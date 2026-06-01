@@ -250,6 +250,7 @@ function MercadoHubPage() {
           imageAlt={t("homeV2.heroTitle")}
           title={t("homeV2.heroTitle")}
           subtitle={t("homeV2.heroSubtitle")}
+          priority
           cta={
             <Link
               to="/mercado/listas"
