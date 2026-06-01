@@ -1601,6 +1601,37 @@
       "emptyTitle": "You haven't saved any markets yet",
       "emptyDescription": "Search for nearby markets or add one manually to use across your lists.",
       "helper": "Once you save a market, you can use it in lists, cart and community prices."
+    },
+    "nearby": {
+      "title": "Find nearby markets",
+      "description": "Discover supermarkets near you or in any region using Google Maps.",
+      "privacy": "Your location is only used to find nearby markets and is never saved.",
+      "useLocation": "Use my location",
+      "manualSearchLabel": "Search by city, neighborhood or address",
+      "searchPlaceholder": "e.g.: Brooklyn, 1000 Main St",
+      "searchButton": "Search this location",
+      "radiusLabel": "Search radius",
+      "resultsTitle": "Markets found",
+      "resultsCount_one": "{{count}} market found",
+      "resultsCount_other": "{{count}} markets found",
+      "locating": "Locating you…",
+      "searching": "Searching markets…",
+      "mapLoading": "Loading map…",
+      "emptyTitle": "No markets found",
+      "emptyDescription": "Try increasing the search radius or looking in another neighborhood or city.",
+      "deniedTitle": "Location not allowed",
+      "deniedDescription": "No problem — you can search manually by typing a city, neighborhood or address.",
+      "errorTitle": "We couldn't search right now",
+      "errorDescription": "Check your connection and try again in a moment.",
+      "retry": "Try again",
+      "card": {
+        "add": "Add this market",
+        "added": "Market added",
+        "viewOnMap": "View on map",
+        "sourceGoogle": "Google Maps",
+        "nearby": "Nearby",
+        "distance": "Distance"
+      }
     }
   }
 }

@@ -1601,6 +1601,37 @@
       "emptyTitle": "Você ainda não salvou nenhum mercado",
       "emptyDescription": "Busque mercados próximos ou cadastre manualmente para usá-los nas suas listas.",
       "helper": "Depois de salvar um mercado, você poderá usá-lo em listas, carrinho e preços comunitários."
+    },
+    "nearby": {
+      "title": "Buscar mercados próximos",
+      "description": "Encontre supermercados perto de você ou em qualquer região usando o Google Maps.",
+      "privacy": "Sua localização é usada apenas para encontrar mercados próximos e não é salva.",
+      "useLocation": "Usar minha localização",
+      "manualSearchLabel": "Buscar por cidade, bairro ou endereço",
+      "searchPlaceholder": "Ex.: Vila Mariana, Av. Paulista 1000",
+      "searchButton": "Buscar neste local",
+      "radiusLabel": "Raio da busca",
+      "resultsTitle": "Mercados encontrados",
+      "resultsCount_one": "{{count}} mercado encontrado",
+      "resultsCount_other": "{{count}} mercados encontrados",
+      "locating": "Localizando você…",
+      "searching": "Buscando mercados…",
+      "mapLoading": "Carregando mapa…",
+      "emptyTitle": "Nenhum mercado encontrado",
+      "emptyDescription": "Tente aumentar o raio da busca ou procurar em outro bairro ou cidade.",
+      "deniedTitle": "Localização não autorizada",
+      "deniedDescription": "Sem problema — você pode buscar manualmente digitando uma cidade, bairro ou endereço.",
+      "errorTitle": "Não foi possível buscar agora",
+      "errorDescription": "Verifique sua conexão e tente novamente em instantes.",
+      "retry": "Tentar novamente",
+      "card": {
+        "add": "Adicionar este mercado",
+        "added": "Mercado adicionado",
+        "viewOnMap": "Ver no mapa",
+        "sourceGoogle": "Google Maps",
+        "nearby": "Próximo",
+        "distance": "Distância"
+      }
     }
   }
 }
