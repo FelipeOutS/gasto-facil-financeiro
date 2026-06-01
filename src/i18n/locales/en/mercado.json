@@ -1333,11 +1333,11 @@
     },
     "onlineImport": {
       "cardTitle": "Import online prices",
-      "cardDescription": "We only import the public highlights from the Joanin Online homepage. Review before saving.",
+      "cardDescription": "We only import the public products shown on the Joanin Online homepage. Review before saving.",
       "cardCta": "Import from Joanin Online",
       "title": "Import online prices",
       "description": "We will fetch public prices from Joanin Online. Review before saving.",
-      "confirmMessage": "We will only fetch the public highlights from the Joanin Online homepage. We do not access the full catalog, logged-in areas or internal offers. Review before saving.",
+      "confirmMessage": "Right now we can only import the public products shown on the Joanin homepage. Categories and the \"Load more\" button use protected loading on the official site.",
       "sourceLabel": "Source: {{source}}",
       "sourceTag": "Source",
       "cancel": "Cancel",
@@ -1357,10 +1357,11 @@
         "noProductsFound": "No prices were found in this search.",
         "importFailed": "Couldn't import the online prices.",
         "saveFailed": "Couldn't save the reviewed prices.",
-        "rateLimited": "Please wait a moment before searching again.",
+        "rateLimited": "You ran several searches in a row. Please wait a moment and try again.",
         "selectAtLeastOne": "Select at least one item to save.",
         "invalidUrl": "Enter a valid joaninonline.com.br URL.",
-        "placementNoPublicData": "This category does not expose products publicly. Try the homepage or a /c/... category."
+        "placementNoPublicData": "This category loads its products dynamically on the Joanin website and isn't available for automatic import. You can take a screenshot or photo of the flyer and use the image reader.",
+        "categoryProtected": "This category loads its products dynamically on the Joanin website and isn't available for automatic import. Use the homepage or send a screenshot via the flyer reader."
       },
       "scopeNotice": "Showing public homepage highlights from Joanin Online ({{count}} products). The full catalog is only available inside the official site.",
       "cardScopeNotice": "We only import the public products available on the Joanin Online homepage. The full catalog may not be available for automatic reading.",
@@ -1381,7 +1382,13 @@
         "padaria": "Bakery",
         "acougue": "Butcher",
         "hortifruti": "Produce",
-        "utilidades": "Utilities"
+        "utilidades": "Utilities",
+        "protectedBadge": "protected"
+      },
+      "flyerScanHint": {
+        "title": "Have the category open on the website?",
+        "description": "Take a screenshot and send it through the flyer/photo reader to capture products and prices.",
+        "cta": "Read screenshot or flyer"
       },
       "warnings": {
         "placementClientRenderedOnly": "This page uses protected dynamic loading. We only imported the publicly visible products.",
