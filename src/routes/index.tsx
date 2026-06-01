@@ -91,6 +91,11 @@ import {
   isLoginBioInProgress,
   isLoginBioUnlockRequired,
 } from "@/lib/biometric-login";
+import {
+  AppModuleBanner,
+  AppEmptyStateVisual,
+  AppActionCard,
+} from "@/components/app-v2";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -361,7 +366,16 @@ function Index() {
   if (isEmpty) {
     return (
       <MobileShell wide>
-        <header className="pt-2 animate-rise">
+        <div className="pt-2 animate-rise">
+          <AppModuleBanner
+            tone="relatorios"
+            priority
+            title={t("empty.banner.title")}
+            subtitle={t("empty.banner.subtitle")}
+          />
+        </div>
+
+        <header className="mt-5">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
             {t("empty.eyebrow")}
           </p>
@@ -371,33 +385,50 @@ function Index() {
           </p>
         </header>
 
-        <section className="mt-6 grid grid-cols-2 gap-3">
-          <WelcomeCard
-            to="/adicionar"
-            search={{ tipo: "receita" }}
-            icon={<ArrowUp className="h-5 w-5" />}
-            title={t("empty.cards.salario")}
-            tint="success"
-          />
-          <WelcomeCard
-            to="/adicionar"
-            search={{ tipo: "gasto" }}
-            icon={<Plus className="h-5 w-5" />}
-            title={t("empty.cards.gasto")}
-            tint="primary"
-          />
-          <WelcomeCard
-            to="/guardado"
-            icon={<Wallet className="h-5 w-5" />}
-            title={t("empty.cards.guardado")}
-            tint="muted"
-          />
-          <WelcomeCard
-            to="/metas"
-            icon={<Target className="h-5 w-5" />}
-            title={t("empty.cards.meta")}
-            tint="muted"
-          />
+        <AppEmptyStateVisual
+          className="mt-5"
+          tone="relatorios"
+          icon={<Sparkles className="h-5 w-5" />}
+          title={t("empty.title")}
+          description={t("empty.subtitle")}
+        />
+
+        <section
+          className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2"
+          aria-label={t("empty.eyebrow")}
+        >
+          <Link to="/adicionar" search={{ tipo: "receita" }} className="block focus-visible:outline-none">
+            <AppActionCard
+              tone="receitas"
+              icon={<ArrowUp className="h-5 w-5" />}
+              title={t("empty.cards.salario")}
+              description={t("empty.descriptions.salario")}
+            />
+          </Link>
+          <Link to="/adicionar" search={{ tipo: "gasto" }} className="block focus-visible:outline-none">
+            <AppActionCard
+              tone="gastos"
+              icon={<Plus className="h-5 w-5" />}
+              title={t("empty.cards.gasto")}
+              description={t("empty.descriptions.gasto")}
+            />
+          </Link>
+          <Link to="/guardado" className="block focus-visible:outline-none">
+            <AppActionCard
+              tone="cofre"
+              icon={<Wallet className="h-5 w-5" />}
+              title={t("empty.cards.guardado")}
+              description={t("empty.descriptions.guardado")}
+            />
+          </Link>
+          <Link to="/metas" className="block focus-visible:outline-none">
+            <AppActionCard
+              tone="metas"
+              icon={<Target className="h-5 w-5" />}
+              title={t("empty.cards.meta")}
+              description={t("empty.descriptions.meta")}
+            />
+          </Link>
         </section>
 
         <p className="mt-8 text-center text-xs text-muted-foreground">
@@ -465,6 +496,27 @@ function Index() {
           metasCount={metas.length}
         />
       </div>
+
+      {/* V3 — Banner premium do Dashboard (compacto, complementa o hero/MonthSummary). */}
+      <div className="mt-3 lg:mt-4">
+        <AppModuleBanner
+          tone="relatorios"
+          compact
+          title={t("heroBannerV2.title")}
+          subtitle={t("heroBannerV2.subtitle")}
+          cta={
+            <Link
+              to="/adicionar"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-card transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              {t("heroBannerV2.cta")}
+            </Link>
+          }
+        />
+      </div>
+
+
 
 
 
