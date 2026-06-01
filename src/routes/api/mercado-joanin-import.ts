@@ -122,14 +122,18 @@ function normalize(value: string): string {
 function classifyPath(pathname: string): Diagnostics["origin"] {
   if (pathname === "/" || pathname === "") return "home";
   if (/^\/c\//.test(pathname)) return "category";
+  if (/^\/p\/categoria\//.test(pathname)) return "category";
   if (/^\/p\//.test(pathname)) return "placement";
   return "other";
 }
 
 function categoryFromPath(pathname: string): string | null {
-  const m = pathname.match(/^\/c\/([^/?#]+)/);
-  if (!m) return null;
-  return decodeURIComponent(m[1]).replace(/-/g, " ");
+  const mC = pathname.match(/^\/c\/([^/?#]+)/);
+  if (mC) return decodeURIComponent(mC[1]).replace(/-/g, " ");
+  const mP = pathname.match(/^\/p\/categoria\/\d+\/([^/?#]+)/);
+  if (mP) return decodeURIComponent(mP[1]).replace(/-/g, " ");
+  if (/^\/p\/ofertas/.test(pathname)) return "ofertas";
+  return null;
 }
 
 function validateUrl(raw: string | undefined | null): { ok: true; url: URL } | { ok: false; reason: string } {
