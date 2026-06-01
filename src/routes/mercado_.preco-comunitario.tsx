@@ -278,6 +278,12 @@ function PrecoComunitarioPage() {
         city: item.city ?? "",
         neighborhood: item.neighborhood ?? "",
         notes: item.notes ?? "",
+        brand: item.brand ?? "",
+        barcode: item.barcode ?? "",
+        imageUrl: item.image_url,
+        imageSource: item.image_source,
+        imageConfidence: item.image_confidence,
+        imageRemoved: false,
       });
     } else {
       setEditingId(null);
@@ -293,6 +299,13 @@ function PrecoComunitarioPage() {
       toast.error(t("communityPrices.errors.manualRequired"));
       return;
     }
+    const imageFields = manualForm.imageRemoved || !manualForm.imageUrl
+      ? { image_url: null, image_source: null, image_confidence: null }
+      : {
+          image_url: manualForm.imageUrl,
+          image_source: manualForm.imageSource ?? "manual",
+          image_confidence: manualForm.imageConfidence,
+        };
     const payload: Record<string, unknown> = {
       product_name: manualForm.productName.trim(),
       normalized_product_name: manualForm.productName.trim().toLowerCase(),
@@ -306,6 +319,9 @@ function PrecoComunitarioPage() {
       city: manualForm.city || null,
       neighborhood: manualForm.neighborhood || null,
       notes: manualForm.notes || null,
+      brand: manualForm.brand.trim() || null,
+      barcode: manualForm.barcode.trim() || null,
+      ...imageFields,
     };
     if (editingId) {
       const { error } = await (supabase.from(TABLE as never) as any)
