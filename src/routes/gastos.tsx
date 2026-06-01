@@ -1027,33 +1027,32 @@ function GastosPage() {
         </div>
       )}
 
-      {/* Resumo premium */}
+      {/* Resumo premium (V3) */}
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 stagger">
-        <SummaryStat
-          icon={<Hash className="h-4 w-4" />}
+        <AppSummaryCard
           tone="neutral"
+          icon={<Hash className="h-4 w-4" />}
           label={t("summary.found")}
           value={<CountNumber value={filtered.length} />}
           hint={mesRef === "todos" ? t("summary.foundHintPeriod") : ymToLabel(mesRef)}
         />
-        <SummaryStat
+        <AppSummaryCard
+          tone="gastos"
           icon={<Wallet className="h-4 w-4" />}
-          tone="brand"
           label={t("summary.total")}
           value={<Money value={total} />}
           hint={t("summary.totalHint")}
-          highlight
         />
-        <SummaryStat
+        <AppSummaryCard
+          tone="relatorios"
           icon={<TrendingUp className="h-4 w-4" />}
-          tone="info"
           label={t("summary.avg")}
           value={<Money value={media} />}
           hint={filtered.length ? t("summary.avgHint", { count: filtered.length }) : t("summary.noValue")}
         />
-        <SummaryStat
+        <AppSummaryCard
+          tone="metas"
           icon={<Tag className="h-4 w-4" />}
-          tone="success"
           label={t("summary.topCategory")}
           value={
             topCategoria ? (
@@ -1065,6 +1064,7 @@ function GastosPage() {
           hint={topCategoria ? formatBRL(topCategoria.valor) : t("summary.noData")}
         />
       </div>
+
 
       {/* Barra de seleção em massa */}
       {filtered.length > 0 && (
