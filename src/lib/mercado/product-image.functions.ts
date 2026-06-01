@@ -187,9 +187,13 @@ async function lookupByBarcode(
 async function lookupByName(
   productName: string,
   brand: string | null,
+  onDiag?: (d: { candidates: number; bestScore: number | null; rejected: string | null }) => void,
 ): Promise<Pick<ProductImageResult, "imageUrl" | "source" | "confidence" | "origin"> | null> {
   const q = [productName, brand].filter(Boolean).join(" ").slice(0, 120);
-  if (q.length < 3) return null;
+  if (q.length < 3) {
+    onDiag?.({ candidates: 0, bestScore: null, rejected: "query_too_short" });
+    return null;
+  }
   const params = new URLSearchParams({
     search_terms: q,
     json: "1",
@@ -198,7 +202,10 @@ async function lookupByName(
   });
   const url = `https://world.openfoodfacts.org/cgi/search.pl?${params.toString()}`;
   const data = await fetchJson<OFFSearch>(url);
-  if (!data?.products?.length) return null;
+  if (!data?.products?.length) {
+    onDiag?.({ candidates: 0, bestScore: null, rejected: "no_results" });
+    return null;
+  }
   const normalizedQuery = normalizeForKey(productName);
   const normalizedBrand = brand ? normalizeForKey(brand) : "";
   let best: { img: string; score: number } | null = null;
@@ -214,22 +221,23 @@ async function lookupByName(
       const brandSubstr =
         candidateBrands.includes(normalizedBrand) ||
         candidateName.includes(normalizedBrand);
-      if (brandSubstr) {
-        score += 0.25;
-      } else if (brandSim > 0.6) {
-        score += 0.15;
-      } else {
-        // marca esperada não aparece no candidato — penaliza forte para
-        // evitar imagem de outro fabricante.
-        score -= 0.25;
-      }
+      if (brandSubstr) score += 0.25;
+      else if (brandSim > 0.6) score += 0.15;
+      else score -= 0.25;
     }
     if (!best || score > best.score) best = { img, score };
   }
-  if (!best) return null;
-  if (best.score < 0.5) return null;
+  if (!best) {
+    onDiag?.({ candidates: data.products.length, bestScore: null, rejected: "no_image_in_results" });
+    return null;
+  }
+  if (best.score < 0.5) {
+    onDiag?.({ candidates: data.products.length, bestScore: best.score, rejected: "score_below_threshold" });
+    return null;
+  }
   const confidence: ProductImageConfidence =
     best.score >= 0.85 ? "high" : best.score >= 0.6 ? "medium" : "low";
+  onDiag?.({ candidates: data.products.length, bestScore: best.score, rejected: null });
   return {
     imageUrl: best.img,
     source: "off_search",
