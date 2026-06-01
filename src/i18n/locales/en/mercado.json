@@ -1472,6 +1472,8 @@
     "marketLabel": "Current market",
     "marketNone": "Choose a market",
     "marketChange": "Change",
+    "marketManage": "Manage markets",
+    "marketAdd": "Add market",
     "categories": {
       "title": "Categories",
       "hortifruti": "Produce",
