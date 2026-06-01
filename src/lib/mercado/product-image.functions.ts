@@ -32,18 +32,35 @@ const InputSchema = z.object({
     .optional()
     .nullable(),
   category: z
-    .enum([
-      "hortifruti",
-      "acougue",
-      "padaria",
-      "bebidas",
-      "laticinios",
-      "limpeza",
-      "mercearia",
-      "utilidades",
-    ])
-    .optional()
-    .nullable(),
+    .preprocess(
+      (v) => {
+        const allowed = [
+          "hortifruti",
+          "acougue",
+          "padaria",
+          "bebidas",
+          "laticinios",
+          "limpeza",
+          "mercearia",
+          "utilidades",
+        ];
+        if (typeof v !== "string") return null;
+        return allowed.includes(v) ? v : null;
+      },
+      z
+        .enum([
+          "hortifruti",
+          "acougue",
+          "padaria",
+          "bebidas",
+          "laticinios",
+          "limpeza",
+          "mercearia",
+          "utilidades",
+        ])
+        .nullable(),
+    )
+    .optional(),
 });
 
 export type ProductImageInput = z.infer<typeof InputSchema>;
