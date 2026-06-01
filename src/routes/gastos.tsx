@@ -1155,24 +1155,24 @@ function GastosPage() {
               }
             />
           ) : mesRef !== "todos" ? (
-            <PremiumEmptyState
-              variant="premium"
+            <AppEmptyStateVisual
+              tone="gastos"
               icon={<Wallet className="h-6 w-6" />}
               title={t("empty.monthTitle")}
               description={t("empty.monthSub", { month: ymToLabel(mesRef) })}
-              cta={
+              action={
                 <Button asChild className="min-h-11 rounded-full font-semibold">
                   <Link to="/adicionar">{t("empty.monthCta", { month: ymToLabel(mesRef) })}</Link>
                 </Button>
               }
             />
           ) : (
-            <PremiumEmptyState
-              variant="premium"
+            <AppEmptyStateVisual
+              tone="gastos"
               icon={<Sparkles className="h-6 w-6" />}
               title={t("empty.noneTitle")}
               description={t("empty.noneSub")}
-              cta={
+              action={
                 <div className="flex w-full flex-col items-center gap-4">
                   <Button asChild className="min-h-11 rounded-full font-semibold">
                     <Link to="/adicionar">{t("empty.noneCta")}</Link>
@@ -1196,10 +1196,10 @@ function GastosPage() {
                 </div>
               }
             />
-
           )}
         </div>
       ) : (
+
 
 
         <ul className="mt-3 space-y-2 pb-4" data-fornecedores-map>
