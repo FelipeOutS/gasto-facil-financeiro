@@ -892,8 +892,85 @@ function PrecoComunitarioPage() {
                 placeholder={t("communityPrices.manual.fields.notesPlaceholder")}
               />
             </div>
+            <div>
+              <Label className="text-xs">{t("communityPrices.image.brand")}</Label>
+              <Input
+                value={manualForm.brand}
+                onChange={(e) => setManualForm((f) => ({ ...f, brand: e.target.value }))}
+                placeholder={t("communityPrices.image.brandPlaceholder")}
+                maxLength={100}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">{t("communityPrices.image.barcode")}</Label>
+              <Input
+                value={manualForm.barcode}
+                onChange={(e) =>
+                  setManualForm((f) => ({
+                    ...f,
+                    barcode: e.target.value.replace(/[^0-9A-Za-z._-]/g, "").slice(0, 32),
+                  }))
+                }
+                placeholder={t("communityPrices.image.barcodePlaceholder")}
+                inputMode="numeric"
+              />
+            </div>
+            <div className="sm:col-span-2 space-y-2 rounded-lg border border-border/60 bg-card-elevated/30 p-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={searchManualImage}
+                  disabled={imageSearching || manualForm.productName.trim().length < 2}
+                  className="min-h-9"
+                >
+                  {imageSearching ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <SearchIcon className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  {imageSearching
+                    ? t("communityPrices.image.searching")
+                    : t("communityPrices.image.searchImage")}
+                </Button>
+                {manualForm.imageUrl && !manualForm.imageRemoved && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setManualForm((f) => ({ ...f, imageRemoved: true, imageUrl: null }))
+                    }
+                    className="inline-flex h-9 items-center gap-1 rounded-full border border-border/60 px-2.5 text-[11px] font-medium text-muted-foreground hover:text-destructive"
+                  >
+                    <XIcon className="h-3 w-3" />
+                    {t("communityPrices.image.removeImage")}
+                  </button>
+                )}
+              </div>
+              {manualForm.imageUrl && !manualForm.imageRemoved ? (
+                <div className="flex items-start gap-2">
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border/60 bg-muted">
+                    <img
+                      src={manualForm.imageUrl}
+                      alt={t("communityPrices.image.previewAlt", {
+                        name: manualForm.productName || "—",
+                      })}
+                      className="h-full w-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                  <p className="text-[10px] italic text-muted-foreground">
+                    {t("communityPrices.image.illustrativeImage")}
+                  </p>
+                </div>
+              ) : imageSearched && !manualForm.imageUrl ? (
+                <p className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <ImageOff className="h-3 w-3" />
+                  {t("communityPrices.image.noImageFound")}
+                </p>
+              ) : null}
+            </div>
           </div>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="ghost" onClick={() => { setManualOpen(false); setEditingId(null); }} className="min-h-11">
               {t("communityPrices.manual.cancel")}
             </Button>
