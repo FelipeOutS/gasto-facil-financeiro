@@ -372,8 +372,36 @@ function CartoesPage() {
         </div>
       ) : (
         <div className="lg:hidden">
-          {/* Carrossel horizontal de cartões */}
+          {/* Banner premium V3 */}
+          <div className="mt-4">
+            <AppModuleBanner
+              tone="cartoes"
+              compact
+              title={t("v3.banner.title")}
+              subtitle={t("v3.banner.subtitle")}
+              cta={
+                <Button
+                  size="sm"
+                  onClick={handleOpenNew}
+                  className="card-press h-9 rounded-full bg-brand-grad px-4 text-xs font-semibold shadow-elevated hover:opacity-95"
+                >
+                  <Plus className="mr-1 h-3.5 w-3.5" />
+                  {t("v3.banner.cta")}
+                </Button>
+              }
+            />
+          </div>
+
+          {/* Minha carteira — carrossel horizontal */}
           <section className="-mx-4 mt-5 px-4 animate-rise">
+            <div className="mb-2 flex items-center justify-between px-0.5">
+              <h2 className="text-sm font-semibold text-foreground">
+                {t("v3.wallet.title")}
+              </h2>
+              <span className="text-[11px] text-muted-foreground">
+                {t("list.count", { count: cartoes.length })}
+              </span>
+            </div>
             <div
               className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               role="list"
@@ -405,32 +433,60 @@ function CartoesPage() {
                 <CartaoAddTile onClick={handleOpenNew} />
               </div>
             </div>
-            {cartoes.length > 0 && (
-              <p className="mt-1 text-center text-[10px] text-muted-foreground">
-                {t("list.count", { count: cartoes.length })} · {t("list.tapHint")}
-              </p>
-            )}
+            <p className="mt-1 text-center text-[10px] text-muted-foreground">
+              {t("list.tapHint")}
+            </p>
           </section>
 
-          {/* KPIs compactos — peso visual reduzido */}
-          <section className="mt-4 grid grid-cols-2 gap-2">
-            <CompactKpi
-              label={t("summary.limitTotal")}
-              value={formatBRL(resumo.limiteTotal)}
-              tone="brand"
+          {/* Ações rápidas */}
+          <section className="mt-4 grid grid-cols-4 gap-2" aria-label={t("v3.wallet.title")}>
+            <QuickAction
+              icon={<Plus className="h-4 w-4" />}
+              label={t("v3.actions.newCard")}
+              onClick={handleOpenNew}
+              primary
             />
-            <CompactKpi
-              label={t("summary.usedMonth")}
-              value={formatBRL(resumo.usado)}
-              tone="warning"
+            <QuickAction
+              icon={<Receipt className="h-4 w-4" />}
+              label={t("v3.actions.addExpense")}
+              onClick={() => navigate({ to: "/adicionar" })}
             />
-            <CompactKpi
-              label={t("summary.available")}
-              value={formatBRL(resumo.disponivel)}
-              tone="success"
+            <QuickAction
+              icon={<FileUp className="h-4 w-4" />}
+              label={t("v3.actions.editCard")}
+              onClick={() => handleOpenImport()}
             />
-            <CompactKpi
-              label={t("summary.nextInvoice")}
+            <QuickAction
+              icon={<Wallet className="h-4 w-4" />}
+              label={t("v3.actions.invoices")}
+              onClick={() => navigate({ to: "/gastos" })}
+            />
+          </section>
+
+          {/* Resumo do mês — grid 2x2 com AppSummaryCard */}
+          <section className="mt-5 grid grid-cols-2 gap-2.5">
+            <AppSummaryCard
+              tone="cartoes"
+              icon={<CreditCard className="h-4 w-4" />}
+              label={t("v3.summary.limit")}
+              value={<Money value={resumo.limiteTotal} className="text-xl" />}
+            />
+            <AppSummaryCard
+              tone="gastos"
+              icon={<Wallet className="h-4 w-4" />}
+              label={t("v3.summary.used")}
+              value={<Money value={resumo.usado} className="text-xl" />}
+            />
+            <AppSummaryCard
+              tone="receitas"
+              icon={<Sparkles className="h-4 w-4" />}
+              label={t("v3.summary.available")}
+              value={<Money value={resumo.disponivel} className="text-xl" />}
+            />
+            <AppSummaryCard
+              tone="contas"
+              icon={<CalendarDays className="h-4 w-4" />}
+              label={t("v3.summary.openInvoices")}
               value={
                 resumo.proxima && resumo.proximaData
                   ? `${String(resumo.proximaData.getDate()).padStart(2, "0")}/${String(resumo.proximaData.getMonth() + 1).padStart(2, "0")}`
@@ -443,28 +499,14 @@ function CartoesPage() {
                     : t("summary.dueDays", { count: resumo.proximaDias })
                   : t("summary.noPending")
               }
-              tone="default"
             />
           </section>
 
-          {/* Ações principais — pills */}
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <Button
-              variant="outline"
-              onClick={() => handleOpenImport()}
-              className="card-press h-11 rounded-full text-sm font-semibold"
-            >
-              <FileUp className="mr-1 h-4 w-4" />
-              {t("list.importInvoice")}
-            </Button>
-            <Button
-              onClick={handleOpenNew}
-              className="card-press h-11 rounded-full bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
-            >
-              <Plus className="mr-1 h-4 w-4" />
-              {t("list.newCard")}
-            </Button>
-          </div>
+          {/* Microcopy de segurança */}
+          <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+            <ShieldCheck className="h-3 w-3" aria-hidden="true" />
+            {t("v3.security.note")}
+          </p>
 
           {/* Blocos complementares empilhados */}
           <div className="mt-5 space-y-4">
