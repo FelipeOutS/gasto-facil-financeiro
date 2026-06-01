@@ -1360,7 +1360,13 @@
         "padaria": "Padaria",
         "acougue": "Açougue",
         "hortifruti": "Hortifruti",
-        "utilidades": "Utilidades"
+        "utilidades": "Utilidades",
+        "protectedBadge": "protegida"
+      },
+      "flyerScanHint": {
+        "title": "Tem a categoria aberta no site?",
+        "description": "Tire um print da tela e envie pelo leitor de panfleto/foto para capturar os produtos e preços.",
+        "cta": "Ler print ou panfleto"
       },
       "warnings": {
         "placementClientRenderedOnly": "Esta categoria usa carregamento dinâmico protegido. Importamos apenas os produtos públicos visíveis.",
