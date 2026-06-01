@@ -157,11 +157,16 @@ async function fetchJson<T>(url: string): Promise<T | null> {
   }
 }
 
+type OFFImageEntry = { pt?: string; en?: string; fr?: string };
+type OFFSelectedImages = {
+  front?: { display?: OFFImageEntry; small?: OFFImageEntry; thumb?: OFFImageEntry };
+};
 type OFFProduct = {
   image_front_url?: string;
   image_url?: string;
   product_name?: string;
   brands?: string;
+  selected_images?: OFFSelectedImages;
 };
 
 type OFFByBarcode = { status?: number; product?: OFFProduct };
@@ -170,6 +175,26 @@ type ProductImageHit = Pick<
   ProductImageResult,
   "imageUrl" | "source" | "confidence" | "origin" | "persistable"
 >;
+
+/** Prioriza imagem frontal selecionada PT > EN > FR > image_front_url > image_url. */
+function pickProductImage(p: OFFProduct): string | null {
+  const sel = p.selected_images?.front;
+  const candidates = [
+    sel?.display?.pt,
+    sel?.display?.en,
+    sel?.display?.fr,
+    sel?.small?.pt,
+    sel?.small?.en,
+    sel?.small?.fr,
+    p.image_front_url,
+    p.image_url,
+  ];
+  for (const c of candidates) {
+    const v = safeUrl(c);
+    if (v) return v;
+  }
+  return null;
+}
 
 /** Dice coefficient simples para similaridade de nomes. */
 function similarity(a: string, b: string): number {
@@ -212,11 +237,17 @@ function hasToken(text: string, tokens: string[]): boolean {
 
 function normalizeLookupTerms(raw: string, brand: string | null): string {
   let text = normalizeForKey(raw);
-  const beerBrand = !!brand && ["heineken", "brahma", "skol", "antarctica", "itaipava", "ambev", "stella artois", "budweiser", "amstel", "eisenbahn"].includes(normalizeForKey(brand));
+  const beerBrand = !!brand && ["heineken", "brahma", "skol", "antarctica", "itaipava", "ambev", "stella artois", "budweiser", "amstel", "eisenbahn", "corona", "brahva"].includes(normalizeForKey(brand));
   text = text
     .replace(/\blong\s*nek\b/g, "long neck")
     .replace(/\blongneck\b/g, "long neck")
+    .replace(/\bcoca\s*cola\b/g, "coca-cola")
+    .replace(/\brefri\b/g, "refrigerante")
+    .replace(/\bachoc(?:olatado)?\s*po\b/g, "achocolatado em po")
+    .replace(/\bling\b/g, "linguica")
     .replace(/\bcx\b/g, "caixa")
+    .replace(/\bpct\b/g, "pacote")
+    .replace(/\b(?:lt|litro|litros)\b/g, "l")
     .replace(/\b(?:und|un|unidade|unidades)\b/g, " ");
   if (beerBrand || hasToken(text, ["cerveja", "beer", "lager"])) {
     text = text.replace(/\bln\b/g, "long neck");
@@ -271,10 +302,10 @@ async function lookupByBarcode(
 ): Promise<ProductImageHit | null> {
   const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(
     barcode,
-  )}.json?fields=image_front_url,image_url,product_name,brands`;
+  )}.json?fields=image_front_url,image_url,product_name,brands,selected_images`;
   const data = await fetchJson<OFFByBarcode>(url);
   if (!data || data.status !== 1 || !data.product) return null;
-  const img = safeUrl(data.product.image_front_url || data.product.image_url);
+  const img = pickProductImage(data.product);
   if (!img) return null;
   return {
     imageUrl: img,
@@ -308,7 +339,7 @@ async function lookupByName(
     search_terms: q,
     json: "1",
     page_size: "20",
-    fields: "image_front_url,image_url,product_name,brands",
+    fields: "image_front_url,image_url,product_name,brands,selected_images",
   });
   const url = `https://world.openfoodfacts.org/cgi/search.pl?${params.toString()}`;
   const data = await fetchJson<OFFSearch>(url);
@@ -319,10 +350,12 @@ async function lookupByName(
   const normalizedQuery = normalizeForKey(query);
   const normalizedBrand = brand ? normalizeForKey(brand) : "";
   const strongBrand = isStrongMarketBrand(normalizedBrand);
+  const brandOnlyQuery =
+    !!normalizedBrand && normalizedQuery === normalizedBrand;
   let best: { img: string; score: number; name: string | null; brands: string | null; brandMatched: boolean } | null = null;
   let bestNoImage: { score: number; name: string | null; brands: string | null } | null = null;
   for (const p of data.products) {
-    const img = safeUrl(p.image_front_url || p.image_url);
+    const img = pickProductImage(p);
     const candidateName = normalizeForKey(p.product_name);
     const candidateBrands = normalizeForKey(p.brands);
     const nameSim = similarity(normalizedQuery, candidateName);
@@ -368,8 +401,14 @@ async function lookupByName(
     });
     return null;
   }
-  const threshold = normalizedBrand && strongBrand ? 0.48 : normalizedBrand ? 0.58 : 0.62;
-  if (normalizedBrand && strongBrand && best.brandMatched && best.score >= 0.46) {
+  const threshold = brandOnlyQuery && strongBrand
+    ? 0.38
+    : normalizedBrand && strongBrand
+      ? 0.46
+      : normalizedBrand
+        ? 0.58
+        : 0.62;
+  if (normalizedBrand && strongBrand && best.brandMatched && best.score >= 0.42) {
     // Marca forte exata não deve cair fora só porque o nome está incompleto ou com typo.
   } else if (best.score < threshold) {
     onDiag?.({
@@ -383,7 +422,7 @@ async function lookupByName(
     return null;
   }
   const confidence: ProductImageConfidence =
-    best.score >= 0.9 ? "high" : best.score >= 0.62 ? "medium" : "low";
+    best.score >= 0.85 ? "high" : best.score >= 0.55 ? "medium" : "low";
   onDiag?.({
     candidates: data.products.length,
     bestScore: best.score,
@@ -499,6 +538,18 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
     return { ...byBrand, checkedAt: now, debug };
   }
 
+  if (isDev && debug) {
+    // Resumo curto em dev para auditar produtos que ficaram sem imagem.
+    // Não loga base64, payload sensível ou dados pessoais.
+    // eslint-disable-next-line no-console
+    console.warn("[image-lookup:miss]", {
+      product: debug.productName,
+      brand: debug.extractedBrand,
+      barcode: debug.barcode,
+      tried: debug.attempts.length,
+      reasons: debug.attempts.map((a) => a.rejected).filter(Boolean),
+    });
+  }
   return { ...EMPTY_RESULT, checkedAt: now, debug };
 }
 
