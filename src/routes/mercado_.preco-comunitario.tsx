@@ -762,6 +762,7 @@ function PrecoComunitarioPage() {
             {bestFinds.map((it) => (
               <div key={`best-${it.id}`} className="w-[150px] shrink-0 snap-start">
                 <ProductCard
+                  className="h-full"
                   name={it.product_name}
                   priceLabel={formatBRL(it.price)}
                   unitLabel={it.unit ?? undefined}
