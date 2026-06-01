@@ -394,7 +394,7 @@ export function cleanProductName(
   rawName: string,
   hintedBrand?: string | null,
 ): ProductNameClean {
-  const normalized = normalizeForKey(rawName);
+  const normalized = normalizeMarketProductTerms(rawName, hintedBrand);
   if (!normalized) return { cleanedName: "", extractedBrand: hintedBrand?.trim() || null };
 
   // Primeiro, tira padrões numéricos com unidade.
@@ -432,7 +432,7 @@ export function cleanProductName(
     // descarta tokens puramente numéricos remanescentes
     .filter((tok) => !/^\d+$/.test(tok));
 
-  const cleanedName = tokens.join(" ").trim();
+  const cleanedName = tokens.length ? tokens.join(" ").trim() : normalized.trim();
   return { cleanedName, extractedBrand };
 }
 
