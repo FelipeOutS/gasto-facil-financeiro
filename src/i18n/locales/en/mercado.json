@@ -1453,5 +1453,54 @@
       "badgeAria": "Market {{name}}",
       "logoAlt": "Logo of {{name}}"
     }
+  },
+  "homeV2": {
+    "heroTitle": "Smart Market",
+    "heroSubtitle": "Build lists, track prices, organize your cart and spot opportunities before you shop.",
+    "heroCta": "Start a list",
+    "searchPlaceholder": "Search products, markets or lists",
+    "categoriesTitle": "Categories",
+    "categoriesDesc": "Tap to filter the community price showcase.",
+    "categoriesClear": "Clear filter",
+    "quickActionsTitle": "Quick actions",
+    "quickActionsDesc": "The most used paths in Smart Market.",
+    "quickActions": {
+      "listas": "My list",
+      "carrinho": "Cart",
+      "orcamento": "Shopping budget",
+      "precoComunitario": "Community Price",
+      "meusMercados": "My markets"
+    },
+    "recentTitle": "Recent prices",
+    "recentDesc": "Latest prices reported by the community.",
+    "recentSeeAll": "See all",
+    "recentEmptyTitle": "No prices here yet",
+    "recentEmptyDesc": "Add the first price to start the showcase.",
+    "recentEmptyCta": "Add price",
+    "nextPurchaseTitle": "Your next shop",
+    "nextPurchaseDesc": "Active list, cart and shopping budget in one place.",
+    "nextPurchase": {
+      "activeListLabel": "Active list",
+      "itemsCount_one": "{{count}} item",
+      "itemsCount_other": "{{count}} items",
+      "budgetLabel": "Monthly budget",
+      "noBudget": "No budget set",
+      "noListTitle": "You don't have a list yet",
+      "noListDesc": "Create your first list to start planning your shop.",
+      "createList": "Create list",
+      "openList": "Open list",
+      "openCart": "Open cart",
+      "openBudget": "Open budget"
+    },
+    "marketsTitle": "Markets and prices near you",
+    "marketsDesc": "Save your favorite markets and compare prices reported by the community.",
+    "marketsCta": "View my markets",
+    "marketsSecondaryCta": "Compare by market",
+    "marketsTertiaryCta": "Community Price",
+    "budgetTitle": "Organize your market budget",
+    "budgetDesc": "Set a limit for the shop and track your cart before the checkout. This is the shopping budget, not the overall monthly budget.",
+    "budgetCta": "Open shopping budget",
+    "toolsTitle": "View all tools",
+    "toolsDesc": "All areas of Smart Market, including premium features."
   }
 }
