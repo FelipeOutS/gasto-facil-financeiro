@@ -291,6 +291,11 @@ const NOISE_TOKENS = new Set([
   "fatiadas",
   "tipo",
   "ling", // abreviação comum de "linguiça" em cupom
+  "de",
+  "da",
+  "do",
+  "das",
+  "dos",
 ]);
 
 // Remove padrões numéricos com unidade (1kg, 500g, 2 l, 1.5l, 12x350ml...).
