@@ -249,8 +249,11 @@ function inferCategoryTerms(name: string, explicitCategory?: ProductImageInput["
   if (explicitCategory === "bebidas" || hasToken(text, ["cerveja", "beer", "lager"])) {
     terms.push("cerveja", "beer", "lager");
   }
-  if (hasToken(text, ["refrigerante", "refri", "soda"])) {
-    terms.push("refrigerante", "soda", "soft drink");
+  if (
+    hasToken(text, ["refrigerante", "refri", "soda", "cola"]) ||
+    /\b(coca|pepsi|fanta|sprite|sukita|schweppes|guarana)\b/.test(text)
+  ) {
+    terms.push("refrigerante", "soda", "soft drink", "cola");
   }
   if (hasToken(text, ["cafe", "pilao", "melitta"])) terms.push("cafe", "coffee");
   if (hasToken(text, ["farinha", "trigo", "adria"])) terms.push("farinha trigo", "flour");
@@ -263,15 +266,16 @@ function packagingTerms(name: string): string[] {
   const terms: string[] = [];
   if (hasToken(text, ["long", "neck"]) || /\blong\s*neck\b/.test(text)) terms.push("long neck", "longneck");
   if (hasToken(text, ["garrafa"])) terms.push("garrafa");
-  if (hasToken(text, ["lata"])) terms.push("lata");
+  if (hasToken(text, ["lata", "latinha"])) terms.push("lata", "can");
   if (hasToken(text, ["pet"])) terms.push("pet");
   if (/\b(?:330\s?ml|330)\b/.test(text)) terms.push("330ml");
-  if (/\b(?:350\s?ml|350|355\s?ml|355)\b/.test(text)) terms.push("355ml");
+  if (/\b(?:350\s?ml|350|355\s?ml|355)\b/.test(text)) terms.push("350ml", "355ml");
   if (/\b(?:2\s?l|2\s?litros|2l)\b/.test(text)) terms.push("2l", "2 litros");
   if (/\b(?:500\s?g|500)\b/.test(text)) terms.push("500g");
   if (/\b(?:1\s?kg|1kg)\b/.test(text)) terms.push("1kg");
   return unique(terms);
 }
+
 
 function buildNameAliases(name: string, brand: string | null, category?: ProductImageInput["category"] | null): string[] {
   const normalized = normalizeLookupTerms(name, brand);
