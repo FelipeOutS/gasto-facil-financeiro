@@ -44,6 +44,9 @@ import {
 } from "@/lib/mercado/community-prices-suggestions";
 
 import { cn } from "@/lib/utils";
+import { MercadoBanner } from "@/components/mercado/shell";
+import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
+import emptyCarrinho from "@/assets/mercado/empty-carrinho.png";
 import { usePlan } from "@/lib/use-plan";
 import {
   addItemLista,
@@ -135,27 +138,32 @@ function ListPicker({ requestedId }: { requestedId?: string }) {
 
   if (listas.length === 0) {
     return (
-      <section className="mt-6 rounded-3xl border border-dashed border-border bg-card p-8 text-center shadow-card">
-        <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-card-elevated text-brand ring-1 ring-border/60">
-          <ListChecks className="h-7 w-7" />
-        </span>
-        <h2 className="mt-4 text-lg font-semibold">{t("carrinho.empty.title")}</h2>
+      <section className="mt-6 overflow-hidden rounded-3xl border border-dashed border-border bg-card p-6 text-center shadow-card md:p-8">
+        <img
+          src={emptyCarrinho}
+          alt={t("cartV2.emptyImageAlt")}
+          loading="lazy"
+          className="mx-auto h-32 w-auto object-contain sm:h-40"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        />
+        <h2 className="mt-4 text-lg font-semibold">{t("cartV2.emptyTitle")}</h2>
         <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-          {t("carrinho.empty.description")}
+          {t("cartV2.emptyDesc")}
         </p>
         <div className="mt-5 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
           <Link
-            to="/mercado/listas/nova"
+            to="/mercado/listas"
             className="inline-flex min-h-11 items-center gap-2 rounded-2xl bg-brand-grad px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
           >
-            <Plus className="h-4 w-4" />
-            {t("carrinho.empty.cta")}
+            <ListChecks className="h-4 w-4" />
+            {t("cartV2.emptyCta")}
           </Link>
           <Link
-            to="/mercado/listas"
+            to="/mercado/listas/nova"
             className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-border/60 bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-card-elevated"
           >
-            {t("carrinho.empty.secondaryCta")}
+            <Plus className="h-4 w-4" />
+            {t("cartV2.emptySecondaryCta")}
           </Link>
         </div>
         <p className="mx-auto mt-3 max-w-md text-[11px] text-muted-foreground">
