@@ -7,7 +7,6 @@ import {
   BarChart3,
   Info,
   Search,
-  Store,
   TrendingDown,
   Clock,
   Receipt,
