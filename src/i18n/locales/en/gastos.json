@@ -5,6 +5,22 @@
     "subtitle": "See, organize and understand where your money is going.",
     "back": "Back"
   },
+  "v3": {
+    "header": {
+      "title": "Expenses",
+      "description": "Track expenses, categories, cards and your month's evolution."
+    },
+    "banner": {
+      "title": "Track your expenses clearly",
+      "subtitle": "See where your money is going, follow categories, and make better day-to-day decisions.",
+      "cta": "Add expense",
+      "alt": "Expense tracking illustration"
+    },
+    "sections": {
+      "filtersTitle": "Filters",
+      "listTitle": "Your expenses"
+    }
+  },
   "actions": {
     "reclassify": "Reclassify",
     "reclassifyTitle": "Reclassify categories",
