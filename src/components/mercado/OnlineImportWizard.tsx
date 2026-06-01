@@ -113,10 +113,14 @@ export function OnlineImportWizard({
 }: OnlineImportWizardProps) {
   const { t, i18n } = useTranslation("mercado");
   const { user } = useAuth();
+  const savedMercados = useMercadosLocais();
   const [step, setStep] = useState<Step>("confirm");
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [fetchedAt, setFetchedAt] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [url, setUrl] = useState<string>(DEFAULT_URL);
+  const [marketName, setMarketName] = useState<string>(DEFAULT_MARKET);
+  const [diagnostics, setDiagnostics] = useState<Diagnostics | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -124,6 +128,9 @@ export function OnlineImportWizard({
       setItems([]);
       setFetchedAt("");
       setSaving(false);
+      setUrl(DEFAULT_URL);
+      setMarketName(DEFAULT_MARKET);
+      setDiagnostics(null);
     }
   }, [open]);
 
