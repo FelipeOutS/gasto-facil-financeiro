@@ -25,6 +25,7 @@ function makeKey(input: ProductImageInput): string {
     normalizeForKey(input.productName),
     normalizeForKey(input.brand ?? ""),
     input.barcode ?? "",
+    input.category ?? "",
   ].join("|");
 }
 
