@@ -20,7 +20,8 @@ import {
   cacheSet,
 } from "./product-image-cache.server";
 import { normalizeForKey } from "./product-image-key";
-import { cleanProductName } from "./product-name-clean";
+import { cleanProductName, isStrongMarketBrand } from "./product-name-clean";
+import { validateImageUrl } from "./image-url-whitelist";
 
 const InputSchema = z.object({
   productName: z.string().trim().min(2).max(200),
@@ -75,14 +76,20 @@ export type ProductImageConfidence = "high" | "medium" | "low" | null;
 
 export type ProductImageDebug = {
   productName: string;
+  brandReceived: string | null;
   cleanedName: string;
+  normalizedName: string;
   extractedBrand: string | null;
+  aliases: string[];
   barcode: string | null;
   attempts: Array<{
     query: string;
     brand: string | null;
     candidates: number;
     bestScore: number | null;
+    bestCandidate?: string | null;
+    bestBrands?: string | null;
+    hadImage?: boolean;
     rejected: string | null;
   }>;
   pickedFrom: "barcode" | "search" | "brand_logo" | "none";
@@ -92,6 +99,8 @@ export type ProductImageResult = {
   imageUrl: string | null;
   source: ProductImageSource;
   confidence: ProductImageConfidence;
+  /** Se a imagem pode ser gravada no banco; baixa confiança fica só em runtime. */
+  persistable?: boolean;
   origin: "openfoodfacts" | "local" | null;
   checkedAt: string;
   debug?: ProductImageDebug;
@@ -103,8 +112,6 @@ const EMPTY_RESULT: Omit<ProductImageResult, "checkedAt"> = {
   confidence: null,
   origin: null,
 };
-
-import { validateImageUrl } from "./image-url-whitelist";
 
 const BRAND_LOGOS = new Set([
   "adobe",
