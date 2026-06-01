@@ -209,5 +209,52 @@
       "Novembro",
       "Dezembro"
     ]
+  },
+  "v3": {
+    "header": {
+      "title": "Cartões",
+      "description": "Acompanhe limites, faturas e gastos dos seus cartões em um só lugar."
+    },
+    "banner": {
+      "title": "Sua carteira no controle",
+      "subtitle": "Veja quanto já usou, quanto ainda tem disponível e acompanhe suas faturas com mais clareza.",
+      "cta": "Adicionar cartão"
+    },
+    "wallet": {
+      "title": "Minha carteira",
+      "limitTotal": "Limite total",
+      "usedThisMonth": "Usado no mês",
+      "available": "Disponível",
+      "usedPercent": "{{pct}} usado"
+    },
+    "actions": {
+      "newCard": "Novo cartão",
+      "addExpense": "Adicionar gasto",
+      "invoices": "Ver faturas",
+      "editCard": "Importar fatura"
+    },
+    "summary": {
+      "limit": "Limite total",
+      "used": "Usado no mês",
+      "available": "Disponível",
+      "openInvoices": "Faturas abertas"
+    },
+    "sections": {
+      "allCards": "Todos os cartões"
+    },
+    "empty": {
+      "title": "Nenhum cartão cadastrado ainda",
+      "description": "Cadastre seus cartões para acompanhar limite, gastos do mês e faturas em aberto.",
+      "cta": "Adicionar primeiro cartão",
+      "security": "Não pedimos número completo, CVV ou senha do cartão.",
+      "steps": {
+        "name": "Cadastre o nome do cartão e o banco",
+        "limit": "Informe o limite disponível",
+        "track": "Acompanhe seus gastos e faturas"
+      }
+    },
+    "security": {
+      "note": "Por segurança, o app não solicita número completo, CVV ou senha do cartão."
+    }
   }
 }

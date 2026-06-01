@@ -112,6 +112,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  AppPageHeader,
+  AppModuleBanner,
+  AppSummaryCard,
+  AppEmptyStateVisual,
+} from "@/components/app-v2";
 
 export const Route = createFileRoute("/cartoes/")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -339,20 +345,23 @@ function CartoesPage() {
 
   return (
     <MobileShell wide>
-      <header className="pt-2 animate-rise">
-        <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-          {t("hero.eyebrow")}
-        </p>
-        <h1 className="mt-0.5 flex items-center gap-2 text-[26px] font-bold leading-tight tracking-tight">
-          <span className="grid h-8 w-8 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
-            <CreditCard className="h-4 w-4" />
-          </span>
-          {t("hero.title")}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("hero.subtitle")}
-        </p>
-      </header>
+      <div className="pt-2 animate-rise">
+        <AppPageHeader
+          tone="cartoes"
+          icon={<Wallet className="h-5 w-5" />}
+          title={t("v3.header.title", { defaultValue: t("hero.title") })}
+          description={t("v3.header.description", { defaultValue: t("hero.subtitle") })}
+          actions={
+            <Button
+              onClick={handleOpenNew}
+              className="card-press hidden h-10 rounded-full bg-brand-grad px-4 text-sm font-semibold shadow-elevated hover:opacity-95 sm:inline-flex"
+            >
+              <Plus className="mr-1 h-4 w-4" />
+              {t("v3.actions.newCard", { defaultValue: t("list.newCard") })}
+            </Button>
+          }
+        />
+      </div>
 
       {/* ============================================================ */}
       {/* MOBILE (<lg) — cartão protagonista no topo, KPIs compactos    */}
@@ -363,8 +372,36 @@ function CartoesPage() {
         </div>
       ) : (
         <div className="lg:hidden">
-          {/* Carrossel horizontal de cartões */}
+          {/* Banner premium V3 */}
+          <div className="mt-4">
+            <AppModuleBanner
+              tone="cartoes"
+              compact
+              title={t("v3.banner.title")}
+              subtitle={t("v3.banner.subtitle")}
+              cta={
+                <Button
+                  size="sm"
+                  onClick={handleOpenNew}
+                  className="card-press h-9 rounded-full bg-brand-grad px-4 text-xs font-semibold shadow-elevated hover:opacity-95"
+                >
+                  <Plus className="mr-1 h-3.5 w-3.5" />
+                  {t("v3.banner.cta")}
+                </Button>
+              }
+            />
+          </div>
+
+          {/* Minha carteira — carrossel horizontal */}
           <section className="-mx-4 mt-5 px-4 animate-rise">
+            <div className="mb-2 flex items-center justify-between px-0.5">
+              <h2 className="text-sm font-semibold text-foreground">
+                {t("v3.wallet.title")}
+              </h2>
+              <span className="text-[11px] text-muted-foreground">
+                {t("list.count", { count: cartoes.length })}
+              </span>
+            </div>
             <div
               className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               role="list"
@@ -396,32 +433,60 @@ function CartoesPage() {
                 <CartaoAddTile onClick={handleOpenNew} />
               </div>
             </div>
-            {cartoes.length > 0 && (
-              <p className="mt-1 text-center text-[10px] text-muted-foreground">
-                {t("list.count", { count: cartoes.length })} · {t("list.tapHint")}
-              </p>
-            )}
+            <p className="mt-1 text-center text-[10px] text-muted-foreground">
+              {t("list.tapHint")}
+            </p>
           </section>
 
-          {/* KPIs compactos — peso visual reduzido */}
-          <section className="mt-4 grid grid-cols-2 gap-2">
-            <CompactKpi
-              label={t("summary.limitTotal")}
-              value={formatBRL(resumo.limiteTotal)}
-              tone="brand"
+          {/* Ações rápidas */}
+          <section className="mt-4 grid grid-cols-4 gap-2" aria-label={t("v3.wallet.title")}>
+            <QuickAction
+              icon={<Plus className="h-4 w-4" />}
+              label={t("v3.actions.newCard")}
+              onClick={handleOpenNew}
+              primary
             />
-            <CompactKpi
-              label={t("summary.usedMonth")}
-              value={formatBRL(resumo.usado)}
-              tone="warning"
+            <QuickAction
+              icon={<Receipt className="h-4 w-4" />}
+              label={t("v3.actions.addExpense")}
+              onClick={() => navigate({ to: "/adicionar" })}
             />
-            <CompactKpi
-              label={t("summary.available")}
-              value={formatBRL(resumo.disponivel)}
-              tone="success"
+            <QuickAction
+              icon={<FileUp className="h-4 w-4" />}
+              label={t("v3.actions.editCard")}
+              onClick={() => handleOpenImport()}
             />
-            <CompactKpi
-              label={t("summary.nextInvoice")}
+            <QuickAction
+              icon={<Wallet className="h-4 w-4" />}
+              label={t("v3.actions.invoices")}
+              onClick={() => navigate({ to: "/gastos" })}
+            />
+          </section>
+
+          {/* Resumo do mês — grid 2x2 com AppSummaryCard */}
+          <section className="mt-5 grid grid-cols-2 gap-2.5">
+            <AppSummaryCard
+              tone="cartoes"
+              icon={<CreditCard className="h-4 w-4" />}
+              label={t("v3.summary.limit")}
+              value={<Money value={resumo.limiteTotal} className="text-xl" />}
+            />
+            <AppSummaryCard
+              tone="gastos"
+              icon={<Wallet className="h-4 w-4" />}
+              label={t("v3.summary.used")}
+              value={<Money value={resumo.usado} className="text-xl" />}
+            />
+            <AppSummaryCard
+              tone="receitas"
+              icon={<Sparkles className="h-4 w-4" />}
+              label={t("v3.summary.available")}
+              value={<Money value={resumo.disponivel} className="text-xl" />}
+            />
+            <AppSummaryCard
+              tone="contas"
+              icon={<CalendarDays className="h-4 w-4" />}
+              label={t("v3.summary.openInvoices")}
               value={
                 resumo.proxima && resumo.proximaData
                   ? `${String(resumo.proximaData.getDate()).padStart(2, "0")}/${String(resumo.proximaData.getMonth() + 1).padStart(2, "0")}`
@@ -434,28 +499,14 @@ function CartoesPage() {
                     : t("summary.dueDays", { count: resumo.proximaDias })
                   : t("summary.noPending")
               }
-              tone="default"
             />
           </section>
 
-          {/* Ações principais — pills */}
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <Button
-              variant="outline"
-              onClick={() => handleOpenImport()}
-              className="card-press h-11 rounded-full text-sm font-semibold"
-            >
-              <FileUp className="mr-1 h-4 w-4" />
-              {t("list.importInvoice")}
-            </Button>
-            <Button
-              onClick={handleOpenNew}
-              className="card-press h-11 rounded-full bg-brand-grad text-sm font-semibold shadow-elevated hover:opacity-95"
-            >
-              <Plus className="mr-1 h-4 w-4" />
-              {t("list.newCard")}
-            </Button>
-          </div>
+          {/* Microcopy de segurança */}
+          <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+            <ShieldCheck className="h-3 w-3" aria-hidden="true" />
+            {t("v3.security.note")}
+          </p>
 
           {/* Blocos complementares empilhados */}
           <div className="mt-5 space-y-4">
@@ -727,30 +778,89 @@ function CompactKpi({
   );
 }
 
+function QuickAction({
+  icon,
+  label,
+  onClick,
+  primary = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  primary?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "card-press flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-2 text-[11px] font-semibold leading-tight transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        primary
+          ? "border-transparent bg-brand-grad text-primary-foreground shadow-elevated hover:opacity-95"
+          : "border-border bg-card text-foreground hover:bg-accent",
+      )}
+    >
+      <span
+        className={cn(
+          "grid h-8 w-8 place-items-center rounded-full",
+          primary ? "bg-white/15 text-primary-foreground" : "bg-brand-soft text-brand-on-soft",
+        )}
+        aria-hidden="true"
+      >
+        {icon}
+      </span>
+      <span className="line-clamp-1">{label}</span>
+    </button>
+  );
+}
+
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   const { t } = useTranslation("cartoes");
+  const steps = [
+    t("v3.empty.steps.name"),
+    t("v3.empty.steps.limit"),
+    t("v3.empty.steps.track"),
+  ];
   return (
-    <PremiumEmptyState
-      className="mt-4"
-      variant="premium"
-      icon={<CreditCard className="h-6 w-6" />}
-      title={t("empty.title")}
+    <AppEmptyStateVisual
+      tone="cartoes"
+      icon={<CreditCard className="h-5 w-5" />}
+      title={t("v3.empty.title", { defaultValue: t("empty.title") })}
       description={
-        <span className="block">
-          <span className="block">{t("empty.subtitle")}</span>
+        <span className="block space-y-3">
+          <span className="block">
+            {t("v3.empty.description", { defaultValue: t("empty.subtitle") })}
+          </span>
+          <ol className="mx-auto mt-2 grid max-w-xs gap-1.5 text-left text-xs">
+            {steps.map((s, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span
+                  className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-semibold"
+                  style={{
+                    backgroundColor: "color-mix(in oklab, var(--module-cartoes) 18%, transparent)",
+                    color: "var(--module-cartoes)",
+                  }}
+                  aria-hidden="true"
+                >
+                  {i + 1}
+                </span>
+                <span className="text-muted-foreground">{s}</span>
+              </li>
+            ))}
+          </ol>
           <span className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <ShieldCheck className="h-3 w-3" />
-            {t("empty.security")}
+            <ShieldCheck className="h-3 w-3" aria-hidden="true" />
+            {t("v3.empty.security", { defaultValue: t("empty.security") })}
           </span>
         </span>
       }
-      cta={
+      action={
         <Button
           onClick={onAdd}
           className="card-press min-h-11 rounded-full bg-brand-grad font-semibold shadow-elevated hover:opacity-95"
         >
           <Plus className="mr-1 h-4 w-4" />
-          {t("empty.addFirst")}
+          {t("v3.empty.cta", { defaultValue: t("empty.addFirst") })}
         </Button>
       }
     />

@@ -209,5 +209,52 @@
       "November",
       "December"
     ]
+  },
+  "v3": {
+    "header": {
+      "title": "Cards",
+      "description": "Track limits, statements and spending across all your cards in one place."
+    },
+    "banner": {
+      "title": "Your wallet, under control",
+      "subtitle": "See how much you've used, what's still available, and follow your statements with clarity.",
+      "cta": "Add card"
+    },
+    "wallet": {
+      "title": "My wallet",
+      "limitTotal": "Total limit",
+      "usedThisMonth": "Used this month",
+      "available": "Available",
+      "usedPercent": "{{pct}} used"
+    },
+    "actions": {
+      "newCard": "New card",
+      "addExpense": "Add expense",
+      "invoices": "View statements",
+      "editCard": "Import statement"
+    },
+    "summary": {
+      "limit": "Total limit",
+      "used": "Used this month",
+      "available": "Available",
+      "openInvoices": "Open statements"
+    },
+    "sections": {
+      "allCards": "All cards"
+    },
+    "empty": {
+      "title": "No cards added yet",
+      "description": "Add your cards to track limits, monthly spending and open statements.",
+      "cta": "Add first card",
+      "security": "We don't ask for the full card number, CVV or password.",
+      "steps": {
+        "name": "Add the card name and issuer",
+        "limit": "Enter the available limit",
+        "track": "Track your spending and statements"
+      }
+    },
+    "security": {
+      "note": "For your safety, the app never asks for the full card number, CVV or password."
+    }
   }
 }
