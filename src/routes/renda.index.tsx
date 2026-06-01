@@ -577,25 +577,35 @@ function RendaPage() {
 
   return (
     <MobileShell>
-      {/* HEADER */}
-      <header className="flex items-center gap-3 pt-2">
-        <Link
-          to="/"
-          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground"
-          aria-label={t("back")}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div className="flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            {t("header.kicker")}
-          </p>
-          <h1 className="text-2xl font-bold tracking-tight">{vocab.rendaTitle}</h1>
-          <p className="text-xs text-muted-foreground">
-            {t("header.subtitle")}
-          </p>
-        </div>
-      </header>
+      {/* V3 Header */}
+      <AppPageHeader
+        tone="receitas"
+        icon={<TrendingUp className="h-5 w-5" />}
+        title={t("v3.header.title", { defaultValue: vocab.rendaTitle })}
+        description={t("v3.header.description")}
+      />
+
+      {/* V3 Banner */}
+      <AppModuleBanner
+        tone="receitas"
+        className="mt-4"
+        title={t("v3.banner.title")}
+        subtitle={t("v3.banner.subtitle")}
+        imageAlt={t("v3.banner.alt")}
+        cta={
+          <Button
+            size="sm"
+            className="h-10 rounded-full px-4 font-semibold"
+            onClick={() =>
+              isMobile ? navigate({ to: "/renda/nova" }) : setOpen(true)
+            }
+          >
+            <Plus className="mr-1 h-4 w-4" />
+            {t("v3.banner.cta")}
+          </Button>
+        }
+      />
+
 
       {/* NAV DE MÊS */}
       <div className="mt-4 flex items-center justify-between rounded-2xl border border-border bg-card px-2 py-2 shadow-sm">
