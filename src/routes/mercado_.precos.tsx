@@ -298,6 +298,9 @@ function PrecosPage() {
                 name={r.product_name}
                 priceLabel={formatBRL(r.price)}
                 unitLabel={r.unit ?? undefined}
+                imageUrl={r.image_url ?? undefined}
+                brand={r.brand}
+                barcode={r.barcode}
                 marketName={r.market_name}
                 source={SOURCE_MAP[r.source] ?? "community"}
                 seenAtLabel={
