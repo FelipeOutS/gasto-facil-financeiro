@@ -14,6 +14,8 @@ import {
   Store,
 } from "lucide-react";
 import { NearbyMarkets } from "@/components/mercado/NearbyMarkets";
+import { MercadoBanner, SectionBlock } from "@/components/mercado/shell";
+import bannerMercados from "@/assets/mercado/banner-mercados.jpg";
 import { useState } from "react";
 import { toast } from "sonner";
 import i18n from "@/i18n";
