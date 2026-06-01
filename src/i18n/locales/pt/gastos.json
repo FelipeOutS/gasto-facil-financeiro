@@ -5,6 +5,22 @@
     "subtitle": "Visualize, organize e entenda para onde seu dinheiro está indo.",
     "back": "Voltar"
   },
+  "v3": {
+    "header": {
+      "title": "Gastos",
+      "description": "Acompanhe despesas, categorias, cartões e a evolução do mês."
+    },
+    "banner": {
+      "title": "Controle seus gastos com clareza",
+      "subtitle": "Veja para onde seu dinheiro está indo, acompanhe categorias e tome decisões melhores no dia a dia.",
+      "cta": "Adicionar gasto",
+      "alt": "Ilustração de controle de gastos"
+    },
+    "sections": {
+      "filtersTitle": "Filtros",
+      "listTitle": "Seus gastos"
+    }
+  },
   "actions": {
     "reclassify": "Reclassificar",
     "reclassifyTitle": "Reclassificar categorias",
