@@ -97,6 +97,12 @@ import { FORMAS_PAGAMENTO } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Trans, useTranslation } from "react-i18next";
+import {
+  AppPageHeader,
+  AppModuleBanner,
+  AppSummaryCard,
+  AppEmptyStateVisual,
+} from "@/components/app-v2";
 
 export const Route = createFileRoute("/gastos")({
   head: () => ({ meta: [{ title: "Gastos — Gasto Inteligente" }] }),
@@ -601,79 +607,62 @@ function GastosPage() {
 
   return (
     <MobileShell wide>
-      {/* HERO premium */}
-      <section className="relative mt-1 overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card via-card-elevated to-card p-5 sm:p-6 shadow-card animate-rise">
-        {/* Glow decorativo */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-20 -right-16 h-64 w-64 rounded-full opacity-60 blur-3xl"
-          style={{ background: "radial-gradient(closest-side, var(--brand-soft, oklch(0.7 0.15 260 / 0.25)), transparent 70%)" }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-24 -left-10 h-56 w-56 rounded-full opacity-40 blur-3xl"
-          style={{ background: "radial-gradient(closest-side, oklch(0.72 0.18 152 / 0.22), transparent 70%)" }}
-        />
-
-        <div className="relative flex items-start gap-3">
-          <Link
-            to="/"
-            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card/70 backdrop-blur text-muted-foreground hover:text-foreground transition-colors"
-            aria-label={t("hero.back")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">
-              {t("hero.eyebrow")}
-            </p>
-            <h1 className="mt-0.5 text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
-              {t("hero.title", { defaultValue: vocab.gastosTitle })}
-            </h1>
-            <p className="mt-1.5 text-sm text-muted-foreground max-w-xl">
-              {t("hero.subtitle")}
-            </p>
+      {/* V3 Page Header */}
+      <AppPageHeader
+        tone="gastos"
+        icon={<Wallet className="h-5 w-5" />}
+        title={t("v3.header.title", { defaultValue: vocab.gastosTitle })}
+        description={t("v3.header.description")}
+        actions={
+          <div className="hidden sm:flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={handleReclassificar}
+              className="h-9 rounded-full"
+              variant="outline"
+              disabled={reclassificando}
+              title={t("actions.reclassifyTitle")}
+            >
+              <RefreshCw className={cn("h-4 w-4", reclassificando && "animate-spin")} />
+              {t("actions.reclassify")}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setHistoryOpen(true)}
+              className="h-9 rounded-full"
+              variant="outline"
+            >
+              <History className="h-4 w-4" />
+              {t("actions.importedStatements")}
+            </Button>
+            <Button
+              type="button"
+              onClick={tryImportar}
+              className="h-9 rounded-full"
+              variant="secondary"
+            >
+              <Upload className="h-4 w-4" />
+              {t("actions.import")}
+              {!can("importar_extrato") && <LockChip />}
+            </Button>
           </div>
-          {/* Ilustração animada (SVG leve) — finanças/gráfico */}
-          <div className="hidden sm:flex shrink-0 ml-2">
-            <HeroFinanceArt />
-          </div>
-        </div>
+        }
+      />
 
-        {/* Ações desktop */}
-        <div className="relative mt-4 hidden sm:flex items-center gap-2">
-          <Button
-            type="button"
-            onClick={handleReclassificar}
-            className="h-9 rounded-full"
-            variant="outline"
-            disabled={reclassificando}
-            title={t("actions.reclassifyTitle")}
-          >
-            <RefreshCw className={cn("h-4 w-4", reclassificando && "animate-spin")} />
-            {t("actions.reclassify")}
+      {/* V3 Module Banner */}
+      <AppModuleBanner
+        tone="gastos"
+        className="mt-4"
+        title={t("v3.banner.title")}
+        subtitle={t("v3.banner.subtitle")}
+        imageAlt={t("v3.banner.alt")}
+        cta={
+          <Button asChild size="sm" className="h-10 rounded-full px-4 font-semibold">
+            <Link to="/adicionar">{t("v3.banner.cta")}</Link>
           </Button>
-          <Button
-            type="button"
-            onClick={() => setHistoryOpen(true)}
-            className="h-9 rounded-full"
-            variant="outline"
-          >
-            <History className="h-4 w-4" />
-            {t("actions.importedStatements")}
-          </Button>
-          <Button
-            type="button"
-            onClick={tryImportar}
-            className="h-9 rounded-full"
-            variant="secondary"
-          >
-            <Upload className="h-4 w-4" />
-            {t("actions.import")}
-            {!can("importar_extrato") && <LockChip />}
-          </Button>
-        </div>
-      </section>
+        }
+      />
+
 
       {/* SELETOR PRINCIPAL: Mês de referência */}
       <section className="mt-4 rounded-2xl border border-border bg-card p-3 sm:p-4 animate-rise">
@@ -1038,33 +1027,32 @@ function GastosPage() {
         </div>
       )}
 
-      {/* Resumo premium */}
+      {/* Resumo premium (V3) */}
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 stagger">
-        <SummaryStat
-          icon={<Hash className="h-4 w-4" />}
+        <AppSummaryCard
           tone="neutral"
+          icon={<Hash className="h-4 w-4" />}
           label={t("summary.found")}
           value={<CountNumber value={filtered.length} />}
           hint={mesRef === "todos" ? t("summary.foundHintPeriod") : ymToLabel(mesRef)}
         />
-        <SummaryStat
+        <AppSummaryCard
+          tone="gastos"
           icon={<Wallet className="h-4 w-4" />}
-          tone="brand"
           label={t("summary.total")}
           value={<Money value={total} />}
           hint={t("summary.totalHint")}
-          highlight
         />
-        <SummaryStat
+        <AppSummaryCard
+          tone="relatorios"
           icon={<TrendingUp className="h-4 w-4" />}
-          tone="info"
           label={t("summary.avg")}
           value={<Money value={media} />}
           hint={filtered.length ? t("summary.avgHint", { count: filtered.length }) : t("summary.noValue")}
         />
-        <SummaryStat
+        <AppSummaryCard
+          tone="metas"
           icon={<Tag className="h-4 w-4" />}
-          tone="success"
           label={t("summary.topCategory")}
           value={
             topCategoria ? (
@@ -1076,6 +1064,7 @@ function GastosPage() {
           hint={topCategoria ? formatBRL(topCategoria.valor) : t("summary.noData")}
         />
       </div>
+
 
       {/* Barra de seleção em massa */}
       {filtered.length > 0 && (
@@ -1166,24 +1155,24 @@ function GastosPage() {
               }
             />
           ) : mesRef !== "todos" ? (
-            <PremiumEmptyState
-              variant="premium"
+            <AppEmptyStateVisual
+              tone="gastos"
               icon={<Wallet className="h-6 w-6" />}
               title={t("empty.monthTitle")}
               description={t("empty.monthSub", { month: ymToLabel(mesRef) })}
-              cta={
+              action={
                 <Button asChild className="min-h-11 rounded-full font-semibold">
                   <Link to="/adicionar">{t("empty.monthCta", { month: ymToLabel(mesRef) })}</Link>
                 </Button>
               }
             />
           ) : (
-            <PremiumEmptyState
-              variant="premium"
+            <AppEmptyStateVisual
+              tone="gastos"
               icon={<Sparkles className="h-6 w-6" />}
               title={t("empty.noneTitle")}
               description={t("empty.noneSub")}
-              cta={
+              action={
                 <div className="flex w-full flex-col items-center gap-4">
                   <Button asChild className="min-h-11 rounded-full font-semibold">
                     <Link to="/adicionar">{t("empty.noneCta")}</Link>
@@ -1207,10 +1196,10 @@ function GastosPage() {
                 </div>
               }
             />
-
           )}
         </div>
       ) : (
+
 
 
         <ul className="mt-3 space-y-2 pb-4" data-fornecedores-map>
