@@ -18,8 +18,8 @@ import { z } from "zod";
 import {
   cacheGet,
   cacheSet,
-  normalizeForKey,
 } from "./product-image-cache.server";
+import { normalizeForKey } from "./product-image-key";
 
 const InputSchema = z.object({
   productName: z.string().trim().min(2).max(200),
