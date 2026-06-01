@@ -157,11 +157,16 @@ async function fetchJson<T>(url: string): Promise<T | null> {
   }
 }
 
+type OFFImageEntry = { pt?: string; en?: string; fr?: string };
+type OFFSelectedImages = {
+  front?: { display?: OFFImageEntry; small?: OFFImageEntry; thumb?: OFFImageEntry };
+};
 type OFFProduct = {
   image_front_url?: string;
   image_url?: string;
   product_name?: string;
   brands?: string;
+  selected_images?: OFFSelectedImages;
 };
 
 type OFFByBarcode = { status?: number; product?: OFFProduct };
@@ -170,6 +175,26 @@ type ProductImageHit = Pick<
   ProductImageResult,
   "imageUrl" | "source" | "confidence" | "origin" | "persistable"
 >;
+
+/** Prioriza imagem frontal selecionada PT > EN > FR > image_front_url > image_url. */
+function pickProductImage(p: OFFProduct): string | null {
+  const sel = p.selected_images?.front;
+  const candidates = [
+    sel?.display?.pt,
+    sel?.display?.en,
+    sel?.display?.fr,
+    sel?.small?.pt,
+    sel?.small?.en,
+    sel?.small?.fr,
+    p.image_front_url,
+    p.image_url,
+  ];
+  for (const c of candidates) {
+    const v = safeUrl(c);
+    if (v) return v;
+  }
+  return null;
+}
 
 /** Dice coefficient simples para similaridade de nomes. */
 function similarity(a: string, b: string): number {
