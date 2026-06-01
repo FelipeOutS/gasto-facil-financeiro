@@ -432,7 +432,7 @@ export function cleanProductName(
     // descarta tokens puramente numéricos remanescentes
     .filter((tok) => !/^\d+$/.test(tok));
 
-  const cleanedName = tokens.length ? tokens.join(" ").trim() : normalized.trim();
+  const cleanedName = tokens.join(" ").trim();
   return { cleanedName, extractedBrand };
 }
 
