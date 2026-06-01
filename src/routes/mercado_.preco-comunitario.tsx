@@ -178,7 +178,11 @@ function PrecoComunitarioPage() {
     const p = filterProduct.trim().toLowerCase();
     const m = filterMarket.trim().toLowerCase();
     const c = filterCategory.trim().toLowerCase();
-    const chipMatchers = categoryChip !== "todos" ? CATEGORY_MATCHERS[categoryChip] : null;
+    const chipMatchers: string[] | null =
+      categoryChip !== "todos" && categoryChip !== "outros"
+        ? CATEGORY_MATCHERS[categoryChip]
+        : null;
+    const chipIsOutros = categoryChip === "outros";
     const arr = items.filter((it) => {
       if (p && !it.product_name.toLowerCase().includes(p)) return false;
       if (m && !it.market_name.toLowerCase().includes(m)) return false;
