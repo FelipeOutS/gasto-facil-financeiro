@@ -17,6 +17,8 @@ import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
 import { cn } from "@/lib/utils";
+import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
+import bannerPrecos from "@/assets/mercado/banner-comunitario.jpg";
 
 export const Route = createFileRoute("/mercado_/precos")({
   head: () => ({
@@ -91,6 +93,15 @@ function PrecosPage() {
           </p>
         </div>
       </header>
+
+      <div className="mt-4">
+        <MercadoBanner
+          title={t("priceCompareV2.banner.title")}
+          subtitle={t("priceCompareV2.banner.subtitle")}
+          imageSrc={bannerPrecos}
+          tone="community"
+        />
+      </div>
 
       {/* Intro */}
       <section className="mt-5 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">

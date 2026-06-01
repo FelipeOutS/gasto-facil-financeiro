@@ -1670,11 +1670,98 @@
       "save": "Save it to your history, a list, or the cart."
     }
   },
+  "basketV2": {
+    "banner": {
+      "title": "Your default basket",
+      "subtitle": "Build a recurring product base to repeat shopping, compare prices, and plan groceries more easily."
+    },
+    "summary": {
+      "title": "Basket summary",
+      "items": "Items",
+      "estimated": "Estimated value",
+      "categories": "Categories",
+      "updated": "Updated on"
+    },
+    "sections": {
+      "items": "Basket items",
+      "categories": "By category"
+    },
+    "empty": {
+      "title": "You haven't created a default basket yet",
+      "description": "Use the basket to repeat recurring purchases and compare prices before heading to the store.",
+      "addProduct": "Add product",
+      "createList": "Create shopping list"
+    },
+    "steps": {
+      "title": "How it works",
+      "add": "Add products you buy every month.",
+      "reuse": "Use the basket as a base for your list or cart.",
+      "compare": "Compare prices before checking out."
+    },
+    "helper": "The default basket is a personal base. It does not place orders or change prices at stores."
+  },
+  "priceCompareV2": {
+    "banner": {
+      "title": "Compare prices",
+      "subtitle": "View registered prices, find opportunities, and compare products before building your grocery list."
+    },
+    "filters": {
+      "title": "Search and filter",
+      "search": "Search product",
+      "market": "Market",
+      "category": "Category",
+      "source": "Price source",
+      "sort": "Sort by",
+      "clear": "Clear filters"
+    },
+    "sections": {
+      "recentFinds": "Recent finds",
+      "results": "Results"
+    },
+    "card": {
+      "checkBeforeBuying": "Check at the store before buying.",
+      "seenOn": "Seen on",
+      "validUntil": "Valid until"
+    },
+    "empty": {
+      "title": "No prices registered yet",
+      "description": "Prices appear when you import flyers, add them manually, or save prices from your shopping trips.",
+      "scanFlyer": "Scan flyer",
+      "manualPrice": "Add price manually"
+    },
+    "disclaimer": "Prices are entered by users or external sources and may vary by store, region, and date."
+  },
   "priceHistoryV2": {
     "banner": {
       "title": "Price history",
-      "subtitle": "Track price changes for products you've bought and find out where you can pay less."
-    }
+      "subtitle": "Track how prices change over time and plan grocery shopping with more confidence."
+    },
+    "filters": {
+      "search": "Search product"
+    },
+    "summary": {
+      "lastPrice": "Last price",
+      "lowestPrice": "Lowest price",
+      "highestPrice": "Highest price",
+      "records": "Records"
+    },
+    "sections": {
+      "products": "Products with history",
+      "timeline": "Timeline"
+    },
+    "empty": {
+      "title": "No price history yet",
+      "description": "Add prices manually, import flyers, or shop with lists to start tracking changes.",
+      "communityPrices": "View community prices",
+      "createList": "Create list"
+    },
+    "steps": {
+      "title": "How it works",
+      "register": "Add prices manually or from a flyer.",
+      "shop": "Shop using lists/cart.",
+      "track": "Watch the price evolution over time."
+    },
+    "disclaimer": "Prices are historical entries saved in the app and may vary by store, region, and date."
   },
   "budgetV2": {
     "banner": {

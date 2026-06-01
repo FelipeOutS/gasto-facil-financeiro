@@ -18,6 +18,8 @@ import { MobileShell } from "@/components/MobileShell";
 import { confirmAsync } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
+import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
+import bannerCesta from "@/assets/mercado/hero-home.jpg";
 import {
   type CestaTipo,
   type MercadoCestaPadrao,
@@ -103,6 +105,15 @@ function CestaPadraoPage() {
         </button>
       </header>
 
+      <div className="mt-4">
+        <MercadoBanner
+          title={t("basketV2.banner.title")}
+          subtitle={t("basketV2.banner.subtitle")}
+          imageSrc={bannerCesta}
+          tone="pantry"
+        />
+      </div>
+
       <section className="mt-5 flex items-start gap-3">
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">
           <PackageCheck className="h-6 w-6" />
@@ -174,23 +185,49 @@ function CestaPadraoPage() {
 
 function EmptyState({ onCreate }: { onCreate: () => void }) {
   const { t } = useTranslation("mercado");
+  const navigate = useNavigate();
   return (
     <section className="mt-5 rounded-3xl border border-dashed border-border/60 bg-card p-6 text-center shadow-card md:p-8">
       <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand">
         <ShoppingBasket className="h-7 w-7" />
       </span>
-      <h2 className="mt-3 text-lg font-semibold text-foreground">{t("cesta.empty.title")}</h2>
+      <h2 className="mt-3 text-lg font-semibold text-foreground">{t("basketV2.empty.title")}</h2>
       <p className="mx-auto mt-1 max-w-md text-sm leading-snug text-muted-foreground">
-        {t("cesta.empty.description")}
+        {t("basketV2.empty.description")}
       </p>
-      <button
-        type="button"
-        onClick={onCreate}
-        className="mt-4 inline-flex h-11 items-center gap-1.5 rounded-2xl bg-brand-grad px-4 text-sm font-semibold text-primary-foreground shadow-elevated transition-opacity hover:opacity-95"
-      >
-        <Plus className="h-4 w-4" />
-        {t("cesta.empty.cta")}
-      </button>
+      <ol className="mx-auto mt-4 grid max-w-xl grid-cols-1 gap-2 text-left sm:grid-cols-3">
+        {(["add", "reuse", "compare"] as const).map((k, i) => (
+          <li
+            key={k}
+            className="flex items-start gap-2 rounded-2xl border border-border/60 bg-card-elevated p-3"
+          >
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-soft text-xs font-bold text-brand">
+              {i + 1}
+            </span>
+            <p className="text-[12px] leading-snug text-foreground">
+              {t(`basketV2.steps.${k}`)}
+            </p>
+          </li>
+        ))}
+      </ol>
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={onCreate}
+          className="inline-flex h-11 items-center gap-1.5 rounded-2xl bg-brand-grad px-4 text-sm font-semibold text-primary-foreground shadow-elevated transition-opacity hover:opacity-95"
+        >
+          <Plus className="h-4 w-4" />
+          {t("basketV2.empty.addProduct")}
+        </button>
+        <button
+          type="button"
+          onClick={() => void navigate({ to: "/mercado/listas/nova" })}
+          className="inline-flex h-11 items-center gap-1.5 rounded-2xl border border-border/60 bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-card-elevated"
+        >
+          {t("basketV2.empty.createList")}
+        </button>
+      </div>
+      <p className="mt-3 text-[11px] text-muted-foreground">{t("basketV2.helper")}</p>
     </section>
   );
 }
