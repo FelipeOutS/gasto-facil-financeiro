@@ -447,11 +447,16 @@ export type Database = {
       }
       community_market_prices: {
         Row: {
+          barcode: string | null
+          brand: string | null
           category: string | null
           city: string | null
           confidence: number | null
           created_at: string
           id: string
+          image_confidence: number | null
+          image_source: string | null
+          image_url: string | null
           market_id: string | null
           market_name: string
           neighborhood: string | null
@@ -468,11 +473,16 @@ export type Database = {
           valid_until: string | null
         }
         Insert: {
+          barcode?: string | null
+          brand?: string | null
           category?: string | null
           city?: string | null
           confidence?: number | null
           created_at?: string
           id?: string
+          image_confidence?: number | null
+          image_source?: string | null
+          image_url?: string | null
           market_id?: string | null
           market_name: string
           neighborhood?: string | null
@@ -489,11 +499,16 @@ export type Database = {
           valid_until?: string | null
         }
         Update: {
+          barcode?: string | null
+          brand?: string | null
           category?: string | null
           city?: string | null
           confidence?: number | null
           created_at?: string
           id?: string
+          image_confidence?: number | null
+          image_source?: string | null
+          image_url?: string | null
           market_id?: string | null
           market_name?: string
           neighborhood?: string | null

@@ -36,6 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch } from "@/lib/api-fetch";
 import { useMercadosLocais } from "@/lib/mercado/mercados-store";
+import { validateImageUrl } from "@/lib/mercado/image-url-whitelist";
 
 const TABLE = "community_market_prices" as const;
 const DEFAULT_MARKET = "Supermercados Joanin";
@@ -293,6 +294,7 @@ export function OnlineImportWizard({
           }
           continue;
         }
+        const validImg = validateImageUrl(r.imageUrl);
         inserts.push({
           user_id: user.id,
           product_name: r.productName.trim(),
@@ -313,6 +315,9 @@ export function OnlineImportWizard({
             typeof r.confidence === "number" && Number.isFinite(r.confidence)
               ? r.confidence
               : 0.85,
+          image_url: validImg.ok ? validImg.url : null,
+          image_source: validImg.ok ? "joanin" : null,
+          image_confidence: validImg.ok ? 1 : null,
         });
       }
 
