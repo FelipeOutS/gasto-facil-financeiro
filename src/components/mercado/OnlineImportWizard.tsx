@@ -520,6 +520,17 @@ export function OnlineImportWizard({
                       </button>
                     </div>
                     <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {r.imageUrl && (
+                        <div className="sm:col-span-2">
+                          <img
+                            src={r.imageUrl}
+                            alt={t("communityPrices.onlineImport.imageAlt")}
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                            className="h-16 w-16 rounded-md border border-border object-cover"
+                          />
+                        </div>
+                      )}
                       <div className="sm:col-span-2">
                         <Label className="text-xs">
                           {t("communityPrices.review.fields.product")}
