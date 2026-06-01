@@ -401,8 +401,14 @@ async function lookupByName(
     });
     return null;
   }
-  const threshold = normalizedBrand && strongBrand ? 0.48 : normalizedBrand ? 0.58 : 0.62;
-  if (normalizedBrand && strongBrand && best.brandMatched && best.score >= 0.46) {
+  const threshold = brandOnlyQuery && strongBrand
+    ? 0.38
+    : normalizedBrand && strongBrand
+      ? 0.46
+      : normalizedBrand
+        ? 0.58
+        : 0.62;
+  if (normalizedBrand && strongBrand && best.brandMatched && best.score >= 0.42) {
     // Marca forte exata não deve cair fora só porque o nome está incompleto ou com typo.
   } else if (best.score < threshold) {
     onDiag?.({
@@ -416,7 +422,7 @@ async function lookupByName(
     return null;
   }
   const confidence: ProductImageConfidence =
-    best.score >= 0.9 ? "high" : best.score >= 0.62 ? "medium" : "low";
+    best.score >= 0.85 ? "high" : best.score >= 0.55 ? "medium" : "low";
   onDiag?.({
     candidates: data.products.length,
     bestScore: best.score,
