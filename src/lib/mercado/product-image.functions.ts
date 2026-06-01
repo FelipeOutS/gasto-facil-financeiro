@@ -312,7 +312,7 @@ async function lookupByBarcode(
   const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(
     barcode,
   )}.json?fields=image_front_url,image_url,product_name,brands,selected_images`;
-  const data = await fetchJson<OFFByBarcode>(url);
+  const { data } = await fetchJson<OFFByBarcode>(url);
   if (!data || data.status !== 1 || !data.product) return null;
   const img = pickProductImage(data.product);
   if (!img) return null;
