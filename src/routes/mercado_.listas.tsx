@@ -116,6 +116,27 @@ function MercadoListasPage() {
         </button>
       </header>
 
+      {/* Visual banner */}
+      <div className="mt-4">
+        <MercadoBanner
+          tone="community"
+          title={t("listsV2.bannerTitle")}
+          subtitle={t("listsV2.bannerSubtitle")}
+          imageSrc={bannerOrcamento}
+          imageAlt={t("listsV2.bannerTitle")}
+          cta={
+            <button
+              type="button"
+              onClick={goToNova}
+              className="inline-flex min-h-10 items-center gap-2 rounded-full bg-brand-grad px-4 py-2 text-xs font-semibold text-primary-foreground shadow-elevated transition active:scale-[0.98]"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {t("listsV2.bannerCta")}
+            </button>
+          }
+        />
+      </div>
+
       {/* Sync status */}
       <SyncStatusBar
         state={syncState}
@@ -335,21 +356,27 @@ function ListaCard({
 function EmptyState({ onCreate }: { onCreate: () => void }) {
   const { t } = useTranslation("mercado");
   return (
-    <section className="mt-6 rounded-3xl border border-dashed border-border bg-card p-8 text-center shadow-card">
-      <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-card-elevated text-brand ring-1 ring-border/60">
-        <ListChecks className="h-7 w-7" />
-      </span>
-      <h2 className="mt-4 text-lg font-semibold">{t("listas.empty.title")}</h2>
+    <section className="mt-6 overflow-hidden rounded-3xl border border-dashed border-border bg-card p-6 text-center shadow-card md:p-8">
+      <img
+        src={emptyLista}
+        alt={t("listsV2.emptyImageAlt")}
+        loading="lazy"
+        className="mx-auto h-32 w-auto object-contain sm:h-40"
+        onError={(e) => {
+          (e.currentTarget as HTMLImageElement).style.display = "none";
+        }}
+      />
+      <h2 className="mt-4 text-lg font-semibold">{t("listsV2.emptyTitle")}</h2>
       <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-        {t("listas.empty.description")}
+        {t("listsV2.emptyDesc")}
       </p>
       <button
         type="button"
         onClick={onCreate}
-        className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-2xl bg-brand-grad px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
+        className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-2xl bg-brand-grad px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
       >
         <Plus className="h-4 w-4" />
-        {t("listas.empty.cta")}
+        {t("listsV2.emptyCta")}
       </button>
       <p className="mx-auto mt-3 max-w-md text-[11px] text-muted-foreground">
         {t("listas.empty.helper")}
