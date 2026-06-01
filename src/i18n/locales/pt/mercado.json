@@ -1336,12 +1336,41 @@
         "importFailed": "Não foi possível importar os preços online.",
         "saveFailed": "Não foi possível salvar os preços revisados.",
         "rateLimited": "Aguarde um pouco antes de buscar novamente.",
-        "selectAtLeastOne": "Selecione ao menos um item para salvar."
+        "selectAtLeastOne": "Selecione ao menos um item para salvar.",
+        "invalidUrl": "Informe uma URL válida do joaninonline.com.br.",
+        "placementNoPublicData": "Esta categoria não expõe produtos publicamente. Tente a página inicial ou uma categoria /c/..."
       },
       "scopeNotice": "Mostramos os destaques públicos da home do Joanin Online ({{count}} produtos). O catálogo completo só fica disponível dentro do site oficial.",
       "cardScopeNotice": "Importamos apenas os produtos públicos disponíveis na página inicial do Joanin Online. O catálogo completo pode não estar disponível para leitura automática.",
       "reviewScopeNote": "Estes itens representam os destaques públicos disponíveis no momento da leitura, não necessariamente todo o catálogo da loja.",
-      "noteSourceLine": "Fonte: Joanin Online — página inicial pública."
+      "noteSourceLine": "Fonte: Joanin Online — página inicial pública.",
+      "urlLabel": "URL pública do Joanin",
+      "urlPlaceholder": "https://joaninonline.com.br/c/bebidas",
+      "urlHelp": "Use a página inicial ou uma categoria pública (/c/...). URLs de destaques (/p/...) podem vir vazias.",
+      "presetsLabel": "Atalhos",
+      "marketLabel": "Mercado",
+      "marketPlaceholder": "Ex.: Supermercados Joanin",
+      "marketHelpSaved": "Selecione um dos seus mercados salvos ou digite um novo nome.",
+      "marketSavedGroup": "Meus mercados",
+      "marketDefaultOption": "Supermercados Joanin",
+      "presets": {
+        "home": "Página inicial",
+        "hortifruti": "Hortifruti",
+        "bebidas": "Bebidas",
+        "limpeza": "Limpeza",
+        "padaria": "Padaria",
+        "carnes": "Carnes",
+        "laticinios": "Laticínios",
+        "mercearia": "Mercearia"
+      },
+      "warnings": {
+        "placementClientRenderedOnly": "Esta categoria usa carregamento dinâmico protegido. Importamos apenas os produtos públicos visíveis.",
+        "paginationPrivateBlocked": "A página tem um botão \"Carregar mais\" privado. Importamos apenas os produtos públicos visíveis nesta primeira leitura.",
+        "pathUnsupported": "Este caminho não é suportado. Use a página inicial ou uma categoria /c/..."
+      },
+      "foundOnPage": "Encontramos {{count}} produtos públicos nesta página.",
+      "partialImportBanner": "Importação parcial: alguns produtos só aparecem após interação no site oficial.",
+      "imageAlt": "Imagem pública do produto"
     },
     "suggestions": {
       "title": "Preço comunitário encontrado",
