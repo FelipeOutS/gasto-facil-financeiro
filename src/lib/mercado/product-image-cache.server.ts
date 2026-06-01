@@ -35,13 +35,3 @@ export function cacheSet<T>(key: string, value: T, ttlMs = DEFAULT_TTL_MS): void
   store.set(key, { value, expiresAt: Date.now() + ttlMs });
 }
 
-/** Normaliza strings para chaves de cache (lower, sem acentos, sem espaços extras). */
-export function normalizeForKey(input: string | null | undefined): string {
-  if (!input) return "";
-  return input
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
