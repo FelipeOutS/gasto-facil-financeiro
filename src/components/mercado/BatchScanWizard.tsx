@@ -37,6 +37,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch } from "@/lib/api-fetch";
 import { useMercadosLocais } from "@/lib/mercado/mercados-store";
+import { ProductImageReview } from "@/components/mercado/ProductImageReview";
+import { toPersistableImage } from "@/lib/mercado/product-image-persist";
+import { cleanProductName } from "@/lib/mercado/product-name-clean";
+import type { ProductImageResult } from "@/lib/mercado/product-image.functions";
 
 const MAX_PHOTOS = 20;
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -86,6 +90,12 @@ type ReviewItem = DetectedItem & {
   id: string;
   include: boolean;
   sourcePhotoIndex: number; // 1-based
+  brand: string | null;
+  barcode: string | null;
+  imageUrl: string | null;
+  imageSource: string | null;
+  imageConfidence: number | null;
+  imageRemoved: boolean;
 };
 
 function fileToBase64(file: File): Promise<string> {
@@ -262,12 +272,21 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
     const out: ReviewItem[] = [];
     currentPhotos.forEach((photo, idx) => {
       photo.items.forEach((it, k) => {
+        // Tenta extrair marca a partir do nome do produto detectado pelo OCR.
+        // O lookup de imagem usa essa marca, mas o nome original é preservado.
+        const { extractedBrand } = cleanProductName(it.productName);
         out.push({
           ...it,
           id: `${photo.id}-${k}`,
           include: true,
           sourcePhotoIndex: idx + 1,
           marketName: marketName || it.marketName,
+          brand: extractedBrand,
+          barcode: null,
+          imageUrl: null,
+          imageSource: null,
+          imageConfidence: null,
+          imageRemoved: false,
         });
       });
     });
@@ -448,24 +467,37 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
     const safeMarketId = marketId && UUID_RE.test(marketId) ? marketId : null;
     const cleanDate = (v: string | null | undefined) =>
       v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
-    const rows = toSave.map((r) => ({
-      user_id: user.id,
-      product_name: r.productName.trim(),
-      normalized_product_name: r.productName.trim().toLowerCase(),
-      category: r.category?.trim() ? r.category.trim() : null,
-      price: r.price,
-      unit: r.unit?.trim() ? r.unit.trim() : null,
-      market_name: marketName,
-      market_id: safeMarketId,
-      source: "flyer",
-      status: "active",
-      seen_at: today,
-      valid_until: cleanDate(r.validUntil),
-      notes: r.notes
-        ? `${r.notes} · ${t("communityPrices.batch.sourcePhoto", { index: r.sourcePhotoIndex })}`
-        : t("communityPrices.batch.sourcePhoto", { index: r.sourcePhotoIndex }),
-      confidence: typeof r.confidence === "number" && Number.isFinite(r.confidence) ? r.confidence : null,
-    }));
+    const rows = toSave.map((r) => {
+      const imageFields = r.imageRemoved || !r.imageUrl
+        ? { image_url: null, image_source: null, image_confidence: null }
+        : {
+            image_url: r.imageUrl,
+            image_source: r.imageSource ?? "open_food_facts",
+            image_confidence: r.imageConfidence,
+          };
+      return {
+        user_id: user.id,
+        product_name: r.productName.trim(),
+        normalized_product_name: r.productName.trim().toLowerCase(),
+        category: r.category?.trim() ? r.category.trim() : null,
+        price: r.price,
+        unit: r.unit?.trim() ? r.unit.trim() : null,
+        market_name: marketName,
+        market_id: safeMarketId,
+        source: "flyer",
+        status: "active",
+        seen_at: today,
+        valid_until: cleanDate(r.validUntil),
+        notes: r.notes
+          ? `${r.notes} · ${t("communityPrices.batch.sourcePhoto", { index: r.sourcePhotoIndex })}`
+          : t("communityPrices.batch.sourcePhoto", { index: r.sourcePhotoIndex }),
+        confidence:
+          typeof r.confidence === "number" && Number.isFinite(r.confidence) ? r.confidence : null,
+        brand: r.brand?.trim() ? r.brand.trim() : null,
+        barcode: r.barcode?.trim() ? r.barcode.trim() : null,
+        ...imageFields,
+      };
+    });
     const { error } = await (supabase.from(TABLE as never) as any).insert(rows);
     setSaving(false);
     if (error) {
@@ -979,6 +1011,45 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                           />
                         </div>
                       </div>
+                      {/* Sugestão de imagem (Open Food Facts) — lazy, com remove/onResult. */}
+                      <ProductImageReview
+                        productName={r.productName}
+                        brand={r.brand}
+                        barcode={r.barcode}
+                        removed={r.imageRemoved}
+                        enabled={r.include && r.productName.trim().length >= 2}
+                        onRemove={() =>
+                          setReviewItems((cur) =>
+                            cur.map((x, i) =>
+                              i === idx
+                                ? {
+                                    ...x,
+                                    imageRemoved: true,
+                                    imageUrl: null,
+                                    imageSource: null,
+                                    imageConfidence: null,
+                                  }
+                                : x,
+                            ),
+                          )
+                        }
+                        onResult={(result: ProductImageResult | null) => {
+                          const persistable = toPersistableImage(result);
+                          setReviewItems((cur) =>
+                            cur.map((x, i) => {
+                              if (i !== idx) return x;
+                              // Respeita remoção explícita do usuário.
+                              if (x.imageRemoved) return x;
+                              return {
+                                ...x,
+                                imageUrl: persistable.image_url,
+                                imageSource: persistable.image_source,
+                                imageConfidence: persistable.image_confidence,
+                              };
+                            }),
+                          );
+                        }}
+                      />
                       {r.notes && <p className="mt-2 text-[11px] text-muted-foreground">{r.notes}</p>}
                     </li>
                   );
