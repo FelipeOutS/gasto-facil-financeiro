@@ -38,6 +38,19 @@ import { apiFetch } from "@/lib/api-fetch";
 import { useMercadosLocais } from "@/lib/mercado/mercados-store";
 
 const TABLE = "community_market_prices" as const;
+const DEFAULT_MARKET = "Supermercados Joanin";
+const DEFAULT_URL = "https://joaninonline.com.br/";
+const URL_PRESETS: Array<{ key: string; url: string }> = [
+  { key: "home", url: "https://joaninonline.com.br/" },
+  { key: "hortifruti", url: "https://joaninonline.com.br/c/hortifruti" },
+  { key: "bebidas", url: "https://joaninonline.com.br/c/bebidas" },
+  { key: "limpeza", url: "https://joaninonline.com.br/c/limpeza" },
+  { key: "padaria", url: "https://joaninonline.com.br/c/padaria" },
+  { key: "carnes", url: "https://joaninonline.com.br/c/carnes" },
+  { key: "laticinios", url: "https://joaninonline.com.br/c/laticinios" },
+  { key: "mercearia", url: "https://joaninonline.com.br/c/mercearia" },
+];
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type ImportedItem = {
   productName: string;
@@ -45,6 +58,7 @@ type ImportedItem = {
   oldPrice: number | null;
   unit: string | null;
   category: string | null;
+  imageUrl: string | null;
   marketName: string;
   sourceName: string;
   sourceUrl: string;
@@ -54,6 +68,15 @@ type ImportedItem = {
   neighborhood: string | null;
   notes: string;
   confidence: number;
+};
+
+type Diagnostics = {
+  origin: "home" | "category" | "placement" | "other";
+  pagePath: string;
+  totalFound: number;
+  paginationAvailable: boolean;
+  paginationBlocked: boolean;
+  warnings: string[];
 };
 
 type ReviewItem = ImportedItem & {
