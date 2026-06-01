@@ -92,6 +92,20 @@ export function useProductImage(
       inFlight = lookupProductImage({ data: normalizedInput })
         .then((res) => {
           cache.set(key, { result: res, fetchedAt: Date.now() });
+          if (import.meta.env.DEV && res.debug) {
+            // eslint-disable-next-line no-console
+            console.debug(
+              `[image-lookup] "${res.debug.productName}" → ${
+                res.imageUrl ? `${res.debug.pickedFrom} (${res.confidence})` : "sem imagem"
+              }`,
+              {
+                cleaned: res.debug.cleanedName,
+                brand: res.debug.extractedBrand,
+                barcode: res.debug.barcode,
+                attempts: res.debug.attempts,
+              },
+            );
+          }
           return res;
         })
         .catch(() => {
@@ -107,6 +121,7 @@ export function useProductImage(
         });
       cache.set(key, { fetchedAt: Date.now(), inFlight });
     }
+
 
     setIsLoading(true);
     inFlight.then((res) => {
