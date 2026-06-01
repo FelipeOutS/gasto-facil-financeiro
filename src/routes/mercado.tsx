@@ -144,6 +144,11 @@ type CommunityPriceRow = {
   market_name: string;
   source: string;
   seen_at: string;
+  image_url: string | null;
+  image_source: string | null;
+  image_confidence: number | null;
+  brand: string | null;
+  barcode: string | null;
 };
 
 const SOURCE_MAP: Record<string, ProductSource> = {
@@ -174,7 +179,7 @@ function MercadoHubPage() {
       setRecentLoading(true);
       try {
         const { data, error } = await (supabase.from("community_market_prices" as never) as any)
-          .select("id,product_name,category,price,unit,market_name,source,seen_at")
+          .select("id,product_name,category,price,unit,market_name,source,seen_at,image_url,image_source,image_confidence,brand,barcode")
           .eq("status", "active")
           .order("seen_at", { ascending: false })
           .limit(24);
@@ -392,6 +397,9 @@ function MercadoHubPage() {
                 name={r.product_name}
                 priceLabel={formatBRL(r.price)}
                 unitLabel={r.unit ?? undefined}
+                imageUrl={r.image_url ?? undefined}
+                brand={r.brand}
+                barcode={r.barcode}
                 marketName={r.market_name}
                 source={SOURCE_MAP[r.source] ?? "community"}
                 seenAtLabel={
