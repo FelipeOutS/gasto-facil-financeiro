@@ -1476,6 +1476,8 @@
       "noMarket": "Market not provided",
       "seenOn": "seen on {{date}}",
       "imageAlt": "Image of {{name}}",
+      "suggestedImage": "suggested image",
+      "brandLogoHint": "brand logo",
       "source": {
         "online": "Online",
         "flyer": "Flyer",
