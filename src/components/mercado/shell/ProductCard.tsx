@@ -141,21 +141,17 @@ export function ProductCard({
       )}
     >
       <div className="relative aspect-square w-full bg-muted">
-        {imageUrl ? (
+        {showImage ? (
           <img
-            src={imageUrl}
+            src={imageUrl!}
             alt={t("shell.product.imageAlt", { name })}
             loading="lazy"
             referrerPolicy="no-referrer"
             className="h-full w-full object-cover"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = "none";
-            }}
+            onError={() => setImgErrored(true)}
           />
         ) : (
-          <div className="grid h-full w-full place-items-center text-muted-foreground">
-            <ImageOff className="h-6 w-6" aria-hidden="true" />
-          </div>
+          <Fallback size="lg" />
         )}
         {sourceLabel && (
           <span className="absolute left-2 top-2 inline-flex items-center rounded-full bg-background/85 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground backdrop-blur">
