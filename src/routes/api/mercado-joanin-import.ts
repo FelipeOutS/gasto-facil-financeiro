@@ -204,8 +204,8 @@ function parseJoaninHtml(
     let imageUrl: string | null = null;
     const imgMatch = card.match(/<img[^>]*class="produto-imagem"[^>]*src="([^"]+)"/);
     if (imgMatch) {
-      const src = imgMatch[1].trim();
-      if (/^https:\/\//i.test(src) && src.length <= 500) imageUrl = src;
+      const v = validateImageUrl(imgMatch[1].trim());
+      if (v.ok) imageUrl = v.url;
     }
 
     items.push({
