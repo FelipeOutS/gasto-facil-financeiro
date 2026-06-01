@@ -1453,5 +1453,54 @@
       "badgeAria": "Mercado {{name}}",
       "logoAlt": "Logo de {{name}}"
     }
+  },
+  "homeV2": {
+    "heroTitle": "Mercado Inteligente",
+    "heroSubtitle": "Monte listas, acompanhe preços, organize seu carrinho e descubra oportunidades antes de comprar.",
+    "heroCta": "Começar lista",
+    "searchPlaceholder": "Buscar produtos, mercados ou listas",
+    "categoriesTitle": "Categorias",
+    "categoriesDesc": "Toque para filtrar a vitrine de preços comunitários.",
+    "categoriesClear": "Limpar filtro",
+    "quickActionsTitle": "Atalhos rápidos",
+    "quickActionsDesc": "Os caminhos mais usados do Mercado Inteligente.",
+    "quickActions": {
+      "listas": "Minha lista",
+      "carrinho": "Carrinho",
+      "orcamento": "Orçamento da compra",
+      "precoComunitario": "Preço Comunitário",
+      "meusMercados": "Meus mercados"
+    },
+    "recentTitle": "Preços recentes",
+    "recentDesc": "Últimos preços informados pela comunidade.",
+    "recentSeeAll": "Ver tudo",
+    "recentEmptyTitle": "Ainda não há preços por aqui",
+    "recentEmptyDesc": "Registre o primeiro preço para começar a montar a vitrine.",
+    "recentEmptyCta": "Adicionar preço",
+    "nextPurchaseTitle": "Sua próxima compra",
+    "nextPurchaseDesc": "Lista ativa, carrinho e orçamento da compra em um só lugar.",
+    "nextPurchase": {
+      "activeListLabel": "Lista ativa",
+      "itemsCount_one": "{{count}} item",
+      "itemsCount_other": "{{count}} itens",
+      "budgetLabel": "Orçamento do mês",
+      "noBudget": "Sem orçamento definido",
+      "noListTitle": "Você ainda não tem uma lista",
+      "noListDesc": "Crie sua primeira lista para começar a planejar a compra.",
+      "createList": "Criar lista",
+      "openList": "Abrir lista",
+      "openCart": "Abrir carrinho",
+      "openBudget": "Abrir orçamento"
+    },
+    "marketsTitle": "Mercados e preços perto de você",
+    "marketsDesc": "Salve seus mercados favoritos e compare preços informados pela comunidade.",
+    "marketsCta": "Ver meus mercados",
+    "marketsSecondaryCta": "Comparar por mercado",
+    "marketsTertiaryCta": "Preço Comunitário",
+    "budgetTitle": "Organize seu orçamento de mercado",
+    "budgetDesc": "Defina um limite para a compra e acompanhe o carrinho antes de passar no caixa. Esse é o orçamento da compra, não o orçamento mensal geral.",
+    "budgetCta": "Abrir orçamento da compra",
+    "toolsTitle": "Ver todas as ferramentas",
+    "toolsDesc": "Todas as áreas do Mercado Inteligente, incluindo recursos premium."
   }
 }
