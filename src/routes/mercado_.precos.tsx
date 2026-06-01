@@ -1,24 +1,40 @@
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   Home,
-  TrendingUp,
-  DollarSign,
-  MapPin,
-  Clock,
-  Users,
-  Shield,
   BarChart3,
   Info,
-  Store,
+  Search,
+  TrendingDown,
+  Clock,
+  Receipt,
+  ChevronRight,
+  PackageSearch,
+  X,
 } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
-import { Money } from "@/components/Money";
 import { cn } from "@/lib/utils";
-import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
+import { formatBRL } from "@/lib/format";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  MercadoBanner,
+  SectionBlock,
+  MercadoShowcase,
+  ProductCard,
+  type ProductSource,
+} from "@/components/mercado/shell";
 import bannerPrecos from "@/assets/mercado/banner-comunitario.jpg";
+import emptyComunitario from "@/assets/mercado/empty-comunitario.png";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/mercado_/precos")({
   head: () => ({
@@ -27,62 +43,128 @@ export const Route = createFileRoute("/mercado_/precos")({
   component: PrecosPage,
 });
 
-function PrecosPage() {
-  const { t } = useTranslation("mercado");
-  const navigate = useNavigate();
+type CommunityPriceRow = {
+  id: string;
+  product_name: string;
+  category: string | null;
+  price: number;
+  unit: string | null;
+  market_name: string;
+  source: string;
+  seen_at: string;
+};
 
-  function handleBack() {
-    void navigate({ to: "/mercado", replace: true });
+const SOURCE_MAP: Record<string, ProductSource> = {
+  flyer: "flyer",
+  store: "store",
+  receipt: "receipt",
+  manual: "manual",
+  online: "online",
+  community: "community",
+};
+
+const ALL = "__all__";
+
+function PrecosPage() {
+  const { t, i18n: i18nInst } = useTranslation("mercado");
+  const navigate = useNavigate();
+  const [rows, setRows] = useState<CommunityPriceRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [market, setMarket] = useState<string>(ALL);
+  const [source, setSource] = useState<string>(ALL);
+  const [sortBy, setSortBy] = useState<"recent" | "lowest" | "highest">("recent");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await (supabase.from("community_market_prices" as never) as any)
+          .select("id,product_name,category,price,unit,market_name,source,seen_at")
+          .eq("status", "active")
+          .order("seen_at", { ascending: false })
+          .limit(200);
+        if (!cancelled) {
+          setRows(error || !data ? [] : (data as CommunityPriceRow[]));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const markets = useMemo(
+    () => Array.from(new Set(rows.map((r) => r.market_name).filter(Boolean))).sort(),
+    [rows],
+  );
+  const sources = useMemo(
+    () => Array.from(new Set(rows.map((r) => r.source).filter(Boolean))).sort(),
+    [rows],
+  );
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let list = rows.filter((r) => {
+      if (q) {
+        const hay = `${r.product_name} ${r.market_name} ${r.category ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (market !== ALL && r.market_name !== market) return false;
+      if (source !== ALL && r.source !== source) return false;
+      return true;
+    });
+    if (sortBy === "lowest") list = [...list].sort((a, b) => a.price - b.price);
+    else if (sortBy === "highest") list = [...list].sort((a, b) => b.price - a.price);
+    else
+      list = [...list].sort(
+        (a, b) => new Date(b.seen_at).getTime() - new Date(a.seen_at).getTime(),
+      );
+    return list;
+  }, [rows, search, market, source, sortBy]);
+
+  const recentFinds = useMemo(
+    () => [...rows].sort((a, b) => a.price - b.price).slice(0, 6),
+    [rows],
+  );
+
+  const hasFilters =
+    !!search.trim() || market !== ALL || source !== ALL || sortBy !== "recent";
+
+  function clearFilters() {
+    setSearch("");
+    setMarket(ALL);
+    setSource(ALL);
+    setSortBy("recent");
   }
 
-  const featureCards = [
-    {
-      key: "averagePrice" as const,
-      icon: TrendingUp,
-    },
-    {
-      key: "minMax" as const,
-      icon: DollarSign,
-    },
-    {
-      key: "markets" as const,
-      icon: MapPin,
-    },
-    {
-      key: "history" as const,
-      icon: Clock,
-    },
-    {
-      key: "community" as const,
-      icon: Users,
-    },
-  ];
-
-  const steps = [1, 2, 3, 4] as const;
-  const privacyPoints = [1, 2, 3, 4, 5] as const;
+  const dateLocale = i18nInst.language?.startsWith("en") ? "en-US" : "pt-BR";
 
   return (
     <MobileShell wide>
       <header className="flex items-start gap-3 pt-1">
         <button
           type="button"
-          onClick={handleBack}
+          onClick={() => void navigate({ to: "/mercado", replace: true })}
           aria-label={t("precos.back")}
           className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground active:scale-95"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-5 w-5" aria-hidden="true" />
         </button>
         <Link
           to="/app"
           aria-label={t("precos.home")}
           className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground active:scale-95"
         >
-          <Home className="h-5 w-5" />
+          <Home className="h-5 w-5" aria-hidden="true" />
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
-              <BarChart3 className="h-4 w-4" />
+              <BarChart3 className="h-4 w-4" aria-hidden="true" />
             </span>
             <h1 className="truncate text-2xl font-bold tracking-tight md:text-3xl">
               {t("precos.title")}
@@ -103,217 +185,281 @@ function PrecosPage() {
         />
       </div>
 
-      {/* Intro */}
-      <section className="mt-5 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
+      {/* Safety disclaimer */}
+      <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
         <div className="flex items-start gap-3">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-card-elevated text-brand ring-1 ring-border/60">
-            <Info className="h-4 w-4" />
+            <Info className="h-4 w-4" aria-hidden="true" />
           </span>
-          <div className="min-w-0">
-            <p className="text-sm leading-snug text-foreground md:text-[15px]">
-              {t("precos.intro.text")}
-            </p>
-            <span
-              className={cn(
-                "mt-2 inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest",
-                "bg-warning/15 text-warning ring-1 ring-warning/30",
-              )}
-            >
-              {t("precos.badge.preparing")}
-            </span>
-          </div>
+          <p className="text-sm leading-snug text-foreground md:text-[15px]">
+            {t("priceCompareV2.disclaimer")}
+          </p>
         </div>
       </section>
 
-      {/* Feature cards */}
-      <section className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {featureCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <article
-              key={card.key}
-              className="flex min-h-[120px] flex-col gap-3 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5"
+      {/* Filters */}
+      <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-foreground md:text-base">
+            {t("priceCompareV2.filters.title")}
+          </h2>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="inline-flex h-9 items-center gap-1 rounded-full border border-border/60 px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              <div className="flex items-start gap-3">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">
-                  <Icon className="h-5 w-5" />
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+              {t("priceCompareV2.filters.clear")}
+            </button>
+          )}
+        </div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="relative">
+            <span className="sr-only">{t("priceCompareV2.filters.search")}</span>
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t("priceCompareV2.filters.search")}
+              className="h-11 w-full rounded-2xl border border-border/60 bg-card-elevated pl-9 pr-3 text-sm text-foreground outline-none transition-colors focus:border-brand"
+            />
+          </label>
+          <Select value={market} onValueChange={setMarket}>
+            <SelectTrigger className="h-11 rounded-2xl" aria-label={t("priceCompareV2.filters.market")}>
+              <SelectValue placeholder={t("priceCompareV2.filters.market")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{t("priceCompareV2.filters.market")}</SelectItem>
+              {markets.map((m) => (
+                <SelectItem key={m} value={m}>
+                  <span className="block max-w-[14rem] truncate">{m}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={source} onValueChange={setSource}>
+            <SelectTrigger className="h-11 rounded-2xl" aria-label={t("priceCompareV2.filters.source")}>
+              <SelectValue placeholder={t("priceCompareV2.filters.source")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>{t("priceCompareV2.filters.source")}</SelectItem>
+              {sources.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {t(`shell.product.source.${SOURCE_MAP[s] ?? "community"}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+            <SelectTrigger className="h-11 rounded-2xl" aria-label={t("priceCompareV2.filters.sort")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="recent">
+                <span className="inline-flex items-center gap-2">
+                  <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                  {t("priceCompareV2.sections.recentFinds")}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <h2 className="truncate text-sm font-semibold md:text-base">
-                    {t(`precos.featureCards.${card.key}.title`)}
-                  </h2>
-                  <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
-                    {t(`precos.featureCards.${card.key}.desc`)}
-                  </p>
-                </div>
-              </div>
-            </article>
-          );
-        })}
-      </section>
-
-      {/* Mock example */}
-      <section className="mt-5 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-base font-semibold md:text-lg">{t("precos.mock.title")}</h2>
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest",
-              "bg-warning/15 text-warning ring-1 ring-warning/30",
-            )}
-          >
-            {t("precos.mock.status")}
-          </span>
-        </div>
-
-        <p className="mt-1 text-[12px] text-muted-foreground">{t("precos.mock.disclaimer")}</p>
-
-        <div className="mt-4 rounded-2xl border border-border/60 bg-card-elevated p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold md:text-base">
-                {t("precos.mock.productName")}
-              </p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
-                {t("precos.mock.lastUpdate")}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <MockTile label={t("precos.mock.averageLabel")} value={<Money value={28.9} />} />
-            <MockTile
-              label={t("precos.mock.minLabel")}
-              value={<Money value={24.99} />}
-              tone="success"
-            />
-            <MockTile
-              label={t("precos.mock.maxLabel")}
-              value={<Money value={34.9} />}
-              tone="destructive"
-            />
-          </div>
+              </SelectItem>
+              <SelectItem value="lowest">
+                <span className="inline-flex items-center gap-2">
+                  <TrendingDown className="h-3.5 w-3.5" aria-hidden="true" />
+                  {t("precosHistorico.card.min")}
+                </span>
+              </SelectItem>
+              <SelectItem value="highest">{t("precosHistorico.card.max")}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="mt-5 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
-        <h2 className="text-base font-semibold md:text-lg">{t("precos.howItWorks.title")}</h2>
-        <ol className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {steps.map((n) => (
-            <li
-              key={n}
-              className="flex items-start gap-3 rounded-2xl border border-border/60 bg-card-elevated p-3"
-            >
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-soft text-sm font-bold text-brand">
-                {n}
-              </span>
-              <p className="text-[13px] leading-snug text-foreground">
-                {t(`precos.howItWorks.step${n}`)}
-              </p>
-            </li>
-          ))}
-        </ol>
-      </section>
+      {/* Recent finds */}
+      {!loading && recentFinds.length > 0 && (
+        <SectionBlock
+          title={t("priceCompareV2.sections.recentFinds")}
+          description={t("priceCompareV2.card.checkBeforeBuying")}
+        >
+          <MercadoShowcase itemMinWidth="180px">
+            {recentFinds.map((r) => (
+              <ProductCard
+                key={r.id}
+                name={r.product_name}
+                priceLabel={formatBRL(r.price)}
+                unitLabel={r.unit ?? undefined}
+                marketName={r.market_name}
+                source={SOURCE_MAP[r.source] ?? "community"}
+                seenAtLabel={
+                  r.seen_at ? new Date(r.seen_at).toLocaleDateString(dateLocale) : undefined
+                }
+              />
+            ))}
+          </MercadoShowcase>
+        </SectionBlock>
+      )}
 
-      {/* Privacy */}
-      <section className="mt-5 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
-        <div className="flex items-start gap-3">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
-            <Shield className="h-4 w-4" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-base font-semibold md:text-lg">{t("precos.privacy.title")}</h2>
+      {/* Results */}
+      <SectionBlock
+        title={t("priceCompareV2.sections.results")}
+        description={
+          loading
+            ? undefined
+            : t("precosHistorico.card.recordsCount", { count: filtered.length })
+        }
+      >
+        {loading ? (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="h-[112px] animate-pulse rounded-2xl border border-border/60 bg-card-elevated/60"
+              />
+            ))}
           </div>
-        </div>
-        <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          {privacyPoints.map((n) => (
-            <li
-              key={n}
-              className="flex items-start gap-2 rounded-2xl border border-border/60 bg-card-elevated p-3"
-            >
-              <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-brand" />
-              <p className="text-[13px] leading-snug text-foreground">
-                {t(`precos.privacy.point${n}`)}
-              </p>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-4 rounded-2xl border border-border/60 bg-card-elevated p-3 text-[13px] leading-snug text-muted-foreground">
-          {t("precos.privacy.futureOptIn")}
-        </p>
-      </section>
+        ) : filtered.length === 0 ? (
+          hasFilters ? (
+            <FilteredEmpty onClear={clearFilters} />
+          ) : (
+            <GlobalEmpty />
+          )
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((r) => (
+              <ProductCard
+                key={r.id}
+                layout="list"
+                name={r.product_name}
+                priceLabel={formatBRL(r.price)}
+                unitLabel={r.unit ?? undefined}
+                marketName={r.market_name}
+                source={SOURCE_MAP[r.source] ?? "community"}
+                seenAtLabel={
+                  r.seen_at ? new Date(r.seen_at).toLocaleDateString(dateLocale) : undefined
+                }
+              />
+            ))}
+          </div>
+        )}
+      </SectionBlock>
 
-      {/* CTA: histórico local */}
-      <section className="mt-5">
-        <Link
+      {/* Bottom CTAs */}
+      <section className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <CTACard
+          to="/mercado/preco-comunitario"
+          icon={<Receipt className="h-5 w-5" aria-hidden="true" />}
+          title={t("precos.ctaLocal.title")}
+          desc={t("precos.ctaLocal.desc")}
+        />
+        <CTACard
           to="/mercado/precos-historico"
-          preload="intent"
-          className="flex items-center justify-between gap-3 rounded-3xl border border-border/60 bg-card p-4 shadow-card transition-colors hover:bg-card-elevated active:scale-[0.99] md:p-5"
-        >
-          <div className="flex items-start gap-3 min-w-0">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">
-              <Clock className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold md:text-base">
-                {t("precos.ctaLocal.title")}
-              </p>
-              <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
-                {t("precos.ctaLocal.desc")}
-              </p>
-            </div>
-          </div>
-        </Link>
-      </section>
-
-      {/* CTA: comparativo por mercado */}
-      <section className="mt-3">
-        <Link
-          to="/mercado/mercados"
-          preload="intent"
-          className="flex items-center justify-between gap-3 rounded-3xl border border-border/60 bg-card p-4 shadow-card transition-colors hover:bg-card-elevated active:scale-[0.99] md:p-5"
-        >
-          <div className="flex items-start gap-3 min-w-0">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">
-              <Store className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold md:text-base">
-                {t("mercados.ctaFromPrecos.title")}
-              </p>
-              <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
-                {t("mercados.ctaFromPrecos.desc")}
-              </p>
-            </div>
-          </div>
-        </Link>
+          icon={<BarChart3 className="h-5 w-5" aria-hidden="true" />}
+          title={t("priceHistoryV2.banner.title")}
+          desc={t("priceHistoryV2.banner.subtitle")}
+        />
       </section>
     </MobileShell>
   );
 }
 
-function MockTile({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: React.ReactNode;
-  tone?: "success" | "destructive";
-}) {
-  const toneClass =
-    tone === "success"
-      ? "text-success"
-      : tone === "destructive"
-        ? "text-destructive"
-        : "text-foreground";
+function GlobalEmpty() {
+  const { t } = useTranslation("mercado");
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-3">
-      <p className="truncate text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-        {label}
-      </p>
-      <p className={cn("mt-1 text-base font-bold tabular-nums", toneClass)}>{value}</p>
+    <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border/60 bg-card p-6 text-center shadow-card md:p-8">
+      <img
+        src={emptyComunitario}
+        alt=""
+        className="h-24 w-24 opacity-90"
+        loading="lazy"
+      />
+      <div>
+        <h3 className="text-base font-semibold text-foreground md:text-lg">
+          {t("priceCompareV2.empty.title")}
+        </h3>
+        <p className="mx-auto mt-1 max-w-md text-sm leading-snug text-muted-foreground">
+          {t("priceCompareV2.empty.description")}
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <Link
+          to="/mercado/preco-comunitario"
+          className="inline-flex h-11 items-center gap-1.5 rounded-full bg-brand-grad px-4 text-sm font-semibold text-primary-foreground shadow-elevated transition active:scale-[0.97]"
+        >
+          {t("priceCompareV2.empty.scanFlyer")}
+        </Link>
+        <Link
+          to="/mercado/preco-comunitario"
+          className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border/60 bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-card-elevated"
+        >
+          {t("priceCompareV2.empty.manualPrice")}
+        </Link>
+      </div>
     </div>
   );
 }
+
+function FilteredEmpty({ onClear }: { onClear: () => void }) {
+  const { t } = useTranslation("mercado");
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border/60 bg-card p-6 text-center shadow-card md:p-8">
+      <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">
+        <PackageSearch className="h-6 w-6" aria-hidden="true" />
+      </span>
+      <div>
+        <h3 className="text-base font-semibold text-foreground md:text-lg">
+          {t("precosHistorico.filters.emptyMarketTitle")}
+        </h3>
+        <p className="mx-auto mt-1 max-w-md text-sm leading-snug text-muted-foreground">
+          {t("precosHistorico.filters.emptyMarketDescription")}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onClear}
+        className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border/60 bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-card-elevated"
+      >
+        <X className="h-3.5 w-3.5" aria-hidden="true" />
+        {t("priceCompareV2.filters.clear")}
+      </button>
+    </div>
+  );
+}
+
+function CTACard({
+  to,
+  icon,
+  title,
+  desc,
+}: {
+  to: string;
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <Link
+      to={to}
+      preload="intent"
+      className={cn(
+        "flex items-center justify-between gap-3 rounded-3xl border border-border/60 bg-card p-4 shadow-card transition-colors hover:bg-card-elevated active:scale-[0.99] md:p-5",
+      )}
+    >
+      <div className="flex items-start gap-3 min-w-0">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">
+          {icon}
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold md:text-base">{title}</p>
+          <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
+            {desc}
+          </p>
+        </div>
+      </div>
+      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+    </Link>
+  );
+}
+
