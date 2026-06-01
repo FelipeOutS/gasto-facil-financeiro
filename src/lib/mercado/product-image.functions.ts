@@ -145,7 +145,7 @@ function safeUrl(raw: unknown): string | null {
   return v.ok ? v.url : null;
 }
 
-async function fetchJson<T>(url: string): Promise<T | null> {
+async function fetchJson<T>(url: string): Promise<{ data: T | null; reason?: string }> {
   try {
     const res = await fetch(url, {
       headers: {
@@ -154,10 +154,16 @@ async function fetchJson<T>(url: string): Promise<T | null> {
       },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
-    if (!res.ok) return null;
-    return (await res.json()) as T;
+    if (!res.ok) return { data: null, reason: `http_${res.status}` };
+    const txt = await res.text();
+    if (!txt || txt[0] !== "{") return { data: null, reason: "rate_limited_or_html" };
+    try {
+      return { data: JSON.parse(txt) as T };
+    } catch {
+      return { data: null, reason: "invalid_json" };
+    }
   } catch {
-    return null;
+    return { data: null, reason: "fetch_error" };
   }
 }
 
