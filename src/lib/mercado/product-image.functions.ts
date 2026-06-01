@@ -523,14 +523,21 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
     });
   }
 
-  // Sequência de tentativas: marca forte primeiro, depois nome original/limpo.
+  // Sequência de tentativas: queries com termo de categoria primeiro
+  // ("cerveja heineken", "refrigerante coca cola") porque o OFF responde
+  // melhor a elas e raramente rate-limita. Depois nome+marca, depois fallback.
   const attempts: Array<{ query: string; brand: string | null }> = [];
+  if (effectiveBrand) {
+    // Categoria + marca → mais robusto no OFF (ex.: "cerveja heineken")
+    for (const term of categoryTerms) attempts.push({ query: `${term} ${effectiveBrand}`, brand: effectiveBrand });
+  }
   if (effectiveBrand && normalizedName) attempts.push({ query: `${effectiveBrand} ${normalizedName}`, brand: effectiveBrand });
   if (effectiveBrand) {
     for (const alias of aliases) attempts.push({ query: `${effectiveBrand} ${alias}`, brand: effectiveBrand });
     for (const term of categoryTerms) attempts.push({ query: `${effectiveBrand} ${term}`, brand: effectiveBrand });
-    if (isStrongMarketBrand(effectiveBrand)) attempts.push({ query: effectiveBrand, brand: effectiveBrand });
     attempts.push({ query: `${input.productName} ${effectiveBrand}`, brand: effectiveBrand });
+    // Marca isolada por último — OFF costuma rate-limitar queries brand-only.
+    if (isStrongMarketBrand(effectiveBrand)) attempts.push({ query: effectiveBrand, brand: effectiveBrand });
   }
   if (normalizedName) attempts.push({ query: normalizedName, brand: null });
   if (cleanedName && cleanedName !== normalizedName) attempts.push({ query: cleanedName, brand: null });
