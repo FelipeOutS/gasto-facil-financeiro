@@ -268,11 +268,7 @@ function lookupBrandLogo(
 
 async function lookupCore(input: ProductImageInput): Promise<ProductImageResult> {
   const now = new Date().toISOString();
-
-  if (input.barcode) {
-    const hit = await lookupByBarcode(input.barcode);
-    if (hit) return { ...hit, checkedAt: now };
-  }
+  const isDev = process.env.NODE_ENV !== "production";
 
   const { cleanedName, extractedBrand } = cleanProductName(
     input.productName,
@@ -280,6 +276,32 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
   );
   const effectiveBrand = extractedBrand || input.brand || null;
   const rawName = normalizeForKey(input.productName);
+
+  const debug: ProductImageDebug | undefined = isDev
+    ? {
+        productName: input.productName,
+        cleanedName,
+        extractedBrand: effectiveBrand,
+        barcode: input.barcode ?? null,
+        attempts: [],
+        pickedFrom: "none",
+      }
+    : undefined;
+
+  if (input.barcode) {
+    const hit = await lookupByBarcode(input.barcode);
+    if (hit) {
+      if (debug) debug.pickedFrom = "barcode";
+      return { ...hit, checkedAt: now, debug };
+    }
+    debug?.attempts.push({
+      query: input.barcode,
+      brand: null,
+      candidates: 0,
+      bestScore: null,
+      rejected: "barcode_no_match",
+    });
+  }
 
   // Sequência de tentativas, da mais específica para a mais ampla.
   const attempts: Array<{ name: string; brand: string | null }> = [];
@@ -291,20 +313,27 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
   if (rawName && rawName !== cleanedName)
     attempts.push({ name: rawName, brand: null });
 
-  // Dedup
   const seen = new Set<string>();
   for (const a of attempts) {
     const key = `${a.name}|${a.brand ?? ""}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    const hit = await lookupByName(a.name, a.brand);
-    if (hit) return { ...hit, checkedAt: now };
+    const hit = await lookupByName(a.name, a.brand, (d) => {
+      debug?.attempts.push({ query: a.name, brand: a.brand, ...d });
+    });
+    if (hit) {
+      if (debug) debug.pickedFrom = "search";
+      return { ...hit, checkedAt: now, debug };
+    }
   }
 
   const byBrand = lookupBrandLogo(effectiveBrand);
-  if (byBrand) return { ...byBrand, checkedAt: now };
+  if (byBrand) {
+    if (debug) debug.pickedFrom = "brand_logo";
+    return { ...byBrand, checkedAt: now, debug };
+  }
 
-  return { ...EMPTY_RESULT, checkedAt: now };
+  return { ...EMPTY_RESULT, checkedAt: now, debug };
 }
 
 export const lookupProductImage = createServerFn({ method: "POST" })
