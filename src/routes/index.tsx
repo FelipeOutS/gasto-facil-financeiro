@@ -91,6 +91,11 @@ import {
   isLoginBioInProgress,
   isLoginBioUnlockRequired,
 } from "@/lib/biometric-login";
+import {
+  AppModuleBanner,
+  AppEmptyStateVisual,
+  AppActionCard,
+} from "@/components/app-v2";
 
 export const Route = createFileRoute("/")({
   head: () => ({
