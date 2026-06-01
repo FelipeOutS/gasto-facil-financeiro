@@ -18,6 +18,18 @@
       "gasto": "Add expense",
       "guardado": "Save money",
       "meta": "Create goal"
+    },
+    "banner": {
+      "title": "Welcome to Gasto Inteligente",
+      "subtitle": "Add your first entry to unlock summaries, charts and alerts."
+    },
+    "descriptions": {
+      "salario": "Log what came in this month.",
+      "salario_mei": "Log this month’s revenue.",
+      "salario_empresa": "Log this month’s revenue.",
+      "gasto": "Add an expense in seconds.",
+      "guardado": "Set aside money for later.",
+      "meta": "Define a financial goal."
     }
   },
   "firstSteps": {
@@ -710,5 +722,10 @@
   },
   "economicImpact": {
     "eyebrow": "Scenario impact on your month"
+  },
+  "heroBannerV2": {
+    "title": "Your money, clearer every day",
+    "subtitle": "Track expenses, income, bills, cards and goals in one place.",
+    "cta": "Add transaction"
   }
 }

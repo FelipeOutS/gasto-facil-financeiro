@@ -18,6 +18,18 @@
       "gasto": "Adicionar gasto",
       "guardado": "Guardar dinheiro",
       "meta": "Criar meta"
+    },
+    "banner": {
+      "title": "Bem-vindo ao Gasto Inteligente",
+      "subtitle": "Comece adicionando seu primeiro lançamento para destravar resumos, gráficos e alertas."
+    },
+    "descriptions": {
+      "salario": "Registre o que entrou no mês.",
+      "salario_mei": "Registre o faturamento do mês.",
+      "salario_empresa": "Registre o faturamento do mês.",
+      "gasto": "Adicione uma despesa em segundos.",
+      "guardado": "Reserve um valor para usar depois.",
+      "meta": "Defina um objetivo financeiro."
     }
   },
   "firstSteps": {
@@ -710,5 +722,10 @@
   },
   "economicImpact": {
     "eyebrow": "Impacto do cenário no seu mês"
+  },
+  "heroBannerV2": {
+    "title": "Seu dinheiro mais claro, todos os dias",
+    "subtitle": "Acompanhe gastos, receitas, contas, cartões e metas em um só lugar.",
+    "cta": "Adicionar lançamento"
   }
 }
