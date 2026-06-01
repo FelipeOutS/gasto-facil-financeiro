@@ -155,6 +155,7 @@ export const KNOWN_BRANDS: string[] = [
   "stella artois",
   "budweiser",
   "amstel",
+  "corona",
   "eisenbahn",
   "itaipava",
   "crystal",
