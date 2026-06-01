@@ -1364,7 +1364,7 @@
       "warnings": {
         "placementClientRenderedOnly": "Esta categoria usa carregamento dinâmico protegido. Importamos apenas os produtos públicos visíveis.",
         "paginationPrivateBlocked": "A página tem um botão \"Carregar mais\" privado. Importamos apenas os produtos públicos visíveis nesta primeira leitura.",
-        "pathUnsupported": "Este caminho não é suportado. Use a página inicial ou uma categoria /c/..."
+        "pathUnsupported": "Este caminho não é suportado. Use a página inicial, /p/ofertas ou /p/categoria/..."
       },
       "foundOnPage": "Encontramos {{count}} produtos públicos nesta página.",
       "partialImportBanner": "Importação parcial: alguns produtos só aparecem após interação no site oficial.",
