@@ -247,7 +247,7 @@ export function OnlineImportWizard({
         .select("id,product_name,price,seen_at,status")
         .eq("user_id", user.id)
         .eq("market_name", toSave[0].marketName)
-        .eq("source", "store")
+        .eq("source", "online")
         .gte("seen_at", today)
         .limit(500);
 
