@@ -38,6 +38,7 @@ export function MercadoBanner({
   title,
   subtitle,
   imageSrc,
+  imageSrcWebp,
   imageAlt,
   tone = "brand",
   cta,
@@ -47,6 +48,7 @@ export function MercadoBanner({
 }: MercadoBannerProps) {
   const { t } = useTranslation("mercado");
   const color = TONE_VAR[tone];
+  const resolvedAlt = imageAlt ?? t("shell.banner.imageAlt");
 
   return (
     <div
@@ -60,17 +62,20 @@ export function MercadoBanner({
       }}
     >
       {imageSrc && (
-        <img
-          src={imageSrc}
-          alt={imageAlt ?? t("shell.banner.imageAlt")}
-          loading={priority ? "eager" : "lazy"}
-          decoding="async"
-          {...(priority ? { fetchPriority: "high" as const } : { fetchPriority: "low" as const })}
-          className="pointer-events-none absolute right-0 top-0 h-full w-1/2 object-cover object-right opacity-90 sm:w-2/5"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).style.display = "none";
-          }}
-        />
+        <picture>
+          {imageSrcWebp && <source srcSet={imageSrcWebp} type="image/webp" />}
+          <img
+            src={imageSrc}
+            alt={resolvedAlt}
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
+            {...(priority ? { fetchPriority: "high" as const } : { fetchPriority: "low" as const })}
+            className="pointer-events-none absolute right-0 top-0 h-full w-1/2 object-cover object-right opacity-90 sm:w-2/5"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+        </picture>
       )}
       <div className="relative z-10 flex h-full max-w-[62%] flex-col justify-center gap-2 p-4 sm:max-w-[60%] sm:p-5 md:p-6">
         <h3 className="text-base font-semibold leading-tight text-foreground md:text-lg">
