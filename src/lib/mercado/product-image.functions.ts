@@ -268,7 +268,7 @@ function buildNameAliases(name: string, brand: string | null, category?: Product
 
 async function lookupByBarcode(
   barcode: string,
-): Promise<Pick<ProductImageResult, "imageUrl" | "source" | "confidence" | "origin"> | null> {
+): Promise<ProductImageHit | null> {
   const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(
     barcode,
   )}.json?fields=image_front_url,image_url,product_name,brands`;
@@ -280,6 +280,7 @@ async function lookupByBarcode(
     imageUrl: img,
     source: "off_barcode",
     confidence: "high",
+    persistable: true,
     origin: "openfoodfacts",
   };
 }
@@ -402,7 +403,7 @@ async function lookupByName(
 
 function lookupBrandLogo(
   brand: string | null,
-): Pick<ProductImageResult, "imageUrl" | "source" | "confidence" | "origin"> | null {
+): ProductImageHit | null {
   if (!brand) return null;
   const slug = normalizeForKey(brand).replace(/\s+/g, "-");
   if (!slug) return null;
@@ -413,6 +414,7 @@ function lookupBrandLogo(
         imageUrl: `/logos/empresas/${c}.svg`,
         source: "brand_logo",
         confidence: "low",
+        persistable: false,
         origin: "local",
       };
     }
