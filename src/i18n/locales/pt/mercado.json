@@ -458,7 +458,12 @@
       "unmark": "Desmarcar",
       "editPrice": "Editar preço unitário",
       "pricePlaceholder": "Preço unitário",
-      "save": "Salvar"
+      "save": "Salvar",
+      "remove": "Remover item do carrinho",
+      "removed": "Item removido do carrinho",
+      "removeConfirmTitle": "Remover este item?",
+      "removeConfirmDescription": "Tem certeza que deseja remover \"{{name}}\" do carrinho?",
+      "cancel": "Cancelar"
     },
     "quickAdd": {
       "title": "Adicionar item rápido",
