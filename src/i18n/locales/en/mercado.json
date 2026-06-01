@@ -1398,6 +1398,49 @@
       "foundOnPage": "Found {{count}} public products on this page.",
       "partialImportBanner": "Partial import: some products only appear after interaction on the official site.",
       "imageAlt": "Public product image"
+    },
+    "v2": {
+      "bannerTitle": "Compare prices, scan flyers and track deals near you",
+      "bannerSubtitle": "Prices reported by users or public sources. Use as reference and check at the store before buying.",
+      "actions": {
+        "scanCta": "Scan flyer",
+        "onlineCta": "Import online",
+        "manualCta": "Add manually"
+      },
+      "categoryChips": {
+        "title": "Categories",
+        "todos": "All",
+        "hortifruti": "Produce",
+        "acougue": "Butcher",
+        "padaria": "Bakery",
+        "bebidas": "Drinks",
+        "laticinios": "Dairy",
+        "limpeza": "Cleaning",
+        "mercearia": "Pantry",
+        "utilidades": "Household",
+        "outros": "Other"
+      },
+      "filters": {
+        "open": "Filters",
+        "close": "Close filters",
+        "applied_one": "{{count}} filter active",
+        "applied_other": "{{count}} filters active"
+      },
+      "bestFinds": {
+        "title": "Best recent finds",
+        "description": "Prices reported by users or public sources. Compare before buying."
+      },
+      "found": {
+        "title": "Products found",
+        "count_one": "{{count}} product",
+        "count_other": "{{count}} products"
+      },
+      "empty": {
+        "title": "No prices here yet",
+        "description": "Scan a flyer, import public prices or manually add what you saw at the store.",
+        "scanCta": "Scan flyer",
+        "manualCta": "Add manually"
+      }
     }
   },
   "shell": {

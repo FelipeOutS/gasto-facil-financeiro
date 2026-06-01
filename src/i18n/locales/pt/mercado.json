@@ -1398,6 +1398,49 @@
       "imageMissing": "Sem imagem disponível",
       "productImage": "Imagem do produto",
       "categoryPlaceholder": "Sem imagem"
+    },
+    "v2": {
+      "bannerTitle": "Compare preços, leia panfletos e acompanhe ofertas da sua região",
+      "bannerSubtitle": "Preços informados por usuários ou fontes públicas. Use como referência e confira no mercado antes de comprar.",
+      "actions": {
+        "scanCta": "Ler panfleto",
+        "onlineCta": "Importar online",
+        "manualCta": "Informar manualmente"
+      },
+      "categoryChips": {
+        "title": "Categorias",
+        "todos": "Todos",
+        "hortifruti": "Hortifruti",
+        "acougue": "Açougue",
+        "padaria": "Padaria",
+        "bebidas": "Bebidas",
+        "laticinios": "Laticínios",
+        "limpeza": "Limpeza",
+        "mercearia": "Mercearia",
+        "utilidades": "Utilidades",
+        "outros": "Outros"
+      },
+      "filters": {
+        "open": "Filtros",
+        "close": "Fechar filtros",
+        "applied_one": "{{count}} filtro ativo",
+        "applied_other": "{{count}} filtros ativos"
+      },
+      "bestFinds": {
+        "title": "Melhores achados recentes",
+        "description": "Preços informados por usuários ou fontes públicas. Compare antes de comprar."
+      },
+      "found": {
+        "title": "Produtos encontrados",
+        "count_one": "{{count}} produto",
+        "count_other": "{{count}} produtos"
+      },
+      "empty": {
+        "title": "Nenhum preço por aqui ainda",
+        "description": "Leia um panfleto, importe preços públicos ou cadastre manualmente o que você viu no mercado.",
+        "scanCta": "Ler panfleto por foto",
+        "manualCta": "Informar manualmente"
+      }
     }
   },
   "shell": {

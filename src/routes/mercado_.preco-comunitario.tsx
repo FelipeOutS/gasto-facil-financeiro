@@ -9,12 +9,13 @@ import {
   Camera,
   Cloud,
   Plus,
-  Info,
   Trash2,
   Save,
   Loader2,
   Filter,
   Pencil,
+  ChevronDown,
+  Sparkles,
 } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
@@ -22,13 +23,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EmptyState } from "@/components/ui/empty-state";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatBRL } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { BatchScanWizard } from "@/components/mercado/BatchScanWizard";
 import { OnlineImportWizard } from "@/components/mercado/OnlineImportWizard";
+import {
+  MercadoBanner,
+  ProductCard,
+  SectionBlock,
+  MERCADO_CATEGORIES,
+  type MercadoCategoryKey,
+  type ProductSource,
+} from "@/components/mercado/shell";
+import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
+import emptyComunitario from "@/assets/mercado/empty-comunitario.png";
+
 
 
 export const Route = createFileRoute("/mercado_/preco-comunitario")({
@@ -77,6 +89,25 @@ type ManualForm = {
 const TABLE = "community_market_prices" as const;
 const SOURCE_KEYS: SourceKey[] = ["flyer", "store", "receipt", "manual"];
 
+const CATEGORY_MATCHERS: Record<MercadoCategoryKey, string[]> = {
+  hortifruti: ["hortifruti", "fruta", "verdura", "legume", "horti"],
+  acougue: ["açougue", "acougue", "carne", "frango", "peixe", "bovino", "suíno", "suino"],
+  padaria: ["padaria", "pão", "pao", "bolo", "confeitaria"],
+  bebidas: ["bebida", "refrigerante", "suco", "cerveja", "vinho", "água", "agua"],
+  laticinios: ["laticínio", "laticinio", "leite", "queijo", "iogurte", "manteiga"],
+  limpeza: ["limpeza", "sabão", "sabao", "detergente", "amaciante", "desinfetante"],
+  mercearia: ["mercearia", "arroz", "feijão", "feijao", "massa", "macarrão", "macarrao", "óleo", "oleo", "açúcar", "acucar"],
+  utilidades: ["utilidade", "utensílio", "utensilio", "papel", "descart", "higiene"],
+};
+
+const SOURCE_MAP: Record<string, ProductSource> = {
+  flyer: "flyer",
+  store: "store",
+  receipt: "receipt",
+  manual: "manual",
+};
+
+
 const emptyManualForm = (): ManualForm => ({
   productName: "",
   price: "",
@@ -107,10 +138,14 @@ function PrecoComunitarioPage() {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterSource, setFilterSource] = useState<SourceKey | "">("");
   const [sortBy, setSortBy] = useState<SortKey>("recent");
+  const [categoryChip, setCategoryChip] = useState<MercadoCategoryKey | "todos" | "outros">("todos");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Batch scan wizard
   const [batchOpen, setBatchOpen] = useState(false);
   const [onlineImportOpen, setOnlineImportOpen] = useState(false);
+
+
 
 
   // Manual state
@@ -143,11 +178,29 @@ function PrecoComunitarioPage() {
     const p = filterProduct.trim().toLowerCase();
     const m = filterMarket.trim().toLowerCase();
     const c = filterCategory.trim().toLowerCase();
+    const chipMatchers: string[] | null =
+      categoryChip !== "todos" && categoryChip !== "outros"
+        ? CATEGORY_MATCHERS[categoryChip]
+        : null;
+    const chipIsOutros = categoryChip === "outros";
     const arr = items.filter((it) => {
       if (p && !it.product_name.toLowerCase().includes(p)) return false;
       if (m && !it.market_name.toLowerCase().includes(m)) return false;
       if (c && !(it.category ?? "").toLowerCase().includes(c)) return false;
       if (filterSource && it.source !== filterSource) return false;
+      if (chipIsOutros || chipMatchers) {
+        const cat = (it.category ?? "").toLowerCase();
+        const name = it.product_name.toLowerCase();
+        if (chipIsOutros) {
+          const inAny = MERCADO_CATEGORIES.some((k) =>
+            CATEGORY_MATCHERS[k].some((mm) => cat.includes(mm) || name.includes(mm)),
+          );
+          if (inAny) return false;
+        } else if (chipMatchers) {
+          const hit = chipMatchers.some((mm) => cat.includes(mm) || name.includes(mm));
+          if (!hit) return false;
+        }
+      }
       return true;
     });
     const sorted = [...arr];
@@ -163,10 +216,20 @@ function PrecoComunitarioPage() {
       sorted.sort((a, b) => new Date(b.seen_at).getTime() - new Date(a.seen_at).getTime());
     }
     return sorted;
-  }, [items, filterProduct, filterMarket, filterCategory, filterSource, sortBy]);
+  }, [items, filterProduct, filterMarket, filterCategory, filterSource, sortBy, categoryChip]);
 
-  const hasFilters =
-    !!filterProduct || !!filterMarket || !!filterCategory || !!filterSource || sortBy !== "recent";
+  const activeFiltersCount =
+    (filterProduct ? 1 : 0) +
+    (filterMarket ? 1 : 0) +
+    (filterCategory ? 1 : 0) +
+    (filterSource ? 1 : 0) +
+    (sortBy !== "recent" ? 1 : 0);
+  const hasFilters = activeFiltersCount > 0 || categoryChip !== "todos";
+
+  const bestFinds = useMemo(() => {
+    if (items.length === 0) return [];
+    return [...items].sort((a, b) => a.price - b.price).slice(0, 6);
+  }, [items]);
 
   function clearFilters() {
     setFilterProduct("");
@@ -174,7 +237,10 @@ function PrecoComunitarioPage() {
     setFilterCategory("");
     setFilterSource("");
     setSortBy("recent");
+    setCategoryChip("todos");
   }
+
+
 
 
 
@@ -290,178 +356,354 @@ function PrecoComunitarioPage() {
         </div>
       </header>
 
-      <div className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-300/50 bg-amber-50/60 p-3 text-[13px] text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
-        <Info className="mt-0.5 h-4 w-4 shrink-0" />
-        <p>{t("communityPrices.disclaimer")}</p>
+      {/* Banner principal */}
+      <div className="mt-5">
+        <MercadoBanner
+          tone="community"
+          imageSrc={bannerComunitario}
+          title={t("communityPrices.v2.bannerTitle")}
+          subtitle={t("communityPrices.v2.bannerSubtitle")}
+        />
       </div>
 
-      {/* Ações */}
-      <section className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
-          <h2 className="flex items-center gap-2 text-sm font-semibold">
-            <Camera className="h-4 w-4" /> {t("communityPrices.actions.scanTitle")}
-          </h2>
-          <p className="mt-1 text-xs text-muted-foreground">{t("communityPrices.actions.scanDescription")}</p>
-          <Button className="mt-3 w-full min-h-11" onClick={() => setBatchOpen(true)}>
-            <Camera className="mr-2 h-4 w-4" /> {t("communityPrices.batch.openCta")}
-          </Button>
-        </div>
-
-        <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
-          <h2 className="flex items-center gap-2 text-sm font-semibold">
-            <Plus className="h-4 w-4" /> {t("communityPrices.actions.manualTitle")}
-          </h2>
-          <p className="mt-1 text-xs text-muted-foreground">{t("communityPrices.actions.manualDescription")}</p>
-          <Button className="mt-3 w-full min-h-11" variant="secondary" onClick={() => openManual()}>
-            <Plus className="mr-2 h-4 w-4" /> {t("communityPrices.actions.newManual")}
-          </Button>
-        </div>
-
-        <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-card sm:col-span-2">
-          <h2 className="flex items-center gap-2 text-sm font-semibold">
-            <Cloud className="h-4 w-4" /> {t("communityPrices.onlineImport.cardTitle")}
-          </h2>
-          <p className="mt-1 text-xs text-muted-foreground">{t("communityPrices.onlineImport.cardDescription")}</p>
-          <p className="mt-2 text-[11px] text-muted-foreground/80">{t("communityPrices.onlineImport.cardScopeNotice")}</p>
-          <Button className="mt-3 w-full min-h-11" variant="outline" onClick={() => setOnlineImportOpen(true)}>
-            <Cloud className="mr-2 h-4 w-4" /> {t("communityPrices.onlineImport.cardCta")}
-          </Button>
-        </div>
+      {/* Ações rápidas */}
+      <section className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {[
+          {
+            key: "scan",
+            icon: Camera,
+            tone: "var(--color-mercado-fresh)",
+            title: t("communityPrices.actions.scanTitle"),
+            desc: t("communityPrices.actions.scanDescription"),
+            cta: t("communityPrices.v2.actions.scanCta"),
+            onClick: () => setBatchOpen(true),
+          },
+          {
+            key: "online",
+            icon: Cloud,
+            tone: "var(--color-mercado-community)",
+            title: t("communityPrices.onlineImport.cardTitle"),
+            desc: t("communityPrices.onlineImport.cardDescription"),
+            cta: t("communityPrices.v2.actions.onlineCta"),
+            onClick: () => setOnlineImportOpen(true),
+          },
+          {
+            key: "manual",
+            icon: Plus,
+            tone: "var(--color-mercado-bakery)",
+            title: t("communityPrices.actions.manualTitle"),
+            desc: t("communityPrices.actions.manualDescription"),
+            cta: t("communityPrices.v2.actions.manualCta"),
+            onClick: () => openManual(),
+          },
+        ].map((a) => {
+          const Icon = a.icon;
+          return (
+            <button
+              key={a.key}
+              type="button"
+              onClick={a.onClick}
+              className="group flex min-h-[148px] flex-col items-start gap-2 rounded-2xl border border-border/60 bg-card p-4 text-left shadow-card transition active:scale-[0.98] hover:bg-card-elevated"
+              style={{
+                backgroundImage: `linear-gradient(160deg, color-mix(in oklab, ${a.tone} 14%, var(--card)) 0%, var(--card) 70%)`,
+              }}
+            >
+              <span
+                className="grid h-10 w-10 place-items-center rounded-xl ring-1 ring-border/60"
+                style={{ backgroundColor: `color-mix(in oklab, ${a.tone} 22%, var(--card))`, color: a.tone }}
+              >
+                <Icon className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <h2 className="text-sm font-semibold text-foreground">{a.title}</h2>
+              <p className="text-xs leading-snug text-muted-foreground">{a.desc}</p>
+              <span className="mt-auto inline-flex h-9 items-center rounded-full bg-brand-grad px-3 text-xs font-semibold text-primary-foreground shadow-elevated">
+                {a.cta}
+              </span>
+            </button>
+          );
+        })}
       </section>
 
-      {/* Filtros */}
-      <section className="mt-5 rounded-2xl border border-border/60 bg-card p-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-            <Filter className="h-3.5 w-3.5" /> {t("communityPrices.filters.title")}
-          </div>
-          {hasFilters && (
+      {/* Chips de categoria */}
+      <SectionBlock
+        title={t("communityPrices.v2.categoryChips.title")}
+        className="mt-6"
+        action={
+          categoryChip !== "todos" ? (
             <button
               type="button"
-              onClick={clearFilters}
-              className="text-[11px] font-semibold text-brand hover:underline"
+              onClick={() => setCategoryChip("todos")}
+              className="text-xs font-medium text-brand hover:underline"
             >
               {t("communityPrices.filters.clear")}
             </button>
-          )}
+          ) : undefined
+        }
+      >
+        <div
+          className="no-scrollbar -mx-3 flex snap-x snap-mandatory gap-2 overflow-x-auto px-3 pb-1 sm:-mx-0 sm:px-0"
+          role="listbox"
+          aria-label={t("communityPrices.v2.categoryChips.title")}
+        >
+          {(["todos", ...MERCADO_CATEGORIES, "outros"] as const).map((k) => {
+            const selected = categoryChip === k;
+            return (
+              <button
+                key={k}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                onClick={() => setCategoryChip(k)}
+                className={cn(
+                  "shrink-0 snap-start whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-medium transition active:scale-[0.97]",
+                  selected
+                    ? "border-transparent bg-brand-grad text-primary-foreground shadow-elevated"
+                    : "border-border/60 bg-card text-foreground hover:bg-card-elevated",
+                )}
+              >
+                {t(`communityPrices.v2.categoryChips.${k}`)}
+              </button>
+            );
+          })}
         </div>
-        <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Input
-            placeholder={t("communityPrices.filters.product")}
-            value={filterProduct}
-            onChange={(e) => setFilterProduct(e.target.value)}
-          />
-          <Input
-            placeholder={t("communityPrices.filters.market")}
-            value={filterMarket}
-            onChange={(e) => setFilterMarket(e.target.value)}
-          />
-          <Input
-            placeholder={t("communityPrices.filters.category")}
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-          />
-          <select
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-            value={filterSource}
-            onChange={(e) => setFilterSource(e.target.value as SourceKey | "")}
-            aria-label={t("communityPrices.filters.source")}
-          >
-            <option value="">{t("communityPrices.filters.allSources")}</option>
-            {SOURCE_KEYS.map((s) => (
-              <option key={s} value={s}>{sourceLabel(s)}</option>
-            ))}
-          </select>
-          <select
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm sm:col-span-2"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortKey)}
-            aria-label={t("communityPrices.filters.sort")}
-          >
-            <option value="recent">{t("communityPrices.filters.sortOptions.recent")}</option>
-            <option value="lowest">{t("communityPrices.filters.sortOptions.lowest")}</option>
-            <option value="highest">{t("communityPrices.filters.sortOptions.highest")}</option>
-            <option value="expiring">{t("communityPrices.filters.sortOptions.expiring")}</option>
-          </select>
-        </div>
+      </SectionBlock>
+
+      {/* Filtros (expansível) */}
+      <section className="mt-4 rounded-2xl border border-border/60 bg-card shadow-card">
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((v) => !v)}
+          className="flex w-full items-center justify-between gap-2 p-3"
+          aria-expanded={filtersOpen}
+        >
+          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+            <Filter className="h-3.5 w-3.5" />
+            {filtersOpen
+              ? t("communityPrices.v2.filters.close")
+              : t("communityPrices.v2.filters.open")}
+            {activeFiltersCount > 0 && (
+              <span className="inline-flex items-center rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-brand-on-soft">
+                {t("communityPrices.v2.filters.applied", { count: activeFiltersCount })}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {hasFilters && (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearFilters();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    clearFilters();
+                  }
+                }}
+                className="text-[11px] font-semibold text-brand hover:underline"
+              >
+                {t("communityPrices.filters.clear")}
+              </span>
+            )}
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-muted-foreground transition-transform",
+                filtersOpen && "rotate-180",
+              )}
+            />
+          </div>
+        </button>
+        {filtersOpen && (
+          <div className="grid grid-cols-1 gap-2 border-t border-border/60 p-3 sm:grid-cols-2">
+            <Input
+              placeholder={t("communityPrices.filters.product")}
+              value={filterProduct}
+              onChange={(e) => setFilterProduct(e.target.value)}
+            />
+            <Input
+              placeholder={t("communityPrices.filters.market")}
+              value={filterMarket}
+              onChange={(e) => setFilterMarket(e.target.value)}
+            />
+            <Input
+              placeholder={t("communityPrices.filters.category")}
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+            />
+            <select
+              className="flex h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+              value={filterSource}
+              onChange={(e) => setFilterSource(e.target.value as SourceKey | "")}
+              aria-label={t("communityPrices.filters.source")}
+            >
+              <option value="">{t("communityPrices.filters.allSources")}</option>
+              {SOURCE_KEYS.map((s) => (
+                <option key={s} value={s}>
+                  {sourceLabel(s)}
+                </option>
+              ))}
+            </select>
+            <select
+              className="flex h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm sm:col-span-2"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortKey)}
+              aria-label={t("communityPrices.filters.sort")}
+            >
+              <option value="recent">{t("communityPrices.filters.sortOptions.recent")}</option>
+              <option value="lowest">{t("communityPrices.filters.sortOptions.lowest")}</option>
+              <option value="highest">{t("communityPrices.filters.sortOptions.highest")}</option>
+              <option value="expiring">{t("communityPrices.filters.sortOptions.expiring")}</option>
+            </select>
+          </div>
+        )}
       </section>
 
-      {/* Lista */}
-      <section className="mt-4">
+      {/* Melhores achados */}
+      {bestFinds.length > 0 && (
+        <SectionBlock
+          title={
+            <span className="inline-flex items-center gap-1.5">
+              <Sparkles className="h-4 w-4 text-brand" aria-hidden="true" />
+              {t("communityPrices.v2.bestFinds.title")}
+            </span>
+          }
+          description={t("communityPrices.v2.bestFinds.description")}
+        >
+          <div
+            className="no-scrollbar -mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-2 sm:-mx-0 sm:px-0"
+            role="region"
+            aria-label={t("communityPrices.v2.bestFinds.title")}
+          >
+            {bestFinds.map((it) => (
+              <div key={`best-${it.id}`} className="w-[180px] shrink-0 snap-start">
+                <ProductCard
+                  name={it.product_name}
+                  priceLabel={formatBRL(it.price)}
+                  unitLabel={it.unit ?? undefined}
+                  marketName={it.market_name}
+                  source={SOURCE_MAP[it.source] ?? "community"}
+                  seenAtLabel={fmtDate(it.seen_at)}
+                />
+              </div>
+            ))}
+          </div>
+        </SectionBlock>
+      )}
+
+      {/* Produtos encontrados */}
+      <SectionBlock
+        title={t("communityPrices.v2.found.title")}
+        description={
+          !loading
+            ? t("communityPrices.v2.found.count", { count: filtered.length })
+            : undefined
+        }
+      >
         {loading ? (
           <div className="grid place-items-center py-10 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
           items.length === 0 ? (
-            <EmptyState
-              title={t("communityPrices.empty.none.title")}
-              description={t("communityPrices.empty.none.description")}
-            />
+            <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border/60 bg-card-elevated/40 p-6 text-center">
+              <img
+                src={emptyComunitario}
+                alt=""
+                loading="lazy"
+                className="h-28 w-28 opacity-90"
+              />
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  {t("communityPrices.v2.empty.title")}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("communityPrices.v2.empty.description")}
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button onClick={() => setBatchOpen(true)} className="min-h-11">
+                  <Camera className="mr-2 h-4 w-4" />
+                  {t("communityPrices.v2.empty.scanCta")}
+                </Button>
+                <Button
+                  onClick={() => openManual()}
+                  variant="secondary"
+                  className="min-h-11"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t("communityPrices.v2.empty.manualCta")}
+                </Button>
+              </div>
+            </div>
           ) : (
-            <EmptyState
-              title={t("communityPrices.empty.noResults.title")}
-              description={t("communityPrices.empty.noResults.description")}
-            />
+            <div className="rounded-2xl border border-dashed border-border/60 bg-card-elevated/40 p-6 text-center">
+              <p className="text-sm font-semibold text-foreground">
+                {t("communityPrices.empty.noResults.title")}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t("communityPrices.empty.noResults.description")}
+              </p>
+            </div>
           )
         ) : (
-          <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filtered.map((it) => {
               const owned = user?.id === it.user_id;
+              const validUntilLabel = it.valid_until
+                ? t("communityPrices.list.validUntil", { date: fmtDate(it.valid_until) })
+                : null;
               return (
-                <li key={it.id} className="rounded-2xl border border-border/60 bg-card p-4 shadow-card">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold">{it.product_name}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {it.market_name}
-                        {it.unit ? ` · ${it.unit}` : ""}
-                        {it.category ? ` · ${it.category}` : ""}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-base font-bold text-brand">{formatBRL(it.price)}</p>
-                      <span className="mt-0.5 inline-flex rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand-on-soft">
-                        {sourceLabel(it.source)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-                    <span className="min-w-0 truncate">
-                      {t("communityPrices.list.seenOn", { date: fmtDate(it.seen_at) })}
-                      {it.valid_until
-                        ? ` · ${t("communityPrices.list.validUntil", { date: fmtDate(it.valid_until) })}`
-                        : ""}
-                    </span>
-                    {owned && (
-                      <div className="flex shrink-0 items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => openManual(it)}
-                          className="rounded p-1 text-muted-foreground hover:text-brand"
-                          aria-label={t("communityPrices.list.edit")}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeItem(it.id)}
-                          className="rounded p-1 text-muted-foreground hover:text-destructive"
-                          aria-label={t("communityPrices.list.remove")}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                <li key={it.id} className="relative">
+                  <ProductCard
+                    name={it.product_name}
+                    priceLabel={formatBRL(it.price)}
+                    unitLabel={it.unit ?? undefined}
+                    marketName={it.market_name}
+                    source={SOURCE_MAP[it.source] ?? "community"}
+                    seenAtLabel={fmtDate(it.seen_at)}
+                    extra={
+                      <div className="mt-1 space-y-1">
+                        {validUntilLabel && (
+                          <p className="text-[10px] text-muted-foreground">{validUntilLabel}</p>
+                        )}
+                        {it.notes && (
+                          <p className="line-clamp-2 text-[10px] text-muted-foreground">{it.notes}</p>
+                        )}
+                        <p className="text-[10px] italic text-muted-foreground">
+                          {t("communityPrices.itemHint")}
+                        </p>
                       </div>
-                    )}
-                  </div>
-                  {it.notes && <p className="mt-1 text-[11px] text-muted-foreground">{it.notes}</p>}
-                  <p className="mt-2 text-[10px] italic text-muted-foreground">{t("communityPrices.itemHint")}</p>
+                    }
+                  />
+                  {owned && (
+                    <div className="absolute right-2 top-2 flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => openManual(it)}
+                        className="grid h-8 w-8 place-items-center rounded-full bg-background/85 text-foreground shadow-card backdrop-blur transition hover:text-brand"
+                        aria-label={t("communityPrices.list.edit")}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(it.id)}
+                        className="grid h-8 w-8 place-items-center rounded-full bg-background/85 text-foreground shadow-card backdrop-blur transition hover:text-destructive"
+                        aria-label={t("communityPrices.list.remove")}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </li>
               );
             })}
           </ul>
         )}
-      </section>
+      </SectionBlock>
+
 
       {/* Batch scan wizard */}
       <BatchScanWizard open={batchOpen} onOpenChange={setBatchOpen} onSaved={reload} />
