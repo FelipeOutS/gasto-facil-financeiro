@@ -176,6 +176,32 @@
   --mercado-pantry: oklch(0.7 0.12 55);       /* mercearia — caramelo */
   --mercado-household: oklch(0.68 0.13 290);  /* utilidades — violeta */
   --mercado-community: oklch(0.75 0.17 152);  /* preço comunitário — verde economia */
+
+  /* App V3 — module accents (dark). Usados pelos componentes app-v2. */
+  --module-gastos: oklch(0.66 0.18 25);
+  --module-receitas: oklch(0.72 0.16 152);
+  --module-cartoes: oklch(0.68 0.16 285);
+  --module-metas: oklch(0.74 0.14 75);
+  --module-contas: oklch(0.7 0.14 230);
+  --module-orcamento: oklch(0.72 0.13 195);
+  --module-relatorios: oklch(0.7 0.12 260);
+  --module-cofre: oklch(0.62 0.12 290);
+  --module-plano: oklch(0.74 0.14 90);
+  --module-investimentos: oklch(0.68 0.16 165);
+}
+
+/* Light overrides — module accents */
+html.light {
+  --module-gastos: oklch(0.58 0.18 25);
+  --module-receitas: oklch(0.6 0.16 152);
+  --module-cartoes: oklch(0.58 0.16 285);
+  --module-metas: oklch(0.66 0.14 75);
+  --module-contas: oklch(0.6 0.14 230);
+  --module-orcamento: oklch(0.62 0.13 195);
+  --module-relatorios: oklch(0.58 0.12 260);
+  --module-cofre: oklch(0.52 0.12 290);
+  --module-plano: oklch(0.64 0.14 90);
+  --module-investimentos: oklch(0.58 0.16 165);
 }
 
 /* Light theme overrides for mercado accents */
