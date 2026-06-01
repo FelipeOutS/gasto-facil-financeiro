@@ -24,6 +24,7 @@ import {
   SectionBlock,
   MercadoShowcase,
   ProductCard,
+  type MercadoCategoryKey,
   type ProductSource,
 } from "@/components/mercado/shell";
 import bannerPrecos from "@/assets/mercado/banner-comunitario.jpg";
@@ -301,6 +302,7 @@ function PrecosPage() {
                 imageUrl={r.image_url ?? undefined}
                 brand={r.brand}
                 barcode={r.barcode}
+                category={(r.category ?? null) as MercadoCategoryKey | null}
                 marketName={r.market_name}
                 source={SOURCE_MAP[r.source] ?? "community"}
                 seenAtLabel={
@@ -348,6 +350,7 @@ function PrecosPage() {
                 imageUrl={r.image_url ?? undefined}
                 brand={r.brand}
                 barcode={r.barcode}
+                category={(r.category ?? null) as MercadoCategoryKey | null}
                 marketName={r.market_name}
                 source={SOURCE_MAP[r.source] ?? "community"}
                 seenAtLabel={
