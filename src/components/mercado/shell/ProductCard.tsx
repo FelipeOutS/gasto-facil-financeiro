@@ -85,16 +85,16 @@ export function ProductCard({
   const initial = (name || "").trim().charAt(0).toUpperCase() || "•";
 
   const CATEGORY_TINT: Record<string, string> = {
-    hortifruti: "var(--color-mercado-fresh, var(--brand))",
-    acougue: "var(--color-mercado-meat, var(--brand))",
-    padaria: "var(--color-mercado-bakery, var(--brand))",
-    bebidas: "var(--color-mercado-drink, var(--brand))",
-    laticinios: "var(--color-mercado-dairy, var(--brand))",
-    limpeza: "var(--color-mercado-clean, var(--brand))",
-    mercearia: "var(--color-mercado-pantry, var(--brand))",
-    utilidades: "var(--color-mercado-community, var(--brand))",
+    hortifruti: "var(--color-mercado-fresh)",
+    acougue: "var(--color-mercado-meat)",
+    padaria: "var(--color-mercado-bakery)",
+    bebidas: "var(--color-mercado-drinks)",
+    laticinios: "var(--color-mercado-dairy)",
+    limpeza: "var(--color-mercado-cleaning)",
+    mercearia: "var(--color-mercado-pantry)",
+    utilidades: "var(--color-mercado-household)",
   };
-  const tint = (category && CATEGORY_TINT[category]) || "var(--brand)";
+  const tint = (category && CATEGORY_TINT[category]) || "var(--color-mercado-community)";
 
   const Fallback = ({ size }: { size: "sm" | "lg" }) => (
     <div
