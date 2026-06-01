@@ -9,12 +9,13 @@ import {
   Camera,
   Cloud,
   Plus,
-  Info,
   Trash2,
   Save,
   Loader2,
   Filter,
   Pencil,
+  ChevronDown,
+  Sparkles,
 } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
@@ -22,13 +23,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { EmptyState } from "@/components/ui/empty-state";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatBRL } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { BatchScanWizard } from "@/components/mercado/BatchScanWizard";
 import { OnlineImportWizard } from "@/components/mercado/OnlineImportWizard";
+import {
+  MercadoBanner,
+  ProductCard,
+  SectionBlock,
+  MERCADO_CATEGORIES,
+  type MercadoCategoryKey,
+  type ProductSource,
+} from "@/components/mercado/shell";
+import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
+import emptyComunitario from "@/assets/mercado/empty-comunitario.png";
+
 
 
 export const Route = createFileRoute("/mercado_/preco-comunitario")({
