@@ -165,7 +165,7 @@ export function ProductCard({
           <button
             type="button"
             onClick={onAdd}
-            className="mt-1 inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-full bg-brand-grad text-xs font-semibold text-primary-foreground shadow-elevated transition active:scale-[0.97]"
+            className="mt-1 inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-full bg-brand-grad text-xs font-semibold text-primary-foreground shadow-elevated transition active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
             {t("shell.product.addToList")}
