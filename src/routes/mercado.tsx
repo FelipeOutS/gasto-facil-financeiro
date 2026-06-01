@@ -42,17 +42,20 @@ import {
 } from "@/components/mercado/shell";
 
 import heroHome from "@/assets/mercado/hero-home.jpg";
+import heroHomeWebp from "@/assets/mercado/hero-home.webp";
 import bannerMercados from "@/assets/mercado/banner-mercados.jpg";
+import bannerMercadosWebp from "@/assets/mercado/banner-mercados.webp";
 import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
-import emptyComunitario from "@/assets/mercado/empty-comunitario.png";
-import catHortifruti from "@/assets/mercado/cat-hortifruti.png";
-import catAcougue from "@/assets/mercado/cat-acougue.png";
-import catPadaria from "@/assets/mercado/cat-padaria.png";
-import catBebidas from "@/assets/mercado/cat-bebidas.png";
-import catLaticinios from "@/assets/mercado/cat-laticinios.png";
-import catLimpeza from "@/assets/mercado/cat-limpeza.png";
-import catMercearia from "@/assets/mercado/cat-mercearia.png";
-import catUtilidades from "@/assets/mercado/cat-utilidades.png";
+import bannerOrcamentoWebp from "@/assets/mercado/banner-orcamento.webp";
+import emptyComunitario from "@/assets/mercado/empty-comunitario.webp";
+import catHortifruti from "@/assets/mercado/cat-hortifruti.webp";
+import catAcougue from "@/assets/mercado/cat-acougue.webp";
+import catPadaria from "@/assets/mercado/cat-padaria.webp";
+import catBebidas from "@/assets/mercado/cat-bebidas.webp";
+import catLaticinios from "@/assets/mercado/cat-laticinios.webp";
+import catLimpeza from "@/assets/mercado/cat-limpeza.webp";
+import catMercearia from "@/assets/mercado/cat-mercearia.webp";
+import catUtilidades from "@/assets/mercado/cat-utilidades.webp";
 
 export const Route = createFileRoute("/mercado")({
   head: () => ({ meta: [{ title: i18n.t("mercado:meta.title", { lng: i18n.language }) }] }),
@@ -247,6 +250,7 @@ function MercadoHubPage() {
         <MercadoBanner
           tone="community"
           imageSrc={heroHome}
+          imageSrcWebp={heroHomeWebp}
           imageAlt={t("homeV2.heroTitle")}
           title={t("homeV2.heroTitle")}
           subtitle={t("homeV2.heroSubtitle")}
@@ -496,6 +500,7 @@ function MercadoHubPage() {
           <MercadoBanner
             tone="meat"
             imageSrc={bannerMercados}
+            imageSrcWebp={bannerMercadosWebp}
             title={t("homeV2.marketsTitle")}
             subtitle={t("homeV2.marketsDesc")}
             cta={
@@ -558,6 +563,7 @@ function MercadoHubPage() {
         <MercadoBanner
           tone="bakery"
           imageSrc={bannerOrcamento}
+          imageSrcWebp={bannerOrcamentoWebp}
           title={t("homeV2.budgetTitle")}
           subtitle={t("homeV2.budgetDesc")}
           cta={

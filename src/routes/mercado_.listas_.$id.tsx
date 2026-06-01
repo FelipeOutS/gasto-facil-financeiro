@@ -40,7 +40,8 @@ import {
 } from "@/lib/mercado/community-prices-suggestions";
 import { MercadoBanner, type MercadoCategoryKey } from "@/components/mercado/shell";
 import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
-import emptyCarrinho from "@/assets/mercado/empty-carrinho.png";
+import bannerComunitarioWebp from "@/assets/mercado/banner-comunitario.webp";
+import emptyCarrinho from "@/assets/mercado/empty-carrinho.webp";
 
 import { cn } from "@/lib/utils";
 import { usePlan } from "@/lib/use-plan";
@@ -255,6 +256,7 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
           title={lista.name}
           subtitle={t("listDetailV2.bannerSubtitle")}
           imageSrc={bannerComunitario}
+          imageSrcWebp={bannerComunitarioWebp}
           imageAlt={t("listDetailV2.bannerSubtitle")}
           compact
         />

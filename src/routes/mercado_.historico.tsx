@@ -8,7 +8,8 @@ import { Money } from "@/components/Money";
 import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
 import { SectionBlock } from "@/components/mercado/shell/SectionBlock";
 import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
-import emptyCarrinho from "@/assets/mercado/empty-carrinho.png";
+import bannerComunitarioWebp from "@/assets/mercado/banner-comunitario.webp";
+import emptyCarrinho from "@/assets/mercado/empty-carrinho.webp";
 import { cn } from "@/lib/utils";
 import {
   useMercadoHistorico,
@@ -91,6 +92,7 @@ function HistoricoPage() {
           title={t("historyV2.banner.title")}
           subtitle={t("historyV2.banner.subtitle")}
           imageSrc={bannerComunitario}
+          imageSrcWebp={bannerComunitarioWebp}
           tone="community"
         />
       </div>

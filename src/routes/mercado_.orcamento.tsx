@@ -14,6 +14,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
 import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
 import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
+import bannerOrcamentoWebp from "@/assets/mercado/banner-orcamento.webp";
 import { PremiumInlineLink } from "@/components/mercado/PremiumInlineLink";
 import { cn } from "@/lib/utils";
 import {
@@ -121,6 +122,7 @@ function OrcamentoPage() {
           title={t("budgetV2.banner.title")}
           subtitle={t("budgetV2.banner.subtitle")}
           imageSrc={bannerOrcamento}
+          imageSrcWebp={bannerOrcamentoWebp}
         />
       </div>
 

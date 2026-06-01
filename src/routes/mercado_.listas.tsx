@@ -27,7 +27,8 @@ import { useAuth } from "@/lib/auth-context";
 import { useState } from "react";
 import { MercadoBanner } from "@/components/mercado/shell";
 import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
-import emptyLista from "@/assets/mercado/empty-lista.png";
+import bannerOrcamentoWebp from "@/assets/mercado/banner-orcamento.webp";
+import emptyLista from "@/assets/mercado/empty-lista.webp";
 
 
 export const Route = createFileRoute("/mercado_/listas")({
@@ -123,6 +124,7 @@ function MercadoListasPage() {
           title={t("listsV2.bannerTitle")}
           subtitle={t("listsV2.bannerSubtitle")}
           imageSrc={bannerOrcamento}
+          imageSrcWebp={bannerOrcamentoWebp}
           imageAlt={t("listsV2.bannerTitle")}
           cta={
             <button

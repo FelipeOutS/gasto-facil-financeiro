@@ -39,7 +39,8 @@ import {
   type ProductSource,
 } from "@/components/mercado/shell";
 import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
-import emptyComunitario from "@/assets/mercado/empty-comunitario.png";
+import bannerComunitarioWebp from "@/assets/mercado/banner-comunitario.webp";
+import emptyComunitario from "@/assets/mercado/empty-comunitario.webp";
 
 
 
@@ -361,6 +362,7 @@ function PrecoComunitarioPage() {
         <MercadoBanner
           tone="community"
           imageSrc={bannerComunitario}
+          imageSrcWebp={bannerComunitarioWebp}
           title={t("communityPrices.v2.bannerTitle")}
           subtitle={t("communityPrices.v2.bannerSubtitle")}
         />

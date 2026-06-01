@@ -27,7 +27,8 @@ import {
   type ProductSource,
 } from "@/components/mercado/shell";
 import bannerPrecos from "@/assets/mercado/banner-comunitario.jpg";
-import emptyComunitario from "@/assets/mercado/empty-comunitario.png";
+import bannerPrecosWebp from "@/assets/mercado/banner-comunitario.webp";
+import emptyComunitario from "@/assets/mercado/empty-comunitario.webp";
 import {
   Select,
   SelectContent,
@@ -181,6 +182,7 @@ function PrecosPage() {
           title={t("priceCompareV2.banner.title")}
           subtitle={t("priceCompareV2.banner.subtitle")}
           imageSrc={bannerPrecos}
+          imageSrcWebp={bannerPrecosWebp}
           tone="community"
         />
       </div>
