@@ -99,9 +99,15 @@ export function useProductImage(
                 res.imageUrl ? `${res.debug.pickedFrom} (${res.confidence})` : "sem imagem"
               }`,
               {
+                original: res.debug.productName,
+                brandReceived: res.debug.brandReceived,
                 cleaned: res.debug.cleanedName,
+                normalized: res.debug.normalizedName,
                 brand: res.debug.extractedBrand,
+                aliases: res.debug.aliases,
                 barcode: res.debug.barcode,
+                chosen: res.imageUrl,
+                persistable: res.persistable ?? false,
                 attempts: res.debug.attempts,
               },
             );
