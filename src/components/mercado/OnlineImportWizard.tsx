@@ -35,6 +35,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch } from "@/lib/api-fetch";
+import { useMercadosLocais } from "@/lib/mercado/mercados-store";
 
 const TABLE = "community_market_prices" as const;
 
