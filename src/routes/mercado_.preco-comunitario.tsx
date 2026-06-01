@@ -119,10 +119,14 @@ function PrecoComunitarioPage() {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterSource, setFilterSource] = useState<SourceKey | "">("");
   const [sortBy, setSortBy] = useState<SortKey>("recent");
+  const [categoryChip, setCategoryChip] = useState<MercadoCategoryKey | "todos" | "outros">("todos");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Batch scan wizard
   const [batchOpen, setBatchOpen] = useState(false);
   const [onlineImportOpen, setOnlineImportOpen] = useState(false);
+
+
 
 
   // Manual state
