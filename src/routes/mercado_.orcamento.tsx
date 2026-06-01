@@ -12,6 +12,8 @@ import {
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
+import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
+import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
 import { PremiumInlineLink } from "@/components/mercado/PremiumInlineLink";
 import { cn } from "@/lib/utils";
 import {
