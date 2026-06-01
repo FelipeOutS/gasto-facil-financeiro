@@ -177,7 +177,7 @@ async function lookupByName(
   const params = new URLSearchParams({
     search_terms: q,
     json: "1",
-    page_size: "5",
+    page_size: "8",
     fields: "image_front_url,image_url,product_name,brands",
   });
   const url = `https://world.openfoodfacts.org/cgi/search.pl?${params.toString()}`;
@@ -185,27 +185,35 @@ async function lookupByName(
   if (!data?.products?.length) return null;
   const normalizedQuery = normalizeForKey(productName);
   const normalizedBrand = brand ? normalizeForKey(brand) : "";
-  // Escolhemos o melhor candidato por similaridade combinada (nome + marca).
-  let best: {
-    img: string;
-    score: number;
-  } | null = null;
+  let best: { img: string; score: number } | null = null;
   for (const p of data.products) {
     const img = safeUrl(p.image_front_url || p.image_url);
     if (!img) continue;
-    const nameSim = similarity(normalizedQuery, normalizeForKey(p.product_name));
-    const brandSim = normalizedBrand
-      ? similarity(normalizedBrand, normalizeForKey(p.brands))
-      : 0;
-    // bônus se a marca bater bem
-    const score = nameSim + (brandSim > 0.6 ? 0.15 : 0);
+    const candidateName = normalizeForKey(p.product_name);
+    const candidateBrands = normalizeForKey(p.brands);
+    const nameSim = similarity(normalizedQuery, candidateName);
+    let score = nameSim;
+    if (normalizedBrand) {
+      const brandSim = similarity(normalizedBrand, candidateBrands);
+      const brandSubstr =
+        candidateBrands.includes(normalizedBrand) ||
+        candidateName.includes(normalizedBrand);
+      if (brandSubstr) {
+        score += 0.25;
+      } else if (brandSim > 0.6) {
+        score += 0.15;
+      } else {
+        // marca esperada não aparece no candidato — penaliza forte para
+        // evitar imagem de outro fabricante.
+        score -= 0.25;
+      }
+    }
     if (!best || score > best.score) best = { img, score };
   }
   if (!best) return null;
-  // Threshold um pouco mais conservador para evitar imagens erradas.
-  if (best.score < 0.55) return null;
+  if (best.score < 0.5) return null;
   const confidence: ProductImageConfidence =
-    best.score >= 0.85 ? "high" : best.score >= 0.65 ? "medium" : "low";
+    best.score >= 0.85 ? "high" : best.score >= 0.6 ? "medium" : "low";
   return {
     imageUrl: best.img,
     source: "off_search",
@@ -220,7 +228,6 @@ function lookupBrandLogo(
   if (!brand) return null;
   const slug = normalizeForKey(brand).replace(/\s+/g, "-");
   if (!slug) return null;
-  // tenta variações comuns
   const candidates = [slug, slug.replace(/-/g, "")];
   for (const c of candidates) {
     if (BRAND_LOGOS.has(c)) {
@@ -243,23 +250,31 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
     if (hit) return { ...hit, checkedAt: now };
   }
 
-  // Limpa o nome (remove unidades, embalagens, adjetivos) e tenta extrair
-  // marca embutida quando o usuário não passou uma marca explícita.
   const { cleanedName, extractedBrand } = cleanProductName(
     input.productName,
     input.brand ?? null,
   );
-  const effectiveName = cleanedName || input.productName;
   const effectiveBrand = extractedBrand || input.brand || null;
+  const rawName = normalizeForKey(input.productName);
 
-  // 1ª tentativa: nome limpo + marca (mais preciso).
-  const byNameWithBrand = await lookupByName(effectiveName, effectiveBrand);
-  if (byNameWithBrand) return { ...byNameWithBrand, checkedAt: now };
+  // Sequência de tentativas, da mais específica para a mais ampla.
+  const attempts: Array<{ name: string; brand: string | null }> = [];
+  if (cleanedName && effectiveBrand)
+    attempts.push({ name: cleanedName, brand: effectiveBrand });
+  if (rawName && effectiveBrand && rawName !== cleanedName)
+    attempts.push({ name: rawName, brand: effectiveBrand });
+  if (cleanedName) attempts.push({ name: cleanedName, brand: null });
+  if (rawName && rawName !== cleanedName)
+    attempts.push({ name: rawName, brand: null });
 
-  // 2ª tentativa: só nome limpo (sem marca) — pega genéricos.
-  if (effectiveBrand) {
-    const byNameOnly = await lookupByName(effectiveName, null);
-    if (byNameOnly) return { ...byNameOnly, checkedAt: now };
+  // Dedup
+  const seen = new Set<string>();
+  for (const a of attempts) {
+    const key = `${a.name}|${a.brand ?? ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const hit = await lookupByName(a.name, a.brand);
+    if (hit) return { ...hit, checkedAt: now };
   }
 
   const byBrand = lookupBrandLogo(effectiveBrand);
