@@ -166,6 +166,10 @@ type OFFProduct = {
 
 type OFFByBarcode = { status?: number; product?: OFFProduct };
 type OFFSearch = { products?: OFFProduct[] };
+type ProductImageHit = Pick<
+  ProductImageResult,
+  "imageUrl" | "source" | "confidence" | "origin" | "persistable"
+>;
 
 /** Dice coefficient simples para similaridade de nomes. */
 function similarity(a: string, b: string): number {
@@ -188,6 +192,78 @@ function similarity(a: string, b: string): number {
   }
   const total = a.length - 1 + (b.length - 1);
   return total > 0 ? (2 * inter) / total : 0;
+}
+
+function unique(values: Array<string | null | undefined>): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const value of values) {
+    const normalized = normalizeForKey(value);
+    if (normalized.length < 2 || seen.has(normalized)) continue;
+    seen.add(normalized);
+    out.push(normalized);
+  }
+  return out;
+}
+
+function hasToken(text: string, tokens: string[]): boolean {
+  return tokens.some((token) => new RegExp(`(^|\\s)${token}(\\s|$)`, "i").test(text));
+}
+
+function normalizeLookupTerms(raw: string, brand: string | null): string {
+  let text = normalizeForKey(raw);
+  const beerBrand = !!brand && ["heineken", "brahma", "skol", "antarctica", "itaipava", "ambev", "stella artois", "budweiser", "amstel", "eisenbahn"].includes(normalizeForKey(brand));
+  text = text
+    .replace(/\blong\s*nek\b/g, "long neck")
+    .replace(/\blongneck\b/g, "long neck")
+    .replace(/\bcx\b/g, "caixa")
+    .replace(/\b(?:und|un|unidade|unidades)\b/g, " ");
+  if (beerBrand || hasToken(text, ["cerveja", "beer", "lager"])) {
+    text = text.replace(/\bln\b/g, "long neck");
+  }
+  return normalizeForKey(text);
+}
+
+function inferCategoryTerms(name: string, explicitCategory?: ProductImageInput["category"] | null): string[] {
+  const text = normalizeForKey(name);
+  const terms: string[] = [];
+  if (explicitCategory === "bebidas" || hasToken(text, ["cerveja", "beer", "lager"])) {
+    terms.push("cerveja", "beer", "lager");
+  }
+  if (hasToken(text, ["refrigerante", "refri", "soda"])) {
+    terms.push("refrigerante", "soda", "soft drink");
+  }
+  if (hasToken(text, ["cafe", "pilao", "melitta"])) terms.push("cafe", "coffee");
+  if (hasToken(text, ["farinha", "trigo", "adria"])) terms.push("farinha trigo", "flour");
+  if (hasToken(text, ["linguica", "ling", "sadia"])) terms.push("linguica", "sausage");
+  return unique(terms);
+}
+
+function packagingTerms(name: string): string[] {
+  const text = normalizeForKey(name);
+  const terms: string[] = [];
+  if (hasToken(text, ["long", "neck"]) || /\blong\s*neck\b/.test(text)) terms.push("long neck", "longneck");
+  if (hasToken(text, ["garrafa"])) terms.push("garrafa");
+  if (hasToken(text, ["lata"])) terms.push("lata");
+  if (hasToken(text, ["pet"])) terms.push("pet");
+  if (/\b(?:330\s?ml|330)\b/.test(text)) terms.push("330ml");
+  if (/\b(?:350\s?ml|350|355\s?ml|355)\b/.test(text)) terms.push("355ml");
+  if (/\b(?:2\s?l|2\s?litros|2l)\b/.test(text)) terms.push("2l", "2 litros");
+  if (/\b(?:500\s?g|500)\b/.test(text)) terms.push("500g");
+  if (/\b(?:1\s?kg|1kg)\b/.test(text)) terms.push("1kg");
+  return unique(terms);
+}
+
+function buildNameAliases(name: string, brand: string | null, category?: ProductImageInput["category"] | null): string[] {
+  const normalized = normalizeLookupTerms(name, brand);
+  const categories = inferCategoryTerms(`${name} ${brand ?? ""}`, category);
+  const packs = packagingTerms(normalized);
+  const aliases = [normalized];
+  if (hasToken(normalized, ["cerveja", "beer", "lager", "long", "neck"]) || normalizeForKey(brand) === "heineken") {
+    aliases.push("long neck", "longneck", "garrafa", "330ml", "355ml", "cerveja", "beer", "lager", "lager beer", "original", "premium pure malt");
+  }
+  if (hasToken(normalized, ["refrigerante", "refri"])) aliases.push("refrigerante", "soda", "soft drink", "pet", "2l", "2 litros");
+  return unique([...aliases, ...packs, ...categories]);
 }
 
 async function lookupByBarcode(
