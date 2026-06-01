@@ -15,6 +15,8 @@ export interface MercadoBannerProps {
   className?: string;
   /** Altura compacta para banners secundários. */
   compact?: boolean;
+  /** Marca a imagem como crítica (LCP): carrega eager e com fetchPriority alta. Use apenas no banner principal acima da dobra. */
+  priority?: boolean;
 }
 
 const TONE_VAR: Record<NonNullable<MercadoBannerProps["tone"]>, string> = {
@@ -39,6 +41,7 @@ export function MercadoBanner({
   cta,
   className,
   compact = false,
+  priority = false,
 }: MercadoBannerProps) {
   const { t } = useTranslation("mercado");
   const color = TONE_VAR[tone];
@@ -58,8 +61,9 @@ export function MercadoBanner({
         <img
           src={imageSrc}
           alt={imageAlt ?? t("shell.banner.imageAlt")}
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
           decoding="async"
+          {...(priority ? { fetchPriority: "high" as const } : { fetchPriority: "low" as const })}
           className="pointer-events-none absolute right-0 top-0 h-full w-1/2 object-cover object-right opacity-90 sm:w-2/5"
           onError={(e) => {
             (e.currentTarget as HTMLImageElement).style.display = "none";

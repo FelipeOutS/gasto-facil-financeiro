@@ -74,7 +74,7 @@ export function MercadoCategoryChips({
             aria-selected={isSelected}
             onClick={() => onSelect?.(key)}
             className={cn(
-              "group flex shrink-0 snap-start items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition active:scale-[0.97]",
+              "group flex min-h-11 shrink-0 snap-start items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
               isSelected
                 ? "border-transparent text-primary-foreground shadow-elevated"
                 : "border-border/60 bg-card text-foreground hover:bg-card-elevated",
