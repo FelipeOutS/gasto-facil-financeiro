@@ -1589,5 +1589,18 @@
     "stickyTotal": "Total estimado",
     "stickyItems": "{{bought}}/{{total}} itens",
     "stickyFinalize": "Finalizar"
+  },
+  "marketsV2": {
+    "banner": {
+      "title": "Mercados perto de você",
+      "subtitle": "Encontre mercados próximos, salve seus favoritos e use-os nas suas listas e comparações."
+    },
+    "saved": {
+      "title": "Meus mercados",
+      "description": "Use seus mercados favoritos nas listas, carrinho e comparação de preços.",
+      "emptyTitle": "Você ainda não salvou nenhum mercado",
+      "emptyDescription": "Busque mercados próximos ou cadastre manualmente para usá-los nas suas listas.",
+      "helper": "Depois de salvar um mercado, você poderá usá-lo em listas, carrinho e preços comunitários."
+    }
   }
 }

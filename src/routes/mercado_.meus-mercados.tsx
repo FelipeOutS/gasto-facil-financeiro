@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
   Home,
-  MapPin,
   Info,
   Plus,
   Star,
@@ -14,6 +13,8 @@ import {
   Store,
 } from "lucide-react";
 import { NearbyMarkets } from "@/components/mercado/NearbyMarkets";
+import { MercadoBanner, SectionBlock } from "@/components/mercado/shell";
+import bannerMercados from "@/assets/mercado/banner-mercados.jpg";
 import { useState } from "react";
 import { toast } from "sonner";
 import i18n from "@/i18n";
@@ -143,7 +144,7 @@ function MeusMercadosPage() {
 
   return (
     <MobileShell wide>
-      <header className="flex items-start gap-3 pt-1">
+      <header className="flex items-center gap-2 pt-1">
         <button
           type="button"
           onClick={handleBack}
@@ -159,20 +160,19 @@ function MeusMercadosPage() {
         >
           <Home className="h-5 w-5" />
         </Link>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
-              <MapPin className="h-4 w-4" />
-            </span>
-            <h1 className="truncate text-2xl font-bold tracking-tight md:text-3xl">
-              {t("meusMercados.title")}
-            </h1>
-          </div>
-          <p className="mt-1 text-sm leading-snug text-muted-foreground md:text-base">
-            {t("meusMercados.localNotice")}
-          </p>
-        </div>
+        <h1 className="ml-1 min-w-0 truncate text-lg font-semibold tracking-tight md:text-xl">
+          {t("meusMercados.title")}
+        </h1>
       </header>
+
+      <MercadoBanner
+        title={t("marketsV2.banner.title")}
+        subtitle={t("marketsV2.banner.subtitle")}
+        imageSrc={bannerMercados}
+        imageAlt={t("marketsV2.banner.title")}
+        tone="brand"
+        className="mt-4"
+      />
 
       <section className="mt-4 rounded-3xl border border-border/60 bg-card-elevated p-4 shadow-card md:p-5">
         <div className="flex items-start gap-3">
@@ -191,24 +191,67 @@ function MeusMercadosPage() {
 
 
 
+
       {mode === "list" && (
-        <div className="mt-5 flex items-center justify-between gap-3">
-          <h2 className="truncate text-base font-semibold md:text-lg">
-            {t("meusMercados.list.title")}{" "}
-            <span className="text-sm font-normal text-muted-foreground">
-              ({t("meusMercados.list.count", { count: mercados.length })})
+        <SectionBlock
+          title={
+            <span>
+              {t("marketsV2.saved.title")}{" "}
+              <span className="text-sm font-normal text-muted-foreground">
+                ({t("meusMercados.list.count", { count: mercados.length })})
+              </span>
             </span>
-          </h2>
-          <Button
-            type="button"
-            onClick={openNew}
-            className="min-h-11 rounded-full font-semibold"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">{t("meusMercados.addCta")}</span>
-            <span className="sm:hidden">{t("meusMercados.addCtaShort")}</span>
-          </Button>
-        </div>
+          }
+          description={t("marketsV2.saved.description")}
+          action={
+            <Button
+              type="button"
+              onClick={openNew}
+              className="min-h-11 rounded-full font-semibold"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("meusMercados.addCta")}</span>
+              <span className="sm:hidden">{t("meusMercados.addCtaShort")}</span>
+            </Button>
+          }
+        >
+          {mercados.length === 0 ? (
+            <EmptyState
+              icon={<Store className="h-6 w-6" />}
+              title={t("marketsV2.saved.emptyTitle")}
+              description={t("marketsV2.saved.emptyDescription")}
+              ctaLabel={t("meusMercados.emptyCta")}
+              onCta={openNew}
+              variant="premium"
+            />
+          ) : (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {mercados.map((m) =>
+                editingId === m.id ? (
+                  <div key={m.id} className="md:col-span-2 xl:col-span-3">
+                    <MercadoForm
+                      title={t("meusMercados.editingTitle")}
+                      form={form}
+                      setForm={setForm}
+                      onSave={save}
+                      onCancel={cancel}
+                      saveLabel={t("meusMercados.saveEdit")}
+                    />
+                  </div>
+                ) : (
+                  <MercadoCard
+                    key={m.id}
+                    m={m}
+                    onEdit={() => openEdit(m)}
+                    onRemove={() => handleRemove(m)}
+                    onToggleFav={() => handleToggleFav(m)}
+                    t={t}
+                  />
+                ),
+              )}
+            </div>
+          )}
+        </SectionBlock>
       )}
 
       {isNew && (
@@ -224,44 +267,9 @@ function MeusMercadosPage() {
         </div>
       )}
 
-      {mercados.length === 0 && mode === "list" && (
-        <div className="mt-5">
-          <EmptyState
-            icon={<Store className="h-6 w-6" />}
-            title={t("meusMercados.empty.title")}
-            description={t("meusMercados.empty.desc")}
-            ctaLabel={t("meusMercados.emptyCta")}
-            onCta={openNew}
-            variant="premium"
-          />
-        </div>
-      )}
-
-      {mercados.length > 0 && (
-        <section className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {mercados.map((m) =>
-            editingId === m.id ? (
-              <div key={m.id} className="md:col-span-2 xl:col-span-3">
-                <MercadoForm
-                  title={t("meusMercados.editingTitle")}
-                  form={form}
-                  setForm={setForm}
-                  onSave={save}
-                  onCancel={cancel}
-                  saveLabel={t("meusMercados.saveEdit")}
-                />
-              </div>
-            ) : (
-              <MercadoCard
-                key={m.id}
-                m={m}
-                onEdit={() => openEdit(m)}
-                onRemove={() => handleRemove(m)}
-                onToggleFav={() => handleToggleFav(m)}
-                t={t}
-              />
-            ),
-          )}
+      {mode === "list" && (
+        <section className="mt-5 rounded-3xl border border-dashed border-border bg-card-elevated p-4 text-sm leading-snug text-muted-foreground md:p-5">
+          {t("marketsV2.saved.helper")}
         </section>
       )}
     </MobileShell>
