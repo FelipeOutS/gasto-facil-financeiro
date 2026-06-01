@@ -31,6 +31,9 @@ import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { QrCodeScannerButton } from "@/components/mercado/QrCodeScannerButton";
 import { SavedMarketsChips } from "@/components/mercado/SavedMarketsChips";
+import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
+import { SectionBlock } from "@/components/mercado/shell/SectionBlock";
+import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
 import {
   parseNfceQrContent,
   type ParsedNfceQrResult,
@@ -51,6 +54,7 @@ import {
 
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
 
 
 
@@ -1661,19 +1665,37 @@ function ImportarCupomPage() {
         </button>
       </header>
 
-      <section className="mt-5 flex items-start gap-3">
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">
-          <Receipt className="h-6 w-6" />
-        </span>
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-            {t("importarCupom.title")}
-          </h1>
-          <p className="mt-1 text-sm leading-snug text-muted-foreground md:text-base">
-            {t("importarCupom.subtitle")}
-          </p>
-        </div>
-      </section>
+      <div className="mt-4">
+        <MercadoBanner
+          title={t("receiptImportV2.banner.title")}
+          subtitle={t("receiptImportV2.banner.subtitle")}
+          imageSrc={bannerOrcamento}
+          tone="community"
+        />
+      </div>
+
+      <SectionBlock title={t("receiptImportV2.steps.title")} className="mt-5">
+        <ol className="grid gap-2 md:grid-cols-3">
+          {(["scan", "review", "save"] as const).map((step, idx) => (
+            <li
+              key={step}
+              className="flex items-start gap-3 rounded-2xl border border-border/60 bg-card p-3 shadow-card md:p-4"
+            >
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-brand-soft text-sm font-bold text-brand ring-1 ring-border/60">
+                {idx + 1}
+              </span>
+              <p className="text-[13px] leading-snug text-foreground md:text-sm">
+                {t(`receiptImportV2.steps.${step}`)}
+              </p>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-3 flex items-start gap-2 rounded-2xl bg-card-elevated p-3 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand" />
+          <span>{t("receiptImportV2.disclaimer")}</span>
+        </p>
+      </SectionBlock>
+
 
       <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
         <div className="flex items-start gap-3">

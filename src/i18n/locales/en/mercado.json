@@ -1633,5 +1633,48 @@
         "distance": "Distance"
       }
     }
+  },
+  "historyV2": {
+    "banner": {
+      "title": "Purchase history",
+      "subtitle": "View past shopping trips, compare totals, and track price changes over time."
+    },
+    "summary": {
+      "title": "Period summary",
+      "totalSpent": "Total spent",
+      "purchaseCount": "Purchases recorded",
+      "averageTicket": "Average ticket",
+      "lastMarket": "Last market",
+      "noMarket": "Not provided"
+    },
+    "list": {
+      "title": "Recorded purchases"
+    },
+    "empty": {
+      "title": "No purchases recorded yet",
+      "description": "Finish a list, use your cart, or import a receipt to start building your history.",
+      "createList": "Create shopping list",
+      "importReceipt": "Import receipt"
+    }
+  },
+  "receiptImportV2": {
+    "banner": {
+      "title": "Import receipt",
+      "subtitle": "Scan the QR code or submit receipt data to review products before saving."
+    },
+    "disclaimer": "Some receipts may not be fully compatible. Always review items before saving.",
+    "steps": {
+      "title": "How it works",
+      "scan": "Scan the QR code or paste the receipt data.",
+      "review": "Review the products and adjust whatever you need.",
+      "save": "Save it to your history, a list, or the cart."
+    }
+  },
+  "priceHistoryV2": {
+    "banner": {
+      "title": "Price history",
+      "subtitle": "Track price changes for products you've bought and find out where you can pay less."
+    }
   }
 }
+

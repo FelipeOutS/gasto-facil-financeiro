@@ -1633,5 +1633,48 @@
         "distance": "Distância"
       }
     }
+  },
+  "historyV2": {
+    "banner": {
+      "title": "Histórico de compras",
+      "subtitle": "Veja suas compras anteriores, compare totais e acompanhe a evolução dos preços ao longo do tempo."
+    },
+    "summary": {
+      "title": "Resumo do período",
+      "totalSpent": "Total gasto",
+      "purchaseCount": "Compras registradas",
+      "averageTicket": "Ticket médio",
+      "lastMarket": "Último mercado",
+      "noMarket": "Não informado"
+    },
+    "list": {
+      "title": "Compras registradas"
+    },
+    "empty": {
+      "title": "Nenhuma compra registrada ainda",
+      "description": "Finalize uma lista, use o carrinho ou importe um cupom para começar a montar seu histórico.",
+      "createList": "Criar lista de compras",
+      "importReceipt": "Importar cupom"
+    }
+  },
+  "receiptImportV2": {
+    "banner": {
+      "title": "Importar cupom fiscal",
+      "subtitle": "Leia o QR Code ou envie dados do cupom para revisar os produtos antes de salvar."
+    },
+    "disclaimer": "Alguns cupons podem não ser totalmente compatíveis. Sempre revise os itens antes de salvar.",
+    "steps": {
+      "title": "Como funciona",
+      "scan": "Leia o QR Code ou cole os dados do cupom.",
+      "review": "Revise os produtos e ajuste o que precisar.",
+      "save": "Salve no histórico, em uma lista ou no carrinho."
+    }
+  },
+  "priceHistoryV2": {
+    "banner": {
+      "title": "Histórico de preços",
+      "subtitle": "Acompanhe a variação de preço dos produtos que você já comprou e descubra onde pagar menos."
+    }
   }
 }
+

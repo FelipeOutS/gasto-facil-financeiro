@@ -1,14 +1,20 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Home, History, WalletCards, Check, CircleDashed } from "lucide-react";
+import { ArrowLeft, Home, History, WalletCards, Check, CircleDashed, Receipt, ListPlus, ShoppingBag, Store, TrendingUp } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
+import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
+import { SectionBlock } from "@/components/mercado/shell/SectionBlock";
+import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
+import emptyCarrinho from "@/assets/mercado/empty-carrinho.png";
 import { cn } from "@/lib/utils";
 import {
   useMercadoHistorico,
   type MercadoCompraHistorico,
 } from "@/lib/mercado/listas-store";
+
 
 export const Route = createFileRoute("/mercado_/historico")({
   head: () => ({
@@ -34,6 +40,22 @@ function HistoricoPage() {
     minute: "2-digit",
   });
 
+  const summary = useMemo(() => {
+    if (historico.length === 0) {
+      return { totalSpent: 0, count: 0, avgTicket: 0, lastMarket: undefined as string | undefined };
+    }
+    const totalSpent = historico.reduce((acc, h) => acc + (h.totalEstimado || 0), 0);
+    const count = historico.length;
+    const avgTicket = count > 0 ? totalSpent / count : 0;
+    const sorted = [...historico].sort(
+      (a, b) => new Date(b.concluidaEm).getTime() - new Date(a.concluidaEm).getTime(),
+    );
+    const lastMarket = sorted.find((h) => h.mercadoNome)?.mercadoNome;
+    return { totalSpent, count, avgTicket, lastMarket };
+  }, [historico]);
+
+  const hasHistorico = historico.length > 0;
+
   return (
     <MobileShell wide>
       <header className="flex items-start gap-3 pt-1">
@@ -58,40 +80,91 @@ function HistoricoPage() {
               <History className="h-4 w-4" />
             </span>
             <h1 className="truncate text-2xl font-bold tracking-tight md:text-3xl">
-              {t("historico.title")}
+              {t("historyV2.banner.title")}
             </h1>
           </div>
-          <p className="mt-1 text-sm leading-snug text-muted-foreground md:text-base">
-            {t("historico.subtitle")}
-          </p>
         </div>
       </header>
 
-      {historico.length === 0 ? (
-        <section className="mt-6 rounded-3xl border border-dashed border-border bg-card p-8 text-center shadow-card">
-          <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-card-elevated text-brand ring-1 ring-border/60">
-            <History className="h-7 w-7" />
-          </span>
-          <h2 className="mt-4 text-lg font-semibold">{t("historico.empty.title")}</h2>
+      <div className="mt-4">
+        <MercadoBanner
+          title={t("historyV2.banner.title")}
+          subtitle={t("historyV2.banner.subtitle")}
+          imageSrc={bannerComunitario}
+          tone="community"
+        />
+      </div>
+
+      {hasHistorico && (
+        <SectionBlock title={t("historyV2.summary.title")} className="mt-5">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <SummaryTile
+              icon={<WalletCards className="h-4 w-4" />}
+              label={t("historyV2.summary.totalSpent")}
+              value={<Money value={summary.totalSpent} />}
+            />
+            <SummaryTile
+              icon={<ShoppingBag className="h-4 w-4" />}
+              label={t("historyV2.summary.purchaseCount")}
+              value={String(summary.count)}
+            />
+            <SummaryTile
+              icon={<TrendingUp className="h-4 w-4" />}
+              label={t("historyV2.summary.averageTicket")}
+              value={<Money value={summary.avgTicket} />}
+            />
+            <SummaryTile
+              icon={<Store className="h-4 w-4" />}
+              label={t("historyV2.summary.lastMarket")}
+              value={summary.lastMarket ?? t("historyV2.summary.noMarket")}
+              truncate
+            />
+          </div>
+        </SectionBlock>
+      )}
+
+      {!hasHistorico ? (
+        <section className="mt-6 flex flex-col items-center rounded-3xl border border-dashed border-border bg-card p-8 text-center shadow-card">
+          <img
+            src={emptyCarrinho}
+            alt=""
+            aria-hidden
+            loading="lazy"
+            className="h-32 w-32 object-contain opacity-90"
+          />
+          <h2 className="mt-3 text-lg font-semibold">{t("historyV2.empty.title")}</h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            {t("historico.empty.description")}
+            {t("historyV2.empty.description")}
           </p>
-          <Link
-            to="/mercado/listas"
-            className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-brand-grad px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
-          >
-            {t("historico.back")}
-          </Link>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center">
+            <Link
+              to="/mercado/listas/nova"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-brand-grad px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
+            >
+              <ListPlus className="h-4 w-4" />
+              {t("historyV2.empty.createList")}
+            </Link>
+            <Link
+              to="/mercado/importar-cupom"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-card-elevated active:scale-[0.98]"
+            >
+              <Receipt className="h-4 w-4" />
+              {t("historyV2.empty.importReceipt")}
+            </Link>
+          </div>
         </section>
       ) : (
-        <section className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {historico.map((h) => (
-            <HistoricoCard key={h.id} item={h} dateFormatter={dateFormatter} />
-          ))}
-        </section>
+        <SectionBlock title={t("historyV2.list.title")} className="mt-6">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {historico.map((h) => (
+              <HistoricoCard key={h.id} item={h} dateFormatter={dateFormatter} />
+            ))}
+          </div>
+        </SectionBlock>
       )}
     </MobileShell>
   );
+
 }
 
 function HistoricoCard({
@@ -234,3 +307,37 @@ function Tile({
     </div>
   );
 }
+
+function SummaryTile({
+  icon,
+  label,
+  value,
+  truncate = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  truncate?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-1 rounded-2xl border border-border/60 bg-card p-3 shadow-card">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-soft text-brand ring-1 ring-border/60">
+          {icon}
+        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-widest">
+          {label}
+        </span>
+      </div>
+      <p
+        className={cn(
+          "text-base font-bold tabular-nums text-foreground md:text-lg",
+          truncate && "truncate",
+        )}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+

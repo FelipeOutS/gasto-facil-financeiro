@@ -5,6 +5,8 @@ import { ArrowLeft, Home, BarChart3, Info, PackageSearch, Store, ChevronRight } 
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
+import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
+import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
 import {
   Select,
   SelectContent,
@@ -12,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import {
   MERCADO_FILTRO_ALL,
   MERCADO_FILTRO_SEM,
@@ -109,6 +112,17 @@ function PrecosHistoricoPage() {
           </p>
         </div>
       </header>
+
+      <div className="mt-4">
+        <MercadoBanner
+          title={t("priceHistoryV2.banner.title")}
+          subtitle={t("priceHistoryV2.banner.subtitle")}
+          imageSrc={bannerComunitario}
+          tone="community"
+        />
+      </div>
+
+
 
       {/* Aviso local */}
       <section className="mt-5 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
