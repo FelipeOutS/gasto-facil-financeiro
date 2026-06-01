@@ -24,6 +24,7 @@ import {
   Loader2,
   Check,
   ShoppingBasket,
+  Trash2,
 } from "lucide-react";
 import { BarcodeScannerButton } from "@/components/mercado/BarcodeScannerButton";
 import {
@@ -56,6 +57,7 @@ import {
   computeOrcamentoLista,
   computeResumo,
   finalizarListaCompra,
+  removeItemLista,
   toggleItemComprado,
   updateItemLista,
   useMercadoLista,
@@ -497,6 +499,19 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
     toast.success(t("communityPrices.suggestions.applied"));
   }
 
+  async function handleRemove() {
+    const ok = await confirmAsync({
+      title: t("carrinho.items.removeConfirmTitle"),
+      description: t("carrinho.items.removeConfirmDescription", { name: item.nome }),
+      confirmText: t("carrinho.items.remove"),
+      cancelText: t("carrinho.items.cancel"),
+      destructive: true,
+    });
+    if (!ok) return;
+    removeItemLista(listaId, item.id);
+    toast.success(t("carrinho.items.removed"));
+  }
+
   const subtotal = (item.precoEstimado ?? 0) * (item.quantidade || 1);
 
   return (
@@ -542,9 +557,17 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
           type="button"
           onClick={() => setEditing((v) => !v)}
           aria-label={t("carrinho.items.editPrice")}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-border bg-card-elevated text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border bg-card-elevated text-muted-foreground transition-colors hover:text-foreground active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {editing ? <X className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+        </button>
+        <button
+          type="button"
+          onClick={handleRemove}
+          aria-label={t("carrinho.items.remove")}
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-destructive/30 bg-destructive/5 text-destructive transition-colors hover:bg-destructive/10 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          <Trash2 className="h-4 w-4" />
         </button>
       </div>
 

@@ -458,7 +458,12 @@
       "unmark": "Unmark",
       "editPrice": "Edit unit price",
       "pricePlaceholder": "Unit price",
-      "save": "Save"
+      "save": "Save",
+      "remove": "Remove item from cart",
+      "removed": "Item removed from cart",
+      "removeConfirmTitle": "Remove this item?",
+      "removeConfirmDescription": "Are you sure you want to remove \"{{name}}\" from the cart?",
+      "cancel": "Cancel"
     },
     "quickAdd": {
       "title": "Quick add item",
