@@ -497,6 +497,27 @@ function Index() {
         />
       </div>
 
+      {/* V3 — Banner premium do Dashboard (compacto, complementa o hero/MonthSummary). */}
+      <div className="mt-3 lg:mt-4">
+        <AppModuleBanner
+          tone="relatorios"
+          compact
+          title={t("heroBannerV2.title")}
+          subtitle={t("heroBannerV2.subtitle")}
+          cta={
+            <Link
+              to="/adicionar"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-card transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              {t("heroBannerV2.cta")}
+            </Link>
+          }
+        />
+      </div>
+
+
+
 
 
       {/* ===== Resumo financeiro — versão desktop/tablet ===== */}
