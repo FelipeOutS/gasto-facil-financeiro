@@ -184,6 +184,7 @@ export const KNOWN_BRANDS: string[] = [
 export const STRONG_MARKET_BRANDS: string[] = [
   "heineken",
   "coca cola",
+  "coca-cola",
   "coca",
   "pepsi",
   "fanta",
@@ -206,6 +207,7 @@ export const STRONG_MARKET_BRANDS: string[] = [
   "nestle",
   "nescau",
   "toddynho",
+  "toddy",
   "piracanjuba",
   "italac",
   "sadia",
@@ -230,6 +232,9 @@ export const STRONG_MARKET_BRANDS: string[] = [
   "tirol",
   "batavo",
   "piraque",
+  "bauducco",
+  "qualy",
+  "doriana",
 ];
 
 // Ordenamos por comprimento desc para casar primeiro marcas multi-palavra
@@ -265,6 +270,8 @@ const NOISE_TOKENS = new Set([
   "sache",
   "sachet",
   "saches",
+  "sache",
+  "saches",
   "garrafa",
   "garrafas",
   "lata",
@@ -283,6 +290,8 @@ const NOISE_TOKENS = new Set([
   "rolos",
   "tradicional",
   "tradicionais",
+  "especial",
+  "especiais",
   "original",
   "originais",
   "novo",
@@ -296,6 +305,8 @@ const NOISE_TOKENS = new Set([
   "defum",
   "defumada",
   "defumado",
+  "defumadas",
+  "defumados",
   "congelada",
   "congelado",
   "resfriada",
@@ -317,6 +328,53 @@ const NOISE_TOKENS = new Set([
 const NUMERIC_UNIT_RE =
   /\b\d+[.,]?\d*\s?(?:kg|g|mg|l|ml|un|und|unid|cx|pct|pc|pcs|sache|saches|rolo|rolos|fardo|barra|barras|x|%)\b/gi;
 const NUMBER_X_NUMBER_RE = /\b\d+\s?x\s?\d+\s?(?:kg|g|mg|l|ml|un|cx|pct)\b/gi;
+
+/**
+ * Normalização específica de mercado/OCR para lookup de imagem.
+ * Mantém apenas texto pesquisável; não altera o nome salvo pelo usuário.
+ */
+export function normalizeMarketProductTerms(
+  raw: string | null | undefined,
+  hintedBrand?: string | null,
+): string {
+  let text = normalizeForKey(raw);
+  if (!text) return "";
+
+  const brandKey = normalizeForKey(hintedBrand);
+  const beerContext =
+    [
+      "heineken",
+      "brahma",
+      "skol",
+      "antarctica",
+      "itaipava",
+      "ambev",
+      "stella artois",
+      "budweiser",
+      "amstel",
+      "eisenbahn",
+      "corona",
+    ].includes(brandKey) || /\b(cerveja|beer|lager|pilsen)\b/.test(text);
+
+  text = text
+    .replace(/\blong\s*nek\b/g, " long neck ")
+    .replace(/\blongneck\b/g, " long neck ")
+    .replace(/\bcoca\s*cola\b/g, " coca cola ")
+    .replace(/\brefri\b/g, " refrigerante ")
+    .replace(/\bachoc\s*po\b/g, " achocolatado em po ")
+    .replace(/\bachocolatado\s*po\b/g, " achocolatado em po ")
+    .replace(/\bling\b/g, " linguica ")
+    .replace(/\bcx\b/g, " caixa ")
+    .replace(/\bpct\b/g, " pacote ")
+    .replace(/\b(?:lt|litro|litros)\b/g, " l ")
+    .replace(/\b(?:und|un|unid|unidade|unidades)\b/g, " ");
+
+  if (beerContext) {
+    text = text.replace(/\bln\b/g, " long neck ");
+  }
+
+  return normalizeForKey(text);
+}
 
 export type ProductNameClean = {
   /** Nome enxuto para busca (sem ruído, sem marca). */
