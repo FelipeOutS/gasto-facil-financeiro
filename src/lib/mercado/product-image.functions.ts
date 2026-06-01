@@ -177,27 +177,41 @@ async function lookupByName(
   const params = new URLSearchParams({
     search_terms: q,
     json: "1",
-    page_size: "3",
+    page_size: "5",
     fields: "image_front_url,image_url,product_name,brands",
   });
   const url = `https://world.openfoodfacts.org/cgi/search.pl?${params.toString()}`;
   const data = await fetchJson<OFFSearch>(url);
   if (!data?.products?.length) return null;
   const normalizedQuery = normalizeForKey(productName);
+  const normalizedBrand = brand ? normalizeForKey(brand) : "";
+  // Escolhemos o melhor candidato por similaridade combinada (nome + marca).
+  let best: {
+    img: string;
+    score: number;
+  } | null = null;
   for (const p of data.products) {
     const img = safeUrl(p.image_front_url || p.image_url);
     if (!img) continue;
-    const sim = similarity(normalizedQuery, normalizeForKey(p.product_name));
-    if (sim >= 0.55) {
-      return {
-        imageUrl: img,
-        source: "off_search",
-        confidence: "medium",
-        origin: "openfoodfacts",
-      };
-    }
+    const nameSim = similarity(normalizedQuery, normalizeForKey(p.product_name));
+    const brandSim = normalizedBrand
+      ? similarity(normalizedBrand, normalizeForKey(p.brands))
+      : 0;
+    // bônus se a marca bater bem
+    const score = nameSim + (brandSim > 0.6 ? 0.15 : 0);
+    if (!best || score > best.score) best = { img, score };
   }
-  return null;
+  if (!best) return null;
+  // Threshold um pouco mais conservador para evitar imagens erradas.
+  if (best.score < 0.55) return null;
+  const confidence: ProductImageConfidence =
+    best.score >= 0.85 ? "high" : best.score >= 0.65 ? "medium" : "low";
+  return {
+    imageUrl: best.img,
+    source: "off_search",
+    confidence,
+    origin: "openfoodfacts",
+  };
 }
 
 function lookupBrandLogo(
@@ -229,10 +243,26 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
     if (hit) return { ...hit, checkedAt: now };
   }
 
-  const byName = await lookupByName(input.productName, input.brand ?? null);
-  if (byName) return { ...byName, checkedAt: now };
+  // Limpa o nome (remove unidades, embalagens, adjetivos) e tenta extrair
+  // marca embutida quando o usuário não passou uma marca explícita.
+  const { cleanedName, extractedBrand } = cleanProductName(
+    input.productName,
+    input.brand ?? null,
+  );
+  const effectiveName = cleanedName || input.productName;
+  const effectiveBrand = extractedBrand || input.brand || null;
 
-  const byBrand = lookupBrandLogo(input.brand ?? null);
+  // 1ª tentativa: nome limpo + marca (mais preciso).
+  const byNameWithBrand = await lookupByName(effectiveName, effectiveBrand);
+  if (byNameWithBrand) return { ...byNameWithBrand, checkedAt: now };
+
+  // 2ª tentativa: só nome limpo (sem marca) — pega genéricos.
+  if (effectiveBrand) {
+    const byNameOnly = await lookupByName(effectiveName, null);
+    if (byNameOnly) return { ...byNameOnly, checkedAt: now };
+  }
+
+  const byBrand = lookupBrandLogo(effectiveBrand);
   if (byBrand) return { ...byBrand, checkedAt: now };
 
   return { ...EMPTY_RESULT, checkedAt: now };
