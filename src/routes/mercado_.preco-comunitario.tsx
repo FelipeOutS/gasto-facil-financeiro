@@ -132,6 +132,12 @@ const emptyManualForm = (): ManualForm => ({
   city: "",
   neighborhood: "",
   notes: "",
+  brand: "",
+  barcode: "",
+  imageUrl: null,
+  imageSource: null,
+  imageConfidence: null,
+  imageRemoved: false,
 });
 
 
