@@ -1675,6 +1675,71 @@
       "title": "Price history",
       "subtitle": "Track price changes for products you've bought and find out where you can pay less."
     }
+  },
+  "budgetV2": {
+    "banner": {
+      "title": "Grocery budget",
+      "subtitle": "Set how much you plan to spend and track whether your shopping stays on budget."
+    },
+    "summary": {
+      "title": "Budget summary",
+      "budget": "Budget",
+      "used": "Used",
+      "remaining": "Remaining",
+      "status": "Status"
+    },
+    "status": {
+      "safe": "Within budget",
+      "warning": "Close to the limit",
+      "exceeded": "Over budget",
+      "none": "No budget set"
+    },
+    "config": {
+      "title": "Your grocery budget",
+      "description": "Set a reference amount to track your shopping.",
+      "helper": "This budget applies only to grocery shopping. It does not change your main monthly app budget.",
+      "edit": "Edit budget"
+    },
+    "empty": {
+      "title": "You haven't set a budget yet",
+      "description": "Set an amount and track your grocery shopping in real time.",
+      "define": "Set budget",
+      "createList": "Create shopping list"
+    },
+    "steps": {
+      "title": "How it works",
+      "define": "Set the shopping amount.",
+      "addItems": "Add items to the cart or list.",
+      "track": "Track the total before checking out."
+    }
+  },
+  "calculatorsV2": {
+    "banner": {
+      "title": "Grocery calculators",
+      "subtitle": "Compare prices, calculate units, and see which option is worth it before adding to your cart."
+    },
+    "intro": {
+      "title": "Before you decide",
+      "description": "Fill in the values to compare options. Use the calculators as support while shopping."
+    },
+    "card": {
+      "calculate": "Calculate",
+      "result": "Result",
+      "clear": "Clear"
+    },
+    "empty": {
+      "title": "Fill in the values",
+      "description": "Enter price and quantity to see the comparison."
+    },
+    "tips": {
+      "value": "This option is cheaper per unit.",
+      "validity": "Also compare expiration date, brand, and quantity before deciding.",
+      "lowestPrice": "The lowest price is not always the best value."
+    },
+    "cta": {
+      "goToCart": "Go to cart",
+      "createList": "Create shopping list"
+    }
   }
 }
 
