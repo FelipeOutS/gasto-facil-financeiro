@@ -112,6 +112,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  AppPageHeader,
+  AppModuleBanner,
+  AppSummaryCard,
+  AppEmptyStateVisual,
+} from "@/components/app-v2";
 
 export const Route = createFileRoute("/cartoes/")({
   validateSearch: (search: Record<string, unknown>) => ({
