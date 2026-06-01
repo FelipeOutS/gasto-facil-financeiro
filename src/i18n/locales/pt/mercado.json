@@ -1399,5 +1399,59 @@
       "productImage": "Imagem do produto",
       "categoryPlaceholder": "Sem imagem"
     }
+  },
+  "shell": {
+    "greeting": "Olá",
+    "greetingShort": "Oi",
+    "searchPlaceholder": "Buscar produto, marca ou preço",
+    "searchAria": "Buscar produtos",
+    "marketLabel": "Mercado atual",
+    "marketNone": "Escolher mercado",
+    "marketChange": "Trocar",
+    "categories": {
+      "title": "Categorias",
+      "hortifruti": "Hortifruti",
+      "acougue": "Açougue",
+      "padaria": "Padaria",
+      "bebidas": "Bebidas",
+      "laticinios": "Laticínios",
+      "limpeza": "Limpeza",
+      "mercearia": "Mercearia",
+      "utilidades": "Utilidades"
+    },
+    "product": {
+      "addToList": "Adicionar à lista",
+      "added": "Adicionado",
+      "unit": "Unidade",
+      "perUnit": "por {{unit}}",
+      "noImage": "Sem imagem",
+      "noMarket": "Mercado não informado",
+      "seenOn": "visto em {{date}}",
+      "imageAlt": "Imagem de {{name}}",
+      "source": {
+        "online": "Online",
+        "flyer": "Panfleto",
+        "manual": "Manual",
+        "store": "Loja",
+        "receipt": "Cupom",
+        "community": "Comunidade"
+      }
+    },
+    "banner": {
+      "defaultCta": "Saiba mais",
+      "imageAlt": "Banner ilustrativo"
+    },
+    "showcase": {
+      "seeAll": "Ver tudo",
+      "scrollAria": "Vitrine deslizante",
+      "empty": "Nada por aqui ainda."
+    },
+    "section": {
+      "seeAll": "Ver tudo"
+    },
+    "market": {
+      "badgeAria": "Mercado {{name}}",
+      "logoAlt": "Logo de {{name}}"
+    }
   }
 }

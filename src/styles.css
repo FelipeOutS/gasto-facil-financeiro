@@ -73,6 +73,17 @@
   --color-cat-meta: var(--cat-meta);
   --color-cat-uber: var(--cat-uber);
 
+  /* Mercado Inteligente — category accents (shell tokens) */
+  --color-mercado-fresh: var(--mercado-fresh);
+  --color-mercado-meat: var(--mercado-meat);
+  --color-mercado-bakery: var(--mercado-bakery);
+  --color-mercado-drinks: var(--mercado-drinks);
+  --color-mercado-dairy: var(--mercado-dairy);
+  --color-mercado-cleaning: var(--mercado-cleaning);
+  --color-mercado-pantry: var(--mercado-pantry);
+  --color-mercado-household: var(--mercado-household);
+  --color-mercado-community: var(--mercado-community);
+
   --color-chart-1: var(--cat-mercado);
   --color-chart-2: var(--cat-roupas);
   --color-chart-3: var(--cat-besteiras);
@@ -154,6 +165,30 @@
   --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
+
+  /* Mercado Inteligente — category accents (dark) */
+  --mercado-fresh: oklch(0.74 0.16 145);      /* hortifruti — verde fresco */
+  --mercado-meat: oklch(0.62 0.18 22);        /* açougue — vermelho carne */
+  --mercado-bakery: oklch(0.76 0.13 70);      /* padaria — dourado pão */
+  --mercado-drinks: oklch(0.7 0.15 230);      /* bebidas — azul */
+  --mercado-dairy: oklch(0.86 0.07 95);       /* laticínios — creme */
+  --mercado-cleaning: oklch(0.74 0.13 200);   /* limpeza — ciano */
+  --mercado-pantry: oklch(0.7 0.12 55);       /* mercearia — caramelo */
+  --mercado-household: oklch(0.68 0.13 290);  /* utilidades — violeta */
+  --mercado-community: oklch(0.75 0.17 152);  /* preço comunitário — verde economia */
+}
+
+/* Light theme overrides for mercado accents */
+html.light {
+  --mercado-fresh: oklch(0.66 0.16 145);
+  --mercado-meat: oklch(0.56 0.18 22);
+  --mercado-bakery: oklch(0.68 0.14 70);
+  --mercado-drinks: oklch(0.6 0.16 230);
+  --mercado-dairy: oklch(0.78 0.09 95);
+  --mercado-cleaning: oklch(0.64 0.14 200);
+  --mercado-pantry: oklch(0.6 0.13 55);
+  --mercado-household: oklch(0.58 0.14 290);
+  --mercado-community: oklch(0.62 0.17 152);
 }
 
 /* Light theme overrides — applied when <html class="light"> */
