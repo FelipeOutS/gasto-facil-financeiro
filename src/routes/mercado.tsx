@@ -304,7 +304,7 @@ function MercadoHubPage() {
                 to={to}
                 preload="intent"
                 className={cn(
-                  "group relative flex min-h-[112px] flex-col justify-between rounded-2xl border border-border/60 bg-card p-3 shadow-card transition active:scale-[0.98] hover:bg-card-elevated",
+                  "group relative flex min-h-[112px] flex-col justify-between rounded-2xl border border-border/60 bg-card p-3 shadow-card transition active:scale-[0.98] hover:bg-card-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 )}
                 style={{
                   backgroundImage: `linear-gradient(160deg, color-mix(in oklab, ${tint} 14%, var(--card)) 0%, var(--card) 70%)`,
