@@ -119,6 +119,7 @@ export function OnlineImportWizard({
   open,
   onOpenChange,
   onSaved,
+  onOpenFlyerScan,
 }: OnlineImportWizardProps) {
   const { t, i18n } = useTranslation("mercado");
   const { user } = useAuth();
