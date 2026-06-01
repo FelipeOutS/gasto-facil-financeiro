@@ -432,12 +432,19 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
   );
   const effectiveBrand = extractedBrand || input.brand || null;
   const rawName = normalizeForKey(input.productName);
+  const normalizedName = normalizeLookupTerms(cleanedName || rawName, effectiveBrand);
+  const aliases = buildNameAliases(`${cleanedName} ${rawName}`, effectiveBrand, input.category);
+  const categoryTerms = inferCategoryTerms(`${input.productName} ${effectiveBrand ?? ""}`, input.category);
+  const packTerms = packagingTerms(`${input.productName} ${normalizedName}`);
 
   const debug: ProductImageDebug | undefined = isDev
     ? {
         productName: input.productName,
+        brandReceived: input.brand ?? null,
         cleanedName,
+        normalizedName,
         extractedBrand: effectiveBrand,
+        aliases,
         barcode: input.barcode ?? null,
         attempts: [],
         pickedFrom: "none",
@@ -459,23 +466,26 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
     });
   }
 
-  // Sequência de tentativas, da mais específica para a mais ampla.
-  const attempts: Array<{ name: string; brand: string | null }> = [];
-  if (cleanedName && effectiveBrand)
-    attempts.push({ name: cleanedName, brand: effectiveBrand });
-  if (rawName && effectiveBrand && rawName !== cleanedName)
-    attempts.push({ name: rawName, brand: effectiveBrand });
-  if (cleanedName) attempts.push({ name: cleanedName, brand: null });
-  if (rawName && rawName !== cleanedName)
-    attempts.push({ name: rawName, brand: null });
+  // Sequência de tentativas: marca forte primeiro, depois nome original/limpo.
+  const attempts: Array<{ query: string; brand: string | null }> = [];
+  if (effectiveBrand && normalizedName) attempts.push({ query: `${effectiveBrand} ${normalizedName}`, brand: effectiveBrand });
+  if (effectiveBrand) {
+    for (const alias of aliases) attempts.push({ query: `${effectiveBrand} ${alias}`, brand: effectiveBrand });
+    for (const term of categoryTerms) attempts.push({ query: `${effectiveBrand} ${term}`, brand: effectiveBrand });
+    if (isStrongMarketBrand(effectiveBrand)) attempts.push({ query: effectiveBrand, brand: effectiveBrand });
+    attempts.push({ query: `${input.productName} ${effectiveBrand}`, brand: effectiveBrand });
+  }
+  if (normalizedName) attempts.push({ query: normalizedName, brand: null });
+  if (cleanedName && cleanedName !== normalizedName) attempts.push({ query: cleanedName, brand: null });
+  if (rawName && rawName !== cleanedName && rawName !== normalizedName) attempts.push({ query: rawName, brand: null });
 
   const seen = new Set<string>();
   for (const a of attempts) {
-    const key = `${a.name}|${a.brand ?? ""}`;
+    const key = `${normalizeForKey(a.query)}|${normalizeForKey(a.brand ?? "")}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    const hit = await lookupByName(a.name, a.brand, (d) => {
-      debug?.attempts.push({ query: a.name, brand: a.brand, ...d });
+    const hit = await lookupByName(a.query, a.brand, categoryTerms, packTerms, (d) => {
+      debug?.attempts.push({ query: a.query, brand: a.brand, ...d });
     });
     if (hit) {
       if (debug) debug.pickedFrom = "search";
