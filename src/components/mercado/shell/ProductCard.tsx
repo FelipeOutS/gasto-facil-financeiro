@@ -116,7 +116,7 @@ export function ProductCard({
           className,
         )}
       >
-        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-muted">
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-muted/60 to-muted">
           {showImage ? (
             <>
               <img
@@ -124,10 +124,7 @@ export function ProductCard({
                 alt={t("shell.product.imageAlt", { name })}
                 loading="lazy"
                 referrerPolicy="no-referrer"
-                className={cn(
-                  "h-full w-full",
-                  isBrandLogo ? "object-contain p-1.5" : "object-cover",
-                )}
+                className="h-full w-full object-contain p-1.5"
                 onError={onImgError}
               />
               {isSuggested && (
