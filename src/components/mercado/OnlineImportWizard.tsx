@@ -350,11 +350,71 @@ export function OnlineImportWizard({
               <p>{t("communityPrices.onlineImport.confirmMessage")}</p>
               <p className="mt-2 text-[11px] opacity-80">{t("communityPrices.onlineImport.cardScopeNotice")}</p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {t("communityPrices.onlineImport.sourceLabel", {
-                source: "Joanin Online",
-              })}
-            </p>
+
+            <div>
+              <Label htmlFor="online-import-url" className="text-xs">
+                {t("communityPrices.onlineImport.urlLabel")}
+              </Label>
+              <Input
+                id="online-import-url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder={t("communityPrices.onlineImport.urlPlaceholder")}
+                inputMode="url"
+                autoComplete="off"
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {t("communityPrices.onlineImport.urlHelp")}
+              </p>
+              <div className="mt-2">
+                <p className="text-[11px] font-medium text-muted-foreground">
+                  {t("communityPrices.onlineImport.presetsLabel")}
+                </p>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {URL_PRESETS.map((p) => {
+                    const active = url.trim() === p.url;
+                    return (
+                      <button
+                        key={p.key}
+                        type="button"
+                        onClick={() => setUrl(p.url)}
+                        className={`rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+                          active
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border bg-muted/40 text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        {t(`communityPrices.onlineImport.presets.${p.key}`)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="online-import-market" className="text-xs">
+                {t("communityPrices.onlineImport.marketLabel")}
+              </Label>
+              <Input
+                id="online-import-market"
+                list="online-import-market-list"
+                value={marketName}
+                onChange={(e) => setMarketName(e.target.value)}
+                placeholder={t("communityPrices.onlineImport.marketPlaceholder")}
+                autoComplete="off"
+              />
+              <datalist id="online-import-market-list">
+                <option value={DEFAULT_MARKET} />
+                {savedMercados.map((m) => (
+                  <option key={m.id} value={m.nome} />
+                ))}
+              </datalist>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {t("communityPrices.onlineImport.marketHelpSaved")}
+              </p>
+            </div>
+
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button
                 variant="ghost"
