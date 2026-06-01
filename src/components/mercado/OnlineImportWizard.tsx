@@ -91,7 +91,6 @@ export type OnlineImportWizardProps = {
   onOpenFlyerScan?: () => void;
 };
 
-const HOME_URL = "https://joaninonline.com.br/";
 function isProtectedJoaninUrl(raw: string): boolean {
   try {
     const u = new URL(raw.trim());
