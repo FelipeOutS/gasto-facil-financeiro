@@ -24,6 +24,7 @@ import {
   Loader2,
   Check,
   ShoppingBasket,
+  Trash2,
 } from "lucide-react";
 import { BarcodeScannerButton } from "@/components/mercado/BarcodeScannerButton";
 import {
