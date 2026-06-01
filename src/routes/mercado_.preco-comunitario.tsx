@@ -756,22 +756,22 @@ function PrecoComunitarioPage() {
                     }
                   />
                   {owned && (
-                    <div className="absolute right-2 top-2 flex items-center gap-1">
+                    <div className="absolute right-1.5 top-1.5 flex items-center gap-1">
                       <button
                         type="button"
                         onClick={() => openManual(it)}
-                        className="grid h-8 w-8 place-items-center rounded-full bg-background/85 text-foreground shadow-card backdrop-blur transition hover:text-brand"
+                        className="grid h-7 w-7 place-items-center rounded-full bg-background/85 text-foreground shadow-card backdrop-blur transition hover:text-brand"
                         aria-label={t("communityPrices.list.edit")}
                       >
-                        <Pencil className="h-3.5 w-3.5" />
+                        <Pencil className="h-3 w-3" />
                       </button>
                       <button
                         type="button"
                         onClick={() => removeItem(it.id)}
-                        className="grid h-8 w-8 place-items-center rounded-full bg-background/85 text-foreground shadow-card backdrop-blur transition hover:text-destructive"
+                        className="grid h-7 w-7 place-items-center rounded-full bg-background/85 text-foreground shadow-card backdrop-blur transition hover:text-destructive"
                         aria-label={t("communityPrices.list.remove")}
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="h-3 w-3" />
                       </button>
                     </div>
                   )}
