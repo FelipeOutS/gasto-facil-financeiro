@@ -1399,5 +1399,59 @@
       "partialImportBanner": "Partial import: some products only appear after interaction on the official site.",
       "imageAlt": "Public product image"
     }
+  },
+  "shell": {
+    "greeting": "Hello",
+    "greetingShort": "Hi",
+    "searchPlaceholder": "Search product, brand or price",
+    "searchAria": "Search products",
+    "marketLabel": "Current market",
+    "marketNone": "Choose a market",
+    "marketChange": "Change",
+    "categories": {
+      "title": "Categories",
+      "hortifruti": "Produce",
+      "acougue": "Butcher",
+      "padaria": "Bakery",
+      "bebidas": "Drinks",
+      "laticinios": "Dairy",
+      "limpeza": "Cleaning",
+      "mercearia": "Pantry",
+      "utilidades": "Household"
+    },
+    "product": {
+      "addToList": "Add to list",
+      "added": "Added",
+      "unit": "Unit",
+      "perUnit": "per {{unit}}",
+      "noImage": "No image",
+      "noMarket": "Market not provided",
+      "seenOn": "seen on {{date}}",
+      "imageAlt": "Image of {{name}}",
+      "source": {
+        "online": "Online",
+        "flyer": "Flyer",
+        "manual": "Manual",
+        "store": "Store",
+        "receipt": "Receipt",
+        "community": "Community"
+      }
+    },
+    "banner": {
+      "defaultCta": "Learn more",
+      "imageAlt": "Illustrative banner"
+    },
+    "showcase": {
+      "seeAll": "See all",
+      "scrollAria": "Sliding showcase",
+      "empty": "Nothing here yet."
+    },
+    "section": {
+      "seeAll": "See all"
+    },
+    "market": {
+      "badgeAria": "Market {{name}}",
+      "logoAlt": "Logo of {{name}}"
+    }
   }
 }
