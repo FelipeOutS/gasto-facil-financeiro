@@ -90,7 +90,7 @@ const CARDS: CardDef[] = [
   { key: "precoComunitario", icon: BadgePercent, status: "open", to: "/mercado/preco-comunitario", feature: "mercado_avancado" },
   { key: "mercados", icon: Store, status: "open", to: "/mercado/mercados", feature: "mercado_avancado" },
   { key: "meusMercados", icon: MapPin, status: "open", to: "/mercado/meus-mercados", feature: "mercado_avancado" },
-  { key: "precos", icon: BarChart3, status: "future", to: "/mercado/precos", feature: "mercado_avancado" },
+  { key: "precos", icon: BarChart3, status: "open", to: "/mercado/precos", feature: "mercado_avancado" },
   { key: "cesta", icon: PackageCheck, status: "open", to: "/mercado/cesta", feature: "mercado_avancado" },
 ];
 
