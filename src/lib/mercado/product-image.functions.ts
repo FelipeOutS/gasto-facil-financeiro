@@ -339,7 +339,7 @@ async function lookupByName(
     search_terms: q,
     json: "1",
     page_size: "20",
-    fields: "image_front_url,image_url,product_name,brands",
+    fields: "image_front_url,image_url,product_name,brands,selected_images",
   });
   const url = `https://world.openfoodfacts.org/cgi/search.pl?${params.toString()}`;
   const data = await fetchJson<OFFSearch>(url);
@@ -350,10 +350,12 @@ async function lookupByName(
   const normalizedQuery = normalizeForKey(query);
   const normalizedBrand = brand ? normalizeForKey(brand) : "";
   const strongBrand = isStrongMarketBrand(normalizedBrand);
+  const brandOnlyQuery =
+    !!normalizedBrand && normalizedQuery === normalizedBrand;
   let best: { img: string; score: number; name: string | null; brands: string | null; brandMatched: boolean } | null = null;
   let bestNoImage: { score: number; name: string | null; brands: string | null } | null = null;
   for (const p of data.products) {
-    const img = safeUrl(p.image_front_url || p.image_url);
+    const img = pickProductImage(p);
     const candidateName = normalizeForKey(p.product_name);
     const candidateBrands = normalizeForKey(p.brands);
     const nameSim = similarity(normalizedQuery, candidateName);
