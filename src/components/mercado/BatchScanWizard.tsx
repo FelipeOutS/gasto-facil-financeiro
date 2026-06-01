@@ -1011,6 +1011,45 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                           />
                         </div>
                       </div>
+                      {/* Sugestão de imagem (Open Food Facts) — lazy, com remove/onResult. */}
+                      <ProductImageReview
+                        productName={r.productName}
+                        brand={r.brand}
+                        barcode={r.barcode}
+                        removed={r.imageRemoved}
+                        enabled={r.include && r.productName.trim().length >= 2}
+                        onRemove={() =>
+                          setReviewItems((cur) =>
+                            cur.map((x, i) =>
+                              i === idx
+                                ? {
+                                    ...x,
+                                    imageRemoved: true,
+                                    imageUrl: null,
+                                    imageSource: null,
+                                    imageConfidence: null,
+                                  }
+                                : x,
+                            ),
+                          )
+                        }
+                        onResult={(result: ProductImageResult | null) => {
+                          const persistable = toPersistableImage(result);
+                          setReviewItems((cur) =>
+                            cur.map((x, i) => {
+                              if (i !== idx) return x;
+                              // Respeita remoção explícita do usuário.
+                              if (x.imageRemoved) return x;
+                              return {
+                                ...x,
+                                imageUrl: persistable.image_url,
+                                imageSource: persistable.image_source,
+                                imageConfidence: persistable.image_confidence,
+                              };
+                            }),
+                          );
+                        }}
+                      />
                       {r.notes && <p className="mt-2 text-[11px] text-muted-foreground">{r.notes}</p>}
                     </li>
                   );
