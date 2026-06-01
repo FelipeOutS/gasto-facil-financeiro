@@ -22,6 +22,7 @@ export const RATE_LIMIT_PRESETS = {
   aiPerUser: { limit: 20, windowSeconds: 3600 },
   importPerUser: { limit: 10, windowSeconds: 3600 },
   flyerOcrPerUser: { limit: 40, windowSeconds: 3600 },
+  onlineImportPerUser: { limit: 30, windowSeconds: 3600 },
   authAttempt: { limit: 10, windowSeconds: 600 },
 } satisfies Record<string, RateLimitPreset>;
 
