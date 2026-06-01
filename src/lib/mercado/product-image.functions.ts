@@ -491,7 +491,7 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
   const rawName = normalizeForKey(input.productName);
   const normalizedName = normalizeLookupTerms(cleanedName || rawName, effectiveBrand);
   const aliases = buildNameAliases(`${cleanedName} ${rawName}`, effectiveBrand, input.category);
-  const categoryTerms = inferCategoryTerms(`${input.productName} ${effectiveBrand ?? ""}`, input.category);
+  const categoryTerms = inferCategoryTerms(`${input.productName} ${effectiveBrand ?? ""}`, input.category, effectiveBrand);
   const packTerms = packagingTerms(`${input.productName} ${normalizedName}`);
 
   const debug: ProductImageDebug | undefined = isDev
