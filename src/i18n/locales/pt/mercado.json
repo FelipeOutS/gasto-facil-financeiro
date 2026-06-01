@@ -1311,18 +1311,18 @@
     },
     "onlineImport": {
       "cardTitle": "Importar preços online",
-      "cardDescription": "Busque preços públicos disponíveis online e revise antes de salvar.",
+      "cardDescription": "Importamos apenas os destaques públicos da página inicial do Joanin Online. Revise antes de salvar.",
       "cardCta": "Importar do Joanin Online",
       "title": "Importar preços online",
       "description": "Vamos buscar preços públicos do Joanin Online. Revise antes de salvar.",
-      "confirmMessage": "Vamos buscar preços públicos do Joanin Online. Os valores podem variar por loja, região e data. Revise antes de salvar.",
+      "confirmMessage": "Vamos buscar apenas os destaques públicos da página inicial do Joanin Online. Não acessamos o catálogo completo, áreas logadas ou ofertas internas. Revise antes de salvar.",
       "sourceLabel": "Fonte: {{source}}",
       "sourceTag": "Fonte",
       "cancel": "Cancelar",
       "back": "Voltar",
       "fetchCta": "Buscar preços",
       "loading": "Buscando preços online…",
-      "reviewSummary": "Encontramos {{count}} preço(s) em {{source}} · Atualizado em {{date}}.",
+      "reviewSummary": "Encontramos {{count}} produto(s) público(s) em {{source}} · Atualizado em {{date}}.",
       "reviewDisclaimer": "Confira disponibilidade e preço no mercado antes de comprar.",
       "itemFooter": "Fonte: {{source}} · Atualizado em {{date}}",
       "oldPriceBadge": "Antes R$ {{value}}",
@@ -1338,7 +1338,10 @@
         "rateLimited": "Aguarde um pouco antes de buscar novamente.",
         "selectAtLeastOne": "Selecione ao menos um item para salvar."
       },
-      "scopeNotice": "Mostramos os destaques públicos da home do Joanin Online ({{count}} produtos). O catálogo completo só fica disponível dentro do site oficial."
+      "scopeNotice": "Mostramos os destaques públicos da home do Joanin Online ({{count}} produtos). O catálogo completo só fica disponível dentro do site oficial.",
+      "cardScopeNotice": "Importamos apenas os produtos públicos disponíveis na página inicial do Joanin Online. O catálogo completo pode não estar disponível para leitura automática.",
+      "reviewScopeNote": "Estes itens representam os destaques públicos disponíveis no momento da leitura, não necessariamente todo o catálogo da loja.",
+      "noteSourceLine": "Fonte: Joanin Online — página inicial pública."
     },
     "suggestions": {
       "title": "Preço comunitário encontrado",

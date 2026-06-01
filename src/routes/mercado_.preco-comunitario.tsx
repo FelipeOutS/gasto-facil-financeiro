@@ -322,6 +322,7 @@ function PrecoComunitarioPage() {
             <Cloud className="h-4 w-4" /> {t("communityPrices.onlineImport.cardTitle")}
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">{t("communityPrices.onlineImport.cardDescription")}</p>
+          <p className="mt-2 text-[11px] text-muted-foreground/80">{t("communityPrices.onlineImport.cardScopeNotice")}</p>
           <Button className="mt-3 w-full min-h-11" variant="outline" onClick={() => setOnlineImportOpen(true)}>
             <Cloud className="mr-2 h-4 w-4" /> {t("communityPrices.onlineImport.cardCta")}
           </Button>

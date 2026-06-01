@@ -1333,18 +1333,18 @@
     },
     "onlineImport": {
       "cardTitle": "Import online prices",
-      "cardDescription": "Fetch public prices available online and review before saving.",
+      "cardDescription": "We only import the public highlights from the Joanin Online homepage. Review before saving.",
       "cardCta": "Import from Joanin Online",
       "title": "Import online prices",
       "description": "We will fetch public prices from Joanin Online. Review before saving.",
-      "confirmMessage": "We'll fetch public prices from Joanin Online. Values may vary by store, region and date. Review before saving.",
+      "confirmMessage": "We will only fetch the public highlights from the Joanin Online homepage. We do not access the full catalog, logged-in areas or internal offers. Review before saving.",
       "sourceLabel": "Source: {{source}}",
       "sourceTag": "Source",
       "cancel": "Cancel",
       "back": "Back",
       "fetchCta": "Fetch prices",
       "loading": "Fetching online prices…",
-      "reviewSummary": "Found {{count}} price(s) on {{source}} · Updated on {{date}}.",
+      "reviewSummary": "Found {{count}} public product(s) on {{source}} · Updated on {{date}}.",
       "reviewDisclaimer": "Check availability and price at the store before buying.",
       "itemFooter": "Source: {{source}} · Updated on {{date}}",
       "oldPriceBadge": "Was R$ {{value}}",
@@ -1360,7 +1360,10 @@
         "rateLimited": "Please wait a moment before searching again.",
         "selectAtLeastOne": "Select at least one item to save."
       },
-      "scopeNotice": "Showing public homepage highlights from Joanin Online ({{count}} products). The full catalog is only available inside the official site."
+      "scopeNotice": "Showing public homepage highlights from Joanin Online ({{count}} products). The full catalog is only available inside the official site.",
+      "cardScopeNotice": "We only import the public products available on the Joanin Online homepage. The full catalog may not be available for automatic reading.",
+      "reviewScopeNote": "These items represent the public highlights available at the time of reading, not necessarily the store's full catalog.",
+      "noteSourceLine": "Source: Joanin Online — public homepage."
     }
   }
 }

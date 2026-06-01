@@ -219,7 +219,7 @@ export function OnlineImportWizard({
         const dup = existingMap.get(key);
         const noteParts = [
           r.notes,
-          `${t("communityPrices.onlineImport.sourceTag")}: ${r.sourceName}`,
+          t("communityPrices.onlineImport.noteSourceLine"),
         ];
         if (r.oldPrice && r.oldPrice !== r.price) {
           noteParts.push(
@@ -298,6 +298,7 @@ export function OnlineImportWizard({
           <div className="space-y-3">
             <div className="rounded-md border border-amber-300/50 bg-amber-50/60 p-3 text-[12px] text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
               <p>{t("communityPrices.onlineImport.confirmMessage")}</p>
+              <p className="mt-2 text-[11px] opacity-80">{t("communityPrices.onlineImport.cardScopeNotice")}</p>
             </div>
             <p className="text-xs text-muted-foreground">
               {t("communityPrices.onlineImport.sourceLabel", {
@@ -337,6 +338,7 @@ export function OnlineImportWizard({
                   date: formattedFetchedAt,
                 })}
               </p>
+              <p className="mt-1">{t("communityPrices.onlineImport.reviewScopeNote")}</p>
               <p className="mt-1">{t("communityPrices.onlineImport.reviewDisclaimer")}</p>
             </div>
 
