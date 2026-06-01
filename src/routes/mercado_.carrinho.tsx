@@ -46,6 +46,7 @@ import {
 import { cn } from "@/lib/utils";
 import { MercadoBanner } from "@/components/mercado/shell";
 import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
+import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
 import emptyCarrinho from "@/assets/mercado/empty-carrinho.png";
 import { usePlan } from "@/lib/use-plan";
 import {
@@ -292,6 +293,14 @@ function CartMode({ lista }: { lista: MercadoLista }) {
 
   return (
     <>
+      <MercadoBanner
+        title={t("cartV2.bannerTitle")}
+        subtitle={t("cartV2.bannerSubtitle")}
+        imageSrc={bannerOrcamento}
+        imageAlt={t("cartV2.emptyImageAlt")}
+        tone="brand"
+        className="mt-4"
+      />
       {/* Summary */}
       <section className="mt-5 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
         <div className="flex items-start justify-between gap-3">
@@ -412,6 +421,44 @@ function CartMode({ lista }: { lista: MercadoLista }) {
           precoEstimado: it.precoEstimado,
         }))}
       />
+
+      {/* Espaçador para não cobrir conteúdo atrás do sticky footer mobile */}
+      <div className="h-24 md:hidden" aria-hidden />
+
+      {/* Sticky footer mobile — resumo rápido + CTA de finalizar */}
+      {resumo.totalItens > 0 && (
+        <div
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-card/95 px-3 pt-2 shadow-elevated backdrop-blur md:hidden"
+          style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+          role="region"
+          aria-label={t("cartV2.stickyTotal")}
+        >
+          <div className="mx-auto flex max-w-screen-sm items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                {t("cartV2.stickyTotal")}
+              </p>
+              <p className="truncate text-base font-bold tabular-nums leading-tight">
+                <Money value={resumo.totalEstimado} />
+              </p>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {t("cartV2.stickyItems", {
+                  bought: resumo.itensComprados,
+                  total: resumo.totalItens,
+                })}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleFinalize}
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl bg-brand-grad px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
+            >
+              <Flag className="h-4 w-4" />
+              {t("cartV2.stickyFinalize")}
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
