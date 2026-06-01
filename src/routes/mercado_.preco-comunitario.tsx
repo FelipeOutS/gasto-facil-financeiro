@@ -188,16 +188,15 @@ function PrecoComunitarioPage() {
       if (m && !it.market_name.toLowerCase().includes(m)) return false;
       if (c && !(it.category ?? "").toLowerCase().includes(c)) return false;
       if (filterSource && it.source !== filterSource) return false;
-      if (chipMatchers) {
+      if (chipIsOutros || chipMatchers) {
         const cat = (it.category ?? "").toLowerCase();
         const name = it.product_name.toLowerCase();
-        if (categoryChip === "outros") {
-          // Outros = não cai em nenhuma das 8 categorias conhecidas
+        if (chipIsOutros) {
           const inAny = MERCADO_CATEGORIES.some((k) =>
             CATEGORY_MATCHERS[k].some((mm) => cat.includes(mm) || name.includes(mm)),
           );
           if (inAny) return false;
-        } else {
+        } else if (chipMatchers) {
           const hit = chipMatchers.some((mm) => cat.includes(mm) || name.includes(mm));
           if (!hit) return false;
         }
