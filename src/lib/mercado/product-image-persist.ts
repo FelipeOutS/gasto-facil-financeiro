@@ -39,6 +39,12 @@ export function toPersistableImage(
   if (!v.ok) return EMPTY;
   // Logos locais não satisfazem a constraint de URL — pular persistência.
   if (v.origin === "local") return EMPTY;
+  // Só persistimos quando a confiança é média ou alta — evita gravar
+  // imagens duvidosas no banco. Baixa confiança continua aparecendo
+  // como sugestão temporária em runtime.
+  if (result.confidence !== "high" && result.confidence !== "medium") {
+    return EMPTY;
+  }
 
   const source: ImageSourceTag =
     v.origin === "openfoodfacts"
