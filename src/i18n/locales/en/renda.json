@@ -1,5 +1,56 @@
 {
   "back": "Back",
+  "v3": {
+    "header": {
+      "title": "Income",
+      "title_mei": "Revenue",
+      "title_empresa": "Revenue",
+      "description": "Track salaries, side income, recurring entries and everything coming in this month.",
+      "description_mei": "Track sales, services, contracts, recurring entries and everything coming in.",
+      "description_empresa": "Track sales, services, contracts, recurring entries and everything coming into the company."
+    },
+    "banner": {
+      "title": "Get clarity on everything coming in",
+      "title_mei": "Get clarity on your full revenue",
+      "title_empresa": "Get clarity on the company's revenue",
+      "subtitle": "Organize salaries, side income and recurring entries to see the whole month at a glance.",
+      "subtitle_mei": "Organize receipts, sales and contracts to see your month's revenue at a glance.",
+      "subtitle_empresa": "Organize receipts, contracts and sales to see the company's monthly revenue.",
+      "cta": "Add income",
+      "cta_mei": "Add revenue",
+      "cta_empresa": "Add revenue",
+      "alt": "Illustration of income entries"
+    },
+    "summary": {
+      "total": "Total this month",
+      "count": "Entries this month",
+      "next": "Next entry",
+      "recurring": "Recurring"
+    },
+    "sections": {
+      "listTitle": "Your entries",
+      "forecastTitle": "Forecast",
+      "upcomingTitle": "Upcoming entries"
+    },
+    "empty": {
+      "title": "Add your first income",
+      "title_mei": "Add your first revenue entry",
+      "title_empresa": "Add your first revenue entry",
+      "description": "In less than a minute you'll see everything organized in the month summary.",
+      "description_mei": "In less than a minute you'll see your revenue organized in the month summary.",
+      "description_empresa": "In less than a minute you'll see the revenue organized in the month summary.",
+      "cta": "Add income",
+      "cta_mei": "Add revenue",
+      "cta_empresa": "Add revenue",
+      "steps": {
+        "source": "Add the source",
+        "amount": "Set amount and date",
+        "summary": "Track it in the month summary",
+        "summary_mei": "Track it in the month revenue",
+        "summary_empresa": "Track it in the month revenue"
+      }
+    }
+  },
   "header": {
     "kicker": "Your income",
     "kicker_mei": "Your revenue",
