@@ -5,6 +5,8 @@ import { ArrowLeft, Home, BarChart3, Info, PackageSearch, Store, ChevronRight } 
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
+import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
+import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
 import {
   Select,
   SelectContent,
@@ -12,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import {
   MERCADO_FILTRO_ALL,
   MERCADO_FILTRO_SEM,
