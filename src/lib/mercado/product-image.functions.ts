@@ -56,12 +56,28 @@ export type ProductImageSource =
 
 export type ProductImageConfidence = "high" | "medium" | "low" | null;
 
+export type ProductImageDebug = {
+  productName: string;
+  cleanedName: string;
+  extractedBrand: string | null;
+  barcode: string | null;
+  attempts: Array<{
+    query: string;
+    brand: string | null;
+    candidates: number;
+    bestScore: number | null;
+    rejected: string | null;
+  }>;
+  pickedFrom: "barcode" | "search" | "brand_logo" | "none";
+};
+
 export type ProductImageResult = {
   imageUrl: string | null;
   source: ProductImageSource;
   confidence: ProductImageConfidence;
   origin: "openfoodfacts" | "local" | null;
   checkedAt: string;
+  debug?: ProductImageDebug;
 };
 
 const EMPTY_RESULT: Omit<ProductImageResult, "checkedAt"> = {
