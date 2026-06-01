@@ -5,8 +5,10 @@ import { cn } from "@/lib/utils";
 export interface MercadoBannerProps {
   title: ReactNode;
   subtitle?: ReactNode;
-  /** URL da imagem/ilustração (responsiva, lazy). */
+  /** URL da imagem/ilustração (responsiva, lazy). Fallback quando WebP não estiver disponível. */
   imageSrc?: string;
+  /** URL WebP opcional — renderizada via <picture> com fallback automático para imageSrc. */
+  imageSrcWebp?: string;
   imageAlt?: string;
   /** Tonalidade de fundo: usa token do mercado. */
   tone?: "brand" | "fresh" | "meat" | "bakery" | "drinks" | "dairy" | "cleaning" | "pantry" | "household" | "community";
