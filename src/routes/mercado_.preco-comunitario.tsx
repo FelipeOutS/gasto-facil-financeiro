@@ -235,6 +235,76 @@ function PrecoComunitarioPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Backfill incremental de imagem para itens do próprio usuário sem
+  // image_url salvo. Roda lazy, em segundo plano, com concorrência baixa.
+  // Cada id é tentado no máximo uma vez por sessão (sucesso ou falha).
+  const backfillAttempted = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!user || loading || items.length === 0) return;
+    const candidates = items.filter(
+      (it) =>
+        it.user_id === user.id &&
+        !it.image_url &&
+        !backfillAttempted.current.has(it.id) &&
+        (it.product_name?.trim().length ?? 0) >= 2,
+    );
+    if (candidates.length === 0) return;
+
+    let cancelled = false;
+    const queue = candidates.slice(0, 24); // proteção: lote pequeno por render
+    queue.forEach((it) => backfillAttempted.current.add(it.id));
+
+    (async () => {
+      const CONCURRENCY = 2;
+      let cursor = 0;
+      const workers = Array.from({ length: CONCURRENCY }, async () => {
+        while (!cancelled && cursor < queue.length) {
+          const it = queue[cursor++];
+          try {
+            const result = await lookupProductImage({
+              data: {
+                productName: it.product_name,
+                brand: it.brand,
+                barcode: it.barcode,
+              },
+            });
+            const persistable = toPersistableImage(result);
+            if (!persistable.image_url || cancelled) continue;
+            const { error } = await (supabase.from(TABLE as never) as any)
+              .update({
+                image_url: persistable.image_url,
+                image_source: persistable.image_source,
+                image_confidence: persistable.image_confidence,
+              })
+              .eq("id", it.id)
+              .eq("user_id", user.id)
+              .is("image_url", null);
+            if (error || cancelled) continue;
+            setItems((curr) =>
+              curr.map((row) =>
+                row.id === it.id
+                  ? {
+                      ...row,
+                      image_url: persistable.image_url,
+                      image_source: persistable.image_source,
+                      image_confidence: persistable.image_confidence,
+                    }
+                  : row,
+              ),
+            );
+          } catch {
+            // silencioso — backfill é best-effort
+          }
+        }
+      });
+      await Promise.all(workers);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [items, loading, user]);
+
   const filtered = useMemo(() => {
     const p = filterProduct.trim().toLowerCase();
     const m = filterMarket.trim().toLowerCase();
