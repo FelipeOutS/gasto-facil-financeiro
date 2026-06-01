@@ -1545,5 +1545,49 @@
     "budgetCta": "Open shopping budget",
     "toolsTitle": "View all tools",
     "toolsDesc": "All areas of Smart Market, including premium features."
+  },
+  "listsV2": {
+    "bannerTitle": "Your shopping lists",
+    "bannerSubtitle": "Plan your shop, track spending and take only what you need.",
+    "bannerCta": "New list",
+    "emptyTitle": "You don't have any lists yet",
+    "emptyDesc": "Create your first list to organize your shop and control spending before heading to the store.",
+    "emptyCta": "Create first list",
+    "emptyImageAlt": "Empty shopping list illustration"
+  },
+  "listDetailV2": {
+    "bannerSubtitle": "Check off items as you put them in your cart while shopping.",
+    "searchPlaceholder": "Search item in list",
+    "searchAria": "Search item in list",
+    "groupTitle": {
+      "hortifruti": "Produce",
+      "acougue": "Butcher",
+      "padaria": "Bakery",
+      "bebidas": "Drinks",
+      "laticinios": "Dairy",
+      "limpeza": "Cleaning",
+      "mercearia": "Pantry",
+      "utilidades": "Household",
+      "outros": "Other"
+    },
+    "emptyTitle": "No items in this list",
+    "emptyDesc": "Add your first item using the form below or the barcode scanner.",
+    "emptyImageAlt": "Empty cart illustration",
+    "noMatch": "No items match your search.",
+    "stickyTotal": "Estimated total",
+    "stickyItems": "{{bought}}/{{total}} items",
+    "stickyGoCart": "Go to cart"
+  },
+  "cartV2": {
+    "bannerTitle": "Your cart",
+    "bannerSubtitle": "Track quantity, prices and finalize the shop.",
+    "emptyTitle": "Empty cart",
+    "emptyDesc": "Pick a list to start checking off items while you shop.",
+    "emptyCta": "View my lists",
+    "emptySecondaryCta": "Create new list",
+    "emptyImageAlt": "Empty cart illustration",
+    "stickyTotal": "Estimated total",
+    "stickyItems": "{{bought}}/{{total}} items",
+    "stickyFinalize": "Finalize"
   }
 }
