@@ -8,7 +8,7 @@ import { Money } from "@/components/Money";
 import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
 import { SectionBlock } from "@/components/mercado/shell/SectionBlock";
 import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
-import emptyCarrinho from "@/assets/mercado/empty-carrinho.png";
+import emptyCarrinho from "@/assets/mercado/empty-carrinho.webp";
 import { cn } from "@/lib/utils";
 import {
   useMercadoHistorico,

@@ -27,7 +27,7 @@ import {
   type ProductSource,
 } from "@/components/mercado/shell";
 import bannerPrecos from "@/assets/mercado/banner-comunitario.jpg";
-import emptyComunitario from "@/assets/mercado/empty-comunitario.png";
+import emptyComunitario from "@/assets/mercado/empty-comunitario.webp";
 import {
   Select,
   SelectContent,

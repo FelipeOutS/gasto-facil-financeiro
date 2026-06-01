@@ -47,7 +47,7 @@ import { cn } from "@/lib/utils";
 import { MercadoBanner } from "@/components/mercado/shell";
 import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
 import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
-import emptyCarrinho from "@/assets/mercado/empty-carrinho.png";
+import emptyCarrinho from "@/assets/mercado/empty-carrinho.webp";
 import { usePlan } from "@/lib/use-plan";
 import {
   addItemLista,

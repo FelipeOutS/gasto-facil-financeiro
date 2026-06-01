@@ -40,7 +40,7 @@ import {
 } from "@/lib/mercado/community-prices-suggestions";
 import { MercadoBanner, type MercadoCategoryKey } from "@/components/mercado/shell";
 import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
-import emptyCarrinho from "@/assets/mercado/empty-carrinho.png";
+import emptyCarrinho from "@/assets/mercado/empty-carrinho.webp";
 
 import { cn } from "@/lib/utils";
 import { usePlan } from "@/lib/use-plan";

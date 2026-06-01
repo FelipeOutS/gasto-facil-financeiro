@@ -27,7 +27,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useState } from "react";
 import { MercadoBanner } from "@/components/mercado/shell";
 import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
-import emptyLista from "@/assets/mercado/empty-lista.png";
+import emptyLista from "@/assets/mercado/empty-lista.webp";
 
 
 export const Route = createFileRoute("/mercado_/listas")({
