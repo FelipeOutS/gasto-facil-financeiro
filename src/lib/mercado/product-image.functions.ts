@@ -538,6 +538,18 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
     return { ...byBrand, checkedAt: now, debug };
   }
 
+  if (isDev && debug) {
+    // Resumo curto em dev para auditar produtos que ficaram sem imagem.
+    // Não loga base64, payload sensível ou dados pessoais.
+    // eslint-disable-next-line no-console
+    console.warn("[image-lookup:miss]", {
+      product: debug.productName,
+      brand: debug.extractedBrand,
+      barcode: debug.barcode,
+      tried: debug.attempts.length,
+      reasons: debug.attempts.map((a) => a.rejected).filter(Boolean),
+    });
+  }
   return { ...EMPTY_RESULT, checkedAt: now, debug };
 }
 
