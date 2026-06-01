@@ -246,9 +246,16 @@ function MercadoHubPage() {
       <MercadoHeader
         userName={userName}
         selectedMarket={favoriteMarket}
+        marketOptions={mercados.map((m) => ({ id: m.id, name: m.nome, favorito: m.favorito }))}
+        onSelectMarketId={(id) => {
+          const current = mercados.find((m) => m.favorito);
+          if (current && current.id !== id) updateMercadoLocal(current.id, { favorito: false });
+          updateMercadoLocal(id, { favorito: true });
+        }}
         searchValue={searchValue}
         onSearchChange={setSearchValue}
       />
+
 
       {/* Hero banner */}
       <div className="mt-5">
