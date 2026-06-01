@@ -1355,13 +1355,11 @@
       "marketDefaultOption": "Supermercados Joanin",
       "presets": {
         "home": "Página inicial",
-        "hortifruti": "Hortifruti",
-        "bebidas": "Bebidas",
-        "limpeza": "Limpeza",
+        "ofertas": "Ofertas",
         "padaria": "Padaria",
-        "carnes": "Carnes",
-        "laticinios": "Laticínios",
-        "mercearia": "Mercearia"
+        "acougue": "Açougue",
+        "hortifruti": "Hortifruti",
+        "utilidades": "Utilidades"
       },
       "warnings": {
         "placementClientRenderedOnly": "Esta categoria usa carregamento dinâmico protegido. Importamos apenas os produtos públicos visíveis.",
