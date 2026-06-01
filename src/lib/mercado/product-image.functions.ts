@@ -20,7 +20,11 @@ import {
   cacheSet,
 } from "./product-image-cache.server";
 import { normalizeForKey } from "./product-image-key";
-import { cleanProductName, isStrongMarketBrand } from "./product-name-clean";
+import {
+  cleanProductName,
+  isStrongMarketBrand,
+  normalizeMarketProductTerms,
+} from "./product-name-clean";
 import { validateImageUrl } from "./image-url-whitelist";
 
 const InputSchema = z.object({
@@ -236,23 +240,7 @@ function hasToken(text: string, tokens: string[]): boolean {
 }
 
 function normalizeLookupTerms(raw: string, brand: string | null): string {
-  let text = normalizeForKey(raw);
-  const beerBrand = !!brand && ["heineken", "brahma", "skol", "antarctica", "itaipava", "ambev", "stella artois", "budweiser", "amstel", "eisenbahn", "corona", "brahva"].includes(normalizeForKey(brand));
-  text = text
-    .replace(/\blong\s*nek\b/g, "long neck")
-    .replace(/\blongneck\b/g, "long neck")
-    .replace(/\bcoca\s*cola\b/g, "coca-cola")
-    .replace(/\brefri\b/g, "refrigerante")
-    .replace(/\bachoc(?:olatado)?\s*po\b/g, "achocolatado em po")
-    .replace(/\bling\b/g, "linguica")
-    .replace(/\bcx\b/g, "caixa")
-    .replace(/\bpct\b/g, "pacote")
-    .replace(/\b(?:lt|litro|litros)\b/g, "l")
-    .replace(/\b(?:und|un|unidade|unidades)\b/g, " ");
-  if (beerBrand || hasToken(text, ["cerveja", "beer", "lager"])) {
-    text = text.replace(/\bln\b/g, "long neck");
-  }
-  return normalizeForKey(text);
+  return normalizeMarketProductTerms(raw, brand);
 }
 
 function inferCategoryTerms(name: string, explicitCategory?: ProductImageInput["category"] | null): string[] {
