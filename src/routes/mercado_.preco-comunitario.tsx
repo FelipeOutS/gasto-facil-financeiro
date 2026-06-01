@@ -71,6 +71,11 @@ type CommunityPrice = {
   confidence: number | null;
   status: string;
   created_at: string;
+  image_url: string | null;
+  image_source: string | null;
+  image_confidence: number | null;
+  brand: string | null;
+  barcode: string | null;
 };
 
 type ManualForm = {
@@ -85,6 +90,12 @@ type ManualForm = {
   city: string;
   neighborhood: string;
   notes: string;
+  brand: string;
+  barcode: string;
+  imageUrl: string | null;
+  imageSource: string | null;
+  imageConfidence: number | null;
+  imageRemoved: boolean;
 };
 
 const TABLE = "community_market_prices" as const;
