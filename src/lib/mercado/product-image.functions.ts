@@ -553,6 +553,20 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
     });
     if (hit) {
       if (debug) debug.pickedFrom = "search";
+      if (isDev) {
+        const last = debug?.attempts[debug.attempts.length - 1];
+        // eslint-disable-next-line no-console
+        console.info("[image-lookup:hit]", {
+          product: input.productName,
+          brand: effectiveBrand,
+          query: a.query,
+          bestCandidate: last?.bestCandidate,
+          bestBrands: last?.bestBrands,
+          score: last?.bestScore,
+          confidence: hit.confidence,
+          imageUrl: hit.imageUrl,
+        });
+      }
       return { ...hit, checkedAt: now, debug };
     }
   }
