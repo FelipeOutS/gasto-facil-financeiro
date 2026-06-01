@@ -169,7 +169,7 @@ export function OnlineImportWizard({
       });
       const json = await res.json().catch(() => ({} as Record<string, unknown>));
       if (res.status === 429) {
-        toast.error(t("communityPrices.onlineImport.errors.rateLimited"));
+        toast.warning(t("communityPrices.onlineImport.errors.rateLimited"));
         setStep("confirm");
         return;
       }
