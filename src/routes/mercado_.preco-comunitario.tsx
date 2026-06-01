@@ -971,7 +971,8 @@ function PrecoComunitarioPage() {
               ) : null}
             </div>
           </div>
-            <Button variant="ghost" onClick={() => { setManualOpen(false); setEditingId(null); }} className="min-h-11">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="ghost" onClick={() => { setManualOpen(false); setEditingId(null); setImageSearched(false); }} className="min-h-11">
               {t("communityPrices.manual.cancel")}
             </Button>
             <Button onClick={saveManual} className="min-h-11">
