@@ -1335,10 +1335,11 @@
         "noProductsFound": "Nenhum preço foi encontrado nessa busca.",
         "importFailed": "Não foi possível importar os preços online.",
         "saveFailed": "Não foi possível salvar os preços revisados.",
-        "rateLimited": "Aguarde um pouco antes de buscar novamente.",
+        "rateLimited": "Você fez várias buscas em sequência. Aguarde alguns instantes e tente novamente.",
         "selectAtLeastOne": "Selecione ao menos um item para salvar.",
         "invalidUrl": "Informe uma URL válida do joaninonline.com.br.",
-        "placementNoPublicData": "Esta categoria não expõe produtos publicamente. Tente a página inicial ou uma categoria /c/..."
+        "placementNoPublicData": "Essa categoria carrega os produtos dinamicamente no site do Joanin e não está disponível para importação automática. Você pode usar print da tela ou foto do panfleto pelo leitor de imagem.",
+        "categoryProtected": "Essa categoria carrega os produtos dinamicamente no site do Joanin e não está disponível para importação automática. Use a página inicial ou envie um print pelo leitor de panfleto."
       },
       "scopeNotice": "Mostramos os destaques públicos da home do Joanin Online ({{count}} produtos). O catálogo completo só fica disponível dentro do site oficial.",
       "cardScopeNotice": "Importamos apenas os produtos públicos disponíveis na página inicial do Joanin Online. O catálogo completo pode não estar disponível para leitura automática.",
