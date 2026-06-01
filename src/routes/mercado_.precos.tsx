@@ -87,7 +87,7 @@ function PrecosPage() {
       setLoading(true);
       try {
         const { data, error } = await (supabase.from("community_market_prices" as never) as any)
-          .select("id,product_name,category,price,unit,market_name,source,seen_at")
+          .select("id,product_name,category,price,unit,market_name,source,seen_at,image_url,image_source,image_confidence,brand,barcode")
           .eq("status", "active")
           .order("seen_at", { ascending: false })
           .limit(200);
