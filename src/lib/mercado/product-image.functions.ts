@@ -145,7 +145,7 @@ function safeUrl(raw: unknown): string | null {
   return v.ok ? v.url : null;
 }
 
-async function fetchJson<T>(url: string): Promise<T | null> {
+async function fetchJson<T>(url: string): Promise<{ data: T | null; reason?: string }> {
   try {
     const res = await fetch(url, {
       headers: {
@@ -154,10 +154,16 @@ async function fetchJson<T>(url: string): Promise<T | null> {
       },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
-    if (!res.ok) return null;
-    return (await res.json()) as T;
+    if (!res.ok) return { data: null, reason: `http_${res.status}` };
+    const txt = await res.text();
+    if (!txt || txt[0] !== "{") return { data: null, reason: "rate_limited_or_html" };
+    try {
+      return { data: JSON.parse(txt) as T };
+    } catch {
+      return { data: null, reason: "invalid_json" };
+    }
   } catch {
-    return null;
+    return { data: null, reason: "fetch_error" };
   }
 }
 
@@ -243,20 +249,29 @@ function normalizeLookupTerms(raw: string, brand: string | null): string {
   return normalizeMarketProductTerms(raw, brand);
 }
 
-function inferCategoryTerms(name: string, explicitCategory?: ProductImageInput["category"] | null): string[] {
+const BEER_BRANDS = ["heineken", "brahma", "skol", "antarctica", "itaipava", "ambev", "stella artois", "budweiser", "amstel", "eisenbahn", "corona", "original", "bohemia", "serramalte"];
+const SOFT_DRINK_BRANDS = ["coca cola", "coca-cola", "coca", "pepsi", "fanta", "sprite", "sukita", "guarana antarctica", "schweppes", "del valle"];
+const COFFEE_BRANDS = ["pilao", "melitta", "tres coracoes", "nescafe", "3 coracoes"];
+const FLOUR_BRANDS = ["adria", "renata", "dona benta", "sol", "anaconda"];
+const CHOCOLATE_BRANDS = ["nescau", "toddy", "toddynho", "ovomaltine"];
+
+function inferCategoryTerms(name: string, explicitCategory?: ProductImageInput["category"] | null, brand?: string | null): string[] {
   const text = normalizeForKey(name);
+  const brandKey = normalizeForKey(brand);
   const terms: string[] = [];
-  if (explicitCategory === "bebidas" || hasToken(text, ["cerveja", "beer", "lager"])) {
+  if (explicitCategory === "bebidas" || hasToken(text, ["cerveja", "beer", "lager", "long", "neck"]) || BEER_BRANDS.includes(brandKey)) {
     terms.push("cerveja", "beer", "lager");
   }
   if (
     hasToken(text, ["refrigerante", "refri", "soda", "cola"]) ||
-    /\b(coca|pepsi|fanta|sprite|sukita|schweppes|guarana)\b/.test(text)
+    /\b(coca|pepsi|fanta|sprite|sukita|schweppes|guarana)\b/.test(text) ||
+    SOFT_DRINK_BRANDS.includes(brandKey)
   ) {
-    terms.push("refrigerante", "soda", "soft drink", "cola");
+    terms.push("refrigerante", "soda", "soft drink");
   }
-  if (hasToken(text, ["cafe", "pilao", "melitta"])) terms.push("cafe", "coffee");
-  if (hasToken(text, ["farinha", "trigo", "adria"])) terms.push("farinha trigo", "flour");
+  if (hasToken(text, ["cafe", "pilao", "melitta"]) || COFFEE_BRANDS.includes(brandKey)) terms.push("cafe", "coffee");
+  if (hasToken(text, ["farinha", "trigo"]) || FLOUR_BRANDS.includes(brandKey)) terms.push("farinha", "farinha trigo", "flour");
+  if (hasToken(text, ["achocolatado", "nescau", "toddy"]) || CHOCOLATE_BRANDS.includes(brandKey)) terms.push("achocolatado", "chocolate milk");
   if (hasToken(text, ["linguica", "ling", "sadia"])) terms.push("linguica", "sausage");
   return unique(terms);
 }
@@ -306,7 +321,7 @@ async function lookupByBarcode(
   const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(
     barcode,
   )}.json?fields=image_front_url,image_url,product_name,brands,selected_images`;
-  const data = await fetchJson<OFFByBarcode>(url);
+  const { data } = await fetchJson<OFFByBarcode>(url);
   if (!data || data.status !== 1 || !data.product) return null;
   const img = pickProductImage(data.product);
   if (!img) return null;
@@ -345,9 +360,9 @@ async function lookupByName(
     fields: "image_front_url,image_url,product_name,brands,selected_images",
   });
   const url = `https://world.openfoodfacts.org/cgi/search.pl?${params.toString()}`;
-  const data = await fetchJson<OFFSearch>(url);
+  const { data, reason } = await fetchJson<OFFSearch>(url);
   if (!data?.products?.length) {
-    onDiag?.({ candidates: 0, bestScore: null, rejected: "no_results" });
+    onDiag?.({ candidates: 0, bestScore: null, rejected: reason ?? "no_results" });
     return null;
   }
   const normalizedQuery = normalizeForKey(query);
@@ -476,7 +491,7 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
   const rawName = normalizeForKey(input.productName);
   const normalizedName = normalizeLookupTerms(cleanedName || rawName, effectiveBrand);
   const aliases = buildNameAliases(`${cleanedName} ${rawName}`, effectiveBrand, input.category);
-  const categoryTerms = inferCategoryTerms(`${input.productName} ${effectiveBrand ?? ""}`, input.category);
+  const categoryTerms = inferCategoryTerms(`${input.productName} ${effectiveBrand ?? ""}`, input.category, effectiveBrand);
   const packTerms = packagingTerms(`${input.productName} ${normalizedName}`);
 
   const debug: ProductImageDebug | undefined = isDev
@@ -508,14 +523,21 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
     });
   }
 
-  // Sequência de tentativas: marca forte primeiro, depois nome original/limpo.
+  // Sequência de tentativas: queries com termo de categoria primeiro
+  // ("cerveja heineken", "refrigerante coca cola") porque o OFF responde
+  // melhor a elas e raramente rate-limita. Depois nome+marca, depois fallback.
   const attempts: Array<{ query: string; brand: string | null }> = [];
+  if (effectiveBrand) {
+    // Categoria + marca → mais robusto no OFF (ex.: "cerveja heineken")
+    for (const term of categoryTerms) attempts.push({ query: `${term} ${effectiveBrand}`, brand: effectiveBrand });
+  }
   if (effectiveBrand && normalizedName) attempts.push({ query: `${effectiveBrand} ${normalizedName}`, brand: effectiveBrand });
   if (effectiveBrand) {
     for (const alias of aliases) attempts.push({ query: `${effectiveBrand} ${alias}`, brand: effectiveBrand });
     for (const term of categoryTerms) attempts.push({ query: `${effectiveBrand} ${term}`, brand: effectiveBrand });
-    if (isStrongMarketBrand(effectiveBrand)) attempts.push({ query: effectiveBrand, brand: effectiveBrand });
     attempts.push({ query: `${input.productName} ${effectiveBrand}`, brand: effectiveBrand });
+    // Marca isolada por último — OFF costuma rate-limitar queries brand-only.
+    if (isStrongMarketBrand(effectiveBrand)) attempts.push({ query: effectiveBrand, brand: effectiveBrand });
   }
   if (normalizedName) attempts.push({ query: normalizedName, brand: null });
   if (cleanedName && cleanedName !== normalizedName) attempts.push({ query: cleanedName, brand: null });
@@ -531,6 +553,20 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
     });
     if (hit) {
       if (debug) debug.pickedFrom = "search";
+      if (isDev) {
+        const last = debug?.attempts[debug.attempts.length - 1];
+        // eslint-disable-next-line no-console
+        console.info("[image-lookup:hit]", {
+          product: input.productName,
+          brand: effectiveBrand,
+          query: a.query,
+          bestCandidate: last?.bestCandidate,
+          bestBrands: last?.bestBrands,
+          score: last?.bestScore,
+          confidence: hit.confidence,
+          imageUrl: hit.imageUrl,
+        });
+      }
       return { ...hit, checkedAt: now, debug };
     }
   }
@@ -542,15 +578,23 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
   }
 
   if (isDev && debug) {
-    // Resumo curto em dev para auditar produtos que ficaram sem imagem.
-    // Não loga base64, payload sensível ou dados pessoais.
+    // Auditoria detalhada quando ficou sem imagem. Sem secrets/PII.
     // eslint-disable-next-line no-console
     console.warn("[image-lookup:miss]", {
       product: debug.productName,
       brand: debug.extractedBrand,
       barcode: debug.barcode,
-      tried: debug.attempts.length,
-      reasons: debug.attempts.map((a) => a.rejected).filter(Boolean),
+      cleanedName: debug.cleanedName,
+      normalizedName: debug.normalizedName,
+      attempts: debug.attempts.map((a) => ({
+        query: a.query,
+        brand: a.brand,
+        candidates: a.candidates,
+        bestScore: a.bestScore,
+        bestCandidate: a.bestCandidate,
+        bestBrands: a.bestBrands,
+        rejected: a.rejected,
+      })),
     });
   }
   return { ...EMPTY_RESULT, checkedAt: now, debug };
