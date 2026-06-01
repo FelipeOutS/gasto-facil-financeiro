@@ -345,20 +345,23 @@ function CartoesPage() {
 
   return (
     <MobileShell wide>
-      <header className="pt-2 animate-rise">
-        <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-          {t("hero.eyebrow")}
-        </p>
-        <h1 className="mt-0.5 flex items-center gap-2 text-[26px] font-bold leading-tight tracking-tight">
-          <span className="grid h-8 w-8 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
-            <CreditCard className="h-4 w-4" />
-          </span>
-          {t("hero.title")}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("hero.subtitle")}
-        </p>
-      </header>
+      <div className="pt-2 animate-rise">
+        <AppPageHeader
+          tone="cartoes"
+          icon={<Wallet className="h-5 w-5" />}
+          title={t("v3.header.title", { defaultValue: t("hero.title") })}
+          description={t("v3.header.description", { defaultValue: t("hero.subtitle") })}
+          actions={
+            <Button
+              onClick={handleOpenNew}
+              className="card-press hidden h-10 rounded-full bg-brand-grad px-4 text-sm font-semibold shadow-elevated hover:opacity-95 sm:inline-flex"
+            >
+              <Plus className="mr-1 h-4 w-4" />
+              {t("v3.actions.newCard", { defaultValue: t("list.newCard") })}
+            </Button>
+          }
+        />
+      </div>
 
       {/* ============================================================ */}
       {/* MOBILE (<lg) — cartão protagonista no topo, KPIs compactos    */}
