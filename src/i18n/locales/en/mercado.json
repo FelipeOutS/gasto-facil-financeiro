@@ -1377,18 +1377,16 @@
       "marketDefaultOption": "Supermercados Joanin",
       "presets": {
         "home": "Home",
-        "hortifruti": "Produce",
-        "bebidas": "Drinks",
-        "limpeza": "Cleaning",
+        "ofertas": "Offers",
         "padaria": "Bakery",
-        "carnes": "Meat",
-        "laticinios": "Dairy",
-        "mercearia": "Grocery"
+        "acougue": "Butcher",
+        "hortifruti": "Produce",
+        "utilidades": "Utilities"
       },
       "warnings": {
-        "placementClientRenderedOnly": "This category uses protected dynamic loading. We only imported the publicly visible products.",
+        "placementClientRenderedOnly": "This page uses protected dynamic loading. We only imported the publicly visible products.",
         "paginationPrivateBlocked": "The page has a private \"Load more\" button. We only imported the publicly visible products from this first read.",
-        "pathUnsupported": "This path is not supported. Use the homepage or a /c/... category."
+        "pathUnsupported": "This path is not supported. Use the homepage, /p/ofertas or /p/categoria/..."
       },
       "foundOnPage": "Found {{count}} public products on this page.",
       "partialImportBanner": "Partial import: some products only appear after interaction on the official site.",
