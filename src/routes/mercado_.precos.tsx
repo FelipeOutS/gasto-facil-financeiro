@@ -94,6 +94,15 @@ function PrecosPage() {
         </div>
       </header>
 
+      <div className="mt-4">
+        <MercadoBanner
+          title={t("priceCompareV2.banner.title")}
+          subtitle={t("priceCompareV2.banner.subtitle")}
+          imageSrc={bannerPrecos}
+          tone="community"
+        />
+      </div>
+
       {/* Intro */}
       <section className="mt-5 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
         <div className="flex items-start gap-3">
