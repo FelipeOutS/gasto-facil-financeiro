@@ -248,6 +248,34 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
         </div>
       </header>
 
+      {/* Visual banner */}
+      <div className="mt-4">
+        <MercadoBanner
+          tone="fresh"
+          title={lista.name}
+          subtitle={t("listDetailV2.bannerSubtitle")}
+          imageSrc={bannerComunitario}
+          imageAlt={t("listDetailV2.bannerSubtitle")}
+          compact
+        />
+      </div>
+
+      {/* Local search */}
+      <div className="mt-4">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("listDetailV2.searchPlaceholder")}
+            aria-label={t("listDetailV2.searchAria")}
+            className="min-h-11 w-full rounded-2xl border border-border bg-card pl-9 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
+          />
+        </div>
+      </div>
+
+
       {/* Resumo */}
       <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <SummaryTile
@@ -321,20 +349,38 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
 
       {/* Items */}
       {lista.entries.length === 0 ? (
-        <section className="mt-5 rounded-3xl border border-dashed border-border bg-card p-8 text-center shadow-card">
-          <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-card-elevated text-brand ring-1 ring-border/60">
-            <ShoppingBasket className="h-7 w-7" />
-          </span>
-          <h2 className="mt-4 text-lg font-semibold">{t("detail.empty.title")}</h2>
+        <section className="mt-5 overflow-hidden rounded-3xl border border-dashed border-border bg-card p-6 text-center shadow-card md:p-8">
+          <img
+            src={emptyCarrinho}
+            alt={t("listDetailV2.emptyImageAlt")}
+            loading="lazy"
+            className="mx-auto h-28 w-auto object-contain sm:h-36"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          />
+          <h2 className="mt-4 text-lg font-semibold">{t("listDetailV2.emptyTitle")}</h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            {t("detail.empty.description")}
+            {t("listDetailV2.emptyDesc")}
           </p>
+        </section>
+      ) : filteredEntries.length === 0 ? (
+        <section className="mt-5 rounded-2xl border border-dashed border-border bg-card/60 p-6 text-center text-sm text-muted-foreground">
+          {t("listDetailV2.noMatch")}
         </section>
       ) : (
         <>
-          <section className="mt-5 flex flex-col gap-3">
-            {lista.entries.map((item) => (
-              <ItemRow key={item.id} item={item} listaId={lista.id} />
+          <section className="mt-5 flex flex-col gap-5 pb-24 md:pb-0">
+            {groupedEntries.map(([groupKey, items]) => (
+              <div key={groupKey}>
+                <h3 className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  {t(`listDetailV2.groupTitle.${groupKey}`)}{" "}
+                  <span className="text-foreground/60 normal-case tracking-normal">· {items.length}</span>
+                </h3>
+                <div className="flex flex-col gap-3">
+                  {items.map((item) => (
+                    <ItemRow key={item.id} item={item} listaId={lista.id} />
+                  ))}
+                </div>
+              </div>
             ))}
           </section>
           <CommunityPriceSavingsSummary
@@ -345,6 +391,36 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
             }))}
           />
         </>
+      )}
+
+      {/* Sticky mobile summary footer */}
+      {lista.entries.length > 0 && (
+        <div
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/95 px-4 py-3 shadow-elevated backdrop-blur md:hidden"
+          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+        >
+          <div className="mx-auto flex max-w-screen-sm items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                {t("listDetailV2.stickyTotal")}
+              </p>
+              <p className="truncate text-base font-bold tabular-nums">
+                <Money value={resumo.totalEstimado} />
+                <span className="ml-2 text-[11px] font-medium text-muted-foreground">
+                  {t("listDetailV2.stickyItems", { bought: resumo.itensComprados, total: resumo.totalItens })}
+                </span>
+              </p>
+            </div>
+            <Link
+              to="/mercado/carrinho"
+              search={{ lista: lista.id }}
+              className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-2xl bg-brand-grad px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated active:scale-[0.98]"
+            >
+              <ShoppingBasket className="h-4 w-4" />
+              {t("listDetailV2.stickyGoCart")}
+            </Link>
+          </div>
+        </div>
       )}
 
       {/* Finalize */}
