@@ -122,14 +122,18 @@ function normalize(value: string): string {
 function classifyPath(pathname: string): Diagnostics["origin"] {
   if (pathname === "/" || pathname === "") return "home";
   if (/^\/c\//.test(pathname)) return "category";
+  if (/^\/p\/categoria\//.test(pathname)) return "category";
   if (/^\/p\//.test(pathname)) return "placement";
   return "other";
 }
 
 function categoryFromPath(pathname: string): string | null {
-  const m = pathname.match(/^\/c\/([^/?#]+)/);
-  if (!m) return null;
-  return decodeURIComponent(m[1]).replace(/-/g, " ");
+  const mC = pathname.match(/^\/c\/([^/?#]+)/);
+  if (mC) return decodeURIComponent(mC[1]).replace(/-/g, " ");
+  const mP = pathname.match(/^\/p\/categoria\/\d+\/([^/?#]+)/);
+  if (mP) return decodeURIComponent(mP[1]).replace(/-/g, " ");
+  if (/^\/p\/ofertas/.test(pathname)) return "ofertas";
+  return null;
 }
 
 function validateUrl(raw: string | undefined | null): { ok: true; url: URL } | { ok: false; reason: string } {
@@ -364,7 +368,8 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
           diagnostics.paginationBlocked = true;
           diagnostics.warnings.push("pagination_private_blocked");
         }
-        if (origin === "placement" && parsed.items.length === 0 && parsed.skeletons > 0) {
+        const onlySkeletons = parsed.items.length === 0 && parsed.skeletons > 0;
+        if (onlySkeletons && (origin === "placement" || origin === "category")) {
           diagnostics.warnings.push("placement_client_rendered_only");
         }
         if (origin === "other") {
@@ -385,7 +390,8 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
         }
 
         if (parsed.items.length === 0) {
-          const code = origin === "placement" ? "placement_no_public_data" : "no_products_found";
+          const dynamicOnly = parsed.skeletons > 0 && (origin === "placement" || origin === "category");
+          const code = dynamicOnly ? "placement_no_public_data" : "no_products_found";
           return Response.json(
             {
               success: false,
@@ -394,7 +400,7 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
               diagnostics,
               message:
                 code === "placement_no_public_data"
-                  ? "Esta categoria usa carregamento dinâmico protegido. Importamos apenas os produtos públicos visíveis."
+                  ? "Esta página usa carregamento dinâmico protegido. Importamos apenas os produtos públicos visíveis."
                   : "Nenhum preço foi encontrado nessa busca.",
             },
             { status: 200 },
