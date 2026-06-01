@@ -70,11 +70,7 @@ const EMPTY_RESULT: Omit<ProductImageResult, "checkedAt"> = {
   origin: null,
 };
 
-const ALLOWED_HOSTS = new Set([
-  "images.openfoodfacts.org",
-  "world.openfoodfacts.org",
-  "static.openfoodfacts.org",
-]);
+import { validateImageUrl } from "./image-url-whitelist";
 
 const BRAND_LOGOS = new Set([
   "adobe",
@@ -100,17 +96,8 @@ const BRAND_LOGOS = new Set([
 const FETCH_TIMEOUT_MS = 4000;
 
 function safeUrl(raw: unknown): string | null {
-  if (typeof raw !== "string" || !raw) return null;
-  try {
-    const u = new URL(raw);
-    if (u.protocol !== "https:" && u.protocol !== "http:") return null;
-    if (!ALLOWED_HOSTS.has(u.hostname)) return null;
-    // força https
-    u.protocol = "https:";
-    return u.toString();
-  } catch {
-    return null;
-  }
+  const v = validateImageUrl(raw);
+  return v.ok ? v.url : null;
 }
 
 async function fetchJson<T>(url: string): Promise<T | null> {
