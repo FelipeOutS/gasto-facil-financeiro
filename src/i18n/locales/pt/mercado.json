@@ -1670,11 +1670,98 @@
       "save": "Salve no histórico, em uma lista ou no carrinho."
     }
   },
+  "basketV2": {
+    "banner": {
+      "title": "Sua cesta padrão",
+      "subtitle": "Monte uma base de produtos recorrentes para repetir compras, comparar preços e planejar melhor o mercado."
+    },
+    "summary": {
+      "title": "Resumo da cesta",
+      "items": "Itens",
+      "estimated": "Valor estimado",
+      "categories": "Categorias",
+      "updated": "Atualizada em"
+    },
+    "sections": {
+      "items": "Itens da cesta",
+      "categories": "Por categoria"
+    },
+    "empty": {
+      "title": "Você ainda não criou uma cesta padrão",
+      "description": "Use a cesta para repetir compras recorrentes e comparar preços antes de ir ao mercado.",
+      "addProduct": "Adicionar produto",
+      "createList": "Criar lista de compras"
+    },
+    "steps": {
+      "title": "Como funciona",
+      "add": "Adicione produtos que compra todo mês.",
+      "reuse": "Use a cesta como base para a lista ou carrinho.",
+      "compare": "Compare preços antes de finalizar a compra."
+    },
+    "helper": "A cesta padrão é uma base pessoal. Ela não envia compras nem altera preços nas lojas."
+  },
+  "priceCompareV2": {
+    "banner": {
+      "title": "Comparar preços",
+      "subtitle": "Veja preços cadastrados, encontre oportunidades e compare produtos antes de montar sua compra."
+    },
+    "filters": {
+      "title": "Buscar e filtrar",
+      "search": "Buscar produto",
+      "market": "Mercado",
+      "category": "Categoria",
+      "source": "Origem do preço",
+      "sort": "Ordenar por",
+      "clear": "Limpar filtros"
+    },
+    "sections": {
+      "recentFinds": "Achados recentes",
+      "results": "Resultados"
+    },
+    "card": {
+      "checkBeforeBuying": "Confira no mercado antes de comprar.",
+      "seenOn": "Visto em",
+      "validUntil": "Válido até"
+    },
+    "empty": {
+      "title": "Nenhum preço cadastrado ainda",
+      "description": "Os preços aparecem quando você importa panfletos, cadastra manualmente ou salva preços a partir das compras.",
+      "scanFlyer": "Ler panfleto",
+      "manualPrice": "Cadastrar preço manual"
+    },
+    "disclaimer": "Os preços são informados por usuários ou fontes externas e podem variar conforme loja, região e data."
+  },
   "priceHistoryV2": {
     "banner": {
       "title": "Histórico de preços",
-      "subtitle": "Acompanhe a variação de preço dos produtos que você já comprou e descubra onde pagar menos."
-    }
+      "subtitle": "Acompanhe como os preços mudam ao longo do tempo e planeje compras com mais segurança."
+    },
+    "filters": {
+      "search": "Buscar produto"
+    },
+    "summary": {
+      "lastPrice": "Último preço",
+      "lowestPrice": "Menor preço",
+      "highestPrice": "Maior preço",
+      "records": "Registros"
+    },
+    "sections": {
+      "products": "Produtos com histórico",
+      "timeline": "Linha do tempo"
+    },
+    "empty": {
+      "title": "Sem histórico de preços ainda",
+      "description": "Cadastre preços manualmente, importe panfletos ou faça compras para começar a acompanhar a variação.",
+      "communityPrices": "Ver preço comunitário",
+      "createList": "Criar lista"
+    },
+    "steps": {
+      "title": "Como funciona",
+      "register": "Cadastre preços manualmente ou por panfleto.",
+      "shop": "Faça compras usando listas/carrinho.",
+      "track": "Acompanhe a evolução dos preços depois."
+    },
+    "disclaimer": "Os preços são históricos cadastrados no app e podem variar conforme loja, região e data."
   },
   "budgetV2": {
     "banner": {
