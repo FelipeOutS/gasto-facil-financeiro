@@ -1117,6 +1117,22 @@
     "home": "Home",
     "disclaimer": "Price reported by a user. May vary by store, region and date. Double-check at the store before buying.",
     "itemHint": "Double-check at the store before buying.",
+    "image": {
+      "searchImage": "Search image automatically",
+      "searching": "Looking up product image…",
+      "imageFound": "Suggested image found",
+      "noImageFound": "No image found for this product. You can still save it.",
+      "removeImage": "Remove image",
+      "illustrativeImage": "Illustrative image only. It may vary by packaging, brand, version or region.",
+      "suggestedImage": "Suggested image",
+      "brandLogo": "Brand logo",
+      "brand": "Brand (optional)",
+      "brandPlaceholder": "e.g.: Nestlé, Tirol, Bauducco",
+      "barcode": "Barcode (optional)",
+      "barcodePlaceholder": "e.g.: 7891000100103",
+      "previewAlt": "Suggested image for {{name}}",
+      "previewHint": "Review before saving."
+    },
     "actions": {
       "scanTitle": "Scan a flyer photo",
       "scanDescription": "Automatic reading can make mistakes. You review each item before saving.",
