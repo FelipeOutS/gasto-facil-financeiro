@@ -242,6 +242,7 @@ const NOISE_TOKENS = new Set([
   "fatiado",
   "fatiados",
   "fatiadas",
+  "tipo",
   "ling", // abreviação comum de "linguiça" em cupom
 ]);
 
