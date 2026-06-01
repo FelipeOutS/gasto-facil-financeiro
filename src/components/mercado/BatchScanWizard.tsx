@@ -467,24 +467,37 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
     const safeMarketId = marketId && UUID_RE.test(marketId) ? marketId : null;
     const cleanDate = (v: string | null | undefined) =>
       v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
-    const rows = toSave.map((r) => ({
-      user_id: user.id,
-      product_name: r.productName.trim(),
-      normalized_product_name: r.productName.trim().toLowerCase(),
-      category: r.category?.trim() ? r.category.trim() : null,
-      price: r.price,
-      unit: r.unit?.trim() ? r.unit.trim() : null,
-      market_name: marketName,
-      market_id: safeMarketId,
-      source: "flyer",
-      status: "active",
-      seen_at: today,
-      valid_until: cleanDate(r.validUntil),
-      notes: r.notes
-        ? `${r.notes} · ${t("communityPrices.batch.sourcePhoto", { index: r.sourcePhotoIndex })}`
-        : t("communityPrices.batch.sourcePhoto", { index: r.sourcePhotoIndex }),
-      confidence: typeof r.confidence === "number" && Number.isFinite(r.confidence) ? r.confidence : null,
-    }));
+    const rows = toSave.map((r) => {
+      const imageFields = r.imageRemoved || !r.imageUrl
+        ? { image_url: null, image_source: null, image_confidence: null }
+        : {
+            image_url: r.imageUrl,
+            image_source: r.imageSource ?? "open_food_facts",
+            image_confidence: r.imageConfidence,
+          };
+      return {
+        user_id: user.id,
+        product_name: r.productName.trim(),
+        normalized_product_name: r.productName.trim().toLowerCase(),
+        category: r.category?.trim() ? r.category.trim() : null,
+        price: r.price,
+        unit: r.unit?.trim() ? r.unit.trim() : null,
+        market_name: marketName,
+        market_id: safeMarketId,
+        source: "flyer",
+        status: "active",
+        seen_at: today,
+        valid_until: cleanDate(r.validUntil),
+        notes: r.notes
+          ? `${r.notes} · ${t("communityPrices.batch.sourcePhoto", { index: r.sourcePhotoIndex })}`
+          : t("communityPrices.batch.sourcePhoto", { index: r.sourcePhotoIndex }),
+        confidence:
+          typeof r.confidence === "number" && Number.isFinite(r.confidence) ? r.confidence : null,
+        brand: r.brand?.trim() ? r.brand.trim() : null,
+        barcode: r.barcode?.trim() ? r.barcode.trim() : null,
+        ...imageFields,
+      };
+    });
     const { error } = await (supabase.from(TABLE as never) as any).insert(rows);
     setSaving(false);
     if (error) {
