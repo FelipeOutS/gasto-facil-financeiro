@@ -104,6 +104,11 @@ import { cn } from "@/lib/utils";
 import { useClientes } from "@/lib/clientes";
 import { ClienteSelect, nomeExibicaoCliente } from "@/components/ClienteSelect";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  AppPageHeader,
+  AppModuleBanner,
+  AppEmptyStateVisual,
+} from "@/components/app-v2";
 
 type RendaSearch = { ano?: number; mes?: number };
 
