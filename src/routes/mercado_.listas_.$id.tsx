@@ -181,12 +181,32 @@ function detectCategory(item: ListaItem): CategoryGroupKey {
 function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => void }) {
   const { t, i18n: i18next } = useTranslation("mercado");
   const resumo = useMemo(() => computeResumo(lista), [lista]);
+  const [search, setSearch] = useState("");
 
   const dateFormatter = new Intl.DateTimeFormat(i18next.language || "pt-BR", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
+
+  const filteredEntries = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return lista.entries;
+    return lista.entries.filter((e) => e.nome.toLowerCase().includes(q));
+  }, [lista.entries, search]);
+
+  const groupedEntries = useMemo(() => {
+    const groups = new Map<CategoryGroupKey, ListaItem[]>();
+    for (const item of filteredEntries) {
+      const key = detectCategory(item);
+      const arr = groups.get(key) ?? [];
+      arr.push(item);
+      groups.set(key, arr);
+    }
+    return CATEGORY_GROUP_ORDER.filter((k) => groups.has(k)).map(
+      (k) => [k, groups.get(k)!] as const,
+    );
+  }, [filteredEntries]);
 
   return (
     <MobileShell wide>
