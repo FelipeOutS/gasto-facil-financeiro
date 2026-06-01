@@ -368,7 +368,8 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
           diagnostics.paginationBlocked = true;
           diagnostics.warnings.push("pagination_private_blocked");
         }
-        if (origin === "placement" && parsed.items.length === 0 && parsed.skeletons > 0) {
+        const onlySkeletons = parsed.items.length === 0 && parsed.skeletons > 0;
+        if (onlySkeletons && (origin === "placement" || origin === "category")) {
           diagnostics.warnings.push("placement_client_rendered_only");
         }
         if (origin === "other") {
