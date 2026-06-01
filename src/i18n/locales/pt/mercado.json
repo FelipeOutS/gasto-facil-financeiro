@@ -1579,8 +1579,8 @@
     "stickyGoCart": "Ir ao carrinho"
   },
   "cartV2": {
-    "bannerTitle": "Seu carrinho",
-    "bannerSubtitle": "Acompanhe quantidade, preços e fechamento da compra.",
+    "bannerTitle": "Seu carrinho de mercado",
+    "bannerSubtitle": "Acompanhe os produtos, quantidades e total estimado antes de concluir sua compra.",
     "emptyTitle": "Carrinho vazio",
     "emptyDesc": "Escolha uma lista para começar a marcar os itens enquanto faz as compras.",
     "emptyCta": "Ver minhas listas",
