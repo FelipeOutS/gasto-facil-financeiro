@@ -173,6 +173,46 @@ function PrecoComunitarioPage() {
   const [manualOpen, setManualOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [manualForm, setManualForm] = useState<ManualForm>(emptyManualForm());
+  const [imageSearching, setImageSearching] = useState(false);
+  const [imageSearched, setImageSearched] = useState(false);
+
+  async function searchManualImage() {
+    const name = manualForm.productName.trim();
+    if (name.length < 2) {
+      toast.error(t("communityPrices.errors.manualRequired"));
+      return;
+    }
+    setImageSearching(true);
+    setImageSearched(false);
+    try {
+      const result = await lookupProductImage({
+        data: {
+          productName: name,
+          brand: manualForm.brand.trim() || null,
+          barcode: manualForm.barcode.trim() || null,
+        },
+      });
+      const persistable = toPersistableImage(result);
+      setManualForm((f) => ({
+        ...f,
+        imageUrl: persistable.image_url,
+        imageSource: persistable.image_source,
+        imageConfidence: persistable.image_confidence,
+        imageRemoved: false,
+      }));
+      if (!persistable.image_url) {
+        toast.info(t("communityPrices.image.noImageFound"));
+      } else {
+        toast.success(t("communityPrices.image.imageFound"));
+      }
+    } catch (err) {
+      console.error("[preco-comunitario] image lookup", err);
+      toast.info(t("communityPrices.image.noImageFound"));
+    } finally {
+      setImageSearching(false);
+      setImageSearched(true);
+    }
+  }
 
   async function reload() {
     setLoading(true);
