@@ -311,7 +311,7 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
         }
 
         const rl = await enforceUserRateLimit({
-          scope: "import",
+          scope: "onlineImport",
           userId: user.id,
           route: "mercado-joanin-import",
           request,

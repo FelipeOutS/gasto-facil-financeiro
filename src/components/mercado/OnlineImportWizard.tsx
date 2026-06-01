@@ -88,7 +88,17 @@ export type OnlineImportWizardProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved?: () => void;
+  onOpenFlyerScan?: () => void;
 };
+
+function isProtectedJoaninUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw.trim());
+    return /^\/p\//.test(u.pathname);
+  } catch {
+    return false;
+  }
+}
 
 function normalize(value: string): string {
   return value
@@ -108,6 +118,7 @@ export function OnlineImportWizard({
   open,
   onOpenChange,
   onSaved,
+  onOpenFlyerScan,
 }: OnlineImportWizardProps) {
   const { t, i18n } = useTranslation("mercado");
   const { user } = useAuth();
@@ -157,7 +168,7 @@ export function OnlineImportWizard({
       });
       const json = await res.json().catch(() => ({} as Record<string, unknown>));
       if (res.status === 429) {
-        toast.error(t("communityPrices.onlineImport.errors.rateLimited"));
+        toast.warning(t("communityPrices.onlineImport.errors.rateLimited"));
         setStep("confirm");
         return;
       }
@@ -371,22 +382,48 @@ export function OnlineImportWizard({
                 <div className="mt-1 flex flex-wrap gap-1.5">
                   {URL_PRESETS.map((p) => {
                     const active = url.trim() === p.url;
+                    const protectedPreset = isProtectedJoaninUrl(p.url);
                     return (
                       <button
                         key={p.key}
                         type="button"
-                        onClick={() => setUrl(p.url)}
+                        onClick={() => {
+                          setUrl(p.url);
+                          if (protectedPreset) {
+                            toast.warning(
+                              t("communityPrices.onlineImport.errors.categoryProtected"),
+                            );
+                          }
+                        }}
+                        title={
+                          protectedPreset
+                            ? t("communityPrices.onlineImport.errors.categoryProtected")
+                            : undefined
+                        }
                         className={`rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
                           active
                             ? "border-primary bg-primary/10 text-primary"
-                            : "border-border bg-muted/40 text-muted-foreground hover:bg-muted"
+                            : protectedPreset
+                              ? "border-dashed border-border bg-muted/30 text-muted-foreground/70 hover:bg-muted/50"
+                              : "border-border bg-muted/40 text-muted-foreground hover:bg-muted"
                         }`}
                       >
                         {t(`communityPrices.onlineImport.presets.${p.key}`)}
+                        {protectedPreset && (
+                          <span className="ml-1 text-[9px] uppercase opacity-70">
+                            {t("communityPrices.onlineImport.presets.protectedBadge")}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
                 </div>
+                {isProtectedJoaninUrl(url) && (
+                  <div className="mt-2 flex items-start gap-2 rounded-md border border-amber-300/40 bg-amber-50/50 p-2 text-[11px] text-amber-900 dark:bg-amber-950/20 dark:text-amber-100">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>{t("communityPrices.onlineImport.errors.categoryProtected")}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -413,6 +450,27 @@ export function OnlineImportWizard({
               </p>
             </div>
 
+            {onOpenFlyerScan && (
+              <div className="rounded-md border border-border bg-muted/20 p-3 text-[12px]">
+                <p className="font-medium">{t("communityPrices.onlineImport.flyerScanHint.title")}</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  {t("communityPrices.onlineImport.flyerScanHint.description")}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onOpenFlyerScan();
+                  }}
+                >
+                  {t("communityPrices.onlineImport.flyerScanHint.cta")}
+                </Button>
+              </div>
+            )}
+
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button
                 variant="ghost"
@@ -421,7 +479,11 @@ export function OnlineImportWizard({
               >
                 {t("communityPrices.onlineImport.cancel")}
               </Button>
-              <Button onClick={runImport} className="min-h-11">
+              <Button
+                onClick={runImport}
+                disabled={isProtectedJoaninUrl(url)}
+                className="min-h-11"
+              >
                 <Cloud className="mr-2 h-4 w-4" />
                 {t("communityPrices.onlineImport.fetchCta")}
               </Button>

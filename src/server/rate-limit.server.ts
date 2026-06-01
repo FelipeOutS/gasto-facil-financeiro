@@ -22,6 +22,7 @@ export const RATE_LIMIT_PRESETS = {
   aiPerUser: { limit: 20, windowSeconds: 3600 },
   importPerUser: { limit: 10, windowSeconds: 3600 },
   flyerOcrPerUser: { limit: 40, windowSeconds: 3600 },
+  onlineImportPerUser: { limit: 30, windowSeconds: 3600 },
   authAttempt: { limit: 10, windowSeconds: 600 },
 } satisfies Record<string, RateLimitPreset>;
 
@@ -158,7 +159,7 @@ export function userRateLimitedResponse(retryAfterSeconds: number): Response {
  *      if (blocked) return blocked;  // (em server route)
  */
 export async function enforceUserRateLimit(params: {
-  scope: "ai" | "import" | "flyerOcr";
+  scope: "ai" | "import" | "flyerOcr" | "onlineImport";
   userId: string;
   route: string;
   request?: Request;
@@ -168,7 +169,9 @@ export async function enforceUserRateLimit(params: {
       ? RATE_LIMIT_PRESETS.aiPerUser
       : params.scope === "flyerOcr"
         ? RATE_LIMIT_PRESETS.flyerOcrPerUser
-        : RATE_LIMIT_PRESETS.importPerUser;
+        : params.scope === "onlineImport"
+          ? RATE_LIMIT_PRESETS.onlineImportPerUser
+          : RATE_LIMIT_PRESETS.importPerUser;
   const ip = params.request ? getClientIp(params.request) : null;
   const ua = params.request?.headers.get("user-agent") ?? null;
 
@@ -196,7 +199,9 @@ export async function enforceUserRateLimit(params: {
           ? "rate_limit_blocked_ai"
           : params.scope === "flyerOcr"
             ? "rate_limit_blocked_flyer_ocr"
-            : "rate_limit_blocked_import",
+            : params.scope === "onlineImport"
+              ? "rate_limit_blocked_online_import"
+              : "rate_limit_blocked_import",
       entity_type: "rate_limit",
       metadata: { route: params.route, limit: preset.limit, window_seconds: preset.windowSeconds },
     });

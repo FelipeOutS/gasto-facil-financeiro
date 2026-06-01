@@ -1311,11 +1311,11 @@
     },
     "onlineImport": {
       "cardTitle": "Importar preços online",
-      "cardDescription": "Importamos apenas os destaques públicos da página inicial do Joanin Online. Revise antes de salvar.",
+      "cardDescription": "Importamos apenas os produtos públicos exibidos na página inicial do Joanin Online. Revise antes de salvar.",
       "cardCta": "Importar do Joanin Online",
       "title": "Importar preços online",
       "description": "Vamos buscar preços públicos do Joanin Online. Revise antes de salvar.",
-      "confirmMessage": "Vamos buscar apenas os destaques públicos da página inicial do Joanin Online. Não acessamos o catálogo completo, áreas logadas ou ofertas internas. Revise antes de salvar.",
+      "confirmMessage": "No momento, conseguimos importar apenas os produtos públicos exibidos na página inicial do Joanin. As categorias e o botão \"Carregar mais\" usam carregamento protegido pelo site oficial.",
       "sourceLabel": "Fonte: {{source}}",
       "sourceTag": "Fonte",
       "cancel": "Cancelar",
@@ -1335,10 +1335,11 @@
         "noProductsFound": "Nenhum preço foi encontrado nessa busca.",
         "importFailed": "Não foi possível importar os preços online.",
         "saveFailed": "Não foi possível salvar os preços revisados.",
-        "rateLimited": "Aguarde um pouco antes de buscar novamente.",
+        "rateLimited": "Você fez várias buscas em sequência. Aguarde alguns instantes e tente novamente.",
         "selectAtLeastOne": "Selecione ao menos um item para salvar.",
         "invalidUrl": "Informe uma URL válida do joaninonline.com.br.",
-        "placementNoPublicData": "Esta categoria não expõe produtos publicamente. Tente a página inicial ou uma categoria /c/..."
+        "placementNoPublicData": "Essa categoria carrega os produtos dinamicamente no site do Joanin e não está disponível para importação automática. Você pode usar print da tela ou foto do panfleto pelo leitor de imagem.",
+        "categoryProtected": "Essa categoria carrega os produtos dinamicamente no site do Joanin e não está disponível para importação automática. Use a página inicial ou envie um print pelo leitor de panfleto."
       },
       "scopeNotice": "Mostramos os destaques públicos da home do Joanin Online ({{count}} produtos). O catálogo completo só fica disponível dentro do site oficial.",
       "cardScopeNotice": "Importamos apenas os produtos públicos disponíveis na página inicial do Joanin Online. O catálogo completo pode não estar disponível para leitura automática.",
@@ -1359,7 +1360,13 @@
         "padaria": "Padaria",
         "acougue": "Açougue",
         "hortifruti": "Hortifruti",
-        "utilidades": "Utilidades"
+        "utilidades": "Utilidades",
+        "protectedBadge": "protegida"
+      },
+      "flyerScanHint": {
+        "title": "Tem a categoria aberta no site?",
+        "description": "Tire um print da tela e envie pelo leitor de panfleto/foto para capturar os produtos e preços.",
+        "cta": "Ler print ou panfleto"
       },
       "warnings": {
         "placementClientRenderedOnly": "Esta categoria usa carregamento dinâmico protegido. Importamos apenas os produtos públicos visíveis.",
