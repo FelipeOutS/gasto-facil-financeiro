@@ -1675,6 +1675,71 @@
       "title": "Histórico de preços",
       "subtitle": "Acompanhe a variação de preço dos produtos que você já comprou e descubra onde pagar menos."
     }
+  },
+  "budgetV2": {
+    "banner": {
+      "title": "Orçamento da compra",
+      "subtitle": "Defina quanto pretende gastar no mercado e acompanhe se a compra está dentro do planejado."
+    },
+    "summary": {
+      "title": "Resumo do orçamento",
+      "budget": "Orçamento",
+      "used": "Já usado",
+      "remaining": "Restante",
+      "status": "Status"
+    },
+    "status": {
+      "safe": "Dentro do orçamento",
+      "warning": "Perto do limite",
+      "exceeded": "Acima do orçamento",
+      "none": "Sem orçamento definido"
+    },
+    "config": {
+      "title": "Seu orçamento de mercado",
+      "description": "Defina um valor de referência para acompanhar suas compras.",
+      "helper": "Este orçamento vale apenas para suas compras de mercado. Ele não altera o orçamento mensal geral do app.",
+      "edit": "Editar orçamento"
+    },
+    "empty": {
+      "title": "Você ainda não definiu um orçamento",
+      "description": "Defina um valor e acompanhe suas compras de mercado em tempo real.",
+      "define": "Definir orçamento",
+      "createList": "Criar lista de compras"
+    },
+    "steps": {
+      "title": "Como funciona",
+      "define": "Defina o valor da compra.",
+      "addItems": "Adicione itens no carrinho ou na lista.",
+      "track": "Acompanhe o total antes de finalizar."
+    }
+  },
+  "calculatorsV2": {
+    "banner": {
+      "title": "Calculadoras de mercado",
+      "subtitle": "Compare preços, calcule unidades e veja qual opção compensa antes de colocar no carrinho."
+    },
+    "intro": {
+      "title": "Antes de decidir",
+      "description": "Preencha os valores para comparar as opções. Use as calculadoras como apoio na hora da compra."
+    },
+    "card": {
+      "calculate": "Calcular",
+      "result": "Resultado",
+      "clear": "Limpar"
+    },
+    "empty": {
+      "title": "Preencha os valores",
+      "description": "Informe preço e quantidade dos itens para ver a comparação."
+    },
+    "tips": {
+      "value": "Esta opção sai mais barata por unidade.",
+      "validity": "Compare também a validade, marca e quantidade antes de decidir.",
+      "lowestPrice": "O menor preço nem sempre é o melhor custo-benefício."
+    },
+    "cta": {
+      "goToCart": "Ir para o carrinho",
+      "createList": "Criar lista de compras"
+    }
   }
 }
 
