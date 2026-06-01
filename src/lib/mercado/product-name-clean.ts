@@ -99,6 +99,8 @@ export const KNOWN_BRANDS: string[] = [
   "tixan",
   "ariel",
   "brilhante",
+  "comfort",
+  "downy",
   "sun",
   "vanish",
   "veja",
