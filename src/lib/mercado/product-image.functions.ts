@@ -20,6 +20,7 @@ import {
   cacheSet,
 } from "./product-image-cache.server";
 import { normalizeForKey } from "./product-image-key";
+import { cleanProductName } from "./product-name-clean";
 
 const InputSchema = z.object({
   productName: z.string().trim().min(2).max(200),
