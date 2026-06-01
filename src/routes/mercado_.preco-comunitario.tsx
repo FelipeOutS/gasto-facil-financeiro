@@ -159,11 +159,26 @@ function PrecoComunitarioPage() {
     const p = filterProduct.trim().toLowerCase();
     const m = filterMarket.trim().toLowerCase();
     const c = filterCategory.trim().toLowerCase();
+    const chipMatchers = categoryChip !== "todos" ? CATEGORY_MATCHERS[categoryChip] : null;
     const arr = items.filter((it) => {
       if (p && !it.product_name.toLowerCase().includes(p)) return false;
       if (m && !it.market_name.toLowerCase().includes(m)) return false;
       if (c && !(it.category ?? "").toLowerCase().includes(c)) return false;
       if (filterSource && it.source !== filterSource) return false;
+      if (chipMatchers) {
+        const cat = (it.category ?? "").toLowerCase();
+        const name = it.product_name.toLowerCase();
+        if (categoryChip === "outros") {
+          // Outros = não cai em nenhuma das 8 categorias conhecidas
+          const inAny = MERCADO_CATEGORIES.some((k) =>
+            CATEGORY_MATCHERS[k].some((mm) => cat.includes(mm) || name.includes(mm)),
+          );
+          if (inAny) return false;
+        } else {
+          const hit = chipMatchers.some((mm) => cat.includes(mm) || name.includes(mm));
+          if (!hit) return false;
+        }
+      }
       return true;
     });
     const sorted = [...arr];
@@ -179,10 +194,20 @@ function PrecoComunitarioPage() {
       sorted.sort((a, b) => new Date(b.seen_at).getTime() - new Date(a.seen_at).getTime());
     }
     return sorted;
-  }, [items, filterProduct, filterMarket, filterCategory, filterSource, sortBy]);
+  }, [items, filterProduct, filterMarket, filterCategory, filterSource, sortBy, categoryChip]);
 
-  const hasFilters =
-    !!filterProduct || !!filterMarket || !!filterCategory || !!filterSource || sortBy !== "recent";
+  const activeFiltersCount =
+    (filterProduct ? 1 : 0) +
+    (filterMarket ? 1 : 0) +
+    (filterCategory ? 1 : 0) +
+    (filterSource ? 1 : 0) +
+    (sortBy !== "recent" ? 1 : 0);
+  const hasFilters = activeFiltersCount > 0 || categoryChip !== "todos";
+
+  const bestFinds = useMemo(() => {
+    if (items.length === 0) return [];
+    return [...items].sort((a, b) => a.price - b.price).slice(0, 6);
+  }, [items]);
 
   function clearFilters() {
     setFilterProduct("");
@@ -190,7 +215,10 @@ function PrecoComunitarioPage() {
     setFilterCategory("");
     setFilterSource("");
     setSortBy("recent");
+    setCategoryChip("todos");
   }
+
+
 
 
 
