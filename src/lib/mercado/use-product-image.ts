@@ -1,8 +1,7 @@
 /**
  * Hook leve para sugerir imagem de produto, com cache em memória e
  * deduplicação de chamadas. Não depende de QueryClientProvider — usa um
- * Map + Promises em vôo. Lazy: só dispara quando habilitado (geralmente
- * quando o card aparece em viewport ou pelo menos é renderizado).
+ * Map + Promises em vôo. Lazy: só dispara quando habilitado.
  */
 import { useEffect, useRef, useState } from "react";
 import {
@@ -10,7 +9,7 @@ import {
   type ProductImageInput,
   type ProductImageResult,
 } from "./product-image.functions";
-import { normalizeForKey } from "./product-image-cache.server";
+import { normalizeForKey } from "./product-image-key";
 
 type CacheEntry = {
   result?: ProductImageResult;
@@ -29,33 +28,38 @@ function makeKey(input: ProductImageInput): string {
   ].join("|");
 }
 
-function isFresh(entry: CacheEntry | undefined): entry is Required<Pick<CacheEntry, "result">> & CacheEntry {
+function isFresh(
+  entry: CacheEntry | undefined,
+): entry is CacheEntry & { result: ProductImageResult } {
   return !!entry && !!entry.result && Date.now() - entry.fetchedAt < STALE_MS;
 }
 
-function shouldLookup(input: { productName?: string | null } & Partial<ProductImageInput>): input is ProductImageInput {
-  const name = (input.productName ?? "").trim();
-  return name.length >= 2;
-}
+export type UseProductImageInput = {
+  productName?: string | null;
+  brand?: string | null;
+  barcode?: string | null;
+  category?: ProductImageInput["category"] | null;
+};
 
 export type UseProductImageOptions = {
   enabled?: boolean;
 };
 
 export function useProductImage(
-  input: { productName?: string | null; brand?: string | null; barcode?: string | null; category?: ProductImageInput["category"] | null },
+  input: UseProductImageInput,
   options: UseProductImageOptions = {},
 ): { data: ProductImageResult | null; isLoading: boolean } {
   const { enabled = true } = options;
-  const valid = shouldLookup(input);
-  const normalizedInput: ProductImageInput | null = valid
-    ? {
-        productName: input.productName!.trim(),
-        brand: input.brand?.trim() || null,
-        barcode: input.barcode?.trim() || null,
-        category: input.category ?? null,
-      }
-    : null;
+  const name = (input.productName ?? "").trim();
+  const normalizedInput: ProductImageInput | null =
+    name.length >= 2
+      ? {
+          productName: name,
+          brand: input.brand?.trim() || null,
+          barcode: input.barcode?.trim() || null,
+          category: input.category ?? null,
+        }
+      : null;
 
   const key = normalizedInput ? makeKey(normalizedInput) : null;
 
