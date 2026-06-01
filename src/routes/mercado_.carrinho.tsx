@@ -293,6 +293,12 @@ function CartMode({ lista }: { lista: MercadoLista }) {
 
   return (
     <>
+      <MercadoBanner
+        title={t("cartV2.bannerTitle")}
+        subtitle={t("cartV2.bannerSubtitle")}
+        image={bannerOrcamento}
+        className="mt-4"
+      />
       {/* Summary */}
       <section className="mt-5 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
         <div className="flex items-start justify-between gap-3">
