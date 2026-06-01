@@ -178,7 +178,6 @@
         "title": "Feature available on higher plans",
         "description": "Smart Import of invoices, statements, PDFs and images is available on more complete plans."
       }
-
     }
   },
   "errors": {
@@ -246,5 +245,16 @@
     "alerts": "We couldn't load your alerts.",
     "connectedAccounts": "We couldn't load your connected accounts.",
     "bcbIndicators": "We couldn't update the indicators right now."
+  },
+  "appV2": {
+    "banner": {
+      "imageAlt": "Module illustration"
+    },
+    "filters": {
+      "aria": "Available filters"
+    },
+    "empty": {
+      "default": "No items to display."
+    }
   }
 }
