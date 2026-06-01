@@ -8,18 +8,24 @@ import {
 import { enforceUserRateLimit } from "@/server/rate-limit.server";
 
 /**
- * V2.3.2 — Preço Comunitário: importação de preços públicos do Joanin Online.
+ * V2.3.3 — Preço Comunitário: importação de preços públicos do Joanin Online.
  *
- * - Apenas leitura de dados públicos (HTML SSR da home).
- * - Sem login, sem captcha, sem armazenar HTML bruto.
- * - Sem expor headers/cookies/chaves na resposta.
- * - Limite máximo de itens por execução (segurança).
+ * Escopo:
+ * - Apenas leitura SSR pública (`/`, `/c/<categoria>`).
+ * - URLs `/p/<placement>` (ofertas/destaques/promoções) só servem skeleton
+ *   client-side → retornamos warning de importação parcial.
+ * - Sem login, sem cookies privados, sem fingerprint, sem WAF bypass.
+ * - Sem download de imagens (apenas image_url público é repassado).
+ * - Sem armazenar HTML bruto na resposta.
+ * - Limite máximo de itens por execução.
  */
 
-const SOURCE_URL = "https://joaninonline.com.br/";
-const MAX_ITEMS = 80;
+const ALLOWED_HOSTS = new Set(["joaninonline.com.br", "www.joaninonline.com.br"]);
+const DEFAULT_URL = "https://joaninonline.com.br/";
+const MAX_ITEMS_CAP = 120;
+const DEFAULT_MAX_ITEMS = 60;
 const FETCH_TIMEOUT_MS = 15_000;
-const MARKET_NAME = "Supermercados Joanin";
+const DEFAULT_MARKET_NAME = "Supermercados Joanin";
 const SOURCE_NAME = "Joanin Online";
 
 type ImportedItem = {
@@ -28,6 +34,7 @@ type ImportedItem = {
   oldPrice: number | null;
   unit: string | null;
   category: string | null;
+  imageUrl: string | null;
   marketName: string;
   sourceName: string;
   sourceUrl: string;
@@ -37,6 +44,15 @@ type ImportedItem = {
   neighborhood: string | null;
   notes: string;
   confidence: number;
+};
+
+type Diagnostics = {
+  origin: "home" | "category" | "placement" | "other";
+  pagePath: string;
+  totalFound: number;
+  paginationAvailable: boolean;
+  paginationBlocked: boolean;
+  warnings: string[];
 };
 
 const UNIT_TOKENS = [
@@ -73,7 +89,6 @@ function parseBrPrice(raw: string): number | null {
 }
 
 function extractUnitFromPriceLabel(label: string): string | null {
-  // Ex: "R$ 24,99 kg" → kg
   const after = label.replace(/R\$\s*[\d.,]+/i, " ").trim().toLowerCase();
   if (!after) return null;
   const token = after.split(/\s+/)[0]?.replace(/[^\p{Letter}]/gu, "") ?? "";
@@ -89,78 +104,9 @@ function inferUnitFromName(name: string): string | null {
       return u === "und" || u === "unid" ? "un" : u;
     }
   }
-  // Padrões comuns
   const m = lower.match(/\b(\d+)\s?(kg|g|ml|l)\b/);
   if (m) return m[2];
   return null;
-}
-
-/**
- * Extrai cards de produto do HTML SSR do Joanin (estrutura Angular).
- * Procura blocos delimitados por <app-produtos-produto-adicionar> ... </app-produtos-produto-adicionar>
- * e dentro deles: produto-descricao (nome), produto-preco-por (atual),
- * produto-preco-de (anterior).
- */
-function parseJoaninHtml(html: string): ImportedItem[] {
-  const items: ImportedItem[] = [];
-  const cardRe = /<app-produtos-produto-adicionar[\s\S]{0,6000}?<\/app-produtos-produto-adicionar>/g;
-  const cards = html.match(cardRe) ?? [];
-
-  for (const card of cards) {
-    if (items.length >= MAX_ITEMS) break;
-
-    // Nome
-    let name: string | null = null;
-    const titleAttrMatch = card.match(/class="produto-descricao"[^>]*title="([^"]+)"/);
-    if (titleAttrMatch) name = decodeHtmlEntities(titleAttrMatch[1]);
-    if (!name) {
-      const spanMatch = card.match(/<span[^>]*class="produto-descricao"[^>]*>([\s\S]*?)<\/span>/);
-      if (spanMatch) name = stripTags(decodeHtmlEntities(spanMatch[1]));
-    }
-    if (!name) continue;
-    name = name.replace(/\s+/g, " ").trim();
-    if (name.length < 2 || name.length > 160) continue;
-
-    // Preço atual
-    const porMatch = card.match(/<span[^>]*class="produto-preco-por"[^>]*>([\s\S]*?)<\/span>/);
-    const porLabel = porMatch ? decodeHtmlEntities(stripTags(porMatch[1])) : "";
-    const price = parseBrPrice(porLabel);
-    if (price === null) continue;
-
-    // Preço anterior (opcional)
-    const deMatch = card.match(/<span[^>]*class="produto-preco-de"[^>]*>([\s\S]*?)<\/span>/);
-    const deLabel = deMatch ? decodeHtmlEntities(stripTags(deMatch[1])) : "";
-    const oldPrice = deLabel ? parseBrPrice(deLabel) : null;
-
-    const unit = extractUnitFromPriceLabel(porLabel) ?? inferUnitFromName(name);
-
-    const confidence = name && price ? 0.85 : 0.5;
-
-    items.push({
-      productName: name,
-      price,
-      oldPrice: oldPrice && oldPrice !== price ? oldPrice : null,
-      unit,
-      category: null,
-      marketName: MARKET_NAME,
-      sourceName: SOURCE_NAME,
-      sourceUrl: SOURCE_URL,
-      seenAt: new Date().toISOString(),
-      validUntil: null,
-      city: null,
-      neighborhood: null,
-      notes: "Preço consultado online. Pode variar por loja, região e data.",
-      confidence,
-    });
-  }
-
-  // Deduplica por (productName normalizado + price)
-  const seen = new Map<string, ImportedItem>();
-  for (const it of items) {
-    const key = `${normalize(it.productName)}|${it.price.toFixed(2)}`;
-    if (!seen.has(key)) seen.set(key, it);
-  }
-  return Array.from(seen.values()).slice(0, MAX_ITEMS);
 }
 
 function normalize(value: string): string {
@@ -173,11 +119,129 @@ function normalize(value: string): string {
     .trim();
 }
 
-async function fetchJoaninHtml(): Promise<{ ok: boolean; html?: string; status: number; error?: string }> {
+function classifyPath(pathname: string): Diagnostics["origin"] {
+  if (pathname === "/" || pathname === "") return "home";
+  if (/^\/c\//.test(pathname)) return "category";
+  if (/^\/p\//.test(pathname)) return "placement";
+  return "other";
+}
+
+function categoryFromPath(pathname: string): string | null {
+  const m = pathname.match(/^\/c\/([^/?#]+)/);
+  if (!m) return null;
+  return decodeURIComponent(m[1]).replace(/-/g, " ");
+}
+
+function validateUrl(raw: string | undefined | null): { ok: true; url: URL } | { ok: false; reason: string } {
+  if (!raw) return { ok: true, url: new URL(DEFAULT_URL) };
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return { ok: false, reason: "invalid_url" };
+  }
+  if (u.protocol !== "https:" && u.protocol !== "http:") {
+    return { ok: false, reason: "invalid_url" };
+  }
+  if (!ALLOWED_HOSTS.has(u.hostname)) {
+    return { ok: false, reason: "host_not_allowed" };
+  }
+  return { ok: true, url: u };
+}
+
+/**
+ * Extrai cards SSR. Cada card pode estar em estado "skeleton" (sem dados) ou
+ * completo (com produto-descricao/preco). Skeletons são contados mas ignorados.
+ */
+function parseJoaninHtml(
+  html: string,
+  baseUrl: URL,
+  marketName: string,
+  category: string | null,
+  maxItems: number,
+): { items: ImportedItem[]; rawCards: number; skeletons: number; hasCarregarMais: boolean } {
+  const items: ImportedItem[] = [];
+  const cardRe = /<app-produtos-produto-adicionar[\s\S]{0,8000}?<\/app-produtos-produto-adicionar>/g;
+  const cards = html.match(cardRe) ?? [];
+  let skeletons = 0;
+  const sourceUrlStr = baseUrl.toString();
+  const seenAtIso = new Date().toISOString();
+
+  for (const card of cards) {
+    if (items.length >= maxItems) break;
+    if (/exibirSkeleton/.test(card)) {
+      skeletons += 1;
+      continue;
+    }
+
+    let name: string | null = null;
+    const titleAttrMatch = card.match(/class="produto-descricao"[^>]*title="([^"]+)"/);
+    if (titleAttrMatch) name = decodeHtmlEntities(titleAttrMatch[1]);
+    if (!name) {
+      const spanMatch = card.match(/<span[^>]*class="produto-descricao"[^>]*>([\s\S]*?)<\/span>/);
+      if (spanMatch) name = stripTags(decodeHtmlEntities(spanMatch[1]));
+    }
+    if (!name) continue;
+    name = name.replace(/\s+/g, " ").trim();
+    if (name.length < 2 || name.length > 160) continue;
+
+    const porMatch = card.match(/<span[^>]*class="produto-preco-por"[^>]*>([\s\S]*?)<\/span>/);
+    const porLabel = porMatch ? decodeHtmlEntities(stripTags(porMatch[1])) : "";
+    const price = parseBrPrice(porLabel);
+    if (price === null) continue;
+
+    const deMatch = card.match(/<span[^>]*class="produto-preco-de"[^>]*>([\s\S]*?)<\/span>/);
+    const deLabel = deMatch ? decodeHtmlEntities(stripTags(deMatch[1])) : "";
+    const oldPrice = deLabel ? parseBrPrice(deLabel) : null;
+
+    const unit = extractUnitFromPriceLabel(porLabel) ?? inferUnitFromName(name);
+
+    let imageUrl: string | null = null;
+    const imgMatch = card.match(/<img[^>]*class="produto-imagem"[^>]*src="([^"]+)"/);
+    if (imgMatch) {
+      const src = imgMatch[1].trim();
+      if (/^https:\/\//i.test(src) && src.length <= 500) imageUrl = src;
+    }
+
+    items.push({
+      productName: name,
+      price,
+      oldPrice: oldPrice && oldPrice !== price ? oldPrice : null,
+      unit,
+      category,
+      imageUrl,
+      marketName,
+      sourceName: SOURCE_NAME,
+      sourceUrl: sourceUrlStr,
+      seenAt: seenAtIso,
+      validUntil: null,
+      city: null,
+      neighborhood: null,
+      notes: "Preço público importado para revisão. Pode variar por loja, região e data. Confira no mercado antes de comprar.",
+      confidence: 0.85,
+    });
+  }
+
+  // dedupe por (nome normalizado + price + unit + sourceUrl)
+  const seen = new Map<string, ImportedItem>();
+  for (const it of items) {
+    const key = `${normalize(it.productName)}|${it.price.toFixed(2)}|${it.unit ?? ""}|${it.sourceUrl}`;
+    if (!seen.has(key)) seen.set(key, it);
+  }
+
+  return {
+    items: Array.from(seen.values()).slice(0, maxItems),
+    rawCards: cards.length,
+    skeletons,
+    hasCarregarMais: /carregar-mais/i.test(html),
+  };
+}
+
+async function fetchHtml(url: URL): Promise<{ ok: boolean; html?: string; status: number; error?: string }> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch(SOURCE_URL, {
+    const res = await fetch(url.toString(), {
       method: "GET",
       headers: {
         "User-Agent":
@@ -188,9 +252,7 @@ async function fetchJoaninHtml(): Promise<{ ok: boolean; html?: string; status: 
       signal: controller.signal,
       redirect: "follow",
     });
-    if (!res.ok) {
-      return { ok: false, status: res.status, error: `http_${res.status}` };
-    }
+    if (!res.ok) return { ok: false, status: res.status, error: `http_${res.status}` };
     const html = await res.text();
     return { ok: true, status: res.status, html };
   } catch (err) {
@@ -199,6 +261,13 @@ async function fetchJoaninHtml(): Promise<{ ok: boolean; html?: string; status: 
   } finally {
     clearTimeout(timer);
   }
+}
+
+function sanitizeMarketName(raw: unknown): string {
+  if (typeof raw !== "string") return DEFAULT_MARKET_NAME;
+  const trimmed = raw.trim().slice(0, 120);
+  if (trimmed.length < 2) return DEFAULT_MARKET_NAME;
+  return trimmed;
 }
 
 export const Route = createFileRoute("/api/mercado-joanin-import")({
@@ -245,45 +314,88 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
         });
         if (rl) return rl;
 
-        const fetched = await fetchJoaninHtml();
+        const body = await request.json().catch(() => ({} as Record<string, unknown>));
+        const validated = validateUrl((body as { url?: string }).url);
+        if (!validated.ok) {
+          return Response.json(
+            { success: false, code: "invalid_url", items: [], message: "URL inválida ou fora do domínio joaninonline.com.br." },
+            { status: 400 },
+          );
+        }
+        const url = validated.url;
+        const origin = classifyPath(url.pathname);
+        const marketName = sanitizeMarketName((body as { marketName?: string }).marketName);
+        const maxItemsRaw = Number((body as { maxItems?: number }).maxItems);
+        const maxItems = Number.isFinite(maxItemsRaw) && maxItemsRaw > 0
+          ? Math.min(Math.floor(maxItemsRaw), MAX_ITEMS_CAP)
+          : DEFAULT_MAX_ITEMS;
+
+        const fetched = await fetchHtml(url);
+        const diagnostics: Diagnostics = {
+          origin,
+          pagePath: url.pathname,
+          totalFound: 0,
+          paginationAvailable: false,
+          paginationBlocked: false,
+          warnings: [],
+        };
+
         if (!fetched.ok || !fetched.html) {
           if (process.env.NODE_ENV !== "production") {
             console.warn("[mercado-joanin-import] fetch falhou", { status: fetched.status, error: fetched.error });
           }
           return Response.json(
-            {
-              success: false,
-              code: "site_unavailable",
-              items: [],
-              message: "Não foi possível acessar a fonte online agora.",
-            },
+            { success: false, code: "site_unavailable", items: [], diagnostics, message: "Não foi possível acessar a fonte online agora." },
             { status: 200 },
           );
         }
 
-        let items: ImportedItem[] = [];
+        const category = categoryFromPath(url.pathname);
+        let parsed;
         try {
-          items = parseJoaninHtml(fetched.html);
+          parsed = parseJoaninHtml(fetched.html, url, marketName, category, maxItems);
         } catch (err) {
           console.error("[mercado-joanin-import] parse erro", err);
-          items = [];
+          parsed = { items: [], rawCards: 0, skeletons: 0, hasCarregarMais: false };
+        }
+
+        diagnostics.totalFound = parsed.items.length;
+        if (parsed.hasCarregarMais) {
+          diagnostics.paginationBlocked = true;
+          diagnostics.warnings.push("pagination_private_blocked");
+        }
+        if (origin === "placement" && parsed.items.length === 0 && parsed.skeletons > 0) {
+          diagnostics.warnings.push("placement_client_rendered_only");
+        }
+        if (origin === "other") {
+          diagnostics.warnings.push("path_unsupported_use_home_or_category");
         }
 
         if (process.env.NODE_ENV !== "production") {
           console.info("[mercado-joanin-import]", {
             provider: "joanin_online",
+            path: url.pathname,
+            origin,
             htmlLength: fetched.html.length,
-            itemCount: items.length,
+            rawCards: parsed.rawCards,
+            skeletons: parsed.skeletons,
+            itemCount: parsed.items.length,
+            paginationBlocked: diagnostics.paginationBlocked,
           });
         }
 
-        if (items.length === 0) {
+        if (parsed.items.length === 0) {
+          const code = origin === "placement" ? "placement_no_public_data" : "no_products_found";
           return Response.json(
             {
               success: false,
-              code: "no_products_found",
+              code,
               items: [],
-              message: "Nenhum preço foi encontrado nessa busca.",
+              diagnostics,
+              message:
+                code === "placement_no_public_data"
+                  ? "Esta categoria usa carregamento dinâmico protegido. Importamos apenas os produtos públicos visíveis."
+                  : "Nenhum preço foi encontrado nessa busca.",
             },
             { status: 200 },
           );
@@ -292,11 +404,13 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
         return Response.json(
           {
             success: true,
-            items,
+            items: parsed.items,
             sourceName: SOURCE_NAME,
-            sourceUrl: SOURCE_URL,
-            marketName: MARKET_NAME,
+            sourceUrl: url.toString(),
+            marketName,
+            category,
             fetchedAt: new Date().toISOString(),
+            diagnostics,
           },
           { status: 200 },
         );

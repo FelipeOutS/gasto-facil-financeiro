@@ -35,8 +35,22 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch } from "@/lib/api-fetch";
+import { useMercadosLocais } from "@/lib/mercado/mercados-store";
 
 const TABLE = "community_market_prices" as const;
+const DEFAULT_MARKET = "Supermercados Joanin";
+const DEFAULT_URL = "https://joaninonline.com.br/";
+const URL_PRESETS: Array<{ key: string; url: string }> = [
+  { key: "home", url: "https://joaninonline.com.br/" },
+  { key: "hortifruti", url: "https://joaninonline.com.br/c/hortifruti" },
+  { key: "bebidas", url: "https://joaninonline.com.br/c/bebidas" },
+  { key: "limpeza", url: "https://joaninonline.com.br/c/limpeza" },
+  { key: "padaria", url: "https://joaninonline.com.br/c/padaria" },
+  { key: "carnes", url: "https://joaninonline.com.br/c/carnes" },
+  { key: "laticinios", url: "https://joaninonline.com.br/c/laticinios" },
+  { key: "mercearia", url: "https://joaninonline.com.br/c/mercearia" },
+];
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type ImportedItem = {
   productName: string;
@@ -44,6 +58,7 @@ type ImportedItem = {
   oldPrice: number | null;
   unit: string | null;
   category: string | null;
+  imageUrl: string | null;
   marketName: string;
   sourceName: string;
   sourceUrl: string;
@@ -53,6 +68,15 @@ type ImportedItem = {
   neighborhood: string | null;
   notes: string;
   confidence: number;
+};
+
+type Diagnostics = {
+  origin: "home" | "category" | "placement" | "other";
+  pagePath: string;
+  totalFound: number;
+  paginationAvailable: boolean;
+  paginationBlocked: boolean;
+  warnings: string[];
 };
 
 type ReviewItem = ImportedItem & {
@@ -89,10 +113,14 @@ export function OnlineImportWizard({
 }: OnlineImportWizardProps) {
   const { t, i18n } = useTranslation("mercado");
   const { user } = useAuth();
+  const savedMercados = useMercadosLocais();
   const [step, setStep] = useState<Step>("confirm");
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [fetchedAt, setFetchedAt] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [url, setUrl] = useState<string>(DEFAULT_URL);
+  const [marketName, setMarketName] = useState<string>(DEFAULT_MARKET);
+  const [diagnostics, setDiagnostics] = useState<Diagnostics | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -100,6 +128,9 @@ export function OnlineImportWizard({
       setItems([]);
       setFetchedAt("");
       setSaving(false);
+      setUrl(DEFAULT_URL);
+      setMarketName(DEFAULT_MARKET);
+      setDiagnostics(null);
     }
   }, [open]);
 
@@ -117,17 +148,19 @@ export function OnlineImportWizard({
   }, [fetchedAt, dateLocale]);
 
   async function runImport() {
+    const trimmedUrl = url.trim() || DEFAULT_URL;
+    const trimmedMarket = marketName.trim() || DEFAULT_MARKET;
     setStep("loading");
     try {
       const res = await apiFetch("/api/mercado-joanin-import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ url: trimmedUrl, marketName: trimmedMarket }),
       });
       const json = await res.json().catch(() => ({} as Record<string, unknown>));
       if (res.status === 429) {
         toast.error(t("communityPrices.onlineImport.errors.rateLimited"));
-        onOpenChange(false);
+        setStep("confirm");
         return;
       }
       if (res.status === 403) {
@@ -138,21 +171,33 @@ export function OnlineImportWizard({
         onOpenChange(false);
         return;
       }
+      if (res.status === 400) {
+        toast.error(t("communityPrices.onlineImport.errors.invalidUrl"));
+        setStep("confirm");
+        return;
+      }
       if (!res.ok) {
         toast.error(t("communityPrices.onlineImport.errors.importFailed"));
-        onOpenChange(false);
+        setStep("confirm");
         return;
       }
       const code = (json as { code?: string }).code;
       const incoming = (json as { items?: ImportedItem[] }).items ?? [];
+      const diag = (json as { diagnostics?: Diagnostics }).diagnostics ?? null;
+      setDiagnostics(diag);
       if (code === "site_unavailable") {
         toast.error(t("communityPrices.onlineImport.errors.siteUnavailable"));
-        onOpenChange(false);
+        setStep("confirm");
+        return;
+      }
+      if (code === "placement_no_public_data") {
+        toast.warning(t("communityPrices.onlineImport.errors.placementNoPublicData"));
+        setStep("confirm");
         return;
       }
       if (code === "no_products_found" || incoming.length === 0) {
         toast.warning(t("communityPrices.onlineImport.errors.noProductsFound"));
-        onOpenChange(false);
+        setStep("confirm");
         return;
       }
       const fetchedAtIso = (json as { fetchedAt?: string }).fetchedAt ?? new Date().toISOString();
@@ -168,7 +213,7 @@ export function OnlineImportWizard({
     } catch (err) {
       console.error("[online-import] erro", err);
       toast.error(t("communityPrices.onlineImport.errors.importFailed"));
-      onOpenChange(false);
+      setStep("confirm");
     }
   }
 
@@ -188,6 +233,11 @@ export function OnlineImportWizard({
       toast.error(t("communityPrices.onlineImport.errors.selectAtLeastOne"));
       return;
     }
+    const matchedMercado = savedMercados.find(
+      (m) => m.nome.trim().toLowerCase() === marketName.trim().toLowerCase(),
+    );
+    const resolvedMarketId =
+      matchedMercado && UUID_RE.test(matchedMercado.id) ? matchedMercado.id : null;
     setSaving(true);
     const today = new Date().toISOString().slice(0, 10);
 
@@ -197,7 +247,7 @@ export function OnlineImportWizard({
         .select("id,product_name,price,seen_at,status")
         .eq("user_id", user.id)
         .eq("market_name", toSave[0].marketName)
-        .eq("source", "store")
+        .eq("source", "online")
         .gte("seen_at", today)
         .limit(500);
 
@@ -242,8 +292,8 @@ export function OnlineImportWizard({
           price: r.price,
           unit: r.unit?.trim() ? r.unit.trim() : null,
           market_name: r.marketName,
-          market_id: null,
-          source: "store",
+          market_id: resolvedMarketId,
+          source: "online",
           status: "active",
           seen_at: today,
           valid_until: r.validUntil && /^\d{4}-\d{2}-\d{2}$/.test(r.validUntil) ? r.validUntil : null,
@@ -300,11 +350,71 @@ export function OnlineImportWizard({
               <p>{t("communityPrices.onlineImport.confirmMessage")}</p>
               <p className="mt-2 text-[11px] opacity-80">{t("communityPrices.onlineImport.cardScopeNotice")}</p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {t("communityPrices.onlineImport.sourceLabel", {
-                source: "Joanin Online",
-              })}
-            </p>
+
+            <div>
+              <Label htmlFor="online-import-url" className="text-xs">
+                {t("communityPrices.onlineImport.urlLabel")}
+              </Label>
+              <Input
+                id="online-import-url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder={t("communityPrices.onlineImport.urlPlaceholder")}
+                inputMode="url"
+                autoComplete="off"
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {t("communityPrices.onlineImport.urlHelp")}
+              </p>
+              <div className="mt-2">
+                <p className="text-[11px] font-medium text-muted-foreground">
+                  {t("communityPrices.onlineImport.presetsLabel")}
+                </p>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {URL_PRESETS.map((p) => {
+                    const active = url.trim() === p.url;
+                    return (
+                      <button
+                        key={p.key}
+                        type="button"
+                        onClick={() => setUrl(p.url)}
+                        className={`rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+                          active
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border bg-muted/40 text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        {t(`communityPrices.onlineImport.presets.${p.key}`)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="online-import-market" className="text-xs">
+                {t("communityPrices.onlineImport.marketLabel")}
+              </Label>
+              <Input
+                id="online-import-market"
+                list="online-import-market-list"
+                value={marketName}
+                onChange={(e) => setMarketName(e.target.value)}
+                placeholder={t("communityPrices.onlineImport.marketPlaceholder")}
+                autoComplete="off"
+              />
+              <datalist id="online-import-market-list">
+                <option value={DEFAULT_MARKET} />
+                {savedMercados.map((m) => (
+                  <option key={m.id} value={m.nome} />
+                ))}
+              </datalist>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {t("communityPrices.onlineImport.marketHelpSaved")}
+              </p>
+            </div>
+
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button
                 variant="ghost"
@@ -332,6 +442,9 @@ export function OnlineImportWizard({
           <div className="space-y-3">
             <div className="rounded-md border border-border bg-muted/20 p-2 text-[11px] text-muted-foreground">
               <p>
+                {t("communityPrices.onlineImport.foundOnPage", { count: items.length })}
+              </p>
+              <p className="mt-1">
                 {t("communityPrices.onlineImport.reviewSummary", {
                   count: items.length,
                   source: "Joanin Online",
@@ -341,6 +454,29 @@ export function OnlineImportWizard({
               <p className="mt-1">{t("communityPrices.onlineImport.reviewScopeNote")}</p>
               <p className="mt-1">{t("communityPrices.onlineImport.reviewDisclaimer")}</p>
             </div>
+
+            {diagnostics && diagnostics.warnings.length > 0 && (
+              <div className="space-y-1.5">
+                {diagnostics.warnings.includes("placement_client_rendered_only") && (
+                  <div className="flex items-start gap-2 rounded-md border border-amber-300/40 bg-amber-50/50 p-2 text-[11px] text-amber-900 dark:bg-amber-950/20 dark:text-amber-100">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>{t("communityPrices.onlineImport.warnings.placementClientRenderedOnly")}</span>
+                  </div>
+                )}
+                {diagnostics.warnings.includes("pagination_private_blocked") && (
+                  <div className="flex items-start gap-2 rounded-md border border-amber-300/40 bg-amber-50/50 p-2 text-[11px] text-amber-900 dark:bg-amber-950/20 dark:text-amber-100">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>{t("communityPrices.onlineImport.warnings.paginationPrivateBlocked")}</span>
+                  </div>
+                )}
+                {diagnostics.warnings.includes("path_unsupported_use_home_or_category") && (
+                  <div className="flex items-start gap-2 rounded-md border border-amber-300/40 bg-amber-50/50 p-2 text-[11px] text-amber-900 dark:bg-amber-950/20 dark:text-amber-100">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>{t("communityPrices.onlineImport.warnings.pathUnsupported")}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             <ul className="max-h-[55vh] space-y-3 overflow-y-auto pr-1">
               {items.map((r, idx) => {
@@ -384,6 +520,17 @@ export function OnlineImportWizard({
                       </button>
                     </div>
                     <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {r.imageUrl && (
+                        <div className="sm:col-span-2">
+                          <img
+                            src={r.imageUrl}
+                            alt={t("communityPrices.onlineImport.imageAlt")}
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                            className="h-16 w-16 rounded-md border border-border object-cover"
+                          />
+                        </div>
+                      )}
                       <div className="sm:col-span-2">
                         <Label className="text-xs">
                           {t("communityPrices.review.fields.product")}
