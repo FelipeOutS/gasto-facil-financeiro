@@ -25,6 +25,9 @@ import { removeLista, useMercadoListas, type MercadoLista } from "@/lib/mercado/
 import { refreshMercadoListas, useMercadoListasSyncState } from "@/lib/mercado/mercado-sync";
 import { useAuth } from "@/lib/auth-context";
 import { useState } from "react";
+import { MercadoBanner } from "@/components/mercado/shell";
+import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
+import emptyLista from "@/assets/mercado/empty-lista.png";
 
 
 export const Route = createFileRoute("/mercado_/listas")({
