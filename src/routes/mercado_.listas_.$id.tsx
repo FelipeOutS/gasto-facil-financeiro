@@ -38,6 +38,9 @@ import {
   getSuggestionsFor,
   useActiveCommunityPrices,
 } from "@/lib/mercado/community-prices-suggestions";
+import { MercadoBanner, type MercadoCategoryKey } from "@/components/mercado/shell";
+import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
+import emptyCarrinho from "@/assets/mercado/empty-carrinho.png";
 
 import { cn } from "@/lib/utils";
 import { usePlan } from "@/lib/use-plan";
@@ -134,15 +137,76 @@ const statusToneMap: Record<ListaStatus, string> = {
   done: "bg-success/10 text-success ring-1 ring-success/20",
 };
 
+type CategoryGroupKey = MercadoCategoryKey | "outros";
+
+const CATEGORY_GROUP_ORDER: CategoryGroupKey[] = [
+  "hortifruti",
+  "acougue",
+  "padaria",
+  "bebidas",
+  "laticinios",
+  "limpeza",
+  "mercearia",
+  "utilidades",
+  "outros",
+];
+
+const CATEGORY_KEYWORDS: Record<MercadoCategoryKey, string[]> = {
+  hortifruti: ["hortifruti", "fruta", "verdura", "legume", "tomate", "alface", "banana", "maca", "maçã", "cebola", "batata", "cenoura"],
+  acougue: ["acougue", "açougue", "carne", "frango", "boi", "porco", "linguica", "linguiça", "bife", "file", "filé", "peito", "coxa"],
+  padaria: ["padaria", "pao", "pão", "bolo", "biscoito", "torrada", "croissant", "rosca"],
+  bebidas: ["bebida", "refrigerante", "suco", "agua", "água", "cerveja", "vinho", "cafe", "café", "cha", "chá", "leite condensado"],
+  laticinios: ["laticinio", "laticínio", "leite", "queijo", "iogurte", "manteiga", "requeijao", "requeijão", "creme de leite"],
+  limpeza: ["limpeza", "detergente", "sabao", "sabão", "amaciante", "desinfetante", "esponja", "agua sanitaria", "água sanitária", "alvejante"],
+  mercearia: ["mercearia", "arroz", "feijao", "feijão", "macarrao", "macarrão", "azeite", "oleo", "óleo", "sal", "acucar", "açúcar", "farinha", "molho"],
+  utilidades: ["utilidade", "papel higienico", "papel higiênico", "guardanapo", "fralda", "absorvente", "escova", "pasta de dente", "sabonete", "shampoo"],
+};
+
+function detectCategory(item: ListaItem): CategoryGroupKey {
+  const explicit = item.categoria?.toLowerCase().trim();
+  if (explicit) {
+    for (const key of Object.keys(CATEGORY_KEYWORDS) as MercadoCategoryKey[]) {
+      if (explicit.includes(key) || CATEGORY_KEYWORDS[key].some((k) => explicit.includes(k))) {
+        return key;
+      }
+    }
+  }
+  const name = item.nome.toLowerCase();
+  for (const key of Object.keys(CATEGORY_KEYWORDS) as MercadoCategoryKey[]) {
+    if (CATEGORY_KEYWORDS[key].some((k) => name.includes(k))) return key;
+  }
+  return "outros";
+}
+
 function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => void }) {
   const { t, i18n: i18next } = useTranslation("mercado");
   const resumo = useMemo(() => computeResumo(lista), [lista]);
+  const [search, setSearch] = useState("");
 
   const dateFormatter = new Intl.DateTimeFormat(i18next.language || "pt-BR", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
+
+  const filteredEntries = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return lista.entries;
+    return lista.entries.filter((e) => e.nome.toLowerCase().includes(q));
+  }, [lista.entries, search]);
+
+  const groupedEntries = useMemo(() => {
+    const groups = new Map<CategoryGroupKey, ListaItem[]>();
+    for (const item of filteredEntries) {
+      const key = detectCategory(item);
+      const arr = groups.get(key) ?? [];
+      arr.push(item);
+      groups.set(key, arr);
+    }
+    return CATEGORY_GROUP_ORDER.filter((k) => groups.has(k)).map(
+      (k) => [k, groups.get(k)!] as const,
+    );
+  }, [filteredEntries]);
 
   return (
     <MobileShell wide>
@@ -183,6 +247,34 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
           </div>
         </div>
       </header>
+
+      {/* Visual banner */}
+      <div className="mt-4">
+        <MercadoBanner
+          tone="fresh"
+          title={lista.name}
+          subtitle={t("listDetailV2.bannerSubtitle")}
+          imageSrc={bannerComunitario}
+          imageAlt={t("listDetailV2.bannerSubtitle")}
+          compact
+        />
+      </div>
+
+      {/* Local search */}
+      <div className="mt-4">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("listDetailV2.searchPlaceholder")}
+            aria-label={t("listDetailV2.searchAria")}
+            className="min-h-11 w-full rounded-2xl border border-border bg-card pl-9 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
+          />
+        </div>
+      </div>
+
 
       {/* Resumo */}
       <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -257,20 +349,38 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
 
       {/* Items */}
       {lista.entries.length === 0 ? (
-        <section className="mt-5 rounded-3xl border border-dashed border-border bg-card p-8 text-center shadow-card">
-          <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-card-elevated text-brand ring-1 ring-border/60">
-            <ShoppingBasket className="h-7 w-7" />
-          </span>
-          <h2 className="mt-4 text-lg font-semibold">{t("detail.empty.title")}</h2>
+        <section className="mt-5 overflow-hidden rounded-3xl border border-dashed border-border bg-card p-6 text-center shadow-card md:p-8">
+          <img
+            src={emptyCarrinho}
+            alt={t("listDetailV2.emptyImageAlt")}
+            loading="lazy"
+            className="mx-auto h-28 w-auto object-contain sm:h-36"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          />
+          <h2 className="mt-4 text-lg font-semibold">{t("listDetailV2.emptyTitle")}</h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            {t("detail.empty.description")}
+            {t("listDetailV2.emptyDesc")}
           </p>
+        </section>
+      ) : filteredEntries.length === 0 ? (
+        <section className="mt-5 rounded-2xl border border-dashed border-border bg-card/60 p-6 text-center text-sm text-muted-foreground">
+          {t("listDetailV2.noMatch")}
         </section>
       ) : (
         <>
-          <section className="mt-5 flex flex-col gap-3">
-            {lista.entries.map((item) => (
-              <ItemRow key={item.id} item={item} listaId={lista.id} />
+          <section className="mt-5 flex flex-col gap-5 pb-24 md:pb-0">
+            {groupedEntries.map(([groupKey, items]) => (
+              <div key={groupKey}>
+                <h3 className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  {t(`listDetailV2.groupTitle.${groupKey}`)}{" "}
+                  <span className="text-foreground/60 normal-case tracking-normal">· {items.length}</span>
+                </h3>
+                <div className="flex flex-col gap-3">
+                  {items.map((item) => (
+                    <ItemRow key={item.id} item={item} listaId={lista.id} />
+                  ))}
+                </div>
+              </div>
             ))}
           </section>
           <CommunityPriceSavingsSummary
@@ -281,6 +391,36 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
             }))}
           />
         </>
+      )}
+
+      {/* Sticky mobile summary footer */}
+      {lista.entries.length > 0 && (
+        <div
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/95 px-4 py-3 shadow-elevated backdrop-blur md:hidden"
+          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+        >
+          <div className="mx-auto flex max-w-screen-sm items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                {t("listDetailV2.stickyTotal")}
+              </p>
+              <p className="truncate text-base font-bold tabular-nums">
+                <Money value={resumo.totalEstimado} />
+                <span className="ml-2 text-[11px] font-medium text-muted-foreground">
+                  {t("listDetailV2.stickyItems", { bought: resumo.itensComprados, total: resumo.totalItens })}
+                </span>
+              </p>
+            </div>
+            <Link
+              to="/mercado/carrinho"
+              search={{ lista: lista.id }}
+              className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-2xl bg-brand-grad px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated active:scale-[0.98]"
+            >
+              <ShoppingBasket className="h-4 w-4" />
+              {t("listDetailV2.stickyGoCart")}
+            </Link>
+          </div>
+        </div>
       )}
 
       {/* Finalize */}

@@ -1545,5 +1545,49 @@
     "budgetCta": "Abrir orçamento da compra",
     "toolsTitle": "Ver todas as ferramentas",
     "toolsDesc": "Todas as áreas do Mercado Inteligente, incluindo recursos premium."
+  },
+  "listsV2": {
+    "bannerTitle": "Suas listas de compras",
+    "bannerSubtitle": "Planeje a compra, acompanhe o gasto e leve só o que precisa.",
+    "bannerCta": "Nova lista",
+    "emptyTitle": "Você ainda não tem listas",
+    "emptyDesc": "Crie sua primeira lista para organizar a compra e controlar o gasto antes de ir ao mercado.",
+    "emptyCta": "Criar primeira lista",
+    "emptyImageAlt": "Ilustração de lista de compras vazia"
+  },
+  "listDetailV2": {
+    "bannerSubtitle": "Marque o que já está no carrinho enquanto faz as compras.",
+    "searchPlaceholder": "Buscar item na lista",
+    "searchAria": "Buscar item na lista",
+    "groupTitle": {
+      "hortifruti": "Hortifruti",
+      "acougue": "Açougue",
+      "padaria": "Padaria",
+      "bebidas": "Bebidas",
+      "laticinios": "Laticínios",
+      "limpeza": "Limpeza",
+      "mercearia": "Mercearia",
+      "utilidades": "Utilidades",
+      "outros": "Outros"
+    },
+    "emptyTitle": "Nenhum item nesta lista",
+    "emptyDesc": "Adicione o primeiro item usando o formulário abaixo ou o leitor de código de barras.",
+    "emptyImageAlt": "Ilustração de carrinho vazio",
+    "noMatch": "Nenhum item encontrado para a busca.",
+    "stickyTotal": "Total estimado",
+    "stickyItems": "{{bought}}/{{total}} itens",
+    "stickyGoCart": "Ir ao carrinho"
+  },
+  "cartV2": {
+    "bannerTitle": "Seu carrinho",
+    "bannerSubtitle": "Acompanhe quantidade, preços e fechamento da compra.",
+    "emptyTitle": "Carrinho vazio",
+    "emptyDesc": "Escolha uma lista para começar a marcar os itens enquanto faz as compras.",
+    "emptyCta": "Ver minhas listas",
+    "emptySecondaryCta": "Criar nova lista",
+    "emptyImageAlt": "Ilustração de carrinho vazio",
+    "stickyTotal": "Total estimado",
+    "stickyItems": "{{bought}}/{{total}} itens",
+    "stickyFinalize": "Finalizar"
   }
 }
