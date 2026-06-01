@@ -1,14 +1,20 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Home, History, WalletCards, Check, CircleDashed } from "lucide-react";
+import { ArrowLeft, Home, History, WalletCards, Check, CircleDashed, Receipt, ListPlus, ShoppingBag, Store, TrendingUp } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
+import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
+import { SectionBlock } from "@/components/mercado/shell/SectionBlock";
+import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
+import emptyCarrinho from "@/assets/mercado/empty-carrinho.png";
 import { cn } from "@/lib/utils";
 import {
   useMercadoHistorico,
   type MercadoCompraHistorico,
 } from "@/lib/mercado/listas-store";
+
 
 export const Route = createFileRoute("/mercado_/historico")({
   head: () => ({
