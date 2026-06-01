@@ -18,6 +18,8 @@ import { MobileShell } from "@/components/MobileShell";
 import { confirmAsync } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
+import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
+import bannerCesta from "@/assets/mercado/hero-home.jpg";
 import {
   type CestaTipo,
   type MercadoCestaPadrao,
