@@ -102,13 +102,51 @@ function CalculadorasPage() {
         </span>
       </header>
 
+      <div className="mt-4">
+        <MercadoBanner
+          tone="community"
+          title={t("calculatorsV2.banner.title")}
+          subtitle={t("calculatorsV2.banner.subtitle")}
+          imageSrc={bannerComunitario}
+        />
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-border/60 bg-card-elevated/60 p-3">
+        <p className="text-sm font-semibold text-foreground">
+          {t("calculatorsV2.intro.title")}
+        </p>
+        <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
+          {t("calculatorsV2.intro.description")}
+        </p>
+      </div>
+
       <section className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <CompareCard />
         <EstimateCard />
       </section>
+
+      <section className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Link
+          to="/mercado/carrinho"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground shadow-card transition-all hover:bg-card-elevated active:scale-[0.98]"
+        >
+          {t("calculatorsV2.cta.goToCart")}
+        </Link>
+        <Link
+          to="/mercado/listas/nova"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-brand-grad px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
+        >
+          {t("calculatorsV2.cta.createList")}
+        </Link>
+      </section>
+
+      <p className="mt-4 rounded-2xl border border-border/60 bg-card-elevated/60 p-3 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
+        💡 {t("calculatorsV2.tips.lowestPrice")} {t("calculatorsV2.tips.validity")}
+      </p>
     </MobileShell>
   );
 }
+
 
 // ----------------- Compare price by unit -----------------
 
