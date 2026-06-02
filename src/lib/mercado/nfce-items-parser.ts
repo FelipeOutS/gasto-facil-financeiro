@@ -251,6 +251,8 @@ function tryParseLine(rawLine: string): CupomItemPreview | undefined {
   if (!nome || nome.length < 2) return undefined;
   // Linhas que viraram só números não são produto
   if (/^[\d\s.,/-]+$/.test(nome)) return undefined;
+  // Nome residual ainda parece URL/host/chave técnica — descarta.
+  if (nameLooksLikeReceiptReference(nome)) return undefined;
 
   // Defaults seguros
   if (!quantidade || !Number.isFinite(quantidade) || quantidade <= 0) {
