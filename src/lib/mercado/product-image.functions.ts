@@ -180,7 +180,7 @@ type OFFProduct = {
 };
 
 type OFFByBarcode = { status?: number; product?: OFFProduct };
-type OFFSearch = { products?: OFFProduct[] };
+type OFFSearch = { products?: OFFProduct[]; hits?: OFFProduct[] };
 type ProductImageHit = Pick<
   ProductImageResult,
   "imageUrl" | "source" | "confidence" | "origin" | "persistable"
