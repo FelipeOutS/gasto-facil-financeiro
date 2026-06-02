@@ -249,7 +249,8 @@
     },
     "finalize": {
       "cta": "Finalizar compra",
-      "hint": "Salve esta compra no seu histórico local.",
+      "hint": "Todos os itens desta lista serão considerados ao finalizar. Use a marcação apenas para controlar o que você já pegou no mercado.",
+      "selectionHint": "Todos os itens desta lista serão considerados ao finalizar. Use a marcação apenas para controlar o que você já pegou no mercado.",
       "emptyError": "Adicione pelo menos um item antes de finalizar.",
       "confirmPending": "Ainda há itens pendentes nesta lista. Deseja finalizar mesmo assim?",
       "success": "Compra registrada no histórico.",
