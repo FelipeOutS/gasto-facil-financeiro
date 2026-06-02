@@ -353,15 +353,17 @@ async function lookupByName(
     onDiag?.({ candidates: 0, bestScore: null, rejected: "query_too_short" });
     return null;
   }
+  // Search-a-Licious: endpoint moderno do OFF, sem rate-limit agressivo
+  // do antigo cgi/search.pl (que devolve 503/HTML em rajadas).
   const params = new URLSearchParams({
-    search_terms: q,
-    json: "1",
+    q,
     page_size: "20",
-    fields: "image_front_url,image_url,product_name,brands,selected_images",
+    fields: "image_front_url,image_url,product_name,brands,selected_images,code",
   });
-  const url = `https://world.openfoodfacts.org/cgi/search.pl?${params.toString()}`;
+  const url = `https://search.openfoodfacts.org/search?${params.toString()}`;
   const { data, reason } = await fetchJson<OFFSearch>(url);
-  if (!data?.products?.length) {
+  const products = data?.hits ?? data?.products ?? [];
+  if (!products.length) {
     onDiag?.({ candidates: 0, bestScore: null, rejected: reason ?? "no_results" });
     return null;
   }
