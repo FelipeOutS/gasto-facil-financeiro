@@ -22,9 +22,52 @@ export interface CupomItemPreview {
 }
 
 export interface CupomParseResult {
-  status: "empty" | "no_items" | "parsed";
+  status:
+    | "empty"
+    | "no_items"
+    | "parsed"
+    | "receipt_url_detected"
+    | "receipt_url_no_items"
+    | "low_confidence_items";
   items: CupomItemPreview[];
   warnings: string[];
+}
+
+// Texto que indica referência de NFC-e (URL/QR/chave) e NUNCA é nome de produto.
+const RECEIPT_REFERENCE_TOKENS = [
+  "http://",
+  "https://",
+  "www.",
+  ".gov.br",
+  "fazenda",
+  "sefaz",
+  "nfce",
+  "nfc-e",
+  "nfeconsulta",
+  "nfceconsulta",
+  "consultapublica",
+  "chnfe",
+  "qrcode",
+  "tpamb",
+  "nversao",
+];
+
+function looksLikeReceiptReference(raw: string): boolean {
+  const s = raw.toLowerCase();
+  if (RECEIPT_REFERENCE_TOKENS.some((tok) => s.includes(tok))) return true;
+  // Chave de acesso de 44 dígitos contínuos (ignora separadores comuns).
+  const onlyDigits = raw.replace(/\D+/g, "");
+  if (/\d{44}/.test(onlyDigits)) return true;
+  return false;
+}
+
+function nameLooksLikeReceiptReference(name: string): boolean {
+  if (!name) return true;
+  if (looksLikeReceiptReference(name)) return true;
+  // Nome com pouquíssimo texto comercial real não é produto.
+  const letters = name.replace(/[^a-zA-Zà-úÀ-Ú]/g, "");
+  if (letters.length < 3) return true;
+  return false;
 }
 
 // ---------- helpers ----------
