@@ -414,6 +414,33 @@ function PrecoComunitarioPage() {
 
 
 
+  function applyImageChange(
+    id: string,
+    next: { imageUrl: string | null; imageSource: string | null; imageConfidence?: number | null },
+  ) {
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === id
+          ? {
+              ...it,
+              image_url: next.imageUrl,
+              image_source: next.imageSource,
+              image_confidence: next.imageConfidence ?? it.image_confidence,
+            }
+          : it,
+      ),
+    );
+    if (editingId === id) {
+      setManualForm((f) => ({
+        ...f,
+        imageUrl: next.imageUrl,
+        imageSource: next.imageSource,
+        imageConfidence: next.imageConfidence ?? f.imageConfidence,
+        imageRemoved: false,
+      }));
+    }
+  }
+
   function openManual(item?: CommunityPrice) {
     if (item) {
       setEditingId(item.id);
