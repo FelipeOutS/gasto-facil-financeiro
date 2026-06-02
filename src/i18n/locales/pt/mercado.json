@@ -481,6 +481,7 @@
       "errorEmpty": "Adicione itens antes de finalizar.",
       "errorGeneric": "Não foi possível finalizar a compra.",
       "confirmPending": "Ainda há {{pending}} item(ns) pendente(s). Finalizar mesmo assim?",
+      "selectionHint": "Todos os itens do carrinho serão considerados ao finalizar. Use a marcação apenas para controlar o que você já pegou no mercado.",
       "success": "Compra finalizada e salva no histórico.",
       "successCommunity": "Compra finalizada e preços adicionados à base do Mercado Inteligente para consultas futuras.",
       "savedMarkets": "Seus mercados",
