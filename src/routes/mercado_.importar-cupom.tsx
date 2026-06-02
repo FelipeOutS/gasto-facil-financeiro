@@ -57,6 +57,7 @@ import {
   registrarCompraFinalizadaDoCupom,
   type ListaTipo,
 } from "@/lib/mercado/listas-store";
+import { submitHistoricoToCommunity } from "@/lib/mercado/community-prices-from-purchase";
 
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
