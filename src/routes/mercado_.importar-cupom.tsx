@@ -57,6 +57,7 @@ import {
   registrarCompraFinalizadaDoCupom,
   type ListaTipo,
 } from "@/lib/mercado/listas-store";
+import { submitHistoricoToCommunity } from "@/lib/mercado/community-prices-from-purchase";
 
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -971,7 +972,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     setFinishObs("");
   }
 
-  function confirmFinish() {
+  async function confirmFinish() {
     if (submitting) return;
     if (!hasValid) {
       toast.error(t("importarCupom.importActions.noValidItems"));
@@ -998,13 +999,29 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
         toast.error(t("importarCupom.importActions.noValidItems"));
         return;
       }
-      toast.success(t("importarCupom.importActions.finishPurchase.success"));
+      // Best-effort: envia preços ao Preço Comunitário (origem receipt).
+      // Falhas não bloqueiam a finalização local.
+      if (entry.mercadoNome) {
+        try {
+          const r = await submitHistoricoToCommunity(entry, "receipt");
+          if (r && (r.inserted > 0 || r.updated > 0)) {
+            toast.success(t("carrinho.finalize.successCommunity"));
+          } else {
+            toast.success(t("importarCupom.importActions.finishPurchase.success"));
+          }
+        } catch {
+          toast.success(t("importarCupom.importActions.finishPurchase.success"));
+        }
+      } else {
+        toast.success(t("importarCupom.importActions.finishPurchase.success"));
+      }
       resetForm();
       void navigate({ to: "/mercado/historico" });
     } finally {
       setSubmitting(false);
     }
   }
+
 
 
   return (

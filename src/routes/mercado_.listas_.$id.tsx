@@ -1430,26 +1430,6 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
         </div>
       </div>
 
-      <div className="mt-4">
-        <label
-          htmlFor="finalize-mercado"
-          className="block text-[12px] font-semibold text-foreground"
-        >
-          {t("detail.finalize.marketLabel")}
-        </label>
-        <input
-          id="finalize-mercado"
-          type="text"
-          value={mercadoNome}
-          onChange={(e) => setMercadoNome(e.target.value)}
-          maxLength={80}
-          placeholder={t("detail.finalize.marketPlaceholder")}
-          className="mt-1.5 w-full min-w-0 rounded-2xl border border-border bg-card-elevated px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand/40"
-        />
-        <p className="mt-1 text-[11px] text-muted-foreground">
-          {t("detail.finalize.marketHint")}
-        </p>
-      </div>
 
       <button
         type="button"
