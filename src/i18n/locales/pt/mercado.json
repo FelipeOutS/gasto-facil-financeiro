@@ -1112,6 +1112,7 @@
         "confirm": "Registrar compra",
         "cancel": "Cancelar",
         "noExpenseNotice": "Isso não cria despesa financeira. A compra será salva apenas no histórico do Mercado.",
+        "gastoNote": "Origem: Cupom fiscal / NFC-e.",
         "success": "Compra registrada no histórico do Mercado."
       }
     },
