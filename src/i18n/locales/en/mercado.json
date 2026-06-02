@@ -249,7 +249,8 @@
     },
     "finalize": {
       "cta": "Finalize shopping",
-      "hint": "Save this shopping trip to your local history.",
+      "hint": "All items in this list are included when you finalize. Use the checkmark only to track what you already grabbed at the store.",
+      "selectionHint": "All items in this list are included when you finalize. Use the checkmark only to track what you already grabbed at the store.",
       "emptyError": "Add at least one item before finalizing.",
       "confirmPending": "There are still pending items in this list. Finalize anyway?",
       "success": "Shopping saved to history.",
