@@ -181,6 +181,8 @@ function tryParseLine(rawLine: string): CupomItemPreview | undefined {
   const line = rawLine.replace(/\s+/g, " ").trim();
   if (!line) return undefined;
   if (isIgnorableLine(line)) return undefined;
+  // Linhas que são URL/QR/chave de NFC-e nunca viram produto.
+  if (looksLikeReceiptReference(line)) return undefined;
 
   // pegar todos os números no formato BR
   const numbers = Array.from(line.matchAll(new RegExp(NUM, "g"))).map((m) => m[0]);
