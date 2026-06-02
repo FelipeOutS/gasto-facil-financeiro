@@ -1542,6 +1542,43 @@
         "store": "Store",
         "receipt": "Receipt",
         "community": "Community"
+      },
+      "adminImage": {
+        "menuLabel": "Image options",
+        "actions": {
+          "replace": "Replace image",
+          "remove": "Remove image",
+          "refresh": "Search again"
+        },
+        "sourceBadge": {
+          "admin_upload": "Manual image",
+          "open_food_facts": "Open Food Facts",
+          "joanin": "Joanin",
+          "brand_logo": "Brand logo",
+          "manual": "Manual",
+          "none": "No image"
+        },
+        "preview": {
+          "title": "Preview",
+          "alt": "Preview of the new image",
+          "cancel": "Cancel",
+          "confirm": "Save image",
+          "uploading": "Uploading…"
+        },
+        "toast": {
+          "invalidFormat": "Invalid format. Use JPG, PNG or WebP.",
+          "tooLarge": "File too large (max 3 MB).",
+          "readError": "Could not read the file.",
+          "uploaded": "Image updated.",
+          "uploadFailed": "Failed to upload image.",
+          "removed": "Image removed.",
+          "removeFailed": "Failed to remove image.",
+          "refreshed": "Image refreshed automatically.",
+          "refreshFailed": "Failed to refresh image.",
+          "noMatch": "No image found with sufficient confidence.",
+          "protectedFromAuto": "Manual image protected. Remove it before refreshing.",
+          "forbidden": "Only the admin master can change images."
+        }
       }
     },
     "banner": {
