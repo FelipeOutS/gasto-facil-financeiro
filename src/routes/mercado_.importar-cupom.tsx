@@ -31,7 +31,11 @@ import { useServerFn } from "@tanstack/react-start";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { QrCodeScannerButton } from "@/components/mercado/QrCodeScannerButton";
-import { SavedMarketsChips } from "@/components/mercado/SavedMarketsChips";
+import {
+  FinalizeMarketDialog,
+  type FinalizeMarketDialogResult,
+} from "@/components/mercado/FinalizeMarketDialog";
+import { createGastoFromFinalizedPurchase } from "@/lib/mercado/finalized-purchase-gasto";
 import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
 import { SectionBlock } from "@/components/mercado/shell/SectionBlock";
 import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
