@@ -65,6 +65,8 @@ import {
   type ListaItem,
   type MercadoLista,
 } from "@/lib/mercado/listas-store";
+import { FinalizeMarketDialog } from "@/components/mercado/FinalizeMarketDialog";
+import { submitHistoricoToCommunity } from "@/lib/mercado/community-prices-from-purchase";
 
 type CarrinhoSearch = { lista?: string };
 
