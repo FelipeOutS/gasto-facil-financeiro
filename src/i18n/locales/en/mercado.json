@@ -1801,6 +1801,17 @@
       "description": "Finish a list, use your cart, or import a receipt to start building your history.",
       "createList": "Create shopping list",
       "importReceipt": "Import receipt"
+    },
+    "actions": {
+      "delete": "Delete history"
+    },
+    "deleteDialog": {
+      "title": "Delete purchase history?",
+      "description": "This action will remove this purchase from your history. Prices already submitted to Community Prices and expenses already created will not be deleted automatically.",
+      "cancel": "Cancel",
+      "confirm": "Delete history",
+      "success": "Purchase history deleted.",
+      "error": "Couldn't delete this history right now."
     }
   },
   "receiptImportV2": {
