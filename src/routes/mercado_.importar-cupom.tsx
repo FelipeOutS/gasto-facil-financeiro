@@ -1648,6 +1648,7 @@ function NfceFetchCard({
   url: string;
   onResult: (r: NfceFetchResult) => void;
 }) {
+  const { t } = useTranslation("mercado");
   const fetchFn = useServerFn(fetchNfceFromUrl);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<NfceFetchResult | null>(null);
@@ -1660,41 +1661,27 @@ function NfceFetchCard({
       setResult(r);
       onResult(r);
       if (r.status === "items_found") {
-        toast.success(`Importamos ${r.items.length} itens da nota.`);
+        toast.success(t("importarCupom.nfceFetch.toast.imported", { count: r.items.length }));
       } else if (r.status === "total_only") {
-        toast.message("Lemos apenas o total da nota. Cadastre os itens manualmente.");
+        toast.message(t("importarCupom.nfceFetch.toast.totalOnly"));
       } else if (r.status === "protected") {
-        toast.error("Página da SEFAZ exige verificação manual (captcha).");
+        toast.error(t("importarCupom.nfceFetch.toast.protected"));
       } else if (r.status === "invalid_url") {
-        toast.error("Esta URL não é de uma página pública de NFC-e.");
+        toast.error(t("importarCupom.nfceFetch.toast.invalidUrl"));
       } else if (r.status === "timeout" || r.status === "network_error") {
-        toast.error("Não conseguimos acessar a página da SEFAZ. Tente novamente.");
+        toast.error(t("importarCupom.nfceFetch.toast.network"));
       } else if (r.status === "http_error") {
-        toast.error(`A página da SEFAZ respondeu com erro (${r.httpStatus ?? "?"}).`);
+        toast.error(t("importarCupom.nfceFetch.toast.httpError", { status: r.httpStatus ?? "?" }));
       } else {
-        toast.message("Identificamos o link, mas não conseguimos ler os produtos.");
+        toast.message(t("importarCupom.nfceFetch.toast.noItems"));
       }
     } catch (err) {
       if (import.meta.env.DEV) console.error("[nfce-fetch] client error", err);
-      toast.error("Falha ao consultar a nota fiscal.");
+      toast.error(t("importarCupom.nfceFetch.toast.fail"));
     } finally {
       setLoading(false);
     }
   }
-
-  const statusMessage: Record<NfceFetchStatusKey, string> = {
-    items_found: "Produtos importados com sucesso.",
-    total_only:
-      "Lemos apenas o valor total da nota. Os produtos não estavam disponíveis para leitura automática.",
-    link_no_items:
-      "Identificamos o link da nota, mas ainda não conseguimos importar os produtos automaticamente. Você pode cadastrar manualmente ou tentar novamente.",
-    protected:
-      "A página da SEFAZ exige verificação manual (captcha). Não conseguimos ler automaticamente.",
-    invalid_url: "Esta URL não pertence a uma página pública de NFC-e.",
-    http_error: "A página da SEFAZ respondeu com erro.",
-    timeout: "A consulta demorou demais. Tente novamente em instantes.",
-    network_error: "Não conseguimos conectar à página da SEFAZ.",
-  };
 
   return (
     <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
@@ -1704,11 +1691,10 @@ function NfceFetchCard({
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold text-foreground md:text-base">
-            Importar produtos da nota
+            {t("importarCupom.nfceFetch.title")}
           </h2>
           <p className="mt-1 text-[12px] text-muted-foreground md:text-[13px]">
-            Tentamos ler a página pública da SEFAZ no servidor para extrair os
-            itens, valores e total. Nenhum dado pessoal é armazenado.
+            {t("importarCupom.nfceFetch.description")}
           </p>
         </div>
       </div>
@@ -1723,12 +1709,12 @@ function NfceFetchCard({
           {loading ? (
             <>
               <RefreshCw className="h-4 w-4 animate-spin" />
-              Lendo a nota…
+              {t("importarCupom.nfceFetch.loading")}
             </>
           ) : (
             <>
               <Search className="h-4 w-4" />
-              {result ? "Tentar novamente" : "Importar produtos da NFC-e"}
+              {result ? t("importarCupom.nfceFetch.retry") : t("importarCupom.nfceFetch.primary")}
             </>
           )}
         </button>
@@ -1737,25 +1723,31 @@ function NfceFetchCard({
       {result && (
         <div className="mt-3 grid gap-2 rounded-2xl border border-border/60 bg-card-elevated p-3">
           <p className="text-[12.5px] text-foreground md:text-[13px]">
-            {statusMessage[result.status as NfceFetchStatusKey] ?? "Resultado indisponível."}
+            {t(`importarCupom.nfceFetch.status.${result.status}`)}
           </p>
           {(result.marketName || result.cnpj || result.dateISO) && (
             <dl className="grid gap-1 text-[12px] text-muted-foreground">
               {result.marketName && (
                 <div className="truncate">
-                  <span className="font-semibold text-foreground">Mercado: </span>
+                  <span className="font-semibold text-foreground">
+                    {t("importarCupom.nfceFetch.market")}:{" "}
+                  </span>
                   {result.marketName}
                 </div>
               )}
               {result.cnpj && (
                 <div className="truncate">
-                  <span className="font-semibold text-foreground">CNPJ: </span>
+                  <span className="font-semibold text-foreground">
+                    {t("importarCupom.nfceFetch.cnpj")}:{" "}
+                  </span>
                   {result.cnpj}
                 </div>
               )}
               {result.dateISO && (
                 <div>
-                  <span className="font-semibold text-foreground">Data: </span>
+                  <span className="font-semibold text-foreground">
+                    {t("importarCupom.nfceFetch.date")}:{" "}
+                  </span>
                   {result.dateISO}
                 </div>
               )}
@@ -1763,23 +1755,24 @@ function NfceFetchCard({
           )}
           {typeof result.totalDeclared === "number" && (
             <div className="text-[12.5px] text-foreground">
-              <span className="font-semibold">Total da nota: </span>
+              <span className="font-semibold">
+                {t("importarCupom.nfceFetch.totalDeclared")}:{" "}
+              </span>
               <span className="tabular-nums">{formatBRL(result.totalDeclared)}</span>
             </div>
           )}
           {result.items.length > 0 && (
             <div className="text-[12.5px] text-foreground">
-              <span className="font-semibold">Itens lidos: </span>
+              <span className="font-semibold">
+                {t("importarCupom.nfceFetch.itemsRead")}:{" "}
+              </span>
               {result.items.length}
             </div>
           )}
           {result.warnings.includes("total_mismatch") && (
             <p className="flex items-start gap-2 text-[12px] text-warning">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              <span>
-                A soma dos itens lidos é diferente do total declarado da nota.
-                Revise os valores antes de salvar.
-              </span>
+              <span>{t("importarCupom.nfceFetch.totalMismatch")}</span>
             </p>
           )}
         </div>
