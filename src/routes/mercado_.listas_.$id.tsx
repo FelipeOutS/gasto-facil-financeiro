@@ -1384,10 +1384,7 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
       toast.error(t("detail.finalize.emptyError"));
       return;
     }
-    if (resumo.itensPendentes > 0) {
-      const ok = await confirmAsync({ title: t("detail.finalize.confirmPending") });
-      if (!ok) return;
-    }
+    // Não bloqueia por itens pendentes — todos os itens são considerados na finalização.
     setMarketDialogOpen(true);
   }
 

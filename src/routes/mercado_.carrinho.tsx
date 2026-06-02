@@ -280,12 +280,7 @@ function CartMode({ lista }: { lista: MercadoLista }) {
       toast.error(t("carrinho.finalize.errorEmpty"));
       return;
     }
-    if (resumo.itensPendentes > 0) {
-      const ok = await confirmAsync({
-        title: t("carrinho.finalize.confirmPending", { pending: resumo.itensPendentes }),
-      });
-      if (!ok) return;
-    }
+    // Não bloqueia por itens não marcados — todos os itens do carrinho são considerados.
     setMarketDialogOpen(true);
   }
 
@@ -422,6 +417,11 @@ function CartMode({ lista }: { lista: MercadoLista }) {
       {/* Items */}
       <section className="mt-5">
         <h2 className="text-base font-semibold md:text-lg">{t("carrinho.items.title")}</h2>
+        {lista.entries.length > 0 && (
+          <p className="mt-1 text-[12px] text-muted-foreground">
+            {t("carrinho.finalize.selectionHint")}
+          </p>
+        )}
         {lista.entries.length === 0 ? (
           <div className="mt-3 rounded-3xl border border-dashed border-border bg-card p-6 text-center shadow-card">
             <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-card-elevated text-brand ring-1 ring-border/60">
