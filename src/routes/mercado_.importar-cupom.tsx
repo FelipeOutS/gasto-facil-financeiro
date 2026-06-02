@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 
 
+import { useServerFn } from "@tanstack/react-start";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { QrCodeScannerButton } from "@/components/mercado/QrCodeScannerButton";
@@ -46,6 +47,10 @@ import {
   type CupomParseResult,
 } from "@/lib/mercado/nfce-items-parser";
 import {
+  fetchNfceFromUrl,
+  type NfceFetchResult,
+} from "@/lib/mercado/nfce-fetch.functions";
+import {
   useMercadoListas,
   addLista,
   addItensLista,
@@ -55,6 +60,7 @@ import {
 
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
 
 
 
