@@ -38,6 +38,8 @@ import {
   type MercadoCategoryKey,
   type ProductSource,
 } from "@/components/mercado/shell";
+import { ProductImageAdminSection } from "@/components/mercado/shell/ProductImageAdminSection";
+import { isAdminMasterEmail } from "@/lib/plans";
 import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
 import bannerComunitarioWebp from "@/assets/mercado/banner-comunitario.webp";
 import emptyComunitario from "@/assets/mercado/empty-comunitario.webp";
