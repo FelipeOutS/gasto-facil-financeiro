@@ -1768,6 +1768,9 @@ function ImportarCupomPage() {
   const [parsed, setParsed] = useState<ParsedNfceQrResult | null>(null);
   const [previewResult, setPreviewResult] = useState<CupomParseResult | null>(null);
   const [previewItems, setPreviewItems] = useState<CupomItemPreview[]>([]);
+  const [nfceLoading, setNfceLoading] = useState(false);
+  const [nfceResult, setNfceResult] = useState<NfceFetchResult | null>(null);
+  const fetchNfce = useServerFn(fetchNfceFromUrl);
 
   function handleBack() {
     void navigate({ to: "/mercado", replace: true });
@@ -1788,6 +1791,7 @@ function ImportarCupomPage() {
     setParsed(null);
     setPreviewResult(null);
     setPreviewItems([]);
+    setNfceResult(null);
   }
 
   async function handlePasteFromClipboard() {
@@ -1818,6 +1822,37 @@ function ImportarCupomPage() {
       });
     }
   }
+
+  async function handleFetchReceipt() {
+    if (!parsed?.url || nfceLoading) return;
+    setNfceLoading(true);
+    try {
+      const r = await fetchNfce({ data: { url: parsed.url } });
+      setNfceResult(r);
+      handleNfceFetched(r);
+      if (r.status === "items_found") {
+        toast.success(t("importarCupom.nfceFetch.toast.imported", { count: r.items.length }));
+      } else if (r.status === "total_only") {
+        toast.message(t("importarCupom.nfceFetch.toast.totalOnly"));
+      } else if (r.status === "protected") {
+        toast.error(t("importarCupom.nfceFetch.toast.protected"));
+      } else if (r.status === "invalid_url") {
+        toast.error(t("importarCupom.nfceFetch.toast.invalidUrl"));
+      } else if (r.status === "timeout" || r.status === "network_error") {
+        toast.error(t("importarCupom.nfceFetch.toast.network"));
+      } else if (r.status === "http_error") {
+        toast.error(t("importarCupom.nfceFetch.toast.httpError", { status: r.httpStatus ?? "?" }));
+      } else {
+        toast.message(t("importarCupom.nfceFetch.toast.noItems"));
+      }
+    } catch (err) {
+      if (import.meta.env.DEV) console.error("[nfce-fetch] client error", err);
+      toast.error(t("importarCupom.nfceFetch.toast.fail"));
+    } finally {
+      setNfceLoading(false);
+    }
+  }
+
 
 
 
