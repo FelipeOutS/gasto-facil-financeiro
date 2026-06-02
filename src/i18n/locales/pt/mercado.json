@@ -1801,6 +1801,17 @@
       "description": "Finalize uma lista, use o carrinho ou importe um cupom para começar a montar seu histórico.",
       "createList": "Criar lista de compras",
       "importReceipt": "Importar cupom"
+    },
+    "actions": {
+      "delete": "Excluir histórico"
+    },
+    "deleteDialog": {
+      "title": "Excluir histórico de compra?",
+      "description": "Essa ação removerá esta compra do seu histórico. Os preços já enviados para o Preço Comunitário e gastos já criados não serão apagados automaticamente.",
+      "cancel": "Cancelar",
+      "confirm": "Excluir histórico",
+      "success": "Histórico de compra excluído.",
+      "error": "Não foi possível excluir este histórico agora."
     }
   },
   "receiptImportV2": {

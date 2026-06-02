@@ -1,18 +1,30 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Home, History, WalletCards, Check, CircleDashed, Receipt, ListPlus, ShoppingBag, Store, TrendingUp } from "lucide-react";
+import { ArrowLeft, Home, History, WalletCards, Check, CircleDashed, Receipt, ListPlus, ShoppingBag, Store, TrendingUp, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
 import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
 import { SectionBlock } from "@/components/mercado/shell/SectionBlock";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
 import bannerComunitarioWebp from "@/assets/mercado/banner-comunitario.webp";
 import emptyCarrinho from "@/assets/mercado/empty-carrinho.webp";
 import { cn } from "@/lib/utils";
 import {
   useMercadoHistorico,
+  removerCompraHistorico,
   type MercadoCompraHistorico,
 } from "@/lib/mercado/listas-store";
 
@@ -28,6 +40,9 @@ function HistoricoPage() {
   const { t, i18n: i18next } = useTranslation("mercado");
   const navigate = useNavigate();
   const historico = useMercadoHistorico();
+  const [pendingDelete, setPendingDelete] = useState<MercadoCompraHistorico | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
 
   function handleBack() {
     void navigate({ to: "/mercado", replace: true });
@@ -159,11 +174,61 @@ function HistoricoPage() {
         <SectionBlock title={t("historyV2.list.title")} className="mt-6">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {historico.map((h) => (
-              <HistoricoCard key={h.id} item={h} dateFormatter={dateFormatter} />
+              <HistoricoCard
+                key={h.id}
+                item={h}
+                dateFormatter={dateFormatter}
+                onRequestDelete={() => setPendingDelete(h)}
+              />
             ))}
           </div>
         </SectionBlock>
       )}
+
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("historyV2.deleteDialog.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("historyV2.deleteDialog.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>
+              {t("historyV2.deleteDialog.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!pendingDelete || deleting) return;
+                setDeleting(true);
+                try {
+                  const ok = removerCompraHistorico(pendingDelete.id);
+                  if (ok) {
+                    toast.success(t("historyV2.deleteDialog.success"));
+                    setPendingDelete(null);
+                  } else {
+                    toast.error(t("historyV2.deleteDialog.error"));
+                  }
+                } catch {
+                  toast.error(t("historyV2.deleteDialog.error"));
+                } finally {
+                  setDeleting(false);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("historyV2.deleteDialog.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileShell>
   );
 
@@ -172,9 +237,11 @@ function HistoricoPage() {
 function HistoricoCard({
   item,
   dateFormatter,
+  onRequestDelete,
 }: {
   item: MercadoCompraHistorico;
   dateFormatter: Intl.DateTimeFormat;
+  onRequestDelete: () => void;
 }) {
   const { t } = useTranslation("mercado");
   const hasBudget = typeof item.orcamento === "number" && item.orcamento > 0;
@@ -186,8 +253,17 @@ function HistoricoCard({
   });
 
   return (
-    <article className="flex h-full flex-col gap-3 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
-      <header className="flex items-start gap-3">
+    <article className="relative flex h-full flex-col gap-3 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
+      <button
+        type="button"
+        onClick={onRequestDelete}
+        aria-label={t("historyV2.actions.delete")}
+        title={t("historyV2.actions.delete")}
+        className="absolute right-2 top-2 grid h-11 w-11 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/40 active:scale-95"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+      <header className="flex items-start gap-3 pr-10">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">
           <WalletCards className="h-5 w-5" />
         </span>
