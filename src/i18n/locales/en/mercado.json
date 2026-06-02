@@ -483,7 +483,9 @@
       "confirmPending": "There are still {{pending}} pending item(s). Finalize anyway?",
       "selectionHint": "All cart items are included when you finalize. Use the checkmark only to track what you already grabbed at the store.",
       "success": "Purchase finalized and saved to history.",
+      "successWithExpense": "Purchase finalized, saved to history and added as an expense.",
       "successCommunity": "Purchase finalized and prices added to the Smart Grocery database for future lookups.",
+      "successCommunityWithExpense": "Purchase finalized, expense created and prices sent to the Community base.",
       "savedMarkets": "Your markets",
       "noSavedMarketsHint": "You can save favorite markets in My markets."
     }
