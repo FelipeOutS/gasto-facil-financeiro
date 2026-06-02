@@ -1157,7 +1157,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
           disabled={!hasValid}
           className={cn(
             "group flex min-h-11 items-start gap-2.5 rounded-2xl border p-3 text-left transition active:scale-[0.99]",
-            mode === "finish"
+            marketDialogOpen
               ? "border-primary bg-primary/5"
               : "border-border/60 bg-card-elevated hover:bg-card",
             !hasValid && "cursor-not-allowed opacity-60",
