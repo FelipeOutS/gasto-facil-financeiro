@@ -383,7 +383,7 @@ async function lookupByName(
   for (const p of products) {
     const img = pickProductImage(p);
     const candidateName = normalizeForKey(p.product_name);
-    const candidateBrands = normalizeForKey(p.brands);
+    const candidateBrands = normalizeForKey(brandsToString(p.brands));
     const nameSim = similarity(normalizedQuery, candidateName);
     const candidateText = `${candidateName} ${candidateBrands}`;
     let score = Math.min(nameSim, 0.45);
