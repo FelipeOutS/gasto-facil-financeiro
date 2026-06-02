@@ -408,12 +408,12 @@ async function lookupByName(
     if (packagingMatched) score += 0.08;
     if (!img) {
       if (!bestNoImage || score > bestNoImage.score) {
-        bestNoImage = { score, name: p.product_name ?? null, brands: p.brands ?? null };
+        bestNoImage = { score, name: p.product_name ?? null, brands: brandsToString(p.brands) || null };
       }
       continue;
     }
     if (!best || score > best.score) {
-      best = { img, score, name: p.product_name ?? null, brands: p.brands ?? null, brandMatched };
+      best = { img, score, name: p.product_name ?? null, brands: brandsToString(p.brands) || null, brandMatched };
     }
   }
   if (!best) {
