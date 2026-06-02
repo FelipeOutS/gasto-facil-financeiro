@@ -260,8 +260,7 @@ export function FinalizeMarketDialog({
                       {cartoes.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.nome}
-                          {c.bandeira ? ` · ${c.bandeira}` : ""}
-                          {c.final ? ` · ${c.final}` : ""}
+                          {c.banco ? ` · ${c.banco}` : ""}
                         </option>
                       ))}
                     </select>
