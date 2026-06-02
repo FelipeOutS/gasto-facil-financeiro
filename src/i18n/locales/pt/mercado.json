@@ -481,9 +481,21 @@
       "errorGeneric": "Não foi possível finalizar a compra.",
       "confirmPending": "Ainda há {{pending}} item(ns) pendente(s). Finalizar mesmo assim?",
       "success": "Compra finalizada e salva no histórico.",
+      "successCommunity": "Compra finalizada e preços adicionados à base do Mercado Inteligente para consultas futuras.",
       "savedMarkets": "Seus mercados",
       "noSavedMarketsHint": "Você pode cadastrar mercados favoritos em Meus mercados."
     }
+  },
+  "finalizeMarketDialog": {
+    "title": "Em qual mercado você fez essa compra?",
+    "description": "Escolha um mercado salvo ou informe o nome para salvar a compra e ajudar a base de Preços da Comunidade.",
+    "savedLabel": "Seus mercados",
+    "emptySaved": "Você ainda não cadastrou mercados. Informe o nome abaixo ou adicione um novo.",
+    "manualLabel": "Informar manualmente",
+    "manualPlaceholder": "Ex.: Supermercado do bairro",
+    "addNew": "Adicionar novo mercado",
+    "cancel": "Cancelar",
+    "confirm": "Finalizar compra"
   },
   "precos": {
     "metaTitle": "Preços da comunidade — Mercado Inteligente",

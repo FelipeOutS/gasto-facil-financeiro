@@ -65,6 +65,8 @@ import {
   type ListaItem,
   type MercadoLista,
 } from "@/lib/mercado/listas-store";
+import { FinalizeMarketDialog } from "@/components/mercado/FinalizeMarketDialog";
+import { submitHistoricoToCommunity } from "@/lib/mercado/community-prices-from-purchase";
 
 type CarrinhoSearch = { lista?: string };
 
@@ -259,6 +261,8 @@ function CartMode({ lista }: { lista: MercadoLista }) {
   const resumo = useMemo(() => computeResumo(lista), [lista]);
   const orc = useMemo(() => computeOrcamentoLista(lista), [lista]);
   const [mercadoNome, setMercadoNome] = useState("");
+  const [marketDialogOpen, setMarketDialogOpen] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
 
   const status: "sem_orcamento" | "dentro" | "atencao" | "excedido" = !orc.hasBudget
     ? "sem_orcamento"
@@ -282,17 +286,31 @@ function CartMode({ lista }: { lista: MercadoLista }) {
       });
       if (!ok) return;
     }
-    const entry = finalizarListaCompra(lista.id, {
-      mercadoNome: mercadoNome.trim() || undefined,
-    });
-    if (!entry) {
-      toast.error(t("carrinho.finalize.errorGeneric"));
-      return;
+    setMarketDialogOpen(true);
+  }
+
+  async function confirmFinalizeWithMarket(market: string) {
+    if (finalizing) return;
+    setFinalizing(true);
+    try {
+      setMercadoNome(market);
+      const entry = finalizarListaCompra(lista.id, { mercadoNome: market });
+      if (!entry) {
+        toast.error(t("carrinho.finalize.errorGeneric"));
+        return;
+      }
+      setMarketDialogOpen(false);
+      // Envia para Preço Comunitário (best-effort, não bloqueia).
+      const result = await submitHistoricoToCommunity(entry, "store");
+      if (result && (result.inserted > 0 || result.updated > 0)) {
+        toast.success(t("carrinho.finalize.successCommunity"));
+      } else {
+        toast.success(t("carrinho.finalize.success"));
+      }
+      void navigate({ to: can("mercado_avancado") ? "/mercado/historico" : "/mercado" });
+    } finally {
+      setFinalizing(false);
     }
-    toast.success(t("carrinho.finalize.success"));
-    // Etapa 17 — só leva ao histórico se o usuário tem `mercado_avancado`;
-    // caso contrário volta à hub para evitar o modal premium logo após finalizar.
-    void navigate({ to: can("mercado_avancado") ? "/mercado/historico" : "/mercado" });
   }
 
   return (
@@ -464,6 +482,13 @@ function CartMode({ lista }: { lista: MercadoLista }) {
           </div>
         </div>
       )}
+      <FinalizeMarketDialog
+        open={marketDialogOpen}
+        onOpenChange={setMarketDialogOpen}
+        defaultMarketName={mercadoNome}
+        onConfirm={confirmFinalizeWithMarket}
+        submitting={finalizing}
+      />
     </>
   );
 }

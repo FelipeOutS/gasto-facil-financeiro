@@ -481,9 +481,21 @@
       "errorGeneric": "Couldn't finalize the purchase.",
       "confirmPending": "There are still {{pending}} pending item(s). Finalize anyway?",
       "success": "Purchase finalized and saved to history.",
+      "successCommunity": "Purchase finalized and prices added to the Smart Grocery database for future lookups.",
       "savedMarkets": "Your markets",
       "noSavedMarketsHint": "You can save favorite markets in My markets."
     }
+  },
+  "finalizeMarketDialog": {
+    "title": "Which market did you shop at?",
+    "description": "Pick a saved market or type a name to save the purchase and feed the Community Prices base.",
+    "savedLabel": "Your markets",
+    "emptySaved": "You haven't saved any markets yet. Type a name below or add a new one.",
+    "manualLabel": "Enter manually",
+    "manualPlaceholder": "e.g. Neighborhood market",
+    "addNew": "Add new market",
+    "cancel": "Cancel",
+    "confirm": "Finalize purchase"
   },
   "precos": {
     "metaTitle": "Community prices — Smart Grocery",

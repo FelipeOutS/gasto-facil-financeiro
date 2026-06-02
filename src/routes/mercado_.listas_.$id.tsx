@@ -1374,6 +1374,8 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
   const { can } = usePlan();
   const resumo = useMemo(() => computeResumo(lista), [lista]);
   const [mercadoNome, setMercadoNome] = useState("");
+  const [marketDialogOpen, setMarketDialogOpen] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
 
   async function handleFinalize() {
     if (resumo.totalItens === 0) {
@@ -1384,16 +1386,30 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
       const ok = await confirmAsync({ title: t("detail.finalize.confirmPending") });
       if (!ok) return;
     }
-    const result = finalizarListaCompra(lista.id, {
-      mercadoNome: mercadoNome.trim() || undefined,
-    });
-    if (!result) {
-      toast.error(t("detail.finalize.error"));
-      return;
+    setMarketDialogOpen(true);
+  }
+
+  async function confirmFinalizeWithMarket(market: string) {
+    if (finalizing) return;
+    setFinalizing(true);
+    try {
+      setMercadoNome(market);
+      const result = finalizarListaCompra(lista.id, { mercadoNome: market });
+      if (!result) {
+        toast.error(t("detail.finalize.error"));
+        return;
+      }
+      setMarketDialogOpen(false);
+      const r = await submitHistoricoToCommunity(result, "store");
+      if (r && (r.inserted > 0 || r.updated > 0)) {
+        toast.success(t("carrinho.finalize.successCommunity"));
+      } else {
+        toast.success(t("detail.finalize.success"));
+      }
+      void navigate({ to: can("mercado_avancado") ? "/mercado/historico" : "/mercado/listas" });
+    } finally {
+      setFinalizing(false);
     }
-    toast.success(t("detail.finalize.success"));
-    // Etapa 17 — só leva ao histórico quem tem `mercado_avancado`.
-    void navigate({ to: can("mercado_avancado") ? "/mercado/historico" : "/mercado/listas" });
   }
 
   return (
