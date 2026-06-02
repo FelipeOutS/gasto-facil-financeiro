@@ -247,13 +247,21 @@ export function ProductCard({
             {sourceLabel}
           </span>
         )}
-        {isSuggested && (
+        {isSuggested && !showAdminMenu && (
           <span
             className="absolute bottom-1.5 right-1.5 inline-flex items-center rounded-full bg-background/85 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider text-muted-foreground backdrop-blur"
             title={suggestedBadgeLabel}
           >
             {isBrandLogo ? "logo" : "auto"}
           </span>
+        )}
+        {showAdminMenu && (
+          <ProductImageAdminMenu
+            priceId={priceId!}
+            currentImageUrl={imageUrl ?? null}
+            currentImageSource={imageSource ?? null}
+            onChanged={onImageChanged}
+          />
         )}
       </div>
       <div className="flex flex-1 flex-col gap-1 p-2.5">
