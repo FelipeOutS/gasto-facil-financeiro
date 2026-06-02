@@ -1781,7 +1781,7 @@ function NfceFetchCard({
   );
 }
 
-type NfceFetchStatusKey = NfceFetchResult["status"];
+
 
 
 function ImportarCupomPage() {
