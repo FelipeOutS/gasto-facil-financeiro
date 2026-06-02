@@ -853,6 +853,19 @@ export function getCompraHistoricoById(id: string): MercadoCompraHistorico | und
   return safeReadHistorico().find((h) => h.id === id);
 }
 
+export function removerCompraHistorico(id: string): boolean {
+  if (!id) return false;
+  const current = safeReadHistorico();
+  const next = current.filter((h) => h.id !== id);
+  if (next.length === current.length) return false;
+  safeWriteHistorico(next);
+  emitHistorico();
+  if (historicoSyncHooks.onDeleteHistorico) {
+    try { historicoSyncHooks.onDeleteHistorico(id); } catch { /* ignore */ }
+  }
+  return true;
+}
+
 export function finalizarListaCompra(
   listaId: string,
   opts: { mercadoNome?: string } = {},
