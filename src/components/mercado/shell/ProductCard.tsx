@@ -42,6 +42,12 @@ export interface ProductCardProps {
   category?: MercadoCategoryKey | null;
   /** Desliga o lookup automático de imagem (default: ligado). */
   disableImageLookup?: boolean;
+  /** ID do registro em community_market_prices (habilita menu admin de imagem). */
+  priceId?: string;
+  /** Origem da imagem atual (para badge admin). */
+  imageSource?: string | null;
+  /** Callback após Admin Master alterar a imagem. */
+  onImageChanged?: (next: { imageUrl: string | null; imageSource: string | null }) => void;
 }
 
 export function ProductCard({
