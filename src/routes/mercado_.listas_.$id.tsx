@@ -44,6 +44,8 @@ import bannerComunitarioWebp from "@/assets/mercado/banner-comunitario.webp";
 import emptyCarrinho from "@/assets/mercado/empty-carrinho.webp";
 
 import { cn } from "@/lib/utils";
+import { FinalizeMarketDialog } from "@/components/mercado/FinalizeMarketDialog";
+import { submitHistoricoToCommunity } from "@/lib/mercado/community-prices-from-purchase";
 import { usePlan } from "@/lib/use-plan";
 import {
   addItemLista,
