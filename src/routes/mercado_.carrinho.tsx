@@ -482,6 +482,13 @@ function CartMode({ lista }: { lista: MercadoLista }) {
           </div>
         </div>
       )}
+      <FinalizeMarketDialog
+        open={marketDialogOpen}
+        onOpenChange={setMarketDialogOpen}
+        defaultMarketName={mercadoNome}
+        onConfirm={confirmFinalizeWithMarket}
+        submitting={finalizing}
+      />
     </>
   );
 }
