@@ -5,6 +5,9 @@ import { cn } from "@/lib/utils";
 import { MarketBadge } from "./MarketBadge";
 import { useProductImage } from "@/lib/mercado/use-product-image";
 import type { MercadoCategoryKey } from "./MercadoCategoryChips";
+import { useAuth } from "@/lib/auth-context";
+import { isAdminMasterEmail } from "@/lib/plans";
+import { ProductImageAdminMenu } from "./ProductImageAdminMenu";
 
 export type ProductSource =
   | "online"
@@ -39,6 +42,12 @@ export interface ProductCardProps {
   category?: MercadoCategoryKey | null;
   /** Desliga o lookup automático de imagem (default: ligado). */
   disableImageLookup?: boolean;
+  /** ID do registro em community_market_prices (habilita menu admin de imagem). */
+  priceId?: string;
+  /** Origem da imagem atual (para badge admin). */
+  imageSource?: string | null;
+  /** Callback após Admin Master alterar a imagem. */
+  onImageChanged?: (next: { imageUrl: string | null; imageSource: string | null }) => void;
 }
 
 export function ProductCard({
@@ -58,8 +67,14 @@ export function ProductCard({
   barcode,
   category,
   disableImageLookup = false,
+  priceId,
+  imageSource,
+  onImageChanged,
 }: ProductCardProps) {
   const { t } = useTranslation("mercado");
+  const { user } = useAuth();
+  const isAdmin = isAdminMasterEmail(user?.email);
+  const showAdminMenu = isAdmin && !!priceId;
   const sourceLabel = source ? t(`shell.product.source.${source}`) : null;
   const [imgErrored, setImgErrored] = useState(false);
   const [suggestedErrored, setSuggestedErrored] = useState(false);
@@ -232,13 +247,21 @@ export function ProductCard({
             {sourceLabel}
           </span>
         )}
-        {isSuggested && (
+        {isSuggested && !showAdminMenu && (
           <span
             className="absolute bottom-1.5 right-1.5 inline-flex items-center rounded-full bg-background/85 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wider text-muted-foreground backdrop-blur"
             title={suggestedBadgeLabel}
           >
             {isBrandLogo ? "logo" : "auto"}
           </span>
+        )}
+        {showAdminMenu && (
+          <ProductImageAdminMenu
+            priceId={priceId!}
+            currentImageUrl={imageUrl ?? null}
+            currentImageSource={imageSource ?? null}
+            onChanged={onImageChanged}
+          />
         )}
       </div>
       <div className="flex flex-1 flex-col gap-1 p-2.5">

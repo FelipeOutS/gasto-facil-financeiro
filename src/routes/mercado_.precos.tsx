@@ -348,6 +348,17 @@ function PrecosPage() {
                 priceLabel={formatBRL(r.price)}
                 unitLabel={r.unit ?? undefined}
                 imageUrl={r.image_url ?? undefined}
+                priceId={r.id}
+                imageSource={r.image_source}
+                onImageChanged={(next) =>
+                  setRows((prev) =>
+                    prev.map((p) =>
+                      p.id === r.id
+                        ? { ...p, image_url: next.imageUrl, image_source: next.imageSource }
+                        : p,
+                    ),
+                  )
+                }
                 brand={r.brand}
                 barcode={r.barcode}
                 category={(r.category ?? null) as MercadoCategoryKey | null}
