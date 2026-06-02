@@ -65,8 +65,12 @@ import {
   type ListaItem,
   type MercadoLista,
 } from "@/lib/mercado/listas-store";
-import { FinalizeMarketDialog } from "@/components/mercado/FinalizeMarketDialog";
+import {
+  FinalizeMarketDialog,
+  type FinalizeMarketDialogResult,
+} from "@/components/mercado/FinalizeMarketDialog";
 import { submitHistoricoToCommunity } from "@/lib/mercado/community-prices-from-purchase";
+import { createGastoFromFinalizedPurchase } from "@/lib/mercado/finalized-purchase-gasto";
 
 type CarrinhoSearch = { lista?: string };
 
@@ -284,10 +288,11 @@ function CartMode({ lista }: { lista: MercadoLista }) {
     setMarketDialogOpen(true);
   }
 
-  async function confirmFinalizeWithMarket(market: string) {
+  async function confirmFinalizeWithMarket(result: FinalizeMarketDialogResult) {
     if (finalizing) return;
     setFinalizing(true);
     try {
+      const market = result.marketName;
       setMercadoNome(market);
       const entry = finalizarListaCompra(lista.id, { mercadoNome: market });
       if (!entry) {
@@ -296,11 +301,33 @@ function CartMode({ lista }: { lista: MercadoLista }) {
       }
       setMarketDialogOpen(false);
       // Envia para Preço Comunitário (best-effort, não bloqueia).
-      const result = await submitHistoricoToCommunity(entry, "store");
-      if (result && (result.inserted > 0 || result.updated > 0)) {
-        toast.success(t("carrinho.finalize.successCommunity"));
+      const community = await submitHistoricoToCommunity(entry, "store");
+      // Cria gasto na aba Gastos (best-effort).
+      let gastoOk = false;
+      try {
+        const r = createGastoFromFinalizedPurchase({
+          marketName: market,
+          formaPagamento: result.formaPagamento,
+          cartaoId: result.cartaoId,
+          items: entry.itensSnapshot ?? [],
+          date: entry.concluidaEm ? new Date(entry.concluidaEm) : new Date(),
+        });
+        gastoOk = r.created;
+      } catch {
+        gastoOk = false;
+      }
+      if (community && (community.inserted > 0 || community.updated > 0)) {
+        toast.success(
+          gastoOk
+            ? t("carrinho.finalize.successCommunityWithExpense")
+            : t("carrinho.finalize.successCommunity"),
+        );
       } else {
-        toast.success(t("carrinho.finalize.success"));
+        toast.success(
+          gastoOk
+            ? t("carrinho.finalize.successWithExpense")
+            : t("carrinho.finalize.success"),
+        );
       }
       void navigate({ to: can("mercado_avancado") ? "/mercado/historico" : "/mercado" });
     } finally {
