@@ -504,6 +504,40 @@ function ItemsPreviewCard({
         </div>
       )}
 
+      {result &&
+        (result.status === "receipt_url_detected" ||
+          result.status === "receipt_url_no_items") &&
+        items.length === 0 && (
+          <div className="mt-4 rounded-2xl border border-dashed border-warning/40 bg-warning/5 p-4">
+            <p className="text-sm font-semibold text-foreground">
+              Link da nota identificado
+            </p>
+            <p className="mt-1 text-[12px] text-muted-foreground md:text-[13px]">
+              Conseguimos identificar o link da nota fiscal, mas ainda não foi
+              possível ler os produtos automaticamente. Você pode tentar
+              importar novamente ou cadastrar manualmente.
+            </p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <button
+                type="button"
+                onClick={addManualItem}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 active:scale-[0.98]"
+              >
+                <Plus className="h-4 w-4" />
+                Cadastrar manualmente
+              </button>
+              <button
+                type="button"
+                onClick={handleParse}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card-elevated px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-card active:scale-[0.98]"
+              >
+                <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                Tentar novamente
+              </button>
+            </div>
+          </div>
+        )}
+
       {items.length > 0 && (
         <>
           <div className="mt-4 flex items-center justify-between gap-3">

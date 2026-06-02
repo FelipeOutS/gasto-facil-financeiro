@@ -22,9 +22,52 @@ export interface CupomItemPreview {
 }
 
 export interface CupomParseResult {
-  status: "empty" | "no_items" | "parsed";
+  status:
+    | "empty"
+    | "no_items"
+    | "parsed"
+    | "receipt_url_detected"
+    | "receipt_url_no_items"
+    | "low_confidence_items";
   items: CupomItemPreview[];
   warnings: string[];
+}
+
+// Texto que indica referência de NFC-e (URL/QR/chave) e NUNCA é nome de produto.
+const RECEIPT_REFERENCE_TOKENS = [
+  "http://",
+  "https://",
+  "www.",
+  ".gov.br",
+  "fazenda",
+  "sefaz",
+  "nfce",
+  "nfc-e",
+  "nfeconsulta",
+  "nfceconsulta",
+  "consultapublica",
+  "chnfe",
+  "qrcode",
+  "tpamb",
+  "nversao",
+];
+
+function looksLikeReceiptReference(raw: string): boolean {
+  const s = raw.toLowerCase();
+  if (RECEIPT_REFERENCE_TOKENS.some((tok) => s.includes(tok))) return true;
+  // Chave de acesso de 44 dígitos contínuos (ignora separadores comuns).
+  const onlyDigits = raw.replace(/\D+/g, "");
+  if (/\d{44}/.test(onlyDigits)) return true;
+  return false;
+}
+
+function nameLooksLikeReceiptReference(name: string): boolean {
+  if (!name) return true;
+  if (looksLikeReceiptReference(name)) return true;
+  // Nome com pouquíssimo texto comercial real não é produto.
+  const letters = name.replace(/[^a-zA-Zà-úÀ-Ú]/g, "");
+  if (letters.length < 3) return true;
+  return false;
 }
 
 // ---------- helpers ----------
@@ -138,6 +181,8 @@ function tryParseLine(rawLine: string): CupomItemPreview | undefined {
   const line = rawLine.replace(/\s+/g, " ").trim();
   if (!line) return undefined;
   if (isIgnorableLine(line)) return undefined;
+  // Linhas que são URL/QR/chave de NFC-e nunca viram produto.
+  if (looksLikeReceiptReference(line)) return undefined;
 
   // pegar todos os números no formato BR
   const numbers = Array.from(line.matchAll(new RegExp(NUM, "g"))).map((m) => m[0]);
@@ -206,6 +251,8 @@ function tryParseLine(rawLine: string): CupomItemPreview | undefined {
   if (!nome || nome.length < 2) return undefined;
   // Linhas que viraram só números não são produto
   if (/^[\d\s.,/-]+$/.test(nome)) return undefined;
+  // Nome residual ainda parece URL/host/chave técnica — descarta.
+  if (nameLooksLikeReceiptReference(nome)) return undefined;
 
   // Defaults seguros
   if (!quantidade || !Number.isFinite(quantidade) || quantidade <= 0) {
@@ -248,10 +295,20 @@ export function parseCupomItemsFromText(input: string): CupomParseResult {
     return { status: "empty", items: [], warnings };
   }
 
-  const lines = input
+  const trimmed = input.trim();
+
+  // Se a entrada inteira é claramente uma URL/QR/chave de NFC-e e não há
+  // texto comercial real além disso, devolve receipt_url_detected sem itens.
+  const lines = trimmed
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter(Boolean);
+
+  const referenceLines = lines.filter((l) => looksLikeReceiptReference(l)).length;
+  const allReference = referenceLines === lines.length;
+  if (allReference) {
+    return { status: "receipt_url_detected", items: [], warnings };
+  }
 
   const items: CupomItemPreview[] = [];
   for (const line of lines) {
@@ -264,18 +321,37 @@ export function parseCupomItemsFromText(input: string): CupomParseResult {
   }
 
   if (items.length === 0) {
+    // Tinha URL/QR mas nada de produtos legíveis.
+    if (referenceLines > 0) {
+      return { status: "receipt_url_no_items", items: [], warnings };
+    }
     return { status: "no_items", items: [], warnings };
   }
 
-  // Sanitização final defensiva: remove NaN/Infinity de qualquer campo numérico.
-  const safe = items.map((it) => ({
-    ...it,
-    quantidade: safeNumber(it.quantidade) ?? 1,
-    valorUnitario: safeNumber(it.valorUnitario),
-    valorTotal: safeNumber(it.valorTotal),
-  }));
+  // Sanitização final defensiva: remove NaN/Infinity de qualquer campo numérico
+  // e revalida coerência quantidade * unitário ≈ total.
+  const safe = items.map((it) => {
+    const q = safeNumber(it.quantidade) ?? 1;
+    const vu = safeNumber(it.valorUnitario);
+    const vt = safeNumber(it.valorTotal);
+    let confianca = it.confianca;
+    if (vu !== undefined && vt !== undefined && q > 0) {
+      const expected = q * vu;
+      const diff = Math.abs(expected - vt);
+      const rel = vt > 0 ? diff / vt : 0;
+      if (rel > 0.1 && diff > 0.05) {
+        confianca = "baixa";
+      }
+    }
+    return { ...it, quantidade: q, valorUnitario: vu, valorTotal: vt, confianca };
+  });
 
-  return { status: "parsed", items: safe, warnings };
+  const onlyLow = safe.every((it) => it.confianca === "baixa");
+  return {
+    status: onlyLow ? "low_confidence_items" : "parsed",
+    items: safe,
+    warnings,
+  };
 }
 
 export function makeEmptyCupomItem(): CupomItemPreview {
