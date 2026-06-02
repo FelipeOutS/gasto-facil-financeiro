@@ -372,12 +372,16 @@ function ItemsPreviewCard({
   setItems,
   result,
   setResult,
+  onRetryFetch,
+  retryLoading,
 }: {
   initialText: string;
   items: CupomItemPreview[];
   setItems: React.Dispatch<React.SetStateAction<CupomItemPreview[]>>;
   result: CupomParseResult | null;
   setResult: React.Dispatch<React.SetStateAction<CupomParseResult | null>>;
+  onRetryFetch?: () => void | Promise<void>;
+  retryLoading?: boolean;
 }) {
   const { t } = useTranslation("mercado");
   const [text, setText] = useState(initialText);
