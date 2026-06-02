@@ -859,6 +859,45 @@
     "subtitle": "Scan the QR Code on your electronic receipt (NFC-e) to prepare importing the purchase.",
     "preparingNotice": "For now, this screen only reads and identifies the QR Code content. Full automatic import of the items is still being prepared.",
     "futureNote": "In a future step, you will be able to review the items read from the receipt before adding them to a list or to the price history.",
+    "nfceFetch": {
+      "title": "Import products from the receipt",
+      "description": "We try to read the public SEFAZ page on the server to extract items, prices and total. No personal data is stored.",
+      "primary": "Import products from NFC-e",
+      "retry": "Try again",
+      "loading": "Reading the receipt…",
+      "market": "Store",
+      "cnpj": "CNPJ",
+      "date": "Date",
+      "totalDeclared": "Receipt total",
+      "itemsRead": "Items read",
+      "totalMismatch": "The sum of the items read differs from the declared total. Review the values before saving.",
+      "toast": {
+        "imported": "Imported {{count}} items from the receipt.",
+        "totalOnly": "We only read the receipt total. Please add the items manually.",
+        "protected": "The SEFAZ page requires manual verification (captcha).",
+        "invalidUrl": "This URL is not a public NFC-e page.",
+        "network": "We could not reach the SEFAZ page. Please try again.",
+        "httpError": "The SEFAZ page returned an error ({{status}}).",
+        "noItems": "We identified the link, but could not read the products.",
+        "fail": "Failed to query the receipt."
+      },
+      "status": {
+        "items_found": "Products imported successfully.",
+        "total_only": "We only read the receipt total. The products were not available for automatic reading.",
+        "link_no_items": "We identified the receipt link, but could not import the products automatically. You can register them manually or try again.",
+        "protected": "The SEFAZ page requires manual verification (captcha). We could not read it automatically.",
+        "invalid_url": "This URL does not belong to a public NFC-e page.",
+        "http_error": "The SEFAZ page responded with an error.",
+        "timeout": "The request took too long. Please try again shortly.",
+        "network_error": "We could not connect to the SEFAZ page."
+      }
+    },
+    "receiptUrl": {
+      "title": "Receipt link identified",
+      "description": "We identified the receipt link, but could not read the products automatically yet. You can try again or register them manually.",
+      "addManual": "Add manually",
+      "retry": "Try again"
+    },
     "scanner": {
       "title": "Scan the receipt QR Code",
       "description": "Point your camera at the QR Code printed on the receipt or upload a photo. Reading happens locally on your device.",
