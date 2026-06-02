@@ -280,12 +280,7 @@ function CartMode({ lista }: { lista: MercadoLista }) {
       toast.error(t("carrinho.finalize.errorEmpty"));
       return;
     }
-    if (resumo.itensPendentes > 0) {
-      const ok = await confirmAsync({
-        title: t("carrinho.finalize.confirmPending", { pending: resumo.itensPendentes }),
-      });
-      if (!ok) return;
-    }
+    // Não bloqueia por itens não marcados — todos os itens do carrinho são considerados.
     setMarketDialogOpen(true);
   }
 
