@@ -1067,6 +1067,14 @@ function PrecoComunitarioPage() {
                 inputMode="numeric"
               />
             </div>
+            {isAdminMaster && editingId && (
+              <ProductImageAdminSection
+                priceId={editingId}
+                currentImageUrl={manualForm.imageRemoved ? null : manualForm.imageUrl}
+                currentImageSource={manualForm.imageSource}
+                onChanged={(next) => applyImageChange(editingId, next)}
+              />
+            )}
             <div className="sm:col-span-2 space-y-2 rounded-lg border border-border/60 bg-card-elevated/30 p-2">
               <div className="flex flex-wrap items-center gap-2">
                 <Button
