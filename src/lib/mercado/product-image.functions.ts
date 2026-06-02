@@ -374,7 +374,7 @@ async function lookupByName(
     !!normalizedBrand && normalizedQuery === normalizedBrand;
   let best: { img: string; score: number; name: string | null; brands: string | null; brandMatched: boolean } | null = null;
   let bestNoImage: { score: number; name: string | null; brands: string | null } | null = null;
-  for (const p of data.products) {
+  for (const p of products) {
     const img = pickProductImage(p);
     const candidateName = normalizeForKey(p.product_name);
     const candidateBrands = normalizeForKey(p.brands);
@@ -412,7 +412,7 @@ async function lookupByName(
   }
   if (!best) {
     onDiag?.({
-      candidates: data.products.length,
+      candidates: products.length,
       bestScore: bestNoImage?.score ?? null,
       bestCandidate: bestNoImage?.name ?? null,
       bestBrands: bestNoImage?.brands ?? null,
@@ -432,7 +432,7 @@ async function lookupByName(
     // Marca forte exata não deve cair fora só porque o nome está incompleto ou com typo.
   } else if (best.score < threshold) {
     onDiag?.({
-      candidates: data.products.length,
+      candidates: products.length,
       bestScore: best.score,
       bestCandidate: best.name,
       bestBrands: best.brands,
@@ -444,7 +444,7 @@ async function lookupByName(
   const confidence: ProductImageConfidence =
     best.score >= 0.85 ? "high" : best.score >= 0.55 ? "medium" : "low";
   onDiag?.({
-    candidates: data.products.length,
+    candidates: products.length,
     bestScore: best.score,
     bestCandidate: best.name,
     bestBrands: best.brands,
