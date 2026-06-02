@@ -40,6 +40,9 @@ function HistoricoPage() {
   const { t, i18n: i18next } = useTranslation("mercado");
   const navigate = useNavigate();
   const historico = useMercadoHistorico();
+  const [pendingDelete, setPendingDelete] = useState<MercadoCompraHistorico | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
 
   function handleBack() {
     void navigate({ to: "/mercado", replace: true });
