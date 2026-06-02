@@ -237,9 +237,11 @@ function HistoricoPage() {
 function HistoricoCard({
   item,
   dateFormatter,
+  onRequestDelete,
 }: {
   item: MercadoCompraHistorico;
   dateFormatter: Intl.DateTimeFormat;
+  onRequestDelete: () => void;
 }) {
   const { t } = useTranslation("mercado");
   const hasBudget = typeof item.orcamento === "number" && item.orcamento > 0;
@@ -251,8 +253,17 @@ function HistoricoCard({
   });
 
   return (
-    <article className="flex h-full flex-col gap-3 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
-      <header className="flex items-start gap-3">
+    <article className="relative flex h-full flex-col gap-3 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
+      <button
+        type="button"
+        onClick={onRequestDelete}
+        aria-label={t("historyV2.actions.delete")}
+        title={t("historyV2.actions.delete")}
+        className="absolute right-2 top-2 grid h-11 w-11 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/40 active:scale-95"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+      <header className="flex items-start gap-3 pr-10">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">
           <WalletCards className="h-5 w-5" />
         </span>
