@@ -5,6 +5,9 @@ import { cn } from "@/lib/utils";
 import { MarketBadge } from "./MarketBadge";
 import { useProductImage } from "@/lib/mercado/use-product-image";
 import type { MercadoCategoryKey } from "./MercadoCategoryChips";
+import { useAuth } from "@/lib/auth-context";
+import { isAdminMasterEmail } from "@/lib/plans";
+import { ProductImageAdminMenu } from "./ProductImageAdminMenu";
 
 export type ProductSource =
   | "online"
