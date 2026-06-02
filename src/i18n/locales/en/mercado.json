@@ -481,6 +481,7 @@
       "errorEmpty": "Add items before finalizing.",
       "errorGeneric": "Couldn't finalize the purchase.",
       "confirmPending": "There are still {{pending}} pending item(s). Finalize anyway?",
+      "selectionHint": "All cart items are included when you finalize. Use the checkmark only to track what you already grabbed at the store.",
       "success": "Purchase finalized and saved to history.",
       "successCommunity": "Purchase finalized and prices added to the Smart Grocery database for future lookups.",
       "savedMarkets": "Your markets",
