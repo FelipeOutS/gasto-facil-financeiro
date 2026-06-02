@@ -536,10 +536,14 @@ function ItemsPreviewCard({
               </button>
               <button
                 type="button"
-                onClick={handleParse}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card-elevated px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-card active:scale-[0.98]"
+                onClick={() => {
+                  if (onRetryFetch) void onRetryFetch();
+                  else handleParse();
+                }}
+                disabled={retryLoading}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card-elevated px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-card active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                <RefreshCw className={cn("h-4 w-4 text-muted-foreground", retryLoading && "animate-spin")} />
                 {t("importarCupom.receiptUrl.retry")}
               </button>
             </div>
