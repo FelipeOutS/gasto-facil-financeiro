@@ -777,15 +777,6 @@ function sanitizeItemsForImport(items: CupomItemPreview[]): Array<{
     .filter((x): x is NonNullable<typeof x> => x !== null);
 }
 
-// E34: Local timezone "YYYY-MM-DD" (avoid UTC drift in pre-filled date input).
-function todayLocalISODate(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
 function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   const { t } = useTranslation("mercado");
   const navigate = useNavigate();
