@@ -489,15 +489,30 @@
     }
   },
   "finalizeMarketDialog": {
-    "title": "Em qual mercado você fez essa compra?",
-    "description": "Escolha um mercado salvo ou informe o nome para salvar a compra e ajudar a base de Preços da Comunidade.",
+    "title": "Confirmar compra",
+    "description": "Confirme o mercado e a forma de pagamento. A compra entra no histórico, vira um gasto e os preços ajudam a base da Comunidade.",
+    "marketSection": "Mercado",
+    "paymentSection": "Como você pagou?",
     "savedLabel": "Seus mercados",
     "emptySaved": "Você ainda não cadastrou mercados. Informe o nome abaixo ou adicione um novo.",
     "manualLabel": "Informar manualmente",
     "manualPlaceholder": "Ex.: Supermercado do bairro",
     "addNew": "Adicionar novo mercado",
+    "totalLabel": "Total estimado",
+    "missingPriceWarning": "{{count}} item(ns) sem preço serão ignorados no total e no Preço Comunitário.",
+    "payment": {
+      "pix": "Pix",
+      "dinheiro": "Dinheiro",
+      "debito": "Débito",
+      "credito": "Crédito",
+      "outro": "Outro"
+    },
+    "cardLabel": "Cartão usado",
+    "cardNone": "Continuar sem vincular cartão",
+    "cardEmpty": "Você ainda não cadastrou cartões.",
+    "cardAdd": "Cadastrar cartão",
     "cancel": "Cancelar",
-    "confirm": "Finalizar compra"
+    "confirm": "Confirmar compra"
   },
   "precos": {
     "metaTitle": "Preços da comunidade — Mercado Inteligente",
