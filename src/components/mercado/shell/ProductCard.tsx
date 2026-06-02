@@ -67,8 +67,14 @@ export function ProductCard({
   barcode,
   category,
   disableImageLookup = false,
+  priceId,
+  imageSource,
+  onImageChanged,
 }: ProductCardProps) {
   const { t } = useTranslation("mercado");
+  const { user } = useAuth();
+  const isAdmin = isAdminMasterEmail(user?.email);
+  const showAdminMenu = isAdmin && !!priceId;
   const sourceLabel = source ? t(`shell.product.source.${source}`) : null;
   const [imgErrored, setImgErrored] = useState(false);
   const [suggestedErrored, setSuggestedErrored] = useState(false);
