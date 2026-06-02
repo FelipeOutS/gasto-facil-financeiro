@@ -1643,6 +1643,156 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
 
 
 
+function NfceFetchCard({
+  url,
+  onResult,
+}: {
+  url: string;
+  onResult: (r: NfceFetchResult) => void;
+}) {
+  const fetchFn = useServerFn(fetchNfceFromUrl);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<NfceFetchResult | null>(null);
+
+  async function handleFetch() {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const r = await fetchFn({ data: { url } });
+      setResult(r);
+      onResult(r);
+      if (r.status === "items_found") {
+        toast.success(`Importamos ${r.items.length} itens da nota.`);
+      } else if (r.status === "total_only") {
+        toast.message("Lemos apenas o total da nota. Cadastre os itens manualmente.");
+      } else if (r.status === "protected") {
+        toast.error("Página da SEFAZ exige verificação manual (captcha).");
+      } else if (r.status === "invalid_url") {
+        toast.error("Esta URL não é de uma página pública de NFC-e.");
+      } else if (r.status === "timeout" || r.status === "network_error") {
+        toast.error("Não conseguimos acessar a página da SEFAZ. Tente novamente.");
+      } else if (r.status === "http_error") {
+        toast.error(`A página da SEFAZ respondeu com erro (${r.httpStatus ?? "?"}).`);
+      } else {
+        toast.message("Identificamos o link, mas não conseguimos ler os produtos.");
+      }
+    } catch (err) {
+      if (import.meta.env.DEV) console.error("[nfce-fetch] client error", err);
+      toast.error("Falha ao consultar a nota fiscal.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const statusMessage: Record<NfceFetchStatusKey, string> = {
+    items_found: "Produtos importados com sucesso.",
+    total_only:
+      "Lemos apenas o valor total da nota. Os produtos não estavam disponíveis para leitura automática.",
+    link_no_items:
+      "Identificamos o link da nota, mas ainda não conseguimos importar os produtos automaticamente. Você pode cadastrar manualmente ou tentar novamente.",
+    protected:
+      "A página da SEFAZ exige verificação manual (captcha). Não conseguimos ler automaticamente.",
+    invalid_url: "Esta URL não pertence a uma página pública de NFC-e.",
+    http_error: "A página da SEFAZ respondeu com erro.",
+    timeout: "A consulta demorou demais. Tente novamente em instantes.",
+    network_error: "Não conseguimos conectar à página da SEFAZ.",
+  };
+
+  return (
+    <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
+      <div className="flex items-start gap-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
+          <Sparkles className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm font-semibold text-foreground md:text-base">
+            Importar produtos da nota
+          </h2>
+          <p className="mt-1 text-[12px] text-muted-foreground md:text-[13px]">
+            Tentamos ler a página pública da SEFAZ no servidor para extrair os
+            itens, valores e total. Nenhum dado pessoal é armazenado.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <button
+          type="button"
+          onClick={handleFetch}
+          disabled={loading}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {loading ? (
+            <>
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              Lendo a nota…
+            </>
+          ) : (
+            <>
+              <Search className="h-4 w-4" />
+              {result ? "Tentar novamente" : "Importar produtos da NFC-e"}
+            </>
+          )}
+        </button>
+      </div>
+
+      {result && (
+        <div className="mt-3 grid gap-2 rounded-2xl border border-border/60 bg-card-elevated p-3">
+          <p className="text-[12.5px] text-foreground md:text-[13px]">
+            {statusMessage[result.status as NfceFetchStatusKey] ?? "Resultado indisponível."}
+          </p>
+          {(result.marketName || result.cnpj || result.dateISO) && (
+            <dl className="grid gap-1 text-[12px] text-muted-foreground">
+              {result.marketName && (
+                <div className="truncate">
+                  <span className="font-semibold text-foreground">Mercado: </span>
+                  {result.marketName}
+                </div>
+              )}
+              {result.cnpj && (
+                <div className="truncate">
+                  <span className="font-semibold text-foreground">CNPJ: </span>
+                  {result.cnpj}
+                </div>
+              )}
+              {result.dateISO && (
+                <div>
+                  <span className="font-semibold text-foreground">Data: </span>
+                  {result.dateISO}
+                </div>
+              )}
+            </dl>
+          )}
+          {typeof result.totalDeclared === "number" && (
+            <div className="text-[12.5px] text-foreground">
+              <span className="font-semibold">Total da nota: </span>
+              <span className="tabular-nums">{formatBRL(result.totalDeclared)}</span>
+            </div>
+          )}
+          {result.items.length > 0 && (
+            <div className="text-[12.5px] text-foreground">
+              <span className="font-semibold">Itens lidos: </span>
+              {result.items.length}
+            </div>
+          )}
+          {result.warnings.includes("total_mismatch") && (
+            <p className="flex items-start gap-2 text-[12px] text-warning">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                A soma dos itens lidos é diferente do total declarado da nota.
+                Revise os valores antes de salvar.
+              </span>
+            </p>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+type NfceFetchStatusKey = NfceFetchResult["status"];
+
+
 function ImportarCupomPage() {
   const { t } = useTranslation("mercado");
   const navigate = useNavigate();
@@ -1683,6 +1833,24 @@ function ImportarCupomPage() {
       /* permissão negada — ignore */
     }
   }
+
+  function handleNfceFetched(r: NfceFetchResult) {
+    if (r.items.length > 0) {
+      setPreviewItems(r.items);
+      setPreviewResult({
+        status: "parsed",
+        items: r.items,
+        warnings: r.warnings,
+      });
+    } else if (r.status === "total_only" || r.status === "link_no_items" || r.status === "protected") {
+      setPreviewResult({
+        status: "receipt_url_no_items",
+        items: [],
+        warnings: r.warnings,
+      });
+    }
+  }
+
 
 
   return (
