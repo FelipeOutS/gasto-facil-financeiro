@@ -480,6 +480,8 @@
     "finalize": {
       "errorEmpty": "Add items before finalizing.",
       "errorGeneric": "Couldn't finalize the purchase.",
+      "errorCommunity": "Purchase saved, but prices couldn't be sent to the Community base.",
+      "errorGasto": "Purchase saved, but the expense couldn't be created in the Expenses tab.",
       "confirmPending": "There are still {{pending}} pending item(s). Finalize anyway?",
       "selectionHint": "All cart items are included when you finalize. Use the checkmark only to track what you already grabbed at the store.",
       "success": "Purchase finalized and saved to history.",
@@ -1110,6 +1112,7 @@
         "confirm": "Register purchase",
         "cancel": "Cancel",
         "noExpenseNotice": "This does not create a financial expense. The purchase is saved only in the Market history.",
+        "gastoNote": "Source: Receipt / NFC-e.",
         "success": "Purchase saved in the Market history."
       }
     },

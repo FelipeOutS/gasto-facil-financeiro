@@ -31,7 +31,11 @@ import { useServerFn } from "@tanstack/react-start";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { QrCodeScannerButton } from "@/components/mercado/QrCodeScannerButton";
-import { SavedMarketsChips } from "@/components/mercado/SavedMarketsChips";
+import {
+  FinalizeMarketDialog,
+  type FinalizeMarketDialogResult,
+} from "@/components/mercado/FinalizeMarketDialog";
+import { createGastoFromFinalizedPurchase } from "@/lib/mercado/finalized-purchase-gasto";
 import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
 import { SectionBlock } from "@/components/mercado/shell/SectionBlock";
 import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
@@ -773,21 +777,12 @@ function sanitizeItemsForImport(items: CupomItemPreview[]): Array<{
     .filter((x): x is NonNullable<typeof x> => x !== null);
 }
 
-// E34: Local timezone "YYYY-MM-DD" (avoid UTC drift in pre-filled date input).
-function todayLocalISODate(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
 function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   const { t } = useTranslation("mercado");
   const navigate = useNavigate();
   const listas = useMercadoListas();
 
-  type Mode = "none" | "new" | "existing" | "cart" | "finish";
+  type Mode = "none" | "new" | "existing" | "cart";
   type CartSub = "none" | "quick" | "existing";
 
   const [mode, setMode] = useState<Mode>("none");
@@ -798,11 +793,8 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   const [observation, setObservation] = useState("");
   const [selectedListaId, setSelectedListaId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  // E34 finish-purchase form state
-  const [finishName, setFinishName] = useState("");
-  const [finishMarket, setFinishMarket] = useState("");
-  const [finishDate, setFinishDate] = useState(() => todayLocalISODate());
-  const [finishObs, setFinishObs] = useState("");
+  // Finalização da compra (cupom) — usa o mesmo modal padrão do Carrinho/Lista.
+  const [marketDialogOpen, setMarketDialogOpen] = useState(false);
 
 
   const validItems = useMemo(() => sanitizeItemsForImport(items), [items]);
@@ -816,10 +808,6 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     setEstimateText("");
     setObservation("");
     setSelectedListaId(null);
-    setFinishName("");
-    setFinishMarket("");
-    setFinishDate(todayLocalISODate());
-    setFinishObs("");
   }
 
 
@@ -960,19 +948,34 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   }
 
 
+  const validItemsTotal = useMemo(
+    () =>
+      validItems.reduce(
+        (acc, it) => acc + (it.precoEstimado ?? 0) * (it.quantidade || 1),
+        0,
+      ),
+    [validItems],
+  );
+  const itensSemPreco = useMemo(
+    () =>
+      validItems.filter(
+        (it) =>
+          typeof it.precoEstimado !== "number" ||
+          !Number.isFinite(it.precoEstimado) ||
+          (it.precoEstimado as number) <= 0,
+      ).length,
+    [validItems],
+  );
+
   function openFinish() {
     if (!hasValid) {
       toast.error(t("importarCupom.importActions.noValidItems"));
       return;
     }
-    setMode("finish");
-    setFinishName(t("importarCupom.importActions.finishPurchase.defaultPurchaseName"));
-    setFinishMarket("");
-    setFinishDate(todayLocalISODate());
-    setFinishObs("");
+    setMarketDialogOpen(true);
   }
 
-  async function confirmFinish() {
+  async function confirmFinalizeWithMarket(result: FinalizeMarketDialogResult) {
     if (submitting) return;
     if (!hasValid) {
       toast.error(t("importarCupom.importActions.noValidItems"));
@@ -980,43 +983,65 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     }
     setSubmitting(true);
     try {
-      const concluidaEm = (() => {
-        const d = finishDate.trim();
-        if (!d) return new Date().toISOString();
-        const parsed = new Date(`${d}T12:00:00`);
-        return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : new Date().toISOString();
-      })();
+      const market = result.marketName.trim();
+      const now = new Date();
       const entry = registrarCompraFinalizadaDoCupom({
-        nome:
-          finishName.trim() ||
-          t("importarCupom.importActions.finishPurchase.defaultPurchaseName"),
-        mercadoNome: finishMarket.trim() || undefined,
-        concluidaEm,
-        observacao: finishObs.trim() || undefined,
+        nome: t("importarCupom.importActions.finishPurchase.defaultPurchaseName"),
+        mercadoNome: market || undefined,
+        concluidaEm: now.toISOString(),
         itens: validItems.map((it) => ({ ...it, origem: "cupom" as const })),
       });
       if (!entry) {
         toast.error(t("importarCupom.importActions.noValidItems"));
         return;
       }
-      // Best-effort: envia preços ao Preço Comunitário (origem receipt).
-      // Falhas não bloqueiam a finalização local.
-      if (entry.mercadoNome) {
-        try {
-          const r = await submitHistoricoToCommunity(entry, "receipt");
-          if (r && (r.inserted > 0 || r.updated > 0)) {
-            toast.success(t("carrinho.finalize.successCommunity"));
-          } else {
-            toast.success(t("importarCupom.importActions.finishPurchase.success"));
-          }
-        } catch {
-          toast.success(t("importarCupom.importActions.finishPurchase.success"));
-        }
+      setMarketDialogOpen(false);
+
+      // Preço Comunitário (best-effort).
+      let community: Awaited<ReturnType<typeof submitHistoricoToCommunity>> = null;
+      try {
+        community = entry.mercadoNome
+          ? await submitHistoricoToCommunity(entry, "receipt")
+          : null;
+      } catch {
+        community = null;
+        toast.error(t("carrinho.finalize.errorCommunity"));
+      }
+
+      // Gasto na aba Gastos + cartão (best-effort).
+      let gastoOk = false;
+      try {
+        const r = createGastoFromFinalizedPurchase({
+          marketName: market || t("importarCupom.importActions.finishPurchase.defaultPurchaseName"),
+          formaPagamento: result.formaPagamento,
+          cartaoId: result.cartaoId,
+          items: entry.itensSnapshot ?? [],
+          date: entry.concluidaEm ? new Date(entry.concluidaEm) : now,
+          notes: t("importarCupom.importActions.finishPurchase.gastoNote"),
+        });
+        gastoOk = r.created;
+      } catch {
+        gastoOk = false;
+        toast.error(t("carrinho.finalize.errorGasto"));
+      }
+
+      if (community && (community.inserted > 0 || community.updated > 0)) {
+        toast.success(
+          gastoOk
+            ? t("carrinho.finalize.successCommunityWithExpense")
+            : t("carrinho.finalize.successCommunity"),
+        );
       } else {
-        toast.success(t("importarCupom.importActions.finishPurchase.success"));
+        toast.success(
+          gastoOk
+            ? t("carrinho.finalize.successWithExpense")
+            : t("importarCupom.importActions.finishPurchase.success"),
+        );
       }
       resetForm();
       void navigate({ to: "/mercado/historico" });
+    } catch {
+      toast.error(t("carrinho.finalize.errorGeneric"));
     } finally {
       setSubmitting(false);
     }
@@ -1123,7 +1148,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
           disabled={!hasValid}
           className={cn(
             "group flex min-h-11 items-start gap-2.5 rounded-2xl border p-3 text-left transition active:scale-[0.99]",
-            mode === "finish"
+            marketDialogOpen
               ? "border-primary bg-primary/5"
               : "border-border/60 bg-card-elevated hover:bg-card",
             !hasValid && "cursor-not-allowed opacity-60",
@@ -1551,110 +1576,14 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
         </div>
       )}
 
-      {mode === "finish" && hasValid && (
-        <div className="mt-4 grid gap-3 rounded-2xl border border-border/60 bg-card-elevated p-3 md:p-4">
-          <div>
-            <p className="text-[12px] font-semibold text-foreground">
-              {t("importarCupom.importActions.finishPurchase.formTitle")}
-            </p>
-            <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-              {t("importarCupom.importActions.finishPurchase.noExpenseNotice")}
-            </p>
-          </div>
-
-          <label className="min-w-0">
-            <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {t("importarCupom.importActions.finishPurchase.purchaseName")}
-            </span>
-            <input
-              type="text"
-              value={finishName}
-              onChange={(e) => setFinishName(e.target.value)}
-              placeholder={t("importarCupom.importActions.finishPurchase.purchaseNamePlaceholder")}
-              className="mt-1 block w-full min-w-0 rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
-            />
-          </label>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            <label className="min-w-0">
-              <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {t("importarCupom.importActions.finishPurchase.market")}
-              </span>
-              <input
-                type="text"
-                value={finishMarket}
-                onChange={(e) => setFinishMarket(e.target.value)}
-                placeholder={t("importarCupom.importActions.finishPurchase.marketPlaceholder")}
-                className="mt-1 block w-full min-w-0 rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
-              />
-              <SavedMarketsChips
-                label={t("importarCupom.importActions.finishPurchase.market")}
-                emptyHint={t("importarCupom.importActions.finishPurchase.marketPlaceholder")}
-                selected={finishMarket}
-                onSelect={(nome) => setFinishMarket(nome)}
-              />
-            </label>
-
-            <label className="min-w-0">
-              <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {t("importarCupom.importActions.finishPurchase.date")}
-              </span>
-              <input
-                type="date"
-                value={finishDate}
-                onChange={(e) => setFinishDate(e.target.value)}
-                className="mt-1 block w-full min-w-0 rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
-              />
-            </label>
-          </div>
-
-          <label className="min-w-0">
-            <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {t("importarCupom.importActions.finishPurchase.observation")}
-            </span>
-            <textarea
-              value={finishObs}
-              onChange={(e) => setFinishObs(e.target.value)}
-              placeholder={t("importarCupom.importActions.finishPurchase.observationPlaceholder")}
-              rows={2}
-              className="mt-1 block w-full min-w-0 resize-y rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
-            />
-          </label>
-
-          <p className="text-[12px] text-muted-foreground">
-            {t("importarCupom.importActions.itemsCount", { count: validItems.length })}
-            {" · "}
-            <span className="tabular-nums">
-              {formatBRL(
-                validItems.reduce(
-                  (acc, it) => acc + (it.precoEstimado ?? 0) * (it.quantidade || 1),
-                  0,
-                ),
-              )}
-            </span>
-          </p>
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <button
-              type="button"
-              onClick={confirmFinish}
-              disabled={submitting}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Receipt className="h-4 w-4" />
-              {t("importarCupom.importActions.finishPurchase.confirm")}
-            </button>
-            <button
-              type="button"
-              onClick={resetForm}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:text-foreground active:scale-[0.98]"
-            >
-              {t("importarCupom.importActions.finishPurchase.cancel")}
-            </button>
-          </div>
-        </div>
-      )}
-
+      <FinalizeMarketDialog
+        open={marketDialogOpen}
+        onOpenChange={setMarketDialogOpen}
+        totalEstimado={validItemsTotal}
+        itensSemPreco={itensSemPreco}
+        onConfirm={confirmFinalizeWithMarket}
+        submitting={submitting}
+      />
 
       <p className="mt-3 flex items-start gap-2 rounded-2xl bg-card-elevated p-3 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand" />
