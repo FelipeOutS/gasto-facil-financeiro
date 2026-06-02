@@ -1459,6 +1459,13 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
         <CheckCircle2 className="h-4 w-4" />
         {t("detail.finalize.cta")}
       </button>
+      <FinalizeMarketDialog
+        open={marketDialogOpen}
+        onOpenChange={setMarketDialogOpen}
+        defaultMarketName={mercadoNome}
+        onConfirm={confirmFinalizeWithMarket}
+        submitting={finalizing}
+      />
     </section>
   );
 }
