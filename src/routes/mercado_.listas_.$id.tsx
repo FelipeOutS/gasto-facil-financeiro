@@ -1404,38 +1404,64 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
         return;
       }
       setMarketDialogOpen(false);
-      const community = await submitHistoricoToCommunity(entry, "store");
-      let gastoOk = false;
+      let community: Awaited<ReturnType<typeof submitHistoricoToCommunity>> = null;
+      let communityError: string | undefined;
       try {
-        const r = createGastoFromFinalizedPurchase({
-          marketName: market,
-          formaPagamento: payload.formaPagamento,
-          cartaoId: payload.cartaoId,
-          items: entry.itensSnapshot ?? [],
-          date: entry.concluidaEm ? new Date(entry.concluidaEm) : new Date(),
-        });
-        gastoOk = r.created;
-      } catch {
-        gastoOk = false;
+        community = await submitHistoricoToCommunity(entry, "store");
+      } catch (err) {
+        communityError = err instanceof Error ? err.message : String(err);
       }
-      if (community && (community.inserted > 0 || community.updated > 0)) {
-        toast.success(
-          gastoOk
-            ? t("carrinho.finalize.successCommunityWithExpense")
-            : t("carrinho.finalize.successCommunity"),
-        );
+      const gastoResult = createGastoFromFinalizedPurchase({
+        marketName: market,
+        formaPagamento: payload.formaPagamento,
+        cartaoId: payload.cartaoId,
+        items: entry.itensSnapshot ?? [],
+        date: entry.concluidaEm ? new Date(entry.concluidaEm) : new Date(),
+      });
+
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.log("[mercado/finalize]", {
+          source: "lista",
+          historyId: entry.id,
+          total: gastoResult.total,
+          marketName: market || null,
+          formaPagamento: payload.formaPagamento,
+          hasCartao: Boolean(payload.cartaoId),
+          gastoCreated: gastoResult.created,
+          gastoId: gastoResult.gastoId,
+          gastoReason: gastoResult.reason,
+          gastoError: gastoResult.error,
+          communitySubmitted: Boolean(community && (community.inserted > 0 || community.updated > 0)),
+          communityError,
+        });
+      }
+
+      const communityOk = !!community && (community.inserted > 0 || community.updated > 0);
+      if (gastoResult.created && communityOk) {
+        toast.success(t("carrinho.finalize.successCommunityWithExpense"));
+      } else if (gastoResult.created) {
+        toast.success(t("carrinho.finalize.successWithExpense"));
+      } else if (communityOk) {
+        toast.success(t("carrinho.finalize.successCommunity"));
+        if (gastoResult.reason && gastoResult.reason !== "empty") {
+          toast.error(t("carrinho.finalize.errorGasto"));
+        }
       } else {
-        toast.success(
-          gastoOk
-            ? t("carrinho.finalize.successWithExpense")
-            : t("detail.finalize.success"),
-        );
+        toast.success(t("detail.finalize.success"));
+        if (gastoResult.reason && gastoResult.reason !== "empty") {
+          toast.error(t("carrinho.finalize.errorGasto"));
+        }
+        if (communityError) {
+          toast.error(t("carrinho.finalize.errorCommunity"));
+        }
       }
       void navigate({ to: can("mercado_avancado") ? "/mercado/historico" : "/mercado/listas" });
     } finally {
       setFinalizing(false);
     }
   }
+
 
   return (
     <section className="mt-5 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
