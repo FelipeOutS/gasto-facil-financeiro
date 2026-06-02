@@ -1585,110 +1585,14 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
         </div>
       )}
 
-      {mode === "finish" && hasValid && (
-        <div className="mt-4 grid gap-3 rounded-2xl border border-border/60 bg-card-elevated p-3 md:p-4">
-          <div>
-            <p className="text-[12px] font-semibold text-foreground">
-              {t("importarCupom.importActions.finishPurchase.formTitle")}
-            </p>
-            <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-              {t("importarCupom.importActions.finishPurchase.noExpenseNotice")}
-            </p>
-          </div>
-
-          <label className="min-w-0">
-            <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {t("importarCupom.importActions.finishPurchase.purchaseName")}
-            </span>
-            <input
-              type="text"
-              value={finishName}
-              onChange={(e) => setFinishName(e.target.value)}
-              placeholder={t("importarCupom.importActions.finishPurchase.purchaseNamePlaceholder")}
-              className="mt-1 block w-full min-w-0 rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
-            />
-          </label>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            <label className="min-w-0">
-              <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {t("importarCupom.importActions.finishPurchase.market")}
-              </span>
-              <input
-                type="text"
-                value={finishMarket}
-                onChange={(e) => setFinishMarket(e.target.value)}
-                placeholder={t("importarCupom.importActions.finishPurchase.marketPlaceholder")}
-                className="mt-1 block w-full min-w-0 rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
-              />
-              <SavedMarketsChips
-                label={t("importarCupom.importActions.finishPurchase.market")}
-                emptyHint={t("importarCupom.importActions.finishPurchase.marketPlaceholder")}
-                selected={finishMarket}
-                onSelect={(nome) => setFinishMarket(nome)}
-              />
-            </label>
-
-            <label className="min-w-0">
-              <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {t("importarCupom.importActions.finishPurchase.date")}
-              </span>
-              <input
-                type="date"
-                value={finishDate}
-                onChange={(e) => setFinishDate(e.target.value)}
-                className="mt-1 block w-full min-w-0 rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
-              />
-            </label>
-          </div>
-
-          <label className="min-w-0">
-            <span className="block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {t("importarCupom.importActions.finishPurchase.observation")}
-            </span>
-            <textarea
-              value={finishObs}
-              onChange={(e) => setFinishObs(e.target.value)}
-              placeholder={t("importarCupom.importActions.finishPurchase.observationPlaceholder")}
-              rows={2}
-              className="mt-1 block w-full min-w-0 resize-y rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
-            />
-          </label>
-
-          <p className="text-[12px] text-muted-foreground">
-            {t("importarCupom.importActions.itemsCount", { count: validItems.length })}
-            {" · "}
-            <span className="tabular-nums">
-              {formatBRL(
-                validItems.reduce(
-                  (acc, it) => acc + (it.precoEstimado ?? 0) * (it.quantidade || 1),
-                  0,
-                ),
-              )}
-            </span>
-          </p>
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <button
-              type="button"
-              onClick={confirmFinish}
-              disabled={submitting}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Receipt className="h-4 w-4" />
-              {t("importarCupom.importActions.finishPurchase.confirm")}
-            </button>
-            <button
-              type="button"
-              onClick={resetForm}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-muted-foreground transition hover:text-foreground active:scale-[0.98]"
-            >
-              {t("importarCupom.importActions.finishPurchase.cancel")}
-            </button>
-          </div>
-        </div>
-      )}
-
+      <FinalizeMarketDialog
+        open={marketDialogOpen}
+        onOpenChange={setMarketDialogOpen}
+        totalEstimado={validItemsTotal}
+        itensSemPreco={itensSemPreco}
+        onConfirm={confirmFinalizeWithMarket}
+        submitting={submitting}
+      />
 
       <p className="mt-3 flex items-start gap-2 rounded-2xl bg-card-elevated p-3 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand" />
