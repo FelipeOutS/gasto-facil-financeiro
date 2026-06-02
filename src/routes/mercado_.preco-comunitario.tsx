@@ -884,6 +884,9 @@ function PrecoComunitarioPage() {
                     priceLabel={formatBRL(it.price)}
                     unitLabel={it.unit ?? undefined}
                     imageUrl={it.image_url ?? undefined}
+                    imageSource={it.image_source}
+                    priceId={it.id}
+                    onImageChanged={(next) => applyImageChange(it.id, next)}
                     brand={it.brand}
                     barcode={it.barcode}
                     category={(it.category ?? null) as MercadoCategoryKey | null}
