@@ -1112,6 +1112,7 @@
         "confirm": "Register purchase",
         "cancel": "Cancel",
         "noExpenseNotice": "This does not create a financial expense. The purchase is saved only in the Market history.",
+        "gastoNote": "Source: Receipt / NFC-e.",
         "success": "Purchase saved in the Market history."
       }
     },
