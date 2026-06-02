@@ -372,12 +372,16 @@ function ItemsPreviewCard({
   setItems,
   result,
   setResult,
+  onRetryFetch,
+  retryLoading,
 }: {
   initialText: string;
   items: CupomItemPreview[];
   setItems: React.Dispatch<React.SetStateAction<CupomItemPreview[]>>;
   result: CupomParseResult | null;
   setResult: React.Dispatch<React.SetStateAction<CupomParseResult | null>>;
+  onRetryFetch?: () => void | Promise<void>;
+  retryLoading?: boolean;
 }) {
   const { t } = useTranslation("mercado");
   const [text, setText] = useState(initialText);
@@ -532,10 +536,14 @@ function ItemsPreviewCard({
               </button>
               <button
                 type="button"
-                onClick={handleParse}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card-elevated px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-card active:scale-[0.98]"
+                onClick={() => {
+                  if (onRetryFetch) void onRetryFetch();
+                  else handleParse();
+                }}
+                disabled={retryLoading}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card-elevated px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-card active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                <RefreshCw className={cn("h-4 w-4 text-muted-foreground", retryLoading && "animate-spin")} />
                 {t("importarCupom.receiptUrl.retry")}
               </button>
             </div>
@@ -1642,46 +1650,15 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
 
 
 function NfceFetchCard({
-  url,
-  onResult,
+  loading,
+  result,
+  onFetch,
 }: {
-  url: string;
-  onResult: (r: NfceFetchResult) => void;
+  loading: boolean;
+  result: NfceFetchResult | null;
+  onFetch: () => void | Promise<void>;
 }) {
   const { t } = useTranslation("mercado");
-  const fetchFn = useServerFn(fetchNfceFromUrl);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<NfceFetchResult | null>(null);
-
-  async function handleFetch() {
-    if (loading) return;
-    setLoading(true);
-    try {
-      const r = await fetchFn({ data: { url } });
-      setResult(r);
-      onResult(r);
-      if (r.status === "items_found") {
-        toast.success(t("importarCupom.nfceFetch.toast.imported", { count: r.items.length }));
-      } else if (r.status === "total_only") {
-        toast.message(t("importarCupom.nfceFetch.toast.totalOnly"));
-      } else if (r.status === "protected") {
-        toast.error(t("importarCupom.nfceFetch.toast.protected"));
-      } else if (r.status === "invalid_url") {
-        toast.error(t("importarCupom.nfceFetch.toast.invalidUrl"));
-      } else if (r.status === "timeout" || r.status === "network_error") {
-        toast.error(t("importarCupom.nfceFetch.toast.network"));
-      } else if (r.status === "http_error") {
-        toast.error(t("importarCupom.nfceFetch.toast.httpError", { status: r.httpStatus ?? "?" }));
-      } else {
-        toast.message(t("importarCupom.nfceFetch.toast.noItems"));
-      }
-    } catch (err) {
-      if (import.meta.env.DEV) console.error("[nfce-fetch] client error", err);
-      toast.error(t("importarCupom.nfceFetch.toast.fail"));
-    } finally {
-      setLoading(false);
-    }
-  }
 
   return (
     <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
@@ -1702,7 +1679,7 @@ function NfceFetchCard({
       <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <button
           type="button"
-          onClick={handleFetch}
+          onClick={() => void onFetch()}
           disabled={loading}
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -1791,6 +1768,9 @@ function ImportarCupomPage() {
   const [parsed, setParsed] = useState<ParsedNfceQrResult | null>(null);
   const [previewResult, setPreviewResult] = useState<CupomParseResult | null>(null);
   const [previewItems, setPreviewItems] = useState<CupomItemPreview[]>([]);
+  const [nfceLoading, setNfceLoading] = useState(false);
+  const [nfceResult, setNfceResult] = useState<NfceFetchResult | null>(null);
+  const fetchNfce = useServerFn(fetchNfceFromUrl);
 
   function handleBack() {
     void navigate({ to: "/mercado", replace: true });
@@ -1811,6 +1791,7 @@ function ImportarCupomPage() {
     setParsed(null);
     setPreviewResult(null);
     setPreviewItems([]);
+    setNfceResult(null);
   }
 
   async function handlePasteFromClipboard() {
@@ -1841,6 +1822,37 @@ function ImportarCupomPage() {
       });
     }
   }
+
+  async function handleFetchReceipt() {
+    if (!parsed?.url || nfceLoading) return;
+    setNfceLoading(true);
+    try {
+      const r = await fetchNfce({ data: { url: parsed.url } });
+      setNfceResult(r);
+      handleNfceFetched(r);
+      if (r.status === "items_found") {
+        toast.success(t("importarCupom.nfceFetch.toast.imported", { count: r.items.length }));
+      } else if (r.status === "total_only") {
+        toast.message(t("importarCupom.nfceFetch.toast.totalOnly"));
+      } else if (r.status === "protected") {
+        toast.error(t("importarCupom.nfceFetch.toast.protected"));
+      } else if (r.status === "invalid_url") {
+        toast.error(t("importarCupom.nfceFetch.toast.invalidUrl"));
+      } else if (r.status === "timeout" || r.status === "network_error") {
+        toast.error(t("importarCupom.nfceFetch.toast.network"));
+      } else if (r.status === "http_error") {
+        toast.error(t("importarCupom.nfceFetch.toast.httpError", { status: r.httpStatus ?? "?" }));
+      } else {
+        toast.message(t("importarCupom.nfceFetch.toast.noItems"));
+      }
+    } catch (err) {
+      if (import.meta.env.DEV) console.error("[nfce-fetch] client error", err);
+      toast.error(t("importarCupom.nfceFetch.toast.fail"));
+    } finally {
+      setNfceLoading(false);
+    }
+  }
+
 
 
 
@@ -1976,7 +1988,11 @@ function ImportarCupomPage() {
       {parsed?.url &&
         (parsed.status === "valid_nfce_url" ||
           parsed.status === "possible_nfce_url") && (
-          <NfceFetchCard url={parsed.url} onResult={handleNfceFetched} />
+          <NfceFetchCard
+            loading={nfceLoading}
+            result={nfceResult}
+            onFetch={handleFetchReceipt}
+          />
         )}
 
 
@@ -1987,6 +2003,8 @@ function ImportarCupomPage() {
           setItems={setPreviewItems}
           result={previewResult}
           setResult={setPreviewResult}
+          onRetryFetch={parsed?.url ? handleFetchReceipt : undefined}
+          retryLoading={nfceLoading}
         />
       )}
 

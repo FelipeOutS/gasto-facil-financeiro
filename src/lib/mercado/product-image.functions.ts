@@ -378,7 +378,7 @@ async function lookupByName(
   const strongBrand = isStrongMarketBrand(normalizedBrand);
   const brandOnlyQuery =
     !!normalizedBrand && normalizedQuery === normalizedBrand;
-  let best: { img: string; score: number; name: string | null; brands: string | null; brandMatched: boolean } | null = null;
+  let best: { img: string; score: number; name: string | null; brands: string | null; brandMatched: boolean; packagingMatched: boolean; categoryMatched: boolean } | null = null;
   let bestNoImage: { score: number; name: string | null; brands: string | null } | null = null;
   for (const p of products) {
     const img = pickProductImage(p);
@@ -402,10 +402,16 @@ async function lookupByName(
       else if (candidateBrands) score -= strongBrand ? 0.9 : 0.55;
     }
     if (img) score += 0.08;
-    const categoryMatched = expectedCategoryTerms.some((term) => candidateText.includes(normalizeForKey(term)));
-    const packagingMatched = expectedPackagingTerms.some((term) => candidateText.includes(normalizeForKey(term)));
+    const categoryMatched = expectedCategoryTerms.length > 0
+      && expectedCategoryTerms.some((term) => candidateText.includes(normalizeForKey(term)));
+    const packagingMatched = expectedPackagingTerms.length > 0
+      && expectedPackagingTerms.some((term) => candidateText.includes(normalizeForKey(term)));
     if (categoryMatched) score += 0.18;
-    if (packagingMatched) score += 0.08;
+    if (packagingMatched) score += 0.12;
+    // Penaliza candidatos que ignoram embalagem/volume esperados (ex.: lata 350ml vs. 2L).
+    if (expectedPackagingTerms.length > 0 && !packagingMatched) score -= 0.18;
+    // Categoria explícita esperada mas ausente: penalidade leve.
+    if (expectedCategoryTerms.length > 0 && !categoryMatched) score -= 0.08;
     if (!img) {
       if (!bestNoImage || score > bestNoImage.score) {
         bestNoImage = { score, name: p.product_name ?? null, brands: brandsToString(p.brands) || null };
@@ -413,7 +419,7 @@ async function lookupByName(
       continue;
     }
     if (!best || score > best.score) {
-      best = { img, score, name: p.product_name ?? null, brands: brandsToString(p.brands) || null, brandMatched };
+      best = { img, score, name: p.product_name ?? null, brands: brandsToString(p.brands) || null, brandMatched, packagingMatched, categoryMatched };
     }
   }
   if (!best) {
@@ -424,6 +430,19 @@ async function lookupByName(
       bestBrands: bestNoImage?.brands ?? null,
       hadImage: false,
       rejected: "no_image_in_results",
+    });
+    return null;
+  }
+  // REGRA RÍGIDA: marca esperada e candidato não bate em marca → rejeita.
+  // Evita pegar "outro produto da mesma categoria/marca" sem ser o produto certo.
+  if (normalizedBrand && !best.brandMatched && !brandOnlyQuery) {
+    onDiag?.({
+      candidates: products.length,
+      bestScore: best.score,
+      bestCandidate: best.name,
+      bestBrands: best.brands,
+      hadImage: true,
+      rejected: "brand_mismatch",
     });
     return null;
   }
@@ -448,7 +467,7 @@ async function lookupByName(
     return null;
   }
   const confidence: ProductImageConfidence =
-    best.score >= 0.85 ? "high" : best.score >= 0.55 ? "medium" : "low";
+    best.score >= 0.85 ? "high" : best.score >= 0.6 ? "medium" : "low";
   onDiag?.({
     candidates: products.length,
     bestScore: best.score,
@@ -457,11 +476,24 @@ async function lookupByName(
     hadImage: true,
     rejected: null,
   });
+  // Persistência só quando há real compatibilidade:
+  //  - alta confiança + (sem marca esperada OU marca casou);
+  //  - média confiança exige brand match + embalagem casada (quando esperada);
+  //  - brand-only (query = marca) NUNCA persiste como foto do produto.
+  let persistable = false;
+  if (!brandOnlyQuery) {
+    if (confidence === "high" && (!normalizedBrand || best.brandMatched)) {
+      persistable = true;
+    } else if (confidence === "medium" && best.brandMatched) {
+      const packagingOk = expectedPackagingTerms.length === 0 || best.packagingMatched;
+      persistable = packagingOk;
+    }
+  }
   return {
     imageUrl: best.img,
     source: "off_search",
     confidence,
-    persistable: confidence === "high" || (confidence === "medium" && (!strongBrand || best.brandMatched)) || (confidence === "low" && false),
+    persistable,
     origin: "openfoodfacts",
   };
 }
