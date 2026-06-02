@@ -480,6 +480,8 @@
     "finalize": {
       "errorEmpty": "Adicione itens antes de finalizar.",
       "errorGeneric": "Não foi possível finalizar a compra.",
+      "errorCommunity": "Compra salva, mas os preços não foram enviados à base da Comunidade.",
+      "errorGasto": "Compra salva, mas o gasto não foi criado na aba Gastos.",
       "confirmPending": "Ainda há {{pending}} item(ns) pendente(s). Finalizar mesmo assim?",
       "selectionHint": "Todos os itens do carrinho serão considerados ao finalizar. Use a marcação apenas para controlar o que você já pegou no mercado.",
       "success": "Compra finalizada e salva no histórico.",
