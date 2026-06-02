@@ -175,9 +175,15 @@ type OFFProduct = {
   image_front_url?: string;
   image_url?: string;
   product_name?: string;
-  brands?: string;
+  /** Em alguns endpoints (Search-a-Licious) `brands` pode vir como array. */
+  brands?: string | string[];
   selected_images?: OFFSelectedImages;
 };
+
+function brandsToString(b: OFFProduct["brands"]): string {
+  if (!b) return "";
+  return Array.isArray(b) ? b.join(" ") : String(b);
+}
 
 type OFFByBarcode = { status?: number; product?: OFFProduct };
 type OFFSearch = { products?: OFFProduct[]; hits?: OFFProduct[] };
