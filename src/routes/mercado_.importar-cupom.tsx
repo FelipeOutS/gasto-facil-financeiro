@@ -957,19 +957,34 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   }
 
 
+  const validItemsTotal = useMemo(
+    () =>
+      validItems.reduce(
+        (acc, it) => acc + (it.precoEstimado ?? 0) * (it.quantidade || 1),
+        0,
+      ),
+    [validItems],
+  );
+  const itensSemPreco = useMemo(
+    () =>
+      validItems.filter(
+        (it) =>
+          typeof it.precoEstimado !== "number" ||
+          !Number.isFinite(it.precoEstimado) ||
+          (it.precoEstimado as number) <= 0,
+      ).length,
+    [validItems],
+  );
+
   function openFinish() {
     if (!hasValid) {
       toast.error(t("importarCupom.importActions.noValidItems"));
       return;
     }
-    setMode("finish");
-    setFinishName(t("importarCupom.importActions.finishPurchase.defaultPurchaseName"));
-    setFinishMarket("");
-    setFinishDate(todayLocalISODate());
-    setFinishObs("");
+    setMarketDialogOpen(true);
   }
 
-  async function confirmFinish() {
+  async function confirmFinalizeWithMarket(result: FinalizeMarketDialogResult) {
     if (submitting) return;
     if (!hasValid) {
       toast.error(t("importarCupom.importActions.noValidItems"));
@@ -977,43 +992,65 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     }
     setSubmitting(true);
     try {
-      const concluidaEm = (() => {
-        const d = finishDate.trim();
-        if (!d) return new Date().toISOString();
-        const parsed = new Date(`${d}T12:00:00`);
-        return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : new Date().toISOString();
-      })();
+      const market = result.marketName.trim();
+      const now = new Date();
       const entry = registrarCompraFinalizadaDoCupom({
-        nome:
-          finishName.trim() ||
-          t("importarCupom.importActions.finishPurchase.defaultPurchaseName"),
-        mercadoNome: finishMarket.trim() || undefined,
-        concluidaEm,
-        observacao: finishObs.trim() || undefined,
+        nome: t("importarCupom.importActions.finishPurchase.defaultPurchaseName"),
+        mercadoNome: market || undefined,
+        concluidaEm: now.toISOString(),
         itens: validItems.map((it) => ({ ...it, origem: "cupom" as const })),
       });
       if (!entry) {
         toast.error(t("importarCupom.importActions.noValidItems"));
         return;
       }
-      // Best-effort: envia preços ao Preço Comunitário (origem receipt).
-      // Falhas não bloqueiam a finalização local.
-      if (entry.mercadoNome) {
-        try {
-          const r = await submitHistoricoToCommunity(entry, "receipt");
-          if (r && (r.inserted > 0 || r.updated > 0)) {
-            toast.success(t("carrinho.finalize.successCommunity"));
-          } else {
-            toast.success(t("importarCupom.importActions.finishPurchase.success"));
-          }
-        } catch {
-          toast.success(t("importarCupom.importActions.finishPurchase.success"));
-        }
+      setMarketDialogOpen(false);
+
+      // Preço Comunitário (best-effort).
+      let community: Awaited<ReturnType<typeof submitHistoricoToCommunity>> = null;
+      try {
+        community = entry.mercadoNome
+          ? await submitHistoricoToCommunity(entry, "receipt")
+          : null;
+      } catch {
+        community = null;
+        toast.error(t("carrinho.finalize.errorCommunity"));
+      }
+
+      // Gasto na aba Gastos + cartão (best-effort).
+      let gastoOk = false;
+      try {
+        const r = createGastoFromFinalizedPurchase({
+          marketName: market || t("importarCupom.importActions.finishPurchase.defaultPurchaseName"),
+          formaPagamento: result.formaPagamento,
+          cartaoId: result.cartaoId,
+          items: entry.itensSnapshot ?? [],
+          date: entry.concluidaEm ? new Date(entry.concluidaEm) : now,
+          notes: t("importarCupom.importActions.finishPurchase.gastoNote"),
+        });
+        gastoOk = r.created;
+      } catch {
+        gastoOk = false;
+        toast.error(t("carrinho.finalize.errorGasto"));
+      }
+
+      if (community && (community.inserted > 0 || community.updated > 0)) {
+        toast.success(
+          gastoOk
+            ? t("carrinho.finalize.successCommunityWithExpense")
+            : t("carrinho.finalize.successCommunity"),
+        );
       } else {
-        toast.success(t("importarCupom.importActions.finishPurchase.success"));
+        toast.success(
+          gastoOk
+            ? t("carrinho.finalize.successWithExpense")
+            : t("importarCupom.importActions.finishPurchase.success"),
+        );
       }
       resetForm();
       void navigate({ to: "/mercado/historico" });
+    } catch {
+      toast.error(t("carrinho.finalize.errorGeneric"));
     } finally {
       setSubmitting(false);
     }
