@@ -999,45 +999,64 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
 
       // Preço Comunitário (best-effort).
       let community: Awaited<ReturnType<typeof submitHistoricoToCommunity>> = null;
+      let communityError: string | undefined;
       try {
         community = entry.mercadoNome
           ? await submitHistoricoToCommunity(entry, "receipt")
           : null;
-      } catch {
+      } catch (err) {
         community = null;
-        toast.error(t("carrinho.finalize.errorCommunity"));
+        communityError = err instanceof Error ? err.message : String(err);
       }
 
-      // Gasto na aba Gastos + cartão (best-effort).
-      let gastoOk = false;
-      try {
-        const r = createGastoFromFinalizedPurchase({
-          marketName: market || t("importarCupom.importActions.finishPurchase.defaultPurchaseName"),
+      // Gasto na aba Gastos + cartão (best-effort, com diagnóstico).
+      const gastoResult = createGastoFromFinalizedPurchase({
+        marketName: market || t("importarCupom.importActions.finishPurchase.defaultPurchaseName"),
+        formaPagamento: result.formaPagamento,
+        cartaoId: result.cartaoId,
+        items: entry.itensSnapshot ?? [],
+        date: entry.concluidaEm ? new Date(entry.concluidaEm) : now,
+        notes: t("importarCupom.importActions.finishPurchase.gastoNote"),
+      });
+
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.log("[mercado/finalize]", {
+          source: "cupom",
+          historyId: entry.id,
+          total: gastoResult.total,
+          marketName: market || null,
           formaPagamento: result.formaPagamento,
-          cartaoId: result.cartaoId,
-          items: entry.itensSnapshot ?? [],
-          date: entry.concluidaEm ? new Date(entry.concluidaEm) : now,
-          notes: t("importarCupom.importActions.finishPurchase.gastoNote"),
+          hasCartao: Boolean(result.cartaoId),
+          gastoCreated: gastoResult.created,
+          gastoId: gastoResult.gastoId,
+          gastoReason: gastoResult.reason,
+          gastoError: gastoResult.error,
+          communitySubmitted: Boolean(community && (community.inserted > 0 || community.updated > 0)),
+          communityError,
         });
-        gastoOk = r.created;
-      } catch {
-        gastoOk = false;
-        toast.error(t("carrinho.finalize.errorGasto"));
       }
 
-      if (community && (community.inserted > 0 || community.updated > 0)) {
-        toast.success(
-          gastoOk
-            ? t("carrinho.finalize.successCommunityWithExpense")
-            : t("carrinho.finalize.successCommunity"),
-        );
+      const communityOk = !!community && (community.inserted > 0 || community.updated > 0);
+      if (gastoResult.created && communityOk) {
+        toast.success(t("carrinho.finalize.successCommunityWithExpense"));
+      } else if (gastoResult.created) {
+        toast.success(t("carrinho.finalize.successWithExpense"));
+      } else if (communityOk) {
+        toast.success(t("carrinho.finalize.successCommunity"));
+        if (gastoResult.reason && gastoResult.reason !== "empty") {
+          toast.error(t("carrinho.finalize.errorGasto"));
+        }
       } else {
-        toast.success(
-          gastoOk
-            ? t("carrinho.finalize.successWithExpense")
-            : t("importarCupom.importActions.finishPurchase.success"),
-        );
+        toast.success(t("importarCupom.importActions.finishPurchase.success"));
+        if (gastoResult.reason && gastoResult.reason !== "empty") {
+          toast.error(t("carrinho.finalize.errorGasto"));
+        }
+        if (communityError) {
+          toast.error(t("carrinho.finalize.errorCommunity"));
+        }
       }
+
       resetForm();
       void navigate({ to: "/mercado/historico" });
     } catch {

@@ -3,11 +3,13 @@
  * finalizada do Mercado Inteligente (Carrinho, Lista ou Cupom).
  *
  * Regras:
- *  - Total = soma de `precoEstimado * quantidade` dos itens com preço válido.
- *  - Itens sem preço são ignorados no cálculo, mas a compra ainda é registrada.
+ *  - Total preferencial = soma de `precoPago * quantidade` quando o item
+ *    tiver preço pago; senão usa `precoEstimado * quantidade`.
+ *  - Itens sem nenhum preço válido são ignorados no cálculo.
  *  - Se o total for 0, NÃO cria gasto (não polui a aba Gastos com R$ 0,00).
- *  - Categoria: "mercado".
- *  - Se `cartaoId` informado e formaPagamento for credito/debito, vincula.
+ *  - Categoria: "mercado" (chave legada usada pelo sistema de gastos).
+ *  - Se `cartaoId` informado e formaPagamento for credito/debito, vincula
+ *    para que apareça em Cartões/fatura/limite usado.
  */
 
 import { addGasto } from "@/lib/store";
@@ -19,6 +21,17 @@ function toLocalISODate(d: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+function pricedOf(it: ListaItem): number | null {
+  const pago = typeof it?.precoPago === "number" && Number.isFinite(it.precoPago) && it.precoPago > 0
+    ? (it.precoPago as number)
+    : null;
+  if (pago !== null) return pago;
+  const est = typeof it?.precoEstimado === "number" && Number.isFinite(it.precoEstimado) && it.precoEstimado > 0
+    ? (it.precoEstimado as number)
+    : null;
+  return est;
 }
 
 export type FinalizedPurchaseGastoInput = {
@@ -36,6 +49,10 @@ export type FinalizedPurchaseGastoResult = {
   itemsCounted: number;
   itemsSkipped: number;
   created: boolean;
+  gastoId?: string;
+  /** "empty" = nenhum item com preço; "blocked" = addGasto bloqueado/sem usuário; "error" = exception. */
+  reason?: "empty" | "blocked" | "error";
+  error?: string;
 };
 
 export function createGastoFromFinalizedPurchase(
@@ -44,17 +61,12 @@ export function createGastoFromFinalizedPurchase(
   const items = Array.isArray(input.items) ? input.items : [];
   const valid = items.filter(
     (it) =>
-      typeof it?.precoEstimado === "number" &&
-      Number.isFinite(it.precoEstimado as number) &&
-      (it.precoEstimado as number) > 0 &&
       typeof it?.nome === "string" &&
-      it.nome.trim().length > 0,
+      it.nome.trim().length > 0 &&
+      pricedOf(it) !== null,
   );
   const total = Math.round(
-    valid.reduce(
-      (s, it) => s + (it.precoEstimado as number) * (it.quantidade || 1),
-      0,
-    ) * 100,
+    valid.reduce((s, it) => s + (pricedOf(it) as number) * (it.quantidade || 1), 0) * 100,
   ) / 100;
 
   if (total <= 0) {
@@ -63,18 +75,17 @@ export function createGastoFromFinalizedPurchase(
       itemsCounted: 0,
       itemsSkipped: items.length,
       created: false,
+      reason: "empty",
     };
   }
 
   const market = (input.marketName || "").trim() || "Mercado";
   const data = toLocalISODate(input.date ?? new Date());
 
-  const lines = valid
-    .slice(0, 30)
-    .map((it) => {
-      const qty = it.quantidade && it.quantidade > 1 ? ` x${it.quantidade}` : "";
-      return `• ${it.nome}${qty}`;
-    });
+  const lines = valid.slice(0, 30).map((it) => {
+    const qty = it.quantidade && it.quantidade > 1 ? ` x${it.quantidade}` : "";
+    return `• ${it.nome}${qty}`;
+  });
   if (valid.length > 30) lines.push(`… +${valid.length - 30}`);
   const baseNote = `Compra finalizada pelo Mercado Inteligente.`;
   const observacao = [baseNote, input.notes?.trim(), lines.join("\n")]
@@ -88,7 +99,7 @@ export function createGastoFromFinalizedPurchase(
       : undefined;
 
   try {
-    addGasto({
+    const created = addGasto({
       descricao: `Compra em ${market}`,
       valor: total,
       data,
@@ -99,19 +110,33 @@ export function createGastoFromFinalizedPurchase(
       observacao,
       origem: "mercado_inteligente",
     });
-  } catch {
+
+    if (!created || created.length === 0) {
+      return {
+        total,
+        itemsCounted: valid.length,
+        itemsSkipped: items.length - valid.length,
+        created: false,
+        reason: "blocked",
+        error: "addGasto returned no rows (sem usuário ativo ou sem permissão de escrita)",
+      };
+    }
+
+    return {
+      total,
+      itemsCounted: valid.length,
+      itemsSkipped: items.length - valid.length,
+      created: true,
+      gastoId: created[0]?.id,
+    };
+  } catch (err) {
     return {
       total,
       itemsCounted: valid.length,
       itemsSkipped: items.length - valid.length,
       created: false,
+      reason: "error",
+      error: err instanceof Error ? err.message : String(err),
     };
   }
-
-  return {
-    total,
-    itemsCounted: valid.length,
-    itemsSkipped: items.length - valid.length,
-    created: true,
-  };
 }
