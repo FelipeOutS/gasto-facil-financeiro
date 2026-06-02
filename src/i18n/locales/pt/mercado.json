@@ -1542,6 +1542,43 @@
         "store": "Loja",
         "receipt": "Cupom",
         "community": "Comunidade"
+      },
+      "adminImage": {
+        "menuLabel": "Opções de imagem",
+        "actions": {
+          "replace": "Substituir imagem",
+          "remove": "Remover imagem",
+          "refresh": "Buscar novamente"
+        },
+        "sourceBadge": {
+          "admin_upload": "Imagem manual",
+          "open_food_facts": "Open Food Facts",
+          "joanin": "Joanin",
+          "brand_logo": "Logo de marca",
+          "manual": "Manual",
+          "none": "Sem imagem"
+        },
+        "preview": {
+          "title": "Pré-visualização",
+          "alt": "Pré-visualização da nova imagem",
+          "cancel": "Cancelar",
+          "confirm": "Salvar imagem",
+          "uploading": "Enviando…"
+        },
+        "toast": {
+          "invalidFormat": "Formato inválido. Use JPG, PNG ou WebP.",
+          "tooLarge": "Arquivo muito grande (máx. 3 MB).",
+          "readError": "Não foi possível ler o arquivo.",
+          "uploaded": "Imagem atualizada.",
+          "uploadFailed": "Falha ao enviar imagem.",
+          "removed": "Imagem removida.",
+          "removeFailed": "Falha ao remover imagem.",
+          "refreshed": "Imagem atualizada automaticamente.",
+          "refreshFailed": "Falha ao buscar imagem.",
+          "noMatch": "Nenhuma imagem encontrada com confiança suficiente.",
+          "protectedFromAuto": "Imagem manual protegida. Remova antes de buscar.",
+          "forbidden": "Apenas o admin master pode alterar imagens."
+        }
       }
     },
     "banner": {
