@@ -1170,7 +1170,18 @@
       "barcode": "Barcode (optional)",
       "barcodePlaceholder": "e.g.: 7891000100103",
       "previewAlt": "Suggested image for {{name}}",
-      "previewHint": "Review before saving."
+      "previewHint": "Review before saving.",
+      "section": {
+        "title": "Product image",
+        "description": "Set a trusted image for this product. It will appear on Mercado Inteligente cards.",
+        "previewAlt": "Current product image",
+        "empty": "No image set for this product.",
+        "uploadCta": "Upload image from device",
+        "refreshCta": "Search automatically",
+        "removeCta": "Remove image",
+        "confirmRemove": "Remove the current image for this product?",
+        "hintFallback": "No image saved — the card will try to fetch one automatically."
+      }
     },
     "actions": {
       "scanTitle": "Scan a flyer photo",

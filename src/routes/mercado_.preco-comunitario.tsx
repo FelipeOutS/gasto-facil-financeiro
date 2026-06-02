@@ -38,6 +38,8 @@ import {
   type MercadoCategoryKey,
   type ProductSource,
 } from "@/components/mercado/shell";
+import { ProductImageAdminSection } from "@/components/mercado/shell/ProductImageAdminSection";
+import { isAdminMasterEmail } from "@/lib/plans";
 import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
 import bannerComunitarioWebp from "@/assets/mercado/banner-comunitario.webp";
 import emptyComunitario from "@/assets/mercado/empty-comunitario.webp";
@@ -150,6 +152,7 @@ function PrecoComunitarioPage() {
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(dateLocale);
 
   const { user } = useAuth();
+  const isAdminMaster = isAdminMasterEmail(user?.email);
   const [items, setItems] = useState<CommunityPrice[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -410,6 +413,33 @@ function PrecoComunitarioPage() {
 
 
 
+
+  function applyImageChange(
+    id: string,
+    next: { imageUrl: string | null; imageSource: string | null; imageConfidence?: number | null },
+  ) {
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === id
+          ? {
+              ...it,
+              image_url: next.imageUrl,
+              image_source: next.imageSource,
+              image_confidence: next.imageConfidence ?? it.image_confidence,
+            }
+          : it,
+      ),
+    );
+    if (editingId === id) {
+      setManualForm((f) => ({
+        ...f,
+        imageUrl: next.imageUrl,
+        imageSource: next.imageSource,
+        imageConfidence: next.imageConfidence ?? f.imageConfidence,
+        imageRemoved: false,
+      }));
+    }
+  }
 
   function openManual(item?: CommunityPrice) {
     if (item) {
@@ -767,6 +797,9 @@ function PrecoComunitarioPage() {
                   priceLabel={formatBRL(it.price)}
                   unitLabel={it.unit ?? undefined}
                   imageUrl={it.image_url ?? undefined}
+                  imageSource={it.image_source}
+                  priceId={it.id}
+                  onImageChanged={(next) => applyImageChange(it.id, next)}
                   brand={it.brand}
                   barcode={it.barcode}
                   category={(it.category ?? null) as MercadoCategoryKey | null}
@@ -851,6 +884,9 @@ function PrecoComunitarioPage() {
                     priceLabel={formatBRL(it.price)}
                     unitLabel={it.unit ?? undefined}
                     imageUrl={it.image_url ?? undefined}
+                    imageSource={it.image_source}
+                    priceId={it.id}
+                    onImageChanged={(next) => applyImageChange(it.id, next)}
                     brand={it.brand}
                     barcode={it.barcode}
                     category={(it.category ?? null) as MercadoCategoryKey | null}
@@ -1031,6 +1067,14 @@ function PrecoComunitarioPage() {
                 inputMode="numeric"
               />
             </div>
+            {isAdminMaster && editingId && (
+              <ProductImageAdminSection
+                priceId={editingId}
+                currentImageUrl={manualForm.imageRemoved ? null : manualForm.imageUrl}
+                currentImageSource={manualForm.imageSource}
+                onChanged={(next) => applyImageChange(editingId, next)}
+              />
+            )}
             <div className="sm:col-span-2 space-y-2 rounded-lg border border-border/60 bg-card-elevated/30 p-2">
               <div className="flex flex-wrap items-center gap-2">
                 <Button

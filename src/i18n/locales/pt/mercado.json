@@ -1170,7 +1170,18 @@
       "barcode": "Código de barras (opcional)",
       "barcodePlaceholder": "Ex.: 7891000100103",
       "previewAlt": "Imagem sugerida para {{name}}",
-      "previewHint": "Revise antes de salvar."
+      "previewHint": "Revise antes de salvar.",
+      "section": {
+        "title": "Imagem do produto",
+        "description": "Defina uma imagem confiável para este produto. Ela será exibida nos cards do Mercado Inteligente.",
+        "previewAlt": "Imagem atual do produto",
+        "empty": "Nenhuma imagem definida para este produto.",
+        "uploadCta": "Enviar imagem do computador",
+        "refreshCta": "Buscar automaticamente",
+        "removeCta": "Remover imagem",
+        "confirmRemove": "Remover a imagem atual deste produto?",
+        "hintFallback": "Sem imagem salva — o card tentará buscar automaticamente."
+      }
     },
     "actions": {
       "scanTitle": "Ler panfleto por foto",
