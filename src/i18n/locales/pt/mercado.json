@@ -859,6 +859,45 @@
     "subtitle": "Leia o QR Code do cupom fiscal (NFC-e) para preparar a importação da compra.",
     "preparingNotice": "Por enquanto, esta tela apenas lê e identifica o conteúdo do QR Code. A importação automática completa dos itens ainda está em preparação.",
     "futureNote": "Em uma próxima etapa, a leitura dos produtos da nota poderá ser revisada por você antes de ser adicionada a uma lista ou ao histórico de preços.",
+    "nfceFetch": {
+      "title": "Importar produtos da nota",
+      "description": "Tentamos ler a página pública da SEFAZ no servidor para extrair os itens, valores e total. Nenhum dado pessoal é armazenado.",
+      "primary": "Importar produtos da NFC-e",
+      "retry": "Tentar novamente",
+      "loading": "Lendo a nota…",
+      "market": "Mercado",
+      "cnpj": "CNPJ",
+      "date": "Data",
+      "totalDeclared": "Total da nota",
+      "itemsRead": "Itens lidos",
+      "totalMismatch": "A soma dos itens lidos é diferente do total declarado da nota. Revise os valores antes de salvar.",
+      "toast": {
+        "imported": "Importamos {{count}} itens da nota.",
+        "totalOnly": "Lemos apenas o total da nota. Cadastre os itens manualmente.",
+        "protected": "Página da SEFAZ exige verificação manual (captcha).",
+        "invalidUrl": "Esta URL não é de uma página pública de NFC-e.",
+        "network": "Não conseguimos acessar a página da SEFAZ. Tente novamente.",
+        "httpError": "A página da SEFAZ respondeu com erro ({{status}}).",
+        "noItems": "Identificamos o link, mas não conseguimos ler os produtos.",
+        "fail": "Falha ao consultar a nota fiscal."
+      },
+      "status": {
+        "items_found": "Produtos importados com sucesso.",
+        "total_only": "Lemos apenas o valor total da nota. Os produtos não estavam disponíveis para leitura automática.",
+        "link_no_items": "Identificamos o link da nota, mas ainda não conseguimos importar os produtos automaticamente. Você pode cadastrar manualmente ou tentar novamente.",
+        "protected": "A página da SEFAZ exige verificação manual (captcha). Não conseguimos ler automaticamente.",
+        "invalid_url": "Esta URL não pertence a uma página pública de NFC-e.",
+        "http_error": "A página da SEFAZ respondeu com erro.",
+        "timeout": "A consulta demorou demais. Tente novamente em instantes.",
+        "network_error": "Não conseguimos conectar à página da SEFAZ."
+      }
+    },
+    "receiptUrl": {
+      "title": "Link da nota identificado",
+      "description": "Conseguimos identificar o link da nota fiscal, mas ainda não foi possível ler os produtos automaticamente. Você pode tentar importar novamente ou cadastrar manualmente.",
+      "addManual": "Cadastrar manualmente",
+      "retry": "Tentar novamente"
+    },
     "scanner": {
       "title": "Ler QR Code do cupom",
       "description": "Aponte a câmera para o QR Code impresso no cupom ou envie uma foto. A leitura é feita localmente no seu dispositivo.",
