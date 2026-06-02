@@ -175,12 +175,18 @@ type OFFProduct = {
   image_front_url?: string;
   image_url?: string;
   product_name?: string;
-  brands?: string;
+  /** Em alguns endpoints (Search-a-Licious) `brands` pode vir como array. */
+  brands?: string | string[];
   selected_images?: OFFSelectedImages;
 };
 
+function brandsToString(b: OFFProduct["brands"]): string {
+  if (!b) return "";
+  return Array.isArray(b) ? b.join(" ") : String(b);
+}
+
 type OFFByBarcode = { status?: number; product?: OFFProduct };
-type OFFSearch = { products?: OFFProduct[] };
+type OFFSearch = { products?: OFFProduct[]; hits?: OFFProduct[] };
 type ProductImageHit = Pick<
   ProductImageResult,
   "imageUrl" | "source" | "confidence" | "origin" | "persistable"
@@ -353,15 +359,17 @@ async function lookupByName(
     onDiag?.({ candidates: 0, bestScore: null, rejected: "query_too_short" });
     return null;
   }
+  // Search-a-Licious: endpoint moderno do OFF, sem rate-limit agressivo
+  // do antigo cgi/search.pl (que devolve 503/HTML em rajadas).
   const params = new URLSearchParams({
-    search_terms: q,
-    json: "1",
+    q,
     page_size: "20",
-    fields: "image_front_url,image_url,product_name,brands,selected_images",
+    fields: "image_front_url,image_url,product_name,brands,selected_images,code",
   });
-  const url = `https://world.openfoodfacts.org/cgi/search.pl?${params.toString()}`;
+  const url = `https://search.openfoodfacts.org/search?${params.toString()}`;
   const { data, reason } = await fetchJson<OFFSearch>(url);
-  if (!data?.products?.length) {
+  const products = data?.hits ?? data?.products ?? [];
+  if (!products.length) {
     onDiag?.({ candidates: 0, bestScore: null, rejected: reason ?? "no_results" });
     return null;
   }
@@ -372,10 +380,10 @@ async function lookupByName(
     !!normalizedBrand && normalizedQuery === normalizedBrand;
   let best: { img: string; score: number; name: string | null; brands: string | null; brandMatched: boolean } | null = null;
   let bestNoImage: { score: number; name: string | null; brands: string | null } | null = null;
-  for (const p of data.products) {
+  for (const p of products) {
     const img = pickProductImage(p);
     const candidateName = normalizeForKey(p.product_name);
-    const candidateBrands = normalizeForKey(p.brands);
+    const candidateBrands = normalizeForKey(brandsToString(p.brands));
     const nameSim = similarity(normalizedQuery, candidateName);
     const candidateText = `${candidateName} ${candidateBrands}`;
     let score = Math.min(nameSim, 0.45);
@@ -400,17 +408,17 @@ async function lookupByName(
     if (packagingMatched) score += 0.08;
     if (!img) {
       if (!bestNoImage || score > bestNoImage.score) {
-        bestNoImage = { score, name: p.product_name ?? null, brands: p.brands ?? null };
+        bestNoImage = { score, name: p.product_name ?? null, brands: brandsToString(p.brands) || null };
       }
       continue;
     }
     if (!best || score > best.score) {
-      best = { img, score, name: p.product_name ?? null, brands: p.brands ?? null, brandMatched };
+      best = { img, score, name: p.product_name ?? null, brands: brandsToString(p.brands) || null, brandMatched };
     }
   }
   if (!best) {
     onDiag?.({
-      candidates: data.products.length,
+      candidates: products.length,
       bestScore: bestNoImage?.score ?? null,
       bestCandidate: bestNoImage?.name ?? null,
       bestBrands: bestNoImage?.brands ?? null,
@@ -430,7 +438,7 @@ async function lookupByName(
     // Marca forte exata não deve cair fora só porque o nome está incompleto ou com typo.
   } else if (best.score < threshold) {
     onDiag?.({
-      candidates: data.products.length,
+      candidates: products.length,
       bestScore: best.score,
       bestCandidate: best.name,
       bestBrands: best.brands,
@@ -442,7 +450,7 @@ async function lookupByName(
   const confidence: ProductImageConfidence =
     best.score >= 0.85 ? "high" : best.score >= 0.55 ? "medium" : "low";
   onDiag?.({
-    candidates: data.products.length,
+    candidates: products.length,
     bestScore: best.score,
     bestCandidate: best.name,
     bestBrands: best.brands,
