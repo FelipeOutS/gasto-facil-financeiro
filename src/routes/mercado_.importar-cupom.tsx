@@ -1988,7 +1988,11 @@ function ImportarCupomPage() {
       {parsed?.url &&
         (parsed.status === "valid_nfce_url" ||
           parsed.status === "possible_nfce_url") && (
-          <NfceFetchCard url={parsed.url} onResult={handleNfceFetched} />
+          <NfceFetchCard
+            loading={nfceLoading}
+            result={nfceResult}
+            onFetch={handleFetchReceipt}
+          />
         )}
 
 
@@ -1999,6 +2003,8 @@ function ImportarCupomPage() {
           setItems={setPreviewItems}
           result={previewResult}
           setResult={setPreviewResult}
+          onRetryFetch={parsed?.url ? handleFetchReceipt : undefined}
+          retryLoading={nfceLoading}
         />
       )}
 
