@@ -489,15 +489,30 @@
     }
   },
   "finalizeMarketDialog": {
-    "title": "Which market did you shop at?",
-    "description": "Pick a saved market or type a name to save the purchase and feed the Community Prices base.",
+    "title": "Confirm purchase",
+    "description": "Confirm the market and payment method. The purchase enters your history, becomes an expense and the prices feed the Community base.",
+    "marketSection": "Market",
+    "paymentSection": "How did you pay?",
     "savedLabel": "Your markets",
     "emptySaved": "You haven't saved any markets yet. Type a name below or add a new one.",
     "manualLabel": "Enter manually",
     "manualPlaceholder": "e.g. Neighborhood market",
     "addNew": "Add new market",
+    "totalLabel": "Estimated total",
+    "missingPriceWarning": "{{count}} item(s) without price will be ignored in the total and in Community Prices.",
+    "payment": {
+      "pix": "Pix",
+      "dinheiro": "Cash",
+      "debito": "Debit",
+      "credito": "Credit",
+      "outro": "Other"
+    },
+    "cardLabel": "Card used",
+    "cardNone": "Continue without linking a card",
+    "cardEmpty": "You haven't saved any cards yet.",
+    "cardAdd": "Add card",
     "cancel": "Cancel",
-    "confirm": "Finalize purchase"
+    "confirm": "Confirm purchase"
   },
   "precos": {
     "metaTitle": "Community prices — Smart Grocery",
