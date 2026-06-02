@@ -31,9 +31,11 @@ const InputSchema = z.object({
   productName: z.string().trim().min(2).max(200),
   brand: z.string().trim().max(100).optional().nullable(),
   barcode: z
-    .string()
-    .trim()
-    .regex(/^\d{8,14}$/)
+    .preprocess((v) => {
+      if (typeof v !== "string") return undefined;
+      const digits = v.replace(/\D/g, "");
+      return digits.length >= 8 && digits.length <= 14 ? digits : undefined;
+    }, z.string().regex(/^\d{8,14}$/).optional())
     .optional()
     .nullable(),
   category: z
