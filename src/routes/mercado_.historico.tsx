@@ -174,11 +174,61 @@ function HistoricoPage() {
         <SectionBlock title={t("historyV2.list.title")} className="mt-6">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {historico.map((h) => (
-              <HistoricoCard key={h.id} item={h} dateFormatter={dateFormatter} />
+              <HistoricoCard
+                key={h.id}
+                item={h}
+                dateFormatter={dateFormatter}
+                onRequestDelete={() => setPendingDelete(h)}
+              />
             ))}
           </div>
         </SectionBlock>
       )}
+
+      <AlertDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("historyV2.deleteDialog.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("historyV2.deleteDialog.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>
+              {t("historyV2.deleteDialog.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!pendingDelete || deleting) return;
+                setDeleting(true);
+                try {
+                  const ok = removerCompraHistorico(pendingDelete.id);
+                  if (ok) {
+                    toast.success(t("historyV2.deleteDialog.success"));
+                    setPendingDelete(null);
+                  } else {
+                    toast.error(t("historyV2.deleteDialog.error"));
+                  }
+                } catch {
+                  toast.error(t("historyV2.deleteDialog.error"));
+                } finally {
+                  setDeleting(false);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("historyV2.deleteDialog.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileShell>
   );
 
