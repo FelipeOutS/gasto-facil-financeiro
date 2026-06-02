@@ -791,7 +791,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   const navigate = useNavigate();
   const listas = useMercadoListas();
 
-  type Mode = "none" | "new" | "existing" | "cart" | "finish";
+  type Mode = "none" | "new" | "existing" | "cart";
   type CartSub = "none" | "quick" | "existing";
 
   const [mode, setMode] = useState<Mode>("none");
@@ -802,11 +802,8 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   const [observation, setObservation] = useState("");
   const [selectedListaId, setSelectedListaId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  // E34 finish-purchase form state
-  const [finishName, setFinishName] = useState("");
-  const [finishMarket, setFinishMarket] = useState("");
-  const [finishDate, setFinishDate] = useState(() => todayLocalISODate());
-  const [finishObs, setFinishObs] = useState("");
+  // Finalização da compra (cupom) — usa o mesmo modal padrão do Carrinho/Lista.
+  const [marketDialogOpen, setMarketDialogOpen] = useState(false);
 
 
   const validItems = useMemo(() => sanitizeItemsForImport(items), [items]);
@@ -820,10 +817,6 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     setEstimateText("");
     setObservation("");
     setSelectedListaId(null);
-    setFinishName("");
-    setFinishMarket("");
-    setFinishDate(todayLocalISODate());
-    setFinishObs("");
   }
 
 
