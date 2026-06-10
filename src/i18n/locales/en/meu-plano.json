@@ -1,6 +1,14 @@
 {
   "back": "Back",
   "eyebrow": "My plan",
+  "freeAds": {
+    "name": "Free with ads",
+    "short": "Start for free with basic features and monthly limits.",
+    "price": "$0.00",
+    "cta": "Start for free",
+    "limitsNote": "Free plan with monthly limits. Upgrade anytime.",
+    "noExternalAdsNote": "No external ads in this phase."
+  },
   "status": {
     "ativo": "Active",
     "teste": "On trial",

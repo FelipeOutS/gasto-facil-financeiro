@@ -2852,6 +2852,7 @@ function TrustPoints() {
 const PLAN_DESCRIPTIONS: Record<PlanTier, string> = {
   free: "",
   sem_assinatura: "",
+  free_ads: "",
   pessoal_manual: "Para começar a organizar suas finanças pessoais com simplicidade.",
   pessoal_premium: "Vida financeira pessoal completa, com automação e mais recursos.",
   mei_essencial: "O essencial para o MEI manter contas, recibos e fluxo organizados.",
@@ -2863,6 +2864,7 @@ const PLAN_DESCRIPTIONS: Record<PlanTier, string> = {
 const PLAN_AUDIENCE: Record<PlanTier, { label: string; tone: string } | null> = {
   free: null,
   sem_assinatura: null,
+  free_ads: null,
   pessoal_manual: { label: "Pessoa Física", tone: "bg-blue-50 text-blue-700 ring-blue-100" },
   pessoal_premium: { label: "Pessoa Física", tone: "bg-blue-50 text-blue-700 ring-blue-100" },
   mei_essencial: { label: "MEI", tone: "bg-emerald-50 text-emerald-700 ring-emerald-100" },

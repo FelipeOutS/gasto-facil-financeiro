@@ -1,6 +1,14 @@
 {
   "back": "Voltar",
   "eyebrow": "Meu plano",
+  "freeAds": {
+    "name": "Gratuito com anúncios",
+    "short": "Comece grátis com recursos básicos e limites mensais.",
+    "price": "R$ 0,00",
+    "cta": "Começar grátis",
+    "limitsNote": "Plano gratuito com limites mensais. Faça upgrade a qualquer momento.",
+    "noExternalAdsNote": "Sem anúncios externos nesta fase."
+  },
   "status": {
     "ativo": "Ativo",
     "teste": "Em teste",
