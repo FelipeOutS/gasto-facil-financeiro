@@ -57,7 +57,14 @@ export async function ensureCanWriteFinancialData(): Promise<{ ok: true } | { ok
 
   if (isAdminMasterEmail(user.email)) return { ok: true };
   const subscription = await getCurrentUserSubscription();
-  if (!subscription.active || subscription.plan === "free" || subscription.plan === "sem_assinatura") {
+  // free_ads é plano ATIVO básico/limitado, mas NÃO concede escrita paga.
+  // Para escrita básica, use canWriteBasic / helper específico (não este).
+  if (
+    !subscription.active ||
+    subscription.plan === "free" ||
+    subscription.plan === "sem_assinatura" ||
+    subscription.plan === "free_ads"
+  ) {
     console.info("[ensureCanWriteFinancialData] bloqueado", subscription.debug);
     return { ok: false, reason: i18n.t("common:subscription.needActive") };
   }
