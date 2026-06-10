@@ -53,6 +53,7 @@ import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
 import bannerOrcamentoWebp from "@/assets/mercado/banner-orcamento.webp";
 import emptyCarrinho from "@/assets/mercado/empty-carrinho.webp";
 import { usePlan } from "@/lib/use-plan";
+import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import {
   addItemLista,
   computeOrcamentoLista,
