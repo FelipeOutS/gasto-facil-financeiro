@@ -13,6 +13,7 @@ import type { TipoCadastro } from "./profile-utils";
 export type PlanTier =
   | "free"
   | "sem_assinatura"
+  | "free_ads"
   | "pessoal_manual"
   | "pessoal_premium"
   | "mei_essencial"
