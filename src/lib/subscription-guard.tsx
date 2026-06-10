@@ -24,7 +24,7 @@ import { isAdminMasterEmail, planAllowsFeature, type FeatureKey } from "@/lib/pl
 import { useAuth } from "@/lib/auth-context";
 import { useRoles } from "@/lib/use-roles";
 import { supabase } from "@/integrations/supabase/client";
-import { setStoreCanWrite } from "@/lib/store";
+import { setStoreCanWrite, setStoreCanWriteBasic } from "@/lib/store";
 import { getCurrentUserSubscription } from "@/lib/subscription.functions";
 import { useActiveAccount } from "@/lib/active-account";
 
