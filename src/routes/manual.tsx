@@ -32,19 +32,19 @@ export const Route = createFileRoute("/manual")({
 function Manual() {
   const { t } = useTranslation("adicionar");
   const navigate = useNavigate();
-  const { canWrite, requireSubscription } = useSubscriptionGuard();
+  const { canWriteBasic, requireSubscription } = useSubscriptionGuard();
   const { user } = useAuth();
   const userId = user?.id ?? null;
   const [pending, setPending] = useState<null | (() => void)>(null);
 
   useEffect(() => {
-    if (!canWrite) {
+    if (!canWriteBasic) {
       requireSubscription(t("requirePlan"));
       navigate({ to: "/meu-plano" });
     }
-  }, [canWrite, requireSubscription, navigate, t]);
+  }, [canWriteBasic, requireSubscription, navigate, t]);
 
-  if (!canWrite) return null;
+  if (!canWriteBasic) return null;
 
   return (
     <MobileShell>
