@@ -1,105 +1,111 @@
-# Imagens automáticas de produtos — plano em 2 fases
+# Fase P2/P3 — Auditoria de UX, Estabilidade e Produto
 
-Objetivo: enriquecer cards/vitrines/listas/carrinho do Mercado Inteligente com fotos reais quando disponíveis, mantendo fallback bonito e sem quebrar nada.
-
-A entrega é dividida em 2 fases para evitar uma única PR enorme que toca em 6 fluxos de cadastro + schema + UX ao mesmo tempo. Cada fase é independente e gera valor.
+Plano organizado a partir da leitura das telas do Mercado Inteligente, Gastos/Cartões/Dashboard, componentes compartilhados (`PremiumLockModal`, `EmptyState`, `AppEmptyStateVisual`, `AppPageHeader`, `SectionBlock`, `MobileShell`, `sonner`) e da estrutura de i18n (PT/EN paralelos). Nada será alterado nesta etapa — esta é a fase de diagnóstico e priorização.
 
 ---
 
-## Fase 1 — Fundação (sem schema novo, valor imediato)
+## A. Melhorias P2 recomendadas
 
-### 1.1 Endpoint server-side seguro
-Criar `src/lib/mercado/product-image.functions.ts` com `lookupProductImage` (server fn `POST`, protegido por `requireSupabaseAuth`).
-
-Entrada (Zod):
-- `productName: string` (min 2, max 200)
-- `brand?: string` (max 100)
-- `barcode?: string` (apenas dígitos, 8–14)
-- `category?: string` (uma das chaves de `MercadoCategoryKey`)
-
-Saída:
-```ts
-{
-  imageUrl: string | null;
-  source: "off_barcode" | "off_search" | "brand_logo" | "fallback" | null;
-  confidence: "high" | "medium" | "low" | null;
-  origin: "openfoodfacts" | "local" | null;
-  checkedAt: string; // ISO
-}
-```
-
-### 1.2 Estratégia de busca (ordem)
-1. **OFF por barcode** — `https://world.openfoodfacts.org/api/v2/product/{barcode}.json` → `image_front_url` → `high` / `off_barcode`.
-2. **OFF por nome+marca** — `https://world.openfoodfacts.org/cgi/search.pl?...&json=1&page_size=3`, pega o primeiro com imagem e nome similar (similaridade ≥ 0.55 via Dice/Levenshtein curto) → `medium` / `off_search`.
-3. **Logo de marca local** — se `brand` casar (case-insensitive) com algum SVG em `public/logos/empresas/*.svg`, devolve URL do logo → `low` / `brand_logo` (sempre marcado como "logo de marca", não foto do produto).
-4. **Sem imagem** → `null` (o front cai no fallback visual por categoria já existente no `ProductCard`).
-
-Regras de segurança server-side:
-- Validação Zod estrita (sem chars de injeção em URL — usar `URL`/`encodeURIComponent`).
-- Whitelist de hosts permitidos no retorno (`images.openfoodfacts.org`, `world.openfoodfacts.org`, `/logos/empresas/*`). Qualquer outra origem é descartada.
-- Timeout de 4s por chamada externa (`AbortSignal.timeout(4000)`).
-- Nenhum secret usado (OFF é público); nada exposto ao client além da URL pública final.
-- Em qualquer erro/timeout: retorna `{ imageUrl: null, ... }` sem propagar exception.
-
-### 1.3 Cache
-- **Server-side (in-memory por worker)** — `Map<string, { value, expiresAt }>` com TTL de 24h e cap de 500 entradas (LRU simples). Chave: `normalize(name) + "|" + normalize(brand) + "|" + barcode`. Evita rebatimento em rajadas.
-- **Client-side** — wrapper `useProductImage(input)` (React Query) com `staleTime: 1h`, `gcTime: 24h`, `queryKey` igual à chave acima. Garante deduplicação e lazy fetch.
-
-### 1.4 Hook + componente de imagem
-Criar `src/lib/mercado/use-product-image.ts` (`useProductImage`) e atualizar `ProductCard` para:
-- Se `imageUrl` (prop, já vindo do banco/usuário) existir → usa direto (prioridade máxima, nunca sobrescrever).
-- Senão, chamar `useProductImage({ name, brand, barcode, category })` lazy (apenas quando o card entra no viewport via `IntersectionObserver` simples ou `loading="lazy"` no `<img>`).
-- Se a hook retornar URL → renderiza com badge discreto "imagem sugerida" (chip `text-[10px]` no canto inferior esquerdo).
-- Se falhar a carregar → cai no `Fallback` por categoria já implementado.
-- `ProductCard` ganha props opcionais novas: `brand?`, `barcode?`, `category?: MercadoCategoryKey`. Compatível para trás (todos os call-sites continuam funcionando sem mudança).
-
-### 1.5 Aplicação inicial (read-only, sem mudar store)
-Atualizar os 3 call-sites de `ProductCard` para passar `brand/barcode/category` quando o registro tiver esses dados:
-- `src/routes/mercado_.precos.tsx` (recent finds + results) — passa `brand`, `barcode` se vierem da tabela.
-- `src/routes/mercado_.preco-comunitario.tsx`
-- `src/routes/mercado.tsx` (home vitrine)
-
-Nenhuma migration nesta fase. Nenhum store alterado. A imagem é puramente derivada/cacheada — se falhar, o fallback bonito atual continua.
-
-### 1.6 i18n PT/EN
-Adicionar em `src/i18n/locales/{pt,en}/mercado.json` no namespace `shell.product`:
-- `suggestedImage`: "imagem sugerida" / "suggested image"
-- `brandLogoHint`: "logo da marca" / "brand logo"
+| # | Rota/Tela | Problema | Impacto | Sugestão | Risco |
+|---|---|---|---|---|---|
+| A1 | `/mercado` (home) | Seções (`SectionBlock`) sem estado vazio dedicado quando o usuário nunca usou listas/carrinho/histórico — aparecem blocos quase em branco. | Sensação de app vazio no primeiro uso. | Usar `AppEmptyStateVisual` por seção com CTA claro ("Criar lista", "Adicionar ao carrinho"). | Baixo (apenas UI). |
+| A2 | `/mercado/carrinho` | Finalização: lock anti-duplo clique já existe, mas o feedback de "criando gasto" é um toast curto; sem confirmação visual do gasto gerado. | Usuário não percebe vínculo Carrinho → Gasto. | Após `addGastoAuto`, mostrar toast com ação "Ver em /gastos" + badge "origem: Mercado" no item. | Baixo (UI/toast). |
+| A3 | `/mercado/historico` | Excluir histórico não explica que gasto/cartão/preço comunitário permanecem. | Usuário teme perder dados financeiros. | Dialog de confirmação com bullets do que é e do que não é apagado. | Baixo. |
+| A4 | `/mercado/preco-comunitario` | Sem indicação visual de quais preços são próprios vs comunidade; sem filtro por mercado/distância. | Confusão sobre origem do preço. | Badge "Seu preço"/"Comunidade" + filtros básicos. | Médio (lê dados; sem alterar RLS). |
+| A5 | `/mercado/importar-cupom` (NFC-e) | Erros de OCR/parse aparecem genéricos ("Falha ao processar"). | Usuário não sabe se foi rede, QR inválido ou rate limit. | Mapear via `getFriendlyErrorKey` + tratar 429 com mensagem específica. Não alterar parser/rate limit. | Baixo. |
+| A6 | `/mercado/listas` e `/mercado/listas/$id` | Ações principais (adicionar item, mover para carrinho) competem visualmente; sem progresso "X de Y comprados". | Baixa orientação. | Header com progresso + CTA primário único por contexto. | Baixo. |
+| A7 | `/gastos` | Gastos vindos do Mercado não mostram origem distinguível. | Auditoria difícil. | Tag/ícone "Mercado" no item + filtro "origem". (Sem alterar `addGastoAuto`.) | Baixo (UI; campo já gravado). |
+| A8 | `/cartoes/$id` | Fatura: itens crédito-Mercado sem link de volta ao histórico da compra. | Rastreabilidade. | Link leve "Ver compra" quando houver `origemMercadoId`. | Baixo. |
+| A9 | `/meu-plano` e `PremiumLockModal` consumidores | Algumas telas premium mostram bloqueio sem preview do recurso. | Conversão fraca. | Tela bloqueada com preview borrado + CTA único. (Sem alterar `PremiumLockModal` em si.) | Baixo. |
+| A10 | Toasts globais | Mix de `toast.success/error` com tons e durações inconsistentes. | Ruído visual. | Padronizar via wrapper (`notify.success/error/info`) sem trocar `sonner`. | Baixo. |
+| A11 | Mobile — headers do Mercado | Vários headers usam `flex flex-wrap`, podem clipar em 360px. | Layout quebra. | Aplicar padrão `grid-cols-[minmax(0,1fr)_auto]` + `min-w-0`/`truncate`. | Baixo. |
+| A12 | Dashboard | Cards repetem KPIs do mês corrente sem hierarquia clara. | Densidade confusa. | Agrupar em "Hoje / Mês / Tendências" com 1 card destaque. | Médio (somente layout). |
 
 ---
 
-## Fase 2 — Persistência e enriquecimento (depois que Fase 1 estiver validada)
+## B. Melhorias P3 recomendadas (polimento)
 
-Adiada conscientemente para uma segunda etapa porque exige migration + ajustes em múltiplos stores. **Não será feita agora.**
-
-Escopo previsto:
-- Migration adicionando colunas em `community_prices` (e tabelas análogas se houver): `image_url`, `image_source`, `image_confidence`, `image_origin`, `image_checked_at`.
-- Server fn `enrichProductImage` que, ao gravar um item novo, faz lookup em background e atualiza a linha (não bloqueia o INSERT).
-- Aplicação nos 6 fluxos de cadastro citados (Preço Comunitário, Importação online, OCR panfleto, Lista, Carrinho, Cadastro manual).
-- UI de revisão/remover/trocar imagem sugerida no fluxo OCR.
-- Quando Fase 2 chegar, a Fase 1 continua útil: ela serve como fallback dinâmico para registros antigos sem imagem persistida.
-
----
-
-## Arquivos da Fase 1
-
-Criados:
-- `src/lib/mercado/product-image.functions.ts` — server fn `lookupProductImage`
-- `src/lib/mercado/product-image-cache.server.ts` — LRU server-side
-- `src/lib/mercado/use-product-image.ts` — hook React Query
-
-Alterados:
-- `src/components/mercado/shell/ProductCard.tsx` — props opcionais + integração com hook + badge "sugerida"
-- `src/routes/mercado_.precos.tsx`, `mercado_.preco-comunitario.tsx`, `mercado.tsx` — passar `brand/barcode/category`
-- `src/i18n/locales/pt/mercado.json`, `src/i18n/locales/en/mercado.json` — chaves novas
-
-Preservado integralmente: RLS, Auth, planos, FeatureKeys, AuthGate, PremiumLockModal, Mercado Pago, WhatsApp, OCR Vision/Gemini, Joanin Import, Google Maps, stores (`listas-store`, `mercados-store`, `community-prices-suggestions`), cálculos, validações, rotas existentes, schema do banco.
+- B1. Skeletons dedicados por seção do Mercado (hoje cai em `BrandLoader` cheio).
+- B2. Microinterações: `animate-rise`/`animate-pop` já existem em `EmptyState` — estender a cards de lista/carrinho.
+- B3. Estados vazios ilustrados (usar `AppEmptyStateVisual` com tom por módulo) em `/mercado/precos`, `/precos-historico`, `/meus-mercados`, `/orcamento`, `/calculadoras`, `/cesta`.
+- B4. Revisão de textos: encurtar títulos longos em `meu-plano.json`, `gastos.json`, `cartoes.json`.
+- B5. Padronizar copy de confirmação ("Tem certeza?" → frases ativas: "Excluir esta lista?").
+- B6. Espaçamento: padronizar `mt-6` do `SectionBlock` com tokens; revisar `gap` em cards densos.
+- B7. Hierarquia: usar `AppPageHeader` com `tone` consistente por módulo (mercado=accent, gastos=danger leve, cartões=info).
+- B8. Acessibilidade: `aria-live` em toasts críticos do Mercado, foco visível em CTAs primários.
+- B9. Dark mode: revisar contraste de badges "Comunidade"/"Seu preço".
+- B10. Favicon/OG por rota leaf (`/mercado/*`) — hoje cai no root.
 
 ---
 
-## Por que dividir assim
+## C. Quick wins seguros (baixo risco, alto retorno)
 
-- Fase 1 entrega ~70% do valor visual (cards passam a mostrar fotos reais quando OFF tem) com risco mínimo: sem migration, sem alterar stores, sem alterar fluxos de cadastro.
-- Fase 2 fica isolada para quando você quiser persistir + permitir override manual, que é onde mora a complexidade real (RLS por tabela, UI de revisão, backfill).
+1. Padronizar mensagens de erro com `getFriendlyErrorKey` nas telas `/mercado/*` que ainda usam string crua.
+2. Adicionar `truncate` + `min-w-0` nos headers mobile do Mercado (A11).
+3. Tag "Mercado" no item de `/gastos` (A7) — campo já existe.
+4. Toast pós-finalização do carrinho com ação "Ver gasto" (A2).
+5. Dialog informativo no excluir histórico (A3).
+6. Empty states ilustrados nas 6 telas do Mercado sem estado vazio (B3).
+7. Wrapper `notify.*` para uniformizar toasts (A10).
+8. Skeleton por seção em `/mercado` (B1).
 
-Posso começar pela Fase 1 assim que aprovar?
+Cada um é isolado, sem tocar lógica de negócio, RLS, planos ou pagamentos.
+
+---
+
+## D. Itens que NÃO devem ser mexidos (hotfix P0/P1 congelado)
+
+Confirmado — permanecem intocados nesta fase:
+
+- Auth, RLS, planos, `FeatureKeys`, `PremiumLockModal` (consumo OK; componente não).
+- Mercado Pago (incl. webhook), checkout, migrations.
+- WhatsApp (endpoint público + flags).
+- OCR, Joanin, Google Maps, parser NFC-e.
+- Rate limit nos 9 endpoints caros.
+- `addGastoAuto` e fluxo Mercado → Histórico → Preço Comunitário → Gastos → Cartões.
+- Isolamento de `localStorage` por `activeUserId`.
+- `src/integrations/supabase/*` (auto-gen).
+
+Qualquer melhoria P2/P3 que esbarre nesses pontos será **parada e reportada**, não implementada silenciosamente.
+
+---
+
+## E. Ordem sugerida de implementação (lotes pequenos)
+
+**Lote 1 — UX Mercado (base)**
+A1, A3, A6, B3, B1. Foco: empty states, confirmações, skeletons.
+
+**Lote 2 — Textos e i18n**
+B4, B5 + Quick win #1 (`getFriendlyErrorKey` em `/mercado/*`). Auditoria PT/EN, sem novas chaves hardcoded.
+
+**Lote 3 — Dashboard / Gastos / Cartões**
+A7, A8, A12. Tag de origem, link fatura→compra, hierarquia do dashboard.
+
+**Lote 4 — Performance leve e acabamento**
+A10 (toasts), A11 (mobile headers), B2, B6, B7, B8, B9, B10.
+
+**Lote 5 — Premium preview**
+A9: preview borrado + CTA único nas telas bloqueadas (sem alterar `PremiumLockModal`).
+
+**Lote 6 (futuro, fora desta fase) — ver seção abaixo.**
+
+---
+
+## Fase futura — Plano Free com Ads
+
+Documentado, **não implementar agora**:
+
+- Definir oficialmente o plano free (hoje "free" = sem assinatura/legado/teste técnico).
+- Quais recursos liberar (provável: Mercado básico, gastos limitados, sem OCR/IA).
+- Limites de uso por dia/mês nos endpoints caros (reaproveitar `enforceUserRateLimit`).
+- Onde anúncios aparecem (nunca em telas financeiras sensíveis: gastos, cartões, fatura, preço comunitário com dados próprios).
+- Conformidade LGPD: consentimento, opt-out, sem PII para redes de ads.
+- Ajuste em `meu-plano`, `PremiumLockModal`, upgrade flow.
+- Impacto em OCR/IA/importações (mantê-los pagos ou com cota muito baixa).
+- Fase isolada de produto + monetização + permissões; não misturar com UX P2/P3.
+
+---
+
+## Próximo passo
+
+Confirmar quais lotes (1 a 5) inicio e em que ordem. Sugiro começar pelo **Lote 1** por ser o de maior ganho percebido e menor risco. Nada será alterado até a sua aprovação.
