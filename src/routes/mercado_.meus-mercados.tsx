@@ -17,7 +17,7 @@ import { MercadoBanner, SectionBlock } from "@/components/mercado/shell";
 import bannerMercados from "@/assets/mercado/banner-mercados.jpg";
 import bannerMercadosWebp from "@/assets/mercado/banner-mercados.webp";
 import { useState } from "react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
@@ -101,23 +101,23 @@ function MeusMercadosPage() {
   function save() {
     const nome = (form.nome ?? "").trim();
     if (!nome) {
-      toast.error(t("meusMercados.toast.nameRequired"));
+      notify.error(t("meusMercados.toast.nameRequired"));
       return;
     }
     if (mode === "new") {
       const created = addMercadoLocal(form);
       if (!created) {
-        toast.error(t("meusMercados.toast.nameRequired"));
+        notify.error(t("meusMercados.toast.nameRequired"));
         return;
       }
-      toast.success(t("meusMercados.toast.added"));
+      notify.success(t("meusMercados.toast.added"));
     } else if (typeof mode === "object" && "edit" in mode) {
       const updated = updateMercadoLocal(mode.edit, form);
       if (!updated) {
-        toast.error(t("meusMercados.toast.nameRequired"));
+        notify.error(t("meusMercados.toast.nameRequired"));
         return;
       }
-      toast.success(t("meusMercados.toast.updated"));
+      notify.success(t("meusMercados.toast.updated"));
     }
     setMode("list");
     setForm(EMPTY_FORM);
@@ -127,13 +127,13 @@ function MeusMercadosPage() {
     const ok = await confirmAsync({ title: t("meusMercados.confirmRemove"), destructive: true });
     if (!ok) return;
     const success = removeMercadoLocal(m.id);
-    if (success) toast.success(t("meusMercados.toast.removed"));
+    if (success) notify.success(t("meusMercados.toast.removed"));
   }
 
   function handleToggleFav(m: MercadoLocal) {
     const next = toggleMercadoFavorito(m.id);
     if (!next) return;
-    toast.success(
+    notify.success(
       next.favorito
         ? t("meusMercados.toast.favOn")
         : t("meusMercados.toast.favOff"),

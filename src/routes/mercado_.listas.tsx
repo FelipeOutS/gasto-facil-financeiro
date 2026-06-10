@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import {
   ArrowLeft,
   Home,
@@ -58,8 +58,8 @@ function MercadoListasPage() {
     setManualRefreshing(true);
     const res = await refreshMercadoListas();
     setManualRefreshing(false);
-    if (res.ok && user) toast.success(t("listas.sync.refreshedToast"));
-    else if (!res.ok) toast.error(t("listas.sync.failed"));
+    if (res.ok && user) notify.success(t("listas.sync.refreshedToast"));
+    else if (!res.ok) notify.error(t("listas.sync.failed"));
   }
 
   function handleBack() {
@@ -188,9 +188,9 @@ function MercadoListasPage() {
               onOpen={() => handleOpenLista(lista.id)}
               onDelete={() => {
                 if (removeLista(lista.id)) {
-                  toast.success(t("listas.card.deleteSuccess"));
+                  notify.success(t("listas.card.deleteSuccess"));
                 } else {
-                  toast.error(t("listas.card.deleteError"));
+                  notify.error(t("listas.card.deleteError"));
                 }
               }}
             />

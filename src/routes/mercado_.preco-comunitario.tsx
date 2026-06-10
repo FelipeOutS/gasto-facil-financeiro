@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import {
   ArrowLeft,
   Home,
@@ -182,7 +182,7 @@ function PrecoComunitarioPage() {
   async function searchManualImage() {
     const name = manualForm.productName.trim();
     if (name.length < 2) {
-      toast.error(t("communityPrices.errors.manualRequired"));
+      notify.error(t("communityPrices.errors.manualRequired"));
       return;
     }
     setImageSearching(true);
@@ -205,13 +205,13 @@ function PrecoComunitarioPage() {
         imageRemoved: false,
       }));
       if (!persistable.image_url) {
-        toast.info(t("communityPrices.image.noImageFound"));
+        notify.info(t("communityPrices.image.noImageFound"));
       } else {
-        toast.success(t("communityPrices.image.imageFound"));
+        notify.success(t("communityPrices.image.imageFound"));
       }
     } catch (err) {
       console.error("[preco-comunitario] image lookup", err);
-      toast.info(t("communityPrices.image.noImageFound"));
+      notify.info(t("communityPrices.image.noImageFound"));
     } finally {
       setImageSearching(false);
       setImageSearched(true);
@@ -227,7 +227,7 @@ function PrecoComunitarioPage() {
       .limit(200);
     if (error) {
       console.error("[preco-comunitario] load", error.message);
-      toast.error(t("communityPrices.errors.loadFailed"));
+      notify.error(t("communityPrices.errors.loadFailed"));
     } else {
       setItems((data ?? []) as CommunityPrice[]);
     }
@@ -474,7 +474,7 @@ function PrecoComunitarioPage() {
     if (!user) return;
     const price = Number(manualForm.price.replace(",", "."));
     if (!manualForm.productName.trim() || !manualForm.marketName.trim() || !Number.isFinite(price) || price <= 0) {
-      toast.error(t("communityPrices.errors.manualRequired"));
+      notify.error(t("communityPrices.errors.manualRequired"));
       return;
     }
     const imageFields = manualForm.imageRemoved || !manualForm.imageUrl
@@ -508,19 +508,19 @@ function PrecoComunitarioPage() {
         .eq("user_id", user.id);
       if (error) {
         console.error("[preco-comunitario] update", error.message);
-        toast.error(t("communityPrices.errors.saveFailed"));
+        notify.error(t("communityPrices.errors.saveFailed"));
         return;
       }
-      toast.success(t("communityPrices.success.updated"));
+      notify.success(t("communityPrices.success.updated"));
     } else {
       payload.user_id = user.id;
       const { error } = await (supabase.from(TABLE as never) as any).insert(payload);
       if (error) {
         console.error("[preco-comunitario] manual insert", error.message);
-        toast.error(t("communityPrices.errors.saveFailed"));
+        notify.error(t("communityPrices.errors.saveFailed"));
         return;
       }
-      toast.success(t("communityPrices.success.manualSaved"));
+      notify.success(t("communityPrices.success.manualSaved"));
     }
     setManualOpen(false);
     setEditingId(null);
@@ -537,11 +537,11 @@ function PrecoComunitarioPage() {
       .eq("user_id", user.id);
     if (error) {
       console.error("[preco-comunitario] delete", error.message);
-      toast.error(t("communityPrices.errors.removeFailed"));
+      notify.error(t("communityPrices.errors.removeFailed"));
       return;
     }
     setItems((curr) => curr.filter((it) => it.id !== id));
-    toast.success(t("communityPrices.success.removed"));
+    notify.success(t("communityPrices.success.removed"));
   }
 
   const sourceLabel = (s: string) =>

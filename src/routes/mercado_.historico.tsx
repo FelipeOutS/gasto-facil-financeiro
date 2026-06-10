@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Home, History, WalletCards, Check, CircleDashed, Receipt, ListPlus, ShoppingBag, Store, TrendingUp, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
 import { Money } from "@/components/Money";
@@ -216,13 +216,13 @@ function HistoricoPage() {
                 try {
                   const ok = removerCompraHistorico(pendingDelete.id);
                   if (ok) {
-                    toast.success(t("historyV2.deleteDialog.success"));
+                    notify.success(t("historyV2.deleteDialog.success"));
                     setPendingDelete(null);
                   } else {
-                    toast.error(t("historyV2.deleteDialog.error"));
+                    notify.error(t("historyV2.deleteDialog.error"));
                   }
                 } catch {
-                  toast.error(t("historyV2.deleteDialog.error"));
+                  notify.error(t("historyV2.deleteDialog.error"));
                 } finally {
                   setDeleting(false);
                 }
