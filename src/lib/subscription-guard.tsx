@@ -24,7 +24,7 @@ import { isAdminMasterEmail, planAllowsFeature, type FeatureKey } from "@/lib/pl
 import { useAuth } from "@/lib/auth-context";
 import { useRoles } from "@/lib/use-roles";
 import { supabase } from "@/integrations/supabase/client";
-import { setStoreCanWrite } from "@/lib/store";
+import { setStoreCanWrite, setStoreCanWriteBasic } from "@/lib/store";
 import { getCurrentUserSubscription } from "@/lib/subscription.functions";
 import { useActiveAccount } from "@/lib/active-account";
 
@@ -148,7 +148,8 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
   // Sincroniza a flag central usada pelo store (defesa contra burla do front).
   useEffect(() => {
     setStoreCanWrite(canWrite);
-  }, [canWrite]);
+    setStoreCanWriteBasic(canWriteBasic);
+  }, [canWrite, canWriteBasic]);
 
   const requireSubscription = useCallback((msg?: string) => {
     if (!isOwnAccount) {
