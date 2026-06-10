@@ -143,6 +143,14 @@ const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
   // Etapa 16 — Mercado Inteligente avançado e importação de cupom.
   mercado_avancado: "pessoal_premium",
   mercado_importar_cupom: "pessoal_premium",
+  // Fase 1E-B2B — features básicas. min = free_ads (whitelist abaixo fixa
+  // os planos exatos; o min é só fallback para a escala linear).
+  gastos_basico: "free_ads",
+  receitas_basico: "free_ads",
+  mercado_basico: "free_ads",
+  cartoes_basico: "free_ads",
+  orcamento_basico: "free_ads",
+  metas_basico: "free_ads",
 };
 
 /**
