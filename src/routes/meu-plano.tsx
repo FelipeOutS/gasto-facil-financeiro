@@ -773,6 +773,36 @@ function MeuPlanoPage() {
       </section>
 
 
+      {/* Plano Gratuito com Anúncios: card informativo "Em breve" — não ativa o plano. */}
+      <section className="mt-5">
+        <div className="flex flex-col gap-3 rounded-3xl border border-dashed border-border bg-card/50 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-bold">{tp("freeAds.name")}</p>
+              <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                {tp("freeAds.comingSoon")}
+              </span>
+              <span className="text-xs font-semibold text-muted-foreground">{tp("freeAds.price")}</span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">{tp("freeAds.short")}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {tp("freeAds.limitsNote")} · {tp("freeAds.noExternalAdsNote")}
+            </p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled
+            aria-disabled="true"
+            title={tp("freeAds.disabledReason")}
+            className="shrink-0 rounded-xl min-h-10"
+          >
+            {tp("freeAds.comingSoon")}
+          </Button>
+        </div>
+      </section>
+
       {/* Investimentos: seção dedicada abaixo dos planos */}
       <section className="mt-5">
         <div className="flex flex-col gap-2 rounded-3xl border border-dashed border-border bg-card/50 p-5 sm:flex-row sm:items-center sm:justify-between">
