@@ -62,6 +62,7 @@ export type FeatureKey =
 export const PLAN_LABEL: Record<PlanTier, string> = {
   free: "Sem assinatura",
   sem_assinatura: "Sem assinatura",
+  free_ads: "Gratuito com anúncios",
   pessoal_manual: "Controle Simples Pessoal",
   pessoal_premium: "Controle Completo Pessoal",
   mei_essencial: "Essencial para MEI",
@@ -73,6 +74,10 @@ export const PLAN_LABEL: Record<PlanTier, string> = {
 export const PLAN_ORDER: Record<PlanTier, number> = {
   sem_assinatura: 0,
   free: 0,
+  // free_ads fica acima de sem_assinatura, mas abaixo de qualquer plano pago,
+  // de forma que `planAllowsFeature` por escala linear continue NÃO liberando
+  // features pagas (todas têm min >= pessoal_manual = 1).
+  free_ads: 0.5,
   pessoal_manual: 1,
   pessoal_premium: 2,
   mei_essencial: 3,
