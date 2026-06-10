@@ -148,7 +148,8 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
   // Sincroniza a flag central usada pelo store (defesa contra burla do front).
   useEffect(() => {
     setStoreCanWrite(canWrite);
-  }, [canWrite]);
+    setStoreCanWriteBasic(canWriteBasic);
+  }, [canWrite, canWriteBasic]);
 
   const requireSubscription = useCallback((msg?: string) => {
     if (!isOwnAccount) {
