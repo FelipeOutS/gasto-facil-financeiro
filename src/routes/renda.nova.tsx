@@ -34,12 +34,22 @@ export const Route = createFileRoute("/renda/nova")({
 function NovaReceitaPage() {
   const { t: tBase } = useTranslation("renda");
   const { profile } = useAuth();
+  const { canWriteBasic, requireSubscription } = useSubscriptionGuard();
   const t = useMemo(
     () => makeRevenueT(tBase, revenueSuffix(profile?.tipo_cadastro as TipoCadastro)),
     [tBase, profile?.tipo_cadastro],
   );
   const navigate = useNavigate();
   const search = Route.useSearch();
+
+  useEffect(() => {
+    if (!canWriteBasic) {
+      requireSubscription();
+      navigate({ to: "/meu-plano" });
+    }
+  }, [canWriteBasic, requireSubscription, navigate]);
+
+  if (!canWriteBasic) return null;
 
   const preset: ReceitaFormPreset = {
     tipo: search.tipo,
