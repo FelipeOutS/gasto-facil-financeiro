@@ -1985,7 +1985,9 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
 
 export function addGasto(input: NovoGastoInput): Gasto[] {
   if (!activeUserId) return [];
-  if (!ensureCanWrite("addGasto")) return [];
+  // Gasto manual é feature básica (gastos_basico): aceita free_ads também.
+  // Quota mensal de free_ads é validada server-side por trigger.
+  if (!ensureCanWrite("addGasto", { allowBasic: true })) return [];
   return addGastoUnchecked(input);
 }
 
@@ -2017,7 +2019,8 @@ function addGastoUnchecked(input: NovoGastoInput): Gasto[] {
     .insert(built.map((b) => b.row))
     .then(({ error }) => {
       if (error) {
-        console.error("[store] addGasto failed", error);
+        const quota = handleFreeAdsQuotaError(error);
+        if (!quota) console.error("[store] addGasto failed", error);
         void refreshGastos();
       }
     });
@@ -2026,6 +2029,7 @@ function addGastoUnchecked(input: NovoGastoInput): Gasto[] {
   }
   return created;
 }
+
 
 /**
  * Versão assíncrona usada pela fila offline: insere no Supabase e aguarda
