@@ -198,7 +198,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: error ?? null };
     },
     async signUp(nome, email, password) {
-      const redirectUrl = `${window.location.origin}/`;
+      const { buildPublicUrl } = await import("./public-url");
+      const redirectUrl = buildPublicUrl("/");
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -233,8 +234,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null);
     },
     async resetPassword(email) {
+      const { buildPublicUrl } = await import("./public-url");
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: buildPublicUrl("/reset-password"),
       });
       return { error: error ?? null };
     },
