@@ -58,7 +58,7 @@ function Adicionar() {
   const { t } = useTranslation("adicionar");
   const navigate = useNavigate();
   const { tipo } = Route.useSearch();
-  const { canWrite, requireSubscription } = useSubscriptionGuard();
+  const { canWrite, canWriteBasic, requireSubscription } = useSubscriptionGuard();
   const { user, profile } = useAuth();
   const tipoCad = tipoEfetivo(profile?.tipo_cadastro as TipoCadastro);
   const isBusiness = tipoCad === "mei" || tipoCad === "empresa";
@@ -74,13 +74,15 @@ function Adicionar() {
   }, [user?.id]);
 
   useEffect(() => {
-    if (!canWrite) {
+    // Permitir acesso à tela se o usuário pode pelo menos escrita básica
+    // (free_ads ou plano pago). OCR/IA/WhatsApp continuam bloqueados abaixo.
+    if (!canWriteBasic) {
       requireSubscription(t("requirePlan"));
     }
-  }, [canWrite, requireSubscription, t]);
+  }, [canWriteBasic, requireSubscription, t]);
 
   const goManual = () => {
-    if (!canWrite) {
+    if (!canWriteBasic) {
       requireSubscription(t("requirePlan"));
       return;
     }
@@ -88,7 +90,7 @@ function Adicionar() {
   };
 
   const goRenda = () => {
-    if (!canWrite) {
+    if (!canWriteBasic) {
       requireSubscription(t("requirePlan"));
       return;
     }
