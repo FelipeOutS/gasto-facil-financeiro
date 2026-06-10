@@ -208,11 +208,17 @@ function ContaPage() {
         </Button>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <Button asChild variant="outline" size="lg" className="h-11 w-full rounded-2xl">
           <Link to="/onboarding">
             <Settings2 className="mr-2 h-4 w-4" />
             {t("actions.redoOnboarding")}
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="lg" className="h-11 w-full rounded-2xl">
+          <Link to="/conta/seguranca">
+            <IdCard className="mr-2 h-4 w-4" />
+            {t("actions.security")}
           </Link>
         </Button>
       </div>

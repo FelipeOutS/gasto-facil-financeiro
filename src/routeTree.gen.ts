@@ -78,6 +78,7 @@ import { Route as EnSplatRouteImport } from './routes/en.$'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as ContasAReceberNovaRouteImport } from './routes/contas-a-receber.nova'
 import { Route as ContasAPagarNovaRouteImport } from './routes/contas-a-pagar.nova'
+import { Route as ContaSegurancaRouteImport } from './routes/conta_.seguranca'
 import { Route as ClientesRelatorioRouteImport } from './routes/clientes_.relatorio'
 import { Route as CartoesNovoRouteImport } from './routes/cartoes.novo'
 import { Route as AssinaturasNovaRouteImport } from './routes/assinaturas.nova'
@@ -481,6 +482,11 @@ const ContasAPagarNovaRoute = ContasAPagarNovaRouteImport.update({
   path: '/contas-a-pagar/nova',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContaSegurancaRoute = ContaSegurancaRouteImport.update({
+  id: '/conta_/seguranca',
+  path: '/conta/seguranca',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClientesRelatorioRoute = ClientesRelatorioRouteImport.update({
   id: '/clientes_/relatorio',
   path: '/clientes/relatorio',
@@ -829,6 +835,7 @@ export interface FileRoutesByFullPath {
   '/assinaturas/nova': typeof AssinaturasNovaRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
+  '/conta/seguranca': typeof ContaSegurancaRoute
   '/contas-a-pagar/nova': typeof ContasAPagarNovaRoute
   '/contas-a-receber/nova': typeof ContasAReceberNovaRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -955,6 +962,7 @@ export interface FileRoutesByTo {
   '/assinaturas/nova': typeof AssinaturasNovaRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
+  '/conta/seguranca': typeof ContaSegurancaRoute
   '/contas-a-pagar/nova': typeof ContasAPagarNovaRoute
   '/contas-a-receber/nova': typeof ContasAReceberNovaRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -1082,6 +1090,7 @@ export interface FileRoutesById {
   '/assinaturas/nova': typeof AssinaturasNovaRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes_/relatorio': typeof ClientesRelatorioRoute
+  '/conta_/seguranca': typeof ContaSegurancaRoute
   '/contas-a-pagar/nova': typeof ContasAPagarNovaRoute
   '/contas-a-receber/nova': typeof ContasAReceberNovaRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -1210,6 +1219,7 @@ export interface FileRouteTypes {
     | '/assinaturas/nova'
     | '/cartoes/novo'
     | '/clientes/relatorio'
+    | '/conta/seguranca'
     | '/contas-a-pagar/nova'
     | '/contas-a-receber/nova'
     | '/email/unsubscribe'
@@ -1336,6 +1346,7 @@ export interface FileRouteTypes {
     | '/assinaturas/nova'
     | '/cartoes/novo'
     | '/clientes/relatorio'
+    | '/conta/seguranca'
     | '/contas-a-pagar/nova'
     | '/contas-a-receber/nova'
     | '/email/unsubscribe'
@@ -1462,6 +1473,7 @@ export interface FileRouteTypes {
     | '/assinaturas/nova'
     | '/cartoes/novo'
     | '/clientes_/relatorio'
+    | '/conta_/seguranca'
     | '/contas-a-pagar/nova'
     | '/contas-a-receber/nova'
     | '/email/unsubscribe'
@@ -1589,6 +1601,7 @@ export interface RootRouteChildren {
   AssinaturasNovaRoute: typeof AssinaturasNovaRoute
   CartoesNovoRoute: typeof CartoesNovoRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
+  ContaSegurancaRoute: typeof ContaSegurancaRoute
   ContasAPagarNovaRoute: typeof ContasAPagarNovaRoute
   ContasAReceberNovaRoute: typeof ContasAReceberNovaRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
@@ -2143,6 +2156,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContasAPagarNovaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/conta_/seguranca': {
+      id: '/conta_/seguranca'
+      path: '/conta/seguranca'
+      fullPath: '/conta/seguranca'
+      preLoaderRoute: typeof ContaSegurancaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/clientes_/relatorio': {
       id: '/clientes_/relatorio'
       path: '/clientes/relatorio'
@@ -2599,6 +2619,7 @@ const rootRouteChildren: RootRouteChildren = {
   AssinaturasNovaRoute: AssinaturasNovaRoute,
   CartoesNovoRoute: CartoesNovoRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
+  ContaSegurancaRoute: ContaSegurancaRoute,
   ContasAPagarNovaRoute: ContasAPagarNovaRoute,
   ContasAReceberNovaRoute: ContasAReceberNovaRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,

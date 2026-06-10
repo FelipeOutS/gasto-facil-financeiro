@@ -29,7 +29,25 @@
     "edit": "Editar perfil",
     "myPlan": "Meu plano",
     "redoOnboarding": "Refazer configuração inicial",
-    "logout": "Sair da conta"
+    "logout": "Sair da conta",
+    "security": "Segurança da conta"
+  },
+  "security": {
+    "metaTitle": "Segurança da conta — Gasto Inteligente",
+    "title": "Segurança da conta",
+    "changePassword": "Alterar senha",
+    "currentNotShown": "Por segurança, sua senha atual não pode ser visualizada. Você pode criar uma nova senha a qualquer momento.",
+    "newPassword": "Nova senha",
+    "newPasswordPlaceholder": "Crie uma senha forte",
+    "confirmPassword": "Confirmar nova senha",
+    "confirmPasswordPlaceholder": "Repita a nova senha",
+    "save": "Salvar nova senha",
+    "saving": "Salvando…",
+    "success": "Senha alterada com sucesso.",
+    "mismatch": "As senhas não coincidem.",
+    "passwordWeak": "Sua senha precisa atender aos requisitos.",
+    "fillNewPassword": "Digite sua nova senha.",
+    "fillConfirm": "Confirme a nova senha."
   },
   "language": {
     "title": "Idioma do app",

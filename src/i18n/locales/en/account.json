@@ -29,7 +29,25 @@
     "edit": "Edit profile",
     "myPlan": "My plan",
     "redoOnboarding": "Redo initial setup",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "security": "Account security"
+  },
+  "security": {
+    "metaTitle": "Account security — Gasto Inteligente",
+    "title": "Account security",
+    "changePassword": "Change password",
+    "currentNotShown": "For security reasons, your current password cannot be shown. You can create a new password at any time.",
+    "newPassword": "New password",
+    "newPasswordPlaceholder": "Create a strong password",
+    "confirmPassword": "Confirm new password",
+    "confirmPasswordPlaceholder": "Repeat the new password",
+    "save": "Save new password",
+    "saving": "Saving…",
+    "success": "Password changed successfully.",
+    "mismatch": "Passwords do not match.",
+    "passwordWeak": "Your password must meet the requirements.",
+    "fillNewPassword": "Enter your new password.",
+    "fillConfirm": "Confirm the new password."
   },
   "language": {
     "title": "App language",
