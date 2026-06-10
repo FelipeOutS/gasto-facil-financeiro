@@ -15,7 +15,7 @@ import { senhaForte, traduzirErroAuth } from "@/lib/auth-messages";
 export const Route = createFileRoute("/reset-password")({
   head: () => {
     const t = i18n.getFixedT(null, "auth");
-    return { meta: [{ title: t("metaTitleReset") }] };
+    return { meta: [{ title: t("metaTitleReset") }, { name: "robots", content: "noindex,follow" }] };
   },
   component: ResetPasswordPage,
 });
