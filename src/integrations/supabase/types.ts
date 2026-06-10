@@ -3167,6 +3167,10 @@ export type Database = {
         Args: { _owner: string }
         Returns: Database["public"]["Enums"]["connected_account_access"]
       }
+      assert_free_ads_quota: {
+        Args: { _resource: string; _user_id: string }
+        Returns: undefined
+      }
       can_admin_account: { Args: { _owner: string }; Returns: boolean }
       can_create_in_account: { Args: { _owner: string }; Returns: boolean }
       can_view_account: { Args: { _owner: string }; Returns: boolean }
@@ -3202,10 +3206,15 @@ export type Database = {
         }[]
       }
       has_active_plan_access: { Args: { _user_id: string }; Returns: boolean }
+      has_basic_feature_access: {
+        Args: { _feature: string; _user_id: string }
+        Returns: boolean
+      }
       has_feature_access: {
         Args: { _feature: string; _user_id: string }
         Returns: boolean
       }
+      has_paid_plan_access: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
