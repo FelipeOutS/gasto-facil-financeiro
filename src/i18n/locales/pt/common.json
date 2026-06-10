@@ -62,8 +62,11 @@
     "freeAdsQuota": {
       "gastos": "Você atingiu o limite mensal de 30 gastos no plano gratuito.",
       "receitas": "Você atingiu o limite mensal de 10 receitas no plano gratuito.",
+      "mercado_listas": "Você atingiu o limite de 2 listas ativas no plano gratuito.",
+      "mercado_itens_lista": "Você atingiu o limite de 30 itens por lista no plano gratuito.",
       "generic": "Você atingiu o limite do plano gratuito para este recurso.",
-      "cta": "Ver planos"
+      "cta": "Ver planos",
+      "marketGastoBlocked": "Gerar lançamento em Gastos a partir do Mercado está disponível nos planos pagos."
     }
   },
   "premium": {
