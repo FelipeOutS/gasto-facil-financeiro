@@ -122,7 +122,15 @@ export function FinalizeMarketDialog({
       : null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        // Anti-duplo-clique: enquanto está salvando, não permite que
+        // Esc/overlay/X fechem o diálogo e disparem uma segunda submissão.
+        if (submitting && !next) return;
+        onOpenChange(next);
+      }}
+    >
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{t("finalizeMarketDialog.title")}</DialogTitle>

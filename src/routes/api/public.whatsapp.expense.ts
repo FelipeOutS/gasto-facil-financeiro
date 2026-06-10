@@ -1,13 +1,48 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "crypto";
+import { z } from "zod";
 import { processarMensagemWhatsApp, sendWhatsAppReply } from "@/server/whatsapp.server";
 import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
 
 /**
- * Verifies Meta's X-Hub-Signature-256 header against the raw request body
- * using WHATSAPP_APP_SECRET. Returns true when valid.
+ * Webhook público do WhatsApp Cloud API (Meta).
+ *
+ * Estado atual (2026-06):
+ *   - O número oficial do WhatsApp Business ainda NÃO está configurado.
+ *   - O endpoint está preparado, validado e seguro, mas só processa
+ *     mensagens reais quando TODOS os secrets exigidos estiverem definidos
+ *     e `WHATSAPP_ENABLED !== "false"`.
+ *   - Enquanto a integração não estiver habilitada, o POST responde 503
+ *     `whatsapp_not_configured`, NUNCA escreve no banco e NUNCA envia
+ *     mensagem de resposta.
+ *
+ * Segurança:
+ *   - HMAC SHA-256 verificada contra `WHATSAPP_APP_SECRET` (cabeçalho
+ *     `x-hub-signature-256`) com comparação de tempo constante.
+ *   - Payload validado com Zod (apenas o formato Meta é aceito; o "simple
+ *     format" antigo foi removido para reduzir a superfície de ataque).
+ *   - Rate limit por IP+rota.
+ *   - Telefones e textos completos NUNCA são gravados em `webhook_logs`;
+ *     apenas contagens e identificadores externos.
  */
+
+// ----- Feature flag ----------------------------------------------------
+// `WHATSAPP_ENABLED` precisa estar explicitamente "true" para permitir
+// gravação. Qualquer outro valor (vazio, "false", undefined) mantém o
+// endpoint em modo seguro de "preparado, mas inativo".
+function isWhatsAppEnabled(): boolean {
+  const flag = (process.env.WHATSAPP_ENABLED ?? "").trim().toLowerCase();
+  if (flag !== "true") return false;
+  const required = [
+    process.env.WHATSAPP_APP_SECRET,
+    process.env.WHATSAPP_VERIFY_TOKEN,
+    process.env.WHATSAPP_ACCESS_TOKEN,
+    process.env.WHATSAPP_PHONE_NUMBER_ID,
+  ];
+  return required.every((v) => typeof v === "string" && v.trim().length > 0);
+}
+
 function verifyMetaSignature(rawBody: string, headerValue: string | null): boolean {
   const appSecret = process.env.WHATSAPP_APP_SECRET;
   if (!appSecret || !headerValue) return false;
@@ -20,16 +55,6 @@ function verifyMetaSignature(rawBody: string, headerValue: string | null): boole
     return false;
   }
 }
-
-/**
- * Webhook público do WhatsApp Cloud API (Meta).
- *
- *  GET  → verificação (hub.mode=subscribe, hub.verify_token, hub.challenge).
- *  POST → recebimento de mensagens reais.
- *
- * Segue o formato de payload do WhatsApp Cloud API. Mensagens não-texto
- * (imagem, áudio etc.) são ignoradas com 200 ok para não retentar.
- */
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,15 +69,73 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
+// ----- Zod schema do payload Meta -------------------------------------
+// Aceita apenas a estrutura oficial do WhatsApp Cloud API. Mensagens não-texto
+// e eventos desconhecidos são ignorados sem erro (200 ok) para evitar retentativas.
+const MetaTextMessage = z.object({
+  id: z.string().min(1).max(256),
+  from: z.string().min(5).max(40).regex(/^\d+$/),
+  timestamp: z.string().min(1).max(20).regex(/^\d+$/),
+  type: z.literal("text"),
+  text: z.object({ body: z.string().min(1).max(1000) }),
+});
+const MetaAnyMessage = z.union([
+  MetaTextMessage,
+  z.object({ id: z.string().optional(), type: z.string() }).passthrough(),
+]);
+const MetaChange = z.object({
+  value: z
+    .object({
+      messages: z.array(MetaAnyMessage).max(50).optional(),
+      metadata: z.unknown().optional(),
+    })
+    .passthrough(),
+  field: z.string().optional(),
+});
+const MetaEntry = z.object({
+  id: z.string().optional(),
+  changes: z.array(MetaChange).max(20),
+});
+const MetaPayload = z.object({
+  object: z.string().optional(),
+  entry: z.array(MetaEntry).max(20),
+});
+
+type FlatMessage = {
+  external_id: string | null;
+  telefone: string;
+  texto: string;
+  recebida_em?: string;
+};
+
+function extractTextMessages(payload: z.infer<typeof MetaPayload>): FlatMessage[] {
+  const out: FlatMessage[] = [];
+  for (const entry of payload.entry) {
+    for (const change of entry.changes) {
+      const messages = change.value.messages ?? [];
+      for (const m of messages) {
+        const parsed = MetaTextMessage.safeParse(m);
+        if (!parsed.success) continue;
+        out.push({
+          external_id: parsed.data.id,
+          telefone: parsed.data.from,
+          texto: parsed.data.text.body,
+          recebida_em: new Date(Number(parsed.data.timestamp) * 1000).toISOString(),
+        });
+      }
+    }
+  }
+  return out;
+}
+
+const MAX_RAW_BODY = 64 * 1024; // 64KB
+
 export const Route = createFileRoute("/api/public/whatsapp/expense")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders }),
 
-      // ---- Verification (Meta calls GET when you save the webhook URL) ----
-      // A Meta envia: ?hub.mode=subscribe&hub.verify_token=...&hub.challenge=...
-      // Devemos responder com o conteúdo PURO de hub.challenge (text/plain),
-      // status 200. Caso o token esteja errado, retornar 403.
+      // ---- Verificação (Meta chama GET ao salvar o webhook) ----
       GET: async ({ request }) => {
         const envToken = process.env.WHATSAPP_VERIFY_TOKEN;
         if (!envToken) {
@@ -67,7 +150,12 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
         const token = url.searchParams.get("hub.verify_token");
         const challenge = url.searchParams.get("hub.challenge");
 
-        if (mode === "subscribe" && token === envToken) {
+        if (
+          mode === "subscribe" &&
+          typeof token === "string" &&
+          token.length === envToken.length &&
+          timingSafeEqual(Buffer.from(token), Buffer.from(envToken))
+        ) {
           return new Response(challenge ?? "", {
             status: 200,
             headers: {
@@ -86,12 +174,11 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
         });
       },
 
-
-      // ---- Receiving messages ----
+      // ---- Recebimento de mensagens ----
       POST: async ({ request }) => {
         const startedAt = Date.now();
 
-        // Rate limit por IP+rota antes de validar assinatura (proteção contra flood).
+        // Rate limit por IP+rota antes de qualquer trabalho pesado.
         const ip = getClientIp(request);
         const ua = request.headers.get("user-agent");
         const rl = await checkRateLimit({
@@ -107,7 +194,6 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
             provider: "whatsapp",
             status: "ignored",
             http_status: 429,
-            request_headers: request.headers,
             error_message: "rate_limited",
             processing_time_ms: Date.now() - startedAt,
           });
@@ -121,66 +207,104 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
           });
         }
 
-        const rawBody = await request.text();
-
-        if (!process.env.WHATSAPP_APP_SECRET) {
-          console.error("[whatsapp] WHATSAPP_APP_SECRET not configured");
+        // Feature flag: enquanto a integração não estiver habilitada, o
+        // endpoint NÃO escreve no banco, NÃO envia resposta e NÃO loga
+        // payload. Apenas retorna 503 com mensagem genérica.
+        if (!isWhatsAppEnabled()) {
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.warn("[whatsapp] whatsapp_not_configured — webhook in safe mode");
+          }
           await logWebhookEvent({
             provider: "whatsapp",
             status: "failed",
             http_status: 503,
-            request_headers: request.headers,
-            error_message: "webhook_not_configured",
+            error_message: "whatsapp_not_configured",
+            processing_time_ms: Date.now() - startedAt,
           });
-          return jsonResponse({ error: "webhook_not_configured" }, 503);
+          return jsonResponse({ error: "whatsapp_not_configured" }, 503);
         }
+
+        // Limite de tamanho do corpo bruto antes de qualquer parse.
+        const contentLength = Number(request.headers.get("content-length") ?? "0");
+        if (contentLength > MAX_RAW_BODY) {
+          await logWebhookEvent({
+            provider: "whatsapp",
+            status: "failed",
+            http_status: 413,
+            error_message: "payload_too_large",
+            processing_time_ms: Date.now() - startedAt,
+          });
+          return jsonResponse({ error: "payload_too_large" }, 413);
+        }
+
+        const rawBody = await request.text();
+        if (rawBody.length > MAX_RAW_BODY) {
+          await logWebhookEvent({
+            provider: "whatsapp",
+            status: "failed",
+            http_status: 413,
+            error_message: "payload_too_large",
+            processing_time_ms: Date.now() - startedAt,
+          });
+          return jsonResponse({ error: "payload_too_large" }, 413);
+        }
+
+        // Verificação HMAC obrigatória.
         const sig = request.headers.get("x-hub-signature-256");
         if (!verifyMetaSignature(rawBody, sig)) {
           await logWebhookEvent({
             provider: "whatsapp",
             status: "failed",
             http_status: 403,
-            request_headers: request.headers,
             error_message: "invalid_signature",
+            processing_time_ms: Date.now() - startedAt,
           });
           return jsonResponse({ error: "invalid_signature" }, 403);
         }
 
-        let payload: unknown;
+        // Parse + validação Zod.
+        let payload: z.infer<typeof MetaPayload>;
         try {
-          payload = JSON.parse(rawBody);
+          const json = JSON.parse(rawBody);
+          payload = MetaPayload.parse(json);
         } catch {
           await logWebhookEvent({
             provider: "whatsapp",
             status: "failed",
             http_status: 400,
-            request_headers: request.headers,
-            error_message: "invalid_json",
+            error_message: "invalid_payload",
+            processing_time_ms: Date.now() - startedAt,
           });
-          return jsonResponse({ error: "invalid_json" }, 400);
+          // 200 para a Meta não retentar payloads malformados.
+          return jsonResponse({ ok: true, skipped: "invalid_payload" });
         }
 
-        const flatMessages = extractMessages(payload);
+        const flatMessages = extractTextMessages(payload);
+
+        // Log seguro: apenas contagem e primeiro external_id, sem texto/telefone.
         const logId = await logWebhookEvent({
           provider: "whatsapp",
           event_type: "messages",
           status: "received",
-          request_headers: request.headers,
-          request_body: payload,
+          external_id: flatMessages[0]?.external_id ?? null,
         });
 
         if (flatMessages.length === 0) {
-          if (logId) await updateWebhookLog(logId, { status: "ignored", http_status: 200, processing_time_ms: Date.now() - startedAt, error_message: "no_messages" });
+          if (logId) {
+            await updateWebhookLog(logId, {
+              status: "ignored",
+              http_status: 200,
+              processing_time_ms: Date.now() - startedAt,
+              error_message: "no_messages",
+            });
+          }
           return jsonResponse({ ok: true, processed: 0, skipped: "no_messages" });
         }
 
         const results: Array<{ status: string; gasto_id?: string }> = [];
         for (const msg of flatMessages) {
           if (!msg.texto?.trim()) continue;
-          if (msg.texto.length > 1000) {
-            results.push({ status: "ignorada_grande" });
-            continue;
-          }
           try {
             const out = await processarMensagemWhatsApp(msg);
             results.push({ status: out.status, gasto_id: out.gastoId });
@@ -188,11 +312,18 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               try {
                 await sendWhatsAppReply(msg.telefone, out.resposta);
               } catch (replyErr) {
-                console.error("[whatsapp] reply send failed", replyErr);
+                // Não logar o erro com payload; apenas a mensagem.
+                console.error(
+                  "[whatsapp] reply send failed:",
+                  replyErr instanceof Error ? replyErr.message : "unknown",
+                );
               }
             }
           } catch (e) {
-            console.error("[whatsapp] processar erro", e);
+            console.error(
+              "[whatsapp] processar erro:",
+              e instanceof Error ? e.message : "unknown",
+            );
             results.push({ status: "erro" });
           }
         }
@@ -200,75 +331,19 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
           await updateWebhookLog(logId, {
             status: "processed",
             http_status: 200,
-            external_id: flatMessages[0]?.external_id ?? null,
             processing_time_ms: Date.now() - startedAt,
-            response_body: { processed: results.length, results },
+            // response_body sem PII: só contagem por status
+            response_body: {
+              processed: results.length,
+              statuses: results.reduce<Record<string, number>>((acc, r) => {
+                acc[r.status] = (acc[r.status] ?? 0) + 1;
+                return acc;
+              }, {}),
+            },
           });
         }
-        return jsonResponse({ ok: true, processed: results.length, results });
+        return jsonResponse({ ok: true, processed: results.length });
       },
     },
   },
 });
-
-type FlatMessage = {
-  external_id: string | null;
-  telefone: string;
-  texto: string;
-  recebida_em?: string;
-};
-
-/**
- * Aceita 2 formatos:
- *  1) WhatsApp Cloud API: { entry: [{ changes: [{ value: { messages, metadata } }] }] }
- *  2) Formato simples: { telefone, texto, external_id?, recebida_em? }
- */
-function extractMessages(payload: unknown): FlatMessage[] {
-  if (!payload || typeof payload !== "object") return [];
-  const obj = payload as Record<string, unknown>;
-
-  // Formato simples
-  if (typeof obj.telefone === "string" && typeof obj.texto === "string") {
-    return [
-      {
-        telefone: String(obj.telefone),
-        texto: String(obj.texto),
-        external_id:
-          typeof obj.external_id === "string" ? obj.external_id : null,
-        recebida_em:
-          typeof obj.recebida_em === "string" ? obj.recebida_em : undefined,
-      },
-    ];
-  }
-
-  // Formato Meta
-  const out: FlatMessage[] = [];
-  const entries = Array.isArray(obj.entry) ? obj.entry : [];
-  for (const entry of entries) {
-    const changes = Array.isArray((entry as { changes?: unknown[] }).changes)
-      ? (entry as { changes: unknown[] }).changes
-      : [];
-    for (const ch of changes) {
-      const value = (ch as { value?: Record<string, unknown> }).value;
-      if (!value) continue;
-      const messages = Array.isArray(value.messages)
-        ? (value.messages as Array<Record<string, unknown>>)
-        : [];
-      for (const m of messages) {
-        if (m.type !== "text") continue;
-        const text = (m.text as { body?: string } | undefined)?.body ?? "";
-        const from = typeof m.from === "string" ? m.from : "";
-        if (!from || !text) continue;
-        const id = typeof m.id === "string" ? m.id : null;
-        const ts = typeof m.timestamp === "string" ? m.timestamp : null;
-        out.push({
-          external_id: id,
-          telefone: from,
-          texto: text,
-          recebida_em: ts ? new Date(Number(ts) * 1000).toISOString() : undefined,
-        });
-      }
-    }
-  }
-  return out;
-}
