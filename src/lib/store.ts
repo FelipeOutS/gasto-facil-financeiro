@@ -29,7 +29,7 @@ import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
 import { parseDateLocal, toLocalISODate } from "./format";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
-import { markContaAPagarPaid, unmarkContaAPagarPaid } from "@/server/contas.functions";
+import { markContaAPagarPaid, unmarkContaAPagarPaid } from "@/lib/contas.functions";
 
 /**
  * Flag de assinatura ativa publicada pelo SubscriptionGuardProvider.
