@@ -88,14 +88,14 @@ function PrecosHistoricoPage() {
           type="button"
           onClick={handleBack}
           aria-label={t("precosHistorico.back")}
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground active:scale-95"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <Link
           to="/app"
           aria-label={t("precosHistorico.home")}
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground active:scale-95"
         >
           <Home className="h-5 w-5" />
         </Link>

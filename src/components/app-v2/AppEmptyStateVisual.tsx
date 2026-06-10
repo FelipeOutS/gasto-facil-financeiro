@@ -35,7 +35,7 @@ export function AppEmptyStateVisual({
   return (
     <div
       className={cn(
-        "flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border/60 bg-card-elevated/40 px-6 py-10 text-center",
+        "flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border/60 bg-card-elevated/40 px-6 py-10 text-center motion-safe:animate-rise",
         className,
       )}
       role="status"

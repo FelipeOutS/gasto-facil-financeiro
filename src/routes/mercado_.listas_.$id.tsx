@@ -120,14 +120,14 @@ function HeaderBar({ onBack, title }: { onBack: () => void; title: string }) {
         type="button"
         onClick={onBack}
         aria-label={t("detail.back")}
-        className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground active:scale-95"
       >
         <ArrowLeft className="h-5 w-5" />
       </button>
       <Link
         to="/app"
         aria-label={t("detail.home")}
-        className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground active:scale-95"
       >
         <Home className="h-5 w-5" />
       </Link>
@@ -223,14 +223,14 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
           type="button"
           onClick={onBack}
           aria-label={t("detail.back")}
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground active:scale-95"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <Link
           to="/app"
           aria-label={t("detail.home")}
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground active:scale-95"
         >
           <Home className="h-5 w-5" />
         </Link>
