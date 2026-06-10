@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/recuperar-senha")({
   head: () => {
     const t = i18n.getFixedT(null, "auth");
-    return { meta: [{ title: t("metaTitleRecover") }] };
+    return { meta: [{ title: t("metaTitleRecover") }, { name: "robots", content: "noindex,follow" }] };
   },
   component: RecoverPage,
 });
