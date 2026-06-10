@@ -57,7 +57,30 @@ export type FeatureKey =
   | "empresa_inteligente"
   | "cofre_pessoal"
   | "mercado_avancado"
-  | "mercado_importar_cupom";
+  | "mercado_importar_cupom"
+  // Fase 1E-B2B — features básicas para free_ads (também liberadas em planos pagos).
+  // NÃO confundir com as features pagas equivalentes (cartoes, orcamento, etc.):
+  // estas são versões limitadas, sujeitas a quota server-side em free_ads.
+  | "gastos_basico"
+  | "receitas_basico"
+  | "mercado_basico"
+  | "cartoes_basico"
+  | "orcamento_basico"
+  | "metas_basico";
+
+/** Lista de features básicas (free_ads + planos pagos). */
+export const BASIC_FEATURES: ReadonlyArray<FeatureKey> = [
+  "gastos_basico",
+  "receitas_basico",
+  "mercado_basico",
+  "cartoes_basico",
+  "orcamento_basico",
+  "metas_basico",
+] as const;
+
+export function isBasicFeature(feature: FeatureKey): boolean {
+  return (BASIC_FEATURES as ReadonlyArray<FeatureKey>).includes(feature);
+}
 
 export const PLAN_LABEL: Record<PlanTier, string> = {
   free: "Sem assinatura",
@@ -120,6 +143,14 @@ const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
   // Etapa 16 — Mercado Inteligente avançado e importação de cupom.
   mercado_avancado: "pessoal_premium",
   mercado_importar_cupom: "pessoal_premium",
+  // Fase 1E-B2B — features básicas. min = free_ads (whitelist abaixo fixa
+  // os planos exatos; o min é só fallback para a escala linear).
+  gastos_basico: "free_ads",
+  receitas_basico: "free_ads",
+  mercado_basico: "free_ads",
+  cartoes_basico: "free_ads",
+  orcamento_basico: "free_ads",
+  metas_basico: "free_ads",
 };
 
 /**
@@ -164,6 +195,15 @@ const FEATURE_PLAN_WHITELIST: Partial<Record<FeatureKey, PlanTier[]>> = {
   mercado_avancado: ["pessoal_premium", "mei_inteligente", "empresa"],
   // Etapa 16 — Importação de cupom fiscal / NFC-e / QR Code.
   mercado_importar_cupom: ["pessoal_premium", "mei_inteligente", "empresa"],
+
+  // Fase 1E-B2B — features básicas: free_ads + todos os planos pagos.
+  // Espelhado em public.has_feature_access (SQL).
+  gastos_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
+  receitas_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
+  mercado_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
+  cartoes_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
+  orcamento_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
+  metas_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
 };
 
 export function planAllowsFeature(plan: PlanTier, feature: FeatureKey): boolean {
@@ -180,7 +220,10 @@ export function minPlanFor(feature: FeatureKey): PlanTier {
 
 export function plansAllowingFeature(feature: FeatureKey): PlanTier[] {
   const whitelist = FEATURE_PLAN_WHITELIST[feature];
-  if (whitelist) return whitelist;
+  // Para fins comerciais (UI de planos), filtramos free_ads das whitelists —
+  // ele aparece apenas via planAllowsFeature direto, nunca como "plano que
+  // vende esta feature".
+  if (whitelist) return whitelist.filter((p) => p !== "free_ads");
   const min = FEATURE_MIN_PLAN[feature];
   return (Object.keys(PLAN_ORDER) as PlanTier[]).filter(
     (p) =>

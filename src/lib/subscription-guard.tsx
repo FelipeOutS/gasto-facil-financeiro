@@ -69,8 +69,18 @@ export async function ensureCanWriteFinancialData(): Promise<{ ok: true } | { ok
  * =========================================================== */
 
 type GuardCtx = {
-  /** Usuário tem permissão para criar/editar dados financeiros? */
+  /**
+   * Escrita PAGA (assinatura paga ativa). Não inclui free_ads.
+   * Use para gates de recursos pagos.
+   */
   canWrite: boolean;
+  /**
+   * Escrita BÁSICA (free_ads OU plano pago). Hoje só free_ads se beneficia
+   * por estar incluído; planos pagos já passam por canWrite. Use no futuro
+   * para gates de recursos básicos quando o plano free_ads for ativado.
+   * Quota mensal é validada server-side (triggers).
+   */
+  canWriteBasic: boolean;
   /** Pode editar/excluir registros existentes (admin/dono). */
   canAdmin: boolean;
   /** Verifica se o plano atual libera uma feature específica. */
@@ -102,13 +112,31 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
     if (!user) return false;
     if (planLoading || rolesLoading) return false;
     if (isTrialActive) return true;
-    if (storedPlan === "sem_assinatura" || storedPlan === "free") return false;
+    // free_ads NÃO concede escrita paga — apenas escrita básica (canWriteBasic).
+    if (
+      storedPlan === "sem_assinatura" ||
+      storedPlan === "free" ||
+      storedPlan === "free_ads"
+    ) {
+      return false;
+    }
     return isStatusActive(status);
   }, [isAdmin, user, storedPlan, status, isTrialActive, planLoading, rolesLoading]);
+
+  // free_ads (ativo) habilita escrita básica, sujeita a quota server-side.
+  const freeAdsAllows =
+    !planLoading &&
+    !rolesLoading &&
+    !!user &&
+    storedPlan === "free_ads" &&
+    isStatusActive(status);
 
   // Em conta própria: depende só da assinatura.
   // Em conta conectada: depende do nível de acesso (não da assinatura do viewer).
   const canWrite = isOwnAccount ? subscriptionAllows : connCanCreate;
+  const canWriteBasic = isOwnAccount
+    ? subscriptionAllows || freeAdsAllows || isAdmin
+    : connCanCreate;
 
   // Sincroniza a flag central usada pelo store (defesa contra burla do front).
   useEffect(() => {
@@ -156,7 +184,7 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
   );
 
   return (
-    <Ctx.Provider value={{ canWrite, canAdmin: isOwnAccount ? subscriptionAllows : connCanAdmin, canUseFeature, requireSubscription, guard }}>
+    <Ctx.Provider value={{ canWrite, canWriteBasic, canAdmin: isOwnAccount ? subscriptionAllows : connCanAdmin, canUseFeature, requireSubscription, guard }}>
       {children}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
@@ -195,6 +223,8 @@ export function useSubscriptionGuard(): GuardCtx {
     // Fallback seguro para casos isolados (ex: testes). Bloqueia tudo.
     return {
       canWrite: false,
+      canWriteBasic: false,
+
       canAdmin: false,
       canUseFeature: () => false,
       requireSubscription: () => {
