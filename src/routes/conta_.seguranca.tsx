@@ -12,7 +12,7 @@ import { PasswordChecklist } from "@/components/PasswordChecklist";
 import { useAuth } from "@/lib/auth-context";
 import { senhaForte, traduzirErroAuth } from "@/lib/auth-messages";
 
-export const Route = createFileRoute("/conta/seguranca")({
+export const Route = createFileRoute("/conta_/seguranca")({
   head: () => {
     const t = i18n.getFixedT(null, "account");
     return {
