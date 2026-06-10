@@ -67,7 +67,7 @@ function Manual() {
       <div className="mt-5">
         <GastoForm
           onSubmit={async (data) => {
-            if (!canWrite) {
+            if (!canWriteBasic) {
               requireSubscription(t("requirePlan"));
               return;
             }
