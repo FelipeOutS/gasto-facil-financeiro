@@ -67,7 +67,7 @@ function ensureCanWrite(action: string, opts?: { allowBasic?: boolean }): boolea
  * (ERRCODE check_violation + message `free_ads_quota_exceeded:<resource>`).
  * Mostra toast amigável e retorna true se tratou.
  */
-function handleFreeAdsQuotaError(error: { code?: string; message?: string } | null | undefined): boolean {
+export function handleFreeAdsQuotaError(error: { code?: string; message?: string } | null | undefined): boolean {
   if (!error) return false;
   const msg = error.message ?? "";
   const m = /free_ads_quota_exceeded:([a-z_]+)/i.exec(msg);

@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { usePlan } from "@/lib/use-plan";
-import { isAdminMasterEmail, planAllowsFeature, type FeatureKey } from "@/lib/plans";
+import { isAdminMasterEmail, isBasicFeature, planAllowsFeature, type FeatureKey } from "@/lib/plans";
 import { useAuth } from "@/lib/auth-context";
 import { useRoles } from "@/lib/use-roles";
 import { supabase } from "@/integrations/supabase/client";
@@ -185,10 +185,15 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
       // Em conta conectada, assume que o dono tem acesso à feature
       // (caso contrário não teria os dados); RLS controla o resto.
       if (!isOwnAccount) return connCanCreate || connCanAdmin;
+      // Features básicas (free_ads + planos pagos): exigem apenas canWriteBasic.
+      if (isBasicFeature(feature)) {
+        if (!canWriteBasic) return false;
+        return planAllowsFeature(plan, feature);
+      }
       if (!canWrite) return false;
       return planAllowsFeature(plan, feature);
     },
-    [isAdmin, isOwnAccount, connCanCreate, connCanAdmin, canWrite, plan],
+    [isAdmin, isOwnAccount, connCanCreate, connCanAdmin, canWrite, canWriteBasic, plan],
   );
 
   return (

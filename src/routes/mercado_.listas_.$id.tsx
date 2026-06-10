@@ -52,6 +52,7 @@ import {
 import { submitHistoricoToCommunity } from "@/lib/mercado/community-prices-from-purchase";
 import { createGastoFromFinalizedPurchase } from "@/lib/mercado/finalized-purchase-gasto";
 import { usePlan } from "@/lib/use-plan";
+import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import {
   addItemLista,
   computeOrcamentoLista,
@@ -1377,8 +1378,10 @@ function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
 
 function FinalizeCard({ lista }: { lista: MercadoLista }) {
   const { t } = useTranslation("mercado");
+  const { t: tCommon } = useTranslation("common");
   const navigate = useNavigate();
   const { can } = usePlan();
+  const { canWrite } = useSubscriptionGuard();
   const resumo = useMemo(() => computeResumo(lista), [lista]);
   const [mercadoNome, setMercadoNome] = useState("");
   const [marketDialogOpen, setMarketDialogOpen] = useState(false);
@@ -1405,6 +1408,13 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
         return;
       }
       setMarketDialogOpen(false);
+      // Free_ads / sem assinatura: finaliza apenas localmente; não cria gasto
+      // financeiro nem envia para Preço Comunitário (recursos pagos).
+      if (!canWrite) {
+        notify.warning(tCommon("subscription.freeAdsQuota.marketGastoBlocked"));
+        void navigate({ to: "/mercado/listas" });
+        return;
+      }
       let community: Awaited<ReturnType<typeof submitHistoricoToCommunity>> = null;
       let communityError: string | undefined;
       try {

@@ -53,6 +53,7 @@ import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
 import bannerOrcamentoWebp from "@/assets/mercado/banner-orcamento.webp";
 import emptyCarrinho from "@/assets/mercado/empty-carrinho.webp";
 import { usePlan } from "@/lib/use-plan";
+import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import {
   addItemLista,
   computeOrcamentoLista,
@@ -261,8 +262,10 @@ function Mini({ label, value }: { label: string; value: React.ReactNode }) {
 
 function CartMode({ lista }: { lista: MercadoLista }) {
   const { t } = useTranslation("mercado");
+  const { t: tCommon } = useTranslation("common");
   const navigate = useNavigate();
   const { can } = usePlan();
+  const { canWrite } = useSubscriptionGuard();
   const resumo = useMemo(() => computeResumo(lista), [lista]);
   const orc = useMemo(() => computeOrcamentoLista(lista), [lista]);
   const [mercadoNome, setMercadoNome] = useState("");
@@ -301,6 +304,13 @@ function CartMode({ lista }: { lista: MercadoLista }) {
         return;
       }
       setMarketDialogOpen(false);
+      // Free_ads / sem assinatura: finaliza apenas localmente; não cria gasto
+      // financeiro nem envia para Preço Comunitário (recursos pagos).
+      if (!canWrite) {
+        notify.warning(tCommon("subscription.freeAdsQuota.marketGastoBlocked"));
+        void navigate({ to: "/mercado/listas" });
+        return;
+      }
       // Envia para Preço Comunitário (best-effort, não bloqueia).
       let community: Awaited<ReturnType<typeof submitHistoricoToCommunity>> = null;
       let communityError: string | undefined;

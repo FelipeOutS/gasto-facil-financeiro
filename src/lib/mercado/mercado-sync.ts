@@ -302,6 +302,9 @@ async function pushUpsertLista(l: MercadoLista) {
     .from("mercado_listas")
     .upsert(listaToRow(l, uid), { onConflict: "id" });
   if (error) {
+    // Toast amigável para quotas free_ads (mercado_listas / mercado_itens_lista).
+    const { handleFreeAdsQuotaError } = await import("@/lib/store");
+    handleFreeAdsQuotaError(error);
     console.warn("[mercado-sync] upsert lista failed:", error.message);
     return;
   }
