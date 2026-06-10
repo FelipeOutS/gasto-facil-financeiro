@@ -63,6 +63,12 @@ function copyText(text: string) {
 }
 
 export const Route = createFileRoute("/admin_/saude")({
+  head: () => ({
+    meta: [
+      { title: "Saúde do sistema — Gasto Inteligente" },
+      { name: "robots", content: "noindex,nofollow" },
+    ],
+  }),
   component: () => (
     <AdminMasterGate>
       <SystemHealthPage />

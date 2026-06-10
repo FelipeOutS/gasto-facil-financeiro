@@ -109,6 +109,11 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Gasto Inteligente — Controle financeiro simples, visual e inteligente" },
       { property: "og:description", content: "Organize gastos, cartões, contas, metas e renda em um só lugar." },
       { property: "og:url", content: "https://gastointeligente.com.br/" },
+      { property: "og:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "Gasto Inteligente — controle financeiro simples, visual e inteligente" },
+      { name: "twitter:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
     ],
     links: [
       { rel: "canonical", href: "https://gastointeligente.com.br/" },

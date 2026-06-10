@@ -72,34 +72,31 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "Gasto Inteligente — Controle de gastos do mês" },
+      { title: "Gasto Inteligente — Controle financeiro pessoal, MEI e empresas" },
       {
         name: "description",
         content:
-          "Cadastre seus gastos por foto, print ou manualmente. Veja gráficos por categoria e controle seus limites.",
+          "Organize gastos, receitas, cartões, metas, mercado, relatórios e previsões financeiras em um só lugar.",
       },
       // Status bar / overscroll: cor por preferência do SO; o ThemeProvider
       // também sobrescreve em runtime quando o usuário força light/dark.
       { name: "theme-color", media: "(prefers-color-scheme: light)", content: THEME_COLOR_LIGHT },
       { name: "theme-color", media: "(prefers-color-scheme: dark)", content: THEME_COLOR_DARK },
       { property: "og:site_name", content: "Gasto Inteligente" },
-      { property: "og:title", content: "Gasto Inteligente — Controle de gastos do mês" },
+      { property: "og:type", content: "website" },
+      { property: "og:title", content: "Gasto Inteligente — Controle financeiro pessoal, MEI e empresas" },
       {
         property: "og:description",
         content:
-          "Organize gastos, contas, cartões, clientes, fornecedores e relatórios em um só lugar.",
+          "Organize gastos, receitas, cartões, metas, mercado, relatórios e previsões financeiras em um só lugar.",
       },
-      { property: "og:type", content: "website" },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cbdbf992-e65f-4ef8-8f0f-d0847404378f/id-preview-8d7db3be--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1779115302264.png" },
-      { property: "og:image:width", content: "1200" },
-      { property: "og:image:height", content: "630" },
-      { property: "og:image:alt", content: "Gasto Inteligente — controle financeiro simples, visual e inteligente" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Gasto Inteligente — Controle de gastos do mês" },
-      { name: "twitter:description", content: "Gasto Inteligente é uma plataforma de controle financeiro que organiza suas receitas, despesas, contas e metas de forma simples e visual. Acompanhe seu saldo, f" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cbdbf992-e65f-4ef8-8f0f-d0847404378f/id-preview-8d7db3be--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1779115302264.png" },
-      { name: "description", content: "Gasto Inteligente é uma plataforma de controle financeiro que organiza suas receitas, despesas, contas e metas de forma simples e visual. Acompanhe seu saldo, f" },
-      { property: "og:description", content: "Gasto Inteligente é uma plataforma de controle financeiro que organiza suas receitas, despesas, contas e metas de forma simples e visual. Acompanhe seu saldo, f" },
+      { name: "twitter:title", content: "Gasto Inteligente — Controle financeiro pessoal, MEI e empresas" },
+      {
+        name: "twitter:description",
+        content:
+          "Organize gastos, receitas, cartões, metas, mercado, relatórios e previsões financeiras em um só lugar.",
+      },
     ],
     links: [
       {

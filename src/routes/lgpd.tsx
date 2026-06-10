@@ -13,6 +13,8 @@ export const Route = createFileRoute("/lgpd")({
         { property: "og:title", content: t("lgpd.metaTitle") },
         { property: "og:description", content: t("lgpd.ogDesc") },
         { property: "og:url", content: "https://gastointeligente.com.br/lgpd" },
+        { property: "og:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
+        { name: "twitter:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
       ],
       links: [{ rel: "canonical", href: "https://gastointeligente.com.br/lgpd" }],
     };
