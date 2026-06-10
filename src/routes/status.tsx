@@ -13,7 +13,11 @@ export const Route = createFileRoute("/status")({
         { name: "description", content: t("status.metaDesc") },
         { property: "og:title", content: t("status.metaTitle") },
         { property: "og:description", content: t("status.ogDesc") },
+        { property: "og:url", content: "https://gastointeligente.com.br/status" },
+        { property: "og:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
+        { name: "twitter:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
       ],
+      links: [{ rel: "canonical", href: "https://gastointeligente.com.br/status" }],
     };
   },
   component: StatusPage,
