@@ -58,6 +58,12 @@
       "viewOnly": "Esta conta foi compartilhada com você apenas para visualização.",
       "viewCreate": "Você pode visualizar e lançar nesta conta, mas não editar/excluir registros existentes.",
       "noPermission": "Sem permissão suficiente para esta ação."
+    },
+    "freeAdsQuota": {
+      "gastos": "Você atingiu o limite mensal de 30 gastos no plano gratuito.",
+      "receitas": "Você atingiu o limite mensal de 10 receitas no plano gratuito.",
+      "generic": "Você atingiu o limite do plano gratuito para este recurso.",
+      "cta": "Ver planos"
     }
   },
   "premium": {
