@@ -105,10 +105,10 @@
       "progress": "Progresso",
       "open": "Abrir",
       "delete": "Excluir",
-      "deleteConfirm": "Tem certeza que deseja excluir esta lista? Compras já finalizadas e histórico de preços continuarão salvos.",
+      "deleteConfirm": "Excluir esta lista? Compras já finalizadas e histórico de preços continuarão salvos.",
       "deleteSuccess": "Lista excluída com sucesso.",
       "deleteError": "Não foi possível excluir esta lista.",
-      "deleteConfirmTitle": "Tem certeza que deseja excluir esta lista?",
+      "deleteConfirmTitle": "Excluir esta lista?",
       "deleteConfirmDescription": "Essa ação remove apenas a lista de compras. Compras já finalizadas, histórico e preços salvos não serão apagados.",
       "deleteConfirmName": "Lista: {{name}}",
       "deleteCancel": "Cancelar",
@@ -279,8 +279,8 @@
       "title": "Zona de risco",
       "description": "Isso remove apenas esta lista de compras. Compras já finalizadas e histórico de preços continuarão salvos.",
       "button": "Excluir lista",
-      "confirm": "Tem certeza que deseja excluir esta lista? Compras já finalizadas e histórico de preços continuarão salvos.",
-      "confirmTitle": "Tem certeza que deseja excluir esta lista?",
+      "confirm": "Excluir esta lista? Compras já finalizadas e histórico de preços continuarão salvos.",
+      "confirmTitle": "Excluir esta lista?",
       "confirmDescription": "Essa ação remove apenas a lista de compras. Compras já finalizadas, histórico e preços salvos não serão apagados.",
       "cancel": "Cancelar",
       "confirmButton": "Excluir lista",
@@ -463,7 +463,7 @@
       "remove": "Remover item do carrinho",
       "removed": "Item removido do carrinho",
       "removeConfirmTitle": "Remover este item?",
-      "removeConfirmDescription": "Tem certeza que deseja remover \"{{name}}\" do carrinho?",
+      "removeConfirmDescription": "Remover \"{{name}}\" do carrinho? O item poderá ser adicionado novamente depois.",
       "cancel": "Cancelar"
     },
     "quickAdd": {
@@ -836,7 +836,7 @@
       "favOff": "Mercado removido dos favoritos.",
       "nameRequired": "Informe o nome do mercado."
     },
-    "confirmRemove": "Tem certeza que deseja remover este mercado? Isso não apaga seu histórico de compras nem seus preços.",
+    "confirmRemove": "Remover este mercado? Seu histórico de compras e os preços já registrados serão mantidos.",
     "empty": {
       "title": "Nenhum mercado cadastrado",
       "desc": "Adicione os mercados onde você costuma comprar para encontrá-los rapidamente ao registrar uma compra."
