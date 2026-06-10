@@ -3297,6 +3297,7 @@ export type Database = {
         | "mei_essencial"
         | "mei_inteligente"
         | "sem_assinatura"
+        | "free_ads"
       subscription_status:
         | "ativo"
         | "teste"
@@ -3451,6 +3452,7 @@ export const Constants = {
         "mei_essencial",
         "mei_inteligente",
         "sem_assinatura",
+        "free_ads",
       ],
       subscription_status: [
         "ativo",
