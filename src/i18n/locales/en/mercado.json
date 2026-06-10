@@ -488,6 +488,7 @@
       "successWithExpense": "Purchase finalized, saved to history and added as an expense.",
       "successCommunity": "Purchase finalized and prices added to the Smart Grocery database for future lookups.",
       "successCommunityWithExpense": "Purchase finalized, expense created and prices sent to the Community base.",
+      "viewExpenseAction": "View expense",
       "savedMarkets": "Your markets",
       "noSavedMarketsHint": "You can save favorite markets in My markets."
     }
