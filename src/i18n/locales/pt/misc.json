@@ -182,10 +182,17 @@
   "investimentos": {
     "locked": {
       "title": "Seus investimentos estão salvos",
-      "desc": "Seu teste gratuito terminou. Seus investimentos continuam armazenados, mas para visualizar e continuar acompanhando sua carteira, assine um plano com acesso a Investimentos.",
+      "desc": "Seu teste gratuito terminou. Sua carteira continua segura por aqui. Para voltar a acompanhar evolução, rendimentos e movimentações, escolha um plano com acesso a Investimentos.",
+      "previewTitle": "O que você desbloqueia",
+      "features": [
+        "Visão consolidada da sua carteira",
+        "Rendimentos e evolução patrimonial",
+        "Importações e movimentações detalhadas"
+      ],
       "plans": "Ver planos",
       "subscribe": "Assinar agora",
-      "home": "Voltar ao início"
+      "home": "Voltar ao início",
+      "back": "Voltar ao início"
     },
     "title": "Investimentos",
     "subtitle": "Acompanhe sua carteira, evolução patrimonial e rendimentos em um só lugar.",
