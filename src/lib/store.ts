@@ -37,11 +37,21 @@ import { markContaAPagarPaid, unmarkContaAPagarPaid } from "@/lib/contas.functio
  * que o usuário tem assinatura ativa ou é Admin Master.
  */
 let canWriteFinancial = false;
+let canWriteBasicFinancial = false;
 export function setStoreCanWrite(v: boolean) {
   canWriteFinancial = v;
 }
-function ensureCanWrite(action: string): boolean {
+/**
+ * Escrita básica (free_ads + planos pagos). Habilitada apenas para fluxos
+ * básicos explicitamente liberados (hoje: addGasto manual e addReceita manual).
+ * Quota mensal é validada server-side pelas triggers `tg_free_ads_quota_*`.
+ */
+export function setStoreCanWriteBasic(v: boolean) {
+  canWriteBasicFinancial = v;
+}
+function ensureCanWrite(action: string, opts?: { allowBasic?: boolean }): boolean {
   if (canWriteFinancial) return true;
+  if (opts?.allowBasic && canWriteBasicFinancial) return true;
   if (typeof window !== "undefined") {
     // Aviso amigável caso uma chamada burle o front-end.
     void import("sonner").then(({ toast }) => {
@@ -50,6 +60,28 @@ function ensureCanWrite(action: string): boolean {
     console.warn(`[store] Bloqueado: ${action} requer assinatura ativa.`);
   }
   return false;
+}
+
+/**
+ * Detecta erros de quota free_ads vindos das triggers SQL
+ * (ERRCODE check_violation + message `free_ads_quota_exceeded:<resource>`).
+ * Mostra toast amigável e retorna true se tratou.
+ */
+function handleFreeAdsQuotaError(error: { code?: string; message?: string } | null | undefined): boolean {
+  if (!error) return false;
+  const msg = error.message ?? "";
+  const m = /free_ads_quota_exceeded:([a-z_]+)/i.exec(msg);
+  if (!m) return false;
+  const resource = m[1];
+  if (typeof window === "undefined") return true;
+  void Promise.all([import("sonner"), import("@/i18n")]).then(([{ toast }, i18nMod]) => {
+    const i18n = i18nMod.default;
+    const key = `common:subscription.freeAdsQuota.${resource}`;
+    const fallbackKey = "common:subscription.freeAdsQuota.generic";
+    const message = i18n.exists(key) ? i18n.t(key) : i18n.t(fallbackKey);
+    toast.error(String(message));
+  });
+  return true;
 }
 
 type GastoInsert = TablesInsert<"gastos">;
