@@ -69,8 +69,18 @@ export async function ensureCanWriteFinancialData(): Promise<{ ok: true } | { ok
  * =========================================================== */
 
 type GuardCtx = {
-  /** Usuário tem permissão para criar/editar dados financeiros? */
+  /**
+   * Escrita PAGA (assinatura paga ativa). Não inclui free_ads.
+   * Use para gates de recursos pagos.
+   */
   canWrite: boolean;
+  /**
+   * Escrita BÁSICA (free_ads OU plano pago). Hoje só free_ads se beneficia
+   * por estar incluído; planos pagos já passam por canWrite. Use no futuro
+   * para gates de recursos básicos quando o plano free_ads for ativado.
+   * Quota mensal é validada server-side (triggers).
+   */
+  canWriteBasic: boolean;
   /** Pode editar/excluir registros existentes (admin/dono). */
   canAdmin: boolean;
   /** Verifica se o plano atual libera uma feature específica. */
