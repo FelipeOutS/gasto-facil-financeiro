@@ -58,6 +58,12 @@
       "viewOnly": "This account was shared with you for viewing only.",
       "viewCreate": "You can view and add entries on this account, but not edit/delete existing records.",
       "noPermission": "You don't have enough permission for this action."
+    },
+    "freeAdsQuota": {
+      "gastos": "You hit the monthly limit of 30 expenses on the free plan.",
+      "receitas": "You hit the monthly limit of 10 income entries on the free plan.",
+      "generic": "You hit the free plan limit for this resource.",
+      "cta": "View plans"
     }
   },
   "premium": {
