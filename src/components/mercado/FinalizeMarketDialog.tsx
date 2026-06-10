@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { CreditCard, Plus, Star, Store } from "lucide-react";
+import { CreditCard, Loader2, Plus, Star, Store } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -304,8 +304,10 @@ export function FinalizeMarketDialog({
             type="button"
             onClick={confirm}
             disabled={!canConfirm}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-brand-grad px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-95 active:scale-[0.98] disabled:opacity-60"
+            aria-busy={submitting || undefined}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-brand-grad px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-elevated transition-all hover:opacity-95 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
           >
+            {submitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
             {t("finalizeMarketDialog.confirm")}
           </button>
         </DialogFooter>
