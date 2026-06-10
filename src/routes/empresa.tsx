@@ -49,7 +49,7 @@ import {
   type EmpresaConsultada,
   type MinhaEmpresa,
 } from "@/lib/empresa";
-import { consultarCnpj } from "@/server/cnpj.functions";
+import { consultarCnpj } from "@/lib/cnpj.functions";
 import i18n from "@/i18n";
 
 export const Route = createFileRoute("/empresa")({
