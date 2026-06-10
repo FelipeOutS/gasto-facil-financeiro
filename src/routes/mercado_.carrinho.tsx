@@ -584,7 +584,7 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
   function applyCommunityPrice(price: number) {
     setValor(String(price));
     updateItemLista(listaId, item.id, { precoEstimado: price });
-    toast.success(t("communityPrices.suggestions.applied"));
+    notify.success(t("communityPrices.suggestions.applied"));
   }
 
   async function handleRemove() {
@@ -597,7 +597,7 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
     });
     if (!ok) return;
     removeItemLista(listaId, item.id);
-    toast.success(t("carrinho.items.removed"));
+    notify.success(t("carrinho.items.removed"));
   }
 
   const subtotal = (item.precoEstimado ?? 0) * (item.quantidade || 1);
@@ -710,7 +710,7 @@ function QuickAddForm({ listaId }: { listaId: string }) {
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!nome.trim()) {
-      toast.error(t("carrinho.quickAdd.errorNome"));
+      notify.error(t("carrinho.quickAdd.errorNome"));
       return;
     }
     const q = Number(quantidade);
@@ -722,7 +722,7 @@ function QuickAddForm({ listaId }: { listaId: string }) {
       precoEstimado: Number.isFinite(p) && p > 0 ? p : undefined,
     });
     if (!created) {
-      toast.error(t("carrinho.quickAdd.errorGeneric"));
+      notify.error(t("carrinho.quickAdd.errorGeneric"));
       return;
     }
     setNome("");
@@ -828,11 +828,11 @@ function QuickAddBarcodeBlock({ onApplyName }: { onApplyName: (name: string) => 
     if (!result?.found) return;
     const name = result.name?.trim();
     if (!name) {
-      toast.error(t("detail.barcode.noName"));
+      notify.error(t("detail.barcode.noName"));
       return;
     }
     onApplyName(name);
-    toast.success(t("detail.barcode.applied"));
+    notify.success(t("detail.barcode.applied"));
     setResult(null);
     setCode("");
     setError(null);
