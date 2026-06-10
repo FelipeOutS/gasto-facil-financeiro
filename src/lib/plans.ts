@@ -268,7 +268,11 @@ export function getEffectiveUserPlan(
     p === "pessoal_premium" ||
     p === "mei_essencial" ||
     p === "mei_inteligente" ||
-    p === "empresa"
+    p === "empresa" ||
+    // free_ads é plano ATIVO básico/limitado (não pago).
+    // Escrita paga deve usar canWrite / ensureCanWriteFinancialData.
+    // Escrita básica deve usar canWriteBasic e features *_basico.
+    p === "free_ads"
   ) {
     return p as PlanTier;
   }
