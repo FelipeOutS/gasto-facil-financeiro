@@ -1,12 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getSubscriptionForUserIdentity } from "./subscription.server";
-import { reconcilePendingCardPaymentsForUser } from "./mercadopago.server";
 
 export const getCurrentUserSubscription = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getSubscriptionForUserIdentity } = await import("@/server/subscription.server");
+    const { reconcilePendingCardPaymentsForUser } = await import("@/server/mercadopago.server");
     const { userId } = context;
     const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
     // Reconcilia pagamentos por cartão pendentes antes de avaliar o estado.

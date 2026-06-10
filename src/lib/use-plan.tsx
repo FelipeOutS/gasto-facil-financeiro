@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { getCurrentUserSubscription } from "@/server/subscription.functions";
+import { getCurrentUserSubscription } from "@/lib/subscription.functions";
 import {
   getEffectiveUserPlan,
   isAdminMasterEmail,
