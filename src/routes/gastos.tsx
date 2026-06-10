@@ -11,6 +11,7 @@ import {
   MoreVertical,
   Pencil,
   Search,
+  ShoppingBasket,
   Sparkles,
   SlidersHorizontal,
   Tag,
@@ -1276,6 +1277,15 @@ function GastosPage() {
                       <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-border bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                         <CalendarIcon className="h-3 w-3" />
                         {mesAnoToLabel(mesEfetivoGasto(g).mes, mesEfetivoGasto(g).ano)}
+                      </span>
+                    )}
+                    {g.origem === "mercado_inteligente" && (
+                      <span
+                        className="ml-1 mt-1 inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-brand-on-soft"
+                        title={t("item.originMercadoTitle")}
+                      >
+                        <ShoppingBasket className="h-3 w-3" />
+                        {t("item.originMercadoBadge")}
                       </span>
                     )}
                   </div>

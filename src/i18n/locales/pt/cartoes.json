@@ -127,6 +127,8 @@
     "searchPlaceholder": "Buscar por descrição ou estabelecimento",
     "clearSearch": "Limpar busca",
     "all": "Todas",
+    "originMercadoBadge": "Mercado",
+    "originMercadoTitle": "Compra do Mercado Inteligente",
     "imports": "Importações nesta fatura",
     "importOriginDefault": "Importação",
     "purchases_one": "{{count}} compra",

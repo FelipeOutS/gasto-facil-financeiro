@@ -39,6 +39,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
+  ShoppingBasket,
   X,
   CheckCircle2,
   RotateCcw,
@@ -1932,6 +1933,15 @@ export function FaturaSheet({
                                       ? ` · ${g.parcelaAtual ?? 1}/${g.totalParcelas}`
                                       : ""}
                                   </p>
+                                  {g.origem === "mercado_inteligente" && (
+                                    <span
+                                      className="mt-1 inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-brand-on-soft"
+                                      title={t("sheet.originMercadoTitle")}
+                                    >
+                                      <ShoppingBasket className="h-3 w-3" />
+                                      {t("sheet.originMercadoBadge")}
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <span className="num shrink-0 text-sm font-semibold">

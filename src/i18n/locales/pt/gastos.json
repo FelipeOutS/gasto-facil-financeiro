@@ -150,7 +150,9 @@
     "delete": "Excluir gasto",
     "select": "Selecionar gasto",
     "deleted": "Gasto removido.",
-    "otherCategory": "Outros"
+    "otherCategory": "Outros",
+    "originMercadoBadge": "Mercado",
+    "originMercadoTitle": "Criado pelo Mercado Inteligente"
   },
   "toast": {
     "reclassified_one": "{{count}} gasto reclassificado.",
