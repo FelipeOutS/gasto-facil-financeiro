@@ -1954,7 +1954,27 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
 export function addGasto(input: NovoGastoInput): Gasto[] {
   if (!activeUserId) return [];
   if (!ensureCanWrite("addGasto")) return [];
-  const built = buildGastosFromInput(input, activeUserId);
+  return addGastoUnchecked(input);
+}
+
+/**
+ * Versão que NÃO aplica `ensureCanWrite` — destinada a efeitos colaterais
+ * automáticos de fluxos que já são liberados no plano free (ex.: criar
+ * gasto a partir de uma compra finalizada pelo Mercado Inteligente).
+ *
+ * O guard de assinatura existe para bloquear criação MANUAL na aba Gastos.
+ * Quando o usuário conclui uma ação de um módulo liberado, a escrita
+ * derivada não deve ser silenciosamente engolida pelo guard.
+ *
+ * Continua exigindo `activeUserId` (RLS server-side é o limite real).
+ */
+export function addGastoAuto(input: NovoGastoInput): Gasto[] {
+  if (!activeUserId) return [];
+  return addGastoUnchecked(input);
+}
+
+function addGastoUnchecked(input: NovoGastoInput): Gasto[] {
+  const built = buildGastosFromInput(input, activeUserId!);
   const created = built.map((b) => b.client);
   // Optimistic update
   memGastos = [...memGastos, ...created];

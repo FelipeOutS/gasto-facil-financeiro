@@ -12,7 +12,7 @@
  *    para que apareça em Cartões/fatura/limite usado.
  */
 
-import { addGasto } from "@/lib/store";
+import { addGastoAuto } from "@/lib/store";
 import type { FormaPagamento } from "@/lib/types";
 import type { ListaItem } from "@/lib/mercado/listas-store";
 
@@ -92,14 +92,17 @@ export function createGastoFromFinalizedPurchase(
     .filter(Boolean)
     .join("\n\n");
 
-  // Cartão só faz sentido quando pagamento é débito/crédito.
+  // Cartão (de crédito) só faz sentido vinculado quando o pagamento é crédito.
+  // A tabela `cartoes` modela APENAS cartões de crédito (com limite, fechamento
+  // e vencimento de fatura). Vincular um débito ao cartão consumiria
+  // incorretamente o limite e poluiria a fatura — por isso ignoramos.
   const cartaoId =
-    input.cartaoId && (input.formaPagamento === "credito" || input.formaPagamento === "debito")
+    input.cartaoId && input.formaPagamento === "credito"
       ? input.cartaoId
       : undefined;
 
   try {
-    const created = addGasto({
+    const created = addGastoAuto({
       descricao: `Compra em ${market}`,
       valor: total,
       data,
