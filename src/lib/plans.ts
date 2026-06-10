@@ -195,6 +195,15 @@ const FEATURE_PLAN_WHITELIST: Partial<Record<FeatureKey, PlanTier[]>> = {
   mercado_avancado: ["pessoal_premium", "mei_inteligente", "empresa"],
   // Etapa 16 — Importação de cupom fiscal / NFC-e / QR Code.
   mercado_importar_cupom: ["pessoal_premium", "mei_inteligente", "empresa"],
+
+  // Fase 1E-B2B — features básicas: free_ads + todos os planos pagos.
+  // Espelhado em public.has_feature_access (SQL).
+  gastos_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
+  receitas_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
+  mercado_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
+  cartoes_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
+  orcamento_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
+  metas_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
 };
 
 export function planAllowsFeature(plan: PlanTier, feature: FeatureKey): boolean {
@@ -211,7 +220,10 @@ export function minPlanFor(feature: FeatureKey): PlanTier {
 
 export function plansAllowingFeature(feature: FeatureKey): PlanTier[] {
   const whitelist = FEATURE_PLAN_WHITELIST[feature];
-  if (whitelist) return whitelist;
+  // Para fins comerciais (UI de planos), filtramos free_ads das whitelists —
+  // ele aparece apenas via planAllowsFeature direto, nunca como "plano que
+  // vende esta feature".
+  if (whitelist) return whitelist.filter((p) => p !== "free_ads");
   const min = FEATURE_MIN_PLAN[feature];
   return (Object.keys(PLAN_ORDER) as PlanTier[]).filter(
     (p) =>
