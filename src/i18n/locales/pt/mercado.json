@@ -488,6 +488,7 @@
       "successWithExpense": "Compra finalizada, salva no histórico e gasto criado na aba Gastos.",
       "successCommunity": "Compra finalizada e preços adicionados à base do Mercado Inteligente para consultas futuras.",
       "successCommunityWithExpense": "Compra finalizada, gasto criado na aba Gastos e preços enviados à base da Comunidade.",
+      "viewExpenseAction": "Ver gasto",
       "savedMarkets": "Seus mercados",
       "noSavedMarketsHint": "Você pode cadastrar mercados favoritos em Meus mercados."
     }
