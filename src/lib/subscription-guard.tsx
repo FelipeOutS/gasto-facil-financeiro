@@ -223,6 +223,8 @@ export function useSubscriptionGuard(): GuardCtx {
     // Fallback seguro para casos isolados (ex: testes). Bloqueia tudo.
     return {
       canWrite: false,
+      canWriteBasic: false,
+
       canAdmin: false,
       canUseFeature: () => false,
       requireSubscription: () => {
