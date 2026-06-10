@@ -1,10 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, Home, Plus } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { ReceitaForm, type ReceitaFormPreset } from "@/components/renda/ReceitaForm";
 import { useAuth } from "@/lib/auth-context";
+import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import { type TipoCadastro } from "@/lib/profile-utils";
 import { makeRevenueT, revenueSuffix } from "@/lib/revenue-vocab";
 import type { TipoReceita } from "@/lib/types";
