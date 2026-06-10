@@ -13,6 +13,8 @@ export const Route = createFileRoute("/privacidade")({
         { property: "og:title", content: t("privacidade.metaTitle") },
         { property: "og:description", content: t("privacidade.ogDesc") },
         { property: "og:url", content: "https://gastointeligente.com.br/privacidade" },
+        { property: "og:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
+        { name: "twitter:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
       ],
       links: [{ rel: "canonical", href: "https://gastointeligente.com.br/privacidade" }],
     };
