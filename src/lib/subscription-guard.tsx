@@ -112,13 +112,31 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
     if (!user) return false;
     if (planLoading || rolesLoading) return false;
     if (isTrialActive) return true;
-    if (storedPlan === "sem_assinatura" || storedPlan === "free") return false;
+    // free_ads NÃO concede escrita paga — apenas escrita básica (canWriteBasic).
+    if (
+      storedPlan === "sem_assinatura" ||
+      storedPlan === "free" ||
+      storedPlan === "free_ads"
+    ) {
+      return false;
+    }
     return isStatusActive(status);
   }, [isAdmin, user, storedPlan, status, isTrialActive, planLoading, rolesLoading]);
+
+  // free_ads (ativo) habilita escrita básica, sujeita a quota server-side.
+  const freeAdsAllows =
+    !planLoading &&
+    !rolesLoading &&
+    !!user &&
+    storedPlan === "free_ads" &&
+    isStatusActive(status);
 
   // Em conta própria: depende só da assinatura.
   // Em conta conectada: depende do nível de acesso (não da assinatura do viewer).
   const canWrite = isOwnAccount ? subscriptionAllows : connCanCreate;
+  const canWriteBasic = isOwnAccount
+    ? subscriptionAllows || freeAdsAllows || isAdmin
+    : connCanCreate;
 
   // Sincroniza a flag central usada pelo store (defesa contra burla do front).
   useEffect(() => {
