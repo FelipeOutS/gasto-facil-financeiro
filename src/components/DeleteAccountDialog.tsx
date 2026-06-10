@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
-import { deleteMyAccount } from "@/server/account.functions";
+import { deleteMyAccount } from "@/lib/account.functions";
 
 type Step = "confirm" | "type" | "deleting";
 

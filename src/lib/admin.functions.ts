@@ -2,13 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getSubscriptionForUserIdentity } from "./subscription.server";
-import { reconcilePendingCardPaymentsForUser } from "./mercadopago.server";
-import { logAuditEvent } from "./logs.server";
+import { getSubscriptionForUserIdentity } from "@/server/subscription.server";
+import { reconcilePendingCardPaymentsForUser } from "@/server/mercadopago.server";
+import { logAuditEvent } from "@/server/logs.server";
 import {
   diagnoseMercadoPagoPayment,
   reconcileMercadoPagoPaymentById,
-} from "./mercadopago-diagnostics.server";
+} from "@/server/mercadopago-diagnostics.server";
 
 const ADMIN_EMAILS = [
   "felipe.out.silva@outlook.com",

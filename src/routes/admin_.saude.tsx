@@ -37,7 +37,7 @@ import {
   type SystemHealthData,
   type LogRetentionPreview,
   type LogRetentionCleanupResult,
-} from "@/server/system-health.functions";
+} from "@/lib/system-health.functions";
 import { PaymentDiagnoseDialog } from "@/components/admin/PaymentDiagnoseDialog";
 import {
   AlertDialog,
