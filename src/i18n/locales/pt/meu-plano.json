@@ -7,7 +7,9 @@
     "price": "R$ 0,00",
     "cta": "Começar grátis",
     "limitsNote": "Plano gratuito com limites mensais. Faça upgrade a qualquer momento.",
-    "noExternalAdsNote": "Sem anúncios externos nesta fase."
+    "noExternalAdsNote": "Sem anúncios externos nesta fase.",
+    "comingSoon": "Em breve",
+    "disabledReason": "Recursos e limites serão ativados em breve."
   },
   "status": {
     "ativo": "Ativo",
