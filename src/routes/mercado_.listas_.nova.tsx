@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import { ArrowLeft, Home, ListPlus } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
@@ -35,7 +35,7 @@ function NovaListaPage() {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) {
-      toast.error(t("nova.errors.nameRequired"));
+      notify.error(t("nova.errors.nameRequired"));
       return;
     }
     setSubmitting(true);
@@ -52,10 +52,10 @@ function NovaListaPage() {
             ? estimateValue
             : undefined,
       });
-      toast.success(t("nova.success"));
+      notify.success(t("nova.success"));
       void navigate({ to: "/mercado/listas" });
     } catch {
-      toast.error(t("nova.errors.generic"));
+      notify.error(t("nova.errors.generic"));
       setSubmitting(false);
     }
   }
