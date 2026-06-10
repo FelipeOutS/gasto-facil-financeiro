@@ -198,6 +198,11 @@ function HistoricoPage() {
               {t("historyV2.deleteDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <ul className="mt-1 space-y-1.5 rounded-2xl border border-border/60 bg-card-elevated p-3 text-sm text-muted-foreground">
+            <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden /><span>{t("historyV2.deleteDialog.bulletGasto")}</span></li>
+            <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden /><span>{t("historyV2.deleteDialog.bulletComunitario")}</span></li>
+            <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden /><span>{t("historyV2.deleteDialog.bulletCartao")}</span></li>
+          </ul>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>
               {t("historyV2.deleteDialog.cancel")}

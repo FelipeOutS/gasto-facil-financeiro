@@ -1807,7 +1807,10 @@
     },
     "deleteDialog": {
       "title": "Delete purchase history?",
-      "description": "This action will remove this purchase from your history. Prices already submitted to Community Prices and expenses already created will not be deleted automatically.",
+      "description": "This only removes this purchase from your Smart Market history.",
+      "bulletGasto": "The expense created will remain in Expenses.",
+      "bulletComunitario": "Items submitted to Community Prices will be kept.",
+      "bulletCartao": "Card and statement will not be changed.",
       "cancel": "Cancel",
       "confirm": "Delete history",
       "success": "Purchase history deleted.",

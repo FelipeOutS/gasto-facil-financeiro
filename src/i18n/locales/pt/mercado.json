@@ -1807,7 +1807,10 @@
     },
     "deleteDialog": {
       "title": "Excluir histórico de compra?",
-      "description": "Essa ação removerá esta compra do seu histórico. Os preços já enviados para o Preço Comunitário e gastos já criados não serão apagados automaticamente.",
+      "description": "Essa ação remove apenas esta compra do histórico do Mercado Inteligente.",
+      "bulletGasto": "O gasto criado continuará em Gastos.",
+      "bulletComunitario": "Itens enviados ao Preço Comunitário serão mantidos.",
+      "bulletCartao": "Cartão e fatura não serão alterados.",
       "cancel": "Cancelar",
       "confirm": "Excluir histórico",
       "success": "Histórico de compra excluído.",
