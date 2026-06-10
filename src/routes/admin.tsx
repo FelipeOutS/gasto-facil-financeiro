@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { isAdminMasterEmail, PLAN_LABEL } from "@/lib/plans";
-import { getAdminDashboard, deleteUserById, grantPlanManually, setUserStatusManually, diagnoseMpPayment, reconcileMpPaymentById, listRecentPaymentEvents, type AdminDashboardData, type AdminUserRow } from "@/server/admin.functions";
+import { getAdminDashboard, deleteUserById, grantPlanManually, setUserStatusManually, diagnoseMpPayment, reconcileMpPaymentById, listRecentPaymentEvents, type AdminDashboardData, type AdminUserRow } from "@/lib/admin.functions";
 import { toast } from "sonner";
 import {
   AlertDialog,

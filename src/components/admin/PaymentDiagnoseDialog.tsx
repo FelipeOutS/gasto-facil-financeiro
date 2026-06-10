@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import {
   diagnoseMpPayment,
   reconcileMpPaymentById,
-} from "@/server/admin.functions";
+} from "@/lib/admin.functions";
 
 type Diagnosis = {
   mercado_pago_status: string;
