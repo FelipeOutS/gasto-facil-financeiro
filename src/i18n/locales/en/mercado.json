@@ -105,10 +105,10 @@
       "progress": "Progress",
       "open": "Open",
       "delete": "Delete",
-      "deleteConfirm": "Are you sure you want to delete this list? Finalized purchases and price history will remain saved.",
+      "deleteConfirm": "Delete this list? Finalized purchases and price history will remain saved.",
       "deleteSuccess": "List deleted successfully.",
       "deleteError": "Could not delete this list.",
-      "deleteConfirmTitle": "Are you sure you want to delete this list?",
+      "deleteConfirmTitle": "Delete this list?",
       "deleteConfirmDescription": "This action only removes the shopping list. Finalized purchases, history and saved prices will not be erased.",
       "deleteConfirmName": "List: {{name}}",
       "deleteCancel": "Cancel",
@@ -279,8 +279,8 @@
       "title": "Danger zone",
       "description": "This removes only this shopping list. Finalized purchases and price history will remain saved.",
       "button": "Delete list",
-      "confirm": "Are you sure you want to delete this list? Finalized purchases and price history will remain saved.",
-      "confirmTitle": "Are you sure you want to delete this list?",
+      "confirm": "Delete this list? Finalized purchases and price history will remain saved.",
+      "confirmTitle": "Delete this list?",
       "confirmDescription": "This action only removes the shopping list. Finalized purchases, history and saved prices will not be erased.",
       "cancel": "Cancel",
       "confirmButton": "Delete list",
@@ -463,7 +463,7 @@
       "remove": "Remove item from cart",
       "removed": "Item removed from cart",
       "removeConfirmTitle": "Remove this item?",
-      "removeConfirmDescription": "Are you sure you want to remove \"{{name}}\" from the cart?",
+      "removeConfirmDescription": "Remove \"{{name}}\" from the cart? You can add it again later.",
       "cancel": "Cancel"
     },
     "quickAdd": {
@@ -836,7 +836,7 @@
       "favOff": "Market removed from favorites.",
       "nameRequired": "Enter the market name."
     },
-    "confirmRemove": "Are you sure you want to remove this market? This does not delete your purchase history or your prices.",
+    "confirmRemove": "Remove this market? Your purchase history and saved prices will be kept.",
     "empty": {
       "title": "No markets saved yet",
       "desc": "Add the markets where you usually shop to find them quickly when recording a purchase."
