@@ -7,7 +7,9 @@
     "price": "$0.00",
     "cta": "Start for free",
     "limitsNote": "Free plan with monthly limits. Upgrade anytime.",
-    "noExternalAdsNote": "No external ads in this phase."
+    "noExternalAdsNote": "No external ads in this phase.",
+    "comingSoon": "Coming soon",
+    "disabledReason": "Features and limits will be activated soon."
   },
   "status": {
     "ativo": "Active",
