@@ -71,6 +71,12 @@ import {
 } from "recharts";
 
 export const Route = createFileRoute("/admin")({
+  head: () => ({
+    meta: [
+      { title: "Admin — Gasto Inteligente" },
+      { name: "robots", content: "noindex,nofollow" },
+    ],
+  }),
   component: AdminPage,
 });
 
