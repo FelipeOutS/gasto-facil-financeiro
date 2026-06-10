@@ -16,12 +16,17 @@ export type RateLimitPreset = {
 };
 
 export const RATE_LIMIT_PRESETS = {
+  // Mercado Pago: alto propositalmente para não bloquear retries legítimos do
+  // provedor. Segurança real do webhook vem de HMAC + idempotência, não daqui.
   mpWebhook: { limit: 120, windowSeconds: 60 },
   whatsappWebhook: { limit: 60, windowSeconds: 60 },
   publicApi: { limit: 60, windowSeconds: 60 },
   aiPerUser: { limit: 20, windowSeconds: 3600 },
-  importPerUser: { limit: 10, windowSeconds: 3600 },
-  flyerOcrPerUser: { limit: 40, windowSeconds: 3600 },
+  // Importações PDF/imagem por usuário (extrato, fatura, conta, investimentos, OCR gasto).
+  importPerUser: { limit: 20, windowSeconds: 3600 },
+  // OCR de panfleto: caro (Vision/Gemini). Mantém faixa segura 10–20/h.
+  flyerOcrPerUser: { limit: 20, windowSeconds: 3600 },
+  // Joanin / importações online (fetch externo).
   onlineImportPerUser: { limit: 30, windowSeconds: 3600 },
   authAttempt: { limit: 10, windowSeconds: 600 },
 } satisfies Record<string, RateLimitPreset>;
