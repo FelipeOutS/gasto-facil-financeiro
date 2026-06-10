@@ -8,7 +8,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { logAuditEvent } from "./logs.server";
+import { logAuditEvent } from "@/server/logs.server";
 
 const ADMIN_EMAILS = [
   "felipe.out.silva@outlook.com",
