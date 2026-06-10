@@ -45,7 +45,7 @@ import { useSubscriptionGuard } from "@/lib/subscription-guard";
 export const Route = createFileRoute("/confirmar")({
   head: () => {
     const t = i18n.getFixedT(null, "confirmar");
-    return { meta: [{ title: t("metaTitle") }] };
+    return { meta: [{ title: t("metaTitle") }, { name: "robots", content: "noindex,follow" }] };
   },
   component: Confirmar,
 });
