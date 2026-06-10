@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatBRL, parseBRLInput } from "@/lib/format";
-import { getEconomicRadar } from "@/server/radar.functions";
+import { getEconomicRadar } from "@/lib/radar.functions";
 
 type Status = "atualizado" | "cache" | "desatualizado";
 

@@ -28,7 +28,7 @@ import {
   addGasto,
 } from "@/lib/store";
 import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
-import { getEconomicRadar } from "@/server/radar.functions";
+import { getEconomicRadar } from "@/lib/radar.functions";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";

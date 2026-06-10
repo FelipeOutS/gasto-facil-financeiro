@@ -33,7 +33,7 @@ import {
 import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
 import { formatBRL, parseBRLInput, toLocalISODate } from "@/lib/format";
 import { requireOnline } from "@/lib/use-online-status";
-import { getEconomicRadar } from "@/server/radar.functions";
+import { getEconomicRadar } from "@/lib/radar.functions";
 
 const FREQ_KEYS: FrequenciaRecorrencia[] = [
   "mensal",

@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
-import { getEconomicRadar } from "@/server/radar.functions";
+import { getEconomicRadar } from "@/lib/radar.functions";
 import i18n from "@/i18n";
 
 export const Route = createFileRoute("/radar")({
