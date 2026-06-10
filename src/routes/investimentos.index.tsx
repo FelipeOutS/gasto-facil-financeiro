@@ -116,6 +116,7 @@ function InvestimentosGate() {
 
 function InvestimentosBloqueado() {
   const { t } = useTranslation("misc");
+  const features = t("investimentos.locked.features", { returnObjects: true }) as string[];
   return (
     <MobileShell wide>
       <div className="mx-auto mt-10 max-w-md rounded-3xl border border-border bg-card p-6 text-center shadow-card">
@@ -123,15 +124,27 @@ function InvestimentosBloqueado() {
         <p className="mt-2 text-sm text-muted-foreground">
           {t("investimentos.locked.desc")}
         </p>
+        {Array.isArray(features) && features.length > 0 && (
+          <div className="mt-5 rounded-2xl border border-border/60 bg-muted/30 p-4 text-left">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("investimentos.locked.previewTitle")}
+            </p>
+            <ul className="mt-2 space-y-1.5 text-sm">
+              {features.map((f, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span aria-hidden className="mt-1 inline-block size-1.5 shrink-0 rounded-full bg-primary" />
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div className="mt-5 flex flex-col gap-2">
           <Button asChild className="rounded-2xl">
             <Link to="/meu-plano">{t("investimentos.locked.plans")}</Link>
           </Button>
-          <Button asChild variant="outline" className="rounded-2xl">
-            <Link to="/meu-plano">{t("investimentos.locked.subscribe")}</Link>
-          </Button>
-          <Button asChild variant="ghost" className="rounded-2xl">
-            <Link to="/">{t("investimentos.locked.home")}</Link>
+          <Button asChild variant="link" className="text-muted-foreground">
+            <Link to="/">{t("investimentos.locked.back")}</Link>
           </Button>
         </div>
       </div>
