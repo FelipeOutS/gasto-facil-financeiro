@@ -449,10 +449,10 @@ function DangerZoneCard({ listaId }: { listaId: string }) {
   function handleConfirm() {
     setConfirming(false);
     if (removeLista(listaId)) {
-      toast.success(t("detail.delete.success"));
+      notify.success(t("detail.delete.success"));
       void navigate({ to: "/mercado/listas", replace: true });
     } else {
-      toast.error(t("detail.delete.error"));
+      notify.error(t("detail.delete.error"));
     }
   }
 
@@ -545,7 +545,7 @@ function EditListaCard({ lista }: { lista: MercadoLista }) {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) {
-      toast.error(t("detail.editList.requiredName"));
+      notify.error(t("detail.editList.requiredName"));
       return;
     }
     const parsed = estimate ? Number(estimate.replace(/\./g, "").replace(",", ".")) : NaN;
@@ -559,10 +559,10 @@ function EditListaCard({ lista }: { lista: MercadoLista }) {
       observation: observation.trim() || null,
     });
     if (!ok) {
-      toast.error(t("detail.editList.requiredName"));
+      notify.error(t("detail.editList.requiredName"));
       return;
     }
-    toast.success(t("detail.editList.saved"));
+    notify.success(t("detail.editList.saved"));
     setOpen(false);
   }
 
@@ -888,7 +888,7 @@ function AddItemForm({ listaId }: { listaId: string }) {
     e.preventDefault();
     const trimmed = nome.trim();
     if (!trimmed) {
-      toast.error(t("detail.form.requiredName"));
+      notify.error(t("detail.form.requiredName"));
       return;
     }
     const created = addItemLista(listaId, {
@@ -898,7 +898,7 @@ function AddItemForm({ listaId }: { listaId: string }) {
       precoEstimado: parseNumber(precoEstimado),
     });
     if (created) {
-      toast.success(t("detail.form.added"));
+      notify.success(t("detail.form.added"));
       setNome("");
       setQuantidade("1");
       setUnidade("");
@@ -1037,11 +1037,11 @@ function BarcodeBlock({ onApply }: { onApply: (name: string) => void }) {
     if (!result?.found) return;
     const name = result.name?.trim();
     if (!name) {
-      toast.error(t("detail.barcode.noName"));
+      notify.error(t("detail.barcode.noName"));
       return;
     }
     onApply(name);
-    toast.success(t("detail.barcode.applied"));
+    notify.success(t("detail.barcode.applied"));
     setResult(null);
     setCode("");
     setError(null);
@@ -1177,7 +1177,7 @@ function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
   function applyCommunityPrice(price: number) {
     setPrecoEstimado(String(price));
     updateItemLista(listaId, item.id, { precoEstimado: price });
-    toast.success(t("communityPrices.suggestions.applied"));
+    notify.success(t("communityPrices.suggestions.applied"));
   }
 
   function startEdit() {
@@ -1195,7 +1195,7 @@ function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
   function saveEdit() {
     const trimmed = nome.trim();
     if (!trimmed) {
-      toast.error(t("detail.form.requiredName"));
+      notify.error(t("detail.form.requiredName"));
       return;
     }
     updateItemLista(listaId, item.id, {
@@ -1204,7 +1204,7 @@ function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
       unidade: unidade.trim() || undefined,
       precoEstimado: parseNumber(precoEstimado),
     });
-    toast.success(t("detail.form.updated"));
+    notify.success(t("detail.form.updated"));
     setEditing(false);
   }
 
@@ -1212,7 +1212,7 @@ function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
     const ok = await confirmAsync({ title: t("detail.item.confirmRemove"), destructive: true });
     if (!ok) return;
     removeItemLista(listaId, item.id);
-    toast.success(t("detail.form.removed"));
+    notify.success(t("detail.form.removed"));
   }
 
   function handleToggle() {
