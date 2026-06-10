@@ -74,7 +74,7 @@ function CadastroForm() {
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: email.trim(),
-      options: { emailRedirectTo: `${window.location.origin}/` },
+      options: { emailRedirectTo: (await import("@/lib/public-url")).buildPublicUrl("/") },
     });
     setReenviando(false);
     if (error) {
