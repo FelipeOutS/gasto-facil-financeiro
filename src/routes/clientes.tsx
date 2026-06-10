@@ -66,7 +66,7 @@ import {
   salvarClientePorCnpj,
   type Cliente,
 } from "@/lib/clientes";
-import { consultarCnpj } from "@/server/cnpj.functions";
+import { consultarCnpj } from "@/lib/cnpj.functions";
 
 export const Route = createFileRoute("/clientes")({
   head: () => ({
