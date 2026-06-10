@@ -182,10 +182,17 @@
   "investimentos": {
     "locked": {
       "title": "Your investments are saved",
-      "desc": "Your free trial has ended. Your investments are still stored, but to view and keep tracking your portfolio, subscribe to a plan with Investments access.",
+      "desc": "Your free trial has ended. Your portfolio is safe here. To keep tracking growth, income and movements, choose a plan that includes Investments.",
+      "previewTitle": "What you unlock",
+      "features": [
+        "Consolidated view of your portfolio",
+        "Income and net worth evolution",
+        "Detailed imports and movements"
+      ],
       "plans": "See plans",
       "subscribe": "Subscribe now",
-      "home": "Back to home"
+      "home": "Back to home",
+      "back": "Back to home"
     },
     "title": "Investments",
     "subtitle": "Track your portfolio, equity evolution and yields all in one place.",
