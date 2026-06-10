@@ -39,14 +39,14 @@ export function EmptyState({
         isPremium
           ? "border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card shadow-card"
           : "border-dashed border-border bg-card/60",
-        "animate-rise",
+        "motion-safe:animate-rise",
         className,
       )}
     >
       {icon && (
         <div
           className={cn(
-            "grid place-items-center rounded-2xl text-foreground animate-pop",
+            "grid place-items-center rounded-2xl text-foreground motion-safe:animate-pop",
             isCompact ? "h-12 w-12" : "h-14 w-14",
             isPremium
               ? "bg-primary/15 text-primary"
