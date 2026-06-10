@@ -2564,7 +2564,8 @@ export function addReceita(input: NovaReceitaInput): Receita[] {
     .insert(rows)
     .then(({ error }) => {
       if (error) {
-        console.error("[store] addReceita failed", error);
+        const quota = handleFreeAdsQuotaError(error);
+        if (!quota) console.error("[store] addReceita failed", error);
       }
     });
   return created;
