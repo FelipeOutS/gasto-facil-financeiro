@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import {
   ArrowLeft,
   Home,
@@ -1038,22 +1039,31 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
       }
 
       const communityOk = !!community && (community.inserted > 0 || community.updated > 0);
+      const goToGasto = () => {
+        void navigate({ to: "/gastos" });
+      };
       if (gastoResult.created && communityOk) {
-        toast.success(t("carrinho.finalize.successCommunityWithExpense"));
+        notify.action(t("carrinho.finalize.successCommunityWithExpense"), {
+          actionLabel: t("carrinho.finalize.viewExpenseAction"),
+          onAction: goToGasto,
+        });
       } else if (gastoResult.created) {
-        toast.success(t("carrinho.finalize.successWithExpense"));
+        notify.action(t("carrinho.finalize.successWithExpense"), {
+          actionLabel: t("carrinho.finalize.viewExpenseAction"),
+          onAction: goToGasto,
+        });
       } else if (communityOk) {
-        toast.success(t("carrinho.finalize.successCommunity"));
+        notify.success(t("carrinho.finalize.successCommunity"));
         if (gastoResult.reason && gastoResult.reason !== "empty") {
-          toast.error(t("carrinho.finalize.errorGasto"));
+          notify.warning(t("carrinho.finalize.errorGasto"));
         }
       } else {
-        toast.success(t("importarCupom.importActions.finishPurchase.success"));
+        notify.success(t("importarCupom.importActions.finishPurchase.success"));
         if (gastoResult.reason && gastoResult.reason !== "empty") {
-          toast.error(t("carrinho.finalize.errorGasto"));
+          notify.warning(t("carrinho.finalize.errorGasto"));
         }
         if (communityError) {
-          toast.error(t("carrinho.finalize.errorCommunity"));
+          notify.warning(t("carrinho.finalize.errorCommunity"));
         }
       }
 
