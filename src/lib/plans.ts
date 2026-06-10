@@ -183,7 +183,11 @@ export function plansAllowingFeature(feature: FeatureKey): PlanTier[] {
   if (whitelist) return whitelist;
   const min = FEATURE_MIN_PLAN[feature];
   return (Object.keys(PLAN_ORDER) as PlanTier[]).filter(
-    (p) => p !== "free" && p !== "sem_assinatura" && PLAN_ORDER[p] >= PLAN_ORDER[min],
+    (p) =>
+      p !== "free" &&
+      p !== "sem_assinatura" &&
+      p !== "free_ads" &&
+      PLAN_ORDER[p] >= PLAN_ORDER[min],
   );
 }
 
