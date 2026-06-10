@@ -127,6 +127,8 @@
     "searchPlaceholder": "Search by description or merchant",
     "clearSearch": "Clear search",
     "all": "All",
+    "originMercadoBadge": "Market",
+    "originMercadoTitle": "Purchase from Smart Market",
     "imports": "Imports in this statement",
     "importOriginDefault": "Import",
     "purchases_one": "{{count}} purchase",

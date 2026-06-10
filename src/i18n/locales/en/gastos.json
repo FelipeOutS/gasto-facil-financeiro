@@ -150,7 +150,9 @@
     "delete": "Delete expense",
     "select": "Select expense",
     "deleted": "Expense removed.",
-    "otherCategory": "Other"
+    "otherCategory": "Other",
+    "originMercadoBadge": "Market",
+    "originMercadoTitle": "Created from Smart Market"
   },
   "toast": {
     "reclassified_one": "{{count}} expense reclassified.",
