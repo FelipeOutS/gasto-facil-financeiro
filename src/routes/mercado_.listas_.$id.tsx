@@ -52,6 +52,7 @@ import {
 import { submitHistoricoToCommunity } from "@/lib/mercado/community-prices-from-purchase";
 import { createGastoFromFinalizedPurchase } from "@/lib/mercado/finalized-purchase-gasto";
 import { usePlan } from "@/lib/use-plan";
+import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import {
   addItemLista,
   computeOrcamentoLista,
