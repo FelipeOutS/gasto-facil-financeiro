@@ -57,7 +57,30 @@ export type FeatureKey =
   | "empresa_inteligente"
   | "cofre_pessoal"
   | "mercado_avancado"
-  | "mercado_importar_cupom";
+  | "mercado_importar_cupom"
+  // Fase 1E-B2B — features básicas para free_ads (também liberadas em planos pagos).
+  // NÃO confundir com as features pagas equivalentes (cartoes, orcamento, etc.):
+  // estas são versões limitadas, sujeitas a quota server-side em free_ads.
+  | "gastos_basico"
+  | "receitas_basico"
+  | "mercado_basico"
+  | "cartoes_basico"
+  | "orcamento_basico"
+  | "metas_basico";
+
+/** Lista de features básicas (free_ads + planos pagos). */
+export const BASIC_FEATURES: ReadonlyArray<FeatureKey> = [
+  "gastos_basico",
+  "receitas_basico",
+  "mercado_basico",
+  "cartoes_basico",
+  "orcamento_basico",
+  "metas_basico",
+] as const;
+
+export function isBasicFeature(feature: FeatureKey): boolean {
+  return (BASIC_FEATURES as ReadonlyArray<FeatureKey>).includes(feature);
+}
 
 export const PLAN_LABEL: Record<PlanTier, string> = {
   free: "Sem assinatura",
