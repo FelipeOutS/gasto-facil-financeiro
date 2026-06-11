@@ -25,8 +25,14 @@ import { tipoEfetivo, type TipoCadastro } from "@/lib/profile-utils";
 import i18n from "@/i18n";
 
 const searchSchema = z.object({
-  tipo: fallback(z.enum(["gasto", "receita"]).optional(), undefined),
+  // `tipo` é opcional. Aceita "gasto" | "receita"; qualquer outro valor
+  // (ausente, inválido, lixo na URL) cai como undefined sem quebrar a tela.
+  tipo: z.preprocess(
+    (v) => (v === "gasto" || v === "receita" ? v : undefined),
+    z.enum(["gasto", "receita"]).optional(),
+  ),
 });
+
 
 export const Route = createFileRoute("/adicionar")({
   validateSearch: zodValidator(searchSchema),
