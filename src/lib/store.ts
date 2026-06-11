@@ -3260,7 +3260,13 @@ export type NovaMetaInput = {
   bancoId?: string;
   imagemKey?: string;
 };
-export function addMeta(input: NovaMetaInput): Meta {
+export function addMeta(input: NovaMetaInput): Meta | null {
+  // Meta básica é liberada para free_ads + planos pagos (quota via trigger
+  // tg_free_ads_quota_metas, cap=2). Sem_assinatura é bloqueado aqui e
+  // também pela RLS de metas_financeiras.
+  if (!ensureCanWrite("addMeta", { allowBasic: true })) {
+    return null;
+  }
   const now = new Date().toISOString();
   const novo: Meta = {
     id: uid(),
@@ -3300,7 +3306,16 @@ export function addMeta(input: NovaMetaInput): Meta {
       ...(novo.imagemKey ? { imagem_key: novo.imagemKey } : {}),
     } as MetaInsert)
     .then(({ error }) => {
-      if (error) console.error("[store] addMeta failed", error);
+      if (error) {
+        // Reverte a inserção otimista para refletir a falha (ex.: quota
+        // free_ads excedida via trigger SQL).
+        memMetas = memMetas.filter((m) => m.id !== newUuid);
+        metaKeyToUuid.delete(newUuid);
+        emit();
+        if (!handleFreeAdsQuotaError(error)) {
+          console.error("[store] addMeta failed", error);
+        }
+      }
     });
   return novo;
 }
