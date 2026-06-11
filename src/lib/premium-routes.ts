@@ -39,7 +39,11 @@ export const PREMIUM_ROUTE_RULES: PremiumRouteRule[] = [
   // upload de capa / galeria / visual personalizado. Não bloqueamos a rota
   // inteira para não barrar o Controle Simples Pessoal por URL direta.
   { path: "/whatsapp", feature: "whatsapp", title: "WhatsApp é um recurso premium" },
-  { path: "/renda", feature: "lancamentos_ilimitados", title: "Receitas é um recurso premium" },
+  // Etapa 1E-B2D — `/renda` (listagem + criação) usa `receitas_basico`,
+  // que libera free_ads e planos pagos. Sem assinatura continua bloqueado.
+  // A quota mensal (10 receitas/mês para free_ads) é enforçada server-side
+  // pelo trigger `tg_free_ads_quota_receitas`.
+  { path: "/renda", feature: "receitas_basico", title: "Receitas é um recurso premium" },
   { path: "/guardado", feature: "lancamentos_ilimitados", title: "Guardado é um recurso premium" },
   { path: "/contas-conectadas", feature: "contas_conectadas", title: "Contas conectadas é um recurso premium", description: "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização. Disponível nos planos Controle Completo Pessoal, MEI e Empresa." },
   { path: "/empresa", feature: "empresa_inteligente", title: "Empresa Inteligente é um recurso para MEI e Empresa", description: "Consulte seu CNPJ e mantenha os dados da sua empresa organizados no Gasto Inteligente. Disponível nos planos Essencial para MEI, MEI Completo e Empresa." },
@@ -87,6 +91,7 @@ const FEATURE_TO_ROUTE_LOCK_KEY: Partial<Record<FeatureKey, string>> = {
   metas_visuais: "metas",
   whatsapp: "whatsapp",
   lancamentos_ilimitados: "renda",
+  receitas_basico: "renda",
   contas_conectadas: "contasConectadas",
   empresa_inteligente: "empresa",
   mercado_avancado: "mercadoAvancado",
