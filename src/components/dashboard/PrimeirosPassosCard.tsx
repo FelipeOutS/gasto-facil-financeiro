@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import type { TipoCadastro } from "@/lib/profile-utils";
 import { tipoEfetivo } from "@/lib/profile-utils";
+import { useSubscription } from "@/lib/subscription-context";
 
 /**
  * Onboarding leve do Dashboard — orienta usuários novos a fazerem o primeiro
