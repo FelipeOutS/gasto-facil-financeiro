@@ -42,6 +42,7 @@ import {
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
+import { usePlan } from "@/lib/use-plan";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { makeRevenueT, revenueSuffix } from "@/lib/revenue-vocab";
 import { PageSkeleton } from "@/components/PageSkeleton";
@@ -179,6 +180,8 @@ function RendaPage() {
   const { t: tBase, i18n } = useTranslation("renda");
   const ready = useBootstrap();
   const { profile, user } = useAuth();
+  const { plan, isAdminMaster } = usePlan();
+  const isFreeAdsPlan = !isAdminMaster && plan === "free_ads";
   const tipoCad = profile?.tipo_cadastro as TipoCadastro;
   const vocab = getVocab(tipoCad);
   const suffix = revenueSuffix(tipoCad);
@@ -433,7 +436,7 @@ function RendaPage() {
     setValorStr("");
     setData(todayISO());
     setTipo("salario");
-    setRecorrente(true);
+    setRecorrente(!isFreeAdsPlan);
     setMeses(12);
     setNovaClienteId(null);
   }
@@ -473,12 +476,16 @@ function RendaPage() {
   }
 
   function openWithPreset(preset: { tipo: TipoReceita; recorrente: boolean; descricao?: string }) {
+    if (isFreeAdsPlan && preset.recorrente) {
+      toast.error(t("toast.recurringPaidOnly"));
+    }
+    const recorrentePermitido = preset.recorrente && !isFreeAdsPlan;
     if (isMobile) {
       void navigate({
         to: "/renda/nova",
         search: {
           tipo: preset.tipo,
-          recorrente: preset.recorrente ? "1" : "0",
+          recorrente: recorrentePermitido ? "1" : "0",
           descricao: preset.descricao,
         } as never,
       });
@@ -486,7 +493,7 @@ function RendaPage() {
     }
     reset();
     setTipo(preset.tipo);
-    setRecorrente(preset.recorrente);
+    setRecorrente(recorrentePermitido);
     if (preset.descricao) setDescricao(preset.descricao);
     setOpen(true);
   }
@@ -504,6 +511,11 @@ function RendaPage() {
     const desc = descricao.trim();
     if (!valor || !desc) {
       toast.error(t("toast.fillFields"));
+      return;
+    }
+    if (isFreeAdsPlan && recorrente) {
+      toast.error(t("toast.recurringPaidOnly"));
+      setRecorrente(false);
       return;
     }
     // Não bloqueia se offline: receita não recorrente cai na fila.
