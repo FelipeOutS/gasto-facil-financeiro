@@ -139,9 +139,13 @@ export function ReceitaForm(props: Props) {
         return;
       }
     }
-    addReceita(payload);
-    toast.success(t("toast.added"));
-    props.onDone();
+    try {
+      await addReceita(payload);
+      toast.success(t("toast.added"));
+      props.onDone();
+    } catch {
+      // addReceita já exibiu toast.error (quota free_ads ou erro genérico).
+    }
   }
 
   async function handleSaveCreate() {
