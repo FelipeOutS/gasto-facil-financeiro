@@ -441,6 +441,10 @@ function RendaPage() {
     setNovaClienteId(null);
   }
 
+  useEffect(() => {
+    if (isFreeAdsPlan && recorrente) setRecorrente(false);
+  }, [isFreeAdsPlan, recorrente]);
+
   async function persistNova(payload: NovaPayload) {
     // Fluxo offline: apenas para receita não recorrente, com usuário logado.
     if (!payload.recorrente && user?.id && !isOnline()) {
@@ -786,9 +790,9 @@ function RendaPage() {
             </DialogTrigger>
           )}
           <div className="flex flex-wrap gap-1.5">
-            <QuickAction icon={Briefcase} label={t("cta.quick.salario")} onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
+            <QuickAction icon={Briefcase} label={t("cta.quick.salario")} onClick={() => openWithPreset({ tipo: "salario", recorrente: !isFreeAdsPlan })} />
             <QuickAction icon={Coins} label={t("cta.quick.freela")} onClick={() => openWithPreset({ tipo: "freelance", recorrente: false })} />
-            <QuickAction icon={Repeat} label={t("cta.quick.recorrente")} onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
+            {!isFreeAdsPlan && <QuickAction icon={Repeat} label={t("cta.quick.recorrente")} onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />}
             <QuickAction icon={Receipt} label={t("cta.quick.avulsa")} onClick={() => openWithPreset({ tipo: "outros", recorrente: false })} />
           </div>
         </div>
