@@ -146,6 +146,7 @@
       "tipo": "Type",
       "repeat": "Repeat every month",
       "repeatHint": "Recurring entry",
+      "repeatPaidOnly": "Available on paid plans",
       "repeatMonths": "Repeat for (months)"
     },
     "cancel": "Cancel",
@@ -173,6 +174,7 @@
     "removed_mei": "Revenue removed.",
     "removed_empresa": "Revenue removed.",
     "fillFields": "Please fill in the description and amount.",
+    "recurringPaidOnly": "Recurring income is available on paid plans.",
     "offlineSaved": "Income saved offline. It will sync when the internet returns.",
     "offlineSaveError": "Could not save offline."
   },
