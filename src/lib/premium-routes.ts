@@ -90,6 +90,7 @@ const FEATURE_TO_ROUTE_LOCK_KEY: Partial<Record<FeatureKey, string>> = {
   contas_a_pagar: "contasAPagar",
   contas_a_receber: "contasAReceber",
   orcamento: "orcamento",
+  orcamento_basico: "orcamento",
   relatorios_avancados: "relatorios",
   gasto_ai: "gastoAi",
   metas_visuais: "metas",
