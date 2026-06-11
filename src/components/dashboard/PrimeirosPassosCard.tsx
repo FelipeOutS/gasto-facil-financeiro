@@ -54,8 +54,14 @@ export function PrimeirosPassosCard({
 }: PrimeirosPassosCardProps) {
   const { t } = useTranslation("dashboard");
   const { user, profile } = useAuth();
+  const { plan } = usePlan();
   const tipo = tipoEfetivo(profile?.tipo_cadastro as TipoCadastro);
   const isBusiness = tipo === "mei" || tipo === "empresa";
+  // free_ads: nesta fase só libera gastos/receitas manuais básicos. Cartões
+  // e metas ainda não estão liberados — escondemos os itens para não levar
+  // o usuário a um bloqueio de plano. Demais planos (pago/sem_assinatura/
+  // admin) continuam vendo o checklist completo.
+  const isFreeAds = plan === "free_ads";
 
   const [dismissed, setDismissed] = useState<boolean>(() => isDismissed(user?.id ?? null));
 
@@ -65,7 +71,7 @@ export function PrimeirosPassosCard({
 
   const items = useMemo(() => {
     const incomeKey = isBusiness ? "revenue" : "income";
-    return [
+    const base = [
       {
         id: "expense",
         label: t("firstSteps.items.expense"),
@@ -97,7 +103,10 @@ export function PrimeirosPassosCard({
         icon: Target,
       },
     ] as const;
-  }, [t, isBusiness, gastosCount, receitasCount, cartoesCount, metasCount]);
+    return isFreeAds
+      ? base.filter((i) => i.id !== "card" && i.id !== "goal")
+      : base;
+  }, [t, isBusiness, gastosCount, receitasCount, cartoesCount, metasCount, isFreeAds]);
 
   const totalDone = items.filter((i) => i.done).length;
   const allDone = totalDone === items.length;
