@@ -9,7 +9,10 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:unit": "bun tests/free-ads-plan.test.ts && bun tests/whatsapp-flow.test.ts && bun tests/whatsapp-pipeline.test.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:free-ads": "playwright test tests/e2e/free-ads.spec.ts"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
