@@ -854,11 +854,24 @@ function RendaPage() {
             <div className="flex items-center justify-between rounded-xl bg-card-elevated px-3 py-2">
               <div>
                 <p className="text-sm font-medium">{t("dialog.fields.repeat")}</p>
-                <p className="text-xs text-muted-foreground">{t("dialog.fields.repeatHint")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {isFreeAdsPlan ? t("dialog.fields.repeatPaidOnly") : t("dialog.fields.repeatHint")}
+                </p>
               </div>
-              <Switch checked={recorrente} onCheckedChange={setRecorrente} />
+              <Switch
+                checked={!isFreeAdsPlan && recorrente}
+                disabled={isFreeAdsPlan}
+                onCheckedChange={(checked) => {
+                  if (isFreeAdsPlan) {
+                    toast.error(t("toast.recurringPaidOnly"));
+                    setRecorrente(false);
+                    return;
+                  }
+                  setRecorrente(checked);
+                }}
+              />
             </div>
-            {recorrente && (
+            {!isFreeAdsPlan && recorrente && (
               <div>
                 <Label className="text-xs text-muted-foreground">{t("dialog.fields.repeatMonths")}</Label>
                 <Input
@@ -1224,9 +1237,9 @@ function RendaPage() {
           {recorrentesMes.length === 0 ? (
             <EmptyRenda
               title={t("empty.recurringTitle")}
-              subtitle={t("empty.recurringSubtitle")}
-              onAction={() => openWithPreset({ tipo: "salario", recorrente: true })}
-              actionLabel={t("empty.recurringAction")}
+                subtitle={isFreeAdsPlan ? t("dialog.fields.repeatPaidOnly") : t("empty.recurringSubtitle")}
+                onAction={isFreeAdsPlan ? undefined : () => openWithPreset({ tipo: "salario", recorrente: true })}
+                actionLabel={isFreeAdsPlan ? undefined : t("empty.recurringAction")}
             />
           ) : (
             <ul className="space-y-2">
