@@ -174,7 +174,7 @@ export function MetaForm({
     }
     if (!(await requireOnline())) return;
     if (isCreate) {
-      addMeta({
+      const created = addMeta({
         nome: nome.trim(),
         valorObjetivo: objetivo,
         valorAtual: parseBRLInput(acumuladoStr) || 0,
@@ -184,6 +184,7 @@ export function MetaForm({
         bancoId: bancoId === "nenhum" ? undefined : bancoId,
         imagemKey,
       });
+      if (!created) return; // bloqueado por assinatura — toast já exibido
       toast.success(t("toasts.created"));
       onClose();
       return;
