@@ -146,6 +146,7 @@
       "tipo": "Tipo",
       "repeat": "Repetir todo mês",
       "repeatHint": "Receita recorrente",
+      "repeatPaidOnly": "Disponível nos planos pagos",
       "repeatMonths": "Repetir por (meses)"
     },
     "cancel": "Cancelar",
@@ -173,6 +174,7 @@
     "removed_mei": "Faturamento removido.",
     "removed_empresa": "Faturamento removido.",
     "fillFields": "Preencha a descrição e o valor.",
+    "recurringPaidOnly": "Receitas recorrentes estão disponíveis nos planos pagos.",
     "offlineSaved": "Receita salva offline. Ela será sincronizada quando a internet voltar.",
     "offlineSaveError": "Não foi possível salvar offline."
   },

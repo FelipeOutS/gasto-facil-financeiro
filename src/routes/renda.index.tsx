@@ -42,6 +42,7 @@ import {
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
+import { usePlan } from "@/lib/use-plan";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { makeRevenueT, revenueSuffix } from "@/lib/revenue-vocab";
 import { PageSkeleton } from "@/components/PageSkeleton";
@@ -179,6 +180,8 @@ function RendaPage() {
   const { t: tBase, i18n } = useTranslation("renda");
   const ready = useBootstrap();
   const { profile, user } = useAuth();
+  const { plan, isAdminMaster } = usePlan();
+  const isFreeAdsPlan = !isAdminMaster && plan === "free_ads";
   const tipoCad = profile?.tipo_cadastro as TipoCadastro;
   const vocab = getVocab(tipoCad);
   const suffix = revenueSuffix(tipoCad);
@@ -433,10 +436,14 @@ function RendaPage() {
     setValorStr("");
     setData(todayISO());
     setTipo("salario");
-    setRecorrente(true);
+    setRecorrente(!isFreeAdsPlan);
     setMeses(12);
     setNovaClienteId(null);
   }
+
+  useEffect(() => {
+    if (isFreeAdsPlan && recorrente) setRecorrente(false);
+  }, [isFreeAdsPlan, recorrente]);
 
   async function persistNova(payload: NovaPayload) {
     // Fluxo offline: apenas para receita não recorrente, com usuário logado.
@@ -473,12 +480,16 @@ function RendaPage() {
   }
 
   function openWithPreset(preset: { tipo: TipoReceita; recorrente: boolean; descricao?: string }) {
+    if (isFreeAdsPlan && preset.recorrente) {
+      toast.error(t("toast.recurringPaidOnly"));
+    }
+    const recorrentePermitido = preset.recorrente && !isFreeAdsPlan;
     if (isMobile) {
       void navigate({
         to: "/renda/nova",
         search: {
           tipo: preset.tipo,
-          recorrente: preset.recorrente ? "1" : "0",
+          recorrente: recorrentePermitido ? "1" : "0",
           descricao: preset.descricao,
         } as never,
       });
@@ -486,7 +497,7 @@ function RendaPage() {
     }
     reset();
     setTipo(preset.tipo);
-    setRecorrente(preset.recorrente);
+    setRecorrente(recorrentePermitido);
     if (preset.descricao) setDescricao(preset.descricao);
     setOpen(true);
   }
@@ -504,6 +515,11 @@ function RendaPage() {
     const desc = descricao.trim();
     if (!valor || !desc) {
       toast.error(t("toast.fillFields"));
+      return;
+    }
+    if (isFreeAdsPlan && recorrente) {
+      toast.error(t("toast.recurringPaidOnly"));
+      setRecorrente(false);
       return;
     }
     // Não bloqueia se offline: receita não recorrente cai na fila.
@@ -774,9 +790,9 @@ function RendaPage() {
             </DialogTrigger>
           )}
           <div className="flex flex-wrap gap-1.5">
-            <QuickAction icon={Briefcase} label={t("cta.quick.salario")} onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
+            <QuickAction icon={Briefcase} label={t("cta.quick.salario")} onClick={() => openWithPreset({ tipo: "salario", recorrente: !isFreeAdsPlan })} />
             <QuickAction icon={Coins} label={t("cta.quick.freela")} onClick={() => openWithPreset({ tipo: "freelance", recorrente: false })} />
-            <QuickAction icon={Repeat} label={t("cta.quick.recorrente")} onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />
+            {!isFreeAdsPlan && <QuickAction icon={Repeat} label={t("cta.quick.recorrente")} onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />}
             <QuickAction icon={Receipt} label={t("cta.quick.avulsa")} onClick={() => openWithPreset({ tipo: "outros", recorrente: false })} />
           </div>
         </div>
@@ -838,11 +854,24 @@ function RendaPage() {
             <div className="flex items-center justify-between rounded-xl bg-card-elevated px-3 py-2">
               <div>
                 <p className="text-sm font-medium">{t("dialog.fields.repeat")}</p>
-                <p className="text-xs text-muted-foreground">{t("dialog.fields.repeatHint")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {isFreeAdsPlan ? t("dialog.fields.repeatPaidOnly") : t("dialog.fields.repeatHint")}
+                </p>
               </div>
-              <Switch checked={recorrente} onCheckedChange={setRecorrente} />
+              <Switch
+                checked={!isFreeAdsPlan && recorrente}
+                disabled={isFreeAdsPlan}
+                onCheckedChange={(checked) => {
+                  if (isFreeAdsPlan) {
+                    toast.error(t("toast.recurringPaidOnly"));
+                    setRecorrente(false);
+                    return;
+                  }
+                  setRecorrente(checked);
+                }}
+              />
             </div>
-            {recorrente && (
+            {!isFreeAdsPlan && recorrente && (
               <div>
                 <Label className="text-xs text-muted-foreground">{t("dialog.fields.repeatMonths")}</Label>
                 <Input
@@ -1208,9 +1237,9 @@ function RendaPage() {
           {recorrentesMes.length === 0 ? (
             <EmptyRenda
               title={t("empty.recurringTitle")}
-              subtitle={t("empty.recurringSubtitle")}
-              onAction={() => openWithPreset({ tipo: "salario", recorrente: true })}
-              actionLabel={t("empty.recurringAction")}
+                subtitle={isFreeAdsPlan ? t("dialog.fields.repeatPaidOnly") : t("empty.recurringSubtitle")}
+                onAction={isFreeAdsPlan ? undefined : () => openWithPreset({ tipo: "salario", recorrente: true })}
+                actionLabel={isFreeAdsPlan ? undefined : t("empty.recurringAction")}
             />
           ) : (
             <ul className="space-y-2">
