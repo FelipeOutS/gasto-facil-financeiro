@@ -13,6 +13,7 @@ import { enqueueIncome } from "@/lib/offline/offline-income-queue";
 import { TIPOS_RECEITA, type Receita, type TipoReceita } from "@/lib/types";
 import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
+import { usePlan } from "@/lib/use-plan";
 import { useClientes } from "@/lib/clientes";
 import { ClienteSelect } from "@/components/ClienteSelect";
 import { Button } from "@/components/ui/button";
@@ -70,8 +71,10 @@ type Props =
 export function ReceitaForm(props: Props) {
   const { t } = useTranslation("renda");
   const { user } = useAuth();
+  const { plan, isAdminMaster } = usePlan();
   const { ativos: clientesAtivos } = useClientes();
   const receitas = useStore(() => getReceitas());
+  const isFreeAdsPlan = !isAdminMaster && plan === "free_ads";
 
   const isEdit = props.mode === "edit";
   const initial = isEdit
@@ -88,7 +91,7 @@ export function ReceitaForm(props: Props) {
         valorStr: "",
         data: todayISO(),
         tipo: (props.preset?.tipo ?? "salario") as TipoReceita,
-        recorrente: props.preset?.recorrente ?? true,
+        recorrente: isFreeAdsPlan ? false : props.preset?.recorrente ?? true,
         clienteId: null as string | null,
       };
 
@@ -118,6 +121,10 @@ export function ReceitaForm(props: Props) {
 
   const receita = isEdit ? props.receita : null;
   const showScope = !!(receita?.recorrente && receita?.recorrenciaId);
+
+  useEffect(() => {
+    if (isFreeAdsPlan && recorrente) setRecorrente(false);
+  }, [isFreeAdsPlan, recorrente]);
 
   async function persistNova(payload: NovaPayload) {
     if (!payload.recorrente && user?.id && !isOnline()) {
@@ -153,6 +160,11 @@ export function ReceitaForm(props: Props) {
     const desc = descricao.trim();
     if (!valor || !desc) {
       toast.error(t("toast.fillFields"));
+      return;
+    }
+    if (isFreeAdsPlan && recorrente) {
+      toast.error(t("toast.recurringPaidOnly"));
+      setRecorrente(false);
       return;
     }
     if (recorrente && !(await requireOnline())) return;
