@@ -64,6 +64,7 @@
       "receitas": "You hit the monthly limit of 10 income entries on the free plan.",
       "mercado_listas": "You reached the limit of 2 active lists on the free plan.",
       "mercado_itens_lista": "You reached the limit of 30 items per list on the free plan.",
+      "metas": "You reached the limit of 2 goals on the free plan.",
       "generic": "You hit the free plan limit for this resource.",
       "cta": "View plans",
       "marketGastoBlocked": "Creating an expense from Market is available on paid plans."
