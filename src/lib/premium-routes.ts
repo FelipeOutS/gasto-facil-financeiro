@@ -31,7 +31,11 @@ export const PREMIUM_ROUTE_RULES: PremiumRouteRule[] = [
   { path: "/assinaturas", feature: "assinaturas_recorrencias", title: "Assinaturas é um recurso premium" },
   { path: "/contas-a-pagar", feature: "contas_a_pagar", title: "Contas a pagar é um recurso premium" },
   { path: "/contas-a-receber", feature: "contas_a_receber", title: "Contas a receber é um recurso premium" },
-  { path: "/orcamento", feature: "orcamento", title: "Orçamento é um recurso premium" },
+  // Fase 1E-B2I — `/orcamento` usa `orcamento_basico`, que libera free_ads
+  // e planos pagos. Sem assinatura continua bloqueado. A quota de 1
+  // orçamento para free_ads é enforçada server-side pelo trigger
+  // `tg_free_ads_quota_limites`.
+  { path: "/orcamento", feature: "orcamento_basico", title: "Orçamento é um recurso premium" },
   { path: "/relatorios", feature: "relatorios_avancados", title: "Relatórios avançados é um recurso premium" },
   { path: "/gasto-ai", feature: "gasto_ai", title: "Gasto Inteligente AI é um recurso premium", description: "Converse com uma IA sobre seus gastos, metas e organização financeira. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
   // Etapa 66 — /metas é liberada para todos os planos pagos (metas básicas).
@@ -86,6 +90,7 @@ const FEATURE_TO_ROUTE_LOCK_KEY: Partial<Record<FeatureKey, string>> = {
   contas_a_pagar: "contasAPagar",
   contas_a_receber: "contasAReceber",
   orcamento: "orcamento",
+  orcamento_basico: "orcamento",
   relatorios_avancados: "relatorios",
   gasto_ai: "gastoAi",
   metas_visuais: "metas",

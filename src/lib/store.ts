@@ -2412,6 +2412,11 @@ export function deleteCategoria(id: string) {
 
 // ---------- Limites ----------
 export function setLimite(tipo: "total" | string, valor: number, mes: number, ano: number) {
+  // Fase 1E-B2I — orçamento básico liberado para free_ads + planos pagos.
+  // Quota (1 orçamento para free_ads) é enforçada server-side pelo trigger
+  // `tg_free_ads_quota_limites`.
+  if (!ensureCanWrite("setLimite", { allowBasic: true })) return;
+  const prev = memLimites;
   const idx = memLimites.findIndex((l) => l.tipo === tipo && l.mes === mes && l.ano === ano);
   if (idx >= 0) {
     memLimites = memLimites.map((l, i) => (i === idx ? { ...l, valor } : l));
@@ -2427,7 +2432,14 @@ export function setLimite(tipo: "total" | string, valor: number, mes: number, an
       { onConflict: "user_id,tipo,mes,ano" },
     )
     .then(({ error }) => {
-      if (error) console.error("[store] setLimite failed", error);
+      if (error) {
+        // Rollback otimista em caso de quota/erro
+        memLimites = prev;
+        emit();
+        if (!handleFreeAdsQuotaError(error)) {
+          console.error("[store] setLimite failed", error);
+        }
+      }
     });
 }
 
