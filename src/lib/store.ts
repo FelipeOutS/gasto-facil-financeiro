@@ -2487,6 +2487,19 @@ export type NovaReceitaInput = {
 
 export async function addReceita(input: NovaReceitaInput): Promise<Receita[]> {
   if (!activeUserId) return [];
+  if (input.recorrente && !canWriteFinancial) {
+    if (canWriteBasicFinancial && typeof window !== "undefined") {
+      void import("sonner").then(({ toast }) => {
+        toast.error("Receitas recorrentes estão disponíveis nos planos pagos.");
+      });
+    } else {
+      ensureCanWrite("addReceita recorrente");
+    }
+    throw new Error("Receitas recorrentes estão disponíveis nos planos pagos.");
+  }
+  if (!ensureCanWrite("addReceita", { allowBasic: true })) {
+    throw new Error("Você precisa de uma assinatura ativa para usar este recurso.");
+  }
   const now = new Date().toISOString();
   const baseDate = new Date(input.data + "T00:00:00");
   const created: Receita[] = [];
