@@ -2485,7 +2485,7 @@ export type NovaReceitaInput = {
   clienteId?: string | null;
 };
 
-export function addReceita(input: NovaReceitaInput): Receita[] {
+export async function addReceita(input: NovaReceitaInput): Promise<Receita[]> {
   if (!activeUserId) return [];
   const now = new Date().toISOString();
   const baseDate = new Date(input.data + "T00:00:00");
@@ -2557,17 +2557,27 @@ export function addReceita(input: NovaReceitaInput): Receita[] {
       ...(clienteId ? { cliente_id: clienteId } : {}),
     } as ReceitaInsert);
   }
+  // Aplica otimisticamente para UI responsiva, mas aguarda o insert e
+  // reverte se houver falha — evita toast de sucesso silencioso quando
+  // RLS, quota ou trigger rejeita a operação.
   memReceitas = [...memReceitas, ...created];
   emit();
-  void supabase
-    .from("receitas")
-    .insert(rows)
-    .then(({ error }) => {
-      if (error) {
-        const quota = handleFreeAdsQuotaError(error);
-        if (!quota) console.error("[store] addReceita failed", error);
+  const createdIds = new Set(created.map((c) => c.id));
+  const { error } = await supabase.from("receitas").insert(rows);
+  if (error) {
+    memReceitas = memReceitas.filter((r) => !createdIds.has(r.id));
+    emit();
+    const quota = handleFreeAdsQuotaError(error);
+    if (!quota) {
+      console.error("[store] addReceita failed", error);
+      if (typeof window !== "undefined") {
+        void import("sonner").then(({ toast }) => {
+          toast.error(error.message || "Não foi possível salvar a receita.");
+        });
       }
-    });
+    }
+    throw new Error(error.message || "addReceita failed");
+  }
   return created;
 }
 
