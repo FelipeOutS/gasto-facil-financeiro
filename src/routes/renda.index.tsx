@@ -462,10 +462,14 @@ function RendaPage() {
         return;
       }
     }
-    addReceita(payload);
-    toast.success(t("toast.added"));
-    setOpen(false);
-    reset();
+    try {
+      await addReceita(payload);
+      toast.success(t("toast.added"));
+      setOpen(false);
+      reset();
+    } catch {
+      // addReceita já exibiu toast.error apropriado.
+    }
   }
 
   function openWithPreset(preset: { tipo: TipoReceita; recorrente: boolean; descricao?: string }) {
