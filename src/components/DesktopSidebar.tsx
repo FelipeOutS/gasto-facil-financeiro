@@ -246,7 +246,7 @@ export function DesktopSidebar() {
             <button
               type="button"
               onClick={() => {
-                if (!canWrite) {
+                if (!canWriteBasic) {
                   requireSubscription(t("header.addExpenseRequiresPlan"));
                   return;
                 }
@@ -264,7 +264,7 @@ export function DesktopSidebar() {
         <button
           type="button"
           onClick={() => {
-            if (!canWrite) {
+            if (!canWriteBasic) {
               requireSubscription(t("header.addExpenseRequiresPlan"));
               return;
             }
