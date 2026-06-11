@@ -47,7 +47,7 @@ export function DesktopSidebar() {
   const { t } = useTranslation("nav");
   const location = useLocation();
   const navigate = useNavigate();
-  const { canWrite, requireSubscription } = useSubscriptionGuard();
+  const { canWriteBasic, requireSubscription } = useSubscriptionGuard();
   const alerta = useAlertaContas();
   const { can } = usePlan();
   const [lockState, setLockState] = useState<{ open: boolean; title: string }>({ open: false, title: "" });
