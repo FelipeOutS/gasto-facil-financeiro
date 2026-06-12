@@ -707,6 +707,9 @@ function MercadoHubPage() {
         </div>
       </details>
 
+      {/* AdSlot — apenas free_ads ativo (Fase 1E-B2L) */}
+      <AdSlot className="mt-4" slotId="mercado-bottom" />
+
       <div className="h-6" aria-hidden="true" />
     </MobileShell>
   );
