@@ -66,6 +66,7 @@ import { Money } from "@/components/Money";
 import { NotificationBell } from "@/components/NotificationBell";
 import { DashboardAlertasBloco } from "@/components/DashboardAlertasBloco";
 import { DashboardDicasBloco } from "@/components/DashboardDicasBloco";
+import { AdSlot } from "@/components/AdSlot";
 import { DashboardSaudeFinanceiraCard } from "@/components/DashboardSaudeFinanceiraCard";
 import { DashboardDiagnosticoMensalCard } from "@/components/DashboardDiagnosticoMensalCard";
 import { RadarEconomicoCard } from "@/components/RadarEconomicoCard";
