@@ -1395,6 +1395,8 @@ function RendaPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* AdSlot — apenas free_ads ativo (Fase 1E-B2L) */}
+      <AdSlot className="mt-4" slotId="renda-bottom" />
     </MobileShell>
   );
 }
