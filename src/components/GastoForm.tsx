@@ -38,6 +38,9 @@ export type GastoFormProps = {
 
 export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
   const { t } = useTranslation("gastos");
+  const { t: tCommon } = useTranslation("common");
+  const { plan } = usePlan();
+  const isFreeAds = plan === "free_ads";
   const categorias = useStore(() => getCategorias());
   const cartoes = useStore(() => getCartoes());
 
