@@ -125,7 +125,7 @@ function MeuPlanoPage() {
       ? "hidden"
       : isFreeAdsActive
         ? "current"
-        : expirado || isCancelled || recusadoLike(status)
+        : expirado || isCancelled || status === "cancelado"
           ? "continue"
           : "start";
 
