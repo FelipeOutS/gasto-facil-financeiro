@@ -91,6 +91,7 @@ export function premiumDescription(rule: PremiumRouteRule): string {
 const FEATURE_TO_ROUTE_LOCK_KEY: Partial<Record<FeatureKey, string>> = {
   investimentos: "investimentos",
   cartoes: "cartoes",
+  cartoes_basico: "cartoes",
   assinaturas_recorrencias: "assinaturas",
   contas_a_pagar: "contasAPagar",
   contas_a_receber: "contasAReceber",
