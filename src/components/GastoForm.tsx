@@ -317,16 +317,25 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
               ).map((opt) => {
                 const active = tipoGasto === opt.id;
                 const Icon = "icon" in opt ? opt.icon : null;
+                const blockedForFreeAds = isFreeAds && opt.id === "parcelado";
                 return (
                   <button
                     key={opt.id}
                     type="button"
-                    onClick={() => setTipoGasto(opt.id)}
+                    onClick={() => {
+                      if (blockedForFreeAds) {
+                        toast.error(tCommon("subscription.freeAdsQuota.parcelamentoBlocked"));
+                        return;
+                      }
+                      setTipoGasto(opt.id);
+                    }}
+                    aria-disabled={blockedForFreeAds}
                     className={cn(
                       "flex items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-xs font-medium",
                       active
                         ? "border-foreground/40 bg-card-elevated"
                         : "border-border bg-card",
+                      blockedForFreeAds && "opacity-50",
                     )}
                   >
                     {Icon && <Icon className="h-3.5 w-3.5" />}
