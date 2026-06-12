@@ -889,6 +889,9 @@ const CartaoCard = memo(function CartaoCard({
   onDelete: () => void;
 }) {
   const { t } = useTranslation("cartoes");
+  const { can } = usePlan();
+  const canImportFatura = can("importar_fatura");
+  const canCartoesPremium = can("cartoes");
   // Usa o resumo pré-calculado quando disponível para evitar recomputar
   // ao tocar/abrir o cartão.
   const r = resumo ?? resumoFaturaCartao(cartao.id);
