@@ -25,8 +25,10 @@ import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
 import { mesReferenciaOpcoes, ymFromDate } from "@/lib/mes-referencia";
 import { ChevronDown, ChevronUp, Repeat, Layers, CreditCard, CalendarDays, Store } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useFornecedores } from "@/lib/fornecedores";
+import { usePlan } from "@/lib/use-plan";
 
 export type GastoFormProps = {
   initial?: Partial<NovoGastoInput>;
@@ -36,6 +38,9 @@ export type GastoFormProps = {
 
 export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
   const { t } = useTranslation("gastos");
+  const { t: tCommon } = useTranslation("common");
+  const { plan } = usePlan();
+  const isFreeAds = plan === "free_ads";
   const categorias = useStore(() => getCategorias());
   const cartoes = useStore(() => getCartoes());
 
@@ -312,16 +317,25 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
               ).map((opt) => {
                 const active = tipoGasto === opt.id;
                 const Icon = "icon" in opt ? opt.icon : null;
+                const blockedForFreeAds = isFreeAds && opt.id === "parcelado";
                 return (
                   <button
                     key={opt.id}
                     type="button"
-                    onClick={() => setTipoGasto(opt.id)}
+                    onClick={() => {
+                      if (blockedForFreeAds) {
+                        toast.error(tCommon("subscription.freeAdsQuota.parcelamentoBlocked"));
+                        return;
+                      }
+                      setTipoGasto(opt.id);
+                    }}
+                    aria-disabled={blockedForFreeAds}
                     className={cn(
                       "flex items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-xs font-medium",
                       active
                         ? "border-foreground/40 bg-card-elevated"
                         : "border-border bg-card",
+                      blockedForFreeAds && "opacity-50",
                     )}
                   >
                     {Icon && <Icon className="h-3.5 w-3.5" />}

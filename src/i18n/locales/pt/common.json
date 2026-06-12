@@ -66,6 +66,9 @@
       "mercado_itens_lista": "Você atingiu o limite de 30 itens por lista no plano gratuito.",
       "metas": "Você atingiu o limite de 2 metas no plano gratuito.",
       "orcamento": "Você atingiu o limite de 1 orçamento no plano gratuito.",
+      "cartoes": "Você atingiu o limite de 1 cartão no plano gratuito.",
+      "parcelamentoBlocked": "Parcelamento está disponível nos planos pagos.",
+      "faturasBlocked": "Faturas do cartão estão disponíveis nos planos pagos.",
       "generic": "Você atingiu o limite do plano gratuito para este recurso.",
       "cta": "Ver planos",
       "marketGastoBlocked": "Gerar lançamento em Gastos a partir do Mercado está disponível nos planos pagos."

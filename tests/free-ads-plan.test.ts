@@ -71,6 +71,9 @@ const basicAllowed: FeatureKey[] = [
   "gastos_basico",
   "receitas_basico",
   "mercado_basico",
+  "metas_basico",
+  "orcamento_basico",
+  "cartoes_basico",
 ];
 for (const f of basicAllowed) {
   ok(`planAllowsFeature(free_ads, ${f}) === true`, planAllowsFeature("free_ads", f) === true);
@@ -87,17 +90,19 @@ const paidBlocked: FeatureKey[] = [
   "mercado_avancado",
   "gasto_ai",
   "orcamento",
+  "importar_fatura",
 ];
 for (const f of paidBlocked) {
   ok(`planAllowsFeature(free_ads, ${f}) === false`, planAllowsFeature("free_ads", f) === false);
 }
 
-console.log("\n▶ Features ainda NÃO liberadas nesta fase (mantém bloqueio para free_ads)");
-// Fase 1E-B2F: cartões/metas/orçamento básicos NÃO devem ser liberados ainda
-// para free_ads via gate paid. Eles existem como *_basico no enum, mas os
-// fluxos (rotas, store, formulários) só serão liberados em fases futuras.
+console.log("\n▶ Fase 1E-B2J-B — cartoes_basico liberado, fatura/parcelamento continuam premium");
 ok(
-  "feature paga 'cartoes' segue bloqueada para free_ads (Cartões básicos virão em fase própria)",
+  "planAllowsFeature(free_ads, 'cartoes_basico') === true",
+  planAllowsFeature("free_ads", "cartoes_basico") === true,
+);
+ok(
+  "feature paga 'cartoes' segue bloqueada para free_ads (faturas/importar continuam premium)",
   planAllowsFeature("free_ads", "cartoes") === false,
 );
 

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import type { TipoCadastro } from "@/lib/profile-utils";
 import { tipoEfetivo } from "@/lib/profile-utils";
-import { usePlan } from "@/lib/use-plan";
+
 
 /**
  * Onboarding leve do Dashboard — orienta usuários novos a fazerem o primeiro
@@ -54,14 +54,13 @@ export function PrimeirosPassosCard({
 }: PrimeirosPassosCardProps) {
   const { t } = useTranslation("dashboard");
   const { user, profile } = useAuth();
-  const { plan } = usePlan();
+  
   const tipo = tipoEfetivo(profile?.tipo_cadastro as TipoCadastro);
   const isBusiness = tipo === "mei" || tipo === "empresa";
-  // free_ads (Fase 1E-B2H): libera gastos, receitas e metas básicas no
-  // checklist. Cartões ainda não estão liberados — escondemos apenas o
-  // item de cartão. Demais planos (pago/sem_assinatura/admin) continuam
-  // vendo o checklist completo.
-  const isFreeAds = plan === "free_ads";
+  // free_ads (Fase 1E-B2J-B): libera gastos, receitas, metas e cartão
+  // (1 cartão básico) no checklist. Demais planos (pago/sem_assinatura/
+  // admin) continuam vendo o checklist completo.
+
 
   const [dismissed, setDismissed] = useState<boolean>(() => isDismissed(user?.id ?? null));
 
@@ -103,10 +102,8 @@ export function PrimeirosPassosCard({
         icon: Target,
       },
     ] as const;
-    return isFreeAds
-      ? base.filter((i) => i.id !== "card")
-      : base;
-  }, [t, isBusiness, gastosCount, receitasCount, cartoesCount, metasCount, isFreeAds]);
+    return base;
+  }, [t, isBusiness, gastosCount, receitasCount, cartoesCount, metasCount]);
 
   const totalDone = items.filter((i) => i.done).length;
   const allDone = totalDone === items.length;
