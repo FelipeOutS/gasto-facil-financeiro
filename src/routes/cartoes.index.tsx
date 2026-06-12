@@ -1090,7 +1090,8 @@ const CartaoCard = memo(function CartaoCard({
             <Receipt className="h-3 w-3" />
             {t("card.viewInvoice")}
           </button>
-          {(faturaStatus === "fechada" || faturaStatus === "vencida") &&
+          {canCartoesPremium &&
+            (faturaStatus === "fechada" || faturaStatus === "vencida") &&
             faturaResumo.total > 0 && (
               <button
                 type="button"
