@@ -452,11 +452,13 @@ function CartoesPage() {
               label={t("v3.actions.addExpense")}
               onClick={() => navigate({ to: "/adicionar" })}
             />
-            <QuickAction
-              icon={<FileUp className="h-4 w-4" />}
-              label={t("v3.actions.editCard")}
-              onClick={() => handleOpenImport()}
-            />
+            {can("importar_fatura") && (
+              <QuickAction
+                icon={<FileUp className="h-4 w-4" />}
+                label={t("v3.actions.editCard")}
+                onClick={() => handleOpenImport()}
+              />
+            )}
             <QuickAction
               icon={<Wallet className="h-4 w-4" />}
               label={t("v3.actions.invoices")}
@@ -569,15 +571,17 @@ function CartoesPage() {
           </div>
           {cartoes.length > 0 && (
             <div className="flex flex-wrap justify-end gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleOpenImport()}
-                className="card-press rounded-full text-sm font-semibold"
-              >
-                <FileUp className="mr-1 h-4 w-4" />
-                {t("list.importInvoice")}
-              </Button>
+              {can("importar_fatura") && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleOpenImport()}
+                  className="card-press rounded-full text-sm font-semibold"
+                >
+                  <FileUp className="mr-1 h-4 w-4" />
+                  {t("list.importInvoice")}
+                </Button>
+              )}
               <Button
                 size="sm"
                 onClick={handleOpenNew}
@@ -885,6 +889,9 @@ const CartaoCard = memo(function CartaoCard({
   onDelete: () => void;
 }) {
   const { t } = useTranslation("cartoes");
+  const { can } = usePlan();
+  const canImportFatura = can("importar_fatura");
+  const canCartoesPremium = can("cartoes");
   // Usa o resumo pré-calculado quando disponível para evitar recomputar
   // ao tocar/abrir o cartão.
   const r = resumo ?? resumoFaturaCartao(cartao.id);
@@ -971,10 +978,12 @@ const CartaoCard = memo(function CartaoCard({
               <Pencil className="mr-2 h-4 w-4" />
               {t("card.edit")}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onImport}>
-              <FileUp className="mr-2 h-4 w-4" />
-              {t("card.import")}
-            </DropdownMenuItem>
+            {canImportFatura && (
+              <DropdownMenuItem onClick={onImport}>
+                <FileUp className="mr-2 h-4 w-4" />
+                {t("card.import")}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={onDelete}
@@ -1081,7 +1090,8 @@ const CartaoCard = memo(function CartaoCard({
             <Receipt className="h-3 w-3" />
             {t("card.viewInvoice")}
           </button>
-          {(faturaStatus === "fechada" || faturaStatus === "vencida") &&
+          {canCartoesPremium &&
+            (faturaStatus === "fechada" || faturaStatus === "vencida") &&
             faturaResumo.total > 0 && (
               <button
                 type="button"
@@ -1435,6 +1445,9 @@ export function FaturaSheet({
   onBack?: () => void;
 }) {
   const { t } = useTranslation("cartoes");
+  const { can } = usePlan();
+  const canImportFatura = can("importar_fatura");
+  const canCartoesPremium = can("cartoes");
 
   const hoje = new Date();
   const initialRef = cartao
@@ -1751,34 +1764,38 @@ export function FaturaSheet({
               <Plus className="mr-1.5 h-4 w-4" />
               {t("sheet.addPurchase")}
             </Button>
-            <Button
-              size="sm"
-              variant={status === "paga" ? "secondary" : "default"}
-              className="card-press"
-              onClick={togglePaga}
-              disabled={resumo.qtd === 0 && status !== "paga"}
-            >
-              {status === "paga" ? (
-                <>
-                  <RotateCcw className="mr-1.5 h-4 w-4" />
-                  {t("sheet.reopen")}
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="mr-1.5 h-4 w-4" />
-                  {t("sheet.markPaidShort")}
-                </>
-              )}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="card-press"
-              onClick={() => onImport(cartao)}
-            >
-              <FileUp className="mr-1.5 h-4 w-4" />
-              {t("sheet.import")}
-            </Button>
+            {canCartoesPremium && (
+              <Button
+                size="sm"
+                variant={status === "paga" ? "secondary" : "default"}
+                className="card-press"
+                onClick={togglePaga}
+                disabled={resumo.qtd === 0 && status !== "paga"}
+              >
+                {status === "paga" ? (
+                  <>
+                    <RotateCcw className="mr-1.5 h-4 w-4" />
+                    {t("sheet.reopen")}
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="mr-1.5 h-4 w-4" />
+                    {t("sheet.markPaidShort")}
+                  </>
+                )}
+              </Button>
+            )}
+            {canImportFatura && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="card-press"
+                onClick={() => onImport(cartao)}
+              >
+                <FileUp className="mr-1.5 h-4 w-4" />
+                {t("sheet.import")}
+              </Button>
+            )}
             <Button
               size="sm"
               variant="outline"

@@ -7,6 +7,7 @@ import { resumoFaturaCartao } from "@/lib/store";
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Cartao } from "@/lib/types";
+import { usePlan } from "@/lib/use-plan";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +48,8 @@ export const CartaoCompactCard = memo(function CartaoCompactCard({
   onDelete: () => void;
 }) {
   const { t } = useTranslation("cartoes");
+  const { can } = usePlan();
+  const canImportFatura = can("importar_fatura");
   const r = resumo ?? resumoFaturaCartao(cartao.id);
   const cor = cartao.cor || "#8b5cf6";
   const theme = useMemo(() => getCardTheme(cor, cartao.banco), [cor, cartao.banco]);
@@ -100,10 +103,12 @@ export const CartaoCompactCard = memo(function CartaoCompactCard({
               <Pencil className="mr-2 h-4 w-4" />
               {t("card.edit")}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onImport}>
-              <FileUp className="mr-2 h-4 w-4" />
-              {t("card.import")}
-            </DropdownMenuItem>
+            {canImportFatura && (
+              <DropdownMenuItem onClick={onImport}>
+                <FileUp className="mr-2 h-4 w-4" />
+                {t("card.import")}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={onDelete}
