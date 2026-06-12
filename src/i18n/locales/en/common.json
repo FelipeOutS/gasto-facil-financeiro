@@ -66,6 +66,9 @@
       "mercado_itens_lista": "You reached the limit of 30 items per list on the free plan.",
       "metas": "You reached the limit of 2 goals on the free plan.",
       "orcamento": "You reached the limit of 1 budget on the free plan.",
+      "cartoes": "You reached the limit of 1 card on the free plan.",
+      "parcelamentoBlocked": "Installments are available on paid plans.",
+      "faturasBlocked": "Card invoices are available on paid plans.",
       "generic": "You hit the free plan limit for this resource.",
       "cta": "View plans",
       "marketGastoBlocked": "Creating an expense from Market is available on paid plans."
