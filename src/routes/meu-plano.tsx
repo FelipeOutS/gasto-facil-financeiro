@@ -1,5 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
+import { chooseFreeAdsPlan } from "@/lib/subscription.functions";
 import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
