@@ -54,7 +54,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: "/contas-a-pagar", labelKey: "contasPagar", descKey: "contasPagar", icon: CalendarClock },
       { to: "/contas-a-receber", labelKey: "contasReceber", descKey: "contasReceber", icon: HandCoins },
       { to: "/assinaturas", labelKey: "assinaturas", descKey: "assinaturas", icon: Repeat },
-      { to: "/orcamento", labelKey: "orcamento", descKey: "orcamento", icon: PieChart, feature: "orcamento" },
+      { to: "/orcamento", labelKey: "orcamento", descKey: "orcamento", icon: PieChart, feature: "orcamento_basico" },
       { to: "/mercado", labelKey: "mercado", descKey: "mercado", icon: ShoppingCart },
     ],
   },
