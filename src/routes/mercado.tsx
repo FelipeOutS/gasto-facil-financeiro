@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
+import { AdSlot } from "@/components/AdSlot";
 import { cn } from "@/lib/utils";
 import { usePlan } from "@/lib/use-plan";
 import type { FeatureKey } from "@/lib/plans";
