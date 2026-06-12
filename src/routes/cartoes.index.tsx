@@ -452,11 +452,13 @@ function CartoesPage() {
               label={t("v3.actions.addExpense")}
               onClick={() => navigate({ to: "/adicionar" })}
             />
-            <QuickAction
-              icon={<FileUp className="h-4 w-4" />}
-              label={t("v3.actions.editCard")}
-              onClick={() => handleOpenImport()}
-            />
+            {can("importar_fatura") && (
+              <QuickAction
+                icon={<FileUp className="h-4 w-4" />}
+                label={t("v3.actions.editCard")}
+                onClick={() => handleOpenImport()}
+              />
+            )}
             <QuickAction
               icon={<Wallet className="h-4 w-4" />}
               label={t("v3.actions.invoices")}
