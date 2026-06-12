@@ -571,15 +571,17 @@ function CartoesPage() {
           </div>
           {cartoes.length > 0 && (
             <div className="flex flex-wrap justify-end gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleOpenImport()}
-                className="card-press rounded-full text-sm font-semibold"
-              >
-                <FileUp className="mr-1 h-4 w-4" />
-                {t("list.importInvoice")}
-              </Button>
+              {can("importar_fatura") && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleOpenImport()}
+                  className="card-press rounded-full text-sm font-semibold"
+                >
+                  <FileUp className="mr-1 h-4 w-4" />
+                  {t("list.importInvoice")}
+                </Button>
+              )}
               <Button
                 size="sm"
                 onClick={handleOpenNew}
