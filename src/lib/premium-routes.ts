@@ -27,7 +27,12 @@ const DEFAULT_DESCRIPTION =
 
 export const PREMIUM_ROUTE_RULES: PremiumRouteRule[] = [
   { path: "/investimentos", feature: "investimentos", title: "Investimentos é um recurso premium" },
-  { path: "/cartoes", feature: "cartoes", title: "Cartões e faturas é um recurso premium" },
+  // Fase 1E-B2J-B — `/cartoes` usa `cartoes_basico`, que libera free_ads
+  // e planos pagos. Sem assinatura continua bloqueado. A quota de 1
+  // cartão para free_ads é enforçada server-side pelo trigger
+  // `tg_free_ads_quota_cartoes`. Faturas (faturas_cartao) continuam
+  // exigindo a feature paga `cartoes` no RLS.
+  { path: "/cartoes", feature: "cartoes_basico", title: "Cartões e faturas é um recurso premium" },
   { path: "/assinaturas", feature: "assinaturas_recorrencias", title: "Assinaturas é um recurso premium" },
   { path: "/contas-a-pagar", feature: "contas_a_pagar", title: "Contas a pagar é um recurso premium" },
   { path: "/contas-a-receber", feature: "contas_a_receber", title: "Contas a receber é um recurso premium" },
