@@ -614,6 +614,9 @@ function Index() {
         <DashboardDiagnosticoMensalCard />
       </section>
 
+      {/* AdSlot — apenas free_ads ativo (Fase 1E-B2L) */}
+      <AdSlot className="mt-4" slotId="dashboard-middle" />
+
 
 
 
