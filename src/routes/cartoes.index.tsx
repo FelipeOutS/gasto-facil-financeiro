@@ -978,10 +978,12 @@ const CartaoCard = memo(function CartaoCard({
               <Pencil className="mr-2 h-4 w-4" />
               {t("card.edit")}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onImport}>
-              <FileUp className="mr-2 h-4 w-4" />
-              {t("card.import")}
-            </DropdownMenuItem>
+            {canImportFatura && (
+              <DropdownMenuItem onClick={onImport}>
+                <FileUp className="mr-2 h-4 w-4" />
+                {t("card.import")}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={onDelete}
