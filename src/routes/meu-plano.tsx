@@ -115,8 +115,47 @@ function MeuPlanoPage() {
   const [verifying, setVerifying] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [historico, setHistorico] = useState<PaymentHistoryRow[]>([]);
+  const [freeAdsSubmitting, setFreeAdsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const chooseFreeAdsPlanFn = useServerFn(chooseFreeAdsPlan);
 
-  useEffect(() => {
+  const isFreeAdsActive = !loading && storedPlan === "free_ads" && status === "ativo";
+  const freeAdsButtonMode: "current" | "continue" | "start" | "hidden" =
+    isAdminMaster || ativoPago
+      ? "hidden"
+      : isFreeAdsActive
+        ? "current"
+        : expirado || isCancelled || recusadoLike(status)
+          ? "continue"
+          : "start";
+
+  async function handleChooseFreeAds() {
+    if (freeAdsSubmitting) return;
+    if (!(await requireOnline())) return;
+    setFreeAdsSubmitting(true);
+    try {
+      const res = await chooseFreeAdsPlanFn();
+      if (res.ok) {
+        await refresh();
+        toast.success(tp("freeAds.successToast"));
+        if (!res.idempotent) {
+          void navigate({ to: "/" });
+        }
+      } else if (res.reason === "paid_plan_active") {
+        toast.error(tp("freeAds.errorPaidActive"));
+      } else if (res.reason === "admin_master") {
+        toast.error(tp("freeAds.errorAdmin"));
+      } else {
+        toast.error(tp("freeAds.errorGeneric"));
+      }
+    } catch (err) {
+      console.error("[chooseFreeAdsPlan]", err);
+      toast.error(tp("freeAds.errorGeneric"));
+    } finally {
+      setFreeAdsSubmitting(false);
+    }
+  }
+
     if (!user?.id) return;
     void listarPagamentos(user.id).then(setHistorico);
   }, [user?.id]);
