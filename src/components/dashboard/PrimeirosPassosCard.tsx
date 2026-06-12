@@ -60,7 +60,7 @@ export function PrimeirosPassosCard({
   // free_ads (Fase 1E-B2J-B): libera gastos, receitas, metas e cartão
   // (1 cartão básico) no checklist. Demais planos (pago/sem_assinatura/
   // admin) continuam vendo o checklist completo.
-  const isFreeAds = plan === "free_ads";
+
 
   const [dismissed, setDismissed] = useState<boolean>(() => isDismissed(user?.id ?? null));
 
