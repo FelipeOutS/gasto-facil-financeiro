@@ -128,9 +128,19 @@ function MeuPlanoPage() {
         : expirado || isCancelled || status === "cancelado"
           ? "continue"
           : "start";
+  // Fase 1E-B2M — Kill switch de rollout. Default: desligado (rollout controlado).
+  // Quando desligado, o card aparece como informativo ("Em breve") mas o botão fica
+  // desativado. Não afeta `chooseFreeAdsPlan` (a server function continua segura).
+  // Usuários já em `free_ads/ativo` continuam vendo "Plano atual" normalmente.
+  const freeAdsSignupEnabled =
+    (import.meta.env.VITE_ENABLE_FREE_ADS_SIGNUP ?? "false") === "true";
+  const freeAdsCtaLocked =
+    !freeAdsSignupEnabled &&
+    (freeAdsButtonMode === "start" || freeAdsButtonMode === "continue");
 
   async function handleChooseFreeAds() {
     if (freeAdsSubmitting) return;
+    if (freeAdsCtaLocked) return;
     if (!(await requireOnline())) return;
     setFreeAdsSubmitting(true);
     try {
@@ -849,18 +859,21 @@ function MeuPlanoPage() {
             <Button
               type="button"
               size="sm"
-              variant={freeAdsButtonMode === "current" ? "secondary" : "default"}
-              disabled={freeAdsButtonMode === "current" || freeAdsSubmitting}
+              variant={freeAdsButtonMode === "current" || freeAdsCtaLocked ? "secondary" : "default"}
+              disabled={freeAdsButtonMode === "current" || freeAdsSubmitting || freeAdsCtaLocked}
               onClick={handleChooseFreeAds}
               className="shrink-0 rounded-xl min-h-10"
+              title={freeAdsCtaLocked ? tp("freeAds.disabledReason") : undefined}
             >
-              {freeAdsSubmitting
-                ? tp("freeAds.activating")
-                : freeAdsButtonMode === "current"
-                  ? tp("freeAds.currentBadge")
-                  : freeAdsButtonMode === "continue"
-                    ? tp("freeAds.continueCta")
-                    : tp("freeAds.cta")}
+              {freeAdsCtaLocked
+                ? tp("freeAds.comingSoon")
+                : freeAdsSubmitting
+                  ? tp("freeAds.activating")
+                  : freeAdsButtonMode === "current"
+                    ? tp("freeAds.currentBadge")
+                    : freeAdsButtonMode === "continue"
+                      ? tp("freeAds.continueCta")
+                      : tp("freeAds.cta")}
             </Button>
           </div>
         </section>
