@@ -858,18 +858,21 @@ function MeuPlanoPage() {
             <Button
               type="button"
               size="sm"
-              variant={freeAdsButtonMode === "current" ? "secondary" : "default"}
-              disabled={freeAdsButtonMode === "current" || freeAdsSubmitting}
+              variant={freeAdsButtonMode === "current" || freeAdsCtaLocked ? "secondary" : "default"}
+              disabled={freeAdsButtonMode === "current" || freeAdsSubmitting || freeAdsCtaLocked}
               onClick={handleChooseFreeAds}
               className="shrink-0 rounded-xl min-h-10"
+              title={freeAdsCtaLocked ? tp("freeAds.disabledReason") : undefined}
             >
-              {freeAdsSubmitting
-                ? tp("freeAds.activating")
-                : freeAdsButtonMode === "current"
-                  ? tp("freeAds.currentBadge")
-                  : freeAdsButtonMode === "continue"
-                    ? tp("freeAds.continueCta")
-                    : tp("freeAds.cta")}
+              {freeAdsCtaLocked
+                ? tp("freeAds.comingSoon")
+                : freeAdsSubmitting
+                  ? tp("freeAds.activating")
+                  : freeAdsButtonMode === "current"
+                    ? tp("freeAds.currentBadge")
+                    : freeAdsButtonMode === "continue"
+                      ? tp("freeAds.continueCta")
+                      : tp("freeAds.cta")}
             </Button>
           </div>
         </section>
