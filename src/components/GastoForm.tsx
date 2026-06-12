@@ -25,8 +25,10 @@ import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
 import { mesReferenciaOpcoes, ymFromDate } from "@/lib/mes-referencia";
 import { ChevronDown, ChevronUp, Repeat, Layers, CreditCard, CalendarDays, Store } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useFornecedores } from "@/lib/fornecedores";
+import { usePlan } from "@/lib/use-plan";
 
 export type GastoFormProps = {
   initial?: Partial<NovoGastoInput>;
