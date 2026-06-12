@@ -54,7 +54,7 @@ export function PrimeirosPassosCard({
 }: PrimeirosPassosCardProps) {
   const { t } = useTranslation("dashboard");
   const { user, profile } = useAuth();
-  const { plan } = usePlan();
+  
   const tipo = tipoEfetivo(profile?.tipo_cadastro as TipoCadastro);
   const isBusiness = tipo === "mei" || tipo === "empresa";
   // free_ads (Fase 1E-B2J-B): libera gastos, receitas, metas e cartão
