@@ -6,10 +6,25 @@
     "short": "Comece grátis com recursos básicos e limites mensais.",
     "price": "R$ 0,00",
     "cta": "Começar grátis",
+    "continueCta": "Continuar grátis",
+    "currentBadge": "Plano atual",
+    "activating": "Ativando…",
     "limitsNote": "Plano gratuito com limites mensais. Faça upgrade a qualquer momento.",
     "noExternalAdsNote": "Sem anúncios externos nesta fase.",
     "comingSoon": "Em breve",
-    "disabledReason": "Recursos e limites serão ativados em breve."
+    "disabledReason": "Recursos e limites serão ativados em breve.",
+    "bullets": [
+      "30 gastos manuais por mês",
+      "10 receitas manuais por mês",
+      "Mercado básico (2 listas ativas, 30 itens por lista)",
+      "2 metas e 1 orçamento",
+      "1 cartão manual à vista",
+      "Sem OCR, IA, importações ou relatórios premium"
+    ],
+    "successToast": "Plano gratuito ativado com sucesso.",
+    "errorPaidActive": "Você já possui um plano ativo.",
+    "errorAdmin": "Conta de administrador não pode ser alterada.",
+    "errorGeneric": "Não foi possível ativar o plano gratuito. Tente novamente."
   },
   "status": {
     "ativo": "Ativo",
