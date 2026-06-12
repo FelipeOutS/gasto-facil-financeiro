@@ -6,10 +6,25 @@
     "short": "Start for free with basic features and monthly limits.",
     "price": "$0.00",
     "cta": "Start for free",
+    "continueCta": "Continue for free",
+    "currentBadge": "Current plan",
+    "activating": "Activating…",
     "limitsNote": "Free plan with monthly limits. Upgrade anytime.",
     "noExternalAdsNote": "No external ads in this phase.",
     "comingSoon": "Coming soon",
-    "disabledReason": "Features and limits will be activated soon."
+    "disabledReason": "Features and limits will be activated soon.",
+    "bullets": [
+      "30 manual expenses per month",
+      "10 manual income entries per month",
+      "Basic Market (2 active lists, 30 items per list)",
+      "2 goals and 1 budget",
+      "1 manual card (cash purchases)",
+      "No OCR, AI, imports or premium reports"
+    ],
+    "successToast": "Free plan activated successfully.",
+    "errorPaidActive": "You already have an active plan.",
+    "errorAdmin": "Admin accounts cannot be changed.",
+    "errorGeneric": "Could not activate the free plan. Please try again."
   },
   "status": {
     "ativo": "Active",
