@@ -1428,7 +1428,11 @@ export type NovoCartaoInput = {
   observacao?: string;
 };
 
-export function addCartao(input: NovoCartaoInput): Cartao {
+export function addCartao(input: NovoCartaoInput): Cartao | null {
+  // Fase 1E-B2J-B — cartões básicos liberados para free_ads + planos pagos.
+  // Quota (1 cartão para free_ads) é enforçada server-side pelo trigger
+  // `tg_free_ads_quota_cartoes`.
+  if (!ensureCanWrite("addCartao", { allowBasic: true })) return null;
   const now = new Date().toISOString();
   const id = activeUserId ? crypto.randomUUID() : uid();
   const novo: Cartao = {
@@ -1443,6 +1447,7 @@ export function addCartao(input: NovoCartaoInput): Cartao {
     criadoEm: now,
     atualizadoEm: now,
   };
+  const prev = memCartoes;
   memCartoes = [...memCartoes, novo];
   emit();
   if (!activeUserId) return novo;
@@ -1459,14 +1464,22 @@ export function addCartao(input: NovoCartaoInput): Cartao {
       cor: novo.cor,
       observacao: novo.observacao ?? null,
     })
-    .then(({ error }: { error: { message: string } | null }) => {
-      if (error) console.error("[store] addCartao failed", error);
+    .then(({ error }: { error: { code?: string; message: string } | null }) => {
+      if (error) {
+        memCartoes = prev;
+        emit();
+        if (!handleFreeAdsQuotaError(error)) {
+          console.error("[store] addCartao failed", error);
+        }
+      }
     });
   return novo;
 }
 
 export function updateCartao(id: string, patch: Partial<NovoCartaoInput>) {
+  if (!ensureCanWrite("updateCartao", { allowBasic: true })) return;
   const now = new Date().toISOString();
+  const prev = memCartoes;
   memCartoes = memCartoes.map((c) =>
     c.id === id ? { ...c, ...patch, atualizadoEm: now } : c,
   );
@@ -1484,12 +1497,20 @@ export function updateCartao(id: string, patch: Partial<NovoCartaoInput>) {
     .from("cartoes")
     .update(row)
     .eq("id", id)
-    .then(({ error }: { error: { message: string } | null }) => {
-      if (error) console.error("[store] updateCartao failed", error);
+    .then(({ error }: { error: { code?: string; message: string } | null }) => {
+      if (error) {
+        memCartoes = prev;
+        emit();
+        if (!handleFreeAdsQuotaError(error)) {
+          console.error("[store] updateCartao failed", error);
+        }
+      }
     });
 }
 
 export function deleteCartao(id: string) {
+  if (!ensureCanWrite("deleteCartao", { allowBasic: true })) return;
+  const prev = memCartoes;
   memCartoes = memCartoes.filter((c) => c.id !== id);
   emit();
   if (!activeUserId) return;
@@ -1497,8 +1518,12 @@ export function deleteCartao(id: string) {
     .from("cartoes")
     .delete()
     .eq("id", id)
-    .then(({ error }: { error: { message: string } | null }) => {
-      if (error) console.error("[store] deleteCartao failed", error);
+    .then(({ error }: { error: { code?: string; message: string } | null }) => {
+      if (error) {
+        memCartoes = prev;
+        emit();
+        console.error("[store] deleteCartao failed", error);
+      }
     });
 }
 
