@@ -271,5 +271,10 @@
     "empty": {
       "default": "No items to display."
     }
+  },
+  "ads": {
+    "placeholderTitle": "Reserved ad space",
+    "placeholderSubtitle": "This space helps keep the free plan available.",
+    "freePlanBadge": "Free plan with ads"
   }
 }
