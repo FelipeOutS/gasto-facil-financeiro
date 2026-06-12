@@ -1445,6 +1445,9 @@ export function FaturaSheet({
   onBack?: () => void;
 }) {
   const { t } = useTranslation("cartoes");
+  const { can } = usePlan();
+  const canImportFatura = can("importar_fatura");
+  const canCartoesPremium = can("cartoes");
 
   const hoje = new Date();
   const initialRef = cartao
