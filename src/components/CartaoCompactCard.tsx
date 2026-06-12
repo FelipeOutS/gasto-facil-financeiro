@@ -7,6 +7,7 @@ import { resumoFaturaCartao } from "@/lib/store";
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Cartao } from "@/lib/types";
+import { usePlan } from "@/lib/use-plan";
 import {
   DropdownMenu,
   DropdownMenuContent,
