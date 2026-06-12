@@ -156,6 +156,7 @@ function MeuPlanoPage() {
     }
   }
 
+  useEffect(() => {
     if (!user?.id) return;
     void listarPagamentos(user.id).then(setHistorico);
   }, [user?.id]);
