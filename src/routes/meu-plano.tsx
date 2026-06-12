@@ -128,6 +128,15 @@ function MeuPlanoPage() {
         : expirado || isCancelled || status === "cancelado"
           ? "continue"
           : "start";
+  // Fase 1E-B2M — Kill switch de rollout. Default: desligado (rollout controlado).
+  // Quando desligado, o card aparece como informativo ("Em breve") mas o botão fica
+  // desativado. Não afeta `chooseFreeAdsPlan` (a server function continua segura).
+  // Usuários já em `free_ads/ativo` continuam vendo "Plano atual" normalmente.
+  const freeAdsSignupEnabled =
+    (import.meta.env.VITE_ENABLE_FREE_ADS_SIGNUP ?? "false") === "true";
+  const freeAdsCtaLocked =
+    !freeAdsSignupEnabled &&
+    (freeAdsButtonMode === "start" || freeAdsButtonMode === "continue");
 
   async function handleChooseFreeAds() {
     if (freeAdsSubmitting) return;
