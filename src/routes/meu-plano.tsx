@@ -140,6 +140,7 @@ function MeuPlanoPage() {
 
   async function handleChooseFreeAds() {
     if (freeAdsSubmitting) return;
+    if (freeAdsCtaLocked) return;
     if (!(await requireOnline())) return;
     setFreeAdsSubmitting(true);
     try {
