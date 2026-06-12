@@ -102,7 +102,8 @@ export function CartaoForm({
       updateCartao(editing.id, payload);
       toast.success(t("toast.cardUpdated"));
     } else {
-      addCartao(payload);
+      const created = addCartao(payload);
+      if (!created) return; // bloqueado por guard/quota; toast já exibido
       toast.success(t("toast.cardCreated"));
     }
     onSaved();
