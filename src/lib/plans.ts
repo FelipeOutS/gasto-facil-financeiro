@@ -297,18 +297,28 @@ export type PlanFeature = {
 };
 
 export const PLAN_FEATURES: PlanFeature[] = [
-  { feature: "lancamentos_ilimitados", label: "Lançamentos ilimitados", description: "Cadastre quantos gastos e receitas quiser." },
+  // Básicos (free_ads + planos pagos)
+  { feature: "gastos_basico", label: "Gastos manuais", description: "Cadastre seus gastos manualmente (limite mensal no plano gratuito)." },
+  { feature: "receitas_basico", label: "Receitas manuais", description: "Cadastre suas receitas manualmente (limite mensal no plano gratuito)." },
+  { feature: "mercado_basico", label: "Mercado básico", description: "Listas e itens essenciais para suas compras." },
+  { feature: "metas_basico", label: "Metas básicas", description: "Defina metas simples de economia." },
+  { feature: "orcamento_basico", label: "Orçamento básico", description: "1 orçamento mensal por categoria." },
+  { feature: "cartoes_basico", label: "1 cartão manual", description: "Cadastre 1 cartão manualmente para acompanhar gastos." },
+  // Premium
+  { feature: "lancamentos_ilimitados", label: "Lançamentos ilimitados", description: "Sem limite mensal de gastos e receitas." },
   { feature: "contas_a_pagar", label: "Contas a pagar", description: "Controle vencimentos e pagamentos do mês." },
-  { feature: "cartoes", label: "Cartões e faturas", description: "Acompanhe limites e compras dos seus cartões." },
-  { feature: "orcamento", label: "Orçamento por categoria", description: "Defina limites mensais e acompanhe o uso." },
+  { feature: "contas_a_receber", label: "Contas a receber", description: "Acompanhe valores a receber e baixas." },
+  { feature: "assinaturas_recorrencias", label: "Assinaturas e recorrências", description: "Automatize lançamentos recorrentes e assinaturas." },
+  { feature: "cartoes", label: "Faturas, importação e parcelamento", description: "Múltiplos cartões, faturas, parcelamento e marcar como paga." },
+  { feature: "orcamento", label: "Orçamento avançado", description: "Múltiplos orçamentos e categorias avançadas." },
   { feature: "importar_extrato", label: "Importar extrato bancário", description: "Importe PDF/CSV do seu banco automaticamente." },
   { feature: "importar_fatura", label: "Importar fatura de cartão", description: "Importe a fatura em PDF ou imagem." },
   { feature: "importar_conta", label: "Importar boleto/Pix", description: "Identifique automaticamente boletos e Pix." },
   { feature: "metas_visuais", label: "Metas com imagens", description: "Capa visual real para cada meta." },
   { feature: "relatorios_avancados", label: "Relatórios avançados", description: "Comparativos, tendências e insights." },
+  { feature: "investimentos", label: "Investimentos", description: "Acompanhe seus investimentos." },
   { feature: "recursos_mei", label: "Recursos do MEI", description: "Linguagem e visão financeira do MEI." },
   { feature: "recursos_empresa", label: "Recursos empresariais", description: "Visão financeira e relatórios da empresa." },
-  { feature: "investimentos_futuro", label: "Investimentos (em breve)", description: "Estrutura preparada para acompanhar investimentos." },
   { feature: "contas_conectadas", label: "Contas conectadas", description: "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização." },
 ];
 

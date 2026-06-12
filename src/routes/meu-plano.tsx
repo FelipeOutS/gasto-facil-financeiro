@@ -615,9 +615,9 @@ function MeuPlanoPage() {
       </h3>
       <section className="mt-3 grid gap-2 sm:grid-cols-2">
         {PLAN_FEATURES.map((f) => {
-          const allowed =
-            isAdminMaster ||
-            (ativoPago && planAllowsFeature(plan, f.feature));
+          // Fase 1E-B2O: removido `ativoPago &&` — planAllowsFeature já
+          // diferencia free_ads (libera *_basico) de sem_assinatura (bloqueia tudo).
+          const allowed = isAdminMaster || planAllowsFeature(plan, f.feature);
           return (
             <div
               key={f.feature}
