@@ -1,5 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
+import { chooseFreeAdsPlan } from "@/lib/subscription.functions";
 import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
@@ -113,6 +115,46 @@ function MeuPlanoPage() {
   const [verifying, setVerifying] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [historico, setHistorico] = useState<PaymentHistoryRow[]>([]);
+  const [freeAdsSubmitting, setFreeAdsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const chooseFreeAdsPlanFn = useServerFn(chooseFreeAdsPlan);
+
+  const isFreeAdsActive = !loading && storedPlan === "free_ads" && status === "ativo";
+  const freeAdsButtonMode: "current" | "continue" | "start" | "hidden" =
+    isAdminMaster || ativoPago
+      ? "hidden"
+      : isFreeAdsActive
+        ? "current"
+        : expirado || isCancelled || status === "cancelado"
+          ? "continue"
+          : "start";
+
+  async function handleChooseFreeAds() {
+    if (freeAdsSubmitting) return;
+    if (!(await requireOnline())) return;
+    setFreeAdsSubmitting(true);
+    try {
+      const res = await chooseFreeAdsPlanFn();
+      if (res.ok) {
+        await refresh();
+        toast.success(tp("freeAds.successToast"));
+        if (!res.idempotent) {
+          void navigate({ to: "/" });
+        }
+      } else if (res.reason === "paid_plan_active") {
+        toast.error(tp("freeAds.errorPaidActive"));
+      } else if (res.reason === "admin_master") {
+        toast.error(tp("freeAds.errorAdmin"));
+      } else {
+        toast.error(tp("freeAds.errorGeneric"));
+      }
+    } catch (err) {
+      console.error("[chooseFreeAdsPlan]", err);
+      toast.error(tp("freeAds.errorGeneric"));
+    } finally {
+      setFreeAdsSubmitting(false);
+    }
+  }
 
   useEffect(() => {
     if (!user?.id) return;
@@ -773,35 +815,57 @@ function MeuPlanoPage() {
       </section>
 
 
-      {/* Plano Gratuito com Anúncios: card informativo "Em breve" — não ativa o plano. */}
-      <section className="mt-5">
-        <div className="flex flex-col gap-3 rounded-3xl border border-dashed border-border bg-card/50 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-bold">{tp("freeAds.name")}</p>
-              <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                {tp("freeAds.comingSoon")}
-              </span>
-              <span className="text-xs font-semibold text-muted-foreground">{tp("freeAds.price")}</span>
+      {/* Plano Gratuito com Anúncios — ativação voluntária via chooseFreeAdsPlan. */}
+      {freeAdsButtonMode !== "hidden" && (
+        <section className="mt-5">
+          <div className="flex flex-col gap-3 rounded-3xl border border-dashed border-border bg-card/50 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-bold">{tp("freeAds.name")}</p>
+                <span className="text-xs font-semibold text-muted-foreground">{tp("freeAds.price")}</span>
+                {freeAdsButtonMode === "current" && (
+                  <span className="rounded-full border border-success/30 bg-success/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-success">
+                    {tp("freeAds.currentBadge")}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">{tp("freeAds.short")}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {tp("freeAds.limitsNote")} · {tp("freeAds.noExternalAdsNote")}
+              </p>
+              <ul className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-[11px] text-muted-foreground sm:grid-cols-2">
+                {(() => {
+                  const raw = tp("freeAds.bullets", { returnObjects: true }) as unknown;
+                  const list = Array.isArray(raw) ? (raw as string[]) : [];
+                  return list.map((b, i) => (
+                    <li key={i} className="flex items-start gap-1.5">
+                      <Check className="mt-0.5 h-3 w-3 shrink-0 text-success" />
+                      <span>{b}</span>
+                    </li>
+                  ));
+                })()}
+              </ul>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">{tp("freeAds.short")}</p>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              {tp("freeAds.limitsNote")} · {tp("freeAds.noExternalAdsNote")}
-            </p>
+            <Button
+              type="button"
+              size="sm"
+              variant={freeAdsButtonMode === "current" ? "secondary" : "default"}
+              disabled={freeAdsButtonMode === "current" || freeAdsSubmitting}
+              onClick={handleChooseFreeAds}
+              className="shrink-0 rounded-xl min-h-10"
+            >
+              {freeAdsSubmitting
+                ? tp("freeAds.activating")
+                : freeAdsButtonMode === "current"
+                  ? tp("freeAds.currentBadge")
+                  : freeAdsButtonMode === "continue"
+                    ? tp("freeAds.continueCta")
+                    : tp("freeAds.cta")}
+            </Button>
           </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled
-            aria-disabled="true"
-            title={tp("freeAds.disabledReason")}
-            className="shrink-0 rounded-xl min-h-10"
-          >
-            {tp("freeAds.comingSoon")}
-          </Button>
-        </div>
-      </section>
+        </section>
+      )}
+
 
       {/* Investimentos: seção dedicada abaixo dos planos */}
       <section className="mt-5">
