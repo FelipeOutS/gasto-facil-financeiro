@@ -41,6 +41,7 @@ import {
   AreaChart,
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
+import { AdSlot } from "@/components/AdSlot";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
@@ -1394,6 +1395,8 @@ function RendaPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* AdSlot — apenas free_ads ativo (Fase 1E-B2L) */}
+      <AdSlot className="mt-4" slotId="renda-bottom" />
     </MobileShell>
   );
 }

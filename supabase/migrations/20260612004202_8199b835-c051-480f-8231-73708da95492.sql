@@ -1,0 +1,1 @@
+UPDATE public.user_plans SET plano='sem_assinatura', status='sem_assinatura', current_period_start=NULL, current_period_end=NULL, updated_at=now() WHERE user_id='44f45eac-ae30-43cd-8e40-fa8ff6b0c0c4';
