@@ -834,14 +834,16 @@ function MeuPlanoPage() {
                 {tp("freeAds.limitsNote")} · {tp("freeAds.noExternalAdsNote")}
               </p>
               <ul className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-[11px] text-muted-foreground sm:grid-cols-2">
-                {(t("freeAds.bullets", { ns: "meu-plano", returnObjects: true }) as string[] | string).constructor === Array
-                  ? (tp("freeAds.bullets", { returnObjects: true }) as unknown as string[]).map((b, i) => (
-                      <li key={i} className="flex items-start gap-1.5">
-                        <Check className="mt-0.5 h-3 w-3 shrink-0 text-success" />
-                        <span>{b}</span>
-                      </li>
-                    ))
-                  : null}
+                {(() => {
+                  const raw = tp("freeAds.bullets", { returnObjects: true }) as unknown;
+                  const list = Array.isArray(raw) ? (raw as string[]) : [];
+                  return list.map((b, i) => (
+                    <li key={i} className="flex items-start gap-1.5">
+                      <Check className="mt-0.5 h-3 w-3 shrink-0 text-success" />
+                      <span>{b}</span>
+                    </li>
+                  ));
+                })()}
               </ul>
             </div>
             <Button
