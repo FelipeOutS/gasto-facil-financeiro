@@ -1764,34 +1764,38 @@ export function FaturaSheet({
               <Plus className="mr-1.5 h-4 w-4" />
               {t("sheet.addPurchase")}
             </Button>
-            <Button
-              size="sm"
-              variant={status === "paga" ? "secondary" : "default"}
-              className="card-press"
-              onClick={togglePaga}
-              disabled={resumo.qtd === 0 && status !== "paga"}
-            >
-              {status === "paga" ? (
-                <>
-                  <RotateCcw className="mr-1.5 h-4 w-4" />
-                  {t("sheet.reopen")}
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="mr-1.5 h-4 w-4" />
-                  {t("sheet.markPaidShort")}
-                </>
-              )}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="card-press"
-              onClick={() => onImport(cartao)}
-            >
-              <FileUp className="mr-1.5 h-4 w-4" />
-              {t("sheet.import")}
-            </Button>
+            {canCartoesPremium && (
+              <Button
+                size="sm"
+                variant={status === "paga" ? "secondary" : "default"}
+                className="card-press"
+                onClick={togglePaga}
+                disabled={resumo.qtd === 0 && status !== "paga"}
+              >
+                {status === "paga" ? (
+                  <>
+                    <RotateCcw className="mr-1.5 h-4 w-4" />
+                    {t("sheet.reopen")}
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="mr-1.5 h-4 w-4" />
+                    {t("sheet.markPaidShort")}
+                  </>
+                )}
+              </Button>
+            )}
+            {canImportFatura && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="card-press"
+                onClick={() => onImport(cartao)}
+              >
+                <FileUp className="mr-1.5 h-4 w-4" />
+                {t("sheet.import")}
+              </Button>
+            )}
             <Button
               size="sm"
               variant="outline"
