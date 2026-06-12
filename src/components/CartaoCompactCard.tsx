@@ -47,6 +47,8 @@ export const CartaoCompactCard = memo(function CartaoCompactCard({
   onDelete: () => void;
 }) {
   const { t } = useTranslation("cartoes");
+  const { can } = usePlan();
+  const canImportFatura = can("importar_fatura");
   const r = resumo ?? resumoFaturaCartao(cartao.id);
   const cor = cartao.cor || "#8b5cf6";
   const theme = useMemo(() => getCardTheme(cor, cartao.banco), [cor, cartao.banco]);
