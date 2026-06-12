@@ -32,6 +32,7 @@ import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
 import { MetricCard } from "@/components/ui/metric-card";
 import type { Gasto } from "@/lib/types";
 import { MobileShell } from "@/components/MobileShell";
+import { AdSlot } from "@/components/AdSlot";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { usePlan } from "@/lib/use-plan";
