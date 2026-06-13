@@ -2,7 +2,7 @@ import { AdSenseSlot } from "@/components/AdSenseSlot";
 import { AdsScriptProvider } from "@/components/AdsScriptProvider";
 import { DirectAdSlot } from "@/components/DirectAdSlot";
 import { PlaceholderAdSlot } from "@/components/PlaceholderAdSlot";
-import { ADS_CONFIG, ADSENSE_SLOTS, DIRECT_ADS, canUseAdsense } from "@/lib/ads-config";
+import { ADS_CONFIG, ADSENSE_SLOTS, canUseAdsense, getEnabledDirectAd } from "@/lib/ads-config";
 import { hasAdvertisingConsent } from "@/lib/ads-consent";
 
 type AdSlotRendererProps = {
@@ -16,8 +16,8 @@ export function AdSlotRenderer({ className, slotId }: AdSlotRendererProps) {
   }
 
   if (ADS_CONFIG.provider === "direct") {
-    const directAd = DIRECT_ADS[slotId];
-    return directAd?.enabled ? (
+    const directAd = getEnabledDirectAd(slotId);
+    return directAd ? (
       <DirectAdSlot ad={directAd} className={className} slotId={slotId} />
     ) : (
       <PlaceholderAdSlot className={className} slotId={slotId} />

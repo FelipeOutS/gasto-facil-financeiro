@@ -33,6 +33,11 @@ export const DIRECT_ADS: Readonly<Record<string, DirectAdConfig>> = {
 // Intencionalmente vazio até existirem aprovação, client ID e IDs de slot reais.
 export const ADSENSE_SLOTS: Readonly<Record<string, string>> = {};
 
+export function getEnabledDirectAd(slotId: string): DirectAdConfig | null {
+  const directAd = DIRECT_ADS[slotId];
+  return directAd?.enabled ? directAd : null;
+}
+
 export function resolveAdsConfig(env: AdsEnvironment): AdsRuntimeConfig {
   const provider = VALID_PROVIDERS.includes(env.provider as AdsProvider)
     ? (env.provider as AdsProvider)
