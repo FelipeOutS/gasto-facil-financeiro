@@ -173,12 +173,22 @@ ok("dashboard-middle possui campanha direct habilitada", getEnabledDirectAd("das
 for (const slotId of ["gastos-bottom", "renda-bottom", "mercado-bottom"]) {
   eq(`${slotId} não possui campanha direct e cai em placeholder`, getEnabledDirectAd(slotId), null);
 }
+const dashboardAd = DIRECT_ADS["dashboard-middle"];
 ok(
-  "link direto usa UTM genérica e não contém identificadores pessoais",
-  DIRECT_ADS["dashboard-middle"].href.includes("utm_source=gasto_inteligente") &&
-    !DIRECT_ADS["dashboard-middle"].href.includes("user_id") &&
-    !DIRECT_ADS["dashboard-middle"].href.includes("email") &&
-    !DIRECT_ADS["dashboard-middle"].href.includes("felipeaitek"),
+  "house ad do dashboard usa navegação interna para a seção de planos",
+  dashboardAd.kind === "internal" &&
+    dashboardAd.to === "/meu-plano" &&
+    dashboardAd.hash === "planos-disponiveis",
+);
+const dashboardDestination =
+  dashboardAd.kind === "internal" ? `${dashboardAd.to}#${dashboardAd.hash ?? ""}` : dashboardAd.href;
+ok(
+  "destino interno não contém tracking nem identificadores pessoais",
+  !dashboardDestination.startsWith("http") &&
+    !dashboardDestination.includes("utm_") &&
+    !dashboardDestination.includes("user_id") &&
+    !dashboardDestination.includes("email") &&
+    !dashboardDestination.includes("felipeaitek"),
 );
 
 console.log(`\nResultado: ${pass} passou, ${fail} falhou`);

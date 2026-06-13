@@ -1,4 +1,5 @@
-import { ExternalLink, Megaphone } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight, ExternalLink, Megaphone } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { DirectAdConfig } from "@/lib/ads-config";
@@ -28,15 +29,26 @@ export function DirectAdSlot({ ad, className, slotId }: DirectAdSlotProps) {
         <p className="text-sm font-medium text-foreground">{t("ads.partnerSpaceTitle")}</p>
         <p className="text-xs text-muted-foreground">{t("ads.partnerSpaceDescription")}</p>
       </div>
-      <a
-        href={ad.href}
-        target="_blank"
-        rel="noopener noreferrer sponsored"
-        className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        {t("ads.learnMore")}
-        <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-      </a>
+      {ad.kind === "internal" ? (
+        <Link
+          to={ad.to}
+          hash={ad.hash}
+          className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {t("ads.learnMore")}
+          <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </Link>
+      ) : (
+        <a
+          href={ad.href}
+          target="_blank"
+          rel="noopener noreferrer sponsored"
+          className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {t("ads.learnMore")}
+          <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+        </a>
+      )}
     </aside>
   );
 }

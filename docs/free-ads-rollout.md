@@ -247,9 +247,11 @@ qualquer valor inválido volta para `placeholder` sem quebrar a página.
 ### Modo direto
 
 O anúncio direto não usa banco, imagem remota, script, iframe, pixel, cookie ou
-tracking individual. O link abre em nova aba com `noopener noreferrer sponsored`
-e UTM genérica, sem UID, e-mail ou dados financeiros. O conteúdo é identificado
-explicitamente como Publicidade/Sponsored e não representa recomendação financeira.
+tracking individual. A primeira campanha é um anúncio interno do próprio Gasto
+Inteligente, sem parceiro, URL externa ou UTM. Links internos usam navegação do app;
+eventuais links externos futuros deverão abrir em nova aba com
+`noopener noreferrer sponsored`. O conteúdo permanece identificado explicitamente
+como Publicidade/Sponsored e não representa alerta do sistema.
 
 ### AdSense preparado, mas inativo
 
@@ -281,8 +283,9 @@ quotas, triggers, planos pagos e `chooseFreeAdsPlan` permanecem fora deste rollo
 ## 10. Piloto direct/manual no Dashboard — Fase 1E-B2R
 
 O piloto utiliza exclusivamente a campanha local `DIRECT_ADS["dashboard-middle"]`
-em `src/lib/ads-config.ts`. Enquanto não houver parceiro aprovado, a URL deve
-permanecer genérica/de exemplo. Para testar o modo direct:
+em `src/lib/ads-config.ts`. Ainda não existe parceiro ou anunciante real: a primeira
+campanha direct é um anúncio interno (house ad) do Gasto Inteligente que divulga os
+planos pagos e navega para `/meu-plano#planos-disponiveis`. Para testar o modo direct:
 
 ```env
 VITE_ENABLE_REAL_ADS=true
@@ -302,17 +305,19 @@ Somente `dashboard-middle` possui campanha habilitada. Em modo direct,
 continuam renderizando o placeholder. Nenhum anúncio foi inserido em formulários,
 modais, autenticação, checkout, pagamento ou ações financeiras críticas.
 
-### Troca segura do parceiro
+### House ad atual e futura troca por parceiro
 
-Antes de substituir `https://exemplo.com`, revisar:
+O house ad usa os textos traduzidos em `common.json`, não abre nova aba, não aponta
+para domínio externo e não adiciona parâmetros ou dados do usuário. Quando houver
+um parceiro real, textos e destino poderão ser substituídos somente após revisão:
 
 - [ ] domínio e destino aprovados pelo responsável do produto;
 - [ ] HTTPS e página de destino funcionando em mobile e desktop;
-- [ ] UTM somente com valores genéricos (`utm_source`, `utm_medium`,
-      `utm_campaign`), sem UID, e-mail, nome ou dados financeiros;
+- [ ] UTM, se usada, somente com valores genéricos, sem UID, e-mail, nome ou dados
+      financeiros;
 - [ ] texto identificado como Publicidade/Sponsored, sem recomendação financeira
       personalizada;
-- [ ] link abre em nova aba e preserva
+- [ ] link externo abre em nova aba e preserva
       `rel="noopener noreferrer sponsored"`;
 - [ ] nenhuma chamada de analytics, registro de impressão/clique, cookie, pixel,
       iframe, imagem remota ou JavaScript externo;
