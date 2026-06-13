@@ -26,14 +26,10 @@ Ambas são `VITE_*` → resolvidas em **build-time**. Alterar exige
 
 ### `VITE_ENABLE_AD_PLACEHOLDERS`
 
-- Controla o componente visual `AdSlot`.
-- **Default: ligado** (só desliga se valor for explicitamente `"false"`).
-- Renderiza **apenas** para `plan === "free_ads"` + `status === "ativo"`,
-  e nunca para Admin Master.
-- **Zero requests externos**, sem script, iframe, pixel, cookie ou tracking.
-  Apenas card estático interno.
-- Kill-switch global: defina `"false"` para esconder em todos os usuários
-  sem alterar código.
+- Flag legada da fase de placeholder, substituída na Fase 1E-B2Q por
+  `VITE_ENABLE_REAL_ADS` e `VITE_ADS_PROVIDER`.
+- O fallback seguro atual é sempre o placeholder interno quando anúncios reais
+  estão desligados; esta flag antiga não controla mais o renderer híbrido.
 
 ---
 
@@ -42,11 +38,12 @@ Ambas são `VITE_*` → resolvidas em **build-time**. Alterar exige
 Configuração recomendada para a primeira ida a produção:
 
 - [ ] `VITE_ENABLE_FREE_ADS_SIGNUP=false`
-- [ ] `VITE_ENABLE_AD_PLACEHOLDERS=true` (ou registrar decisão contrária)
+- [ ] `VITE_ENABLE_REAL_ADS=false`
+- [ ] `VITE_ADS_PROVIDER=placeholder`
 - [ ] `bun run test:unit` verde
 - [ ] `bunx tsc --noEmit` sem erros
 - [ ] Build/harness limpo
-- [ ] `SELECT COUNT(*) FROM user_plans WHERE plano='free_ads'` = `0`
+- [ ] `SELECT COUNT(*) FROM user_plans WHERE plano='free_ads'` = `1` (conta QA fixa)
 - [ ] QA visual: usuário sem assinatura em `/meu-plano` vê card
       "Gratuito com anúncios" com botão **"Em breve"** desabilitado
 - [ ] QA visual: usuário em plano pago ativo **não** vê CTA de downgrade
@@ -215,3 +212,66 @@ Esse `1` deve corresponder **exclusivamente** ao UID
   investigar imediatamente.
 - Checkout, Mercado Pago, webhooks, RLS e código do produto continuam
   **intocados** por essa exceção.
+
+---
+
+## 9. Arquitetura híbrida de anúncios — Fase 1E-B2Q
+
+O `AdSlot` continua sendo o wrapper público usado pelas páginas. Ele só encaminha
+para o renderer quando o usuário está em `free_ads / ativo`, o plano terminou de
+carregar e a conta não é Admin Master.
+
+### Flags de build
+
+```env
+VITE_ENABLE_REAL_ADS=false
+VITE_ADS_PROVIDER=placeholder
+VITE_GOOGLE_ADSENSE_CLIENT=
+VITE_ADSENSE_TEST_MODE=true
+VITE_ADS_REQUIRE_CONSENT=true
+```
+
+Todas as flags `VITE_*` são resolvidas no build. Qualquer alteração exige
+**rebuild + redeploy**. Providers válidos: `placeholder`, `direct` e `adsense`;
+qualquer valor inválido volta para `placeholder` sem quebrar a página.
+
+- `VITE_ENABLE_REAL_ADS=false`: sempre usa o placeholder interno.
+- `placeholder`: card estático, sem chamadas externas.
+- `direct`: usa configuração local. Nesta fase, somente `dashboard-middle` está
+  configurado; `gastos-bottom`, `renda-bottom` e `mercado-bottom` permanecem como
+  placeholder.
+- `adsense`: só pode avançar com anúncios reais ligados, client ID preenchido e
+  consentimento permitido quando obrigatório. Sem qualquer requisito, usa o
+  placeholder.
+
+### Modo direto
+
+O anúncio direto não usa banco, imagem remota, script, iframe, pixel, cookie ou
+tracking individual. O link abre em nova aba com `noopener noreferrer sponsored`
+e UTM genérica, sem UID, e-mail ou dados financeiros. O conteúdo é identificado
+explicitamente como Publicidade/Sponsored e não representa recomendação financeira.
+
+### AdSense preparado, mas inativo
+
+Não há Auto Ads. O loader controlado adiciona o script no máximo uma vez e somente
+quando todos os gates forem satisfeitos. Os IDs de unidades estão intencionalmente
+vazios, o client ID real não foi configurado e o helper de consentimento retorna
+`false` por padrão. Portanto, **nenhum script AdSense é carregado na configuração
+atual**, mesmo que o provider seja selecionado sem completar as pendências.
+
+Antes de ativar AdSense real, são obrigatórios:
+
+1. conta/site aprovados pelo Google AdSense;
+2. client ID e IDs de unidades reais;
+3. Política de Privacidade revisada;
+4. Termos de Uso revisados;
+5. CMP/consentimento e política de cookies implementados;
+6. validação final das políticas do Google e QA sem clicar em anúncios reais.
+
+### QA e expectativa operacional
+
+A conta QA fixa `felipeaitek@gmail.com`
+(`44f45eac-ae30-43cd-8e40-fa8ff6b0c0c4`) deve permanecer em `free_ads / ativo`.
+O total esperado de registros com `plano = 'free_ads'` continua sendo **1**, e deve
+corresponder exclusivamente a essa conta. Checkout, Mercado Pago, webhooks, RLS,
+quotas, triggers, planos pagos e `chooseFreeAdsPlan` permanecem fora deste rollout.

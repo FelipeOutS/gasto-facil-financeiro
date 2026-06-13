@@ -273,6 +273,10 @@
     }
   },
   "ads": {
+    "sponsoredLabel": "Sponsored",
+    "partnerSpaceTitle": "Partner space",
+    "partnerSpaceDescription": "This space helps keep the free plan available.",
+    "learnMore": "Learn more",
     "placeholderTitle": "Reserved ad space",
     "placeholderSubtitle": "This space helps keep the free plan available.",
     "freePlanBadge": "Free plan with ads"

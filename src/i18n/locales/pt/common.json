@@ -273,6 +273,10 @@
     }
   },
   "ads": {
+    "sponsoredLabel": "Publicidade",
+    "partnerSpaceTitle": "Espaço de parceiro",
+    "partnerSpaceDescription": "Este espaço ajuda a manter o plano gratuito disponível.",
+    "learnMore": "Conhecer parceiro",
     "placeholderTitle": "Espaço reservado para anúncio",
     "placeholderSubtitle": "Este espaço ajuda a manter o plano gratuito.",
     "freePlanBadge": "Plano gratuito com anúncios"

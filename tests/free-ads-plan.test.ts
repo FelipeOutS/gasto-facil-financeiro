@@ -18,6 +18,7 @@ import {
   type FeatureKey,
   type PlanTier,
 } from "../src/lib/plans";
+import { canUseAdsense, DIRECT_ADS, resolveAdsConfig } from "../src/lib/ads-config";
 
 let pass = 0;
 let fail = 0;
@@ -126,6 +127,49 @@ console.log("\n▶ Admin master — passa em qualquer feature");
 for (const f of [...basicAllowed, ...paidBlocked]) {
   ok(`planAllowsFeature(admin_master, ${f}) === true`, planAllowsFeature("admin_master", f) === true);
 }
+
+console.log("\n▶ Fase 1E-B2Q — arquitetura híbrida de anúncios");
+const placeholderConfig = resolveAdsConfig({ enableRealAds: "false", provider: "placeholder" });
+eq("anúncios reais desligados por padrão", placeholderConfig.enableRealAds, false);
+eq("provider placeholder é reconhecido", placeholderConfig.provider, "placeholder");
+eq("provider inválido faz fallback seguro", resolveAdsConfig({ provider: "unknown" }).provider, "placeholder");
+eq("consentimento é exigido por padrão", resolveAdsConfig({}).requireConsent, true);
+eq("modo de teste AdSense é ligado por padrão", resolveAdsConfig({}).adsenseTestMode, true);
+ok(
+  "AdSense sem client ID nunca é permitido",
+  canUseAdsense(resolveAdsConfig({ enableRealAds: "true", provider: "adsense" }), true) === false,
+);
+ok(
+  "AdSense sem consentimento nunca é permitido quando exigido",
+  canUseAdsense(
+    resolveAdsConfig({
+      enableRealAds: "true",
+      provider: "adsense",
+      adsenseClient: "ca-pub-test",
+      requireConsent: "true",
+    }),
+    false,
+  ) === false,
+);
+ok(
+  "AdSense só é permitido com flag, provider, client e consentimento",
+  canUseAdsense(
+    resolveAdsConfig({
+      enableRealAds: "true",
+      provider: "adsense",
+      adsenseClient: "ca-pub-test",
+      requireConsent: "true",
+    }),
+    true,
+  ) === true,
+);
+eq("somente dashboard-middle possui anúncio direto", Object.keys(DIRECT_ADS).join(","), "dashboard-middle");
+ok(
+  "link direto usa UTM genérica e não contém identificadores pessoais",
+  DIRECT_ADS["dashboard-middle"].href.includes("utm_source=gasto_inteligente") &&
+    !DIRECT_ADS["dashboard-middle"].href.includes("user_id") &&
+    !DIRECT_ADS["dashboard-middle"].href.includes("email"),
+);
 
 console.log(`\nResultado: ${pass} passou, ${fail} falhou`);
 if (fail > 0) {
