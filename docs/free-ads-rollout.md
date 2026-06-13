@@ -178,3 +178,40 @@ bunx tsc --noEmit
 ```
 
 Esperado: tudo verde, zero erros.
+
+---
+
+## 8. Conta QA fixa do plano Gratuito com anúncios
+
+Este usuário é mantido permanentemente (ou a longo prazo) em `free_ads / ativo`
+para testes manuais contínuos. **Não é um usuário real de produção.**
+
+| Campo | Valor |
+|-------|-------|
+| E-mail | `felipeaitek@gmail.com` |
+| UID | `44f45eac-ae30-43cd-8e40-fa8ff6b0c0c4` |
+| Plano esperado | `free_ads` |
+| Status esperado | `ativo` |
+
+### Verificação rápida
+
+```sql
+SELECT COUNT(*) FROM user_plans WHERE plano = 'free_ads';
+```
+
+**Resultado esperado:** `1`
+
+Esse `1` deve corresponder **exclusivamente** ao UID
+`44f45eac-ae30-43cd-8e40-fa8ff6b0c0c4`.
+
+### Regras operacionais
+
+- **Não fazer rollback automático** desse usuário para `sem_assinatura`.
+- **Não alterar** esse usuário, salvo pedido explícito do responsável.
+- **Não promover** outros usuários para `free_ads` sem autorização.
+- Se o total de `free_ads` for **maior que 1** sem autorização, investigar
+  imediatamente.
+- Se o usuário QA deixar de estar em `free_ads / ativo` sem solicitação,
+  investigar imediatamente.
+- Checkout, Mercado Pago, webhooks, RLS e código do produto continuam
+  **intocados** por essa exceção.
