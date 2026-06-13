@@ -33,7 +33,7 @@ export function AdSlotRenderer({ className, slotId }: AdSlotRendererProps) {
   return (
     <>
       <AdsScriptProvider clientId={ADS_CONFIG.adsenseClient} enabled />
-      <AdSenseSlot adUnitId={adUnitId} slotId={slotId} />
+      <AdSenseSlot adUnitId={adUnitId} className={className} slotId={slotId} />
     </>
   );
 }

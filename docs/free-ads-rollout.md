@@ -26,14 +26,10 @@ Ambas são `VITE_*` → resolvidas em **build-time**. Alterar exige
 
 ### `VITE_ENABLE_AD_PLACEHOLDERS`
 
-- Controla o componente visual `AdSlot`.
-- **Default: ligado** (só desliga se valor for explicitamente `"false"`).
-- Renderiza **apenas** para `plan === "free_ads"` + `status === "ativo"`,
-  e nunca para Admin Master.
-- **Zero requests externos**, sem script, iframe, pixel, cookie ou tracking.
-  Apenas card estático interno.
-- Kill-switch global: defina `"false"` para esconder em todos os usuários
-  sem alterar código.
+- Flag legada da fase de placeholder, substituída na Fase 1E-B2Q por
+  `VITE_ENABLE_REAL_ADS` e `VITE_ADS_PROVIDER`.
+- O fallback seguro atual é sempre o placeholder interno quando anúncios reais
+  estão desligados; esta flag antiga não controla mais o renderer híbrido.
 
 ---
 
@@ -42,7 +38,8 @@ Ambas são `VITE_*` → resolvidas em **build-time**. Alterar exige
 Configuração recomendada para a primeira ida a produção:
 
 - [ ] `VITE_ENABLE_FREE_ADS_SIGNUP=false`
-- [ ] `VITE_ENABLE_AD_PLACEHOLDERS=true` (ou registrar decisão contrária)
+- [ ] `VITE_ENABLE_REAL_ADS=false`
+- [ ] `VITE_ADS_PROVIDER=placeholder`
 - [ ] `bun run test:unit` verde
 - [ ] `bunx tsc --noEmit` sem erros
 - [ ] Build/harness limpo

@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { ADS_CONFIG } from "@/lib/ads-config";
+import { cn } from "@/lib/utils";
 
 declare global {
   interface Window {
@@ -8,11 +10,13 @@ declare global {
 }
 
 type AdSenseSlotProps = {
+  className?: string;
   slotId: string;
   adUnitId: string;
 };
 
-export function AdSenseSlot({ slotId, adUnitId }: AdSenseSlotProps) {
+export function AdSenseSlot({ className, slotId, adUnitId }: AdSenseSlotProps) {
+  const { t } = useTranslation("common");
   const requested = useRef(false);
 
   useEffect(() => {
@@ -23,7 +27,16 @@ export function AdSenseSlot({ slotId, adUnitId }: AdSenseSlotProps) {
   }, [adUnitId]);
 
   return (
-    <aside role="complementary" data-ad-slot={slotId} data-ad-provider="adsense">
+    <aside
+      role="complementary"
+      aria-label={t("ads.sponsoredLabel")}
+      data-ad-slot={slotId}
+      data-ad-provider="adsense"
+      className={cn("rounded-2xl border border-border bg-muted/30 px-4 py-3", className)}
+    >
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {t("ads.sponsoredLabel")}
+      </p>
       <ins
         className="adsbygoogle block"
         data-ad-client={ADS_CONFIG.adsenseClient}
