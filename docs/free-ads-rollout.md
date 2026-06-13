@@ -275,3 +275,64 @@ A conta QA fixa `felipeaitek@gmail.com`
 O total esperado de registros com `plano = 'free_ads'` continua sendo **1**, e deve
 corresponder exclusivamente a essa conta. Checkout, Mercado Pago, webhooks, RLS,
 quotas, triggers, planos pagos e `chooseFreeAdsPlan` permanecem fora deste rollout.
+
+---
+
+## 10. Piloto direct/manual no Dashboard — Fase 1E-B2R
+
+O piloto utiliza exclusivamente a campanha local `DIRECT_ADS["dashboard-middle"]`
+em `src/lib/ads-config.ts`. Enquanto não houver parceiro aprovado, a URL deve
+permanecer genérica/de exemplo. Para testar o modo direct:
+
+```env
+VITE_ENABLE_REAL_ADS=true
+VITE_ADS_PROVIDER=direct
+```
+
+Para retornar ao fallback seguro:
+
+```env
+VITE_ENABLE_REAL_ADS=false
+VITE_ADS_PROVIDER=placeholder
+```
+
+As flags são resolvidas no build; qualquer troca exige **rebuild + redeploy**.
+Somente `dashboard-middle` possui campanha habilitada. Em modo direct,
+`gastos-bottom`, `renda-bottom` e `mercado-bottom` não encontram campanha local e
+continuam renderizando o placeholder. Nenhum anúncio foi inserido em formulários,
+modais, autenticação, checkout, pagamento ou ações financeiras críticas.
+
+### Troca segura do parceiro
+
+Antes de substituir `https://exemplo.com`, revisar:
+
+- [ ] domínio e destino aprovados pelo responsável do produto;
+- [ ] HTTPS e página de destino funcionando em mobile e desktop;
+- [ ] UTM somente com valores genéricos (`utm_source`, `utm_medium`,
+      `utm_campaign`), sem UID, e-mail, nome ou dados financeiros;
+- [ ] texto identificado como Publicidade/Sponsored, sem recomendação financeira
+      personalizada;
+- [ ] link abre em nova aba e preserva
+      `rel="noopener noreferrer sponsored"`;
+- [ ] nenhuma chamada de analytics, registro de impressão/clique, cookie, pixel,
+      iframe, imagem remota ou JavaScript externo;
+- [ ] QA visual com `free_ads / ativo` e testes negativos para plano pago,
+      Admin Master, `sem_assinatura`, expirado, cancelado e loading.
+
+O conteúdo do anúncio fica em `src/i18n/locales/pt/common.json` e
+`src/i18n/locales/en/common.json`. O modo direct é um link HTML estático: não usa
+banco nem envia eventos. O gate continua centralizado no `AdSlot`, que só encaminha
+o renderer após o plano carregar e apenas para usuário não-admin com
+`plan = free_ads` e `status = ativo`.
+
+### AdSense e conta QA
+
+AdSense continua **inativo**: sem Client ID real, sem unidades configuradas, sem
+Auto Ads e com consentimento publicitário negado por padrão. Ativar o provider
+direct não carrega o script do Google nem qualquer outro script externo.
+
+A conta QA fixa `felipeaitek@gmail.com`
+(`44f45eac-ae30-43cd-8e40-fa8ff6b0c0c4`) deve permanecer em
+`free_ads / ativo`, sem rollback. Durante o piloto, o resultado esperado de
+`SELECT COUNT(*) FROM user_plans WHERE plano = 'free_ads'` permanece **1**,
+correspondente exclusivamente a essa conta.

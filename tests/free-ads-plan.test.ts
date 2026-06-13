@@ -18,7 +18,12 @@ import {
   type FeatureKey,
   type PlanTier,
 } from "../src/lib/plans";
-import { canUseAdsense, DIRECT_ADS, resolveAdsConfig } from "../src/lib/ads-config";
+import {
+  canUseAdsense,
+  DIRECT_ADS,
+  getEnabledDirectAd,
+  resolveAdsConfig,
+} from "../src/lib/ads-config";
 
 let pass = 0;
 let fail = 0;
@@ -164,11 +169,16 @@ ok(
   ) === true,
 );
 eq("somente dashboard-middle possui anúncio direto", Object.keys(DIRECT_ADS).join(","), "dashboard-middle");
+ok("dashboard-middle possui campanha direct habilitada", getEnabledDirectAd("dashboard-middle") !== null);
+for (const slotId of ["gastos-bottom", "renda-bottom", "mercado-bottom"]) {
+  eq(`${slotId} não possui campanha direct e cai em placeholder`, getEnabledDirectAd(slotId), null);
+}
 ok(
   "link direto usa UTM genérica e não contém identificadores pessoais",
   DIRECT_ADS["dashboard-middle"].href.includes("utm_source=gasto_inteligente") &&
     !DIRECT_ADS["dashboard-middle"].href.includes("user_id") &&
-    !DIRECT_ADS["dashboard-middle"].href.includes("email"),
+    !DIRECT_ADS["dashboard-middle"].href.includes("email") &&
+    !DIRECT_ADS["dashboard-middle"].href.includes("felipeaitek"),
 );
 
 console.log(`\nResultado: ${pass} passou, ${fail} falhou`);
