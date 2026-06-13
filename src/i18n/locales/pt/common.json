@@ -274,9 +274,9 @@
   },
   "ads": {
     "sponsoredLabel": "Publicidade",
-    "partnerSpaceTitle": "Espaço de parceiro",
-    "partnerSpaceDescription": "Este espaço ajuda a manter o plano gratuito disponível.",
-    "learnMore": "Conhecer parceiro",
+    "partnerSpaceTitle": "Quer ir além do plano gratuito?",
+    "partnerSpaceDescription": "Desbloqueie recursos avançados, lançamentos ilimitados, importações, relatórios e muito mais.",
+    "learnMore": "Conhecer planos",
     "placeholderTitle": "Espaço reservado para anúncio",
     "placeholderSubtitle": "Este espaço ajuda a manter o plano gratuito.",
     "freePlanBadge": "Plano gratuito com anúncios"

@@ -16,17 +16,18 @@ export type AdsRuntimeConfig = {
   requireConsent: boolean;
 };
 
-export type DirectAdConfig = {
-  enabled: boolean;
-  href: string;
-};
+export type DirectAdConfig =
+  | { enabled: boolean; kind: "internal"; to: "/meu-plano"; hash?: string }
+  | { enabled: boolean; kind: "external"; href: string };
 
 const VALID_PROVIDERS: readonly AdsProvider[] = ["placeholder", "direct", "adsense"];
 
 export const DIRECT_ADS: Readonly<Record<string, DirectAdConfig>> = {
   "dashboard-middle": {
     enabled: true,
-    href: "https://exemplo.com?utm_source=gasto_inteligente&utm_medium=adslot&utm_campaign=dashboard",
+    kind: "internal",
+    to: "/meu-plano",
+    hash: "planos-disponiveis",
   },
 };
 
