@@ -437,6 +437,9 @@ function Index() {
           </Link>
         </section>
 
+        {/* Mantém o piloto direct visível também no Dashboard sem lançamentos. */}
+        <AdSlot className="mt-5" slotId="dashboard-middle" />
+
         <p className="mt-8 text-center text-xs text-muted-foreground">
           {t("empty.footer")}
         </p>
