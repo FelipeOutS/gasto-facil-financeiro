@@ -368,24 +368,17 @@ correspondente exclusivamente a essa conta.
 - [x] 129 testes passaram.
 - [x] Nenhuma alteração feita em checkout, Mercado Pago, webhooks, RLS, quotas, triggers, `chooseFreeAdsPlan` ou planos pagos.
 
-### Ambiente de preview vs produção
+### Ambiente de preview e produção
 
-As flags `VITE_ENABLE_REAL_ADS=true` e `VITE_ADS_PROVIDER=direct` foram
-aplicadas **apenas no sandbox/preview** via `.env.local` (arquivo ignorado pelo
-Git e não transportado para o build de produção).
+As flags públicas `VITE_ENABLE_REAL_ADS=true` e `VITE_ADS_PROVIDER=direct`
+estão configuradas no arquivo versionado `.env.production`, carregado pelo
+build de produção. Elas não são secrets e não devem ser cadastradas em
+**Cloud → Secrets**. O sandbox/preview mantém os mesmos valores em
+`.env.local`, que continua local e ignorado pelo Git.
 
-Para ativar o house ad interno em **produção/publicação**, é necessário
-configurar as mesmas variáveis como **Environment Variables de build** no
-painel do projeto Lovable:
-
-1. Acesse **Project Settings → Environment Variables** (ou **Build Variables**,
-   conforme a nomenclatura atual da plataforma).
-2. Adicione:
-   - `VITE_ENABLE_REAL_ADS` = `true`
-   - `VITE_ADS_PROVIDER` = `direct`
-3. Salve as variáveis.
-4. Publique/deploy o projeto novamente para que o build de produção as
-   incorpore.
+Para incorporar as flags ao ambiente publicado, basta executar um novo build
+e publicar/deployar novamente o projeto. Não é necessário alterar o código nem
+cadastrar valores no painel de Secrets.
 
 > ⚠️ `VITE_*` são resolvidas em build-time. Alterá-las exige sempre um novo
 > build + deploy. Não funcionam como toggle em runtime.
