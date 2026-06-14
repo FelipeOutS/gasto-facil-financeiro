@@ -341,3 +341,65 @@ A conta QA fixa `felipeaitek@gmail.com`
 `free_ads / ativo`, sem rollback. Durante o piloto, o resultado esperado de
 `SELECT COUNT(*) FROM user_plans WHERE plano = 'free_ads'` permanece **1**,
 correspondente exclusivamente a essa conta.
+
+---
+
+## 11. Fase 1E-B2R — Conclusão
+
+**Status: CONCLUÍDA** em 14/06/2026.
+
+### Critérios de aceite validados
+
+- [x] Preview recompilado com `VITE_ENABLE_REAL_ADS=true`.
+- [x] Provider `direct` ativo no preview.
+- [x] House ad interno exibido no slot `dashboard-middle`.
+- [x] CTA navegando na mesma aba para `/meu-plano#planos-disponiveis`.
+- [x] Sem URL externa.
+- [x] Sem parceiro externo.
+- [x] Sem UTM.
+- [x] Sem tracking.
+- [x] Sem cookie.
+- [x] Sem pixel.
+- [x] Sem script externo de anúncio.
+- [x] AdSense permanece inativo.
+- [x] `gastos-bottom`, `renda-bottom` e `mercado-bottom` continuam em placeholder.
+- [x] Conta QA `felipeaitek@gmail.com` permanece `free_ads / ativo`.
+- [x] `COUNT(*) WHERE plano='free_ads' = 1`.
+- [x] 129 testes passaram.
+- [x] Nenhuma alteração feita em checkout, Mercado Pago, webhooks, RLS, quotas, triggers, `chooseFreeAdsPlan` ou planos pagos.
+
+### Ambiente de preview vs produção
+
+As flags `VITE_ENABLE_REAL_ADS=true` e `VITE_ADS_PROVIDER=direct` foram
+aplicadas **apenas no sandbox/preview** via `.env.local` (arquivo ignorado pelo
+Git e não transportado para o build de produção).
+
+Para ativar o house ad interno em **produção/publicação**, é necessário
+configurar as mesmas variáveis como **Environment Variables de build** no
+painel do projeto Lovable:
+
+1. Acesse **Project Settings → Environment Variables** (ou **Build Variables**,
+   conforme a nomenclatura atual da plataforma).
+2. Adicione:
+   - `VITE_ENABLE_REAL_ADS` = `true`
+   - `VITE_ADS_PROVIDER` = `direct`
+3. Salve as variáveis.
+4. Publique/deploy o projeto novamente para que o build de produção as
+   incorpore.
+
+> ⚠️ `VITE_*` são resolvidas em build-time. Alterá-las exige sempre um novo
+> build + deploy. Não funcionam como toggle em runtime.
+
+### Comportamento esperado em produção
+
+Ao publicar com as flags acima, o comportamento em produção será **idêntico** ao
+validado no preview:
+
+- Apenas usuários `free_ads / ativo` (não-admin) verão o house ad em
+  `dashboard-middle`.
+- O CTA continua sendo um link interno para `/meu-plano#planos-disponiveis`,
+  sem nova aba, sem URL externa, sem UTM, sem tracking.
+- AdSense continua inativo: sem Client ID, sem unidades, sem Auto Ads.
+- Slots secundários (`gastos-bottom`, `renda-bottom`, `mercado-bottom`)
+  permanecem como placeholder.
+- Zero scripts, cookies, pixels ou chamadas externas de anúncio.
