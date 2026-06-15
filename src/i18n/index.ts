@@ -110,6 +110,18 @@ if (!i18n.isInitialized) {
     interpolation: { escapeValue: false },
     react: { useSuspense: false },
   });
+} else if (normalizeLanguageTag(i18n.resolvedLanguage || i18n.language) !== DEFAULT_LOCALE) {
+  // Singleton i18next pode persistir entre requisições no runtime do servidor e
+  // entre navegações client-side. Forçar o idioma padrão antes do primeiro
+  // render garante que o HTML do SSR e a hidratação inicial usem o mesmo
+  // idioma (React #418). O useLocale reaplica a preferência do usuário no
+  // próximo effect, sem alterar áreas autenticadas após a hidratação.
+  void i18n.changeLanguage(DEFAULT_LOCALE);
+}
+
+function normalizeLanguageTag(value: string | undefined): string {
+  if (typeof value !== "string") return DEFAULT_LOCALE;
+  return value.toLowerCase().startsWith("en") ? "en" : "pt";
 }
 
 export default i18n;
