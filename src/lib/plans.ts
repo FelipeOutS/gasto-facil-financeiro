@@ -5,13 +5,18 @@
 import type { TipoCadastro } from "./profile-utils";
 
 /**
- * Tiers de plano. `free` permanece apenas para compatibilidade interna
- * (registros antigos), mas NÃO é exibido como plano comercial.
+ * Tiers de plano.
+ *
+ * `free` é LEGADO/DEPRECATED — mantido apenas por compatibilidade histórica
+ * com registros antigos em `user_plans` (Fase 1E-B2T migrou os usuários reais
+ * elegíveis para `free_ads`; apenas Admin Master e QA antiga inerte podem
+ * permanecer em `free`). Novos usuários recebem `free_ads` via trigger
+ * `handle_new_user_plan`. Não usar `free` em UI, checkout ou novas regras.
  *
  * `mei` é mantido como alias legado e mapeado para `mei_essencial`.
  */
 export type PlanTier =
-  | "free"
+  | "free" // @deprecated — legado; usar `free_ads` para novos usuários gratuitos
   | "sem_assinatura"
   | "free_ads"
   | "pessoal_manual"
