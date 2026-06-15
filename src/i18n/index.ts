@@ -106,7 +106,7 @@ if (!i18n.isInitialized) {
     ns: ["common", "landing", "auth", "account", "nav", "dashboard", "gastos", "cartoes", "contas-a-pagar", "contas-a-receber", "categorias", "clientes", "fornecedores", "metas", "orcamento", "relatorios", "adicionar", "guardado", "renda", "assinaturas", "meu-plano", "perfil", "empresa", "onboarding", "confirmar", "legal", "misc", "import-conta", "import-fatura", "import-extrato", "import-investimentos", "extratos-importados", "mercado", "cofre", "investimentos"],
     // Os recursos já estão no bundle: inicializar de forma síncrona garante que
     // SSR e o primeiro render do navegador traduzam o mesmo texto na hidratação.
-    initImmediate: false,
+    initAsync: false,
     interpolation: { escapeValue: false },
     react: { useSuspense: false },
   });
