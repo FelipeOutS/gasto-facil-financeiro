@@ -826,7 +826,7 @@ function AdminPage() {
 }
 
 function ManualGrantSection({ target, onDone }: { target: AdminUserRow; onDone: () => void }) {
-  const [plano, setPlano] = useState<string>("pessoal_manual");
+  const [plano, setPlano] = useState<string>("pessoal_premium");
   const [periodicidade, setPeriodicidade] = useState<string>("mensal");
   const [startDate, setStartDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState<string>("");
@@ -840,7 +840,7 @@ function ManualGrantSection({ target, onDone }: { target: AdminUserRow; onDone: 
       await grantPlanManually({
         data: {
           targetUserId: target.user_id,
-          plano: plano as "pessoal_manual" | "pessoal_premium" | "mei_essencial" | "mei_inteligente" | "empresa",
+          plano: plano as "pessoal_premium" | "mei_essencial" | "mei_inteligente" | "empresa",
           periodicidade: periodicidade as "mensal" | "trimestral" | "semestral" | "anual",
           startDate: startDate || undefined,
           endDate: endDate || undefined,
@@ -866,7 +866,6 @@ function ManualGrantSection({ target, onDone }: { target: AdminUserRow; onDone: 
           <Select value={plano} onValueChange={setPlano}>
             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="pessoal_manual">Controle Simples Pessoal</SelectItem>
               <SelectItem value="pessoal_premium">Controle Completo Pessoal</SelectItem>
               <SelectItem value="mei_essencial">Essencial para MEI</SelectItem>
               <SelectItem value="mei_inteligente">MEI Completo</SelectItem>

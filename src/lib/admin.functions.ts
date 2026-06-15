@@ -367,7 +367,6 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
   });
 
 const PLAN_TIERS = [
-  "pessoal_manual",
   "pessoal_premium",
   "mei_essencial",
   "mei_inteligente",

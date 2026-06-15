@@ -80,22 +80,15 @@ export const ACCOUNT_TYPES: {
   },
 ];
 
-const ADVANCED_GOALS: GoalKey[] = ["investimentos"];
-const ADVANCED_MODULES: ModuleKey[] = ["investimentos", "relatorios"];
-
 /** Sugere plano com base no tipo + objetivos + módulos. */
 export function recommendPlan(
   accountType: AccountType | null,
-  goals: GoalKey[],
-  modules: ModuleKey[],
+  _goals: GoalKey[],
+  _modules: ModuleKey[],
 ): PlanTier {
-  const wantsAdvanced =
-    goals.some((g) => ADVANCED_GOALS.includes(g)) ||
-    modules.some((m) => ADVANCED_MODULES.includes(m));
-
   if (accountType === "empresa") return "empresa";
   if (accountType === "mei") {
-    return wantsAdvanced ? "mei_inteligente" : "mei_essencial";
+    return "mei_essencial";
   }
   // pessoa_fisica ou null
   return "pessoal_premium";
