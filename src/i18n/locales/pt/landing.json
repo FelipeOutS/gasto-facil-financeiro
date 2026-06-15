@@ -228,6 +228,7 @@
     "eyebrow": "Planos",
     "title": "Escolha o plano ideal para sua rotina financeira.",
     "subtitle": "Escolha o plano que combina com sua rotina e evolua conforme sua organização crescer.",
+    "freeOrPaid": "Comece grátis e evolua quando precisar de mais recursos.",
     "audiencePF": "Pessoa Física",
     "audienceMEI": "MEI",
     "audienceEmpresa": "Empresa",
@@ -245,6 +246,27 @@
     "helperA": "Não sabe qual escolher?",
     "helperLink": "Veja as dúvidas frequentes",
     "helperB": "ou comece pelo plano mais próximo do seu momento — você pode evoluir depois.",
+    "freeAds": {
+      "name": "Gratuito com anúncios",
+      "price": "R$ 0,00",
+      "subtitle": "Comece a organizar sua vida financeira sem pagar nada.",
+      "description": "Controle o básico do dia a dia com anúncios discretos.",
+      "badge": "Comece grátis",
+      "adsLabel": "Com anúncios",
+      "cta": "Começar grátis",
+      "activating": "Ativando…",
+      "error": "Não foi possível ativar o plano gratuito agora. Tente novamente.",
+      "paidNote": "Recursos avançados, importações, relatórios completos e automações estão disponíveis nos planos pagos.",
+      "features": [
+        "Gastos manuais",
+        "Receitas manuais",
+        "Mercado básico",
+        "Metas básicas",
+        "Orçamento básico",
+        "1 cartão manual",
+        "Anúncios discretos no app"
+      ]
+    },
     "names": {
       "pessoal_manual": "Controle Simples Pessoal",
       "pessoal_premium": "Controle Completo Pessoal",

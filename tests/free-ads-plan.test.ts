@@ -106,6 +106,11 @@ ok(
   checkoutSource.includes("Este plano não está mais disponível para novas assinaturas."),
 );
 
+const landingSource = await Bun.file("src/components/landing/PublicLanding.tsx").text();
+ok("landing exibe card gratuito antes dos planos pagos", landingSource.indexOf("<FreeAdsPlanCard />") < landingSource.indexOf("COMMERCIAL_PLANS.map"));
+ok("CTA gratuito usa o fluxo seguro chooseFreeAdsPlan", landingSource.includes("useServerFn(chooseFreeAdsPlan)"));
+ok("card gratuito não chama criarCheckout", !landingSource.slice(landingSource.indexOf("function FreeAdsPlanCard"), landingSource.indexOf("function PlanCardItem")).includes("criarCheckout"));
+
 const defaultPlanMigration = await Bun.file(
   "supabase/migrations/20260615004941_820ecfb5-7a04-4558-8143-4b1661b99ec9.sql",
 ).text();
