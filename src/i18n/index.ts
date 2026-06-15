@@ -83,22 +83,12 @@ export function isLocale(value: unknown): value is Locale {
 }
 
 /**
- * Detects the initial language. Para evitar hydration mismatch entre SSR e cliente,
- * usamos APENAS sinais que existem nos dois lados (URL search `?lang=` ou prefixo de rota).
- * O fallback do localStorage / navigator é aplicado depois da hidratação pelo hook useLocale.
+ * Mantém o primeiro render idêntico no SSR e no cliente. O servidor não tem
+ * acesso à URL do navegador neste singleton, portanto qualquer detecção aqui
+ * faria o cliente traduzir antes da hidratação e divergiria do HTML em PT.
+ * URL, localStorage e navegador são sincronizados depois pelo hook useLocale.
  */
 function detectInitialLocale(): Locale {
-  try {
-    if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      const fromUrl = url.searchParams.get("lang");
-      if (isLocale(fromUrl)) return fromUrl;
-      const seg = url.pathname.split("/").filter(Boolean)[0];
-      if (isLocale(seg)) return seg;
-    }
-  } catch {
-    // ignore
-  }
   return DEFAULT_LOCALE;
 }
 
