@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { PlanTier, Periodicidade } from "@/lib/plans";
+import { isPlanAvailableForNewSubscriptions, type PlanTier, type Periodicidade } from "@/lib/plans";
 
 /**
  * Cria uma cobrança no Mercado Pago para o plano + periodicidade escolhidos.
@@ -41,6 +41,9 @@ export async function criarCheckout(
   plano: PlanTier,
   opts: { periodicidade: Periodicidade; method: "pix" | "card" },
 ): Promise<CheckoutResult> {
+  if (!isPlanAvailableForNewSubscriptions(plano)) {
+    return { ok: false, reason: "Este plano não está mais disponível para novas assinaturas." };
+  }
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
   if (!token) return { ok: false, reason: "Faça login novamente para continuar." };

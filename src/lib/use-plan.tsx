@@ -401,7 +401,7 @@ export async function startTrial(
   } else {
     const { error } = await supabase.from("user_plans").insert({
       user_id: userId,
-      plano: "free",
+      plano: "free_ads",
       status: "teste",
       trial_plan_type: planoEscolhido,
       trial_started_at: startISO,
