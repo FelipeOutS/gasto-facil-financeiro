@@ -223,13 +223,16 @@ export function plansAllowingFeature(feature: FeatureKey): PlanTier[] {
   // Para fins comerciais (UI de planos), filtramos free_ads das whitelists —
   // ele aparece apenas via planAllowsFeature direto, nunca como "plano que
   // vende esta feature".
-  if (whitelist) return whitelist.filter((p) => p !== "free_ads");
+  if (whitelist) return whitelist.filter(
+    (p) => p !== "free_ads" && p !== "pessoal_manual",
+  );
   const min = FEATURE_MIN_PLAN[feature];
   return (Object.keys(PLAN_ORDER) as PlanTier[]).filter(
     (p) =>
       p !== "free" &&
       p !== "sem_assinatura" &&
       p !== "free_ads" &&
+      p !== "pessoal_manual" &&
       PLAN_ORDER[p] >= PLAN_ORDER[min],
   );
 }
@@ -287,7 +290,7 @@ export function suggestedUpgrade(
   if (current === "admin_master") return current;
   if (tipo === "empresa") return "empresa";
   if (tipo === "mei") return current === "mei_essencial" ? "mei_inteligente" : "mei_essencial";
-  return current === "pessoal_manual" ? "pessoal_premium" : "pessoal_manual";
+  return "pessoal_premium";
 }
 
 export type PlanFeature = {

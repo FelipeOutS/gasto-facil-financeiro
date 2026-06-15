@@ -5,6 +5,7 @@ import { getCurrentUserSubscription } from "@/lib/subscription.functions";
 import {
   getEffectiveUserPlan,
   isAdminMasterEmail,
+  isPlanAvailableForNewSubscriptions,
   planAllowsFeature,
   type FeatureKey,
   type PlanTier,
