@@ -369,7 +369,7 @@ export const PLAN_CATALOG: CommercialPlan[] = [
     priceLabel: "R$ 50,00/mês",
     tagline: "Mais automação para o seu dia a dia.",
     highlights: [
-      "Tudo do Controle Simples Pessoal",
+      "Lançamentos e controles financeiros ilimitados",
       "Importar extrato, fatura e boleto/Pix",
       "Contas a receber completas",
       "Metas com imagens",
@@ -387,7 +387,7 @@ export const PLAN_CATALOG: CommercialPlan[] = [
     priceLabel: "R$ 39,90/mês",
     tagline: "O essencial para o seu MEI.",
     highlights: [
-      "Tudo do Controle Simples Pessoal",
+      "Controles financeiros essenciais para o MEI",
       "Empresa Inteligente: Minha Empresa, clientes e fornecedores",
       "Contas a pagar com fornecedor e a receber com cliente",
       "Relatórios por cliente e por fornecedor",
