@@ -98,5 +98,5 @@ export function recommendPlan(
     return wantsAdvanced ? "mei_inteligente" : "mei_essencial";
   }
   // pessoa_fisica ou null
-  return wantsAdvanced ? "pessoal_premium" : "pessoal_manual";
+  return "pessoal_premium";
 }

@@ -334,9 +334,13 @@ export type CommercialPlan = {
   priceLabel: string;
   tagline: string;
   highlights: string[];
+  /** Mantém compatibilidade histórica sem oferecer novas assinaturas. */
+  deprecated?: boolean;
+  visible?: boolean;
+  allowNewSubscriptions?: boolean;
 };
 
-export const COMMERCIAL_PLANS: CommercialPlan[] = [
+export const PLAN_CATALOG: CommercialPlan[] = [
   {
     tier: "pessoal_manual",
     name: "Controle Simples Pessoal",
@@ -351,6 +355,9 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
       "Relatórios básicos",
       "Sem importações automáticas",
     ],
+    deprecated: true,
+    visible: false,
+    allowNewSubscriptions: false,
   },
   {
     tier: "pessoal_premium",
@@ -429,8 +436,19 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
   },
 ];
 
+/** Planos exibidos na oferta comercial atual. */
+export const COMMERCIAL_PLANS: CommercialPlan[] = PLAN_CATALOG.filter(
+  (plan) => plan.visible !== false && plan.allowNewSubscriptions !== false,
+);
+
+export function isPlanAvailableForNewSubscriptions(tier: PlanTier): boolean {
+  return PLAN_CATALOG.some(
+    (plan) => plan.tier === tier && plan.visible !== false && plan.allowNewSubscriptions !== false,
+  );
+}
+
 export function commercialPlanByTier(tier: PlanTier): CommercialPlan | undefined {
-  return COMMERCIAL_PLANS.find((p) => p.tier === tier);
+  return PLAN_CATALOG.find((p) => p.tier === tier);
 }
 
 /* ===========================================================

@@ -367,6 +367,9 @@ export async function startTrial(
   userId: string,
   planoEscolhido: PlanTier,
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
+  if (!isPlanAvailableForNewSubscriptions(planoEscolhido)) {
+    return { ok: false, reason: "Este plano não está mais disponível para novas assinaturas." };
+  }
   if (!TRIAL_PLAN_VALUES.includes(planoEscolhido)) {
     return { ok: false, reason: "Plano inválido para teste." };
   }
