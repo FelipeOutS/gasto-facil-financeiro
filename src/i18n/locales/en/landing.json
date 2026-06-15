@@ -228,6 +228,7 @@
     "eyebrow": "Plans",
     "title": "Pick the plan that fits your financial routine.",
     "subtitle": "Choose the plan that suits your routine and upgrade as your organization grows.",
+    "freeOrPaid": "Start free and upgrade when you need more features.",
     "audiencePF": "Individual",
     "audienceMEI": "Freelancer",
     "audienceEmpresa": "Business",
@@ -245,6 +246,27 @@
     "helperA": "Not sure which to pick?",
     "helperLink": "See the FAQ",
     "helperB": "or start with the plan closest to your moment — you can upgrade later.",
+    "freeAds": {
+      "name": "Free with ads",
+      "price": "R$ 0.00",
+      "subtitle": "Start organizing your financial life at no cost.",
+      "description": "Manage the essentials of everyday life with discreet ads.",
+      "badge": "Start free",
+      "adsLabel": "With ads",
+      "cta": "Start free",
+      "activating": "Activating…",
+      "error": "We couldn't activate the free plan right now. Please try again.",
+      "paidNote": "Advanced features, imports, complete reports and automations are available on paid plans.",
+      "features": [
+        "Manual expenses",
+        "Manual income",
+        "Basic grocery tools",
+        "Basic goals",
+        "Basic budgeting",
+        "1 manual card",
+        "Discreet in-app ads"
+      ]
+    },
     "names": {
       "pessoal_manual": "Simple Personal Control",
       "pessoal_premium": "Complete Personal Control",

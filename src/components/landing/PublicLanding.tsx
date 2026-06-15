@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   Wallet,
@@ -65,7 +66,12 @@ import empresaEntrepreneur from "@/assets/empresa-entrepreneur.jpg";
 import mobileGastoInteligente from "@/assets/mobile-gasto-inteligente.png";
 import landingDevicesMockup from "@/assets/landing-devices-mockup.png";
 import { COMMERCIAL_PLANS, type PlanTier } from "@/lib/plans";
+import { useAuth } from "@/lib/auth-context";
+import { usePlan } from "@/lib/use-plan";
+import { chooseFreeAdsPlan } from "@/lib/subscription.functions";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 /* ──────────────────────────────────────────────────────────────
    Public landing — always light theme, white-first, premium feel.
@@ -2880,6 +2886,104 @@ const HIGHLIGHT: Partial<Record<PlanTier, { label: string; tone: "primary" | "em
 
 const VISIBLE_HIGHLIGHTS = 5;
 
+function FreeAdsPlanCard() {
+  const { t } = useTranslation("landing");
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { storedPlan, status, loading: planLoading, isAdminMaster } = usePlan();
+  const chooseFreeAds = useServerFn(chooseFreeAdsPlan);
+  const [submitting, setSubmitting] = useState(false);
+  const features = t("plans.freeAds.features", { returnObjects: true }) as string[];
+
+  async function handleStartFree() {
+    if (authLoading || planLoading || submitting) return;
+    if (!user) {
+      void navigate({ to: "/cadastro" });
+      return;
+    }
+    if (storedPlan === "free_ads" && status === "ativo") {
+      void navigate({ to: "/" });
+      return;
+    }
+    if (isAdminMaster) {
+      void navigate({ to: "/meu-plano", hash: "planos-disponiveis" });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const result = await chooseFreeAds();
+      if (result.ok) {
+        void navigate({ to: "/" });
+      } else if (result.reason === "paid_plan_active" || result.reason === "admin_master") {
+        void navigate({ to: "/meu-plano", hash: "planos-disponiveis" });
+      } else {
+        toast.error(t("plans.freeAds.error"));
+      }
+    } catch {
+      toast.error(t("plans.freeAds.error"));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Reveal className="h-full">
+      <div className="group relative flex h-full min-h-[520px] flex-col overflow-hidden rounded-3xl border border-emerald-200 bg-gradient-to-b from-emerald-50/80 via-white to-white px-5 py-6 text-slate-900 shadow-[0_10px_30px_-18px_rgba(15,118,110,0.2)] transition-all duration-300 hover:-translate-y-1 hover:border-emerald-300 hover:shadow-[0_22px_44px_-18px_rgba(15,118,110,0.28)] sm:px-6 xl:px-5">
+        <div aria-hidden className="pointer-events-none absolute -right-14 -top-16 h-36 w-36 rounded-full bg-emerald-100/70 blur-2xl" />
+        <div className="relative flex items-center justify-between gap-2">
+          <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-800 ring-1 ring-emerald-200">
+            {t("plans.freeAds.badge")}
+          </span>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
+            {t("plans.freeAds.adsLabel")}
+          </span>
+        </div>
+
+        <h3 className="relative mt-3 text-base font-bold tracking-tight text-slate-900 lg:text-[1.0625rem]">
+          {t("plans.freeAds.name")}
+        </h3>
+        <p className="relative mt-1 min-h-[34px] text-xs leading-snug text-slate-600">
+          {t("plans.freeAds.subtitle")}
+        </p>
+
+        <div className="relative mt-3 flex items-baseline gap-1">
+          <span className="text-[1.75rem] font-extrabold leading-none tracking-tight text-slate-900 tabular-nums">
+            {t("plans.freeAds.price")}
+          </span>
+          <span className="text-xs font-medium text-slate-500">/{t("plans.perMonth")}</span>
+        </div>
+        <p className="relative mt-0.5 text-[11px] text-emerald-700">{t("plans.freeAds.description")}</p>
+
+        <div className="relative my-3 h-px w-full bg-gradient-to-r from-transparent via-emerald-200 to-transparent" />
+        <ul className="relative space-y-1.5">
+          {Array.isArray(features) && features.map((feature) => (
+            <li key={feature} className="flex items-start gap-2 text-[12.5px] leading-snug text-slate-700">
+              <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+                <Check className="h-2.5 w-2.5" strokeWidth={3} />
+              </span>
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="relative mt-3 text-[11px] leading-relaxed text-slate-500">
+          {t("plans.freeAds.paidNote")}
+        </p>
+        <div className="flex-1" />
+        <Button
+          type="button"
+          onClick={() => void handleStartFree()}
+          disabled={authLoading || planLoading || submitting}
+          className="relative mt-4 w-full rounded-full bg-emerald-700 text-sm font-semibold text-white hover:bg-emerald-800"
+        >
+          {submitting ? t("plans.freeAds.activating") : t("plans.freeAds.cta")}
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+        </Button>
+      </div>
+    </Reveal>
+  );
+}
+
 function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[number]; index: number }) {
   const { t } = useTranslation("landing");
   const [expanded, setExpanded] = useState(false);
@@ -3082,9 +3186,14 @@ function Plans() {
           </span>
         </div>
 
-        <div className="mx-auto mt-12 grid max-w-md grid-cols-1 items-stretch gap-5 sm:max-w-3xl sm:grid-cols-2 sm:gap-6 lg:max-w-6xl lg:grid-cols-3 xl:max-w-[1380px] xl:grid-cols-5 xl:gap-4 2xl:gap-5">
+        <p className="mx-auto mt-6 max-w-2xl text-center text-sm font-medium text-slate-600">
+          {t("plans.freeOrPaid")}
+        </p>
+
+        <div className="mx-auto mt-10 grid max-w-md grid-cols-1 items-stretch gap-5 sm:max-w-3xl sm:grid-cols-2 sm:gap-6 lg:max-w-6xl lg:grid-cols-3 xl:max-w-[1380px] xl:grid-cols-5 xl:gap-4 2xl:gap-5">
+          <FreeAdsPlanCard />
           {COMMERCIAL_PLANS.map((p, i) => (
-            <PlanCardItem key={p.tier} plan={p} index={i} />
+            <PlanCardItem key={p.tier} plan={p} index={i + 1} />
           ))}
         </div>
 
