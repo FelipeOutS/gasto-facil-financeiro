@@ -26,7 +26,9 @@ function applyLocale(i18nInstance: { language?: string; resolvedLanguage?: strin
 
 /**
  * Sincroniza o idioma entre: URL search param (?lang=) ↔ i18next ↔ localStorage ↔ <html lang>.
- * O search param é a fonte primária quando presente; localStorage é o fallback persistente.
+ * Sem parâmetro explícito, mantém o idioma determinístico usado no SSR. Ler a
+ * preferência local em um efeito pode ocorrer antes de chunks lazy terminarem
+ * de hidratar e produzir textos diferentes dentro da mesma árvore.
  */
 export function useLocale() {
   const { i18n } = useTranslation();
@@ -42,19 +44,6 @@ export function useLocale() {
     if (isLocale(langParam)) {
       applyLocale(i18n, langParam);
       return;
-    }
-    // Sem ?lang= na URL: fallback persistente (localStorage > navegador)
-    try {
-      const fromStorage = window.localStorage.getItem(LANG_STORAGE_KEY);
-      if (isLocale(fromStorage)) {
-        applyLocale(i18n, fromStorage);
-        return;
-      }
-      const nav = (window.navigator.language || "").toLowerCase();
-      const guess: Locale | null = nav.startsWith("en") ? "en" : nav.startsWith("pt") ? "pt" : null;
-      if (guess) applyLocale(i18n, guess);
-    } catch {
-      // ignore
     }
     // i18n é singleton; intencionalmente fora das deps para não re-disparar este efeito.
     // eslint-disable-next-line react-hooks/exhaustive-deps
