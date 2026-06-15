@@ -11,7 +11,10 @@
  * NÃO mexe em checkout/Mercado Pago, NÃO ativa "Começar grátis".
  */
 import {
+  COMMERCIAL_PLANS,
+  PLAN_CATALOG,
   getEffectiveUserPlan,
+  isPlanAvailableForNewSubscriptions,
   planAllowsFeature,
   isAdminMasterEmail,
   PLAN_LABEL,
@@ -71,6 +74,45 @@ ok(
   "label PT do free_ads = 'Gratuito com anúncios'",
   PLAN_LABEL.free_ads === "Gratuito com anúncios",
 );
+
+console.log("\n▶ Fase 1E-B2S — descontinuação segura do plano de R$ 25");
+const legacyPlan = PLAN_CATALOG.find((plan) => plan.tier === "pessoal_manual");
+ok("pessoal_manual permanece no catálogo histórico", legacyPlan !== undefined);
+eq("pessoal_manual está marcado como descontinuado", legacyPlan?.deprecated, true);
+eq("pessoal_manual está oculto da oferta", legacyPlan?.visible, false);
+eq("pessoal_manual bloqueia novas assinaturas", legacyPlan?.allowNewSubscriptions, false);
+ok(
+  "card de R$ 25 não aparece nos planos comerciais",
+  !COMMERCIAL_PLANS.some((plan) => plan.tier === "pessoal_manual"),
+);
+for (const tier of ["pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"] as PlanTier[]) {
+  ok(`${tier} continua visível`, COMMERCIAL_PLANS.some((plan) => plan.tier === tier));
+  ok(`${tier} continua disponível para checkout`, isPlanAvailableForNewSubscriptions(tier));
+}
+eq(
+  "pessoal_manual é recusado para checkout novo",
+  isPlanAvailableForNewSubscriptions("pessoal_manual"),
+  false,
+);
+
+const checkoutSource = await Bun.file("src/routes/api/checkout.create.ts").text();
+ok(
+  "checkout server bloqueia plano descontinuado antes de alterar user_plans",
+  checkoutSource.indexOf("isPlanAvailableForNewSubscriptions") >= 0 &&
+    checkoutSource.indexOf("isPlanAvailableForNewSubscriptions") < checkoutSource.indexOf('.from("user_plans")'),
+);
+ok(
+  "checkout retorna mensagem amigável para plano descontinuado",
+  checkoutSource.includes("Este plano não está mais disponível para novas assinaturas."),
+);
+
+const defaultPlanMigration = await Bun.file(
+  "supabase/migrations/20260615004941_820ecfb5-7a04-4558-8143-4b1661b99ec9.sql",
+).text();
+ok("novo usuário comum recebe free_ads", defaultPlanMigration.includes("'free_ads'::public.plan_tier"));
+ok("novo usuário recebe status ativo", defaultPlanMigration.includes("'ativo'::public.subscription_status"));
+ok("cadastro padrão é idempotente", defaultPlanMigration.includes("ON CONFLICT (user_id) DO NOTHING"));
+ok("Admin Master não recebe plano desnecessário", defaultPlanMigration.includes("public.is_admin_email(NEW.email)"));
 
 console.log("\n▶ free_ads — features BÁSICAS liberadas");
 const basicAllowed: FeatureKey[] = [

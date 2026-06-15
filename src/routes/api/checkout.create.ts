@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { isPlanAvailableForNewSubscriptions, type PlanTier } from "@/lib/plans";
 
 /**
  * POST /api/checkout/create
@@ -88,6 +89,15 @@ export const Route = createFileRoute("/api/checkout/create")({
         const method = (body.method as "pix" | "card") ?? "pix";
         const periodicidade = (body.periodicidade as Periodicidade) ?? "mensal";
         if (!plano || !(plano in PLAN_BASE)) return json({ error: "invalid_plan" }, 400);
+        if (!isPlanAvailableForNewSubscriptions(plano as PlanTier)) {
+          return json(
+            {
+              error: "plan_unavailable",
+              detail: "Este plano não está mais disponível para novas assinaturas.",
+            },
+            410,
+          );
+        }
         if (!(periodicidade in PERIOD_INFO)) return json({ error: "invalid_period" }, 400);
         if (method !== "pix" && method !== "card") return json({ error: "invalid_method" }, 400);
 

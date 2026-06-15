@@ -5,6 +5,7 @@ import { getCurrentUserSubscription } from "@/lib/subscription.functions";
 import {
   getEffectiveUserPlan,
   isAdminMasterEmail,
+  isPlanAvailableForNewSubscriptions,
   planAllowsFeature,
   type FeatureKey,
   type PlanTier,
@@ -367,6 +368,9 @@ export async function startTrial(
   userId: string,
   planoEscolhido: PlanTier,
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
+  if (!isPlanAvailableForNewSubscriptions(planoEscolhido)) {
+    return { ok: false, reason: "Este plano não está mais disponível para novas assinaturas." };
+  }
   if (!TRIAL_PLAN_VALUES.includes(planoEscolhido)) {
     return { ok: false, reason: "Plano inválido para teste." };
   }
@@ -397,7 +401,7 @@ export async function startTrial(
   } else {
     const { error } = await supabase.from("user_plans").insert({
       user_id: userId,
-      plano: "free",
+      plano: "free_ads",
       status: "teste",
       trial_plan_type: planoEscolhido,
       trial_started_at: startISO,

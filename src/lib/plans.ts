@@ -223,13 +223,16 @@ export function plansAllowingFeature(feature: FeatureKey): PlanTier[] {
   // Para fins comerciais (UI de planos), filtramos free_ads das whitelists —
   // ele aparece apenas via planAllowsFeature direto, nunca como "plano que
   // vende esta feature".
-  if (whitelist) return whitelist.filter((p) => p !== "free_ads");
+  if (whitelist) return whitelist.filter(
+    (p) => p !== "free_ads" && p !== "pessoal_manual",
+  );
   const min = FEATURE_MIN_PLAN[feature];
   return (Object.keys(PLAN_ORDER) as PlanTier[]).filter(
     (p) =>
       p !== "free" &&
       p !== "sem_assinatura" &&
       p !== "free_ads" &&
+      p !== "pessoal_manual" &&
       PLAN_ORDER[p] >= PLAN_ORDER[min],
   );
 }
@@ -287,7 +290,7 @@ export function suggestedUpgrade(
   if (current === "admin_master") return current;
   if (tipo === "empresa") return "empresa";
   if (tipo === "mei") return current === "mei_essencial" ? "mei_inteligente" : "mei_essencial";
-  return current === "pessoal_manual" ? "pessoal_premium" : "pessoal_manual";
+  return "pessoal_premium";
 }
 
 export type PlanFeature = {
@@ -334,9 +337,13 @@ export type CommercialPlan = {
   priceLabel: string;
   tagline: string;
   highlights: string[];
+  /** Mantém compatibilidade histórica sem oferecer novas assinaturas. */
+  deprecated?: boolean;
+  visible?: boolean;
+  allowNewSubscriptions?: boolean;
 };
 
-export const COMMERCIAL_PLANS: CommercialPlan[] = [
+export const PLAN_CATALOG: CommercialPlan[] = [
   {
     tier: "pessoal_manual",
     name: "Controle Simples Pessoal",
@@ -351,6 +358,9 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
       "Relatórios básicos",
       "Sem importações automáticas",
     ],
+    deprecated: true,
+    visible: false,
+    allowNewSubscriptions: false,
   },
   {
     tier: "pessoal_premium",
@@ -359,7 +369,7 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
     priceLabel: "R$ 50,00/mês",
     tagline: "Mais automação para o seu dia a dia.",
     highlights: [
-      "Tudo do Controle Simples Pessoal",
+      "Lançamentos e controles financeiros ilimitados",
       "Importar extrato, fatura e boleto/Pix",
       "Contas a receber completas",
       "Metas com imagens",
@@ -377,7 +387,7 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
     priceLabel: "R$ 39,90/mês",
     tagline: "O essencial para o seu MEI.",
     highlights: [
-      "Tudo do Controle Simples Pessoal",
+      "Controles financeiros essenciais para o MEI",
       "Empresa Inteligente: Minha Empresa, clientes e fornecedores",
       "Contas a pagar com fornecedor e a receber com cliente",
       "Relatórios por cliente e por fornecedor",
@@ -429,8 +439,19 @@ export const COMMERCIAL_PLANS: CommercialPlan[] = [
   },
 ];
 
+/** Planos exibidos na oferta comercial atual. */
+export const COMMERCIAL_PLANS: CommercialPlan[] = PLAN_CATALOG.filter(
+  (plan) => plan.visible !== false && plan.allowNewSubscriptions !== false,
+);
+
+export function isPlanAvailableForNewSubscriptions(tier: PlanTier): boolean {
+  return PLAN_CATALOG.some(
+    (plan) => plan.tier === tier && plan.visible !== false && plan.allowNewSubscriptions !== false,
+  );
+}
+
 export function commercialPlanByTier(tier: PlanTier): CommercialPlan | undefined {
-  return COMMERCIAL_PLANS.find((p) => p.tier === tier);
+  return PLAN_CATALOG.find((p) => p.tier === tier);
 }
 
 /* ===========================================================

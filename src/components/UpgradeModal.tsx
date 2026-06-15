@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { PLAN_LABEL, minPlanFor, type FeatureKey } from "@/lib/plans";
+import { PLAN_LABEL, plansAllowingFeature, type FeatureKey } from "@/lib/plans";
 
 type Props = {
   open: boolean;
@@ -22,7 +22,7 @@ type Props = {
 
 export function UpgradeModal({ open, onOpenChange, feature, featureLabel, benefit }: Props) {
   const { t } = useTranslation("common");
-  const min = feature ? minPlanFor(feature) : "pessoal_manual";
+  const min = feature ? (plansAllowingFeature(feature)[0] ?? "pessoal_premium") : "pessoal_premium";
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
