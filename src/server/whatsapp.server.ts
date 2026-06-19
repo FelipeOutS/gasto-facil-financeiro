@@ -401,14 +401,22 @@ export async function processarMensagemWhatsApp(
   const texto = (msg.texto ?? "").trim();
   if (!texto) return { status: "erro", resposta: "Não recebi nenhum texto. Me envie o gasto, ex.: \"Mercado 48,90 hoje no Nubank\"." };
 
-  const userId = await resolveUserId(msg.telefone);
-  if (!userId) {
+  const resolved = await resolveUserId(msg.telefone);
+  if (resolved.status === "sem_vinculo") {
     return {
       status: "sem_vinculo",
       resposta:
         "Olá! Esse número ainda não está vinculado a uma conta no Gasto Inteligente. Abra o app, vá em WhatsApp e cadastre seu número para começar a lançar gastos por aqui.",
     };
   }
+  if (resolved.status === "sem_consentimento") {
+    return {
+      status: "sem_consentimento",
+      resposta:
+        "Seu WhatsApp não possui consentimento ativo para lançamentos. Acesse o app e vincule novamente seu número.",
+    };
+  }
+  const userId = resolved.userId;
 
   const planoOk = await userPodeUsarWhatsApp(userId);
   if (!planoOk.ok) {
