@@ -74,6 +74,9 @@ type Link = {
   ativo: boolean;
   ultimo_uso: string | null;
   created_at: string;
+  opt_in_em: string | null;
+  opt_in_version: string | null;
+  revogado_em: string | null;
 };
 
 type Message = {
