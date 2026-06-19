@@ -570,10 +570,49 @@ function WhatsAppPage() {
               inputMode="tel"
               className="flex-1"
             />
-            <Button onClick={adicionar} disabled={adding || !novoTel.trim()} className="bg-emerald-500 hover:bg-emerald-600 text-white">
+            <Button
+              onClick={adicionar}
+              disabled={adding || !novoTel.trim() || !aceitouOptIn}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+            >
               <Plus className="h-4 w-4 mr-1" /> {links.length === 0 ? "Vincular WhatsApp" : "Adicionar outro"}
             </Button>
           </div>
+
+          {/* Consentimento LGPD — obrigatório */}
+          <label
+            htmlFor="wa-opt-in"
+            className="flex items-start gap-2.5 rounded-lg border border-border bg-card-elevated p-3 text-xs cursor-pointer select-none"
+          >
+            <input
+              id="wa-opt-in"
+              type="checkbox"
+              checked={aceitouOptIn}
+              onChange={(e) => setAceitouOptIn(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500"
+            />
+            <span className="space-y-1.5 leading-relaxed">
+              <span className="block text-foreground">
+                Concordo em vincular meu WhatsApp ao Gasto Inteligente para enviar mensagens
+                de lançamento de gastos. Entendo que esse canal é{" "}
+                <strong>exclusivo para registrar despesas</strong> e{" "}
+                <strong>não é suporte/atendimento</strong>.
+              </span>
+              <span className="block text-muted-foreground">
+                As mensagens enviadas podem conter dados financeiros e serão usadas para
+                interpretar e registrar seus gastos no app. Você pode desvincular seu número
+                a qualquer momento. Veja mais na{" "}
+                <Link
+                  to="/privacidade"
+                  className="underline underline-offset-2 text-emerald-300 hover:text-emerald-200"
+                >
+                  Política de Privacidade
+                </Link>
+                .
+              </span>
+            </span>
+          </label>
+
 
           {links.length === 0 && !loading && (
             <p className="text-xs text-muted-foreground">
