@@ -105,6 +105,7 @@ const STATUS_STYLES: Record<string, string> = {
   pendente: "border-amber-500/40 text-amber-400 bg-amber-500/10",
   duplicada: "border-sky-500/40 text-sky-400 bg-sky-500/10",
   sem_vinculo: "border-rose-500/40 text-rose-400 bg-rose-500/10",
+  sem_consentimento: "border-rose-500/40 text-rose-400 bg-rose-500/10",
   sem_plano: "border-rose-500/40 text-rose-400 bg-rose-500/10",
   erro: "border-rose-500/40 text-rose-400 bg-rose-500/10",
   valor_invalido: "border-amber-500/40 text-amber-400 bg-amber-500/10",
