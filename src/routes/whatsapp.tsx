@@ -26,7 +26,7 @@ import { toastFromError } from "@/lib/premium-error";
 import { refreshGastos } from "@/lib/store";
 import { ExternalLink } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { getWhatsAppConfigStatus } from "@/lib/whatsapp.functions";
+import { getWhatsAppConfigStatus, upsertWhatsAppLink, deleteWhatsAppLink } from "@/lib/whatsapp.functions";
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText, DEFAULT_CATEGORIES } from "@/lib/categories";
 import { FORMAS_PAGAMENTO } from "@/lib/types";
