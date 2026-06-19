@@ -30,6 +30,11 @@ import { getWhatsAppConfigStatus } from "@/lib/whatsapp.functions";
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText, DEFAULT_CATEGORIES } from "@/lib/categories";
 import { FORMAS_PAGAMENTO } from "@/lib/types";
+import {
+  getOfficialWhatsAppNumber,
+  formatWhatsAppNumberShort,
+  getOfficialWhatsAppDeepLink,
+} from "@/lib/whatsapp-config";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 import { supabase as _supabase } from "@/integrations/supabase/client";
 // As tabelas whatsapp_* foram criadas após a regeneração de tipos.
@@ -145,9 +150,14 @@ function activationCode(linkId: string): string {
   return `ATIVAR ${num}`;
 }
 
-// Configuração do número oficial do WhatsApp do Gasto Inteligente.
-// Enquanto WHATSAPP_NUMERO_OFICIAL estiver vazio, a tela opera em "modo teste".
-const WHATSAPP_NUMERO_OFICIAL = ""; // ex.: "5511999998888"
+// Número oficial do WhatsApp do Gasto Inteligente (canal de lançamento de
+// gastos, NÃO de suporte). Lido do helper centralizado.
+const WHATSAPP_NUMERO_OFICIAL = getOfficialWhatsAppNumber();
+const WHATSAPP_NUMERO_OFICIAL_DISPLAY = formatWhatsAppNumberShort();
+const WHATSAPP_DEEPLINK = getOfficialWhatsAppDeepLink();
+// "Modo teste" agora depende apenas da ativação do webhook real (controlada
+// pelo backend via WHATSAPP_ENABLED + secrets). Como esta tela é client-side,
+// mantemos o flag visual amarrado à presença do número oficial.
 const MODO_TESTE = WHATSAPP_NUMERO_OFICIAL.trim().length === 0;
 
 function WhatsAppPage() {
@@ -471,6 +481,50 @@ function WhatsAppPage() {
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </header>
+
+        {/* Número oficial — canal de lançamento de gastos (NÃO é suporte) */}
+        {!MODO_TESTE && (
+          <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400">
+                <MessageCircle className="h-5 w-5" />
+              </span>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-sm font-semibold text-emerald-300">
+                  Número oficial para enviar gastos
+                </h2>
+                <p className="text-lg font-semibold mt-0.5 num tracking-wide">
+                  {WHATSAPP_NUMERO_OFICIAL_DISPLAY}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Depois de vincular seu WhatsApp à sua conta, envie mensagens como:
+                  <span className="block mt-1 font-mono text-foreground/90">
+                    “Mercado 45,90” · “Uber 32,50 transporte” · “Almoço 28”
+                  </span>
+                </p>
+              </div>
+            </div>
+            <a
+              href={WHATSAPP_DEEPLINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Abrir conversa para enviar gasto
+              <ExternalLink className="h-3.5 w-3.5 opacity-80" />
+            </a>
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-[11px] text-amber-200 flex items-start gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-300" />
+              <p>
+                Esse WhatsApp é exclusivo para lançamento de gastos. Ele
+                <strong> não é canal de suporte ou atendimento</strong>.
+              </p>
+            </div>
+          </section>
+        )}
+
+
 
         {/* Aviso de modo teste */}
         {MODO_TESTE && (
