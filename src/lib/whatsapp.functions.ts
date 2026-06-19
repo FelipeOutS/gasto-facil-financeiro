@@ -38,11 +38,16 @@ export const listWhatsAppLinks = createServerFn({ method: "GET" })
     const sb = context.supabase as any;
     const { data, error } = await sb
       .from("whatsapp_links")
-      .select("id, telefone, ativo, ultimo_uso, created_at")
+      .select(
+        "id, telefone, ativo, ultimo_uso, created_at, opt_in_em, opt_in_version, revogado_em",
+      )
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return { links: data ?? [] };
   });
+
+/** Versão atual da copy de consentimento (WhatsApp como canal de lançamento de gastos). */
+export const WHATSAPP_OPT_IN_VERSION = "whatsapp-expense-v1";
 
 export const upsertWhatsAppLink = createServerFn({ method: "POST" })
   .inputValidator((d) =>
@@ -50,12 +55,19 @@ export const upsertWhatsAppLink = createServerFn({ method: "POST" })
       .object({
         telefone: z.string().min(8).max(20),
         ativo: z.boolean().optional(),
+        aceitou_opt_in: z.boolean(),
+        user_agent: z.string().max(400).optional(),
       })
       .parse(d),
   )
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     await assertFeatureAccess(context.userId, "whatsapp");
+    if (data.aceitou_opt_in !== true) {
+      throw new Error(
+        "Para usar o lançamento por WhatsApp, você precisa aceitar o consentimento de uso desse canal.",
+      );
+    }
     const tel = normTel(data.telefone);
     if (tel.length < 8) throw new Error("Telefone inválido");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -72,10 +84,18 @@ export const upsertWhatsAppLink = createServerFn({ method: "POST" })
       throw new Error("Esse número já está vinculado a outra conta.");
     }
 
+    const nowIso = new Date().toISOString();
+    const consentPayload = {
+      opt_in_em: nowIso,
+      opt_in_version: WHATSAPP_OPT_IN_VERSION,
+      opt_in_user_agent: data.user_agent ?? null,
+      revogado_em: null as string | null,
+    };
+
     if (existing) {
       const { error } = await sb
         .from("whatsapp_links")
-        .update({ ativo: data.ativo ?? true })
+        .update({ ativo: data.ativo ?? true, ...consentPayload })
         .eq("id", existing.id);
       if (error) throw new Error(error.message);
       return { id: existing.id, telefone: tel };
@@ -83,7 +103,12 @@ export const upsertWhatsAppLink = createServerFn({ method: "POST" })
 
     const { data: created, error } = await sb
       .from("whatsapp_links")
-      .insert({ user_id: userId, telefone: tel, ativo: data.ativo ?? true })
+      .insert({
+        user_id: userId,
+        telefone: tel,
+        ativo: data.ativo ?? true,
+        ...consentPayload,
+      })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
@@ -97,9 +122,14 @@ export const deleteWhatsAppLink = createServerFn({ method: "POST" })
     await assertFeatureAccess(context.userId, "whatsapp");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
+    // Soft revoke (LGPD): mantém auditoria, mas impede o webhook de
+    // processar mensagens deste número até novo consentimento.
     const { error } = await sb
       .from("whatsapp_links")
-      .delete()
+      .update({
+        ativo: false,
+        revogado_em: new Date().toISOString(),
+      })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
