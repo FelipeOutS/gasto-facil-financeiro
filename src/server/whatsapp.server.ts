@@ -416,7 +416,7 @@ export async function processarMensagemWhatsApp(
         "Seu WhatsApp não possui consentimento ativo para lançamentos. Acesse o app e vincule novamente seu número.",
     };
   }
-  const userId = resolved.userId;
+  const userId = resolved.userId as string;
 
   const planoOk = await userPodeUsarWhatsApp(userId);
   if (!planoOk.ok) {
