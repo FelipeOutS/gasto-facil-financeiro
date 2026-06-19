@@ -2936,6 +2936,11 @@ export type Database = {
           ativo: boolean
           created_at: string
           id: string
+          opt_in_em: string | null
+          opt_in_ip: string | null
+          opt_in_user_agent: string | null
+          opt_in_version: string | null
+          revogado_em: string | null
           telefone: string
           ultimo_uso: string | null
           updated_at: string
@@ -2945,6 +2950,11 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           id?: string
+          opt_in_em?: string | null
+          opt_in_ip?: string | null
+          opt_in_user_agent?: string | null
+          opt_in_version?: string | null
+          revogado_em?: string | null
           telefone: string
           ultimo_uso?: string | null
           updated_at?: string
@@ -2954,6 +2964,11 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           id?: string
+          opt_in_em?: string | null
+          opt_in_ip?: string | null
+          opt_in_user_agent?: string | null
+          opt_in_version?: string | null
+          revogado_em?: string | null
           telefone?: string
           ultimo_uso?: string | null
           updated_at?: string

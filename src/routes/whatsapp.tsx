@@ -26,7 +26,7 @@ import { toastFromError } from "@/lib/premium-error";
 import { refreshGastos } from "@/lib/store";
 import { ExternalLink } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { getWhatsAppConfigStatus } from "@/lib/whatsapp.functions";
+import { getWhatsAppConfigStatus, upsertWhatsAppLink, deleteWhatsAppLink } from "@/lib/whatsapp.functions";
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText, DEFAULT_CATEGORIES } from "@/lib/categories";
 import { FORMAS_PAGAMENTO } from "@/lib/types";
@@ -74,6 +74,9 @@ type Link = {
   ativo: boolean;
   ultimo_uso: string | null;
   created_at: string;
+  opt_in_em: string | null;
+  opt_in_version: string | null;
+  revogado_em: string | null;
 };
 
 type Message = {
@@ -102,6 +105,7 @@ const STATUS_STYLES: Record<string, string> = {
   pendente: "border-amber-500/40 text-amber-400 bg-amber-500/10",
   duplicada: "border-sky-500/40 text-sky-400 bg-sky-500/10",
   sem_vinculo: "border-rose-500/40 text-rose-400 bg-rose-500/10",
+  sem_consentimento: "border-rose-500/40 text-rose-400 bg-rose-500/10",
   sem_plano: "border-rose-500/40 text-rose-400 bg-rose-500/10",
   erro: "border-rose-500/40 text-rose-400 bg-rose-500/10",
   valor_invalido: "border-amber-500/40 text-amber-400 bg-amber-500/10",
@@ -169,11 +173,14 @@ function WhatsAppPage() {
   const [loading, setLoading] = useState(true);
   const [novoTel, setNovoTel] = useState("");
   const [adding, setAdding] = useState(false);
+  const [aceitouOptIn, setAceitouOptIn] = useState(false);
   const [testTexto, setTestTexto] = useState(
     "gastei R$ 48,90 no mercado hoje no Nubank",
   );
   const [testando, setTestando] = useState(false);
   const [copiado, setCopiado] = useState(false);
+  const upsertLinkFn = useServerFn(upsertWhatsAppLink);
+  const deleteLinkFn = useServerFn(deleteWhatsAppLink);
 
   // URL pública estável usada na configuração do painel da Meta.
   // Sempre o domínio publicado, nunca preview/localhost.
@@ -260,7 +267,7 @@ function WhatsAppPage() {
       const [linksRes, msgsRes] = await Promise.all([
         supabase
           .from("whatsapp_links")
-          .select("id, telefone, ativo, ultimo_uso, created_at")
+          .select("id, telefone, ativo, ultimo_uso, created_at, opt_in_em, opt_in_version, revogado_em")
           .order("created_at", { ascending: false }),
         supabase
           .from("whatsapp_messages")
@@ -288,6 +295,12 @@ function WhatsAppPage() {
 
   async function adicionar() {
     if (!novoTel.trim()) return;
+    if (!aceitouOptIn) {
+      toast.error(
+        "Para usar o lançamento por WhatsApp, você precisa aceitar o consentimento de uso desse canal.",
+      );
+      return;
+    }
     const tel = normTel(novoTel);
     if (tel.length < 8) {
       toast.error("Telefone inválido");
@@ -295,30 +308,18 @@ function WhatsAppPage() {
     }
     setAdding(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Faça login primeiro");
-      const { data: existing } = await supabase
-        .from("whatsapp_links")
-        .select("id, user_id")
-        .eq("telefone", tel)
-        .maybeSingle();
-      if (existing && existing.user_id !== user.id) {
-        throw new Error("Esse número já está vinculado a outra conta.");
-      }
-      if (existing) {
-        const { error } = await supabase
-          .from("whatsapp_links")
-          .update({ ativo: true })
-          .eq("id", existing.id);
-        if (error) throw new Error(error.message);
-      } else {
-        const { error } = await supabase
-          .from("whatsapp_links")
-          .insert({ user_id: user.id, telefone: tel, ativo: true });
-        if (error) throw new Error(error.message);
-      }
-      toast.success("Número vinculado");
+      const ua = typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 400) : undefined;
+      await upsertLinkFn({
+        data: {
+          telefone: tel,
+          ativo: true,
+          aceitou_opt_in: true,
+          user_agent: ua,
+        },
+      });
+      toast.success("Número vinculado com consentimento registrado.");
       setNovoTel("");
+      setAceitouOptIn(false);
       await refresh();
     } catch (e) {
       toastFromError(e);
@@ -328,13 +329,18 @@ function WhatsAppPage() {
   }
 
   async function excluir(id: string) {
+    if (
+      !(await confirmAsync({
+        title: "Desvincular WhatsApp",
+        description:
+          "Você está revogando o consentimento de uso do WhatsApp. Mensagens enviadas a partir desse número deixarão de criar gastos. Tem certeza?",
+        confirmText: "Desvincular e revogar",
+      }))
+    )
+      return;
     try {
-      const { error } = await supabase
-        .from("whatsapp_links")
-        .delete()
-        .eq("id", id);
-      if (error) throw new Error(error.message);
-      toast.success("Vínculo removido");
+      await deleteLinkFn({ data: { id } });
+      toast.success("Consentimento revogado. Número desvinculado.");
       await refresh();
     } catch (e) {
       toastFromError(e);
@@ -565,10 +571,49 @@ function WhatsAppPage() {
               inputMode="tel"
               className="flex-1"
             />
-            <Button onClick={adicionar} disabled={adding || !novoTel.trim()} className="bg-emerald-500 hover:bg-emerald-600 text-white">
+            <Button
+              onClick={adicionar}
+              disabled={adding || !novoTel.trim() || !aceitouOptIn}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+            >
               <Plus className="h-4 w-4 mr-1" /> {links.length === 0 ? "Vincular WhatsApp" : "Adicionar outro"}
             </Button>
           </div>
+
+          {/* Consentimento LGPD — obrigatório */}
+          <label
+            htmlFor="wa-opt-in"
+            className="flex items-start gap-2.5 rounded-lg border border-border bg-card-elevated p-3 text-xs cursor-pointer select-none"
+          >
+            <input
+              id="wa-opt-in"
+              type="checkbox"
+              checked={aceitouOptIn}
+              onChange={(e) => setAceitouOptIn(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500"
+            />
+            <span className="space-y-1.5 leading-relaxed">
+              <span className="block text-foreground">
+                Concordo em vincular meu WhatsApp ao Gasto Inteligente para enviar mensagens
+                de lançamento de gastos. Entendo que esse canal é{" "}
+                <strong>exclusivo para registrar despesas</strong> e{" "}
+                <strong>não é suporte/atendimento</strong>.
+              </span>
+              <span className="block text-muted-foreground">
+                As mensagens enviadas podem conter dados financeiros e serão usadas para
+                interpretar e registrar seus gastos no app. Você pode desvincular seu número
+                a qualquer momento. Veja mais na{" "}
+                <Link
+                  to="/privacidade"
+                  className="underline underline-offset-2 text-emerald-300 hover:text-emerald-200"
+                >
+                  Política de Privacidade
+                </Link>
+                .
+              </span>
+            </span>
+          </label>
+
 
           {links.length === 0 && !loading && (
             <p className="text-xs text-muted-foreground">

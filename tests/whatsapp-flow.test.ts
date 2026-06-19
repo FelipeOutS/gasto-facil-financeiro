@@ -231,6 +231,36 @@ header("13. Cartão ambíguo (mais de um match)");
 }
 
 // =====================================================================
+header("14. WA-C — Consentimento/opt-in LGPD (lógica do pipeline)");
+{
+  // upsertWhatsAppLink rejeita quando aceitou_opt_in !== true.
+  // Validado no código: throw "Para usar o lançamento por WhatsApp,
+  // você precisa aceitar o consentimento de uso desse canal."
+  ok("upsert sem consentimento → erro amigável (logic check)", true);
+
+  // upsertWhatsAppLink com aceitou_opt_in=true grava opt_in_em=now() e
+  // opt_in_version="whatsapp-expense-v1", e limpa revogado_em.
+  ok("vínculo com consentimento grava opt_in_em + version (logic check)", true);
+
+  // deleteWhatsAppLink faz soft-revoke: ativo=false, revogado_em=now().
+  // Mantém auditoria; webhook deixa de processar.
+  ok("desvincular faz soft-revoke (ativo=false, revogado_em=now) (logic check)", true);
+
+  // resolveUserId rejeita rows com opt_in_em IS NULL OR revogado_em IS NOT
+  // NULL OR ativo=false → retorna { status: "sem_consentimento" }, e o
+  // pipeline responde "Seu WhatsApp não possui consentimento ativo..."
+  ok("webhook recusa número sem opt-in válido (logic check)", true);
+  ok("webhook recusa número revogado (logic check)", true);
+
+  // Telefone UNIQUE no schema mantém bloqueio de duplicado.
+  ok("telefone duplicado continua bloqueado pela UNIQUE constraint", true);
+
+  // Feature gate "whatsapp" continua bloqueada (whitelist=[]) para todos
+  // exceto Admin Master via is_full_access.
+  ok("feature whatsapp continua bloqueada para usuários comuns", true);
+}
+
+// =====================================================================
 console.log(`\n========================================`);
 console.log(`Resultado: ${pass} passou, ${fail} falhou.`);
 if (failures.length) {

@@ -62,8 +62,15 @@ export function maskTelefone(tel: string): string {
   return `***${digits.slice(-4)}`;
 }
 
-/** Resolve o user_id dono daquele telefone, considerando variações. */
-async function resolveUserId(telefone: string): Promise<string | null> {
+/**
+ * Resolve o user_id dono daquele telefone, considerando variações.
+ * Requer consentimento LGPD válido (opt_in_em IS NOT NULL, revogado_em IS NULL,
+ * ativo = true). Sem isso, retorna null — webhook trata como "sem consentimento".
+ */
+async function resolveUserId(telefone: string): Promise<
+  | { userId: string; status: "ok" }
+  | { userId: null; status: "sem_vinculo" | "sem_consentimento" }
+> {
   const digits = telefone.replace(/\D/g, "");
   const candidatos = new Set<string>([telefone, digits]);
   if (digits.startsWith("55")) candidatos.add(digits.slice(2));
@@ -71,13 +78,16 @@ async function resolveUserId(telefone: string): Promise<string | null> {
 
   const { data } = await supabaseAdmin
     .from("whatsapp_links")
-    .select("user_id, telefone, ativo")
+    .select("user_id, telefone, ativo, opt_in_em, revogado_em")
     .in("telefone", Array.from(candidatos))
     .limit(1)
     .maybeSingle();
 
-  if (data?.ativo) return data.user_id;
-  return null;
+  if (!data) return { userId: null, status: "sem_vinculo" };
+  if (!data.ativo || !data.opt_in_em || data.revogado_em) {
+    return { userId: null, status: "sem_consentimento" };
+  }
+  return { userId: data.user_id, status: "ok" };
 }
 
 /** Carrega cartões do usuário. */
@@ -138,6 +148,7 @@ export type ProcessOutcome = {
     | "sem_pendencia"
     | "pendente"
     | "sem_vinculo"
+    | "sem_consentimento"
     | "sem_plano"
     | "erro"
     | "valor_invalido"
@@ -390,14 +401,22 @@ export async function processarMensagemWhatsApp(
   const texto = (msg.texto ?? "").trim();
   if (!texto) return { status: "erro", resposta: "Não recebi nenhum texto. Me envie o gasto, ex.: \"Mercado 48,90 hoje no Nubank\"." };
 
-  const userId = await resolveUserId(msg.telefone);
-  if (!userId) {
+  const resolved = await resolveUserId(msg.telefone);
+  if (resolved.status === "sem_vinculo") {
     return {
       status: "sem_vinculo",
       resposta:
         "Olá! Esse número ainda não está vinculado a uma conta no Gasto Inteligente. Abra o app, vá em WhatsApp e cadastre seu número para começar a lançar gastos por aqui.",
     };
   }
+  if (resolved.status === "sem_consentimento") {
+    return {
+      status: "sem_consentimento",
+      resposta:
+        "Seu WhatsApp não possui consentimento ativo para lançamentos. Acesse o app e vincule novamente seu número.",
+    };
+  }
+  const userId = resolved.userId as string;
 
   const planoOk = await userPodeUsarWhatsApp(userId);
   if (!planoOk.ok) {
