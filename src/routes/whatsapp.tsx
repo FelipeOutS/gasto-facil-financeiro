@@ -172,11 +172,14 @@ function WhatsAppPage() {
   const [loading, setLoading] = useState(true);
   const [novoTel, setNovoTel] = useState("");
   const [adding, setAdding] = useState(false);
+  const [aceitouOptIn, setAceitouOptIn] = useState(false);
   const [testTexto, setTestTexto] = useState(
     "gastei R$ 48,90 no mercado hoje no Nubank",
   );
   const [testando, setTestando] = useState(false);
   const [copiado, setCopiado] = useState(false);
+  const upsertLinkFn = useServerFn(upsertWhatsAppLink);
+  const deleteLinkFn = useServerFn(deleteWhatsAppLink);
 
   // URL pública estável usada na configuração do painel da Meta.
   // Sempre o domínio publicado, nunca preview/localhost.
