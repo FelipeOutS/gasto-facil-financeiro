@@ -294,6 +294,12 @@ function WhatsAppPage() {
 
   async function adicionar() {
     if (!novoTel.trim()) return;
+    if (!aceitouOptIn) {
+      toast.error(
+        "Para usar o lançamento por WhatsApp, você precisa aceitar o consentimento de uso desse canal.",
+      );
+      return;
+    }
     const tel = normTel(novoTel);
     if (tel.length < 8) {
       toast.error("Telefone inválido");
@@ -301,30 +307,18 @@ function WhatsAppPage() {
     }
     setAdding(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Faça login primeiro");
-      const { data: existing } = await supabase
-        .from("whatsapp_links")
-        .select("id, user_id")
-        .eq("telefone", tel)
-        .maybeSingle();
-      if (existing && existing.user_id !== user.id) {
-        throw new Error("Esse número já está vinculado a outra conta.");
-      }
-      if (existing) {
-        const { error } = await supabase
-          .from("whatsapp_links")
-          .update({ ativo: true })
-          .eq("id", existing.id);
-        if (error) throw new Error(error.message);
-      } else {
-        const { error } = await supabase
-          .from("whatsapp_links")
-          .insert({ user_id: user.id, telefone: tel, ativo: true });
-        if (error) throw new Error(error.message);
-      }
-      toast.success("Número vinculado");
+      const ua = typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 400) : undefined;
+      await upsertLinkFn({
+        data: {
+          telefone: tel,
+          ativo: true,
+          aceitou_opt_in: true,
+          user_agent: ua,
+        },
+      });
+      toast.success("Número vinculado com consentimento registrado.");
       setNovoTel("");
+      setAceitouOptIn(false);
       await refresh();
     } catch (e) {
       toastFromError(e);
@@ -334,13 +328,18 @@ function WhatsAppPage() {
   }
 
   async function excluir(id: string) {
+    if (
+      !(await confirmAsync({
+        title: "Desvincular WhatsApp",
+        description:
+          "Você está revogando o consentimento de uso do WhatsApp. Mensagens enviadas a partir desse número deixarão de criar gastos. Tem certeza?",
+        confirmText: "Desvincular e revogar",
+      }))
+    )
+      return;
     try {
-      const { error } = await supabase
-        .from("whatsapp_links")
-        .delete()
-        .eq("id", id);
-      if (error) throw new Error(error.message);
-      toast.success("Vínculo removido");
+      await deleteLinkFn({ data: { id } });
+      toast.success("Consentimento revogado. Número desvinculado.");
       await refresh();
     } catch (e) {
       toastFromError(e);
