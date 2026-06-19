@@ -148,6 +148,7 @@ export type ProcessOutcome = {
     | "sem_pendencia"
     | "pendente"
     | "sem_vinculo"
+    | "sem_consentimento"
     | "sem_plano"
     | "erro"
     | "valor_invalido"
