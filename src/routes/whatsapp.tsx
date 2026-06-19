@@ -150,9 +150,14 @@ function activationCode(linkId: string): string {
   return `ATIVAR ${num}`;
 }
 
-// Configuração do número oficial do WhatsApp do Gasto Inteligente.
-// Enquanto WHATSAPP_NUMERO_OFICIAL estiver vazio, a tela opera em "modo teste".
-const WHATSAPP_NUMERO_OFICIAL = ""; // ex.: "5511999998888"
+// Número oficial do WhatsApp do Gasto Inteligente (canal de lançamento de
+// gastos, NÃO de suporte). Lido do helper centralizado.
+const WHATSAPP_NUMERO_OFICIAL = getOfficialWhatsAppNumber();
+const WHATSAPP_NUMERO_OFICIAL_DISPLAY = formatWhatsAppNumberShort();
+const WHATSAPP_DEEPLINK = getOfficialWhatsAppDeepLink();
+// "Modo teste" agora depende apenas da ativação do webhook real (controlada
+// pelo backend via WHATSAPP_ENABLED + secrets). Como esta tela é client-side,
+// mantemos o flag visual amarrado à presença do número oficial.
 const MODO_TESTE = WHATSAPP_NUMERO_OFICIAL.trim().length === 0;
 
 function WhatsAppPage() {
