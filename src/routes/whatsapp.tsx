@@ -266,7 +266,7 @@ function WhatsAppPage() {
       const [linksRes, msgsRes] = await Promise.all([
         supabase
           .from("whatsapp_links")
-          .select("id, telefone, ativo, ultimo_uso, created_at")
+          .select("id, telefone, ativo, ultimo_uso, created_at, opt_in_em, opt_in_version, revogado_em")
           .order("created_at", { ascending: false }),
         supabase
           .from("whatsapp_messages")
