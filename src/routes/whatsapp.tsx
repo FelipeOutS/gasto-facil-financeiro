@@ -345,7 +345,7 @@ function WhatsAppPage() {
       setConsentResult(r.consentimento_atualizado);
       if (r.consentimento_atualizado === "ok") {
         toast.success("Consentimento atualizado.");
-        await carregar();
+        await refresh();
       } else {
         toast.error("Não foi possível atualizar o consentimento.");
       }
