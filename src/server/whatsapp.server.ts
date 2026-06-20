@@ -746,6 +746,7 @@ export async function processarMensagemWhatsApp(
       "salva",
       sessao.session,
       result.resposta,
+      result.gastoId,
     );
     await supabaseAdmin
       .from("whatsapp_links")
