@@ -957,31 +957,32 @@ function classifyRegisterStrategy(
 ): "registro_direto_cloud_api" | "migracao_manual_necessaria" | "estado_desconhecido" {
   const verificado = audit.verificacao_numero_meta === "verificado";
   const nomeAprovado = audit.nome_exibicao_meta === "aprovado";
+  const inWaba = audit.phone_number_id_atual_esta_na_waba_oficial === "sim";
 
+  // Apenas plataformas legadas confirmadas exigem migração manual.
+  // platform_type == "outro" sozinho NÃO basta — a Meta às vezes não preenche
+  // platform_type antes do primeiro /register no Cloud API.
   if (
     audit.tipo_plataforma_meta === "on_premise" ||
-    audit.tipo_plataforma_meta === "coexistence" ||
-    audit.tipo_plataforma_meta === "outro"
+    audit.tipo_plataforma_meta === "coexistence"
   ) {
     return "migracao_manual_necessaria";
   }
 
-  if (!verificado || !nomeAprovado) {
+  if (!verificado || !nomeAprovado || !inWaba) {
     return "estado_desconhecido";
   }
 
+  // Se já está conectado na Cloud API, não há registro direto a fazer.
   if (
-    (audit.tipo_plataforma_meta === "cloud_api" ||
-      audit.tipo_plataforma_meta === "nao_informado") &&
-    (audit.status_numero_meta === "pendente" ||
-      audit.status_numero_meta === "disconnected" ||
-      audit.status_numero_meta === "nao_informado" ||
-      audit.status_numero_meta === "connected")
+    audit.tipo_plataforma_meta === "cloud_api" &&
+    audit.status_numero_meta === "connected" &&
+    audit.numero_registrado_cloud_api === "sim"
   ) {
-    return "registro_direto_cloud_api";
+    return "estado_desconhecido";
   }
 
-  return "estado_desconhecido";
+  return "registro_direto_cloud_api";
 }
 
 /**
