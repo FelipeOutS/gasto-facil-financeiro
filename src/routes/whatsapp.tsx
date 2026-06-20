@@ -200,7 +200,6 @@ function WhatsAppPage() {
     return `${origin}/api/public/whatsapp/expense`;
   }, []);
 
-  const [copiadoToken, setCopiadoToken] = useState(false);
   async function copyToClipboardSafe(value: string): Promise<boolean> {
     try {
       if (navigator.clipboard && window.isSecureContext) {
@@ -222,15 +221,6 @@ function WhatsAppPage() {
       return ok;
     } catch {
       return false;
-    }
-  }
-  async function copiarToken() {
-    const ok = await copyToClipboardSafe(VERIFY_TOKEN);
-    if (ok) {
-      setCopiadoToken(true);
-      setTimeout(() => setCopiadoToken(false), 1500);
-    } else {
-      toast.error("Não foi possível copiar. Selecione manualmente.");
     }
   }
 
