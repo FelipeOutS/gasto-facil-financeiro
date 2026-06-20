@@ -322,7 +322,6 @@ function WhatsAppPage() {
       setCanaryReadinessLoading(false);
     }
   }
-  }
   const [configStatus, setConfigStatus] = useState<{
     access_token: boolean;
     phone_number_id: boolean;
