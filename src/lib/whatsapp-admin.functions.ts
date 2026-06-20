@@ -16,7 +16,9 @@ import { timingSafeEqual } from "crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { isAdminMasterEmail } from "@/lib/plans";
 
-const GRAPH_VERSION = "v21.0";
+// Versão Graph API centralizada server-side. Default v25.0 (atual no painel Meta).
+// Override opcional via env WHATSAPP_GRAPH_VERSION (ex.: "v26.0").
+const GRAPH_VERSION = (process.env.WHATSAPP_GRAPH_VERSION ?? "v25.0").trim() || "v25.0";
 const OFFICIAL_NUMBER_E164 = "5511918539158";
 
 function adminUnauthorized(): Response {
@@ -51,10 +53,11 @@ type ErroCategoria =
   | "ativo_nao_atribuido"
   | "waba_incorreta"
   | "phone_id_incorreto"
+  | "rota_ou_versao_invalida"
   | "rede"
   | "desconhecido";
 
-type HttpBucket = 200 | 400 | 401 | 403 | -1;
+type HttpBucket = 200 | 400 | 401 | 403 | 404 | -1 | "outro";
 
 type PreflightResult = {
   token_para_waba: "ok" | "falhou";
@@ -64,21 +67,25 @@ type PreflightResult = {
   numero_ja_registrado: "sim" | "nao" | "desconhecido";
   pronto_para_register: "sim" | "nao";
   secrets_completos: boolean;
-  // Diagnóstico seguro (sem expor secrets).
+  // Diagnóstico seguro (sem expor secrets, IDs, URL, body ou headers).
   access_token_lido_pelo_backend: "sim" | "nao";
   access_token_hash_prefix: string;
-  meta_token_http_status: HttpBucket | "outro";
-  meta_waba_http_status: HttpBucket | "outro";
-  meta_phone_http_status: HttpBucket | "outro";
+  meta_token_http_status: HttpBucket;
+  meta_waba_http_status: HttpBucket;
+  meta_phone_http_status: HttpBucket;
+  meta_subscribed_apps_http_status: HttpBucket;
+  meta_error_code: number | null;
+  meta_error_subcode: number | null;
   erro_categoria: ErroCategoria;
 };
 
-function bucketStatus(s: number | null): HttpBucket | "outro" {
+function bucketStatus(s: number | null): HttpBucket {
   if (s === null) return -1;
   if (s === 200) return 200;
   if (s === 400) return 400;
   if (s === 401) return 401;
   if (s === 403) return 403;
+  if (s === 404) return 404;
   return "outro";
 }
 
@@ -95,10 +102,16 @@ async function sha256Prefix(value: string): Promise<string> {
   }
 }
 
-async function safeGraphGet(
-  path: string,
-  token: string,
-): Promise<{ ok: boolean; status: number | null; json: unknown; networkError: boolean }> {
+type GraphCall = {
+  ok: boolean;
+  status: number | null;
+  json: unknown;
+  networkError: boolean;
+  errorCode: number | null;
+  errorSubcode: number | null;
+};
+
+async function safeGraphGet(path: string, token: string): Promise<GraphCall> {
   try {
     const resp = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${path}`, {
       method: "GET",
@@ -110,9 +123,20 @@ async function safeGraphGet(
     } catch {
       json = null;
     }
-    return { ok: resp.ok, status: resp.status, json, networkError: false };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const err = (json as any)?.error ?? null;
+    const errorCode = typeof err?.code === "number" ? err.code : null;
+    const errorSubcode = typeof err?.error_subcode === "number" ? err.error_subcode : null;
+    return { ok: resp.ok, status: resp.status, json, networkError: false, errorCode, errorSubcode };
   } catch {
-    return { ok: false, status: null, json: null, networkError: true };
+    return {
+      ok: false,
+      status: null,
+      json: null,
+      networkError: true,
+      errorCode: null,
+      errorSubcode: null,
+    };
   }
 }
 
@@ -146,6 +170,9 @@ async function runPreflightInternal(): Promise<PreflightResult> {
     meta_token_http_status: -1,
     meta_waba_http_status: -1,
     meta_phone_http_status: -1,
+    meta_subscribed_apps_http_status: -1,
+    meta_error_code: null,
+    meta_error_subcode: null,
     erro_categoria: "nenhum",
   };
 
@@ -159,57 +186,77 @@ async function runPreflightInternal(): Promise<PreflightResult> {
   }
 
   let anyNetworkError = false;
+  const firstError = { code: null as number | null, sub: null as number | null };
+  const captureError = (c: GraphCall) => {
+    if (firstError.code === null && (c.errorCode !== null || c.errorSubcode !== null)) {
+      firstError.code = c.errorCode;
+      firstError.sub = c.errorSubcode;
+    }
+  };
 
-  // 1) Token consegue ler o PHONE_NUMBER_ID?
-  const phoneRead = await safeGraphGet(
-    `${PHONE_NUMBER_ID}?fields=id,display_phone_number,verified_name,code_verification_status,quality_rating,whatsapp_business_account{id}`,
-    ACCESS_TOKEN!,
-  );
-  result.meta_phone_http_status = bucketStatus(phoneRead.status);
-  result.meta_token_http_status = bucketStatus(phoneRead.status);
-  if (phoneRead.networkError) anyNetworkError = true;
-  if (phoneRead.ok) {
+  // 1) Token básico — /me?fields=id
+  const meRead = await safeGraphGet(`me?fields=id`, ACCESS_TOKEN!);
+  result.meta_token_http_status = bucketStatus(meRead.status);
+  if (meRead.networkError) anyNetworkError = true;
+  if (!meRead.ok) captureError(meRead);
+  if (meRead.ok) {
     result.token_para_waba = "ok";
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const p = phoneRead.json as any;
-    const cvs = String(p?.code_verification_status ?? "").toUpperCase();
-    if (cvs === "VERIFIED") result.numero_ja_registrado = "sim";
-    else if (cvs === "NOT_VERIFIED" || cvs === "EXPIRED") result.numero_ja_registrado = "nao";
   }
 
-  // 2) WABA contém o número oficial?
+  // 2) WABA — /{WABA_ID}/phone_numbers
   const wabaList = await safeGraphGet(
-    `${WABA_ID}/phone_numbers?fields=id,display_phone_number,code_verification_status`,
+    `${WABA_ID}/phone_numbers?fields=id,display_phone_number,verified_name,status,code_verification_status`,
     ACCESS_TOKEN!,
   );
   result.meta_waba_http_status = bucketStatus(wabaList.status);
   if (wabaList.networkError) anyNetworkError = true;
-  if (wabaList.ok) {
+  if (!wabaList.ok) captureError(wabaList);
+  if (wabaList.status === 200 && wabaList.ok) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const arr = ((wabaList.json as any)?.data ?? []) as Array<{
-      id: string;
+      id?: string;
       display_phone_number?: string;
       code_verification_status?: string;
     }>;
-    const match = arr.find(
-      (row) =>
-        row.id === PHONE_NUMBER_ID &&
-        digitsOnly(row.display_phone_number) === OFFICIAL_NUMBER_E164,
-    );
+    const match = Array.isArray(arr)
+      ? arr.find(
+          (row) =>
+            row?.id === PHONE_NUMBER_ID &&
+            digitsOnly(row?.display_phone_number) === OFFICIAL_NUMBER_E164,
+        )
+      : undefined;
     if (match) {
       result.numero_oficial_na_waba = "ok";
-      if (result.numero_ja_registrado === "desconhecido") {
-        const cvs = String(match.code_verification_status ?? "").toUpperCase();
-        if (cvs === "VERIFIED") result.numero_ja_registrado = "sim";
-        else if (cvs === "NOT_VERIFIED") result.numero_ja_registrado = "nao";
-      }
+      const cvs = String(match.code_verification_status ?? "").toUpperCase();
+      if (cvs === "VERIFIED") result.numero_ja_registrado = "sim";
+      else if (cvs === "NOT_VERIFIED") result.numero_ja_registrado = "nao";
     }
   }
 
-  // 3) App inscrito na WABA?
+  // 3) Número — /{PHONE_NUMBER_ID}
+  const phoneRead = await safeGraphGet(
+    `${PHONE_NUMBER_ID}?fields=id,display_phone_number,verified_name,status,code_verification_status`,
+    ACCESS_TOKEN!,
+  );
+  result.meta_phone_http_status = bucketStatus(phoneRead.status);
+  if (phoneRead.networkError) anyNetworkError = true;
+  if (!phoneRead.ok) captureError(phoneRead);
+  if (phoneRead.status === 200 && phoneRead.ok) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const p = phoneRead.json as any;
+    const cvs = String(p?.code_verification_status ?? "").toUpperCase();
+    if (result.numero_ja_registrado === "desconhecido") {
+      if (cvs === "VERIFIED") result.numero_ja_registrado = "sim";
+      else if (cvs === "NOT_VERIFIED" || cvs === "EXPIRED") result.numero_ja_registrado = "nao";
+    }
+  }
+
+  // 4) App inscrito — /{WABA_ID}/subscribed_apps
   const subs = await safeGraphGet(`${WABA_ID}/subscribed_apps`, ACCESS_TOKEN!);
+  result.meta_subscribed_apps_http_status = bucketStatus(subs.status);
   if (subs.networkError) anyNetworkError = true;
-  if (subs.ok) {
+  if (!subs.ok) captureError(subs);
+  if (subs.status === 200 && subs.ok) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const arr = ((subs.json as any)?.data ?? []) as Array<unknown>;
     if (Array.isArray(arr) && arr.length > 0) {
@@ -217,7 +264,7 @@ async function runPreflightInternal(): Promise<PreflightResult> {
     }
   }
 
-  // 4) Webhook handshake local.
+  // 5) Webhook handshake local (sem chamar Meta).
   try {
     const a = Buffer.from(VERIFY_TOKEN!);
     const b = Buffer.from(VERIFY_TOKEN!);
@@ -228,7 +275,7 @@ async function runPreflightInternal(): Promise<PreflightResult> {
     result.webhook_handshake = "falhou";
   }
 
-  // 5) Pronto para register?
+  // 6) Pronto para register?
   result.pronto_para_register =
     result.token_para_waba === "ok" &&
     result.numero_oficial_na_waba === "ok" &&
@@ -242,21 +289,50 @@ async function runPreflightInternal(): Promise<PreflightResult> {
     result.pronto_para_register = "nao";
   }
 
-  // Categorização do erro (sem expor detalhes da Meta).
-  if (result.pronto_para_register === "sim" || result.numero_ja_registrado === "sim") {
-    result.erro_categoria = "nenhum";
-  } else if (anyNetworkError) {
+  result.meta_error_code = firstError.code;
+  result.meta_error_subcode = firstError.sub;
+
+  // 7) Categorização do erro por HTTP + código Meta.
+  // Códigos Meta comuns:
+  //   190 → token inválido/expirado
+  //   200/10/278 → permissão ausente
+  //   100 → parâmetro inválido (rota/versão/ID errado)
+  //   803 → objeto não existe (ID incorreto)
+  const allOk =
+    meRead.status === 200 &&
+    wabaList.status === 200 &&
+    phoneRead.status === 200 &&
+    subs.status === 200;
+
+  if (anyNetworkError) {
     result.erro_categoria = "rede";
-  } else if (phoneRead.status === 401 || wabaList.status === 401) {
+  } else if (allOk) {
+    if (result.app_inscrito_na_waba === "falhou") {
+      result.erro_categoria = "ativo_nao_atribuido";
+    } else if (result.numero_oficial_na_waba === "falhou") {
+      result.erro_categoria = "phone_id_incorreto";
+    } else {
+      result.erro_categoria = "nenhum";
+    }
+  } else if (firstError.code === 190 || meRead.status === 401) {
     result.erro_categoria = "token_invalido";
-  } else if (phoneRead.status === 403 || wabaList.status === 403 || subs.status === 403) {
+  } else if (
+    firstError.code === 200 ||
+    firstError.code === 10 ||
+    firstError.code === 278 ||
+    meRead.status === 403 ||
+    wabaList.status === 403 ||
+    phoneRead.status === 403 ||
+    subs.status === 403
+  ) {
     result.erro_categoria = "permissao_insuficiente";
-  } else if (phoneRead.status === 404 || phoneRead.status === 400) {
+  } else if (firstError.code === 100) {
+    // 100 normalmente significa parâmetro/rota inválido (ex.: versão Graph errada).
+    result.erro_categoria = "rota_ou_versao_invalida";
+  } else if (phoneRead.status === 404 || firstError.code === 803) {
     result.erro_categoria = "phone_id_incorreto";
-  } else if (wabaList.status === 404 || wabaList.status === 400) {
+  } else if (wabaList.status === 404) {
     result.erro_categoria = "waba_incorreta";
-  } else if (result.app_inscrito_na_waba === "falhou" && subs.ok) {
-    result.erro_categoria = "ativo_nao_atribuido";
   } else {
     result.erro_categoria = "desconhecido";
   }
