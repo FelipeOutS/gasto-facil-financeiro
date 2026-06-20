@@ -334,7 +334,11 @@ function WhatsAppPage() {
     numero_apto_para_conversa_whatsapp: "sim" | "nao" | "desconhecido";
     plataforma_do_numero: "cloud_api" | "outro" | "desconhecido";
     status_de_registro_confiavel: "sim" | "nao";
-    acao_recomendada: "registrar_numero" | "revisar_meta" | "aguardar" | "nenhuma";
+    acao_recomendada: "registrar_cloud_api" | "migrar_para_cloud_api" | "revisar_meta" | "aguardar" | "nenhuma";
+    tipo_plataforma_meta: "cloud_api" | "on_premise" | "coexistence" | "nao_informado" | "outro";
+    status_numero_meta: "connected" | "disconnected" | "pendente" | "nao_informado" | "outro";
+    verificacao_numero_meta: "verificado" | "nao_verificado" | "desconhecido";
+    nome_exibicao_meta: "aprovado" | "pendente" | "reprovado" | "desconhecido";
   } | null>(null);
   const [auditRealStateLoading, setAuditRealStateLoading] = useState(false);
   async function auditarStatusRealDoNumero() {
