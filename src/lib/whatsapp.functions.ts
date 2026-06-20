@@ -17,16 +17,18 @@ function normTel(raw: string): string {
 export const getWhatsAppConfigStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // Admin Master only — gate via feature key reuso (qualquer feature serve
-    // pra exigir login + assinatura ativa; aqui usamos whatsapp).
     await assertFeatureAccess(context.userId, "whatsapp");
     const has = (v: string | undefined | null) =>
       typeof v === "string" && v.trim().length > 0;
+    const flag = (v: string | undefined | null) =>
+      (v ?? "").trim().toLowerCase() === "true";
     return {
       access_token: has(process.env.WHATSAPP_ACCESS_TOKEN),
       phone_number_id: has(process.env.WHATSAPP_PHONE_NUMBER_ID),
       business_account_id: has(process.env.WHATSAPP_BUSINESS_ACCOUNT_ID),
       verify_token: has(process.env.WHATSAPP_VERIFY_TOKEN),
+      enabled: flag(process.env.WHATSAPP_ENABLED),
+      canary_enabled: flag(process.env.WHATSAPP_CANARY_ENABLED),
     };
   });
 

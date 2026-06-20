@@ -27,7 +27,7 @@ import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-l
  *     apenas contagens e identificadores externos.
  */
 
-// ----- Feature flag ----------------------------------------------------
+// ----- Feature flags --------------------------------------------------
 // `WHATSAPP_ENABLED` precisa estar explicitamente "true" para permitir
 // gravação. Qualquer outro valor (vazio, "false", undefined) mantém o
 // endpoint em modo seguro de "preparado, mas inativo".
@@ -41,6 +41,41 @@ function isWhatsAppEnabled(): boolean {
     process.env.WHATSAPP_PHONE_NUMBER_ID,
   ];
   return required.every((v) => typeof v === "string" && v.trim().length > 0);
+}
+
+// Modo canário: quando "true", APENAS mensagens vindas de um telefone
+// vinculado a um Admin Master (vínculo ativo + consentimento LGPD válido)
+// são processadas. Mensagens de qualquer outro número recebem 200 OK,
+// SEM criar gasto, SEM responder, SEM salvar texto ou dados financeiros.
+function isCanaryEnabled(): boolean {
+  return (process.env.WHATSAPP_CANARY_ENABLED ?? "").trim().toLowerCase() === "true";
+}
+
+const ADMIN_MASTER_EMAILS = [
+  "felipe.out.silva@outlook.com",
+  "michael@medeiroscenografia.com.br",
+] as const;
+
+async function isAdminMasterPhone(telefone: string): Promise<boolean> {
+  const tel = telefone.replace(/\D/g, "");
+  if (!tel) return false;
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabaseAdmin as any;
+    const { data: link } = await sb
+      .from("whatsapp_links")
+      .select("user_id, ativo, revogado_em")
+      .eq("telefone", tel)
+      .maybeSingle();
+    if (!link || !link.ativo || link.revogado_em) return false;
+    const { data } = await sb.auth.admin.getUserById(link.user_id);
+    const email: string | null = data?.user?.email ?? null;
+    if (!email) return false;
+    return (ADMIN_MASTER_EMAILS as ReadonlyArray<string>).includes(email.trim().toLowerCase());
+  } catch {
+    return false;
+  }
 }
 
 function verifyMetaSignature(rawBody: string, headerValue: string | null): boolean {
@@ -302,9 +337,20 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
           return jsonResponse({ ok: true, processed: 0, skipped: "no_messages" });
         }
 
+        const canaryOn = isCanaryEnabled();
         const results: Array<{ status: string; gasto_id?: string }> = [];
         for (const msg of flatMessages) {
           if (!msg.texto?.trim()) continue;
+          // Modo canário: descarta silenciosamente qualquer telefone que
+          // não pertença a um Admin Master com vínculo ativo e consentimento.
+          // NÃO grava texto, NÃO cria gasto, NÃO envia resposta.
+          if (canaryOn) {
+            const allowed = await isAdminMasterPhone(msg.telefone);
+            if (!allowed) {
+              results.push({ status: "canary_dropped" });
+              continue;
+            }
+          }
           try {
             const out = await processarMensagemWhatsApp(msg);
             results.push({ status: out.status, gasto_id: out.gastoId });

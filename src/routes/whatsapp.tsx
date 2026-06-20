@@ -29,7 +29,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getWhatsAppConfigStatus, upsertWhatsAppLink, deleteWhatsAppLink } from "@/lib/whatsapp.functions";
 import {
   whatsappAdminCheckRegistration,
-  whatsappAdminSubscribeAppToWaba,
+  whatsappAdminGetOpsChecklist,
 } from "@/lib/whatsapp-admin.functions";
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText, DEFAULT_CATEGORIES } from "@/lib/categories";
@@ -279,54 +279,26 @@ function WhatsAppPage() {
     }
   }
 
-  // ===== WA-D2 — Inscrever App na WABA (TEMPORÁRIO; remover após confirmação) =====
-  const subscribeAppFn = useServerFn(whatsappAdminSubscribeAppToWaba);
-  const [subscribeLoading, setSubscribeLoading] = useState(false);
-  const [subscribeResult, setSubscribeResult] = useState<{
+  // ===== WA-E1 — Checklist operacional Admin Master =====
+  const opsChecklistFn = useServerFn(whatsappAdminGetOpsChecklist);
+  const [opsChecklist, setOpsChecklist] = useState<{
+    numero_registrado: "ok" | "falhou";
     app_inscrito_na_waba: "ok" | "falhou";
-    pronto_para_register: "sim" | "nao";
-    meta_subscribed_apps_http_status: number | string;
-    meta_error_code: number | null;
-    meta_error_subcode: number | null;
-    erro_categoria: string;
+    webhook_configurado: "ok" | "falhou";
+    modo_canario_preparado: "ok" | "falhou";
+    modo_canario_ativo: "sim" | "nao";
+    processamento_real_ativo: "sim" | "nao";
   } | null>(null);
-  async function executarSubscribeApp() {
-    const ok = await confirmAsync({
-      title: "Inscrever App na WABA?",
-      description:
-        "Esta ação executa POST /{WABA_ID}/subscribed_apps. Read-only do registro do número permanece inalterado.",
-    });
-    if (!ok) return;
-    const typed = window.prompt('Digite exatamente: ASSINAR-APP-NA-WABA');
-    if (typed !== "ASSINAR-APP-NA-WABA") {
-      toast.error("Confirmação textual inválida.");
-      return;
-    }
-    setSubscribeLoading(true);
+  const [opsChecklistLoading, setOpsChecklistLoading] = useState(false);
+  async function carregarOpsChecklist() {
+    setOpsChecklistLoading(true);
     try {
-      const r = await subscribeAppFn({ data: { confirm: "ASSINAR-APP-NA-WABA" } });
-      if (r.status === "missing_secrets" || r.status === "preflight_failed") {
-        toast.error(r.message);
-        setSubscribeResult(null);
-        return;
-      }
-      setSubscribeResult({
-        app_inscrito_na_waba: r.app_inscrito_na_waba,
-        pronto_para_register: r.pronto_para_register,
-        meta_subscribed_apps_http_status: r.meta_subscribed_apps_http_status,
-        meta_error_code: r.meta_error_code,
-        meta_error_subcode: r.meta_error_subcode,
-        erro_categoria: r.erro_categoria,
-      });
-      if (r.app_inscrito_na_waba === "ok") {
-        toast.success("App inscrito na WABA.");
-      } else {
-        toast.error("Inscrição não confirmada. Veja os campos de diagnóstico.");
-      }
+      const r = await opsChecklistFn();
+      setOpsChecklist(r);
     } catch {
-      toast.error("Falha ao inscrever o App na WABA.");
+      toast.error("Falha ao carregar checklist.");
     } finally {
-      setSubscribeLoading(false);
+      setOpsChecklistLoading(false);
     }
   }
   const [configStatus, setConfigStatus] = useState<{
@@ -334,6 +306,8 @@ function WhatsAppPage() {
     phone_number_id: boolean;
     business_account_id: boolean;
     verify_token: boolean;
+    enabled: boolean;
+    canary_enabled: boolean;
   } | null>(null);
   useEffect(() => {
     let alive = true;
@@ -539,15 +513,23 @@ function WhatsAppPage() {
     }
   }
 
-  // Status global da integração (linguagem amigável para o usuário final)
+  // Status global da integração (linguagem amigável para o usuário final).
+  // Enquanto o processamento real estiver desligado no backend
+  // (WHATSAPP_ENABLED !== "true"), nunca mostrar "Ativo".
   const ultimaMsg = msgs[0];
+  const processamentoRealAtivo = configStatus?.enabled === true;
   const integracaoStatus = MODO_TESTE
     ? { label: "Em configuração", cls: "border-amber-500/40 text-amber-300" }
-    : links.length === 0
-      ? { label: "Não configurado", cls: "border-border text-muted-foreground" }
-      : ultimaMsg
-        ? { label: "Ativo", cls: "border-emerald-500/40 text-emerald-400" }
-        : { label: "Aguardando primeira mensagem", cls: "border-sky-500/40 text-sky-400" };
+    : !processamentoRealAtivo
+      ? {
+          label: "Configurado — teste de mensagens ainda desativado",
+          cls: "border-amber-500/40 text-amber-300",
+        }
+      : links.length === 0
+        ? { label: "Não configurado", cls: "border-border text-muted-foreground" }
+        : ultimaMsg
+          ? { label: "Ativo", cls: "border-emerald-500/40 text-emerald-400" }
+          : { label: "Aguardando primeira mensagem", cls: "border-sky-500/40 text-sky-400" };
 
   return (
     <MobileShell>
@@ -890,25 +872,25 @@ erro_categoria: ${preflightResult.erro_categoria}`}
                 </pre>
               )}
 
-              {/* WA-D2 — Inscrever App na WABA (TEMPORÁRIO) */}
-              <div className="pt-2 border-t border-amber-500/20">
+              {/* WA-E1 — Checklist operacional Admin Master */}
+              <div className="pt-2 border-t border-amber-500/20 space-y-2">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={executarSubscribeApp}
-                  disabled={subscribeLoading}
+                  onClick={carregarOpsChecklist}
+                  disabled={opsChecklistLoading}
                   className="text-xs"
                 >
-                  {subscribeLoading ? "Executando..." : "Inscrever App na WABA (POST único)"}
+                  {opsChecklistLoading ? "Carregando..." : "Atualizar checklist técnico"}
                 </Button>
-                {subscribeResult && (
-                  <pre className="mt-2 rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
-{`app_inscrito_na_waba: ${subscribeResult.app_inscrito_na_waba}
-pronto_para_register: ${subscribeResult.pronto_para_register}
-meta_subscribed_apps_http_status: ${subscribeResult.meta_subscribed_apps_http_status}
-meta_error_code: ${subscribeResult.meta_error_code ?? "null"}
-meta_error_subcode: ${subscribeResult.meta_error_subcode ?? "null"}
-erro_categoria: ${subscribeResult.erro_categoria}`}
+                {opsChecklist && (
+                  <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
+{`numero_registrado: ${opsChecklist.numero_registrado}
+app_inscrito_na_waba: ${opsChecklist.app_inscrito_na_waba}
+webhook_configurado: ${opsChecklist.webhook_configurado}
+modo_canario_preparado: ${opsChecklist.modo_canario_preparado}
+modo_canario_ativo: ${opsChecklist.modo_canario_ativo}
+processamento_real_ativo: ${opsChecklist.processamento_real_ativo}`}
                   </pre>
                 )}
               </div>

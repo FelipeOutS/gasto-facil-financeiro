@@ -553,3 +553,34 @@ export const whatsappAdminSubscribeAppToWaba = createServerFn({ method: "POST" }
                   : ("outro" as const),
     };
   });
+
+/**
+ * Checklist técnico operacional (read-only) para o painel Admin Master.
+ * Retorna apenas enums seguros. Nenhum secret, ID, token ou URL é exposto.
+ */
+export const whatsappAdminGetOpsChecklist = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdminMaster(context.userId);
+    const pf = await runPreflightInternal();
+
+    const enabledFlag = (process.env.WHATSAPP_ENABLED ?? "").trim().toLowerCase() === "true";
+    const canaryFlag =
+      (process.env.WHATSAPP_CANARY_ENABLED ?? "").trim().toLowerCase() === "true";
+    // "Preparado" significa que o controle existe no backend (mesmo desligado).
+    const canaryPrepared = typeof process.env.WHATSAPP_CANARY_ENABLED === "string";
+
+    return {
+      numero_registrado: (pf.numero_ja_registrado === "sim" ? "ok" : "falhou") as
+        | "ok"
+        | "falhou",
+      app_inscrito_na_waba: pf.app_inscrito_na_waba,
+      webhook_configurado:
+        pf.webhook_handshake === "ok" && pf.secrets_completos
+          ? ("ok" as const)
+          : ("falhou" as const),
+      modo_canario_preparado: canaryPrepared ? ("ok" as const) : ("falhou" as const),
+      modo_canario_ativo: canaryFlag ? ("sim" as const) : ("nao" as const),
+      processamento_real_ativo: enabledFlag ? ("sim" as const) : ("nao" as const),
+    };
+  });
