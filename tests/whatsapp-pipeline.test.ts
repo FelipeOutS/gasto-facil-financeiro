@@ -67,8 +67,11 @@ function makeBuilder(table: string): any {
     if (state.op === "update") {
       if (table === "whatsapp_messages") {
         const s = state.payload?.status;
-        if (s === "salva" || s === "cancelada" || s === "expirada") {
+        const id = state.filters?.id;
+        if (s === "salva" || s === "cancelada") {
           pendingRow = null;
+        } else if (s === "expirada") {
+          if (pendingRow && id && pendingRow.id === id) pendingRow = null;
         } else if (s && pendingRow) {
           pendingRow = {
             ...pendingRow,
