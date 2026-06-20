@@ -776,6 +776,41 @@ function WhatsAppPage() {
               </p>
             </div>
 
+            {/* WA-D — Preflight read-only (TEMPORÁRIO; remover após WA-D) */}
+            <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-amber-300">
+                  WA-D · Preflight (somente leitura)
+                </h2>
+                <Badge variant="outline" className="border-amber-500/40 text-amber-300">
+                  temporário
+                </Badge>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Executa apenas verificações de leitura na Meta. Não envia mensagens, não
+                registra o número e não expõe credenciais.
+              </p>
+              <Button
+                type="button"
+                onClick={executarPreflight}
+                disabled={preflightLoading}
+                className="w-full sm:w-auto bg-amber-500/90 hover:bg-amber-500 text-black"
+              >
+                {preflightLoading ? "Executando..." : "Executar preflight (somente leitura)"}
+              </Button>
+              {preflightResult && (
+                <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
+{`token_para_waba: ${preflightResult.token_para_waba}
+numero_oficial_na_waba: ${preflightResult.numero_oficial_na_waba}
+app_inscrito_na_waba: ${preflightResult.app_inscrito_na_waba}
+webhook_handshake: ${preflightResult.webhook_handshake}
+numero_ja_registrado: ${preflightResult.numero_ja_registrado}
+pronto_para_register: ${preflightResult.pronto_para_register}`}
+                </pre>
+              )}
+            </section>
+
+
             {/* Status técnico + secrets */}
             <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
               <div className="flex items-center justify-between">
