@@ -51,16 +51,17 @@ export function formatWhatsAppNumberShort(e164: string = getOfficialWhatsAppNumb
 /**
  * Gera link `wa.me` para abrir a conversa com o número oficial.
  *
- * IMPORTANTE: a mensagem pré-preenchida deve ser GENÉRICA. Nunca incluir
- * `user_id`, e-mail, dados financeiros ou qualquer dado do app.
+ * Por padrão NÃO envia texto pré-preenchido — o canal é exclusivo para
+ * lançamento de gastos, e qualquer mensagem genérica poderia induzir o
+ * usuário a tratá-lo como suporte/atendimento.
  *
- * O link é apenas conveniência para o usuário iniciar a conversa — o
- * processamento real ocorre pelo webhook, e o usuário só consegue lançar
- * gastos se seu número estiver vinculado em `whatsapp_links`.
+ * Se um `prefilledText` for explicitamente passado, NUNCA pode conter
+ * `user_id`, e-mail, dados financeiros ou qualquer dado do app.
  */
-export function getOfficialWhatsAppDeepLink(
-  prefilledText: string = "Olá! Quero vincular meu WhatsApp ao Gasto Inteligente para enviar gastos.",
-): string {
+export function getOfficialWhatsAppDeepLink(prefilledText?: string): string {
   const num = getOfficialWhatsAppNumber();
-  return `https://wa.me/${num}?text=${encodeURIComponent(prefilledText)}`;
+  const text = (prefilledText ?? "").trim();
+  return text.length > 0
+    ? `https://wa.me/${num}?text=${encodeURIComponent(text)}`
+    : `https://wa.me/${num}`;
 }
