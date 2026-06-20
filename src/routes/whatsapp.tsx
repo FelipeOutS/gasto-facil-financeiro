@@ -339,6 +339,8 @@ function WhatsAppPage() {
     status_numero_meta: "connected" | "disconnected" | "pendente" | "nao_informado" | "outro";
     verificacao_numero_meta: "verificado" | "nao_verificado" | "desconhecido";
     nome_exibicao_meta: "aprovado" | "pendente" | "reprovado" | "desconhecido";
+    id_do_erro_meta_corresponde_ao_phone_number_id_atual: "sim" | "nao";
+    phone_number_id_atual_esta_na_waba_oficial: "sim" | "nao";
   } | null>(null);
   const [auditRealStateLoading, setAuditRealStateLoading] = useState(false);
   async function auditarStatusRealDoNumero() {
