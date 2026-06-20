@@ -3,192 +3,9 @@
  *
  * Garante que NENHUM gasto é gravado em `gastos` antes da confirmação
  * explícita do usuário (sim/salvar/confirmar/ok/✅).
- *
- * Roda via: bun test tests/whatsapp-pipeline.test.ts
  */
-import { test, expect, mock, beforeEach } from "bun:test";
-
-// ---------- Fake Supabase client com rastreamento ----------
-
-const inserts: Array<{ table: string; row: Record<string, unknown> }> = [];
-let pendingRow: {
-  id: string;
-  status: string;
-  parsed: Record<string, unknown>;
-  recebida_em: string;
-  gasto_id?: string | null;
-} | null = null;
-
-let cartoesData: Record<string, unknown>[] = [];
-const categoriasData = [
-  { id: "cat-out", legacy_id: "outros", nome: "Outros", user_id: "u1" },
-  { id: "cat-mer", legacy_id: "mercado", nome: "Mercado", user_id: "u1" },
-  { id: "cat-trans", legacy_id: "transporte", nome: "Transporte", user_id: "u1" },
-  { id: "cat-saude", legacy_id: "saude", nome: "Saúde", user_id: "u1" },
-  { id: "cat-rest", legacy_id: "restaurante", nome: "Restaurante", user_id: "u1" },
-  { id: "cat-int", legacy_id: "internet", nome: "Internet", user_id: "u1" },
-];
-const linkData = {
-  user_id: "u1",
-  telefone: "5511999998888",
-  ativo: true,
-  opt_in_em: new Date().toISOString(),
-  revogado_em: null,
-};
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function makeBuilder(table: string): any {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const state: any = { table, op: "select", payload: null };
-
-  const finalize = async () => {
-    if (state.op === "insert") {
-      const rows = Array.isArray(state.payload) ? state.payload : [state.payload];
-      for (const r of rows) inserts.push({ table, row: r });
-      const PENDING = [
-        "aguardando_confirmacao",
-        "aguardando_forma_pagamento",
-        "aguardando_cartao",
-      ];
-      if (table === "whatsapp_messages" && PENDING.includes(rows[0]?.status)) {
-        pendingRow = {
-          id: `m-${inserts.length}`,
-          status: rows[0].status,
-          parsed: rows[0].parsed,
-          recebida_em: new Date().toISOString(),
-          gasto_id: null,
-        };
-      }
-      if (table === "gastos") {
-        return { data: { id: `g-${inserts.length}` }, error: null };
-      }
-      return { data: null, error: null };
-    }
-    if (state.op === "update") {
-      if (table === "whatsapp_messages") {
-        const s = state.payload?.status;
-        const id = state.filters?.id;
-        if (s === "salva" || s === "cancelada") {
-          pendingRow = null;
-        } else if (s === "expirada") {
-          if (pendingRow && id && pendingRow.id === id) pendingRow = null;
-        } else if (s && pendingRow) {
-          pendingRow = {
-            ...pendingRow,
-            status: s,
-            parsed: state.payload?.parsed ?? pendingRow.parsed,
-          };
-        }
-      }
-      return { data: null, error: null };
-    }
-    if (state.op === "delete") return { data: null, error: null };
-
-    // SELECT
-    if (table === "whatsapp_links") return { data: linkData, error: null };
-    if (table === "whatsapp_messages") {
-      // Lookup por external_id (dedupe): só retorna se o external_id consultado
-      // corresponde ao último inserido (rastreado via state.filters).
-      const extId = state.filters?.external_id;
-      if (extId) {
-        const found = inserts.find(
-          (i) => i.table === "whatsapp_messages" && i.row.external_id === extId,
-        );
-        if (!found) return { data: null, error: null };
-        return {
-          data: {
-            id: "logged",
-            status: found.row.status,
-            gasto_id: found.row.gasto_id ?? null,
-          },
-          error: null,
-        };
-      }
-      return { data: pendingRow, error: null };
-    }
-    if (table === "cartoes") return { data: cartoesData, error: null };
-    if (table === "categorias") return { data: categoriasData, error: null };
-    if (table === "gastos") return { data: { id: "x" }, error: null };
-    if (table === "auth.users")
-      return { data: { email: "u@example.com" }, error: null };
-    return { data: null, error: null };
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const builder: any = {
-    select() {
-      return builder;
-    },
-    insert(payload: unknown) {
-      state.op = "insert";
-      state.payload = payload;
-      return builder;
-    },
-    update(payload: unknown) {
-      state.op = "update";
-      state.payload = payload;
-      return builder;
-    },
-    delete() {
-      state.op = "delete";
-      return builder;
-    },
-    eq(col: string, val: unknown) {
-      state.filters = state.filters ?? {};
-      state.filters[col] = val;
-      return builder;
-    },
-    in() {
-      return builder;
-    },
-    gte() {
-      return builder;
-    },
-    order() {
-      return builder;
-    },
-    limit() {
-      return builder;
-    },
-    single: finalize,
-    maybeSingle: finalize,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    then(resolve: any, reject: any) {
-      return finalize().then(resolve, reject);
-    },
-  };
-  return builder;
-}
-
-const fakeAdmin = {
-  from: (t: string) => makeBuilder(t),
-  auth: {
-    admin: {
-      getUserById: async () => ({
-        data: { user: { email: "u@example.com" } },
-      }),
-    },
-  },
-};
-
-mock.module("@/integrations/supabase/client.server", () => ({
-  supabaseAdmin: fakeAdmin,
-}));
-mock.module("../src/integrations/supabase/client.server", () => ({
-  supabaseAdmin: fakeAdmin,
-}));
-mock.module("@/server/subscription.server", () => ({
-  getSubscriptionForUserIdentity: async () => ({
-    active: true,
-    plan: "admin_master",
-  }),
-}));
-mock.module("./subscription.server", () => ({
-  getSubscriptionForUserIdentity: async () => ({
-    active: true,
-    plan: "admin_master",
-  }),
-}));
+import { test, expect, beforeEach } from "bun:test";
+import { state, resetState, gastosInserts } from "./_whatsapp-fake";
 
 const { processarMensagemWhatsApp } = await import(
   "../src/server/whatsapp.server"
@@ -197,28 +14,8 @@ const { processarMensagemWhatsApp } = await import(
 const tel = "5511999998888";
 
 beforeEach(() => {
-  inserts.length = 0;
-  pendingRow = null;
-  cartoesData = [
-    {
-      id: "c-nu",
-      nome: "Nubank",
-      banco: "Nubank",
-      limite_total: 0,
-      dia_fechamento: 1,
-      dia_vencimento: 10,
-      cor: "#000",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ];
+  resetState();
 });
-
-const gastosInserts = () => inserts.filter((i) => i.table === "gastos");
-
-// ============================================================
-// Regra 1+2: nova mensagem completa só cria pendência
-// ============================================================
 
 test("Pix completo NÃO grava gasto antes da confirmação", async () => {
   const r = await processarMensagemWhatsApp({
@@ -228,7 +25,7 @@ test("Pix completo NÃO grava gasto antes da confirmação", async () => {
   });
   expect(r.status).toBe("aguardando_confirmacao");
   expect(gastosInserts()).toHaveLength(0);
-  expect(pendingRow).not.toBeNull();
+  expect(state.pendingRow).not.toBeNull();
 });
 
 test("Débito completo NÃO grava gasto antes da confirmação", async () => {
@@ -251,10 +48,6 @@ test("Cartão de crédito completo NÃO grava gasto antes da confirmação", asy
   expect(gastosInserts()).toHaveLength(0);
 });
 
-// ============================================================
-// Regra 5: "sim" sem pendência ativa
-// ============================================================
-
 test("Confirmação 'sim' sem pendência NÃO grava gasto", async () => {
   const r = await processarMensagemWhatsApp({
     telefone: tel,
@@ -265,17 +58,13 @@ test("Confirmação 'sim' sem pendência NÃO grava gasto", async () => {
   expect(gastosInserts()).toHaveLength(0);
 });
 
-// ============================================================
-// Regra 4: "não" descarta pendência
-// ============================================================
-
 test("Cancelamento descarta pendência sem gravar gasto", async () => {
   await processarMensagemWhatsApp({
     telefone: tel,
     texto: "Gastei R$ 35,90 no mercado hoje no cartão Nubank",
     external_id: "n-1",
   });
-  expect(pendingRow).not.toBeNull();
+  expect(state.pendingRow).not.toBeNull();
   const r = await processarMensagemWhatsApp({
     telefone: tel,
     texto: "não",
@@ -283,12 +72,8 @@ test("Cancelamento descarta pendência sem gravar gasto", async () => {
   });
   expect(r.status).toBe("cancelada");
   expect(gastosInserts()).toHaveLength(0);
-  expect(pendingRow).toBeNull();
+  expect(state.pendingRow).toBeNull();
 });
-
-// ============================================================
-// Regra 3 + 6: confirmação cria UM gasto, segunda confirmação não duplica
-// ============================================================
 
 test("Confirmação cria UM gasto e segunda confirmação NÃO duplica", async () => {
   await processarMensagemWhatsApp({
@@ -313,17 +98,13 @@ test("Confirmação cria UM gasto e segunda confirmação NÃO duplica", async (
   expect(gastosInserts()).toHaveLength(1);
 });
 
-// ============================================================
-// Regra 7: nova mensagem enquanto há pendência ativa
-// ============================================================
-
 test("Nova despesa com pendência ativa avisa e NÃO grava gasto", async () => {
   await processarMensagemWhatsApp({
     telefone: tel,
     texto: "Gastei R$ 35,90 no mercado hoje no cartão Nubank",
     external_id: "p-1",
   });
-  expect(pendingRow).not.toBeNull();
+  expect(state.pendingRow).not.toBeNull();
   const r = await processarMensagemWhatsApp({
     telefone: tel,
     texto: "Uber R$ 27 hoje no pix",
@@ -332,13 +113,8 @@ test("Nova despesa com pendência ativa avisa e NÃO grava gasto", async () => {
   expect(r.status).toBe("pendente");
   expect(r.resposta).toMatch(/aguardando confirma[cç][aã]o/i);
   expect(gastosInserts()).toHaveLength(0);
-  // pendência original permanece
-  expect(pendingRow).not.toBeNull();
+  expect(state.pendingRow).not.toBeNull();
 });
-
-// ============================================================
-// Regra 3: forma de pagamento correta após confirmação
-// ============================================================
 
 test("Confirmação salva como Pix (forma=pix, sem cartão)", async () => {
   await processarMensagemWhatsApp({
@@ -347,9 +123,7 @@ test("Confirmação salva como Pix (forma=pix, sem cartão)", async () => {
     external_id: "fp-pix-1",
   });
   await processarMensagemWhatsApp({
-    telefone: tel,
-    texto: "sim",
-    external_id: "fp-pix-2",
+    telefone: tel, texto: "sim", external_id: "fp-pix-2",
   });
   const gasto = gastosInserts()[0]?.row;
   expect(gasto?.forma_pagamento).toBe("pix");
@@ -363,9 +137,7 @@ test("Confirmação salva como débito (forma=debito, sem cartão)", async () =>
     external_id: "fp-deb-1",
   });
   await processarMensagemWhatsApp({
-    telefone: tel,
-    texto: "sim",
-    external_id: "fp-deb-2",
+    telefone: tel, texto: "sim", external_id: "fp-deb-2",
   });
   const gasto = gastosInserts()[0]?.row;
   expect(gasto?.forma_pagamento).toBe("debito");
@@ -379,23 +151,16 @@ test("Confirmação salva como crédito vincula cartao_id correto", async () => 
     external_id: "fp-cred-1",
   });
   await processarMensagemWhatsApp({
-    telefone: tel,
-    texto: "sim",
-    external_id: "fp-cred-2",
+    telefone: tel, texto: "sim", external_id: "fp-cred-2",
   });
   const gasto = gastosInserts()[0]?.row;
   expect(gasto?.forma_pagamento).toBe("credito");
   expect(gasto?.cartao_id).toBe("c-nu");
 });
 
-// ============================================================
-// Variantes de confirmação (ok / salvar / ✅)
-// ============================================================
-
 test("Variantes de confirmação salvam o gasto", async () => {
   for (const palavra of ["ok", "salvar", "confirmar", "✅"]) {
-    inserts.length = 0;
-    pendingRow = null;
+    resetState();
     await processarMensagemWhatsApp({
       telefone: tel,
       texto: "Paguei R$ 18 no pix hoje no lanche",
