@@ -418,6 +418,9 @@ function WhatsAppPage() {
       });
       setRegisterResult({
         registro_cloud_api_executado: r.registro_cloud_api_executado,
+        registro_http_status: r.registro_http_status,
+        meta_error_code: r.meta_error_code,
+        meta_error_subcode: r.meta_error_subcode,
         numero_registrado_cloud_api: r.numero_registrado_cloud_api,
         numero_apto_para_conversa_whatsapp: r.numero_apto_para_conversa_whatsapp,
         tipo_plataforma_meta: r.tipo_plataforma_meta,
