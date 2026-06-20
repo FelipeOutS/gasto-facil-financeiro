@@ -443,3 +443,113 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
     // Apaga referências locais (defesa simbólica).
     // (variáveis saem de escopo no final do handler)
   });
+
+/**
+ * Inscreve o App Gasto Inteligente na WABA oficial via
+ * POST /{WABA_ID}/subscribed_apps.
+ *
+ * Proteções:
+ *  - Admin Master obrigatório.
+ *  - Confirmação textual exata: "ASSINAR-APP-NA-WABA".
+ *  - Roda preflight read-only antes do POST e exige:
+ *      token_para_waba=ok, numero_oficial_na_waba=ok,
+ *      numero_ja_registrado=sim, app_inscrito_na_waba=falhou.
+ *  - Nunca retorna token/IDs/PIN/App Secret/Verify Token/URL/headers/body.
+ *  - Não chama /register, não envia mensagem.
+ */
+export const whatsappAdminSubscribeAppToWaba = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z.object({ confirm: z.literal("ASSINAR-APP-NA-WABA") }).parse(d),
+  )
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdminMaster(context.userId);
+
+    const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
+    const WABA_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+
+    if (!hasSecret(ACCESS_TOKEN) || !hasSecret(WABA_ID)) {
+      return {
+        ok: false as const,
+        status: "missing_secrets" as const,
+        message: "Secrets obrigatórios ausentes.",
+      };
+    }
+
+    // Pré-flight read-only obrigatório.
+    const pfBefore = await runPreflightInternal();
+    const preconditionsOk =
+      pfBefore.token_para_waba === "ok" &&
+      pfBefore.numero_oficial_na_waba === "ok" &&
+      pfBefore.numero_ja_registrado === "sim" &&
+      pfBefore.app_inscrito_na_waba === "falhou";
+
+    if (!preconditionsOk) {
+      return {
+        ok: false as const,
+        status: "preflight_failed" as const,
+        message: "Pré-condições do preflight não atendidas.",
+      };
+    }
+
+    // POST /{WABA_ID}/subscribed_apps (sem body — assina o App dono do token).
+    let httpStatus: number | null = null;
+    let errorCode: number | null = null;
+    let errorSubcode: number | null = null;
+    let networkError = false;
+    let postOk = false;
+    try {
+      const resp = await fetch(
+        `https://graph.facebook.com/${GRAPH_VERSION}/${WABA_ID}/subscribed_apps`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+        },
+      );
+      httpStatus = resp.status;
+      postOk = resp.ok;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const j: any = await resp.json();
+        if (j?.error) {
+          if (typeof j.error.code === "number") errorCode = j.error.code;
+          if (typeof j.error.error_subcode === "number") errorSubcode = j.error.error_subcode;
+        }
+      } catch {
+        /* ignore — não logamos corpo */
+      }
+    } catch {
+      networkError = true;
+    }
+
+    // Re-roda preflight para confirmar o estado pós-POST.
+    const pfAfter = await runPreflightInternal();
+
+    return {
+      ok: postOk && pfAfter.app_inscrito_na_waba === "ok",
+      status: networkError
+        ? ("network_error" as const)
+        : postOk
+          ? ("subscribed" as const)
+          : ("failed" as const),
+      app_inscrito_na_waba: pfAfter.app_inscrito_na_waba,
+      pronto_para_register: pfAfter.pronto_para_register,
+      meta_subscribed_apps_http_status: pfAfter.meta_subscribed_apps_http_status,
+      meta_error_code: errorCode ?? pfAfter.meta_error_code,
+      meta_error_subcode: errorSubcode ?? pfAfter.meta_error_subcode,
+      erro_categoria: pfAfter.erro_categoria,
+      post_http_bucket: httpStatus === null
+        ? -1
+        : httpStatus === 200
+          ? 200
+          : httpStatus === 400
+            ? 400
+            : httpStatus === 401
+              ? 401
+              : httpStatus === 403
+                ? 403
+                : httpStatus === 404
+                  ? 404
+                  : ("outro" as const),
+    };
+  });
