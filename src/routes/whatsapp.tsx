@@ -32,6 +32,8 @@ import {
   whatsappAdminGetOpsChecklist,
   whatsappAdminCheckCanaryReadiness,
   whatsappAdminAuditRealRegistrationState,
+  whatsappAdminClassifyRegisterStrategy,
+  whatsappAdminRegisterNumber,
 } from "@/lib/whatsapp-admin.functions";
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText, DEFAULT_CATEGORIES } from "@/lib/categories";
