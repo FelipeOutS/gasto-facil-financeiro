@@ -369,6 +369,9 @@ function WhatsAppPage() {
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerResult, setRegisterResult] = useState<{
     registro_cloud_api_executado: "sim" | "nao";
+    registro_http_status: 200 | "outro";
+    meta_error_code: number | null;
+    meta_error_subcode: number | null;
     numero_registrado_cloud_api: "sim" | "nao" | "desconhecido";
     numero_apto_para_conversa_whatsapp: "sim" | "nao" | "desconhecido";
     tipo_plataforma_meta:
