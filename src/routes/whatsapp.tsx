@@ -1230,9 +1230,11 @@ phone_number_id_atual_esta_na_waba_oficial: ${auditRealState.phone_number_id_atu
                 {registerResult && (
                   <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
 {`registro_cloud_api_executado: ${registerResult.registro_cloud_api_executado}
+registro_http_status: ${registerResult.registro_http_status}
+meta_error_code: ${registerResult.meta_error_code ?? "null"}
+meta_error_subcode: ${registerResult.meta_error_subcode ?? "null"}
 numero_registrado_cloud_api: ${registerResult.numero_registrado_cloud_api}
 numero_apto_para_conversa_whatsapp: ${registerResult.numero_apto_para_conversa_whatsapp}
-tipo_plataforma_meta: ${registerResult.tipo_plataforma_meta}
 status_numero_meta: ${registerResult.status_numero_meta}
 acao_recomendada: ${registerResult.acao_recomendada}`}
                   </pre>
