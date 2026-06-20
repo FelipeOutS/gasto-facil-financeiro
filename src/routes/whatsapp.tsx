@@ -1047,6 +1047,30 @@ admin_email_autorizado: ${canaryReadiness.admin_email_autorizado}`}
                   </pre>
                 )}
               </div>
+
+              {/* WA-E2.audit — Auditoria read-only do estado real do número (Admin Master) */}
+              <div className="pt-2 border-t border-amber-500/20 space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={auditarStatusRealDoNumero}
+                  disabled={auditRealStateLoading}
+                  className="text-xs"
+                >
+                  {auditRealStateLoading ? "Auditando..." : "Auditar status real do número"}
+                </Button>
+                {auditRealState && (
+                  <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
+{`numero_meta_encontrado: ${auditRealState.numero_meta_encontrado}
+numero_verificado_na_meta: ${auditRealState.numero_verificado_na_meta}
+numero_registrado_cloud_api: ${auditRealState.numero_registrado_cloud_api}
+numero_apto_para_conversa_whatsapp: ${auditRealState.numero_apto_para_conversa_whatsapp}
+plataforma_do_numero: ${auditRealState.plataforma_do_numero}
+status_de_registro_confiavel: ${auditRealState.status_de_registro_confiavel}
+acao_recomendada: ${auditRealState.acao_recomendada}`}
+                  </pre>
+                )}
+              </div>
             </section>
 
 
