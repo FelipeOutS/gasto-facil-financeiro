@@ -1160,7 +1160,80 @@ phone_number_id_atual_esta_na_waba_oficial: ${auditRealState.phone_number_id_atu
                   </pre>
                 )}
               </div>
+
+              {/* WA-E2.register — Estratégia + execução do POST /register */}
+              <div className="pt-2 border-t border-amber-500/20 space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={classificarEstrategiaRegistro}
+                  disabled={registerStrategyLoading}
+                  className="text-xs"
+                >
+                  {registerStrategyLoading
+                    ? "Classificando..."
+                    : "Classificar estratégia de registro"}
+                </Button>
+                {registerStrategy && (
+                  <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
+{`estrategia_registro: ${registerStrategy}`}
+                  </pre>
+                )}
+
+                {registerStrategy === "registro_direto_cloud_api" && (
+                  <div className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3 space-y-2">
+                    <p className="text-[11px] text-rose-200 leading-relaxed">
+                      Ação irreversível. Para confirmar, digite{" "}
+                      <span className="font-mono">REGISTRAR-CLOUD-API</span> e{" "}
+                      <span className="font-mono">11918539158</span>.
+                    </p>
+                    <Input
+                      value={registerConfirm1}
+                      onChange={(e) => setRegisterConfirm1(e.target.value)}
+                      placeholder="REGISTRAR-CLOUD-API"
+                      className="font-mono text-xs"
+                    />
+                    <Input
+                      value={registerConfirm2}
+                      onChange={(e) => setRegisterConfirm2(e.target.value)}
+                      placeholder="11918539158"
+                      className="font-mono text-xs"
+                    />
+                    <Button
+                      type="button"
+                      onClick={executarRegistroCloudApi}
+                      disabled={
+                        registerLoading ||
+                        registerConfirm1 !== "REGISTRAR-CLOUD-API" ||
+                        registerConfirm2 !== "11918539158"
+                      }
+                      className="bg-rose-500 hover:bg-rose-600 text-white text-xs"
+                    >
+                      {registerLoading ? "Registrando..." : "Registrar número na Cloud API"}
+                    </Button>
+                  </div>
+                )}
+
+                {registerStrategy &&
+                  registerStrategy !== "registro_direto_cloud_api" && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Botão de registro não disponível para esta estratégia.
+                    </p>
+                  )}
+
+                {registerResult && (
+                  <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
+{`registro_cloud_api_executado: ${registerResult.registro_cloud_api_executado}
+numero_registrado_cloud_api: ${registerResult.numero_registrado_cloud_api}
+numero_apto_para_conversa_whatsapp: ${registerResult.numero_apto_para_conversa_whatsapp}
+tipo_plataforma_meta: ${registerResult.tipo_plataforma_meta}
+status_numero_meta: ${registerResult.status_numero_meta}
+acao_recomendada: ${registerResult.acao_recomendada}`}
+                  </pre>
+                )}
+              </div>
             </section>
+
 
 
             {/* Status técnico + secrets */}
