@@ -30,6 +30,7 @@ import { getWhatsAppConfigStatus, upsertWhatsAppLink, deleteWhatsAppLink } from 
 import {
   whatsappAdminCheckRegistration,
   whatsappAdminGetOpsChecklist,
+  whatsappAdminCheckCanaryReadiness,
 } from "@/lib/whatsapp-admin.functions";
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText, DEFAULT_CATEGORIES } from "@/lib/categories";
@@ -299,6 +300,27 @@ function WhatsAppPage() {
       toast.error("Falha ao carregar checklist.");
     } finally {
       setOpsChecklistLoading(false);
+    }
+  }
+
+  // ===== WA-E1.1 — Prontidão canário do Admin Master =====
+  const canaryReadinessFn = useServerFn(whatsappAdminCheckCanaryReadiness);
+  const [canaryReadiness, setCanaryReadiness] = useState<{
+    admin_canary_phone_ready: "ok" | "falhou";
+    admin_link_ativo: "ok" | "falhou";
+    admin_opt_in_valido: "ok" | "falhou";
+    admin_email_autorizado: "ok" | "falhou";
+  } | null>(null);
+  const [canaryReadinessLoading, setCanaryReadinessLoading] = useState(false);
+  async function carregarCanaryReadiness() {
+    setCanaryReadinessLoading(true);
+    try {
+      const r = await canaryReadinessFn();
+      setCanaryReadiness(r);
+    } catch {
+      toast.error("Falha ao verificar prontidão do canário.");
+    } finally {
+      setCanaryReadinessLoading(false);
     }
   }
   const [configStatus, setConfigStatus] = useState<{
@@ -891,6 +913,29 @@ webhook_configurado: ${opsChecklist.webhook_configurado}
 modo_canario_preparado: ${opsChecklist.modo_canario_preparado}
 modo_canario_ativo: ${opsChecklist.modo_canario_ativo}
 processamento_real_ativo: ${opsChecklist.processamento_real_ativo}`}
+                  </pre>
+                )}
+              </div>
+
+              {/* WA-E1.1 — Prontidão canário do Admin Master */}
+              <div className="pt-2 border-t border-amber-500/20 space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={carregarCanaryReadiness}
+                  disabled={canaryReadinessLoading}
+                  className="text-xs"
+                >
+                  {canaryReadinessLoading
+                    ? "Verificando..."
+                    : "Verificar prontidão do canário (Admin Master)"}
+                </Button>
+                {canaryReadiness && (
+                  <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
+{`admin_canary_phone_ready: ${canaryReadiness.admin_canary_phone_ready}
+admin_link_ativo: ${canaryReadiness.admin_link_ativo}
+admin_opt_in_valido: ${canaryReadiness.admin_opt_in_valido}
+admin_email_autorizado: ${canaryReadiness.admin_email_autorizado}`}
                   </pre>
                 )}
               </div>

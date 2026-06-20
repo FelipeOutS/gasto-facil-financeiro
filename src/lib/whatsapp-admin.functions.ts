@@ -586,3 +586,62 @@ export const whatsappAdminGetOpsChecklist = createServerFn({ method: "GET" })
       processamento_real_ativo: enabledFlag ? ("sim" as const) : ("nao" as const),
     };
   });
+
+/**
+ * Verificação read-only de prontidão do WhatsApp do Admin Master
+ * para ser o único remetente autorizado no teste canário.
+ *
+ * Retorna SOMENTE enums seguros. Nenhum telefone, e-mail, user_id,
+ * token, ID ou mensagem é exposto.
+ */
+export const whatsappAdminCheckCanaryReadiness = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdminMaster(context.userId);
+
+    type Enum = "ok" | "falhou";
+    let admin_email_autorizado: Enum = "falhou";
+    let admin_link_ativo: Enum = "falhou";
+    let admin_opt_in_valido: Enum = "falhou";
+
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const adm = supabaseAdmin as any;
+
+      const { data: userData } = await adm.auth.admin.getUserById(context.userId);
+      const email: string | null = userData?.user?.email ?? null;
+      if (email && isAdminMasterEmail(email)) {
+        admin_email_autorizado = "ok";
+      }
+
+      const { data: link } = await adm
+        .from("whatsapp_links")
+        .select("ativo, revogado_em, opt_in_em")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+
+      if (link && link.ativo === true && !link.revogado_em) {
+        admin_link_ativo = "ok";
+      }
+      if (link && link.opt_in_em) {
+        admin_opt_in_valido = "ok";
+      }
+    } catch {
+      // mantém "falhou" — não vazar detalhes
+    }
+
+    const admin_canary_phone_ready: Enum =
+      admin_email_autorizado === "ok" &&
+      admin_link_ativo === "ok" &&
+      admin_opt_in_valido === "ok"
+        ? "ok"
+        : "falhou";
+
+    return {
+      admin_canary_phone_ready,
+      admin_link_ativo,
+      admin_opt_in_valido,
+      admin_email_autorizado,
+    };
+  });
