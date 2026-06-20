@@ -29,7 +29,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getWhatsAppConfigStatus, upsertWhatsAppLink, deleteWhatsAppLink } from "@/lib/whatsapp.functions";
 import {
   whatsappAdminCheckRegistration,
-  whatsappAdminSubscribeAppToWaba,
+  whatsappAdminGetOpsChecklist,
 } from "@/lib/whatsapp-admin.functions";
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText, DEFAULT_CATEGORIES } from "@/lib/categories";
