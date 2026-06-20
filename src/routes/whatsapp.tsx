@@ -862,25 +862,25 @@ erro_categoria: ${preflightResult.erro_categoria}`}
                 </pre>
               )}
 
-              {/* WA-D2 — Inscrever App na WABA (TEMPORÁRIO) */}
-              <div className="pt-2 border-t border-amber-500/20">
+              {/* WA-E1 — Checklist operacional Admin Master */}
+              <div className="pt-2 border-t border-amber-500/20 space-y-2">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={executarSubscribeApp}
-                  disabled={subscribeLoading}
+                  onClick={carregarOpsChecklist}
+                  disabled={opsChecklistLoading}
                   className="text-xs"
                 >
-                  {subscribeLoading ? "Executando..." : "Inscrever App na WABA (POST único)"}
+                  {opsChecklistLoading ? "Carregando..." : "Atualizar checklist técnico"}
                 </Button>
-                {subscribeResult && (
-                  <pre className="mt-2 rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
-{`app_inscrito_na_waba: ${subscribeResult.app_inscrito_na_waba}
-pronto_para_register: ${subscribeResult.pronto_para_register}
-meta_subscribed_apps_http_status: ${subscribeResult.meta_subscribed_apps_http_status}
-meta_error_code: ${subscribeResult.meta_error_code ?? "null"}
-meta_error_subcode: ${subscribeResult.meta_error_subcode ?? "null"}
-erro_categoria: ${subscribeResult.erro_categoria}`}
+                {opsChecklist && (
+                  <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
+{`numero_registrado: ${opsChecklist.numero_registrado}
+app_inscrito_na_waba: ${opsChecklist.app_inscrito_na_waba}
+webhook_configurado: ${opsChecklist.webhook_configurado}
+modo_canario_preparado: ${opsChecklist.modo_canario_preparado}
+modo_canario_ativo: ${opsChecklist.modo_canario_ativo}
+processamento_real_ativo: ${opsChecklist.processamento_real_ativo}`}
                   </pre>
                 )}
               </div>
