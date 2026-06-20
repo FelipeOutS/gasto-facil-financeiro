@@ -279,54 +279,26 @@ function WhatsAppPage() {
     }
   }
 
-  // ===== WA-D2 — Inscrever App na WABA (TEMPORÁRIO; remover após confirmação) =====
-  const subscribeAppFn = useServerFn(whatsappAdminSubscribeAppToWaba);
-  const [subscribeLoading, setSubscribeLoading] = useState(false);
-  const [subscribeResult, setSubscribeResult] = useState<{
+  // ===== WA-E1 — Checklist operacional Admin Master =====
+  const opsChecklistFn = useServerFn(whatsappAdminGetOpsChecklist);
+  const [opsChecklist, setOpsChecklist] = useState<{
+    numero_registrado: "ok" | "falhou";
     app_inscrito_na_waba: "ok" | "falhou";
-    pronto_para_register: "sim" | "nao";
-    meta_subscribed_apps_http_status: number | string;
-    meta_error_code: number | null;
-    meta_error_subcode: number | null;
-    erro_categoria: string;
+    webhook_configurado: "ok" | "falhou";
+    modo_canario_preparado: "ok" | "falhou";
+    modo_canario_ativo: "sim" | "nao";
+    processamento_real_ativo: "sim" | "nao";
   } | null>(null);
-  async function executarSubscribeApp() {
-    const ok = await confirmAsync({
-      title: "Inscrever App na WABA?",
-      description:
-        "Esta ação executa POST /{WABA_ID}/subscribed_apps. Read-only do registro do número permanece inalterado.",
-    });
-    if (!ok) return;
-    const typed = window.prompt('Digite exatamente: ASSINAR-APP-NA-WABA');
-    if (typed !== "ASSINAR-APP-NA-WABA") {
-      toast.error("Confirmação textual inválida.");
-      return;
-    }
-    setSubscribeLoading(true);
+  const [opsChecklistLoading, setOpsChecklistLoading] = useState(false);
+  async function carregarOpsChecklist() {
+    setOpsChecklistLoading(true);
     try {
-      const r = await subscribeAppFn({ data: { confirm: "ASSINAR-APP-NA-WABA" } });
-      if (r.status === "missing_secrets" || r.status === "preflight_failed") {
-        toast.error(r.message);
-        setSubscribeResult(null);
-        return;
-      }
-      setSubscribeResult({
-        app_inscrito_na_waba: r.app_inscrito_na_waba,
-        pronto_para_register: r.pronto_para_register,
-        meta_subscribed_apps_http_status: r.meta_subscribed_apps_http_status,
-        meta_error_code: r.meta_error_code,
-        meta_error_subcode: r.meta_error_subcode,
-        erro_categoria: r.erro_categoria,
-      });
-      if (r.app_inscrito_na_waba === "ok") {
-        toast.success("App inscrito na WABA.");
-      } else {
-        toast.error("Inscrição não confirmada. Veja os campos de diagnóstico.");
-      }
+      const r = await opsChecklistFn();
+      setOpsChecklist(r);
     } catch {
-      toast.error("Falha ao inscrever o App na WABA.");
+      toast.error("Falha ao carregar checklist.");
     } finally {
-      setSubscribeLoading(false);
+      setOpsChecklistLoading(false);
     }
   }
   const [configStatus, setConfigStatus] = useState<{
