@@ -1071,7 +1071,11 @@ numero_registrado_cloud_api: ${auditRealState.numero_registrado_cloud_api}
 numero_apto_para_conversa_whatsapp: ${auditRealState.numero_apto_para_conversa_whatsapp}
 plataforma_do_numero: ${auditRealState.plataforma_do_numero}
 status_de_registro_confiavel: ${auditRealState.status_de_registro_confiavel}
-acao_recomendada: ${auditRealState.acao_recomendada}`}
+acao_recomendada: ${auditRealState.acao_recomendada}
+tipo_plataforma_meta: ${auditRealState.tipo_plataforma_meta}
+status_numero_meta: ${auditRealState.status_numero_meta}
+verificacao_numero_meta: ${auditRealState.verificacao_numero_meta}
+nome_exibicao_meta: ${auditRealState.nome_exibicao_meta}`}
                   </pre>
                 )}
               </div>
