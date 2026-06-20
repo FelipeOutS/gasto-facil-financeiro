@@ -45,14 +45,18 @@ function makeBuilder(table: string): any {
     if (state.op === "insert") {
       const rows = Array.isArray(state.payload) ? state.payload : [state.payload];
       for (const r of rows) inserts.push({ table, row: r });
-      if (
-        table === "whatsapp_messages" &&
-        rows[0]?.status === "aguardando_confirmacao"
-      ) {
+      const PENDING = [
+        "aguardando_confirmacao",
+        "aguardando_forma_pagamento",
+        "aguardando_cartao",
+      ];
+      if (table === "whatsapp_messages" && PENDING.includes(rows[0]?.status)) {
         pendingRow = {
           id: `m-${inserts.length}`,
+          status: rows[0].status,
           parsed: rows[0].parsed,
           recebida_em: new Date().toISOString(),
+          gasto_id: null,
         };
       }
       if (table === "gastos") {
@@ -61,12 +65,17 @@ function makeBuilder(table: string): any {
       return { data: null, error: null };
     }
     if (state.op === "update") {
-      if (
-        table === "whatsapp_messages" &&
-        (state.payload?.status === "salva" ||
-          state.payload?.status === "cancelada")
-      ) {
-        pendingRow = null;
+      if (table === "whatsapp_messages") {
+        const s = state.payload?.status;
+        if (s === "salva" || s === "cancelada" || s === "expirada") {
+          pendingRow = null;
+        } else if (s && pendingRow) {
+          pendingRow = {
+            ...pendingRow,
+            status: s,
+            parsed: state.payload?.parsed ?? pendingRow.parsed,
+          };
+        }
       }
       return { data: null, error: null };
     }
