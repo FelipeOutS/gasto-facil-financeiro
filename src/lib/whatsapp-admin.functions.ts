@@ -677,6 +677,8 @@ export const whatsappAdminAuditRealRegistrationState = createServerFn({ method: 
       status_numero_meta: "connected" | "disconnected" | "pendente" | "nao_informado" | "outro";
       verificacao_numero_meta: "verificado" | "nao_verificado" | "desconhecido";
       nome_exibicao_meta: "aprovado" | "pendente" | "reprovado" | "desconhecido";
+      id_do_erro_meta_corresponde_ao_phone_number_id_atual: "sim" | "nao";
+      phone_number_id_atual_esta_na_waba_oficial: "sim" | "nao";
     } = {
       numero_meta_encontrado: "nao",
       numero_verificado_na_meta: "desconhecido",
@@ -689,16 +691,38 @@ export const whatsappAdminAuditRealRegistrationState = createServerFn({ method: 
       status_numero_meta: "nao_informado",
       verificacao_numero_meta: "desconhecido",
       nome_exibicao_meta: "desconhecido",
+      id_do_erro_meta_corresponde_ao_phone_number_id_atual: "nao",
+      phone_number_id_atual_esta_na_waba_oficial: "nao",
     };
 
     const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
     const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
     const WABA_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
 
+    // Comparação interna do ID antigo reportado no erro da Meta.
+    // Nunca exposto na resposta.
+    const ID_ERRO_META_HISTORICO = "1186676367860451";
+    if (hasSecret(PHONE_NUMBER_ID) && PHONE_NUMBER_ID!.trim() === ID_ERRO_META_HISTORICO) {
+      result.id_do_erro_meta_corresponde_ao_phone_number_id_atual = "sim";
+    }
+
     if (!hasSecret(ACCESS_TOKEN) || !hasSecret(PHONE_NUMBER_ID) || !hasSecret(WABA_ID)) {
       result.acao_recomendada = "revisar_meta";
       return result;
     }
+
+    // Verifica se o PHONE_NUMBER_ID atual aparece na lista de phone_numbers da WABA.
+    const wabaCall = await safeGraphGet(`${WABA_ID}/phone_numbers?fields=id`, ACCESS_TOKEN!);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const wabaArr = ((wabaCall.json as any)?.data ?? []) as Array<{ id?: string }>;
+    if (
+      wabaCall.ok &&
+      Array.isArray(wabaArr) &&
+      wabaArr.some((row) => row?.id === PHONE_NUMBER_ID)
+    ) {
+      result.phone_number_id_atual_esta_na_waba_oficial = "sim";
+    }
+
 
     // 1) GET no Phone Number ID com fields seguros.
     const phoneFields = [
