@@ -84,7 +84,23 @@ function makeBuilder(table: string): any {
     // SELECT
     if (table === "whatsapp_links") return { data: linkData, error: null };
     if (table === "whatsapp_messages") {
-      // buscarPendencia
+      // Lookup por external_id (dedupe): só retorna se o external_id consultado
+      // corresponde ao último inserido (rastreado via state.filters).
+      const extId = state.filters?.external_id;
+      if (extId) {
+        const found = inserts.find(
+          (i) => i.table === "whatsapp_messages" && i.row.external_id === extId,
+        );
+        if (!found) return { data: null, error: null };
+        return {
+          data: {
+            id: "logged",
+            status: found.row.status,
+            gasto_id: found.row.gasto_id ?? null,
+          },
+          error: null,
+        };
+      }
       return { data: pendingRow, error: null };
     }
     if (table === "cartoes") return { data: cartoesData, error: null };
@@ -114,7 +130,9 @@ function makeBuilder(table: string): any {
       state.op = "delete";
       return builder;
     },
-    eq() {
+    eq(col: string, val: unknown) {
+      state.filters = state.filters ?? {};
+      state.filters[col] = val;
       return builder;
     },
     in() {
