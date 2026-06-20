@@ -51,6 +51,62 @@ export const listWhatsAppLinks = createServerFn({ method: "GET" })
 /** Versão atual da copy de consentimento (WhatsApp como canal de lançamento de gastos). */
 export const WHATSAPP_OPT_IN_VERSION = "whatsapp-expense-v1";
 
+/**
+ * Versão específica para o fluxo de re-confirmação de consentimento
+ * de vínculo já existente (LGPD). Não altera telefone, não cria vínculo,
+ * não fala com a Meta — apenas atualiza opt_in do próprio usuário.
+ */
+export const WHATSAPP_CONSENT_REFRESH_VERSION = "whatsapp-lancamentos-v1";
+
+export const confirmWhatsAppLinkConsent = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z
+      .object({
+        aceitou: z.literal(true),
+        user_agent: z.string().max(400).optional(),
+      })
+      .parse(d),
+  )
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    await assertFeatureAccess(context.userId, "whatsapp");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = context.supabase as any;
+    const { userId } = context;
+
+    // Localiza o vínculo do PRÓPRIO usuário (RLS já restringe a auth.uid()).
+    const { data: link, error: selErr } = await sb
+      .from("whatsapp_links")
+      .select("id, ativo, telefone")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (selErr) throw new Error(selErr.message);
+    if (!link) {
+      return { consentimento_atualizado: "falhou" as const };
+    }
+
+    const nowIso = new Date().toISOString();
+    // Atualiza SOMENTE campos de consentimento. Não toca em telefone,
+    // user_id, ativo (mantém estado atual) nem cria novo vínculo.
+    const { error: updErr } = await sb
+      .from("whatsapp_links")
+      .update({
+        opt_in_em: nowIso,
+        opt_in_version: WHATSAPP_CONSENT_REFRESH_VERSION,
+        opt_in_user_agent: data.user_agent ?? null,
+        revogado_em: null,
+      })
+      .eq("id", link.id)
+      .eq("user_id", userId);
+    if (updErr) {
+      return { consentimento_atualizado: "falhou" as const };
+    }
+    return { consentimento_atualizado: "ok" as const };
+  });
+
+
 export const upsertWhatsAppLink = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z

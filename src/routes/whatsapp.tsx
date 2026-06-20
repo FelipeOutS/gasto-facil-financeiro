@@ -26,7 +26,7 @@ import { toastFromError } from "@/lib/premium-error";
 import { refreshGastos } from "@/lib/store";
 import { ExternalLink } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { getWhatsAppConfigStatus, upsertWhatsAppLink, deleteWhatsAppLink } from "@/lib/whatsapp.functions";
+import { getWhatsAppConfigStatus, upsertWhatsAppLink, deleteWhatsAppLink, confirmWhatsAppLinkConsent } from "@/lib/whatsapp.functions";
 import {
   whatsappAdminCheckRegistration,
   whatsappAdminGetOpsChecklist,
@@ -321,6 +321,39 @@ function WhatsAppPage() {
       toast.error("Falha ao verificar prontidão do canário.");
     } finally {
       setCanaryReadinessLoading(false);
+    }
+  }
+
+  // ===== Re-confirmação de consentimento LGPD (vínculo existente) =====
+  const confirmConsentFn = useServerFn(confirmWhatsAppLinkConsent);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [consentLoading, setConsentLoading] = useState(false);
+  const [consentResult, setConsentResult] = useState<"ok" | "falhou" | null>(null);
+  async function confirmarConsentimento() {
+    if (!consentChecked) {
+      toast.error("Marque o consentimento antes de confirmar.");
+      return;
+    }
+    setConsentLoading(true);
+    try {
+      const r = await confirmConsentFn({
+        data: {
+          aceitou: true,
+          user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 400) : undefined,
+        },
+      });
+      setConsentResult(r.consentimento_atualizado);
+      if (r.consentimento_atualizado === "ok") {
+        toast.success("Consentimento atualizado.");
+        await refresh();
+      } else {
+        toast.error("Não foi possível atualizar o consentimento.");
+      }
+    } catch {
+      setConsentResult("falhou");
+      toast.error("Falha ao atualizar consentimento.");
+    } finally {
+      setConsentLoading(false);
     }
   }
   const [configStatus, setConfigStatus] = useState<{
@@ -711,6 +744,56 @@ function WhatsAppPage() {
               </span>
             </span>
           </label>
+
+
+          {/* Re-confirmação de consentimento LGPD em vínculo já existente */}
+          {links.some((l) => l.ativo && (!l.opt_in_em || l.revogado_em)) && (
+            <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 space-y-3">
+              <p className="text-sm font-semibold text-amber-300">
+                Confirme seu consentimento para continuar usando o WhatsApp para lançar gastos.
+              </p>
+              <p className="text-xs text-amber-200/90 leading-relaxed">
+                Seu número já está vinculado, mas o consentimento de uso do canal precisa ser
+                reconfirmado para seguir com o lançamento de gastos por WhatsApp. Nenhuma
+                mensagem é enviada e seu telefone não é alterado.
+              </p>
+              <label className="flex items-start gap-2 text-xs text-amber-100/95 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={consentChecked}
+                  onChange={(e) => setConsentChecked(e.target.checked)}
+                  className="mt-0.5 accent-amber-400"
+                />
+                <span>
+                  Autorizo o uso do meu WhatsApp vinculado como canal para lançar gastos no
+                  Gasto Inteligente, conforme a{" "}
+                  <Link
+                    to="/privacidade"
+                    className="underline underline-offset-2 text-amber-200 hover:text-amber-100"
+                  >
+                    Política de Privacidade
+                  </Link>
+                  .
+                </span>
+              </label>
+              <div className="flex items-center gap-3 flex-wrap">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={confirmarConsentimento}
+                  disabled={!consentChecked || consentLoading}
+                  className="bg-amber-500 hover:bg-amber-400 text-amber-950"
+                >
+                  {consentLoading ? "Confirmando..." : "Confirmar consentimento"}
+                </Button>
+                {consentResult && (
+                  <pre className="rounded-md bg-card-elevated px-2 py-1 text-[11px] font-mono">
+{`consentimento_atualizado: ${consentResult}`}
+                  </pre>
+                )}
+              </div>
+            </div>
+          )}
 
 
           {links.length === 0 && !loading && (
