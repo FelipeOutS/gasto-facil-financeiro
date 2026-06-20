@@ -827,11 +827,10 @@ function WhatsAppPage() {
 
               <div className="space-y-1.5">
                 <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Verify Token</p>
-                <div className="flex items-center gap-2 rounded-lg bg-card-elevated px-3 py-2 text-xs font-mono break-all">
-                  <span className="flex-1">{VERIFY_TOKEN}</span>
-                  <button type="button" onClick={copiarToken} className="shrink-0 rounded-md p-1.5 hover:bg-border" aria-label="Copiar token">
-                    {copiadoToken ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                  </button>
+                <div className="rounded-lg bg-card-elevated px-3 py-2 text-[11px] text-muted-foreground leading-relaxed">
+                  Por segurança, o Verify Token não é exibido aqui. Configure-o diretamente no
+                  painel seguro de Secrets (chave <span className="font-mono">WHATSAPP_VERIFY_TOKEN</span>)
+                  e use exatamente o mesmo valor no campo <span className="font-mono">Verify token</span> da Meta.
                 </div>
               </div>
 
