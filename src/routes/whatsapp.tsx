@@ -323,6 +323,39 @@ function WhatsAppPage() {
       setCanaryReadinessLoading(false);
     }
   }
+
+  // ===== Re-confirmação de consentimento LGPD (vínculo existente) =====
+  const confirmConsentFn = useServerFn(confirmWhatsAppLinkConsent);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [consentLoading, setConsentLoading] = useState(false);
+  const [consentResult, setConsentResult] = useState<"ok" | "falhou" | null>(null);
+  async function confirmarConsentimento() {
+    if (!consentChecked) {
+      toast.error("Marque o consentimento antes de confirmar.");
+      return;
+    }
+    setConsentLoading(true);
+    try {
+      const r = await confirmConsentFn({
+        data: {
+          aceitou: true,
+          user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 400) : undefined,
+        },
+      });
+      setConsentResult(r.consentimento_atualizado);
+      if (r.consentimento_atualizado === "ok") {
+        toast.success("Consentimento atualizado.");
+        await carregar();
+      } else {
+        toast.error("Não foi possível atualizar o consentimento.");
+      }
+    } catch {
+      setConsentResult("falhou");
+      toast.error("Falha ao atualizar consentimento.");
+    } finally {
+      setConsentLoading(false);
+    }
+  }
   const [configStatus, setConfigStatus] = useState<{
     access_token: boolean;
     phone_number_id: boolean;
