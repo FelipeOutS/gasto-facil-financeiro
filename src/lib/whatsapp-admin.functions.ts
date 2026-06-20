@@ -663,7 +663,7 @@ export const whatsappAdminAuditRealRegistrationState = createServerFn({ method: 
 
     type SimNaoDesc = "sim" | "nao" | "desconhecido";
     type Plataforma = "cloud_api" | "outro" | "desconhecido";
-    type Acao = "registrar_numero" | "revisar_meta" | "aguardar" | "nenhuma";
+    type Acao = "registrar_cloud_api" | "migrar_para_cloud_api" | "revisar_meta" | "aguardar" | "nenhuma";
 
     const result: {
       numero_meta_encontrado: "sim" | "nao";
@@ -673,6 +673,10 @@ export const whatsappAdminAuditRealRegistrationState = createServerFn({ method: 
       plataforma_do_numero: Plataforma;
       status_de_registro_confiavel: "sim" | "nao";
       acao_recomendada: Acao;
+      tipo_plataforma_meta: "cloud_api" | "on_premise" | "coexistence" | "nao_informado" | "outro";
+      status_numero_meta: "connected" | "disconnected" | "pendente" | "nao_informado" | "outro";
+      verificacao_numero_meta: "verificado" | "nao_verificado" | "desconhecido";
+      nome_exibicao_meta: "aprovado" | "pendente" | "reprovado" | "desconhecido";
     } = {
       numero_meta_encontrado: "nao",
       numero_verificado_na_meta: "desconhecido",
@@ -681,6 +685,10 @@ export const whatsappAdminAuditRealRegistrationState = createServerFn({ method: 
       plataforma_do_numero: "desconhecido",
       status_de_registro_confiavel: "nao",
       acao_recomendada: "aguardar",
+      tipo_plataforma_meta: "nao_informado",
+      status_numero_meta: "nao_informado",
+      verificacao_numero_meta: "desconhecido",
+      nome_exibicao_meta: "desconhecido",
     };
 
     const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
@@ -728,11 +736,23 @@ export const whatsappAdminAuditRealRegistrationState = createServerFn({ method: 
     else if (codeVer === "NOT_VERIFIED" || codeVer === "EXPIRED") result.numero_verificado_na_meta = "nao";
     else result.numero_verificado_na_meta = "desconhecido";
 
+    // 2a) Enum seguro de verificação
+    if (codeVer === "VERIFIED") result.verificacao_numero_meta = "verificado";
+    else if (codeVer === "NOT_VERIFIED" || codeVer === "EXPIRED") result.verificacao_numero_meta = "nao_verificado";
+    else result.verificacao_numero_meta = "desconhecido";
+
     // 3) Plataforma.
     const platform = String(phoneJson.platform_type ?? "").toUpperCase();
     if (platform === "CLOUD_API") result.plataforma_do_numero = "cloud_api";
     else if (platform.length > 0) result.plataforma_do_numero = "outro";
     else result.plataforma_do_numero = "desconhecido";
+
+    // 3a) Enum seguro de plataforma (normalizado)
+    if (platform === "CLOUD_API") result.tipo_plataforma_meta = "cloud_api";
+    else if (platform === "ON_PREMISE") result.tipo_plataforma_meta = "on_premise";
+    else if (platform === "COEXISTENCE") result.tipo_plataforma_meta = "coexistence";
+    else if (platform.length > 0) result.tipo_plataforma_meta = "outro";
+    else result.tipo_plataforma_meta = "nao_informado";
 
     // 4) Registro real Cloud API.
     // Indicador forte: campo "status" === "CONNECTED" + name_status APPROVED + platform CLOUD_API.
@@ -756,6 +776,19 @@ export const whatsappAdminAuditRealRegistrationState = createServerFn({ method: 
     } else {
       result.numero_registrado_cloud_api = "desconhecido";
     }
+
+    // 4a) Enum seguro de status do número (normalizado)
+    if (phoneStatus === "CONNECTED") result.status_numero_meta = "connected";
+    else if (phoneStatus === "DISCONNECTED") result.status_numero_meta = "disconnected";
+    else if (phoneStatus === "PENDING") result.status_numero_meta = "pendente";
+    else if (phoneStatus.length > 0) result.status_numero_meta = "outro";
+    else result.status_numero_meta = "nao_informado";
+
+    // 4b) Enum seguro de nome/exibição (normalizado)
+    if (nameStatus === "APPROVED" || nameStatus === "AVAILABLE_WITHOUT_REVIEW") result.nome_exibicao_meta = "aprovado";
+    else if (nameStatus === "PENDING") result.nome_exibicao_meta = "pendente";
+    else if (nameStatus === "REJECTED") result.nome_exibicao_meta = "reprovado";
+    else result.nome_exibicao_meta = "desconhecido";
 
     // 5) Apto para conversa: precisa estar registrado Cloud API + verificado + name aprovado.
     if (
@@ -790,7 +823,12 @@ export const whatsappAdminAuditRealRegistrationState = createServerFn({ method: 
       result.plataforma_do_numero === "cloud_api" &&
       result.numero_registrado_cloud_api !== "sim"
     ) {
-      result.acao_recomendada = "registrar_numero";
+      result.acao_recomendada = "registrar_cloud_api";
+    } else if (
+      result.numero_verificado_na_meta === "sim" &&
+      result.plataforma_do_numero === "outro"
+    ) {
+      result.acao_recomendada = "migrar_para_cloud_api";
     } else if (
       result.numero_verificado_na_meta === "nao" ||
       result.plataforma_do_numero === "outro"

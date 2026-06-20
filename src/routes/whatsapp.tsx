@@ -334,7 +334,11 @@ function WhatsAppPage() {
     numero_apto_para_conversa_whatsapp: "sim" | "nao" | "desconhecido";
     plataforma_do_numero: "cloud_api" | "outro" | "desconhecido";
     status_de_registro_confiavel: "sim" | "nao";
-    acao_recomendada: "registrar_numero" | "revisar_meta" | "aguardar" | "nenhuma";
+    acao_recomendada: "registrar_cloud_api" | "migrar_para_cloud_api" | "revisar_meta" | "aguardar" | "nenhuma";
+    tipo_plataforma_meta: "cloud_api" | "on_premise" | "coexistence" | "nao_informado" | "outro";
+    status_numero_meta: "connected" | "disconnected" | "pendente" | "nao_informado" | "outro";
+    verificacao_numero_meta: "verificado" | "nao_verificado" | "desconhecido";
+    nome_exibicao_meta: "aprovado" | "pendente" | "reprovado" | "desconhecido";
   } | null>(null);
   const [auditRealStateLoading, setAuditRealStateLoading] = useState(false);
   async function auditarStatusRealDoNumero() {
@@ -1067,7 +1071,11 @@ numero_registrado_cloud_api: ${auditRealState.numero_registrado_cloud_api}
 numero_apto_para_conversa_whatsapp: ${auditRealState.numero_apto_para_conversa_whatsapp}
 plataforma_do_numero: ${auditRealState.plataforma_do_numero}
 status_de_registro_confiavel: ${auditRealState.status_de_registro_confiavel}
-acao_recomendada: ${auditRealState.acao_recomendada}`}
+acao_recomendada: ${auditRealState.acao_recomendada}
+tipo_plataforma_meta: ${auditRealState.tipo_plataforma_meta}
+status_numero_meta: ${auditRealState.status_numero_meta}
+verificacao_numero_meta: ${auditRealState.verificacao_numero_meta}
+nome_exibicao_meta: ${auditRealState.nome_exibicao_meta}`}
                   </pre>
                 )}
               </div>
