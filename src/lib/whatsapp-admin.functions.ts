@@ -1058,8 +1058,15 @@ export const whatsappAdminClassifyRegisterStrategy = createServerFn({ method: "G
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdminMaster(context.userId);
-    const audit = await computeRealAuditState();
+    const [audit, pf] = await Promise.all([
+      computeRealAuditState(),
+      runPreflightInternal(),
+    ]);
+    const flags = {
+      enabled: (process.env.WHATSAPP_ENABLED ?? "").trim().toLowerCase() === "true",
+      canary: (process.env.WHATSAPP_CANARY_ENABLED ?? "").trim().toLowerCase() === "true",
+    };
     return {
-      estrategia_registro: classifyRegisterStrategy(audit),
+      estrategia_registro: classifyRegisterStrategy(audit, pf, flags),
     };
   });
