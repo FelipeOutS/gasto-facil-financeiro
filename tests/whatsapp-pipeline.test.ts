@@ -26,7 +26,13 @@ const categoriasData = [
   { id: "cat-rest", legacy_id: "restaurante", nome: "Restaurante", user_id: "u1" },
   { id: "cat-int", legacy_id: "internet", nome: "Internet", user_id: "u1" },
 ];
-const linkData = { user_id: "u1", telefone: "5511999998888", ativo: true };
+const linkData = {
+  user_id: "u1",
+  telefone: "5511999998888",
+  ativo: true,
+  opt_in_em: new Date().toISOString(),
+  revogado_em: null,
+};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeBuilder(table: string): any {
