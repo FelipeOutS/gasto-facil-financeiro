@@ -238,6 +238,12 @@ function WhatsAppPage() {
     webhook_handshake: "ok" | "falhou";
     numero_ja_registrado: "sim" | "nao" | "desconhecido";
     pronto_para_register: "sim" | "nao";
+    access_token_lido_pelo_backend: "sim" | "nao";
+    access_token_hash_prefix: string;
+    meta_token_http_status: number | string;
+    meta_waba_http_status: number | string;
+    meta_phone_http_status: number | string;
+    erro_categoria: string;
   } | null>(null);
   async function executarPreflight() {
     setPreflightLoading(true);
@@ -250,6 +256,12 @@ function WhatsAppPage() {
         webhook_handshake: r.webhook_handshake,
         numero_ja_registrado: r.numero_ja_registrado,
         pronto_para_register: r.pronto_para_register,
+        access_token_lido_pelo_backend: r.access_token_lido_pelo_backend,
+        access_token_hash_prefix: r.access_token_hash_prefix,
+        meta_token_http_status: r.meta_token_http_status,
+        meta_waba_http_status: r.meta_waba_http_status,
+        meta_phone_http_status: r.meta_phone_http_status,
+        erro_categoria: r.erro_categoria,
       });
     } catch {
       toast.error("Falha ao executar preflight.");
