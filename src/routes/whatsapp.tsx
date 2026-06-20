@@ -513,15 +513,23 @@ function WhatsAppPage() {
     }
   }
 
-  // Status global da integração (linguagem amigável para o usuário final)
+  // Status global da integração (linguagem amigável para o usuário final).
+  // Enquanto o processamento real estiver desligado no backend
+  // (WHATSAPP_ENABLED !== "true"), nunca mostrar "Ativo".
   const ultimaMsg = msgs[0];
+  const processamentoRealAtivo = configStatus?.enabled === true;
   const integracaoStatus = MODO_TESTE
     ? { label: "Em configuração", cls: "border-amber-500/40 text-amber-300" }
-    : links.length === 0
-      ? { label: "Não configurado", cls: "border-border text-muted-foreground" }
-      : ultimaMsg
-        ? { label: "Ativo", cls: "border-emerald-500/40 text-emerald-400" }
-        : { label: "Aguardando primeira mensagem", cls: "border-sky-500/40 text-sky-400" };
+    : !processamentoRealAtivo
+      ? {
+          label: "Configurado — teste de mensagens ainda desativado",
+          cls: "border-amber-500/40 text-amber-300",
+        }
+      : links.length === 0
+        ? { label: "Não configurado", cls: "border-border text-muted-foreground" }
+        : ultimaMsg
+          ? { label: "Ativo", cls: "border-emerald-500/40 text-emerald-400" }
+          : { label: "Aguardando primeira mensagem", cls: "border-sky-500/40 text-sky-400" };
 
   return (
     <MobileShell>
