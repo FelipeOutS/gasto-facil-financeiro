@@ -31,6 +31,7 @@ import {
   whatsappAdminCheckRegistration,
   whatsappAdminGetOpsChecklist,
   whatsappAdminCheckCanaryReadiness,
+  whatsappAdminAuditRealRegistrationState,
 } from "@/lib/whatsapp-admin.functions";
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText, DEFAULT_CATEGORIES } from "@/lib/categories";
@@ -321,6 +322,30 @@ function WhatsAppPage() {
       toast.error("Falha ao verificar prontidão do canário.");
     } finally {
       setCanaryReadinessLoading(false);
+    }
+  }
+
+  // ===== WA-E2.audit — Auditoria read-only do estado real do número =====
+  const auditRealStateFn = useServerFn(whatsappAdminAuditRealRegistrationState);
+  const [auditRealState, setAuditRealState] = useState<{
+    numero_meta_encontrado: "sim" | "nao";
+    numero_verificado_na_meta: "sim" | "nao" | "desconhecido";
+    numero_registrado_cloud_api: "sim" | "nao" | "desconhecido";
+    numero_apto_para_conversa_whatsapp: "sim" | "nao" | "desconhecido";
+    plataforma_do_numero: "cloud_api" | "outro" | "desconhecido";
+    status_de_registro_confiavel: "sim" | "nao";
+    acao_recomendada: "registrar_numero" | "revisar_meta" | "aguardar" | "nenhuma";
+  } | null>(null);
+  const [auditRealStateLoading, setAuditRealStateLoading] = useState(false);
+  async function auditarStatusRealDoNumero() {
+    setAuditRealStateLoading(true);
+    try {
+      const r = await auditRealStateFn();
+      setAuditRealState(r);
+    } catch {
+      toast.error("Falha ao auditar status real do número.");
+    } finally {
+      setAuditRealStateLoading(false);
     }
   }
 
@@ -1019,6 +1044,30 @@ processamento_real_ativo: ${opsChecklist.processamento_real_ativo}`}
 admin_link_ativo: ${canaryReadiness.admin_link_ativo}
 admin_opt_in_valido: ${canaryReadiness.admin_opt_in_valido}
 admin_email_autorizado: ${canaryReadiness.admin_email_autorizado}`}
+                  </pre>
+                )}
+              </div>
+
+              {/* WA-E2.audit — Auditoria read-only do estado real do número (Admin Master) */}
+              <div className="pt-2 border-t border-amber-500/20 space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={auditarStatusRealDoNumero}
+                  disabled={auditRealStateLoading}
+                  className="text-xs"
+                >
+                  {auditRealStateLoading ? "Auditando..." : "Auditar status real do número"}
+                </Button>
+                {auditRealState && (
+                  <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
+{`numero_meta_encontrado: ${auditRealState.numero_meta_encontrado}
+numero_verificado_na_meta: ${auditRealState.numero_verificado_na_meta}
+numero_registrado_cloud_api: ${auditRealState.numero_registrado_cloud_api}
+numero_apto_para_conversa_whatsapp: ${auditRealState.numero_apto_para_conversa_whatsapp}
+plataforma_do_numero: ${auditRealState.plataforma_do_numero}
+status_de_registro_confiavel: ${auditRealState.status_de_registro_confiavel}
+acao_recomendada: ${auditRealState.acao_recomendada}`}
                   </pre>
                 )}
               </div>
