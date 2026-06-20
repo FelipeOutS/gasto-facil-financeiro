@@ -325,6 +325,30 @@ function WhatsAppPage() {
     }
   }
 
+  // ===== WA-E2.audit — Auditoria read-only do estado real do número =====
+  const auditRealStateFn = useServerFn(whatsappAdminAuditRealRegistrationState);
+  const [auditRealState, setAuditRealState] = useState<{
+    numero_meta_encontrado: "sim" | "nao";
+    numero_verificado_na_meta: "sim" | "nao" | "desconhecido";
+    numero_registrado_cloud_api: "sim" | "nao" | "desconhecido";
+    numero_apto_para_conversa_whatsapp: "sim" | "nao" | "desconhecido";
+    plataforma_do_numero: "cloud_api" | "outro" | "desconhecido";
+    status_de_registro_confiavel: "sim" | "nao";
+    acao_recomendada: "registrar_numero" | "revisar_meta" | "aguardar" | "nenhuma";
+  } | null>(null);
+  const [auditRealStateLoading, setAuditRealStateLoading] = useState(false);
+  async function auditarStatusRealDoNumero() {
+    setAuditRealStateLoading(true);
+    try {
+      const r = await auditRealStateFn();
+      setAuditRealState(r);
+    } catch {
+      toast.error("Falha ao auditar status real do número.");
+    } finally {
+      setAuditRealStateLoading(false);
+    }
+  }
+
   // ===== Re-confirmação de consentimento LGPD (vínculo existente) =====
   const confirmConsentFn = useServerFn(confirmWhatsAppLinkConsent);
   const [consentChecked, setConsentChecked] = useState(false);
