@@ -300,7 +300,28 @@ function WhatsAppPage() {
       toast.error("Falha ao carregar checklist.");
     } finally {
       setOpsChecklistLoading(false);
+  }
+
+  // ===== WA-E1.1 — Prontidão canário do Admin Master =====
+  const canaryReadinessFn = useServerFn(whatsappAdminCheckCanaryReadiness);
+  const [canaryReadiness, setCanaryReadiness] = useState<{
+    admin_canary_phone_ready: "ok" | "falhou";
+    admin_link_ativo: "ok" | "falhou";
+    admin_opt_in_valido: "ok" | "falhou";
+    admin_email_autorizado: "ok" | "falhou";
+  } | null>(null);
+  const [canaryReadinessLoading, setCanaryReadinessLoading] = useState(false);
+  async function carregarCanaryReadiness() {
+    setCanaryReadinessLoading(true);
+    try {
+      const r = await canaryReadinessFn();
+      setCanaryReadiness(r);
+    } catch {
+      toast.error("Falha ao verificar prontidão do canário.");
+    } finally {
+      setCanaryReadinessLoading(false);
     }
+  }
   }
   const [configStatus, setConfigStatus] = useState<{
     access_token: boolean;
