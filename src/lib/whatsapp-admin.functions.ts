@@ -298,7 +298,3 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
     // Apaga referências locais (defesa simbólica).
     // (variáveis saem de escopo no final do handler)
   });
-
-// HMAC helper exportado apenas para evitar tree-shake removal do import
-// em caso de uso futuro de assinaturas; não usado externamente agora.
-export const __whatsapp_admin_internal = { createHmac };
