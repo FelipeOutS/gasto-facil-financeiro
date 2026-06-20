@@ -1186,46 +1186,13 @@ phone_number_id_atual_esta_na_waba_oficial: ${auditRealState.phone_number_id_atu
                   </pre>
                 )}
 
-                {registerStrategy === "registro_direto_cloud_api" && (
-                  <div className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3 space-y-2">
-                    <p className="text-[11px] text-rose-200 leading-relaxed">
-                      Ação irreversível. Para confirmar, digite{" "}
-                      <span className="font-mono">REGISTRAR-CLOUD-API</span> e{" "}
-                      <span className="font-mono">11918539158</span>.
-                    </p>
-                    <Input
-                      value={registerConfirm1}
-                      onChange={(e) => setRegisterConfirm1(e.target.value)}
-                      placeholder="REGISTRAR-CLOUD-API"
-                      className="font-mono text-xs"
-                    />
-                    <Input
-                      value={registerConfirm2}
-                      onChange={(e) => setRegisterConfirm2(e.target.value)}
-                      placeholder="11918539158"
-                      className="font-mono text-xs"
-                    />
-                    <Button
-                      type="button"
-                      onClick={executarRegistroCloudApi}
-                      disabled={
-                        registerLoading ||
-                        registerConfirm1 !== "REGISTRAR-CLOUD-API" ||
-                        registerConfirm2 !== "11918539158"
-                      }
-                      className="bg-rose-500 hover:bg-rose-600 text-white text-xs"
-                    >
-                      {registerLoading ? "Registrando..." : "Registrar número na Cloud API"}
-                    </Button>
-                  </div>
-                )}
-
-                {registerStrategy &&
-                  registerStrategy !== "registro_direto_cloud_api" && (
-                    <p className="text-[11px] text-muted-foreground">
-                      Botão de registro não disponível para esta estratégia.
-                    </p>
-                  )}
+                {/* Registro Cloud API já concluído — trava operacional ativa (WHATSAPP_REGISTER_LOCK). */}
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Registro na Cloud API já concluído. Execução de novo /register
+                  está travada operacionalmente. Auditoria, preflight, checklist
+                  técnico e prontidão do canário continuam disponíveis em
+                  modo read-only.
+                </p>
 
                 {registerResult && (
                   <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
