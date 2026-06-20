@@ -357,6 +357,81 @@ function WhatsAppPage() {
     }
   }
 
+  // ===== WA-E2.register — Estratégia + execução do POST /register =====
+  const classifyStrategyFn = useServerFn(whatsappAdminClassifyRegisterStrategy);
+  const registerNumberFn = useServerFn(whatsappAdminRegisterNumber);
+  const [registerStrategy, setRegisterStrategy] = useState<
+    "registro_direto_cloud_api" | "migracao_manual_necessaria" | "estado_desconhecido" | null
+  >(null);
+  const [registerStrategyLoading, setRegisterStrategyLoading] = useState(false);
+  const [registerConfirm1, setRegisterConfirm1] = useState("");
+  const [registerConfirm2, setRegisterConfirm2] = useState("");
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [registerResult, setRegisterResult] = useState<{
+    registro_cloud_api_executado: "sim" | "nao";
+    numero_registrado_cloud_api: "sim" | "nao" | "desconhecido";
+    numero_apto_para_conversa_whatsapp: "sim" | "nao" | "desconhecido";
+    tipo_plataforma_meta:
+      | "cloud_api"
+      | "on_premise"
+      | "coexistence"
+      | "nao_informado"
+      | "outro";
+    status_numero_meta:
+      | "connected"
+      | "disconnected"
+      | "pendente"
+      | "nao_informado"
+      | "outro";
+    acao_recomendada:
+      | "nenhuma"
+      | "revisar_meta"
+      | "migrar_para_cloud_api"
+      | "aguardar"
+      | "registrar_cloud_api";
+  } | null>(null);
+
+  async function classificarEstrategiaRegistro() {
+    setRegisterStrategyLoading(true);
+    try {
+      const r = await classifyStrategyFn();
+      setRegisterStrategy(r.estrategia_registro);
+    } catch {
+      toast.error("Falha ao classificar estratégia.");
+    } finally {
+      setRegisterStrategyLoading(false);
+    }
+  }
+
+  async function executarRegistroCloudApi() {
+    if (registerConfirm1 !== "REGISTRAR-CLOUD-API" || registerConfirm2 !== "11918539158") {
+      toast.error("Confirmações não conferem.");
+      return;
+    }
+    setRegisterLoading(true);
+    try {
+      const r = await registerNumberFn({
+        data: { confirm1: "REGISTRAR-CLOUD-API", confirm2: "11918539158" },
+      });
+      setRegisterResult({
+        registro_cloud_api_executado: r.registro_cloud_api_executado,
+        numero_registrado_cloud_api: r.numero_registrado_cloud_api,
+        numero_apto_para_conversa_whatsapp: r.numero_apto_para_conversa_whatsapp,
+        tipo_plataforma_meta: r.tipo_plataforma_meta,
+        status_numero_meta: r.status_numero_meta,
+        acao_recomendada: r.acao_recomendada,
+      });
+      if (r.ok) toast.success("Registro Cloud API executado.");
+      else toast.error("Registro não autorizado ou rejeitado pela Meta.");
+    } catch {
+      toast.error("Falha ao executar registro.");
+    } finally {
+      setRegisterLoading(false);
+      setRegisterConfirm1("");
+      setRegisterConfirm2("");
+    }
+  }
+
   // ===== Re-confirmação de consentimento LGPD (vínculo existente) =====
   const confirmConsentFn = useServerFn(confirmWhatsAppLinkConsent);
   const [consentChecked, setConsentChecked] = useState(false);
