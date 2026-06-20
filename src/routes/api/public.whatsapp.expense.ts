@@ -337,9 +337,20 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
           return jsonResponse({ ok: true, processed: 0, skipped: "no_messages" });
         }
 
+        const canaryOn = isCanaryEnabled();
         const results: Array<{ status: string; gasto_id?: string }> = [];
         for (const msg of flatMessages) {
           if (!msg.texto?.trim()) continue;
+          // Modo canário: descarta silenciosamente qualquer telefone que
+          // não pertença a um Admin Master com vínculo ativo e consentimento.
+          // NÃO grava texto, NÃO cria gasto, NÃO envia resposta.
+          if (canaryOn) {
+            const allowed = await isAdminMasterPhone(msg.telefone);
+            if (!allowed) {
+              results.push({ status: "canary_dropped" });
+              continue;
+            }
+          }
           try {
             const out = await processarMensagemWhatsApp(msg);
             results.push({ status: out.status, gasto_id: out.gastoId });
