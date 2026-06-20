@@ -227,6 +227,36 @@ function WhatsAppPage() {
 
   // Status dos secrets do WhatsApp (apenas booleans, nunca os valores).
   const fetchConfigStatus = useServerFn(getWhatsAppConfigStatus);
+
+  // ===== WA-D — Preflight read-only (controle TEMPORÁRIO; remover após WA-D) =====
+  const runPreflightFn = useServerFn(whatsappAdminCheckRegistration);
+  const [preflightLoading, setPreflightLoading] = useState(false);
+  const [preflightResult, setPreflightResult] = useState<{
+    token_para_waba: "ok" | "falhou";
+    numero_oficial_na_waba: "ok" | "falhou";
+    app_inscrito_na_waba: "ok" | "falhou";
+    webhook_handshake: "ok" | "falhou";
+    numero_ja_registrado: "sim" | "nao" | "desconhecido";
+    pronto_para_register: "sim" | "nao";
+  } | null>(null);
+  async function executarPreflight() {
+    setPreflightLoading(true);
+    try {
+      const r = await runPreflightFn();
+      setPreflightResult({
+        token_para_waba: r.token_para_waba,
+        numero_oficial_na_waba: r.numero_oficial_na_waba,
+        app_inscrito_na_waba: r.app_inscrito_na_waba,
+        webhook_handshake: r.webhook_handshake,
+        numero_ja_registrado: r.numero_ja_registrado,
+        pronto_para_register: r.pronto_para_register,
+      });
+    } catch {
+      toast.error("Falha ao executar preflight.");
+    } finally {
+      setPreflightLoading(false);
+    }
+  }
   const [configStatus, setConfigStatus] = useState<{
     access_token: boolean;
     phone_number_id: boolean;
