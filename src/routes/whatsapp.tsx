@@ -306,6 +306,8 @@ function WhatsAppPage() {
     phone_number_id: boolean;
     business_account_id: boolean;
     verify_token: boolean;
+    enabled: boolean;
+    canary_enabled: boolean;
   } | null>(null);
   useEffect(() => {
     let alive = true;
