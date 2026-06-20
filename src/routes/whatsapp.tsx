@@ -294,8 +294,7 @@ function WhatsAppPage() {
     const ok = await confirmAsync({
       title: "Inscrever App na WABA?",
       description:
-        "Esta ação executa POST /{WABA_ID}/subscribed_apps. Read-only do registro do número permanece inalterado. Digite a confirmação abaixo.",
-      confirmLabel: "Continuar",
+        "Esta ação executa POST /{WABA_ID}/subscribed_apps. Read-only do registro do número permanece inalterado.",
     });
     if (!ok) return;
     const typed = window.prompt('Digite exatamente: ASSINAR-APP-NA-WABA');
@@ -306,6 +305,11 @@ function WhatsAppPage() {
     setSubscribeLoading(true);
     try {
       const r = await subscribeAppFn({ data: { confirm: "ASSINAR-APP-NA-WABA" } });
+      if (r.status === "missing_secrets" || r.status === "preflight_failed") {
+        toast.error(r.message);
+        setSubscribeResult(null);
+        return;
+      }
       setSubscribeResult({
         app_inscrito_na_waba: r.app_inscrito_na_waba,
         pronto_para_register: r.pronto_para_register,
