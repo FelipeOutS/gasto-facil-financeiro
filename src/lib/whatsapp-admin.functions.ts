@@ -914,23 +914,26 @@ async function computeRealAuditState(): Promise<RealAuditState> {
       ? "sim"
       : "nao";
 
+  const inWaba = result.phone_number_id_atual_esta_na_waba_oficial === "sim";
+  const tipoLegado =
+    result.tipo_plataforma_meta === "on_premise" ||
+    result.tipo_plataforma_meta === "coexistence";
+
   if (result.numero_apto_para_conversa_whatsapp === "sim") {
     result.acao_recomendada = "nenhuma";
   } else if (
     result.numero_verificado_na_meta === "sim" &&
-    result.plataforma_do_numero === "cloud_api" &&
+    nameApproved &&
+    inWaba &&
+    !tipoLegado &&
     result.numero_registrado_cloud_api !== "sim"
   ) {
+    // Confirmado pelo painel da Meta: número verificado + na WABA + status pendente
+    // ⇒ registro direto na Cloud API (mesmo que platform_type venha vazio/"outro").
     result.acao_recomendada = "registrar_cloud_api";
-  } else if (
-    result.numero_verificado_na_meta === "sim" &&
-    result.plataforma_do_numero === "outro"
-  ) {
+  } else if (result.numero_verificado_na_meta === "sim" && tipoLegado) {
     result.acao_recomendada = "migrar_para_cloud_api";
-  } else if (
-    result.numero_verificado_na_meta === "nao" ||
-    result.plataforma_do_numero === "outro"
-  ) {
+  } else if (result.numero_verificado_na_meta === "nao") {
     result.acao_recomendada = "revisar_meta";
   } else {
     result.acao_recomendada = "aguardar";
