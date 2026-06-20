@@ -76,10 +76,8 @@ async function safeGraphGet(path: string, token: string): Promise<{ ok: boolean;
  * conversar com a Meta para o número oficial, sem enviar mensagens,
  * sem registrar o número e sem expor segredos.
  */
-export const whatsappAdminCheckRegistration = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<PreflightResult> => {
-    await assertAdminMaster(context.userId);
+async function runPreflightInternal(): Promise<PreflightResult> {
+
 
     const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
     const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
