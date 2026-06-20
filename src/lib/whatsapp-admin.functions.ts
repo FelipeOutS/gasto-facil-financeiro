@@ -261,7 +261,7 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
     }
 
     // Pré-flight obrigatório
-    const pf = await whatsappAdminCheckRegistration();
+    const pf = await runPreflightInternal();
     if (pf.pronto_para_register !== "sim") {
       return {
         ok: false as const,
