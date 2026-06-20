@@ -148,13 +148,13 @@ mock.module("../src/integrations/supabase/client.server", () => ({
 mock.module("@/server/subscription.server", () => ({
   getSubscriptionForUserIdentity: async () => ({
     active: true,
-    plan: "pessoal_premium",
+    plan: "admin_master",
   }),
 }));
 mock.module("./subscription.server", () => ({
   getSubscriptionForUserIdentity: async () => ({
     active: true,
-    plan: "pessoal_premium",
+    plan: "admin_master",
   }),
 }));
 
