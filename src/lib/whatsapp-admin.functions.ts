@@ -392,6 +392,9 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
       status: RegisterStatus;
       message: string;
       registro_cloud_api_executado: "sim" | "nao";
+      registro_http_status: 200 | "outro";
+      meta_error_code: number | null;
+      meta_error_subcode: number | null;
       numero_registrado_cloud_api: "sim" | "nao" | "desconhecido";
       numero_apto_para_conversa_whatsapp: "sim" | "nao" | "desconhecido";
       tipo_plataforma_meta:
@@ -423,6 +426,9 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
       status,
       message,
       registro_cloud_api_executado: "nao",
+      registro_http_status: "outro",
+      meta_error_code: null,
+      meta_error_subcode: null,
       numero_registrado_cloud_api: audit?.numero_registrado_cloud_api ?? "desconhecido",
       numero_apto_para_conversa_whatsapp:
         audit?.numero_apto_para_conversa_whatsapp ?? "desconhecido",
