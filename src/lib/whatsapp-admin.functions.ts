@@ -477,12 +477,13 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
       return safeFail("preflight_failed", "Preflight não autorizou o register.");
     }
 
-    // Auditoria real obrigatória + estratégia segura.
+    // Auditoria real obrigatória + estratégia segura (com preflight + flags).
     const auditBefore = await computeRealAuditState();
-    const strat = classifyRegisterStrategy(auditBefore);
-    const verificado = auditBefore.verificacao_numero_meta === "verificado";
-    const nomeAprovado = auditBefore.nome_exibicao_meta === "aprovado";
-    if (strat !== "registro_direto_cloud_api" || !verificado || !nomeAprovado) {
+    const strat = classifyRegisterStrategy(auditBefore, pf, {
+      enabled: enabledFlag,
+      canary: canaryFlag,
+    });
+    if (strat !== "registro_direto_cloud_api") {
       return safeFail(
         "strategy_blocked",
         "Estratégia segura não autorizou o register direto.",
