@@ -916,6 +916,29 @@ processamento_real_ativo: ${opsChecklist.processamento_real_ativo}`}
                   </pre>
                 )}
               </div>
+
+              {/* WA-E1.1 — Prontidão canário do Admin Master */}
+              <div className="pt-2 border-t border-amber-500/20 space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={carregarCanaryReadiness}
+                  disabled={canaryReadinessLoading}
+                  className="text-xs"
+                >
+                  {canaryReadinessLoading
+                    ? "Verificando..."
+                    : "Verificar prontidão do canário (Admin Master)"}
+                </Button>
+                {canaryReadiness && (
+                  <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
+{`admin_canary_phone_ready: ${canaryReadiness.admin_canary_phone_ready}
+admin_link_ativo: ${canaryReadiness.admin_link_ativo}
+admin_opt_in_valido: ${canaryReadiness.admin_opt_in_valido}
+admin_email_autorizado: ${canaryReadiness.admin_email_autorizado}`}
+                  </pre>
+                )}
+              </div>
             </section>
 
 
