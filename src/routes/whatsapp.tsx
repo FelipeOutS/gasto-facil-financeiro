@@ -30,6 +30,7 @@ import { getWhatsAppConfigStatus, upsertWhatsAppLink, deleteWhatsAppLink } from 
 import {
   whatsappAdminCheckRegistration,
   whatsappAdminGetOpsChecklist,
+  whatsappAdminCheckCanaryReadiness,
 } from "@/lib/whatsapp-admin.functions";
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText, DEFAULT_CATEGORIES } from "@/lib/categories";
