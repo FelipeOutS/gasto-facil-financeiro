@@ -198,6 +198,13 @@ async function runPreflightInternal(): Promise<PreflightResult> {
     }
 
     return result;
+}
+
+export const whatsappAdminCheckRegistration = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<PreflightResult> => {
+    await assertAdminMaster(context.userId);
+    return runPreflightInternal();
   });
 
 /**
