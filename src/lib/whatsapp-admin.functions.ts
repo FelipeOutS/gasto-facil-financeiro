@@ -567,8 +567,10 @@ export const whatsappAdminGetOpsChecklist = createServerFn({ method: "GET" })
     const enabledFlag = (process.env.WHATSAPP_ENABLED ?? "").trim().toLowerCase() === "true";
     const canaryFlag =
       (process.env.WHATSAPP_CANARY_ENABLED ?? "").trim().toLowerCase() === "true";
-    // "Preparado" significa que o controle existe no backend (mesmo desligado).
-    const canaryPrepared = typeof process.env.WHATSAPP_CANARY_ENABLED === "string";
+    // "Preparado" significa que a lógica de canário existe no backend
+    // (isAdminMasterPhone + bloqueio seguro p/ não-admin no webhook),
+    // independente da env var WHATSAPP_CANARY_ENABLED estar definida.
+    const canaryPrepared = true;
 
     return {
       numero_registrado: (pf.numero_ja_registrado === "sim" ? "ok" : "falhou") as
