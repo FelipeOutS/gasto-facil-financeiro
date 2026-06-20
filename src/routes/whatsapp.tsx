@@ -817,7 +817,13 @@ numero_oficial_na_waba: ${preflightResult.numero_oficial_na_waba}
 app_inscrito_na_waba: ${preflightResult.app_inscrito_na_waba}
 webhook_handshake: ${preflightResult.webhook_handshake}
 numero_ja_registrado: ${preflightResult.numero_ja_registrado}
-pronto_para_register: ${preflightResult.pronto_para_register}`}
+pronto_para_register: ${preflightResult.pronto_para_register}
+access_token_lido_pelo_backend: ${preflightResult.access_token_lido_pelo_backend}
+access_token_hash_prefix: ${preflightResult.access_token_hash_prefix}
+meta_token_http_status: ${preflightResult.meta_token_http_status}
+meta_waba_http_status: ${preflightResult.meta_waba_http_status}
+meta_phone_http_status: ${preflightResult.meta_phone_http_status}
+erro_categoria: ${preflightResult.erro_categoria}`}
                 </pre>
               )}
             </section>
