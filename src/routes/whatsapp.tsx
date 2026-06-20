@@ -829,6 +829,9 @@ access_token_hash_prefix: ${preflightResult.access_token_hash_prefix}
 meta_token_http_status: ${preflightResult.meta_token_http_status}
 meta_waba_http_status: ${preflightResult.meta_waba_http_status}
 meta_phone_http_status: ${preflightResult.meta_phone_http_status}
+meta_subscribed_apps_http_status: ${preflightResult.meta_subscribed_apps_http_status}
+meta_error_code: ${preflightResult.meta_error_code ?? "null"}
+meta_error_subcode: ${preflightResult.meta_error_subcode ?? "null"}
 erro_categoria: ${preflightResult.erro_categoria}`}
                 </pre>
               )}
