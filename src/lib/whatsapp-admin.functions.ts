@@ -647,6 +647,257 @@ export const whatsappAdminCheckCanaryReadiness = createServerFn({ method: "GET" 
   });
 
 /**
+ * Tipos e helper interno reutilizados por:
+ *  - whatsappAdminAuditRealRegistrationState (read-only)
+ *  - whatsappAdminClassifyRegisterStrategy (read-only)
+ *  - whatsappAdminRegisterNumber (gating do POST)
+ *
+ * Não exposto diretamente — sempre chamado por handler com admin check.
+ */
+type RealAuditState = {
+  numero_meta_encontrado: "sim" | "nao";
+  numero_verificado_na_meta: "sim" | "nao" | "desconhecido";
+  numero_registrado_cloud_api: "sim" | "nao" | "desconhecido";
+  numero_apto_para_conversa_whatsapp: "sim" | "nao" | "desconhecido";
+  plataforma_do_numero: "cloud_api" | "outro" | "desconhecido";
+  status_de_registro_confiavel: "sim" | "nao";
+  acao_recomendada:
+    | "registrar_cloud_api"
+    | "migrar_para_cloud_api"
+    | "revisar_meta"
+    | "aguardar"
+    | "nenhuma";
+  tipo_plataforma_meta:
+    | "cloud_api"
+    | "on_premise"
+    | "coexistence"
+    | "nao_informado"
+    | "outro";
+  status_numero_meta:
+    | "connected"
+    | "disconnected"
+    | "pendente"
+    | "nao_informado"
+    | "outro";
+  verificacao_numero_meta: "verificado" | "nao_verificado" | "desconhecido";
+  nome_exibicao_meta: "aprovado" | "pendente" | "reprovado" | "desconhecido";
+  id_do_erro_meta_corresponde_ao_phone_number_id_atual: "sim" | "nao";
+  phone_number_id_atual_esta_na_waba_oficial: "sim" | "nao";
+};
+
+async function computeRealAuditState(): Promise<RealAuditState> {
+  const result: RealAuditState = {
+    numero_meta_encontrado: "nao",
+    numero_verificado_na_meta: "desconhecido",
+    numero_registrado_cloud_api: "desconhecido",
+    numero_apto_para_conversa_whatsapp: "desconhecido",
+    plataforma_do_numero: "desconhecido",
+    status_de_registro_confiavel: "nao",
+    acao_recomendada: "aguardar",
+    tipo_plataforma_meta: "nao_informado",
+    status_numero_meta: "nao_informado",
+    verificacao_numero_meta: "desconhecido",
+    nome_exibicao_meta: "desconhecido",
+    id_do_erro_meta_corresponde_ao_phone_number_id_atual: "nao",
+    phone_number_id_atual_esta_na_waba_oficial: "nao",
+  };
+
+  const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
+  const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const WABA_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
+
+  const ID_ERRO_META_HISTORICO = "1186676367860451";
+  if (hasSecret(PHONE_NUMBER_ID) && PHONE_NUMBER_ID!.trim() === ID_ERRO_META_HISTORICO) {
+    result.id_do_erro_meta_corresponde_ao_phone_number_id_atual = "sim";
+  }
+
+  if (!hasSecret(ACCESS_TOKEN) || !hasSecret(PHONE_NUMBER_ID) || !hasSecret(WABA_ID)) {
+    result.acao_recomendada = "revisar_meta";
+    return result;
+  }
+
+  const wabaCall = await safeGraphGet(`${WABA_ID}/phone_numbers?fields=id`, ACCESS_TOKEN!);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const wabaArr = ((wabaCall.json as any)?.data ?? []) as Array<{ id?: string }>;
+  if (
+    wabaCall.ok &&
+    Array.isArray(wabaArr) &&
+    wabaArr.some((row) => row?.id === PHONE_NUMBER_ID)
+  ) {
+    result.phone_number_id_atual_esta_na_waba_oficial = "sim";
+  }
+
+  const phoneFields = [
+    "id",
+    "display_phone_number",
+    "verified_name",
+    "code_verification_status",
+    "name_status",
+    "quality_rating",
+    "platform_type",
+    "status",
+    "throughput",
+    "messaging_limit_tier",
+    "account_mode",
+    "is_official_business_account",
+  ].join(",");
+  const phoneCall = await safeGraphGet(
+    `${PHONE_NUMBER_ID}?fields=${phoneFields}`,
+    ACCESS_TOKEN!,
+  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const phoneJson = (phoneCall.json as any) ?? null;
+  const phoneFound =
+    phoneCall.ok && phoneJson && typeof phoneJson === "object" && !phoneJson.error;
+  result.numero_meta_encontrado = phoneFound ? "sim" : "nao";
+
+  if (!phoneFound) {
+    result.acao_recomendada = "revisar_meta";
+    return result;
+  }
+
+  const codeVer = String(phoneJson.code_verification_status ?? "").toUpperCase();
+  if (codeVer === "VERIFIED") result.numero_verificado_na_meta = "sim";
+  else if (codeVer === "NOT_VERIFIED" || codeVer === "EXPIRED")
+    result.numero_verificado_na_meta = "nao";
+  else result.numero_verificado_na_meta = "desconhecido";
+
+  if (codeVer === "VERIFIED") result.verificacao_numero_meta = "verificado";
+  else if (codeVer === "NOT_VERIFIED" || codeVer === "EXPIRED")
+    result.verificacao_numero_meta = "nao_verificado";
+  else result.verificacao_numero_meta = "desconhecido";
+
+  const platform = String(phoneJson.platform_type ?? "").toUpperCase();
+  if (platform === "CLOUD_API") result.plataforma_do_numero = "cloud_api";
+  else if (platform.length > 0) result.plataforma_do_numero = "outro";
+  else result.plataforma_do_numero = "desconhecido";
+
+  if (platform === "CLOUD_API") result.tipo_plataforma_meta = "cloud_api";
+  else if (platform === "ON_PREMISE") result.tipo_plataforma_meta = "on_premise";
+  else if (platform === "COEXISTENCE") result.tipo_plataforma_meta = "coexistence";
+  else if (platform.length > 0) result.tipo_plataforma_meta = "outro";
+  else result.tipo_plataforma_meta = "nao_informado";
+
+  const phoneStatus = String(phoneJson.status ?? "").toUpperCase();
+  const nameStatus = String(phoneJson.name_status ?? "").toUpperCase();
+  const statusConnected = phoneStatus === "CONNECTED";
+  const nameApproved =
+    nameStatus === "APPROVED" || nameStatus === "AVAILABLE_WITHOUT_REVIEW";
+
+  if (result.plataforma_do_numero === "cloud_api" && statusConnected) {
+    result.numero_registrado_cloud_api = "sim";
+  } else if (
+    result.plataforma_do_numero === "cloud_api" &&
+    phoneStatus.length > 0 &&
+    !statusConnected
+  ) {
+    result.numero_registrado_cloud_api = "nao";
+  } else {
+    result.numero_registrado_cloud_api = "desconhecido";
+  }
+
+  if (phoneStatus === "CONNECTED") result.status_numero_meta = "connected";
+  else if (phoneStatus === "DISCONNECTED") result.status_numero_meta = "disconnected";
+  else if (phoneStatus === "PENDING") result.status_numero_meta = "pendente";
+  else if (phoneStatus.length > 0) result.status_numero_meta = "outro";
+  else result.status_numero_meta = "nao_informado";
+
+  if (nameStatus === "APPROVED" || nameStatus === "AVAILABLE_WITHOUT_REVIEW")
+    result.nome_exibicao_meta = "aprovado";
+  else if (nameStatus === "PENDING") result.nome_exibicao_meta = "pendente";
+  else if (nameStatus === "REJECTED") result.nome_exibicao_meta = "reprovado";
+  else result.nome_exibicao_meta = "desconhecido";
+
+  if (
+    result.numero_registrado_cloud_api === "sim" &&
+    result.numero_verificado_na_meta === "sim" &&
+    nameApproved
+  ) {
+    result.numero_apto_para_conversa_whatsapp = "sim";
+  } else if (
+    result.numero_registrado_cloud_api === "nao" ||
+    result.numero_verificado_na_meta === "nao"
+  ) {
+    result.numero_apto_para_conversa_whatsapp = "nao";
+  } else {
+    result.numero_apto_para_conversa_whatsapp = "desconhecido";
+  }
+
+  result.status_de_registro_confiavel =
+    result.numero_verificado_na_meta !== "desconhecido" &&
+    result.numero_registrado_cloud_api !== "desconhecido" &&
+    result.plataforma_do_numero !== "desconhecido"
+      ? "sim"
+      : "nao";
+
+  if (result.numero_apto_para_conversa_whatsapp === "sim") {
+    result.acao_recomendada = "nenhuma";
+  } else if (
+    result.numero_verificado_na_meta === "sim" &&
+    result.plataforma_do_numero === "cloud_api" &&
+    result.numero_registrado_cloud_api !== "sim"
+  ) {
+    result.acao_recomendada = "registrar_cloud_api";
+  } else if (
+    result.numero_verificado_na_meta === "sim" &&
+    result.plataforma_do_numero === "outro"
+  ) {
+    result.acao_recomendada = "migrar_para_cloud_api";
+  } else if (
+    result.numero_verificado_na_meta === "nao" ||
+    result.plataforma_do_numero === "outro"
+  ) {
+    result.acao_recomendada = "revisar_meta";
+  } else {
+    result.acao_recomendada = "aguardar";
+  }
+
+  return result;
+}
+
+/**
+ * Classifica internamente a estratégia segura de registro Cloud API.
+ *
+ * Regras:
+ *  - registro_direto_cloud_api: verificado + nome aprovado + status pendente/desconhecido
+ *      + tipo_plataforma_meta compatível com Cloud API (cloud_api ou nao_informado).
+ *  - migracao_manual_necessaria: tipo_plataforma_meta indica plataforma legada
+ *      (on_premise, coexistence) ou qualquer outro tipo que não aceite register direto.
+ *  - estado_desconhecido: qualquer outro caso (não verificado, nome não aprovado etc.).
+ */
+function classifyRegisterStrategy(
+  audit: RealAuditState,
+): "registro_direto_cloud_api" | "migracao_manual_necessaria" | "estado_desconhecido" {
+  const verificado = audit.verificacao_numero_meta === "verificado";
+  const nomeAprovado = audit.nome_exibicao_meta === "aprovado";
+
+  if (
+    audit.tipo_plataforma_meta === "on_premise" ||
+    audit.tipo_plataforma_meta === "coexistence" ||
+    audit.tipo_plataforma_meta === "outro"
+  ) {
+    return "migracao_manual_necessaria";
+  }
+
+  if (!verificado || !nomeAprovado) {
+    return "estado_desconhecido";
+  }
+
+  if (
+    (audit.tipo_plataforma_meta === "cloud_api" ||
+      audit.tipo_plataforma_meta === "nao_informado") &&
+    (audit.status_numero_meta === "pendente" ||
+      audit.status_numero_meta === "disconnected" ||
+      audit.status_numero_meta === "nao_informado" ||
+      audit.status_numero_meta === "connected")
+  ) {
+    return "registro_direto_cloud_api";
+  }
+
+  return "estado_desconhecido";
+}
+
+/**
  * whatsappAdminAuditRealRegistrationState
  *
  * Auditoria read-only do estado real do Phone Number ID na Meta.
@@ -660,207 +911,22 @@ export const whatsappAdminAuditRealRegistrationState = createServerFn({ method: 
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdminMaster(context.userId);
+    return computeRealAuditState();
+  });
 
-    type SimNaoDesc = "sim" | "nao" | "desconhecido";
-    type Plataforma = "cloud_api" | "outro" | "desconhecido";
-    type Acao = "registrar_cloud_api" | "migrar_para_cloud_api" | "revisar_meta" | "aguardar" | "nenhuma";
-
-    const result: {
-      numero_meta_encontrado: "sim" | "nao";
-      numero_verificado_na_meta: SimNaoDesc;
-      numero_registrado_cloud_api: SimNaoDesc;
-      numero_apto_para_conversa_whatsapp: SimNaoDesc;
-      plataforma_do_numero: Plataforma;
-      status_de_registro_confiavel: "sim" | "nao";
-      acao_recomendada: Acao;
-      tipo_plataforma_meta: "cloud_api" | "on_premise" | "coexistence" | "nao_informado" | "outro";
-      status_numero_meta: "connected" | "disconnected" | "pendente" | "nao_informado" | "outro";
-      verificacao_numero_meta: "verificado" | "nao_verificado" | "desconhecido";
-      nome_exibicao_meta: "aprovado" | "pendente" | "reprovado" | "desconhecido";
-      id_do_erro_meta_corresponde_ao_phone_number_id_atual: "sim" | "nao";
-      phone_number_id_atual_esta_na_waba_oficial: "sim" | "nao";
-    } = {
-      numero_meta_encontrado: "nao",
-      numero_verificado_na_meta: "desconhecido",
-      numero_registrado_cloud_api: "desconhecido",
-      numero_apto_para_conversa_whatsapp: "desconhecido",
-      plataforma_do_numero: "desconhecido",
-      status_de_registro_confiavel: "nao",
-      acao_recomendada: "aguardar",
-      tipo_plataforma_meta: "nao_informado",
-      status_numero_meta: "nao_informado",
-      verificacao_numero_meta: "desconhecido",
-      nome_exibicao_meta: "desconhecido",
-      id_do_erro_meta_corresponde_ao_phone_number_id_atual: "nao",
-      phone_number_id_atual_esta_na_waba_oficial: "nao",
+/**
+ * whatsappAdminClassifyRegisterStrategy
+ *
+ * Decisão server-side sobre a estratégia segura de registro.
+ * Retorna SOMENTE o enum estrategia_registro. Nenhum dado cru, ID,
+ * token, telefone, mensagem ou resposta da Meta é exposto.
+ */
+export const whatsappAdminClassifyRegisterStrategy = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdminMaster(context.userId);
+    const audit = await computeRealAuditState();
+    return {
+      estrategia_registro: classifyRegisterStrategy(audit),
     };
-
-    const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
-    const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
-    const WABA_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
-
-    // Comparação interna do ID antigo reportado no erro da Meta.
-    // Nunca exposto na resposta.
-    const ID_ERRO_META_HISTORICO = "1186676367860451";
-    if (hasSecret(PHONE_NUMBER_ID) && PHONE_NUMBER_ID!.trim() === ID_ERRO_META_HISTORICO) {
-      result.id_do_erro_meta_corresponde_ao_phone_number_id_atual = "sim";
-    }
-
-    if (!hasSecret(ACCESS_TOKEN) || !hasSecret(PHONE_NUMBER_ID) || !hasSecret(WABA_ID)) {
-      result.acao_recomendada = "revisar_meta";
-      return result;
-    }
-
-    // Verifica se o PHONE_NUMBER_ID atual aparece na lista de phone_numbers da WABA.
-    const wabaCall = await safeGraphGet(`${WABA_ID}/phone_numbers?fields=id`, ACCESS_TOKEN!);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const wabaArr = ((wabaCall.json as any)?.data ?? []) as Array<{ id?: string }>;
-    if (
-      wabaCall.ok &&
-      Array.isArray(wabaArr) &&
-      wabaArr.some((row) => row?.id === PHONE_NUMBER_ID)
-    ) {
-      result.phone_number_id_atual_esta_na_waba_oficial = "sim";
-    }
-
-
-    // 1) GET no Phone Number ID com fields seguros.
-    const phoneFields = [
-      "id",
-      "display_phone_number",
-      "verified_name",
-      "code_verification_status",
-      "name_status",
-      "quality_rating",
-      "platform_type",
-      "status",
-      "throughput",
-      "messaging_limit_tier",
-      "account_mode",
-      "is_official_business_account",
-    ].join(",");
-    const phoneCall = await safeGraphGet(
-      `${PHONE_NUMBER_ID}?fields=${phoneFields}`,
-      ACCESS_TOKEN!,
-    );
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const phoneJson = (phoneCall.json as any) ?? null;
-    const phoneFound = phoneCall.ok && phoneJson && typeof phoneJson === "object" && !phoneJson.error;
-    result.numero_meta_encontrado = phoneFound ? "sim" : "nao";
-
-    if (!phoneFound) {
-      result.acao_recomendada = "revisar_meta";
-      return result;
-    }
-
-    // 2) Verificação na Meta — code_verification_status === "VERIFIED".
-    const codeVer = String(phoneJson.code_verification_status ?? "").toUpperCase();
-    if (codeVer === "VERIFIED") result.numero_verificado_na_meta = "sim";
-    else if (codeVer === "NOT_VERIFIED" || codeVer === "EXPIRED") result.numero_verificado_na_meta = "nao";
-    else result.numero_verificado_na_meta = "desconhecido";
-
-    // 2a) Enum seguro de verificação
-    if (codeVer === "VERIFIED") result.verificacao_numero_meta = "verificado";
-    else if (codeVer === "NOT_VERIFIED" || codeVer === "EXPIRED") result.verificacao_numero_meta = "nao_verificado";
-    else result.verificacao_numero_meta = "desconhecido";
-
-    // 3) Plataforma.
-    const platform = String(phoneJson.platform_type ?? "").toUpperCase();
-    if (platform === "CLOUD_API") result.plataforma_do_numero = "cloud_api";
-    else if (platform.length > 0) result.plataforma_do_numero = "outro";
-    else result.plataforma_do_numero = "desconhecido";
-
-    // 3a) Enum seguro de plataforma (normalizado)
-    if (platform === "CLOUD_API") result.tipo_plataforma_meta = "cloud_api";
-    else if (platform === "ON_PREMISE") result.tipo_plataforma_meta = "on_premise";
-    else if (platform === "COEXISTENCE") result.tipo_plataforma_meta = "coexistence";
-    else if (platform.length > 0) result.tipo_plataforma_meta = "outro";
-    else result.tipo_plataforma_meta = "nao_informado";
-
-    // 4) Registro real Cloud API.
-    // Indicador forte: campo "status" === "CONNECTED" + name_status APPROVED + platform CLOUD_API.
-    // Quando o número está cadastrado na WABA mas NÃO registrado para Cloud API,
-    // o campo "status" tipicamente não retorna "CONNECTED".
-    const phoneStatus = String(phoneJson.status ?? "").toUpperCase();
-    const nameStatus = String(phoneJson.name_status ?? "").toUpperCase();
-
-    const statusConnected = phoneStatus === "CONNECTED";
-    const nameApproved = nameStatus === "APPROVED" || nameStatus === "AVAILABLE_WITHOUT_REVIEW";
-
-    if (result.plataforma_do_numero === "cloud_api" && statusConnected) {
-      result.numero_registrado_cloud_api = "sim";
-    } else if (
-      result.plataforma_do_numero === "cloud_api" &&
-      phoneStatus.length > 0 &&
-      !statusConnected
-    ) {
-      // status presente porém não-CONNECTED → ainda não registrado para Cloud API.
-      result.numero_registrado_cloud_api = "nao";
-    } else {
-      result.numero_registrado_cloud_api = "desconhecido";
-    }
-
-    // 4a) Enum seguro de status do número (normalizado)
-    if (phoneStatus === "CONNECTED") result.status_numero_meta = "connected";
-    else if (phoneStatus === "DISCONNECTED") result.status_numero_meta = "disconnected";
-    else if (phoneStatus === "PENDING") result.status_numero_meta = "pendente";
-    else if (phoneStatus.length > 0) result.status_numero_meta = "outro";
-    else result.status_numero_meta = "nao_informado";
-
-    // 4b) Enum seguro de nome/exibição (normalizado)
-    if (nameStatus === "APPROVED" || nameStatus === "AVAILABLE_WITHOUT_REVIEW") result.nome_exibicao_meta = "aprovado";
-    else if (nameStatus === "PENDING") result.nome_exibicao_meta = "pendente";
-    else if (nameStatus === "REJECTED") result.nome_exibicao_meta = "reprovado";
-    else result.nome_exibicao_meta = "desconhecido";
-
-    // 5) Apto para conversa: precisa estar registrado Cloud API + verificado + name aprovado.
-    if (
-      result.numero_registrado_cloud_api === "sim" &&
-      result.numero_verificado_na_meta === "sim" &&
-      nameApproved
-    ) {
-      result.numero_apto_para_conversa_whatsapp = "sim";
-    } else if (
-      result.numero_registrado_cloud_api === "nao" ||
-      result.numero_verificado_na_meta === "nao"
-    ) {
-      result.numero_apto_para_conversa_whatsapp = "nao";
-    } else {
-      result.numero_apto_para_conversa_whatsapp = "desconhecido";
-    }
-
-    // 6) Confiabilidade do diagnóstico.
-    // Considera confiável quando todos os enums principais saíram de "desconhecido".
-    result.status_de_registro_confiavel =
-      result.numero_verificado_na_meta !== "desconhecido" &&
-      result.numero_registrado_cloud_api !== "desconhecido" &&
-      result.plataforma_do_numero !== "desconhecido"
-        ? "sim"
-        : "nao";
-
-    // 7) Ação recomendada.
-    if (result.numero_apto_para_conversa_whatsapp === "sim") {
-      result.acao_recomendada = "nenhuma";
-    } else if (
-      result.numero_verificado_na_meta === "sim" &&
-      result.plataforma_do_numero === "cloud_api" &&
-      result.numero_registrado_cloud_api !== "sim"
-    ) {
-      result.acao_recomendada = "registrar_cloud_api";
-    } else if (
-      result.numero_verificado_na_meta === "sim" &&
-      result.plataforma_do_numero === "outro"
-    ) {
-      result.acao_recomendada = "migrar_para_cloud_api";
-    } else if (
-      result.numero_verificado_na_meta === "nao" ||
-      result.plataforma_do_numero === "outro"
-    ) {
-      result.acao_recomendada = "revisar_meta";
-    } else {
-      result.acao_recomendada = "aguardar";
-    }
-
-    return result;
   });
