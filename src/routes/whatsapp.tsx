@@ -369,6 +369,9 @@ function WhatsAppPage() {
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerResult, setRegisterResult] = useState<{
     registro_cloud_api_executado: "sim" | "nao";
+    registro_http_status: 200 | "outro";
+    meta_error_code: number | null;
+    meta_error_subcode: number | null;
     numero_registrado_cloud_api: "sim" | "nao" | "desconhecido";
     numero_apto_para_conversa_whatsapp: "sim" | "nao" | "desconhecido";
     tipo_plataforma_meta:
@@ -415,6 +418,9 @@ function WhatsAppPage() {
       });
       setRegisterResult({
         registro_cloud_api_executado: r.registro_cloud_api_executado,
+        registro_http_status: r.registro_http_status,
+        meta_error_code: r.meta_error_code,
+        meta_error_subcode: r.meta_error_subcode,
         numero_registrado_cloud_api: r.numero_registrado_cloud_api,
         numero_apto_para_conversa_whatsapp: r.numero_apto_para_conversa_whatsapp,
         tipo_plataforma_meta: r.tipo_plataforma_meta,
@@ -1224,9 +1230,11 @@ phone_number_id_atual_esta_na_waba_oficial: ${auditRealState.phone_number_id_atu
                 {registerResult && (
                   <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
 {`registro_cloud_api_executado: ${registerResult.registro_cloud_api_executado}
+registro_http_status: ${registerResult.registro_http_status}
+meta_error_code: ${registerResult.meta_error_code ?? "null"}
+meta_error_subcode: ${registerResult.meta_error_subcode ?? "null"}
 numero_registrado_cloud_api: ${registerResult.numero_registrado_cloud_api}
 numero_apto_para_conversa_whatsapp: ${registerResult.numero_apto_para_conversa_whatsapp}
-tipo_plataforma_meta: ${registerResult.tipo_plataforma_meta}
 status_numero_meta: ${registerResult.status_numero_meta}
 acao_recomendada: ${registerResult.acao_recomendada}`}
                   </pre>

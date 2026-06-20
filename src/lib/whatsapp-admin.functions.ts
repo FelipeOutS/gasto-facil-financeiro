@@ -392,6 +392,9 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
       status: RegisterStatus;
       message: string;
       registro_cloud_api_executado: "sim" | "nao";
+      registro_http_status: 200 | "outro";
+      meta_error_code: number | null;
+      meta_error_subcode: number | null;
       numero_registrado_cloud_api: "sim" | "nao" | "desconhecido";
       numero_apto_para_conversa_whatsapp: "sim" | "nao" | "desconhecido";
       tipo_plataforma_meta:
@@ -423,6 +426,9 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
       status,
       message,
       registro_cloud_api_executado: "nao",
+      registro_http_status: "outro",
+      meta_error_code: null,
+      meta_error_subcode: null,
       numero_registrado_cloud_api: audit?.numero_registrado_cloud_api ?? "desconhecido",
       numero_apto_para_conversa_whatsapp:
         audit?.numero_apto_para_conversa_whatsapp ?? "desconhecido",
@@ -487,6 +493,9 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
     // POST /{PHONE_NUMBER_ID}/register
     let postOk = false;
     let networkError = false;
+    let httpStatus: number | null = null;
+    let metaErrorCode: number | null = null;
+    let metaErrorSubcode: number | null = null;
     try {
       const resp = await fetch(
         `https://graph.facebook.com/${GRAPH_VERSION}/${PHONE_NUMBER_ID}/register`,
@@ -500,7 +509,18 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
         },
       );
       postOk = resp.ok;
-      // NÃO logar/retornar corpo bruto.
+      httpStatus = resp.status;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const j: any = await resp.json();
+        if (j?.error) {
+          if (typeof j.error.code === "number") metaErrorCode = j.error.code;
+          if (typeof j.error.error_subcode === "number")
+            metaErrorSubcode = j.error.error_subcode;
+        }
+      } catch {
+        // sem body — não logamos nada
+      }
     } catch {
       networkError = true;
     }
@@ -508,8 +528,15 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
     // Re-auditoria pós-POST para devolver estado real.
     const auditAfter = await computeRealAuditState();
 
+    const httpBucket: 200 | "outro" = httpStatus === 200 ? 200 : "outro";
+
     if (networkError) {
-      return safeFail("network_error", "Falha de rede ao chamar a Meta.", auditAfter);
+      return {
+        ...safeFail("network_error", "Falha de rede ao chamar a Meta.", auditAfter),
+        registro_http_status: "outro" as const,
+        meta_error_code: null,
+        meta_error_subcode: null,
+      };
     }
 
     return {
@@ -519,6 +546,9 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
         ? "Registro Cloud API executado. Defina WHATSAPP_REGISTER_LOCK=true em seguida."
         : "Meta rejeitou o registro. Consulte o painel da Meta.",
       registro_cloud_api_executado: postOk ? "sim" : "nao",
+      registro_http_status: httpBucket,
+      meta_error_code: metaErrorCode,
+      meta_error_subcode: metaErrorSubcode,
       numero_registrado_cloud_api: auditAfter.numero_registrado_cloud_api,
       numero_apto_para_conversa_whatsapp: auditAfter.numero_apto_para_conversa_whatsapp,
       tipo_plataforma_meta: auditAfter.tipo_plataforma_meta,
@@ -914,23 +944,26 @@ async function computeRealAuditState(): Promise<RealAuditState> {
       ? "sim"
       : "nao";
 
+  const inWaba = result.phone_number_id_atual_esta_na_waba_oficial === "sim";
+  const tipoLegado =
+    result.tipo_plataforma_meta === "on_premise" ||
+    result.tipo_plataforma_meta === "coexistence";
+
   if (result.numero_apto_para_conversa_whatsapp === "sim") {
     result.acao_recomendada = "nenhuma";
   } else if (
     result.numero_verificado_na_meta === "sim" &&
-    result.plataforma_do_numero === "cloud_api" &&
+    nameApproved &&
+    inWaba &&
+    !tipoLegado &&
     result.numero_registrado_cloud_api !== "sim"
   ) {
+    // Confirmado pelo painel da Meta: número verificado + na WABA + status pendente
+    // ⇒ registro direto na Cloud API (mesmo que platform_type venha vazio/"outro").
     result.acao_recomendada = "registrar_cloud_api";
-  } else if (
-    result.numero_verificado_na_meta === "sim" &&
-    result.plataforma_do_numero === "outro"
-  ) {
+  } else if (result.numero_verificado_na_meta === "sim" && tipoLegado) {
     result.acao_recomendada = "migrar_para_cloud_api";
-  } else if (
-    result.numero_verificado_na_meta === "nao" ||
-    result.plataforma_do_numero === "outro"
-  ) {
+  } else if (result.numero_verificado_na_meta === "nao") {
     result.acao_recomendada = "revisar_meta";
   } else {
     result.acao_recomendada = "aguardar";
@@ -954,31 +987,32 @@ function classifyRegisterStrategy(
 ): "registro_direto_cloud_api" | "migracao_manual_necessaria" | "estado_desconhecido" {
   const verificado = audit.verificacao_numero_meta === "verificado";
   const nomeAprovado = audit.nome_exibicao_meta === "aprovado";
+  const inWaba = audit.phone_number_id_atual_esta_na_waba_oficial === "sim";
 
+  // Apenas plataformas legadas confirmadas exigem migração manual.
+  // platform_type == "outro" sozinho NÃO basta — a Meta às vezes não preenche
+  // platform_type antes do primeiro /register no Cloud API.
   if (
     audit.tipo_plataforma_meta === "on_premise" ||
-    audit.tipo_plataforma_meta === "coexistence" ||
-    audit.tipo_plataforma_meta === "outro"
+    audit.tipo_plataforma_meta === "coexistence"
   ) {
     return "migracao_manual_necessaria";
   }
 
-  if (!verificado || !nomeAprovado) {
+  if (!verificado || !nomeAprovado || !inWaba) {
     return "estado_desconhecido";
   }
 
+  // Se já está conectado na Cloud API, não há registro direto a fazer.
   if (
-    (audit.tipo_plataforma_meta === "cloud_api" ||
-      audit.tipo_plataforma_meta === "nao_informado") &&
-    (audit.status_numero_meta === "pendente" ||
-      audit.status_numero_meta === "disconnected" ||
-      audit.status_numero_meta === "nao_informado" ||
-      audit.status_numero_meta === "connected")
+    audit.tipo_plataforma_meta === "cloud_api" &&
+    audit.status_numero_meta === "connected" &&
+    audit.numero_registrado_cloud_api === "sim"
   ) {
-    return "registro_direto_cloud_api";
+    return "estado_desconhecido";
   }
 
-  return "estado_desconhecido";
+  return "registro_direto_cloud_api";
 }
 
 /**
