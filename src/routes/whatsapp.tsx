@@ -243,6 +243,9 @@ function WhatsAppPage() {
     meta_token_http_status: number | string;
     meta_waba_http_status: number | string;
     meta_phone_http_status: number | string;
+    meta_subscribed_apps_http_status: number | string;
+    meta_error_code: number | null;
+    meta_error_subcode: number | null;
     erro_categoria: string;
   } | null>(null);
   async function executarPreflight() {
@@ -261,6 +264,9 @@ function WhatsAppPage() {
         meta_token_http_status: r.meta_token_http_status,
         meta_waba_http_status: r.meta_waba_http_status,
         meta_phone_http_status: r.meta_phone_http_status,
+        meta_subscribed_apps_http_status: r.meta_subscribed_apps_http_status,
+        meta_error_code: r.meta_error_code,
+        meta_error_subcode: r.meta_error_subcode,
         erro_categoria: r.erro_categoria,
       });
     } catch {
