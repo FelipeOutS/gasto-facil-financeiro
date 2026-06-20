@@ -349,20 +349,25 @@ export const whatsappAdminCheckRegistration = createServerFn({ method: "GET" })
 
 /**
  * Registra o número oficial no WhatsApp Cloud API.
- * Implementada, MAS NÃO deve ser executada até autorização explícita.
  *
  * Proteções:
  *  - Exige Admin Master.
- *  - Dupla confirmação textual obrigatória.
+ *  - Dupla confirmação textual obrigatória: "REGISTRAR-CLOUD-API" + "11918539158".
  *  - Trava operacional via WHATSAPP_REGISTER_LOCK="true".
- *  - Valida via preflight antes de despachar.
- *  - Nunca retorna o PIN/token/IDs ao chamador.
+ *  - Gating server-side baseado em:
+ *      • Preflight (token_para_waba, numero_oficial_na_waba, app_inscrito_na_waba) → ok
+ *      • Auditoria real (verificacao_numero_meta=verificado, nome_exibicao_meta=aprovado)
+ *      • estrategia_registro === "registro_direto_cloud_api"
+ *      • WHATSAPP_ENABLED=false e WHATSAPP_CANARY_ENABLED=false
+ *  - NÃO usa numero_ja_registrado para liberar/bloquear.
+ *  - NÃO retorna PIN/token/IDs/URL/headers/body ao chamador.
+ *  - Após o POST, roda a auditoria real e devolve apenas enums seguros.
  */
 export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z
       .object({
-        confirm1: z.literal("REGISTRAR-NUMERO-OFICIAL"),
+        confirm1: z.literal("REGISTRAR-CLOUD-API"),
         confirm2: z.literal("11918539158"),
       })
       .parse(d),
@@ -371,14 +376,77 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await assertAdminMaster(context.userId);
 
+    type RegisterStatus =
+      | "locked"
+      | "missing_secrets"
+      | "invalid_pin_format"
+      | "preflight_failed"
+      | "strategy_blocked"
+      | "flags_active"
+      | "registered"
+      | "failed"
+      | "network_error";
+
+    type RegisterResponse = {
+      ok: boolean;
+      status: RegisterStatus;
+      message: string;
+      registro_cloud_api_executado: "sim" | "nao";
+      numero_registrado_cloud_api: "sim" | "nao" | "desconhecido";
+      numero_apto_para_conversa_whatsapp: "sim" | "nao" | "desconhecido";
+      tipo_plataforma_meta:
+        | "cloud_api"
+        | "on_premise"
+        | "coexistence"
+        | "nao_informado"
+        | "outro";
+      status_numero_meta:
+        | "connected"
+        | "disconnected"
+        | "pendente"
+        | "nao_informado"
+        | "outro";
+      acao_recomendada:
+        | "nenhuma"
+        | "revisar_meta"
+        | "migrar_para_cloud_api"
+        | "aguardar"
+        | "registrar_cloud_api";
+    };
+
+    const safeFail = (
+      status: RegisterStatus,
+      message: string,
+      audit?: RealAuditState,
+    ): RegisterResponse => ({
+      ok: false,
+      status,
+      message,
+      registro_cloud_api_executado: "nao",
+      numero_registrado_cloud_api: audit?.numero_registrado_cloud_api ?? "desconhecido",
+      numero_apto_para_conversa_whatsapp:
+        audit?.numero_apto_para_conversa_whatsapp ?? "desconhecido",
+      tipo_plataforma_meta: audit?.tipo_plataforma_meta ?? "nao_informado",
+      status_numero_meta: audit?.status_numero_meta ?? "nao_informado",
+      acao_recomendada:
+        (audit?.acao_recomendada as RegisterResponse["acao_recomendada"]) ?? "aguardar",
+    });
+
     // Trava operacional: após o primeiro register, define-se WHATSAPP_REGISTER_LOCK=true
     const lock = (process.env.WHATSAPP_REGISTER_LOCK ?? "").trim().toLowerCase();
     if (lock === "true") {
-      return {
-        ok: false as const,
-        status: "locked" as const,
-        message: "Operação travada (WHATSAPP_REGISTER_LOCK=true).",
-      };
+      return safeFail("locked", "Operação travada (WHATSAPP_REGISTER_LOCK=true).");
+    }
+
+    // Flags operacionais devem permanecer desligadas durante o register.
+    const enabledFlag = (process.env.WHATSAPP_ENABLED ?? "").trim().toLowerCase() === "true";
+    const canaryFlag =
+      (process.env.WHATSAPP_CANARY_ENABLED ?? "").trim().toLowerCase() === "true";
+    if (enabledFlag || canaryFlag) {
+      return safeFail(
+        "flags_active",
+        "Flags operacionais ativas; desative antes de registrar.",
+      );
     }
 
     const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
@@ -386,30 +454,39 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
     const REGISTER_PIN = process.env.WHATSAPP_REGISTER_PIN;
 
     if (!hasSecret(ACCESS_TOKEN) || !hasSecret(PHONE_NUMBER_ID) || !hasSecret(REGISTER_PIN)) {
-      return {
-        ok: false as const,
-        status: "missing_secrets" as const,
-        message: "Secrets obrigatórios ausentes.",
-      };
+      return safeFail("missing_secrets", "Secrets obrigatórios ausentes.");
     }
     if (!/^\d{6}$/.test(REGISTER_PIN!)) {
-      return {
-        ok: false as const,
-        status: "invalid_pin_format" as const,
-        message: "PIN deve ter exatamente 6 dígitos.",
-      };
+      return safeFail("invalid_pin_format", "PIN deve ter exatamente 6 dígitos.");
     }
 
-    // Pré-flight obrigatório
+    // Preflight read-only obrigatório (token/WABA/app/webhook).
     const pf = await runPreflightInternal();
-    if (pf.pronto_para_register !== "sim") {
-      return {
-        ok: false as const,
-        status: "preflight_failed" as const,
-        message: "Preflight read-only não autorizou o register.",
-      };
+    const preflightOk =
+      pf.token_para_waba === "ok" &&
+      pf.numero_oficial_na_waba === "ok" &&
+      pf.app_inscrito_na_waba === "ok" &&
+      pf.webhook_handshake === "ok";
+    if (!preflightOk) {
+      return safeFail("preflight_failed", "Preflight não autorizou o register.");
     }
 
+    // Auditoria real obrigatória + estratégia segura.
+    const auditBefore = await computeRealAuditState();
+    const strat = classifyRegisterStrategy(auditBefore);
+    const verificado = auditBefore.verificacao_numero_meta === "verificado";
+    const nomeAprovado = auditBefore.nome_exibicao_meta === "aprovado";
+    if (strat !== "registro_direto_cloud_api" || !verificado || !nomeAprovado) {
+      return safeFail(
+        "strategy_blocked",
+        "Estratégia segura não autorizou o register direto.",
+        auditBefore,
+      );
+    }
+
+    // POST /{PHONE_NUMBER_ID}/register
+    let postOk = false;
+    let networkError = false;
     try {
       const resp = await fetch(
         `https://graph.facebook.com/${GRAPH_VERSION}/${PHONE_NUMBER_ID}/register`,
@@ -422,26 +499,33 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
           body: JSON.stringify({ messaging_product: "whatsapp", pin: REGISTER_PIN }),
         },
       );
-      const ok = resp.ok;
-      // NÃO logar/retornar corpo bruto (pode conter eco do PIN/IDs).
-      return {
-        ok,
-        status: (ok ? "registered" : "failed") as "registered" | "failed",
-        http: resp.status,
-        message: ok
-          ? "Número registrado. Defina WHATSAPP_REGISTER_LOCK=true em seguida."
-          : "Falha ao registrar. Consulte o painel da Meta para detalhes.",
-      };
+      postOk = resp.ok;
+      // NÃO logar/retornar corpo bruto.
     } catch {
-      return {
-        ok: false as const,
-        status: "network_error" as const,
-        message: "Falha de rede ao chamar a Meta.",
-      };
+      networkError = true;
     }
 
-    // Apaga referências locais (defesa simbólica).
-    // (variáveis saem de escopo no final do handler)
+    // Re-auditoria pós-POST para devolver estado real.
+    const auditAfter = await computeRealAuditState();
+
+    if (networkError) {
+      return safeFail("network_error", "Falha de rede ao chamar a Meta.", auditAfter);
+    }
+
+    return {
+      ok: postOk,
+      status: (postOk ? "registered" : "failed") as RegisterStatus,
+      message: postOk
+        ? "Registro Cloud API executado. Defina WHATSAPP_REGISTER_LOCK=true em seguida."
+        : "Meta rejeitou o registro. Consulte o painel da Meta.",
+      registro_cloud_api_executado: postOk ? "sim" : "nao",
+      numero_registrado_cloud_api: auditAfter.numero_registrado_cloud_api,
+      numero_apto_para_conversa_whatsapp: auditAfter.numero_apto_para_conversa_whatsapp,
+      tipo_plataforma_meta: auditAfter.tipo_plataforma_meta,
+      status_numero_meta: auditAfter.status_numero_meta,
+      acao_recomendada:
+        auditAfter.acao_recomendada as RegisterResponse["acao_recomendada"],
+    } as RegisterResponse;
   });
 
 /**
