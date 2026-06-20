@@ -889,6 +889,29 @@ meta_error_subcode: ${preflightResult.meta_error_subcode ?? "null"}
 erro_categoria: ${preflightResult.erro_categoria}`}
                 </pre>
               )}
+
+              {/* WA-D2 — Inscrever App na WABA (TEMPORÁRIO) */}
+              <div className="pt-2 border-t border-amber-500/20">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={executarSubscribeApp}
+                  disabled={subscribeLoading}
+                  className="text-xs"
+                >
+                  {subscribeLoading ? "Executando..." : "Inscrever App na WABA (POST único)"}
+                </Button>
+                {subscribeResult && (
+                  <pre className="mt-2 rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
+{`app_inscrito_na_waba: ${subscribeResult.app_inscrito_na_waba}
+pronto_para_register: ${subscribeResult.pronto_para_register}
+meta_subscribed_apps_http_status: ${subscribeResult.meta_subscribed_apps_http_status}
+meta_error_code: ${subscribeResult.meta_error_code ?? "null"}
+meta_error_subcode: ${subscribeResult.meta_error_subcode ?? "null"}
+erro_categoria: ${subscribeResult.erro_categoria}`}
+                  </pre>
+                )}
+              </div>
             </section>
 
 
