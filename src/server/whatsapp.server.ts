@@ -586,6 +586,7 @@ async function gravarSessao(
   status: string,
   session: Session,
   resposta: string,
+  gastoId?: string,
 ) {
   await supabaseAdmin.from("whatsapp_messages").insert({
     user_id: userId,
@@ -597,6 +598,7 @@ async function gravarSessao(
     confianca: session.confianca ?? null,
     parsed: session as unknown as Record<string, unknown>,
     resposta_sugerida: resposta,
+    gasto_id: gastoId ?? null,
   });
 }
 
