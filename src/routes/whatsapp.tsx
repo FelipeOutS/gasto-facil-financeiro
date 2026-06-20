@@ -186,7 +186,8 @@ function WhatsAppPage() {
   // Sempre o domínio publicado, nunca preview/localhost.
   const PUBLIC_WEBHOOK_URL =
     "https://gastointeligente.com.br/api/public/whatsapp/expense";
-  const VERIFY_TOKEN = "gasto_inteligente_whatsapp_2026";
+  // Verify Token NÃO vive no frontend. Configure-o em Secrets (WHATSAPP_VERIFY_TOKEN)
+  // e use o mesmo valor no painel da Meta. Nunca exibido na UI nem retornado por server fn.
 
   const webhookUrl = useMemo(() => {
     // Em ambiente de preview, usamos a origem atual para teste local;
