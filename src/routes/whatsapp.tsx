@@ -32,6 +32,8 @@ import {
   whatsappAdminGetOpsChecklist,
   whatsappAdminCheckCanaryReadiness,
   whatsappAdminAuditRealRegistrationState,
+  whatsappAdminClassifyRegisterStrategy,
+  whatsappAdminRegisterNumber,
 } from "@/lib/whatsapp-admin.functions";
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText, DEFAULT_CATEGORIES } from "@/lib/categories";
@@ -352,6 +354,81 @@ function WhatsAppPage() {
       toast.error("Falha ao auditar status real do número.");
     } finally {
       setAuditRealStateLoading(false);
+    }
+  }
+
+  // ===== WA-E2.register — Estratégia + execução do POST /register =====
+  const classifyStrategyFn = useServerFn(whatsappAdminClassifyRegisterStrategy);
+  const registerNumberFn = useServerFn(whatsappAdminRegisterNumber);
+  const [registerStrategy, setRegisterStrategy] = useState<
+    "registro_direto_cloud_api" | "migracao_manual_necessaria" | "estado_desconhecido" | null
+  >(null);
+  const [registerStrategyLoading, setRegisterStrategyLoading] = useState(false);
+  const [registerConfirm1, setRegisterConfirm1] = useState("");
+  const [registerConfirm2, setRegisterConfirm2] = useState("");
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [registerResult, setRegisterResult] = useState<{
+    registro_cloud_api_executado: "sim" | "nao";
+    numero_registrado_cloud_api: "sim" | "nao" | "desconhecido";
+    numero_apto_para_conversa_whatsapp: "sim" | "nao" | "desconhecido";
+    tipo_plataforma_meta:
+      | "cloud_api"
+      | "on_premise"
+      | "coexistence"
+      | "nao_informado"
+      | "outro";
+    status_numero_meta:
+      | "connected"
+      | "disconnected"
+      | "pendente"
+      | "nao_informado"
+      | "outro";
+    acao_recomendada:
+      | "nenhuma"
+      | "revisar_meta"
+      | "migrar_para_cloud_api"
+      | "aguardar"
+      | "registrar_cloud_api";
+  } | null>(null);
+
+  async function classificarEstrategiaRegistro() {
+    setRegisterStrategyLoading(true);
+    try {
+      const r = await classifyStrategyFn();
+      setRegisterStrategy(r.estrategia_registro);
+    } catch {
+      toast.error("Falha ao classificar estratégia.");
+    } finally {
+      setRegisterStrategyLoading(false);
+    }
+  }
+
+  async function executarRegistroCloudApi() {
+    if (registerConfirm1 !== "REGISTRAR-CLOUD-API" || registerConfirm2 !== "11918539158") {
+      toast.error("Confirmações não conferem.");
+      return;
+    }
+    setRegisterLoading(true);
+    try {
+      const r = await registerNumberFn({
+        data: { confirm1: "REGISTRAR-CLOUD-API", confirm2: "11918539158" },
+      });
+      setRegisterResult({
+        registro_cloud_api_executado: r.registro_cloud_api_executado,
+        numero_registrado_cloud_api: r.numero_registrado_cloud_api,
+        numero_apto_para_conversa_whatsapp: r.numero_apto_para_conversa_whatsapp,
+        tipo_plataforma_meta: r.tipo_plataforma_meta,
+        status_numero_meta: r.status_numero_meta,
+        acao_recomendada: r.acao_recomendada,
+      });
+      if (r.ok) toast.success("Registro Cloud API executado.");
+      else toast.error("Registro não autorizado ou rejeitado pela Meta.");
+    } catch {
+      toast.error("Falha ao executar registro.");
+    } finally {
+      setRegisterLoading(false);
+      setRegisterConfirm1("");
+      setRegisterConfirm2("");
     }
   }
 
@@ -1083,7 +1160,80 @@ phone_number_id_atual_esta_na_waba_oficial: ${auditRealState.phone_number_id_atu
                   </pre>
                 )}
               </div>
+
+              {/* WA-E2.register — Estratégia + execução do POST /register */}
+              <div className="pt-2 border-t border-amber-500/20 space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={classificarEstrategiaRegistro}
+                  disabled={registerStrategyLoading}
+                  className="text-xs"
+                >
+                  {registerStrategyLoading
+                    ? "Classificando..."
+                    : "Classificar estratégia de registro"}
+                </Button>
+                {registerStrategy && (
+                  <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
+{`estrategia_registro: ${registerStrategy}`}
+                  </pre>
+                )}
+
+                {registerStrategy === "registro_direto_cloud_api" && (
+                  <div className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-3 space-y-2">
+                    <p className="text-[11px] text-rose-200 leading-relaxed">
+                      Ação irreversível. Para confirmar, digite{" "}
+                      <span className="font-mono">REGISTRAR-CLOUD-API</span> e{" "}
+                      <span className="font-mono">11918539158</span>.
+                    </p>
+                    <Input
+                      value={registerConfirm1}
+                      onChange={(e) => setRegisterConfirm1(e.target.value)}
+                      placeholder="REGISTRAR-CLOUD-API"
+                      className="font-mono text-xs"
+                    />
+                    <Input
+                      value={registerConfirm2}
+                      onChange={(e) => setRegisterConfirm2(e.target.value)}
+                      placeholder="11918539158"
+                      className="font-mono text-xs"
+                    />
+                    <Button
+                      type="button"
+                      onClick={executarRegistroCloudApi}
+                      disabled={
+                        registerLoading ||
+                        registerConfirm1 !== "REGISTRAR-CLOUD-API" ||
+                        registerConfirm2 !== "11918539158"
+                      }
+                      className="bg-rose-500 hover:bg-rose-600 text-white text-xs"
+                    >
+                      {registerLoading ? "Registrando..." : "Registrar número na Cloud API"}
+                    </Button>
+                  </div>
+                )}
+
+                {registerStrategy &&
+                  registerStrategy !== "registro_direto_cloud_api" && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Botão de registro não disponível para esta estratégia.
+                    </p>
+                  )}
+
+                {registerResult && (
+                  <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
+{`registro_cloud_api_executado: ${registerResult.registro_cloud_api_executado}
+numero_registrado_cloud_api: ${registerResult.numero_registrado_cloud_api}
+numero_apto_para_conversa_whatsapp: ${registerResult.numero_apto_para_conversa_whatsapp}
+tipo_plataforma_meta: ${registerResult.tipo_plataforma_meta}
+status_numero_meta: ${registerResult.status_numero_meta}
+acao_recomendada: ${registerResult.acao_recomendada}`}
+                  </pre>
+                )}
+              </div>
             </section>
+
 
 
             {/* Status técnico + secrets */}
