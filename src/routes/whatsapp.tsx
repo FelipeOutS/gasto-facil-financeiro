@@ -1077,7 +1077,9 @@ acao_recomendada: ${auditRealState.acao_recomendada}
 tipo_plataforma_meta: ${auditRealState.tipo_plataforma_meta}
 status_numero_meta: ${auditRealState.status_numero_meta}
 verificacao_numero_meta: ${auditRealState.verificacao_numero_meta}
-nome_exibicao_meta: ${auditRealState.nome_exibicao_meta}`}
+nome_exibicao_meta: ${auditRealState.nome_exibicao_meta}
+id_do_erro_meta_corresponde_ao_phone_number_id_atual: ${auditRealState.id_do_erro_meta_corresponde_ao_phone_number_id_atual}
+phone_number_id_atual_esta_na_waba_oficial: ${auditRealState.phone_number_id_atual_esta_na_waba_oficial}`}
                   </pre>
                 )}
               </div>
