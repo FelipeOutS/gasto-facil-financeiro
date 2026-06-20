@@ -13,8 +13,10 @@ import { test, expect, mock, beforeEach } from "bun:test";
 const inserts: Array<{ table: string; row: Record<string, unknown> }> = [];
 let pendingRow: {
   id: string;
+  status: string;
   parsed: Record<string, unknown>;
   recebida_em: string;
+  gasto_id?: string | null;
 } | null = null;
 
 let cartoesData: Record<string, unknown>[] = [];
