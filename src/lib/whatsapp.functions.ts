@@ -106,7 +106,6 @@ export const confirmWhatsAppLinkConsent = createServerFn({ method: "POST" })
     return { consentimento_atualizado: "ok" as const };
   });
 
-const _LEGACY_OPT_IN_VERSION_PLACEHOLDER =
 
 export const upsertWhatsAppLink = createServerFn({ method: "POST" })
   .inputValidator((d) =>
