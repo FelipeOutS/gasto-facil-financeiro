@@ -477,12 +477,13 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
       return safeFail("preflight_failed", "Preflight não autorizou o register.");
     }
 
-    // Auditoria real obrigatória + estratégia segura.
+    // Auditoria real obrigatória + estratégia segura (com preflight + flags).
     const auditBefore = await computeRealAuditState();
-    const strat = classifyRegisterStrategy(auditBefore);
-    const verificado = auditBefore.verificacao_numero_meta === "verificado";
-    const nomeAprovado = auditBefore.nome_exibicao_meta === "aprovado";
-    if (strat !== "registro_direto_cloud_api" || !verificado || !nomeAprovado) {
+    const strat = classifyRegisterStrategy(auditBefore, pf, {
+      enabled: enabledFlag,
+      canary: canaryFlag,
+    });
+    if (strat !== "registro_direto_cloud_api") {
       return safeFail(
         "strategy_blocked",
         "Estratégia segura não autorizou o register direto.",
@@ -984,14 +985,16 @@ async function computeRealAuditState(): Promise<RealAuditState> {
  */
 function classifyRegisterStrategy(
   audit: RealAuditState,
+  preflight?: PreflightResult,
+  flags?: { enabled: boolean; canary: boolean },
 ): "registro_direto_cloud_api" | "migracao_manual_necessaria" | "estado_desconhecido" {
   const verificado = audit.verificacao_numero_meta === "verificado";
   const nomeAprovado = audit.nome_exibicao_meta === "aprovado";
   const inWaba = audit.phone_number_id_atual_esta_na_waba_oficial === "sim";
+  const statusPendente = audit.status_numero_meta === "pendente";
 
-  // Apenas plataformas legadas confirmadas exigem migração manual.
-  // platform_type == "outro" sozinho NÃO basta — a Meta às vezes não preenche
-  // platform_type antes do primeiro /register no Cloud API.
+  // Plataformas legadas confirmadas exigem migração manual.
+  // platform_type == "outro" isoladamente NÃO basta.
   if (
     audit.tipo_plataforma_meta === "on_premise" ||
     audit.tipo_plataforma_meta === "coexistence"
@@ -999,16 +1002,29 @@ function classifyRegisterStrategy(
     return "migracao_manual_necessaria";
   }
 
-  if (!verificado || !nomeAprovado || !inWaba) {
-    return "estado_desconhecido";
-  }
-
-  // Se já está conectado na Cloud API, não há registro direto a fazer.
+  // Já registrado e conectado → não há register direto a fazer.
   if (
-    audit.tipo_plataforma_meta === "cloud_api" &&
     audit.status_numero_meta === "connected" &&
     audit.numero_registrado_cloud_api === "sim"
   ) {
+    return "estado_desconhecido";
+  }
+
+  // Preflight e flags (quando fornecidos) precisam estar conformes.
+  if (preflight) {
+    if (
+      preflight.token_para_waba !== "ok" ||
+      preflight.numero_oficial_na_waba !== "ok" ||
+      preflight.app_inscrito_na_waba !== "ok"
+    ) {
+      return "estado_desconhecido";
+    }
+  }
+  if (flags && (flags.enabled || flags.canary)) {
+    return "estado_desconhecido";
+  }
+
+  if (!verificado || !nomeAprovado || !inWaba || !statusPendente) {
     return "estado_desconhecido";
   }
 
@@ -1043,8 +1059,15 @@ export const whatsappAdminClassifyRegisterStrategy = createServerFn({ method: "G
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdminMaster(context.userId);
-    const audit = await computeRealAuditState();
+    const [audit, pf] = await Promise.all([
+      computeRealAuditState(),
+      runPreflightInternal(),
+    ]);
+    const flags = {
+      enabled: (process.env.WHATSAPP_ENABLED ?? "").trim().toLowerCase() === "true",
+      canary: (process.env.WHATSAPP_CANARY_ENABLED ?? "").trim().toLowerCase() === "true",
+    };
     return {
-      estrategia_registro: classifyRegisterStrategy(audit),
+      estrategia_registro: classifyRegisterStrategy(audit, pf, flags),
     };
   });
