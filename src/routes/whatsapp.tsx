@@ -300,6 +300,7 @@ function WhatsAppPage() {
       toast.error("Falha ao carregar checklist.");
     } finally {
       setOpsChecklistLoading(false);
+    }
   }
 
   // ===== WA-E1.1 — Prontidão canário do Admin Master =====
