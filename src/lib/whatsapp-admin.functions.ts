@@ -493,6 +493,9 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
     // POST /{PHONE_NUMBER_ID}/register
     let postOk = false;
     let networkError = false;
+    let httpStatus: number | null = null;
+    let metaErrorCode: number | null = null;
+    let metaErrorSubcode: number | null = null;
     try {
       const resp = await fetch(
         `https://graph.facebook.com/${GRAPH_VERSION}/${PHONE_NUMBER_ID}/register`,
@@ -506,7 +509,18 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
         },
       );
       postOk = resp.ok;
-      // NÃO logar/retornar corpo bruto.
+      httpStatus = resp.status;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const j: any = await resp.json();
+        if (j?.error) {
+          if (typeof j.error.code === "number") metaErrorCode = j.error.code;
+          if (typeof j.error.error_subcode === "number")
+            metaErrorSubcode = j.error.error_subcode;
+        }
+      } catch {
+        // sem body — não logamos nada
+      }
     } catch {
       networkError = true;
     }
@@ -514,8 +528,15 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
     // Re-auditoria pós-POST para devolver estado real.
     const auditAfter = await computeRealAuditState();
 
+    const httpBucket: 200 | "outro" = httpStatus === 200 ? 200 : "outro";
+
     if (networkError) {
-      return safeFail("network_error", "Falha de rede ao chamar a Meta.", auditAfter);
+      return {
+        ...safeFail("network_error", "Falha de rede ao chamar a Meta.", auditAfter),
+        registro_http_status: "outro" as const,
+        meta_error_code: null,
+        meta_error_subcode: null,
+      };
     }
 
     return {
@@ -525,6 +546,9 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
         ? "Registro Cloud API executado. Defina WHATSAPP_REGISTER_LOCK=true em seguida."
         : "Meta rejeitou o registro. Consulte o painel da Meta.",
       registro_cloud_api_executado: postOk ? "sim" : "nao",
+      registro_http_status: httpBucket,
+      meta_error_code: metaErrorCode,
+      meta_error_subcode: metaErrorSubcode,
       numero_registrado_cloud_api: auditAfter.numero_registrado_cloud_api,
       numero_apto_para_conversa_whatsapp: auditAfter.numero_apto_para_conversa_whatsapp,
       tipo_plataforma_meta: auditAfter.tipo_plataforma_meta,
