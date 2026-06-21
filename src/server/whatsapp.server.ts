@@ -1080,14 +1080,17 @@ export async function processarMensagemWhatsApp(
       return { status: "aguardando_confirmacao", resposta };
     }
     // cartão não cadastrado
+    const negado = isNegacaoCartao(texto);
     const next: Session = {
       ...sessao.session,
       formaPagamento: "credito",
       cartaoId: null,
-      cartaoDigitado: texto.slice(0, 80),
+      cartaoDigitado: negado ? undefined : texto.slice(0, 80),
       cartaoNaoCadastrado: true,
     };
-    const resposta = avisoCartaoNaoCadastrado(next, texto.trim());
+    const resposta = negado
+      ? avisoCartaoNaoCadastradoNegado(next)
+      : avisoCartaoNaoCadastrado(next, texto.trim());
     await supabaseAdmin
       .from("whatsapp_messages")
       .update({ status: "expirada" })
