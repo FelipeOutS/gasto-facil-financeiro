@@ -589,6 +589,35 @@ export function isGenericExpenseCommand(texto: string): boolean {
 }
 
 /**
+ * Comandos de reinício geral da conversa.
+ * Encerram qualquer sessão pendente e devolvem o usuário ao estado inicial.
+ * Comparação após `normalizeCmd` (sem acento, minúsculas, sem pontuação final).
+ *
+ * IMPORTANTE: "não", "n", "errado" etc. NÃO são reset — são respostas de
+ * confirmação. Por isso este conjunto é separado de `CANCEL_TOKENS`.
+ */
+const RESET_COMMANDS: ReadonlySet<string> = new Set([
+  "cancelar",
+  "cancela",
+  "cancelar tudo",
+  "reiniciar",
+  "reinicia",
+  "recomecar",
+  "recomeca",
+  "comecar de novo",
+  "comeca de novo",
+  "voltar ao inicio",
+  "voltar pro inicio",
+  "voltar para o inicio",
+]);
+
+export function isResetCommand(texto: string): boolean {
+  if (!texto) return false;
+  return RESET_COMMANDS.has(normalizeCmd(texto));
+}
+
+
+/**
  * Bloqueia que descrições genéricas (vindas do parser ou de uma sessão)
  * sejam usadas como nome real do gasto. Ex.: "registrar gasto",
  * "Gasto WhatsApp", "Novo Gasto" — todas inválidas.
