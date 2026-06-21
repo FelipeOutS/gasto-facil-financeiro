@@ -1185,6 +1185,11 @@ categoria_resolvida_para_padaria: ${categoriaCheck.categoria_resolvida_para_pada
                 )}
               </div>
 
+              {/* WA-F — Gestão da beta fechada (Admin Master) */}
+              <BetaAdminSection />
+
+
+
 
 
               {/* WA-E2.audit — Auditoria read-only do estado real do número (Admin Master) */}
