@@ -119,13 +119,64 @@ function ItemRow({ alert, onClose }: { alert: UserAlert; onClose: () => void }) 
   );
 }
 
+export function NotificationsPanel({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation("dashboard");
+  const { visible, unreadCount } = useAlerts();
+  const total = visible.length;
+  const top = visible.slice(0, 6);
+
+  return (
+    <div className="flex flex-col">
+      <div className="px-4 pt-4 pb-3 border-b border-border/60">
+        <h3 className="text-base font-semibold leading-tight">{t("notifications.title")}</h3>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {unreadCount > 0
+            ? unreadCount === 1
+              ? t("notifications.novosSing", { count: unreadCount })
+              : t("notifications.novosPlur", { count: unreadCount })
+            : t("notifications.padrao")}
+        </p>
+      </div>
+
+      {total === 0 ? (
+        <div className="px-6 py-8 text-center motion-safe:animate-fade-in">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
+            <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <p className="mt-3 text-sm font-semibold">{t("notifications.tudoCerto")}</p>
+          <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+            {t("notifications.tudoCertoSub")}
+          </p>
+        </div>
+      ) : (
+        <ul className="max-h-[60vh] overflow-y-auto">
+          {top.map((a) => (
+            <ItemRow key={a.id} alert={a} onClose={onClose} />
+          ))}
+        </ul>
+      )}
+
+      <div className="border-t border-border/60 px-3 py-2">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="w-full justify-center text-xs"
+          onClick={onClose}
+        >
+          <Link to="/alertas">{t("notifications.verTodos")}</Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function NotificationBell() {
   const { t } = useTranslation("dashboard");
   const [open, setOpen] = useState(false);
   const { visible, unreadCount } = useAlerts();
   const total = visible.length;
   const hasUrgente = visible.some((a) => a.priority === "critica" || a.priority === "alta");
-  const top = visible.slice(0, 6);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -166,46 +217,7 @@ export function NotificationBell() {
         sideOffset={8}
         className="w-[340px] p-0 overflow-hidden border-border/70 shadow-xl"
       >
-        <div className="px-4 pt-4 pb-3 border-b border-border/60">
-          <h3 className="text-base font-semibold leading-tight">{t("notifications.title")}</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {unreadCount > 0
-              ? unreadCount === 1
-                ? t("notifications.novosSing", { count: unreadCount })
-                : t("notifications.novosPlur", { count: unreadCount })
-              : t("notifications.padrao")}
-          </p>
-        </div>
-
-        {total === 0 ? (
-          <div className="px-6 py-8 text-center motion-safe:animate-fade-in">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
-              <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <p className="mt-3 text-sm font-semibold">{t("notifications.tudoCerto")}</p>
-            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-              {t("notifications.tudoCertoSub")}
-            </p>
-          </div>
-        ) : (
-          <ul className="max-h-[420px] overflow-y-auto">
-            {top.map((a) => (
-              <ItemRow key={a.id} alert={a} onClose={() => setOpen(false)} />
-            ))}
-          </ul>
-        )}
-
-        <div className="border-t border-border/60 px-3 py-2">
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="w-full justify-center text-xs"
-            onClick={() => setOpen(false)}
-          >
-            <Link to="/alertas">{t("notifications.verTodos")}</Link>
-          </Button>
-        </div>
+        <NotificationsPanel onClose={() => setOpen(false)} />
       </PopoverContent>
     </Popover>
   );
