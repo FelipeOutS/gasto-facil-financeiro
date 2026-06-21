@@ -1133,8 +1133,7 @@ export async function processarMensagemWhatsApp(
     return { status: "valor_invalido", confianca: parsed.confianca, resposta };
   }
   if (!parsed.nome || parsed.nome.length < 2) {
-    const resposta =
-      "❓ Só preciso de mais uma informação: o que você comprou ou pagou? Ex.: mercado, uber, farmácia.";
+    const resposta = M.faltaNome();
     await gravarSessao(
       userId,
       msg.telefone,
