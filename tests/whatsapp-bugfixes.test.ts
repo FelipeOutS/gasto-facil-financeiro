@@ -295,4 +295,74 @@ test('"Padaria" cai em Mercado quando Alimentação não existe', async () => {
   expect(g.categoria_id).toBe("cat-mer");
 });
 
+// ---------- Bug 7: resolução de categoria por nome (acento / variações) ----------
+
+const { diagnoseCategoriaResolution } = await import("../src/server/whatsapp.server");
+
+test('Padaria → Alimentação quando a categoria se chama exatamente "Alimentação"', () => {
+  const cats = [
+    { id: "a", legacy_id: null, nome: "Alimentação" },
+    { id: "m", legacy_id: null, nome: "Mercado" },
+  ];
+  const r = diagnoseCategoriaResolution("Padaria", cats);
+  expect(r.categoria_alimentacao_disponivel).toBe("sim");
+  expect(r.categoria_resolvida).toBe("alimentacao");
+});
+
+test('Padaria → Alimentação quando a categoria se chama "Alimentacao" (sem acento)', () => {
+  const cats = [
+    { id: "a", legacy_id: null, nome: "Alimentacao" },
+    { id: "m", legacy_id: null, nome: "Mercado" },
+  ];
+  const r = diagnoseCategoriaResolution("Padaria", cats);
+  expect(r.categoria_resolvida).toBe("alimentacao");
+});
+
+test('Padaria → Alimentação quando a categoria se chama "Refeições"', () => {
+  const cats = [
+    { id: "r", legacy_id: null, nome: "Refeições" },
+    { id: "m", legacy_id: null, nome: "Mercado" },
+  ];
+  const r = diagnoseCategoriaResolution("Padaria", cats);
+  expect(r.categoria_alimentacao_disponivel).toBe("sim");
+  expect(r.categoria_resolvida).toBe("alimentacao");
+});
+
+test("Sem categoria compatível com Alimentação → fallback Mercado", () => {
+  const cats = [
+    { id: "m", legacy_id: null, nome: "Mercado" },
+    { id: "t", legacy_id: null, nome: "Transporte" },
+  ];
+  const r = diagnoseCategoriaResolution("Padaria", cats);
+  expect(r.categoria_alimentacao_disponivel).toBe("nao");
+  expect(r.categoria_resolvida).toBe("fallback_mercado");
+});
+
+test('Padaria salva com a categoria oficial "Refeições" quando existe', async () => {
+  resetState({
+    categorias: [
+      { id: "cat-out", legacy_id: "outros", nome: "Outros", user_id: "u1" },
+      { id: "cat-mer", legacy_id: "mercado", nome: "Mercado", user_id: "u1" },
+      { id: "cat-ref", legacy_id: null, nome: "Refeições", user_id: "u1" },
+    ],
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Padaria 1,00 pix",
+    external_id: "ref1",
+  });
+  // confirmação deve mostrar o nome oficial "Refeições"
+  const resp = state.pendingRow?.parsed as { resposta?: string } | null;
+  // pendingRow.parsed é a sessão; a resposta foi gravada à parte, conferimos via segunda mensagem
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "sim",
+    external_id: "ref2",
+  });
+  const g = gastosInserts()[0]?.row as Record<string, unknown>;
+  expect(g.categoria_id).toBe("cat-ref");
+  void resp;
+});
+
 afterAll(() => {});
+

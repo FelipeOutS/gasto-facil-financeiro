@@ -34,7 +34,9 @@ import {
   whatsappAdminAuditRealRegistrationState,
   whatsappAdminClassifyRegisterStrategy,
   whatsappAdminRegisterNumber,
+  whatsappAdminCheckCategoriaResolution,
 } from "@/lib/whatsapp-admin.functions";
+
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText, DEFAULT_CATEGORIES } from "@/lib/categories";
 import { FORMAS_PAGAMENTO } from "@/lib/types";
@@ -324,6 +326,25 @@ function WhatsAppPage() {
       toast.error("Falha ao verificar prontidão do canário.");
     } finally {
       setCanaryReadinessLoading(false);
+    }
+  }
+
+  // ===== WA-Cat — Diagnóstico de resolução de categoria (temporário) =====
+  const categoriaCheckFn = useServerFn(whatsappAdminCheckCategoriaResolution);
+  const [categoriaCheck, setCategoriaCheck] = useState<{
+    categoria_alimentacao_disponivel: "sim" | "nao";
+    categoria_resolvida_para_padaria: "alimentacao" | "fallback_mercado" | "outra";
+  } | null>(null);
+  const [categoriaCheckLoading, setCategoriaCheckLoading] = useState(false);
+  async function carregarCategoriaCheck() {
+    setCategoriaCheckLoading(true);
+    try {
+      const r = await categoriaCheckFn();
+      setCategoriaCheck(r);
+    } catch {
+      toast.error("Falha ao verificar resolução de categoria.");
+    } finally {
+      setCategoriaCheckLoading(false);
     }
   }
 
@@ -1136,6 +1157,29 @@ admin_email_autorizado: ${canaryReadiness.admin_email_autorizado}`}
                   </pre>
                 )}
               </div>
+
+              {/* WA-Cat — Diagnóstico temporário de resolução de categoria (Admin Master) */}
+              <div className="pt-2 border-t border-amber-500/20 space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={carregarCategoriaCheck}
+                  disabled={categoriaCheckLoading}
+                  className="text-xs"
+                >
+                  {categoriaCheckLoading
+                    ? "Verificando..."
+                    : "Verificar resolução de categoria (Padaria)"}
+                </Button>
+                {categoriaCheck && (
+                  <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
+{`categoria_alimentacao_disponivel: ${categoriaCheck.categoria_alimentacao_disponivel}
+categoria_resolvida_para_padaria: ${categoriaCheck.categoria_resolvida_para_padaria}`}
+                  </pre>
+                )}
+              </div>
+
+
 
               {/* WA-E2.audit — Auditoria read-only do estado real do número (Admin Master) */}
               <div className="pt-2 border-t border-amber-500/20 space-y-2">
