@@ -503,11 +503,14 @@ type Session = {
 };
 
 function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
-  const cartaoNome = s.cartaoId
-    ? cartoes.find((c) => c.id === s.cartaoId)?.nome
+  const cartaoCadastrado = s.cartaoId
+    ? cartoes.find((c) => c.id === s.cartaoId)
+    : undefined;
+  const cartaoNome = cartaoCadastrado
+    ? displayCartaoNome(cartaoCadastrado)
     : s.cartaoNaoCadastrado
       ? (s.cartaoDigitado || "cartão não cadastrado")
-      : s.cartaoNomeDetectado;
+      : canonicalizeBrand(s.cartaoNomeDetectado ?? "");
   return {
     nome: s.nome,
     valor: s.valor,
