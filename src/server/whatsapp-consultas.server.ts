@@ -288,7 +288,9 @@ async function handleMaioresGastos(
 ): Promise<ConsultaResult> {
   const hoje = todayLocalISO();
   const from = escopo === "semana" ? addDaysISO(hoje, -6) : monthStartISO(hoje);
-  const to = escopo === "semana" ? addDaysISO(hoje, 1) : nextMonthStartISO(hoje);
+  // WA-G3: maiores gastos do mês também ignora despesas futuras (até hoje, inclusive).
+  const to = addDaysISO(hoje, 1);
+
   const gastos = await loadGastos(userId, from, to);
   const ordenados = [...gastos]
     .map((g) => ({ descricao: (g.descricao ?? "").trim() || "Gasto", valor: Number(g.valor ?? 0) || 0 }))
