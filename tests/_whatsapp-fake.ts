@@ -130,6 +130,11 @@ function makeBuilder(table: string): any {
 
 export const fakeAdmin = {
   from: (t: string) => makeBuilder(t),
+  // RPC mock: por padrão libera tudo (Admin Master / beta ativa).
+  // Testes específicos podem sobrescrever `fakeAdmin.rpc` para simular
+  // usuário sem beta.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  rpc: async (_name: string, _args?: unknown) => ({ data: true, error: null }),
   auth: {
     admin: {
       getUserById: async () => ({
