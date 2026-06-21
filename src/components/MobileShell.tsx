@@ -74,6 +74,7 @@ export function MobileShell({
         </main>
       </div>
       {showNav && <BottomNav />}
+      {showNav && <MobileNotificationsFab />}
     </div>
   );
 
