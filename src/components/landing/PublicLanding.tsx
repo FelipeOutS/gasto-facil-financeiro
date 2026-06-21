@@ -305,12 +305,21 @@ function Header() {
       <div className="mx-auto flex h-12 w-full max-w-7xl items-center justify-between px-4 sm:h-14 sm:px-6 md:h-16 lg:px-8">
         <a href="#inicio" onClick={(e) => handleAnchorClick(e, "#inicio")} className="flex items-center gap-2">
           <img
-            src="/logos/brand/logo-gasto-inteligente-completo-light.svg"
+            src="/logos/brand/icone-gasto-inteligente-light.svg"
             alt="Gasto Inteligente"
-            width={176}
-            height={44}
+            width={36}
+            height={36}
             fetchPriority="high"
-            className="h-8 w-auto object-contain sm:h-10 md:h-11"
+            className="h-8 w-auto object-contain sm:hidden"
+            draggable={false}
+          />
+          <img
+            src="/logos/brand/logo-gasto-inteligente-sidebar-light.svg"
+            alt="Gasto Inteligente"
+            width={180}
+            height={40}
+            fetchPriority="high"
+            className="hidden w-auto object-contain sm:block sm:h-9 md:h-10"
             draggable={false}
           />
         </a>
@@ -3726,9 +3735,9 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-12 lg:col-span-4">
             <img
-              src="/logos/brand/logo-gasto-inteligente-completo-light.svg"
+              src="/logos/brand/logo-gasto-inteligente-sidebar-light.svg"
               alt="Gasto Inteligente"
-              className="h-9 w-auto sm:h-10 object-contain"
+              className="w-[150px] sm:w-[160px] h-auto object-contain"
               draggable={false}
             />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-600">
