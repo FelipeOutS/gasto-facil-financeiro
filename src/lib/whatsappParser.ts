@@ -35,12 +35,27 @@ export type ParsedExpense = {
 
 // ---------- helpers ----------
 
+const APP_TZ = "America/Sao_Paulo";
+
 function todayISO() {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  // Data local do usuário (BR) — evita off-by-one quando o host roda em UTC.
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return fmt.format(new Date());
+}
+
+function shiftDaysISO(deltaDays: number): string {
+  const [y, m, d] = todayISO().split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + deltaDays);
+  const yy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getUTCDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
 }
 
 function toISO(day: number, month: number, year: number): string {
