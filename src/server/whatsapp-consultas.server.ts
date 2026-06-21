@@ -133,11 +133,8 @@ function addDaysISO(iso: string, days: number): string {
 function monthStartISO(iso: string): string {
   return `${iso.slice(0, 7)}-01`;
 }
-function nextMonthStartISO(iso: string): string {
-  const [y, m] = iso.split("-").map(Number);
-  const dt = new Date(Date.UTC(y, m, 1));
-  return dt.toISOString().slice(0, 10);
-}
+// WA-G3: removida `nextMonthStartISO` — janelas mensais usam "até hoje".
+
 
 function mesPorExtenso(iso: string): string {
   const [, m] = iso.split("-").map(Number);
