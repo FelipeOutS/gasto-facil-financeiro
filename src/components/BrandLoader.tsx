@@ -29,7 +29,8 @@ export function BrandLoader({
     >
       <div className="flex flex-col items-center gap-4 animate-fade-in">
         <BrandMark
-          className="h-12 w-auto sm:h-16 motion-safe:animate-[brand-pulse_1.8s_ease-in-out_infinite]"
+          variant="symbol"
+          className="h-14 w-14 sm:h-16 sm:w-16 motion-safe:animate-[brand-pulse_1.8s_ease-in-out_infinite]"
         />
         {message && (
           <p className="text-sm text-muted-foreground text-center">{message}</p>
