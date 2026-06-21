@@ -56,25 +56,50 @@ const ADMIN_MASTER_EMAILS = [
   "michael@medeiroscenografia.com.br",
 ] as const;
 
-async function isAdminMasterPhone(telefone: string): Promise<boolean> {
-  const tel = telefone.replace(/\D/g, "");
-  if (!tel) return false;
+/**
+ * Resolve o telefone para userId via whatsapp_links e checa elegibilidade:
+ *  - Admin Master sempre passa.
+ *  - Demais usuários só passam se houver beta ativa (whatsapp_beta_access).
+ *  - Em modo canário, somente Admin Master passa, independente de beta.
+ * Retorna `{ allowed: false }` para qualquer caso negativo, inclusive
+ * telefone sem vínculo ou sem consentimento.
+ */
+async function checkPhoneEligibility(
+  telefone: string,
+  canaryOn: boolean,
+): Promise<{ allowed: boolean }> {
+  const digits = telefone.replace(/\D/g, "");
+  if (!digits) return { allowed: false };
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabaseAdmin as any;
+    const candidatos = new Set<string>([telefone, digits]);
+    if (digits.startsWith("55")) candidatos.add(digits.slice(2));
+    else candidatos.add(`55${digits}`);
+
     const { data: link } = await sb
       .from("whatsapp_links")
-      .select("user_id, ativo, revogado_em")
-      .eq("telefone", tel)
+      .select("user_id, ativo, opt_in_em, revogado_em")
+      .in("telefone", Array.from(candidatos))
+      .limit(1)
       .maybeSingle();
-    if (!link || !link.ativo || link.revogado_em) return false;
-    const { data } = await sb.auth.admin.getUserById(link.user_id);
-    const email: string | null = data?.user?.email ?? null;
-    if (!email) return false;
-    return (ADMIN_MASTER_EMAILS as ReadonlyArray<string>).includes(email.trim().toLowerCase());
+    if (!link || !link.ativo || link.revogado_em || !link.opt_in_em) {
+      return { allowed: false };
+    }
+    const { data: u } = await sb.auth.admin.getUserById(link.user_id);
+    const email: string | null = (u?.user?.email ?? "").trim().toLowerCase() || null;
+    const isAdmin =
+      !!email && (ADMIN_MASTER_EMAILS as ReadonlyArray<string>).includes(email);
+
+    if (canaryOn) return { allowed: isAdmin };
+    if (isAdmin) return { allowed: true };
+
+    // Beta fechada
+    const { data: ok } = await sb.rpc("can_use_whatsapp", { _user_id: link.user_id });
+    return { allowed: ok === true };
   } catch {
-    return false;
+    return { allowed: false };
   }
 }
 
