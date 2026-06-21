@@ -641,7 +641,7 @@ async function fecharSessoesAnteriores(
 function listarCartoesParaPergunta(cartoes: Cartao[]): string {
   if (cartoes.length === 0) return "";
   const linhas = cartoes.map((c) => `• ${maskCartaoLabel(c)}`);
-  return `\nSeus cartões cadastrados:\n${linhas.join("\n")}`;
+  return `\n${linhas.join("\n")}`;
 }
 
 function perguntaFormaPagamento(s: Session): string {
@@ -649,7 +649,7 @@ function perguntaFormaPagamento(s: Session): string {
 }
 function perguntaCartao(s: Session, cartoes: Cartao[]): string {
   const lista = listarCartoesParaPergunta(cartoes);
-  return M.perguntaCartao(s.nome, formatBRL(s.valor), lista);
+  return M.perguntaCartao(lista);
 }
 function avisoCartaoAmbiguo(nomes: string[]): string {
   return M.avisoCartaoAmbiguo(nomes);
@@ -750,11 +750,11 @@ async function persistirGasto(
 
   const categoria = categoriaLabel(categoriaKey);
   const ondePagou = s.cartaoNaoCadastrado
-    ? " (cartão não cadastrado)"
+    ? "cartão não cadastrado"
     : s.cartaoId
-      ? ` no Cartão ${canonicalizeBrand(s.cartaoNomeDetectado ?? "")}`.replace(/\s+$/, "")
-      : ` no ${rotuloFormaPagamento(s.formaPagamento ?? "credito")}`;
-  const resposta = M.gastoSalvo(formatBRL(s.valor), categoria, ondePagou);
+      ? `Cartão ${canonicalizeBrand(s.cartaoNomeDetectado ?? "")}`.replace(/\s+$/, "")
+      : rotuloFormaPagamento(s.formaPagamento ?? "credito");
+  const resposta = M.gastoSalvo(formatBRL(s.valor), nomeLimpo, categoria, ondePagou);
   return { ok: true, gastoId: gastoRow.id, resposta };
 }
 
