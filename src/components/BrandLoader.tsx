@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { StarfieldBackground } from "@/components/StarfieldBackground";
-import iconDark from "/logos/brand/icone-gasto-inteligente-dark.svg?url";
+const ICON_DARK = "/logos/brand/icone-gasto-inteligente-dark.svg";
 
 /**
  * Tela de carregamento padrão do Gasto Inteligente.
