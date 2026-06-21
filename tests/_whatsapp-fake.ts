@@ -29,6 +29,8 @@ export const state = {
     { id: "cat-rest", legacy_id: "restaurante", nome: "Restaurante", user_id: "u1" },
     { id: "cat-int", legacy_id: "internet", nome: "Internet", user_id: "u1" },
   ] as Record<string, unknown>[],
+  gastosData: [] as Record<string, unknown>[],
+  receitasData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
