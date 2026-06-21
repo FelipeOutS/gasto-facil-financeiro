@@ -2,6 +2,7 @@ import { createContext, useContext, type ReactNode } from "react";
 import { BottomNav } from "./BottomNav";
 import { DesktopSidebar } from "./DesktopSidebar";
 import { MobileTopBar } from "./MobileTopBar";
+import { MobileNotificationsFab } from "./MobileNotificationsFab";
 import { AuthGate } from "./AuthGate";
 import { ExpiredAccessBanner } from "./ExpiredAccessBanner";
 import { useSidebarCollapsed } from "@/lib/sidebar-collapsed";
