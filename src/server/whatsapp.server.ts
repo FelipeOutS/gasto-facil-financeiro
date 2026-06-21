@@ -686,6 +686,11 @@ const PENDING_STATES = [
   "aguardando_confirmacao",
   "aguardando_forma_pagamento",
   "aguardando_cartao",
+  // WA — sessão de gasto criada por comando genérico ("registrar gasto"),
+  // ainda sem descrição e/ou valor. Precisa ficar persistida para que a
+  // próxima mensagem (incluindo "oi", "ajuda", "menu") não interrompa o
+  // fluxo nem dispare saudação / consulta / nova intenção.
+  "aguardando_descricao_e_valor_gasto",
   ...RECEITA_PENDING_STATES,
 ];
 
