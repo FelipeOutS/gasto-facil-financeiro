@@ -31,7 +31,7 @@ test('"Quero lançar uma renda" → fluxo completo não recorrente', async () =>
   r = await processarMensagemWhatsApp({ telefone: tel, texto: "não", external_id: "rec1-d" });
   expect(r.resposta).toContain("Confere pra mim");
   expect(r.resposta).toContain("Salário");
-  expect(r.resposta).toContain("R$ 3.500,00");
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 3.500,00");
 
   r = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "rec1-e" });
   expect(r.status).toBe("salva");
