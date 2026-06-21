@@ -35,15 +35,16 @@ function header(s: string) {
   console.log(`\n=== ${s} ===`);
 }
 
-const hojeISO = (() => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-})();
-
+const TZ = "America/Sao_Paulo";
+const fmtBR = new Intl.DateTimeFormat("en-CA", {
+  timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit",
+});
+const hojeISO = fmtBR.format(new Date());
 const ontemISO = (() => {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const [y, m, d] = hojeISO.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - 1);
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
 })();
 
 function makeCartao(over: Partial<Cartao>): Cartao {
