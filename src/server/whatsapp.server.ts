@@ -651,6 +651,10 @@ type Session = {
   categoriaSugestao?: string;
   mensagemOriginal: string;
   confianca?: number;
+  /** Marcador explícito: distingue sessões de gasto das de receita.
+   *  Persistido em whatsapp_messages.parsed quando criamos uma sessão
+   *  vazia de gasto (status=aguardando_descricao_e_valor_gasto). */
+  kind?: "gasto";
 };
 
 function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
