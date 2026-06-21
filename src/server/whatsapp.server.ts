@@ -962,7 +962,7 @@ export async function processarMensagemWhatsApp(
         ...sessao.session,
         formaPagamento: "credito",
         cartaoId: match.id,
-        cartaoNomeDetectado: match.nome,
+        cartaoNomeDetectado: displayCartaoNome(match),
         cartaoNaoCadastrado: false,
       };
       const resposta = formatarConfirmacao(sessionToParsed(next, cartoes));
