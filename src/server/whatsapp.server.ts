@@ -674,8 +674,27 @@ function perguntaCartao(s: Session, cartoes: Cartao[]): string {
 function avisoCartaoAmbiguo(nomes: string[]): string {
   return `Encontrei mais de um cartão parecido:\n${nomes.map((n) => `• ${n}`).join("\n")}\nMe diga o nome exato (ou os últimos 4 dígitos).`;
 }
+const NEGACAO_CARTAO_PATTERNS = [
+  /\bnenhum desses\b/,
+  /\bnenhum deles\b/,
+  /\bnenhum\b/,
+  /\bnao tenho\b/,
+  /\bnão tenho\b/,
+  /\boutro cart[aã]o\b/,
+  /\boutro\b/,
+];
+
+function isNegacaoCartao(texto: string): boolean {
+  const t = normalizeText(texto);
+  return NEGACAO_CARTAO_PATTERNS.some((re) => re.test(t));
+}
+
 function avisoCartaoNaoCadastrado(s: Session, digitado: string): string {
   return `Não encontrei "${digitado}" entre os seus cartões cadastrados.\nVou registrar este gasto como cartão não cadastrado. Depois, caso queira, você poderá cadastrá-lo na área Cartões do Gasto Inteligente.\n\nConfirma o gasto de ${formatBRL(s.valor)} em ${s.nome}, ${formatDataBR(s.data) === "hoje" ? "hoje" : formatDataBR(s.data)}, pago com cartão não cadastrado? Responda sim ou não.`;
+}
+
+function avisoCartaoNaoCadastradoNegado(s: Session): string {
+  return `Não encontrei nenhum dos seus cartões cadastrados para esse gasto.\n\nVou registrar como cartão não cadastrado. Depois, caso queira, você poderá cadastrar esse cartão na área Cartões do Gasto Inteligente.\n\nConfirma o gasto de ${formatBRL(s.valor)} em ${s.nome}, ${formatDataBR(s.data) === "hoje" ? "hoje" : formatDataBR(s.data)}, pago com cartão não cadastrado? Responda sim ou não.`;
 }
 
 async function verificarGastoExiste(gastoId: string | null | undefined): Promise<boolean> {
