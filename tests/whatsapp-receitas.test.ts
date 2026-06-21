@@ -93,11 +93,11 @@ test("Frequência inválida pede de novo", async () => {
 });
 
 // ---------------------------------------------------------------------
-test("Cancelamento no meio do fluxo encerra sem salvar", async () => {
+test("Cancelamento no meio do fluxo encerra sem salvar (mensagem de reinício)", async () => {
   await processarMensagemWhatsApp({ telefone: tel, texto: "Quero lançar uma renda", external_id: "c-a" });
   const r = await processarMensagemWhatsApp({ telefone: tel, texto: "cancelar", external_id: "c-b" });
   expect(r.status).toBe("cancelada");
-  expect(r.resposta.toLowerCase()).toContain("não registrei");
+  expect(r.resposta.toLowerCase()).toContain("vamos começar de novo");
   expect(receitasInserts().length).toBe(0);
 });
 
