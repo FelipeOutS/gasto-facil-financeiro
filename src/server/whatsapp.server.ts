@@ -797,8 +797,15 @@ async function persistirGasto(
   // original (evita "Mercado mercado 45,90" virar categoria/descrição).
   const categorias = await carregarCategorias(userId);
   const nomeLimpo = cleanDescricao(s.nome) || s.nome;
+  // Salvaguarda final: nunca persistir despesa com descrição genérica
+  // (ex.: "Gasto WhatsApp", "registrar gasto"). Bloqueia também o caso
+  // em que cleanDescricao normalize um texto-comando.
+  if (isGenericExpenseDescription(nomeLimpo)) {
+    return { ok: false, resposta: M.faltaNome() };
+  }
   const categoriaKey = pickCategoriaKey(nomeLimpo, categorias);
   const categoriaId = resolveCategoriaIdFromList(categorias, categoriaKey);
+
   const [y, m] = s.data.split("-").map(Number);
 
   const cartaoFinalId =
