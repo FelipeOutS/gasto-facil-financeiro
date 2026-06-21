@@ -356,6 +356,7 @@ function categoriaParaExibir(nome: string): string {
 }
 
 export function formatarConfirmacao(parsed: ParsedExpense, cartaoNome?: string): string {
+  const cartao = cartaoNome ?? parsed.cartaoNomeDetectado;
   const categoria = categoriaParaExibir(parsed.nome);
   const dataFmt = formatDataBR(parsed.data);
   const linhas = [
