@@ -1177,6 +1177,9 @@ admin_email_autorizado: ${canaryReadiness.admin_email_autorizado}`}
 categoria_resolvida_para_padaria: ${categoriaCheck.categoria_resolvida_para_padaria}`}
                   </pre>
                 )}
+              </div>
+
+
 
               {/* WA-E2.audit — Auditoria read-only do estado real do número (Admin Master) */}
               <div className="pt-2 border-t border-amber-500/20 space-y-2">
