@@ -998,14 +998,26 @@ export async function processarMensagemWhatsApp(
   if (msg.external_id) {
     const { data: existente } = await supabaseAdmin
       .from("whatsapp_messages")
-      .select("id, gasto_id, status")
+      .select("id, gasto_id, status, parsed")
       .eq("external_id", msg.external_id)
       .maybeSingle();
     if (existente) {
       const gastoAindaExiste = await verificarGastoExiste(existente.gasto_id);
-      // Receitas salvas via WhatsApp não preenchem gasto_id — qualquer
-      // status "salva" sem gasto_id é, na prática, uma receita já gravada.
-      const receitaSalva = existente.status === "salva" && !existente.gasto_id;
+      // Receitas salvas via WhatsApp registram marcadores explícitos
+      // em `parsed` (kind=receita + status=salva + receita_id/recorrencia_id).
+      // O dedup consulta esses campos explícitos — nunca infere por
+      // ausência de gasto_id.
+      const parsed = (existente.parsed ?? {}) as {
+        kind?: string;
+        status?: string;
+        receita_id?: string;
+        recorrencia_id?: string;
+      };
+      const receitaSalva =
+        existente.status === "salva" &&
+        parsed.kind === "receita" &&
+        parsed.status === "salva" &&
+        (typeof parsed.receita_id === "string" || typeof parsed.recorrencia_id === "string");
       if ((existente.status === "salva" && gastoAindaExiste) || receitaSalva) {
         return {
           status: "duplicada",
