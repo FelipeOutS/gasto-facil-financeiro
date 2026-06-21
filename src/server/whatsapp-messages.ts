@@ -94,6 +94,17 @@ export const whatsappMessages = {
     return `Tudo certo, não registrei esse gasto.`;
   },
 
+  // WA — comando de reinício geral da conversa ("cancelar", "reiniciar",
+  // "recomeçar", etc.). Encerra qualquer sessão pendente e devolve uma
+  // mensagem única, neutra, indicando que o usuário pode começar de novo.
+  resetConversa() {
+    return (
+      `Tudo certo, vamos começar de novo. 👋\n\n` +
+      `Posso registrar um gasto, uma renda ou mostrar um resumo das suas finanças.\n\n` +
+      `Digite "ajuda" para ver exemplos.`
+    );
+  },
+
   // ---- erros e edge cases ----
   naoEntendiSimNao() {
     // Mantemos "Não entendi" para preservar contratos de teste e clareza.
