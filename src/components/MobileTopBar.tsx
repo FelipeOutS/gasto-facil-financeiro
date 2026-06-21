@@ -51,7 +51,7 @@ export function MobileTopBar() {
           aria-label="Gasto Inteligente"
           className="flex items-center justify-center active:scale-[0.98]"
         >
-          <BrandMark className="h-6 w-auto md:h-7" />
+          <BrandMark variant="symbol" className="h-7 w-7 md:h-8 md:w-8" />
         </Link>
 
         {/* Direita — Sino + Avatar */}
