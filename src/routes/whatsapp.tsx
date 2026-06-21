@@ -322,10 +322,9 @@ function WhatsAppPage() {
     try {
       const r = await canaryReadinessFn();
       setCanaryReadiness(r);
-    } catch {
-      toast.error("Falha ao verificar prontidão do canário.");
     } finally {
       setCanaryReadinessLoading(false);
+    }
   }
 
   // ===== WA-Cat — Diagnóstico de resolução de categoria (temporário) =====
@@ -345,7 +344,6 @@ function WhatsAppPage() {
     } finally {
       setCategoriaCheckLoading(false);
     }
-  }
   }
 
   // ===== WA-E2.audit — Auditoria read-only do estado real do número =====
