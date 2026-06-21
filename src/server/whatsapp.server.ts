@@ -38,6 +38,7 @@ import {
   type ReceitaSession,
   type ReceitaStatus,
 } from "./whatsapp-receitas.server";
+import { detectConsultaIntent, handleConsulta } from "./whatsapp-consultas.server";
 
 // ---------- elegibilidade WhatsApp (gate único) ----------
 // Admin Master OU participante ativo da beta fechada (whatsapp_beta_access).
@@ -378,7 +379,8 @@ export type ProcessOutcome = {
     | "sem_plano"
     | "erro"
     | "valor_invalido"
-    | "gasto_excluido";
+    | "gasto_excluido"
+    | "consulta";
   gastoId?: string;
   confianca?: number;
   resposta: string;
@@ -1075,21 +1077,54 @@ export async function processarMensagemWhatsApp(
   const decisao = classificarResposta(texto);
   const sessao = await buscarSessaoAtiva(userId, msg.telefone);
 
-  // ---- Fase WA-G1: receitas têm prioridade quando há sessão de receita
-  //                  pendente, OU quando o texto livre indica receita. ----
+  // ---- Fase WA-G1: sessão de receita pendente sempre tem prioridade. ----
   const sessionIsReceita = sessao && isReceitaSession(sessao.session);
-  const startsReceita = !sessao && decisao === "outro" && isReceitaIntent(texto);
-
-  if (sessionIsReceita || startsReceita) {
+  if (sessionIsReceita) {
     return await processarReceita({
-      userId,
-      msg,
-      texto,
-      recebidaEm,
-      decisao,
-      sessao: sessionIsReceita ? sessao : null,
+      userId, msg, texto, recebidaEm, decisao, sessao,
     });
   }
+
+  // ---- Fase WA-G2: consultas financeiras ----
+  // Roda ANTES da detecção de receita livre porque frases como "quanto meus
+  // gastos afetam minha renda" contêm a palavra "renda" mas são consulta.
+  // Só dispara quando NÃO há sessão pendente e a mensagem não é uma resposta
+  // sim/não/forma de pagamento. Curtas como "sim"/"pix" continuam roteadas
+  // para o pendente quando houver.
+  if (!sessao && decisao === "outro") {
+    const intent = detectConsultaIntent(texto);
+    if (intent) {
+      const out = await handleConsulta(userId, intent);
+      await gravarSessao(
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "sem_pendencia",
+        {
+          nome: "",
+          valor: 0,
+          data: todayLocalISO(),
+          mensagemOriginal: texto,
+        },
+        out.resposta,
+      );
+      return { status: "consulta", resposta: out.resposta };
+    }
+  }
+
+  // ---- Fase WA-G1: texto livre indicando intenção de receita. ----
+  const startsReceita = !sessao && decisao === "outro" && isReceitaIntent(texto);
+  if (startsReceita) {
+    return await processarReceita({
+      userId, msg, texto, recebidaEm, decisao, sessao: null,
+    });
+  }
+
+
+
+
 
 
   // ---- Confirmar/cancelar ----

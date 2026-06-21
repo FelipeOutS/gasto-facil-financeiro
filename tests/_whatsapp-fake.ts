@@ -29,6 +29,8 @@ export const state = {
     { id: "cat-rest", legacy_id: "restaurante", nome: "Restaurante", user_id: "u1" },
     { id: "cat-int", legacy_id: "internet", nome: "Internet", user_id: "u1" },
   ] as Record<string, unknown>[],
+  gastosData: [] as Record<string, unknown>[],
+  receitasData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
@@ -111,7 +113,13 @@ function makeBuilder(table: string): any {
     }
     if (table === "cartoes") return { data: state.cartoesData, error: null };
     if (table === "categorias") return { data: state.categoriasData, error: null };
-    if (table === "gastos") return { data: { id: "x" }, error: null };
+    if (table === "gastos") {
+      if (ctx.filters?.id) return { data: { id: ctx.filters.id }, error: null };
+      return { data: state.gastosData, error: null };
+    }
+    if (table === "receitas") {
+      return { data: state.receitasData, error: null };
+    }
     if (table === "auth.users")
       return { data: { email: "u@example.com" }, error: null };
     return { data: null, error: null };
@@ -126,6 +134,9 @@ function makeBuilder(table: string): any {
     eq(col: string, val: unknown) { ctx.filters[col] = val; return builder; },
     in: () => builder,
     gte: () => builder,
+    lt: () => builder,
+    lte: () => builder,
+    gt: () => builder,
     order: () => builder,
     limit: () => builder,
     single: finalize,
@@ -165,9 +176,13 @@ export function resetState(opts?: {
   cartoes?: Record<string, unknown>[];
   categorias?: Record<string, unknown>[];
   link?: typeof state.linkData;
+  gastos?: Record<string, unknown>[];
+  receitas?: Record<string, unknown>[];
 }) {
   state.inserts.length = 0;
   state.pendingRow = null;
+  state.gastosData = opts?.gastos ?? [];
+  state.receitasData = opts?.receitas ?? [];
   state.cartoesData = opts?.cartoes ?? [
     {
       id: "c-nu", nome: "Nubank", banco: "Nubank",
