@@ -97,6 +97,11 @@ export const Route = createRootRoute({
         content:
           "Organize gastos, receitas, cartões, metas, mercado, relatórios e previsões financeiras em um só lugar.",
       },
+      { name: "description", content: "Gasto Inteligente: controle financeiro pessoal com registro manual, foto e importação de investimentos." },
+      { property: "og:description", content: "Gasto Inteligente: controle financeiro pessoal com registro manual, foto e importação de investimentos." },
+      { name: "twitter:description", content: "Gasto Inteligente: controle financeiro pessoal com registro manual, foto e importação de investimentos." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/727ea37a-7137-4b26-8a7e-78b184885840/id-preview-3104884e--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1782072328943.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/727ea37a-7137-4b26-8a7e-78b184885840/id-preview-3104884e--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1782072328943.png" },
     ],
     links: [
       {
