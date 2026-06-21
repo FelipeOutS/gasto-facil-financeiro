@@ -918,12 +918,11 @@ export async function processarMensagemWhatsApp(
           data: new Date().toISOString().slice(0, 10),
           mensagemOriginal: texto,
         },
-        "Não há nenhum gasto aguardando confirmação no momento. Me envie o gasto, ex.: \"Mercado 48,90 hoje no Nubank\".",
+        M.semPendencia(),
       );
       return {
         status: "sem_pendencia",
-        resposta:
-          "Não há nenhum gasto aguardando confirmação no momento. Me envie o gasto, ex.: \"Mercado 48,90 hoje no Nubank\".",
+        resposta: M.semPendencia(),
       };
     }
 
