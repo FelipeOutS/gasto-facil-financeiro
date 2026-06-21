@@ -571,10 +571,7 @@ async function persistirGasto(
     return { ok: false, resposta: "❌ Não consegui salvar agora. Pode tentar de novo em instantes?" };
   }
 
-  const categoria =
-    s.categoriaSugestao && s.categoriaSugestao.length < 40
-      ? s.categoriaSugestao
-      : suggestCategoryFromText(s.nome) ?? "Outros";
+  const categoria = categoriaLabel(categoriaKey);
   const ondePagou = s.cartaoNaoCadastrado
     ? " (cartão não cadastrado)"
     : s.cartaoId
