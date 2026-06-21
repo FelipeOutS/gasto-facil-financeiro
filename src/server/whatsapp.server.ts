@@ -928,6 +928,15 @@ async function processarReceita(args: {
         return { status: "erro", resposta: result.resposta };
       }
       await fecharSessoesAnteriores(userId, msg.telefone, "salva");
+      // Persistência da receita gera marcadores explícitos em `parsed`
+      // (kind/status/receita_id/recorrencia_id) — usados pelo dedup por
+      // external_message_id no reenvio do mesmo webhook pela Meta.
+      const sessionSalva = {
+        ...session,
+        status: "salva",
+        receita_id: result.receitaId,
+        ...(result.recorrenciaId ? { recorrencia_id: result.recorrenciaId } : {}),
+      } as unknown as Session;
       await gravarSessao(
         userId,
         msg.telefone,
@@ -935,7 +944,7 @@ async function processarReceita(args: {
         texto,
         recebidaEm,
         "salva",
-        session as unknown as Session,
+        sessionSalva,
         result.resposta,
       );
       return { status: "salva", resposta: result.resposta };
