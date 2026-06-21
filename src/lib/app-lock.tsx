@@ -341,7 +341,7 @@ function LockScreen({
       aria-modal="true"
     >
       <div className="flex flex-col items-center gap-4 text-center">
-        <BrandMark className="h-12 w-auto sm:h-14" />
+        <BrandMark variant="login" className="h-12 w-auto sm:h-14" />
         <div className="grid h-20 w-20 place-items-center rounded-full bg-brand-soft text-brand ring-1 ring-border/60">
           <Fingerprint className="h-10 w-10" />
         </div>

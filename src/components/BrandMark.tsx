@@ -1,59 +1,83 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Official Gasto Inteligente logo (full lockup: símbolo + "Gasto Inteligente").
+ * Official Gasto Inteligente brand mark.
  *
- * Served from /public/logos/brand/ via absolute URLs so the asset resolves
- * identically in the Lovable preview, in published deployments and in any
- * embedded/external context — no bundler hashing surprises.
+ * Centralized component — every screen must render the logo through this
+ * component so light/dark variants stay consistent.
  *
- * - `variant="auto"` (default): switches between dark-bg and light-bg lockups
- *   based on the active theme.
- * - `symbolOnly`: only the icon (no wordmark) for very compact spots.
+ * Variants:
+ * - `full`    → big surfaces (landing, public pages, footer, splashes).
+ * - `login`   → auth screens (login, cadastro, recuperar-senha, confirmar).
+ * - `sidebar` → app sidebar (open) and side menus.
+ * - `symbol`  → icon-only (collapsed sidebar, compact headers, loaders,
+ *               mobile top bar when space is tight).
+ *
+ * The component always renders both the light-bg and dark-bg SVG and lets
+ * Tailwind's `dark:` variant swap them — no CSS filters / recoloring.
  */
-const LOGO_LIGHT = "/logos/brand/gasto-inteligente-light.png";
-const LOGO_DARK = "/logos/brand/gasto-inteligente-dark.png";
-const LOGO_SYMBOL = "/logos/brand/gasto-inteligente-symbol.png";
+
+type Variant = "full" | "login" | "sidebar" | "symbol";
+
+const SOURCES: Record<Variant, { light: string; dark: string }> = {
+  full: {
+    light: "/logos/brand/logo-gasto-inteligente-completo-light.svg",
+    dark: "/logos/brand/logo-gasto-inteligente-completo-dark.svg",
+  },
+  login: {
+    light: "/logos/brand/logo-gasto-inteligente-login-light.svg",
+    dark: "/logos/brand/logo-gasto-inteligente-login-dark.svg",
+  },
+  sidebar: {
+    light: "/logos/brand/logo-gasto-inteligente-sidebar-light.svg",
+    dark: "/logos/brand/logo-gasto-inteligente-sidebar-dark.svg",
+  },
+  symbol: {
+    light: "/logos/brand/icone-gasto-inteligente-light.svg",
+    dark: "/logos/brand/icone-gasto-inteligente-dark.svg",
+  },
+};
+
+export interface BrandMarkProps {
+  className?: string;
+  variant?: Variant;
+  /** @deprecated use `variant="symbol"` */
+  symbolOnly?: boolean;
+  alt?: string;
+  /** Mark as decorative — sets aria-hidden and empty alt. */
+  decorative?: boolean;
+}
 
 export function BrandMark({
   className,
-  symbolOnly = false,
+  variant,
+  symbolOnly,
   alt = "Gasto Inteligente",
-}: {
-  className?: string;
-  symbolOnly?: boolean;
-  alt?: string;
-}) {
-  if (symbolOnly) {
-    return (
-      <img
-        src={LOGO_SYMBOL}
-        alt={alt}
-        className={cn("object-contain", className)}
-        draggable={false}
-      />
-    );
-  }
+  decorative = false,
+}: BrandMarkProps) {
+  const resolved: Variant = variant ?? (symbolOnly ? "symbol" : "full");
+  const { light, dark } = SOURCES[resolved];
+  const imgAlt = decorative ? "" : alt;
+  const ariaHidden = decorative ? true : undefined;
+
   return (
     <>
       <img
-        src={LOGO_DARK}
-        alt={alt}
-        width={1920}
-        height={619}
+        src={dark}
+        alt={imgAlt}
+        aria-hidden={ariaHidden}
         className={cn(
-          "hidden dark:block w-auto max-w-full object-contain",
+          "hidden dark:block w-auto max-w-full object-contain select-none",
           className,
         )}
         draggable={false}
       />
       <img
-        src={LOGO_LIGHT}
-        alt={alt}
-        width={1920}
-        height={619}
+        src={light}
+        alt={imgAlt}
+        aria-hidden={ariaHidden}
         className={cn(
-          "block dark:hidden w-auto max-w-full object-contain",
+          "block dark:hidden w-auto max-w-full object-contain select-none",
           className,
         )}
         draggable={false}
