@@ -364,5 +364,101 @@ test('Padaria salva com a categoria oficial "Refeições" quando existe', async 
   void resp;
 });
 
+// ---------- Bug 8: negação de cartão não trata texto como nome literal ----------
+
+test('"nenhum desses" não exibe nome literal e segue para confirmação', async () => {
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Padaria 1,00",
+    external_id: "neg1",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "cartão",
+    external_id: "neg2",
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "nenhum desses",
+    external_id: "neg3",
+  });
+  expect(r.status).toBe("aguardando_confirmacao");
+  expect(r.resposta).not.toMatch(/nenhum desses/i);
+  expect(r.resposta).toMatch(/Não encontrei nenhum dos seus cartões cadastrados/i);
+  expect(r.resposta).toMatch(/cartão não cadastrado/i);
+  expect(r.resposta).toMatch(/Responda sim ou não/);
+
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "sim",
+    external_id: "neg4",
+  });
+  const g = gastosInserts()[0]?.row as Record<string, unknown>;
+  expect(g.cartao_id).toBeNull();
+  expect(g.observacao).not.toMatch(/nenhum desses/i);
+});
+
+test('"não tenho" segue como cartão não cadastrado sem nome literal', async () => {
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Uber 12,00",
+    external_id: "neg5",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "cartão",
+    external_id: "neg6",
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "não tenho",
+    external_id: "neg7",
+  });
+  expect(r.status).toBe("aguardando_confirmacao");
+  expect(r.resposta).toMatch(/Não encontrei nenhum dos seus cartões cadastrados/i);
+  expect(r.resposta).not.toMatch(/"não tenho"/i);
+});
+
+test('"outro cartão" segue como cartão não cadastrado sem nome literal', async () => {
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Uber 12,00",
+    external_id: "neg8",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "cartão",
+    external_id: "neg9",
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "outro cartão",
+    external_id: "neg10",
+  });
+  expect(r.status).toBe("aguardando_confirmacao");
+  expect(r.resposta).toMatch(/Não encontrei nenhum dos seus cartões cadastrados/i);
+  expect(r.resposta).not.toMatch(/"outro cartão"/i);
+});
+
+test('nome de cartão inexistente ainda mostra o nome literal', async () => {
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Uber 12,00",
+    external_id: "neg11",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "cartão",
+    external_id: "neg12",
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Itaú Platinum",
+    external_id: "neg13",
+  });
+  expect(r.status).toBe("aguardando_confirmacao");
+  expect(r.resposta).toMatch(/Não encontrei "Itaú Platinum"/i);
+});
+
 afterAll(() => {});
 
