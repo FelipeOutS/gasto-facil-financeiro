@@ -226,15 +226,27 @@ export function AuthShell({
   subtitle,
   children,
   footer,
+  background,
 }: {
   title: string;
   subtitle?: string;
   children: ReactNode;
   footer?: ReactNode;
+  /**
+   * Quando informado, substitui o fundo padrão (gradiente + orbs) por um
+   * slot customizado renderizado atrás do card. Usado p.ex. pela tela de
+   * login para aplicar o fundo estrelado.
+   */
+  background?: ReactNode;
 }) {
   return (
     <div
-      className="relative w-full overflow-x-hidden bg-background bg-gradient-to-br from-slate-50 via-white to-blue-50/40 px-4 py-8 sm:px-6 sm:py-12 dark:from-slate-950 dark:via-background dark:to-slate-900"
+      className={
+        "relative w-full overflow-x-hidden px-4 py-8 sm:px-6 sm:py-12 " +
+        (background
+          ? "bg-[#05070c]"
+          : "bg-background bg-gradient-to-br from-slate-50 via-white to-blue-50/40 dark:from-slate-950 dark:via-background dark:to-slate-900")
+      }
       style={{
         minHeight: "100vh",
         // eslint-disable-next-line
@@ -245,8 +257,12 @@ export function AuthShell({
         paddingTop: "max(2rem, env(safe-area-inset-top))",
       }}
     >
-      <div aria-hidden className="pointer-events-none absolute -top-32 -left-24 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl dark:bg-blue-500/10" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-emerald-300/20 blur-3xl dark:bg-emerald-500/10" />
+      {background ?? (
+        <>
+          <div aria-hidden className="pointer-events-none absolute -top-32 -left-24 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl dark:bg-blue-500/10" />
+          <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-emerald-300/20 blur-3xl dark:bg-emerald-500/10" />
+        </>
+      )}
 
       <div className="relative mx-auto flex w-full max-w-md flex-col animate-fade-in">
         <Link
