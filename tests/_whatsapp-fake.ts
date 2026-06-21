@@ -173,9 +173,13 @@ export function resetState(opts?: {
   cartoes?: Record<string, unknown>[];
   categorias?: Record<string, unknown>[];
   link?: typeof state.linkData;
+  gastos?: Record<string, unknown>[];
+  receitas?: Record<string, unknown>[];
 }) {
   state.inserts.length = 0;
   state.pendingRow = null;
+  state.gastosData = opts?.gastos ?? [];
+  state.receitasData = opts?.receitas ?? [];
   state.cartoesData = opts?.cartoes ?? [
     {
       id: "c-nu", nome: "Nubank", banco: "Nubank",
