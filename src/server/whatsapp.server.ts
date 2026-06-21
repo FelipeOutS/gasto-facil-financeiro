@@ -44,6 +44,11 @@ import {
   detectConversationalIntent,
   handleConversational,
 } from "./whatsapp-consultas.server";
+import {
+  detectConsultaEspecifica,
+  handleConsultaEspecifica,
+  handleCategoriaAmbiguaResponse,
+} from "./whatsapp-consultas-especificas.server";
 
 
 // ---------- elegibilidade WhatsApp (gate único) ----------
