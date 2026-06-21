@@ -406,6 +406,7 @@ function rotuloFormaPagamento(f: FormaPagamento, cartaoNome?: string): string {
 
 const CATEGORIA_LABEL: Record<string, string> = {
   mercado: "Mercado",
+  alimentacao: "Alimentação",
   transporte: "Transporte",
   saude: "Saúde",
   restaurante: "Restaurante",
@@ -426,23 +427,30 @@ function categoriaLabel(key: string | undefined | null): string {
 }
 
 /** Resolve a label limpa de categoria a partir do nome do gasto. */
-function categoriaParaExibir(nome: string): string {
-  const key = suggestCategoryFromText(nome) || "outros";
+function categoriaParaExibir(nome: string, categorias?: CategoriaRow[]): string {
+  const key = categorias && categorias.length
+    ? pickCategoriaKey(nome, categorias)
+    : (suggestCategoryFromText(nome) || "outros");
   return categoriaLabel(key);
 }
 
-export function formatarConfirmacao(parsed: ParsedExpense, cartaoNome?: string): string {
-  const cartao = cartaoNome ?? parsed.cartaoNomeDetectado;
-  const categoria = categoriaParaExibir(parsed.nome);
+export function formatarConfirmacao(
+  parsed: ParsedExpense,
+  cartaoNome?: string,
+  categorias?: CategoriaRow[],
+): string {
+  const cartao = canonicalizeBrand(cartaoNome ?? parsed.cartaoNomeDetectado ?? "");
+  const descricao = cleanDescricao(parsed.nome) || parsed.nome;
+  const categoria = categoriaParaExibir(descricao, categorias);
   const dataFmt = formatDataBR(parsed.data);
   const linhas = [
     "🧾 Encontrei este gasto:",
     "",
-    `Descrição: ${parsed.nome}`,
+    `Descrição: ${descricao}`,
     `Categoria: ${categoria}`,
     `Valor: ${formatBRL(parsed.valor)}`,
     `Data: ${dataFmt === "hoje" ? "Hoje" : dataFmt}`,
-    `Pagamento: ${rotuloFormaPagamento(parsed.formaPagamento, cartao)}`,
+    `Pagamento: ${rotuloFormaPagamento(parsed.formaPagamento, cartao || undefined)}`,
   ];
   if (parsed.parcelas && parsed.parcelas > 1) linhas.push(`Parcelas: ${parsed.parcelas}x`);
   linhas.push("");
