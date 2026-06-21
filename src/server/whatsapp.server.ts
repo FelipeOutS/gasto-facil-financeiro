@@ -533,10 +533,15 @@ export function detectarFaltantes(
   parsed: ParsedExpense,
   cartoes: Cartao[],
 ): string | null {
-  if (!parsed.valor || parsed.valor <= 0) {
-    return M.faltaValor();
+  const valorAusente = !parsed.valor || parsed.valor <= 0;
+  const nomeAusente = !parsed.nome || parsed.nome.length < 2;
+  if (valorAusente && nomeAusente) {
+    return M.faltaDescricaoEValor();
   }
-  if (!parsed.nome || parsed.nome.length < 2) {
+  if (valorAusente) {
+    return M.faltaValor(parsed.nome);
+  }
+  if (nomeAusente) {
     return M.faltaNome();
   }
   if (parsed.formaPagamento === "credito") {
