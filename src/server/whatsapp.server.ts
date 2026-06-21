@@ -20,6 +20,7 @@ import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.
 const supabaseAdmin = _supabaseAdmin as any;
 import {
   parseWhatsAppExpenseMessage,
+  cleanDescricao,
   type ParsedExpense,
 } from "@/lib/whatsappParser";
 import { suggestCategoryFromText } from "@/lib/categories";
@@ -130,10 +131,53 @@ function normalizeText(s: string): string {
     .trim();
 }
 
+/** Capitalização canônica de marcas conhecidas — usada quando o cadastro foi
+ *  salvo com caixa inconsistente (ex.: "Mercado pago" → "Mercado Pago"). */
+const CANONICAL_BRAND: Record<string, string> = {
+  "nubank": "Nubank",
+  "itau": "Itaú",
+  "itaú": "Itaú",
+  "santander": "Santander",
+  "mercado pago": "Mercado Pago",
+  "mercadopago": "Mercado Pago",
+  "inter": "Inter",
+  "c6": "C6",
+  "c6 bank": "C6 Bank",
+  "bradesco": "Bradesco",
+  "banco do brasil": "Banco do Brasil",
+  "bb": "Banco do Brasil",
+  "caixa": "Caixa",
+  "picpay": "PicPay",
+  "next": "Next",
+  "neon": "Neon",
+  "will": "Will",
+  "will bank": "Will Bank",
+  "pan": "Pan",
+  "original": "Original",
+  "btg": "BTG",
+  "xp": "XP",
+  "porto": "Porto",
+  "safra": "Safra",
+};
+
+function canonicalizeBrand(nome: string | null | undefined): string {
+  const raw = (nome ?? "").trim();
+  if (!raw) return raw;
+  const key = raw.toLowerCase();
+  if (CANONICAL_BRAND[key]) return CANONICAL_BRAND[key];
+  return raw;
+}
+
+/** Nome a ser exibido para um cartão cadastrado, preservando a capitalização
+ *  do cadastro — apenas corrige marcas conhecidas salvas em caixa errada. */
+export function displayCartaoNome(c: Cartao): string {
+  return canonicalizeBrand(c.nome);
+}
+
 /** Mascara cartão para exibição (nunca número completo). */
 export function maskCartaoLabel(c: Cartao): string {
-  const nome = (c.nome ?? "").trim();
-  const banco = (c.banco ?? "").trim();
+  const nome = displayCartaoNome(c);
+  const banco = canonicalizeBrand(c.banco ?? "");
   // Tenta extrair 4 dígitos contíguos do nome (ex.: "Nubank 1234")
   const m = nome.match(/(\d{4})(?!.*\d{4})/);
   if (m) {
