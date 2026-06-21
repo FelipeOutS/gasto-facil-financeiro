@@ -854,9 +854,25 @@ async function processarReceita(args: {
   sessao: SessaoRow | null;
 }): Promise<ProcessOutcome> {
   const { userId, msg, texto, recebidaEm, decisao, sessao } = args;
+  const current = (sessao?.status ?? "") as ReceitaStatus | "";
+  // "cancelar" explícito encerra a sessão em qualquer etapa.
+  // Já o "não" (decisao=cancel) só é tratado como cancelamento global em
+  // estados que não fazem perguntas sim/não — caso contrário ele é uma
+  // resposta válida (ex.: "Esse valor costuma entrar de forma recorrente?").
+  const hardCancelRe = /\b(cancelar|cancela|cancelado|cancelada)\b/i;
+  const isHardCancel = hardCancelRe.test(texto);
+  const cancelStatesGlobais: ReceitaStatus[] = [
+    "rec_aguardando_tipo",
+    "rec_aguardando_valor",
+    "rec_aguardando_frequencia",
+    "rec_aguardando_dia",
+    "rec_aguardando_categoria",
+  ];
+  const shouldHardCancel =
+    sessao && (isHardCancel ||
+      (decisao === "cancel" && cancelStatesGlobais.includes(current as ReceitaStatus)));
 
-  // Cancelamento em qualquer etapa encerra a sessão de receita.
-  if (sessao && decisao === "cancel") {
+  if (shouldHardCancel) {
     await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     await gravarSessao(
       userId,
