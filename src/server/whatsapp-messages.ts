@@ -136,6 +136,16 @@ export const whatsappMessages = {
     );
   },
 
+  // WA — usado quando já existe sessão de gasto pendente aguardando
+  // descrição e valor e o usuário envia uma mensagem que não traz nem
+  // descrição nem valor (ex.: "oi", "ajuda", "menu").
+  aguardandoGastoEValor() {
+    return (
+      `Ainda estou aguardando o gasto e o valor.\n\n` +
+      `Ex.: Uber R$ 48,90`
+    );
+  },
+
   cartaoNaoEncontradoNoParse(digitado: string, listaCartoes: string) {
     return (
       `❓ Não encontrei o cartão "${digitado}" cadastrado.${listaCartoes}\n` +
