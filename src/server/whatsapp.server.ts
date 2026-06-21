@@ -528,13 +528,82 @@ export function formatarConfirmacao(
   });
 }
 
+/**
+ * Normaliza texto para comparação de comandos genéricos:
+ * remove acentos, baixa caixa, colapsa espaços, remove pontuação final.
+ */
+function normalizeCmd(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[.!?,;:]+$/g, "")
+    .trim();
+}
+
+/**
+ * Comandos/descrições genéricos que NÃO podem virar descrição de gasto.
+ * Inclui tanto frases-comando ("registrar gasto") quanto descrições
+ * automáticas inválidas ("Gasto WhatsApp"). Comparação após normalizeCmd.
+ */
+const GENERIC_EXPENSE_TERMS: ReadonlySet<string> = new Set([
+  "gasto",
+  "gastos",
+  "despesa",
+  "despesas",
+  "lancamento",
+  "lancamentos",
+  "registrar gasto",
+  "registrar um gasto",
+  "registrar despesa",
+  "registrar uma despesa",
+  "novo gasto",
+  "nova despesa",
+  "adicionar gasto",
+  "adicionar um gasto",
+  "adicionar despesa",
+  "lancar gasto",
+  "lancar um gasto",
+  "lancar despesa",
+  "quero registrar um gasto",
+  "quero registrar gasto",
+  "quero lancar um gasto",
+  "quero lancar gasto",
+  "quero adicionar um gasto",
+  "quero adicionar gasto",
+  "gasto whatsapp",
+  "despesa whatsapp",
+]);
+
+export function isGenericExpenseCommand(texto: string): boolean {
+  if (!texto) return false;
+  return GENERIC_EXPENSE_TERMS.has(normalizeCmd(texto));
+}
+
+/**
+ * Bloqueia que descrições genéricas (vindas do parser ou de uma sessão)
+ * sejam usadas como nome real do gasto. Ex.: "registrar gasto",
+ * "Gasto WhatsApp", "Novo Gasto" — todas inválidas.
+ */
+export function isGenericExpenseDescription(nome: string | undefined | null): boolean {
+  if (!nome) return true;
+  const n = normalizeCmd(nome);
+  if (!n) return true;
+  return GENERIC_EXPENSE_TERMS.has(n);
+}
+
 /** Mantido para compatibilidade com testes existentes. */
 export function detectarFaltantes(
   parsed: ParsedExpense,
   cartoes: Cartao[],
 ): string | null {
   const valorAusente = !parsed.valor || parsed.valor <= 0;
-  const nomeAusente = !parsed.nome || parsed.nome.length < 2;
+  const nomeAusente =
+    !parsed.nome ||
+    parsed.nome.length < 2 ||
+    isGenericExpenseDescription(parsed.nome);
   if (valorAusente && nomeAusente) {
     return M.faltaDescricaoEValor();
   }
@@ -544,6 +613,7 @@ export function detectarFaltantes(
   if (nomeAusente) {
     return M.faltaNome();
   }
+
   if (parsed.formaPagamento === "credito") {
     if (parsed.cartaoAmbiguo && parsed.cartaoAmbiguo.nomes.length > 1) {
       return `❓ Você tem mais de um cartão parecido: ${parsed.cartaoAmbiguo.nomes.join(", ")}. Me diga o nome exato do cartão usado.`;
