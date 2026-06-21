@@ -366,7 +366,7 @@ export function formatarConfirmacao(parsed: ParsedExpense, cartaoNome?: string):
     `Categoria: ${categoria}`,
     `Valor: ${formatBRL(parsed.valor)}`,
     `Data: ${dataFmt === "hoje" ? "Hoje" : dataFmt}`,
-    `Pagamento: ${rotuloFormaPagamento(parsed.formaPagamento, cartaoNome)}`,
+    `Pagamento: ${rotuloFormaPagamento(parsed.formaPagamento, cartao)}`,
   ];
   if (parsed.parcelas && parsed.parcelas > 1) linhas.push(`Parcelas: ${parsed.parcelas}x`);
   linhas.push("");
