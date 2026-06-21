@@ -443,7 +443,7 @@ export type StepResult = {
 export function buildConfirmacao(s: ReceitaSession): string {
   return M.receita.resumoConfirmacao({
     descricao: s.descricao || s.tipoLabel || "Renda",
-    categoria: s.tipoLabel || "Outros",
+    tipo: s.tipoLabel || "Outros",
     valor: formatBRL(Number(s.valor || 0)),
     data: formatDataBR(s.data || todayLocalISO()),
     resumoRecorrencia: resumoRecorrencia(s),
