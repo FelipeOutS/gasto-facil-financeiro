@@ -1077,32 +1077,24 @@ export async function processarMensagemWhatsApp(
   const decisao = classificarResposta(texto);
   const sessao = await buscarSessaoAtiva(userId, msg.telefone);
 
-  // ---- Fase WA-G1: receitas têm prioridade quando há sessão de receita
-  //                  pendente, OU quando o texto livre indica receita. ----
+  // ---- Fase WA-G1: sessão de receita pendente sempre tem prioridade. ----
   const sessionIsReceita = sessao && isReceitaSession(sessao.session);
-  const startsReceita = !sessao && decisao === "outro" && isReceitaIntent(texto);
-
-  if (sessionIsReceita || startsReceita) {
+  if (sessionIsReceita) {
     return await processarReceita({
-      userId,
-      msg,
-      texto,
-      recebidaEm,
-      decisao,
-      sessao: sessionIsReceita ? sessao : null,
+      userId, msg, texto, recebidaEm, decisao, sessao,
     });
   }
 
   // ---- Fase WA-G2: consultas financeiras ----
-  // Só dispara quando NÃO há sessão pendente (despesa/receita) e a mensagem
-  // não é uma resposta sim/não/forma de pagamento. Curtas como "sim", "pix"
-  // continuam encaminhadas ao fluxo pendente quando houver.
+  // Roda ANTES da detecção de receita livre porque frases como "quanto meus
+  // gastos afetam minha renda" contêm a palavra "renda" mas são consulta.
+  // Só dispara quando NÃO há sessão pendente e a mensagem não é uma resposta
+  // sim/não/forma de pagamento. Curtas como "sim"/"pix" continuam roteadas
+  // para o pendente quando houver.
   if (!sessao && decisao === "outro") {
     const intent = detectConsultaIntent(texto);
     if (intent) {
       const out = await handleConsulta(userId, intent);
-      // Persistimos apenas o registro de retenção padrão (sem dados sensíveis
-      // adicionais), reaproveitando o status terminal "sem_pendencia".
       await gravarSessao(
         userId,
         msg.telefone,
@@ -1121,6 +1113,16 @@ export async function processarMensagemWhatsApp(
       return { status: "consulta", resposta: out.resposta };
     }
   }
+
+  // ---- Fase WA-G1: texto livre indicando intenção de receita. ----
+  const startsReceita = !sessao && decisao === "outro" && isReceitaIntent(texto);
+  if (startsReceita) {
+    return await processarReceita({
+      userId, msg, texto, recebidaEm, decisao, sessao: null,
+    });
+  }
+
+
 
 
 
