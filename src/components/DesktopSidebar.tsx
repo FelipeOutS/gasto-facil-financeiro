@@ -196,7 +196,7 @@ export function DesktopSidebar() {
       <div className={cn("pt-5 pb-4", collapsed ? "px-2 flex flex-col items-center gap-3" : "px-5")}>
         {collapsed ? (
           <>
-            <BrandMark symbolOnly className="h-9 w-9" />
+            <BrandMark variant="symbol" className="h-9 w-9" />
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
