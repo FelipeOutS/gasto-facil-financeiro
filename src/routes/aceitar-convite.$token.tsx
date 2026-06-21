@@ -61,7 +61,7 @@ function AcceptInvitePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 px-4 py-10">
       <div className="mx-auto w-full max-w-md">
-        <div className="mb-6 flex justify-center"><BrandMark className="h-10 w-auto" /></div>
+        <div className="mb-6 flex justify-center"><BrandMark variant="login" className="h-10 w-auto" /></div>
         <div className="rounded-3xl border border-border/60 bg-card p-6 shadow-lg">
           {loading ? (
             <p className="text-center text-sm text-muted-foreground">{t("invite.loading")}</p>
