@@ -192,4 +192,107 @@ test("formatarConfirmacao nunca repete valor ou mensagem original na categoria",
   expect(out).not.toMatch(/Mercado\s+mercado/i);
 });
 
+// ---------- Bug 4: pontuação residual na descrição ----------
+
+test('"Padaria 1,00" → descrição salva sem vírgula residual', async () => {
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Padaria 1,00 pix",
+    external_id: "p1",
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "sim",
+    external_id: "p2",
+  });
+  expect(r.status).toBe("salva");
+  const g = gastosInserts()[0]?.row as Record<string, unknown>;
+  expect(g.descricao).toBe("Padaria");
+  expect(g.estabelecimento).toBe("Padaria");
+});
+
+// ---------- Bug 5: capitalização do cartão preservada ----------
+
+test("cartão cadastrado com caixa errada é exibido com capitalização canônica", async () => {
+  // cadastro foi gravado como "Mercado pago" (lowercase p) — display canônico
+  resetState({
+    cartoes: [
+      {
+        id: "c-mp-low",
+        nome: "Mercado pago",
+        banco: "Mercado pago",
+        limite_total: 0,
+        dia_fechamento: 1,
+        dia_vencimento: 10,
+        cor: "#000",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ],
+  });
+
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Padaria 1,00",
+    external_id: "mp1",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "cartão",
+    external_id: "mp2",
+  });
+  const r3 = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Mercado Pago",
+    external_id: "mp3",
+  });
+  expect(r3.status).toBe("aguardando_confirmacao");
+  expect(r3.resposta).toMatch(/Pagamento:\s*Cartão Mercado Pago/);
+  expect(r3.resposta).not.toMatch(/Mercado pago/);
+});
+
+// ---------- Bug 6: padaria → Alimentação quando categoria existe ----------
+
+test('"Padaria" usa categoria Alimentação quando ela existe', async () => {
+  resetState({
+    categorias: [
+      { id: "cat-out", legacy_id: "outros", nome: "Outros", user_id: "u1" },
+      { id: "cat-mer", legacy_id: "mercado", nome: "Mercado", user_id: "u1" },
+      { id: "cat-ali", legacy_id: "alimentacao", nome: "Alimentação", user_id: "u1" },
+    ],
+  });
+
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Padaria 1,00 pix",
+    external_id: "pa1",
+  });
+  const conf = state.pendingRow;
+  expect(conf?.status).toBe("aguardando_confirmacao");
+
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "sim",
+    external_id: "pa2",
+  });
+  const g = gastosInserts()[0]?.row as Record<string, unknown>;
+  expect(g.categoria_id).toBe("cat-ali");
+});
+
+test('"Padaria" cai em Mercado quando Alimentação não existe', async () => {
+  // default fake state não tem alimentacao
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Padaria 1,00 pix",
+    external_id: "pf1",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "sim",
+    external_id: "pf2",
+  });
+  const g = gastosInserts()[0]?.row as Record<string, unknown>;
+  expect(g.categoria_id).toBe("cat-mer");
+});
+
 afterAll(() => {});
