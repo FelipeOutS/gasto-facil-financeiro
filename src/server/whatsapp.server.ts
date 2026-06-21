@@ -25,35 +25,19 @@ import {
 } from "@/lib/whatsappParser";
 import { suggestCategoryFromText } from "@/lib/categories";
 import type { Cartao, FormaPagamento } from "@/lib/types";
-import { getSubscriptionForUserIdentity } from "./subscription.server";
-import { planAllowsFeature } from "@/lib/plans";
+import { canUseWhatsApp } from "./whatsapp-beta.server";
 
-// ---------- assinatura ----------
-
+// ---------- elegibilidade WhatsApp (gate único) ----------
+// Admin Master OU participante ativo da beta fechada (whatsapp_beta_access).
+// Esta é a única fonte de verdade usada no webhook e nas server functions.
 async function userPodeUsarWhatsApp(userId: string): Promise<{ ok: boolean; reason?: string }> {
-  const { data: u } = await supabaseAdmin
-    .from("auth.users" as never)
-    .select("email")
-    .eq("id", userId)
-    .maybeSingle();
-  let email: string | null = null;
-  if (u?.email) email = u.email;
-  if (!email) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const adminApi = (supabaseAdmin as any).auth?.admin;
-      if (adminApi?.getUserById) {
-        const { data } = await adminApi.getUserById(userId);
-        email = data?.user?.email ?? null;
-      }
-    } catch {
-      email = null;
-    }
-  }
-  const sub = await getSubscriptionForUserIdentity({ userId, email });
-  if (!sub.active) return { ok: false, reason: "Sua assinatura não está ativa." };
-  if (!planAllowsFeature(sub.plan, "whatsapp")) {
-    return { ok: false, reason: "Seu plano atual não inclui o lançamento por WhatsApp." };
+  const ok = await canUseWhatsApp(userId);
+  if (!ok) {
+    return {
+      ok: false,
+      reason:
+        "Seu acesso ao WhatsApp ainda não está disponível — o recurso está em beta fechada.",
+    };
   }
   return { ok: true };
 }
