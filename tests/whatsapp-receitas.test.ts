@@ -47,7 +47,7 @@ test('"Recebi 4.000 de salário" → resumo direto, confirma e salva', async () 
   expect(r.resposta.toLowerCase()).toContain("recorrente");
 
   r = await processarMensagemWhatsApp({ telefone: tel, texto: "não", external_id: "rec2-b" });
-  expect(r.resposta).toContain("R$ 4.000,00");
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 4.000,00");
 
   r = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "rec2-c" });
   expect(r.status).toBe("salva");
