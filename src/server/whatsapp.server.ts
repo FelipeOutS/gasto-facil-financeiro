@@ -599,6 +599,7 @@ const PENDING_STATES = [
   "aguardando_confirmacao",
   "aguardando_forma_pagamento",
   "aguardando_cartao",
+  ...RECEITA_PENDING_STATES,
 ];
 
 type SessaoRow = {
