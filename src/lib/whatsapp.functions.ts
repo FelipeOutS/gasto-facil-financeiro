@@ -10,6 +10,26 @@ function normTel(raw: string): string {
 }
 
 /**
+ * Gate unificado: feature de plano + beta fechada (ou Admin Master).
+ * Lança 403 amigável se faltar acesso de beta.
+ */
+async function assertWhatsAppAccess(userId: string): Promise<void> {
+  await assertFeatureAccess(userId, "whatsapp");
+  const { canUseWhatsApp } = await import("@/server/whatsapp-beta.server");
+  const ok = await canUseWhatsApp(userId);
+  if (!ok) {
+    throw new Response(
+      JSON.stringify({
+        error: "whatsapp_beta_required",
+        message:
+          "O WhatsApp está em beta fechada. Solicite acesso ao Admin Master para participar.",
+      }),
+      { status: 403, headers: { "Content-Type": "application/json" } },
+    );
+  }
+}
+
+/**
  * Retorna apenas o status (boolean) dos secrets do WhatsApp.
  * NUNCA retorna os valores. Usado no painel admin para mostrar
  * "Configurado" / "Não configurado".
