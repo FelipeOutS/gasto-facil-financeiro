@@ -255,6 +255,23 @@ function parseEstruturado(message: string): Partial<ParsedExpense> | null {
   };
 }
 
+// ---------- limpeza de descrição ----------
+
+/**
+ * Normaliza o nome do gasto antes de salvar/exibir:
+ * - remove vírgulas, pontos, hífens, ponto-e-vírgula e espaços nas bordas;
+ * - preserva pontuação legítima no meio (ex.: "Café & Cia.");
+ * - colapsa espaços internos.
+ */
+export function cleanDescricao(input: string | null | undefined): string {
+  if (!input) return "";
+  return String(input)
+    .replace(/\s+/g, " ")
+    .replace(/^[\s,.;:\-_/\\|·•]+/, "")
+    .replace(/[\s,;:\-_/\\|·•]+$/, "")
+    .trim();
+}
+
 // ---------- nome do estabelecimento ----------
 
 function extractNome(textRaw: string, valor: number | null): string {
@@ -287,12 +304,13 @@ function extractNome(textRaw: string, valor: number | null): string {
   for (const re of stop) t = t.replace(re, " ");
   t = t.replace(/\s+/g, " ").trim();
   // capitaliza palavras
-  return t
+  const titled = t
     .split(" ")
     .filter(Boolean)
     .map((w) => (w.length <= 2 ? w : w[0].toUpperCase() + w.slice(1)))
     .join(" ")
     .slice(0, 80);
+  return cleanDescricao(titled);
 }
 
 // ---------- main ----------
