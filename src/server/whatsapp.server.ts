@@ -1611,14 +1611,22 @@ export async function processarMensagemWhatsApp(
       resposta = M.faltaNome();
       status = "pendente";
     }
+    // Persistir como sessão de gasto pendente (kind=gasto) para que a
+    // próxima mensagem do usuário — inclusive "oi", "ajuda", "menu" —
+    // continue dentro do mesmo fluxo de despesa e não dispare saudação,
+    // menu ou consulta. Vide handler de "aguardando_descricao_e_valor_gasto".
+    const sessaoPendente: Session = {
+      ...buildSessionFromParse(parsed),
+      kind: "gasto",
+    };
     await gravarSessao(
       userId,
       msg.telefone,
       msg.external_id,
       texto,
       recebidaEm,
-      "pendente",
-      { ...buildSessionFromParse(parsed) },
+      "aguardando_descricao_e_valor_gasto",
+      sessaoPendente,
       resposta,
     );
     return { status, confianca: parsed.confianca, resposta };
