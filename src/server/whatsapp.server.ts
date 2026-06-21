@@ -1102,8 +1102,7 @@ export async function processarMensagemWhatsApp(
     // Resposta inválida (ex.: "sin") enquanto aguardamos sim/não.
     // Não repetimos o resumo nem reiniciamos a sessão — apenas pedimos
     // uma resposta válida. A sessão original permanece intacta.
-    const aviso =
-      'Não entendi sua resposta. Para salvar, responda "sim". Para cancelar, responda "não".';
+    const aviso = M.naoEntendiSimNao();
     await gravarSessao(
       userId,
       msg.telefone,
