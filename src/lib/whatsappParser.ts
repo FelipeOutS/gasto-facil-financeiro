@@ -357,7 +357,7 @@ export function parseWhatsAppExpenseMessage(
     cartaoId: card.cartaoId,
     cartaoAmbiguo: card.ambiguo,
     parcelas,
-    categoriaSugestao: estr?.categoriaSugestao || `${nome} ${original}`,
+    categoriaSugestao: estr?.categoriaSugestao || undefined,
     mensagemOriginal: original,
     confianca,
     notas,
