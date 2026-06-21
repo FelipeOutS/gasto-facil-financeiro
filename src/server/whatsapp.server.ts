@@ -27,6 +27,17 @@ import { suggestCategoryFromText } from "@/lib/categories";
 import type { Cartao, FormaPagamento } from "@/lib/types";
 import { canUseWhatsApp } from "./whatsapp-beta.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
+import {
+  RECEITA_PENDING_STATES,
+  isReceitaIntent,
+  isReceitaSession,
+  startReceitaFromText,
+  nextStepReceita,
+  persistirReceita,
+  buildConfirmacao as buildReceitaConfirmacao,
+  type ReceitaSession,
+  type ReceitaStatus,
+} from "./whatsapp-receitas.server";
 
 // ---------- elegibilidade WhatsApp (gate único) ----------
 // Admin Master OU participante ativo da beta fechada (whatsapp_beta_access).
