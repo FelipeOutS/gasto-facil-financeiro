@@ -1158,6 +1158,26 @@ admin_email_autorizado: ${canaryReadiness.admin_email_autorizado}`}
                 )}
               </div>
 
+              {/* WA-Cat — Diagnóstico temporário de resolução de categoria (Admin Master) */}
+              <div className="pt-2 border-t border-amber-500/20 space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={carregarCategoriaCheck}
+                  disabled={categoriaCheckLoading}
+                  className="text-xs"
+                >
+                  {categoriaCheckLoading
+                    ? "Verificando..."
+                    : "Verificar resolução de categoria (Padaria)"}
+                </Button>
+                {categoriaCheck && (
+                  <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
+{`categoria_alimentacao_disponivel: ${categoriaCheck.categoria_alimentacao_disponivel}
+categoria_resolvida_para_padaria: ${categoriaCheck.categoria_resolvida_para_padaria}`}
+                  </pre>
+                )}
+
               {/* WA-E2.audit — Auditoria read-only do estado real do número (Admin Master) */}
               <div className="pt-2 border-t border-amber-500/20 space-y-2">
                 <Button
