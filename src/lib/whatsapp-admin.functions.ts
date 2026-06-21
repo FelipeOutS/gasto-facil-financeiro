@@ -1071,3 +1071,38 @@ export const whatsappAdminClassifyRegisterStrategy = createServerFn({ method: "G
       estrategia_registro: classifyRegisterStrategy(audit, pf, flags),
     };
   });
+
+/**
+ * Diagnóstico read-only (Admin Master) — resolução de categoria do WhatsApp.
+ *
+ * Verifica, para o próprio Admin Master, se existe uma categoria compatível
+ * com "Alimentação" e qual seria a categoria escolhida para a descrição
+ * de teste "Padaria". Não expõe IDs, nomes de outros usuários, telefones,
+ * tokens ou qualquer dado bruto.
+ */
+export const whatsappAdminCheckCategoriaResolution = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdminMaster(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { diagnoseCategoriaResolution } = await import("@/server/whatsapp.server");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const adm = supabaseAdmin as any;
+    const { data } = await adm
+      .from("categorias")
+      .select("id, legacy_id, nome")
+      .eq("user_id", context.userId);
+    const categorias = Array.isArray(data)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ? (data as any[]).map((c) => ({
+          id: String(c.id),
+          legacy_id: c.legacy_id ?? null,
+          nome: c.nome ?? "",
+        }))
+      : [];
+    const diag = diagnoseCategoriaResolution("Padaria", categorias);
+    return {
+      categoria_alimentacao_disponivel: diag.categoria_alimentacao_disponivel,
+      categoria_resolvida_para_padaria: diag.categoria_resolvida,
+    };
+  });
