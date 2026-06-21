@@ -27,6 +27,17 @@ import { suggestCategoryFromText } from "@/lib/categories";
 import type { Cartao, FormaPagamento } from "@/lib/types";
 import { canUseWhatsApp } from "./whatsapp-beta.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
+import {
+  RECEITA_PENDING_STATES,
+  isReceitaIntent,
+  isReceitaSession,
+  startReceitaFromText,
+  nextStepReceita,
+  persistirReceita,
+  buildConfirmacao as buildReceitaConfirmacao,
+  type ReceitaSession,
+  type ReceitaStatus,
+} from "./whatsapp-receitas.server";
 
 // ---------- elegibilidade WhatsApp (gate único) ----------
 // Admin Master OU participante ativo da beta fechada (whatsapp_beta_access).
@@ -588,6 +599,7 @@ const PENDING_STATES = [
   "aguardando_confirmacao",
   "aguardando_forma_pagamento",
   "aguardando_cartao",
+  ...RECEITA_PENDING_STATES,
 ];
 
 type SessaoRow = {
@@ -831,7 +843,144 @@ async function atualizarSessao(
     .eq("id", id);
 }
 
+// ---------- pipeline de receitas (Fase WA-G1) ----------
+
+async function processarReceita(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  decisao: "confirm" | "cancel" | "outro";
+  sessao: SessaoRow | null;
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, decisao, sessao } = args;
+  const currentStatus = (sessao?.status ?? "") as ReceitaStatus | "";
+  // "cancelar" explícito encerra a sessão em qualquer etapa.
+  // Já o "não" (decisao=cancel) só é tratado como cancelamento global em
+  // estados que não fazem perguntas sim/não — caso contrário ele é uma
+  // resposta válida (ex.: "Esse valor costuma entrar de forma recorrente?").
+  const hardCancelRe = /\b(cancelar|cancela|cancelado|cancelada)\b/i;
+  const isHardCancel = hardCancelRe.test(texto);
+  const cancelStatesGlobais: ReceitaStatus[] = [
+    "rec_aguardando_tipo",
+    "rec_aguardando_valor",
+    "rec_aguardando_frequencia",
+    "rec_aguardando_dia",
+    "rec_aguardando_categoria",
+    "rec_aguardando_confirmacao",
+  ];
+  const shouldHardCancel =
+    !!sessao &&
+    (isHardCancel ||
+      (decisao === "cancel" &&
+        cancelStatesGlobais.includes(currentStatus as ReceitaStatus)));
+
+  if (shouldHardCancel && sessao) {
+    await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+    await gravarSessao(
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "cancelada",
+      sessao.session as unknown as Session,
+      M.receita.cancelado(),
+    );
+    return { status: "cancelada", resposta: M.receita.cancelado() };
+  }
+
+  // Sem sessão: iniciar fluxo a partir do texto livre.
+  if (!sessao) {
+    const step = startReceitaFromText(texto);
+    await gravarSessao(
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      step.status,
+      step.session as unknown as Session,
+      step.resposta,
+    );
+    return { status: "pendente", resposta: step.resposta };
+  }
+
+  const current = sessao.status as ReceitaStatus;
+  const session = sessao.session as unknown as ReceitaSession;
+
+  // Confirmação final: persiste.
+  if (current === "rec_aguardando_confirmacao") {
+    if (decisao === "confirm") {
+      const result = await persistirReceita(userId, session);
+      if (!result.ok) {
+        // mantém sessão para o usuário tentar de novo
+        await gravarSessao(
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
+          "rec_aguardando_confirmacao",
+          session as unknown as Session,
+          result.resposta,
+        );
+        return { status: "erro", resposta: result.resposta };
+      }
+      await fecharSessoesAnteriores(userId, msg.telefone, "salva");
+      await gravarSessao(
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "salva",
+        session as unknown as Session,
+        result.resposta,
+      );
+      return { status: "salva", resposta: result.resposta };
+    }
+    // resposta inválida na confirmação
+    const aviso = M.receita.naoEntendiSimNao();
+    await gravarSessao(
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "pendente",
+      session as unknown as Session,
+      aviso,
+    );
+    return { status: "pendente", resposta: aviso };
+  }
+
+  // Demais etapas: delegar ao state machine.
+  const step = nextStepReceita(current, session, texto, decisao);
+  // marca sessão antiga como expirada e cria nova com novo status
+  await supabaseAdmin
+    .from("whatsapp_messages")
+    .update({ status: "expirada" })
+    .eq("id", sessao.id);
+  await gravarSessao(
+    userId,
+    msg.telefone,
+    msg.external_id,
+    texto,
+    recebidaEm,
+    step.status,
+    step.session as unknown as Session,
+    step.resposta,
+  );
+  // Reconfirma o resumo no estado de confirmação para garantir consistência.
+  if (step.status === "rec_aguardando_confirmacao") {
+    return { status: "aguardando_confirmacao", resposta: buildReceitaConfirmacao(step.session) };
+  }
+  return { status: "pendente", resposta: step.resposta };
+}
+
 // ---------- pipeline principal ----------
+
 
 export async function processarMensagemWhatsApp(
   msg: WhatsAppMessageRow,
@@ -845,7 +994,10 @@ export async function processarMensagemWhatsApp(
       .maybeSingle();
     if (existente) {
       const gastoAindaExiste = await verificarGastoExiste(existente.gasto_id);
-      if (existente.status === "salva" && gastoAindaExiste) {
+      // Receitas salvas via WhatsApp não preenchem gasto_id — qualquer
+      // status "salva" sem gasto_id é, na prática, uma receita já gravada.
+      const receitaSalva = existente.status === "salva" && !existente.gasto_id;
+      if ((existente.status === "salva" && gastoAindaExiste) || receitaSalva) {
         return {
           status: "duplicada",
           gastoId: existente.gasto_id ?? undefined,
@@ -901,6 +1053,23 @@ export async function processarMensagemWhatsApp(
   const categorias = await carregarCategorias(userId);
   const decisao = classificarResposta(texto);
   const sessao = await buscarSessaoAtiva(userId, msg.telefone);
+
+  // ---- Fase WA-G1: receitas têm prioridade quando há sessão de receita
+  //                  pendente, OU quando o texto livre indica receita. ----
+  const sessionIsReceita = sessao && isReceitaSession(sessao.session);
+  const startsReceita = !sessao && decisao === "outro" && isReceitaIntent(texto);
+
+  if (sessionIsReceita || startsReceita) {
+    return await processarReceita({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao: sessionIsReceita ? sessao : null,
+    });
+  }
+
 
   // ---- Confirmar/cancelar ----
   if (decisao !== "outro") {

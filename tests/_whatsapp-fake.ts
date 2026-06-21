@@ -35,6 +35,13 @@ const PENDING = [
   "aguardando_confirmacao",
   "aguardando_forma_pagamento",
   "aguardando_cartao",
+  "rec_aguardando_tipo",
+  "rec_aguardando_valor",
+  "rec_aguardando_recorrencia",
+  "rec_aguardando_frequencia",
+  "rec_aguardando_dia",
+  "rec_aguardando_categoria",
+  "rec_aguardando_confirmacao",
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
