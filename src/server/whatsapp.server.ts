@@ -260,26 +260,85 @@ async function carregarCategorias(userId: string): Promise<CategoriaRow[]> {
   }));
 }
 
+function normalizeCat(s: string): string {
+  return (s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    // tolera plurais simples (refeicoes <-> refeicao)
+    .replace(/oes$/, "ao")
+    .replace(/s$/, "");
+}
+
+/** Termos na descrição que indicam alimentação humana / refeição. */
+const ALIMENTACAO_KEYWORDS = [
+  "padaria", "padoca", "pao", "lanche", "lanchonete",
+  "restaurante", "cafe", "refeicao", "comida",
+];
+
+/** Nomes canônicos aceitos como "categoria de alimentação" do usuário. */
+const ALIMENTACAO_CATEGORY_NAMES = [
+  "alimentacao", "comida", "refeicao", "alimentos",
+];
+
+/** Encontra a categoria do usuário cujo nome normalizado bate com algum dos
+ *  nomes aceitos. Compara também legacy_id. Preserva o nome oficial salvo. */
+function findCategoriaByNames(
+  categorias: CategoriaRow[],
+  acceptedNames: string[],
+): CategoriaRow | null {
+  const accepted = new Set(acceptedNames.map(normalizeCat));
+  for (const c of categorias) {
+    if (c.legacy_id && accepted.has(normalizeCat(c.legacy_id))) return c;
+    if (c.nome && accepted.has(normalizeCat(c.nome))) return c;
+  }
+  return null;
+}
+
 function categoriaExiste(categorias: CategoriaRow[], key: string): boolean {
-  const k = key.toLowerCase();
+  const k = normalizeCat(key);
   return categorias.some(
-    (c) => c.legacy_id === key || (c.nome ?? "").toLowerCase() === k,
+    (c) => normalizeCat(c.legacy_id ?? "") === k || normalizeCat(c.nome ?? "") === k,
   );
+}
+
+/** Diagnóstico interno (Admin Master): qual categoria o WhatsApp escolheria
+ *  para uma descrição como "padaria". Nunca expõe IDs. */
+export function diagnoseCategoriaResolution(
+  nome: string,
+  categorias: CategoriaRow[],
+): {
+  categoria_alimentacao_disponivel: "sim" | "nao";
+  categoria_resolvida: "alimentacao" | "fallback_mercado" | "outra";
+} {
+  const ali = findCategoriaByNames(categorias, ALIMENTACAO_CATEGORY_NAMES);
+  const key = pickCategoriaKey(nome, categorias);
+  let resolvida: "alimentacao" | "fallback_mercado" | "outra";
+  if (ali && key === "alimentacao") resolvida = "alimentacao";
+  else if (key === "mercado") resolvida = "fallback_mercado";
+  else resolvida = "outra";
+  return {
+    categoria_alimentacao_disponivel: ali ? "sim" : "nao",
+    categoria_resolvida: resolvida,
+  };
 }
 
 /**
  * Escolhe a categoria preferida considerando as categorias ativas do usuário.
- * Regra extra: "padaria" prefere "alimentacao" quando essa categoria existe
- * (cai para o sugerido por keyword — geralmente "mercado" — caso contrário).
+ * Termos de alimentação (padaria, lanche, restaurante, café, refeição…)
+ * preferem uma categoria compatível com "Alimentação" se o usuário a tiver.
+ * Caso contrário, cai no sugerido por keyword (geralmente "mercado").
  */
 function pickCategoriaKey(nome: string, categorias: CategoriaRow[]): string {
   const sugerido = suggestCategoryFromText(nome) || "outros";
-  const normNome = (nome || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-  if (/\bpadaria\b/.test(normNome) && categoriaExiste(categorias, "alimentacao")) {
-    return "alimentacao";
+  const norm = normalizeCat(nome);
+  const hasAlimentacaoKeyword = ALIMENTACAO_KEYWORDS.some((kw) =>
+    new RegExp(`\\b${kw}\\b`).test(norm),
+  );
+  if (hasAlimentacaoKeyword) {
+    const ali = findCategoriaByNames(categorias, ALIMENTACAO_CATEGORY_NAMES);
+    if (ali) return "alimentacao";
   }
   return sugerido;
 }
@@ -289,14 +348,21 @@ function resolveCategoriaIdFromList(
   categoriaKey: string,
 ): string | null {
   if (categorias.length === 0) return null;
+  // "alimentacao" pode ser representada por nomes equivalentes do usuário.
+  if (categoriaKey === "alimentacao") {
+    const ali = findCategoriaByNames(categorias, ALIMENTACAO_CATEGORY_NAMES);
+    if (ali) return ali.id;
+  }
   const byLegacy = categorias.find((c) => c.legacy_id === categoriaKey);
   if (byLegacy) return byLegacy.id;
-  const norm = categoriaKey.toLowerCase();
-  const byName = categorias.find((c) => (c.nome ?? "").toLowerCase() === norm);
+  const k = normalizeCat(categoriaKey);
+  const byName = categorias.find((c) => normalizeCat(c.nome ?? "") === k);
   if (byName) return byName.id;
   const outros = categorias.find((c) => c.legacy_id === "outros") ?? categorias[0];
   return outros?.id ?? null;
 }
+
+
 
 
 // ---------- tipos públicos ----------
