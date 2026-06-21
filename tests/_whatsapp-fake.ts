@@ -210,6 +210,18 @@ export function resetState(opts?: {
 }) {
   state.inserts.length = 0;
   state.pendingRow = null;
+  // WA-G3: limpa o cache anti-repetição do menu/saudação entre testes.
+  try {
+    // import dinâmico evita ciclo na fase de bootstrap dos mocks.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mod = require("../src/server/whatsapp-consultas.server") as {
+      _resetConversationalCache?: () => void;
+    };
+    mod._resetConversationalCache?.();
+  } catch {
+    /* noop */
+  }
+
   state.gastosData = opts?.gastos ?? [];
   state.receitasData = opts?.receitas ?? [];
   state.cartoesData = opts?.cartoes ?? [
