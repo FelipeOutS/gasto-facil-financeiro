@@ -36,12 +36,6 @@ import {
   whatsappAdminRegisterNumber,
   whatsappAdminCheckCategoriaResolution,
 } from "@/lib/whatsapp-admin.functions";
-import {
-  whatsappBetaAdminCount,
-  whatsappBetaAdminList,
-  whatsappBetaAdminGrant,
-  whatsappBetaAdminRevoke,
-} from "@/lib/whatsapp-beta.functions";
 import { BetaAdminSection } from "@/components/whatsapp/BetaAdminSection";
 
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
