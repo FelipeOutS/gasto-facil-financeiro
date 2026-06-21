@@ -13,8 +13,11 @@ import {
   classificarResposta,
   detectarFaltantes,
   formatarConfirmacao,
+  isGenericExpenseCommand,
+  isGenericExpenseDescription,
 } from "../src/server/whatsapp.server";
 import type { Cartao } from "../src/lib/types";
+
 
 let pass = 0;
 let fail = 0;
