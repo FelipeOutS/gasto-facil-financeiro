@@ -645,14 +645,14 @@ function listarCartoesParaPergunta(cartoes: Cartao[]): string {
 }
 
 function perguntaFormaPagamento(s: Session): string {
-  return `Anotei ${formatBRL(s.valor)} em ${s.nome}.\nVocê pagou com Pix, dinheiro, débito ou cartão?`;
+  return M.perguntaFormaPagamento(formatBRL(s.valor), s.nome);
 }
 function perguntaCartao(s: Session, cartoes: Cartao[]): string {
   const lista = listarCartoesParaPergunta(cartoes);
-  return `Qual cartão você usou para ${s.nome} (${formatBRL(s.valor)})?${lista}`;
+  return M.perguntaCartao(s.nome, formatBRL(s.valor), lista);
 }
 function avisoCartaoAmbiguo(nomes: string[]): string {
-  return `Encontrei mais de um cartão parecido:\n${nomes.map((n) => `• ${n}`).join("\n")}\nMe diga o nome exato (ou os últimos 4 dígitos).`;
+  return M.avisoCartaoAmbiguo(nomes);
 }
 const NEGACAO_CARTAO_PATTERNS = [
   /\bnenhum desses\b/,
@@ -670,11 +670,22 @@ function isNegacaoCartao(texto: string): boolean {
 }
 
 function avisoCartaoNaoCadastrado(s: Session, digitado: string): string {
-  return `Não encontrei "${digitado}" entre os seus cartões cadastrados.\nVou registrar este gasto como cartão não cadastrado. Depois, caso queira, você poderá cadastrá-lo na área Cartões do Gasto Inteligente.\n\nConfirma o gasto de ${formatBRL(s.valor)} em ${s.nome}, ${formatDataBR(s.data) === "hoje" ? "hoje" : formatDataBR(s.data)}, pago com cartão não cadastrado? Responda sim ou não.`;
+  const dataFmt = formatDataBR(s.data);
+  return M.avisoCartaoNaoCadastrado(
+    digitado,
+    formatBRL(s.valor),
+    s.nome,
+    dataFmt === "hoje" ? "hoje" : dataFmt,
+  );
 }
 
 function avisoCartaoNaoCadastradoNegado(s: Session): string {
-  return `Não encontrei nenhum dos seus cartões cadastrados para esse gasto.\n\nVou registrar como cartão não cadastrado. Depois, caso queira, você poderá cadastrar esse cartão na área Cartões do Gasto Inteligente.\n\nConfirma o gasto de ${formatBRL(s.valor)} em ${s.nome}, ${formatDataBR(s.data) === "hoje" ? "hoje" : formatDataBR(s.data)}, pago com cartão não cadastrado? Responda sim ou não.`;
+  const dataFmt = formatDataBR(s.data);
+  return M.avisoCartaoNaoCadastradoNegado(
+    formatBRL(s.valor),
+    s.nome,
+    dataFmt === "hoje" ? "hoje" : dataFmt,
+  );
 }
 
 async function verificarGastoExiste(gastoId: string | null | undefined): Promise<boolean> {
