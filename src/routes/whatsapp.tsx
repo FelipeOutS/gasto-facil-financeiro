@@ -34,7 +34,9 @@ import {
   whatsappAdminAuditRealRegistrationState,
   whatsappAdminClassifyRegisterStrategy,
   whatsappAdminRegisterNumber,
+  whatsappAdminCheckCategoriaResolution,
 } from "@/lib/whatsapp-admin.functions";
+
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText, DEFAULT_CATEGORIES } from "@/lib/categories";
 import { FORMAS_PAGAMENTO } from "@/lib/types";
