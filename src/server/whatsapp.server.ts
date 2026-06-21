@@ -286,12 +286,22 @@ function formatBRL(v: number): string {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+const APP_TZ = "America/Sao_Paulo";
+
+function todayLocalISO(): string {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return fmt.format(new Date());
+}
+
 function formatDataBR(iso: string): string {
   const [y, m, d] = iso.split("-");
   if (!y || !m || !d) return iso;
-  const hoje = new Date();
-  const hojeIso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
-  if (iso === hojeIso) return "hoje";
+  if (iso === todayLocalISO()) return "hoje";
   return `${d}/${m}/${y}`;
 }
 
@@ -318,17 +328,43 @@ function rotuloFormaPagamento(f: FormaPagamento, cartaoNome?: string): string {
   }
 }
 
+const CATEGORIA_LABEL: Record<string, string> = {
+  mercado: "Mercado",
+  transporte: "Transporte",
+  saude: "Saúde",
+  restaurante: "Restaurante",
+  internet: "Internet",
+  lazer: "Lazer",
+  educacao: "Educação",
+  moradia: "Moradia",
+  servicos: "Serviços",
+  vestuario: "Vestuário",
+  outros: "Outros",
+};
+
+function categoriaLabel(key: string | undefined | null): string {
+  if (!key) return "Outros";
+  const k = key.toLowerCase().trim();
+  if (CATEGORIA_LABEL[k]) return CATEGORIA_LABEL[k];
+  return k.charAt(0).toUpperCase() + k.slice(1);
+}
+
+/** Resolve a label limpa de categoria a partir do nome do gasto. */
+function categoriaParaExibir(nome: string): string {
+  const key = suggestCategoryFromText(nome) || "outros";
+  return categoriaLabel(key);
+}
+
 export function formatarConfirmacao(parsed: ParsedExpense, cartaoNome?: string): string {
-  const categoria =
-    parsed.categoriaSugestao && parsed.categoriaSugestao.length < 40
-      ? parsed.categoriaSugestao
-      : suggestCategoryFromText(parsed.nome) ?? "Outros";
+  const categoria = categoriaParaExibir(parsed.nome);
+  const dataFmt = formatDataBR(parsed.data);
   const linhas = [
     "🧾 Encontrei este gasto:",
     "",
-    `Valor: ${formatBRL(parsed.valor)}`,
+    `Descrição: ${parsed.nome}`,
     `Categoria: ${categoria}`,
-    `Data: ${formatDataBR(parsed.data) === "hoje" ? "Hoje" : formatDataBR(parsed.data)}`,
+    `Valor: ${formatBRL(parsed.valor)}`,
+    `Data: ${dataFmt === "hoje" ? "Hoje" : dataFmt}`,
     `Pagamento: ${rotuloFormaPagamento(parsed.formaPagamento, cartaoNome)}`,
   ];
   if (parsed.parcelas && parsed.parcelas > 1) linhas.push(`Parcelas: ${parsed.parcelas}x`);
