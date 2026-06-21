@@ -113,7 +113,7 @@ test("cancelar encerra a sessão de gasto pendente", async () => {
     telefone: tel, texto: "cancelar", external_id: "g2",
   });
   expect(r.status).toBe("cancelada");
-  expect(r.resposta).toMatch(/n[aã]o registrei esse gasto/i);
+  expect(r.resposta).toMatch(/vamos começar de novo/i);
   expect(state.pendingRow).toBeNull();
 });
 

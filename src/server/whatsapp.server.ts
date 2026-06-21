@@ -589,6 +589,35 @@ export function isGenericExpenseCommand(texto: string): boolean {
 }
 
 /**
+ * Comandos de reinício geral da conversa.
+ * Encerram qualquer sessão pendente e devolvem o usuário ao estado inicial.
+ * Comparação após `normalizeCmd` (sem acento, minúsculas, sem pontuação final).
+ *
+ * IMPORTANTE: "não", "n", "errado" etc. NÃO são reset — são respostas de
+ * confirmação. Por isso este conjunto é separado de `CANCEL_TOKENS`.
+ */
+const RESET_COMMANDS: ReadonlySet<string> = new Set([
+  "cancelar",
+  "cancela",
+  "cancelar tudo",
+  "reiniciar",
+  "reinicia",
+  "recomecar",
+  "recomeca",
+  "comecar de novo",
+  "comeca de novo",
+  "voltar ao inicio",
+  "voltar pro inicio",
+  "voltar para o inicio",
+]);
+
+export function isResetCommand(texto: string): boolean {
+  if (!texto) return false;
+  return RESET_COMMANDS.has(normalizeCmd(texto));
+}
+
+
+/**
  * Bloqueia que descrições genéricas (vindas do parser ou de uma sessão)
  * sejam usadas como nome real do gasto. Ex.: "registrar gasto",
  * "Gasto WhatsApp", "Novo Gasto" — todas inválidas.
@@ -1173,6 +1202,35 @@ export async function processarMensagemWhatsApp(
   const categorias = await carregarCategorias(userId);
   const decisao = classificarResposta(texto);
   const sessao = await buscarSessaoAtiva(userId, msg.telefone);
+
+  // ---- WA: comando de reinício geral ("cancelar", "reiniciar", ...) ----
+  // Prioridade máxima: encerra qualquer sessão pendente (gasto, receita,
+  // confirmação, cartão, descrição/valor) e devolve o usuário ao estado
+  // inicial limpo. Não toca em lançamentos já confirmados nem em vínculo,
+  // consentimento, retenção ou histórico — apenas estados aguardando_*.
+  if (isResetCommand(texto)) {
+    if (sessao) {
+      await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+    }
+    const resposta = M.resetConversa();
+    await gravarSessao(
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "cancelada",
+      {
+        nome: "",
+        valor: 0,
+        data: todayLocalISO(),
+        mensagemOriginal: texto,
+      },
+      resposta,
+    );
+    return { status: "cancelada", resposta };
+  }
+
 
   // ---- Fase WA-G1: sessão de receita pendente sempre tem prioridade. ----
   const sessionIsReceita = sessao && isReceitaSession(sessao.session);
