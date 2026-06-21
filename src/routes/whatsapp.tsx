@@ -36,6 +36,7 @@ import {
   whatsappAdminRegisterNumber,
   whatsappAdminCheckCategoriaResolution,
 } from "@/lib/whatsapp-admin.functions";
+import { BetaAdminSection } from "@/components/whatsapp/BetaAdminSection";
 
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText, DEFAULT_CATEGORIES } from "@/lib/categories";
@@ -1178,6 +1179,11 @@ categoria_resolvida_para_padaria: ${categoriaCheck.categoria_resolvida_para_pada
                   </pre>
                 )}
               </div>
+
+              {/* WA-F — Gestão da beta fechada (Admin Master) */}
+              <BetaAdminSection />
+
+
 
 
 
