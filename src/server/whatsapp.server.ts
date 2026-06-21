@@ -972,7 +972,7 @@ export async function processarMensagemWhatsApp(
   if (sessao && sessao.status === "aguardando_forma_pagamento") {
     const forma = detectFormaPagamentoFromText(texto);
     if (!forma) {
-      const resposta = `Ainda preciso saber a forma de pagamento.\n${perguntaFormaPagamento(sessao.session)}`;
+      const resposta = M.faltaForma(perguntaFormaPagamento(sessao.session));
       await gravarSessao(
         userId,
         msg.telefone,
