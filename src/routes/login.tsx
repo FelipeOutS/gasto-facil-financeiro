@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Fingerprint, KeyRound } from "lucide-react";
 import i18n from "@/i18n";
 import { AuthShell, GuestOnly } from "@/components/AuthGate";
+import { StarfieldBackground } from "@/components/StarfieldBackground";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -275,6 +276,7 @@ function LoginForm() {
       <AuthShell
         title="Ativar entrada por biometria?"
         subtitle="Use a digital deste aparelho nas próximas vezes em que abrir o app."
+        background={<StarfieldBackground />}
       >
         <div className="flex flex-col items-center gap-5">
           <span className="grid h-20 w-20 place-items-center rounded-full bg-brand-soft text-brand ring-1 ring-border/60">
@@ -312,6 +314,7 @@ function LoginForm() {
       <AuthShell
         title="Entrar com biometria"
         subtitle="Use a digital deste aparelho para continuar."
+        background={<StarfieldBackground />}
       >
         <div className="flex flex-col items-center gap-6">
           <span className="grid h-24 w-24 place-items-center rounded-full bg-brand-soft text-brand ring-1 ring-border/60">
@@ -357,6 +360,7 @@ function LoginForm() {
     <AuthShell
       title={t("login.title")}
       subtitle={t("login.subtitle")}
+      background={<StarfieldBackground />}
       footer={
         <div className="flex flex-col items-center gap-2">
           <span className="text-muted-foreground">
