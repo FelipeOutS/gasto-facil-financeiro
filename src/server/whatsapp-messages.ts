@@ -196,7 +196,7 @@ export const whatsappMessages = {
     },
     resumoConfirmacao(args: {
       descricao: string;
-      categoria: string;
+      tipo: string;
       valor: string;
       data: string;
       resumoRecorrencia: string;
@@ -205,7 +205,7 @@ export const whatsappMessages = {
         `Confere pra mim? 👀`,
         ``,
         `• Descrição: ${args.descricao}`,
-        `• Categoria: ${args.categoria}`,
+        `• Tipo de receita: ${args.tipo}`,
         `• Valor: ${args.valor}`,
         `• Data: ${args.data}`,
         `• Recorrente: ${args.resumoRecorrencia}`,
@@ -213,11 +213,11 @@ export const whatsappMessages = {
         `Posso registrar? Responda sim ou não.`,
       ].join("\n");
     },
-    salvaSimples(args: { valor: string; descricao: string; categoria: string }) {
+    salvaSimples(args: { valor: string; descricao: string; tipo: string }) {
       return (
         `Pronto! Sua renda foi registrada ✅\n\n` +
         `${args.valor} em ${args.descricao}.\n` +
-        `Categoria: ${args.categoria}\n\n` +
+        `Tipo de receita: ${args.tipo}\n\n` +
         `Você já consegue vê-la no Gasto Inteligente.`
       );
     },
