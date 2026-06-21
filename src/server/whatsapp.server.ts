@@ -854,7 +854,7 @@ async function processarReceita(args: {
   sessao: SessaoRow | null;
 }): Promise<ProcessOutcome> {
   const { userId, msg, texto, recebidaEm, decisao, sessao } = args;
-  const current = (sessao?.status ?? "") as ReceitaStatus | "";
+  const currentStatus = (sessao?.status ?? "") as ReceitaStatus | "";
   // "cancelar" explícito encerra a sessão em qualquer etapa.
   // Já o "não" (decisao=cancel) só é tratado como cancelamento global em
   // estados que não fazem perguntas sim/não — caso contrário ele é uma
@@ -867,12 +867,15 @@ async function processarReceita(args: {
     "rec_aguardando_frequencia",
     "rec_aguardando_dia",
     "rec_aguardando_categoria",
+    "rec_aguardando_confirmacao",
   ];
   const shouldHardCancel =
-    sessao && (isHardCancel ||
-      (decisao === "cancel" && cancelStatesGlobais.includes(current as ReceitaStatus)));
+    !!sessao &&
+    (isHardCancel ||
+      (decisao === "cancel" &&
+        cancelStatesGlobais.includes(currentStatus as ReceitaStatus)));
 
-  if (shouldHardCancel) {
+  if (shouldHardCancel && sessao) {
     await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     await gravarSessao(
       userId,
