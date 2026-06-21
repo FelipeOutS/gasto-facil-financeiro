@@ -305,7 +305,7 @@ function Header() {
       <div className="mx-auto flex h-12 w-full max-w-7xl items-center justify-between px-4 sm:h-14 sm:px-6 md:h-16 lg:px-8">
         <a href="#inicio" onClick={(e) => handleAnchorClick(e, "#inicio")} className="flex items-center gap-2">
           <img
-            src="/logos/brand/gasto-inteligente-light.png"
+            src="/logos/brand/logo-gasto-inteligente-completo-light.svg"
             alt="Gasto Inteligente"
             width={176}
             height={44}
@@ -731,7 +731,7 @@ function DesktopDashboardMock() {
       <div className="flex w-[22%] flex-col border-r border-slate-200 bg-white p-2">
         <div className="flex items-center px-1 pb-1">
           <img
-            src="/logos/brand/gasto-inteligente-light.png"
+            src="/logos/brand/logo-gasto-inteligente-completo-light.svg"
             alt="Gasto Inteligente"
             draggable={false}
             className="h-4 w-auto object-contain"
@@ -871,7 +871,7 @@ function TabletDashboardMock() {
         {/* logo */}
         <div className="flex items-center justify-between">
           <img
-            src="/logos/brand/gasto-inteligente-light.png"
+            src="/logos/brand/logo-gasto-inteligente-completo-light.svg"
             alt="Gasto Inteligente"
             draggable={false}
             className="h-3 w-auto object-contain"
@@ -1050,7 +1050,7 @@ function MobileDashboardMock() {
         {/* logo */}
         <div className="flex items-center justify-between gap-1">
           <img
-            src="/logos/brand/gasto-inteligente-light.png"
+            src="/logos/brand/logo-gasto-inteligente-completo-light.svg"
             alt="Gasto Inteligente"
             draggable={false}
             className="h-2.5 w-auto object-contain"
@@ -3726,7 +3726,7 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-12 lg:col-span-4">
             <img
-              src="/logos/brand/gasto-inteligente-light.png"
+              src="/logos/brand/logo-gasto-inteligente-completo-light.svg"
               alt="Gasto Inteligente"
               className="h-9 w-auto sm:h-10 object-contain"
               draggable={false}

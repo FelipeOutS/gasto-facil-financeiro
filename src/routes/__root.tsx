@@ -116,7 +116,7 @@ export const Route = createRootRoute({
       {
         rel: "preload",
         as: "image",
-        href: "/logos/brand/gasto-inteligente-light.png",
+        href: "/logos/brand/logo-gasto-inteligente-completo-light.svg",
         fetchPriority: "high",
       },
     ],
@@ -128,7 +128,7 @@ export const Route = createRootRoute({
           "@type": "Organization",
           name: "Gasto Inteligente",
           url: "https://gastointeligente.com.br",
-          logo: "https://gastointeligente.com.br/logos/brand/gasto-inteligente-light.png",
+          logo: "https://gastointeligente.com.br/logos/brand/logo-gasto-inteligente-completo-light.svg",
           email: "contato@gastointeligente.com.br",
         }),
       },
