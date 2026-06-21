@@ -244,28 +244,60 @@ export function matchCartao(
 
 // ---------- categorias ----------
 
-async function resolveCategoriaId(
-  userId: string,
-  categoriaKey: string,
-): Promise<string | null> {
+type CategoriaRow = { id: string; legacy_id: string | null; nome: string };
+
+async function carregarCategorias(userId: string): Promise<CategoriaRow[]> {
   const { data } = await supabaseAdmin
     .from("categorias")
     .select("id, legacy_id, nome")
     .eq("user_id", userId);
-  if (!data || data.length === 0) return null;
+  if (!data) return [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const arr = data as any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const byLegacy = arr.find((c: any) => c.legacy_id === categoriaKey);
+  return (data as any[]).map((c: any) => ({
+    id: c.id,
+    legacy_id: c.legacy_id ?? null,
+    nome: c.nome ?? "",
+  }));
+}
+
+function categoriaExiste(categorias: CategoriaRow[], key: string): boolean {
+  const k = key.toLowerCase();
+  return categorias.some(
+    (c) => c.legacy_id === key || (c.nome ?? "").toLowerCase() === k,
+  );
+}
+
+/**
+ * Escolhe a categoria preferida considerando as categorias ativas do usuário.
+ * Regra extra: "padaria" prefere "alimentacao" quando essa categoria existe
+ * (cai para o sugerido por keyword — geralmente "mercado" — caso contrário).
+ */
+function pickCategoriaKey(nome: string, categorias: CategoriaRow[]): string {
+  const sugerido = suggestCategoryFromText(nome) || "outros";
+  const normNome = (nome || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  if (/\bpadaria\b/.test(normNome) && categoriaExiste(categorias, "alimentacao")) {
+    return "alimentacao";
+  }
+  return sugerido;
+}
+
+function resolveCategoriaIdFromList(
+  categorias: CategoriaRow[],
+  categoriaKey: string,
+): string | null {
+  if (categorias.length === 0) return null;
+  const byLegacy = categorias.find((c) => c.legacy_id === categoriaKey);
   if (byLegacy) return byLegacy.id;
   const norm = categoriaKey.toLowerCase();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const byName = arr.find((c: any) => c.nome.toLowerCase() === norm);
+  const byName = categorias.find((c) => (c.nome ?? "").toLowerCase() === norm);
   if (byName) return byName.id;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const outros = arr.find((c: any) => c.legacy_id === "outros") ?? arr[0];
+  const outros = categorias.find((c) => c.legacy_id === "outros") ?? categorias[0];
   return outros?.id ?? null;
 }
+
 
 // ---------- tipos públicos ----------
 
