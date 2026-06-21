@@ -139,4 +139,123 @@ export const whatsappMessages = {
   erroAoSalvar() {
     return `Tive um probleminha ao salvar agora. Tente novamente em alguns instantes.`;
   },
+
+  // =====================================================================
+  // RECEITAS / RENDAS (Fase WA-G1)
+  // =====================================================================
+  receita: {
+    perguntaTipo() {
+      return (
+        `Claro! Que tipo de renda foi essa? 💰\n\n` +
+        `Ex.: salário, freelancer, venda, comissão ou outro.`
+      );
+    },
+    perguntaValor() {
+      return `Perfeito. Qual valor você recebeu?`;
+    },
+    perguntaRecorrencia() {
+      return (
+        `Esse valor costuma entrar de forma recorrente?\n\n` +
+        `Responda sim ou não.`
+      );
+    },
+    perguntaFrequencia() {
+      return (
+        `Com que frequência essa renda costuma entrar?\n\n` +
+        `Ex.: todo mês, toda semana ou a cada 15 dias.`
+      );
+    },
+    perguntaDiaMes() {
+      return `Em qual dia do mês ela costuma cair?`;
+    },
+    perguntaDiaSemana() {
+      return `Em qual dia da semana ela costuma entrar?`;
+    },
+    frequenciaInvalida() {
+      return (
+        `Não consegui entender a frequência 😅\n\n` +
+        `Você pode responder, por exemplo: todo mês, toda semana ou a cada 15 dias.`
+      );
+    },
+    diaMesInvalido() {
+      return `Não consegui entender o dia. Me diga um número entre 1 e 31.`;
+    },
+    diaSemanaInvalido() {
+      return (
+        `Não consegui entender o dia. Tente segunda, terça, quarta, quinta, sexta, sábado ou domingo.`
+      );
+    },
+    valorInvalido() {
+      return `Não consegui identificar o valor. Me diga um número, ex.: 1500 ou R$ 350,00.`;
+    },
+    perguntaCategoria() {
+      return (
+        `Em qual categoria essa renda entra?\n\n` +
+        `Ex.: salário, freelancer, vendas, comissão ou outra.`
+      );
+    },
+    resumoConfirmacao(args: {
+      descricao: string;
+      categoria: string;
+      valor: string;
+      data: string;
+      resumoRecorrencia: string;
+    }) {
+      return [
+        `Confere pra mim? 👀`,
+        ``,
+        `• Descrição: ${args.descricao}`,
+        `• Categoria: ${args.categoria}`,
+        `• Valor: ${args.valor}`,
+        `• Data: ${args.data}`,
+        `• Recorrente: ${args.resumoRecorrencia}`,
+        ``,
+        `Posso registrar? Responda sim ou não.`,
+      ].join("\n");
+    },
+    salvaSimples(args: { valor: string; descricao: string; categoria: string }) {
+      return (
+        `Pronto! Sua renda foi registrada ✅\n\n` +
+        `${args.valor} em ${args.descricao}.\n` +
+        `Categoria: ${args.categoria}\n\n` +
+        `Você já consegue vê-la no Gasto Inteligente.`
+      );
+    },
+    salvaRecorrente(args: {
+      valor: string;
+      descricao: string;
+      resumoRecorrencia: string;
+    }) {
+      return (
+        `Pronto! Sua renda recorrente foi registrada ✅\n\n` +
+        `${args.valor} em ${args.descricao}.\n` +
+        `Frequência: ${args.resumoRecorrencia}\n\n` +
+        `Você já consegue acompanhar isso no Gasto Inteligente.`
+      );
+    },
+    cancelado() {
+      return `Tudo certo, não registrei essa renda.`;
+    },
+    naoEntendiSimNao() {
+      return (
+        `Não entendi essa parte 😅\n\n` +
+        `Posso registrar essa renda? Responda sim ou não.`
+      );
+    },
+    quotaExcedida() {
+      return (
+        `Você atingiu o limite mensal de receitas do seu plano. ` +
+        `Faça upgrade no app para continuar lançando.`
+      );
+    },
+    recorrenteIndisponivel() {
+      return (
+        `Receitas recorrentes estão disponíveis nos planos pagos. ` +
+        `Posso registrar como renda única? Responda sim ou não.`
+      );
+    },
+    erroAoSalvar() {
+      return `Tive um probleminha ao salvar a renda. Tente novamente em alguns instantes.`;
+    },
+  },
 };
