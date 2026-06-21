@@ -1375,7 +1375,7 @@ export async function processarMensagemWhatsApp(
       .from("whatsapp_messages")
       .update({ status: "expirada" })
       .eq("id", sessao.id);
-    sessao.status = "expirada";
+    sessao = null;
     // continua para os blocos abaixo (conversational / consulta / parser)
   }
 
