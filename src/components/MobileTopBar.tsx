@@ -1,9 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BrandMark } from "@/components/BrandMark";
 import { useAuth } from "@/lib/auth-context";
-import { useAlerts } from "@/lib/alerts/use-alerts";
 import { MobileMoreSheet } from "@/components/MobileMoreSheet";
 
 function getInitials(name?: string | null, email?: string | null) {
@@ -15,72 +14,50 @@ function getInitials(name?: string | null, email?: string | null) {
 }
 
 /**
- * Header mobile estilo app financeiro premium:
- *   [☰]               [LOGO]               [🔔] [avatar]
+ * Header mobile minimalista com três áreas de mesma largura:
+ *   [☰ 44px]           [ LOGO centralizado ]           [avatar 44px]
  *
- * Layout limpo, sem textos longos no topo, com a marca em destaque
- * centralizada — visual de aplicativo real (não dashboard web).
+ * O sino de notificações foi movido para um FAB dedicado (MobileNotificationsFab).
  * Visível apenas em <lg via `lg:hidden`.
  */
 export function MobileTopBar() {
   const { t } = useTranslation("nav");
   const { user, profile } = useAuth();
-  const { unreadCount } = useAlerts();
 
   const initials = getInitials(profile?.nome ?? profile?.responsavel_nome, user?.email);
 
   return (
     <div className="sticky top-0 z-40 border-b border-border/60 bg-background/95 backdrop-blur safe-top lg:hidden">
-      <div className="mx-auto grid h-14 max-w-md grid-cols-[auto_1fr_auto] items-center gap-2 px-3 md:h-16 md:max-w-3xl md:gap-4 md:px-6">
-        {/* Esquerda — Hambúrguer */}
+      <div className="mx-auto grid h-14 max-w-md grid-cols-[44px_1fr_44px] items-center px-3 md:h-16 md:max-w-3xl md:px-6">
+        {/* Esquerda — Hambúrguer (44x44 clicável) */}
         <MobileMoreSheet
           trigger={
             <button
               type="button"
               aria-label={t("aria.openMore")}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-foreground transition active:scale-95 hover:bg-muted/60"
+              className="grid h-11 w-11 place-items-center rounded-full text-foreground transition active:scale-95 hover:bg-muted/60"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-5 w-5" aria-hidden="true" />
             </button>
           }
         />
 
-        {/* Centro — Logo da marca */}
+        {/* Centro — Logo da marca, realmente centralizado */}
         <Link
           to="/"
           aria-label="Gasto Inteligente"
           className="flex items-center justify-center active:scale-[0.98]"
         >
-          <BrandMark variant="symbol" className="h-7 w-7 md:h-8 md:w-8" />
+          <BrandMark variant="symbol" className="h-8 w-8" />
         </Link>
 
-        {/* Direita — Sino + Avatar */}
-        <div className="flex items-center gap-1">
-          <Link
-            to="/alertas"
-            aria-label={
-              unreadCount > 0
-                ? `${t("aria.openAlerts")} (${unreadCount > 9 ? "9+" : unreadCount})`
-                : t("aria.openAlerts")
-            }
-            className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full text-muted-foreground transition active:scale-95 hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            <Bell className="h-5 w-5" aria-hidden="true" />
-            {unreadCount > 0 && (
-              <span
-                aria-hidden="true"
-                className="absolute right-1 top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold leading-none text-destructive-foreground ring-2 ring-background"
-              >
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            )}
-          </Link>
-
-          <Link
-            to="/app/perfil"
-            aria-label={t("aria.openProfile")}
-            className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full border border-border/60 bg-muted text-[11px] font-bold text-foreground transition active:scale-95"
-          >
+        {/* Direita — Avatar (44x44 clicável, ~36px visível) */}
+        <Link
+          to="/app/perfil"
+          aria-label={t("aria.openProfile")}
+          className="grid h-11 w-11 place-items-center rounded-full transition active:scale-95"
+        >
+          <span className="grid h-9 w-9 place-items-center overflow-hidden rounded-full border border-border/60 bg-muted text-[11px] font-bold text-foreground">
             {profile?.avatar_url ? (
               <img
                 src={profile.avatar_url}
@@ -91,8 +68,8 @@ export function MobileTopBar() {
             ) : (
               <span>{initials}</span>
             )}
-          </Link>
-        </div>
+          </span>
+        </Link>
       </div>
     </div>
   );
