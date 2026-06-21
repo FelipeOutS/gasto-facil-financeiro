@@ -326,7 +326,26 @@ function WhatsAppPage() {
       toast.error("Falha ao verificar prontidão do canário.");
     } finally {
       setCanaryReadinessLoading(false);
+  }
+
+  // ===== WA-Cat — Diagnóstico de resolução de categoria (temporário) =====
+  const categoriaCheckFn = useServerFn(whatsappAdminCheckCategoriaResolution);
+  const [categoriaCheck, setCategoriaCheck] = useState<{
+    categoria_alimentacao_disponivel: "sim" | "nao";
+    categoria_resolvida_para_padaria: "alimentacao" | "fallback_mercado" | "outra";
+  } | null>(null);
+  const [categoriaCheckLoading, setCategoriaCheckLoading] = useState(false);
+  async function carregarCategoriaCheck() {
+    setCategoriaCheckLoading(true);
+    try {
+      const r = await categoriaCheckFn();
+      setCategoriaCheck(r);
+    } catch {
+      toast.error("Falha ao verificar resolução de categoria.");
+    } finally {
+      setCategoriaCheckLoading(false);
     }
+  }
   }
 
   // ===== WA-E2.audit — Auditoria read-only do estado real do número =====
