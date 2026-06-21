@@ -994,7 +994,10 @@ export async function processarMensagemWhatsApp(
       .maybeSingle();
     if (existente) {
       const gastoAindaExiste = await verificarGastoExiste(existente.gasto_id);
-      if (existente.status === "salva" && gastoAindaExiste) {
+      // Receitas salvas via WhatsApp não preenchem gasto_id — qualquer
+      // status "salva" sem gasto_id é, na prática, uma receita já gravada.
+      const receitaSalva = existente.status === "salva" && !existente.gasto_id;
+      if ((existente.status === "salva" && gastoAindaExiste) || receitaSalva) {
         return {
           status: "duplicada",
           gastoId: existente.gasto_id ?? undefined,
