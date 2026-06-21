@@ -213,7 +213,7 @@ export function DesktopSidebar() {
           </>
         ) : (
           <div className="flex items-center justify-between gap-2">
-            <BrandMark className="h-10 w-auto" />
+            <BrandMark variant="sidebar" className="h-10 w-auto" />
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
