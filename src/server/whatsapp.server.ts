@@ -1203,6 +1203,35 @@ export async function processarMensagemWhatsApp(
   const decisao = classificarResposta(texto);
   const sessao = await buscarSessaoAtiva(userId, msg.telefone);
 
+  // ---- WA: comando de reinício geral ("cancelar", "reiniciar", ...) ----
+  // Prioridade máxima: encerra qualquer sessão pendente (gasto, receita,
+  // confirmação, cartão, descrição/valor) e devolve o usuário ao estado
+  // inicial limpo. Não toca em lançamentos já confirmados nem em vínculo,
+  // consentimento, retenção ou histórico — apenas estados aguardando_*.
+  if (isResetCommand(texto)) {
+    if (sessao) {
+      await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+    }
+    const resposta = M.resetConversa();
+    await gravarSessao(
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "cancelada",
+      {
+        nome: "",
+        valor: 0,
+        data: todayLocalISO(),
+        mensagemOriginal: texto,
+      },
+      resposta,
+    );
+    return { status: "cancelada", resposta };
+  }
+
+
   // ---- Fase WA-G1: sessão de receita pendente sempre tem prioridade. ----
   const sessionIsReceita = sessao && isReceitaSession(sessao.session);
   if (sessionIsReceita) {
