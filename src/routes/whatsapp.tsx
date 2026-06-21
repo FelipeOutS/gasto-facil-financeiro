@@ -322,6 +322,8 @@ function WhatsAppPage() {
     try {
       const r = await canaryReadinessFn();
       setCanaryReadiness(r);
+    } catch {
+      toast.error("Falha ao verificar prontidão do canário.");
     } finally {
       setCanaryReadinessLoading(false);
     }
