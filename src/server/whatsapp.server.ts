@@ -1119,8 +1119,7 @@ export async function processarMensagemWhatsApp(
   // ---- Caso B: nenhuma sessão ativa → parse normal ----
   const parsed = parseWhatsAppExpenseMessage(texto, cartoes);
   if (!parsed.valor || parsed.valor <= 0) {
-    const resposta =
-      "❓ Só preciso de mais uma informação: qual foi o valor do gasto? Ex.: R$ 48,90.";
+    const resposta = M.faltaValor();
     await gravarSessao(
       userId,
       msg.telefone,
