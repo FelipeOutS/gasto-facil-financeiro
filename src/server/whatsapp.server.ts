@@ -497,8 +497,19 @@ function categoriaParaExibir(nome: string, categorias?: CategoriaRow[]): string 
   const key = categorias && categorias.length
     ? pickCategoriaKey(nome, categorias)
     : (suggestCategoryFromText(nome) || "outros");
+  // Preserva o nome oficial salvo pelo usuário quando aplicável.
+  if (categorias && categorias.length) {
+    if (key === "alimentacao") {
+      const ali = findCategoriaByNames(categorias, ALIMENTACAO_CATEGORY_NAMES);
+      if (ali && ali.nome) return ali.nome;
+    } else {
+      const byLegacy = categorias.find((c) => c.legacy_id === key);
+      if (byLegacy && byLegacy.nome) return byLegacy.nome;
+    }
+  }
   return categoriaLabel(key);
 }
+
 
 export function formatarConfirmacao(
   parsed: ParsedExpense,
