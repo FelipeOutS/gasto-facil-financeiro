@@ -2931,6 +2931,45 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_beta_access: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          expires_at: string | null
+          granted_at: string
+          granted_by: string | null
+          id: string
+          observacao: string | null
+          revoked_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          observacao?: string | null
+          revoked_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          observacao?: string | null
+          revoked_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       whatsapp_links: {
         Row: {
           ativo: boolean
@@ -3188,6 +3227,7 @@ export type Database = {
       }
       can_admin_account: { Args: { _owner: string }; Returns: boolean }
       can_create_in_account: { Args: { _owner: string }; Returns: boolean }
+      can_use_whatsapp: { Args: { _user_id: string }; Returns: boolean }
       can_view_account: { Args: { _owner: string }; Returns: boolean }
       claim_owner_if_first: { Args: never; Returns: boolean }
       current_plan: {
