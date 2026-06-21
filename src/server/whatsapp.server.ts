@@ -811,6 +811,7 @@ export async function processarMensagemWhatsApp(
 
   const recebidaEm = msg.recebida_em ?? new Date().toISOString();
   const cartoes = await carregarCartoes(userId);
+  const categorias = await carregarCategorias(userId);
   const decisao = classificarResposta(texto);
   const sessao = await buscarSessaoAtiva(userId, msg.telefone);
 
