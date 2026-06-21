@@ -259,7 +259,7 @@ export function AuthShell({
 
         <div className="rounded-3xl border border-border/60 bg-card/95 px-6 py-8 shadow-xl shadow-slate-900/5 backdrop-blur-sm sm:px-9 sm:py-10 dark:shadow-black/30">
           <Link to="/" className="mx-auto flex items-center justify-center" aria-label="Gasto Inteligente">
-            <BrandMark className="h-14 w-auto" />
+            <BrandMark variant="login" className="h-14 w-auto" />
           </Link>
 
           <div className="mt-6 text-center">
