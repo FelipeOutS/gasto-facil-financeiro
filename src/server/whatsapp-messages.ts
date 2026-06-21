@@ -258,4 +258,129 @@ export const whatsappMessages = {
       return `Tive um probleminha ao salvar a renda. Tente novamente em alguns instantes.`;
     },
   },
+
+  // =====================================================================
+  // CONSULTAS FINANCEIRAS (Fase WA-G2)
+  // Apelido curto "GI" usado só em mensagens de ajuda/boas-vindas.
+  // Máximo 1 emoji por mensagem.
+  // =====================================================================
+  consulta: {
+    ajuda() {
+      return [
+        `Oi! Eu sou o GI, assistente do Gasto Inteligente. 👋`,
+        ``,
+        `Posso te ajudar com:`,
+        ``,
+        `• Registrar gasto`,
+        `• Registrar renda`,
+        `• Resumo da semana`,
+        `• Resumo do mês`,
+        `• Maiores gastos`,
+        `• Impacto dos gastos na renda`,
+        ``,
+        `Exemplos:`,
+        `“Uber 29,90”`,
+        `“Recebi 500 de freelancer”`,
+        `“Como foi minha semana?”`,
+        `“Quais foram meus maiores gastos?”`,
+      ].join("\n");
+    },
+
+    resumoSemana(args: {
+      receitas: string;
+      despesas: string;
+      saldo: string;
+      maiorGrupo: { nome: string; valor: string } | null;
+    }) {
+      const linhas = [
+        `Resumo dos últimos 7 dias 📊`,
+        ``,
+        `• Receitas: ${args.receitas}`,
+        `• Despesas: ${args.despesas}`,
+        `• Saldo do período: ${args.saldo}`,
+      ];
+      linhas.push(``);
+      if (args.maiorGrupo) {
+        linhas.push(
+          `Seu maior grupo de gastos foi ${args.maiorGrupo.nome}: ${args.maiorGrupo.valor}.`,
+        );
+      } else {
+        linhas.push(`Ainda não encontrei gastos registrados nesse período.`);
+      }
+      return linhas.join("\n");
+    },
+
+    resumoMes(args: {
+      mes: string;
+      receitas: string;
+      despesas: string;
+      saldo: string;
+      percentual: number | null;
+    }) {
+      const linhas = [
+        `Resumo de ${args.mes} 📊`,
+        ``,
+        `• Receitas: ${args.receitas}`,
+        `• Despesas: ${args.despesas}`,
+        `• Saldo atual: ${args.saldo}`,
+        ``,
+      ];
+      if (args.percentual === null) {
+        linhas.push(
+          `Ainda não há receitas registradas suficientes para calcular essa comparação.`,
+        );
+      } else {
+        linhas.push(`Você já usou ${args.percentual}% das suas receitas registradas.`);
+      }
+      return linhas.join("\n");
+    },
+
+    maioresGastos(args: {
+      escopo: "semana" | "mes";
+      itens: Array<{ descricao: string; valor: string }>;
+      total: string;
+    }) {
+      const periodoLabel = args.escopo === "semana"
+        ? "dos últimos 7 dias"
+        : "deste mês";
+      if (args.itens.length === 0) {
+        return args.escopo === "semana"
+          ? `Ainda não encontrei gastos registrados nos últimos 7 dias.`
+          : `Ainda não encontrei gastos registrados neste mês.`;
+      }
+      const linhas = [`Seus maiores gastos ${periodoLabel} foram:`, ``];
+      args.itens.forEach((g, i) => {
+        linhas.push(`${i + 1}. ${g.descricao} — ${g.valor}`);
+      });
+      linhas.push(``);
+      const rotulo = args.itens.length === 1
+        ? `Total: ${args.total}.`
+        : `Total dos ${args.itens.length} maiores: ${args.total}.`;
+      linhas.push(rotulo);
+      return linhas.join("\n");
+    },
+
+    impactoComReceita(args: {
+      receitas: string;
+      despesas: string;
+      saldo: string;
+      percentual: number;
+    }) {
+      return [
+        `Neste mês, você registrou ${args.receitas} em receitas e ${args.despesas} em despesas.`,
+        ``,
+        `Isso representa ${args.percentual}% da sua renda registrada.`,
+        ``,
+        `Até agora, sobram ${args.saldo}.`,
+      ].join("\n");
+    },
+
+    impactoSemReceita() {
+      return [
+        `Ainda não há receitas registradas neste mês para calcular o impacto das despesas.`,
+        ``,
+        `Cadastre suas entradas e eu faço essa comparação para você.`,
+      ].join("\n");
+    },
+  },
 };
