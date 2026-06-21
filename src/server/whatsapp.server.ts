@@ -608,8 +608,10 @@ async function persistirGasto(
 ): Promise<{ gastoId?: string; resposta: string; ok: boolean }> {
   // Sempre derivamos a categoria a partir do nome do gasto — nunca da mensagem
   // original (evita "Mercado mercado 45,90" virar categoria/descrição).
-  const categoriaKey = suggestCategoryFromText(s.nome) || "outros";
-  const categoriaId = await resolveCategoriaId(userId, categoriaKey);
+  const categorias = await carregarCategorias(userId);
+  const nomeLimpo = cleanDescricao(s.nome) || s.nome;
+  const categoriaKey = pickCategoriaKey(nomeLimpo, categorias);
+  const categoriaId = resolveCategoriaIdFromList(categorias, categoriaKey);
   const [y, m] = s.data.split("-").map(Number);
 
   const cartaoFinalId =
@@ -626,8 +628,8 @@ async function persistirGasto(
     .insert({
       user_id: userId,
       categoria_id: categoriaId,
-      descricao: s.nome,
-      estabelecimento: s.nome,
+      descricao: nomeLimpo,
+      estabelecimento: nomeLimpo,
       valor: s.valor,
       data: s.data,
       mes: m,
@@ -652,7 +654,7 @@ async function persistirGasto(
   const ondePagou = s.cartaoNaoCadastrado
     ? " (cartão não cadastrado)"
     : s.cartaoId
-      ? ` no Cartão ${s.cartaoNomeDetectado ?? ""}`.replace(/\s+$/, "")
+      ? ` no Cartão ${canonicalizeBrand(s.cartaoNomeDetectado ?? "")}`.replace(/\s+$/, "")
       : ` no ${rotuloFormaPagamento(s.formaPagamento ?? "credito")}`;
   const resposta = `✅ Gasto salvo com sucesso!\n${formatBRL(s.valor)} em ${categoria} foi registrado${ondePagou}.`;
   return { ok: true, gastoId: gastoRow.id, resposta };
