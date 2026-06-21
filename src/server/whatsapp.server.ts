@@ -26,6 +26,7 @@ import {
 import { suggestCategoryFromText } from "@/lib/categories";
 import type { Cartao, FormaPagamento } from "@/lib/types";
 import { canUseWhatsApp } from "./whatsapp-beta.server";
+import { whatsappMessages as M } from "./whatsapp-messages";
 
 // ---------- elegibilidade WhatsApp (gate único) ----------
 // Admin Master OU participante ativo da beta fechada (whatsapp_beta_access).
@@ -504,19 +505,14 @@ export function formatarConfirmacao(
   const descricao = cleanDescricao(parsed.nome) || parsed.nome;
   const categoria = categoriaParaExibir(descricao, categorias);
   const dataFmt = formatDataBR(parsed.data);
-  const linhas = [
-    "🧾 Encontrei este gasto:",
-    "",
-    `Descrição: ${descricao}`,
-    `Categoria: ${categoria}`,
-    `Valor: ${formatBRL(parsed.valor)}`,
-    `Data: ${dataFmt === "hoje" ? "Hoje" : dataFmt}`,
-    `Pagamento: ${rotuloFormaPagamento(parsed.formaPagamento, cartao || undefined)}`,
-  ];
-  if (parsed.parcelas && parsed.parcelas > 1) linhas.push(`Parcelas: ${parsed.parcelas}x`);
-  linhas.push("");
-  linhas.push("Deseja salvar esse gasto? Responda sim ou não.");
-  return linhas.join("\n");
+  return M.resumoConfirmacao({
+    descricao,
+    categoria,
+    valor: formatBRL(parsed.valor),
+    data: dataFmt === "hoje" ? "Hoje" : dataFmt,
+    pagamento: rotuloFormaPagamento(parsed.formaPagamento, cartao || undefined),
+    parcelas: parsed.parcelas,
+  });
 }
 
 /** Mantido para compatibilidade com testes existentes. */
@@ -525,10 +521,10 @@ export function detectarFaltantes(
   cartoes: Cartao[],
 ): string | null {
   if (!parsed.valor || parsed.valor <= 0) {
-    return "❓ Só preciso de mais uma informação: qual foi o valor do gasto? Ex.: R$ 48,90.";
+    return M.faltaValor();
   }
   if (!parsed.nome || parsed.nome.length < 2) {
-    return "❓ Só preciso de mais uma informação: o que você comprou ou pagou? Ex.: mercado, uber, farmácia.";
+    return M.faltaNome();
   }
   if (parsed.formaPagamento === "credito") {
     if (parsed.cartaoAmbiguo && parsed.cartaoAmbiguo.nomes.length > 1) {
@@ -540,7 +536,7 @@ export function detectarFaltantes(
     if (!parsed.cartaoId && parsed.cartaoNomeDetectado) {
       const nomes = cartoes.map((c) => c.nome).filter(Boolean);
       const lista = nomes.length > 0 ? `\nSeus cartões cadastrados: ${nomes.join(", ")}.` : "";
-      return `❓ Não encontrei o cartão "${parsed.cartaoNomeDetectado}" cadastrado.${lista}\nMe diga o nome certo do cartão ou cadastre um novo no app antes de confirmar.`;
+      return M.cartaoNaoEncontradoNoParse(parsed.cartaoNomeDetectado, lista);
     }
   }
   return null;
@@ -649,14 +645,14 @@ function listarCartoesParaPergunta(cartoes: Cartao[]): string {
 }
 
 function perguntaFormaPagamento(s: Session): string {
-  return `Anotei ${formatBRL(s.valor)} em ${s.nome}.\nVocê pagou com Pix, dinheiro, débito ou cartão?`;
+  return M.perguntaFormaPagamento(formatBRL(s.valor), s.nome);
 }
 function perguntaCartao(s: Session, cartoes: Cartao[]): string {
   const lista = listarCartoesParaPergunta(cartoes);
-  return `Qual cartão você usou para ${s.nome} (${formatBRL(s.valor)})?${lista}`;
+  return M.perguntaCartao(s.nome, formatBRL(s.valor), lista);
 }
 function avisoCartaoAmbiguo(nomes: string[]): string {
-  return `Encontrei mais de um cartão parecido:\n${nomes.map((n) => `• ${n}`).join("\n")}\nMe diga o nome exato (ou os últimos 4 dígitos).`;
+  return M.avisoCartaoAmbiguo(nomes);
 }
 const NEGACAO_CARTAO_PATTERNS = [
   /\bnenhum desses\b/,
@@ -674,11 +670,22 @@ function isNegacaoCartao(texto: string): boolean {
 }
 
 function avisoCartaoNaoCadastrado(s: Session, digitado: string): string {
-  return `Não encontrei "${digitado}" entre os seus cartões cadastrados.\nVou registrar este gasto como cartão não cadastrado. Depois, caso queira, você poderá cadastrá-lo na área Cartões do Gasto Inteligente.\n\nConfirma o gasto de ${formatBRL(s.valor)} em ${s.nome}, ${formatDataBR(s.data) === "hoje" ? "hoje" : formatDataBR(s.data)}, pago com cartão não cadastrado? Responda sim ou não.`;
+  const dataFmt = formatDataBR(s.data);
+  return M.avisoCartaoNaoCadastrado(
+    digitado,
+    formatBRL(s.valor),
+    s.nome,
+    dataFmt === "hoje" ? "hoje" : dataFmt,
+  );
 }
 
 function avisoCartaoNaoCadastradoNegado(s: Session): string {
-  return `Não encontrei nenhum dos seus cartões cadastrados para esse gasto.\n\nVou registrar como cartão não cadastrado. Depois, caso queira, você poderá cadastrar esse cartão na área Cartões do Gasto Inteligente.\n\nConfirma o gasto de ${formatBRL(s.valor)} em ${s.nome}, ${formatDataBR(s.data) === "hoje" ? "hoje" : formatDataBR(s.data)}, pago com cartão não cadastrado? Responda sim ou não.`;
+  const dataFmt = formatDataBR(s.data);
+  return M.avisoCartaoNaoCadastradoNegado(
+    formatBRL(s.valor),
+    s.nome,
+    dataFmt === "hoje" ? "hoje" : dataFmt,
+  );
 }
 
 async function verificarGastoExiste(gastoId: string | null | undefined): Promise<boolean> {
@@ -738,7 +745,7 @@ async function persistirGasto(
 
   if (gastoErr || !gastoRow) {
     console.error("[whatsapp] gasto insert failed", gastoErr);
-    return { ok: false, resposta: "❌ Não consegui salvar agora. Pode tentar de novo em instantes?" };
+    return { ok: false, resposta: M.erroAoSalvar() };
   }
 
   const categoria = categoriaLabel(categoriaKey);
@@ -747,7 +754,7 @@ async function persistirGasto(
     : s.cartaoId
       ? ` no Cartão ${canonicalizeBrand(s.cartaoNomeDetectado ?? "")}`.replace(/\s+$/, "")
       : ` no ${rotuloFormaPagamento(s.formaPagamento ?? "credito")}`;
-  const resposta = `✅ Gasto salvo com sucesso!\n${formatBRL(s.valor)} em ${categoria} foi registrado${ondePagou}.`;
+  const resposta = M.gastoSalvo(formatBRL(s.valor), categoria, ondePagou);
   return { ok: true, gastoId: gastoRow.id, resposta };
 }
 
@@ -911,12 +918,11 @@ export async function processarMensagemWhatsApp(
           data: new Date().toISOString().slice(0, 10),
           mensagemOriginal: texto,
         },
-        "Não há nenhum gasto aguardando confirmação no momento. Me envie o gasto, ex.: \"Mercado 48,90 hoje no Nubank\".",
+        M.semPendencia(),
       );
       return {
         status: "sem_pendencia",
-        resposta:
-          "Não há nenhum gasto aguardando confirmação no momento. Me envie o gasto, ex.: \"Mercado 48,90 hoje no Nubank\".",
+        resposta: M.semPendencia(),
       };
     }
 
@@ -934,7 +940,7 @@ export async function processarMensagemWhatsApp(
       );
       return {
         status: "cancelada",
-        resposta: "❌ Tudo bem, gasto cancelado.\nNada foi salvo.",
+        resposta: M.gastoCancelado(),
       };
     }
 
@@ -966,7 +972,7 @@ export async function processarMensagemWhatsApp(
   if (sessao && sessao.status === "aguardando_forma_pagamento") {
     const forma = detectFormaPagamentoFromText(texto);
     if (!forma) {
-      const resposta = `Ainda preciso saber a forma de pagamento.\n${perguntaFormaPagamento(sessao.session)}`;
+      const resposta = M.faltaForma(perguntaFormaPagamento(sessao.session));
       await gravarSessao(
         userId,
         msg.telefone,
@@ -1096,8 +1102,7 @@ export async function processarMensagemWhatsApp(
     // Resposta inválida (ex.: "sin") enquanto aguardamos sim/não.
     // Não repetimos o resumo nem reiniciamos a sessão — apenas pedimos
     // uma resposta válida. A sessão original permanece intacta.
-    const aviso =
-      'Não entendi sua resposta. Para salvar, responda "sim". Para cancelar, responda "não".';
+    const aviso = M.naoEntendiSimNao();
     await gravarSessao(
       userId,
       msg.telefone,
@@ -1114,8 +1119,7 @@ export async function processarMensagemWhatsApp(
   // ---- Caso B: nenhuma sessão ativa → parse normal ----
   const parsed = parseWhatsAppExpenseMessage(texto, cartoes);
   if (!parsed.valor || parsed.valor <= 0) {
-    const resposta =
-      "❓ Só preciso de mais uma informação: qual foi o valor do gasto? Ex.: R$ 48,90.";
+    const resposta = M.faltaValor();
     await gravarSessao(
       userId,
       msg.telefone,
@@ -1129,8 +1133,7 @@ export async function processarMensagemWhatsApp(
     return { status: "valor_invalido", confianca: parsed.confianca, resposta };
   }
   if (!parsed.nome || parsed.nome.length < 2) {
-    const resposta =
-      "❓ Só preciso de mais uma informação: o que você comprou ou pagou? Ex.: mercado, uber, farmácia.";
+    const resposta = M.faltaNome();
     await gravarSessao(
       userId,
       msg.telefone,
