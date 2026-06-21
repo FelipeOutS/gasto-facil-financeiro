@@ -919,17 +919,11 @@ export async function processarMensagemWhatsApp(
   }
 
   if (sessao && sessao.status === "aguardando_confirmacao") {
-    // Mensagem nova enquanto pendência aguarda sim/não. Não reinicia, não sobrescreve.
-    const cartaoNomeAnt = sessao.session.cartaoId
-      ? cartoes.find((c) => c.id === sessao.session.cartaoId)?.nome
-      : sessao.session.cartaoNaoCadastrado
-        ? "cartão não cadastrado"
-        : undefined;
-    const resumoAnt = formatarConfirmacao(
-      sessionToParsed(sessao.session, cartoes),
-      cartaoNomeAnt,
-    );
-    const aviso = `⏳ Você já tem um gasto aguardando confirmação:\n\n${resumoAnt}\n\nResponda sim para salvar ou não para cancelar antes de enviar um novo gasto.`;
+    // Resposta inválida (ex.: "sin") enquanto aguardamos sim/não.
+    // Não repetimos o resumo nem reiniciamos a sessão — apenas pedimos
+    // uma resposta válida. A sessão original permanece intacta.
+    const aviso =
+      'Não entendi sua resposta. Para salvar, responda "sim". Para cancelar, responda "não".';
     await gravarSessao(
       userId,
       msg.telefone,
