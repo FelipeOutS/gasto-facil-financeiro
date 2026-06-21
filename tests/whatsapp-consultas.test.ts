@@ -28,6 +28,12 @@ function daysAgoISO(n: number): string {
   dt.setUTCDate(dt.getUTCDate() - n);
   return dt.toISOString().slice(0, 10);
 }
+function daysAheadISO(n: number): string {
+  const [y, m, d] = todayISO().split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return dt.toISOString().slice(0, 10);
+}
 function monthStart(): string {
   return todayISO().slice(0, 7) + "-01";
 }
