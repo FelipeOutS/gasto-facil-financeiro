@@ -1,10 +1,10 @@
-import { BrandMark } from "@/components/BrandMark";
 import { cn } from "@/lib/utils";
+import { StarfieldBackground } from "@/components/StarfieldBackground";
+import iconDark from "/logos/brand/icone-gasto-inteligente-dark.svg?url";
 
 /**
  * Tela de carregamento padrão do Gasto Inteligente.
- * Usa o logo oficial com uma pulsação suave e elegante.
- * Centraliza vertical/horizontalmente respeitando safe-area (notch/câmera).
+ * Usa o ícone oficial sobre um fundo estrelado premium.
  */
 export function BrandLoader({
   message = "Preparando tudo…",
@@ -16,7 +16,7 @@ export function BrandLoader({
   return (
     <div
       className={cn(
-        "fixed inset-0 flex items-center justify-center bg-background px-6",
+        "fixed inset-0 flex items-center justify-center overflow-hidden px-6",
         className,
       )}
       style={{
@@ -27,13 +27,18 @@ export function BrandLoader({
       role="status"
       aria-live="polite"
     >
-      <div className="flex flex-col items-center gap-4 animate-fade-in">
-        <BrandMark
-          variant="symbol"
+      <StarfieldBackground />
+      <div className="relative z-10 flex flex-col items-center gap-4 animate-fade-in">
+        <img
+          src={iconDark}
+          alt=""
+          aria-hidden="true"
+          width={64}
+          height={64}
           className="h-14 w-14 sm:h-16 sm:w-16 motion-safe:animate-[brand-pulse_1.8s_ease-in-out_infinite]"
         />
         {message && (
-          <p className="text-sm text-muted-foreground text-center">{message}</p>
+          <p className="text-sm text-slate-300/90 text-center">{message}</p>
         )}
       </div>
     </div>
