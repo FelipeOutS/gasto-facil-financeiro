@@ -22,11 +22,11 @@ export const whatsappMessages = {
   },
 
   // ---- cartão ----
-  perguntaCartao(nome: string, valorFmt: string, listaCartoes: string) {
+  perguntaCartao(listaCartoes: string) {
     return (
-      `Certo! Qual cartão você usou para ${nome} (${valorFmt})? 💳` +
+      `Certo! Qual cartão você usou? 💳\n` +
       `${listaCartoes}\n\n` +
-      `Responda com o nome do cartão ou escolha uma das opções acima.`
+      `Responda com o nome do cartão ou escolha uma opção acima.`
     );
   },
 
@@ -81,11 +81,12 @@ export const whatsappMessages = {
   },
 
   // ---- respostas finais ----
-  gastoSalvo(valorFmt: string, categoria: string, ondePagou: string) {
+  gastoSalvo(valorFmt: string, descricao: string, categoria: string, ondePagou: string) {
     return (
-      `Pronto! Seu gasto foi registrado ✅\n` +
-      `${valorFmt} em ${categoria}${ondePagou}.\n` +
-      `Você já consegue ver no Gasto Inteligente.`
+      `Pronto! Seu gasto foi registrado ✅\n\n` +
+      `${valorFmt} em ${descricao}, pago via ${ondePagou}.\n` +
+      `Categoria: ${categoria}\n\n` +
+      `Você já consegue ver esse lançamento no Gasto Inteligente.`
     );
   },
 
