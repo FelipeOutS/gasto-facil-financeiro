@@ -505,19 +505,14 @@ export function formatarConfirmacao(
   const descricao = cleanDescricao(parsed.nome) || parsed.nome;
   const categoria = categoriaParaExibir(descricao, categorias);
   const dataFmt = formatDataBR(parsed.data);
-  const linhas = [
-    "🧾 Encontrei este gasto:",
-    "",
-    `Descrição: ${descricao}`,
-    `Categoria: ${categoria}`,
-    `Valor: ${formatBRL(parsed.valor)}`,
-    `Data: ${dataFmt === "hoje" ? "Hoje" : dataFmt}`,
-    `Pagamento: ${rotuloFormaPagamento(parsed.formaPagamento, cartao || undefined)}`,
-  ];
-  if (parsed.parcelas && parsed.parcelas > 1) linhas.push(`Parcelas: ${parsed.parcelas}x`);
-  linhas.push("");
-  linhas.push("Deseja salvar esse gasto? Responda sim ou não.");
-  return linhas.join("\n");
+  return M.resumoConfirmacao({
+    descricao,
+    categoria,
+    valor: formatBRL(parsed.valor),
+    data: dataFmt === "hoje" ? "Hoje" : dataFmt,
+    pagamento: rotuloFormaPagamento(parsed.formaPagamento, cartao || undefined),
+    parcelas: parsed.parcelas,
+  });
 }
 
 /** Mantido para compatibilidade com testes existentes. */
