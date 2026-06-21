@@ -38,6 +38,7 @@ import {
   type ReceitaSession,
   type ReceitaStatus,
 } from "./whatsapp-receitas.server";
+import { detectConsultaIntent, handleConsulta } from "./whatsapp-consultas.server";
 
 // ---------- elegibilidade WhatsApp (gate único) ----------
 // Admin Master OU participante ativo da beta fechada (whatsapp_beta_access).
