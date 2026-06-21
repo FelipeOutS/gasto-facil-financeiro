@@ -111,7 +111,7 @@ test("Nova despesa com pendência ativa avisa e NÃO grava gasto", async () => {
     external_id: "p-2",
   });
   expect(r.status).toBe("pendente");
-  expect(r.resposta).toMatch(/aguardando confirma[cç][aã]o/i);
+  expect(r.resposta).toMatch(/n[aã]o entendi/i);
   expect(gastosInserts()).toHaveLength(0);
   expect(state.pendingRow).not.toBeNull();
 });
