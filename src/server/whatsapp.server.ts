@@ -529,8 +529,9 @@ async function persistirGasto(
   userId: string,
   s: Session,
 ): Promise<{ gastoId?: string; resposta: string; ok: boolean }> {
-  const categoriaKey =
-    suggestCategoryFromText(s.categoriaSugestao || s.nome) || "outros";
+  // Sempre derivamos a categoria a partir do nome do gasto — nunca da mensagem
+  // original (evita "Mercado mercado 45,90" virar categoria/descrição).
+  const categoriaKey = suggestCategoryFromText(s.nome) || "outros";
   const categoriaId = await resolveCategoriaId(userId, categoriaKey);
   const [y, m] = s.data.split("-").map(Number);
 
