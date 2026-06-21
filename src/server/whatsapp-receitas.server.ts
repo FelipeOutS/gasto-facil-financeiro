@@ -165,16 +165,27 @@ export function parseValor(texto: string): number | null {
     const n = Number(milMatch[1].replace(",", "."));
     if (Number.isFinite(n) && n > 0) return Math.round(n * 1000 * 100) / 100;
   }
-  // número brasileiro: 1.234,56 ou 1234,56 ou 1234.56 ou 1234
-  const m = t.match(/(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?)/);
-  if (!m) return null;
-  let raw = m[1];
-  if (raw.includes(",")) {
-    raw = raw.replace(/\./g, "").replace(",", ".");
+  // Brazilian thousand groups: "1.234", "12.345,67"
+  const brGrouped = t.match(/(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?)/);
+  if (brGrouped) {
+    let raw = brGrouped[1].replace(/\./g, "");
+    if (raw.includes(",")) raw = raw.replace(",", ".");
+    const n = Number(raw);
+    if (Number.isFinite(n) && n > 0) return Math.round(n * 100) / 100;
   }
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.round(n * 100) / 100;
+  // Comma decimal: "1234,56"
+  const decBr = t.match(/(\d+,\d{1,2})/);
+  if (decBr) {
+    const n = Number(decBr[1].replace(",", "."));
+    if (Number.isFinite(n) && n > 0) return Math.round(n * 100) / 100;
+  }
+  // Plain / US decimal: "1234" / "12.50"
+  const plain = t.match(/(\d+(?:\.\d{1,2})?)/);
+  if (plain) {
+    const n = Number(plain[1]);
+    if (Number.isFinite(n) && n > 0) return Math.round(n * 100) / 100;
+  }
+  return null;
 }
 
 // ---------- parse de frequência ----------
