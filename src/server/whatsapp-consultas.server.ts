@@ -133,11 +133,8 @@ function addDaysISO(iso: string, days: number): string {
 function monthStartISO(iso: string): string {
   return `${iso.slice(0, 7)}-01`;
 }
-function nextMonthStartISO(iso: string): string {
-  const [y, m] = iso.split("-").map(Number);
-  const dt = new Date(Date.UTC(y, m, 1));
-  return dt.toISOString().slice(0, 10);
-}
+// WA-G3: removida `nextMonthStartISO` — janelas mensais usam "até hoje".
+
 
 function mesPorExtenso(iso: string): string {
   const [, m] = iso.split("-").map(Number);
@@ -288,7 +285,9 @@ async function handleMaioresGastos(
 ): Promise<ConsultaResult> {
   const hoje = todayLocalISO();
   const from = escopo === "semana" ? addDaysISO(hoje, -6) : monthStartISO(hoje);
-  const to = escopo === "semana" ? addDaysISO(hoje, 1) : nextMonthStartISO(hoje);
+  // WA-G3: maiores gastos do mês também ignora despesas futuras (até hoje, inclusive).
+  const to = addDaysISO(hoje, 1);
+
   const gastos = await loadGastos(userId, from, to);
   const ordenados = [...gastos]
     .map((g) => ({ descricao: (g.descricao ?? "").trim() || "Gasto", valor: Number(g.valor ?? 0) || 0 }))
@@ -348,4 +347,114 @@ export async function handleConsulta(
     case "impacto_despesas_renda":
       return await handleImpacto(userId);
   }
+}
+
+// =====================================================================
+// WA-G3 — Intenções conversacionais (saudação, menu, finanças genérico).
+// Não acessam banco. Não criam sessão. Não retornam dados financeiros.
+// =====================================================================
+
+export type ConversationalIntent =
+  | "saudacao_whatsapp"
+  | "menu_whatsapp"
+  | "financas_generico"
+  | "cancelar_sem_sessao";
+
+const SAUDACOES = new Set<string>([
+  "oi", "ola", "ei", "e ai", "eai",
+  "bom dia", "boa tarde", "boa noite",
+  "hey", "hello", "alo",
+]);
+
+const MENU_EXATOS = new Set<string>([
+  "ajuda", "ajudar", "menu", "help", "opcoes", "opcao",
+  "gi", "oi gi", "ola gi", "ei gi", "bom dia gi", "boa tarde gi", "boa noite gi",
+  "gasto inteligente", "oi gasto inteligente", "ola gasto inteligente",
+]);
+
+const CANCELAR_EXATOS = new Set<string>([
+  "cancelar", "cancela", "cancelado", "cancelada",
+]);
+
+/**
+ * Detecta intenção conversacional. Roda apenas quando NÃO há sessão pendente.
+ * Tem precedência sobre `detectConsultaIntent` para palavras-chave compartilhadas
+ * (ex.: "menu", "ajuda", "como estão minhas finanças").
+ */
+export function detectConversationalIntent(texto: string): ConversationalIntent | null {
+  const t = norm(texto);
+  if (!t) return null;
+
+  if (CANCELAR_EXATOS.has(t)) return "cancelar_sem_sessao";
+
+  if (MENU_EXATOS.has(t)) return "menu_whatsapp";
+  if (
+    /\bo que voce (faz|consegue fazer|pode fazer)\b/.test(t) ||
+    /\bcomo voce (pode|consegue) (me )?ajudar\b/.test(t) ||
+    /\bquais (sao )?(os )?seus comandos\b/.test(t) ||
+    /\bquais (sao )?(as )?op[cç]oes\b/.test(t)
+  ) {
+    return "menu_whatsapp";
+  }
+
+  if (
+    /\bquero (ver|saber) (as )?minhas finan[cç]as\b/.test(t) ||
+    /\bcomo est(a|ao) (as )?minhas finan[cç]as\b/.test(t) ||
+    /\bme ajuda com (as )?minhas finan[cç]as\b/.test(t)
+  ) {
+    return "financas_generico";
+  }
+
+  if (SAUDACOES.has(t)) return "saudacao_whatsapp";
+
+  return null;
+}
+
+// Cache anti-repetição em memória (best-effort, 5 min). Chave = telefone.
+// Não armazena conteúdo da mensagem do usuário — apenas qual intenção
+// acabamos de responder, para evitar repetir o menu inteiro logo em seguida.
+const RECENT_TTL_MS = 5 * 60 * 1000;
+const recentIntent = new Map<string, { intent: ConversationalIntent; at: number }>();
+
+export function _resetConversationalCache(): void {
+  recentIntent.clear();
+}
+
+function getRecentIntent(telefone: string): ConversationalIntent | null {
+  const e = recentIntent.get(telefone);
+  if (!e) return null;
+  if (Date.now() - e.at > RECENT_TTL_MS) {
+    recentIntent.delete(telefone);
+    return null;
+  }
+  return e.intent;
+}
+
+function markRecentIntent(telefone: string, intent: ConversationalIntent): void {
+  recentIntent.set(telefone, { intent, at: Date.now() });
+}
+
+export function handleConversational(
+  telefone: string,
+  intent: ConversationalIntent,
+): { status: "consulta"; resposta: string } {
+  let resposta: string;
+  if (intent === "saudacao_whatsapp") {
+    const recente = getRecentIntent(telefone);
+    resposta = recente === "saudacao_whatsapp" || recente === "menu_whatsapp"
+      ? M.consulta.menuCurto()
+      : M.consulta.saudacao();
+  } else if (intent === "menu_whatsapp") {
+    const recente = getRecentIntent(telefone);
+    resposta = recente === "menu_whatsapp"
+      ? M.consulta.menuCurto()
+      : M.consulta.ajuda();
+  } else if (intent === "financas_generico") {
+    resposta = M.consulta.financasGenerico();
+  } else {
+    // cancelar_sem_sessao
+    resposta = M.consulta.cancelarSemPendencia();
+  }
+  markRecentIntent(telefone, intent);
+  return { status: "consulta", resposta };
 }

@@ -294,6 +294,47 @@ export const whatsappMessages = {
       ].join("\n");
     },
 
+    // WA-G3 — saudação curta sem dados financeiros automáticos.
+    saudacao() {
+      return [
+        `Oi! Eu sou o GI, assistente do Gasto Inteligente. 👋`,
+        ``,
+        `Posso registrar gastos e rendas ou mostrar um resumo das suas finanças.`,
+        ``,
+        `Digite “ajuda” para ver exemplos.`,
+      ].join("\n");
+    },
+
+    // WA-G3 — versão curta usada quando menu/saudação acabou de ser enviado.
+    menuCurto() {
+      return `Você pode me enviar um gasto, uma renda ou pedir um resumo das suas finanças.`;
+    },
+
+    // WA-G3 — pedido financeiro genérico ("quero ver minhas finanças").
+    financasGenerico() {
+      return [
+        `Claro! O que você quer consultar? 📊`,
+        ``,
+        `• Resumo da semana`,
+        `• Resumo do mês`,
+        `• Maiores gastos`,
+        `• Impacto dos gastos na renda`,
+        ``,
+        `Exemplo:`,
+        `“Como foi minha semana?”`,
+      ].join("\n");
+    },
+
+    // WA-G3 — "cancelar" sem sessão pendente.
+    cancelarSemPendencia() {
+      return [
+        `Não tem nada em andamento agora.`,
+        ``,
+        `Posso registrar um gasto, uma renda ou mostrar um resumo das suas finanças.`,
+      ].join("\n");
+    },
+
+
     resumoSemana(args: {
       receitas: string;
       despesas: string;

@@ -38,7 +38,13 @@ import {
   type ReceitaSession,
   type ReceitaStatus,
 } from "./whatsapp-receitas.server";
-import { detectConsultaIntent, handleConsulta } from "./whatsapp-consultas.server";
+import {
+  detectConsultaIntent,
+  handleConsulta,
+  detectConversationalIntent,
+  handleConversational,
+} from "./whatsapp-consultas.server";
+
 
 // ---------- elegibilidade WhatsApp (gate único) ----------
 // Admin Master OU participante ativo da beta fechada (whatsapp_beta_access).
@@ -1167,6 +1173,53 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // ---- Fase WA-G3: intenções conversacionais (saudação, menu, finanças genérico) ----
+  // Tem precedência sobre consultas reais e sobre parsing de gasto/receita.
+  // Só roda quando NÃO há sessão pendente e não é uma resposta sim/não/forma.
+  if (!sessao && decisao === "outro") {
+    const conv = detectConversationalIntent(texto);
+    if (conv) {
+      const out = handleConversational(msg.telefone, conv);
+      await gravarSessao(
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "sem_pendencia",
+        {
+          nome: "",
+          valor: 0,
+          data: todayLocalISO(),
+          mensagemOriginal: texto,
+        },
+        out.resposta,
+      );
+      return { status: "consulta", resposta: out.resposta };
+    }
+  }
+
+  // ---- Fase WA-G3: "cancelar" sem sessão pendente → mensagem neutra. ----
+  if (!sessao && decisao === "cancel") {
+    const resposta = M.consulta.cancelarSemPendencia();
+    await gravarSessao(
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "sem_pendencia",
+      {
+        nome: "",
+        valor: 0,
+        data: todayLocalISO(),
+        mensagemOriginal: texto,
+      },
+      resposta,
+    );
+    return { status: "sem_pendencia", resposta };
+  }
+
   // ---- Fase WA-G2: consultas financeiras ----
   // Roda ANTES da detecção de receita livre porque frases como "quanto meus
   // gastos afetam minha renda" contêm a palavra "renda" mas são consulta.
@@ -1195,6 +1248,7 @@ export async function processarMensagemWhatsApp(
       return { status: "consulta", resposta: out.resposta };
     }
   }
+
 
   // ---- Fase WA-G1: texto livre indicando intenção de receita. ----
   const startsReceita = !sessao && decisao === "outro" && isReceitaIntent(texto);
