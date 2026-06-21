@@ -940,7 +940,7 @@ export async function processarMensagemWhatsApp(
       );
       return {
         status: "cancelada",
-        resposta: "❌ Tudo bem, gasto cancelado.\nNada foi salvo.",
+        resposta: M.gastoCancelado(),
       };
     }
 
