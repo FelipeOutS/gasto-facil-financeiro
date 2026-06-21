@@ -20,6 +20,7 @@ import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.
 const supabaseAdmin = _supabaseAdmin as any;
 import {
   parseWhatsAppExpenseMessage,
+  cleanDescricao,
   type ParsedExpense,
 } from "@/lib/whatsappParser";
 import { suggestCategoryFromText } from "@/lib/categories";
@@ -130,10 +131,53 @@ function normalizeText(s: string): string {
     .trim();
 }
 
+/** Capitalização canônica de marcas conhecidas — usada quando o cadastro foi
+ *  salvo com caixa inconsistente (ex.: "Mercado pago" → "Mercado Pago"). */
+const CANONICAL_BRAND: Record<string, string> = {
+  "nubank": "Nubank",
+  "itau": "Itaú",
+  "itaú": "Itaú",
+  "santander": "Santander",
+  "mercado pago": "Mercado Pago",
+  "mercadopago": "Mercado Pago",
+  "inter": "Inter",
+  "c6": "C6",
+  "c6 bank": "C6 Bank",
+  "bradesco": "Bradesco",
+  "banco do brasil": "Banco do Brasil",
+  "bb": "Banco do Brasil",
+  "caixa": "Caixa",
+  "picpay": "PicPay",
+  "next": "Next",
+  "neon": "Neon",
+  "will": "Will",
+  "will bank": "Will Bank",
+  "pan": "Pan",
+  "original": "Original",
+  "btg": "BTG",
+  "xp": "XP",
+  "porto": "Porto",
+  "safra": "Safra",
+};
+
+function canonicalizeBrand(nome: string | null | undefined): string {
+  const raw = (nome ?? "").trim();
+  if (!raw) return raw;
+  const key = raw.toLowerCase();
+  if (CANONICAL_BRAND[key]) return CANONICAL_BRAND[key];
+  return raw;
+}
+
+/** Nome a ser exibido para um cartão cadastrado, preservando a capitalização
+ *  do cadastro — apenas corrige marcas conhecidas salvas em caixa errada. */
+export function displayCartaoNome(c: Cartao): string {
+  return canonicalizeBrand(c.nome);
+}
+
 /** Mascara cartão para exibição (nunca número completo). */
 export function maskCartaoLabel(c: Cartao): string {
-  const nome = (c.nome ?? "").trim();
-  const banco = (c.banco ?? "").trim();
+  const nome = displayCartaoNome(c);
+  const banco = canonicalizeBrand(c.banco ?? "");
   // Tenta extrair 4 dígitos contíguos do nome (ex.: "Nubank 1234")
   const m = nome.match(/(\d{4})(?!.*\d{4})/);
   if (m) {
@@ -200,28 +244,60 @@ export function matchCartao(
 
 // ---------- categorias ----------
 
-async function resolveCategoriaId(
-  userId: string,
-  categoriaKey: string,
-): Promise<string | null> {
+type CategoriaRow = { id: string; legacy_id: string | null; nome: string };
+
+async function carregarCategorias(userId: string): Promise<CategoriaRow[]> {
   const { data } = await supabaseAdmin
     .from("categorias")
     .select("id, legacy_id, nome")
     .eq("user_id", userId);
-  if (!data || data.length === 0) return null;
+  if (!data) return [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const arr = data as any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const byLegacy = arr.find((c: any) => c.legacy_id === categoriaKey);
+  return (data as any[]).map((c: any) => ({
+    id: c.id,
+    legacy_id: c.legacy_id ?? null,
+    nome: c.nome ?? "",
+  }));
+}
+
+function categoriaExiste(categorias: CategoriaRow[], key: string): boolean {
+  const k = key.toLowerCase();
+  return categorias.some(
+    (c) => c.legacy_id === key || (c.nome ?? "").toLowerCase() === k,
+  );
+}
+
+/**
+ * Escolhe a categoria preferida considerando as categorias ativas do usuário.
+ * Regra extra: "padaria" prefere "alimentacao" quando essa categoria existe
+ * (cai para o sugerido por keyword — geralmente "mercado" — caso contrário).
+ */
+function pickCategoriaKey(nome: string, categorias: CategoriaRow[]): string {
+  const sugerido = suggestCategoryFromText(nome) || "outros";
+  const normNome = (nome || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  if (/\bpadaria\b/.test(normNome) && categoriaExiste(categorias, "alimentacao")) {
+    return "alimentacao";
+  }
+  return sugerido;
+}
+
+function resolveCategoriaIdFromList(
+  categorias: CategoriaRow[],
+  categoriaKey: string,
+): string | null {
+  if (categorias.length === 0) return null;
+  const byLegacy = categorias.find((c) => c.legacy_id === categoriaKey);
   if (byLegacy) return byLegacy.id;
   const norm = categoriaKey.toLowerCase();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const byName = arr.find((c: any) => c.nome.toLowerCase() === norm);
+  const byName = categorias.find((c) => (c.nome ?? "").toLowerCase() === norm);
   if (byName) return byName.id;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const outros = arr.find((c: any) => c.legacy_id === "outros") ?? arr[0];
+  const outros = categorias.find((c) => c.legacy_id === "outros") ?? categorias[0];
   return outros?.id ?? null;
 }
+
 
 // ---------- tipos públicos ----------
 
@@ -330,6 +406,7 @@ function rotuloFormaPagamento(f: FormaPagamento, cartaoNome?: string): string {
 
 const CATEGORIA_LABEL: Record<string, string> = {
   mercado: "Mercado",
+  alimentacao: "Alimentação",
   transporte: "Transporte",
   saude: "Saúde",
   restaurante: "Restaurante",
@@ -350,23 +427,30 @@ function categoriaLabel(key: string | undefined | null): string {
 }
 
 /** Resolve a label limpa de categoria a partir do nome do gasto. */
-function categoriaParaExibir(nome: string): string {
-  const key = suggestCategoryFromText(nome) || "outros";
+function categoriaParaExibir(nome: string, categorias?: CategoriaRow[]): string {
+  const key = categorias && categorias.length
+    ? pickCategoriaKey(nome, categorias)
+    : (suggestCategoryFromText(nome) || "outros");
   return categoriaLabel(key);
 }
 
-export function formatarConfirmacao(parsed: ParsedExpense, cartaoNome?: string): string {
-  const cartao = cartaoNome ?? parsed.cartaoNomeDetectado;
-  const categoria = categoriaParaExibir(parsed.nome);
+export function formatarConfirmacao(
+  parsed: ParsedExpense,
+  cartaoNome?: string,
+  categorias?: CategoriaRow[],
+): string {
+  const cartao = canonicalizeBrand(cartaoNome ?? parsed.cartaoNomeDetectado ?? "");
+  const descricao = cleanDescricao(parsed.nome) || parsed.nome;
+  const categoria = categoriaParaExibir(descricao, categorias);
   const dataFmt = formatDataBR(parsed.data);
   const linhas = [
     "🧾 Encontrei este gasto:",
     "",
-    `Descrição: ${parsed.nome}`,
+    `Descrição: ${descricao}`,
     `Categoria: ${categoria}`,
     `Valor: ${formatBRL(parsed.valor)}`,
     `Data: ${dataFmt === "hoje" ? "Hoje" : dataFmt}`,
-    `Pagamento: ${rotuloFormaPagamento(parsed.formaPagamento, cartao)}`,
+    `Pagamento: ${rotuloFormaPagamento(parsed.formaPagamento, cartao || undefined)}`,
   ];
   if (parsed.parcelas && parsed.parcelas > 1) linhas.push(`Parcelas: ${parsed.parcelas}x`);
   linhas.push("");
@@ -419,11 +503,14 @@ type Session = {
 };
 
 function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
-  const cartaoNome = s.cartaoId
-    ? cartoes.find((c) => c.id === s.cartaoId)?.nome
+  const cartaoCadastrado = s.cartaoId
+    ? cartoes.find((c) => c.id === s.cartaoId)
+    : undefined;
+  const cartaoNome = cartaoCadastrado
+    ? displayCartaoNome(cartaoCadastrado)
     : s.cartaoNaoCadastrado
       ? (s.cartaoDigitado || "cartão não cadastrado")
-      : s.cartaoNomeDetectado;
+      : canonicalizeBrand(s.cartaoNomeDetectado ?? "");
   return {
     nome: s.nome,
     valor: s.valor,
@@ -532,8 +619,10 @@ async function persistirGasto(
 ): Promise<{ gastoId?: string; resposta: string; ok: boolean }> {
   // Sempre derivamos a categoria a partir do nome do gasto — nunca da mensagem
   // original (evita "Mercado mercado 45,90" virar categoria/descrição).
-  const categoriaKey = suggestCategoryFromText(s.nome) || "outros";
-  const categoriaId = await resolveCategoriaId(userId, categoriaKey);
+  const categorias = await carregarCategorias(userId);
+  const nomeLimpo = cleanDescricao(s.nome) || s.nome;
+  const categoriaKey = pickCategoriaKey(nomeLimpo, categorias);
+  const categoriaId = resolveCategoriaIdFromList(categorias, categoriaKey);
   const [y, m] = s.data.split("-").map(Number);
 
   const cartaoFinalId =
@@ -550,8 +639,8 @@ async function persistirGasto(
     .insert({
       user_id: userId,
       categoria_id: categoriaId,
-      descricao: s.nome,
-      estabelecimento: s.nome,
+      descricao: nomeLimpo,
+      estabelecimento: nomeLimpo,
       valor: s.valor,
       data: s.data,
       mes: m,
@@ -576,7 +665,7 @@ async function persistirGasto(
   const ondePagou = s.cartaoNaoCadastrado
     ? " (cartão não cadastrado)"
     : s.cartaoId
-      ? ` no Cartão ${s.cartaoNomeDetectado ?? ""}`.replace(/\s+$/, "")
+      ? ` no Cartão ${canonicalizeBrand(s.cartaoNomeDetectado ?? "")}`.replace(/\s+$/, "")
       : ` no ${rotuloFormaPagamento(s.formaPagamento ?? "credito")}`;
   const resposta = `✅ Gasto salvo com sucesso!\n${formatBRL(s.valor)} em ${categoria} foi registrado${ondePagou}.`;
   return { ok: true, gastoId: gastoRow.id, resposta };
@@ -722,6 +811,7 @@ export async function processarMensagemWhatsApp(
 
   const recebidaEm = msg.recebida_em ?? new Date().toISOString();
   const cartoes = await carregarCartoes(userId);
+  const categorias = await carregarCategorias(userId);
   const decisao = classificarResposta(texto);
   const sessao = await buscarSessaoAtiva(userId, msg.telefone);
 
@@ -873,7 +963,7 @@ export async function processarMensagemWhatsApp(
         ...sessao.session,
         formaPagamento: "credito",
         cartaoId: match.id,
-        cartaoNomeDetectado: match.nome,
+        cartaoNomeDetectado: displayCartaoNome(match),
         cartaoNaoCadastrado: false,
       };
       const resposta = formatarConfirmacao(sessionToParsed(next, cartoes));

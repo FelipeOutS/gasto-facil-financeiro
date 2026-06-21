@@ -150,6 +150,7 @@ mock.module("./subscription.server", () => ({
 
 export function resetState(opts?: {
   cartoes?: Record<string, unknown>[];
+  categorias?: Record<string, unknown>[];
   link?: typeof state.linkData;
 }) {
   state.inserts.length = 0;
@@ -161,6 +162,17 @@ export function resetState(opts?: {
       created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
     },
   ];
+  if (opts?.categorias) state.categoriasData = opts.categorias;
+  else {
+    state.categoriasData = [
+      { id: "cat-out", legacy_id: "outros", nome: "Outros", user_id: "u1" },
+      { id: "cat-mer", legacy_id: "mercado", nome: "Mercado", user_id: "u1" },
+      { id: "cat-trans", legacy_id: "transporte", nome: "Transporte", user_id: "u1" },
+      { id: "cat-saude", legacy_id: "saude", nome: "Saúde", user_id: "u1" },
+      { id: "cat-rest", legacy_id: "restaurante", nome: "Restaurante", user_id: "u1" },
+      { id: "cat-int", legacy_id: "internet", nome: "Internet", user_id: "u1" },
+    ];
+  }
   state.linkData = opts?.link === undefined
     ? {
         user_id: "u1",
