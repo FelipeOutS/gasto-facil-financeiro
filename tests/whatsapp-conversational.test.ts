@@ -117,29 +117,30 @@ test("como estão minhas finanças cai em finanças genérico (não resumo do m�
 });
 
 // ---------- cancelar sem sessão ----------
-test("cancelar sem sessão ativa responde mensagem neutra", async () => {
+test("cancelar sem sessão ativa responde com mensagem de reinício", async () => {
   const r = await processarMensagemWhatsApp({ telefone: tel, texto: "cancelar", external_id: "g3-c-1" });
-  expect(r.status).toBe("sem_pendencia");
-  expect(r.resposta).toContain("Não tem nada em andamento agora");
+  expect(r.status).toBe("cancelada");
+  expect(r.resposta).toContain("vamos começar de novo");
+  expect(r.resposta).not.toContain("Não tem nada em andamento");
   expect(r.resposta).not.toContain("aguardando confirmação");
 });
 
 // ---------- cancelar com sessão (regressão) ----------
-test("cancelar com sessão de gasto continua cancelando o gasto", async () => {
+test("cancelar com sessão de gasto encerra e devolve mensagem de reinício", async () => {
   // cria sessão aguardando_confirmacao
   await processarMensagemWhatsApp({ telefone: tel, texto: "Mercado 30 hoje pix", external_id: "g3-cg-a" });
   expect(state.pendingRow?.status).toBe("aguardando_confirmacao");
   const r = await processarMensagemWhatsApp({ telefone: tel, texto: "cancelar", external_id: "g3-cg-b" });
   expect(r.status).toBe("cancelada");
-  expect(r.resposta).toContain("não registrei esse gasto");
+  expect(r.resposta).toContain("vamos começar de novo");
 });
 
-test("cancelar com sessão de receita continua cancelando a renda", async () => {
+test("cancelar com sessão de receita encerra e devolve mensagem de reinício", async () => {
   await processarMensagemWhatsApp({ telefone: tel, texto: "Quero lançar uma renda", external_id: "g3-cr-a" });
   expect(state.pendingRow?.status).toBe("rec_aguardando_tipo");
   const r = await processarMensagemWhatsApp({ telefone: tel, texto: "cancelar", external_id: "g3-cr-b" });
   expect(r.status).toBe("cancelada");
-  expect(r.resposta).toContain("não registrei essa renda");
+  expect(r.resposta).toContain("vamos começar de novo");
 });
 
 // ---------- prioridade da sessão pendente ----------
