@@ -13,8 +13,11 @@ import {
   classificarResposta,
   detectarFaltantes,
   formatarConfirmacao,
+  isGenericExpenseCommand,
+  isGenericExpenseDescription,
 } from "../src/server/whatsapp.server";
 import type { Cartao } from "../src/lib/types";
+
 
 let pass = 0;
 let fail = 0;
@@ -308,6 +311,101 @@ header("Coleta inteligente quando faltam descrição e/ou valor");
 
 
 // =====================================================================
+header("Comandos genéricos de lançamento de gasto");
+{
+  const comandos = [
+    "registrar gasto",
+    "registrar um gasto",
+    "novo gasto",
+    "adicionar gasto",
+    "lançar gasto",
+    "lancar gasto",
+    "quero registrar um gasto",
+    "quero lançar um gasto",
+    "quero lancar um gasto",
+  ];
+  for (const c of comandos) {
+    ok(`"${c}" detectado como comando genérico`, isGenericExpenseCommand(c));
+  }
+  ok(`"Uber 48,90" NÃO é comando genérico`, !isGenericExpenseCommand("Uber 48,90"));
+  ok(`"uber" NÃO é comando genérico`, !isGenericExpenseCommand("uber"));
+
+  const descricoesBloqueadas = [
+    "Gasto WhatsApp",
+    "Registrar Gasto",
+    "Novo Gasto",
+    "Adicionar Gasto",
+    "Lançar Gasto",
+    "Despesa WhatsApp",
+    "gastos",
+    "despesa",
+  ];
+  for (const d of descricoesBloqueadas) {
+    ok(`"${d}" bloqueada como descrição`, isGenericExpenseDescription(d));
+  }
+  ok(`"Uber" NÃO é descrição genérica`, !isGenericExpenseDescription("Uber"));
+  ok(`"mercado" NÃO é descrição genérica`, !isGenericExpenseDescription("mercado"));
+
+  // Parser + detectarFaltantes: comando-texto não vira descrição.
+  const pRegistrar = parseWhatsAppExpenseMessage("registrar gasto", cartoesUser);
+  // Sanitização equivalente à do pipeline Caso B:
+  if (isGenericExpenseDescription(pRegistrar.nome)) pRegistrar.nome = "";
+  const fRegistrar = detectarFaltantes(pRegistrar, cartoesUser);
+  ok(
+    `"registrar gasto" → faltaDescricaoEValor`,
+    !!fRegistrar && /me diga o gasto e o valor/i.test(fRegistrar),
+    `got="${fRegistrar}"`,
+  );
+  ok(
+    `"registrar gasto" → NÃO usa o texto-comando como descrição`,
+    !!fRegistrar && !/valor de registrar gasto/i.test(fRegistrar),
+  );
+
+  const pNovo = parseWhatsAppExpenseMessage("novo gasto", cartoesUser);
+  const fNovo = detectarFaltantes(pNovo, cartoesUser);
+  ok(
+    `"novo gasto" → faltaDescricaoEValor (via detectarFaltantes direto)`,
+    !!fNovo && /me diga o gasto e o valor/i.test(fNovo),
+    `got="${fNovo}"`,
+  );
+
+  const pLancar = parseWhatsAppExpenseMessage("lançar gasto", cartoesUser);
+  const fLancar = detectarFaltantes(pLancar, cartoesUser);
+  ok(
+    `"lançar gasto" → faltaDescricaoEValor`,
+    !!fLancar && /me diga o gasto e o valor/i.test(fLancar),
+  );
+
+  // Apenas valor → pergunta descrição (nunca cria "Gasto WhatsApp" automático).
+  const pSoValor = parseWhatsAppExpenseMessage("48,90", cartoesUser);
+  const fSoValor = detectarFaltantes(pSoValor, cartoesUser);
+  ok(
+    `"48,90" sozinho → pergunta descrição`,
+    !!fSoValor && /esse valor foi de qu[eê]\?/i.test(fSoValor),
+    `got="${fSoValor}"`,
+  );
+
+  // "Uber" sem valor → pergunta o valor de Uber.
+  const pUber = parseWhatsAppExpenseMessage("Uber", cartoesUser);
+  const fUber = detectarFaltantes(pUber, cartoesUser);
+  ok(
+    `"Uber" sem valor → pergunta valor de Uber`,
+    !!fUber && /qual foi o valor de uber\?/i.test(fUber),
+    `got="${fUber}"`,
+  );
+
+  // "Uber 48,90" continua válido.
+  const pUberValor = parseWhatsAppExpenseMessage("Uber 48,90", cartoesUser);
+  ok(`"Uber 48,90" tem valor 48.90`, pUberValor.valor === 48.9);
+  ok(
+    `"Uber 48,90" tem nome não genérico`,
+    !isGenericExpenseDescription(pUberValor.nome),
+  );
+}
+
+
+// =====================================================================
+
 console.log(`\n========================================`);
 console.log(`Resultado: ${pass} passou, ${fail} falhou.`);
 if (failures.length) {
