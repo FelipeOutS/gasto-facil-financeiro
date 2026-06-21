@@ -42,6 +42,7 @@ import {
   whatsappBetaAdminGrant,
   whatsappBetaAdminRevoke,
 } from "@/lib/whatsapp-beta.functions";
+import { BetaAdminSection } from "@/components/whatsapp/BetaAdminSection";
 
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { suggestCategoryFromText, DEFAULT_CATEGORIES } from "@/lib/categories";
