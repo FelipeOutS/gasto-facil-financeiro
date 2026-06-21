@@ -102,14 +102,10 @@ function parseData(textRaw: string): { iso: string; matched: boolean } {
 
   if (/\bhoje\b/.test(text)) return { iso: todayISO(), matched: true };
   if (/\bontem\b/.test(text)) {
-    const d = new Date();
-    d.setDate(d.getDate() - 1);
-    return { iso: toISO(d.getDate(), d.getMonth() + 1, d.getFullYear()), matched: true };
+    return { iso: shiftDaysISO(-1), matched: true };
   }
   if (/\banteontem\b/.test(text)) {
-    const d = new Date();
-    d.setDate(d.getDate() - 2);
-    return { iso: toISO(d.getDate(), d.getMonth() + 1, d.getFullYear()), matched: true };
+    return { iso: shiftDaysISO(-2), matched: true };
   }
 
   // dd/mm/yyyy ou dd/mm
