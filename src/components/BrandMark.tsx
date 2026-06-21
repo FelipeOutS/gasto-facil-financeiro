@@ -60,12 +60,24 @@ export function BrandMark({
   const imgAlt = decorative ? "" : alt;
   const ariaHidden = decorative ? true : undefined;
 
+  const SYMBOL_FALLBACK_DARK = SOURCES.symbol.dark;
+  const SYMBOL_FALLBACK_LIGHT = SOURCES.symbol.light;
+
+  const onErrorFallback = (fallback: string) => (
+    e: React.SyntheticEvent<HTMLImageElement>,
+  ) => {
+    const img = e.currentTarget;
+    if (img.src.endsWith(fallback)) return;
+    img.src = fallback;
+  };
+
   return (
     <>
       <img
         src={dark}
         alt={imgAlt}
         aria-hidden={ariaHidden}
+        onError={onErrorFallback(SYMBOL_FALLBACK_DARK)}
         className={cn(
           "hidden dark:block w-auto max-w-full object-contain select-none",
           className,
@@ -76,6 +88,7 @@ export function BrandMark({
         src={light}
         alt={imgAlt}
         aria-hidden={ariaHidden}
+        onError={onErrorFallback(SYMBOL_FALLBACK_LIGHT)}
         className={cn(
           "block dark:hidden w-auto max-w-full object-contain select-none",
           className,
