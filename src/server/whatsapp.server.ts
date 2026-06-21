@@ -1093,6 +1093,37 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // ---- Fase WA-G2: consultas financeiras ----
+  // Só dispara quando NÃO há sessão pendente (despesa/receita) e a mensagem
+  // não é uma resposta sim/não/forma de pagamento. Curtas como "sim", "pix"
+  // continuam encaminhadas ao fluxo pendente quando houver.
+  if (!sessao && decisao === "outro") {
+    const intent = detectConsultaIntent(texto);
+    if (intent) {
+      const out = await handleConsulta(userId, intent);
+      // Persistimos apenas o registro de retenção padrão (sem dados sensíveis
+      // adicionais), reaproveitando o status terminal "sem_pendencia".
+      await gravarSessao(
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "sem_pendencia",
+        {
+          nome: "",
+          valor: 0,
+          data: todayLocalISO(),
+          mensagemOriginal: texto,
+        },
+        out.resposta,
+      );
+      return { status: "consulta", resposta: out.resposta };
+    }
+  }
+
+
+
 
   // ---- Confirmar/cancelar ----
   if (decisao !== "outro") {
