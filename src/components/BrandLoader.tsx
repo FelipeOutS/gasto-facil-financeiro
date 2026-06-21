@@ -30,7 +30,7 @@ export function BrandLoader({
       <StarfieldBackground />
       <div className="relative z-10 flex flex-col items-center gap-4 animate-fade-in">
         <img
-          src={iconDark}
+          src={ICON_DARK}
           alt=""
           aria-hidden="true"
           width={64}
