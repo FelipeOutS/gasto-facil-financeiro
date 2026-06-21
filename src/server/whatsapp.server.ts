@@ -914,6 +914,23 @@ export async function processarMensagemWhatsApp(
   const decisao = classificarResposta(texto);
   const sessao = await buscarSessaoAtiva(userId, msg.telefone);
 
+  // ---- Fase WA-G1: receitas têm prioridade quando há sessão de receita
+  //                  pendente, OU quando o texto livre indica receita. ----
+  const sessionIsReceita = sessao && isReceitaSession(sessao.session);
+  const startsReceita = !sessao && decisao === "outro" && isReceitaIntent(texto);
+
+  if (sessionIsReceita || startsReceita) {
+    return await processarReceita({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao: sessionIsReceita ? sessao : null,
+    });
+  }
+
+
   // ---- Confirmar/cancelar ----
   if (decisao !== "outro") {
     if (!sessao || sessao.status !== "aguardando_confirmacao") {
