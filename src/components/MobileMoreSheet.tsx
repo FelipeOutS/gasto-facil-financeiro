@@ -114,7 +114,7 @@ export function MobileMoreSheet({ trigger }: { trigger: ReactNode }) {
       <SheetContent side="left" className="w-[min(86vw,360px)] overflow-y-auto p-0">
         {/* Bloco de marca */}
         <div className="border-b border-border/60 bg-background px-4 pb-3 pt-5">
-          <BrandMark className="h-6" />
+          <BrandMark variant="sidebar" className="h-6" />
           <p className="mt-1 text-[11px] font-medium text-muted-foreground">
             Seu controle financeiro em um só lugar
           </p>
