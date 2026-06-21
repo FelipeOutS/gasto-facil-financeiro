@@ -73,7 +73,7 @@ function AppEntry() {
         }}
       >
         <div className="flex max-w-sm flex-col items-center gap-5 text-center">
-          <BrandMark className="h-12 w-auto sm:h-14" />
+          <BrandMark variant="login" className="h-12 w-auto sm:h-14" />
           <div className="space-y-2">
             <h1 className="text-lg font-semibold">{t("bootError.title")}</h1>
             <p className="text-sm text-muted-foreground">
