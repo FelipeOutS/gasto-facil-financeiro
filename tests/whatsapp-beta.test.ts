@@ -9,11 +9,9 @@
  *  - Quota whatsapp conta como gasto normal (não contorna por origem).
  */
 import { test, expect, beforeEach } from "bun:test";
-import { mock } from "bun:test";
 import { state, resetState, gastosInserts, fakeAdmin } from "./_whatsapp-fake";
 
-// Estende o fake admin com um RPC mockável (`can_use_whatsapp`, `is_full_access`).
-type RpcMock = { value: boolean | null };
+type RpcMock = { value: boolean };
 const rpc: { can_use_whatsapp: RpcMock; is_full_access: RpcMock } = {
   can_use_whatsapp: { value: true },
   is_full_access: { value: true },
@@ -22,7 +20,7 @@ const rpc: { can_use_whatsapp: RpcMock; is_full_access: RpcMock } = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (fakeAdmin as any).rpc = async (name: string) => {
   const r = (rpc as Record<string, RpcMock>)[name];
-  return { data: r ? r.value : null, error: null };
+  return { data: r ? r.value : true, error: null };
 };
 
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
