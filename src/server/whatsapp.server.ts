@@ -725,6 +725,10 @@ const PENDING_STATES = [
   // próxima mensagem (incluindo "oi", "ajuda", "menu") não interrompa o
   // fluxo nem dispare saudação / consulta / nova intenção.
   "aguardando_descricao_e_valor_gasto",
+  // WA-G4 — estado temporário de consulta. Aguarda o usuário escolher
+  // uma das categorias quando o termo bate com mais de uma. NUNCA cria
+  // gasto ou receita. Cancelável por "cancelar".
+  "consulta_categoria_ambigua",
   ...RECEITA_PENDING_STATES,
 ];
 
