@@ -1349,6 +1349,38 @@ export async function processarMensagemWhatsApp(
   }
 
 
+  // ---- Fase WA-G4: sessão temporária de consulta com categoria ambígua ----
+  // Aguardando o usuário escolher uma das categorias listadas. NÃO cria
+  // gasto/receita; "cancelar" já encerrou acima. Se a resposta não casar
+  // com nenhuma opção, encerra o estado e segue o pipeline normal.
+  if (sessao && sessao.status === "consulta_categoria_ambigua") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const prev = sessao.session as any;
+    const opts: Array<{ id: string; nome: string }> = Array.isArray(prev?.options)
+      ? prev.options
+      : [];
+    const out = await handleCategoriaAmbiguaResponse(userId, texto, opts);
+    if (out) {
+      await fecharSessoesAnteriores(userId, msg.telefone, "salva");
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        out.resposta,
+      );
+      return { status: "consulta", resposta: out.resposta };
+    }
+    // Não casou — encerra o estado temporário e segue o pipeline normal.
+    await supabaseAdmin
+      .from("whatsapp_messages")
+      .update({ status: "expirada" })
+      .eq("id", sessao.id);
+    sessao.status = "expirada";
+    // continua para os blocos abaixo (conversational / consulta / parser)
+  }
+
+
+
   // ---- Fase WA-G3: intenções conversacionais (saudação, menu, finanças genérico) ----
   // Tem precedência sobre consultas reais e sobre parsing de gasto/receita.
   // Só roda quando NÃO há sessão pendente e não é uma resposta sim/não/forma.
