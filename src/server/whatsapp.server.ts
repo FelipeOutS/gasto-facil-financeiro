@@ -521,10 +521,10 @@ export function detectarFaltantes(
   cartoes: Cartao[],
 ): string | null {
   if (!parsed.valor || parsed.valor <= 0) {
-    return "❓ Só preciso de mais uma informação: qual foi o valor do gasto? Ex.: R$ 48,90.";
+    return M.faltaValor();
   }
   if (!parsed.nome || parsed.nome.length < 2) {
-    return "❓ Só preciso de mais uma informação: o que você comprou ou pagou? Ex.: mercado, uber, farmácia.";
+    return M.faltaNome();
   }
   if (parsed.formaPagamento === "credito") {
     if (parsed.cartaoAmbiguo && parsed.cartaoAmbiguo.nomes.length > 1) {
@@ -536,7 +536,7 @@ export function detectarFaltantes(
     if (!parsed.cartaoId && parsed.cartaoNomeDetectado) {
       const nomes = cartoes.map((c) => c.nome).filter(Boolean);
       const lista = nomes.length > 0 ? `\nSeus cartões cadastrados: ${nomes.join(", ")}.` : "";
-      return `❓ Não encontrei o cartão "${parsed.cartaoNomeDetectado}" cadastrado.${lista}\nMe diga o nome certo do cartão ou cadastre um novo no app antes de confirmar.`;
+      return M.cartaoNaoEncontradoNoParse(parsed.cartaoNomeDetectado, lista);
     }
   }
   return null;
