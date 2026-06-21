@@ -115,10 +115,10 @@ function makeBuilder(table: string): any {
     if (table === "categorias") return { data: state.categoriasData, error: null };
     if (table === "gastos") {
       if (ctx.filters?.id) return { data: { id: ctx.filters.id }, error: null };
-      return { data: state.gastosData, error: null };
+      return { data: applyRangeFilters(state.gastosData, ctx.range), error: null };
     }
     if (table === "receitas") {
-      return { data: state.receitasData, error: null };
+      return { data: applyRangeFilters(state.receitasData, ctx.range), error: null };
     }
     if (table === "auth.users")
       return { data: { email: "u@example.com" }, error: null };
@@ -133,9 +133,21 @@ function makeBuilder(table: string): any {
     delete() { ctx.op = "delete"; return builder; },
     eq(col: string, val: unknown) { ctx.filters[col] = val; return builder; },
     in: () => builder,
-    gte: () => builder,
-    lt: () => builder,
-    lte: () => builder,
+    gte(col: string, val: unknown) {
+      ctx.range = ctx.range ?? {};
+      (ctx.range[col] = ctx.range[col] ?? {}).gte = val;
+      return builder;
+    },
+    lt(col: string, val: unknown) {
+      ctx.range = ctx.range ?? {};
+      (ctx.range[col] = ctx.range[col] ?? {}).lt = val;
+      return builder;
+    },
+    lte(col: string, val: unknown) {
+      ctx.range = ctx.range ?? {};
+      (ctx.range[col] = ctx.range[col] ?? {}).lte = val;
+      return builder;
+    },
     gt: () => builder,
     order: () => builder,
     limit: () => builder,
@@ -145,6 +157,23 @@ function makeBuilder(table: string): any {
     then(resolve: any, reject: any) { return finalize().then(resolve, reject); },
   };
   return builder;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applyRangeFilters(rows: any, range: any): any {
+  if (!Array.isArray(rows) || !range) return rows;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return rows.filter((r: any) => {
+    for (const col of Object.keys(range)) {
+      const v = r?.[col];
+      if (v == null) continue;
+      const rg = range[col];
+      if (rg.gte != null && !(v >= rg.gte)) return false;
+      if (rg.lte != null && !(v <= rg.lte)) return false;
+      if (rg.lt != null && !(v < rg.lt)) return false;
+    }
+    return true;
+  });
 }
 
 export const fakeAdmin = {

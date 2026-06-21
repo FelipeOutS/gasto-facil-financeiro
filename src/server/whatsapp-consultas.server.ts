@@ -260,7 +260,9 @@ async function handleResumoSemana(userId: string): Promise<ConsultaResult> {
 async function handleResumoMes(userId: string): Promise<ConsultaResult> {
   const hoje = todayLocalISO();
   const from = monthStartISO(hoje);
-  const to = nextMonthStartISO(hoje);
+  // WA-G2.1: janela mensal "até hoje" — não inclui lançamentos futuros
+  // (ex.: receitas recorrentes do mesmo mês ainda não recebidas).
+  const to = addDaysISO(hoje, 1);
   const [gastos, receitas] = await Promise.all([
     loadGastos(userId, from, to),
     loadReceitas(userId, from, to),
@@ -305,7 +307,8 @@ async function handleMaioresGastos(
 async function handleImpacto(userId: string): Promise<ConsultaResult> {
   const hoje = todayLocalISO();
   const from = monthStartISO(hoje);
-  const to = nextMonthStartISO(hoje);
+  // WA-G2.1: janela mensal "até hoje" — exclui receitas/despesas futuras.
+  const to = addDaysISO(hoje, 1);
   const [gastos, receitas] = await Promise.all([
     loadGastos(userId, from, to),
     loadReceitas(userId, from, to),

@@ -28,6 +28,12 @@ function daysAgoISO(n: number): string {
   dt.setUTCDate(dt.getUTCDate() - n);
   return dt.toISOString().slice(0, 10);
 }
+function daysAheadISO(n: number): string {
+  const [y, m, d] = todayISO().split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return dt.toISOString().slice(0, 10);
+}
 function monthStart(): string {
   return todayISO().slice(0, 7) + "-01";
 }
@@ -212,4 +218,68 @@ test("sessão pendente de receita prevalece sobre intenção de consulta", async
   expect(state.pendingRow?.status).toBe("rec_aguardando_tipo");
   const r = await processarMensagemWhatsApp({ telefone: tel, texto: "resumo da semana", external_id: "spr-b" });
   expect(r.status).not.toBe("consulta");
+});
+
+// ---------------------------------------------------------------------
+// WA-G2.1 — janela mensal "até hoje" (exclui lançamentos futuros)
+// ---------------------------------------------------------------------
+
+test("WA-G2.1 resumo do mês ignora receita recorrente futura no mesmo mês", async () => {
+  resetState({
+    gastos: [{ descricao: "Mercado", valor: 200, data: monthStart(), categoria_id: "cat-mer" }],
+    receitas: [
+      { valor: 1000, data: monthStart() },            // já recebida
+      { valor: 5000, data: daysAheadISO(3) },         // recorrente futura — deve ser ignorada
+    ],
+  });
+  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "resumo do mês", external_id: "g21-rm-1" });
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 1.000,00"); // só receita já recebida
+  expect(r.resposta).not.toContain("6.000");
+  expect(r.resposta).toContain("20% das suas receitas"); // 200/1000
+});
+
+test("WA-G2.1 impacto despesas ignora receita recorrente futura no mesmo mês", async () => {
+  resetState({
+    gastos: [{ descricao: "Mercado", valor: 200, data: monthStart(), categoria_id: "cat-mer" }],
+    receitas: [
+      { valor: 1000, data: monthStart() },
+      { valor: 5000, data: daysAheadISO(5) },
+    ],
+  });
+  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "quanto meus gastos afetam minha renda", external_id: "g21-im-1" });
+  expect(r.resposta).toContain("20% da sua renda");
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 800,00"); // saldo 1000-200
+});
+
+test("WA-G2.1 receita com data de hoje é incluída no resumo do mês", async () => {
+  resetState({
+    gastos: [],
+    receitas: [{ valor: 1500, data: todayISO() }],
+  });
+  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "resumo do mês", external_id: "g21-rm-2" });
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 1.500,00");
+});
+
+test("WA-G2.1 despesa com data futura não é incluída no resumo do mês", async () => {
+  resetState({
+    gastos: [
+      { descricao: "Hoje",   valor: 100, data: todayISO(),         categoria_id: "cat-mer" },
+      { descricao: "Futuro", valor: 999, data: daysAheadISO(2),    categoria_id: "cat-mer" },
+    ],
+    receitas: [{ valor: 1000, data: monthStart() }],
+  });
+  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "resumo do mês", external_id: "g21-rm-3" });
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 100,00"); // despesas
+  expect(r.resposta).not.toContain("999");
+});
+
+test("WA-G2.1 resumo semanal permanece inalterado (não foi afetado)", async () => {
+  resetState({
+    gastos: [{ descricao: "Uber", valor: 30, data: daysAgoISO(1), categoria_id: "cat-trans" }],
+    receitas: [{ valor: 500, data: daysAgoISO(2) }],
+  });
+  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "resumo da semana", external_id: "g21-rs-1" });
+  expect(r.resposta).toContain("Resumo dos últimos 7 dias");
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 500,00");
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 30,00");
 });
