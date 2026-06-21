@@ -366,15 +366,14 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
         const results: Array<{ status: string; gasto_id?: string }> = [];
         for (const msg of flatMessages) {
           if (!msg.texto?.trim()) continue;
-          // Modo canário: descarta silenciosamente qualquer telefone que
-          // não pertença a um Admin Master com vínculo ativo e consentimento.
-          // NÃO grava texto, NÃO cria gasto, NÃO envia resposta.
-          if (canaryOn) {
-            const allowed = await isAdminMasterPhone(msg.telefone);
-            if (!allowed) {
-              results.push({ status: "canary_dropped" });
-              continue;
-            }
+          // Gate único de elegibilidade: telefone não vinculado, sem
+          // consentimento, sem beta ativa (ou fora do canário) → drop
+          // silencioso. NÃO grava texto, NÃO cria sessão/gasto, NÃO
+          // envia resposta.
+          const elig = await checkPhoneEligibility(msg.telefone, canaryOn);
+          if (!elig.allowed) {
+            results.push({ status: "nao_elegivel" });
+            continue;
           }
           try {
             const out = await processarMensagemWhatsApp(msg);
