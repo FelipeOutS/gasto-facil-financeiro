@@ -379,7 +379,8 @@ export type ProcessOutcome = {
     | "sem_plano"
     | "erro"
     | "valor_invalido"
-    | "gasto_excluido";
+    | "gasto_excluido"
+    | "consulta";
   gastoId?: string;
   confianca?: number;
   resposta: string;
