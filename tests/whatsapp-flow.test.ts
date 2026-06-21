@@ -262,6 +262,52 @@ header("14. WA-C — Consentimento/opt-in LGPD (lógica do pipeline)");
 }
 
 // =====================================================================
+header("Coleta inteligente quando faltam descrição e/ou valor");
+{
+  type P = Parameters<typeof detectarFaltantes>[0];
+  const base: P = {
+    nome: "",
+    valor: 0,
+    data: hojeISO,
+    formaPagamento: "pix",
+    mensagemOriginal: "",
+    confianca: 0,
+    notas: [],
+  };
+
+  // (a) sem descrição e sem valor → pede ambos
+  const r1 = detectarFaltantes({ ...base, nome: "", valor: 0 }, cartoesUser);
+  ok(
+    "sem descrição e sem valor → pede ambos com exemplo",
+    !!r1 && /me diga o gasto e o valor/i.test(r1) && /uber r\$\s*48,90/i.test(r1),
+    `got="${r1}"`,
+  );
+  ok(
+    "mensagem (a) usa apenas 1 emoji (💸)",
+    !!r1 && (r1.match(/[\u{1F300}-\u{1FAFF}]/gu) || []).length === 1,
+  );
+
+  // (b) com descrição, sem valor → "Qual foi o valor de {descricao}?"
+  const r2 = detectarFaltantes({ ...base, nome: "uber", valor: 0 }, cartoesUser);
+  ok(
+    "com descrição, sem valor → 'Qual foi o valor de {descricao}?'",
+    !!r2 && /qual foi o valor de uber\?/i.test(r2) && /r\$\s*48,90/i.test(r2),
+    `got="${r2}"`,
+  );
+  ok("mensagem (b) sem emoji", !!r2 && !/[\u{1F300}-\u{1FAFF}]/u.test(r2));
+
+  // (c) com valor, sem descrição → "Esse valor foi de quê?"
+  const r3 = detectarFaltantes({ ...base, nome: "", valor: 30 }, cartoesUser);
+  ok(
+    "com valor, sem descrição → 'Esse valor foi de quê?'",
+    !!r3 && /esse valor foi de qu[eê]\?/i.test(r3) && /uber, mercado ou restaurante/i.test(r3),
+    `got="${r3}"`,
+  );
+  ok("mensagem (c) sem emoji", !!r3 && !/[\u{1F300}-\u{1FAFF}]/u.test(r3));
+}
+
+
+// =====================================================================
 console.log(`\n========================================`);
 console.log(`Resultado: ${pass} passou, ${fail} falhou.`);
 if (failures.length) {

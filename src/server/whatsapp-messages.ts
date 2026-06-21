@@ -114,17 +114,25 @@ export const whatsappMessages = {
     return `Ainda preciso saber a forma de pagamento.\n${perguntaForma}`;
   },
 
-  faltaValor() {
+  faltaDescricaoEValor() {
     return (
-      `❓ Só preciso de mais uma informação: qual foi o valor do gasto? ` +
-      `Ex.: R$ 48,90.`
+      `Claro! Me diga o gasto e o valor. 💸\n\n` +
+      `Ex.: Uber R$ 48,90`
+    );
+  },
+
+  faltaValor(descricao?: string) {
+    const ref = descricao && descricao.trim().length > 0 ? descricao.trim() : "esse gasto";
+    return (
+      `Qual foi o valor de ${ref}?\n\n` +
+      `Ex.: R$ 48,90`
     );
   },
 
   faltaNome() {
     return (
-      `❓ Só preciso de mais uma informação: o que você comprou ou pagou? ` +
-      `Ex.: mercado, uber, farmácia.`
+      `Esse valor foi de quê?\n\n` +
+      `Ex.: Uber, mercado ou restaurante.`
     );
   },
 

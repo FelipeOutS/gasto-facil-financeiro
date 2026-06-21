@@ -533,10 +533,15 @@ export function detectarFaltantes(
   parsed: ParsedExpense,
   cartoes: Cartao[],
 ): string | null {
-  if (!parsed.valor || parsed.valor <= 0) {
-    return M.faltaValor();
+  const valorAusente = !parsed.valor || parsed.valor <= 0;
+  const nomeAusente = !parsed.nome || parsed.nome.length < 2;
+  if (valorAusente && nomeAusente) {
+    return M.faltaDescricaoEValor();
   }
-  if (!parsed.nome || parsed.nome.length < 2) {
+  if (valorAusente) {
+    return M.faltaValor(parsed.nome);
+  }
+  if (nomeAusente) {
     return M.faltaNome();
   }
   if (parsed.formaPagamento === "credito") {
@@ -1343,8 +1348,21 @@ export async function processarMensagemWhatsApp(
 
   // ---- Caso B: nenhuma sessão ativa → parse normal ----
   const parsed = parseWhatsAppExpenseMessage(texto, cartoes);
-  if (!parsed.valor || parsed.valor <= 0) {
-    const resposta = M.faltaValor();
+  const valorAusente = !parsed.valor || parsed.valor <= 0;
+  const nomeAusente = !parsed.nome || parsed.nome.length < 2;
+  if (valorAusente || nomeAusente) {
+    let resposta: string;
+    let status: ProcessOutcome["status"];
+    if (valorAusente && nomeAusente) {
+      resposta = M.faltaDescricaoEValor();
+      status = "pendente";
+    } else if (valorAusente) {
+      resposta = M.faltaValor(parsed.nome);
+      status = "valor_invalido";
+    } else {
+      resposta = M.faltaNome();
+      status = "pendente";
+    }
     await gravarSessao(
       userId,
       msg.telefone,
@@ -1355,21 +1373,7 @@ export async function processarMensagemWhatsApp(
       { ...buildSessionFromParse(parsed) },
       resposta,
     );
-    return { status: "valor_invalido", confianca: parsed.confianca, resposta };
-  }
-  if (!parsed.nome || parsed.nome.length < 2) {
-    const resposta = M.faltaNome();
-    await gravarSessao(
-      userId,
-      msg.telefone,
-      msg.external_id,
-      texto,
-      recebidaEm,
-      "pendente",
-      { ...buildSessionFromParse(parsed) },
-      resposta,
-    );
-    return { status: "pendente", confianca: parsed.confianca, resposta };
+    return { status, confianca: parsed.confianca, resposta };
   }
 
   const sess: Session = {
