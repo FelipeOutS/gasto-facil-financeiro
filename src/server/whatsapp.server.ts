@@ -843,7 +843,125 @@ async function atualizarSessao(
     .eq("id", id);
 }
 
+// ---------- pipeline de receitas (Fase WA-G1) ----------
+
+async function processarReceita(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  decisao: "confirm" | "cancel" | "outro";
+  sessao: SessaoRow | null;
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, decisao, sessao } = args;
+
+  // Cancelamento em qualquer etapa encerra a sessão de receita.
+  if (sessao && decisao === "cancel") {
+    await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+    await gravarSessao(
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "cancelada",
+      sessao.session as unknown as Session,
+      M.receita.cancelado(),
+    );
+    return { status: "cancelada", resposta: M.receita.cancelado() };
+  }
+
+  // Sem sessão: iniciar fluxo a partir do texto livre.
+  if (!sessao) {
+    const step = startReceitaFromText(texto);
+    await gravarSessao(
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      step.status,
+      step.session as unknown as Session,
+      step.resposta,
+    );
+    return { status: "pendente", resposta: step.resposta };
+  }
+
+  const current = sessao.status as ReceitaStatus;
+  const session = sessao.session as unknown as ReceitaSession;
+
+  // Confirmação final: persiste.
+  if (current === "rec_aguardando_confirmacao") {
+    if (decisao === "confirm") {
+      const result = await persistirReceita(userId, session);
+      if (!result.ok) {
+        // mantém sessão para o usuário tentar de novo
+        await gravarSessao(
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
+          "rec_aguardando_confirmacao",
+          session as unknown as Session,
+          result.resposta,
+        );
+        return { status: "erro", resposta: result.resposta };
+      }
+      await fecharSessoesAnteriores(userId, msg.telefone, "salva");
+      await gravarSessao(
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "salva",
+        session as unknown as Session,
+        result.resposta,
+      );
+      return { status: "salva", resposta: result.resposta };
+    }
+    // resposta inválida na confirmação
+    const aviso = M.receita.naoEntendiSimNao();
+    await gravarSessao(
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "pendente",
+      session as unknown as Session,
+      aviso,
+    );
+    return { status: "pendente", resposta: aviso };
+  }
+
+  // Demais etapas: delegar ao state machine.
+  const step = nextStepReceita(current, session, texto, decisao);
+  // marca sessão antiga como expirada e cria nova com novo status
+  await supabaseAdmin
+    .from("whatsapp_messages")
+    .update({ status: "expirada" })
+    .eq("id", sessao.id);
+  await gravarSessao(
+    userId,
+    msg.telefone,
+    msg.external_id,
+    texto,
+    recebidaEm,
+    step.status,
+    step.session as unknown as Session,
+    step.resposta,
+  );
+  // Reconfirma o resumo no estado de confirmação para garantir consistência.
+  if (step.status === "rec_aguardando_confirmacao") {
+    return { status: "aguardando_confirmacao", resposta: buildReceitaConfirmacao(step.session) };
+  }
+  return { status: "pendente", resposta: step.resposta };
+}
+
 // ---------- pipeline principal ----------
+
 
 export async function processarMensagemWhatsApp(
   msg: WhatsAppMessageRow,
