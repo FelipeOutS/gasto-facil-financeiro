@@ -335,10 +335,20 @@ async function contarReceitasMesAtual(userId: string): Promise<number> {
 
 // ---------- persistir ----------
 
+export type PersistirReceitaResult =
+  | { ok: true; resposta: string; receitaId: string; recorrenciaId?: string }
+  | { ok: false; resposta: string };
+
+function genId(): string {
+  return typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 export async function persistirReceita(
   userId: string,
   s: ReceitaSession,
-): Promise<{ ok: boolean; resposta: string }> {
+): Promise<PersistirReceitaResult> {
   const plan = await getUserPlan(userId);
   const isFreeAds = plan === "free_ads" || plan === "free" || plan === "sem_assinatura";
 
@@ -362,31 +372,35 @@ export async function persistirReceita(
   const baseData = s.data || todayLocalISO();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rows: any[] = [];
+  let primeiroReceitaId = "";
+  let recorrenciaId: string | undefined;
+
   if (s.recorrente) {
-    const recId =
-      // crypto.randomUUID exists in workerd
-      typeof crypto !== "undefined" && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    recorrenciaId = genId();
     const datas = gerarDatasRecorrencia(s);
-    for (const iso of datas) {
+    datas.forEach((iso, idx) => {
       const [y, m] = iso.split("-").map(Number);
+      const id = genId();
+      if (idx === 0) primeiroReceitaId = id;
       rows.push({
+        id,
         user_id: userId,
         descricao,
         valor,
         data: iso,
         tipo,
         recorrente: true,
-        recorrencia_id: recId,
+        recorrencia_id: recorrenciaId,
         mes: m,
         ano: y,
         origem: "whatsapp",
       });
-    }
+    });
   } else {
     const [y, m] = baseData.split("-").map(Number);
+    primeiroReceitaId = genId();
     rows.push({
+      id: primeiroReceitaId,
       user_id: userId,
       descricao,
       valor,
@@ -406,21 +420,16 @@ export async function persistirReceita(
   }
 
   const valorFmt = formatBRL(valor);
-  const categoria = s.tipoLabel || descricao;
-  if (s.recorrente) {
-    return {
-      ok: true,
-      resposta: M.receita.salvaRecorrente({
+  const tipoLabel = s.tipoLabel || descricao;
+  const resposta = s.recorrente
+    ? M.receita.salvaRecorrente({
         valor: valorFmt,
         descricao,
         resumoRecorrencia: resumoRecorrencia(s),
-      }),
-    };
-  }
-  return {
-    ok: true,
-    resposta: M.receita.salvaSimples({ valor: valorFmt, descricao, categoria }),
-  };
+      })
+    : M.receita.salvaSimples({ valor: valorFmt, descricao, tipo: tipoLabel });
+
+  return { ok: true, resposta, receitaId: primeiroReceitaId, recorrenciaId };
 }
 
 // ---------- montagem de resposta da etapa ----------
@@ -434,7 +443,7 @@ export type StepResult = {
 export function buildConfirmacao(s: ReceitaSession): string {
   return M.receita.resumoConfirmacao({
     descricao: s.descricao || s.tipoLabel || "Renda",
-    categoria: s.tipoLabel || "Outros",
+    tipo: s.tipoLabel || "Outros",
     valor: formatBRL(Number(s.valor || 0)),
     data: formatDataBR(s.data || todayLocalISO()),
     resumoRecorrencia: resumoRecorrencia(s),

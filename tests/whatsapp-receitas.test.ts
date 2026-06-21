@@ -140,3 +140,75 @@ test("Fluxo de despesas continua intacto (regressão)", async () => {
   expect(r.status).toBe("aguardando_confirmacao");
   expect(receitasInserts().length).toBe(0);
 });
+
+// ---------------------------------------------------------------------
+// WA-G1.1 — reentrega de webhook (Meta reenvia o mesmo external_message_id)
+// ---------------------------------------------------------------------
+test("Reentrega: receita simples salva → segundo envio é duplicada (não cria)", async () => {
+  await processarMensagemWhatsApp({ telefone: tel, texto: "Recebi 80 de salário", external_id: "re-s-a" });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "não", external_id: "re-s-b" });
+  const r1 = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "re-s-c" });
+  expect(r1.status).toBe("salva");
+  expect(receitasInserts().length).toBe(1);
+
+  // Reentrega do mesmo external_id da confirmação
+  const r2 = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "re-s-c" });
+  expect(r2.status).toBe("duplicada");
+  expect(receitasInserts().length).toBe(1);
+
+  // Marcadores explícitos foram persistidos em parsed
+  const salva = state.inserts.find(
+    (i) => i.table === "whatsapp_messages" && i.row.external_id === "re-s-c" && i.row.status === "salva",
+  );
+  expect(salva).toBeTruthy();
+  const parsed = salva!.row.parsed as Record<string, unknown>;
+  expect(parsed.kind).toBe("receita");
+  expect(parsed.status).toBe("salva");
+  expect(typeof parsed.receita_id).toBe("string");
+});
+
+test("Reentrega: receita recorrente → segundo envio não cria nova série", async () => {
+  await processarMensagemWhatsApp({ telefone: tel, texto: "Recebi 1000 de salário", external_id: "re-r-a" });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "re-r-b" });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "todo mês", external_id: "re-r-c" });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "10", external_id: "re-r-d" });
+  const r1 = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "re-r-e" });
+  expect(r1.status).toBe("salva");
+  expect(receitasInserts().length).toBe(12);
+
+  const r2 = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "re-r-e" });
+  expect(r2.status).toBe("duplicada");
+  expect(receitasInserts().length).toBe(12);
+
+  const salva = state.inserts.find(
+    (i) => i.table === "whatsapp_messages" && i.row.external_id === "re-r-e" && i.row.status === "salva",
+  );
+  const parsed = salva!.row.parsed as Record<string, unknown>;
+  expect(parsed.kind).toBe("receita");
+  expect(typeof parsed.recorrencia_id).toBe("string");
+  expect(typeof parsed.receita_id).toBe("string");
+});
+
+test("Reentrega: despesa salva → segundo envio é duplicada (não cria gasto)", async () => {
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Mercado 25,50 hoje pix",
+    external_id: "re-d-a",
+  });
+  const r1 = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "re-d-b" });
+  expect(r1.status).toBe("salva");
+  const gastos1 = state.inserts.filter((i) => i.table === "gastos").length;
+  expect(gastos1).toBe(1);
+
+  const r2 = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "re-d-b" });
+  expect(r2.status).toBe("duplicada");
+  expect(state.inserts.filter((i) => i.table === "gastos").length).toBe(1);
+});
+
+// ---------------------------------------------------------------------
+test("Confirmação mostra 'Tipo de receita' (não 'Categoria')", async () => {
+  await processarMensagemWhatsApp({ telefone: tel, texto: "Recebi 500 de salário", external_id: "tx-a" });
+  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "não", external_id: "tx-b" });
+  expect(r.resposta).toContain("Tipo de receita:");
+  expect(r.resposta).not.toContain("Categoria:");
+});

@@ -102,6 +102,7 @@ function makeBuilder(table: string): any {
             id: "x",
             status: found.row.status,
             gasto_id: found.row.gasto_id ?? null,
+            parsed: found.row.parsed ?? null,
           },
           error: null,
         };
