@@ -1418,6 +1418,14 @@ export async function processarMensagemWhatsApp(
 
   // ---- Caso B: nenhuma sessão ativa → parse normal ----
   const parsed = parseWhatsAppExpenseMessage(texto, cartoes);
+  // Comandos genéricos ("registrar gasto", "novo gasto", ...) e descrições
+  // automáticas inválidas ("Gasto WhatsApp") NUNCA podem virar descrição
+  // real. Limpamos o nome antes de seguir, para que a sessão pendente
+  // gravada não retenha o texto-comando como descrição.
+  const nomeEhGenerico = isGenericExpenseDescription(parsed.nome);
+  if (nomeEhGenerico) {
+    parsed.nome = "";
+  }
   const valorAusente = !parsed.valor || parsed.valor <= 0;
   const nomeAusente = !parsed.nome || parsed.nome.length < 2;
   if (valorAusente || nomeAusente) {
@@ -1445,6 +1453,7 @@ export async function processarMensagemWhatsApp(
     );
     return { status, confianca: parsed.confianca, resposta };
   }
+
 
   const sess: Session = {
     nome: parsed.nome,
