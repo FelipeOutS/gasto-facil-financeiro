@@ -1182,6 +1182,106 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // ---- WA: sessão de gasto aguardando descrição e/ou valor ----
+  // Prioridade sobre saudação, menu, ajuda, consulta ou nova intenção.
+  // Mantém o fluxo de despesa em andamento — "oi"/"ajuda"/"menu" apenas
+  // lembram o usuário do que falta. Só "cancelar" encerra a sessão.
+  if (sessao && sessao.status === "aguardando_descricao_e_valor_gasto") {
+    const prev = sessao.session;
+    const hardCancelRe = /\b(cancelar|cancela|cancelado|cancelada)\b/i;
+    if (hardCancelRe.test(texto) || decisao === "cancel") {
+      await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "cancelada", prev, M.gastoCancelado(),
+      );
+      return { status: "cancelada", resposta: M.gastoCancelado() };
+    }
+    // Saudação, menu, ajuda, finanças genérico → relembrar sem perder sessão.
+    if (decisao === "outro" && detectConversationalIntent(texto)) {
+      const resposta = M.aguardandoGastoEValor();
+      await atualizarSessao(
+        sessao.id, "aguardando_descricao_e_valor_gasto", prev, resposta,
+      );
+      return { status: "pendente", resposta };
+    }
+    // Tenta extrair descrição/valor da nova mensagem e mescla com a sessão.
+    const parsedNovo = parseWhatsAppExpenseMessage(texto, cartoes);
+    if (isGenericExpenseDescription(parsedNovo.nome)) parsedNovo.nome = "";
+    const mergedNome =
+      parsedNovo.nome && parsedNovo.nome.length >= 2 ? parsedNovo.nome : (prev.nome ?? "");
+    const mergedValor =
+      parsedNovo.valor && parsedNovo.valor > 0 ? parsedNovo.valor : (prev.valor ?? 0);
+    const valorAusente = !mergedValor || mergedValor <= 0;
+    const nomeAusente =
+      !mergedNome ||
+      mergedNome.length < 2 ||
+      isGenericExpenseDescription(mergedNome);
+
+    if (valorAusente && nomeAusente) {
+      const resposta = M.aguardandoGastoEValor();
+      await atualizarSessao(
+        sessao.id, "aguardando_descricao_e_valor_gasto", prev, resposta,
+      );
+      return { status: "pendente", resposta };
+    }
+    if (valorAusente) {
+      const next: Session = {
+        ...prev,
+        nome: mergedNome,
+        mensagemOriginal: texto,
+        kind: "gasto",
+      };
+      const resposta = M.faltaValor(mergedNome);
+      await atualizarSessao(
+        sessao.id, "aguardando_descricao_e_valor_gasto", next, resposta,
+      );
+      return { status: "valor_invalido", resposta };
+    }
+    if (nomeAusente) {
+      const next: Session = {
+        ...prev,
+        valor: mergedValor,
+        data: parsedNovo.data || prev.data,
+        mensagemOriginal: texto,
+        kind: "gasto",
+      };
+      const resposta = M.faltaNome();
+      await atualizarSessao(
+        sessao.id, "aguardando_descricao_e_valor_gasto", next, resposta,
+      );
+      return { status: "pendente", resposta };
+    }
+    // Ambos presentes → avança para forma de pagamento. Não tentamos extrair
+    // forma/cartão automaticamente aqui (caminho conservador): se o usuário
+    // mandou "Uber 48,90 pix", vamos perguntar a forma — comportamento
+    // alinhado ao spec ("segue o lançamento" = forma_pagamento).
+    const next: Session = {
+      nome: mergedNome,
+      valor: mergedValor,
+      data: parsedNovo.data,
+      parcelas: parsedNovo.parcelas,
+      categoriaSugestao: parsedNovo.categoriaSugestao,
+      mensagemOriginal: texto,
+      confianca: parsedNovo.confianca,
+    };
+    const resposta = perguntaFormaPagamento(next);
+    await supabaseAdmin
+      .from("whatsapp_messages")
+      .update({ status: "expirada" })
+      .eq("id", sessao.id);
+    await gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "aguardando_forma_pagamento", next, resposta,
+    );
+    return {
+      status: "aguardando_forma_pagamento",
+      confianca: next.confianca,
+      resposta,
+    };
+  }
+
+
   // ---- Fase WA-G3: intenções conversacionais (saudação, menu, finanças genérico) ----
   // Tem precedência sobre consultas reais e sobre parsing de gasto/receita.
   // Só roda quando NÃO há sessão pendente e não é uma resposta sim/não/forma.
