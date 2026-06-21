@@ -113,7 +113,13 @@ function makeBuilder(table: string): any {
     }
     if (table === "cartoes") return { data: state.cartoesData, error: null };
     if (table === "categorias") return { data: state.categoriasData, error: null };
-    if (table === "gastos") return { data: { id: "x" }, error: null };
+    if (table === "gastos") {
+      if (ctx.filters?.id) return { data: { id: ctx.filters.id }, error: null };
+      return { data: state.gastosData, error: null };
+    }
+    if (table === "receitas") {
+      return { data: state.receitasData, error: null };
+    }
     if (table === "auth.users")
       return { data: { email: "u@example.com" }, error: null };
     return { data: null, error: null };
