@@ -1457,6 +1457,45 @@ export async function processarMensagemWhatsApp(
     }
   }
 
+  // ---- Fase WA-G4: consultas financeiras específicas ----
+  // Gasto por descrição/categoria, receita por tipo, gastos de ontem,
+  // sobra da renda. Só dispara sem sessão pendente e sem ser uma
+  // resposta sim/não. Nunca cria gasto/receita. Pode criar um único
+  // estado temporário "consulta_categoria_ambigua".
+  if (!sessao && decisao === "outro") {
+    const espec = detectConsultaEspecifica(texto);
+    if (espec) {
+      const out = await handleConsultaEspecifica(userId, espec);
+      if (out.status === "consulta_categoria_ambigua") {
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "consulta_categoria_ambigua",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ({
+            nome: "",
+            valor: 0,
+            data: todayLocalISO(),
+            mensagemOriginal: texto,
+            kind: "consulta_categoria",
+            termo: out.termo,
+            options: out.options,
+          } as unknown) as Session,
+          out.resposta,
+        );
+        return { status: "pendente", resposta: out.resposta };
+      }
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        out.resposta,
+      );
+      return { status: "consulta", resposta: out.resposta };
+    }
+  }
+
+
+
 
   // ---- Fase WA-G1: texto livre indicando intenção de receita. ----
   const startsReceita = !sessao && decisao === "outro" && isReceitaIntent(texto);
