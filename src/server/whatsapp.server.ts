@@ -762,6 +762,33 @@ type SessaoRow = {
   recebida_em: string;
 };
 
+function toSessaoRows(data: unknown): SessaoRow[] {
+  const rows = Array.isArray(data) ? data : data ? [data] : [];
+  return rows
+    .filter((r): r is { id: string; status: string; parsed: Session; recebida_em: string } => {
+      if (!r || typeof r !== "object") return false;
+      const row = r as { id?: unknown; status?: unknown; parsed?: unknown; recebida_em?: unknown };
+      return (
+        typeof row.id === "string" &&
+        typeof row.status === "string" &&
+        !!row.parsed &&
+        typeof row.parsed === "object" &&
+        typeof row.recebida_em === "string"
+      );
+    })
+    .map((r) => ({
+      id: r.id,
+      status: r.status,
+      session: r.parsed,
+      recebida_em: r.recebida_em,
+    }));
+}
+
+function isReceiptReservedCommand(texto: string): boolean {
+  const t = normalizeCmd(texto);
+  return (RECEIPT_RESERVED_COMMANDS as readonly string[]).includes(t);
+}
+
 async function buscarSessaoAtiva(
   userId: string,
   telefone: string,
