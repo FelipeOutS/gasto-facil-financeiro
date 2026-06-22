@@ -396,6 +396,9 @@ function ocrParaSessao(
   // ou retornou confiança baixa — nunca salvamos como Outros sozinhos.
   const categoriaNaoIdentificada =
     !ocr.categoriaSugerida || ocr.confianca === "baixa";
+  // Data fica "incerta" quando o OCR trouxe uma data mas a confiança geral
+  // é baixa — não confiar mesmo dentro da janela ±30 dias.
+  const dataIncerta = !!ocr.data && ocr.confianca === "baixa";
   return {
     kind: "imagem_comprovante",
     descricao,
@@ -406,7 +409,10 @@ function ocrParaSessao(
     categoriaNaoIdentificada,
     formaPagamento: ocr.formaPagamento,
     confianca: ocr.confianca,
-    dataConfirmada: !ocr.data, // se OCR não trouxe data, usamos hoje (sem precisar confirmar)
+    dataIncerta,
+    // Se OCR não trouxe data, usamos hoje (sem precisar confirmar).
+    // Se a data é incerta, precisa de confirmação explícita.
+    dataConfirmada: !ocr.data && !dataIncerta,
     imageSha256: img.sha256,
     imageMimeType: img.mimeType,
     mensagemOriginal,
@@ -430,7 +436,13 @@ function categoriaSugestaoLabel(
   return { label: fb?.nome ?? "Outros", id: fb?.id ?? null };
 }
 
-function dataLabelEValor(iso: string | undefined): { label: string; valor: string } {
+function dataLabelEValor(
+  s: ComprovanteSession,
+): { label: string; valor: string } {
+  const iso = s.data;
+  if (s.dataIncerta && !s.dataConfirmada) {
+    return { label: "Data da nota", valor: "Não confirmada" };
+  }
   if (!iso) return { label: "Data", valor: "Hoje" };
   const fmt = formatDataBR(iso);
   const isToday = iso === todayLocalISO();
@@ -439,7 +451,7 @@ function dataLabelEValor(iso: string | undefined): { label: string; valor: strin
 
 function buildResumo(s: ComprovanteSession, cats: CategoriaRow[]): string {
   const cat = categoriaSugestaoLabel(s, cats);
-  const d = dataLabelEValor(s.data);
+  const d = dataLabelEValor(s);
   return M.imagem.resumo({
     descricao: s.descricao ?? "—",
     valor: s.valor ? formatBRL(s.valor) : "—",
