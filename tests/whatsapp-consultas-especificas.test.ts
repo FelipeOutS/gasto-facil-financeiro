@@ -137,8 +137,8 @@ test("Categoria ambígua pede escolha e cria estado temporário", async () => {
 test("Categoria ambígua — reset (cancelar) encerra estado temporário", async () => {
   resetState({
     categorias: [
-      { id: "cat-1", legacy_id: null, nome: "Saúde",           user_id: "u1", tipo: "despesa" },
-      { id: "cat-2", legacy_id: null, nome: "Saúde da família", user_id: "u1", tipo: "despesa" },
+      { id: "cat-1", legacy_id: null, nome: "Saúde Geral",          user_id: "u1", tipo: "despesa" },
+      { id: "cat-2", legacy_id: null, nome: "Saúde da família",     user_id: "u1", tipo: "despesa" },
     ],
   });
   await processarMensagemWhatsApp({
