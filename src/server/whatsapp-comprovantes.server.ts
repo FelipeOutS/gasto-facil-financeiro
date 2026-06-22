@@ -50,6 +50,10 @@ export type ComprovanteSession = {
   formaPagamento?: string | null;
   confianca?: "alta" | "media" | "baixa";
   dataConfirmada?: boolean;
+  /** Marca quando a data lida do OCR é incerta (confiança baixa). Nesses
+   *  casos a data não é apresentada como certeza e o usuário precisa
+   *  confirmar antes de salvar. */
+  dataIncerta?: boolean;
   imageSha256?: string;
   imageMimeType?: string;
   pendingField?: "valor" | "descricao" | "categoria" | "data" | "pagamento";
