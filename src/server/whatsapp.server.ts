@@ -745,6 +745,15 @@ const PENDING_STATES = [
   ...RECEITA_PENDING_STATES,
   ...COMPROVANTE_PENDING_STATES,
 ];
+const FINAL_SESSION_STATES = new Set(["salva", "cancelada", "expirada", "sem_pendencia"]);
+export const RECEIPT_RESERVED_COMMANDS = [
+  "categoria",
+  "valor",
+  "descricao",
+  "descrição",
+  "data",
+  "pagamento",
+] as const;
 
 type SessaoRow = {
   id: string;
@@ -766,15 +775,22 @@ async function buscarSessaoAtiva(
     .in("status", PENDING_STATES)
     .gte("recebida_em", desde)
     .order("recebida_em", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (!data?.parsed) return null;
-  return {
-    id: data.id,
-    status: data.status,
-    session: data.parsed as Session,
-    recebida_em: data.recebida_em,
-  };
+    .limit(20);
+  const { data: comprovantes } = await supabaseAdmin
+    .from("whatsapp_messages")
+    .select("id, status, parsed, recebida_em")
+    .eq("user_id", userId)
+    .eq("telefone", telefone)
+    .eq("parsed->>kind", "imagem_comprovante")
+    .gte("recebida_em", desde)
+    .order("recebida_em", { ascending: false })
+    .limit(10);
+
+  const rows = [...toSessaoRows(data), ...toSessaoRows(comprovantes)]
+    .filter((r) => r.session && !FINAL_SESSION_STATES.has(r.status))
+    .sort((a, b) => Date.parse(b.recebida_em) - Date.parse(a.recebida_em));
+  const comprovante = rows.find((r) => isComprovanteSession(r.session));
+  return comprovante ?? rows.find((r) => PENDING_STATES.includes(r.status)) ?? null;
 }
 
 async function fecharSessoesAnteriores(
