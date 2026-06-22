@@ -9,6 +9,11 @@ import {
   validateDownloadedImage,
 } from "@/server/whatsapp-media-validation.server";
 import { podeUsarOcrComprovante } from "@/server/whatsapp-comprovantes.server";
+import {
+  canUseWhatsAppForSender,
+  shouldSendBlockedReply,
+  WHATSAPP_BLOCKED_REPLY,
+} from "@/server/whatsapp-authz.server";
 
 /**
  * Webhook público do WhatsApp Cloud API (Meta).
@@ -61,51 +66,13 @@ const ADMIN_MASTER_EMAILS = [
   "michael@medeiroscenografia.com.br",
 ] as const;
 
-/**
- * Resolve o telefone para userId via whatsapp_links e checa elegibilidade:
- *  - Admin Master sempre passa.
- *  - Demais usuários só passam se houver beta ativa (whatsapp_beta_access).
- *  - Em modo canário, somente Admin Master passa, independente de beta.
- * Retorna `{ allowed: false }` para qualquer caso negativo, inclusive
- * telefone sem vínculo ou sem consentimento.
- */
+// Eligibilidade do telefone: delega ao gate único `canUseWhatsAppForSender`.
+// Mantido como wrapper fino para preservar o call-site existente.
 async function checkPhoneEligibility(
   telefone: string,
   canaryOn: boolean,
 ): Promise<{ allowed: boolean; userId?: string }> {
-  const digits = telefone.replace(/\D/g, "");
-  if (!digits) return { allowed: false };
-  try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sb = supabaseAdmin as any;
-    const candidatos = new Set<string>([telefone, digits]);
-    if (digits.startsWith("55")) candidatos.add(digits.slice(2));
-    else candidatos.add(`55${digits}`);
-
-    const { data: link } = await sb
-      .from("whatsapp_links")
-      .select("user_id, ativo, opt_in_em, revogado_em")
-      .in("telefone", Array.from(candidatos))
-      .limit(1)
-      .maybeSingle();
-    if (!link || !link.ativo || link.revogado_em || !link.opt_in_em) {
-      return { allowed: false };
-    }
-    const { data: u } = await sb.auth.admin.getUserById(link.user_id);
-    const email: string | null = (u?.user?.email ?? "").trim().toLowerCase() || null;
-    const isAdmin =
-      !!email && (ADMIN_MASTER_EMAILS as ReadonlyArray<string>).includes(email);
-
-    if (canaryOn) return { allowed: isAdmin, userId: isAdmin ? link.user_id : undefined };
-    if (isAdmin) return { allowed: true, userId: link.user_id };
-
-    // Beta fechada
-    const { data: ok } = await sb.rpc("can_use_whatsapp", { _user_id: link.user_id });
-    return { allowed: ok === true, userId: ok === true ? link.user_id : undefined };
-  } catch {
-    return { allowed: false };
-  }
+  return canUseWhatsAppForSender(telefone, { canaryOnly: canaryOn });
 }
 
 /**
@@ -477,6 +444,23 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
           // envia resposta.
           const elig = await checkPhoneEligibility(msg.telefone, canaryOn);
           if (!elig.allowed) {
+            // WA-G5B — número não autorizado.
+            //  - Texto: resposta neutra, 1× por número/24h (anti-spam).
+            //  - Imagem/anexo: silêncio total (já não baixamos mídia).
+            // NÃO grava texto, NÃO grava telefone bruto em logs, NÃO
+            // cria sessão, NÃO baixa mídia, NÃO chama OCR/IA.
+            if (msg.texto?.trim() && !msg.image) {
+              try {
+                if (await shouldSendBlockedReply(msg.telefone)) {
+                  await sendWhatsAppReply(msg.telefone, WHATSAPP_BLOCKED_REPLY);
+                }
+              } catch (replyErr) {
+                console.error(
+                  "[whatsapp] blocked reply failed:",
+                  replyErr instanceof Error ? replyErr.name : "unknown",
+                );
+              }
+            }
             results.push({ status: "nao_elegivel" });
             continue;
           }
