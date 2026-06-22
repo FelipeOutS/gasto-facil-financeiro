@@ -50,6 +50,10 @@ export type ComprovanteSession = {
   formaPagamento?: string | null;
   confianca?: "alta" | "media" | "baixa";
   dataConfirmada?: boolean;
+  /** Marca quando a data lida do OCR é incerta (confiança baixa). Nesses
+   *  casos a data não é apresentada como certeza e o usuário precisa
+   *  confirmar antes de salvar. */
+  dataIncerta?: boolean;
   imageSha256?: string;
   imageMimeType?: string;
   pendingField?: "valor" | "descricao" | "categoria" | "data" | "pagamento";
@@ -287,6 +291,39 @@ function fallbackCategoria(cats: CategoriaRow[]): CategoriaRow | null {
   return out;
 }
 
+/**
+ * Resolve uma categoria a partir do texto do usuário durante a sessão de
+ * comprovante. Aceita:
+ *  - índice numérico ("1", "2", ...) referente à ordem exibida em
+ *    `listarCategorias`;
+ *  - "categoria <termo>" — tira o prefixo;
+ *  - nome exato (ex.: "Transporte") ou contém (ex.: "transp").
+ *
+ * Categorias de outro usuário nunca entram em `cats` (filtro por
+ * `user_id` em `carregarCategoriasDespesa`).
+ */
+function pickCategoria(
+  cats: CategoriaRow[],
+  texto: string,
+): CategoriaRow | null {
+  const raw = (texto || "").trim();
+  if (!raw) return null;
+  // pontuação/aspas no fim
+  const limpo = raw.replace(/^[•\-.\s]+/, "").replace(/[.!?\s]+$/, "");
+  const t = normalize(limpo);
+  if (!t) return null;
+  // "categoria X" → X
+  const semPrefixo = t.replace(/^categoria\s+/, "").trim();
+  // numérico puro → índice
+  const numMatch = semPrefixo.match(/^(\d{1,3})$/);
+  if (numMatch) {
+    const idx = Number(numMatch[1]) - 1;
+    if (idx >= 0 && idx < cats.length) return cats[idx];
+    return null;
+  }
+  return findCategoriaByTerm(cats, semPrefixo);
+}
+
 // ----- detecção de comandos ---------------------------------------------
 type AjusteField = "valor" | "descricao" | "categoria" | "data" | "pagamento";
 type AjusteIntent =
@@ -297,24 +334,30 @@ type AjusteIntent =
   | { kind: "direct"; field: "data"; data: string }
   | { kind: "direct"; field: "pagamento"; forma: string };
 
+const VERBO_AJUSTE = "(alterar|trocar|mudar|corrigir|editar|ajustar)";
+
 export function detectAjuste(texto: string): AjusteIntent | null {
-  const t = normalize(texto);
+  if (!texto) return null;
+  // remove pontuação final que costuma chegar do WhatsApp ("categoria.",
+  // "categoria!", "categoria?").
+  const limpo = texto.replace(/[.!?\s]+$/g, "").trim();
+  const t = normalize(limpo);
   if (!t) return null;
 
-  // pedidos simples
-  if (/^(alterar |trocar |mudar |corrigir )?valor$/.test(t)) {
+  // pedidos simples — "categoria", "alterar categoria", "editar categoria"...
+  if (new RegExp(`^(${VERBO_AJUSTE}\\s+)?valor$`).test(t)) {
     return { kind: "ask", field: "valor" };
   }
-  if (/^(alterar |trocar |mudar |corrigir )?(descricao|descrição)$/.test(t)) {
+  if (new RegExp(`^(${VERBO_AJUSTE}\\s+)?(descricao|descrição)$`).test(t)) {
     return { kind: "ask", field: "descricao" };
   }
-  if (/^(alterar |trocar |mudar |corrigir )?categoria$/.test(t)) {
+  if (new RegExp(`^(${VERBO_AJUSTE}\\s+)?categoria$`).test(t)) {
     return { kind: "ask", field: "categoria" };
   }
-  if (/^(alterar |trocar |mudar |corrigir )?data$/.test(t)) {
+  if (new RegExp(`^(${VERBO_AJUSTE}\\s+)?data$`).test(t)) {
     return { kind: "ask", field: "data" };
   }
-  if (/^(alterar |trocar |mudar |corrigir )?(pagamento|forma de pagamento)$/.test(t)) {
+  if (new RegExp(`^(${VERBO_AJUSTE}\\s+)?(pagamento|forma de pagamento|forma)$`).test(t)) {
     return { kind: "ask", field: "pagamento" };
   }
 
@@ -353,6 +396,9 @@ function ocrParaSessao(
   // ou retornou confiança baixa — nunca salvamos como Outros sozinhos.
   const categoriaNaoIdentificada =
     !ocr.categoriaSugerida || ocr.confianca === "baixa";
+  // Data fica "incerta" quando o OCR trouxe uma data mas a confiança geral
+  // é baixa — não confiar mesmo dentro da janela ±30 dias.
+  const dataIncerta = !!ocr.data && ocr.confianca === "baixa";
   return {
     kind: "imagem_comprovante",
     descricao,
@@ -363,7 +409,10 @@ function ocrParaSessao(
     categoriaNaoIdentificada,
     formaPagamento: ocr.formaPagamento,
     confianca: ocr.confianca,
-    dataConfirmada: !ocr.data, // se OCR não trouxe data, usamos hoje (sem precisar confirmar)
+    dataIncerta,
+    // Se OCR não trouxe data, usamos hoje (sem precisar confirmar).
+    // Se a data é incerta, precisa de confirmação explícita.
+    dataConfirmada: !ocr.data && !dataIncerta,
     imageSha256: img.sha256,
     imageMimeType: img.mimeType,
     mensagemOriginal,
@@ -387,7 +436,13 @@ function categoriaSugestaoLabel(
   return { label: fb?.nome ?? "Outros", id: fb?.id ?? null };
 }
 
-function dataLabelEValor(iso: string | undefined): { label: string; valor: string } {
+function dataLabelEValor(
+  s: ComprovanteSession,
+): { label: string; valor: string } {
+  const iso = s.data;
+  if (s.dataIncerta && !s.dataConfirmada) {
+    return { label: "Data da nota", valor: "Não confirmada" };
+  }
   if (!iso) return { label: "Data", valor: "Hoje" };
   const fmt = formatDataBR(iso);
   const isToday = iso === todayLocalISO();
@@ -396,7 +451,7 @@ function dataLabelEValor(iso: string | undefined): { label: string; valor: strin
 
 function buildResumo(s: ComprovanteSession, cats: CategoriaRow[]): string {
   const cat = categoriaSugestaoLabel(s, cats);
-  const d = dataLabelEValor(s.data);
+  const d = dataLabelEValor(s);
   return M.imagem.resumo({
     descricao: s.descricao ?? "—",
     valor: s.valor ? formatBRL(s.valor) : "—",
@@ -549,13 +604,20 @@ async function avancarAposConfirmacao(
       resposta: M.imagem.perguntaCategoriaObrigatoria(listarCategorias(cats)),
     };
   }
-  // 2) Confirmação de data quando a nota é antiga (>30 dias) ou futura.
-  if (!session.dataConfirmada && dataPrecisaConfirmacao(session.data)) {
+  // 2) Confirmação de data: nota antiga (>30d), futura ou marcada como incerta
+  //    pela confiança baixa do OCR.
+  if (
+    !session.dataConfirmada &&
+    (session.dataIncerta || dataPrecisaConfirmacao(session.data))
+  ) {
+    const resposta = session.dataIncerta
+      ? M.imagem.perguntaDataIncerta()
+      : M.imagem.perguntaDataConfirmacao(formatDataBR(session.data as string));
     return {
       status: "aguardando_data_confirmacao",
       newStatus: "img_aguardando_data_confirmacao",
       session,
-      resposta: M.imagem.perguntaDataConfirmacao(formatDataBR(session.data as string)),
+      resposta,
     };
   }
   // 3) Forma de pagamento, quando não detectada.
@@ -623,12 +685,12 @@ export async function processarRespostaImagem(args: {
       }
       next.descricao = d;
     } else if (field === "categoria") {
-      const found = findCategoriaByTerm(cats, texto.trim());
+      const found = pickCategoria(cats, texto);
       if (!found) {
         return {
           status: "aguardando_ajuste",
           newStatus: "img_aguardando_ajuste",
-          session,
+          session: { ...session, pendingField: "categoria" },
           resposta: M.imagem.pedirNovaCategoria(listarCategorias(cats)),
         };
       }
@@ -691,27 +753,38 @@ export async function processarRespostaImagem(args: {
     return rebuildResumoOuPreencher(next, cats);
   }
 
-  // ----- aguardando confirmação de DATA (fora da janela ±30 dias) -----
+  // ----- aguardando confirmação de DATA (fora da janela ±30 dias OU incerta) -----
   if (status === "img_aguardando_data_confirmacao") {
     const t = normalize(texto);
     const usarNota = /^(usar data da nota|usar a data da nota|manter data|manter|data da nota|nota)$/.test(t);
     const usarHoje = /^(usar hoje|hoje|usar a data de hoje)$/.test(t);
-    if (!usarNota && !usarHoje) {
+    // Quando o usuário responde com uma data direta ("15/06/2026", "ontem")
+    // também aceitamos — confirma a data informada manualmente.
+    const dataInformada = parseData(texto);
+    if (!usarNota && !usarHoje && !dataInformada) {
+      const resposta = session.dataIncerta
+        ? M.imagem.perguntaDataIncerta()
+        : M.imagem.perguntaDataConfirmacao(formatDataBR(session.data as string));
       return {
         status: "aguardando_data_confirmacao",
         newStatus: "img_aguardando_data_confirmacao",
         session,
-        resposta: M.imagem.perguntaDataConfirmacao(formatDataBR(session.data as string)),
+        resposta,
       };
     }
-    const next: ComprovanteSession = { ...session, dataConfirmada: true };
+    const next: ComprovanteSession = {
+      ...session,
+      dataConfirmada: true,
+      dataIncerta: false,
+    };
     if (usarHoje) next.data = todayLocalISO();
+    if (dataInformada && !usarNota && !usarHoje) next.data = dataInformada;
     return avancarAposConfirmacao(userId, next, cats);
   }
 
   // ----- aguardando categoria obrigatória -----
   if (status === "img_aguardando_categoria_obrigatoria") {
-    const found = findCategoriaByTerm(cats, texto.trim());
+    const found = pickCategoria(cats, texto);
     if (!found) {
       return {
         status: "aguardando_categoria_obrigatoria",
@@ -777,7 +850,7 @@ export async function processarRespostaImagem(args: {
       }
       if (aj.field === "pagamento") next.formaPagamento = aj.forma;
       if (aj.field === "categoria") {
-        const found = findCategoriaByTerm(cats, aj.termo);
+        const found = pickCategoria(cats, aj.termo);
         if (!found) {
           return {
             status: "aguardando_ajuste",
@@ -855,7 +928,8 @@ function listarCategorias(cats: CategoriaRow[]): string {
     .filter(Boolean)
     .slice(0, 20);
   if (nomes.length === 0) return "";
-  return "\n" + nomes.map((n) => `• ${n}`).join("\n");
+  // Numerada para permitir resposta por índice ("1", "2", ...).
+  return "\n\n" + nomes.map((n, i) => `${i + 1}. ${n}`).join("\n");
 }
 
 // ----- entitlement: importar foto / OCR ----------------------------------
