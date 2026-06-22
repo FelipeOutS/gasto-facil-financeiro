@@ -30,6 +30,8 @@ export const COMPROVANTE_PENDING_STATES = [
   "img_aguardando_descricao",
   "img_aguardando_pagamento",
   "img_aguardando_ajuste",
+  "img_aguardando_data_confirmacao",
+  "img_aguardando_categoria_obrigatoria",
 ] as const;
 export type ComprovanteStatus = (typeof COMPROVANTE_PENDING_STATES)[number];
 
@@ -44,10 +46,13 @@ export type ComprovanteSession = {
   categoriaSugerida?: string | null; // chave do OCR
   categoriaLabel?: string | null; // nome resolvido do usuário (display)
   categoriaId?: string | null;
+  categoriaNaoIdentificada?: boolean;
   formaPagamento?: string | null;
+  confianca?: "alta" | "media" | "baixa";
+  dataConfirmada?: boolean;
   imageSha256?: string;
   imageMimeType?: string;
-  pendingField?: "valor" | "descricao" | "categoria" | "data";
+  pendingField?: "valor" | "descricao" | "categoria" | "data" | "pagamento";
   mensagemOriginal: string;
 };
 
@@ -71,6 +76,8 @@ export type ComprovanteResult = {
     | "aguardando_valor"
     | "aguardando_descricao"
     | "aguardando_ajuste"
+    | "aguardando_data_confirmacao"
+    | "aguardando_categoria_obrigatoria"
     | "ilegivel"
     | "nao_elegivel"
     | "salva"
@@ -122,6 +129,58 @@ function normalize(s: string): string {
     .toLowerCase()
     .replace(/\s+/g, " ")
     .trim();
+}
+
+// Capitaliza descrição vinda em CAIXA ALTA do OCR (ex.: "EXPEDITO ALVES DE
+// LIMA ME" → "Expedito Alves de Lima ME"). Só atua quando o texto está
+// majoritariamente em maiúsculas; preservações de sigla comuns (ME, EPP,
+// LTDA, SA) ficam em caixa alta. NUNCA inventa palavras.
+const PRESERVAR_SIGLA = new Set([
+  "ME", "EPP", "LTDA", "SA", "S/A", "S.A", "S.A.",
+  "CNPJ", "CPF", "RJ", "SP", "MG", "RS", "DF", "PR", "SC", "BA",
+  "II", "III", "IV", "VI", "VII", "VIII", "IX", "XI", "XII",
+]);
+const MINUSCULA_CONJ = new Set([
+  "de", "da", "do", "das", "dos", "e", "a", "o", "em", "para", "por", "com",
+]);
+function titleCaseDescricao(input: string): string {
+  if (!input) return input;
+  const trimmed = input.replace(/\s+/g, " ").trim();
+  // letras alfabéticas (com acento) — para decidir se está em CAPS
+  const letras = trimmed.replace(/[^A-Za-zÀ-ÿ]/g, "");
+  if (!letras) return trimmed;
+  const upperLetras = letras.replace(/[a-zà-ÿ]/g, "");
+  const ratioCaps = upperLetras.length / letras.length;
+  // Só ajusta quando ≥80% das letras já estão em caixa alta — preserva
+  // entradas que vieram com formatação normal do OCR.
+  if (ratioCaps < 0.8) return trimmed;
+  const palavras = trimmed.split(" ");
+  return palavras
+    .map((w, i) => {
+      const up = w.toUpperCase();
+      if (PRESERVAR_SIGLA.has(up)) return up;
+      const baixo = w.toLowerCase();
+      if (i > 0 && MINUSCULA_CONJ.has(baixo)) return baixo;
+      return baixo.charAt(0).toUpperCase() + baixo.slice(1);
+    })
+    .join(" ");
+}
+
+function diasDeDiferenca(iso: string): number | null {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const target = Date.UTC(y, m - 1, d);
+  const today = todayLocalISO().split("-").map(Number);
+  const now = Date.UTC(today[0], today[1] - 1, today[2]);
+  return Math.round((target - now) / 86400000);
+}
+
+function dataPrecisaConfirmacao(iso: string | undefined): boolean {
+  if (!iso) return false;
+  const diff = diasDeDiferenca(iso);
+  if (diff === null) return false;
+  // futura OU anterior a 30 dias
+  return diff > 0 || diff < -30;
 }
 
 function parseValor(texto: string): number | null {
@@ -229,12 +288,14 @@ function fallbackCategoria(cats: CategoriaRow[]): CategoriaRow | null {
 }
 
 // ----- detecção de comandos ---------------------------------------------
+type AjusteField = "valor" | "descricao" | "categoria" | "data" | "pagamento";
 type AjusteIntent =
-  | { kind: "ask"; field: "valor" | "descricao" | "categoria" | "data" }
+  | { kind: "ask"; field: AjusteField }
   | { kind: "direct"; field: "valor"; valor: number }
   | { kind: "direct"; field: "descricao"; descricao: string }
   | { kind: "direct"; field: "categoria"; termo: string }
-  | { kind: "direct"; field: "data"; data: string };
+  | { kind: "direct"; field: "data"; data: string }
+  | { kind: "direct"; field: "pagamento"; forma: string };
 
 export function detectAjuste(texto: string): AjusteIntent | null {
   const t = normalize(texto);
@@ -253,8 +314,12 @@ export function detectAjuste(texto: string): AjusteIntent | null {
   if (/^(alterar |trocar |mudar |corrigir )?data$/.test(t)) {
     return { kind: "ask", field: "data" };
   }
+  if (/^(alterar |trocar |mudar |corrigir )?(pagamento|forma de pagamento)$/.test(t)) {
+    return { kind: "ask", field: "pagamento" };
+  }
 
-  // formas diretas: "valor 52,90", "categoria Transporte", "descrição Uber", "data ontem"
+  // formas diretas: "valor 52,90", "categoria Transporte", "descrição Uber",
+  // "data ontem", "pagamento pix"
   let m = t.match(/^valor\s+(.+)$/);
   if (m) {
     const v = parseValor(m[1]);
@@ -269,6 +334,11 @@ export function detectAjuste(texto: string): AjusteIntent | null {
     const d = parseData(m[1]);
     if (d) return { kind: "direct", field: "data", data: d };
   }
+  m = t.match(/^(pagamento|forma de pagamento|forma)\s+(.+)$/);
+  if (m) {
+    const f = detectFormaPagamento(m[2]);
+    if (f) return { kind: "direct", field: "pagamento", forma: f };
+  }
   return null;
 }
 
@@ -278,14 +348,22 @@ function ocrParaSessao(
   mensagemOriginal: string,
   img: ImageAttachment,
 ): ComprovanteSession {
+  const descricao = ocr.descricao ? titleCaseDescricao(ocr.descricao) : undefined;
+  // Categoria fica "não identificada" quando o OCR não sugeriu nada
+  // ou retornou confiança baixa — nunca salvamos como Outros sozinhos.
+  const categoriaNaoIdentificada =
+    !ocr.categoriaSugerida || ocr.confianca === "baixa";
   return {
     kind: "imagem_comprovante",
-    descricao: ocr.descricao ?? undefined,
+    descricao,
     valor: ocr.valor ?? undefined,
     data: ocr.data ?? todayLocalISO(),
     categoriaSugerida: ocr.categoriaSugerida,
-    categoriaLabel: null, // resolvido depois com base nas categorias do usuário
+    categoriaLabel: null,
+    categoriaNaoIdentificada,
     formaPagamento: ocr.formaPagamento,
+    confianca: ocr.confianca,
+    dataConfirmada: !ocr.data, // se OCR não trouxe data, usamos hoje (sem precisar confirmar)
     imageSha256: img.sha256,
     imageMimeType: img.mimeType,
     mensagemOriginal,
@@ -299,6 +377,9 @@ function categoriaSugestaoLabel(
   if (s.categoriaLabel && s.categoriaId) {
     return { label: s.categoriaLabel, id: s.categoriaId };
   }
+  if (s.categoriaNaoIdentificada) {
+    return { label: "Não identificada", id: null };
+  }
   const termo = s.categoriaSugerida ?? "";
   const found = findCategoriaByTerm(cats, termo);
   if (found) return { label: found.nome, id: found.id };
@@ -306,12 +387,22 @@ function categoriaSugestaoLabel(
   return { label: fb?.nome ?? "Outros", id: fb?.id ?? null };
 }
 
+function dataLabelEValor(iso: string | undefined): { label: string; valor: string } {
+  if (!iso) return { label: "Data", valor: "Hoje" };
+  const fmt = formatDataBR(iso);
+  const isToday = iso === todayLocalISO();
+  return { label: isToday ? "Data" : "Data da nota", valor: fmt };
+}
+
 function buildResumo(s: ComprovanteSession, cats: CategoriaRow[]): string {
   const cat = categoriaSugestaoLabel(s, cats);
+  const d = dataLabelEValor(s.data);
   return M.imagem.resumo({
     descricao: s.descricao ?? "—",
     valor: s.valor ? formatBRL(s.valor) : "—",
-    data: s.data ? formatDataBR(s.data) : "Hoje",
+    dataLabel: d.label,
+    dataValor: d.valor,
+    pagamento: s.formaPagamento ? rotuloPagamento(s.formaPagamento) : "Não identificado",
     categoria: cat.label,
   });
 }
@@ -426,10 +517,12 @@ export async function processarNovaImagem(args: {
     };
   }
 
-  // Leitura completa → resumo
+  // Leitura completa → resumo (sem cravar categoriaId quando OCR está incerto)
   const cat = categoriaSugestaoLabel(session, cats);
-  session.categoriaId = cat.id;
-  session.categoriaLabel = cat.label;
+  if (!session.categoriaNaoIdentificada) {
+    session.categoriaId = cat.id;
+    session.categoriaLabel = cat.label;
+  }
   return {
     status: "aguardando_confirmacao",
     newStatus: "img_aguardando_confirmacao",
@@ -438,11 +531,56 @@ export async function processarNovaImagem(args: {
   };
 }
 
+// Avança o fluxo após o "sim": exige categoria (quando não identificada),
+// confirma data fora da janela, pergunta forma de pagamento (quando não
+// detectada) e por fim persiste o gasto. Cada passo retorna um novo estado
+// pendente — nunca cria gasto sem todas as confirmações.
+async function avancarAposConfirmacao(
+  userId: string,
+  session: ComprovanteSession,
+  cats: CategoriaRow[],
+): Promise<ComprovanteResult> {
+  // 1) Categoria obrigatória quando OCR não identificou com confiança.
+  if (session.categoriaNaoIdentificada && !session.categoriaId) {
+    return {
+      status: "aguardando_categoria_obrigatoria",
+      newStatus: "img_aguardando_categoria_obrigatoria",
+      session,
+      resposta: M.imagem.perguntaCategoriaObrigatoria(listarCategorias(cats)),
+    };
+  }
+  // 2) Confirmação de data quando a nota é antiga (>30 dias) ou futura.
+  if (!session.dataConfirmada && dataPrecisaConfirmacao(session.data)) {
+    return {
+      status: "aguardando_data_confirmacao",
+      newStatus: "img_aguardando_data_confirmacao",
+      session,
+      resposta: M.imagem.perguntaDataConfirmacao(formatDataBR(session.data as string)),
+    };
+  }
+  // 3) Forma de pagamento, quando não detectada.
+  if (!session.formaPagamento) {
+    return {
+      status: "aguardando_pagamento",
+      newStatus: "img_aguardando_pagamento",
+      session,
+      resposta: M.imagem.perguntaFormaPagamento(),
+    };
+  }
+  // 4) Persiste.
+  const saved = await persistirGastoComprovante(userId, session, cats);
+  if (!saved.ok) return { status: "erro", resposta: saved.resposta, session };
+  return {
+    status: "salva",
+    newStatus: "salva",
+    session,
+    gastoId: saved.gastoId,
+    resposta: saved.resposta,
+  };
+}
+
 /**
  * Processa uma mensagem do usuário enquanto existe uma sessão de imagem.
- * Lida com: sim/não, ajustes pedidos ("alterar valor"), ajustes diretos
- * ("valor 52,90"), preenchimento de campos faltantes (valor/descrição),
- * pergunta de forma de pagamento, persistência.
  */
 export async function processarRespostaImagem(args: {
   userId: string;
@@ -454,7 +592,6 @@ export async function processarRespostaImagem(args: {
   const { userId, texto, session, status, decisao } = args;
   const cats = await carregarCategoriasDespesa(userId);
 
-  // cancelamento: tratado no pipeline principal por isResetCommand / "não"
   if (decisao === "cancel") {
     return { status: "cancelada", resposta: M.imagem.cancelado(), session };
   }
@@ -497,6 +634,7 @@ export async function processarRespostaImagem(args: {
       }
       next.categoriaId = found.id;
       next.categoriaLabel = found.nome;
+      next.categoriaNaoIdentificada = false;
     } else if (field === "data") {
       const d = parseData(texto);
       if (!d) {
@@ -508,6 +646,18 @@ export async function processarRespostaImagem(args: {
         };
       }
       next.data = d;
+      next.dataConfirmada = true; // usuário forneceu data explicitamente
+    } else if (field === "pagamento") {
+      const forma = detectFormaPagamento(texto);
+      if (!forma) {
+        return {
+          status: "aguardando_ajuste",
+          newStatus: "img_aguardando_ajuste",
+          session,
+          resposta: M.imagem.pedirNovoPagamento(),
+        };
+      }
+      next.formaPagamento = forma;
     }
     return rebuildResumoOuPreencher(next, cats);
   }
@@ -541,7 +691,45 @@ export async function processarRespostaImagem(args: {
     return rebuildResumoOuPreencher(next, cats);
   }
 
-  // ----- aguardando forma de pagamento (após sim, sem forma detectada) -----
+  // ----- aguardando confirmação de DATA (fora da janela ±30 dias) -----
+  if (status === "img_aguardando_data_confirmacao") {
+    const t = normalize(texto);
+    const usarNota = /^(usar data da nota|usar a data da nota|manter data|manter|data da nota|nota)$/.test(t);
+    const usarHoje = /^(usar hoje|hoje|usar a data de hoje)$/.test(t);
+    if (!usarNota && !usarHoje) {
+      return {
+        status: "aguardando_data_confirmacao",
+        newStatus: "img_aguardando_data_confirmacao",
+        session,
+        resposta: M.imagem.perguntaDataConfirmacao(formatDataBR(session.data as string)),
+      };
+    }
+    const next: ComprovanteSession = { ...session, dataConfirmada: true };
+    if (usarHoje) next.data = todayLocalISO();
+    return avancarAposConfirmacao(userId, next, cats);
+  }
+
+  // ----- aguardando categoria obrigatória -----
+  if (status === "img_aguardando_categoria_obrigatoria") {
+    const found = findCategoriaByTerm(cats, texto.trim());
+    if (!found) {
+      return {
+        status: "aguardando_categoria_obrigatoria",
+        newStatus: "img_aguardando_categoria_obrigatoria",
+        session,
+        resposta: M.imagem.perguntaCategoriaObrigatoria(listarCategorias(cats)),
+      };
+    }
+    const next: ComprovanteSession = {
+      ...session,
+      categoriaId: found.id,
+      categoriaLabel: found.nome,
+      categoriaNaoIdentificada: false,
+    };
+    return avancarAposConfirmacao(userId, next, cats);
+  }
+
+  // ----- aguardando forma de pagamento -----
   if (status === "img_aguardando_pagamento") {
     const forma = detectFormaPagamento(texto);
     if (!forma) {
@@ -553,20 +741,11 @@ export async function processarRespostaImagem(args: {
       };
     }
     const next: ComprovanteSession = { ...session, formaPagamento: forma };
-    const saved = await persistirGastoComprovante(userId, next, cats);
-    if (!saved.ok) return { status: "erro", resposta: saved.resposta, session: next };
-    return {
-      status: "salva",
-      newStatus: "salva",
-      session: next,
-      gastoId: saved.gastoId,
-      resposta: saved.resposta,
-    };
+    return avancarAposConfirmacao(userId, next, cats);
   }
 
-  // ----- aguardando confirmação -----
+  // ----- aguardando confirmação principal -----
   if (status === "img_aguardando_confirmacao") {
-    // ajuste antes do sim/não
     const aj = detectAjuste(texto);
     if (aj) {
       if (aj.kind === "ask") {
@@ -578,7 +757,9 @@ export async function processarRespostaImagem(args: {
               ? M.imagem.pedirNovaDescricao()
               : aj.field === "categoria"
                 ? M.imagem.pedirNovaCategoria(listarCategorias(cats))
-                : M.imagem.pedirNovaData();
+                : aj.field === "pagamento"
+                  ? M.imagem.pedirNovoPagamento()
+                  : M.imagem.pedirNovaData();
         return {
           status: "aguardando_ajuste",
           newStatus: "img_aguardando_ajuste",
@@ -590,7 +771,11 @@ export async function processarRespostaImagem(args: {
       const next: ComprovanteSession = { ...session };
       if (aj.field === "valor") next.valor = aj.valor;
       if (aj.field === "descricao") next.descricao = aj.descricao;
-      if (aj.field === "data") next.data = aj.data;
+      if (aj.field === "data") {
+        next.data = aj.data;
+        next.dataConfirmada = true;
+      }
+      if (aj.field === "pagamento") next.formaPagamento = aj.forma;
       if (aj.field === "categoria") {
         const found = findCategoriaByTerm(cats, aj.termo);
         if (!found) {
@@ -603,29 +788,13 @@ export async function processarRespostaImagem(args: {
         }
         next.categoriaId = found.id;
         next.categoriaLabel = found.nome;
+        next.categoriaNaoIdentificada = false;
       }
       return rebuildResumoOuPreencher(next, cats);
     }
 
     if (decisao === "confirm") {
-      // se forma de pagamento não foi identificada, perguntar antes de salvar
-      if (!session.formaPagamento) {
-        return {
-          status: "aguardando_pagamento",
-          newStatus: "img_aguardando_pagamento",
-          session,
-          resposta: M.imagem.perguntaFormaPagamento(),
-        };
-      }
-      const saved = await persistirGastoComprovante(userId, session, cats);
-      if (!saved.ok) return { status: "erro", resposta: saved.resposta, session };
-      return {
-        status: "salva",
-        newStatus: "salva",
-        session,
-        gastoId: saved.gastoId,
-        resposta: saved.resposta,
-      };
+      return avancarAposConfirmacao(userId, session, cats);
     }
     // resposta desconhecida — reapresenta o resumo
     return {
@@ -667,9 +836,11 @@ function rebuildResumoOuPreencher(
       resposta: M.imagem.apenasValor(formatBRL(s.valor as number)),
     };
   }
-  const cat = categoriaSugestaoLabel(s, cats);
-  s.categoriaId = cat.id;
-  s.categoriaLabel = cat.label;
+  if (!s.categoriaNaoIdentificada) {
+    const cat = categoriaSugestaoLabel(s, cats);
+    s.categoriaId = cat.id;
+    s.categoriaLabel = cat.label;
+  }
   return {
     status: "aguardando_confirmacao",
     newStatus: "img_aguardando_confirmacao",

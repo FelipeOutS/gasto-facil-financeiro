@@ -591,16 +591,24 @@ export const whatsappMessages = {
         `Qual foi o valor desse gasto?`,
       ].join("\n");
     },
-    resumo(args: { descricao: string; valor: string; data: string; categoria: string }) {
+    resumo(args: {
+      descricao: string;
+      valor: string;
+      dataLabel: string;
+      dataValor: string;
+      pagamento: string;
+      categoria: string;
+    }) {
       return [
         `Li esta nota 🧾`,
         ``,
         `• Descrição: ${args.descricao}`,
         `• Valor: ${args.valor}`,
-        `• Data: ${args.data}`,
-        `• Sugestão: ${args.categoria}`,
+        `• ${args.dataLabel}: ${args.dataValor}`,
+        `• Pagamento: ${args.pagamento}`,
+        `• Categoria: ${args.categoria}`,
         ``,
-        `Está certo? Responda sim ou diga o que quer alterar: valor, descrição, categoria ou data.`,
+        `Está certo? Responda sim ou diga o que quer alterar: valor, descrição, categoria, data ou pagamento.`,
       ].join("\n");
     },
     pedirNovoValor() {
@@ -611,6 +619,27 @@ export const whatsappMessages = {
     },
     pedirNovaCategoria(listaCategorias: string) {
       return `Qual categoria devo usar?${listaCategorias}`;
+    },
+    pedirNovoPagamento() {
+      return [
+        `Qual forma de pagamento devo usar?`,
+        ``,
+        `Você pode responder com Pix, cartão de crédito, cartão de débito, dinheiro ou outro.`,
+      ].join("\n");
+    },
+    perguntaDataConfirmacao(dataFmt: string) {
+      return [
+        `A nota indica a data ${dataFmt}.`,
+        ``,
+        `Quer usar essa data ou registrar como hoje?`,
+      ].join("\n");
+    },
+    perguntaCategoriaObrigatoria(listaCategorias: string) {
+      return [
+        `Em qual categoria esse gasto entra?`,
+        ``,
+        `Ex.: Alimentação, Transporte, Saúde ou Lazer.${listaCategorias}`,
+      ].join("\n");
     },
     pedirNovaData() {
       return [
