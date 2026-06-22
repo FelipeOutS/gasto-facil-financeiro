@@ -296,8 +296,37 @@ export type EspecificaResult =
       status: "consulta_categoria_ambigua";
       resposta: string;
       termo: string;
-      options: Array<{ id: string; nome: string }>;
+      options: Array<{ ids: string[]; nome: string }>;
     };
+
+/**
+ * Agrupa categorias por nome normalizado. Categorias visualmente
+ * equivalentes (acento, caixa, plural, espaços) viram um único grupo
+ * lógico com todos os categoria_id juntos. O nome de exibição
+ * preferido é o primeiro com letra maiúscula; senão o primeiro nome
+ * trimmed.
+ */
+function agruparCategorias(
+  categorias: CategoriaRow[],
+): Array<{ ids: string[]; nome: string }> {
+  const map = new Map<string, { ids: string[]; nomes: string[] }>();
+  for (const c of categorias) {
+    const raw = (c.nome ?? "").trim();
+    if (!raw) continue;
+    const key = normCat(raw);
+    if (!key) continue;
+    const entry = map.get(key) ?? { ids: [], nomes: [] };
+    entry.ids.push(c.id);
+    entry.nomes.push(raw);
+    map.set(key, entry);
+  }
+  const groups: Array<{ ids: string[]; nome: string }> = [];
+  for (const { ids, nomes } of map.values()) {
+    const display = nomes.find((n) => /[A-ZÀ-ÖØ-Þ]/.test(n)) ?? nomes[0];
+    groups.push({ ids, nome: display });
+  }
+  return groups;
+}
 
 /** Janela mensal "[primeiro_dia_do_mes, amanha)" — exclui datas futuras. */
 function janelaMesAteHoje(): { from: string; to: string; hoje: string } {
