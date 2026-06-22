@@ -850,7 +850,7 @@ export async function processarRespostaImagem(args: {
       }
       if (aj.field === "pagamento") next.formaPagamento = aj.forma;
       if (aj.field === "categoria") {
-        const found = findCategoriaByTerm(cats, aj.termo);
+        const found = pickCategoria(cats, aj.termo);
         if (!found) {
           return {
             status: "aguardando_ajuste",
