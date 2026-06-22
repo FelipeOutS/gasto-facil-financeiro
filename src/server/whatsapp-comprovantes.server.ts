@@ -131,6 +131,58 @@ function normalize(s: string): string {
     .trim();
 }
 
+// Capitaliza descrição vinda em CAIXA ALTA do OCR (ex.: "EXPEDITO ALVES DE
+// LIMA ME" → "Expedito Alves de Lima ME"). Só atua quando o texto está
+// majoritariamente em maiúsculas; preservações de sigla comuns (ME, EPP,
+// LTDA, SA) ficam em caixa alta. NUNCA inventa palavras.
+const PRESERVAR_SIGLA = new Set([
+  "ME", "EPP", "LTDA", "SA", "S/A", "S.A", "S.A.",
+  "CNPJ", "CPF", "RJ", "SP", "MG", "RS", "DF", "PR", "SC", "BA",
+  "II", "III", "IV", "VI", "VII", "VIII", "IX", "XI", "XII",
+]);
+const MINUSCULA_CONJ = new Set([
+  "de", "da", "do", "das", "dos", "e", "a", "o", "em", "para", "por", "com",
+]);
+function titleCaseDescricao(input: string): string {
+  if (!input) return input;
+  const trimmed = input.replace(/\s+/g, " ").trim();
+  // letras alfabéticas (com acento) — para decidir se está em CAPS
+  const letras = trimmed.replace(/[^A-Za-zÀ-ÿ]/g, "");
+  if (!letras) return trimmed;
+  const upperLetras = letras.replace(/[a-zà-ÿ]/g, "");
+  const ratioCaps = upperLetras.length / letras.length;
+  // Só ajusta quando ≥80% das letras já estão em caixa alta — preserva
+  // entradas que vieram com formatação normal do OCR.
+  if (ratioCaps < 0.8) return trimmed;
+  const palavras = trimmed.split(" ");
+  return palavras
+    .map((w, i) => {
+      const up = w.toUpperCase();
+      if (PRESERVAR_SIGLA.has(up)) return up;
+      const baixo = w.toLowerCase();
+      if (i > 0 && MINUSCULA_CONJ.has(baixo)) return baixo;
+      return baixo.charAt(0).toUpperCase() + baixo.slice(1);
+    })
+    .join(" ");
+}
+
+function diasDeDiferenca(iso: string): number | null {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const target = Date.UTC(y, m - 1, d);
+  const today = todayLocalISO().split("-").map(Number);
+  const now = Date.UTC(today[0], today[1] - 1, today[2]);
+  return Math.round((target - now) / 86400000);
+}
+
+function dataPrecisaConfirmacao(iso: string | undefined): boolean {
+  if (!iso) return false;
+  const diff = diasDeDiferenca(iso);
+  if (diff === null) return false;
+  // futura OU anterior a 30 dias
+  return diff > 0 || diff < -30;
+}
+
 function parseValor(texto: string): number | null {
   const t = texto.replace(/[Rr]\$\s*/g, "").trim();
   // dois grupos: "1.234,56" (BR) ou "1234.56" / "1234,56"
