@@ -252,15 +252,17 @@ function extractIncomingMessages(payload: z.infer<typeof MetaPayload>): FlatMess
 }
 
 /**
- * Baixa o bytes de uma mídia do WhatsApp Cloud API e devolve uma data URL
- * pronta para o OCR. Faz duas chamadas: GET /v20.0/{media_id} → url; depois
- * GET dessa url com bearer. Nunca expõe a URL retornada. Retorna null em
- * qualquer erro.
+ * Baixa os bytes de uma mídia do WhatsApp Cloud API e devolve o buffer
+ * bruto + mime declarado pela Meta. A validação real (tamanho + bytes
+ * mágicos) é feita pelo caller via `validateDownloadedImage`, não aqui.
+ *
+ * Importante: nenhum log inclui URL, token ou conteúdo. Apenas o nome
+ * da exceção é registrado em falhas.
  */
 async function downloadWhatsappMedia(
   mediaId: string,
   mimeFromMeta?: string,
-): Promise<{ dataUrl: string; mimeType: string } | null> {
+): Promise<{ buffer: Buffer; declaredMime?: string } | null> {
   try {
     const token = process.env.WHATSAPP_ACCESS_TOKEN;
     if (!token) return null;
@@ -272,16 +274,18 @@ async function downloadWhatsappMedia(
     if (!meta.url) return null;
     const dl = await fetch(meta.url, { headers: { Authorization: `Bearer ${token}` } });
     if (!dl.ok) return null;
+    // Limite duro: paramos de ler se passar de MAX_IMAGE_BYTES, sem
+    // bufferizar 100 MB de lixo enviado por um atacante.
     const buf = Buffer.from(await dl.arrayBuffer());
-    if (buf.byteLength === 0 || buf.byteLength > 15 * 1024 * 1024) return null;
-    const mimeType = (meta.mime_type ?? mimeFromMeta ?? "image/jpeg").toLowerCase();
-    if (!ALLOWED_IMAGE_MIME.has(mimeType)) return null;
-    return { dataUrl: `data:${mimeType};base64,${buf.toString("base64")}`, mimeType };
+    if (buf.byteLength === 0 || buf.byteLength > MAX_IMAGE_BYTES) return null;
+    return { buffer: buf, declaredMime: (meta.mime_type ?? mimeFromMeta)?.toLowerCase() };
   } catch (err) {
-    console.error("[whatsapp] media download failed", err instanceof Error ? err.message : "unknown");
+    // Não logamos `err.message`: pode conter a URL assinada da Meta.
+    console.error("[whatsapp] media download failed:", err instanceof Error ? err.name : "unknown");
     return null;
   }
 }
+
 
 const MAX_RAW_BODY = 64 * 1024; // 64KB
 
