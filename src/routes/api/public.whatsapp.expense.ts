@@ -67,7 +67,7 @@ const ADMIN_MASTER_EMAILS = [
 async function checkPhoneEligibility(
   telefone: string,
   canaryOn: boolean,
-): Promise<{ allowed: boolean }> {
+): Promise<{ allowed: boolean; userId?: string }> {
   const digits = telefone.replace(/\D/g, "");
   if (!digits) return { allowed: false };
   try {
@@ -92,16 +92,39 @@ async function checkPhoneEligibility(
     const isAdmin =
       !!email && (ADMIN_MASTER_EMAILS as ReadonlyArray<string>).includes(email);
 
-    if (canaryOn) return { allowed: isAdmin };
-    if (isAdmin) return { allowed: true };
+    if (canaryOn) return { allowed: isAdmin, userId: isAdmin ? link.user_id : undefined };
+    if (isAdmin) return { allowed: true, userId: link.user_id };
 
     // Beta fechada
     const { data: ok } = await sb.rpc("can_use_whatsapp", { _user_id: link.user_id });
-    return { allowed: ok === true };
+    return { allowed: ok === true, userId: ok === true ? link.user_id : undefined };
   } catch {
     return { allowed: false };
   }
 }
+
+/**
+ * WA-G5A.1 — dedup pré-download: se o mesmo `external_id` já gerou um
+ * gasto confirmado, NUNCA baixamos a mídia novamente. Reenvio do
+ * webhook pela Meta é absorvido em silêncio.
+ */
+async function externalIdAlreadyConfirmed(externalId: string | null): Promise<boolean> {
+  if (!externalId) return false;
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabaseAdmin as any;
+    const { data } = await sb
+      .from("whatsapp_messages")
+      .select("id, status, gasto_id")
+      .eq("external_id", externalId)
+      .maybeSingle();
+    return !!(data && data.status === "salva" && data.gasto_id);
+  } catch {
+    return false;
+  }
+}
+
 
 function verifyMetaSignature(rawBody: string, headerValue: string | null): boolean {
   const appSecret = process.env.WHATSAPP_APP_SECRET;
