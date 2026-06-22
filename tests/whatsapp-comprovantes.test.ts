@@ -286,3 +286,167 @@ test("'alterar valor' pede o novo valor e depois aceita o ajuste", async () => {
   });
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 75,00");
 });
+
+// =====================================================================
+// WA-G5A.2 — confirmação melhorada
+// =====================================================================
+
+test("Descrição em CAIXA ALTA é formatada com capitalização normal", async () => {
+  mockOcr({
+    valor: 50,
+    descricao: "EXPEDITO ALVES DE LIMA ME",
+    data: null,
+    categoriaSugerida: "alimentacao",
+    formaPagamento: "pix",
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "img-tc1", image: fakeImage("h-tc1"),
+  });
+  expect(r.resposta).toContain("Expedito Alves de Lima ME");
+  expect(r.resposta).not.toContain("EXPEDITO ALVES");
+});
+
+test("OCR com CRÉDITO sugere Cartão de crédito no resumo", async () => {
+  mockOcr({
+    valor: 80, descricao: "Padaria", data: null,
+    categoriaSugerida: "alimentacao", formaPagamento: "credito",
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "img-fp-c", image: fakeImage("h-fp-c"),
+  });
+  expect(r.resposta).toContain("Pagamento: Cartão de crédito");
+});
+
+test("OCR com PIX sugere Pix no resumo e não pergunta forma de pagamento", async () => {
+  mockOcr({
+    valor: 25, descricao: "Lanchonete", data: null,
+    categoriaSugerida: "alimentacao", formaPagamento: "pix",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "img-fp-p", image: fakeImage("h-fp-p"),
+  });
+  expect(state.pendingRow?.parsed.formaPagamento).toBe("pix");
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "sim", external_id: "img-fp-p-yes",
+  });
+  expect(r.status).toBe("salva");
+  expect(r.resposta).not.toContain("Como você pagou");
+});
+
+test("Data antiga (>30 dias) → pergunta usar nota ou hoje antes de salvar", async () => {
+  mockOcr({
+    valor: 40, descricao: "Mercado", data: "2020-01-15",
+    categoriaSugerida: "mercado", formaPagamento: "pix",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "img-dt1", image: fakeImage("h-dt1"),
+  });
+  const pre = await processarMensagemWhatsApp({
+    telefone: tel, texto: "sim", external_id: "img-dt1-yes",
+  });
+  expect(pre.resposta).toContain("A nota indica a data 15/01/2020");
+  expect(gastosInserts()).toHaveLength(0);
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "usar data da nota", external_id: "img-dt1-keep",
+  });
+  expect(r.status).toBe("salva");
+  expect(gastosInserts()[0].row.data).toBe("2020-01-15");
+});
+
+test("Data antiga + 'usar hoje' grava com a data de hoje", async () => {
+  mockOcr({
+    valor: 41, descricao: "Mercado", data: "2020-01-15",
+    categoriaSugerida: "mercado", formaPagamento: "pix",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "img-dt2", image: fakeImage("h-dt2"),
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "sim", external_id: "img-dt2-yes",
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "usar hoje", external_id: "img-dt2-hoje",
+  });
+  expect(r.status).toBe("salva");
+  expect(gastosInserts()[0].row.data).not.toBe("2020-01-15");
+});
+
+test("Data futura → pergunta confirmação antes de salvar", async () => {
+  mockOcr({
+    valor: 30, descricao: "Padaria", data: "2099-12-25",
+    categoriaSugerida: "alimentacao", formaPagamento: "pix",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "img-dtf", image: fakeImage("h-dtf"),
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "sim", external_id: "img-dtf-yes",
+  });
+  expect(r.resposta).toContain("A nota indica a data 25/12/2099");
+  expect(gastosInserts()).toHaveLength(0);
+});
+
+test("Categoria sem confiança NÃO vira Outros automaticamente", async () => {
+  mockOcr({
+    valor: 60, descricao: "Loja Diversa", data: null,
+    categoriaSugerida: null, formaPagamento: "pix",
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "img-cat1", image: fakeImage("h-cat1"),
+  });
+  expect(r.resposta).toContain("Categoria: Não identificada");
+  const pre = await processarMensagemWhatsApp({
+    telefone: tel, texto: "sim", external_id: "img-cat1-yes",
+  });
+  expect(pre.resposta).toContain("Em qual categoria");
+  expect(gastosInserts()).toHaveLength(0);
+  const r2 = await processarMensagemWhatsApp({
+    telefone: tel, texto: "Mercado", external_id: "img-cat1-mer",
+  });
+  expect(r2.status).toBe("salva");
+  expect(gastosInserts()[0].row.categoria_id).toBe("cat-mer");
+});
+
+test("Categoria com confiança baixa NÃO é assumida sem o usuário escolher", async () => {
+  mockOcr({
+    valor: 60, descricao: "Loja X", data: null,
+    categoriaSugerida: "outros", confianca: "baixa", formaPagamento: "pix",
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "img-cat2", image: fakeImage("h-cat2"),
+  });
+  expect(r.resposta).toContain("Categoria: Não identificada");
+});
+
+test("Ajuste manual de pagamento via 'pagamento pix' atualiza o resumo", async () => {
+  mockOcr({
+    valor: 70, descricao: "Restaurante", data: null,
+    categoriaSugerida: "alimentacao", formaPagamento: "credito",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "img-fp-aj", image: fakeImage("h-fp-aj"),
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "pagamento pix", external_id: "img-fp-aj-v",
+  });
+  expect(r.resposta).toContain("Pagamento: Pix");
+  expect(r.resposta).not.toContain("Pagamento: Cartão de crédito");
+});
+
+test("'alterar pagamento' pede a nova forma e aceita o ajuste", async () => {
+  mockOcr({
+    valor: 70, descricao: "Padaria", data: null,
+    categoriaSugerida: "alimentacao", formaPagamento: "credito",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "img-fp-aj2", image: fakeImage("h-fp-aj2"),
+  });
+  const ask = await processarMensagemWhatsApp({
+    telefone: tel, texto: "alterar pagamento", external_id: "img-fp-aj2-q",
+  });
+  expect(ask.resposta).toContain("Qual forma de pagamento");
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "débito", external_id: "img-fp-aj2-v",
+  });
+  expect(r.resposta).toContain("Pagamento: Cartão de débito");
+});
