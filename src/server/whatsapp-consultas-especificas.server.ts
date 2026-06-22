@@ -450,45 +450,48 @@ async function handleGastoPorDescricaoOuCategoria(
 ): Promise<EspecificaResult> {
   const categorias = await loadCategoriasDespesa(userId);
   const matches = findCategoriasByTermo(categorias, termo);
+  const grupos = agruparCategorias(matches);
 
-  if (matches.length > 1) {
+  if (grupos.length > 1) {
+    const opts = grupos.slice(0, 5);
     return {
       status: "consulta_categoria_ambigua",
       termo,
-      options: matches.slice(0, 5).map((c) => ({ id: c.id, nome: c.nome ?? "" })),
+      options: opts,
       resposta: M.consultaEspecifica.categoriaAmbigua({
         termo,
-        opcoes: matches.slice(0, 5).map((c) => c.nome ?? ""),
+        opcoes: opts.map((g) => g.nome),
       }),
     };
   }
 
-  if (matches.length === 1) {
-    return await respostaCategoria(userId, matches[0]);
+  if (grupos.length === 1) {
+    return await respostaCategoriaGrupo(userId, grupos[0]);
   }
 
   // Sem match de categoria → consulta por descrição.
   return await respostaDescricao(userId, termo);
 }
 
-async function respostaCategoria(
+async function respostaCategoriaGrupo(
   userId: string,
-  categoria: CategoriaRow,
+  grupo: { ids: string[]; nome: string },
 ): Promise<EspecificaResult> {
   const { from, to } = janelaMesAteHoje();
   const gastos = await loadGastos(userId, from, to);
-  const filtrados = gastos.filter((g) => g.categoria_id === categoria.id);
+  const idsSet = new Set(grupo.ids);
+  const filtrados = gastos.filter((g) => g.categoria_id != null && idsSet.has(g.categoria_id));
   if (filtrados.length === 0) {
     return {
       status: "consulta",
-      resposta: M.consultaEspecifica.categoriaSemResultado(categoria.nome ?? ""),
+      resposta: M.consultaEspecifica.categoriaSemResultado(grupo.nome),
     };
   }
   const total = sumValor(filtrados);
   return {
     status: "consulta",
     resposta: M.consultaEspecifica.gastoPorCategoria({
-      categoria: categoria.nome ?? "",
+      categoria: grupo.nome,
       valor: formatBRL(total),
       quantidade: filtrados.length,
     }),
