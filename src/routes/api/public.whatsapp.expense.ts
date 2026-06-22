@@ -139,8 +139,23 @@ const MetaTextMessage = z.object({
   type: z.literal("text"),
   text: z.object({ body: z.string().min(1).max(1000) }),
 });
+// WA-G5A — mensagens de imagem (Cloud API). Aceita apenas mime-types
+// suportados pelo OCR existente do site: jpeg/png/webp.
+const MetaImageMessage = z.object({
+  id: z.string().min(1).max(256),
+  from: z.string().min(5).max(40).regex(/^\d+$/),
+  timestamp: z.string().min(1).max(20).regex(/^\d+$/),
+  type: z.literal("image"),
+  image: z.object({
+    id: z.string().min(1).max(256),
+    mime_type: z.string().max(80).optional(),
+    sha256: z.string().max(128).optional(),
+    caption: z.string().max(1000).optional(),
+  }),
+});
 const MetaAnyMessage = z.union([
   MetaTextMessage,
+  MetaImageMessage,
   z.object({ id: z.string().optional(), type: z.string() }).passthrough(),
 ]);
 const MetaChange = z.object({
@@ -166,26 +181,83 @@ type FlatMessage = {
   telefone: string;
   texto: string;
   recebida_em?: string;
+  image?: {
+    mediaId: string;
+    mimeType?: string;
+    sha256?: string;
+  };
 };
 
-function extractTextMessages(payload: z.infer<typeof MetaPayload>): FlatMessage[] {
+const ALLOWED_IMAGE_MIME = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
+
+function extractIncomingMessages(payload: z.infer<typeof MetaPayload>): FlatMessage[] {
   const out: FlatMessage[] = [];
   for (const entry of payload.entry) {
     for (const change of entry.changes) {
       const messages = change.value.messages ?? [];
       for (const m of messages) {
-        const parsed = MetaTextMessage.safeParse(m);
-        if (!parsed.success) continue;
-        out.push({
-          external_id: parsed.data.id,
-          telefone: parsed.data.from,
-          texto: parsed.data.text.body,
-          recebida_em: new Date(Number(parsed.data.timestamp) * 1000).toISOString(),
-        });
+        const t = MetaTextMessage.safeParse(m);
+        if (t.success) {
+          out.push({
+            external_id: t.data.id,
+            telefone: t.data.from,
+            texto: t.data.text.body,
+            recebida_em: new Date(Number(t.data.timestamp) * 1000).toISOString(),
+          });
+          continue;
+        }
+        const i = MetaImageMessage.safeParse(m);
+        if (i.success) {
+          const mime = i.data.image.mime_type;
+          if (mime && !ALLOWED_IMAGE_MIME.has(mime.toLowerCase())) continue;
+          out.push({
+            external_id: i.data.id,
+            telefone: i.data.from,
+            texto: i.data.image.caption ?? "",
+            recebida_em: new Date(Number(i.data.timestamp) * 1000).toISOString(),
+            image: {
+              mediaId: i.data.image.id,
+              mimeType: mime,
+              sha256: i.data.image.sha256,
+            },
+          });
+        }
       }
     }
   }
   return out;
+}
+
+/**
+ * Baixa o bytes de uma mídia do WhatsApp Cloud API e devolve uma data URL
+ * pronta para o OCR. Faz duas chamadas: GET /v20.0/{media_id} → url; depois
+ * GET dessa url com bearer. Nunca expõe a URL retornada. Retorna null em
+ * qualquer erro.
+ */
+async function downloadWhatsappMedia(
+  mediaId: string,
+  mimeFromMeta?: string,
+): Promise<{ dataUrl: string; mimeType: string } | null> {
+  try {
+    const token = process.env.WHATSAPP_ACCESS_TOKEN;
+    if (!token) return null;
+    const lookup = await fetch(`https://graph.facebook.com/v20.0/${encodeURIComponent(mediaId)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!lookup.ok) return null;
+    const meta = (await lookup.json()) as { url?: string; mime_type?: string };
+    if (!meta.url) return null;
+    const dl = await fetch(meta.url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!dl.ok) return null;
+    const buf = Buffer.from(await dl.arrayBuffer());
+    if (buf.byteLength === 0 || buf.byteLength > 15 * 1024 * 1024) return null;
+    const mimeType = (meta.mime_type ?? mimeFromMeta ?? "image/jpeg").toLowerCase();
+    if (!ALLOWED_IMAGE_MIME.has(mimeType)) return null;
+    return { dataUrl: `data:${mimeType};base64,${buf.toString("base64")}`, mimeType };
+  } catch (err) {
+    console.error("[whatsapp] media download failed", err instanceof Error ? err.message : "unknown");
+    return null;
+  }
 }
 
 const MAX_RAW_BODY = 64 * 1024; // 64KB
@@ -340,7 +412,7 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
           return jsonResponse({ ok: true, skipped: "invalid_payload" });
         }
 
-        const flatMessages = extractTextMessages(payload);
+        const flatMessages = extractIncomingMessages(payload);
 
         // Log seguro: apenas contagem e primeiro external_id, sem texto/telefone.
         const logId = await logWebhookEvent({
@@ -365,7 +437,8 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
         const canaryOn = isCanaryEnabled();
         const results: Array<{ status: string; gasto_id?: string }> = [];
         for (const msg of flatMessages) {
-          if (!msg.texto?.trim()) continue;
+          // Mensagem precisa ter texto OU imagem (WA-G5A).
+          if (!msg.texto?.trim() && !msg.image) continue;
           // Gate único de elegibilidade: telefone não vinculado, sem
           // consentimento, sem beta ativa (ou fora do canário) → drop
           // silencioso. NÃO grava texto, NÃO cria sessão/gasto, NÃO
@@ -376,7 +449,30 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
             continue;
           }
           try {
-            const out = await processarMensagemWhatsApp(msg);
+            // Para imagens, baixar a mídia agora (com WHATSAPP_ACCESS_TOKEN)
+            // e converter em data URL ANTES de chamar o pipeline. A imagem
+            // bruta não é persistida — só hash e mime ficam em parsed.
+            let runMsg: {
+              external_id: string | null;
+              telefone: string;
+              texto: string;
+              recebida_em?: string;
+              image?: { base64: string; mimeType?: string; sha256?: string };
+            } = { external_id: msg.external_id, telefone: msg.telefone, texto: msg.texto, recebida_em: msg.recebida_em };
+            if (msg.image) {
+              const dl = await downloadWhatsappMedia(msg.image.mediaId, msg.image.mimeType);
+              if (!dl) {
+                // Falha no download → drop silencioso para o usuário.
+                results.push({ status: "imagem_indisponivel" });
+                continue;
+              }
+              runMsg.image = {
+                base64: dl.dataUrl,
+                mimeType: dl.mimeType,
+                sha256: msg.image.sha256,
+              };
+            }
+            const out = await processarMensagemWhatsApp(runMsg);
             results.push({ status: out.status, gasto_id: out.gastoId });
             if (out.resposta && msg.telefone) {
               try {

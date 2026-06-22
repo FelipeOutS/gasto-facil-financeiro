@@ -49,6 +49,16 @@ import {
   handleConsultaEspecifica,
   handleCategoriaAmbiguaResponse,
 } from "./whatsapp-consultas-especificas.server";
+import {
+  COMPROVANTE_PENDING_STATES,
+  isComprovanteSession,
+  processarNovaImagem,
+  processarRespostaImagem,
+  podeUsarOcrComprovante,
+  type ComprovanteSession,
+  type ComprovanteStatus,
+  type ImageAttachment,
+} from "./whatsapp-comprovantes.server";
 
 
 // ---------- elegibilidade WhatsApp (gate único) ----------
@@ -71,6 +81,9 @@ type WhatsAppMessageRow = {
   telefone: string;
   texto: string;
   recebida_em?: string;
+  /** Anexo de imagem (Fase WA-G5A). Quando presente, dispara o fluxo
+   *  de leitura de comprovante via OCR existente do site. */
+  image?: ImageAttachment;
 };
 
 export function maskTelefone(tel: string): string {
@@ -730,6 +743,7 @@ const PENDING_STATES = [
   // gasto ou receita. Cancelável por "cancelar".
   "consulta_categoria_ambigua",
   ...RECEITA_PENDING_STATES,
+  ...COMPROVANTE_PENDING_STATES,
 ];
 
 type SessaoRow = {
@@ -1173,7 +1187,9 @@ export async function processarMensagemWhatsApp(
   }
 
   const texto = (msg.texto ?? "").trim();
-  if (!texto) {
+  // Permitir mensagens só-imagem (Fase WA-G5A): se vier uma foto sem
+  // texto, seguimos o pipeline e roteamos para o handler de comprovante.
+  if (!texto && !msg.image) {
     return {
       status: "erro",
       resposta:
@@ -1240,6 +1256,18 @@ export async function processarMensagemWhatsApp(
     return { status: "cancelada", resposta };
   }
 
+
+  // ---- Fase WA-G5A: imagem chegou enquanto há sessão pendente NÃO-comprovante ----
+  // Uma foto nunca interrompe um fluxo de gasto/receita em andamento.
+  // Orienta o usuário a enviar "cancelar" antes de mandar a foto.
+  if (msg.image && sessao && !isComprovanteSession(sessao.session)) {
+    const aviso = M.imagem.sessaoEmAndamento();
+    await gravarSessao(
+      userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
+      sessao.status, sessao.session, aviso,
+    );
+    return { status: "pendente", resposta: aviso };
+  }
 
   // ---- Fase WA-G1: sessão de receita pendente sempre tem prioridade. ----
   const sessionIsReceita = sessao && isReceitaSession(sessao.session);
@@ -1347,6 +1375,131 @@ export async function processarMensagemWhatsApp(
       resposta,
     };
   }
+
+
+  // ---- Fase WA-G5A: sessão de comprovante/imagem pendente ----
+  // Prioridade após reset/receita/gasto e antes de consultas. "cancelar"
+  // já encerrou acima. "não" também encerra (mantém comportamento global).
+  // Aceita ajustes ("alterar valor", "valor 52,90", ...), preenchimento de
+  // campos faltantes, pergunta de forma de pagamento e confirmação.
+  if (
+    sessao &&
+    (COMPROVANTE_PENDING_STATES as readonly string[]).includes(sessao.status) &&
+    isComprovanteSession(sessao.session)
+  ) {
+    const prev = sessao.session as ComprovanteSession;
+    // Nova imagem durante sessão de imagem: orienta a cancelar antes.
+    if (msg.image) {
+      const aviso = M.imagem.sessaoEmAndamento();
+      await atualizarSessao(sessao.id, sessao.status, prev as unknown as Session, aviso);
+      return { status: "pendente", resposta: aviso };
+    }
+    if (decisao === "cancel") {
+      await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "cancelada", prev as unknown as Session, M.imagem.cancelado(),
+      );
+      return { status: "cancelada", resposta: M.imagem.cancelado() };
+    }
+    const out = await processarRespostaImagem({
+      userId,
+      texto,
+      session: prev,
+      status: sessao.status as ComprovanteStatus,
+      decisao,
+    });
+    // marcar a sessão antiga como expirada e gravar a nova
+    await supabaseAdmin
+      .from("whatsapp_messages")
+      .update({ status: "expirada" })
+      .eq("id", sessao.id);
+    if (out.status === "salva") {
+      await fecharSessoesAnteriores(userId, msg.telefone, "salva", out.gastoId);
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "salva", (out.session ?? prev) as unknown as Session,
+        out.resposta, out.gastoId,
+      );
+      return { status: "salva", gastoId: out.gastoId, resposta: out.resposta };
+    }
+    const nextStatus = out.newStatus ?? "img_aguardando_confirmacao";
+    await gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      nextStatus, (out.session ?? prev) as unknown as Session, out.resposta,
+    );
+    return { status: "pendente", resposta: out.resposta };
+  }
+
+  // ---- Fase WA-G5A: imagem nova chegando sem sessão pendente ----
+  // Sessões pendentes (receita/gasto) já interceptaram acima — uma imagem
+  // nunca interrompe um fluxo financeiro em andamento.
+  if (msg.image) {
+    if (sessao) {
+      // sessão pendente não-comprovante (gasto/receita/etc.) — não processa OCR.
+      const aviso = M.imagem.sessaoEmAndamento();
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
+        sessao.status, sessao.session, aviso,
+      );
+      return { status: "pendente", resposta: aviso };
+    }
+    // Entitlement: precisa do mesmo gate do site para OCR ("importacoes").
+    const elegivel = await podeUsarOcrComprovante(userId);
+    if (!elegivel) {
+      // Drop silencioso: 200 OK sem OCR, sem persistir imagem, sem resposta.
+      return { status: "sem_plano", resposta: "" };
+    }
+    // Dedup por hash da imagem nas últimas 30min (mesmo usuário+telefone).
+    const sha = msg.image.sha256 ?? "";
+    if (sha) {
+      const desde = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+      const { data: dup } = await supabaseAdmin
+        .from("whatsapp_messages")
+        .select("id, status, gasto_id")
+        .eq("user_id", userId)
+        .eq("telefone", msg.telefone)
+        .gte("recebida_em", desde)
+        .order("recebida_em", { ascending: false })
+        .limit(20);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rows: any[] = Array.isArray(dup) ? dup : [];
+      const jaSalva = rows.find((r) => r.status === "salva" && r.gasto_id);
+      if (jaSalva) {
+        return {
+          status: "duplicada",
+          gastoId: jaSalva.gasto_id ?? undefined,
+          resposta: "Essa nota já foi registrada anteriormente.",
+        };
+      }
+    }
+    const out = await processarNovaImagem({
+      userId,
+      texto: texto || "(foto)",
+      image: msg.image,
+    });
+    const nextStatus = out.newStatus ?? "img_aguardando_confirmacao";
+    if (out.status === "ilegivel") {
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto || "(foto)" },
+        out.resposta,
+      );
+      return { status: "pendente", resposta: out.resposta };
+    }
+    await gravarSessao(
+      userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
+      nextStatus as string,
+      (out.session ?? {
+        kind: "imagem_comprovante",
+        mensagemOriginal: texto || "(foto)",
+      }) as unknown as Session,
+      out.resposta,
+    );
+    return { status: "pendente", resposta: out.resposta };
+  }
+
 
 
   // ---- Fase WA-G4: sessão temporária de consulta com categoria ambígua ----
