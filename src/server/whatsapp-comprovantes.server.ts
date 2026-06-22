@@ -753,27 +753,38 @@ export async function processarRespostaImagem(args: {
     return rebuildResumoOuPreencher(next, cats);
   }
 
-  // ----- aguardando confirmação de DATA (fora da janela ±30 dias) -----
+  // ----- aguardando confirmação de DATA (fora da janela ±30 dias OU incerta) -----
   if (status === "img_aguardando_data_confirmacao") {
     const t = normalize(texto);
     const usarNota = /^(usar data da nota|usar a data da nota|manter data|manter|data da nota|nota)$/.test(t);
     const usarHoje = /^(usar hoje|hoje|usar a data de hoje)$/.test(t);
-    if (!usarNota && !usarHoje) {
+    // Quando o usuário responde com uma data direta ("15/06/2026", "ontem")
+    // também aceitamos — confirma a data informada manualmente.
+    const dataInformada = parseData(texto);
+    if (!usarNota && !usarHoje && !dataInformada) {
+      const resposta = session.dataIncerta
+        ? M.imagem.perguntaDataIncerta()
+        : M.imagem.perguntaDataConfirmacao(formatDataBR(session.data as string));
       return {
         status: "aguardando_data_confirmacao",
         newStatus: "img_aguardando_data_confirmacao",
         session,
-        resposta: M.imagem.perguntaDataConfirmacao(formatDataBR(session.data as string)),
+        resposta,
       };
     }
-    const next: ComprovanteSession = { ...session, dataConfirmada: true };
+    const next: ComprovanteSession = {
+      ...session,
+      dataConfirmada: true,
+      dataIncerta: false,
+    };
     if (usarHoje) next.data = todayLocalISO();
+    if (dataInformada && !usarNota && !usarHoje) next.data = dataInformada;
     return avancarAposConfirmacao(userId, next, cats);
   }
 
   // ----- aguardando categoria obrigatória -----
   if (status === "img_aguardando_categoria_obrigatoria") {
-    const found = findCategoriaByTerm(cats, texto.trim());
+    const found = pickCategoria(cats, texto);
     if (!found) {
       return {
         status: "aguardando_categoria_obrigatoria",
