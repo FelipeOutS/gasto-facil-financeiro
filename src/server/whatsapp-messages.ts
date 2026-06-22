@@ -618,7 +618,11 @@ export const whatsappMessages = {
       return `Qual descrição devo usar?`;
     },
     pedirNovaCategoria(listaCategorias: string) {
-      return `Qual categoria devo usar?${listaCategorias}`;
+      return [
+        `Claro. Qual categoria você quer usar?`,
+        ``,
+        `Ex.: Alimentação, Transporte, Saúde ou Lazer.${listaCategorias}`,
+      ].join("\n");
     },
     pedirNovoPagamento() {
       return [
@@ -632,6 +636,13 @@ export const whatsappMessages = {
         `A nota indica a data ${dataFmt}.`,
         ``,
         `Quer usar essa data ou registrar como hoje?`,
+      ].join("\n");
+    },
+    perguntaDataIncerta() {
+      return [
+        `Não consegui confirmar a data da nota.`,
+        ``,
+        `Quer usar hoje ou informar outra data?`,
       ].join("\n");
     },
     perguntaCategoriaObrigatoria(listaCategorias: string) {
