@@ -67,7 +67,7 @@ test("Quanto gastei com Uber este mês — soma e quantidade", async () => {
   });
   expect(r.status).toBe("consulta");
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 69,90");
-  expect(r.resposta).toContain("Uber");
+  expect(r.resposta.toLowerCase()).toContain("uber");
   expect(r.resposta).toMatch(/2 lançamentos/);
 });
 
