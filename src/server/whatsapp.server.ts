@@ -789,6 +789,27 @@ function isReceiptReservedCommand(texto: string): boolean {
   return (RECEIPT_RESERVED_COMMANDS as readonly string[]).includes(t);
 }
 
+function receiptSessionDiagnostic(sessao: SessaoRow | null) {
+  if (!sessao || !isComprovanteSession(sessao.session)) return null;
+  const s = sessao.session as unknown as ComprovanteSession;
+  return {
+    kind: s.kind,
+    status: sessao.status,
+    parsed: {
+      kind: s.kind,
+      pendingField: s.pendingField ?? null,
+      hasDescricao: !!s.descricao,
+      hasValor: typeof s.valor === "number" && s.valor > 0,
+      hasData: !!s.data,
+      hasCategoriaId: !!s.categoriaId,
+      categoriaNaoIdentificada: !!s.categoriaNaoIdentificada,
+      hasFormaPagamento: !!s.formaPagamento,
+      hasImageSha256: !!s.imageSha256,
+      imageMimeType: s.imageMimeType ?? null,
+    },
+  };
+}
+
 async function buscarSessaoAtiva(
   userId: string,
   telefone: string,
