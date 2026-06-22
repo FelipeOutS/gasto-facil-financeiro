@@ -685,12 +685,12 @@ export async function processarRespostaImagem(args: {
       }
       next.descricao = d;
     } else if (field === "categoria") {
-      const found = findCategoriaByTerm(cats, texto.trim());
+      const found = pickCategoria(cats, texto);
       if (!found) {
         return {
           status: "aguardando_ajuste",
           newStatus: "img_aguardando_ajuste",
-          session,
+          session: { ...session, pendingField: "categoria" },
           resposta: M.imagem.pedirNovaCategoria(listarCategorias(cats)),
         };
       }
