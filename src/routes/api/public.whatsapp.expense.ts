@@ -4,6 +4,11 @@ import { z } from "zod";
 import { processarMensagemWhatsApp, sendWhatsAppReply } from "@/server/whatsapp.server";
 import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
+import {
+  MAX_IMAGE_BYTES,
+  validateDownloadedImage,
+} from "@/server/whatsapp-media-validation.server";
+import { podeUsarOcrComprovante } from "@/server/whatsapp-comprovantes.server";
 
 /**
  * Webhook público do WhatsApp Cloud API (Meta).
@@ -67,7 +72,7 @@ const ADMIN_MASTER_EMAILS = [
 async function checkPhoneEligibility(
   telefone: string,
   canaryOn: boolean,
-): Promise<{ allowed: boolean }> {
+): Promise<{ allowed: boolean; userId?: string }> {
   const digits = telefone.replace(/\D/g, "");
   if (!digits) return { allowed: false };
   try {
@@ -92,16 +97,39 @@ async function checkPhoneEligibility(
     const isAdmin =
       !!email && (ADMIN_MASTER_EMAILS as ReadonlyArray<string>).includes(email);
 
-    if (canaryOn) return { allowed: isAdmin };
-    if (isAdmin) return { allowed: true };
+    if (canaryOn) return { allowed: isAdmin, userId: isAdmin ? link.user_id : undefined };
+    if (isAdmin) return { allowed: true, userId: link.user_id };
 
     // Beta fechada
     const { data: ok } = await sb.rpc("can_use_whatsapp", { _user_id: link.user_id });
-    return { allowed: ok === true };
+    return { allowed: ok === true, userId: ok === true ? link.user_id : undefined };
   } catch {
     return { allowed: false };
   }
 }
+
+/**
+ * WA-G5A.1 — dedup pré-download: se o mesmo `external_id` já gerou um
+ * gasto confirmado, NUNCA baixamos a mídia novamente. Reenvio do
+ * webhook pela Meta é absorvido em silêncio.
+ */
+async function externalIdAlreadyConfirmed(externalId: string | null): Promise<boolean> {
+  if (!externalId) return false;
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabaseAdmin as any;
+    const { data } = await sb
+      .from("whatsapp_messages")
+      .select("id, status, gasto_id")
+      .eq("external_id", externalId)
+      .maybeSingle();
+    return !!(data && data.status === "salva" && data.gasto_id);
+  } catch {
+    return false;
+  }
+}
+
 
 function verifyMetaSignature(rawBody: string, headerValue: string | null): boolean {
   const appSecret = process.env.WHATSAPP_APP_SECRET;
@@ -229,15 +257,17 @@ function extractIncomingMessages(payload: z.infer<typeof MetaPayload>): FlatMess
 }
 
 /**
- * Baixa o bytes de uma mídia do WhatsApp Cloud API e devolve uma data URL
- * pronta para o OCR. Faz duas chamadas: GET /v20.0/{media_id} → url; depois
- * GET dessa url com bearer. Nunca expõe a URL retornada. Retorna null em
- * qualquer erro.
+ * Baixa os bytes de uma mídia do WhatsApp Cloud API e devolve o buffer
+ * bruto + mime declarado pela Meta. A validação real (tamanho + bytes
+ * mágicos) é feita pelo caller via `validateDownloadedImage`, não aqui.
+ *
+ * Importante: nenhum log inclui URL, token ou conteúdo. Apenas o nome
+ * da exceção é registrado em falhas.
  */
 async function downloadWhatsappMedia(
   mediaId: string,
   mimeFromMeta?: string,
-): Promise<{ dataUrl: string; mimeType: string } | null> {
+): Promise<{ buffer: Buffer; declaredMime?: string } | null> {
   try {
     const token = process.env.WHATSAPP_ACCESS_TOKEN;
     if (!token) return null;
@@ -249,16 +279,18 @@ async function downloadWhatsappMedia(
     if (!meta.url) return null;
     const dl = await fetch(meta.url, { headers: { Authorization: `Bearer ${token}` } });
     if (!dl.ok) return null;
+    // Limite duro: paramos de ler se passar de MAX_IMAGE_BYTES, sem
+    // bufferizar 100 MB de lixo enviado por um atacante.
     const buf = Buffer.from(await dl.arrayBuffer());
-    if (buf.byteLength === 0 || buf.byteLength > 15 * 1024 * 1024) return null;
-    const mimeType = (meta.mime_type ?? mimeFromMeta ?? "image/jpeg").toLowerCase();
-    if (!ALLOWED_IMAGE_MIME.has(mimeType)) return null;
-    return { dataUrl: `data:${mimeType};base64,${buf.toString("base64")}`, mimeType };
+    if (buf.byteLength === 0 || buf.byteLength > MAX_IMAGE_BYTES) return null;
+    return { buffer: buf, declaredMime: (meta.mime_type ?? mimeFromMeta)?.toLowerCase() };
   } catch (err) {
-    console.error("[whatsapp] media download failed", err instanceof Error ? err.message : "unknown");
+    // Não logamos `err.message`: pode conter a URL assinada da Meta.
+    console.error("[whatsapp] media download failed:", err instanceof Error ? err.name : "unknown");
     return null;
   }
 }
+
 
 const MAX_RAW_BODY = 64 * 1024; // 64KB
 
@@ -449,9 +481,14 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
             continue;
           }
           try {
-            // Para imagens, baixar a mídia agora (com WHATSAPP_ACCESS_TOKEN)
-            // e converter em data URL ANTES de chamar o pipeline. A imagem
-            // bruta não é persistida — só hash e mime ficam em parsed.
+            // WA-G5A.1 — ordem obrigatória para imagens:
+            //   1) eligibilidade do telefone (já validada acima);
+            //   2) dedup por external_id (mesma mensagem reenviada
+            //      pela Meta com gasto JÁ confirmado → silêncio);
+            //   3) entitlement de OCR ("importacoes");
+            //   4) somente então baixa a mídia da Meta;
+            //   5) valida tamanho real + bytes mágicos;
+            //   6) converte em data URL e entrega ao pipeline.
             let runMsg: {
               external_id: string | null;
               telefone: string;
@@ -460,18 +497,41 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               image?: { base64: string; mimeType?: string; sha256?: string };
             } = { external_id: msg.external_id, telefone: msg.telefone, texto: msg.texto, recebida_em: msg.recebida_em };
             if (msg.image) {
+              // (2) external_id já confirmado → não baixa, não chama OCR.
+              if (await externalIdAlreadyConfirmed(msg.external_id)) {
+                results.push({ status: "duplicada" });
+                continue;
+              }
+              // (3) entitlement de OCR. Sem plano → drop silencioso,
+              // ANTES de qualquer chamada à Graph API.
+              const podeOcr = elig.userId ? await podeUsarOcrComprovante(elig.userId) : false;
+              if (!podeOcr) {
+                results.push({ status: "sem_plano" });
+                continue;
+              }
+              // (4) download da mídia.
               const dl = await downloadWhatsappMedia(msg.image.mediaId, msg.image.mimeType);
               if (!dl) {
-                // Falha no download → drop silencioso para o usuário.
                 results.push({ status: "imagem_indisponivel" });
                 continue;
               }
+              // (5) validação real: tamanho + bytes mágicos + mime
+              // declarado X mime real.
+              const ok = validateDownloadedImage(dl.buffer, dl.declaredMime);
+              if (!ok) {
+                results.push({ status: "imagem_invalida" });
+                continue;
+              }
+              // (6) só agora converte em data URL para o OCR. A
+              // data URL nunca é logada nem persistida.
+              const dataUrl = `data:${ok.mimeType};base64,${dl.buffer.toString("base64")}`;
               runMsg.image = {
-                base64: dl.dataUrl,
-                mimeType: dl.mimeType,
+                base64: dataUrl,
+                mimeType: ok.mimeType,
                 sha256: msg.image.sha256,
               };
             }
+
             const out = await processarMensagemWhatsApp(runMsg);
             results.push({ status: out.status, gasto_id: out.gastoId });
             if (out.resposta && msg.telefone) {
