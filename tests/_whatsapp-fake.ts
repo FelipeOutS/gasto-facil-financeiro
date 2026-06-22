@@ -141,8 +141,9 @@ function makeBuilder(table: string): any {
       // Apenas quando NÃO foi pedido maybeSingle/single.
       if (ctx.filters?.user_id && !ctx.filters?.id && !ctx.single) {
         const rows = state.inserts
-          .filter((i, idx) => i.table === "whatsapp_messages" && matchesFilters(i.row, idx))
-          .map((i, idx) => ({
+          .map((i, idx) => ({ i, idx }))
+          .filter(({ i, idx }) => i.table === "whatsapp_messages" && matchesFilters(i.row, idx))
+          .map(({ i, idx }) => ({
             id: `m-${idx + 1}`,
             status: i.row.status,
             gasto_id: i.row.gasto_id ?? null,
