@@ -254,7 +254,7 @@ test("Imagem durante sessão de receita pendente NÃO interrompe o fluxo", async
 });
 
 test("Imagem duplicada (mesmo hash) já salva NÃO cria segundo gasto", async () => {
-  mockOcr({ valor: 30, descricao: "Uber", formaPagamento: "pix" });
+  mockOcr({ valor: 30, descricao: "Uber", categoriaSugerida: "transporte", formaPagamento: "pix" });
   await processarMensagemWhatsApp({
     telefone: tel, texto: "", external_id: "img-dup1", image: fakeImage("dup-h"),
   });
@@ -264,7 +264,7 @@ test("Imagem duplicada (mesmo hash) já salva NÃO cria segundo gasto", async ()
   expect(gastosInserts()).toHaveLength(1);
 
   // Reenviar a mesma imagem (mesmo hash). Deve ser detectada como duplicada.
-  mockOcr({ valor: 30, descricao: "Uber", formaPagamento: "pix" });
+  mockOcr({ valor: 30, descricao: "Uber", categoriaSugerida: "transporte", formaPagamento: "pix" });
   const r = await processarMensagemWhatsApp({
     telefone: tel, texto: "", external_id: "img-dup2", image: fakeImage("dup-h"),
   });
