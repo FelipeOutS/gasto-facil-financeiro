@@ -4,6 +4,11 @@ import { z } from "zod";
 import { processarMensagemWhatsApp, sendWhatsAppReply } from "@/server/whatsapp.server";
 import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
+import {
+  MAX_IMAGE_BYTES,
+  validateDownloadedImage,
+} from "@/server/whatsapp-media-validation.server";
+import { podeUsarOcrComprovante } from "@/server/whatsapp-comprovantes.server";
 
 /**
  * Webhook público do WhatsApp Cloud API (Meta).
