@@ -858,6 +858,24 @@ async function fecharSessoesAnteriores(
     .in("status", PENDING_STATES);
 }
 
+async function fecharSessoesComprovanteAtivas(
+  userId: string,
+  telefone: string,
+  motivo: "salva" | "cancelada" | "expirada",
+  gastoId?: string,
+) {
+  await supabaseAdmin
+    .from("whatsapp_messages")
+    .update({
+      status: motivo,
+      gasto_id: gastoId ?? null,
+    })
+    .eq("user_id", userId)
+    .eq("telefone", telefone)
+    .eq("parsed->>kind", "imagem_comprovante")
+    .in("status", [...PENDING_STATES, "pendente", "aguardando_confirmacao"]);
+}
+
 function listarCartoesParaPergunta(cartoes: Cartao[]): string {
   if (cartoes.length === 0) return "";
   const linhas = cartoes.map((c) => `• ${maskCartaoLabel(c)}`);
