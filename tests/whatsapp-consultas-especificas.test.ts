@@ -383,3 +383,117 @@ test("WA-G4.1 — descrição continua funcionando quando não há categoria cor
   expect(r.resposta.toLowerCase()).toContain("ifood");
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 45,00");
 });
+
+// ---------- WA-G4.2: categorias duplicadas com o mesmo nome ----------
+test("WA-G4.2 — duas categorias 'Transporte' viram um grupo único e somam os gastos", async () => {
+  resetState({
+    categorias: [
+      { id: "cat-trans-a", legacy_id: "transporte", nome: "Transporte", user_id: "u1" },
+      { id: "cat-trans-b", legacy_id: null,         nome: "Transporte", user_id: "u1" },
+      { id: "cat-mer",     legacy_id: "mercado",    nome: "Mercado",    user_id: "u1" },
+    ],
+    gastos: [
+      { descricao: "Uber",    valor: 81.9, data: monthStart(),  categoria_id: "cat-trans-a" },
+      { descricao: "Uber",    valor: 49.9, data: daysAgoISO(2), categoria_id: "cat-trans-b" },
+      { descricao: "Mercado", valor: 200,  data: monthStart(),  categoria_id: "cat-mer"     },
+    ],
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "quanto gastei com transporte?", external_id: "g42-1",
+  });
+  expect(r.status).toBe("consulta");
+  expect(r.resposta).toContain("Transporte");
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 131,80");
+  expect(r.resposta).toMatch(/2 lan/);
+  // não pode pedir escolha
+  expect(r.resposta).not.toContain("mais de uma categoria");
+  // nunca lista o mesmo nome duas vezes
+  const ocorrencias = r.resposta.match(/Transporte/g)?.length ?? 0;
+  expect(ocorrencias).toBe(1);
+});
+
+test("WA-G4.2 — plural e singular caem no mesmo grupo lógico", async () => {
+  resetState({
+    categorias: [
+      { id: "cat-1", legacy_id: null, nome: "Transporte",  user_id: "u1" },
+      { id: "cat-2", legacy_id: null, nome: "Transportes", user_id: "u1" },
+    ],
+    gastos: [
+      { descricao: "Uber", valor: 10, data: monthStart(), categoria_id: "cat-1" },
+      { descricao: "99",   valor: 20, data: monthStart(), categoria_id: "cat-2" },
+    ],
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "quanto gastei com transporte", external_id: "g42-2",
+  });
+  expect(r.status).toBe("consulta");
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 30,00");
+  expect(r.resposta).not.toContain("mais de uma categoria");
+});
+
+test("WA-G4.2 — categorias realmente distintas continuam gerando ambiguidade (sem duplicar nomes)", async () => {
+  resetState({
+    categorias: [
+      { id: "cat-1", legacy_id: null, nome: "Transporte",         user_id: "u1" },
+      { id: "cat-1b",legacy_id: null, nome: "transporte",         user_id: "u1" }, // duplicada do 1
+      { id: "cat-2", legacy_id: null, nome: "Transporte Público", user_id: "u1" },
+    ],
+    gastos: [
+      { descricao: "Uber",   valor: 50, data: monthStart(), categoria_id: "cat-1"  },
+      { descricao: "Metrô",  valor: 7,  data: monthStart(), categoria_id: "cat-2"  },
+    ],
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "quanto gastei com transporte", external_id: "g42-3",
+  });
+  expect(r.resposta).toContain("mais de uma categoria");
+  // Apenas dois grupos lógicos, sem duplicar "Transporte".
+  expect(r.resposta).toContain("1. ");
+  expect(r.resposta).toContain("2. ");
+  expect(r.resposta).not.toContain("3. ");
+  expect(state.pendingRow?.status).toBe("consulta_categoria_ambigua");
+});
+
+test("WA-G4.2 — resposta '1' escolhe corretamente o primeiro grupo (com IDs duplicados)", async () => {
+  resetState({
+    categorias: [
+      { id: "cat-1",  legacy_id: null, nome: "Transporte",         user_id: "u1" },
+      { id: "cat-1b", legacy_id: null, nome: "Transporte",         user_id: "u1" },
+      { id: "cat-2",  legacy_id: null, nome: "Transporte Público", user_id: "u1" },
+    ],
+    gastos: [
+      { descricao: "Uber",  valor: 40, data: monthStart(), categoria_id: "cat-1"  },
+      { descricao: "99",    valor: 60, data: monthStart(), categoria_id: "cat-1b" },
+      { descricao: "Metrô", valor: 7,  data: monthStart(), categoria_id: "cat-2"  },
+    ],
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "quanto gastei com transporte", external_id: "g42-4a",
+  });
+  expect(state.pendingRow?.status).toBe("consulta_categoria_ambigua");
+  const r2 = await processarMensagemWhatsApp({
+    telefone: tel, texto: "1", external_id: "g42-4b",
+  });
+  expect(r2.status).toBe("consulta");
+  // soma de cat-1 + cat-1b = 100, sem cat-2
+  expect(r2.resposta.replace(/\u00a0/g, " ")).toContain("R$ 100,00");
+  expect(r2.resposta).not.toContain("R$ 7,00");
+});
+
+test("WA-G4.2 — cancelar encerra a escolha de categoria duplicada", async () => {
+  resetState({
+    categorias: [
+      { id: "cat-1", legacy_id: null, nome: "Transporte",         user_id: "u1" },
+      { id: "cat-2", legacy_id: null, nome: "Transporte Público", user_id: "u1" },
+    ],
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "quanto gastei com transporte", external_id: "g42-5a",
+  });
+  expect(state.pendingRow?.status).toBe("consulta_categoria_ambigua");
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "cancelar", external_id: "g42-5b",
+  });
+  expect(r.status).toBe("cancelada");
+  expect(state.pendingRow).toBe(null);
+});
