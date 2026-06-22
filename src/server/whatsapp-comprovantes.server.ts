@@ -288,12 +288,14 @@ function fallbackCategoria(cats: CategoriaRow[]): CategoriaRow | null {
 }
 
 // ----- detecção de comandos ---------------------------------------------
+type AjusteField = "valor" | "descricao" | "categoria" | "data" | "pagamento";
 type AjusteIntent =
-  | { kind: "ask"; field: "valor" | "descricao" | "categoria" | "data" }
+  | { kind: "ask"; field: AjusteField }
   | { kind: "direct"; field: "valor"; valor: number }
   | { kind: "direct"; field: "descricao"; descricao: string }
   | { kind: "direct"; field: "categoria"; termo: string }
-  | { kind: "direct"; field: "data"; data: string };
+  | { kind: "direct"; field: "data"; data: string }
+  | { kind: "direct"; field: "pagamento"; forma: string };
 
 export function detectAjuste(texto: string): AjusteIntent | null {
   const t = normalize(texto);
@@ -312,8 +314,12 @@ export function detectAjuste(texto: string): AjusteIntent | null {
   if (/^(alterar |trocar |mudar |corrigir )?data$/.test(t)) {
     return { kind: "ask", field: "data" };
   }
+  if (/^(alterar |trocar |mudar |corrigir )?(pagamento|forma de pagamento)$/.test(t)) {
+    return { kind: "ask", field: "pagamento" };
+  }
 
-  // formas diretas: "valor 52,90", "categoria Transporte", "descrição Uber", "data ontem"
+  // formas diretas: "valor 52,90", "categoria Transporte", "descrição Uber",
+  // "data ontem", "pagamento pix"
   let m = t.match(/^valor\s+(.+)$/);
   if (m) {
     const v = parseValor(m[1]);
@@ -328,6 +334,11 @@ export function detectAjuste(texto: string): AjusteIntent | null {
     const d = parseData(m[1]);
     if (d) return { kind: "direct", field: "data", data: d };
   }
+  m = t.match(/^(pagamento|forma de pagamento|forma)\s+(.+)$/);
+  if (m) {
+    const f = detectFormaPagamento(m[2]);
+    if (f) return { kind: "direct", field: "pagamento", forma: f };
+  }
   return null;
 }
 
@@ -337,14 +348,22 @@ function ocrParaSessao(
   mensagemOriginal: string,
   img: ImageAttachment,
 ): ComprovanteSession {
+  const descricao = ocr.descricao ? titleCaseDescricao(ocr.descricao) : undefined;
+  // Categoria fica "não identificada" quando o OCR não sugeriu nada
+  // ou retornou confiança baixa — nunca salvamos como Outros sozinhos.
+  const categoriaNaoIdentificada =
+    !ocr.categoriaSugerida || ocr.confianca === "baixa";
   return {
     kind: "imagem_comprovante",
-    descricao: ocr.descricao ?? undefined,
+    descricao,
     valor: ocr.valor ?? undefined,
     data: ocr.data ?? todayLocalISO(),
     categoriaSugerida: ocr.categoriaSugerida,
-    categoriaLabel: null, // resolvido depois com base nas categorias do usuário
+    categoriaLabel: null,
+    categoriaNaoIdentificada,
     formaPagamento: ocr.formaPagamento,
+    confianca: ocr.confianca,
+    dataConfirmada: !ocr.data, // se OCR não trouxe data, usamos hoje (sem precisar confirmar)
     imageSha256: img.sha256,
     imageMimeType: img.mimeType,
     mensagemOriginal,
@@ -358,6 +377,9 @@ function categoriaSugestaoLabel(
   if (s.categoriaLabel && s.categoriaId) {
     return { label: s.categoriaLabel, id: s.categoriaId };
   }
+  if (s.categoriaNaoIdentificada) {
+    return { label: "Não identificada", id: null };
+  }
   const termo = s.categoriaSugerida ?? "";
   const found = findCategoriaByTerm(cats, termo);
   if (found) return { label: found.nome, id: found.id };
@@ -365,12 +387,22 @@ function categoriaSugestaoLabel(
   return { label: fb?.nome ?? "Outros", id: fb?.id ?? null };
 }
 
+function dataLabelEValor(iso: string | undefined): { label: string; valor: string } {
+  if (!iso) return { label: "Data", valor: "Hoje" };
+  const fmt = formatDataBR(iso);
+  const isToday = iso === todayLocalISO();
+  return { label: isToday ? "Data" : "Data da nota", valor: fmt };
+}
+
 function buildResumo(s: ComprovanteSession, cats: CategoriaRow[]): string {
   const cat = categoriaSugestaoLabel(s, cats);
+  const d = dataLabelEValor(s.data);
   return M.imagem.resumo({
     descricao: s.descricao ?? "—",
     valor: s.valor ? formatBRL(s.valor) : "—",
-    data: s.data ? formatDataBR(s.data) : "Hoje",
+    dataLabel: d.label,
+    dataValor: d.valor,
+    pagamento: s.formaPagamento ? rotuloPagamento(s.formaPagamento) : "Não identificado",
     categoria: cat.label,
   });
 }
