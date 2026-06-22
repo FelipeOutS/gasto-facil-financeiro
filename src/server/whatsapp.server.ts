@@ -1314,6 +1314,7 @@ export async function processarMensagemWhatsApp(
   // consentimento, retenção ou histórico — apenas estados aguardando_*.
   if (isResetCommand(texto)) {
     await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+    await fecharSessoesComprovanteAtivas(userId, msg.telefone, "cancelada");
     const resposta = M.resetConversa();
     await gravarSessao(
       userId,
@@ -1353,6 +1354,7 @@ export async function processarMensagemWhatsApp(
     }
     if (decisao === "cancel") {
       await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+      await fecharSessoesComprovanteAtivas(userId, msg.telefone, "cancelada");
       await gravarSessao(
         userId, msg.telefone, msg.external_id, texto, recebidaEm,
         "cancelada", prev as unknown as Session, M.imagem.cancelado(),
@@ -1374,6 +1376,7 @@ export async function processarMensagemWhatsApp(
       .eq("id", sessao.id);
     if (out.status === "salva") {
       await fecharSessoesAnteriores(userId, msg.telefone, "salva", out.gastoId);
+      await fecharSessoesComprovanteAtivas(userId, msg.telefone, "salva", out.gastoId);
       await gravarSessao(
         userId, msg.telefone, msg.external_id, texto, recebidaEm,
         "salva", (out.session ?? prev) as unknown as Session,
