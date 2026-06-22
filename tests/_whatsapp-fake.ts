@@ -129,6 +129,7 @@ function makeBuilder(table: string): any {
             status: i.row.status,
             gasto_id: i.row.gasto_id ?? null,
             parsed: i.row.parsed ?? null,
+            recebida_em: i.row.recebida_em ?? new Date(Date.now() + idx).toISOString(),
           }));
         return { data: rows, error: null };
       }
