@@ -196,7 +196,7 @@ type ReceitaRow = {
   data: string;
   tipo: string | null;
 };
-type CategoriaRow = { id: string; nome: string | null; tipo?: string | null };
+type CategoriaRow = { id: string; nome: string | null };
 
 async function loadGastos(userId: string, from: string, toExclusive: string): Promise<GastoRow[]> {
   const { data } = await supabaseAdmin
@@ -218,17 +218,20 @@ async function loadReceitas(userId: string, from: string, toExclusive: string): 
   return Array.isArray(data) ? (data as ReceitaRow[]) : [];
 }
 
+/**
+ * Carrega as categorias do próprio usuário. A tabela `public.categorias`
+ * só armazena categorias de despesa (receitas têm seu próprio enum
+ * `tipo`). Importante: NÃO selecionar colunas inexistentes — a versão
+ * anterior pedia `tipo`, coluna que não existe no schema real, e o
+ * Supabase devolvia erro, deixando a busca por categoria sempre vazia.
+ */
 async function loadCategoriasDespesa(userId: string): Promise<CategoriaRow[]> {
   const { data } = await supabaseAdmin
     .from("categorias")
-    .select("id, nome, tipo")
+    .select("id, nome")
     .eq("user_id", userId);
   if (!Array.isArray(data)) return [];
-  // Filtra apenas categorias de despesa. Quando o campo `tipo` não existe
-  // ou é null, mantemos (compatibilidade com dados antigos).
-  return (data as CategoriaRow[]).filter(
-    (c) => !c.tipo || String(c.tipo).toLowerCase() === "despesa",
-  );
+  return data as CategoriaRow[];
 }
 
 function sumValor(rows: { valor: number | string | null }[]): number {
