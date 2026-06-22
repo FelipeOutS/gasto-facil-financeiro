@@ -279,12 +279,13 @@ function findCategoriasByTermo(
 ): CategoriaRow[] {
   const t = normCat(termo);
   if (!t) return [];
-  const exact = categorias.filter((c) => normCat(c.nome ?? "") === t);
-  if (exact.length > 0) return exact;
+  // Match por inclusão bidirecional — não usar short-circuit em exato,
+  // senão "transporte" descarta "Transporte Público" e perde casos de
+  // ambiguidade real entre grupos distintos.
   return categorias.filter((c) => {
     const n = normCat(c.nome ?? "");
     if (!n) return false;
-    return n.includes(t) || t.includes(n);
+    return n === t || n.includes(t) || t.includes(n);
   });
 }
 
