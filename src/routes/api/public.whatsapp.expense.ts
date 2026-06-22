@@ -452,7 +452,13 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
             // Para imagens, baixar a mídia agora (com WHATSAPP_ACCESS_TOKEN)
             // e converter em data URL ANTES de chamar o pipeline. A imagem
             // bruta não é persistida — só hash e mime ficam em parsed.
-            let runMsg: typeof msg & { image?: { base64: string; mimeType?: string; sha256?: string } } = msg;
+            let runMsg: {
+              external_id: string | null;
+              telefone: string;
+              texto: string;
+              recebida_em?: string;
+              image?: { base64: string; mimeType?: string; sha256?: string };
+            } = { external_id: msg.external_id, telefone: msg.telefone, texto: msg.texto, recebida_em: msg.recebida_em };
             if (msg.image) {
               const dl = await downloadWhatsappMedia(msg.image.mediaId, msg.image.mimeType);
               if (!dl) {
@@ -460,13 +466,10 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                 results.push({ status: "imagem_indisponivel" });
                 continue;
               }
-              runMsg = {
-                ...msg,
-                image: {
-                  base64: dl.dataUrl,
-                  mimeType: dl.mimeType,
-                  sha256: msg.image.sha256,
-                },
+              runMsg.image = {
+                base64: dl.dataUrl,
+                mimeType: dl.mimeType,
+                sha256: msg.image.sha256,
               };
             }
             const out = await processarMensagemWhatsApp(runMsg);
