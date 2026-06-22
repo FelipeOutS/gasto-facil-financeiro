@@ -412,7 +412,7 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
           return jsonResponse({ ok: true, skipped: "invalid_payload" });
         }
 
-        const flatMessages = extractTextMessages(payload);
+        const flatMessages = extractIncomingMessages(payload);
 
         // Log seguro: apenas contagem e primeiro external_id, sem texto/telefone.
         const logId = await logWebhookEvent({
@@ -437,7 +437,8 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
         const canaryOn = isCanaryEnabled();
         const results: Array<{ status: string; gasto_id?: string }> = [];
         for (const msg of flatMessages) {
-          if (!msg.texto?.trim()) continue;
+          // Mensagem precisa ter texto OU imagem (WA-G5A).
+          if (!msg.texto?.trim() && !msg.image) continue;
           // Gate único de elegibilidade: telefone não vinculado, sem
           // consentimento, sem beta ativa (ou fora do canário) → drop
           // silencioso. NÃO grava texto, NÃO cria sessão/gasto, NÃO
@@ -448,7 +449,27 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
             continue;
           }
           try {
-            const out = await processarMensagemWhatsApp(msg);
+            // Para imagens, baixar a mídia agora (com WHATSAPP_ACCESS_TOKEN)
+            // e converter em data URL ANTES de chamar o pipeline. A imagem
+            // bruta não é persistida — só hash e mime ficam em parsed.
+            let runMsg: typeof msg & { image?: { base64: string; mimeType?: string; sha256?: string } } = msg;
+            if (msg.image) {
+              const dl = await downloadWhatsappMedia(msg.image.mediaId, msg.image.mimeType);
+              if (!dl) {
+                // Falha no download → drop silencioso para o usuário.
+                results.push({ status: "imagem_indisponivel" });
+                continue;
+              }
+              runMsg = {
+                ...msg,
+                image: {
+                  base64: dl.dataUrl,
+                  mimeType: dl.mimeType,
+                  sha256: msg.image.sha256,
+                },
+              };
+            }
+            const out = await processarMensagemWhatsApp(runMsg);
             results.push({ status: out.status, gasto_id: out.gastoId });
             if (out.resposta && msg.telefone) {
               try {
