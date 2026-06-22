@@ -481,9 +481,14 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
             continue;
           }
           try {
-            // Para imagens, baixar a mídia agora (com WHATSAPP_ACCESS_TOKEN)
-            // e converter em data URL ANTES de chamar o pipeline. A imagem
-            // bruta não é persistida — só hash e mime ficam em parsed.
+            // WA-G5A.1 — ordem obrigatória para imagens:
+            //   1) eligibilidade do telefone (já validada acima);
+            //   2) dedup por external_id (mesma mensagem reenviada
+            //      pela Meta com gasto JÁ confirmado → silêncio);
+            //   3) entitlement de OCR ("importacoes");
+            //   4) somente então baixa a mídia da Meta;
+            //   5) valida tamanho real + bytes mágicos;
+            //   6) converte em data URL e entrega ao pipeline.
             let runMsg: {
               external_id: string | null;
               telefone: string;
@@ -492,18 +497,41 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               image?: { base64: string; mimeType?: string; sha256?: string };
             } = { external_id: msg.external_id, telefone: msg.telefone, texto: msg.texto, recebida_em: msg.recebida_em };
             if (msg.image) {
+              // (2) external_id já confirmado → não baixa, não chama OCR.
+              if (await externalIdAlreadyConfirmed(msg.external_id)) {
+                results.push({ status: "duplicada" });
+                continue;
+              }
+              // (3) entitlement de OCR. Sem plano → drop silencioso,
+              // ANTES de qualquer chamada à Graph API.
+              const podeOcr = elig.userId ? await podeUsarOcrComprovante(elig.userId) : false;
+              if (!podeOcr) {
+                results.push({ status: "sem_plano" });
+                continue;
+              }
+              // (4) download da mídia.
               const dl = await downloadWhatsappMedia(msg.image.mediaId, msg.image.mimeType);
               if (!dl) {
-                // Falha no download → drop silencioso para o usuário.
                 results.push({ status: "imagem_indisponivel" });
                 continue;
               }
+              // (5) validação real: tamanho + bytes mágicos + mime
+              // declarado X mime real.
+              const ok = validateDownloadedImage(dl.buffer, dl.declaredMime);
+              if (!ok) {
+                results.push({ status: "imagem_invalida" });
+                continue;
+              }
+              // (6) só agora converte em data URL para o OCR. A
+              // data URL nunca é logada nem persistida.
+              const dataUrl = `data:${ok.mimeType};base64,${dl.buffer.toString("base64")}`;
               runMsg.image = {
-                base64: dl.dataUrl,
-                mimeType: dl.mimeType,
+                base64: dataUrl,
+                mimeType: ok.mimeType,
                 sha256: msg.image.sha256,
               };
             }
+
             const out = await processarMensagemWhatsApp(runMsg);
             results.push({ status: out.status, gasto_id: out.gastoId });
             if (out.resposta && msg.telefone) {
