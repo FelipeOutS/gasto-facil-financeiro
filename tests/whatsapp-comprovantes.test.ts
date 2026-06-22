@@ -556,3 +556,85 @@ test("Data com confiança baixa NÃO é salva automaticamente — pergunta antes
   expect(r3.status).toBe("salva");
   expect(gastosInserts()[0].row.data).not.toBe("2026-06-20");
 });
+
+test("E2E produção: comando 'categoria' em sessão de comprovante não cai no parser de gasto", async () => {
+  mockOcr({
+    valor: 48.9,
+    descricao: "EXPEDITO ALVES DE LIMA ME",
+    data: null,
+    categoriaSugerida: "mercado",
+    formaPagamento: "pix",
+  });
+  const resumo = await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g5a31-img", image: fakeImage("g5a31-h"),
+  });
+  expect(resumo.resposta).toContain("Li esta nota");
+  expect(state.pendingRow?.parsed.kind).toBe("imagem_comprovante");
+  expect(state.pendingRow?.status).toBe("img_aguardando_confirmacao");
+
+  const ask = await processarMensagemWhatsApp({
+    telefone: tel, texto: "categoria", external_id: "g5a31-cat",
+  });
+  expect(ask.resposta).toContain("Claro. Qual categoria você quer usar?");
+  expect(ask.resposta).toMatch(/1\.\s+Outros/);
+  expect(ask.resposta).toMatch(/3\.\s+Transporte/);
+  expect(ask.resposta).not.toContain("Qual foi o valor de Categoria");
+  expect(state.inserts.some((i) => i.table === "whatsapp_messages" && i.row.status === "aguardando_descricao_e_valor_gasto")).toBe(false);
+  expect(gastosInserts()).toHaveLength(0);
+
+  const selected = await processarMensagemWhatsApp({
+    telefone: tel, texto: "3", external_id: "g5a31-cat-3",
+  });
+  expect(selected.resposta).toContain("Li esta nota");
+  expect(selected.resposta).toContain("Expedito Alves de Lima ME");
+  expect(selected.resposta.replace(/\u00a0/g, " ")).toContain("R$ 48,90");
+  expect(selected.resposta).toContain("Pagamento: Pix");
+  expect(selected.resposta).toContain("Categoria: Transporte");
+  expect(gastosInserts()).toHaveLength(0);
+});
+
+test("Comandos reservados de comprovante são priorizados mesmo se status salvo vier como pendente", async () => {
+  mockOcr({ valor: 50, descricao: "Padaria", data: null, categoriaSugerida: "alimentacao", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g5a31-lost-img", image: fakeImage("g5a31-lost-h"),
+  });
+  const receiptInsert = [...state.inserts].reverse().find((i) => i.table === "whatsapp_messages");
+  if (receiptInsert) receiptInsert.row.status = "pendente";
+  if (state.pendingRow) state.pendingRow.status = "pendente";
+
+  const commands = [
+    ["categoria", "Qual categoria você quer usar"],
+    ["valor", "Qual valor devo usar"],
+    ["descrição", "Qual descrição devo usar"],
+    ["data", "Qual data devo usar"],
+    ["pagamento", "Qual forma de pagamento devo usar"],
+  ] as const;
+
+  for (const [cmd, expected] of commands) {
+    const r = await processarMensagemWhatsApp({
+      telefone: tel, texto: cmd, external_id: `g5a31-res-${cmd}`,
+    });
+    expect(r.resposta).toContain(expected);
+    expect(r.resposta).not.toContain("Qual foi o valor de Categoria");
+    expect(state.inserts.some((i) => i.table === "whatsapp_messages" && i.row.texto === cmd && i.row.status === "aguardando_descricao_e_valor_gasto")).toBe(false);
+    const latest = [...state.inserts].reverse().find((i) => i.table === "whatsapp_messages");
+    if (latest) latest.row.status = "pendente";
+    if (state.pendingRow) state.pendingRow.status = "pendente";
+  }
+});
+
+test("Cancelar encerra sessão de comprovante e depois 'categoria' volta ao fluxo normal", async () => {
+  mockOcr({ valor: 22, descricao: "Loja", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g5a31-cancel-img", image: fakeImage("g5a31-cancel-h"),
+  });
+  const cancel = await processarMensagemWhatsApp({
+    telefone: tel, texto: "cancelar", external_id: "g5a31-cancel",
+  });
+  expect(cancel.status).toBe("cancelada");
+  expect(state.pendingRow).toBeNull();
+  const after = await processarMensagemWhatsApp({
+    telefone: tel, texto: "categoria", external_id: "g5a31-after-cancel",
+  });
+  expect(after.resposta).toContain("Qual foi o valor de Categoria");
+});
