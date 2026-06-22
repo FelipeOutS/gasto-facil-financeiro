@@ -110,8 +110,8 @@ test("Quanto gastei com transporte — usa categoria do usuário", async () => {
 test("Categoria ambígua pede escolha e cria estado temporário", async () => {
   resetState({
     categorias: [
-      { id: "cat-1", legacy_id: null, nome: "Saúde",          user_id: "u1", tipo: "despesa" },
-      { id: "cat-2", legacy_id: null, nome: "Saúde da família",user_id: "u1", tipo: "despesa" },
+      { id: "cat-1", legacy_id: null, nome: "Saúde Geral",         user_id: "u1", tipo: "despesa" },
+      { id: "cat-2", legacy_id: null, nome: "Saúde da família",    user_id: "u1", tipo: "despesa" },
     ],
     gastos: [
       { descricao: "Farmácia", valor: 100, data: monthStart(), categoria_id: "cat-1" },
