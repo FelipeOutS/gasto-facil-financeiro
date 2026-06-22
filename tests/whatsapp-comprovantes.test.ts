@@ -450,3 +450,109 @@ test("'alterar pagamento' pede a nova forma e aceita o ajuste", async () => {
   });
   expect(r.resposta).toContain("Pagamento: Cartão de débito");
 });
+
+// =====================================================================
+// WA-G5A.3 — comando "categoria" durante sessão + numérico + data incerta
+// =====================================================================
+
+test("'categoria' sozinho durante o resumo NÃO inicia novo gasto", async () => {
+  mockOcr({
+    valor: 50, descricao: "Padaria", data: "2026-06-22",
+    categoriaSugerida: "alimentacao", formaPagamento: "pix",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g5a3-1", image: fakeImage("g5a3-h1"),
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "categoria", external_id: "g5a3-1-cat",
+  });
+  expect(r.resposta).toContain("Qual categoria você quer usar");
+  expect(r.resposta).not.toContain("Qual foi o valor de");
+  expect(state.pendingRow?.status).toBe("img_aguardando_ajuste");
+  // dados originais preservados na sessão
+  expect(state.pendingRow?.parsed.valor).toBe(50);
+  expect(state.pendingRow?.parsed.descricao).toBe("Padaria");
+});
+
+test("Aceita 'editar categoria' e 'trocar categoria' como pedido de ajuste", async () => {
+  mockOcr({ valor: 50, descricao: "Padaria", data: "2026-06-22", categoriaSugerida: "alimentacao", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g5a3-2", image: fakeImage("g5a3-h2"),
+  });
+  const a = await processarMensagemWhatsApp({
+    telefone: tel, texto: "editar categoria", external_id: "g5a3-2a",
+  });
+  expect(a.resposta).toContain("Qual categoria você quer usar");
+  // restart session
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "cancelar", external_id: "g5a3-2c",
+  });
+  mockOcr({ valor: 50, descricao: "Padaria", data: "2026-06-22", categoriaSugerida: "alimentacao", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g5a3-2b", image: fakeImage("g5a3-h2b"),
+  });
+  const b = await processarMensagemWhatsApp({
+    telefone: tel, texto: "Trocar Categoria", external_id: "g5a3-2bx",
+  });
+  expect(b.resposta).toContain("Qual categoria você quer usar");
+});
+
+test("Escolha de categoria por número atualiza o resumo", async () => {
+  mockOcr({ valor: 50, descricao: "Padaria", data: "2026-06-22", categoriaSugerida: "alimentacao", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g5a3-3", image: fakeImage("g5a3-h3"),
+  });
+  const ask = await processarMensagemWhatsApp({
+    telefone: tel, texto: "categoria", external_id: "g5a3-3-ask",
+  });
+  // lista numerada
+  expect(ask.resposta).toMatch(/1\.\s+Outros/);
+  expect(ask.resposta).toMatch(/3\.\s+Transporte/);
+  // user picks "3" → Transporte
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "3", external_id: "g5a3-3-pick",
+  });
+  expect(r.resposta).toContain("Categoria: Transporte");
+  expect(r.resposta).toContain("Li esta nota");
+});
+
+test("Escolha de categoria por nome durante o ajuste atualiza o resumo", async () => {
+  mockOcr({ valor: 50, descricao: "Padaria", data: "2026-06-22", categoriaSugerida: "alimentacao", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g5a3-4", image: fakeImage("g5a3-h4"),
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "categoria", external_id: "g5a3-4-ask",
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "Transporte", external_id: "g5a3-4-pick",
+  });
+  expect(r.resposta).toContain("Categoria: Transporte");
+});
+
+test("Data com confiança baixa NÃO é salva automaticamente — pergunta antes", async () => {
+  mockOcr({
+    valor: 40, descricao: "Lanchonete", data: "2026-06-20",
+    categoriaSugerida: "alimentacao", confianca: "baixa", formaPagamento: "pix",
+  });
+  const r1 = await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g5a3-d1", image: fakeImage("g5a3-d1h"),
+  });
+  // resumo mostra "Não confirmada"
+  expect(r1.resposta).toContain("Data da nota: Não confirmada");
+  // user precisa primeiro escolher categoria (sem confiança) e depois data
+  const r2 = await processarMensagemWhatsApp({
+    telefone: tel, texto: "sim", external_id: "g5a3-d1-yes",
+  });
+  expect(r2.resposta).toContain("Em qual categoria");
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "Mercado", external_id: "g5a3-d1-cat",
+  });
+  // agora pergunta de data incerta
+  expect(state.pendingRow?.status).toBe("img_aguardando_data_confirmacao");
+  const r3 = await processarMensagemWhatsApp({
+    telefone: tel, texto: "usar hoje", external_id: "g5a3-d1-hoje",
+  });
+  expect(r3.status).toBe("salva");
+  expect(gastosInserts()[0].row.data).not.toBe("2026-06-20");
+});
