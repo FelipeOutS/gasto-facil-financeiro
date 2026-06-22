@@ -495,7 +495,7 @@ export const whatsappMessages = {
         ``,
         `Qual delas você quer consultar?`,
       ];
-      for (const o of args.opcoes) linhas.push(`• ${o}`);
+      args.opcoes.forEach((o, i) => linhas.push(`${i + 1}. ${o}`));
       return linhas.join("\n");
     },
     receitaPorTipo(args: { tipo: string; valor: string; quantidade: number }) {
