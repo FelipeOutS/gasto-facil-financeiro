@@ -453,4 +453,107 @@ export const whatsappMessages = {
       ].join("\n");
     },
   },
+
+  // =====================================================================
+  // CONSULTAS ESPECÍFICAS (Fase WA-G4)
+  // Gasto por descrição, gasto por categoria, receita por tipo, gastos
+  // de ontem e quanto sobra da renda no mês. Máximo 1 emoji.
+  // =====================================================================
+  consultaEspecifica: {
+    gastoPorDescricao(args: { descricao: string; valor: string; quantidade: number }) {
+      const plural = args.quantidade === 1 ? "lançamento" : "lançamentos";
+      return [
+        `Neste mês, você gastou ${args.valor} com ${args.descricao}.`,
+        ``,
+        `Foram ${args.quantidade} ${plural} até agora.`,
+      ].join("\n");
+    },
+    descricaoSemResultado(termo: string) {
+      return `Não encontrei gastos com "${termo}" neste período.`;
+    },
+    gastoPorCategoria(args: { categoria: string; valor: string; quantidade: number }) {
+      const plural = args.quantidade === 1 ? "lançamento" : "lançamentos";
+      return [
+        `Neste mês, você gastou ${args.valor} em ${args.categoria}.`,
+        ``,
+        `Foram ${args.quantidade} ${plural} até agora.`,
+      ].join("\n");
+    },
+    categoriaSemResultado(categoria: string) {
+      return `Não encontrei gastos em "${categoria}" neste período.`;
+    },
+    categoriaInexistente(termo: string) {
+      return [
+        `Não encontrei uma categoria chamada "${termo}" nas suas despesas.`,
+        ``,
+        `Você pode pedir, por exemplo: transporte, alimentação ou lazer.`,
+      ].join("\n");
+    },
+    categoriaAmbigua(args: { termo: string; opcoes: string[] }) {
+      const linhas = [
+        `Encontrei mais de uma categoria parecida com "${args.termo}".`,
+        ``,
+        `Qual delas você quer consultar?`,
+      ];
+      for (const o of args.opcoes) linhas.push(`• ${o}`);
+      return linhas.join("\n");
+    },
+    receitaPorTipo(args: { tipo: string; valor: string; quantidade: number }) {
+      const plural = args.quantidade === 1 ? "entrada registrada" : "entradas registradas";
+      return [
+        `Neste mês, você recebeu ${args.valor} em ${args.tipo}.`,
+        ``,
+        `Foram ${args.quantidade} ${plural} até agora.`,
+      ].join("\n");
+    },
+    receitaSemResultado(tipo: string) {
+      return `Não encontrei receitas do tipo "${tipo}" neste período.`;
+    },
+    gastosOntem(args: {
+      total: string;
+      quantidade: number;
+      maior: { descricao: string; valor: string };
+      itens: Array<{ descricao: string; valor: string }>;
+    }) {
+      const linhas = [
+        `Resumo de ontem 📊`,
+        ``,
+        `• Despesas: ${args.total}`,
+        `• Lançamentos: ${args.quantidade}`,
+        `• Maior gasto: ${args.maior.descricao} — ${args.maior.valor}`,
+      ];
+      if (args.itens.length > 0) {
+        linhas.push(``);
+        linhas.push(`Maiores gastos:`);
+        args.itens.forEach((g, i) => {
+          linhas.push(`${i + 1}. ${g.descricao} — ${g.valor}`);
+        });
+      }
+      return linhas.join("\n");
+    },
+    gastosOntemSemRegistros() {
+      return `Não encontrei gastos registrados ontem.`;
+    },
+    sobraPositiva(args: { receitas: string; despesas: string; saldo: string }) {
+      return [
+        `Neste mês, você recebeu ${args.receitas} e gastou ${args.despesas}.`,
+        ``,
+        `Até agora, sobram ${args.saldo}.`,
+      ].join("\n");
+    },
+    sobraNegativa(args: { receitas: string; despesas: string; valorAcima: string }) {
+      return [
+        `Neste mês, você recebeu ${args.receitas} e gastou ${args.despesas}.`,
+        ``,
+        `No momento, suas despesas estão ${args.valorAcima} acima das receitas registradas.`,
+      ].join("\n");
+    },
+    sobraSemReceitas() {
+      return [
+        `Ainda não há receitas registradas neste mês para calcular quanto sobra.`,
+        ``,
+        `Cadastre suas entradas e eu faço essa conta para você.`,
+      ].join("\n");
+    },
+  },
 };

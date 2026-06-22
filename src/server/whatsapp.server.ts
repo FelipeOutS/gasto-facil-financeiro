@@ -44,6 +44,11 @@ import {
   detectConversationalIntent,
   handleConversational,
 } from "./whatsapp-consultas.server";
+import {
+  detectConsultaEspecifica,
+  handleConsultaEspecifica,
+  handleCategoriaAmbiguaResponse,
+} from "./whatsapp-consultas-especificas.server";
 
 
 // ---------- elegibilidade WhatsApp (gate único) ----------
@@ -720,6 +725,10 @@ const PENDING_STATES = [
   // próxima mensagem (incluindo "oi", "ajuda", "menu") não interrompa o
   // fluxo nem dispare saudação / consulta / nova intenção.
   "aguardando_descricao_e_valor_gasto",
+  // WA-G4 — estado temporário de consulta. Aguarda o usuário escolher
+  // uma das categorias quando o termo bate com mais de uma. NUNCA cria
+  // gasto ou receita. Cancelável por "cancelar".
+  "consulta_categoria_ambigua",
   ...RECEITA_PENDING_STATES,
 ];
 
@@ -1201,7 +1210,7 @@ export async function processarMensagemWhatsApp(
   const cartoes = await carregarCartoes(userId);
   const categorias = await carregarCategorias(userId);
   const decisao = classificarResposta(texto);
-  const sessao = await buscarSessaoAtiva(userId, msg.telefone);
+  let sessao = await buscarSessaoAtiva(userId, msg.telefone);
 
   // ---- WA: comando de reinício geral ("cancelar", "reiniciar", ...) ----
   // Prioridade máxima: encerra qualquer sessão pendente (gasto, receita,
@@ -1340,6 +1349,38 @@ export async function processarMensagemWhatsApp(
   }
 
 
+  // ---- Fase WA-G4: sessão temporária de consulta com categoria ambígua ----
+  // Aguardando o usuário escolher uma das categorias listadas. NÃO cria
+  // gasto/receita; "cancelar" já encerrou acima. Se a resposta não casar
+  // com nenhuma opção, encerra o estado e segue o pipeline normal.
+  if (sessao && sessao.status === "consulta_categoria_ambigua") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const prev = sessao.session as any;
+    const opts: Array<{ id: string; nome: string }> = Array.isArray(prev?.options)
+      ? prev.options
+      : [];
+    const out = await handleCategoriaAmbiguaResponse(userId, texto, opts);
+    if (out) {
+      await fecharSessoesAnteriores(userId, msg.telefone, "salva");
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        out.resposta,
+      );
+      return { status: "consulta", resposta: out.resposta };
+    }
+    // Não casou — encerra o estado temporário e segue o pipeline normal.
+    await supabaseAdmin
+      .from("whatsapp_messages")
+      .update({ status: "expirada" })
+      .eq("id", sessao.id);
+    sessao = null;
+    // continua para os blocos abaixo (conversational / consulta / parser)
+  }
+
+
+
   // ---- Fase WA-G3: intenções conversacionais (saudação, menu, finanças genérico) ----
   // Tem precedência sobre consultas reais e sobre parsing de gasto/receita.
   // Só roda quando NÃO há sessão pendente e não é uma resposta sim/não/forma.
@@ -1415,6 +1456,45 @@ export async function processarMensagemWhatsApp(
       return { status: "consulta", resposta: out.resposta };
     }
   }
+
+  // ---- Fase WA-G4: consultas financeiras específicas ----
+  // Gasto por descrição/categoria, receita por tipo, gastos de ontem,
+  // sobra da renda. Só dispara sem sessão pendente e sem ser uma
+  // resposta sim/não. Nunca cria gasto/receita. Pode criar um único
+  // estado temporário "consulta_categoria_ambigua".
+  if (!sessao && decisao === "outro") {
+    const espec = detectConsultaEspecifica(texto);
+    if (espec) {
+      const out = await handleConsultaEspecifica(userId, espec);
+      if (out.status === "consulta_categoria_ambigua") {
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "consulta_categoria_ambigua",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ({
+            nome: "",
+            valor: 0,
+            data: todayLocalISO(),
+            mensagemOriginal: texto,
+            kind: "consulta_categoria",
+            termo: out.termo,
+            options: out.options,
+          } as unknown) as Session,
+          out.resposta,
+        );
+        return { status: "pendente", resposta: out.resposta };
+      }
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        out.resposta,
+      );
+      return { status: "consulta", resposta: out.resposta };
+    }
+  }
+
+
 
 
   // ---- Fase WA-G1: texto livre indicando intenção de receita. ----
