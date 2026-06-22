@@ -520,28 +520,38 @@ async function respostaDescricao(userId: string, termo: string): Promise<Especif
 }
 
 /**
- * Continuação após pergunta de categoria ambígua. Tenta casar a resposta
- * do usuário com uma das opções persistidas. Retorna null quando nada
- * bate — nesse caso o pipeline encerra o estado temporário e segue o
- * processamento normal.
+ * Continuação após pergunta de categoria ambígua. Aceita escolha por
+ * nome (com normalização) ou por número ordinal ("1", "2", ...).
+ * Cada opção é um grupo lógico de categorias com o mesmo nome
+ * normalizado — todos os ids do grupo são usados na agregação.
+ * Retorna null quando nada bate; o pipeline então encerra o estado
+ * temporário e segue o processamento normal.
  */
 export async function handleCategoriaAmbiguaResponse(
   userId: string,
   texto: string,
-  options: Array<{ id: string; nome: string }>,
+  options: Array<{ ids: string[]; nome: string }>,
 ): Promise<EspecificaResult | null> {
   const t = norm(texto);
   if (!t) return null;
-  let chosen: { id: string; nome: string } | null = null;
-  for (const o of options) {
-    const n = norm(o.nome);
-    if (!n) continue;
-    if (n === t || t.includes(n) || n.includes(t)) {
-      chosen = o;
-      break;
+
+  // Escolha por ordinal: "1", "2", "opção 1", etc.
+  const mOrd = t.match(/\b([1-9])\b/);
+  if (mOrd) {
+    const idx = Number(mOrd[1]) - 1;
+    if (idx >= 0 && idx < options.length) {
+      return await respostaCategoriaGrupo(userId, options[idx]);
     }
   }
-  if (!chosen) return null;
-  // Reusa respostaCategoria — precisamos do `categoria_id` real para filtrar.
-  return await respostaCategoria(userId, { id: chosen.id, nome: chosen.nome });
+
+  // Escolha por nome.
+  for (const o of options) {
+    const n = normCat(o.nome);
+    if (!n) continue;
+    const tCat = normCat(texto);
+    if (n === tCat || tCat.includes(n) || n.includes(tCat)) {
+      return await respostaCategoriaGrupo(userId, o);
+    }
+  }
+  return null;
 }
