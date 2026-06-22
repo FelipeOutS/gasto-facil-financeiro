@@ -517,10 +517,12 @@ export async function processarNovaImagem(args: {
     };
   }
 
-  // Leitura completa → resumo
+  // Leitura completa → resumo (sem cravar categoriaId quando OCR está incerto)
   const cat = categoriaSugestaoLabel(session, cats);
-  session.categoriaId = cat.id;
-  session.categoriaLabel = cat.label;
+  if (!session.categoriaNaoIdentificada) {
+    session.categoriaId = cat.id;
+    session.categoriaLabel = cat.label;
+  }
   return {
     status: "aguardando_confirmacao",
     newStatus: "img_aguardando_confirmacao",
@@ -529,11 +531,56 @@ export async function processarNovaImagem(args: {
   };
 }
 
+// Avança o fluxo após o "sim": exige categoria (quando não identificada),
+// confirma data fora da janela, pergunta forma de pagamento (quando não
+// detectada) e por fim persiste o gasto. Cada passo retorna um novo estado
+// pendente — nunca cria gasto sem todas as confirmações.
+async function avancarAposConfirmacao(
+  userId: string,
+  session: ComprovanteSession,
+  cats: CategoriaRow[],
+): Promise<ComprovanteResult> {
+  // 1) Categoria obrigatória quando OCR não identificou com confiança.
+  if (session.categoriaNaoIdentificada && !session.categoriaId) {
+    return {
+      status: "aguardando_categoria_obrigatoria",
+      newStatus: "img_aguardando_categoria_obrigatoria",
+      session,
+      resposta: M.imagem.perguntaCategoriaObrigatoria(listarCategorias(cats)),
+    };
+  }
+  // 2) Confirmação de data quando a nota é antiga (>30 dias) ou futura.
+  if (!session.dataConfirmada && dataPrecisaConfirmacao(session.data)) {
+    return {
+      status: "aguardando_data_confirmacao",
+      newStatus: "img_aguardando_data_confirmacao",
+      session,
+      resposta: M.imagem.perguntaDataConfirmacao(formatDataBR(session.data as string)),
+    };
+  }
+  // 3) Forma de pagamento, quando não detectada.
+  if (!session.formaPagamento) {
+    return {
+      status: "aguardando_pagamento",
+      newStatus: "img_aguardando_pagamento",
+      session,
+      resposta: M.imagem.perguntaFormaPagamento(),
+    };
+  }
+  // 4) Persiste.
+  const saved = await persistirGastoComprovante(userId, session, cats);
+  if (!saved.ok) return { status: "erro", resposta: saved.resposta, session };
+  return {
+    status: "salva",
+    newStatus: "salva",
+    session,
+    gastoId: saved.gastoId,
+    resposta: saved.resposta,
+  };
+}
+
 /**
  * Processa uma mensagem do usuário enquanto existe uma sessão de imagem.
- * Lida com: sim/não, ajustes pedidos ("alterar valor"), ajustes diretos
- * ("valor 52,90"), preenchimento de campos faltantes (valor/descrição),
- * pergunta de forma de pagamento, persistência.
  */
 export async function processarRespostaImagem(args: {
   userId: string;
@@ -545,7 +592,6 @@ export async function processarRespostaImagem(args: {
   const { userId, texto, session, status, decisao } = args;
   const cats = await carregarCategoriasDespesa(userId);
 
-  // cancelamento: tratado no pipeline principal por isResetCommand / "não"
   if (decisao === "cancel") {
     return { status: "cancelada", resposta: M.imagem.cancelado(), session };
   }
@@ -588,6 +634,7 @@ export async function processarRespostaImagem(args: {
       }
       next.categoriaId = found.id;
       next.categoriaLabel = found.nome;
+      next.categoriaNaoIdentificada = false;
     } else if (field === "data") {
       const d = parseData(texto);
       if (!d) {
@@ -599,6 +646,18 @@ export async function processarRespostaImagem(args: {
         };
       }
       next.data = d;
+      next.dataConfirmada = true; // usuário forneceu data explicitamente
+    } else if (field === "pagamento") {
+      const forma = detectFormaPagamento(texto);
+      if (!forma) {
+        return {
+          status: "aguardando_ajuste",
+          newStatus: "img_aguardando_ajuste",
+          session,
+          resposta: M.imagem.pedirNovoPagamento(),
+        };
+      }
+      next.formaPagamento = forma;
     }
     return rebuildResumoOuPreencher(next, cats);
   }
@@ -632,7 +691,45 @@ export async function processarRespostaImagem(args: {
     return rebuildResumoOuPreencher(next, cats);
   }
 
-  // ----- aguardando forma de pagamento (após sim, sem forma detectada) -----
+  // ----- aguardando confirmação de DATA (fora da janela ±30 dias) -----
+  if (status === "img_aguardando_data_confirmacao") {
+    const t = normalize(texto);
+    const usarNota = /^(usar data da nota|usar a data da nota|manter data|manter|data da nota|nota)$/.test(t);
+    const usarHoje = /^(usar hoje|hoje|usar a data de hoje)$/.test(t);
+    if (!usarNota && !usarHoje) {
+      return {
+        status: "aguardando_data_confirmacao",
+        newStatus: "img_aguardando_data_confirmacao",
+        session,
+        resposta: M.imagem.perguntaDataConfirmacao(formatDataBR(session.data as string)),
+      };
+    }
+    const next: ComprovanteSession = { ...session, dataConfirmada: true };
+    if (usarHoje) next.data = todayLocalISO();
+    return avancarAposConfirmacao(userId, next, cats);
+  }
+
+  // ----- aguardando categoria obrigatória -----
+  if (status === "img_aguardando_categoria_obrigatoria") {
+    const found = findCategoriaByTerm(cats, texto.trim());
+    if (!found) {
+      return {
+        status: "aguardando_categoria_obrigatoria",
+        newStatus: "img_aguardando_categoria_obrigatoria",
+        session,
+        resposta: M.imagem.perguntaCategoriaObrigatoria(listarCategorias(cats)),
+      };
+    }
+    const next: ComprovanteSession = {
+      ...session,
+      categoriaId: found.id,
+      categoriaLabel: found.nome,
+      categoriaNaoIdentificada: false,
+    };
+    return avancarAposConfirmacao(userId, next, cats);
+  }
+
+  // ----- aguardando forma de pagamento -----
   if (status === "img_aguardando_pagamento") {
     const forma = detectFormaPagamento(texto);
     if (!forma) {
@@ -644,20 +741,11 @@ export async function processarRespostaImagem(args: {
       };
     }
     const next: ComprovanteSession = { ...session, formaPagamento: forma };
-    const saved = await persistirGastoComprovante(userId, next, cats);
-    if (!saved.ok) return { status: "erro", resposta: saved.resposta, session: next };
-    return {
-      status: "salva",
-      newStatus: "salva",
-      session: next,
-      gastoId: saved.gastoId,
-      resposta: saved.resposta,
-    };
+    return avancarAposConfirmacao(userId, next, cats);
   }
 
-  // ----- aguardando confirmação -----
+  // ----- aguardando confirmação principal -----
   if (status === "img_aguardando_confirmacao") {
-    // ajuste antes do sim/não
     const aj = detectAjuste(texto);
     if (aj) {
       if (aj.kind === "ask") {
@@ -669,7 +757,9 @@ export async function processarRespostaImagem(args: {
               ? M.imagem.pedirNovaDescricao()
               : aj.field === "categoria"
                 ? M.imagem.pedirNovaCategoria(listarCategorias(cats))
-                : M.imagem.pedirNovaData();
+                : aj.field === "pagamento"
+                  ? M.imagem.pedirNovoPagamento()
+                  : M.imagem.pedirNovaData();
         return {
           status: "aguardando_ajuste",
           newStatus: "img_aguardando_ajuste",
@@ -681,7 +771,11 @@ export async function processarRespostaImagem(args: {
       const next: ComprovanteSession = { ...session };
       if (aj.field === "valor") next.valor = aj.valor;
       if (aj.field === "descricao") next.descricao = aj.descricao;
-      if (aj.field === "data") next.data = aj.data;
+      if (aj.field === "data") {
+        next.data = aj.data;
+        next.dataConfirmada = true;
+      }
+      if (aj.field === "pagamento") next.formaPagamento = aj.forma;
       if (aj.field === "categoria") {
         const found = findCategoriaByTerm(cats, aj.termo);
         if (!found) {
@@ -694,29 +788,13 @@ export async function processarRespostaImagem(args: {
         }
         next.categoriaId = found.id;
         next.categoriaLabel = found.nome;
+        next.categoriaNaoIdentificada = false;
       }
       return rebuildResumoOuPreencher(next, cats);
     }
 
     if (decisao === "confirm") {
-      // se forma de pagamento não foi identificada, perguntar antes de salvar
-      if (!session.formaPagamento) {
-        return {
-          status: "aguardando_pagamento",
-          newStatus: "img_aguardando_pagamento",
-          session,
-          resposta: M.imagem.perguntaFormaPagamento(),
-        };
-      }
-      const saved = await persistirGastoComprovante(userId, session, cats);
-      if (!saved.ok) return { status: "erro", resposta: saved.resposta, session };
-      return {
-        status: "salva",
-        newStatus: "salva",
-        session,
-        gastoId: saved.gastoId,
-        resposta: saved.resposta,
-      };
+      return avancarAposConfirmacao(userId, session, cats);
     }
     // resposta desconhecida — reapresenta o resumo
     return {
@@ -758,9 +836,11 @@ function rebuildResumoOuPreencher(
       resposta: M.imagem.apenasValor(formatBRL(s.valor as number)),
     };
   }
-  const cat = categoriaSugestaoLabel(s, cats);
-  s.categoriaId = cat.id;
-  s.categoriaLabel = cat.label;
+  if (!s.categoriaNaoIdentificada) {
+    const cat = categoriaSugestaoLabel(s, cats);
+    s.categoriaId = cat.id;
+    s.categoriaLabel = cat.label;
+  }
   return {
     status: "aguardando_confirmacao",
     newStatus: "img_aguardando_confirmacao",
