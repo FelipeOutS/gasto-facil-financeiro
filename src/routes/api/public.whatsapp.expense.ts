@@ -9,6 +9,11 @@ import {
   validateDownloadedImage,
 } from "@/server/whatsapp-media-validation.server";
 import { podeUsarOcrComprovante } from "@/server/whatsapp-comprovantes.server";
+import {
+  canUseWhatsAppForSender,
+  shouldSendBlockedReply,
+  WHATSAPP_BLOCKED_REPLY,
+} from "@/server/whatsapp-authz.server";
 
 /**
  * Webhook público do WhatsApp Cloud API (Meta).
