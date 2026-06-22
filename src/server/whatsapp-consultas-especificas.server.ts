@@ -253,16 +253,37 @@ function descricaoMatches(descricao: string, termo: string): boolean {
   return tokens.every((w) => new RegExp(`\\b${w}`).test(d));
 }
 
+function singularize(s: string): string {
+  // Português: heurística simples para casar plural/singular.
+  // Mantém palavras curtas intactas.
+  if (s.length < 4) return s;
+  if (s.endsWith("oes")) return s.slice(0, -3) + "ao"; // cartoes -> cartao
+  if (s.endsWith("aes")) return s.slice(0, -3) + "ao"; // paes -> pao
+  if (s.endsWith("ais")) return s.slice(0, -2) + "l";  // animais -> animal
+  if (s.endsWith("eis")) return s.slice(0, -2) + "l";  // moveis -> movel
+  if (s.endsWith("ois")) return s.slice(0, -2) + "l";  // farois -> farol
+  if (s.endsWith("uis")) return s.slice(0, -2) + "l";  // azuis -> azul
+  if (s.endsWith("ns"))  return s.slice(0, -2) + "m";  // homens -> homem
+  if (s.endsWith("res") || s.endsWith("ses") || s.endsWith("zes")) return s.slice(0, -2);
+  if (s.endsWith("s"))   return s.slice(0, -1);
+  return s;
+}
+
+function normCat(s: string): string {
+  return singularize(norm(s));
+}
+
 function findCategoriasByTermo(
   categorias: CategoriaRow[],
   termo: string,
 ): CategoriaRow[] {
-  const t = norm(termo);
+  const t = normCat(termo);
   if (!t) return [];
-  const exact = categorias.filter((c) => norm(c.nome ?? "") === t);
+  const exact = categorias.filter((c) => normCat(c.nome ?? "") === t);
   if (exact.length > 0) return exact;
   return categorias.filter((c) => {
-    const n = norm(c.nome ?? "");
+    const n = normCat(c.nome ?? "");
+    if (!n) return false;
     return n.includes(t) || t.includes(n);
   });
 }
