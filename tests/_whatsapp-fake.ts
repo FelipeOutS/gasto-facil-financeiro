@@ -62,6 +62,19 @@ function makeBuilder(table: string): any {
   const ctx: any = { table, op: "select", payload: null, filters: {} };
 
   const finalize = async () => {
+    const matchesFilters = (row: Record<string, unknown>, idx: number) => {
+      for (const [col, val] of Object.entries(ctx.filters)) {
+        const actual = col === "id"
+          ? `m-${idx + 1}`
+          : col === "parsed->>kind"
+            ? (row.parsed as Record<string, unknown> | undefined)?.kind
+            : row[col];
+        if (Array.isArray(val)) {
+          if (!val.includes(actual)) return false;
+        } else if (actual !== val) return false;
+      }
+      return true;
+    };
     if (ctx.op === "insert") {
       const rows = Array.isArray(ctx.payload) ? ctx.payload : [ctx.payload];
       for (const r of rows) state.inserts.push({ table, row: r });
@@ -81,6 +94,11 @@ function makeBuilder(table: string): any {
     }
     if (ctx.op === "update") {
       if (table === "whatsapp_messages") {
+        state.inserts.forEach((entry, idx) => {
+          if (entry.table === "whatsapp_messages" && matchesFilters(entry.row, idx)) {
+            entry.row = { ...entry.row, ...ctx.payload };
+          }
+        });
         const s = ctx.payload?.status;
         const id = ctx.filters?.id;
         if (s === "salva" || s === "cancelada") {
@@ -123,7 +141,7 @@ function makeBuilder(table: string): any {
       // Apenas quando NÃO foi pedido maybeSingle/single.
       if (ctx.filters?.user_id && !ctx.filters?.id && !ctx.single) {
         const rows = state.inserts
-          .filter((i) => i.table === "whatsapp_messages")
+          .filter((i, idx) => i.table === "whatsapp_messages" && matchesFilters(i.row, idx))
           .map((i, idx) => ({
             id: `m-${idx + 1}`,
             status: i.row.status,
@@ -156,7 +174,7 @@ function makeBuilder(table: string): any {
     update(p: unknown) { ctx.op = "update"; ctx.payload = p; return builder; },
     delete() { ctx.op = "delete"; return builder; },
     eq(col: string, val: unknown) { ctx.filters[col] = val; return builder; },
-    in: () => builder,
+    in(col: string, vals: unknown[]) { ctx.filters[col] = vals; return builder; },
     gte(col: string, val: unknown) {
       ctx.range = ctx.range ?? {};
       (ctx.range[col] = ctx.range[col] ?? {}).gte = val;
