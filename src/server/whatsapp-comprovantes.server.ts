@@ -30,6 +30,8 @@ export const COMPROVANTE_PENDING_STATES = [
   "img_aguardando_descricao",
   "img_aguardando_pagamento",
   "img_aguardando_ajuste",
+  "img_aguardando_data_confirmacao",
+  "img_aguardando_categoria_obrigatoria",
 ] as const;
 export type ComprovanteStatus = (typeof COMPROVANTE_PENDING_STATES)[number];
 
@@ -44,10 +46,13 @@ export type ComprovanteSession = {
   categoriaSugerida?: string | null; // chave do OCR
   categoriaLabel?: string | null; // nome resolvido do usuário (display)
   categoriaId?: string | null;
+  categoriaNaoIdentificada?: boolean;
   formaPagamento?: string | null;
+  confianca?: "alta" | "media" | "baixa";
+  dataConfirmada?: boolean;
   imageSha256?: string;
   imageMimeType?: string;
-  pendingField?: "valor" | "descricao" | "categoria" | "data";
+  pendingField?: "valor" | "descricao" | "categoria" | "data" | "pagamento";
   mensagemOriginal: string;
 };
 
