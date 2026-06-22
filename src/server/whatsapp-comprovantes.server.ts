@@ -1,0 +1,717 @@
+/**
+ * Fase WA-G5A — Leitura de comprovantes pelo WhatsApp.
+ *
+ * Reaproveita integralmente o leitor de comprovantes do site
+ * (`src/server/ocr-comprovante.server.ts`, originalmente
+ * `src/routes/api/ocr-gasto.ts`) — não introduz uma segunda solução
+ * de OCR.
+ *
+ * Privacidade:
+ *  - Imagem é enviada APENAS ao gateway de IA do Lovable.
+ *  - A imagem bruta NUNCA é persistida; só metadados mínimos
+ *    (hash sha256, mime_type) ficam em whatsapp_messages.parsed
+ *    para auditoria e deduplicação.
+ *  - Nenhuma URL pública é exposta.
+ *
+ * Nunca cria gasto automaticamente — sempre passa por confirmação.
+ */
+import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
+import { runExtractor, type OcrResult } from "@/server/ocr-comprovante.server";
+import { whatsappMessages as M } from "./whatsapp-messages";
+import { createHash } from "crypto";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabaseAdmin = _supabaseAdmin as any;
+
+// ----- estados -----------------------------------------------------------
+export const COMPROVANTE_PENDING_STATES = [
+  "img_aguardando_confirmacao",
+  "img_aguardando_valor",
+  "img_aguardando_descricao",
+  "img_aguardando_pagamento",
+  "img_aguardando_ajuste",
+] as const;
+export type ComprovanteStatus = (typeof COMPROVANTE_PENDING_STATES)[number];
+
+const APP_TZ = "America/Sao_Paulo";
+
+// ----- tipos públicos ----------------------------------------------------
+export type ComprovanteSession = {
+  kind: "imagem_comprovante";
+  descricao?: string;
+  valor?: number;
+  data?: string; // YYYY-MM-DD
+  categoriaSugerida?: string | null; // chave do OCR
+  categoriaLabel?: string | null; // nome resolvido do usuário (display)
+  categoriaId?: string | null;
+  formaPagamento?: string | null;
+  imageSha256?: string;
+  imageMimeType?: string;
+  pendingField?: "valor" | "descricao" | "categoria" | "data";
+  mensagemOriginal: string;
+};
+
+export function isComprovanteSession(s: unknown): s is ComprovanteSession {
+  return !!s && typeof s === "object" && (s as { kind?: string }).kind === "imagem_comprovante";
+}
+
+export type ImageAttachment = {
+  /** Data URL completa "data:image/...;base64,..." */
+  base64: string;
+  mimeType?: string;
+  sha256?: string;
+};
+
+export type ComprovanteResult = {
+  status:
+    | "duplicada"
+    | "sessao_em_andamento"
+    | "aguardando_confirmacao"
+    | "aguardando_pagamento"
+    | "aguardando_valor"
+    | "aguardando_descricao"
+    | "aguardando_ajuste"
+    | "ilegivel"
+    | "nao_elegivel"
+    | "salva"
+    | "cancelada"
+    | "erro";
+  resposta: string;
+  session?: ComprovanteSession;
+  newStatus?: ComprovanteStatus | "salva" | "cancelada";
+  gastoId?: string;
+};
+
+// ----- helpers locais ----------------------------------------------------
+function todayLocalISO(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function ontemLocalISO(): string {
+  const now = new Date();
+  now.setUTCDate(now.getUTCDate() - 1);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+}
+
+function formatBRL(v: number): string {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function formatDataBR(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  if (iso === todayLocalISO()) return "Hoje";
+  if (iso === ontemLocalISO()) return "Ontem";
+  return `${d}/${m}/${y}`;
+}
+
+function normalize(s: string): string {
+  return (s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parseValor(texto: string): number | null {
+  const t = texto.replace(/[Rr]\$\s*/g, "").trim();
+  // dois grupos: "1.234,56" (BR) ou "1234.56" / "1234,56"
+  const m = t.match(/(\d{1,3}(?:[.\s]\d{3})*(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?)/);
+  if (!m) return null;
+  let s = m[1].replace(/\s/g, "");
+  // se contém ',' tratamos como BR
+  if (s.includes(",")) {
+    s = s.replace(/\./g, "").replace(",", ".");
+  }
+  const n = Number(s);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.round(n * 100) / 100;
+}
+
+function parseData(texto: string): string | null {
+  const t = normalize(texto);
+  if (!t) return null;
+  if (t === "hoje") return todayLocalISO();
+  if (t === "ontem") return ontemLocalISO();
+  // DD/MM/YYYY ou DD/MM/YY
+  const m = t.match(/\b(\d{1,2})[/\-.](\d{1,2})(?:[/\-.](\d{2,4}))?\b/);
+  if (m) {
+    const dd = m[1].padStart(2, "0");
+    const mm = m[2].padStart(2, "0");
+    let yy = m[3] ?? String(new Date().getFullYear());
+    if (yy.length === 2) yy = `20${yy}`;
+    if (Number(dd) >= 1 && Number(dd) <= 31 && Number(mm) >= 1 && Number(mm) <= 12) {
+      return `${yy}-${mm}-${dd}`;
+    }
+  }
+  return null;
+}
+
+function detectFormaPagamento(text: string): string | null {
+  const t = normalize(text);
+  if (!t) return null;
+  if (/\bpix\b/.test(t)) return "pix";
+  if (/\b(dinheiro|especie|cash)\b/.test(t)) return "dinheiro";
+  if (/\b(debito|cartao de debito)\b/.test(t)) return "debito";
+  if (/\b(credito|cartao de credito|cartao|cartoes)\b/.test(t)) return "credito";
+  if (/\bboleto\b/.test(t)) return "boleto";
+  if (/\btransfer/.test(t)) return "transferencia";
+  if (/\b(vr|vale.?refei)/.test(t)) return "vale_refeicao";
+  if (/\b(va|vale.?aliment)/.test(t)) return "vale_alimentacao";
+  if (/\boutro\b/.test(t)) return "outro";
+  return null;
+}
+
+function rotuloPagamento(f: string | null | undefined): string {
+  switch (f) {
+    case "credito": return "Cartão de crédito";
+    case "debito": return "Cartão de débito";
+    case "pix": return "Pix";
+    case "dinheiro": return "Dinheiro";
+    case "boleto": return "Boleto";
+    case "transferencia": return "Transferência";
+    case "vale_alimentacao": return "Vale alimentação";
+    case "vale_refeicao": return "Vale refeição";
+    case "outro": return "Outro";
+    default: return "Não informado";
+  }
+}
+
+// ----- categorias do usuário ---------------------------------------------
+type CategoriaRow = { id: string; legacy_id: string | null; nome: string };
+
+async function carregarCategoriasDespesa(userId: string): Promise<CategoriaRow[]> {
+  const { data } = await supabaseAdmin
+    .from("categorias")
+    .select("id, legacy_id, nome")
+    .eq("user_id", userId);
+  if (!Array.isArray(data)) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).map((c: any) => ({
+    id: c.id,
+    legacy_id: c.legacy_id ?? null,
+    nome: c.nome ?? "",
+  }));
+}
+
+function findCategoriaByTerm(
+  cats: CategoriaRow[],
+  termo: string,
+): CategoriaRow | null {
+  if (!termo) return null;
+  const t = normalize(termo);
+  // exato por legacy_id ou nome
+  for (const c of cats) {
+    if (c.legacy_id && normalize(c.legacy_id) === t) return c;
+    if (c.nome && normalize(c.nome) === t) return c;
+  }
+  // contém
+  for (const c of cats) {
+    if (c.nome && normalize(c.nome).includes(t)) return c;
+  }
+  return null;
+}
+
+function fallbackCategoria(cats: CategoriaRow[]): CategoriaRow | null {
+  const out = cats.find((c) => c.legacy_id === "outros") ?? cats[0] ?? null;
+  return out;
+}
+
+// ----- detecção de comandos ---------------------------------------------
+type AjusteIntent =
+  | { kind: "ask"; field: "valor" | "descricao" | "categoria" | "data" }
+  | { kind: "direct"; field: "valor"; valor: number }
+  | { kind: "direct"; field: "descricao"; descricao: string }
+  | { kind: "direct"; field: "categoria"; termo: string }
+  | { kind: "direct"; field: "data"; data: string };
+
+export function detectAjuste(texto: string): AjusteIntent | null {
+  const t = normalize(texto);
+  if (!t) return null;
+
+  // pedidos simples
+  if (/^(alterar |trocar |mudar |corrigir )?valor$/.test(t)) {
+    return { kind: "ask", field: "valor" };
+  }
+  if (/^(alterar |trocar |mudar |corrigir )?(descricao|descrição)$/.test(t)) {
+    return { kind: "ask", field: "descricao" };
+  }
+  if (/^(alterar |trocar |mudar |corrigir )?categoria$/.test(t)) {
+    return { kind: "ask", field: "categoria" };
+  }
+  if (/^(alterar |trocar |mudar |corrigir )?data$/.test(t)) {
+    return { kind: "ask", field: "data" };
+  }
+
+  // formas diretas: "valor 52,90", "categoria Transporte", "descrição Uber", "data ontem"
+  let m = t.match(/^valor\s+(.+)$/);
+  if (m) {
+    const v = parseValor(m[1]);
+    if (v) return { kind: "direct", field: "valor", valor: v };
+  }
+  m = t.match(/^(descricao|descrição)\s+(.+)$/);
+  if (m) return { kind: "direct", field: "descricao", descricao: m[2].slice(0, 80) };
+  m = t.match(/^categoria\s+(.+)$/);
+  if (m) return { kind: "direct", field: "categoria", termo: m[1].slice(0, 60) };
+  m = t.match(/^data\s+(.+)$/);
+  if (m) {
+    const d = parseData(m[1]);
+    if (d) return { kind: "direct", field: "data", data: d };
+  }
+  return null;
+}
+
+// ----- construção da sessão a partir do OCR ------------------------------
+function ocrParaSessao(
+  ocr: OcrResult,
+  mensagemOriginal: string,
+  img: ImageAttachment,
+): ComprovanteSession {
+  return {
+    kind: "imagem_comprovante",
+    descricao: ocr.descricao ?? undefined,
+    valor: ocr.valor ?? undefined,
+    data: ocr.data ?? todayLocalISO(),
+    categoriaSugerida: ocr.categoriaSugerida,
+    categoriaLabel: null, // resolvido depois com base nas categorias do usuário
+    formaPagamento: ocr.formaPagamento,
+    imageSha256: img.sha256,
+    imageMimeType: img.mimeType,
+    mensagemOriginal,
+  };
+}
+
+function categoriaSugestaoLabel(
+  s: ComprovanteSession,
+  cats: CategoriaRow[],
+): { label: string; id: string | null } {
+  if (s.categoriaLabel && s.categoriaId) {
+    return { label: s.categoriaLabel, id: s.categoriaId };
+  }
+  const termo = s.categoriaSugerida ?? "";
+  const found = findCategoriaByTerm(cats, termo);
+  if (found) return { label: found.nome, id: found.id };
+  const fb = fallbackCategoria(cats);
+  return { label: fb?.nome ?? "Outros", id: fb?.id ?? null };
+}
+
+function buildResumo(s: ComprovanteSession, cats: CategoriaRow[]): string {
+  const cat = categoriaSugestaoLabel(s, cats);
+  return M.imagem.resumo({
+    descricao: s.descricao ?? "—",
+    valor: s.valor ? formatBRL(s.valor) : "—",
+    data: s.data ? formatDataBR(s.data) : "Hoje",
+    categoria: cat.label,
+  });
+}
+
+// ----- persistência do gasto --------------------------------------------
+async function persistirGastoComprovante(
+  userId: string,
+  s: ComprovanteSession,
+  cats: CategoriaRow[],
+): Promise<{ ok: boolean; gastoId?: string; resposta: string }> {
+  const cat = categoriaSugestaoLabel(s, cats);
+  const data = s.data ?? todayLocalISO();
+  const [y, mo] = data.split("-").map(Number);
+
+  const desc = (s.descricao ?? "").trim().slice(0, 120);
+  if (!desc || !s.valor || s.valor <= 0) {
+    return { ok: false, resposta: M.erroAoSalvar() };
+  }
+
+  const obs = `WhatsApp (foto): ${s.mensagemOriginal}`.slice(0, 240);
+
+  const { data: row, error } = await supabaseAdmin
+    .from("gastos")
+    .insert({
+      user_id: userId,
+      categoria_id: cat.id,
+      descricao: desc,
+      estabelecimento: desc,
+      valor: s.valor,
+      data,
+      mes: mo,
+      ano: y,
+      forma_pagamento: s.formaPagamento ?? "outro",
+      cartao_id: null,
+      tipo_gasto: "unico",
+      total_parcelas: null,
+      observacao: obs,
+      origem: "whatsapp",
+      confirmado: true,
+    })
+    .select("id")
+    .single();
+
+  if (error || !row) {
+    console.error("[whatsapp-comprovante] gasto insert failed", error);
+    return { ok: false, resposta: M.erroAoSalvar() };
+  }
+  const resposta = M.imagem.salvo({
+    valor: formatBRL(s.valor),
+    descricao: desc,
+    categoria: cat.label,
+    pagamento: rotuloPagamento(s.formaPagamento),
+  });
+  return { ok: true, gastoId: row.id, resposta };
+}
+
+// ----- API pública: nova imagem ------------------------------------------
+export function hashImageBase64(b64: string): string {
+  // hash da parte de dados (sem prefixo data URL), para deduplicação estável.
+  const idx = b64.indexOf(",");
+  const payload = idx >= 0 ? b64.slice(idx + 1) : b64;
+  return createHash("sha256").update(payload).digest("hex");
+}
+
+/**
+ * Processa uma imagem recém-recebida (sem sessão pendente).
+ * Retorna a sessão a ser persistida + a resposta a enviar.
+ */
+export async function processarNovaImagem(args: {
+  userId: string;
+  texto: string;
+  image: ImageAttachment;
+}): Promise<ComprovanteResult> {
+  const { userId, texto, image } = args;
+
+  const sha = image.sha256 || hashImageBase64(image.base64);
+  image.sha256 = sha;
+
+  const ocr = await runExtractor(image.base64);
+  if (!ocr.ok) {
+    return { status: "ilegivel", resposta: M.imagem.ileagivel() };
+  }
+
+  const cats = await carregarCategoriasDespesa(userId);
+  const session = ocrParaSessao(ocr.data, texto || "(foto)", image);
+
+  const temValor = !!session.valor && session.valor > 0;
+  const temDescricao = !!session.descricao && session.descricao.trim().length >= 2;
+
+  // Leitura totalmente vazia
+  if (!temValor && !temDescricao) {
+    return { status: "ilegivel", resposta: M.imagem.ileagivel() };
+  }
+
+  // Só valor
+  if (temValor && !temDescricao) {
+    return {
+      status: "aguardando_descricao",
+      newStatus: "img_aguardando_descricao",
+      session,
+      resposta: M.imagem.apenasValor(formatBRL(session.valor as number)),
+    };
+  }
+
+  // Só descrição
+  if (!temValor && temDescricao) {
+    return {
+      status: "aguardando_valor",
+      newStatus: "img_aguardando_valor",
+      session,
+      resposta: M.imagem.apenasDescricao(session.descricao as string),
+    };
+  }
+
+  // Leitura completa → resumo
+  const cat = categoriaSugestaoLabel(session, cats);
+  session.categoriaId = cat.id;
+  session.categoriaLabel = cat.label;
+  return {
+    status: "aguardando_confirmacao",
+    newStatus: "img_aguardando_confirmacao",
+    session,
+    resposta: buildResumo(session, cats),
+  };
+}
+
+/**
+ * Processa uma mensagem do usuário enquanto existe uma sessão de imagem.
+ * Lida com: sim/não, ajustes pedidos ("alterar valor"), ajustes diretos
+ * ("valor 52,90"), preenchimento de campos faltantes (valor/descrição),
+ * pergunta de forma de pagamento, persistência.
+ */
+export async function processarRespostaImagem(args: {
+  userId: string;
+  texto: string;
+  session: ComprovanteSession;
+  status: ComprovanteStatus;
+  decisao: "confirm" | "cancel" | "outro";
+}): Promise<ComprovanteResult> {
+  const { userId, texto, session, status, decisao } = args;
+  const cats = await carregarCategoriasDespesa(userId);
+
+  // cancelamento: tratado no pipeline principal por isResetCommand / "não"
+  if (decisao === "cancel") {
+    return { status: "cancelada", resposta: M.imagem.cancelado(), session };
+  }
+
+  // ----- estados de pedido de ajuste -----
+  if (status === "img_aguardando_ajuste" && session.pendingField) {
+    const field = session.pendingField;
+    const next: ComprovanteSession = { ...session, pendingField: undefined };
+    if (field === "valor") {
+      const v = parseValor(texto);
+      if (!v) {
+        return {
+          status: "aguardando_ajuste",
+          newStatus: "img_aguardando_ajuste",
+          session,
+          resposta: M.imagem.pedirNovoValor(),
+        };
+      }
+      next.valor = v;
+    } else if (field === "descricao") {
+      const d = texto.trim().slice(0, 80);
+      if (!d) {
+        return {
+          status: "aguardando_ajuste",
+          newStatus: "img_aguardando_ajuste",
+          session,
+          resposta: M.imagem.pedirNovaDescricao(),
+        };
+      }
+      next.descricao = d;
+    } else if (field === "categoria") {
+      const found = findCategoriaByTerm(cats, texto.trim());
+      if (!found) {
+        return {
+          status: "aguardando_ajuste",
+          newStatus: "img_aguardando_ajuste",
+          session,
+          resposta: M.imagem.pedirNovaCategoria(listarCategorias(cats)),
+        };
+      }
+      next.categoriaId = found.id;
+      next.categoriaLabel = found.nome;
+    } else if (field === "data") {
+      const d = parseData(texto);
+      if (!d) {
+        return {
+          status: "aguardando_ajuste",
+          newStatus: "img_aguardando_ajuste",
+          session,
+          resposta: M.imagem.pedirNovaData(),
+        };
+      }
+      next.data = d;
+    }
+    return rebuildResumoOuPreencher(next, cats);
+  }
+
+  // ----- campos faltantes -----
+  if (status === "img_aguardando_valor") {
+    const v = parseValor(texto);
+    if (!v) {
+      return {
+        status: "aguardando_valor",
+        newStatus: "img_aguardando_valor",
+        session,
+        resposta: M.imagem.apenasDescricao(session.descricao ?? ""),
+      };
+    }
+    const next: ComprovanteSession = { ...session, valor: v };
+    return rebuildResumoOuPreencher(next, cats);
+  }
+
+  if (status === "img_aguardando_descricao") {
+    const d = texto.trim().slice(0, 80);
+    if (!d) {
+      return {
+        status: "aguardando_descricao",
+        newStatus: "img_aguardando_descricao",
+        session,
+        resposta: M.imagem.apenasValor(formatBRL(session.valor ?? 0)),
+      };
+    }
+    const next: ComprovanteSession = { ...session, descricao: d };
+    return rebuildResumoOuPreencher(next, cats);
+  }
+
+  // ----- aguardando forma de pagamento (após sim, sem forma detectada) -----
+  if (status === "img_aguardando_pagamento") {
+    const forma = detectFormaPagamento(texto);
+    if (!forma) {
+      return {
+        status: "aguardando_pagamento",
+        newStatus: "img_aguardando_pagamento",
+        session,
+        resposta: M.imagem.perguntaFormaPagamento(),
+      };
+    }
+    const next: ComprovanteSession = { ...session, formaPagamento: forma };
+    const saved = await persistirGastoComprovante(userId, next, cats);
+    if (!saved.ok) return { status: "erro", resposta: saved.resposta, session: next };
+    return {
+      status: "salva",
+      newStatus: "salva",
+      session: next,
+      gastoId: saved.gastoId,
+      resposta: saved.resposta,
+    };
+  }
+
+  // ----- aguardando confirmação -----
+  if (status === "img_aguardando_confirmacao") {
+    // ajuste antes do sim/não
+    const aj = detectAjuste(texto);
+    if (aj) {
+      if (aj.kind === "ask") {
+        const next: ComprovanteSession = { ...session, pendingField: aj.field };
+        const resposta =
+          aj.field === "valor"
+            ? M.imagem.pedirNovoValor()
+            : aj.field === "descricao"
+              ? M.imagem.pedirNovaDescricao()
+              : aj.field === "categoria"
+                ? M.imagem.pedirNovaCategoria(listarCategorias(cats))
+                : M.imagem.pedirNovaData();
+        return {
+          status: "aguardando_ajuste",
+          newStatus: "img_aguardando_ajuste",
+          session: next,
+          resposta,
+        };
+      }
+      // direct
+      const next: ComprovanteSession = { ...session };
+      if (aj.field === "valor") next.valor = aj.valor;
+      if (aj.field === "descricao") next.descricao = aj.descricao;
+      if (aj.field === "data") next.data = aj.data;
+      if (aj.field === "categoria") {
+        const found = findCategoriaByTerm(cats, aj.termo);
+        if (!found) {
+          return {
+            status: "aguardando_ajuste",
+            newStatus: "img_aguardando_ajuste",
+            session: { ...session, pendingField: "categoria" },
+            resposta: M.imagem.pedirNovaCategoria(listarCategorias(cats)),
+          };
+        }
+        next.categoriaId = found.id;
+        next.categoriaLabel = found.nome;
+      }
+      return rebuildResumoOuPreencher(next, cats);
+    }
+
+    if (decisao === "confirm") {
+      // se forma de pagamento não foi identificada, perguntar antes de salvar
+      if (!session.formaPagamento) {
+        return {
+          status: "aguardando_pagamento",
+          newStatus: "img_aguardando_pagamento",
+          session,
+          resposta: M.imagem.perguntaFormaPagamento(),
+        };
+      }
+      const saved = await persistirGastoComprovante(userId, session, cats);
+      if (!saved.ok) return { status: "erro", resposta: saved.resposta, session };
+      return {
+        status: "salva",
+        newStatus: "salva",
+        session,
+        gastoId: saved.gastoId,
+        resposta: saved.resposta,
+      };
+    }
+    // resposta desconhecida — reapresenta o resumo
+    return {
+      status: "aguardando_confirmacao",
+      newStatus: "img_aguardando_confirmacao",
+      session,
+      resposta: buildResumo(session, cats),
+    };
+  }
+
+  // fallback: reapresenta resumo
+  return {
+    status: "aguardando_confirmacao",
+    newStatus: "img_aguardando_confirmacao",
+    session,
+    resposta: buildResumo(session, cats),
+  };
+}
+
+function rebuildResumoOuPreencher(
+  s: ComprovanteSession,
+  cats: CategoriaRow[],
+): ComprovanteResult {
+  const temValor = !!s.valor && s.valor > 0;
+  const temDesc = !!s.descricao && s.descricao.trim().length >= 2;
+  if (!temValor) {
+    return {
+      status: "aguardando_valor",
+      newStatus: "img_aguardando_valor",
+      session: s,
+      resposta: M.imagem.apenasDescricao(s.descricao ?? ""),
+    };
+  }
+  if (!temDesc) {
+    return {
+      status: "aguardando_descricao",
+      newStatus: "img_aguardando_descricao",
+      session: s,
+      resposta: M.imagem.apenasValor(formatBRL(s.valor as number)),
+    };
+  }
+  const cat = categoriaSugestaoLabel(s, cats);
+  s.categoriaId = cat.id;
+  s.categoriaLabel = cat.label;
+  return {
+    status: "aguardando_confirmacao",
+    newStatus: "img_aguardando_confirmacao",
+    session: s,
+    resposta: buildResumo(s, cats),
+  };
+}
+
+function listarCategorias(cats: CategoriaRow[]): string {
+  const nomes = cats
+    .map((c) => c.nome)
+    .filter(Boolean)
+    .slice(0, 20);
+  if (nomes.length === 0) return "";
+  return "\n" + nomes.map((n) => `• ${n}`).join("\n");
+}
+
+// ----- entitlement: importar foto / OCR ----------------------------------
+/**
+ * Mesmo gate server-side que `/api/ocr-gasto` aplica para o site:
+ * Admin Master sempre passa; demais usuários precisam de assinatura ativa
+ * com o feature "importacoes" liberado pelo plano.
+ *
+ * Retorna `true` quando o usuário pode usar OCR; `false` caso contrário.
+ * Não envia resposta — o caller decide o drop silencioso (HTTP 200).
+ */
+export async function podeUsarOcrComprovante(userId: string): Promise<boolean> {
+  try {
+    const adminEmails = [
+      "felipe.out.silva@outlook.com",
+      "michael@medeiroscenografia.com.br",
+    ];
+    const { data: u } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const email: string = (u?.user?.email ?? "").trim().toLowerCase();
+    if (email && adminEmails.includes(email)) return true;
+    const { getSubscriptionForUserIdentity } = await import("@/server/subscription.server");
+    const { planAllowsFeature } = await import("@/lib/plans");
+    const sub = await getSubscriptionForUserIdentity({ userId, email: email || null, repairLink: false });
+    if (!sub.active) return false;
+    return planAllowsFeature(sub.plan, "importacoes");
+  } catch (err) {
+    console.error("[whatsapp-comprovante] entitlement check failed", err);
+    return false;
+  }
+}

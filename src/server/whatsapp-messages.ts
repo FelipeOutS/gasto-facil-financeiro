@@ -556,4 +556,88 @@ export const whatsappMessages = {
       ].join("\n");
     },
   },
+
+  // =====================================================================
+  // LEITURA DE COMPROVANTE / FOTO DE NOTA (Fase WA-G5A)
+  // Reaproveita o OCR existente do site. Nunca cria gasto antes de "sim".
+  // Máximo 1 emoji por mensagem.
+  // =====================================================================
+  imagem: {
+    sessaoEmAndamento() {
+      return [
+        `Você já tem um lançamento em andamento.`,
+        ``,
+        `Envie "cancelar" para começar de novo antes de mandar uma foto.`,
+      ].join("\n");
+    },
+    ileagivel() {
+      return [
+        `Não consegui ler esta nota com segurança.`,
+        ``,
+        `Envie uma foto mais nítida ou me escreva o gasto e o valor.`,
+      ].join("\n");
+    },
+    apenasValor(valorFmt: string) {
+      return [
+        `Consegui identificar o valor de ${valorFmt}.`,
+        ``,
+        `Esse gasto foi de quê?`,
+      ].join("\n");
+    },
+    apenasDescricao(descricao: string) {
+      return [
+        `Consegui identificar "${descricao}".`,
+        ``,
+        `Qual foi o valor desse gasto?`,
+      ].join("\n");
+    },
+    resumo(args: { descricao: string; valor: string; data: string; categoria: string }) {
+      return [
+        `Li esta nota 🧾`,
+        ``,
+        `• Descrição: ${args.descricao}`,
+        `• Valor: ${args.valor}`,
+        `• Data: ${args.data}`,
+        `• Sugestão: ${args.categoria}`,
+        ``,
+        `Está certo? Responda sim ou diga o que quer alterar: valor, descrição, categoria ou data.`,
+      ].join("\n");
+    },
+    pedirNovoValor() {
+      return `Qual valor devo usar?`;
+    },
+    pedirNovaDescricao() {
+      return `Qual descrição devo usar?`;
+    },
+    pedirNovaCategoria(listaCategorias: string) {
+      return `Qual categoria devo usar?${listaCategorias}`;
+    },
+    pedirNovaData() {
+      return [
+        `Qual data devo usar?`,
+        ``,
+        `Ex.: hoje, ontem ou 15/06/2026.`,
+      ].join("\n");
+    },
+    perguntaFormaPagamento() {
+      return [
+        `Como você pagou esse gasto? 💳`,
+        ``,
+        `Você pode responder com Pix, cartão, dinheiro ou outro.`,
+      ].join("\n");
+    },
+    salvo(args: { valor: string; descricao: string; categoria: string; pagamento: string }) {
+      return [
+        `Pronto! Registrei esse gasto ✅`,
+        ``,
+        `${args.valor} em ${args.descricao}, pago via ${args.pagamento}.`,
+        `Categoria: ${args.categoria}`,
+        ``,
+        `Você já consegue ver esse lançamento no Gasto Inteligente.`,
+      ].join("\n");
+    },
+    cancelado() {
+      return `Tudo certo, não registrei esse gasto.`;
+    },
+  },
 };

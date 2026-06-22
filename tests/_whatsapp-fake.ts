@@ -46,6 +46,12 @@ const PENDING = [
   "rec_aguardando_dia",
   "rec_aguardando_categoria",
   "rec_aguardando_confirmacao",
+  // WA-G5A — comprovante/foto
+  "img_aguardando_confirmacao",
+  "img_aguardando_valor",
+  "img_aguardando_descricao",
+  "img_aguardando_pagamento",
+  "img_aguardando_ajuste",
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -111,6 +117,19 @@ function makeBuilder(table: string): any {
           error: null,
         };
       }
+      // Lista por user_id+telefone (usada pelo dedup de imagens, WA-G5A).
+      // Apenas quando NÃO foi pedido maybeSingle/single.
+      if (ctx.filters?.user_id && !ctx.filters?.id && !ctx.single) {
+        const rows = state.inserts
+          .filter((i) => i.table === "whatsapp_messages")
+          .map((i, idx) => ({
+            id: `m-${idx + 1}`,
+            status: i.row.status,
+            gasto_id: i.row.gasto_id ?? null,
+            parsed: i.row.parsed ?? null,
+          }));
+        return { data: rows, error: null };
+      }
       return { data: state.pendingRow, error: null };
     }
     if (table === "cartoes") return { data: state.cartoesData, error: null };
@@ -153,8 +172,8 @@ function makeBuilder(table: string): any {
     gt: () => builder,
     order: () => builder,
     limit: () => builder,
-    single: finalize,
-    maybeSingle: finalize,
+    single() { ctx.single = true; return finalize(); },
+    maybeSingle() { ctx.single = true; return finalize(); },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     then(resolve: any, reject: any) { return finalize().then(resolve, reject); },
   };
