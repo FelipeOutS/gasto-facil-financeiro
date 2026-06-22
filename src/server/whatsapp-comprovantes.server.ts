@@ -928,7 +928,8 @@ function listarCategorias(cats: CategoriaRow[]): string {
     .filter(Boolean)
     .slice(0, 20);
   if (nomes.length === 0) return "";
-  return "\n" + nomes.map((n) => `• ${n}`).join("\n");
+  // Numerada para permitir resposta por índice ("1", "2", ...).
+  return "\n\n" + nomes.map((n, i) => `${i + 1}. ${n}`).join("\n");
 }
 
 // ----- entitlement: importar foto / OCR ----------------------------------
