@@ -1371,11 +1371,6 @@ export async function processarMensagemWhatsApp(
     return { status: "pendente", resposta: out.resposta };
   }
 
-  // ---- Blindagem final: comandos reservados de comprovante nunca viram gasto. ----
-  if (sessao && isReceiptReservedCommand(texto)) {
-    return { status: "pendente", resposta: M.semPendencia() };
-  }
-
   // ---- Fase WA-G5A: imagem chegou enquanto há sessão pendente NÃO-comprovante ----
   // Uma foto nunca interrompe um fluxo de gasto/receita em andamento.
   // Orienta o usuário a enviar "cancelar" antes de mandar a foto.
