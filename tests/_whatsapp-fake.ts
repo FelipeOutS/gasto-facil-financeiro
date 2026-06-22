@@ -52,6 +52,8 @@ const PENDING = [
   "img_aguardando_descricao",
   "img_aguardando_pagamento",
   "img_aguardando_ajuste",
+  "img_aguardando_data_confirmacao",
+  "img_aguardando_categoria_obrigatoria",
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
