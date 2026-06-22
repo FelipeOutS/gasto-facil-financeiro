@@ -279,12 +279,13 @@ function findCategoriasByTermo(
 ): CategoriaRow[] {
   const t = normCat(termo);
   if (!t) return [];
-  const exact = categorias.filter((c) => normCat(c.nome ?? "") === t);
-  if (exact.length > 0) return exact;
+  // Match por inclusão bidirecional — não usar short-circuit em exato,
+  // senão "transporte" descarta "Transporte Público" e perde casos de
+  // ambiguidade real entre grupos distintos.
   return categorias.filter((c) => {
     const n = normCat(c.nome ?? "");
     if (!n) return false;
-    return n.includes(t) || t.includes(n);
+    return n === t || n.includes(t) || t.includes(n);
   });
 }
 
@@ -296,8 +297,37 @@ export type EspecificaResult =
       status: "consulta_categoria_ambigua";
       resposta: string;
       termo: string;
-      options: Array<{ id: string; nome: string }>;
+      options: Array<{ ids: string[]; nome: string }>;
     };
+
+/**
+ * Agrupa categorias por nome normalizado. Categorias visualmente
+ * equivalentes (acento, caixa, plural, espaços) viram um único grupo
+ * lógico com todos os categoria_id juntos. O nome de exibição
+ * preferido é o primeiro com letra maiúscula; senão o primeiro nome
+ * trimmed.
+ */
+function agruparCategorias(
+  categorias: CategoriaRow[],
+): Array<{ ids: string[]; nome: string }> {
+  const map = new Map<string, { ids: string[]; nomes: string[] }>();
+  for (const c of categorias) {
+    const raw = (c.nome ?? "").trim();
+    if (!raw) continue;
+    const key = normCat(raw);
+    if (!key) continue;
+    const entry = map.get(key) ?? { ids: [], nomes: [] };
+    entry.ids.push(c.id);
+    entry.nomes.push(raw);
+    map.set(key, entry);
+  }
+  const groups: Array<{ ids: string[]; nome: string }> = [];
+  for (const { ids, nomes } of map.values()) {
+    const display = nomes.find((n) => /[A-ZÀ-ÖØ-Þ]/.test(n)) ?? nomes[0];
+    groups.push({ ids, nome: display });
+  }
+  return groups;
+}
 
 /** Janela mensal "[primeiro_dia_do_mes, amanha)" — exclui datas futuras. */
 function janelaMesAteHoje(): { from: string; to: string; hoje: string } {
@@ -421,45 +451,48 @@ async function handleGastoPorDescricaoOuCategoria(
 ): Promise<EspecificaResult> {
   const categorias = await loadCategoriasDespesa(userId);
   const matches = findCategoriasByTermo(categorias, termo);
+  const grupos = agruparCategorias(matches);
 
-  if (matches.length > 1) {
+  if (grupos.length > 1) {
+    const opts = grupos.slice(0, 5);
     return {
       status: "consulta_categoria_ambigua",
       termo,
-      options: matches.slice(0, 5).map((c) => ({ id: c.id, nome: c.nome ?? "" })),
+      options: opts,
       resposta: M.consultaEspecifica.categoriaAmbigua({
         termo,
-        opcoes: matches.slice(0, 5).map((c) => c.nome ?? ""),
+        opcoes: opts.map((g) => g.nome),
       }),
     };
   }
 
-  if (matches.length === 1) {
-    return await respostaCategoria(userId, matches[0]);
+  if (grupos.length === 1) {
+    return await respostaCategoriaGrupo(userId, grupos[0]);
   }
 
   // Sem match de categoria → consulta por descrição.
   return await respostaDescricao(userId, termo);
 }
 
-async function respostaCategoria(
+async function respostaCategoriaGrupo(
   userId: string,
-  categoria: CategoriaRow,
+  grupo: { ids: string[]; nome: string },
 ): Promise<EspecificaResult> {
   const { from, to } = janelaMesAteHoje();
   const gastos = await loadGastos(userId, from, to);
-  const filtrados = gastos.filter((g) => g.categoria_id === categoria.id);
+  const idsSet = new Set(grupo.ids);
+  const filtrados = gastos.filter((g) => g.categoria_id != null && idsSet.has(g.categoria_id));
   if (filtrados.length === 0) {
     return {
       status: "consulta",
-      resposta: M.consultaEspecifica.categoriaSemResultado(categoria.nome ?? ""),
+      resposta: M.consultaEspecifica.categoriaSemResultado(grupo.nome),
     };
   }
   const total = sumValor(filtrados);
   return {
     status: "consulta",
     resposta: M.consultaEspecifica.gastoPorCategoria({
-      categoria: categoria.nome ?? "",
+      categoria: grupo.nome,
       valor: formatBRL(total),
       quantidade: filtrados.length,
     }),
@@ -488,28 +521,38 @@ async function respostaDescricao(userId: string, termo: string): Promise<Especif
 }
 
 /**
- * Continuação após pergunta de categoria ambígua. Tenta casar a resposta
- * do usuário com uma das opções persistidas. Retorna null quando nada
- * bate — nesse caso o pipeline encerra o estado temporário e segue o
- * processamento normal.
+ * Continuação após pergunta de categoria ambígua. Aceita escolha por
+ * nome (com normalização) ou por número ordinal ("1", "2", ...).
+ * Cada opção é um grupo lógico de categorias com o mesmo nome
+ * normalizado — todos os ids do grupo são usados na agregação.
+ * Retorna null quando nada bate; o pipeline então encerra o estado
+ * temporário e segue o processamento normal.
  */
 export async function handleCategoriaAmbiguaResponse(
   userId: string,
   texto: string,
-  options: Array<{ id: string; nome: string }>,
+  options: Array<{ ids: string[]; nome: string }>,
 ): Promise<EspecificaResult | null> {
   const t = norm(texto);
   if (!t) return null;
-  let chosen: { id: string; nome: string } | null = null;
-  for (const o of options) {
-    const n = norm(o.nome);
-    if (!n) continue;
-    if (n === t || t.includes(n) || n.includes(t)) {
-      chosen = o;
-      break;
+
+  // Escolha por ordinal: "1", "2", "opção 1", etc.
+  const mOrd = t.match(/\b([1-9])\b/);
+  if (mOrd) {
+    const idx = Number(mOrd[1]) - 1;
+    if (idx >= 0 && idx < options.length) {
+      return await respostaCategoriaGrupo(userId, options[idx]);
     }
   }
-  if (!chosen) return null;
-  // Reusa respostaCategoria — precisamos do `categoria_id` real para filtrar.
-  return await respostaCategoria(userId, { id: chosen.id, nome: chosen.nome });
+
+  // Escolha por nome.
+  for (const o of options) {
+    const n = normCat(o.nome);
+    if (!n) continue;
+    const tCat = normCat(texto);
+    if (n === tCat || tCat.includes(n) || n.includes(tCat)) {
+      return await respostaCategoriaGrupo(userId, o);
+    }
+  }
+  return null;
 }

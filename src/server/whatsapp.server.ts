@@ -1356,7 +1356,7 @@ export async function processarMensagemWhatsApp(
   if (sessao && sessao.status === "consulta_categoria_ambigua") {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const prev = sessao.session as any;
-    const opts: Array<{ id: string; nome: string }> = Array.isArray(prev?.options)
+    const opts: Array<{ ids: string[]; nome: string }> = Array.isArray(prev?.options)
       ? prev.options
       : [];
     const out = await handleCategoriaAmbiguaResponse(userId, texto, opts);
