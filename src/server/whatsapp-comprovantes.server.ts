@@ -76,6 +76,8 @@ export type ComprovanteResult = {
     | "aguardando_valor"
     | "aguardando_descricao"
     | "aguardando_ajuste"
+    | "aguardando_data_confirmacao"
+    | "aguardando_categoria_obrigatoria"
     | "ilegivel"
     | "nao_elegivel"
     | "salva"
