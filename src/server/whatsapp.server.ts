@@ -1490,61 +1490,6 @@ export async function processarMensagemWhatsApp(
     };
   }
 
-
-  // ---- Fase WA-G5A: sessão de comprovante/imagem pendente ----
-  // Prioridade após reset/receita/gasto e antes de consultas. "cancelar"
-  // já encerrou acima. "não" também encerra (mantém comportamento global).
-  // Aceita ajustes ("alterar valor", "valor 52,90", ...), preenchimento de
-  // campos faltantes, pergunta de forma de pagamento e confirmação.
-  if (
-    sessao &&
-    (COMPROVANTE_PENDING_STATES as readonly string[]).includes(sessao.status) &&
-    isComprovanteSession(sessao.session)
-  ) {
-    const prev = sessao.session as ComprovanteSession;
-    // Nova imagem durante sessão de imagem: orienta a cancelar antes.
-    if (msg.image) {
-      const aviso = M.imagem.sessaoEmAndamento();
-      await atualizarSessao(sessao.id, sessao.status, prev as unknown as Session, aviso);
-      return { status: "pendente", resposta: aviso };
-    }
-    if (decisao === "cancel") {
-      await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
-      await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "cancelada", prev as unknown as Session, M.imagem.cancelado(),
-      );
-      return { status: "cancelada", resposta: M.imagem.cancelado() };
-    }
-    const out = await processarRespostaImagem({
-      userId,
-      texto,
-      session: prev,
-      status: sessao.status as ComprovanteStatus,
-      decisao,
-    });
-    // marcar a sessão antiga como expirada e gravar a nova
-    await supabaseAdmin
-      .from("whatsapp_messages")
-      .update({ status: "expirada" })
-      .eq("id", sessao.id);
-    if (out.status === "salva") {
-      await fecharSessoesAnteriores(userId, msg.telefone, "salva", out.gastoId);
-      await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "salva", (out.session ?? prev) as unknown as Session,
-        out.resposta, out.gastoId,
-      );
-      return { status: "salva", gastoId: out.gastoId, resposta: out.resposta };
-    }
-    const nextStatus = out.newStatus ?? "img_aguardando_confirmacao";
-    await gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      nextStatus, (out.session ?? prev) as unknown as Session, out.resposta,
-    );
-    return { status: "pendente", resposta: out.resposta };
-  }
-
   // ---- Fase WA-G5A: imagem nova chegando sem sessão pendente ----
   // Sessões pendentes (receita/gasto) já interceptaram acima — uma imagem
   // nunca interrompe um fluxo financeiro em andamento.
