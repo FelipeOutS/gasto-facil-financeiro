@@ -598,7 +598,7 @@ test("Comandos reservados de comprovante são priorizados mesmo se status salvo 
   await processarMensagemWhatsApp({
     telefone: tel, texto: "", external_id: "g5a31-lost-img", image: fakeImage("g5a31-lost-h"),
   });
-  const receiptInsert = state.inserts.findLast((i) => i.table === "whatsapp_messages");
+  const receiptInsert = [...state.inserts].reverse().find((i) => i.table === "whatsapp_messages");
   if (receiptInsert) receiptInsert.row.status = "pendente";
   if (state.pendingRow) state.pendingRow.status = "pendente";
 
@@ -617,7 +617,7 @@ test("Comandos reservados de comprovante são priorizados mesmo se status salvo 
     expect(r.resposta).toContain(expected);
     expect(r.resposta).not.toContain("Qual foi o valor de Categoria");
     expect(state.inserts.some((i) => i.table === "whatsapp_messages" && i.row.texto === cmd && i.row.status === "aguardando_descricao_e_valor_gasto")).toBe(false);
-    const latest = state.inserts.findLast((i) => i.table === "whatsapp_messages");
+    const latest = [...state.inserts].reverse().find((i) => i.table === "whatsapp_messages");
     if (latest) latest.row.status = "pendente";
     if (state.pendingRow) state.pendingRow.status = "pendente";
   }
