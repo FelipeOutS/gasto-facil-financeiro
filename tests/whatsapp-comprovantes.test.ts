@@ -78,7 +78,7 @@ test("Confirmação com 'sim' cria UM único gasto via WhatsApp", async () => {
   mockOcr({
     valor: 30,
     descricao: "Uber",
-    data: "2026-06-22",
+    data: null, // sem data no OCR → usa hoje, sem confirmação extra
     categoriaSugerida: "transporte",
     formaPagamento: "credito",
   });
