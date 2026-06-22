@@ -604,13 +604,20 @@ async function avancarAposConfirmacao(
       resposta: M.imagem.perguntaCategoriaObrigatoria(listarCategorias(cats)),
     };
   }
-  // 2) Confirmação de data quando a nota é antiga (>30 dias) ou futura.
-  if (!session.dataConfirmada && dataPrecisaConfirmacao(session.data)) {
+  // 2) Confirmação de data: nota antiga (>30d), futura ou marcada como incerta
+  //    pela confiança baixa do OCR.
+  if (
+    !session.dataConfirmada &&
+    (session.dataIncerta || dataPrecisaConfirmacao(session.data))
+  ) {
+    const resposta = session.dataIncerta
+      ? M.imagem.perguntaDataIncerta()
+      : M.imagem.perguntaDataConfirmacao(formatDataBR(session.data as string));
     return {
       status: "aguardando_data_confirmacao",
       newStatus: "img_aguardando_data_confirmacao",
       session,
-      resposta: M.imagem.perguntaDataConfirmacao(formatDataBR(session.data as string)),
+      resposta,
     };
   }
   // 3) Forma de pagamento, quando não detectada.
