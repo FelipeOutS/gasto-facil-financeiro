@@ -1937,6 +1937,39 @@ export async function processarMensagemWhatsApp(
   }
 
   // ---- Caso B: nenhuma sessão ativa → parse normal ----
+  const guardSessaoComprovante = await buscarSessaoAtiva(userId, msg.telefone);
+  if (guardSessaoComprovante && isComprovanteSession(guardSessaoComprovante.session)) {
+    console.warn(
+      "[whatsapp-comprovante] parser guard redirected active receipt session",
+      receiptSessionDiagnostic(guardSessaoComprovante),
+    );
+    const out = await processarRespostaImagem({
+      userId,
+      texto,
+      session: guardSessaoComprovante.session as unknown as ComprovanteSession,
+      status: ((COMPROVANTE_PENDING_STATES as readonly string[]).includes(guardSessaoComprovante.status)
+        ? guardSessaoComprovante.status
+        : "img_aguardando_confirmacao") as ComprovanteStatus,
+      decisao,
+    });
+    await supabaseAdmin
+      .from("whatsapp_messages")
+      .update({ status: "expirada" })
+      .eq("id", guardSessaoComprovante.id);
+    const nextStatus = out.newStatus ?? "img_aguardando_confirmacao";
+    await gravarSessao(
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      nextStatus,
+      (out.session ?? guardSessaoComprovante.session) as unknown as Session,
+      out.resposta,
+      out.gastoId,
+    );
+    return { status: out.status === "salva" ? "salva" : "pendente", gastoId: out.gastoId, resposta: out.resposta };
+  }
   const parsed = parseWhatsAppExpenseMessage(texto, cartoes);
   // Comandos genéricos ("registrar gasto", "novo gasto", ...) e descrições
   // automáticas inválidas ("Gasto WhatsApp") NUNCA podem virar descrição
