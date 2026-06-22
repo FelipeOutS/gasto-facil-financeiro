@@ -206,7 +206,7 @@ test("Ajuste de data com 'ontem' atualiza o resumo", async () => {
 });
 
 test("Sem forma de pagamento detectada → 'sim' pergunta como pagou antes de salvar", async () => {
-  mockOcr({ valor: 30, descricao: "Uber", data: "2026-06-22", formaPagamento: null });
+  mockOcr({ valor: 30, descricao: "Uber", data: null, categoriaSugerida: "transporte", formaPagamento: null });
   await processarMensagemWhatsApp({
     telefone: tel, texto: "", external_id: "img-p1", image: fakeImage("h-p1"),
   });
