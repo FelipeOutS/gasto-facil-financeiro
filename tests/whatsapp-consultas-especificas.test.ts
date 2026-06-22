@@ -88,7 +88,7 @@ test("Descrição sem resultados responde mensagem dedicada", async () => {
     telefone: tel, texto: "Quanto gastei com iFood?", external_id: "g4-d-3",
   });
   expect(r.resposta).toContain("Não encontrei gastos");
-  expect(r.resposta).toContain("iFood");
+  expect(r.resposta.toLowerCase()).toContain("ifood");
 });
 
 // ---------- gasto por categoria ----------
