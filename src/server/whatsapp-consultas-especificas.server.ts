@@ -196,7 +196,7 @@ type ReceitaRow = {
   data: string;
   tipo: string | null;
 };
-type CategoriaRow = { id: string; nome: string | null; tipo?: string | null };
+type CategoriaRow = { id: string; nome: string | null };
 
 async function loadGastos(userId: string, from: string, toExclusive: string): Promise<GastoRow[]> {
   const { data } = await supabaseAdmin
@@ -218,17 +218,20 @@ async function loadReceitas(userId: string, from: string, toExclusive: string): 
   return Array.isArray(data) ? (data as ReceitaRow[]) : [];
 }
 
+/**
+ * Carrega as categorias do próprio usuário. A tabela `public.categorias`
+ * só armazena categorias de despesa (receitas têm seu próprio enum
+ * `tipo`). Importante: NÃO selecionar colunas inexistentes — a versão
+ * anterior pedia `tipo`, coluna que não existe no schema real, e o
+ * Supabase devolvia erro, deixando a busca por categoria sempre vazia.
+ */
 async function loadCategoriasDespesa(userId: string): Promise<CategoriaRow[]> {
   const { data } = await supabaseAdmin
     .from("categorias")
-    .select("id, nome, tipo")
+    .select("id, nome")
     .eq("user_id", userId);
   if (!Array.isArray(data)) return [];
-  // Filtra apenas categorias de despesa. Quando o campo `tipo` não existe
-  // ou é null, mantemos (compatibilidade com dados antigos).
-  return (data as CategoriaRow[]).filter(
-    (c) => !c.tipo || String(c.tipo).toLowerCase() === "despesa",
-  );
+  return data as CategoriaRow[];
 }
 
 function sumValor(rows: { valor: number | string | null }[]): number {
@@ -250,16 +253,37 @@ function descricaoMatches(descricao: string, termo: string): boolean {
   return tokens.every((w) => new RegExp(`\\b${w}`).test(d));
 }
 
+function singularize(s: string): string {
+  // Português: heurística simples para casar plural/singular.
+  // Mantém palavras curtas intactas.
+  if (s.length < 4) return s;
+  if (s.endsWith("oes")) return s.slice(0, -3) + "ao"; // cartoes -> cartao
+  if (s.endsWith("aes")) return s.slice(0, -3) + "ao"; // paes -> pao
+  if (s.endsWith("ais")) return s.slice(0, -2) + "l";  // animais -> animal
+  if (s.endsWith("eis")) return s.slice(0, -2) + "l";  // moveis -> movel
+  if (s.endsWith("ois")) return s.slice(0, -2) + "l";  // farois -> farol
+  if (s.endsWith("uis")) return s.slice(0, -2) + "l";  // azuis -> azul
+  if (s.endsWith("ns"))  return s.slice(0, -2) + "m";  // homens -> homem
+  if (s.endsWith("res") || s.endsWith("ses") || s.endsWith("zes")) return s.slice(0, -2);
+  if (s.endsWith("s"))   return s.slice(0, -1);
+  return s;
+}
+
+function normCat(s: string): string {
+  return singularize(norm(s));
+}
+
 function findCategoriasByTermo(
   categorias: CategoriaRow[],
   termo: string,
 ): CategoriaRow[] {
-  const t = norm(termo);
+  const t = normCat(termo);
   if (!t) return [];
-  const exact = categorias.filter((c) => norm(c.nome ?? "") === t);
+  const exact = categorias.filter((c) => normCat(c.nome ?? "") === t);
   if (exact.length > 0) return exact;
   return categorias.filter((c) => {
-    const n = norm(c.nome ?? "");
+    const n = normCat(c.nome ?? "");
+    if (!n) return false;
     return n.includes(t) || t.includes(n);
   });
 }

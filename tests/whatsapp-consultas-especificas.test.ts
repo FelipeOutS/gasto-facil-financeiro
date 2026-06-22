@@ -273,3 +273,113 @@ test("Uber 29,90 continua sendo lançamento, não consulta", async () => {
   });
   expect(r.status).toBe("aguardando_forma_pagamento");
 });
+
+// ---------- WA-G4.1: correção de consulta por categoria ----------
+test("WA-G4.1 — categoria Transporte encontra gastos vinculados (soma e total)", async () => {
+  resetState({
+    gastos: [
+      { descricao: "Uber", valor: 81.9,  data: monthStart(),  categoria_id: "cat-trans" },
+      { descricao: "Uber", valor: 49.9,  data: daysAgoISO(2), categoria_id: "cat-trans" },
+      { descricao: "Mercado", valor: 200, data: monthStart(), categoria_id: "cat-mer" },
+    ],
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "quanto gastei com transporte?", external_id: "g41-1",
+  });
+  expect(r.status).toBe("consulta");
+  expect(r.resposta).toContain("Transporte");
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 131,80");
+  expect(r.resposta).toMatch(/2 lan/);
+});
+
+test("WA-G4.1 — sem acento encontra categoria com acento (Saúde)", async () => {
+  resetState({
+    gastos: [
+      { descricao: "Farmácia", valor: 50, data: monthStart(), categoria_id: "cat-saude" },
+    ],
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "quanto gastei com saude", external_id: "g41-2",
+  });
+  expect(r.status).toBe("consulta");
+  expect(r.resposta).toContain("Saúde");
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 50,00");
+});
+
+test("WA-G4.1 — termo no plural encontra categoria no singular", async () => {
+  resetState({
+    gastos: [
+      { descricao: "Uber", valor: 30, data: monthStart(), categoria_id: "cat-trans" },
+    ],
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "quanto gastei com transportes", external_id: "g41-3",
+  });
+  expect(r.status).toBe("consulta");
+  expect(r.resposta).toContain("Transporte");
+});
+
+test("WA-G4.1 — gastos de outra categoria não entram na soma", async () => {
+  resetState({
+    gastos: [
+      { descricao: "Uber",    valor: 30,  data: monthStart(), categoria_id: "cat-trans" },
+      { descricao: "Mercado", valor: 999, data: monthStart(), categoria_id: "cat-mer"   },
+      { descricao: "Plano",   valor: 500, data: monthStart(), categoria_id: "cat-saude" },
+    ],
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "quanto gastei com transporte", external_id: "g41-4",
+  });
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 30,00");
+  expect(r.resposta).not.toContain("999");
+  expect(r.resposta).not.toContain("500");
+});
+
+test("WA-G4.1 — gastos futuros não entram na consulta por categoria", async () => {
+  resetState({
+    gastos: [
+      { descricao: "Uber",  valor: 30,   data: monthStart(),     categoria_id: "cat-trans" },
+      { descricao: "Uber",  valor: 9999, data: daysAheadISO(3),  categoria_id: "cat-trans" },
+    ],
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "quanto gastei com transporte", external_id: "g41-5",
+  });
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 30,00");
+  expect(r.resposta).not.toContain("9.999");
+});
+
+test("WA-G4.1 — outro usuário não aparece (categoria/gasto filtrados por user_id)", async () => {
+  resetState({
+    categorias: [
+      { id: "cat-trans-u1", legacy_id: "transporte", nome: "Transporte", user_id: "u1" },
+    ],
+    gastos: [
+      { descricao: "Uber", valor: 30, data: monthStart(), categoria_id: "cat-trans-u1", user_id: "u1" },
+      // Mesmo se "vazasse", não tem categoria do u1
+      { descricao: "Uber outro", valor: 5000, data: monthStart(), categoria_id: "cat-trans-outro", user_id: "u2" },
+    ],
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "quanto gastei com transporte", external_id: "g41-6",
+  });
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 30,00");
+  expect(r.resposta).not.toContain("5.000");
+});
+
+test("WA-G4.1 — descrição continua funcionando quando não há categoria correspondente", async () => {
+  resetState({
+    categorias: [
+      { id: "cat-out", legacy_id: "outros", nome: "Outros", user_id: "u1" },
+    ],
+    gastos: [
+      { descricao: "iFood", valor: 45, data: monthStart(), categoria_id: "cat-out" },
+    ],
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "quanto gastei com iFood", external_id: "g41-7",
+  });
+  expect(r.status).toBe("consulta");
+  expect(r.resposta.toLowerCase()).toContain("ifood");
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 45,00");
+});
