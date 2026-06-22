@@ -291,6 +291,39 @@ function fallbackCategoria(cats: CategoriaRow[]): CategoriaRow | null {
   return out;
 }
 
+/**
+ * Resolve uma categoria a partir do texto do usuário durante a sessão de
+ * comprovante. Aceita:
+ *  - índice numérico ("1", "2", ...) referente à ordem exibida em
+ *    `listarCategorias`;
+ *  - "categoria <termo>" — tira o prefixo;
+ *  - nome exato (ex.: "Transporte") ou contém (ex.: "transp").
+ *
+ * Categorias de outro usuário nunca entram em `cats` (filtro por
+ * `user_id` em `carregarCategoriasDespesa`).
+ */
+function pickCategoria(
+  cats: CategoriaRow[],
+  texto: string,
+): CategoriaRow | null {
+  const raw = (texto || "").trim();
+  if (!raw) return null;
+  // pontuação/aspas no fim
+  const limpo = raw.replace(/^[•\-.\s]+/, "").replace(/[.!?\s]+$/, "");
+  const t = normalize(limpo);
+  if (!t) return null;
+  // "categoria X" → X
+  const semPrefixo = t.replace(/^categoria\s+/, "").trim();
+  // numérico puro → índice
+  const numMatch = semPrefixo.match(/^(\d{1,3})$/);
+  if (numMatch) {
+    const idx = Number(numMatch[1]) - 1;
+    if (idx >= 0 && idx < cats.length) return cats[idx];
+    return null;
+  }
+  return findCategoriaByTerm(cats, semPrefixo);
+}
+
 // ----- detecção de comandos ---------------------------------------------
 type AjusteField = "valor" | "descricao" | "categoria" | "data" | "pagamento";
 type AjusteIntent =
@@ -301,24 +334,30 @@ type AjusteIntent =
   | { kind: "direct"; field: "data"; data: string }
   | { kind: "direct"; field: "pagamento"; forma: string };
 
+const VERBO_AJUSTE = "(alterar|trocar|mudar|corrigir|editar|ajustar)";
+
 export function detectAjuste(texto: string): AjusteIntent | null {
-  const t = normalize(texto);
+  if (!texto) return null;
+  // remove pontuação final que costuma chegar do WhatsApp ("categoria.",
+  // "categoria!", "categoria?").
+  const limpo = texto.replace(/[.!?\s]+$/g, "").trim();
+  const t = normalize(limpo);
   if (!t) return null;
 
-  // pedidos simples
-  if (/^(alterar |trocar |mudar |corrigir )?valor$/.test(t)) {
+  // pedidos simples — "categoria", "alterar categoria", "editar categoria"...
+  if (new RegExp(`^(${VERBO_AJUSTE}\\s+)?valor$`).test(t)) {
     return { kind: "ask", field: "valor" };
   }
-  if (/^(alterar |trocar |mudar |corrigir )?(descricao|descrição)$/.test(t)) {
+  if (new RegExp(`^(${VERBO_AJUSTE}\\s+)?(descricao|descrição)$`).test(t)) {
     return { kind: "ask", field: "descricao" };
   }
-  if (/^(alterar |trocar |mudar |corrigir )?categoria$/.test(t)) {
+  if (new RegExp(`^(${VERBO_AJUSTE}\\s+)?categoria$`).test(t)) {
     return { kind: "ask", field: "categoria" };
   }
-  if (/^(alterar |trocar |mudar |corrigir )?data$/.test(t)) {
+  if (new RegExp(`^(${VERBO_AJUSTE}\\s+)?data$`).test(t)) {
     return { kind: "ask", field: "data" };
   }
-  if (/^(alterar |trocar |mudar |corrigir )?(pagamento|forma de pagamento)$/.test(t)) {
+  if (new RegExp(`^(${VERBO_AJUSTE}\\s+)?(pagamento|forma de pagamento|forma)$`).test(t)) {
     return { kind: "ask", field: "pagamento" };
   }
 
