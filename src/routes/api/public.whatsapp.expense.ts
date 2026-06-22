@@ -444,6 +444,23 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
           // envia resposta.
           const elig = await checkPhoneEligibility(msg.telefone, canaryOn);
           if (!elig.allowed) {
+            // WA-G5B — número não autorizado.
+            //  - Texto: resposta neutra, 1× por número/24h (anti-spam).
+            //  - Imagem/anexo: silêncio total (já não baixamos mídia).
+            // NÃO grava texto, NÃO grava telefone bruto em logs, NÃO
+            // cria sessão, NÃO baixa mídia, NÃO chama OCR/IA.
+            if (msg.texto?.trim() && !msg.image) {
+              try {
+                if (await shouldSendBlockedReply(msg.telefone)) {
+                  await sendWhatsAppReply(msg.telefone, WHATSAPP_BLOCKED_REPLY);
+                }
+              } catch (replyErr) {
+                console.error(
+                  "[whatsapp] blocked reply failed:",
+                  replyErr instanceof Error ? replyErr.name : "unknown",
+                );
+              }
+            }
             results.push({ status: "nao_elegivel" });
             continue;
           }
