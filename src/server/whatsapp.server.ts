@@ -1287,10 +1287,7 @@ export async function processarMensagemWhatsApp(
   }
 
   const recebidaEm = msg.recebida_em ?? new Date().toISOString();
-  const cartoes = await carregarCartoes(userId);
-  const categorias = await carregarCategorias(userId);
   const decisao = classificarResposta(texto);
-  let sessao = await buscarSessaoAtiva(userId, msg.telefone);
 
   // ---- WA: comando de reinício geral ("cancelar", "reiniciar", ...) ----
   // Prioridade máxima: encerra qualquer sessão pendente (gasto, receita,
@@ -1298,9 +1295,7 @@ export async function processarMensagemWhatsApp(
   // inicial limpo. Não toca em lançamentos já confirmados nem em vínculo,
   // consentimento, retenção ou histórico — apenas estados aguardando_*.
   if (isResetCommand(texto)) {
-    if (sessao) {
-      await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
-    }
+    await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     const resposta = M.resetConversa();
     await gravarSessao(
       userId,
@@ -1320,11 +1315,71 @@ export async function processarMensagemWhatsApp(
     return { status: "cancelada", resposta };
   }
 
+  let sessao = await buscarSessaoAtiva(userId, msg.telefone);
+  const cartoes = await carregarCartoes(userId);
+  const categorias = await carregarCategorias(userId);
+
+  // ---- Fase WA-G5A: sessão de comprovante/imagem pendente ----
+  // Prioridade absoluta após reset e antes de qualquer parser/fluxo genérico.
+  if (sessao && isComprovanteSession(sessao.session)) {
+    if (!(COMPROVANTE_PENDING_STATES as readonly string[]).includes(sessao.status)) {
+      console.info("[whatsapp-comprovante] active receipt session recovered outside pending list", receiptSessionDiagnostic(sessao));
+    } else if (isReceiptReservedCommand(texto)) {
+      console.info("[whatsapp-comprovante] reserved command routed to receipt handler", receiptSessionDiagnostic(sessao));
+    }
+    const prev = sessao.session as ComprovanteSession;
+    if (msg.image) {
+      const aviso = M.imagem.sessaoEmAndamento();
+      await atualizarSessao(sessao.id, sessao.status, prev as unknown as Session, aviso);
+      return { status: "pendente", resposta: aviso };
+    }
+    if (decisao === "cancel") {
+      await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "cancelada", prev as unknown as Session, M.imagem.cancelado(),
+      );
+      return { status: "cancelada", resposta: M.imagem.cancelado() };
+    }
+    const out = await processarRespostaImagem({
+      userId,
+      texto,
+      session: prev,
+      status: ((COMPROVANTE_PENDING_STATES as readonly string[]).includes(sessao.status)
+        ? sessao.status
+        : "img_aguardando_confirmacao") as ComprovanteStatus,
+      decisao,
+    });
+    await supabaseAdmin
+      .from("whatsapp_messages")
+      .update({ status: "expirada" })
+      .eq("id", sessao.id);
+    if (out.status === "salva") {
+      await fecharSessoesAnteriores(userId, msg.telefone, "salva", out.gastoId);
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "salva", (out.session ?? prev) as unknown as Session,
+        out.resposta, out.gastoId,
+      );
+      return { status: "salva", gastoId: out.gastoId, resposta: out.resposta };
+    }
+    const nextStatus = out.newStatus ?? "img_aguardando_confirmacao";
+    await gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      nextStatus, (out.session ?? prev) as unknown as Session, out.resposta,
+    );
+    return { status: "pendente", resposta: out.resposta };
+  }
+
+  // ---- Blindagem final: comandos reservados de comprovante nunca viram gasto. ----
+  if (sessao && isReceiptReservedCommand(texto)) {
+    return { status: "pendente", resposta: M.semPendencia() };
+  }
 
   // ---- Fase WA-G5A: imagem chegou enquanto há sessão pendente NÃO-comprovante ----
   // Uma foto nunca interrompe um fluxo de gasto/receita em andamento.
   // Orienta o usuário a enviar "cancelar" antes de mandar a foto.
-  if (msg.image && sessao && !isComprovanteSession(sessao.session)) {
+  if (msg.image && sessao) {
     const aviso = M.imagem.sessaoEmAndamento();
     await gravarSessao(
       userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
