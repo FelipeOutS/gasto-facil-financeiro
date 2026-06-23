@@ -1591,6 +1591,7 @@ export async function processarMensagemWhatsApp(
   // Uma foto nunca interrompe um fluxo de gasto/receita em andamento.
   // Orienta o usuário a enviar "cancelar" antes de mandar a foto.
   if (msg.image && sessao) {
+    logWaRouteDecision(msg, "receipt_handler", "image_blocked_by_existing_non_receipt_session");
     const aviso = M.imagem.sessaoEmAndamento();
     await gravarSessao(
       userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
@@ -1602,6 +1603,7 @@ export async function processarMensagemWhatsApp(
   // ---- Fase WA-G1: sessão de receita pendente sempre tem prioridade. ----
   const sessionIsReceita = sessao && isReceitaSession(sessao.session);
   if (sessionIsReceita) {
+    logWaRouteDecision(msg, "revenue_handler", "active_revenue_session");
     return await processarReceita({
       userId, msg, texto, recebidaEm, decisao, sessao,
     });
@@ -1612,6 +1614,7 @@ export async function processarMensagemWhatsApp(
   // Mantém o fluxo de despesa em andamento — "oi"/"ajuda"/"menu" apenas
   // lembram o usuário do que falta. Só "cancelar" encerra a sessão.
   if (sessao && sessao.status === "aguardando_descricao_e_valor_gasto") {
+    logWaRouteDecision(msg, "expense_parser", "active_expense_missing_fields_session");
     const prev = sessao.session;
     const hardCancelRe = /\b(cancelar|cancela|cancelado|cancelada)\b/i;
     if (hardCancelRe.test(texto) || decisao === "cancel") {
@@ -1632,6 +1635,8 @@ export async function processarMensagemWhatsApp(
     }
     receiptLookup = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
     if (receiptLookup.sessao) {
+      logWaSessionLookup({ msg, activeSession: receiptLookup.sessao, receiptLookup });
+      logWaRouteDecision(msg, "receipt_handler", "receipt_session_found_inside_expense_session_guard");
       return await processarSessaoComprovanteAtiva({
         userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
       });
