@@ -2032,7 +2032,7 @@ export async function processarMensagemWhatsApp(
       );
       return { status: "pendente", resposta: out.resposta };
     }
-    await gravarSessao(
+    const saveResult = await gravarSessao(
       userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
       nextStatus as string,
       (out.session ?? {
@@ -2041,8 +2041,33 @@ export async function processarMensagemWhatsApp(
       }) as unknown as Session,
       out.resposta,
     );
-    // WA-G5A.4 — audita imediatamente após a persistência da sessão de imagem.
-    await logReceiptSessionCreatedAudit({ msg, userId, persisted: true });
+    // WA-G5A.5 — readback obrigatório: só responde o resumo se a sessão
+    // foi efetivamente persistida E for recuperável pela mesma query
+    // que a próxima mensagem ("categoria", "valor", ...) usará.
+    let readbackOk = false;
+    if (saveResult.ok) {
+      const verify = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
+      readbackOk = !!verify.sessao
+        && isComprovanteSession(verify.sessao.session)
+        && !FINAL_SESSION_STATES.has(verify.sessao.status);
+    }
+    await logReceiptSessionCreatedAudit({ msg, userId, persisted: saveResult.ok });
+    if (!saveResult.ok || !readbackOk) {
+      console.error({
+        event: "wa_receipt_session_unrecoverable",
+        handlerVersion: WHATSAPP_HANDLER_VERSION,
+        conversationKey: conversationKeyFor(msg.telefone),
+        messageKey: messageKeyFor(msg.external_id),
+        saveOk: saveResult.ok,
+        readbackOk,
+        errorCode: saveResult.errorCode,
+      });
+      return {
+        status: "falha",
+        resposta:
+          "Não consegui preparar essa nota agora.\nTente enviar a foto novamente em alguns instantes.",
+      };
+    }
     return { status: "pendente", resposta: out.resposta };
   }
 
