@@ -621,7 +621,7 @@ export const whatsappMessages = {
       return [
         `Claro. Qual categoria você quer usar?`,
         ``,
-        `Ex.: Alimentação, Transporte, Saúde ou Lazer.${listaCategorias}`,
+        `${listaCategorias.trim()}`,
       ].join("\n");
     },
     pedirNovoPagamento() {
