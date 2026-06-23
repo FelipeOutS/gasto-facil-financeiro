@@ -1071,18 +1071,13 @@ export async function processarRespostaImagem(args: {
       }
       next.descricao = d;
     } else if (field === "categoria") {
-      const found = pickCategoria(cats, texto);
-      if (!found) {
-        return {
-          status: "aguardando_ajuste",
-          newStatus: "img_aguardando_ajuste",
-          session: { ...session, pendingField: "categoria" },
-          resposta: M.imagem.pedirNovaCategoria(listarCategorias(cats)),
-        };
-      }
+      const r = await handleCategoriaReply(userId, session, cats, texto, "ajuste");
+      if (r.result) return r.result;
+      const found = r.picked!;
       next.categoriaId = found.id;
       next.categoriaLabel = found.nome;
       next.categoriaNaoIdentificada = false;
+      next.categoriaOptions = undefined;
     } else if (field === "data") {
       const d = parseData(texto);
       if (!d) {
