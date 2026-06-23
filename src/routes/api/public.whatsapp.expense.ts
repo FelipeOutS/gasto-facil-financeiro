@@ -667,16 +667,7 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               }
               // (c) validação rápida do MIME declarado, ANTES do download.
               const declared = msg.audio.mimeType?.split(";")[0].trim().toLowerCase();
-              const preliminary = validateDownloadedAudio(
-                // buffer não-vazio sintético só para reusar a regra de MIME
-                new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
-                declared,
-              );
-              if (
-                declared &&
-                preliminary.ok === false &&
-                preliminary.reason === "unsupported_type"
-              ) {
+              if (declared && !ALLOWED_AUDIO_MIME.has(declared)) {
                 logAudioDecision({
                   handlerVersion: WHATSAPP_HANDLER_VERSION,
                   externalId: msg.external_id,
