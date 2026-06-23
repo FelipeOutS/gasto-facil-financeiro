@@ -1059,3 +1059,150 @@ test("WA-G5A.6: categorias de outro usuário nunca aparecem", async () => {
   const ask = await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "g56-9-cat" });
   expect(ask.resposta).not.toContain("Categoria Outro Usuário");
 });
+
+// =====================================================================
+// WA-G5A.7 — dedup estrito por hash exato (sem falso positivo)
+// =====================================================================
+
+test("WA-G5A.7: duas imagens diferentes (hashes diferentes) NÃO são bloqueadas como duplicadas", async () => {
+  // 1) Primeira nota → confirma e salva.
+  mockOcr({ valor: 80, descricao: "Mercado", categoriaSugerida: "mercado", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g57-a-img", image: fakeImage("g57-aaaaaa"),
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "sim", external_id: "g57-a-yes",
+  });
+  expect(gastosInserts()).toHaveLength(1);
+
+  // 2) Segunda nota DIFERENTE (hash diferente) → deve passar normalmente.
+  mockOcr({ valor: 65, descricao: "Drogaria", categoriaSugerida: "saude", formaPagamento: "pix" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g57-b-img", image: fakeImage("g57-bbbbbb"),
+  });
+  expect(r.status).not.toBe("duplicada");
+  expect(r.resposta).toContain("Li esta nota");
+});
+
+test("WA-G5A.7: mesma imagem (hash exato) já salva É bloqueada com mensagem nova", async () => {
+  mockOcr({ valor: 65, descricao: "Stone", categoriaSugerida: "outros", formaPagamento: "credito" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g57-exact-1", image: fakeImage("g57-exact"),
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "sim", external_id: "g57-exact-yes",
+  });
+  expect(gastosInserts()).toHaveLength(1);
+
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g57-exact-2", image: fakeImage("g57-exact"),
+  });
+  expect(r.status).toBe("duplicada");
+  expect(r.resposta).toContain("Não criei outro gasto");
+  expect(gastosInserts()).toHaveLength(1);
+});
+
+test("WA-G5A.7: hash ausente NÃO dispara duplicidade", async () => {
+  mockOcr({ valor: 30, descricao: "Uber", categoriaSugerida: "transporte", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g57-h1", image: fakeImage("g57-haaaaaa"),
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "sim", external_id: "g57-h1-y",
+  });
+  expect(gastosInserts()).toHaveLength(1);
+
+  mockOcr({ valor: 30, descricao: "Uber", categoriaSugerida: "transporte", formaPagamento: "pix" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g57-h2",
+    image: { base64: "data:image/jpeg;base64,/9j/AAAA", mimeType: "image/jpeg", sha256: "" },
+  });
+  expect(r.status).not.toBe("duplicada");
+});
+
+test("WA-G5A.7: hash em formato inválido NÃO dispara duplicidade", async () => {
+  mockOcr({ valor: 30, descricao: "Uber", categoriaSugerida: "transporte", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g57-bad1", image: fakeImage("g57-badxxx"),
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "sim", external_id: "g57-bad1-y",
+  });
+  expect(gastosInserts()).toHaveLength(1);
+
+  mockOcr({ valor: 30, descricao: "Uber", categoriaSugerida: "transporte", formaPagamento: "pix" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g57-bad2",
+    image: { base64: "data:image/jpeg;base64,/9j/AAAA", mimeType: "image/jpeg", sha256: "xx" },
+  });
+  expect(r.status).not.toBe("duplicada");
+});
+
+test("WA-G5A.7: mesmo valor+estabelecimento com hash diferente NÃO é bloqueado", async () => {
+  mockOcr({ valor: 50, descricao: "Mercado X", categoriaSugerida: "mercado", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g57-sim-1", image: fakeImage("g57-simaaaa"),
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "sim", external_id: "g57-sim-1-y",
+  });
+  expect(gastosInserts()).toHaveLength(1);
+
+  // Mesma loja, mesmo valor, hash totalmente diferente → transação diferente.
+  mockOcr({ valor: 50, descricao: "Mercado X", categoriaSugerida: "mercado", formaPagamento: "pix" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g57-sim-2", image: fakeImage("g57-simbbbb"),
+  });
+  expect(r.status).not.toBe("duplicada");
+  expect(r.resposta).toContain("Li esta nota");
+});
+
+test("WA-G5A.7: comprovante de outro user_id NÃO interfere no dedup", async () => {
+  // Salva nota como u1.
+  mockOcr({ valor: 40, descricao: "Loja", categoriaSugerida: "outros", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g57-uA-img", image: fakeImage("g57-shared"),
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "sim", external_id: "g57-uA-yes",
+  });
+  expect(gastosInserts()).toHaveLength(1);
+
+  // Outro telefone/user envia imagem com MESMO hash — deve processar
+  // normalmente (dedup é por user_id).
+  state.linkData = {
+    user_id: "u2",
+    telefone: "5511777776666",
+    ativo: true,
+    opt_in_em: new Date().toISOString(),
+    revogado_em: null,
+  };
+  state.categoriasData = [
+    { id: "cat-out2", legacy_id: "outros", nome: "Outros", user_id: "u2" },
+  ];
+  mockOcr({ valor: 40, descricao: "Loja", categoriaSugerida: "outros", formaPagamento: "pix" });
+  const r = await processarMensagemWhatsApp({
+    telefone: "5511777776666", texto: "", external_id: "g57-uB-img",
+    image: fakeImage("g57-shared"),
+  });
+  expect(r.status).not.toBe("duplicada");
+});
+
+test("WA-G5A.7: reenvio com mesmo external_message_id não cria segundo gasto", async () => {
+  mockOcr({ valor: 25, descricao: "Padaria", categoriaSugerida: "mercado", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g57-ext-1", image: fakeImage("g57-extaaaa"),
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "sim", external_id: "g57-ext-yes",
+  });
+  expect(gastosInserts()).toHaveLength(1);
+
+  // Reenvio técnico do mesmo webhook (mesmo external_id).
+  mockOcr({ valor: 25, descricao: "Padaria", categoriaSugerida: "mercado", formaPagamento: "pix" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g57-ext-1", image: fakeImage("g57-extaaaa"),
+  });
+  expect(r.status).toBe("duplicada");
+  expect(gastosInserts()).toHaveLength(1);
+});
