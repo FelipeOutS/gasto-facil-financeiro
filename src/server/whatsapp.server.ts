@@ -59,13 +59,25 @@ import {
   type ComprovanteStatus,
   type ImageAttachment,
 } from "./whatsapp-comprovantes.server";
+import { createHash } from "crypto";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
+type WhatsAppAuditTestEvent =
+  | { event: "wa_route_decision"; routedTo: string; reason: string }
+  | { event: "wa_expense_parser_guard"; receiptSessionExists: boolean; allowedToParseExpense: boolean }
+  | { event: "wa_session_lookup"; receiptSessionFoundByKind: boolean; receiptSessionFoundByStatus: boolean };
+let auditObserverForTests: ((event: WhatsAppAuditTestEvent) => void) | null = null;
 
 export function __setExpenseParserForTests(
   parser: typeof baseParseWhatsAppExpenseMessage | null,
 ) {
   parseExpenseMessage = parser ?? baseParseWhatsAppExpenseMessage;
+}
+
+export function __setWhatsAppAuditObserverForTests(
+  observer: ((event: WhatsAppAuditTestEvent) => void) | null,
+) {
+  auditObserverForTests = observer;
 }
 
 
@@ -737,7 +749,7 @@ function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
 }
 
 const PENDING_TTL_MS = 30 * 60 * 1000;
-const RECEIPT_HANDLER_VERSION = "receipt-session-hard-gate-v2";
+export const WHATSAPP_HANDLER_VERSION = "receipt-session-audit-v3";
 const PENDING_STATES = [
   "aguardando_confirmacao",
   "aguardando_forma_pagamento",
@@ -844,13 +856,109 @@ function receiptSessionDiagnostic(sessao: SessaoRow | null) {
   };
 }
 
+function auditHash(input: string | null | undefined): string {
+  return createHash("sha256").update(input ?? "").digest("hex").slice(0, 12);
+}
+
+function conversationKeyFor(telefone: string): string {
+  return auditHash(telefone.replace(/\D/g, ""));
+}
+
+function messageKeyFor(externalId: string | null | undefined): string {
+  return auditHash(externalId ?? "");
+}
+
+type WhatsAppAuditRoute =
+  | "receipt_handler"
+  | "expense_parser"
+  | "revenue_handler"
+  | "consulta_handler"
+  | "conversational_handler"
+  | "reset_handler";
+
+export function logWhatsAppInboundReceived(args: {
+  telefone: string;
+  externalId: string | null;
+  messageType: "text" | "image";
+}) {
+  console.info({
+    event: "wa_inbound_received",
+    handlerVersion: WHATSAPP_HANDLER_VERSION,
+    conversationKey: conversationKeyFor(args.telefone),
+    messageKey: messageKeyFor(args.externalId),
+    messageType: args.messageType,
+  });
+}
+
+function logWaSessionLookup(args: {
+  msg: WhatsAppMessageRow;
+  activeSession: SessaoRow | null;
+  receiptLookup: ReceiptSessionLookup;
+}) {
+  const receipt = args.receiptLookup.sessao;
+  auditObserverForTests?.({
+    event: "wa_session_lookup",
+    receiptSessionFoundByKind: args.receiptLookup.sessionFoundByKind,
+    receiptSessionFoundByStatus: args.receiptLookup.sessionFoundByStatus,
+  });
+  console.info({
+    event: "wa_session_lookup",
+    handlerVersion: WHATSAPP_HANDLER_VERSION,
+    conversationKey: conversationKeyFor(args.msg.telefone),
+    messageKey: messageKeyFor(args.msg.external_id),
+    activeSessionFound: !!args.activeSession,
+    activeSessionStatus: args.activeSession?.status ?? null,
+    activeSessionKind: args.activeSession?.session && typeof args.activeSession.session === "object"
+      ? (args.activeSession.session as { kind?: string }).kind ?? null
+      : null,
+    receiptSessionFoundByStatus: args.receiptLookup.sessionFoundByStatus,
+    receiptSessionFoundByKind: args.receiptLookup.sessionFoundByKind,
+    receiptSessionStatus: receipt?.status ?? null,
+    receiptSessionKind: receipt?.session && isComprovanteSession(receipt.session)
+      ? (receipt.session as unknown as ComprovanteSession).kind
+      : null,
+  });
+}
+
+function logWaRouteDecision(msg: WhatsAppMessageRow, routedTo: WhatsAppAuditRoute, reason: string) {
+  auditObserverForTests?.({ event: "wa_route_decision", routedTo, reason });
+  console.info({
+    event: "wa_route_decision",
+    handlerVersion: WHATSAPP_HANDLER_VERSION,
+    conversationKey: conversationKeyFor(msg.telefone),
+    messageKey: messageKeyFor(msg.external_id),
+    routedTo,
+    reason,
+  });
+}
+
+function logWaExpenseParserGuard(args: {
+  msg: WhatsAppMessageRow;
+  receiptSessionExists: boolean;
+  allowedToParseExpense: boolean;
+}) {
+  auditObserverForTests?.({
+    event: "wa_expense_parser_guard",
+    receiptSessionExists: args.receiptSessionExists,
+    allowedToParseExpense: args.allowedToParseExpense,
+  });
+  console.info({
+    event: "wa_expense_parser_guard",
+    handlerVersion: WHATSAPP_HANDLER_VERSION,
+    conversationKey: conversationKeyFor(args.msg.telefone),
+    messageKey: messageKeyFor(args.msg.external_id),
+    receiptSessionExists: args.receiptSessionExists,
+    allowedToParseExpense: args.allowedToParseExpense,
+  });
+}
+
 function logReceiptSessionRoute(args: ReceiptSessionLookup & {
   routedTo: "receipt_handler" | "expense_parser";
 }) {
   const s = args.sessao;
   console.info({
     event: "whatsapp_receipt_session_route",
-    handlerVersion: RECEIPT_HANDLER_VERSION,
+    handlerVersion: WHATSAPP_HANDLER_VERSION,
     sessionFoundByStatus: args.sessionFoundByStatus,
     sessionFoundByKind: args.sessionFoundByKind,
     sessionKind: s && isComprovanteSession(s.session) ? (s.session as ComprovanteSession).kind : null,
@@ -1462,6 +1570,7 @@ export async function processarMensagemWhatsApp(
   // inicial limpo. Não toca em lançamentos já confirmados nem em vínculo,
   // consentimento, retenção ou histórico — apenas estados aguardando_*.
   if (isResetCommand(texto)) {
+    logWaRouteDecision(msg, "reset_handler", "global_reset_command");
     await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     await fecharSessoesComprovanteAtivas(userId, msg.telefone, "cancelada");
     const resposta = M.resetConversa();
@@ -1488,12 +1597,20 @@ export async function processarMensagemWhatsApp(
   // lista PENDING_STATES. É o primeiro roteamento após reset/global gate.
   let receiptLookup = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
   if (receiptLookup.sessao) {
+    logWaSessionLookup({ msg, activeSession: receiptLookup.sessao, receiptLookup });
+    logWaExpenseParserGuard({
+      msg,
+      receiptSessionExists: true,
+      allowedToParseExpense: false,
+    });
+    logWaRouteDecision(msg, "receipt_handler", "active_receipt_session_before_any_parser");
     return await processarSessaoComprovanteAtiva({
       userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
     });
   }
 
   let sessao = await buscarSessaoAtiva(userId, msg.telefone);
+  logWaSessionLookup({ msg, activeSession: sessao, receiptLookup });
   const cartoes = await carregarCartoes(userId);
   const categorias = await carregarCategorias(userId);
 
@@ -1501,6 +1618,7 @@ export async function processarMensagemWhatsApp(
   // Uma foto nunca interrompe um fluxo de gasto/receita em andamento.
   // Orienta o usuário a enviar "cancelar" antes de mandar a foto.
   if (msg.image && sessao) {
+    logWaRouteDecision(msg, "receipt_handler", "image_blocked_by_existing_non_receipt_session");
     const aviso = M.imagem.sessaoEmAndamento();
     await gravarSessao(
       userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
@@ -1512,6 +1630,7 @@ export async function processarMensagemWhatsApp(
   // ---- Fase WA-G1: sessão de receita pendente sempre tem prioridade. ----
   const sessionIsReceita = sessao && isReceitaSession(sessao.session);
   if (sessionIsReceita) {
+    logWaRouteDecision(msg, "revenue_handler", "active_revenue_session");
     return await processarReceita({
       userId, msg, texto, recebidaEm, decisao, sessao,
     });
@@ -1542,10 +1661,23 @@ export async function processarMensagemWhatsApp(
     }
     receiptLookup = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
     if (receiptLookup.sessao) {
+      logWaSessionLookup({ msg, activeSession: receiptLookup.sessao, receiptLookup });
+      logWaExpenseParserGuard({
+        msg,
+        receiptSessionExists: true,
+        allowedToParseExpense: false,
+      });
+      logWaRouteDecision(msg, "receipt_handler", "receipt_session_found_inside_expense_session_guard");
       return await processarSessaoComprovanteAtiva({
         userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
       });
     }
+    logWaExpenseParserGuard({
+      msg,
+      receiptSessionExists: false,
+      allowedToParseExpense: true,
+    });
+    logWaRouteDecision(msg, "expense_parser", "active_expense_missing_fields_session");
     // Tenta extrair descrição/valor da nova mensagem e mescla com a sessão.
     const parsedNovo = parseExpenseMessage(texto, cartoes);
     if (isGenericExpenseDescription(parsedNovo.nome)) parsedNovo.nome = "";
@@ -1628,6 +1760,7 @@ export async function processarMensagemWhatsApp(
   if (msg.image) {
     if (sessao) {
       // sessão pendente não-comprovante (gasto/receita/etc.) — não processa OCR.
+      logWaRouteDecision(msg, "receipt_handler", "image_blocked_by_existing_session");
       const aviso = M.imagem.sessaoEmAndamento();
       await gravarSessao(
         userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
@@ -1641,6 +1774,7 @@ export async function processarMensagemWhatsApp(
       // Drop silencioso: 200 OK sem OCR, sem persistir imagem, sem resposta.
       return { status: "sem_plano", resposta: "" };
     }
+    logWaRouteDecision(msg, "receipt_handler", "new_image_without_active_session");
     // Dedup por hash da imagem nas últimas 30min (mesmo usuário+telefone).
     const sha = msg.image.sha256 ?? "";
     if (sha) {
@@ -1731,6 +1865,7 @@ export async function processarMensagemWhatsApp(
   if (!sessao && decisao === "outro") {
     const conv = detectConversationalIntent(texto);
     if (conv) {
+      logWaRouteDecision(msg, "conversational_handler", "conversational_intent_without_session");
       const out = handleConversational(msg.telefone, conv);
       await gravarSessao(
         userId,
@@ -1781,6 +1916,7 @@ export async function processarMensagemWhatsApp(
   if (!sessao && decisao === "outro") {
     const intent = detectConsultaIntent(texto);
     if (intent) {
+      logWaRouteDecision(msg, "consulta_handler", "consulta_intent_without_session");
       const out = await handleConsulta(userId, intent);
       await gravarSessao(
         userId,
@@ -1809,6 +1945,7 @@ export async function processarMensagemWhatsApp(
   if (!sessao && decisao === "outro") {
     const espec = detectConsultaEspecifica(texto);
     if (espec) {
+      logWaRouteDecision(msg, "consulta_handler", "consulta_especifica_without_session");
       const out = await handleConsultaEspecifica(userId, espec);
       if (out.status === "consulta_categoria_ambigua") {
         await gravarSessao(
@@ -1844,6 +1981,7 @@ export async function processarMensagemWhatsApp(
   // ---- Fase WA-G1: texto livre indicando intenção de receita. ----
   const startsReceita = !sessao && decisao === "outro" && isReceitaIntent(texto);
   if (startsReceita) {
+    logWaRouteDecision(msg, "revenue_handler", "new_revenue_intent");
     return await processarReceita({
       userId, msg, texto, recebidaEm, decisao, sessao: null,
     });
@@ -2073,13 +2211,26 @@ export async function processarMensagemWhatsApp(
   // parsed.kind = imagem_comprovante. Se houver sessão ativa, o parser não roda.
   receiptLookup = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
   if (receiptLookup.sessao) {
+    logWaSessionLookup({ msg, activeSession: receiptLookup.sessao, receiptLookup });
+    logWaExpenseParserGuard({
+      msg,
+      receiptSessionExists: true,
+      allowedToParseExpense: false,
+    });
+    logWaRouteDecision(msg, "receipt_handler", "final_guard_receipt_session_found");
     return await processarSessaoComprovanteAtiva({
       userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
     });
   }
+  logWaExpenseParserGuard({
+    msg,
+    receiptSessionExists: false,
+    allowedToParseExpense: true,
+  });
   if (isReceiptReservedCommand(texto)) {
     logReceiptSessionRoute({ ...receiptLookup, routedTo: "expense_parser" });
   }
+  logWaRouteDecision(msg, "expense_parser", "no_active_session_after_final_guard");
   const parsed = parseExpenseMessage(texto, cartoes);
   // Comandos genéricos ("registrar gasto", "novo gasto", ...) e descrições
   // automáticas inválidas ("Gasto WhatsApp") NUNCA podem virar descrição

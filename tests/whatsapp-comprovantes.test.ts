@@ -4,8 +4,14 @@
  */
 import { test, expect, beforeEach } from "bun:test";
 import { state, resetState, gastosInserts } from "./_whatsapp-fake";
+import type { ParsedExpense } from "../src/lib/whatsappParser";
 
-const { processarMensagemWhatsApp, buscarSessaoComprovanteAtiva, __setExpenseParserForTests } = await import(
+const {
+  processarMensagemWhatsApp,
+  buscarSessaoComprovanteAtiva,
+  __setExpenseParserForTests,
+  __setWhatsAppAuditObserverForTests,
+} = await import(
   "../src/server/whatsapp.server"
 );
 const { __setOcrExtractorForTests } = await import(
@@ -51,6 +57,7 @@ beforeEach(() => {
   resetState();
   __setOcrExtractorForTests(null);
   __setExpenseParserForTests(null);
+  __setWhatsAppAuditObserverForTests(null);
 });
 
 // ---------------------------------------------------------------------
@@ -592,6 +599,78 @@ test("E2E produção: comando 'categoria' em sessão de comprovante não cai no 
   expect(selected.resposta).toContain("Pagamento: Pix");
   expect(selected.resposta).toContain("Categoria: Transporte");
   expect(gastosInserts()).toHaveLength(0);
+});
+
+test("Integração realista: cancelar → imagem → comandos de ajuste ficam no comprovante", async () => {
+  async function startReceipt(externalPrefix: string) {
+    await processarMensagemWhatsApp({
+      telefone: tel, texto: "cancelar", external_id: `${externalPrefix}-cancel`,
+    });
+    mockOcr({
+      valor: 48.9,
+      descricao: "EXPEDITO ALVES DE LIMA ME",
+      data: null,
+      categoriaSugerida: "mercado",
+      formaPagamento: "pix",
+    });
+    const resumo = await processarMensagemWhatsApp({
+      telefone: tel, texto: "", external_id: `${externalPrefix}-img`, image: fakeImage(`${externalPrefix}-h`),
+    });
+    expect(resumo.resposta).toContain("Li esta nota");
+    const lookup = await buscarSessaoComprovanteAtiva("u1", tel);
+    expect(lookup.sessionFoundByKind).toBe(true);
+    expect(lookup.sessao?.session.kind).toBe("imagem_comprovante");
+    return lookup;
+  }
+
+  const commands = [
+    ["categoria", "Qual categoria você quer usar"],
+    ["valor", "Qual valor devo usar"],
+    ["data", "Qual data devo usar"],
+    ["pagamento", "Qual forma de pagamento devo usar"],
+    ["descrição", "Qual descrição devo usar"],
+    ["alterar categoria", "Qual categoria você quer usar"],
+  ] as const;
+
+  for (const [idx, [cmd, expected]] of commands.entries()) {
+    resetState();
+    __setExpenseParserForTests(null);
+    const events: Array<Record<string, unknown>> = [];
+    __setWhatsAppAuditObserverForTests((event) => events.push(event));
+    await startReceipt(`audit-${idx}`);
+    let expenseParserCalled = false;
+    __setExpenseParserForTests((message, cartoes) => {
+      expenseParserCalled = true;
+      return {
+        nome: message,
+        valor: 0,
+        data: new Date().toISOString().slice(0, 10),
+        formaPagamento: "credito",
+        mensagemOriginal: message,
+        confianca: 0,
+        notas: [],
+      } as ParsedExpense;
+    });
+
+    const response = await processarMensagemWhatsApp({
+      telefone: tel, texto: cmd, external_id: `audit-${idx}-cmd`,
+    });
+    expect(response.resposta).toContain(expected);
+    expect(expenseParserCalled).toBe(false);
+    expect(events.some((e) => e.event === "wa_session_lookup" && e.receiptSessionFoundByKind === true)).toBe(true);
+    expect(events.some((e) => e.event === "wa_route_decision" && e.routedTo === "receipt_handler")).toBe(true);
+    expect(events.some((e) => e.event === "wa_route_decision" && e.routedTo === "expense_parser")).toBe(false);
+
+    if (cmd === "categoria") {
+      const selected = await processarMensagemWhatsApp({
+        telefone: tel, texto: "3", external_id: `audit-${idx}-cat-3`,
+      });
+      expect(selected.resposta).toContain("Li esta nota");
+      expect(selected.resposta).toContain("Categoria: Transporte");
+    }
+  }
+  __setExpenseParserForTests(null);
+  __setWhatsAppAuditObserverForTests(null);
 });
 
 test("Comandos reservados de comprovante são priorizados mesmo se status salvo vier como pendente", async () => {
