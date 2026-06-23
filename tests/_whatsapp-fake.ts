@@ -172,7 +172,13 @@ function makeBuilder(table: string): any {
       return { data: state.pendingRow, error: null };
     }
     if (table === "cartoes") return { data: state.cartoesData, error: null };
-    if (table === "categorias") return { data: state.categoriasData, error: null };
+    if (table === "categorias") {
+      const uid = ctx.filters?.user_id;
+      const rows = uid
+        ? state.categoriasData.filter((c) => c.user_id === uid)
+        : state.categoriasData;
+      return { data: rows, error: null };
+    }
     if (table === "gastos") {
       if (ctx.filters?.id) return { data: { id: ctx.filters.id }, error: null };
       return { data: applyRangeFilters(state.gastosData, ctx.range), error: null };
