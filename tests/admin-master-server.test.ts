@@ -1,7 +1,7 @@
 /**
  * tests/admin-master-server.test.ts
  *
- * Cobre a fonte única server-side de Admin Master (WA-B1).
+ * Cobre a fonte única server-side de Admin Master (WA-B1 + WA-B4 fail-closed).
  */
 import { test, expect, beforeEach, afterEach, describe } from "bun:test";
 
@@ -12,7 +12,6 @@ async function load() {
   mod.__resetAdminMasterCacheForTests();
   return mod;
 }
-
 
 const ORIGINAL = process.env.ADMIN_MASTER_EMAILS;
 
@@ -31,42 +30,62 @@ afterEach(async () => {
   mod.__resetAdminMasterCacheForTests();
 });
 
-describe("admin-master.server", () => {
-  test("default: e-mail admin embutido é reconhecido", async () => {
-    delete process.env.ADMIN_MASTER_EMAILS;
-    const { isAdminMasterEmail, getAdminMasterSource, getAdminMasterEmails } = await load();
-    expect(isAdminMasterEmail("felipe.out.silva@outlook.com")).toBe(true);
-    expect(isAdminMasterEmail("michael@medeiroscenografia.com.br")).toBe(true);
-    expect(getAdminMasterSource()).toBe("default");
-    expect(getAdminMasterEmails().length).toBeGreaterThan(0);
-  });
-
-  test("env override: lista vinda de ADMIN_MASTER_EMAILS é honrada", async () => {
+describe("admin-master.server — fail-closed (WA-B4)", () => {
+  test("env válida: e-mails são reconhecidos", async () => {
     process.env.ADMIN_MASTER_EMAILS = "alice@example.com, bob@example.com";
-    const { isAdminMasterEmail, getAdminMasterSource, getAdminMasterEmails } = await load();
+    const { isAdminMasterEmail, getAdminMasterSource, getAdminMasterEmails, isAdminMasterConfigured } =
+      await load();
     expect(getAdminMasterSource()).toBe("env");
+    expect(isAdminMasterConfigured()).toBe(true);
     expect(getAdminMasterEmails()).toEqual(["alice@example.com", "bob@example.com"]);
     expect(isAdminMasterEmail("alice@example.com")).toBe(true);
     expect(isAdminMasterEmail("bob@example.com")).toBe(true);
-    expect(isAdminMasterEmail("felipe.out.silva@outlook.com")).toBe(false);
   });
 
-  test("case-insensitive: maiúsculas/minúsculas são equivalentes", async () => {
-    process.env.ADMIN_MASTER_EMAILS = "Alice@Example.COM";
-    const { isAdminMasterEmail } = await load();
-    expect(isAdminMasterEmail("ALICE@example.com")).toBe(true);
-    expect(isAdminMasterEmail("alice@example.com")).toBe(true);
-    expect(isAdminMasterEmail("alice@EXAMPLE.com")).toBe(true);
+  test("env ausente: lista vazia, ninguém vira admin (fail-closed)", async () => {
+    delete process.env.ADMIN_MASTER_EMAILS;
+    const { isAdminMasterEmail, getAdminMasterSource, getAdminMasterEmails, isAdminMasterConfigured } =
+      await load();
+    expect(getAdminMasterSource()).toBe("none");
+    expect(isAdminMasterConfigured()).toBe(false);
+    expect(getAdminMasterEmails()).toEqual([]);
+    expect(isAdminMasterEmail("alice@example.com")).toBe(false);
+    expect(isAdminMasterEmail("anyone@anywhere.com")).toBe(false);
   });
 
-  test("espaços extras são ignorados na configuração e na entrada", async () => {
-    process.env.ADMIN_MASTER_EMAILS = "  alice@example.com  ,  bob@example.com  ";
+  test("env vazia: lista vazia (fail-closed)", async () => {
+    process.env.ADMIN_MASTER_EMAILS = "";
+    const { isAdminMasterEmail, getAdminMasterSource, getAdminMasterEmails } = await load();
+    expect(getAdminMasterSource()).toBe("none");
+    expect(getAdminMasterEmails()).toEqual([]);
+    expect(isAdminMasterEmail("alice@example.com")).toBe(false);
+  });
+
+  test("env só com vírgulas/espaços: lista vazia (fail-closed)", async () => {
+    process.env.ADMIN_MASTER_EMAILS = "  , , ";
+    const { isAdminMasterEmail, getAdminMasterSource, getAdminMasterEmails } = await load();
+    expect(getAdminMasterSource()).toBe("none");
+    expect(getAdminMasterEmails()).toEqual([]);
+    expect(isAdminMasterEmail("eve@example.com")).toBe(false);
+  });
+
+  test("env com itens inválidos: apenas inválidos são filtrados; se sobrar 0, fail-closed", async () => {
+    process.env.ADMIN_MASTER_EMAILS = "not-an-email, @nope, foo@, ";
+    const { isAdminMasterEmail, getAdminMasterSource, getAdminMasterEmails } = await load();
+    expect(getAdminMasterSource()).toBe("none");
+    expect(getAdminMasterEmails()).toEqual([]);
+    expect(isAdminMasterEmail("alice@example.com")).toBe(false);
+  });
+
+  test("case-insensitive e tolerante a espaços", async () => {
+    process.env.ADMIN_MASTER_EMAILS = "  Alice@Example.COM  ";
     const { isAdminMasterEmail, getAdminMasterEmails } = await load();
-    expect(getAdminMasterEmails()).toEqual(["alice@example.com", "bob@example.com"]);
-    expect(isAdminMasterEmail("   alice@example.com   ")).toBe(true);
+    expect(getAdminMasterEmails()).toEqual(["alice@example.com"]);
+    expect(isAdminMasterEmail("ALICE@example.com")).toBe(true);
+    expect(isAdminMasterEmail("  alice@example.com  ")).toBe(true);
   });
 
-  test("e-mail não-admin é rejeitado", async () => {
+  test("e-mail não-admin, null, undefined, vazio são rejeitados", async () => {
     process.env.ADMIN_MASTER_EMAILS = "alice@example.com";
     const { isAdminMasterEmail } = await load();
     expect(isAdminMasterEmail("eve@example.com")).toBe(false);
@@ -76,24 +95,36 @@ describe("admin-master.server", () => {
     expect(isAdminMasterEmail("not-an-email")).toBe(false);
   });
 
-  test("ADMIN_MASTER_EMAILS vazia/inválida → fallback seguro (default), nunca abre para todos", async () => {
-    process.env.ADMIN_MASTER_EMAILS = "   , , ";
-    const { isAdminMasterEmail, getAdminMasterSource, getAdminMasterEmails } = await load();
-    // Strings inválidas filtradas → cai para default (fail-safe).
-    expect(getAdminMasterSource()).toBe("default");
-    expect(getAdminMasterEmails().length).toBeGreaterThan(0);
-    expect(isAdminMasterEmail("eve@example.com")).toBe(false);
-  });
-
   test("duplicatas na env são deduplicadas", async () => {
     process.env.ADMIN_MASTER_EMAILS = "alice@example.com,ALICE@example.com, alice@example.com";
     const { getAdminMasterEmails } = await load();
     expect(getAdminMasterEmails()).toEqual(["alice@example.com"]);
   });
+
+  test("sem env, nenhum log inclui valor da variável, e-mails ou segredos", async () => {
+    delete process.env.ADMIN_MASTER_EMAILS;
+    const captured: string[] = [];
+    const origWarn = console.warn;
+    console.warn = (...args: unknown[]) => {
+      captured.push(args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" "));
+    };
+    try {
+      const { isAdminMasterEmail } = await load();
+      expect(isAdminMasterEmail("alice@example.com")).toBe(false);
+    } finally {
+      console.warn = origWarn;
+    }
+    const joined = captured.join("\n");
+    // log esperado existe...
+    expect(joined).toContain("admin_master_config_missing");
+    // ...mas sem e-mails, sem valor da env, sem variáveis de ambiente.
+    expect(joined).not.toMatch(/@/);
+    expect(joined).not.toMatch(/ADMIN_MASTER_EMAILS\s*=/);
+  });
 });
 
-describe("WA-B1 — fonte única de Admin Master", () => {
-  test("webhook, authz e comprovantes usam o mesmo módulo central", async () => {
+describe("WA-B1 + WA-B4 — fonte única, sem fallback compilado em src/server", () => {
+  test("webhook, authz, comprovantes e api-auth usam o módulo central", async () => {
     const { readFileSync } = await import("fs");
     const authz = readFileSync("src/server/whatsapp-authz.server.ts", "utf8");
     const webhook = readFileSync("src/routes/api/public.whatsapp.expense.ts", "utf8");
@@ -103,18 +134,14 @@ describe("WA-B1 — fonte única de Admin Master", () => {
     expect(authz).toContain("admin-master.server");
     expect(comprov).toContain("admin-master.server");
     expect(apiAuth).toContain("admin-master.server");
-
-    // Webhook não pode mais ter lista hardcoded.
     expect(webhook).not.toContain("felipe.out.silva@outlook.com");
     expect(authz).not.toMatch(/const\s+ADMIN_MASTER_EMAILS\s*=/);
     expect(comprov).not.toMatch(/const\s+adminEmails\s*=\s*\[/);
     expect(apiAuth).not.toMatch(/const\s+ADMIN_MASTER_EMAILS\s*:/);
   });
 
-  test("nenhum arquivo server-side fora do módulo central tem lista hardcoded de admin", async () => {
+  test("nenhum arquivo em src/server tem fallback compilado de admin (incluindo o módulo central)", async () => {
     const { execSync } = await import("child_process");
-    // Busca por e-mails de admin master hardcoded em qualquer arquivo
-    // server-side, exceto o próprio módulo central e os testes.
     let hits = "";
     try {
       hits = execSync(
@@ -124,10 +151,15 @@ describe("WA-B1 — fonte única de Admin Master", () => {
     } catch {
       hits = "";
     }
-    const offenders = hits
-      .split("\n")
-      .filter((p) => p && !p.endsWith("admin-master.server.ts"));
-
+    const offenders = hits.split("\n").filter((p) => p.length > 0);
     expect(offenders).toEqual([]);
+  });
+
+  test("WhatsApp authz continua fail-closed: sem env, e-mail admin não passa por bypass", async () => {
+    delete process.env.ADMIN_MASTER_EMAILS;
+    const { isAdminMasterEmail } = await load();
+    // Mesmo um e-mail que historicamente era admin não pode mais bypassar.
+    expect(isAdminMasterEmail("felipe.out.silva@outlook.com")).toBe(false);
+    expect(isAdminMasterEmail("michael@medeiroscenografia.com.br")).toBe(false);
   });
 });
