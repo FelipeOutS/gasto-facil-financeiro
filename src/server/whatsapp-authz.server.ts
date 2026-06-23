@@ -71,12 +71,12 @@ async function isAdminMaster(userId: string): Promise<{ isAdmin: boolean; email:
   try {
     const { data } = await sb.auth.admin.getUserById(userId);
     const email: string | null = (data?.user?.email ?? "").trim().toLowerCase() || null;
-    const isAdmin = !!email && (ADMIN_MASTER_EMAILS as ReadonlyArray<string>).includes(email);
-    return { isAdmin, email };
+    return { isAdmin: isAdminMasterEmail(email), email };
   } catch {
     return { isAdmin: false, email: null };
   }
 }
+
 
 async function hasEligiblePaidPlan(userId: string, email: string | null): Promise<boolean> {
   try {
