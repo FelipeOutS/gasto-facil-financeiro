@@ -1541,7 +1541,7 @@ export async function processarMensagemWhatsApp(
       return { status: "pendente", resposta };
     }
     // Tenta extrair descrição/valor da nova mensagem e mescla com a sessão.
-    const parsedNovo = parseWhatsAppExpenseMessage(texto, cartoes);
+    const parsedNovo = parseExpenseMessage(texto, cartoes);
     if (isGenericExpenseDescription(parsedNovo.nome)) parsedNovo.nome = "";
     const mergedNome =
       parsedNovo.nome && parsedNovo.nome.length >= 2 ? parsedNovo.nome : (prev.nome ?? "");
@@ -2072,7 +2072,7 @@ export async function processarMensagemWhatsApp(
     });
   }
   logReceiptSessionRoute({ ...receiptLookup, routedTo: "expense_parser" });
-  const parsed = parseWhatsAppExpenseMessage(texto, cartoes);
+  const parsed = parseExpenseMessage(texto, cartoes);
   // Comandos genéricos ("registrar gasto", "novo gasto", ...) e descrições
   // automáticas inválidas ("Gasto WhatsApp") NUNCA podem virar descrição
   // real. Limpamos o nome antes de seguir, para que a sessão pendente
