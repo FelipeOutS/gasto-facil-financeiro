@@ -61,19 +61,15 @@ export function unauthorizedResponse(message = "Você precisa estar logado para 
 }
 
 /**
- * Allowlist espelhada de `src/lib/plans.ts` (ADMIN_MASTER_EMAILS).
- * Mantida aqui para evitar import de módulo client em código de servidor.
+ * Bypass de Admin Master para rotas internas: delega para a fonte única
+ * server-side em `src/server/admin-master.server.ts`.
  */
-const ADMIN_MASTER_EMAILS: ReadonlyArray<string> = [
-  "felipe.out.silva@outlook.com",
-  "michael@medeiroscenografia.com.br",
-];
+import { isAdminMasterEmail as _isAdminMasterEmail } from "./admin-master.server";
 
 export function isAdminMasterUser(user: { email?: string | null } | null | undefined): boolean {
-  const email = user?.email?.trim().toLowerCase();
-  if (!email) return false;
-  return ADMIN_MASTER_EMAILS.includes(email);
+  return _isAdminMasterEmail(user?.email);
 }
+
 
 export function forbiddenResponse(message = "Acesso restrito ao administrador master."): Response {
   return new Response(JSON.stringify({ error: "forbidden", message }), {

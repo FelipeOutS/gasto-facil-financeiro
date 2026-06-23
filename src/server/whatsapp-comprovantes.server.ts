@@ -1310,13 +1310,11 @@ function rebuildResumoOuPreencher(
  */
 export async function podeUsarOcrComprovante(userId: string): Promise<boolean> {
   try {
-    const adminEmails = [
-      "felipe.out.silva@outlook.com",
-      "michael@medeiroscenografia.com.br",
-    ];
+    const { isAdminMasterEmail } = await import("@/server/admin-master.server");
     const { data: u } = await supabaseAdmin.auth.admin.getUserById(userId);
     const email: string = (u?.user?.email ?? "").trim().toLowerCase();
-    if (email && adminEmails.includes(email)) return true;
+    if (isAdminMasterEmail(email)) return true;
+
     const { getSubscriptionForUserIdentity } = await import("@/server/subscription.server");
     const { planAllowsFeature } = await import("@/lib/plans");
     const sub = await getSubscriptionForUserIdentity({ userId, email: email || null, repairLink: false });

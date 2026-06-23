@@ -27,14 +27,11 @@
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createHash } from "crypto";
 import { checkRateLimit } from "./rate-limit.server";
+import { isAdminMasterEmail } from "./admin-master.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = _supabaseAdmin as any;
 
-const ADMIN_MASTER_EMAILS = [
-  "felipe.out.silva@outlook.com",
-  "michael@medeiroscenografia.com.br",
-] as const;
 
 /**
  * Planos pagos que liberam WhatsApp.
@@ -74,12 +71,12 @@ async function isAdminMaster(userId: string): Promise<{ isAdmin: boolean; email:
   try {
     const { data } = await sb.auth.admin.getUserById(userId);
     const email: string | null = (data?.user?.email ?? "").trim().toLowerCase() || null;
-    const isAdmin = !!email && (ADMIN_MASTER_EMAILS as ReadonlyArray<string>).includes(email);
-    return { isAdmin, email };
+    return { isAdmin: isAdminMasterEmail(email), email };
   } catch {
     return { isAdmin: false, email: null };
   }
 }
+
 
 async function hasEligiblePaidPlan(userId: string, email: string | null): Promise<boolean> {
   try {

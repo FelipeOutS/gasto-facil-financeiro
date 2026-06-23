@@ -66,10 +66,11 @@ function isCanaryEnabled(): boolean {
   return (process.env.WHATSAPP_CANARY_ENABLED ?? "").trim().toLowerCase() === "true";
 }
 
-const ADMIN_MASTER_EMAILS = [
-  "felipe.out.silva@outlook.com",
-  "michael@medeiroscenografia.com.br",
-] as const;
+// Allowlist de Admin Master vive em `src/server/admin-master.server.ts`
+// (fonte única server-side). Este arquivo não precisa importar a lista —
+// o gate de autorização (`canUseWhatsAppForSender`) já consulta a fonte
+// central via `whatsapp-authz.server.ts`.
+
 
 // Eligibilidade do telefone: delega ao gate único `canUseWhatsAppForSender`.
 // Mantido como wrapper fino para preservar o call-site existente.
