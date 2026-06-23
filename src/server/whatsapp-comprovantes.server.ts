@@ -1165,20 +1165,15 @@ export async function processarRespostaImagem(args: {
 
   // ----- aguardando categoria obrigatória -----
   if (status === "img_aguardando_categoria_obrigatoria") {
-    const found = pickCategoria(cats, texto);
-    if (!found) {
-      return {
-        status: "aguardando_categoria_obrigatoria",
-        newStatus: "img_aguardando_categoria_obrigatoria",
-        session,
-        resposta: M.imagem.perguntaCategoriaObrigatoria(listarCategorias(cats)),
-      };
-    }
+    const r = await handleCategoriaReply(userId, session, cats, texto, "obrigatoria");
+    if (r.result) return r.result;
+    const found = r.picked!;
     const next: ComprovanteSession = {
       ...session,
       categoriaId: found.id,
       categoriaLabel: found.nome,
       categoriaNaoIdentificada: false,
+      categoriaOptions: undefined,
     };
     return avancarAposConfirmacao(userId, next, cats);
   }
