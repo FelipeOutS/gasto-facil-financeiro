@@ -82,13 +82,20 @@ function buildBuilder(table: string) {
     not: () => chain,
     gte: () => chain,
     order: () => chain,
-    limit: async () => {
-      state.queries.push({ ...ctx });
-      if (table === "whatsapp_messages") {
-        const idx = state.comprovanteCallIdx++;
-        return { data: state.comprovanteRows[idx] ?? [], error: null };
-      }
-      return { data: [], error: null };
+    limit: () => {
+      // Não resolve aqui: caller pode encadear `.maybeSingle()` ou
+      // tratar o builder como thenable.
+      return Object.assign(chain, {
+        then: (resolve: (v: { data: unknown; error: unknown }) => unknown) => {
+          state.queries.push({ ...ctx });
+          if (table === "whatsapp_messages") {
+            const idx = state.comprovanteCallIdx++;
+            resolve({ data: state.comprovanteRows[idx] ?? [], error: null });
+          } else {
+            resolve({ data: [], error: null });
+          }
+        },
+      });
     },
     maybeSingle: async () => {
       state.queries.push({ ...ctx });
