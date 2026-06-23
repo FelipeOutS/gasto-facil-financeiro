@@ -797,3 +797,70 @@ test("Cancelar encerra sessão de comprovante e depois 'categoria' volta ao flux
   });
   expect(after.resposta).toContain("Qual foi o valor de Categoria");
 });
+
+// ============================================================
+// WA-G5A.4 — Instrumentação de criação/recuperação de sessão
+// ============================================================
+
+test("WA-G5A.4: criação da sessão de comprovante dispara wa_receipt_session_created e readback positivo", async () => {
+  resetState();
+  type Ev = { event: string } & Record<string, unknown>;
+  const events: Ev[] = [];
+  __setWhatsAppAuditObserverForTests((e) => events.push(e as Ev));
+  try {
+    mockOcr({ valor: 30, descricao: "MERCADO X", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
+    await processarMensagemWhatsApp({
+      telefone: tel, texto: "", external_id: "g5a4-create", image: fakeImage("g5a4-create-h"),
+    });
+    const created = events.find((e) => e.event === "wa_receipt_session_created");
+    expect(created).toBeDefined();
+    expect(created!.persistedRowFound).toBe(true);
+    expect(created!.persistedKindPath).toBe("parsed.kind");
+    expect(created!.persistedPhoneStartsWith55).toBe(true);
+  } finally {
+    __setWhatsAppAuditObserverForTests(null);
+  }
+});
+
+test("WA-G5A.4: 'categoria' após foto encontra a sessão e roteia para receipt_handler com storedKindPath", async () => {
+  resetState();
+  type Ev = { event: string } & Record<string, unknown>;
+  const events: Ev[] = [];
+  mockOcr({ valor: 30, descricao: "MERCADO X", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g5a4-cat-img", image: fakeImage("g5a4-cat-h"),
+  });
+  __setWhatsAppAuditObserverForTests((e) => events.push(e as Ev));
+  try {
+    await processarMensagemWhatsApp({
+      telefone: tel, texto: "categoria", external_id: "g5a4-cat-msg",
+    });
+    const trace = events.find((e) => e.event === "wa_receipt_session_trace");
+    expect(trace).toBeDefined();
+    expect(trace!.routeChosen).toBe("receipt_handler");
+    expect(trace!.storedKindPath).toBe("parsed.kind");
+    expect(trace!.receiptSessionFoundByStatus || trace!.receiptSessionFoundByKind).toBe(true);
+  } finally {
+    __setWhatsAppAuditObserverForTests(null);
+  }
+});
+
+test("WA-G5A.4: buscarSessaoComprovanteAtiva expõe storedKindPath e flags de auditoria", async () => {
+  resetState();
+  mockOcr({ valor: 40, descricao: "Loja", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g5a4-lookup", image: fakeImage("g5a4-lookup-h"),
+  });
+  const lookup = await buscarSessaoComprovanteAtiva("u1", tel);
+  expect(lookup.sessao).not.toBeNull();
+  expect(lookup.storedKindPath).toBe("parsed.kind");
+  expect(lookup.sessionFoundByFallbackQuery).toBe(false);
+  // Auditoria nunca expõe campos sensíveis: lookup só carrega flags
+  // estruturais (status, recebida_em, parsed.kind) — não há telefone bruto,
+  // imagem, texto, OCR, valor financeiro ou token no payload.
+  const keys = Object.keys(lookup);
+  expect(keys.sort()).toEqual([
+    "sessao", "sessionFoundByFallbackQuery", "sessionFoundByKind",
+    "sessionFoundByStatus", "storedKindPath",
+  ]);
+});
