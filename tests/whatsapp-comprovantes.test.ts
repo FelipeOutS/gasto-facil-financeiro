@@ -5,7 +5,7 @@
 import { test, expect, beforeEach } from "bun:test";
 import { state, resetState, gastosInserts } from "./_whatsapp-fake";
 
-const { processarMensagemWhatsApp } = await import(
+const { processarMensagemWhatsApp, buscarSessaoComprovanteAtiva } = await import(
   "../src/server/whatsapp.server"
 );
 const { __setOcrExtractorForTests } = await import(
