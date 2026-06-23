@@ -639,6 +639,9 @@ test("Query real por parsed.kind encontra comprovante com status fora de PENDING
   expect(lookup.sessao?.status).toBe("pendente");
   expect(lookup.sessao?.session.kind).toBe("imagem_comprovante");
 
+  __setExpenseParserForTests(() => {
+    throw new Error("parseWhatsAppExpenseMessage não deveria ser chamado");
+  });
   const ask = await processarMensagemWhatsApp({
     telefone: tel, texto: "categoria", external_id: "g5a32-kind-cat",
   });
@@ -663,6 +666,9 @@ test("valor, data, pagamento e descrição com comprovante ativo não criam sess
     if (receiptInsert) receiptInsert.row.status = "pendente";
     if (state.pendingRow) state.pendingRow.status = "pendente";
 
+    __setExpenseParserForTests(() => {
+      throw new Error(`parseWhatsAppExpenseMessage não deveria ser chamado para ${cmd}`);
+    });
     const res = await processarMensagemWhatsApp({
       telefone: tel, texto: cmd, external_id: `g5a32-${cmd}-cmd`,
     });
