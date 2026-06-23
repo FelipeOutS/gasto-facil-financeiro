@@ -523,25 +523,26 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
         const canaryOn = isCanaryEnabled();
         const results: Array<{ status: string; gasto_id?: string }> = [];
         for (const msg of flatMessages) {
-          // Mensagem precisa ter texto OU imagem (WA-G5A).
-          if (!msg.texto?.trim() && !msg.image) continue;
+          // Mensagem precisa ter texto, imagem OU áudio.
+          if (!msg.texto?.trim() && !msg.image && !msg.audio) continue;
+          const messageType = msg.audio ? "audio" : msg.image ? "image" : "text";
           logWhatsAppInboundReceived({
             telefone: msg.telefone,
             externalId: msg.external_id,
-            messageType: msg.image ? "image" : "text",
+            messageType,
           });
           // Gate único de elegibilidade: telefone não vinculado, sem
           // consentimento, sem beta ativa (ou fora do canário) → drop
           // silencioso. NÃO grava texto, NÃO cria sessão/gasto, NÃO
-          // envia resposta.
+          // envia resposta, NÃO baixa mídia.
           const elig = await checkPhoneEligibility(msg.telefone, canaryOn);
           if (!elig.allowed) {
             // WA-G5B — número não autorizado.
             //  - Texto: resposta neutra, 1× por número/24h (anti-spam).
-            //  - Imagem/anexo: silêncio total (já não baixamos mídia).
+            //  - Imagem/áudio/anexo: silêncio total (já não baixamos mídia).
             // NÃO grava texto, NÃO grava telefone bruto em logs, NÃO
-            // cria sessão, NÃO baixa mídia, NÃO chama OCR/IA.
-            if (msg.texto?.trim() && !msg.image) {
+            // cria sessão, NÃO baixa mídia, NÃO chama OCR/IA/transcrição.
+            if (msg.texto?.trim() && !msg.image && !msg.audio) {
               try {
                 if (await shouldSendBlockedReply(msg.telefone)) {
                   await sendWhatsAppReply(msg.telefone, WHATSAPP_BLOCKED_REPLY);
@@ -552,6 +553,15 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                   replyErr instanceof Error ? replyErr.name : "unknown",
                 );
               }
+            }
+            if (msg.audio) {
+              logAudioDecision({
+                handlerVersion: WHATSAPP_HANDLER_VERSION,
+                externalId: msg.external_id,
+                decision: "blocked",
+                mimeTypePresent: Boolean(msg.audio.mimeType),
+                audioBytesBucket: null,
+              });
             }
             results.push({ status: "nao_elegivel" });
             continue;
@@ -616,6 +626,186 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                 base64: dataUrl,
                 mimeType: ok.mimeType,
                 sha256: msg.image.sha256,
+              };
+            } else if (msg.audio) {
+              // WA-V1 — ordem obrigatória para áudio:
+              //   rate-limit / raw body / HMAC / Zod / extração / gate
+              //     (todos acima já passaram)
+              //   → flag WHATSAPP_AUDIO_ENABLED
+              //   → dedup external_id
+              //   → validação tipo/tamanho
+              //   → download
+              //   → validação bytes reais
+              //   → transcrição
+              //   → pipeline textual
+              const mimePresent = Boolean(msg.audio.mimeType);
+              // (a) flag — usuário autorizado mas recurso desligado.
+              if (!isWhatsAppAudioEnabled()) {
+                logAudioDecision({
+                  handlerVersion: WHATSAPP_HANDLER_VERSION,
+                  externalId: msg.external_id,
+                  decision: "feature_disabled",
+                  mimeTypePresent: mimePresent,
+                  audioBytesBucket: null,
+                });
+                try {
+                  await sendWhatsAppReply(msg.telefone, WHATSAPP_AUDIO_DISABLED_REPLY);
+                } catch (replyErr) {
+                  console.error({
+                    event: "wa_reply_failed",
+                    errorName: replyErr instanceof Error ? replyErr.name : "unknown",
+                  });
+                }
+                results.push({ status: "audio_desabilitado" });
+                continue;
+              }
+              // (b) dedup técnico por external_id.
+              if (await externalIdAlreadyConfirmed(msg.external_id)) {
+                results.push({ status: "duplicada" });
+                continue;
+              }
+              // (c) validação rápida do MIME declarado, ANTES do download.
+              const declared = msg.audio.mimeType?.split(";")[0].trim().toLowerCase();
+              const preliminary = validateDownloadedAudio(
+                // buffer não-vazio sintético só para reusar a regra de MIME
+                new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+                declared,
+              );
+              if (
+                declared &&
+                preliminary.ok === false &&
+                preliminary.reason === "unsupported_type"
+              ) {
+                logAudioDecision({
+                  handlerVersion: WHATSAPP_HANDLER_VERSION,
+                  externalId: msg.external_id,
+                  decision: "unsupported_type",
+                  mimeTypePresent: true,
+                  audioBytesBucket: null,
+                });
+                results.push({ status: "audio_tipo_invalido" });
+                continue;
+              }
+              // (d) download da mídia, com limite duro de bytes do áudio.
+              const dl = await downloadWhatsappMedia(
+                msg.audio.mediaId,
+                msg.audio.mimeType,
+                getMaxAudioBytes(),
+              );
+              if (!dl) {
+                logAudioDecision({
+                  handlerVersion: WHATSAPP_HANDLER_VERSION,
+                  externalId: msg.external_id,
+                  decision: "invalid_media",
+                  mimeTypePresent: mimePresent,
+                  audioBytesBucket: null,
+                });
+                results.push({ status: "audio_indisponivel" });
+                continue;
+              }
+              // (e) validação real: tamanho + bytes mágicos + mime.
+              const validated = validateDownloadedAudio(dl.buffer, dl.declaredMime);
+              if (!validated.ok) {
+                const decision =
+                  validated.reason === "too_large"
+                    ? "too_large"
+                    : validated.reason === "unsupported_type" ||
+                        validated.reason === "mime_mismatch"
+                      ? "unsupported_type"
+                      : "invalid_media";
+                logAudioDecision({
+                  handlerVersion: WHATSAPP_HANDLER_VERSION,
+                  externalId: msg.external_id,
+                  decision,
+                  mimeTypePresent: mimePresent,
+                  audioBytesBucket: bucketForBytes(dl.buffer.byteLength),
+                });
+                results.push({ status: "audio_invalido" });
+                continue;
+              }
+              const bytesBucket: AudioBytesBucket = validated.bytesBucket;
+              // (f) transcrição. Bytes apenas em memória; transcript não
+              // é persistido nem logado.
+              const transcription = await runTranscriber(dl.buffer, validated.mimeType);
+              if (transcription.ok === false) {
+                if (transcription.reason === "unsupported_language") {
+                  logAudioDecision({
+                    handlerVersion: WHATSAPP_HANDLER_VERSION,
+                    externalId: msg.external_id,
+                    decision: "transcription_unsupported_language",
+                    mimeTypePresent: mimePresent,
+                    audioBytesBucket: bytesBucket,
+                  });
+                  try {
+                    await sendWhatsAppReply(
+                      msg.telefone,
+                      WHATSAPP_AUDIO_UNSUPPORTED_LANGUAGE_REPLY,
+                    );
+                  } catch (replyErr) {
+                    console.error({
+                      event: "wa_reply_failed",
+                      errorName: replyErr instanceof Error ? replyErr.name : "unknown",
+                    });
+                  }
+                  results.push({ status: "audio_idioma" });
+                  continue;
+                }
+                const decision =
+                  transcription.reason === "empty"
+                    ? "transcription_empty"
+                    : "transcription_failed";
+                logAudioDecision({
+                  handlerVersion: WHATSAPP_HANDLER_VERSION,
+                  externalId: msg.external_id,
+                  decision,
+                  mimeTypePresent: mimePresent,
+                  audioBytesBucket: bytesBucket,
+                });
+                try {
+                  await sendWhatsAppReply(msg.telefone, WHATSAPP_AUDIO_UNINTELLIGIBLE_REPLY);
+                } catch (replyErr) {
+                  console.error({
+                    event: "wa_reply_failed",
+                    errorName: replyErr instanceof Error ? replyErr.name : "unknown",
+                  });
+                }
+                results.push({ status: "audio_transcricao_falhou" });
+                continue;
+              }
+              const transcript = transcription.text.trim();
+              if (transcript.length < 2) {
+                logAudioDecision({
+                  handlerVersion: WHATSAPP_HANDLER_VERSION,
+                  externalId: msg.external_id,
+                  decision: "transcription_empty",
+                  mimeTypePresent: mimePresent,
+                  audioBytesBucket: bytesBucket,
+                });
+                try {
+                  await sendWhatsAppReply(msg.telefone, WHATSAPP_AUDIO_UNINTELLIGIBLE_REPLY);
+                } catch (replyErr) {
+                  console.error({
+                    event: "wa_reply_failed",
+                    errorName: replyErr instanceof Error ? replyErr.name : "unknown",
+                  });
+                }
+                results.push({ status: "audio_transcricao_vazia" });
+                continue;
+              }
+              // (g) encaminhamento ao pipeline textual existente — mesmo
+              // orquestrador, mesma confirmação, mesmas sessões. Não há
+              // parser financeiro paralelo. Transcript permanece só em
+              // memória; não persistimos no runMsg/banco.
+              logAudioDecision({
+                handlerVersion: WHATSAPP_HANDLER_VERSION,
+                externalId: msg.external_id,
+                decision: "routed_to_text_pipeline",
+                mimeTypePresent: mimePresent,
+                audioBytesBucket: bytesBucket,
+              });
+              runMsg = {
+                ...runMsg,
+                texto: transcript,
               };
             }
 
