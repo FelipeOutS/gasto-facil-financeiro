@@ -5,7 +5,7 @@
 import { test, expect, beforeEach } from "bun:test";
 import { state, resetState, gastosInserts } from "./_whatsapp-fake";
 
-const { processarMensagemWhatsApp, buscarSessaoComprovanteAtiva } = await import(
+const { processarMensagemWhatsApp, buscarSessaoComprovanteAtiva, __setExpenseParserForTests } = await import(
   "../src/server/whatsapp.server"
 );
 const { __setOcrExtractorForTests } = await import(
@@ -50,6 +50,7 @@ function mockOcr(result: Partial<{
 beforeEach(() => {
   resetState();
   __setOcrExtractorForTests(null);
+  __setExpenseParserForTests(null);
 });
 
 // ---------------------------------------------------------------------
