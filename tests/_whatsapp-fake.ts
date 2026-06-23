@@ -68,7 +68,9 @@ function makeBuilder(table: string): any {
           ? `m-${idx + 1}`
           : col === "parsed->>kind"
             ? (row.parsed as Record<string, unknown> | undefined)?.kind
-            : row[col];
+            : col === "parsed->>imageSha256"
+              ? (row.parsed as Record<string, unknown> | undefined)?.imageSha256
+              : row[col];
         if (Array.isArray(val)) {
           if (!val.includes(actual)) return false;
         } else if (actual !== val) return false;
@@ -199,6 +201,10 @@ function makeBuilder(table: string): any {
     delete() { ctx.op = "delete"; return builder; },
     eq(col: string, val: unknown) { ctx.filters[col] = val; return builder; },
     in(col: string, vals: unknown[]) { ctx.filters[col] = vals; return builder; },
+    filter(col: string, op: string, val: unknown) {
+      if (op === "eq") ctx.filters[col] = val;
+      return builder;
+    },
     not(col: string, op: string, val: unknown) { ctx.notFilters.push({ col, op, val }); return builder; },
     gte(col: string, val: unknown) {
       ctx.range = ctx.range ?? {};
