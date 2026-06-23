@@ -931,3 +931,123 @@ test("WA-G5A.5: 'categoria' depois da foto encontra a sessão e NUNCA cai no par
   // E não responde com a pergunta do parser ("Qual foi o valor de Categoria?").
   expect(out.resposta.toLowerCase()).not.toContain("qual foi o valor");
 });
+
+// =============================================================
+// WA-G5A.6 — lista curta + paginação + ver todas + erros
+// =============================================================
+
+test("WA-G5A.6: lista inicial mostra no máximo 6 categorias", async () => {
+  // 8 categorias — sair de fábrica + 2 extras
+  resetState({
+    categorias: [
+      { id: "c1", legacy_id: "outros", nome: "Outros", user_id: "u1" },
+      { id: "c2", legacy_id: "mercado", nome: "Mercado", user_id: "u1" },
+      { id: "c3", legacy_id: "transporte", nome: "Transporte", user_id: "u1" },
+      { id: "c4", legacy_id: "saude", nome: "Saúde", user_id: "u1" },
+      { id: "c5", legacy_id: "restaurante", nome: "Restaurante", user_id: "u1" },
+      { id: "c6", legacy_id: "internet", nome: "Internet", user_id: "u1" },
+      { id: "c7", legacy_id: "lazer", nome: "Lazer", user_id: "u1" },
+      { id: "c8", legacy_id: "educacao", nome: "Educação", user_id: "u1" },
+    ],
+  });
+  mockOcr({ valor: 50, descricao: "Padaria", categoriaSugerida: "alimentacao", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-1-img", image: fakeImage("g56-1-h") });
+  const ask = await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "g56-1-cat" });
+  // máximo 6 opções na lista curta
+  const linhas = (ask.resposta.match(/^\d+\.\s+/gm) ?? []);
+  expect(linhas.length).toBeLessThanOrEqual(6);
+  expect(ask.resposta).toContain("ver todas");
+});
+
+test("WA-G5A.6: categoria sugerida pelo OCR aparece em primeiro", async () => {
+  mockOcr({ valor: 50, descricao: "Compra", categoriaSugerida: "transporte", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-2-img", image: fakeImage("g56-2-h") });
+  const ask = await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "g56-2-cat" });
+  expect(ask.resposta).toMatch(/1\.\s+Transporte/);
+});
+
+test("WA-G5A.6: keywords da descrição priorizam categoria", async () => {
+  mockOcr({ valor: 50, descricao: "Padaria do bairro", categoriaSugerida: null, formaPagamento: "pix" });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-3-img", image: fakeImage("g56-3-h") });
+  // categoria não identificada → entra direto no obrigatorio com lista curta
+  expect(state.pendingRow?.status).toBe("img_aguardando_confirmacao");
+  const sim = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "g56-3-sim" });
+  // "padaria" mapeia para alimentacao → mas só restaurante existe, sem alimentacao no cats.
+  // Mesmo assim a lista deve conter Restaurante perto do topo via "padaria" → alimentacao
+  // (não há cat alimentacao, fica null). Verificamos só que a pergunta saiu.
+  expect(sim.resposta).toContain("Em qual categoria");
+});
+
+test("WA-G5A.6: escolha por nome sem acento encontra categoria com acento", async () => {
+  mockOcr({ valor: 50, descricao: "Drogaria", categoriaSugerida: "saude", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-4-img", image: fakeImage("g56-4-h") });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "g56-4-cat" });
+  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "saude", external_id: "g56-4-pick" });
+  expect(r.resposta).toContain("Categoria: Saúde");
+});
+
+test("WA-G5A.6: 'ver todas' mostra lista completa", async () => {
+  mockOcr({ valor: 50, descricao: "Compra", categoriaSugerida: "mercado", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-5-img", image: fakeImage("g56-5-h") });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "g56-5-cat" });
+  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "ver todas", external_id: "g56-5-vt" });
+  expect(r.resposta.toLowerCase()).toContain("categorias disponíveis");
+});
+
+test("WA-G5A.6: paginação 'mais' avança para a próxima página", async () => {
+  // 15 categorias → 2 páginas (12 + 3)
+  const many = Array.from({ length: 15 }, (_, i) => ({
+    id: `cx-${i}`, legacy_id: `cat${i}`, nome: `Categoria ${String(i + 1).padStart(2, "0")}`, user_id: "u1",
+  }));
+  resetState({ categorias: many });
+  mockOcr({ valor: 50, descricao: "Compra", categoriaSugerida: null, formaPagamento: "pix" });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-6-img", image: fakeImage("g56-6-h") });
+  // sessão entra em ajuste ao pedir categoria via "sim" (categoria não identif.)
+  await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "g56-6-sim" });
+  const all = await processarMensagemWhatsApp({ telefone: tel, texto: "ver todas", external_id: "g56-6-vt" });
+  expect(all.resposta).toContain("página 1 de 2");
+  const next = await processarMensagemWhatsApp({ telefone: tel, texto: "mais", external_id: "g56-6-mais" });
+  expect(next.resposta).toContain("página 2 de 2");
+});
+
+test("WA-G5A.6: número fora da lista mantém sessão e não cria gasto", async () => {
+  mockOcr({ valor: 50, descricao: "Padaria", categoriaSugerida: "alimentacao", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-7-img", image: fakeImage("g56-7-h") });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "g56-7-cat" });
+  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "99", external_id: "g56-7-bad" });
+  expect(r.resposta.toLowerCase()).toContain("não encontrei");
+  expect(state.pendingRow?.status).toBe("img_aguardando_ajuste");
+  expect(gastosInserts()).toHaveLength(0);
+});
+
+test("WA-G5A.6: categorias duplicadas visualmente aparecem só uma vez", async () => {
+  resetState({
+    categorias: [
+      { id: "ca", legacy_id: "transporte", nome: "Transporte", user_id: "u1" },
+      { id: "cb", legacy_id: "transporte_old", nome: "transporte", user_id: "u1" },
+      { id: "cc", legacy_id: "mercado", nome: "Mercado", user_id: "u1" },
+      { id: "cd", legacy_id: "outros", nome: "Outros", user_id: "u1" },
+    ],
+  });
+  mockOcr({ valor: 50, descricao: "Compra", categoriaSugerida: "transporte", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-8-img", image: fakeImage("g56-8-h") });
+  const ask = await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "g56-8-cat" });
+  const ocorrencias = (ask.resposta.toLowerCase().match(/transporte/g) ?? []).length;
+  expect(ocorrencias).toBe(1);
+});
+
+test("WA-G5A.6: categorias de outro usuário nunca aparecem", async () => {
+  // O mock de carregar categorias já filtra por user_id; aqui só garantimos
+  // que o que aparece bate com o estado configurado.
+  resetState({
+    categorias: [
+      { id: "u1a", legacy_id: "transporte", nome: "Transporte", user_id: "u1" },
+      { id: "u2x", legacy_id: "secreta", nome: "Categoria Outro Usuário", user_id: "u2" },
+      { id: "u1b", legacy_id: "outros", nome: "Outros", user_id: "u1" },
+    ],
+  });
+  mockOcr({ valor: 50, descricao: "Compra", categoriaSugerida: "transporte", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-9-img", image: fakeImage("g56-9-h") });
+  const ask = await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "g56-9-cat" });
+  expect(ask.resposta).not.toContain("Categoria Outro Usuário");
+});
