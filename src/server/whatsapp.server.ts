@@ -1389,6 +1389,34 @@ function nextStateFor(s: Session): {
   return { status: "aguardando_confirmacao", resposta: "" };
 }
 
+// WA-G5A.5 — coerção segura de confiança.
+// O OCR de comprovantes devolve string ("alta"/"media"/"baixa"); o pipeline
+// de gastos devolve número 0..1. A coluna `whatsapp_messages.confianca` é
+// NUMERIC — passar string causava `invalid input syntax for type numeric`
+// e o INSERT falhava em silêncio (sem leitura de `.error`). Isso impedia
+// a sessão de comprovante de ser persistida e, consequentemente, a próxima
+// mensagem ("categoria") caía no parser de gasto.
+function coerceConfiancaForDb(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const v = value.trim().toLowerCase();
+    if (v === "alta") return 0.9;
+    if (v === "media" || v === "média") return 0.6;
+    if (v === "baixa") return 0.3;
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+export type SaveSessionResult = {
+  ok: boolean;
+  sessionId: string | null;
+  status: string | null;
+  kind: string | null;
+  errorCode: string | null;
+};
+
 async function gravarSessao(
   userId: string,
   telefone: string,
@@ -1399,19 +1427,50 @@ async function gravarSessao(
   session: Session,
   resposta: string,
   gastoId?: string,
-) {
-  await supabaseAdmin.from("whatsapp_messages").insert({
-    user_id: userId,
-    external_id: externalId,
-    telefone,
-    texto,
-    recebida_em: recebidaEm,
-    status,
-    confianca: session.confianca ?? null,
-    parsed: session as unknown as Record<string, unknown>,
-    resposta_sugerida: resposta,
-    gasto_id: gastoId ?? null,
-  });
+): Promise<SaveSessionResult> {
+  const parsed = session as unknown as Record<string, unknown>;
+  const kind = typeof parsed?.kind === "string" ? (parsed.kind as string) : null;
+  const { data, error } = await supabaseAdmin
+    .from("whatsapp_messages")
+    .insert({
+      user_id: userId,
+      external_id: externalId,
+      telefone,
+      texto,
+      recebida_em: recebidaEm,
+      status,
+      confianca: coerceConfiancaForDb(session.confianca),
+      parsed,
+      resposta_sugerida: resposta,
+      gasto_id: gastoId ?? null,
+    })
+    .select("id, status")
+    .maybeSingle();
+  if (error || !data?.id) {
+    console.error({
+      event: "wa_session_insert_failed",
+      handlerVersion: WHATSAPP_HANDLER_VERSION,
+      conversationKey: conversationKeyFor(telefone),
+      messageKey: messageKeyFor(externalId),
+      status,
+      kind,
+      errorCode: error?.code ?? null,
+    });
+    return {
+      ok: false,
+      sessionId: null,
+      status: null,
+      kind,
+      errorCode: error?.code ?? "no_row_returned",
+    };
+  }
+  return {
+    ok: true,
+    sessionId: data.id,
+    status: (data.status as string) ?? status,
+    kind,
+    errorCode: null,
+  };
 }
 
 async function atualizarSessao(
