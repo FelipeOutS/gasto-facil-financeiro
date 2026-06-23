@@ -892,11 +892,12 @@ async function avancarAposConfirmacao(
 ): Promise<ComprovanteResult> {
   // 1) Categoria obrigatória quando OCR não identificou com confiança.
   if (session.categoriaNaoIdentificada && !session.categoriaId) {
+    const out = await bodyOpcoesCategoria(userId, session, cats);
     return {
       status: "aguardando_categoria_obrigatoria",
       newStatus: "img_aguardando_categoria_obrigatoria",
-      session,
-      resposta: M.imagem.perguntaCategoriaObrigatoria(listarCategorias(cats)),
+      session: out.sessionPatch,
+      resposta: M.imagem.perguntaCategoriaObrigatoria(out.body),
     };
   }
   // 2) Confirmação de data: nota antiga (>30d), futura ou marcada como incerta
