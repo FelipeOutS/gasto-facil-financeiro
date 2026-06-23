@@ -201,13 +201,15 @@ export type WhatsAppAudioDecisionLog = {
   source: "audio";
   mimeTypePresent: boolean;
   audioBytesBucket: AudioBytesBucket | null;
+  audioDurationBucket: AudioDurationBucket | null;
 };
 
 /**
  * Loga decisão do pipeline de áudio sem expor dados sensíveis.
  *
  * Proibido incluir: telefone, e-mail, URL Graph, token, mídia, base64,
- * transcript, mensagem original, valor, descrição, categoria, banco.
+ * transcript, mensagem original, valor, descrição, categoria, banco,
+ * duração exata em segundos (usar apenas bucket).
  */
 export function logAudioDecision(input: {
   handlerVersion: string;
@@ -215,6 +217,7 @@ export function logAudioDecision(input: {
   decision: WhatsAppAudioDecision;
   mimeTypePresent: boolean;
   audioBytesBucket: AudioBytesBucket | null;
+  audioDurationBucket?: AudioDurationBucket | null;
 }): void {
   const log: WhatsAppAudioDecisionLog = {
     event: "wa_audio_decision",
@@ -225,6 +228,7 @@ export function logAudioDecision(input: {
     source: "audio",
     mimeTypePresent: input.mimeTypePresent,
     audioBytesBucket: input.audioBytesBucket,
+    audioDurationBucket: input.audioDurationBucket ?? null,
   };
   // eslint-disable-next-line no-console
   console.info(log);
