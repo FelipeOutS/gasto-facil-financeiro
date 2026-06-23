@@ -896,6 +896,11 @@ function logWaSessionLookup(args: {
   receiptLookup: ReceiptSessionLookup;
 }) {
   const receipt = args.receiptLookup.sessao;
+  auditObserverForTests?.({
+    event: "wa_session_lookup",
+    receiptSessionFoundByKind: args.receiptLookup.sessionFoundByKind,
+    receiptSessionFoundByStatus: args.receiptLookup.sessionFoundByStatus,
+  });
   console.info({
     event: "wa_session_lookup",
     handlerVersion: WHATSAPP_HANDLER_VERSION,
@@ -916,6 +921,7 @@ function logWaSessionLookup(args: {
 }
 
 function logWaRouteDecision(msg: WhatsAppMessageRow, routedTo: WhatsAppAuditRoute, reason: string) {
+  auditObserverForTests?.({ event: "wa_route_decision", routedTo, reason });
   console.info({
     event: "wa_route_decision",
     handlerVersion: WHATSAPP_HANDLER_VERSION,
@@ -931,6 +937,11 @@ function logWaExpenseParserGuard(args: {
   receiptSessionExists: boolean;
   allowedToParseExpense: boolean;
 }) {
+  auditObserverForTests?.({
+    event: "wa_expense_parser_guard",
+    receiptSessionExists: args.receiptSessionExists,
+    allowedToParseExpense: args.allowedToParseExpense,
+  });
   console.info({
     event: "wa_expense_parser_guard",
     handlerVersion: WHATSAPP_HANDLER_VERSION,
