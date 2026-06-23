@@ -119,6 +119,17 @@ type WhatsAppMessageRow = {
   /** Anexo de imagem (Fase WA-G5A). Quando presente, dispara o fluxo
    *  de leitura de comprovante via OCR existente do site. */
   image?: ImageAttachment;
+  /**
+   * WA-B3.1 — identidade autorizada propagada pelo gate único
+   * `canUseWhatsAppForSender`. Quando presente, o pipeline NÃO refaz
+   * `resolveUserId` nem `userPodeUsarWhatsApp`: a autorização já foi
+   * decidida pelo webhook e este `userId` é a única fonte confiável.
+   *
+   * Não confiar em identidade vinda de payload livre / texto: este
+   * campo é populado apenas pelo handler HTTP do webhook (que tem o
+   * gate antes de qualquer parser ou persistência).
+   */
+  authorizedUserId?: string;
 };
 
 export function maskTelefone(tel: string): string {
@@ -1135,13 +1146,20 @@ export async function buscarSessaoComprovanteAtiva(
   const activeStatusRows = statusRows.filter((r) => !FINAL_SESSION_STATES.has(r.status));
   const activeKindRows = kindRows.filter((r) => !FINAL_SESSION_STATES.has(r.status));
 
-  // ---- WA-G5A.4: fallback diagnóstico para detectar formatos JSON ----
-  // alternativos onde "kind" possa ter sido persistido em outro nível
-  // (parsed.session.kind, parsed.flow.kind, etc.). NUNCA usado para
-  // tomar decisão de rota; apenas para auditoria de produção.
+  // ---- WA-G5A.4 / WA-B3.5: fallback diagnóstico ----
+  // Detecta formatos JSON alternativos onde "kind" possa ter sido
+  // persistido em outro nível (parsed.session.kind, parsed.flow.kind).
+  // NUNCA é usado para tomar decisão de rota; apenas para auditoria.
+  //
+  // WA-B3.5 — removido do caminho crítico por padrão. Permanece atrás
+  // de flag server-side `WHATSAPP_SESSION_AUDIT_FALLBACK=true`, desligada
+  // por padrão. O hard gate de comprovante (busca por status + parsed.kind
+  // logo acima) continua intocado.
   let fallbackRows: SessaoRow[] = [];
   let fallbackStoredKindPath: string | null = null;
-  if (activeStatusRows.length === 0 && activeKindRows.length === 0) {
+  const auditFallbackOn =
+    (process.env.WHATSAPP_SESSION_AUDIT_FALLBACK ?? "").trim().toLowerCase() === "true";
+  if (auditFallbackOn && activeStatusRows.length === 0 && activeKindRows.length === 0) {
     const { data: fallback } = await supabaseAdmin
       .from("whatsapp_messages")
       .select("id, status, parsed, recebida_em")
@@ -1474,22 +1492,80 @@ async function gravarSessao(
   };
 }
 
+/**
+ * WA-B3.3 — resultado explícito de uma atualização de sessão. Substitui o
+ * antigo retorno `void`, que escondia erros de RLS, política e payload
+ * malformado e permitia o pipeline avançar para criar gasto/receita
+ * mesmo quando a transição de estado falhava silenciosamente.
+ */
+export type UpdateSessionResult = {
+  ok: boolean;
+  status: string | null;
+  errorCode: string | null;
+};
+
 async function atualizarSessao(
   id: string,
   status: string,
   session: Session,
   resposta: string,
   gastoId?: string,
-) {
-  await supabaseAdmin
+): Promise<UpdateSessionResult> {
+  const parsed = session as unknown as Record<string, unknown>;
+  const kind = typeof parsed?.kind === "string" ? (parsed.kind as string) : null;
+  const { data, error } = await supabaseAdmin
     .from("whatsapp_messages")
     .update({
       status,
-      parsed: session as unknown as Record<string, unknown>,
+      parsed,
       resposta_sugerida: resposta,
       gasto_id: gastoId ?? null,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id, status")
+    .maybeSingle();
+  if (error || !data?.id) {
+    // Log técnico SEM telefone, texto, OCR, imagem, URL, token, valores
+    // ou qualquer trecho de conteúdo financeiro/PII.
+    console.error({
+      event: "wa_session_update_failed",
+      handlerVersion: WHATSAPP_HANDLER_VERSION,
+      sessionIdHash: id ? id.slice(0, 8) : null,
+      requestedStatus: status,
+      kind,
+      errorCode: error?.code ?? "no_row_returned",
+    });
+    return { ok: false, status: null, errorCode: error?.code ?? "no_row_returned" };
+  }
+  return { ok: true, status: (data.status as string) ?? status, errorCode: null };
+}
+
+/**
+ * WA-B3.3 — wrapper para call sites em que a atualização de sessão é
+ * CRÍTICA (precede commit financeiro / avanço de confirmação). Quando
+ * a atualização falha, devolve um `ProcessOutcome` neutro de "tente
+ * novamente daqui a pouco", garantindo que NENHUM gasto ou receita
+ * seja criado em cima de uma sessão que não pôde ser persistida.
+ *
+ * Não substitui `atualizarSessao` em transições não-críticas (ex.:
+ * abrir "aguardando_descricao") para preservar a UX atual.
+ */
+export const WA_SESSION_UPDATE_FALLBACK_REPLY =
+  "Não consegui salvar agora. Pode tentar de novo daqui a pouco?";
+
+export async function atualizarSessaoOuFalhar(
+  id: string,
+  status: string,
+  session: Session,
+  resposta: string,
+  gastoId?: string,
+): Promise<{ ok: true } | { ok: false; outcome: ProcessOutcome }> {
+  const r = await atualizarSessao(id, status, session, resposta, gastoId);
+  if (r.ok) return { ok: true };
+  return {
+    ok: false,
+    outcome: { status: "erro", resposta: WA_SESSION_UPDATE_FALLBACK_REPLY },
+  };
 }
 
 // ---------- pipeline de receitas (Fase WA-G1) ----------
@@ -1755,29 +1831,40 @@ export async function processarMensagemWhatsApp(
     };
   }
 
-  const resolved = await resolveUserId(msg.telefone);
-  if (resolved.status === "sem_vinculo") {
-    return {
-      status: "sem_vinculo",
-      resposta:
-        "Olá! Esse número ainda não está vinculado a uma conta no Gasto Inteligente. Abra o app, vá em WhatsApp e cadastre seu número para começar a lançar gastos por aqui.",
-    };
-  }
-  if (resolved.status === "sem_consentimento") {
-    return {
-      status: "sem_consentimento",
-      resposta:
-        "Seu WhatsApp não possui consentimento ativo para lançamentos. Acesse o app e vincule novamente seu número.",
-    };
-  }
-  const userId = resolved.userId as string;
+  // WA-B3.1 — se o webhook já passou pelo gate único
+  // `canUseWhatsAppForSender`, o `userId` autorizado vem em
+  // `msg.authorizedUserId` e NÃO refazemos resolveUserId nem
+  // userPodeUsarWhatsApp. Isso elimina o lookup duplicado e mantém
+  // fail-closed: sem `authorizedUserId`, o pipeline cai no caminho
+  // legado (ainda usado pelos call sites de server-functions internas).
+  let userId: string;
+  if (typeof msg.authorizedUserId === "string" && msg.authorizedUserId.length > 0) {
+    userId = msg.authorizedUserId;
+  } else {
+    const resolved = await resolveUserId(msg.telefone);
+    if (resolved.status === "sem_vinculo") {
+      return {
+        status: "sem_vinculo",
+        resposta:
+          "Olá! Esse número ainda não está vinculado a uma conta no Gasto Inteligente. Abra o app, vá em WhatsApp e cadastre seu número para começar a lançar gastos por aqui.",
+      };
+    }
+    if (resolved.status === "sem_consentimento") {
+      return {
+        status: "sem_consentimento",
+        resposta:
+          "Seu WhatsApp não possui consentimento ativo para lançamentos. Acesse o app e vincule novamente seu número.",
+      };
+    }
+    userId = resolved.userId as string;
 
-  const planoOk = await userPodeUsarWhatsApp(userId);
-  if (!planoOk.ok) {
-    return {
-      status: "sem_plano",
-      resposta: `Olá! ${planoOk.reason ?? "Sua assinatura não está ativa."} Ative um plano no app para usar os lançamentos pelo WhatsApp.`,
-    };
+    const planoOk = await userPodeUsarWhatsApp(userId);
+    if (!planoOk.ok) {
+      return {
+        status: "sem_plano",
+        resposta: `Olá! ${planoOk.reason ?? "Sua assinatura não está ativa."} Ative um plano no app para usar os lançamentos pelo WhatsApp.`,
+      };
+    }
   }
 
   const recebidaEm = msg.recebida_em ?? new Date().toISOString();
@@ -2692,8 +2779,26 @@ export async function sendWhatsAppReply(
         }),
       },
     );
+    if (!res.ok) {
+      // WA-B3.4 — apenas o status HTTP é registrado. NÃO logamos body,
+      // URL com query, token, telefone, texto da resposta nem códigos
+      // de erro provider-side que possam embutir conteúdo do payload.
+      console.error({
+        event: "wa_reply_failed",
+        handlerVersion: WHATSAPP_HANDLER_VERSION,
+        httpStatus: res.status,
+      });
+    }
     return { sent: res.ok, status: res.status };
   } catch (e) {
-    return { sent: false, reason: (e as Error).message };
+    // WA-B3.4 — NUNCA logar `err.message`: pode conter URL da Graph,
+    // body, telefone ou token. Apenas o nome do erro.
+    const errorName = e instanceof Error ? e.name : "unknown";
+    console.error({
+      event: "wa_reply_failed",
+      handlerVersion: WHATSAPP_HANDLER_VERSION,
+      errorName,
+    });
+    return { sent: false, reason: errorName };
   }
 }

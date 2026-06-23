@@ -82,9 +82,20 @@ async function checkPhoneEligibility(
 }
 
 /**
- * WA-G5A.1 — dedup pré-download: se o mesmo `external_id` já gerou um
- * gasto confirmado, NUNCA baixamos a mídia novamente. Reenvio do
- * webhook pela Meta é absorvido em silêncio.
+ * WA-G5A.1 / WA-B3.2 — dedup pré-download por `external_id`.
+ *
+ * Bloqueia o reprocessamento quando a MESMA mensagem já gerou uma
+ * confirmação persistida — não apenas de gasto. Cobre:
+ *   - gasto confirmado (status = "salva" + gasto_id);
+ *   - receita simples confirmada
+ *     (status = "salva" + parsed.kind = "receita" + parsed.receita_id);
+ *   - receita recorrente confirmada
+ *     (status = "salva" + parsed.kind = "receita" + parsed.recorrencia_id);
+ *   - comprovante com gasto confirmado
+ *     (status = "salva" + gasto_id, kind = "imagem_comprovante").
+ *
+ * NÃO usa janela de tempo, valor, categoria ou similaridade —
+ * deduplicação exclusivamente por `external_message_id` da Meta.
  */
 async function externalIdAlreadyConfirmed(externalId: string | null): Promise<boolean> {
   if (!externalId) return false;
@@ -94,10 +105,25 @@ async function externalIdAlreadyConfirmed(externalId: string | null): Promise<bo
     const sb = supabaseAdmin as any;
     const { data } = await sb
       .from("whatsapp_messages")
-      .select("id, status, gasto_id")
+      .select("id, status, gasto_id, parsed")
       .eq("external_id", externalId)
       .maybeSingle();
-    return !!(data && data.status === "salva" && data.gasto_id);
+    if (!data) return false;
+    if (data.status !== "salva") return false;
+    // Gasto / comprovante com gasto confirmado.
+    if (data.gasto_id) return true;
+    // Receita simples ou recorrente já confirmada.
+    const parsed = (data.parsed ?? {}) as {
+      kind?: string;
+      status?: string;
+      receita_id?: string;
+      recorrencia_id?: string;
+    };
+    if (parsed.kind === "receita" && parsed.status === "salva") {
+      if (typeof parsed.receita_id === "string" && parsed.receita_id.length > 0) return true;
+      if (typeof parsed.recorrencia_id === "string" && parsed.recorrencia_id.length > 0) return true;
+    }
+    return false;
   } catch {
     return false;
   }
@@ -488,13 +514,24 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
             //   4) somente então baixa a mídia da Meta;
             //   5) valida tamanho real + bytes mágicos;
             //   6) converte em data URL e entrega ao pipeline.
+            // WA-B3.1 — `authorizedUserId` propaga a identidade já
+            // confirmada pelo gate único `canUseWhatsAppForSender`,
+            // eliminando o lookup duplicado no pipeline. NÃO confiamos
+            // em identidade vinda do payload livre da Meta.
             let runMsg: {
               external_id: string | null;
               telefone: string;
               texto: string;
               recebida_em?: string;
+              authorizedUserId?: string;
               image?: { base64: string; mimeType?: string; sha256?: string };
-            } = { external_id: msg.external_id, telefone: msg.telefone, texto: msg.texto, recebida_em: msg.recebida_em };
+            } = {
+              external_id: msg.external_id,
+              telefone: msg.telefone,
+              texto: msg.texto,
+              recebida_em: msg.recebida_em,
+              authorizedUserId: elig.userId,
+            };
             if (msg.image) {
               // (2) external_id já confirmado → não baixa, não chama OCR.
               if (await externalIdAlreadyConfirmed(msg.external_id)) {
@@ -537,18 +574,21 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               try {
                 await sendWhatsAppReply(msg.telefone, out.resposta);
               } catch (replyErr) {
-                // Não logar o erro com payload; apenas a mensagem.
-                console.error(
-                  "[whatsapp] reply send failed:",
-                  replyErr instanceof Error ? replyErr.message : "unknown",
-                );
+                // WA-B3.4 — NUNCA logar err.message; pode conter URL
+                // assinada da Graph, telefone, token ou body do payload.
+                console.error({
+                  event: "wa_reply_failed",
+                  errorName: replyErr instanceof Error ? replyErr.name : "unknown",
+                });
               }
             }
           } catch (e) {
-            console.error(
-              "[whatsapp] processar erro:",
-              e instanceof Error ? e.message : "unknown",
-            );
+            // WA-B3.4 — sanitização análoga ao reply: apenas o nome do
+            // erro, nunca o message bruto (pode conter conteúdo).
+            console.error({
+              event: "wa_process_failed",
+              errorName: e instanceof Error ? e.name : "unknown",
+            });
             results.push({ status: "erro" });
           }
         }
