@@ -899,7 +899,7 @@ function logWaSessionLookup(args: {
     receiptSessionFoundByKind: args.receiptLookup.sessionFoundByKind,
     receiptSessionStatus: receipt?.status ?? null,
     receiptSessionKind: receipt?.session && isComprovanteSession(receipt.session)
-      ? receipt.session.kind
+      ? (receipt.session as unknown as ComprovanteSession).kind
       : null,
   });
 }
