@@ -27,14 +27,11 @@
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createHash } from "crypto";
 import { checkRateLimit } from "./rate-limit.server";
+import { isAdminMasterEmail } from "./admin-master.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = _supabaseAdmin as any;
 
-const ADMIN_MASTER_EMAILS = [
-  "felipe.out.silva@outlook.com",
-  "michael@medeiroscenografia.com.br",
-] as const;
 
 /**
  * Planos pagos que liberam WhatsApp.
