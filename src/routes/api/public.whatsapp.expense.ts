@@ -5,6 +5,7 @@ import {
   logWhatsAppInboundReceived,
   processarMensagemWhatsApp,
   sendWhatsAppReply,
+  WHATSAPP_HANDLER_VERSION,
 } from "@/server/whatsapp.server";
 import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
