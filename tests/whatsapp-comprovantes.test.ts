@@ -586,14 +586,14 @@ test("E2E produção: comando 'categoria' em sessão de comprovante não cai no 
     telefone: tel, texto: "categoria", external_id: "g5a31-cat",
   });
   expect(ask.resposta).toContain("Claro. Qual categoria você quer usar?");
-  expect(ask.resposta).toMatch(/1\.\s+Outros/);
-  expect(ask.resposta).toMatch(/3\.\s+Transporte/);
+  expect(ask.resposta).toMatch(/1\.\s+Mercado/);
+  expect(ask.resposta).toMatch(/2\.\s+Transporte/);
   expect(ask.resposta).not.toContain("Qual foi o valor de Categoria");
   expect(state.inserts.some((i) => i.table === "whatsapp_messages" && i.row.status === "aguardando_descricao_e_valor_gasto")).toBe(false);
   expect(gastosInserts()).toHaveLength(0);
 
   const selected = await processarMensagemWhatsApp({
-    telefone: tel, texto: "3", external_id: "g5a31-cat-3",
+    telefone: tel, texto: "2", external_id: "g5a31-cat-2",
   });
   expect(selected.resposta).toContain("Li esta nota");
   expect(selected.resposta).toContain("Expedito Alves de Lima ME");
