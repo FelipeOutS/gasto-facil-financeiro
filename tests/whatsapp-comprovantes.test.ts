@@ -665,7 +665,7 @@ test("Integração realista: cancelar → imagem → comandos de ajuste ficam no
 
     if (cmd === "categoria") {
       const selected = await processarMensagemWhatsApp({
-        telefone: tel, texto: "3", external_id: `audit-${idx}-cat-3`,
+        telefone: tel, texto: "2", external_id: `audit-${idx}-cat-2`,
       });
       expect(selected.resposta).toContain("Li esta nota");
       expect(selected.resposta).toContain("Categoria: Transporte");
