@@ -57,8 +57,15 @@ export type ComprovanteSession = {
   imageSha256?: string;
   imageMimeType?: string;
   pendingField?: "valor" | "descricao" | "categoria" | "data" | "pagamento";
+  /** WA-G5A.6 — opções de categoria mostradas ao usuário (lista curta ou
+   *  paginada completa). Limpa ao escolher categoria, cancelar ou salvar. */
+  categoriaOptions?: {
+    mode: "short" | "all";
+    page: number;
+    optionIds: string[];
+    optionNames: string[];
+  };
   mensagemOriginal: string;
-};
 
 export function isComprovanteSession(s: unknown): s is ComprovanteSession {
   return !!s && typeof s === "object" && (s as { kind?: string }).kind === "imagem_comprovante";
