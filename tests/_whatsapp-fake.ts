@@ -59,7 +59,7 @@ const PENDING = [
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeBuilder(table: string): any {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ctx: any = { table, op: "select", payload: null, filters: {} };
+  const ctx: any = { table, op: "select", payload: null, filters: {}, notFilters: [] };
 
   const finalize = async () => {
     const matchesFilters = (row: Record<string, unknown>, idx: number) => {
@@ -72,6 +72,17 @@ function makeBuilder(table: string): any {
         if (Array.isArray(val)) {
           if (!val.includes(actual)) return false;
         } else if (actual !== val) return false;
+      }
+      for (const nf of ctx.notFilters as Array<{ col: string; op: string; val: unknown }>) {
+        const actual = nf.col === "id"
+          ? `m-${idx + 1}`
+          : nf.col === "parsed->>kind"
+            ? (row.parsed as Record<string, unknown> | undefined)?.kind
+            : row[nf.col];
+        if (nf.op === "in" && typeof nf.val === "string") {
+          const blocked = nf.val.replace(/^\(|\)$/g, "").split(",").map((s) => s.replace(/^"|"$/g, ""));
+          if (blocked.includes(String(actual))) return false;
+        }
       }
       return true;
     };
@@ -176,6 +187,7 @@ function makeBuilder(table: string): any {
     delete() { ctx.op = "delete"; return builder; },
     eq(col: string, val: unknown) { ctx.filters[col] = val; return builder; },
     in(col: string, vals: unknown[]) { ctx.filters[col] = vals; return builder; },
+    not(col: string, op: string, val: unknown) { ctx.notFilters.push({ col, op, val }); return builder; },
     gte(col: string, val: unknown) {
       ctx.range = ctx.range ?? {};
       (ctx.range[col] = ctx.range[col] ?? {}).gte = val;

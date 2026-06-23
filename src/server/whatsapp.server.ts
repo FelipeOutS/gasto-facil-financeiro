@@ -19,7 +19,7 @@ import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin = _supabaseAdmin as any;
 import {
-  parseWhatsAppExpenseMessage,
+  parseWhatsAppExpenseMessage as baseParseWhatsAppExpenseMessage,
   cleanDescricao,
   type ParsedExpense,
 } from "@/lib/whatsappParser";
@@ -59,6 +59,14 @@ import {
   type ComprovanteStatus,
   type ImageAttachment,
 } from "./whatsapp-comprovantes.server";
+
+let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
+
+export function __setExpenseParserForTests(
+  parser: typeof baseParseWhatsAppExpenseMessage | null,
+) {
+  parseExpenseMessage = parser ?? baseParseWhatsAppExpenseMessage;
+}
 
 
 // ---------- elegibilidade WhatsApp (gate único) ----------
@@ -729,6 +737,7 @@ function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
 }
 
 const PENDING_TTL_MS = 30 * 60 * 1000;
+const RECEIPT_HANDLER_VERSION = "receipt-session-hard-gate-v2";
 const PENDING_STATES = [
   "aguardando_confirmacao",
   "aguardando_forma_pagamento",
@@ -745,7 +754,17 @@ const PENDING_STATES = [
   ...RECEITA_PENDING_STATES,
   ...COMPROVANTE_PENDING_STATES,
 ];
-const FINAL_SESSION_STATES = new Set(["salva", "cancelada", "expirada", "sem_pendencia"]);
+const FINAL_SESSION_STATES = new Set([
+  "salva",
+  "cancelada",
+  "falha",
+  "expirada",
+  "duplicada",
+  "sem_pendencia",
+]);
+const FINAL_SESSION_STATES_POSTGREST = `(${Array.from(FINAL_SESSION_STATES)
+  .map((s) => `"${s}"`)
+  .join(",")})`;
 export const RECEIPT_RESERVED_COMMANDS = [
   "categoria",
   "valor",
@@ -753,13 +772,28 @@ export const RECEIPT_RESERVED_COMMANDS = [
   "descrição",
   "data",
   "pagamento",
+  "alterar categoria",
+  "alterar valor",
+  "alterar descricao",
+  "alterar descrição",
+  "alterar data",
+  "alterar pagamento",
 ] as const;
+const RECEIPT_RESERVED_COMMAND_SET = new Set(
+  RECEIPT_RESERVED_COMMANDS.map((cmd) => normalizeCmd(cmd)),
+);
 
 type SessaoRow = {
   id: string;
   status: string;
   session: Session;
   recebida_em: string;
+};
+
+type ReceiptSessionLookup = {
+  sessao: SessaoRow | null;
+  sessionFoundByStatus: boolean;
+  sessionFoundByKind: boolean;
 };
 
 function toSessaoRows(data: unknown): SessaoRow[] {
@@ -786,7 +820,7 @@ function toSessaoRows(data: unknown): SessaoRow[] {
 
 function isReceiptReservedCommand(texto: string): boolean {
   const t = normalizeCmd(texto);
-  return (RECEIPT_RESERVED_COMMANDS as readonly string[]).includes(t);
+  return RECEIPT_RESERVED_COMMAND_SET.has(t);
 }
 
 function receiptSessionDiagnostic(sessao: SessaoRow | null) {
@@ -808,6 +842,21 @@ function receiptSessionDiagnostic(sessao: SessaoRow | null) {
       imageMimeType: s.imageMimeType ?? null,
     },
   };
+}
+
+function logReceiptSessionRoute(args: ReceiptSessionLookup & {
+  routedTo: "receipt_handler" | "expense_parser";
+}) {
+  const s = args.sessao;
+  console.info({
+    event: "whatsapp_receipt_session_route",
+    handlerVersion: RECEIPT_HANDLER_VERSION,
+    sessionFoundByStatus: args.sessionFoundByStatus,
+    sessionFoundByKind: args.sessionFoundByKind,
+    sessionKind: s && isComprovanteSession(s.session) ? (s.session as ComprovanteSession).kind : null,
+    sessionStatus: s?.status ?? null,
+    routedTo: args.routedTo,
+  });
 }
 
 async function buscarSessaoAtiva(
@@ -839,6 +888,46 @@ async function buscarSessaoAtiva(
     .sort((a, b) => Date.parse(b.recebida_em) - Date.parse(a.recebida_em));
   const comprovante = rows.find((r) => isComprovanteSession(r.session));
   return comprovante ?? rows.find((r) => PENDING_STATES.includes(r.status)) ?? null;
+}
+
+export async function buscarSessaoComprovanteAtiva(
+  userId: string,
+  telefone: string,
+): Promise<ReceiptSessionLookup> {
+  const desde = new Date(Date.now() - PENDING_TTL_MS).toISOString();
+  const { data: byStatus } = await supabaseAdmin
+    .from("whatsapp_messages")
+    .select("id, status, parsed, recebida_em")
+    .eq("user_id", userId)
+    .eq("telefone", telefone)
+    .in("status", COMPROVANTE_PENDING_STATES as unknown as string[])
+    .gte("recebida_em", desde)
+    .order("recebida_em", { ascending: false })
+    .limit(20);
+  const { data: byKind } = await supabaseAdmin
+    .from("whatsapp_messages")
+    .select("id, status, parsed, recebida_em")
+    .eq("user_id", userId)
+    .eq("telefone", telefone)
+    .eq("parsed->>kind", "imagem_comprovante")
+    .not("status", "in", FINAL_SESSION_STATES_POSTGREST)
+    .gte("recebida_em", desde)
+    .order("recebida_em", { ascending: false })
+    .limit(20);
+
+  const statusRows = toSessaoRows(byStatus).filter((r) => isComprovanteSession(r.session));
+  const kindRows = toSessaoRows(byKind).filter((r) => isComprovanteSession(r.session));
+  const activeStatusRows = statusRows.filter((r) => !FINAL_SESSION_STATES.has(r.status));
+  const activeKindRows = kindRows.filter((r) => !FINAL_SESSION_STATES.has(r.status));
+  const rows = [...activeStatusRows, ...activeKindRows]
+    .filter((row, idx, all) => all.findIndex((r) => r.id === row.id) === idx)
+    .sort((a, b) => Date.parse(b.recebida_em) - Date.parse(a.recebida_em));
+
+  return {
+    sessao: rows[0] ?? null,
+    sessionFoundByStatus: activeStatusRows.length > 0,
+    sessionFoundByKind: activeKindRows.length > 0,
+  };
 }
 
 async function fecharSessoesAnteriores(
@@ -873,7 +962,7 @@ async function fecharSessoesComprovanteAtivas(
     .eq("user_id", userId)
     .eq("telefone", telefone)
     .eq("parsed->>kind", "imagem_comprovante")
-    .in("status", [...PENDING_STATES, "pendente", "aguardando_confirmacao"]);
+    .not("status", "in", FINAL_SESSION_STATES_POSTGREST);
 }
 
 function listarCartoesParaPergunta(cartoes: Cartao[]): string {
@@ -1221,6 +1310,66 @@ async function processarReceita(args: {
   return { status: "pendente", resposta: step.resposta };
 }
 
+async function processarSessaoComprovanteAtiva(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  decisao: "confirm" | "cancel" | "outro";
+  lookup: ReceiptSessionLookup;
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, decisao, lookup } = args;
+  const sessao = lookup.sessao;
+  if (!sessao || !isComprovanteSession(sessao.session)) {
+    return { status: "erro", resposta: M.erroAoSalvar() };
+  }
+  logReceiptSessionRoute({ ...lookup, routedTo: "receipt_handler" });
+  const prev = sessao.session as unknown as ComprovanteSession;
+  if (msg.image) {
+    const aviso = M.imagem.sessaoEmAndamento();
+    await atualizarSessao(sessao.id, sessao.status, prev as unknown as Session, aviso);
+    return { status: "pendente", resposta: aviso };
+  }
+  if (decisao === "cancel") {
+    await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+    await fecharSessoesComprovanteAtivas(userId, msg.telefone, "cancelada");
+    await gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "cancelada", prev as unknown as Session, M.imagem.cancelado(),
+    );
+    return { status: "cancelada", resposta: M.imagem.cancelado() };
+  }
+  const out = await processarRespostaImagem({
+    userId,
+    texto,
+    session: prev,
+    status: ((COMPROVANTE_PENDING_STATES as readonly string[]).includes(sessao.status)
+      ? sessao.status
+      : "img_aguardando_confirmacao") as ComprovanteStatus,
+    decisao,
+  });
+  await supabaseAdmin
+    .from("whatsapp_messages")
+    .update({ status: "expirada" })
+    .eq("id", sessao.id);
+  if (out.status === "salva") {
+    await fecharSessoesAnteriores(userId, msg.telefone, "salva", out.gastoId);
+    await fecharSessoesComprovanteAtivas(userId, msg.telefone, "salva", out.gastoId);
+    await gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "salva", (out.session ?? prev) as unknown as Session,
+      out.resposta, out.gastoId,
+    );
+    return { status: "salva", gastoId: out.gastoId, resposta: out.resposta };
+  }
+  const nextStatus = out.newStatus ?? "img_aguardando_confirmacao";
+  await gravarSessao(
+    userId, msg.telefone, msg.external_id, texto, recebidaEm,
+    nextStatus, (out.session ?? prev) as unknown as Session, out.resposta,
+  );
+  return { status: "pendente", resposta: out.resposta };
+}
+
 // ---------- pipeline principal ----------
 
 
@@ -1334,63 +1483,19 @@ export async function processarMensagemWhatsApp(
     return { status: "cancelada", resposta };
   }
 
+  // ---- Fase WA-G5A: sessão de comprovante/imagem pendente ----
+  // Busca defensiva por parsed.kind = "imagem_comprovante", independente da
+  // lista PENDING_STATES. É o primeiro roteamento após reset/global gate.
+  let receiptLookup = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
+  if (receiptLookup.sessao) {
+    return await processarSessaoComprovanteAtiva({
+      userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
+    });
+  }
+
   let sessao = await buscarSessaoAtiva(userId, msg.telefone);
   const cartoes = await carregarCartoes(userId);
   const categorias = await carregarCategorias(userId);
-
-  // ---- Fase WA-G5A: sessão de comprovante/imagem pendente ----
-  // Prioridade absoluta após reset e antes de qualquer parser/fluxo genérico.
-  if (sessao && isComprovanteSession(sessao.session)) {
-    if (!(COMPROVANTE_PENDING_STATES as readonly string[]).includes(sessao.status)) {
-      console.info("[whatsapp-comprovante] active receipt session recovered outside pending list", receiptSessionDiagnostic(sessao));
-    } else if (isReceiptReservedCommand(texto)) {
-      console.info("[whatsapp-comprovante] reserved command routed to receipt handler", receiptSessionDiagnostic(sessao));
-    }
-    const prev = sessao.session as ComprovanteSession;
-    if (msg.image) {
-      const aviso = M.imagem.sessaoEmAndamento();
-      await atualizarSessao(sessao.id, sessao.status, prev as unknown as Session, aviso);
-      return { status: "pendente", resposta: aviso };
-    }
-    if (decisao === "cancel") {
-      await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
-      await fecharSessoesComprovanteAtivas(userId, msg.telefone, "cancelada");
-      await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "cancelada", prev as unknown as Session, M.imagem.cancelado(),
-      );
-      return { status: "cancelada", resposta: M.imagem.cancelado() };
-    }
-    const out = await processarRespostaImagem({
-      userId,
-      texto,
-      session: prev,
-      status: ((COMPROVANTE_PENDING_STATES as readonly string[]).includes(sessao.status)
-        ? sessao.status
-        : "img_aguardando_confirmacao") as ComprovanteStatus,
-      decisao,
-    });
-    await supabaseAdmin
-      .from("whatsapp_messages")
-      .update({ status: "expirada" })
-      .eq("id", sessao.id);
-    if (out.status === "salva") {
-      await fecharSessoesAnteriores(userId, msg.telefone, "salva", out.gastoId);
-      await fecharSessoesComprovanteAtivas(userId, msg.telefone, "salva", out.gastoId);
-      await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "salva", (out.session ?? prev) as unknown as Session,
-        out.resposta, out.gastoId,
-      );
-      return { status: "salva", gastoId: out.gastoId, resposta: out.resposta };
-    }
-    const nextStatus = out.newStatus ?? "img_aguardando_confirmacao";
-    await gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      nextStatus, (out.session ?? prev) as unknown as Session, out.resposta,
-    );
-    return { status: "pendente", resposta: out.resposta };
-  }
 
   // ---- Fase WA-G5A: imagem chegou enquanto há sessão pendente NÃO-comprovante ----
   // Uma foto nunca interrompe um fluxo de gasto/receita em andamento.
@@ -1435,8 +1540,14 @@ export async function processarMensagemWhatsApp(
       );
       return { status: "pendente", resposta };
     }
+    receiptLookup = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
+    if (receiptLookup.sessao) {
+      return await processarSessaoComprovanteAtiva({
+        userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
+      });
+    }
     // Tenta extrair descrição/valor da nova mensagem e mescla com a sessão.
-    const parsedNovo = parseWhatsAppExpenseMessage(texto, cartoes);
+    const parsedNovo = parseExpenseMessage(texto, cartoes);
     if (isGenericExpenseDescription(parsedNovo.nome)) parsedNovo.nome = "";
     const mergedNome =
       parsedNovo.nome && parsedNovo.nome.length >= 2 ? parsedNovo.nome : (prev.nome ?? "");
@@ -1958,40 +2069,18 @@ export async function processarMensagemWhatsApp(
   }
 
   // ---- Caso B: nenhuma sessão ativa → parse normal ----
-  const guardSessaoComprovante = await buscarSessaoAtiva(userId, msg.telefone);
-  if (guardSessaoComprovante && isComprovanteSession(guardSessaoComprovante.session)) {
-    console.warn(
-      "[whatsapp-comprovante] parser guard redirected active receipt session",
-      receiptSessionDiagnostic(guardSessaoComprovante),
-    );
-    const out = await processarRespostaImagem({
-      userId,
-      texto,
-      session: guardSessaoComprovante.session as unknown as ComprovanteSession,
-      status: ((COMPROVANTE_PENDING_STATES as readonly string[]).includes(guardSessaoComprovante.status)
-        ? guardSessaoComprovante.status
-        : "img_aguardando_confirmacao") as ComprovanteStatus,
-      decisao,
+  // Hard gate final: antes do parser de despesa, refaz a busca real por
+  // parsed.kind = imagem_comprovante. Se houver sessão ativa, o parser não roda.
+  receiptLookup = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
+  if (receiptLookup.sessao) {
+    return await processarSessaoComprovanteAtiva({
+      userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
     });
-    await supabaseAdmin
-      .from("whatsapp_messages")
-      .update({ status: "expirada" })
-      .eq("id", guardSessaoComprovante.id);
-    const nextStatus = out.newStatus ?? "img_aguardando_confirmacao";
-    await gravarSessao(
-      userId,
-      msg.telefone,
-      msg.external_id,
-      texto,
-      recebidaEm,
-      nextStatus,
-      (out.session ?? guardSessaoComprovante.session) as unknown as Session,
-      out.resposta,
-      out.gastoId,
-    );
-    return { status: out.status === "salva" ? "salva" : "pendente", gastoId: out.gastoId, resposta: out.resposta };
   }
-  const parsed = parseWhatsAppExpenseMessage(texto, cartoes);
+  if (isReceiptReservedCommand(texto)) {
+    logReceiptSessionRoute({ ...receiptLookup, routedTo: "expense_parser" });
+  }
+  const parsed = parseExpenseMessage(texto, cartoes);
   // Comandos genéricos ("registrar gasto", "novo gasto", ...) e descrições
   // automáticas inválidas ("Gasto WhatsApp") NUNCA podem virar descrição
   // real. Limpamos o nome antes de seguir, para que a sessão pendente
