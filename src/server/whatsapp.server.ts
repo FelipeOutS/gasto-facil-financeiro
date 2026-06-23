@@ -749,7 +749,7 @@ function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
 }
 
 const PENDING_TTL_MS = 30 * 60 * 1000;
-export const WHATSAPP_HANDLER_VERSION = "receipt-session-audit-v3";
+export const WHATSAPP_HANDLER_VERSION = "receipt-session-audit-v4";
 const PENDING_STATES = [
   "aguardando_confirmacao",
   "aguardando_forma_pagamento",
