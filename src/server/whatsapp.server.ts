@@ -1728,6 +1728,7 @@ export async function processarMensagemWhatsApp(
   if (msg.image) {
     if (sessao) {
       // sessão pendente não-comprovante (gasto/receita/etc.) — não processa OCR.
+      logWaRouteDecision(msg, "receipt_handler", "image_blocked_by_existing_session");
       const aviso = M.imagem.sessaoEmAndamento();
       await gravarSessao(
         userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
@@ -1741,6 +1742,7 @@ export async function processarMensagemWhatsApp(
       // Drop silencioso: 200 OK sem OCR, sem persistir imagem, sem resposta.
       return { status: "sem_plano", resposta: "" };
     }
+    logWaRouteDecision(msg, "receipt_handler", "new_image_without_active_session");
     // Dedup por hash da imagem nas últimas 30min (mesmo usuário+telefone).
     const sha = msg.image.sha256 ?? "";
     if (sha) {
