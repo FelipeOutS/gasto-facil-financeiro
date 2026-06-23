@@ -1641,6 +1641,11 @@ export async function processarMensagemWhatsApp(
         userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
       });
     }
+    logWaExpenseParserGuard({
+      msg,
+      receiptSessionExists: false,
+      allowedToParseExpense: true,
+    });
     // Tenta extrair descrição/valor da nova mensagem e mescla com a sessão.
     const parsedNovo = parseExpenseMessage(texto, cartoes);
     if (isGenericExpenseDescription(parsedNovo.nome)) parsedNovo.nome = "";
