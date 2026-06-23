@@ -729,6 +729,7 @@ function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
 }
 
 const PENDING_TTL_MS = 30 * 60 * 1000;
+const RECEIPT_HANDLER_VERSION = "receipt-session-hard-gate-v2";
 const PENDING_STATES = [
   "aguardando_confirmacao",
   "aguardando_forma_pagamento",
@@ -745,7 +746,14 @@ const PENDING_STATES = [
   ...RECEITA_PENDING_STATES,
   ...COMPROVANTE_PENDING_STATES,
 ];
-const FINAL_SESSION_STATES = new Set(["salva", "cancelada", "expirada", "sem_pendencia"]);
+const FINAL_SESSION_STATES = new Set([
+  "salva",
+  "cancelada",
+  "falha",
+  "expirada",
+  "duplicada",
+  "sem_pendencia",
+]);
 export const RECEIPT_RESERVED_COMMANDS = [
   "categoria",
   "valor",
@@ -753,13 +761,28 @@ export const RECEIPT_RESERVED_COMMANDS = [
   "descrição",
   "data",
   "pagamento",
+  "alterar categoria",
+  "alterar valor",
+  "alterar descricao",
+  "alterar descrição",
+  "alterar data",
+  "alterar pagamento",
 ] as const;
+const RECEIPT_RESERVED_COMMAND_SET = new Set(
+  RECEIPT_RESERVED_COMMANDS.map((cmd) => normalizeCmd(cmd)),
+);
 
 type SessaoRow = {
   id: string;
   status: string;
   session: Session;
   recebida_em: string;
+};
+
+type ReceiptSessionLookup = {
+  sessao: SessaoRow | null;
+  sessionFoundByStatus: boolean;
+  sessionFoundByKind: boolean;
 };
 
 function toSessaoRows(data: unknown): SessaoRow[] {
