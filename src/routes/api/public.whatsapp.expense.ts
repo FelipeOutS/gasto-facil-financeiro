@@ -19,6 +19,18 @@ import {
   shouldSendBlockedReply,
   WHATSAPP_BLOCKED_REPLY,
 } from "@/server/whatsapp-authz.server";
+import {
+  bucketForBytes,
+  getMaxAudioBytes,
+  isWhatsAppAudioEnabled,
+  logAudioDecision,
+  validateDownloadedAudio,
+  WHATSAPP_AUDIO_DISABLED_REPLY,
+  WHATSAPP_AUDIO_UNINTELLIGIBLE_REPLY,
+  WHATSAPP_AUDIO_UNSUPPORTED_LANGUAGE_REPLY,
+  type AudioBytesBucket,
+} from "@/server/whatsapp-audio.server";
+import { runTranscriber } from "@/server/whatsapp-transcription.server";
 
 /**
  * Webhook público do WhatsApp Cloud API (Meta).
