@@ -1298,6 +1298,66 @@ async function processarReceita(args: {
   return { status: "pendente", resposta: step.resposta };
 }
 
+async function processarSessaoComprovanteAtiva(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  decisao: "confirm" | "cancel" | "outro";
+  lookup: ReceiptSessionLookup;
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, decisao, lookup } = args;
+  const sessao = lookup.sessao;
+  if (!sessao || !isComprovanteSession(sessao.session)) {
+    return { status: "erro", resposta: M.erroAoSalvar() };
+  }
+  logReceiptSessionRoute({ ...lookup, routedTo: "receipt_handler" });
+  const prev = sessao.session as unknown as ComprovanteSession;
+  if (msg.image) {
+    const aviso = M.imagem.sessaoEmAndamento();
+    await atualizarSessao(sessao.id, sessao.status, prev as unknown as Session, aviso);
+    return { status: "pendente", resposta: aviso };
+  }
+  if (decisao === "cancel") {
+    await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+    await fecharSessoesComprovanteAtivas(userId, msg.telefone, "cancelada");
+    await gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "cancelada", prev as unknown as Session, M.imagem.cancelado(),
+    );
+    return { status: "cancelada", resposta: M.imagem.cancelado() };
+  }
+  const out = await processarRespostaImagem({
+    userId,
+    texto,
+    session: prev,
+    status: ((COMPROVANTE_PENDING_STATES as readonly string[]).includes(sessao.status)
+      ? sessao.status
+      : "img_aguardando_confirmacao") as ComprovanteStatus,
+    decisao,
+  });
+  await supabaseAdmin
+    .from("whatsapp_messages")
+    .update({ status: "expirada" })
+    .eq("id", sessao.id);
+  if (out.status === "salva") {
+    await fecharSessoesAnteriores(userId, msg.telefone, "salva", out.gastoId);
+    await fecharSessoesComprovanteAtivas(userId, msg.telefone, "salva", out.gastoId);
+    await gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "salva", (out.session ?? prev) as unknown as Session,
+      out.resposta, out.gastoId,
+    );
+    return { status: "salva", gastoId: out.gastoId, resposta: out.resposta };
+  }
+  const nextStatus = out.newStatus ?? "img_aguardando_confirmacao";
+  await gravarSessao(
+    userId, msg.telefone, msg.external_id, texto, recebidaEm,
+    nextStatus, (out.session ?? prev) as unknown as Session, out.resposta,
+  );
+  return { status: "pendente", resposta: out.resposta };
+}
+
 // ---------- pipeline principal ----------
 
 
