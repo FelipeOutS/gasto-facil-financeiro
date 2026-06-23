@@ -1766,29 +1766,40 @@ export async function processarMensagemWhatsApp(
     };
   }
 
-  const resolved = await resolveUserId(msg.telefone);
-  if (resolved.status === "sem_vinculo") {
-    return {
-      status: "sem_vinculo",
-      resposta:
-        "Olá! Esse número ainda não está vinculado a uma conta no Gasto Inteligente. Abra o app, vá em WhatsApp e cadastre seu número para começar a lançar gastos por aqui.",
-    };
-  }
-  if (resolved.status === "sem_consentimento") {
-    return {
-      status: "sem_consentimento",
-      resposta:
-        "Seu WhatsApp não possui consentimento ativo para lançamentos. Acesse o app e vincule novamente seu número.",
-    };
-  }
-  const userId = resolved.userId as string;
+  // WA-B3.1 — se o webhook já passou pelo gate único
+  // `canUseWhatsAppForSender`, o `userId` autorizado vem em
+  // `msg.authorizedUserId` e NÃO refazemos resolveUserId nem
+  // userPodeUsarWhatsApp. Isso elimina o lookup duplicado e mantém
+  // fail-closed: sem `authorizedUserId`, o pipeline cai no caminho
+  // legado (ainda usado pelos call sites de server-functions internas).
+  let userId: string;
+  if (typeof msg.authorizedUserId === "string" && msg.authorizedUserId.length > 0) {
+    userId = msg.authorizedUserId;
+  } else {
+    const resolved = await resolveUserId(msg.telefone);
+    if (resolved.status === "sem_vinculo") {
+      return {
+        status: "sem_vinculo",
+        resposta:
+          "Olá! Esse número ainda não está vinculado a uma conta no Gasto Inteligente. Abra o app, vá em WhatsApp e cadastre seu número para começar a lançar gastos por aqui.",
+      };
+    }
+    if (resolved.status === "sem_consentimento") {
+      return {
+        status: "sem_consentimento",
+        resposta:
+          "Seu WhatsApp não possui consentimento ativo para lançamentos. Acesse o app e vincule novamente seu número.",
+      };
+    }
+    userId = resolved.userId as string;
 
-  const planoOk = await userPodeUsarWhatsApp(userId);
-  if (!planoOk.ok) {
-    return {
-      status: "sem_plano",
-      resposta: `Olá! ${planoOk.reason ?? "Sua assinatura não está ativa."} Ative um plano no app para usar os lançamentos pelo WhatsApp.`,
-    };
+    const planoOk = await userPodeUsarWhatsApp(userId);
+    if (!planoOk.ok) {
+      return {
+        status: "sem_plano",
+        resposta: `Olá! ${planoOk.reason ?? "Sua assinatura não está ativa."} Ative um plano no app para usar os lançamentos pelo WhatsApp.`,
+      };
+    }
   }
 
   const recebidaEm = msg.recebida_em ?? new Date().toISOString();
