@@ -845,13 +845,33 @@ function receiptSessionDiagnostic(sessao: SessaoRow | null) {
   };
 }
 
+function auditHash(input: string | null | undefined): string {
+  return createHash("sha256").update(input ?? "").digest("hex").slice(0, 12);
+}
+
+function conversationKeyFor(telefone: string): string {
+  return auditHash(telefone.replace(/\D/g, ""));
+}
+
+function messageKeyFor(externalId: string | null | undefined): string {
+  return auditHash(externalId ?? "");
+}
+
+type WhatsAppAuditRoute =
+  | "receipt_handler"
+  | "expense_parser"
+  | "revenue_handler"
+  | "consulta_handler"
+  | "conversational_handler"
+  | "reset_handler";
+
 function logReceiptSessionRoute(args: ReceiptSessionLookup & {
   routedTo: "receipt_handler" | "expense_parser";
 }) {
   const s = args.sessao;
   console.info({
     event: "whatsapp_receipt_session_route",
-    handlerVersion: RECEIPT_HANDLER_VERSION,
+    handlerVersion: WHATSAPP_HANDLER_VERSION,
     sessionFoundByStatus: args.sessionFoundByStatus,
     sessionFoundByKind: args.sessionFoundByKind,
     sessionKind: s && isComprovanteSession(s.session) ? (s.session as ComprovanteSession).kind : null,
