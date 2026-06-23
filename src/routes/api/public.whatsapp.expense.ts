@@ -23,6 +23,7 @@ import {
   ALLOWED_AUDIO_MIME,
   bucketForBytes,
   getMaxAudioBytes,
+  getMaxAudioSeconds,
   isWhatsAppAudioEnabled,
   logAudioDecision,
   validateDownloadedAudio,
@@ -31,6 +32,12 @@ import {
   WHATSAPP_AUDIO_UNSUPPORTED_LANGUAGE_REPLY,
   type AudioBytesBucket,
 } from "@/server/whatsapp-audio.server";
+import {
+  bucketForDuration,
+  measureAudioDuration,
+  WHATSAPP_AUDIO_DURATION_UNAVAILABLE_REPLY,
+  WHATSAPP_AUDIO_TOO_LONG_REPLY,
+} from "@/server/whatsapp-audio-duration.server";
 import { runTranscriber } from "@/server/whatsapp-transcription.server";
 
 /**
@@ -716,7 +723,53 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                 continue;
               }
               const bytesBucket: AudioBytesBucket = validated.bytesBucket;
-              // (f) transcrição. Bytes apenas em memória; transcript não
+              // (f) validação de duração real ANTES da transcrição.
+              // Não confiamos em duração declarada pela Meta; medimos no
+              // buffer já validado. Fail-closed: se a duração não pode
+              // ser determinada com segurança, não enviamos para o ASR.
+              const duration = measureAudioDuration(dl.buffer, validated.mimeType);
+              const durationBucket = bucketForDuration(
+                duration.durationSeconds,
+                getMaxAudioSeconds(),
+              );
+              if (!duration.ok) {
+                const decision =
+                  duration.reason === "too_long" ? "too_long" : "duration_unavailable";
+                logAudioDecision({
+                  handlerVersion: WHATSAPP_HANDLER_VERSION,
+                  externalId: msg.external_id,
+                  decision,
+                  mimeTypePresent: mimePresent,
+                  audioBytesBucket: bytesBucket,
+                  audioDurationBucket: durationBucket,
+                });
+                try {
+                  await sendWhatsAppReply(
+                    msg.telefone,
+                    decision === "too_long"
+                      ? WHATSAPP_AUDIO_TOO_LONG_REPLY
+                      : WHATSAPP_AUDIO_DURATION_UNAVAILABLE_REPLY,
+                  );
+                } catch (replyErr) {
+                  console.error({
+                    event: "wa_reply_failed",
+                    errorName: replyErr instanceof Error ? replyErr.name : "unknown",
+                  });
+                }
+                results.push({
+                  status: decision === "too_long" ? "audio_muito_longo" : "audio_duracao_indisponivel",
+                });
+                continue;
+              }
+              logAudioDecision({
+                handlerVersion: WHATSAPP_HANDLER_VERSION,
+                externalId: msg.external_id,
+                decision: "valid_duration",
+                mimeTypePresent: mimePresent,
+                audioBytesBucket: bytesBucket,
+                audioDurationBucket: durationBucket,
+              });
+              // (g) transcrição. Bytes apenas em memória; transcript não
               // é persistido nem logado.
               const transcription = await runTranscriber(dl.buffer, validated.mimeType);
               if (transcription.ok === false) {

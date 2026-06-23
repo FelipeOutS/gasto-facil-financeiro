@@ -39,6 +39,48 @@ function setBaseEnv() {
 
 // ---------------- estado mutável dos mocks ----------------
 
+// ---------------- builders de fixtures sintéticas ----------------
+
+// Constrói um OGG Opus válido o suficiente para o validador
+// (bytes mágicos + OpusHead) e para a extração de duração
+// (granule_position da última página = sampleRate * segundos).
+function buildOggOpus(durationSeconds: number): Buffer {
+  const opusHead = Buffer.concat([
+    Buffer.from("OpusHead", "ascii"),
+    Buffer.from([1, 1, 0, 0, 0x80, 0xbb, 0, 0, 0, 0, 0]),
+  ]);
+  const granule = Math.round(durationSeconds * 48000);
+  function granuleBytes(g: number): Buffer {
+    const b = Buffer.alloc(8);
+    b.writeUInt32LE(g >>> 0, 0);
+    b.writeUInt32LE(Math.floor(g / 0x100000000) >>> 0, 4);
+    return b;
+  }
+  function buildPage(g: number, payload: Buffer, headerType: number, seq: number): Buffer {
+    const segTable: number[] = [];
+    let remaining = payload.length;
+    while (remaining >= 255) { segTable.push(255); remaining -= 255; }
+    segTable.push(remaining);
+    return Buffer.concat([
+      Buffer.from("OggS", "ascii"),
+      Buffer.from([0, headerType]),
+      granuleBytes(g),
+      Buffer.from([0, 0, 0, 0]),
+      Buffer.from([seq & 0xff, (seq >> 8) & 0xff, 0, 0]),
+      Buffer.from([0, 0, 0, 0]),
+      Buffer.from([segTable.length]),
+      Buffer.from(segTable),
+      payload,
+    ]);
+  }
+  return Buffer.concat([
+    buildPage(0, opusHead, 0x02, 0),
+    buildPage(granule, Buffer.from([0xfc]), 0x04, 1),
+  ]);
+}
+
+const DEFAULT_OGG_BYTES = buildOggOpus(20);
+
 type EligResult = { allowed: boolean; userId?: string };
 type ProcessCall = {
   authorizedUserId?: string;
@@ -50,12 +92,8 @@ type ProcessCall = {
 const fakeState = {
   elig: { allowed: true, userId: "u-audio" } as EligResult,
   externalConfirmed: false,
-  // Bytes reais a "baixar" da Meta (já não é áudio real — usamos bytes
-  // mágicos que casem com o validador). Default: OGG.
-  fakeAudioBytes: Buffer.concat([
-    Buffer.from([0x4f, 0x67, 0x67, 0x53]), // "OggS"
-    Buffer.alloc(60, 0),
-  ]),
+  // Bytes reais a "baixar" da Meta. Default: OGG Opus de 20 s sintético.
+  fakeAudioBytes: DEFAULT_OGG_BYTES as Buffer,
   fakeAudioContentType: "audio/ogg",
   transcribeResult: {
     ok: true as boolean,
@@ -86,10 +124,7 @@ const fakeState = {
 function resetState() {
   fakeState.elig = { allowed: true, userId: "u-audio" };
   fakeState.externalConfirmed = false;
-  fakeState.fakeAudioBytes = Buffer.concat([
-    Buffer.from([0x4f, 0x67, 0x67, 0x53]),
-    Buffer.alloc(60, 0),
-  ]);
+  fakeState.fakeAudioBytes = DEFAULT_OGG_BYTES;
   fakeState.fakeAudioContentType = "audio/ogg";
   fakeState.transcribeResult = {
     ok: true,
