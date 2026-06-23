@@ -1733,6 +1733,7 @@ export async function processarMensagemWhatsApp(
       allowedToParseExpense: false,
     });
     logWaRouteDecision(msg, "receipt_handler", "active_receipt_session_before_any_parser");
+    logWaReceiptSessionTrace({ msg, receiptSessionCreated: false, lookup: receiptLookup, routeChosen: "receipt_handler" });
     return await processarSessaoComprovanteAtiva({
       userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
     });
