@@ -809,7 +809,7 @@ function toSessaoRows(data: unknown): SessaoRow[] {
 
 function isReceiptReservedCommand(texto: string): boolean {
   const t = normalizeCmd(texto);
-  return (RECEIPT_RESERVED_COMMANDS as readonly string[]).includes(t);
+  return RECEIPT_RESERVED_COMMAND_SET.has(t);
 }
 
 function receiptSessionDiagnostic(sessao: SessaoRow | null) {
@@ -831,6 +831,21 @@ function receiptSessionDiagnostic(sessao: SessaoRow | null) {
       imageMimeType: s.imageMimeType ?? null,
     },
   };
+}
+
+function logReceiptSessionRoute(args: ReceiptSessionLookup & {
+  routedTo: "receipt_handler" | "expense_parser";
+}) {
+  const s = args.sessao;
+  console.info({
+    event: "whatsapp_receipt_session_route",
+    handlerVersion: RECEIPT_HANDLER_VERSION,
+    sessionFoundByStatus: args.sessionFoundByStatus,
+    sessionFoundByKind: args.sessionFoundByKind,
+    sessionKind: s && isComprovanteSession(s.session) ? (s.session as ComprovanteSession).kind : null,
+    sessionStatus: s?.status ?? null,
+    routedTo: args.routedTo,
+  });
 }
 
 async function buscarSessaoAtiva(
