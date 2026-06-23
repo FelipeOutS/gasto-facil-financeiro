@@ -1298,15 +1298,6 @@ function rebuildResumoOuPreencher(
   };
 }
 
-function listarCategorias(cats: CategoriaRow[]): string {
-  const nomes = cats
-    .map((c) => c.nome)
-    .filter(Boolean)
-    .slice(0, 20);
-  if (nomes.length === 0) return "";
-  // Numerada para permitir resposta por índice ("1", "2", ...).
-  return "\n\n" + nomes.map((n, i) => `${i + 1}. ${n}`).join("\n");
-}
 
 // ----- entitlement: importar foto / OCR ----------------------------------
 /**
