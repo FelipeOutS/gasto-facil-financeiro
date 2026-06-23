@@ -996,6 +996,14 @@ export function logWaReceiptSessionTrace(args: {
   routeChosen: WhatsAppAuditRoute;
 }) {
   const phoneDigits = args.msg.telefone.replace(/\D/g, "");
+  auditObserverForTests?.({
+    event: "wa_receipt_session_trace",
+    receiptSessionFoundByStatus: args.lookup.sessionFoundByStatus,
+    receiptSessionFoundByKind: args.lookup.sessionFoundByKind,
+    receiptSessionFoundByFallbackQuery: args.lookup.sessionFoundByFallbackQuery,
+    storedKindPath: args.lookup.storedKindPath,
+    routeChosen: args.routeChosen,
+  });
   console.info({
     event: "wa_receipt_session_trace",
     handlerVersion: WHATSAPP_HANDLER_VERSION,
