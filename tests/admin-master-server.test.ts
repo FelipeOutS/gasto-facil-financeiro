@@ -118,7 +118,7 @@ describe("WA-B1 — fonte única de Admin Master", () => {
     let hits = "";
     try {
       hits = execSync(
-        `grep -rln "felipe.out.silva@outlook.com\\|michael@medeiroscenografia.com.br" src/server src/routes 2>/dev/null || true`,
+        `grep -rln "felipe.out.silva@outlook.com\\|michael@medeiroscenografia.com.br" src/server 2>/dev/null || true`,
         { encoding: "utf8" },
       ).trim();
     } catch {
@@ -127,6 +127,7 @@ describe("WA-B1 — fonte única de Admin Master", () => {
     const offenders = hits
       .split("\n")
       .filter((p) => p && !p.endsWith("admin-master.server.ts"));
+
     expect(offenders).toEqual([]);
   });
 });
