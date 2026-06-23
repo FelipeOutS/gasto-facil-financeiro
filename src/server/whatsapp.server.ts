@@ -2071,7 +2071,9 @@ export async function processarMensagemWhatsApp(
       userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
     });
   }
-  logReceiptSessionRoute({ ...receiptLookup, routedTo: "expense_parser" });
+  if (isReceiptReservedCommand(texto)) {
+    logReceiptSessionRoute({ ...receiptLookup, routedTo: "expense_parser" });
+  }
   const parsed = parseExpenseMessage(texto, cartoes);
   // Comandos genéricos ("registrar gasto", "novo gasto", ...) e descrições
   // automáticas inválidas ("Gasto WhatsApp") NUNCA podem virar descrição
