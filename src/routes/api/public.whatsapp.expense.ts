@@ -23,6 +23,7 @@ import {
   ALLOWED_AUDIO_MIME,
   bucketForBytes,
   getMaxAudioBytes,
+  getMaxAudioSeconds,
   isWhatsAppAudioEnabled,
   logAudioDecision,
   validateDownloadedAudio,
@@ -31,6 +32,12 @@ import {
   WHATSAPP_AUDIO_UNSUPPORTED_LANGUAGE_REPLY,
   type AudioBytesBucket,
 } from "@/server/whatsapp-audio.server";
+import {
+  bucketForDuration,
+  measureAudioDuration,
+  WHATSAPP_AUDIO_DURATION_UNAVAILABLE_REPLY,
+  WHATSAPP_AUDIO_TOO_LONG_REPLY,
+} from "@/server/whatsapp-audio-duration.server";
 import { runTranscriber } from "@/server/whatsapp-transcription.server";
 
 /**
