@@ -513,12 +513,14 @@ test("Escolha de categoria por número atualiza o resumo", async () => {
   const ask = await processarMensagemWhatsApp({
     telefone: tel, texto: "categoria", external_id: "g5a3-3-ask",
   });
-  // lista numerada
-  expect(ask.resposta).toMatch(/1\.\s+Outros/);
-  expect(ask.resposta).toMatch(/3\.\s+Transporte/);
-  // user picks "3" → Transporte
+  // lista numerada (curta — prioridade nova: OCR + keywords + uso + restantes,
+  // Outros sempre por último)
+  expect(ask.resposta).toMatch(/1\.\s+Mercado/);
+  expect(ask.resposta).toMatch(/2\.\s+Transporte/);
+  expect(ask.resposta).toMatch(/6\.\s+Outros/);
+  // user picks "2" → Transporte
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "3", external_id: "g5a3-3-pick",
+    telefone: tel, texto: "2", external_id: "g5a3-3-pick",
   });
   expect(r.resposta).toContain("Categoria: Transporte");
   expect(r.resposta).toContain("Li esta nota");
