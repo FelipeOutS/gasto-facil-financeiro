@@ -963,11 +963,85 @@ function logReceiptSessionRoute(args: ReceiptSessionLookup & {
     handlerVersion: WHATSAPP_HANDLER_VERSION,
     sessionFoundByStatus: args.sessionFoundByStatus,
     sessionFoundByKind: args.sessionFoundByKind,
+    sessionFoundByFallbackQuery: args.sessionFoundByFallbackQuery,
+    storedKindPath: args.storedKindPath,
     sessionKind: s && isComprovanteSession(s.session) ? (s.session as ComprovanteSession).kind : null,
     sessionStatus: s?.status ?? null,
     routedTo: args.routedTo,
   });
 }
+
+// WA-G5A.4 — trace estruturado da decisão de rota para a sequência
+// (cancelar → foto → "categoria"). Nunca registra texto, telefone bruto,
+// imagem, OCR, token ou valores.
+export function logWaReceiptSessionTrace(args: {
+  msg: WhatsAppMessageRow;
+  receiptSessionCreated: boolean;
+  lookup: ReceiptSessionLookup;
+  routeChosen: WhatsAppAuditRoute;
+}) {
+  const phoneDigits = args.msg.telefone.replace(/\D/g, "");
+  console.info({
+    event: "wa_receipt_session_trace",
+    handlerVersion: WHATSAPP_HANDLER_VERSION,
+    conversationKey: conversationKeyFor(args.msg.telefone),
+    messageKey: messageKeyFor(args.msg.external_id),
+    receiptSessionCreated: args.receiptSessionCreated,
+    receiptSessionFoundByStatus: args.lookup.sessionFoundByStatus,
+    receiptSessionFoundByKind: args.lookup.sessionFoundByKind,
+    receiptSessionFoundByFallbackQuery: args.lookup.sessionFoundByFallbackQuery,
+    storedStatus: args.lookup.sessao?.status ?? null,
+    storedKindPath: args.lookup.storedKindPath,
+    phoneDigitLength: phoneDigits.length,
+    phoneStartsWith55: phoneDigits.startsWith("55"),
+    routeChosen: args.routeChosen,
+  });
+}
+
+// WA-G5A.4 — audita imediatamente após a sessão de imagem ser persistida.
+// Faz uma leitura usando exatamente a mesma query do webhook e reporta
+// se a sessão é encontrada de volta. Nenhum dado sensível é registrado.
+export async function logReceiptSessionCreatedAudit(args: {
+  msg: WhatsAppMessageRow;
+  userId: string;
+  persisted: boolean;
+}) {
+  let persistedRowFound = false;
+  let persistedStatus: string | null = null;
+  let persistedKindPath: string | null = null;
+  let persistedParsedStatus: string | null = null;
+  try {
+    const lookup = await buscarSessaoComprovanteAtiva(args.userId, args.msg.telefone);
+    persistedRowFound = !!lookup.sessao
+      || lookup.sessionFoundByStatus
+      || lookup.sessionFoundByKind
+      || lookup.sessionFoundByFallbackQuery;
+    persistedStatus = lookup.sessao?.status ?? null;
+    persistedKindPath = lookup.storedKindPath;
+    const parsedAny = lookup.sessao?.session as Record<string, unknown> | undefined;
+    const ps = parsedAny?.status;
+    persistedParsedStatus = typeof ps === "string" ? ps : null;
+  } catch {
+    /* swallow — auditoria nunca derruba o webhook */
+  }
+  const phoneDigits = args.msg.telefone.replace(/\D/g, "");
+  console.info({
+    event: "wa_receipt_session_created",
+    handlerVersion: WHATSAPP_HANDLER_VERSION,
+    conversationKey: conversationKeyFor(args.msg.telefone),
+    messageKey: messageKeyFor(args.msg.external_id),
+    persisted: args.persisted,
+    persistedRowFound,
+    persistedStatus,
+    persistedKind: persistedKindPath ? "imagem_comprovante" : null,
+    persistedKindPath,
+    persistedParsedStatus,
+    persistedUserIdPresent: !!args.userId,
+    persistedPhoneDigitLength: phoneDigits.length,
+    persistedPhoneStartsWith55: phoneDigits.startsWith("55"),
+  });
+}
+
 
 async function buscarSessaoAtiva(
   userId: string,
