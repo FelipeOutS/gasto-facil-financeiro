@@ -623,6 +623,79 @@ test("Comandos reservados de comprovante são priorizados mesmo se status salvo 
   }
 });
 
+test("Query real por parsed.kind encontra comprovante com status fora de PENDING_STATES", async () => {
+  mockOcr({ valor: 48.9, descricao: "Padaria", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g5a32-kind-img", image: fakeImage("g5a32-kind-h"),
+  });
+  const receiptInsert = [...state.inserts].reverse().find((i) => i.table === "whatsapp_messages");
+  if (receiptInsert) receiptInsert.row.status = "pendente";
+  if (state.pendingRow) state.pendingRow.status = "pendente";
+
+  const lookup = await buscarSessaoComprovanteAtiva("u1", tel);
+  expect(lookup.sessionFoundByStatus).toBe(false);
+  expect(lookup.sessionFoundByKind).toBe(true);
+  expect(lookup.sessao?.status).toBe("pendente");
+  expect(lookup.sessao?.session.kind).toBe("imagem_comprovante");
+
+  const ask = await processarMensagemWhatsApp({
+    telefone: tel, texto: "categoria", external_id: "g5a32-kind-cat",
+  });
+  expect(ask.resposta).toContain("Claro. Qual categoria você quer usar?");
+  expect(ask.resposta).not.toContain("Qual foi o valor de Categoria");
+  expect(gastosInserts()).toHaveLength(0);
+});
+
+test("valor, data, pagamento e descrição com comprovante ativo não criam sessão de gasto", async () => {
+  for (const [cmd, expected] of [
+    ["valor", "Qual valor devo usar"],
+    ["data", "Qual data devo usar"],
+    ["pagamento", "Qual forma de pagamento devo usar"],
+    ["descrição", "Qual descrição devo usar"],
+  ] as const) {
+    resetState();
+    mockOcr({ valor: 35, descricao: "Loja", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
+    await processarMensagemWhatsApp({
+      telefone: tel, texto: "", external_id: `g5a32-${cmd}-img`, image: fakeImage(`g5a32-${cmd}-h`),
+    });
+    const receiptInsert = [...state.inserts].reverse().find((i) => i.table === "whatsapp_messages");
+    if (receiptInsert) receiptInsert.row.status = "pendente";
+    if (state.pendingRow) state.pendingRow.status = "pendente";
+
+    const res = await processarMensagemWhatsApp({
+      telefone: tel, texto: cmd, external_id: `g5a32-${cmd}-cmd`,
+    });
+    expect(res.resposta).toContain(expected);
+    expect(state.inserts.some((i) => i.table === "whatsapp_messages" && i.row.texto === cmd && i.row.status === "aguardando_descricao_e_valor_gasto")).toBe(false);
+    expect(gastosInserts()).toHaveLength(0);
+  }
+});
+
+test("Sessão de comprovante finalizada ou cancelada não bloqueia novo gasto", async () => {
+  mockOcr({ valor: 12, descricao: "Padaria", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g5a32-final-img", image: fakeImage("g5a32-final-h"),
+  });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "g5a32-final-sim" });
+  const afterSaved = await processarMensagemWhatsApp({
+    telefone: tel, texto: "Uber 20", external_id: "g5a32-after-saved",
+  });
+  expect(afterSaved.resposta).not.toContain("Li esta nota");
+  expect(afterSaved.resposta).toContain("Como você pagou");
+
+  resetState();
+  mockOcr({ valor: 12, descricao: "Padaria", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
+  await processarMensagemWhatsApp({
+    telefone: tel, texto: "", external_id: "g5a32-cancel-img", image: fakeImage("g5a32-cancel-h"),
+  });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "cancelar", external_id: "g5a32-cancel" });
+  const afterCancel = await processarMensagemWhatsApp({
+    telefone: tel, texto: "Uber 21", external_id: "g5a32-after-cancel",
+  });
+  expect(afterCancel.resposta).not.toContain("Li esta nota");
+  expect(afterCancel.resposta).toContain("Como você pagou");
+});
+
 test("Cancelar encerra sessão de comprovante e depois 'categoria' volta ao fluxo normal", async () => {
   mockOcr({ valor: 22, descricao: "Loja", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
   await processarMensagemWhatsApp({
