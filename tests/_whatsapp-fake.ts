@@ -201,6 +201,10 @@ function makeBuilder(table: string): any {
     delete() { ctx.op = "delete"; return builder; },
     eq(col: string, val: unknown) { ctx.filters[col] = val; return builder; },
     in(col: string, vals: unknown[]) { ctx.filters[col] = vals; return builder; },
+    filter(col: string, op: string, val: unknown) {
+      if (op === "eq") ctx.filters[col] = val;
+      return builder;
+    },
     not(col: string, op: string, val: unknown) { ctx.notFilters.push({ col, op, val }); return builder; },
     gte(col: string, val: unknown) {
       ctx.range = ctx.range ?? {};
