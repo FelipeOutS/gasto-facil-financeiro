@@ -879,6 +879,45 @@ async function buscarSessaoAtiva(
   return comprovante ?? rows.find((r) => PENDING_STATES.includes(r.status)) ?? null;
 }
 
+async function buscarSessaoComprovanteAtiva(
+  userId: string,
+  telefone: string,
+): Promise<ReceiptSessionLookup> {
+  const desde = new Date(Date.now() - PENDING_TTL_MS).toISOString();
+  const { data: byStatus } = await supabaseAdmin
+    .from("whatsapp_messages")
+    .select("id, status, parsed, recebida_em")
+    .eq("user_id", userId)
+    .eq("telefone", telefone)
+    .in("status", COMPROVANTE_PENDING_STATES as unknown as string[])
+    .gte("recebida_em", desde)
+    .order("recebida_em", { ascending: false })
+    .limit(20);
+  const { data: byKind } = await supabaseAdmin
+    .from("whatsapp_messages")
+    .select("id, status, parsed, recebida_em")
+    .eq("user_id", userId)
+    .eq("telefone", telefone)
+    .eq("parsed->>kind", "imagem_comprovante")
+    .gte("recebida_em", desde)
+    .order("recebida_em", { ascending: false })
+    .limit(20);
+
+  const statusRows = toSessaoRows(byStatus).filter((r) => isComprovanteSession(r.session));
+  const kindRows = toSessaoRows(byKind).filter((r) => isComprovanteSession(r.session));
+  const activeStatusRows = statusRows.filter((r) => !FINAL_SESSION_STATES.has(r.status));
+  const activeKindRows = kindRows.filter((r) => !FINAL_SESSION_STATES.has(r.status));
+  const rows = [...activeStatusRows, ...activeKindRows]
+    .filter((row, idx, all) => all.findIndex((r) => r.id === row.id) === idx)
+    .sort((a, b) => Date.parse(b.recebida_em) - Date.parse(a.recebida_em));
+
+  return {
+    sessao: rows[0] ?? null,
+    sessionFoundByStatus: activeStatusRows.length > 0,
+    sessionFoundByKind: activeKindRows.length > 0,
+  };
+}
+
 async function fecharSessoesAnteriores(
   userId: string,
   telefone: string,
