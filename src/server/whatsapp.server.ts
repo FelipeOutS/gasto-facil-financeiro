@@ -59,6 +59,7 @@ import {
   type ComprovanteStatus,
   type ImageAttachment,
 } from "./whatsapp-comprovantes.server";
+import { createHash } from "crypto";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
 
@@ -737,7 +738,7 @@ function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
 }
 
 const PENDING_TTL_MS = 30 * 60 * 1000;
-const RECEIPT_HANDLER_VERSION = "receipt-session-hard-gate-v2";
+export const WHATSAPP_HANDLER_VERSION = "receipt-session-audit-v3";
 const PENDING_STATES = [
   "aguardando_confirmacao",
   "aguardando_forma_pagamento",
