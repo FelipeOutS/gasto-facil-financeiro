@@ -5,7 +5,12 @@
 import { test, expect, beforeEach } from "bun:test";
 import { state, resetState, gastosInserts } from "./_whatsapp-fake";
 
-const { processarMensagemWhatsApp, buscarSessaoComprovanteAtiva, __setExpenseParserForTests } = await import(
+const {
+  processarMensagemWhatsApp,
+  buscarSessaoComprovanteAtiva,
+  __setExpenseParserForTests,
+  __setWhatsAppAuditObserverForTests,
+} = await import(
   "../src/server/whatsapp.server"
 );
 const { __setOcrExtractorForTests } = await import(
@@ -51,6 +56,7 @@ beforeEach(() => {
   resetState();
   __setOcrExtractorForTests(null);
   __setExpenseParserForTests(null);
+  __setWhatsAppAuditObserverForTests(null);
 });
 
 // ---------------------------------------------------------------------
