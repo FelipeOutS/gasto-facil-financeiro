@@ -1598,6 +1598,11 @@ export async function processarMensagemWhatsApp(
   let receiptLookup = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
   if (receiptLookup.sessao) {
     logWaSessionLookup({ msg, activeSession: receiptLookup.sessao, receiptLookup });
+    logWaExpenseParserGuard({
+      msg,
+      receiptSessionExists: true,
+      allowedToParseExpense: false,
+    });
     logWaRouteDecision(msg, "receipt_handler", "active_receipt_session_before_any_parser");
     return await processarSessaoComprovanteAtiva({
       userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
@@ -1657,6 +1662,11 @@ export async function processarMensagemWhatsApp(
     receiptLookup = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
     if (receiptLookup.sessao) {
       logWaSessionLookup({ msg, activeSession: receiptLookup.sessao, receiptLookup });
+      logWaExpenseParserGuard({
+        msg,
+        receiptSessionExists: true,
+        allowedToParseExpense: false,
+      });
       logWaRouteDecision(msg, "receipt_handler", "receipt_session_found_inside_expense_session_guard");
       return await processarSessaoComprovanteAtiva({
         userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
