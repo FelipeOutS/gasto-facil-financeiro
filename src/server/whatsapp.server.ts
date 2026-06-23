@@ -1048,6 +1048,13 @@ export async function logReceiptSessionCreatedAudit(args: {
     /* swallow — auditoria nunca derruba o webhook */
   }
   const phoneDigits = args.msg.telefone.replace(/\D/g, "");
+  auditObserverForTests?.({
+    event: "wa_receipt_session_created",
+    persistedRowFound,
+    persistedStatus,
+    persistedKindPath,
+    persistedPhoneStartsWith55: phoneDigits.startsWith("55"),
+  });
   console.info({
     event: "wa_receipt_session_created",
     handlerVersion: WHATSAPP_HANDLER_VERSION,
