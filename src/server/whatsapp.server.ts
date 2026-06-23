@@ -950,7 +950,7 @@ async function fecharSessoesComprovanteAtivas(
     .eq("user_id", userId)
     .eq("telefone", telefone)
     .eq("parsed->>kind", "imagem_comprovante")
-    .in("status", [...PENDING_STATES, "pendente", "aguardando_confirmacao"]);
+    .not("status", "in", `(${Array.from(FINAL_SESSION_STATES).map((s) => `"${s}"`).join(",")})`);
 }
 
 function listarCartoesParaPergunta(cartoes: Cartao[]): string {
