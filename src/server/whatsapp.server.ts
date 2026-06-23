@@ -1471,63 +1471,19 @@ export async function processarMensagemWhatsApp(
     return { status: "cancelada", resposta };
   }
 
+  // ---- Fase WA-G5A: sessão de comprovante/imagem pendente ----
+  // Busca defensiva por parsed.kind = "imagem_comprovante", independente da
+  // lista PENDING_STATES. É o primeiro roteamento após reset/global gate.
+  let receiptLookup = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
+  if (receiptLookup.sessao) {
+    return await processarSessaoComprovanteAtiva({
+      userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
+    });
+  }
+
   let sessao = await buscarSessaoAtiva(userId, msg.telefone);
   const cartoes = await carregarCartoes(userId);
   const categorias = await carregarCategorias(userId);
-
-  // ---- Fase WA-G5A: sessão de comprovante/imagem pendente ----
-  // Prioridade absoluta após reset e antes de qualquer parser/fluxo genérico.
-  if (sessao && isComprovanteSession(sessao.session)) {
-    if (!(COMPROVANTE_PENDING_STATES as readonly string[]).includes(sessao.status)) {
-      console.info("[whatsapp-comprovante] active receipt session recovered outside pending list", receiptSessionDiagnostic(sessao));
-    } else if (isReceiptReservedCommand(texto)) {
-      console.info("[whatsapp-comprovante] reserved command routed to receipt handler", receiptSessionDiagnostic(sessao));
-    }
-    const prev = sessao.session as ComprovanteSession;
-    if (msg.image) {
-      const aviso = M.imagem.sessaoEmAndamento();
-      await atualizarSessao(sessao.id, sessao.status, prev as unknown as Session, aviso);
-      return { status: "pendente", resposta: aviso };
-    }
-    if (decisao === "cancel") {
-      await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
-      await fecharSessoesComprovanteAtivas(userId, msg.telefone, "cancelada");
-      await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "cancelada", prev as unknown as Session, M.imagem.cancelado(),
-      );
-      return { status: "cancelada", resposta: M.imagem.cancelado() };
-    }
-    const out = await processarRespostaImagem({
-      userId,
-      texto,
-      session: prev,
-      status: ((COMPROVANTE_PENDING_STATES as readonly string[]).includes(sessao.status)
-        ? sessao.status
-        : "img_aguardando_confirmacao") as ComprovanteStatus,
-      decisao,
-    });
-    await supabaseAdmin
-      .from("whatsapp_messages")
-      .update({ status: "expirada" })
-      .eq("id", sessao.id);
-    if (out.status === "salva") {
-      await fecharSessoesAnteriores(userId, msg.telefone, "salva", out.gastoId);
-      await fecharSessoesComprovanteAtivas(userId, msg.telefone, "salva", out.gastoId);
-      await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "salva", (out.session ?? prev) as unknown as Session,
-        out.resposta, out.gastoId,
-      );
-      return { status: "salva", gastoId: out.gastoId, resposta: out.resposta };
-    }
-    const nextStatus = out.newStatus ?? "img_aguardando_confirmacao";
-    await gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      nextStatus, (out.session ?? prev) as unknown as Session, out.resposta,
-    );
-    return { status: "pendente", resposta: out.resposta };
-  }
 
   // ---- Fase WA-G5A: imagem chegou enquanto há sessão pendente NÃO-comprovante ----
   // Uma foto nunca interrompe um fluxo de gasto/receita em andamento.
