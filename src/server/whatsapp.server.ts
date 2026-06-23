@@ -1540,6 +1540,12 @@ export async function processarMensagemWhatsApp(
       );
       return { status: "pendente", resposta };
     }
+    receiptLookup = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
+    if (receiptLookup.sessao) {
+      return await processarSessaoComprovanteAtiva({
+        userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
+      });
+    }
     // Tenta extrair descrição/valor da nova mensagem e mescla com a sessão.
     const parsedNovo = parseExpenseMessage(texto, cartoes);
     if (isGenericExpenseDescription(parsedNovo.nome)) parsedNovo.nome = "";
