@@ -21,11 +21,19 @@ const { __setOcrExtractorForTests } = await import(
 const tel = "5511999998888";
 
 // Imagem fake = data URL mínima válida; o OCR mock ignora o conteúdo.
+// Expande hashes curtos para 64 chars hex (formato SHA-256 válido) para
+// satisfazer a validação do dedup WA-G5A.7.
+function expandHash(seed: string): string {
+  let s = seed.replace(/[^a-f0-9]/gi, "").toLowerCase();
+  if (!s) s = "0";
+  while (s.length < 64) s = s + s + "abcdef0123456789".slice(0, Math.max(0, 64 - s.length));
+  return s.slice(0, 64);
+}
 function fakeImage(hash = "img-abc-1") {
   return {
     base64: "data:image/jpeg;base64,/9j/AAAA",
     mimeType: "image/jpeg",
-    sha256: hash,
+    sha256: expandHash(hash),
   };
 }
 
