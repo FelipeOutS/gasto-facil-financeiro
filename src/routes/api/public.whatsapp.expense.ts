@@ -514,13 +514,24 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
             //   4) somente então baixa a mídia da Meta;
             //   5) valida tamanho real + bytes mágicos;
             //   6) converte em data URL e entrega ao pipeline.
+            // WA-B3.1 — `authorizedUserId` propaga a identidade já
+            // confirmada pelo gate único `canUseWhatsAppForSender`,
+            // eliminando o lookup duplicado no pipeline. NÃO confiamos
+            // em identidade vinda do payload livre da Meta.
             let runMsg: {
               external_id: string | null;
               telefone: string;
               texto: string;
               recebida_em?: string;
+              authorizedUserId?: string;
               image?: { base64: string; mimeType?: string; sha256?: string };
-            } = { external_id: msg.external_id, telefone: msg.telefone, texto: msg.texto, recebida_em: msg.recebida_em };
+            } = {
+              external_id: msg.external_id,
+              telefone: msg.telefone,
+              texto: msg.texto,
+              recebida_em: msg.recebida_em,
+              authorizedUserId: elig.userId,
+            };
             if (msg.image) {
               // (2) external_id já confirmado → não baixa, não chama OCR.
               if (await externalIdAlreadyConfirmed(msg.external_id)) {
