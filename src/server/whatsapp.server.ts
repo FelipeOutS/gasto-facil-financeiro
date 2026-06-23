@@ -1548,6 +1548,7 @@ export async function processarMensagemWhatsApp(
   // inicial limpo. Não toca em lançamentos já confirmados nem em vínculo,
   // consentimento, retenção ou histórico — apenas estados aguardando_*.
   if (isResetCommand(texto)) {
+    logWaRouteDecision(msg, "reset_handler", "global_reset_command");
     await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     await fecharSessoesComprovanteAtivas(userId, msg.telefone, "cancelada");
     const resposta = M.resetConversa();
@@ -1574,12 +1575,15 @@ export async function processarMensagemWhatsApp(
   // lista PENDING_STATES. É o primeiro roteamento após reset/global gate.
   let receiptLookup = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
   if (receiptLookup.sessao) {
+    logWaSessionLookup({ msg, activeSession: receiptLookup.sessao, receiptLookup });
+    logWaRouteDecision(msg, "receipt_handler", "active_receipt_session_before_any_parser");
     return await processarSessaoComprovanteAtiva({
       userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
     });
   }
 
   let sessao = await buscarSessaoAtiva(userId, msg.telefone);
+  logWaSessionLookup({ msg, activeSession: sessao, receiptLookup });
   const cartoes = await carregarCartoes(userId);
   const categorias = await carregarCategorias(userId);
 
