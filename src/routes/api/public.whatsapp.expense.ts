@@ -597,7 +597,7 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                 continue;
               }
               // (4) download da mídia.
-              const dl = await downloadWhatsappMedia(msg.image.mediaId, msg.image.mimeType);
+              const dl = await downloadWhatsappMedia(msg.image.mediaId, msg.image.mimeType, MAX_IMAGE_BYTES);
               if (!dl) {
                 results.push({ status: "imagem_indisponivel" });
                 continue;
