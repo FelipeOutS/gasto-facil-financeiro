@@ -62,11 +62,22 @@ import {
 import { createHash } from "crypto";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
+type WhatsAppAuditTestEvent =
+  | { event: "wa_route_decision"; routedTo: string; reason: string }
+  | { event: "wa_expense_parser_guard"; receiptSessionExists: boolean; allowedToParseExpense: boolean }
+  | { event: "wa_session_lookup"; receiptSessionFoundByKind: boolean; receiptSessionFoundByStatus: boolean };
+let auditObserverForTests: ((event: WhatsAppAuditTestEvent) => void) | null = null;
 
 export function __setExpenseParserForTests(
   parser: typeof baseParseWhatsAppExpenseMessage | null,
 ) {
   parseExpenseMessage = parser ?? baseParseWhatsAppExpenseMessage;
+}
+
+export function __setWhatsAppAuditObserverForTests(
+  observer: ((event: WhatsAppAuditTestEvent) => void) | null,
+) {
+  auditObserverForTests = observer;
 }
 
 
