@@ -1485,22 +1485,80 @@ async function gravarSessao(
   };
 }
 
+/**
+ * WA-B3.3 — resultado explícito de uma atualização de sessão. Substitui o
+ * antigo retorno `void`, que escondia erros de RLS, política e payload
+ * malformado e permitia o pipeline avançar para criar gasto/receita
+ * mesmo quando a transição de estado falhava silenciosamente.
+ */
+export type UpdateSessionResult = {
+  ok: boolean;
+  status: string | null;
+  errorCode: string | null;
+};
+
 async function atualizarSessao(
   id: string,
   status: string,
   session: Session,
   resposta: string,
   gastoId?: string,
-) {
-  await supabaseAdmin
+): Promise<UpdateSessionResult> {
+  const parsed = session as unknown as Record<string, unknown>;
+  const kind = typeof parsed?.kind === "string" ? (parsed.kind as string) : null;
+  const { data, error } = await supabaseAdmin
     .from("whatsapp_messages")
     .update({
       status,
-      parsed: session as unknown as Record<string, unknown>,
+      parsed,
       resposta_sugerida: resposta,
       gasto_id: gastoId ?? null,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id, status")
+    .maybeSingle();
+  if (error || !data?.id) {
+    // Log técnico SEM telefone, texto, OCR, imagem, URL, token, valores
+    // ou qualquer trecho de conteúdo financeiro/PII.
+    console.error({
+      event: "wa_session_update_failed",
+      handlerVersion: WHATSAPP_HANDLER_VERSION,
+      sessionIdHash: id ? id.slice(0, 8) : null,
+      requestedStatus: status,
+      kind,
+      errorCode: error?.code ?? "no_row_returned",
+    });
+    return { ok: false, status: null, errorCode: error?.code ?? "no_row_returned" };
+  }
+  return { ok: true, status: (data.status as string) ?? status, errorCode: null };
+}
+
+/**
+ * WA-B3.3 — wrapper para call sites em que a atualização de sessão é
+ * CRÍTICA (precede commit financeiro / avanço de confirmação). Quando
+ * a atualização falha, devolve um `ProcessOutcome` neutro de "tente
+ * novamente daqui a pouco", garantindo que NENHUM gasto ou receita
+ * seja criado em cima de uma sessão que não pôde ser persistida.
+ *
+ * Não substitui `atualizarSessao` em transições não-críticas (ex.:
+ * abrir "aguardando_descricao") para preservar a UX atual.
+ */
+export const WA_SESSION_UPDATE_FALLBACK_REPLY =
+  "Não consegui salvar agora. Pode tentar de novo daqui a pouco?";
+
+export async function atualizarSessaoOuFalhar(
+  id: string,
+  status: string,
+  session: Session,
+  resposta: string,
+  gastoId?: string,
+): Promise<{ ok: true } | { ok: false; outcome: ProcessOutcome }> {
+  const r = await atualizarSessao(id, status, session, resposta, gastoId);
+  if (r.ok) return { ok: true };
+  return {
+    ok: false,
+    outcome: { status: "erro", resposta: WA_SESSION_UPDATE_FALLBACK_REPLY },
+  };
 }
 
 // ---------- pipeline de receitas (Fase WA-G1) ----------
