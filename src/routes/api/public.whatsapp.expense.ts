@@ -1,7 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "crypto";
 import { z } from "zod";
-import { processarMensagemWhatsApp, sendWhatsAppReply } from "@/server/whatsapp.server";
+import {
+  logWhatsAppInboundReceived,
+  processarMensagemWhatsApp,
+  sendWhatsAppReply,
+} from "@/server/whatsapp.server";
 import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
 import {
@@ -438,6 +442,11 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
         for (const msg of flatMessages) {
           // Mensagem precisa ter texto OU imagem (WA-G5A).
           if (!msg.texto?.trim() && !msg.image) continue;
+          logWhatsAppInboundReceived({
+            telefone: msg.telefone,
+            externalId: msg.external_id,
+            messageType: msg.image ? "image" : "text",
+          });
           // Gate único de elegibilidade: telefone não vinculado, sem
           // consentimento, sem beta ativa (ou fora do canário) → drop
           // silencioso. NÃO grava texto, NÃO cria sessão/gasto, NÃO
