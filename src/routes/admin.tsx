@@ -203,8 +203,8 @@ function AdminPage() {
     };
   }, [authorized, reloadKey]);
 
-  const ADMIN_LOCK_EMAILS = ["felipe.out.silva@outlook.com", "michael@medeiroscenografia.com.br"];
-  const isProtectedAdmin = (email: string) => ADMIN_LOCK_EMAILS.includes((email ?? "").toLowerCase());
+  const isProtectedAdmin = (email: string) => isAdminMasterEmail(email);
+
 
   async function confirmDelete() {
     if (!toDelete) return;
