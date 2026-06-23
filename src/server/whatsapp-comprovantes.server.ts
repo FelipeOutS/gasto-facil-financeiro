@@ -57,8 +57,17 @@ export type ComprovanteSession = {
   imageSha256?: string;
   imageMimeType?: string;
   pendingField?: "valor" | "descricao" | "categoria" | "data" | "pagamento";
+  /** WA-G5A.6 — opções de categoria mostradas ao usuário (lista curta ou
+   *  paginada completa). Limpa ao escolher categoria, cancelar ou salvar. */
+  categoriaOptions?: {
+    mode: "short" | "all";
+    page: number;
+    optionIds: string[];
+    optionNames: string[];
+  };
   mensagemOriginal: string;
 };
+
 
 export function isComprovanteSession(s: unknown): s is ComprovanteSession {
   return !!s && typeof s === "object" && (s as { kind?: string }).kind === "imagem_comprovante";
@@ -323,6 +332,292 @@ function pickCategoria(
   }
   return findCategoriaByTerm(cats, semPrefixo);
 }
+
+// ===== WA-G5A.6 — lista curta + lista completa paginada =================
+const CATEGORIA_KEYWORDS: Record<string, string[]> = {
+  farmacia: ["farmacia", "drogaria", "remedio", "medicamento", "drugstore"],
+  saude: ["saude", "medico", "hospital", "clinica", "consulta", "exame", "farmacia", "drogaria"],
+  alimentacao: ["restaurante", "lanchonete", "ifood", "padaria", "cafe", "comida", "almoco", "jantar"],
+  mercado: ["mercado", "supermercado", "atacadao", "joanin", "carrefour", "assai", "extra"],
+  transporte: ["uber", "99", "taxi", "posto", "combustivel", "gasolina", "metro", "onibus"],
+  assinaturas: ["netflix", "spotify", "prime", "internet", "youtube", "disney"],
+  moradia: ["aluguel", "condominio", "energia", "agua", "luz"],
+};
+
+const CATEGORIA_PAGE_SIZE = 12;
+const CATEGORIA_SHORT_MAX = 6;
+
+function dedupCategoriasByNome(cats: CategoriaRow[]): CategoriaRow[] {
+  const seen = new Map<string, CategoriaRow>();
+  for (const c of cats) {
+    const k = normalize(c.nome || "");
+    if (!k) continue;
+    if (!seen.has(k)) seen.set(k, c);
+  }
+  return Array.from(seen.values());
+}
+
+function findCatByLegacyOrNome(cats: CategoriaRow[], key: string | null | undefined): CategoriaRow | null {
+  if (!key) return null;
+  const t = normalize(key);
+  if (!t) return null;
+  for (const c of cats) {
+    if (c.legacy_id && normalize(c.legacy_id) === t) return c;
+    if (normalize(c.nome || "") === t) return c;
+  }
+  return null;
+}
+
+async function loadCategoriaHistory(
+  userId: string,
+): Promise<{ recentIds: string[]; topIds: string[] }> {
+  try {
+    const since = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
+    const { data } = await supabaseAdmin
+      .from("gastos")
+      .select("categoria_id, data, created_at")
+      .eq("user_id", userId)
+      .gte("data", since);
+    if (!Array.isArray(data)) return { recentIds: [], topIds: [] };
+    const rows = data as Array<{ categoria_id: string | null; data: string | null; created_at?: string | null }>;
+    const sorted = [...rows].sort((a, b) => {
+      const ka = String(a.created_at || a.data || "");
+      const kb = String(b.created_at || b.data || "");
+      return kb.localeCompare(ka);
+    });
+    const recentIds: string[] = [];
+    const counts = new Map<string, number>();
+    for (const r of sorted) {
+      const id = r.categoria_id;
+      if (!id) continue;
+      if (recentIds.length < 10 && !recentIds.includes(id)) recentIds.push(id);
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+    const topIds = Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([id]) => id);
+    return { recentIds, topIds };
+  } catch {
+    return { recentIds: [], topIds: [] };
+  }
+}
+
+async function buildShortCategoriaOptions(
+  userId: string,
+  cats: CategoriaRow[],
+  session: ComprovanteSession,
+): Promise<CategoriaRow[]> {
+  const deduped = dedupCategoriasByNome(cats);
+  const result: CategoriaRow[] = [];
+  const isOutros = (c: CategoriaRow) =>
+    c.legacy_id === "outros" || normalize(c.nome) === "outros";
+  const push = (c: CategoriaRow | null | undefined) => {
+    if (!c) return;
+    if (result.length >= CATEGORIA_SHORT_MAX) return;
+    const k = normalize(c.nome);
+    if (result.find((r) => normalize(r.nome) === k)) return;
+    result.push(c);
+  };
+
+  // 1) OCR
+  if (session.categoriaSugerida) {
+    push(findCatByLegacyOrNome(deduped, session.categoriaSugerida));
+  }
+  // 2) keywords from descricao
+  const desc = normalize(session.descricao || "");
+  if (desc) {
+    for (const [legacy, kws] of Object.entries(CATEGORIA_KEYWORDS)) {
+      if (result.length >= CATEGORIA_SHORT_MAX - 1) break;
+      if (kws.some((k) => desc.includes(k))) {
+        push(findCatByLegacyOrNome(deduped, legacy));
+      }
+    }
+  }
+  // 3 + 4) history (excluindo Outros — Outros vai por último)
+  const byId = new Map(deduped.map((c) => [c.id, c]));
+  const { recentIds, topIds } = await loadCategoriaHistory(userId);
+  for (const id of recentIds) {
+    if (result.length >= CATEGORIA_SHORT_MAX - 1) break;
+    const c = byId.get(id);
+    if (c && !isOutros(c)) push(c);
+  }
+  for (const id of topIds) {
+    if (result.length >= CATEGORIA_SHORT_MAX - 1) break;
+    const c = byId.get(id);
+    if (c && !isOutros(c)) push(c);
+  }
+  // 5) fill com restantes (excluindo Outros) preservando ordem
+  for (const c of deduped) {
+    if (result.length >= CATEGORIA_SHORT_MAX - 1) break;
+    if (!isOutros(c)) push(c);
+  }
+  // 6) Outros sempre por último, quando existir
+  const outros = deduped.find(isOutros);
+  if (outros) push(outros);
+  return result.slice(0, CATEGORIA_SHORT_MAX);
+}
+
+function buildAllCategoriaPage(
+  cats: CategoriaRow[],
+  page: number,
+): { opts: CategoriaRow[]; pageIndex: number; totalPages: number } {
+  const deduped = dedupCategoriasByNome(cats);
+  const totalPages = Math.max(1, Math.ceil(deduped.length / CATEGORIA_PAGE_SIZE));
+  const p = Math.max(0, Math.min(page, totalPages - 1));
+  return {
+    opts: deduped.slice(p * CATEGORIA_PAGE_SIZE, p * CATEGORIA_PAGE_SIZE + CATEGORIA_PAGE_SIZE),
+    pageIndex: p,
+    totalPages,
+  };
+}
+
+function renderCategoriaOptionsShort(opts: CategoriaRow[]): string {
+  const lines = opts.map((c, i) => `${i + 1}. ${c.nome}`).join("\n");
+  return [
+    lines,
+    ``,
+    `Você pode responder com o número, digitar o nome da categoria ou escrever "ver todas".`,
+  ].join("\n");
+}
+
+function renderCategoriaOptionsAll(
+  opts: CategoriaRow[],
+  pageIndex: number,
+  totalPages: number,
+): string {
+  const header =
+    totalPages > 1
+      ? `Categorias disponíveis — página ${pageIndex + 1} de ${totalPages}:`
+      : `Todas as categorias disponíveis:`;
+  const lines = opts.map((c, i) => `${i + 1}. ${c.nome}`).join("\n");
+  const footerMais =
+    pageIndex < totalPages - 1
+      ? `Digite o número, o nome da categoria ou "mais" para ver outras opções.`
+      : `Responda com o número ou digite o nome da categoria.`;
+  return [header, ``, lines, ``, footerMais].join("\n");
+}
+
+function optsToState(
+  mode: "short" | "all",
+  page: number,
+  opts: CategoriaRow[],
+): NonNullable<ComprovanteSession["categoriaOptions"]> {
+  return {
+    mode,
+    page,
+    optionIds: opts.map((c) => c.id),
+    optionNames: opts.map((c) => c.nome),
+  };
+}
+
+async function bodyOpcoesCategoria(
+  userId: string,
+  session: ComprovanteSession,
+  cats: CategoriaRow[],
+): Promise<{ body: string; sessionPatch: ComprovanteSession }> {
+  const mode = session.categoriaOptions?.mode ?? "short";
+  if (mode === "all") {
+    const page = session.categoriaOptions?.page ?? 0;
+    const { opts, pageIndex, totalPages } = buildAllCategoriaPage(cats, page);
+    const next: ComprovanteSession = {
+      ...session,
+      categoriaOptions: optsToState("all", pageIndex, opts),
+    };
+    return { body: renderCategoriaOptionsAll(opts, pageIndex, totalPages), sessionPatch: next };
+  }
+  const opts = await buildShortCategoriaOptions(userId, cats, session);
+  const next: ComprovanteSession = {
+    ...session,
+    categoriaOptions: optsToState("short", 0, opts),
+  };
+  return { body: renderCategoriaOptionsShort(opts), sessionPatch: next };
+}
+
+/** Detecta "ver todas", "mais", "voltar" durante uma sessão de comprovante.
+ *  Retorna o novo estado das opções ou null quando o texto não é navegação. */
+type NavCategoriaIntent =
+  | { kind: "ver_todas" }
+  | { kind: "mais" }
+  | { kind: "voltar" };
+
+function detectNavCategoria(texto: string): NavCategoriaIntent | null {
+  const t = normalize((texto || "").replace(/[.!?\s]+$/g, ""));
+  if (!t) return null;
+  if (/^(ver todas|ver categorias|mostrar categorias|todas|todas as categorias|todas categorias)$/.test(t)) {
+    return { kind: "ver_todas" };
+  }
+  if (/^(mais|proxima|próxima|mais categorias|ver mais)$/.test(t)) return { kind: "mais" };
+  if (/^(voltar|anterior|pagina anterior)$/.test(t)) return { kind: "voltar" };
+  return null;
+}
+
+/** Resolve uma resposta do usuário durante a escolha de categoria.
+ *  Retorna a categoria escolhida, OU um patch de sessão com nova lista, OU
+ *  indica resposta inválida (não sai da sessão). */
+async function resolveCategoriaInput(args: {
+  userId: string;
+  session: ComprovanteSession;
+  cats: CategoriaRow[];
+  texto: string;
+}): Promise<
+  | { kind: "picked"; cat: CategoriaRow }
+  | { kind: "relist"; sessionPatch: ComprovanteSession; body: string }
+  | { kind: "invalid" }
+> {
+  const { userId, session, cats, texto } = args;
+  const nav = detectNavCategoria(texto);
+  if (nav) {
+    if (nav.kind === "ver_todas") {
+      const next: ComprovanteSession = {
+        ...session,
+        categoriaOptions: { mode: "all", page: 0, optionIds: [], optionNames: [] },
+      };
+      const out = await bodyOpcoesCategoria(userId, next, cats);
+      return { kind: "relist", sessionPatch: out.sessionPatch, body: out.body };
+    }
+    const currentPage = session.categoriaOptions?.page ?? 0;
+    const delta = nav.kind === "mais" ? 1 : -1;
+    const next: ComprovanteSession = {
+      ...session,
+      categoriaOptions: {
+        mode: "all",
+        page: currentPage + delta,
+        optionIds: [],
+        optionNames: [],
+      },
+    };
+    const out = await bodyOpcoesCategoria(userId, next, cats);
+    return { kind: "relist", sessionPatch: out.sessionPatch, body: out.body };
+  }
+
+  const limpo = (texto || "")
+    .replace(/^[•\-.\s]+/, "")
+    .replace(/[.!?\s]+$/, "")
+    .trim();
+  const t = normalize(limpo).replace(/^categoria\s+/, "").trim();
+  if (!t) return { kind: "invalid" };
+
+  const opts = session.categoriaOptions;
+  const num = t.match(/^(\d{1,3})$/);
+  if (num) {
+    const idx = Number(num[1]) - 1;
+    if (opts && idx >= 0 && idx < opts.optionIds.length) {
+      const id = opts.optionIds[idx];
+      const found = cats.find((c) => c.id === id);
+      if (found) return { kind: "picked", cat: found };
+    }
+    return { kind: "invalid" };
+  }
+
+  const deduped = dedupCategoriasByNome(cats);
+  const byName = findCategoriaByTerm(deduped, t);
+  if (byName) {
+    // mapear de volta para a categoria canônica no array original
+    return { kind: "picked", cat: byName };
+  }
+  return { kind: "invalid" };
+}
+
 
 // ----- detecção de comandos ---------------------------------------------
 type AjusteField = "valor" | "descricao" | "categoria" | "data" | "pagamento";
@@ -597,11 +892,12 @@ async function avancarAposConfirmacao(
 ): Promise<ComprovanteResult> {
   // 1) Categoria obrigatória quando OCR não identificou com confiança.
   if (session.categoriaNaoIdentificada && !session.categoriaId) {
+    const out = await bodyOpcoesCategoria(userId, session, cats);
     return {
       status: "aguardando_categoria_obrigatoria",
       newStatus: "img_aguardando_categoria_obrigatoria",
-      session,
-      resposta: M.imagem.perguntaCategoriaObrigatoria(listarCategorias(cats)),
+      session: out.sessionPatch,
+      resposta: M.imagem.perguntaCategoriaObrigatoria(out.body),
     };
   }
   // 2) Confirmação de data: nota antiga (>30d), futura ou marcada como incerta
@@ -640,6 +936,96 @@ async function avancarAposConfirmacao(
     resposta: saved.resposta,
   };
 }
+
+type CategoriaModo = "ajuste" | "obrigatoria";
+
+function wrapCategoriaPrompt(modo: CategoriaModo, body: string): string {
+  return modo === "obrigatoria"
+    ? M.imagem.perguntaCategoriaObrigatoria(body)
+    : M.imagem.pedirNovaCategoria(body);
+}
+
+function categoriaResultStatus(modo: CategoriaModo): {
+  status: ComprovanteResult["status"];
+  newStatus: ComprovanteStatus;
+} {
+  return modo === "obrigatoria"
+    ? {
+        status: "aguardando_categoria_obrigatoria",
+        newStatus: "img_aguardando_categoria_obrigatoria",
+      }
+    : { status: "aguardando_ajuste", newStatus: "img_aguardando_ajuste" };
+}
+
+async function askCategoriaResult(
+  userId: string,
+  session: ComprovanteSession,
+  cats: CategoriaRow[],
+  modo: CategoriaModo,
+): Promise<ComprovanteResult> {
+  const base: ComprovanteSession = {
+    ...session,
+    categoriaOptions: undefined, // entra sempre em "short" page 0
+  };
+  const out = await bodyOpcoesCategoria(userId, base, cats);
+  const sessionNext: ComprovanteSession = {
+    ...out.sessionPatch,
+    pendingField: modo === "ajuste" ? "categoria" : session.pendingField,
+  };
+  const st = categoriaResultStatus(modo);
+  return {
+    status: st.status,
+    newStatus: st.newStatus,
+    session: sessionNext,
+    resposta: wrapCategoriaPrompt(modo, out.body),
+  };
+}
+
+/** Resolve a mensagem do usuário durante a escolha de categoria.
+ *  Retorna `picked` quando o usuário escolheu uma categoria válida;
+ *  caso contrário retorna um `ComprovanteResult` pronto para devolver
+ *  (relistagem, paginação ou aviso de inválido) — sempre mantendo a
+ *  sessão de comprovante ativa. */
+async function handleCategoriaReply(
+  userId: string,
+  session: ComprovanteSession,
+  cats: CategoriaRow[],
+  texto: string,
+  modo: CategoriaModo,
+): Promise<{ picked?: CategoriaRow; result?: ComprovanteResult }> {
+  const r = await resolveCategoriaInput({ userId, session, cats, texto });
+  const st = categoriaResultStatus(modo);
+  if (r.kind === "picked") return { picked: r.cat };
+  if (r.kind === "relist") {
+    const sessionNext: ComprovanteSession = {
+      ...r.sessionPatch,
+      pendingField: modo === "ajuste" ? "categoria" : session.pendingField,
+    };
+    return {
+      result: {
+        status: st.status,
+        newStatus: st.newStatus,
+        session: sessionNext,
+        resposta: wrapCategoriaPrompt(modo, r.body),
+      },
+    };
+  }
+  // inválido — mantém estado e opções, com aviso.
+  const out = await bodyOpcoesCategoria(userId, session, cats);
+  const sessionNext: ComprovanteSession = {
+    ...out.sessionPatch,
+    pendingField: modo === "ajuste" ? "categoria" : session.pendingField,
+  };
+  return {
+    result: {
+      status: st.status,
+      newStatus: st.newStatus,
+      session: sessionNext,
+      resposta: `${M.imagem.categoriaNaoEncontrada()}\n\n${wrapCategoriaPrompt(modo, out.body)}`,
+    },
+  };
+}
+
 
 /**
  * Processa uma mensagem do usuário enquanto existe uma sessão de imagem.
@@ -685,18 +1071,13 @@ export async function processarRespostaImagem(args: {
       }
       next.descricao = d;
     } else if (field === "categoria") {
-      const found = pickCategoria(cats, texto);
-      if (!found) {
-        return {
-          status: "aguardando_ajuste",
-          newStatus: "img_aguardando_ajuste",
-          session: { ...session, pendingField: "categoria" },
-          resposta: M.imagem.pedirNovaCategoria(listarCategorias(cats)),
-        };
-      }
+      const r = await handleCategoriaReply(userId, session, cats, texto, "ajuste");
+      if (r.result) return r.result;
+      const found = r.picked!;
       next.categoriaId = found.id;
       next.categoriaLabel = found.nome;
       next.categoriaNaoIdentificada = false;
+      next.categoriaOptions = undefined;
     } else if (field === "data") {
       const d = parseData(texto);
       if (!d) {
@@ -784,20 +1165,15 @@ export async function processarRespostaImagem(args: {
 
   // ----- aguardando categoria obrigatória -----
   if (status === "img_aguardando_categoria_obrigatoria") {
-    const found = pickCategoria(cats, texto);
-    if (!found) {
-      return {
-        status: "aguardando_categoria_obrigatoria",
-        newStatus: "img_aguardando_categoria_obrigatoria",
-        session,
-        resposta: M.imagem.perguntaCategoriaObrigatoria(listarCategorias(cats)),
-      };
-    }
+    const r = await handleCategoriaReply(userId, session, cats, texto, "obrigatoria");
+    if (r.result) return r.result;
+    const found = r.picked!;
     const next: ComprovanteSession = {
       ...session,
       categoriaId: found.id,
       categoriaLabel: found.nome,
       categoriaNaoIdentificada: false,
+      categoriaOptions: undefined,
     };
     return avancarAposConfirmacao(userId, next, cats);
   }
@@ -822,17 +1198,18 @@ export async function processarRespostaImagem(args: {
     const aj = detectAjuste(texto);
     if (aj) {
       if (aj.kind === "ask") {
+        if (aj.field === "categoria") {
+          return askCategoriaResult(userId, session, cats, "ajuste");
+        }
         const next: ComprovanteSession = { ...session, pendingField: aj.field };
         const resposta =
           aj.field === "valor"
             ? M.imagem.pedirNovoValor()
             : aj.field === "descricao"
               ? M.imagem.pedirNovaDescricao()
-              : aj.field === "categoria"
-                ? M.imagem.pedirNovaCategoria(listarCategorias(cats))
-                : aj.field === "pagamento"
-                  ? M.imagem.pedirNovoPagamento()
-                  : M.imagem.pedirNovaData();
+              : aj.field === "pagamento"
+                ? M.imagem.pedirNovoPagamento()
+                : M.imagem.pedirNovaData();
         return {
           status: "aguardando_ajuste",
           newStatus: "img_aguardando_ajuste",
@@ -850,18 +1227,17 @@ export async function processarRespostaImagem(args: {
       }
       if (aj.field === "pagamento") next.formaPagamento = aj.forma;
       if (aj.field === "categoria") {
-        const found = pickCategoria(cats, aj.termo);
+        // "categoria <termo>" direto — tenta resolver pelo nome; se falhar,
+        // entra no fluxo interativo de lista curta.
+        const deduped = dedupCategoriasByNome(cats);
+        const found = findCategoriaByTerm(deduped, aj.termo);
         if (!found) {
-          return {
-            status: "aguardando_ajuste",
-            newStatus: "img_aguardando_ajuste",
-            session: { ...session, pendingField: "categoria" },
-            resposta: M.imagem.pedirNovaCategoria(listarCategorias(cats)),
-          };
+          return askCategoriaResult(userId, session, cats, "ajuste");
         }
         next.categoriaId = found.id;
         next.categoriaLabel = found.nome;
         next.categoriaNaoIdentificada = false;
+        next.categoriaOptions = undefined;
       }
       return rebuildResumoOuPreencher(next, cats);
     }
@@ -922,15 +1298,6 @@ function rebuildResumoOuPreencher(
   };
 }
 
-function listarCategorias(cats: CategoriaRow[]): string {
-  const nomes = cats
-    .map((c) => c.nome)
-    .filter(Boolean)
-    .slice(0, 20);
-  if (nomes.length === 0) return "";
-  // Numerada para permitir resposta por índice ("1", "2", ...).
-  return "\n\n" + nomes.map((n, i) => `${i + 1}. ${n}`).join("\n");
-}
 
 // ----- entitlement: importar foto / OCR ----------------------------------
 /**

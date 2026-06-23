@@ -617,11 +617,11 @@ export const whatsappMessages = {
     pedirNovaDescricao() {
       return `Qual descrição devo usar?`;
     },
-    pedirNovaCategoria(listaCategorias: string) {
+    pedirNovaCategoria(corpoOpcoes: string) {
       return [
         `Claro. Qual categoria você quer usar?`,
         ``,
-        `${listaCategorias.trim()}`,
+        corpoOpcoes.trim(),
       ].join("\n");
     },
     pedirNovoPagamento() {
@@ -645,11 +645,18 @@ export const whatsappMessages = {
         `Quer usar hoje ou informar outra data?`,
       ].join("\n");
     },
-    perguntaCategoriaObrigatoria(listaCategorias: string) {
+    perguntaCategoriaObrigatoria(corpoOpcoes: string) {
       return [
         `Em qual categoria esse gasto entra?`,
         ``,
-        `Ex.: Alimentação, Transporte, Saúde ou Lazer.${listaCategorias}`,
+        corpoOpcoes.trim(),
+      ].join("\n");
+    },
+    categoriaNaoEncontrada() {
+      return [
+        `Não encontrei essa categoria.`,
+        ``,
+        `Você pode escolher um número da lista, digitar o nome ou escrever "ver todas".`,
       ].join("\n");
     },
     pedirNovaData() {
