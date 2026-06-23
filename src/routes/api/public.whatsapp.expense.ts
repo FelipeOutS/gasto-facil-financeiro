@@ -196,9 +196,25 @@ const MetaImageMessage = z.object({
     caption: z.string().max(1000).optional(),
   }),
 });
+// WA-V1 — mensagens de áudio (Cloud API). Aceita apenas o envelope; a
+// validação real do tipo, tamanho e bytes mágicos acontece DEPOIS do
+// gate de elegibilidade e da flag (ordem obrigatória do webhook).
+const MetaAudioMessage = z.object({
+  id: z.string().min(1).max(256),
+  from: z.string().min(5).max(40).regex(/^\d+$/),
+  timestamp: z.string().min(1).max(20).regex(/^\d+$/),
+  type: z.literal("audio"),
+  audio: z.object({
+    id: z.string().min(1).max(256),
+    mime_type: z.string().max(80).optional(),
+    sha256: z.string().max(128).optional(),
+    voice: z.boolean().optional(),
+  }),
+});
 const MetaAnyMessage = z.union([
   MetaTextMessage,
   MetaImageMessage,
+  MetaAudioMessage,
   z.object({ id: z.string().optional(), type: z.string() }).passthrough(),
 ]);
 const MetaChange = z.object({
@@ -225,6 +241,11 @@ type FlatMessage = {
   texto: string;
   recebida_em?: string;
   image?: {
+    mediaId: string;
+    mimeType?: string;
+    sha256?: string;
+  };
+  audio?: {
     mediaId: string;
     mimeType?: string;
     sha256?: string;
