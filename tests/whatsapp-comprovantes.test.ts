@@ -4,6 +4,7 @@
  */
 import { test, expect, beforeEach } from "bun:test";
 import { state, resetState, gastosInserts } from "./_whatsapp-fake";
+import type { ParsedExpense } from "../src/lib/whatsappParser";
 
 const {
   processarMensagemWhatsApp,
@@ -648,7 +649,7 @@ test("Integração realista: cancelar → imagem → comandos de ajuste ficam no
         mensagemOriginal: message,
         confianca: 0,
         notas: [],
-      } as ReturnType<typeof import("../src/lib/whatsappParser").parseWhatsAppExpenseMessage>;
+      } as ParsedExpense;
     });
 
     const response = await processarMensagemWhatsApp({
