@@ -2163,13 +2163,26 @@ export async function processarMensagemWhatsApp(
   // parsed.kind = imagem_comprovante. Se houver sessão ativa, o parser não roda.
   receiptLookup = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
   if (receiptLookup.sessao) {
+    logWaSessionLookup({ msg, activeSession: receiptLookup.sessao, receiptLookup });
+    logWaExpenseParserGuard({
+      msg,
+      receiptSessionExists: true,
+      allowedToParseExpense: false,
+    });
+    logWaRouteDecision(msg, "receipt_handler", "final_guard_receipt_session_found");
     return await processarSessaoComprovanteAtiva({
       userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
     });
   }
+  logWaExpenseParserGuard({
+    msg,
+    receiptSessionExists: false,
+    allowedToParseExpense: true,
+  });
   if (isReceiptReservedCommand(texto)) {
     logReceiptSessionRoute({ ...receiptLookup, routedTo: "expense_parser" });
   }
+  logWaRouteDecision(msg, "expense_parser", "no_active_session_after_final_guard");
   const parsed = parseExpenseMessage(texto, cartoes);
   // Comandos genéricos ("registrar gasto", "novo gasto", ...) e descrições
   // automáticas inválidas ("Gasto WhatsApp") NUNCA podem virar descrição
