@@ -19,7 +19,7 @@ import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin = _supabaseAdmin as any;
 import {
-  parseWhatsAppExpenseMessage,
+  parseWhatsAppExpenseMessage as baseParseWhatsAppExpenseMessage,
   cleanDescricao,
   type ParsedExpense,
 } from "@/lib/whatsappParser";
@@ -59,6 +59,14 @@ import {
   type ComprovanteStatus,
   type ImageAttachment,
 } from "./whatsapp-comprovantes.server";
+
+let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
+
+export function __setExpenseParserForTests(
+  parser: typeof baseParseWhatsAppExpenseMessage | null,
+) {
+  parseExpenseMessage = parser ?? baseParseWhatsAppExpenseMessage;
+}
 
 
 // ---------- elegibilidade WhatsApp (gate único) ----------
