@@ -8,14 +8,11 @@ import { test, expect, beforeEach, afterEach, describe } from "bun:test";
 const MODULE_PATH = "../src/server/admin-master.server";
 
 async function load() {
-  // bun cache do módulo — reset entre testes para que `process.env` seja
-  // re-lido a cada caso.
-  // @ts-expect-error bun runtime
-  delete (await import("bun")).$;
   const mod = await import(MODULE_PATH);
   mod.__resetAdminMasterCacheForTests();
   return mod;
 }
+
 
 const ORIGINAL = process.env.ADMIN_MASTER_EMAILS;
 
