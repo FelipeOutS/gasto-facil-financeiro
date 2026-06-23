@@ -1951,6 +1951,8 @@ export async function processarMensagemWhatsApp(
       }) as unknown as Session,
       out.resposta,
     );
+    // WA-G5A.4 — audita imediatamente após a persistência da sessão de imagem.
+    await logReceiptSessionCreatedAudit({ msg, userId, persisted: true });
     return { status: "pendente", resposta: out.resposta };
   }
 
