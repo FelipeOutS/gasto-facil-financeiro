@@ -1029,15 +1029,68 @@ export async function buscarSessaoComprovanteAtiva(
   const kindRows = toSessaoRows(byKind).filter((r) => isComprovanteSession(r.session));
   const activeStatusRows = statusRows.filter((r) => !FINAL_SESSION_STATES.has(r.status));
   const activeKindRows = kindRows.filter((r) => !FINAL_SESSION_STATES.has(r.status));
+
+  // ---- WA-G5A.4: fallback diagnóstico para detectar formatos JSON ----
+  // alternativos onde "kind" possa ter sido persistido em outro nível
+  // (parsed.session.kind, parsed.flow.kind, etc.). NUNCA usado para
+  // tomar decisão de rota; apenas para auditoria de produção.
+  let fallbackRows: SessaoRow[] = [];
+  let fallbackStoredKindPath: string | null = null;
+  if (activeStatusRows.length === 0 && activeKindRows.length === 0) {
+    const { data: fallback } = await supabaseAdmin
+      .from("whatsapp_messages")
+      .select("id, status, parsed, recebida_em")
+      .eq("user_id", userId)
+      .eq("telefone", telefone)
+      .not("status", "in", FINAL_SESSION_STATES_POSTGREST)
+      .gte("recebida_em", desde)
+      .order("recebida_em", { ascending: false })
+      .limit(20);
+    const rows = toSessaoRows(fallback);
+    for (const r of rows) {
+      const path = detectStoredKindPath(r.session);
+      if (path) {
+        fallbackRows.push(r);
+        fallbackStoredKindPath = path;
+        break;
+      }
+    }
+  }
+
   const rows = [...activeStatusRows, ...activeKindRows]
     .filter((row, idx, all) => all.findIndex((r) => r.id === row.id) === idx)
     .sort((a, b) => Date.parse(b.recebida_em) - Date.parse(a.recebida_em));
+
+  // storedKindPath para o registro escolhido (ou fallback se nenhum oficial).
+  let storedKindPath: string | null = null;
+  if (rows[0]) storedKindPath = detectStoredKindPath(rows[0].session);
+  else if (fallbackStoredKindPath) storedKindPath = fallbackStoredKindPath;
 
   return {
     sessao: rows[0] ?? null,
     sessionFoundByStatus: activeStatusRows.length > 0,
     sessionFoundByKind: activeKindRows.length > 0,
+    sessionFoundByFallbackQuery: fallbackRows.length > 0,
+    storedKindPath,
   };
+}
+
+// WA-G5A.4 — descobre em qual caminho do JSON persistido o "kind" foi salvo.
+// Retorna apenas o caminho técnico (p.ex. "parsed.kind"), nunca o valor
+// completo do parsed nem dados sensíveis.
+function detectStoredKindPath(session: unknown): string | null {
+  if (!session || typeof session !== "object") return null;
+  const s = session as Record<string, unknown>;
+  if (typeof s.kind === "string" && s.kind === "imagem_comprovante") return "parsed.kind";
+  const inner = s.session as Record<string, unknown> | undefined;
+  if (inner && typeof inner === "object" && (inner as { kind?: unknown }).kind === "imagem_comprovante") {
+    return "parsed.session.kind";
+  }
+  const flow = s.flow as Record<string, unknown> | undefined;
+  if (flow && typeof flow === "object" && (flow as { kind?: unknown }).kind === "imagem_comprovante") {
+    return "parsed.flow.kind";
+  }
+  return null;
 }
 
 async function fecharSessoesAnteriores(
