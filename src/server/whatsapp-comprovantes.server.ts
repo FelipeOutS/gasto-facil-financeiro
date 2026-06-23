@@ -1198,17 +1198,18 @@ export async function processarRespostaImagem(args: {
     const aj = detectAjuste(texto);
     if (aj) {
       if (aj.kind === "ask") {
+        if (aj.field === "categoria") {
+          return askCategoriaResult(userId, session, cats, "ajuste");
+        }
         const next: ComprovanteSession = { ...session, pendingField: aj.field };
         const resposta =
           aj.field === "valor"
             ? M.imagem.pedirNovoValor()
             : aj.field === "descricao"
               ? M.imagem.pedirNovaDescricao()
-              : aj.field === "categoria"
-                ? M.imagem.pedirNovaCategoria(listarCategorias(cats))
-                : aj.field === "pagamento"
-                  ? M.imagem.pedirNovoPagamento()
-                  : M.imagem.pedirNovaData();
+              : aj.field === "pagamento"
+                ? M.imagem.pedirNovoPagamento()
+                : M.imagem.pedirNovaData();
         return {
           status: "aguardando_ajuste",
           newStatus: "img_aguardando_ajuste",
@@ -1226,18 +1227,17 @@ export async function processarRespostaImagem(args: {
       }
       if (aj.field === "pagamento") next.formaPagamento = aj.forma;
       if (aj.field === "categoria") {
-        const found = pickCategoria(cats, aj.termo);
+        // "categoria <termo>" direto — tenta resolver pelo nome; se falhar,
+        // entra no fluxo interativo de lista curta.
+        const deduped = dedupCategoriasByNome(cats);
+        const found = findCategoriaByTerm(deduped, aj.termo);
         if (!found) {
-          return {
-            status: "aguardando_ajuste",
-            newStatus: "img_aguardando_ajuste",
-            session: { ...session, pendingField: "categoria" },
-            resposta: M.imagem.pedirNovaCategoria(listarCategorias(cats)),
-          };
+          return askCategoriaResult(userId, session, cats, "ajuste");
         }
         next.categoriaId = found.id;
         next.categoriaLabel = found.nome;
         next.categoriaNaoIdentificada = false;
+        next.categoriaOptions = undefined;
       }
       return rebuildResumoOuPreencher(next, cats);
     }
