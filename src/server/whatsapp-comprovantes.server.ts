@@ -66,6 +66,8 @@ export type ComprovanteSession = {
     optionNames: string[];
   };
   mensagemOriginal: string;
+};
+
 
 export function isComprovanteSession(s: unknown): s is ComprovanteSession {
   return !!s && typeof s === "object" && (s as { kind?: string }).kind === "imagem_comprovante";
