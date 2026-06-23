@@ -8,6 +8,7 @@
  * os dados que esses helpers usariam, e validamos o branch correspondente
  * por inspeção lógica (asserts diretos).
  */
+import { test, expect } from "bun:test";
 import { parseWhatsAppExpenseMessage } from "../src/lib/whatsappParser";
 import {
   classificarResposta,
@@ -17,6 +18,7 @@ import {
   isGenericExpenseDescription,
 } from "../src/server/whatsapp.server";
 import type { Cartao } from "../src/lib/types";
+
 
 
 let pass = 0;
@@ -411,6 +413,11 @@ console.log(`Resultado: ${pass} passou, ${fail} falhou.`);
 if (failures.length) {
   console.log("\nFalhas:");
   failures.forEach((f) => console.log("  - " + f));
-  process.exit(1);
 }
-process.exit(0);
+
+// WA-B5: integrar runner imperativo legado ao bun:test sem usar process.exit,
+// para que o arquivo conviva com os demais sob `bun test tests/`.
+test("whatsapp-flow (runner legado): todos os asserts passaram", () => {
+  expect({ pass, fail, failures }).toEqual({ pass, fail: 0, failures: [] });
+});
+
