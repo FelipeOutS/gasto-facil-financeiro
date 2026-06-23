@@ -806,6 +806,8 @@ type ReceiptSessionLookup = {
   sessao: SessaoRow | null;
   sessionFoundByStatus: boolean;
   sessionFoundByKind: boolean;
+  sessionFoundByFallbackQuery: boolean;
+  storedKindPath: string | null;
 };
 
 function toSessaoRows(data: unknown): SessaoRow[] {
