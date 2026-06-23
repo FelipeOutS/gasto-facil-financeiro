@@ -2772,8 +2772,26 @@ export async function sendWhatsAppReply(
         }),
       },
     );
+    if (!res.ok) {
+      // WA-B3.4 — apenas o status HTTP é registrado. NÃO logamos body,
+      // URL com query, token, telefone, texto da resposta nem códigos
+      // de erro provider-side que possam embutir conteúdo do payload.
+      console.error({
+        event: "wa_reply_failed",
+        handlerVersion: WHATSAPP_HANDLER_VERSION,
+        httpStatus: res.status,
+      });
+    }
     return { sent: res.ok, status: res.status };
   } catch (e) {
-    return { sent: false, reason: (e as Error).message };
+    // WA-B3.4 — NUNCA logar `err.message`: pode conter URL da Graph,
+    // body, telefone ou token. Apenas o nome do erro.
+    const errorName = e instanceof Error ? e.name : "unknown";
+    console.error({
+      event: "wa_reply_failed",
+      handlerVersion: WHATSAPP_HANDLER_VERSION,
+      errorName,
+    });
+    return { sent: false, reason: errorName };
   }
 }
