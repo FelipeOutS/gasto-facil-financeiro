@@ -9,6 +9,13 @@
  */
 import { test, expect, beforeEach, mock } from "bun:test";
 
+// WA-B4: admin-master.server agora é fail-closed (sem fallback compilado).
+// Os testes que validam o bypass de Admin Master precisam configurar a env
+// ANTES do módulo ser importado.
+process.env.ADMIN_MASTER_EMAILS = "felipe.out.silva@outlook.com,michael@medeiroscenografia.com.br";
+
+
+
 // -------- mocks --------
 const linkState: {
   link: null | {
