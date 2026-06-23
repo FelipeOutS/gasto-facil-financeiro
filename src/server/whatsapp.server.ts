@@ -908,7 +908,7 @@ type WhatsAppAuditRoute =
 export function logWhatsAppInboundReceived(args: {
   telefone: string;
   externalId: string | null;
-  messageType: "text" | "image";
+  messageType: "text" | "image" | "audio";
 }) {
   console.info({
     event: "wa_inbound_received",
