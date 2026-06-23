@@ -754,6 +754,9 @@ const FINAL_SESSION_STATES = new Set([
   "duplicada",
   "sem_pendencia",
 ]);
+const FINAL_SESSION_STATES_POSTGREST = `(${Array.from(FINAL_SESSION_STATES)
+  .map((s) => `"${s}"`)
+  .join(",")})`;
 export const RECEIPT_RESERVED_COMMANDS = [
   "categoria",
   "valor",
@@ -879,7 +882,7 @@ async function buscarSessaoAtiva(
   return comprovante ?? rows.find((r) => PENDING_STATES.includes(r.status)) ?? null;
 }
 
-async function buscarSessaoComprovanteAtiva(
+export async function buscarSessaoComprovanteAtiva(
   userId: string,
   telefone: string,
 ): Promise<ReceiptSessionLookup> {
@@ -899,6 +902,7 @@ async function buscarSessaoComprovanteAtiva(
     .eq("user_id", userId)
     .eq("telefone", telefone)
     .eq("parsed->>kind", "imagem_comprovante")
+    .not("status", "in", FINAL_SESSION_STATES_POSTGREST)
     .gte("recebida_em", desde)
     .order("recebida_em", { ascending: false })
     .limit(20);
@@ -950,7 +954,7 @@ async function fecharSessoesComprovanteAtivas(
     .eq("user_id", userId)
     .eq("telefone", telefone)
     .eq("parsed->>kind", "imagem_comprovante")
-    .not("status", "in", `(${Array.from(FINAL_SESSION_STATES).map((s) => `"${s}"`).join(",")})`);
+    .not("status", "in", FINAL_SESSION_STATES_POSTGREST);
 }
 
 function listarCartoesParaPergunta(cartoes: Cartao[]): string {
