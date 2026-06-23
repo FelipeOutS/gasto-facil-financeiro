@@ -1146,13 +1146,20 @@ export async function buscarSessaoComprovanteAtiva(
   const activeStatusRows = statusRows.filter((r) => !FINAL_SESSION_STATES.has(r.status));
   const activeKindRows = kindRows.filter((r) => !FINAL_SESSION_STATES.has(r.status));
 
-  // ---- WA-G5A.4: fallback diagnóstico para detectar formatos JSON ----
-  // alternativos onde "kind" possa ter sido persistido em outro nível
-  // (parsed.session.kind, parsed.flow.kind, etc.). NUNCA usado para
-  // tomar decisão de rota; apenas para auditoria de produção.
+  // ---- WA-G5A.4 / WA-B3.5: fallback diagnóstico ----
+  // Detecta formatos JSON alternativos onde "kind" possa ter sido
+  // persistido em outro nível (parsed.session.kind, parsed.flow.kind).
+  // NUNCA é usado para tomar decisão de rota; apenas para auditoria.
+  //
+  // WA-B3.5 — removido do caminho crítico por padrão. Permanece atrás
+  // de flag server-side `WHATSAPP_SESSION_AUDIT_FALLBACK=true`, desligada
+  // por padrão. O hard gate de comprovante (busca por status + parsed.kind
+  // logo acima) continua intocado.
   let fallbackRows: SessaoRow[] = [];
   let fallbackStoredKindPath: string | null = null;
-  if (activeStatusRows.length === 0 && activeKindRows.length === 0) {
+  const auditFallbackOn =
+    (process.env.WHATSAPP_SESSION_AUDIT_FALLBACK ?? "").trim().toLowerCase() === "true";
+  if (auditFallbackOn && activeStatusRows.length === 0 && activeKindRows.length === 0) {
     const { data: fallback } = await supabaseAdmin
       .from("whatsapp_messages")
       .select("id, status, parsed, recebida_em")
