@@ -865,6 +865,71 @@ type WhatsAppAuditRoute =
   | "conversational_handler"
   | "reset_handler";
 
+export function logWhatsAppInboundReceived(args: {
+  telefone: string;
+  externalId: string | null;
+  messageType: "text" | "image";
+}) {
+  console.info({
+    event: "wa_inbound_received",
+    handlerVersion: WHATSAPP_HANDLER_VERSION,
+    conversationKey: conversationKeyFor(args.telefone),
+    messageKey: messageKeyFor(args.externalId),
+    messageType: args.messageType,
+  });
+}
+
+function logWaSessionLookup(args: {
+  msg: WhatsAppMessageRow;
+  activeSession: SessaoRow | null;
+  receiptLookup: ReceiptSessionLookup;
+}) {
+  const receipt = args.receiptLookup.sessao;
+  console.info({
+    event: "wa_session_lookup",
+    handlerVersion: WHATSAPP_HANDLER_VERSION,
+    conversationKey: conversationKeyFor(args.msg.telefone),
+    messageKey: messageKeyFor(args.msg.external_id),
+    activeSessionFound: !!args.activeSession,
+    activeSessionStatus: args.activeSession?.status ?? null,
+    activeSessionKind: args.activeSession?.session && typeof args.activeSession.session === "object"
+      ? (args.activeSession.session as { kind?: string }).kind ?? null
+      : null,
+    receiptSessionFoundByStatus: args.receiptLookup.sessionFoundByStatus,
+    receiptSessionFoundByKind: args.receiptLookup.sessionFoundByKind,
+    receiptSessionStatus: receipt?.status ?? null,
+    receiptSessionKind: receipt?.session && isComprovanteSession(receipt.session)
+      ? receipt.session.kind
+      : null,
+  });
+}
+
+function logWaRouteDecision(msg: WhatsAppMessageRow, routedTo: WhatsAppAuditRoute, reason: string) {
+  console.info({
+    event: "wa_route_decision",
+    handlerVersion: WHATSAPP_HANDLER_VERSION,
+    conversationKey: conversationKeyFor(msg.telefone),
+    messageKey: messageKeyFor(msg.external_id),
+    routedTo,
+    reason,
+  });
+}
+
+function logWaExpenseParserGuard(args: {
+  msg: WhatsAppMessageRow;
+  receiptSessionExists: boolean;
+  allowedToParseExpense: boolean;
+}) {
+  console.info({
+    event: "wa_expense_parser_guard",
+    handlerVersion: WHATSAPP_HANDLER_VERSION,
+    conversationKey: conversationKeyFor(args.msg.telefone),
+    messageKey: messageKeyFor(args.msg.external_id),
+    receiptSessionExists: args.receiptSessionExists,
+    allowedToParseExpense: args.allowedToParseExpense,
+  });
+}
+
 function logReceiptSessionRoute(args: ReceiptSessionLookup & {
   routedTo: "receipt_handler" | "expense_parser";
 }) {
