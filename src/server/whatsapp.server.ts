@@ -119,6 +119,17 @@ type WhatsAppMessageRow = {
   /** Anexo de imagem (Fase WA-G5A). Quando presente, dispara o fluxo
    *  de leitura de comprovante via OCR existente do site. */
   image?: ImageAttachment;
+  /**
+   * WA-B3.1 — identidade autorizada propagada pelo gate único
+   * `canUseWhatsAppForSender`. Quando presente, o pipeline NÃO refaz
+   * `resolveUserId` nem `userPodeUsarWhatsApp`: a autorização já foi
+   * decidida pelo webhook e este `userId` é a única fonte confiável.
+   *
+   * Não confiar em identidade vinda de payload livre / texto: este
+   * campo é populado apenas pelo handler HTTP do webhook (que tem o
+   * gate antes de qualquer parser ou persistência).
+   */
+  authorizedUserId?: string;
 };
 
 export function maskTelefone(tel: string): string {
