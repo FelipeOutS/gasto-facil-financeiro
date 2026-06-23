@@ -937,6 +937,96 @@ async function avancarAposConfirmacao(
   };
 }
 
+type CategoriaModo = "ajuste" | "obrigatoria";
+
+function wrapCategoriaPrompt(modo: CategoriaModo, body: string): string {
+  return modo === "obrigatoria"
+    ? M.imagem.perguntaCategoriaObrigatoria(body)
+    : M.imagem.pedirNovaCategoria(body);
+}
+
+function categoriaResultStatus(modo: CategoriaModo): {
+  status: ComprovanteResult["status"];
+  newStatus: ComprovanteStatus;
+} {
+  return modo === "obrigatoria"
+    ? {
+        status: "aguardando_categoria_obrigatoria",
+        newStatus: "img_aguardando_categoria_obrigatoria",
+      }
+    : { status: "aguardando_ajuste", newStatus: "img_aguardando_ajuste" };
+}
+
+async function askCategoriaResult(
+  userId: string,
+  session: ComprovanteSession,
+  cats: CategoriaRow[],
+  modo: CategoriaModo,
+): Promise<ComprovanteResult> {
+  const base: ComprovanteSession = {
+    ...session,
+    categoriaOptions: undefined, // entra sempre em "short" page 0
+  };
+  const out = await bodyOpcoesCategoria(userId, base, cats);
+  const sessionNext: ComprovanteSession = {
+    ...out.sessionPatch,
+    pendingField: modo === "ajuste" ? "categoria" : session.pendingField,
+  };
+  const st = categoriaResultStatus(modo);
+  return {
+    status: st.status,
+    newStatus: st.newStatus,
+    session: sessionNext,
+    resposta: wrapCategoriaPrompt(modo, out.body),
+  };
+}
+
+/** Resolve a mensagem do usuário durante a escolha de categoria.
+ *  Retorna `picked` quando o usuário escolheu uma categoria válida;
+ *  caso contrário retorna um `ComprovanteResult` pronto para devolver
+ *  (relistagem, paginação ou aviso de inválido) — sempre mantendo a
+ *  sessão de comprovante ativa. */
+async function handleCategoriaReply(
+  userId: string,
+  session: ComprovanteSession,
+  cats: CategoriaRow[],
+  texto: string,
+  modo: CategoriaModo,
+): Promise<{ picked?: CategoriaRow; result?: ComprovanteResult }> {
+  const r = await resolveCategoriaInput({ userId, session, cats, texto });
+  const st = categoriaResultStatus(modo);
+  if (r.kind === "picked") return { picked: r.cat };
+  if (r.kind === "relist") {
+    const sessionNext: ComprovanteSession = {
+      ...r.sessionPatch,
+      pendingField: modo === "ajuste" ? "categoria" : session.pendingField,
+    };
+    return {
+      result: {
+        status: st.status,
+        newStatus: st.newStatus,
+        session: sessionNext,
+        resposta: wrapCategoriaPrompt(modo, r.body),
+      },
+    };
+  }
+  // inválido — mantém estado e opções, com aviso.
+  const out = await bodyOpcoesCategoria(userId, session, cats);
+  const sessionNext: ComprovanteSession = {
+    ...out.sessionPatch,
+    pendingField: modo === "ajuste" ? "categoria" : session.pendingField,
+  };
+  return {
+    result: {
+      status: st.status,
+      newStatus: st.newStatus,
+      session: sessionNext,
+      resposta: `${M.imagem.categoriaNaoEncontrada()}\n\n${wrapCategoriaPrompt(modo, out.body)}`,
+    },
+  };
+}
+
+
 /**
  * Processa uma mensagem do usuário enquanto existe uma sessão de imagem.
  */
