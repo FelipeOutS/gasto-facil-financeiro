@@ -1865,6 +1865,7 @@ export async function processarMensagemWhatsApp(
   if (!sessao && decisao === "outro") {
     const conv = detectConversationalIntent(texto);
     if (conv) {
+      logWaRouteDecision(msg, "conversational_handler", "conversational_intent_without_session");
       const out = handleConversational(msg.telefone, conv);
       await gravarSessao(
         userId,
@@ -1915,6 +1916,7 @@ export async function processarMensagemWhatsApp(
   if (!sessao && decisao === "outro") {
     const intent = detectConsultaIntent(texto);
     if (intent) {
+      logWaRouteDecision(msg, "consulta_handler", "consulta_intent_without_session");
       const out = await handleConsulta(userId, intent);
       await gravarSessao(
         userId,
@@ -1943,6 +1945,7 @@ export async function processarMensagemWhatsApp(
   if (!sessao && decisao === "outro") {
     const espec = detectConsultaEspecifica(texto);
     if (espec) {
+      logWaRouteDecision(msg, "consulta_handler", "consulta_especifica_without_session");
       const out = await handleConsultaEspecifica(userId, espec);
       if (out.status === "consulta_categoria_ambigua") {
         await gravarSessao(
@@ -1978,6 +1981,7 @@ export async function processarMensagemWhatsApp(
   // ---- Fase WA-G1: texto livre indicando intenção de receita. ----
   const startsReceita = !sessao && decisao === "outro" && isReceitaIntent(texto);
   if (startsReceita) {
+    logWaRouteDecision(msg, "revenue_handler", "new_revenue_intent");
     return await processarReceita({
       userId, msg, texto, recebidaEm, decisao, sessao: null,
     });
