@@ -65,7 +65,22 @@ let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
 type WhatsAppAuditTestEvent =
   | { event: "wa_route_decision"; routedTo: string; reason: string }
   | { event: "wa_expense_parser_guard"; receiptSessionExists: boolean; allowedToParseExpense: boolean }
-  | { event: "wa_session_lookup"; receiptSessionFoundByKind: boolean; receiptSessionFoundByStatus: boolean };
+  | { event: "wa_session_lookup"; receiptSessionFoundByKind: boolean; receiptSessionFoundByStatus: boolean }
+  | {
+      event: "wa_receipt_session_created";
+      persistedRowFound: boolean;
+      persistedStatus: string | null;
+      persistedKindPath: string | null;
+      persistedPhoneStartsWith55: boolean;
+    }
+  | {
+      event: "wa_receipt_session_trace";
+      receiptSessionFoundByStatus: boolean;
+      receiptSessionFoundByKind: boolean;
+      receiptSessionFoundByFallbackQuery: boolean;
+      storedKindPath: string | null;
+      routeChosen: string;
+    };
 let auditObserverForTests: ((event: WhatsAppAuditTestEvent) => void) | null = null;
 
 export function __setExpenseParserForTests(
