@@ -5,6 +5,7 @@ import {
   logWhatsAppInboundReceived,
   processarMensagemWhatsApp,
   sendWhatsAppReply,
+  WHATSAPP_HANDLER_VERSION,
 } from "@/server/whatsapp.server";
 import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
@@ -119,6 +120,10 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
+  // WA-G5A.4 — diagnóstico de versão do handler ativo em produção.
+  // Permite confirmar tecnicamente qual deploy está respondendo sem
+  // expor dado sensível algum.
+  "X-WA-Handler-Version": WHATSAPP_HANDLER_VERSION,
 };
 
 function jsonResponse(body: unknown, status = 200): Response {
