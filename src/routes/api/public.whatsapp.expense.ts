@@ -574,18 +574,21 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               try {
                 await sendWhatsAppReply(msg.telefone, out.resposta);
               } catch (replyErr) {
-                // Não logar o erro com payload; apenas a mensagem.
-                console.error(
-                  "[whatsapp] reply send failed:",
-                  replyErr instanceof Error ? replyErr.message : "unknown",
-                );
+                // WA-B3.4 — NUNCA logar err.message; pode conter URL
+                // assinada da Graph, telefone, token ou body do payload.
+                console.error({
+                  event: "wa_reply_failed",
+                  errorName: replyErr instanceof Error ? replyErr.name : "unknown",
+                });
               }
             }
           } catch (e) {
-            console.error(
-              "[whatsapp] processar erro:",
-              e instanceof Error ? e.message : "unknown",
-            );
+            // WA-B3.4 — sanitização análoga ao reply: apenas o nome do
+            // erro, nunca o message bruto (pode conter conteúdo).
+            console.error({
+              event: "wa_process_failed",
+              errorName: e instanceof Error ? e.name : "unknown",
+            });
             results.push({ status: "erro" });
           }
         }
