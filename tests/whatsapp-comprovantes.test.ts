@@ -864,3 +864,68 @@ test("WA-G5A.4: buscarSessaoComprovanteAtiva expõe storedKindPath e flags de au
     "sessionFoundByStatus", "storedKindPath",
   ]);
 });
+
+// ---------- WA-G5A.5: persistência durável da sessão de comprovante ----------
+
+test("WA-G5A.5: confiança 'baixa'/'media'/'alta' do OCR é gravada como NUMERIC (não derruba o INSERT)", async () => {
+  resetState();
+  mockOcr({
+    valor: 12.5,
+    descricao: "Padaria do João",
+    data: null,
+    categoriaSugerida: "mercado",
+    formaPagamento: "pix",
+    confianca: "baixa",
+  });
+  const out = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "",
+    external_id: "g5a5-conf-baixa",
+    image: fakeImage("g5a5-conf-baixa-h"),
+  });
+  // Deve responder com o resumo (status pendente), nunca com a falha segura.
+  expect(out.status).toBe("pendente");
+  // Linha inserida com confianca numérica (não a string "baixa").
+  const insercoes = state.inserts.filter(
+    (i) => i.table === "whatsapp_messages" && i.row?.external_id === "g5a5-conf-baixa",
+  );
+  expect(insercoes.length).toBeGreaterThan(0);
+  const row = insercoes[insercoes.length - 1].row as Record<string, unknown>;
+  expect(typeof row.confianca === "number" || row.confianca === null).toBe(true);
+  // E a sessão deve ser recuperável imediatamente pela mesma query da produção.
+  const lookup = await buscarSessaoComprovanteAtiva("u1", tel);
+  expect(lookup.sessao).not.toBeNull();
+  expect(lookup.storedKindPath).toBe("parsed.kind");
+});
+
+test("WA-G5A.5: 'categoria' depois da foto encontra a sessão e NUNCA cai no parser de gasto", async () => {
+  resetState();
+  mockOcr({
+    valor: 48.9,
+    descricao: "EXPEDITO ALVES DE LIMA ME",
+    data: null,
+    categoriaSugerida: "mercado",
+    formaPagamento: "credito",
+    confianca: "baixa",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "",
+    external_id: "g5a5-cat-foto",
+    image: fakeImage("g5a5-cat-foto-h"),
+  });
+  const out = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "categoria",
+    external_id: "g5a5-cat-texto",
+  });
+  // Não cria sessão de gasto "aguardando_descricao_e_valor_gasto".
+  const semParserGasto = state.inserts.every(
+    (i) =>
+      i.table !== "whatsapp_messages" ||
+      i.row?.status !== "aguardando_descricao_e_valor_gasto",
+  );
+  expect(semParserGasto).toBe(true);
+  // E não responde com a pergunta do parser ("Qual foi o valor de Categoria?").
+  expect(out.resposta.toLowerCase()).not.toContain("qual foi o valor");
+});

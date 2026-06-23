@@ -101,6 +101,12 @@ function makeBuilder(table: string): any {
       if (table === "gastos") {
         return { data: { id: `g-${state.inserts.length}` }, error: null };
       }
+      if (table === "whatsapp_messages") {
+        return {
+          data: { id: `m-${state.inserts.length}`, status: rows[0]?.status ?? null },
+          error: null,
+        };
+      }
       return { data: null, error: null };
     }
     if (ctx.op === "update") {

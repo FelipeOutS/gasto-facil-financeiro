@@ -439,6 +439,7 @@ export type ProcessOutcome = {
     | "erro"
     | "valor_invalido"
     | "gasto_excluido"
+    | "falha"
     | "consulta";
   gastoId?: string;
   confianca?: number;
@@ -764,7 +765,7 @@ function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
 }
 
 const PENDING_TTL_MS = 30 * 60 * 1000;
-export const WHATSAPP_HANDLER_VERSION = "receipt-session-audit-v4";
+export const WHATSAPP_HANDLER_VERSION = "receipt-session-durable-v5";
 const PENDING_STATES = [
   "aguardando_confirmacao",
   "aguardando_forma_pagamento",
@@ -1389,6 +1390,34 @@ function nextStateFor(s: Session): {
   return { status: "aguardando_confirmacao", resposta: "" };
 }
 
+// WA-G5A.5 — coerção segura de confiança.
+// O OCR de comprovantes devolve string ("alta"/"media"/"baixa"); o pipeline
+// de gastos devolve número 0..1. A coluna `whatsapp_messages.confianca` é
+// NUMERIC — passar string causava `invalid input syntax for type numeric`
+// e o INSERT falhava em silêncio (sem leitura de `.error`). Isso impedia
+// a sessão de comprovante de ser persistida e, consequentemente, a próxima
+// mensagem ("categoria") caía no parser de gasto.
+function coerceConfiancaForDb(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const v = value.trim().toLowerCase();
+    if (v === "alta") return 0.9;
+    if (v === "media" || v === "média") return 0.6;
+    if (v === "baixa") return 0.3;
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+export type SaveSessionResult = {
+  ok: boolean;
+  sessionId: string | null;
+  status: string | null;
+  kind: string | null;
+  errorCode: string | null;
+};
+
 async function gravarSessao(
   userId: string,
   telefone: string,
@@ -1399,19 +1428,50 @@ async function gravarSessao(
   session: Session,
   resposta: string,
   gastoId?: string,
-) {
-  await supabaseAdmin.from("whatsapp_messages").insert({
-    user_id: userId,
-    external_id: externalId,
-    telefone,
-    texto,
-    recebida_em: recebidaEm,
-    status,
-    confianca: session.confianca ?? null,
-    parsed: session as unknown as Record<string, unknown>,
-    resposta_sugerida: resposta,
-    gasto_id: gastoId ?? null,
-  });
+): Promise<SaveSessionResult> {
+  const parsed = session as unknown as Record<string, unknown>;
+  const kind = typeof parsed?.kind === "string" ? (parsed.kind as string) : null;
+  const { data, error } = await supabaseAdmin
+    .from("whatsapp_messages")
+    .insert({
+      user_id: userId,
+      external_id: externalId,
+      telefone,
+      texto,
+      recebida_em: recebidaEm,
+      status,
+      confianca: coerceConfiancaForDb(session.confianca),
+      parsed,
+      resposta_sugerida: resposta,
+      gasto_id: gastoId ?? null,
+    })
+    .select("id, status")
+    .maybeSingle();
+  if (error || !data?.id) {
+    console.error({
+      event: "wa_session_insert_failed",
+      handlerVersion: WHATSAPP_HANDLER_VERSION,
+      conversationKey: conversationKeyFor(telefone),
+      messageKey: messageKeyFor(externalId),
+      status,
+      kind,
+      errorCode: error?.code ?? null,
+    });
+    return {
+      ok: false,
+      sessionId: null,
+      status: null,
+      kind,
+      errorCode: error?.code ?? "no_row_returned",
+    };
+  }
+  return {
+    ok: true,
+    sessionId: data.id,
+    status: (data.status as string) ?? status,
+    kind,
+    errorCode: null,
+  };
 }
 
 async function atualizarSessao(
@@ -1973,7 +2033,7 @@ export async function processarMensagemWhatsApp(
       );
       return { status: "pendente", resposta: out.resposta };
     }
-    await gravarSessao(
+    const saveResult = await gravarSessao(
       userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
       nextStatus as string,
       (out.session ?? {
@@ -1982,8 +2042,33 @@ export async function processarMensagemWhatsApp(
       }) as unknown as Session,
       out.resposta,
     );
-    // WA-G5A.4 — audita imediatamente após a persistência da sessão de imagem.
-    await logReceiptSessionCreatedAudit({ msg, userId, persisted: true });
+    // WA-G5A.5 — readback obrigatório: só responde o resumo se a sessão
+    // foi efetivamente persistida E for recuperável pela mesma query
+    // que a próxima mensagem ("categoria", "valor", ...) usará.
+    let readbackOk = false;
+    if (saveResult.ok) {
+      const verify = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
+      readbackOk = !!verify.sessao
+        && isComprovanteSession(verify.sessao.session)
+        && !FINAL_SESSION_STATES.has(verify.sessao.status);
+    }
+    await logReceiptSessionCreatedAudit({ msg, userId, persisted: saveResult.ok });
+    if (!saveResult.ok || !readbackOk) {
+      console.error({
+        event: "wa_receipt_session_unrecoverable",
+        handlerVersion: WHATSAPP_HANDLER_VERSION,
+        conversationKey: conversationKeyFor(msg.telefone),
+        messageKey: messageKeyFor(msg.external_id),
+        saveOk: saveResult.ok,
+        readbackOk,
+        errorCode: saveResult.errorCode,
+      });
+      return {
+        status: "falha",
+        resposta:
+          "Não consegui preparar essa nota agora.\nTente enviar a foto novamente em alguns instantes.",
+      };
+    }
     return { status: "pendente", resposta: out.resposta };
   }
 
