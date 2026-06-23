@@ -8,6 +8,7 @@
  * os dados que esses helpers usariam, e validamos o branch correspondente
  * por inspeção lógica (asserts diretos).
  */
+import { test, expect } from "bun:test";
 import { parseWhatsAppExpenseMessage } from "../src/lib/whatsappParser";
 import {
   classificarResposta,
@@ -17,6 +18,7 @@ import {
   isGenericExpenseDescription,
 } from "../src/server/whatsapp.server";
 import type { Cartao } from "../src/lib/types";
+
 
 
 let pass = 0;
