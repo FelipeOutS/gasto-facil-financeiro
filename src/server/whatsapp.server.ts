@@ -1999,8 +1999,9 @@ export async function processarMensagemWhatsApp(
     // mesmo user_id, comprovante anterior confirmado (status=salva +
     // gasto_id existente). Semelhança fraca (valor/estabelecimento/data/
     // janela de tempo) NUNCA bloqueia.
-    const rawSha = (msg.image.sha256 ?? "").trim().toLowerCase();
-    const shaValid = /^[a-f0-9]{64}$/.test(rawSha);
+    const rawSha = (msg.image.sha256 ?? "").trim();
+    const shaValid =
+      /^[a-f0-9]{64}$/i.test(rawSha) || /^[A-Za-z0-9+/_=-]{40,88}$/.test(rawSha);
     let dedupDecision: "process" | "duplicate_image" = "process";
     let dedupReason = "no_match";
     let candidateCount = 0;
