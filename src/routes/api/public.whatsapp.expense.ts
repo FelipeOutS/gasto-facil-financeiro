@@ -286,6 +286,22 @@ function extractIncomingMessages(payload: z.infer<typeof MetaPayload>): FlatMess
             },
           });
         }
+        // WA-V1 — áudio. Apenas extrai metadados; download/validação/
+        // transcrição acontecem DEPOIS do gate de elegibilidade.
+        const a = MetaAudioMessage.safeParse(m);
+        if (a.success) {
+          out.push({
+            external_id: a.data.id,
+            telefone: a.data.from,
+            texto: "",
+            recebida_em: new Date(Number(a.data.timestamp) * 1000).toISOString(),
+            audio: {
+              mediaId: a.data.audio.id,
+              mimeType: a.data.audio.mime_type,
+              sha256: a.data.audio.sha256,
+            },
+          });
+        }
       }
     }
   }
@@ -295,14 +311,16 @@ function extractIncomingMessages(payload: z.infer<typeof MetaPayload>): FlatMess
 /**
  * Baixa os bytes de uma mídia do WhatsApp Cloud API e devolve o buffer
  * bruto + mime declarado pela Meta. A validação real (tamanho + bytes
- * mágicos) é feita pelo caller via `validateDownloadedImage`, não aqui.
+ * mágicos) é feita pelo caller via `validateDownloadedImage` /
+ * `validateDownloadedAudio`, não aqui.
  *
  * Importante: nenhum log inclui URL, token ou conteúdo. Apenas o nome
  * da exceção é registrado em falhas.
  */
 async function downloadWhatsappMedia(
   mediaId: string,
-  mimeFromMeta?: string,
+  mimeFromMeta: string | undefined,
+  maxBytes: number,
 ): Promise<{ buffer: Buffer; declaredMime?: string } | null> {
   try {
     const token = process.env.WHATSAPP_ACCESS_TOKEN;
@@ -315,10 +333,10 @@ async function downloadWhatsappMedia(
     if (!meta.url) return null;
     const dl = await fetch(meta.url, { headers: { Authorization: `Bearer ${token}` } });
     if (!dl.ok) return null;
-    // Limite duro: paramos de ler se passar de MAX_IMAGE_BYTES, sem
+    // Limite duro: paramos de ler se passar de `maxBytes`, sem
     // bufferizar 100 MB de lixo enviado por um atacante.
     const buf = Buffer.from(await dl.arrayBuffer());
-    if (buf.byteLength === 0 || buf.byteLength > MAX_IMAGE_BYTES) return null;
+    if (buf.byteLength === 0 || buf.byteLength > maxBytes) return null;
     return { buffer: buf, declaredMime: (meta.mime_type ?? mimeFromMeta)?.toLowerCase() };
   } catch (err) {
     // Não logamos `err.message`: pode conter a URL assinada da Meta.
