@@ -179,10 +179,19 @@ export type WhatsAppAudioDecision =
   | "unsupported_type"
   | "invalid_media"
   | "too_large"
+  | "too_long"
+  | "duration_unavailable"
+  | "valid_duration"
   | "transcription_failed"
   | "transcription_empty"
   | "transcription_unsupported_language"
   | "routed_to_text_pipeline";
+
+export type AudioDurationBucket =
+  | "under_30s"
+  | "30_to_60s"
+  | "60_to_120s"
+  | "over_limit";
 
 export type WhatsAppAudioDecisionLog = {
   event: "wa_audio_decision";
