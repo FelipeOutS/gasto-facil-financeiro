@@ -1636,7 +1636,6 @@ export async function processarMensagemWhatsApp(
   // Mantém o fluxo de despesa em andamento — "oi"/"ajuda"/"menu" apenas
   // lembram o usuário do que falta. Só "cancelar" encerra a sessão.
   if (sessao && sessao.status === "aguardando_descricao_e_valor_gasto") {
-    logWaRouteDecision(msg, "expense_parser", "active_expense_missing_fields_session");
     const prev = sessao.session;
     const hardCancelRe = /\b(cancelar|cancela|cancelado|cancelada)\b/i;
     if (hardCancelRe.test(texto) || decisao === "cancel") {
@@ -1668,6 +1667,7 @@ export async function processarMensagemWhatsApp(
       receiptSessionExists: false,
       allowedToParseExpense: true,
     });
+    logWaRouteDecision(msg, "expense_parser", "active_expense_missing_fields_session");
     // Tenta extrair descrição/valor da nova mensagem e mescla com a sessão.
     const parsedNovo = parseExpenseMessage(texto, cartoes);
     if (isGenericExpenseDescription(parsedNovo.nome)) parsedNovo.nome = "";
