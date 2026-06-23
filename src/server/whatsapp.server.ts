@@ -1995,28 +1995,69 @@ export async function processarMensagemWhatsApp(
       return { status: "sem_plano", resposta: "" };
     }
     logWaRouteDecision(msg, "receipt_handler", "new_image_without_active_session");
-    // Dedup por hash da imagem nas últimas 30min (mesmo usuário+telefone).
-    const sha = msg.image.sha256 ?? "";
-    if (sha) {
-      const desde = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    // WA-G5A.7 — dedup APENAS por hash SHA-256 exato da mesma imagem,
+    // mesmo user_id, comprovante anterior confirmado (status=salva +
+    // gasto_id existente). Semelhança fraca (valor/estabelecimento/data/
+    // janela de tempo) NUNCA bloqueia.
+    const rawSha = (msg.image.sha256 ?? "").trim().toLowerCase();
+    const shaValid = /^[a-f0-9]{64}$/.test(rawSha);
+    let dedupDecision: "process" | "duplicate_image" = "process";
+    let dedupReason = "no_match";
+    let candidateCount = 0;
+    let exactImageHashMatch = false;
+    let matchedRow: { id: string; gasto_id: string | null } | null = null;
+    if (shaValid) {
+      // Janela ampla (90 dias) — segurança vem do match exato de hash,
+      // não da janela. Filtra por imageSha256 dentro de parsed jsonb.
+      const desde = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
       const { data: dup } = await supabaseAdmin
         .from("whatsapp_messages")
-        .select("id, status, gasto_id")
+        .select("id, status, gasto_id, parsed")
         .eq("user_id", userId)
-        .eq("telefone", msg.telefone)
+        .eq("status", "salva")
         .gte("recebida_em", desde)
+        .filter("parsed->>imageSha256", "eq", rawSha)
         .order("recebida_em", { ascending: false })
-        .limit(20);
+        .limit(5);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rows: any[] = Array.isArray(dup) ? dup : [];
-      const jaSalva = rows.find((r) => r.status === "salva" && r.gasto_id);
-      if (jaSalva) {
-        return {
-          status: "duplicada",
-          gastoId: jaSalva.gasto_id ?? undefined,
-          resposta: "Essa nota já foi registrada anteriormente.",
-        };
+      candidateCount = rows.length;
+      for (const r of rows) {
+        if (!r.gasto_id) continue;
+        const gastoExiste = await verificarGastoExiste(r.gasto_id);
+        if (gastoExiste) {
+          matchedRow = { id: r.id, gasto_id: r.gasto_id };
+          exactImageHashMatch = true;
+          dedupDecision = "duplicate_image";
+          dedupReason = "exact_image_hash_match_confirmed_expense";
+          break;
+        }
       }
+    } else {
+      dedupReason = rawSha ? "invalid_hash_format" : "hash_absent";
+    }
+    console.log({
+      event: "wa_receipt_dedup_decision",
+      handlerVersion: WHATSAPP_HANDLER_VERSION,
+      conversationKey: conversationKeyFor(msg.telefone),
+      messageKey: messageKeyFor(msg.external_id),
+      sameExternalMessageId: false,
+      currentHashPresent: rawSha.length > 0,
+      currentHashValid: shaValid,
+      exactImageHashMatch,
+      receiptFingerprintPresent: false,
+      exactReceiptFingerprintMatch: false,
+      candidateCount,
+      decision: dedupDecision,
+      reason: dedupReason,
+    });
+    if (dedupDecision === "duplicate_image" && matchedRow) {
+      return {
+        status: "duplicada",
+        gastoId: matchedRow.gasto_id ?? undefined,
+        resposta:
+          "Esta nota parece ser a mesma de um lançamento já confirmado.\nNão criei outro gasto para evitar duplicidade.",
+      };
     }
     const out = await processarNovaImagem({
       userId,
