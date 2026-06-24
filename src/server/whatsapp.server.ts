@@ -2519,7 +2519,7 @@ export async function processarMensagemWhatsApp(
         .eq("id", sessao.id);
       return { status: "aguardando_cartao", resposta };
     }
-    const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias);
+    const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias, next.source);
     await supabaseAdmin
       .from("whatsapp_messages")
       .update({ status: "expirada" })
@@ -2565,7 +2565,7 @@ export async function processarMensagemWhatsApp(
         cartaoNomeDetectado: displayCartaoNome(match),
         cartaoNaoCadastrado: false,
       };
-      const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias);
+      const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias, next.source);
       await supabaseAdmin
         .from("whatsapp_messages")
         .update({ status: "expirada" })
@@ -2768,7 +2768,7 @@ export async function processarMensagemWhatsApp(
         return { status: "aguardando_cartao", resposta };
       }
     }
-    const resposta = formatarConfirmacao(sessionToParsed(sess, cartoes), undefined, categorias);
+    const resposta = formatarConfirmacao(sessionToParsed(sess, cartoes), undefined, categorias, sess.source);
     await gravarSessao(
       userId,
       msg.telefone,
