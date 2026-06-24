@@ -787,6 +787,14 @@ type Session = {
    *  Persistido em whatsapp_messages.parsed quando criamos uma sessão
    *  vazia de gasto (status=aguardando_descricao_e_valor_gasto). */
   kind?: "gasto";
+  /**
+   * WA-V1.3 — propagada da `WhatsAppMessageRow` para que tanto a
+   * prévia (formatarConfirmacao) quanto a persistência final
+   * (persistirGasto) usem o mesmo vocabulário de voz na escolha de
+   * categoria. Persistida com a sessão para sobreviver à resposta
+   * "sim" do usuário em uma mensagem posterior.
+   */
+  source?: "audio";
 };
 
 function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
