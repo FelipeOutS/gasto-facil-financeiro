@@ -1373,7 +1373,7 @@ async function persistirGasto(
   if (isGenericExpenseDescription(nomeLimpo)) {
     return { ok: false, resposta: M.faltaNome() };
   }
-  const categoriaKey = pickCategoriaKey(nomeLimpo, categorias);
+  const categoriaKey = pickCategoriaKey(nomeLimpo, categorias, s.source);
   const categoriaId = resolveCategoriaIdFromList(categorias, categoriaKey);
 
   const [y, m] = s.data.split("-").map(Number);
