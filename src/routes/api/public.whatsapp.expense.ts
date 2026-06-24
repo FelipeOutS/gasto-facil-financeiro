@@ -39,6 +39,7 @@ import {
   WHATSAPP_AUDIO_TOO_LONG_REPLY,
 } from "@/server/whatsapp-audio-duration.server";
 import { runTranscriber } from "@/server/whatsapp-transcription.server";
+import { normalizeVoiceMoney } from "@/server/whatsapp-voice-number-normalizer.server";
 
 /**
  * Webhook público do WhatsApp Cloud API (Meta).
