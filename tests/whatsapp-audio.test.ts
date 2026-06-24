@@ -448,7 +448,9 @@ test("áudio válido → transcreve e encaminha o TEXTO ao processarMensagemWhat
   expect(fakeState.calls.transcribe).toBe(1);
   expect(fakeState.calls.processarMensagemWhatsApp).toBe(1);
   const arg = fakeState.calls.processArgs[0];
-  expect(arg.texto).toBe(fakeState.transcribeResult.text);
+  // WA-V1.2 — valor falado por extenso é normalizado em memória antes
+  // do pipeline textual existente. Transcript original não é persistido.
+  expect(arg.texto).toBe("gastei R$ 42,00 no almoço");
 });
 
 test("authorizedUserId do gate é preservado no runMsg enviado ao pipeline", async () => {

@@ -39,6 +39,7 @@ import {
   WHATSAPP_AUDIO_TOO_LONG_REPLY,
 } from "@/server/whatsapp-audio-duration.server";
 import { runTranscriber } from "@/server/whatsapp-transcription.server";
+import { normalizeVoiceMoney } from "@/server/whatsapp-voice-number-normalizer.server";
 
 /**
  * Webhook público do WhatsApp Cloud API (Meta).
@@ -837,10 +838,20 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                 results.push({ status: "audio_transcricao_vazia" });
                 continue;
               }
-              // (g) encaminhamento ao pipeline textual existente — mesmo
-              // orquestrador, mesma confirmação, mesmas sessões. Não há
-              // parser financeiro paralelo. Transcript permanece só em
-              // memória; não persistimos no runMsg/banco.
+              // (g) WA-V1.2 — normalização monetária em memória para
+              // áudios. Converte valores falados por extenso
+              // ("quarenta e dois reais") em formato numérico
+              // ("R$ 42,00") ANTES de encaminhar ao pipeline textual
+              // existente. Não criamos parser financeiro paralelo —
+              // apenas adaptamos o texto. Transcript e texto
+              // normalizado permanecem só em memória.
+              const moneyNorm = normalizeVoiceMoney(transcript);
+              console.log({
+                event: "wa_audio_money_normalization",
+                applied: moneyNorm.normalizedValuesCount > 0,
+                moneyDetected: moneyNorm.moneyDetected,
+                normalizedValuesCount: moneyNorm.normalizedValuesCount,
+              });
               logAudioDecision({
                 handlerVersion: WHATSAPP_HANDLER_VERSION,
                 externalId: msg.external_id,
@@ -850,7 +861,7 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               });
               runMsg = {
                 ...runMsg,
-                texto: transcript,
+                texto: moneyNorm.normalizedText,
               };
             }
 
