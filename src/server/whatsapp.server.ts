@@ -2685,7 +2685,7 @@ export async function processarMensagemWhatsApp(
     // continue dentro do mesmo fluxo de despesa e não dispare saudação,
     // menu ou consulta. Vide handler de "aguardando_descricao_e_valor_gasto".
     const sessaoPendente: Session = {
-      ...buildSessionFromParse(parsed),
+      ...buildSessionFromParse(parsed, msg.source),
       kind: "gasto",
     };
     await gravarSessao(
@@ -2710,6 +2710,7 @@ export async function processarMensagemWhatsApp(
     categoriaSugestao: parsed.categoriaSugestao,
     mensagemOriginal: parsed.mensagemOriginal,
     confianca: parsed.confianca,
+    source: msg.source,
   };
 
   // Forma de pagamento foi explicitamente identificada?
