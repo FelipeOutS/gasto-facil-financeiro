@@ -1426,7 +1426,7 @@ async function persistirGasto(
 
 // ---------- helpers de transição ----------
 
-function buildSessionFromParse(parsed: ParsedExpense): Session {
+function buildSessionFromParse(parsed: ParsedExpense, source?: "audio"): Session {
   return {
     nome: parsed.nome,
     valor: parsed.valor,
@@ -1436,6 +1436,7 @@ function buildSessionFromParse(parsed: ParsedExpense): Session {
     categoriaSugestao: parsed.categoriaSugestao,
     mensagemOriginal: parsed.mensagemOriginal,
     confianca: parsed.confianca,
+    source,
   };
 }
 
