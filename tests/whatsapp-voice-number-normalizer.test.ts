@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { normalizeVoiceMoney } from "@/server/whatsapp-voice-number-normalizer.server";
 
 const n = (s: string) => normalizeVoiceMoney(s).normalizedText;
@@ -34,8 +34,6 @@ describe("normalizeVoiceMoney", () => {
   it("gastei 42 reais no almoço", () => {
     expect(n("gastei 42 reais no almoço")).toBe("gastei R$ 42,00 no almoço");
   });
-
-  // Protecções
   it("dia cinco", () => {
     expect(n("dia cinco vence minha conta")).toBe("dia cinco vence minha conta");
   });
@@ -51,11 +49,9 @@ describe("normalizeVoiceMoney", () => {
   it("comprei dois produtos", () => {
     expect(n("comprei dois produtos")).toBe("comprei dois produtos");
   });
-
   it("texto sem números mantido", () => {
     expect(n("oi, tudo bem?")).toBe("oi, tudo bem?");
   });
-
   it("contagem", () => {
     const r = normalizeVoiceMoney("gastei quarenta reais e paguei cinco reais");
     expect(r.normalizedValuesCount).toBe(2);
