@@ -42,6 +42,7 @@ const INCLUDE = [
   "whatsapp-reset.test.ts",
   "whatsapp-session.test.ts",
   "whatsapp-webhook-http.test.ts",
+  "whatsapp-voice-number-normalizer.test.ts",
   "free-ads-plan.test.ts",
 ];
 
