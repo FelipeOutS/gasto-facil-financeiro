@@ -867,6 +867,10 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               runMsg = {
                 ...runMsg,
                 texto: moneyNorm.normalizedText,
+                // WA-V1.3 — sinaliza ao pipeline textual que esta
+                // mensagem nasceu de transcrição de áudio, liberando
+                // sugestão de categoria por vocabulário de voz.
+                source: "audio",
               };
             }
 
