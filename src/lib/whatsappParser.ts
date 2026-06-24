@@ -268,7 +268,12 @@ export function cleanDescricao(input: string | null | undefined): string {
   return String(input)
     .replace(/\s+/g, " ")
     .replace(/^[\s,.;:\-_/\\|·•]+/, "")
-    .replace(/[\s,;:\-_/\\|·•]+$/, "")
+    // WA-V1.3 — `.` foi incluído no conjunto final para remover ponto
+    // residual deixado por `extractNome` ao apagar valor/data/pagamento
+    // (ex.: "Almoço, ." → "Almoço", "Café ." → "Café", "Uber,," → "Uber").
+    // Pontuação interna legítima (ex.: "Café & Cia.") segue preservada
+    // porque o conjunto só atua nas bordas após colapsar espaços.
+    .replace(/[\s,.;:\-_/\\|·•]+$/, "")
     .trim();
 }
 
