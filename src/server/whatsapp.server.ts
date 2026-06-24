@@ -352,6 +352,18 @@ const ALIMENTACAO_KEYWORDS = [
   "restaurante", "cafe", "refeicao", "comida",
 ];
 
+/**
+ * WA-V1.3 — vocabulário extra aplicado APENAS quando a mensagem veio
+ * de áudio (`source="audio"`). São termos que aparecem com frequência
+ * em transcrições de voz mas geram ambiguidade em mensagens digitadas,
+ * por isso ficam restritos ao canal de voz e nunca substituem uma
+ * categoria já escolhida pelo usuário (só atuam quando o fallback
+ * atual seria "outros").
+ */
+const ALIMENTACAO_KEYWORDS_VOICE = [
+  "almoco", "jantar",
+];
+
 /** Nomes canônicos aceitos como "categoria de alimentação" do usuário. */
 const ALIMENTACAO_CATEGORY_NAMES = [
   "alimentacao", "comida", "refeicao", "alimentos",
