@@ -417,16 +417,28 @@ export function diagnoseCategoriaResolution(
  * preferem uma categoria compatível com "Alimentação" se o usuário a tiver.
  * Caso contrário, cai no sugerido por keyword (geralmente "mercado").
  */
-function pickCategoriaKey(nome: string, categorias: CategoriaRow[]): string {
+function pickCategoriaKey(
+  nome: string,
+  categorias: CategoriaRow[],
+  source?: "audio",
+): string {
   const sugerido = suggestCategoryFromText(nome) || "outros";
   const norm = normalizeCat(nome);
-  const hasAlimentacaoKeyword = ALIMENTACAO_KEYWORDS.some((kw) =>
+  // Vocabulário base (texto + áudio) + vocabulário extra exclusivo de voz.
+  // WA-V1.3 — `ALIMENTACAO_KEYWORDS_VOICE` (almoço, jantar) NUNCA é
+  // aplicado a mensagens digitadas: só entra quando o webhook marca
+  // explicitamente `source="audio"`.
+  const voiceExtras = source === "audio" ? ALIMENTACAO_KEYWORDS_VOICE : [];
+  const allAlimentacaoKeywords = [...ALIMENTACAO_KEYWORDS, ...voiceExtras];
+  const hasAlimentacaoKeyword = allAlimentacaoKeywords.some((kw) =>
     new RegExp(`\\b${kw}\\b`).test(norm),
   );
   if (hasAlimentacaoKeyword) {
     const ali = findCategoriaByNames(categorias, ALIMENTACAO_CATEGORY_NAMES);
     if (ali) return "alimentacao";
   }
+  // WA-V1.3 — só substituímos quando o fallback atual seria "outros":
+  // categoria já reconhecida por keyword global continua intacta.
   return sugerido;
 }
 
