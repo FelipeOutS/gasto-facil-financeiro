@@ -130,6 +130,14 @@ type WhatsAppMessageRow = {
    * gate antes de qualquer parser ou persistência).
    */
   authorizedUserId?: string;
+  /**
+   * WA-V1.3 — origem da mensagem dentro do webhook. Quando a entrada
+   * veio de áudio transcrito + normalização monetária, marcamos
+   * `source="audio"` para que a sugestão de categoria por contexto
+   * (`pickCategoriaKey`) considere o vocabulário ampliado de voz
+   * (almoço, jantar) SEM alterar o comportamento de texto digitado.
+   */
+  source?: "audio";
 };
 
 export function maskTelefone(tel: string): string {
