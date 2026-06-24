@@ -595,6 +595,11 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               recebida_em?: string;
               authorizedUserId?: string;
               image?: { base64: string; mimeType?: string; sha256?: string };
+              // WA-V1.3 — marcador de origem usado pelo pipeline textual
+              // para liberar o vocabulário extra de voz (almoço/jantar)
+              // na sugestão de categoria. Mensagens digitadas seguem
+              // sem `source` definido e nada muda para elas.
+              source?: "audio";
             } = {
               external_id: msg.external_id,
               telefone: msg.telefone,
