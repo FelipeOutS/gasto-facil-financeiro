@@ -130,6 +130,14 @@ type WhatsAppMessageRow = {
    * gate antes de qualquer parser ou persistência).
    */
   authorizedUserId?: string;
+  /**
+   * WA-V1.3 — origem da mensagem dentro do webhook. Quando a entrada
+   * veio de áudio transcrito + normalização monetária, marcamos
+   * `source="audio"` para que a sugestão de categoria por contexto
+   * (`pickCategoriaKey`) considere o vocabulário ampliado de voz
+   * (almoço, jantar) SEM alterar o comportamento de texto digitado.
+   */
+  source?: "audio";
 };
 
 export function maskTelefone(tel: string): string {
@@ -344,6 +352,18 @@ const ALIMENTACAO_KEYWORDS = [
   "restaurante", "cafe", "refeicao", "comida",
 ];
 
+/**
+ * WA-V1.3 — vocabulário extra aplicado APENAS quando a mensagem veio
+ * de áudio (`source="audio"`). São termos que aparecem com frequência
+ * em transcrições de voz mas geram ambiguidade em mensagens digitadas,
+ * por isso ficam restritos ao canal de voz e nunca substituem uma
+ * categoria já escolhida pelo usuário (só atuam quando o fallback
+ * atual seria "outros").
+ */
+const ALIMENTACAO_KEYWORDS_VOICE = [
+  "almoco", "jantar",
+];
+
 /** Nomes canônicos aceitos como "categoria de alimentação" do usuário. */
 const ALIMENTACAO_CATEGORY_NAMES = [
   "alimentacao", "comida", "refeicao", "alimentos",
@@ -397,16 +417,28 @@ export function diagnoseCategoriaResolution(
  * preferem uma categoria compatível com "Alimentação" se o usuário a tiver.
  * Caso contrário, cai no sugerido por keyword (geralmente "mercado").
  */
-function pickCategoriaKey(nome: string, categorias: CategoriaRow[]): string {
+function pickCategoriaKey(
+  nome: string,
+  categorias: CategoriaRow[],
+  source?: "audio",
+): string {
   const sugerido = suggestCategoryFromText(nome) || "outros";
   const norm = normalizeCat(nome);
-  const hasAlimentacaoKeyword = ALIMENTACAO_KEYWORDS.some((kw) =>
+  // Vocabulário base (texto + áudio) + vocabulário extra exclusivo de voz.
+  // WA-V1.3 — `ALIMENTACAO_KEYWORDS_VOICE` (almoço, jantar) NUNCA é
+  // aplicado a mensagens digitadas: só entra quando o webhook marca
+  // explicitamente `source="audio"`.
+  const voiceExtras = source === "audio" ? ALIMENTACAO_KEYWORDS_VOICE : [];
+  const allAlimentacaoKeywords = [...ALIMENTACAO_KEYWORDS, ...voiceExtras];
+  const hasAlimentacaoKeyword = allAlimentacaoKeywords.some((kw) =>
     new RegExp(`\\b${kw}\\b`).test(norm),
   );
   if (hasAlimentacaoKeyword) {
     const ali = findCategoriaByNames(categorias, ALIMENTACAO_CATEGORY_NAMES);
     if (ali) return "alimentacao";
   }
+  // WA-V1.3 — só substituímos quando o fallback atual seria "outros":
+  // categoria já reconhecida por keyword global continua intacta.
   return sugerido;
 }
 
@@ -562,9 +594,13 @@ function categoriaLabel(key: string | undefined | null): string {
 }
 
 /** Resolve a label limpa de categoria a partir do nome do gasto. */
-function categoriaParaExibir(nome: string, categorias?: CategoriaRow[]): string {
+function categoriaParaExibir(
+  nome: string,
+  categorias?: CategoriaRow[],
+  source?: "audio",
+): string {
   const key = categorias && categorias.length
-    ? pickCategoriaKey(nome, categorias)
+    ? pickCategoriaKey(nome, categorias, source)
     : (suggestCategoryFromText(nome) || "outros");
   // Preserva o nome oficial salvo pelo usuário quando aplicável.
   if (categorias && categorias.length) {
@@ -584,10 +620,12 @@ export function formatarConfirmacao(
   parsed: ParsedExpense,
   cartaoNome?: string,
   categorias?: CategoriaRow[],
+  source?: "audio",
 ): string {
   const cartao = canonicalizeBrand(cartaoNome ?? parsed.cartaoNomeDetectado ?? "");
   const descricao = cleanDescricao(parsed.nome) || parsed.nome;
-  const categoria = categoriaParaExibir(descricao, categorias);
+  const categoria = categoriaParaExibir(descricao, categorias, source);
+
   const dataFmt = formatDataBR(parsed.data);
   return M.resumoConfirmacao({
     descricao,
@@ -749,6 +787,14 @@ type Session = {
    *  Persistido em whatsapp_messages.parsed quando criamos uma sessão
    *  vazia de gasto (status=aguardando_descricao_e_valor_gasto). */
   kind?: "gasto";
+  /**
+   * WA-V1.3 — propagada da `WhatsAppMessageRow` para que tanto a
+   * prévia (formatarConfirmacao) quanto a persistência final
+   * (persistirGasto) usem o mesmo vocabulário de voz na escolha de
+   * categoria. Persistida com a sessão para sobreviver à resposta
+   * "sim" do usuário em uma mensagem posterior.
+   */
+  source?: "audio";
 };
 
 function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
@@ -1327,7 +1373,7 @@ async function persistirGasto(
   if (isGenericExpenseDescription(nomeLimpo)) {
     return { ok: false, resposta: M.faltaNome() };
   }
-  const categoriaKey = pickCategoriaKey(nomeLimpo, categorias);
+  const categoriaKey = pickCategoriaKey(nomeLimpo, categorias, s.source);
   const categoriaId = resolveCategoriaIdFromList(categorias, categoriaKey);
 
   const [y, m] = s.data.split("-").map(Number);
@@ -1380,7 +1426,7 @@ async function persistirGasto(
 
 // ---------- helpers de transição ----------
 
-function buildSessionFromParse(parsed: ParsedExpense): Session {
+function buildSessionFromParse(parsed: ParsedExpense, source?: "audio"): Session {
   return {
     nome: parsed.nome,
     valor: parsed.valor,
@@ -1390,6 +1436,7 @@ function buildSessionFromParse(parsed: ParsedExpense): Session {
     categoriaSugestao: parsed.categoriaSugestao,
     mensagemOriginal: parsed.mensagemOriginal,
     confianca: parsed.confianca,
+    source,
   };
 }
 
@@ -2472,7 +2519,7 @@ export async function processarMensagemWhatsApp(
         .eq("id", sessao.id);
       return { status: "aguardando_cartao", resposta };
     }
-    const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias);
+    const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias, next.source);
     await supabaseAdmin
       .from("whatsapp_messages")
       .update({ status: "expirada" })
@@ -2518,7 +2565,7 @@ export async function processarMensagemWhatsApp(
         cartaoNomeDetectado: displayCartaoNome(match),
         cartaoNaoCadastrado: false,
       };
-      const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias);
+      const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias, next.source);
       await supabaseAdmin
         .from("whatsapp_messages")
         .update({ status: "expirada" })
@@ -2638,7 +2685,7 @@ export async function processarMensagemWhatsApp(
     // continue dentro do mesmo fluxo de despesa e não dispare saudação,
     // menu ou consulta. Vide handler de "aguardando_descricao_e_valor_gasto".
     const sessaoPendente: Session = {
-      ...buildSessionFromParse(parsed),
+      ...buildSessionFromParse(parsed, msg.source),
       kind: "gasto",
     };
     await gravarSessao(
@@ -2663,6 +2710,7 @@ export async function processarMensagemWhatsApp(
     categoriaSugestao: parsed.categoriaSugestao,
     mensagemOriginal: parsed.mensagemOriginal,
     confianca: parsed.confianca,
+    source: msg.source,
   };
 
   // Forma de pagamento foi explicitamente identificada?
@@ -2720,7 +2768,7 @@ export async function processarMensagemWhatsApp(
         return { status: "aguardando_cartao", resposta };
       }
     }
-    const resposta = formatarConfirmacao(sessionToParsed(sess, cartoes), undefined, categorias);
+    const resposta = formatarConfirmacao(sessionToParsed(sess, cartoes), undefined, categorias, sess.source);
     await gravarSessao(
       userId,
       msg.telefone,
