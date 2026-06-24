@@ -594,9 +594,13 @@ function categoriaLabel(key: string | undefined | null): string {
 }
 
 /** Resolve a label limpa de categoria a partir do nome do gasto. */
-function categoriaParaExibir(nome: string, categorias?: CategoriaRow[]): string {
+function categoriaParaExibir(
+  nome: string,
+  categorias?: CategoriaRow[],
+  source?: "audio",
+): string {
   const key = categorias && categorias.length
-    ? pickCategoriaKey(nome, categorias)
+    ? pickCategoriaKey(nome, categorias, source)
     : (suggestCategoryFromText(nome) || "outros");
   // Preserva o nome oficial salvo pelo usuário quando aplicável.
   if (categorias && categorias.length) {
@@ -616,10 +620,12 @@ export function formatarConfirmacao(
   parsed: ParsedExpense,
   cartaoNome?: string,
   categorias?: CategoriaRow[],
+  source?: "audio",
 ): string {
   const cartao = canonicalizeBrand(cartaoNome ?? parsed.cartaoNomeDetectado ?? "");
   const descricao = cleanDescricao(parsed.nome) || parsed.nome;
-  const categoria = categoriaParaExibir(descricao, categorias);
+  const categoria = categoriaParaExibir(descricao, categorias, source);
+
   const dataFmt = formatDataBR(parsed.data);
   return M.resumoConfirmacao({
     descricao,
