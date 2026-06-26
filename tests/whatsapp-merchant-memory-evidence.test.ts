@@ -77,6 +77,7 @@ mock.module("@/server/whatsapp-merchant-memory.server", () => ({
     return { ok: true };
   },
   logMerchantMemoryDecision: () => {},
+  MERCHANT_MEMORY_HINT_LINE: "Sugestão baseada em lançamentos confirmados anteriormente.",
 }));
 
 const { persistirGasto } = await import("@/server/whatsapp.server");
