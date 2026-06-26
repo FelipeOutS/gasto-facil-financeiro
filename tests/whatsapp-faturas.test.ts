@@ -114,7 +114,7 @@ describe("handleFaturaIntent — usuário com um cartão", () => {
     ];
     const out = await handleFaturaIntent("u1", { kind: "invoice_total" });
     expect(out.status).toBe("answered");
-    expect(out.resposta).toContain("R$ 150,50");
+    expect(out.resposta).toContain(BRL("R$ 150,50"));
     expect(out.resposta).toContain("Nubank");
   });
   it("consulta por cartão específico mostra vencimento, fechamento e limite", async () => {
@@ -149,7 +149,7 @@ describe("handleFaturaIntent — usuário com vários cartões", () => {
     ];
     const out = await handleFaturaIntent("u1", { kind: "invoice_total" });
     expect(out.status).toBe("answered");
-    expect(out.resposta).toContain("R$ 1.000,00");
+    expect(out.resposta).toContain(BRL("R$ 1.000,00"));
     expect(out.resposta).toContain("Nubank: R$ 300,00");
     expect(out.resposta).toContain("Inter: R$ 700,00");
     expect(out.resposta).toContain("Cartão com maior fatura: Inter");
@@ -168,7 +168,7 @@ describe("handleFaturaIntent — usuário com vários cartões", () => {
     const out = await handleFaturaIntent("u1", { kind: "invoice_highest" });
     expect(out.status).toBe("answered");
     expect(out.resposta).toContain("Inter");
-    expect(out.resposta).toContain("R$ 500,00");
+    expect(out.resposta).toContain(BRL("R$ 500,00"));
   });
 });
 
@@ -180,7 +180,7 @@ describe("handleFaturaIntent — regras de exclusão", () => {
       { user_id: "u1", cartao_id: null, valor: 999, data: isoToday(), forma_pagamento: "debito", confirmado: true, invoice_month: null },
     ];
     const out = await handleFaturaIntent("u1", { kind: "invoice_total" });
-    expect(out.resposta).toContain("R$ 0,00");
+    expect(out.resposta).toContain(BRL("R$ 0,00"));
   });
 
   it("gasto futuro de fatura seguinte não entra (invoice_month diferente)", async () => {
@@ -188,7 +188,7 @@ describe("handleFaturaIntent — regras de exclusão", () => {
       { user_id: "u1", cartao_id: "c-nu", valor: 200, data: isoFuture(40), forma_pagamento: "credito", confirmado: true, invoice_month: "2099-12" },
     ];
     const out = await handleFaturaIntent("u1", { kind: "invoice_total" });
-    expect(out.resposta).toContain("R$ 0,00");
+    expect(out.resposta).toContain(BRL("R$ 0,00"));
   });
 
   it("cartão inexistente retorna resposta segura", async () => {
@@ -226,7 +226,7 @@ describe("Pipeline WhatsApp — consulta de fatura", () => {
       recebida_em: new Date().toISOString(),
     });
     expect(out.status).toBe("consulta");
-    expect(out.resposta).toContain("R$ 100,00");
+    expect(out.resposta).toContain(BRL("R$ 100,00"));
     // Não cria gasto, cartão ou receita
     const novos = state.inserts.slice(before);
     expect(novos.find((i) => i.table === "gastos")).toBeUndefined();
