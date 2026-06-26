@@ -1276,6 +1276,7 @@ export async function processarRespostaImagem(args: {
         next.categoriaId = found.id;
         next.categoriaLabel = found.nome;
         next.categoriaNaoIdentificada = false;
+        next.categoriaSelecionadaManual = true; // WA-M1.2
         next.categoriaOptions = undefined;
       }
       return rebuildResumoOuPreencher(next, cats);
