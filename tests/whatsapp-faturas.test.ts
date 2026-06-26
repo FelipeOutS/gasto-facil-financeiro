@@ -150,8 +150,8 @@ describe("handleFaturaIntent — usuário com vários cartões", () => {
     const out = await handleFaturaIntent("u1", { kind: "invoice_total" });
     expect(out.status).toBe("answered");
     expect(out.resposta).toContain(BRL("R$ 1.000,00"));
-    expect(out.resposta).toContain("Nubank: R$ 300,00");
-    expect(out.resposta).toContain("Inter: R$ 700,00");
+    expect(out.resposta).toContain(BRL("Nubank: R$ 300,00"));
+    expect(out.resposta).toContain(BRL("Inter: R$ 700,00"));
     expect(out.resposta).toContain("Cartão com maior fatura: Inter");
   });
   it("vencimento sem nome específico pede desambiguação", async () => {
