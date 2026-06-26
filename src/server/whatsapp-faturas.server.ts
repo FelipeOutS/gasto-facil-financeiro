@@ -89,6 +89,44 @@ export function detectFaturaIntent(texto: string): FaturaIntent | null {
   const t = norm(texto);
   if (!t) return null;
 
+  // WA-F2 — detalhamento. Estes padrões precisam vir ANTES das regras
+  // genéricas do WA-F1: "compras do Nubank" não deve cair em invoice_card.
+
+  // "maiores compras", "maiores gastos do <cartao>", "onde gastei mais
+  // no cartao", "compras mais caras"
+  if (
+    /\bmaior(?:es)?\s+(?:compras?|gastos?|lan[cç]amentos?)\b/.test(t) ||
+    /\b(?:compras?|gastos?)\s+mais\s+(?:caras?|altas?|gordas?)\b/.test(t) ||
+    /\bonde\s+(?:eu\s+)?gastei\s+mais\b/.test(t)
+  ) {
+    return { kind: "invoice_largest", termo: extractCartaoTermo(t) };
+  }
+
+  // "últimas compras", "compras recentes do cartão"
+  if (
+    /\b(?:ultim(?:a|as)|recentes?)\s+(?:compras?|gastos?|lan[cç]amentos?)\b/.test(t) ||
+    /\b(?:compras?|gastos?|lan[cç]amentos?)\s+recentes?\b/.test(t) ||
+    /\bo\s+que\s+(?:eu\s+)?comprei\s+(?:recentemente|hoje)\b.*\b(?:cart(?:ao|oes)|credito|fatura)\b/.test(t)
+  ) {
+    return { kind: "invoice_recent", termo: extractCartaoTermo(t) };
+  }
+
+  // "o que tem na minha fatura", "quais compras estão na fatura",
+  // "compras da fatura", "compras do cartao", "me mostra as compras
+  // do Nubank", "ver fatura do Inter"
+  if (
+    /\bo\s+que\s+tem\s+na\b.*\bfatura\b/.test(t) ||
+    /\b(?:quais|que)\s+(?:compras?|gastos?|lan[cç]amentos?)\b/.test(t) ||
+    /\b(?:compras?|gastos?|lan[cç]amentos?)\s+(?:da|do|na|no)\s+(?:fatura|cart(?:ao|oes)|credito)\b/.test(t) ||
+    /\b(?:me\s+)?mostr(?:a|e|ar)\s+(?:as\s+)?(?:compras?|gastos?|lan[cç]amentos?|fatura)\b/.test(t) ||
+    /\bver\s+(?:as\s+)?(?:compras?|gastos?|lan[cç]amentos?|fatura)\b/.test(t) ||
+    /\bdetalh(?:ar|es?)\s+(?:a\s+)?fatura\b/.test(t)
+  ) {
+    return { kind: "invoice_items", termo: extractCartaoTermo(t) };
+  }
+
+  // ---- WA-F1 (mantido) ----
+
   // "qual cartão está com a maior fatura?" / "fatura mais alta"
   if (
     /\b(qual|que)\b.*\bcart(ao|oes)\b.*\bmaior\b.*\bfatura\b/.test(t) ||
@@ -130,6 +168,7 @@ export function detectFaturaIntent(texto: string): FaturaIntent | null {
 
   return null;
 }
+
 
 /**
  * Extrai um possível nome de cartão a partir da pergunta. Captura padrões
