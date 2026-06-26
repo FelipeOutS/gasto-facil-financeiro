@@ -51,6 +51,12 @@ export type ComprovanteSession = {
   categoriaLabel?: string | null; // nome resolvido do usuário (display)
   categoriaId?: string | null;
   categoriaNaoIdentificada?: boolean;
+  /** WA-M1.2 — marcado quando o usuário escolheu/alterou a categoria
+   *  explicitamente (lista numerada, nome digitado, "categoria <termo>"
+   *  durante ajuste, ou fluxo de categoria obrigatória). Persiste na
+   *  sessão para garantir que `recordMerchantMemory` grave evidência
+   *  "manual" mesmo após `categoriaNaoIdentificada` ser zerado. */
+  categoriaSelecionadaManual?: boolean;
   formaPagamento?: string | null;
   confianca?: "alta" | "media" | "baixa";
   dataConfirmada?: boolean;
