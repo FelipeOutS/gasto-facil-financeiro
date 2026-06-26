@@ -892,6 +892,10 @@ const PENDING_STATES = [
   // uma das categorias quando o termo bate com mais de uma. NUNCA cria
   // gasto ou receita. Cancelável por "cancelar".
   "consulta_categoria_ambigua",
+  // WA-M1.3 — usuário está escolhendo nova categoria via lista paginada
+  // durante uma confirmação de gasto por texto/áudio. Permanece pendente
+  // até o usuário escolher (volta para aguardando_confirmacao) ou cancelar.
+  "aguardando_categoria_gasto",
   ...RECEITA_PENDING_STATES,
   ...COMPROVANTE_PENDING_STATES,
 ];
