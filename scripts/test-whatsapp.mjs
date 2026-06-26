@@ -50,6 +50,7 @@ const INCLUDE = [
   "whatsapp-comprovante-categoria-manual.test.ts",
   "whatsapp-categoria-manual-gasto.test.ts",
   "whatsapp-faturas.test.ts",
+  "whatsapp-faturas-detalhe.test.ts",
   "free-ads-plan.test.ts",
 ];
 

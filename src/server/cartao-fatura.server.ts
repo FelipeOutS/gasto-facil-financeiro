@@ -245,3 +245,122 @@ export async function getResumoFaturasAtuais(
   }
   return out;
 }
+
+// =====================================================================
+// WA-F2 — Itens (lançamentos) da fatura atual
+// =====================================================================
+
+/**
+ * Item individual que compõe a fatura atual. Estritamente derivado do
+ * gasto persistido — nunca inventa estabelecimento, descrição ou
+ * categoria.
+ */
+export type ItemFatura = {
+  id: string;
+  descricao: string;
+  valor: number;
+  data: string; // ISO yyyy-mm-dd
+  parcelaAtual: number | null;
+  totalParcelas: number | null;
+};
+
+/**
+ * Lê os lançamentos da fatura ATUAL de um cartão específico aplicando
+ * exatamente as mesmas regras de `getFaturaAtualPorCartao`:
+ *   - mesmo `user_id`
+ *   - mesmo `cartao_id`
+ *   - `forma_pagamento === "credito"`
+ *   - `confirmado !== false`
+ *   - `invoice_month` quando presente; senão, janela `cicloFatura`
+ *
+ * Não cria, não altera e não notifica nada. Filtra em memória pela mesma
+ * regra usada no total para garantir que o somatório dos itens bate
+ * com `FaturaAtual.total`.
+ */
+export async function getItensFaturaAtualPorCartao(
+  userId: string,
+  cartao: CartaoRow,
+  hoje: Date = nowInAppTz(),
+): Promise<ItemFatura[]> {
+  const diaFech = Number(cartao.dia_fechamento ?? 1) || 1;
+  const { mes, ano } = faturaCorrenteRef(diaFech, hoje);
+  const { inicio, fim } = cicloFatura(diaFech, mes, ano);
+  const targetYm = ymOf(mes, ano);
+
+  const fromIso = inicio.toISOString().slice(0, 10);
+  const toIso = new Date(fim.getTime() + 24 * 3600 * 1000).toISOString().slice(0, 10);
+  const { data } = await supabaseAdmin
+    .from("gastos")
+    .select(
+      "id, descricao, estabelecimento, valor, data, cartao_id, invoice_month, forma_pagamento, confirmado, parcela_atual, total_parcelas",
+    )
+    .eq("user_id", userId)
+    .eq("cartao_id", cartao.id)
+    .gte("data", fromIso)
+    .lt("data", toIso);
+
+  const rows = Array.isArray(data) ? (data as Array<{
+    id: string;
+    descricao: string | null;
+    estabelecimento: string | null;
+    valor: number | string | null;
+    data: string;
+    cartao_id: string | null;
+    invoice_month: string | null;
+    forma_pagamento: string | null;
+    confirmado: boolean | null;
+    parcela_atual: number | null;
+    total_parcelas: number | null;
+  }>) : [];
+
+  const out: ItemFatura[] = [];
+  for (const g of rows) {
+    if (g.cartao_id !== cartao.id) continue;
+    if ((g.forma_pagamento ?? "") !== "credito") continue;
+    if (g.confirmado === false) continue;
+    const im = g.invoice_month;
+    if (im && /^\d{4}-\d{2}$/.test(im)) {
+      if (im !== targetYm) continue;
+    } else {
+      const d = g.data ? new Date(g.data + "T00:00:00") : null;
+      if (!d) continue;
+      if (d < inicio || d > fim) continue;
+    }
+    // Só consideramos parcela "confiável" quando AMBOS parcela_atual e
+    // total_parcelas vierem preenchidos com inteiros consistentes
+    // (1 <= atual <= total). Nunca inferimos parcelamento pelo nome,
+    // valor ou data do estabelecimento.
+    const pa = Number(g.parcela_atual);
+    const tp = Number(g.total_parcelas);
+    const parcelaConfiavel =
+      Number.isFinite(pa) && Number.isFinite(tp) &&
+      pa >= 1 && tp >= 2 && pa <= tp;
+
+    out.push({
+      id: String(g.id ?? ""),
+      descricao: String(g.descricao ?? g.estabelecimento ?? "").trim(),
+      valor: Number(g.valor ?? 0) || 0,
+      data: g.data,
+      parcelaAtual: parcelaConfiavel ? pa : null,
+      totalParcelas: parcelaConfiavel ? tp : null,
+    });
+  }
+  return out;
+}
+
+/**
+ * Resumo de itens consolidado por cartão: usa o mesmo helper acima
+ * para cada cartão do usuário. Retorna um array com pares
+ * {cartao, itens}, mesmo que `itens` esteja vazio.
+ */
+export async function getResumoItensFaturaAtual(
+  userId: string,
+  hoje: Date = nowInAppTz(),
+): Promise<Array<{ cartao: CartaoRow; itens: ItemFatura[] }>> {
+  const cartoes = await loadCartoesDoUsuario(userId);
+  const out: Array<{ cartao: CartaoRow; itens: ItemFatura[] }> = [];
+  for (const c of cartoes) {
+    out.push({ cartao: c, itens: await getItensFaturaAtualPorCartao(userId, c, hoje) });
+  }
+  return out;
+}
