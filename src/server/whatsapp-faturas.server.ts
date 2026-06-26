@@ -196,7 +196,7 @@ export async function handleFaturaIntent(
     if (ativos.length === 0) {
       const out: FaturaResult = {
         status: "answered",
-        resposta: "Sua fatura atual está em R$ 0,00.",
+        resposta: `Sua fatura atual está em ${formatBRL(0)}.`,
       };
       logFaturaQuery({ intent: intent.kind, cardsMatchedCount: cartoes.length, result: out.status });
       return out;
