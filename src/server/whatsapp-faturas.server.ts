@@ -125,6 +125,15 @@ export function detectFaturaIntent(texto: string): FaturaIntent | null {
     return { kind: "invoice_items", termo: extractCartaoTermo(t) };
   }
 
+  // "compras do <cartao>" / "gastos do <cartao>" — só dispara quando
+  // há nome de cartão reconhecível, para não capturar frases neutras
+  // como "compras do mercado".
+  if (/\b(?:compras?|gastos?|lan[cç]amentos?)\s+(?:da|do|na|no)\b/.test(t)) {
+    const termo = extractCartaoTermo(t);
+    if (termo) return { kind: "invoice_items", termo };
+  }
+
+
   // ---- WA-F1 (mantido) ----
 
   // "qual cartão está com a maior fatura?" / "fatura mais alta"
