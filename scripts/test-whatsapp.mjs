@@ -47,6 +47,7 @@ const INCLUDE = [
   "whatsapp-voice-category-suggestion.test.ts",
   "whatsapp-merchant-memory.test.ts",
   "whatsapp-merchant-memory-evidence.test.ts",
+  "whatsapp-comprovante-categoria-manual.test.ts",
   "free-ads-plan.test.ts",
 ];
 
