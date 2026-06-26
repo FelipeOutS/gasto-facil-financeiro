@@ -27,6 +27,10 @@ function todayParts() {
   return { y: d.getFullYear(), m: d.getMonth() + 1, day: d.getDate() };
 }
 
+// NBSP usado pelo Intl pt-BR entre "R$" e o valor.
+const NBSP = "\u00a0";
+const BRL = (s: string) => s.replace(/R\$ /g, `R$${NBSP}`);
+
 function isoToday(): string {
   const { y, m, day } = todayParts();
   return `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
