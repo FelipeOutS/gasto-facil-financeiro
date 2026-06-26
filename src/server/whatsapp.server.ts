@@ -58,6 +58,12 @@ import {
   type ComprovanteSession,
   type ComprovanteStatus,
   type ImageAttachment,
+  // WA-M1.3 — picker compartilhado de categorias (lista curta, paginação,
+  // resolução por número/nome). Reutilizado pelo fluxo de gasto por
+  // texto/áudio para evitar duplicação.
+  buildCategoriaListBody,
+  resolveCategoriaPickerInput,
+  type CategoriaPickerState,
 } from "./whatsapp-comprovantes.server";
 import {
   merchantKeyFor,
