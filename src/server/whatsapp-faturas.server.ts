@@ -19,9 +19,12 @@ import {
   findCartoesDoUsuarioByTerm,
   getFaturaAtualPorCartao,
   getResumoFaturasAtuais,
+  getItensFaturaAtualPorCartao,
+  getResumoItensFaturaAtual,
   nowInAppTz,
   type CartaoRow,
   type FaturaAtual,
+  type ItemFatura,
 } from "./cartao-fatura.server";
 
 export type FaturaIntent =
@@ -29,13 +32,31 @@ export type FaturaIntent =
   | { kind: "invoice_card"; termo: string }
   | { kind: "invoice_due_date"; termo: string | null }
   | { kind: "invoice_closing_date"; termo: string | null }
-  | { kind: "invoice_highest" };
+  | { kind: "invoice_highest" }
+  // WA-F2 — detalhamento de fatura
+  | { kind: "invoice_items"; termo: string | null }
+  | { kind: "invoice_recent"; termo: string | null }
+  | { kind: "invoice_largest"; termo: string | null };
+
+/** Modo da paginação WA-F2 (apenas em sessão temporária). */
+export type FaturaDetailMode = "recentes" | "maiores";
+
+/** Estado mínimo de paginação. NUNCA contém valor, descrição, telefone, etc. */
+export type FaturaDetailSessionState = {
+  kind: "consulta_fatura";
+  cartaoId: string;
+  mode: FaturaDetailMode;
+  page: number;
+};
 
 export type FaturaResult =
   | { status: "answered"; resposta: string }
+  | { status: "answered"; resposta: string; nextSession: FaturaDetailSessionState }
   | { status: "card_not_found"; resposta: string }
   | { status: "ambiguous_card"; resposta: string }
-  | { status: "no_invoice_data"; resposta: string };
+  | { status: "no_invoice_data"; resposta: string }
+  | { status: "no_more_items"; resposta: string };
+
 
 function norm(s: string): string {
   return (s ?? "")
