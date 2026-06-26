@@ -823,6 +823,14 @@ type Session = {
   merchantKey?: string;
   memoryAppliedCategoriaId?: string;
   memoryApplied?: boolean;
+  /**
+   * WA-M1.1 — marcador mínimo (sem PII) indicando se a categoria do gasto
+   * foi escolhida/alterada explicitamente pelo usuário ("manual") ou se
+   * foi apenas inferida/confirmada do palpite do sistema ("automatic").
+   * Sobrevive até o "sim" e decide a `evidence` gravada em
+   * `recordMerchantMemory` no momento da persistência.
+   */
+  categorySelectionSource?: "manual" | "automatic";
 };
 
 function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
@@ -1387,7 +1395,7 @@ async function verificarGastoExiste(gastoId: string | null | undefined): Promise
 
 // ---------- persistência de gasto ----------
 
-async function persistirGasto(
+export async function persistirGasto(
   userId: string,
   s: Session,
 ): Promise<{ gastoId?: string; resposta: string; ok: boolean }> {
@@ -1457,17 +1465,20 @@ async function persistirGasto(
     return { ok: false, resposta: M.erroAoSalvar() };
   }
 
-  // WA-M1 — após salvar com sucesso, registra memória de estabelecimento.
-  // Para texto/áudio não há UI de escolha manual de categoria, então a
-  // evidência é sempre "confirmed". A escrita só ocorre se houver
-  // merchant_key válido e categoria_id resolvido (categoria ativa).
+  // WA-M1 / WA-M1.1 — após salvar com sucesso, registra memória de
+  // estabelecimento. A evidência é "manual" SOMENTE quando a sessão marca
+  // que o usuário escolheu/alterou a categoria explicitamente; caso
+  // contrário (apenas confirmou a sugestão automática) é "confirmed".
+  // A escrita só ocorre com merchant_key válido e categoria_id resolvido.
   if (s.merchantKey && categoriaId) {
     try {
+      const evidence: "manual" | "confirmed" =
+        s.categorySelectionSource === "manual" ? "manual" : "confirmed";
       await recordMerchantMemory({
         userId,
         merchantKey: s.merchantKey,
         categoryId: categoriaId,
-        evidence: "confirmed",
+        evidence,
       });
     } catch {
       // Falha de memória nunca quebra o fluxo de gasto.
@@ -1563,6 +1574,10 @@ function buildSessionFromParse(parsed: ParsedExpense, source?: "audio"): Session
     mensagemOriginal: parsed.mensagemOriginal,
     confianca: parsed.confianca,
     source,
+    // WA-M1.1 — gastos por texto/áudio nascem da inferência automática.
+    // Será promovido a "manual" se/quando o usuário escolher ou alterar
+    // a categoria explicitamente durante a conversa.
+    categorySelectionSource: "automatic",
   };
 }
 
