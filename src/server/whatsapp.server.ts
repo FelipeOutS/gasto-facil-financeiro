@@ -1456,6 +1456,20 @@ export async function persistirGasto(
     if (cat?.nome) categoriaLabelFinal = cat.nome;
   }
 
+  // WA-M1.3 — escolha manual do usuário durante a confirmação vence
+  // sobre o palpite automático e sobre a memória. Só aplica quando a
+  // categoria escolhida ainda existe nas categorias ativas (evita
+  // referenciar categoria removida/desativada após a escolha).
+  if (
+    s.categorySelectionSource === "manual"
+    && s.manualCategoriaId
+    && categorias.some((c) => c.id === s.manualCategoriaId)
+  ) {
+    categoriaId = s.manualCategoriaId;
+    const cat = categorias.find((c) => c.id === s.manualCategoriaId);
+    categoriaLabelFinal = cat?.nome ?? s.manualCategoriaLabel ?? categoriaLabelFinal;
+  }
+
   const [y, m] = s.data.split("-").map(Number);
 
   const cartaoFinalId =
