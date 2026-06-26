@@ -1574,6 +1574,10 @@ function buildSessionFromParse(parsed: ParsedExpense, source?: "audio"): Session
     mensagemOriginal: parsed.mensagemOriginal,
     confianca: parsed.confianca,
     source,
+    // WA-M1.1 — gastos por texto/áudio nascem da inferência automática.
+    // Será promovido a "manual" se/quando o usuário escolher ou alterar
+    // a categoria explicitamente durante a conversa.
+    categorySelectionSource: "automatic",
   };
 }
 
