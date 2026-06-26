@@ -823,6 +823,14 @@ type Session = {
   merchantKey?: string;
   memoryAppliedCategoriaId?: string;
   memoryApplied?: boolean;
+  /**
+   * WA-M1.1 — marcador mínimo (sem PII) indicando se a categoria do gasto
+   * foi escolhida/alterada explicitamente pelo usuário ("manual") ou se
+   * foi apenas inferida/confirmada do palpite do sistema ("automatic").
+   * Sobrevive até o "sim" e decide a `evidence` gravada em
+   * `recordMerchantMemory` no momento da persistência.
+   */
+  categorySelectionSource?: "manual" | "automatic";
 };
 
 function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
