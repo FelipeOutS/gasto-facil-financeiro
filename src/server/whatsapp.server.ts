@@ -629,13 +629,15 @@ export function formatarConfirmacao(
   cartaoNome?: string,
   categorias?: CategoriaRow[],
   source?: "audio",
+  memoryHint?: { categoriaLabel: string },
 ): string {
   const cartao = canonicalizeBrand(cartaoNome ?? parsed.cartaoNomeDetectado ?? "");
   const descricao = cleanDescricao(parsed.nome) || parsed.nome;
-  const categoria = categoriaParaExibir(descricao, categorias, source);
+  const categoria = memoryHint?.categoriaLabel
+    ?? categoriaParaExibir(descricao, categorias, source);
 
   const dataFmt = formatDataBR(parsed.data);
-  return M.resumoConfirmacao({
+  const base = M.resumoConfirmacao({
     descricao,
     categoria,
     valor: formatBRL(parsed.valor),
@@ -643,6 +645,15 @@ export function formatarConfirmacao(
     pagamento: rotuloFormaPagamento(parsed.formaPagamento, cartao || undefined),
     parcelas: parsed.parcelas,
   });
+  if (!memoryHint) return base;
+  // Insere a observação logo após a linha "• Categoria: ...".
+  const lines = base.split("\n");
+  const idx = lines.findIndex((l) => l.startsWith("• Categoria:"));
+  if (idx >= 0) {
+    lines.splice(idx + 1, 0, `  ↳ ${MERCHANT_MEMORY_HINT_LINE}`);
+    return lines.join("\n");
+  }
+  return base;
 }
 
 /**
