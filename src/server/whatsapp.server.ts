@@ -958,6 +958,9 @@ const PENDING_STATES = [
   // durante uma confirmação de gasto por texto/áudio. Permanece pendente
   // até o usuário escolher (volta para aguardando_confirmacao) ou cancelar.
   "aguardando_categoria_gasto",
+  // WA-F2 — paginação temporária de detalhamento de fatura. Aguarda
+  // "ver mais", "voltar" ou "cancelar". NUNCA cria gasto/receita/cartão.
+  "aguardando_consulta_fatura",
   ...RECEITA_PENDING_STATES,
   ...COMPROVANTE_PENDING_STATES,
 ];
