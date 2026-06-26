@@ -811,14 +811,19 @@ async function persistirGastoComprovante(
     return { ok: false, resposta: M.erroAoSalvar() };
   }
 
-  // WA-M1 — registra memória de estabelecimento após o gasto ser salvo
-  // com sucesso. Para comprovantes, classificamos como "manual" quando o
-  // usuário precisou escolher a categoria explicitamente (categoria não
-  // identificada inicialmente pelo OCR); caso contrário, "confirmed".
+  // WA-M1 / WA-M1.2 — registra memória de estabelecimento após o gasto ser
+  // salvo. Classifica como "manual" quando o usuário escolheu/alterou a
+  // categoria explicitamente (flag `categoriaSelecionadaManual`) OU quando
+  // o OCR não identificou e ele teve que escolher (fail-safe via
+  // `categoriaNaoIdentificada` na sessão original). Caso contrário,
+  // "confirmed" (OCR sugeriu e usuário aceitou com "sim").
   if (cat.id) {
     const key = merchantKeyFor(desc);
     if (key) {
-      const evidence = s.categoriaNaoIdentificada ? "manual" : "confirmed";
+      const evidence =
+        s.categoriaSelecionadaManual || s.categoriaNaoIdentificada
+          ? "manual"
+          : "confirmed";
       try {
         await recordMerchantMemory({
           userId,
