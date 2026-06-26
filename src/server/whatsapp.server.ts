@@ -795,6 +795,15 @@ type Session = {
    * "sim" do usuário em uma mensagem posterior.
    */
   source?: "audio";
+  /**
+   * WA-M1 — memória de categoria por estabelecimento.
+   * Quando preenchidos, indicam que a memória foi aplicada à prévia
+   * e deve ser usada na persistência final. Nunca sobrescreve escolha
+   * manual nem categoria forte por keyword.
+   */
+  merchantKey?: string;
+  memoryAppliedCategoriaId?: string;
+  memoryApplied?: boolean;
 };
 
 function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
