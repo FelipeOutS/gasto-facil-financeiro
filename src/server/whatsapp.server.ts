@@ -1402,7 +1402,22 @@ async function persistirGasto(
     return { ok: false, resposta: M.faltaNome() };
   }
   const categoriaKey = pickCategoriaKey(nomeLimpo, categorias, s.source);
-  const categoriaId = resolveCategoriaIdFromList(categorias, categoriaKey);
+  let categoriaId = resolveCategoriaIdFromList(categorias, categoriaKey);
+  let categoriaLabelFinal = categoriaLabel(categoriaKey);
+
+  // WA-M1 — aplica memória de estabelecimento quando elegível e quando a
+  // categoria natural seria "outros". Nunca sobrescreve escolha manual nem
+  // uma categoria forte por keyword. Categoria inativa é ignorada.
+  const memoryAppliedHere =
+    s.memoryApplied === true
+    && !!s.memoryAppliedCategoriaId
+    && categoriaKey === "outros"
+    && categorias.some((c) => c.id === s.memoryAppliedCategoriaId);
+  if (memoryAppliedHere) {
+    categoriaId = s.memoryAppliedCategoriaId!;
+    const cat = categorias.find((c) => c.id === categoriaId);
+    if (cat?.nome) categoriaLabelFinal = cat.nome;
+  }
 
   const [y, m] = s.data.split("-").map(Number);
 
@@ -1442,15 +1457,98 @@ async function persistirGasto(
     return { ok: false, resposta: M.erroAoSalvar() };
   }
 
-  const categoria = categoriaLabel(categoriaKey);
+  // WA-M1 — após salvar com sucesso, registra memória de estabelecimento.
+  // Para texto/áudio não há UI de escolha manual de categoria, então a
+  // evidência é sempre "confirmed". A escrita só ocorre se houver
+  // merchant_key válido e categoria_id resolvido (categoria ativa).
+  if (s.merchantKey && categoriaId) {
+    try {
+      await recordMerchantMemory({
+        userId,
+        merchantKey: s.merchantKey,
+        categoryId: categoriaId,
+        evidence: "confirmed",
+      });
+    } catch {
+      // Falha de memória nunca quebra o fluxo de gasto.
+    }
+  }
+
   const ondePagou = s.cartaoNaoCadastrado
     ? "cartão não cadastrado"
     : s.cartaoId
       ? `Cartão ${canonicalizeBrand(s.cartaoNomeDetectado ?? "")}`.replace(/\s+$/, "")
       : rotuloFormaPagamento(s.formaPagamento ?? "credito");
-  const resposta = M.gastoSalvo(formatBRL(s.valor), nomeLimpo, categoria, ondePagou);
+  const resposta = M.gastoSalvo(formatBRL(s.valor), nomeLimpo, categoriaLabelFinal, ondePagou);
   return { ok: true, gastoId: gastoRow.id, resposta };
 }
+
+/**
+ * WA-M1 — Enriquecimento opcional da sessão com memória de estabelecimento.
+ * Roda ANTES de qualquer prévia ser enviada ao usuário. Mutates a sessão
+ * passada com `merchantKey`, `memoryAppliedCategoriaId`, `memoryApplied`.
+ *
+ * Regras de aplicação:
+ *  - Não aplica em descrição genérica/fraca.
+ *  - Não aplica quando a categoria natural já é "forte" (keyword global
+ *    ou alimentação). Memória só substitui "outros".
+ *  - Categoria inativa/inexistente é ignorada.
+ *  - Histórico ambíguo (mais de uma categoria elegível) não aplica.
+ */
+async function aplicarMemoriaEstabelecimento(args: {
+  userId: string;
+  session: Session;
+  categorias: CategoriaRow[];
+  source: MerchantMemorySource;
+}): Promise<void> {
+  const { userId, session, categorias, source } = args;
+  // Limpa marcação anterior (se sessão foi reaproveitada).
+  session.memoryApplied = false;
+  session.memoryAppliedCategoriaId = undefined;
+  const nomeLimpo = cleanDescricao(session.nome) || session.nome;
+  const key = merchantKeyFor(nomeLimpo);
+  if (!key) {
+    logMerchantMemoryDecision({ source, memoryFound: false, memoryApplied: false, reason: "generic_description" });
+    return;
+  }
+  session.merchantKey = key;
+
+  const naturalKey = pickCategoriaKey(nomeLimpo, categorias, session.source);
+  if (naturalKey !== "outros") {
+    logMerchantMemoryDecision({ source, memoryFound: false, memoryApplied: false, reason: "high_confidence_category_wins" });
+    return;
+  }
+
+  const activeIds = new Set(categorias.map((c) => c.id));
+  const lookup = await lookupMerchantMemory({ userId, merchantKey: key, activeCategoryIds: activeIds });
+  if (lookup.kind === "ambiguous") {
+    logMerchantMemoryDecision({ source, memoryFound: true, memoryApplied: false, reason: "ambiguous_history" });
+    return;
+  }
+  if (lookup.kind === "none") {
+    logMerchantMemoryDecision({ source, memoryFound: false, memoryApplied: false, reason: "no_eligible_memory" });
+    return;
+  }
+  session.memoryApplied = true;
+  session.memoryAppliedCategoriaId = lookup.lookup.categoryId;
+  logMerchantMemoryDecision({ source, memoryFound: true, memoryApplied: true, reason: "memory_applied" });
+}
+
+/**
+ * Constrói o memoryHint para `formatarConfirmacao` quando aplicável,
+ * resolvendo o label oficial da categoria ativa do usuário.
+ */
+function memoryHintFromSession(
+  session: Session,
+  categorias: CategoriaRow[],
+): { categoriaLabel: string } | undefined {
+  if (!session.memoryApplied || !session.memoryAppliedCategoriaId) return undefined;
+  const cat = categorias.find((c) => c.id === session.memoryAppliedCategoriaId);
+  if (!cat) return undefined;
+  return { categoriaLabel: cat.nome || categoriaLabel("outros") };
+}
+
+
 
 // ---------- helpers de transição ----------
 
