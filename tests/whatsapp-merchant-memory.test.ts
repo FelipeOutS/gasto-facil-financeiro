@@ -95,8 +95,9 @@ describe("merchantKeyFor — normalização", () => {
     expect(mem.merchantKeyFor("Caboclo Ventania Artigos de Fé"))
       .toBe("caboclo ventania artigos de fe");
   });
-  it("remove pontuação e asteriscos", () => {
-    expect(mem.merchantKeyFor("UBER *TRIP  123")).toBe("uber trip");
+  it("remove pontuação, asteriscos e identificadores numéricos longos", () => {
+    expect(mem.merchantKeyFor("UBER *TRIP")).toBe("uber trip");
+    expect(mem.merchantKeyFor("Loja XPTO 123456")).toBe("loja xpto");
   });
   it("preserva palavras relevantes", () => {
     expect(mem.merchantKeyFor("Drogaria São Paulo")).toBe("drogaria sao paulo");
