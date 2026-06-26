@@ -515,6 +515,57 @@ const CANCEL_TOKENS = [
   "ignorar", "apaga", "apagar", "errado", "no",
 ];
 
+/**
+ * WA-M1.3 — comandos de alteração de categoria reconhecidos durante a
+ * confirmação de gasto por texto/áudio. Detecção estrita: só dispara
+ * quando o texto é exatamente um desses padrões — frases soltas com a
+ * palavra "categoria" no meio não disparam.
+ *
+ * Padrões aceitos:
+ *   - "categoria"                        (ask: abre lista)
+ *   - "alterar categoria" / "mudar categoria" / "editar categoria" / ... (ask)
+ *   - "categoria <termo>"                (direct)
+ *   - "coloca em <termo>" / "coloque em <termo>"
+ *   - "muda para <termo>" / "mude para <termo>" / "mudar para <termo>"
+ *   - "alterar categoria para <termo>" / "alterar para <termo>"
+ *   - "trocar categoria para <termo>"
+ */
+export type CategoriaCommandIntent =
+  | { kind: "ask" }
+  | { kind: "direct"; termo: string };
+
+export function detectCategoriaCommand(texto: string): CategoriaCommandIntent | null {
+  if (!texto) return null;
+  const limpo = texto.replace(/[.!?\s]+$/g, "").trim();
+  const t = normalizeText(limpo);
+  if (!t) return null;
+
+  // ask: "categoria", "alterar categoria", "editar categoria", "mudar
+  // categoria", "trocar categoria", "ajustar categoria"
+  if (/^(alterar|editar|mudar|trocar|ajustar|corrigir)?\s*categoria$/.test(t)) {
+    return { kind: "ask" };
+  }
+
+  // direct: "categoria <termo>"
+  let m = t.match(/^categoria\s+(.+)$/);
+  if (m) return { kind: "direct", termo: m[1].slice(0, 60).trim() };
+
+  // direct: "coloca em <termo>" / "coloque em <termo>"
+  m = t.match(/^(?:coloca|coloque)(?:\s+isso)?\s+em\s+(.+)$/);
+  if (m) return { kind: "direct", termo: m[1].slice(0, 60).trim() };
+
+  // direct: "muda para X", "mude para X", "mudar para X" (com ou sem
+  // "categoria" no meio).
+  m = t.match(/^(?:muda|mude|mudar|troca|troque|trocar)\s+(?:a\s+)?(?:categoria\s+)?(?:para|pra)\s+(.+)$/);
+  if (m) return { kind: "direct", termo: m[1].slice(0, 60).trim() };
+
+  // direct: "alterar/editar/ajustar categoria para X" / "alterar para X"
+  m = t.match(/^(?:alterar|editar|ajustar|corrigir)\s+(?:a\s+)?(?:categoria\s+)?(?:para|pra)\s+(.+)$/);
+  if (m) return { kind: "direct", termo: m[1].slice(0, 60).trim() };
+
+  return null;
+}
+
 export function classificarResposta(texto: string): "confirm" | "cancel" | "outro" {
   const t = normalizeText(texto);
   if (!t) return "outro";
