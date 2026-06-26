@@ -275,6 +275,16 @@ export async function handleFaturaIntent(
 ): Promise<FaturaResult> {
   const hoje = nowInAppTz();
 
+  // WA-F2 — dispatch para o handler de detalhamento.
+  if (
+    intent.kind === "invoice_items" ||
+    intent.kind === "invoice_recent" ||
+    intent.kind === "invoice_largest"
+  ) {
+    return handleFaturaDetailIntent(userId, intent);
+  }
+
+
   if (intent.kind === "invoice_total") {
     const cartoes = await loadCartoesDoUsuario(userId);
     if (cartoes.length === 0) {
