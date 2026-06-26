@@ -487,6 +487,7 @@ export type ProcessOutcome = {
     | "aguardando_confirmacao"
     | "aguardando_forma_pagamento"
     | "aguardando_cartao"
+    | "aguardando_categoria_gasto"
     | "cancelada"
     | "sem_pendencia"
     | "pendente"
