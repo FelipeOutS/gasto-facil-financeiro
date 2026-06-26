@@ -18,6 +18,10 @@
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runExtractor, type OcrResult } from "@/server/ocr-comprovante.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
+import {
+  merchantKeyFor,
+  recordMerchantMemory,
+} from "./whatsapp-merchant-memory.server";
 import { createHash } from "crypto";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -800,6 +804,28 @@ async function persistirGastoComprovante(
     console.error("[whatsapp-comprovante] gasto insert failed", error);
     return { ok: false, resposta: M.erroAoSalvar() };
   }
+
+  // WA-M1 — registra memória de estabelecimento após o gasto ser salvo
+  // com sucesso. Para comprovantes, classificamos como "manual" quando o
+  // usuário precisou escolher a categoria explicitamente (categoria não
+  // identificada inicialmente pelo OCR); caso contrário, "confirmed".
+  if (cat.id) {
+    const key = merchantKeyFor(desc);
+    if (key) {
+      const evidence = s.categoriaNaoIdentificada ? "manual" : "confirmed";
+      try {
+        await recordMerchantMemory({
+          userId,
+          merchantKey: key,
+          categoryId: cat.id,
+          evidence,
+        });
+      } catch {
+        // Falha de memória nunca quebra o fluxo de gasto.
+      }
+    }
+  }
+
   const resposta = M.imagem.salvo({
     valor: formatBRL(s.valor),
     descricao: desc,

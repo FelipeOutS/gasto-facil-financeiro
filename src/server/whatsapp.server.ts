@@ -59,6 +59,14 @@ import {
   type ComprovanteStatus,
   type ImageAttachment,
 } from "./whatsapp-comprovantes.server";
+import {
+  merchantKeyFor,
+  lookupMerchantMemory,
+  recordMerchantMemory,
+  logMerchantMemoryDecision,
+  MERCHANT_MEMORY_HINT_LINE,
+  type MerchantMemorySource,
+} from "./whatsapp-merchant-memory.server";
 import { createHash } from "crypto";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
@@ -621,13 +629,15 @@ export function formatarConfirmacao(
   cartaoNome?: string,
   categorias?: CategoriaRow[],
   source?: "audio",
+  memoryHint?: { categoriaLabel: string },
 ): string {
   const cartao = canonicalizeBrand(cartaoNome ?? parsed.cartaoNomeDetectado ?? "");
   const descricao = cleanDescricao(parsed.nome) || parsed.nome;
-  const categoria = categoriaParaExibir(descricao, categorias, source);
+  const categoria = memoryHint?.categoriaLabel
+    ?? categoriaParaExibir(descricao, categorias, source);
 
   const dataFmt = formatDataBR(parsed.data);
-  return M.resumoConfirmacao({
+  const base = M.resumoConfirmacao({
     descricao,
     categoria,
     valor: formatBRL(parsed.valor),
@@ -635,6 +645,15 @@ export function formatarConfirmacao(
     pagamento: rotuloFormaPagamento(parsed.formaPagamento, cartao || undefined),
     parcelas: parsed.parcelas,
   });
+  if (!memoryHint) return base;
+  // Insere a observação logo após a linha "• Categoria: ...".
+  const lines = base.split("\n");
+  const idx = lines.findIndex((l) => l.startsWith("• Categoria:"));
+  if (idx >= 0) {
+    lines.splice(idx + 1, 0, `  ↳ ${MERCHANT_MEMORY_HINT_LINE}`);
+    return lines.join("\n");
+  }
+  return base;
 }
 
 /**
@@ -795,6 +814,15 @@ type Session = {
    * "sim" do usuário em uma mensagem posterior.
    */
   source?: "audio";
+  /**
+   * WA-M1 — memória de categoria por estabelecimento.
+   * Quando preenchidos, indicam que a memória foi aplicada à prévia
+   * e deve ser usada na persistência final. Nunca sobrescreve escolha
+   * manual nem categoria forte por keyword.
+   */
+  merchantKey?: string;
+  memoryAppliedCategoriaId?: string;
+  memoryApplied?: boolean;
 };
 
 function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
@@ -1374,7 +1402,22 @@ async function persistirGasto(
     return { ok: false, resposta: M.faltaNome() };
   }
   const categoriaKey = pickCategoriaKey(nomeLimpo, categorias, s.source);
-  const categoriaId = resolveCategoriaIdFromList(categorias, categoriaKey);
+  let categoriaId = resolveCategoriaIdFromList(categorias, categoriaKey);
+  let categoriaLabelFinal = categoriaLabel(categoriaKey);
+
+  // WA-M1 — aplica memória de estabelecimento quando elegível e quando a
+  // categoria natural seria "outros". Nunca sobrescreve escolha manual nem
+  // uma categoria forte por keyword. Categoria inativa é ignorada.
+  const memoryAppliedHere =
+    s.memoryApplied === true
+    && !!s.memoryAppliedCategoriaId
+    && categoriaKey === "outros"
+    && categorias.some((c) => c.id === s.memoryAppliedCategoriaId);
+  if (memoryAppliedHere) {
+    categoriaId = s.memoryAppliedCategoriaId!;
+    const cat = categorias.find((c) => c.id === categoriaId);
+    if (cat?.nome) categoriaLabelFinal = cat.nome;
+  }
 
   const [y, m] = s.data.split("-").map(Number);
 
@@ -1414,15 +1457,98 @@ async function persistirGasto(
     return { ok: false, resposta: M.erroAoSalvar() };
   }
 
-  const categoria = categoriaLabel(categoriaKey);
+  // WA-M1 — após salvar com sucesso, registra memória de estabelecimento.
+  // Para texto/áudio não há UI de escolha manual de categoria, então a
+  // evidência é sempre "confirmed". A escrita só ocorre se houver
+  // merchant_key válido e categoria_id resolvido (categoria ativa).
+  if (s.merchantKey && categoriaId) {
+    try {
+      await recordMerchantMemory({
+        userId,
+        merchantKey: s.merchantKey,
+        categoryId: categoriaId,
+        evidence: "confirmed",
+      });
+    } catch {
+      // Falha de memória nunca quebra o fluxo de gasto.
+    }
+  }
+
   const ondePagou = s.cartaoNaoCadastrado
     ? "cartão não cadastrado"
     : s.cartaoId
       ? `Cartão ${canonicalizeBrand(s.cartaoNomeDetectado ?? "")}`.replace(/\s+$/, "")
       : rotuloFormaPagamento(s.formaPagamento ?? "credito");
-  const resposta = M.gastoSalvo(formatBRL(s.valor), nomeLimpo, categoria, ondePagou);
+  const resposta = M.gastoSalvo(formatBRL(s.valor), nomeLimpo, categoriaLabelFinal, ondePagou);
   return { ok: true, gastoId: gastoRow.id, resposta };
 }
+
+/**
+ * WA-M1 — Enriquecimento opcional da sessão com memória de estabelecimento.
+ * Roda ANTES de qualquer prévia ser enviada ao usuário. Mutates a sessão
+ * passada com `merchantKey`, `memoryAppliedCategoriaId`, `memoryApplied`.
+ *
+ * Regras de aplicação:
+ *  - Não aplica em descrição genérica/fraca.
+ *  - Não aplica quando a categoria natural já é "forte" (keyword global
+ *    ou alimentação). Memória só substitui "outros".
+ *  - Categoria inativa/inexistente é ignorada.
+ *  - Histórico ambíguo (mais de uma categoria elegível) não aplica.
+ */
+async function aplicarMemoriaEstabelecimento(args: {
+  userId: string;
+  session: Session;
+  categorias: CategoriaRow[];
+  source: MerchantMemorySource;
+}): Promise<void> {
+  const { userId, session, categorias, source } = args;
+  // Limpa marcação anterior (se sessão foi reaproveitada).
+  session.memoryApplied = false;
+  session.memoryAppliedCategoriaId = undefined;
+  const nomeLimpo = cleanDescricao(session.nome) || session.nome;
+  const key = merchantKeyFor(nomeLimpo);
+  if (!key) {
+    logMerchantMemoryDecision({ source, memoryFound: false, memoryApplied: false, reason: "generic_description" });
+    return;
+  }
+  session.merchantKey = key;
+
+  const naturalKey = pickCategoriaKey(nomeLimpo, categorias, session.source);
+  if (naturalKey !== "outros") {
+    logMerchantMemoryDecision({ source, memoryFound: false, memoryApplied: false, reason: "high_confidence_category_wins" });
+    return;
+  }
+
+  const activeIds = new Set(categorias.map((c) => c.id));
+  const lookup = await lookupMerchantMemory({ userId, merchantKey: key, activeCategoryIds: activeIds });
+  if (lookup.kind === "ambiguous") {
+    logMerchantMemoryDecision({ source, memoryFound: true, memoryApplied: false, reason: "ambiguous_history" });
+    return;
+  }
+  if (lookup.kind === "none") {
+    logMerchantMemoryDecision({ source, memoryFound: false, memoryApplied: false, reason: "no_eligible_memory" });
+    return;
+  }
+  session.memoryApplied = true;
+  session.memoryAppliedCategoriaId = lookup.lookup.categoryId;
+  logMerchantMemoryDecision({ source, memoryFound: true, memoryApplied: true, reason: "memory_applied" });
+}
+
+/**
+ * Constrói o memoryHint para `formatarConfirmacao` quando aplicável,
+ * resolvendo o label oficial da categoria ativa do usuário.
+ */
+function memoryHintFromSession(
+  session: Session,
+  categorias: CategoriaRow[],
+): { categoriaLabel: string } | undefined {
+  if (!session.memoryApplied || !session.memoryAppliedCategoriaId) return undefined;
+  const cat = categorias.find((c) => c.id === session.memoryAppliedCategoriaId);
+  if (!cat) return undefined;
+  return { categoriaLabel: cat.nome || categoriaLabel("outros") };
+}
+
+
 
 // ---------- helpers de transição ----------
 
@@ -2519,7 +2645,8 @@ export async function processarMensagemWhatsApp(
         .eq("id", sessao.id);
       return { status: "aguardando_cartao", resposta };
     }
-    const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias, next.source);
+    await aplicarMemoriaEstabelecimento({ userId, session: next, categorias, source: next.source === "audio" ? "audio" : "text" });
+    const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias, next.source, memoryHintFromSession(next, categorias));
     await supabaseAdmin
       .from("whatsapp_messages")
       .update({ status: "expirada" })
@@ -2565,7 +2692,8 @@ export async function processarMensagemWhatsApp(
         cartaoNomeDetectado: displayCartaoNome(match),
         cartaoNaoCadastrado: false,
       };
-      const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias, next.source);
+      await aplicarMemoriaEstabelecimento({ userId, session: next, categorias, source: next.source === "audio" ? "audio" : "text" });
+      const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias, next.source, memoryHintFromSession(next, categorias));
       await supabaseAdmin
         .from("whatsapp_messages")
         .update({ status: "expirada" })
@@ -2768,7 +2896,8 @@ export async function processarMensagemWhatsApp(
         return { status: "aguardando_cartao", resposta };
       }
     }
-    const resposta = formatarConfirmacao(sessionToParsed(sess, cartoes), undefined, categorias, sess.source);
+    await aplicarMemoriaEstabelecimento({ userId, session: sess, categorias, source: sess.source === "audio" ? "audio" : "text" });
+    const resposta = formatarConfirmacao(sessionToParsed(sess, cartoes), undefined, categorias, sess.source, memoryHintFromSession(sess, categorias));
     await gravarSessao(
       userId,
       msg.telefone,

@@ -3015,6 +3015,50 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_merchant_category_memories: {
+        Row: {
+          category_id: string
+          confirmed_count: number
+          created_at: string
+          id: string
+          last_confirmed_at: string
+          manual_confirmed_count: number
+          merchant_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          confirmed_count?: number
+          created_at?: string
+          id?: string
+          last_confirmed_at?: string
+          manual_confirmed_count?: number
+          merchant_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          confirmed_count?: number
+          created_at?: string
+          id?: string
+          last_confirmed_at?: string
+          manual_confirmed_count?: number
+          merchant_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_merchant_category_memories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_messages: {
         Row: {
           confianca: number | null
