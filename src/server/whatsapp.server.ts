@@ -2620,7 +2620,7 @@ export async function processarMensagemWhatsApp(
     }
   }
 
-  }
+
 
   // ---- Fase WA-G4: consultas financeiras específicas ----
   // Gasto por descrição/categoria, receita por tipo, gastos de ontem,
