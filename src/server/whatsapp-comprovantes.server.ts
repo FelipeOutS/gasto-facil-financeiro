@@ -1211,6 +1211,7 @@ export async function processarRespostaImagem(args: {
       categoriaId: found.id,
       categoriaLabel: found.nome,
       categoriaNaoIdentificada: false,
+      categoriaSelecionadaManual: true, // WA-M1.2
       categoriaOptions: undefined,
     };
     return avancarAposConfirmacao(userId, next, cats);
