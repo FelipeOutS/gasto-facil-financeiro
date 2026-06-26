@@ -50,6 +50,10 @@ import {
   handleCategoriaAmbiguaResponse,
 } from "./whatsapp-consultas-especificas.server";
 import {
+  detectFaturaIntent,
+  handleFaturaIntent,
+} from "./whatsapp-faturas.server";
+import {
   COMPROVANTE_PENDING_STATES,
   isComprovanteSession,
   processarNovaImagem,
@@ -2595,6 +2599,31 @@ export async function processarMensagemWhatsApp(
       return { status: "consulta", resposta: out.resposta };
     }
   }
+
+
+
+  // ---- Fase WA-F1: consulta de fatura atual de cartão de crédito ----
+  // Apenas leitura. Detecta perguntas como "fatura", "fatura Nubank",
+  // "quanto devo no cartão", "quando vence minha fatura", "qual cartão
+  // está com maior fatura". Não cria sessão, não altera nada. Reusa o
+  // helper compartilhado `cartao-fatura.server` para espelhar a regra
+  // financeira do site.
+  if (!sessao && decisao === "outro") {
+    const intentF = detectFaturaIntent(texto);
+    if (intentF) {
+      logWaRouteDecision(msg, "consulta_handler", "consulta_fatura_without_session");
+      const out = await handleFaturaIntent(userId, intentF);
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        out.resposta,
+      );
+      return { status: "consulta", resposta: out.resposta };
+    }
+  }
+
+
 
   // ---- Fase WA-G4: consultas financeiras específicas ----
   // Gasto por descrição/categoria, receita por tipo, gastos de ontem,
