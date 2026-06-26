@@ -16,7 +16,9 @@
  *   - Gravação só após gasto efetivamente salvo (`gastoId` válido).
  */
 
-import { supabaseAdmin } from "@/lib/supabaseAdminClient";
+import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabaseAdmin = _supabaseAdmin as any;
 
 export type MerchantMemorySource = "text" | "audio" | "receipt";
 export type MerchantMemoryEvidence = "manual" | "confirmed";
