@@ -399,6 +399,10 @@ export async function handleFaturaIntent(
   };
   logFaturaQuery({ intent: intent.kind, cardsMatchedCount: resumos.length, result: out.status });
   return out;
+}
+
+
+
 
 
 // =====================================================================
