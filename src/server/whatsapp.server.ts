@@ -2597,7 +2597,10 @@ export async function processarMensagemWhatsApp(
         out.resposta,
       );
       return { status: "consulta", resposta: out.resposta };
+    }
   }
+
+
 
   // ---- Fase WA-F1: consulta de fatura atual de cartão de crédito ----
   // Apenas leitura. Detecta perguntas como "fatura", "fatura Nubank",
