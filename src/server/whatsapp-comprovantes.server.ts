@@ -18,6 +18,10 @@
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runExtractor, type OcrResult } from "@/server/ocr-comprovante.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
+import {
+  merchantKeyFor,
+  recordMerchantMemory,
+} from "./whatsapp-merchant-memory.server";
 import { createHash } from "crypto";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
