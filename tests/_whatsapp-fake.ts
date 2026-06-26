@@ -185,7 +185,9 @@ function makeBuilder(table: string): any {
     }
     if (table === "gastos") {
       if (ctx.filters?.id) return { data: { id: ctx.filters.id }, error: null };
-      return { data: applyRangeFilters(state.gastosData, ctx.range), error: null };
+      const uid = ctx.filters?.user_id;
+      const base = uid ? state.gastosData.filter((g) => g.user_id === uid) : state.gastosData;
+      return { data: applyRangeFilters(base, ctx.range), error: null };
     }
     if (table === "receitas") {
       return { data: applyRangeFilters(state.receitasData, ctx.range), error: null };
