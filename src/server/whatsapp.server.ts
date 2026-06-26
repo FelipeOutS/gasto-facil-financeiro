@@ -52,6 +52,9 @@ import {
 import {
   detectFaturaIntent,
   handleFaturaIntent,
+  handleFaturaPagination,
+  detectPaginationCommand,
+  type FaturaDetailSessionState,
 } from "./whatsapp-faturas.server";
 import {
   COMPROVANTE_PENDING_STATES,
