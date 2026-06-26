@@ -39,6 +39,7 @@ const PENDING = [
   "aguardando_cartao",
   "aguardando_descricao_e_valor_gasto",
   "consulta_categoria_ambigua",
+  "aguardando_categoria_gasto",
   "rec_aguardando_tipo",
   "rec_aguardando_valor",
   "rec_aguardando_recorrencia",

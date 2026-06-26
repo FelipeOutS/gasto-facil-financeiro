@@ -58,6 +58,12 @@ import {
   type ComprovanteSession,
   type ComprovanteStatus,
   type ImageAttachment,
+  // WA-M1.3 — picker compartilhado de categorias (lista curta, paginação,
+  // resolução por número/nome). Reutilizado pelo fluxo de gasto por
+  // texto/áudio para evitar duplicação.
+  buildCategoriaListBody,
+  resolveCategoriaPickerInput,
+  type CategoriaPickerState,
 } from "./whatsapp-comprovantes.server";
 import {
   merchantKeyFor,
@@ -481,6 +487,7 @@ export type ProcessOutcome = {
     | "aguardando_confirmacao"
     | "aguardando_forma_pagamento"
     | "aguardando_cartao"
+    | "aguardando_categoria_gasto"
     | "cancelada"
     | "sem_pendencia"
     | "pendente"
@@ -508,6 +515,57 @@ const CANCEL_TOKENS = [
   "nao", "não", "n", "cancelar", "cancela", "cancelado", "ignora",
   "ignorar", "apaga", "apagar", "errado", "no",
 ];
+
+/**
+ * WA-M1.3 — comandos de alteração de categoria reconhecidos durante a
+ * confirmação de gasto por texto/áudio. Detecção estrita: só dispara
+ * quando o texto é exatamente um desses padrões — frases soltas com a
+ * palavra "categoria" no meio não disparam.
+ *
+ * Padrões aceitos:
+ *   - "categoria"                        (ask: abre lista)
+ *   - "alterar categoria" / "mudar categoria" / "editar categoria" / ... (ask)
+ *   - "categoria <termo>"                (direct)
+ *   - "coloca em <termo>" / "coloque em <termo>"
+ *   - "muda para <termo>" / "mude para <termo>" / "mudar para <termo>"
+ *   - "alterar categoria para <termo>" / "alterar para <termo>"
+ *   - "trocar categoria para <termo>"
+ */
+export type CategoriaCommandIntent =
+  | { kind: "ask" }
+  | { kind: "direct"; termo: string };
+
+export function detectCategoriaCommand(texto: string): CategoriaCommandIntent | null {
+  if (!texto) return null;
+  const limpo = texto.replace(/[.!?\s]+$/g, "").trim();
+  const t = normalizeText(limpo);
+  if (!t) return null;
+
+  // ask: "categoria", "alterar categoria", "editar categoria", "mudar
+  // categoria", "trocar categoria", "ajustar categoria"
+  if (/^(alterar|editar|mudar|trocar|ajustar|corrigir)?\s*categoria$/.test(t)) {
+    return { kind: "ask" };
+  }
+
+  // direct: "categoria <termo>"
+  let m = t.match(/^categoria\s+(.+)$/);
+  if (m) return { kind: "direct", termo: m[1].slice(0, 60).trim() };
+
+  // direct: "coloca em <termo>" / "coloque em <termo>"
+  m = t.match(/^(?:coloca|coloque)(?:\s+isso)?\s+em\s+(.+)$/);
+  if (m) return { kind: "direct", termo: m[1].slice(0, 60).trim() };
+
+  // direct: "muda para X", "mude para X", "mudar para X" (com ou sem
+  // "categoria" no meio).
+  m = t.match(/^(?:muda|mude|mudar|troca|troque|trocar)\s+(?:a\s+)?(?:categoria\s+)?(?:para|pra)\s+(.+)$/);
+  if (m) return { kind: "direct", termo: m[1].slice(0, 60).trim() };
+
+  // direct: "alterar/editar/ajustar categoria para X" / "alterar para X"
+  m = t.match(/^(?:alterar|editar|ajustar|corrigir)\s+(?:a\s+)?(?:categoria\s+)?(?:para|pra)\s+(.+)$/);
+  if (m) return { kind: "direct", termo: m[1].slice(0, 60).trim() };
+
+  return null;
+}
 
 export function classificarResposta(texto: string): "confirm" | "cancel" | "outro" {
   const t = normalizeText(texto);
@@ -630,10 +688,14 @@ export function formatarConfirmacao(
   categorias?: CategoriaRow[],
   source?: "audio",
   memoryHint?: { categoriaLabel: string },
+  /** WA-M1.3 — quando o usuário escolheu categoria explicitamente, o
+   *  label manual vence sobre memoryHint e palpite automático. */
+  manualCategoriaLabel?: string,
 ): string {
   const cartao = canonicalizeBrand(cartaoNome ?? parsed.cartaoNomeDetectado ?? "");
   const descricao = cleanDescricao(parsed.nome) || parsed.nome;
-  const categoria = memoryHint?.categoriaLabel
+  const categoria = manualCategoriaLabel
+    ?? memoryHint?.categoriaLabel
     ?? categoriaParaExibir(descricao, categorias, source);
 
   const dataFmt = formatDataBR(parsed.data);
@@ -645,7 +707,8 @@ export function formatarConfirmacao(
     pagamento: rotuloFormaPagamento(parsed.formaPagamento, cartao || undefined),
     parcelas: parsed.parcelas,
   });
-  if (!memoryHint) return base;
+  // Escolha manual posterior nunca exibe a dica de memória.
+  if (manualCategoriaLabel || !memoryHint) return base;
   // Insere a observação logo após a linha "• Categoria: ...".
   const lines = base.split("\n");
   const idx = lines.findIndex((l) => l.startsWith("• Categoria:"));
@@ -831,6 +894,20 @@ type Session = {
    * `recordMerchantMemory` no momento da persistência.
    */
   categorySelectionSource?: "manual" | "automatic";
+  /**
+   * WA-M1.3 — override manual de categoria durante a confirmação de gasto
+   * por texto/áudio. Quando preenchidos, `persistirGasto` salva o gasto
+   * com essa categoria e a memória de estabelecimento grava
+   * `evidence="manual"`. Nunca derivados do parser/keyword/memória.
+   */
+  manualCategoriaId?: string;
+  manualCategoriaLabel?: string;
+  /**
+   * WA-M1.3 — opções de categoria mostradas ao usuário (lista curta ou
+   * paginada). Limpa após escolha, cancelamento ou retorno à
+   * confirmação.
+   */
+  categoriaOptions?: CategoriaPickerState;
 };
 
 function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
@@ -872,6 +949,10 @@ const PENDING_STATES = [
   // uma das categorias quando o termo bate com mais de uma. NUNCA cria
   // gasto ou receita. Cancelável por "cancelar".
   "consulta_categoria_ambigua",
+  // WA-M1.3 — usuário está escolhendo nova categoria via lista paginada
+  // durante uma confirmação de gasto por texto/áudio. Permanece pendente
+  // até o usuário escolher (volta para aguardando_confirmacao) ou cancelar.
+  "aguardando_categoria_gasto",
   ...RECEITA_PENDING_STATES,
   ...COMPROVANTE_PENDING_STATES,
 ];
@@ -1425,6 +1506,20 @@ export async function persistirGasto(
     categoriaId = s.memoryAppliedCategoriaId!;
     const cat = categorias.find((c) => c.id === categoriaId);
     if (cat?.nome) categoriaLabelFinal = cat.nome;
+  }
+
+  // WA-M1.3 — escolha manual do usuário durante a confirmação vence
+  // sobre o palpite automático e sobre a memória. Só aplica quando a
+  // categoria escolhida ainda existe nas categorias ativas (evita
+  // referenciar categoria removida/desativada após a escolha).
+  if (
+    s.categorySelectionSource === "manual"
+    && s.manualCategoriaId
+    && categorias.some((c) => c.id === s.manualCategoriaId)
+  ) {
+    categoriaId = s.manualCategoriaId;
+    const cat = categorias.find((c) => c.id === s.manualCategoriaId);
+    categoriaLabelFinal = cat?.nome ?? s.manualCategoriaLabel ?? categoriaLabelFinal;
   }
 
   const [y, m] = s.data.split("-").map(Number);
@@ -2554,6 +2649,145 @@ export async function processarMensagemWhatsApp(
 
 
 
+  // ---- WA-M1.3: comandos de categoria durante uma sessão de gasto -----
+  // Atua APENAS quando há sessão ativa em `aguardando_confirmacao` e a
+  // sessão é de gasto (sessões de receita/comprovante foram roteadas
+  // antes). Reusa o picker compartilhado de `whatsapp-comprovantes`
+  // para não duplicar lista/paginação/resolução por nome.
+  if (
+    sessao
+    && sessao.status === "aguardando_confirmacao"
+    && !isComprovanteSession(sessao.session)
+    && !isReceitaSession(sessao.session)
+  ) {
+    const cmd = detectCategoriaCommand(texto);
+    if (cmd) {
+      const categoriasUser = await carregarCategorias(userId);
+      if (cmd.kind === "ask") {
+        const { body, options } = await buildCategoriaListBody({
+          userId,
+          holder: {
+            descricao: sessao.session.nome,
+            categoriaSugerida: sessao.session.categoriaSugestao ?? null,
+          },
+          cats: categoriasUser,
+        });
+        const next: Session = { ...sessao.session, categoriaOptions: options };
+        const resposta = `Qual categoria devo usar?\n\n${body}`;
+        await atualizarSessao(sessao.id, "aguardando_categoria_gasto", next, resposta);
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "aguardando_categoria_gasto", next, resposta,
+        );
+        return { status: "aguardando_categoria_gasto", resposta };
+      }
+      // direct: resolve termo via picker compartilhado (sem opções: cai no
+      // matching por nome). Categorias de outro usuário nunca entram em
+      // `categoriasUser` (filtro user_id em carregarCategorias).
+      const r = await resolveCategoriaPickerInput({
+        userId,
+        holder: {
+          descricao: sessao.session.nome,
+          categoriaSugerida: sessao.session.categoriaSugestao ?? null,
+          categoriaOptions: undefined,
+        },
+        cats: categoriasUser,
+        texto: cmd.termo,
+      });
+      if (r.kind !== "picked") {
+        const resposta =
+          `Não encontrei a categoria "${cmd.termo}". ` +
+          `Digite "categoria" para ver a lista de opções.`;
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "aguardando_confirmacao", sessao.session, resposta,
+        );
+        return { status: "aguardando_confirmacao", resposta };
+      }
+      const next: Session = {
+        ...sessao.session,
+        categorySelectionSource: "manual",
+        manualCategoriaId: r.cat.id,
+        manualCategoriaLabel: r.cat.nome,
+        categoriaOptions: undefined,
+      };
+      const resumo = formatarConfirmacao(
+        sessionToParsed(next, cartoes), undefined, categoriasUser,
+        next.source, undefined, r.cat.nome,
+      );
+      const resposta = `✅ Categoria atualizada para: ${r.cat.nome}\n\n${resumo}`;
+      await atualizarSessao(sessao.id, "aguardando_confirmacao", next, resposta);
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "aguardando_confirmacao", next, resposta,
+      );
+      return { status: "aguardando_confirmacao", resposta };
+    }
+  }
+
+  // ---- WA-M1.3: sessão ativa no picker de categoria de gasto ----------
+  // Atende qualquer mensagem (inclusive "sim"/"não") com prioridade
+  // máxima: só "cancelar" encerra a sessão. Demais textos viram input
+  // para o picker (número, nome, "ver todas", "mais", "voltar").
+  if (sessao && sessao.status === "aguardando_categoria_gasto") {
+    if (decisao === "cancel") {
+      await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "cancelada", sessao.session, "Cancelado pelo usuário.",
+      );
+      return { status: "cancelada", resposta: M.gastoCancelado() };
+    }
+    const categoriasUser = await carregarCategorias(userId);
+    const r = await resolveCategoriaPickerInput({
+      userId,
+      holder: {
+        descricao: sessao.session.nome,
+        categoriaSugerida: sessao.session.categoriaSugestao ?? null,
+        categoriaOptions: sessao.session.categoriaOptions,
+      },
+      cats: categoriasUser,
+      texto,
+    });
+    if (r.kind === "picked") {
+      const next: Session = {
+        ...sessao.session,
+        categorySelectionSource: "manual",
+        manualCategoriaId: r.cat.id,
+        manualCategoriaLabel: r.cat.nome,
+        categoriaOptions: undefined,
+      };
+      const resumo = formatarConfirmacao(
+        sessionToParsed(next, cartoes), undefined, categoriasUser,
+        next.source, undefined, r.cat.nome,
+      );
+      const resposta = `✅ Categoria atualizada para: ${r.cat.nome}\n\n${resumo}`;
+      await atualizarSessao(sessao.id, "aguardando_confirmacao", next, resposta);
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "aguardando_confirmacao", next, resposta,
+      );
+      return { status: "aguardando_confirmacao", resposta };
+    }
+    if (r.kind === "relist") {
+      const next: Session = { ...sessao.session, categoriaOptions: r.options };
+      await atualizarSessao(sessao.id, "aguardando_categoria_gasto", next, r.body);
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "aguardando_categoria_gasto", next, r.body,
+      );
+      return { status: "aguardando_categoria_gasto", resposta: r.body };
+    }
+    // invalid
+    const aviso =
+      `Não entendi a resposta. Digite o número, o nome da categoria, ` +
+      `"mais" para ver outras opções ou "cancelar" para sair.`;
+    await gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "aguardando_categoria_gasto", sessao.session, aviso,
+    );
+    return { status: "aguardando_categoria_gasto", resposta: aviso };
+  }
 
 
   // ---- Confirmar/cancelar ----

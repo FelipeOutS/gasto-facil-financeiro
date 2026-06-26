@@ -48,6 +48,7 @@ const INCLUDE = [
   "whatsapp-merchant-memory.test.ts",
   "whatsapp-merchant-memory-evidence.test.ts",
   "whatsapp-comprovante-categoria-manual.test.ts",
+  "whatsapp-categoria-manual-gasto.test.ts",
   "free-ads-plan.test.ts",
 ];
 

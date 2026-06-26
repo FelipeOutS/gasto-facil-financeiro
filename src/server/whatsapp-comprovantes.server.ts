@@ -1365,3 +1365,78 @@ export async function podeUsarOcrComprovante(userId: string): Promise<boolean> {
     return false;
   }
 }
+
+// ===== WA-M1.3 — Exports compartilhados para o picker de categoria ========
+// Permite que o fluxo de gasto por texto/áudio reuse a lista, paginação e
+// resolução de categoria sem duplicar lógica. Os adaptadores constroem um
+// `ComprovanteSession` sintético para reusar `bodyOpcoesCategoria` e
+// `resolveCategoriaInput` já testados pelo fluxo de comprovantes.
+export type CategoriaPickerState = {
+  mode: "short" | "all";
+  page: number;
+  optionIds: string[];
+  optionNames: string[];
+};
+export type CategoriaPickerHolder = {
+  categoriaSugerida?: string | null;
+  descricao?: string | null;
+  categoriaOptions?: CategoriaPickerState;
+};
+export type CategoriaPickerRow = CategoriaRow;
+
+function holderToSynthSession(h: CategoriaPickerHolder): ComprovanteSession {
+  return {
+    kind: "imagem_comprovante",
+    mensagemOriginal: "",
+    descricao: h.descricao ?? undefined,
+    categoriaSugerida: h.categoriaSugerida ?? null,
+    categoriaOptions: h.categoriaOptions,
+  };
+}
+
+const EMPTY_PICKER_STATE: CategoriaPickerState = {
+  mode: "short",
+  page: 0,
+  optionIds: [],
+  optionNames: [],
+};
+
+export async function buildCategoriaListBody(args: {
+  userId: string;
+  holder: CategoriaPickerHolder;
+  cats: CategoriaPickerRow[];
+}): Promise<{ body: string; options: CategoriaPickerState }> {
+  const out = await bodyOpcoesCategoria(args.userId, holderToSynthSession(args.holder), args.cats);
+  return { body: out.body, options: out.sessionPatch.categoriaOptions ?? EMPTY_PICKER_STATE };
+}
+
+export async function resolveCategoriaPickerInput(args: {
+  userId: string;
+  holder: CategoriaPickerHolder;
+  cats: CategoriaPickerRow[];
+  texto: string;
+}): Promise<
+  | { kind: "picked"; cat: CategoriaPickerRow }
+  | { kind: "relist"; options: CategoriaPickerState; body: string }
+  | { kind: "invalid" }
+> {
+  const r = await resolveCategoriaInput({
+    userId: args.userId,
+    session: holderToSynthSession(args.holder),
+    cats: args.cats,
+    texto: args.texto,
+  });
+  if (r.kind === "picked") return { kind: "picked", cat: r.cat };
+  if (r.kind === "relist") {
+    return {
+      kind: "relist",
+      options: r.sessionPatch.categoriaOptions ?? EMPTY_PICKER_STATE,
+      body: r.body,
+    };
+  }
+  return { kind: "invalid" };
+}
+
+export async function loadCategoriasParaPicker(userId: string): Promise<CategoriaPickerRow[]> {
+  return await carregarCategoriasDespesa(userId);
+}
