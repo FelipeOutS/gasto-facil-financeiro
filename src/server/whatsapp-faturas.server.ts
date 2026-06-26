@@ -177,18 +177,25 @@ export function detectFaturaIntent(texto: string): FaturaIntent | null {
  * cartão real — isso é feito pelo handler com filtro por user_id.
  */
 function extractCartaoTermo(t: string): string | null {
+  const STOP =
+    /^(atual|aberta|fechada|mais|maior|maiores|do|da|de|dos|das|no|na|nos|nas|minha|meu|meus|minhas|cart(?:ao|oes)|credito|fatura|recente|recentes|ultimas?|compras?|gastos?|lan[cç]amentos?)$/;
+
   let m = t.match(/\bfatura\s+(?:do|da|de|dos|das)\s+([a-z0-9\s]{2,30}?)(?:\s*\?|\s*$)/);
   if (m) return m[1].trim();
   m = t.match(/\bfatura\s+([a-z0-9]{2,30})(?:\s*\?|\s*$)/);
-  if (m && !/^(atual|aberta|fechada|mais|maior|do|da|de|minha|meu)$/.test(m[1])) {
-    return m[1].trim();
-  }
+  if (m && !STOP.test(m[1])) return m[1].trim();
   m = t.match(/\bcart(?:ao|oes)\s+(?:do|da|de)?\s*([a-z0-9\s]{2,30}?)(?:\s*\?|\s*$)/);
   if (m) {
-    const candidate = m[1].trim();
-    if (candidate && !/^(esta|estao|com|maior|mais|alta|fatura)$/.test(candidate)) {
-      return candidate;
-    }
+    const c = m[1].trim();
+    if (c && !STOP.test(c)) return c;
+  }
+  // WA-F2 — "compras do nubank", "gastos da caixa", "lancamentos do inter"
+  m = t.match(
+    /\b(?:compras?|gastos?|lan[cç]amentos?)\s+(?:do|da|de|dos|das|no|na)\s+([a-z0-9\s]{2,30}?)(?:\s*\?|\s*$)/,
+  );
+  if (m) {
+    const c = m[1].trim();
+    if (c && !STOP.test(c)) return c;
   }
   return null;
 }
@@ -206,6 +213,31 @@ function logFaturaQuery(args: {
     result: args.result,
   });
 }
+
+/**
+ * WA-F2 — log seguro de detalhamento. NUNCA inclui userId, telefone,
+ * texto, valor, descrição ou nome de cartão.
+ */
+function logFaturaDetailQuery(args: {
+  intent: "invoice_items" | "invoice_recent" | "invoice_largest" | "invoice_page";
+  cardsMatchedCount: number;
+  itemsReturnedCount: number;
+  result:
+    | "answered"
+    | "ambiguous_card"
+    | "card_not_found"
+    | "no_invoice_data"
+    | "no_more_items";
+}) {
+  console.info({
+    event: "wa_invoice_detail_query",
+    intent: args.intent,
+    cardsMatchedCount: args.cardsMatchedCount,
+    itemsReturnedCount: args.itemsReturnedCount,
+    result: args.result,
+  });
+}
+
 
 function ambiguousCardMessage(cartoes: CartaoRow[]): string {
   const linhas = cartoes
