@@ -1465,17 +1465,20 @@ async function persistirGasto(
     return { ok: false, resposta: M.erroAoSalvar() };
   }
 
-  // WA-M1 — após salvar com sucesso, registra memória de estabelecimento.
-  // Para texto/áudio não há UI de escolha manual de categoria, então a
-  // evidência é sempre "confirmed". A escrita só ocorre se houver
-  // merchant_key válido e categoria_id resolvido (categoria ativa).
+  // WA-M1 / WA-M1.1 — após salvar com sucesso, registra memória de
+  // estabelecimento. A evidência é "manual" SOMENTE quando a sessão marca
+  // que o usuário escolheu/alterou a categoria explicitamente; caso
+  // contrário (apenas confirmou a sugestão automática) é "confirmed".
+  // A escrita só ocorre com merchant_key válido e categoria_id resolvido.
   if (s.merchantKey && categoriaId) {
     try {
+      const evidence: "manual" | "confirmed" =
+        s.categorySelectionSource === "manual" ? "manual" : "confirmed";
       await recordMerchantMemory({
         userId,
         merchantKey: s.merchantKey,
         categoryId: categoriaId,
-        evidence: "confirmed",
+        evidence,
       });
     } catch {
       // Falha de memória nunca quebra o fluxo de gasto.
