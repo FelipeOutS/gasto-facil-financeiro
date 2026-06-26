@@ -768,7 +768,7 @@ function buildResumo(s: ComprovanteSession, cats: CategoriaRow[]): string {
 }
 
 // ----- persistência do gasto --------------------------------------------
-async function persistirGastoComprovante(
+export async function persistirGastoComprovante(
   userId: string,
   s: ComprovanteSession,
   cats: CategoriaRow[],
