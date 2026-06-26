@@ -2529,6 +2529,80 @@ export async function processarMensagemWhatsApp(
 
 
 
+  // ---- Fase WA-F2: paginação ativa de detalhamento de fatura ----
+  // Apenas leitura. Aceita "ver mais", "voltar" e "cancelar". Se a
+  // mensagem não for um comando de paginação, encerra o estado e segue
+  // o pipeline normal (gasto/receita/consulta).
+  if (sessao && sessao.status === "aguardando_consulta_fatura") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const prev = sessao.session as any;
+    const stateF: FaturaDetailSessionState | null =
+      prev && prev.kind === "consulta_fatura" && typeof prev.cartaoId === "string"
+        ? {
+            kind: "consulta_fatura",
+            cartaoId: prev.cartaoId,
+            mode: prev.mode === "maiores" ? "maiores" : "recentes",
+            page: Number.isFinite(prev.page) ? Number(prev.page) : 0,
+          }
+        : null;
+    const cmd = detectPaginationCommand(texto);
+    if (stateF && cmd === "cancel") {
+      await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+      const resposta = "Tudo bem, encerrei a consulta da fatura.";
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        resposta,
+      );
+      return { status: "consulta", resposta };
+    }
+    if (stateF && (cmd === "next" || cmd === "prev")) {
+      const out = await handleFaturaPagination(userId, stateF, cmd);
+      const hasNext =
+        "nextSession" in out && (out as { nextSession?: FaturaDetailSessionState }).nextSession;
+      if (hasNext) {
+        const next = (out as { nextSession: FaturaDetailSessionState }).nextSession;
+        await fecharSessoesAnteriores(userId, msg.telefone, "expirada");
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "aguardando_consulta_fatura",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ({
+            nome: "",
+            valor: 0,
+            data: todayLocalISO(),
+            mensagemOriginal: "",
+            kind: "consulta_fatura",
+            cartaoId: next.cartaoId,
+            mode: next.mode,
+            page: next.page,
+          } as unknown) as Session,
+          out.resposta,
+        );
+        return { status: "pendente", resposta: out.resposta };
+      }
+      await fecharSessoesAnteriores(userId, msg.telefone, "salva");
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        out.resposta,
+      );
+      return { status: "consulta", resposta: out.resposta };
+    }
+    // Não é comando de paginação — encerra o estado e segue o pipeline.
+    await supabaseAdmin
+      .from("whatsapp_messages")
+      .update({ status: "expirada" })
+      .eq("id", sessao.id);
+    sessao = null;
+  }
+
+
+
+
+
   // ---- Fase WA-G3: intenções conversacionais (saudação, menu, finanças genérico) ----
   // Tem precedência sobre consultas reais e sobre parsing de gasto/receita.
   // Só roda quando NÃO há sessão pendente e não é uma resposta sim/não/forma.
