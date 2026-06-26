@@ -837,6 +837,20 @@ type Session = {
    * `recordMerchantMemory` no momento da persistência.
    */
   categorySelectionSource?: "manual" | "automatic";
+  /**
+   * WA-M1.3 — override manual de categoria durante a confirmação de gasto
+   * por texto/áudio. Quando preenchidos, `persistirGasto` salva o gasto
+   * com essa categoria e a memória de estabelecimento grava
+   * `evidence="manual"`. Nunca derivados do parser/keyword/memória.
+   */
+  manualCategoriaId?: string;
+  manualCategoriaLabel?: string;
+  /**
+   * WA-M1.3 — opções de categoria mostradas ao usuário (lista curta ou
+   * paginada). Limpa após escolha, cancelamento ou retorno à
+   * confirmação.
+   */
+  categoriaOptions?: CategoriaPickerState;
 };
 
 function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
