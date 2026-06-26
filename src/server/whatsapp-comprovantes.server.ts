@@ -51,6 +51,12 @@ export type ComprovanteSession = {
   categoriaLabel?: string | null; // nome resolvido do usuário (display)
   categoriaId?: string | null;
   categoriaNaoIdentificada?: boolean;
+  /** WA-M1.2 — marcado quando o usuário escolheu/alterou a categoria
+   *  explicitamente (lista numerada, nome digitado, "categoria <termo>"
+   *  durante ajuste, ou fluxo de categoria obrigatória). Persiste na
+   *  sessão para garantir que `recordMerchantMemory` grave evidência
+   *  "manual" mesmo após `categoriaNaoIdentificada` ser zerado. */
+  categoriaSelecionadaManual?: boolean;
   formaPagamento?: string | null;
   confianca?: "alta" | "media" | "baixa";
   dataConfirmada?: boolean;
@@ -762,7 +768,7 @@ function buildResumo(s: ComprovanteSession, cats: CategoriaRow[]): string {
 }
 
 // ----- persistência do gasto --------------------------------------------
-async function persistirGastoComprovante(
+export async function persistirGastoComprovante(
   userId: string,
   s: ComprovanteSession,
   cats: CategoriaRow[],
@@ -805,14 +811,19 @@ async function persistirGastoComprovante(
     return { ok: false, resposta: M.erroAoSalvar() };
   }
 
-  // WA-M1 — registra memória de estabelecimento após o gasto ser salvo
-  // com sucesso. Para comprovantes, classificamos como "manual" quando o
-  // usuário precisou escolher a categoria explicitamente (categoria não
-  // identificada inicialmente pelo OCR); caso contrário, "confirmed".
+  // WA-M1 / WA-M1.2 — registra memória de estabelecimento após o gasto ser
+  // salvo. Classifica como "manual" quando o usuário escolheu/alterou a
+  // categoria explicitamente (flag `categoriaSelecionadaManual`) OU quando
+  // o OCR não identificou e ele teve que escolher (fail-safe via
+  // `categoriaNaoIdentificada` na sessão original). Caso contrário,
+  // "confirmed" (OCR sugeriu e usuário aceitou com "sim").
   if (cat.id) {
     const key = merchantKeyFor(desc);
     if (key) {
-      const evidence = s.categoriaNaoIdentificada ? "manual" : "confirmed";
+      const evidence =
+        s.categoriaSelecionadaManual || s.categoriaNaoIdentificada
+          ? "manual"
+          : "confirmed";
       try {
         await recordMerchantMemory({
           userId,
@@ -1103,6 +1114,7 @@ export async function processarRespostaImagem(args: {
       next.categoriaId = found.id;
       next.categoriaLabel = found.nome;
       next.categoriaNaoIdentificada = false;
+      next.categoriaSelecionadaManual = true; // WA-M1.2
       next.categoriaOptions = undefined;
     } else if (field === "data") {
       const d = parseData(texto);
@@ -1199,6 +1211,7 @@ export async function processarRespostaImagem(args: {
       categoriaId: found.id,
       categoriaLabel: found.nome,
       categoriaNaoIdentificada: false,
+      categoriaSelecionadaManual: true, // WA-M1.2
       categoriaOptions: undefined,
     };
     return avancarAposConfirmacao(userId, next, cats);
@@ -1263,6 +1276,7 @@ export async function processarRespostaImagem(args: {
         next.categoriaId = found.id;
         next.categoriaLabel = found.nome;
         next.categoriaNaoIdentificada = false;
+        next.categoriaSelecionadaManual = true; // WA-M1.2
         next.categoriaOptions = undefined;
       }
       return rebuildResumoOuPreencher(next, cats);
