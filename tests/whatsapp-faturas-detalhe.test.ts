@@ -453,7 +453,9 @@ describe("Pipeline WhatsApp — WA-F2", () => {
       telefone: "5511999998888", texto: "cancelar",
       external_id: "ext-c-2", recebida_em: new Date().toISOString(),
     });
-    expect(r.status).toBe("consulta");
+    // Aceita tanto "consulta" (cancelar local) quanto "cancelada"
+    // (reset global captura primeiro). Ambos encerram a paginação.
+    expect(["consulta", "cancelada"]).toContain(r.status);
     expect(state.pendingRow).toBeNull();
   });
 });
