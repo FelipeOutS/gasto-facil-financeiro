@@ -45,6 +45,7 @@ const INCLUDE = [
   "whatsapp-voice-number-normalizer.test.ts",
   "whatsapp-voice-description-cleanup.test.ts",
   "whatsapp-voice-category-suggestion.test.ts",
+  "whatsapp-merchant-memory.test.ts",
   "free-ads-plan.test.ts",
 ];
 
