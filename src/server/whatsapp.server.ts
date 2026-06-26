@@ -636,10 +636,14 @@ export function formatarConfirmacao(
   categorias?: CategoriaRow[],
   source?: "audio",
   memoryHint?: { categoriaLabel: string },
+  /** WA-M1.3 — quando o usuário escolheu categoria explicitamente, o
+   *  label manual vence sobre memoryHint e palpite automático. */
+  manualCategoriaLabel?: string,
 ): string {
   const cartao = canonicalizeBrand(cartaoNome ?? parsed.cartaoNomeDetectado ?? "");
   const descricao = cleanDescricao(parsed.nome) || parsed.nome;
-  const categoria = memoryHint?.categoriaLabel
+  const categoria = manualCategoriaLabel
+    ?? memoryHint?.categoriaLabel
     ?? categoriaParaExibir(descricao, categorias, source);
 
   const dataFmt = formatDataBR(parsed.data);
@@ -651,7 +655,8 @@ export function formatarConfirmacao(
     pagamento: rotuloFormaPagamento(parsed.formaPagamento, cartao || undefined),
     parcelas: parsed.parcelas,
   });
-  if (!memoryHint) return base;
+  // Escolha manual posterior nunca exibe a dica de memória.
+  if (manualCategoriaLabel || !memoryHint) return base;
   // Insere a observação logo após a linha "• Categoria: ...".
   const lines = base.split("\n");
   const idx = lines.findIndex((l) => l.startsWith("• Categoria:"));
