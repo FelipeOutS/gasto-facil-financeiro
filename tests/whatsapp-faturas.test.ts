@@ -7,17 +7,20 @@
  */
 import { beforeEach, describe, expect, it } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
-import {
+
+const {
   detectFaturaIntent,
   handleFaturaIntent,
-} from "../src/server/whatsapp-faturas.server";
-import {
+} = await import("../src/server/whatsapp-faturas.server");
+const {
   faturaCorrenteRef,
   cicloFatura,
   proximoFechamentoData,
   proximoVencimentoFaturaAberta,
-} from "../src/server/cartao-fatura.server";
-import { processarMensagemWhatsApp } from "../src/server/whatsapp.server";
+} = await import("../src/server/cartao-fatura.server");
+const { processarMensagemWhatsApp } = await import(
+  "../src/server/whatsapp.server"
+);
 
 function todayParts() {
   const d = new Date();
