@@ -59,6 +59,14 @@ import {
   type ComprovanteStatus,
   type ImageAttachment,
 } from "./whatsapp-comprovantes.server";
+import {
+  merchantKeyFor,
+  lookupMerchantMemory,
+  recordMerchantMemory,
+  logMerchantMemoryDecision,
+  MERCHANT_MEMORY_HINT_LINE,
+  type MerchantMemorySource,
+} from "./whatsapp-merchant-memory.server";
 import { createHash } from "crypto";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
