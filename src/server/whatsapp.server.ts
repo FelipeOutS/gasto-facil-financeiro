@@ -2896,7 +2896,8 @@ export async function processarMensagemWhatsApp(
         return { status: "aguardando_cartao", resposta };
       }
     }
-    const resposta = formatarConfirmacao(sessionToParsed(sess, cartoes), undefined, categorias, sess.source);
+    await aplicarMemoriaEstabelecimento({ userId, session: sess, categorias, source: sess.source === "audio" ? "audio" : "text" });
+    const resposta = formatarConfirmacao(sessionToParsed(sess, cartoes), undefined, categorias, sess.source, memoryHintFromSession(sess, categorias));
     await gravarSessao(
       userId,
       msg.telefone,
