@@ -50,6 +50,10 @@ import {
   handleCategoriaAmbiguaResponse,
 } from "./whatsapp-consultas-especificas.server";
 import {
+  detectFaturaIntent,
+  handleFaturaIntent,
+} from "./whatsapp-faturas.server";
+import {
   COMPROVANTE_PENDING_STATES,
   isComprovanteSession,
   processarNovaImagem,
