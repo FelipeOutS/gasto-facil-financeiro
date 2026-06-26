@@ -2694,6 +2694,29 @@ export async function processarMensagemWhatsApp(
     if (intentF) {
       logWaRouteDecision(msg, "consulta_handler", "consulta_fatura_without_session");
       const out = await handleFaturaIntent(userId, intentF);
+      const next =
+        "nextSession" in out
+          ? (out as { nextSession?: FaturaDetailSessionState }).nextSession
+          : undefined;
+      if (next) {
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "aguardando_consulta_fatura",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ({
+            nome: "",
+            valor: 0,
+            data: todayLocalISO(),
+            mensagemOriginal: "",
+            kind: "consulta_fatura",
+            cartaoId: next.cartaoId,
+            mode: next.mode,
+            page: next.page,
+          } as unknown) as Session,
+          out.resposta,
+        );
+        return { status: "pendente", resposta: out.resposta };
+      }
       await gravarSessao(
         userId, msg.telefone, msg.external_id, texto, recebidaEm,
         "sem_pendencia",
@@ -2703,6 +2726,7 @@ export async function processarMensagemWhatsApp(
       return { status: "consulta", resposta: out.resposta };
     }
   }
+
 
 
 
