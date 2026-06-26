@@ -2692,7 +2692,8 @@ export async function processarMensagemWhatsApp(
         cartaoNomeDetectado: displayCartaoNome(match),
         cartaoNaoCadastrado: false,
       };
-      const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias, next.source);
+      await aplicarMemoriaEstabelecimento({ userId, session: next, categorias, source: next.source === "audio" ? "audio" : "text" });
+      const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias, next.source, memoryHintFromSession(next, categorias));
       await supabaseAdmin
         .from("whatsapp_messages")
         .update({ status: "expirada" })
