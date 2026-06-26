@@ -1395,7 +1395,7 @@ async function verificarGastoExiste(gastoId: string | null | undefined): Promise
 
 // ---------- persistência de gasto ----------
 
-async function persistirGasto(
+export async function persistirGasto(
   userId: string,
   s: Session,
 ): Promise<{ gastoId?: string; resposta: string; ok: boolean }> {
