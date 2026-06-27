@@ -141,54 +141,92 @@ function hasMonetaryValue(textRaw: string): boolean {
  * Retorna `{ termo }` quando reconhece — termo é o nome candidato a
  * casar com `contas_a_pagar.nome` no helper de busca.
  */
-export function detectMarkAsPaidIntent(textRaw: string): { termo: string } | null {
+export function detectMarkAsPaidIntent(
+  textRaw: string,
+): { termo: string; paymentDate: string | null } | null {
   if (!textRaw || !textRaw.trim()) return null;
   // Bloqueia gastos consumados ANTES da normalização (vírgulas seriam removidas).
   if (hasMonetaryValue(textRaw)) return null;
-  const t = norm(textRaw);
-  if (!t) return null;
-
+  const t0 = norm(textRaw);
+  if (!t0) return null;
 
   // Bloqueia fatura / cartão (competência WA-F1..F5).
-  if (/\bfatura\b/.test(t)) return null;
+  if (/\bfatura\b/.test(t0)) return null;
 
   // Bloqueia intenção futura ("vou pagar", "ainda preciso pagar").
-  if (/\bvou\s+pagar\b/.test(t) || /\bpreciso\s+pagar\b/.test(t)) return null;
+  if (/\bvou\s+pagar\b/.test(t0) || /\bpreciso\s+pagar\b/.test(t0)) return null;
   // Bloqueia consultas: "o que paguei", "quando paguei".
-  if (/\bo\s+que\s+paguei\b/.test(t) || /\bquando\s+paguei\b/.test(t)) return null;
+  if (/\bo\s+que\s+paguei\b/.test(t0) || /\bquando\s+paguei\b/.test(t0)) return null;
+
+  // WA-C3.1 — separa a data ANTES de casar o termo, para aceitar
+  // "paguei a internet ontem", "dei baixa na academia em 03/07", etc.
+  const { dateText, cleaned: t } = extractAndStripDate(t0);
 
   // Padrões aceitos. Cada um extrai o `termo`.
   // 1) "paguei [a|o|minha|meu|essa|esse] <termo>"
   let m = t.match(/\bpaguei\s+(?:(?:a|o|as|os|minha|meu|essa|esse|uma|um)\s+)?([a-z0-9 ]{2,40})$/);
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
-    if (termo) return { termo };
+    if (termo) return { termo, paymentDate: dateText };
   }
   // 2) "quitei <termo>" / "quitar <termo>"
   m = t.match(/\bquit(?:ei|ar|a|e)\s+(?:(?:a|o|as|os|minha|meu|essa|esse|uma|um)\s+)?([a-z0-9 ]{2,40})$/);
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
-    if (termo) return { termo };
+    if (termo) return { termo, paymentDate: dateText };
   }
   // 3) "dei baixa (em|na|no|do|da) <termo>" / "dar baixa em <termo>"
   m = t.match(/\b(?:dei|dar|da)\s+baixa\s+(?:(?:em|na|no|do|da|nos|nas)\s+)?([a-z0-9 ]{2,40})$/);
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
-    if (termo) return { termo };
+    if (termo) return { termo, paymentDate: dateText };
   }
   // 4) "marcar <termo> como pago" / "marca <termo> como pago"
   m = t.match(/\bmarc(?:ar|a|e|ou)\s+(?:(?:a|o|as|os|minha|meu|essa|esse)\s+)?([a-z0-9 ]{2,40})\s+como\s+pag[ao]\b/);
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
-    if (termo) return { termo };
+    if (termo) return { termo, paymentDate: dateText };
   }
   // 5) "<termo> foi pago/paga" / "a conta de <termo> foi paga"
   m = t.match(/\b(?:a\s+conta\s+(?:de|do|da)\s+)?([a-z0-9 ]{2,40})\s+(?:foi|esta|ja\s+foi)\s+pag[ao]\b/);
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
-    if (termo) return { termo };
+    if (termo) return { termo, paymentDate: dateText };
   }
   return null;
+}
+
+/**
+ * WA-C3.1 — extrai e remove a primeira ocorrência de uma expressão de data
+ * do texto normalizado. Mantém o restante da frase intacto para o casamento
+ * de termo. NÃO remove palavras internas que poderiam fazer parte do nome
+ * da conta (apenas tokens reconhecidos como data).
+ */
+function extractAndStripDate(textNorm: string): { dateText: string | null; cleaned: string } {
+  const patterns: RegExp[] = [
+    // "em 5 de julho [de 2026]" / "5 de julho"
+    /\b(?:em\s+)?\d{1,2}\s+de\s+(?:janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\s+de\s+\d{2,4})?\b/,
+    // "em DD/MM[/YYYY]" / "no DD/MM[/YYYY]"
+    /\b(?:em|no|na)\s+\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/,
+    // "DD/MM[/YYYY]" — solto
+    /\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/,
+    // "no dia N do mes que vem" / "dia N do mes que vem"
+    /\b(?:no\s+)?dia\s+\d{1,2}\s+do\s+mes\s+que\s+vem\b/,
+    // "no dia N" / "dia N"
+    /\b(?:no\s+)?dia\s+\d{1,2}\b/,
+    // advérbios isolados
+    /\bamanha\b/,
+    /\bhoje\b/,
+    /\bontem\b/,
+  ];
+  for (const re of patterns) {
+    const m = textNorm.match(re);
+    if (m) {
+      const cleaned = textNorm.replace(re, " ").replace(/\s+/g, " ").trim();
+      return { dateText: m[0], cleaned };
+    }
+  }
+  return { dateText: null, cleaned: textNorm };
 }
 
 const FILLER_WORDS = new Set([
@@ -223,8 +261,38 @@ function parseDataPagamento(textRaw: string, hoje: Date = nowInAppTz()): string 
     const d = new Date(hoje); d.setDate(d.getDate() - 1);
     return todayISOInAppTz(d);
   }
-  // "dia 5" — assume mês corrente.
-  let m = t.match(/\bdia\s+(\d{1,2})\b/);
+  if (/\bamanha\b/.test(t)) {
+    const d = new Date(hoje); d.setDate(d.getDate() + 1);
+    return todayISOInAppTz(d);
+  }
+  // "em 5 de julho [de 2026]" / "5 de julho"
+  let m = t.match(/\b(?:em\s+)?(\d{1,2})\s+de\s+(janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\s+de\s+(\d{2,4}))?\b/);
+  if (m) {
+    const dia = Number(m[1]);
+    const mes = MESES[m[2]];
+    if (mes && dia >= 1 && dia <= 31) {
+      let ano = m[3] ? Number(m[3]) : hoje.getFullYear();
+      if (ano < 100) ano = 2000 + ano;
+      const last = new Date(ano, mes, 0).getDate();
+      const d = Math.min(dia, last);
+      return `${ano}-${String(mes).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+  }
+  // "dia N do mes que vem" / "no dia N do mes que vem"
+  m = t.match(/\b(?:no\s+)?dia\s+(\d{1,2})\s+do\s+mes\s+que\s+vem\b/);
+  if (m) {
+    const dia = Number(m[1]);
+    if (dia >= 1 && dia <= 31) {
+      const next = new Date(hoje); next.setDate(1); next.setMonth(next.getMonth() + 1);
+      const y = next.getFullYear();
+      const mm = next.getMonth() + 1;
+      const last = new Date(y, mm, 0).getDate();
+      const d = Math.min(dia, last);
+      return `${y}-${String(mm).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+  }
+  // "no dia 5" / "dia 5" — assume mês corrente.
+  m = t.match(/\b(?:no\s+)?dia\s+(\d{1,2})\b/);
   if (m) {
     const dia = Number(m[1]);
     if (dia >= 1 && dia <= 31) {
@@ -235,8 +303,8 @@ function parseDataPagamento(textRaw: string, hoje: Date = nowInAppTz()): string 
       return `${y}-${String(mm).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
     }
   }
-  // "DD/MM" ou "DD/MM/YYYY"
-  m = t.match(/\b(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?\b/);
+  // "DD/MM" ou "DD/MM/YYYY" (aceita prefixo "em"/"no").
+  m = t.match(/\b(?:em|no|na)?\s*(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?\b/);
   if (m) {
     const dia = Number(m[1]);
     const mes = Number(m[2]);
@@ -250,6 +318,11 @@ function parseDataPagamento(textRaw: string, hoje: Date = nowInAppTz()): string 
   }
   return null;
 }
+
+const MESES: Record<string, number> = {
+  janeiro: 1, fevereiro: 2, marco: 3, abril: 4, maio: 5, junho: 6,
+  julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
+};
 
 function isFutureISO(iso: string, hoje: Date = nowInAppTz()): boolean {
   return iso > todayISOInAppTz(hoje);
@@ -268,6 +341,7 @@ function previewSingle(row: ContaVencimentoRow, dataPagamento: string): string {
     'Confirma marcar como paga? Responda "sim", informe outra data (ex.: "ontem" ou "03/07") ou "cancelar".',
   ].join("\n");
 }
+
 
 function ambiguousList(rows: ContaVencimentoRow[], termo: string): string {
   // Sem valor nesta etapa, conforme especificação.
@@ -364,16 +438,28 @@ export async function processarBaixaConta(args: {
           'Você pode consultar suas contas com "o que vence esta semana?".',
       };
     }
-    // 1 candidata → confirmação direta.
+    // 1 candidata → confirmação direta (ou confirmação extra se data futura).
     if (rows.length === 1) {
       const row = rows[0];
-      const dataPag = todayISOInAppTz();
+      // WA-C3.1 — usa data extraída da própria frase quando houver.
+      const parsedFromIntent = intent.paymentDate ? parseDataPagamento(intent.paymentDate) : null;
+      const dataPag = parsedFromIntent ?? todayISOInAppTz();
       const session: BaixaContaSession = {
         kind: "baixa_conta",
         contaId: row.id,
         candidateContaIds: null,
         dataPagamento: dataPag,
       };
+      if (isFutureISO(dataPag)) {
+        const resposta = askFutureConfirm(dataPag);
+        await deps.gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "conta_pagamento_aguardando_data",
+          session as never, resposta,
+        );
+        logEvent("awaiting_confirmation", 1, "ok");
+        return { status: "pendente", resposta };
+      }
       const resposta = previewSingle(row, dataPag);
       await deps.gravarSessao(
         userId, msg.telefone, msg.external_id, texto, recebidaEm,
