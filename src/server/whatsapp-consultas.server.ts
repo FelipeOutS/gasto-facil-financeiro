@@ -458,3 +458,91 @@ export function handleConversational(
   markRecentIntent(telefone, intent);
   return { status: "consulta", resposta };
 }
+
+// =====================================================================
+// WA-C6 — Menu numerado guiado.
+//
+// Quando o usuário responde apenas com um dígito 1..8 (após receber o
+// menu) reescrevemos para uma frase canônica que os handlers existentes
+// já entendem. Não cria handlers novos, apenas roteia.
+// =====================================================================
+
+const MENU_OPCAO_RE = /^\s*([1-8])\s*[.)\-:º°]?\s*$/;
+
+/** Retorna o índice 1..8 quando o texto é apenas um número de menu. */
+export function detectMenuOption(texto: string): number | null {
+  const m = (texto ?? "").match(MENU_OPCAO_RE);
+  return m ? Number(m[1]) : null;
+}
+
+/**
+ * Para cada opção do menu retorna a frase canônica (em PT-BR) que será
+ * injetada no roteador como se o usuário a tivesse digitado. Quando a
+ * opção exige uma orientação textual (registrar gasto, editar conta),
+ * devolvemos `{ guidance }` com o texto a responder ao usuário.
+ */
+export type MenuDispatch =
+  | { kind: "rewrite"; texto: string }
+  | { kind: "guidance"; resposta: string };
+
+export function dispatchMenuOption(opcao: number): MenuDispatch | null {
+  switch (opcao) {
+    case 1:
+      return {
+        kind: "guidance",
+        resposta:
+          "Para registrar um gasto, me envie em uma única mensagem.\n\n" +
+          "Exemplos:\n" +
+          "• “Uber 29,90 hoje no pix”\n" +
+          "• “Mercado 148 ontem no cartão Nubank”\n" +
+          "• “Almoço 35 débito”",
+      };
+    case 2:
+      return {
+        kind: "guidance",
+        resposta:
+          "Para cadastrar uma conta a pagar, me envie nome, valor e vencimento.\n\n" +
+          "Exemplos:\n" +
+          "• “Cadastrar internet 119,90 vence dia 5 todo mês”\n" +
+          "• “Nova conta aluguel 1500 vence 10/07”",
+      };
+    case 3:
+      return { kind: "rewrite", texto: "minhas contas" };
+    case 4:
+      return { kind: "rewrite", texto: "contas atrasadas" };
+    case 5:
+      return {
+        kind: "guidance",
+        resposta:
+          "Para marcar uma conta como paga, diga o nome dela.\n\n" +
+          "Exemplos:\n" +
+          "• “Paguei a internet”\n" +
+          "• “Quitei o aluguel ontem”\n" +
+          "Se você acabou de ver uma lista, também posso entender “paguei a segunda”.",
+      };
+    case 6:
+      return {
+        kind: "guidance",
+        resposta:
+          "Para editar uma conta, diga o nome dela.\n\n" +
+          "Exemplos:\n" +
+          "• “Editar internet”\n" +
+          "• “Alterar aluguel”\n" +
+          "Depois eu pergunto o que você quer mudar.",
+      };
+    case 7:
+      return {
+        kind: "guidance",
+        resposta:
+          "Para cancelar uma conta, diga o nome dela.\n\n" +
+          "Exemplos:\n" +
+          "• “Cancelar internet”\n" +
+          "• “Excluir academia”\n" +
+          "Eu confirmo antes de remover.",
+      };
+    case 8:
+      return { kind: "rewrite", texto: "ajuda" };
+    default:
+      return null;
+  }
+}
