@@ -32,6 +32,9 @@ export const state = {
   gastosData: [] as Record<string, unknown>[],
   receitasData: [] as Record<string, unknown>[],
   contasData: [] as Record<string, unknown>[],
+  // WA-C7 — favorecidos (reuso de fornecedores). Cada teste pode
+  // semear via resetState({ favorecidos: [...] }).
+  favorecidosData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
