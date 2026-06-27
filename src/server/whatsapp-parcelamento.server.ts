@@ -351,9 +351,7 @@ export async function processarParcelamento(args: {
 }): Promise<ProcessOutcome> {
   await loadWa();
   const { userId, msg, texto, recebidaEm, decisao, sessao } = args;
-  console.log("[parc-deps]", { hasCarregarCartoes: typeof wa.carregarCartoes });
   const cartoes = await wa.carregarCartoes(userId);
-  console.log("[parc-cartoes-loaded]", { len: cartoes.length });
   // Cancelamento explícito vence sobre tudo.
   const isHardCancel = /\b(cancelar|cancela|cancelado|cancelada)\b/i.test(texto) || decisao === "cancel";
   if (sessao && isHardCancel) {
@@ -518,7 +516,6 @@ async function avancarFluxo(args: {
       logDecision({ stage: "awaiting_card", installmentsCountPresent: true, cardMatchedCount: args.cartaoAmbiguous.length, result: "ambiguous" });
       return { status: "pendente", resposta: r };
     }
-    console.log("[parc-debug]", { cartoesLen: cartoes.length, cartoesNames: cartoes.map(c=>c.nome) });
     if (cartoes.length === 0) {
       const r = "Você ainda não tem cartões cadastrados no Gasto Inteligente. Cadastre o cartão pelo app antes de lançar uma compra parcelada.";
       await persistTransition("cancelada", session, r, sessaoId, args);
