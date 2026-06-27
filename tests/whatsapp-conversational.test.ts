@@ -75,15 +75,15 @@ test("GI abre o menu completo", async () => {
   const r = await processarMensagemWhatsApp({ telefone: tel, texto: "GI", external_id: "g3-m-1" });
   expect(r.status).toBe("consulta");
   expect(r.resposta).toContain("Registrar gasto");
-  expect(r.resposta).toContain("Registrar renda");
-  expect(r.resposta).toContain("Resumo da semana");
+  expect(r.resposta).toContain("Cadastrar uma conta");
+  expect(r.resposta).toContain("Ver contas pendentes");
 });
 
 test("Gasto Inteligente abre o menu completo", async () => {
   const r = await processarMensagemWhatsApp({ telefone: tel, texto: "Gasto Inteligente", external_id: "g3-m-2" });
   expect(r.status).toBe("consulta");
   expect(r.resposta).toContain("Registrar gasto");
-  expect(r.resposta).toContain("Impacto");
+  expect(r.resposta).toContain("Ajuda");
 });
 
 test("ajuda abre o menu completo", async () => {
