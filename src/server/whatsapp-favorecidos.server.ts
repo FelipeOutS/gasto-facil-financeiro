@@ -5,7 +5,7 @@
  * sobre a RLS, padrão WA-C5.1). Nada de Pix/CPF/CNPJ/telefone nos logs —
  * apenas IDs UUID, tipo da chave, contagem e flags booleanas.
  */
-import * as _supa from "@/integrations/supabase/client.server";
+import * as _supa from "../integrations/supabase/client.server";
 import type { PixKeyType } from "./whatsapp-pix-parser";
 
 // Live-binding para permitir mock.module() em testes (padrão WA-C3/WA-C4).
