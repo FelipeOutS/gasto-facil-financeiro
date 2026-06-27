@@ -2864,6 +2864,63 @@ export async function processarMensagemWhatsApp(
 
 
 
+  // ---- Fase WA-F4: faturas futuras e parcelas em aberto ----
+  // Apenas leitura. Roda DEPOIS do WA-F1 (fatura atual) — só pega o
+  // que sobrou ("próxima fatura", "fatura de agosto", "parcelas em
+  // aberto", "quanto falta pagar do tênis").
+  if (!sessao && decisao === "outro") {
+    if (isBeyondHorizon(texto)) {
+      const resposta =
+        "Por enquanto só consigo estimar até 12 meses à frente.\n\n" +
+        "Tente uma data mais próxima.";
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        resposta,
+      );
+      return { status: "consulta", resposta };
+    }
+    const intentP = detectFutureFaturaIntent(texto);
+    if (intentP) {
+      logWaRouteDecision(msg, "consulta_handler", "consulta_future_invoice_without_session");
+      const out = await handleFutureFaturaIntent(userId, intentP);
+      const next =
+        "nextSession" in out
+          ? (out as { nextSession?: ParceladoSessionState }).nextSession
+          : undefined;
+      if (next) {
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "aguardando_consulta_parcelamento",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ({
+            nome: "",
+            valor: 0,
+            data: todayLocalISO(),
+            mensagemOriginal: "",
+            kind: "consulta_parcelamento",
+            mode: next.mode,
+            cartaoId: next.cartaoId,
+            installmentGroupIds: next.installmentGroupIds,
+            targetInvoiceMonth: next.targetInvoiceMonth,
+            page: next.page,
+          } as unknown) as Session,
+          out.resposta,
+        );
+        return { status: "pendente", resposta: out.resposta };
+      }
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        out.resposta,
+      );
+      return { status: "consulta", resposta: out.resposta };
+    }
+  }
+
+
 
   // ---- Fase WA-G4: consultas financeiras específicas ----
   // Gasto por descrição/categoria, receita por tipo, gastos de ontem,
