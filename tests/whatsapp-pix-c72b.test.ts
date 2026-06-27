@@ -17,7 +17,7 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
 import { processarMensagemWhatsApp } from "@/server/whatsapp.server";
 
-const telefone = "+5511988887777";
+const telefone = "5511999998888";
 const userId = "u1";
 
 function gastoInserts() {
