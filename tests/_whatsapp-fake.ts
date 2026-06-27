@@ -77,6 +77,17 @@ const PENDING = [
   "conta_pagamento_aguardando_escolha",
   "conta_pagamento_aguardando_confirmacao",
   "conta_pagamento_aguardando_data",
+  // WA-C4 — edição/cancelamento de conta a pagar.
+  "conta_edicao_aguardando_escolha",
+  "conta_edicao_aguardando_campo",
+  "conta_edicao_aguardando_valor",
+  "conta_edicao_aguardando_vencimento",
+  "conta_edicao_aguardando_categoria",
+  "conta_edicao_aguardando_nome",
+  "conta_edicao_aguardando_escopo_recorrencia",
+  "conta_edicao_aguardando_confirmacao",
+  "conta_cancelamento_aguardando_confirmacao",
+  "conta_edicao_persistindo",
 ];
 
 
