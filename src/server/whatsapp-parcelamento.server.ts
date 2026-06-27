@@ -262,20 +262,20 @@ export function parseInstallmentMessage(
   const parsed = parseWhatsAppExpenseMessage(text, cartoes);
   const valor = parsed.valor && parsed.valor > 0 ? parsed.valor : extrairValor(text);
   const descricao = (() => {
-    const fromParser = parsed.nome && !isGenericExpenseDescription(parsed.nome)
+    const fromParser = parsed.nome && !wa.isGenericExpenseDescription(parsed.nome)
       ? parsed.nome
       : "";
     if (fromParser && fromParser.length >= 2) return fromParser;
     const d = extrairDescricao(text);
     return d && d.length >= 2 ? d : "";
   })();
-  const { match, ambiguous } = matchCartao(text, cartoes);
+  const { match, ambiguous } = wa.matchCartao(text, cartoes);
   return {
     descricao,
     valorTotal: valor ?? null,
     totalParcelas: intent.count,
     cartaoId: match?.id ?? null,
-    cartaoNome: match ? displayCartaoNome(match) : (parsed.cartaoNomeDetectado ?? null),
+    cartaoNome: match ? wa.displayCartaoNome(match) : (parsed.cartaoNomeDetectado ?? null),
     cartaoAmbiguous: ambiguous && ambiguous.length > 1 ? ambiguous : null,
   };
 }
@@ -314,7 +314,7 @@ function askQuantidade(): string {
   return `Em quantas parcelas você dividiu? (mínimo ${MIN_PARCELAS}, máximo ${MAX_PARCELAS})`;
 }
 function askCartao(cartoes: Cartao[]): string {
-  const linhas = cartoes.map((c) => `• ${maskCartaoLabel(c)}`).join("\n");
+  const linhas = cartoes.map((c) => `• ${wa.maskCartaoLabel(c)}`).join("\n");
   return `Em qual cartão foi essa compra?\n\n${linhas}`;
 }
 
@@ -327,14 +327,14 @@ export async function processarParcelamento(args: {
   recebidaEm: string;
   decisao: "confirm" | "cancel" | "outro";
   sessao: { id: string; status: string; session: unknown; recebida_em: string } | null;
-}): Promise<ProcessOutcome> {
+}): Promise<wa.ProcessOutcome> {
   const { userId, msg, texto, recebidaEm, decisao, sessao } = args;
-  const cartoes = await carregarCartoes(userId);
+  const cartoes = await wa.carregarCartoes(userId);
   // Cancelamento explícito vence sobre tudo.
   const isHardCancel = /\b(cancelar|cancela|cancelado|cancelada)\b/i.test(texto) || decisao === "cancel";
   if (sessao && isHardCancel) {
-    await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
-    await gravarSessao(
+    await wa.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+    await wa.gravarSessao(
       userId, msg.telefone, msg.external_id, texto, recebidaEm,
       "cancelada",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -394,7 +394,7 @@ export async function processarParcelamento(args: {
     const v = extrairValor(texto);
     if (!v || v <= 0) {
       const r = `Não consegui ler o valor. ${askValor()}`;
-      await atualizarSessao(sessao.id, "parc_aguardando_total", session as unknown as never, r);
+      await wa.atualizarSessao(sessao.id, "parc_aguardando_total", session as unknown as never, r);
       return { status: "pendente", resposta: r };
     }
     session.valorTotal = v;
@@ -405,7 +405,7 @@ export async function processarParcelamento(args: {
     const n = extrairQuantidadeParcelas(texto);
     if (!n) {
       const r = `Não consegui ler. ${askQuantidade()}`;
-      await atualizarSessao(sessao.id, "parc_aguardando_quantidade", session as unknown as never, r);
+      await wa.atualizarSessao(sessao.id, "parc_aguardando_quantidade", session as unknown as never, r);
       return { status: "pendente", resposta: r };
     }
     session.totalParcelas = n;
@@ -413,21 +413,21 @@ export async function processarParcelamento(args: {
   }
 
   if (current === "parc_aguardando_cartao") {
-    const { match, ambiguous } = matchCartao(texto, cartoes);
+    const { match, ambiguous } = wa.matchCartao(texto, cartoes);
     if (ambiguous && ambiguous.length > 1) {
       const r = `Achei mais de um cartão parecido: ${ambiguous.join(", ")}. Me diga o nome exato.`;
-      await atualizarSessao(sessao.id, "parc_aguardando_cartao", session as unknown as never, r);
+      await wa.atualizarSessao(sessao.id, "parc_aguardando_cartao", session as unknown as never, r);
       logDecision({ stage: "awaiting_card", installmentsCountPresent: true, cardMatchedCount: ambiguous.length, result: "ambiguous" });
       return { status: "pendente", resposta: r };
     }
     if (!match) {
       const r = `Não encontrei esse cartão. ${askCartao(cartoes)}`;
-      await atualizarSessao(sessao.id, "parc_aguardando_cartao", session as unknown as never, r);
+      await wa.atualizarSessao(sessao.id, "parc_aguardando_cartao", session as unknown as never, r);
       logDecision({ stage: "awaiting_card", installmentsCountPresent: true, cardMatchedCount: 0, result: "invalid" });
       return { status: "pendente", resposta: r };
     }
     session.cartaoId = match.id;
-    session.cartaoNome = displayCartaoNome(match);
+    session.cartaoNome = wa.displayCartaoNome(match);
     return await avancarFluxo({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id });
   }
 
@@ -443,10 +443,10 @@ export async function processarParcelamento(args: {
     if (v && v > 0 && /\b(valor|certo|na verdade|foi|paguei|total)\b/i.test(texto)) {
       session.valorTotal = v;
     }
-    const { match } = matchCartao(texto, cartoes);
+    const { match } = wa.matchCartao(texto, cartoes);
     if (match) {
       session.cartaoId = match.id;
-      session.cartaoNome = displayCartaoNome(match);
+      session.cartaoNome = wa.displayCartaoNome(match);
     }
     return await avancarFluxo({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id });
   }
@@ -463,7 +463,7 @@ async function avancarFluxo(args: {
   cartoes: Cartao[];
   sessaoId: string | null;
   cartaoAmbiguous?: string[] | null;
-}): Promise<ProcessOutcome> {
+}): Promise<wa.ProcessOutcome> {
   const { userId, msg, texto, recebidaEm, session, cartoes, sessaoId } = args;
 
   // 1) Valor faltando → pergunta.
@@ -503,7 +503,7 @@ async function avancarFluxo(args: {
     }
     if (cartoes.length === 1) {
       session.cartaoId = cartoes[0].id;
-      session.cartaoNome = displayCartaoNome(cartoes[0]);
+      session.cartaoNome = wa.displayCartaoNome(cartoes[0]);
     } else {
       const r = askCartao(cartoes);
       await persistTransition("parc_aguardando_cartao", session, r, sessaoId, args);
@@ -513,7 +513,7 @@ async function avancarFluxo(args: {
   }
 
   // 4) Descrição: se ainda for vazia, usa um label genérico de momento.
-  if (!session.descricao || session.descricao.length < 2 || isGenericExpenseDescription(session.descricao)) {
+  if (!session.descricao || session.descricao.length < 2 || wa.isGenericExpenseDescription(session.descricao)) {
     session.descricao = "Compra parcelada";
   }
 
@@ -553,7 +553,7 @@ async function persistTransition(
   if (sessaoId) {
     await supabaseAdmin.from("whatsapp_messages").update({ status: "expirada" }).eq("id", sessaoId);
   }
-  await gravarSessao(
+  await wa.gravarSessao(
     userId, msg.telefone, msg.external_id, texto, recebidaEm,
     newStatus, session as unknown as never, resposta,
   );
@@ -589,7 +589,7 @@ async function persistir(args: {
   session: ParcelamentoSession;
   cartoes: Cartao[];
   sessaoId: string;
-}): Promise<ProcessOutcome> {
+}): Promise<wa.ProcessOutcome> {
   const { userId, msg, texto, recebidaEm, session, cartoes, sessaoId } = args;
   const cartao = cartoes.find((c) => c.id === session.cartaoId);
   if (!cartao || !session.valorTotal || !session.totalParcelas) {
@@ -654,8 +654,8 @@ async function persistir(args: {
   }
 
   // Fecha sessões e grava marca "salva".
-  await fecharSessoesAnteriores(userId, msg.telefone, "salva", inseridos[0]);
-  await gravarSessao(
+  await wa.fecharSessoesAnteriores(userId, msg.telefone, "salva", inseridos[0]);
+  await wa.gravarSessao(
     userId, msg.telefone, msg.external_id, texto, recebidaEm,
     "salva",
     {
