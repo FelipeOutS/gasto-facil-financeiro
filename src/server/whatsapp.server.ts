@@ -3802,12 +3802,17 @@ export async function processarMensagemWhatsApp(
   //  - claim atômico de external_id (M-1, race condition)
   //  - integração guiada com Contas a Pagar (M-2)
   //  - conversa multi-passo se faltar valor/descrição/favorecido.
+  // Gradual: "Paguei João" / "Paguei o Pedro" — SEM dígitos e SEM termos
+  // que pertencem a outros domínios (boleto/fatura/conta/cartão/pix/mercado).
+  // Exige nome próprio (Capitalizado) para evitar canibalizar "paguei no
+  // mercado" e similares, que devem seguir para o parser de gasto.
   const PAGAR_PESSOA_GRADUAL_RE =
-    /^\s*(paguei|pago|quitei|ja\s+paguei|j[áa]\s+paguei|acabei\s+de\s+pagar)\b/i;
+    /^\s*(?:paguei|pago|quitei|j[áa]\s+paguei|acabei\s+de\s+pagar)\s+(?:o\s+|a\s+)?[A-ZÀ-Ý][\wÀ-ÿ'.-]{1,30}\s*[.!?]*\s*$/;
   const ehFraseDePagamento =
     detectPagarPessoaIntent(texto) ||
     (PAGAR_PESSOA_GRADUAL_RE.test(texto) &&
-      !/\b(boleto|fatura|conta\s+de\s+\w+|cartao|cartão)\b/i.test(texto));
+      !/\d/.test(texto) &&
+      !/\b(boleto|fatura|conta\s+de\s+\w+|cartao|cartão|pix|mercado|lanche|almoco|almoço|jantar|padaria|farmacia|farmácia)\b/i.test(texto));
   if (decisao === "outro" && ehFraseDePagamento) {
     logWaRouteDecision(msg, "expense_parser", "pagar_pessoa_intent");
     return await processarPagarPessoaFlow({
