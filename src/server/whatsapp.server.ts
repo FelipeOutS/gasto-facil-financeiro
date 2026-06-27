@@ -3644,6 +3644,18 @@ export async function processarMensagemWhatsApp(
   // WA-C2: detecção de CONTA A PAGAR / VENCIMENTO RECORRENTE antes do
   // parser de gasto comum. Estrita: bloqueia gastei/paguei/comprei,
   // fatura/cartão e exige palavra de domínio + pista de vencimento.
+  // WA-C4: detecção de EDIÇÃO/CANCELAMENTO de conta a pagar
+  // ("mudar vencimento da X", "adiar Y", "cancelar Z"). DEVE preceder
+  // WA-C2 (criação) porque verbos como "mudar/adiar/renomear" também
+  // poderiam parecer instruções de cadastro novo.
+  if (decisao === "outro" && detectEdicaoContaIntent(texto)) {
+    logWaRouteDecision(msg, "expense_parser", "new_payable_account_edit_intent");
+    return await processarEdicaoConta({
+      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      deps: edicaoContaDeps,
+    });
+  }
+
   if (decisao === "outro" && detectPayableAccountIntent(texto)) {
     logWaRouteDecision(msg, "expense_parser", "new_payable_account_intent");
     return await processarContaAPagar({
@@ -3664,16 +3676,6 @@ export async function processarMensagemWhatsApp(
     });
   }
 
-  // WA-C4: detecção de EDIÇÃO/CANCELAMENTO de conta a pagar
-  // ("mudar vencimento da X", "adiar Y", "cancelar Z"). Estrito:
-  // rejeita "fatura/cartão" e exige verbos exclusivos de edição.
-  if (decisao === "outro" && detectEdicaoContaIntent(texto)) {
-    logWaRouteDecision(msg, "expense_parser", "new_payable_account_edit_intent");
-    return await processarEdicaoConta({
-      userId, msg, texto, recebidaEm, decisao, sessao: null,
-      deps: edicaoContaDeps,
-    });
-  }
 
 
 
