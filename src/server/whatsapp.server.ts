@@ -3758,11 +3758,19 @@ export async function processarMensagemWhatsApp(
   // fatura/cartão/pix). WA-C3 continua dono de "paguei a internet" e
   // afins. Quando a frase tem valor ("paguei R$ X ao João"), a decisão
   // fica para o detector completo abaixo.
-  const PP_GRADUAL_PRIORITY_RE =
-    /^\s*(?:paguei|pago|quitei|j[áa]\s+paguei|acabei\s+de\s+pagar)\s+(?:o\s+|a\s+)?[A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}(?:\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}){0,2}\s*[.!?]*\s*$/;
+  // Verbo case-insensitive + nome com inicial maiúscula (sensível a caso).
+  // Evita capturar "paguei conta" (palavra comum) e mantém "Paguei João".
+  const PP_VERB_PREFIX_RE =
+    /^\s*(?:paguei|pago|quitei|j[áa]\s+paguei|acabei\s+de\s+pagar)\s+(?:o\s+|a\s+)?/i;
+  const PP_NAME_TAIL_RE =
+    /[A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}(?:\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}){0,2}\s*[.!?]*\s*$/;
+  const ppVerbMatch = texto.match(PP_VERB_PREFIX_RE);
+  const ppGradualMatch =
+    ppVerbMatch !== null &&
+    PP_NAME_TAIL_RE.test(texto.slice(ppVerbMatch[0].length));
   if (
     decisao === "outro" &&
-    PP_GRADUAL_PRIORITY_RE.test(texto) &&
+    ppGradualMatch &&
     !/\d/.test(texto) &&
     !/\b(boleto|fatura|conta\s+de\s+\w+|cartao|cartão|pix)\b/i.test(texto)
   ) {
