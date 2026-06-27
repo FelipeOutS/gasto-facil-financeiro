@@ -58,6 +58,7 @@ const INCLUDE = [
   "whatsapp-contas-pagar.test.ts",
   "whatsapp-contas-pagar-data.test.ts",
   "whatsapp-contas-pagar-preserve-name.test.ts",
+  "whatsapp-contas-editar.test.ts",
 
   "whatsapp-parcelamento.test.ts",
   "whatsapp-parcelamento-categoria-integracao.test.ts",

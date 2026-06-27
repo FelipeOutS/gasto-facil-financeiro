@@ -117,6 +117,13 @@ import {
   processarBaixaConta,
   type WhatsAppBaixaContaDeps,
 } from "./whatsapp-contas-pagar.server";
+import {
+  EDICAO_CONTA_PENDING_STATES,
+  detectEdicaoContaIntent,
+  isEdicaoContaSession,
+  processarEdicaoConta,
+  type WhatsAppEdicaoContaDeps,
+} from "./whatsapp-contas-editar.server";
 
 // Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
 // precisa do orquestrador é exposto aqui de forma explícita, evitando que
@@ -166,7 +173,19 @@ const baixaContaDeps: WhatsAppBaixaContaDeps = {
     fecharSessoesAnteriores(userId, telefone, motivo, gastoId),
 };
 
-
+// WA-C4 — DI seam para EDIÇÃO/CANCELAMENTO de contas a pagar.
+const edicaoContaDeps: WhatsAppEdicaoContaDeps = {
+  gravarSessao: (userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId) =>
+    gravarSessao(userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId),
+  atualizarSessao: (id, status, session, resposta, gastoId) =>
+    atualizarSessao(id, status, session, resposta, gastoId),
+  fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
+    fecharSessoesAnteriores(userId, telefone, motivo, gastoId),
+  loadCategoriasParaPicker: (userId) => loadCategoriasParaPicker(userId),
+  buildCategoriaListBody: (a) => buildCategoriaListBody(a),
+  resolveCategoriaPickerInput: (a) => resolveCategoriaPickerInput(a),
+  detectCategoriaCommand: (t) => detectCategoriaCommand(t),
+};
 
 import { createHash } from "crypto";
 
@@ -1085,6 +1104,8 @@ const PENDING_STATES = [
   ...CONTA_PENDING_STATES,
   // WA-C3 — baixa de conta a pagar (marcar como paga).
   ...BAIXA_CONTA_PENDING_STATES,
+  // WA-C4 — edição/cancelamento de contas a pagar.
+  ...EDICAO_CONTA_PENDING_STATES,
   ...RECEITA_PENDING_STATES,
 
   ...COMPROVANTE_PENDING_STATES,
@@ -2399,6 +2420,18 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // ---- WA-C4: sessão ativa de EDIÇÃO/CANCELAMENTO de conta. ----
+  if (sessao && (
+    isEdicaoContaSession(sessao.session) ||
+    (EDICAO_CONTA_PENDING_STATES as readonly string[]).includes(sessao.status)
+  )) {
+    logWaRouteDecision(msg, "expense_parser", "active_payable_account_edit_session");
+    return await processarEdicaoConta({
+      userId, msg, texto, recebidaEm, decisao, sessao,
+      deps: edicaoContaDeps,
+    });
+  }
+
 
 
 
@@ -3076,7 +3109,7 @@ export async function processarMensagemWhatsApp(
   // WA-C2 tem precedência sobre WA-C1: mensagens com clara intenção
   // de CRIAR conta a pagar ("cadastrar internet de 119,90 vence dia 5
   // todo mês") não devem ser interpretadas como consulta.
-  if (!sessao && decisao === "outro" && !detectPayableAccountIntent(texto)) {
+  if (!sessao && decisao === "outro" && !detectPayableAccountIntent(texto) && !detectEdicaoContaIntent(texto)) {
     const intentD = detectDueIntent(texto);
 
     if (intentD) {
@@ -3613,6 +3646,18 @@ export async function processarMensagemWhatsApp(
   // WA-C2: detecção de CONTA A PAGAR / VENCIMENTO RECORRENTE antes do
   // parser de gasto comum. Estrita: bloqueia gastei/paguei/comprei,
   // fatura/cartão e exige palavra de domínio + pista de vencimento.
+  // WA-C4: detecção de EDIÇÃO/CANCELAMENTO de conta a pagar
+  // ("mudar vencimento da X", "adiar Y", "cancelar Z"). DEVE preceder
+  // WA-C2 (criação) porque verbos como "mudar/adiar/renomear" também
+  // poderiam parecer instruções de cadastro novo.
+  if (decisao === "outro" && detectEdicaoContaIntent(texto)) {
+    logWaRouteDecision(msg, "expense_parser", "new_payable_account_edit_intent");
+    return await processarEdicaoConta({
+      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      deps: edicaoContaDeps,
+    });
+  }
+
   if (decisao === "outro" && detectPayableAccountIntent(texto)) {
     logWaRouteDecision(msg, "expense_parser", "new_payable_account_intent");
     return await processarContaAPagar({
@@ -3632,6 +3677,8 @@ export async function processarMensagemWhatsApp(
       deps: baixaContaDeps,
     });
   }
+
+
 
 
 
