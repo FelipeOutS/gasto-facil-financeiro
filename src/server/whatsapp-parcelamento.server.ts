@@ -33,10 +33,27 @@ import {
 // IMPORTANT: import as namespace to preserve ESM live bindings.
 // whatsapp.server.ts imports back from this module — a default named
 // import would snapshot bindings as `undefined` during initialisation.
-import * as wa from "./whatsapp.server";
-import type { WhatsAppMessageRow } from "./whatsapp.server";
-import { recordMerchantMemory, merchantKeyFor } from "./whatsapp-merchant-memory.server";
-import { randomUUID } from "crypto";
+// Lazy/dynamic import to break the circular dep with whatsapp.server.ts.
+// Static `import * as wa` triggers a Bun mock.module() race where
+// supabaseAdmin captured by upstream modules is the REAL client even
+// after the test fake registered its mock — breaking integration tests.
+// We resolve the module on first call and reuse the namespace object.
+import type * as waNs from "./whatsapp.server";
+let _wa: typeof waNs | undefined;
+async function loadWa(): Promise<typeof waNs> {
+  if (!_wa) _wa = await import("./whatsapp.server");
+  return _wa;
+}
+// `wa` is a proxy that lazily resolves to the loaded namespace.
+// Any call to `wa.X(...)` MUST be preceded by `await loadWa()` in the
+// nearest async entry point.
+const wa = new Proxy({} as typeof waNs, {
+  get(_t, prop) {
+    if (!_wa) throw new Error(`[parcelamento] wa.${String(prop)} accessed before loadWa()`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (_wa as any)[prop];
+  },
+});
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin = _supabaseAdmin as any;
