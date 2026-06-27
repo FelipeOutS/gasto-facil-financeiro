@@ -335,12 +335,12 @@ export function parseInstallmentMessage(
   // Reusa o parser principal só para resolver cartão e valor — depois
   // refinamos com nossos próprios extratores.
   const parsed = parseWhatsAppExpenseMessage(text, cartoes);
-  // Sempre confiamos no nosso `extrairValor` (consciente do formato BR e
-  // ciente de "Nx/N vezes/N parcelas"). O `parsed.valor` do parser de
-  // gasto comum confunde a contagem de parcelas com valor (ex.:
-  // "em 3 vezes" → valor=3), então só o usamos como fallback quando
-  // o nosso extrator não encontrar nada.
-  const valor = extrairValor(text) ?? (parsed.valor && parsed.valor > 0 ? parsed.valor : null);
+  // No fluxo de parcelamento o nosso `extrairValor` é a fonte da verdade:
+  // entende formato BR ("1.200", "89,90"), detecta "R$" e ignora
+  // "Nx/N vezes/N parcelas". O `parsed.valor` do parser de gasto comum
+  // confunde a quantidade de parcelas com valor (ex.: "em 3 vezes"
+  // → valor=3) e não deve ser usado aqui — nem como fallback.
+  const valor = extrairValor(text);
   const descricao = (() => {
     const fromParser = parsed.nome && !deps.isGenericExpenseDescription(parsed.nome)
       ? parsed.nome
