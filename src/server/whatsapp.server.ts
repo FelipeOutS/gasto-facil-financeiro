@@ -156,6 +156,18 @@ const contaCriarDeps: WhatsAppContaCriarDeps = {
   detectCategoriaCommand: (t) => detectCategoriaCommand(t),
 };
 
+// WA-C3 — DI seam para BAIXA de contas a pagar (marcar como paga).
+const baixaContaDeps: WhatsAppBaixaContaDeps = {
+  gravarSessao: (userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId) =>
+    gravarSessao(userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId),
+  atualizarSessao: (id, status, session, resposta, gastoId) =>
+    atualizarSessao(id, status, session, resposta, gastoId),
+  fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
+    fecharSessoesAnteriores(userId, telefone, motivo, gastoId),
+};
+
+
+
 import { createHash } from "crypto";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
