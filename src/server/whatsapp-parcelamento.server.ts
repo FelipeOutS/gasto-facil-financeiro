@@ -42,7 +42,22 @@ import {
 // tipos são apagados pelo compilador e não criam aresta de runtime.
 import type { WhatsAppMessageRow, ProcessOutcome } from "./whatsapp.server";
 import { recordMerchantMemory, merchantKeyFor } from "./whatsapp-merchant-memory.server";
+import type {
+  CategoriaPickerRow,
+  CategoriaPickerState,
+} from "./whatsapp-comprovantes.server";
 import { randomUUID } from "crypto";
+
+export type CategoriaCmdIntent =
+  | { kind: "ask" }
+  | { kind: "direct"; termo: string };
+
+export type SaveSessionLite = {
+  ok: boolean;
+  sessionId: string | null;
+  status: string | null;
+  errorCode: string | null;
+};
 
 export type WhatsAppParcelamentoDeps = {
   carregarCartoes: (userId: string) => Promise<Cartao[]>;
@@ -64,6 +79,30 @@ export type WhatsAppParcelamentoDeps = {
     userId: string, telefone: string,
     motivo: "salva" | "cancelada" | "expirada", gastoId?: string,
   ) => Promise<void>;
+  // WA-F3.3 — picker compartilhado (lista curta, paginação, resolução
+  // por número/nome). Reutiliza integralmente os helpers já testados
+  // pelo fluxo de comprovantes/gasto, sem duplicar lógica.
+  loadCategoriasParaPicker: (userId: string) => Promise<CategoriaPickerRow[]>;
+  buildCategoriaListBody: (args: {
+    userId: string;
+    holder: { descricao?: string | null; categoriaSugerida?: string | null };
+    cats: CategoriaPickerRow[];
+  }) => Promise<{ body: string; options: CategoriaPickerState }>;
+  resolveCategoriaPickerInput: (args: {
+    userId: string;
+    holder: {
+      descricao?: string | null;
+      categoriaSugerida?: string | null;
+      categoriaOptions?: CategoriaPickerState;
+    };
+    cats: CategoriaPickerRow[];
+    texto: string;
+  }) => Promise<
+    | { kind: "picked"; cat: CategoriaPickerRow }
+    | { kind: "relist"; options: CategoriaPickerState; body: string }
+    | { kind: "invalid" }
+  >;
+  detectCategoriaCommand: (texto: string) => CategoriaCmdIntent | null;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
