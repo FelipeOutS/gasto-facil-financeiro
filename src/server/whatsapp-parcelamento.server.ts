@@ -203,7 +203,7 @@ export type ParcelamentoSession = {
   cartaoNome?: string;
   source?: "audio" | "text";
   // WA-F3.3 — categoria.
-  categoriaSelectionSource?: "manual" | "automatic";
+  categorySelectionSource?: "manual" | "automatic";
   manualCategoriaId?: string;
   manualCategoriaLabel?: string;
   categoriaOptions?: CategoriaPickerState;
