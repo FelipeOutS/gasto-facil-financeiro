@@ -2946,6 +2946,38 @@ export async function processarMensagemWhatsApp(
 
 
 
+  // ---- WA-C6: menu numerado guiado (1..8) sem sessão pendente ----
+  // Reescreve "3" → "minhas contas", "8" → "ajuda". Para opções que pedem
+  // orientação (1, 2, 5, 6, 7), responde direto com o texto-guia.
+  if (!sessao && decisao === "outro") {
+    const opcao = detectMenuOption(texto);
+    if (opcao !== null) {
+      const dispatch = dispatchMenuOption(opcao);
+      if (dispatch?.kind === "guidance") {
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "sem_pendencia",
+          { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+          dispatch.resposta,
+        );
+        return { status: "consulta", resposta: dispatch.resposta };
+      }
+      if (dispatch?.kind === "rewrite") {
+        texto = dispatch.texto;
+      }
+    }
+  }
+
+  // ---- WA-C6: memória curta de lista — "pagar a segunda", "cancela 3" ----
+  // Reescreve para a frase canônica que os handlers existentes já entendem.
+  if (!sessao && decisao === "outro") {
+    const reescrito = shortResolveOrdinal(msg.telefone, texto);
+    if (reescrito) {
+      texto = reescrito;
+    }
+  }
+
+
   // ---- Fase WA-G3: intenções conversacionais (saudação, menu, finanças genérico) ----
   // Tem precedência sobre consultas reais e sobre parsing de gasto/receita.
   // Só roda quando NÃO há sessão pendente e não é uma resposta sim/não/forma.
