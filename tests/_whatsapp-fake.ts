@@ -96,7 +96,6 @@ const PENDING = [
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeBuilder(table: string): any {
-  if (process.env.WA_PIX_DBG) console.log("[fake] makeBuilder table=", table);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ctx: any = { table, op: "select", payload: null, filters: {}, notFilters: [] };
 
