@@ -387,15 +387,14 @@ export async function processarParcelamento(args: {
       // Não deveria entrar aqui — quem roteia já checou. Defensivo.
       return { status: "sem_pendencia", resposta: "" };
     }
-    const draft = parseInstallmentMessage(texto, cartoes, intent);
+    const draft = parseInstallmentMessage(texto, cartoes, intent, deps);
     logDecision({
       stage: "detected",
       installmentsCountPresent: true,
       cardMatchedCount: draft.cartaoId ? 1 : (draft.cartaoAmbiguous?.length ?? 0),
       result: "ok",
     });
-    return await avancarFluxo({
-      userId, msg, texto, recebidaEm,
+    return await avancarFluxo({ userId, msg, texto, recebidaEm, deps,
       session: {
         kind: "parcelamento",
         mensagemOriginal: texto,
@@ -428,7 +427,7 @@ export async function processarParcelamento(args: {
       return { status: "pendente", resposta: r };
     }
     session.valorTotal = v;
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id });
+    return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
   }
 
   if (current === "parc_aguardando_quantidade") {
@@ -439,7 +438,7 @@ export async function processarParcelamento(args: {
       return { status: "pendente", resposta: r };
     }
     session.totalParcelas = n;
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id });
+    return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
   }
 
   if (current === "parc_aguardando_cartao") {
@@ -451,20 +450,20 @@ export async function processarParcelamento(args: {
       return { status: "pendente", resposta: r };
     }
     if (!match) {
-      const r = `Não encontrei esse cartão. ${askCartao(cartoes)}`;
+      const r = `Não encontrei esse cartão. ${askCartao(cartoes, deps)}`;
       await deps.atualizarSessao(sessao.id, "parc_aguardando_cartao", session as unknown as never, r);
       logDecision({ stage: "awaiting_card", installmentsCountPresent: true, cardMatchedCount: 0, result: "invalid" });
       return { status: "pendente", resposta: r };
     }
     session.cartaoId = match.id;
     session.cartaoNome = deps.displayCartaoNome(match);
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id });
+    return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
   }
 
   if (current === "parc_aguardando_confirmacao") {
     if (decisao === "confirm") {
       // Ajustes posteriores ao "sim" não são esperados.
-      return await persistir({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id });
+      return await persistir({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id, deps });
     }
     // Ajuste por frase livre: tenta reinterpretar campos do texto.
     const intent = detectInstallmentIntent(texto);
@@ -478,7 +477,7 @@ export async function processarParcelamento(args: {
       session.cartaoId = match.id;
       session.cartaoNome = deps.displayCartaoNome(match);
     }
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id });
+    return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
   }
 
   return { status: "sem_pendencia", resposta: "" };
@@ -493,8 +492,9 @@ async function avancarFluxo(args: {
   cartoes: Cartao[];
   sessaoId: string | null;
   cartaoAmbiguous?: string[] | null;
+  deps: WhatsAppParcelamentoDeps;
 }): Promise<ProcessOutcome> {
-  const { userId, msg, texto, recebidaEm, session, cartoes, sessaoId } = args;
+  const { userId, msg, texto, recebidaEm, session, cartoes, sessaoId, deps } = args;
 
   // 1) Valor faltando → pergunta.
   if (!session.valorTotal || session.valorTotal <= 0) {
@@ -534,7 +534,7 @@ async function avancarFluxo(args: {
       session.cartaoId = cartoes[0].id;
       session.cartaoNome = deps.displayCartaoNome(cartoes[0]);
     } else {
-      const r = askCartao(cartoes);
+      const r = askCartao(cartoes, deps);
       await persistTransition("parc_aguardando_cartao", session, r, sessaoId, args);
       logDecision({ stage: "awaiting_card", installmentsCountPresent: true, cardMatchedCount: cartoes.length, result: "ok" });
       return { status: "pendente", resposta: r };
@@ -576,9 +576,9 @@ async function persistTransition(
   session: ParcelamentoSession,
   resposta: string,
   sessaoId: string | null,
-  args: { userId: string; msg: WhatsAppMessageRow; texto: string; recebidaEm: string },
+  args: { userId: string; msg: WhatsAppMessageRow; texto: string; recebidaEm: string; deps: WhatsAppParcelamentoDeps },
 ): Promise<void> {
-  const { userId, msg, texto, recebidaEm } = args;
+  const { userId, msg, texto, recebidaEm, deps } = args;
   if (sessaoId) {
     await supabaseAdmin.from("whatsapp_messages").update({ status: "expirada" }).eq("id", sessaoId);
   }
@@ -618,8 +618,9 @@ async function persistir(args: {
   session: ParcelamentoSession;
   cartoes: Cartao[];
   sessaoId: string;
+  deps: WhatsAppParcelamentoDeps;
 }): Promise<ProcessOutcome> {
-  const { userId, msg, texto, recebidaEm, session, cartoes, sessaoId } = args;
+  const { userId, msg, texto, recebidaEm, session, cartoes, sessaoId, deps } = args;
   const cartao = cartoes.find((c) => c.id === session.cartaoId);
   if (!cartao || !session.valorTotal || !session.totalParcelas) {
     logDecision({ stage: "failed", installmentsCountPresent: !!session.totalParcelas, cardMatchedCount: 0, result: "error" });
