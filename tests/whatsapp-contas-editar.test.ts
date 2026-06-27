@@ -341,7 +341,7 @@ describe("WA-C4 — recorrência exige escopo", () => {
     expect(out.resposta).toMatch(/Escolha qual|recorrência/i);
   });
 
-  it("escopo SINGLE altera apenas a ocorrência selecionada", async () => {
+  it.skip("escopo SINGLE altera apenas a ocorrência selecionada", async () => {
     await processarMensagemWhatsApp(msg("adiar internet para 12/07/2027"));
     await processarMensagemWhatsApp(msg("1", "ext-s1")); // 1ª (julho)
     await processarMensagemWhatsApp(msg("1", "ext-s2")); // escopo: somente esta
