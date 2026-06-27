@@ -343,10 +343,9 @@ describe("WA-C4 — recorrência exige escopo", () => {
 
   it("escopo SINGLE altera apenas a ocorrência selecionada", async () => {
     await processarMensagemWhatsApp(msg("adiar internet para 12/07/2027"));
-    await processarMensagemWhatsApp(msg("1", "ext-1")); // 1ª (julho)
-    // Pergunta escopo agora.
-    await processarMensagemWhatsApp(msg("1", "ext-2")); // escopo: somente esta
-    await processarMensagemWhatsApp(msg("sim", "ext-3"));
+    await processarMensagemWhatsApp(msg("1", "ext-s1")); // 1ª (julho)
+    await processarMensagemWhatsApp(msg("1", "ext-s2")); // escopo: somente esta
+    await processarMensagemWhatsApp(msg("sim", "ext-s3"));
     const jul = state.contasData.find((c) => c.id === "c-int-jul")!;
     const ago = state.contasData.find((c) => c.id === "c-int-ago")!;
     const set = state.contasData.find((c) => c.id === "c-int-set")!;
@@ -359,9 +358,9 @@ describe("WA-C4 — recorrência exige escopo", () => {
 
   it("escopo FUTURE_PENDING altera só pendentes >= data selecionada", async () => {
     await processarMensagemWhatsApp(msg("adiar internet para 12/07/2027"));
-    await processarMensagemWhatsApp(msg("2", "ext-1")); // escolhe agosto
-    await processarMensagemWhatsApp(msg("2", "ext-2")); // escopo: esta e próximas
-    await processarMensagemWhatsApp(msg("sim", "ext-3"));
+    await processarMensagemWhatsApp(msg("2", "ext-f1")); // escolhe agosto
+    await processarMensagemWhatsApp(msg("2", "ext-f2")); // escopo: esta e próximas
+    await processarMensagemWhatsApp(msg("sim", "ext-f3"));
     const jul = state.contasData.find((c) => c.id === "c-int-jul")!;
     const ago = state.contasData.find((c) => c.id === "c-int-ago")!;
     const set = state.contasData.find((c) => c.id === "c-int-set")!;
