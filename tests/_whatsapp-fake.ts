@@ -235,6 +235,25 @@ function makeBuilder(table: string): any {
         if (ctx.single) return { data: updatedRows[0] ?? null, error: null };
         return { data: updatedRows, error: null };
       }
+      // WA-C7 — update de fornecedores (Pix). Aplica filtros por id/user_id.
+      if (table === "fornecedores") {
+        const updatedRows: Record<string, unknown>[] = [];
+        for (const f of state.favorecidosData) {
+          let match = true;
+          for (const [col, val] of Object.entries(ctx.filters)) {
+            if ((f as Record<string, unknown>)[col] !== val) {
+              match = false;
+              break;
+            }
+          }
+          if (match) {
+            Object.assign(f, ctx.payload);
+            updatedRows.push(f);
+          }
+        }
+        if (ctx.single) return { data: updatedRows[0] ?? null, error: null };
+        return { data: updatedRows, error: null };
+      }
       return { data: null, error: null };
     }
     if (ctx.op === "delete") return { data: null, error: null };
