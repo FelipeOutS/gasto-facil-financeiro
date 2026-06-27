@@ -105,6 +105,18 @@ export function detectLimiteIntent(texto: string): LimiteIntent | null {
   const t = norm(texto);
   if (!t) return null;
 
+  // Guard: mensagens com valor monetário ou número de transação são
+  // gastos/receitas e NUNCA são consultas de limite. Evita capturar
+  // "Gastei R$ 35,90 no cartão Nubank" como `limit_card`.
+  if (
+    /r\$\s*\d/.test(t) ||
+    /\d+[.,]\d{2}\b/.test(t) ||
+    /\b\d{2,}\s*(?:reais|conto|paus)\b/.test(t)
+  ) {
+    return null;
+  }
+
+
   // "comprometido" / "parcelas futuras" no cartão
   if (
     /\bcomprometid[ao]s?\b/.test(t) ||
