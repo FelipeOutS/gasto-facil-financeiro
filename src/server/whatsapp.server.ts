@@ -3795,42 +3795,29 @@ export async function processarMensagemWhatsApp(
     const reescritoPix = shortResolvePagueiSemNome(msg.telefone, texto);
     if (reescritoPix) texto = reescritoPix;
   }
-  if (decisao === "outro" && detectPagarPessoaIntent(texto)) {
+  // WA-C7.2.b — Entrada na state machine completa de pagamento para pessoa.
+  // Aceita tanto o detector completo (paguei + valor + nome) quanto a
+  // entrada gradual "Paguei João" (sem valor) e "Paguei." resolvido via
+  // memória curta. Em todos os casos, a state machine assume:
+  //  - claim atômico de external_id (M-1, race condition)
+  //  - integração guiada com Contas a Pagar (M-2)
+  //  - conversa multi-passo se faltar valor/descrição/favorecido.
+  const PAGAR_PESSOA_GRADUAL_RE =
+    /^\s*(paguei|pago|quitei|ja\s+paguei|j[áa]\s+paguei|acabei\s+de\s+pagar)\b/i;
+  const ehFraseDePagamento =
+    detectPagarPessoaIntent(texto) ||
+    (PAGAR_PESSOA_GRADUAL_RE.test(texto) &&
+      !/\b(boleto|fatura|conta\s+de\s+\w+|cartao|cartão)\b/i.test(texto));
+  if (decisao === "outro" && ehFraseDePagamento) {
     logWaRouteDecision(msg, "expense_parser", "pagar_pessoa_intent");
-    const outcome = await handlePagarPessoaIntent({
-      userId, telefone: msg.telefone, texto, _row: msg,
+    return await processarPagarPessoaFlow({
+      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      deps: pagarPessoaDeps,
     });
-    // WA-C7.2.a — M-1 (idempotência): persistimos o resultado em
-    // `whatsapp_messages` com `parsed.kind="pagar_pessoa"` para que
-    // tanto o dedup top-level desta função quanto a checagem dentro do
-    // próprio handler captem retries do webhook. Só persistimos quando
-    // o pagamento foi efetivamente salvo (com `gastoId`); demais
-    // outcomes (aviso de colisão, parse_failed, erro) não devem
-    // bloquear retries futuros.
-    if (outcome.status === "salva" && outcome.gastoId) {
-      await gravarSessao(
-        userId,
-        msg.telefone,
-        msg.external_id,
-        texto,
-        recebidaEm,
-        "salva",
-        {
-          // Sessão sintética: o handler já gerou o gasto. Mantemos os
-          // campos mínimos da `Session` para não quebrar o schema.
-          nome: "",
-          valor: 0,
-          data: todayLocalISO(),
-          mensagemOriginal: texto,
-          // Marcador usado pelo dedup e por futuros estados (7.2.b).
-          kind: "pagar_pessoa",
-        } as Session,
-        outcome.resposta,
-        outcome.gastoId,
-      );
-    }
-    return outcome;
   }
+  // Mantemos o handler legado disponível apenas como fallback explícito
+  // se a state machine não foi acionada (defensivo — não deve ocorrer).
+  void handlePagarPessoaIntent;
 
   const parsed = parseExpenseMessage(texto, cartoes);
   // Comandos genéricos ("registrar gasto", "novo gasto", ...) e descrições
