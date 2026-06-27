@@ -356,8 +356,9 @@ export async function processarParcelamento(args: {
   recebidaEm: string;
   decisao: "confirm" | "cancel" | "outro";
   sessao: { id: string; status: string; session: unknown; recebida_em: string } | null;
+  deps: WhatsAppParcelamentoDeps;
 }): Promise<ProcessOutcome> {
-  const { userId, msg, texto, recebidaEm, decisao, sessao } = args;
+  const { userId, msg, texto, recebidaEm, decisao, sessao, deps } = args;
   const cartoes = await deps.carregarCartoes(userId);
   // Cancelamento explícito vence sobre tudo.
   const isHardCancel = /\b(cancelar|cancela|cancelado|cancelada)\b/i.test(texto) || decisao === "cancel";
