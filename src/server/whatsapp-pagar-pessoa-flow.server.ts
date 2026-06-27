@@ -616,10 +616,16 @@ async function entrarFluxo(args: {
   let nome = parsed?.nome ?? null;
   // Entrada gradual: "Paguei João" (sem valor) — extrai o nome direto.
   if (!nome) {
-    const m = texto.match(
-      /^\s*(?:paguei|pago|quitei|j[áa]\s+paguei|acabei\s+de\s+pagar)\s+(?:o\s+|a\s+)?([A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}(?:\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}){0,2})\s*[.!?]*\s*$/,
+    const verbMatch = texto.match(
+      /^\s*(?:paguei|pago|quitei|j[áa]\s+paguei|acabei\s+de\s+pagar)\s+(?:o\s+|a\s+)?/i,
     );
-    if (m) nome = m[1].trim();
+    if (verbMatch) {
+      const tail = texto.slice(verbMatch[0].length);
+      const nameMatch = tail.match(
+        /^([A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}(?:\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}){0,2})\s*[.!?]*\s*$/,
+      );
+      if (nameMatch) nome = nameMatch[1].trim();
+    }
   }
   // Atalho "Paguei." sem destinatário: tenta memória curta.
   if (!nome) {
