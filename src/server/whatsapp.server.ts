@@ -63,6 +63,10 @@ import {
   type ParceladoSessionState,
 } from "./whatsapp-faturas.server";
 import {
+  detectLimiteIntent,
+  handleLimiteIntent,
+} from "./whatsapp-limites.server";
+import {
   COMPROVANTE_PENDING_STATES,
   isComprovanteSession,
   processarNovaImagem,
@@ -2868,6 +2872,27 @@ export async function processarMensagemWhatsApp(
         );
         return { status: "pendente", resposta: out.resposta };
       }
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        out.resposta,
+      );
+      return { status: "consulta", resposta: out.resposta };
+    }
+  }
+
+
+
+  // ---- Fase WA-F5: limite, utilização e valor comprometido ----
+  // Apenas leitura. Roda DEPOIS do WA-F1 (fatura atual) — só pega o
+  // que sobrou ("qual meu limite", "limite do Nubank", "quanto está
+  // comprometido", "qual cartão tem menos limite"). Nunca cria nada.
+  if (!sessao && decisao === "outro") {
+    const intentL = detectLimiteIntent(texto);
+    if (intentL) {
+      logWaRouteDecision(msg, "consulta_handler", "consulta_limite_without_session");
+      const out = await handleLimiteIntent(userId, intentL);
       await gravarSessao(
         userId, msg.telefone, msg.external_id, texto, recebidaEm,
         "sem_pendencia",
