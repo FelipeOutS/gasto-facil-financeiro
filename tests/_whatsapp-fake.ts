@@ -73,6 +73,10 @@ const PENDING = [
   "conta_aguardando_categoria",
   "conta_aguardando_confirmacao",
   "conta_persistindo",
+  // WA-C3 — baixa de conta a pagar (marcar como paga).
+  "conta_pagamento_aguardando_escolha",
+  "conta_pagamento_aguardando_confirmacao",
+  "conta_pagamento_aguardando_data",
 ];
 
 
@@ -172,6 +176,21 @@ function makeBuilder(table: string): any {
           };
         }
       }
+      // WA-C3 — update condicional de contas_a_pagar (status='pendente').
+      if (table === "contas_a_pagar") {
+        let updated: Record<string, unknown> | null = null;
+        for (const c of state.contasData) {
+          let match = true;
+          for (const [col, val] of Object.entries(ctx.filters)) {
+            if ((c as Record<string, unknown>)[col] !== val) { match = false; break; }
+          }
+          if (match) {
+            Object.assign(c, ctx.payload);
+            if (!updated) updated = c;
+          }
+        }
+        return { data: updated, error: null };
+      }
       return { data: null, error: null };
     }
     if (ctx.op === "delete") return { data: null, error: null };
@@ -246,7 +265,16 @@ function makeBuilder(table: string): any {
       if (ctx.filters?.status) {
         base = base.filter((c) => c.status === ctx.filters.status);
       }
-      return { data: applyRangeFilters(base, ctx.range), error: null };
+      if (ctx.filters?.id !== undefined && !Array.isArray(ctx.filters.id)) {
+        base = base.filter((c) => c.id === ctx.filters.id);
+      }
+      if (Array.isArray(ctx.filters?.id)) {
+        const ids = ctx.filters.id as unknown[];
+        base = base.filter((c) => ids.includes(c.id));
+      }
+      const ranged = applyRangeFilters(base, ctx.range);
+      if (ctx.single) return { data: ranged[0] ?? null, error: null };
+      return { data: ranged, error: null };
     }
     if (table === "auth.users")
       return { data: { email: "u@example.com" }, error: null };

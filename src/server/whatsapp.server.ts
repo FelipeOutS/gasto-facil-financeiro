@@ -110,6 +110,13 @@ import {
   processarContaAPagar,
   type WhatsAppContaCriarDeps,
 } from "./whatsapp-contas-criar.server";
+import {
+  BAIXA_CONTA_PENDING_STATES,
+  detectMarkAsPaidIntent,
+  isBaixaContaSession,
+  processarBaixaConta,
+  type WhatsAppBaixaContaDeps,
+} from "./whatsapp-contas-pagar.server";
 
 // Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
 // precisa do orquestrador é exposto aqui de forma explícita, evitando que
@@ -148,6 +155,18 @@ const contaCriarDeps: WhatsAppContaCriarDeps = {
   resolveCategoriaPickerInput: (a) => resolveCategoriaPickerInput(a),
   detectCategoriaCommand: (t) => detectCategoriaCommand(t),
 };
+
+// WA-C3 — DI seam para BAIXA de contas a pagar (marcar como paga).
+const baixaContaDeps: WhatsAppBaixaContaDeps = {
+  gravarSessao: (userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId) =>
+    gravarSessao(userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId),
+  atualizarSessao: (id, status, session, resposta, gastoId) =>
+    atualizarSessao(id, status, session, resposta, gastoId),
+  fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
+    fecharSessoesAnteriores(userId, telefone, motivo, gastoId),
+};
+
+
 
 import { createHash } from "crypto";
 
@@ -578,6 +597,9 @@ export type ProcessOutcome = {
     | "conta_aguardando_recorrencia"
     | "conta_aguardando_categoria"
     | "conta_aguardando_confirmacao"
+    | "conta_pagamento_aguardando_escolha"
+    | "conta_pagamento_aguardando_confirmacao"
+    | "conta_pagamento_aguardando_data"
     | "cancelada"
 
     | "sem_pendencia"
@@ -1061,6 +1083,8 @@ const PENDING_STATES = [
   "parc_persistindo",
   // WA-C2 — criação de contas a pagar / vencimentos recorrentes.
   ...CONTA_PENDING_STATES,
+  // WA-C3 — baixa de conta a pagar (marcar como paga).
+  ...BAIXA_CONTA_PENDING_STATES,
   ...RECEITA_PENDING_STATES,
 
   ...COMPROVANTE_PENDING_STATES,
@@ -2363,6 +2387,21 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // ---- WA-C3: sessão ativa de BAIXA DE CONTA tem prioridade. ----
+  if (sessao && (
+    isBaixaContaSession(sessao.session) ||
+    (BAIXA_CONTA_PENDING_STATES as readonly string[]).includes(sessao.status)
+  )) {
+    logWaRouteDecision(msg, "expense_parser", "active_payable_account_payment_session");
+    return await processarBaixaConta({
+      userId, msg, texto, recebidaEm, decisao, sessao,
+      deps: baixaContaDeps,
+    });
+  }
+
+
+
+
 
 
   // ---- WA: sessão de gasto aguardando descrição e/ou valor ----
@@ -3581,6 +3620,20 @@ export async function processarMensagemWhatsApp(
       deps: contaCriarDeps,
     });
   }
+
+  // WA-C3: detecção de BAIXA DE CONTA A PAGAR ("paguei a internet",
+  // "marcar aluguel como pago", "dei baixa na academia"). Estrita:
+  // exige verbo de pagamento + termo SEM valor monetário. Frases com
+  // valor ("paguei 50 no mercado") continuam no parser de gasto comum.
+  if (decisao === "outro" && detectMarkAsPaidIntent(texto)) {
+    logWaRouteDecision(msg, "expense_parser", "new_payable_account_payment_intent");
+    return await processarBaixaConta({
+      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      deps: baixaContaDeps,
+    });
+  }
+
+
 
 
   const parsed = parseExpenseMessage(texto, cartoes);
