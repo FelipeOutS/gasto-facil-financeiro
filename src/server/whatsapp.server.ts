@@ -3789,8 +3789,7 @@ export async function processarMensagemWhatsApp(
           data: todayLocalISO(),
           mensagemOriginal: texto,
           // Marcador usado pelo dedup e por futuros estados (7.2.b).
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          kind: "pagar_pessoa" as any,
+          kind: "pagar_pessoa",
         } as Session,
         outcome.resposta,
         outcome.gastoId,
