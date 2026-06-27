@@ -339,6 +339,23 @@ function makeBuilder(table: string): any {
       if (ctx.single) return { data: ranged[0] ?? null, error: null };
       return { data: ranged, error: null };
     }
+    // WA-C7 — select de fornecedores. Aplica filtros por user_id/ativo/id.
+    if (table === "fornecedores") {
+      const uid = ctx.filters?.user_id;
+      let base = uid
+        ? state.favorecidosData.filter(
+            (f) => f.user_id === undefined || f.user_id === uid,
+          )
+        : state.favorecidosData;
+      if (ctx.filters?.ativo !== undefined) {
+        base = base.filter((f) => f.ativo === ctx.filters.ativo);
+      }
+      if (ctx.filters?.id !== undefined) {
+        base = base.filter((f) => f.id === ctx.filters.id);
+      }
+      if (ctx.single) return { data: base[0] ?? null, error: null };
+      return { data: base, error: null };
+    }
     if (table === "auth.users")
       return { data: { email: "u@example.com" }, error: null };
     return { data: null, error: null };
