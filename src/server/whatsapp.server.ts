@@ -3122,6 +3122,11 @@ export async function processarMensagemWhatsApp(
     if (intentD) {
       logWaRouteDecision(msg, "consulta_handler", "consulta_vencimentos_without_session");
       const out = await handleDueIntent(userId, intentD);
+      // WA-C6 — memória curta: grava a ordem das contas mostradas para
+      // permitir "pagar a segunda", "cancela 3", etc. Sem PII em log.
+      if (out.items && out.items.length > 0) {
+        shortRecordContas(msg.telefone, out.items.map((nome) => ({ nome })));
+      }
       const next = out.nextSession ?? null;
       if (next) {
         await gravarSessao(
