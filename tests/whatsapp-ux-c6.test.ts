@@ -18,6 +18,10 @@ import { state, resetState } from "./_whatsapp-fake";
 const { processarMensagemWhatsApp } = await import(
   "../src/server/whatsapp.server"
 );
+const { monthRangeInAppTz } = await import(
+  "../src/server/contas-vencimento.server"
+);
+const MONTH = monthRangeInAppTz();
 const {
   detectMenuOption,
   dispatchMenuOption,
