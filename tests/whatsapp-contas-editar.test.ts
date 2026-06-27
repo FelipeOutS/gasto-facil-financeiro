@@ -116,34 +116,34 @@ describe("WA-C4 — detectEdicaoContaIntent", () => {
 describe("WA-C4 — alterar vencimento", () => {
   beforeEach(() =>
     resetState({
-      contas: [makeConta({ id: "c-int", nome: "Internet", data_vencimento: "2026-07-05" })],
+      contas: [makeConta({ id: "c-int", nome: "Internet", data_vencimento: "2027-07-05" })],
     }),
   );
 
   it("mostra prévia com data antiga e nova", async () => {
     const out = await processarMensagemWhatsApp(
-      msg("mudar o vencimento da internet para dia 10"),
+      msg("mudar o vencimento da internet para 10/07/2027"),
     );
     expect(out.status).toBe("pendente");
     expect(out.resposta).toContain("Confere");
     expect(out.resposta).toContain("Internet");
-    expect(out.resposta).toContain("05/07/2026");
-    expect(out.resposta).toMatch(/10\/\d{2}\/\d{4}/);
-    expect(state.contasData[0].data_vencimento).toBe("2026-07-05");
+    expect(out.resposta).toContain("05/07/2027");
+    expect(out.resposta).toContain("10/07/2027");
+    expect(state.contasData[0].data_vencimento).toBe("2027-07-05");
   });
 
   it("sim aplica a alteração; cancelar não", async () => {
-    await processarMensagemWhatsApp(msg("adiar internet para dia 12"));
+    await processarMensagemWhatsApp(msg("adiar internet para 12/07/2027"));
     const ok = await processarMensagemWhatsApp(msg("sim", "ext-c"));
     expect(ok.status).toBe("salva");
-    expect(String(state.contasData[0].data_vencimento)).toMatch(/-12$/);
+    expect(state.contasData[0].data_vencimento).toBe("2027-07-12");
   });
 
   it("cancelar durante prévia não altera", async () => {
-    await processarMensagemWhatsApp(msg("adiar internet para dia 12"));
+    await processarMensagemWhatsApp(msg("adiar internet para 12/07/2027"));
     const out = await processarMensagemWhatsApp(msg("cancelar", "ext-c"));
     expect(out.status).toBe("cancelada");
-    expect(state.contasData[0].data_vencimento).toBe("2026-07-05");
+    expect(state.contasData[0].data_vencimento).toBe("2027-07-05");
   });
 });
 
