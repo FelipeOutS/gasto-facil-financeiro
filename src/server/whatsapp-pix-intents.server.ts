@@ -257,6 +257,80 @@ export async function handlePagarPessoaIntent(args: {
     };
   }
 
+  // ----------------------------------------------------------------------
+  // WA-C7.2.a — M-1 (idempotência): se este `external_id` já gravou um
+  // pagamento para pessoa em uma chamada anterior (webhook reentregue,
+  // retry do Meta, race com a mesma mensagem), devolve a resposta neutra
+  // sem inserir um segundo gasto. Não dependemos do dedup top-level
+  // porque ele só cobre `status = "salva" AND gasto_id existente`; aqui
+  // garantimos a checagem pelo `parsed.kind = "pagar_pessoa"`, alinhado
+  // ao padrão usado em WA-F3 (parc_persistindo) e WA-C2/C4 (conta_*).
+  // ----------------------------------------------------------------------
+  const externalId = (args._row?.external_id ?? "").trim();
+  if (externalId.length > 0) {
+    const { data: prev } = await supabaseAdmin
+      .from("whatsapp_messages")
+      .select("id, gasto_id, parsed, status")
+      .eq("external_id", externalId)
+      .eq("status", "salva")
+      .maybeSingle();
+    const prevParsed =
+      (prev?.parsed ?? null) as { kind?: string } | null;
+    if (prev && prevParsed?.kind === "pagar_pessoa" && prev.gasto_id) {
+      console.info({
+        event: "wa_pix_payment",
+        stage: "idempotent_replay",
+        result: "ok",
+      });
+      return {
+        status: "duplicada",
+        gastoId: prev.gasto_id as string,
+        resposta:
+          "Esse pagamento já tinha sido registrado. Está tudo certo. ✅",
+      };
+    }
+  }
+
+  // ----------------------------------------------------------------------
+  // WA-C7.2.a — M-2 (aviso de colisão com Contas a Pagar):
+  // Se existir ao menos uma conta PENDENTE compatível com o nome do
+  // favorecido, NÃO criamos um gasto solto — orientamos o usuário a usar
+  // "paguei <nome>" (fluxo de baixa de conta, WA-C3) ou a confirmar
+  // explicitamente que quer registrar um gasto novo. O fluxo de baixa
+  // automática ficará para WA-C7.2.b (state machine completo); aqui o
+  // objetivo é simplesmente evitar duplicidade contábil silenciosa.
+  // ----------------------------------------------------------------------
+  const contasPendentes = await findVencimentoByTerm(
+    args.userId,
+    parsed.nome,
+  );
+  if (contasPendentes.length > 0) {
+    console.info({
+      event: "wa_pix_payment",
+      stage: "payable_collision_detected",
+      result: "not_found",
+      candidatesCount: contasPendentes.length,
+    });
+    const nomesDistintos = Array.from(
+      new Set(contasPendentes.map((c) => c.nome)),
+    ).slice(0, 5);
+    const lista = nomesDistintos.map((n, i) => `${i + 1}. ${n}`).join("\n");
+    const linhas = [
+      contasPendentes.length === 1
+        ? `Encontrei uma conta pendente com esse nome:`
+        : `Encontrei ${contasPendentes.length} contas pendentes com esse nome:`,
+      ``,
+      lista,
+      ``,
+      `• Se foi essa conta que você pagou, responda "paguei ${parsed.nome}" para eu marcar como paga.`,
+      `• Se foi um pagamento avulso para a pessoa, responda "novo gasto" e eu registro como gasto separado.`,
+    ];
+    return {
+      status: "consulta",
+      resposta: linhas.join("\n"),
+    };
+  }
+
   const matches = await findFavorecidosByNome(args.userId, parsed.nome);
   const favorecido: FavorecidoRow | null =
     matches.length === 1 ? matches[0] : null;
