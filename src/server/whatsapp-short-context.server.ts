@@ -30,8 +30,36 @@ type Entry = {
 
 const store = new Map<string, Entry>();
 
+/**
+ * WA-C7 — Último favorecido referenciado por telefone (somente RAM, TTL).
+ * Permite que "paguei 50" logo após consultar o Pix do João resolva o
+ * destinatário sem ambiguidade. Nunca guarda chave Pix — só nome.
+ */
+type FavorecidoEntry = { nome: string; at: number };
+const favoritoStore = new Map<string, FavorecidoEntry>();
+
 export function _resetShortContext(): void {
   store.clear();
+  favoritoStore.clear();
+}
+
+export function recordFavorecido(telefone: string, nome: string): void {
+  if (!telefone || !nome || nome.trim().length === 0) return;
+  favoritoStore.set(telefone, { nome: nome.trim(), at: Date.now() });
+}
+
+export function getLastFavorecido(telefone: string): string | null {
+  const e = favoritoStore.get(telefone);
+  if (!e) return null;
+  if (!ttlOk(e.at)) {
+    favoritoStore.delete(telefone);
+    return null;
+  }
+  return e.nome;
+}
+
+export function clearFavorecido(telefone: string): void {
+  favoritoStore.delete(telefone);
 }
 
 function ttlOk(at: number): boolean {
