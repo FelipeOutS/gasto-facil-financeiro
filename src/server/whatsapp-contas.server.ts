@@ -341,7 +341,7 @@ export async function handleDueIntent(
       false,
       "Total previsto para hoje",
     );
-    const out: DueResult = { status: "answered", resposta: body, nextSession };
+    const out: DueResult = { status: "answered", resposta: body, nextSession, items: rows.map((r) => r.nome) };
     logDueQuery({ intent: "due_today", itemsReturnedCount: rows.length, result: out.status });
     return out;
   }
@@ -363,7 +363,7 @@ export async function handleDueIntent(
       false,
       "Total previsto para amanhã",
     );
-    const out: DueResult = { status: "answered", resposta: body, nextSession };
+    const out: DueResult = { status: "answered", resposta: body, nextSession, items: rows.map((r) => r.nome) };
     logDueQuery({ intent: "due_tomorrow", itemsReturnedCount: rows.length, result: out.status });
     return out;
   }
@@ -385,7 +385,7 @@ export async function handleDueIntent(
       true,
       "Total previsto na semana",
     );
-    const out: DueResult = { status: "answered", resposta: body, nextSession };
+    const out: DueResult = { status: "answered", resposta: body, nextSession, items: rows.map((r) => r.nome) };
     logDueQuery({ intent: "due_week", itemsReturnedCount: rows.length, result: out.status });
     return out;
   }
@@ -407,7 +407,7 @@ export async function handleDueIntent(
       true,
       "Total previsto no mês",
     );
-    const out: DueResult = { status: "answered", resposta: body, nextSession };
+    const out: DueResult = { status: "answered", resposta: body, nextSession, items: rows.map((r) => r.nome) };
     logDueQuery({ intent: "due_month", itemsReturnedCount: rows.length, result: out.status });
     return out;
   }
@@ -433,7 +433,7 @@ export async function handleDueIntent(
       true,
       "Total em atraso",
     );
-    const out: DueResult = { status: "answered", resposta: body, nextSession };
+    const out: DueResult = { status: "answered", resposta: body, nextSession, items: rows.map((r) => r.nome) };
     logDueQuery({ intent: "due_overdue", itemsReturnedCount: rows.length, result: out.status });
     return out;
   }
