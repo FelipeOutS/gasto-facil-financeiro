@@ -284,6 +284,7 @@ export function parseInstallmentMessage(
   text: string,
   cartoes: Cartao[],
   intent: { count: number },
+  deps: Pick<WhatsAppParcelamentoDeps, "matchCartao" | "displayCartaoNome" | "isGenericExpenseDescription">,
 ): ParcelamentoDraft {
   // Reusa o parser principal só para resolver cartão e valor — depois
   // refinamos com nossos próprios extratores.
