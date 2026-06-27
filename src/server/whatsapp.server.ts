@@ -2479,6 +2479,8 @@ export async function processarMensagemWhatsApp(
       userId, msg, texto, recebidaEm, decisao, sessao,
       deps: pagarPessoaDeps,
     });
+  }
+
 
 
 
