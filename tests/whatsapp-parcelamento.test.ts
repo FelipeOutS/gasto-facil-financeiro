@@ -10,17 +10,26 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import "./_whatsapp-fake";
 import { resetState, state, gastosInserts } from "./_whatsapp-fake";
-import {
+
+// IMPORTANTE: imports dinâmicos top-level garantem que o `mock.module(...)`
+// registrado em `_whatsapp-fake` esteja ativo antes dos módulos de
+// produção capturarem o cliente Supabase. Este é o mesmo padrão usado em
+// todos os outros testes do WhatsApp que precisam do supabaseAdmin
+// mockado (ver whatsapp-faturas-detalhe.test.ts, whatsapp-beta.test.ts,
+// whatsapp-hardening-b3.test.ts etc).
+const {
   calcularParcelasCentavos,
   criarPlanoParcelamento,
   reaisParaCentavos,
-} from "../src/server/cartao-parcelamento.server";
-import {
+} = await import("../src/server/cartao-parcelamento.server");
+const {
   detectInstallmentIntent,
   extrairValor,
   extrairQuantidadeParcelas,
-} from "../src/server/whatsapp-parcelamento.server";
-import { processarMensagemWhatsApp } from "../src/server/whatsapp.server";
+} = await import("../src/server/whatsapp-parcelamento.server");
+const { processarMensagemWhatsApp } = await import(
+  "../src/server/whatsapp.server"
+);
 
 function msg(texto: string, externalId = "e-1") {
   return {
