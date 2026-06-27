@@ -2914,6 +2914,47 @@ export async function processarMensagemWhatsApp(
 
 
 
+  // ---- Fase WA-C1: vencimentos / contas a pagar ----
+  // Apenas leitura. Roda DEPOIS de WA-F1..F5 para não conflitar com
+  // perguntas de fatura de cartão. Reusa `contas-vencimento.server`.
+  // Não cria conta, não marca como paga, não cria recorrência.
+  if (!sessao && decisao === "outro") {
+    const intentD = detectDueIntent(texto);
+    if (intentD) {
+      logWaRouteDecision(msg, "consulta_handler", "consulta_vencimentos_without_session");
+      const out = await handleDueIntent(userId, intentD);
+      const next = out.nextSession ?? null;
+      if (next) {
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "aguardando_consulta_vencimentos",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ({
+            nome: "",
+            valor: 0,
+            data: todayLocalISO(),
+            mensagemOriginal: "",
+            kind: "consulta_vencimentos",
+            mode: next.mode,
+            page: next.page,
+            referenceMonth: next.referenceMonth,
+          } as unknown) as Session,
+          out.resposta,
+        );
+        return { status: "pendente", resposta: out.resposta };
+      }
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        out.resposta,
+      );
+      return { status: "consulta", resposta: out.resposta };
+    }
+  }
+
+
+
   // ---- Fase WA-F4: faturas futuras e parcelas em aberto ----
   // Apenas leitura. Roda DEPOIS do WA-F1 (fatura atual) — só pega o
   // que sobrou ("próxima fatura", "fatura de agosto", "parcelas em
