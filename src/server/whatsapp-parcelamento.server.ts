@@ -42,7 +42,22 @@ import {
 // tipos são apagados pelo compilador e não criam aresta de runtime.
 import type { WhatsAppMessageRow, ProcessOutcome } from "./whatsapp.server";
 import { recordMerchantMemory, merchantKeyFor } from "./whatsapp-merchant-memory.server";
+import type {
+  CategoriaPickerRow,
+  CategoriaPickerState,
+} from "./whatsapp-comprovantes.server";
 import { randomUUID } from "crypto";
+
+export type CategoriaCmdIntent =
+  | { kind: "ask" }
+  | { kind: "direct"; termo: string };
+
+export type SaveSessionLite = {
+  ok: boolean;
+  sessionId: string | null;
+  status: string | null;
+  errorCode: string | null;
+};
 
 export type WhatsAppParcelamentoDeps = {
   carregarCartoes: (userId: string) => Promise<Cartao[]>;
@@ -64,6 +79,30 @@ export type WhatsAppParcelamentoDeps = {
     userId: string, telefone: string,
     motivo: "salva" | "cancelada" | "expirada", gastoId?: string,
   ) => Promise<void>;
+  // WA-F3.3 — picker compartilhado (lista curta, paginação, resolução
+  // por número/nome). Reutiliza integralmente os helpers já testados
+  // pelo fluxo de comprovantes/gasto, sem duplicar lógica.
+  loadCategoriasParaPicker: (userId: string) => Promise<CategoriaPickerRow[]>;
+  buildCategoriaListBody: (args: {
+    userId: string;
+    holder: { descricao?: string | null; categoriaSugerida?: string | null };
+    cats: CategoriaPickerRow[];
+  }) => Promise<{ body: string; options: CategoriaPickerState }>;
+  resolveCategoriaPickerInput: (args: {
+    userId: string;
+    holder: {
+      descricao?: string | null;
+      categoriaSugerida?: string | null;
+      categoriaOptions?: CategoriaPickerState;
+    };
+    cats: CategoriaPickerRow[];
+    texto: string;
+  }) => Promise<
+    | { kind: "picked"; cat: CategoriaPickerRow }
+    | { kind: "relist"; options: CategoriaPickerState; body: string }
+    | { kind: "invalid" }
+  >;
+  detectCategoriaCommand: (texto: string) => CategoriaCmdIntent | null;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -163,6 +202,11 @@ export type ParcelamentoSession = {
   cartaoId?: string;
   cartaoNome?: string;
   source?: "audio" | "text";
+  // WA-F3.3 — categoria.
+  categorySelectionSource?: "manual" | "automatic";
+  manualCategoriaId?: string;
+  manualCategoriaLabel?: string;
+  categoriaOptions?: CategoriaPickerState;
 };
 
 export function isParcelamentoSession(s: unknown): s is ParcelamentoSession {
@@ -512,8 +556,14 @@ export async function processarParcelamento(args: {
   }
 
   if (current === "parc_aguardando_confirmacao") {
+    // WA-F3.3 — comandos de categoria têm prioridade sobre "sim".
+    const catCmd = deps.detectCategoriaCommand(texto);
+    if (catCmd) {
+      return await handleCategoriaCmd({
+        userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps, cartoes, cmd: catCmd,
+      });
+    }
     if (decisao === "confirm") {
-      // Ajustes posteriores ao "sim" não são esperados.
       return await persistir({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id, deps });
     }
     // Ajuste por frase livre: tenta reinterpretar campos do texto.
@@ -531,7 +581,84 @@ export async function processarParcelamento(args: {
     return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
   }
 
+  // WA-F3.3 — picker de categoria ativo: trata qualquer mensagem como
+  // input do picker (número, nome, "ver todas", "mais", "voltar"). "sim"
+  // dentro do picker NÃO confirma a compra — é tratado como termo
+  // inválido, evitando criar parcelas sem o usuário escolher categoria.
+  if (current === "parc_aguardando_categoria") {
+    const cats = await deps.loadCategoriasParaPicker(userId);
+    const r = await deps.resolveCategoriaPickerInput({
+      userId,
+      holder: {
+        descricao: session.descricao ?? null,
+        categoriaSugerida: null,
+        categoriaOptions: session.categoriaOptions,
+      },
+      cats,
+      texto,
+    });
+    if (r.kind === "picked") {
+      session.categorySelectionSource = "manual";
+      session.manualCategoriaId = r.cat.id;
+      session.manualCategoriaLabel = r.cat.nome;
+      session.categoriaOptions = undefined;
+      return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
+    }
+    if (r.kind === "relist") {
+      session.categoriaOptions = r.options;
+      await deps.atualizarSessao(sessao.id, "parc_aguardando_categoria", session as unknown as never, r.body);
+      return { status: "parc_aguardando_categoria", resposta: r.body };
+    }
+    const aviso = `Não entendi. Digite o número, o nome da categoria, "mais" para ver outras opções ou "cancelar".`;
+    await deps.atualizarSessao(sessao.id, "parc_aguardando_categoria", session as unknown as never, aviso);
+    return { status: "parc_aguardando_categoria", resposta: aviso };
+  }
+
   return { status: "sem_pendencia", resposta: "" };
+}
+
+// WA-F3.3 — trata comandos de categoria durante `parc_aguardando_confirmacao`.
+async function handleCategoriaCmd(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  session: ParcelamentoSession;
+  sessaoId: string;
+  deps: WhatsAppParcelamentoDeps;
+  cartoes: Cartao[];
+  cmd: CategoriaCmdIntent;
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, session, sessaoId, deps, cartoes, cmd } = args;
+  const cats = await deps.loadCategoriasParaPicker(userId);
+  if (cmd.kind === "ask") {
+    const { body, options } = await deps.buildCategoriaListBody({
+      userId,
+      holder: { descricao: session.descricao ?? null, categoriaSugerida: null },
+      cats,
+    });
+    session.categoriaOptions = options;
+    const resposta = `Qual categoria devo usar?\n\n${body}`;
+    await deps.atualizarSessao(sessaoId, "parc_aguardando_categoria", session as unknown as never, resposta);
+    return { status: "parc_aguardando_categoria", resposta };
+  }
+  // direct
+  const r = await deps.resolveCategoriaPickerInput({
+    userId,
+    holder: { descricao: session.descricao ?? null, categoriaSugerida: null, categoriaOptions: undefined },
+    cats,
+    texto: cmd.termo,
+  });
+  if (r.kind !== "picked") {
+    const resposta = `Não encontrei a categoria "${cmd.termo}". Digite "categoria" para ver a lista de opções.`;
+    await deps.atualizarSessao(sessaoId, "parc_aguardando_confirmacao", session as unknown as never, resposta);
+    return { status: "aguardando_confirmacao", resposta };
+  }
+  session.categorySelectionSource = "manual";
+  session.manualCategoriaId = r.cat.id;
+  session.manualCategoriaLabel = r.cat.nome;
+  session.categoriaOptions = undefined;
+  return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId });
 }
 
 async function avancarFluxo(args: {
@@ -605,10 +732,18 @@ async function avancarFluxo(args: {
     totalParcelas: session.totalParcelas!,
     diaFechamentoCartao: dia,
   });
-  const sugestaoCat = suggestCategoryFromText(session.descricao) || "outros";
-  const categoriaLabel =
-    sugestaoCat === "outros" ? "Outros" :
-    sugestaoCat.charAt(0).toUpperCase() + sugestaoCat.slice(1);
+  // WA-F3.3 — categoria: manual escolhida tem precedência; senão, sugere
+  // pelo texto. A label exibida na prévia também é a definitiva usada na
+  // persistência, evitando "preview diz X, salva Y".
+  let categoriaLabel: string;
+  if (session.manualCategoriaLabel) {
+    categoriaLabel = session.manualCategoriaLabel;
+  } else {
+    const sugestaoCat = suggestCategoryFromText(session.descricao) || "outros";
+    categoriaLabel =
+      sugestaoCat === "outros" ? "Outros" :
+      sugestaoCat.charAt(0).toUpperCase() + sugestaoCat.slice(1);
+  }
   const resposta = previewMessage({
     descricao: session.descricao,
     valorTotal: plano.total,
@@ -688,15 +823,42 @@ async function persistir(args: {
     logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
     return { status: "erro", resposta: "Não consegui dividir esse valor nessas parcelas. Verifique e tente de novo." };
   }
+  // WA-F3.3 — categoria: manual escolhida tem precedência absoluta.
   const cats = await carregarCategoriasMin(userId);
-  const cat = resolveCategoriaId(cats, session.descricao ?? "Compra parcelada");
+  const cat = session.manualCategoriaId
+    ? { id: session.manualCategoriaId, nome: session.manualCategoriaLabel ?? "Categoria" }
+    : resolveCategoriaId(cats, session.descricao ?? "Compra parcelada");
   const grupoId = randomUUID();
   const baseObs = `WhatsApp: ${session.mensagemOriginal}`.slice(0, 1000);
 
-  // WA-F3.2 — persistência atômica via RPC `create_installment_purchase`.
-  // A RPC roda como SECURITY DEFINER em transação única: ou TODAS as
-  // parcelas são criadas, ou nenhuma. Valida `user_id` x `cartao_id`
-  // server-side (defesa em profundidade adicional à RLS).
+  // WA-F3.3 — Idempotência concorrente: antes da RPC, fazemos um "claim
+  // atômico" da mensagem de confirmação gravando uma linha em status
+  // intermediário `parc_persistindo` com o `external_id` da mensagem.
+  // O índice único parcial em whatsapp_messages(external_id) garante que
+  // dois webhooks simultâneos com o mesmo external_message_id falhem aqui
+  // — apenas um sobreviverá para chamar a RPC. Sem claim, sem RPC.
+  // A linha final "salva" é gravada como UPDATE desta mesma sessão de
+  // claim, evitando colidir consigo mesmo no índice único.
+  let claimSessionId: string | null = null;
+  if (msg.external_id) {
+    const claim = await deps.gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "parc_persistindo",
+      { ...session, grupo_parcelamento_id: grupoId } as unknown as never,
+      "",
+    ) as { ok?: boolean; sessionId?: string | null } | undefined;
+    if (!claim?.ok || !claim.sessionId) {
+      logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
+      return { status: "erro", resposta: "Já estou processando essa compra. Aguarde um instante." };
+    }
+    claimSessionId = claim.sessionId;
+  }
+
+  // WA-F3.2/3.3 — persistência atômica via RPC `create_installment_purchase`.
+  // SECURITY DEFINER + search_path fixo + validações server-side (cartão
+  // pertence ao user, categoria pertence ao user, soma > 0, parcelas
+  // 1..N sem furos, invoice_month YYYY-MM). Falha em qualquer validação
+  // não insere nenhuma parcela.
   const parcelasPayload = plano.parcelas.map((p) => ({
     numero: p.numero,
     valor: p.valor,
@@ -725,8 +887,9 @@ async function persistir(args: {
     return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
   }
 
-  // Readback: confirma que TODAS as parcelas foram efetivamente gravadas
-  // sob o mesmo grupo_parcelamento_id antes de informar sucesso.
+  // Readback obrigatório: confirma que TODAS as parcelas foram
+  // efetivamente gravadas sob o mesmo grupo_parcelamento_id antes de
+  // informar sucesso ao usuário.
   const { data: readback, error: readErr } = await supabaseAdmin
     .from("gastos")
     .select("id, parcela_atual")
@@ -746,23 +909,30 @@ async function persistir(args: {
     .sort((a, b) => (a.parcela_atual ?? 0) - (b.parcela_atual ?? 0))
     .map((r) => r.id);
 
-  // Fecha sessões e grava marca "salva".
+  // Fecha sessões e grava marca "salva". Quando há claim, atualizamos
+  // a própria linha de claim (mesmo external_id) em vez de inserir uma
+  // nova, evitando colidir com o índice único da idempotência.
   await deps.fecharSessoesAnteriores(userId, msg.telefone, "salva", inseridos[0]);
-  await deps.gravarSessao(
-    userId, msg.telefone, msg.external_id, texto, recebidaEm,
-    "salva",
-    {
-      ...session,
-      grupo_parcelamento_id: grupoId,
-      gasto_ids: inseridos,
-      status: "salva",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any,
-    "ok",
-    inseridos[0],
-  );
+  const finalSession = {
+    ...session,
+    grupo_parcelamento_id: grupoId,
+    gasto_ids: inseridos,
+    status: "salva",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any;
+  if (claimSessionId) {
+    await deps.atualizarSessao(claimSessionId, "salva", finalSession, "ok", inseridos[0]);
+  } else {
+    await deps.gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "salva", finalSession, "ok", inseridos[0],
+    );
+  }
 
-  // Memória de estabelecimento — UMA vez por compra confirmada.
+  // WA-F3.3 — Memória de estabelecimento: UMA única vez por compra
+  // confirmada. evidence = "manual" se o usuário escolheu explicitamente
+  // a categoria via picker/comando; "confirmed" quando apenas aceitou a
+  // sugestão automática.
   const key = merchantKeyFor(session.descricao ?? "");
   if (key && cat.id) {
     try {
@@ -770,7 +940,7 @@ async function persistir(args: {
         userId,
         merchantKey: key,
         categoryId: cat.id,
-        evidence: "confirmed",
+        evidence: session.categorySelectionSource === "manual" ? "manual" : "confirmed",
       });
     } catch {
       /* memória nunca quebra o fluxo */

@@ -70,6 +70,7 @@ import {
   // texto/áudio para evitar duplicação.
   buildCategoriaListBody,
   resolveCategoriaPickerInput,
+  loadCategoriasParaPicker,
   type CategoriaPickerState,
 } from "./whatsapp-comprovantes.server";
 import {
@@ -104,6 +105,11 @@ const parcelamentoDeps: WhatsAppParcelamentoDeps = {
     atualizarSessao(id, status, session, resposta, gastoId),
   fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
     fecharSessoesAnteriores(userId, telefone, motivo, gastoId),
+  // WA-F3.3 — categoria manual no parcelamento (reusa helpers compartilhados).
+  loadCategoriasParaPicker: (userId) => loadCategoriasParaPicker(userId),
+  buildCategoriaListBody: (a) => buildCategoriaListBody(a),
+  resolveCategoriaPickerInput: (a) => resolveCategoriaPickerInput(a),
+  detectCategoriaCommand: (t) => detectCategoriaCommand(t),
 };
 import { createHash } from "crypto";
 
@@ -525,6 +531,7 @@ export type ProcessOutcome = {
     | "parc_aguardando_quantidade"
     | "parc_aguardando_cartao"
     | "parc_aguardando_confirmacao"
+    | "parc_aguardando_categoria"
     | "cancelada"
     | "sem_pendencia"
     | "pendente"
@@ -998,6 +1005,9 @@ const PENDING_STATES = [
   "parc_aguardando_quantidade",
   "parc_aguardando_cartao",
   "parc_aguardando_confirmacao",
+  // WA-F3.3 — picker de categoria + claim de idempotência de RPC.
+  "parc_aguardando_categoria",
+  "parc_persistindo",
   ...RECEITA_PENDING_STATES,
   ...COMPROVANTE_PENDING_STATES,
 ];
@@ -2276,7 +2286,7 @@ export async function processarMensagemWhatsApp(
   // gasto/receita/foto em andamento.
   if (sessao && (
     isParcelamentoSession(sessao.session) ||
-    ["parc_aguardando_total","parc_aguardando_quantidade","parc_aguardando_cartao","parc_aguardando_confirmacao"].includes(sessao.status)
+    ["parc_aguardando_total","parc_aguardando_quantidade","parc_aguardando_cartao","parc_aguardando_confirmacao","parc_aguardando_categoria"].includes(sessao.status)
   )) {
     logWaRouteDecision(msg, "expense_parser", "active_installment_session");
     return await processarParcelamento({
