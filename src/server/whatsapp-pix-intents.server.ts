@@ -20,7 +20,7 @@
  *  - O parser puro vive em `whatsapp-pix-parser.ts` e é trivialmente
  *    exercitável em testes unitários sem mocks.
  */
-import * as _supa from "@/integrations/supabase/client.server";
+import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { ProcessOutcome, WhatsAppMessageRow } from "./whatsapp.server";
 import {
   detectSavePixIntent,
