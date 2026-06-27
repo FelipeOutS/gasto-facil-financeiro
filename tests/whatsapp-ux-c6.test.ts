@@ -132,7 +132,7 @@ test("WA-C6: enviar '8' fora de sessão dispara ajuda completa", async () => {
 
 test("WA-C6: '3' fora de sessão entra no fluxo de contas (rewrite → minhas contas)", async () => {
   resetState({
-    contasData: [
+    contas: [
       {
         id: "cap-1", user_id: "u1", nome: "Internet",
         valor: 119.9, data_vencimento: daysAheadISO(3),
@@ -194,7 +194,7 @@ test("WA-C6 resolveOrdinal: clear() limpa contexto", () => {
 
 test("WA-C6 pipeline: listar contas grava contexto e 'paguei a primeira' dispara baixa", async () => {
   resetState({
-    contasData: [
+    contas: [
       {
         id: "cap-1", user_id: "u1", nome: "Internet",
         valor: 119.9, data_vencimento: daysAheadISO(5),
