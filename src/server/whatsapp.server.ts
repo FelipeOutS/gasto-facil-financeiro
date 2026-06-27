@@ -531,6 +531,7 @@ export type ProcessOutcome = {
     | "parc_aguardando_quantidade"
     | "parc_aguardando_cartao"
     | "parc_aguardando_confirmacao"
+    | "parc_aguardando_categoria"
     | "cancelada"
     | "sem_pendencia"
     | "pendente"
