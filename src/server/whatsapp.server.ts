@@ -533,6 +533,7 @@ export type ProcessOutcome = {
     | "aguardando_cartao"
     | "aguardando_categoria_gasto"
     | "aguardando_consulta_fatura"
+    | "aguardando_consulta_parcelamento"
     | "parc_aguardando_total"
     | "parc_aguardando_quantidade"
     | "parc_aguardando_cartao"
