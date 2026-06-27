@@ -3722,10 +3722,33 @@ export async function processarMensagemWhatsApp(
     });
   }
 
-
-
-
-
+  // WA-C7 — Pix / favorecidos / pagamento para pessoa.
+  // Estes 3 handlers ficam ANTES do parser genérico de gasto, mas DEPOIS
+  // dos handlers de contas a pagar (C2/C3/C4) — pois "paguei a internet"
+  // ou "mudar vencimento" não devem ser interpretados como Pix.
+  //
+  //  - save  : "salva o Pix do João: 11999999999"
+  //  - query : "qual o Pix do João?"
+  //  - pay   : "paguei 50 ao João do almoço" (exige valor + destinatário
+  //            explícito; sem boletos/faturas/cartões na frase)
+  if (decisao === "outro" && detectSavePixIntent(texto)) {
+    logWaRouteDecision(msg, "expense_parser", "save_pix_intent");
+    return await handleSavePixIntent({
+      userId, telefone: msg.telefone, texto, _row: msg,
+    });
+  }
+  if (decisao === "outro" && detectQueryPixIntent(texto)) {
+    logWaRouteDecision(msg, "expense_parser", "query_pix_intent");
+    return await handleQueryPixIntent({
+      userId, telefone: msg.telefone, texto, _row: msg,
+    });
+  }
+  if (decisao === "outro" && detectPagarPessoaIntent(texto)) {
+    logWaRouteDecision(msg, "expense_parser", "pagar_pessoa_intent");
+    return await handlePagarPessoaIntent({
+      userId, telefone: msg.telefone, texto, _row: msg,
+    });
+  }
 
   const parsed = parseExpenseMessage(texto, cartoes);
   // Comandos genéricos ("registrar gasto", "novo gasto", ...) e descrições
