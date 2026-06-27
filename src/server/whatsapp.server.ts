@@ -3195,6 +3195,18 @@ export async function processarMensagemWhatsApp(
   }
   logWaRouteDecision(msg, "expense_parser", "no_active_session_after_final_guard");
   logWaReceiptSessionTrace({ msg, receiptSessionCreated: false, lookup: receiptLookup, routeChosen: "expense_parser" });
+
+  // WA-F3: detecção de COMPRA PARCELADA antes do parser de gasto comum.
+  // Só dispara em mensagem com indicador inequívoco ("em Nx", "em N vezes",
+  // "N parcelas", "parcelado em N", "Nx" + pista de crédito). Caso
+  // contrário, segue o parser de gasto comum normalmente.
+  const parcIntent = detectInstallmentIntent(texto);
+  if (parcIntent) {
+    return await processarParcelamento({
+      userId, msg, texto, recebidaEm, decisao, sessao: null,
+    });
+  }
+
   const parsed = parseExpenseMessage(texto, cartoes);
   // Comandos genéricos ("registrar gasto", "novo gasto", ...) e descrições
   // automáticas inválidas ("Gasto WhatsApp") NUNCA podem virar descrição
