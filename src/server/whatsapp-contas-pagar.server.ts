@@ -261,8 +261,38 @@ function parseDataPagamento(textRaw: string, hoje: Date = nowInAppTz()): string 
     const d = new Date(hoje); d.setDate(d.getDate() - 1);
     return todayISOInAppTz(d);
   }
-  // "dia 5" — assume mês corrente.
-  let m = t.match(/\bdia\s+(\d{1,2})\b/);
+  if (/\bamanha\b/.test(t)) {
+    const d = new Date(hoje); d.setDate(d.getDate() + 1);
+    return todayISOInAppTz(d);
+  }
+  // "em 5 de julho [de 2026]" / "5 de julho"
+  let m = t.match(/\b(?:em\s+)?(\d{1,2})\s+de\s+(janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\s+de\s+(\d{2,4}))?\b/);
+  if (m) {
+    const dia = Number(m[1]);
+    const mes = MESES[m[2]];
+    if (mes && dia >= 1 && dia <= 31) {
+      let ano = m[3] ? Number(m[3]) : hoje.getFullYear();
+      if (ano < 100) ano = 2000 + ano;
+      const last = new Date(ano, mes, 0).getDate();
+      const d = Math.min(dia, last);
+      return `${ano}-${String(mes).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+  }
+  // "dia N do mes que vem" / "no dia N do mes que vem"
+  m = t.match(/\b(?:no\s+)?dia\s+(\d{1,2})\s+do\s+mes\s+que\s+vem\b/);
+  if (m) {
+    const dia = Number(m[1]);
+    if (dia >= 1 && dia <= 31) {
+      const next = new Date(hoje); next.setDate(1); next.setMonth(next.getMonth() + 1);
+      const y = next.getFullYear();
+      const mm = next.getMonth() + 1;
+      const last = new Date(y, mm, 0).getDate();
+      const d = Math.min(dia, last);
+      return `${y}-${String(mm).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+  }
+  // "no dia 5" / "dia 5" — assume mês corrente.
+  m = t.match(/\b(?:no\s+)?dia\s+(\d{1,2})\b/);
   if (m) {
     const dia = Number(m[1]);
     if (dia >= 1 && dia <= 31) {
@@ -273,8 +303,8 @@ function parseDataPagamento(textRaw: string, hoje: Date = nowInAppTz()): string 
       return `${y}-${String(mm).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
     }
   }
-  // "DD/MM" ou "DD/MM/YYYY"
-  m = t.match(/\b(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?\b/);
+  // "DD/MM" ou "DD/MM/YYYY" (aceita prefixo "em"/"no").
+  m = t.match(/\b(?:em|no|na)?\s*(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?\b/);
   if (m) {
     const dia = Number(m[1]);
     const mes = Number(m[2]);
@@ -289,6 +319,11 @@ function parseDataPagamento(textRaw: string, hoje: Date = nowInAppTz()): string 
   return null;
 }
 
+const MESES: Record<string, number> = {
+  janeiro: 1, fevereiro: 2, marco: 3, abril: 4, maio: 5, junho: 6,
+  julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
+};
+
 function isFutureISO(iso: string, hoje: Date = nowInAppTz()): boolean {
   return iso > todayISOInAppTz(hoje);
 }
@@ -296,6 +331,16 @@ function isFutureISO(iso: string, hoje: Date = nowInAppTz()): boolean {
 // ---------- formatação ----------
 
 function previewSingle(row: ContaVencimentoRow, dataPagamento: string): string {
+  return [
+    "Encontrei esta conta pendente:",
+    "",
+    `• ${row.nome} — ${fmtBRL(row.valor)}`,
+    `• Vencimento: ${fmtDateBR(row.dataVencimento)}`,
+    `• Data de pagamento: ${fmtDateBR(dataPagamento)}`,
+    "",
+    'Confirma marcar como paga? Responda "sim", informe outra data (ex.: "ontem" ou "03/07") ou "cancelar".',
+  ].join("\n");
+}
   return [
     "Encontrei esta conta pendente:",
     "",
