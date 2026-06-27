@@ -140,6 +140,12 @@ import {
   handleQueryPixIntent,
   handlePagarPessoaIntent,
 } from "./whatsapp-pix-intents.server";
+import {
+  PAGAR_PESSOA_PENDING_STATES,
+  isPagarPessoaSession,
+  processarPagarPessoaFlow,
+  type WhatsAppPagarPessoaDeps,
+} from "./whatsapp-pagar-pessoa-flow.server";
 
 // Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
 // precisa do orquestrador é exposto aqui de forma explícita, evitando que
