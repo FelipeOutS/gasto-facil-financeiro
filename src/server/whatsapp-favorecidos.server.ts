@@ -5,13 +5,17 @@
  * sobre a RLS, padrão WA-C5.1). Nada de Pix/CPF/CNPJ/telefone nos logs —
  * apenas IDs UUID, tipo da chave, contagem e flags booleanas.
  */
-import * as _supa from "../integrations/supabase/client.server";
+import * as _supa from "@/integrations/supabase/client.server";
 import type { PixKeyType } from "./whatsapp-pix-parser";
 
 // Live-binding para permitir mock.module() em testes (padrão WA-C3/WA-C4).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin: any = new Proxy({}, {
-  get: (_t, prop) => (_supa.supabaseAdmin as never)[prop as never],
+  get: (_t, prop) => {
+    const sa = (_supa as { supabaseAdmin?: unknown }).supabaseAdmin;
+    if (process.env.WA_PIX_DBG) console.log("[favorecidos proxy] prop=", String(prop), "sa typeof=", typeof sa, "has from:", !!(sa as { from?: unknown })?.from);
+    return (sa as never)[prop as never];
+  },
 });
 
 export type FavorecidoRow = {
