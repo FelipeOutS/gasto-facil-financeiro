@@ -470,9 +470,16 @@ async function buscarContaPorId(userId: string, contaId: string): Promise<ContaV
   };
 }
 
-async function getRecorrenciaIdDaConta(contaId: string): Promise<string | null> {
+async function getRecorrenciaIdDaConta(contaId: string, userId: string): Promise<string | null> {
+  // Defesa em profundidade: além do contaId já validado upstream, escopamos
+  // explicitamente por user_id para impedir qualquer leitura cruzada caso a
+  // função venha a ser invocada em outro contexto.
   const { data } = await supabaseAdmin
-    .from("contas_a_pagar").select("recorrencia_id").eq("id", contaId).maybeSingle();
+    .from("contas_a_pagar")
+    .select("recorrencia_id")
+    .eq("id", contaId)
+    .eq("user_id", userId)
+    .maybeSingle();
   return (data?.recorrencia_id as string | null) ?? null;
 }
 
@@ -888,7 +895,7 @@ export async function processarEdicaoConta(args: {
       logEvent("failed", sess.operation, 0, 0, result.error === "already_paid" ? "conflict" : "error");
       const resposta = result.error === "already_paid"
         ? statusPagaResposta()
-        : "Não consegui aplicar a alteração agora. Tente novamente em instantes.";
+        : 'Não consegui confirmar a alteração agora. Envie "minhas contas" para conferir o estado atual e, se precisar, tente novamente em instantes.';
       await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
       await deps.gravarSessao(
         userId, msg.telefone, msg.external_id, texto, recebidaEm,
@@ -960,7 +967,7 @@ async function avancarApos1Candidata(
     return { status: "consulta", resposta };
   }
 
-  const recId = await getRecorrenciaIdDaConta(conta.id);
+  const recId = await getRecorrenciaIdDaConta(conta.id, userId);
 
   const sess: EdicaoContaSession = {
     kind: intent.operation === "cancel" ? "cancelamento_conta" : "edicao_conta",
