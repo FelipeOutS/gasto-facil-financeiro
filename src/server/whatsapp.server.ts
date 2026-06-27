@@ -131,6 +131,14 @@ import {
   processarEdicaoConta,
   type WhatsAppEdicaoContaDeps,
 } from "./whatsapp-contas-editar.server";
+import {
+  detectSavePixIntent,
+  detectQueryPixIntent,
+  detectPagarPessoaIntent,
+  handleSavePixIntent,
+  handleQueryPixIntent,
+  handlePagarPessoaIntent,
+} from "./whatsapp-pix-intents.server";
 
 // Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
 // precisa do orquestrador é exposto aqui de forma explícita, evitando que
