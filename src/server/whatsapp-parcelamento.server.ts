@@ -202,9 +202,17 @@ export type ParcelamentoSession = {
   cartaoId?: string;
   cartaoNome?: string;
   source?: "audio" | "text";
+  // WA-F3.3 — categoria.
+  categoriaSelectionSource?: "manual" | "automatic";
+  manualCategoriaId?: string;
+  manualCategoriaLabel?: string;
+  categoriaOptions?: CategoriaPickerState;
 };
 
 export function isParcelamentoSession(s: unknown): s is ParcelamentoSession {
+  if (!s || typeof s !== "object") return false;
+  return (s as { kind?: unknown }).kind === "parcelamento";
+}
   if (!s || typeof s !== "object") return false;
   return (s as { kind?: unknown }).kind === "parcelamento";
 }
