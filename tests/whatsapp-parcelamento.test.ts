@@ -218,3 +218,95 @@ describe("WA-F3 — fluxo conversacional", () => {
     expect(gastosInserts().length).toBe(0);
   });
 });
+
+describe("WA-F3.2 — persistência atômica via RPC", () => {
+  let fake: typeof import("./_whatsapp-fake").fakeAdmin;
+  beforeEach(async () => {
+    fake = (await import("./_whatsapp-fake")).fakeAdmin;
+    resetState({
+      cartoes: [
+        { id: "c-nu", nome: "Nubank", banco: "Nubank", limite_total: 0, dia_fechamento: 28, dia_vencimento: 10, cor: "#000", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+      ],
+    });
+  });
+
+  it("R$ 1.200,50 em 3x: soma exata e parcelas seguem invoice_month sequencial", async () => {
+    await processarMensagemWhatsApp(msg("Comprei algo de R$ 1.200,50 em 3x no Nubank", "e-1"));
+    const out = await processarMensagemWhatsApp(msg("sim", "e-2"));
+    expect(out.status).toBe("salva");
+    const gs = gastosInserts();
+    expect(gs.length).toBe(3);
+    const soma = gs.reduce((acc, g) => acc + Number(g.row.valor), 0);
+    expect(Math.round(soma * 100)).toBe(120050);
+    // invoice_month sequencial mês a mês (3 valores distintos).
+    const ims = gs.map((g) => g.row.invoice_month as string);
+    expect(new Set(ims).size).toBe(3);
+    // Centavos extras vão para a primeira parcela.
+    const valores = gs.sort((a, b) => (a.row.parcela_atual as number) - (b.row.parcela_atual as number)).map((g) => Math.round(Number(g.row.valor) * 100));
+    expect(valores[0]).toBeGreaterThanOrEqual(valores[1]);
+    expect(valores[0] + valores[1] + valores[2]).toBe(120050);
+  });
+
+  it("falha na transação não cria parcela parcial", async () => {
+    const original = fake.rpc;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (fake as any).rpc = async (name: string) => {
+      if (name === "create_installment_purchase") {
+        return { data: null, error: { message: "boom" } };
+      }
+      return { data: true, error: null };
+    };
+    try {
+      await processarMensagemWhatsApp(msg("Tênis 300 em 3x no Nubank", "e-1"));
+      const out = await processarMensagemWhatsApp(msg("sim", "e-2"));
+      expect(out.status).toBe("erro");
+      expect(gastosInserts().length).toBe(0);
+      expect(out.resposta.toLowerCase()).not.toContain("registrei");
+    } finally {
+      fake.rpc = original;
+    }
+  });
+
+  it("falha no readback não envia sucesso falso", async () => {
+    const original = fake.rpc;
+    // RPC retorna ok, mas não persiste nada → readback encontra 0 linhas.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (fake as any).rpc = async (name: string, args?: Record<string, unknown>) => {
+      if (name === "create_installment_purchase") {
+        // Devolve só metadados sem gravar em state.gastosData.
+        const parcelas = (args?.p_parcelas ?? []) as Array<Record<string, unknown>>;
+        return { data: parcelas.map((p, i) => ({ id: `phantom-${i}`, parcela_atual: p.numero, invoice_month: p.invoice_month, valor: p.valor })), error: null };
+      }
+      return { data: true, error: null };
+    };
+    try {
+      await processarMensagemWhatsApp(msg("Tênis 300 em 3x no Nubank", "e-1"));
+      const out = await processarMensagemWhatsApp(msg("sim", "e-2"));
+      expect(out.status).toBe("erro");
+      expect(out.resposta.toLowerCase()).not.toContain("registrei");
+      expect(gastosInserts().filter((g) => g.row.grupo_parcelamento_id).length).toBe(0);
+    } finally {
+      fake.rpc = original;
+    }
+  });
+
+  it("mensagem de sucesso não lista parcelas individualmente", async () => {
+    await processarMensagemWhatsApp(msg("Tênis 300 em 3x no Nubank", "e-1"));
+    const out = await processarMensagemWhatsApp(msg("sim", "e-2"));
+    expect(out.status).toBe("salva");
+    expect(out.resposta).toContain("Registrei sua compra parcelada");
+    // Não enumera "1/3", "2/3", "3/3" no corpo de sucesso.
+    expect(out.resposta).not.toMatch(/1\/3/);
+    expect(out.resposta).not.toMatch(/2\/3/);
+  });
+
+  it("todas as parcelas compartilham o mesmo grupo_parcelamento_id (uuid)", async () => {
+    await processarMensagemWhatsApp(msg("Tênis 300 em 3x no Nubank", "e-1"));
+    await processarMensagemWhatsApp(msg("sim", "e-2"));
+    const grupos = gastosInserts().map((g) => g.row.grupo_parcelamento_id);
+    expect(new Set(grupos).size).toBe(1);
+    expect(typeof grupos[0]).toBe("string");
+    // UUID v4 simplificado.
+    expect(String(grupos[0])).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+  });
+});
