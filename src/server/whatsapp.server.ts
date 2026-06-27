@@ -70,6 +70,7 @@ import {
   // texto/áudio para evitar duplicação.
   buildCategoriaListBody,
   resolveCategoriaPickerInput,
+  loadCategoriasParaPicker,
   type CategoriaPickerState,
 } from "./whatsapp-comprovantes.server";
 import {
