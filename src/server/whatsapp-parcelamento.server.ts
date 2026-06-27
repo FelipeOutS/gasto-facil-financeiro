@@ -213,9 +213,6 @@ export function isParcelamentoSession(s: unknown): s is ParcelamentoSession {
   if (!s || typeof s !== "object") return false;
   return (s as { kind?: unknown }).kind === "parcelamento";
 }
-  if (!s || typeof s !== "object") return false;
-  return (s as { kind?: unknown }).kind === "parcelamento";
-}
 
 // ---------- log seguro ----------
 
