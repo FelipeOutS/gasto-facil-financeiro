@@ -30,18 +30,10 @@ import {
   reaisParaCentavos,
   calcularParcelasCentavos,
 } from "./cartao-parcelamento.server";
-import {
-  matchCartao,
-  displayCartaoNome,
-  maskCartaoLabel,
-  carregarCartoes,
-  gravarSessao,
-  atualizarSessao,
-  fecharSessoesAnteriores,
-  isGenericExpenseDescription,
-  classificarResposta,
-  type ProcessOutcome,
-} from "./whatsapp.server";
+// IMPORTANT: import as namespace to preserve ESM live bindings.
+// whatsapp.server.ts imports back from this module — a default named
+// import would snapshot bindings as `undefined` during initialisation.
+import * as wa from "./whatsapp.server";
 import type { WhatsAppMessageRow } from "./whatsapp.server";
 import { recordMerchantMemory, merchantKeyFor } from "./whatsapp-merchant-memory.server";
 import { randomUUID } from "crypto";
