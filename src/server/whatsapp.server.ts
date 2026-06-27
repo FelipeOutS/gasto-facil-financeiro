@@ -43,7 +43,14 @@ import {
   handleConsulta,
   detectConversationalIntent,
   handleConversational,
+  detectMenuOption,
+  dispatchMenuOption,
 } from "./whatsapp-consultas.server";
+import {
+  recordContas as shortRecordContas,
+  resolveOrdinal as shortResolveOrdinal,
+  clear as shortClear,
+} from "./whatsapp-short-context.server";
 import {
   detectConsultaEspecifica,
   handleConsultaEspecifica,
