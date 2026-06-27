@@ -192,9 +192,15 @@ function makeBuilder(table: string): any {
       const uid = ctx.filters?.user_id;
       // Filtra por user_id apenas quando as linhas declaram esse campo;
       // mantém compatibilidade com fixtures legadas sem `user_id`.
-      const base = uid
+      let base = uid
         ? state.gastosData.filter((g) => g.user_id === undefined || g.user_id === uid)
         : state.gastosData;
+      // WA-F3.2 — readback de compra parcelada filtra por grupo.
+      if (ctx.filters?.grupo_parcelamento_id) {
+        base = base.filter(
+          (g) => g.grupo_parcelamento_id === ctx.filters.grupo_parcelamento_id,
+        );
+      }
       return { data: applyRangeFilters(base, ctx.range), error: null };
     }
     if (table === "receitas") {
