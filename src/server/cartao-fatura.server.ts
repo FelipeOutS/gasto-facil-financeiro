@@ -585,13 +585,18 @@ function isParcelaEmAberto(
   const diaFech = Number(cartao.dia_fechamento ?? 1) || 1;
   const { mes, ano } = faturaCorrenteRef(diaFech, hoje);
   const curYm = ymOf(mes, ano);
+  // "Em aberto" = parcela ainda NÃO foi para uma fatura já fechada
+  // nem para a fatura atualmente em cobrança. Usamos > ciclo atual
+  // (estritamente). A parcela do ciclo atual é considerada "prevista
+  // até agora" (já apareceu na fatura corrente).
   if (p.invoiceMonth && /^\d{4}-\d{2}$/.test(p.invoiceMonth)) {
-    return p.invoiceMonth >= curYm;
+    return p.invoiceMonth > curYm;
   }
   if (!p.data) return false;
   const d = new Date(p.data + "T00:00:00");
-  const inicioAtual = cicloFatura(diaFech, mes, ano).inicio;
-  return d >= inicioAtual;
+  const fimAtual = cicloFatura(diaFech, mes, ano).fim;
+  return d > fimAtual;
+
 }
 
 function buildCompraParcelada(
