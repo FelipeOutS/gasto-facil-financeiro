@@ -82,7 +82,7 @@ describe("WA-C3.1 — detector com data embutida", () => {
 
   it("extrai termo (preserva nome composto) e advérbio em 'foi paga'", () => {
     const r = detectMarkAsPaidIntent("a conta de luz foi paga ontem");
-    expect(r?.termo).toBe("luz");
+    expect(r?.termo).toBe("conta de luz");
     expect(r?.paymentDate).toBe("ontem");
   });
 

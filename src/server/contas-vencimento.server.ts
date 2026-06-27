@@ -160,9 +160,18 @@ function norm(s: string): string {
 }
 
 /**
- * Busca contas PENDENTES cujo `nome` contenha `term` (busca em memória,
- * normalizada para acentos/caixa). Limita às 12 mais próximas. Ordena
- * pela próxima data de vencimento, agrupando por nome distinto.
+ * Busca contas PENDENTES cujo `nome` casa com `term` (normalizado para
+ * acentos/caixa).
+ *
+ * WA-C3.2 — prioridade de casamento:
+ *   1) match EXATO do nome normalizado;
+ *   2) match por expressão COMPLETA (substring com fronteira de palavra);
+ *   3) match parcial (substring qualquer).
+ *
+ * Sempre que um nível superior tem resultados, devolve só ele. Isso
+ * evita escolher automaticamente uma conta só porque contém uma palavra
+ * curta ("luz", "água", "plano"). Limita às 12 mais próximas, ordenadas
+ * pela próxima data de vencimento.
  */
 export async function findVencimentoByTerm(
   userId: string,
@@ -178,11 +187,18 @@ export async function findVencimentoByTerm(
     .eq("user_id", userId)
     .eq("status", "pendente");
   if (error || !Array.isArray(data)) return [];
-  const rows = (data as Record<string, unknown>[])
-    .map(rowToConta)
-    .filter((r) => norm(r.nome).includes(t))
-    .sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento));
-  return rows.slice(0, 12);
+  const rows = (data as Record<string, unknown>[]).map(rowToConta);
+  const byDate = (a: ContaVencimentoRow, b: ContaVencimentoRow) =>
+    a.dataVencimento.localeCompare(b.dataVencimento);
+  const exact = rows.filter((r) => norm(r.nome) === t);
+  if (exact.length > 0) return exact.sort(byDate).slice(0, 12);
+  const wholeWord = rows.filter((r) => {
+    const n = ` ${norm(r.nome)} `;
+    return n.includes(` ${t} `);
+  });
+  if (wholeWord.length > 0) return wholeWord.sort(byDate).slice(0, 12);
+  const partial = rows.filter((r) => norm(r.nome).includes(t));
+  return partial.sort(byDate).slice(0, 12);
 }
 
 /** Lista de "nomes distintos" presentes no resultado da busca. */
