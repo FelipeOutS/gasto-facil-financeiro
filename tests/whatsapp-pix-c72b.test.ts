@@ -13,9 +13,16 @@
  *  6. Cancelar em qualquer passo encerra a sessão.
  *  7. Conversa gradual: "Paguei João" → "Quanto foi?" → "Motivo?" → ✅
  */
+import "./_whatsapp-fake";
 import { describe, it, expect, beforeEach } from "bun:test";
-import { state, resetState } from "./_whatsapp-fake";
-import { processarMensagemWhatsApp } from "@/server/whatsapp.server";
+import { resetState, state } from "./_whatsapp-fake";
+
+const { processarMensagemWhatsApp } = await import(
+  "../src/server/whatsapp.server"
+);
+const { _resetShortContext } = await import(
+  "../src/server/whatsapp-short-context.server"
+);
 
 const telefone = "5511999998888";
 const userId = "u1";
@@ -26,13 +33,7 @@ function gastoInserts() {
 
 beforeEach(() => {
   resetState({});
-  state.linkData = {
-    user_id: userId,
-    telefone,
-    ativo: true,
-    opt_in_em: new Date().toISOString(),
-    revogado_em: null,
-  };
+  _resetShortContext();
 });
 
 describe("WA-C7.2.b :: M-1 race condition", () => {
