@@ -29,13 +29,12 @@ import {
   getDetalheCompraParcelada,
   findCompraParceladaByTerm,
   parseInvoiceMonth,
-  faturaCorrenteRef,
   type CartaoRow,
   type FaturaAtual,
   type ItemFatura,
   type CompraParcelada,
-  type ParcelaRow,
 } from "./cartao-fatura.server";
+
 
 
 export type FaturaIntent =
