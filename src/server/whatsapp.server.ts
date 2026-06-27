@@ -117,6 +117,13 @@ import {
   processarBaixaConta,
   type WhatsAppBaixaContaDeps,
 } from "./whatsapp-contas-pagar.server";
+import {
+  EDICAO_CONTA_PENDING_STATES,
+  detectEdicaoContaIntent,
+  isEdicaoContaSession,
+  processarEdicaoConta,
+  type WhatsAppEdicaoContaDeps,
+} from "./whatsapp-contas-editar.server";
 
 // Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
 // precisa do orquestrador é exposto aqui de forma explícita, evitando que
