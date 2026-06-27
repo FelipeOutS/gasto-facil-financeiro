@@ -1007,6 +1007,8 @@ const PENDING_STATES = [
   // WA-F2 — paginação temporária de detalhamento de fatura. Aguarda
   // "ver mais", "voltar" ou "cancelar". NUNCA cria gasto/receita/cartão.
   "aguardando_consulta_fatura",
+  // WA-F4 — paginação/escolha de compras parceladas e fatura futura.
+  "aguardando_consulta_parcelamento",
   // WA-F3 — sessões de compra parcelada no cartão.
   "parc_aguardando_total",
   "parc_aguardando_quantidade",
