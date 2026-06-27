@@ -3107,7 +3107,7 @@ export async function processarMensagemWhatsApp(
   // WA-C2 tem precedência sobre WA-C1: mensagens com clara intenção
   // de CRIAR conta a pagar ("cadastrar internet de 119,90 vence dia 5
   // todo mês") não devem ser interpretadas como consulta.
-  if (!sessao && decisao === "outro" && !detectPayableAccountIntent(texto)) {
+  if (!sessao && decisao === "outro" && !detectPayableAccountIntent(texto) && !detectEdicaoContaIntent(texto)) {
     const intentD = detectDueIntent(texto);
 
     if (intentD) {
