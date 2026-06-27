@@ -31,6 +31,7 @@ export const state = {
   ] as Record<string, unknown>[],
   gastosData: [] as Record<string, unknown>[],
   receitasData: [] as Record<string, unknown>[],
+  contasData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
@@ -62,6 +63,8 @@ const PENDING = [
   "img_aguardando_ajuste",
   "img_aguardando_data_confirmacao",
   "img_aguardando_categoria_obrigatoria",
+  // WA-C1 — paginação de vencimentos/contas a pagar.
+  "aguardando_consulta_vencimentos",
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -220,6 +223,16 @@ function makeBuilder(table: string): any {
     if (table === "receitas") {
       return { data: applyRangeFilters(state.receitasData, ctx.range), error: null };
     }
+    if (table === "contas_a_pagar") {
+      const uid = ctx.filters?.user_id;
+      let base = uid
+        ? state.contasData.filter((c) => c.user_id === undefined || c.user_id === uid)
+        : state.contasData;
+      if (ctx.filters?.status) {
+        base = base.filter((c) => c.status === ctx.filters.status);
+      }
+      return { data: applyRangeFilters(base, ctx.range), error: null };
+    }
     if (table === "auth.users")
       return { data: { email: "u@example.com" }, error: null };
     return { data: null, error: null };
@@ -363,6 +376,7 @@ export function resetState(opts?: {
   link?: typeof state.linkData;
   gastos?: Record<string, unknown>[];
   receitas?: Record<string, unknown>[];
+  contas?: Record<string, unknown>[];
 }) {
   state.inserts.length = 0;
   state.pendingRow = null;
@@ -380,6 +394,7 @@ export function resetState(opts?: {
 
   state.gastosData = opts?.gastos ?? [];
   state.receitasData = opts?.receitas ?? [];
+  state.contasData = opts?.contas ?? [];
   state.cartoesData = opts?.cartoes ?? [
     {
       id: "c-nu", nome: "Nubank", banco: "Nubank",
