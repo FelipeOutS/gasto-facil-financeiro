@@ -223,6 +223,16 @@ function makeBuilder(table: string): any {
     if (table === "receitas") {
       return { data: applyRangeFilters(state.receitasData, ctx.range), error: null };
     }
+    if (table === "contas_a_pagar") {
+      const uid = ctx.filters?.user_id;
+      let base = uid
+        ? state.contasData.filter((c) => c.user_id === undefined || c.user_id === uid)
+        : state.contasData;
+      if (ctx.filters?.status) {
+        base = base.filter((c) => c.status === ctx.filters.status);
+      }
+      return { data: applyRangeFilters(base, ctx.range), error: null };
+    }
     if (table === "auth.users")
       return { data: { email: "u@example.com" }, error: null };
     return { data: null, error: null };
