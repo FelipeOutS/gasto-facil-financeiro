@@ -3664,6 +3664,18 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // WA-C4: detecção de EDIÇÃO/CANCELAMENTO de conta a pagar
+  // ("mudar vencimento da X", "adiar Y", "cancelar Z"). Estrito:
+  // rejeita "fatura/cartão" e exige verbos exclusivos de edição.
+  if (decisao === "outro" && detectEdicaoContaIntent(texto)) {
+    logWaRouteDecision(msg, "expense_parser", "new_payable_account_edit_intent");
+    return await processarEdicaoConta({
+      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      deps: edicaoContaDeps,
+    });
+  }
+
+
 
 
 
