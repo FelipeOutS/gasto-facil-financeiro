@@ -1141,6 +1141,8 @@ const PENDING_STATES = [
   ...BAIXA_CONTA_PENDING_STATES,
   // WA-C4 — edição/cancelamento de contas a pagar.
   ...EDICAO_CONTA_PENDING_STATES,
+  // WA-C7.2.b — pagamento para pessoa (state machine completa).
+  ...PAGAR_PESSOA_PENDING_STATES,
   ...RECEITA_PENDING_STATES,
 
   ...COMPROVANTE_PENDING_STATES,
