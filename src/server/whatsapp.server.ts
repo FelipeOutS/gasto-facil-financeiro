@@ -80,6 +80,11 @@ import {
   MERCHANT_MEMORY_HINT_LINE,
   type MerchantMemorySource,
 } from "./whatsapp-merchant-memory.server";
+import {
+  detectInstallmentIntent,
+  isParcelamentoSession,
+  processarParcelamento,
+} from "./whatsapp-parcelamento.server";
 import { createHash } from "crypto";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
