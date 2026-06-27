@@ -556,8 +556,14 @@ export async function processarParcelamento(args: {
   }
 
   if (current === "parc_aguardando_confirmacao") {
+    // WA-F3.3 — comandos de categoria têm prioridade sobre "sim".
+    const catCmd = deps.detectCategoriaCommand(texto);
+    if (catCmd) {
+      return await handleCategoriaCmd({
+        userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps, cartoes, cmd: catCmd,
+      });
+    }
     if (decisao === "confirm") {
-      // Ajustes posteriores ao "sim" não são esperados.
       return await persistir({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id, deps });
     }
     // Ajuste por frase livre: tenta reinterpretar campos do texto.
@@ -575,7 +581,84 @@ export async function processarParcelamento(args: {
     return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
   }
 
+  // WA-F3.3 — picker de categoria ativo: trata qualquer mensagem como
+  // input do picker (número, nome, "ver todas", "mais", "voltar"). "sim"
+  // dentro do picker NÃO confirma a compra — é tratado como termo
+  // inválido, evitando criar parcelas sem o usuário escolher categoria.
+  if (current === "parc_aguardando_categoria") {
+    const cats = await deps.loadCategoriasParaPicker(userId);
+    const r = await deps.resolveCategoriaPickerInput({
+      userId,
+      holder: {
+        descricao: session.descricao ?? null,
+        categoriaSugerida: null,
+        categoriaOptions: session.categoriaOptions,
+      },
+      cats,
+      texto,
+    });
+    if (r.kind === "picked") {
+      session.categorySelectionSource = "manual";
+      session.manualCategoriaId = r.cat.id;
+      session.manualCategoriaLabel = r.cat.nome;
+      session.categoriaOptions = undefined;
+      return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
+    }
+    if (r.kind === "relist") {
+      session.categoriaOptions = r.options;
+      await deps.atualizarSessao(sessao.id, "parc_aguardando_categoria", session as unknown as never, r.body);
+      return { status: "parc_aguardando_categoria", resposta: r.body };
+    }
+    const aviso = `Não entendi. Digite o número, o nome da categoria, "mais" para ver outras opções ou "cancelar".`;
+    await deps.atualizarSessao(sessao.id, "parc_aguardando_categoria", session as unknown as never, aviso);
+    return { status: "parc_aguardando_categoria", resposta: aviso };
+  }
+
   return { status: "sem_pendencia", resposta: "" };
+}
+
+// WA-F3.3 — trata comandos de categoria durante `parc_aguardando_confirmacao`.
+async function handleCategoriaCmd(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  session: ParcelamentoSession;
+  sessaoId: string;
+  deps: WhatsAppParcelamentoDeps;
+  cartoes: Cartao[];
+  cmd: CategoriaCmdIntent;
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, session, sessaoId, deps, cartoes, cmd } = args;
+  const cats = await deps.loadCategoriasParaPicker(userId);
+  if (cmd.kind === "ask") {
+    const { body, options } = await deps.buildCategoriaListBody({
+      userId,
+      holder: { descricao: session.descricao ?? null, categoriaSugerida: null },
+      cats,
+    });
+    session.categoriaOptions = options;
+    const resposta = `Qual categoria devo usar?\n\n${body}`;
+    await deps.atualizarSessao(sessaoId, "parc_aguardando_categoria", session as unknown as never, resposta);
+    return { status: "parc_aguardando_categoria", resposta };
+  }
+  // direct
+  const r = await deps.resolveCategoriaPickerInput({
+    userId,
+    holder: { descricao: session.descricao ?? null, categoriaSugerida: null, categoriaOptions: undefined },
+    cats,
+    texto: cmd.termo,
+  });
+  if (r.kind !== "picked") {
+    const resposta = `Não encontrei a categoria "${cmd.termo}". Digite "categoria" para ver a lista de opções.`;
+    await deps.atualizarSessao(sessaoId, "parc_aguardando_confirmacao", session as unknown as never, resposta);
+    return { status: "aguardando_confirmacao", resposta };
+  }
+  session.categorySelectionSource = "manual";
+  session.manualCategoriaId = r.cat.id;
+  session.manualCategoriaLabel = r.cat.nome;
+  session.categoriaOptions = undefined;
+  return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId });
 }
 
 async function avancarFluxo(args: {
