@@ -2751,6 +2751,75 @@ export async function processarMensagemWhatsApp(
 
 
 
+  // ---- Fase WA-C1: paginação ativa de vencimentos / contas a pagar ----
+  // Aceita "ver mais", "voltar" e "cancelar". Se não casar com comando
+  // de paginação, encerra o estado e segue o pipeline normal.
+  if (sessao && sessao.status === "aguardando_consulta_vencimentos") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const prev = sessao.session as any;
+    const stateD: DueSessionState | null =
+      prev && prev.kind === "consulta_vencimentos" && typeof prev.mode === "string"
+        ? {
+            kind: "consulta_vencimentos",
+            mode: prev.mode,
+            page: Number.isFinite(prev.page) ? Number(prev.page) : 0,
+            referenceMonth: typeof prev.referenceMonth === "string" ? prev.referenceMonth : null,
+          }
+        : null;
+    const cmd = detectPaginationCommand(texto);
+    if (stateD && cmd === "cancel") {
+      await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+      const resposta = "Tudo bem, encerrei a consulta de vencimentos.";
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        resposta,
+      );
+      return { status: "consulta", resposta };
+    }
+    if (stateD && cmd === "next") {
+      const out = await handleDuePagination(userId, stateD);
+      const next = out.nextSession ?? null;
+      if (next) {
+        await fecharSessoesAnteriores(userId, msg.telefone, "expirada");
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "aguardando_consulta_vencimentos",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ({
+            nome: "",
+            valor: 0,
+            data: todayLocalISO(),
+            mensagemOriginal: "",
+            kind: "consulta_vencimentos",
+            mode: next.mode,
+            page: next.page,
+            referenceMonth: next.referenceMonth,
+          } as unknown) as Session,
+          out.resposta,
+        );
+        return { status: "pendente", resposta: out.resposta };
+      }
+      await fecharSessoesAnteriores(userId, msg.telefone, "salva");
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        out.resposta,
+      );
+      return { status: "consulta", resposta: out.resposta };
+    }
+    // Não casou — encerra estado e segue o pipeline normal.
+    await supabaseAdmin
+      .from("whatsapp_messages")
+      .update({ status: "expirada" })
+      .eq("id", sessao.id);
+    sessao = null;
+  }
+
+
+
   // ---- Fase WA-G3: intenções conversacionais (saudação, menu, finanças genérico) ----
   // Tem precedência sobre consultas reais e sobre parsing de gasto/receita.
   // Só roda quando NÃO há sessão pendente e não é uma resposta sim/não/forma.
