@@ -50,6 +50,7 @@ import {
   recordContas as shortRecordContas,
   resolveOrdinal as shortResolveOrdinal,
   clear as shortClear,
+  resolvePagueiSemNome as shortResolvePagueiSemNome,
 } from "./whatsapp-short-context.server";
 import {
   detectConsultaEspecifica,
