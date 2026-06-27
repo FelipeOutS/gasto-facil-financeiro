@@ -37,6 +37,10 @@ import {
   rotuloTipoPix,
   type FavorecidoRow,
 } from "./whatsapp-favorecidos.server";
+// WA-C7.2.a (M-2 aviso): consulta de contas a pagar pendentes para
+// detectar colisão entre "paguei <nome>" e uma conta pendente do mesmo
+// favorecido. Reusa o mesmo lookup já validado em WA-C3.
+import { findVencimentoByTerm } from "./contas-vencimento.server";
 import {
   recordFavorecido,
   getLastFavorecido,
