@@ -131,6 +131,7 @@ import { Route as InvestimentosMovimentacaoMovIdEditarRouteImport } from './rout
 import { Route as AppIntegracoesMercadoPagoMovimentacoesRouteImport } from './routes/app_.integracoes.mercado-pago.movimentacoes'
 import { Route as ApiPublicWhatsappExpenseRouteImport } from './routes/api/public.whatsapp.expense'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public.webhooks.mercadopago'
+import { Route as ApiPublicHooksWhatsappDispatcherRouteImport } from './routes/api/public.hooks.whatsapp-dispatcher'
 import { Route as ApiIntegrationsMercadopagoConnectRouteImport } from './routes/api/integrations.mercadopago.connect'
 import { Route as ApiIntegrationsMercadopagoCallbackRouteImport } from './routes/api/integrations.mercadopago.callback'
 import { Route as ApiIntegrationsMercadopagoActionRouteImport } from './routes/api/integrations.mercadopago.$action'
@@ -759,6 +760,12 @@ const ApiPublicWebhooksMercadopagoRoute =
     path: '/api/public/webhooks/mercadopago',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksWhatsappDispatcherRoute =
+  ApiPublicHooksWhatsappDispatcherRouteImport.update({
+    id: '/api/public/hooks/whatsapp-dispatcher',
+    path: '/api/public/hooks/whatsapp-dispatcher',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiIntegrationsMercadopagoConnectRoute =
   ApiIntegrationsMercadopagoConnectRouteImport.update({
     id: '/api/integrations/mercadopago/connect',
@@ -893,6 +900,7 @@ export interface FileRoutesByFullPath {
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
   '/api/integrations/mercadopago/callback': typeof ApiIntegrationsMercadopagoCallbackRoute
   '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
+  '/api/public/hooks/whatsapp-dispatcher': typeof ApiPublicHooksWhatsappDispatcherRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
   '/app/integracoes/mercado-pago/movimentacoes': typeof AppIntegracoesMercadoPagoMovimentacoesRoute
@@ -1020,6 +1028,7 @@ export interface FileRoutesByTo {
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
   '/api/integrations/mercadopago/callback': typeof ApiIntegrationsMercadopagoCallbackRoute
   '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
+  '/api/public/hooks/whatsapp-dispatcher': typeof ApiPublicHooksWhatsappDispatcherRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
   '/app/integracoes/mercado-pago/movimentacoes': typeof AppIntegracoesMercadoPagoMovimentacoesRoute
@@ -1148,6 +1157,7 @@ export interface FileRoutesById {
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
   '/api/integrations/mercadopago/callback': typeof ApiIntegrationsMercadopagoCallbackRoute
   '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
+  '/api/public/hooks/whatsapp-dispatcher': typeof ApiPublicHooksWhatsappDispatcherRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
   '/app_/integracoes/mercado-pago/movimentacoes': typeof AppIntegracoesMercadoPagoMovimentacoesRoute
@@ -1277,6 +1287,7 @@ export interface FileRouteTypes {
     | '/api/integrations/mercadopago/$action'
     | '/api/integrations/mercadopago/callback'
     | '/api/integrations/mercadopago/connect'
+    | '/api/public/hooks/whatsapp-dispatcher'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
     | '/app/integracoes/mercado-pago/movimentacoes'
@@ -1404,6 +1415,7 @@ export interface FileRouteTypes {
     | '/api/integrations/mercadopago/$action'
     | '/api/integrations/mercadopago/callback'
     | '/api/integrations/mercadopago/connect'
+    | '/api/public/hooks/whatsapp-dispatcher'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
     | '/app/integracoes/mercado-pago/movimentacoes'
@@ -1531,6 +1543,7 @@ export interface FileRouteTypes {
     | '/api/integrations/mercadopago/$action'
     | '/api/integrations/mercadopago/callback'
     | '/api/integrations/mercadopago/connect'
+    | '/api/public/hooks/whatsapp-dispatcher'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
     | '/app_/integracoes/mercado-pago/movimentacoes'
@@ -1658,6 +1671,7 @@ export interface RootRouteChildren {
   ApiIntegrationsMercadopagoActionRoute: typeof ApiIntegrationsMercadopagoActionRoute
   ApiIntegrationsMercadopagoCallbackRoute: typeof ApiIntegrationsMercadopagoCallbackRoute
   ApiIntegrationsMercadopagoConnectRoute: typeof ApiIntegrationsMercadopagoConnectRoute
+  ApiPublicHooksWhatsappDispatcherRoute: typeof ApiPublicHooksWhatsappDispatcherRoute
   ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
   ApiPublicWhatsappExpenseRoute: typeof ApiPublicWhatsappExpenseRoute
   AppIntegracoesMercadoPagoMovimentacoesRoute: typeof AppIntegracoesMercadoPagoMovimentacoesRoute
@@ -2527,6 +2541,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksMercadopagoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/whatsapp-dispatcher': {
+      id: '/api/public/hooks/whatsapp-dispatcher'
+      path: '/api/public/hooks/whatsapp-dispatcher'
+      fullPath: '/api/public/hooks/whatsapp-dispatcher'
+      preLoaderRoute: typeof ApiPublicHooksWhatsappDispatcherRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/integrations/mercadopago/connect': {
       id: '/api/integrations/mercadopago/connect'
       path: '/api/integrations/mercadopago/connect'
@@ -2678,6 +2699,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiIntegrationsMercadopagoCallbackRoute,
   ApiIntegrationsMercadopagoConnectRoute:
     ApiIntegrationsMercadopagoConnectRoute,
+  ApiPublicHooksWhatsappDispatcherRoute: ApiPublicHooksWhatsappDispatcherRoute,
   ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
   ApiPublicWhatsappExpenseRoute: ApiPublicWhatsappExpenseRoute,
   AppIntegracoesMercadoPagoMovimentacoesRoute:
