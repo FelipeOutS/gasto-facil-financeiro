@@ -21,10 +21,13 @@
  * canônico. Todas as queries filtram por `user_id`. Nunca expor dados
  * de outro usuário.
  */
-import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
+import * as _supa from "@/integrations/supabase/client.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const supabaseAdmin = _supabaseAdmin as any;
+// Lazy live-binding: garante que mock.module() em testes seja
+// resolvido a cada chamada, sem snapshot no escopo de módulo.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabaseAdmin: any = new Proxy({}, { get: (_t, prop) => (_supa.supabaseAdmin as any)[prop] });
 
 const APP_TZ = "America/Sao_Paulo";
 

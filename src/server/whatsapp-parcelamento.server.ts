@@ -15,7 +15,7 @@
  * - todas as queries filtradas por user_id;
  * - log seguro, sem PII/valor/cartão/descrição/texto.
  */
-import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
+import * as _supa from "@/integrations/supabase/client.server";
 import {
   parseWhatsAppExpenseMessage,
   cleanDescricao,
@@ -67,7 +67,10 @@ export type WhatsAppParcelamentoDeps = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const supabaseAdmin = _supabaseAdmin as any;
+// Lazy live-binding: garante que mock.module() em testes seja
+// resolvido a cada chamada, sem snapshot no escopo de módulo.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabaseAdmin: any = new Proxy({}, { get: (_t, prop) => (_supa.supabaseAdmin as any)[prop] });
 
 const MESES_PT = [
   "janeiro", "fevereiro", "março", "abril", "maio", "junho",
