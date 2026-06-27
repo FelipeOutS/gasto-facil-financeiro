@@ -159,25 +159,25 @@ export function detectMarkAsPaidIntent(textRaw: string): { termo: string } | nul
 
   // Padrões aceitos. Cada um extrai o `termo`.
   // 1) "paguei [a|o|minha|meu|essa|esse] <termo>"
-  let m = t.match(/\bpaguei\s+(?:a|o|as|os|minha|meu|essa|esse|uma|um)?\s*([a-z0-9 ]{2,40})$/);
+  let m = t.match(/\bpaguei\s+(?:(?:a|o|as|os|minha|meu|essa|esse|uma|um)\s+)?([a-z0-9 ]{2,40})$/);
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
     if (termo) return { termo };
   }
   // 2) "quitei <termo>" / "quitar <termo>"
-  m = t.match(/\bquit(?:ei|ar|a|e)\s+(?:a|o|as|os|minha|meu|essa|esse|uma|um)?\s*([a-z0-9 ]{2,40})$/);
+  m = t.match(/\bquit(?:ei|ar|a|e)\s+(?:(?:a|o|as|os|minha|meu|essa|esse|uma|um)\s+)?([a-z0-9 ]{2,40})$/);
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
     if (termo) return { termo };
   }
   // 3) "dei baixa (em|na|no|do|da) <termo>" / "dar baixa em <termo>"
-  m = t.match(/\b(?:dei|dar|da)\s+baixa\s+(?:em|na|no|do|da|nos|nas)?\s*([a-z0-9 ]{2,40})$/);
+  m = t.match(/\b(?:dei|dar|da)\s+baixa\s+(?:(?:em|na|no|do|da|nos|nas)\s+)?([a-z0-9 ]{2,40})$/);
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
     if (termo) return { termo };
   }
   // 4) "marcar <termo> como pago" / "marca <termo> como pago"
-  m = t.match(/\bmarc(?:ar|a|e|ou)\s+(?:a|o|as|os|minha|meu|essa|esse)?\s*([a-z0-9 ]{2,40})\s+como\s+pag[ao]\b/);
+  m = t.match(/\bmarc(?:ar|a|e|ou)\s+(?:(?:a|o|as|os|minha|meu|essa|esse)\s+)?([a-z0-9 ]{2,40})\s+como\s+pag[ao]\b/);
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
     if (termo) return { termo };
