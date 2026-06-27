@@ -2264,7 +2264,7 @@ export async function processarMensagemWhatsApp(
     }
   }
 
-  const texto = (msg.texto ?? "").trim();
+  let texto = (msg.texto ?? "").trim();
   // Permitir mensagens só-imagem (Fase WA-G5A): se vier uma foto sem
   // texto, seguimos o pipeline e roteamos para o handler de comprovante.
   if (!texto && !msg.image) {
