@@ -2818,7 +2818,23 @@ export async function processarMensagemWhatsApp(
 
 
 
-  // ---- Fase WA-F1: consulta de fatura atual de cartão de crédito ----
+  // ---- Fase WA-F4 (guarda): mês explícito > 12 meses à frente ----
+  // Roda ANTES do WA-F1 para não cair em "fatura de X" como nome de
+  // cartão. Apenas leitura.
+  if (!sessao && decisao === "outro" && isBeyondHorizon(texto)) {
+    const resposta =
+      "Por enquanto só consigo estimar até 12 meses à frente.\n\n" +
+      "Tente uma data mais próxima.";
+    await gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "sem_pendencia",
+      { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+      resposta,
+    );
+    return { status: "consulta", resposta };
+  }
+
+
   // Apenas leitura. Detecta perguntas como "fatura", "fatura Nubank",
   // "quanto devo no cartão", "quando vence minha fatura", "qual cartão
   // está com maior fatura". Não cria sessão, não altera nada. Reusa o
