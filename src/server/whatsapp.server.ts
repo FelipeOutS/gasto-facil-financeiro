@@ -50,6 +50,7 @@ import {
   recordContas as shortRecordContas,
   resolveOrdinal as shortResolveOrdinal,
   clear as shortClear,
+  resolvePagueiSemNome as shortResolvePagueiSemNome,
 } from "./whatsapp-short-context.server";
 import {
   detectConsultaEspecifica,
@@ -1015,7 +1016,7 @@ type Session = {
   /** Marcador explícito: distingue sessões de gasto das de receita.
    *  Persistido em whatsapp_messages.parsed quando criamos uma sessão
    *  vazia de gasto (status=aguardando_descricao_e_valor_gasto). */
-  kind?: "gasto";
+  kind?: "gasto" | "pagar_pessoa";
   /**
    * WA-V1.3 — propagada da `WhatsAppMessageRow` para que tanto a
    * prévia (formatarConfirmacao) quanto a persistência final
@@ -3751,11 +3752,50 @@ export async function processarMensagemWhatsApp(
       userId, telefone: msg.telefone, texto, _row: msg,
     });
   }
+  // WA-C7.2.a — Atalho "Paguei.": se a frase é só um verbo de pagamento
+  // (sem nome próprio nem sinais de conta/estabelecimento) e há um
+  // favorecido recentemente referenciado em memória curta, reescrevemos
+  // para incluir o nome antes do detector. Isso permite "qual o Pix do
+  // João?" + "paguei 50" → "paguei 50 João".
+  if (decisao === "outro") {
+    const reescritoPix = shortResolvePagueiSemNome(msg.telefone, texto);
+    if (reescritoPix) texto = reescritoPix;
+  }
   if (decisao === "outro" && detectPagarPessoaIntent(texto)) {
     logWaRouteDecision(msg, "expense_parser", "pagar_pessoa_intent");
-    return await handlePagarPessoaIntent({
+    const outcome = await handlePagarPessoaIntent({
       userId, telefone: msg.telefone, texto, _row: msg,
     });
+    // WA-C7.2.a — M-1 (idempotência): persistimos o resultado em
+    // `whatsapp_messages` com `parsed.kind="pagar_pessoa"` para que
+    // tanto o dedup top-level desta função quanto a checagem dentro do
+    // próprio handler captem retries do webhook. Só persistimos quando
+    // o pagamento foi efetivamente salvo (com `gastoId`); demais
+    // outcomes (aviso de colisão, parse_failed, erro) não devem
+    // bloquear retries futuros.
+    if (outcome.status === "salva" && outcome.gastoId) {
+      await gravarSessao(
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "salva",
+        {
+          // Sessão sintética: o handler já gerou o gasto. Mantemos os
+          // campos mínimos da `Session` para não quebrar o schema.
+          nome: "",
+          valor: 0,
+          data: todayLocalISO(),
+          mensagemOriginal: texto,
+          // Marcador usado pelo dedup e por futuros estados (7.2.b).
+          kind: "pagar_pessoa",
+        } as Session,
+        outcome.resposta,
+        outcome.gastoId,
+      );
+    }
+    return outcome;
   }
 
   const parsed = parseExpenseMessage(texto, cartoes);

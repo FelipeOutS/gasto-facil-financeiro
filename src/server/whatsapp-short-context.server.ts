@@ -202,3 +202,65 @@ export function resolveOrdinal(telefone: string, texto: string): string | null {
   if (action === "editar") return `editar ${item.nome}`;
   return `cancelar ${item.nome}`;
 }
+
+// =========================================================================
+// WA-C7.2.a — Atalho "Paguei." usando memória curta de favorecido
+// =========================================================================
+//
+// Quando o usuário acabou de consultar o Pix de alguém (ou registrou um
+// pagamento para essa pessoa) e dispara apenas "paguei", "paguei R$ 50" ou
+// "paguei 50 do almoço", o sistema reescreve a frase para incluir o nome do
+// último favorecido. Isso permite que o handler de pagamento para pessoa
+// (`handlePagarPessoaIntent`) entenda o destinatário sem o usuário ter
+// que repetir o nome.
+//
+// Regras estritas para evitar reescritas indevidas:
+//  - Não reescreve se já houver um nome próprio reconhecível (qualquer
+//    palavra capitalizada com 2+ letras) na frase.
+//  - Não reescreve se a frase mencionar boleto/fatura/cartão/conta — esses
+//    sinais devem permanecer com o fluxo de Contas a Pagar (WA-C3).
+//  - Não reescreve se a frase parecer um lançamento de gasto comum
+//    (ex.: "paguei 50 no mercado", "paguei 30 no pix no Uber"): a presença
+//    de "no/na <estabelecimento>" indica gasto, não pagamento para pessoa.
+//  - Só aciona se há favorecido recente válido (TTL ok).
+// O texto retornado é determinístico e seguro: insere `<nome>` logo após o
+// verbo "paguei", preservando o restante da frase para que o parser de
+// `parsePagarPessoa` extraia valor/descrição normalmente.
+const VERBO_PAGUEI_RE = /^\s*(paguei|ja\s+paguei|já\s+paguei|acabei\s+de\s+pagar|quitei)\b/i;
+const TEM_NOME_PROPRIO_RE = /\b[A-ZÀ-Ý][a-zà-ÿ]{1,}\b/; // capitalizado
+const SINAIS_CONTA_RE = /\b(boleto|fatura|cartao|cartão|conta\s+de\s+\w+)\b/i;
+const SINAIS_ESTABELECIMENTO_RE = /\b(?:no|na|nos|nas)\s+[a-zà-ÿ]/i;
+const PREP_DESTINATARIO_RE = /\b(?:para|pra|pro|ao|à)\s+[a-zà-ÿ]/i;
+
+/**
+ * Tenta reescrever uma frase de pagamento curta para incluir o último
+ * favorecido recentemente referenciado. Retorna o texto reescrito ou null
+ * quando não for seguro reescrever.
+ *
+ * Exemplos:
+ *  - "paguei"                         → "paguei João"
+ *  - "paguei 50"                      → "paguei João 50"
+ *  - "paguei R$ 50 do almoço"         → "paguei João R$ 50 do almoço"
+ *  - "paguei 50 no mercado"           → null  (sinal de estabelecimento)
+ *  - "paguei João 50"                 → null  (já tem destinatário)
+ *  - "paguei a fatura"                → null  (sinal de conta a pagar)
+ */
+export function resolvePagueiSemNome(
+  telefone: string,
+  texto: string,
+): string | null {
+  const raw = (texto ?? "").trim();
+  if (!raw) return null;
+  if (!VERBO_PAGUEI_RE.test(raw)) return null;
+  if (SINAIS_CONTA_RE.test(raw)) return null;
+  if (PREP_DESTINATARIO_RE.test(raw)) return null;
+  if (SINAIS_ESTABELECIMENTO_RE.test(raw)) return null;
+  // Heurística: a primeira palavra após o verbo, se capitalizada, costuma
+  // ser nome próprio explícito ("paguei João 50") — não reescrever.
+  const aposVerbo = raw.replace(VERBO_PAGUEI_RE, "").trim();
+  if (TEM_NOME_PROPRIO_RE.test(aposVerbo)) return null;
+  const nome = getLastFavorecido(telefone);
+  if (!nome) return null;
+  // Insere o nome logo depois do verbo. Preserva o restante.
+  return raw.replace(VERBO_PAGUEI_RE, (m) => `${m} ${nome}`);
+}
