@@ -349,6 +349,7 @@ export async function processarParcelamento(args: {
   decisao: "confirm" | "cancel" | "outro";
   sessao: { id: string; status: string; session: unknown; recebida_em: string } | null;
 }): Promise<ProcessOutcome> {
+  await loadWa();
   const { userId, msg, texto, recebidaEm, decisao, sessao } = args;
   console.log("[parc-deps]", { hasCarregarCartoes: typeof wa.carregarCartoes });
   const cartoes = await wa.carregarCartoes(userId);
