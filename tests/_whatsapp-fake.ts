@@ -187,20 +187,37 @@ function makeBuilder(table: string): any {
           };
         }
       }
-      // WA-C3 — update condicional de contas_a_pagar (status='pendente').
+      // WA-C3/WA-C4 — update condicional de contas_a_pagar. Suporta
+      // filtros por equality, IN (array) e range (gte/lte/lt).
       if (table === "contas_a_pagar") {
-        let updated: Record<string, unknown> | null = null;
+        const updatedRows: Record<string, unknown>[] = [];
         for (const c of state.contasData) {
           let match = true;
           for (const [col, val] of Object.entries(ctx.filters)) {
-            if ((c as Record<string, unknown>)[col] !== val) { match = false; break; }
+            const actual = (c as Record<string, unknown>)[col];
+            if (Array.isArray(val)) {
+              if (!val.includes(actual)) { match = false; break; }
+            } else if (actual !== val) {
+              match = false;
+              break;
+            }
+          }
+          if (match && ctx.range) {
+            for (const col of Object.keys(ctx.range)) {
+              const v = (c as Record<string, unknown>)[col];
+              const rg = ctx.range[col];
+              if (rg.gte != null && !(v != null && (v as string | number) >= rg.gte)) { match = false; break; }
+              if (rg.lte != null && !(v != null && (v as string | number) <= rg.lte)) { match = false; break; }
+              if (rg.lt != null && !(v != null && (v as string | number) < rg.lt)) { match = false; break; }
+            }
           }
           if (match) {
             Object.assign(c, ctx.payload);
-            if (!updated) updated = c;
+            updatedRows.push(c);
           }
         }
-        return { data: updated, error: null };
+        if (ctx.single) return { data: updatedRows[0] ?? null, error: null };
+        return { data: updatedRows, error: null };
       }
       return { data: null, error: null };
     }
