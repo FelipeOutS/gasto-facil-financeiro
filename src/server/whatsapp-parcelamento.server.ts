@@ -30,34 +30,41 @@ import {
   reaisParaCentavos,
   calcularParcelasCentavos,
 } from "./cartao-parcelamento.server";
-// IMPORTANT: import as namespace to preserve ESM live bindings.
-// whatsapp.server.ts imports back from this module — a default named
-// import would snapshot bindings as `undefined` during initialisation.
-// Lazy/dynamic import to break the circular dep with whatsapp.server.ts.
-// Static `import * as wa` triggers a Bun mock.module() race where
-// supabaseAdmin captured by upstream modules is the REAL client even
-// after the test fake registered its mock — breaking integration tests.
-// We resolve the module on first call and reuse the namespace object.
-import type * as waNs from "./whatsapp.server";
+// ----- Dependency-injection seam -----
+// O orquestrador (`whatsapp.server.ts`) é quem importa este módulo. Para
+// evitar dependência circular em runtime — que quebrava o mock de
+// `supabaseAdmin` em testes e tornava o módulo financeiro dependente do
+// pipeline de mensagens — este módulo NÃO importa nenhum runtime do
+// `whatsapp.server.ts`. Em vez disso, recebe as funções necessárias via
+// `deps`, injetadas pelo orquestrador na hora da chamada.
+//
+// `import type` é a única referência permitida ao módulo do WhatsApp:
+// tipos são apagados pelo compilador e não criam aresta de runtime.
 import type { WhatsAppMessageRow, ProcessOutcome } from "./whatsapp.server";
 import { recordMerchantMemory, merchantKeyFor } from "./whatsapp-merchant-memory.server";
 import { randomUUID } from "crypto";
 
-let _wa: typeof waNs | undefined;
-async function loadWa(): Promise<typeof waNs> {
-  if (!_wa) _wa = await import("./whatsapp.server");
-  return _wa;
-}
-// `wa` is a proxy that lazily resolves to the loaded namespace.
-// Any call to `wa.X(...)` MUST be preceded by `await loadWa()` in the
-// nearest async entry point.
-const wa: typeof waNs = new Proxy({} as typeof waNs, {
-  get(_t, prop) {
-    if (!_wa) throw new Error(`[parcelamento] wa.${String(prop)} accessed before loadWa()`);
+export type WhatsAppParcelamentoDeps = {
+  carregarCartoes: (userId: string) => Promise<Cartao[]>;
+  matchCartao: (input: string, cartoes: Cartao[]) => { match: Cartao | null; ambiguous?: string[] };
+  displayCartaoNome: (c: Cartao) => string;
+  maskCartaoLabel: (c: Cartao) => string;
+  isGenericExpenseDescription: (nome: string | undefined | null) => boolean;
+  gravarSessao: (
+    userId: string, telefone: string, externalId: string | null,
+    texto: string, recebidaEm: string, status: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (_wa as any)[prop];
-  },
-}) as typeof waNs;
+    session: any, resposta: string, gastoId?: string,
+  ) => Promise<unknown>;
+  atualizarSessao: (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    id: string, status: string, session: any, resposta: string, gastoId?: string,
+  ) => Promise<unknown>;
+  fecharSessoesAnteriores: (
+    userId: string, telefone: string,
+    motivo: "salva" | "cancelada" | "expirada", gastoId?: string,
+  ) => Promise<void>;
+};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin = _supabaseAdmin as any;
