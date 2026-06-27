@@ -188,7 +188,10 @@ export function detectMarkAsPaidIntent(
     if (termo) return { termo, paymentDate: dateText };
   }
   // 5) "<termo> foi pago/paga" / "a conta de <termo> foi paga"
-  m = t.match(/\b(?:a\s+conta\s+(?:de|do|da)\s+)?([a-z0-9 ]{2,40})\s+(?:foi|esta|ja\s+foi)\s+pag[ao]\b/);
+  //    WA-C3.2 — preserva o nome composto inteiro (ex.: "conta de luz",
+  //    "plano de saúde"). O regex aceita um artigo inicial opcional, mas
+  //    NÃO consome "conta de" como prefixo descartável: ele entra no termo.
+  m = t.match(/\b(?:(?:a|o|as|os|minha|meu|essa|esse)\s+)?([a-z0-9][a-z0-9 ]{1,40})\s+(?:foi|esta|ja\s+foi)\s+pag[ao]\b/);
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
     if (termo) return { termo, paymentDate: dateText };
@@ -229,16 +232,22 @@ function extractAndStripDate(textNorm: string): { dateText: string | null; clean
   return { dateText: null, cleaned: textNorm };
 }
 
-const FILLER_WORDS = new Set([
+/**
+ * WA-C3.2 — apenas tokens de "borda" descartáveis: artigos, pronomes e
+ * marcadores periféricos ("já"). NÃO remove "conta", "de", "do", "da",
+ * "dos", "das" — elas fazem parte de nomes legítimos ("conta de luz",
+ * "plano de saúde", "seguro do carro").
+ */
+const EDGE_FILLERS = new Set([
   "a","o","as","os","minha","meu","essa","esse","uma","um",
-  "de","do","da","dos","das","conta","contas","mensalidade",
   "ja","já",
 ]);
 
 function stripFillers(raw: string): string {
-  const words = raw.trim().split(/\s+/).filter((w) => !FILLER_WORDS.has(w));
-  const out = words.join(" ").trim();
-  return out;
+  const words = raw.trim().split(/\s+/).filter(Boolean);
+  while (words.length && EDGE_FILLERS.has(words[0])) words.shift();
+  while (words.length && EDGE_FILLERS.has(words[words.length - 1])) words.pop();
+  return words.join(" ").trim();
 }
 
 // ---------- ajuste de data ----------
