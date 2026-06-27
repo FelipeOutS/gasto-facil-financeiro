@@ -177,7 +177,7 @@ function norm(s: string): string {
   return (s ?? "")
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/[?!.,;:"']+/g, " ")
+    .replace(/[?!;:"']+/g, " ")
     .replace(/\s+/g, " ").trim();
 }
 
