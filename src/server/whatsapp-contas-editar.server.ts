@@ -292,8 +292,10 @@ function parseDate(text: string, hoje: Date = nowInAppTz()): string | null {
 // IGNORA tokens como "dia 10", "3 parcelas", "cartão final 42".
 function parseAmountToCentavos(textRaw: string): number | null {
   let t = textRaw.toLowerCase();
-  // remove tokens irrelevantes ANTES.
-  t = t.replace(/\bdia\s+\d{1,2}\b/g, " ")
+  // remove tokens irrelevantes ANTES (datas, parcelas, finais de cartão).
+  t = t.replace(/\b\d{1,2}\s+de\s+(?:janeiro|fevereiro|marco|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\s+de\s+\d{2,4})?\b/g, " ")
+       .replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g, " ")
+       .replace(/\bdia\s+\d{1,2}\b/g, " ")
        .replace(/\b\d+\s*x\b/g, " ")
        .replace(/\b\d+\s*(?:parcelas?|vezes?)\b/g, " ")
        .replace(/\bfinal\s+\d{2,4}\b/g, " ")
