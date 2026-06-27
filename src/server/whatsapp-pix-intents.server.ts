@@ -43,11 +43,9 @@ import {
 } from "./whatsapp-short-context.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
 
-// Live-binding para permitir mock.module() em testes.
+// Direct import mocked por `mock.module(...)` nos testes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const supabaseAdmin: any = new Proxy({}, {
-  get: (_t, prop) => (_supa.supabaseAdmin as never)[prop as never],
-});
+const supabaseAdmin: any = _supabaseAdmin;
 
 // Re-export para o roteador principal.
 export {
