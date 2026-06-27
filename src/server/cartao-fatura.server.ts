@@ -367,3 +367,343 @@ export async function getResumoItensFaturaAtual(
   }
   return out;
 }
+
+// =====================================================================
+// WA-F4 — Faturas FUTURAS (mês específico) e COMPRAS PARCELADAS em aberto.
+// Reusa estritamente as regras de ciclo/`invoice_month` já definidas
+// acima. Nunca cria, altera ou exclui registros. Nunca atravessa
+// fronteiras de `user_id`.
+// =====================================================================
+
+/** Valida e parseia "YYYY-MM". Retorna null se inválido. */
+export function parseInvoiceMonth(ym: string | null | undefined):
+  | { mes: number; ano: number; ym: string }
+  | null {
+  if (!ym || typeof ym !== "string") return null;
+  const m = ym.match(/^(\d{4})-(0[1-9]|1[0-2])$/);
+  if (!m) return null;
+  const ano = Number(m[1]);
+  const mes = Number(m[2]);
+  return { mes, ano, ym };
+}
+
+/**
+ * Calcula a fatura ESTIMADA de um cartão para um mês específico
+ * (`invoice_month`). Aplica as mesmas regras de filtro do
+ * `getFaturaAtualPorCartao`, porém com o ciclo do MÊS alvo, não do
+ * ciclo aberto. Útil para responder "próxima fatura", "fatura de
+ * agosto", parcelas futuras. Não infere status de pagamento.
+ */
+export async function getFaturaPorMes(
+  userId: string,
+  cartao: CartaoRow,
+  invoiceMonth: string,
+): Promise<FaturaAtual | null> {
+  const parsed = parseInvoiceMonth(invoiceMonth);
+  if (!parsed) return null;
+  const diaFech = Number(cartao.dia_fechamento ?? 1) || 1;
+  const diaVenc = Number(cartao.dia_vencimento ?? 10) || 10;
+  const { mes, ano, ym: targetYm } = parsed;
+  const { inicio, fim } = cicloFatura(diaFech, mes, ano);
+
+  const fromIso = inicio.toISOString().slice(0, 10);
+  const toIso = new Date(fim.getTime() + 24 * 3600 * 1000).toISOString().slice(0, 10);
+
+  // Buscamos TODOS os gastos do cartão por dois caminhos:
+  // a) gastos com invoice_month = targetYm (parcelas futuras já criadas);
+  // b) gastos com data dentro da janela do ciclo (sem invoice_month).
+  // Como a query SQL não consegue um OR limpo neste fake, varremos a
+  // janela do ciclo e também rebuscamos só por invoice_month — depois
+  // deduplicamos por id.
+  const { data: byDate } = await supabaseAdmin
+    .from("gastos")
+    .select("id, valor, data, cartao_id, invoice_month, forma_pagamento, confirmado")
+    .eq("user_id", userId)
+    .eq("cartao_id", cartao.id)
+    .gte("data", fromIso)
+    .lt("data", toIso);
+  const { data: byYm } = await supabaseAdmin
+    .from("gastos")
+    .select("id, valor, data, cartao_id, invoice_month, forma_pagamento, confirmado")
+    .eq("user_id", userId)
+    .eq("cartao_id", cartao.id)
+    .eq("invoice_month", targetYm);
+
+  type Row = {
+    id: string;
+    valor: number | string | null;
+    data: string;
+    cartao_id: string | null;
+    invoice_month: string | null;
+    forma_pagamento: string | null;
+    confirmado: boolean | null;
+  };
+  const seen = new Set<string>();
+  const all: Row[] = [];
+  for (const r of [...((byDate as Row[]) ?? []), ...((byYm as Row[]) ?? [])]) {
+    const id = String(r.id ?? "");
+    if (seen.has(id)) continue;
+    seen.add(id);
+    all.push(r);
+  }
+
+  let total = 0;
+  let qtd = 0;
+  for (const g of all) {
+    if (g.cartao_id !== cartao.id) continue;
+    if ((g.forma_pagamento ?? "") !== "credito") continue;
+    if (g.confirmado === false) continue;
+    const im = g.invoice_month;
+    if (im && /^\d{4}-\d{2}$/.test(im)) {
+      if (im !== targetYm) continue;
+    } else {
+      const d = g.data ? new Date(g.data + "T00:00:00") : null;
+      if (!d) continue;
+      if (d < inicio || d > fim) continue;
+    }
+    total += Number(g.valor ?? 0) || 0;
+    qtd += 1;
+  }
+
+  // Datas de fechamento/vencimento DO MÊS alvo (não do ciclo aberto).
+  const fechamento = new Date(ano, mes - 1, diaFech, 23, 59, 59, 999);
+  let vencimento = new Date(ano, mes - 1, diaVenc);
+  if (vencimento.getTime() <= fechamento.getTime()) {
+    vencimento = new Date(ano, mes, diaVenc);
+  }
+
+  const limite = Number(cartao.limite_total ?? 0) || 0;
+  const disponivel = Math.max(0, limite - total);
+  return {
+    cartaoId: cartao.id,
+    cartaoNome: cartao.nome,
+    mesRef: mes,
+    anoRef: ano,
+    total,
+    limite,
+    disponivel,
+    qtd,
+    fechamento,
+    vencimento,
+  };
+}
+
+/** Resumo consolidado de faturas estimadas por mês (todos os cartões). */
+export async function getResumoFaturasPorMes(
+  userId: string,
+  invoiceMonth: string,
+): Promise<FaturaAtual[]> {
+  const cartoes = await loadCartoesDoUsuario(userId);
+  const out: FaturaAtual[] = [];
+  for (const c of cartoes) {
+    const f = await getFaturaPorMes(userId, c, invoiceMonth);
+    if (f) out.push(f);
+  }
+  return out;
+}
+
+// ---- Compras parceladas em aberto ----------------------------------
+
+export type ParcelaRow = {
+  id: string;
+  descricao: string;
+  estabelecimento: string | null;
+  valor: number;
+  data: string;
+  invoiceMonth: string | null;
+  parcelaAtual: number;
+  totalParcelas: number;
+  grupoId: string;
+  cartaoId: string;
+};
+
+export type CompraParcelada = {
+  grupoId: string;
+  descricao: string;
+  cartaoId: string;
+  totalParcelas: number;
+  parcelas: ParcelaRow[];
+  totalCompra: number;
+  /** Parcelas com invoice_month >= ciclo atual do cartão. */
+  parcelasRestantes: ParcelaRow[];
+  saldoRestante: number;
+  /** Primeira parcela futura/atual, em ordem cronológica. */
+  proximaParcela: ParcelaRow | null;
+};
+
+/**
+ * Carrega TODAS as parcelas (linhas de gastos com grupo_parcelamento_id
+ * não-nulo) do próprio usuário, agrupadas por grupo. Filtra pelas
+ * regras seguras: crédito, confirmadas, com parcela_atual/total
+ * coerentes. Não infere parcelas por texto/valor.
+ */
+async function loadParcelasDoUsuario(userId: string): Promise<ParcelaRow[]> {
+  const { data } = await supabaseAdmin
+    .from("gastos")
+    .select(
+      "id, descricao, estabelecimento, valor, data, invoice_month, forma_pagamento, confirmado, parcela_atual, total_parcelas, grupo_parcelamento_id, cartao_id",
+    )
+    .eq("user_id", userId);
+  const rows = Array.isArray(data) ? (data as Array<Record<string, unknown>>) : [];
+  const out: ParcelaRow[] = [];
+  for (const g of rows) {
+    if ((g.forma_pagamento ?? "") !== "credito") continue;
+    if (g.confirmado === false) continue;
+    const grupoId = g.grupo_parcelamento_id as string | null;
+    const cartaoId = g.cartao_id as string | null;
+    if (!grupoId || !cartaoId) continue;
+    const pa = Number(g.parcela_atual);
+    const tp = Number(g.total_parcelas);
+    if (!(Number.isFinite(pa) && Number.isFinite(tp) && pa >= 1 && tp >= 2 && pa <= tp)) continue;
+    out.push({
+      id: String(g.id ?? ""),
+      descricao: String(g.descricao ?? g.estabelecimento ?? "").trim(),
+      estabelecimento: (g.estabelecimento as string | null) ?? null,
+      valor: Number(g.valor ?? 0) || 0,
+      data: String(g.data ?? ""),
+      invoiceMonth: (g.invoice_month as string | null) ?? null,
+      parcelaAtual: pa,
+      totalParcelas: tp,
+      grupoId,
+      cartaoId,
+    });
+  }
+  return out;
+}
+
+/**
+ * Define se uma parcela "ainda está aberta" — heurística segura,
+ * sem inventar status de pagamento:
+ *   - parcela com invoice_month >= ciclo atual do cartão; OU
+ *   - parcela sem invoice_month cuja data cai no ciclo atual ou depois.
+ */
+function isParcelaEmAberto(
+  p: ParcelaRow,
+  cartao: CartaoRow,
+  hoje: Date,
+): boolean {
+  const diaFech = Number(cartao.dia_fechamento ?? 1) || 1;
+  const { mes, ano } = faturaCorrenteRef(diaFech, hoje);
+  const curYm = ymOf(mes, ano);
+  // "Em aberto" = parcela ainda NÃO foi para uma fatura já fechada
+  // nem para a fatura atualmente em cobrança. Usamos > ciclo atual
+  // (estritamente). A parcela do ciclo atual é considerada "prevista
+  // até agora" (já apareceu na fatura corrente).
+  if (p.invoiceMonth && /^\d{4}-\d{2}$/.test(p.invoiceMonth)) {
+    return p.invoiceMonth > curYm;
+  }
+  if (!p.data) return false;
+  const d = new Date(p.data + "T00:00:00");
+  const fimAtual = cicloFatura(diaFech, mes, ano).fim;
+  return d > fimAtual;
+
+}
+
+function buildCompraParcelada(
+  parcelas: ParcelaRow[],
+  cartao: CartaoRow,
+  hoje: Date,
+): CompraParcelada {
+  const ordenadas = parcelas.slice().sort((a, b) => a.parcelaAtual - b.parcelaAtual);
+  const totalCompra = ordenadas.reduce((s, p) => s + p.valor, 0);
+  const restantes = ordenadas.filter((p) => isParcelaEmAberto(p, cartao, hoje));
+  const saldo = restantes.reduce((s, p) => s + p.valor, 0);
+  const proxima =
+    restantes.slice().sort((a, b) => {
+      const ka = a.invoiceMonth ?? a.data;
+      const kb = b.invoiceMonth ?? b.data;
+      return ka < kb ? -1 : ka > kb ? 1 : a.parcelaAtual - b.parcelaAtual;
+    })[0] ?? null;
+  const descricao = (ordenadas.find((p) => p.descricao)?.descricao ?? "").trim();
+  return {
+    grupoId: ordenadas[0].grupoId,
+    descricao,
+    cartaoId: cartao.id,
+    totalParcelas: ordenadas[0].totalParcelas,
+    parcelas: ordenadas,
+    totalCompra,
+    parcelasRestantes: restantes,
+    saldoRestante: saldo,
+    proximaParcela: proxima,
+  };
+}
+
+/**
+ * Retorna apenas as compras parceladas com pelo menos UMA parcela
+ * ainda em aberto (cycle atual ou futuro). Ordenadas pela próxima
+ * parcela mais próxima.
+ */
+export async function getComprasParceladasEmAberto(
+  userId: string,
+  hoje: Date = nowInAppTz(),
+): Promise<CompraParcelada[]> {
+  const parcelas = await loadParcelasDoUsuario(userId);
+  if (parcelas.length === 0) return [];
+  const cartoes = await loadCartoesDoUsuario(userId);
+  const byCartao = new Map(cartoes.map((c) => [c.id, c]));
+  const groups = new Map<string, ParcelaRow[]>();
+  for (const p of parcelas) {
+    const arr = groups.get(p.grupoId) ?? [];
+    arr.push(p);
+    groups.set(p.grupoId, arr);
+  }
+  const out: CompraParcelada[] = [];
+  for (const [, arr] of groups) {
+    const cartao = byCartao.get(arr[0].cartaoId);
+    if (!cartao) continue; // cartão excluído → ignora
+    const compra = buildCompraParcelada(arr, cartao, hoje);
+    if (compra.parcelasRestantes.length > 0) out.push(compra);
+  }
+  out.sort((a, b) => {
+    const ka = a.proximaParcela?.invoiceMonth ?? a.proximaParcela?.data ?? "";
+    const kb = b.proximaParcela?.invoiceMonth ?? b.proximaParcela?.data ?? "";
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+  });
+  return out;
+}
+
+/** Detalhe de UMA compra parcelada por grupo. Null se não pertencer ao usuário. */
+export async function getDetalheCompraParcelada(
+  userId: string,
+  grupoId: string,
+  hoje: Date = nowInAppTz(),
+): Promise<CompraParcelada | null> {
+  if (!grupoId) return null;
+  const parcelas = (await loadParcelasDoUsuario(userId)).filter((p) => p.grupoId === grupoId);
+  if (parcelas.length === 0) return null;
+  const cartoes = await loadCartoesDoUsuario(userId);
+  const cartao = cartoes.find((c) => c.id === parcelas[0].cartaoId);
+  if (!cartao) return null;
+  return buildCompraParcelada(parcelas, cartao, hoje);
+}
+
+function normTermo(s: string): string {
+  return (s ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[?!.,;:"']+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Encontra compras parceladas EM ABERTO cuja descrição corresponde ao
+ * termo informado (inclusão bidirecional, normalizada). Apenas dados
+ * do próprio usuário.
+ */
+export async function findCompraParceladaByTerm(
+  userId: string,
+  termo: string,
+  hoje: Date = nowInAppTz(),
+): Promise<CompraParcelada[]> {
+  const t = normTermo(termo);
+  if (!t) return [];
+  const compras = await getComprasParceladasEmAberto(userId, hoje);
+  return compras.filter((c) => {
+    const d = normTermo(c.descricao);
+    if (!d) return false;
+    return d === t || d.includes(t) || t.includes(d);
+  });
+}
+

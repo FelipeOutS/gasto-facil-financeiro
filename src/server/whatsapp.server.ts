@@ -54,7 +54,13 @@ import {
   handleFaturaIntent,
   handleFaturaPagination,
   detectPaginationCommand,
+  // WA-F4 — faturas futuras / parcelas em aberto.
+  detectFutureFaturaIntent,
+  handleFutureFaturaIntent,
+  handleParceladoPagination,
+  isBeyondHorizon,
   type FaturaDetailSessionState,
+  type ParceladoSessionState,
 } from "./whatsapp-faturas.server";
 import {
   COMPROVANTE_PENDING_STATES,
@@ -527,6 +533,7 @@ export type ProcessOutcome = {
     | "aguardando_cartao"
     | "aguardando_categoria_gasto"
     | "aguardando_consulta_fatura"
+    | "aguardando_consulta_parcelamento"
     | "parc_aguardando_total"
     | "parc_aguardando_quantidade"
     | "parc_aguardando_cartao"
@@ -1000,6 +1007,8 @@ const PENDING_STATES = [
   // WA-F2 — paginação temporária de detalhamento de fatura. Aguarda
   // "ver mais", "voltar" ou "cancelar". NUNCA cria gasto/receita/cartão.
   "aguardando_consulta_fatura",
+  // WA-F4 — paginação/escolha de compras parceladas e fatura futura.
+  "aguardando_consulta_parcelamento",
   // WA-F3 — sessões de compra parcelada no cartão.
   "parc_aguardando_total",
   "parc_aguardando_quantidade",
@@ -2659,6 +2668,73 @@ export async function processarMensagemWhatsApp(
   }
 
 
+  // ---- Fase WA-F4: paginação/escolha em compras parceladas ----
+  // Apenas leitura. Aceita "ver mais", "voltar", "cancelar" e (em
+  // modo "detalhe") escolha numérica entre compras ambíguas. Se a
+  // mensagem não casar com nenhum comando, encerra o estado e segue
+  // o pipeline normal.
+  if (sessao && sessao.status === "aguardando_consulta_parcelamento") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const prev = sessao.session as any;
+    const stateP: ParceladoSessionState | null =
+      prev && prev.kind === "consulta_parcelamento"
+        ? {
+            kind: "consulta_parcelamento",
+            mode: prev.mode === "detalhe" || prev.mode === "fatura_futura" ? prev.mode : "lista",
+            cartaoId: typeof prev.cartaoId === "string" ? prev.cartaoId : null,
+            installmentGroupIds: Array.isArray(prev.installmentGroupIds)
+              ? prev.installmentGroupIds.filter((x: unknown) => typeof x === "string")
+              : null,
+            targetInvoiceMonth: typeof prev.targetInvoiceMonth === "string" ? prev.targetInvoiceMonth : null,
+            page: Number.isFinite(prev.page) ? Number(prev.page) : 0,
+          }
+        : null;
+    if (stateP) {
+      const out = await handleParceladoPagination(userId, stateP, texto);
+      if (out) {
+        const next =
+          "nextSession" in out
+            ? (out as { nextSession?: ParceladoSessionState }).nextSession
+            : undefined;
+        if (next) {
+          await fecharSessoesAnteriores(userId, msg.telefone, "expirada");
+          await gravarSessao(
+            userId, msg.telefone, msg.external_id, texto, recebidaEm,
+            "aguardando_consulta_parcelamento",
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ({
+              nome: "",
+              valor: 0,
+              data: todayLocalISO(),
+              mensagemOriginal: "",
+              kind: "consulta_parcelamento",
+              mode: next.mode,
+              cartaoId: next.cartaoId,
+              installmentGroupIds: next.installmentGroupIds,
+              targetInvoiceMonth: next.targetInvoiceMonth,
+              page: next.page,
+            } as unknown) as Session,
+            out.resposta,
+          );
+          return { status: "pendente", resposta: out.resposta };
+        }
+        await fecharSessoesAnteriores(userId, msg.telefone, "salva");
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "sem_pendencia",
+          { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+          out.resposta,
+        );
+        return { status: "consulta", resposta: out.resposta };
+      }
+    }
+    // Não casou — encerra estado e segue o pipeline normal.
+    await supabaseAdmin
+      .from("whatsapp_messages")
+      .update({ status: "expirada" })
+      .eq("id", sessao.id);
+    sessao = null;
+  }
 
 
 
@@ -2742,7 +2818,23 @@ export async function processarMensagemWhatsApp(
 
 
 
-  // ---- Fase WA-F1: consulta de fatura atual de cartão de crédito ----
+  // ---- Fase WA-F4 (guarda): mês explícito > 12 meses à frente ----
+  // Roda ANTES do WA-F1 para não cair em "fatura de X" como nome de
+  // cartão. Apenas leitura.
+  if (!sessao && decisao === "outro" && isBeyondHorizon(texto)) {
+    const resposta =
+      "Por enquanto só consigo estimar até 12 meses à frente.\n\n" +
+      "Tente uma data mais próxima.";
+    await gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "sem_pendencia",
+      { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+      resposta,
+    );
+    return { status: "consulta", resposta };
+  }
+
+
   // Apenas leitura. Detecta perguntas como "fatura", "fatura Nubank",
   // "quanto devo no cartão", "quando vence minha fatura", "qual cartão
   // está com maior fatura". Não cria sessão, não altera nada. Reusa o
@@ -2786,6 +2878,51 @@ export async function processarMensagemWhatsApp(
     }
   }
 
+
+
+  // ---- Fase WA-F4: faturas futuras e parcelas em aberto ----
+  // Apenas leitura. Roda DEPOIS do WA-F1 (fatura atual) — só pega o
+  // que sobrou ("próxima fatura", "fatura de agosto", "parcelas em
+  // aberto", "quanto falta pagar do tênis").
+  if (!sessao && decisao === "outro") {
+    const intentP = detectFutureFaturaIntent(texto);
+    if (intentP) {
+      logWaRouteDecision(msg, "consulta_handler", "consulta_future_invoice_without_session");
+      const out = await handleFutureFaturaIntent(userId, intentP);
+      const next =
+        "nextSession" in out
+          ? (out as { nextSession?: ParceladoSessionState }).nextSession
+          : undefined;
+      if (next) {
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "aguardando_consulta_parcelamento",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ({
+            nome: "",
+            valor: 0,
+            data: todayLocalISO(),
+            mensagemOriginal: "",
+            kind: "consulta_parcelamento",
+            mode: next.mode,
+            cartaoId: next.cartaoId,
+            installmentGroupIds: next.installmentGroupIds,
+            targetInvoiceMonth: next.targetInvoiceMonth,
+            page: next.page,
+          } as unknown) as Session,
+          out.resposta,
+        );
+        return { status: "pendente", resposta: out.resposta };
+      }
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        out.resposta,
+      );
+      return { status: "consulta", resposta: out.resposta };
+    }
+  }
 
 
 

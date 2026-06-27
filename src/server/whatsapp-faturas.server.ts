@@ -22,10 +22,20 @@ import {
   getItensFaturaAtualPorCartao,
   getResumoItensFaturaAtual,
   nowInAppTz,
+  // WA-F4 — faturas futuras e parcelas em aberto.
+  getFaturaPorMes,
+  getResumoFaturasPorMes,
+  getComprasParceladasEmAberto,
+  getDetalheCompraParcelada,
+  findCompraParceladaByTerm,
+  parseInvoiceMonth,
   type CartaoRow,
   type FaturaAtual,
   type ItemFatura,
+  type CompraParcelada,
 } from "./cartao-fatura.server";
+
+
 
 export type FaturaIntent =
   | { kind: "invoice_total" }
@@ -718,3 +728,539 @@ export async function handleFaturaPagination(
   return renderPage(userId, cartao, state.mode, nextPage, "invoice_page", hoje);
 }
 
+
+// =====================================================================
+// WA-F4 — Próximas faturas, parcelas futuras e saldo de compras parceladas.
+// Apenas leitura. Reutiliza estritamente os helpers de
+// `cartao-fatura.server.ts` e `cartao-parcelamento.server.ts`.
+// Nunca cria, altera, exclui ou envia nada.
+// =====================================================================
+
+const MESES_PT: Record<string, number> = {
+  janeiro: 1, fevereiro: 2, marco: 3, abril: 4, maio: 5, junho: 6,
+  julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
+};
+
+const NOME_MES_PT = [
+  "", "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+];
+
+function monthLabel(mes: number): string {
+  return NOME_MES_PT[mes] ?? "";
+}
+
+const PARCELADOS_PAGE_SIZE = 5;
+const MAX_MONTHS_AHEAD = 12;
+
+export type FutureFaturaIntent =
+  | { kind: "future_invoice_total"; invoiceMonth: string }
+  | { kind: "future_invoice_card"; termo: string; invoiceMonth: string }
+  | { kind: "installment_list" }
+  | { kind: "installment_detail"; termo: string };
+
+export type ParceladoSessionState = {
+  kind: "consulta_parcelamento";
+  mode: "lista" | "detalhe" | "fatura_futura";
+  cartaoId: string | null;
+  installmentGroupIds: string[] | null;
+  targetInvoiceMonth: string | null;
+  page: number;
+};
+
+export type FutureFaturaResult =
+  | { status: "answered"; resposta: string }
+  | { status: "answered"; resposta: string; nextSession: ParceladoSessionState }
+  | { status: "ambiguous_card"; resposta: string }
+  | { status: "ambiguous_installment"; resposta: string; nextSession: ParceladoSessionState }
+  | { status: "card_not_found"; resposta: string }
+  | { status: "no_future_data"; resposta: string }
+  | { status: "no_more_items"; resposta: string };
+
+function normF4(s: string): string {
+  return (s ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[?!.,;:"']+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatBRL_F4(v: number): string {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function logFutureQuery(args: {
+  intent:
+    | "future_invoice_total"
+    | "future_invoice_card"
+    | "installment_list"
+    | "installment_detail"
+    | "installment_page";
+  cardsMatchedCount: number;
+  groupsMatchedCount: number;
+  result:
+    | "answered"
+    | "ambiguous_card"
+    | "ambiguous_installment"
+    | "card_not_found"
+    | "no_future_data"
+    | "no_more_items";
+}) {
+  // Log seguro: SEM userId, telefone, valor, descrição, cartão,
+  // grupo_parcelamento_id ou texto da pergunta.
+  console.info({
+    event: "wa_future_invoice_query",
+    intent: args.intent,
+    cardsMatchedCount: args.cardsMatchedCount,
+    groupsMatchedCount: args.groupsMatchedCount,
+    result: args.result,
+  });
+}
+
+/**
+ * Resolve "mês X" (português) em invoice_month "YYYY-MM" relativo a
+ * `hoje`. Regras:
+ *  - se o mês já passou no ano atual, vai para o PRÓXIMO ano;
+ *  - se houver ano explícito (4 dígitos), respeita;
+ *  - retorna null se ultrapassar 12 meses à frente.
+ */
+export function resolveTargetInvoiceMonth(
+  texto: string,
+  hoje: Date = nowInAppTz(),
+): { ym: string; mes: number; ano: number } | null {
+  const t = normF4(texto);
+  const re = new RegExp(
+    `\\b(${Object.keys(MESES_PT).join("|")})\\b(?:\\s+(?:de\\s+)?(\\d{4}))?`,
+  );
+  const m = t.match(re);
+  if (!m) return null;
+  const mes = MESES_PT[m[1]];
+  const hojeMes = hoje.getMonth() + 1;
+  const hojeAno = hoje.getFullYear();
+  let ano: number;
+  if (m[2]) {
+    ano = Number(m[2]);
+  } else {
+    ano = hojeAno;
+    if (mes < hojeMes) ano += 1;
+  }
+  // Limite de 12 meses à frente, contando a partir do mês corrente.
+  const diff = (ano - hojeAno) * 12 + (mes - hojeMes);
+  if (diff > MAX_MONTHS_AHEAD || diff < 0) return null;
+  return { ym: `${ano}-${String(mes).padStart(2, "0")}`, mes, ano };
+}
+
+function extractCartaoTermoF4(t: string): string | null {
+  const STOP =
+    /^(proxim[ao]|atual|aberta|fechada|mais|maior|do|da|de|dos|das|no|na|nos|nas|minha|meu|meus|minhas|cart(?:ao|oes)|credito|fatura|mes|que|vem|janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)$/;
+  let m = t.match(/\bno\s+([a-z0-9]{2,30})\b/);
+  if (m && !STOP.test(m[1])) return m[1].trim();
+  m = t.match(/\bdo\s+([a-z0-9]{2,30})\b/);
+  if (m && !STOP.test(m[1])) return m[1].trim();
+  m = t.match(/\bcart(?:ao|oes)\s+(?:do|da|de)?\s*([a-z0-9\s]{2,30}?)(?:\s*\?|\s*$)/);
+  if (m) {
+    const c = m[1].trim();
+    if (c && !STOP.test(c)) return c;
+  }
+  return null;
+}
+
+/**
+ * Detecta intenções de fatura futura / parcelas em aberto. Retorna
+ * null se a mensagem não casar. Usado APÓS `detectFaturaIntent`
+ * (atual) — esta camada cobre só o "futuro / parcelas".
+ */
+export function detectFutureFaturaIntent(
+  texto: string,
+  hoje: Date = nowInAppTz(),
+): FutureFaturaIntent | null {
+  const t = normF4(texto);
+  if (!t) return null;
+
+  // ---- compras parceladas em aberto ----
+  if (
+    /\b(minhas\s+)?compras?\s+parcelad[ao]s?\b/.test(t) ||
+    /\bquais?\s+parcelas?\s+(?:ainda\s+)?(?:faltam|restam)\b/.test(t) ||
+    /\bparcelas?\s+(?:em\s+)?aberto\b/.test(t) ||
+    /\bo\s+que\s+(?:eu\s+)?(?:ainda\s+)?(?:estou\s+)?pagando\s+no\s+cart(?:ao|oes)\b/.test(t) ||
+    /\bquanto\s+(?:ainda\s+)?falta\s+pagar\s+(?:do|no)\s+cart(?:ao|oes)\b/.test(t)
+  ) {
+    return { kind: "installment_list" };
+  }
+
+  // ---- saldo de compra parcelada ("quanto falta pagar do tênis") ----
+  let m = t.match(
+    /\bquanto\s+(?:ainda\s+)?falta\s+(?:pagar\s+)?(?:do|da|de|dos|das)\s+([a-z0-9\s]{2,40}?)(?:\s*\?|\s*$)/,
+  );
+  if (m) return { kind: "installment_detail", termo: m[1].trim() };
+  m = t.match(
+    /\bdetalhes?\s+(?:da\s+)?compra\s+parcelad[ao]\s+(?:do|da|de|dos|das)\s+([a-z0-9\s]{2,40}?)(?:\s*\?|\s*$)/,
+  );
+  if (m) return { kind: "installment_detail", termo: m[1].trim() };
+
+  // ---- futuro de fatura ----
+  const target = resolveTargetInvoiceMonth(t, hoje);
+  const futureCue =
+    /\bprox(?:ima|imo)\b/.test(t) ||
+    /\bmes\s+que\s+vem\b/.test(t) ||
+    /\bfutur[ao]\b/.test(t) ||
+    target !== null;
+  if (!futureCue) return null;
+
+  // Só dispara como "fatura futura" se houver token claro de fatura/cartão/pagamento.
+  if (
+    !(
+      /\bfatura\b/.test(t) ||
+      /\bcart(?:ao|oes)\b/.test(t) ||
+      /\b(?:vou|vai|sera|sera)\s+pagar\b/.test(t) ||
+      /\b(?:vai|vou)\s+(?:dar|ficar)\b/.test(t)
+    )
+  ) {
+    return null;
+  }
+
+  // Se passa de 12 meses, bloqueamos no handler com no_future_data.
+  let ym: string;
+  if (target) {
+    ym = target.ym;
+  } else {
+    // Próximo mês civil quando não há mês explícito.
+    const nextMonth = hoje.getMonth() + 2 > 12
+      ? { m: 1, y: hoje.getFullYear() + 1 }
+      : { m: hoje.getMonth() + 2, y: hoje.getFullYear() };
+    ym = `${nextMonth.y}-${String(nextMonth.m).padStart(2, "0")}`;
+  }
+  const termo = extractCartaoTermoF4(t);
+  if (termo) return { kind: "future_invoice_card", termo, invoiceMonth: ym };
+  return { kind: "future_invoice_total", invoiceMonth: ym };
+}
+
+/** Detecta se mensagem solicita mês explícito mas > 12 meses à frente. */
+export function isBeyondHorizon(
+  texto: string,
+  hoje: Date = nowInAppTz(),
+): boolean {
+  const t = normF4(texto);
+  const re = new RegExp(
+    `\\b(${Object.keys(MESES_PT).join("|")})\\b(?:\\s+(?:de\\s+)?(\\d{4}))?`,
+  );
+  const m = t.match(re);
+  if (!m) return false;
+  const mes = MESES_PT[m[1]];
+  const hojeMes = hoje.getMonth() + 1;
+  const hojeAno = hoje.getFullYear();
+  let ano: number;
+  if (m[2]) ano = Number(m[2]);
+  else {
+    ano = hojeAno;
+    if (mes < hojeMes) ano += 1;
+  }
+  const diff = (ano - hojeAno) * 12 + (mes - hojeMes);
+  return diff > MAX_MONTHS_AHEAD;
+}
+
+function formatDDMM_F4(d: Date | null): string | null {
+  if (!d) return null;
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${dd}/${mm}`;
+}
+
+function ambiguousCardMsg_F4(cartoes: CartaoRow[]): string {
+  const linhas = cartoes
+    .map((c) => `• ${(c.nome ?? "").trim() || (c.banco ?? "").trim() || "Cartão"}`)
+    .join("\n");
+  return (
+    "Encontrei mais de um cartão.\n\n" +
+    "Digite o nome de um deles para eu calcular a fatura:\n" +
+    linhas
+  );
+}
+
+function noFutureDataMsg(): string {
+  return (
+    "Ainda não encontrei lançamentos para essa fatura futura.\n\n" +
+    "Conforme novas compras forem registradas, eu consigo calcular."
+  );
+}
+
+export async function handleFutureFaturaIntent(
+  userId: string,
+  intent: FutureFaturaIntent,
+  hoje: Date = nowInAppTz(),
+): Promise<FutureFaturaResult> {
+  if (intent.kind === "future_invoice_total") {
+    const resumos = await getResumoFaturasPorMes(userId, intent.invoiceMonth);
+    const ativos = resumos.filter((f) => f.total > 0);
+    if (ativos.length === 0) {
+      const out: FutureFaturaResult = { status: "no_future_data", resposta: noFutureDataMsg() };
+      logFutureQuery({
+        intent: intent.kind, cardsMatchedCount: resumos.length, groupsMatchedCount: 0,
+        result: out.status,
+      });
+      return out;
+    }
+    const total = ativos.reduce((s, f) => s + f.total, 0);
+    const parsed = parseInvoiceMonth(intent.invoiceMonth);
+    const monthName = parsed ? monthLabel(parsed.mes) : "do próximo mês";
+    const linhas = ativos
+      .sort((a, b) => b.total - a.total)
+      .map((f) => `• ${f.cartaoNome}: ${formatBRL_F4(f.total)}`);
+    const corpo =
+      `Sua próxima fatura estimada de ${monthName} está em ${formatBRL_F4(total)}.\n\n` +
+      linhas.join("\n") +
+      `\n\nEsse valor pode mudar conforme novas compras forem registradas.`;
+    const out: FutureFaturaResult = { status: "answered", resposta: corpo };
+    logFutureQuery({
+      intent: intent.kind, cardsMatchedCount: ativos.length, groupsMatchedCount: 0,
+      result: out.status,
+    });
+    return out;
+  }
+
+  if (intent.kind === "future_invoice_card") {
+    const matches = await findCartoesDoUsuarioByTerm(userId, intent.termo);
+    if (matches.length === 0) {
+      const out: FutureFaturaResult = {
+        status: "card_not_found",
+        resposta:
+          `Não encontrei nenhum cartão com o nome "${intent.termo}".\n\n` +
+          `Confira o nome cadastrado no Gasto Inteligente.`,
+      };
+      logFutureQuery({
+        intent: intent.kind, cardsMatchedCount: 0, groupsMatchedCount: 0, result: out.status,
+      });
+      return out;
+    }
+    if (matches.length > 1) {
+      const out: FutureFaturaResult = {
+        status: "ambiguous_card", resposta: ambiguousCardMsg_F4(matches),
+      };
+      logFutureQuery({
+        intent: intent.kind, cardsMatchedCount: matches.length, groupsMatchedCount: 0,
+        result: out.status,
+      });
+      return out;
+    }
+    const f = await getFaturaPorMes(userId, matches[0], intent.invoiceMonth);
+    if (!f || f.total <= 0) {
+      const out: FutureFaturaResult = { status: "no_future_data", resposta: noFutureDataMsg() };
+      logFutureQuery({
+        intent: intent.kind, cardsMatchedCount: 1, groupsMatchedCount: 0, result: out.status,
+      });
+      return out;
+    }
+    const parsed = parseInvoiceMonth(intent.invoiceMonth)!;
+    const monthName = monthLabel(parsed.mes);
+    const linhas: string[] = [];
+    linhas.push(`A fatura estimada do ${f.cartaoNome} para ${monthName} está em ${formatBRL_F4(f.total)}.`);
+    const venc = formatDDMM_F4(f.vencimento);
+    const fech = formatDDMM_F4(f.fechamento);
+    if (venc || fech) linhas.push("");
+    if (venc) linhas.push(`Vencimento: ${venc}`);
+    if (fech) linhas.push(`Fechamento: ${fech}`);
+    const out: FutureFaturaResult = { status: "answered", resposta: linhas.join("\n") };
+    logFutureQuery({
+      intent: intent.kind, cardsMatchedCount: 1, groupsMatchedCount: 0, result: out.status,
+    });
+    return out;
+  }
+
+  if (intent.kind === "installment_list") {
+    const compras = await getComprasParceladasEmAberto(userId, hoje);
+    if (compras.length === 0) {
+      const out: FutureFaturaResult = {
+        status: "no_future_data",
+        resposta:
+          "Você não tem compras parceladas em aberto agora.\n\n" +
+          "Quando registrar uma compra parcelada, eu acompanho aqui.",
+      };
+      logFutureQuery({
+        intent: intent.kind, cardsMatchedCount: 0, groupsMatchedCount: 0, result: out.status,
+      });
+      return out;
+    }
+    return renderInstallmentPage(compras, 0, "installment_list");
+  }
+
+  // installment_detail
+  const matches = await findCompraParceladaByTerm(userId, intent.termo, hoje);
+  if (matches.length === 0) {
+    const out: FutureFaturaResult = {
+      status: "no_future_data",
+      resposta:
+        `Não encontrei nenhuma compra parcelada em aberto com a descrição "${intent.termo}".\n\n` +
+        `Digite "minhas compras parceladas" para ver a lista.`,
+    };
+    logFutureQuery({
+      intent: intent.kind, cardsMatchedCount: 0, groupsMatchedCount: 0, result: out.status,
+    });
+    return out;
+  }
+  if (matches.length > 1) {
+    const linhas = matches.slice(0, 5).map((c, i) => `${i + 1}. ${c.descricao}`).join("\n");
+    const out: FutureFaturaResult = {
+      status: "ambiguous_installment",
+      resposta:
+        "Encontrei mais de uma compra parcelada com esse nome. Qual delas?\n\n" + linhas,
+      nextSession: {
+        kind: "consulta_parcelamento",
+        mode: "detalhe",
+        cartaoId: null,
+        installmentGroupIds: matches.slice(0, 5).map((c) => c.grupoId),
+        targetInvoiceMonth: null,
+        page: 0,
+      },
+    };
+    logFutureQuery({
+      intent: intent.kind, cardsMatchedCount: 0, groupsMatchedCount: matches.length,
+      result: out.status,
+    });
+    return out;
+  }
+  return renderInstallmentDetail(userId, matches[0], hoje);
+}
+
+function renderInstallmentPage(
+  compras: CompraParcelada[],
+  page: number,
+  intentKind: "installment_list" | "installment_page",
+): FutureFaturaResult {
+  const start = page * PARCELADOS_PAGE_SIZE;
+  if (start >= compras.length) {
+    logFutureQuery({
+      intent: intentKind, cardsMatchedCount: 0, groupsMatchedCount: 0,
+      result: "no_more_items",
+    });
+    return {
+      status: "no_more_items",
+      resposta: "Não há mais compras parceladas em aberto.",
+    };
+  }
+  const slice = compras.slice(start, start + PARCELADOS_PAGE_SIZE);
+  const hasMore = compras.length > start + PARCELADOS_PAGE_SIZE;
+  const total = compras.length;
+  const titulo = `Você tem ${total} compra${total === 1 ? "" : "s"} parcelada${total === 1 ? "" : "s"} em aberto:`;
+  const linhas = slice.map((c) => {
+    const pagas = c.totalParcelas - c.parcelasRestantes.length;
+    const faltam = c.parcelasRestantes.length;
+    const desc = c.descricao || "Compra no cartão";
+    return `• ${desc} — faltam ${faltam} de ${c.totalParcelas} parcelas (já cobradas: ${pagas})`;
+  });
+  const partes = [titulo, "", ...linhas, "", "Digite o nome da compra para ver mais detalhes."];
+  if (hasMore) partes.push('Digite "ver mais" para continuar.');
+  logFutureQuery({
+    intent: intentKind, cardsMatchedCount: 0, groupsMatchedCount: slice.length,
+    result: "answered",
+  });
+  const next: ParceladoSessionState = {
+    kind: "consulta_parcelamento",
+    mode: "lista",
+    cartaoId: null,
+    installmentGroupIds: compras.map((c) => c.grupoId),
+    targetInvoiceMonth: null,
+    page,
+  };
+  return { status: "answered", resposta: partes.join("\n"), nextSession: next };
+}
+
+async function renderInstallmentDetail(
+  userId: string,
+  compra: CompraParcelada,
+  _hoje: Date,
+): Promise<FutureFaturaResult> {
+  const cartoes = await loadCartoesDoUsuario(userId);
+  const cartao = cartoes.find((c) => c.id === compra.cartaoId);
+  const nomeCartao = cartao?.nome ?? "Cartão";
+  const pagas = compra.totalParcelas - compra.parcelasRestantes.length;
+  const proxima = compra.proximaParcela;
+  const linhas: string[] = [];
+  linhas.push(compra.descricao || "Compra no cartão");
+  linhas.push("");
+  linhas.push(`• Total da compra: ${formatBRL_F4(compra.totalCompra)}`);
+  linhas.push(`• Parcelas previstas até agora: ${pagas} de ${compra.totalParcelas}`);
+  linhas.push(`• Parcelas restantes: ${compra.parcelasRestantes.length}`);
+  linhas.push(`• Saldo previsto restante: ${formatBRL_F4(compra.saldoRestante)}`);
+  if (proxima) {
+    const ymKey = proxima.invoiceMonth ?? proxima.data.slice(0, 7);
+    const parsed = parseInvoiceMonth(ymKey);
+    const mesNome = parsed ? monthLabel(parsed.mes) : "";
+    linhas.push(
+      `• Próxima parcela: ${formatBRL_F4(proxima.valor)}${mesNome ? ` em ${mesNome}` : ""}`,
+    );
+  }
+  linhas.push(`• Cartão: ${nomeCartao}`);
+  logFutureQuery({
+    intent: "installment_detail", cardsMatchedCount: 1, groupsMatchedCount: 1,
+    result: "answered",
+  });
+  return { status: "answered", resposta: linhas.join("\n") };
+}
+
+/**
+ * Paginação ativa (sessão `consulta_parcelamento`). Aceita também
+ * escolha numérica em lista ambígua de compras parceladas.
+ */
+export async function handleParceladoPagination(
+  userId: string,
+  state: ParceladoSessionState,
+  texto: string,
+  hoje: Date = nowInAppTz(),
+): Promise<FutureFaturaResult | null> {
+  const t = normF4(texto);
+
+  // Modo "detalhe" + lista ambígua → aceita "1".."5".
+  if (state.mode === "detalhe" && state.installmentGroupIds && state.installmentGroupIds.length > 0) {
+    const m = t.match(/^([1-9])$/);
+    if (m) {
+      const idx = Number(m[1]) - 1;
+      const grupoId = state.installmentGroupIds[idx];
+      if (!grupoId) {
+        return {
+          status: "no_more_items",
+          resposta: "Opção inválida. Digite o número correspondente ou \"cancelar\".",
+        };
+      }
+      const detalhe = await getDetalheCompraParcelada(userId, grupoId, hoje);
+      if (!detalhe) {
+        return {
+          status: "no_future_data",
+          resposta: "Não encontrei essa compra parcelada.",
+        };
+      }
+      return renderInstallmentDetail(userId, detalhe, hoje);
+    }
+  }
+
+  // Modo "lista" → paginação.
+  if (state.mode === "lista" && state.installmentGroupIds) {
+    if (/^(ver\s+mais|mais|continuar|seguinte|proxim[ao]s?)$/.test(t)) {
+      const compras = await getComprasParceladasEmAberto(userId, hoje);
+      // Mantém só os grupos que ainda existem na sessão original (estabilidade).
+      const filtrados = compras.filter((c) => state.installmentGroupIds!.includes(c.grupoId));
+      return renderInstallmentPage(filtrados, state.page + 1, "installment_page");
+    }
+    if (/^(voltar|anterior|pagina\s+anterior)$/.test(t)) {
+      if (state.page <= 0) {
+        return {
+          status: "no_more_items",
+          resposta: "Você já está na primeira página.",
+        };
+      }
+      const compras = await getComprasParceladasEmAberto(userId, hoje);
+      const filtrados = compras.filter((c) => state.installmentGroupIds!.includes(c.grupoId));
+      return renderInstallmentPage(filtrados, state.page - 1, "installment_page");
+    }
+  }
+
+  if (/^(cancelar|cancela|sair|encerrar|parar)$/.test(t)) {
+    return {
+      status: "no_more_items",
+      resposta: "Tudo bem, encerrei a consulta.",
+    };
+  }
+
+  return null;
+}
