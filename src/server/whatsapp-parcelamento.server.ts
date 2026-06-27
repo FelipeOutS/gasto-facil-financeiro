@@ -15,7 +15,7 @@
  * - todas as queries filtradas por user_id;
  * - log seguro, sem PII/valor/cartão/descrição/texto.
  */
-import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
+import * as _supa from "@/integrations/supabase/client.server";
 import {
   parseWhatsAppExpenseMessage,
   cleanDescricao,
@@ -30,37 +30,47 @@ import {
   reaisParaCentavos,
   calcularParcelasCentavos,
 } from "./cartao-parcelamento.server";
-// IMPORTANT: import as namespace to preserve ESM live bindings.
-// whatsapp.server.ts imports back from this module — a default named
-// import would snapshot bindings as `undefined` during initialisation.
-// Lazy/dynamic import to break the circular dep with whatsapp.server.ts.
-// Static `import * as wa` triggers a Bun mock.module() race where
-// supabaseAdmin captured by upstream modules is the REAL client even
-// after the test fake registered its mock — breaking integration tests.
-// We resolve the module on first call and reuse the namespace object.
-import type * as waNs from "./whatsapp.server";
+// ----- Dependency-injection seam -----
+// O orquestrador (`whatsapp.server.ts`) é quem importa este módulo. Para
+// evitar dependência circular em runtime — que quebrava o mock de
+// `supabaseAdmin` em testes e tornava o módulo financeiro dependente do
+// pipeline de mensagens — este módulo NÃO importa nenhum runtime do
+// `whatsapp.server.ts`. Em vez disso, recebe as funções necessárias via
+// `deps`, injetadas pelo orquestrador na hora da chamada.
+//
+// `import type` é a única referência permitida ao módulo do WhatsApp:
+// tipos são apagados pelo compilador e não criam aresta de runtime.
 import type { WhatsAppMessageRow, ProcessOutcome } from "./whatsapp.server";
 import { recordMerchantMemory, merchantKeyFor } from "./whatsapp-merchant-memory.server";
 import { randomUUID } from "crypto";
 
-let _wa: typeof waNs | undefined;
-async function loadWa(): Promise<typeof waNs> {
-  if (!_wa) _wa = await import("./whatsapp.server");
-  return _wa;
-}
-// `wa` is a proxy that lazily resolves to the loaded namespace.
-// Any call to `wa.X(...)` MUST be preceded by `await loadWa()` in the
-// nearest async entry point.
-const wa: typeof waNs = new Proxy({} as typeof waNs, {
-  get(_t, prop) {
-    if (!_wa) throw new Error(`[parcelamento] wa.${String(prop)} accessed before loadWa()`);
+export type WhatsAppParcelamentoDeps = {
+  carregarCartoes: (userId: string) => Promise<Cartao[]>;
+  matchCartao: (input: string, cartoes: Cartao[]) => { match: Cartao | null; ambiguous?: string[] };
+  displayCartaoNome: (c: Cartao) => string;
+  maskCartaoLabel: (c: Cartao) => string;
+  isGenericExpenseDescription: (nome: string | undefined | null) => boolean;
+  gravarSessao: (
+    userId: string, telefone: string, externalId: string | null,
+    texto: string, recebidaEm: string, status: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (_wa as any)[prop];
-  },
-}) as typeof waNs;
+    session: any, resposta: string, gastoId?: string,
+  ) => Promise<unknown>;
+  atualizarSessao: (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    id: string, status: string, session: any, resposta: string, gastoId?: string,
+  ) => Promise<unknown>;
+  fecharSessoesAnteriores: (
+    userId: string, telefone: string,
+    motivo: "salva" | "cancelada" | "expirada", gastoId?: string,
+  ) => Promise<void>;
+};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const supabaseAdmin = _supabaseAdmin as any;
+// Lazy live-binding: garante que mock.module() em testes seja
+// resolvido a cada chamada, sem snapshot no escopo de módulo.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabaseAdmin: any = new Proxy({}, { get: (_t, prop) => (_supa.supabaseAdmin as any)[prop] });
 
 const MESES_PT = [
   "janeiro", "fevereiro", "março", "abril", "maio", "junho",
@@ -195,28 +205,71 @@ const NUMEROS_EXTENSO: Record<string, number> = {
   "nove": 9, "dez": 10, "onze": 11, "doze": 12,
 };
 
-/** Extrai valor monetário (R$) do texto. Aceita "R$ 89,90", "1.200",
- *  "2 mil reais", "300 reais", "1500". */
+/** Extrai valor monetário (R$) do texto em formato brasileiro.
+ *  Regras:
+ *  - vírgula = decimal; ponto = separador de milhar quando houver
+ *    grupo válido de três dígitos. "1.200" → 1200; "89,90" → 89.90;
+ *    "1.200,50" → 1200.50.
+ *  - ignora números seguidos de "x", "vezes", "parcelas", "prestações"
+ *    (são quantidade de parcelas, não valor).
+ *  - ignora números embutidos em data/hora/final de cartão (ex.: 12/05,
+ *    14:30, 1234-5).
+ *  - prefere ocorrência com prefixo "R$" ou sufixo "reais/real".
+ *  - "2 mil" / "2,5 mil reais" são reconhecidos como ×1000.
+ *  IMPORTANTE: trabalha sobre o texto RAW (sem normalizar pontuação),
+ *  para não destruir "1.200" → "1 200". */
 export function extrairValor(textRaw: string): number | null {
-  const t = normalize(textRaw);
-  // 2 mil reais → 2000
-  const mil = t.match(/\b(\d+(?:[.,]\d+)?)\s*mil\b/);
+  if (!textRaw) return null;
+  const t = (textRaw ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  // 2 mil reais / 2,5 mil
+  const mil = t.match(/(\d+(?:[.,]\d+)?)\s*mil(?:\s+(?:reais|real))?\b/);
   if (mil) {
     const base = Number(mil[1].replace(",", "."));
-    if (Number.isFinite(base)) return Math.round(base * 1000 * 100) / 100;
+    if (Number.isFinite(base) && base > 0) {
+      return Math.round(base * 1000 * 100) / 100;
+    }
   }
-  // R$ 89,90 / 1.200,00 / 89,90 / 1200 / 1.200 / 1200.50
-  const re =
-    /\b(?:r\$?\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?|\d+(?:\.\d{1,2})?)\b(?!\s*(?:x|vezes|parcelas|presta))/;
-  const m = t.match(re);
-  if (!m) return null;
-  const raw = m[1];
-  const norm = raw.includes(",")
-    ? raw.replace(/\./g, "").replace(",", ".")
-    : (raw.match(/\.\d{1,2}$/) ? raw : raw.replace(/\./g, ""));
-  const n = Number(norm);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.round(n * 100) / 100;
+
+  // Candidatos numéricos. Anchoras (?<![\d:/-]) e (?![\d:/-]) evitam
+  // captura parcial de datas/horas/finais de cartão.
+  // Negative lookahead descarta tokens seguidos de "x|vezes|parcelas|prest".
+  const re = /(?<![\d:/-])(?:r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+,\d{1,2}|\d+\.\d{1,2}|\d+)(?![\d:/-])(?!\s*(?:x|vezes?|parcelas?|prest))/gi;
+
+  const matches = [...t.matchAll(re)];
+  if (matches.length === 0) return null;
+
+  function toNumber(raw: string): number {
+    let s = raw;
+    if (s.includes(",")) {
+      // Brasileiro: ponto = milhar; vírgula = decimal.
+      s = s.replace(/\./g, "").replace(",", ".");
+    } else if (/^\d{1,3}(\.\d{3})+$/.test(s)) {
+      // Pontos formam apenas grupos de milhar.
+      s = s.replace(/\./g, "");
+    }
+    // Demais casos ("1500", "1500.50") seguem como vieram.
+    return Number(s);
+  }
+
+  let best: number | null = null;
+  for (const m of matches) {
+    const raw = m[1];
+    const n = toNumber(raw);
+    if (!Number.isFinite(n) || n <= 0) continue;
+    const idx = m.index ?? 0;
+    const before = t.slice(Math.max(0, idx - 3), idx);
+    const after = t.slice(idx + m[0].length, idx + m[0].length + 8);
+    const hasRPrefix = /r\$\s*$/i.test(before) || /^r\$/i.test(m[0]);
+    const hasReais = /^\s*(?:reais|real)\b/i.test(after);
+    if (hasRPrefix || hasReais) return Math.round(n * 100) / 100;
+    best = best === null ? n : Math.max(best, n);
+  }
+  if (best === null) return null;
+  return Math.round(best * 100) / 100;
 }
 
 /** Tenta extrair quantidade de parcelas (digitos ou extenso). Usado APENAS
@@ -277,26 +330,32 @@ export function parseInstallmentMessage(
   text: string,
   cartoes: Cartao[],
   intent: { count: number },
+  deps: Pick<WhatsAppParcelamentoDeps, "matchCartao" | "displayCartaoNome" | "isGenericExpenseDescription">,
 ): ParcelamentoDraft {
   // Reusa o parser principal só para resolver cartão e valor — depois
   // refinamos com nossos próprios extratores.
   const parsed = parseWhatsAppExpenseMessage(text, cartoes);
-  const valor = parsed.valor && parsed.valor > 0 ? parsed.valor : extrairValor(text);
+  // No fluxo de parcelamento o nosso `extrairValor` é a fonte da verdade:
+  // entende formato BR ("1.200", "89,90"), detecta "R$" e ignora
+  // "Nx/N vezes/N parcelas". O `parsed.valor` do parser de gasto comum
+  // confunde a quantidade de parcelas com valor (ex.: "em 3 vezes"
+  // → valor=3) e não deve ser usado aqui — nem como fallback.
+  const valor = extrairValor(text);
   const descricao = (() => {
-    const fromParser = parsed.nome && !wa.isGenericExpenseDescription(parsed.nome)
+    const fromParser = parsed.nome && !deps.isGenericExpenseDescription(parsed.nome)
       ? parsed.nome
       : "";
     if (fromParser && fromParser.length >= 2) return fromParser;
     const d = extrairDescricao(text);
     return d && d.length >= 2 ? d : "";
   })();
-  const { match, ambiguous } = wa.matchCartao(text, cartoes);
+  const { match, ambiguous } = deps.matchCartao(text, cartoes);
   return {
     descricao,
     valorTotal: valor ?? null,
     totalParcelas: intent.count,
     cartaoId: match?.id ?? null,
-    cartaoNome: match ? wa.displayCartaoNome(match) : (parsed.cartaoNomeDetectado ?? null),
+    cartaoNome: match ? deps.displayCartaoNome(match) : (parsed.cartaoNomeDetectado ?? null),
     cartaoAmbiguous: ambiguous && ambiguous.length > 1 ? ambiguous : null,
   };
 }
@@ -334,8 +393,8 @@ function askValor(): string {
 function askQuantidade(): string {
   return `Em quantas parcelas você dividiu? (mínimo ${MIN_PARCELAS}, máximo ${MAX_PARCELAS})`;
 }
-function askCartao(cartoes: Cartao[]): string {
-  const linhas = cartoes.map((c) => `• ${wa.maskCartaoLabel(c)}`).join("\n");
+function askCartao(cartoes: Cartao[], deps: Pick<WhatsAppParcelamentoDeps, "maskCartaoLabel">): string {
+  const linhas = cartoes.map((c) => `• ${deps.maskCartaoLabel(c)}`).join("\n");
   return `Em qual cartão foi essa compra?\n\n${linhas}`;
 }
 
@@ -348,15 +407,15 @@ export async function processarParcelamento(args: {
   recebidaEm: string;
   decisao: "confirm" | "cancel" | "outro";
   sessao: { id: string; status: string; session: unknown; recebida_em: string } | null;
+  deps: WhatsAppParcelamentoDeps;
 }): Promise<ProcessOutcome> {
-  await loadWa();
-  const { userId, msg, texto, recebidaEm, decisao, sessao } = args;
-  const cartoes = await wa.carregarCartoes(userId);
+  const { userId, msg, texto, recebidaEm, decisao, sessao, deps } = args;
+  const cartoes = await deps.carregarCartoes(userId);
   // Cancelamento explícito vence sobre tudo.
   const isHardCancel = /\b(cancelar|cancela|cancelado|cancelada)\b/i.test(texto) || decisao === "cancel";
   if (sessao && isHardCancel) {
-    await wa.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
-    await wa.gravarSessao(
+    await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+    await deps.gravarSessao(
       userId, msg.telefone, msg.external_id, texto, recebidaEm,
       "cancelada",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -379,15 +438,14 @@ export async function processarParcelamento(args: {
       // Não deveria entrar aqui — quem roteia já checou. Defensivo.
       return { status: "sem_pendencia", resposta: "" };
     }
-    const draft = parseInstallmentMessage(texto, cartoes, intent);
+    const draft = parseInstallmentMessage(texto, cartoes, intent, deps);
     logDecision({
       stage: "detected",
       installmentsCountPresent: true,
       cardMatchedCount: draft.cartaoId ? 1 : (draft.cartaoAmbiguous?.length ?? 0),
       result: "ok",
     });
-    return await avancarFluxo({
-      userId, msg, texto, recebidaEm,
+    return await avancarFluxo({ userId, msg, texto, recebidaEm, deps,
       session: {
         kind: "parcelamento",
         mensagemOriginal: texto,
@@ -416,47 +474,47 @@ export async function processarParcelamento(args: {
     const v = extrairValor(texto);
     if (!v || v <= 0) {
       const r = `Não consegui ler o valor. ${askValor()}`;
-      await wa.atualizarSessao(sessao.id, "parc_aguardando_total", session as unknown as never, r);
+      await deps.atualizarSessao(sessao.id, "parc_aguardando_total", session as unknown as never, r);
       return { status: "pendente", resposta: r };
     }
     session.valorTotal = v;
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id });
+    return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
   }
 
   if (current === "parc_aguardando_quantidade") {
     const n = extrairQuantidadeParcelas(texto);
     if (!n) {
       const r = `Não consegui ler. ${askQuantidade()}`;
-      await wa.atualizarSessao(sessao.id, "parc_aguardando_quantidade", session as unknown as never, r);
+      await deps.atualizarSessao(sessao.id, "parc_aguardando_quantidade", session as unknown as never, r);
       return { status: "pendente", resposta: r };
     }
     session.totalParcelas = n;
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id });
+    return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
   }
 
   if (current === "parc_aguardando_cartao") {
-    const { match, ambiguous } = wa.matchCartao(texto, cartoes);
+    const { match, ambiguous } = deps.matchCartao(texto, cartoes);
     if (ambiguous && ambiguous.length > 1) {
       const r = `Achei mais de um cartão parecido: ${ambiguous.join(", ")}. Me diga o nome exato.`;
-      await wa.atualizarSessao(sessao.id, "parc_aguardando_cartao", session as unknown as never, r);
+      await deps.atualizarSessao(sessao.id, "parc_aguardando_cartao", session as unknown as never, r);
       logDecision({ stage: "awaiting_card", installmentsCountPresent: true, cardMatchedCount: ambiguous.length, result: "ambiguous" });
       return { status: "pendente", resposta: r };
     }
     if (!match) {
-      const r = `Não encontrei esse cartão. ${askCartao(cartoes)}`;
-      await wa.atualizarSessao(sessao.id, "parc_aguardando_cartao", session as unknown as never, r);
+      const r = `Não encontrei esse cartão. ${askCartao(cartoes, deps)}`;
+      await deps.atualizarSessao(sessao.id, "parc_aguardando_cartao", session as unknown as never, r);
       logDecision({ stage: "awaiting_card", installmentsCountPresent: true, cardMatchedCount: 0, result: "invalid" });
       return { status: "pendente", resposta: r };
     }
     session.cartaoId = match.id;
-    session.cartaoNome = wa.displayCartaoNome(match);
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id });
+    session.cartaoNome = deps.displayCartaoNome(match);
+    return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
   }
 
   if (current === "parc_aguardando_confirmacao") {
     if (decisao === "confirm") {
       // Ajustes posteriores ao "sim" não são esperados.
-      return await persistir({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id });
+      return await persistir({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id, deps });
     }
     // Ajuste por frase livre: tenta reinterpretar campos do texto.
     const intent = detectInstallmentIntent(texto);
@@ -465,12 +523,12 @@ export async function processarParcelamento(args: {
     if (v && v > 0 && /\b(valor|certo|na verdade|foi|paguei|total)\b/i.test(texto)) {
       session.valorTotal = v;
     }
-    const { match } = wa.matchCartao(texto, cartoes);
+    const { match } = deps.matchCartao(texto, cartoes);
     if (match) {
       session.cartaoId = match.id;
-      session.cartaoNome = wa.displayCartaoNome(match);
+      session.cartaoNome = deps.displayCartaoNome(match);
     }
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id });
+    return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
   }
 
   return { status: "sem_pendencia", resposta: "" };
@@ -485,8 +543,9 @@ async function avancarFluxo(args: {
   cartoes: Cartao[];
   sessaoId: string | null;
   cartaoAmbiguous?: string[] | null;
+  deps: WhatsAppParcelamentoDeps;
 }): Promise<ProcessOutcome> {
-  const { userId, msg, texto, recebidaEm, session, cartoes, sessaoId } = args;
+  const { userId, msg, texto, recebidaEm, session, cartoes, sessaoId, deps } = args;
 
   // 1) Valor faltando → pergunta.
   if (!session.valorTotal || session.valorTotal <= 0) {
@@ -524,9 +583,9 @@ async function avancarFluxo(args: {
     }
     if (cartoes.length === 1) {
       session.cartaoId = cartoes[0].id;
-      session.cartaoNome = wa.displayCartaoNome(cartoes[0]);
+      session.cartaoNome = deps.displayCartaoNome(cartoes[0]);
     } else {
-      const r = askCartao(cartoes);
+      const r = askCartao(cartoes, deps);
       await persistTransition("parc_aguardando_cartao", session, r, sessaoId, args);
       logDecision({ stage: "awaiting_card", installmentsCountPresent: true, cardMatchedCount: cartoes.length, result: "ok" });
       return { status: "pendente", resposta: r };
@@ -534,7 +593,7 @@ async function avancarFluxo(args: {
   }
 
   // 4) Descrição: se ainda for vazia, usa um label genérico de momento.
-  if (!session.descricao || session.descricao.length < 2 || wa.isGenericExpenseDescription(session.descricao)) {
+  if (!session.descricao || session.descricao.length < 2 || deps.isGenericExpenseDescription(session.descricao)) {
     session.descricao = "Compra parcelada";
   }
 
@@ -568,13 +627,13 @@ async function persistTransition(
   session: ParcelamentoSession,
   resposta: string,
   sessaoId: string | null,
-  args: { userId: string; msg: WhatsAppMessageRow; texto: string; recebidaEm: string },
+  args: { userId: string; msg: WhatsAppMessageRow; texto: string; recebidaEm: string; deps: WhatsAppParcelamentoDeps },
 ): Promise<void> {
-  const { userId, msg, texto, recebidaEm } = args;
+  const { userId, msg, texto, recebidaEm, deps } = args;
   if (sessaoId) {
     await supabaseAdmin.from("whatsapp_messages").update({ status: "expirada" }).eq("id", sessaoId);
   }
-  await wa.gravarSessao(
+  await deps.gravarSessao(
     userId, msg.telefone, msg.external_id, texto, recebidaEm,
     newStatus, session as unknown as never, resposta,
   );
@@ -610,8 +669,9 @@ async function persistir(args: {
   session: ParcelamentoSession;
   cartoes: Cartao[];
   sessaoId: string;
+  deps: WhatsAppParcelamentoDeps;
 }): Promise<ProcessOutcome> {
-  const { userId, msg, texto, recebidaEm, session, cartoes, sessaoId } = args;
+  const { userId, msg, texto, recebidaEm, session, cartoes, sessaoId, deps } = args;
   const cartao = cartoes.find((c) => c.id === session.cartaoId);
   if (!cartao || !session.valorTotal || !session.totalParcelas) {
     logDecision({ stage: "failed", installmentsCountPresent: !!session.totalParcelas, cardMatchedCount: 0, result: "error" });
@@ -675,8 +735,8 @@ async function persistir(args: {
   }
 
   // Fecha sessões e grava marca "salva".
-  await wa.fecharSessoesAnteriores(userId, msg.telefone, "salva", inseridos[0]);
-  await wa.gravarSessao(
+  await deps.fecharSessoesAnteriores(userId, msg.telefone, "salva", inseridos[0]);
+  await deps.gravarSessao(
     userId, msg.telefone, msg.external_id, texto, recebidaEm,
     "salva",
     {

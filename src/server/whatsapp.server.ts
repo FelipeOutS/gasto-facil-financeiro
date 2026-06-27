@@ -84,7 +84,27 @@ import {
   detectInstallmentIntent,
   isParcelamentoSession,
   processarParcelamento,
+  type WhatsAppParcelamentoDeps,
 } from "./whatsapp-parcelamento.server";
+
+// Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
+// precisa do orquestrador é exposto aqui de forma explícita, evitando que
+// `whatsapp-parcelamento.server.ts` importe `whatsapp.server.ts` em
+// runtime (o que criava dependência circular e quebrava o mock do
+// supabase nos testes).
+const parcelamentoDeps: WhatsAppParcelamentoDeps = {
+  carregarCartoes: (userId) => carregarCartoes(userId),
+  matchCartao: (text, cartoes) => matchCartao(text, cartoes),
+  displayCartaoNome: (c) => displayCartaoNome(c),
+  maskCartaoLabel: (c) => maskCartaoLabel(c),
+  isGenericExpenseDescription: (n) => isGenericExpenseDescription(n),
+  gravarSessao: (userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId) =>
+    gravarSessao(userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId),
+  atualizarSessao: (id, status, session, resposta, gastoId) =>
+    atualizarSessao(id, status, session, resposta, gastoId),
+  fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
+    fecharSessoesAnteriores(userId, telefone, motivo, gastoId),
+};
 import { createHash } from "crypto";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
@@ -2261,6 +2281,7 @@ export async function processarMensagemWhatsApp(
     logWaRouteDecision(msg, "expense_parser", "active_installment_session");
     return await processarParcelamento({
       userId, msg, texto, recebidaEm, decisao, sessao,
+      deps: parcelamentoDeps,
     });
   }
 
@@ -3204,6 +3225,7 @@ export async function processarMensagemWhatsApp(
   if (parcIntent) {
     return await processarParcelamento({
       userId, msg, texto, recebidaEm, decisao, sessao: null,
+      deps: parcelamentoDeps,
     });
   }
 
