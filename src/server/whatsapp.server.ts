@@ -3205,6 +3205,7 @@ export async function processarMensagemWhatsApp(
   if (parcIntent) {
     return await processarParcelamento({
       userId, msg, texto, recebidaEm, decisao, sessao: null,
+      deps: parcelamentoDeps,
     });
   }
 
