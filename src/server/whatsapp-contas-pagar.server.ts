@@ -341,16 +341,7 @@ function previewSingle(row: ContaVencimentoRow, dataPagamento: string): string {
     'Confirma marcar como paga? Responda "sim", informe outra data (ex.: "ontem" ou "03/07") ou "cancelar".',
   ].join("\n");
 }
-  return [
-    "Encontrei esta conta pendente:",
-    "",
-    `• ${row.nome} — ${fmtBRL(row.valor)}`,
-    `• Vencimento: ${fmtDateBR(row.dataVencimento)}`,
-    `• Data de pagamento: ${fmtDateBR(dataPagamento)}`,
-    "",
-    'Confirma marcar como paga? Responda "sim", informe outra data (ex.: "ontem" ou "03/07") ou "cancelar".',
-  ].join("\n");
-}
+
 
 function ambiguousList(rows: ContaVencimentoRow[], termo: string): string {
   // Sem valor nesta etapa, conforme especificação.
