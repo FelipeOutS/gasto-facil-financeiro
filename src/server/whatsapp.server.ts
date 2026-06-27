@@ -3621,6 +3621,20 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // WA-C3: detecção de BAIXA DE CONTA A PAGAR ("paguei a internet",
+  // "marcar aluguel como pago", "dei baixa na academia"). Estrita:
+  // exige verbo de pagamento + termo SEM valor monetário. Frases com
+  // valor ("paguei 50 no mercado") continuam no parser de gasto comum.
+  if (decisao === "outro" && detectMarkAsPaidIntent(texto)) {
+    logWaRouteDecision(msg, "expense_parser", "new_payable_account_payment_intent");
+    return await processarBaixaConta({
+      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      deps: baixaContaDeps,
+    });
+  }
+
+
+
 
   const parsed = parseExpenseMessage(texto, cartoes);
   // Comandos genéricos ("registrar gasto", "novo gasto", ...) e descrições
