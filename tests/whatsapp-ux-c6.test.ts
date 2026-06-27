@@ -201,12 +201,12 @@ test("WA-C6 pipeline: listar contas grava contexto e 'paguei a primeira' dispara
     contas: [
       {
         id: "cap-1", user_id: "u1", nome: "Internet",
-        valor: 119.9, data_vencimento: daysAheadISO(5),
+        valor: 119.9, data_vencimento: `${MONTH.yearMonth}-10`,
         status: "pendente", data_pagamento: null,
       },
       {
         id: "cap-2", user_id: "u1", nome: "Aluguel",
-        valor: 1500, data_vencimento: daysAheadISO(10),
+        valor: 1500, data_vencimento: `${MONTH.yearMonth}-15`,
         status: "pendente", data_pagamento: null,
       },
     ],
