@@ -691,48 +691,60 @@ async function persistir(args: {
   const cats = await carregarCategoriasMin(userId);
   const cat = resolveCategoriaId(cats, session.descricao ?? "Compra parcelada");
   const grupoId = randomUUID();
-
-  // Monta o batch de inserts.
   const baseObs = `WhatsApp: ${session.mensagemOriginal}`.slice(0, 1000);
-  const rows = plano.parcelas.map((p) => ({
-    user_id: userId,
-    categoria_id: cat.id,
-    descricao: session.descricao,
-    estabelecimento: session.descricao,
+
+  // WA-F3.2 — persistência atômica via RPC `create_installment_purchase`.
+  // A RPC roda como SECURITY DEFINER em transação única: ou TODAS as
+  // parcelas são criadas, ou nenhuma. Valida `user_id` x `cartao_id`
+  // server-side (defesa em profundidade adicional à RLS).
+  const parcelasPayload = plano.parcelas.map((p) => ({
+    numero: p.numero,
     valor: p.valor,
     data: p.data,
     mes: p.mes,
     ano: p.ano,
     invoice_month: p.invoiceMonth,
-    forma_pagamento: "credito" as const,
-    cartao_id: cartao.id,
-    tipo_gasto: "parcelado",
-    parcela_atual: p.numero,
-    total_parcelas: plano.totalParcelas,
-    grupo_parcelamento_id: grupoId,
-    observacao: baseObs,
-    origem: "whatsapp",
-    confirmado: true,
   }));
-
-  // Insere uma a uma para preservar ids e respeitar o mock simples.
-  const inseridos: string[] = [];
-  for (const row of rows) {
-    const { data, error } = await supabaseAdmin
-      .from("gastos")
-      .insert(row)
-      .select("id")
-      .single();
-    if (error || !data?.id) {
-      logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
-      // Tentativa de rollback best-effort.
-      if (inseridos.length > 0) {
-        await supabaseAdmin.from("gastos").delete().eq("grupo_parcelamento_id", grupoId);
-      }
-      return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
-    }
-    inseridos.push(data.id);
+  const { data: rpcRows, error: rpcErr } = await supabaseAdmin.rpc(
+    "create_installment_purchase",
+    {
+      p_user_id: userId,
+      p_cartao_id: cartao.id,
+      p_categoria_id: cat.id,
+      p_descricao: session.descricao,
+      p_estabelecimento: session.descricao,
+      p_observacao: baseObs,
+      p_origem: "whatsapp",
+      p_grupo_id: grupoId,
+      p_total_parcelas: plano.totalParcelas,
+      p_parcelas: parcelasPayload,
+    },
+  );
+  if (rpcErr) {
+    logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
+    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
   }
+
+  // Readback: confirma que TODAS as parcelas foram efetivamente gravadas
+  // sob o mesmo grupo_parcelamento_id antes de informar sucesso.
+  const { data: readback, error: readErr } = await supabaseAdmin
+    .from("gastos")
+    .select("id, parcela_atual")
+    .eq("user_id", userId)
+    .eq("grupo_parcelamento_id", grupoId);
+  const rbRows: Array<{ id: string; parcela_atual: number | null }> =
+    Array.isArray(readback) ? readback : Array.isArray(rpcRows) ? rpcRows : [];
+  if (readErr || rbRows.length !== plano.totalParcelas) {
+    logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
+    return {
+      status: "erro",
+      resposta: "Salvei mas não consegui confirmar todas as parcelas. Pode me chamar de novo em alguns minutos?",
+    };
+  }
+  const inseridos: string[] = rbRows
+    .slice()
+    .sort((a, b) => (a.parcela_atual ?? 0) - (b.parcela_atual ?? 0))
+    .map((r) => r.id);
 
   // Fecha sessões e grava marca "salva".
   await deps.fecharSessoesAnteriores(userId, msg.telefone, "salva", inseridos[0]);

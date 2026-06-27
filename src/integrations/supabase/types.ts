@@ -3274,6 +3274,26 @@ export type Database = {
       can_use_whatsapp: { Args: { _user_id: string }; Returns: boolean }
       can_view_account: { Args: { _owner: string }; Returns: boolean }
       claim_owner_if_first: { Args: never; Returns: boolean }
+      create_installment_purchase: {
+        Args: {
+          p_cartao_id: string
+          p_categoria_id: string
+          p_descricao: string
+          p_estabelecimento: string
+          p_grupo_id: string
+          p_observacao: string
+          p_origem: string
+          p_parcelas: Json
+          p_total_parcelas: number
+          p_user_id: string
+        }
+        Returns: {
+          id: string
+          invoice_month: string
+          parcela_atual: number
+          valor: number
+        }[]
+      }
       current_plan: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["plan_tier"]
