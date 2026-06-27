@@ -500,6 +500,7 @@ export function resetState(opts?: {
   gastos?: Record<string, unknown>[];
   receitas?: Record<string, unknown>[];
   contas?: Record<string, unknown>[];
+  favorecidos?: Record<string, unknown>[];
 }) {
   state.inserts.length = 0;
   state.pendingRow = null;
@@ -518,6 +519,7 @@ export function resetState(opts?: {
   state.gastosData = opts?.gastos ?? [];
   state.receitasData = opts?.receitas ?? [];
   state.contasData = opts?.contas ?? [];
+  state.favorecidosData = opts?.favorecidos ?? [];
   state.cartoesData = opts?.cartoes ?? [
     {
       id: "c-nu", nome: "Nubank", banco: "Nubank",
