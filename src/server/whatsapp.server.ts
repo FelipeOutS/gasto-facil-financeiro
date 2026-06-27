@@ -103,6 +103,13 @@ import {
   processarParcelamento,
   type WhatsAppParcelamentoDeps,
 } from "./whatsapp-parcelamento.server";
+import {
+  CONTA_PENDING_STATES,
+  detectPayableAccountIntent,
+  isContaSession,
+  processarContaAPagar,
+  type WhatsAppContaCriarDeps,
+} from "./whatsapp-contas-criar.server";
 
 // Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
 // precisa do orquestrador é exposto aqui de forma explícita, evitando que
@@ -127,6 +134,21 @@ const parcelamentoDeps: WhatsAppParcelamentoDeps = {
   resolveCategoriaPickerInput: (a) => resolveCategoriaPickerInput(a),
   detectCategoriaCommand: (t) => detectCategoriaCommand(t),
 };
+
+// WA-C2 — DI seam para criação de contas a pagar.
+const contaCriarDeps: WhatsAppContaCriarDeps = {
+  gravarSessao: (userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId) =>
+    gravarSessao(userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId),
+  atualizarSessao: (id, status, session, resposta, gastoId) =>
+    atualizarSessao(id, status, session, resposta, gastoId),
+  fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
+    fecharSessoesAnteriores(userId, telefone, motivo, gastoId),
+  loadCategoriasParaPicker: (userId) => loadCategoriasParaPicker(userId),
+  buildCategoriaListBody: (a) => buildCategoriaListBody(a),
+  resolveCategoriaPickerInput: (a) => resolveCategoriaPickerInput(a),
+  detectCategoriaCommand: (t) => detectCategoriaCommand(t),
+};
+
 import { createHash } from "crypto";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
@@ -550,7 +572,14 @@ export type ProcessOutcome = {
     | "parc_aguardando_cartao"
     | "parc_aguardando_confirmacao"
     | "parc_aguardando_categoria"
+    | "conta_aguardando_nome"
+    | "conta_aguardando_valor"
+    | "conta_aguardando_vencimento"
+    | "conta_aguardando_recorrencia"
+    | "conta_aguardando_categoria"
+    | "conta_aguardando_confirmacao"
     | "cancelada"
+
     | "sem_pendencia"
     | "pendente"
     | "sem_vinculo"
@@ -1030,7 +1059,10 @@ const PENDING_STATES = [
   // WA-F3.3 — picker de categoria + claim de idempotência de RPC.
   "parc_aguardando_categoria",
   "parc_persistindo",
+  // WA-C2 — criação de contas a pagar / vencimentos recorrentes.
+  ...CONTA_PENDING_STATES,
   ...RECEITA_PENDING_STATES,
+
   ...COMPROVANTE_PENDING_STATES,
 ];
 const FINAL_SESSION_STATES = new Set([
@@ -2317,6 +2349,21 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // ---- WA-C2: sessão ativa de CONTA A PAGAR tem prioridade. ----
+  // Roda após receita e parcelamento; nunca interrompe um fluxo em
+  // andamento. Estados conta_* SÓ saem por confirmação/cancelamento.
+  if (sessao && (
+    isContaSession(sessao.session) ||
+    (CONTA_PENDING_STATES as readonly string[]).includes(sessao.status)
+  )) {
+    logWaRouteDecision(msg, "expense_parser", "active_payable_account_session");
+    return await processarContaAPagar({
+      userId, msg, texto, recebidaEm, decisao, sessao,
+      deps: contaCriarDeps,
+    });
+  }
+
+
 
   // ---- WA: sessão de gasto aguardando descrição e/ou valor ----
   // Prioridade sobre saudação, menu, ajuda, consulta ou nova intenção.
@@ -2987,8 +3034,12 @@ export async function processarMensagemWhatsApp(
   // Apenas leitura. Roda DEPOIS de WA-F1..F5 para não conflitar com
   // perguntas de fatura de cartão. Reusa `contas-vencimento.server`.
   // Não cria conta, não marca como paga, não cria recorrência.
-  if (!sessao && decisao === "outro") {
+  // WA-C2 tem precedência sobre WA-C1: mensagens com clara intenção
+  // de CRIAR conta a pagar ("cadastrar internet de 119,90 vence dia 5
+  // todo mês") não devem ser interpretadas como consulta.
+  if (!sessao && decisao === "outro" && !detectPayableAccountIntent(texto)) {
     const intentD = detectDueIntent(texto);
+
     if (intentD) {
       logWaRouteDecision(msg, "consulta_handler", "consulta_vencimentos_without_session");
       const out = await handleDueIntent(userId, intentD);
@@ -3519,6 +3570,18 @@ export async function processarMensagemWhatsApp(
       deps: parcelamentoDeps,
     });
   }
+
+  // WA-C2: detecção de CONTA A PAGAR / VENCIMENTO RECORRENTE antes do
+  // parser de gasto comum. Estrita: bloqueia gastei/paguei/comprei,
+  // fatura/cartão e exige palavra de domínio + pista de vencimento.
+  if (decisao === "outro" && detectPayableAccountIntent(texto)) {
+    logWaRouteDecision(msg, "expense_parser", "new_payable_account_intent");
+    return await processarContaAPagar({
+      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      deps: contaCriarDeps,
+    });
+  }
+
 
   const parsed = parseExpenseMessage(texto, cartoes);
   // Comandos genéricos ("registrar gasto", "novo gasto", ...) e descrições
