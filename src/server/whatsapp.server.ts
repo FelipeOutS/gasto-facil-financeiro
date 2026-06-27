@@ -1104,6 +1104,8 @@ const PENDING_STATES = [
   ...CONTA_PENDING_STATES,
   // WA-C3 — baixa de conta a pagar (marcar como paga).
   ...BAIXA_CONTA_PENDING_STATES,
+  // WA-C4 — edição/cancelamento de contas a pagar.
+  ...EDICAO_CONTA_PENDING_STATES,
   ...RECEITA_PENDING_STATES,
 
   ...COMPROVANTE_PENDING_STATES,
