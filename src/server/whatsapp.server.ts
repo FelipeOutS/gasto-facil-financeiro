@@ -2261,6 +2261,7 @@ export async function processarMensagemWhatsApp(
     logWaRouteDecision(msg, "expense_parser", "active_installment_session");
     return await processarParcelamento({
       userId, msg, texto, recebidaEm, decisao, sessao,
+      deps: parcelamentoDeps,
     });
   }
 
