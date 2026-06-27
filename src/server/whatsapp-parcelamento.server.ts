@@ -732,10 +732,18 @@ async function avancarFluxo(args: {
     totalParcelas: session.totalParcelas!,
     diaFechamentoCartao: dia,
   });
-  const sugestaoCat = suggestCategoryFromText(session.descricao) || "outros";
-  const categoriaLabel =
-    sugestaoCat === "outros" ? "Outros" :
-    sugestaoCat.charAt(0).toUpperCase() + sugestaoCat.slice(1);
+  // WA-F3.3 — categoria: manual escolhida tem precedência; senão, sugere
+  // pelo texto. A label exibida na prévia também é a definitiva usada na
+  // persistência, evitando "preview diz X, salva Y".
+  let categoriaLabel: string;
+  if (session.manualCategoriaLabel) {
+    categoriaLabel = session.manualCategoriaLabel;
+  } else {
+    const sugestaoCat = suggestCategoryFromText(session.descricao) || "outros";
+    categoriaLabel =
+      sugestaoCat === "outros" ? "Outros" :
+      sugestaoCat.charAt(0).toUpperCase() + sugestaoCat.slice(1);
+  }
   const resposta = previewMessage({
     descricao: session.descricao,
     valorTotal: plano.total,
