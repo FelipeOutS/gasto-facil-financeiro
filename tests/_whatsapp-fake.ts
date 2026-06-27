@@ -264,10 +264,61 @@ function applyRangeFilters(rows: any, range: any): any {
 export const fakeAdmin = {
   from: (t: string) => makeBuilder(t),
   // RPC mock: por padrão libera tudo (Admin Master / beta ativa).
-  // Testes específicos podem sobrescrever `fakeAdmin.rpc` para simular
-  // usuário sem beta.
+  // WA-F3.2 — `create_installment_purchase` é simulada como atômica:
+  // injeta uma linha em `state.inserts` e em `state.gastosData` por
+  // parcela, permitindo readback (`select … eq grupo_parcelamento_id`)
+  // funcionar. Testes podem sobrescrever `fakeAdmin.rpc` para simular
+  // falha; nesse caso, nenhuma linha é inserida (cumpre o invariante
+  // de atomicidade exposto pela RPC real).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  rpc: async (_name: string, _args?: unknown) => ({ data: true, error: null }),
+  rpc: async (name: string, args?: Record<string, unknown>) => {
+    if (name === "create_installment_purchase") {
+      const parcelas = (args?.p_parcelas ?? []) as Array<Record<string, unknown>>;
+      const userId = args?.p_user_id as string;
+      const cartaoId = args?.p_cartao_id as string;
+      const categoriaId = (args?.p_categoria_id ?? null) as string | null;
+      const grupoId = args?.p_grupo_id as string;
+      const total = args?.p_total_parcelas as number;
+      const descricao = (args?.p_descricao ?? "") as string;
+      const observacao = (args?.p_observacao ?? null) as string | null;
+      const out: Array<Record<string, unknown>> = [];
+      for (const p of parcelas) {
+        const idx = state.inserts.length + 1;
+        const id = `g-${idx}`;
+        const row = {
+          id,
+          user_id: userId,
+          cartao_id: cartaoId,
+          categoria_id: categoriaId,
+          descricao,
+          estabelecimento: descricao,
+          observacao,
+          valor: p.valor,
+          data: p.data,
+          mes: p.mes,
+          ano: p.ano,
+          invoice_month: p.invoice_month,
+          forma_pagamento: "credito",
+          tipo_gasto: "parcelado",
+          parcela_atual: p.numero,
+          total_parcelas: total,
+          grupo_parcelamento_id: grupoId,
+          origem: "whatsapp",
+          confirmado: true,
+        };
+        state.inserts.push({ table: "gastos", row });
+        state.gastosData.push(row);
+        out.push({
+          id,
+          parcela_atual: p.numero as number,
+          invoice_month: p.invoice_month as string,
+          valor: p.valor as number,
+        });
+      }
+      return { data: out, error: null };
+    }
+    return { data: true, error: null };
+  },
   auth: {
     admin: {
       getUserById: async () => ({
