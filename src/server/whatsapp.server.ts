@@ -2469,6 +2469,17 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // ---- WA-C7.2.b: sessão ativa de PAGAMENTO PARA PESSOA. ----
+  if (sessao && (
+    isPagarPessoaSession(sessao.session) ||
+    (PAGAR_PESSOA_PENDING_STATES as readonly string[]).includes(sessao.status)
+  )) {
+    logWaRouteDecision(msg, "expense_parser", "active_pagar_pessoa_session");
+    return await processarPagarPessoaFlow({
+      userId, msg, texto, recebidaEm, decisao, sessao,
+      deps: pagarPessoaDeps,
+    });
+
 
 
 
