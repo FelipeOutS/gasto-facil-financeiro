@@ -80,6 +80,11 @@ import {
   MERCHANT_MEMORY_HINT_LINE,
   type MerchantMemorySource,
 } from "./whatsapp-merchant-memory.server";
+import {
+  detectInstallmentIntent,
+  isParcelamentoSession,
+  processarParcelamento,
+} from "./whatsapp-parcelamento.server";
 import { createHash } from "crypto";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
@@ -132,7 +137,7 @@ async function userPodeUsarWhatsApp(userId: string): Promise<{ ok: boolean; reas
   return { ok: true };
 }
 
-type WhatsAppMessageRow = {
+export type WhatsAppMessageRow = {
   external_id: string | null;
   telefone: string;
   texto: string;
@@ -194,7 +199,7 @@ async function resolveUserId(telefone: string): Promise<
 
 // ---------- cartões ----------
 
-async function carregarCartoes(userId: string): Promise<Cartao[]> {
+export async function carregarCartoes(userId: string): Promise<Cartao[]> {
   const { data } = await supabaseAdmin
     .from("cartoes")
     .select("*")
@@ -496,6 +501,10 @@ export type ProcessOutcome = {
     | "aguardando_cartao"
     | "aguardando_categoria_gasto"
     | "aguardando_consulta_fatura"
+    | "parc_aguardando_total"
+    | "parc_aguardando_quantidade"
+    | "parc_aguardando_cartao"
+    | "parc_aguardando_confirmacao"
     | "cancelada"
     | "sem_pendencia"
     | "pendente"
@@ -964,6 +973,11 @@ const PENDING_STATES = [
   // WA-F2 — paginação temporária de detalhamento de fatura. Aguarda
   // "ver mais", "voltar" ou "cancelar". NUNCA cria gasto/receita/cartão.
   "aguardando_consulta_fatura",
+  // WA-F3 — sessões de compra parcelada no cartão.
+  "parc_aguardando_total",
+  "parc_aguardando_quantidade",
+  "parc_aguardando_cartao",
+  "parc_aguardando_confirmacao",
   ...RECEITA_PENDING_STATES,
   ...COMPROVANTE_PENDING_STATES,
 ];
@@ -1390,7 +1404,7 @@ function detectStoredKindPath(session: unknown): string | null {
   return null;
 }
 
-async function fecharSessoesAnteriores(
+export async function fecharSessoesAnteriores(
   userId: string,
   telefone: string,
   motivo: "salva" | "cancelada" | "expirada",
@@ -1475,7 +1489,7 @@ function avisoCartaoNaoCadastradoNegado(s: Session): string {
   );
 }
 
-async function verificarGastoExiste(gastoId: string | null | undefined): Promise<boolean> {
+export async function verificarGastoExiste(gastoId: string | null | undefined): Promise<boolean> {
   if (!gastoId) return false;
   const { data } = await supabaseAdmin
     .from("gastos")
@@ -1730,7 +1744,7 @@ export type SaveSessionResult = {
   errorCode: string | null;
 };
 
-async function gravarSessao(
+export async function gravarSessao(
   userId: string,
   telefone: string,
   externalId: string | null,
@@ -1798,7 +1812,7 @@ export type UpdateSessionResult = {
   errorCode: string | null;
 };
 
-async function atualizarSessao(
+export async function atualizarSessao(
   id: string,
   status: string,
   session: Session,
@@ -2236,6 +2250,20 @@ export async function processarMensagemWhatsApp(
       userId, msg, texto, recebidaEm, decisao, sessao,
     });
   }
+
+  // ---- WA-F3: sessão ativa de COMPRA PARCELADA tem prioridade. ----
+  // Vem depois de comprovante e receita; nunca interrompe um fluxo de
+  // gasto/receita/foto em andamento.
+  if (sessao && (
+    isParcelamentoSession(sessao.session) ||
+    ["parc_aguardando_total","parc_aguardando_quantidade","parc_aguardando_cartao","parc_aguardando_confirmacao"].includes(sessao.status)
+  )) {
+    logWaRouteDecision(msg, "expense_parser", "active_installment_session");
+    return await processarParcelamento({
+      userId, msg, texto, recebidaEm, decisao, sessao,
+    });
+  }
+
 
   // ---- WA: sessão de gasto aguardando descrição e/ou valor ----
   // Prioridade sobre saudação, menu, ajuda, consulta ou nova intenção.
@@ -3167,6 +3195,18 @@ export async function processarMensagemWhatsApp(
   }
   logWaRouteDecision(msg, "expense_parser", "no_active_session_after_final_guard");
   logWaReceiptSessionTrace({ msg, receiptSessionCreated: false, lookup: receiptLookup, routeChosen: "expense_parser" });
+
+  // WA-F3: detecção de COMPRA PARCELADA antes do parser de gasto comum.
+  // Só dispara em mensagem com indicador inequívoco ("em Nx", "em N vezes",
+  // "N parcelas", "parcelado em N", "Nx" + pista de crédito). Caso
+  // contrário, segue o parser de gasto comum normalmente.
+  const parcIntent = detectInstallmentIntent(texto);
+  if (parcIntent) {
+    return await processarParcelamento({
+      userId, msg, texto, recebidaEm, decisao, sessao: null,
+    });
+  }
+
   const parsed = parseExpenseMessage(texto, cartoes);
   // Comandos genéricos ("registrar gasto", "novo gasto", ...) e descrições
   // automáticas inválidas ("Gasto WhatsApp") NUNCA podem virar descrição
