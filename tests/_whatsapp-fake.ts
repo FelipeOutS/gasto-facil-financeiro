@@ -98,6 +98,18 @@ function makeBuilder(table: string): any {
     };
     if (ctx.op === "insert") {
       const rows = Array.isArray(ctx.payload) ? ctx.payload : [ctx.payload];
+      // WA-F3.3 — espelha o índice único parcial em whatsapp_messages
+      // (external_id) WHERE external_id IS NOT NULL. Dois inserts
+      // concorrentes com o mesmo external_id falham → garante que o
+      // "claim atômico" do parcelamento bloqueie corridas reais.
+      if (table === "whatsapp_messages" && rows[0]?.external_id) {
+        const dup = state.inserts.some(
+          (i) => i.table === "whatsapp_messages" && i.row.external_id === rows[0].external_id,
+        );
+        if (dup) {
+          return { data: null, error: { code: "23505", message: "duplicate external_id" } };
+        }
+      }
       for (const r of rows) state.inserts.push({ table, row: r });
       if (table === "whatsapp_messages" && PENDING.includes(rows[0]?.status)) {
         state.pendingRow = {
