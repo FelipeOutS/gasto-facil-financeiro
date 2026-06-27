@@ -1016,7 +1016,7 @@ type Session = {
   /** Marcador explícito: distingue sessões de gasto das de receita.
    *  Persistido em whatsapp_messages.parsed quando criamos uma sessão
    *  vazia de gasto (status=aguardando_descricao_e_valor_gasto). */
-  kind?: "gasto";
+  kind?: "gasto" | "pagar_pessoa";
   /**
    * WA-V1.3 — propagada da `WhatsAppMessageRow` para que tanto a
    * prévia (formatarConfirmacao) quanto a persistência final
