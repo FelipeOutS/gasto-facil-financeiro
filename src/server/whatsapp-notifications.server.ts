@@ -242,7 +242,8 @@ export async function markFailed(
     patch.status = "failed";
     patch.failed_at = new Date().toISOString();
   }
-  await c.from("whatsapp_notifications").update(patch).eq("id", id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await c.from("whatsapp_notifications").update(patch as any).eq("id", id);
   return { scheduledRetry: canRetry };
 }
 
