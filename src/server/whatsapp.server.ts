@@ -209,6 +209,19 @@ const edicaoContaDeps: WhatsAppEdicaoContaDeps = {
   detectCategoriaCommand: (t) => detectCategoriaCommand(t),
 };
 
+// WA-C7.2.b — DI seam para state machine de PAGAMENTO PARA PESSOA.
+const pagarPessoaDeps: WhatsAppPagarPessoaDeps = {
+  gravarSessao: (userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId) =>
+    gravarSessao(userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId),
+  atualizarSessao: (id, status, session, resposta, gastoId) =>
+    atualizarSessao(id, status, session, resposta, gastoId),
+  fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
+    fecharSessoesAnteriores(userId, telefone, motivo, gastoId),
+  baixaContaDeps,
+};
+
+
+
 import { createHash } from "crypto";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
