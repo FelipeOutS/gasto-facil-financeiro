@@ -42,13 +42,11 @@ export async function findFavorecidosByNome(
 ): Promise<FavorecidoRow[]> {
   const n = norm(termo);
   if (!userId || !n) return [];
-  const res = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("fornecedores")
     .select("id, user_id, nome, apelido, pix_key, pix_key_type")
     .eq("user_id", userId)
     .eq("ativo", true);
-  if (process.env.WA_PIX_DBG) console.log("[favorecidos] raw result:", JSON.stringify(res));
-  const { data, error } = res ?? {};
   if (error || !Array.isArray(data)) return [];
   const rows = data as FavorecidoRow[];
   // Match em memória: substring no nome OU apelido normalizados.
