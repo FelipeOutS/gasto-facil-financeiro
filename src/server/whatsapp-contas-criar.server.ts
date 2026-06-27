@@ -232,7 +232,13 @@ export function detectPayableAccountIntent(textRaw: string): boolean {
   if (FATURA_OU_CARTAO.test(t)) return false;
 
   // Precisa de pelo menos UMA palavra de domínio "conta a pagar".
-  const temPalavra = PALAVRAS_CONTA.some((p) => t.includes(p));
+  // Usa bordas de palavra (\b) para evitar falsos positivos como
+  // "gasto" casando com "gas" ou "telefonema" casando com "telefone".
+  const temPalavra = PALAVRAS_CONTA.some((p) => {
+    const esc = p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`\\b${esc}\\b`, "u").test(t);
+  });
+
   // OU "cadastrar/registrar/criar X" + vencimento → cobre "cadastrar internet".
   const temVerboCriar = VERBOS_CADASTRAR.test(t);
 
