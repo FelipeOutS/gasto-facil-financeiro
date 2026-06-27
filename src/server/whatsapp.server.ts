@@ -3753,6 +3753,26 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // WA-C7.2.b — entrada gradual de PAGAMENTO PARA PESSOA tem prioridade
+  // sobre WA-C3 para "Paguei <NomeProprio>" (sem valor, sem boleto/
+  // fatura/cartão/pix). WA-C3 continua dono de "paguei a internet" e
+  // afins. Quando a frase tem valor ("paguei R$ X ao João"), a decisão
+  // fica para o detector completo abaixo.
+  const PP_GRADUAL_PRIORITY_RE =
+    /^\s*(?:paguei|pago|quitei|j[áa]\s+paguei|acabei\s+de\s+pagar)\s+(?:o\s+|a\s+)?[A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}(?:\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}){0,2}\s*[.!?]*\s*$/;
+  if (
+    decisao === "outro" &&
+    PP_GRADUAL_PRIORITY_RE.test(texto) &&
+    !/\d/.test(texto) &&
+    !/\b(boleto|fatura|conta\s+de\s+\w+|cartao|cartão|pix)\b/i.test(texto)
+  ) {
+    logWaRouteDecision(msg, "expense_parser", "pagar_pessoa_intent_gradual");
+    return await processarPagarPessoaFlow({
+      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      deps: pagarPessoaDeps,
+    });
+  }
+
   // WA-C3: detecção de BAIXA DE CONTA A PAGAR ("paguei a internet",
   // "marcar aluguel como pago", "dei baixa na academia"). Estrita:
   // exige verbo de pagamento + termo SEM valor monetário. Frases com
