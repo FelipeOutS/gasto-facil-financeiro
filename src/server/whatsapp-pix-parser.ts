@@ -132,7 +132,7 @@ export function parseSavePix(texto: string): SavePixParsed | null {
   // Tenta primeiro o formato "pix do/da NOME ... CHAVE" com separador.
   // Aceita ":", "=", "é", "eh", "e" (apenas como separador explícito).
   const reFull =
-    /pix\s+(?:do|da|de|dos|das)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'.-]{0,40}?)\s*(?::|=|\b(?:e|eh|é)\b|\bsera\b|\bserá\b)\s*([^\s].{0,80}?)\s*$/i;
+    /pix\s+(?:do|da|de|dos|das)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'.-]{0,40}?)\s*(?::|=|(?:\s|^)(?:e|eh|é|sera|será)(?:\s|$))\s*([^\s].{0,80}?)\s*$/i;
   const m1 = texto.match(reFull);
   if (m1) {
     const nome = cleanNome(m1[1]);
