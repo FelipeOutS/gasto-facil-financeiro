@@ -67,6 +67,12 @@ import {
   handleLimiteIntent,
 } from "./whatsapp-limites.server";
 import {
+  detectDueIntent,
+  handleDueIntent,
+  handleDuePagination,
+  type DueSessionState,
+} from "./whatsapp-contas.server";
+import {
   COMPROVANTE_PENDING_STATES,
   isComprovanteSession,
   processarNovaImagem,
