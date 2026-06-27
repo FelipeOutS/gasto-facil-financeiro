@@ -895,7 +895,7 @@ export async function processarEdicaoConta(args: {
       logEvent("failed", sess.operation, 0, 0, result.error === "already_paid" ? "conflict" : "error");
       const resposta = result.error === "already_paid"
         ? statusPagaResposta()
-        : "Não consegui aplicar a alteração agora. Tente novamente em instantes.";
+        : 'Não consegui confirmar a alteração agora. Envie "minhas contas" para conferir o estado atual e, se precisar, tente novamente em instantes.';
       await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
       await deps.gravarSessao(
         userId, msg.telefone, msg.external_id, texto, recebidaEm,
