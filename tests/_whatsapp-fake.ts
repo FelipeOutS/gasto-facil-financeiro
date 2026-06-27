@@ -63,6 +63,8 @@ const PENDING = [
   "img_aguardando_ajuste",
   "img_aguardando_data_confirmacao",
   "img_aguardando_categoria_obrigatoria",
+  // WA-C1 — paginação de vencimentos/contas a pagar.
+  "aguardando_consulta_vencimentos",
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
