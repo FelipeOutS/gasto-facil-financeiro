@@ -2885,18 +2885,6 @@ export async function processarMensagemWhatsApp(
   // que sobrou ("próxima fatura", "fatura de agosto", "parcelas em
   // aberto", "quanto falta pagar do tênis").
   if (!sessao && decisao === "outro") {
-    if (isBeyondHorizon(texto)) {
-      const resposta =
-        "Por enquanto só consigo estimar até 12 meses à frente.\n\n" +
-        "Tente uma data mais próxima.";
-      await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "sem_pendencia",
-        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
-        resposta,
-      );
-      return { status: "consulta", resposta };
-    }
     const intentP = detectFutureFaturaIntent(texto);
     if (intentP) {
       logWaRouteDecision(msg, "consulta_handler", "consulta_future_invoice_without_session");
