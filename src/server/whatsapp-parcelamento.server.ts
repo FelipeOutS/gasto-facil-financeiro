@@ -502,6 +502,7 @@ async function avancarFluxo(args: {
       logDecision({ stage: "awaiting_card", installmentsCountPresent: true, cardMatchedCount: args.cartaoAmbiguous.length, result: "ambiguous" });
       return { status: "pendente", resposta: r };
     }
+    console.log("[parc-debug]", { cartoesLen: cartoes.length, cartoesNames: cartoes.map(c=>c.nome) });
     if (cartoes.length === 0) {
       const r = "Você ainda não tem cartões cadastrados no Gasto Inteligente. Cadastre o cartão pelo app antes de lançar uma compra parcelada.";
       await persistTransition("cancelada", session, r, sessaoId, args);
