@@ -342,7 +342,7 @@ function askValor(): string {
 function askQuantidade(): string {
   return `Em quantas parcelas você dividiu? (mínimo ${MIN_PARCELAS}, máximo ${MAX_PARCELAS})`;
 }
-function askCartao(cartoes: Cartao[]): string {
+function askCartao(cartoes: Cartao[], deps: Pick<WhatsAppParcelamentoDeps, "maskCartaoLabel">): string {
   const linhas = cartoes.map((c) => `• ${deps.maskCartaoLabel(c)}`).join("\n");
   return `Em qual cartão foi essa compra?\n\n${linhas}`;
 }
