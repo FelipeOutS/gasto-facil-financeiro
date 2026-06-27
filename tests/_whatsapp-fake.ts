@@ -146,6 +146,14 @@ function makeBuilder(table: string): any {
       if (table === "contas_a_pagar") {
         for (const r of rows) state.contasData.push(r);
       }
+      // WA-C7 — espelha inserts em fornecedores e devolve um id estável
+      // para o readback (`select … maybeSingle()`).
+      if (table === "fornecedores") {
+        for (const r of rows) {
+          const id = `forn-${state.favorecidosData.length + 1}`;
+          state.favorecidosData.push({ id, apelido: null, ...r });
+        }
+      }
 
       if (table === "whatsapp_messages" && PENDING.includes(rows[0]?.status)) {
         state.pendingRow = {
