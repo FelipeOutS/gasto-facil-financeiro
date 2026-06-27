@@ -430,10 +430,10 @@ describe("WA-C4 — integração com WA-C1", () => {
     await processarMensagemWhatsApp(msg(`mudar internet para 250 reais`));
     await processarMensagemWhatsApp(msg("sim", "ext-c"));
     const r = await handleDueIntent("u1", { kind: "month", yearMonth: ym });
-    expect(r.status).toBe("ok");
+    expect(r.status).toBe("answered");
     void day;
     // R$ 250 deve aparecer no total ou na linha.
-    expect((r as { body: string }).body).toMatch(/250/);
+    expect(r.resposta).toMatch(/250/);
   });
 });
 
