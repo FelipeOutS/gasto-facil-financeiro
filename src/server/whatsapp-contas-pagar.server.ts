@@ -117,12 +117,15 @@ function norm(s: string): string {
     .trim();
 }
 
-function hasMonetaryValue(t: string): boolean {
-  // R$ X, X,XX, 1.200, "50 reais", "20 mil"
+function hasMonetaryValue(textRaw: string): boolean {
+  // Roda sobre o texto BRUTO — normalização tira vírgulas e quebra "89,90".
+  const t = textRaw.toLowerCase();
   if (/r\$\s*\d/.test(t)) return true;
   if (/\b\d+[.,]\d{2}\b/.test(t)) return true;
   if (/\b\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?\b/.test(t)) return true;
   if (/\b\d+\s*(?:reais|real|mil)\b/.test(t)) return true;
+  // Número solto após verbo de pagamento (ex.: "paguei 42 no almoço").
+  if (/\b(paguei|gastei|comprei)\s+\d+/.test(t)) return true;
   return false;
 }
 
