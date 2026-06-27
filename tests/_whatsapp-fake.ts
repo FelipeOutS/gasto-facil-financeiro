@@ -91,6 +91,13 @@ const PENDING = [
   "conta_edicao_aguardando_confirmacao",
   "conta_cancelamento_aguardando_confirmacao",
   "conta_edicao_persistindo",
+  // WA-C7.2.b — pagamento para pessoa (state machine).
+  "pp_aguardando_favorecido",
+  "pp_aguardando_valor",
+  "pp_aguardando_descricao",
+  "pp_aguardando_confirmar_conta",
+  "pp_aguardando_escolha_conta",
+  "pp_persistindo",
 ];
 
 

@@ -110,7 +110,7 @@ describe("WA-C7.2.a :: atalho 'Paguei.' via memória curta", () => {
 });
 
 describe("WA-C7.2.a :: M-2 aviso de colisão com Contas a Pagar", () => {
-  it("'paguei R$ 120 ao Maria' com conta pendente para Maria NÃO cria gasto", async () => {
+  it("'paguei R$ 120 ao Maria' com conta pendente para Maria NÃO cria gasto (fluxo guiado WA-C7.2.b)", async () => {
     resetState({
       contas: [{
         id: "c1",
@@ -126,9 +126,14 @@ describe("WA-C7.2.a :: M-2 aviso de colisão com Contas a Pagar", () => {
       telefone, texto: "paguei R$ 120 ao Maria", external_id: "ext-col",
     });
 
-    expect(r.status).toBe("consulta");
-    expect(r.resposta).toMatch(/conta(s)? pendente/i);
-    expect(r.resposta).toMatch(/paguei Maria/i);
+    // WA-C7.2.b: agora o sistema entra em pp_aguardando_confirmar_conta
+    // e pergunta sim/não/cancelar. Não cria gasto enquanto não houver
+    // decisão explícita.
+    expect(r.status).toBe("pendente");
+    expect(r.resposta).toMatch(/conta\s+pendente|Maria/i);
+    expect(r.resposta).toMatch(/1\.\s*Sim/i);
+    expect(r.resposta).toMatch(/2\.\s*N[aã]o/i);
+    expect(r.resposta).toMatch(/3\.\s*Cancelar/i);
     expect(gastoInserts()).toHaveLength(0);
   });
 

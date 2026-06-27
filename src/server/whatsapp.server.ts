@@ -140,6 +140,12 @@ import {
   handleQueryPixIntent,
   handlePagarPessoaIntent,
 } from "./whatsapp-pix-intents.server";
+import {
+  PAGAR_PESSOA_PENDING_STATES,
+  isPagarPessoaSession,
+  processarPagarPessoaFlow,
+  type WhatsAppPagarPessoaDeps,
+} from "./whatsapp-pagar-pessoa-flow.server";
 
 // Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
 // precisa do orquestrador é exposto aqui de forma explícita, evitando que
@@ -202,6 +208,19 @@ const edicaoContaDeps: WhatsAppEdicaoContaDeps = {
   resolveCategoriaPickerInput: (a) => resolveCategoriaPickerInput(a),
   detectCategoriaCommand: (t) => detectCategoriaCommand(t),
 };
+
+// WA-C7.2.b — DI seam para state machine de PAGAMENTO PARA PESSOA.
+const pagarPessoaDeps: WhatsAppPagarPessoaDeps = {
+  gravarSessao: (userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId) =>
+    gravarSessao(userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId),
+  atualizarSessao: (id, status, session, resposta, gastoId) =>
+    atualizarSessao(id, status, session, resposta, gastoId),
+  fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
+    fecharSessoesAnteriores(userId, telefone, motivo, gastoId),
+  baixaContaDeps,
+};
+
+
 
 import { createHash } from "crypto";
 
@@ -1122,6 +1141,8 @@ const PENDING_STATES = [
   ...BAIXA_CONTA_PENDING_STATES,
   // WA-C4 — edição/cancelamento de contas a pagar.
   ...EDICAO_CONTA_PENDING_STATES,
+  // WA-C7.2.b — pagamento para pessoa (state machine completa).
+  ...PAGAR_PESSOA_PENDING_STATES,
   ...RECEITA_PENDING_STATES,
 
   ...COMPROVANTE_PENDING_STATES,
@@ -2448,6 +2469,19 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // ---- WA-C7.2.b: sessão ativa de PAGAMENTO PARA PESSOA. ----
+  if (sessao && (
+    isPagarPessoaSession(sessao.session) ||
+    (PAGAR_PESSOA_PENDING_STATES as readonly string[]).includes(sessao.status)
+  )) {
+    logWaRouteDecision(msg, "expense_parser", "active_pagar_pessoa_session");
+    return await processarPagarPessoaFlow({
+      userId, msg, texto, recebidaEm, decisao, sessao,
+      deps: pagarPessoaDeps,
+    });
+  }
+
+
 
 
 
@@ -3719,6 +3753,34 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // WA-C7.2.b — entrada gradual de PAGAMENTO PARA PESSOA tem prioridade
+  // sobre WA-C3 para "Paguei <NomeProprio>" (sem valor, sem boleto/
+  // fatura/cartão/pix). WA-C3 continua dono de "paguei a internet" e
+  // afins. Quando a frase tem valor ("paguei R$ X ao João"), a decisão
+  // fica para o detector completo abaixo.
+  // Verbo case-insensitive + nome com inicial maiúscula (sensível a caso).
+  // Evita capturar "paguei conta" (palavra comum) e mantém "Paguei João".
+  const PP_VERB_PREFIX_RE =
+    /^\s*(?:paguei|pago|quitei|j[áa]\s+paguei|acabei\s+de\s+pagar)\s+(?:o\s+|a\s+)?/i;
+  const PP_NAME_TAIL_RE =
+    /[A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}(?:\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}){0,2}\s*[.!?]*\s*$/;
+  const ppVerbMatch = texto.match(PP_VERB_PREFIX_RE);
+  const ppGradualMatch =
+    ppVerbMatch !== null &&
+    PP_NAME_TAIL_RE.test(texto.slice(ppVerbMatch[0].length));
+  if (
+    decisao === "outro" &&
+    ppGradualMatch &&
+    !/\d/.test(texto) &&
+    !/\b(boleto|fatura|conta\s+de\s+\w+|cartao|cartão|pix)\b/i.test(texto)
+  ) {
+    logWaRouteDecision(msg, "expense_parser", "pagar_pessoa_intent_gradual");
+    return await processarPagarPessoaFlow({
+      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      deps: pagarPessoaDeps,
+    });
+  }
+
   // WA-C3: detecção de BAIXA DE CONTA A PAGAR ("paguei a internet",
   // "marcar aluguel como pago", "dei baixa na academia"). Estrita:
   // exige verbo de pagamento + termo SEM valor monetário. Frases com
@@ -3761,42 +3823,34 @@ export async function processarMensagemWhatsApp(
     const reescritoPix = shortResolvePagueiSemNome(msg.telefone, texto);
     if (reescritoPix) texto = reescritoPix;
   }
-  if (decisao === "outro" && detectPagarPessoaIntent(texto)) {
+  // WA-C7.2.b — Entrada na state machine completa de pagamento para pessoa.
+  // Aceita tanto o detector completo (paguei + valor + nome) quanto a
+  // entrada gradual "Paguei João" (sem valor) e "Paguei." resolvido via
+  // memória curta. Em todos os casos, a state machine assume:
+  //  - claim atômico de external_id (M-1, race condition)
+  //  - integração guiada com Contas a Pagar (M-2)
+  //  - conversa multi-passo se faltar valor/descrição/favorecido.
+  // Gradual: "Paguei João" / "Paguei o Pedro" — SEM dígitos e SEM termos
+  // que pertencem a outros domínios (boleto/fatura/conta/cartão/pix/mercado).
+  // Exige nome próprio (Capitalizado) para evitar canibalizar "paguei no
+  // mercado" e similares, que devem seguir para o parser de gasto.
+  const PAGAR_PESSOA_GRADUAL_RE =
+    /^\s*(?:paguei|pago|quitei|j[áa]\s+paguei|acabei\s+de\s+pagar)\s+(?:o\s+|a\s+)?[A-ZÀ-Ý][\wÀ-ÿ'.-]{1,30}\s*[.!?]*\s*$/;
+  const ehFraseDePagamento =
+    detectPagarPessoaIntent(texto) ||
+    (PAGAR_PESSOA_GRADUAL_RE.test(texto) &&
+      !/\d/.test(texto) &&
+      !/\b(boleto|fatura|conta\s+de\s+\w+|cartao|cartão|pix|mercado|lanche|almoco|almoço|jantar|padaria|farmacia|farmácia)\b/i.test(texto));
+  if (decisao === "outro" && ehFraseDePagamento) {
     logWaRouteDecision(msg, "expense_parser", "pagar_pessoa_intent");
-    const outcome = await handlePagarPessoaIntent({
-      userId, telefone: msg.telefone, texto, _row: msg,
+    return await processarPagarPessoaFlow({
+      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      deps: pagarPessoaDeps,
     });
-    // WA-C7.2.a — M-1 (idempotência): persistimos o resultado em
-    // `whatsapp_messages` com `parsed.kind="pagar_pessoa"` para que
-    // tanto o dedup top-level desta função quanto a checagem dentro do
-    // próprio handler captem retries do webhook. Só persistimos quando
-    // o pagamento foi efetivamente salvo (com `gastoId`); demais
-    // outcomes (aviso de colisão, parse_failed, erro) não devem
-    // bloquear retries futuros.
-    if (outcome.status === "salva" && outcome.gastoId) {
-      await gravarSessao(
-        userId,
-        msg.telefone,
-        msg.external_id,
-        texto,
-        recebidaEm,
-        "salva",
-        {
-          // Sessão sintética: o handler já gerou o gasto. Mantemos os
-          // campos mínimos da `Session` para não quebrar o schema.
-          nome: "",
-          valor: 0,
-          data: todayLocalISO(),
-          mensagemOriginal: texto,
-          // Marcador usado pelo dedup e por futuros estados (7.2.b).
-          kind: "pagar_pessoa",
-        } as Session,
-        outcome.resposta,
-        outcome.gastoId,
-      );
-    }
-    return outcome;
   }
+  // Mantemos o handler legado disponível apenas como fallback explícito
+  // se a state machine não foi acionada (defensivo — não deve ocorrer).
+  void handlePagarPessoaIntent;
 
   const parsed = parseExpenseMessage(texto, cartoes);
   // Comandos genéricos ("registrar gasto", "novo gasto", ...) e descrições

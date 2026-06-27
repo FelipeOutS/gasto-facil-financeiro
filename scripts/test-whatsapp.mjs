@@ -65,6 +65,7 @@ const INCLUDE = [
   "whatsapp-ux-c6.test.ts",
   "whatsapp-pix-favorecidos.test.ts",
   "whatsapp-pix-c72a.test.ts",
+  "whatsapp-pix-c72b.test.ts",
   "free-ads-plan.test.ts",
 ];
 
