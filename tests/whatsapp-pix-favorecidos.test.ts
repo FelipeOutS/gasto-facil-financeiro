@@ -11,7 +11,11 @@
 import "./_whatsapp-fake";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { resetState, state } from "./_whatsapp-fake";
-import {
+
+// IMPORTANTE: usar dynamic import APÓS o side-effect de `_whatsapp-fake`
+// para garantir que `mock.module(...)` seja aplicado antes do supabase
+// client ser carregado pelos módulos de servidor.
+const {
   detectPixKeyType,
   parseSavePix,
   parseQueryPix,
@@ -19,13 +23,13 @@ import {
   detectSavePixIntent,
   detectQueryPixIntent,
   detectPagarPessoaIntent,
-} from "../src/server/whatsapp-pix-parser";
-import {
+} = await import("../src/server/whatsapp-pix-parser");
+const {
   handleSavePixIntent,
   handleQueryPixIntent,
   handlePagarPessoaIntent,
-} from "../src/server/whatsapp-pix-intents.server";
-import { _resetShortContext } from "../src/server/whatsapp-short-context.server";
+} = await import("../src/server/whatsapp-pix-intents.server");
+const { _resetShortContext } = await import("../src/server/whatsapp-short-context.server");
 
 const userId = "u1";
 const telefone = "5511999998888";
