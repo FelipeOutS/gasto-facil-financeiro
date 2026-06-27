@@ -179,7 +179,7 @@ function makeBuilder(table: string): any {
       }
       return { data: state.pendingRow, error: null };
     }
-    if (table === "cartoes") { console.log("[fake-cartoes]", { op: ctx.op, len: state.cartoesData.length, filters: ctx.filters }); return { data: state.cartoesData, error: null }; }
+    if (table === "cartoes") return { data: state.cartoesData, error: null };
     if (table === "categorias") {
       const uid = ctx.filters?.user_id;
       const rows = uid
