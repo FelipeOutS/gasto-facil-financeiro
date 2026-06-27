@@ -63,6 +63,10 @@ import {
   type ParceladoSessionState,
 } from "./whatsapp-faturas.server";
 import {
+  detectLimiteIntent,
+  handleLimiteIntent,
+} from "./whatsapp-limites.server";
+import {
   COMPROVANTE_PENDING_STATES,
   isComprovanteSession,
   processarNovaImagem,
