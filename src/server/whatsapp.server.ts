@@ -597,6 +597,9 @@ export type ProcessOutcome = {
     | "conta_aguardando_recorrencia"
     | "conta_aguardando_categoria"
     | "conta_aguardando_confirmacao"
+    | "conta_pagamento_aguardando_escolha"
+    | "conta_pagamento_aguardando_confirmacao"
+    | "conta_pagamento_aguardando_data"
     | "cancelada"
 
     | "sem_pendencia"
