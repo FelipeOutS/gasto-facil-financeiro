@@ -194,7 +194,7 @@ async function resolveUserId(telefone: string): Promise<
 
 // ---------- cartões ----------
 
-async function carregarCartoes(userId: string): Promise<Cartao[]> {
+export async function carregarCartoes(userId: string): Promise<Cartao[]> {
   const { data } = await supabaseAdmin
     .from("cartoes")
     .select("*")
@@ -1390,7 +1390,7 @@ function detectStoredKindPath(session: unknown): string | null {
   return null;
 }
 
-async function fecharSessoesAnteriores(
+export async function fecharSessoesAnteriores(
   userId: string,
   telefone: string,
   motivo: "salva" | "cancelada" | "expirada",
@@ -1475,7 +1475,7 @@ function avisoCartaoNaoCadastradoNegado(s: Session): string {
   );
 }
 
-async function verificarGastoExiste(gastoId: string | null | undefined): Promise<boolean> {
+export async function verificarGastoExiste(gastoId: string | null | undefined): Promise<boolean> {
   if (!gastoId) return false;
   const { data } = await supabaseAdmin
     .from("gastos")
@@ -1730,7 +1730,7 @@ export type SaveSessionResult = {
   errorCode: string | null;
 };
 
-async function gravarSessao(
+export async function gravarSessao(
   userId: string,
   telefone: string,
   externalId: string | null,
@@ -1798,7 +1798,7 @@ export type UpdateSessionResult = {
   errorCode: string | null;
 };
 
-async function atualizarSessao(
+export async function atualizarSessao(
   id: string,
   status: string,
   session: Session,
