@@ -76,7 +76,7 @@ export type CreateFavorecidoInput = {
 export async function createFavorecido(
   input: CreateFavorecidoInput,
 ): Promise<FavorecidoRow | null> {
-  const { data, error } = await supabaseAdmin
+  const res = await supabaseAdmin
     .from("fornecedores")
     .insert({
       user_id: input.userId,
@@ -88,6 +88,8 @@ export async function createFavorecido(
     })
     .select("id, user_id, nome, apelido, pix_key, pix_key_type")
     .maybeSingle();
+  if (process.env.WA_PIX_DBG) console.log("[favorecidos] create raw:", JSON.stringify(res));
+  const { data, error } = res ?? {};
   if (error || !data) return null;
   return data as FavorecidoRow;
 }
