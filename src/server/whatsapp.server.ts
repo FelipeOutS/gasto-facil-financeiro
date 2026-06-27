@@ -1083,6 +1083,8 @@ const PENDING_STATES = [
   "parc_persistindo",
   // WA-C2 — criação de contas a pagar / vencimentos recorrentes.
   ...CONTA_PENDING_STATES,
+  // WA-C3 — baixa de conta a pagar (marcar como paga).
+  ...BAIXA_CONTA_PENDING_STATES,
   ...RECEITA_PENDING_STATES,
 
   ...COMPROVANTE_PENDING_STATES,
