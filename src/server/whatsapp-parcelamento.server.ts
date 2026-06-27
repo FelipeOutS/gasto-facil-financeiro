@@ -823,15 +823,39 @@ async function persistir(args: {
     logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
     return { status: "erro", resposta: "Não consegui dividir esse valor nessas parcelas. Verifique e tente de novo." };
   }
+  // WA-F3.3 — categoria: manual escolhida tem precedência absoluta.
   const cats = await carregarCategoriasMin(userId);
-  const cat = resolveCategoriaId(cats, session.descricao ?? "Compra parcelada");
+  const cat = session.manualCategoriaId
+    ? { id: session.manualCategoriaId, nome: session.manualCategoriaLabel ?? "Categoria" }
+    : resolveCategoriaId(cats, session.descricao ?? "Compra parcelada");
   const grupoId = randomUUID();
   const baseObs = `WhatsApp: ${session.mensagemOriginal}`.slice(0, 1000);
 
-  // WA-F3.2 — persistência atômica via RPC `create_installment_purchase`.
-  // A RPC roda como SECURITY DEFINER em transação única: ou TODAS as
-  // parcelas são criadas, ou nenhuma. Valida `user_id` x `cartao_id`
-  // server-side (defesa em profundidade adicional à RLS).
+  // WA-F3.3 — Idempotência concorrente: antes da RPC, fazemos um "claim
+  // atômico" da mensagem de confirmação gravando a sessão em status
+  // intermediário `parc_persistindo` com o `external_id` da mensagem.
+  // O índice único parcial em whatsapp_messages(external_id) garante que
+  // dois webhooks simultâneos com o mesmo external_message_id falhem aqui
+  // — apenas um sobreviverá para chamar a RPC. Sem claim, sem RPC.
+  if (msg.external_id) {
+    try {
+      await deps.gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "parc_persistindo",
+        { ...session, grupo_parcelamento_id: grupoId } as unknown as never,
+        "",
+      );
+    } catch {
+      logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
+      return { status: "erro", resposta: "Já estou processando essa compra. Aguarde um instante." };
+    }
+  }
+
+  // WA-F3.2/3.3 — persistência atômica via RPC `create_installment_purchase`.
+  // SECURITY DEFINER + search_path fixo + validações server-side (cartão
+  // pertence ao user, categoria pertence ao user, soma > 0, parcelas
+  // 1..N sem furos, invoice_month YYYY-MM). Falha em qualquer validação
+  // não insere nenhuma parcela.
   const parcelasPayload = plano.parcelas.map((p) => ({
     numero: p.numero,
     valor: p.valor,
@@ -860,8 +884,9 @@ async function persistir(args: {
     return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
   }
 
-  // Readback: confirma que TODAS as parcelas foram efetivamente gravadas
-  // sob o mesmo grupo_parcelamento_id antes de informar sucesso.
+  // Readback obrigatório: confirma que TODAS as parcelas foram
+  // efetivamente gravadas sob o mesmo grupo_parcelamento_id antes de
+  // informar sucesso ao usuário.
   const { data: readback, error: readErr } = await supabaseAdmin
     .from("gastos")
     .select("id, parcela_atual")
@@ -897,7 +922,10 @@ async function persistir(args: {
     inseridos[0],
   );
 
-  // Memória de estabelecimento — UMA vez por compra confirmada.
+  // WA-F3.3 — Memória de estabelecimento: UMA única vez por compra
+  // confirmada. evidence = "manual" se o usuário escolheu explicitamente
+  // a categoria via picker/comando; "confirmed" quando apenas aceitou a
+  // sugestão automática.
   const key = merchantKeyFor(session.descricao ?? "");
   if (key && cat.id) {
     try {
@@ -905,7 +933,7 @@ async function persistir(args: {
         userId,
         merchantKey: key,
         categoryId: cat.id,
-        evidence: "confirmed",
+        evidence: session.categorySelectionSource === "manual" ? "manual" : "confirmed",
       });
     } catch {
       /* memória nunca quebra o fluxo */
