@@ -45,6 +45,8 @@ const PENDING = [
   "parc_aguardando_quantidade",
   "parc_aguardando_cartao",
   "parc_aguardando_confirmacao",
+  "parc_aguardando_categoria",
+  "parc_persistindo",
   "rec_aguardando_tipo",
   "rec_aguardando_valor",
   "rec_aguardando_recorrencia",
