@@ -75,10 +75,6 @@ describe("WA-C7.2.b :: M-2 fluxo guiado", () => {
         valor: 12000, data_vencimento: "2026-07-10", status: "pendente",
       }],
     });
-    state.linkData = {
-      user_id: userId, telefone, ativo: true,
-      opt_in_em: new Date().toISOString(), revogado_em: null,
-    };
 
     const r = await processarMensagemWhatsApp({
       telefone, texto: "paguei R$ 120 ao Maria", external_id: "m2-a",
@@ -96,10 +92,6 @@ describe("WA-C7.2.b :: M-2 fluxo guiado", () => {
         valor: 12000, data_vencimento: "2026-07-10", status: "pendente",
       }],
     });
-    state.linkData = {
-      user_id: userId, telefone, ativo: true,
-      opt_in_em: new Date().toISOString(), revogado_em: null,
-    };
     await processarMensagemWhatsApp({
       telefone, texto: "paguei R$ 120 ao Maria", external_id: "m2-b1",
     });
@@ -118,10 +110,6 @@ describe("WA-C7.2.b :: M-2 fluxo guiado", () => {
         valor: 12000, data_vencimento: "2026-07-10", status: "pendente",
       }],
     });
-    state.linkData = {
-      user_id: userId, telefone, ativo: true,
-      opt_in_em: new Date().toISOString(), revogado_em: null,
-    };
     await processarMensagemWhatsApp({
       telefone, texto: "paguei R$ 120 ao Maria", external_id: "m2-c1",
     });
@@ -139,10 +127,6 @@ describe("WA-C7.2.b :: M-2 fluxo guiado", () => {
         { id: "c2", user_id: userId, nome: "Maria Internet", valor: 8900, data_vencimento: "2026-07-15", status: "pendente" },
       ],
     });
-    state.linkData = {
-      user_id: userId, telefone, ativo: true,
-      opt_in_em: new Date().toISOString(), revogado_em: null,
-    };
     const r = await processarMensagemWhatsApp({
       telefone, texto: "paguei R$ 500 ao Maria", external_id: "m2-d",
     });
@@ -162,10 +146,6 @@ describe("WA-C7.2.b :: M-2 fluxo guiado", () => {
         valor: 12000, data_vencimento: "2026-07-10", status: "pendente",
       }],
     });
-    state.linkData = {
-      user_id: userId, telefone, ativo: true,
-      opt_in_em: new Date().toISOString(), revogado_em: null,
-    };
     await processarMensagemWhatsApp({
       telefone, texto: "paguei R$ 120 ao Maria", external_id: "m2-e1",
     });
