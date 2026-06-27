@@ -2251,6 +2251,20 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // ---- WA-F3: sessão ativa de COMPRA PARCELADA tem prioridade. ----
+  // Vem depois de comprovante e receita; nunca interrompe um fluxo de
+  // gasto/receita/foto em andamento.
+  if (sessao && (
+    isParcelamentoSession(sessao.session) ||
+    ["parc_aguardando_total","parc_aguardando_quantidade","parc_aguardando_cartao","parc_aguardando_confirmacao"].includes(sessao.status)
+  )) {
+    logWaRouteDecision(msg, "expense_parser", "active_installment_session");
+    return await processarParcelamento({
+      userId, msg, texto, recebidaEm, decisao, sessao,
+    });
+  }
+
+
   // ---- WA: sessão de gasto aguardando descrição e/ou valor ----
   // Prioridade sobre saudação, menu, ajuda, consulta ou nova intenção.
   // Mantém o fluxo de despesa em andamento — "oi"/"ajuda"/"menu" apenas
