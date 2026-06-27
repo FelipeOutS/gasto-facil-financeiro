@@ -40,7 +40,10 @@ import {
   type ContaVencimentoRow,
 } from "./contas-vencimento.server";
 import { nowInAppTz } from "./cartao-fatura.server";
-import type { CategoriaPickerState } from "./whatsapp-comprovantes.server";
+import type {
+  CategoriaPickerState,
+  CategoriaPickerRow,
+} from "./whatsapp-comprovantes.server";
 
 // Live-binding para permitir mock.module() em testes (padrão WA-C3/WA-F3).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
