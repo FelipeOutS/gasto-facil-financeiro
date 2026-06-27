@@ -348,7 +348,7 @@ export async function processarParcelamento(args: {
   recebidaEm: string;
   decisao: "confirm" | "cancel" | "outro";
   sessao: { id: string; status: string; session: unknown; recebida_em: string } | null;
-}): Promise<wa.ProcessOutcome> {
+}): Promise<ProcessOutcome> {
   const { userId, msg, texto, recebidaEm, decisao, sessao } = args;
   console.log("[parc-deps]", { hasCarregarCartoes: typeof wa.carregarCartoes });
   const cartoes = await wa.carregarCartoes(userId);
@@ -486,7 +486,7 @@ async function avancarFluxo(args: {
   cartoes: Cartao[];
   sessaoId: string | null;
   cartaoAmbiguous?: string[] | null;
-}): Promise<wa.ProcessOutcome> {
+}): Promise<ProcessOutcome> {
   const { userId, msg, texto, recebidaEm, session, cartoes, sessaoId } = args;
 
   // 1) Valor faltando → pergunta.
@@ -612,7 +612,7 @@ async function persistir(args: {
   session: ParcelamentoSession;
   cartoes: Cartao[];
   sessaoId: string;
-}): Promise<wa.ProcessOutcome> {
+}): Promise<ProcessOutcome> {
   const { userId, msg, texto, recebidaEm, session, cartoes, sessaoId } = args;
   const cartao = cartoes.find((c) => c.id === session.cartaoId);
   if (!cartao || !session.valorTotal || !session.totalParcelas) {
