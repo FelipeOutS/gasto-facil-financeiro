@@ -31,6 +31,7 @@ export const state = {
   ] as Record<string, unknown>[],
   gastosData: [] as Record<string, unknown>[],
   receitasData: [] as Record<string, unknown>[],
+  contasData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
