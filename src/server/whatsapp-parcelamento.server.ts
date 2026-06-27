@@ -909,21 +909,25 @@ async function persistir(args: {
     .sort((a, b) => (a.parcela_atual ?? 0) - (b.parcela_atual ?? 0))
     .map((r) => r.id);
 
-  // Fecha sessões e grava marca "salva".
+  // Fecha sessões e grava marca "salva". Quando há claim, atualizamos
+  // a própria linha de claim (mesmo external_id) em vez de inserir uma
+  // nova, evitando colidir com o índice único da idempotência.
   await deps.fecharSessoesAnteriores(userId, msg.telefone, "salva", inseridos[0]);
-  await deps.gravarSessao(
-    userId, msg.telefone, msg.external_id, texto, recebidaEm,
-    "salva",
-    {
-      ...session,
-      grupo_parcelamento_id: grupoId,
-      gasto_ids: inseridos,
-      status: "salva",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any,
-    "ok",
-    inseridos[0],
-  );
+  const finalSession = {
+    ...session,
+    grupo_parcelamento_id: grupoId,
+    gasto_ids: inseridos,
+    status: "salva",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any;
+  if (claimSessionId) {
+    await deps.atualizarSessao(claimSessionId, "salva", finalSession, "ok", inseridos[0]);
+  } else {
+    await deps.gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "salva", finalSession, "ok", inseridos[0],
+    );
+  }
 
   // WA-F3.3 — Memória de estabelecimento: UMA única vez por compra
   // confirmada. evidence = "manual" se o usuário escolheu explicitamente
