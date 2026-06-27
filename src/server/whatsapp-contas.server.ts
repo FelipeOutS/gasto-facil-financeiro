@@ -146,6 +146,30 @@ export function detectDueIntent(texto: string): DueIntent | null {
   // Bloqueia perguntas sobre fatura de cartão (WA-F1..F5).
   if (FATURA_KEYWORDS.test(t)) return null;
 
+  // Bloqueia perguntas de gasto/receita/saldo — competência de WA-G4.
+  if (
+    /\bgast(?:ei|ar|o|os|ou)\b/.test(t) ||
+    /\brecebi\b/.test(t) ||
+    /\bganhei\b/.test(t) ||
+    /\bsobra\b/.test(t) ||
+    /\bsaldo\b/.test(t)
+  ) {
+    return null;
+  }
+
+  // Vocabulário típico de contas a pagar. Sem ele, NÃO ativa este módulo.
+  const billsLex =
+    /\bvenc(?:e|er|imento|imentos)\b/.test(t) ||
+    /\bvencendo\b/.test(t) ||
+    /\bvenceu\b/.test(t) ||
+    /\bpagar\b/.test(t) ||
+    /\bconta(?:s)?\b/.test(t) ||
+    /\bcompromiss[oa]s?\b/.test(t) ||
+    /\batrasad[ao]s?\b/.test(t) ||
+    /\bboleto(?:s)?\b/.test(t);
+
+  if (!billsLex) return null;
+
   // "vencimentos atrasados" / "o que venceu" / "tenho atrasada"
   if (
     /\batrasad[ao]s?\b/.test(t) ||
@@ -160,7 +184,7 @@ export function detectDueIntent(texto: string): DueIntent | null {
   if (
     /\bvence\s+hoje\b/.test(t) ||
     /\bhoje\s+vence\b/.test(t) ||
-    /\b(o\s+que|tem\s+(?:conta|algo))\b.*\bhoje\b/.test(t) && /\bpagar|vence/.test(t) ||
+    (/\b(o\s+que|tem\s+(?:conta|algo))\b.*\bhoje\b/.test(t) && /\bpagar|vence/.test(t)) ||
     /\bconta(?:s)?\s+para\s+pagar\s+hoje\b/.test(t) ||
     /\bvencimentos?\s+(?:de\s+)?hoje\b/.test(t)
   ) {
@@ -172,13 +196,13 @@ export function detectDueIntent(texto: string): DueIntent | null {
     /\bvence\s+amanha\b/.test(t) ||
     /\bamanha\s+vence\b/.test(t) ||
     /\bconta(?:s)?\s+(?:vencendo|para\s+pagar)\s+amanha\b/.test(t) ||
-    /\b(?:o\s+que|tem)\b.*\bamanha\b/.test(t) && /\bvenc|pagar\b/.test(t) ||
+    (/\b(?:o\s+que|tem)\b.*\bamanha\b/.test(t) && /\bvenc|pagar\b/.test(t)) ||
     /\bvencimentos?\s+(?:de\s+)?amanha\b/.test(t)
   ) {
     return { kind: "tomorrow" };
   }
 
-  // "essa semana" / "ate domingo"
+  // "essa semana" / "ate domingo" — só dispara junto com bills lex.
   if (
     /\b(essa|esta|nesta|nessa)\s+semana\b/.test(t) ||
     /\bate\s+domingo\b/.test(t) ||
@@ -187,7 +211,7 @@ export function detectDueIntent(texto: string): DueIntent | null {
     return { kind: "week" };
   }
 
-  // "do mes" / nome do mês / "este mes"
+  // Mês — exige bills lex (já garantido acima) + indicador de mês.
   const mesYM = parseMonthFromText(t);
   if (
     mesYM ||
@@ -197,6 +221,7 @@ export function detectDueIntent(texto: string): DueIntent | null {
   ) {
     return { kind: "month", yearMonth: mesYM };
   }
+
 
   // "quais contas tenho para pagar" / "minhas contas" / "o que tenho para pagar"
   if (
