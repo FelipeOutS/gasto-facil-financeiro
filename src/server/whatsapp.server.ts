@@ -204,6 +204,7 @@ export async function carregarCartoes(userId: string): Promise<Cartao[]> {
     .from("cartoes")
     .select("*")
     .eq("user_id", userId);
+  console.log("[wa-carregarCartoes]", { dataLen: Array.isArray(data) ? data.length : null, sample: Array.isArray(data) ? data[0] : null });
   if (!data) return [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data as any[]).map(
