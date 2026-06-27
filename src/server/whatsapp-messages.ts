@@ -294,24 +294,28 @@ export const whatsappMessages = {
   // Máximo 1 emoji por mensagem.
   // =====================================================================
   consulta: {
+    // WA-C6 — Boas-vindas reposicionando o WhatsApp como assistente
+    // RÁPIDO, sem substituir o site/app (onde ficam dashboards, gráficos,
+    // relatórios, Mercado Inteligente, IA, importações).
     ajuda() {
       return [
         `Oi! Eu sou o GI, assistente do Gasto Inteligente. 👋`,
         ``,
-        `Posso te ajudar com:`,
+        `O Gasto Inteligente é seu app e site completos para controlar suas finanças — com dashboards, gráficos, relatórios, planejamento, Mercado Inteligente, IA e importações.`,
         ``,
-        `• Registrar gasto`,
-        `• Registrar renda`,
-        `• Resumo da semana`,
-        `• Resumo do mês`,
-        `• Maiores gastos`,
-        `• Impacto dos gastos na renda`,
+        `Aqui no WhatsApp eu sou seu atalho rápido. Não substituo o site/app, mas resolvo o dia a dia em segundos.`,
         ``,
-        `Exemplos:`,
-        `“Uber 29,90”`,
-        `“Recebi 500 de freelancer”`,
-        `“Como foi minha semana?”`,
-        `“Quais foram meus maiores gastos?”`,
+        `📌 O que deseja fazer?`,
+        `1. Registrar gasto`,
+        `2. Cadastrar uma conta a pagar`,
+        `3. Ver contas pendentes`,
+        `4. Ver contas atrasadas`,
+        `5. Marcar conta como paga`,
+        `6. Editar uma conta`,
+        `7. Cancelar uma conta`,
+        `8. Ajuda e exemplos`,
+        ``,
+        `Responda com o número ou descreva em poucas palavras (ex.: “Uber 29,90”, “paguei a internet”).`,
       ].join("\n");
     },
 
@@ -320,15 +324,17 @@ export const whatsappMessages = {
       return [
         `Oi! Eu sou o GI, assistente do Gasto Inteligente. 👋`,
         ``,
-        `Posso registrar gastos e rendas ou mostrar um resumo das suas finanças.`,
+        `Sou seu atalho rápido pelo WhatsApp: registro gastos, cadastro/consulto/pago/edito/cancelo contas e tiro dúvidas rápidas.`,
         ``,
-        `Digite “ajuda” para ver exemplos.`,
+        `Para a visão completa (dashboards, relatórios, planejamento, Mercado Inteligente, IA), use o site ou o app do Gasto Inteligente.`,
+        ``,
+        `Digite “menu” para ver as opções ou “ajuda” para exemplos.`,
       ].join("\n");
     },
 
     // WA-G3 — versão curta usada quando menu/saudação acabou de ser enviado.
     menuCurto() {
-      return `Você pode me enviar um gasto, uma renda ou pedir um resumo das suas finanças.`;
+      return `Você pode me enviar um gasto, pagar/criar uma conta ou pedir um resumo. Digite “menu” para ver as opções.`;
     },
 
     // WA-G3 — pedido financeiro genérico ("quero ver minhas finanças").
@@ -341,8 +347,9 @@ export const whatsappMessages = {
         `• Maiores gastos`,
         `• Impacto dos gastos na renda`,
         ``,
-        `Exemplo:`,
-        `“Como foi minha semana?”`,
+        `Para gráficos completos e planejamento, abra o site ou o app.`,
+        ``,
+        `Exemplo: “Como foi minha semana?”`,
       ].join("\n");
     },
 
@@ -351,8 +358,41 @@ export const whatsappMessages = {
       return [
         `Não tem nada em andamento agora.`,
         ``,
-        `Posso registrar um gasto, uma renda ou mostrar um resumo das suas finanças.`,
+        `Posso registrar um gasto, criar/pagar/editar/cancelar uma conta ou mostrar um resumo. Digite “menu” para ver as opções.`,
       ].join("\n");
+    },
+
+    // WA-C6 — ajuda contextual quando não entendemos a mensagem fora de sessão.
+    ajudaContextual() {
+      return [
+        `Não consegui entender bem. Talvez eu possa ajudar com:`,
+        ``,
+        `• Registrar gasto (ex.: “Uber 29,90”)`,
+        `• Criar conta (ex.: “Cadastrar internet 119,90 vence dia 5”)`,
+        `• Ver pendências (“minhas contas”)`,
+        `• Marcar pagamento (“paguei a internet”)`,
+        `• Editar ou cancelar uma conta`,
+        ``,
+        `Digite “menu” para ver tudo.`,
+      ].join("\n");
+    },
+
+    // WA-C6 — sufixo curto com próximos passos sugeridos.
+    // Não muda regras: apenas anexa uma linha às respostas finais.
+    sugestoesPos(acao: "gasto_salvo" | "conta_criada" | "conta_paga" | "conta_cancelada" | "conta_editada") {
+      if (acao === "gasto_salvo") {
+        return `Próximo passo: registre outro gasto, peça “resumo da semana” ou digite “menu”.`;
+      }
+      if (acao === "conta_criada") {
+        return `Próximo passo: diga “minhas contas” para ver pendências, “criar outra” ou “menu”.`;
+      }
+      if (acao === "conta_paga") {
+        return `Próximo passo: peça “próximas contas”, registre outro pagamento ou “menu”.`;
+      }
+      if (acao === "conta_cancelada") {
+        return `Próximo passo: diga “minhas contas” ou “menu”.`;
+      }
+      return `Próximo passo: diga “minhas contas” ou “menu”.`;
     },
 
 
