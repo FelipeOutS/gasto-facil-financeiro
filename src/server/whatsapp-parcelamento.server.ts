@@ -832,23 +832,26 @@ async function persistir(args: {
   const baseObs = `WhatsApp: ${session.mensagemOriginal}`.slice(0, 1000);
 
   // WA-F3.3 — Idempotência concorrente: antes da RPC, fazemos um "claim
-  // atômico" da mensagem de confirmação gravando a sessão em status
+  // atômico" da mensagem de confirmação gravando uma linha em status
   // intermediário `parc_persistindo` com o `external_id` da mensagem.
   // O índice único parcial em whatsapp_messages(external_id) garante que
   // dois webhooks simultâneos com o mesmo external_message_id falhem aqui
   // — apenas um sobreviverá para chamar a RPC. Sem claim, sem RPC.
+  // A linha final "salva" é gravada como UPDATE desta mesma sessão de
+  // claim, evitando colidir consigo mesmo no índice único.
+  let claimSessionId: string | null = null;
   if (msg.external_id) {
-    try {
-      await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "parc_persistindo",
-        { ...session, grupo_parcelamento_id: grupoId } as unknown as never,
-        "",
-      );
-    } catch {
+    const claim = await deps.gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "parc_persistindo",
+      { ...session, grupo_parcelamento_id: grupoId } as unknown as never,
+      "",
+    ) as { ok?: boolean; sessionId?: string | null } | undefined;
+    if (!claim?.ok || !claim.sessionId) {
       logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
       return { status: "erro", resposta: "Já estou processando essa compra. Aguarde um instante." };
     }
+    claimSessionId = claim.sessionId;
   }
 
   // WA-F3.2/3.3 — persistência atômica via RPC `create_installment_purchase`.
