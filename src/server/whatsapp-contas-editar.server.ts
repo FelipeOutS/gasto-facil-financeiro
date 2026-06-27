@@ -470,9 +470,16 @@ async function buscarContaPorId(userId: string, contaId: string): Promise<ContaV
   };
 }
 
-async function getRecorrenciaIdDaConta(contaId: string): Promise<string | null> {
+async function getRecorrenciaIdDaConta(contaId: string, userId: string): Promise<string | null> {
+  // Defesa em profundidade: além do contaId já validado upstream, escopamos
+  // explicitamente por user_id para impedir qualquer leitura cruzada caso a
+  // função venha a ser invocada em outro contexto.
   const { data } = await supabaseAdmin
-    .from("contas_a_pagar").select("recorrencia_id").eq("id", contaId).maybeSingle();
+    .from("contas_a_pagar")
+    .select("recorrencia_id")
+    .eq("id", contaId)
+    .eq("user_id", userId)
+    .maybeSingle();
   return (data?.recorrencia_id as string | null) ?? null;
 }
 
