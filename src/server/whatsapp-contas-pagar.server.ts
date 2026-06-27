@@ -438,16 +438,28 @@ export async function processarBaixaConta(args: {
           'Você pode consultar suas contas com "o que vence esta semana?".',
       };
     }
-    // 1 candidata → confirmação direta.
+    // 1 candidata → confirmação direta (ou confirmação extra se data futura).
     if (rows.length === 1) {
       const row = rows[0];
-      const dataPag = todayISOInAppTz();
+      // WA-C3.1 — usa data extraída da própria frase quando houver.
+      const parsedFromIntent = intent.paymentDate ? parseDataPagamento(intent.paymentDate) : null;
+      const dataPag = parsedFromIntent ?? todayISOInAppTz();
       const session: BaixaContaSession = {
         kind: "baixa_conta",
         contaId: row.id,
         candidateContaIds: null,
         dataPagamento: dataPag,
       };
+      if (isFutureISO(dataPag)) {
+        const resposta = askFutureConfirm(dataPag);
+        await deps.gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "conta_pagamento_aguardando_data",
+          session as never, resposta,
+        );
+        logEvent("awaiting_confirmation", 1, "ok");
+        return { status: "pendente", resposta };
+      }
       const resposta = previewSingle(row, dataPag);
       await deps.gravarSessao(
         userId, msg.telefone, msg.external_id, texto, recebidaEm,
