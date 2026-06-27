@@ -1005,6 +1005,9 @@ const PENDING_STATES = [
   "parc_aguardando_quantidade",
   "parc_aguardando_cartao",
   "parc_aguardando_confirmacao",
+  // WA-F3.3 — picker de categoria + claim de idempotência de RPC.
+  "parc_aguardando_categoria",
+  "parc_persistindo",
   ...RECEITA_PENDING_STATES,
   ...COMPROVANTE_PENDING_STATES,
 ];
