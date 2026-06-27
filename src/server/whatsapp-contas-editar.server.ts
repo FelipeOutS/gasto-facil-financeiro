@@ -967,7 +967,7 @@ async function avancarApos1Candidata(
     return { status: "consulta", resposta };
   }
 
-  const recId = await getRecorrenciaIdDaConta(conta.id);
+  const recId = await getRecorrenciaIdDaConta(conta.id, userId);
 
   const sess: EdicaoContaSession = {
     kind: intent.operation === "cancel" ? "cancelamento_conta" : "edicao_conta",
