@@ -173,9 +173,21 @@ const baixaContaDeps: WhatsAppBaixaContaDeps = {
     fecharSessoesAnteriores(userId, telefone, motivo, gastoId),
 };
 
+// WA-C4 — DI seam para EDIÇÃO/CANCELAMENTO de contas a pagar.
+const edicaoContaDeps: WhatsAppEdicaoContaDeps = {
+  gravarSessao: (userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId) =>
+    gravarSessao(userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId),
+  atualizarSessao: (id, status, session, resposta, gastoId) =>
+    atualizarSessao(id, status, session, resposta, gastoId),
+  fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
+    fecharSessoesAnteriores(userId, telefone, motivo, gastoId),
+  loadCategoriasParaPicker: (userId) => loadCategoriasParaPicker(userId),
+  buildCategoriaListBody: (a) => buildCategoriaListBody(a),
+  resolveCategoriaPickerInput: (a) => resolveCategoriaPickerInput(a),
+  detectCategoriaCommand: (t) => detectCategoriaCommand(t),
+};
 
 
-import { createHash } from "crypto";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
 type WhatsAppAuditTestEvent =
