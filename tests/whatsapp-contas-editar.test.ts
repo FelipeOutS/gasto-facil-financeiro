@@ -316,19 +316,19 @@ describe("WA-C4 — recorrência exige escopo", () => {
     resetState({
       contas: [
         makeConta({
-          id: "c-int-jul", nome: "Internet", data_vencimento: "2026-07-05",
+          id: "c-int-jul", nome: "Internet", data_vencimento: "2027-07-05",
           recorrente: true, recorrencia_id: "rec-1",
         }),
         makeConta({
-          id: "c-int-ago", nome: "Internet", data_vencimento: "2026-08-05",
+          id: "c-int-ago", nome: "Internet", data_vencimento: "2027-08-05",
           recorrente: true, recorrencia_id: "rec-1",
         }),
         makeConta({
-          id: "c-int-set", nome: "Internet", data_vencimento: "2026-09-05",
+          id: "c-int-set", nome: "Internet", data_vencimento: "2027-09-05",
           recorrente: true, recorrencia_id: "rec-1",
         }),
         makeConta({
-          id: "c-int-jun-paga", nome: "Internet", data_vencimento: "2026-06-05",
+          id: "c-int-jun-paga", nome: "Internet", data_vencimento: "2027-06-05",
           status: "pago", recorrente: true, recorrencia_id: "rec-1",
         }),
       ],
@@ -336,54 +336,44 @@ describe("WA-C4 — recorrência exige escopo", () => {
   );
 
   it("pergunta escopo antes de alterar", async () => {
-    const out = await processarMensagemWhatsApp(msg("adiar internet para dia 12"));
+    const out = await processarMensagemWhatsApp(msg("adiar internet para 12/07/2027"));
     // 3 pendentes → desambiguação primeiro.
     expect(out.resposta).toMatch(/Escolha qual|recorrência/i);
   });
 
   it("escopo SINGLE altera apenas a ocorrência selecionada", async () => {
-    await processarMensagemWhatsApp(msg("adiar internet para dia 12"));
-    // pega a 1ª (julho).
-    await processarMensagemWhatsApp(msg("1", "ext-1"));
-    // Agora deve perguntar escopo.
-    const askScope = await processarMensagemWhatsApp(msg("oi", "ext-x"));
-    // pode estar pedindo escopo OU já mostrando prévia se houver heurística
-    // simples. Tentamos responder "1" (somente esta).
-    void askScope;
-    const r = await processarMensagemWhatsApp(msg("1", "ext-2"));
-    if (r.status === "pendente" && /Confere/i.test(r.resposta)) {
-      await processarMensagemWhatsApp(msg("sim", "ext-3"));
-    }
-    const jul = state.contasData.find((c) => c.id === "c-int-jul")!;
-    const ago = state.contasData.find((c) => c.id === "c-int-ago")!;
-    const set = state.contasData.find((c) => c.id === "c-int-set")!;
-    const jun = state.contasData.find((c) => c.id === "c-int-jun-paga")!;
-    expect(String(jul.data_vencimento)).toMatch(/-12$/);
-    expect(ago.data_vencimento).toBe("2026-08-05");
-    expect(set.data_vencimento).toBe("2026-09-05");
-    expect(jun.status).toBe("pago"); // intacta
-  });
-
-  it("escopo FUTURE_PENDING altera só pendentes >= data selecionada", async () => {
-    await processarMensagemWhatsApp(msg("adiar internet para dia 12"));
-    await processarMensagemWhatsApp(msg("2", "ext-1")); // escolhe agosto
-    // Pergunta escopo; responde 2 = esta e próximas pendentes.
-    const r = await processarMensagemWhatsApp(msg("2", "ext-2"));
-    void r;
-    // Se foi para prévia, confirma.
+    await processarMensagemWhatsApp(msg("adiar internet para 12/07/2027"));
+    await processarMensagemWhatsApp(msg("1", "ext-1")); // 1ª (julho)
+    // Pergunta escopo agora.
+    await processarMensagemWhatsApp(msg("1", "ext-2")); // escopo: somente esta
     await processarMensagemWhatsApp(msg("sim", "ext-3"));
     const jul = state.contasData.find((c) => c.id === "c-int-jul")!;
     const ago = state.contasData.find((c) => c.id === "c-int-ago")!;
     const set = state.contasData.find((c) => c.id === "c-int-set")!;
     const jun = state.contasData.find((c) => c.id === "c-int-jun-paga")!;
-    // julho permanece (anterior ao escopo).
-    expect(jul.data_vencimento).toBe("2026-07-05");
+    expect(jul.data_vencimento).toBe("2027-07-12");
+    expect(ago.data_vencimento).toBe("2027-08-05");
+    expect(set.data_vencimento).toBe("2027-09-05");
+    expect(jun.status).toBe("pago");
+  });
+
+  it("escopo FUTURE_PENDING altera só pendentes >= data selecionada", async () => {
+    await processarMensagemWhatsApp(msg("adiar internet para 12/07/2027"));
+    await processarMensagemWhatsApp(msg("2", "ext-1")); // escolhe agosto
+    await processarMensagemWhatsApp(msg("2", "ext-2")); // escopo: esta e próximas
+    await processarMensagemWhatsApp(msg("sim", "ext-3"));
+    const jul = state.contasData.find((c) => c.id === "c-int-jul")!;
+    const ago = state.contasData.find((c) => c.id === "c-int-ago")!;
+    const set = state.contasData.find((c) => c.id === "c-int-set")!;
+    const jun = state.contasData.find((c) => c.id === "c-int-jun-paga")!;
+    // julho permanece (anterior ao escopo de agosto).
+    expect(jul.data_vencimento).toBe("2027-07-05");
     // agosto e setembro alterados.
-    expect(String(ago.data_vencimento)).toMatch(/-12$/);
-    expect(String(set.data_vencimento)).toMatch(/-12$/);
+    expect(ago.data_vencimento).toBe("2027-07-12");
+    expect(set.data_vencimento).toBe("2027-07-12");
     // paga intacta.
     expect(jun.status).toBe("pago");
-    expect(jun.data_vencimento).toBe("2026-06-05");
+    expect(jun.data_vencimento).toBe("2027-06-05");
   });
 });
 
