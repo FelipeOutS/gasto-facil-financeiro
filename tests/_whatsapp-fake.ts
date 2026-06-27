@@ -65,7 +65,16 @@ const PENDING = [
   "img_aguardando_categoria_obrigatoria",
   // WA-C1 — paginação de vencimentos/contas a pagar.
   "aguardando_consulta_vencimentos",
+  // WA-C2 — criação de conta a pagar.
+  "conta_aguardando_nome",
+  "conta_aguardando_valor",
+  "conta_aguardando_vencimento",
+  "conta_aguardando_recorrencia",
+  "conta_aguardando_categoria",
+  "conta_aguardando_confirmacao",
+  "conta_persistindo",
 ];
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeBuilder(table: string): any {
@@ -114,6 +123,12 @@ function makeBuilder(table: string): any {
         }
       }
       for (const r of rows) state.inserts.push({ table, row: r });
+      // WA-C2 — espelha inserts em contas_a_pagar para o readback e para
+      // a integração com WA-C1 (consulta de vencimentos).
+      if (table === "contas_a_pagar") {
+        for (const r of rows) state.contasData.push(r);
+      }
+
       if (table === "whatsapp_messages" && PENDING.includes(rows[0]?.status)) {
         state.pendingRow = {
           id: `m-${state.inserts.length}`,
