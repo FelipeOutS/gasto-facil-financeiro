@@ -614,6 +614,13 @@ async function entrarFluxo(args: {
   const parsed: PagarPessoaParsed | null = parsePagarPessoa(texto);
 
   let nome = parsed?.nome ?? null;
+  // Entrada gradual: "Paguei João" (sem valor) — extrai o nome direto.
+  if (!nome) {
+    const m = texto.match(
+      /^\s*(?:paguei|pago|quitei|j[áa]\s+paguei|acabei\s+de\s+pagar)\s+(?:o\s+|a\s+)?([A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}(?:\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}){0,2})\s*[.!?]*\s*$/,
+    );
+    if (m) nome = m[1].trim();
+  }
   // Atalho "Paguei." sem destinatário: tenta memória curta.
   if (!nome) {
     const recente = getLastFavorecido(msg.telefone);
