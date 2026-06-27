@@ -192,7 +192,8 @@ describe("WA-F3 — fluxo conversacional", () => {
     await processarMensagemWhatsApp(msg("Tênis 300 em 3x no Nubank", "e-1"));
     const out = await processarMensagemWhatsApp(msg("o valor certo é 360", "e-2"));
     expect(out.status).toBe("aguardando_confirmacao");
-    expect(out.resposta).toContain("R$ 120");
+    // BRL usa NBSP entre "R$" e o número (formato pt-BR).
+    expect(out.resposta).toContain(`R$\u00a0120`);
   });
 
   it("falta valor → pergunta valor", async () => {
