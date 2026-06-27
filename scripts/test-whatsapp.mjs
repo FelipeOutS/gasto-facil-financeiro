@@ -51,6 +51,7 @@ const INCLUDE = [
   "whatsapp-categoria-manual-gasto.test.ts",
   "whatsapp-faturas.test.ts",
   "whatsapp-faturas-detalhe.test.ts",
+  "whatsapp-parcelamento.test.ts",
   "free-ads-plan.test.ts",
 ];
 
