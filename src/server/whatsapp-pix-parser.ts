@@ -324,15 +324,15 @@ function extrairNomePessoa(texto: string): string | null {
 }
 
 function cleanNomeStrict(s: string): string {
-  const tokens = s.trim().split(/\s+/).filter((w) => {
-    const n = norm(w);
-    return n.length > 1 && !NOME_STOPWORDS.has(n) && !/^\d+$/.test(w);
-  });
-  // Para no primeiro token que seja stopword (não corta palavras válidas).
+  // Walk tokens em ordem e PARA no primeiro stopword (não pré-filtra),
+  // assim "João do almoço" devolve apenas "João" em vez de "João Almoço".
+  const tokens = s.trim().split(/\s+/);
   const valid: string[] = [];
   for (const t of tokens) {
     const n = norm(t);
-    if (NOME_STOPWORDS.has(n) || /\d/.test(t)) break;
+    if (n.length < 2) break;
+    if (NOME_STOPWORDS.has(n)) break;
+    if (/\d/.test(t)) break;
     valid.push(t);
     if (valid.length >= 3) break;
   }
