@@ -2107,6 +2107,7 @@ export type Database = {
           razao_social: string | null
           responsavel_nome: string | null
           telefone: string | null
+          timezone: string
           tipo_cadastro: string | null
           updated_at: string
         }
@@ -2121,6 +2122,7 @@ export type Database = {
           razao_social?: string | null
           responsavel_nome?: string | null
           telefone?: string | null
+          timezone?: string
           tipo_cadastro?: string | null
           updated_at?: string
         }
@@ -2135,6 +2137,7 @@ export type Database = {
           razao_social?: string | null
           responsavel_nome?: string | null
           telefone?: string | null
+          timezone?: string
           tipo_cadastro?: string | null
           updated_at?: string
         }
@@ -3113,6 +3116,165 @@ export type Database = {
           texto?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_notification_preferences: {
+        Row: {
+          avisos_sistema: boolean
+          contas_a_pagar: boolean
+          created_at: string
+          ia_insights: boolean
+          mercado: boolean
+          metas: boolean
+          orcamento: boolean
+          quiet_hours_end: number | null
+          quiet_hours_start: number | null
+          recorrencias: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avisos_sistema?: boolean
+          contas_a_pagar?: boolean
+          created_at?: string
+          ia_insights?: boolean
+          mercado?: boolean
+          metas?: boolean
+          orcamento?: boolean
+          quiet_hours_end?: number | null
+          quiet_hours_start?: number | null
+          recorrencias?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avisos_sistema?: boolean
+          contas_a_pagar?: boolean
+          created_at?: string
+          ia_insights?: boolean
+          mercado?: boolean
+          metas?: boolean
+          orcamento?: boolean
+          quiet_hours_end?: number | null
+          quiet_hours_start?: number | null
+          recorrencias?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_notification_templates: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          default_priority: string
+          key: string
+          meta_template_name: string | null
+          payload_schema: Json
+          requires_template_window: boolean
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          created_at?: string
+          default_priority?: string
+          key: string
+          meta_template_name?: string | null
+          payload_schema?: Json
+          requires_template_window?: boolean
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          default_priority?: string
+          key?: string
+          meta_template_name?: string | null
+          payload_schema?: Json
+          requires_template_window?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      whatsapp_notifications: {
+        Row: {
+          attempt_count: number
+          cancelled_at: string | null
+          category: string
+          created_at: string
+          dedupe_key: string
+          entity_id: string | null
+          entity_type: string | null
+          failed_at: string | null
+          id: string
+          last_error_code: string | null
+          max_attempts: number
+          next_attempt_at: string | null
+          notification_type: string
+          payload: Json
+          payload_version: number
+          priority: string
+          provider_message_id: string | null
+          scheduled_at: string
+          sent_at: string | null
+          skipped_reason: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempt_count?: number
+          cancelled_at?: string | null
+          category: string
+          created_at?: string
+          dedupe_key: string
+          entity_id?: string | null
+          entity_type?: string | null
+          failed_at?: string | null
+          id?: string
+          last_error_code?: string | null
+          max_attempts?: number
+          next_attempt_at?: string | null
+          notification_type: string
+          payload?: Json
+          payload_version?: number
+          priority?: string
+          provider_message_id?: string | null
+          scheduled_at: string
+          sent_at?: string | null
+          skipped_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempt_count?: number
+          cancelled_at?: string | null
+          category?: string
+          created_at?: string
+          dedupe_key?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          failed_at?: string | null
+          id?: string
+          last_error_code?: string | null
+          max_attempts?: number
+          next_attempt_at?: string | null
+          notification_type?: string
+          payload?: Json
+          payload_version?: number
+          priority?: string
+          provider_message_id?: string | null
+          scheduled_at?: string
+          sent_at?: string | null
+          skipped_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
