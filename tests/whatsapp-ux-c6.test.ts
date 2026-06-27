@@ -139,7 +139,7 @@ test("WA-C6: '3' fora de sessão entra no fluxo de contas (rewrite → minhas co
     contas: [
       {
         id: "cap-1", user_id: "u1", nome: "Internet",
-        valor: 119.9, data_vencimento: daysAheadISO(3),
+        valor: 119.9, data_vencimento: `${MONTH.yearMonth}-05`,
         status: "pendente", data_pagamento: null,
       },
     ],
