@@ -1,0 +1,11 @@
+import "./_whatsapp-fake";
+import { resetState, state, gastosInserts } from "./_whatsapp-fake";
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
+const { getItensFaturaAtualPorCartao } = await import("../src/server/cartao-fatura.server");
+resetState({ cartoes: [{ id: "c-nu", nome: "Nubank", banco: "Nubank", limite_total: 0, dia_fechamento: 28, dia_vencimento: 10, cor: "#000", created_at: new Date().toISOString(), updated_at: new Date().toISOString() }] });
+await processarMensagemWhatsApp({ external_id:"e-1", telefone:"5511999998888", texto:"Tênis 300 em 3x no Nubank", recebida_em:new Date().toISOString(), authorizedUserId:"u1" } as any);
+const r = await processarMensagemWhatsApp({ external_id:"e-2", telefone:"5511999998888", texto:"sim", recebida_em:new Date().toISOString(), authorizedUserId:"u1" } as any);
+console.error("RESULT:", r);
+console.error("GASTOS:", JSON.stringify(gastosInserts().map(g => ({ data: g.row.data, im: g.row.invoice_month, valor: g.row.valor, ca: g.row.cartao_id, ui: g.row.user_id })), null, 2));
+const itens = await getItensFaturaAtualPorCartao("u1", state.cartoesData[0] as any);
+console.error("ITENS:", JSON.stringify(itens, null, 2));
