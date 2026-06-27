@@ -496,6 +496,10 @@ export type ProcessOutcome = {
     | "aguardando_cartao"
     | "aguardando_categoria_gasto"
     | "aguardando_consulta_fatura"
+    | "parc_aguardando_total"
+    | "parc_aguardando_quantidade"
+    | "parc_aguardando_cartao"
+    | "parc_aguardando_confirmacao"
     | "cancelada"
     | "sem_pendencia"
     | "pendente"
@@ -964,6 +968,11 @@ const PENDING_STATES = [
   // WA-F2 — paginação temporária de detalhamento de fatura. Aguarda
   // "ver mais", "voltar" ou "cancelar". NUNCA cria gasto/receita/cartão.
   "aguardando_consulta_fatura",
+  // WA-F3 — sessões de compra parcelada no cartão.
+  "parc_aguardando_total",
+  "parc_aguardando_quantidade",
+  "parc_aguardando_cartao",
+  "parc_aguardando_confirmacao",
   ...RECEITA_PENDING_STATES,
   ...COMPROVANTE_PENDING_STATES,
 ];
