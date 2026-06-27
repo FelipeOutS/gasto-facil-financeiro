@@ -202,28 +202,71 @@ const NUMEROS_EXTENSO: Record<string, number> = {
   "nove": 9, "dez": 10, "onze": 11, "doze": 12,
 };
 
-/** Extrai valor monetário (R$) do texto. Aceita "R$ 89,90", "1.200",
- *  "2 mil reais", "300 reais", "1500". */
+/** Extrai valor monetário (R$) do texto em formato brasileiro.
+ *  Regras:
+ *  - vírgula = decimal; ponto = separador de milhar quando houver
+ *    grupo válido de três dígitos. "1.200" → 1200; "89,90" → 89.90;
+ *    "1.200,50" → 1200.50.
+ *  - ignora números seguidos de "x", "vezes", "parcelas", "prestações"
+ *    (são quantidade de parcelas, não valor).
+ *  - ignora números embutidos em data/hora/final de cartão (ex.: 12/05,
+ *    14:30, 1234-5).
+ *  - prefere ocorrência com prefixo "R$" ou sufixo "reais/real".
+ *  - "2 mil" / "2,5 mil reais" são reconhecidos como ×1000.
+ *  IMPORTANTE: trabalha sobre o texto RAW (sem normalizar pontuação),
+ *  para não destruir "1.200" → "1 200". */
 export function extrairValor(textRaw: string): number | null {
-  const t = normalize(textRaw);
-  // 2 mil reais → 2000
-  const mil = t.match(/\b(\d+(?:[.,]\d+)?)\s*mil\b/);
+  if (!textRaw) return null;
+  const t = (textRaw ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  // 2 mil reais / 2,5 mil
+  const mil = t.match(/(\d+(?:[.,]\d+)?)\s*mil(?:\s+(?:reais|real))?\b/);
   if (mil) {
     const base = Number(mil[1].replace(",", "."));
-    if (Number.isFinite(base)) return Math.round(base * 1000 * 100) / 100;
+    if (Number.isFinite(base) && base > 0) {
+      return Math.round(base * 1000 * 100) / 100;
+    }
   }
-  // R$ 89,90 / 1.200,00 / 89,90 / 1200 / 1.200 / 1200.50
-  const re =
-    /\b(?:r\$?\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?|\d+(?:\.\d{1,2})?)\b(?!\s*(?:x|vezes|parcelas|presta))/;
-  const m = t.match(re);
-  if (!m) return null;
-  const raw = m[1];
-  const norm = raw.includes(",")
-    ? raw.replace(/\./g, "").replace(",", ".")
-    : (raw.match(/\.\d{1,2}$/) ? raw : raw.replace(/\./g, ""));
-  const n = Number(norm);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.round(n * 100) / 100;
+
+  // Candidatos numéricos. Anchoras (?<![\d:/-]) e (?![\d:/-]) evitam
+  // captura parcial de datas/horas/finais de cartão.
+  // Negative lookahead descarta tokens seguidos de "x|vezes|parcelas|prest".
+  const re = /(?<![\d:/-])(?:r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+,\d{1,2}|\d+\.\d{1,2}|\d+)(?![\d:/-])(?!\s*(?:x|vezes?|parcelas?|prest))/gi;
+
+  const matches = [...t.matchAll(re)];
+  if (matches.length === 0) return null;
+
+  function toNumber(raw: string): number {
+    let s = raw;
+    if (s.includes(",")) {
+      // Brasileiro: ponto = milhar; vírgula = decimal.
+      s = s.replace(/\./g, "").replace(",", ".");
+    } else if (/^\d{1,3}(\.\d{3})+$/.test(s)) {
+      // Pontos formam apenas grupos de milhar.
+      s = s.replace(/\./g, "");
+    }
+    // Demais casos ("1500", "1500.50") seguem como vieram.
+    return Number(s);
+  }
+
+  let best: number | null = null;
+  for (const m of matches) {
+    const raw = m[1];
+    const n = toNumber(raw);
+    if (!Number.isFinite(n) || n <= 0) continue;
+    const idx = m.index ?? 0;
+    const before = t.slice(Math.max(0, idx - 3), idx);
+    const after = t.slice(idx + m[0].length, idx + m[0].length + 8);
+    const hasRPrefix = /r\$\s*$/i.test(before) || /^r\$/i.test(m[0]);
+    const hasReais = /^\s*(?:reais|real)\b/i.test(after);
+    if (hasRPrefix || hasReais) return Math.round(n * 100) / 100;
+    best = best === null ? n : Math.max(best, n);
+  }
+  if (best === null) return null;
+  return Math.round(best * 100) / 100;
 }
 
 /** Tenta extrair quantidade de parcelas (digitos ou extenso). Usado APENAS
