@@ -176,6 +176,21 @@ function makeBuilder(table: string): any {
           };
         }
       }
+      // WA-C3 — update condicional de contas_a_pagar (status='pendente').
+      if (table === "contas_a_pagar") {
+        let updated: Record<string, unknown> | null = null;
+        for (const c of state.contasData) {
+          let match = true;
+          for (const [col, val] of Object.entries(ctx.filters)) {
+            if ((c as Record<string, unknown>)[col] !== val) { match = false; break; }
+          }
+          if (match) {
+            Object.assign(c, ctx.payload);
+            if (!updated) updated = c;
+          }
+        }
+        return { data: updated, error: null };
+      }
       return { data: null, error: null };
     }
     if (ctx.op === "delete") return { data: null, error: null };
