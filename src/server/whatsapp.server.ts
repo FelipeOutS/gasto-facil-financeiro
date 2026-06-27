@@ -187,7 +187,7 @@ const edicaoContaDeps: WhatsAppEdicaoContaDeps = {
   detectCategoriaCommand: (t) => detectCategoriaCommand(t),
 };
 
-
+import { createHash } from "crypto";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
 type WhatsAppAuditTestEvent =
