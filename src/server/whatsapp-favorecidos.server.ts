@@ -5,18 +5,15 @@
  * sobre a RLS, padrão WA-C5.1). Nada de Pix/CPF/CNPJ/telefone nos logs —
  * apenas IDs UUID, tipo da chave, contagem e flags booleanas.
  */
-import * as _supa from "@/integrations/supabase/client.server";
+import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { PixKeyType } from "./whatsapp-pix-parser";
 
-// Live-binding para permitir mock.module() em testes (padrão WA-C3/WA-C4).
+// Re-export como `any` para preservar a interface fluida do supabase-js
+// e evitar fricção de tipos nos chamadores. Direct import garante que o
+// `mock.module(...)` dos testes substitua a referência sem precisar de
+// Proxy de live-binding.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const supabaseAdmin: any = new Proxy({}, {
-  get: (_t, prop) => {
-    const sa = (_supa as { supabaseAdmin?: unknown }).supabaseAdmin;
-    if (process.env.WA_PIX_DBG) console.log("[favorecidos proxy] prop=", String(prop), "sa typeof=", typeof sa, "has from:", !!(sa as { from?: unknown })?.from);
-    return (sa as never)[prop as never];
-  },
-});
+const supabaseAdmin: any = _supabaseAdmin;
 
 export type FavorecidoRow = {
   id: string;
