@@ -167,6 +167,11 @@ function makeBuilder(table: string): any {
       if (table === "gastos") {
         return { data: { id: `g-${state.inserts.length}` }, error: null };
       }
+      if (table === "fornecedores") {
+        // Devolve a última linha favorecidoData inserida (id estável).
+        const last = state.favorecidosData[state.favorecidosData.length - 1] ?? null;
+        return { data: last, error: null };
+      }
       if (table === "whatsapp_messages") {
         return {
           data: { id: `m-${state.inserts.length}`, status: rows[0]?.status ?? null },
