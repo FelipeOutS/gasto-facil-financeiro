@@ -15,7 +15,10 @@ const {
 const { processarMensagemWhatsApp } = await import(
   "../src/server/whatsapp.server"
 );
-const { handleDueIntent, todayISOInAppTz } = await import(
+const { handleDueIntent } = await import(
+  "../src/server/whatsapp-contas.server"
+);
+const { todayISOInAppTz } = await import(
   "../src/server/contas-vencimento.server"
 );
 
