@@ -329,7 +329,9 @@ export async function processarParcelamento(args: {
   sessao: { id: string; status: string; session: unknown; recebida_em: string } | null;
 }): Promise<wa.ProcessOutcome> {
   const { userId, msg, texto, recebidaEm, decisao, sessao } = args;
+  console.log("[parc-deps]", { hasCarregarCartoes: typeof wa.carregarCartoes });
   const cartoes = await wa.carregarCartoes(userId);
+  console.log("[parc-cartoes-loaded]", { len: cartoes.length });
   // Cancelamento explícito vence sobre tudo.
   const isHardCancel = /\b(cancelar|cancela|cancelado|cancelada)\b/i.test(texto) || decisao === "cancel";
   if (sessao && isHardCancel) {
