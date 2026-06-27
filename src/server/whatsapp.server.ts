@@ -104,6 +104,11 @@ const parcelamentoDeps: WhatsAppParcelamentoDeps = {
     atualizarSessao(id, status, session, resposta, gastoId),
   fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
     fecharSessoesAnteriores(userId, telefone, motivo, gastoId),
+  // WA-F3.3 — categoria manual no parcelamento (reusa helpers compartilhados).
+  loadCategoriasParaPicker: (userId) => loadCategoriasParaPicker(userId),
+  buildCategoriaListBody: (a) => buildCategoriaListBody(a),
+  resolveCategoriaPickerInput: (a) => resolveCategoriaPickerInput(a),
+  detectCategoriaCommand: (t) => detectCategoriaCommand(t),
 };
 import { createHash } from "crypto";
 
