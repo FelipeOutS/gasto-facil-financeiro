@@ -142,11 +142,12 @@ function hasMonetaryValue(textRaw: string): boolean {
  * casar com `contas_a_pagar.nome` no helper de busca.
  */
 export function detectMarkAsPaidIntent(textRaw: string): { termo: string } | null {
+  if (!textRaw || !textRaw.trim()) return null;
+  // Bloqueia gastos consumados ANTES da normalização (vírgulas seriam removidas).
+  if (hasMonetaryValue(textRaw)) return null;
   const t = norm(textRaw);
   if (!t) return null;
 
-  // Bloqueia gastos consumados (mesmo verbo "paguei", mas com valor).
-  if (hasMonetaryValue(t)) return null;
 
   // Bloqueia fatura / cartão (competência WA-F1..F5).
   if (/\bfatura\b/.test(t)) return null;
