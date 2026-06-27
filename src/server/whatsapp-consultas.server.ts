@@ -367,7 +367,7 @@ const SAUDACOES = new Set<string>([
 ]);
 
 const MENU_EXATOS = new Set<string>([
-  "ajuda", "ajudar", "menu", "help", "opcoes", "opcao",
+  "ajuda", "ajudar", "menu", "help", "opcoes", "opcao", "comandos",
   "gi", "oi gi", "ola gi", "ei gi", "bom dia gi", "boa tarde gi", "boa noite gi",
   "gasto inteligente", "oi gasto inteligente", "ola gasto inteligente",
 ]);
