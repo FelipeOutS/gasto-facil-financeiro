@@ -544,6 +544,7 @@ export type ProcessOutcome = {
     | "aguardando_categoria_gasto"
     | "aguardando_consulta_fatura"
     | "aguardando_consulta_parcelamento"
+    | "aguardando_consulta_vencimentos"
     | "parc_aguardando_total"
     | "parc_aguardando_quantidade"
     | "parc_aguardando_cartao"
