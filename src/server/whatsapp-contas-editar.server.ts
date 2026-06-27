@@ -119,23 +119,27 @@ export type WhatsAppEdicaoContaDeps = {
     userId: string, telefone: string,
     motivo: "salva" | "cancelada" | "expirada", gastoId?: string,
   ) => Promise<void>;
-  loadCategoriasParaPicker: (userId: string) => Promise<Array<{ id: string; nome: string }>>;
+  loadCategoriasParaPicker: (userId: string) => Promise<CategoriaPickerRow[]>;
   buildCategoriaListBody: (args: {
     userId: string;
-    holder: { categoriaSugerida?: string | null; descricao?: string | null; categoriaOptions?: CategoriaPickerState };
-    cats: Array<{ id: string; nome: string }>;
+    holder: { descricao?: string | null; categoriaSugerida?: string | null };
+    cats: CategoriaPickerRow[];
   }) => Promise<{ body: string; options: CategoriaPickerState }>;
   resolveCategoriaPickerInput: (args: {
     userId: string;
-    holder: { categoriaSugerida?: string | null; descricao?: string | null; categoriaOptions?: CategoriaPickerState };
-    cats: Array<{ id: string; nome: string }>;
+    holder: {
+      descricao?: string | null;
+      categoriaSugerida?: string | null;
+      categoriaOptions?: CategoriaPickerState;
+    };
+    cats: CategoriaPickerRow[];
     texto: string;
   }) => Promise<
-    | { kind: "picked"; cat: { id: string; nome: string } }
+    | { kind: "picked"; cat: CategoriaPickerRow }
     | { kind: "relist"; options: CategoriaPickerState; body: string }
     | { kind: "invalid" }
   >;
-  detectCategoriaCommand: (texto: string) => { kind: "ask" | "direct"; termo: string } | null;
+  detectCategoriaCommand: (texto: string) => { kind: "ask" } | { kind: "direct"; termo: string } | null;
 };
 
 // ---------- log seguro ----------
