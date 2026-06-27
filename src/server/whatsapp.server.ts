@@ -2418,6 +2418,18 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // ---- WA-C4: sessão ativa de EDIÇÃO/CANCELAMENTO de conta. ----
+  if (sessao && (
+    isEdicaoContaSession(sessao.session) ||
+    (EDICAO_CONTA_PENDING_STATES as readonly string[]).includes(sessao.status)
+  )) {
+    logWaRouteDecision(msg, "expense_parser", "active_payable_account_edit_session");
+    return await processarEdicaoConta({
+      userId, msg, texto, recebidaEm, decisao, sessao,
+      deps: edicaoContaDeps,
+    });
+  }
+
 
 
 
