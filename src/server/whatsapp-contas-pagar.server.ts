@@ -141,54 +141,92 @@ function hasMonetaryValue(textRaw: string): boolean {
  * Retorna `{ termo }` quando reconhece — termo é o nome candidato a
  * casar com `contas_a_pagar.nome` no helper de busca.
  */
-export function detectMarkAsPaidIntent(textRaw: string): { termo: string } | null {
+export function detectMarkAsPaidIntent(
+  textRaw: string,
+): { termo: string; paymentDate: string | null } | null {
   if (!textRaw || !textRaw.trim()) return null;
   // Bloqueia gastos consumados ANTES da normalização (vírgulas seriam removidas).
   if (hasMonetaryValue(textRaw)) return null;
-  const t = norm(textRaw);
-  if (!t) return null;
-
+  const t0 = norm(textRaw);
+  if (!t0) return null;
 
   // Bloqueia fatura / cartão (competência WA-F1..F5).
-  if (/\bfatura\b/.test(t)) return null;
+  if (/\bfatura\b/.test(t0)) return null;
 
   // Bloqueia intenção futura ("vou pagar", "ainda preciso pagar").
-  if (/\bvou\s+pagar\b/.test(t) || /\bpreciso\s+pagar\b/.test(t)) return null;
+  if (/\bvou\s+pagar\b/.test(t0) || /\bpreciso\s+pagar\b/.test(t0)) return null;
   // Bloqueia consultas: "o que paguei", "quando paguei".
-  if (/\bo\s+que\s+paguei\b/.test(t) || /\bquando\s+paguei\b/.test(t)) return null;
+  if (/\bo\s+que\s+paguei\b/.test(t0) || /\bquando\s+paguei\b/.test(t0)) return null;
+
+  // WA-C3.1 — separa a data ANTES de casar o termo, para aceitar
+  // "paguei a internet ontem", "dei baixa na academia em 03/07", etc.
+  const { dateText, cleaned: t } = extractAndStripDate(t0);
 
   // Padrões aceitos. Cada um extrai o `termo`.
   // 1) "paguei [a|o|minha|meu|essa|esse] <termo>"
   let m = t.match(/\bpaguei\s+(?:(?:a|o|as|os|minha|meu|essa|esse|uma|um)\s+)?([a-z0-9 ]{2,40})$/);
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
-    if (termo) return { termo };
+    if (termo) return { termo, paymentDate: dateText };
   }
   // 2) "quitei <termo>" / "quitar <termo>"
   m = t.match(/\bquit(?:ei|ar|a|e)\s+(?:(?:a|o|as|os|minha|meu|essa|esse|uma|um)\s+)?([a-z0-9 ]{2,40})$/);
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
-    if (termo) return { termo };
+    if (termo) return { termo, paymentDate: dateText };
   }
   // 3) "dei baixa (em|na|no|do|da) <termo>" / "dar baixa em <termo>"
   m = t.match(/\b(?:dei|dar|da)\s+baixa\s+(?:(?:em|na|no|do|da|nos|nas)\s+)?([a-z0-9 ]{2,40})$/);
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
-    if (termo) return { termo };
+    if (termo) return { termo, paymentDate: dateText };
   }
   // 4) "marcar <termo> como pago" / "marca <termo> como pago"
   m = t.match(/\bmarc(?:ar|a|e|ou)\s+(?:(?:a|o|as|os|minha|meu|essa|esse)\s+)?([a-z0-9 ]{2,40})\s+como\s+pag[ao]\b/);
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
-    if (termo) return { termo };
+    if (termo) return { termo, paymentDate: dateText };
   }
   // 5) "<termo> foi pago/paga" / "a conta de <termo> foi paga"
   m = t.match(/\b(?:a\s+conta\s+(?:de|do|da)\s+)?([a-z0-9 ]{2,40})\s+(?:foi|esta|ja\s+foi)\s+pag[ao]\b/);
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
-    if (termo) return { termo };
+    if (termo) return { termo, paymentDate: dateText };
   }
   return null;
+}
+
+/**
+ * WA-C3.1 — extrai e remove a primeira ocorrência de uma expressão de data
+ * do texto normalizado. Mantém o restante da frase intacto para o casamento
+ * de termo. NÃO remove palavras internas que poderiam fazer parte do nome
+ * da conta (apenas tokens reconhecidos como data).
+ */
+function extractAndStripDate(textNorm: string): { dateText: string | null; cleaned: string } {
+  const patterns: RegExp[] = [
+    // "em 5 de julho [de 2026]" / "5 de julho"
+    /\b(?:em\s+)?\d{1,2}\s+de\s+(?:janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\s+de\s+\d{2,4})?\b/,
+    // "em DD/MM[/YYYY]" / "no DD/MM[/YYYY]"
+    /\b(?:em|no|na)\s+\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/,
+    // "DD/MM[/YYYY]" — solto
+    /\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/,
+    // "no dia N do mes que vem" / "dia N do mes que vem"
+    /\b(?:no\s+)?dia\s+\d{1,2}\s+do\s+mes\s+que\s+vem\b/,
+    // "no dia N" / "dia N"
+    /\b(?:no\s+)?dia\s+\d{1,2}\b/,
+    // advérbios isolados
+    /\bamanha\b/,
+    /\bhoje\b/,
+    /\bontem\b/,
+  ];
+  for (const re of patterns) {
+    const m = textNorm.match(re);
+    if (m) {
+      const cleaned = textNorm.replace(re, " ").replace(/\s+/g, " ").trim();
+      return { dateText: m[0], cleaned };
+    }
+  }
+  return { dateText: null, cleaned: textNorm };
 }
 
 const FILLER_WORDS = new Set([
