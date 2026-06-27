@@ -73,6 +73,10 @@ const PENDING = [
   "conta_aguardando_categoria",
   "conta_aguardando_confirmacao",
   "conta_persistindo",
+  // WA-C3 — baixa de conta a pagar (marcar como paga).
+  "conta_pagamento_aguardando_escolha",
+  "conta_pagamento_aguardando_confirmacao",
+  "conta_pagamento_aguardando_data",
 ];
 
 
