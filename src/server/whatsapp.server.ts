@@ -200,6 +200,7 @@ async function resolveUserId(telefone: string): Promise<
 // ---------- cartões ----------
 
 export async function carregarCartoes(userId: string): Promise<Cartao[]> {
+  console.log("[wa-carregarCartoes-enter]", { supabaseFromType: typeof supabaseAdmin?.from, supabaseAdminKeys: Object.keys(supabaseAdmin || {}) });
   const { data } = await supabaseAdmin
     .from("cartoes")
     .select("*")
