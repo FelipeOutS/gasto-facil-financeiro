@@ -341,6 +341,7 @@ function makeBuilder(table: string): any {
     }
     // WA-C7 — select de fornecedores. Aplica filtros por user_id/ativo/id.
     if (table === "fornecedores") {
+      console.log("[fake] fornecedores select ctx:", JSON.stringify({filters: ctx.filters, single: ctx.single, seeded: state.favorecidosData.length}));
       const uid = ctx.filters?.user_id;
       let base = uid
         ? state.favorecidosData.filter(
