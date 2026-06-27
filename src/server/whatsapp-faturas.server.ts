@@ -22,10 +22,21 @@ import {
   getItensFaturaAtualPorCartao,
   getResumoItensFaturaAtual,
   nowInAppTz,
+  // WA-F4 — faturas futuras e parcelas em aberto.
+  getFaturaPorMes,
+  getResumoFaturasPorMes,
+  getComprasParceladasEmAberto,
+  getDetalheCompraParcelada,
+  findCompraParceladaByTerm,
+  parseInvoiceMonth,
+  faturaCorrenteRef,
   type CartaoRow,
   type FaturaAtual,
   type ItemFatura,
+  type CompraParcelada,
+  type ParcelaRow,
 } from "./cartao-fatura.server";
+
 
 export type FaturaIntent =
   | { kind: "invoice_total" }
