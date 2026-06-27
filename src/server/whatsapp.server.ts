@@ -54,7 +54,13 @@ import {
   handleFaturaIntent,
   handleFaturaPagination,
   detectPaginationCommand,
+  // WA-F4 — faturas futuras / parcelas em aberto.
+  detectFutureFaturaIntent,
+  handleFutureFaturaIntent,
+  handleParceladoPagination,
+  isBeyondHorizon,
   type FaturaDetailSessionState,
+  type ParceladoSessionState,
 } from "./whatsapp-faturas.server";
 import {
   COMPROVANTE_PENDING_STATES,
