@@ -2668,6 +2668,73 @@ export async function processarMensagemWhatsApp(
   }
 
 
+  // ---- Fase WA-F4: paginação/escolha em compras parceladas ----
+  // Apenas leitura. Aceita "ver mais", "voltar", "cancelar" e (em
+  // modo "detalhe") escolha numérica entre compras ambíguas. Se a
+  // mensagem não casar com nenhum comando, encerra o estado e segue
+  // o pipeline normal.
+  if (sessao && sessao.status === "aguardando_consulta_parcelamento") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const prev = sessao.session as any;
+    const stateP: ParceladoSessionState | null =
+      prev && prev.kind === "consulta_parcelamento"
+        ? {
+            kind: "consulta_parcelamento",
+            mode: prev.mode === "detalhe" || prev.mode === "fatura_futura" ? prev.mode : "lista",
+            cartaoId: typeof prev.cartaoId === "string" ? prev.cartaoId : null,
+            installmentGroupIds: Array.isArray(prev.installmentGroupIds)
+              ? prev.installmentGroupIds.filter((x: unknown) => typeof x === "string")
+              : null,
+            targetInvoiceMonth: typeof prev.targetInvoiceMonth === "string" ? prev.targetInvoiceMonth : null,
+            page: Number.isFinite(prev.page) ? Number(prev.page) : 0,
+          }
+        : null;
+    if (stateP) {
+      const out = await handleParceladoPagination(userId, stateP, texto);
+      if (out) {
+        const next =
+          "nextSession" in out
+            ? (out as { nextSession?: ParceladoSessionState }).nextSession
+            : undefined;
+        if (next) {
+          await fecharSessoesAnteriores(userId, msg.telefone, "expirada");
+          await gravarSessao(
+            userId, msg.telefone, msg.external_id, texto, recebidaEm,
+            "aguardando_consulta_parcelamento",
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ({
+              nome: "",
+              valor: 0,
+              data: todayLocalISO(),
+              mensagemOriginal: "",
+              kind: "consulta_parcelamento",
+              mode: next.mode,
+              cartaoId: next.cartaoId,
+              installmentGroupIds: next.installmentGroupIds,
+              targetInvoiceMonth: next.targetInvoiceMonth,
+              page: next.page,
+            } as unknown) as Session,
+            out.resposta,
+          );
+          return { status: "pendente", resposta: out.resposta };
+        }
+        await fecharSessoesAnteriores(userId, msg.telefone, "salva");
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "sem_pendencia",
+          { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+          out.resposta,
+        );
+        return { status: "consulta", resposta: out.resposta };
+      }
+    }
+    // Não casou — encerra estado e segue o pipeline normal.
+    await supabaseAdmin
+      .from("whatsapp_messages")
+      .update({ status: "expirada" })
+      .eq("id", sessao.id);
+    sessao = null;
+  }
 
 
 
