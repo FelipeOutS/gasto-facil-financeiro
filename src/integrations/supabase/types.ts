@@ -1078,6 +1078,8 @@ export type Database = {
           nome_fantasia: string | null
           numero: string | null
           observacoes: string | null
+          pix_key: string | null
+          pix_key_type: string | null
           razao_social: string | null
           situacao_cadastral: string | null
           source: string | null
@@ -1105,6 +1107,8 @@ export type Database = {
           nome_fantasia?: string | null
           numero?: string | null
           observacoes?: string | null
+          pix_key?: string | null
+          pix_key_type?: string | null
           razao_social?: string | null
           situacao_cadastral?: string | null
           source?: string | null
@@ -1132,6 +1136,8 @@ export type Database = {
           nome_fantasia?: string | null
           numero?: string | null
           observacoes?: string | null
+          pix_key?: string | null
+          pix_key_type?: string | null
           razao_social?: string | null
           situacao_cadastral?: string | null
           source?: string | null

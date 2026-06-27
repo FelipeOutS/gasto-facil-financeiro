@@ -727,4 +727,62 @@ export const whatsappMessages = {
       return `Tudo certo, não registrei esse gasto.`;
     },
   },
+
+  // ---- WA-C7: Pix / favorecidos ----
+  pix: {
+    pedirFormato() {
+      return [
+        `Para salvar um Pix, me mande no formato:`,
+        ``,
+        `• "salva o Pix do João: 11999999999"`,
+        `• "Pix da Maria é maria@email.com"`,
+        `• "cadastra Pix do Pedro CPF 123.456.789-00"`,
+      ].join("\n");
+    },
+    salvo(args: { nome: string; tipo: string }) {
+      return `Pronto! Salvei o Pix de ${args.nome} (${args.tipo}). ✅`;
+    },
+    atualizado(args: { nome: string; tipo: string }) {
+      return `Atualizei o Pix de ${args.nome} para ${args.tipo}. ✅`;
+    },
+    favorecidoNaoEncontrado(nome: string) {
+      return [
+        `Não encontrei "${nome}" entre seus favorecidos.`,
+        ``,
+        `Quer cadastrar agora? Me mande, por exemplo:`,
+        `"salva o Pix do ${nome}: chave-aqui"`,
+      ].join("\n");
+    },
+    semPixCadastrado(nome: string) {
+      return [
+        `Tenho ${nome} aqui, mas ainda sem chave Pix cadastrada.`,
+        ``,
+        `Me mande a chave: "Pix do ${nome} é ..."`,
+      ].join("\n");
+    },
+    consultaUnica(args: { nome: string; tipo: string; chave: string }) {
+      return [
+        `Pix de ${args.nome} (${args.tipo}):`,
+        args.chave,
+      ].join("\n");
+    },
+    ambiguidade(args: { termo: string; nomes: string[] }) {
+      const linhas = args.nomes.map((n, i) => `${i + 1}. ${n}`).join("\n");
+      return [
+        `Tenho mais de uma pessoa parecida com "${args.termo}":`,
+        ``,
+        linhas,
+        ``,
+        `Me diga o nome completo de quem você quer.`,
+      ].join("\n");
+    },
+    pagamentoSalvo(args: { valor: string; nome: string; descricao: string | null }) {
+      const desc = args.descricao ? ` (${args.descricao})` : "";
+      return [
+        `Anotado! ${args.valor} pago para ${args.nome}${desc}. ✅`,
+        ``,
+        `Já está registrado no Gasto Inteligente.`,
+      ].join("\n");
+    },
+  },
 };

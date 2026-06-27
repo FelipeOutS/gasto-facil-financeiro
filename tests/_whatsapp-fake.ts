@@ -32,6 +32,9 @@ export const state = {
   gastosData: [] as Record<string, unknown>[],
   receitasData: [] as Record<string, unknown>[],
   contasData: [] as Record<string, unknown>[],
+  // WA-C7 — favorecidos (reuso de fornecedores). Cada teste pode
+  // semear via resetState({ favorecidos: [...] }).
+  favorecidosData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
@@ -143,6 +146,14 @@ function makeBuilder(table: string): any {
       if (table === "contas_a_pagar") {
         for (const r of rows) state.contasData.push(r);
       }
+      // WA-C7 — espelha inserts em fornecedores e devolve um id estável
+      // para o readback (`select … maybeSingle()`).
+      if (table === "fornecedores") {
+        for (const r of rows) {
+          const id = `forn-${state.favorecidosData.length + 1}`;
+          state.favorecidosData.push({ id, apelido: null, ...r });
+        }
+      }
 
       if (table === "whatsapp_messages" && PENDING.includes(rows[0]?.status)) {
         state.pendingRow = {
@@ -155,6 +166,11 @@ function makeBuilder(table: string): any {
       }
       if (table === "gastos") {
         return { data: { id: `g-${state.inserts.length}` }, error: null };
+      }
+      if (table === "fornecedores") {
+        // Devolve a última linha favorecidoData inserida (id estável).
+        const last = state.favorecidosData[state.favorecidosData.length - 1] ?? null;
+        return { data: last, error: null };
       }
       if (table === "whatsapp_messages") {
         return {
@@ -214,6 +230,25 @@ function makeBuilder(table: string): any {
           if (match) {
             Object.assign(c, ctx.payload);
             updatedRows.push(c);
+          }
+        }
+        if (ctx.single) return { data: updatedRows[0] ?? null, error: null };
+        return { data: updatedRows, error: null };
+      }
+      // WA-C7 — update de fornecedores (Pix). Aplica filtros por id/user_id.
+      if (table === "fornecedores") {
+        const updatedRows: Record<string, unknown>[] = [];
+        for (const f of state.favorecidosData) {
+          let match = true;
+          for (const [col, val] of Object.entries(ctx.filters)) {
+            if ((f as Record<string, unknown>)[col] !== val) {
+              match = false;
+              break;
+            }
+          }
+          if (match) {
+            Object.assign(f, ctx.payload);
+            updatedRows.push(f);
           }
         }
         if (ctx.single) return { data: updatedRows[0] ?? null, error: null };
@@ -303,6 +338,23 @@ function makeBuilder(table: string): any {
       const ranged = applyRangeFilters(base, ctx.range);
       if (ctx.single) return { data: ranged[0] ?? null, error: null };
       return { data: ranged, error: null };
+    }
+    // WA-C7 — select de fornecedores. Aplica filtros por user_id/ativo/id.
+    if (table === "fornecedores") {
+      const uid = ctx.filters?.user_id;
+      let base = uid
+        ? state.favorecidosData.filter(
+            (f) => f.user_id === undefined || f.user_id === uid,
+          )
+        : state.favorecidosData;
+      if (ctx.filters?.ativo !== undefined) {
+        base = base.filter((f) => f.ativo === ctx.filters.ativo);
+      }
+      if (ctx.filters?.id !== undefined) {
+        base = base.filter((f) => f.id === ctx.filters.id);
+      }
+      if (ctx.single) return { data: base[0] ?? null, error: null };
+      return { data: base, error: null };
     }
     if (table === "auth.users")
       return { data: { email: "u@example.com" }, error: null };
@@ -448,6 +500,7 @@ export function resetState(opts?: {
   gastos?: Record<string, unknown>[];
   receitas?: Record<string, unknown>[];
   contas?: Record<string, unknown>[];
+  favorecidos?: Record<string, unknown>[];
 }) {
   state.inserts.length = 0;
   state.pendingRow = null;
@@ -466,6 +519,7 @@ export function resetState(opts?: {
   state.gastosData = opts?.gastos ?? [];
   state.receitasData = opts?.receitas ?? [];
   state.contasData = opts?.contas ?? [];
+  state.favorecidosData = opts?.favorecidos ?? [];
   state.cartoesData = opts?.cartoes ?? [
     {
       id: "c-nu", nome: "Nubank", banco: "Nubank",
