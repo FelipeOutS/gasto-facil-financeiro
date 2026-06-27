@@ -43,7 +43,14 @@ import {
   handleConsulta,
   detectConversationalIntent,
   handleConversational,
+  detectMenuOption,
+  dispatchMenuOption,
 } from "./whatsapp-consultas.server";
+import {
+  recordContas as shortRecordContas,
+  resolveOrdinal as shortResolveOrdinal,
+  clear as shortClear,
+} from "./whatsapp-short-context.server";
 import {
   detectConsultaEspecifica,
   handleConsultaEspecifica,
@@ -2257,7 +2264,7 @@ export async function processarMensagemWhatsApp(
     }
   }
 
-  const texto = (msg.texto ?? "").trim();
+  let texto = (msg.texto ?? "").trim();
   // Permitir mensagens só-imagem (Fase WA-G5A): se vier uma foto sem
   // texto, seguimos o pipeline e roteamos para o handler de comprovante.
   if (!texto && !msg.image) {
@@ -2939,6 +2946,38 @@ export async function processarMensagemWhatsApp(
 
 
 
+  // ---- WA-C6: menu numerado guiado (1..8) sem sessão pendente ----
+  // Reescreve "3" → "minhas contas", "8" → "ajuda". Para opções que pedem
+  // orientação (1, 2, 5, 6, 7), responde direto com o texto-guia.
+  if (!sessao && decisao === "outro") {
+    const opcao = detectMenuOption(texto);
+    if (opcao !== null) {
+      const dispatch = dispatchMenuOption(opcao);
+      if (dispatch?.kind === "guidance") {
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "sem_pendencia",
+          { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+          dispatch.resposta,
+        );
+        return { status: "consulta", resposta: dispatch.resposta };
+      }
+      if (dispatch?.kind === "rewrite") {
+        texto = dispatch.texto;
+      }
+    }
+  }
+
+  // ---- WA-C6: memória curta de lista — "pagar a segunda", "cancela 3" ----
+  // Reescreve para a frase canônica que os handlers existentes já entendem.
+  if (!sessao && decisao === "outro") {
+    const reescrito = shortResolveOrdinal(msg.telefone, texto);
+    if (reescrito) {
+      texto = reescrito;
+    }
+  }
+
+
   // ---- Fase WA-G3: intenções conversacionais (saudação, menu, finanças genérico) ----
   // Tem precedência sobre consultas reais e sobre parsing de gasto/receita.
   // Só roda quando NÃO há sessão pendente e não é uma resposta sim/não/forma.
@@ -3115,6 +3154,11 @@ export async function processarMensagemWhatsApp(
     if (intentD) {
       logWaRouteDecision(msg, "consulta_handler", "consulta_vencimentos_without_session");
       const out = await handleDueIntent(userId, intentD);
+      // WA-C6 — memória curta: grava a ordem das contas mostradas para
+      // permitir "pagar a segunda", "cancela 3", etc. Sem PII em log.
+      if (out.items && out.items.length > 0) {
+        shortRecordContas(msg.telefone, out.items.map((nome) => ({ nome })));
+      }
       const next = out.nextSession ?? null;
       if (next) {
         await gravarSessao(

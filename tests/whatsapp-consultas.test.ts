@@ -79,8 +79,8 @@ test("ajuda/menu responde com apresentação do GI e bullets", async () => {
   expect(r.status).toBe("consulta");
   expect(r.resposta).toContain("GI");
   expect(r.resposta).toContain("Registrar gasto");
-  expect(r.resposta).toContain("Registrar renda");
-  expect(r.resposta).toContain("Resumo da semana");
+  expect(r.resposta).toContain("Cadastrar uma conta");
+  expect(r.resposta).toContain("Ver contas pendentes");
   // Não deve criar gasto/receita
   expect(state.inserts.some((i) => i.table === "gastos")).toBe(false);
   expect(state.inserts.some((i) => i.table === "receitas")).toBe(false);
