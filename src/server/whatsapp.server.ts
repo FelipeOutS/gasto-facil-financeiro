@@ -132,7 +132,7 @@ async function userPodeUsarWhatsApp(userId: string): Promise<{ ok: boolean; reas
   return { ok: true };
 }
 
-type WhatsAppMessageRow = {
+export type WhatsAppMessageRow = {
   external_id: string | null;
   telefone: string;
   texto: string;

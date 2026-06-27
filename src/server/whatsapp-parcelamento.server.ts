@@ -42,7 +42,7 @@ import {
   classificarResposta,
   type ProcessOutcome,
 } from "./whatsapp.server";
-import type { WhatsAppMessageRow } from "@/types/whatsapp";
+import type { WhatsAppMessageRow } from "./whatsapp.server";
 import { recordMerchantMemory, merchantKeyFor } from "./whatsapp-merchant-memory.server";
 import { randomUUID } from "crypto";
 
