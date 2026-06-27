@@ -39,6 +39,10 @@ import {
 // after the test fake registered its mock — breaking integration tests.
 // We resolve the module on first call and reuse the namespace object.
 import type * as waNs from "./whatsapp.server";
+import type { WhatsAppMessageRow, ProcessOutcome } from "./whatsapp.server";
+import { recordMerchantMemory, merchantKeyFor } from "./whatsapp-merchant-memory.server";
+import { randomUUID } from "crypto";
+
 let _wa: typeof waNs | undefined;
 async function loadWa(): Promise<typeof waNs> {
   if (!_wa) _wa = await import("./whatsapp.server");
@@ -47,13 +51,13 @@ async function loadWa(): Promise<typeof waNs> {
 // `wa` is a proxy that lazily resolves to the loaded namespace.
 // Any call to `wa.X(...)` MUST be preceded by `await loadWa()` in the
 // nearest async entry point.
-const wa = new Proxy({} as typeof waNs, {
+const wa: typeof waNs = new Proxy({} as typeof waNs, {
   get(_t, prop) {
     if (!_wa) throw new Error(`[parcelamento] wa.${String(prop)} accessed before loadWa()`);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (_wa as any)[prop];
   },
-});
+}) as typeof waNs;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin = _supabaseAdmin as any;
