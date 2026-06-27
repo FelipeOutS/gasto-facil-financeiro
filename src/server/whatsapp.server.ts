@@ -2286,7 +2286,7 @@ export async function processarMensagemWhatsApp(
   // gasto/receita/foto em andamento.
   if (sessao && (
     isParcelamentoSession(sessao.session) ||
-    ["parc_aguardando_total","parc_aguardando_quantidade","parc_aguardando_cartao","parc_aguardando_confirmacao"].includes(sessao.status)
+    ["parc_aguardando_total","parc_aguardando_quantidade","parc_aguardando_cartao","parc_aguardando_confirmacao","parc_aguardando_categoria"].includes(sessao.status)
   )) {
     logWaRouteDecision(msg, "expense_parser", "active_installment_session");
     return await processarParcelamento({
