@@ -2387,6 +2387,21 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // ---- WA-C3: sessão ativa de BAIXA DE CONTA tem prioridade. ----
+  if (sessao && (
+    isBaixaContaSession(sessao.session) ||
+    (BAIXA_CONTA_PENDING_STATES as readonly string[]).includes(sessao.status)
+  )) {
+    logWaRouteDecision(msg, "expense_parser", "active_payable_account_payment_session");
+    return await processarBaixaConta({
+      userId, msg, texto, recebidaEm, decisao, sessao,
+      deps: baixaContaDeps,
+    });
+  }
+
+
+
+
 
 
   // ---- WA: sessão de gasto aguardando descrição e/ou valor ----
