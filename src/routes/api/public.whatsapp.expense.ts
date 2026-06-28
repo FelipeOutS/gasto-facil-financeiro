@@ -334,6 +334,25 @@ function extractIncomingMessages(payload: z.infer<typeof MetaPayload>): FlatMess
             },
           });
         }
+        // WA-C10.b — documento PDF. Apenas extrai metadados; download,
+        // magic-bytes e pipeline OCR de boleto rodam depois do gate.
+        const d = MetaDocumentMessage.safeParse(m);
+        if (d.success) {
+          const mime = d.data.document.mime_type?.toLowerCase();
+          if (mime && mime !== "application/pdf") continue;
+          out.push({
+            external_id: d.data.id,
+            telefone: d.data.from,
+            texto: d.data.document.caption ?? "",
+            recebida_em: new Date(Number(d.data.timestamp) * 1000).toISOString(),
+            document: {
+              mediaId: d.data.document.id,
+              mimeType: mime,
+              sha256: d.data.document.sha256,
+              filename: d.data.document.filename,
+            },
+          });
+        }
       }
     }
   }
