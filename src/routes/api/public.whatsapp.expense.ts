@@ -276,6 +276,12 @@ type FlatMessage = {
     mimeType?: string;
     sha256?: string;
   };
+  document?: {
+    mediaId: string;
+    mimeType?: string;
+    sha256?: string;
+    filename?: string;
+  };
 };
 
 const ALLOWED_IMAGE_MIME = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
