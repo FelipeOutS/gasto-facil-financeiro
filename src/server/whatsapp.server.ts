@@ -164,7 +164,7 @@ import {
 } from "./whatsapp-boleto-intents.server";
 import { extractBoletoFromMedia } from "./whatsapp-boleto-ocr.server";
 import { tryParseBoleto } from "./whatsapp-boleto-parser";
-import { extractBoletoCandidatesFromPdf } from "./whatsapp-pdf-text-extract.server";
+import { extractBoletoCandidatesFromPdfAsync } from "./whatsapp-pdf-text-extract.server";
 import {
   getCachedOcr,
   setCachedOcr,
