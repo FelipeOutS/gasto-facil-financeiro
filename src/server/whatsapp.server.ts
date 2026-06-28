@@ -2652,6 +2652,76 @@ export async function processarMensagemWhatsApp(
     };
   }
 
+  // ---- WA-C10.b: roteamento de mídia (foto/PDF) → tentativa de BOLETO ----
+  // Ordem oficial:
+  //   1) validar download/magic-bytes (já feito no route layer; aqui revalidamos).
+  //   2) tentar extractBoletoFromMedia (Gemini + tool-call).
+  //   3) entrar no fluxo de boleto APENAS se houver candidato validado pelo
+  //      parser determinístico (tryParseBoleto). Se houver só sugestão de
+  //      valor/vencimento, oferecer fallback manual ("dados encontrados,
+  //      boleto não validado").
+  //   4) caso contrário: imagem → segue para OCR de comprovante;
+  //                       PDF   → responde com mensagem amigável (sem OCR
+  //                               de comprovante; PDF nunca vira imagem).
+  if (msg.document && !sessao) {
+    logWaRouteDecision(msg, "expense_parser", "media_boleto_pdf_candidate");
+    const head = decodeBase64Head(msg.document.base64, 8);
+    if (!head || !looksLikePdfMagic(head)) {
+      return { status: "erro", resposta: M.boletoMidia.pdfInvalido() };
+    }
+    const ocr = await extractBoletoFromMedia({
+      kind: "pdf",
+      dataUrl: msg.document.base64,
+    });
+    if (!ocr.ok) {
+      // gateway/credits/etc. — mensagem neutra; NUNCA loga base64/url.
+      console.log({ event: "wa_boleto_media_ocr_failed", sourceType: "pdf", reason: ocr.reason });
+      return { status: "erro", resposta: M.boletoMidia.indisponivel() };
+    }
+    if (ocr.candidatos.length >= 1) {
+      return await iniciarBoletoDeMidia({
+        userId, msg, texto: texto || "(pdf)", recebidaEm,
+        origem: "pdf",
+        candidatos: ocr.candidatos,
+        identificacaoSugerida: ocr.sugestoes.identificacao,
+        deps: boletoDeps,
+      });
+    }
+    if (ocr.sugestoes.valorCentavos != null || ocr.sugestoes.vencimentoISO) {
+      return await iniciarBoletoManualFallback({
+        userId, msg, texto: texto || "(pdf)", recebidaEm,
+        origem: "pdf",
+        valorCentavos: ocr.sugestoes.valorCentavos,
+        vencimentoISO: ocr.sugestoes.vencimentoISO,
+        identificacaoSugerida: ocr.sugestoes.identificacao,
+        deps: boletoDeps,
+      });
+    }
+    return { status: "erro", resposta: M.boletoMidia.nenhumCandidato() };
+  }
+
+  if (msg.image && !sessao) {
+    // Tenta OCR de boleto ANTES do OCR de comprovante. Só intercepta o
+    // fluxo se houver candidato validado pelo parser determinístico —
+    // caso contrário, imagem de cupom segue normal para receipt OCR.
+    const ocr = await extractBoletoFromMedia({
+      kind: "image",
+      dataUrl: msg.image.base64,
+      mimeType: (msg.image.mimeType as "image/jpeg" | "image/png" | "image/webp") ?? "image/jpeg",
+    });
+    if (ocr.ok && ocr.candidatos.length >= 1) {
+      logWaRouteDecision(msg, "expense_parser", "media_boleto_image_candidate");
+      return await iniciarBoletoDeMidia({
+        userId, msg, texto: texto || "(foto)", recebidaEm,
+        origem: "imagem",
+        candidatos: ocr.candidatos,
+        identificacaoSugerida: ocr.sugestoes.identificacao,
+        deps: boletoDeps,
+      });
+    }
+    // Sem candidato validado: cai no fluxo já existente de comprovante.
+  }
+
   // ---- Fase WA-G5A: imagem nova chegando sem sessão pendente ----
   // Sessões pendentes (receita/gasto) já interceptaram acima — uma imagem
   // nunca interrompe um fluxo financeiro em andamento.
