@@ -195,17 +195,52 @@ export async function processarBoleto(args: {
 }): Promise<ProcessOutcome> {
   const { userId, msg, texto, recebidaEm, decisao, sessao, deps } = args;
   const t = texto.trim();
+  const tLower = t.toLowerCase();
   const hardCancel = decisao === "cancel" || /^(5|cancelar|cancela|cancelado|cancelada)$/i.test(t);
+
+  // ---- WA-C10.a.1: menu/ajuda em sessão ativa não perdem dados ----
+  if (sessao && isBoletoSession(sessao.session) && !hardCancel) {
+    const session = sessao.session as BoletoSession;
+    const isAjuda = /^(ajuda|help|comandos|\?)$/i.test(tLower);
+    const isMenu = /^menu$/i.test(tLower);
+    if (isAjuda) {
+      const r = [
+        "Você está cadastrando um boleto 🧾",
+        "Você pode:",
+        "1. Continuar o cadastro",
+        "2. Corrigir os dados (responda no formato pedido)",
+        "3. Cancelar o boleto (envie \"cancelar\")",
+        "4. Voltar ao menu (envie \"menu\")",
+        "",
+        "Envie o dado solicitado ou uma das opções.",
+      ].join("\n");
+      await deps.atualizarSessao(sessao.id, sessao.status, session as never, r);
+      return { status: "pendente", resposta: r };
+    }
+    if (isMenu) {
+      const r = [
+        "Você tem um boleto em andamento. O que deseja fazer?",
+        "1. Continuar cadastro",
+        "2. Cancelar boleto e abrir menu",
+        "3. Ver ajuda",
+      ].join("\n");
+      await deps.atualizarSessao(sessao.id, sessao.status, session as never, r);
+      return { status: "pendente", resposta: r };
+    }
+  }
 
   // Cancelamento em qualquer estado de boleto.
   if (sessao && isBoletoSession(sessao.session) && hardCancel) {
+    const original = sessao.session as BoletoSession;
+    // WA-C10.a.1: limpa código bruto antes de persistir a sessão final cancelada.
+    const sanitized: BoletoSession = { ...original, codigoBarras: "" };
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     const r = "Cadastro do boleto cancelado. 👍";
     await deps.gravarSessao(
       userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "cancelada", sessao.session as never, r,
+      "cancelada", sanitized as never, r,
     );
-    logBoleto("cancelled", (sessao.session as BoletoSession).fingerprint, "ok");
+    logBoleto("cancelled", original.fingerprint, "ok");
     return { status: "cancelada", resposta: r };
   }
 
