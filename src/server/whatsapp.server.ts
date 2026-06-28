@@ -2793,6 +2793,7 @@ export async function processarMensagemWhatsApp(
         scope: "whatsappBoletoOcr",
         userId,
         route: "whatsapp/boleto-ocr-pdf",
+        failMode: "closed",
       });
       if (limited) {
         logBoletoMediaGate("rate_limit", "pdf", "blocked");
