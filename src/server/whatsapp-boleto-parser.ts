@@ -19,6 +19,7 @@
  * e códigos arbitrários fora do detector.
  */
 import { createHash } from "crypto";
+import { getBoletoFingerprintPepper } from "./whatsapp-boleto-secret.server";
 
 export type BoletoTipo = "cobranca" | "arrecadacao";
 
