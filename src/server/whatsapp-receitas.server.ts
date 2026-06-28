@@ -232,67 +232,14 @@ function descricaoFromTipo(label: string): string {
   return label;
 }
 
-// ---------- recorrência: gera datas ----------
+// ---------- (helpers de pré-projeção removidos em WA-R1-Fix) ----------
 
-function nextWeekday(fromISO: string, dow: number): string {
-  const [y, m, d] = fromISO.split("-").map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  const cur = dt.getUTCDay();
-  let diff = (dow - cur + 7) % 7;
-  if (diff === 0) diff = 0; // hoje também conta
-  dt.setUTCDate(dt.getUTCDate() + diff);
-  return dt.toISOString().slice(0, 10);
-}
 
-function addDays(iso: string, days: number): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  dt.setUTCDate(dt.getUTCDate() + days);
-  return dt.toISOString().slice(0, 10);
-}
+// WA-R1-Fix: a função `gerarDatasRecorrencia` foi removida. A criação de
+// receitas recorrentes agora é feita atomicamente pela RPC
+// `create_recurring_income`, que cria 1 receita atual + 1 recorrência ativa
+// (sem pré-projeção de 12 meses).
 
-function addMonthsKeepDay(iso: string, monthsAdd: number, dia: number): string {
-  const [y, m] = iso.split("-").map(Number);
-  const target = new Date(Date.UTC(y, m - 1 + monthsAdd, 1));
-  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
-  const day = Math.min(dia, lastDay);
-  return `${target.getUTCFullYear()}-${String(target.getUTCMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-}
-
-function gerarDatasRecorrencia(s: ReceitaSession): string[] {
-  const COUNT = 12;
-  const hoje = todayLocalISO();
-  if (s.frequencia === "mensal") {
-    const dia = s.diaMes ?? Number(hoje.slice(8));
-    // primeira ocorrência: este mês (se dia ainda não passou) ou próximo
-    const [y, m] = hoje.slice(0, 7).split("-").map(Number);
-    const lastDayThis = new Date(Date.UTC(y, m, 0)).getUTCDate();
-    const diaThis = Math.min(dia, lastDayThis);
-    const firstThis = `${y}-${String(m).padStart(2, "0")}-${String(diaThis).padStart(2, "0")}`;
-    const startMonthsAhead = firstThis < hoje ? 1 : 0;
-    const out: string[] = [];
-    for (let i = 0; i < COUNT; i++) out.push(addMonthsKeepDay(hoje, startMonthsAhead + i, dia));
-    return out;
-  }
-  if (s.frequencia === "semanal") {
-    const dow = s.diaSemana ?? new Date().getUTCDay();
-    let cur = nextWeekday(hoje, dow);
-    const out: string[] = [];
-    for (let i = 0; i < COUNT; i++) {
-      out.push(cur);
-      cur = addDays(cur, 7);
-    }
-    return out;
-  }
-  // quinzenal: a partir de hoje, a cada 15 dias
-  const out: string[] = [];
-  let cur = hoje;
-  for (let i = 0; i < COUNT; i++) {
-    out.push(cur);
-    cur = addDays(cur, 15);
-  }
-  return out;
-}
 
 export function resumoRecorrencia(s: ReceitaSession): string {
   if (!s.recorrente) return "Não";
@@ -345,6 +292,18 @@ function genId(): string {
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+/**
+ * WA-R1-Fix — Persistência atômica de receita.
+ *
+ * Receita única: 1 row em `receitas` (sem `recorrencia_id`).
+ * Receita recorrente: RPC `create_recurring_income` cria exatamente
+ *   1 row em `receitas` (data informada = data real de recebimento)
+ *   + 1 row em `recorrencias` (ativa, próxima cobrança estritamente
+ *   futura). Atômico: falha em qualquer etapa não deixa parcial.
+ *
+ * Readback obrigatório: confirma que ambos os registros existem e
+ * que `receita.recorrencia_id` aponta para uma `recorrencias.id` real.
+ */
 export async function persistirReceita(
   userId: string,
   s: ReceitaSession,
@@ -370,66 +329,109 @@ export async function persistirReceita(
   }
 
   const baseData = s.data || todayLocalISO();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rows: any[] = [];
-  let primeiroReceitaId = "";
-  let recorrenciaId: string | undefined;
+  const valorFmt = formatBRL(valor);
+  const tipoLabel = s.tipoLabel || descricao;
 
+  // -------- RECORRENTE: RPC atômica (1 receita + 1 recorrência) --------
   if (s.recorrente) {
-    recorrenciaId = genId();
-    const datas = gerarDatasRecorrencia(s);
-    datas.forEach((iso, idx) => {
-      const [y, m] = iso.split("-").map(Number);
-      const id = genId();
-      if (idx === 0) primeiroReceitaId = id;
-      rows.push({
-        id,
-        user_id: userId,
+    if (s.frequencia === "mensal" && (!s.diaMes || s.diaMes < 1 || s.diaMes > 31)) {
+      return { ok: false, resposta: M.receita.erroAoSalvar() };
+    }
+
+    const { data, error } = await supabaseAdmin.rpc("create_recurring_income", {
+      p_user_id: userId,
+      p_descricao: descricao,
+      p_valor: valor,
+      p_data: baseData,
+      p_tipo: tipo,
+      p_frequencia: s.frequencia ?? "mensal",
+      p_dia_mes: s.frequencia === "mensal" ? (s.diaMes ?? null) : null,
+      p_dia_semana: s.frequencia === "semanal" ? (s.diaSemana ?? null) : null,
+      p_observacao: null,
+      p_origem: "whatsapp",
+    });
+
+    if (error || !Array.isArray(data) || data.length === 0) {
+      console.error("[whatsapp] receita recorrente RPC failed", error);
+      return { ok: false, resposta: M.receita.erroAoSalvar() };
+    }
+    const row = data[0] as { receita_id?: string; recorrencia_id?: string };
+    const receitaId = row?.receita_id;
+    const recorrenciaId = row?.recorrencia_id;
+    if (!receitaId || !recorrenciaId) {
+      console.error("[whatsapp] receita recorrente RPC retornou shape inesperado", row);
+      return { ok: false, resposta: M.receita.erroAoSalvar() };
+    }
+
+    // -------- Readback Guard --------
+    const [recCheck, recoCheck] = await Promise.all([
+      supabaseAdmin
+        .from("receitas")
+        .select("id, recorrencia_id, valor, data, user_id")
+        .eq("id", receitaId)
+        .eq("user_id", userId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("recorrencias")
+        .select("id, frequencia, proxima_cobranca, status, user_id")
+        .eq("id", recorrenciaId)
+        .eq("user_id", userId)
+        .maybeSingle(),
+    ]);
+    const recRow = recCheck?.data as
+      | { id: string; recorrencia_id: string | null; valor: number; data: string; user_id: string }
+      | null;
+    const recoRow = recoCheck?.data as
+      | { id: string; frequencia: string; proxima_cobranca: string | null; status: string; user_id: string }
+      | null;
+    if (
+      !recRow || !recoRow ||
+      recRow.recorrencia_id !== recorrenciaId ||
+      recoRow.status !== "ativa" ||
+      !recoRow.proxima_cobranca
+    ) {
+      console.error("[whatsapp] receita recorrente readback failed", { recRow, recoRow });
+      return { ok: false, resposta: M.receita.erroAoSalvar() };
+    }
+
+    return {
+      ok: true,
+      resposta: M.receita.salvaRecorrente({
+        valor: valorFmt,
         descricao,
-        valor,
-        data: iso,
-        tipo,
-        recorrente: true,
-        recorrencia_id: recorrenciaId,
-        mes: m,
-        ano: y,
-        origem: "whatsapp",
-      });
-    });
-  } else {
-    const [y, m] = baseData.split("-").map(Number);
-    primeiroReceitaId = genId();
-    rows.push({
-      id: primeiroReceitaId,
-      user_id: userId,
-      descricao,
-      valor,
-      data: baseData,
-      tipo,
-      recorrente: false,
-      mes: m,
-      ano: y,
-      origem: "whatsapp",
-    });
+        resumoRecorrencia: resumoRecorrencia(s),
+      }),
+      receitaId,
+      recorrenciaId,
+    };
   }
 
-  const { error } = await supabaseAdmin.from("receitas").insert(rows);
+  // -------- ÚNICA --------
+  const [y, m] = baseData.split("-").map(Number);
+  const primeiroReceitaId = genId();
+  const row = {
+    id: primeiroReceitaId,
+    user_id: userId,
+    descricao,
+    valor,
+    data: baseData,
+    tipo,
+    recorrente: false,
+    mes: m,
+    ano: y,
+    origem: "whatsapp",
+  };
+  const { error } = await supabaseAdmin.from("receitas").insert(row);
   if (error) {
     console.error("[whatsapp] receita insert failed", error);
     return { ok: false, resposta: M.receita.erroAoSalvar() };
   }
 
-  const valorFmt = formatBRL(valor);
-  const tipoLabel = s.tipoLabel || descricao;
-  const resposta = s.recorrente
-    ? M.receita.salvaRecorrente({
-        valor: valorFmt,
-        descricao,
-        resumoRecorrencia: resumoRecorrencia(s),
-      })
-    : M.receita.salvaSimples({ valor: valorFmt, descricao, tipo: tipoLabel });
-
-  return { ok: true, resposta, receitaId: primeiroReceitaId, recorrenciaId };
+  return {
+    ok: true,
+    resposta: M.receita.salvaSimples({ valor: valorFmt, descricao, tipo: tipoLabel }),
+    receitaId: primeiroReceitaId,
+  };
 }
 
 // ---------- montagem de resposta da etapa ----------

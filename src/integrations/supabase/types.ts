@@ -3462,6 +3462,25 @@ export type Database = {
           valor: number
         }[]
       }
+      create_recurring_income: {
+        Args: {
+          p_data: string
+          p_descricao: string
+          p_dia_mes?: number
+          p_dia_semana?: number
+          p_frequencia: string
+          p_observacao?: string
+          p_origem?: string
+          p_tipo: string
+          p_user_id: string
+          p_valor: number
+        }
+        Returns: {
+          proxima_cobranca: string
+          receita_id: string
+          recorrencia_id: string
+        }[]
+      }
       current_plan: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["plan_tier"]

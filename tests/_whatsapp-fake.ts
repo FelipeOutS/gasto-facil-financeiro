@@ -35,6 +35,8 @@ export const state = {
   // WA-C7 — favorecidos (reuso de fornecedores). Cada teste pode
   // semear via resetState({ favorecidos: [...] }).
   favorecidosData: [] as Record<string, unknown>[],
+  // WA-R1-Fix — recorrências para o fluxo de receitas recorrentes
+  recorrenciasData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
@@ -334,7 +336,23 @@ function makeBuilder(table: string): any {
       return { data: applyRangeFilters(base, ctx.range), error: null };
     }
     if (table === "receitas") {
-      return { data: applyRangeFilters(state.receitasData, ctx.range), error: null };
+      const idF = ctx.filters?.id;
+      const uid = ctx.filters?.user_id;
+      let base = state.receitasData as Array<Record<string, unknown>>;
+      if (idF !== undefined) base = base.filter((r) => r.id === idF);
+      if (uid !== undefined) base = base.filter((r) => r.user_id === undefined || r.user_id === uid);
+      const ranged = applyRangeFilters(base, ctx.range);
+      if (ctx.single) return { data: ranged[0] ?? null, error: null };
+      return { data: ranged, error: null };
+    }
+    if (table === "recorrencias") {
+      const idF = ctx.filters?.id;
+      const uid = ctx.filters?.user_id;
+      let base = state.recorrenciasData as Array<Record<string, unknown>>;
+      if (idF !== undefined) base = base.filter((r) => r.id === idF);
+      if (uid !== undefined) base = base.filter((r) => r.user_id === undefined || r.user_id === uid);
+      if (ctx.single) return { data: base[0] ?? null, error: null };
+      return { data: base, error: null };
     }
     if (table === "contas_a_pagar") {
       const uid = ctx.filters?.user_id;
@@ -493,6 +511,72 @@ export const fakeAdmin = {
       }
       return { data: out, error: null };
     }
+    // WA-R1-Fix — atômica: 1 receita + 1 recorrência ativa.
+    if (name === "create_recurring_income") {
+      const userId = args?.p_user_id as string;
+      const descricao = (args?.p_descricao ?? "Renda") as string;
+      const valor = Number(args?.p_valor ?? 0);
+      const data = args?.p_data as string;
+      const tipo = (args?.p_tipo ?? "outros") as string;
+      const freq = (args?.p_frequencia ?? "mensal") as string;
+      const diaMes = args?.p_dia_mes as number | null | undefined;
+      const diaSemana = args?.p_dia_semana as number | null | undefined;
+      // calcula próxima cobrança estritamente futura (mesma lógica da RPC SQL)
+      const baseD = new Date(`${data}T00:00:00Z`);
+      let prox = new Date(baseD);
+      if (freq === "mensal") {
+        const dia = Math.min(diaMes ?? 1, 31);
+        prox = new Date(Date.UTC(baseD.getUTCFullYear(), baseD.getUTCMonth(), dia));
+        if (prox <= baseD) {
+          prox = new Date(Date.UTC(baseD.getUTCFullYear(), baseD.getUTCMonth() + 1, dia));
+        }
+      } else if (freq === "semanal") {
+        const dow = diaSemana ?? 0;
+        let diff = ((dow - baseD.getUTCDay() + 7) % 7);
+        if (diff === 0) diff = 7;
+        prox.setUTCDate(prox.getUTCDate() + diff);
+      } else {
+        prox.setUTCDate(prox.getUTCDate() + 15);
+      }
+      const proxIso = prox.toISOString().slice(0, 10);
+      const recIdx = state.inserts.length + 1;
+      const recorrenciaId = `reco-${recIdx}`;
+      const recoRow = {
+        id: recorrenciaId,
+        user_id: userId,
+        nome: descricao,
+        valor,
+        frequencia: freq,
+        proxima_cobranca: proxIso,
+        status: "ativa",
+        tipo_recorrencia: "recorrencia_fixa",
+        origem: "whatsapp",
+      };
+      state.inserts.push({ table: "recorrencias", row: recoRow });
+      state.recorrenciasData.push(recoRow);
+      const receitaIdx = state.inserts.length + 1;
+      const receitaId = `rec-${receitaIdx}`;
+      const [y, m] = data.split("-").map(Number);
+      const recRow = {
+        id: receitaId,
+        user_id: userId,
+        descricao,
+        valor,
+        data,
+        tipo,
+        recorrente: true,
+        recorrencia_id: recorrenciaId,
+        mes: m,
+        ano: y,
+        origem: "whatsapp",
+      };
+      state.inserts.push({ table: "receitas", row: recRow });
+      state.receitasData.push(recRow);
+      return {
+        data: [{ receita_id: receitaId, recorrencia_id: recorrenciaId, proxima_cobranca: proxIso }],
+        error: null,
+      };
+    }
     return { data: true, error: null };
   },
   auth: {
@@ -538,6 +622,7 @@ export function resetState(opts?: {
 
   state.gastosData = opts?.gastos ?? [];
   state.receitasData = opts?.receitas ?? [];
+  state.recorrenciasData = [];
   state.contasData = opts?.contas ?? [];
   state.favorecidosData = opts?.favorecidos ?? [];
   state.cartoesData = opts?.cartoes ?? [
@@ -571,3 +656,9 @@ export function resetState(opts?: {
 
 export const gastosInserts = () =>
   state.inserts.filter((i) => i.table === "gastos");
+
+export const receitasInserts = () =>
+  state.inserts.filter((i) => i.table === "receitas");
+
+export const recorrenciasInserts = () =>
+  state.inserts.filter((i) => i.table === "recorrencias");

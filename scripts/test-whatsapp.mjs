@@ -39,6 +39,7 @@ const INCLUDE = [
   "whatsapp-pending-expense-session.test.ts",
   "whatsapp-pipeline.test.ts",
   "whatsapp-receitas.test.ts",
+  "whatsapp-receita-recorrencia-rpc.test.ts",
   "whatsapp-reset.test.ts",
   "whatsapp-session.test.ts",
   "whatsapp-webhook-http.test.ts",
