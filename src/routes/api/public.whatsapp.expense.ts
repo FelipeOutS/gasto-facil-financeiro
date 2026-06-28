@@ -221,10 +221,26 @@ const MetaAudioMessage = z.object({
     voice: z.boolean().optional(),
   }),
 });
+// WA-C10.b — documentos PDF (Cloud API). Aceitamos apenas application/pdf;
+// validação real de bytes mágicos/tamanho/páginas é feita após o download.
+const MetaDocumentMessage = z.object({
+  id: z.string().min(1).max(256),
+  from: z.string().min(5).max(40).regex(/^\d+$/),
+  timestamp: z.string().min(1).max(20).regex(/^\d+$/),
+  type: z.literal("document"),
+  document: z.object({
+    id: z.string().min(1).max(256),
+    mime_type: z.string().max(80).optional(),
+    sha256: z.string().max(128).optional(),
+    filename: z.string().max(256).optional(),
+    caption: z.string().max(1000).optional(),
+  }),
+});
 const MetaAnyMessage = z.union([
   MetaTextMessage,
   MetaImageMessage,
   MetaAudioMessage,
+  MetaDocumentMessage,
   z.object({ id: z.string().optional(), type: z.string() }).passthrough(),
 ]);
 const MetaChange = z.object({
