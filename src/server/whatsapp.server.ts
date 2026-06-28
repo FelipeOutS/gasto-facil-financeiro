@@ -1167,6 +1167,8 @@ const PENDING_STATES = [
   // WA-C7.2.b — pagamento para pessoa (state machine completa).
   ...PAGAR_PESSOA_PENDING_STATES,
   ...RECEITA_PENDING_STATES,
+  // WA-C10.a — cadastro de boleto por texto.
+  ...BOLETO_PENDING_STATES,
 
   ...COMPROVANTE_PENDING_STATES,
 ];
