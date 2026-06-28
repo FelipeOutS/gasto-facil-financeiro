@@ -45,11 +45,9 @@ describe("WA-R1-Fix — receita não recorrente", () => {
 
   it("cria exatamente 1 receita e nenhuma recorrência", async () => {
     await processarMensagemWhatsApp(msg("Recebi 3500 de salário hoje", "e-prev"));
-    await processarMensagemWhatsApp(msg("sim", "e-rec-1")); // pergunta de recorrência
-    const out = await processarMensagemWhatsApp(msg("não", "e-rec-2"));
-    // não recorrente → vai direto à confirmação final
-    await processarMensagemWhatsApp(msg("sim", "e-rec-3"));
-    expect(out).toBeTruthy();
+    await processarMensagemWhatsApp(msg("não", "e-rec-1")); // não recorrente
+    const out = await processarMensagemWhatsApp(msg("sim", "e-rec-2")); // confirma
+    expect(out.status).toBe("salva");
     const recs = receitasInserts();
     expect(recs.length).toBe(1);
     expect(recs[0].row.recorrente).toBe(false);
