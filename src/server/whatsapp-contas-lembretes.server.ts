@@ -354,6 +354,101 @@ export async function revalidateContaForDispatch(
   return { ok: true };
 }
 
+// =========================================================================
+// WA-C9.1 — Fallback persistente após restart do servidor.
+//
+// Se a RAM da memória curta foi limpa (deploy/restart) e o usuário responde
+// "Paguei", "Adiar", "Ver detalhes" ou "Ignorar" sem reply_to nativo, o
+// servidor consulta `whatsapp_notifications` para recuperar o contexto.
+//
+// Regras de segurança:
+//  - Filtro estrito por `user_id` (nunca cruza usuários).
+//  - Considera apenas categoria `contas_a_pagar` enviadas (`status='sent'`)
+//    nas últimas LEMBRETE_FALLBACK_TTL_HOURS horas (24h: alinhado à janela
+//    da Meta e ao TTL da RAM).
+//  - Se houver mais de uma entidade distinta → retorna `ambiguous`.
+//  - Se providerMessageId for fornecido, tem prioridade absoluta.
+//  - Sem PII em log.
+// =========================================================================
+const LEMBRETE_FALLBACK_TTL_HOURS = 24;
+
+export type RecentLembreteLookup =
+  | { kind: "single"; contaId: string; notificationId: string; nomeCurto: string | null; dueISO: string }
+  | { kind: "ambiguous"; count: number }
+  | { kind: "none" };
+
+export interface RecentLembreteDeps {
+  client?: typeof supabaseAdmin;
+  now?: () => Date;
+}
+
+export async function findRecentSentLembreteForUser(
+  userId: string,
+  opts: { providerMessageId?: string | null } = {},
+  deps?: RecentLembreteDeps,
+): Promise<RecentLembreteLookup> {
+  if (!userId) return { kind: "none" };
+  const c = deps?.client ?? supabaseAdmin;
+  const now = deps?.now?.() ?? new Date();
+  const since = new Date(now.getTime() - LEMBRETE_FALLBACK_TTL_HOURS * 3600_000);
+
+  // 1) Prioridade: reply_to nativo.
+  const pmid = (opts.providerMessageId ?? "").trim();
+  if (pmid) {
+    const { data } = await c
+      .from("whatsapp_notifications")
+      .select("id, user_id, entity_id, payload, sent_at, category")
+      .eq("user_id", userId)
+      .eq("provider_message_id", pmid)
+      .maybeSingle();
+    const row = data as {
+      id?: string; entity_id?: string | null; payload?: Record<string, unknown> | null; sent_at?: string | null; category?: string | null;
+    } | null;
+    if (row && row.category === "contas_a_pagar" && row.entity_id) {
+      const sentAt = row.sent_at ? new Date(row.sent_at) : null;
+      if (sentAt && sentAt >= since) {
+        return {
+          kind: "single",
+          contaId: row.entity_id,
+          notificationId: row.id ?? "",
+          nomeCurto: null,
+          dueISO: String(row.payload?.due_date ?? ""),
+        };
+      }
+    }
+  }
+
+  // 2) Caso contrário, lembretes enviados recentemente para o mesmo usuário.
+  const { data } = await c
+    .from("whatsapp_notifications")
+    .select("id, entity_id, payload, sent_at")
+    .eq("user_id", userId)
+    .eq("category", "contas_a_pagar")
+    .eq("status", "sent")
+    .gte("sent_at", since.toISOString())
+    .order("sent_at", { ascending: false })
+    .limit(20);
+  const rows = (Array.isArray(data) ? data : []) as Array<{
+    id: string; entity_id: string | null; payload: Record<string, unknown> | null; sent_at: string | null;
+  }>;
+  if (rows.length === 0) return { kind: "none" };
+  const distinct = new Map<string, { id: string; payload: Record<string, unknown> | null }>();
+  for (const r of rows) {
+    if (!r.entity_id) continue;
+    if (!distinct.has(r.entity_id)) distinct.set(r.entity_id, { id: r.id, payload: r.payload });
+  }
+  if (distinct.size === 0) return { kind: "none" };
+  if (distinct.size > 1) return { kind: "ambiguous", count: distinct.size };
+  const [contaId, info] = distinct.entries().next().value as [string, { id: string; payload: Record<string, unknown> | null }];
+  return {
+    kind: "single",
+    contaId,
+    notificationId: info.id,
+    nomeCurto: null,
+    dueISO: String(info.payload?.due_date ?? ""),
+  };
+}
+
 // ---------- Renderização (usada pelo dispatcher na hora do envio) ----------
 
 export interface RenderInput {
