@@ -72,9 +72,9 @@ test("WA-C6: saudação posiciona WhatsApp como atalho e cita site/app", async (
   expect(r.resposta).toContain("menu");
 });
 
-test("WA-C6: 'ajuda' devolve menu numerado 1..8 com itens chave", async () => {
+test("WA-C6: 'menu' devolve menu numerado 1..8 com itens chave", async () => {
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "ajuda", external_id: "c6-aj-1",
+    telefone: tel, texto: "menu", external_id: "c6-aj-1",
   });
   for (const linha of [
     "1. Registrar gasto",
@@ -90,8 +90,38 @@ test("WA-C6: 'ajuda' devolve menu numerado 1..8 com itens chave", async () => {
   }
 });
 
-test("WA-C6: 'comandos' é reconhecido como menu", () => {
-  expect(detectConversationalIntent("comandos")).toBe("menu_whatsapp");
+test("WA-C6: 'ajuda' devolve exemplos práticos e NÃO o menu numerado", async () => {
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "ajuda", external_id: "c6-aj-2",
+  });
+  expect(r.status).toBe("consulta");
+  // contém exemplos práticos
+  expect(r.resposta).toMatch(/exemplos?/i);
+  expect(r.resposta).toContain("Uber 29,90");
+  expect(r.resposta).toMatch(/Paguei a internet/i);
+  // NÃO é a lista numerada do menu
+  expect(r.resposta).not.toContain("1. Registrar gasto");
+  expect(r.resposta).not.toContain("8. Ajuda");
+});
+
+test("WA-C6: 'comandos' devolve lista curta de atalhos (não menu, não ajuda)", async () => {
+  const r = await processarMensagemWhatsApp({
+    telefone: tel, texto: "comandos", external_id: "c6-cmd-1",
+  });
+  expect(r.status).toBe("consulta");
+  expect(r.resposta).toMatch(/Comandos r[aá]pidos/i);
+  expect(r.resposta).toContain("menu");
+  expect(r.resposta).toContain("ajuda");
+  expect(r.resposta).toContain("minhas contas");
+  // não cita exemplos longos nem opções numeradas do menu
+  expect(r.resposta).not.toContain("1. Registrar gasto");
+  expect(r.resposta).not.toContain("Uber 29,90");
+});
+
+test("WA-C6: detectConversationalIntent diferencia menu, ajuda e comandos", () => {
+  expect(detectConversationalIntent("menu")).toBe("menu_whatsapp");
+  expect(detectConversationalIntent("ajuda")).toBe("ajuda_whatsapp");
+  expect(detectConversationalIntent("comandos")).toBe("comandos_whatsapp");
 });
 
 // =====================================================================
@@ -125,13 +155,14 @@ test("WA-C6: enviar '1' fora de sessão responde com guia de registro de gasto",
   expect(r.resposta).toMatch(/registrar um gasto/i);
 });
 
-test("WA-C6: enviar '8' fora de sessão dispara ajuda completa", async () => {
+test("WA-C6: enviar '8' fora de sessão dispara ajuda com exemplos práticos", async () => {
   const r = await processarMensagemWhatsApp({
     telefone: tel, texto: "8", external_id: "c6-num-8",
   });
   expect(r.status).toBe("consulta");
-  expect(r.resposta).toContain("1. Registrar gasto");
-  expect(r.resposta).toContain("8. Ajuda");
+  expect(r.resposta).toMatch(/exemplos?/i);
+  expect(r.resposta).toContain("Uber 29,90");
+  expect(r.resposta).not.toContain("1. Registrar gasto");
 });
 
 test("WA-C6: '3' fora de sessão entra no fluxo de contas (rewrite → minhas contas)", async () => {
