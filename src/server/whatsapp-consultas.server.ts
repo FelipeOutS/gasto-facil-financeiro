@@ -447,7 +447,36 @@ export async function handleConsulta(
       return await handleImpacto(userId);
     case "listar_receitas_mes":
       return await handleListarReceitasMes(userId);
+    case "listar_gastos_mes":
+      return await handleListarGastosMes(userId);
   }
+}
+
+async function handleListarGastosMes(userId: string): Promise<ConsultaResult> {
+  const hoje = todayLocalISO();
+  const from = monthStartISO(hoje);
+  const to = addDaysISO(hoje, 1);
+  const [gastos, catMap] = await Promise.all([
+    loadGastos(userId, from, to),
+    loadCategoriasMap(userId),
+  ]);
+  const ordenados = [...gastos].sort((a, b) => (a.data < b.data ? 1 : -1));
+  const total = sumValor(ordenados);
+  const itens = ordenados.slice(0, 10).map((g) => ({
+    descricao: (g.descricao ?? "").trim() || "Gasto",
+    categoria: g.categoria_id ? (catMap.get(g.categoria_id) || "Outros") : "Outros",
+    valor: formatBRL(Number(g.valor ?? 0) || 0),
+    data: formatDataBR(g.data),
+  }));
+  return {
+    status: "consulta",
+    resposta: M.consulta.listarGastosMes({
+      mes: mesPorExtenso(hoje),
+      itens,
+      total: formatBRL(total),
+      totalRegistros: ordenados.length,
+    }),
+  };
 }
 
 // =====================================================================
