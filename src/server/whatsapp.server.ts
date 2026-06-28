@@ -51,6 +51,9 @@ import {
   resolveOrdinal as shortResolveOrdinal,
   clear as shortClear,
   resolvePagueiSemNome as shortResolvePagueiSemNome,
+  resolveLembreteResposta as shortResolveLembreteResposta,
+  getLembreteConta as shortGetLembreteConta,
+  clearLembreteConta as shortClearLembreteConta,
 } from "./whatsapp-short-context.server";
 import {
   detectConsultaEspecifica,
