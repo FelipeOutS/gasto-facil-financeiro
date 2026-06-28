@@ -207,12 +207,11 @@ export async function processarBoleto(args: {
       const r = [
         "Você está cadastrando um boleto 🧾",
         "Você pode:",
-        "1. Continuar o cadastro",
-        "2. Corrigir os dados (responda no formato pedido)",
-        "3. Cancelar o boleto (envie \"cancelar\")",
-        "4. Voltar ao menu (envie \"menu\")",
+        "• Enviar o dado pedido (valor, vencimento ou identificação) para continuar",
+        "• Enviar \"cancelar\" para descartar este boleto",
+        "• Enviar \"menu\" para ver as opções globais",
         "",
-        "Envie o dado solicitado ou uma das opções.",
+        "Seus dados ficam salvos enquanto você decide.",
       ].join("\n");
       await deps.atualizarSessao(sessao.id, sessao.status, session as never, r);
       return { status: "pendente", resposta: r };
