@@ -56,7 +56,9 @@ test('"Recebi 4.000 de salário" → resumo direto, confirma e salva', async () 
 });
 
 // ---------------------------------------------------------------------
-test("Receita recorrente mensal cria 12 lançamentos com mesmo recorrencia_id", async () => {
+// WA-R1-Fix — recorrência cria exatamente 1 receita atual + 1 recorrência ativa
+// (nunca pré-projeta lançamentos futuros como receitas reais).
+test("Receita recorrente mensal cria exatamente 1 receita + 1 recorrência ativa", async () => {
   await processarMensagemWhatsApp({ telefone: tel, texto: "Recebi 2500 de salário", external_id: "rm-a" });
   await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "rm-b" }); // recorrente sim
   await processarMensagemWhatsApp({ telefone: tel, texto: "todo mês", external_id: "rm-c" });
@@ -65,11 +67,13 @@ test("Receita recorrente mensal cria 12 lançamentos com mesmo recorrencia_id", 
   expect(r.status).toBe("salva");
   expect(r.resposta.toLowerCase()).toContain("frequência");
   const rows = receitasInserts();
-  expect(rows.length).toBe(12);
-  const recId = rows[0].row.recorrencia_id;
-  expect(typeof recId).toBe("string");
-  expect(rows.every((x) => x.row.recorrencia_id === recId)).toBe(true);
-  expect(rows.every((x) => x.row.recorrente === true)).toBe(true);
+  expect(rows.length).toBe(1);
+  expect(rows[0].row.recorrente).toBe(true);
+  expect(typeof rows[0].row.recorrencia_id).toBe("string");
+  const recos = state.inserts.filter((i) => i.table === "recorrencias");
+  expect(recos.length).toBe(1);
+  expect(recos[0].row.id).toBe(rows[0].row.recorrencia_id);
+  expect(recos[0].row.status).toBe("ativa");
 });
 
 // ---------------------------------------------------------------------
@@ -81,7 +85,8 @@ test("Receita recorrente semanal aceita 'sexta'", async () => {
   expect(r.resposta).toContain("Toda semana");
   const r2 = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "rs-e" });
   expect(r2.status).toBe("salva");
-  expect(receitasInserts().length).toBe(12);
+  expect(receitasInserts().length).toBe(1);
+  expect(state.inserts.filter((i) => i.table === "recorrencias").length).toBe(1);
 });
 
 // ---------------------------------------------------------------------
