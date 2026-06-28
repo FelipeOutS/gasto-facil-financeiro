@@ -785,4 +785,57 @@ export const whatsappMessages = {
       ].join("\n");
     },
   },
+
+  // ---- WA-C10.b: boleto por foto/PDF ----
+  boletoMidia: {
+    nenhumCandidato() {
+      return [
+        `Não consegui ler este boleto com segurança.`,
+        ``,
+        `Tente enviar uma imagem mais nítida, um PDF original ou copie a linha digitável aqui.`,
+      ].join("\n");
+    },
+    multiplosCandidatos(opts: Array<{ mascara: string; valor?: string; venc?: string }>) {
+      const linhas = [
+        `Encontrei mais de um boleto válido neste arquivo. Qual você quer cadastrar?`,
+        ``,
+      ];
+      opts.forEach((o, i) => {
+        const extras = [o.valor, o.venc].filter(Boolean).join(" • ");
+        linhas.push(`${i + 1}. Boleto final ${o.mascara}${extras ? ` (${extras})` : ""}`);
+      });
+      linhas.push(`${opts.length + 1}. Nenhum deles`);
+      return linhas.join("\n");
+    },
+    fallbackManual(args: { valor?: string; venc?: string }) {
+      const linhas = [
+        `Encontrei possivelmente:`,
+        ``,
+      ];
+      if (args.valor) linhas.push(`• Valor: ${args.valor}`);
+      if (args.venc) linhas.push(`• Vencimento: ${args.venc}`);
+      if (!args.valor && !args.venc) linhas.push(`• (nenhum dado confiável)`);
+      linhas.push(
+        ``,
+        `Não consegui validar a linha digitável.`,
+        `Deseja cadastrar como uma conta a pagar manual?`,
+        ``,
+        `1. Confirmar dados`,
+        `2. Corrigir valor`,
+        `3. Corrigir vencimento`,
+        `4. Digitar a linha do boleto`,
+        `5. Cancelar`,
+      );
+      return linhas.join("\n");
+    },
+    pdfMuitasPaginas() {
+      return `Esse PDF tem páginas demais. Envie só a página do boleto.`;
+    },
+    pdfInvalido() {
+      return `Não consegui abrir este PDF. Pode reenviar o boleto original?`;
+    },
+    indisponivel() {
+      return `A leitura por imagem/PDF está indisponível agora. Tente novamente em alguns minutos ou cole a linha digitável.`;
+    },
+  },
 };
