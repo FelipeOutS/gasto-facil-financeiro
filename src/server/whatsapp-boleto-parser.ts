@@ -19,6 +19,7 @@
  * e códigos arbitrários fora do detector.
  */
 import { createHash } from "crypto";
+import { getBoletoFingerprintPepper } from "./whatsapp-boleto-secret.server";
 
 export type BoletoTipo = "cobranca" | "arrecadacao";
 
@@ -153,10 +154,7 @@ function fatorToISO(fator: number): string | null {
 // ---------- fingerprint ----------
 
 function fingerprintOf(digits: string): string {
-  const pepper =
-    process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET ||
-    process.env.WHATSAPP_DISPATCHER_SECRET ||
-    "wa-c10a-boleto-fp";
+  const pepper = getBoletoFingerprintPepper();
   return createHash("sha256").update(`${pepper}:${digits}`).digest("hex").slice(0, 32);
 }
 
