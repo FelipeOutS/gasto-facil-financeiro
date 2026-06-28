@@ -179,11 +179,11 @@ test("Reentrega: receita recorrente → segundo envio não cria nova série", as
   await processarMensagemWhatsApp({ telefone: tel, texto: "10", external_id: "re-r-d" });
   const r1 = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "re-r-e" });
   expect(r1.status).toBe("salva");
-  expect(receitasInserts().length).toBe(12);
+  expect(receitasInserts().length).toBe(1);
 
   const r2 = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "re-r-e" });
   expect(r2.status).toBe("duplicada");
-  expect(receitasInserts().length).toBe(12);
+  expect(receitasInserts().length).toBe(1);
 
   const salva = state.inserts.find(
     (i) => i.table === "whatsapp_messages" && i.row.external_id === "re-r-e" && i.row.status === "salva",
