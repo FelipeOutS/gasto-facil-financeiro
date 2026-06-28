@@ -151,14 +151,19 @@ import {
   processarPagarPessoaFlow,
   type WhatsAppPagarPessoaDeps,
 } from "./whatsapp-pagar-pessoa-flow.server";
-// WA-C10.a — Boleto por código/linha digitável (texto). Foto/PDF/OCR ficam para WA-C10.b.
+// WA-C10.a/b — Boleto por código/linha digitável (texto) + foto/PDF.
 import {
   BOLETO_PENDING_STATES,
   detectBoletoIntent,
   isBoletoSession,
+  isAnyBoletoSession,
+  iniciarBoletoDeMidia,
+  iniciarBoletoManualFallback,
   processarBoleto,
   type WhatsAppBoletoDeps,
 } from "./whatsapp-boleto-intents.server";
+import { extractBoletoFromMedia } from "./whatsapp-boleto-ocr.server";
+import type { DocumentAttachment } from "./whatsapp-media-attachment.ts";
 
 // Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
 // precisa do orquestrador é exposto aqui de forma explícita, evitando que
