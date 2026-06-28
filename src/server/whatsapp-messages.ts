@@ -377,6 +377,49 @@ export const whatsappMessages = {
       ].join("\n");
     },
 
+    // WA-C6 — “ajuda” explícito: explicação + exemplos práticos (NÃO é o menu numerado).
+    ajudaExemplos() {
+      return [
+        `💡 Posso te ajudar com tarefas rápidas pelo WhatsApp. Veja exemplos:`,
+        ``,
+        `📝 Registrar gasto`,
+        `   • “Uber 29,90”`,
+        `   • “Mercado 187,50 ontem no crédito”`,
+        ``,
+        `📄 Criar conta a pagar`,
+        `   • “Cadastrar internet 119,90 vence dia 5”`,
+        `   • “Nova conta luz 230 venc 15/07”`,
+        ``,
+        `💸 Marcar como paga / adiar / cancelar`,
+        `   • “Paguei a internet”`,
+        `   • “Adiar a luz para sexta”`,
+        `   • “Cancelar a conta do streaming”`,
+        ``,
+        `📊 Consultar`,
+        `   • “Minhas contas” • “Contas atrasadas”`,
+        `   • “Resumo da semana” • “Maiores gastos do mês”`,
+        ``,
+        `Para a lista de opções numeradas digite “menu”. Para ver só os atalhos digite “comandos”.`,
+      ].join("\n");
+    },
+
+    // WA-C6 — “comandos”: lista curta e enxuta de atalhos (sem narrativa).
+    comandosLista() {
+      return [
+        `🔤 Comandos rápidos:`,
+        ``,
+        `• menu — opções numeradas (1 a 8)`,
+        `• ajuda — exemplos práticos de uso`,
+        `• minhas contas — pendentes`,
+        `• contas atrasadas — em atraso`,
+        `• próximas contas — vencimentos futuros`,
+        `• resumo da semana / resumo do mês`,
+        `• paguei <conta> — dar baixa`,
+        `• adiar <conta> para <data> — reagendar`,
+        `• cancelar — encerra o que estiver em andamento`,
+      ].join("\n");
+    },
+
     // WA-C6 — sufixo curto com próximos passos sugeridos.
     // Não muda regras: apenas anexa uma linha às respostas finais.
     sugestoesPos(acao: "gasto_salvo" | "conta_criada" | "conta_paga" | "conta_cancelada" | "conta_editada") {
