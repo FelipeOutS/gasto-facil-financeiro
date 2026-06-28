@@ -164,7 +164,7 @@ import {
 } from "./whatsapp-boleto-intents.server";
 import { extractBoletoFromMedia } from "./whatsapp-boleto-ocr.server";
 import { tryParseBoleto } from "./whatsapp-boleto-parser";
-import { extractBoletoCandidatesFromPdf } from "./whatsapp-pdf-text-extract.server";
+import { extractBoletoCandidatesFromPdfAsync } from "./whatsapp-pdf-text-extract.server";
 import {
   getCachedOcr,
   setCachedOcr,
@@ -2759,7 +2759,7 @@ export async function processarMensagemWhatsApp(
     // WA-C10.b.1 — TENTATIVA 1: extração textual local (sem IA).
     const fullBytes = decodeBase64Full(msg.document.base64);
     if (fullBytes) {
-      const localCandidates = extractBoletoCandidatesFromPdf(fullBytes);
+      const localCandidates = await extractBoletoCandidatesFromPdfAsync(fullBytes);
       const validados = [];
       const seen = new Set<string>();
       for (const c of localCandidates) {
@@ -2793,6 +2793,7 @@ export async function processarMensagemWhatsApp(
         scope: "whatsappBoletoOcr",
         userId,
         route: "whatsapp/boleto-ocr-pdf",
+        failMode: "closed",
       });
       if (limited) {
         logBoletoMediaGate("rate_limit", "pdf", "blocked");
@@ -2853,6 +2854,7 @@ export async function processarMensagemWhatsApp(
           scope: "whatsappBoletoOcr",
           userId,
           route: "whatsapp/boleto-ocr-image",
+          failMode: "closed",
         });
         if (limited) {
           logBoletoMediaGate("rate_limit", "image", "blocked");
