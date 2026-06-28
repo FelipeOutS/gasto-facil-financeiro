@@ -43,7 +43,8 @@ test("detectConversationalIntent reconhece variações", () => {
 
   expect(detectConversationalIntent("GI")).toBe("menu_whatsapp");
   expect(detectConversationalIntent("Gasto Inteligente")).toBe("menu_whatsapp");
-  expect(detectConversationalIntent("ajuda")).toBe("menu_whatsapp");
+  expect(detectConversationalIntent("ajuda")).toBe("ajuda_whatsapp");
+  expect(detectConversationalIntent("comandos")).toBe("comandos_whatsapp");
   expect(detectConversationalIntent("menu")).toBe("menu_whatsapp");
   expect(detectConversationalIntent("opções")).toBe("menu_whatsapp");
   expect(detectConversationalIntent("o que você faz?")).toBe("menu_whatsapp");
