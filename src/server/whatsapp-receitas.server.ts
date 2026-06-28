@@ -232,32 +232,8 @@ function descricaoFromTipo(label: string): string {
   return label;
 }
 
-// ---------- recorrência: gera datas ----------
+// ---------- (helpers de pré-projeção removidos em WA-R1-Fix) ----------
 
-function nextWeekday(fromISO: string, dow: number): string {
-  const [y, m, d] = fromISO.split("-").map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  const cur = dt.getUTCDay();
-  let diff = (dow - cur + 7) % 7;
-  if (diff === 0) diff = 0; // hoje também conta
-  dt.setUTCDate(dt.getUTCDate() + diff);
-  return dt.toISOString().slice(0, 10);
-}
-
-function addDays(iso: string, days: number): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  dt.setUTCDate(dt.getUTCDate() + days);
-  return dt.toISOString().slice(0, 10);
-}
-
-function addMonthsKeepDay(iso: string, monthsAdd: number, dia: number): string {
-  const [y, m] = iso.split("-").map(Number);
-  const target = new Date(Date.UTC(y, m - 1 + monthsAdd, 1));
-  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
-  const day = Math.min(dia, lastDay);
-  return `${target.getUTCFullYear()}-${String(target.getUTCMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-}
 
 // WA-R1-Fix: a função `gerarDatasRecorrencia` foi removida. A criação de
 // receitas recorrentes agora é feita atomicamente pela RPC
