@@ -22,6 +22,7 @@ import {
   canDispatch,
   type GateDecision,
 } from "@/server/whatsapp-notification-gates.server";
+import { revalidateContaForDispatch } from "@/server/whatsapp-contas-lembretes.server";
 
 interface TemplateMeta {
   requires_template_window: boolean;
