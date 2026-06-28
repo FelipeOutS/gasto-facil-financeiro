@@ -748,7 +748,7 @@ async function avancarFluxo(args: {
       sugestaoCat === "outros" ? "Outros" :
       sugestaoCat.charAt(0).toUpperCase() + sugestaoCat.slice(1);
   }
-  const resposta = previewMessage({
+  const previewBody = previewMessage({
     descricao: session.descricao,
     valorTotal: plano.total,
     totalParcelas: plano.totalParcelas,
@@ -756,6 +756,12 @@ async function avancarFluxo(args: {
     primeiraYm: plano.parcelas[0].invoiceMonth,
     categoria: categoriaLabel,
   });
+  // WA-F3.3-Fix-UX — consome ack pendente e prefixa a prévia.
+  const ack = session.pendingCategoryAck;
+  session.pendingCategoryAck = undefined;
+  const resposta = ack
+    ? `✓ Categoria atualizada para ${ack}.\n\n${previewBody}`
+    : previewBody;
   await persistTransition("parc_aguardando_confirmacao", session, resposta, sessaoId, args);
   logDecision({ stage: "awaiting_confirmation", installmentsCountPresent: true, cardMatchedCount: 1, result: "ok" });
   return { status: "aguardando_confirmacao", resposta };
