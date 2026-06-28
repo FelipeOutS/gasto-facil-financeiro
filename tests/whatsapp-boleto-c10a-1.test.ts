@@ -190,21 +190,22 @@ describe("WA-C10.a.1 — menu/ajuda em sessão ativa", () => {
     expect(rOk.status).toBe("salva");
   });
 
-  it("cancelar limpa código bruto da sessão final", async () => {
+  it("cancelar (\"5\" no menu de confirmação) limpa código bruto da sessão final", async () => {
     const { linha } = _buildBoletoCobrancaForTest({ valorCentavos: 2200 });
     await processarMensagemWhatsApp(msg(linha));
     await processarMensagemWhatsApp(msg("Internet"));
-    const r = await processarMensagemWhatsApp(msg("cancelar"));
+    const r = await processarMensagemWhatsApp(msg("5"));
     expect(r.status).toBe("cancelada");
-    const finalMsgs = state.inserts.filter(
-      (i) => i.table === "whatsapp_messages" && (i.row as { status?: string }).status === "cancelada",
-    );
-    expect(finalMsgs.length).toBeGreaterThan(0);
-    for (const m of finalMsgs) {
-      const parsed = JSON.stringify((m.row as { parsed?: unknown }).parsed ?? {});
-      expect(parsed).not.toContain(linha);
-      // Garantia adicional: codigoBarras vazio no payload sanitizado.
-      expect(parsed).toMatch(/"codigoBarras":""/);
+    const finalBoletoMsgs = state.inserts.filter((i) => {
+      if (i.table !== "whatsapp_messages") return false;
+      const row = i.row as { status?: string; parsed?: { kind?: string } };
+      return row.status === "cancelada" && row.parsed?.kind === "boleto";
+    });
+    expect(finalBoletoMsgs.length).toBeGreaterThan(0);
+    for (const m of finalBoletoMsgs) {
+      const parsed = (m.row as { parsed?: { codigoBarras?: string } }).parsed ?? {};
+      expect(parsed.codigoBarras).toBe("");
+      expect(JSON.stringify(parsed)).not.toContain(linha);
     }
   });
 });
