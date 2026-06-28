@@ -465,6 +465,8 @@ export async function handleConsulta(
       return await handleListarReceitasMes(userId);
     case "listar_gastos_mes":
       return await handleListarGastosMes(userId);
+    case "gastos_por_categoria_mes":
+      return await handleGastosPorCategoriaMes(userId);
   }
 }
 
