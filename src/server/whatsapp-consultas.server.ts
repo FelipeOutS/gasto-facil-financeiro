@@ -148,17 +148,23 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
   // ----- listar gastos/despesas do mês (precede parser de cartão/fatura) -----
   // Cobre variações comuns. Evita roteamento incorreto para faturas, onde
   // "gastos do mês" era interpretado como "compras do <cartão mês>".
+  // Excluir frases com modificadores temporais que pertencem a
+  // consultas específicas (ex.: "meus gastos de ontem", "gastos de hoje",
+  // "gastos da semana") — essas são roteadas por detectConsultaEspecifica.
+  const tempModificador = /\b(ontem|hoje|amanha|amanh[aã]|da semana|de hoje|de ontem)\b/.test(t);
   if (
-    /\bmeus gastos\b/.test(t) ||
-    /\bminhas despesas\b/.test(t) ||
-    /\bgastos (do |deste |desse |neste |nesse )?m[eê]s\b/.test(t) ||
-    /\bdespesas (do |deste |desse |neste |nesse )?m[eê]s\b/.test(t) ||
-    /\bgastos (do )?(m[eê]s )?atual\b/.test(t) ||
-    /\bquanto (eu )?gastei (este|esse|neste|nesse|no|do) ?m[eê]s\b/.test(t) ||
-    /\btotal (de |dos )?gastos\b/.test(t) ||
-    /\btotal (de |das )?despesas\b/.test(t) ||
-    /\blistar (os |as )?(meus |minhas )?(gastos|despesas)\b/.test(t) ||
-    /\bver (os |as )?(meus |minhas )?(gastos|despesas)\b/.test(t)
+    !tempModificador && (
+      /\bmeus gastos\b/.test(t) ||
+      /\bminhas despesas\b/.test(t) ||
+      /\bgastos (do |deste |desse |neste |nesse )?m[eê]s\b/.test(t) ||
+      /\bdespesas (do |deste |desse |neste |nesse )?m[eê]s\b/.test(t) ||
+      /\bgastos (do )?(m[eê]s )?atual\b/.test(t) ||
+      /\bquanto (eu )?gastei (este|esse|neste|nesse|no|do) ?m[eê]s\b/.test(t) ||
+      /\btotal (de |dos )?gastos\b/.test(t) ||
+      /\btotal (de |das )?despesas\b/.test(t) ||
+      /\blistar (os |as )?(meus |minhas )?(gastos|despesas)\b/.test(t) ||
+      /\bver (os |as )?(meus |minhas )?(gastos|despesas)\b/.test(t)
+    )
   ) {
     return "listar_gastos_mes";
   }
