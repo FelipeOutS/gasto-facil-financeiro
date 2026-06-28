@@ -2810,6 +2810,9 @@ export async function processarMensagemWhatsApp(
       setCachedOcr(userId, pdfSha, "pdf", ocrResult);
     }
 
+    if (!ocrResult) {
+      return { status: "erro", resposta: M.boletoMidia.indisponivel() };
+    }
     if (ocrResult.candidatos.length >= 1) {
       return await iniciarBoletoDeMidia({
         userId, msg, texto: texto || "(pdf)", recebidaEm,
