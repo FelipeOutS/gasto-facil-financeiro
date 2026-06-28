@@ -13,6 +13,7 @@ import {
   MAX_IMAGE_BYTES,
   validateDownloadedImage,
 } from "@/server/whatsapp-media-validation.server";
+import { MAX_PDF_BYTES, validateDownloadedPdf } from "@/server/whatsapp-pdf-validation.server";
 import { podeUsarOcrComprovante } from "@/server/whatsapp-comprovantes.server";
 import {
   canUseWhatsAppForSender,
