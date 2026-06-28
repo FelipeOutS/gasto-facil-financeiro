@@ -575,8 +575,8 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
         const results: Array<{ status: string; gasto_id?: string }> = [];
         for (const msg of flatMessages) {
           // Mensagem precisa ter texto, imagem OU áudio.
-          if (!msg.texto?.trim() && !msg.image && !msg.audio) continue;
-          const messageType = msg.audio ? "audio" : msg.image ? "image" : "text";
+          if (!msg.texto?.trim() && !msg.image && !msg.audio && !msg.document) continue;
+          const messageType = msg.audio ? "audio" : msg.image ? "image" : msg.document ? "document" : "text";
           logWhatsAppInboundReceived({
             telefone: msg.telefone,
             externalId: msg.external_id,
