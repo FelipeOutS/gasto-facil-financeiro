@@ -3844,6 +3844,25 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // WA-C10.a — Detecção de BOLETO por texto (código de barras / linha digitável).
+  // Vem antes dos detectores de edição/criação de conta para evitar que a
+  // sequência numérica seja interpretada como nome/valor. Estrita: requer
+  // DV válido (mod10 por campo + mod11 global em cobrança; mod10/mod11 em
+  // arrecadação), o que descarta CPF/CNPJ/telefone/cartão automaticamente.
+  if (decisao === "outro") {
+    const boletoParsed = detectBoletoIntent(texto);
+    if (boletoParsed) {
+      logWaRouteDecision(msg, "expense_parser", "new_boleto_intent");
+      return await processarBoleto({
+        userId, msg, texto, recebidaEm, decisao, sessao: null,
+        deps: boletoDeps,
+        parsed: boletoParsed,
+      });
+    }
+  }
+
+
+
   // WA-C2: detecção de CONTA A PAGAR / VENCIMENTO RECORRENTE antes do
   // parser de gasto comum. Estrita: bloqueia gastei/paguei/comprei,
   // fatura/cartão e exige palavra de domínio + pista de vencimento.
