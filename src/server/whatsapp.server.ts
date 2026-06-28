@@ -54,7 +54,9 @@ import {
   resolveLembreteResposta as shortResolveLembreteResposta,
   getLembreteConta as shortGetLembreteConta,
   clearLembreteConta as shortClearLembreteConta,
+  parseLembreteCommand as shortParseLembreteCommand,
 } from "./whatsapp-short-context.server";
+import { findRecentSentLembreteForUser } from "./whatsapp-contas-lembretes.server";
 import {
   detectConsultaEspecifica,
   handleConsultaEspecifica,
