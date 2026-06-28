@@ -837,5 +837,11 @@ export const whatsappMessages = {
     indisponivel() {
       return `A leitura por imagem/PDF está indisponível agora. Tente novamente em alguns minutos ou cole a linha digitável.`;
     },
+    rateLimited() {
+      return `Não consegui analisar esse arquivo agora. Você pode copiar a linha digitável aqui ou tentar novamente mais tarde.`;
+    },
+    arquivoMuitoGrande() {
+      return `Esse arquivo é grande demais para análise. Envie uma imagem mais leve, um PDF menor ou copie a linha digitável.`;
+    },
   },
 };

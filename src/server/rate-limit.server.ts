@@ -28,6 +28,9 @@ export const RATE_LIMIT_PRESETS = {
   flyerOcrPerUser: { limit: 20, windowSeconds: 3600 },
   // Joanin / importações online (fetch externo).
   onlineImportPerUser: { limit: 30, windowSeconds: 3600 },
+  // WA-C10.b.1 — OCR de boleto via WhatsApp (foto/PDF). Caro (Gemini) e
+  // pode ser disparado por qualquer imagem recebida — limite conservador.
+  whatsappBoletoOcrPerUser: { limit: 10, windowSeconds: 3600 },
   authAttempt: { limit: 10, windowSeconds: 600 },
 } satisfies Record<string, RateLimitPreset>;
 
@@ -164,7 +167,7 @@ export function userRateLimitedResponse(retryAfterSeconds: number): Response {
  *      if (blocked) return blocked;  // (em server route)
  */
 export async function enforceUserRateLimit(params: {
-  scope: "ai" | "import" | "flyerOcr" | "onlineImport";
+  scope: "ai" | "import" | "flyerOcr" | "onlineImport" | "whatsappBoletoOcr";
   userId: string;
   route: string;
   request?: Request;
@@ -176,7 +179,9 @@ export async function enforceUserRateLimit(params: {
         ? RATE_LIMIT_PRESETS.flyerOcrPerUser
         : params.scope === "onlineImport"
           ? RATE_LIMIT_PRESETS.onlineImportPerUser
-          : RATE_LIMIT_PRESETS.importPerUser;
+          : params.scope === "whatsappBoletoOcr"
+            ? RATE_LIMIT_PRESETS.whatsappBoletoOcrPerUser
+            : RATE_LIMIT_PRESETS.importPerUser;
   const ip = params.request ? getClientIp(params.request) : null;
   const ua = params.request?.headers.get("user-agent") ?? null;
 

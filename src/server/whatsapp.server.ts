@@ -163,6 +163,14 @@ import {
   type WhatsAppBoletoDeps,
 } from "./whatsapp-boleto-intents.server";
 import { extractBoletoFromMedia } from "./whatsapp-boleto-ocr.server";
+import { tryParseBoleto } from "./whatsapp-boleto-parser";
+import { extractBoletoCandidatesFromPdf } from "./whatsapp-pdf-text-extract.server";
+import {
+  getCachedOcr,
+  setCachedOcr,
+  type CachedOcrResult,
+} from "./whatsapp-boleto-ocr-cache.server";
+import { enforceUserRateLimit } from "./rate-limit.server";
 import type { DocumentAttachment } from "./whatsapp-media-attachment";
 
 // Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
@@ -1958,6 +1966,61 @@ function looksLikePdfMagic(buf: Uint8Array): boolean {
   return buf.length >= 5 && buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46 && buf[4] === 0x2d;
 }
 
+/** Estima o tamanho real em bytes de uma data URL base64 sem decodificar. */
+function estimateBase64Bytes(dataUrl: string): number {
+  if (typeof dataUrl !== "string") return 0;
+  const comma = dataUrl.indexOf(",");
+  const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+  const pad = b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0;
+  return Math.max(0, Math.floor((b64.length * 3) / 4) - pad);
+}
+
+/** Decodifica TODA a data URL base64 para um Uint8Array (uso pontual). */
+function decodeBase64Full(dataUrl: string): Uint8Array | null {
+  if (typeof dataUrl !== "string") return null;
+  const comma = dataUrl.indexOf(",");
+  const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+  try {
+    if (typeof atob === "function") {
+      const bin = atob(b64);
+      const out = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i) & 0xff;
+      return out;
+    }
+    const buf = Buffer.from(b64, "base64");
+    return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+  } catch {
+    return null;
+  }
+}
+
+/** Caption do usuário sugere boleto/conta? (palavras-âncora). */
+function captionSuggestsBoleto(text: string | null | undefined): boolean {
+  if (!text) return false;
+  const t = text.toLowerCase();
+  return /\b(boleto|linha\s+digit[aá]vel|c[oó]digo\s+de\s+barras|fatura|conta\s+a\s+pagar|cobran[cç]a|arrecada[cç][aã]o)\b/.test(
+    t,
+  );
+}
+
+/** Gate heurístico mínimo para imagem: arquivos minúsculos pulam OCR de boleto. */
+const MIN_IMAGE_BYTES_FOR_BOLETO_OCR = 8 * 1024;
+
+function logBoletoMediaGate(
+  stage: string,
+  sourceType: "image" | "pdf",
+  result: string,
+  extras?: Record<string, string | number | boolean | null>,
+) {
+  console.info({
+    event: "wa_boleto_media_gate",
+    stage,
+    sourceType,
+    result,
+    ...(extras ?? {}),
+  });
+}
+
 export type SaveSessionResult = {
   ok: boolean;
   sessionId: string | null;
@@ -2689,33 +2752,83 @@ export async function processarMensagemWhatsApp(
     logWaRouteDecision(msg, "expense_parser", "media_boleto_pdf_candidate");
     const head = decodeBase64Head(msg.document.base64, 8);
     if (!head || !looksLikePdfMagic(head)) {
+      logBoletoMediaGate("validate", "pdf", "magic_bytes_invalid");
       return { status: "erro", resposta: M.boletoMidia.pdfInvalido() };
     }
-    const ocr = await extractBoletoFromMedia({
-      kind: "pdf",
-      dataUrl: msg.document.base64,
-    });
-    if (!ocr.ok) {
-      // gateway/credits/etc. — mensagem neutra; NUNCA loga base64/url.
-      console.log({ event: "wa_boleto_media_ocr_failed", sourceType: "pdf", reason: ocr.reason });
+
+    // WA-C10.b.1 — TENTATIVA 1: extração textual local (sem IA).
+    const fullBytes = decodeBase64Full(msg.document.base64);
+    if (fullBytes) {
+      const localCandidates = extractBoletoCandidatesFromPdf(fullBytes);
+      const validados = [];
+      const seen = new Set<string>();
+      for (const c of localCandidates) {
+        const p = tryParseBoleto(c);
+        if (!p) continue;
+        if (seen.has(p.fingerprint)) continue;
+        seen.add(p.fingerprint);
+        validados.push(p);
+      }
+      if (validados.length >= 1) {
+        logBoletoMediaGate("pdf_local_text", "pdf", "found", { count: validados.length });
+        return await iniciarBoletoDeMidia({
+          userId, msg, texto: texto || "(pdf)", recebidaEm,
+          origem: "pdf",
+          candidatos: validados,
+          identificacaoSugerida: null,
+          deps: boletoDeps,
+        });
+      }
+      logBoletoMediaGate("pdf_local_text", "pdf", "no_valid");
+    }
+
+    // WA-C10.b.1 — Cache por usuário+hash (TTL curto) antes de chamar IA.
+    const pdfSha = msg.document.sha256 ?? null;
+    const cached = getCachedOcr(userId, pdfSha, "pdf");
+    let ocrResult: CachedOcrResult | null = cached;
+    if (cached) {
+      logBoletoMediaGate("cache", "pdf", "hit");
+    } else {
+      const limited = await enforceUserRateLimit({
+        scope: "whatsappBoletoOcr",
+        userId,
+        route: "whatsapp/boleto-ocr-pdf",
+      });
+      if (limited) {
+        logBoletoMediaGate("rate_limit", "pdf", "blocked");
+        return { status: "erro", resposta: M.boletoMidia.rateLimited() };
+      }
+      const ocr = await extractBoletoFromMedia({
+        kind: "pdf",
+        dataUrl: msg.document.base64,
+      });
+      if (!ocr.ok) {
+        console.log({ event: "wa_boleto_media_ocr_failed", sourceType: "pdf", reason: ocr.reason });
+        return { status: "erro", resposta: M.boletoMidia.indisponivel() };
+      }
+      ocrResult = { candidatos: ocr.candidatos, sugestoes: ocr.sugestoes };
+      setCachedOcr(userId, pdfSha, "pdf", ocrResult);
+    }
+
+    if (!ocrResult) {
       return { status: "erro", resposta: M.boletoMidia.indisponivel() };
     }
-    if (ocr.candidatos.length >= 1) {
+    if (ocrResult.candidatos.length >= 1) {
       return await iniciarBoletoDeMidia({
         userId, msg, texto: texto || "(pdf)", recebidaEm,
         origem: "pdf",
-        candidatos: ocr.candidatos,
-        identificacaoSugerida: ocr.sugestoes.identificacao,
+        candidatos: ocrResult.candidatos,
+        identificacaoSugerida: ocrResult.sugestoes.identificacao,
         deps: boletoDeps,
       });
     }
-    if (ocr.sugestoes.valorCentavos != null || ocr.sugestoes.vencimentoISO) {
+    if (ocrResult.sugestoes.valorCentavos != null || ocrResult.sugestoes.vencimentoISO) {
       return await iniciarBoletoManualFallback({
         userId, msg, texto: texto || "(pdf)", recebidaEm,
         origem: "pdf",
-        valorCentavos: ocr.sugestoes.valorCentavos,
-        vencimentoISO: ocr.sugestoes.vencimentoISO,
-        identificacaoSugerida: ocr.sugestoes.identificacao,
+        valorCentavos: ocrResult.sugestoes.valorCentavos,
+        vencimentoISO: ocrResult.sugestoes.vencimentoISO,
+        identificacaoSugerida: ocrResult.sugestoes.identificacao,
         deps: boletoDeps,
       });
     }
@@ -2723,26 +2836,56 @@ export async function processarMensagemWhatsApp(
   }
 
   if (msg.image && !sessao) {
-    // Tenta OCR de boleto ANTES do OCR de comprovante. Só intercepta o
-    // fluxo se houver candidato validado pelo parser determinístico —
-    // caso contrário, imagem de cupom segue normal para receipt OCR.
-    const ocr = await extractBoletoFromMedia({
-      kind: "image",
-      dataUrl: msg.image.base64,
-      mimeType: (msg.image.mimeType as "image/jpeg" | "image/png" | "image/webp") ?? "image/jpeg",
-    });
-    if (ocr.ok && ocr.candidatos.length >= 1) {
-      logWaRouteDecision(msg, "expense_parser", "media_boleto_image_candidate");
-      return await iniciarBoletoDeMidia({
-        userId, msg, texto: texto || "(foto)", recebidaEm,
-        origem: "imagem",
-        candidatos: ocr.candidatos,
-        identificacaoSugerida: ocr.sugestoes.identificacao,
-        deps: boletoDeps,
-      });
+    // WA-C10.b.1 — Gate heurístico + cache + rate limit antes de chamar IA.
+    const sizeBytes = estimateBase64Bytes(msg.image.base64);
+    const captionHint = captionSuggestsBoleto(texto);
+    const isTestEnv = process.env.NODE_ENV === "test" || process.env.BUN_ENV === "test";
+    if (!isTestEnv && sizeBytes > 0 && sizeBytes < MIN_IMAGE_BYTES_FOR_BOLETO_OCR && !captionHint) {
+      logBoletoMediaGate("size_gate", "image", "skipped", { bytesBucket: "<8k" });
+    } else {
+      const imgSha = msg.image.sha256 ?? null;
+      const cached = getCachedOcr(userId, imgSha, "image");
+      let ocrResult: CachedOcrResult | null = cached;
+      if (cached) {
+        logBoletoMediaGate("cache", "image", "hit");
+      } else {
+        const limited = await enforceUserRateLimit({
+          scope: "whatsappBoletoOcr",
+          userId,
+          route: "whatsapp/boleto-ocr-image",
+        });
+        if (limited) {
+          logBoletoMediaGate("rate_limit", "image", "blocked");
+          // Não bloqueia o fluxo de comprovante: apenas pula OCR de boleto.
+        } else {
+          const ocr = await extractBoletoFromMedia({
+            kind: "image",
+            dataUrl: msg.image.base64,
+            mimeType: (msg.image.mimeType as "image/jpeg" | "image/png" | "image/webp") ?? "image/jpeg",
+          });
+          if (ocr.ok) {
+            ocrResult = { candidatos: ocr.candidatos, sugestoes: ocr.sugestoes };
+            setCachedOcr(userId, imgSha, "image", ocrResult);
+          } else {
+            console.log({ event: "wa_boleto_media_ocr_failed", sourceType: "image", reason: ocr.reason });
+          }
+        }
+      }
+      if (ocrResult && ocrResult.candidatos.length >= 1) {
+        logWaRouteDecision(msg, "expense_parser", "media_boleto_image_candidate");
+        return await iniciarBoletoDeMidia({
+          userId, msg, texto: texto || "(foto)", recebidaEm,
+          origem: "imagem",
+          candidatos: ocrResult.candidatos,
+          identificacaoSugerida: ocrResult.sugestoes.identificacao,
+          deps: boletoDeps,
+        });
+      }
     }
     // Sem candidato validado: cai no fluxo já existente de comprovante.
   }
+
+
 
   // ---- Fase WA-G5A: imagem nova chegando sem sessão pendente ----
   // Sessões pendentes (receita/gasto) já interceptaram acima — uma imagem
