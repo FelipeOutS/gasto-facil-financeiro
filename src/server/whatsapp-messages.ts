@@ -577,6 +577,25 @@ export const whatsappMessages = {
       linhas.push(`Total gasto no mês: ${args.total}.`);
       return linhas.join("\n");
     },
+
+    gastosPorCategoriaMes(args: {
+      mes: string;
+      itens: Array<{ categoria: string; valor: string; quantidade: number }>;
+      total: string;
+      totalRegistros: number;
+    }) {
+      if (args.totalRegistros === 0) {
+        return `Ainda não encontrei gastos registrados em ${args.mes}.`;
+      }
+      const linhas = [`Seus gastos por categoria em ${args.mes} 📊`, ``];
+      args.itens.forEach((c, i) => {
+        const plural = c.quantidade === 1 ? "lançamento" : "lançamentos";
+        linhas.push(`${i + 1}. ${c.categoria} — ${c.valor} (${c.quantidade} ${plural})`);
+      });
+      linhas.push(``);
+      linhas.push(`Total gasto no mês: ${args.total}.`);
+      return linhas.join("\n");
+    },
   },
 
   // =====================================================================
