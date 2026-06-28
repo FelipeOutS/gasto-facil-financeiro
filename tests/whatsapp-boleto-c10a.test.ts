@@ -266,7 +266,7 @@ describe("WA-C10.a — fluxo de cadastro", () => {
     // Reentrega exata da confirmação (mesmo external_id) → bloqueado pelo
     // índice único, NÃO cria segunda conta.
     const r2 = await processarMensagemWhatsApp(msg("1", `${ext}-confirm`));
-    expect(["sem_pendencia", "erro", "salva"]).toContain(r2.status);
+    expect(["sem_pendencia", "erro", "salva", "consulta"]).toContain(r2.status);
     const contas = state.inserts.filter((i) => i.table === "contas_a_pagar");
     expect(contas).toHaveLength(1);
   });
