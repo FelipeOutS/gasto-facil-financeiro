@@ -116,7 +116,7 @@ export async function checkRateLimit(
     };
   } catch (err) {
     console.error("[rate-limit] check failed", err);
-    return { blocked: false, count: 0, limit, retryAfterSeconds: windowSeconds };
+    return { blocked: false, count: 0, limit, retryAfterSeconds: windowSeconds, dbError: true };
   }
 }
 
