@@ -104,6 +104,8 @@ const PENDING = [
   "bol_aguardando_identificacao",
   "bol_aguardando_confirmacao",
   "bol_aguardando_duplicidade",
+  "bol_aguardando_selecao_candidato",
+  "bol_aguardando_confirmacao_manual",
   "bol_persistindo",
 ];
 
