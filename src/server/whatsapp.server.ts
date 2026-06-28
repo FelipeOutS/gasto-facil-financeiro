@@ -2432,11 +2432,11 @@ export async function processarMensagemWhatsApp(
   // ---- Fase WA-G5A: imagem chegou enquanto há sessão pendente NÃO-comprovante ----
   // Uma foto nunca interrompe um fluxo de gasto/receita em andamento.
   // Orienta o usuário a enviar "cancelar" antes de mandar a foto.
-  if (msg.image && sessao) {
+  if ((msg.image || msg.document) && sessao) {
     logWaRouteDecision(msg, "receipt_handler", "image_blocked_by_existing_non_receipt_session");
     const aviso = M.imagem.sessaoEmAndamento();
     await gravarSessao(
-      userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
+      userId, msg.telefone, msg.external_id, texto || (msg.document ? "(documento)" : "(foto)"), recebidaEm,
       sessao.status, sessao.session, aviso,
     );
     return { status: "pendente", resposta: aviso };
