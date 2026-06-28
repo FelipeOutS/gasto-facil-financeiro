@@ -92,7 +92,8 @@ type Stage =
   | "paid"
   | "already_updated"
   | "cancelled"
-  | "failed";
+  | "failed"
+  | "reminders_cancelled";
 
 type Result = "ok" | "not_found" | "ambiguous" | "conflict" | "error";
 
