@@ -894,6 +894,18 @@ async function persistir(args: {
   );
   if (rpcErr) {
     logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
+    // WA-F3.4-Fix — não deixar a sessão de claim órfã em `parc_persistindo`.
+    // Marcamos como `erro` (terminal) para que a próxima mensagem "sim"
+    // (com novo external_id) possa reentrar no fluxo de confirmação a
+    // partir da sessão original `parc_aguardando_confirmacao`, sem
+    // colidir com o índice único de idempotência. Retry permanece
+    // idempotente: nenhum gasto foi criado (RPC é atômica) e o
+    // `grupo_parcelamento_id` daquela tentativa é descartado.
+    if (claimSessionId) {
+      try {
+        await deps.atualizarSessao(claimSessionId, "erro", session, "rpc_failed");
+      } catch { /* claim cleanup nunca quebra o fluxo de resposta */ }
+    }
     return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
   }
 
@@ -909,6 +921,11 @@ async function persistir(args: {
     Array.isArray(readback) ? readback : Array.isArray(rpcRows) ? rpcRows : [];
   if (readErr || rbRows.length !== plano.totalParcelas) {
     logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
+    if (claimSessionId) {
+      try {
+        await deps.atualizarSessao(claimSessionId, "erro", session, "readback_failed");
+      } catch { /* idem */ }
+    }
     return {
       status: "erro",
       resposta: "Salvei mas não consegui confirmar todas as parcelas. Pode me chamar de novo em alguns minutos?",
