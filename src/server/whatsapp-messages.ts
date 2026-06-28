@@ -556,6 +556,27 @@ export const whatsappMessages = {
       linhas.push(`Total recebido no mês: ${args.total}.`);
       return linhas.join("\n");
     },
+
+    listarGastosMes(args: {
+      mes: string;
+      itens: Array<{ descricao: string; categoria: string; valor: string; data: string }>;
+      total: string;
+      totalRegistros: number;
+    }) {
+      if (args.totalRegistros === 0) {
+        return `Ainda não encontrei gastos registrados em ${args.mes}.`;
+      }
+      const linhas = [`Seus gastos de ${args.mes} 💸`, ``];
+      args.itens.forEach((g, i) => {
+        linhas.push(`${i + 1}. ${g.descricao} — ${g.valor} (${g.data})`);
+      });
+      linhas.push(``);
+      if (args.totalRegistros > args.itens.length) {
+        linhas.push(`Mostrando os ${args.itens.length} mais recentes de ${args.totalRegistros} no mês.`);
+      }
+      linhas.push(`Total gasto no mês: ${args.total}.`);
+      return linhas.join("\n");
+    },
   },
 
   // =====================================================================

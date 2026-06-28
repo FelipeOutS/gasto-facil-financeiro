@@ -24,7 +24,8 @@ export type ConsultaIntent =
   | "maiores_gastos_semana"
   | "maiores_gastos_mes"
   | "impacto_despesas_renda"
-  | "listar_receitas_mes";
+  | "listar_receitas_mes"
+  | "listar_gastos_mes";
 
 const APP_TZ = "America/Sao_Paulo";
 
@@ -126,6 +127,24 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     /\bver (as )?(minhas )?receitas\b/.test(t)
   ) {
     return "listar_receitas_mes";
+  }
+
+  // ----- listar gastos/despesas do mês (precede parser de cartão/fatura) -----
+  // Cobre variações comuns. Evita roteamento incorreto para faturas, onde
+  // "gastos do mês" era interpretado como "compras do <cartão mês>".
+  if (
+    /\bmeus gastos\b/.test(t) ||
+    /\bminhas despesas\b/.test(t) ||
+    /\bgastos (do |deste |desse |neste |nesse )?m[eê]s\b/.test(t) ||
+    /\bdespesas (do |deste |desse |neste |nesse )?m[eê]s\b/.test(t) ||
+    /\bgastos (do )?(m[eê]s )?atual\b/.test(t) ||
+    /\bquanto (eu )?gastei (este|esse|neste|nesse|no|do) ?m[eê]s\b/.test(t) ||
+    /\btotal (de |dos )?gastos\b/.test(t) ||
+    /\btotal (de |das )?despesas\b/.test(t) ||
+    /\blistar (os |as )?(meus |minhas )?(gastos|despesas)\b/.test(t) ||
+    /\bver (os |as )?(meus |minhas )?(gastos|despesas)\b/.test(t)
+  ) {
+    return "listar_gastos_mes";
   }
 
   return null;
@@ -428,7 +447,36 @@ export async function handleConsulta(
       return await handleImpacto(userId);
     case "listar_receitas_mes":
       return await handleListarReceitasMes(userId);
+    case "listar_gastos_mes":
+      return await handleListarGastosMes(userId);
   }
+}
+
+async function handleListarGastosMes(userId: string): Promise<ConsultaResult> {
+  const hoje = todayLocalISO();
+  const from = monthStartISO(hoje);
+  const to = addDaysISO(hoje, 1);
+  const [gastos, catMap] = await Promise.all([
+    loadGastos(userId, from, to),
+    loadCategoriasMap(userId),
+  ]);
+  const ordenados = [...gastos].sort((a, b) => (a.data < b.data ? 1 : -1));
+  const total = sumValor(ordenados);
+  const itens = ordenados.slice(0, 10).map((g) => ({
+    descricao: (g.descricao ?? "").trim() || "Gasto",
+    categoria: g.categoria_id ? (catMap.get(g.categoria_id) || "Outros") : "Outros",
+    valor: formatBRL(Number(g.valor ?? 0) || 0),
+    data: formatDataBR(g.data),
+  }));
+  return {
+    status: "consulta",
+    resposta: M.consulta.listarGastosMes({
+      mes: mesPorExtenso(hoje),
+      itens,
+      total: formatBRL(total),
+      totalRegistros: ordenados.length,
+    }),
+  };
 }
 
 // =====================================================================
