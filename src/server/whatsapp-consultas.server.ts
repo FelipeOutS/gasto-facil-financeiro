@@ -113,16 +113,14 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
   // ----- listar receitas do mês (precede qualquer fluxo de criação) -----
   // Aceita variações comuns de consulta sobre receitas/entradas recebidas
   // no mês corrente. Frases sem "do mês" (ex.: "minhas receitas") caem
-  // aqui também, defaultando para o mês atual.
+  // aqui também, defaultando para o mês atual. Evita casar "renda"
+  // isolada (que aparece em "quanto sobra da minha renda").
   if (
     /\bminhas receitas\b/.test(t) ||
     /\breceitas (do |deste |desse |neste |nesse )?m[eê]s\b/.test(t) ||
     /\breceitas (do )?(m[eê]s )?atual\b/.test(t) ||
-    /\bminhas? rendas?\b/.test(t) ||
-    /\brendas? (do |deste |desse |neste |nesse )?m[eê]s\b/.test(t) ||
     /\b(quais|quanto|qual o total) (sao |s[aã]o |de |das )?(as )?(minhas )?receitas\b/.test(t) ||
-    /\b(o que|quanto) (eu )?recebi (este|esse|neste|nesse|no|do)? ?m[eê]s\b/.test(t) ||
-    /\bquanto (eu )?recebi este m[eê]s\b/.test(t) ||
+    /\b(o que|quanto) (eu )?recebi (este|esse|neste|nesse|no|do) ?m[eê]s\b/.test(t) ||
     /\btotal (de |das )?receitas\b/.test(t) ||
     /\blistar (as )?(minhas )?receitas\b/.test(t) ||
     /\bver (as )?(minhas )?receitas\b/.test(t)
