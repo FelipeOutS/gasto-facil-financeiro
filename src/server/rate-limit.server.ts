@@ -28,6 +28,9 @@ export const RATE_LIMIT_PRESETS = {
   flyerOcrPerUser: { limit: 20, windowSeconds: 3600 },
   // Joanin / importações online (fetch externo).
   onlineImportPerUser: { limit: 30, windowSeconds: 3600 },
+  // WA-C10.b.1 — OCR de boleto via WhatsApp (foto/PDF). Caro (Gemini) e
+  // pode ser disparado por qualquer imagem recebida — limite conservador.
+  whatsappBoletoOcrPerUser: { limit: 10, windowSeconds: 3600 },
   authAttempt: { limit: 10, windowSeconds: 600 },
 } satisfies Record<string, RateLimitPreset>;
 
