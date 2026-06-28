@@ -87,9 +87,18 @@ test("Gasto Inteligente abre o menu completo", async () => {
   expect(r.resposta).toContain("Ajuda");
 });
 
-test("ajuda abre o menu completo", async () => {
+test("ajuda devolve exemplos práticos (não o menu numerado)", async () => {
   const r = await processarMensagemWhatsApp({ telefone: tel, texto: "ajuda", external_id: "g3-m-3" });
-  expect(r.resposta).toContain("Registrar gasto");
+  expect(r.resposta).toMatch(/exemplos?/i);
+  expect(r.resposta).toContain("Uber 29,90");
+  expect(r.resposta).not.toContain("1. Registrar gasto");
+});
+
+test("comandos devolve lista curta de atalhos", async () => {
+  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "comandos", external_id: "g3-m-4" });
+  expect(r.resposta).toMatch(/Comandos r[aá]pidos/i);
+  expect(r.resposta).toContain("minhas contas");
+  expect(r.resposta).not.toContain("Uber 29,90");
 });
 
 // ---------- anti-repetição ----------
