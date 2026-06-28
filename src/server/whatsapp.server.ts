@@ -163,7 +163,7 @@ import {
   type WhatsAppBoletoDeps,
 } from "./whatsapp-boleto-intents.server";
 import { extractBoletoFromMedia } from "./whatsapp-boleto-ocr.server";
-import type { DocumentAttachment } from "./whatsapp-media-attachment.ts";
+import type { DocumentAttachment } from "./whatsapp-media-attachment";
 
 // Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
 // precisa do orquestrador é exposto aqui de forma explícita, evitando que
