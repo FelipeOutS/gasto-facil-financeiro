@@ -163,6 +163,14 @@ import {
   type WhatsAppBoletoDeps,
 } from "./whatsapp-boleto-intents.server";
 import { extractBoletoFromMedia } from "./whatsapp-boleto-ocr.server";
+import { tryParseBoleto } from "./whatsapp-boleto-parser";
+import { extractBoletoCandidatesFromPdf } from "./whatsapp-pdf-text-extract.server";
+import {
+  getCachedOcr,
+  setCachedOcr,
+  type CachedOcrResult,
+} from "./whatsapp-boleto-ocr-cache.server";
+import { enforceUserRateLimit } from "./rate-limit.server";
 import type { DocumentAttachment } from "./whatsapp-media-attachment";
 
 // Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
