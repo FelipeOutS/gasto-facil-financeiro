@@ -656,3 +656,9 @@ export function resetState(opts?: {
 
 export const gastosInserts = () =>
   state.inserts.filter((i) => i.table === "gastos");
+
+export const receitasInserts = () =>
+  state.inserts.filter((i) => i.table === "receitas");
+
+export const recorrenciasInserts = () =>
+  state.inserts.filter((i) => i.table === "recorrencias");
