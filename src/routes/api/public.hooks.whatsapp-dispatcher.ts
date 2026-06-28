@@ -80,6 +80,30 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
           const claimed = await claimForProcessing(n.id);
           if (!claimed) continue; // outro worker pegou
 
+          // 1.5) WA-C9.1 — rechecagem da entidade vinculada.
+          // Mesmo que o lembrete tenha sido enfileirado horas antes, a conta
+          // pode ter sido paga/cancelada/alterada nesse meio-tempo.
+          const reval = await revalidateContaForDispatch({
+            user_id: claimed.user_id,
+            category: claimed.category,
+            entity_type: claimed.entity_type,
+            entity_id: claimed.entity_id,
+            payload: claimed.payload,
+          });
+          if (!reval.ok) {
+            await markSkipped(n.id, reval.reason);
+            summary.skipped++;
+            console.info(
+              "[wa-dispatcher] revalidated_skip",
+              JSON.stringify({
+                type: n.notification_type,
+                category: n.category,
+                reason: reval.reason,
+              }),
+            );
+            continue;
+          }
+
           // 2) Template
           const tpl = await loadTemplate(n.notification_type);
           if (!tpl || !tpl.active) {
