@@ -2236,7 +2236,7 @@ async function processarSessaoComprovanteAtiva(args: {
   }
   logReceiptSessionRoute({ ...lookup, routedTo: "receipt_handler" });
   const prev = sessao.session as unknown as ComprovanteSession;
-  if (msg.image) {
+  if (msg.image || msg.document) {
     const aviso = M.imagem.sessaoEmAndamento();
     await atualizarSessao(sessao.id, sessao.status, prev as unknown as Session, aviso);
     return { status: "pendente", resposta: aviso };
