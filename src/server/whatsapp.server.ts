@@ -2468,6 +2468,19 @@ export async function processarMensagemWhatsApp(
     });
   }
 
+  // ---- WA-C10.a: sessão ativa de BOLETO tem prioridade. ----
+  if (sessao && (
+    isBoletoSession(sessao.session) ||
+    (BOLETO_PENDING_STATES as readonly string[]).includes(sessao.status)
+  )) {
+    logWaRouteDecision(msg, "expense_parser", "active_boleto_session");
+    return await processarBoleto({
+      userId, msg, texto, recebidaEm, decisao, sessao,
+      deps: boletoDeps,
+    });
+  }
+
+
   // ---- WA-C3: sessão ativa de BAIXA DE CONTA tem prioridade. ----
   if (sessao && (
     isBaixaContaSession(sessao.session) ||
