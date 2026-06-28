@@ -68,6 +68,8 @@ const INCLUDE = [
   "whatsapp-parcelamento-categoria-integracao.test.ts",
   "whatsapp-parcelamento-categoria-ack.test.ts",
   "whatsapp-parcelamento-rpc-hardening.test.ts",
+  "whatsapp-parcelamento-cat-hardening.test.ts",
+
   "whatsapp-ux-c6.test.ts",
   "whatsapp-pix-favorecidos.test.ts",
   "whatsapp-pix-c72a.test.ts",

@@ -833,11 +833,33 @@ async function persistir(args: {
     logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
     return { status: "erro", resposta: "Não consegui dividir esse valor nessas parcelas. Verifique e tente de novo." };
   }
-  // WA-F3.3 — categoria: manual escolhida tem precedência absoluta.
+  // WA-F3.3-Fix-CatHardening — categoria: escolha manual tem precedência
+  // absoluta, mas SOMENTE quando (a) `categorySelectionSource === "manual"`,
+  // (b) `manualCategoriaId` está presente e (c) a categoria ainda pertence
+  // ao usuário (não foi removida/desativada entre a escolha e o "sim").
+  // Sem isso, qualquer cenário que perdesse `manualCategoriaId` cairia
+  // silenciosamente na heurística por descrição. Quando a escolha manual
+  // não passa na validação, abortamos (não invertemos para sugestão
+  // automática) — o usuário pediu Casa, salvar como "Mercado" é pior do
+  // que pedir para repetir.
   const cats = await carregarCategoriasMin(userId);
-  const cat = session.manualCategoriaId
-    ? { id: session.manualCategoriaId, nome: session.manualCategoriaLabel ?? "Categoria" }
-    : resolveCategoriaId(cats, session.descricao ?? "Compra parcelada");
+  let cat: { id: string | null; nome: string };
+  if (session.categorySelectionSource === "manual" || session.manualCategoriaId) {
+    if (
+      session.categorySelectionSource !== "manual"
+      || !session.manualCategoriaId
+      || !cats.some((c) => c.id === session.manualCategoriaId)
+    ) {
+      logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
+      return {
+        status: "erro",
+        resposta: "A categoria que você escolheu não está mais disponível. Digite \"categoria\" para escolher outra.",
+      };
+    }
+    cat = { id: session.manualCategoriaId, nome: session.manualCategoriaLabel ?? "Categoria" };
+  } else {
+    cat = resolveCategoriaId(cats, session.descricao ?? "Compra parcelada");
+  }
   const grupoId = randomUUID();
   const baseObs = `WhatsApp: ${session.mensagemOriginal}`.slice(0, 1000);
 
@@ -911,19 +933,26 @@ async function persistir(args: {
 
   // Readback obrigatório: confirma que TODAS as parcelas foram
   // efetivamente gravadas sob o mesmo grupo_parcelamento_id antes de
-  // informar sucesso ao usuário.
+  // informar sucesso ao usuário. WA-F3.3-Fix-CatHardening: a coluna
+  // `categoria_id` agora entra no readback — qualquer parcela com
+  // categoria diferente da escolhida (manual ou sugerida) aborta com
+  // erro em vez de informar sucesso falso.
   const { data: readback, error: readErr } = await supabaseAdmin
     .from("gastos")
-    .select("id, parcela_atual")
+    .select("id, parcela_atual, categoria_id")
     .eq("user_id", userId)
     .eq("grupo_parcelamento_id", grupoId);
-  const rbRows: Array<{ id: string; parcela_atual: number | null }> =
-    Array.isArray(readback) ? readback : Array.isArray(rpcRows) ? rpcRows : [];
-  if (readErr || rbRows.length !== plano.totalParcelas) {
+  const rbRows: Array<{ id: string; parcela_atual: number | null; categoria_id: string | null }> =
+    Array.isArray(readback) ? readback : Array.isArray(rpcRows)
+      ? (rpcRows as Array<{ id: string; parcela_atual: number | null; categoria_id?: string | null }>)
+          .map((r) => ({ id: r.id, parcela_atual: r.parcela_atual ?? null, categoria_id: r.categoria_id ?? cat.id ?? null }))
+      : [];
+  const categoriaMismatch = cat.id != null && rbRows.some((r) => r.categoria_id !== cat.id);
+  if (readErr || rbRows.length !== plano.totalParcelas || categoriaMismatch) {
     logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
     if (claimSessionId) {
       try {
-        await deps.atualizarSessao(claimSessionId, "erro", session, "readback_failed");
+        await deps.atualizarSessao(claimSessionId, "erro", session, categoriaMismatch ? "categoria_mismatch" : "readback_failed");
       } catch { /* idem */ }
     }
     return {
