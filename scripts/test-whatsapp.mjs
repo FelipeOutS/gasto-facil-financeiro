@@ -41,6 +41,7 @@ const INCLUDE = [
   "whatsapp-receitas.test.ts",
   "whatsapp-receita-recorrencia-rpc.test.ts",
   "whatsapp-receitas-consulta-listar.test.ts",
+  "whatsapp-gastos-consulta-listar.test.ts",
   "whatsapp-reset.test.ts",
   "whatsapp-session.test.ts",
   "whatsapp-webhook-http.test.ts",
