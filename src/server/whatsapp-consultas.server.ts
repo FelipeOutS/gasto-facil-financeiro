@@ -357,6 +357,8 @@ export async function handleConsulta(
 export type ConversationalIntent =
   | "saudacao_whatsapp"
   | "menu_whatsapp"
+  | "ajuda_whatsapp"
+  | "comandos_whatsapp"
   | "financas_generico"
   | "cancelar_sem_sessao";
 
@@ -366,10 +368,21 @@ const SAUDACOES = new Set<string>([
   "hey", "hello", "alo",
 ]);
 
+// WA-C6 (corrigido): "menu" é a lista numerada; "ajuda" e "comandos"
+// foram separados em intents próprios para devolver respostas distintas.
 const MENU_EXATOS = new Set<string>([
-  "ajuda", "ajudar", "menu", "help", "opcoes", "opcao", "comandos",
+  "menu", "opcoes", "opcao",
   "gi", "oi gi", "ola gi", "ei gi", "bom dia gi", "boa tarde gi", "boa noite gi",
   "gasto inteligente", "oi gasto inteligente", "ola gasto inteligente",
+]);
+
+const AJUDA_EXATOS = new Set<string>([
+  "ajuda", "ajudar", "help", "me ajuda", "exemplos", "exemplo", "como usar",
+]);
+
+const COMANDOS_EXATOS = new Set<string>([
+  "comandos", "comando", "lista de comandos", "quais comandos",
+  "atalhos", "atalho",
 ]);
 
 const CANCELAR_EXATOS = new Set<string>([
@@ -387,6 +400,8 @@ export function detectConversationalIntent(texto: string): ConversationalIntent 
 
   if (CANCELAR_EXATOS.has(t)) return "cancelar_sem_sessao";
 
+  if (COMANDOS_EXATOS.has(t)) return "comandos_whatsapp";
+  if (AJUDA_EXATOS.has(t)) return "ajuda_whatsapp";
   if (MENU_EXATOS.has(t)) return "menu_whatsapp";
   if (
     /\bo que voce (faz|consegue fazer|pode fazer)\b/.test(t) ||
@@ -449,6 +464,10 @@ export function handleConversational(
     resposta = recente === "menu_whatsapp"
       ? M.consulta.menuCurto()
       : M.consulta.ajuda();
+  } else if (intent === "ajuda_whatsapp") {
+    resposta = M.consulta.ajudaExemplos();
+  } else if (intent === "comandos_whatsapp") {
+    resposta = M.consulta.comandosLista();
   } else if (intent === "financas_generico") {
     resposta = M.consulta.financasGenerico();
   } else {
