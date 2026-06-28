@@ -689,6 +689,18 @@ async function persistirBaixa(args: {
   const finalSession = { ...session, status: "salva" } as unknown;
   await deps.atualizarSessao(sessao.id, "salva", finalSession as never, "ok");
 
+  // WA-C9.1 — cancela lembretes pendentes daquela conta (best-effort, nunca
+  // bloqueia a baixa). Reusa `cancelByEntity` via helper centralizado.
+  try {
+    const { cancelarLembretesDaConta } = await import("./whatsapp-contas-lembretes.server");
+    const { clearLembreteConta } = await import("./whatsapp-short-context.server");
+    const n = await cancelarLembretesDaConta(userId, session.contaId);
+    clearLembreteConta(msg.telefone);
+    if (n > 0) logEvent("reminders_cancelled", n > 5 ? 6 : n, "ok");
+  } catch {
+    // silencioso: lembretes são auxiliares; baixa já está persistida.
+  }
+
   const nome = String(data.nome ?? "").trim() || "Conta";
   const valor = Number(data.valor ?? 0) || 0;
   const resposta = [
