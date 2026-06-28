@@ -1966,6 +1966,61 @@ function looksLikePdfMagic(buf: Uint8Array): boolean {
   return buf.length >= 5 && buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46 && buf[4] === 0x2d;
 }
 
+/** Estima o tamanho real em bytes de uma data URL base64 sem decodificar. */
+function estimateBase64Bytes(dataUrl: string): number {
+  if (typeof dataUrl !== "string") return 0;
+  const comma = dataUrl.indexOf(",");
+  const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+  const pad = b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0;
+  return Math.max(0, Math.floor((b64.length * 3) / 4) - pad);
+}
+
+/** Decodifica TODA a data URL base64 para um Uint8Array (uso pontual). */
+function decodeBase64Full(dataUrl: string): Uint8Array | null {
+  if (typeof dataUrl !== "string") return null;
+  const comma = dataUrl.indexOf(",");
+  const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+  try {
+    if (typeof atob === "function") {
+      const bin = atob(b64);
+      const out = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i) & 0xff;
+      return out;
+    }
+    const buf = Buffer.from(b64, "base64");
+    return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+  } catch {
+    return null;
+  }
+}
+
+/** Caption do usuário sugere boleto/conta? (palavras-âncora). */
+function captionSuggestsBoleto(text: string | null | undefined): boolean {
+  if (!text) return false;
+  const t = text.toLowerCase();
+  return /\b(boleto|linha\s+digit[aá]vel|c[oó]digo\s+de\s+barras|fatura|conta\s+a\s+pagar|cobran[cç]a|arrecada[cç][aã]o)\b/.test(
+    t,
+  );
+}
+
+/** Gate heurístico mínimo para imagem: arquivos minúsculos pulam OCR de boleto. */
+const MIN_IMAGE_BYTES_FOR_BOLETO_OCR = 8 * 1024;
+
+function logBoletoMediaGate(
+  stage: string,
+  sourceType: "image" | "pdf",
+  result: string,
+  extras?: Record<string, string | number | boolean | null>,
+) {
+  console.info({
+    event: "wa_boleto_media_gate",
+    stage,
+    sourceType,
+    result,
+    ...(extras ?? {}),
+  });
+}
+
 export type SaveSessionResult = {
   ok: boolean;
   sessionId: string | null;
