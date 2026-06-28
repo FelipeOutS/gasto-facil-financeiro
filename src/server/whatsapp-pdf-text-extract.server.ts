@@ -68,31 +68,41 @@ async function inflateOnce(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const DS: any = (globalThis as any).DecompressionStream;
   if (typeof DS !== "function") return null;
+  let reader: { read: () => Promise<{ value?: Uint8Array; done: boolean }>; cancel: () => Promise<unknown> } | null = null;
   try {
     const ds = new DS(format);
     const writer = ds.writable.getWriter();
-    void writer.write(bytes);
-    void writer.close();
-    const reader = ds.readable.getReader();
+    // Aguarda writes/close para que rejeições sejam capturadas localmente
+    // e nunca escapem como "unhandled rejection".
+    const writePromise = writer.write(bytes).catch(() => undefined);
+    const closePromise = writer.close().catch(() => undefined);
+    reader = ds.readable.getReader();
     const chunks: Uint8Array[] = [];
     let total = 0;
     while (true) {
-      const { value, done } = await reader.read();
+      const { value, done } = await reader!.read();
       if (done) break;
       if (value) {
         total += value.byteLength;
         if (total > capBytes) {
-          try { await reader.cancel(); } catch { /* noop */ }
+          try { await reader!.cancel(); } catch { /* noop */ }
+          await writePromise;
+          await closePromise;
           return null;
         }
         chunks.push(value);
       }
     }
+    await writePromise;
+    await closePromise;
     const out = new Uint8Array(total);
     let off = 0;
     for (const c of chunks) { out.set(c, off); off += c.byteLength; }
     return out;
   } catch {
+    if (reader) {
+      try { await reader.cancel(); } catch { /* noop */ }
+    }
     return null;
   }
 }
