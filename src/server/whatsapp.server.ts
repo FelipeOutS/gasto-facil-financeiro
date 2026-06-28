@@ -233,6 +233,16 @@ const pagarPessoaDeps: WhatsAppPagarPessoaDeps = {
   baixaContaDeps,
 };
 
+// WA-C10.a — DI seam para cadastro de boleto por texto.
+const boletoDeps: WhatsAppBoletoDeps = {
+  gravarSessao: (userId, telefone, externalId, texto, recebidaEm, status, session, resposta) =>
+    gravarSessao(userId, telefone, externalId, texto, recebidaEm, status, session, resposta),
+  atualizarSessao: (id, status, session, resposta) =>
+    atualizarSessao(id, status, session, resposta),
+  fecharSessoesAnteriores: (userId, telefone, motivo) =>
+    fecharSessoesAnteriores(userId, telefone, motivo),
+};
+
 
 
 import { createHash } from "crypto";
