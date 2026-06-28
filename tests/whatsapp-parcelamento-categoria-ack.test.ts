@@ -39,16 +39,11 @@ function nubank(diaFechamento = 1) {
 }
 
 function ultimaSessaoParsed(): Record<string, unknown> | null {
-  const rows = state.whatsappMessages ?? [];
-  if (!rows.length) return null;
-  const last = rows[rows.length - 1] as { parsed?: Record<string, unknown> | null };
-  return last.parsed ?? null;
+  return (state.pendingRow?.parsed as Record<string, unknown> | undefined) ?? null;
 }
 
 function ultimaSessaoStatus(): string | null {
-  const rows = state.whatsappMessages ?? [];
-  if (!rows.length) return null;
-  return (rows[rows.length - 1] as { status?: string | null }).status ?? null;
+  return state.pendingRow?.status ?? null;
 }
 
 describe("WA-F3.3-Fix-UX — ack de categoria no parcelamento", () => {
