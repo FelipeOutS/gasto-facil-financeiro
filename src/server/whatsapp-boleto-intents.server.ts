@@ -42,6 +42,8 @@ export const BOLETO_PENDING_STATES = [
   "bol_aguardando_identificacao",
   "bol_aguardando_confirmacao",
   "bol_aguardando_duplicidade",
+  "bol_aguardando_selecao_candidato",
+  "bol_aguardando_confirmacao_manual",
   "bol_persistindo",
 ] as const;
 
@@ -56,11 +58,63 @@ export type BoletoSession = {
   /** Mantido apenas até persistir; nunca aparece em logs nem em resposta. */
   codigoBarras: string;
   banco?: string;
+  /** Origem da sessão. Usado p/ telemetria, nunca afeta validação. */
+  origem?: "texto" | "imagem" | "pdf";
 };
 
 export function isBoletoSession(s: unknown): s is BoletoSession {
   if (!s || typeof s !== "object") return false;
   return (s as { kind?: unknown }).kind === "boleto";
+}
+
+/**
+ * Sessão de SELEÇÃO de candidato — usada quando o OCR encontrou >1 boleto
+ * válido (todos com DV ok) e o usuário precisa escolher qual cadastrar.
+ *
+ * Os códigos brutos ficam APENAS aqui dentro até o usuário escolher.
+ * Não são logados; não viram resposta; mascaras é o que aparece ao usuário.
+ */
+export type BoletoSelecaoSession = {
+  kind: "boleto_selecao";
+  origem: "imagem" | "pdf";
+  candidatos: Array<{
+    fingerprint: string;
+    mascara: string;
+    codigoBarras: string;
+    tipo: "cobranca" | "arrecadacao";
+    valorCentavos: number | null;
+    vencimentoISO: string | null;
+    banco?: string;
+  }>;
+  identificacaoSugerida: string | null;
+};
+
+export function isBoletoSelecaoSession(s: unknown): s is BoletoSelecaoSession {
+  if (!s || typeof s !== "object") return false;
+  return (s as { kind?: unknown }).kind === "boleto_selecao";
+}
+
+/**
+ * Sessão de FALLBACK MANUAL — usada quando o OCR encontrou apenas
+ * valor/vencimento sugeridos, sem nenhum candidato validado pelo parser.
+ * Cria uma conta a pagar SEM `codigo_boleto`. O usuário precisa confirmar.
+ */
+export type BoletoManualSession = {
+  kind: "boleto_manual";
+  origem: "imagem" | "pdf";
+  valorCentavos: number | null;
+  vencimentoISO: string | null;
+  identificacao: string | null;
+};
+
+export function isBoletoManualSession(s: unknown): s is BoletoManualSession {
+  if (!s || typeof s !== "object") return false;
+  return (s as { kind?: unknown }).kind === "boleto_manual";
+}
+
+/** União ampla — usada pelos roteadores em `whatsapp.server.ts`. */
+export function isAnyBoletoSession(s: unknown): boolean {
+  return isBoletoSession(s) || isBoletoSelecaoSession(s) || isBoletoManualSession(s);
 }
 
 // ---------- DI ----------
