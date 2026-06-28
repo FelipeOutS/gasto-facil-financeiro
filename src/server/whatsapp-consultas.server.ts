@@ -130,6 +130,21 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     return "listar_receitas_mes";
   }
 
+  // ----- gastos por categoria (precede parser de criação e de cartão) -----
+  // Aceita variações que pedem agregação por grupo, evitando que o parser
+  // de gasto interprete "categoria" como nome de estabelecimento.
+  if (
+    /\bgastos? por categoria(s)?\b/.test(t) ||
+    /\bdespesas? por categoria(s)?\b/.test(t) ||
+    /\bcategorias? (de |dos |das )?(gastos|despesas)\b/.test(t) ||
+    /\bonde (eu )?gastei mais\b/.test(t) ||
+    /\bonde gasto mais\b/.test(t) ||
+    /\bgastos? agrupados? por categoria(s)?\b/.test(t) ||
+    /\btotal por categoria(s)?\b/.test(t)
+  ) {
+    return "gastos_por_categoria_mes";
+  }
+
   // ----- listar gastos/despesas do mês (precede parser de cartão/fatura) -----
   // Cobre variações comuns. Evita roteamento incorreto para faturas, onde
   // "gastos do mês" era interpretado como "compras do <cartão mês>".
