@@ -25,7 +25,8 @@ export type ConsultaIntent =
   | "maiores_gastos_mes"
   | "impacto_despesas_renda"
   | "listar_receitas_mes"
-  | "listar_gastos_mes";
+  | "listar_gastos_mes"
+  | "gastos_por_categoria_mes";
 
 const APP_TZ = "America/Sao_Paulo";
 
@@ -101,10 +102,11 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
   }
 
   // ----- resumo do mês -----
+  // Nota: frases como "quanto gastei no mês" são totalizadoras de gastos
+  // e roteadas para listar_gastos_mes (mais específico), não para resumo.
   if (
     /\bresumo (do )?m[eê]s\b/.test(t) ||
     /\bcomo foi (o )?meu m[eê]s\b/.test(t) ||
-    /\bquanto (eu )?gastei (no )?m[eê]s\b/.test(t) ||
     /\bcomo est[aã]o (as )?minhas finan[cç]as\b/.test(t) ||
     /\bfinan[cç]as do m[eê]s\b/.test(t)
   ) {
@@ -129,20 +131,41 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     return "listar_receitas_mes";
   }
 
+  // ----- gastos por categoria (precede parser de criação e de cartão) -----
+  // Aceita variações que pedem agregação por grupo, evitando que o parser
+  // de gasto interprete "categoria" como nome de estabelecimento.
+  if (
+    /\bgastos? por categoria(s)?\b/.test(t) ||
+    /\bdespesas? por categoria(s)?\b/.test(t) ||
+    /\bcategorias? (de |dos |das )?(gastos|despesas)\b/.test(t) ||
+    /\bonde (eu )?gastei mais\b/.test(t) ||
+    /\bonde gasto mais\b/.test(t) ||
+    /\bgastos? agrupados? por categoria(s)?\b/.test(t) ||
+    /\btotal por categoria(s)?\b/.test(t)
+  ) {
+    return "gastos_por_categoria_mes";
+  }
+
   // ----- listar gastos/despesas do mês (precede parser de cartão/fatura) -----
   // Cobre variações comuns. Evita roteamento incorreto para faturas, onde
   // "gastos do mês" era interpretado como "compras do <cartão mês>".
+  // Excluir frases com modificadores temporais que pertencem a
+  // consultas específicas (ex.: "meus gastos de ontem", "gastos de hoje",
+  // "gastos da semana") — essas são roteadas por detectConsultaEspecifica.
+  const tempModificador = /\b(ontem|hoje|amanha|amanh[aã]|da semana|de hoje|de ontem)\b/.test(t);
   if (
-    /\bmeus gastos\b/.test(t) ||
-    /\bminhas despesas\b/.test(t) ||
-    /\bgastos (do |deste |desse |neste |nesse )?m[eê]s\b/.test(t) ||
-    /\bdespesas (do |deste |desse |neste |nesse )?m[eê]s\b/.test(t) ||
-    /\bgastos (do )?(m[eê]s )?atual\b/.test(t) ||
-    /\bquanto (eu )?gastei (este|esse|neste|nesse|no|do) ?m[eê]s\b/.test(t) ||
-    /\btotal (de |dos )?gastos\b/.test(t) ||
-    /\btotal (de |das )?despesas\b/.test(t) ||
-    /\blistar (os |as )?(meus |minhas )?(gastos|despesas)\b/.test(t) ||
-    /\bver (os |as )?(meus |minhas )?(gastos|despesas)\b/.test(t)
+    !tempModificador && (
+      /\bmeus gastos\b/.test(t) ||
+      /\bminhas despesas\b/.test(t) ||
+      /\bgastos (do |deste |desse |neste |nesse )?m[eê]s\b/.test(t) ||
+      /\bdespesas (do |deste |desse |neste |nesse )?m[eê]s\b/.test(t) ||
+      /\bgastos (do )?(m[eê]s )?atual\b/.test(t) ||
+      /\bquanto (eu )?gastei (este|esse|neste|nesse|no|do) ?m[eê]s\b/.test(t) ||
+      /\btotal (de |dos )?gastos\b/.test(t) ||
+      /\btotal (de |das )?despesas\b/.test(t) ||
+      /\blistar (os |as )?(meus |minhas )?(gastos|despesas)\b/.test(t) ||
+      /\bver (os |as )?(meus |minhas )?(gastos|despesas)\b/.test(t)
+    )
   ) {
     return "listar_gastos_mes";
   }
@@ -449,6 +472,8 @@ export async function handleConsulta(
       return await handleListarReceitasMes(userId);
     case "listar_gastos_mes":
       return await handleListarGastosMes(userId);
+    case "gastos_por_categoria_mes":
+      return await handleGastosPorCategoriaMes(userId);
   }
 }
 
@@ -475,6 +500,42 @@ async function handleListarGastosMes(userId: string): Promise<ConsultaResult> {
       itens,
       total: formatBRL(total),
       totalRegistros: ordenados.length,
+    }),
+  };
+}
+
+async function handleGastosPorCategoriaMes(userId: string): Promise<ConsultaResult> {
+  const hoje = todayLocalISO();
+  const from = monthStartISO(hoje);
+  const to = addDaysISO(hoje, 1);
+  const [gastos, catMap] = await Promise.all([
+    loadGastos(userId, from, to),
+    loadCategoriasMap(userId),
+  ]);
+  const totals = new Map<string, { nome: string; valor: number; quantidade: number }>();
+  for (const g of gastos) {
+    const key = g.categoria_id ?? "__sem__";
+    const nome = key === "__sem__" ? "Outros" : (catMap.get(key) || "Outros");
+    const cur = totals.get(key) ?? { nome, valor: 0, quantidade: 0 };
+    cur.valor += Number(g.valor ?? 0) || 0;
+    cur.quantidade += 1;
+    totals.set(key, cur);
+  }
+  const itens = [...totals.values()]
+    .sort((a, b) => b.valor - a.valor)
+    .map((c) => ({
+      categoria: c.nome,
+      valor: formatBRL(c.valor),
+      quantidade: c.quantidade,
+    }));
+  const total = sumValor(gastos);
+  return {
+    status: "consulta",
+    resposta: M.consulta.gastosPorCategoriaMes({
+      mes: mesPorExtenso(hoje),
+      itens,
+      total: formatBRL(total),
+      totalRegistros: gastos.length,
     }),
   };
 }
