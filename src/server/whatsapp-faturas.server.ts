@@ -197,7 +197,7 @@ export function detectFaturaIntent(texto: string): FaturaIntent | null {
  */
 function extractCartaoTermo(t: string): string | null {
   const STOP =
-    /^(atual|aberta|fechada|mais|maior|maiores|do|da|de|dos|das|no|na|nos|nas|minha|meu|meus|minhas|cart(?:ao|oes)|credito|fatura|recente|recentes|ultimas?|compras?|gastos?|lan[cç]amentos?)$/;
+    /^(atual|aberta|fechada|mais|maior|maiores|do|da|de|dos|das|no|na|nos|nas|minha|meu|meus|minhas|cart(?:ao|oes)|credito|fatura|recente|recentes|ultimas?|compras?|gastos?|despesas?|lan[cç]amentos?|mes|m[eê]s|semana|dia|ano|hoje|ontem|amanha|amanh[aã]|atual|mensal|semanal)$/;
 
   let m = t.match(/\bfatura\s+(?:do|da|de|dos|das)\s+([a-z0-9\s]{2,30}?)(?:\s*\?|\s*$)/);
   if (m) return m[1].trim();
