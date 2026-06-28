@@ -220,9 +220,9 @@ export async function processarBoleto(args: {
     if (isMenu) {
       const r = [
         "Você tem um boleto em andamento. O que deseja fazer?",
-        "1. Continuar cadastro",
-        "2. Cancelar boleto e abrir menu",
-        "3. Ver ajuda",
+        "• Envie o dado pedido para continuar o cadastro",
+        "• Envie \"cancelar\" para descartar o boleto e abrir o menu",
+        "• Envie \"ajuda\" para ver opções",
       ].join("\n");
       await deps.atualizarSessao(sessao.id, sessao.status, session as never, r);
       return { status: "pendente", resposta: r };
