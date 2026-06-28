@@ -155,13 +155,14 @@ test("WA-C6: enviar '1' fora de sessão responde com guia de registro de gasto",
   expect(r.resposta).toMatch(/registrar um gasto/i);
 });
 
-test("WA-C6: enviar '8' fora de sessão dispara ajuda completa", async () => {
+test("WA-C6: enviar '8' fora de sessão dispara ajuda com exemplos práticos", async () => {
   const r = await processarMensagemWhatsApp({
     telefone: tel, texto: "8", external_id: "c6-num-8",
   });
   expect(r.status).toBe("consulta");
-  expect(r.resposta).toContain("1. Registrar gasto");
-  expect(r.resposta).toContain("8. Ajuda");
+  expect(r.resposta).toMatch(/exemplos?/i);
+  expect(r.resposta).toContain("Uber 29,90");
+  expect(r.resposta).not.toContain("1. Registrar gasto");
 });
 
 test("WA-C6: '3' fora de sessão entra no fluxo de contas (rewrite → minhas contas)", async () => {
