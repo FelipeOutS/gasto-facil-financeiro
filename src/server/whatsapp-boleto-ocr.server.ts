@@ -221,6 +221,13 @@ async function callGemini(input: BoletoOcrInput): Promise<
  */
 export async function extractBoletoFromMedia(input: BoletoOcrInput): Promise<BoletoOcrOutcome> {
   const sourceType = input.kind;
+  // Em ambiente de teste, NUNCA toca a rede real: se o teste quiser exercer
+  // o pipeline, registra um extractor via __setBoletoOcrExtractorForTests.
+  // Caso contrário, devolvemos `missing_api_key` e o caller cai no fluxo de
+  // comprovante/legado, exatamente como em produção sem chave.
+  if (!__testExtractor && (process.env.NODE_ENV === "test" || process.env.BUN_ENV === "test")) {
+    return { ok: false, sourceType, reason: "missing_api_key" };
+  }
   const runner = __testExtractor ?? callGemini;
   const raw = await runner(input);
   if ("error" in raw) {

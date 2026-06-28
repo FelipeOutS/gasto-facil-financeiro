@@ -13,6 +13,7 @@ import {
   MAX_IMAGE_BYTES,
   validateDownloadedImage,
 } from "@/server/whatsapp-media-validation.server";
+import { MAX_PDF_BYTES, validateDownloadedPdf } from "@/server/whatsapp-pdf-validation.server";
 import { podeUsarOcrComprovante } from "@/server/whatsapp-comprovantes.server";
 import {
   canUseWhatsAppForSender,
@@ -220,10 +221,26 @@ const MetaAudioMessage = z.object({
     voice: z.boolean().optional(),
   }),
 });
+// WA-C10.b — documentos PDF (Cloud API). Aceitamos apenas application/pdf;
+// validação real de bytes mágicos/tamanho/páginas é feita após o download.
+const MetaDocumentMessage = z.object({
+  id: z.string().min(1).max(256),
+  from: z.string().min(5).max(40).regex(/^\d+$/),
+  timestamp: z.string().min(1).max(20).regex(/^\d+$/),
+  type: z.literal("document"),
+  document: z.object({
+    id: z.string().min(1).max(256),
+    mime_type: z.string().max(80).optional(),
+    sha256: z.string().max(128).optional(),
+    filename: z.string().max(256).optional(),
+    caption: z.string().max(1000).optional(),
+  }),
+});
 const MetaAnyMessage = z.union([
   MetaTextMessage,
   MetaImageMessage,
   MetaAudioMessage,
+  MetaDocumentMessage,
   z.object({ id: z.string().optional(), type: z.string() }).passthrough(),
 ]);
 const MetaChange = z.object({
@@ -258,6 +275,12 @@ type FlatMessage = {
     mediaId: string;
     mimeType?: string;
     sha256?: string;
+  };
+  document?: {
+    mediaId: string;
+    mimeType?: string;
+    sha256?: string;
+    filename?: string;
   };
 };
 
@@ -308,6 +331,25 @@ function extractIncomingMessages(payload: z.infer<typeof MetaPayload>): FlatMess
               mediaId: a.data.audio.id,
               mimeType: a.data.audio.mime_type,
               sha256: a.data.audio.sha256,
+            },
+          });
+        }
+        // WA-C10.b — documento PDF. Apenas extrai metadados; download,
+        // magic-bytes e pipeline OCR de boleto rodam depois do gate.
+        const d = MetaDocumentMessage.safeParse(m);
+        if (d.success) {
+          const mime = d.data.document.mime_type?.toLowerCase();
+          if (mime && mime !== "application/pdf") continue;
+          out.push({
+            external_id: d.data.id,
+            telefone: d.data.from,
+            texto: d.data.document.caption ?? "",
+            recebida_em: new Date(Number(d.data.timestamp) * 1000).toISOString(),
+            document: {
+              mediaId: d.data.document.id,
+              mimeType: mime,
+              sha256: d.data.document.sha256,
+              filename: d.data.document.filename,
             },
           });
         }
@@ -533,8 +575,8 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
         const results: Array<{ status: string; gasto_id?: string }> = [];
         for (const msg of flatMessages) {
           // Mensagem precisa ter texto, imagem OU áudio.
-          if (!msg.texto?.trim() && !msg.image && !msg.audio) continue;
-          const messageType = msg.audio ? "audio" : msg.image ? "image" : "text";
+          if (!msg.texto?.trim() && !msg.image && !msg.audio && !msg.document) continue;
+          const messageType = msg.audio ? "audio" : msg.image ? "image" : msg.document ? "document" : "text";
           logWhatsAppInboundReceived({
             telefone: msg.telefone,
             externalId: msg.external_id,
@@ -595,6 +637,7 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               recebida_em?: string;
               authorizedUserId?: string;
               image?: { base64: string; mimeType?: string; sha256?: string };
+              document?: { kind: "document"; base64: string; mimeType: "application/pdf"; sha256?: string };
               // WA-V1.3 — marcador de origem usado pelo pipeline textual
               // para liberar o vocabulário extra de voz (almoço/jantar)
               // na sugestão de categoria. Mensagens digitadas seguem
@@ -640,6 +683,36 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                 base64: dataUrl,
                 mimeType: ok.mimeType,
                 sha256: msg.image.sha256,
+              };
+            } else if (msg.document) {
+              // ---- WA-C10.b: PDF (sempre boleto). ----
+              // Ordem: dedup → entitlement (reaproveita gate de OCR) →
+              // download → magic-bytes + tamanho + páginas → data URL.
+              if (await externalIdAlreadyConfirmed(msg.external_id)) {
+                results.push({ status: "duplicada" });
+                continue;
+              }
+              const podeOcr = elig.userId ? await podeUsarOcrComprovante(elig.userId) : false;
+              if (!podeOcr) {
+                results.push({ status: "sem_plano" });
+                continue;
+              }
+              const dl = await downloadWhatsappMedia(msg.document.mediaId, msg.document.mimeType, MAX_PDF_BYTES);
+              if (!dl) {
+                results.push({ status: "documento_indisponivel" });
+                continue;
+              }
+              const pdfOk = validateDownloadedPdf(new Uint8Array(dl.buffer), dl.declaredMime);
+              if (!pdfOk.ok) {
+                results.push({ status: `pdf_${pdfOk.reason}` });
+                continue;
+              }
+              const dataUrl = `data:application/pdf;base64,${dl.buffer.toString("base64")}`;
+              runMsg.document = {
+                kind: "document",
+                base64: dataUrl,
+                mimeType: "application/pdf",
+                sha256: msg.document.sha256,
               };
             } else if (msg.audio) {
               // WA-V1 — ordem obrigatória para áudio:

@@ -151,14 +151,19 @@ import {
   processarPagarPessoaFlow,
   type WhatsAppPagarPessoaDeps,
 } from "./whatsapp-pagar-pessoa-flow.server";
-// WA-C10.a — Boleto por código/linha digitável (texto). Foto/PDF/OCR ficam para WA-C10.b.
+// WA-C10.a/b — Boleto por código/linha digitável (texto) + foto/PDF.
 import {
   BOLETO_PENDING_STATES,
   detectBoletoIntent,
   isBoletoSession,
+  isAnyBoletoSession,
+  iniciarBoletoDeMidia,
+  iniciarBoletoManualFallback,
   processarBoleto,
   type WhatsAppBoletoDeps,
 } from "./whatsapp-boleto-intents.server";
+import { extractBoletoFromMedia } from "./whatsapp-boleto-ocr.server";
+import type { DocumentAttachment } from "./whatsapp-media-attachment";
 
 // Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
 // precisa do orquestrador é exposto aqui de forma explícita, evitando que
@@ -305,6 +310,10 @@ export type WhatsAppMessageRow = {
   /** Anexo de imagem (Fase WA-G5A). Quando presente, dispara o fluxo
    *  de leitura de comprovante via OCR existente do site. */
   image?: ImageAttachment;
+  /** WA-C10.b — Anexo de documento (PDF). NUNCA reusar `image` para
+   *  representar PDF: tipos separados garantem que nenhuma rota de
+   *  comprovante/imagem capture um PDF por engano. */
+  document?: DocumentAttachment;
   /**
    * WA-B3.1 — identidade autorizada propagada pelo gate único
    * `canUseWhatsAppForSender`. Quando presente, o pipeline NÃO refaz
@@ -1287,7 +1296,7 @@ type WhatsAppAuditRoute =
 export function logWhatsAppInboundReceived(args: {
   telefone: string;
   externalId: string | null;
-  messageType: "text" | "image" | "audio";
+  messageType: "text" | "image" | "audio" | "document";
 }) {
   console.info({
     event: "wa_inbound_received",
@@ -1927,6 +1936,28 @@ function coerceConfiancaForDb(value: unknown): number | null {
   return null;
 }
 
+// WA-C10.b — utilidades de validação de mídia (magic bytes). NUNCA persistem
+// nem logam o conteúdo: lêem só os primeiros bytes da data URL em memória.
+function decodeBase64Head(dataUrl: string, nBytes: number): Uint8Array | null {
+  if (typeof dataUrl !== "string") return null;
+  const comma = dataUrl.indexOf(",");
+  const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+  // Pega só o suficiente para os magic bytes (cada 4 chars b64 = 3 bytes).
+  const chunk = b64.slice(0, Math.ceil((nBytes * 4) / 3) + 4);
+  try {
+    const bin = typeof atob === "function" ? atob(chunk) : Buffer.from(chunk, "base64").toString("binary");
+    const out = new Uint8Array(Math.min(bin.length, nBytes));
+    for (let i = 0; i < out.length; i++) out[i] = bin.charCodeAt(i) & 0xff;
+    return out;
+  } catch {
+    return null;
+  }
+}
+function looksLikePdfMagic(buf: Uint8Array): boolean {
+  // %PDF-
+  return buf.length >= 5 && buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46 && buf[4] === 0x2d;
+}
+
 export type SaveSessionResult = {
   ok: boolean;
   sessionId: string | null;
@@ -2227,7 +2258,7 @@ async function processarSessaoComprovanteAtiva(args: {
   }
   logReceiptSessionRoute({ ...lookup, routedTo: "receipt_handler" });
   const prev = sessao.session as unknown as ComprovanteSession;
-  if (msg.image) {
+  if (msg.image || msg.document) {
     const aviso = M.imagem.sessaoEmAndamento();
     await atualizarSessao(sessao.id, sessao.status, prev as unknown as Session, aviso);
     return { status: "pendente", resposta: aviso };
@@ -2322,7 +2353,7 @@ export async function processarMensagemWhatsApp(
   let texto = (msg.texto ?? "").trim();
   // Permitir mensagens só-imagem (Fase WA-G5A): se vier uma foto sem
   // texto, seguimos o pipeline e roteamos para o handler de comprovante.
-  if (!texto && !msg.image) {
+  if (!texto && !msg.image && !msg.document) {
     return {
       status: "erro",
       resposta:
@@ -2423,11 +2454,11 @@ export async function processarMensagemWhatsApp(
   // ---- Fase WA-G5A: imagem chegou enquanto há sessão pendente NÃO-comprovante ----
   // Uma foto nunca interrompe um fluxo de gasto/receita em andamento.
   // Orienta o usuário a enviar "cancelar" antes de mandar a foto.
-  if (msg.image && sessao) {
+  if ((msg.image || msg.document) && sessao) {
     logWaRouteDecision(msg, "receipt_handler", "image_blocked_by_existing_non_receipt_session");
     const aviso = M.imagem.sessaoEmAndamento();
     await gravarSessao(
-      userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
+      userId, msg.telefone, msg.external_id, texto || (msg.document ? "(documento)" : "(foto)"), recebidaEm,
       sessao.status, sessao.session, aviso,
     );
     return { status: "pendente", resposta: aviso };
@@ -2472,7 +2503,7 @@ export async function processarMensagemWhatsApp(
 
   // ---- WA-C10.a: sessão ativa de BOLETO tem prioridade. ----
   if (sessao && (
-    isBoletoSession(sessao.session) ||
+    isAnyBoletoSession(sessao.session) ||
     (BOLETO_PENDING_STATES as readonly string[]).includes(sessao.status)
   )) {
     logWaRouteDecision(msg, "expense_parser", "active_boleto_session");
@@ -2641,6 +2672,76 @@ export async function processarMensagemWhatsApp(
       confianca: next.confianca,
       resposta,
     };
+  }
+
+  // ---- WA-C10.b: roteamento de mídia (foto/PDF) → tentativa de BOLETO ----
+  // Ordem oficial:
+  //   1) validar download/magic-bytes (já feito no route layer; aqui revalidamos).
+  //   2) tentar extractBoletoFromMedia (Gemini + tool-call).
+  //   3) entrar no fluxo de boleto APENAS se houver candidato validado pelo
+  //      parser determinístico (tryParseBoleto). Se houver só sugestão de
+  //      valor/vencimento, oferecer fallback manual ("dados encontrados,
+  //      boleto não validado").
+  //   4) caso contrário: imagem → segue para OCR de comprovante;
+  //                       PDF   → responde com mensagem amigável (sem OCR
+  //                               de comprovante; PDF nunca vira imagem).
+  if (msg.document && !sessao) {
+    logWaRouteDecision(msg, "expense_parser", "media_boleto_pdf_candidate");
+    const head = decodeBase64Head(msg.document.base64, 8);
+    if (!head || !looksLikePdfMagic(head)) {
+      return { status: "erro", resposta: M.boletoMidia.pdfInvalido() };
+    }
+    const ocr = await extractBoletoFromMedia({
+      kind: "pdf",
+      dataUrl: msg.document.base64,
+    });
+    if (!ocr.ok) {
+      // gateway/credits/etc. — mensagem neutra; NUNCA loga base64/url.
+      console.log({ event: "wa_boleto_media_ocr_failed", sourceType: "pdf", reason: ocr.reason });
+      return { status: "erro", resposta: M.boletoMidia.indisponivel() };
+    }
+    if (ocr.candidatos.length >= 1) {
+      return await iniciarBoletoDeMidia({
+        userId, msg, texto: texto || "(pdf)", recebidaEm,
+        origem: "pdf",
+        candidatos: ocr.candidatos,
+        identificacaoSugerida: ocr.sugestoes.identificacao,
+        deps: boletoDeps,
+      });
+    }
+    if (ocr.sugestoes.valorCentavos != null || ocr.sugestoes.vencimentoISO) {
+      return await iniciarBoletoManualFallback({
+        userId, msg, texto: texto || "(pdf)", recebidaEm,
+        origem: "pdf",
+        valorCentavos: ocr.sugestoes.valorCentavos,
+        vencimentoISO: ocr.sugestoes.vencimentoISO,
+        identificacaoSugerida: ocr.sugestoes.identificacao,
+        deps: boletoDeps,
+      });
+    }
+    return { status: "erro", resposta: M.boletoMidia.nenhumCandidato() };
+  }
+
+  if (msg.image && !sessao) {
+    // Tenta OCR de boleto ANTES do OCR de comprovante. Só intercepta o
+    // fluxo se houver candidato validado pelo parser determinístico —
+    // caso contrário, imagem de cupom segue normal para receipt OCR.
+    const ocr = await extractBoletoFromMedia({
+      kind: "image",
+      dataUrl: msg.image.base64,
+      mimeType: (msg.image.mimeType as "image/jpeg" | "image/png" | "image/webp") ?? "image/jpeg",
+    });
+    if (ocr.ok && ocr.candidatos.length >= 1) {
+      logWaRouteDecision(msg, "expense_parser", "media_boleto_image_candidate");
+      return await iniciarBoletoDeMidia({
+        userId, msg, texto: texto || "(foto)", recebidaEm,
+        origem: "imagem",
+        candidatos: ocr.candidatos,
+        identificacaoSugerida: ocr.sugestoes.identificacao,
+        deps: boletoDeps,
+      });
+    }
+    // Sem candidato validado: cai no fluxo já existente de comprovante.
   }
 
   // ---- Fase WA-G5A: imagem nova chegando sem sessão pendente ----

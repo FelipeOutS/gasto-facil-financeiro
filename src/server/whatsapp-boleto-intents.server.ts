@@ -42,6 +42,8 @@ export const BOLETO_PENDING_STATES = [
   "bol_aguardando_identificacao",
   "bol_aguardando_confirmacao",
   "bol_aguardando_duplicidade",
+  "bol_aguardando_selecao_candidato",
+  "bol_aguardando_confirmacao_manual",
   "bol_persistindo",
 ] as const;
 
@@ -56,11 +58,63 @@ export type BoletoSession = {
   /** Mantido apenas até persistir; nunca aparece em logs nem em resposta. */
   codigoBarras: string;
   banco?: string;
+  /** Origem da sessão. Usado p/ telemetria, nunca afeta validação. */
+  origem?: "texto" | "imagem" | "pdf";
 };
 
 export function isBoletoSession(s: unknown): s is BoletoSession {
   if (!s || typeof s !== "object") return false;
   return (s as { kind?: unknown }).kind === "boleto";
+}
+
+/**
+ * Sessão de SELEÇÃO de candidato — usada quando o OCR encontrou >1 boleto
+ * válido (todos com DV ok) e o usuário precisa escolher qual cadastrar.
+ *
+ * Os códigos brutos ficam APENAS aqui dentro até o usuário escolher.
+ * Não são logados; não viram resposta; mascaras é o que aparece ao usuário.
+ */
+export type BoletoSelecaoSession = {
+  kind: "boleto_selecao";
+  origem: "imagem" | "pdf";
+  candidatos: Array<{
+    fingerprint: string;
+    mascara: string;
+    codigoBarras: string;
+    tipo: "cobranca" | "arrecadacao";
+    valorCentavos: number | null;
+    vencimentoISO: string | null;
+    banco?: string;
+  }>;
+  identificacaoSugerida: string | null;
+};
+
+export function isBoletoSelecaoSession(s: unknown): s is BoletoSelecaoSession {
+  if (!s || typeof s !== "object") return false;
+  return (s as { kind?: unknown }).kind === "boleto_selecao";
+}
+
+/**
+ * Sessão de FALLBACK MANUAL — usada quando o OCR encontrou apenas
+ * valor/vencimento sugeridos, sem nenhum candidato validado pelo parser.
+ * Cria uma conta a pagar SEM `codigo_boleto`. O usuário precisa confirmar.
+ */
+export type BoletoManualSession = {
+  kind: "boleto_manual";
+  origem: "imagem" | "pdf";
+  valorCentavos: number | null;
+  vencimentoISO: string | null;
+  identificacao: string | null;
+};
+
+export function isBoletoManualSession(s: unknown): s is BoletoManualSession {
+  if (!s || typeof s !== "object") return false;
+  return (s as { kind?: unknown }).kind === "boleto_manual";
+}
+
+/** União ampla — usada pelos roteadores em `whatsapp.server.ts`. */
+export function isAnyBoletoSession(s: unknown): boolean {
+  return isBoletoSession(s) || isBoletoSelecaoSession(s) || isBoletoManualSession(s);
 }
 
 // ---------- DI ----------
@@ -198,9 +252,9 @@ export async function processarBoleto(args: {
   const tLower = t.toLowerCase();
   const hardCancel = decisao === "cancel" || /^(5|cancelar|cancela|cancelado|cancelada)$/i.test(t);
 
-  // ---- WA-C10.a.1: menu/ajuda em sessão ativa não perdem dados ----
-  if (sessao && isBoletoSession(sessao.session) && !hardCancel) {
-    const session = sessao.session as BoletoSession;
+  // ---- WA-C10.a.1 / WA-C10.b: menu/ajuda em sessão ativa não perdem dados ----
+  if (sessao && isAnyBoletoSession(sessao.session) && !hardCancel) {
+    const session = sessao.session as { kind: string };
     const isAjuda = /^(ajuda|help|comandos|\?)$/i.test(tLower);
     const isMenu = /^menu$/i.test(tLower);
     if (isAjuda) {
@@ -228,18 +282,26 @@ export async function processarBoleto(args: {
     }
   }
 
-  // Cancelamento em qualquer estado de boleto.
-  if (sessao && isBoletoSession(sessao.session) && hardCancel) {
-    const original = sessao.session as BoletoSession;
-    // WA-C10.a.1: limpa código bruto antes de persistir a sessão final cancelada.
-    const sanitized: BoletoSession = { ...original, codigoBarras: "" };
+  // Cancelamento em qualquer estado de boleto (texto, seleção ou manual).
+  if (sessao && isAnyBoletoSession(sessao.session) && hardCancel) {
+    const original = sessao.session as Record<string, unknown>;
+    // WA-C10.a.1 / WA-C10.b: limpa quaisquer códigos brutos.
+    const sanitized: Record<string, unknown> = { ...original };
+    if (isBoletoSession(original)) sanitized.codigoBarras = "";
+    if (isBoletoSelecaoSession(original)) {
+      sanitized.candidatos = original.candidatos.map((c) => ({
+        fingerprint: c.fingerprint, mascara: c.mascara, tipo: c.tipo,
+        valorCentavos: c.valorCentavos, vencimentoISO: c.vencimentoISO,
+      }));
+    }
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     const r = "Cadastro do boleto cancelado. 👍";
     await deps.gravarSessao(
       userId, msg.telefone, msg.external_id, texto, recebidaEm,
       "cancelada", sanitized as never, r,
     );
-    logBoleto("cancelled", original.fingerprint, "ok");
+    const fp = isBoletoSession(original) ? original.fingerprint : "n/a";
+    logBoleto("cancelled", fp, "ok");
     return { status: "cancelada", resposta: r };
   }
 
@@ -287,6 +349,20 @@ export async function processarBoleto(args: {
       return { status: "pendente", resposta: resp };
     }
     return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: null, deps });
+  }
+
+  // ---- WA-C10.b: seleção de candidato (sessão veio de OCR multi-candidato) ----
+  if (isBoletoSelecaoSession(sessao.session)) {
+    return await processarSelecaoCandidato({
+      userId, msg, texto, recebidaEm, sessao, deps,
+    });
+  }
+
+  // ---- WA-C10.b: fallback manual (OCR só achou valor/vencimento) ----
+  if (isBoletoManualSession(sessao.session)) {
+    return await processarBoletoManual({
+      userId, msg, texto, recebidaEm, decisao, sessao, deps,
+    });
   }
 
   if (!isBoletoSession(sessao.session)) {
@@ -572,6 +648,447 @@ async function persistir(args: {
     status: "salva",
     resposta: [
       "Pronto! Registrei seu boleto ✅",
+      "",
+      `${session.identificacao} — ${formatBRL(session.valorCentavos)}`,
+      aviso,
+    ].join("\n"),
+  };
+}
+
+// ====================================================================
+// WA-C10.b — Entradas e estados auxiliares para boleto a partir de mídia
+// (imagem ou PDF). O parser determinístico (`tryParseBoleto`) continua
+// sendo a única fonte de verdade; o OCR só sugere candidatos.
+// ====================================================================
+
+/**
+ * Inicia o fluxo de boleto a partir de candidatos extraídos por OCR de
+ * imagem/PDF. NÃO recebe nem persiste base64. Os caminhos possíveis:
+ *
+ *  - 1 candidato validado → cai no fluxo normal (`avancarFluxo`),
+ *    igual ao caminho de texto, preservando dedup + readback.
+ *  - N candidatos validados → cria sessão `bol_aguardando_selecao_candidato`.
+ *  - 0 candidatos validados mas houve sugestão (valor/vencimento) → entra
+ *    no fallback manual (`iniciarBoletoManualFallback`).
+ *  - 0 candidatos e nenhuma sugestão → o caller decide a resposta.
+ *
+ * Em todos os casos, o código bruto fica APENAS na sessão server-side
+ * (`codigoBarras`) e é zerado em cancelamento / persistido em
+ * contas_a_pagar.codigo_boleto na conclusão.
+ */
+export async function iniciarBoletoDeMidia(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  origem: "imagem" | "pdf";
+  candidatos: BoletoParsed[];
+  identificacaoSugerida: string | null;
+  deps: WhatsAppBoletoDeps;
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, origem, candidatos, identificacaoSugerida, deps } = args;
+  if (candidatos.length === 0) {
+    // O caller decide a resposta (nenhum candidato / fallback manual).
+    return { status: "sem_pendencia", resposta: "" };
+  }
+  if (candidatos.length === 1) {
+    const parsed = candidatos[0];
+    const ident =
+      identificacaoSugerida && identificacaoSugerida.trim().length >= 2
+        ? identificacaoSugerida.trim().slice(0, 80)
+        : null;
+    const session: BoletoSession = {
+      kind: "boleto",
+      fingerprint: parsed.fingerprint,
+      tipo: parsed.tipo,
+      valorCentavos: parsed.valorCentavos,
+      vencimentoISO: parsed.vencimentoISO,
+      identificacao: ident ? ident.charAt(0).toUpperCase() + ident.slice(1) : null,
+      mascara: parsed.mascaraExibicao,
+      codigoBarras: parsed.codigoBarras,
+      banco: parsed.banco,
+      origem,
+    };
+    // Dedup determinístico antes de qualquer pergunta — mesmo critério
+    // do fluxo por texto, garantindo paridade com WA-C10.a.
+    const dup = await findDuplicateBoleto(userId, parsed.codigoBarras);
+    if (dup) {
+      const linhas = [
+        `Encontrei este boleto (${parsed.mascaraExibicao}) na imagem, mas ele já está nas suas contas pendentes${dup.nome ? ` como "${dup.nome}"` : ""}.`,
+        "",
+        "1. Ver conta existente",
+        "2. Continuar mesmo assim",
+        "3. Cancelar",
+      ];
+      const resp = linhas.join("\n");
+      const claim = await deps.gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "bol_aguardando_duplicidade", session as never, resp,
+      );
+      if (!claim?.ok) {
+        return { status: "erro", resposta: "Já estou processando esse boleto. Aguarde um instante." };
+      }
+      logBoleto("awaiting_duplicate_decision", parsed.fingerprint, "duplicate");
+      return { status: "pendente", resposta: resp };
+    }
+    logBoleto("detected", parsed.fingerprint, "ok");
+    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: null, deps });
+  }
+  // ----- N candidatos: persistir sessão de seleção -----
+  const session: BoletoSelecaoSession = {
+    kind: "boleto_selecao",
+    origem,
+    candidatos: candidatos.map((p) => ({
+      fingerprint: p.fingerprint,
+      mascara: p.mascaraExibicao,
+      codigoBarras: p.codigoBarras,
+      tipo: p.tipo,
+      valorCentavos: p.valorCentavos,
+      vencimentoISO: p.vencimentoISO,
+      banco: p.banco,
+    })),
+    identificacaoSugerida,
+  };
+  const linhas = ["Encontrei mais de um boleto neste arquivo. Qual você quer cadastrar?", ""];
+  candidatos.forEach((p, i) => {
+    const extras = [
+      p.valorCentavos != null ? formatBRL(p.valorCentavos) : null,
+      p.vencimentoISO ? formatDateBR(p.vencimentoISO) : null,
+    ].filter(Boolean).join(" • ");
+    linhas.push(`${i + 1}. Boleto ${p.mascaraExibicao}${extras ? ` (${extras})` : ""}`);
+  });
+  linhas.push(`${candidatos.length + 1}. Nenhum deles`);
+  const resp = linhas.join("\n");
+  const claim = await deps.gravarSessao(
+    userId, msg.telefone, msg.external_id, texto, recebidaEm,
+    "bol_aguardando_selecao_candidato", session as never, resp,
+  );
+  if (!claim?.ok) {
+    return { status: "erro", resposta: "Já estou processando esse boleto. Aguarde um instante." };
+  }
+  return { status: "pendente", resposta: resp };
+}
+
+async function processarSelecaoCandidato(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  sessao: { id: string; status: string; session: unknown; recebida_em: string };
+  deps: WhatsAppBoletoDeps;
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, sessao, deps } = args;
+  const sel = sessao.session as BoletoSelecaoSession;
+  const m = texto.trim().match(/^(\d{1,2})/);
+  const idx = m ? Number(m[1]) - 1 : -1;
+  if (idx === sel.candidatos.length) {
+    // "Nenhum deles".
+    await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+    const r = "Tudo bem, descartei essa imagem. Se quiser, envie outra foto/PDF ou cole a linha digitável.";
+    await deps.gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "cancelada", { kind: "boleto_selecao", origem: sel.origem, descartado: true } as never, r,
+    );
+    return { status: "cancelada", resposta: r };
+  }
+  if (idx < 0 || idx >= sel.candidatos.length) {
+    const r = `Não entendi. Responda com o número da opção (1 a ${sel.candidatos.length + 1}).`;
+    await deps.atualizarSessao(sessao.id, sessao.status, sel as never, r);
+    return { status: "pendente", resposta: r };
+  }
+  const chosen = sel.candidatos[idx];
+  // Marca a sessão antiga como expirada antes de abrir a nova.
+  await deps.atualizarSessao(sessao.id, "expirada", { kind: "boleto_selecao" } as never, "");
+  // Reusa exatamente o caminho de 1-candidato.
+  const parsed: BoletoParsed = {
+    fingerprint: chosen.fingerprint,
+    tipo: chosen.tipo,
+    valorCentavos: chosen.valorCentavos,
+    vencimentoISO: chosen.vencimentoISO,
+    codigoBarras: chosen.codigoBarras,
+    mascaraExibicao: chosen.mascara,
+    banco: chosen.banco,
+  } as BoletoParsed;
+  return await iniciarBoletoDeMidia({
+    userId, msg, texto, recebidaEm,
+    origem: sel.origem,
+    candidatos: [parsed],
+    identificacaoSugerida: sel.identificacaoSugerida,
+    deps,
+  });
+}
+
+/**
+ * Inicia o fallback manual: OCR achou apenas valor/vencimento mas nenhum
+ * candidato validado. Cria uma conta a pagar **sem `codigo_boleto`** —
+ * isso fica explícito para o usuário (e para futuras consultas: a conta
+ * não é pagável pela linha digitável).
+ */
+export async function iniciarBoletoManualFallback(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  origem: "imagem" | "pdf";
+  valorCentavos: number | null;
+  vencimentoISO: string | null;
+  identificacaoSugerida: string | null;
+  deps: WhatsAppBoletoDeps;
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, origem, valorCentavos, vencimentoISO, identificacaoSugerida, deps } = args;
+  const session: BoletoManualSession = {
+    kind: "boleto_manual",
+    origem,
+    valorCentavos,
+    vencimentoISO,
+    identificacao: identificacaoSugerida && identificacaoSugerida.trim().length >= 2
+      ? identificacaoSugerida.trim().slice(0, 80)
+      : null,
+  };
+  const resp = manualFallbackPrompt(session);
+  const claim = await deps.gravarSessao(
+    userId, msg.telefone, msg.external_id, texto, recebidaEm,
+    "bol_aguardando_confirmacao_manual", session as never, resp,
+  );
+  if (!claim?.ok) {
+    return { status: "erro", resposta: "Já estou processando esse arquivo. Aguarde um instante." };
+  }
+  return { status: "pendente", resposta: resp };
+}
+
+function manualFallbackPrompt(s: BoletoManualSession): string {
+  const linhas = [
+    "Encontrei dados, mas não consegui validar a linha digitável do boleto.",
+    "Posso registrar como uma conta a pagar manual (sem código copiável):",
+    "",
+    `• Valor: ${s.valorCentavos != null ? formatBRL(s.valorCentavos) : "(a confirmar)"}`,
+    `• Vencimento: ${s.vencimentoISO ? formatDateBR(s.vencimentoISO) : "(a confirmar)"}`,
+    `• Identificação: ${s.identificacao ?? "(a confirmar)"}`,
+    "",
+    "1. Confirmar",
+    "2. Corrigir valor",
+    "3. Corrigir vencimento",
+    "4. Corrigir identificação",
+    "5. Cancelar",
+  ];
+  return linhas.join("\n");
+}
+
+async function processarBoletoManual(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  decisao: "confirm" | "cancel" | "outro";
+  sessao: { id: string; status: string; session: unknown; recebida_em: string };
+  deps: WhatsAppBoletoDeps;
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, decisao, sessao, deps } = args;
+  const s = sessao.session as BoletoManualSession;
+  const t = texto.trim();
+
+  // Sub-fluxos de coleta (valor / vencimento / identificacao).
+  if (sessao.status === "bol_aguardando_valor") {
+    const v = parseValorFromText(t);
+    if (!v) {
+      const r = "Não consegui ler o valor. Ex.: R$ 120,00";
+      await deps.atualizarSessao(sessao.id, sessao.status, s as never, r);
+      return { status: "pendente", resposta: r };
+    }
+    s.valorCentavos = v;
+    return await transicionarManual(s, args);
+  }
+  if (sessao.status === "bol_aguardando_vencimento") {
+    const d = parseDataFromText(t);
+    if (!d) {
+      const r = "Não consegui ler a data. Ex.: 10/07/2026";
+      await deps.atualizarSessao(sessao.id, sessao.status, s as never, r);
+      return { status: "pendente", resposta: r };
+    }
+    s.vencimentoISO = d;
+    return await transicionarManual(s, args);
+  }
+  if (sessao.status === "bol_aguardando_identificacao") {
+    const nome = t.slice(0, 80).trim();
+    if (nome.length < 2) {
+      const r = "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade";
+      await deps.atualizarSessao(sessao.id, sessao.status, s as never, r);
+      return { status: "pendente", resposta: r };
+    }
+    s.identificacao = nome.charAt(0).toUpperCase() + nome.slice(1);
+    return await transicionarManual(s, args);
+  }
+
+  // Estado normal: bol_aguardando_confirmacao_manual.
+  if (decisao === "confirm" || /^(1|sim|confirmar?|ok|confirmo)\b/i.test(t)) {
+    if (s.valorCentavos == null) {
+      s.valorCentavos = null;
+      return await transicionarManual(s, args, "bol_aguardando_valor",
+        "Qual é o valor desta conta? (ex.: R$ 120,00)");
+    }
+    if (!s.vencimentoISO) {
+      return await transicionarManual(s, args, "bol_aguardando_vencimento",
+        "Qual é a data de vencimento? (ex.: 10/07/2026)");
+    }
+    if (!s.identificacao) {
+      return await transicionarManual(s, args, "bol_aguardando_identificacao",
+        "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade");
+    }
+    return await persistirManual({ userId, msg, texto, recebidaEm, session: s, sessaoId: sessao.id, deps });
+  }
+  if (/^2\b|corrigir\s+valor|^valor\b/i.test(t)) {
+    s.valorCentavos = null;
+    return await transicionarManual(s, args, "bol_aguardando_valor",
+      "Qual é o valor desta conta? (ex.: R$ 120,00)");
+  }
+  if (/^3\b|corrigir\s+venc|^venc/i.test(t)) {
+    s.vencimentoISO = null;
+    return await transicionarManual(s, args, "bol_aguardando_vencimento",
+      "Qual é a data de vencimento? (ex.: 10/07/2026)");
+  }
+  if (/^4\b|corrigir\s+identi|identifica|nome/i.test(t)) {
+    s.identificacao = null;
+    return await transicionarManual(s, args, "bol_aguardando_identificacao",
+      "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade");
+  }
+  const r = "Não entendi. Responda 1 para confirmar, 2-4 para corrigir ou 5 para cancelar.";
+  await deps.atualizarSessao(sessao.id, sessao.status, s as never, r);
+  return { status: "pendente", resposta: r };
+}
+
+async function transicionarManual(
+  s: BoletoManualSession,
+  args: {
+    userId: string; msg: WhatsAppMessageRow; texto: string; recebidaEm: string;
+    sessao: { id: string; status: string; session: unknown; recebida_em: string };
+    deps: WhatsAppBoletoDeps;
+  },
+  override?: string,
+  prompt?: string,
+): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, sessao, deps } = args;
+  // Se não veio override, avança automaticamente para a próxima pergunta.
+  if (!override) {
+    if (s.valorCentavos == null) {
+      const r = "Qual é o valor desta conta? (ex.: R$ 120,00)";
+      await sessaoExpirar(sessao.id, deps);
+      await deps.gravarSessao(userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "bol_aguardando_valor", s as never, r);
+      return { status: "pendente", resposta: r };
+    }
+    if (!s.vencimentoISO) {
+      const r = "Qual é a data de vencimento? (ex.: 10/07/2026)";
+      await sessaoExpirar(sessao.id, deps);
+      await deps.gravarSessao(userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "bol_aguardando_vencimento", s as never, r);
+      return { status: "pendente", resposta: r };
+    }
+    if (!s.identificacao) {
+      const r = "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade";
+      await sessaoExpirar(sessao.id, deps);
+      await deps.gravarSessao(userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "bol_aguardando_identificacao", s as never, r);
+      return { status: "pendente", resposta: r };
+    }
+    const r = manualFallbackPrompt(s);
+    await sessaoExpirar(sessao.id, deps);
+    await deps.gravarSessao(userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "bol_aguardando_confirmacao_manual", s as never, r);
+    return { status: "pendente", resposta: r };
+  }
+  await sessaoExpirar(sessao.id, deps);
+  const r = prompt ?? manualFallbackPrompt(s);
+  await deps.gravarSessao(userId, msg.telefone, msg.external_id, texto, recebidaEm,
+    override, s as never, r);
+  return { status: "pendente", resposta: r };
+}
+
+async function sessaoExpirar(id: string, _deps: WhatsAppBoletoDeps): Promise<void> {
+  await supabaseAdmin.from("whatsapp_messages").update({ status: "expirada" }).eq("id", id);
+}
+
+async function persistirManual(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  session: BoletoManualSession;
+  sessaoId: string;
+  deps: WhatsAppBoletoDeps;
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, session, deps } = args;
+  if (session.valorCentavos == null || !session.vencimentoISO || !session.identificacao) {
+    return { status: "erro", resposta: "Não consegui montar essa conta. Vamos começar de novo?" };
+  }
+  // Claim atômico — bloqueia retries do webhook.
+  let claimSessionId: string | null = null;
+  if (msg.external_id) {
+    const claim = await deps.gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "bol_persistindo", session as never, "",
+    );
+    if (!claim?.ok || !claim.sessionId) {
+      return { status: "erro", resposta: "Já estou processando essa conta. Aguarde um instante." };
+    }
+    claimSessionId = claim.sessionId;
+  }
+  const [y, m] = session.vencimentoISO.split("-").map(Number);
+  const id = randomUUID();
+  const nowIso = new Date().toISOString();
+  const row = {
+    id,
+    user_id: userId,
+    nome: session.identificacao,
+    valor: session.valorCentavos / 100,
+    data_vencimento: session.vencimentoISO,
+    categoria_id: null,
+    observacao: null,
+    recorrente: false,
+    recorrencia_id: null,
+    frequencia_recorrencia: null,
+    data_inicio: null,
+    data_fim: null,
+    status: "pendente",
+    mes: m,
+    ano: y,
+    mes_referencia: `${y}-${String(m).padStart(2, "0")}`,
+    forma_pagamento: "boleto" as const,
+    fornecedor_id: null,
+    codigo_boleto: null,
+    created_at: nowIso,
+    updated_at: nowIso,
+  } as Record<string, unknown>;
+  const { error: insErr } = await supabaseAdmin.from("contas_a_pagar").insert([row]);
+  if (insErr) {
+    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
+  }
+  await deps.fecharSessoesAnteriores(userId, msg.telefone, "salva");
+  const finalSession: Record<string, unknown> = {
+    kind: "boleto_manual",
+    origem: session.origem,
+    valorCentavos: session.valorCentavos,
+    vencimentoISO: session.vencimentoISO,
+    identificacao: session.identificacao,
+    contaId: id,
+    status: "salva",
+  };
+  if (claimSessionId) {
+    await deps.atualizarSessao(claimSessionId, "salva", finalSession as never, "ok");
+  } else {
+    await deps.gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "salva", finalSession as never, "ok",
+    );
+  }
+  const vencFmt = formatDateBR(session.vencimentoISO);
+  const aviso = session.vencimentoISO < todayLocalISO()
+    ? `Conta marcada como pendente (vencida em ${vencFmt}). Confirme antes de pagar.`
+    : `Vencimento: ${vencFmt}.`;
+  return {
+    status: "salva",
+    resposta: [
+      "Pronto! Registrei sua conta a pagar ✅",
+      "(Sem código copiável — esse boleto entrou como conta manual.)",
       "",
       `${session.identificacao} — ${formatBRL(session.valorCentavos)}`,
       aviso,
