@@ -207,6 +207,8 @@ export type ParcelamentoSession = {
   manualCategoriaId?: string;
   manualCategoriaLabel?: string;
   categoriaOptions?: CategoriaPickerState;
+  // WA-F3.3-Fix-UX — ack transitório consumido na próxima prévia.
+  pendingCategoryAck?: string;
 };
 
 export function isParcelamentoSession(s: unknown): s is ParcelamentoSession {
@@ -658,6 +660,8 @@ async function handleCategoriaCmd(args: {
   session.manualCategoriaId = r.cat.id;
   session.manualCategoriaLabel = r.cat.nome;
   session.categoriaOptions = undefined;
+  // WA-F3.3-Fix-UX — sinaliza ack para a próxima prévia.
+  session.pendingCategoryAck = r.cat.nome;
   return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId });
 }
 
@@ -744,7 +748,7 @@ async function avancarFluxo(args: {
       sugestaoCat === "outros" ? "Outros" :
       sugestaoCat.charAt(0).toUpperCase() + sugestaoCat.slice(1);
   }
-  const resposta = previewMessage({
+  const previewBody = previewMessage({
     descricao: session.descricao,
     valorTotal: plano.total,
     totalParcelas: plano.totalParcelas,
@@ -752,6 +756,12 @@ async function avancarFluxo(args: {
     primeiraYm: plano.parcelas[0].invoiceMonth,
     categoria: categoriaLabel,
   });
+  // WA-F3.3-Fix-UX — consome ack pendente e prefixa a prévia.
+  const ack = session.pendingCategoryAck;
+  session.pendingCategoryAck = undefined;
+  const resposta = ack
+    ? `✓ Categoria atualizada para ${ack}.\n\n${previewBody}`
+    : previewBody;
   await persistTransition("parc_aguardando_confirmacao", session, resposta, sessaoId, args);
   logDecision({ stage: "awaiting_confirmation", installmentsCountPresent: true, cardMatchedCount: 1, result: "ok" });
   return { status: "aguardando_confirmacao", resposta };

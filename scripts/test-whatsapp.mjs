@@ -62,6 +62,7 @@ const INCLUDE = [
 
   "whatsapp-parcelamento.test.ts",
   "whatsapp-parcelamento-categoria-integracao.test.ts",
+  "whatsapp-parcelamento-categoria-ack.test.ts",
   "whatsapp-ux-c6.test.ts",
   "whatsapp-pix-favorecidos.test.ts",
   "whatsapp-pix-c72a.test.ts",
