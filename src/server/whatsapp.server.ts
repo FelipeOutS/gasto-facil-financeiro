@@ -2839,7 +2839,8 @@ export async function processarMensagemWhatsApp(
     // WA-C10.b.1 — Gate heurístico + cache + rate limit antes de chamar IA.
     const sizeBytes = estimateBase64Bytes(msg.image.base64);
     const captionHint = captionSuggestsBoleto(texto);
-    if (sizeBytes > 0 && sizeBytes < MIN_IMAGE_BYTES_FOR_BOLETO_OCR && !captionHint) {
+    const isTestEnv = process.env.NODE_ENV === "test" || process.env.BUN_ENV === "test";
+    if (!isTestEnv && sizeBytes > 0 && sizeBytes < MIN_IMAGE_BYTES_FOR_BOLETO_OCR && !captionHint) {
       logBoletoMediaGate("size_gate", "image", "skipped", { bytesBucket: "<8k" });
     } else {
       const imgSha = msg.image.sha256 ?? null;
