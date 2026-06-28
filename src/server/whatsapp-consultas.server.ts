@@ -497,6 +497,42 @@ async function handleListarGastosMes(userId: string): Promise<ConsultaResult> {
   };
 }
 
+async function handleGastosPorCategoriaMes(userId: string): Promise<ConsultaResult> {
+  const hoje = todayLocalISO();
+  const from = monthStartISO(hoje);
+  const to = addDaysISO(hoje, 1);
+  const [gastos, catMap] = await Promise.all([
+    loadGastos(userId, from, to),
+    loadCategoriasMap(userId),
+  ]);
+  const totals = new Map<string, { nome: string; valor: number; quantidade: number }>();
+  for (const g of gastos) {
+    const key = g.categoria_id ?? "__sem__";
+    const nome = key === "__sem__" ? "Outros" : (catMap.get(key) || "Outros");
+    const cur = totals.get(key) ?? { nome, valor: 0, quantidade: 0 };
+    cur.valor += Number(g.valor ?? 0) || 0;
+    cur.quantidade += 1;
+    totals.set(key, cur);
+  }
+  const itens = [...totals.values()]
+    .sort((a, b) => b.valor - a.valor)
+    .map((c) => ({
+      categoria: c.nome,
+      valor: formatBRL(c.valor),
+      quantidade: c.quantidade,
+    }));
+  const total = sumValor(gastos);
+  return {
+    status: "consulta",
+    resposta: M.consulta.gastosPorCategoriaMes({
+      mes: mesPorExtenso(hoje),
+      itens,
+      total: formatBRL(total),
+      totalRegistros: gastos.length,
+    }),
+  };
+}
+
 // =====================================================================
 // WA-G3 — Intenções conversacionais (saudação, menu, finanças genérico).
 // Não acessam banco. Não criam sessão. Não retornam dados financeiros.
