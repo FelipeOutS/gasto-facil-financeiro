@@ -151,6 +151,14 @@ import {
   processarPagarPessoaFlow,
   type WhatsAppPagarPessoaDeps,
 } from "./whatsapp-pagar-pessoa-flow.server";
+// WA-C10.a — Boleto por código/linha digitável (texto). Foto/PDF/OCR ficam para WA-C10.b.
+import {
+  BOLETO_PENDING_STATES,
+  detectBoletoIntent,
+  isBoletoSession,
+  processarBoleto,
+  type WhatsAppBoletoDeps,
+} from "./whatsapp-boleto-intents.server";
 
 // Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
 // precisa do orquestrador é exposto aqui de forma explícita, evitando que
@@ -223,6 +231,16 @@ const pagarPessoaDeps: WhatsAppPagarPessoaDeps = {
   fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
     fecharSessoesAnteriores(userId, telefone, motivo, gastoId),
   baixaContaDeps,
+};
+
+// WA-C10.a — DI seam para cadastro de boleto por texto.
+const boletoDeps: WhatsAppBoletoDeps = {
+  gravarSessao: (userId, telefone, externalId, texto, recebidaEm, status, session, resposta) =>
+    gravarSessao(userId, telefone, externalId, texto, recebidaEm, status, session, resposta),
+  atualizarSessao: (id, status, session, resposta) =>
+    atualizarSessao(id, status, session, resposta),
+  fecharSessoesAnteriores: (userId, telefone, motivo) =>
+    fecharSessoesAnteriores(userId, telefone, motivo),
 };
 
 
@@ -1149,6 +1167,8 @@ const PENDING_STATES = [
   // WA-C7.2.b — pagamento para pessoa (state machine completa).
   ...PAGAR_PESSOA_PENDING_STATES,
   ...RECEITA_PENDING_STATES,
+  // WA-C10.a — cadastro de boleto por texto.
+  ...BOLETO_PENDING_STATES,
 
   ...COMPROVANTE_PENDING_STATES,
 ];
@@ -2449,6 +2469,19 @@ export async function processarMensagemWhatsApp(
       deps: contaCriarDeps,
     });
   }
+
+  // ---- WA-C10.a: sessão ativa de BOLETO tem prioridade. ----
+  if (sessao && (
+    isBoletoSession(sessao.session) ||
+    (BOLETO_PENDING_STATES as readonly string[]).includes(sessao.status)
+  )) {
+    logWaRouteDecision(msg, "expense_parser", "active_boleto_session");
+    return await processarBoleto({
+      userId, msg, texto, recebidaEm, decisao, sessao,
+      deps: boletoDeps,
+    });
+  }
+
 
   // ---- WA-C3: sessão ativa de BAIXA DE CONTA tem prioridade. ----
   if (sessao && (
@@ -3812,6 +3845,25 @@ export async function processarMensagemWhatsApp(
       deps: parcelamentoDeps,
     });
   }
+
+  // WA-C10.a — Detecção de BOLETO por texto (código de barras / linha digitável).
+  // Vem antes dos detectores de edição/criação de conta para evitar que a
+  // sequência numérica seja interpretada como nome/valor. Estrita: requer
+  // DV válido (mod10 por campo + mod11 global em cobrança; mod10/mod11 em
+  // arrecadação), o que descarta CPF/CNPJ/telefone/cartão automaticamente.
+  if (decisao === "outro") {
+    const boletoParsed = detectBoletoIntent(texto);
+    if (boletoParsed) {
+      logWaRouteDecision(msg, "expense_parser", "new_boleto_intent");
+      return await processarBoleto({
+        userId, msg, texto, recebidaEm, decisao, sessao: null,
+        deps: boletoDeps,
+        parsed: boletoParsed,
+      });
+    }
+  }
+
+
 
   // WA-C2: detecção de CONTA A PAGAR / VENCIMENTO RECORRENTE antes do
   // parser de gasto comum. Estrita: bloqueia gastei/paguei/comprei,

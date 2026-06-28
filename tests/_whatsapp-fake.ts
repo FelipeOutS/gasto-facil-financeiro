@@ -98,6 +98,13 @@ const PENDING = [
   "pp_aguardando_confirmar_conta",
   "pp_aguardando_escolha_conta",
   "pp_persistindo",
+  // WA-C10.a — cadastro de boleto por texto.
+  "bol_aguardando_valor",
+  "bol_aguardando_vencimento",
+  "bol_aguardando_identificacao",
+  "bol_aguardando_confirmacao",
+  "bol_aguardando_duplicidade",
+  "bol_persistindo",
 ];
 
 
@@ -341,6 +348,10 @@ function makeBuilder(table: string): any {
       if (Array.isArray(ctx.filters?.id)) {
         const ids = ctx.filters.id as unknown[];
         base = base.filter((c) => ids.includes(c.id));
+      }
+      // WA-C10.a — dedup por código de boleto.
+      if (ctx.filters?.codigo_boleto !== undefined) {
+        base = base.filter((c) => c.codigo_boleto === ctx.filters.codigo_boleto);
       }
       const ranged = applyRangeFilters(base, ctx.range);
       if (ctx.single) return { data: ranged[0] ?? null, error: null };
