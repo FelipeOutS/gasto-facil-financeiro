@@ -310,6 +310,10 @@ export type WhatsAppMessageRow = {
   /** Anexo de imagem (Fase WA-G5A). Quando presente, dispara o fluxo
    *  de leitura de comprovante via OCR existente do site. */
   image?: ImageAttachment;
+  /** WA-C10.b — Anexo de documento (PDF). NUNCA reusar `image` para
+   *  representar PDF: tipos separados garantem que nenhuma rota de
+   *  comprovante/imagem capture um PDF por engano. */
+  document?: DocumentAttachment;
   /**
    * WA-B3.1 — identidade autorizada propagada pelo gate único
    * `canUseWhatsAppForSender`. Quando presente, o pipeline NÃO refaz
