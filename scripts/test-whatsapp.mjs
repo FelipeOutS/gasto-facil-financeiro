@@ -70,6 +70,7 @@ const INCLUDE = [
   "whatsapp-contas-lembretes-c9.test.ts",
   "whatsapp-c91-lifecycle.test.ts",
   "whatsapp-boleto-c10a.test.ts",
+  "whatsapp-boleto-c10a-1.test.ts",
   "free-ads-plan.test.ts",
 ];
 
