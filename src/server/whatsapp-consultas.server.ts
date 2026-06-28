@@ -102,10 +102,11 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
   }
 
   // ----- resumo do mês -----
+  // Nota: frases como "quanto gastei no mês" são totalizadoras de gastos
+  // e roteadas para listar_gastos_mes (mais específico), não para resumo.
   if (
     /\bresumo (do )?m[eê]s\b/.test(t) ||
     /\bcomo foi (o )?meu m[eê]s\b/.test(t) ||
-    /\bquanto (eu )?gastei (no )?m[eê]s\b/.test(t) ||
     /\bcomo est[aã]o (as )?minhas finan[cç]as\b/.test(t) ||
     /\bfinan[cç]as do m[eê]s\b/.test(t)
   ) {
