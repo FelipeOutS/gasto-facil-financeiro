@@ -41,6 +41,90 @@ const favoritoStore = new Map<string, FavorecidoEntry>();
 export function _resetShortContext(): void {
   store.clear();
   favoritoStore.clear();
+  lembreteStore.clear();
+}
+
+// =========================================================================
+// WA-C9 — Contexto curto de lembrete de conta a pagar.
+//
+// Quando o dispatcher envia um lembrete ("Hoje vence sua conta..."), o
+// servidor registra qual conta foi referenciada para que respostas como
+// "Paguei", "Adiar para sexta", "Ver detalhes" ou "Ignorar" sejam
+// interpretadas no contexto certo. Mesmo TTL/RAM da memória curta —
+// efêmero, sem PII em log, escopado por telefone.
+// =========================================================================
+const LEMBRETE_TTL_MS = 24 * 60 * 60 * 1000; // 24h: cobre janela 24h da Meta.
+
+export type LembreteContaContext = {
+  contaId: string;
+  notificationId: string;
+  nomeCurto?: string | null;
+  dueISO: string;
+};
+
+type LembreteEntry = LembreteContaContext & { at: number };
+const lembreteStore = new Map<string, LembreteEntry>();
+
+export function recordLembreteConta(
+  telefone: string,
+  ctx: LembreteContaContext,
+): void {
+  if (!telefone || !ctx?.contaId) return;
+  lembreteStore.set(telefone, { ...ctx, at: Date.now() });
+}
+
+export function getLembreteConta(
+  telefone: string,
+): LembreteContaContext | null {
+  const e = lembreteStore.get(telefone);
+  if (!e) return null;
+  if (Date.now() - e.at > LEMBRETE_TTL_MS) {
+    lembreteStore.delete(telefone);
+    return null;
+  }
+  const { at: _at, ...rest } = e;
+  void _at;
+  return rest;
+}
+
+export function clearLembreteConta(telefone: string): void {
+  lembreteStore.delete(telefone);
+}
+
+export type LembreteResponseKind =
+  | { kind: "paguei" }
+  | { kind: "adiar"; novaData: string | null }
+  | { kind: "detalhes" }
+  | { kind: "ignorar" };
+
+const RE_PAGUEI =
+  /^\s*(?:1\.?|paguei|j[aá]\s+paguei|quitei|marcar\s+como\s+paga|pagou|pago)\b/i;
+const RE_ADIAR = /^\s*(?:2\.?|adiar|postergar|adia)\b/i;
+const RE_DETALHES = /^\s*(?:3\.?|ver\s+detalhes|detalhes?)\b/i;
+const RE_IGNORAR = /^\s*(?:4\.?|ignorar|ignora|depois)\b/i;
+
+/**
+ * Interpreta a resposta do usuário a um lembrete. Retorna `null` se não há
+ * lembrete ativo OU se o texto não casa com nenhum dos atalhos esperados.
+ *
+ * Não altera estado financeiro — apenas classifica.
+ */
+export function resolveLembreteResposta(
+  telefone: string,
+  texto: string,
+): LembreteResponseKind | null {
+  const ctx = getLembreteConta(telefone);
+  if (!ctx) return null;
+  const raw = (texto ?? "").trim();
+  if (!raw) return null;
+  if (RE_PAGUEI.test(raw)) return { kind: "paguei" };
+  if (RE_ADIAR.test(raw)) {
+    const m = raw.match(/para\s+(.+)$/i);
+    return { kind: "adiar", novaData: m ? m[1].trim() : null };
+  }
+  if (RE_DETALHES.test(raw)) return { kind: "detalhes" };
+  if (RE_IGNORAR.test(raw)) return { kind: "ignorar" };
+  return null;
 }
 
 export function recordFavorecido(telefone: string, nome: string): void {

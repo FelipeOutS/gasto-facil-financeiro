@@ -51,6 +51,9 @@ import {
   resolveOrdinal as shortResolveOrdinal,
   clear as shortClear,
   resolvePagueiSemNome as shortResolvePagueiSemNome,
+  resolveLembreteResposta as shortResolveLembreteResposta,
+  getLembreteConta as shortGetLembreteConta,
+  clearLembreteConta as shortClearLembreteConta,
 } from "./whatsapp-short-context.server";
 import {
   detectConsultaEspecifica,
@@ -3007,6 +3010,50 @@ export async function processarMensagemWhatsApp(
       }
       if (dispatch?.kind === "rewrite") {
         texto = dispatch.texto;
+      }
+    }
+  }
+
+  // ---- WA-C9: ponte de respostas a lembretes de contas a pagar ----
+  // Se há um lembrete ativo (TTL 24h) e o usuário disse "paguei", "adiar",
+  // "ver detalhes" ou "ignorar", reescrevemos o texto para a frase canônica
+  // que `processarBaixaConta` / edição de vencimento já entendem. Mantém o
+  // fluxo de baixa intacto e sem lógica duplicada.
+  if (!sessao && decisao === "outro") {
+    const lembReply = shortResolveLembreteResposta(msg.telefone, texto);
+    const lembCtx = lembReply ? shortGetLembreteConta(msg.telefone) : null;
+    if (lembReply && lembCtx) {
+      const ref = (lembCtx.nomeCurto && lembCtx.nomeCurto.trim()) || "a conta";
+      if (lembReply.kind === "paguei") {
+        texto = `paguei ${ref}`;
+        shortClearLembreteConta(msg.telefone);
+      } else if (lembReply.kind === "adiar") {
+        const destino = lembReply.novaData?.trim();
+        texto = destino ? `adiar ${ref} para ${destino}` : `adiar ${ref}`;
+        shortClearLembreteConta(msg.telefone);
+      } else if (lembReply.kind === "ignorar") {
+        shortClearLembreteConta(msg.telefone);
+        const resposta = "Tudo bem, deixei o lembrete de lado.";
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "sem_pendencia",
+          { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+          resposta,
+        );
+        return { status: "sem_pendencia", resposta };
+      } else if (lembReply.kind === "detalhes") {
+        const resposta =
+          `Detalhes da conta:\n` +
+          `• Vencimento: ${lembCtx.dueISO}\n` +
+          (lembCtx.nomeCurto ? `• Nome: ${lembCtx.nomeCurto}\n` : "") +
+          `\nResponda "1 - Paguei" para dar baixa, "2 - Adiar para <data>" para reagendar ou "4 - Ignorar".`;
+        await gravarSessao(
+          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          "sem_pendencia",
+          { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+          resposta,
+        );
+        return { status: "sem_pendencia", resposta };
       }
     }
   }
