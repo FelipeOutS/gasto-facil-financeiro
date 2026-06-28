@@ -292,6 +292,68 @@ export async function cancelarLembretesDaConta(
   });
 }
 
+// =========================================================================
+// WA-C9.1 — Rechecagem final do dispatcher.
+// Antes de marcar `would_send` ou de fato enviar, o dispatcher consulta a
+// conta vinculada à notificação e confirma que ela ainda está elegível.
+// Retorna { ok: true } quando segue ou { ok: false, reason } com motivo
+// seguro para `markSkipped`. Sem PII em log.
+// =========================================================================
+export type RevalidateReason =
+  | "payable_paid"
+  | "payable_cancelled"
+  | "payable_changed"
+  | "payable_not_found";
+
+export interface NotificationLike {
+  user_id: string;
+  category: string;
+  entity_type: string | null;
+  entity_id: string | null;
+  payload: Record<string, unknown>;
+}
+
+export async function revalidateContaForDispatch(
+  n: NotificationLike,
+  deps?: LembretesDeps,
+): Promise<{ ok: true } | { ok: false; reason: RevalidateReason }> {
+  if (n.category !== "contas_a_pagar") return { ok: true };
+  const contaId = n.entity_id ?? (n.payload?.conta_id as string | undefined) ?? null;
+  if (!contaId || !n.user_id) return { ok: false, reason: "payable_not_found" };
+
+  const c = client(deps);
+  const { data, error } = await c
+    .from("contas_a_pagar")
+    .select("id, status, data_vencimento, valor, user_id")
+    .eq("id", contaId)
+    .eq("user_id", n.user_id)
+    .maybeSingle();
+
+  if (error || !data) return { ok: false, reason: "payable_not_found" };
+  const row = data as {
+    status?: string | null;
+    data_vencimento?: string | null;
+    valor?: number | string | null;
+  };
+  const status = String(row.status ?? "");
+  if (status === "pago") return { ok: false, reason: "payable_paid" };
+  if (status === "cancelado") return { ok: false, reason: "payable_cancelled" };
+  if (status !== "pendente") return { ok: false, reason: "payable_cancelled" };
+
+  const expectedDue = (n.payload?.due_date as string | undefined) ?? null;
+  if (expectedDue && row.data_vencimento && expectedDue !== row.data_vencimento) {
+    return { ok: false, reason: "payable_changed" };
+  }
+  const expectedCentavos = Number(n.payload?.valor_centavos ?? NaN);
+  if (Number.isFinite(expectedCentavos)) {
+    const actualCentavos = Math.max(0, Math.round(Number(row.valor ?? 0) * 100));
+    if (expectedCentavos !== actualCentavos) {
+      return { ok: false, reason: "payable_changed" };
+    }
+  }
+  return { ok: true };
+}
+
 // ---------- Renderização (usada pelo dispatcher na hora do envio) ----------
 
 export interface RenderInput {
