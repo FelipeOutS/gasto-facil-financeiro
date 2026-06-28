@@ -2759,7 +2759,7 @@ export async function processarMensagemWhatsApp(
     // WA-C10.b.1 — TENTATIVA 1: extração textual local (sem IA).
     const fullBytes = decodeBase64Full(msg.document.base64);
     if (fullBytes) {
-      const localCandidates = extractBoletoCandidatesFromPdf(fullBytes);
+      const localCandidates = await extractBoletoCandidatesFromPdfAsync(fullBytes);
       const validados = [];
       const seen = new Set<string>();
       for (const c of localCandidates) {
