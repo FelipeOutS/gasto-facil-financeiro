@@ -1,0 +1,1 @@
+UPDATE public.whatsapp_messages SET status = 'cancelada', updated_at = now() WHERE id = '72cc3deb-01cc-4883-9cc4-cd8ba0ef8cf3' AND status = 'aguardando_descricao_e_valor_gasto';
