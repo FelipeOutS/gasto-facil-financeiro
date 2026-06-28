@@ -201,7 +201,7 @@ describe("WA-C10.a.1 — menu/ajuda em sessão ativa", () => {
       const row = i.row as { status?: string; parsed?: { kind?: string } };
       return row.status === "cancelada" && row.parsed?.kind === "boleto";
     });
-    console.log("DEBUG inserts:", JSON.stringify(state.inserts.filter(i=>i.table==="whatsapp_messages").map(i=>({status:(i.row as any).status, kind:(i.row as any).parsed?.kind, cb:(i.row as any).parsed?.codigoBarras}))));expect(finalBoletoMsgs.length).toBeGreaterThan(0);
+    expect(finalBoletoMsgs.length).toBeGreaterThan(0);
     for (const m of finalBoletoMsgs) {
       const parsed = (m.row as { parsed?: { codigoBarras?: string } }).parsed ?? {};
       expect(parsed.codigoBarras).toBe("");
