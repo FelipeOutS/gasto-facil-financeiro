@@ -98,8 +98,8 @@ describe("WA-C10.b.2 — extractBoletoCandidatesFromPdfAsync (FlateDecode)", () 
   });
 
   it("encontra código de barras (44 dígitos) dentro de stream FlateDecode", async () => {
-    const { codigoBarras } = _buildBoletoCobrancaForTest({ valorCentavos: 5000, fator: 9200 });
-    const pdf = buildFlatePdf(`BT (Pague ${codigoBarras} hoje) Tj ET`);
+    const { barcode } = _buildBoletoCobrancaForTest({ valorCentavos: 5000, fator: 9200 });
+    const pdf = buildFlatePdf(`BT (Pague ${barcode} hoje) Tj ET`);
     const out = await extractBoletoCandidatesFromPdfAsync(new Uint8Array(pdf));
     const validados = out.map(tryParseBoleto).filter((p) => p !== null);
     expect(validados.length).toBeGreaterThanOrEqual(1);
