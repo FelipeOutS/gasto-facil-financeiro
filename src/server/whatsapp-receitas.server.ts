@@ -259,40 +259,11 @@ function addMonthsKeepDay(iso: string, monthsAdd: number, dia: number): string {
   return `${target.getUTCFullYear()}-${String(target.getUTCMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-function gerarDatasRecorrencia(s: ReceitaSession): string[] {
-  const COUNT = 12;
-  const hoje = todayLocalISO();
-  if (s.frequencia === "mensal") {
-    const dia = s.diaMes ?? Number(hoje.slice(8));
-    // primeira ocorrência: este mês (se dia ainda não passou) ou próximo
-    const [y, m] = hoje.slice(0, 7).split("-").map(Number);
-    const lastDayThis = new Date(Date.UTC(y, m, 0)).getUTCDate();
-    const diaThis = Math.min(dia, lastDayThis);
-    const firstThis = `${y}-${String(m).padStart(2, "0")}-${String(diaThis).padStart(2, "0")}`;
-    const startMonthsAhead = firstThis < hoje ? 1 : 0;
-    const out: string[] = [];
-    for (let i = 0; i < COUNT; i++) out.push(addMonthsKeepDay(hoje, startMonthsAhead + i, dia));
-    return out;
-  }
-  if (s.frequencia === "semanal") {
-    const dow = s.diaSemana ?? new Date().getUTCDay();
-    let cur = nextWeekday(hoje, dow);
-    const out: string[] = [];
-    for (let i = 0; i < COUNT; i++) {
-      out.push(cur);
-      cur = addDays(cur, 7);
-    }
-    return out;
-  }
-  // quinzenal: a partir de hoje, a cada 15 dias
-  const out: string[] = [];
-  let cur = hoje;
-  for (let i = 0; i < COUNT; i++) {
-    out.push(cur);
-    cur = addDays(cur, 15);
-  }
-  return out;
-}
+// WA-R1-Fix: a função `gerarDatasRecorrencia` foi removida. A criação de
+// receitas recorrentes agora é feita atomicamente pela RPC
+// `create_recurring_income`, que cria 1 receita atual + 1 recorrência ativa
+// (sem pré-projeção de 12 meses).
+
 
 export function resumoRecorrencia(s: ReceitaSession): string {
   if (!s.recorrente) return "Não";
