@@ -349,6 +349,10 @@ function makeBuilder(table: string): any {
         const ids = ctx.filters.id as unknown[];
         base = base.filter((c) => ids.includes(c.id));
       }
+      // WA-C10.a — dedup por código de boleto.
+      if (ctx.filters?.codigo_boleto !== undefined) {
+        base = base.filter((c) => c.codigo_boleto === ctx.filters.codigo_boleto);
+      }
       const ranged = applyRangeFilters(base, ctx.range);
       if (ctx.single) return { data: ranged[0] ?? null, error: null };
       return { data: ranged, error: null };
