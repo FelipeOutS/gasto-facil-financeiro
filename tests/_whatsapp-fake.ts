@@ -98,6 +98,13 @@ const PENDING = [
   "pp_aguardando_confirmar_conta",
   "pp_aguardando_escolha_conta",
   "pp_persistindo",
+  // WA-C10.a — cadastro de boleto por texto.
+  "bol_aguardando_valor",
+  "bol_aguardando_vencimento",
+  "bol_aguardando_identificacao",
+  "bol_aguardando_confirmacao",
+  "bol_aguardando_duplicidade",
+  "bol_persistindo",
 ];
 
 
