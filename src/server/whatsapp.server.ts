@@ -2854,6 +2854,7 @@ export async function processarMensagemWhatsApp(
           scope: "whatsappBoletoOcr",
           userId,
           route: "whatsapp/boleto-ocr-image",
+          failMode: "closed",
         });
         if (limited) {
           logBoletoMediaGate("rate_limit", "image", "blocked");
