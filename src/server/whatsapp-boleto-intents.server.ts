@@ -252,9 +252,9 @@ export async function processarBoleto(args: {
   const tLower = t.toLowerCase();
   const hardCancel = decisao === "cancel" || /^(5|cancelar|cancela|cancelado|cancelada)$/i.test(t);
 
-  // ---- WA-C10.a.1: menu/ajuda em sessão ativa não perdem dados ----
-  if (sessao && isBoletoSession(sessao.session) && !hardCancel) {
-    const session = sessao.session as BoletoSession;
+  // ---- WA-C10.a.1 / WA-C10.b: menu/ajuda em sessão ativa não perdem dados ----
+  if (sessao && isAnyBoletoSession(sessao.session) && !hardCancel) {
+    const session = sessao.session as { kind: string };
     const isAjuda = /^(ajuda|help|comandos|\?)$/i.test(tLower);
     const isMenu = /^menu$/i.test(tLower);
     if (isAjuda) {
@@ -282,18 +282,26 @@ export async function processarBoleto(args: {
     }
   }
 
-  // Cancelamento em qualquer estado de boleto.
-  if (sessao && isBoletoSession(sessao.session) && hardCancel) {
-    const original = sessao.session as BoletoSession;
-    // WA-C10.a.1: limpa código bruto antes de persistir a sessão final cancelada.
-    const sanitized: BoletoSession = { ...original, codigoBarras: "" };
+  // Cancelamento em qualquer estado de boleto (texto, seleção ou manual).
+  if (sessao && isAnyBoletoSession(sessao.session) && hardCancel) {
+    const original = sessao.session as Record<string, unknown>;
+    // WA-C10.a.1 / WA-C10.b: limpa quaisquer códigos brutos.
+    const sanitized: Record<string, unknown> = { ...original };
+    if (isBoletoSession(original)) sanitized.codigoBarras = "";
+    if (isBoletoSelecaoSession(original)) {
+      sanitized.candidatos = original.candidatos.map((c) => ({
+        fingerprint: c.fingerprint, mascara: c.mascara, tipo: c.tipo,
+        valorCentavos: c.valorCentavos, vencimentoISO: c.vencimentoISO,
+      }));
+    }
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     const r = "Cadastro do boleto cancelado. 👍";
     await deps.gravarSessao(
       userId, msg.telefone, msg.external_id, texto, recebidaEm,
       "cancelada", sanitized as never, r,
     );
-    logBoleto("cancelled", original.fingerprint, "ok");
+    const fp = isBoletoSession(original) ? original.fingerprint : "n/a";
+    logBoleto("cancelled", fp, "ok");
     return { status: "cancelada", resposta: r };
   }
 
