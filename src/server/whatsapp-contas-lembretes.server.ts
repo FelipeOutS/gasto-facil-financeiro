@@ -292,6 +292,163 @@ export async function cancelarLembretesDaConta(
   });
 }
 
+// =========================================================================
+// WA-C9.1 — Rechecagem final do dispatcher.
+// Antes de marcar `would_send` ou de fato enviar, o dispatcher consulta a
+// conta vinculada à notificação e confirma que ela ainda está elegível.
+// Retorna { ok: true } quando segue ou { ok: false, reason } com motivo
+// seguro para `markSkipped`. Sem PII em log.
+// =========================================================================
+export type RevalidateReason =
+  | "payable_paid"
+  | "payable_cancelled"
+  | "payable_changed"
+  | "payable_not_found";
+
+export interface NotificationLike {
+  user_id: string;
+  category: string;
+  entity_type: string | null;
+  entity_id: string | null;
+  payload: Record<string, unknown>;
+}
+
+export async function revalidateContaForDispatch(
+  n: NotificationLike,
+  deps?: LembretesDeps,
+): Promise<{ ok: true } | { ok: false; reason: RevalidateReason }> {
+  if (n.category !== "contas_a_pagar") return { ok: true };
+  const contaId = n.entity_id ?? (n.payload?.conta_id as string | undefined) ?? null;
+  if (!contaId || !n.user_id) return { ok: false, reason: "payable_not_found" };
+
+  const c = client(deps);
+  const { data, error } = await c
+    .from("contas_a_pagar")
+    .select("id, status, data_vencimento, valor, user_id")
+    .eq("id", contaId)
+    .eq("user_id", n.user_id)
+    .maybeSingle();
+
+  if (error || !data) return { ok: false, reason: "payable_not_found" };
+  const row = data as {
+    status?: string | null;
+    data_vencimento?: string | null;
+    valor?: number | string | null;
+  };
+  const status = String(row.status ?? "");
+  if (status === "pago") return { ok: false, reason: "payable_paid" };
+  if (status === "cancelado") return { ok: false, reason: "payable_cancelled" };
+  if (status !== "pendente") return { ok: false, reason: "payable_cancelled" };
+
+  const expectedDue = (n.payload?.due_date as string | undefined) ?? null;
+  if (expectedDue && row.data_vencimento && expectedDue !== row.data_vencimento) {
+    return { ok: false, reason: "payable_changed" };
+  }
+  const expectedCentavos = Number(n.payload?.valor_centavos ?? NaN);
+  if (Number.isFinite(expectedCentavos)) {
+    const actualCentavos = Math.max(0, Math.round(Number(row.valor ?? 0) * 100));
+    if (expectedCentavos !== actualCentavos) {
+      return { ok: false, reason: "payable_changed" };
+    }
+  }
+  return { ok: true };
+}
+
+// =========================================================================
+// WA-C9.1 — Fallback persistente após restart do servidor.
+//
+// Se a RAM da memória curta foi limpa (deploy/restart) e o usuário responde
+// "Paguei", "Adiar", "Ver detalhes" ou "Ignorar" sem reply_to nativo, o
+// servidor consulta `whatsapp_notifications` para recuperar o contexto.
+//
+// Regras de segurança:
+//  - Filtro estrito por `user_id` (nunca cruza usuários).
+//  - Considera apenas categoria `contas_a_pagar` enviadas (`status='sent'`)
+//    nas últimas LEMBRETE_FALLBACK_TTL_HOURS horas (24h: alinhado à janela
+//    da Meta e ao TTL da RAM).
+//  - Se houver mais de uma entidade distinta → retorna `ambiguous`.
+//  - Se providerMessageId for fornecido, tem prioridade absoluta.
+//  - Sem PII em log.
+// =========================================================================
+const LEMBRETE_FALLBACK_TTL_HOURS = 24;
+
+export type RecentLembreteLookup =
+  | { kind: "single"; contaId: string; notificationId: string; nomeCurto: string | null; dueISO: string }
+  | { kind: "ambiguous"; count: number }
+  | { kind: "none" };
+
+export interface RecentLembreteDeps {
+  client?: typeof supabaseAdmin;
+  now?: () => Date;
+}
+
+export async function findRecentSentLembreteForUser(
+  userId: string,
+  opts: { providerMessageId?: string | null } = {},
+  deps?: RecentLembreteDeps,
+): Promise<RecentLembreteLookup> {
+  if (!userId) return { kind: "none" };
+  const c = deps?.client ?? supabaseAdmin;
+  const now = deps?.now?.() ?? new Date();
+  const since = new Date(now.getTime() - LEMBRETE_FALLBACK_TTL_HOURS * 3600_000);
+
+  // 1) Prioridade: reply_to nativo.
+  const pmid = (opts.providerMessageId ?? "").trim();
+  if (pmid) {
+    const { data } = await c
+      .from("whatsapp_notifications")
+      .select("id, user_id, entity_id, payload, sent_at, category")
+      .eq("user_id", userId)
+      .eq("provider_message_id", pmid)
+      .maybeSingle();
+    const row = data as {
+      id?: string; entity_id?: string | null; payload?: Record<string, unknown> | null; sent_at?: string | null; category?: string | null;
+    } | null;
+    if (row && row.category === "contas_a_pagar" && row.entity_id) {
+      const sentAt = row.sent_at ? new Date(row.sent_at) : null;
+      if (sentAt && sentAt >= since) {
+        return {
+          kind: "single",
+          contaId: row.entity_id,
+          notificationId: row.id ?? "",
+          nomeCurto: null,
+          dueISO: String(row.payload?.due_date ?? ""),
+        };
+      }
+    }
+  }
+
+  // 2) Caso contrário, lembretes enviados recentemente para o mesmo usuário.
+  const { data } = await c
+    .from("whatsapp_notifications")
+    .select("id, entity_id, payload, sent_at")
+    .eq("user_id", userId)
+    .eq("category", "contas_a_pagar")
+    .eq("status", "sent")
+    .gte("sent_at", since.toISOString())
+    .order("sent_at", { ascending: false })
+    .limit(20);
+  const rows = (Array.isArray(data) ? data : []) as Array<{
+    id: string; entity_id: string | null; payload: Record<string, unknown> | null; sent_at: string | null;
+  }>;
+  if (rows.length === 0) return { kind: "none" };
+  const distinct = new Map<string, { id: string; payload: Record<string, unknown> | null }>();
+  for (const r of rows) {
+    if (!r.entity_id) continue;
+    if (!distinct.has(r.entity_id)) distinct.set(r.entity_id, { id: r.id, payload: r.payload });
+  }
+  if (distinct.size === 0) return { kind: "none" };
+  if (distinct.size > 1) return { kind: "ambiguous", count: distinct.size };
+  const [contaId, info] = distinct.entries().next().value as [string, { id: string; payload: Record<string, unknown> | null }];
+  return {
+    kind: "single",
+    contaId,
+    notificationId: info.id,
+    nomeCurto: null,
+    dueISO: String(info.payload?.due_date ?? ""),
+  };
+}
+
 // ---------- Renderização (usada pelo dispatcher na hora do envio) ----------
 
 export interface RenderInput {

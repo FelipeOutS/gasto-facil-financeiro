@@ -54,7 +54,9 @@ import {
   resolveLembreteResposta as shortResolveLembreteResposta,
   getLembreteConta as shortGetLembreteConta,
   clearLembreteConta as shortClearLembreteConta,
+  parseLembreteCommand as shortParseLembreteCommand,
 } from "./whatsapp-short-context.server";
+import { findRecentSentLembreteForUser } from "./whatsapp-contas-lembretes.server";
 import {
   detectConsultaEspecifica,
   handleConsultaEspecifica,
@@ -3019,9 +3021,43 @@ export async function processarMensagemWhatsApp(
   // "ver detalhes" ou "ignorar", reescrevemos o texto para a frase canônica
   // que `processarBaixaConta` / edição de vencimento já entendem. Mantém o
   // fluxo de baixa intacto e sem lógica duplicada.
+  //
+  // WA-C9.1 — quando a RAM está vazia (restart/deploy) mas o texto casa com
+  // um atalho de lembrete, consulta o banco em busca de uma única notificação
+  // recente (`status='sent'`, últimas 24h) e usa esse contexto. Se houver
+  // ambiguidade, pede desambiguação ao invés de baixar conta às cegas.
   if (!sessao && decisao === "outro") {
-    const lembReply = shortResolveLembreteResposta(msg.telefone, texto);
-    const lembCtx = lembReply ? shortGetLembreteConta(msg.telefone) : null;
+    let lembReply = shortResolveLembreteResposta(msg.telefone, texto);
+    let lembCtx: { contaId: string; notificationId: string; nomeCurto?: string | null; dueISO: string } | null =
+      lembReply ? shortGetLembreteConta(msg.telefone) : null;
+
+    // Fallback persistente.
+    if (!lembReply || !lembCtx) {
+      const parsed = shortParseLembreteCommand(texto);
+      if (parsed) {
+        const found = await findRecentSentLembreteForUser(userId).catch(() => ({ kind: "none" as const }));
+        if (found.kind === "ambiguous") {
+          const resposta = "Você recebeu lembretes de mais de uma conta recentemente. Qual delas você pagou? Envie \"minhas contas\" para ver suas pendências.";
+          await gravarSessao(
+            userId, msg.telefone, msg.external_id, texto, recebidaEm,
+            "sem_pendencia",
+            { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+            resposta,
+          );
+          return { status: "sem_pendencia", resposta };
+        }
+        if (found.kind === "single") {
+          lembReply = parsed;
+          lembCtx = {
+            contaId: found.contaId,
+            notificationId: found.notificationId,
+            nomeCurto: found.nomeCurto,
+            dueISO: found.dueISO,
+          };
+        }
+      }
+    }
+
     if (lembReply && lembCtx) {
       const ref = (lembCtx.nomeCurto && lembCtx.nomeCurto.trim()) || "a conta";
       if (lembReply.kind === "paguei") {

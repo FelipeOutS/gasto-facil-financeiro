@@ -115,6 +115,15 @@ export function resolveLembreteResposta(
 ): LembreteResponseKind | null {
   const ctx = getLembreteConta(telefone);
   if (!ctx) return null;
+  return parseLembreteCommand(texto);
+}
+
+/**
+ * WA-C9.1 — parser puro: classifica o texto como atalho de lembrete,
+ * sem consultar RAM nem banco. Permite que o fallback persistente reuse
+ * a mesma classificação.
+ */
+export function parseLembreteCommand(texto: string): LembreteResponseKind | null {
   const raw = (texto ?? "").trim();
   if (!raw) return null;
   if (RE_PAGUEI.test(raw)) return { kind: "paguei" };

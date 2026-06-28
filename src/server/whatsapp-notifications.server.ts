@@ -39,7 +39,12 @@ export type SkippedReason =
   | "quiet_hours"
   | "no_session_window"
   | "template_missing"
-  | "user_disabled";
+  | "user_disabled"
+  // WA-C9.1 — motivos de invalidação da entidade vinculada (contas a pagar).
+  | "payable_paid"
+  | "payable_cancelled"
+  | "payable_changed"
+  | "payable_not_found";
 
 export interface EnqueueInput {
   userId: string;
@@ -242,8 +247,15 @@ export async function markFailed(
     patch.status = "failed";
     patch.failed_at = new Date().toISOString();
   }
+  // WA-C9.1 — nunca ressuscita notificação que outro caminho já invalidou.
+  // O filtro `.in("status", ["pending", "processing", "failed"])` garante
+  // que `cancelled`/`skipped`/`sent` permaneçam terminais.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await c.from("whatsapp_notifications").update(patch as any).eq("id", id);
+  await c
+    .from("whatsapp_notifications")
+    .update(patch as any)
+    .eq("id", id)
+    .in("status", ["pending", "processing", "failed"]);
   return { scheduledRetry: canRetry };
 }
 

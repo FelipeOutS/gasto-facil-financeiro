@@ -611,6 +611,19 @@ async function applyUpdate(
     const { data, error } = await q;
     if (error) return { ok: false, affected: 0, error: "db_error" };
     const arr = Array.isArray(data) ? data : data ? [data] : [];
+    // WA-C9.1 — invalida lembretes pendentes quando:
+    //   - a conta foi cancelada;
+    //   - o vencimento mudou (dedupeKey antiga contém a data velha);
+    //   - o valor mudou (payload de centavos ficaria desatualizado).
+    // Edição de nome/categoria NÃO invalida (não constam no payload do
+    // lembrete; o nome final é resolvido no envio).
+    if (arr.length > 0 && sess.contaId &&
+        (sess.kind === "cancelamento_conta" || sess.operation === "due_date" || sess.operation === "amount")) {
+      try {
+        const { cancelarLembretesDaConta } = await import("./whatsapp-contas-lembretes.server");
+        await cancelarLembretesDaConta(userId, sess.contaId);
+      } catch { /* best-effort */ }
+    }
     return { ok: arr.length > 0, affected: arr.length };
   }
 
@@ -631,6 +644,17 @@ async function applyUpdate(
   const { data, error } = await q;
   if (error) return { ok: false, affected: 0, error: "db_error" };
   const arr = Array.isArray(data) ? data : data ? [data] : [];
+  // WA-C9.1 — invalida lembretes pendentes de cada conta atingida.
+  if (arr.length > 0 &&
+      (sess.kind === "cancelamento_conta" || sess.operation === "due_date" || sess.operation === "amount")) {
+    try {
+      const { cancelarLembretesDaConta } = await import("./whatsapp-contas-lembretes.server");
+      for (const row of arr) {
+        const id = (row as { id?: string } | null)?.id;
+        if (id) await cancelarLembretesDaConta(userId, id);
+      }
+    } catch { /* best-effort */ }
+  }
   return { ok: arr.length > 0, affected: arr.length };
 }
 
