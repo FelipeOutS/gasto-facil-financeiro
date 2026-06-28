@@ -1936,6 +1936,28 @@ function coerceConfiancaForDb(value: unknown): number | null {
   return null;
 }
 
+// WA-C10.b — utilidades de validação de mídia (magic bytes). NUNCA persistem
+// nem logam o conteúdo: lêem só os primeiros bytes da data URL em memória.
+function decodeBase64Head(dataUrl: string, nBytes: number): Uint8Array | null {
+  if (typeof dataUrl !== "string") return null;
+  const comma = dataUrl.indexOf(",");
+  const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+  // Pega só o suficiente para os magic bytes (cada 4 chars b64 = 3 bytes).
+  const chunk = b64.slice(0, Math.ceil((nBytes * 4) / 3) + 4);
+  try {
+    const bin = typeof atob === "function" ? atob(chunk) : Buffer.from(chunk, "base64").toString("binary");
+    const out = new Uint8Array(Math.min(bin.length, nBytes));
+    for (let i = 0; i < out.length; i++) out[i] = bin.charCodeAt(i) & 0xff;
+    return out;
+  } catch {
+    return null;
+  }
+}
+function looksLikePdfMagic(buf: Uint8Array): boolean {
+  // %PDF-
+  return buf.length >= 5 && buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46 && buf[4] === 0x2d;
+}
+
 export type SaveSessionResult = {
   ok: boolean;
   sessionId: string | null;
