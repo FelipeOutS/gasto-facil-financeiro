@@ -336,7 +336,23 @@ function makeBuilder(table: string): any {
       return { data: applyRangeFilters(base, ctx.range), error: null };
     }
     if (table === "receitas") {
-      return { data: applyRangeFilters(state.receitasData, ctx.range), error: null };
+      const idF = ctx.filters?.id;
+      const uid = ctx.filters?.user_id;
+      let base = state.receitasData as Array<Record<string, unknown>>;
+      if (idF !== undefined) base = base.filter((r) => r.id === idF);
+      if (uid !== undefined) base = base.filter((r) => r.user_id === undefined || r.user_id === uid);
+      const ranged = applyRangeFilters(base, ctx.range);
+      if (ctx.single) return { data: ranged[0] ?? null, error: null };
+      return { data: ranged, error: null };
+    }
+    if (table === "recorrencias") {
+      const idF = ctx.filters?.id;
+      const uid = ctx.filters?.user_id;
+      let base = state.recorrenciasData as Array<Record<string, unknown>>;
+      if (idF !== undefined) base = base.filter((r) => r.id === idF);
+      if (uid !== undefined) base = base.filter((r) => r.user_id === undefined || r.user_id === uid);
+      if (ctx.single) return { data: base[0] ?? null, error: null };
+      return { data: base, error: null };
     }
     if (table === "contas_a_pagar") {
       const uid = ctx.filters?.user_id;
