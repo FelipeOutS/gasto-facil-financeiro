@@ -167,7 +167,7 @@ export function userRateLimitedResponse(retryAfterSeconds: number): Response {
  *      if (blocked) return blocked;  // (em server route)
  */
 export async function enforceUserRateLimit(params: {
-  scope: "ai" | "import" | "flyerOcr" | "onlineImport";
+  scope: "ai" | "import" | "flyerOcr" | "onlineImport" | "whatsappBoletoOcr";
   userId: string;
   route: string;
   request?: Request;
@@ -179,7 +179,9 @@ export async function enforceUserRateLimit(params: {
         ? RATE_LIMIT_PRESETS.flyerOcrPerUser
         : params.scope === "onlineImport"
           ? RATE_LIMIT_PRESETS.onlineImportPerUser
-          : RATE_LIMIT_PRESETS.importPerUser;
+          : params.scope === "whatsappBoletoOcr"
+            ? RATE_LIMIT_PRESETS.whatsappBoletoOcrPerUser
+            : RATE_LIMIT_PRESETS.importPerUser;
   const ip = params.request ? getClientIp(params.request) : null;
   const ua = params.request?.headers.get("user-agent") ?? null;
 
