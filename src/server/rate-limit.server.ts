@@ -50,6 +50,8 @@ export type CheckRateLimitResult = {
   count: number;
   limit: number;
   retryAfterSeconds: number;
+  /** WA-C10.b.2 — true quando a checagem falhou no banco (DB indisponível). */
+  dbError?: boolean;
 };
 
 /**
