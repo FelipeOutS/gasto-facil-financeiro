@@ -39,7 +39,12 @@ export type SkippedReason =
   | "quiet_hours"
   | "no_session_window"
   | "template_missing"
-  | "user_disabled";
+  | "user_disabled"
+  // WA-C9.1 — motivos de invalidação da entidade vinculada (contas a pagar).
+  | "payable_paid"
+  | "payable_cancelled"
+  | "payable_changed"
+  | "payable_not_found";
 
 export interface EnqueueInput {
   userId: string;
