@@ -622,6 +622,7 @@ export function resetState(opts?: {
 
   state.gastosData = opts?.gastos ?? [];
   state.receitasData = opts?.receitas ?? [];
+  state.recorrenciasData = [];
   state.contasData = opts?.contas ?? [];
   state.favorecidosData = opts?.favorecidos ?? [];
   state.cartoesData = opts?.cartoes ?? [
