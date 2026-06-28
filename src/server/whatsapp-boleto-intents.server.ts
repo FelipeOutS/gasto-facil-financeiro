@@ -351,6 +351,20 @@ export async function processarBoleto(args: {
     return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: null, deps });
   }
 
+  // ---- WA-C10.b: seleção de candidato (sessão veio de OCR multi-candidato) ----
+  if (isBoletoSelecaoSession(sessao.session)) {
+    return await processarSelecaoCandidato({
+      userId, msg, texto, recebidaEm, sessao, deps,
+    });
+  }
+
+  // ---- WA-C10.b: fallback manual (OCR só achou valor/vencimento) ----
+  if (isBoletoManualSession(sessao.session)) {
+    return await processarBoletoManual({
+      userId, msg, texto, recebidaEm, decisao, sessao, deps,
+    });
+  }
+
   if (!isBoletoSession(sessao.session)) {
     return { status: "sem_pendencia", resposta: "" };
   }
