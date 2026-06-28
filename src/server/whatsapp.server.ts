@@ -2481,7 +2481,7 @@ export async function processarMensagemWhatsApp(
 
   // ---- WA-C10.a: sessão ativa de BOLETO tem prioridade. ----
   if (sessao && (
-    isBoletoSession(sessao.session) ||
+    isAnyBoletoSession(sessao.session) ||
     (BOLETO_PENDING_STATES as readonly string[]).includes(sessao.status)
   )) {
     logWaRouteDecision(msg, "expense_parser", "active_boleto_session");
