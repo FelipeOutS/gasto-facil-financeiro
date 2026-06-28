@@ -35,6 +35,8 @@ export const state = {
   // WA-C7 — favorecidos (reuso de fornecedores). Cada teste pode
   // semear via resetState({ favorecidos: [...] }).
   favorecidosData: [] as Record<string, unknown>[],
+  // WA-R1-Fix — recorrências para o fluxo de receitas recorrentes
+  recorrenciasData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
