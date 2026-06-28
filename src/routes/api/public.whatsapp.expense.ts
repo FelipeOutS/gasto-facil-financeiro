@@ -683,6 +683,36 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                 mimeType: ok.mimeType,
                 sha256: msg.image.sha256,
               };
+            } else if (msg.document) {
+              // ---- WA-C10.b: PDF (sempre boleto). ----
+              // Ordem: dedup → entitlement (reaproveita gate de OCR) →
+              // download → magic-bytes + tamanho + páginas → data URL.
+              if (await externalIdAlreadyConfirmed(msg.external_id)) {
+                results.push({ status: "duplicada" });
+                continue;
+              }
+              const podeOcr = elig.userId ? await podeUsarOcrComprovante(elig.userId) : false;
+              if (!podeOcr) {
+                results.push({ status: "sem_plano" });
+                continue;
+              }
+              const dl = await downloadWhatsappMedia(msg.document.mediaId, msg.document.mimeType, MAX_PDF_BYTES);
+              if (!dl) {
+                results.push({ status: "documento_indisponivel" });
+                continue;
+              }
+              const pdfOk = validateDownloadedPdf(new Uint8Array(dl.buffer), dl.declaredMime);
+              if (!pdfOk.ok) {
+                results.push({ status: `pdf_${pdfOk.reason}` });
+                continue;
+              }
+              const dataUrl = `data:application/pdf;base64,${dl.buffer.toString("base64")}`;
+              runMsg.document = {
+                kind: "document",
+                base64: dataUrl,
+                mimeType: "application/pdf",
+                sha256: msg.document.sha256,
+              };
             } else if (msg.audio) {
               // WA-V1 — ordem obrigatória para áudio:
               //   rate-limit / raw body / HMAC / Zod / extração / gate
