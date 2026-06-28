@@ -23,7 +23,8 @@ export type ConsultaIntent =
   | "resumo_mes"
   | "maiores_gastos_semana"
   | "maiores_gastos_mes"
-  | "impacto_despesas_renda";
+  | "impacto_despesas_renda"
+  | "listar_receitas_mes";
 
 const APP_TZ = "America/Sao_Paulo";
 
