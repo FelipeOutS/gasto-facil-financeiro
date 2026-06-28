@@ -350,6 +350,67 @@ async function handleImpacto(userId: string): Promise<ConsultaResult> {
   };
 }
 
+type ReceitaListRow = {
+  descricao: string | null;
+  tipo: string | null;
+  valor: number | string | null;
+  data: string;
+};
+
+async function loadReceitasDetalhadas(
+  userId: string,
+  from: string,
+  toExclusive: string,
+): Promise<ReceitaListRow[]> {
+  const { data } = await supabaseAdmin
+    .from("receitas")
+    .select("descricao, tipo, valor, data")
+    .eq("user_id", userId)
+    .gte("data", from)
+    .lt("data", toExclusive)
+    .order("data", { ascending: false });
+  return Array.isArray(data) ? (data as ReceitaListRow[]) : [];
+}
+
+const TIPO_RECEITA_LABELS: Record<string, string> = {
+  salario: "Salário",
+  freelance: "Freelance",
+  comissao: "Comissão",
+  venda: "Venda",
+  reembolso: "Reembolso",
+  pix: "Pix recebido",
+  bonus: "Bônus",
+  outros: "Outros",
+};
+
+function formatDataBR(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+async function handleListarReceitasMes(userId: string): Promise<ConsultaResult> {
+  const hoje = todayLocalISO();
+  const from = monthStartISO(hoje);
+  const to = addDaysISO(hoje, 1);
+  const receitas = await loadReceitasDetalhadas(userId, from, to);
+  const total = sumValor(receitas);
+  const itens = receitas.slice(0, 10).map((r) => ({
+    descricao: (r.descricao ?? "").trim() || (TIPO_RECEITA_LABELS[String(r.tipo ?? "").toLowerCase()] ?? "Receita"),
+    tipo: TIPO_RECEITA_LABELS[String(r.tipo ?? "").toLowerCase()] ?? "Outros",
+    valor: formatBRL(Number(r.valor ?? 0) || 0),
+    data: formatDataBR(r.data),
+  }));
+  return {
+    status: "consulta",
+    resposta: M.consulta.listarReceitasMes({
+      mes: mesPorExtenso(hoje),
+      itens,
+      total: formatBRL(total),
+      totalRegistros: receitas.length,
+    }),
+  };
+}
+
 export async function handleConsulta(
   userId: string,
   intent: ConsultaIntent,
@@ -367,6 +428,8 @@ export async function handleConsulta(
       return await handleMaioresGastos(userId, "mes");
     case "impacto_despesas_renda":
       return await handleImpacto(userId);
+    case "listar_receitas_mes":
+      return await handleListarReceitasMes(userId);
   }
 }
 
