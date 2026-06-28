@@ -173,6 +173,14 @@ export async function enforceUserRateLimit(params: {
   userId: string;
   route: string;
   request?: Request;
+  /**
+   * WA-C10.b.2 — Política em caso de indisponibilidade do banco.
+   *  - "open" (default): preserva o comportamento histórico (não bloqueia).
+   *  - "closed": trata DB indisponível como bloqueio (protege custo de IA/OCR).
+   * Apenas o OCR de boleto usa "closed" hoje; todos os demais scopes (texto,
+   * importações, comprovante, Pix, contas, lembretes) seguem "open".
+   */
+  failMode?: "open" | "closed";
 }): Promise<Response | null> {
   const preset =
     params.scope === "ai"
@@ -197,6 +205,16 @@ export async function enforceUserRateLimit(params: {
     limit: preset.limit,
     windowSeconds: preset.windowSeconds,
   });
+
+  // WA-C10.b.2 — fail-closed específico para OCR.
+  if (result.dbError && params.failMode === "closed") {
+    console.log({
+      event: "rate_limit_fail_closed",
+      scope: params.scope,
+      route: params.route,
+    });
+    return userRateLimitedResponse(preset.windowSeconds);
+  }
 
   if (!result.blocked) return null;
 
