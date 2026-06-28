@@ -535,6 +535,27 @@ export const whatsappMessages = {
         `Cadastre suas entradas e eu faço essa comparação para você.`,
       ].join("\n");
     },
+
+    listarReceitasMes(args: {
+      mes: string;
+      itens: Array<{ descricao: string; tipo: string; valor: string; data: string }>;
+      total: string;
+      totalRegistros: number;
+    }) {
+      if (args.totalRegistros === 0) {
+        return `Ainda não encontrei receitas registradas em ${args.mes}.`;
+      }
+      const linhas = [`Suas receitas de ${args.mes} 💰`, ``];
+      args.itens.forEach((r, i) => {
+        linhas.push(`${i + 1}. ${r.descricao} — ${r.valor} (${r.data})`);
+      });
+      linhas.push(``);
+      if (args.totalRegistros > args.itens.length) {
+        linhas.push(`Mostrando as ${args.itens.length} mais recentes de ${args.totalRegistros} no mês.`);
+      }
+      linhas.push(`Total recebido no mês: ${args.total}.`);
+      return linhas.join("\n");
+    },
   },
 
   // =====================================================================
