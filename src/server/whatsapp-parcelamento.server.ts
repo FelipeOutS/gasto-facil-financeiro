@@ -207,6 +207,8 @@ export type ParcelamentoSession = {
   manualCategoriaId?: string;
   manualCategoriaLabel?: string;
   categoriaOptions?: CategoriaPickerState;
+  // WA-F3.3-Fix-UX — ack transitório consumido na próxima prévia.
+  pendingCategoryAck?: string;
 };
 
 export function isParcelamentoSession(s: unknown): s is ParcelamentoSession {
