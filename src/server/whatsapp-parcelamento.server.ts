@@ -660,6 +660,8 @@ async function handleCategoriaCmd(args: {
   session.manualCategoriaId = r.cat.id;
   session.manualCategoriaLabel = r.cat.nome;
   session.categoriaOptions = undefined;
+  // WA-F3.3-Fix-UX — sinaliza ack para a próxima prévia.
+  session.pendingCategoryAck = r.cat.nome;
   return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId });
 }
 
