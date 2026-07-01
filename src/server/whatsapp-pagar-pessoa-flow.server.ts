@@ -732,6 +732,8 @@ async function entrarFluxo(args: {
       descricao,
       formaPagamento,
       favorecidoId,
+      pendingPixKey: null,
+      pendingPixKeyType: null,
       contaId: null,
       candidateContaIds: null,
       valorBateConta: false,
