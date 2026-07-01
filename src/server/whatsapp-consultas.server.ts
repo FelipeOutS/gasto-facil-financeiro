@@ -103,9 +103,14 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
   if (
     t === "recorrencias" ||
     t === "recorrencia" ||
+    t === "recorrentes" ||
     t === "minhas recorrencias" ||
     t === "minha recorrencia" ||
+    t === "meus recorrentes" ||
+    t === "minhas recorrentes" ||
     t === "recorrencias ativas" ||
+    t === "assinaturas mensais" ||
+    t === "minhas assinaturas mensais" ||
     /\bquais (sao )?(as )?minhas recorrencias\b/.test(t) ||
     /\blistar (as )?(minhas )?recorrencias\b/.test(t) ||
     /\bver (as )?(minhas )?recorrencias\b/.test(t) ||
