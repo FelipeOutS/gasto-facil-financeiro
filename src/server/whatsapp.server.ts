@@ -3684,6 +3684,26 @@ export async function processarMensagemWhatsApp(
 
 
 
+  // ---- WA-Q-Hardening: Safety Net de Consultas Desconhecidas ----
+  // Roda DEPOIS de todas as intents conhecidas (conversacional, consultas,
+  // faturas, limites, vencimentos) e ANTES de qualquer parser genérico
+  // de receita/gasto ou detector de escrita (boleto/contas/pagar-pessoa).
+  // Se a mensagem tem forma consultiva mas nenhuma intent casou, respondemos
+  // com orientação segura. NUNCA abre sessão, nunca escreve, nunca faz claim.
+  if (!sessao && decisao === "outro") {
+    const guard = detectConsultaShape(texto);
+    if (guard.kind === "fallback") {
+      logWaRouteDecision(msg, "consulta_handler", "query_guard_fallback");
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        guard.resposta,
+      );
+      return { status: "consulta", resposta: guard.resposta };
+    }
+  }
+
   // ---- Fase WA-G1: texto livre indicando intenção de receita. ----
   const startsReceita = !sessao && decisao === "outro" && isReceitaIntent(texto);
   if (startsReceita) {
