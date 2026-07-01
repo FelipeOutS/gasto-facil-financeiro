@@ -133,6 +133,8 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     t === "conta a receber" ||
     t === "valores a receber" ||
     t === "valor a receber" ||
+    t === "recebiveis" ||
+    t === "meus recebiveis" ||
     t === "recebimentos pendentes" ||
     t === "meus recebimentos" ||
     t === "meus recebimentos pendentes" ||
