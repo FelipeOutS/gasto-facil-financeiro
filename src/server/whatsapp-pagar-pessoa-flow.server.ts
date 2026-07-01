@@ -648,6 +648,14 @@ export async function processarPagarPessoaFlow(args: {
 
   // Cancelamento universal.
   if (sessao && isHardCancel) {
+    // WA-Q-PixInline-LGPD: se havia secret cifrado transitório, apaga
+    // antes de fechar a sessão — nunca deixar ciphertext órfão.
+    if (isPagarPessoaSession(sessao.session)) {
+      const s = sessao.session as PagarPessoaSession;
+      if (s.pendingPixSecretId) {
+        await deletePendingPixKey({ userId, secretId: s.pendingPixSecretId });
+      }
+    }
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     await deps.gravarSessao(
       userId, msg.telefone, msg.external_id, texto, recebidaEm,
@@ -656,6 +664,7 @@ export async function processarPagarPessoaFlow(args: {
     logEvent("cancelled", "ok");
     return { status: "cancelada", resposta: T.cancelado() };
   }
+
 
   // -----------------------------------------------------------
   // Entrada sem sessão (a partir do roteador, após detectPagarPessoaIntent
