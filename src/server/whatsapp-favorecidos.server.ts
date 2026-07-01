@@ -109,6 +109,31 @@ export async function updateFavorecidoPix(
 }
 
 /**
+ * Busca um favorecido do usuário pela chave Pix normalizada. Comparação
+ * feita em memória (case-insensitive) para não depender de igualdade
+ * exata em nível de banco. Escopo estrito por `user_id` — nunca retorna
+ * favorecido de outro usuário.
+ */
+export async function findFavorecidoByPixKey(
+  userId: string,
+  pixKey: string,
+): Promise<FavorecidoRow | null> {
+  const key = (pixKey ?? "").trim().toLowerCase();
+  if (!userId || !key) return null;
+  const { data, error } = await supabaseAdmin
+    .from("fornecedores")
+    .select("id, user_id, nome, apelido, pix_key, pix_key_type")
+    .eq("user_id", userId)
+    .eq("ativo", true);
+  if (error || !Array.isArray(data)) return null;
+  const rows = data as FavorecidoRow[];
+  const match = rows.find(
+    (r) => (r.pix_key ?? "").trim().toLowerCase() === key,
+  );
+  return match ?? null;
+}
+
+/**
  * Rotula o tipo de chave para exibição ao usuário.
  */
 export function rotuloTipoPix(t: PixKeyType): string {

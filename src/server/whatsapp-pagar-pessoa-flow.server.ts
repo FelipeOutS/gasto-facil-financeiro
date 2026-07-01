@@ -40,10 +40,18 @@ import type {
 } from "./whatsapp.server";
 import {
   parsePagarPessoa,
+  parsePagarPixInline,
+  maskPixKey,
   type PagarPessoaParsed,
+  type PagarPixInlineParsed,
+  type PixKeyType,
 } from "./whatsapp-pix-parser";
 import {
   findFavorecidosByNome,
+  findFavorecidoByPixKey,
+  createFavorecido,
+  updateFavorecidoPix,
+  rotuloTipoPix,
   type FavorecidoRow,
 } from "./whatsapp-favorecidos.server";
 import {
@@ -74,6 +82,8 @@ export const PAGAR_PESSOA_PENDING_STATES = [
   "pp_aguardando_descricao",
   "pp_aguardando_confirmar_conta",
   "pp_aguardando_escolha_conta",
+  "pp_aguardando_confirmar_pix_inline",
+  "pp_aguardando_desambig_fav_pix",
   "pp_persistindo",
 ] as const;
 
@@ -86,6 +96,13 @@ export type PagarPessoaSession = {
   descricao: string | null;
   formaPagamento: "pix" | "outro";
   favorecidoId: string | null;
+  /**
+   * Chave Pix pendente do fluxo inline. Só é persistida no favorecido
+   * na confirmação. NUNCA é exibida em plain-text (usar `maskPixKey`)
+   * nem logada.
+   */
+  pendingPixKey: string | null;
+  pendingPixKeyType: PixKeyType | null;
   /** Quando há 1 conta candidata, esse é o id em consideração. */
   contaId: string | null;
   /** Quando há N contas candidatas, ids ordenados como apresentados. */
@@ -95,6 +112,7 @@ export type PagarPessoaSession = {
   /** Texto original recebido (já normalizado pelo curto-circuito de memória). */
   mensagemOriginal: string;
 };
+
 
 export function isPagarPessoaSession(s: unknown): s is PagarPessoaSession {
   if (!s || typeof s !== "object") return false;
@@ -298,6 +316,68 @@ const T = {
   },
   naoEntendiNumero(maxOpcao: number): string {
     return `Não entendi. Responda com o número da opção (1 a ${maxOpcao}) ou "cancelar".`;
+  },
+  previewPixInline(args: {
+    nome: string;
+    valorCentavos: number;
+    pixKeyType: PixKeyType;
+    pixKeyMasked: string;
+    reusandoFavorecido: boolean;
+  }): string {
+    const reuso = args.reusandoFavorecido
+      ? `Favorecido já cadastrado — apenas vou registrar o pagamento.`
+      : `Novo favorecido será salvo com essa chave.`;
+    return [
+      `Confira o pagamento Pix antes de confirmar:`,
+      ``,
+      `• Favorecido: ${args.nome}`,
+      `• Chave Pix (${rotuloTipoPix(args.pixKeyType)}): ${args.pixKeyMasked}`,
+      `• Valor: ${formatBRL(args.valorCentavos)}`,
+      `• Forma: Pix`,
+      ``,
+      reuso,
+      `⚠️ Registro interno no Gasto Inteligente — nenhum Pix bancário é enviado.`,
+      ``,
+      `Responda "sim" para registrar ou "cancelar" para descartar.`,
+    ].join("\n");
+  },
+  pixInlineChaveInvalida(): string {
+    return [
+      `Não reconheci a chave Pix informada.`,
+      `Chaves aceitas: celular (com DDD), CPF, CNPJ, e-mail ou chave aleatória (UUID).`,
+      `Exemplo: Pix 50 para João Silva chave 11999998888`,
+    ].join("\n");
+  },
+  pixInlineSucesso(args: {
+    nome: string;
+    valorCentavos: number;
+    pixKeyType: PixKeyType;
+    pixKeyMasked: string;
+  }): string {
+    return [
+      `Registrado! ${formatBRL(args.valorCentavos)} para ${args.nome} via Pix. ✅`,
+      `Chave (${rotuloTipoPix(args.pixKeyType)}): ${args.pixKeyMasked}`,
+      ``,
+      `Favorecido salvo. Nas próximas vezes basta dizer o nome.`,
+    ].join("\n");
+  },
+  pixInlineDesambig(args: {
+    nomeNovo: string;
+    existente: FavorecidoRow;
+  }): string {
+    const existType = args.existente.pix_key_type ?? "desconhecida";
+    const existMasked = args.existente.pix_key
+      ? maskPixKey(args.existente.pix_key, existType as PixKeyType)
+      : "sem chave";
+    return [
+      `Já existe um favorecido chamado "${args.existente.nome}" com outra chave Pix.`,
+      `• Chave atual (${rotuloTipoPix(existType as PixKeyType)}): ${existMasked}`,
+      ``,
+      `O que deseja fazer?`,
+      `1. Atualizar a chave do favorecido existente`,
+      `2. Salvar como um novo favorecido separado`,
+      `3. Cancelar`,
+    ].join("\n");
   },
 };
 
@@ -591,6 +671,14 @@ export async function processarPagarPessoaFlow(args: {
       return await passoEscolherConta({
         userId, msg, texto, recebidaEm, session, sessao, deps,
       });
+    case "pp_aguardando_confirmar_pix_inline":
+      return await passoConfirmarPixInline({
+        userId, msg, texto, recebidaEm, session, sessao, decisao, deps,
+      });
+    case "pp_aguardando_desambig_fav_pix":
+      return await passoDesambigFavPix({
+        userId, msg, texto, recebidaEm, session, sessao, deps,
+      });
     case "pp_persistindo":
       // Mesmo external_id em corrida — devolve resposta neutra.
       return { status: "duplicada", resposta: T.ainda_processando() };
@@ -657,6 +745,8 @@ async function entrarFluxo(args: {
       descricao,
       formaPagamento,
       favorecidoId: null,
+      pendingPixKey: null,
+      pendingPixKeyType: null,
       contaId: null,
       candidateContaIds: null,
       valorBateConta: false,
@@ -684,6 +774,8 @@ async function entrarFluxo(args: {
       descricao,
       formaPagamento,
       favorecidoId,
+      pendingPixKey: null,
+      pendingPixKeyType: null,
       contaId: null,
       candidateContaIds: null,
       valorBateConta: false,
@@ -710,6 +802,8 @@ async function entrarFluxo(args: {
       descricao,
       formaPagamento,
       favorecidoId,
+      pendingPixKey: null,
+      pendingPixKeyType: null,
       contaId: null,
       candidateContaIds: null,
       valorBateConta: false,
@@ -1004,3 +1098,328 @@ async function passoEscolherConta(args: {
   );
   return { status: "pendente", resposta };
 }
+
+// ============================================================
+// WA-Q-PixInline — Pagamento Pix inline com cadastro de favorecido
+// ============================================================
+
+/**
+ * Entrada explícita do fluxo Pix inline. Chamada pelo dispatcher ANTES
+ * do parser genérico de gasto quando `detectPagarPixInlineIntent` casa.
+ *
+ * Não persiste favorecido nem gasto. Apenas resolve/valida o favorecido
+ * e abre sessão `pp_aguardando_confirmar_pix_inline` com prévia mascarada.
+ */
+export async function processarPixInlineEntry(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  parsed: PagarPixInlineParsed;
+  deps: WhatsAppPagarPessoaDeps;
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, parsed, deps } = args;
+
+  // Chave inválida (por segurança, mesmo com detectPagarPixInlineIntent
+  // já filtrando) — resposta clara sem abrir sessão travada.
+  if (!parsed.pixKey || parsed.pixKeyType === "desconhecida") {
+    logEvent("pix_inline_invalid_key", "fail", {
+      pixKeyType: parsed.pixKeyType,
+    });
+    return {
+      status: "sem_pendencia",
+      resposta: T.pixInlineChaveInvalida(),
+    };
+  }
+
+  // 1) Match por chave Pix (silencioso — reusa favorecido existente).
+  const byKey = await findFavorecidoByPixKey(userId, parsed.pixKey);
+  if (byKey) {
+    const session: PagarPessoaSession = {
+      kind: "pagar_pessoa",
+      nome: byKey.nome, // usa nome já cadastrado como fonte da verdade
+      valorCentavos: parsed.valorCentavos,
+      descricao: null,
+      formaPagamento: "pix",
+      favorecidoId: byKey.id,
+      pendingPixKey: parsed.pixKey,
+      pendingPixKeyType: parsed.pixKeyType,
+      contaId: null,
+      candidateContaIds: null,
+      valorBateConta: false,
+      mensagemOriginal: texto,
+    };
+    const resposta = T.previewPixInline({
+      nome: byKey.nome,
+      valorCentavos: parsed.valorCentavos,
+      pixKeyType: parsed.pixKeyType,
+      pixKeyMasked: maskPixKey(parsed.pixKey, parsed.pixKeyType),
+      reusandoFavorecido: true,
+    });
+    await deps.gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "pp_aguardando_confirmar_pix_inline", session, resposta,
+    );
+    logEvent("pix_inline_preview", "ok", {
+      favorecidoMatched: true,
+      matchBy: "key",
+      pixKeyType: parsed.pixKeyType,
+    });
+    return { status: "pendente", resposta };
+  }
+
+  // 2) Nenhuma chave igual. Checa conflito por nome (mesmo nome, outra
+  // chave). Se houver, entra em desambiguação. Nunca vaza favorecido de
+  // outro user_id (findFavorecidosByNome filtra por user_id).
+  const byName = await findFavorecidosByNome(userId, parsed.nome);
+  const conflitoNome = byName.find(
+    (f) =>
+      (f.nome ?? "").trim().toLowerCase() ===
+        parsed.nome.trim().toLowerCase() &&
+      f.pix_key &&
+      f.pix_key.trim().toLowerCase() !== parsed.pixKey.trim().toLowerCase(),
+  );
+
+  if (conflitoNome) {
+    const session: PagarPessoaSession = {
+      kind: "pagar_pessoa",
+      nome: parsed.nome,
+      valorCentavos: parsed.valorCentavos,
+      descricao: null,
+      formaPagamento: "pix",
+      favorecidoId: conflitoNome.id,
+      pendingPixKey: parsed.pixKey,
+      pendingPixKeyType: parsed.pixKeyType,
+      contaId: null,
+      candidateContaIds: null,
+      valorBateConta: false,
+      mensagemOriginal: texto,
+    };
+    const resposta = T.pixInlineDesambig({
+      nomeNovo: parsed.nome,
+      existente: conflitoNome,
+    });
+    await deps.gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "pp_aguardando_desambig_fav_pix", session, resposta,
+    );
+    logEvent("pix_inline_disambig", "conflict", {
+      pixKeyType: parsed.pixKeyType,
+    });
+    return { status: "pendente", resposta };
+  }
+
+  // 3) Caminho normal — favorecido novo. Prévia sem persistência.
+  const session: PagarPessoaSession = {
+    kind: "pagar_pessoa",
+    nome: parsed.nome,
+    valorCentavos: parsed.valorCentavos,
+    descricao: null,
+    formaPagamento: "pix",
+    favorecidoId: null,
+    pendingPixKey: parsed.pixKey,
+    pendingPixKeyType: parsed.pixKeyType,
+    contaId: null,
+    candidateContaIds: null,
+    valorBateConta: false,
+    mensagemOriginal: texto,
+  };
+  const resposta = T.previewPixInline({
+    nome: parsed.nome,
+    valorCentavos: parsed.valorCentavos,
+    pixKeyType: parsed.pixKeyType,
+    pixKeyMasked: maskPixKey(parsed.pixKey, parsed.pixKeyType),
+    reusandoFavorecido: false,
+  });
+  await deps.gravarSessao(
+    userId, msg.telefone, msg.external_id, texto, recebidaEm,
+    "pp_aguardando_confirmar_pix_inline", session, resposta,
+  );
+  logEvent("pix_inline_preview", "ok", {
+    favorecidoMatched: false,
+    matchBy: "none",
+    pixKeyType: parsed.pixKeyType,
+  });
+  return { status: "pendente", resposta };
+}
+
+/**
+ * Confirma (ou cancela) a prévia. Só no "sim" cria/atualiza favorecido
+ * + gasto atomicamente via `persistirGastoComClaim` (claim já cobre
+ * idempotência por external_id).
+ */
+async function passoConfirmarPixInline(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  session: PagarPessoaSession;
+  sessao: { id: string };
+  decisao: "confirm" | "cancel" | "outro";
+  deps: WhatsAppPagarPessoaDeps;
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, session, sessao, decisao, deps } = args;
+  const t = texto.trim().toLowerCase();
+  const yes =
+    decisao === "confirm" ||
+    /^(1|sim|s|confirmo|confirmar|ok|pode\s+registrar)\b/i.test(t);
+  const no =
+    decisao === "cancel" ||
+    /^(2|3|nao|não|n|cancelar|cancela|descarta|nao\s+quero|não\s+quero)\b/i.test(t);
+
+  if (no) {
+    await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+    logEvent("pix_inline_cancelled", "ok");
+    return { status: "cancelada", resposta: T.cancelado() };
+  }
+  if (!yes) {
+    const resposta =
+      `Responda "sim" para registrar o pagamento ou "cancelar" para descartar.`;
+    await deps.atualizarSessao(
+      sessao.id, "pp_aguardando_confirmar_pix_inline", session, resposta,
+    );
+    return { status: "pendente", resposta };
+  }
+
+  // Upsert favorecido ANTES do gasto (a persistência do gasto pode
+  // referenciar favorecidoId). Se favorecidoId já veio (reuso silencioso
+  // por chave igual), não recriamos.
+  let favorecidoId = session.favorecidoId;
+  const pixKey = session.pendingPixKey ?? "";
+  const pixKeyType = session.pendingPixKeyType ?? "desconhecida";
+
+  if (!favorecidoId && pixKey && pixKeyType !== "desconhecida") {
+    // Recheca chave (double-check pós-race: outro webhook pode ter
+    // cadastrado o mesmo favorecido entre a prévia e a confirmação).
+    const rec = await findFavorecidoByPixKey(userId, pixKey);
+    if (rec) {
+      favorecidoId = rec.id;
+    } else {
+      const created = await createFavorecido({
+        userId,
+        nome: session.nome ?? "Favorecido",
+        pixKey,
+        pixKeyType,
+      });
+      if (!created) {
+        logEvent("pix_inline_favorecido_create_fail", "fail");
+        return { status: "erro", resposta: T.erroGenerico() };
+      }
+      favorecidoId = created.id;
+    }
+  }
+
+  const sessionComFav: PagarPessoaSession = {
+    ...session,
+    favorecidoId,
+    formaPagamento: "pix",
+  };
+
+  const result = await persistirGastoComClaim({
+    userId,
+    telefone: msg.telefone,
+    externalId: msg.external_id,
+    texto,
+    recebidaEm,
+    session: sessionComFav,
+    deps,
+  });
+
+  if (result.kind === "ok") {
+    if (sessionComFav.nome) recordFavorecido(msg.telefone, sessionComFav.nome);
+    const resposta = T.pixInlineSucesso({
+      nome: sessionComFav.nome ?? "Favorecido",
+      valorCentavos: sessionComFav.valorCentavos ?? 0,
+      pixKeyType: pixKeyType as PixKeyType,
+      pixKeyMasked: maskPixKey(pixKey, pixKeyType as PixKeyType),
+    });
+    return { status: "salva", gastoId: result.gastoId, resposta };
+  }
+  if (result.kind === "race_duplicate") {
+    return {
+      status: "duplicada",
+      gastoId: result.gastoId ?? undefined,
+      resposta: T.duplicado(),
+    };
+  }
+  if (result.kind === "race_in_progress") {
+    return { status: "duplicada", resposta: T.ainda_processando() };
+  }
+  return { status: "erro", resposta: T.erroGenerico() };
+}
+
+/**
+ * Desambiguação quando o nome já existe com OUTRA chave.
+ *  1) Atualiza chave do favorecido existente.
+ *  2) Cria novo favorecido (nome duplicado, chave nova).
+ *  3) Cancela.
+ */
+async function passoDesambigFavPix(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  session: PagarPessoaSession;
+  sessao: { id: string };
+  deps: WhatsAppPagarPessoaDeps;
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, session, sessao, deps } = args;
+  const t = texto.trim().toLowerCase();
+  const escolha =
+    /^1\b|atualizar/i.test(t) ? 1 :
+    /^2\b|novo|separado/i.test(t) ? 2 :
+    /^3\b|cancelar/i.test(t) ? 3 : 0;
+
+  if (escolha === 3) {
+    await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+    return { status: "cancelada", resposta: T.cancelado() };
+  }
+  if (escolha === 0) {
+    const resposta = T.naoEntendiNumero(3);
+    await deps.atualizarSessao(
+      sessao.id, "pp_aguardando_desambig_fav_pix", session, resposta,
+    );
+    return { status: "pendente", resposta };
+  }
+
+  const pixKey = session.pendingPixKey ?? "";
+  const pixKeyType = (session.pendingPixKeyType ?? "desconhecida") as PixKeyType;
+
+  if (escolha === 1 && session.favorecidoId) {
+    // Atualiza chave do favorecido existente.
+    const ok = await updateFavorecidoPix(
+      userId, session.favorecidoId, pixKey, pixKeyType,
+    );
+    if (!ok) {
+      logEvent("pix_inline_update_fail", "fail");
+      return { status: "erro", resposta: T.erroGenerico() };
+    }
+    const next: PagarPessoaSession = { ...session };
+    const resposta = T.previewPixInline({
+      nome: session.nome ?? "Favorecido",
+      valorCentavos: session.valorCentavos ?? 0,
+      pixKeyType,
+      pixKeyMasked: maskPixKey(pixKey, pixKeyType),
+      reusandoFavorecido: true,
+    });
+    await deps.atualizarSessao(
+      sessao.id, "pp_aguardando_confirmar_pix_inline", next, resposta,
+    );
+    return { status: "pendente", resposta };
+  }
+
+  // escolha === 2: criar novo favorecido (desvincula do existente).
+  const next: PagarPessoaSession = { ...session, favorecidoId: null };
+  const resposta = T.previewPixInline({
+    nome: session.nome ?? "Favorecido",
+    valorCentavos: session.valorCentavos ?? 0,
+    pixKeyType,
+    pixKeyMasked: maskPixKey(pixKey, pixKeyType),
+    reusandoFavorecido: false,
+  });
+  await deps.atualizarSessao(
+    sessao.id, "pp_aguardando_confirmar_pix_inline", next, resposta,
+  );
+  return { status: "pendente", resposta };
+}
+

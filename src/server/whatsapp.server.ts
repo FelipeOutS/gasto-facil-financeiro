@@ -150,8 +150,13 @@ import {
   PAGAR_PESSOA_PENDING_STATES,
   isPagarPessoaSession,
   processarPagarPessoaFlow,
+  processarPixInlineEntry,
   type WhatsAppPagarPessoaDeps,
 } from "./whatsapp-pagar-pessoa-flow.server";
+import {
+  detectPagarPixInlineIntent,
+  parsePagarPixInline,
+} from "./whatsapp-pix-parser";
 // WA-C10.a/b — Boleto por código/linha digitável (texto) + foto/PDF.
 import {
   BOLETO_PENDING_STATES,
@@ -4215,6 +4220,19 @@ export async function processarMensagemWhatsApp(
     return await handleQueryPixIntent({
       userId, telefone: msg.telefone, texto, _row: msg,
     });
+  }
+  // WA-Q-PixInline — Formato natural "Pix VALOR para NOME chave CHAVE".
+  // Sempre ANTES do parser de gasto e do fluxo pagar-pessoa (que não
+  // captura chave). Não envia Pix bancário — apenas registro interno.
+  if (decisao === "outro" && detectPagarPixInlineIntent(texto)) {
+    const parsedPixInline = parsePagarPixInline(texto);
+    if (parsedPixInline) {
+      logWaRouteDecision(msg, "expense_parser", "pix_inline_intent");
+      return await processarPixInlineEntry({
+        userId, msg, texto, recebidaEm,
+        parsed: parsedPixInline, deps: pagarPessoaDeps,
+      });
+    }
   }
   // WA-C7.2.a — Atalho "Paguei.": se a frase é só um verbo de pagamento
   // (sem nome próprio nem sinais de conta/estabelecimento) e há um

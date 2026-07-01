@@ -353,3 +353,165 @@ function extrairDescricaoPagamento(texto: string): string | null {
   }
   return null;
 }
+
+// =========================================================================
+// 4) Pix inline: "Pix VALOR para NOME chave CHAVE"
+//
+// Este parser é APENAS para o formato natural iniciado pela palavra "pix"
+// seguido de valor + destinatário + chave. Deve rodar ANTES do parser
+// genérico de gasto e ANTES do fluxo pagar-pessoa (que não captura chave).
+//
+// NÃO envia Pix externo. Registra um pagamento interno + upsert do
+// favorecido com a chave já vinculada.
+// =========================================================================
+
+export type PagarPixInlineParsed = {
+  nome: string;
+  valorCentavos: number;
+  pixKey: string;
+  pixKeyType: PixKeyType;
+};
+
+/**
+ * Detecta o formato inline "Pix VALOR para NOME chave CHAVE" (com ou sem
+ * a palavra "chave"). Requer todos os elementos: iniciar por "pix",
+ * ter valor, preposição de destino, nome e chave reconhecível.
+ */
+export function detectPagarPixInlineIntent(texto: string): boolean {
+  if (!texto) return false;
+  const raw = texto.trim();
+  // Deve começar com "pix" (opcional artigo).
+  if (!/^\s*(?:um\s+|o\s+)?pix\b/i.test(raw)) return false;
+  // Exclui claramente consultas / cadastros existentes.
+  if (detectSavePixIntent(raw)) return false;
+  if (detectQueryPixIntent(raw)) return false;
+  return parsePagarPixInline(raw) !== null;
+}
+
+/**
+ * Extrai valor + nome + chave do texto. Retorna null se qualquer
+ * componente estiver ausente ou se a chave não for reconhecível
+ * (tipo `desconhecida` também retorna null — chave inválida).
+ */
+export function parsePagarPixInline(texto: string): PagarPixInlineParsed | null {
+  if (!texto) return null;
+  const t = texto.trim();
+
+  // 4.1) Formato canônico com marcador "chave":
+  //   Pix 50 para João Silva chave 11999998888
+  //   Pix R$ 50,00 pra Maria chave joao@email.com
+  const reComChave =
+    /^\s*(?:um\s+|o\s+)?pix\s+(?:r\$?\s*)?(\d+(?:[.,]\d{1,2})?)\s+(?:pra|para|pro|ao|à)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'.\s-]{1,50}?)\s+(?:chave|pix)\s+(\S(?:.*\S)?)\s*$/i;
+  const m1 = t.match(reComChave);
+  if (m1) {
+    const valorCentavos = parseBRLToCentavosPix(m1[1]);
+    const nome = cleanNomeInline(m1[2]);
+    const raw = (m1[3] ?? "").trim();
+    if (valorCentavos > 0 && nome && raw) {
+      const type = detectPixKeyType(raw);
+      if (type === "desconhecida") return null;
+      return {
+        nome,
+        valorCentavos,
+        pixKey: normalizePixKey(raw, type),
+        pixKeyType: type,
+      };
+    }
+  }
+
+  // 4.2) Formato sem "chave" — nome seguido diretamente pela chave (email
+  // ou padrão de dígitos/símbolos). Menos ambíguo quando a chave é email
+  // ou tem máscara. Exige que a chave case detectPixKeyType != desconhecida.
+  const reSemChave =
+    /^\s*(?:um\s+|o\s+)?pix\s+(?:r\$?\s*)?(\d+(?:[.,]\d{1,2})?)\s+(?:pra|para|pro|ao|à)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'.\s-]{1,50}?)\s+(\S+@\S+\.\S+|\+?[\d.()\-\s]{10,25}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\s*$/i;
+  const m2 = t.match(reSemChave);
+  if (m2) {
+    const valorCentavos = parseBRLToCentavosPix(m2[1]);
+    const nome = cleanNomeInline(m2[2]);
+    const raw = (m2[3] ?? "").trim();
+    if (valorCentavos > 0 && nome && raw) {
+      const type = detectPixKeyType(raw);
+      if (type === "desconhecida") return null;
+      return {
+        nome,
+        valorCentavos,
+        pixKey: normalizePixKey(raw, type),
+        pixKeyType: type,
+      };
+    }
+  }
+
+  return null;
+}
+
+function parseBRLToCentavosPix(s: string): number {
+  const cleaned = s.replace(/\./g, "").replace(",", ".");
+  const v = Number(cleaned);
+  if (!Number.isFinite(v) || v <= 0) return 0;
+  return Math.round(v * 100);
+}
+
+function cleanNomeInline(s: string): string {
+  // Igual a cleanNome, mas rejeita se restar apenas stopwords ou se a
+  // última palavra for "chave" (residual quando o regex sem marcador
+  // captura demais). Filtra pontuação lateral.
+  const raw = s
+    .trim()
+    .replace(/[,.;:!?]+$/g, "")
+    .trim();
+  const tokens = raw.split(/\s+/).filter((w) => {
+    const n = norm(w);
+    return (
+      n.length > 0 &&
+      !NOME_STOPWORDS.has(n) &&
+      !/^(cpf|cnpj|email|telefone|celular|chave|aleatoria|aleatória|pix)$/i.test(w)
+    );
+  });
+  if (tokens.length === 0) return "";
+  // Limita a 3 palavras (nome + até 2 sobrenomes).
+  return normNome(tokens.slice(0, 3).join(" "));
+}
+
+// =========================================================================
+// 5) Máscara de chave Pix para exibição SEGURA (preview, sucesso, logs)
+//
+// Nunca expor chave completa em resposta ao usuário para não vazar em
+// screenshots/backups do WhatsApp da conversa alheia. Cumpre LGPD.
+// =========================================================================
+
+export function maskPixKey(pixKey: string, type: PixKeyType): string {
+  const k = (pixKey ?? "").trim();
+  if (!k) return "";
+  switch (type) {
+    case "email": {
+      const [user, dom] = k.split("@");
+      if (!user || !dom) return "***";
+      const uMask = user.length <= 2
+        ? user[0] + "*"
+        : user[0] + "***" + user.slice(-1);
+      return `${uMask}@${dom}`;
+    }
+    case "telefone": {
+      const d = k.replace(/\D+/g, "");
+      if (d.length < 4) return "***";
+      return `+** (**) *****-${d.slice(-4)}`;
+    }
+    case "cpf": {
+      const d = k.replace(/\D+/g, "");
+      if (d.length < 2) return "***";
+      return `***.***.***-${d.slice(-2)}`;
+    }
+    case "cnpj": {
+      const d = k.replace(/\D+/g, "");
+      if (d.length < 4) return "***";
+      return `**.***.***/****-${d.slice(-2)}`;
+    }
+    case "aleatoria": {
+      if (k.length <= 8) return "********";
+      return `${k.slice(0, 4)}****${k.slice(-4)}`;
+    }
+    default:
+      return "***";
+  }
+}
+
