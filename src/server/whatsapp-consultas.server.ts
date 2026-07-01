@@ -103,9 +103,14 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
   if (
     t === "recorrencias" ||
     t === "recorrencia" ||
+    t === "recorrentes" ||
     t === "minhas recorrencias" ||
     t === "minha recorrencia" ||
+    t === "meus recorrentes" ||
+    t === "minhas recorrentes" ||
     t === "recorrencias ativas" ||
+    t === "assinaturas mensais" ||
+    t === "minhas assinaturas mensais" ||
     /\bquais (sao )?(as )?minhas recorrencias\b/.test(t) ||
     /\blistar (as )?(minhas )?recorrencias\b/.test(t) ||
     /\bver (as )?(minhas )?recorrencias\b/.test(t) ||
@@ -128,6 +133,8 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     t === "conta a receber" ||
     t === "valores a receber" ||
     t === "valor a receber" ||
+    t === "recebiveis" ||
+    t === "meus recebiveis" ||
     t === "recebimentos pendentes" ||
     t === "meus recebimentos" ||
     t === "meus recebimentos pendentes" ||
@@ -155,9 +162,12 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     t === "historico de transferencias" ||
     t === "transferencias entre contas" ||
     t === "transferencias internas" ||
+    t === "movimentacoes entre contas" ||
+    t === "minhas movimentacoes entre contas" ||
     /\b(quais|liste?|ver|mostrar?|mostre) (sao )?(as )?(minhas )?transferencias\b/.test(t) ||
     /\bhistorico (de|das) transferencias\b/.test(t) ||
     /\btransferencias (entre|de|para) contas\b/.test(t) ||
+    /\bmovimentacoes (entre|de|para) contas\b/.test(t) ||
     /\bquanto (eu )?transferi\b/.test(t) ||
     /\bminhas transferencias (entre contas|internas)\b/.test(t)
   ) {
