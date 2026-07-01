@@ -457,15 +457,18 @@ export function parsePagarPixInline(texto: string): PagarPixInlineParsed | null 
   // 4.1) Formato canônico com marcador "chave":
   //   Pix 50 para João Silva chave 11999998888
   //   Pix R$ 50,00 pra Maria chave joao@email.com
+  //   Pix 50 para João chave celular 11999998888   ← dica explícita
+  //   Pix 50 para João celular 11999998888          ← dica sem "chave"
   const reComChave =
-    /^\s*(?:um\s+|o\s+)?pix\s+(?:r\$?\s*)?(\d+(?:[.,]\d{1,2})?)\s+(?:pra|para|pro|ao|à)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'.\s-]{1,50}?)\s+(?:chave|pix)\s+(\S(?:.*\S)?)\s*$/i;
+    /^\s*(?:um\s+|o\s+)?pix\s+(?:r\$?\s*)?(\d+(?:[.,]\d{1,2})?)\s+(?:pra|para|pro|ao|à)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'.\s-]{1,50}?)\s+(?:chave\s+)?(celular|telefone|cpf|cnpj|email|aleat[oó]ria|chave)?\s*(?:chave\s+)?(\S(?:.*\S)?)\s*$/i;
   const m1 = t.match(reComChave);
   if (m1) {
     const valorCentavos = parseBRLToCentavosPix(m1[1]);
     const nome = cleanNomeInline(m1[2]);
-    const raw = (m1[3] ?? "").trim();
+    const hint = normalizeHint(m1[3]);
+    const raw = (m1[4] ?? "").trim();
     if (valorCentavos > 0 && nome && raw) {
-      const type = detectPixKeyType(raw);
+      const type = detectPixKeyType(raw, hint);
       if (type === "desconhecida") return null;
       return {
         nome,
@@ -476,9 +479,7 @@ export function parsePagarPixInline(texto: string): PagarPixInlineParsed | null 
     }
   }
 
-  // 4.2) Formato sem "chave" — nome seguido diretamente pela chave (email
-  // ou padrão de dígitos/símbolos). Menos ambíguo quando a chave é email
-  // ou tem máscara. Exige que a chave case detectPixKeyType != desconhecida.
+  // 4.2) Formato sem "chave" — nome seguido diretamente pela chave.
   const reSemChave =
     /^\s*(?:um\s+|o\s+)?pix\s+(?:r\$?\s*)?(\d+(?:[.,]\d{1,2})?)\s+(?:pra|para|pro|ao|à)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'.\s-]{1,50}?)\s+(\S+@\S+\.\S+|\+?[\d.()\-\s]{10,25}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\s*$/i;
   const m2 = t.match(reSemChave);
@@ -501,6 +502,17 @@ export function parsePagarPixInline(texto: string): PagarPixInlineParsed | null 
   return null;
 }
 
+function normalizeHint(raw: string | undefined): PixKeyHint | undefined {
+  if (!raw) return undefined;
+  const h = raw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (h === "celular" || h === "telefone") return "telefone";
+  if (h === "cpf") return "cpf";
+  if (h === "cnpj") return "cnpj";
+  if (h === "email") return "email";
+  if (h === "aleatoria") return "aleatoria";
+  return undefined;
+}
+
 function parseBRLToCentavosPix(s: string): number {
   const cleaned = s.replace(/\./g, "").replace(",", ".");
   const v = Number(cleaned);
@@ -510,8 +522,8 @@ function parseBRLToCentavosPix(s: string): number {
 
 function cleanNomeInline(s: string): string {
   // Igual a cleanNome, mas rejeita se restar apenas stopwords ou se a
-  // última palavra for "chave" (residual quando o regex sem marcador
-  // captura demais). Filtra pontuação lateral.
+  // última palavra for "chave"/tipo (residual quando o regex captura
+  // demais). Filtra pontuação lateral.
   const raw = s
     .trim()
     .replace(/[,.;:!?]+$/g, "")
@@ -525,7 +537,6 @@ function cleanNomeInline(s: string): string {
     );
   });
   if (tokens.length === 0) return "";
-  // Limita a 3 palavras (nome + até 2 sobrenomes).
   return normNome(tokens.slice(0, 3).join(" "));
 }
 
@@ -549,14 +560,27 @@ export function maskPixKey(pixKey: string, type: PixKeyType): string {
       return `${uMask}@${dom}`;
     }
     case "telefone": {
+      // Preserva DDD e últimos 4. Ex.: 11999998888 → "+55 11 9****-8888".
+      // Assume BR (11 dígitos com DDD ou 13 com +55). Fallback para
+      // formatos internacionais mantém apenas últimos 4.
       const d = k.replace(/\D+/g, "");
       if (d.length < 4) return "***";
-      return `+** (**) *****-${d.slice(-4)}`;
+      const last4 = d.slice(-4);
+      // Remove código de país 55 se presente para extrair DDD.
+      const local = d.length >= 12 && d.startsWith("55") ? d.slice(2) : d;
+      if (local.length === 11) {
+        const ddd = local.slice(0, 2);
+        return `+55 ${ddd} 9****-${last4}`;
+      }
+      if (local.length === 10) {
+        const ddd = local.slice(0, 2);
+        return `+55 ${ddd} ****-${last4}`;
+      }
+      return `+** (**) *****-${last4}`;
     }
     case "cpf": {
-      const d = k.replace(/\D+/g, "");
-      if (d.length < 2) return "***";
-      return `***.***.***-${d.slice(-2)}`;
+      // Totalmente mascarado — nunca expor final do CPF.
+      return "***.***.***-**";
     }
     case "cnpj": {
       const d = k.replace(/\D+/g, "");
