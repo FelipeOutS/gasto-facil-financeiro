@@ -29,7 +29,7 @@ const { _resetShortContext } = await import(
   "../src/server/whatsapp-short-context.server"
 );
 
-const telefone = "5511999998888";
+const telefone = "55(11) 99999-8888";
 
 function gastoInserts() {
   return state.inserts.filter((i) => i.table === "gastos");
@@ -50,7 +50,7 @@ beforeEach(() => {
 describe("parser :: detectPagarPixInlineIntent", () => {
   it("aceita formato canônico com 'chave' + celular", () => {
     expect(
-      detectPagarPixInlineIntent("Pix 50 para João Silva chave 11999998888"),
+      detectPagarPixInlineIntent("Pix 50 para João Silva chave (11) 99999-8888"),
     ).toBe(true);
   });
   it("aceita 'pra' e 'pro' como preposição", () => {
@@ -82,8 +82,8 @@ describe("parser :: detectPagarPixInlineIntent", () => {
     expect(detectPagarPixInlineIntent("Pix 50 para João chave abc")).toBe(false);
   });
   it("não confunde com 'salva o pix do João'", () => {
-    expect(detectPagarPixInlineIntent("salva o pix do João: 11999998888")).toBe(false);
-    expect(detectSavePixIntent("salva o pix do João: 11999998888")).toBe(true);
+    expect(detectPagarPixInlineIntent("salva o pix do João: (11) 99999-8888")).toBe(false);
+    expect(detectSavePixIntent("salva o pix do João: (11) 99999-8888")).toBe(true);
   });
   it("não confunde com 'qual o pix do João?'", () => {
     expect(detectPagarPixInlineIntent("qual o pix do João?")).toBe(false);
@@ -101,18 +101,18 @@ describe("parser :: detectPagarPixInlineIntent", () => {
 
 describe("parser :: parsePagarPixInline", () => {
   it("extrai valor+nome+chave (celular)", () => {
-    const p = parsePagarPixInline("Pix 50 para João Silva chave 11999998888");
+    const p = parsePagarPixInline("Pix 50 para João Silva chave (11) 99999-8888");
     expect(p).toBeTruthy();
     expect(p!.valorCentavos).toBe(5000);
     expect(p!.nome).toBe("João Silva");
     expect(p!.pixKeyType).toBe("telefone");
-    expect(p!.pixKey).toBe("+11999998888");
+    expect(p!.pixKey).toBe("+(11) 99999-8888");
   });
   it("retorna null quando chave é inválida", () => {
     expect(parsePagarPixInline("Pix 50 para João chave zzz")).toBeNull();
   });
   it("não deixa a palavra 'chave' entrar no nome", () => {
-    const p = parsePagarPixInline("Pix 50 para João Silva chave 11999998888");
+    const p = parsePagarPixInline("Pix 50 para João Silva chave (11) 99999-8888");
     expect(p!.nome.toLowerCase()).not.toContain("chave");
   });
   it("formato sem 'chave' (só email)", () => {
@@ -128,8 +128,8 @@ describe("parser :: maskPixKey", () => {
     expect(maskPixKey("joao@example.com", "email")).toMatch(/^j\*+@example\.com$/);
   });
   it("mascara celular preservando últimos 4", () => {
-    expect(maskPixKey("+11999998888", "telefone")).toContain("8888");
-    expect(maskPixKey("+11999998888", "telefone")).not.toContain("99999");
+    expect(maskPixKey("+(11) 99999-8888", "telefone")).toContain("8888");
+    expect(maskPixKey("+(11) 99999-8888", "telefone")).not.toContain("99999");
   });
   it("mascara CPF preservando últimos 2 dígitos", () => {
     expect(maskPixKey("12345678901", "cpf")).toBe("***.***.***-01");
@@ -152,7 +152,7 @@ describe("fluxo :: prévia sem persistência", () => {
   it("gera prévia com chave mascarada e NÃO cria favorecido nem gasto", async () => {
     const r = await processarMensagemWhatsApp({
       telefone,
-      texto: "Pix 50 para João Silva chave 11999998888",
+      texto: "Pix 50 para João Silva chave (11) 99999-8888",
       external_id: "pi-1",
     });
     expect(r.status).toBe("pendente");
@@ -160,7 +160,7 @@ describe("fluxo :: prévia sem persistência", () => {
     expect(r.resposta).toContain("João Silva");
     expect(r.resposta).toContain("R$ 50,00");
     // Chave mascarada — nunca em plain text.
-    expect(r.resposta).not.toContain("11999998888");
+    expect(r.resposta).not.toContain("(11) 99999-8888");
     expect(r.resposta).toContain("8888");
     // Nada persistido.
     expect(gastoInserts()).toHaveLength(0);
@@ -186,7 +186,7 @@ describe("fluxo :: confirmação (sim/não)", () => {
   it("'sim' cria favorecido + gasto atomicamente", async () => {
     await processarMensagemWhatsApp({
       telefone,
-      texto: "Pix 50 para João Silva chave 11999998888",
+      texto: "Pix 50 para João Silva chave (11) 99999-8888",
       external_id: "pi-c1",
     });
     const r = await processarMensagemWhatsApp({
@@ -202,17 +202,17 @@ describe("fluxo :: confirmação (sim/não)", () => {
     expect(gasto.forma_pagamento).toBe("pix");
     expect(gasto.estabelecimento).toBe("João Silva");
     // A descrição / observação não pode conter a chave completa.
-    expect(String(gasto.observacao ?? "")).not.toContain("11999998888");
-    expect(String(gasto.descricao ?? "")).not.toContain("11999998888");
+    expect(String(gasto.observacao ?? "")).not.toContain("(11) 99999-8888");
+    expect(String(gasto.descricao ?? "")).not.toContain("(11) 99999-8888");
     // Resposta de sucesso mascara a chave.
-    expect(r.resposta).not.toContain("11999998888");
+    expect(r.resposta).not.toContain("(11) 99999-8888");
     expect(r.resposta).toContain("8888");
   });
 
   it("'cancelar' não cria nada", async () => {
     await processarMensagemWhatsApp({
       telefone,
-      texto: "Pix 50 para João Silva chave 11999998888",
+      texto: "Pix 50 para João Silva chave (11) 99999-8888",
       external_id: "pi-x1",
     });
     const r = await processarMensagemWhatsApp({
@@ -247,12 +247,12 @@ describe("fluxo :: reuso e desambiguação", () => {
     resetState({
       favorecidos: [{
         id: "f1", user_id: "u1", nome: "João Silva",
-        pix_key: "+11999998888", pix_key_type: "telefone", ativo: true,
+        pix_key: "+(11) 99999-8888", pix_key_type: "telefone", ativo: true,
       }],
     });
     await processarMensagemWhatsApp({
       telefone,
-      texto: "Pix 50 para João Silva chave 11999998888",
+      texto: "Pix 50 para João Silva chave (11) 99999-8888",
       external_id: "pi-r1",
     });
     const r = await processarMensagemWhatsApp({
@@ -277,7 +277,7 @@ describe("fluxo :: reuso e desambiguação", () => {
     });
     const r = await processarMensagemWhatsApp({
       telefone,
-      texto: "Pix 50 para João Silva chave 11999998888",
+      texto: "Pix 50 para João Silva chave (11) 99999-8888",
       external_id: "pi-d1",
     });
     expect(r.status).toBe("pendente");
@@ -319,12 +319,12 @@ describe("fluxo :: isolamento por user_id", () => {
       favorecidos: [{
         id: "outro-user-fav", user_id: "u-outro",
         nome: "João Silva",
-        pix_key: "+11999998888", pix_key_type: "telefone", ativo: true,
+        pix_key: "+(11) 99999-8888", pix_key_type: "telefone", ativo: true,
       }],
     });
     await processarMensagemWhatsApp({
       telefone,
-      texto: "Pix 50 para João Silva chave 11999998888",
+      texto: "Pix 50 para João Silva chave (11) 99999-8888",
       external_id: "pi-iso1",
     });
     const r = await processarMensagemWhatsApp({
@@ -340,10 +340,10 @@ describe("fluxo :: isolamento por user_id", () => {
 });
 
 describe("fluxo :: regressões vizinhas", () => {
-  it("'salva o pix do João: 11999998888' continua indo para save_pix", async () => {
+  it("'salva o pix do João: (11) 99999-8888' continua indo para save_pix", async () => {
     const r = await processarMensagemWhatsApp({
       telefone,
-      texto: "salva o pix do João: 11999998888",
+      texto: "salva o pix do João: (11) 99999-8888",
       external_id: "reg-1",
     });
     // Ou cria favorecido novo, ou responde de acordo com o handler save.
