@@ -140,6 +140,29 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     return "listar_contas_receber";
   }
 
+  // ----- WA-Q-Transferencias — listagem read-only de transferências internas -----
+  // Precede QUALQUER parser de criação (gasto, receita, transferência). A palavra
+  // "transferi/transferência" isolada era capturada pelo parser genérico de gasto
+  // (confiança 0.25), abrindo `aguardando_descricao_e_valor_gasto`. Aqui é 100%
+  // read-only: nunca abre sessão nem escreve em gastos/receitas/transferencias_internas.
+  if (
+    t === "transferencias" ||
+    t === "transferencia" ||
+    t === "minhas transferencias" ||
+    t === "minha transferencia" ||
+    t === "ver transferencias" ||
+    t === "historico de transferencias" ||
+    t === "transferencias entre contas" ||
+    t === "transferencias internas" ||
+    /\b(quais|liste?|ver|mostrar?|mostre) (as )?(minhas )?transferencias\b/.test(t) ||
+    /\bhistorico (de|das) transferencias\b/.test(t) ||
+    /\btransferencias (entre|de|para) contas\b/.test(t) ||
+    /\bquanto (eu )?transferi\b/.test(t) ||
+    /\bminhas transferencias (entre contas|internas)\b/.test(t)
+  ) {
+    return "listar_transferencias";
+  }
+
 
 
   // ----- maiores gastos (verificar antes de "mes/semana" sozinhos) -----
