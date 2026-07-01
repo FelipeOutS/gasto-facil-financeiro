@@ -29,7 +29,8 @@ export type ConsultaIntent =
   | "gastos_por_categoria_mes"
   | "orcamento_mes"
   | "listar_recorrencias"
-  | "listar_contas_receber";
+  | "listar_contas_receber"
+  | "listar_transferencias";
 
 const APP_TZ = "America/Sao_Paulo";
 
