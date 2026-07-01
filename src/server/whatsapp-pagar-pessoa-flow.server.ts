@@ -40,10 +40,18 @@ import type {
 } from "./whatsapp.server";
 import {
   parsePagarPessoa,
+  parsePagarPixInline,
+  maskPixKey,
   type PagarPessoaParsed,
+  type PagarPixInlineParsed,
+  type PixKeyType,
 } from "./whatsapp-pix-parser";
 import {
   findFavorecidosByNome,
+  findFavorecidoByPixKey,
+  createFavorecido,
+  updateFavorecidoPix,
+  rotuloTipoPix,
   type FavorecidoRow,
 } from "./whatsapp-favorecidos.server";
 import {
