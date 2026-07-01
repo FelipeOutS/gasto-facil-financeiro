@@ -502,8 +502,116 @@ export async function handleConsulta(
       return await handleListarGastosMes(userId);
     case "gastos_por_categoria_mes":
       return await handleGastosPorCategoriaMes(userId);
+    case "orcamento_mes":
+      return await handleOrcamentoMes(userId);
   }
 }
+
+// ---------- WA-Q-Orcamento — leitura de limites/orçamento do mês ----------
+// Estritamente somente leitura. Não cria/atualiza gasto, receita,
+// recorrência, sessão ou limite. Quando não há limites cadastrados no
+// mês vigente, responde amigável e orienta a configurar no site.
+type LimiteRow = {
+  tipo: string | null;
+  valor: number | string | null;
+  mes: number | null;
+  ano: number | null;
+};
+
+async function loadLimitesDoMes(
+  userId: string,
+  mes: number,
+  ano: number,
+): Promise<LimiteRow[]> {
+  const { data } = await supabaseAdmin
+    .from("limites")
+    .select("tipo, valor, mes, ano")
+    .eq("user_id", userId)
+    .eq("mes", mes)
+    .eq("ano", ano);
+  return Array.isArray(data) ? (data as LimiteRow[]) : [];
+}
+
+async function handleOrcamentoMes(userId: string): Promise<ConsultaResult> {
+  const hoje = todayLocalISO();
+  const [y, m] = hoje.split("-").map(Number);
+  const from = monthStartISO(hoje);
+  const to = addDaysISO(hoje, 1);
+  const [limites, gastos, catMap] = await Promise.all([
+    loadLimitesDoMes(userId, m, y),
+    loadGastos(userId, from, to),
+    loadCategoriasMap(userId),
+  ]);
+
+  if (!limites.length) {
+    return {
+      status: "consulta",
+      resposta:
+        `Você ainda não tem limites de orçamento cadastrados para ${mesPorExtenso(hoje)}.\n\n` +
+        `Para definir um limite total ou por categoria, acesse:\n` +
+        `https://gastointeligente.com.br → Limites\n\n` +
+        `Depois é só me perguntar "meu orçamento" que eu te mostro como está o mês.`,
+    };
+  }
+
+  // Índices de gasto: total do mês e por nome de categoria (lowercased).
+  const totalGastoMes = sumValor(gastos);
+  const gastoPorCat = new Map<string, number>();
+  for (const g of gastos) {
+    const nome = g.categoria_id
+      ? (catMap.get(g.categoria_id) || "Outros")
+      : "Outros";
+    const key = nome.trim().toLowerCase();
+    gastoPorCat.set(key, (gastoPorCat.get(key) ?? 0) + (Number(g.valor ?? 0) || 0));
+  }
+
+  const linhas: string[] = [];
+  linhas.push(`Seu orçamento de ${mesPorExtenso(hoje)} 📊`);
+  linhas.push("");
+
+  // Total primeiro, se houver.
+  const totalRow = limites.find(
+    (l) => (l.tipo ?? "").trim().toLowerCase() === "total",
+  );
+  if (totalRow) {
+    const orc = Number(totalRow.valor ?? 0) || 0;
+    const restante = orc - totalGastoMes;
+    linhas.push(`• Total: ${formatBRL(totalGastoMes)} de ${formatBRL(orc)}`);
+    linhas.push(
+      restante >= 0
+        ? `  Ainda pode gastar ${formatBRL(restante)}.`
+        : `  Ultrapassou em ${formatBRL(-restante)}.`,
+    );
+    linhas.push("");
+  }
+
+  // Depois cada categoria (exclui "total" e a chave "meta_gasto_mensal"
+  // que é do app antigo).
+  const categoriasCadastradas = limites.filter((l) => {
+    const t = (l.tipo ?? "").trim().toLowerCase();
+    return t && t !== "total" && t !== "meta_gasto_mensal";
+  });
+  for (const l of categoriasCadastradas) {
+    const nome = (l.tipo ?? "").trim();
+    const orc = Number(l.valor ?? 0) || 0;
+    const gasto = gastoPorCat.get(nome.toLowerCase()) ?? 0;
+    const restante = orc - gasto;
+    linhas.push(
+      `• ${nome.charAt(0).toUpperCase() + nome.slice(1)}: ${formatBRL(gasto)} de ${formatBRL(orc)}`,
+    );
+    linhas.push(
+      restante >= 0
+        ? `  Restam ${formatBRL(restante)}.`
+        : `  Ultrapassou em ${formatBRL(-restante)}.`,
+    );
+  }
+
+  if (linhas[linhas.length - 1] !== "") linhas.push("");
+  linhas.push("Para ajustar seus limites: https://gastointeligente.com.br → Limites");
+
+  return { status: "consulta", resposta: linhas.join("\n") };
+}
+
 
 async function handleListarGastosMes(userId: string): Promise<ConsultaResult> {
   const hoje = todayLocalISO();
