@@ -68,6 +68,33 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     return "ajuda_whatsapp";
   }
 
+  // ----- WA-Q-Orcamento — consulta de LIMITES / ORÇAMENTO do mês -----
+  // Precede toda a pipeline de criação (parser de gasto/receita) e
+  // também o WA-F5 (limite de cartão), pois "limites" isolado é
+  // ambíguo mas por padrão o usuário quer o orçamento mensal.
+  // NUNCA cria sessão, gasto, receita, recorrência ou orçamento.
+  if (
+    t === "limite" ||
+    t === "limites" ||
+    t === "meu limite" ||
+    t === "meus limites" ||
+    t === "orcamento" ||
+    t === "orcamentos" ||
+    t === "meu orcamento" ||
+    t === "meus orcamentos" ||
+    /\bcomo est[aã]o? (os )?meus? limites\b/.test(t) ||
+    /\bcomo est[aã] (o )?meu orcamento\b/.test(t) ||
+    /\borcamento do m[eê]s\b/.test(t) ||
+    /\bmeu orcamento(?: do m[eê]s)?\b/.test(t) ||
+    /\bmeus orcamentos\b/.test(t) ||
+    /\bquanto (ainda )?(eu )?posso gastar\b/.test(t) ||
+    /\bquanto (ainda )?(me )?sobra (do|no) (meu )?orcamento\b/.test(t)
+  ) {
+    return "orcamento_mes";
+  }
+
+
+
   // ----- maiores gastos (verificar antes de "mes/semana" sozinhos) -----
   const fala_em_maiores =
     /\bmaiores? gastos?\b/.test(t) ||
