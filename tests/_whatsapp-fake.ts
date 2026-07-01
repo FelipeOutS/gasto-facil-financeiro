@@ -43,6 +43,8 @@ export const state = {
   contasReceberData: [] as Record<string, unknown>[],
   // WA-Q-Transferencias — transferências internas do usuário
   transferenciasData: [] as Record<string, unknown>[],
+  // WA-Q-Metas — metas financeiras do usuário
+  metasData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
@@ -415,6 +417,15 @@ function makeBuilder(table: string): any {
       const base = uid
         ? state.transferenciasData.filter((t) => t.user_id === undefined || t.user_id === uid)
         : state.transferenciasData;
+      if (ctx.single) return { data: base[0] ?? null, error: null };
+      return { data: base, error: null };
+    }
+    // WA-Q-Metas — select read-only de metas financeiras.
+    if (table === "metas_financeiras") {
+      const uid = ctx.filters?.user_id;
+      const base = uid
+        ? state.metasData.filter((m) => m.user_id === undefined || m.user_id === uid)
+        : state.metasData;
       if (ctx.single) return { data: base[0] ?? null, error: null };
       return { data: base, error: null };
     }

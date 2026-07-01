@@ -30,7 +30,8 @@ export type ConsultaIntent =
   | "orcamento_mes"
   | "listar_recorrencias"
   | "listar_contas_receber"
-  | "listar_transferencias";
+  | "listar_transferencias"
+  | "listar_metas";
 
 const APP_TZ = "America/Sao_Paulo";
 
@@ -162,6 +163,36 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
   ) {
     return "listar_transferencias";
   }
+
+  // ----- WA-Q-Metas — listagem read-only de metas financeiras ATIVAS -----
+  // Precede QUALQUER parser de criação (gasto, receita, recorrência, meta).
+  // "minhas metas" isolada era capturada pelo parser genérico de gasto
+  // (confiança 0.25), abrindo `aguardando_descricao_e_valor_gasto`. Aqui é
+  // 100% read-only: nunca abre sessão nem escreve em metas_financeiras/
+  // movimentacoes_meta/gastos/receitas/recorrencias/contas.
+  if (
+    t === "metas" ||
+    t === "meta" ||
+    t === "minhas metas" ||
+    t === "minha meta" ||
+    t === "metas financeiras" ||
+    t === "minhas metas financeiras" ||
+    t === "ver metas" ||
+    t === "listar metas" ||
+    t === "objetivos" ||
+    t === "meus objetivos" ||
+    /\bcomo est[aã]o? (as )?minhas metas\b/.test(t) ||
+    /\bprogresso (das |de )?(minhas )?metas\b/.test(t) ||
+    /\bquanto falta (para |pra )?(as |atingir )?(minhas )?metas\b/.test(t) ||
+    /\bquanto falta (para |pra )?(a )?minha meta\b/.test(t) ||
+    /\b(quais|liste?|ver|mostrar?|mostre) (sao )?(as )?(minhas )?metas\b/.test(t) ||
+    /\bmetas ativas\b/.test(t)
+  ) {
+    return "listar_metas";
+  }
+
+
+
 
 
 
@@ -580,6 +611,8 @@ export async function handleConsulta(
       return await handleListarContasReceber(userId);
     case "listar_transferencias":
       return await handleListarTransferencias(userId);
+    case "listar_metas":
+      return await handleListarMetas(userId);
   }
 }
 
@@ -647,6 +680,75 @@ async function handleListarTransferencias(userId: string): Promise<ConsultaResul
   linhas.push(`Total transferido (exibido): ${formatBRL(total)}`);
   linhas.push("");
   linhas.push("Para registrar ou editar: https://gastointeligente.com.br → Transferências");
+
+  return { status: "consulta", resposta: linhas.join("\n") };
+}
+
+// ---------- WA-Q-Metas — listagem read-only de metas financeiras ativas ----------
+// Estritamente somente leitura. Nunca cria/atualiza meta, movimentação, gasto,
+// receita, recorrência, conta ou sessão. Filtra pelo user_id do dono. A tabela
+// `metas_financeiras` não possui coluna `status`; consideramos "ativa" quando
+// `valor_atual < valor_objetivo` (ainda não concluída). Ordena por prazo ASC
+// (metas sem prazo vão para o fim). Limita a 10 itens para caber na mensagem.
+type MetaRow = {
+  id: string;
+  nome: string | null;
+  valor_objetivo: number | string | null;
+  valor_atual: number | string | null;
+  prazo: string | null;
+};
+
+async function handleListarMetas(userId: string): Promise<ConsultaResult> {
+  const { data: raw } = await supabaseAdmin
+    .from("metas_financeiras")
+    .select("id, nome, valor_objetivo, valor_atual, prazo")
+    .eq("user_id", userId);
+  const all = (Array.isArray(raw) ? raw : []) as MetaRow[];
+
+  const ativas = all.filter((m) => {
+    const obj = Number(m.valor_objetivo ?? 0) || 0;
+    const atu = Number(m.valor_atual ?? 0) || 0;
+    return obj > 0 && atu < obj;
+  });
+
+  if (ativas.length === 0) {
+    return {
+      status: "consulta",
+      resposta:
+        "Você ainda não tem metas financeiras ativas. 🎯\n\n" +
+        "Para criar uma meta (viagem, reserva, entrada de imóvel...), acesse:\n" +
+        "https://gastointeligente.com.br → Metas",
+    };
+  }
+
+  ativas.sort((a, b) => {
+    const av = a.prazo ?? "9999-99-99";
+    const bv = b.prazo ?? "9999-99-99";
+    return av < bv ? -1 : av > bv ? 1 : 0;
+  });
+
+  const recentes = ativas.slice(0, 10);
+  const linhas: string[] = [];
+  linhas.push(`Suas metas financeiras ativas 🎯 (${ativas.length})`);
+  linhas.push("");
+  for (const m of recentes) {
+    const nome = (m.nome ?? "").trim() || "Meta";
+    const obj = Number(m.valor_objetivo ?? 0) || 0;
+    const atu = Number(m.valor_atual ?? 0) || 0;
+    const falta = Math.max(0, obj - atu);
+    const pct = obj > 0 ? Math.min(100, Math.round((atu / obj) * 100)) : 0;
+    const prazo = m.prazo ? ` · prazo: ${formatDataBR(m.prazo)}` : "";
+    linhas.push(
+      `• ${nome} — ${formatBRL(atu)} de ${formatBRL(obj)} (${pct}%)${prazo}`,
+    );
+    linhas.push(`  Faltam ${formatBRL(falta)}.`);
+  }
+  if (ativas.length > recentes.length) {
+    linhas.push("");
+    linhas.push(`(exibindo as ${recentes.length} mais próximas de ${ativas.length})`);
+  }
+  linhas.push("");
+  linhas.push("Para editar ou aportar: https://gastointeligente.com.br → Metas");
 
   return { status: "consulta", resposta: linhas.join("\n") };
 }
