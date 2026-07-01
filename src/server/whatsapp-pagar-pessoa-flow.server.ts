@@ -609,6 +609,14 @@ export async function processarPagarPessoaFlow(args: {
       return await passoEscolherConta({
         userId, msg, texto, recebidaEm, session, sessao, deps,
       });
+    case "pp_aguardando_confirmar_pix_inline":
+      return await passoConfirmarPixInline({
+        userId, msg, texto, recebidaEm, session, sessao, decisao, deps,
+      });
+    case "pp_aguardando_desambig_fav_pix":
+      return await passoDesambigFavPix({
+        userId, msg, texto, recebidaEm, session, sessao, deps,
+      });
     case "pp_persistindo":
       // Mesmo external_id em corrida — devolve resposta neutra.
       return { status: "duplicada", resposta: T.ainda_processando() };
