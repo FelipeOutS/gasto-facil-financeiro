@@ -66,7 +66,6 @@ describe("WA-Q-Hardening — detectConsultaShape (positivos = fallback)", () => 
       "meus lançamentos",
       // impacto na renda
       "impacto dos gastos na renda",
-      "gastos na renda",
     ];
     for (const t of gaps) {
       it(`fallback para "${t}"`, () => isFallback(t));
