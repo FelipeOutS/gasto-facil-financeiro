@@ -39,6 +39,8 @@ export const state = {
   recorrenciasData: [] as Record<string, unknown>[],
   // WA-Q-Orcamento — limites/orçamento do usuário
   limitesData: [] as Record<string, unknown>[],
+  // WA-Q-ContasReceber — contas a receber do usuário
+  contasReceberData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
