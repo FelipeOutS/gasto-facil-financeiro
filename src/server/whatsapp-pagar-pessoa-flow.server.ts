@@ -1164,7 +1164,7 @@ export async function processarPixInlineEntry(args: {
   // Persiste ciphertext ANTES da sessão. Se falhar, aborta sem abrir prévia.
   const stored = await storePendingPixKey({
     userId,
-    sessionMessageId: msg.id,
+    sessionMessageId: crypto.randomUUID(),
     pixKeyPlaintext: parsed.pixKey,
     pixKeyType: parsed.pixKeyType,
   });
@@ -1463,7 +1463,7 @@ async function passoDesambigFavPix(args: {
     // Re-armazena para o próximo passo (confirmar).
     const restored = await storePendingPixKey({
       userId,
-      sessionMessageId: msg.id,
+      sessionMessageId: crypto.randomUUID(),
       pixKeyPlaintext: pixKey,
       pixKeyType,
     });
