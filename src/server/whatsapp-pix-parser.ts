@@ -59,26 +59,83 @@ function normNome(s: string): string {
 // Classificação de tipo de chave Pix
 // =========================================================================
 
-/** Reconhece email simples, telefone BR, CPF, CNPJ e UUID v4 (aleatória). */
-export function detectPixKeyType(raw: string): PixKeyType {
+/** Dica externa (ex.: marcador "chave celular X") para desambiguar. */
+export type PixKeyHint = "email" | "telefone" | "cpf" | "cnpj" | "aleatoria";
+
+/** Valida CPF pelos dígitos verificadores (padrão Receita Federal). */
+function isValidCPF(digits: string): boolean {
+  if (!/^\d{11}$/.test(digits)) return false;
+  if (/^(\d)\1{10}$/.test(digits)) return false;
+  const calc = (base: string, factor: number) => {
+    let sum = 0;
+    for (let i = 0; i < base.length; i++) {
+      sum += Number(base[i]) * (factor - i);
+    }
+    const r = (sum * 10) % 11;
+    return r === 10 ? 0 : r;
+  };
+  const d1 = calc(digits.slice(0, 9), 10);
+  const d2 = calc(digits.slice(0, 10), 11);
+  return d1 === Number(digits[9]) && d2 === Number(digits[10]);
+}
+
+/** Padrão celular BR: DDD válido (11–99, sem zero) + prefixo 9 + 8 dígitos. */
+function isBrazilianMobilePattern(digits: string): boolean {
+  return /^[1-9][1-9]9\d{8}$/.test(digits);
+}
+
+/**
+ * Reconhece email, telefone BR, CPF, CNPJ e UUID v4 (aleatória).
+ *
+ * `hint` vem de marcadores explícitos no texto ("chave celular X",
+ * "telefone X", "chave cpf X"). Quando presente, força a classificação
+ * — nunca "adivinha" outro tipo por cima.
+ */
+export function detectPixKeyType(raw: string, hint?: PixKeyHint): PixKeyType {
   const k = (raw ?? "").trim();
   if (!k) return "desconhecida";
+
+  // 1) Dica explícita do usuário tem prioridade absoluta.
+  if (hint) {
+    const digits = k.replace(/\D+/g, "");
+    if (hint === "email") {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(k) ? "email" : "desconhecida";
+    }
+    if (hint === "telefone") {
+      return digits.length >= 10 && digits.length <= 13 ? "telefone" : "desconhecida";
+    }
+    if (hint === "cpf") return digits.length === 11 ? "cpf" : "desconhecida";
+    if (hint === "cnpj") return digits.length === 14 ? "cnpj" : "desconhecida";
+    if (hint === "aleatoria") {
+      return /^[0-9a-f-]{8,}$/i.test(k) ? "aleatoria" : "desconhecida";
+    }
+  }
+
+  // 2) Detecção estrutural sem dica.
   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(k)) return "email";
-  // UUID v4 ou parecido (chave aleatória do BCB tem formato UUID v4).
   if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(k)) {
     return "aleatoria";
   }
   const digits = k.replace(/\D+/g, "");
-  if (digits.length === 11 && !k.startsWith("+")) {
-    // 11 dígitos puros: pode ser CPF ou celular com DDD. Heurística:
-    // se a entrada tinha pontos ou traços ("123.456.789-00"), CPF.
-    // Se tinha parênteses/espaços/+, telefone.
-    if (/[.\-]/.test(k) && !/[()\s+]/.test(k)) return "cpf";
+
+  // Prefixo +55 → telefone BR.
+  if (k.startsWith("+")) {
+    if (digits.length >= 10 && digits.length <= 13) return "telefone";
+  }
+
+  if (digits.length === 11) {
+    // Máscara CPF explícita ("123.456.789-00") → CPF.
+    if (/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(k)) return "cpf";
+    // Máscara de telefone (parênteses/espaços/+) → telefone.
     if (/[()\s+]/.test(k)) return "telefone";
-    // Sem máscara, 11 dígitos: privilegia CPF (regra mais comum no Brasil
-    // ao "ditar Pix"). Telefone normalmente vem com DDD entre parênteses
-    // ou com +55.
-    return "cpf";
+    // Sem máscara: desambigua por padrão brasileiro de celular
+    // (DDD válido + prefixo 9). Só cai em CPF quando o padrão de celular
+    // NÃO bate e o número é um CPF matematicamente válido.
+    if (isBrazilianMobilePattern(digits)) return "telefone";
+    if (isValidCPF(digits)) return "cpf";
+    // Nada bate: fallback conservador → telefone (evita cadastrar
+    // silenciosamente um CPF inválido como se fosse chave real).
+    return "telefone";
   }
   if (digits.length === 14) return "cnpj";
   if (digits.length >= 10 && digits.length <= 13) return "telefone";
