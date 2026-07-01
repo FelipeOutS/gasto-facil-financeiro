@@ -3278,6 +3278,45 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_pix_pending_secrets: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          key_auth_tag: string
+          key_ciphertext: string
+          key_hash: string
+          key_iv: string
+          key_type: string
+          session_message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          key_auth_tag: string
+          key_ciphertext: string
+          key_hash: string
+          key_iv: string
+          key_type: string
+          session_message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          key_auth_tag?: string
+          key_ciphertext?: string
+          key_hash?: string
+          key_iv?: string
+          key_type?: string
+          session_message_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       contas_a_pagar_shared: {

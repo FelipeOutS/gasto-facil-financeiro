@@ -68,6 +68,12 @@ import {
   type WhatsAppBaixaContaDeps,
   type BaixaContaSession,
 } from "./whatsapp-contas-pagar.server";
+import {
+  storePendingPixKey,
+  consumePendingPixKey,
+  deletePendingPixKey,
+  hashPixKey,
+} from "./whatsapp-pix-secret.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin: any = _supabaseAdmin;
@@ -97,12 +103,21 @@ export type PagarPessoaSession = {
   formaPagamento: "pix" | "outro";
   favorecidoId: string | null;
   /**
-   * Chave Pix pendente do fluxo inline. Só é persistida no favorecido
-   * na confirmação. NUNCA é exibida em plain-text (usar `maskPixKey`)
-   * nem logada.
+   * WA-Q-PixInline-LGPD — a chave Pix bruta NUNCA fica na sessão nem em
+   * `whatsapp_messages.parsed`. Guardamos apenas:
+   *   - `pendingPixSecretId`: id da linha cifrada em
+   *     `whatsapp_pix_pending_secrets` (AES-256-GCM, TTL 30min);
+   *   - `pendingPixKeyType`: tipo (para render/rótulo);
+   *   - `pendingPixKeyMasked`: exibição já mascarada (LGPD-safe);
+   *   - `pendingPixKeyHash`: HMAC da chave normalizada, só para
+   *     dedup pós-race na confirmação.
+   * O plaintext é lido apenas UMA vez, no "sim", via
+   * `consumePendingPixKey` — que já apaga a linha após ler.
    */
-  pendingPixKey: string | null;
+  pendingPixSecretId: string | null;
   pendingPixKeyType: PixKeyType | null;
+  pendingPixKeyMasked: string | null;
+  pendingPixKeyHash: string | null;
   /** Quando há 1 conta candidata, esse é o id em consideração. */
   contaId: string | null;
   /** Quando há N contas candidatas, ids ordenados como apresentados. */
@@ -331,7 +346,10 @@ const T = {
       `Confira o pagamento Pix antes de confirmar:`,
       ``,
       `• Favorecido: ${args.nome}`,
-      `• Chave Pix (${rotuloTipoPix(args.pixKeyType)}): ${args.pixKeyMasked}`,
+      // WA-Q-PixInline-UX: rótulo em duas linhas — tipo primeiro
+      // ("Celular" p/ telefone), máscara na linha seguinte.
+      `• Chave Pix: ${rotuloTipoPix(args.pixKeyType)}`,
+      `  ${args.pixKeyMasked}`,
       `• Valor: ${formatBRL(args.valorCentavos)}`,
       `• Forma: Pix`,
       ``,
@@ -356,7 +374,9 @@ const T = {
   }): string {
     return [
       `Registrado! ${formatBRL(args.valorCentavos)} para ${args.nome} via Pix. ✅`,
-      `Chave (${rotuloTipoPix(args.pixKeyType)}): ${args.pixKeyMasked}`,
+      // Mesma convenção da prévia — tipo + máscara em linhas separadas.
+      `Chave Pix: ${rotuloTipoPix(args.pixKeyType)}`,
+      `  ${args.pixKeyMasked}`,
       ``,
       `Favorecido salvo. Nas próximas vezes basta dizer o nome.`,
     ].join("\n");
@@ -745,7 +765,9 @@ async function entrarFluxo(args: {
       descricao,
       formaPagamento,
       favorecidoId: null,
-      pendingPixKey: null,
+      pendingPixSecretId: null,
+      pendingPixKeyMasked: null,
+      pendingPixKeyHash: null,
       pendingPixKeyType: null,
       contaId: null,
       candidateContaIds: null,
@@ -774,7 +796,9 @@ async function entrarFluxo(args: {
       descricao,
       formaPagamento,
       favorecidoId,
-      pendingPixKey: null,
+      pendingPixSecretId: null,
+      pendingPixKeyMasked: null,
+      pendingPixKeyHash: null,
       pendingPixKeyType: null,
       contaId: null,
       candidateContaIds: null,
@@ -802,7 +826,9 @@ async function entrarFluxo(args: {
       descricao,
       formaPagamento,
       favorecidoId,
-      pendingPixKey: null,
+      pendingPixSecretId: null,
+      pendingPixKeyMasked: null,
+      pendingPixKeyHash: null,
       pendingPixKeyType: null,
       contaId: null,
       candidateContaIds: null,
@@ -1132,28 +1158,54 @@ export async function processarPixInlineEntry(args: {
     };
   }
 
+  const keyMasked = maskPixKey(parsed.pixKey, parsed.pixKeyType);
+  const keyHashLocal = hashPixKey(parsed.pixKey);
+
+  // Persiste ciphertext ANTES da sessão. Se falhar, aborta sem abrir prévia.
+  const stored = await storePendingPixKey({
+    userId,
+    sessionMessageId: msg.id,
+    pixKeyPlaintext: parsed.pixKey,
+    pixKeyType: parsed.pixKeyType,
+  });
+  if (!stored) {
+    logEvent("pix_inline_store_secret_fail", "fail");
+    return { status: "erro", resposta: T.erroGenerico() };
+  }
+
+  const buildSession = (
+    over: Partial<PagarPessoaSession>,
+  ): PagarPessoaSession => ({
+    kind: "pagar_pessoa",
+    nome: parsed.nome,
+    valorCentavos: parsed.valorCentavos,
+    descricao: null,
+    formaPagamento: "pix",
+    favorecidoId: null,
+    // WA-Q-PixInline-LGPD: NADA de plaintext aqui.
+    pendingPixSecretId: stored.secretId,
+    pendingPixKeyType: parsed.pixKeyType,
+    pendingPixKeyMasked: keyMasked,
+    pendingPixKeyHash: stored.keyHash,
+    contaId: null,
+    candidateContaIds: null,
+    valorBateConta: false,
+    mensagemOriginal: texto,
+    ...over,
+  });
+
   // 1) Match por chave Pix (silencioso — reusa favorecido existente).
   const byKey = await findFavorecidoByPixKey(userId, parsed.pixKey);
   if (byKey) {
-    const session: PagarPessoaSession = {
-      kind: "pagar_pessoa",
-      nome: byKey.nome, // usa nome já cadastrado como fonte da verdade
-      valorCentavos: parsed.valorCentavos,
-      descricao: null,
-      formaPagamento: "pix",
+    const session = buildSession({
+      nome: byKey.nome,
       favorecidoId: byKey.id,
-      pendingPixKey: parsed.pixKey,
-      pendingPixKeyType: parsed.pixKeyType,
-      contaId: null,
-      candidateContaIds: null,
-      valorBateConta: false,
-      mensagemOriginal: texto,
-    };
+    });
     const resposta = T.previewPixInline({
       nome: byKey.nome,
       valorCentavos: parsed.valorCentavos,
       pixKeyType: parsed.pixKeyType,
-      pixKeyMasked: maskPixKey(parsed.pixKey, parsed.pixKeyType),
+      pixKeyMasked: keyMasked,
       reusandoFavorecido: true,
     });
     await deps.gravarSessao(
@@ -1168,33 +1220,20 @@ export async function processarPixInlineEntry(args: {
     return { status: "pendente", resposta };
   }
 
-  // 2) Nenhuma chave igual. Checa conflito por nome (mesmo nome, outra
-  // chave). Se houver, entra em desambiguação. Nunca vaza favorecido de
-  // outro user_id (findFavorecidosByNome filtra por user_id).
+  // 2) Checa conflito por nome (mesmo nome, outra chave).
   const byName = await findFavorecidosByNome(userId, parsed.nome);
-  const conflitoNome = byName.find(
-    (f) =>
-      (f.nome ?? "").trim().toLowerCase() ===
-        parsed.nome.trim().toLowerCase() &&
-      f.pix_key &&
-      f.pix_key.trim().toLowerCase() !== parsed.pixKey.trim().toLowerCase(),
-  );
+  const conflitoNome = byName.find((f) => {
+    if ((f.nome ?? "").trim().toLowerCase() !==
+      parsed.nome.trim().toLowerCase()) return false;
+    if (!f.pix_key) return false;
+    // Compara via hash — não guarda plaintext do favorecido no scope.
+    return hashPixKey(f.pix_key) !== keyHashLocal;
+  });
 
   if (conflitoNome) {
-    const session: PagarPessoaSession = {
-      kind: "pagar_pessoa",
-      nome: parsed.nome,
-      valorCentavos: parsed.valorCentavos,
-      descricao: null,
-      formaPagamento: "pix",
+    const session = buildSession({
       favorecidoId: conflitoNome.id,
-      pendingPixKey: parsed.pixKey,
-      pendingPixKeyType: parsed.pixKeyType,
-      contaId: null,
-      candidateContaIds: null,
-      valorBateConta: false,
-      mensagemOriginal: texto,
-    };
+    });
     const resposta = T.pixInlineDesambig({
       nomeNovo: parsed.nome,
       existente: conflitoNome,
@@ -1210,25 +1249,12 @@ export async function processarPixInlineEntry(args: {
   }
 
   // 3) Caminho normal — favorecido novo. Prévia sem persistência.
-  const session: PagarPessoaSession = {
-    kind: "pagar_pessoa",
-    nome: parsed.nome,
-    valorCentavos: parsed.valorCentavos,
-    descricao: null,
-    formaPagamento: "pix",
-    favorecidoId: null,
-    pendingPixKey: parsed.pixKey,
-    pendingPixKeyType: parsed.pixKeyType,
-    contaId: null,
-    candidateContaIds: null,
-    valorBateConta: false,
-    mensagemOriginal: texto,
-  };
+  const session = buildSession({});
   const resposta = T.previewPixInline({
     nome: parsed.nome,
     valorCentavos: parsed.valorCentavos,
     pixKeyType: parsed.pixKeyType,
-    pixKeyMasked: maskPixKey(parsed.pixKey, parsed.pixKeyType),
+    pixKeyMasked: keyMasked,
     reusandoFavorecido: false,
   });
   await deps.gravarSessao(
@@ -1245,8 +1271,8 @@ export async function processarPixInlineEntry(args: {
 
 /**
  * Confirma (ou cancela) a prévia. Só no "sim" cria/atualiza favorecido
- * + gasto atomicamente via `persistirGastoComClaim` (claim já cobre
- * idempotência por external_id).
+ * + gasto atomicamente. O plaintext da chave é lido UMA vez do
+ * secret-store (que já apaga a linha na leitura).
  */
 async function passoConfirmarPixInline(args: {
   userId: string;
@@ -1268,6 +1294,10 @@ async function passoConfirmarPixInline(args: {
     /^(2|3|nao|não|n|cancelar|cancela|descarta|nao\s+quero|não\s+quero)\b/i.test(t);
 
   if (no) {
+    // Apaga o secret antes de fechar a sessão.
+    if (session.pendingPixSecretId) {
+      await deletePendingPixKey({ userId, secretId: session.pendingPixSecretId });
+    }
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     logEvent("pix_inline_cancelled", "ok");
     return { status: "cancelada", resposta: T.cancelado() };
@@ -1281,16 +1311,31 @@ async function passoConfirmarPixInline(args: {
     return { status: "pendente", resposta };
   }
 
-  // Upsert favorecido ANTES do gasto (a persistência do gasto pode
-  // referenciar favorecidoId). Se favorecidoId já veio (reuso silencioso
-  // por chave igual), não recriamos.
-  let favorecidoId = session.favorecidoId;
-  const pixKey = session.pendingPixKey ?? "";
-  const pixKeyType = session.pendingPixKeyType ?? "desconhecida";
+  const pixKeyType = (session.pendingPixKeyType ?? "desconhecida") as PixKeyType;
+  const pixKeyMasked = session.pendingPixKeyMasked ?? "";
 
-  if (!favorecidoId && pixKey && pixKeyType !== "desconhecida") {
-    // Recheca chave (double-check pós-race: outro webhook pode ter
-    // cadastrado o mesmo favorecido entre a prévia e a confirmação).
+  // Lê plaintext do secret-store (consumo apaga a linha).
+  let pixKey = "";
+  if (session.pendingPixSecretId) {
+    pixKey = (await consumePendingPixKey({
+      userId,
+      secretId: session.pendingPixSecretId,
+    })) ?? "";
+  }
+  if (!pixKey || pixKeyType === "desconhecida") {
+    logEvent("pix_inline_secret_missing", "fail");
+    // Sessão sem chave utilizável (expirou). Fecha e pede novamente.
+    await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
+    return {
+      status: "erro",
+      resposta:
+        `A prévia expirou por segurança. Reenvie o Pix para eu registrar novamente.`,
+    };
+  }
+
+  // Upsert favorecido ANTES do gasto.
+  let favorecidoId = session.favorecidoId;
+  if (!favorecidoId) {
     const rec = await findFavorecidoByPixKey(userId, pixKey);
     if (rec) {
       favorecidoId = rec.id;
@@ -1309,10 +1354,13 @@ async function passoConfirmarPixInline(args: {
     }
   }
 
+  // pixKey só é usada até aqui — sai do scope após persistência.
   const sessionComFav: PagarPessoaSession = {
     ...session,
     favorecidoId,
     formaPagamento: "pix",
+    // pendingPixSecretId já foi consumido — zera para não vazar em audit.
+    pendingPixSecretId: null,
   };
 
   const result = await persistirGastoComClaim({
@@ -1330,8 +1378,8 @@ async function passoConfirmarPixInline(args: {
     const resposta = T.pixInlineSucesso({
       nome: sessionComFav.nome ?? "Favorecido",
       valorCentavos: sessionComFav.valorCentavos ?? 0,
-      pixKeyType: pixKeyType as PixKeyType,
-      pixKeyMasked: maskPixKey(pixKey, pixKeyType as PixKeyType),
+      pixKeyType,
+      pixKeyMasked,
     });
     return { status: "salva", gastoId: result.gastoId, resposta };
   }
@@ -1350,9 +1398,7 @@ async function passoConfirmarPixInline(args: {
 
 /**
  * Desambiguação quando o nome já existe com OUTRA chave.
- *  1) Atualiza chave do favorecido existente.
- *  2) Cria novo favorecido (nome duplicado, chave nova).
- *  3) Cancela.
+ * O secret-store da chave nova é mantido até "sim" ou cancelamento.
  */
 async function passoDesambigFavPix(args: {
   userId: string;
@@ -1371,6 +1417,9 @@ async function passoDesambigFavPix(args: {
     /^3\b|cancelar/i.test(t) ? 3 : 0;
 
   if (escolha === 3) {
+    if (session.pendingPixSecretId) {
+      await deletePendingPixKey({ userId, secretId: session.pendingPixSecretId });
+    }
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     return { status: "cancelada", resposta: T.cancelado() };
   }
@@ -1382,11 +1431,28 @@ async function passoDesambigFavPix(args: {
     return { status: "pendente", resposta };
   }
 
-  const pixKey = session.pendingPixKey ?? "";
   const pixKeyType = (session.pendingPixKeyType ?? "desconhecida") as PixKeyType;
+  const pixKeyMasked = session.pendingPixKeyMasked ?? "";
 
   if (escolha === 1 && session.favorecidoId) {
-    // Atualiza chave do favorecido existente.
+    // Update chave — precisa do plaintext, mas NÃO consumir (ainda vai
+    // rodar o "sim" depois). Faz peek: lê e re-grava.
+    let pixKey = "";
+    if (session.pendingPixSecretId) {
+      pixKey = (await consumePendingPixKey({
+        userId,
+        secretId: session.pendingPixSecretId,
+      })) ?? "";
+    }
+    if (!pixKey || pixKeyType === "desconhecida") {
+      logEvent("pix_inline_secret_missing", "fail");
+      await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
+      return {
+        status: "erro",
+        resposta:
+          `A prévia expirou por segurança. Reenvie o Pix para eu registrar novamente.`,
+      };
+    }
     const ok = await updateFavorecidoPix(
       userId, session.favorecidoId, pixKey, pixKeyType,
     );
@@ -1394,12 +1460,23 @@ async function passoDesambigFavPix(args: {
       logEvent("pix_inline_update_fail", "fail");
       return { status: "erro", resposta: T.erroGenerico() };
     }
-    const next: PagarPessoaSession = { ...session };
+    // Re-armazena para o próximo passo (confirmar).
+    const restored = await storePendingPixKey({
+      userId,
+      sessionMessageId: msg.id,
+      pixKeyPlaintext: pixKey,
+      pixKeyType,
+    });
+    const next: PagarPessoaSession = {
+      ...session,
+      pendingPixSecretId: restored?.secretId ?? null,
+      pendingPixKeyHash: restored?.keyHash ?? session.pendingPixKeyHash,
+    };
     const resposta = T.previewPixInline({
       nome: session.nome ?? "Favorecido",
       valorCentavos: session.valorCentavos ?? 0,
       pixKeyType,
-      pixKeyMasked: maskPixKey(pixKey, pixKeyType),
+      pixKeyMasked,
       reusandoFavorecido: true,
     });
     await deps.atualizarSessao(
@@ -1414,7 +1491,7 @@ async function passoDesambigFavPix(args: {
     nome: session.nome ?? "Favorecido",
     valorCentavos: session.valorCentavos ?? 0,
     pixKeyType,
-    pixKeyMasked: maskPixKey(pixKey, pixKeyType),
+    pixKeyMasked,
     reusandoFavorecido: false,
   });
   await deps.atualizarSessao(
@@ -1422,4 +1499,5 @@ async function passoDesambigFavPix(args: {
   );
   return { status: "pendente", resposta };
 }
+
 
