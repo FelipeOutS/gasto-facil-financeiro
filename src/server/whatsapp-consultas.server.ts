@@ -581,6 +581,8 @@ export async function handleConsulta(
       return await handleListarContasReceber(userId);
     case "listar_transferencias":
       return await handleListarTransferencias(userId);
+    case "listar_metas":
+      return await handleListarMetas(userId);
   }
 }
 
