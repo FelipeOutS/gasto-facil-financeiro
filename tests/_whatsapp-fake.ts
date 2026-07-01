@@ -45,6 +45,8 @@ export const state = {
   transferenciasData: [] as Record<string, unknown>[],
   // WA-Q-Metas — metas financeiras do usuário
   metasData: [] as Record<string, unknown>[],
+  // WA-Q-PixInline-LGPD — segredos Pix cifrados em trânsito.
+  pixPendingSecretsData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
@@ -204,6 +206,15 @@ function makeBuilder(table: string): any {
           error: null,
         };
       }
+      if (table === "whatsapp_pix_pending_secrets") {
+        // Simula insert com retorno de id (uuid-like).
+        for (const r of rows) {
+          const id = `pix-sec-${state.pixPendingSecretsData.length + 1}`;
+          state.pixPendingSecretsData.push({ id, ...r });
+        }
+        const last = state.pixPendingSecretsData[state.pixPendingSecretsData.length - 1];
+        return { data: { id: last?.id }, error: null };
+      }
       return { data: null, error: null };
     }
     if (ctx.op === "update") {
@@ -282,7 +293,25 @@ function makeBuilder(table: string): any {
       }
       return { data: null, error: null };
     }
-    if (ctx.op === "delete") return { data: null, error: null };
+    if (ctx.op === "delete") {
+      if (table === "whatsapp_pix_pending_secrets") {
+        const before = state.pixPendingSecretsData.length;
+        const idF = ctx.filters?.id;
+        const uidF = ctx.filters?.user_id;
+        state.pixPendingSecretsData = state.pixPendingSecretsData.filter((r) => {
+          if (idF !== undefined && r.id !== idF) return true;
+          if (uidF !== undefined && r.user_id !== uidF) return true;
+          // Suporte a purge por range (lt expires_at).
+          if (ctx.range?.expires_at?.lt !== undefined) {
+            const exp = r.expires_at as string | undefined;
+            if (exp && exp >= ctx.range.expires_at.lt) return true;
+          }
+          return false;
+        });
+        return { data: null, error: null, count: before - state.pixPendingSecretsData.length };
+      }
+      return { data: null, error: null };
+    }
 
     if (table === "whatsapp_links") return { data: state.linkData, error: null };
     if (table === "whatsapp_messages") {
@@ -443,6 +472,16 @@ function makeBuilder(table: string): any {
       if (ctx.filters?.id !== undefined) {
         base = base.filter((f) => f.id === ctx.filters.id);
       }
+      if (ctx.single) return { data: base[0] ?? null, error: null };
+      return { data: base, error: null };
+    }
+    // WA-Q-PixInline-LGPD — select do segredo Pix cifrado transitório.
+    if (table === "whatsapp_pix_pending_secrets") {
+      const idF = ctx.filters?.id;
+      const uidF = ctx.filters?.user_id;
+      let base = state.pixPendingSecretsData;
+      if (idF !== undefined) base = base.filter((r) => r.id === idF);
+      if (uidF !== undefined) base = base.filter((r) => r.user_id === uidF);
       if (ctx.single) return { data: base[0] ?? null, error: null };
       return { data: base, error: null };
     }
@@ -677,6 +716,7 @@ export function resetState(opts?: {
   state.recorrenciasData = [];
   state.contasData = opts?.contas ?? [];
   state.favorecidosData = opts?.favorecidos ?? [];
+  state.pixPendingSecretsData = [];
   state.cartoesData = opts?.cartoes ?? [
     {
       id: "c-nu", nome: "Nubank", banco: "Nubank",

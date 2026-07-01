@@ -141,7 +141,8 @@ export function rotuloTipoPix(t: PixKeyType): string {
     case "email":
       return "e-mail";
     case "telefone":
-      return "telefone";
+      // WA-Q-PixInline-UX: exibir "Celular" em vez de "telefone".
+      return "Celular";
     case "cpf":
       return "CPF";
     case "cnpj":

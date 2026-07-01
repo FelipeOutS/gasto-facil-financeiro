@@ -2476,6 +2476,17 @@ export async function processarMensagemWhatsApp(
   // consentimento, retenção ou histórico — apenas estados aguardando_*.
   if (isResetCommand(texto)) {
     logWaRouteDecision(msg, "reset_handler", "global_reset_command");
+    // WA-Q-PixInline-LGPD: se havia uma sessão de pagar_pessoa com secret
+    // Pix cifrado transitório aberto, apaga o ciphertext antes de fechar.
+    // Nunca deixar segredo órfão em `whatsapp_pix_pending_secrets`.
+    try {
+      const activeBefore = await buscarSessaoAtiva(userId, msg.telefone);
+      const sess = activeBefore?.session as { kind?: string; pendingPixSecretId?: string } | null;
+      if (sess?.kind === "pagar_pessoa" && typeof sess.pendingPixSecretId === "string" && sess.pendingPixSecretId) {
+        const { deletePendingPixKey } = await import("./whatsapp-pix-secret.server");
+        await deletePendingPixKey({ userId, secretId: sess.pendingPixSecretId });
+      }
+    } catch { /* noop — LGPD cleanup best-effort */ }
     await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     await fecharSessoesComprovanteAtivas(userId, msg.telefone, "cancelada");
     const resposta = M.resetConversa();

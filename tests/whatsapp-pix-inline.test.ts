@@ -438,3 +438,211 @@ describe("fluxo :: regressões vizinhas", () => {
     expect(r.resposta).not.toMatch(/Confira o pagamento Pix/);
   });
 });
+
+// ==========================================================================
+// 3. LGPD — chave Pix NUNCA em texto plano em parsed / logs / respostas.
+// ==========================================================================
+
+// Interceptor para logs (console.info/warn/error) e cache local. O secret-store
+// só emite eventos abstratos como `stage: pix_inline_preview` sem PII.
+function withLogCapture<T>(run: () => Promise<T>): Promise<{ res: T; logs: string[] }> {
+  const orig = { info: console.info, warn: console.warn, error: console.error };
+  const logs: string[] = [];
+  const push = (...args: unknown[]) => {
+    for (const a of args) {
+      try {
+        logs.push(typeof a === "string" ? a : JSON.stringify(a));
+      } catch {
+        logs.push(String(a));
+      }
+    }
+  };
+  console.info = push;
+  console.warn = push;
+  console.error = push;
+  return run()
+    .then((res) => ({ res, logs }))
+    .finally(() => {
+      console.info = orig.info;
+      console.warn = orig.warn;
+      console.error = orig.error;
+    });
+}
+
+function sessionParsedOf(idx = -1): Record<string, unknown> | null {
+  const rows = state.inserts.filter((i) => i.table === "whatsapp_messages");
+  const row = idx < 0 ? rows[rows.length + idx] : rows[idx];
+  const p = row?.row?.parsed as Record<string, unknown> | undefined;
+  return p ?? null;
+}
+
+function pixSecretsCount(): number {
+  return state.pixPendingSecretsData.length;
+}
+
+describe("LGPD :: chave Pix nunca vaza em parsed / logs / respostas", () => {
+  const KEY_FULL = "11999998888";
+  const KEY_FULL_MASKED_INPUT = "(11) 99999-8888";
+
+  it("prévia: parsed NÃO contém a chave completa (só masked+type+secretId+hash)", async () => {
+    const { logs } = await withLogCapture(async () => {
+      const r = await processarMensagemWhatsApp({
+        telefone,
+        texto: `Pix 50 para João Silva chave ${KEY_FULL_MASKED_INPUT}`,
+        external_id: "lgpd-a1",
+      });
+      expect(r.status).toBe("pendente");
+    });
+    const parsed = sessionParsedOf();
+    expect(parsed).toBeTruthy();
+    // Estrutura esperada: masked/type/secretId/hash — nunca plaintext.
+    expect(parsed).toMatchObject({
+      pendingPixKeyType: "telefone",
+      pendingPixKeyMasked: expect.any(String),
+      pendingPixSecretId: expect.any(String),
+      pendingPixKeyHash: expect.any(String),
+    });
+    // Campos plaintext antigos são proibidos.
+    expect(parsed).not.toHaveProperty("pendingPixKey");
+    // Serialização de TODO o parsed jamais deve conter a chave.
+    const serial = JSON.stringify(parsed);
+    expect(serial).not.toContain(KEY_FULL);
+    expect(serial).not.toContain(KEY_FULL_MASKED_INPUT);
+    // Nem logs devem conter a chave.
+    for (const l of logs) {
+      expect(l).not.toContain(KEY_FULL);
+      expect(l).not.toContain(KEY_FULL_MASKED_INPUT);
+    }
+  });
+
+  it("resposta de prévia NUNCA contém a chave completa", async () => {
+    const r = await processarMensagemWhatsApp({
+      telefone,
+      texto: `Pix 50 para João Silva chave ${KEY_FULL_MASKED_INPUT}`,
+      external_id: "lgpd-a2",
+    });
+    expect(r.resposta).not.toContain(KEY_FULL);
+    expect(r.resposta).not.toContain(KEY_FULL_MASKED_INPUT);
+    // Sanity — a máscara aparece com U+2217 e os 4 últimos dígitos.
+    expect(r.resposta).toMatch(/\+55 11 9∗∗∗∗-8888/);
+  });
+
+  it("secret-store recebeu ciphertext (nunca plaintext)", async () => {
+    await processarMensagemWhatsApp({
+      telefone,
+      texto: `Pix 50 para João Silva chave ${KEY_FULL_MASKED_INPUT}`,
+      external_id: "lgpd-a3",
+    });
+    expect(pixSecretsCount()).toBe(1);
+    const row = state.pixPendingSecretsData[0];
+    // Ciphertext existe e NÃO revela a chave.
+    expect(String(row.key_ciphertext ?? "")).not.toContain(KEY_FULL);
+    expect(String(row.key_ciphertext ?? "").length).toBeGreaterThan(10);
+    expect(row.key_type).toBe("telefone");
+    // Hash é HMAC — não reversível para plaintext direto.
+    expect(String(row.key_hash ?? "")).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it("cancelamento apaga o secret cifrado", async () => {
+    await processarMensagemWhatsApp({
+      telefone,
+      texto: `Pix 50 para João Silva chave ${KEY_FULL_MASKED_INPUT}`,
+      external_id: "lgpd-b1",
+    });
+    expect(pixSecretsCount()).toBe(1);
+    const r = await processarMensagemWhatsApp({
+      telefone, texto: "cancelar", external_id: "lgpd-b2",
+    });
+    expect(r.status).toBe("cancelada");
+    expect(pixSecretsCount()).toBe(0);
+  });
+
+  it("'não' também apaga o secret cifrado", async () => {
+    await processarMensagemWhatsApp({
+      telefone,
+      texto: `Pix 40 para Ana chave ${KEY_FULL_MASKED_INPUT}`,
+      external_id: "lgpd-b3",
+    });
+    expect(pixSecretsCount()).toBe(1);
+    await processarMensagemWhatsApp({
+      telefone, texto: "não", external_id: "lgpd-b4",
+    });
+    expect(pixSecretsCount()).toBe(0);
+  });
+
+  it("confirmação 'sim' apaga o secret e persiste favorecido + gasto", async () => {
+    await processarMensagemWhatsApp({
+      telefone,
+      texto: `Pix 50 para João Silva chave ${KEY_FULL_MASKED_INPUT}`,
+      external_id: "lgpd-c1",
+    });
+    expect(pixSecretsCount()).toBe(1);
+    const r = await processarMensagemWhatsApp({
+      telefone, texto: "sim", external_id: "lgpd-c2",
+    });
+    expect(r.status).toBe("salva");
+    expect(pixSecretsCount()).toBe(0);
+    // Favorecido foi criado COM a chave completa normalizada
+    // (persistência funcionando).
+    expect(fornecedorInserts()).toHaveLength(1);
+    const fav = fornecedorInserts()[0].row as Record<string, unknown>;
+    expect(fav.pix_key).toBe(KEY_FULL);
+    expect(fav.pix_key_type).toBe("telefone");
+    // Gasto não vaza chave em descrição/observação.
+    const gasto = gastoInserts()[0].row as Record<string, unknown>;
+    expect(String(gasto.observacao ?? "")).not.toContain(KEY_FULL);
+    expect(String(gasto.descricao ?? "")).not.toContain(KEY_FULL);
+  });
+
+  it("secret expirado → sessão pede reenvio (sem persistir)", async () => {
+    await processarMensagemWhatsApp({
+      telefone,
+      texto: `Pix 50 para João Silva chave ${KEY_FULL_MASKED_INPUT}`,
+      external_id: "lgpd-e1",
+    });
+    // Simula expiração forçando expires_at no passado.
+    for (const row of state.pixPendingSecretsData) {
+      row.expires_at = new Date(Date.now() - 60_000).toISOString();
+    }
+    const r = await processarMensagemWhatsApp({
+      telefone, texto: "sim", external_id: "lgpd-e2",
+    });
+    expect(r.status).toBe("erro");
+    expect(r.resposta).toMatch(/expirou/i);
+    // Nada persistido.
+    expect(gastoInserts()).toHaveLength(0);
+    expect(fornecedorInserts()).toHaveLength(0);
+    // E o secret expirado foi removido (consumePendingPixKey apaga).
+    expect(pixSecretsCount()).toBe(0);
+  });
+});
+
+// ==========================================================================
+// 4. UX — rótulo "Celular" + formato Chave Pix: <tipo> \n mask
+// ==========================================================================
+
+describe("UX :: rótulo do celular exibido como 'Celular'", () => {
+  it("prévia mostra 'Chave Pix: Celular' e máscara em nova linha", async () => {
+    const r = await processarMensagemWhatsApp({
+      telefone,
+      texto: "Pix 50 para João Silva chave +5511999998888",
+      external_id: "ux-1",
+    });
+    expect(r.resposta).toMatch(/Chave Pix:\s*Celular/);
+    expect(r.resposta).toMatch(/\+55 11 9∗∗∗∗-8888/);
+    // Nunca mais o formato antigo "(telefone)".
+    expect(r.resposta).not.toMatch(/\(telefone\)/);
+  });
+  it("sucesso após 'sim' também usa 'Celular' e máscara em duas linhas", async () => {
+    await processarMensagemWhatsApp({
+      telefone,
+      texto: "Pix 20 para Ana chave 11988887777",
+      external_id: "ux-2a",
+    });
+    const r = await processarMensagemWhatsApp({
+      telefone, texto: "sim", external_id: "ux-2b",
+    });
+    expect(r.resposta).toMatch(/Chave Pix:\s*Celular/);
+    expect(r.resposta).not.toMatch(/\(telefone\)/);
+  });
+});
