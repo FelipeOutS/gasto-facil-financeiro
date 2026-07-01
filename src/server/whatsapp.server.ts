@@ -2480,7 +2480,7 @@ export async function processarMensagemWhatsApp(
     // Pix cifrado transitório aberto, apaga o ciphertext antes de fechar.
     // Nunca deixar segredo órfão em `whatsapp_pix_pending_secrets`.
     try {
-      const activeBefore = await getActiveSessionForConversation(userId, msg.telefone);
+      const activeBefore = await buscarSessaoAtiva(userId, msg.telefone);
       const sess = activeBefore?.session as { kind?: string; pendingPixSecretId?: string } | null;
       if (sess?.kind === "pagar_pessoa" && typeof sess.pendingPixSecretId === "string" && sess.pendingPixSecretId) {
         const { deletePendingPixKey } = await import("./whatsapp-pix-secret.server");
