@@ -27,7 +27,8 @@ export type ConsultaIntent =
   | "listar_receitas_mes"
   | "listar_gastos_mes"
   | "gastos_por_categoria_mes"
-  | "orcamento_mes";
+  | "orcamento_mes"
+  | "listar_recorrencias";
 
 const APP_TZ = "America/Sao_Paulo";
 
