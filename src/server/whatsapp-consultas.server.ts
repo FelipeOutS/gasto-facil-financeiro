@@ -28,7 +28,8 @@ export type ConsultaIntent =
   | "listar_gastos_mes"
   | "gastos_por_categoria_mes"
   | "orcamento_mes"
-  | "listar_recorrencias";
+  | "listar_recorrencias"
+  | "listar_contas_receber";
 
 const APP_TZ = "America/Sao_Paulo";
 
@@ -113,6 +114,29 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     /\bminhas assinaturas\b/.test(t)
   ) {
     return "listar_recorrencias";
+  }
+
+  // ----- WA-Q-ContasReceber — listagem read-only de contas A RECEBER pendentes -----
+  // Precede QUALQUER parser de criação (receita, gasto, recorrência). A palavra
+  // "receber" isolada arrastava a mensagem para o parser de receita
+  // (abrindo `rec_aguardando_tipo`). Aqui é 100% read-only. Nunca abre sessão
+  // nem escreve em receitas/contas_a_receber/gastos/recorrencias.
+  if (
+    t === "contas a receber" ||
+    t === "conta a receber" ||
+    t === "valores a receber" ||
+    t === "valor a receber" ||
+    t === "recebimentos pendentes" ||
+    t === "meus recebimentos" ||
+    t === "meus recebimentos pendentes" ||
+    /\bo que (eu )?tenho (a|para|pra) receber\b/.test(t) ||
+    /\bquem me deve\b/.test(t) ||
+    /\bquem esta me devendo\b/.test(t) ||
+    /\blistar (as )?(minhas )?contas a receber\b/.test(t) ||
+    /\bver (as )?(minhas )?contas a receber\b/.test(t) ||
+    /\bminhas contas a receber\b/.test(t)
+  ) {
+    return "listar_contas_receber";
   }
 
 
@@ -528,7 +552,72 @@ export async function handleConsulta(
       return await handleOrcamentoMes(userId);
     case "listar_recorrencias":
       return await handleListarRecorrencias(userId);
+    case "listar_contas_receber":
+      return await handleListarContasReceber(userId);
   }
+}
+
+// ---------- WA-Q-ContasReceber — listagem read-only de contas a receber ----------
+// Estritamente somente leitura. Filtra por status='pendente' | 'parcial'
+// (exclui 'recebido' e 'cancelado'). Classifica como "atrasada" quando a
+// data_prevista já passou. Ordena por data_prevista ASC. Zero escrita.
+type ContaReceberRow = {
+  id: string;
+  titulo: string | null;
+  pagador_nome: string | null;
+  valor_total: number | string | null;
+  valor_restante: number | string | null;
+  data_prevista: string | null;
+  status: string | null;
+};
+
+async function handleListarContasReceber(userId: string): Promise<ConsultaResult> {
+  const { data: raw } = await supabaseAdmin
+    .from("contas_a_receber")
+    .select("id, titulo, pagador_nome, valor_total, valor_restante, data_prevista, status")
+    .eq("user_id", userId)
+    .in("status", ["pendente", "parcial"]);
+  const rows = (Array.isArray(raw) ? raw : []) as ContaReceberRow[];
+
+  if (rows.length === 0) {
+    return {
+      status: "consulta",
+      resposta:
+        "Você não tem contas a receber pendentes no momento. ✅\n\n" +
+        "Para cadastrar um valor a receber, acesse:\n" +
+        "https://gastointeligente.com.br → Contas a receber",
+    };
+  }
+
+  rows.sort((a, b) => {
+    const av = a.data_prevista ?? "9999-99-99";
+    const bv = b.data_prevista ?? "9999-99-99";
+    return av < bv ? -1 : av > bv ? 1 : 0;
+  });
+
+  const hoje = todayLocalISO();
+  const linhas: string[] = [];
+  linhas.push(`Suas contas a receber pendentes 💰 (${rows.length})`);
+  linhas.push("");
+  let total = 0;
+  for (const r of rows) {
+    const nome = (r.titulo ?? "").trim() || "Recebimento";
+    const pagador = (r.pagador_nome ?? "").trim();
+    const restante = Number(r.valor_restante ?? r.valor_total ?? 0) || 0;
+    total += restante;
+    const prevista = r.data_prevista ?? "";
+    const atrasada = prevista && prevista < hoje;
+    const suffix = atrasada ? " ⚠️ atrasada" : "";
+    const de = pagador ? ` (de ${pagador})` : "";
+    const quando = prevista ? formatDataBR(prevista) : "-";
+    linhas.push(`• ${nome}${de} — ${formatBRL(restante)} · previsto: ${quando}${suffix}`);
+  }
+  linhas.push("");
+  linhas.push(`Total pendente: ${formatBRL(total)}`);
+  linhas.push("");
+  linhas.push("Para dar baixa ou editar: https://gastointeligente.com.br → Contas a receber");
+
+  return { status: "consulta", resposta: linhas.join("\n") };
 }
 
 // ---------- WA-Q-Recorrencias — listagem read-only de recorrências ativas ----------
