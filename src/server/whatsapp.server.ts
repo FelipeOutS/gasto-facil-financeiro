@@ -46,6 +46,7 @@ import {
   detectMenuOption,
   dispatchMenuOption,
 } from "./whatsapp-consultas.server";
+import { detectConsultaShape } from "./whatsapp-query-guard.server";
 import {
   recordContas as shortRecordContas,
   resolveOrdinal as shortResolveOrdinal,
