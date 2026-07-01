@@ -27,7 +27,8 @@ export type ConsultaIntent =
   | "listar_receitas_mes"
   | "listar_gastos_mes"
   | "gastos_por_categoria_mes"
-  | "orcamento_mes";
+  | "orcamento_mes"
+  | "listar_recorrencias";
 
 const APP_TZ = "America/Sao_Paulo";
 
@@ -91,6 +92,27 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     /\bquanto (ainda )?(me )?sobra (do|no) (meu )?orcamento\b/.test(t)
   ) {
     return "orcamento_mes";
+  }
+
+  // ----- WA-Q-Recorrencias — listagem de recorrências ATIVAS -----
+  // Precede parser de gasto/receita/contas. Read-only puro. Nunca abre
+  // sessão nem escreve em gastos/receitas/recorrencias/contas_a_pagar.
+  if (
+    t === "recorrencias" ||
+    t === "recorrencia" ||
+    t === "minhas recorrencias" ||
+    t === "minha recorrencia" ||
+    t === "recorrencias ativas" ||
+    /\bquais (sao )?(as )?minhas recorrencias\b/.test(t) ||
+    /\blistar (as )?(minhas )?recorrencias\b/.test(t) ||
+    /\bver (as )?(minhas )?recorrencias\b/.test(t) ||
+    /\bmeus pagamentos recorrentes\b/.test(t) ||
+    /\bminhas (despesas|contas) recorrentes\b/.test(t) ||
+    /\bminhas receitas recorrentes\b/.test(t) ||
+    /\bassinaturas ativas\b/.test(t) ||
+    /\bminhas assinaturas\b/.test(t)
+  ) {
+    return "listar_recorrencias";
   }
 
 
@@ -504,7 +526,100 @@ export async function handleConsulta(
       return await handleGastosPorCategoriaMes(userId);
     case "orcamento_mes":
       return await handleOrcamentoMes(userId);
+    case "listar_recorrencias":
+      return await handleListarRecorrencias(userId);
   }
+}
+
+// ---------- WA-Q-Recorrencias — listagem read-only de recorrências ativas ----------
+// Estritamente somente leitura. Não cria/atualiza recorrência, receita,
+// gasto, sessão ou conta a pagar. Classifica cada recorrência ativa em
+// "receita" (quando existe pelo menos uma linha em public.receitas com
+// recorrencia_id = r.id) ou "despesa" (caso contrário).
+type RecorrenciaRow = {
+  id: string;
+  nome: string | null;
+  valor: number | string | null;
+  frequencia: string | null;
+  proxima_cobranca: string | null;
+  forma_pagamento: string | null;
+  categoria_id: string | null;
+};
+
+async function handleListarRecorrencias(userId: string): Promise<ConsultaResult> {
+  const { data: recosRaw } = await supabaseAdmin
+    .from("recorrencias")
+    .select("id, nome, valor, frequencia, proxima_cobranca, forma_pagamento, categoria_id")
+    .eq("user_id", userId)
+    .eq("status", "ativa");
+  const recos = (Array.isArray(recosRaw) ? recosRaw : []) as RecorrenciaRow[];
+
+  if (recos.length === 0) {
+    return {
+      status: "consulta",
+      resposta:
+        "Você ainda não tem recorrências ativas cadastradas.\n\n" +
+        "Para cadastrar uma assinatura, salário ou conta fixa, é só me mandar aqui — " +
+        "ex.: \"receita recorrente salário 3500 dia 5\" ou \"despesa recorrente Spotify 23,90 dia 3\".",
+    };
+  }
+
+  // Classifica: se há receita com recorrencia_id = r.id → receita; senão → despesa.
+  const { data: recRaw } = await supabaseAdmin
+    .from("receitas")
+    .select("recorrencia_id")
+    .eq("user_id", userId);
+  const receitaLinks = new Set<string>();
+  for (const r of (Array.isArray(recRaw) ? recRaw : []) as Array<{ recorrencia_id: string | null }>) {
+    if (r?.recorrencia_id) receitaLinks.add(r.recorrencia_id);
+  }
+
+  const catMap = await loadCategoriasMap(userId);
+
+  const fmtFreq = (f: string | null): string => {
+    const v = (f ?? "").toLowerCase();
+    if (v === "mensal") return "mensal";
+    if (v === "semanal") return "semanal";
+    if (v === "quinzenal") return "quinzenal";
+    if (v === "anual") return "anual";
+    return v || "-";
+  };
+
+  const fmtLinha = (r: RecorrenciaRow): string => {
+    const nome = (r.nome ?? "").trim() || "Recorrência";
+    const valor = formatBRL(Number(r.valor ?? 0) || 0);
+    const freq = fmtFreq(r.frequencia);
+    const prox = r.proxima_cobranca ? formatDataBR(r.proxima_cobranca) : "-";
+    const cat = r.categoria_id ? (catMap.get(r.categoria_id) || null) : null;
+    const catSuffix = cat ? ` · ${cat}` : "";
+    return `• ${nome} — ${valor} (${freq}) · próx.: ${prox}${catSuffix}`;
+  };
+
+  const sortByProx = (a: RecorrenciaRow, b: RecorrenciaRow) => {
+    const av = a.proxima_cobranca ?? "9999-99-99";
+    const bv = b.proxima_cobranca ?? "9999-99-99";
+    return av < bv ? -1 : av > bv ? 1 : 0;
+  };
+
+  const receitas = recos.filter((r) => receitaLinks.has(r.id)).sort(sortByProx);
+  const despesas = recos.filter((r) => !receitaLinks.has(r.id)).sort(sortByProx);
+
+  const linhas: string[] = [];
+  linhas.push(`Suas recorrências ativas 🔁 (${recos.length})`);
+  if (receitas.length) {
+    linhas.push("");
+    linhas.push(`Receitas recorrentes (${receitas.length}):`);
+    for (const r of receitas) linhas.push(fmtLinha(r));
+  }
+  if (despesas.length) {
+    linhas.push("");
+    linhas.push(`Despesas recorrentes (${despesas.length}):`);
+    for (const r of despesas) linhas.push(fmtLinha(r));
+  }
+  linhas.push("");
+  linhas.push("Para editar ou cancelar: https://gastointeligente.com.br → Recorrências");
+
+  return { status: "consulta", resposta: linhas.join("\n") };
 }
 
 // ---------- WA-Q-Orcamento — leitura de limites/orçamento do mês ----------
