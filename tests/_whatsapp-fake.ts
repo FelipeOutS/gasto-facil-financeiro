@@ -41,6 +41,8 @@ export const state = {
   limitesData: [] as Record<string, unknown>[],
   // WA-Q-ContasReceber — contas a receber do usuário
   contasReceberData: [] as Record<string, unknown>[],
+  // WA-Q-Transferencias — transferências internas do usuário
+  transferenciasData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
