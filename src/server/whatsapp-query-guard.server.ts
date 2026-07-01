@@ -130,7 +130,16 @@ export function detectConsultaShape(texto: string): QueryGuardDecision {
     if (!hasStrongQuery) return { kind: "pass" };
   }
 
-  // Precisa de pelo menos um marcador consultivo.
+  // Consulta a uma área conhecida sem handler dedicado. Precede o teste
+  // de query-shape porque frases como "impacto dos gastos na renda" não
+  // trazem marcador de posse mas ainda são consultas de área conhecida.
+  for (const { area, re } of AREA_PATTERNS) {
+    if (re.test(t)) {
+      return { kind: "fallback", area, resposta: respostaPorArea(area) };
+    }
+  }
+
+  // Precisa de pelo menos um marcador consultivo para o fallback genérico.
   const hasQueryShape = QUERY_MARKERS.some((re) => re.test(t));
   if (!hasQueryShape) return { kind: "pass" };
 
@@ -138,13 +147,6 @@ export function detectConsultaShape(texto: string): QueryGuardDecision {
   // provavelmente é um lançamento em texto livre. Não bloqueia.
   if (texto.length >= 90 && HAS_MONEY.test(t)) {
     return { kind: "pass" };
-  }
-
-  // Consulta a uma área conhecida sem handler dedicado.
-  for (const { area, re } of AREA_PATTERNS) {
-    if (re.test(t)) {
-      return { kind: "fallback", area, resposta: respostaPorArea(area) };
-    }
   }
 
   // Consulta genérica desconhecida.
