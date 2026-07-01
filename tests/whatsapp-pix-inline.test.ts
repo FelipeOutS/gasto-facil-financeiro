@@ -131,12 +131,16 @@ describe("parser :: maskPixKey", () => {
     expect(maskPixKey("11999998888", "telefone")).toContain("8888");
     expect(maskPixKey("11999998888", "telefone")).not.toContain("99999");
   });
-  it("mascara CPF preservando últimos 2 dígitos", () => {
-    expect(maskPixKey("12345678901", "cpf")).toBe("***.***.***-01");
+  it("mascara CPF totalmente (nunca vaza final)", () => {
+    expect(maskPixKey("12345678909", "cpf")).toBe("***.***.***-**");
   });
   it("mascara CNPJ preservando últimos 2 dígitos", () => {
     expect(maskPixKey("12345678000199", "cnpj")).toContain("99");
     expect(maskPixKey("12345678000199", "cnpj")).not.toContain("12345678");
+  });
+  it("mascara celular no formato +55 DDD 9****-últ4", () => {
+    expect(maskPixKey("11999998888", "telefone")).toBe("+55 11 9****-8888");
+    expect(maskPixKey("+5511999998888", "telefone")).toBe("+55 11 9****-8888");
   });
   it("mascara chave aleatória (UUID)", () => {
     const m = maskPixKey("550e8400-e29b-41d4-a716-446655440000", "aleatoria");
