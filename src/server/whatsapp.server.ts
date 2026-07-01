@@ -150,8 +150,13 @@ import {
   PAGAR_PESSOA_PENDING_STATES,
   isPagarPessoaSession,
   processarPagarPessoaFlow,
+  processarPixInlineEntry,
   type WhatsAppPagarPessoaDeps,
 } from "./whatsapp-pagar-pessoa-flow.server";
+import {
+  detectPagarPixInlineIntent,
+  parsePagarPixInline,
+} from "./whatsapp-pix-parser";
 // WA-C10.a/b — Boleto por código/linha digitável (texto) + foto/PDF.
 import {
   BOLETO_PENDING_STATES,
