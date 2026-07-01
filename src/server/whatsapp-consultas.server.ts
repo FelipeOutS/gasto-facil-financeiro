@@ -154,7 +154,7 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     t === "historico de transferencias" ||
     t === "transferencias entre contas" ||
     t === "transferencias internas" ||
-    /\b(quais|liste?|ver|mostrar?|mostre) (as )?(minhas )?transferencias\b/.test(t) ||
+    /\b(quais|liste?|ver|mostrar?|mostre) (sao )?(as )?(minhas )?transferencias\b/.test(t) ||
     /\bhistorico (de|das) transferencias\b/.test(t) ||
     /\btransferencias (entre|de|para) contas\b/.test(t) ||
     /\bquanto (eu )?transferi\b/.test(t) ||
