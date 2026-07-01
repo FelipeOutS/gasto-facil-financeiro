@@ -578,7 +578,77 @@ export async function handleConsulta(
       return await handleListarRecorrencias(userId);
     case "listar_contas_receber":
       return await handleListarContasReceber(userId);
+    case "listar_transferencias":
+      return await handleListarTransferencias(userId);
   }
+}
+
+// ---------- WA-Q-Transferencias — listagem read-only de transferências internas ----------
+// Estritamente somente leitura. Nunca cria/atualiza gasto, receita, transferência
+// ou sessão. Filtra pelo user_id do dono e ordena por data DESC, horário DESC.
+// Limita a 10 itens mais recentes para caber na mensagem do WhatsApp.
+type TransferenciaRow = {
+  id: string;
+  descricao: string | null;
+  valor: number | string | null;
+  data: string;
+  horario: string | null;
+  origem: string | null;
+  destino: string | null;
+  observacao: string | null;
+};
+
+async function handleListarTransferencias(userId: string): Promise<ConsultaResult> {
+  const { data: raw } = await supabaseAdmin
+    .from("transferencias_internas")
+    .select("id, descricao, valor, data, horario, origem, destino, observacao")
+    .eq("user_id", userId);
+  const rows = (Array.isArray(raw) ? raw : []) as TransferenciaRow[];
+
+  if (rows.length === 0) {
+    return {
+      status: "consulta",
+      resposta:
+        "Você ainda não tem transferências entre contas registradas. 💸\n\n" +
+        "Para registrar uma transferência entre suas contas, acesse:\n" +
+        "https://gastointeligente.com.br → Transferências",
+    };
+  }
+
+  rows.sort((a, b) => {
+    if (a.data !== b.data) return a.data < b.data ? 1 : -1;
+    const ah = a.horario ?? "";
+    const bh = b.horario ?? "";
+    return ah < bh ? 1 : ah > bh ? -1 : 0;
+  });
+
+  const recentes = rows.slice(0, 10);
+  const linhas: string[] = [];
+  linhas.push(`Suas transferências entre contas 💸 (${rows.length})`);
+  linhas.push("");
+  let total = 0;
+  for (const r of recentes) {
+    const valor = Number(r.valor ?? 0) || 0;
+    total += valor;
+    const origem = (r.origem ?? "").trim() || "—";
+    const destino = (r.destino ?? "").trim() || "—";
+    const quando = formatDataBR(r.data);
+    const desc = (r.descricao ?? "").trim();
+    const obs = (r.observacao ?? "").trim();
+    const detalhe = desc || obs;
+    const sufixo = detalhe ? ` — ${detalhe}` : "";
+    linhas.push(`• ${quando} · ${origem} → ${destino}: ${formatBRL(valor)}${sufixo}`);
+  }
+  if (rows.length > recentes.length) {
+    linhas.push("");
+    linhas.push(`(exibindo as ${recentes.length} mais recentes de ${rows.length})`);
+  }
+  linhas.push("");
+  linhas.push(`Total transferido (exibido): ${formatBRL(total)}`);
+  linhas.push("");
+  linhas.push("Para registrar ou editar: https://gastointeligente.com.br → Transferências");
+
+  return { status: "consulta", resposta: linhas.join("\n") };
 }
 
 // ---------- WA-Q-ContasReceber — listagem read-only de contas a receber ----------
