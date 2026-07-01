@@ -293,7 +293,25 @@ function makeBuilder(table: string): any {
       }
       return { data: null, error: null };
     }
-    if (ctx.op === "delete") return { data: null, error: null };
+    if (ctx.op === "delete") {
+      if (table === "whatsapp_pix_pending_secrets") {
+        const before = state.pixPendingSecretsData.length;
+        const idF = ctx.filters?.id;
+        const uidF = ctx.filters?.user_id;
+        state.pixPendingSecretsData = state.pixPendingSecretsData.filter((r) => {
+          if (idF !== undefined && r.id !== idF) return true;
+          if (uidF !== undefined && r.user_id !== uidF) return true;
+          // Suporte a purge por range (lt expires_at).
+          if (ctx.range?.expires_at?.lt !== undefined) {
+            const exp = r.expires_at as string | undefined;
+            if (exp && exp >= ctx.range.expires_at.lt) return true;
+          }
+          return false;
+        });
+        return { data: null, error: null, count: before - state.pixPendingSecretsData.length };
+      }
+      return { data: null, error: null };
+    }
 
     if (table === "whatsapp_links") return { data: state.linkData, error: null };
     if (table === "whatsapp_messages") {
