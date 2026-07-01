@@ -158,7 +158,7 @@ describe("fluxo :: prévia sem persistência", () => {
     expect(r.status).toBe("pendente");
     expect(r.resposta).toMatch(/Confira o pagamento Pix/);
     expect(r.resposta).toContain("João Silva");
-    expect(r.resposta).toContain("R$ 50,00");
+    expect(r.resposta).toMatch(/R\$\s*50,00/);
     // Chave mascarada — nunca em plain text.
     expect(r.resposta).not.toContain("(11) 99999-8888");
     expect(r.resposta).toContain("8888");
