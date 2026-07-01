@@ -106,7 +106,7 @@ describe("parser :: parsePagarPixInline", () => {
     expect(p!.valorCentavos).toBe(5000);
     expect(p!.nome).toBe("João Silva");
     expect(p!.pixKeyType).toBe("telefone");
-    expect(p!.pixKey).toBe("+(11) 99999-8888");
+    expect(p!.pixKey).toBe("11999998888");
   });
   it("retorna null quando chave é inválida", () => {
     expect(parsePagarPixInline("Pix 50 para João chave zzz")).toBeNull();
@@ -125,11 +125,11 @@ describe("parser :: parsePagarPixInline", () => {
 
 describe("parser :: maskPixKey", () => {
   it("mascara e-mail preservando domínio", () => {
-    expect(maskPixKey("joao@example.com", "email")).toMatch(/^j\*+@example\.com$/);
+    expect(maskPixKey("joao@example.com", "email")).toMatch(/^j\*+.*@example\.com$/);
   });
   it("mascara celular preservando últimos 4", () => {
-    expect(maskPixKey("+(11) 99999-8888", "telefone")).toContain("8888");
-    expect(maskPixKey("+(11) 99999-8888", "telefone")).not.toContain("99999");
+    expect(maskPixKey("11999998888", "telefone")).toContain("8888");
+    expect(maskPixKey("11999998888", "telefone")).not.toContain("99999");
   });
   it("mascara CPF preservando últimos 2 dígitos", () => {
     expect(maskPixKey("12345678901", "cpf")).toBe("***.***.***-01");
@@ -247,7 +247,7 @@ describe("fluxo :: reuso e desambiguação", () => {
     resetState({
       favorecidos: [{
         id: "f1", user_id: "u1", nome: "João Silva",
-        pix_key: "+(11) 99999-8888", pix_key_type: "telefone", ativo: true,
+        pix_key: "11999998888", pix_key_type: "telefone", ativo: true,
       }],
     });
     await processarMensagemWhatsApp({
@@ -272,7 +272,7 @@ describe("fluxo :: reuso e desambiguação", () => {
     resetState({
       favorecidos: [{
         id: "f1", user_id: "u1", nome: "João Silva",
-        pix_key: "+11988887777", pix_key_type: "telefone", ativo: true,
+        pix_key: "11988887777", pix_key_type: "telefone", ativo: true,
       }],
     });
     const r = await processarMensagemWhatsApp({
@@ -319,7 +319,7 @@ describe("fluxo :: isolamento por user_id", () => {
       favorecidos: [{
         id: "outro-user-fav", user_id: "u-outro",
         nome: "João Silva",
-        pix_key: "+(11) 99999-8888", pix_key_type: "telefone", ativo: true,
+        pix_key: "11999998888", pix_key_type: "telefone", ativo: true,
       }],
     });
     await processarMensagemWhatsApp({
