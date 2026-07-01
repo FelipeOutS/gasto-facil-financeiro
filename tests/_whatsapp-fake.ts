@@ -41,6 +41,8 @@ export const state = {
   limitesData: [] as Record<string, unknown>[],
   // WA-Q-ContasReceber — contas a receber do usuário
   contasReceberData: [] as Record<string, unknown>[],
+  // WA-Q-Transferencias — transferências internas do usuário
+  transferenciasData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
@@ -404,6 +406,15 @@ function makeBuilder(table: string): any {
       } else if (stF !== undefined) {
         base = base.filter((c) => c.status === stF);
       }
+      if (ctx.single) return { data: base[0] ?? null, error: null };
+      return { data: base, error: null };
+    }
+    // WA-Q-Transferencias — select read-only de transferências internas.
+    if (table === "transferencias_internas") {
+      const uid = ctx.filters?.user_id;
+      const base = uid
+        ? state.transferenciasData.filter((t) => t.user_id === undefined || t.user_id === uid)
+        : state.transferenciasData;
       if (ctx.single) return { data: base[0] ?? null, error: null };
       return { data: base, error: null };
     }
