@@ -162,9 +162,12 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     t === "historico de transferencias" ||
     t === "transferencias entre contas" ||
     t === "transferencias internas" ||
+    t === "movimentacoes entre contas" ||
+    t === "minhas movimentacoes entre contas" ||
     /\b(quais|liste?|ver|mostrar?|mostre) (sao )?(as )?(minhas )?transferencias\b/.test(t) ||
     /\bhistorico (de|das) transferencias\b/.test(t) ||
     /\btransferencias (entre|de|para) contas\b/.test(t) ||
+    /\bmovimentacoes (entre|de|para) contas\b/.test(t) ||
     /\bquanto (eu )?transferi\b/.test(t) ||
     /\bminhas transferencias (entre contas|internas)\b/.test(t)
   ) {
