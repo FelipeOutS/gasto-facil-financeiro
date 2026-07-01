@@ -206,6 +206,15 @@ function makeBuilder(table: string): any {
           error: null,
         };
       }
+      if (table === "whatsapp_pix_pending_secrets") {
+        // Simula insert com retorno de id (uuid-like).
+        for (const r of rows) {
+          const id = `pix-sec-${state.pixPendingSecretsData.length + 1}`;
+          state.pixPendingSecretsData.push({ id, ...r });
+        }
+        const last = state.pixPendingSecretsData[state.pixPendingSecretsData.length - 1];
+        return { data: { id: last?.id }, error: null };
+      }
       return { data: null, error: null };
     }
     if (ctx.op === "update") {
