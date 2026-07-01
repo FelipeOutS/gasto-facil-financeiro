@@ -409,6 +409,15 @@ function makeBuilder(table: string): any {
       if (ctx.single) return { data: base[0] ?? null, error: null };
       return { data: base, error: null };
     }
+    // WA-Q-Transferencias — select read-only de transferências internas.
+    if (table === "transferencias_internas") {
+      const uid = ctx.filters?.user_id;
+      const base = uid
+        ? state.transferenciasData.filter((t) => t.user_id === undefined || t.user_id === uid)
+        : state.transferenciasData;
+      if (ctx.single) return { data: base[0] ?? null, error: null };
+      return { data: base, error: null };
+    }
     // WA-C7 — select de fornecedores. Aplica filtros por user_id/ativo/id.
     if (table === "fornecedores") {
       const uid = ctx.filters?.user_id;
