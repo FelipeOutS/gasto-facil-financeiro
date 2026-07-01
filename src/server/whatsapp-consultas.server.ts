@@ -94,6 +94,27 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     return "orcamento_mes";
   }
 
+  // ----- WA-Q-Recorrencias — listagem de recorrências ATIVAS -----
+  // Precede parser de gasto/receita/contas. Read-only puro. Nunca abre
+  // sessão nem escreve em gastos/receitas/recorrencias/contas_a_pagar.
+  if (
+    t === "recorrencias" ||
+    t === "recorrencia" ||
+    t === "minhas recorrencias" ||
+    t === "minha recorrencia" ||
+    t === "recorrencias ativas" ||
+    /\bquais (sao )?(as )?minhas recorrencias\b/.test(t) ||
+    /\blistar (as )?(minhas )?recorrencias\b/.test(t) ||
+    /\bver (as )?(minhas )?recorrencias\b/.test(t) ||
+    /\bmeus pagamentos recorrentes\b/.test(t) ||
+    /\bminhas (despesas|contas) recorrentes\b/.test(t) ||
+    /\bminhas receitas recorrentes\b/.test(t) ||
+    /\bassinaturas ativas\b/.test(t) ||
+    /\bminhas assinaturas\b/.test(t)
+  ) {
+    return "listar_recorrencias";
+  }
+
 
 
   // ----- maiores gastos (verificar antes de "mes/semana" sozinhos) -----
