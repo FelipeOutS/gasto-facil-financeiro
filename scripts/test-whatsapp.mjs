@@ -80,6 +80,7 @@ const INCLUDE = [
   "whatsapp-pix-favorecidos.test.ts",
   "whatsapp-pix-c72a.test.ts",
   "whatsapp-pix-c72b.test.ts",
+  "whatsapp-pix-inline.test.ts",
   "whatsapp-notifications-c8.test.ts",
   "whatsapp-contas-lembretes-c9.test.ts",
   "whatsapp-c91-lifecycle.test.ts",

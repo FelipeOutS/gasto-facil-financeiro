@@ -560,23 +560,26 @@ export function maskPixKey(pixKey: string, type: PixKeyType): string {
       return `${uMask}@${dom}`;
     }
     case "telefone": {
-      // Preserva DDD e últimos 4. Ex.: 11999998888 → "+55 11 9****-8888".
-      // Assume BR (11 dígitos com DDD ou 13 com +55). Fallback para
-      // formatos internacionais mantém apenas últimos 4.
+      // Preserva DDD e últimos 4. Ex.: 11999998888 → "+55 11 9∗∗∗∗-8888".
+      // Usa U+2217 (∗) em vez de U+002A (*) para evitar que o WhatsApp
+      // interprete `****` como marcação de negrito (`**...**`) e engula
+      // pares de asteriscos no render — o que fazia aparecer "9**-8888".
+      // A chave em si permanece completa em memória / banco; só o render
+      // exibido é mascarado.
       const d = k.replace(/\D+/g, "");
-      if (d.length < 4) return "***";
+      if (d.length < 4) return "∗∗∗";
       const last4 = d.slice(-4);
       // Remove código de país 55 se presente para extrair DDD.
       const local = d.length >= 12 && d.startsWith("55") ? d.slice(2) : d;
       if (local.length === 11) {
         const ddd = local.slice(0, 2);
-        return `+55 ${ddd} 9****-${last4}`;
+        return `+55 ${ddd} 9∗∗∗∗-${last4}`;
       }
       if (local.length === 10) {
         const ddd = local.slice(0, 2);
-        return `+55 ${ddd} ****-${last4}`;
+        return `+55 ${ddd} ∗∗∗∗-${last4}`;
       }
-      return `+** (**) *****-${last4}`;
+      return `+∗∗ (∗∗) ∗∗∗∗∗-${last4}`;
     }
     case "cpf": {
       // Totalmente mascarado — nunca expor final do CPF.
