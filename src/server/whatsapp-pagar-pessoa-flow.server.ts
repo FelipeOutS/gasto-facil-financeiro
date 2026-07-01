@@ -168,6 +168,45 @@ function formatBRL(centavos: number): string {
   });
 }
 
+/**
+ * WA-Q-PixInline-LGPD — remove a chave Pix (plaintext e variantes
+ * formatadas com dígitos apenas) do texto original antes de persistir
+ * em `mensagemOriginal` / `parsed`. Substitui por `***`.
+ */
+function redigirPixKeyDoTexto(texto: string, pixKey: string): string {
+  if (!texto) return texto;
+  if (!pixKey) return texto;
+  let out = texto;
+  const raw = pixKey.trim();
+  const digits = raw.replace(/\D+/g, "");
+  const candidates = new Set<string>([raw]);
+  if (digits.length >= 4) {
+    candidates.add(digits);
+    // Variantes formatadas: (11) 99999-8888 e 11 99999-8888.
+    if (digits.length === 11) {
+      candidates.add(
+        `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`,
+      );
+      candidates.add(
+        `${digits.slice(0, 2)} ${digits.slice(2, 7)}-${digits.slice(7)}`,
+      );
+      candidates.add(
+        `+55${digits}`,
+      );
+      candidates.add(
+        `+55 ${digits.slice(0, 2)} ${digits.slice(2, 7)}-${digits.slice(7)}`,
+      );
+    }
+  }
+  for (const c of candidates) {
+    if (!c) continue;
+    const esc = c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    out = out.replace(new RegExp(esc, "gi"), "***");
+  }
+  return out;
+}
+
+
 function logEvent(
   stage: string,
   result: "ok" | "fail" | "not_found" | "race" | "conflict",
