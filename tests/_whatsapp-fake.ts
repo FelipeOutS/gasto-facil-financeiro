@@ -716,6 +716,7 @@ export function resetState(opts?: {
   state.recorrenciasData = [];
   state.contasData = opts?.contas ?? [];
   state.favorecidosData = opts?.favorecidos ?? [];
+  state.pixPendingSecretsData = [];
   state.cartoesData = opts?.cartoes ?? [
     {
       id: "c-nu", nome: "Nubank", banco: "Nubank",
