@@ -37,6 +37,8 @@ export const state = {
   favorecidosData: [] as Record<string, unknown>[],
   // WA-R1-Fix — recorrências para o fluxo de receitas recorrentes
   recorrenciasData: [] as Record<string, unknown>[],
+  // WA-Q-Orcamento — limites/orçamento do usuário
+  limitesData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
