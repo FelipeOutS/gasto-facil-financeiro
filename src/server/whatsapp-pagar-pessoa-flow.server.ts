@@ -82,6 +82,8 @@ export const PAGAR_PESSOA_PENDING_STATES = [
   "pp_aguardando_descricao",
   "pp_aguardando_confirmar_conta",
   "pp_aguardando_escolha_conta",
+  "pp_aguardando_confirmar_pix_inline",
+  "pp_aguardando_desambig_fav_pix",
   "pp_persistindo",
 ] as const;
 
@@ -94,6 +96,13 @@ export type PagarPessoaSession = {
   descricao: string | null;
   formaPagamento: "pix" | "outro";
   favorecidoId: string | null;
+  /**
+   * Chave Pix pendente do fluxo inline. Só é persistida no favorecido
+   * na confirmação. NUNCA é exibida em plain-text (usar `maskPixKey`)
+   * nem logada.
+   */
+  pendingPixKey: string | null;
+  pendingPixKeyType: PixKeyType | null;
   /** Quando há 1 conta candidata, esse é o id em consideração. */
   contaId: string | null;
   /** Quando há N contas candidatas, ids ordenados como apresentados. */
@@ -103,6 +112,7 @@ export type PagarPessoaSession = {
   /** Texto original recebido (já normalizado pelo curto-circuito de memória). */
   mensagemOriginal: string;
 };
+
 
 export function isPagarPessoaSession(s: unknown): s is PagarPessoaSession {
   if (!s || typeof s !== "object") return false;
