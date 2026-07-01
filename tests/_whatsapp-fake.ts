@@ -392,6 +392,21 @@ function makeBuilder(table: string): any {
       if (ctx.single) return { data: ranged[0] ?? null, error: null };
       return { data: ranged, error: null };
     }
+    // WA-Q-ContasReceber — select read-only de contas a receber.
+    if (table === "contas_a_receber") {
+      const uid = ctx.filters?.user_id;
+      let base = uid
+        ? state.contasReceberData.filter((c) => c.user_id === undefined || c.user_id === uid)
+        : state.contasReceberData;
+      const stF = ctx.filters?.status;
+      if (Array.isArray(stF)) {
+        base = base.filter((c) => (stF as unknown[]).includes(c.status));
+      } else if (stF !== undefined) {
+        base = base.filter((c) => c.status === stF);
+      }
+      if (ctx.single) return { data: base[0] ?? null, error: null };
+      return { data: base, error: null };
+    }
     // WA-C7 — select de fornecedores. Aplica filtros por user_id/ativo/id.
     if (table === "fornecedores") {
       const uid = ctx.filters?.user_id;
