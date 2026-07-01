@@ -26,7 +26,8 @@ export type ConsultaIntent =
   | "impacto_despesas_renda"
   | "listar_receitas_mes"
   | "listar_gastos_mes"
-  | "gastos_por_categoria_mes";
+  | "gastos_por_categoria_mes"
+  | "orcamento_mes";
 
 const APP_TZ = "America/Sao_Paulo";
 
