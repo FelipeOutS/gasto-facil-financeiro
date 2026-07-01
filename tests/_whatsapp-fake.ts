@@ -37,6 +37,8 @@ export const state = {
   favorecidosData: [] as Record<string, unknown>[],
   // WA-R1-Fix — recorrências para o fluxo de receitas recorrentes
   recorrenciasData: [] as Record<string, unknown>[],
+  // WA-Q-Orcamento — limites/orçamento do usuário
+  limitesData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
@@ -318,6 +320,15 @@ function makeBuilder(table: string): any {
         ? state.categoriasData.filter((c) => c.user_id === uid)
         : state.categoriasData;
       return { data: rows, error: null };
+    }
+    if (table === "limites") {
+      const uid = ctx.filters?.user_id;
+      let base = uid
+        ? state.limitesData.filter((l) => l.user_id === undefined || l.user_id === uid)
+        : state.limitesData;
+      if (ctx.filters?.mes !== undefined) base = base.filter((l) => l.mes === ctx.filters.mes);
+      if (ctx.filters?.ano !== undefined) base = base.filter((l) => l.ano === ctx.filters.ano);
+      return { data: base, error: null };
     }
     if (table === "gastos") {
       if (ctx.filters?.id) return { data: { id: ctx.filters.id }, error: null };
