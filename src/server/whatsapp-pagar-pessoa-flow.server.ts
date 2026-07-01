@@ -1192,7 +1192,12 @@ export async function processarPixInlineEntry(args: {
   parsed: PagarPixInlineParsed;
   deps: WhatsAppPagarPessoaDeps;
 }): Promise<ProcessOutcome> {
-  const { userId, msg, texto, recebidaEm, parsed, deps } = args;
+  const { userId, msg, recebidaEm, parsed, deps } = args;
+  // WA-Q-PixInline-LGPD (reforço): redigimos o texto ANTES de qualquer
+  // gravarSessao. Isso garante que `whatsapp_messages.texto` — coluna
+  // consultável comum — nunca receba a chave Pix completa em texto puro.
+  // O `mensagemOriginal` da sessão continua sendo redigido também.
+  const texto = redigirPixKeyDoTexto(args.texto, parsed.pixKey);
 
   // Chave inválida (por segurança, mesmo com detectPagarPixInlineIntent
   // já filtrando) — resposta clara sem abrir sessão travada.
