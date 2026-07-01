@@ -149,6 +149,71 @@ describe("parser :: maskPixKey", () => {
 });
 
 // ==========================================================================
+// 1b. Desambiguação de chaves numéricas de 11 dígitos (CPF vs celular BR)
+// ==========================================================================
+
+describe("parser :: 11 dígitos — desambiguação CPF vs celular", () => {
+  it("celular BR com DDD válido + prefixo 9 → telefone (sem máscara)", () => {
+    expect(detectPixKeyType("11999998888")).toBe("telefone");
+  });
+  it("CPF matematicamente válido sem padrão celular → cpf", () => {
+    // 111.444.777-35 é um CPF válido; não é padrão celular (3º dígito ≠ 9).
+    expect(detectPixKeyType("11144477735")).toBe("cpf");
+  });
+  it("11 dígitos sem padrão celular e CPF inválido → telefone (fallback conservador)", () => {
+    // 12345678901 → 3º dígito=3, não é celular; checksum CPF inválido.
+    expect(detectPixKeyType("12345678901")).toBe("telefone");
+  });
+  it("prefixo +55 sempre classifica como telefone", () => {
+    expect(detectPixKeyType("+5511999998888")).toBe("telefone");
+  });
+  it("máscara CPF explícita força CPF", () => {
+    expect(detectPixKeyType("123.456.789-01")).toBe("cpf");
+  });
+  it("hint 'telefone' força telefone mesmo com padrão de CPF", () => {
+    expect(detectPixKeyType("11144477735", "telefone")).toBe("telefone");
+  });
+  it("hint 'cpf' força CPF mesmo com padrão de celular", () => {
+    expect(detectPixKeyType("11999998888", "cpf")).toBe("cpf");
+  });
+});
+
+describe("parser :: contexto explícito celular/telefone no inline", () => {
+  it("'chave celular 11999998888' → telefone", () => {
+    const p = parsePagarPixInline("Pix 50 para João chave celular 11999998888");
+    expect(p).toBeTruthy();
+    expect(p!.pixKeyType).toBe("telefone");
+    expect(p!.pixKey).toBe("11999998888");
+  });
+  it("'telefone 11999998888' (sem 'chave') → telefone", () => {
+    const p = parsePagarPixInline("Pix 50 para João telefone 11999998888");
+    expect(p).toBeTruthy();
+    expect(p!.pixKeyType).toBe("telefone");
+  });
+  it("'celular 11999998888' (sem 'chave') → telefone", () => {
+    const p = parsePagarPixInline("Pix 50 para João celular 11999998888");
+    expect(p).toBeTruthy();
+    expect(p!.pixKeyType).toBe("telefone");
+  });
+  it("'chave cpf 11144477735' → cpf mesmo se padrão bater com celular", () => {
+    const p = parsePagarPixInline("Pix 50 para Ana chave cpf 11999998888");
+    expect(p).toBeTruthy();
+    expect(p!.pixKeyType).toBe("cpf");
+  });
+  it("formato natural 'chave 11999998888' → telefone (celular BR)", () => {
+    const p = parsePagarPixInline("Pix 50 para João Silva chave 11999998888");
+    expect(p).toBeTruthy();
+    expect(p!.pixKeyType).toBe("telefone");
+    expect(p!.pixKey).toBe("11999998888");
+  });
+  it("formato natural 'chave +5511999998888' → telefone", () => {
+    const p = parsePagarPixInline("Pix 50 para João Silva chave +5511999998888");
+    expect(p).toBeTruthy();
+    expect(p!.pixKeyType).toBe("telefone");
+  });
+});
+
+// ==========================================================================
 // 2. Fluxo E2E
 // ==========================================================================
 
