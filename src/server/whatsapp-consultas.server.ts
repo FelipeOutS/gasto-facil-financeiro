@@ -164,6 +164,36 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     return "listar_transferencias";
   }
 
+  // ----- WA-Q-Metas — listagem read-only de metas financeiras ATIVAS -----
+  // Precede QUALQUER parser de criação (gasto, receita, recorrência, meta).
+  // "minhas metas" isolada era capturada pelo parser genérico de gasto
+  // (confiança 0.25), abrindo `aguardando_descricao_e_valor_gasto`. Aqui é
+  // 100% read-only: nunca abre sessão nem escreve em metas_financeiras/
+  // movimentacoes_meta/gastos/receitas/recorrencias/contas.
+  if (
+    t === "metas" ||
+    t === "meta" ||
+    t === "minhas metas" ||
+    t === "minha meta" ||
+    t === "metas financeiras" ||
+    t === "minhas metas financeiras" ||
+    t === "ver metas" ||
+    t === "listar metas" ||
+    t === "objetivos" ||
+    t === "meus objetivos" ||
+    /\bcomo est[aã]o? (as )?minhas metas\b/.test(t) ||
+    /\bprogresso (das |de )?(minhas )?metas\b/.test(t) ||
+    /\bquanto falta (para |pra )?(as |atingir )?(minhas )?metas\b/.test(t) ||
+    /\bquanto falta (para |pra )?(a )?minha meta\b/.test(t) ||
+    /\b(quais|liste?|ver|mostrar?|mostre) (sao )?(as )?(minhas )?metas\b/.test(t) ||
+    /\bmetas ativas\b/.test(t)
+  ) {
+    return "listar_metas";
+  }
+
+
+
+
 
 
   // ----- maiores gastos (verificar antes de "mes/semana" sozinhos) -----
