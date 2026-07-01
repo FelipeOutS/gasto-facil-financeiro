@@ -1199,7 +1199,10 @@ export async function processarPixInlineEntry(args: {
     contaId: null,
     candidateContaIds: null,
     valorBateConta: false,
-    mensagemOriginal: texto,
+    // WA-Q-PixInline-LGPD: redige a chave do texto original antes de persistir
+    // em session/parsed. Mantém contexto ("Pix 50 para João Silva chave ***")
+    // sem vazar a chave.
+    mensagemOriginal: redigirPixKeyDoTexto(texto, parsed.pixKey),
     ...over,
   });
 
