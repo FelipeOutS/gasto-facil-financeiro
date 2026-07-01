@@ -116,6 +116,29 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     return "listar_recorrencias";
   }
 
+  // ----- WA-Q-ContasReceber — listagem read-only de contas A RECEBER pendentes -----
+  // Precede QUALQUER parser de criação (receita, gasto, recorrência). A palavra
+  // "receber" isolada arrastava a mensagem para o parser de receita
+  // (abrindo `rec_aguardando_tipo`). Aqui é 100% read-only. Nunca abre sessão
+  // nem escreve em receitas/contas_a_receber/gastos/recorrencias.
+  if (
+    t === "contas a receber" ||
+    t === "conta a receber" ||
+    t === "valores a receber" ||
+    t === "valor a receber" ||
+    t === "recebimentos pendentes" ||
+    t === "meus recebimentos" ||
+    t === "meus recebimentos pendentes" ||
+    /\bo que (eu )?tenho (a|para|pra) receber\b/.test(t) ||
+    /\bquem me deve\b/.test(t) ||
+    /\bquem esta me devendo\b/.test(t) ||
+    /\blistar (as )?(minhas )?contas a receber\b/.test(t) ||
+    /\bver (as )?(minhas )?contas a receber\b/.test(t) ||
+    /\bminhas contas a receber\b/.test(t)
+  ) {
+    return "listar_contas_receber";
+  }
+
 
 
   // ----- maiores gastos (verificar antes de "mes/semana" sozinhos) -----
