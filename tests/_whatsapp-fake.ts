@@ -420,6 +420,15 @@ function makeBuilder(table: string): any {
       if (ctx.single) return { data: base[0] ?? null, error: null };
       return { data: base, error: null };
     }
+    // WA-Q-Metas — select read-only de metas financeiras.
+    if (table === "metas_financeiras") {
+      const uid = ctx.filters?.user_id;
+      const base = uid
+        ? state.metasData.filter((m) => m.user_id === undefined || m.user_id === uid)
+        : state.metasData;
+      if (ctx.single) return { data: base[0] ?? null, error: null };
+      return { data: base, error: null };
+    }
     // WA-C7 — select de fornecedores. Aplica filtros por user_id/ativo/id.
     if (table === "fornecedores") {
       const uid = ctx.filters?.user_id;
