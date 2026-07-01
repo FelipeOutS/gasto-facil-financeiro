@@ -45,6 +45,8 @@ export const state = {
   transferenciasData: [] as Record<string, unknown>[],
   // WA-Q-Metas — metas financeiras do usuário
   metasData: [] as Record<string, unknown>[],
+  // WA-Q-PixInline-LGPD — segredos Pix cifrados em trânsito.
+  pixPendingSecretsData: [] as Record<string, unknown>[],
 };
 
 const PENDING = [
