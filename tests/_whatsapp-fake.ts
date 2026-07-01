@@ -359,9 +359,11 @@ function makeBuilder(table: string): any {
     if (table === "recorrencias") {
       const idF = ctx.filters?.id;
       const uid = ctx.filters?.user_id;
+      const st = ctx.filters?.status;
       let base = state.recorrenciasData as Array<Record<string, unknown>>;
       if (idF !== undefined) base = base.filter((r) => r.id === idF);
       if (uid !== undefined) base = base.filter((r) => r.user_id === undefined || r.user_id === uid);
+      if (st !== undefined) base = base.filter((r) => r.status === st);
       if (ctx.single) return { data: base[0] ?? null, error: null };
       return { data: base, error: null };
     }
