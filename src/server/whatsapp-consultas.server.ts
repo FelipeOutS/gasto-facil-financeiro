@@ -30,7 +30,8 @@ export type ConsultaIntent =
   | "orcamento_mes"
   | "listar_recorrencias"
   | "listar_contas_receber"
-  | "listar_transferencias";
+  | "listar_transferencias"
+  | "listar_metas";
 
 const APP_TZ = "America/Sao_Paulo";
 
