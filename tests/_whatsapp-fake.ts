@@ -475,6 +475,16 @@ function makeBuilder(table: string): any {
       if (ctx.single) return { data: base[0] ?? null, error: null };
       return { data: base, error: null };
     }
+    // WA-Q-PixInline-LGPD — select do segredo Pix cifrado transitório.
+    if (table === "whatsapp_pix_pending_secrets") {
+      const idF = ctx.filters?.id;
+      const uidF = ctx.filters?.user_id;
+      let base = state.pixPendingSecretsData;
+      if (idF !== undefined) base = base.filter((r) => r.id === idF);
+      if (uidF !== undefined) base = base.filter((r) => r.user_id === uidF);
+      if (ctx.single) return { data: base[0] ?? null, error: null };
+      return { data: base, error: null };
+    }
     if (table === "auth.users")
       return { data: { email: "u@example.com" }, error: null };
     return { data: null, error: null };
