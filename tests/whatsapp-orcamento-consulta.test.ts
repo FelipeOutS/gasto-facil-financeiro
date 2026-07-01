@@ -63,17 +63,20 @@ describe("WA-Q-Orcamento — handler não escreve nada", () => {
   });
 
   test("com limites: mostra Total e categorias com restante — nenhuma escrita", async () => {
-    const now = new Date();
-    const mes = now.getMonth() + 1;
-    const ano = now.getFullYear();
+    // Alinha com o cálculo interno do handler (America/Sao_Paulo).
+    const hojeSP = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+    const [ano, mes] = hojeSP.split("-").map(Number);
     state.limitesData = [
       { user_id: USER, tipo: "total", valor: 1000, mes, ano },
       { user_id: USER, tipo: "mercado", valor: 300, mes, ano },
     ];
-    const mm = String(mes).padStart(2, "0");
-    const dd = String(Math.min(now.getDate(), 15)).padStart(2, "0");
     state.gastosData = [
-      { user_id: USER, descricao: "Assaí", valor: 80, data: `${ano}-${mm}-${dd}`, categoria_id: "cat-mer" },
+      { user_id: USER, descricao: "Assaí", valor: 80, data: `${hojeSP}`, categoria_id: "cat-mer" },
     ];
 
     const out = await handleConsulta(USER, "orcamento_mes");
