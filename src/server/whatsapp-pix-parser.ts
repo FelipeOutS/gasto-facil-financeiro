@@ -460,13 +460,13 @@ export function parsePagarPixInline(texto: string): PagarPixInlineParsed | null 
   //   Pix 50 para João chave celular 11999998888   ← dica explícita
   //   Pix 50 para João celular 11999998888          ← dica sem "chave"
   const reComChave =
-    /^\s*(?:um\s+|o\s+)?pix\s+(?:r\$?\s*)?(\d+(?:[.,]\d{1,2})?)\s+(?:pra|para|pro|ao|à)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'.\s-]{1,50}?)\s+(?:chave\s+)?(celular|telefone|cpf|cnpj|email|aleat[oó]ria|chave)?\s*(?:chave\s+)?(\S(?:.*\S)?)\s*$/i;
+    /^\s*(?:um\s+|o\s+)?pix\s+(?:r\$?\s*)?(\d+(?:[.,]\d{1,2})?)\s+(?:pra|para|pro|ao|à)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'.\s-]{1,50}?)\s+(?:chave(?:\s+(celular|telefone|cpf|cnpj|email|aleat[oó]ria))?|(celular|telefone|cpf|cnpj|email|aleat[oó]ria))\s+(\S(?:.*\S)?)\s*$/i;
   const m1 = t.match(reComChave);
   if (m1) {
     const valorCentavos = parseBRLToCentavosPix(m1[1]);
     const nome = cleanNomeInline(m1[2]);
-    const hint = normalizeHint(m1[3]);
-    const raw = (m1[4] ?? "").trim();
+    const hint = normalizeHint(m1[3] ?? m1[4]);
+    const raw = (m1[5] ?? "").trim();
     if (valorCentavos > 0 && nome && raw) {
       const type = detectPixKeyType(raw, hint);
       if (type === "desconhecida") return null;
