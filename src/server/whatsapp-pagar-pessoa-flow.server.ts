@@ -317,6 +317,68 @@ const T = {
   naoEntendiNumero(maxOpcao: number): string {
     return `Não entendi. Responda com o número da opção (1 a ${maxOpcao}) ou "cancelar".`;
   },
+  previewPixInline(args: {
+    nome: string;
+    valorCentavos: number;
+    pixKeyType: PixKeyType;
+    pixKeyMasked: string;
+    reusandoFavorecido: boolean;
+  }): string {
+    const reuso = args.reusandoFavorecido
+      ? `Favorecido já cadastrado — apenas vou registrar o pagamento.`
+      : `Novo favorecido será salvo com essa chave.`;
+    return [
+      `Confira o pagamento Pix antes de confirmar:`,
+      ``,
+      `• Favorecido: ${args.nome}`,
+      `• Chave Pix (${rotuloTipoPix(args.pixKeyType)}): ${args.pixKeyMasked}`,
+      `• Valor: ${formatBRL(args.valorCentavos)}`,
+      `• Forma: Pix`,
+      ``,
+      reuso,
+      `⚠️ Registro interno no Gasto Inteligente — nenhum Pix bancário é enviado.`,
+      ``,
+      `Responda "sim" para registrar ou "cancelar" para descartar.`,
+    ].join("\n");
+  },
+  pixInlineChaveInvalida(): string {
+    return [
+      `Não reconheci a chave Pix informada.`,
+      `Chaves aceitas: celular (com DDD), CPF, CNPJ, e-mail ou chave aleatória (UUID).`,
+      `Exemplo: Pix 50 para João Silva chave 11999998888`,
+    ].join("\n");
+  },
+  pixInlineSucesso(args: {
+    nome: string;
+    valorCentavos: number;
+    pixKeyType: PixKeyType;
+    pixKeyMasked: string;
+  }): string {
+    return [
+      `Registrado! ${formatBRL(args.valorCentavos)} para ${args.nome} via Pix. ✅`,
+      `Chave (${rotuloTipoPix(args.pixKeyType)}): ${args.pixKeyMasked}`,
+      ``,
+      `Favorecido salvo. Nas próximas vezes basta dizer o nome.`,
+    ].join("\n");
+  },
+  pixInlineDesambig(args: {
+    nomeNovo: string;
+    existente: FavorecidoRow;
+  }): string {
+    const existType = args.existente.pix_key_type ?? "desconhecida";
+    const existMasked = args.existente.pix_key
+      ? maskPixKey(args.existente.pix_key, existType as PixKeyType)
+      : "sem chave";
+    return [
+      `Já existe um favorecido chamado "${args.existente.nome}" com outra chave Pix.`,
+      `• Chave atual (${rotuloTipoPix(existType as PixKeyType)}): ${existMasked}`,
+      ``,
+      `O que deseja fazer?`,
+      `1. Atualizar a chave do favorecido existente`,
+      `2. Salvar como um novo favorecido separado`,
+      `3. Cancelar`,
+    ].join("\n");
+  },
 };
 
 export const PP_MESSAGES_FOR_TESTS = T;
