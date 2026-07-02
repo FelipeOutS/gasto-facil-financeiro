@@ -382,9 +382,12 @@ function parseBRLToCentavos(s: string): number {
 }
 
 function extrairNomePessoa(texto: string): string | null {
-  // Preferência: "para/pra/pro/ao + <nome 1-3 palavras>"
+  // Preferência: "para/pra/pro/ao/pelo + <nome 1-3 palavras>".
+  // Cobrimos também "pelo/pela" para casos como
+  // "paguei 50 pelo João no Pix" — o cleanNomeStrict abaixo cuida de
+  // parar em "no/na/via/com/etc." antes de engolir a forma de pagamento.
   const re1 =
-    /\b(?:para|pra|pro|ao|à)\s+(?:o\s+|a\s+)?([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ]{1,30}(?:\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ]{1,30}){0,2})\b/i;
+    /\b(?:para|pra|pro|ao|à|pelo|pela)\s+(?:o\s+|a\s+)?([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ]{1,30}(?:\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ]{1,30}){0,2})\b/i;
   const m1 = texto.match(re1);
   if (m1) {
     const nome = cleanNomeStrict(m1[1]);
