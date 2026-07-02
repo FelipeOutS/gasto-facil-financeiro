@@ -29,6 +29,8 @@ import {
   parseQueryPix,
   detectPagarPessoaIntent,
   parsePagarPessoa,
+  maskPixKey,
+  type PixKeyType,
 } from "./whatsapp-pix-parser";
 import {
   findFavorecidosByNome,
@@ -70,9 +72,10 @@ function formatBRL(centavos: number): string {
 }
 
 function maskPixDisplay(chave: string, tipo: string): string {
-  // Para exibição: não mascara aqui. Usuário pediu o Pix, queremos entregar
-  // a chave. Mascaramento é apenas para LOGS (que jamais incluem a chave).
-  return chave;
+  // WA-Q-PixInline-Mask: mascara para exibição em consultas por texto.
+  // Até termos o botão "Copiar chave Pix" (WA-PIX-UX-01), nunca devolvemos
+  // a chave completa em texto plano — orientamos o usuário a abrir o app.
+  return maskPixKey(chave, tipo as PixKeyType);
 }
 
 // ---------- 1) Cadastrar Pix ----------

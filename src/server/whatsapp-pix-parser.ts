@@ -161,14 +161,17 @@ export function normalizePixKey(raw: string, type: PixKeyType): string {
 const SAVE_PIX_TRIGGERS = [
   /\b(?:salv|cadastr|guard|grav|anot)[aeoiu][a-z]*\b.{0,30}\bpix\b/i,
   /\bpix\s+(?:do|da|de|dos|das)\s+\S+.{0,80}\b(?:e|eh|é|=|:|sera|será)\b/i,
-  /^\s*(?:o|a)?\s*pix\s+(?:do|da|de|dos|das)\b/i,
 ];
 
 export function detectSavePixIntent(texto: string): boolean {
   const t = (texto ?? "").trim();
   if (!t) return false;
-  // exclui consultas claras ("qual o pix do joão")
+  // exclui consultas claras ("qual o pix do joão", "chave pix do joão",
+  // "pix do joão" isolado — trata-se como query, não save).
   if (/^\s*(qual|me\s+manda|manda\s+o|envia\s+o|cade|cadê|onde)\b/i.test(t)) {
+    return false;
+  }
+  if (/^\s*chave(?:\s+pix)?\s+(?:do|da|de|dos|das)\b/i.test(t)) {
     return false;
   }
   return SAVE_PIX_TRIGGERS.some((re) => re.test(t));
@@ -246,9 +249,18 @@ export function detectQueryPixIntent(texto: string): boolean {
   if (!t) return false;
   if (detectSavePixIntent(t)) return false;
   return (
-    /\b(?:qual|cade|cadê|onde\s+(?:esta|está))\s+(?:e\s+)?(?:o\s+)?pix\b/i.test(t) ||
-    /\bme\s+(?:manda|passa|envia|diz)\s+(?:o\s+)?pix\b/i.test(t) ||
-    /\b(?:manda|envia|passa)\s+o\s+pix\b/i.test(t) ||
+    // "qual (é/a/o) (a chave)? pix do João"
+    /\b(?:qual|cade|cadê|onde\s+(?:esta|está))\b[^?]*\bpix\b/i.test(t) ||
+    // "qual a chave do João" (sem a palavra pix, mas com "chave")
+    /\bqual\b[^?]*\bchave\b[^?]*\b(?:do|da|de|dos|das)\s+\S+/i.test(t) ||
+    // "me manda/passa/envia (o) (chave)? pix"
+    /\bme\s+(?:manda|passa|envia|diz)\s+(?:o\s+|a\s+)?(?:chave\s+(?:pix\s+)?)?pix\b/i.test(t) ||
+    // "manda/envia/passa (o|a) (chave)? pix"
+    /\b(?:manda|envia|passa)\s+(?:o|a)\s+(?:chave\s+(?:pix\s+)?)?pix\b/i.test(t) ||
+    // "chave pix do João" / "chave do João" isolado no início
+    /^\s*(?:a\s+|o\s+)?chave(?:\s+pix)?\s+(?:do|da|de|dos|das)\s+\S+/i.test(t) ||
+    // "pix do João" isolado (sem separador de key → não é save)
+    /^\s*(?:o\s+|a\s+)?pix\s+(?:do|da|de|dos|das)\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'.\s-]{0,60}\s*[?.!]?\s*$/i.test(t) ||
     /\bquero\s+pagar\s+\w+.*\bpix\b/i.test(t)
   );
 }
@@ -257,11 +269,20 @@ export type QueryPixParsed = { nome: string };
 
 export function parseQueryPix(texto: string): QueryPixParsed | null {
   if (!texto) return null;
+  // "pix do/da NOME"
   const re =
     /pix\s+(?:do|da|de|dos|das)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'.-]{0,40}?)(?:\s*[?.!]|\s*$)/i;
   const m = texto.match(re);
   if (m) {
     const nome = cleanNome(m[1]);
+    if (nome) return { nome };
+  }
+  // "chave (pix)? do/da NOME"
+  const reChave =
+    /chave(?:\s+pix)?\s+(?:do|da|de|dos|das)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'.-]{0,40}?)(?:\s*[?.!]|\s*$)/i;
+  const mc = texto.match(reChave);
+  if (mc) {
+    const nome = cleanNome(mc[1]);
     if (nome) return { nome };
   }
   // "quero pagar o joão, manda o pix dele"

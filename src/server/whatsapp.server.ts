@@ -3706,6 +3706,17 @@ export async function processarMensagemWhatsApp(
   // de receita/gasto ou detector de escrita (boleto/contas/pagar-pessoa).
   // Se a mensagem tem forma consultiva mas nenhuma intent casou, respondemos
   // com orientação segura. NUNCA abre sessão, nunca escreve, nunca faz claim.
+  //
+  // EXCEÇÃO: consulta específica de Pix por nome ("qual a chave Pix do
+  // João?", "chave Pix do João", "pix do João") tem intent dedicada
+  // (`consultar_pix_favorecido`) e roda ANTES do guard — caso contrário
+  // o padrão de área "favorecidos/chaves pix" cai no fallback genérico.
+  if (!sessao && decisao === "outro" && detectQueryPixIntent(texto)) {
+    logWaRouteDecision(msg, "consulta_handler", "query_pix_intent_precede_guard");
+    return await handleQueryPixIntent({
+      userId, telefone: msg.telefone, texto, _row: msg,
+    });
+  }
   if (!sessao && decisao === "outro") {
     const guard = detectConsultaShape(texto);
     if (guard.kind === "fallback") {
