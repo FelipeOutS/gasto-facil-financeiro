@@ -401,6 +401,18 @@ function extrairNomePessoa(texto: string): string | null {
   return null;
 }
 
+// Stopwords ADICIONAIS só do contexto de pagamento — preposições/artigos que
+// aparecem imediatamente antes da forma de pagamento (Pix, cartão, etc.) e
+// que, se engolidos como sobrenome, quebram o match com o favorecido.
+// Ex.: "paguei 50 pro João no Pix" NÃO deve virar "João No".
+// NÃO é aplicada globalmente (NOME_STOPWORDS continua conservador) para não
+// quebrar nomes compostos legítimos em outros parsers.
+const PAGAR_PESSOA_EXTRA_STOPWORDS = new Set([
+  "no", "na", "nos", "nas",
+  "pelo", "pela", "pelos", "pelas",
+  "via", "com", "usando", "por",
+]);
+
 function cleanNomeStrict(s: string): string {
   // Walk tokens em ordem e PARA no primeiro stopword (não pré-filtra),
   // assim "João do almoço" devolve apenas "João" em vez de "João Almoço".
@@ -410,6 +422,7 @@ function cleanNomeStrict(s: string): string {
     const n = norm(t);
     if (n.length < 2) break;
     if (NOME_STOPWORDS.has(n)) break;
+    if (PAGAR_PESSOA_EXTRA_STOPWORDS.has(n)) break;
     if (/\d/.test(t)) break;
     valid.push(t);
     if (valid.length >= 3) break;
