@@ -117,7 +117,8 @@ describe("WA-PIX-Q-01 :: handler", () => {
     expect(out.status).toBe("consulta");
     expect(out.resposta).toContain("João Silva");
     expect(out.resposta).toContain("Celular");
-    expect(out.resposta).toContain("Para copiar a chave completa");
+    // WA-PIX-UX-01: agora devolve um link opaco de curta duração
+    expect(out.resposta).toMatch(/\/pix\/copiar\/[A-Za-z0-9_-]{20,}/);
     // Não expõe chave completa
     expect(out.resposta).not.toContain("11999998888");
     expect(out.resposta).not.toContain(chaveReal);
