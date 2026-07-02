@@ -4461,6 +4461,51 @@ export async function sendWhatsAppReply(
   to: string,
   text: string,
 ): Promise<{ sent: boolean; reason?: string; status?: number }> {
+  return sendWhatsAppRaw(to, {
+    messaging_product: "whatsapp",
+    to,
+    type: "text",
+    text: { body: text },
+  });
+}
+
+/**
+ * WA-PIX-UX-01.c — envio de mensagem `interactive` com botão CTA URL.
+ * Só pode ser usado dentro da janela de 24h (nossa consulta é sempre
+ * iniciada pelo usuário, então estamos sempre em janela).
+ *
+ * Segurança:
+ *  - `body` e `buttonText` NUNCA contêm chave Pix;
+ *  - a URL carrega apenas um token opaco de curta duração;
+ *  - logs de erro seguem WA-B3.4 (só httpStatus / errorName, nunca body).
+ */
+export async function sendWhatsAppInteractiveCtaUrl(
+  to: string,
+  payload: WhatsAppInteractivePayload,
+): Promise<{ sent: boolean; reason?: string; status?: number }> {
+  return sendWhatsAppRaw(to, {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to,
+    type: "interactive",
+    interactive: {
+      type: "cta_url",
+      body: { text: payload.body },
+      action: {
+        name: "cta_url",
+        parameters: {
+          display_text: payload.buttonText,
+          url: payload.url,
+        },
+      },
+    },
+  });
+}
+
+async function sendWhatsAppRaw(
+  _to: string,
+  body: Record<string, unknown>,
+): Promise<{ sent: boolean; reason?: string; status?: number }> {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   if (!token || !phoneId) return { sent: false, reason: "not_configured" };
@@ -4473,18 +4518,10 @@ export async function sendWhatsAppReply(
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          to,
-          type: "text",
-          text: { body: text },
-        }),
+        body: JSON.stringify(body),
       },
     );
     if (!res.ok) {
-      // WA-B3.4 — apenas o status HTTP é registrado. NÃO logamos body,
-      // URL com query, token, telefone, texto da resposta nem códigos
-      // de erro provider-side que possam embutir conteúdo do payload.
       console.error({
         event: "wa_reply_failed",
         handlerVersion: WHATSAPP_HANDLER_VERSION,
@@ -4493,8 +4530,6 @@ export async function sendWhatsAppReply(
     }
     return { sent: res.ok, status: res.status };
   } catch (e) {
-    // WA-B3.4 — NUNCA logar `err.message`: pode conter URL da Graph,
-    // body, telefone ou token. Apenas o nome do erro.
     const errorName = e instanceof Error ? e.name : "unknown";
     console.error({
       event: "wa_reply_failed",
