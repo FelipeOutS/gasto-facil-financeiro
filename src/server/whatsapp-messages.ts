@@ -864,14 +864,27 @@ export const whatsappMessages = {
         `Me mande a chave: "Pix do ${nome} é ..."`,
       ].join("\n");
     },
-    consultaUnica(args: { nome: string; tipo: string; chave: string }) {
-      return [
+    consultaUnica(args: {
+      nome: string;
+      tipo: string;
+      chave: string;
+      copiarUrl?: string | null;
+    }) {
+      const linhas = [
         `Favorecido: ${args.nome}`,
         `Chave Pix: ${args.tipo}`,
         args.chave,
         ``,
-        `Para copiar a chave completa, abra no Gasto Inteligente.`,
-      ].join("\n");
+      ];
+      if (args.copiarUrl) {
+        linhas.push(
+          `Copiar chave Pix (link seguro, expira em 10 min):`,
+          args.copiarUrl,
+        );
+      } else {
+        linhas.push(`Para copiar a chave completa, abra no Gasto Inteligente.`);
+      }
+      return linhas.join("\n");
     },
     ambiguidade(args: { termo: string; nomes: string[] }) {
       const linhas = args.nomes.map((n, i) => `${i + 1}. ${n}`).join("\n");
