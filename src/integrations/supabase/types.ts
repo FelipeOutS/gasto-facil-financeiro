@@ -3317,6 +3317,47 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_pix_reveal_tokens: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          favorecido_id: string
+          id: string
+          pix_key_type: string
+          token_hash: string
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          favorecido_id: string
+          id?: string
+          pix_key_type: string
+          token_hash: string
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          favorecido_id?: string
+          id?: string
+          pix_key_type?: string
+          token_hash?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_pix_reveal_tokens_favorecido_id_fkey"
+            columns: ["favorecido_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       contas_a_pagar_shared: {
