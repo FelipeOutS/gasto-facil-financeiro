@@ -165,6 +165,7 @@ describe("WA-PIX-Q-01 :: handler", () => {
       _row: fakeRow,
     });
     expect(out.resposta).toContain("Não encontrei");
+    expect(out.interactive).toBeUndefined();
     expect(state.inserts.length).toBe(0);
   });
 
