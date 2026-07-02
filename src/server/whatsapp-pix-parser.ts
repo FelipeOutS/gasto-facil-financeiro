@@ -330,8 +330,8 @@ export function detectPagarPessoaIntent(texto: string): boolean {
   if (/\b(boleto|fatura|conta\s+de\s+\w+|cartao|cartão)\b/.test(t)) return false;
   // Precisa de valor monetário (R$ X, X reais, ou número solto).
   if (!/\b\d/.test(t)) return false;
-  // Precisa de destinatário: "para/pra/pro/ao + nome" OU pattern direto.
-  if (/\b(?:para|pra|pro|ao|a)\s+[a-zà-ÿ][a-zà-ÿ]+/.test(t)) return true;
+  // Precisa de destinatário: "para/pra/pro/ao/pelo + nome" OU pattern direto.
+  if (/\b(?:para|pra|pro|ao|a|pelo|pela)\s+[a-zà-ÿ][a-zà-ÿ]+/.test(t)) return true;
   // "paguei o joão 50" / "paguei maria 120"
   if (/^(?:paguei|pago|quitei|ja\s+paguei|acabei\s+de\s+pagar)\s+(?:o\s+|a\s+)?[a-zà-ÿ][a-zà-ÿ]+\s+(?:r?\$?\s*)?\d/i.test(raw)) {
     return true;
