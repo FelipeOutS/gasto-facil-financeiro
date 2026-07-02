@@ -124,8 +124,15 @@ describe("WA-PIX-Q-01 :: handler", () => {
     expect(out.resposta).not.toContain(chaveReal);
     // Contém máscara com operador U+2217
     expect(out.resposta).toMatch(/9∗∗∗∗-8888/);
-    // Nenhuma escrita
-    expect(state.inserts.length).toBe(0);
+    // Nenhuma escrita em gasto/favorecido. A única escrita permitida é o
+    // token opaco de reveal (whatsapp_pix_reveal_tokens), que jamais contém
+    // a chave em texto plano.
+    for (const ins of state.inserts) {
+      expect(ins.table).toBe("whatsapp_pix_reveal_tokens");
+      const payload = JSON.stringify(ins.payload ?? {});
+      expect(payload).not.toContain("11999998888");
+      expect(payload).not.toContain(chaveReal);
+    }
   });
 
   it("respeita isolamento por user_id (favorecido de outro user é invisível)", async () => {
