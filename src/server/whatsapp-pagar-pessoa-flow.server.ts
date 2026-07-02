@@ -607,7 +607,7 @@ async function persistirGastoComClaim(args: {
       claimedSessionId,
       "salva",
       { ...session, kind: "pagar_pessoa" },
-      T.gastoRegistrado({ valor, nome, descricao: session.descricao }),
+      T.gastoRegistrado({ valor: valorCentavos, nome, descricao: session.descricao }),
       gastoId,
     );
   } else {
