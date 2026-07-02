@@ -180,6 +180,9 @@ describe("WA-PIX-Q-01 :: handler", () => {
       userId, telefone, texto: "chave Pix do João", _row: fakeRow,
     });
     expect(out.resposta).toContain("mais de uma pessoa");
+    // WA-PIX-UX-01.c — ambiguidade NUNCA emite botão CTA (nenhum favorecido
+    // único, portanto nenhum token de reveal deve ser gerado).
+    expect(out.interactive).toBeUndefined();
     expect(state.inserts.length).toBe(0);
   });
 
