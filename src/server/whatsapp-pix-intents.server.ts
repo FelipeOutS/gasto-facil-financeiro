@@ -234,13 +234,39 @@ export async function handleQueryPixIntent(args: {
     copiarUrl = null;
   }
 
+  // WA-PIX-UX-01.c — quando temos link seguro, respondemos com uma mensagem
+  // `interactive` (botão CTA URL "Copiar chave Pix"). O corpo textual é
+  // mantido curto (sem URL) e a URL vai só no botão. Se o envio interativo
+  // falhar upstream, o `resposta` textual (com URL) serve de fallback.
+  if (copiarUrl) {
+    return {
+      status: "consulta",
+      resposta: M.pix.consultaUnica({
+        nome: f.nome,
+        tipo: rotuloTipoPix(f.pix_key_type),
+        chave: maskPixDisplay(f.pix_key, f.pix_key_type),
+        copiarUrl,
+      }),
+      interactive: {
+        type: "cta_url",
+        body: M.pix.consultaUnicaBody({
+          nome: f.nome,
+          tipo: rotuloTipoPix(f.pix_key_type),
+          chave: maskPixDisplay(f.pix_key, f.pix_key_type),
+        }),
+        buttonText: "Copiar chave Pix",
+        url: copiarUrl,
+      },
+    };
+  }
+
   return {
     status: "consulta",
     resposta: M.pix.consultaUnica({
       nome: f.nome,
       tipo: rotuloTipoPix(f.pix_key_type),
       chave: maskPixDisplay(f.pix_key, f.pix_key_type),
-      copiarUrl,
+      copiarUrl: null,
     }),
   };
 }
