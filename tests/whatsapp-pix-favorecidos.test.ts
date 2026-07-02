@@ -174,9 +174,14 @@ describe("WA-C7 :: handlers", () => {
       userId, telefone, texto: "qual o pix do João?", _row: fakeRow,
     });
     expect(out.status).toBe("consulta");
-    // WA-PIX-Q-01/UX-01: chave é mascarada em texto — cópia sai por link opaco.
+    // WA-PIX-UX-01.c: chave é mascarada no texto; a URL de cópia sai
+    // APENAS no botão CTA (interactive.url), nunca no corpo.
     expect(out.resposta).not.toContain("joao@email.com");
-    expect(out.resposta).toMatch(/\/pix\/copiar\/[A-Za-z0-9_-]{20,}/);
+    expect(out.resposta).not.toMatch(/\/pix\/copiar\//);
+    expect(out.interactive?.type).toBe("cta_url");
+    expect(out.interactive?.buttonText).toBe("Copiar chave Pix");
+    expect(out.interactive?.url).toMatch(/\/pix\/copiar\/[A-Za-z0-9_-]{20,}/);
+    expect(out.interactive?.url).not.toContain("joao@email.com");
   });
 
   it("handleQueryPixIntent oferece desambiguação para 2+ matches", async () => {
