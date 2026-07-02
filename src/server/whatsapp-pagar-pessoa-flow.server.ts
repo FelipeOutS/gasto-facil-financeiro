@@ -169,6 +169,18 @@ function formatBRL(centavos: number): string {
 }
 
 /**
+ * WA-Q-PixInline-Valor-Fix — conversão única e explícita de centavos
+ * (inteiro) para reais (numeric) na fronteira de persistência. Toda a
+ * pipeline usa centavos internamente; `gastos.valor` é o único campo em
+ * reais. Nunca chame com valor já em reais.
+ */
+export function centavosParaReais(centavos: number): number {
+  if (!Number.isFinite(centavos)) return 0;
+  // Duas casas fixas evitam ruído de ponto flutuante (ex.: 5055 → 50.55).
+  return Math.round(centavos) / 100;
+}
+
+/**
  * WA-Q-PixInline-LGPD — remove a chave Pix (plaintext e variantes
  * formatadas com dígitos apenas) do texto original antes de persistir
  * em `mensagemOriginal` / `parsed`. Substitui por `***`.
