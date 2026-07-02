@@ -161,14 +161,17 @@ export function normalizePixKey(raw: string, type: PixKeyType): string {
 const SAVE_PIX_TRIGGERS = [
   /\b(?:salv|cadastr|guard|grav|anot)[aeoiu][a-z]*\b.{0,30}\bpix\b/i,
   /\bpix\s+(?:do|da|de|dos|das)\s+\S+.{0,80}\b(?:e|eh|é|=|:|sera|será)\b/i,
-  /^\s*(?:o|a)?\s*pix\s+(?:do|da|de|dos|das)\b/i,
 ];
 
 export function detectSavePixIntent(texto: string): boolean {
   const t = (texto ?? "").trim();
   if (!t) return false;
-  // exclui consultas claras ("qual o pix do joão")
+  // exclui consultas claras ("qual o pix do joão", "chave pix do joão",
+  // "pix do joão" isolado — trata-se como query, não save).
   if (/^\s*(qual|me\s+manda|manda\s+o|envia\s+o|cade|cadê|onde)\b/i.test(t)) {
+    return false;
+  }
+  if (/^\s*chave(?:\s+pix)?\s+(?:do|da|de|dos|das)\b/i.test(t)) {
     return false;
   }
   return SAVE_PIX_TRIGGERS.some((re) => re.test(t));
