@@ -102,6 +102,7 @@ import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convit
 import { Route as CartoesIdIndexRouteImport } from './routes/cartoes.$id.index'
 import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integracoes.index'
 import { Route as RendaIdEditarRouteImport } from './routes/renda.$id.editar'
+import { Route as PixCopiarTokenRouteImport } from './routes/pix.copiar.$token'
 import { Route as MetasIdRemoverRouteImport } from './routes/metas.$id.remover'
 import { Route as MetasIdEditarRouteImport } from './routes/metas.$id.editar'
 import { Route as MetasIdAdicionarRouteImport } from './routes/metas.$id.adicionar'
@@ -604,6 +605,11 @@ const RendaIdEditarRoute = RendaIdEditarRouteImport.update({
   path: '/renda/$id/editar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PixCopiarTokenRoute = PixCopiarTokenRouteImport.update({
+  id: '/pix/copiar/$token',
+  path: '/pix/copiar/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MetasIdRemoverRoute = MetasIdRemoverRouteImport.update({
   id: '/metas/$id/remover',
   path: '/metas/$id/remover',
@@ -901,6 +907,7 @@ export interface FileRoutesByFullPath {
   '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
   '/metas/$id/editar': typeof MetasIdEditarRoute
   '/metas/$id/remover': typeof MetasIdRemoverRoute
+  '/pix/copiar/$token': typeof PixCopiarTokenRoute
   '/renda/$id/editar': typeof RendaIdEditarRoute
   '/app/integracoes/': typeof AppIntegracoesIndexRoute
   '/cartoes/$id/': typeof CartoesIdIndexRoute
@@ -1030,6 +1037,7 @@ export interface FileRoutesByTo {
   '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
   '/metas/$id/editar': typeof MetasIdEditarRoute
   '/metas/$id/remover': typeof MetasIdRemoverRoute
+  '/pix/copiar/$token': typeof PixCopiarTokenRoute
   '/renda/$id/editar': typeof RendaIdEditarRoute
   '/app/integracoes': typeof AppIntegracoesIndexRoute
   '/cartoes/$id': typeof CartoesIdIndexRoute
@@ -1160,6 +1168,7 @@ export interface FileRoutesById {
   '/metas/$id/adicionar': typeof MetasIdAdicionarRoute
   '/metas/$id/editar': typeof MetasIdEditarRoute
   '/metas/$id/remover': typeof MetasIdRemoverRoute
+  '/pix/copiar/$token': typeof PixCopiarTokenRoute
   '/renda/$id/editar': typeof RendaIdEditarRoute
   '/app_/integracoes/': typeof AppIntegracoesIndexRoute
   '/cartoes/$id/': typeof CartoesIdIndexRoute
@@ -1291,6 +1300,7 @@ export interface FileRouteTypes {
     | '/metas/$id/adicionar'
     | '/metas/$id/editar'
     | '/metas/$id/remover'
+    | '/pix/copiar/$token'
     | '/renda/$id/editar'
     | '/app/integracoes/'
     | '/cartoes/$id/'
@@ -1420,6 +1430,7 @@ export interface FileRouteTypes {
     | '/metas/$id/adicionar'
     | '/metas/$id/editar'
     | '/metas/$id/remover'
+    | '/pix/copiar/$token'
     | '/renda/$id/editar'
     | '/app/integracoes'
     | '/cartoes/$id'
@@ -1549,6 +1560,7 @@ export interface FileRouteTypes {
     | '/metas/$id/adicionar'
     | '/metas/$id/editar'
     | '/metas/$id/remover'
+    | '/pix/copiar/$token'
     | '/renda/$id/editar'
     | '/app_/integracoes/'
     | '/cartoes/$id/'
@@ -1678,6 +1690,7 @@ export interface RootRouteChildren {
   MetasIdAdicionarRoute: typeof MetasIdAdicionarRoute
   MetasIdEditarRoute: typeof MetasIdEditarRoute
   MetasIdRemoverRoute: typeof MetasIdRemoverRoute
+  PixCopiarTokenRoute: typeof PixCopiarTokenRoute
   RendaIdEditarRoute: typeof RendaIdEditarRoute
   AppIntegracoesIndexRoute: typeof AppIntegracoesIndexRoute
   CartoesIdIndexRoute: typeof CartoesIdIndexRoute
@@ -2352,6 +2365,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RendaIdEditarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pix/copiar/$token': {
+      id: '/pix/copiar/$token'
+      path: '/pix/copiar/$token'
+      fullPath: '/pix/copiar/$token'
+      preLoaderRoute: typeof PixCopiarTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/metas/$id/remover': {
       id: '/metas/$id/remover'
       path: '/metas/$id/remover'
@@ -2712,6 +2732,7 @@ const rootRouteChildren: RootRouteChildren = {
   MetasIdAdicionarRoute: MetasIdAdicionarRoute,
   MetasIdEditarRoute: MetasIdEditarRoute,
   MetasIdRemoverRoute: MetasIdRemoverRoute,
+  PixCopiarTokenRoute: PixCopiarTokenRoute,
   RendaIdEditarRoute: RendaIdEditarRoute,
   AppIntegracoesIndexRoute: AppIntegracoesIndexRoute,
   CartoesIdIndexRoute: CartoesIdIndexRoute,
@@ -2741,12 +2762,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

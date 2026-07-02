@@ -48,6 +48,7 @@ import {
   getLastFavorecido,
 } from "./whatsapp-short-context.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
+import { issueRevealToken } from "./whatsapp-pix-reveal-token.server";
 
 // Direct import mocked por `mock.module(...)` nos testes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -212,12 +213,34 @@ export async function handleQueryPixIntent(args: {
     };
   }
   recordFavorecido(args.telefone, f.nome);
+
+  // WA-PIX-UX-01 — emite token opaco de curta duração para a página autenticada
+  // "Copiar chave Pix". A chave NUNCA vai no texto, no parsed nem no log; o
+  // link contém apenas o token opaco.
+  let copiarUrl: string | null = null;
+  try {
+    const issued = await issueRevealToken({
+      userId: args.userId,
+      favorecidoId: f.id,
+      pixKeyType: f.pix_key_type,
+    });
+    if (issued) {
+      const base =
+        process.env.PUBLIC_SITE_URL?.replace(/\/+$/, "") ??
+        "https://gastointeligente.com.br";
+      copiarUrl = `${base}/pix/copiar/${issued.token}`;
+    }
+  } catch {
+    copiarUrl = null;
+  }
+
   return {
     status: "consulta",
     resposta: M.pix.consultaUnica({
       nome: f.nome,
       tipo: rotuloTipoPix(f.pix_key_type),
       chave: maskPixDisplay(f.pix_key, f.pix_key_type),
+      copiarUrl,
     }),
   };
 }
