@@ -952,7 +952,21 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
             results.push({ status: out.status, gasto_id: out.gastoId });
             if (out.resposta && msg.telefone) {
               try {
-                await sendWhatsAppReply(msg.telefone, out.resposta);
+                // WA-PIX-UX-01.c — se o handler forneceu `interactive`,
+                // preferimos a mensagem com botão CTA URL. Se o envio
+                // interativo falhar (`sent=false`), caímos para o texto
+                // plano `out.resposta` (que já inclui o link de fallback).
+                let sentOk = false;
+                if (out.interactive) {
+                  const r = await sendWhatsAppInteractiveCtaUrl(
+                    msg.telefone,
+                    out.interactive,
+                  );
+                  sentOk = r.sent;
+                }
+                if (!sentOk) {
+                  await sendWhatsAppReply(msg.telefone, out.resposta);
+                }
               } catch (replyErr) {
                 // WA-B3.4 — NUNCA logar err.message; pode conter URL
                 // assinada da Graph, telefone, token ou body do payload.
