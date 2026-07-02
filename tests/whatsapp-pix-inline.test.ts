@@ -267,7 +267,9 @@ describe("fluxo :: confirmação (sim/não)", () => {
     expect(fornecedorInserts()).toHaveLength(1);
     expect(gastoInserts()).toHaveLength(1);
     const gasto = gastoInserts()[0].row as Record<string, unknown>;
-    expect(gasto.valor).toBe(5000);
+    // WA-Q-PixInline-Valor-Fix: valor persistido é em REAIS (50.00),
+    // não centavos (5000). Prévia dizia R$ 50,00 e o banco recebe 50.
+    expect(gasto.valor).toBe(50);
     expect(gasto.forma_pagamento).toBe("pix");
     expect(gasto.estabelecimento).toBe("João Silva");
     // A descrição / observação não pode conter a chave completa.
