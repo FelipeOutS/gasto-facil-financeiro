@@ -29,6 +29,8 @@ import {
   parseQueryPix,
   detectPagarPessoaIntent,
   parsePagarPessoa,
+  maskPixKey,
+  type PixKeyType,
 } from "./whatsapp-pix-parser";
 import {
   findFavorecidosByNome,
