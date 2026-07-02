@@ -48,6 +48,7 @@ import {
   getLastFavorecido,
 } from "./whatsapp-short-context.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
+import { issueRevealToken } from "./whatsapp-pix-reveal-token.server";
 
 // Direct import mocked por `mock.module(...)` nos testes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
