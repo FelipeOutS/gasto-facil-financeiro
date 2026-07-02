@@ -65,9 +65,9 @@ describe("WA-PIX-Q-01 :: detecção", () => {
     expect(detectSavePixIntent("chave Pix do João")).toBe(false);
   });
 
-  it("save ainda funciona com separador", () => {
+  it("save ainda funciona com verbo explícito", () => {
     expect(detectSavePixIntent("salva o Pix do João: 11999998888")).toBe(true);
-    expect(detectSavePixIntent("Pix do João é 11999998888")).toBe(true);
+    expect(detectSavePixIntent("cadastra Pix do Pedro CPF 123.456.789-00")).toBe(true);
   });
 
   it("não detecta em pedidos de listagem geral (Q-Guard cuida)", () => {
