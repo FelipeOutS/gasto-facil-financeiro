@@ -174,7 +174,9 @@ describe("WA-C7 :: handlers", () => {
       userId, telefone, texto: "qual o pix do João?", _row: fakeRow,
     });
     expect(out.status).toBe("consulta");
-    expect(out.resposta).toContain("joao@email.com");
+    // WA-PIX-Q-01: chave é mascarada em texto — orientamos a abrir o app.
+    expect(out.resposta).not.toContain("joao@email.com");
+    expect(out.resposta).toContain("Para copiar a chave completa");
   });
 
   it("handleQueryPixIntent oferece desambiguação para 2+ matches", async () => {
