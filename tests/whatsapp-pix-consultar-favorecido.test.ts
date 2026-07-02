@@ -196,6 +196,7 @@ describe("WA-PIX-Q-01 :: handler", () => {
       userId, telefone, texto: "qual a chave Pix do João Silva?", _row: fakeRow,
     });
     expect(out.resposta.toLowerCase()).toContain("sem chave pix");
+    expect(out.interactive).toBeUndefined();
     expect(state.inserts.length).toBe(0);
   });
 });
