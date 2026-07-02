@@ -866,8 +866,11 @@ export const whatsappMessages = {
     },
     consultaUnica(args: { nome: string; tipo: string; chave: string }) {
       return [
-        `Pix de ${args.nome} (${args.tipo}):`,
+        `Favorecido: ${args.nome}`,
+        `Chave Pix: ${args.tipo}`,
         args.chave,
+        ``,
+        `Para copiar a chave completa, abra no Gasto Inteligente.`,
       ].join("\n");
     },
     ambiguidade(args: { termo: string; nomes: string[] }) {
