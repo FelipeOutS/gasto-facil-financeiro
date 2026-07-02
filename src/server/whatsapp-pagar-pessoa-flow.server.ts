@@ -485,8 +485,10 @@ async function persistirGastoComClaim(args: {
 }): Promise<PersistResult> {
   const { userId, telefone, externalId, texto, recebidaEm, session, deps } = args;
   const nome = session.nome ?? "";
-  const valor = session.valorCentavos ?? 0;
-  if (!nome || valor <= 0) return { kind: "error" };
+  const valorCentavos = session.valorCentavos ?? 0;
+  if (!nome || valorCentavos <= 0) return { kind: "error" };
+  // Conversão única centavos → reais na fronteira do insert.
+  const valorReais = centavosParaReais(valorCentavos);
 
   // Pré-check de idempotência (retries sequenciais sem race ativa).
   if (externalId) {
