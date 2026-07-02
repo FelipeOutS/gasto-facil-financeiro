@@ -691,7 +691,7 @@ describe("valor :: prévia == banco (não grava 100× maior)", () => {
     const { previa, sim } = await runPreviaEConfirmacao(
       "Pix 50 para João Silva chave (11) 99999-8888", "val-50",
     );
-    expect(previa.resposta).toContain("R$ 50,00");
+    expect(previa.resposta).toMatch(/R\$\s*50,00/);
     expect(sim.status).toBe("salva");
     const gasto = gastoInserts()[0].row as Record<string, unknown>;
     expect(gasto.valor).toBe(50);
@@ -702,7 +702,7 @@ describe("valor :: prévia == banco (não grava 100× maior)", () => {
     const { previa, sim } = await runPreviaEConfirmacao(
       "Pix 0,01 para Ana chave ana@ex.com", "val-1c",
     );
-    expect(previa.resposta).toContain("R$ 0,01");
+    expect(previa.resposta).toMatch(/R\$\s*0,01/);
     expect(sim.status).toBe("salva");
     const gasto = gastoInserts()[0].row as Record<string, unknown>;
     expect(gasto.valor).toBe(0.01);
@@ -721,7 +721,7 @@ describe("valor :: prévia == banco (não grava 100× maior)", () => {
     const { previa, sim } = await runPreviaEConfirmacao(
       "Pix 50,55 para Ana Costa chave 11988887777", "val-5055",
     );
-    expect(previa.resposta).toContain("R$ 50,55");
+    expect(previa.resposta).toMatch(/R\$\s*50,55/);
     expect(sim.status).toBe("salva");
     const gasto = gastoInserts()[0].row as Record<string, unknown>;
     expect(gasto.valor).toBe(50.55);
