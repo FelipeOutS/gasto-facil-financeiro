@@ -615,7 +615,7 @@ async function persistirGastoComClaim(args: {
     await deps.gravarSessao(
       userId, telefone, externalId, texto, recebidaEm, "salva",
       session,
-      T.gastoRegistrado({ valor, nome, descricao: session.descricao }),
+      T.gastoRegistrado({ valor: valorCentavos, nome, descricao: session.descricao }),
       gastoId,
     );
   }
