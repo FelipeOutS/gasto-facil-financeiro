@@ -715,6 +715,21 @@ export type ProcessOutcome = {
   gastoId?: string;
   confianca?: number;
   resposta: string;
+  /**
+   * WA-PIX-UX-01.c — payload opcional para enviar a resposta como mensagem
+   * `interactive` (ex.: botão CTA URL "Copiar chave Pix"). Quando presente,
+   * a camada de envio prefere este payload em vez de `resposta` em texto.
+   * O corpo (`body`) e o rótulo (`buttonText`) NUNCA contêm chave Pix; a
+   * URL carrega apenas um token opaco de curta duração.
+   */
+  interactive?: WhatsAppInteractivePayload;
+};
+
+export type WhatsAppInteractivePayload = {
+  type: "cta_url";
+  body: string;
+  buttonText: string;
+  url: string;
 };
 
 // ---------- confirmação / cancelamento ----------
