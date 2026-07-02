@@ -169,6 +169,18 @@ function formatBRL(centavos: number): string {
 }
 
 /**
+ * WA-Q-PixInline-Valor-Fix — conversão única e explícita de centavos
+ * (inteiro) para reais (numeric) na fronteira de persistência. Toda a
+ * pipeline usa centavos internamente; `gastos.valor` é o único campo em
+ * reais. Nunca chame com valor já em reais.
+ */
+export function centavosParaReais(centavos: number): number {
+  if (!Number.isFinite(centavos)) return 0;
+  // Duas casas fixas evitam ruído de ponto flutuante (ex.: 5055 → 50.55).
+  return Math.round(centavos) / 100;
+}
+
+/**
  * WA-Q-PixInline-LGPD — remove a chave Pix (plaintext e variantes
  * formatadas com dígitos apenas) do texto original antes de persistir
  * em `mensagemOriginal` / `parsed`. Substitui por `***`.
@@ -473,8 +485,10 @@ async function persistirGastoComClaim(args: {
 }): Promise<PersistResult> {
   const { userId, telefone, externalId, texto, recebidaEm, session, deps } = args;
   const nome = session.nome ?? "";
-  const valor = session.valorCentavos ?? 0;
-  if (!nome || valor <= 0) return { kind: "error" };
+  const valorCentavos = session.valorCentavos ?? 0;
+  if (!nome || valorCentavos <= 0) return { kind: "error" };
+  // Conversão única centavos → reais na fronteira do insert.
+  const valorReais = centavosParaReais(valorCentavos);
 
   // Pré-check de idempotência (retries sequenciais sem race ativa).
   if (externalId) {
@@ -560,7 +574,7 @@ async function persistirGastoComClaim(args: {
       categoria_id: catId,
       descricao: descricaoFinal.slice(0, 120),
       estabelecimento: nome.slice(0, 120),
-      valor,
+      valor: valorReais,
       data,
       mes: mo,
       ano: y,
@@ -593,7 +607,7 @@ async function persistirGastoComClaim(args: {
       claimedSessionId,
       "salva",
       { ...session, kind: "pagar_pessoa" },
-      T.gastoRegistrado({ valor, nome, descricao: session.descricao }),
+      T.gastoRegistrado({ valor: valorCentavos, nome, descricao: session.descricao }),
       gastoId,
     );
   } else {
@@ -601,7 +615,7 @@ async function persistirGastoComClaim(args: {
     await deps.gravarSessao(
       userId, telefone, externalId, texto, recebidaEm, "salva",
       session,
-      T.gastoRegistrado({ valor, nome, descricao: session.descricao }),
+      T.gastoRegistrado({ valor: valorCentavos, nome, descricao: session.descricao }),
       gastoId,
     );
   }
@@ -1437,6 +1451,12 @@ async function passoConfirmarPixInline(args: {
       pixKeyType,
       pixKeyMasked,
     });
+    // WA-Q-PixInline-Terminal — a sessão da prévia (pp_aguardando_confirmar_pix_inline)
+    // é uma linha diferente da mensagem "sim". Fecha explicitamente para
+    // não deixar estado pendente residual.
+    await deps.atualizarSessao(
+      sessao.id, "salva", sessionComFav, resposta, result.gastoId,
+    );
     return { status: "salva", gastoId: result.gastoId, resposta };
   }
   if (result.kind === "race_duplicate") {
@@ -1449,6 +1469,11 @@ async function passoConfirmarPixInline(args: {
   if (result.kind === "race_in_progress") {
     return { status: "duplicada", resposta: T.ainda_processando() };
   }
+  // WA-Q-PixInline-Terminal — erro de persistência: fecha em terminal
+  // de falha em vez de deixar a prévia pendurada.
+  await deps.atualizarSessao(
+    sessao.id, "falha", sessionComFav, T.erroGenerico(),
+  );
   return { status: "erro", resposta: T.erroGenerico() };
 }
 

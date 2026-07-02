@@ -267,7 +267,9 @@ describe("fluxo :: confirmação (sim/não)", () => {
     expect(fornecedorInserts()).toHaveLength(1);
     expect(gastoInserts()).toHaveLength(1);
     const gasto = gastoInserts()[0].row as Record<string, unknown>;
-    expect(gasto.valor).toBe(5000);
+    // WA-Q-PixInline-Valor-Fix: valor persistido é em REAIS (50.00),
+    // não centavos (5000). Prévia dizia R$ 50,00 e o banco recebe 50.
+    expect(gasto.valor).toBe(50);
     expect(gasto.forma_pagamento).toBe("pix");
     expect(gasto.estabelecimento).toBe("João Silva");
     // A descrição / observação não pode conter a chave completa.
@@ -644,5 +646,100 @@ describe("UX :: rótulo do celular exibido como 'Celular'", () => {
     });
     expect(r.resposta).toMatch(/Chave Pix:\s*Celular/);
     expect(r.resposta).not.toMatch(/\(telefone\)/);
+  });
+});
+
+// ==========================================================================
+// 4. WA-Q-PixInline-Valor-Fix — regressão de unidade monetária
+// ==========================================================================
+
+const { centavosParaReais } = await import(
+  "../src/server/whatsapp-pagar-pessoa-flow.server"
+);
+
+describe("valor :: centavosParaReais (helper puro)", () => {
+  it("converte 5000 centavos em 50 reais", () => {
+    expect(centavosParaReais(5000)).toBe(50);
+  });
+  it("converte 1 centavo em 0.01 real", () => {
+    expect(centavosParaReais(1)).toBe(0.01);
+  });
+  it("converte 100 centavos em 1 real", () => {
+    expect(centavosParaReais(100)).toBe(1);
+  });
+  it("preserva duas casas em 5055 → 50.55", () => {
+    expect(centavosParaReais(5055)).toBe(50.55);
+  });
+  it("blinda entradas não-finitas", () => {
+    expect(centavosParaReais(Number.NaN)).toBe(0);
+    expect(centavosParaReais(Number.POSITIVE_INFINITY)).toBe(0);
+  });
+});
+
+describe("valor :: prévia == banco (não grava 100× maior)", () => {
+  async function runPreviaEConfirmacao(texto: string, tag: string) {
+    const previa = await processarMensagemWhatsApp({
+      telefone, texto, external_id: `${tag}-1`,
+    });
+    const sim = await processarMensagemWhatsApp({
+      telefone, texto: "sim", external_id: `${tag}-2`,
+    });
+    return { previa, sim };
+  }
+
+  it("R$ 50,00: prévia mostra 50,00 e banco recebe 50", async () => {
+    const { previa, sim } = await runPreviaEConfirmacao(
+      "Pix 50 para João Silva chave (11) 99999-8888", "val-50",
+    );
+    expect(previa.resposta).toMatch(/R\$\s*50,00/);
+    expect(sim.status).toBe("salva");
+    const gasto = gastoInserts()[0].row as Record<string, unknown>;
+    expect(gasto.valor).toBe(50);
+    expect(gasto.valor).not.toBe(5000);
+  });
+
+  it("R$ 0,01: prévia mostra 0,01 e banco recebe 0.01", async () => {
+    const { previa, sim } = await runPreviaEConfirmacao(
+      "Pix 0,01 para Ana chave ana@ex.com", "val-1c",
+    );
+    expect(previa.resposta).toMatch(/R\$\s*0,01/);
+    expect(sim.status).toBe("salva");
+    const gasto = gastoInserts()[0].row as Record<string, unknown>;
+    expect(gasto.valor).toBe(0.01);
+  });
+
+  it("R$ 1,00: prévia mostra 1,00 e banco recebe 1", async () => {
+    const { sim } = await runPreviaEConfirmacao(
+      "Pix 1 para Pedro chave 12345678901", "val-1",
+    );
+    expect(sim.status).toBe("salva");
+    const gasto = gastoInserts()[0].row as Record<string, unknown>;
+    expect(gasto.valor).toBe(1);
+  });
+
+  it("R$ 50,55: preserva centavos exatos no banco", async () => {
+    const { previa, sim } = await runPreviaEConfirmacao(
+      "Pix 50,55 para Ana Costa chave 11988887777", "val-5055",
+    );
+    expect(previa.resposta).toMatch(/R\$\s*50,55/);
+    expect(sim.status).toBe("salva");
+    const gasto = gastoInserts()[0].row as Record<string, unknown>;
+    expect(gasto.valor).toBe(50.55);
+  });
+
+  it("idempotência: mesmo external_id no 'sim' cria apenas 1 gasto", async () => {
+    await processarMensagemWhatsApp({
+      telefone,
+      texto: "Pix 50 para João Silva chave (11) 99999-8888",
+      external_id: "val-idem-1",
+    });
+    await processarMensagemWhatsApp({
+      telefone, texto: "sim", external_id: "val-idem-2",
+    });
+    await processarMensagemWhatsApp({
+      telefone, texto: "sim", external_id: "val-idem-2",
+    });
+    expect(gastoInserts()).toHaveLength(1);
+    expect((gastoInserts()[0].row as Record<string, unknown>).valor).toBe(50);
   });
 });

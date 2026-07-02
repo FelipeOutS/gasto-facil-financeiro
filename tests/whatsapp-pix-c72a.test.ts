@@ -84,7 +84,7 @@ describe("WA-C7.2.a :: atalho 'Paguei.' via memória curta", () => {
     const g = gastoInserts()[0].row as {
       valor: number; fornecedor_id: string | null;
     };
-    expect(g.valor).toBe(5000);
+    expect(g.valor).toBe(50); // WA-Q-PixInline-Valor-Fix: reais, não centavos
     expect(g.fornecedor_id).toBe("f1");
   });
 
