@@ -43,8 +43,12 @@ function gastoInserts() {
 
 function textosPersistidos(): string[] {
   const out: string[] = [];
+  // Colunas cujo valor SEMPRE contém o telefone do remetente e portanto
+  // seriam falso-positivos ("11999998888" é substring de "5511999998888").
+  const skipCols = new Set(["telefone", "external_id", "id", "user_id"]);
   for (const i of state.inserts) {
-    for (const v of Object.values(i.row ?? {})) {
+    for (const [k, v] of Object.entries(i.row ?? {})) {
+      if (skipCols.has(k)) continue;
       if (typeof v === "string") out.push(v);
       else if (v && typeof v === "object") out.push(JSON.stringify(v));
     }
@@ -56,8 +60,6 @@ function assertChaveNaoVazou() {
   const digits = chaveReal.replace(/\D+/g, ""); // 5511999998888
   const bare11 = digits.slice(-11); // 11999998888
   for (const s of textosPersistidos()) {
-    // Aceita ciphertext (base64/hex opaco) na tabela de segredos —
-    // filtramos por presença literal dos dígitos crus.
     expect(s.includes(bare11)).toBe(false);
     expect(s.includes(chaveReal)).toBe(false);
   }
