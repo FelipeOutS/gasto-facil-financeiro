@@ -846,8 +846,9 @@ async function entrarFluxo(args: {
 
   // Tem favorecido. Resolve favorecidoId quando possível.
   const matches = await findFavorecidosByNome(userId, nome);
-  const favorecidoId =
-    matches.length === 1 ? matches[0].id : null;
+  const favorecidoUnico: FavorecidoRow | null =
+    matches.length === 1 ? matches[0] : null;
+  const favorecidoId = favorecidoUnico?.id ?? null;
 
   // Sem valor → estado valor.
   if (!valor || valor <= 0) {
@@ -875,30 +876,115 @@ async function entrarFluxo(args: {
     return { status: "pendente", resposta: T.perguntarValor(nome) };
   }
 
+  const baseSession: PagarPessoaSession = {
+    kind: "pagar_pessoa",
+    nome,
+    valorCentavos: valor,
+    descricao,
+    formaPagamento,
+    favorecidoId,
+    pendingPixSecretId: null,
+    pendingPixKeyMasked: null,
+    pendingPixKeyHash: null,
+    pendingPixKeyType: null,
+    contaId: null,
+    candidateContaIds: null,
+    valorBateConta: false,
+    mensagemOriginal: texto,
+  };
+
+  // WA-PIX-3.25 — Quando o pagamento é Pix E há favorecido único cadastrado
+  // com chave Pix, abrimos OBRIGATORIAMENTE a prévia Pix Inline. NUNCA
+  // persistimos direto. A chave completa nunca entra em `texto`, `parsed`,
+  // sessão ou log — só o ciphertext em `whatsapp_pix_pending_secrets` e a
+  // máscara para exibição.
+  if (
+    formaPagamento === "pix" &&
+    favorecidoUnico &&
+    favorecidoUnico.pix_key &&
+    favorecidoUnico.pix_key_type
+  ) {
+    return await abrirPreviaPixInlineDeFavorecido({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      favorecido: favorecidoUnico,
+      baseSession,
+      deps,
+    });
+  }
+
   // Tem nome + valor → roda M-2 (contas pendentes) ou registra direto.
   return await decidirContasOuRegistrar({
     userId,
     msg,
     texto,
     recebidaEm,
-    session: {
-      kind: "pagar_pessoa",
-      nome,
-      valorCentavos: valor,
-      descricao,
-      formaPagamento,
-      favorecidoId,
-      pendingPixSecretId: null,
-      pendingPixKeyMasked: null,
-      pendingPixKeyHash: null,
-      pendingPixKeyType: null,
-      contaId: null,
-      candidateContaIds: null,
-      valorBateConta: false,
-      mensagemOriginal: texto,
-    },
+    session: baseSession,
     deps,
   });
+}
+
+/**
+ * WA-PIX-3.25 — abre a prévia Pix Inline reusando o secret-store e o
+ * estado `pp_aguardando_confirmar_pix_inline`. A chave do favorecido é
+ * lida uma única vez do banco (via `findFavorecidosByNome`), cifrada em
+ * `whatsapp_pix_pending_secrets` e removida de memória antes de gravar
+ * a sessão. Nada de plaintext em `parsed`, `texto` ou log.
+ */
+async function abrirPreviaPixInlineDeFavorecido(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  favorecido: FavorecidoRow;
+  baseSession: PagarPessoaSession;
+  deps: WhatsAppPagarPessoaDeps;
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, favorecido, baseSession, deps } = args;
+  const pixKey = favorecido.pix_key as string;
+  const pixKeyType = favorecido.pix_key_type as PixKeyType;
+  const keyMasked = maskPixKey(pixKey, pixKeyType);
+
+  const stored = await storePendingPixKey({
+    userId,
+    sessionMessageId: crypto.randomUUID(),
+    pixKeyPlaintext: pixKey,
+    pixKeyType,
+  });
+  if (!stored) {
+    logEvent("pix_inline_store_secret_fail", "fail");
+    return { status: "erro", resposta: T.erroGenerico() };
+  }
+
+  const session: PagarPessoaSession = {
+    ...baseSession,
+    nome: favorecido.nome,
+    formaPagamento: "pix",
+    favorecidoId: favorecido.id,
+    pendingPixSecretId: stored.secretId,
+    pendingPixKeyType: pixKeyType,
+    pendingPixKeyMasked: keyMasked,
+    pendingPixKeyHash: stored.keyHash,
+  };
+
+  const resposta = T.previewPixInline({
+    nome: favorecido.nome,
+    valorCentavos: session.valorCentavos ?? 0,
+    pixKeyType,
+    pixKeyMasked: keyMasked,
+    reusandoFavorecido: true,
+  });
+  await deps.gravarSessao(
+    userId, msg.telefone, msg.external_id, texto, recebidaEm,
+    "pp_aguardando_confirmar_pix_inline", session, resposta,
+  );
+  logEvent("pix_inline_preview_from_favorecido", "ok", {
+    favorecidoMatched: true,
+    pixKeyType,
+  });
+  return { status: "pendente", resposta };
 }
 
 // ============================================================

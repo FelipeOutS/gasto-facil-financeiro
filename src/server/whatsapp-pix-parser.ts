@@ -330,8 +330,8 @@ export function detectPagarPessoaIntent(texto: string): boolean {
   if (/\b(boleto|fatura|conta\s+de\s+\w+|cartao|cartão)\b/.test(t)) return false;
   // Precisa de valor monetário (R$ X, X reais, ou número solto).
   if (!/\b\d/.test(t)) return false;
-  // Precisa de destinatário: "para/pra/pro/ao + nome" OU pattern direto.
-  if (/\b(?:para|pra|pro|ao|a)\s+[a-zà-ÿ][a-zà-ÿ]+/.test(t)) return true;
+  // Precisa de destinatário: "para/pra/pro/ao/pelo + nome" OU pattern direto.
+  if (/\b(?:para|pra|pro|ao|a|pelo|pela)\s+[a-zà-ÿ][a-zà-ÿ]+/.test(t)) return true;
   // "paguei o joão 50" / "paguei maria 120"
   if (/^(?:paguei|pago|quitei|ja\s+paguei|acabei\s+de\s+pagar)\s+(?:o\s+|a\s+)?[a-zà-ÿ][a-zà-ÿ]+\s+(?:r?\$?\s*)?\d/i.test(raw)) {
     return true;
@@ -382,9 +382,12 @@ function parseBRLToCentavos(s: string): number {
 }
 
 function extrairNomePessoa(texto: string): string | null {
-  // Preferência: "para/pra/pro/ao + <nome 1-3 palavras>"
+  // Preferência: "para/pra/pro/ao/pelo + <nome 1-3 palavras>".
+  // Cobrimos também "pelo/pela" para casos como
+  // "paguei 50 pelo João no Pix" — o cleanNomeStrict abaixo cuida de
+  // parar em "no/na/via/com/etc." antes de engolir a forma de pagamento.
   const re1 =
-    /\b(?:para|pra|pro|ao|à)\s+(?:o\s+|a\s+)?([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ]{1,30}(?:\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ]{1,30}){0,2})\b/i;
+    /\b(?:para|pra|pro|ao|à|pelo|pela)\s+(?:o\s+|a\s+)?([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ]{1,30}(?:\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ]{1,30}){0,2})\b/i;
   const m1 = texto.match(re1);
   if (m1) {
     const nome = cleanNomeStrict(m1[1]);
@@ -401,6 +404,18 @@ function extrairNomePessoa(texto: string): string | null {
   return null;
 }
 
+// Stopwords ADICIONAIS só do contexto de pagamento — preposições/artigos que
+// aparecem imediatamente antes da forma de pagamento (Pix, cartão, etc.) e
+// que, se engolidos como sobrenome, quebram o match com o favorecido.
+// Ex.: "paguei 50 pro João no Pix" NÃO deve virar "João No".
+// NÃO é aplicada globalmente (NOME_STOPWORDS continua conservador) para não
+// quebrar nomes compostos legítimos em outros parsers.
+const PAGAR_PESSOA_EXTRA_STOPWORDS = new Set([
+  "no", "na", "nos", "nas",
+  "pelo", "pela", "pelos", "pelas",
+  "via", "com", "usando", "por",
+]);
+
 function cleanNomeStrict(s: string): string {
   // Walk tokens em ordem e PARA no primeiro stopword (não pré-filtra),
   // assim "João do almoço" devolve apenas "João" em vez de "João Almoço".
@@ -410,6 +425,7 @@ function cleanNomeStrict(s: string): string {
     const n = norm(t);
     if (n.length < 2) break;
     if (NOME_STOPWORDS.has(n)) break;
+    if (PAGAR_PESSOA_EXTRA_STOPWORDS.has(n)) break;
     if (/\d/.test(t)) break;
     valid.push(t);
     if (valid.length >= 3) break;
