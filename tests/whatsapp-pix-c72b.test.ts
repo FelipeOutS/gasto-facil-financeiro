@@ -177,7 +177,7 @@ describe("WA-C7.2.b :: conversa gradual", () => {
     expect(c.status).toBe("salva");
     expect(gastoInserts()).toHaveLength(1);
     const row = gastoInserts()[0].row as Record<string, unknown>;
-    expect(row.valor).toBe(5000);
+    expect(row.valor).toBe(50); // WA-Q-PixInline-Valor-Fix: reais, não centavos
     expect(row.estabelecimento).toBe("João");
   });
 
