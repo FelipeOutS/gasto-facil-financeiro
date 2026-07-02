@@ -864,6 +864,23 @@ export const whatsappMessages = {
         `Me mande a chave: "Pix do ${nome} é ..."`,
       ].join("\n");
     },
+    /**
+     * WA-PIX-UX-01.c — Corpo da consulta única.
+     *
+     * Quando `copiarUrl` é fornecido, o corpo NÃO contém a URL: ela vai no
+     * botão CTA da mensagem `interactive`. Se o envio interativo falhar, o
+     * `sendWhatsAppReply` do fallback usa `consultaUnicaTextoFallback`
+     * (abaixo), que inclui a URL como texto.
+     */
+    consultaUnicaBody(args: { nome: string; tipo: string; chave: string }) {
+      return [
+        `Favorecido: ${args.nome}`,
+        `Chave Pix: ${args.tipo}`,
+        args.chave,
+        ``,
+        `Toque no botão abaixo para copiar a chave completa em um toque. Link seguro, expira em 10 min.`,
+      ].join("\n");
+    },
     consultaUnica(args: {
       nome: string;
       tipo: string;
