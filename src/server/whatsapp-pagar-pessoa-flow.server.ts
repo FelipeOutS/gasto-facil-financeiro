@@ -1451,6 +1451,12 @@ async function passoConfirmarPixInline(args: {
       pixKeyType,
       pixKeyMasked,
     });
+    // WA-Q-PixInline-Terminal — a sessão da prévia (pp_aguardando_confirmar_pix_inline)
+    // é uma linha diferente da mensagem "sim". Fecha explicitamente para
+    // não deixar estado pendente residual.
+    await deps.atualizarSessao(
+      sessao.id, "salva", sessionComFav, resposta, result.gastoId,
+    );
     return { status: "salva", gastoId: result.gastoId, resposta };
   }
   if (result.kind === "race_duplicate") {
@@ -1463,6 +1469,11 @@ async function passoConfirmarPixInline(args: {
   if (result.kind === "race_in_progress") {
     return { status: "duplicada", resposta: T.ainda_processando() };
   }
+  // WA-Q-PixInline-Terminal — erro de persistência: fecha em terminal
+  // de falha em vez de deixar a prévia pendurada.
+  await deps.atualizarSessao(
+    sessao.id, "falha", sessionComFav, T.erroGenerico(),
+  );
   return { status: "erro", resposta: T.erroGenerico() };
 }
 
