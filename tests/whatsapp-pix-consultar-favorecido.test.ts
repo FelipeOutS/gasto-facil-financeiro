@@ -129,7 +129,7 @@ describe("WA-PIX-Q-01 :: handler", () => {
     // a chave em texto plano.
     for (const ins of state.inserts) {
       expect(ins.table).toBe("whatsapp_pix_reveal_tokens");
-      const payload = JSON.stringify(ins.payload ?? {});
+      const payload = JSON.stringify(ins.row ?? {});
       expect(payload).not.toContain("11999998888");
       expect(payload).not.toContain(chaveReal);
     }
