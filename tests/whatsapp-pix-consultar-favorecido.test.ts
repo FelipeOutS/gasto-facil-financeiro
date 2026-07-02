@@ -117,13 +117,27 @@ describe("WA-PIX-Q-01 :: handler", () => {
     expect(out.status).toBe("consulta");
     expect(out.resposta).toContain("João Silva");
     expect(out.resposta).toContain("Celular");
-    // WA-PIX-UX-01: agora devolve um link opaco de curta duração
-    expect(out.resposta).toMatch(/\/pix\/copiar\/[A-Za-z0-9_-]{20,}/);
-    // Não expõe chave completa
+    // WA-PIX-UX-01.c — texto do corpo NÃO contém URL crua: ela vai no
+    // botão CTA da mensagem interactive. Fallback textual continua
+    // contendo a URL, mas o `resposta` primário agora é o corpo curto.
+    expect(out.resposta).not.toMatch(/\/pix\/copiar\//);
+    // Botão CTA URL presente com rótulo canônico e URL segura.
+    expect(out.interactive?.type).toBe("cta_url");
+    expect(out.interactive?.buttonText).toBe("Copiar chave Pix");
+    expect(out.interactive?.url).toMatch(/\/pix\/copiar\/[A-Za-z0-9_-]{20,}/);
+    expect(out.interactive?.body).toContain("João Silva");
+    expect(out.interactive?.body).toContain("Celular");
+    // Nunca a chave completa
     expect(out.resposta).not.toContain("11999998888");
     expect(out.resposta).not.toContain(chaveReal);
-    // Contém máscara com operador U+2217
+    expect(out.interactive?.body).not.toContain("11999998888");
+    expect(out.interactive?.body).not.toContain(chaveReal);
+    expect(out.interactive?.url).not.toContain("11999998888");
+    expect(out.interactive?.url).not.toContain(chaveReal);
+    expect(out.interactive?.buttonText).not.toContain("11999998888");
+    // Máscara com operador U+2217 continua no corpo
     expect(out.resposta).toMatch(/9∗∗∗∗-8888/);
+    expect(out.interactive?.body).toMatch(/9∗∗∗∗-8888/);
     // Nenhuma escrita em gasto/favorecido. A única escrita permitida é o
     // token opaco de reveal (whatsapp_pix_reveal_tokens), que jamais contém
     // a chave em texto plano.
