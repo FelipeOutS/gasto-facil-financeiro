@@ -574,7 +574,7 @@ async function persistirGastoComClaim(args: {
       categoria_id: catId,
       descricao: descricaoFinal.slice(0, 120),
       estabelecimento: nome.slice(0, 120),
-      valor,
+      valor: valorReais,
       data,
       mes: mo,
       ano: y,
