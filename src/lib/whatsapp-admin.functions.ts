@@ -722,6 +722,7 @@ export const whatsappAdminCheckCanaryReadiness = createServerFn({ method: "GET" 
 
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { isAdminMasterEmail } = await import("@/server/admin-master.server");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const adm = supabaseAdmin as any;
 
