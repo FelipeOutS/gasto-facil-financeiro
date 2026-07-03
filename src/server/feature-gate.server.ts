@@ -10,7 +10,8 @@
  */
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getSubscriptionForUserIdentity } from "./subscription.server";
-import { isAdminMasterEmail, planAllowsFeature, type FeatureKey, type PlanTier } from "@/lib/plans";
+import { planAllowsFeature, type FeatureKey, type PlanTier } from "@/lib/plans";
+import { isAdminMasterEmail } from "@/server/admin-master.server";
 
 function lockedResponse(message: string): Response {
   return new Response(
