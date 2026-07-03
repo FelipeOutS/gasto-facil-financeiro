@@ -14,7 +14,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { timingSafeEqual } from "crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { isAdminMasterEmail } from "@/lib/plans";
+
 
 // Versão Graph API centralizada server-side. Default v25.0 (atual no painel Meta).
 // Override opcional via env WHATSAPP_GRAPH_VERSION (ex.: "v26.0").
