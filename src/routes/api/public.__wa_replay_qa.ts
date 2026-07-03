@@ -23,7 +23,7 @@ const REPLAY_TEXT = "sim";
 const REPLAY_PHONE_NUMBER_ID = "000000000000000";
 const REPLAY_DISPLAY_PHONE = "5511988866698";
 
-export const Route = createFileRoute("/api/__wa_replay_qa")({
+export const Route = createFileRoute("/api/public/__wa_replay_qa")({
   server: {
     handlers: {
       POST: async ({ request }) => {
