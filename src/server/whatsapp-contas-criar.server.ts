@@ -23,6 +23,7 @@
  * - Log sem PII/valor/nome/data/userId/telefone/texto/transcrição.
  */
 import * as _supa from "@/integrations/supabase/client.server";
+import { nowInAppTz } from "./cartao-fatura.server";
 import { suggestCategoryFromText } from "@/lib/categories";
 import type { WhatsAppMessageRow, ProcessOutcome } from "./whatsapp.server";
 import type {
@@ -288,12 +289,17 @@ function lastDayOfMonth(y: number, m: number): number {
 /**
  * Retorna `{ iso, dia, mes, ano }` quando uma data clara é extraída.
  * Tolera "dia 5", "5 de julho", "05/07", "05/07/2026", "amanhã", "hoje".
- * `recurring=true` força próxima ocorrência futura quando o dia já passou.
+ *
+ * Regra "dia N" (sem mês): resolve automaticamente à PRÓXIMA
+ * ocorrência aplicável no fuso America/Sao_Paulo — jamais no passado,
+ * jamais uma data inválida (avança meses até um mês que contenha N).
+ * Comportamento idêntico para conta única e recorrente.
+ * Datas completas (`05/08/2026`, `5 de agosto`) têm prioridade.
  */
 export function extrairDataVencimento(
   textRaw: string,
-  hoje: Date = new Date(),
-  recurring = false,
+  hoje: Date = nowInAppTz(),
+  _recurring = false,
 ): { iso: string; dia: number; mes: number; ano: number } | { kind: "dia_somente"; dia: number } | null {
   const t = norm(textRaw);
   if (!t) return null;
@@ -342,28 +348,52 @@ export function extrairDataVencimento(
     }
   }
 
-  // "dia 5" / "dia 10" — só o dia, mês implícito (corrente ou próximo)
+  // "dia 5" / "dia 10" — só o dia, mês inferido automaticamente.
+  // Nunca gera passado, nunca gera data inválida: avança meses até
+  // achar um mês corrente/futuro que contenha `dia`.
   const m3 = t.match(/\bdia\s+(\d{1,2})\b/);
   if (m3) {
     const dia = Number(m3[1]);
     if (dia >= 1 && dia <= 31) {
-      if (recurring) {
-        // recorrente: próxima ocorrência futura
-        const cur = hoje.getDate();
-        const useNextMonth = dia < cur;
-        const baseMes = hoje.getMonth() + 1 + (useNextMonth ? 1 : 0);
-        let ano = hoje.getFullYear();
-        let mes = baseMes;
-        if (mes > 12) { mes -= 12; ano += 1; }
-        const d = Math.min(dia, lastDayOfMonth(ano, mes));
-        return { iso: toLocalISO(ano, mes, d), dia: d, mes, ano };
-      }
-      // não recorrente: só sabe o dia, falta o mês explícito → pedir confirmação.
-      return { kind: "dia_somente", dia };
+      return resolveNextOccurrence(dia, hoje);
     }
   }
 
   return null;
+}
+
+/**
+ * Resolve o próximo YYYY-MM-DD (America/Sao_Paulo) tal que:
+ *   - `dia` seja um dia válido do mês resolvido;
+ *   - a data seja >= hoje (nunca no passado).
+ * Se hoje = 02/07 e dia=2 → 02/07 (hoje).
+ * Se hoje = 02/07 e dia=1 → 01/08.
+ * Se hoje = 30/09 e dia=31 → 31/10 (setembro não tem 31).
+ */
+function resolveNextOccurrence(
+  dia: number,
+  hoje: Date,
+): { iso: string; dia: number; mes: number; ano: number } {
+  let y = hoje.getFullYear();
+  let m0 = hoje.getMonth(); // 0-11
+  const hojeD = hoje.getDate();
+  // no máximo 14 iterações (cobre fev-fev pulando meses sem 30/31)
+  for (let i = 0; i < 14; i++) {
+    const last = lastDayOfMonth(y, m0 + 1);
+    if (dia <= last) {
+      // dia é válido neste mês
+      const candidate = new Date(y, m0, dia);
+      const today = new Date(hoje.getFullYear(), hoje.getMonth(), hojeD);
+      if (candidate.getTime() >= today.getTime()) {
+        return { iso: toLocalISO(y, m0 + 1, dia), dia, mes: m0 + 1, ano: y };
+      }
+    }
+    // avança um mês
+    m0 += 1;
+    if (m0 > 11) { m0 = 0; y += 1; }
+  }
+  // fallback defensivo (não deve ocorrer)
+  return { iso: toLocalISO(y, m0 + 1, Math.min(dia, lastDayOfMonth(y, m0 + 1))), dia, mes: m0 + 1, ano: y };
 }
 
 // ---------- categoria sugerida (determinística) ----------
