@@ -206,13 +206,13 @@ function AdminPage() {
   }, [authorized, reloadKey]);
 
   // A lista de e-mails de Admin Master vive server-side (fail-closed).
-  // Client protege apenas o próprio usuário logado; o restante é enforced
-  // no servidor (delete/grant/status). Fallback pelo plano stored quando
-  // disponível na row do dashboard.
+  // Client protege apenas o próprio usuário logado; ações destrutivas contra
+  // outros Admin Master são enforced no servidor (delete/grant/status).
+  // Fallback: reconhece admin master pelo plano armazenado.
   const isProtectedAdmin = (email: string) => {
     if (isAdminMaster && email === user?.email) return true;
-    const row = (data?.users ?? []).find((u) => u.email === email);
-    return ((row as { plano?: string } | undefined)?.plano ?? "").toLowerCase() === "admin_master";
+    const row = data?.users.find((u) => u.email === email);
+    return (row?.plano ?? "").toLowerCase() === "admin_master";
   };
 
 
