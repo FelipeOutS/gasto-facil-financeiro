@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getEffectiveUserPlan, isAdminMasterEmail, type PlanTier, type SubscriptionStatus } from "@/lib/plans";
+import { getEffectiveUserPlan, type PlanTier, type SubscriptionStatus } from "@/lib/plans";
+import { isAdminMasterEmail } from "@/server/admin-master.server";
 
 const APPROVED_PAYMENT_STATUSES = new Set(["approved", "paid", "authorized", "aprovado", "aprovada"]);
 
