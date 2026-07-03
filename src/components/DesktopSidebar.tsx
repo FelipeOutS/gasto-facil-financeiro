@@ -48,10 +48,9 @@ export function DesktopSidebar() {
   const navigate = useNavigate();
   const { canWriteBasic, requireSubscription } = useSubscriptionGuard();
   const alerta = useAlertaContas();
-  const { can } = usePlan();
+  const { can, isAdminMaster } = usePlan();
   const [lockState, setLockState] = useState<{ open: boolean; title: string }>({ open: false, title: "" });
   const { user, profile } = useAuth();
-  const isAdminMaster = isAdminMasterEmail(user?.email);
   const collapsed = useSidebarCollapsed();
 
   const groups = useMemo(
