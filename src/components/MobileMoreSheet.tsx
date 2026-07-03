@@ -14,7 +14,7 @@ import {
 import { UserAvatar } from "@/components/UserAvatar";
 import { NAV_GROUPS, filterVisibleGroups, type NavLeaf } from "@/lib/nav-groups";
 import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
-import { isAdminMasterEmail, PLAN_LABEL } from "@/lib/plans";
+import { PLAN_LABEL } from "@/lib/plans";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import { cn } from "@/lib/utils";
