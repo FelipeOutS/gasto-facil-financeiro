@@ -55,7 +55,8 @@ export async function ensureCanWriteFinancialData(): Promise<{ ok: true } | { ok
   const user = userRes?.user;
   if (!user) return { ok: false, reason: i18n.t("common:subscription.needLogin") };
 
-  if (isAdminMasterEmail(user.email)) return { ok: true };
+  // Admin Master é detectado via plano `admin_master` retornado pelo servidor
+  // (a lista de e-mails vive só server-side — WA-B4 fail-closed).
   const subscription = await getCurrentUserSubscription();
   // free_ads é plano ATIVO básico/limitado, mas NÃO concede escrita paga.
   // Para escrita básica, use canWriteBasic / helper específico (não este).
