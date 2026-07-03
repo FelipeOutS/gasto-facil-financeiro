@@ -574,6 +574,7 @@ async function buildInvestimentosBlock(supabase: any, userId: string): Promise<s
 async function ensureFeatureAccess(userId: string): Promise<{ ok: true } | { ok: false; reason: string }> {
   const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
   const email = data.user?.email ?? null;
+  const { isAdminMasterEmail } = await import("@/server/admin-master.server");
   if (isAdminMasterEmail(email)) return { ok: true };
 
   const sub = await getSubscriptionForUserIdentity({ userId, email, repairLink: false });
