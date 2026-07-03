@@ -3673,6 +3673,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      whatsapp_baixa_conta_atomic: {
+        Args: {
+          p_conta_id: string
+          p_data_pagamento: string
+          p_origem?: string
+          p_user_id: string
+        }
+        Returns: {
+          data_pagamento: string
+          gasto_id: string
+          nome: string
+          result: string
+          valor: number
+        }[]
+      }
     }
     Enums: {
       app_role: "owner" | "admin" | "user"
