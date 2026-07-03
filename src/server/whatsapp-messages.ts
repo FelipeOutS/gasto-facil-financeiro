@@ -846,6 +846,13 @@ export const whatsappMessages = {
     salvo(args: { nome: string; tipo: string }) {
       return `Pronto! Salvei o Pix de ${args.nome} (${args.tipo}). ✅`;
     },
+    chaveInvalida() {
+      return [
+        `Não reconheci essa chave Pix.`,
+        ``,
+        `Envie um CPF, CNPJ, e-mail, celular com DDD ou chave aleatória válida.`,
+      ].join("\n");
+    },
     atualizado(args: { nome: string; tipo: string }) {
       return `Atualizei o Pix de ${args.nome} para ${args.tipo}. ✅`;
     },

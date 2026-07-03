@@ -30,6 +30,7 @@ import {
   detectPagarPessoaIntent,
   parsePagarPessoa,
   maskPixKey,
+  isValidPixKey,
   type PixKeyType,
 } from "./whatsapp-pix-parser";
 import {
@@ -95,6 +96,22 @@ export async function handleSavePixIntent(args: {
       result: "needs_format",
     });
     return { status: "sem_pendencia", resposta: M.pix.pedirFormato() };
+  }
+
+  // WA-PIX-3.26 — Validação estrita da chave Pix antes de qualquer escrita.
+  // Rejeita tipo "desconhecida", CPF/CNPJ com dígito inválido, telefone
+  // fora do padrão celular BR, email malformado e UUID inválido. Zero
+  // favorecido criado/atualizado, zero sessão, zero claim.
+  if (
+    parsed.pixKeyType === "desconhecida" ||
+    !isValidPixKey(parsed.pixKeyType, parsed.pixKey)
+  ) {
+    console.info({
+      event: "wa_pix_save",
+      stage: "invalid_key_rejected",
+      pixKeyType: parsed.pixKeyType,
+    });
+    return { status: "sem_pendencia", resposta: M.pix.chaveInvalida() };
   }
 
   // Procura favorecido existente para o user (sem expor nome em log).
