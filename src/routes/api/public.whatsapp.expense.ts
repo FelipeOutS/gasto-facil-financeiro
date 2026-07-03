@@ -992,8 +992,14 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
           }
         }
         if (logId) {
+          // WA-3.27 — se todas as mensagens do lote foram duplicatas
+          // (reentrega do mesmo wamid), marcar o log como `ignored`
+          // em vez de `processed` para refletir que nenhum efeito
+          // colateral novo foi produzido.
+          const allDuplicates =
+            results.length > 0 && results.every((r) => r.status === "duplicada");
           await updateWebhookLog(logId, {
-            status: "processed",
+            status: allDuplicates ? "ignored" : "processed",
             http_status: 200,
             processing_time_ms: Date.now() - startedAt,
             // response_body sem PII: só contagem por status
