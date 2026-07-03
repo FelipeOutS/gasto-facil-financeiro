@@ -119,7 +119,6 @@ import { Route as ContasAReceberIdEditarRouteImport } from './routes/contas-a-re
 import { Route as ContasAPagarIdEditarRouteImport } from './routes/contas-a-pagar.$id.editar'
 import { Route as CartoesIdEditarRouteImport } from './routes/cartoes.$id.editar'
 import { Route as AssinaturasIdEditarRouteImport } from './routes/assinaturas.$id.editar'
-import { Route as ApiPublicWa_replay_qaRouteImport } from './routes/api/public.wa_replay_qa'
 import { Route as ApiCheckoutVerifyRouteImport } from './routes/api/checkout.verify'
 import { Route as ApiCheckoutCreateRouteImport } from './routes/api/checkout.create'
 import { Route as AppIntegracoesMercadoPagoIndexRouteImport } from './routes/app_.integracoes.mercado-pago.index'
@@ -694,11 +693,6 @@ const AssinaturasIdEditarRoute = AssinaturasIdEditarRouteImport.update({
   path: '/assinaturas/$id/editar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicWa_replay_qaRoute = ApiPublicWa_replay_qaRouteImport.update({
-  id: '/api/public/wa_replay_qa',
-  path: '/api/public/wa_replay_qa',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiCheckoutVerifyRoute = ApiCheckoutVerifyRouteImport.update({
   id: '/api/checkout/verify',
   path: '/api/checkout/verify',
@@ -897,7 +891,6 @@ export interface FileRoutesByFullPath {
   '/renda/': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
-  '/api/public/wa_replay_qa': typeof ApiPublicWa_replay_qaRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
@@ -1028,7 +1021,6 @@ export interface FileRoutesByTo {
   '/renda': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
-  '/api/public/wa_replay_qa': typeof ApiPublicWa_replay_qaRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
@@ -1160,7 +1152,6 @@ export interface FileRoutesById {
   '/renda/': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
-  '/api/public/wa_replay_qa': typeof ApiPublicWa_replay_qaRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
@@ -1293,7 +1284,6 @@ export interface FileRouteTypes {
     | '/renda/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
-    | '/api/public/wa_replay_qa'
     | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
@@ -1424,7 +1414,6 @@ export interface FileRouteTypes {
     | '/renda'
     | '/api/checkout/create'
     | '/api/checkout/verify'
-    | '/api/public/wa_replay_qa'
     | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
@@ -1555,7 +1544,6 @@ export interface FileRouteTypes {
     | '/renda/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
-    | '/api/public/wa_replay_qa'
     | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
@@ -1687,7 +1675,6 @@ export interface RootRouteChildren {
   RendaIndexRoute: typeof RendaIndexRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
-  ApiPublicWa_replay_qaRoute: typeof ApiPublicWa_replay_qaRoute
   AssinaturasIdEditarRoute: typeof AssinaturasIdEditarRoute
   CartoesIdEditarRoute: typeof CartoesIdEditarRoute
   ContasAPagarIdEditarRoute: typeof ContasAPagarIdEditarRoute
@@ -2497,13 +2484,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AssinaturasIdEditarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/wa_replay_qa': {
-      id: '/api/public/wa_replay_qa'
-      path: '/api/public/wa_replay_qa'
-      fullPath: '/api/public/wa_replay_qa'
-      preLoaderRoute: typeof ApiPublicWa_replay_qaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/checkout/verify': {
       id: '/api/checkout/verify'
       path: '/api/checkout/verify'
@@ -2737,7 +2717,6 @@ const rootRouteChildren: RootRouteChildren = {
   RendaIndexRoute: RendaIndexRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
-  ApiPublicWa_replay_qaRoute: ApiPublicWa_replay_qaRoute,
   AssinaturasIdEditarRoute: AssinaturasIdEditarRoute,
   CartoesIdEditarRoute: CartoesIdEditarRoute,
   ContasAPagarIdEditarRoute: ContasAPagarIdEditarRoute,
