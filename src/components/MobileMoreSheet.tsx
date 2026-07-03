@@ -29,7 +29,7 @@ const PERSONAL_ITEMS: NavLeaf[] = [
 export function MobileMoreSheet({ trigger }: { trigger: ReactNode }) {
   const { t } = useTranslation("nav");
   const { user, profile, signOut } = useAuth();
-  const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
+  const { plan, can, isTrialActive, trialDaysLeft, isAdminMaster } = usePlan();
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
