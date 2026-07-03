@@ -9,7 +9,6 @@ import { ConnectedAccountSwitcher } from "@/components/ConnectedAccountSwitcher"
 import { useAlertaContas } from "@/lib/contas-alertas";
 import { usePlan } from "@/lib/use-plan";
 import { useAuth } from "@/lib/auth-context";
-import { isAdminMasterEmail } from "@/lib/plans";
 import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { PremiumLockModal } from "@/components/PremiumLockModal";
 import { UserAvatar } from "@/components/UserAvatar";
