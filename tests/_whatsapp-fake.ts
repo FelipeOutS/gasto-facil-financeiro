@@ -668,6 +668,52 @@ export const fakeAdmin = {
         error: null,
       };
     }
+    // WA-3.30 — baixa atômica: cria gasto + marca conta como paga + vincula
+    if (name === "whatsapp_baixa_conta_atomic") {
+      const userId = args?.p_user_id as string;
+      const contaId = args?.p_conta_id as string;
+      const dataPag = args?.p_data_pagamento as string;
+      const origem = (args?.p_origem ?? "whatsapp") as string;
+      const conta = state.contasData.find(
+        (c) => c.id === contaId && c.user_id === userId,
+      );
+      if (!conta) {
+        return { data: [{ result: "not_found", gasto_id: null, nome: null, valor: null, data_pagamento: null }], error: null };
+      }
+      if (conta.status === "pago" && conta.gasto_id) {
+        return { data: [{ result: "noop", gasto_id: conta.gasto_id, nome: conta.nome, valor: conta.valor, data_pagamento: conta.data_pagamento }], error: null };
+      }
+      if (conta.status === "pago" && !conta.gasto_id) {
+        return { data: [{ result: "inconsistent", gasto_id: null, nome: conta.nome, valor: conta.valor, data_pagamento: conta.data_pagamento }], error: null };
+      }
+      if (conta.status !== "pendente") {
+        return { data: [{ result: "not_pending", gasto_id: null, nome: conta.nome, valor: conta.valor, data_pagamento: null }], error: null };
+      }
+      const idx = state.inserts.length + 1;
+      const gastoId = `g-baixa-${idx}`;
+      const [y, m] = dataPag.split("-").map(Number);
+      const gastoRow: Record<string, unknown> = {
+        id: gastoId,
+        user_id: userId,
+        categoria_id: conta.categoria_id ?? null,
+        descricao: conta.nome ?? "Conta",
+        valor: conta.valor,
+        data: dataPag,
+        estabelecimento: (conta.beneficiario as string) ?? "",
+        forma_pagamento: (conta.forma_pagamento as string) || "outros",
+        mes: m,
+        ano: y,
+        tipo_gasto: "unico",
+        confirmado: true,
+        origem,
+      };
+      state.inserts.push({ table: "gastos", row: gastoRow });
+      state.gastosData.push(gastoRow);
+      conta.status = "pago";
+      conta.data_pagamento = dataPag;
+      conta.gasto_id = gastoId;
+      return { data: [{ result: "paid", gasto_id: gastoId, nome: conta.nome, valor: conta.valor, data_pagamento: dataPag }], error: null };
+    }
     return { data: true, error: null };
   },
   auth: {
