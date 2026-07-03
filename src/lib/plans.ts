@@ -244,42 +244,52 @@ export function plansAllowingFeature(feature: FeatureKey): PlanTier[] {
 
 /* ===========================================================
  * Admin Master por e-mail (regra central)
+ *
+ * SEGURANÇA: A lista real de e-mails de Admin Master vive
+ * EXCLUSIVAMENTE server-side em `src/server/admin-master.server.ts`
+ * (env `ADMIN_MASTER_EMAILS`). NÃO existe lista compilada aqui,
+ * pois este módulo é bundleado no client e vazaria os e-mails
+ * privilegiados para qualquer visitante.
+ *
+ * O stub abaixo mantém a assinatura por compatibilidade e SEMPRE
+ * retorna `false` no client. Callers client-side devem detectar
+ * Admin Master via plano efetivo (`plan === "admin_master"`),
+ * carregado do servidor (subscription/user_plans) ou via role
+ * (`useRoles().isOwner`). Callers server-side devem importar de
+ * `@/server/admin-master.server`.
  * =========================================================== */
 
-const ADMIN_MASTER_EMAILS: ReadonlyArray<string> = [
-  "felipe.out.silva@outlook.com",
-  "michael@medeiroscenografia.com.br",
-];
-
-export function isAdminMasterEmail(email: string | null | undefined): boolean {
-  if (!email) return false;
-  return ADMIN_MASTER_EMAILS.includes(email.trim().toLowerCase());
+/**
+ * @deprecated Client-safe stub — sempre `false`. Use `plan === "admin_master"`
+ * no client (via `usePlan().isAdminMaster`) ou `isAdminMasterEmail` de
+ * `@/server/admin-master.server` no servidor.
+ */
+export function isAdminMasterEmail(_email: string | null | undefined): boolean {
+  return false;
 }
 
 /**
  * Plano efetivo do usuário.
- * - Admin Master por e-mail vence sempre.
  * - `mei` legado => `mei_essencial`.
+ * - `admin_master` só é retornado se `storedPlan` já for admin_master
+ *   (a promoção por e-mail ocorre server-side em
+ *   `getSubscriptionForUserIdentity`, com base na env server-only).
  * - Sem registro válido => `sem_assinatura`.
  */
 export function getEffectiveUserPlan(
-  user: { email?: string | null } | null | undefined,
+  _user: { email?: string | null } | null | undefined,
   storedPlan: string | null | undefined,
 ): PlanTier {
-  if (isAdminMasterEmail(user?.email)) return "admin_master";
   const p = (storedPlan ?? "").toLowerCase();
+  if (p === "admin_master") return "admin_master";
   if (p === "pessoal") return "pessoal_manual";
   if (p === "mei") return "mei_essencial";
-  if (p === "admin_master") return "admin_master";
   if (
     p === "pessoal_manual" ||
     p === "pessoal_premium" ||
     p === "mei_essencial" ||
     p === "mei_inteligente" ||
     p === "empresa" ||
-    // free_ads é plano ATIVO básico/limitado (não pago).
-    // Escrita paga deve usar canWrite / ensureCanWriteFinancialData.
-    // Escrita básica deve usar canWriteBasic e features *_basico.
     p === "free_ads"
   ) {
     return p as PlanTier;
