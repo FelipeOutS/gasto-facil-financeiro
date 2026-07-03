@@ -2,7 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
-import { isAdminMasterEmail, PLAN_LABEL } from "@/lib/plans";
+import { PLAN_LABEL } from "@/lib/plans";
+import { usePlan } from "@/lib/use-plan";
 import { getAdminDashboard, deleteUserById, grantPlanManually, setUserStatusManually, diagnoseMpPayment, reconcileMpPaymentById, listRecentPaymentEvents, type AdminDashboardData, type AdminUserRow } from "@/lib/admin.functions";
 import { toast } from "sonner";
 import {
