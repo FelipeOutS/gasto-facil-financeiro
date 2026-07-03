@@ -179,7 +179,7 @@ function AdminPage() {
       void navigate({ to: "/login" });
       return;
     }
-    if (!isAdminMasterEmail(user.email)) {
+    if (!isAdminMaster) {
       setAuthorized(false);
       return;
     }
