@@ -30,6 +30,7 @@ import {
   detectPagarPessoaIntent,
   parsePagarPessoa,
   maskPixKey,
+  isValidPixKey,
   type PixKeyType,
 } from "./whatsapp-pix-parser";
 import {
