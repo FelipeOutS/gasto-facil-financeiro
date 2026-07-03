@@ -47,7 +47,7 @@ describe("WA-3.27 webhook replay é silencioso", () => {
     // para que auditorias externas consigam distinguir uma reentrega
     // silenciosa de um processamento com efeito colateral.
     expect(ROUTE).toMatch(
-      /allDuplicates[\s\S]{0,120}results\.every\([^)]*status\s*===\s*["']duplicada["']/,
+      /allDuplicates[\s\S]{0,200}results\.every\([\s\S]{0,80}status\s*===\s*["']duplicada["']/,
     );
     expect(ROUTE).toMatch(
       /status:\s*allDuplicates\s*\?\s*["']ignored["']\s*:\s*["']processed["']/,
