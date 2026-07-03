@@ -176,7 +176,6 @@ const WHATSAPP_DEEPLINK = getOfficialWhatsAppDeepLink();
 const MODO_TESTE = WHATSAPP_NUMERO_OFICIAL.trim().length === 0;
 
 function WhatsAppPage() {
-  const { user } = useAuth();
   const { isAdminMaster: isAdmin } = usePlan();
 
   const [links, setLinks] = useState<Link[]>([]);
