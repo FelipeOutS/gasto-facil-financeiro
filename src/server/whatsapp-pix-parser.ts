@@ -84,6 +84,65 @@ function isBrazilianMobilePattern(digits: string): boolean {
   return /^[1-9][1-9]9\d{8}$/.test(digits);
 }
 
+/** Valida CNPJ pelos dígitos verificadores (padrão Receita Federal). */
+function isValidCNPJ(digits: string): boolean {
+  if (!/^\d{14}$/.test(digits)) return false;
+  if (/^(\d)\1{13}$/.test(digits)) return false;
+  const calc = (base: string, weights: number[]) => {
+    let sum = 0;
+    for (let i = 0; i < base.length; i++) {
+      sum += Number(base[i]) * weights[i];
+    }
+    const r = sum % 11;
+    return r < 2 ? 0 : 11 - r;
+  };
+  const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const d1 = calc(digits.slice(0, 12), w1);
+  const d2 = calc(digits.slice(0, 13), w2);
+  return d1 === Number(digits[12]) && d2 === Number(digits[13]);
+}
+
+/**
+ * WA-PIX-3.26 — Validação estrita de chave Pix.
+ *
+ * Aceita SOMENTE:
+ *   - email: RFC-like + tamanho <= 77 (limite oficial Bacen);
+ *   - telefone: celular BR com DDD (11 dígitos) ou "+55" + celular (13);
+ *   - cpf: 11 dígitos com verificadores válidos;
+ *   - cnpj: 14 dígitos com verificadores válidos;
+ *   - aleatoria: UUID v4-ish (formato 8-4-4-4-12 hex).
+ *
+ * Rejeita: `desconhecida`, números curtos, CPF/CNPJ inválidos, telefone
+ * sem DDD, email malformado, UUID inválido, texto genérico.
+ */
+export function isValidPixKey(type: PixKeyType, key: string): boolean {
+  const k = (key ?? "").trim();
+  if (!k) return false;
+  const digits = k.replace(/\D+/g, "");
+  switch (type) {
+    case "email":
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(k) && k.length <= 77;
+    case "telefone":
+      if (digits.length === 13 && digits.startsWith("55")) {
+        return isBrazilianMobilePattern(digits.slice(2));
+      }
+      if (digits.length === 11) return isBrazilianMobilePattern(digits);
+      return false;
+    case "cpf":
+      return isValidCPF(digits);
+    case "cnpj":
+      return isValidCNPJ(digits);
+    case "aleatoria":
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        k,
+      );
+    case "desconhecida":
+    default:
+      return false;
+  }
+}
+
 /**
  * Reconhece email, telefone BR, CPF, CNPJ e UUID v4 (aleatória).
  *
