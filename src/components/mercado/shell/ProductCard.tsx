@@ -6,7 +6,7 @@ import { MarketBadge } from "./MarketBadge";
 import { useProductImage } from "@/lib/mercado/use-product-image";
 import type { MercadoCategoryKey } from "./MercadoCategoryChips";
 import { useAuth } from "@/lib/auth-context";
-import { isAdminMasterEmail } from "@/lib/plans";
+import { usePlan } from "@/lib/use-plan";
 import { ProductImageAdminMenu } from "./ProductImageAdminMenu";
 
 export type ProductSource =
@@ -73,7 +73,7 @@ export function ProductCard({
 }: ProductCardProps) {
   const { t } = useTranslation("mercado");
   const { user } = useAuth();
-  const isAdmin = isAdminMasterEmail(user?.email);
+  const { isAdminMaster: isAdmin } = usePlan();
   const showAdminMenu = isAdmin && !!priceId;
   const sourceLabel = source ? t(`shell.product.source.${source}`) : null;
   const [imgErrored, setImgErrored] = useState(false);

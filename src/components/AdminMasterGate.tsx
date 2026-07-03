@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
-import { isAdminMasterEmail } from "@/lib/plans";
+import { usePlan } from "@/lib/use-plan";
 import { MobileShell } from "@/components/MobileShell";
 import { Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 export function AdminMasterGate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const isAdminMaster = isAdminMasterEmail(user?.email);
+  const { isAdminMaster } = usePlan();
 
   useEffect(() => {
     if (loading) return;

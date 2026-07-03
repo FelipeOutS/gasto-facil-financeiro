@@ -4,7 +4,6 @@ import { useAuth } from "@/lib/auth-context";
 import { getCurrentUserSubscription } from "@/lib/subscription.functions";
 import {
   getEffectiveUserPlan,
-  isAdminMasterEmail,
   isPlanAvailableForNewSubscriptions,
   planAllowsFeature,
   type FeatureKey,
@@ -160,7 +159,10 @@ export function usePlan(): PlanState {
   const [loading, setLoading] = useState(!initialCache);
   const [hydratedUserId, setHydratedUserId] = useState<string | null>(initialCache && user ? user.id : null);
 
-  const isAdminMaster = isAdminMasterEmail(user?.email);
+  // Admin Master é detectado pelo plano efetivo (`admin_master`) devolvido
+  // pelo servidor em `getSubscriptionForUserIdentity` — a lista de e-mails
+  // NÃO vive no client (WA-B4 fail-closed). Fallback ao stored plan cru.
+  const isAdminMaster = (storedRaw ?? "").toLowerCase() === "admin_master";
 
   const applyCached = useCallback((cached: CachedSubscription) => {
     setStoredRaw(cached.storedPlan);

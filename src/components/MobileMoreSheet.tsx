@@ -14,7 +14,7 @@ import {
 import { UserAvatar } from "@/components/UserAvatar";
 import { NAV_GROUPS, filterVisibleGroups, type NavLeaf } from "@/lib/nav-groups";
 import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
-import { isAdminMasterEmail, PLAN_LABEL } from "@/lib/plans";
+import { PLAN_LABEL } from "@/lib/plans";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import { cn } from "@/lib/utils";
@@ -29,11 +29,10 @@ const PERSONAL_ITEMS: NavLeaf[] = [
 export function MobileMoreSheet({ trigger }: { trigger: ReactNode }) {
   const { t } = useTranslation("nav");
   const { user, profile, signOut } = useAuth();
-  const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
+  const { plan, can, isTrialActive, trialDaysLeft, isAdminMaster } = usePlan();
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
-  const isAdminMaster = isAdminMasterEmail(user?.email);
 
   const groups = useMemo(
     () =>

@@ -39,7 +39,7 @@ import {
   type ProductSource,
 } from "@/components/mercado/shell";
 import { ProductImageAdminSection } from "@/components/mercado/shell/ProductImageAdminSection";
-import { isAdminMasterEmail } from "@/lib/plans";
+import { usePlan } from "@/lib/use-plan";
 import bannerComunitario from "@/assets/mercado/banner-comunitario.jpg";
 import bannerComunitarioWebp from "@/assets/mercado/banner-comunitario.webp";
 import emptyComunitario from "@/assets/mercado/empty-comunitario.webp";
@@ -152,7 +152,7 @@ function PrecoComunitarioPage() {
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(dateLocale);
 
   const { user } = useAuth();
-  const isAdminMaster = isAdminMasterEmail(user?.email);
+  const { isAdminMaster } = usePlan();
   const [items, setItems] = useState<CommunityPrice[]>([]);
   const [loading, setLoading] = useState(true);
 

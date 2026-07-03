@@ -25,7 +25,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { UserAvatar } from "@/components/UserAvatar";
 import { NAV_GROUPS, type NavLeaf } from "@/lib/nav-groups";
 import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
-import { isAdminMasterEmail, PLAN_LABEL } from "@/lib/plans";
+import { PLAN_LABEL } from "@/lib/plans";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import { OfflineHistoryTrigger } from "@/components/offline/OfflineHistoryDialog";
@@ -47,7 +47,7 @@ function AppMaisPage() {
   const { t } = useTranslation("nav");
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
-  const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
+  const { plan, can, isTrialActive, trialDaysLeft, isAdminMaster } = usePlan();
   const [signingOut, setSigningOut] = useState(false);
   const appLock = useAppLock();
   const [togglingLock, setTogglingLock] = useState(false);
@@ -55,7 +55,6 @@ function AppMaisPage() {
   const [loginBioEnabled, setLoginBioEnabled] = useState(false);
   const [togglingLoginBio, setTogglingLoginBio] = useState(false);
 
-  const isAdminMaster = isAdminMasterEmail(user?.email);
 
   useEffect(() => {
     setLoginBioAvailable(isLoginBioBridgeAvailable());

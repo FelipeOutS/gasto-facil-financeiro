@@ -20,11 +20,6 @@ import { validateImageUrl } from "./image-url-whitelist";
 import { lookupProductImage } from "./product-image.functions";
 import { toPersistableImage } from "./product-image-persist";
 
-const ADMIN_MASTER_EMAILS = [
-  "felipe.out.silva@outlook.com",
-  "michael@medeiroscenografia.com.br",
-] as const;
-
 const BUCKET = "mercado-product-images";
 const MAX_BYTES = 3 * 1024 * 1024; // 3 MB
 const MIME_TO_EXT: Record<string, string> = {
@@ -38,7 +33,8 @@ async function ensureAdminMaster(userId: string): Promise<void> {
   const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
   if (error || !data?.user) throw new Error("FORBIDDEN");
   const email = (data.user.email ?? "").trim().toLowerCase();
-  if (!ADMIN_MASTER_EMAILS.includes(email as (typeof ADMIN_MASTER_EMAILS)[number])) {
+  const { isAdminMasterEmail } = await import("@/server/admin-master.server");
+  if (!isAdminMasterEmail(email)) {
     // Fallback: também aceita owner role.
     const { data: roles } = await supabaseAdmin
       .from("user_roles")

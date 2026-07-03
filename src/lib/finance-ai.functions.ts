@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { checkRateLimit, RATE_LIMIT_PRESETS, enforceUserRateLimit } from "@/server/rate-limit.server";
 import { getSubscriptionForUserIdentity } from "@/server/subscription.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { planAllowsFeature, isAdminMasterEmail, type PlanTier } from "@/lib/plans";
+import { planAllowsFeature, type PlanTier } from "@/lib/plans";
 
 const MAX_MESSAGE_LEN = 1500;
 const HISTORY_LIMIT = 30;
@@ -574,6 +574,7 @@ async function buildInvestimentosBlock(supabase: any, userId: string): Promise<s
 async function ensureFeatureAccess(userId: string): Promise<{ ok: true } | { ok: false; reason: string }> {
   const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
   const email = data.user?.email ?? null;
+  const { isAdminMasterEmail } = await import("@/server/admin-master.server");
   if (isAdminMasterEmail(email)) return { ok: true };
 
   const sub = await getSubscriptionForUserIdentity({ userId, email, repairLink: false });

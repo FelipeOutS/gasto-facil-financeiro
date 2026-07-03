@@ -12,7 +12,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { isAdminMasterEmail } from "@/lib/plans";
+
 
 function forbidden(): Response {
   return new Response(
@@ -23,6 +23,7 @@ function forbidden(): Response {
 
 async function assertAdminMaster(userId: string): Promise<void> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { isAdminMasterEmail } = await import("@/server/admin-master.server");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const adm = supabaseAdmin as any;
   const { data } = await adm.auth.admin.getUserById(userId);

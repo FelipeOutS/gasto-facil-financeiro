@@ -2,7 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
-import { isAdminMasterEmail, PLAN_LABEL } from "@/lib/plans";
+import { PLAN_LABEL } from "@/lib/plans";
+import { usePlan } from "@/lib/use-plan";
 import { getAdminDashboard, deleteUserById, grantPlanManually, setUserStatusManually, diagnoseMpPayment, reconcileMpPaymentById, listRecentPaymentEvents, type AdminDashboardData, type AdminUserRow } from "@/lib/admin.functions";
 import { toast } from "sonner";
 import {
@@ -152,6 +153,7 @@ function periodToDate(period: string): Date | null {
 
 function AdminPage() {
   const { user, loading: authLoading } = useAuth();
+  const { isAdminMaster } = usePlan();
   const navigate = useNavigate();
   const [data, setData] = useState<AdminDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -177,7 +179,7 @@ function AdminPage() {
       void navigate({ to: "/login" });
       return;
     }
-    if (!isAdminMasterEmail(user.email)) {
+    if (!isAdminMaster) {
       setAuthorized(false);
       return;
     }
@@ -203,7 +205,15 @@ function AdminPage() {
     };
   }, [authorized, reloadKey]);
 
-  const isProtectedAdmin = (email: string) => isAdminMasterEmail(email);
+  // A lista de e-mails de Admin Master vive server-side (fail-closed).
+  // Client protege apenas o próprio usuário logado; ações destrutivas contra
+  // outros Admin Master são enforced no servidor (delete/grant/status).
+  // Fallback: reconhece admin master pelo plano armazenado.
+  const isProtectedAdmin = (email: string) => {
+    if (isAdminMaster && email === user?.email) return true;
+    const row = data?.users.find((u) => u.email === email);
+    return (row?.plano ?? "").toLowerCase() === "admin_master";
+  };
 
 
   async function confirmDelete() {

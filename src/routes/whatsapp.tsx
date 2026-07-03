@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
-import { isAdminMasterEmail } from "@/lib/plans";
+import { usePlan } from "@/lib/use-plan";
 import {
   ArrowLeft,
   Copy,
@@ -176,8 +176,7 @@ const WHATSAPP_DEEPLINK = getOfficialWhatsAppDeepLink();
 const MODO_TESTE = WHATSAPP_NUMERO_OFICIAL.trim().length === 0;
 
 function WhatsAppPage() {
-  const { user } = useAuth();
-  const isAdmin = isAdminMasterEmail(user?.email);
+  const { isAdminMaster: isAdmin } = usePlan();
 
   const [links, setLinks] = useState<Link[]>([]);
   const [msgs, setMsgs] = useState<Message[]>([]);
