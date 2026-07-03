@@ -645,23 +645,24 @@ async function persistirBaixa(args: {
     logEvent("failed", 0, "error");
     return { status: "erro", resposta: "Não consegui identificar a conta. Pode começar de novo?" };
   }
-  const nowIso = new Date().toISOString();
-  // Update CONDICIONAL: id + user_id + status=pendente. Garante:
-  //   - conta de outro usuário NÃO é alterada
-  //   - dupla confirmação concorrente não dá baixa duas vezes
-  //   - conta já paga não é tocada
-  const { data, error } = await supabaseAdmin
-    .from("contas_a_pagar")
-    .update({
-      status: "pago",
-      data_pagamento: session.dataPagamento,
-      updated_at: nowIso,
-    })
-    .eq("id", session.contaId)
-    .eq("user_id", userId)
-    .eq("status", "pendente")
-    .select("id, nome, valor, data_vencimento, data_pagamento")
-    .maybeSingle();
+  // WA-3.30 — baixa ATÔMICA via RPC public.whatsapp_baixa_conta_atomic.
+  // Na mesma transação: cria gasto correspondente + marca conta como pago
+  // + grava contas_a_pagar.gasto_id. Se qualquer passo falhar, tudo é
+  // desfeito. Idempotência:
+  //   - conta já paga com gasto_id válido => 'noop' (sem novo gasto)
+  //   - conta paga sem gasto_id => 'inconsistent' (erro controlado, não
+  //     cria gasto silenciosamente)
+  //   - conta ainda pendente => 'paid' (gasto criado + vínculo)
+  //   - conta não localizada => 'not_found'
+  const { data: rpcData, error } = await supabaseAdmin.rpc(
+    "whatsapp_baixa_conta_atomic",
+    {
+      p_user_id: userId,
+      p_conta_id: session.contaId,
+      p_data_pagamento: session.dataPagamento,
+      p_origem: "whatsapp",
+    },
+  );
 
   if (error) {
     logEvent("failed", 0, "error");
@@ -674,8 +675,12 @@ async function persistirBaixa(args: {
       resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?",
     };
   }
-  if (!data) {
-    // Sem linha alterada — outro processo já deu baixa, OU a conta sumiu.
+
+  const row = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+  const rpcResult = String(row?.result ?? "");
+  const gastoIdRet = row?.gasto_id as string | null | undefined;
+
+  if (rpcResult === "not_found" || rpcResult === "not_pending") {
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
     const resposta = "Essa conta já foi atualizada ou não está mais pendente.";
     await deps.gravarSessao(
@@ -685,6 +690,57 @@ async function persistirBaixa(args: {
     logEvent("already_updated", 0, "conflict");
     return { status: "consulta", resposta };
   }
+
+  if (rpcResult === "inconsistent") {
+    // Conta marcada como paga sem gasto vinculado — não criamos gasto
+    // silenciosamente. Requer remediação manual.
+    logEvent("failed", 0, "inconsistent");
+    await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
+    const resposta =
+      "Encontrei uma inconsistência nessa conta (já paga mas sem gasto vinculado). "
+      + "Peça para revisarem manualmente.";
+    await deps.gravarSessao(
+      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      "sem_pendencia", session as never, resposta,
+    );
+    return { status: "erro", resposta };
+  }
+
+  if (rpcResult === "noop") {
+    // Já paga com vínculo válido — idempotente, não cria novo gasto.
+    await deps.fecharSessoesAnteriores(userId, msg.telefone, "salva");
+    const finalSession = { ...session, status: "salva", gastoId: gastoIdRet ?? null } as unknown;
+    await deps.atualizarSessao(sessao.id, "salva", finalSession as never, "ok");
+    const resposta = "Essa conta já estava paga com o gasto registrado. Sem alteração.";
+    logEvent("noop", 0, "ok");
+    return { status: "salva", resposta };
+  }
+
+  if (rpcResult !== "paid") {
+    logEvent("failed", 0, "error");
+    return {
+      status: "erro",
+      resposta: "Não consegui concluir a baixa. Pode tentar de novo daqui a pouco?",
+    };
+  }
+
+  // Readback obrigatório: confirmar que conta.gasto_id foi gravado e que o
+  // gasto existe antes de finalizar a sessão.
+  const { data: readback, error: readbackErr } = await supabaseAdmin
+    .from("contas_a_pagar")
+    .select("id, nome, valor, data_pagamento, status, gasto_id")
+    .eq("id", session.contaId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (readbackErr || !readback || readback.status !== "pago"
+      || !readback.gasto_id || readback.gasto_id !== gastoIdRet) {
+    logEvent("failed", 0, "readback_failed");
+    return {
+      status: "erro",
+      resposta: "Não consegui confirmar a baixa. Pode tentar de novo daqui a pouco?",
+    };
+  }
+  const data = readback;
 
   await deps.fecharSessoesAnteriores(userId, msg.telefone, "salva");
   const finalSession = { ...session, status: "salva" } as unknown;
