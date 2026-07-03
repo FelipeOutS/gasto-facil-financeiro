@@ -33,7 +33,6 @@ export function MobileMoreSheet({ trigger }: { trigger: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
-  const isAdminMaster = isAdminMasterEmail(user?.email);
 
   const groups = useMemo(
     () =>
