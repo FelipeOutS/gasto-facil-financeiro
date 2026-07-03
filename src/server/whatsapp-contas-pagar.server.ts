@@ -90,12 +90,13 @@ type Stage =
   | "awaiting_choice"
   | "awaiting_confirmation"
   | "paid"
+  | "noop"
   | "already_updated"
   | "cancelled"
   | "failed"
   | "reminders_cancelled";
 
-type Result = "ok" | "not_found" | "ambiguous" | "conflict" | "error";
+type Result = "ok" | "not_found" | "ambiguous" | "conflict" | "error" | "inconsistent" | "readback_failed";
 
 function logEvent(stage: Stage, candidatesCount: number, result: Result) {
   console.info({
