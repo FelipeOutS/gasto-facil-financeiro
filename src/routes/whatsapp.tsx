@@ -177,7 +177,7 @@ const MODO_TESTE = WHATSAPP_NUMERO_OFICIAL.trim().length === 0;
 
 function WhatsAppPage() {
   const { user } = useAuth();
-  const isAdmin = isAdminMasterEmail(user?.email);
+  const { isAdminMaster: isAdmin } = usePlan();
 
   const [links, setLinks] = useState<Link[]>([]);
   const [msgs, setMsgs] = useState<Message[]>([]);
