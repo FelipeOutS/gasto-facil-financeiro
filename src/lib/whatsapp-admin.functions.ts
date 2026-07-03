@@ -30,6 +30,7 @@ function adminUnauthorized(): Response {
 
 async function assertAdminMaster(userId: string): Promise<void> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { isAdminMasterEmail } = await import("@/server/admin-master.server");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const adm = supabaseAdmin as any;
   const { data } = await adm.auth.admin.getUserById(userId);
