@@ -73,7 +73,7 @@ export function ProductCard({
 }: ProductCardProps) {
   const { t } = useTranslation("mercado");
   const { user } = useAuth();
-  const isAdmin = isAdminMasterEmail(user?.email);
+  const { isAdminMaster: isAdmin } = usePlan();
   const showAdminMenu = isAdmin && !!priceId;
   const sourceLabel = source ? t(`shell.product.source.${source}`) : null;
   const [imgErrored, setImgErrored] = useState(false);
