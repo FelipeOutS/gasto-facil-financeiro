@@ -47,7 +47,7 @@ function AppMaisPage() {
   const { t } = useTranslation("nav");
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
-  const { plan, can, isTrialActive, trialDaysLeft } = usePlan();
+  const { plan, can, isTrialActive, trialDaysLeft, isAdminMaster } = usePlan();
   const [signingOut, setSigningOut] = useState(false);
   const appLock = useAppLock();
   const [togglingLock, setTogglingLock] = useState(false);
@@ -55,7 +55,6 @@ function AppMaisPage() {
   const [loginBioEnabled, setLoginBioEnabled] = useState(false);
   const [togglingLoginBio, setTogglingLoginBio] = useState(false);
 
-  const isAdminMaster = isAdminMasterEmail(user?.email);
 
   useEffect(() => {
     setLoginBioAvailable(isLoginBioBridgeAvailable());
