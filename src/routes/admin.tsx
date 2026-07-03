@@ -153,6 +153,7 @@ function periodToDate(period: string): Date | null {
 
 function AdminPage() {
   const { user, loading: authLoading } = useAuth();
+  const { isAdminMaster } = usePlan();
   const navigate = useNavigate();
   const [data, setData] = useState<AdminDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
