@@ -23,6 +23,7 @@
  * - Log sem PII/valor/nome/data/userId/telefone/texto/transcrição.
  */
 import * as _supa from "@/integrations/supabase/client.server";
+import { nowInAppTz } from "./cartao-fatura.server";
 import { suggestCategoryFromText } from "@/lib/categories";
 import type { WhatsAppMessageRow, ProcessOutcome } from "./whatsapp.server";
 import type {
