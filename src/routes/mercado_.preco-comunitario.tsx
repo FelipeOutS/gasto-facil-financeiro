@@ -152,7 +152,7 @@ function PrecoComunitarioPage() {
   const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(dateLocale);
 
   const { user } = useAuth();
-  const isAdminMaster = isAdminMasterEmail(user?.email);
+  const { isAdminMaster } = usePlan();
   const [items, setItems] = useState<CommunityPrice[]>([]);
   const [loading, setLoading] = useState(true);
 
