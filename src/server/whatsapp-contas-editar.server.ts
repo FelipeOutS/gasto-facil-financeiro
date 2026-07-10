@@ -299,6 +299,27 @@ function parseDate(text: string, hoje: Date = nowInAppTz()): string | null {
       return `${ano}-${String(mes).padStart(2, "0")}-${String(Math.min(dia, last)).padStart(2, "0")}`;
     }
   }
+  // WA-3.31 — dia da semana ("sexta", "próxima sexta", "sexta que vem",
+  // "segunda-feira"). Determinístico em America/Sao_Paulo:
+  //   - com modificador "proxima/proximo" ou "que vem": sempre a próxima
+  //     ocorrência estrita (delta em [1..7], nunca hoje);
+  //   - sem modificador: próxima ocorrência inclusiva (delta em [0..6],
+  //     hoje quando o dow bate).
+  m = t.match(new RegExp(
+    `\\b(proxima|proximo)?\\s*(${WEEKDAY_ALT})(?:-feira)?(\\s+que\\s+vem)?\\b`,
+  ));
+  if (m) {
+    const target = WEEKDAYS_DOW[m[2]];
+    if (target !== undefined) {
+      const hasNextMod = Boolean(m[1]) || Boolean(m[3]);
+      const todayDow = hoje.getDay();
+      let delta = (target - todayDow + 7) % 7;
+      if (hasNextMod && delta === 0) delta = 7;
+      const d = new Date(hoje);
+      d.setDate(d.getDate() + delta);
+      return todayISOInAppTz(d);
+    }
+  }
   return null;
 }
 
