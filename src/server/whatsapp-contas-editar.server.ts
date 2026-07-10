@@ -451,7 +451,7 @@ export function detectEdicaoContaIntent(textRaw: string): EdicaoIntent | null {
     const { dateText } = extractDate(norm(m[2]));
     if (termo && dateText) return { operation: "due_date", termo, dateText };
   }
-  m = t.match(/^(?:adiar|postergar|antecipar)\s+(.+?)\s+para\s+(.+)$/);
+  m = t.match(/^(?:adiar|postergar|antecipar|remarcar|reagendar)\s+(.+?)\s+para\s+(.+)$/);
   if (m) {
     const termo = stripLeadingArticles(m[1]);
     const { dateText } = extractDate(norm(m[2]));
