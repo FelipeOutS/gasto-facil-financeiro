@@ -215,6 +215,19 @@ function stripLeadingArticles(s: string): string {
   return v.trim();
 }
 
+// WA-3.31 — dias da semana (América/São Paulo). Aceita forma curta
+// ("sexta") e composta ("sexta-feira"). Modificadores: "próxima/proximo"
+// e "que vem" resolvem sempre para a próxima ocorrência estrita
+// (>= 7 dias quando hoje é o mesmo dia da semana). Sem modificador,
+// a data é a próxima ocorrência inclusiva (hoje quando dow bate).
+const WEEKDAYS_DOW: Record<string, number> = {
+  domingo: 0, segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6,
+};
+const WEEKDAY_ALT = "domingo|segunda|terca|quarta|quinta|sexta|sabado";
+const WEEKDAY_EXTRACT_RE = new RegExp(
+  `\\b(?:(?:em|para|pro|pra|no|na)\\s+)?(?:(?:proxima|proximo|essa|esta)\\s+)?(?:${WEEKDAY_ALT})(?:-feira)?(?:\\s+que\\s+vem)?\\b`,
+);
+
 // extrai uma expressão de data e devolve { dateText, rest } com o restante
 // da frase sem essa expressão. Reusa o mesmo conjunto de WA-C3.1.
 function extractDate(t: string): { dateText: string | null; rest: string } {
@@ -223,6 +236,7 @@ function extractDate(t: string): { dateText: string | null; rest: string } {
     /\b(?:em|para|pro|pra|no|na)?\s*\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/,
     /\b(?:no\s+|para\s+o\s+|pro\s+|pra\s+o\s+)?dia\s+\d{1,2}(?:\s+do\s+mes\s+que\s+vem)?\b/,
     /\bamanha\b/, /\bhoje\b/, /\bontem\b/,
+    WEEKDAY_EXTRACT_RE,
   ];
   for (const re of patterns) {
     const m = t.match(re);
