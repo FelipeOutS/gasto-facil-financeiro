@@ -215,6 +215,19 @@ function stripLeadingArticles(s: string): string {
   return v.trim();
 }
 
+// WA-3.31 — dias da semana (América/São Paulo). Aceita forma curta
+// ("sexta") e composta ("sexta-feira"). Modificadores: "próxima/proximo"
+// e "que vem" resolvem sempre para a próxima ocorrência estrita
+// (>= 7 dias quando hoje é o mesmo dia da semana). Sem modificador,
+// a data é a próxima ocorrência inclusiva (hoje quando dow bate).
+const WEEKDAYS_DOW: Record<string, number> = {
+  domingo: 0, segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6,
+};
+const WEEKDAY_ALT = "domingo|segunda|terca|quarta|quinta|sexta|sabado";
+const WEEKDAY_EXTRACT_RE = new RegExp(
+  `\\b(?:(?:em|para|pro|pra|no|na)\\s+)?(?:(?:proxima|proximo|essa|esta)\\s+)?(?:${WEEKDAY_ALT})(?:-feira)?(?:\\s+que\\s+vem)?\\b`,
+);
+
 // extrai uma expressão de data e devolve { dateText, rest } com o restante
 // da frase sem essa expressão. Reusa o mesmo conjunto de WA-C3.1.
 function extractDate(t: string): { dateText: string | null; rest: string } {
@@ -223,6 +236,7 @@ function extractDate(t: string): { dateText: string | null; rest: string } {
     /\b(?:em|para|pro|pra|no|na)?\s*\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/,
     /\b(?:no\s+|para\s+o\s+|pro\s+|pra\s+o\s+)?dia\s+\d{1,2}(?:\s+do\s+mes\s+que\s+vem)?\b/,
     /\bamanha\b/, /\bhoje\b/, /\bontem\b/,
+    WEEKDAY_EXTRACT_RE,
   ];
   for (const re of patterns) {
     const m = t.match(re);
@@ -283,6 +297,27 @@ function parseDate(text: string, hoje: Date = nowInAppTz()): string | null {
       if (ano < 100) ano = 2000 + ano;
       const last = new Date(ano, mes, 0).getDate();
       return `${ano}-${String(mes).padStart(2, "0")}-${String(Math.min(dia, last)).padStart(2, "0")}`;
+    }
+  }
+  // WA-3.31 — dia da semana ("sexta", "próxima sexta", "sexta que vem",
+  // "segunda-feira"). Determinístico em America/Sao_Paulo:
+  //   - com modificador "proxima/proximo" ou "que vem": sempre a próxima
+  //     ocorrência estrita (delta em [1..7], nunca hoje);
+  //   - sem modificador: próxima ocorrência inclusiva (delta em [0..6],
+  //     hoje quando o dow bate).
+  m = t.match(new RegExp(
+    `\\b(proxima|proximo)?\\s*(${WEEKDAY_ALT})(?:-feira)?(\\s+que\\s+vem)?\\b`,
+  ));
+  if (m) {
+    const target = WEEKDAYS_DOW[m[2]];
+    if (target !== undefined) {
+      const hasNextMod = Boolean(m[1]) || Boolean(m[3]);
+      const todayDow = hoje.getDay();
+      let delta = (target - todayDow + 7) % 7;
+      if (hasNextMod && delta === 0) delta = 7;
+      const d = new Date(hoje);
+      d.setDate(d.getDate() + delta);
+      return todayISOInAppTz(d);
     }
   }
   return null;
@@ -416,7 +451,7 @@ export function detectEdicaoContaIntent(textRaw: string): EdicaoIntent | null {
     const { dateText } = extractDate(norm(m[2]));
     if (termo && dateText) return { operation: "due_date", termo, dateText };
   }
-  m = t.match(/^(?:adiar|postergar|antecipar)\s+(.+?)\s+para\s+(.+)$/);
+  m = t.match(/^(?:adiar|postergar|antecipar|remarcar|reagendar)\s+(.+?)\s+para\s+(.+)$/);
   if (m) {
     const termo = stripLeadingArticles(m[1]);
     const { dateText } = extractDate(norm(m[2]));
