@@ -3521,6 +3521,36 @@ export async function processarMensagemWhatsApp(
     }
   }
 
+  // ---- WA-B-Precedence: consulta mensal por mês nomeado ----
+  // "quanto gastei em julho", "gastos de julho", "quanto gastei em julho
+  // de 2026" etc. Precede `detectConsultaEspecifica` para impedir que
+  // "julho" seja tratado como termo textual de descrição. Zero escrita.
+  if (!sessao && decisao === "outro") {
+    const mensal = detectConsultaMensalNomeada(texto);
+    if (mensal) {
+      logWaRouteDecision(msg, "consulta_handler", "consulta_mensal_nomeada");
+      let resposta: string;
+      if (mensal.kind === "ano_invalido") {
+        resposta =
+          `Ano inválido para consulta de gastos (${mensal.yearRaw}).\n\n` +
+          `Tente algo como "quanto gastei em julho" ou "quanto gastei em julho de 2026".`;
+      } else {
+        const out = await handleConsulta(userId, "listar_gastos_mes", {
+          month: mensal.month,
+          year: mensal.year,
+        });
+        resposta = out.resposta;
+      }
+      await gravarSessao(
+        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        resposta,
+      );
+      return { status: "consulta", resposta };
+    }
+  }
+
 
 
   // ---- Fase WA-F4 (guarda): mês explícito > 12 meses à frente ----
