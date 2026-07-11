@@ -26,44 +26,62 @@ const store: { events: Event[] } = { events: [] };
 let nowMs = new Date("2026-07-11T15:00:00.000Z").getTime();
 let dbFailure = false;
 
-function makeChain(filters: { key?: string; sinceISO?: string }) {
-  return {
-    eq(col: string, val: string) {
-      if (col === "key") filters.key = val;
-      return makeChain(filters);
-    },
-    gte(col: string, val: string) {
-      if (col === "created_at") filters.sinceISO = val;
-      const count = store.events.filter(
-        (e) =>
-          (!filters.key || e.key === filters.key) &&
-          (!filters.sinceISO || e.created_at >= filters.sinceISO),
-      ).length;
-      return Promise.resolve({ count, data: null, error: null });
-    },
-  };
+/**
+ * Fake admin agora expõe `.rpc('rate_limit_hit', ...)` — a implementação
+ * real vive no Postgres (advisory lock + INSERT em rate_limit_events).
+ * Este mock reproduz a semântica atômica sequenciando por chave.
+ */
+type RpcArgs = {
+  _key: string;
+  _route: string;
+  _limit: number;
+  _window_seconds: number;
+  _ip_address?: string;
+  _user_id?: string;
+  _user_agent?: string;
+  _method?: string;
+};
+
+// Serialização por chave — equivalente ao pg_advisory_xact_lock(hash(key)).
+const chains = new Map<string, Promise<unknown>>();
+function serialize<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const prev = chains.get(key) ?? Promise.resolve();
+  const next = prev.then(fn, fn);
+  chains.set(
+    key,
+    next.catch(() => undefined),
+  );
+  return next;
+}
+
+async function rpcRateLimitHit(args: RpcArgs) {
+  return serialize(args._key, async () => {
+    if (dbFailure) return { data: null, error: { message: "db unavailable" } };
+    const sinceMs = nowMs - args._window_seconds * 1000;
+    const count = store.events.filter(
+      (e) => e.key === args._key && new Date(e.created_at).getTime() >= sinceMs,
+    ).length;
+    const blocked = count >= args._limit;
+    store.events.push({ key: args._key, created_at: new Date(nowMs).toISOString() });
+    return {
+      data: [
+        {
+          current_count: blocked ? count : count + 1,
+          blocked,
+          reset_at: new Date(nowMs + args._window_seconds * 1000).toISOString(),
+        },
+      ],
+      error: null,
+    };
+  });
 }
 
 const fakeAdmin = {
-  from(table: string) {
-    if (dbFailure) {
-      throw new Error("db unavailable");
+  rpc(name: string, args: RpcArgs) {
+    if (name !== "rate_limit_hit") {
+      throw new Error(`RPC inesperada no teste: ${name}`);
     }
-    if (table !== "rate_limit_events") {
-      throw new Error(`Tabela inesperada no teste: ${table}`);
-    }
-    return {
-      select(_cols: string, _opts?: { count?: string; head?: boolean }) {
-        return makeChain({});
-      },
-      insert(row: { key: string; created_at?: string }) {
-        store.events.push({
-          key: row.key,
-          created_at: row.created_at ?? new Date(nowMs).toISOString(),
-        });
-        return Promise.resolve({ data: null, error: null });
-      },
-    };
+    return rpcRateLimitHit(args);
   },
 };
 
