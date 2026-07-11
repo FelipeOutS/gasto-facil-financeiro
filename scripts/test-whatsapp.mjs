@@ -103,6 +103,7 @@ const INCLUDE = [
   "whatsapp-boleto-rate-limit-3-36.test.ts",
   "whatsapp-lembrete-interativo-3-38.test.ts",
   "whatsapp-boleto-wa-c10-3.test.ts",
+  "whatsapp-mes-nomeado.test.ts",
 
   "free-ads-plan.test.ts",
 ];
