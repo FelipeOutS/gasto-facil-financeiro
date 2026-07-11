@@ -601,6 +601,7 @@ async function handleListarReceitasMes(userId: string): Promise<ConsultaResult> 
 export async function handleConsulta(
   userId: string,
   intent: ConsultaIntent,
+  params?: ConsultaParams,
 ): Promise<ConsultaResult> {
   switch (intent) {
     case "ajuda_whatsapp":
@@ -618,7 +619,7 @@ export async function handleConsulta(
     case "listar_receitas_mes":
       return await handleListarReceitasMes(userId);
     case "listar_gastos_mes":
-      return await handleListarGastosMes(userId);
+      return await handleListarGastosMes(userId, params);
     case "gastos_por_categoria_mes":
       return await handleGastosPorCategoriaMes(userId);
     case "orcamento_mes":
