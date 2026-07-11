@@ -45,7 +45,9 @@ import {
   handleConversational,
   detectMenuOption,
   dispatchMenuOption,
+  detectConsultaMensalNomeada,
 } from "./whatsapp-consultas.server";
+import { mesLabel as _waMesLabel } from "./whatsapp-mes-nomeado";
 import { detectConsultaShape } from "./whatsapp-query-guard.server";
 import {
   recordContas as shortRecordContas,
