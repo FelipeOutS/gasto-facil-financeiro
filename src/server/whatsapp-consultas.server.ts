@@ -13,6 +13,14 @@
  */
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
+import {
+  detectConsultaMensalNomeada as _detectConsultaMensalNomeada,
+  janelaMes as _janelaMes,
+  mesLabel as _mesLabel,
+} from "./whatsapp-mes-nomeado";
+
+export type ConsultaParams = { month?: number; year?: number };
+export const detectConsultaMensalNomeada = _detectConsultaMensalNomeada;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin = _supabaseAdmin as any;
