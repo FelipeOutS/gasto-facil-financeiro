@@ -3639,6 +3639,23 @@ export type Database = {
         }
         Returns: number
       }
+      rate_limit_hit: {
+        Args: {
+          _ip_address?: string
+          _key: string
+          _limit: number
+          _method?: string
+          _route: string
+          _user_agent?: string
+          _user_id?: string
+          _window_seconds: number
+        }
+        Returns: {
+          blocked: boolean
+          current_count: number
+          reset_at: string
+        }[]
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
