@@ -165,7 +165,8 @@ const CONTA_OUTRO = {
 
 function baseSeed() {
   return {
-    contas: [CONTA_WA_338 as Row, CONTA_OUTRO as Row],
+    // Clona para evitar mutação cruzada entre testes (ex.: status → 'pago').
+    contas: [{ ...CONTA_WA_338 } as Row, { ...CONTA_OUTRO } as Row],
     prefs: {
       user_id: ADMIN_USER,
       contas_a_pagar: true,
