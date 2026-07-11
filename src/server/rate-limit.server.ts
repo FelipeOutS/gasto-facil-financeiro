@@ -77,40 +77,48 @@ function truncate(value: string | null | undefined, max: number): string | null 
   return value.length > max ? value.slice(0, max) : value;
 }
 
+/**
+ * WA-C8.2 — Verificação atômica no banco via RPC `rate_limit_hit`.
+ *
+ * A RPC serializa por `pg_advisory_xact_lock(hashtextextended(key,0))`,
+ * então múltiplas chamadas concorrentes para a MESMA key são estritamente
+ * ordenadas — impossível ultrapassar o limite sob concorrência real.
+ * Chaves diferentes (users/scopes distintos) continuam em paralelo.
+ *
+ * Contrato preservado: `blocked`, `count`, `limit`, `retryAfterSeconds`,
+ * `dbError`. Presets inalterados. Semântica de janela deslizante
+ * inalterada. Nenhum call-site precisa mudar.
+ */
 export async function checkRateLimit(
   options: CheckRateLimitOptions,
 ): Promise<CheckRateLimitResult> {
   const { key, route, limit, windowSeconds } = options;
-  const sinceISO = new Date(Date.now() - windowSeconds * 1000).toISOString();
 
   try {
-    const { count } = await supabaseAdmin
-      .from("rate_limit_events")
-      .select("id", { count: "exact", head: true })
-      .eq("key", key)
-      .gte("created_at", sinceISO);
+    const { data, error } = await supabaseAdmin.rpc("rate_limit_hit", {
+      _key: truncate(key, 200) ?? key,
+      _route: truncate(route, 255) ?? route,
+      _limit: limit,
+      _window_seconds: windowSeconds,
+      _ip_address: truncate(options.ip_address ?? null, 64),
+      _user_id: options.user_id ?? null,
+      _user_agent: truncate(options.user_agent ?? null, 512),
+      _method: truncate(options.method ?? null, 16),
+    });
 
-    const current = count ?? 0;
-    const blocked = current >= limit;
-
-    // Registra o evento (não bloqueia o fluxo se falhar).
-    try {
-      await supabaseAdmin.from("rate_limit_events").insert({
-        key,
-        route: truncate(route, 255) ?? route,
-        ip_address: truncate(options.ip_address ?? null, 64),
-        user_id: options.user_id ?? null,
-        user_agent: truncate(options.user_agent ?? null, 512),
-        method: truncate(options.method ?? null, 16),
-        blocked,
-      });
-    } catch (err) {
-      console.error("[rate-limit] insert failed", err);
+    if (error) {
+      console.error("[rate-limit] rpc failed", error.message ?? error);
+      return { blocked: false, count: 0, limit, retryAfterSeconds: windowSeconds, dbError: true };
     }
+
+    // `RETURNS TABLE` chega como array de linhas.
+    const row = Array.isArray(data) ? data[0] : data;
+    const current = Number(row?.current_count ?? 0);
+    const blocked = Boolean(row?.blocked);
 
     return {
       blocked,
-      count: current + 1,
+      count: current,
       limit,
       retryAfterSeconds: windowSeconds,
     };
