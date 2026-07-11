@@ -13,6 +13,14 @@
  */
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
+import {
+  detectConsultaMensalNomeada as _detectConsultaMensalNomeada,
+  janelaMes as _janelaMes,
+  mesLabel as _mesLabel,
+} from "./whatsapp-mes-nomeado";
+
+export type ConsultaParams = { month?: number; year?: number };
+export const detectConsultaMensalNomeada = _detectConsultaMensalNomeada;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin = _supabaseAdmin as any;
@@ -593,6 +601,7 @@ async function handleListarReceitasMes(userId: string): Promise<ConsultaResult> 
 export async function handleConsulta(
   userId: string,
   intent: ConsultaIntent,
+  params?: ConsultaParams,
 ): Promise<ConsultaResult> {
   switch (intent) {
     case "ajuda_whatsapp":
@@ -610,7 +619,7 @@ export async function handleConsulta(
     case "listar_receitas_mes":
       return await handleListarReceitasMes(userId);
     case "listar_gastos_mes":
-      return await handleListarGastosMes(userId);
+      return await handleListarGastosMes(userId, params);
     case "gastos_por_categoria_mes":
       return await handleGastosPorCategoriaMes(userId);
     case "orcamento_mes":
@@ -1023,10 +1032,24 @@ async function handleOrcamentoMes(userId: string): Promise<ConsultaResult> {
 }
 
 
-async function handleListarGastosMes(userId: string): Promise<ConsultaResult> {
+async function handleListarGastosMes(
+  userId: string,
+  params?: ConsultaParams,
+): Promise<ConsultaResult> {
   const hoje = todayLocalISO();
-  const from = monthStartISO(hoje);
-  const to = addDaysISO(hoje, 1);
+  let from: string;
+  let to: string;
+  let mesTitulo: string;
+  if (params?.month && params?.year) {
+    const win = _janelaMes(params.month, params.year);
+    from = win.from;
+    to = win.to;
+    mesTitulo = `${_mesLabel(params.month)} de ${params.year}`;
+  } else {
+    from = monthStartISO(hoje);
+    to = addDaysISO(hoje, 1);
+    mesTitulo = mesPorExtenso(hoje);
+  }
   const [gastos, catMap] = await Promise.all([
     loadGastos(userId, from, to),
     loadCategoriasMap(userId),
@@ -1042,7 +1065,7 @@ async function handleListarGastosMes(userId: string): Promise<ConsultaResult> {
   return {
     status: "consulta",
     resposta: M.consulta.listarGastosMes({
-      mes: mesPorExtenso(hoje),
+      mes: mesTitulo,
       itens,
       total: formatBRL(total),
       totalRegistros: ordenados.length,

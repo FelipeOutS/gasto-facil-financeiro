@@ -11,6 +11,7 @@
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
 import { TIPOS_RECEITA, type TipoReceita } from "@/lib/types";
+import { extractPeriodoSuffix } from "./whatsapp-mes-nomeado";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin = _supabaseAdmin as any;
@@ -141,6 +142,13 @@ const PERIODO_SUFFIXES = [
 ];
 function stripPeriodoSuffix(raw: string): string {
   let s = raw.trim();
+  // 1) Remove sufixos com nome de mês (com ou sem ano): "em julho",
+  //    "no mês de julho", "de julho de 2026" etc. Só age quando o
+  //    período aparece como sufixo introduzido por preposição — nomes
+  //    de mês no meio de descrições legítimas ficam intocados.
+  const { termo, periodo } = extractPeriodoSuffix(s);
+  if (periodo) s = termo;
+  // 2) Sufixos temporais fixos ("este mês", "hoje" etc.).
   for (const suf of PERIODO_SUFFIXES) {
     const n = norm(s);
     const nsuf = norm(suf);
