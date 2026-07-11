@@ -11,6 +11,7 @@
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
 import { TIPOS_RECEITA, type TipoReceita } from "@/lib/types";
+import { extractPeriodoSuffix } from "./whatsapp-mes-nomeado";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin = _supabaseAdmin as any;
