@@ -2915,8 +2915,34 @@ export async function processarMensagemWhatsApp(
           deps: boletoDeps,
         });
       }
+      // WA-C10.3 — Roteamento determinístico após OCR:
+      // Se `tryParseBoleto` não validou nenhuma linha (ex.: transcodificação
+      // JPEG degradou a linha digitável ao ponto de falhar o DV), mas o OCR
+      // ainda extraiu valor e/ou vencimento de forma inequívoca, tratamos
+      // como boleto no fallback manual — paridade com o branch de PDF.
+      // Isso evita uma segunda chamada ao Gemini (comprovante) para a mesma
+      // imagem e mantém a decisão orientada pelos dados do documento, não
+      // pelo rótulo probabilístico do classificador.
+      if (
+        ocrResult &&
+        (ocrResult.sugestoes.valorCentavos != null ||
+          ocrResult.sugestoes.vencimentoISO != null)
+      ) {
+        logWaRouteDecision(msg, "expense_parser", "media_boleto_image_manual_fallback");
+        return await iniciarBoletoManualFallback({
+          userId, msg, texto: texto || "(foto)", recebidaEm,
+          origem: "imagem",
+          valorCentavos: ocrResult.sugestoes.valorCentavos,
+          vencimentoISO: ocrResult.sugestoes.vencimentoISO,
+          identificacaoSugerida: ocrResult.sugestoes.identificacao,
+          deps: boletoDeps,
+        });
+      }
     }
-    // Sem candidato validado: cai no fluxo já existente de comprovante.
+    // Sem sinal estrutural nem sugestões de boleto: cai no fluxo já
+    // existente de comprovante (segunda chamada ao Gemini). Apenas neste
+    // caso — OCR de boleto retornou vazio E sem valor/vencimento — o
+    // classificador de comprovante decide.
   }
 
 
