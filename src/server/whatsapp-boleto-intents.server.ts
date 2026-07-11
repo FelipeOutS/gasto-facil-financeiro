@@ -29,6 +29,7 @@ import {
   detectBoletoFromText,
   type BoletoParsed,
 } from "./whatsapp-boleto-parser";
+import { formatBancoEmissor } from "./whatsapp-boleto-banco";
 
 // Live-binding para permitir mock.module() em testes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
