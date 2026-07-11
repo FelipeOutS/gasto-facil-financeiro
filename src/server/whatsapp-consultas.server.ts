@@ -1032,10 +1032,24 @@ async function handleOrcamentoMes(userId: string): Promise<ConsultaResult> {
 }
 
 
-async function handleListarGastosMes(userId: string): Promise<ConsultaResult> {
+async function handleListarGastosMes(
+  userId: string,
+  params?: ConsultaParams,
+): Promise<ConsultaResult> {
   const hoje = todayLocalISO();
-  const from = monthStartISO(hoje);
-  const to = addDaysISO(hoje, 1);
+  let from: string;
+  let to: string;
+  let mesTitulo: string;
+  if (params?.month && params?.year) {
+    const win = _janelaMes(params.month, params.year);
+    from = win.from;
+    to = win.to;
+    mesTitulo = `${_mesLabel(params.month)} de ${params.year}`;
+  } else {
+    from = monthStartISO(hoje);
+    to = addDaysISO(hoje, 1);
+    mesTitulo = mesPorExtenso(hoje);
+  }
   const [gastos, catMap] = await Promise.all([
     loadGastos(userId, from, to),
     loadCategoriasMap(userId),
@@ -1051,7 +1065,7 @@ async function handleListarGastosMes(userId: string): Promise<ConsultaResult> {
   return {
     status: "consulta",
     resposta: M.consulta.listarGastosMes({
-      mes: mesPorExtenso(hoje),
+      mes: mesTitulo,
       itens,
       total: formatBRL(total),
       totalRegistros: ordenados.length,
