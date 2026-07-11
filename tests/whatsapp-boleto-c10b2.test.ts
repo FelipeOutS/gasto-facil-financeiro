@@ -185,19 +185,17 @@ describe("WA-C10.b.2 — pipeline PDF FlateDecode", () => {
 
 describe("WA-C10.b.2 — rate limit fail-closed em OCR de boleto", () => {
   // Mock supabaseAdmin que sempre falha. Importa AFTER outras importações.
+  // WA-C8.2: o helper agora usa `.rpc('rate_limit_hit', ...)`.
+  // Stubamos `.rpc` (para o gate) e `.from` (para o audit log), mantendo o
+  // resto do supabaseAdmin intacto.
   it("checkRateLimit marca dbError:true quando DB lança", async () => {
-    // Substitui supabaseAdmin globalmente via mock.module? O fake já controla.
-    // Aqui validamos o contrato: dbError=true em erro.
-    // Forçamos uma key com formato inválido se possível, mas mais simples:
-    // criamos chamada com count que falha — usamos preset count via state.
-    // O fake não força throw — então testamos o caminho indireto via enforceUserRateLimit
-    // injetando supabaseAdmin que joga.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const originalFrom = supabaseAdmin.from;
+    const originalRpc = supabaseAdmin.rpc;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabaseAdmin as any).from = () => {
-      throw new Error("db unavailable");
-    };
+    (supabaseAdmin as any).rpc = async () => ({
+      data: null,
+      error: { message: "db unavailable" },
+    });
     try {
       const result = await checkRateLimit({
         key: "test:fail-closed",
@@ -209,17 +207,18 @@ describe("WA-C10.b.2 — rate limit fail-closed em OCR de boleto", () => {
       expect(result.blocked).toBe(false);
     } finally {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabaseAdmin as any).from = originalFrom;
+      (supabaseAdmin as any).rpc = originalRpc;
     }
   });
 
   it("enforceUserRateLimit failMode='closed' retorna 429 quando DB falha", async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const originalFrom = supabaseAdmin.from;
+    const originalRpc = supabaseAdmin.rpc;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabaseAdmin as any).from = () => {
-      throw new Error("db unavailable");
-    };
+    (supabaseAdmin as any).rpc = async () => ({
+      data: null,
+      error: { message: "db unavailable" },
+    });
     try {
       const resp = await enforceUserRateLimit({
         scope: "whatsappBoletoOcr",
@@ -231,17 +230,18 @@ describe("WA-C10.b.2 — rate limit fail-closed em OCR de boleto", () => {
       expect(resp!.status).toBe(429);
     } finally {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabaseAdmin as any).from = originalFrom;
+      (supabaseAdmin as any).rpc = originalRpc;
     }
   });
 
   it("enforceUserRateLimit failMode default ('open') NÃO bloqueia quando DB falha", async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const originalFrom = supabaseAdmin.from;
+    const originalRpc = supabaseAdmin.rpc;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabaseAdmin as any).from = () => {
-      throw new Error("db unavailable");
-    };
+    (supabaseAdmin as any).rpc = async () => ({
+      data: null,
+      error: { message: "db unavailable" },
+    });
     try {
       const resp = await enforceUserRateLimit({
         scope: "ai",
@@ -251,7 +251,7 @@ describe("WA-C10.b.2 — rate limit fail-closed em OCR de boleto", () => {
       expect(resp).toBeNull();
     } finally {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabaseAdmin as any).from = originalFrom;
+      (supabaseAdmin as any).rpc = originalRpc;
     }
   });
 
@@ -265,13 +265,13 @@ describe("WA-C10.b.2 — rate limit fail-closed em OCR de boleto", () => {
       extractorCalls++;
       return { candidatos: [], valorCentavos: null, vencimentoISO: null, identificacao: null };
     });
-    const originalFrom = supabaseAdmin.from;
+    const originalRpc = supabaseAdmin.rpc;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const realFrom = originalFrom.bind(supabaseAdmin);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabaseAdmin as any).from = (table: string) => {
-      if (table === "rate_limit_events") throw new Error("db unavailable");
-      return realFrom(table);
+    (supabaseAdmin as any).rpc = async (name: string) => {
+      if (name === "rate_limit_hit") {
+        return { data: null, error: { message: "db unavailable" } };
+      }
+      return { data: null, error: null };
     };
     try {
       const out = await processarMensagemWhatsApp(
@@ -281,7 +281,7 @@ describe("WA-C10.b.2 — rate limit fail-closed em OCR de boleto", () => {
       expect(out.status).toBe("erro");
     } finally {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabaseAdmin as any).from = originalFrom;
+      (supabaseAdmin as any).rpc = originalRpc;
     }
   });
 });
