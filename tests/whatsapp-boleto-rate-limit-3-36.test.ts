@@ -215,14 +215,10 @@ describe("WA-3.36 — boleto OCR rate limit (fail-closed, 10/h por usuário)", (
     expect(blocked).toBe(5);
   });
 
-  it("[observação P1 — WA-C8.2] concorrência pura expõe race count-then-insert", async () => {
-    // Este teste NÃO reprova o gate: documenta que, sob 20 chamadas
-    // estritamente simultâneas para o MESMO usuário, o padrão atual
-    // (contar → inserir) pode autorizar mais que 10 porque todas as
-    // leituras enxergam o mesmo count antes dos inserts persistirem.
-    // No fluxo real do webhook WhatsApp isso não ocorre (mensagens do
-    // mesmo usuário são serializadas). Registrado como pendência P1
-    // para endurecer com contador atômico antes do envio real.
+  it("[WA-C8.2 corrigido] concorrência pura: 20 paralelas → exatamente 10 permitidas", async () => {
+    // Após WA-C8.2, o gate usa `rate_limit_hit` (advisory lock por chave).
+    // Sob 20 chamadas estritamente simultâneas para o MESMO usuário, o
+    // resultado é determinístico: exatamente 10 permitidas e 10 bloqueadas.
     const userId = "user-D2";
     const results = await Promise.all(
       Array.from({ length: 20 }, () =>
@@ -236,9 +232,9 @@ describe("WA-3.36 — boleto OCR rate limit (fail-closed, 10/h por usuário)", (
     );
     const allowed = results.filter((r) => r === null).length;
     const blocked = results.filter((r) => r && r.status === 429).length;
-    expect(allowed + blocked).toBe(20);
-    // Após a rajada, a próxima chamada (serializada) tem que estar
-    // bloqueada — o estado convergiu mesmo com a race.
+    expect(allowed).toBe(10);
+    expect(blocked).toBe(10);
+    // Próxima chamada continua bloqueada.
     const next = await enforceUserRateLimit({
       scope: "whatsappBoletoOcr",
       userId,
