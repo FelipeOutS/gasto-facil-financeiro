@@ -90,11 +90,14 @@ describe("WA-C2 — detectFrequencia / parsePayableAccountMessage", () => {
     expect(d.dataVencimento).toMatch(/^2026-(06|07)-10$/);
   });
 
-  it("conta única com data passada e sem 'todo mês': pede confirmação (dia_somente)", () => {
+  it("conta única com data passada e sem 'todo mês': resolve próxima ocorrência (WA-3.28)", () => {
+    // WA-3.28 — `resolveNextOccurrence` avança "dia 1" já passado no mês
+    // corrente para o dia 1 do próximo mês. `diaInformado` fica null
+    // porque a data já foi resolvida; `dataVencimento` traz a data
+    // absoluta (nunca no passado). Fixed clock: 15/jul/2026 → 01/ago/2026.
     const d = parsePayableAccountMessage("Conta de luz de 180 vence dia 1", new Date(2026, 6, 15));
-    // como "dia 1" não tem mês explícito e não é recorrente, retorna diaInformado
-    expect(d.diaInformado).toBe(1);
-    expect(d.dataVencimento).toBe(null);
+    expect(d.diaInformado).toBe(null);
+    expect(d.dataVencimento).toBe("2026-08-01");
   });
 
   it("ignora cadastros sem valor (deixa para handler perguntar)", () => {
@@ -178,11 +181,24 @@ describe("WA-C2 — fluxo completo (texto)", () => {
     expect(out1.resposta).toMatch(/data de vencimento/i);
   });
 
-  it("data passada sem 'todo mês': pergunta o mês explícito", async () => {
-    // "dia 1" sem recorrência → deve pedir confirmação do mês.
+  it("'dia N' já passado no mês: abre prévia direta na próxima ocorrência (WA-3.28)", async () => {
+    // WA-3.28 — o comando "vence dia N" nunca deve produzir data no
+    // passado nem exigir pergunta de mês. O fluxo abre prévia direta
+    // com a próxima ocorrência válida (America/Sao_Paulo).
     const out1 = await processarMensagemWhatsApp(msg("Cadastrar conta de luz de 180 reais dia 1"));
-    expect(out1.resposta).toMatch(/dia 1/i);
-    expect(out1.resposta).toMatch(/qual m[eê]s/i);
+    expect(out1.resposta).toContain("Confere pra mim?");
+    expect(out1.resposta).toMatch(/Recorrência:\s+Única/i);
+    // Data resolvida deve ser futura (nunca no passado).
+    const match = out1.resposta.match(/Vencimento:\s*(\d{2})\/(\d{2})\/(\d{4})/);
+    expect(match).not.toBeNull();
+    if (match) {
+      const [_, dd, mm, yyyy] = match;
+      const iso = `${yyyy}-${mm}-${dd}`;
+      expect(iso >= new Date().toISOString().slice(0, 10)).toBe(true);
+      expect(dd).toBe("01");
+    }
+    // Não pergunta mês.
+    expect(out1.resposta).not.toMatch(/qual m[eê]s/i);
     expect(state.contasData.length).toBe(0);
   });
 

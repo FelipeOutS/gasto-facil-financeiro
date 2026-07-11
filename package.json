@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test:unit": "bun tests/free-ads-plan.test.ts && bun tests/whatsapp-flow.test.ts && bun test tests/whatsapp-pipeline.test.ts tests/whatsapp-session.test.ts",
+    "test:unit": "bun tests/free-ads-plan.test.ts && bun test tests/whatsapp-flow.test.ts && bun test tests/whatsapp-pipeline.test.ts tests/whatsapp-session.test.ts",
     "test:whatsapp": "bun scripts/test-whatsapp.mjs",
     "test:whatsapp:ci": "bun scripts/test-whatsapp.mjs",
     "test:e2e": "playwright test",
