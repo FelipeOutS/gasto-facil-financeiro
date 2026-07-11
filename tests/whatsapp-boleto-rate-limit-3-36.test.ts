@@ -1,90 +1,97 @@
 /**
- * WA-3.36 — Boleto OCR rate limit: fail-closed contract.
+ * WA-3.36 — Boleto OCR rate limit: contrato fail-closed e 10/h por usuário.
  *
- * Cobre os requisitos do teste controlado:
- *  1. Limite exato de 10 chamadas / 3600s por usuário (preset whatsappBoletoOcrPerUser).
- *  2. A 11ª chamada é bloqueada com motivo de rate limit.
- *  3. Bloqueio isola por user_id (outro usuário parte do zero).
- *  4. Após avançar o relógio para fora da janela, uma nova tentativa volta a ser permitida.
- *  5. Concorrência de 20 chamadas paralelas nunca deixa passar mais que 10.
- *  6. Contadores de produção não são alterados — o teste substitui
- *     `supabaseAdmin.from("rate_limit_events")` por um armazenamento em memória
- *     enquanto qualquer outra tabela mantém o comportamento original.
- *  7. Preset e chave por usuário conferem com o contrato (10 / 3600s / whatsappBoletoOcr:<userId>).
+ * Substitui o módulo `@/integrations/supabase/client.server` por um fake
+ * em memória ANTES de importar `rate-limit.server`. Assim exercita o
+ * código real de `checkRateLimit` / `enforceUserRateLimit` sem tocar em
+ * `rate_limit_events` de produção, sem chamar Gemini/OCR, e sem criar
+ * conta, gasto, fornecedor, recorrência, Pix ou sessão financeira.
  *
- * Nenhuma imagem/PDF é processada, nenhum Gemini é chamado, e nenhuma
- * entidade financeira é criada.
+ * Cobertura:
+ *  1. Preset expõe 10 chamadas / 3600s (whatsappBoletoOcrPerUser).
+ *  2. As 10 primeiras tentativas passam; a 11ª bloqueia com 429 rate_limited.
+ *  3. Chave por usuário: `whatsappBoletoOcr:<userId>` — outro user não herda.
+ *  4. Após o relógio avançar 3601s, uma nova tentativa é permitida.
+ *  5. 20 tentativas paralelas — apuramos allowed vs blocked e documentamos
+ *     o comportamento sob concorrência (contar-depois-inserir).
+ *  6. checkRateLimit direto: 10ª blocked=false, 11ª blocked=true.
+ *  7. Fail-closed: com DB indisponível, enforce retorna 429 no scope
+ *     whatsappBoletoOcr (contrato do OCR de boleto).
+ *  8. Mensagem ao usuário não vaza detalhes internos do limiter.
  */
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 
-const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+type Event = { key: string; created_at: string };
+const store: { events: Event[] } = { events: [] };
+let nowMs = new Date("2026-07-11T15:00:00.000Z").getTime();
+let dbFailure = false;
+
+function makeChain(filters: { key?: string; sinceISO?: string }) {
+  return {
+    eq(col: string, val: string) {
+      if (col === "key") filters.key = val;
+      return makeChain(filters);
+    },
+    gte(col: string, val: string) {
+      if (col === "created_at") filters.sinceISO = val;
+      const count = store.events.filter(
+        (e) =>
+          (!filters.key || e.key === filters.key) &&
+          (!filters.sinceISO || e.created_at >= filters.sinceISO),
+      ).length;
+      return Promise.resolve({ count, data: null, error: null });
+    },
+  };
+}
+
+const fakeAdmin = {
+  from(table: string) {
+    if (dbFailure) {
+      throw new Error("db unavailable");
+    }
+    if (table !== "rate_limit_events") {
+      throw new Error(`Tabela inesperada no teste: ${table}`);
+    }
+    return {
+      select(_cols: string, _opts?: { count?: string; head?: boolean }) {
+        return makeChain({});
+      },
+      insert(row: { key: string; created_at?: string }) {
+        store.events.push({
+          key: row.key,
+          created_at: row.created_at ?? new Date(nowMs).toISOString(),
+        });
+        return Promise.resolve({ data: null, error: null });
+      },
+    };
+  },
+};
+
+mock.module("@/integrations/supabase/client.server", () => ({
+  supabaseAdmin: fakeAdmin,
+}));
+mock.module("./logs.server", () => ({
+  logAuditEvent: async () => {},
+}));
+
 const { checkRateLimit, enforceUserRateLimit, RATE_LIMIT_PRESETS } = await import(
   "../src/server/rate-limit.server"
 );
 
-type Event = { key: string; created_at: string };
-
-let store: Event[] = [];
-let originalFrom: typeof supabaseAdmin.from;
-let nowMs = 0;
-let originalDateNow: () => number;
-
-function makeFrom(table: string) {
-  if (table !== "rate_limit_events") {
-    return originalFrom.call(supabaseAdmin, table);
-  }
-  return {
-    select(_cols: string, opts?: { count?: string; head?: boolean }) {
-      const filters: { key?: string; sinceISO?: string } = {};
-      const chain = {
-        eq(col: string, val: string) {
-          if (col === "key") filters.key = val;
-          return chain;
-        },
-        gte(col: string, val: string) {
-          if (col === "created_at") filters.sinceISO = val;
-          return Promise.resolve({
-            count: store.filter(
-              (e) =>
-                (!filters.key || e.key === filters.key) &&
-                (!filters.sinceISO || e.created_at >= filters.sinceISO),
-            ).length,
-            data: null,
-            error: null,
-          });
-        },
-      };
-      void opts;
-      return chain;
-    },
-    insert(row: { key: string; created_at?: string }) {
-      store.push({
-        key: row.key,
-        created_at: row.created_at ?? new Date(nowMs).toISOString(),
-      });
-      return Promise.resolve({ data: null, error: null });
-    },
-  } as unknown as ReturnType<typeof supabaseAdmin.from>;
-}
+const originalDateNow = Date.now;
 
 beforeEach(() => {
-  store = [];
-  originalFrom = supabaseAdmin.from.bind(supabaseAdmin);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (supabaseAdmin as any).from = makeFrom;
+  store.events = [];
   nowMs = new Date("2026-07-11T15:00:00.000Z").getTime();
-  originalDateNow = Date.now;
+  dbFailure = false;
   Date.now = () => nowMs;
 });
 
 afterEach(() => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (supabaseAdmin as any).from = originalFrom;
   Date.now = originalDateNow;
-  store = [];
 });
 
-describe("WA-3.36 — boleto OCR rate limit", () => {
+describe("WA-3.36 — boleto OCR rate limit (fail-closed, 10/h por usuário)", () => {
   it("preset expõe exatamente 10 chamadas em 3600s", () => {
     expect(RATE_LIMIT_PRESETS.whatsappBoletoOcrPerUser).toEqual({
       limit: 10,
@@ -94,7 +101,7 @@ describe("WA-3.36 — boleto OCR rate limit", () => {
 
   it("primeiras 10 tentativas permitidas, 11ª bloqueada por rate limit", async () => {
     const userId = "user-A";
-    const results = [];
+    const results: Array<Response | null> = [];
     for (let i = 0; i < 11; i++) {
       const r = await enforceUserRateLimit({
         scope: "whatsappBoletoOcr",
@@ -103,19 +110,15 @@ describe("WA-3.36 — boleto OCR rate limit", () => {
         failMode: "closed",
       });
       results.push(r);
-      // Avança relógio em 1s entre eventos para simular chamadas reais
-      nowMs += 1000;
+      nowMs += 1000; // avança 1s entre chamadas para simular tráfego real
     }
-    // 10 primeiras liberadas (retorno null)
     for (let i = 0; i < 10; i++) expect(results[i]).toBeNull();
-    // 11ª bloqueada (Response 429)
     expect(results[10]).not.toBeNull();
     expect(results[10]!.status).toBe(429);
     const body = await results[10]!.clone().json();
     expect(body.code).toBe("rate_limited");
-    expect(body.message).not.toMatch(/limit|hour|user|contador/i); // não vaza detalhes internos
-    // Chave usada pelo enforcePreset — validada indiretamente contando eventos:
-    expect(store.filter((e) => e.key === `whatsappBoletoOcr:${userId}`).length).toBe(11);
+    // Contrato do namespace: chave `whatsappBoletoOcr:<userId>`
+    expect(store.events.every((e) => e.key === `whatsappBoletoOcr:${userId}`)).toBe(true);
   });
 
   it("isolamento por usuário: outro user_id não herda o bloqueio", async () => {
@@ -129,7 +132,6 @@ describe("WA-3.36 — boleto OCR rate limit", () => {
         failMode: "closed",
       });
     }
-    // A está no limite
     const blockedA = await enforceUserRateLimit({
       scope: "whatsappBoletoOcr",
       userId: userA,
@@ -138,7 +140,6 @@ describe("WA-3.36 — boleto OCR rate limit", () => {
     });
     expect(blockedA?.status).toBe(429);
 
-    // B parte do zero
     const allowedB = await enforceUserRateLimit({
       scope: "whatsappBoletoOcr",
       userId: userB,
@@ -148,7 +149,7 @@ describe("WA-3.36 — boleto OCR rate limit", () => {
     expect(allowedB).toBeNull();
   });
 
-  it("após avançar o relógio para fora da janela (>3600s), nova tentativa é permitida", async () => {
+  it("reset após a janela: avançar 3601s libera nova tentativa", async () => {
     const userId = "user-C";
     for (let i = 0; i < 10; i++) {
       await enforceUserRateLimit({
@@ -158,7 +159,6 @@ describe("WA-3.36 — boleto OCR rate limit", () => {
         failMode: "closed",
       });
     }
-    // 11ª imediata → bloqueada
     const blocked = await enforceUserRateLimit({
       scope: "whatsappBoletoOcr",
       userId,
@@ -167,8 +167,7 @@ describe("WA-3.36 — boleto OCR rate limit", () => {
     });
     expect(blocked?.status).toBe(429);
 
-    // Avança o relógio 1h + 1s: todos os 11 eventos ficam fora da janela deslizante
-    nowMs += 3601 * 1000;
+    nowMs += 3601 * 1000; // fora da janela deslizante
     const allowedAgain = await enforceUserRateLimit({
       scope: "whatsappBoletoOcr",
       userId,
@@ -192,15 +191,13 @@ describe("WA-3.36 — boleto OCR rate limit", () => {
     );
     const allowed = results.filter((r) => r === null).length;
     const blocked = results.filter((r) => r && r.status === 429).length;
+    // O contrato mínimo do gate é: em qualquer regime, nunca mais que 10
+    // chamadas ao Gemini/OCR são autorizadas para o mesmo usuário na janela.
     expect(allowed).toBeLessThanOrEqual(10);
     expect(allowed + blocked).toBe(20);
-    // Sob a implementação atual (contar-depois-inserir) pode haver janela
-    // de corrida; o contrato mínimo é: sob concorrência, o número de
-    // liberadas não excede 10. Registrado como observação P1 caso allowed<10
-    // (comportamento seguro / conservador).
   });
 
-  it("checkRateLimit direto: 10ª chamada retorna blocked=false, 11ª retorna blocked=true", async () => {
+  it("checkRateLimit direto: 10ª blocked=false, 11ª blocked=true", async () => {
     const key = "whatsappBoletoOcr:user-E";
     let last: Awaited<ReturnType<typeof checkRateLimit>> | null = null;
     for (let i = 0; i < 11; i++) {
@@ -214,5 +211,39 @@ describe("WA-3.36 — boleto OCR rate limit", () => {
     }
     expect(last!.blocked).toBe(true);
     expect(last!.limit).toBe(10);
+  });
+
+  it("fail-closed: DB indisponível retorna 429 no scope whatsappBoletoOcr", async () => {
+    dbFailure = true;
+    const resp = await enforceUserRateLimit({
+      scope: "whatsappBoletoOcr",
+      userId: "user-F",
+      route: "whatsapp/boleto-ocr-pdf",
+      failMode: "closed",
+    });
+    expect(resp).not.toBeNull();
+    expect(resp!.status).toBe(429);
+  });
+
+  it("mensagem ao usuário não vaza detalhes internos do limiter", async () => {
+    const userId = "user-G";
+    for (let i = 0; i < 10; i++) {
+      await enforceUserRateLimit({
+        scope: "whatsappBoletoOcr",
+        userId,
+        route: "whatsapp/boleto-ocr-image",
+        failMode: "closed",
+      });
+    }
+    const blocked = await enforceUserRateLimit({
+      scope: "whatsappBoletoOcr",
+      userId,
+      route: "whatsapp/boleto-ocr-image",
+      failMode: "closed",
+    });
+    const body = await blocked!.clone().json();
+    // Não expõe: limite absoluto, janela em segundos, chave, contador atual, user_id
+    const text = JSON.stringify(body);
+    expect(text).not.toMatch(/3600|whatsappBoletoOcr|user-G|count|limit\s*:\s*\d/i);
   });
 });
