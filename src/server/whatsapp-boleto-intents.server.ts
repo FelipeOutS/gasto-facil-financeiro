@@ -592,6 +592,7 @@ async function persistir(args: {
     forma_pagamento: "boleto" as const,
     fornecedor_id: null,
     codigo_boleto: session.codigoBarras,
+    banco_emissor: formatBancoEmissor(session.banco),
     created_at: nowIso,
     updated_at: nowIso,
   } as Record<string, unknown>;
