@@ -121,6 +121,8 @@ mock.module("@/server/whatsapp.server", () => ({
   sendWhatsAppReply: async (telefone: string, texto: string) => {
     fakeState.calls.sendWhatsAppReply.push({ telefone, texto });
   },
+  // WA-B6 — stub seguro; nunca chama rede real.
+  sendWhatsAppInteractiveCtaUrl: async () => ({ ok: true, status: 200 }),
 }));
 
 mock.module("@/server/whatsapp-authz.server", () => ({
