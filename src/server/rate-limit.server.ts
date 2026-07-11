@@ -100,10 +100,10 @@ export async function checkRateLimit(
       _route: truncate(route, 255) ?? route,
       _limit: limit,
       _window_seconds: windowSeconds,
-      _ip_address: truncate(options.ip_address ?? null, 64),
-      _user_id: options.user_id ?? null,
-      _user_agent: truncate(options.user_agent ?? null, 512),
-      _method: truncate(options.method ?? null, 16),
+      _ip_address: truncate(options.ip_address ?? null, 64) ?? undefined,
+      _user_id: options.user_id ?? undefined,
+      _user_agent: truncate(options.user_agent ?? null, 512) ?? undefined,
+      _method: truncate(options.method ?? null, 16) ?? undefined,
     });
 
     if (error) {
