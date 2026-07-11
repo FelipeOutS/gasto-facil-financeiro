@@ -90,11 +90,14 @@ describe("WA-C2 — detectFrequencia / parsePayableAccountMessage", () => {
     expect(d.dataVencimento).toMatch(/^2026-(06|07)-10$/);
   });
 
-  it("conta única com data passada e sem 'todo mês': pede confirmação (dia_somente)", () => {
+  it("conta única com data passada e sem 'todo mês': resolve próxima ocorrência (WA-3.28)", () => {
+    // WA-3.28 — `resolveNextOccurrence` avança "dia 1" já passado no mês
+    // corrente para o dia 1 do próximo mês. `diaInformado` fica null
+    // porque a data já foi resolvida; `dataVencimento` traz a data
+    // absoluta (nunca no passado). Fixed clock: 15/jul/2026 → 01/ago/2026.
     const d = parsePayableAccountMessage("Conta de luz de 180 vence dia 1", new Date(2026, 6, 15));
-    // como "dia 1" não tem mês explícito e não é recorrente, retorna diaInformado
-    expect(d.diaInformado).toBe(1);
-    expect(d.dataVencimento).toBe(null);
+    expect(d.diaInformado).toBe(null);
+    expect(d.dataVencimento).toBe("2026-08-01");
   });
 
   it("ignora cadastros sem valor (deixa para handler perguntar)", () => {
