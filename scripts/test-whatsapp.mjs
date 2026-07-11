@@ -90,6 +90,20 @@ const INCLUDE = [
   "whatsapp-boleto-c10b-integration.test.ts",
   "whatsapp-boleto-c10b-hardening.test.ts",
   "whatsapp-boleto-c10b2.test.ts",
+
+  // WA-3.x — arquivos novos das sessões pós-smoke (WA-B5 update).
+  // Ordem determinística preservada; guard WA-B5 mantido.
+  "whatsapp-baixa-conta-atomic-3-30.test.ts",
+  "whatsapp-contas-vencimento-dia-n.test.ts",
+  "whatsapp-pix-3-25.test.ts",
+  "whatsapp-pix-3-26.test.ts",
+  "whatsapp-pix-consultar-favorecido.test.ts",
+  "whatsapp-webhook-replay-3-27.test.ts",
+  "whatsapp-contas-adiar-3-31.test.ts",
+  "whatsapp-boleto-rate-limit-3-36.test.ts",
+  "whatsapp-lembrete-interativo-3-38.test.ts",
+  "whatsapp-boleto-wa-c10-3.test.ts",
+
   "free-ads-plan.test.ts",
 ];
 
