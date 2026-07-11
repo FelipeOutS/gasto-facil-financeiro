@@ -142,6 +142,13 @@ const PERIODO_SUFFIXES = [
 ];
 function stripPeriodoSuffix(raw: string): string {
   let s = raw.trim();
+  // 1) Remove sufixos com nome de mês (com ou sem ano): "em julho",
+  //    "no mês de julho", "de julho de 2026" etc. Só age quando o
+  //    período aparece como sufixo introduzido por preposição — nomes
+  //    de mês no meio de descrições legítimas ficam intocados.
+  const { termo, periodo } = extractPeriodoSuffix(s);
+  if (periodo) s = termo;
+  // 2) Sufixos temporais fixos ("este mês", "hoje" etc.).
   for (const suf of PERIODO_SUFFIXES) {
     const n = norm(s);
     const nsuf = norm(suf);
