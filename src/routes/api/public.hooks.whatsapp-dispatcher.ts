@@ -72,6 +72,7 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
         const summary = {
           considered: due.length,
           skipped: 0,
+          rescheduled_quiet_hours: 0,
           would_send: 0,
           dispatch_enabled: dispatchEnabled,
         };
