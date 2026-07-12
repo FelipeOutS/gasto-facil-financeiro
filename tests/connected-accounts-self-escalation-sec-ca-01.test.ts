@@ -118,17 +118,14 @@ describe.skipIf(!hasDb)("WA-SEC-CA-01 — connected_accounts hardening", () => {
     expect(r.stderr.toLowerCase()).toContain("viewers can only set status to removed".toLowerCase());
   });
 
-  it("terceiro sem vínculo não afeta linha (RLS bloqueia — 0 rows)", () => {
+  it("terceiro sem vínculo cai no ramo invitee do trigger e é bloqueado", () => {
     const id = randomUUID();
     const r = runCase(`
       ${seed("accepted", { rowId: id, viewer: VIEWER, owner: OWNER, email: EMAIL })}
       ${jwtSet(THIRD)}
-      UPDATE public.connected_accounts SET nickname='hijack-attempt' WHERE id='${id}'::uuid;
-      RESET ROLE;
-      SELECT nickname FROM public.connected_accounts WHERE id='${id}'::uuid;
+      UPDATE public.connected_accounts SET access_level='admin' WHERE id='${id}'::uuid;
     `);
-    // Após rollback do UPDATE via RLS (0 rows), nickname permanece NULL.
-    expect(r.stdout).not.toContain("hijack-attempt");
+    expect(r.stderr.toLowerCase()).toContain("invitees cannot change access_level".toLowerCase());
   });
 
   it("invitee-por-email pode transicionar pending -> accepted", () => {
