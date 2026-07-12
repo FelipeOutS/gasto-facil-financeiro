@@ -412,7 +412,7 @@ describe("WA-C8.1 :: rescheduleForQuietHours (persistência)", () => {
     expect(claimed).not.toBeNull();
 
     const nextAt = new Date("2026-06-28T10:00:00Z");
-    const res = await rescheduleForQuietHours(row!.id, nextAt, {
+    const res = await rescheduleForQuietHours(row!.id, nextAt, null, {
       client: fake.client,
     });
     expect(res.ok).toBe(true);
@@ -432,7 +432,7 @@ describe("WA-C8.1 :: rescheduleForQuietHours (persistência)", () => {
 
   it("status pending → resultado = state_changed (não é erro)", async () => {
     const row = await enqueueNotification(baseEnqueue, { client: fake.client });
-    const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), {
+    const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), null, {
       client: fake.client,
     });
     expect(res.ok).toBe(false);
@@ -450,7 +450,7 @@ describe("WA-C8.1 :: rescheduleForQuietHours (persistência)", () => {
         client: fake.client,
       });
       (fake.tables.whatsapp_notifications[0] as Row).status = term;
-      const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), {
+      const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), null, {
         client: fake.client,
       });
       expect(res.ok).toBe(false);
@@ -464,10 +464,10 @@ describe("WA-C8.1 :: rescheduleForQuietHours (persistência)", () => {
     const row = await enqueueNotification(baseEnqueue, { client: fake.client });
     await claimForProcessing(row!.id, { client: fake.client });
     const nextAt = new Date("2026-06-28T10:00:00Z");
-    const a = await rescheduleForQuietHours(row!.id, nextAt, {
+    const a = await rescheduleForQuietHours(row!.id, nextAt, null, {
       client: fake.client,
     });
-    const b = await rescheduleForQuietHours(row!.id, nextAt, {
+    const b = await rescheduleForQuietHours(row!.id, nextAt, null, {
       client: fake.client,
     });
     expect(a.ok).toBe(true);
@@ -484,7 +484,7 @@ describe("WA-C8.1 :: rescheduleForQuietHours (persistência)", () => {
     ).toISOString();
     await claimForProcessing(row!.id, { client: fake.client });
     const nextAt = new Date("2026-06-28T10:00:00Z");
-    const res = await rescheduleForQuietHours(row!.id, nextAt, {
+    const res = await rescheduleForQuietHours(row!.id, nextAt, null, {
       client: fake.client,
     });
     expect(res.ok).toBe(true);
@@ -515,7 +515,7 @@ describe("WA-C8.1 :: erro de banco no UPDATE", () => {
       code: "PGRST000",
       message: "connection reset",
     });
-    const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), {
+    const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), null, {
       client: fake.client,
     });
     expect(res.ok).toBe(false);
@@ -530,7 +530,7 @@ describe("WA-C8.1 :: erro de banco no UPDATE", () => {
   it("UPDATE sem erro + zero linhas afetadas → state_changed (não error)", async () => {
     const row = await enqueueNotification(baseEnqueue, { client: fake.client });
     // Sem claim: status permanece pending → filtro falha, 0 linhas, sem erro.
-    const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), {
+    const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), null, {
       client: fake.client,
     });
     expect(res.ok).toBe(false);
@@ -546,13 +546,13 @@ describe("WA-C8.1 :: erro de banco no UPDATE", () => {
       code: "PGRST000",
       message: "boom",
     });
-    const r1 = await rescheduleForQuietHours(row!.id, nextAt, {
+    const r1 = await rescheduleForQuietHours(row!.id, nextAt, null, {
       client: fake.client,
     });
     expect(r1.ok).toBe(false);
     if (!r1.ok) expect(r1.status).toBe("error");
     // Recovery preserva filtro processing → sucesso.
-    const r2 = await recoverStuckReschedule(row!.id, nextAt, {
+    const r2 = await recoverStuckReschedule(row!.id, nextAt, null, {
       client: fake.client,
     });
     expect(r2.ok).toBe(true);
@@ -570,12 +570,12 @@ describe("WA-C8.1 :: erro de banco no UPDATE", () => {
     await claimForProcessing(row!.id, { client: fake.client });
     const nextAt = new Date("2026-06-28T10:00:00Z");
     fake.injectUpdateError("whatsapp_notifications", { code: "1", message: "a" });
-    const r1 = await rescheduleForQuietHours(row!.id, nextAt, {
+    const r1 = await rescheduleForQuietHours(row!.id, nextAt, null, {
       client: fake.client,
     });
     expect(r1.ok).toBe(false);
     fake.injectUpdateError("whatsapp_notifications", { code: "2", message: "b" });
-    const r2 = await recoverStuckReschedule(row!.id, nextAt, {
+    const r2 = await recoverStuckReschedule(row!.id, nextAt, null, {
       client: fake.client,
     });
     expect(r2.ok).toBe(false);
@@ -593,13 +593,13 @@ describe("WA-C8.1 :: erro de banco no UPDATE", () => {
     await claimForProcessing(row!.id, { client: fake.client });
     const nextAt = new Date("2026-06-28T10:00:00Z");
     fake.injectUpdateError("whatsapp_notifications", { code: "x", message: "y" });
-    const r1 = await rescheduleForQuietHours(row!.id, nextAt, {
+    const r1 = await rescheduleForQuietHours(row!.id, nextAt, null, {
       client: fake.client,
     });
     expect(r1.ok).toBe(false);
     // Nesse intervalo, o pagamento cancela a notificação.
     (fake.tables.whatsapp_notifications[0] as Row).status = "cancelled";
-    const r2 = await recoverStuckReschedule(row!.id, nextAt, {
+    const r2 = await recoverStuckReschedule(row!.id, nextAt, null, {
       client: fake.client,
     });
     expect(r2.ok).toBe(false);
