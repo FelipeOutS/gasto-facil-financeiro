@@ -203,10 +203,9 @@ function fakeClient(initial?: {
       if (!valid) {
         return { data: [{ outcome: "state_changed", attempt_id: null }], error: null };
       }
-      // UNIQUE (notification_id, claim_token)
-      if (attempts.some((a) => a.notification_id === nid && a.claim_token === ctok)) {
-        return { data: [{ outcome: "active_attempt_exists", attempt_id: null }], error: null };
-      }
+      // Ordem espelha a RPC de produção: primeiro checa "ativos"
+      // (planned/sending/ambiguous) — ambiguous vira quarantined —,
+      // depois cai no INSERT que valida UNIQUE (notification_id, claim_token).
       const existing = attempts.find(
         (a) => a.notification_id === nid && ACTIVE.includes(a.attempt_status as AttemptStatus),
       );
@@ -221,6 +220,9 @@ function fakeClient(initial?: {
           ],
           error: null,
         };
+      }
+      if (attempts.some((a) => a.notification_id === nid && a.claim_token === ctok)) {
+        return { data: [{ outcome: "active_attempt_exists", attempt_id: null }], error: null };
       }
       const inserted = {
         id: `att-${attempts.length + 1}`,
