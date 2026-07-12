@@ -125,7 +125,7 @@ describe.skipIf(!hasDb)("WA-SEC-CA-01B — policy viewer bloqueia antes do trigg
       SELECT tgenabled::text FROM pg_trigger t
         JOIN pg_class c ON c.oid = t.tgrelid
        WHERE c.relname='connected_accounts'
-         AND t.tgname LIKE '%prevent_invitee_escalation%'
+         AND t.tgname='connected_accounts_prevent_escalation'
          AND NOT t.tgisinternal;
     `);
     // 'O' (origin) ou 'A' (always) contam como habilitado; 'D' seria disabled.
@@ -133,21 +133,22 @@ describe.skipIf(!hasDb)("WA-SEC-CA-01B — policy viewer bloqueia antes do trigg
   });
 
   it("função lógica: viewer que NÃO é dono do row recebe false (sem oracle)", () => {
-    // Simula um caller autenticado como um UUID aleatório que não é viewer de
-    // nenhuma linha existente e verifica que a função retorna false. Executa
-    // dentro de transação com ROLLBACK para não deixar resíduo.
-    const out = psql(`
-      BEGIN;
-      SET LOCAL "request.jwt.claims" TO '{"sub":"00000000-0000-0000-0000-0000000000aa","role":"authenticated"}';
-      SELECT public.connected_accounts_viewer_update_allowed(
-        gen_random_uuid(),
-        'accepted'::public.connected_account_status,
-        'admin'::public.connected_account_access,
-        NULL, NULL, 'x@x', 'tok', now(), now(), now()
-      );
-      ROLLBACK;
-    `);
-    expect(out).toContain("f");
+    // Caller autenticado com UUID aleatório que não é viewer de nenhuma linha
+    // — a função precisa devolver false, não vazar dados. Executado em uma
+    // única transação via stdin para preservar SET LOCAL.
+    const script =
+      `BEGIN;\n` +
+      `SET LOCAL "request.jwt.claims" TO '{"sub":"00000000-0000-0000-0000-0000000000aa","role":"authenticated"}';\n` +
+      `SELECT public.connected_accounts_viewer_update_allowed(\n` +
+      `  gen_random_uuid(), 'accepted'::public.connected_account_status,\n` +
+      `  'admin'::public.connected_account_access, NULL, NULL,\n` +
+      `  'x@x','tok', now(), now(), now());\n` +
+      `ROLLBACK;`;
+    const r = spawnSync("psql", ["-X", "-A", "-t"], { input: script, encoding: "utf8" });
+    const out = (r.stdout ?? "").trim();
+    // Última linha não-vazia é o resultado do SELECT.
+    const lines = out.split(/\n/).map((s) => s.trim()).filter(Boolean);
+    expect(lines[lines.length - 1]).toBe("f");
   });
 });
 
