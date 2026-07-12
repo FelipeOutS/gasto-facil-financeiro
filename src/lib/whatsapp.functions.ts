@@ -385,22 +385,27 @@ export const enviarMensagemTesteWhatsApp = createServerFn({ method: "POST" })
       );
     }
     const to = normTel(data.telefone);
-    const res = await fetch(
-      `https://graph.facebook.com/v20.0/${phoneId}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          to,
-          type: "text",
-          text: { body: data.texto },
-        }),
-      },
+    const { buildWhatsAppGraphUrl } = await import(
+      "@/server/whatsapp-graph-version.server"
     );
+    const built = buildWhatsAppGraphUrl({ kind: "messages", phoneNumberId: phoneId });
+    if (!built.ok) {
+      // META-GRAPH-UPGRADE-01 — fail-closed
+      return { sent: false, status: 0, error: "configuration_error" };
+    }
+    const res = await fetch(built.url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to,
+        type: "text",
+        text: { body: data.texto },
+      }),
+    });
     const ok = res.ok;
     let detail: unknown = null;
     try {
