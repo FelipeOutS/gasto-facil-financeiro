@@ -88,7 +88,10 @@ function fakeClient(initial?: {
   const attempts: Array<Record<string, unknown>> = initial?.attempts ?? [];
   const ACTIVE: AttemptStatus[] = ["planned", "sending", "ambiguous"];
 
-  const client: SupabaseLike = {
+  const client: SupabaseLike & {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rpc: (name: string, args: Record<string, unknown>) => Promise<{ data: any; error: any }>;
+  } = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     from(table: string): any {
       const rows = table === "whatsapp_notifications" ? notifs : attempts;
@@ -118,11 +121,21 @@ function fakeClient(initial?: {
         },
         maybeSingle() {
           if (q._insert) {
-            // Unique parcial simulada: em attempts, negar insert
-            // se já existe row para a mesma notification_id com status ativo.
             if (table === "whatsapp_notification_attempts") {
               const nid = q._insert.notification_id;
+              const ctok = q._insert.claim_token;
               const status = q._insert.attempt_status as AttemptStatus;
+              // UNIQUE (notification_id, claim_token) — fecha B.
+              if (
+                attempts.some(
+                  (a) => a.notification_id === nid && a.claim_token === ctok,
+                )
+              ) {
+                return Promise.resolve({
+                  data: null,
+                  error: { code: "23505", message: "unique_violation notification_claim" },
+                });
+              }
               if (
                 ACTIVE.includes(status) &&
                 attempts.some(
@@ -136,7 +149,6 @@ function fakeClient(initial?: {
                   error: { code: "23505", message: "unique_violation active_attempt" },
                 });
               }
-              // Unique attempt_token e client_reference.
               if (
                 attempts.some((a) => a.attempt_token === q._insert!.attempt_token) ||
                 attempts.some((a) => a.client_reference === q._insert!.client_reference)
@@ -170,6 +182,63 @@ function fakeClient(initial?: {
         },
       };
       return q;
+    },
+    // Simula a RPC atômica whatsapp_attempt_prepare_atomic: valida ownership
+    // + verifica ativos + insere numa "transação" única. É o contrato que o
+    // Postgres garante em produção via SECURITY DEFINER + FOR UPDATE.
+    async rpc(name: string, args: Record<string, unknown>) {
+      if (name !== "whatsapp_attempt_prepare_atomic") {
+        return { data: null, error: { message: "unknown_rpc" } };
+      }
+      const nid = args.p_notification_id as string;
+      const ctok = args.p_claim_token as string;
+      const nowIso = String(args.p_now ?? new Date().toISOString());
+      const notif = notifs.find((n) => n.id === nid);
+      const valid =
+        notif &&
+        notif.status === "processing" &&
+        notif.claim_token === ctok &&
+        typeof notif.lease_expires_at === "string" &&
+        (notif.lease_expires_at as string) > nowIso;
+      if (!valid) {
+        return { data: [{ outcome: "state_changed", attempt_id: null }], error: null };
+      }
+      // Ordem espelha a RPC de produção: primeiro checa "ativos"
+      // (planned/sending/ambiguous) — ambiguous vira quarantined —,
+      // depois cai no INSERT que valida UNIQUE (notification_id, claim_token).
+      const existing = attempts.find(
+        (a) => a.notification_id === nid && ACTIVE.includes(a.attempt_status as AttemptStatus),
+      );
+      if (existing) {
+        return {
+          data: [
+            {
+              outcome:
+                existing.attempt_status === "ambiguous" ? "quarantined" : "active_attempt_exists",
+              attempt_id: null,
+            },
+          ],
+          error: null,
+        };
+      }
+      if (attempts.some((a) => a.notification_id === nid && a.claim_token === ctok)) {
+        return { data: [{ outcome: "active_attempt_exists", attempt_id: null }], error: null };
+      }
+      const inserted = {
+        id: `att-${attempts.length + 1}`,
+        notification_id: nid,
+        attempt_token: args.p_attempt_token,
+        claim_token: ctok,
+        request_hash: args.p_request_hash,
+        template_key: args.p_template_key,
+        template_name: args.p_template_name,
+        template_language: args.p_template_language,
+        client_reference: args.p_client_reference,
+        attempt_status: "planned" as AttemptStatus,
+        started_at: nowIso,
+      };
+      attempts.push(inserted);
+      return { data: [{ outcome: "prepared", attempt_id: inserted.id }], error: null };
     },
   };
   return { client, notifs, attempts };
@@ -706,5 +775,104 @@ describe("executeNotificationAttemptDryTechnical", () => {
     const r = await executeNotificationAttemptDryTechnical(baseInput, { client, now }, undefined);
     expect(r.kind).toBe("database_error");
     expect(attempts.length).toBe(0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hardening pós-auditoria: atomicidade e uma-tentativa-por-claim.
+
+describe("prepareNotificationAttempt — atomic ownership (Pergunta A)", () => {
+  const baseInput = {
+    notificationId: "n1",
+    claimToken: "claim-A",
+    template: template(),
+    payload: OK_PAYLOAD,
+    recipient: "5511912345678",
+  };
+
+  it("claim_token rotacionado antes do INSERT → state_changed, nenhuma tentativa criada", async () => {
+    const { client, notifs, attempts } = fakeClient();
+    notifs[0].claim_token = "claim-ROTATED";
+    const r = await prepareNotificationAttempt(baseInput, { client, now });
+    expect(r.kind).toBe("state_changed");
+    expect(attempts.length).toBe(0);
+  });
+
+  it("lease expirado antes do INSERT → state_changed, nenhuma tentativa criada", async () => {
+    const { client, notifs, attempts } = fakeClient();
+    notifs[0].lease_expires_at = new Date(NOW.getTime() - 60_000).toISOString();
+    const r = await prepareNotificationAttempt(baseInput, { client, now });
+    expect(r.kind).toBe("state_changed");
+    expect(attempts.length).toBe(0);
+  });
+
+  it("status virou pending antes do INSERT → state_changed", async () => {
+    const { client, notifs, attempts } = fakeClient();
+    notifs[0].status = "pending";
+    const r = await prepareNotificationAttempt(baseInput, { client, now });
+    expect(r.kind).toBe("state_changed");
+    expect(attempts.length).toBe(0);
+  });
+});
+
+describe("prepareNotificationAttempt — uma tentativa por claim (Pergunta B)", () => {
+  const baseInput = {
+    notificationId: "n1",
+    claimToken: "claim-A",
+    phoneNumberId: "PHONE_ID_TEST",
+    template: template(),
+    payload: OK_PAYLOAD,
+    recipient: "5511912345678",
+  };
+
+  it("após accepted, mesmo claim_token não gera segunda tentativa", async () => {
+    const { client, attempts } = fakeClient();
+    const transport = new FakeWhatsAppNotificationTransport({
+      kind: "accepted",
+      providerMessageId: "wamid.OK",
+      httpStatus: 200,
+    });
+    const r1 = await executeNotificationAttemptDryTechnical(baseInput, { client, now }, transport);
+    expect(r1.kind).toBe("accepted");
+    expect(attempts.length).toBe(1);
+    expect(attempts[0].attempt_status).toBe("accepted");
+
+    const r2 = await prepareNotificationAttempt(baseInput, { client, now });
+    expect(r2.kind).toBe("active_attempt_exists");
+    expect(attempts.length).toBe(1);
+  });
+
+  it("após rejected, mesmo claim_token também não gera segunda tentativa", async () => {
+    const { client, attempts } = fakeClient();
+    const transport = new FakeWhatsAppNotificationTransport({
+      kind: "rejected",
+      errorCode: "131047",
+      errorCategory: "template",
+      retryable: false,
+      httpStatus: 400,
+    });
+    await executeNotificationAttemptDryTechnical(baseInput, { client, now }, transport);
+    expect(attempts.length).toBe(1);
+    const r2 = await prepareNotificationAttempt(baseInput, { client, now });
+    expect(r2.kind).toBe("active_attempt_exists");
+    expect(attempts.length).toBe(1);
+  });
+
+  it("novo claim_token após reclaim autoriza exatamente uma nova tentativa", async () => {
+    const { client, notifs, attempts } = fakeClient();
+    const transport = new FakeWhatsAppNotificationTransport({
+      kind: "accepted",
+      providerMessageId: "wamid.OK",
+      httpStatus: 200,
+    });
+    await executeNotificationAttemptDryTechnical(baseInput, { client, now }, transport);
+    expect(attempts.length).toBe(1);
+    notifs[0].claim_token = "claim-B";
+    const r2 = await prepareNotificationAttempt(
+      { ...baseInput, claimToken: "claim-B" },
+      { client, now },
+    );
+    expect(r2.kind).toBe("prepared");
+    expect(attempts.length).toBe(2);
   });
 });

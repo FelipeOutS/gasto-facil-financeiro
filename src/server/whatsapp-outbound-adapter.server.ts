@@ -315,44 +315,22 @@ export async function prepareNotificationAttempt(
   input: PrepareInput,
   deps: OutboundDeps,
 ): Promise<PrepareResult> {
-  const { client } = deps;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const client = deps.client as any;
   const now = nowOf(deps);
   const nowIso = now.toISOString();
 
-  // 1. Validar notification: status=processing, claim_token bate, lease futuro.
-  let notifRow: Record<string, unknown> | null = null;
-  try {
-    const res = await client
-      .from("whatsapp_notifications")
-      .select("id, status, claim_token, lease_expires_at")
-      .eq("id", input.notificationId)
-      .maybeSingle();
-    if (res.error) return { kind: "database_error", error: res.error };
-    notifRow = res.data ?? null;
-  } catch (err) {
-    return { kind: "database_error", error: err };
-  }
-  if (!notifRow) return { kind: "state_changed" };
-  if (
-    notifRow.status !== "processing" ||
-    notifRow.claim_token !== input.claimToken ||
-    !notifRow.lease_expires_at ||
-    String(notifRow.lease_expires_at) <= nowIso
-  ) {
-    return { kind: "state_changed" };
-  }
-
-  // 2. Validar recipient.
+  // 1. Validar recipient.
   const recipient = validateRecipient(input.recipient);
   if (!recipient.ok) return { kind: "invalid_recipient", reason: recipient.reason };
 
-  // 3. Renderizar components.
+  // 2. Renderizar components.
   const rendered = renderTemplateComponents(input.template, input.payload);
   if ("reason" in rendered && rendered.ok === false) {
     return { kind: "invalid_template", reason: rendered.reason, param: (rendered as { param?: string }).param };
   }
 
-  // 4. Gerar tokens + hash + request.
+  // 3. Gerar tokens + hash + request.
   const attemptToken = uuid(deps);
   const clientReference = buildClientReference(attemptToken);
   const templateName = String(input.template.meta_template_name);
@@ -372,70 +350,56 @@ export async function prepareNotificationAttempt(
     clientReference,
   });
 
-  // 5. Checar tentativa ativa existente (defesa em profundidade; unique parcial
-  //    é a garantia atômica no DB).
+  // 4. Chamada atômica via RPC: valida status/claim/lease + insere planned
+  //    numa única transação SECURITY DEFINER. Fecha a race entre SELECT da
+  //    notificação e INSERT da tentativa (ownership só é revalidada dentro
+  //    da mesma transação em que a linha nasce).
   try {
-    const existing = await client
-      .from("whatsapp_notification_attempts")
-      .select("id, attempt_status")
-      .eq("notification_id", input.notificationId)
-      .in("attempt_status", ["planned", "sending", "ambiguous"])
-      .maybeSingle();
-    if (existing.error) return { kind: "database_error", error: existing.error };
-    if (existing.data) {
-      return existing.data.attempt_status === "ambiguous"
-        ? { kind: "quarantined" }
-        : { kind: "active_attempt_exists" };
-    }
-  } catch (err) {
-    return { kind: "database_error", error: err };
-  }
-
-  // 6. Insert attempt planned.
-  try {
-    const ins = await client
-      .from("whatsapp_notification_attempts")
-      .insert({
-        notification_id: input.notificationId,
-        attempt_token: attemptToken,
-        claim_token: input.claimToken,
-        request_hash: requestHash,
-        template_key: input.template.key,
-        template_name: templateName,
-        template_language: languageCode,
-        attempt_status: "planned",
-        started_at: nowIso,
-        client_reference: clientReference,
-      })
-      .select("id")
-      .maybeSingle();
-    if (ins.error) {
-      // Postgres unique parcial → 23505 quando outra tentativa ativa colidir.
-      const code = (ins.error as { code?: string }).code ?? "";
-      if (code === "23505") {
-        return { kind: "active_attempt_exists" };
-      }
-      return { kind: "database_error", error: ins.error };
-    }
-    const attemptId = String(ins.data?.id ?? "");
-    if (!attemptId) return { kind: "database_error" };
-    logStructured({
-      event: "attempt_prepared",
-      attempt_id: attemptId,
-      notification_id: input.notificationId,
-      template_key: input.template.key,
-      request_hash_short: requestHash.slice(0, 12),
-      recipient_masked: maskPhone(recipient.digits),
+    const rpc = await client.rpc("whatsapp_attempt_prepare_atomic", {
+      p_notification_id: input.notificationId,
+      p_claim_token: input.claimToken,
+      p_attempt_token: attemptToken,
+      p_request_hash: requestHash,
+      p_template_key: input.template.key,
+      p_template_name: templateName,
+      p_template_language: languageCode,
+      p_client_reference: clientReference,
+      p_now: nowIso,
     });
-    return {
-      kind: "prepared",
-      attemptId,
-      attemptToken,
-      clientReference,
-      requestHash,
-      request,
-      recipientDigits: recipient.digits,
-    };
+    if (rpc.error) return { kind: "database_error", error: rpc.error };
+    const rows = Array.isArray(rpc.data) ? rpc.data : rpc.data ? [rpc.data] : [];
+    const first = (rows[0] ?? {}) as { outcome?: string; attempt_id?: string | null };
+    switch (first.outcome) {
+      case "state_changed":
+        return { kind: "state_changed" };
+      case "active_attempt_exists":
+        return { kind: "active_attempt_exists" };
+      case "quarantined":
+        return { kind: "quarantined" };
+      case "prepared": {
+        const attemptId = String(first.attempt_id ?? "");
+        if (!attemptId) return { kind: "database_error" };
+        logStructured({
+          event: "attempt_prepared",
+          attempt_id: attemptId,
+          notification_id: input.notificationId,
+          template_key: input.template.key,
+          request_hash_short: requestHash.slice(0, 12),
+          recipient_masked: maskPhone(recipient.digits),
+        });
+        return {
+          kind: "prepared",
+          attemptId,
+          attemptToken,
+          clientReference,
+          requestHash,
+          request,
+          recipientDigits: recipient.digits,
+        };
+      }
+      default:
+        return { kind: "database_error", error: new Error("rpc_unknown_outcome") };
+    }
   } catch (err) {
     return { kind: "database_error", error: err };
   }
