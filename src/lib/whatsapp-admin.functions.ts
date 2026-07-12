@@ -639,13 +639,21 @@ export const whatsappAdminSubscribeAppToWaba = createServerFn({ method: "POST" }
     let networkError = false;
     let postOk = false;
     try {
-      const resp = await fetch(
-        `https://graph.facebook.com/${GRAPH_VERSION}/${WABA_ID}/subscribed_apps`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
-        },
+      const { buildWhatsAppGraphUrl } = await import(
+        "@/server/whatsapp-graph-version.server"
       );
+      const built = buildWhatsAppGraphUrl({
+        kind: "subscribed_apps",
+        wabaId: WABA_ID!,
+      });
+      if (!built.ok) {
+        networkError = true;
+        throw new Error("configuration_error");
+      }
+      const resp = await fetch(built.url, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+      });
       httpStatus = resp.status;
       postOk = resp.ok;
       try {
