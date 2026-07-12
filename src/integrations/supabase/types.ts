@@ -3522,6 +3522,21 @@ export type Database = {
       can_use_whatsapp: { Args: { _user_id: string }; Returns: boolean }
       can_view_account: { Args: { _owner: string }; Returns: boolean }
       claim_owner_if_first: { Args: never; Returns: boolean }
+      connected_accounts_viewer_update_allowed: {
+        Args: {
+          p_new_accepted_at: string
+          p_new_access_level: Database["public"]["Enums"]["connected_account_access"]
+          p_new_invite_expires_at: string
+          p_new_invite_token: string
+          p_new_invited_email: string
+          p_new_owner_user_id: string
+          p_new_refused_at: string
+          p_new_status: Database["public"]["Enums"]["connected_account_status"]
+          p_new_viewer_user_id: string
+          p_row_id: string
+        }
+        Returns: boolean
+      }
       create_installment_purchase: {
         Args: {
           p_cartao_id: string
