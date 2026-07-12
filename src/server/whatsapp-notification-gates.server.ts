@@ -143,6 +143,156 @@ export function isQuietHour(
 }
 
 /**
+ * WA-C8.1 — Componentes locais (year/month/day/hour, 0-based month) de `instant`
+ * no timezone informado. Usa `Intl.DateTimeFormat` (locale `en-CA` produz
+ * `YYYY-MM-DD`).
+ */
+function localPartsInTimezone(
+  instant: Date,
+  timezone: string,
+): { year: number; month: number; day: number; hour: number } {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(instant);
+  const pick = (t: string) =>
+    Number(parts.find((p) => p.type === t)?.value ?? "0");
+  let hour = pick("hour");
+  // `en-CA` com hour12:false emite "24" à meia-noite em algumas engines.
+  if (hour === 24) hour = 0;
+  return {
+    year: pick("year"),
+    month: pick("month") - 1,
+    day: pick("day"),
+    hour,
+  };
+}
+
+/**
+ * Converte um wall-clock (ano/mês/dia/hora, 0-based month) no timezone
+ * informado para o instante UTC correspondente. Duas iterações de ponto-fixo
+ * cobrem transições de DST (avanço/retorno) — em horário local inexistente,
+ * converge para o instante logo após o salto; em horário duplicado,
+ * converge para uma das duas ocorrências de forma determinística.
+ */
+function zonedWallTimeToUtc(
+  year: number,
+  monthZeroBased: number,
+  day: number,
+  hour: number,
+  timezone: string,
+): Date {
+  // 1ª aproximação: tratar wall-clock como se fosse UTC.
+  let utc = Date.UTC(year, monthZeroBased, day, hour, 0, 0);
+  for (let i = 0; i < 3; i++) {
+    const parts = localPartsInTimezone(new Date(utc), timezone);
+    const asLocalUtc = Date.UTC(
+      parts.year,
+      parts.month,
+      parts.day,
+      parts.hour,
+      0,
+      0,
+    );
+    const wantedUtc = Date.UTC(year, monthZeroBased, day, hour, 0, 0);
+    const drift = asLocalUtc - wantedUtc;
+    if (drift === 0) break;
+    utc -= drift;
+  }
+  return new Date(utc);
+}
+
+function addLocalDays(
+  y: number,
+  m: number,
+  d: number,
+  days: number,
+): { year: number; month: number; day: number } {
+  const t = Date.UTC(y, m, d + days, 12, 0, 0); // meio-dia UTC evita bordas
+  const dt = new Date(t);
+  return {
+    year: dt.getUTCFullYear(),
+    month: dt.getUTCMonth(),
+    day: dt.getUTCDate(),
+  };
+}
+
+/**
+ * WA-C8.1 — Próximo instante UTC permitido após a janela de silêncio.
+ *
+ * Contrato:
+ *  - Retorna `null` quando quiet hours está desativado (start/end nulos ou
+ *    iguais — preserva o contrato de `isQuietHour`, que trata `start===end`
+ *    como desativado).
+ *  - Se `now` NÃO está dentro da quiet window, retorna `null` (nada a fazer).
+ *  - Caso contrário retorna o instante UTC alinhado a `HH:00:00` local
+ *    correspondente ao fim exclusivo da janela (`end`), no timezone do
+ *    usuário. Nunca retorna um instante <= `now` nem dentro da janela.
+ *  - Usa fallback `America/Sao_Paulo` para timezone inválido/ausente.
+ *  - Limite defensivo: no máximo 5 tentativas de +1h para lidar com DST /
+ *    horário local inexistente — nunca entra em loop infinito.
+ */
+export function nextAllowedAfterQuietHours(
+  now: Date,
+  start: number | null,
+  end: number | null,
+  timezone: string | null | undefined,
+): Date | null {
+  if (start == null || end == null) return null;
+  if (start === end) return null;
+
+  let tz = timezone && timezone.length > 0 ? timezone : "America/Sao_Paulo";
+  // Validação defensiva do TZ.
+  try {
+    new Intl.DateTimeFormat("en-CA", { timeZone: tz });
+  } catch {
+    tz = "America/Sao_Paulo";
+  }
+
+  const local = localPartsInTimezone(now, tz);
+  if (!isQuietHour(local.hour, start, end)) return null;
+
+  // Descobre em qual dia local cai o `end`.
+  // Janela sem cruzar meia-noite (start < end): `end` é hoje.
+  // Janela cruzando meia-noite (start > end):
+  //   - se `hour >= start`: `end` é AMANHÃ;
+  //   - se `hour < end`:    `end` é HOJE.
+  let target = { year: local.year, month: local.month, day: local.day };
+  if (start > end && local.hour >= start) {
+    target = addLocalDays(local.year, local.month, local.day, 1);
+  }
+
+  let candidate = zonedWallTimeToUtc(
+    target.year,
+    target.month,
+    target.day,
+    end,
+    tz,
+  );
+
+  // Guarda: garante `candidate > now` e fora da quiet window (DST /
+  // horário inexistente / dupla ocorrência).
+  let guard = 0;
+  while (
+    guard < 5 &&
+    (candidate.getTime() <= now.getTime() ||
+      isQuietHour(hourInTimezone(candidate, tz), start, end))
+  ) {
+    candidate = new Date(candidate.getTime() + 60 * 60_000);
+    guard++;
+  }
+  return candidate;
+}
+
+
+/**
  * Janela de 24h após última mensagem do usuário: required pela política da Meta
  * para mensagens não-template. Lê `whatsapp_messages` (já existente).
  */
