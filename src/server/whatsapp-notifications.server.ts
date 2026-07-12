@@ -322,10 +322,7 @@ export async function rescheduleForQuietHours(
     }
     return { ok: false, status: "state_changed" };
   } catch (err) {
-    console.error(
-      "[wa-notif] reschedule quiet_hours threw",
-      JSON.stringify({ id }),
-    );
+    console.error("[wa-notif] reschedule quiet_hours threw", JSON.stringify({ id }));
     return { ok: false, status: "error", error: err };
   }
 }

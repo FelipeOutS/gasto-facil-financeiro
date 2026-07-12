@@ -20,10 +20,7 @@ import {
   rescheduleForQuietHours,
   type NotificationRow,
 } from "@/server/whatsapp-notifications.server";
-import {
-  canDispatch,
-  type GateDecision,
-} from "@/server/whatsapp-notification-gates.server";
+import { canDispatch, type GateDecision } from "@/server/whatsapp-notification-gates.server";
 import { revalidateContaForDispatch } from "@/server/whatsapp-contas-lembretes.server";
 
 interface TemplateMeta {
@@ -130,10 +127,7 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
             // diferenciado de race, com uma tentativa de recuperação
             // conservadora — sem envio, sem markSkipped, sem estado terminal.
             if (decision.reason === "quiet_hours" && decision.nextAllowedAt) {
-              const res = await rescheduleForQuietHours(
-                n.id,
-                decision.nextAllowedAt,
-              );
+              const res = await rescheduleForQuietHours(n.id, decision.nextAllowedAt);
               if (res.ok) {
                 summary.rescheduled_quiet_hours++;
                 console.info(
@@ -154,10 +148,7 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
               // res.status === "error": tenta recuperação persistente,
               // preservando o mesmo `nextAllowedAt`. Nunca envia, nunca
               // marca como skipped/sent.
-              const recovery = await recoverStuckReschedule(
-                n.id,
-                decision.nextAllowedAt,
-              );
+              const recovery = await recoverStuckReschedule(n.id, decision.nextAllowedAt);
               if (recovery.ok) {
                 summary.rescheduled_quiet_hours++;
                 console.info(
@@ -191,9 +182,7 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
           summary.would_send++;
           if (!dispatchEnabled) {
             // Volta para `pending` para que WA-C9 (com envio real) possa pegar.
-            const { supabaseAdmin } = await import(
-              "@/integrations/supabase/client.server"
-            );
+            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
             await supabaseAdmin
               .from("whatsapp_notifications")
               .update({ status: "pending" })

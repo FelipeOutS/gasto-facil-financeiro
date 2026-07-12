@@ -114,10 +114,7 @@ function buildFake() {
         }
         return Promise.resolve(resolve({ data: apply(), error: null }));
       },
-      upsert(
-        row: Row | Row[],
-        opts?: { onConflict?: string; ignoreDuplicates?: boolean },
-      ) {
+      upsert(row: Row | Row[], opts?: { onConflict?: string; ignoreDuplicates?: boolean }) {
         const rows = Array.isArray(row) ? row : [row];
         for (const r of rows) {
           const cols = (opts?.onConflict ?? "")
@@ -171,9 +168,7 @@ function buildFake() {
     return api;
   }
   return {
-    client: { from } as unknown as Parameters<
-      typeof enqueueNotification
-    >[1]["client"],
+    client: { from } as unknown as Parameters<typeof enqueueNotification>[1]["client"],
     tables,
     injectUpdateError(table: string, err: unknown) {
       injectedUpdateErrors[table] = err;
@@ -204,12 +199,7 @@ describe("WA-C8.1 :: nextAllowedAfterQuietHours (helper puro)", () => {
   const TZ_BR = "America/Sao_Paulo"; // UTC-3, sem DST no runtime moderno.
 
   it("fora da quiet hour → retorna null (nada a fazer)", () => {
-    const r = nextAllowedAfterQuietHours(
-      new Date("2026-06-28T15:00:00Z"),
-      22,
-      7,
-      TZ_BR,
-    );
+    const r = nextAllowedAfterQuietHours(new Date("2026-06-28T15:00:00Z"), 22, 7, TZ_BR);
     expect(r).toBeNull();
   });
 
@@ -233,12 +223,7 @@ describe("WA-C8.1 :: nextAllowedAfterQuietHours (helper puro)", () => {
   });
 
   it("exatamente no fim (07:00 local) → NÃO está em quiet (end exclusivo) → null", () => {
-    const r = nextAllowedAfterQuietHours(
-      new Date("2026-06-28T10:00:00Z"),
-      22,
-      7,
-      TZ_BR,
-    );
+    const r = nextAllowedAfterQuietHours(new Date("2026-06-28T10:00:00Z"), 22, 7, TZ_BR);
     expect(r).toBeNull();
   });
 
@@ -258,9 +243,7 @@ describe("WA-C8.1 :: nextAllowedAfterQuietHours (helper puro)", () => {
     const now = new Date("2026-07-15T08:00:00Z");
     const r = nextAllowedAfterQuietHours(now, 22, 7, "America/New_York")!;
     expect(r.getTime()).toBeGreaterThan(now.getTime());
-    expect(isQuietHour(hourInTimezone(r, "America/New_York"), 22, 7)).toBe(
-      false,
-    );
+    expect(isQuietHour(hourInTimezone(r, "America/New_York"), 22, 7)).toBe(false);
     expect(hourInTimezone(r, "America/New_York")).toBe(7);
   });
 
@@ -419,8 +402,7 @@ describe("WA-C8.1 :: rescheduleForQuietHours (persistência)", () => {
     expect(res.ok).toBe(true);
     if (res.ok) expect(res.status).toBe("rescheduled");
 
-    const rows = fake.tables
-      .whatsapp_notifications as unknown as NotificationRow[];
+    const rows = fake.tables.whatsapp_notifications as unknown as NotificationRow[];
     expect(rows).toHaveLength(1);
     const after = rows[0];
     expect(after.id).toBe(row!.id);
@@ -434,41 +416,30 @@ describe("WA-C8.1 :: rescheduleForQuietHours (persistência)", () => {
 
   it("status pending → resultado = state_changed (não é erro)", async () => {
     const row = await enqueueNotification(baseEnqueue, { client: fake.client });
-    const res = await rescheduleForQuietHours(
-      row!.id,
-      new Date("2026-06-28T10:00:00Z"),
-      { client: fake.client },
-    );
+    const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), {
+      client: fake.client,
+    });
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.status).toBe("state_changed");
-    const after = fake.tables
-      .whatsapp_notifications[0] as unknown as NotificationRow;
+    const after = fake.tables.whatsapp_notifications[0] as unknown as NotificationRow;
     expect(after.status).toBe("pending");
     expect(after.scheduled_at).toBe(baseEnqueue.scheduledAt.toISOString());
   });
 
   it("estados terminais (cancelled/sent/failed/skipped) NÃO são reabertos", async () => {
-    const terminals: NotificationRow["status"][] = [
-      "cancelled",
-      "sent",
-      "failed",
-      "skipped",
-    ];
+    const terminals: NotificationRow["status"][] = ["cancelled", "sent", "failed", "skipped"];
     for (const term of terminals) {
       fake = buildFake();
       const row = await enqueueNotification(baseEnqueue, {
         client: fake.client,
       });
       (fake.tables.whatsapp_notifications[0] as Row).status = term;
-      const res = await rescheduleForQuietHours(
-        row!.id,
-        new Date("2026-06-28T10:00:00Z"),
-        { client: fake.client },
-      );
+      const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), {
+        client: fake.client,
+      });
       expect(res.ok).toBe(false);
       if (!res.ok) expect(res.status).toBe("state_changed");
-      const after = fake.tables
-        .whatsapp_notifications[0] as unknown as NotificationRow;
+      const after = fake.tables.whatsapp_notifications[0] as unknown as NotificationRow;
       expect(after.status).toBe(term);
     }
   });
@@ -528,16 +499,13 @@ describe("WA-C8.1 :: erro de banco no UPDATE", () => {
       code: "PGRST000",
       message: "connection reset",
     });
-    const res = await rescheduleForQuietHours(
-      row!.id,
-      new Date("2026-06-28T10:00:00Z"),
-      { client: fake.client },
-    );
+    const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), {
+      client: fake.client,
+    });
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.status).toBe("error");
     // Linha permanece em processing — não vira sent/skipped/cancelled.
-    const after = fake.tables
-      .whatsapp_notifications[0] as unknown as NotificationRow;
+    const after = fake.tables.whatsapp_notifications[0] as unknown as NotificationRow;
     expect(after.status).toBe("processing");
     // Nenhuma linha nova.
     expect(fake.tables.whatsapp_notifications).toHaveLength(1);
@@ -546,11 +514,9 @@ describe("WA-C8.1 :: erro de banco no UPDATE", () => {
   it("UPDATE sem erro + zero linhas afetadas → state_changed (não error)", async () => {
     const row = await enqueueNotification(baseEnqueue, { client: fake.client });
     // Sem claim: status permanece pending → filtro falha, 0 linhas, sem erro.
-    const res = await rescheduleForQuietHours(
-      row!.id,
-      new Date("2026-06-28T10:00:00Z"),
-      { client: fake.client },
-    );
+    const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), {
+      client: fake.client,
+    });
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.status).toBe("state_changed");
   });
@@ -574,8 +540,7 @@ describe("WA-C8.1 :: erro de banco no UPDATE", () => {
       client: fake.client,
     });
     expect(r2.ok).toBe(true);
-    const after = fake.tables
-      .whatsapp_notifications[0] as unknown as NotificationRow;
+    const after = fake.tables.whatsapp_notifications[0] as unknown as NotificationRow;
     expect(after.status).toBe("pending");
     expect(after.scheduled_at).toBe(nextAt.toISOString());
     expect(after.next_attempt_at).toBeNull();
@@ -600,8 +565,7 @@ describe("WA-C8.1 :: erro de banco no UPDATE", () => {
     expect(r2.ok).toBe(false);
     if (!r2.ok) expect(r2.status).toBe("error");
     // Estado preso, mas observável — nunca sent/skipped.
-    const after = fake.tables
-      .whatsapp_notifications[0] as unknown as NotificationRow;
+    const after = fake.tables.whatsapp_notifications[0] as unknown as NotificationRow;
     expect(after.status).toBe("processing");
     expect(after.skipped_reason ?? null).toBeNull();
     expect(after.sent_at ?? null).toBeNull();
@@ -624,8 +588,7 @@ describe("WA-C8.1 :: erro de banco no UPDATE", () => {
     });
     expect(r2.ok).toBe(false);
     if (!r2.ok) expect(r2.status).toBe("state_changed");
-    const after = fake.tables
-      .whatsapp_notifications[0] as unknown as NotificationRow;
+    const after = fake.tables.whatsapp_notifications[0] as unknown as NotificationRow;
     expect(after.status).toBe("cancelled");
   });
 });
