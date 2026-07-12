@@ -114,9 +114,7 @@ const INCLUDE = [
 ];
 
 // Validação: arquivos listados existem; reporta extras WhatsApp não cobertos.
-const onDisk = new Set(
-  readdirSync(TESTS_DIR).filter((f) => f.endsWith(".test.ts")),
-);
+const onDisk = new Set(readdirSync(TESTS_DIR).filter((f) => f.endsWith(".test.ts")));
 const missing = INCLUDE.filter((f) => !onDisk.has(f));
 if (missing.length > 0) {
   console.error(`[WA-B5] arquivos esperados ausentes: ${missing.join(", ")}`);
@@ -124,9 +122,7 @@ if (missing.length > 0) {
 }
 const extras = [...onDisk].filter(
   (f) =>
-    (f.startsWith("whatsapp-") ||
-      f.startsWith("admin-master-") ||
-      f.startsWith("free-ads-")) &&
+    (f.startsWith("whatsapp-") || f.startsWith("admin-master-") || f.startsWith("free-ads-")) &&
     !INCLUDE.includes(f),
 );
 if (extras.length > 0) {

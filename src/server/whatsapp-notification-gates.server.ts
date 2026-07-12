@@ -5,10 +5,7 @@
  * deve ser `skipped` (com motivo). Todas as queries filtram `user_id`.
  */
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import type {
-  NotificationCategory,
-  SkippedReason,
-} from "./whatsapp-notifications.server";
+import type { NotificationCategory, SkippedReason } from "./whatsapp-notifications.server";
 
 export type GateDecision =
   | { allow: true }
@@ -80,10 +77,7 @@ export async function isChannelOptedIn(
   return { ok: true };
 }
 
-export async function getPreferences(
-  userId: string,
-  deps?: GatesDeps,
-): Promise<PrefsRow> {
+export async function getPreferences(userId: string, deps?: GatesDeps): Promise<PrefsRow> {
   const c = client(deps);
   const { data } = await c
     .from("whatsapp_notification_preferences")
@@ -91,26 +85,16 @@ export async function getPreferences(
     .eq("user_id", userId)
     .maybeSingle();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return ((data as any) as PrefsRow) ?? DEFAULT_PREFS;
+  return (data as any as PrefsRow) ?? DEFAULT_PREFS;
 }
 
-export function isCategoryEnabled(
-  prefs: PrefsRow,
-  category: NotificationCategory,
-): boolean {
+export function isCategoryEnabled(prefs: PrefsRow, category: NotificationCategory): boolean {
   return prefs[category] === true;
 }
 
-export async function getUserTimezone(
-  userId: string,
-  deps?: GatesDeps,
-): Promise<string> {
+export async function getUserTimezone(userId: string, deps?: GatesDeps): Promise<string> {
   const c = client(deps);
-  const { data } = await c
-    .from("profiles")
-    .select("timezone")
-    .eq("id", userId)
-    .maybeSingle();
+  const { data } = await c.from("profiles").select("timezone").eq("id", userId).maybeSingle();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tz = (data as any)?.timezone as string | undefined;
   return tz && tz.length > 0 ? tz : "America/Sao_Paulo";
@@ -139,11 +123,7 @@ export function hourInTimezone(now: Date, timezone: string): number {
  * Verifica se o horário local cai dentro da janela de silêncio.
  * Suporta janela que cruza a meia-noite (ex: 22 → 7).
  */
-export function isQuietHour(
-  hourLocal: number,
-  start: number | null,
-  end: number | null,
-): boolean {
+export function isQuietHour(hourLocal: number, start: number | null, end: number | null): boolean {
   if (start == null || end == null) return false;
   if (start === end) return false;
   if (start < end) return hourLocal >= start && hourLocal < end;
@@ -170,8 +150,7 @@ function localPartsInTimezone(
     hour12: false,
   });
   const parts = fmt.formatToParts(instant);
-  const pick = (t: string) =>
-    Number(parts.find((p) => p.type === t)?.value ?? "0");
+  const pick = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? "0");
   let hour = pick("hour");
   // `en-CA` com hour12:false emite "24" à meia-noite em algumas engines.
   if (hour === 24) hour = 0;
@@ -201,14 +180,7 @@ function zonedWallTimeToUtc(
   let utc = Date.UTC(year, monthZeroBased, day, hour, 0, 0);
   for (let i = 0; i < 3; i++) {
     const parts = localPartsInTimezone(new Date(utc), timezone);
-    const asLocalUtc = Date.UTC(
-      parts.year,
-      parts.month,
-      parts.day,
-      parts.hour,
-      0,
-      0,
-    );
+    const asLocalUtc = Date.UTC(parts.year, parts.month, parts.day, parts.hour, 0, 0);
     const wantedUtc = Date.UTC(year, monthZeroBased, day, hour, 0, 0);
     const drift = asLocalUtc - wantedUtc;
     if (drift === 0) break;
@@ -277,21 +249,14 @@ export function nextAllowedAfterQuietHours(
     target = addLocalDays(local.year, local.month, local.day, 1);
   }
 
-  let candidate = zonedWallTimeToUtc(
-    target.year,
-    target.month,
-    target.day,
-    end,
-    tz,
-  );
+  let candidate = zonedWallTimeToUtc(target.year, target.month, target.day, end, tz);
 
   // Guarda: garante `candidate > now` e fora da quiet window (DST /
   // horário inexistente / dupla ocorrência).
   let guard = 0;
   while (
     guard < 5 &&
-    (candidate.getTime() <= now.getTime() ||
-      isQuietHour(hourInTimezone(candidate, tz), start, end))
+    (candidate.getTime() <= now.getTime() || isQuietHour(hourInTimezone(candidate, tz), start, end))
   ) {
     candidate = new Date(candidate.getTime() + 60 * 60_000);
     guard++;
@@ -299,15 +264,11 @@ export function nextAllowedAfterQuietHours(
   return candidate;
 }
 
-
 /**
  * Janela de 24h após última mensagem do usuário: required pela política da Meta
  * para mensagens não-template. Lê `whatsapp_messages` (já existente).
  */
-export async function hasOpenSessionWindow(
-  userId: string,
-  deps?: GatesDeps,
-): Promise<boolean> {
+export async function hasOpenSessionWindow(userId: string, deps?: GatesDeps): Promise<boolean> {
   const c = client(deps);
   const since = new Date((deps?.now?.() ?? new Date()).getTime() - 24 * 3600_000).toISOString();
   const { data } = await c
@@ -347,12 +308,8 @@ export async function canDispatch(
   const hour = hourInTimezone(now, tz);
   if (isQuietHour(hour, prefs.quiet_hours_start, prefs.quiet_hours_end)) {
     const nextAllowedAt =
-      nextAllowedAfterQuietHours(
-        now,
-        prefs.quiet_hours_start,
-        prefs.quiet_hours_end,
-        tz,
-      ) ?? undefined;
+      nextAllowedAfterQuietHours(now, prefs.quiet_hours_start, prefs.quiet_hours_end, tz) ??
+      undefined;
     return { allow: false, reason: "quiet_hours", nextAllowedAt };
   }
 
