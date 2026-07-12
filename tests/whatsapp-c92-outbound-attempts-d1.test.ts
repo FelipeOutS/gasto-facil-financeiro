@@ -88,7 +88,10 @@ function fakeClient(initial?: {
   const attempts: Array<Record<string, unknown>> = initial?.attempts ?? [];
   const ACTIVE: AttemptStatus[] = ["planned", "sending", "ambiguous"];
 
-  const client: SupabaseLike = {
+  const client: SupabaseLike & {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rpc: (name: string, args: Record<string, unknown>) => Promise<{ data: any; error: any }>;
+  } = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     from(table: string): any {
       const rows = table === "whatsapp_notifications" ? notifs : attempts;
@@ -118,11 +121,21 @@ function fakeClient(initial?: {
         },
         maybeSingle() {
           if (q._insert) {
-            // Unique parcial simulada: em attempts, negar insert
-            // se já existe row para a mesma notification_id com status ativo.
             if (table === "whatsapp_notification_attempts") {
               const nid = q._insert.notification_id;
+              const ctok = q._insert.claim_token;
               const status = q._insert.attempt_status as AttemptStatus;
+              // UNIQUE (notification_id, claim_token) — fecha B.
+              if (
+                attempts.some(
+                  (a) => a.notification_id === nid && a.claim_token === ctok,
+                )
+              ) {
+                return Promise.resolve({
+                  data: null,
+                  error: { code: "23505", message: "unique_violation notification_claim" },
+                });
+              }
               if (
                 ACTIVE.includes(status) &&
                 attempts.some(
@@ -136,7 +149,6 @@ function fakeClient(initial?: {
                   error: { code: "23505", message: "unique_violation active_attempt" },
                 });
               }
-              // Unique attempt_token e client_reference.
               if (
                 attempts.some((a) => a.attempt_token === q._insert!.attempt_token) ||
                 attempts.some((a) => a.client_reference === q._insert!.client_reference)
@@ -170,6 +182,61 @@ function fakeClient(initial?: {
         },
       };
       return q;
+    },
+    // Simula a RPC atômica whatsapp_attempt_prepare_atomic: valida ownership
+    // + verifica ativos + insere numa "transação" única. É o contrato que o
+    // Postgres garante em produção via SECURITY DEFINER + FOR UPDATE.
+    async rpc(name: string, args: Record<string, unknown>) {
+      if (name !== "whatsapp_attempt_prepare_atomic") {
+        return { data: null, error: { message: "unknown_rpc" } };
+      }
+      const nid = args.p_notification_id as string;
+      const ctok = args.p_claim_token as string;
+      const nowIso = String(args.p_now ?? new Date().toISOString());
+      const notif = notifs.find((n) => n.id === nid);
+      const valid =
+        notif &&
+        notif.status === "processing" &&
+        notif.claim_token === ctok &&
+        typeof notif.lease_expires_at === "string" &&
+        (notif.lease_expires_at as string) > nowIso;
+      if (!valid) {
+        return { data: [{ outcome: "state_changed", attempt_id: null }], error: null };
+      }
+      // UNIQUE (notification_id, claim_token)
+      if (attempts.some((a) => a.notification_id === nid && a.claim_token === ctok)) {
+        return { data: [{ outcome: "active_attempt_exists", attempt_id: null }], error: null };
+      }
+      const existing = attempts.find(
+        (a) => a.notification_id === nid && ACTIVE.includes(a.attempt_status as AttemptStatus),
+      );
+      if (existing) {
+        return {
+          data: [
+            {
+              outcome:
+                existing.attempt_status === "ambiguous" ? "quarantined" : "active_attempt_exists",
+              attempt_id: null,
+            },
+          ],
+          error: null,
+        };
+      }
+      const inserted = {
+        id: `att-${attempts.length + 1}`,
+        notification_id: nid,
+        attempt_token: args.p_attempt_token,
+        claim_token: ctok,
+        request_hash: args.p_request_hash,
+        template_key: args.p_template_key,
+        template_name: args.p_template_name,
+        template_language: args.p_template_language,
+        client_reference: args.p_client_reference,
+        attempt_status: "planned" as AttemptStatus,
+        started_at: nowIso,
+      };
+      attempts.push(inserted);
+      return { data: [{ outcome: "prepared", attempt_id: inserted.id }], error: null };
     },
   };
   return { client, notifs, attempts };
