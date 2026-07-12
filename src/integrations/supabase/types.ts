@@ -3205,6 +3205,8 @@ export type Database = {
           attempt_count: number
           cancelled_at: string | null
           category: string
+          claim_token: string | null
+          claimed_at: string | null
           created_at: string
           dedupe_key: string
           entity_id: string | null
@@ -3212,6 +3214,7 @@ export type Database = {
           failed_at: string | null
           id: string
           last_error_code: string | null
+          lease_expires_at: string | null
           max_attempts: number
           next_attempt_at: string | null
           notification_type: string
@@ -3230,6 +3233,8 @@ export type Database = {
           attempt_count?: number
           cancelled_at?: string | null
           category: string
+          claim_token?: string | null
+          claimed_at?: string | null
           created_at?: string
           dedupe_key: string
           entity_id?: string | null
@@ -3237,6 +3242,7 @@ export type Database = {
           failed_at?: string | null
           id?: string
           last_error_code?: string | null
+          lease_expires_at?: string | null
           max_attempts?: number
           next_attempt_at?: string | null
           notification_type: string
@@ -3255,6 +3261,8 @@ export type Database = {
           attempt_count?: number
           cancelled_at?: string | null
           category?: string
+          claim_token?: string | null
+          claimed_at?: string | null
           created_at?: string
           dedupe_key?: string
           entity_id?: string | null
@@ -3262,6 +3270,7 @@ export type Database = {
           failed_at?: string | null
           id?: string
           last_error_code?: string | null
+          lease_expires_at?: string | null
           max_attempts?: number
           next_attempt_at?: string | null
           notification_type?: string
