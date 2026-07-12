@@ -906,3 +906,120 @@ describe("prepareNotificationAttempt — uma tentativa por claim (Pergunta B)", 
     expect(attempts.length).toBe(2);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WA-C9.2 D.1 Preflight — revalidação de ownership entre prepare e sending.
+//
+// Requisito 1.A: markAttemptSending revalida atomicamente (status/claim/lease
+// da notificação) antes de mover planned → sending. Em qualquer cenário de
+// ownership perdida, o transport NUNCA é chamado, a tentativa não entra em
+// sending, e nenhuma nova tentativa é criada.
+
+describe("markAttemptSending — revalidação atômica de ownership (Requisito 1.A)", () => {
+  const baseInput = {
+    notificationId: "n1",
+    claimToken: "claim-A",
+    phoneNumberId: "PHONE_ID_TEST",
+    template: template(),
+    payload: OK_PAYLOAD,
+    recipient: "5511912345678",
+  };
+
+  async function prepared() {
+    const { client, notifs, attempts } = fakeClient();
+    const r = await prepareNotificationAttempt(baseInput, {
+      client, now, randomUUID: () => "att-token-owner-A",
+    });
+    if (r.kind !== "prepared") throw new Error("prepare failed in setup");
+    return { client, notifs, attempts, attemptId: r.attemptId, attemptToken: r.attemptToken };
+  }
+
+  it("Cenário 1: callback moveu notif para 'sent' entre prepare e sending → ownership_lost", async () => {
+    const s = await prepared();
+    // Simula o webhook de callback processando 'sent' entre prepare e sending.
+    s.notifs[0].status = "sent";
+    const transport = new FakeWhatsAppNotificationTransport({
+      kind: "accepted", providerMessageId: "wamid.NOT_ALLOWED", httpStatus: 200,
+    });
+    const ok = await markAttemptSending(s.attemptId, s.attemptToken, { client: s.client, now });
+    expect(ok).toBe(false);
+    expect(s.attempts[0].attempt_status).toBe("cancelled");
+    expect(s.attempts[0].error_code).toBe("ownership_lost");
+    expect(transport.calls.length).toBe(0);
+    expect(s.attempts.length).toBe(1);
+  });
+
+  it("Cenário 2: recovery limpou claim_token depois do prepare → ownership_lost", async () => {
+    const s = await prepared();
+    s.notifs[0].claim_token = null;
+    const ok = await markAttemptSending(s.attemptId, s.attemptToken, { client: s.client, now });
+    expect(ok).toBe(false);
+    expect(s.attempts[0].attempt_status).toBe("cancelled");
+    expect(s.attempts[0].error_code).toBe("ownership_lost");
+    expect(s.attempts.length).toBe(1);
+  });
+
+  it("Cenário 3: lease venceu depois do prepare → ownership_lost", async () => {
+    const s = await prepared();
+    s.notifs[0].lease_expires_at = new Date(NOW.getTime() - 1000).toISOString();
+    const ok = await markAttemptSending(s.attemptId, s.attemptToken, { client: s.client, now });
+    expect(ok).toBe(false);
+    expect(s.attempts[0].attempt_status).toBe("cancelled");
+    expect(s.attempts[0].error_code).toBe("ownership_lost");
+  });
+
+  it("Cenário 4: claim A foi substituído por claim B → ownership_lost", async () => {
+    const s = await prepared();
+    s.notifs[0].claim_token = "claim-B";
+    const ok = await markAttemptSending(s.attemptId, s.attemptToken, { client: s.client, now });
+    expect(ok).toBe(false);
+    expect(s.attempts[0].attempt_status).toBe("cancelled");
+    expect(s.attempts[0].error_code).toBe("ownership_lost");
+  });
+
+  it("Cenário 5: notificação cancelada antes do sending → ownership_lost", async () => {
+    const s = await prepared();
+    s.notifs[0].status = "cancelled";
+    const ok = await markAttemptSending(s.attemptId, s.attemptToken, { client: s.client, now });
+    expect(ok).toBe(false);
+    expect(s.attempts[0].attempt_status).toBe("cancelled");
+    expect(s.attempts[0].error_code).toBe("ownership_lost");
+  });
+
+  it("executeNotificationAttemptDryTechnical: ownership perdida entre prepare e sending NÃO chama transport", async () => {
+    // Repete o cenário 1 pelo orquestrador de ponta-a-ponta.
+    const { client, notifs, attempts } = fakeClient();
+    let step = 0;
+    // Transport que sabota o teste caso seja chamado.
+    const transport = new FakeWhatsAppNotificationTransport(() => {
+      throw new Error("transport MUST NOT be called when ownership is lost");
+    });
+    // Sobrescreve a RPC de mark_sending para simular perda de ownership
+    // depois que a tentativa 'planned' já existe. O prepare passa; o
+    // mark_sending encontra notif.status='sent' e cancela a tentativa.
+    const origRpc = client.rpc.bind(client);
+    (client as unknown as { rpc: typeof origRpc }).rpc = async (name, args) => {
+      if (name === "whatsapp_attempt_mark_sending_atomic") {
+        // simula que o callback já mudou o status
+        notifs[0].status = "sent";
+      }
+      step += 1;
+      return origRpc(name, args);
+    };
+    const r = await executeNotificationAttemptDryTechnical(baseInput, { client, now }, transport);
+    expect(r.kind).toBe("state_changed");
+    expect(transport.calls.length).toBe(0);
+    expect(attempts.length).toBe(1);
+    expect(attempts[0].attempt_status).toBe("cancelled");
+    expect(attempts[0].error_code).toBe("ownership_lost");
+    expect(step).toBeGreaterThan(0);
+  });
+
+  it("ownership válida no momento do sending → segue normalmente", async () => {
+    const s = await prepared();
+    // Notif intocada; markAttemptSending deve suceder.
+    const ok = await markAttemptSending(s.attemptId, s.attemptToken, { client: s.client, now });
+    expect(ok).toBe(true);
+    expect(s.attempts[0].attempt_status).toBe("sending");
+  });
+});
