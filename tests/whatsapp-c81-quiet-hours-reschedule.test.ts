@@ -5,11 +5,16 @@
  *  - quiet_hours NÃO produz `skipped` (que é terminal): a mesma linha
  *    volta a `pending` com `scheduled_at` no próximo horário permitido.
  *  - `attempt_count`, `dedupe_key`, `created_at`, `id` preservados.
+ *  - `next_attempt_at` é sempre limpo no reagendamento.
  *  - Nenhuma linha nova criada.
  *  - Estados terminais (`sent`, `failed`, `cancelled`, `skipped`) NÃO são
  *    reabertos: o reagendamento exige `status = 'processing'`.
+ *  - Retorno é união discriminada: `rescheduled | state_changed | error`
+ *    (erro real de banco NUNCA é escondido como race).
+ *  - Recuperação persistente após erro: mesma semântica, filtro
+ *    `status='processing'`, nunca faz `markSkipped` nem envia.
  *  - Timezone respeitado; fallback `America/Sao_Paulo`.
- *  - Suporta janela atravessando meia-noite e janela no mesmo dia.
+ *  - DST spring-forward e fall-back reais de America/New_York cobertos.
  *  - Sem envio real, sem escrita em gastos/contas/receitas.
  */
 import { describe, it, expect, beforeEach } from "bun:test";
@@ -39,6 +44,9 @@ function buildFake() {
     whatsapp_messages: [],
     profiles: [],
   };
+  // WA-C8.1 — injeção one-shot de erro em UPDATE por tabela.
+  const injectedUpdateErrors: Record<string, unknown> = {};
+
   function from(table: string) {
     if (!tables[table]) tables[table] = [];
     const data = tables[table];
@@ -55,6 +63,14 @@ function buildFake() {
       orderAsc: true,
       limitN: null,
     };
+    function consumeError(): unknown | null {
+      if (ctx.updatePatch != null && injectedUpdateErrors[table]) {
+        const err = injectedUpdateErrors[table];
+        delete injectedUpdateErrors[table];
+        return err;
+      }
+      return null;
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const api: any = {
       select() {
@@ -86,16 +102,28 @@ function buildFake() {
         return api;
       },
       async maybeSingle() {
+        const err = consumeError();
+        if (err) return { data: null, error: err };
         const rows = apply();
         return { data: rows[0] ?? null, error: null };
       },
-      then(resolve: (v: { data: Row[]; error: null }) => unknown) {
+      then(resolve: (v: { data: Row[]; error: unknown | null }) => unknown) {
+        const err = consumeError();
+        if (err) {
+          return Promise.resolve(resolve({ data: [], error: err }));
+        }
         return Promise.resolve(resolve({ data: apply(), error: null }));
       },
-      upsert(row: Row | Row[], opts?: { onConflict?: string; ignoreDuplicates?: boolean }) {
+      upsert(
+        row: Row | Row[],
+        opts?: { onConflict?: string; ignoreDuplicates?: boolean },
+      ) {
         const rows = Array.isArray(row) ? row : [row];
         for (const r of rows) {
-          const cols = (opts?.onConflict ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+          const cols = (opts?.onConflict ?? "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
           const existing = cols.length
             ? data.find((d) => cols.every((c) => d[c] === r[c]))
             : undefined;
@@ -142,7 +170,15 @@ function buildFake() {
     }
     return api;
   }
-  return { client: { from } as unknown as Parameters<typeof enqueueNotification>[1]["client"], tables };
+  return {
+    client: { from } as unknown as Parameters<
+      typeof enqueueNotification
+    >[1]["client"],
+    tables,
+    injectUpdateError(table: string, err: unknown) {
+      injectedUpdateErrors[table] = err;
+    },
+  };
 }
 
 // ----------------------- Helpers de teste -----------------------
@@ -168,7 +204,6 @@ describe("WA-C8.1 :: nextAllowedAfterQuietHours (helper puro)", () => {
   const TZ_BR = "America/Sao_Paulo"; // UTC-3, sem DST no runtime moderno.
 
   it("fora da quiet hour → retorna null (nada a fazer)", () => {
-    // 15:00 UTC = 12:00 em BR, janela 22→7 → fora.
     const r = nextAllowedAfterQuietHours(
       new Date("2026-06-28T15:00:00Z"),
       22,
@@ -179,30 +214,25 @@ describe("WA-C8.1 :: nextAllowedAfterQuietHours (helper puro)", () => {
   });
 
   it("dentro da janela 22→07: aos 23:59 local → 07:00 local do dia SEGUINTE", () => {
-    // 02:59 UTC de 28/06 = 23:59 local BR de 27/06.
     const now = new Date("2026-06-28T02:59:00Z");
     const r = nextAllowedAfterQuietHours(now, 22, 7, TZ_BR)!;
     expect(r).not.toBeNull();
-    // 07:00 BR de 28/06 = 10:00 UTC.
     expect(r.toISOString()).toBe("2026-06-28T10:00:00.000Z");
   });
 
   it("dentro da janela 22→07: aos 00:01 local → 07:00 local do MESMO dia local", () => {
-    // 03:01 UTC de 28/06 = 00:01 local BR de 28/06.
     const now = new Date("2026-06-28T03:01:00Z");
     const r = nextAllowedAfterQuietHours(now, 22, 7, TZ_BR)!;
     expect(r.toISOString()).toBe("2026-06-28T10:00:00.000Z");
   });
 
   it("exatamente no início (22:00 local) → reagenda para 07:00 local do dia seguinte", () => {
-    // 01:00 UTC de 28/06 = 22:00 local BR de 27/06.
     const now = new Date("2026-06-28T01:00:00Z");
     const r = nextAllowedAfterQuietHours(now, 22, 7, TZ_BR)!;
     expect(r.toISOString()).toBe("2026-06-28T10:00:00.000Z");
   });
 
   it("exatamente no fim (07:00 local) → NÃO está em quiet (end exclusivo) → null", () => {
-    // 10:00 UTC de 28/06 = 07:00 local BR.
     const r = nextAllowedAfterQuietHours(
       new Date("2026-06-28T10:00:00Z"),
       22,
@@ -213,36 +243,28 @@ describe("WA-C8.1 :: nextAllowedAfterQuietHours (helper puro)", () => {
   });
 
   it("janela mesmo dia (09→12): dentro → 12:00 local", () => {
-    // 13:00 UTC = 10:00 BR (dentro).
     const now = new Date("2026-06-28T13:00:00Z");
     const r = nextAllowedAfterQuietHours(now, 9, 12, TZ_BR)!;
-    // 12:00 BR = 15:00 UTC.
     expect(r.toISOString()).toBe("2026-06-28T15:00:00.000Z");
   });
 
   it("timezone alternativo (UTC): janela 22→07", () => {
-    // 23:30 UTC → dentro da janela; end 07:00 UTC do dia seguinte.
     const now = new Date("2026-06-28T23:30:00Z");
     const r = nextAllowedAfterQuietHours(now, 22, 7, "UTC")!;
     expect(r.toISOString()).toBe("2026-06-29T07:00:00.000Z");
   });
 
   it("timezone com DST (America/New_York) — retorna instante válido, fora da quiet e > now", () => {
-    // 08:00 UTC ≈ 04:00 EDT (verão americano) → janela 22→07 → dentro.
     const now = new Date("2026-07-15T08:00:00Z");
     const r = nextAllowedAfterQuietHours(now, 22, 7, "America/New_York")!;
     expect(r.getTime()).toBeGreaterThan(now.getTime());
-    // Precisa estar fora da quiet no timezone dado.
-    expect(
-      isQuietHour(hourInTimezone(r, "America/New_York"), 22, 7),
-    ).toBe(false);
-    // Alinhado a HH:00:00 no timezone (minutos/segundos = 0 no local).
-    const hh = hourInTimezone(r, "America/New_York");
-    expect(hh).toBe(7);
+    expect(isQuietHour(hourInTimezone(r, "America/New_York"), 22, 7)).toBe(
+      false,
+    );
+    expect(hourInTimezone(r, "America/New_York")).toBe(7);
   });
 
   it("timezone com offset fracionário (Asia/Kolkata, +05:30) — resultado válido", () => {
-    // 20:00 UTC = 01:30 IST → janela 22→07 → dentro.
     const now = new Date("2026-06-28T20:00:00Z");
     const r = nextAllowedAfterQuietHours(now, 22, 7, "Asia/Kolkata")!;
     expect(r.getTime()).toBeGreaterThan(now.getTime());
@@ -251,7 +273,7 @@ describe("WA-C8.1 :: nextAllowedAfterQuietHours (helper puro)", () => {
   });
 
   it("timezone inválido cai para fallback America/Sao_Paulo", () => {
-    const now = new Date("2026-06-28T03:00:00Z"); // 00:00 BR
+    const now = new Date("2026-06-28T03:00:00Z");
     const r = nextAllowedAfterQuietHours(now, 22, 7, "Not/AZone")!;
     expect(r.toISOString()).toBe("2026-06-28T10:00:00.000Z");
   });
@@ -262,7 +284,7 @@ describe("WA-C8.1 :: nextAllowedAfterQuietHours (helper puro)", () => {
     expect(r.toISOString()).toBe("2026-06-28T10:00:00.000Z");
   });
 
-  it("start === end → quiet hours desativado → retorna null (preserva isQuietHour)", () => {
+  it("start === end → quiet hours desativado → retorna null", () => {
     const now = new Date("2026-06-28T03:00:00Z");
     expect(nextAllowedAfterQuietHours(now, 7, 7, TZ_BR)).toBeNull();
   });
@@ -276,7 +298,6 @@ describe("WA-C8.1 :: nextAllowedAfterQuietHours (helper puro)", () => {
   it("resultado alinhado a HH:00:00 no timezone local", () => {
     const now = new Date("2026-06-28T03:30:00Z");
     const r = nextAllowedAfterQuietHours(now, 22, 7, TZ_BR)!;
-    // BR = UTC-3 sem DST: 10:00 UTC == 07:00 local exato.
     expect(r.getUTCMinutes()).toBe(0);
     expect(r.getUTCSeconds()).toBe(0);
     expect(hourInTimezone(r, TZ_BR)).toBe(7);
@@ -299,47 +320,134 @@ describe("WA-C8.1 :: nextAllowedAfterQuietHours (helper puro)", () => {
 });
 
 // =====================================================================
-// 2) rescheduleForQuietHours — persistência
+// 1b) DST real de America/New_York (spring-forward + fall-back)
+// =====================================================================
+describe("WA-C8.1 :: DST real America/New_York (2026)", () => {
+  const TZ_NY = "America/New_York";
+
+  function offsetMinutes(instant: Date, tz: string): number {
+    // offset local - UTC, em minutos.
+    const fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      timeZoneName: "shortOffset",
+    });
+    const parts = fmt.formatToParts(instant);
+    const tzName = parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+    const m = /GMT([+-])(\d{1,2})(?::(\d{2}))?/.exec(tzName);
+    if (!m) return 0;
+    const sign = m[1] === "-" ? -1 : 1;
+    return sign * (Number(m[2]) * 60 + Number(m[3] ?? "0"));
+  }
+
+  it("spring-forward 2026-03-08 — entrada antes do avanço → resultado válido, > now, fora da quiet", () => {
+    // 08 mar 2026, 06:00 UTC = 01:00 EST (pré-salto). Quiet 22→7 → dentro.
+    const now = new Date("2026-03-08T06:00:00Z");
+    const r = nextAllowedAfterQuietHours(now, 22, 7, TZ_NY)!;
+    expect(r).not.toBeNull();
+    expect(Number.isNaN(r.getTime())).toBe(false);
+    expect(r.getTime()).toBeGreaterThan(now.getTime());
+    expect(isQuietHour(hourInTimezone(r, TZ_NY), 22, 7)).toBe(false);
+    // 07:00 EDT = 11:00 UTC (offset -04:00 pós-salto).
+    expect(r.toISOString()).toBe("2026-03-08T11:00:00.000Z");
+    // Registro de offsets para auditoria.
+    expect(offsetMinutes(now, TZ_NY)).toBe(-300); // EST
+    expect(offsetMinutes(r, TZ_NY)).toBe(-240); // EDT
+  });
+
+  it("spring-forward 2026-03-08 — end no horário inexistente (02) converge para primeiro instante válido", () => {
+    // 06:30 UTC = 01:30 EST (dentro da janela 22→2). end=02:00 local não existe.
+    // O algoritmo deve convergir para o instante logo após o salto (03:00 EDT).
+    const now = new Date("2026-03-08T06:30:00Z");
+    const r = nextAllowedAfterQuietHours(now, 22, 2, TZ_NY)!;
+    expect(r).not.toBeNull();
+    expect(Number.isNaN(r.getTime())).toBe(false);
+    expect(r.getTime()).toBeGreaterThan(now.getTime());
+    expect(isQuietHour(hourInTimezone(r, TZ_NY), 22, 2)).toBe(false);
+    // Guarda de sanidade: hora local não pode cair dentro do "buraco".
+    const hh = hourInTimezone(r, TZ_NY);
+    expect(hh).not.toBe(2);
+  });
+
+  it("fall-back 2026-11-01 — dentro da janela (01:00 EDT, repetição prestes a acontecer)", () => {
+    // 01 nov 2026, 05:00 UTC = 01:00 EDT (primeira ocorrência do wall-clock 01:00).
+    const before = new Date("2026-11-01T05:00:00Z");
+    const r1 = nextAllowedAfterQuietHours(before, 22, 7, TZ_NY)!;
+    expect(r1).not.toBeNull();
+    expect(Number.isNaN(r1.getTime())).toBe(false);
+    expect(r1.getTime()).toBeGreaterThan(before.getTime());
+    expect(isQuietHour(hourInTimezone(r1, TZ_NY), 22, 7)).toBe(false);
+    // 07:00 EST = 12:00 UTC (offset -05:00 pós-fall-back).
+    expect(r1.toISOString()).toBe("2026-11-01T12:00:00.000Z");
+    expect(offsetMinutes(before, TZ_NY)).toBe(-240); // EDT
+    expect(offsetMinutes(r1, TZ_NY)).toBe(-300); // EST
+  });
+
+  it("fall-back 2026-11-01 — dentro da janela (01:00 EST, segunda ocorrência do mesmo wall-clock)", () => {
+    // 06:30 UTC = 01:30 EST (segunda ocorrência). Ainda dentro da janela 22→7.
+    const after = new Date("2026-11-01T06:30:00Z");
+    const r2 = nextAllowedAfterQuietHours(after, 22, 7, TZ_NY)!;
+    expect(r2).not.toBeNull();
+    expect(Number.isNaN(r2.getTime())).toBe(false);
+    expect(r2.getTime()).toBeGreaterThan(after.getTime());
+    expect(isQuietHour(hourInTimezone(r2, TZ_NY), 22, 7)).toBe(false);
+    // Deve reagendar para 07:00 EST = 12:00 UTC, mesmo instante determinístico
+    // independentemente de qual das duas ocorrências foi a entrada.
+    expect(r2.toISOString()).toBe("2026-11-01T12:00:00.000Z");
+    expect(offsetMinutes(after, TZ_NY)).toBe(-300); // EST
+  });
+});
+
+// =====================================================================
+// 2) rescheduleForQuietHours — persistência (novo contrato)
 // =====================================================================
 describe("WA-C8.1 :: rescheduleForQuietHours (persistência)", () => {
-  it("reagenda a MESMA linha; preserva id/dedupe_key/attempt_count/created_at", async () => {
+  it("reagenda a MESMA linha; preserva id/dedupe_key/attempt_count/created_at; limpa next_attempt_at", async () => {
     const row = await enqueueNotification(baseEnqueue, { client: fake.client });
     expect(row).not.toBeNull();
+    // Estado inicial com next_attempt_at antigo + attempt_count > 0.
+    Object.assign(fake.tables.whatsapp_notifications[0] as Row, {
+      next_attempt_at: new Date("2026-06-01T00:00:00Z").toISOString(),
+      attempt_count: 3,
+    });
     const claimed = await claimForProcessing(row!.id, { client: fake.client });
     expect(claimed).not.toBeNull();
 
     const nextAt = new Date("2026-06-28T10:00:00Z");
-    const ok = await rescheduleForQuietHours(row!.id, nextAt, {
+    const res = await rescheduleForQuietHours(row!.id, nextAt, {
       client: fake.client,
     });
-    expect(ok).toBe(true);
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.status).toBe("rescheduled");
 
-    const rows = fake.tables.whatsapp_notifications as unknown as NotificationRow[];
-    expect(rows).toHaveLength(1); // nenhuma linha nova
+    const rows = fake.tables
+      .whatsapp_notifications as unknown as NotificationRow[];
+    expect(rows).toHaveLength(1);
     const after = rows[0];
     expect(after.id).toBe(row!.id);
     expect(after.status).toBe("pending");
     expect(after.scheduled_at).toBe(nextAt.toISOString());
     expect(after.skipped_reason).toBeNull();
+    expect(after.next_attempt_at).toBeNull(); // WA-C8.1 hardening
     expect(after.dedupe_key).toBe(baseEnqueue.dedupeKey);
-    expect(after.attempt_count).toBe(0); // não incrementa
+    expect(after.attempt_count).toBe(3); // preservado
   });
 
-  it("só reagenda a partir de `processing` — status `pending` NÃO é atualizado", async () => {
+  it("status pending → resultado = state_changed (não é erro)", async () => {
     const row = await enqueueNotification(baseEnqueue, { client: fake.client });
-    // Sem claim: fica pending.
-    const ok = await rescheduleForQuietHours(
+    const res = await rescheduleForQuietHours(
       row!.id,
       new Date("2026-06-28T10:00:00Z"),
       { client: fake.client },
     );
-    expect(ok).toBe(false);
-    const after = (fake.tables.whatsapp_notifications[0] as unknown as NotificationRow);
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.status).toBe("state_changed");
+    const after = fake.tables
+      .whatsapp_notifications[0] as unknown as NotificationRow;
     expect(after.status).toBe("pending");
     expect(after.scheduled_at).toBe(baseEnqueue.scheduledAt.toISOString());
   });
 
-  it("não reabre estados terminais (cancelled/sent/failed/skipped)", async () => {
+  it("estados terminais (cancelled/sent/failed/skipped) NÃO são reabertos", async () => {
     const terminals: NotificationRow["status"][] = [
       "cancelled",
       "sent",
@@ -348,52 +456,177 @@ describe("WA-C8.1 :: rescheduleForQuietHours (persistência)", () => {
     ];
     for (const term of terminals) {
       fake = buildFake();
-      const row = await enqueueNotification(baseEnqueue, { client: fake.client });
-      // Força estado terminal direto.
+      const row = await enqueueNotification(baseEnqueue, {
+        client: fake.client,
+      });
       (fake.tables.whatsapp_notifications[0] as Row).status = term;
-      const ok = await rescheduleForQuietHours(
+      const res = await rescheduleForQuietHours(
         row!.id,
         new Date("2026-06-28T10:00:00Z"),
         { client: fake.client },
       );
-      expect(ok).toBe(false);
-      const after = fake.tables.whatsapp_notifications[0] as unknown as NotificationRow;
+      expect(res.ok).toBe(false);
+      if (!res.ok) expect(res.status).toBe("state_changed");
+      const after = fake.tables
+        .whatsapp_notifications[0] as unknown as NotificationRow;
       expect(after.status).toBe(term);
     }
   });
 
-  it("duas tentativas simultâneas: no máximo UMA atualiza (semântica processing→pending)", async () => {
+  it("duas tentativas simultâneas: exatamente UMA rescheduled, outra state_changed", async () => {
     const row = await enqueueNotification(baseEnqueue, { client: fake.client });
     await claimForProcessing(row!.id, { client: fake.client });
     const nextAt = new Date("2026-06-28T10:00:00Z");
-    const a = await rescheduleForQuietHours(row!.id, nextAt, { client: fake.client });
-    // Segunda chamada: já está `pending`, filtro `status = processing` falha.
-    const b = await rescheduleForQuietHours(row!.id, nextAt, { client: fake.client });
-    expect(a).toBe(true);
-    expect(b).toBe(false);
+    const a = await rescheduleForQuietHours(row!.id, nextAt, {
+      client: fake.client,
+    });
+    const b = await rescheduleForQuietHours(row!.id, nextAt, {
+      client: fake.client,
+    });
+    expect(a.ok).toBe(true);
+    expect(b.ok).toBe(false);
+    if (!b.ok) expect(b.status).toBe("state_changed");
     expect(fake.tables.whatsapp_notifications).toHaveLength(1);
   });
 
-  it("listDuePending só retorna após o novo scheduled_at", async () => {
+  it("listDuePending respeita o novo scheduled_at; next_attempt_at antigo não influencia", async () => {
     const row = await enqueueNotification(baseEnqueue, { client: fake.client });
+    // next_attempt_at antigo no passado — não deve elegibilizar antes de scheduled_at.
+    (fake.tables.whatsapp_notifications[0] as Row).next_attempt_at = new Date(
+      "2026-06-01T00:00:00Z",
+    ).toISOString();
     await claimForProcessing(row!.id, { client: fake.client });
     const nextAt = new Date("2026-06-28T10:00:00Z");
-    await rescheduleForQuietHours(row!.id, nextAt, { client: fake.client });
+    const res = await rescheduleForQuietHours(row!.id, nextAt, {
+      client: fake.client,
+    });
+    expect(res.ok).toBe(true);
 
-    // Antes do horário reagendado → não é due.
     const before = await listDuePending(50, {
       client: fake.client,
       now: () => new Date("2026-06-28T09:59:00Z"),
     });
     expect(before).toHaveLength(0);
 
-    // Depois → é due de novo.
     const after = await listDuePending(50, {
       client: fake.client,
       now: () => new Date("2026-06-28T10:00:00Z"),
     });
     expect(after).toHaveLength(1);
     expect(after[0].id).toBe(row!.id);
+  });
+});
+
+// =====================================================================
+// 2b) Erro de banco — diferenciado de race
+// =====================================================================
+describe("WA-C8.1 :: erro de banco no UPDATE", () => {
+  it("Supabase retorna error → resultado = error (nunca state_changed)", async () => {
+    const row = await enqueueNotification(baseEnqueue, { client: fake.client });
+    await claimForProcessing(row!.id, { client: fake.client });
+    fake.injectUpdateError("whatsapp_notifications", {
+      code: "PGRST000",
+      message: "connection reset",
+    });
+    const res = await rescheduleForQuietHours(
+      row!.id,
+      new Date("2026-06-28T10:00:00Z"),
+      { client: fake.client },
+    );
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.status).toBe("error");
+    // Linha permanece em processing — não vira sent/skipped/cancelled.
+    const after = fake.tables
+      .whatsapp_notifications[0] as unknown as NotificationRow;
+    expect(after.status).toBe("processing");
+    // Nenhuma linha nova.
+    expect(fake.tables.whatsapp_notifications).toHaveLength(1);
+  });
+
+  it("UPDATE sem erro + zero linhas afetadas → state_changed (não error)", async () => {
+    const row = await enqueueNotification(baseEnqueue, { client: fake.client });
+    // Sem claim: status permanece pending → filtro falha, 0 linhas, sem erro.
+    const res = await rescheduleForQuietHours(
+      row!.id,
+      new Date("2026-06-28T10:00:00Z"),
+      { client: fake.client },
+    );
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.status).toBe("state_changed");
+  });
+
+  it("recuperação após erro: UPDATE inicial falha → recovery restabelece processing→pending", async () => {
+    const row = await enqueueNotification(baseEnqueue, { client: fake.client });
+    await claimForProcessing(row!.id, { client: fake.client });
+    const nextAt = new Date("2026-06-28T10:00:00Z");
+    // Primeiro UPDATE erra (injeção one-shot); segunda chamada roda limpa.
+    fake.injectUpdateError("whatsapp_notifications", {
+      code: "PGRST000",
+      message: "boom",
+    });
+    const r1 = await rescheduleForQuietHours(row!.id, nextAt, {
+      client: fake.client,
+    });
+    expect(r1.ok).toBe(false);
+    if (!r1.ok) expect(r1.status).toBe("error");
+    // Recovery preserva filtro processing → sucesso.
+    const r2 = await recoverStuckReschedule(row!.id, nextAt, {
+      client: fake.client,
+    });
+    expect(r2.ok).toBe(true);
+    const after = fake.tables
+      .whatsapp_notifications[0] as unknown as NotificationRow;
+    expect(after.status).toBe("pending");
+    expect(after.scheduled_at).toBe(nextAt.toISOString());
+    expect(after.next_attempt_at).toBeNull();
+    expect(after.attempt_count).toBe(0);
+    expect(after.dedupe_key).toBe(baseEnqueue.dedupeKey);
+    expect(fake.tables.whatsapp_notifications).toHaveLength(1);
+  });
+
+  it("recuperação também falha: status permanece processing, sem envio, sem markSkipped", async () => {
+    const row = await enqueueNotification(baseEnqueue, { client: fake.client });
+    await claimForProcessing(row!.id, { client: fake.client });
+    const nextAt = new Date("2026-06-28T10:00:00Z");
+    fake.injectUpdateError("whatsapp_notifications", { code: "1", message: "a" });
+    const r1 = await rescheduleForQuietHours(row!.id, nextAt, {
+      client: fake.client,
+    });
+    expect(r1.ok).toBe(false);
+    fake.injectUpdateError("whatsapp_notifications", { code: "2", message: "b" });
+    const r2 = await recoverStuckReschedule(row!.id, nextAt, {
+      client: fake.client,
+    });
+    expect(r2.ok).toBe(false);
+    if (!r2.ok) expect(r2.status).toBe("error");
+    // Estado preso, mas observável — nunca sent/skipped.
+    const after = fake.tables
+      .whatsapp_notifications[0] as unknown as NotificationRow;
+    expect(after.status).toBe("processing");
+    expect(after.skipped_reason ?? null).toBeNull();
+    expect(after.sent_at ?? null).toBeNull();
+    expect(fake.tables.whatsapp_notifications).toHaveLength(1);
+  });
+
+  it("recuperação após estado terminal simultâneo: retorna state_changed sem reabrir", async () => {
+    const row = await enqueueNotification(baseEnqueue, { client: fake.client });
+    await claimForProcessing(row!.id, { client: fake.client });
+    const nextAt = new Date("2026-06-28T10:00:00Z");
+    fake.injectUpdateError("whatsapp_notifications", { code: "x", message: "y" });
+    const r1 = await rescheduleForQuietHours(row!.id, nextAt, {
+      client: fake.client,
+    });
+    expect(r1.ok).toBe(false);
+    // Nesse intervalo, o pagamento cancela a notificação.
+    (fake.tables.whatsapp_notifications[0] as Row).status = "cancelled";
+    const r2 = await recoverStuckReschedule(row!.id, nextAt, {
+      client: fake.client,
+    });
+    expect(r2.ok).toBe(false);
+    if (!r2.ok) expect(r2.status).toBe("state_changed");
+    const after = fake.tables
+      .whatsapp_notifications[0] as unknown as NotificationRow;
+    expect(after.status).toBe("cancelled");
   });
 });
 
@@ -425,7 +658,7 @@ describe("WA-C8.1 :: canDispatch expõe nextAllowedAt", () => {
       quiet_hours_start: 22,
       quiet_hours_end: 7,
     });
-    const now = new Date("2026-06-28T03:00:00Z"); // 00:00 BR
+    const now = new Date("2026-06-28T03:00:00Z");
     const r = await canDispatch(
       {
         userId: "u1",
