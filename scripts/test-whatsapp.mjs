@@ -84,6 +84,7 @@ const INCLUDE = [
   "whatsapp-notifications-c8.test.ts",
   "whatsapp-c81-quiet-hours-reschedule.test.ts",
   "whatsapp-c92-dispatch-eligibility-backoff.test.ts",
+  "whatsapp-c92-processing-lease-recovery.test.ts",
   "whatsapp-contas-lembretes-c9.test.ts",
   "whatsapp-c91-lifecycle.test.ts",
   "whatsapp-boleto-c10a.test.ts",
