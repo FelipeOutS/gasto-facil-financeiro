@@ -3853,6 +3853,12 @@ export type Database = {
         }
         Returns: undefined
       }
+      whatsapp_attempt_mark_sending_atomic: {
+        Args: { p_attempt_id: string; p_attempt_token: string; p_now?: string }
+        Returns: {
+          outcome: string
+        }[]
+      }
       whatsapp_attempt_prepare_atomic: {
         Args: {
           p_attempt_token: string
