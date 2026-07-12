@@ -3164,6 +3164,65 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_notification_status_events: {
+        Row: {
+          conversation_id: string | null
+          error_category: string | null
+          error_code: string | null
+          error_message: string | null
+          error_title: string | null
+          event_at: string
+          event_key: string
+          event_status: string
+          id: string
+          notification_id: string | null
+          phone_number_id: string | null
+          pricing_category: string | null
+          provider_message_id: string
+          received_at: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          error_category?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          error_title?: string | null
+          event_at: string
+          event_key: string
+          event_status: string
+          id?: string
+          notification_id?: string | null
+          phone_number_id?: string | null
+          pricing_category?: string | null
+          provider_message_id: string
+          received_at?: string
+        }
+        Update: {
+          conversation_id?: string | null
+          error_category?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          error_title?: string | null
+          event_at?: string
+          event_key?: string
+          event_status?: string
+          id?: string
+          notification_id?: string | null
+          phone_number_id?: string | null
+          pricing_category?: string | null
+          provider_message_id?: string
+          received_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_notification_status_events_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_notification_templates: {
         Row: {
           active: boolean
@@ -3209,6 +3268,7 @@ export type Database = {
           claimed_at: string | null
           created_at: string
           dedupe_key: string
+          delivered_at: string | null
           entity_id: string | null
           entity_type: string | null
           failed_at: string | null
@@ -3222,6 +3282,7 @@ export type Database = {
           payload_version: number
           priority: string
           provider_message_id: string | null
+          read_at: string | null
           scheduled_at: string
           sent_at: string | null
           skipped_reason: string | null
@@ -3237,6 +3298,7 @@ export type Database = {
           claimed_at?: string | null
           created_at?: string
           dedupe_key: string
+          delivered_at?: string | null
           entity_id?: string | null
           entity_type?: string | null
           failed_at?: string | null
@@ -3250,6 +3312,7 @@ export type Database = {
           payload_version?: number
           priority?: string
           provider_message_id?: string | null
+          read_at?: string | null
           scheduled_at: string
           sent_at?: string | null
           skipped_reason?: string | null
@@ -3265,6 +3328,7 @@ export type Database = {
           claimed_at?: string | null
           created_at?: string
           dedupe_key?: string
+          delivered_at?: string | null
           entity_id?: string | null
           entity_type?: string | null
           failed_at?: string | null
@@ -3278,6 +3342,7 @@ export type Database = {
           payload_version?: number
           priority?: string
           provider_message_id?: string | null
+          read_at?: string | null
           scheduled_at?: string
           sent_at?: string | null
           skipped_reason?: string | null
