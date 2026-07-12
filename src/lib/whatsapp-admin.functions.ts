@@ -16,9 +16,11 @@ import { timingSafeEqual } from "crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 
-// Versão Graph API centralizada server-side. Default v25.0 (atual no painel Meta).
-// Override opcional via env WHATSAPP_GRAPH_VERSION (ex.: "v26.0").
-const GRAPH_VERSION = (process.env.WHATSAPP_GRAPH_VERSION ?? "v25.0").trim() || "v25.0";
+// META-GRAPH-UPGRADE-01 — fonte única e validada da versão Graph.
+// Nenhum fallback silencioso; nenhuma constante literal de versão neste
+// módulo. Import dinâmico dentro dos handlers porque `.functions.ts`
+// participa do grafo do bundle client (apenas o corpo do handler é
+// removido do cliente).
 const OFFICIAL_NUMBER_E164 = "5511918539158";
 
 function adminUnauthorized(): Response {
