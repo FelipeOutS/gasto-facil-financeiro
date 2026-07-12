@@ -775,3 +775,102 @@ describe("executeNotificationAttemptDryTechnical", () => {
     expect(attempts.length).toBe(0);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hardening pós-auditoria: atomicidade e uma-tentativa-por-claim.
+
+describe("prepareNotificationAttempt — atomic ownership (Pergunta A)", () => {
+  const baseInput = {
+    notificationId: "n1",
+    claimToken: "claim-A",
+    template: template(),
+    payload: OK_PAYLOAD,
+    recipient: "5511912345678",
+  };
+
+  it("claim_token rotacionado antes do INSERT → state_changed, nenhuma tentativa criada", async () => {
+    const { client, notifs, attempts } = fakeClient();
+    notifs[0].claim_token = "claim-ROTATED";
+    const r = await prepareNotificationAttempt(baseInput, { client, now });
+    expect(r.kind).toBe("state_changed");
+    expect(attempts.length).toBe(0);
+  });
+
+  it("lease expirado antes do INSERT → state_changed, nenhuma tentativa criada", async () => {
+    const { client, notifs, attempts } = fakeClient();
+    notifs[0].lease_expires_at = new Date(NOW.getTime() - 60_000).toISOString();
+    const r = await prepareNotificationAttempt(baseInput, { client, now });
+    expect(r.kind).toBe("state_changed");
+    expect(attempts.length).toBe(0);
+  });
+
+  it("status virou pending antes do INSERT → state_changed", async () => {
+    const { client, notifs, attempts } = fakeClient();
+    notifs[0].status = "pending";
+    const r = await prepareNotificationAttempt(baseInput, { client, now });
+    expect(r.kind).toBe("state_changed");
+    expect(attempts.length).toBe(0);
+  });
+});
+
+describe("prepareNotificationAttempt — uma tentativa por claim (Pergunta B)", () => {
+  const baseInput = {
+    notificationId: "n1",
+    claimToken: "claim-A",
+    phoneNumberId: "PHONE_ID_TEST",
+    template: template(),
+    payload: OK_PAYLOAD,
+    recipient: "5511912345678",
+  };
+
+  it("após accepted, mesmo claim_token não gera segunda tentativa", async () => {
+    const { client, attempts } = fakeClient();
+    const transport = new FakeWhatsAppNotificationTransport({
+      kind: "accepted",
+      providerMessageId: "wamid.OK",
+      httpStatus: 200,
+    });
+    const r1 = await executeNotificationAttemptDryTechnical(baseInput, { client, now }, transport);
+    expect(r1.kind).toBe("accepted");
+    expect(attempts.length).toBe(1);
+    expect(attempts[0].attempt_status).toBe("accepted");
+
+    const r2 = await prepareNotificationAttempt(baseInput, { client, now });
+    expect(r2.kind).toBe("active_attempt_exists");
+    expect(attempts.length).toBe(1);
+  });
+
+  it("após rejected, mesmo claim_token também não gera segunda tentativa", async () => {
+    const { client, attempts } = fakeClient();
+    const transport = new FakeWhatsAppNotificationTransport({
+      kind: "rejected",
+      errorCode: "131047",
+      errorCategory: "template",
+      retryable: false,
+      httpStatus: 400,
+    });
+    await executeNotificationAttemptDryTechnical(baseInput, { client, now }, transport);
+    expect(attempts.length).toBe(1);
+    const r2 = await prepareNotificationAttempt(baseInput, { client, now });
+    expect(r2.kind).toBe("active_attempt_exists");
+    expect(attempts.length).toBe(1);
+  });
+
+  it("novo claim_token após reclaim autoriza exatamente uma nova tentativa", async () => {
+    const { client, notifs, attempts } = fakeClient();
+    const transport = new FakeWhatsAppNotificationTransport({
+      kind: "accepted",
+      providerMessageId: "wamid.OK",
+      httpStatus: 200,
+    });
+    await executeNotificationAttemptDryTechnical(baseInput, { client, now }, transport);
+    expect(attempts.length).toBe(1);
+    notifs[0].claim_token = "claim-B";
+    const r2 = await prepareNotificationAttempt(
+      { ...baseInput, claimToken: "claim-B" },
+      { client, now },
+    );
+    expect(r2.kind).toBe("prepared");
+    expect(attempts.length).toBe(2);
+  });
+});
