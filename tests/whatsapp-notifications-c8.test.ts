@@ -40,6 +40,19 @@ function buildFake() {
     profiles: [],
   };
 
+  function parseOr(expr: string): Array<(r: Row) => boolean> {
+    return expr.split(",").map((cl) => {
+      const [col, op, ...rest] = cl.trim().split(".");
+      const val = rest.join(".");
+      if (op === "is" && val === "null") return (r: Row) => r[col] == null;
+      if (op === "lte")
+        return (r: Row) => r[col] != null && String(r[col]) <= String(val);
+      if (op === "gte")
+        return (r: Row) => r[col] != null && String(r[col]) >= String(val);
+      if (op === "eq") return (r: Row) => r[col] === val;
+      return () => false;
+    });
+  }
   function from(table: string) {
     if (!tables[table]) tables[table] = [];
     const data = tables[table];
@@ -71,6 +84,7 @@ function buildFake() {
       in: (col: string, vals: unknown[]) => typeof api;
       lte: (col: string, val: unknown) => typeof api;
       gte: (col: string, val: unknown) => typeof api;
+      or: (expr: string) => typeof api;
       order: (col: string, opts?: { ascending?: boolean }) => typeof api;
       limit: (n: number) => typeof api;
       maybeSingle: () => Promise<{ data: Row | null; error: null }>;
@@ -99,6 +113,11 @@ function buildFake() {
       },
       lte(col, val) {
         ctx.filters.push((r) => String(r[col]) <= String(val));
+        return api;
+      },
+      or(expr) {
+        const preds = parseOr(expr);
+        ctx.filters.push((r) => preds.some((p) => p(r)));
         return api;
       },
       gte(col, val) {

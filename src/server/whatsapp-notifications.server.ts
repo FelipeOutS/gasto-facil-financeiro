@@ -148,23 +148,52 @@ export async function enqueueNotification(
 }
 
 /**
- * Claim atômico: marca como `processing` apenas se ainda estiver `pending`.
- * Retorna a linha clamada ou null se outro worker venceu a corrida.
+ * WA-C9.2 Fase A — Contrato de elegibilidade unificado.
+ *
+ * Uma notificação SÓ é elegível para dispatch quando:
+ *   status = 'pending'
+ *   AND scheduled_at <= now
+ *   AND (next_attempt_at IS NULL OR next_attempt_at <= now)
+ *
+ * Este contrato é aplicado em `listDuePending` (listagem) e revalidado
+ * atomicamente em `claimForProcessing` (UPDATE condicional). Isso protege
+ * contra:
+ *  - chamada direta de claim por ID conhecido;
+ *  - mudança de estado entre listagem e claim;
+ *  - retry antecipado durante backoff futuro;
+ *  - reagendamento por quiet hours (scheduled_at futuro);
+ *  - reabertura de estado terminal (sent/failed/cancelled/skipped/processing).
+ *
+ * Ordenação: `scheduled_at ASC` — determinístico e servido pelo índice parcial
+ * `idx_wa_notif_due (scheduled_at) WHERE status='pending'`. O filtro extra
+ * sobre `next_attempt_at` é recheck barato pós-index (conjunto pending é
+ * pequeno em regime saudável).
+ */
+
+/**
+ * Claim atômico: marca como `processing` apenas se todas as condições de
+ * elegibilidade forem verdadeiras no instante do UPDATE.
+ * Retorna a linha clamada ou null (race, backoff futuro, scheduled futuro,
+ * terminal, etc.). Não incrementa attempt_count, preserva dedupe_key,
+ * scheduled_at e next_attempt_at.
  */
 export async function claimForProcessing(
   id: string,
   deps?: NotificationsDeps,
 ): Promise<NotificationRow | null> {
   const c = client(deps);
+  const now = (deps?.now?.() ?? new Date()).toISOString();
   const { data, error } = await c
     .from("whatsapp_notifications")
     .update({ status: "processing" })
     .eq("id", id)
     .eq("status", "pending")
+    .lte("scheduled_at", now)
+    .or(`next_attempt_at.is.null,next_attempt_at.lte.${now}`)
     .select("*")
     .maybeSingle();
   if (error) {
-    console.error("[wa-notif] claim failed", error.code);
+    console.error("[wa-notif] claim failed", (error as { code?: string }).code);
     return null;
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -172,8 +201,8 @@ export async function claimForProcessing(
 }
 
 /**
- * Lista pendentes vencidas (scheduled_at <= now). Não muda status.
- * O dispatcher itera e chama `claimForProcessing` em cada uma.
+ * Lista pendentes elegíveis. Não muda status.
+ * O dispatcher itera e chama `claimForProcessing` em cada uma, que revalida.
  */
 export async function listDuePending(
   limit = 50,
@@ -186,6 +215,7 @@ export async function listDuePending(
     .select("*")
     .eq("status", "pending")
     .lte("scheduled_at", now)
+    .or(`next_attempt_at.is.null,next_attempt_at.lte.${now}`)
     .order("scheduled_at", { ascending: true })
     .limit(limit);
   if (error) {
@@ -195,6 +225,7 @@ export async function listDuePending(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data as any) ?? [];
 }
+
 
 export async function markSent(
   id: string,

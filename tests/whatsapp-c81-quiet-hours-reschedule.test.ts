@@ -47,6 +47,19 @@ function buildFake() {
   // WA-C8.1 — injeção one-shot de erro em UPDATE por tabela.
   const injectedUpdateErrors: Record<string, unknown> = {};
 
+  function parseOr(expr: string): Array<(r: Row) => boolean> {
+    return expr.split(",").map((cl) => {
+      const [col, op, ...rest] = cl.trim().split(".");
+      const val = rest.join(".");
+      if (op === "is" && val === "null") return (r: Row) => r[col] == null;
+      if (op === "lte")
+        return (r: Row) => r[col] != null && String(r[col]) <= String(val);
+      if (op === "gte")
+        return (r: Row) => r[col] != null && String(r[col]) >= String(val);
+      if (op === "eq") return (r: Row) => r[col] === val;
+      return () => false;
+    });
+  }
   function from(table: string) {
     if (!tables[table]) tables[table] = [];
     const data = tables[table];
@@ -90,6 +103,11 @@ function buildFake() {
       },
       gte(col: string, val: unknown) {
         ctx.filters.push((r) => String(r[col]) >= String(val));
+        return api;
+      },
+      or(expr: string) {
+        const preds = parseOr(expr);
+        ctx.filters.push((r) => preds.some((p) => p(r)));
         return api;
       },
       order(col: string, opts?: { ascending?: boolean }) {
