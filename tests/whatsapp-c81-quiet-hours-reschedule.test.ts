@@ -105,6 +105,11 @@ function buildFake() {
         ctx.filters.push((r) => String(r[col]) >= String(val));
         return api;
       },
+      or(expr: string) {
+        const preds = parseOr(expr);
+        ctx.filters.push((r) => preds.some((p) => p(r)));
+        return api;
+      },
       order(col: string, opts?: { ascending?: boolean }) {
         ctx.orderBy = col;
         ctx.orderAsc = opts?.ascending ?? true;
