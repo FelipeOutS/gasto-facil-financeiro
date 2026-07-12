@@ -183,62 +183,92 @@ function fakeClient(initial?: {
       };
       return q;
     },
-    // Simula a RPC atômica whatsapp_attempt_prepare_atomic: valida ownership
-    // + verifica ativos + insere numa "transação" única. É o contrato que o
-    // Postgres garante em produção via SECURITY DEFINER + FOR UPDATE.
+    // Simula as RPCs atômicas do Postgres.
+    //
+    //  - whatsapp_attempt_prepare_atomic: valida ownership + verifica ativos
+    //    + insere numa "transação" única (SECURITY DEFINER + FOR UPDATE).
+    //  - whatsapp_attempt_mark_sending_atomic: revalida ownership sob lock
+    //    e move planned → sending; se ownership caiu, cancela a tentativa
+    //    atomicamente (planned → cancelled com error_code='ownership_lost').
     async rpc(name: string, args: Record<string, unknown>) {
-      if (name !== "whatsapp_attempt_prepare_atomic") {
-        return { data: null, error: { message: "unknown_rpc" } };
-      }
-      const nid = args.p_notification_id as string;
-      const ctok = args.p_claim_token as string;
-      const nowIso = String(args.p_now ?? new Date().toISOString());
-      const notif = notifs.find((n) => n.id === nid);
-      const valid =
-        notif &&
-        notif.status === "processing" &&
-        notif.claim_token === ctok &&
-        typeof notif.lease_expires_at === "string" &&
-        (notif.lease_expires_at as string) > nowIso;
-      if (!valid) {
-        return { data: [{ outcome: "state_changed", attempt_id: null }], error: null };
-      }
-      // Ordem espelha a RPC de produção: primeiro checa "ativos"
-      // (planned/sending/ambiguous) — ambiguous vira quarantined —,
-      // depois cai no INSERT que valida UNIQUE (notification_id, claim_token).
-      const existing = attempts.find(
-        (a) => a.notification_id === nid && ACTIVE.includes(a.attempt_status as AttemptStatus),
-      );
-      if (existing) {
-        return {
-          data: [
-            {
-              outcome:
-                existing.attempt_status === "ambiguous" ? "quarantined" : "active_attempt_exists",
-              attempt_id: null,
-            },
-          ],
-          error: null,
+      if (name === "whatsapp_attempt_prepare_atomic") {
+        const nid = args.p_notification_id as string;
+        const ctok = args.p_claim_token as string;
+        const nowIso = String(args.p_now ?? new Date().toISOString());
+        const notif = notifs.find((n) => n.id === nid);
+        const valid =
+          notif &&
+          notif.status === "processing" &&
+          notif.claim_token === ctok &&
+          typeof notif.lease_expires_at === "string" &&
+          (notif.lease_expires_at as string) > nowIso;
+        if (!valid) {
+          return { data: [{ outcome: "state_changed", attempt_id: null }], error: null };
+        }
+        const existing = attempts.find(
+          (a) => a.notification_id === nid && ACTIVE.includes(a.attempt_status as AttemptStatus),
+        );
+        if (existing) {
+          return {
+            data: [
+              {
+                outcome:
+                  existing.attempt_status === "ambiguous" ? "quarantined" : "active_attempt_exists",
+                attempt_id: null,
+              },
+            ],
+            error: null,
+          };
+        }
+        if (attempts.some((a) => a.notification_id === nid && a.claim_token === ctok)) {
+          return { data: [{ outcome: "active_attempt_exists", attempt_id: null }], error: null };
+        }
+        const inserted = {
+          id: `att-${attempts.length + 1}`,
+          notification_id: nid,
+          attempt_token: args.p_attempt_token,
+          claim_token: ctok,
+          request_hash: args.p_request_hash,
+          template_key: args.p_template_key,
+          template_name: args.p_template_name,
+          template_language: args.p_template_language,
+          client_reference: args.p_client_reference,
+          attempt_status: "planned" as AttemptStatus,
+          started_at: nowIso,
         };
+        attempts.push(inserted);
+        return { data: [{ outcome: "prepared", attempt_id: inserted.id }], error: null };
       }
-      if (attempts.some((a) => a.notification_id === nid && a.claim_token === ctok)) {
-        return { data: [{ outcome: "active_attempt_exists", attempt_id: null }], error: null };
+      if (name === "whatsapp_attempt_mark_sending_atomic") {
+        const aid = args.p_attempt_id as string;
+        const atok = args.p_attempt_token as string;
+        const nowIso = String(args.p_now ?? new Date().toISOString());
+        const att = attempts.find(
+          (a) => a.id === aid && a.attempt_token === atok,
+        );
+        if (!att) return { data: [{ outcome: "not_found" }], error: null };
+        if (att.attempt_status !== "planned") {
+          return { data: [{ outcome: "state_changed" }], error: null };
+        }
+        const nf = notifs.find((n) => n.id === att.notification_id);
+        const ownershipValid =
+          nf &&
+          nf.status === "processing" &&
+          nf.claim_token === att.claim_token &&
+          typeof nf.lease_expires_at === "string" &&
+          (nf.lease_expires_at as string) > nowIso;
+        if (!ownershipValid) {
+          att.attempt_status = "cancelled";
+          att.error_code = "ownership_lost";
+          att.error_category = "cancelled";
+          att.retryable = null;
+          att.finished_at = nowIso;
+          return { data: [{ outcome: "ownership_lost" }], error: null };
+        }
+        att.attempt_status = "sending";
+        return { data: [{ outcome: "sending" }], error: null };
       }
-      const inserted = {
-        id: `att-${attempts.length + 1}`,
-        notification_id: nid,
-        attempt_token: args.p_attempt_token,
-        claim_token: ctok,
-        request_hash: args.p_request_hash,
-        template_key: args.p_template_key,
-        template_name: args.p_template_name,
-        template_language: args.p_template_language,
-        client_reference: args.p_client_reference,
-        attempt_status: "planned" as AttemptStatus,
-        started_at: nowIso,
-      };
-      attempts.push(inserted);
-      return { data: [{ outcome: "prepared", attempt_id: inserted.id }], error: null };
+      return { data: null, error: { message: "unknown_rpc" } };
     },
   };
   return { client, notifs, attempts };
@@ -874,5 +904,122 @@ describe("prepareNotificationAttempt — uma tentativa por claim (Pergunta B)", 
     );
     expect(r2.kind).toBe("prepared");
     expect(attempts.length).toBe(2);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WA-C9.2 D.1 Preflight — revalidação de ownership entre prepare e sending.
+//
+// Requisito 1.A: markAttemptSending revalida atomicamente (status/claim/lease
+// da notificação) antes de mover planned → sending. Em qualquer cenário de
+// ownership perdida, o transport NUNCA é chamado, a tentativa não entra em
+// sending, e nenhuma nova tentativa é criada.
+
+describe("markAttemptSending — revalidação atômica de ownership (Requisito 1.A)", () => {
+  const baseInput = {
+    notificationId: "n1",
+    claimToken: "claim-A",
+    phoneNumberId: "PHONE_ID_TEST",
+    template: template(),
+    payload: OK_PAYLOAD,
+    recipient: "5511912345678",
+  };
+
+  async function prepared() {
+    const { client, notifs, attempts } = fakeClient();
+    const r = await prepareNotificationAttempt(baseInput, {
+      client, now, randomUUID: () => "att-token-owner-A",
+    });
+    if (r.kind !== "prepared") throw new Error("prepare failed in setup");
+    return { client, notifs, attempts, attemptId: r.attemptId, attemptToken: r.attemptToken };
+  }
+
+  it("Cenário 1: callback moveu notif para 'sent' entre prepare e sending → ownership_lost", async () => {
+    const s = await prepared();
+    // Simula o webhook de callback processando 'sent' entre prepare e sending.
+    s.notifs[0].status = "sent";
+    const transport = new FakeWhatsAppNotificationTransport({
+      kind: "accepted", providerMessageId: "wamid.NOT_ALLOWED", httpStatus: 200,
+    });
+    const ok = await markAttemptSending(s.attemptId, s.attemptToken, { client: s.client, now });
+    expect(ok).toBe(false);
+    expect(s.attempts[0].attempt_status).toBe("cancelled");
+    expect(s.attempts[0].error_code).toBe("ownership_lost");
+    expect(transport.calls.length).toBe(0);
+    expect(s.attempts.length).toBe(1);
+  });
+
+  it("Cenário 2: recovery limpou claim_token depois do prepare → ownership_lost", async () => {
+    const s = await prepared();
+    s.notifs[0].claim_token = null;
+    const ok = await markAttemptSending(s.attemptId, s.attemptToken, { client: s.client, now });
+    expect(ok).toBe(false);
+    expect(s.attempts[0].attempt_status).toBe("cancelled");
+    expect(s.attempts[0].error_code).toBe("ownership_lost");
+    expect(s.attempts.length).toBe(1);
+  });
+
+  it("Cenário 3: lease venceu depois do prepare → ownership_lost", async () => {
+    const s = await prepared();
+    s.notifs[0].lease_expires_at = new Date(NOW.getTime() - 1000).toISOString();
+    const ok = await markAttemptSending(s.attemptId, s.attemptToken, { client: s.client, now });
+    expect(ok).toBe(false);
+    expect(s.attempts[0].attempt_status).toBe("cancelled");
+    expect(s.attempts[0].error_code).toBe("ownership_lost");
+  });
+
+  it("Cenário 4: claim A foi substituído por claim B → ownership_lost", async () => {
+    const s = await prepared();
+    s.notifs[0].claim_token = "claim-B";
+    const ok = await markAttemptSending(s.attemptId, s.attemptToken, { client: s.client, now });
+    expect(ok).toBe(false);
+    expect(s.attempts[0].attempt_status).toBe("cancelled");
+    expect(s.attempts[0].error_code).toBe("ownership_lost");
+  });
+
+  it("Cenário 5: notificação cancelada antes do sending → ownership_lost", async () => {
+    const s = await prepared();
+    s.notifs[0].status = "cancelled";
+    const ok = await markAttemptSending(s.attemptId, s.attemptToken, { client: s.client, now });
+    expect(ok).toBe(false);
+    expect(s.attempts[0].attempt_status).toBe("cancelled");
+    expect(s.attempts[0].error_code).toBe("ownership_lost");
+  });
+
+  it("executeNotificationAttemptDryTechnical: ownership perdida entre prepare e sending NÃO chama transport", async () => {
+    // Repete o cenário 1 pelo orquestrador de ponta-a-ponta.
+    const { client, notifs, attempts } = fakeClient();
+    let step = 0;
+    // Transport que sabota o teste caso seja chamado.
+    const transport = new FakeWhatsAppNotificationTransport(() => {
+      throw new Error("transport MUST NOT be called when ownership is lost");
+    });
+    // Sobrescreve a RPC de mark_sending para simular perda de ownership
+    // depois que a tentativa 'planned' já existe. O prepare passa; o
+    // mark_sending encontra notif.status='sent' e cancela a tentativa.
+    const origRpc = client.rpc.bind(client);
+    (client as unknown as { rpc: typeof origRpc }).rpc = async (name, args) => {
+      if (name === "whatsapp_attempt_mark_sending_atomic") {
+        // simula que o callback já mudou o status
+        notifs[0].status = "sent";
+      }
+      step += 1;
+      return origRpc(name, args);
+    };
+    const r = await executeNotificationAttemptDryTechnical(baseInput, { client, now }, transport);
+    expect(r.kind).toBe("state_changed");
+    expect(transport.calls.length).toBe(0);
+    expect(attempts.length).toBe(1);
+    expect(attempts[0].attempt_status).toBe("cancelled");
+    expect(attempts[0].error_code).toBe("ownership_lost");
+    expect(step).toBeGreaterThan(0);
+  });
+
+  it("ownership válida no momento do sending → segue normalmente", async () => {
+    const s = await prepared();
+    // Notif intocada; markAttemptSending deve suceder.
+    const ok = await markAttemptSending(s.attemptId, s.attemptToken, { client: s.client, now });
+    expect(ok).toBe(true);
+    expect(s.attempts[0].attempt_status).toBe("sending");
   });
 });

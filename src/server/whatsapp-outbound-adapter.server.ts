@@ -431,16 +431,55 @@ async function transitionAttempt(
   }
 }
 
+/**
+ * Move attempt planned → sending SOMENTE se a notificação ainda estiver com
+ * ownership válida (status='processing', claim_token=att.claim_token, lease
+ * vigente). A revalidação é feita atomicamente pela RPC
+ * `whatsapp_attempt_mark_sending_atomic` (SECURITY DEFINER + FOR UPDATE):
+ *
+ *   - ownership válida  → true (transport pode ser chamado)
+ *   - ownership perdida → false, tentativa cancelada atomicamente
+ *                         (status='cancelled', error_code='ownership_lost')
+ *   - attempt já não está planned → false, sem tocar
+ *
+ * Fecha a corrida entre prepare e sending (callback/recovery/lease/reclaim/
+ * cancelamento). Nunca move para sending sem prova fresca de ownership.
+ */
 export async function markAttemptSending(
   attemptId: string,
   attemptToken: string,
   deps: OutboundDeps,
 ): Promise<boolean> {
-  const ok = await transitionAttempt(deps, attemptId, attemptToken, ["planned"], {
-    attempt_status: "sending",
-  });
-  if (ok) logStructured({ event: "attempt_sending", attempt_id: attemptId });
-  return ok;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const client = deps.client as any;
+  const nowIso = nowOf(deps).toISOString();
+  try {
+    const rpc = await client.rpc("whatsapp_attempt_mark_sending_atomic", {
+      p_attempt_id: attemptId,
+      p_attempt_token: attemptToken,
+      p_now: nowIso,
+    });
+    if (rpc.error) {
+      logStructured({ event: "mark_sending_rpc_error", attempt_id: attemptId });
+      return false;
+    }
+    const rows = Array.isArray(rpc.data) ? rpc.data : rpc.data ? [rpc.data] : [];
+    const outcome = String((rows[0] as { outcome?: string } | undefined)?.outcome ?? "");
+    if (outcome === "sending") {
+      logStructured({ event: "attempt_sending", attempt_id: attemptId });
+      return true;
+    }
+    if (outcome === "ownership_lost") {
+      logStructured({ event: "ownership_lost_before_sending", attempt_id: attemptId });
+    } else if (outcome === "state_changed" || outcome === "not_found") {
+      logStructured({ event: "attempt_sending_state_changed", attempt_id: attemptId, outcome });
+    } else {
+      logStructured({ event: "attempt_sending_unknown_outcome", attempt_id: attemptId, outcome });
+    }
+    return false;
+  } catch {
+    return false;
+  }
 }
 
 export async function completeAttemptAccepted(
