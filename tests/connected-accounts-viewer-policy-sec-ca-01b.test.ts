@@ -146,9 +146,10 @@ describe.skipIf(!hasDb)("WA-SEC-CA-01B — policy viewer bloqueia antes do trigg
       `ROLLBACK;`;
     const r = spawnSync("psql", ["-X", "-A", "-t"], { input: script, encoding: "utf8" });
     const out = (r.stdout ?? "").trim();
-    // Última linha não-vazia é o resultado do SELECT.
     const lines = out.split(/\n/).map((s) => s.trim()).filter(Boolean);
-    expect(lines[lines.length - 1]).toBe("f");
+    // Filtra tags de comando (BEGIN/ROLLBACK) e pega o valor booleano.
+    const bool = lines.find((l) => l === "t" || l === "f");
+    expect(bool).toBe("f");
   });
 });
 
