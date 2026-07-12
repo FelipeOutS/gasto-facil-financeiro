@@ -40,6 +40,19 @@ function buildFake() {
     profiles: [],
   };
 
+  function parseOr(expr: string): Array<(r: Row) => boolean> {
+    return expr.split(",").map((cl) => {
+      const [col, op, ...rest] = cl.trim().split(".");
+      const val = rest.join(".");
+      if (op === "is" && val === "null") return (r: Row) => r[col] == null;
+      if (op === "lte")
+        return (r: Row) => r[col] != null && String(r[col]) <= String(val);
+      if (op === "gte")
+        return (r: Row) => r[col] != null && String(r[col]) >= String(val);
+      if (op === "eq") return (r: Row) => r[col] === val;
+      return () => false;
+    });
+  }
   function from(table: string) {
     if (!tables[table]) tables[table] = [];
     const data = tables[table];
