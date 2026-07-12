@@ -123,6 +123,27 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
           });
 
           if (!decision.allow) {
+            // WA-C8.1 — quiet_hours é bloqueio TEMPORÁRIO: reagenda a mesma
+            // linha para o próximo horário permitido no timezone do usuário,
+            // preservando dedupe_key/attempt_count.
+            if (decision.reason === "quiet_hours" && decision.nextAllowedAt) {
+              const ok = await rescheduleForQuietHours(
+                n.id,
+                decision.nextAllowedAt,
+              );
+              if (ok) {
+                summary.rescheduled_quiet_hours++;
+                console.info(
+                  "[wa-dispatcher] rescheduled_quiet_hours",
+                  JSON.stringify({
+                    type: n.notification_type,
+                    category: n.category,
+                    scheduled_at: decision.nextAllowedAt.toISOString(),
+                  }),
+                );
+              }
+              continue;
+            }
             await markSkipped(n.id, decision.reason);
             summary.skipped++;
             continue;
