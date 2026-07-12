@@ -26,6 +26,7 @@ import {
 import { suggestCategoryFromText } from "@/lib/categories";
 import type { Cartao, FormaPagamento } from "@/lib/types";
 import { canUseWhatsApp } from "./whatsapp-beta.server";
+import { buildWhatsAppGraphUrl } from "./whatsapp-graph-version.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
 import {
   RECEITA_PENDING_STATES,
