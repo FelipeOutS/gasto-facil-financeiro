@@ -261,10 +261,20 @@ describe("WA-C9.1 :: markFailed respeita estados terminais", () => {
     expect(fake.tables.whatsapp_notifications[0].status).toBe("skipped");
   });
 
-  it("notificação processing pode voltar a pending (retry normal)", async () => {
-    const n = addNotif({ status: "processing" });
-    await markFailed(String(n.id), "transient", { retryable: true, currentAttempt: 0, maxAttempts: 5 }, null, { client: fake.client });
+  it("processing só volta a pending via worker path (com claim_token) — WA-C9.2 Fase B hardening", () => {
+    // Sem token (admin path) NÃO altera processing.
+    const n1 = addNotif({ status: "processing", claim_token: "TOK-X", claimed_at: new Date().toISOString(), lease_expires_at: new Date(Date.now() + 60_000).toISOString() });
+    void markFailed(String(n1.id), "transient", { retryable: true, currentAttempt: 0, maxAttempts: 5 }, null, { client: fake.client });
+    expect(fake.tables.whatsapp_notifications[0].status).toBe("processing");
+    expect(fake.tables.whatsapp_notifications[0].claim_token).toBe("TOK-X");
+  });
+
+  it("worker com token correto retoma processing → pending (retry normal)", async () => {
+    fake.tables.whatsapp_notifications.length = 0;
+    const n = addNotif({ status: "processing", claim_token: "TOK-Y", claimed_at: new Date().toISOString(), lease_expires_at: new Date(Date.now() + 60_000).toISOString() });
+    await markFailed(String(n.id), "transient", { retryable: true, currentAttempt: 0, maxAttempts: 5 }, "TOK-Y", { client: fake.client });
     expect(fake.tables.whatsapp_notifications[0].status).toBe("pending");
+    expect(fake.tables.whatsapp_notifications[0].claim_token).toBeNull();
   });
 });
 
