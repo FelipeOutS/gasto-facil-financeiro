@@ -15,10 +15,11 @@ import { z } from "zod";
 import { timingSafeEqual } from "crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-
-// Versão Graph API centralizada server-side. Default v25.0 (atual no painel Meta).
-// Override opcional via env WHATSAPP_GRAPH_VERSION (ex.: "v26.0").
-const GRAPH_VERSION = (process.env.WHATSAPP_GRAPH_VERSION ?? "v25.0").trim() || "v25.0";
+// META-GRAPH-UPGRADE-01 — fonte única e validada da versão Graph.
+// Nenhum fallback silencioso; nenhuma constante literal de versão neste
+// módulo. Import dinâmico dentro dos handlers porque `.functions.ts`
+// participa do grafo do bundle client (apenas o corpo do handler é
+// removido do cliente).
 const OFFICIAL_NUMBER_E164 = "5511918539158";
 
 function adminUnauthorized(): Response {
@@ -113,8 +114,20 @@ type GraphCall = {
 };
 
 async function safeGraphGet(path: string, token: string): Promise<GraphCall> {
+  const { buildWhatsAppGraphUrl } = await import("@/server/whatsapp-graph-version.server");
+  const built = buildWhatsAppGraphUrl({ kind: "admin_path", path });
+  if (!built.ok) {
+    return {
+      ok: false,
+      status: null,
+      json: null,
+      networkError: true,
+      errorCode: null,
+      errorSubcode: null,
+    };
+  }
   try {
-    const resp = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${path}`, {
+    const resp = await fetch(built.url, {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -398,18 +411,8 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
       meta_error_subcode: number | null;
       numero_registrado_cloud_api: "sim" | "nao" | "desconhecido";
       numero_apto_para_conversa_whatsapp: "sim" | "nao" | "desconhecido";
-      tipo_plataforma_meta:
-        | "cloud_api"
-        | "on_premise"
-        | "coexistence"
-        | "nao_informado"
-        | "outro";
-      status_numero_meta:
-        | "connected"
-        | "disconnected"
-        | "pendente"
-        | "nao_informado"
-        | "outro";
+      tipo_plataforma_meta: "cloud_api" | "on_premise" | "coexistence" | "nao_informado" | "outro";
+      status_numero_meta: "connected" | "disconnected" | "pendente" | "nao_informado" | "outro";
       acao_recomendada:
         | "nenhuma"
         | "revisar_meta"
@@ -447,13 +450,9 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
 
     // Flags operacionais devem permanecer desligadas durante o register.
     const enabledFlag = (process.env.WHATSAPP_ENABLED ?? "").trim().toLowerCase() === "true";
-    const canaryFlag =
-      (process.env.WHATSAPP_CANARY_ENABLED ?? "").trim().toLowerCase() === "true";
+    const canaryFlag = (process.env.WHATSAPP_CANARY_ENABLED ?? "").trim().toLowerCase() === "true";
     if (enabledFlag || canaryFlag) {
-      return safeFail(
-        "flags_active",
-        "Flags operacionais ativas; desative antes de registrar.",
-      );
+      return safeFail("flags_active", "Flags operacionais ativas; desative antes de registrar.");
     }
 
     const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
@@ -499,17 +498,23 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
     let metaErrorCode: number | null = null;
     let metaErrorSubcode: number | null = null;
     try {
-      const resp = await fetch(
-        `https://graph.facebook.com/${GRAPH_VERSION}/${PHONE_NUMBER_ID}/register`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${ACCESS_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ messaging_product: "whatsapp", pin: REGISTER_PIN }),
+      const { buildWhatsAppGraphUrl } = await import("@/server/whatsapp-graph-version.server");
+      const built = buildWhatsAppGraphUrl({
+        kind: "register",
+        phoneNumberId: PHONE_NUMBER_ID!,
+      });
+      if (!built.ok) {
+        networkError = true;
+        throw new Error("configuration_error");
+      }
+      const resp = await fetch(built.url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({ messaging_product: "whatsapp", pin: REGISTER_PIN }),
+      });
       postOk = resp.ok;
       httpStatus = resp.status;
       try {
@@ -517,8 +522,7 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
         const j: any = await resp.json();
         if (j?.error) {
           if (typeof j.error.code === "number") metaErrorCode = j.error.code;
-          if (typeof j.error.error_subcode === "number")
-            metaErrorSubcode = j.error.error_subcode;
+          if (typeof j.error.error_subcode === "number") metaErrorSubcode = j.error.error_subcode;
         }
       } catch {
         // sem body — não logamos nada
@@ -555,8 +559,7 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
       numero_apto_para_conversa_whatsapp: auditAfter.numero_apto_para_conversa_whatsapp,
       tipo_plataforma_meta: auditAfter.tipo_plataforma_meta,
       status_numero_meta: auditAfter.status_numero_meta,
-      acao_recomendada:
-        auditAfter.acao_recomendada as RegisterResponse["acao_recomendada"],
+      acao_recomendada: auditAfter.acao_recomendada as RegisterResponse["acao_recomendada"],
     } as RegisterResponse;
   });
 
@@ -574,9 +577,7 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
  *  - Não chama /register, não envia mensagem.
  */
 export const whatsappAdminSubscribeAppToWaba = createServerFn({ method: "POST" })
-  .inputValidator((d) =>
-    z.object({ confirm: z.literal("ASSINAR-APP-NA-WABA") }).parse(d),
-  )
+  .inputValidator((d) => z.object({ confirm: z.literal("ASSINAR-APP-NA-WABA") }).parse(d))
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdminMaster(context.userId);
@@ -615,13 +616,19 @@ export const whatsappAdminSubscribeAppToWaba = createServerFn({ method: "POST" }
     let networkError = false;
     let postOk = false;
     try {
-      const resp = await fetch(
-        `https://graph.facebook.com/${GRAPH_VERSION}/${WABA_ID}/subscribed_apps`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
-        },
-      );
+      const { buildWhatsAppGraphUrl } = await import("@/server/whatsapp-graph-version.server");
+      const built = buildWhatsAppGraphUrl({
+        kind: "subscribed_apps",
+        wabaId: WABA_ID!,
+      });
+      if (!built.ok) {
+        networkError = true;
+        throw new Error("configuration_error");
+      }
+      const resp = await fetch(built.url, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+      });
       httpStatus = resp.status;
       postOk = resp.ok;
       try {
@@ -654,19 +661,20 @@ export const whatsappAdminSubscribeAppToWaba = createServerFn({ method: "POST" }
       meta_error_code: errorCode ?? pfAfter.meta_error_code,
       meta_error_subcode: errorSubcode ?? pfAfter.meta_error_subcode,
       erro_categoria: pfAfter.erro_categoria,
-      post_http_bucket: httpStatus === null
-        ? -1
-        : httpStatus === 200
-          ? 200
-          : httpStatus === 400
-            ? 400
-            : httpStatus === 401
-              ? 401
-              : httpStatus === 403
-                ? 403
-                : httpStatus === 404
-                  ? 404
-                  : ("outro" as const),
+      post_http_bucket:
+        httpStatus === null
+          ? -1
+          : httpStatus === 200
+            ? 200
+            : httpStatus === 400
+              ? 400
+              : httpStatus === 401
+                ? 401
+                : httpStatus === 403
+                  ? 403
+                  : httpStatus === 404
+                    ? 404
+                    : ("outro" as const),
     };
   });
 
@@ -681,17 +689,14 @@ export const whatsappAdminGetOpsChecklist = createServerFn({ method: "GET" })
     const pf = await runPreflightInternal();
 
     const enabledFlag = (process.env.WHATSAPP_ENABLED ?? "").trim().toLowerCase() === "true";
-    const canaryFlag =
-      (process.env.WHATSAPP_CANARY_ENABLED ?? "").trim().toLowerCase() === "true";
+    const canaryFlag = (process.env.WHATSAPP_CANARY_ENABLED ?? "").trim().toLowerCase() === "true";
     // "Preparado" significa que a lógica de canário existe no backend
     // (isAdminMasterPhone + bloqueio seguro p/ não-admin no webhook),
     // independente da env var WHATSAPP_CANARY_ENABLED estar definida.
     const canaryPrepared = true;
 
     return {
-      numero_registrado: (pf.numero_ja_registrado === "sim" ? "ok" : "falhou") as
-        | "ok"
-        | "falhou",
+      numero_registrado: (pf.numero_ja_registrado === "sim" ? "ok" : "falhou") as "ok" | "falhou",
       app_inscrito_na_waba: pf.app_inscrito_na_waba,
       webhook_configurado:
         pf.webhook_handshake === "ok" && pf.secrets_completos
@@ -749,9 +754,7 @@ export const whatsappAdminCheckCanaryReadiness = createServerFn({ method: "GET" 
     }
 
     const admin_canary_phone_ready: Enum =
-      admin_email_autorizado === "ok" &&
-      admin_link_ativo === "ok" &&
-      admin_opt_in_valido === "ok"
+      admin_email_autorizado === "ok" && admin_link_ativo === "ok" && admin_opt_in_valido === "ok"
         ? "ok"
         : "falhou";
 
@@ -784,18 +787,8 @@ type RealAuditState = {
     | "revisar_meta"
     | "aguardar"
     | "nenhuma";
-  tipo_plataforma_meta:
-    | "cloud_api"
-    | "on_premise"
-    | "coexistence"
-    | "nao_informado"
-    | "outro";
-  status_numero_meta:
-    | "connected"
-    | "disconnected"
-    | "pendente"
-    | "nao_informado"
-    | "outro";
+  tipo_plataforma_meta: "cloud_api" | "on_premise" | "coexistence" | "nao_informado" | "outro";
+  status_numero_meta: "connected" | "disconnected" | "pendente" | "nao_informado" | "outro";
   verificacao_numero_meta: "verificado" | "nao_verificado" | "desconhecido";
   nome_exibicao_meta: "aprovado" | "pendente" | "reprovado" | "desconhecido";
   id_do_erro_meta_corresponde_ao_phone_number_id_atual: "sim" | "nao";
@@ -836,11 +829,7 @@ async function computeRealAuditState(): Promise<RealAuditState> {
   const wabaCall = await safeGraphGet(`${WABA_ID}/phone_numbers?fields=id`, ACCESS_TOKEN!);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const wabaArr = ((wabaCall.json as any)?.data ?? []) as Array<{ id?: string }>;
-  if (
-    wabaCall.ok &&
-    Array.isArray(wabaArr) &&
-    wabaArr.some((row) => row?.id === PHONE_NUMBER_ID)
-  ) {
+  if (wabaCall.ok && Array.isArray(wabaArr) && wabaArr.some((row) => row?.id === PHONE_NUMBER_ID)) {
     result.phone_number_id_atual_esta_na_waba_oficial = "sim";
   }
 
@@ -858,14 +847,10 @@ async function computeRealAuditState(): Promise<RealAuditState> {
     "account_mode",
     "is_official_business_account",
   ].join(",");
-  const phoneCall = await safeGraphGet(
-    `${PHONE_NUMBER_ID}?fields=${phoneFields}`,
-    ACCESS_TOKEN!,
-  );
+  const phoneCall = await safeGraphGet(`${PHONE_NUMBER_ID}?fields=${phoneFields}`, ACCESS_TOKEN!);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const phoneJson = (phoneCall.json as any) ?? null;
-  const phoneFound =
-    phoneCall.ok && phoneJson && typeof phoneJson === "object" && !phoneJson.error;
+  const phoneFound = phoneCall.ok && phoneJson && typeof phoneJson === "object" && !phoneJson.error;
   result.numero_meta_encontrado = phoneFound ? "sim" : "nao";
 
   if (!phoneFound) {
@@ -898,8 +883,7 @@ async function computeRealAuditState(): Promise<RealAuditState> {
   const phoneStatus = String(phoneJson.status ?? "").toUpperCase();
   const nameStatus = String(phoneJson.name_status ?? "").toUpperCase();
   const statusConnected = phoneStatus === "CONNECTED";
-  const nameApproved =
-    nameStatus === "APPROVED" || nameStatus === "AVAILABLE_WITHOUT_REVIEW";
+  const nameApproved = nameStatus === "APPROVED" || nameStatus === "AVAILABLE_WITHOUT_REVIEW";
 
   if (result.plataforma_do_numero === "cloud_api" && statusConnected) {
     result.numero_registrado_cloud_api = "sim";
@@ -949,8 +933,7 @@ async function computeRealAuditState(): Promise<RealAuditState> {
 
   const inWaba = result.phone_number_id_atual_esta_na_waba_oficial === "sim";
   const tipoLegado =
-    result.tipo_plataforma_meta === "on_premise" ||
-    result.tipo_plataforma_meta === "coexistence";
+    result.tipo_plataforma_meta === "on_premise" || result.tipo_plataforma_meta === "coexistence";
 
   if (result.numero_apto_para_conversa_whatsapp === "sim") {
     result.acao_recomendada = "nenhuma";
@@ -997,18 +980,12 @@ function classifyRegisterStrategy(
 
   // Plataformas legadas confirmadas exigem migração manual.
   // platform_type == "outro" isoladamente NÃO basta.
-  if (
-    audit.tipo_plataforma_meta === "on_premise" ||
-    audit.tipo_plataforma_meta === "coexistence"
-  ) {
+  if (audit.tipo_plataforma_meta === "on_premise" || audit.tipo_plataforma_meta === "coexistence") {
     return "migracao_manual_necessaria";
   }
 
   // Já registrado e conectado → não há register direto a fazer.
-  if (
-    audit.status_numero_meta === "connected" &&
-    audit.numero_registrado_cloud_api === "sim"
-  ) {
+  if (audit.status_numero_meta === "connected" && audit.numero_registrado_cloud_api === "sim") {
     return "estado_desconhecido";
   }
 
@@ -1061,10 +1038,7 @@ export const whatsappAdminClassifyRegisterStrategy = createServerFn({ method: "G
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdminMaster(context.userId);
-    const [audit, pf] = await Promise.all([
-      computeRealAuditState(),
-      runPreflightInternal(),
-    ]);
+    const [audit, pf] = await Promise.all([computeRealAuditState(), runPreflightInternal()]);
     const flags = {
       enabled: (process.env.WHATSAPP_ENABLED ?? "").trim().toLowerCase() === "true",
       canary: (process.env.WHATSAPP_CANARY_ENABLED ?? "").trim().toLowerCase() === "true",
@@ -1095,8 +1069,8 @@ export const whatsappAdminCheckCategoriaResolution = createServerFn({ method: "G
       .select("id, legacy_id, nome")
       .eq("user_id", context.userId);
     const categorias = Array.isArray(data)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ? (data as any[]).map((c) => ({
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (data as any[]).map((c) => ({
           id: String(c.id),
           legacy_id: c.legacy_id ?? null,
           nome: c.nome ?? "",

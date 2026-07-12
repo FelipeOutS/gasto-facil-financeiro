@@ -26,6 +26,7 @@ import {
 import { suggestCategoryFromText } from "@/lib/categories";
 import type { Cartao, FormaPagamento } from "@/lib/types";
 import { canUseWhatsApp } from "./whatsapp-beta.server";
+import { buildWhatsAppGraphUrl } from "./whatsapp-graph-version.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
 import {
   RECEITA_PENDING_STATES,
@@ -78,10 +79,7 @@ import {
   type FaturaDetailSessionState,
   type ParceladoSessionState,
 } from "./whatsapp-faturas.server";
-import {
-  detectLimiteIntent,
-  handleLimiteIntent,
-} from "./whatsapp-limites.server";
+import { detectLimiteIntent, handleLimiteIntent } from "./whatsapp-limites.server";
 import {
   detectDueIntent,
   handleDueIntent,
@@ -155,10 +153,7 @@ import {
   processarPixInlineEntry,
   type WhatsAppPagarPessoaDeps,
 } from "./whatsapp-pagar-pessoa-flow.server";
-import {
-  detectPagarPixInlineIntent,
-  parsePagarPixInline,
-} from "./whatsapp-pix-parser";
+import { detectPagarPixInlineIntent, parsePagarPixInline } from "./whatsapp-pix-parser";
 // WA-C10.a/b — Boleto por código/linha digitável (texto) + foto/PDF.
 import {
   BOLETO_PENDING_STATES,
@@ -192,8 +187,28 @@ const parcelamentoDeps: WhatsAppParcelamentoDeps = {
   displayCartaoNome: (c) => displayCartaoNome(c),
   maskCartaoLabel: (c) => maskCartaoLabel(c),
   isGenericExpenseDescription: (n) => isGenericExpenseDescription(n),
-  gravarSessao: (userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId) =>
-    gravarSessao(userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId),
+  gravarSessao: (
+    userId,
+    telefone,
+    externalId,
+    texto,
+    recebidaEm,
+    status,
+    session,
+    resposta,
+    gastoId,
+  ) =>
+    gravarSessao(
+      userId,
+      telefone,
+      externalId,
+      texto,
+      recebidaEm,
+      status,
+      session,
+      resposta,
+      gastoId,
+    ),
   atualizarSessao: (id, status, session, resposta, gastoId) =>
     atualizarSessao(id, status, session, resposta, gastoId),
   fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
@@ -207,8 +222,28 @@ const parcelamentoDeps: WhatsAppParcelamentoDeps = {
 
 // WA-C2 — DI seam para criação de contas a pagar.
 const contaCriarDeps: WhatsAppContaCriarDeps = {
-  gravarSessao: (userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId) =>
-    gravarSessao(userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId),
+  gravarSessao: (
+    userId,
+    telefone,
+    externalId,
+    texto,
+    recebidaEm,
+    status,
+    session,
+    resposta,
+    gastoId,
+  ) =>
+    gravarSessao(
+      userId,
+      telefone,
+      externalId,
+      texto,
+      recebidaEm,
+      status,
+      session,
+      resposta,
+      gastoId,
+    ),
   atualizarSessao: (id, status, session, resposta, gastoId) =>
     atualizarSessao(id, status, session, resposta, gastoId),
   fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
@@ -221,8 +256,28 @@ const contaCriarDeps: WhatsAppContaCriarDeps = {
 
 // WA-C3 — DI seam para BAIXA de contas a pagar (marcar como paga).
 const baixaContaDeps: WhatsAppBaixaContaDeps = {
-  gravarSessao: (userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId) =>
-    gravarSessao(userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId),
+  gravarSessao: (
+    userId,
+    telefone,
+    externalId,
+    texto,
+    recebidaEm,
+    status,
+    session,
+    resposta,
+    gastoId,
+  ) =>
+    gravarSessao(
+      userId,
+      telefone,
+      externalId,
+      texto,
+      recebidaEm,
+      status,
+      session,
+      resposta,
+      gastoId,
+    ),
   atualizarSessao: (id, status, session, resposta, gastoId) =>
     atualizarSessao(id, status, session, resposta, gastoId),
   fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
@@ -231,8 +286,28 @@ const baixaContaDeps: WhatsAppBaixaContaDeps = {
 
 // WA-C4 — DI seam para EDIÇÃO/CANCELAMENTO de contas a pagar.
 const edicaoContaDeps: WhatsAppEdicaoContaDeps = {
-  gravarSessao: (userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId) =>
-    gravarSessao(userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId),
+  gravarSessao: (
+    userId,
+    telefone,
+    externalId,
+    texto,
+    recebidaEm,
+    status,
+    session,
+    resposta,
+    gastoId,
+  ) =>
+    gravarSessao(
+      userId,
+      telefone,
+      externalId,
+      texto,
+      recebidaEm,
+      status,
+      session,
+      resposta,
+      gastoId,
+    ),
   atualizarSessao: (id, status, session, resposta, gastoId) =>
     atualizarSessao(id, status, session, resposta, gastoId),
   fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
@@ -245,8 +320,28 @@ const edicaoContaDeps: WhatsAppEdicaoContaDeps = {
 
 // WA-C7.2.b — DI seam para state machine de PAGAMENTO PARA PESSOA.
 const pagarPessoaDeps: WhatsAppPagarPessoaDeps = {
-  gravarSessao: (userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId) =>
-    gravarSessao(userId, telefone, externalId, texto, recebidaEm, status, session, resposta, gastoId),
+  gravarSessao: (
+    userId,
+    telefone,
+    externalId,
+    texto,
+    recebidaEm,
+    status,
+    session,
+    resposta,
+    gastoId,
+  ) =>
+    gravarSessao(
+      userId,
+      telefone,
+      externalId,
+      texto,
+      recebidaEm,
+      status,
+      session,
+      resposta,
+      gastoId,
+    ),
   atualizarSessao: (id, status, session, resposta, gastoId) =>
     atualizarSessao(id, status, session, resposta, gastoId),
   fecharSessoesAnteriores: (userId, telefone, motivo, gastoId) =>
@@ -264,15 +359,21 @@ const boletoDeps: WhatsAppBoletoDeps = {
     fecharSessoesAnteriores(userId, telefone, motivo),
 };
 
-
-
 import { createHash } from "crypto";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
 type WhatsAppAuditTestEvent =
   | { event: "wa_route_decision"; routedTo: string; reason: string }
-  | { event: "wa_expense_parser_guard"; receiptSessionExists: boolean; allowedToParseExpense: boolean }
-  | { event: "wa_session_lookup"; receiptSessionFoundByKind: boolean; receiptSessionFoundByStatus: boolean }
+  | {
+      event: "wa_expense_parser_guard";
+      receiptSessionExists: boolean;
+      allowedToParseExpense: boolean;
+    }
+  | {
+      event: "wa_session_lookup";
+      receiptSessionFoundByKind: boolean;
+      receiptSessionFoundByStatus: boolean;
+    }
   | {
       event: "wa_receipt_session_created";
       persistedRowFound: boolean;
@@ -290,9 +391,7 @@ type WhatsAppAuditTestEvent =
     };
 let auditObserverForTests: ((event: WhatsAppAuditTestEvent) => void) | null = null;
 
-export function __setExpenseParserForTests(
-  parser: typeof baseParseWhatsAppExpenseMessage | null,
-) {
+export function __setExpenseParserForTests(parser: typeof baseParseWhatsAppExpenseMessage | null) {
   parseExpenseMessage = parser ?? baseParseWhatsAppExpenseMessage;
 }
 
@@ -302,7 +401,6 @@ export function __setWhatsAppAuditObserverForTests(
   auditObserverForTests = observer;
 }
 
-
 // ---------- elegibilidade WhatsApp (gate único) ----------
 // Admin Master OU participante ativo da beta fechada (whatsapp_beta_access).
 // Esta é a única fonte de verdade usada no webhook e nas server functions.
@@ -311,8 +409,7 @@ async function userPodeUsarWhatsApp(userId: string): Promise<{ ok: boolean; reas
   if (!ok) {
     return {
       ok: false,
-      reason:
-        "Seu acesso ao WhatsApp ainda não está disponível — o recurso está em beta fechada.",
+      reason: "Seu acesso ao WhatsApp ainda não está disponível — o recurso está em beta fechada.",
     };
   }
   return { ok: true };
@@ -359,9 +456,10 @@ export function maskTelefone(tel: string): string {
 
 // ---------- vínculo/consentimento ----------
 
-async function resolveUserId(telefone: string): Promise<
-  | { userId: string; status: "ok" }
-  | { userId: null; status: "sem_vinculo" | "sem_consentimento" }
+async function resolveUserId(
+  telefone: string,
+): Promise<
+  { userId: string; status: "ok" } | { userId: null; status: "sem_vinculo" | "sem_consentimento" }
 > {
   const digits = telefone.replace(/\D/g, "");
   const candidatos = new Set<string>([telefone, digits]);
@@ -385,10 +483,7 @@ async function resolveUserId(telefone: string): Promise<
 // ---------- cartões ----------
 
 export async function carregarCartoes(userId: string): Promise<Cartao[]> {
-  const { data } = await supabaseAdmin
-    .from("cartoes")
-    .select("*")
-    .eq("user_id", userId);
+  const { data } = await supabaseAdmin.from("cartoes").select("*").eq("user_id", userId);
   if (!data) return [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data as any[]).map(
@@ -420,30 +515,30 @@ function normalizeText(s: string): string {
 /** Capitalização canônica de marcas conhecidas — usada quando o cadastro foi
  *  salvo com caixa inconsistente (ex.: "Mercado pago" → "Mercado Pago"). */
 const CANONICAL_BRAND: Record<string, string> = {
-  "nubank": "Nubank",
-  "itau": "Itaú",
-  "itaú": "Itaú",
-  "santander": "Santander",
+  nubank: "Nubank",
+  itau: "Itaú",
+  itaú: "Itaú",
+  santander: "Santander",
   "mercado pago": "Mercado Pago",
-  "mercadopago": "Mercado Pago",
-  "inter": "Inter",
-  "c6": "C6",
+  mercadopago: "Mercado Pago",
+  inter: "Inter",
+  c6: "C6",
   "c6 bank": "C6 Bank",
-  "bradesco": "Bradesco",
+  bradesco: "Bradesco",
   "banco do brasil": "Banco do Brasil",
-  "bb": "Banco do Brasil",
-  "caixa": "Caixa",
-  "picpay": "PicPay",
-  "next": "Next",
-  "neon": "Neon",
-  "will": "Will",
+  bb: "Banco do Brasil",
+  caixa: "Caixa",
+  picpay: "PicPay",
+  next: "Next",
+  neon: "Neon",
+  will: "Will",
   "will bank": "Will Bank",
-  "pan": "Pan",
-  "original": "Original",
-  "btg": "BTG",
-  "xp": "XP",
-  "porto": "Porto",
-  "safra": "Safra",
+  pan: "Pan",
+  original: "Original",
+  btg: "BTG",
+  xp: "XP",
+  porto: "Porto",
+  safra: "Safra",
 };
 
 function canonicalizeBrand(nome: string | null | undefined): string {
@@ -467,7 +562,10 @@ export function maskCartaoLabel(c: Cartao): string {
   // Tenta extrair 4 dígitos contíguos do nome (ex.: "Nubank 1234")
   const m = nome.match(/(\d{4})(?!.*\d{4})/);
   if (m) {
-    const base = nome.replace(m[0], "").replace(/[•·\-\s]+$/, "").trim();
+    const base = nome
+      .replace(m[0], "")
+      .replace(/[•·\-\s]+$/, "")
+      .trim();
     return `${base || banco || "Cartão"} •••• ${m[1]}`;
   }
   if (banco && !nome.toLowerCase().includes(banco.toLowerCase())) {
@@ -547,20 +645,29 @@ async function carregarCategorias(userId: string): Promise<CategoriaRow[]> {
 }
 
 function normalizeCat(s: string): string {
-  return (s || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim()
-    // tolera plurais simples (refeicoes <-> refeicao)
-    .replace(/oes$/, "ao")
-    .replace(/s$/, "");
+  return (
+    (s || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim()
+      // tolera plurais simples (refeicoes <-> refeicao)
+      .replace(/oes$/, "ao")
+      .replace(/s$/, "")
+  );
 }
 
 /** Termos na descrição que indicam alimentação humana / refeição. */
 const ALIMENTACAO_KEYWORDS = [
-  "padaria", "padoca", "pao", "lanche", "lanchonete",
-  "restaurante", "cafe", "refeicao", "comida",
+  "padaria",
+  "padoca",
+  "pao",
+  "lanche",
+  "lanchonete",
+  "restaurante",
+  "cafe",
+  "refeicao",
+  "comida",
 ];
 
 /**
@@ -571,14 +678,10 @@ const ALIMENTACAO_KEYWORDS = [
  * categoria já escolhida pelo usuário (só atuam quando o fallback
  * atual seria "outros").
  */
-const ALIMENTACAO_KEYWORDS_VOICE = [
-  "almoco", "jantar",
-];
+const ALIMENTACAO_KEYWORDS_VOICE = ["almoco", "jantar"];
 
 /** Nomes canônicos aceitos como "categoria de alimentação" do usuário. */
-const ALIMENTACAO_CATEGORY_NAMES = [
-  "alimentacao", "comida", "refeicao", "alimentos",
-];
+const ALIMENTACAO_CATEGORY_NAMES = ["alimentacao", "comida", "refeicao", "alimentos"];
 
 /** Encontra a categoria do usuário cujo nome normalizado bate com algum dos
  *  nomes aceitos. Compara também legacy_id. Preserva o nome oficial salvo. */
@@ -628,11 +731,7 @@ export function diagnoseCategoriaResolution(
  * preferem uma categoria compatível com "Alimentação" se o usuário a tiver.
  * Caso contrário, cai no sugerido por keyword (geralmente "mercado").
  */
-function pickCategoriaKey(
-  nome: string,
-  categorias: CategoriaRow[],
-  source?: "audio",
-): string {
+function pickCategoriaKey(nome: string, categorias: CategoriaRow[], source?: "audio"): string {
   const sugerido = suggestCategoryFromText(nome) || "outros";
   const norm = normalizeCat(nome);
   // Vocabulário base (texto + áudio) + vocabulário extra exclusivo de voz.
@@ -672,9 +771,6 @@ function resolveCategoriaIdFromList(
   return outros?.id ?? null;
 }
 
-
-
-
 // ---------- tipos públicos ----------
 
 export type ProcessOutcome = {
@@ -703,7 +799,6 @@ export type ProcessOutcome = {
     | "conta_pagamento_aguardando_confirmacao"
     | "conta_pagamento_aguardando_data"
     | "cancelada"
-
     | "sem_pendencia"
     | "pendente"
     | "sem_vinculo"
@@ -737,13 +832,39 @@ export type WhatsAppInteractivePayload = {
 // ---------- confirmação / cancelamento ----------
 
 const CONFIRM_TOKENS = [
-  "sim", "s", "ok", "okay", "salvar", "salva", "confirmar", "confirma",
-  "confirmado", "confirmada", "pode salvar", "pode", "isso", "isso mesmo",
-  "correto", "👍", "✅", "yes", "y",
+  "sim",
+  "s",
+  "ok",
+  "okay",
+  "salvar",
+  "salva",
+  "confirmar",
+  "confirma",
+  "confirmado",
+  "confirmada",
+  "pode salvar",
+  "pode",
+  "isso",
+  "isso mesmo",
+  "correto",
+  "👍",
+  "✅",
+  "yes",
+  "y",
 ];
 const CANCEL_TOKENS = [
-  "nao", "não", "n", "cancelar", "cancela", "cancelado", "ignora",
-  "ignorar", "apaga", "apagar", "errado", "no",
+  "nao",
+  "não",
+  "n",
+  "cancelar",
+  "cancela",
+  "cancelado",
+  "ignora",
+  "ignorar",
+  "apaga",
+  "apagar",
+  "errado",
+  "no",
 ];
 
 /**
@@ -761,9 +882,7 @@ const CANCEL_TOKENS = [
  *   - "alterar categoria para <termo>" / "alterar para <termo>"
  *   - "trocar categoria para <termo>"
  */
-export type CategoriaCommandIntent =
-  | { kind: "ask" }
-  | { kind: "direct"; termo: string };
+export type CategoriaCommandIntent = { kind: "ask" } | { kind: "direct"; termo: string };
 
 export function detectCategoriaCommand(texto: string): CategoriaCommandIntent | null {
   if (!texto) return null;
@@ -787,11 +906,15 @@ export function detectCategoriaCommand(texto: string): CategoriaCommandIntent | 
 
   // direct: "muda para X", "mude para X", "mudar para X" (com ou sem
   // "categoria" no meio).
-  m = t.match(/^(?:muda|mude|mudar|troca|troque|trocar)\s+(?:a\s+)?(?:categoria\s+)?(?:para|pra)\s+(.+)$/);
+  m = t.match(
+    /^(?:muda|mude|mudar|troca|troque|trocar)\s+(?:a\s+)?(?:categoria\s+)?(?:para|pra)\s+(.+)$/,
+  );
   if (m) return { kind: "direct", termo: m[1].slice(0, 60).trim() };
 
   // direct: "alterar/editar/ajustar categoria para X" / "alterar para X"
-  m = t.match(/^(?:alterar|editar|ajustar|corrigir)\s+(?:a\s+)?(?:categoria\s+)?(?:para|pra)\s+(.+)$/);
+  m = t.match(
+    /^(?:alterar|editar|ajustar|corrigir)\s+(?:a\s+)?(?:categoria\s+)?(?:para|pra)\s+(.+)$/,
+  );
   if (m) return { kind: "direct", termo: m[1].slice(0, 60).trim() };
 
   return null;
@@ -890,14 +1013,11 @@ function categoriaLabel(key: string | undefined | null): string {
 }
 
 /** Resolve a label limpa de categoria a partir do nome do gasto. */
-function categoriaParaExibir(
-  nome: string,
-  categorias?: CategoriaRow[],
-  source?: "audio",
-): string {
-  const key = categorias && categorias.length
-    ? pickCategoriaKey(nome, categorias, source)
-    : (suggestCategoryFromText(nome) || "outros");
+function categoriaParaExibir(nome: string, categorias?: CategoriaRow[], source?: "audio"): string {
+  const key =
+    categorias && categorias.length
+      ? pickCategoriaKey(nome, categorias, source)
+      : suggestCategoryFromText(nome) || "outros";
   // Preserva o nome oficial salvo pelo usuário quando aplicável.
   if (categorias && categorias.length) {
     if (key === "alimentacao") {
@@ -911,7 +1031,6 @@ function categoriaParaExibir(
   return categoriaLabel(key);
 }
 
-
 export function formatarConfirmacao(
   parsed: ParsedExpense,
   cartaoNome?: string,
@@ -924,9 +1043,10 @@ export function formatarConfirmacao(
 ): string {
   const cartao = canonicalizeBrand(cartaoNome ?? parsed.cartaoNomeDetectado ?? "");
   const descricao = cleanDescricao(parsed.nome) || parsed.nome;
-  const categoria = manualCategoriaLabel
-    ?? memoryHint?.categoriaLabel
-    ?? categoriaParaExibir(descricao, categorias, source);
+  const categoria =
+    manualCategoriaLabel ??
+    memoryHint?.categoriaLabel ??
+    categoriaParaExibir(descricao, categorias, source);
 
   const dataFmt = formatDataBR(parsed.data);
   const base = M.resumoConfirmacao({
@@ -1031,7 +1151,6 @@ export function isResetCommand(texto: string): boolean {
   return RESET_COMMANDS.has(normalizeCmd(texto));
 }
 
-
 /**
  * Bloqueia que descrições genéricas (vindas do parser ou de uma sessão)
  * sejam usadas como nome real do gasto. Ex.: "registrar gasto",
@@ -1045,15 +1164,10 @@ export function isGenericExpenseDescription(nome: string | undefined | null): bo
 }
 
 /** Mantido para compatibilidade com testes existentes. */
-export function detectarFaltantes(
-  parsed: ParsedExpense,
-  cartoes: Cartao[],
-): string | null {
+export function detectarFaltantes(parsed: ParsedExpense, cartoes: Cartao[]): string | null {
   const valorAusente = !parsed.valor || parsed.valor <= 0;
   const nomeAusente =
-    !parsed.nome ||
-    parsed.nome.length < 2 ||
-    isGenericExpenseDescription(parsed.nome);
+    !parsed.nome || parsed.nome.length < 2 || isGenericExpenseDescription(parsed.nome);
   if (valorAusente && nomeAusente) {
     return M.faltaDescricaoEValor();
   }
@@ -1141,13 +1255,11 @@ type Session = {
 };
 
 function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
-  const cartaoCadastrado = s.cartaoId
-    ? cartoes.find((c) => c.id === s.cartaoId)
-    : undefined;
+  const cartaoCadastrado = s.cartaoId ? cartoes.find((c) => c.id === s.cartaoId) : undefined;
   const cartaoNome = cartaoCadastrado
     ? displayCartaoNome(cartaoCadastrado)
     : s.cartaoNaoCadastrado
-      ? (s.cartaoDigitado || "cartão não cadastrado")
+      ? s.cartaoDigitado || "cartão não cadastrado"
       : canonicalizeBrand(s.cartaoNomeDetectado ?? "");
   return {
     nome: s.nome,
@@ -1305,7 +1417,10 @@ function receiptSessionDiagnostic(sessao: SessaoRow | null) {
 }
 
 function auditHash(input: string | null | undefined): string {
-  return createHash("sha256").update(input ?? "").digest("hex").slice(0, 12);
+  return createHash("sha256")
+    .update(input ?? "")
+    .digest("hex")
+    .slice(0, 12);
 }
 
 function conversationKeyFor(telefone: string): string {
@@ -1356,15 +1471,17 @@ function logWaSessionLookup(args: {
     messageKey: messageKeyFor(args.msg.external_id),
     activeSessionFound: !!args.activeSession,
     activeSessionStatus: args.activeSession?.status ?? null,
-    activeSessionKind: args.activeSession?.session && typeof args.activeSession.session === "object"
-      ? (args.activeSession.session as { kind?: string }).kind ?? null
-      : null,
+    activeSessionKind:
+      args.activeSession?.session && typeof args.activeSession.session === "object"
+        ? ((args.activeSession.session as { kind?: string }).kind ?? null)
+        : null,
     receiptSessionFoundByStatus: args.receiptLookup.sessionFoundByStatus,
     receiptSessionFoundByKind: args.receiptLookup.sessionFoundByKind,
     receiptSessionStatus: receipt?.status ?? null,
-    receiptSessionKind: receipt?.session && isComprovanteSession(receipt.session)
-      ? (receipt.session as unknown as ComprovanteSession).kind
-      : null,
+    receiptSessionKind:
+      receipt?.session && isComprovanteSession(receipt.session)
+        ? (receipt.session as unknown as ComprovanteSession).kind
+        : null,
   });
 }
 
@@ -1400,9 +1517,11 @@ function logWaExpenseParserGuard(args: {
   });
 }
 
-function logReceiptSessionRoute(args: ReceiptSessionLookup & {
-  routedTo: "receipt_handler" | "expense_parser";
-}) {
+function logReceiptSessionRoute(
+  args: ReceiptSessionLookup & {
+    routedTo: "receipt_handler" | "expense_parser";
+  },
+) {
   const s = args.sessao;
   console.info({
     event: "whatsapp_receipt_session_route",
@@ -1411,7 +1530,8 @@ function logReceiptSessionRoute(args: ReceiptSessionLookup & {
     sessionFoundByKind: args.sessionFoundByKind,
     sessionFoundByFallbackQuery: args.sessionFoundByFallbackQuery,
     storedKindPath: args.storedKindPath,
-    sessionKind: s && isComprovanteSession(s.session) ? (s.session as ComprovanteSession).kind : null,
+    sessionKind:
+      s && isComprovanteSession(s.session) ? (s.session as ComprovanteSession).kind : null,
     sessionStatus: s?.status ?? null,
     routedTo: args.routedTo,
   });
@@ -1466,10 +1586,11 @@ export async function logReceiptSessionCreatedAudit(args: {
   let persistedParsedStatus: string | null = null;
   try {
     const lookup = await buscarSessaoComprovanteAtiva(args.userId, args.msg.telefone);
-    persistedRowFound = !!lookup.sessao
-      || lookup.sessionFoundByStatus
-      || lookup.sessionFoundByKind
-      || lookup.sessionFoundByFallbackQuery;
+    persistedRowFound =
+      !!lookup.sessao ||
+      lookup.sessionFoundByStatus ||
+      lookup.sessionFoundByKind ||
+      lookup.sessionFoundByFallbackQuery;
     persistedStatus = lookup.sessao?.status ?? null;
     persistedKindPath = lookup.storedKindPath;
     const parsedAny = lookup.sessao?.session as Record<string, unknown> | undefined;
@@ -1503,11 +1624,7 @@ export async function logReceiptSessionCreatedAudit(args: {
   });
 }
 
-
-async function buscarSessaoAtiva(
-  userId: string,
-  telefone: string,
-): Promise<SessaoRow | null> {
+async function buscarSessaoAtiva(userId: string, telefone: string): Promise<SessaoRow | null> {
   const desde = new Date(Date.now() - PENDING_TTL_MS).toISOString();
   const { data } = await supabaseAdmin
     .from("whatsapp_messages")
@@ -1625,11 +1742,19 @@ function detectStoredKindPath(session: unknown): string | null {
   const s = session as Record<string, unknown>;
   if (typeof s.kind === "string" && s.kind === "imagem_comprovante") return "parsed.kind";
   const inner = s.session as Record<string, unknown> | undefined;
-  if (inner && typeof inner === "object" && (inner as { kind?: unknown }).kind === "imagem_comprovante") {
+  if (
+    inner &&
+    typeof inner === "object" &&
+    (inner as { kind?: unknown }).kind === "imagem_comprovante"
+  ) {
     return "parsed.session.kind";
   }
   const flow = s.flow as Record<string, unknown> | undefined;
-  if (flow && typeof flow === "object" && (flow as { kind?: unknown }).kind === "imagem_comprovante") {
+  if (
+    flow &&
+    typeof flow === "object" &&
+    (flow as { kind?: unknown }).kind === "imagem_comprovante"
+  ) {
     return "parsed.flow.kind";
   }
   return null;
@@ -1722,11 +1847,7 @@ function avisoCartaoNaoCadastradoNegado(s: Session): string {
 
 export async function verificarGastoExiste(gastoId: string | null | undefined): Promise<boolean> {
   if (!gastoId) return false;
-  const { data } = await supabaseAdmin
-    .from("gastos")
-    .select("id")
-    .eq("id", gastoId)
-    .maybeSingle();
+  const { data } = await supabaseAdmin.from("gastos").select("id").eq("id", gastoId).maybeSingle();
   return !!data;
 }
 
@@ -1754,10 +1875,10 @@ export async function persistirGasto(
   // categoria natural seria "outros". Nunca sobrescreve escolha manual nem
   // uma categoria forte por keyword. Categoria inativa é ignorada.
   const memoryAppliedHere =
-    s.memoryApplied === true
-    && !!s.memoryAppliedCategoriaId
-    && categoriaKey === "outros"
-    && categorias.some((c) => c.id === s.memoryAppliedCategoriaId);
+    s.memoryApplied === true &&
+    !!s.memoryAppliedCategoriaId &&
+    categoriaKey === "outros" &&
+    categorias.some((c) => c.id === s.memoryAppliedCategoriaId);
   if (memoryAppliedHere) {
     categoriaId = s.memoryAppliedCategoriaId!;
     const cat = categorias.find((c) => c.id === categoriaId);
@@ -1769,9 +1890,9 @@ export async function persistirGasto(
   // categoria escolhida ainda existe nas categorias ativas (evita
   // referenciar categoria removida/desativada após a escolha).
   if (
-    s.categorySelectionSource === "manual"
-    && s.manualCategoriaId
-    && categorias.some((c) => c.id === s.manualCategoriaId)
+    s.categorySelectionSource === "manual" &&
+    s.manualCategoriaId &&
+    categorias.some((c) => c.id === s.manualCategoriaId)
   ) {
     categoriaId = s.manualCategoriaId;
     const cat = categorias.find((c) => c.id === s.manualCategoriaId);
@@ -1781,13 +1902,12 @@ export async function persistirGasto(
   const [y, m] = s.data.split("-").map(Number);
 
   const cartaoFinalId =
-    s.formaPagamento === "credito" && s.cartaoId && !s.cartaoNaoCadastrado
-      ? s.cartaoId
-      : null;
+    s.formaPagamento === "credito" && s.cartaoId && !s.cartaoNaoCadastrado ? s.cartaoId : null;
 
-  const obsExtra = s.cartaoNaoCadastrado && s.cartaoDigitado
-    ? ` (cartão não cadastrado: ${s.cartaoDigitado.slice(0, 60)})`
-    : "";
+  const obsExtra =
+    s.cartaoNaoCadastrado && s.cartaoDigitado
+      ? ` (cartão não cadastrado: ${s.cartaoDigitado.slice(0, 60)})`
+      : "";
 
   const { data: gastoRow, error: gastoErr } = await supabaseAdmin
     .from("gastos")
@@ -1870,30 +1990,59 @@ async function aplicarMemoriaEstabelecimento(args: {
   const nomeLimpo = cleanDescricao(session.nome) || session.nome;
   const key = merchantKeyFor(nomeLimpo);
   if (!key) {
-    logMerchantMemoryDecision({ source, memoryFound: false, memoryApplied: false, reason: "generic_description" });
+    logMerchantMemoryDecision({
+      source,
+      memoryFound: false,
+      memoryApplied: false,
+      reason: "generic_description",
+    });
     return;
   }
   session.merchantKey = key;
 
   const naturalKey = pickCategoriaKey(nomeLimpo, categorias, session.source);
   if (naturalKey !== "outros") {
-    logMerchantMemoryDecision({ source, memoryFound: false, memoryApplied: false, reason: "high_confidence_category_wins" });
+    logMerchantMemoryDecision({
+      source,
+      memoryFound: false,
+      memoryApplied: false,
+      reason: "high_confidence_category_wins",
+    });
     return;
   }
 
   const activeIds = new Set(categorias.map((c) => c.id));
-  const lookup = await lookupMerchantMemory({ userId, merchantKey: key, activeCategoryIds: activeIds });
+  const lookup = await lookupMerchantMemory({
+    userId,
+    merchantKey: key,
+    activeCategoryIds: activeIds,
+  });
   if (lookup.kind === "ambiguous") {
-    logMerchantMemoryDecision({ source, memoryFound: true, memoryApplied: false, reason: "ambiguous_history" });
+    logMerchantMemoryDecision({
+      source,
+      memoryFound: true,
+      memoryApplied: false,
+      reason: "ambiguous_history",
+    });
     return;
   }
   if (lookup.kind === "none") {
-    logMerchantMemoryDecision({ source, memoryFound: false, memoryApplied: false, reason: "no_eligible_memory" });
+    logMerchantMemoryDecision({
+      source,
+      memoryFound: false,
+      memoryApplied: false,
+      reason: "no_eligible_memory",
+    });
     return;
   }
   session.memoryApplied = true;
   session.memoryAppliedCategoriaId = lookup.lookup.categoryId;
-  logMerchantMemoryDecision({ source, memoryFound: true, memoryApplied: true, reason: "memory_applied" });
+  logMerchantMemoryDecision({
+    source,
+    memoryFound: true,
+    memoryApplied: true,
+    reason: "memory_applied",
+  });
 }
 
 /**
@@ -1909,8 +2058,6 @@ function memoryHintFromSession(
   if (!cat) return undefined;
   return { categoriaLabel: cat.nome || categoriaLabel("outros") };
 }
-
-
 
 // ---------- helpers de transição ----------
 
@@ -1976,7 +2123,8 @@ function decodeBase64Head(dataUrl: string, nBytes: number): Uint8Array | null {
   // Pega só o suficiente para os magic bytes (cada 4 chars b64 = 3 bytes).
   const chunk = b64.slice(0, Math.ceil((nBytes * 4) / 3) + 4);
   try {
-    const bin = typeof atob === "function" ? atob(chunk) : Buffer.from(chunk, "base64").toString("binary");
+    const bin =
+      typeof atob === "function" ? atob(chunk) : Buffer.from(chunk, "base64").toString("binary");
     const out = new Uint8Array(Math.min(bin.length, nBytes));
     for (let i = 0; i < out.length; i++) out[i] = bin.charCodeAt(i) & 0xff;
     return out;
@@ -1986,7 +2134,14 @@ function decodeBase64Head(dataUrl: string, nBytes: number): Uint8Array | null {
 }
 function looksLikePdfMagic(buf: Uint8Array): boolean {
   // %PDF-
-  return buf.length >= 5 && buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46 && buf[4] === 0x2d;
+  return (
+    buf.length >= 5 &&
+    buf[0] === 0x25 &&
+    buf[1] === 0x50 &&
+    buf[2] === 0x44 &&
+    buf[3] === 0x46 &&
+    buf[4] === 0x2d
+  );
 }
 
 /** Estima o tamanho real em bytes de uma data URL base64 sem decodificar. */
@@ -2213,8 +2368,7 @@ async function processarReceita(args: {
   const shouldHardCancel =
     !!sessao &&
     (isHardCancel ||
-      (decisao === "cancel" &&
-        cancelStatesGlobais.includes(currentStatus as ReceitaStatus)));
+      (decisao === "cancel" && cancelStatesGlobais.includes(currentStatus as ReceitaStatus)));
 
   if (shouldHardCancel && sessao) {
     await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
@@ -2308,10 +2462,7 @@ async function processarReceita(args: {
   // Demais etapas: delegar ao state machine.
   const step = nextStepReceita(current, session, texto, decisao);
   // marca sessão antiga como expirada e cria nova com novo status
-  await supabaseAdmin
-    .from("whatsapp_messages")
-    .update({ status: "expirada" })
-    .eq("id", sessao.id);
+  await supabaseAdmin.from("whatsapp_messages").update({ status: "expirada" }).eq("id", sessao.id);
   await gravarSessao(
     userId,
     msg.telefone,
@@ -2353,8 +2504,14 @@ async function processarSessaoComprovanteAtiva(args: {
     await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     await fecharSessoesComprovanteAtivas(userId, msg.telefone, "cancelada");
     await gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "cancelada", prev as unknown as Session, M.imagem.cancelado(),
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "cancelada",
+      prev as unknown as Session,
+      M.imagem.cancelado(),
     );
     return { status: "cancelada", resposta: M.imagem.cancelado() };
   }
@@ -2367,34 +2524,40 @@ async function processarSessaoComprovanteAtiva(args: {
       : "img_aguardando_confirmacao") as ComprovanteStatus,
     decisao,
   });
-  await supabaseAdmin
-    .from("whatsapp_messages")
-    .update({ status: "expirada" })
-    .eq("id", sessao.id);
+  await supabaseAdmin.from("whatsapp_messages").update({ status: "expirada" }).eq("id", sessao.id);
   if (out.status === "salva") {
     await fecharSessoesAnteriores(userId, msg.telefone, "salva", out.gastoId);
     await fecharSessoesComprovanteAtivas(userId, msg.telefone, "salva", out.gastoId);
     await gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "salva", (out.session ?? prev) as unknown as Session,
-      out.resposta, out.gastoId,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "salva",
+      (out.session ?? prev) as unknown as Session,
+      out.resposta,
+      out.gastoId,
     );
     return { status: "salva", gastoId: out.gastoId, resposta: out.resposta };
   }
   const nextStatus = out.newStatus ?? "img_aguardando_confirmacao";
   await gravarSessao(
-    userId, msg.telefone, msg.external_id, texto, recebidaEm,
-    nextStatus, (out.session ?? prev) as unknown as Session, out.resposta,
+    userId,
+    msg.telefone,
+    msg.external_id,
+    texto,
+    recebidaEm,
+    nextStatus,
+    (out.session ?? prev) as unknown as Session,
+    out.resposta,
   );
   return { status: "pendente", resposta: out.resposta };
 }
 
 // ---------- pipeline principal ----------
 
-
-export async function processarMensagemWhatsApp(
-  msg: WhatsAppMessageRow,
-): Promise<ProcessOutcome> {
+export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promise<ProcessOutcome> {
   // Dedupe por external_id
   if (msg.external_id) {
     const { data: existente } = await supabaseAdmin
@@ -2442,8 +2605,7 @@ export async function processarMensagemWhatsApp(
   if (!texto && !msg.image && !msg.document) {
     return {
       status: "erro",
-      resposta:
-        "Não recebi nenhum texto. Me envie o gasto, ex.: \"Mercado 48,90 hoje no Nubank\".",
+      resposta: 'Não recebi nenhum texto. Me envie o gasto, ex.: "Mercado 48,90 hoje no Nubank".',
     };
   }
 
@@ -2499,11 +2661,17 @@ export async function processarMensagemWhatsApp(
     try {
       const activeBefore = await buscarSessaoAtiva(userId, msg.telefone);
       const sess = activeBefore?.session as { kind?: string; pendingPixSecretId?: string } | null;
-      if (sess?.kind === "pagar_pessoa" && typeof sess.pendingPixSecretId === "string" && sess.pendingPixSecretId) {
+      if (
+        sess?.kind === "pagar_pessoa" &&
+        typeof sess.pendingPixSecretId === "string" &&
+        sess.pendingPixSecretId
+      ) {
         const { deletePendingPixKey } = await import("./whatsapp-pix-secret.server");
         await deletePendingPixKey({ userId, secretId: sess.pendingPixSecretId });
       }
-    } catch { /* noop — LGPD cleanup best-effort */ }
+    } catch {
+      /* noop — LGPD cleanup best-effort */
+    }
     await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     await fecharSessoesComprovanteAtivas(userId, msg.telefone, "cancelada");
     const resposta = M.resetConversa();
@@ -2537,9 +2705,19 @@ export async function processarMensagemWhatsApp(
       allowedToParseExpense: false,
     });
     logWaRouteDecision(msg, "receipt_handler", "active_receipt_session_before_any_parser");
-    logWaReceiptSessionTrace({ msg, receiptSessionCreated: false, lookup: receiptLookup, routeChosen: "receipt_handler" });
+    logWaReceiptSessionTrace({
+      msg,
+      receiptSessionCreated: false,
+      lookup: receiptLookup,
+      routeChosen: "receipt_handler",
+    });
     return await processarSessaoComprovanteAtiva({
-      userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      lookup: receiptLookup,
     });
   }
 
@@ -2555,8 +2733,14 @@ export async function processarMensagemWhatsApp(
     logWaRouteDecision(msg, "receipt_handler", "image_blocked_by_existing_non_receipt_session");
     const aviso = M.imagem.sessaoEmAndamento();
     await gravarSessao(
-      userId, msg.telefone, msg.external_id, texto || (msg.document ? "(documento)" : "(foto)"), recebidaEm,
-      sessao.status, sessao.session, aviso,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto || (msg.document ? "(documento)" : "(foto)"),
+      recebidaEm,
+      sessao.status,
+      sessao.session,
+      aviso,
     );
     return { status: "pendente", resposta: aviso };
   }
@@ -2566,20 +2750,37 @@ export async function processarMensagemWhatsApp(
   if (sessionIsReceita) {
     logWaRouteDecision(msg, "revenue_handler", "active_revenue_session");
     return await processarReceita({
-      userId, msg, texto, recebidaEm, decisao, sessao,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao,
     });
   }
 
   // ---- WA-F3: sessão ativa de COMPRA PARCELADA tem prioridade. ----
   // Vem depois de comprovante e receita; nunca interrompe um fluxo de
   // gasto/receita/foto em andamento.
-  if (sessao && (
-    isParcelamentoSession(sessao.session) ||
-    ["parc_aguardando_total","parc_aguardando_quantidade","parc_aguardando_cartao","parc_aguardando_confirmacao","parc_aguardando_categoria"].includes(sessao.status)
-  )) {
+  if (
+    sessao &&
+    (isParcelamentoSession(sessao.session) ||
+      [
+        "parc_aguardando_total",
+        "parc_aguardando_quantidade",
+        "parc_aguardando_cartao",
+        "parc_aguardando_confirmacao",
+        "parc_aguardando_categoria",
+      ].includes(sessao.status))
+  ) {
     logWaRouteDecision(msg, "expense_parser", "active_installment_session");
     return await processarParcelamento({
-      userId, msg, texto, recebidaEm, decisao, sessao,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao,
       deps: parcelamentoDeps,
     });
   }
@@ -2587,71 +2788,94 @@ export async function processarMensagemWhatsApp(
   // ---- WA-C2: sessão ativa de CONTA A PAGAR tem prioridade. ----
   // Roda após receita e parcelamento; nunca interrompe um fluxo em
   // andamento. Estados conta_* SÓ saem por confirmação/cancelamento.
-  if (sessao && (
-    isContaSession(sessao.session) ||
-    (CONTA_PENDING_STATES as readonly string[]).includes(sessao.status)
-  )) {
+  if (
+    sessao &&
+    (isContaSession(sessao.session) ||
+      (CONTA_PENDING_STATES as readonly string[]).includes(sessao.status))
+  ) {
     logWaRouteDecision(msg, "expense_parser", "active_payable_account_session");
     return await processarContaAPagar({
-      userId, msg, texto, recebidaEm, decisao, sessao,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao,
       deps: contaCriarDeps,
     });
   }
 
   // ---- WA-C10.a: sessão ativa de BOLETO tem prioridade. ----
-  if (sessao && (
-    isAnyBoletoSession(sessao.session) ||
-    (BOLETO_PENDING_STATES as readonly string[]).includes(sessao.status)
-  )) {
+  if (
+    sessao &&
+    (isAnyBoletoSession(sessao.session) ||
+      (BOLETO_PENDING_STATES as readonly string[]).includes(sessao.status))
+  ) {
     logWaRouteDecision(msg, "expense_parser", "active_boleto_session");
     return await processarBoleto({
-      userId, msg, texto, recebidaEm, decisao, sessao,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao,
       deps: boletoDeps,
     });
   }
 
-
   // ---- WA-C3: sessão ativa de BAIXA DE CONTA tem prioridade. ----
-  if (sessao && (
-    isBaixaContaSession(sessao.session) ||
-    (BAIXA_CONTA_PENDING_STATES as readonly string[]).includes(sessao.status)
-  )) {
+  if (
+    sessao &&
+    (isBaixaContaSession(sessao.session) ||
+      (BAIXA_CONTA_PENDING_STATES as readonly string[]).includes(sessao.status))
+  ) {
     logWaRouteDecision(msg, "expense_parser", "active_payable_account_payment_session");
     return await processarBaixaConta({
-      userId, msg, texto, recebidaEm, decisao, sessao,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao,
       deps: baixaContaDeps,
     });
   }
 
   // ---- WA-C4: sessão ativa de EDIÇÃO/CANCELAMENTO de conta. ----
-  if (sessao && (
-    isEdicaoContaSession(sessao.session) ||
-    (EDICAO_CONTA_PENDING_STATES as readonly string[]).includes(sessao.status)
-  )) {
+  if (
+    sessao &&
+    (isEdicaoContaSession(sessao.session) ||
+      (EDICAO_CONTA_PENDING_STATES as readonly string[]).includes(sessao.status))
+  ) {
     logWaRouteDecision(msg, "expense_parser", "active_payable_account_edit_session");
     return await processarEdicaoConta({
-      userId, msg, texto, recebidaEm, decisao, sessao,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao,
       deps: edicaoContaDeps,
     });
   }
 
   // ---- WA-C7.2.b: sessão ativa de PAGAMENTO PARA PESSOA. ----
-  if (sessao && (
-    isPagarPessoaSession(sessao.session) ||
-    (PAGAR_PESSOA_PENDING_STATES as readonly string[]).includes(sessao.status)
-  )) {
+  if (
+    sessao &&
+    (isPagarPessoaSession(sessao.session) ||
+      (PAGAR_PESSOA_PENDING_STATES as readonly string[]).includes(sessao.status))
+  ) {
     logWaRouteDecision(msg, "expense_parser", "active_pagar_pessoa_session");
     return await processarPagarPessoaFlow({
-      userId, msg, texto, recebidaEm, decisao, sessao,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao,
       deps: pagarPessoaDeps,
     });
   }
-
-
-
-
-
-
 
   // ---- WA: sessão de gasto aguardando descrição e/ou valor ----
   // Prioridade sobre saudação, menu, ajuda, consulta ou nova intenção.
@@ -2663,17 +2887,21 @@ export async function processarMensagemWhatsApp(
     if (hardCancelRe.test(texto) || decisao === "cancel") {
       await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "cancelada", prev, M.gastoCancelado(),
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "cancelada",
+        prev,
+        M.gastoCancelado(),
       );
       return { status: "cancelada", resposta: M.gastoCancelado() };
     }
     // Saudação, menu, ajuda, finanças genérico → relembrar sem perder sessão.
     if (decisao === "outro" && detectConversationalIntent(texto)) {
       const resposta = M.aguardandoGastoEValor();
-      await atualizarSessao(
-        sessao.id, "aguardando_descricao_e_valor_gasto", prev, resposta,
-      );
+      await atualizarSessao(sessao.id, "aguardando_descricao_e_valor_gasto", prev, resposta);
       return { status: "pendente", resposta };
     }
     receiptLookup = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
@@ -2684,9 +2912,18 @@ export async function processarMensagemWhatsApp(
         receiptSessionExists: true,
         allowedToParseExpense: false,
       });
-      logWaRouteDecision(msg, "receipt_handler", "receipt_session_found_inside_expense_session_guard");
+      logWaRouteDecision(
+        msg,
+        "receipt_handler",
+        "receipt_session_found_inside_expense_session_guard",
+      );
       return await processarSessaoComprovanteAtiva({
-        userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        decisao,
+        lookup: receiptLookup,
       });
     }
     logWaExpenseParserGuard({
@@ -2704,15 +2941,11 @@ export async function processarMensagemWhatsApp(
       parsedNovo.valor && parsedNovo.valor > 0 ? parsedNovo.valor : (prev.valor ?? 0);
     const valorAusente = !mergedValor || mergedValor <= 0;
     const nomeAusente =
-      !mergedNome ||
-      mergedNome.length < 2 ||
-      isGenericExpenseDescription(mergedNome);
+      !mergedNome || mergedNome.length < 2 || isGenericExpenseDescription(mergedNome);
 
     if (valorAusente && nomeAusente) {
       const resposta = M.aguardandoGastoEValor();
-      await atualizarSessao(
-        sessao.id, "aguardando_descricao_e_valor_gasto", prev, resposta,
-      );
+      await atualizarSessao(sessao.id, "aguardando_descricao_e_valor_gasto", prev, resposta);
       return { status: "pendente", resposta };
     }
     if (valorAusente) {
@@ -2723,9 +2956,7 @@ export async function processarMensagemWhatsApp(
         kind: "gasto",
       };
       const resposta = M.faltaValor(mergedNome);
-      await atualizarSessao(
-        sessao.id, "aguardando_descricao_e_valor_gasto", next, resposta,
-      );
+      await atualizarSessao(sessao.id, "aguardando_descricao_e_valor_gasto", next, resposta);
       return { status: "valor_invalido", resposta };
     }
     if (nomeAusente) {
@@ -2737,9 +2968,7 @@ export async function processarMensagemWhatsApp(
         kind: "gasto",
       };
       const resposta = M.faltaNome();
-      await atualizarSessao(
-        sessao.id, "aguardando_descricao_e_valor_gasto", next, resposta,
-      );
+      await atualizarSessao(sessao.id, "aguardando_descricao_e_valor_gasto", next, resposta);
       return { status: "pendente", resposta };
     }
     // Ambos presentes → avança para forma de pagamento. Não tentamos extrair
@@ -2761,8 +2990,14 @@ export async function processarMensagemWhatsApp(
       .update({ status: "expirada" })
       .eq("id", sessao.id);
     await gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "aguardando_forma_pagamento", next, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "aguardando_forma_pagamento",
+      next,
+      resposta,
     );
     return {
       status: "aguardando_forma_pagamento",
@@ -2806,7 +3041,10 @@ export async function processarMensagemWhatsApp(
       if (validados.length >= 1) {
         logBoletoMediaGate("pdf_local_text", "pdf", "found", { count: validados.length });
         return await iniciarBoletoDeMidia({
-          userId, msg, texto: texto || "(pdf)", recebidaEm,
+          userId,
+          msg,
+          texto: texto || "(pdf)",
+          recebidaEm,
           origem: "pdf",
           candidatos: validados,
           identificacaoSugerida: null,
@@ -2850,7 +3088,10 @@ export async function processarMensagemWhatsApp(
     }
     if (ocrResult.candidatos.length >= 1) {
       return await iniciarBoletoDeMidia({
-        userId, msg, texto: texto || "(pdf)", recebidaEm,
+        userId,
+        msg,
+        texto: texto || "(pdf)",
+        recebidaEm,
         origem: "pdf",
         candidatos: ocrResult.candidatos,
         identificacaoSugerida: ocrResult.sugestoes.identificacao,
@@ -2859,7 +3100,10 @@ export async function processarMensagemWhatsApp(
     }
     if (ocrResult.sugestoes.valorCentavos != null || ocrResult.sugestoes.vencimentoISO) {
       return await iniciarBoletoManualFallback({
-        userId, msg, texto: texto || "(pdf)", recebidaEm,
+        userId,
+        msg,
+        texto: texto || "(pdf)",
+        recebidaEm,
         origem: "pdf",
         valorCentavos: ocrResult.sugestoes.valorCentavos,
         vencimentoISO: ocrResult.sugestoes.vencimentoISO,
@@ -2897,20 +3141,28 @@ export async function processarMensagemWhatsApp(
           const ocr = await extractBoletoFromMedia({
             kind: "image",
             dataUrl: msg.image.base64,
-            mimeType: (msg.image.mimeType as "image/jpeg" | "image/png" | "image/webp") ?? "image/jpeg",
+            mimeType:
+              (msg.image.mimeType as "image/jpeg" | "image/png" | "image/webp") ?? "image/jpeg",
           });
           if (ocr.ok) {
             ocrResult = { candidatos: ocr.candidatos, sugestoes: ocr.sugestoes };
             setCachedOcr(userId, imgSha, "image", ocrResult);
           } else {
-            console.log({ event: "wa_boleto_media_ocr_failed", sourceType: "image", reason: ocr.reason });
+            console.log({
+              event: "wa_boleto_media_ocr_failed",
+              sourceType: "image",
+              reason: ocr.reason,
+            });
           }
         }
       }
       if (ocrResult && ocrResult.candidatos.length >= 1) {
         logWaRouteDecision(msg, "expense_parser", "media_boleto_image_candidate");
         return await iniciarBoletoDeMidia({
-          userId, msg, texto: texto || "(foto)", recebidaEm,
+          userId,
+          msg,
+          texto: texto || "(foto)",
+          recebidaEm,
           origem: "imagem",
           candidatos: ocrResult.candidatos,
           identificacaoSugerida: ocrResult.sugestoes.identificacao,
@@ -2927,12 +3179,14 @@ export async function processarMensagemWhatsApp(
       // pelo rótulo probabilístico do classificador.
       if (
         ocrResult &&
-        (ocrResult.sugestoes.valorCentavos != null ||
-          ocrResult.sugestoes.vencimentoISO != null)
+        (ocrResult.sugestoes.valorCentavos != null || ocrResult.sugestoes.vencimentoISO != null)
       ) {
         logWaRouteDecision(msg, "expense_parser", "media_boleto_image_manual_fallback");
         return await iniciarBoletoManualFallback({
-          userId, msg, texto: texto || "(foto)", recebidaEm,
+          userId,
+          msg,
+          texto: texto || "(foto)",
+          recebidaEm,
           origem: "imagem",
           valorCentavos: ocrResult.sugestoes.valorCentavos,
           vencimentoISO: ocrResult.sugestoes.vencimentoISO,
@@ -2947,8 +3201,6 @@ export async function processarMensagemWhatsApp(
     // classificador de comprovante decide.
   }
 
-
-
   // ---- Fase WA-G5A: imagem nova chegando sem sessão pendente ----
   // Sessões pendentes (receita/gasto) já interceptaram acima — uma imagem
   // nunca interrompe um fluxo financeiro em andamento.
@@ -2958,8 +3210,14 @@ export async function processarMensagemWhatsApp(
       logWaRouteDecision(msg, "receipt_handler", "image_blocked_by_existing_session");
       const aviso = M.imagem.sessaoEmAndamento();
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
-        sessao.status, sessao.session, aviso,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto || "(foto)",
+        recebidaEm,
+        sessao.status,
+        sessao.session,
+        aviso,
       );
       return { status: "pendente", resposta: aviso };
     }
@@ -2975,8 +3233,7 @@ export async function processarMensagemWhatsApp(
     // gasto_id existente). Semelhança fraca (valor/estabelecimento/data/
     // janela de tempo) NUNCA bloqueia.
     const rawSha = (msg.image.sha256 ?? "").trim();
-    const shaValid =
-      /^[a-f0-9]{64}$/i.test(rawSha) || /^[A-Za-z0-9+/_=-]{40,88}$/.test(rawSha);
+    const shaValid = /^[a-f0-9]{64}$/i.test(rawSha) || /^[A-Za-z0-9+/_=-]{40,88}$/.test(rawSha);
     let dedupDecision: "process" | "duplicate_image" = "process";
     let dedupReason = "no_match";
     let candidateCount = 0;
@@ -3043,7 +3300,11 @@ export async function processarMensagemWhatsApp(
     const nextStatus = out.newStatus ?? "img_aguardando_confirmacao";
     if (out.status === "ilegivel") {
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto || "(foto)",
+        recebidaEm,
         "sem_pendencia",
         { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto || "(foto)" },
         out.resposta,
@@ -3051,7 +3312,11 @@ export async function processarMensagemWhatsApp(
       return { status: "pendente", resposta: out.resposta };
     }
     const saveResult = await gravarSessao(
-      userId, msg.telefone, msg.external_id, texto || "(foto)", recebidaEm,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto || "(foto)",
+      recebidaEm,
       nextStatus as string,
       (out.session ?? {
         kind: "imagem_comprovante",
@@ -3065,9 +3330,10 @@ export async function processarMensagemWhatsApp(
     let readbackOk = false;
     if (saveResult.ok) {
       const verify = await buscarSessaoComprovanteAtiva(userId, msg.telefone);
-      readbackOk = !!verify.sessao
-        && isComprovanteSession(verify.sessao.session)
-        && !FINAL_SESSION_STATES.has(verify.sessao.status);
+      readbackOk =
+        !!verify.sessao &&
+        isComprovanteSession(verify.sessao.session) &&
+        !FINAL_SESSION_STATES.has(verify.sessao.status);
     }
     await logReceiptSessionCreatedAudit({ msg, userId, persisted: saveResult.ok });
     if (!saveResult.ok || !readbackOk) {
@@ -3089,8 +3355,6 @@ export async function processarMensagemWhatsApp(
     return { status: "pendente", resposta: out.resposta };
   }
 
-
-
   // ---- Fase WA-G4: sessão temporária de consulta com categoria ambígua ----
   // Aguardando o usuário escolher uma das categorias listadas. NÃO cria
   // gasto/receita; "cancelar" já encerrou acima. Se a resposta não casar
@@ -3105,7 +3369,11 @@ export async function processarMensagemWhatsApp(
     if (out) {
       await fecharSessoesAnteriores(userId, msg.telefone, "salva");
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
         "sem_pendencia",
         { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
         out.resposta,
@@ -3120,8 +3388,6 @@ export async function processarMensagemWhatsApp(
     sessao = null;
     // continua para os blocos abaixo (conversational / consulta / parser)
   }
-
-
 
   // ---- Fase WA-F2: paginação ativa de detalhamento de fatura ----
   // Apenas leitura. Aceita "ver mais", "voltar" e "cancelar". Se a
@@ -3144,7 +3410,11 @@ export async function processarMensagemWhatsApp(
       await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
       const resposta = "Tudo bem, encerrei a consulta da fatura.";
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
         "sem_pendencia",
         { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
         resposta,
@@ -3159,10 +3429,14 @@ export async function processarMensagemWhatsApp(
         const next = (out as { nextSession: FaturaDetailSessionState }).nextSession;
         await fecharSessoesAnteriores(userId, msg.telefone, "expirada");
         await gravarSessao(
-          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
           "aguardando_consulta_fatura",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ({
+          {
             nome: "",
             valor: 0,
             data: todayLocalISO(),
@@ -3171,14 +3445,18 @@ export async function processarMensagemWhatsApp(
             cartaoId: next.cartaoId,
             mode: next.mode,
             page: next.page,
-          } as unknown) as Session,
+          } as unknown as Session,
           out.resposta,
         );
         return { status: "pendente", resposta: out.resposta };
       }
       await fecharSessoesAnteriores(userId, msg.telefone, "salva");
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
         "sem_pendencia",
         { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
         out.resposta,
@@ -3192,7 +3470,6 @@ export async function processarMensagemWhatsApp(
       .eq("id", sessao.id);
     sessao = null;
   }
-
 
   // ---- Fase WA-F4: paginação/escolha em compras parceladas ----
   // Apenas leitura. Aceita "ver mais", "voltar", "cancelar" e (em
@@ -3211,7 +3488,8 @@ export async function processarMensagemWhatsApp(
             installmentGroupIds: Array.isArray(prev.installmentGroupIds)
               ? prev.installmentGroupIds.filter((x: unknown) => typeof x === "string")
               : null,
-            targetInvoiceMonth: typeof prev.targetInvoiceMonth === "string" ? prev.targetInvoiceMonth : null,
+            targetInvoiceMonth:
+              typeof prev.targetInvoiceMonth === "string" ? prev.targetInvoiceMonth : null,
             page: Number.isFinite(prev.page) ? Number(prev.page) : 0,
           }
         : null;
@@ -3225,10 +3503,14 @@ export async function processarMensagemWhatsApp(
         if (next) {
           await fecharSessoesAnteriores(userId, msg.telefone, "expirada");
           await gravarSessao(
-            userId, msg.telefone, msg.external_id, texto, recebidaEm,
+            userId,
+            msg.telefone,
+            msg.external_id,
+            texto,
+            recebidaEm,
             "aguardando_consulta_parcelamento",
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ({
+            {
               nome: "",
               valor: 0,
               data: todayLocalISO(),
@@ -3239,14 +3521,18 @@ export async function processarMensagemWhatsApp(
               installmentGroupIds: next.installmentGroupIds,
               targetInvoiceMonth: next.targetInvoiceMonth,
               page: next.page,
-            } as unknown) as Session,
+            } as unknown as Session,
             out.resposta,
           );
           return { status: "pendente", resposta: out.resposta };
         }
         await fecharSessoesAnteriores(userId, msg.telefone, "salva");
         await gravarSessao(
-          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
           "sem_pendencia",
           { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
           out.resposta,
@@ -3261,8 +3547,6 @@ export async function processarMensagemWhatsApp(
       .eq("id", sessao.id);
     sessao = null;
   }
-
-
 
   // ---- Fase WA-C1: paginação ativa de vencimentos / contas a pagar ----
   // Aceita "ver mais", "voltar" e "cancelar". Se não casar com comando
@@ -3284,7 +3568,11 @@ export async function processarMensagemWhatsApp(
       await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
       const resposta = "Tudo bem, encerrei a consulta de vencimentos.";
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
         "sem_pendencia",
         { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
         resposta,
@@ -3297,10 +3585,14 @@ export async function processarMensagemWhatsApp(
       if (next) {
         await fecharSessoesAnteriores(userId, msg.telefone, "expirada");
         await gravarSessao(
-          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
           "aguardando_consulta_vencimentos",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ({
+          {
             nome: "",
             valor: 0,
             data: todayLocalISO(),
@@ -3309,14 +3601,18 @@ export async function processarMensagemWhatsApp(
             mode: next.mode,
             page: next.page,
             referenceMonth: next.referenceMonth,
-          } as unknown) as Session,
+          } as unknown as Session,
           out.resposta,
         );
         return { status: "pendente", resposta: out.resposta };
       }
       await fecharSessoesAnteriores(userId, msg.telefone, "salva");
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
         "sem_pendencia",
         { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
         out.resposta,
@@ -3331,8 +3627,6 @@ export async function processarMensagemWhatsApp(
     sessao = null;
   }
 
-
-
   // ---- WA-C6: menu numerado guiado (1..8) sem sessão pendente ----
   // Reescreve "3" → "minhas contas", "8" → "ajuda". Para opções que pedem
   // orientação (1, 2, 5, 6, 7), responde direto com o texto-guia.
@@ -3342,7 +3636,11 @@ export async function processarMensagemWhatsApp(
       const dispatch = dispatchMenuOption(opcao);
       if (dispatch?.kind === "guidance") {
         await gravarSessao(
-          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
           "sem_pendencia",
           { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
           dispatch.resposta,
@@ -3367,18 +3665,29 @@ export async function processarMensagemWhatsApp(
   // ambiguidade, pede desambiguação ao invés de baixar conta às cegas.
   if (!sessao && decisao === "outro") {
     let lembReply = shortResolveLembreteResposta(msg.telefone, texto);
-    let lembCtx: { contaId: string; notificationId: string; nomeCurto?: string | null; dueISO: string } | null =
-      lembReply ? shortGetLembreteConta(msg.telefone) : null;
+    let lembCtx: {
+      contaId: string;
+      notificationId: string;
+      nomeCurto?: string | null;
+      dueISO: string;
+    } | null = lembReply ? shortGetLembreteConta(msg.telefone) : null;
 
     // Fallback persistente.
     if (!lembReply || !lembCtx) {
       const parsed = shortParseLembreteCommand(texto);
       if (parsed) {
-        const found = await findRecentSentLembreteForUser(userId).catch(() => ({ kind: "none" as const }));
+        const found = await findRecentSentLembreteForUser(userId).catch(() => ({
+          kind: "none" as const,
+        }));
         if (found.kind === "ambiguous") {
-          const resposta = "Você recebeu lembretes de mais de uma conta recentemente. Qual delas você pagou? Envie \"minhas contas\" para ver suas pendências.";
+          const resposta =
+            'Você recebeu lembretes de mais de uma conta recentemente. Qual delas você pagou? Envie "minhas contas" para ver suas pendências.';
           await gravarSessao(
-            userId, msg.telefone, msg.external_id, texto, recebidaEm,
+            userId,
+            msg.telefone,
+            msg.external_id,
+            texto,
+            recebidaEm,
             "sem_pendencia",
             { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
             resposta,
@@ -3410,7 +3719,11 @@ export async function processarMensagemWhatsApp(
         shortClearLembreteConta(msg.telefone);
         const resposta = "Tudo bem, deixei o lembrete de lado.";
         await gravarSessao(
-          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
           "sem_pendencia",
           { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
           resposta,
@@ -3423,7 +3736,11 @@ export async function processarMensagemWhatsApp(
           (lembCtx.nomeCurto ? `• Nome: ${lembCtx.nomeCurto}\n` : "") +
           `\nResponda "1 - Paguei" para dar baixa, "2 - Adiar para <data>" para reagendar ou "4 - Ignorar".`;
         await gravarSessao(
-          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
           "sem_pendencia",
           { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
           resposta,
@@ -3441,7 +3758,6 @@ export async function processarMensagemWhatsApp(
       texto = reescrito;
     }
   }
-
 
   // ---- Fase WA-G3: intenções conversacionais (saudação, menu, finanças genérico) ----
   // Tem precedência sobre consultas reais e sobre parsing de gasto/receita.
@@ -3542,7 +3858,11 @@ export async function processarMensagemWhatsApp(
         resposta = out.resposta;
       }
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
         "sem_pendencia",
         { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
         resposta,
@@ -3551,24 +3871,24 @@ export async function processarMensagemWhatsApp(
     }
   }
 
-
-
   // ---- Fase WA-F4 (guarda): mês explícito > 12 meses à frente ----
   // Roda ANTES do WA-F1 para não cair em "fatura de X" como nome de
   // cartão. Apenas leitura.
   if (!sessao && decisao === "outro" && isBeyondHorizon(texto)) {
     const resposta =
-      "Por enquanto só consigo estimar até 12 meses à frente.\n\n" +
-      "Tente uma data mais próxima.";
+      "Por enquanto só consigo estimar até 12 meses à frente.\n\n" + "Tente uma data mais próxima.";
     await gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
       "sem_pendencia",
       { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
       resposta,
     );
     return { status: "consulta", resposta };
   }
-
 
   // Apenas leitura. Detecta perguntas como "fatura", "fatura Nubank",
   // "quanto devo no cartão", "quando vence minha fatura", "qual cartão
@@ -3586,10 +3906,14 @@ export async function processarMensagemWhatsApp(
           : undefined;
       if (next) {
         await gravarSessao(
-          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
           "aguardando_consulta_fatura",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ({
+          {
             nome: "",
             valor: 0,
             data: todayLocalISO(),
@@ -3598,13 +3922,17 @@ export async function processarMensagemWhatsApp(
             cartaoId: next.cartaoId,
             mode: next.mode,
             page: next.page,
-          } as unknown) as Session,
+          } as unknown as Session,
           out.resposta,
         );
         return { status: "pendente", resposta: out.resposta };
       }
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
         "sem_pendencia",
         { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
         out.resposta,
@@ -3612,8 +3940,6 @@ export async function processarMensagemWhatsApp(
       return { status: "consulta", resposta: out.resposta };
     }
   }
-
-
 
   // ---- Fase WA-F5: limite, utilização e valor comprometido ----
   // Apenas leitura. Roda DEPOIS do WA-F1 (fatura atual) — só pega o
@@ -3625,7 +3951,11 @@ export async function processarMensagemWhatsApp(
       logWaRouteDecision(msg, "consulta_handler", "consulta_limite_without_session");
       const out = await handleLimiteIntent(userId, intentL);
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
         "sem_pendencia",
         { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
         out.resposta,
@@ -3633,8 +3963,6 @@ export async function processarMensagemWhatsApp(
       return { status: "consulta", resposta: out.resposta };
     }
   }
-
-
 
   // ---- Fase WA-C1: vencimentos / contas a pagar ----
   // Apenas leitura. Roda DEPOIS de WA-F1..F5 para não conflitar com
@@ -3643,7 +3971,12 @@ export async function processarMensagemWhatsApp(
   // WA-C2 tem precedência sobre WA-C1: mensagens com clara intenção
   // de CRIAR conta a pagar ("cadastrar internet de 119,90 vence dia 5
   // todo mês") não devem ser interpretadas como consulta.
-  if (!sessao && decisao === "outro" && !detectPayableAccountIntent(texto) && !detectEdicaoContaIntent(texto)) {
+  if (
+    !sessao &&
+    decisao === "outro" &&
+    !detectPayableAccountIntent(texto) &&
+    !detectEdicaoContaIntent(texto)
+  ) {
     const intentD = detectDueIntent(texto);
 
     if (intentD) {
@@ -3652,15 +3985,22 @@ export async function processarMensagemWhatsApp(
       // WA-C6 — memória curta: grava a ordem das contas mostradas para
       // permitir "pagar a segunda", "cancela 3", etc. Sem PII em log.
       if (out.items && out.items.length > 0) {
-        shortRecordContas(msg.telefone, out.items.map((nome) => ({ nome })));
+        shortRecordContas(
+          msg.telefone,
+          out.items.map((nome) => ({ nome })),
+        );
       }
       const next = out.nextSession ?? null;
       if (next) {
         await gravarSessao(
-          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
           "aguardando_consulta_vencimentos",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ({
+          {
             nome: "",
             valor: 0,
             data: todayLocalISO(),
@@ -3669,13 +4009,17 @@ export async function processarMensagemWhatsApp(
             mode: next.mode,
             page: next.page,
             referenceMonth: next.referenceMonth,
-          } as unknown) as Session,
+          } as unknown as Session,
           out.resposta,
         );
         return { status: "pendente", resposta: out.resposta };
       }
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
         "sem_pendencia",
         { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
         out.resposta,
@@ -3683,8 +4027,6 @@ export async function processarMensagemWhatsApp(
       return { status: "consulta", resposta: out.resposta };
     }
   }
-
-
 
   // ---- Fase WA-F4: faturas futuras e parcelas em aberto ----
   // Apenas leitura. Roda DEPOIS do WA-F1 (fatura atual) — só pega o
@@ -3701,10 +4043,14 @@ export async function processarMensagemWhatsApp(
           : undefined;
       if (next) {
         await gravarSessao(
-          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
           "aguardando_consulta_parcelamento",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ({
+          {
             nome: "",
             valor: 0,
             data: todayLocalISO(),
@@ -3715,13 +4061,17 @@ export async function processarMensagemWhatsApp(
             installmentGroupIds: next.installmentGroupIds,
             targetInvoiceMonth: next.targetInvoiceMonth,
             page: next.page,
-          } as unknown) as Session,
+          } as unknown as Session,
           out.resposta,
         );
         return { status: "pendente", resposta: out.resposta };
       }
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
         "sem_pendencia",
         { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
         out.resposta,
@@ -3729,8 +4079,6 @@ export async function processarMensagemWhatsApp(
       return { status: "consulta", resposta: out.resposta };
     }
   }
-
-
 
   // ---- Fase WA-G4: consultas financeiras específicas ----
   // Gasto por descrição/categoria, receita por tipo, gastos de ontem,
@@ -3744,10 +4092,14 @@ export async function processarMensagemWhatsApp(
       const out = await handleConsultaEspecifica(userId, espec);
       if (out.status === "consulta_categoria_ambigua") {
         await gravarSessao(
-          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
           "consulta_categoria_ambigua",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ({
+          {
             nome: "",
             valor: 0,
             data: todayLocalISO(),
@@ -3755,13 +4107,17 @@ export async function processarMensagemWhatsApp(
             kind: "consulta_categoria",
             termo: out.termo,
             options: out.options,
-          } as unknown) as Session,
+          } as unknown as Session,
           out.resposta,
         );
         return { status: "pendente", resposta: out.resposta };
       }
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
         "sem_pendencia",
         { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
         out.resposta,
@@ -3769,9 +4125,6 @@ export async function processarMensagemWhatsApp(
       return { status: "consulta", resposta: out.resposta };
     }
   }
-
-
-
 
   // ---- WA-Q-Hardening: Safety Net de Consultas Desconhecidas ----
   // Roda DEPOIS de todas as intents conhecidas (conversacional, consultas,
@@ -3787,7 +4140,10 @@ export async function processarMensagemWhatsApp(
   if (!sessao && decisao === "outro" && detectQueryPixIntent(texto)) {
     logWaRouteDecision(msg, "consulta_handler", "query_pix_intent_precede_guard");
     return await handleQueryPixIntent({
-      userId, telefone: msg.telefone, texto, _row: msg,
+      userId,
+      telefone: msg.telefone,
+      texto,
+      _row: msg,
     });
   }
   if (!sessao && decisao === "outro") {
@@ -3795,7 +4151,11 @@ export async function processarMensagemWhatsApp(
     if (guard.kind === "fallback") {
       logWaRouteDecision(msg, "consulta_handler", "query_guard_fallback");
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
         "sem_pendencia",
         { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
         guard.resposta,
@@ -3809,12 +4169,14 @@ export async function processarMensagemWhatsApp(
   if (startsReceita) {
     logWaRouteDecision(msg, "revenue_handler", "new_revenue_intent");
     return await processarReceita({
-      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao: null,
     });
   }
-
-
-
 
   // ---- WA-M1.3: comandos de categoria durante uma sessão de gasto -----
   // Atua APENAS quando há sessão ativa em `aguardando_confirmacao` e a
@@ -3822,10 +4184,10 @@ export async function processarMensagemWhatsApp(
   // antes). Reusa o picker compartilhado de `whatsapp-comprovantes`
   // para não duplicar lista/paginação/resolução por nome.
   if (
-    sessao
-    && sessao.status === "aguardando_confirmacao"
-    && !isComprovanteSession(sessao.session)
-    && !isReceitaSession(sessao.session)
+    sessao &&
+    sessao.status === "aguardando_confirmacao" &&
+    !isComprovanteSession(sessao.session) &&
+    !isReceitaSession(sessao.session)
   ) {
     const cmd = detectCategoriaCommand(texto);
     if (cmd) {
@@ -3843,8 +4205,14 @@ export async function processarMensagemWhatsApp(
         const resposta = `Qual categoria devo usar?\n\n${body}`;
         await atualizarSessao(sessao.id, "aguardando_categoria_gasto", next, resposta);
         await gravarSessao(
-          userId, msg.telefone, msg.external_id, texto, recebidaEm,
-          "aguardando_categoria_gasto", next, resposta,
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
+          "aguardando_categoria_gasto",
+          next,
+          resposta,
         );
         return { status: "aguardando_categoria_gasto", resposta };
       }
@@ -3866,8 +4234,14 @@ export async function processarMensagemWhatsApp(
           `Não encontrei a categoria "${cmd.termo}". ` +
           `Digite "categoria" para ver a lista de opções.`;
         await gravarSessao(
-          userId, msg.telefone, msg.external_id, texto, recebidaEm,
-          "aguardando_confirmacao", sessao.session, resposta,
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
+          "aguardando_confirmacao",
+          sessao.session,
+          resposta,
         );
         return { status: "aguardando_confirmacao", resposta };
       }
@@ -3879,14 +4253,24 @@ export async function processarMensagemWhatsApp(
         categoriaOptions: undefined,
       };
       const resumo = formatarConfirmacao(
-        sessionToParsed(next, cartoes), undefined, categoriasUser,
-        next.source, undefined, r.cat.nome,
+        sessionToParsed(next, cartoes),
+        undefined,
+        categoriasUser,
+        next.source,
+        undefined,
+        r.cat.nome,
       );
       const resposta = `✅ Categoria atualizada para: ${r.cat.nome}\n\n${resumo}`;
       await atualizarSessao(sessao.id, "aguardando_confirmacao", next, resposta);
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "aguardando_confirmacao", next, resposta,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "aguardando_confirmacao",
+        next,
+        resposta,
       );
       return { status: "aguardando_confirmacao", resposta };
     }
@@ -3900,8 +4284,14 @@ export async function processarMensagemWhatsApp(
     if (decisao === "cancel") {
       await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "cancelada", sessao.session, "Cancelado pelo usuário.",
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "cancelada",
+        sessao.session,
+        "Cancelado pelo usuário.",
       );
       return { status: "cancelada", resposta: M.gastoCancelado() };
     }
@@ -3925,14 +4315,24 @@ export async function processarMensagemWhatsApp(
         categoriaOptions: undefined,
       };
       const resumo = formatarConfirmacao(
-        sessionToParsed(next, cartoes), undefined, categoriasUser,
-        next.source, undefined, r.cat.nome,
+        sessionToParsed(next, cartoes),
+        undefined,
+        categoriasUser,
+        next.source,
+        undefined,
+        r.cat.nome,
       );
       const resposta = `✅ Categoria atualizada para: ${r.cat.nome}\n\n${resumo}`;
       await atualizarSessao(sessao.id, "aguardando_confirmacao", next, resposta);
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "aguardando_confirmacao", next, resposta,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "aguardando_confirmacao",
+        next,
+        resposta,
       );
       return { status: "aguardando_confirmacao", resposta };
     }
@@ -3940,8 +4340,14 @@ export async function processarMensagemWhatsApp(
       const next: Session = { ...sessao.session, categoriaOptions: r.options };
       await atualizarSessao(sessao.id, "aguardando_categoria_gasto", next, r.body);
       await gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "aguardando_categoria_gasto", next, r.body,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "aguardando_categoria_gasto",
+        next,
+        r.body,
       );
       return { status: "aguardando_categoria_gasto", resposta: r.body };
     }
@@ -3950,12 +4356,17 @@ export async function processarMensagemWhatsApp(
       `Não entendi a resposta. Digite o número, o nome da categoria, ` +
       `"mais" para ver outras opções ou "cancelar" para sair.`;
     await gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "aguardando_categoria_gasto", sessao.session, aviso,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "aguardando_categoria_gasto",
+      sessao.session,
+      aviso,
     );
     return { status: "aguardando_categoria_gasto", resposta: aviso };
   }
-
 
   // ---- Confirmar/cancelar ----
   if (decisao !== "outro") {
@@ -4061,8 +4472,19 @@ export async function processarMensagemWhatsApp(
         .eq("id", sessao.id);
       return { status: "aguardando_cartao", resposta };
     }
-    await aplicarMemoriaEstabelecimento({ userId, session: next, categorias, source: next.source === "audio" ? "audio" : "text" });
-    const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias, next.source, memoryHintFromSession(next, categorias));
+    await aplicarMemoriaEstabelecimento({
+      userId,
+      session: next,
+      categorias,
+      source: next.source === "audio" ? "audio" : "text",
+    });
+    const resposta = formatarConfirmacao(
+      sessionToParsed(next, cartoes),
+      undefined,
+      categorias,
+      next.source,
+      memoryHintFromSession(next, categorias),
+    );
     await supabaseAdmin
       .from("whatsapp_messages")
       .update({ status: "expirada" })
@@ -4108,8 +4530,19 @@ export async function processarMensagemWhatsApp(
         cartaoNomeDetectado: displayCartaoNome(match),
         cartaoNaoCadastrado: false,
       };
-      await aplicarMemoriaEstabelecimento({ userId, session: next, categorias, source: next.source === "audio" ? "audio" : "text" });
-      const resposta = formatarConfirmacao(sessionToParsed(next, cartoes), undefined, categorias, next.source, memoryHintFromSession(next, categorias));
+      await aplicarMemoriaEstabelecimento({
+        userId,
+        session: next,
+        categorias,
+        source: next.source === "audio" ? "audio" : "text",
+      });
+      const resposta = formatarConfirmacao(
+        sessionToParsed(next, cartoes),
+        undefined,
+        categorias,
+        next.source,
+        memoryHintFromSession(next, categorias),
+      );
       await supabaseAdmin
         .from("whatsapp_messages")
         .update({ status: "expirada" })
@@ -4185,9 +4618,19 @@ export async function processarMensagemWhatsApp(
       allowedToParseExpense: false,
     });
     logWaRouteDecision(msg, "receipt_handler", "final_guard_receipt_session_found");
-    logWaReceiptSessionTrace({ msg, receiptSessionCreated: false, lookup: receiptLookup, routeChosen: "receipt_handler" });
+    logWaReceiptSessionTrace({
+      msg,
+      receiptSessionCreated: false,
+      lookup: receiptLookup,
+      routeChosen: "receipt_handler",
+    });
     return await processarSessaoComprovanteAtiva({
-      userId, msg, texto, recebidaEm, decisao, lookup: receiptLookup,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      lookup: receiptLookup,
     });
   }
   logWaExpenseParserGuard({
@@ -4199,7 +4642,12 @@ export async function processarMensagemWhatsApp(
     logReceiptSessionRoute({ ...receiptLookup, routedTo: "expense_parser" });
   }
   logWaRouteDecision(msg, "expense_parser", "no_active_session_after_final_guard");
-  logWaReceiptSessionTrace({ msg, receiptSessionCreated: false, lookup: receiptLookup, routeChosen: "expense_parser" });
+  logWaReceiptSessionTrace({
+    msg,
+    receiptSessionCreated: false,
+    lookup: receiptLookup,
+    routeChosen: "expense_parser",
+  });
 
   // WA-F3: detecção de COMPRA PARCELADA antes do parser de gasto comum.
   // Só dispara em mensagem com indicador inequívoco ("em Nx", "em N vezes",
@@ -4208,7 +4656,12 @@ export async function processarMensagemWhatsApp(
   const parcIntent = detectInstallmentIntent(texto);
   if (parcIntent) {
     return await processarParcelamento({
-      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao: null,
       deps: parcelamentoDeps,
     });
   }
@@ -4223,14 +4676,17 @@ export async function processarMensagemWhatsApp(
     if (boletoParsed) {
       logWaRouteDecision(msg, "expense_parser", "new_boleto_intent");
       return await processarBoleto({
-        userId, msg, texto, recebidaEm, decisao, sessao: null,
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        decisao,
+        sessao: null,
         deps: boletoDeps,
         parsed: boletoParsed,
       });
     }
   }
-
-
 
   // WA-C2: detecção de CONTA A PAGAR / VENCIMENTO RECORRENTE antes do
   // parser de gasto comum. Estrita: bloqueia gastei/paguei/comprei,
@@ -4242,7 +4698,12 @@ export async function processarMensagemWhatsApp(
   if (decisao === "outro" && detectEdicaoContaIntent(texto)) {
     logWaRouteDecision(msg, "expense_parser", "new_payable_account_edit_intent");
     return await processarEdicaoConta({
-      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao: null,
       deps: edicaoContaDeps,
     });
   }
@@ -4250,7 +4711,12 @@ export async function processarMensagemWhatsApp(
   if (decisao === "outro" && detectPayableAccountIntent(texto)) {
     logWaRouteDecision(msg, "expense_parser", "new_payable_account_intent");
     return await processarContaAPagar({
-      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao: null,
       deps: contaCriarDeps,
     });
   }
@@ -4268,8 +4734,7 @@ export async function processarMensagemWhatsApp(
     /[A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}(?:\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'.-]{1,30}){0,2}\s*[.!?]*\s*$/;
   const ppVerbMatch = texto.match(PP_VERB_PREFIX_RE);
   const ppGradualMatch =
-    ppVerbMatch !== null &&
-    PP_NAME_TAIL_RE.test(texto.slice(ppVerbMatch[0].length));
+    ppVerbMatch !== null && PP_NAME_TAIL_RE.test(texto.slice(ppVerbMatch[0].length));
   if (
     decisao === "outro" &&
     ppGradualMatch &&
@@ -4278,7 +4743,12 @@ export async function processarMensagemWhatsApp(
   ) {
     logWaRouteDecision(msg, "expense_parser", "pagar_pessoa_intent_gradual");
     return await processarPagarPessoaFlow({
-      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao: null,
       deps: pagarPessoaDeps,
     });
   }
@@ -4290,7 +4760,12 @@ export async function processarMensagemWhatsApp(
   if (decisao === "outro" && detectMarkAsPaidIntent(texto)) {
     logWaRouteDecision(msg, "expense_parser", "new_payable_account_payment_intent");
     return await processarBaixaConta({
-      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao: null,
       deps: baixaContaDeps,
     });
   }
@@ -4307,13 +4782,19 @@ export async function processarMensagemWhatsApp(
   if (decisao === "outro" && detectSavePixIntent(texto)) {
     logWaRouteDecision(msg, "expense_parser", "save_pix_intent");
     return await handleSavePixIntent({
-      userId, telefone: msg.telefone, texto, _row: msg,
+      userId,
+      telefone: msg.telefone,
+      texto,
+      _row: msg,
     });
   }
   if (decisao === "outro" && detectQueryPixIntent(texto)) {
     logWaRouteDecision(msg, "expense_parser", "query_pix_intent");
     return await handleQueryPixIntent({
-      userId, telefone: msg.telefone, texto, _row: msg,
+      userId,
+      telefone: msg.telefone,
+      texto,
+      _row: msg,
     });
   }
   // WA-Q-PixInline — Formato natural "Pix VALOR para NOME chave CHAVE".
@@ -4324,8 +4805,12 @@ export async function processarMensagemWhatsApp(
     if (parsedPixInline) {
       logWaRouteDecision(msg, "expense_parser", "pix_inline_intent");
       return await processarPixInlineEntry({
-        userId, msg, texto, recebidaEm,
-        parsed: parsedPixInline, deps: pagarPessoaDeps,
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        parsed: parsedPixInline,
+        deps: pagarPessoaDeps,
       });
     }
   }
@@ -4355,11 +4840,18 @@ export async function processarMensagemWhatsApp(
     detectPagarPessoaIntent(texto) ||
     (PAGAR_PESSOA_GRADUAL_RE.test(texto) &&
       !/\d/.test(texto) &&
-      !/\b(boleto|fatura|conta\s+de\s+\w+|cartao|cartão|pix|mercado|lanche|almoco|almoço|jantar|padaria|farmacia|farmácia)\b/i.test(texto));
+      !/\b(boleto|fatura|conta\s+de\s+\w+|cartao|cartão|pix|mercado|lanche|almoco|almoço|jantar|padaria|farmacia|farmácia)\b/i.test(
+        texto,
+      ));
   if (decisao === "outro" && ehFraseDePagamento) {
     logWaRouteDecision(msg, "expense_parser", "pagar_pessoa_intent");
     return await processarPagarPessoaFlow({
-      userId, msg, texto, recebidaEm, decisao, sessao: null,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao: null,
       deps: pagarPessoaDeps,
     });
   }
@@ -4412,7 +4904,6 @@ export async function processarMensagemWhatsApp(
     return { status, confianca: parsed.confianca, resposta };
   }
 
-
   const sess: Session = {
     nome: parsed.nome,
     valor: parsed.valor,
@@ -4425,8 +4916,7 @@ export async function processarMensagemWhatsApp(
   };
 
   // Forma de pagamento foi explicitamente identificada?
-  const formaExplicita =
-    !parsed.notas.includes("Forma de pagamento não identificada");
+  const formaExplicita = !parsed.notas.includes("Forma de pagamento não identificada");
 
   if (formaExplicita) {
     sess.formaPagamento = parsed.formaPagamento;
@@ -4479,8 +4969,19 @@ export async function processarMensagemWhatsApp(
         return { status: "aguardando_cartao", resposta };
       }
     }
-    await aplicarMemoriaEstabelecimento({ userId, session: sess, categorias, source: sess.source === "audio" ? "audio" : "text" });
-    const resposta = formatarConfirmacao(sessionToParsed(sess, cartoes), undefined, categorias, sess.source, memoryHintFromSession(sess, categorias));
+    await aplicarMemoriaEstabelecimento({
+      userId,
+      session: sess,
+      categorias,
+      source: sess.source === "audio" ? "audio" : "text",
+    });
+    const resposta = formatarConfirmacao(
+      sessionToParsed(sess, cartoes),
+      undefined,
+      categorias,
+      sess.source,
+      memoryHintFromSession(sess, categorias),
+    );
     await gravarSessao(
       userId,
       msg.telefone,
@@ -4567,18 +5068,21 @@ async function sendWhatsAppRaw(
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   if (!token || !phoneId) return { sent: false, reason: "not_configured" };
+  const built = buildWhatsAppGraphUrl({ kind: "messages", phoneNumberId: phoneId });
+  if (!built.ok) {
+    // META-GRAPH-UPGRADE-01 — fail-closed: sem versão autorizada,
+    // nenhuma mensagem sai. Não expor conteúdo do erro.
+    return { sent: false, reason: "configuration_error" };
+  }
   try {
-    const res = await fetch(
-      `https://graph.facebook.com/v20.0/${phoneId}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
+    const res = await fetch(built.url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify(body),
+    });
     if (!res.ok) {
       console.error({
         event: "wa_reply_failed",
