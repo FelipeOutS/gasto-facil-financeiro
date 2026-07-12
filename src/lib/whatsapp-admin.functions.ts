@@ -121,7 +121,9 @@ async function safeGraphGet(path: string, token: string): Promise<GraphCall> {
   const built = buildWhatsAppGraphUrl({ kind: "admin_path", path });
   if (!built.ok) {
     return {
-      httpStatus: null,
+      ok: false,
+      status: null,
+      json: null,
       networkError: true,
       errorCode: null,
       errorSubcode: null,
