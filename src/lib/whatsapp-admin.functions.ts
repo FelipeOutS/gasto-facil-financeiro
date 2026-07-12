@@ -515,17 +515,25 @@ export const whatsappAdminRegisterNumber = createServerFn({ method: "POST" })
     let metaErrorCode: number | null = null;
     let metaErrorSubcode: number | null = null;
     try {
-      const resp = await fetch(
-        `https://graph.facebook.com/${GRAPH_VERSION}/${PHONE_NUMBER_ID}/register`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${ACCESS_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ messaging_product: "whatsapp", pin: REGISTER_PIN }),
-        },
+      const { buildWhatsAppGraphUrl } = await import(
+        "@/server/whatsapp-graph-version.server"
       );
+      const built = buildWhatsAppGraphUrl({
+        kind: "register",
+        phoneNumberId: PHONE_NUMBER_ID!,
+      });
+      if (!built.ok) {
+        networkError = true;
+        throw new Error("configuration_error");
+      }
+      const resp = await fetch(built.url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ messaging_product: "whatsapp", pin: REGISTER_PIN }),
+      });
       postOk = resp.ok;
       httpStatus = resp.status;
       try {
