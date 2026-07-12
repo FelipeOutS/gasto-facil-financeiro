@@ -550,6 +550,33 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
           return jsonResponse({ ok: true, skipped: "invalid_payload" });
         }
 
+        // WA-C9.2 Fase C — Callbacks de status (sent/delivered/read/failed).
+        // Rodam DEPOIS do HMAC/Zod e ANTES da extração de mensagens. Nunca lança.
+        try {
+          const { processMetaStatusCallbacks } = await import(
+            "@/server/whatsapp-meta-status-callbacks.server"
+          );
+          const expectedPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID ?? null;
+          // Zod tem passthrough; statuses continua presente no payload.
+          const statusSummary = await processMetaStatusCallbacks(
+            payload as unknown as {
+              entry?: Array<{ changes?: Array<{ value?: unknown }> }>;
+            },
+            { expected_phone_number_id: expectedPhoneId },
+          );
+          if (statusSummary.received > 0) {
+            console.info(
+              "[wa-webhook] meta_status_callbacks",
+              JSON.stringify(statusSummary),
+            );
+          }
+        } catch (statusErr) {
+          console.error({
+            event: "wa_status_callbacks_failed",
+            errorName: statusErr instanceof Error ? statusErr.name : "unknown",
+          });
+        }
+
         const flatMessages = extractIncomingMessages(payload);
 
         // Log seguro: apenas contagem e primeiro external_id, sem texto/telefone.
