@@ -346,7 +346,14 @@ export async function canDispatch(
   const tz = await getUserTimezone(input.userId, deps);
   const hour = hourInTimezone(now, tz);
   if (isQuietHour(hour, prefs.quiet_hours_start, prefs.quiet_hours_end)) {
-    return { allow: false, reason: "quiet_hours" };
+    const nextAllowedAt =
+      nextAllowedAfterQuietHours(
+        now,
+        prefs.quiet_hours_start,
+        prefs.quiet_hours_end,
+        tz,
+      ) ?? undefined;
+    return { allow: false, reason: "quiet_hours", nextAllowedAt };
   }
 
   // Política da Meta: fora da janela de 24h, exige template aprovado (HSM).
