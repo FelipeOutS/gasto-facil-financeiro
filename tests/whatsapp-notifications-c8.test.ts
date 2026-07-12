@@ -45,10 +45,8 @@ function buildFake() {
       const [col, op, ...rest] = cl.trim().split(".");
       const val = rest.join(".");
       if (op === "is" && val === "null") return (r: Row) => r[col] == null;
-      if (op === "lte")
-        return (r: Row) => r[col] != null && String(r[col]) <= String(val);
-      if (op === "gte")
-        return (r: Row) => r[col] != null && String(r[col]) >= String(val);
+      if (op === "lte") return (r: Row) => r[col] != null && String(r[col]) <= String(val);
+      if (op === "gte") return (r: Row) => r[col] != null && String(r[col]) >= String(val);
       if (op === "eq") return (r: Row) => r[col] === val;
       return () => false;
     });
@@ -147,7 +145,10 @@ function buildFake() {
         ctx.upsertOpts = opts ?? null;
         const rows = Array.isArray(row) ? row : [row];
         for (const r of rows) {
-          const conflictCols = (opts?.onConflict ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+          const conflictCols = (opts?.onConflict ?? "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
           const existing = conflictCols.length
             ? data.find((d) => conflictCols.every((c) => d[c] === r[c]))
             : undefined;
