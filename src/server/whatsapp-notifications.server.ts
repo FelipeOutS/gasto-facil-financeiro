@@ -250,9 +250,9 @@ export async function markFailed(
   // WA-C9.1 — nunca ressuscita notificação que outro caminho já invalidou.
   // O filtro `.in("status", ["pending", "processing", "failed"])` garante
   // que `cancelled`/`skipped`/`sent` permaneçam terminais.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await c
     .from("whatsapp_notifications")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .update(patch as any)
     .eq("id", id)
     .in("status", ["pending", "processing", "failed"]);
