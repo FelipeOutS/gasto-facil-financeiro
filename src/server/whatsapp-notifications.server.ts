@@ -260,40 +260,91 @@ export async function markFailed(
 }
 
 /**
+ * WA-C8.1 — Resultado do reagendamento por quiet hours.
+ *
+ * Diferencia race (`state_changed`) de erro real de banco/rede (`error`).
+ * O dispatcher usa esta discriminação para decidir se tenta recuperação
+ * persistente e nunca esconde erro como simples `false`.
+ */
+export type QuietHoursRescheduleResult =
+  | { ok: true; status: "rescheduled" }
+  | { ok: false; status: "state_changed" }
+  | { ok: false; status: "error"; error: unknown };
+
+/**
  * WA-C8.1 — Reagendamento seguro para quiet hours.
  *
  * Ao contrário de `markSkipped`, quiet_hours é um bloqueio TEMPORÁRIO:
  *  - a mesma linha volta a `pending` com `scheduled_at = nextAllowedAt`;
- *  - `attempt_count` permanece inalterado (não é falha de envio);
- *  - `dedupe_key` permanece;
+ *  - `next_attempt_at` é sempre limpo (metadata antiga de retry não pertence
+ *    ao próximo agendamento);
+ *  - `attempt_count`, `dedupe_key` e `created_at` permanecem;
  *  - `skipped_reason` é limpo;
  *  - só reagenda se ainda estiver em `processing` (protege race com
  *    cancelamento/pagamento/skip concorrentes — estados terminais não
  *    são reabertos).
  *
- * Retorna `true` quando exatamente 1 linha foi atualizada.
+ * Retorna uma união discriminada:
+ *  - `rescheduled` (ok=true)  → exatamente 1 linha `processing → pending`.
+ *  - `state_changed` (ok=false) → 0 linhas, sem erro do banco (race).
+ *  - `error` (ok=false)         → Supabase retornou erro ou throw.
+ *
+ * Nunca envia mensagem, nunca marca `sent`, nunca cria nova linha, nunca
+ * loga PII (só `id`, códigos e nomes técnicos).
  */
 export async function rescheduleForQuietHours(
   id: string,
   nextAllowedAt: Date,
   deps?: NotificationsDeps,
-): Promise<boolean> {
+): Promise<QuietHoursRescheduleResult> {
   const c = client(deps);
-  const { data, error } = await c
-    .from("whatsapp_notifications")
-    .update({
-      status: "pending",
-      scheduled_at: nextAllowedAt.toISOString(),
-      skipped_reason: null,
-    })
-    .eq("id", id)
-    .eq("status", "processing")
-    .select("id");
-  if (error) {
-    console.error("[wa-notif] reschedule quiet_hours failed", error.code);
-    return false;
+  try {
+    const { data, error } = await c
+      .from("whatsapp_notifications")
+      .update({
+        status: "pending",
+        scheduled_at: nextAllowedAt.toISOString(),
+        next_attempt_at: null,
+        skipped_reason: null,
+      })
+      .eq("id", id)
+      .eq("status", "processing")
+      .select("id");
+    if (error) {
+      console.error(
+        "[wa-notif] reschedule quiet_hours db_error",
+        JSON.stringify({ id, code: (error as { code?: string }).code ?? null }),
+      );
+      return { ok: false, status: "error", error };
+    }
+    if ((data ?? []).length > 0) {
+      return { ok: true, status: "rescheduled" };
+    }
+    return { ok: false, status: "state_changed" };
+  } catch (err) {
+    console.error("[wa-notif] reschedule quiet_hours threw", JSON.stringify({ id }));
+    return { ok: false, status: "error", error: err };
   }
-  return (data ?? []).length > 0;
+}
+
+/**
+ * WA-C8.1 — Recuperação conservadora após falha do UPDATE inicial.
+ *
+ * Mesma semântica de `rescheduleForQuietHours` (processing → pending com
+ * `next_attempt_at=NULL`), executada como segunda tentativa persistente
+ * para evitar deixar a linha presa em `processing` quando o primeiro
+ * UPDATE falhou por erro transitório de banco/rede.
+ *
+ * Aplica o mesmo filtro `status = 'processing'`: se nesse meio-tempo o
+ * status virou terminal ou já foi reagendado por outro worker, retorna
+ * `state_changed`. Nunca envia, nunca faz `markSkipped`.
+ */
+export async function recoverStuckReschedule(
+  id: string,
+  nextAllowedAt: Date,
+  deps?: NotificationsDeps,
+): Promise<QuietHoursRescheduleResult> {
+  return rescheduleForQuietHours(id, nextAllowedAt, deps);
 }
 
 /** Cancela uma notificação pendente. Filtra por user_id (não toca a de outro user). */

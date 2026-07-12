@@ -16,13 +16,11 @@ import {
   claimForProcessing,
   listDuePending,
   markSkipped,
+  recoverStuckReschedule,
   rescheduleForQuietHours,
   type NotificationRow,
 } from "@/server/whatsapp-notifications.server";
-import {
-  canDispatch,
-  type GateDecision,
-} from "@/server/whatsapp-notification-gates.server";
+import { canDispatch, type GateDecision } from "@/server/whatsapp-notification-gates.server";
 import { revalidateContaForDispatch } from "@/server/whatsapp-contas-lembretes.server";
 
 interface TemplateMeta {
@@ -125,13 +123,12 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
           if (!decision.allow) {
             // WA-C8.1 — quiet_hours é bloqueio TEMPORÁRIO: reagenda a mesma
             // linha para o próximo horário permitido no timezone do usuário,
-            // preservando dedupe_key/attempt_count.
+            // preservando dedupe_key/attempt_count. Erro de banco é
+            // diferenciado de race, com uma tentativa de recuperação
+            // conservadora — sem envio, sem markSkipped, sem estado terminal.
             if (decision.reason === "quiet_hours" && decision.nextAllowedAt) {
-              const ok = await rescheduleForQuietHours(
-                n.id,
-                decision.nextAllowedAt,
-              );
-              if (ok) {
+              const res = await rescheduleForQuietHours(n.id, decision.nextAllowedAt);
+              if (res.ok) {
                 summary.rescheduled_quiet_hours++;
                 console.info(
                   "[wa-dispatcher] rescheduled_quiet_hours",
@@ -141,7 +138,39 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
                     scheduled_at: decision.nextAllowedAt.toISOString(),
                   }),
                 );
+                continue;
               }
+              if (res.status === "state_changed") {
+                // Race: outro caminho já mudou o status (cancel/pay/skip).
+                // Nada a fazer — não é falha.
+                continue;
+              }
+              // res.status === "error": tenta recuperação persistente,
+              // preservando o mesmo `nextAllowedAt`. Nunca envia, nunca
+              // marca como skipped/sent.
+              const recovery = await recoverStuckReschedule(n.id, decision.nextAllowedAt);
+              if (recovery.ok) {
+                summary.rescheduled_quiet_hours++;
+                console.info(
+                  "[wa-dispatcher] rescheduled_quiet_hours_recovered",
+                  JSON.stringify({
+                    type: n.notification_type,
+                    category: n.category,
+                    scheduled_at: decision.nextAllowedAt.toISOString(),
+                  }),
+                );
+              } else if (recovery.status === "error") {
+                console.error(
+                  "[wa-dispatcher] reschedule_quiet_hours_stuck",
+                  JSON.stringify({
+                    id: n.id,
+                    type: n.notification_type,
+                    category: n.category,
+                  }),
+                );
+              }
+              // Em qualquer caso de falha: NÃO envia, NÃO marca skipped,
+              // NÃO cria linha nova. Segue para o próximo item.
               continue;
             }
             await markSkipped(n.id, decision.reason);
@@ -153,9 +182,7 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
           summary.would_send++;
           if (!dispatchEnabled) {
             // Volta para `pending` para que WA-C9 (com envio real) possa pegar.
-            const { supabaseAdmin } = await import(
-              "@/integrations/supabase/client.server"
-            );
+            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
             await supabaseAdmin
               .from("whatsapp_notifications")
               .update({ status: "pending" })
