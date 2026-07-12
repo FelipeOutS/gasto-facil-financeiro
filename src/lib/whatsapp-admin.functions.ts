@@ -115,8 +115,20 @@ type GraphCall = {
 };
 
 async function safeGraphGet(path: string, token: string): Promise<GraphCall> {
+  const { buildWhatsAppGraphUrl } = await import(
+    "@/server/whatsapp-graph-version.server"
+  );
+  const built = buildWhatsAppGraphUrl({ kind: "admin_path", path });
+  if (!built.ok) {
+    return {
+      httpStatus: null,
+      networkError: true,
+      errorCode: null,
+      errorSubcode: null,
+    };
+  }
   try {
-    const resp = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${path}`, {
+    const resp = await fetch(built.url, {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
     });
