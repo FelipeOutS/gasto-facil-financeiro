@@ -1,14 +1,13 @@
 /**
  * WA-C8 — Rota dispatcher (DRY-RUN).
+ * WA-C9.2 Fase B — Lease/ownership token + recuperação de processing preso.
  *
  * - `/api/public/hooks/whatsapp-dispatcher` é endpoint para pg_cron.
  * - Autentica via HMAC SHA-256 sobre o corpo bruto (header `x-cron-signature`),
  *   chave: env `WHATSAPP_DISPATCHER_SECRET`.
- * - Em WA-C8, `WHATSAPP_DISPATCH_ENABLED` é tratado como `false` por padrão:
- *   apenas avalia gates, marca `skipped` quando aplicável e loga "would send"
- *   para pendentes elegíveis (sem chamar Meta, sem mudar para `sent`).
- *
- * Nenhum PII é logado.
+ * - Cada tick: (1) recovery de processing preso, (2) list due, (3) claim
+ *   por linha com token de ownership, (4) revalida entidade, template e gates,
+ *   (5) dry-run revert (envio real desligado). Nenhum PII é logado.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "node:crypto";
@@ -16,8 +15,10 @@ import {
   claimForProcessing,
   listDuePending,
   markSkipped,
+  recoverStuckProcessing,
   recoverStuckReschedule,
   rescheduleForQuietHours,
+  revertProcessingToPending,
   type NotificationRow,
 } from "@/server/whatsapp-notifications.server";
 import { canDispatch, type GateDecision } from "@/server/whatsapp-notification-gates.server";
@@ -66,6 +67,17 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
         const dispatchEnabled =
           (process.env.WHATSAPP_DISPATCH_ENABLED ?? "false").toLowerCase() === "true";
 
+        // 0) WA-C9.2 Fase B — recovery de processing preso ANTES da listagem.
+        const recovery = await recoverStuckProcessing(50);
+        console.info(
+          "[wa-dispatcher] recover_stuck_processing",
+          JSON.stringify({
+            recovered: recovery.recovered,
+            state_changed: recovery.state_changed,
+            errors: recovery.errors,
+          }),
+        );
+
         const due = await listDuePending(50);
         const summary = {
           considered: due.length,
@@ -73,16 +85,22 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
           rescheduled_quiet_hours: 0,
           would_send: 0,
           dispatch_enabled: dispatchEnabled,
+          recovered_stuck_processing: recovery.recovered,
+          recovery_state_changed: recovery.state_changed,
+          recovery_errors: recovery.errors,
         };
 
         for (const n of due as NotificationRow[]) {
-          // 1) Claim atômico
+          // 1) Claim atômico com ownership token (Fase B).
           const claimed = await claimForProcessing(n.id);
-          if (!claimed) continue; // outro worker pegou
+          if (!claimed) continue;
+          const token = claimed.claim_token;
+          if (!token) {
+            // Defesa em profundidade: sem token não devemos tocar a linha.
+            continue;
+          }
 
           // 1.5) WA-C9.1 — rechecagem da entidade vinculada.
-          // Mesmo que o lembrete tenha sido enfileirado horas antes, a conta
-          // pode ter sido paga/cancelada/alterada nesse meio-tempo.
           const reval = await revalidateContaForDispatch({
             user_id: claimed.user_id,
             category: claimed.category,
@@ -91,7 +109,7 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
             payload: claimed.payload,
           });
           if (!reval.ok) {
-            await markSkipped(n.id, reval.reason);
+            await markSkipped(n.id, reval.reason, token);
             summary.skipped++;
             console.info(
               "[wa-dispatcher] revalidated_skip",
@@ -107,12 +125,12 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
           // 2) Template
           const tpl = await loadTemplate(n.notification_type);
           if (!tpl || !tpl.active) {
-            await markSkipped(n.id, "template_missing");
+            await markSkipped(n.id, "template_missing", token);
             summary.skipped++;
             continue;
           }
 
-          // 3) Gates (canal + categoria + quiet hours + janela 24h/HSM)
+          // 3) Gates
           const decision: GateDecision = await canDispatch({
             userId: n.user_id,
             category: n.category,
@@ -121,13 +139,8 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
           });
 
           if (!decision.allow) {
-            // WA-C8.1 — quiet_hours é bloqueio TEMPORÁRIO: reagenda a mesma
-            // linha para o próximo horário permitido no timezone do usuário,
-            // preservando dedupe_key/attempt_count. Erro de banco é
-            // diferenciado de race, com uma tentativa de recuperação
-            // conservadora — sem envio, sem markSkipped, sem estado terminal.
             if (decision.reason === "quiet_hours" && decision.nextAllowedAt) {
-              const res = await rescheduleForQuietHours(n.id, decision.nextAllowedAt);
+              const res = await rescheduleForQuietHours(n.id, decision.nextAllowedAt, token);
               if (res.ok) {
                 summary.rescheduled_quiet_hours++;
                 console.info(
@@ -140,16 +153,9 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
                 );
                 continue;
               }
-              if (res.status === "state_changed") {
-                // Race: outro caminho já mudou o status (cancel/pay/skip).
-                // Nada a fazer — não é falha.
-                continue;
-              }
-              // res.status === "error": tenta recuperação persistente,
-              // preservando o mesmo `nextAllowedAt`. Nunca envia, nunca
-              // marca como skipped/sent.
-              const recovery = await recoverStuckReschedule(n.id, decision.nextAllowedAt);
-              if (recovery.ok) {
+              if (res.status === "state_changed") continue;
+              const rec = await recoverStuckReschedule(n.id, decision.nextAllowedAt, token);
+              if (rec.ok) {
                 summary.rescheduled_quiet_hours++;
                 console.info(
                   "[wa-dispatcher] rescheduled_quiet_hours_recovered",
@@ -159,7 +165,7 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
                     scheduled_at: decision.nextAllowedAt.toISOString(),
                   }),
                 );
-              } else if (recovery.status === "error") {
+              } else if (rec.status === "error") {
                 console.error(
                   "[wa-dispatcher] reschedule_quiet_hours_stuck",
                   JSON.stringify({
@@ -169,24 +175,17 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
                   }),
                 );
               }
-              // Em qualquer caso de falha: NÃO envia, NÃO marca skipped,
-              // NÃO cria linha nova. Segue para o próximo item.
               continue;
             }
-            await markSkipped(n.id, decision.reason);
+            await markSkipped(n.id, decision.reason, token);
             summary.skipped++;
             continue;
           }
 
-          // 4) WA-C8 termina aqui: dry-run.
+          // 4) Dry-run: revert processing → pending mantendo dedupe/attempt.
           summary.would_send++;
           if (!dispatchEnabled) {
-            // Volta para `pending` para que WA-C9 (com envio real) possa pegar.
-            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-            await supabaseAdmin
-              .from("whatsapp_notifications")
-              .update({ status: "pending" })
-              .eq("id", n.id);
+            await revertProcessingToPending(n.id, token);
             console.info(
               "[wa-dispatcher] would_send",
               JSON.stringify({
@@ -199,8 +198,7 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
             continue;
           }
 
-          // 5) Envio real será implementado em WA-C9 (atrás da flag).
-          // Por ora, qualquer caminho "habilitado" também é noop.
+          // 5) Envio real será implementado em fase futura (atrás da flag).
         }
 
         return Response.json(summary);

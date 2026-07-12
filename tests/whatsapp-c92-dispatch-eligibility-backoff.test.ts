@@ -406,6 +406,7 @@ describe("WA-C9.2 :: backoff efetivo via markFailed", () => {
       id,
       "network_error",
       { retryable: true, currentAttempt: 0, maxAttempts: 5 },
+      null,
       { client: fake.client },
     );
     expect(res.scheduledRetry).toBe(true);
@@ -435,6 +436,7 @@ describe("WA-C9.2 :: backoff efetivo via markFailed", () => {
       id,
       "perma",
       { retryable: true, currentAttempt: 4, maxAttempts: 5 },
+      null,
       { client: fake.client },
     );
     const row = fake.tables.whatsapp_notifications[0] as unknown as NotificationRow;
