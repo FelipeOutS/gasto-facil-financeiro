@@ -6,7 +6,7 @@
  * reconciliação. O foco é a lógica pura; DB é mockado.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import {
   buildEventKey,
   classifyMetaError,
