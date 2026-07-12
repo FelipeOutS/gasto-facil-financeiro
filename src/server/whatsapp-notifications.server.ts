@@ -13,19 +13,34 @@
  *  - `payload` é JSONB estruturado (IDs, valores em centavos, datas). O texto
  *    final é renderizado pelo dispatcher a partir do template em tempo de envio.
  *
- * ── Máquina de estados (Fase B) ────────────────────────────────────────────
+ * ── Máquina de estados (Fase B — ownership estrito) ───────────────────────
  *
  *   pending ──claim──▶ processing (grava claim_token, claimed_at, lease_expires_at)
  *
- *   processing ──markSent(token)──▶ sent           (limpa claim fields)
- *   processing ──markFailed(token, retry)──▶ pending  (limpa claim fields, seta next_attempt_at)
- *   processing ──markFailed(token, terminal)──▶ failed (limpa claim fields)
- *   processing ──markSkipped(token)──▶ skipped     (limpa claim fields)
- *   processing ──reschedule quiet(token)──▶ pending (limpa claim fields, scheduled_at futuro, next_attempt_at=NULL)
- *   processing ──dry-run revert(token)──▶ pending  (limpa claim fields)
- *   processing ──lease expira + recovery──▶ pending (limpa claim fields, next_attempt_at=+5min, last_error=processing_timeout)
- *   processing ──cancelByEntity/Dedupe──▶ cancelled (limpa claim fields; sem token: operação externa legítima)
+ *   Caminho WORKER (exige claim_token não-vazio + status='processing'):
+ *     processing ──markSent(token)──▶ sent
+ *     processing ──markFailed(token, retry)──▶ pending  (next_attempt_at=backoff)
+ *     processing ──markFailed(token, terminal)──▶ failed
+ *     processing ──markSkipped(token)──▶ skipped
+ *     processing ──rescheduleForQuietHours(token)──▶ pending (scheduled_at futuro)
+ *     processing ──recoverStuckReschedule(token)──▶ pending
+ *     processing ──revertProcessingToPending(token)──▶ pending
+ *     processing ──renewProcessingLease(token)──▶ processing (só estende lease)
  *
+ *   Caminho ADMINISTRATIVO (claimToken=null):
+ *     markFailed / markSkipped com token=null NUNCA tocam processing:
+ *       admin path só atua sobre status='pending'.
+ *     Reservado a fluxos onde não houve claim (ex.: falha síncrona ao enqueuar,
+ *     invalidação da entidade antes do dispatch).
+ *
+ *   Caminho RECOVERY (sem token do worker, mas atômico):
+ *     processing (lease vencido) ──recoverStuckProcessing──▶ pending
+ *       (filtra por claim_token original + lease_expires_at<=now; race-safe)
+ *
+ *   Caminho CANCELAMENTO EXTERNO (cancelByDedupe/cancelByEntity):
+ *     opera SOMENTE sobre status='pending'; nunca toca processing.
+ *
+ *   Todas as saídas de processing limpam (claim_token, claimed_at, lease_expires_at).
  *   Estados terminais (sent, failed, cancelled, skipped) NUNCA são reabertos.
  */
 import { randomUUID } from "node:crypto";
@@ -267,10 +282,19 @@ const CLAIM_CLEAR = {
 };
 
 /**
+ * Validador de token de ownership. Aceita apenas string não-vazia (trim).
+ * `undefined`, `null`, `""` ou whitespace-only → false.
+ */
+function isValidClaimToken(t: unknown): t is string {
+  return typeof t === "string" && t.trim().length > 0;
+}
+
+/**
  * WA-C9.2 Fase B — Marca como `sent`.
- * Exige `claimToken` correto e `status='processing'`. Limpa campos de claim.
- * Retorna `true` se exatamente 1 linha foi atualizada; `false` em race /
- * token inválido / estado terminal (não reabre nada).
+ * WORKER-ONLY: exige `claimToken` string não-vazia + `status='processing'` +
+ * match exato em `claim_token`. Limpa campos de claim. Retorna `true` se
+ * exatamente 1 linha foi atualizada; `false` em race / token inválido /
+ * estado terminal (não reabre nada).
  */
 export async function markSent(
   id: string,
@@ -278,6 +302,7 @@ export async function markSent(
   claimToken: string,
   deps?: NotificationsDeps,
 ): Promise<boolean> {
+  if (!isValidClaimToken(claimToken)) return false;
   const c = client(deps);
   const { data } = await c
     .from("whatsapp_notifications")
@@ -296,10 +321,11 @@ export async function markSent(
 
 /**
  * WA-C9.2 Fase B — Marca como `skipped`.
- * Quando `claimToken` é uma string, exige `status='processing'` e ownership
- * (uso pelo worker após o claim). Quando `claimToken=null`, mantém semântica
- * legada (transições administrativas que não vieram do claim).
- * Em ambos os casos limpa campos de claim (defesa em profundidade).
+ * Dois caminhos discriminados por `claimToken`:
+ *  - WORKER (token string não-vazia): exige `status='processing'` + ownership.
+ *  - ADMIN (token=null): opera SOMENTE sobre `status='pending'`. NUNCA toca
+ *    processing/terminal. Reservado para invalidações pré-claim.
+ * Em ambos limpa campos de claim (defesa em profundidade).
  */
 export async function markSkipped(
   id: string,
@@ -308,7 +334,7 @@ export async function markSkipped(
   deps?: NotificationsDeps,
 ): Promise<boolean> {
   const c = client(deps);
-  const q = c
+  const base = c
     .from("whatsapp_notifications")
     .update({
       status: "skipped",
@@ -316,18 +342,26 @@ export async function markSkipped(
       ...CLAIM_CLEAR,
     })
     .eq("id", id);
-  const filtered =
-    claimToken != null
-      ? q.eq("status", "processing").eq("claim_token", claimToken)
-      : q;
-  const { data } = await filtered.select("id");
+  if (claimToken === null) {
+    // Admin path — só toca pending; nunca reabre processing/terminal.
+    const { data } = await base.eq("status", "pending").select("id");
+    return (data ?? []).length > 0;
+  }
+  if (!isValidClaimToken(claimToken)) return false;
+  const { data } = await base
+    .eq("status", "processing")
+    .eq("claim_token", claimToken)
+    .select("id");
   return (data ?? []).length > 0;
 }
 
 /**
  * WA-C9.2 Fase B — Marca falha (com retry ou terminal).
- * Quando `claimToken` é uma string, exige ownership e `status='processing'`.
- * Sempre limpa campos de claim, pois toda saída de processing zera o lease.
+ * Dois caminhos discriminados por `claimToken`:
+ *  - WORKER (token string não-vazia): exige `status='processing'` + ownership.
+ *  - ADMIN (token=null): opera SOMENTE sobre `status='pending'`. NUNCA toca
+ *    processing nem reabre terminal.
+ * Sempre limpa campos de claim.
  */
 export async function markFailed(
   id: string,
@@ -351,17 +385,20 @@ export async function markFailed(
     patch.status = "failed";
     patch.failed_at = nowOf(deps).toISOString();
   }
-  let q = c
+  const base = c
     .from("whatsapp_notifications")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .update(patch as any)
     .eq("id", id);
-  if (claimToken != null) {
-    q = q.eq("status", "processing").eq("claim_token", claimToken);
+  let q;
+  if (claimToken === null) {
+    // Admin path — só toca pending. Não altera processing nem terminal.
+    q = base.eq("status", "pending");
   } else {
-    // Semântica legada: mantém retry a partir de pending/processing/failed,
-    // sem reabrir cancelled/skipped/sent.
-    q = q.in("status", ["pending", "processing", "failed"]);
+    if (!isValidClaimToken(claimToken)) {
+      return { scheduledRetry: canRetry, updated: false };
+    }
+    q = base.eq("status", "processing").eq("claim_token", claimToken);
   }
   const { data } = await q.select("id");
   return { scheduledRetry: canRetry, updated: (data ?? []).length > 0 };
@@ -377,18 +414,22 @@ export type QuietHoursRescheduleResult =
 
 /**
  * WA-C8.1 + WA-C9.2 Fase B — Reagendamento seguro para quiet hours.
- * Exige ownership por `claimToken` e `status='processing'`. Limpa campos de
- * claim ao voltar para pending com `scheduled_at=nextAllowedAt`.
+ * WORKER-ONLY: exige `claimToken` string não-vazia + `status='processing'` +
+ * ownership. Sem caminho administrativo com null. Limpa campos de claim ao
+ * voltar para pending com `scheduled_at=nextAllowedAt`, `next_attempt_at=null`.
  */
 export async function rescheduleForQuietHours(
   id: string,
   nextAllowedAt: Date,
-  claimToken: string | null,
+  claimToken: string,
   deps?: NotificationsDeps,
 ): Promise<QuietHoursRescheduleResult> {
+  if (!isValidClaimToken(claimToken)) {
+    return { ok: false, status: "state_changed" };
+  }
   const c = client(deps);
   try {
-    let q = c
+    const { data, error } = await c
       .from("whatsapp_notifications")
       .update({
         status: "pending",
@@ -398,11 +439,9 @@ export async function rescheduleForQuietHours(
         ...CLAIM_CLEAR,
       })
       .eq("id", id)
-      .eq("status", "processing");
-    if (claimToken != null) {
-      q = q.eq("claim_token", claimToken);
-    }
-    const { data, error } = await q.select("id");
+      .eq("status", "processing")
+      .eq("claim_token", claimToken)
+      .select("id");
     if (error) {
       console.error(
         "[wa-notif] reschedule quiet_hours db_error",
@@ -422,13 +461,13 @@ export async function rescheduleForQuietHours(
 
 /**
  * WA-C8.1 — Recuperação conservadora após falha do UPDATE inicial de quiet
- * hours. Semanticamente idêntica; token de ownership continua obrigatório.
+ * hours. Semanticamente idêntica; token de ownership obrigatório.
  * Papel distinto de `recoverStuckProcessing` (lease geral expirado).
  */
 export async function recoverStuckReschedule(
   id: string,
   nextAllowedAt: Date,
-  claimToken: string | null,
+  claimToken: string,
   deps?: NotificationsDeps,
 ): Promise<QuietHoursRescheduleResult> {
   return rescheduleForQuietHours(id, nextAllowedAt, claimToken, deps);
@@ -436,15 +475,15 @@ export async function recoverStuckReschedule(
 
 /**
  * WA-C9.2 Fase B — Reverte processing → pending como dry-run.
- * Exige ownership por `claimToken`. Preserva scheduled_at, next_attempt_at,
- * attempt_count, dedupe_key. Limpa campos de claim.
- * Retorna `true` em caso de update; `false` em race / token inválido.
+ * WORKER-ONLY: exige ownership por `claimToken` não-vazio. Preserva
+ * scheduled_at, next_attempt_at, attempt_count, dedupe_key. Limpa claim.
  */
 export async function revertProcessingToPending(
   id: string,
   claimToken: string,
   deps?: NotificationsDeps,
 ): Promise<boolean> {
+  if (!isValidClaimToken(claimToken)) return false;
   const c = client(deps);
   const { data } = await c
     .from("whatsapp_notifications")
@@ -458,16 +497,16 @@ export async function revertProcessingToPending(
 
 /**
  * WA-C9.2 Fase B — Renova o lease de uma notificação em processing.
- * Exige ownership. Preserva claimed_at, attempt_count, dedupe_key,
- * scheduled_at, next_attempt_at. Só atualiza `lease_expires_at`.
- * Retorna `true` se renovado; `false` se estado terminal, token errado,
- * ou lease já recuperado por outro worker.
+ * WORKER-ONLY: exige ownership por `claimToken` não-vazio. Só atualiza
+ * `lease_expires_at`. Retorna `true` se renovado; `false` se estado terminal,
+ * token errado, ou lease já recuperado por outro worker.
  */
 export async function renewProcessingLease(
   id: string,
   claimToken: string,
   deps?: NotificationsDeps,
 ): Promise<boolean> {
+  if (!isValidClaimToken(claimToken)) return false;
   const c = client(deps);
   const nextLease = new Date(nowOf(deps).getTime() + LEASE_DURATION_MS).toISOString();
   const { data } = await c

@@ -398,7 +398,7 @@ describe("WA-C9.2 :: backoff efetivo via markFailed", () => {
       scheduled_at: new Date(realNow.getTime() - 60 * 60_000).toISOString(),
       next_attempt_at: null,
     });
-    await claimForProcessing(id, {
+    const claimed = await claimForProcessing(id, {
       client: fake.client,
       now: () => realNow,
     });
@@ -406,7 +406,7 @@ describe("WA-C9.2 :: backoff efetivo via markFailed", () => {
       id,
       "network_error",
       { retryable: true, currentAttempt: 0, maxAttempts: 5 },
-      null,
+      claimed!.claim_token,
       { client: fake.client },
     );
     expect(res.scheduledRetry).toBe(true);
