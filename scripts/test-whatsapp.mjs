@@ -106,6 +106,7 @@ const INCLUDE = [
   "whatsapp-mes-nomeado.test.ts",
   "whatsapp-boleto-banco-emissor-c10-4.test.ts",
   "rate-limit-atomic-c82.test.ts",
+  "whatsapp-rpc-security-guard.test.ts",
 
   "free-ads-plan.test.ts",
 ];
