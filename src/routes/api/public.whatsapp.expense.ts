@@ -377,7 +377,12 @@ async function downloadWhatsappMedia(
   try {
     const token = process.env.WHATSAPP_ACCESS_TOKEN;
     if (!token) return null;
-    const lookup = await fetch(`https://graph.facebook.com/v20.0/${encodeURIComponent(mediaId)}`, {
+    const { buildWhatsAppGraphUrl } = await import(
+      "@/server/whatsapp-graph-version.server"
+    );
+    const lookupBuild = buildWhatsAppGraphUrl({ kind: "media_lookup", mediaId });
+    if (!lookupBuild.ok) return null;
+    const lookup = await fetch(lookupBuild.url, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!lookup.ok) return null;
