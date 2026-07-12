@@ -251,12 +251,12 @@ describe("WA-C8 :: claim atômico", () => {
 describe("WA-C8 :: retry/backoff", () => {
   it("markFailed retryable agenda nova tentativa e volta a pending", async () => {
     const row = await enqueueNotification(baseEnqueue, { client: fake.client });
-    await claimForProcessing(row!.id, { client: fake.client });
+    const claimed = await claimForProcessing(row!.id, { client: fake.client });
     const res = await markFailed(
       row!.id,
       "network_error",
       { retryable: true, currentAttempt: 0, maxAttempts: 3 },
-      null,
+      claimed!.claim_token,
       { client: fake.client },
     );
     expect(res.scheduledRetry).toBe(true);
