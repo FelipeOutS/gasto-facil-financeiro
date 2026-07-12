@@ -3119,6 +3119,80 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_notification_attempts: {
+        Row: {
+          attempt_status: string
+          attempt_token: string
+          claim_token: string
+          client_reference: string
+          created_at: string
+          error_category: string | null
+          error_code: string | null
+          finished_at: string | null
+          http_status: number | null
+          id: string
+          notification_id: string
+          provider_message_id: string | null
+          request_hash: string
+          retryable: boolean | null
+          started_at: string
+          template_key: string
+          template_language: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_status: string
+          attempt_token?: string
+          claim_token: string
+          client_reference: string
+          created_at?: string
+          error_category?: string | null
+          error_code?: string | null
+          finished_at?: string | null
+          http_status?: number | null
+          id?: string
+          notification_id: string
+          provider_message_id?: string | null
+          request_hash: string
+          retryable?: boolean | null
+          started_at?: string
+          template_key: string
+          template_language: string
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_status?: string
+          attempt_token?: string
+          claim_token?: string
+          client_reference?: string
+          created_at?: string
+          error_category?: string | null
+          error_code?: string | null
+          finished_at?: string | null
+          http_status?: number | null
+          id?: string
+          notification_id?: string
+          provider_message_id?: string | null
+          request_hash?: string
+          retryable?: boolean | null
+          started_at?: string
+          template_key?: string
+          template_language?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_notification_attempts_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_notification_preferences: {
         Row: {
           avisos_sistema: boolean
