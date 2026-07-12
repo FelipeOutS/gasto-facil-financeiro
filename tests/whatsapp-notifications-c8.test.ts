@@ -102,6 +102,11 @@ function buildFake() {
         ctx.filters.push((r) => String(r[col]) <= String(val));
         return api;
       },
+      or(expr) {
+        const preds = parseOr(expr);
+        ctx.filters.push((r) => preds.some((p) => p(r)));
+        return api;
+      },
       gte(col, val) {
         ctx.filters.push((r) => String(r[col]) >= String(val));
         return api;
