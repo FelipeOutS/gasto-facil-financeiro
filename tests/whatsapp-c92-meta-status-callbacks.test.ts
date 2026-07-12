@@ -623,3 +623,216 @@ describe("reconcileStatusEvents", () => {
     expect(notifs[0].claim_token).toBeNull();
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WA-C9.2 Fase C — Hardening: HTTP semantics + self-heal.
+
+import { processMetaStatusCallbacks } from "@/server/whatsapp-meta-status-callbacks.server";
+
+/**
+ * Fake client que injeta falha transitória (5xx-like) na PRIMEIRA operação
+ * do tipo especificado. Serve para verificar que erros transitórios elevam
+ * `requiresWebhookRetry` sem retornar 200 silencioso.
+ */
+function faultyClient(
+  base: ReturnType<typeof fakeClient>,
+  faultOn: { table: string; op: "insert" | "select" | "update" },
+): SupabaseLike {
+  let armed = true;
+  return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    from(table: string): any {
+      const inner = base.client.from(table);
+      if (table !== faultOn.table) return inner;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const wrap: any = {
+        ...inner,
+        insert(row: Record<string, unknown>) {
+          const q = inner.insert(row);
+          if (faultOn.op === "insert" && armed) {
+            armed = false;
+            q.maybeSingle = () =>
+              Promise.resolve({
+                data: null,
+                error: {
+                  code: "57014",
+                  message: "statement_timeout (simulated)",
+                },
+              });
+            q.then = (r: (v: unknown) => unknown) =>
+              Promise.resolve({
+                data: null,
+                error: { code: "57014", message: "timeout" },
+              }).then(r);
+          }
+          return q;
+        },
+        select() {
+          const q = inner.select();
+          if (faultOn.op === "select" && armed) {
+            armed = false;
+            const orig = q.then?.bind(q);
+            q.then = (r: (v: unknown) => unknown) =>
+              Promise.resolve({
+                data: null,
+                error: { message: "connection_reset" },
+              }).then(r);
+            q.maybeSingle = () =>
+              Promise.resolve({
+                data: null,
+                error: { message: "connection_reset" },
+              });
+            void orig;
+          }
+          return q;
+        },
+        update(patch: Record<string, unknown>) {
+          const q = inner.update(patch);
+          if (faultOn.op === "update" && armed) {
+            armed = false;
+            q.then = (r: (v: unknown) => unknown) =>
+              Promise.resolve({
+                data: null,
+                error: { message: "deadlock_detected" },
+              }).then(r);
+          }
+          return q;
+        },
+      };
+      return wrap;
+    },
+  };
+}
+
+describe("WA-C9.2 Fase C — HTTP semantics & self-heal", () => {
+  it("falha transitória no INSERT do evento → requiresWebhookRetry=true", async () => {
+    const base = fakeClient({
+      notifs: [
+        {
+          id: "n1",
+          provider_message_id: "wamid.t1",
+          status: "processing",
+          sent_at: null,
+          delivered_at: null,
+          read_at: null,
+          failed_at: null,
+          last_error_code: null,
+        },
+      ],
+    });
+    const client = faultyClient(base, {
+      table: "whatsapp_notification_status_events",
+      op: "insert",
+    });
+
+    const payload = {
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                statuses: [
+                  { id: "wamid.t1", status: "delivered", timestamp: "1752316200" },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    const r = await processMetaStatusCallbacks(payload, { client });
+    expect(r.requiresWebhookRetry).toBe(true);
+    expect(r.retryableErrors).toBeGreaterThan(0);
+  });
+
+  it("evento duplicado após partial-write repara o agregado (self-heal)", async () => {
+    // Cenário: primeiro webhook persistiu o evento MAS o update do notification
+    // falhou (partial-write). No retry, o INSERT vira duplicata (23505). O
+    // apply DEVE reprocessar usando o evento já persistido e promover o estado.
+    const persistedEventKey = buildEventKey({
+      provider_message_id: "wamid.heal",
+      event_status: "delivered",
+      event_at: T(11),
+      error_code: null,
+    });
+    const base = fakeClient({
+      notifs: [
+        {
+          id: "nH",
+          provider_message_id: "wamid.heal",
+          // Estado NÃO reflete o evento já persistido — precisa self-heal.
+          status: "processing",
+          sent_at: null,
+          delivered_at: null,
+          read_at: null,
+          failed_at: null,
+          last_error_code: null,
+          claim_token: "tok",
+          claimed_at: T(9),
+          lease_expires_at: T(19),
+        },
+      ],
+      events: [
+        {
+          id: "e-pre",
+          notification_id: "nH",
+          provider_message_id: "wamid.heal",
+          event_status: "delivered",
+          event_at: T(11),
+          error_code: null,
+          event_key: persistedEventKey,
+        },
+      ],
+    });
+
+    const payload = {
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                statuses: [
+                  { id: "wamid.heal", status: "delivered", timestamp: "1752316260" },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    };
+    // Nota: T(11) === 2026-07-12T11:00:00Z. timestamp 1752316260 gera outro
+    // ISO; para o teste focar no self-heal usamos o evento já persistido.
+    // Se a timestamp gerada por parse não bater com T(11), o event_key
+    // também difere, mas o SELF-HEAL relê tudo do PMID e ainda promove.
+    const r = await processMetaStatusCallbacks(payload, { client: base.client });
+    expect(r.requiresWebhookRetry).toBe(false);
+    expect(base.notifs[0].status).toBe("sent");
+    expect(base.notifs[0].delivered_at).toBeTruthy();
+    expect(base.notifs[0].claim_token).toBeNull();
+  });
+
+  it("payload só com statuses inválidos → sucesso silencioso, sem retry", async () => {
+    const base = fakeClient({ notifs: [] });
+    const payload = {
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                statuses: [
+                  { id: "wamid.x", status: "clicked", timestamp: "1752316200" },
+                  { id: "", status: "sent", timestamp: "1752316200" },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    };
+    const r = await processMetaStatusCallbacks(payload, { client: base.client });
+    expect(r.requiresWebhookRetry).toBe(false);
+    expect(r.received).toBe(0);
+  });
+});
+

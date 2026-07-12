@@ -1,13 +1,21 @@
 /**
- * WA-C9.2 Fase C — Callbacks de status da Meta.
+ * WA-C9.2 Fase C — Callbacks de status da Meta (HARDENED).
  *
  * Este módulo cobre:
  *   1. Parser de `value.statuses[]` a partir do payload já validado pelo webhook.
  *   2. Geração determinística de `event_key` (idempotência).
  *   3. Persistência em `whatsapp_notification_status_events` (dedupe via unique).
  *   4. Redutor puro do estado agregado (sent/delivered/read/failed).
- *   5. Aplicação idempotente em `whatsapp_notifications` sem regredir estado.
+ *   5. Aplicação idempotente e sem regressão em `whatsapp_notifications`
+ *      (compare-and-set + auto-heal via re-leitura de todos os eventos do PMID).
  *   6. Reconciliação de eventos "unmatched" (sem notification_id) por PMID.
+ *
+ * Contrato HTTP para o webhook:
+ *   - Eventos inválidos ou permanentes (status desconhecido, PMID ausente, timestamp
+ *     inválido, phone_number_id divergente, duplicata plena) → sucesso: não pedem
+ *     retry da Meta.
+ *   - Falhas transitórias (INSERT/SELECT/UPDATE, timeout, 5xx do PostgREST) →
+ *     `requiresWebhookRetry = true`. O webhook deve retornar não-2xx.
  *
  * Não envia mensagens. Não chama Graph API. Não altera cron/canary.
  * A tabela de eventos é interna (RLS fechada, apenas service_role).
@@ -83,10 +91,11 @@ const ALLOWED_STATUS: ReadonlyArray<ProviderStatus> = [
 
 const MAX_ERROR_TITLE = 200;
 const MAX_ERROR_MESSAGE = 1000;
-
-// Aceitamos timestamps entre 2020-01-01 e now + 24h (tolerância p/ clock skew).
 const MIN_EVENT_MS = Date.UTC(2020, 0, 1);
 const MAX_FUTURE_MS = 24 * 60 * 60 * 1000;
+
+// CAS: até 3 tentativas em update concorrente.
+const APPLY_CAS_MAX_ATTEMPTS = 3;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sanitização de texto (nunca deixa PII vazar em log/DB)
@@ -94,7 +103,6 @@ const MAX_FUTURE_MS = 24 * 60 * 60 * 1000;
 function sanitizeText(v: unknown, max: number): string | null {
   if (v == null) return null;
   const s = String(v)
-    // remove controles exceto tab/newline/CR
     // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
     .replace(/\s+/g, " ")
@@ -111,6 +119,33 @@ function sanitizeCode(v: unknown): string | null {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Classificação de falhas do driver Supabase/PostgREST.
+// A regra é conservadora: qualquer erro que NÃO seja unique_violation nem
+// erro permanente conhecido (23514 check_violation, 22P02 invalid_text_repr,
+// 23502 not_null_violation) é tratado como transitório e força o retry do webhook.
+
+const PERMANENT_PG_CODES = new Set([
+  "23505", // unique_violation (dedupe por event_key — tratado à parte)
+  "23514", // check_violation
+  "23502", // not_null_violation
+  "22P02", // invalid_text_representation
+  "22001", // string_data_right_truncation
+  "22007", // invalid_datetime_format
+  "22008", // datetime_field_overflow
+  "42501", // insufficient_privilege — sinaliza bug, não retry
+]);
+
+function isTransientDbError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return true;
+  const anyErr = err as { code?: unknown; message?: unknown; name?: unknown };
+  const code = typeof anyErr.code === "string" ? anyErr.code : null;
+  if (code === "23505") return false; // duplicata é permanente-idempotente
+  if (code && PERMANENT_PG_CODES.has(code)) return false;
+  // AbortError / timeout / fetch failed / network / 5xx → transitório
+  return true;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Normalização de timestamp
 
 function normalizeTimestampToUtcIso(raw: unknown): string | null {
@@ -118,7 +153,6 @@ function normalizeTimestampToUtcIso(raw: unknown): string | null {
   let ms: number | null = null;
 
   if (typeof raw === "number" && Number.isFinite(raw)) {
-    // Meta envia epoch em segundos (10 dígitos). Aceita ms se maior.
     ms = raw > 1e12 ? raw : raw * 1000;
   } else if (typeof raw === "string") {
     const trimmed = raw.trim();
@@ -151,7 +185,6 @@ export function buildEventKey(input: {
   event_at: string;
   error_code: string | null;
 }): string {
-  // Representação canônica: ordem fixa, sem espaços, UTC.
   const canonical = [
     input.provider_message_id,
     input.event_status,
@@ -162,10 +195,8 @@ export function buildEventKey(input: {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Classificação de erro Meta (Cloud API) — categorias iniciais.
-// Códigos comuns: 130472 (rate limit), 131047 (24h window), 131026 (undeliverable),
-// 131051 (unsupported), 132000 (parameter), 131057 (auth), 190 (token).
-// Usada apenas para auditoria nesta fase.
+// Classificação de erro Meta (Cloud API).
+
 export function classifyMetaError(code: string | null): ErrorCategory | null {
   if (!code) return null;
   const n = Number(code);
@@ -189,11 +220,6 @@ export interface ParseOutcome {
 }
 
 export interface ParseOptions {
-  /**
-   * ID do phone number configurado para o projeto. Quando presente e o payload
-   * trouxer `metadata.phone_number_id` diferente, o lote inteiro é rejeitado.
-   * (Meta pode enviar múltiplos change.value; a validação ocorre por change.)
-   */
   expected_phone_number_id?: string | null;
 }
 
@@ -214,7 +240,6 @@ export function parseStatusesFromChangeValue(
   const statuses = Array.isArray(changeValue.statuses) ? changeValue.statuses : [];
   if (statuses.length === 0) return out;
 
-  // phone_number_id da metadata do change
   const metaPhoneId =
     changeValue.metadata &&
     typeof changeValue.metadata === "object" &&
@@ -224,7 +249,6 @@ export function parseStatusesFromChangeValue(
         )
       : null;
 
-  // Se configurado e diferente, rejeita todo o change.value.
   if (
     opts.expected_phone_number_id &&
     metaPhoneId &&
@@ -308,16 +332,6 @@ export function parseStatusesFromChangeValue(
 // ─────────────────────────────────────────────────────────────────────────────
 // Redutor puro. Não toca DB.
 
-/**
- * Regras (WA-C9.2 Fase C, §9):
- * - read > delivered > sent (nunca rebaixa).
- * - failed só define estado quando não há delivered/read.
- * - sent vs failed decidido por timestamps (empate → failed).
- * - Se após failed chegar delivered/read → volta para sent (e limpa last_error_code
- *   no agregado; o evento failed continua preservado na tabela de auditoria).
- * - Preserva o menor timestamp válido por estágio.
- * - Nunca rebaixa timestamps já preenchidos no `current`.
- */
 export function reduceProviderStatusEvents(
   events: ReadonlyArray<
     Pick<ParsedStatusEvent, "event_status" | "event_at" | "error_code">
@@ -338,10 +352,8 @@ export function reduceProviderStatusEvents(
     failedCode: current.last_error_code,
   };
 
-  const earlier = (a: string | null, b: string) =>
-    a && a <= b ? a : b;
+  const earlier = (a: string | null, b: string) => (a && a <= b ? a : b);
 
-  // Para failed, precisamos do MAIS RECENTE (para decidir estado) e do erro dele.
   let latestFailedAt: string | null = current.failed_at;
   let latestFailedCode: string | null = current.last_error_code;
 
@@ -366,18 +378,14 @@ export function reduceProviderStatusEvents(
     }
   }
 
-  // Decide status agregado
   let status: AggregateState["status"] = null;
   let last_error_code: string | null = latestFailedCode;
 
   const hasDeliveryEvidence = merged.delivered || merged.read;
   if (hasDeliveryEvidence) {
-    // delivered/read vencem qualquer failed.
     status = "sent";
-    // Erro do provider deixa de refletir estado atual quando há entrega confirmada.
     last_error_code = null;
   } else if (merged.sent && merged.failed) {
-    // Empate ou failed mais recente → failed. Sent mais recente que failed → sent.
     if (merged.sent > merged.failed) status = "sent";
     else status = "failed";
   } else if (merged.failed) {
@@ -387,8 +395,6 @@ export function reduceProviderStatusEvents(
   }
 
   if (status !== "failed") {
-    // Só carrega failed_at/last_error_code quando o estado atual é failed.
-    // O evento failed continua preservado na tabela de eventos.
     return {
       status,
       sent_at: merged.sent,
@@ -415,7 +421,7 @@ export function reduceProviderStatusEvents(
 export type PersistOutcome =
   | { kind: "inserted"; id: string }
   | { kind: "duplicate" }
-  | { kind: "error"; reason: string };
+  | { kind: "error"; transient: boolean; reason: string };
 
 export async function persistStatusEvent(
   ev: ParsedStatusEvent,
@@ -443,20 +449,24 @@ export async function persistStatusEvent(
       .maybeSingle();
 
     if (error) {
-      // Postgres unique_violation
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const code = (error as any).code;
       const msg = String(error.message || "");
       if (code === "23505" || msg.includes("event_key_uniq")) {
         return { kind: "duplicate" };
       }
-      return { kind: "error", reason: msg || "insert_failed" };
+      return {
+        kind: "error",
+        transient: isTransientDbError(error),
+        reason: sanitizeCode(msg) ?? "insert_failed",
+      };
     }
     if (!data) return { kind: "duplicate" };
     return { kind: "inserted", id: data.id as string };
   } catch (e) {
     return {
       kind: "error",
+      transient: true,
       reason: e instanceof Error ? e.name : "unknown",
     };
   }
@@ -474,6 +484,7 @@ export interface SupabaseLike {
 export interface ApplyOutcome {
   ok: boolean;
   changed: boolean;
+  transient?: boolean;
   reason?: string;
   new_status?: string;
 }
@@ -481,13 +492,17 @@ export interface ApplyOutcome {
 /**
  * Aplica o agregado a UMA notificação identificada pelo `provider_message_id`.
  *
- * Regras de segurança (§11–§13):
- *   - Toca somente sent_at/delivered_at/read_at/failed_at/last_error_code/status
- *     (updated_at via trigger).
- *   - Callback em `processing` PODE promover para sent/failed limpando lease.
- *   - Callback em estados terminais (`cancelled`, `skipped`) NÃO reabre.
- *   - Callback em `pending` NÃO promove sem correlação forte — apenas registra.
- *   - Nunca rebaixa delivered_at/read_at existentes.
+ * HARDENING:
+ *   - Auto-heal: relê TODOS os eventos do PMID em `whatsapp_notification_status_events`
+ *     (não confia apenas nos eventos do lote atual). Isso repara casos em que
+ *     uma persist anterior teve sucesso mas o apply falhou — o replay chega como
+ *     duplicata mas ainda reprocessa o agregado.
+ *   - Compare-and-set: UPDATE condicionado ao snapshot lido; retry até 3x
+ *     quando outra escrita concorrente altera o registro entre SELECT e UPDATE.
+ *   - Nunca regride: aplica MIN() para sent_at/delivered_at/read_at existentes.
+ *   - delivered/read sempre podem promover `failed` → `sent`; o inverso é bloqueado.
+ *   - Estados terminais (cancelled, skipped) não reabrem.
+ *   - Callback em `pending` NÃO promove status — apenas registra timestamps ausentes.
  */
 export async function applyProviderStatusAggregate(
   provider_message_id: string,
@@ -496,134 +511,246 @@ export async function applyProviderStatusAggregate(
   >,
   client: SupabaseLike = supabaseAdmin as unknown as SupabaseLike,
 ): Promise<ApplyOutcome> {
-  const { data: notif, error: selErr } = await client
-    .from("whatsapp_notifications")
-    .select(
-      "id, status, sent_at, delivered_at, read_at, failed_at, last_error_code, claim_token, claimed_at, lease_expires_at",
-    )
-    .eq("provider_message_id", provider_message_id)
-    .maybeSingle();
-
-  if (selErr) return { ok: false, changed: false, reason: "select_failed" };
-  if (!notif) return { ok: false, changed: false, reason: "unmatched" };
-
-  const cur: CurrentNotification = {
-    status: notif.status as string,
-    sent_at: (notif.sent_at as string) ?? null,
-    delivered_at: (notif.delivered_at as string) ?? null,
-    read_at: (notif.read_at as string) ?? null,
-    failed_at: (notif.failed_at as string) ?? null,
-    last_error_code: (notif.last_error_code as string) ?? null,
-  };
-
-  // Estados terminais: cancelled/skipped nunca reabrem.
-  if (cur.status === "cancelled" || cur.status === "skipped") {
-    return { ok: true, changed: false, reason: "terminal_state", new_status: cur.status };
-  }
-
-  const agg = reduceProviderStatusEvents(eventsForPmid, cur);
-
-  // Se o redutor não tem opinião (nenhum evento válido conhecido), no-op.
-  if (agg.status === null) {
-    return { ok: true, changed: false, reason: "no_effective_state" };
-  }
-
-  // ─── Regra Fase C §13: callback em `pending` não promove sem prova forte.
-  // Nesta rodada tratamos como anomalia: registramos ausência de mudança.
-  if (cur.status === "pending") {
-    // Ainda gravamos os timestamps individuais se estavam nulos, pois são
-    // apenas rastros de auditoria e não afetam a máquina de estados.
-    const patchOnly: Record<string, unknown> = {};
-    if (cur.sent_at == null && agg.sent_at) patchOnly.sent_at = agg.sent_at;
-    if (cur.delivered_at == null && agg.delivered_at)
-      patchOnly.delivered_at = agg.delivered_at;
-    if (cur.read_at == null && agg.read_at) patchOnly.read_at = agg.read_at;
-
-    if (Object.keys(patchOnly).length === 0) {
-      return { ok: true, changed: false, reason: "pending_no_promotion" };
+  // Fonte da verdade: TODOS os eventos persistidos para este PMID +
+  // os eventos in-flight do lote atual. União idempotente (dedupe por event_key
+  // não é necessário aqui porque o redutor é comutativo e idempotente).
+  let persistedEvents: Array<{
+    event_status: ProviderStatus;
+    event_at: string;
+    error_code: string | null;
+  }> = [];
+  try {
+    const { data, error } = await client
+      .from("whatsapp_notification_status_events")
+      .select("event_status, event_at, error_code")
+      .eq("provider_message_id", provider_message_id);
+    if (error) {
+      return {
+        ok: false,
+        changed: false,
+        transient: isTransientDbError(error),
+        reason: "events_select_failed",
+      };
     }
-    const { error } = await client
-      .from("whatsapp_notifications")
-      .update(patchOnly)
-      .eq("id", notif.id)
-      .eq("status", "pending"); // condição defensiva
-    if (error) return { ok: false, changed: false, reason: "update_failed" };
+    persistedEvents = (data ?? []) as typeof persistedEvents;
+  } catch (e) {
     return {
-      ok: true,
-      changed: true,
-      new_status: "pending",
-      reason: "pending_timestamps_only",
+      ok: false,
+      changed: false,
+      transient: true,
+      reason: e instanceof Error ? e.name : "events_select_throw",
     };
   }
 
-  // ─── Monta patch respeitando "nunca rebaixar" e "primeiro timestamp válido".
-  const patch: Record<string, unknown> = {};
-  const eq_or_null = (a: string | null, b: string | null) => a === b;
+  const allEvents = [
+    ...persistedEvents,
+    ...eventsForPmid.map((e) => ({
+      event_status: e.event_status,
+      event_at: e.event_at,
+      error_code: e.error_code,
+    })),
+  ];
 
-  const nextSent =
-    cur.sent_at && agg.sent_at ? (cur.sent_at <= agg.sent_at ? cur.sent_at : agg.sent_at) : (cur.sent_at ?? agg.sent_at);
-  const nextDelivered =
-    cur.delivered_at && agg.delivered_at
-      ? cur.delivered_at <= agg.delivered_at
-        ? cur.delivered_at
-        : agg.delivered_at
-      : (cur.delivered_at ?? agg.delivered_at);
-  const nextRead =
-    cur.read_at && agg.read_at
-      ? cur.read_at <= agg.read_at
-        ? cur.read_at
-        : agg.read_at
-      : (cur.read_at ?? agg.read_at);
+  for (let attempt = 0; attempt < APPLY_CAS_MAX_ATTEMPTS; attempt++) {
+    const { data: notif, error: selErr } = await client
+      .from("whatsapp_notifications")
+      .select(
+        "id, status, sent_at, delivered_at, read_at, failed_at, last_error_code, claim_token, claimed_at, lease_expires_at",
+      )
+      .eq("provider_message_id", provider_message_id)
+      .maybeSingle();
 
-  if (!eq_or_null(nextSent, cur.sent_at)) patch.sent_at = nextSent;
-  if (!eq_or_null(nextDelivered, cur.delivered_at)) patch.delivered_at = nextDelivered;
-  if (!eq_or_null(nextRead, cur.read_at)) patch.read_at = nextRead;
+    if (selErr) {
+      return {
+        ok: false,
+        changed: false,
+        transient: isTransientDbError(selErr),
+        reason: "select_failed",
+      };
+    }
+    if (!notif) return { ok: false, changed: false, reason: "unmatched" };
 
-  // Status agregado: sent | failed.
-  let newStatus: string = cur.status;
-  if (agg.status === "sent") newStatus = "sent";
-  else if (agg.status === "failed") newStatus = "failed";
+    const cur: CurrentNotification = {
+      status: notif.status as string,
+      sent_at: (notif.sent_at as string) ?? null,
+      delivered_at: (notif.delivered_at as string) ?? null,
+      read_at: (notif.read_at as string) ?? null,
+      failed_at: (notif.failed_at as string) ?? null,
+      last_error_code: (notif.last_error_code as string) ?? null,
+    };
 
-  // Bloqueia rebaixamento: se atual é `sent` e chegou apenas failed sem prova
-  // de entrega, o redutor já teria retornado "failed" apenas se não houvesse
-  // delivered/read no histórico. Como delivered/read sobrepõem, aqui é seguro.
-  // Porém, se cur.status === "sent" e agg diz "failed" sem novos delivered/read,
-  // aplicamos apenas quando o histórico agregado justifica (o redutor decide).
-  if (newStatus !== cur.status) patch.status = newStatus;
+    if (cur.status === "cancelled" || cur.status === "skipped") {
+      return {
+        ok: true,
+        changed: false,
+        reason: "terminal_state",
+        new_status: cur.status,
+      };
+    }
 
-  // failed_at/last_error_code
-  if (agg.status === "failed") {
-    if (agg.failed_at && cur.failed_at !== agg.failed_at) patch.failed_at = agg.failed_at;
-    if (agg.last_error_code !== cur.last_error_code)
-      patch.last_error_code = agg.last_error_code;
-  } else {
-    // agg.status === "sent" (nunca "pending" aqui)
-    if (cur.failed_at) patch.failed_at = null;
-    if (cur.last_error_code) patch.last_error_code = null;
+    const agg = reduceProviderStatusEvents(allEvents, cur);
+
+    if (agg.status === null) {
+      return { ok: true, changed: false, reason: "no_effective_state" };
+    }
+
+    // Pending: nunca promove status; apenas preenche timestamps ausentes.
+    if (cur.status === "pending") {
+      const patchOnly: Record<string, unknown> = {};
+      if (cur.sent_at == null && agg.sent_at) patchOnly.sent_at = agg.sent_at;
+      if (cur.delivered_at == null && agg.delivered_at)
+        patchOnly.delivered_at = agg.delivered_at;
+      if (cur.read_at == null && agg.read_at) patchOnly.read_at = agg.read_at;
+
+      if (Object.keys(patchOnly).length === 0) {
+        return { ok: true, changed: false, reason: "pending_no_promotion" };
+      }
+      const { error } = await client
+        .from("whatsapp_notifications")
+        .update(patchOnly)
+        .eq("id", notif.id)
+        .eq("status", "pending");
+      if (error) {
+        return {
+          ok: false,
+          changed: false,
+          transient: isTransientDbError(error),
+          reason: "update_failed",
+        };
+      }
+      return {
+        ok: true,
+        changed: true,
+        new_status: "pending",
+        reason: "pending_timestamps_only",
+      };
+    }
+
+    // Compute patch com regra "nunca regride" (MIN() por estágio).
+    const nextSent =
+      cur.sent_at && agg.sent_at
+        ? cur.sent_at <= agg.sent_at
+          ? cur.sent_at
+          : agg.sent_at
+        : (cur.sent_at ?? agg.sent_at);
+    const nextDelivered =
+      cur.delivered_at && agg.delivered_at
+        ? cur.delivered_at <= agg.delivered_at
+          ? cur.delivered_at
+          : agg.delivered_at
+        : (cur.delivered_at ?? agg.delivered_at);
+    const nextRead =
+      cur.read_at && agg.read_at
+        ? cur.read_at <= agg.read_at
+          ? cur.read_at
+          : agg.read_at
+        : (cur.read_at ?? agg.read_at);
+
+    const patch: Record<string, unknown> = {};
+    if (nextSent !== cur.sent_at) patch.sent_at = nextSent;
+    if (nextDelivered !== cur.delivered_at) patch.delivered_at = nextDelivered;
+    if (nextRead !== cur.read_at) patch.read_at = nextRead;
+
+    let newStatus: string = cur.status;
+    if (agg.status === "sent") newStatus = "sent";
+    else if (agg.status === "failed") {
+      // NUNCA rebaixa: se cur já está em `sent` (com prova de entrega prévia),
+      // o redutor não deveria devolver failed. Defesa em profundidade:
+      if (cur.status === "sent") {
+        newStatus = "sent";
+      } else {
+        newStatus = "failed";
+      }
+    }
+    if (newStatus !== cur.status) patch.status = newStatus;
+
+    if (newStatus === "failed") {
+      if (agg.failed_at && cur.failed_at !== agg.failed_at)
+        patch.failed_at = agg.failed_at;
+      if (agg.last_error_code !== cur.last_error_code)
+        patch.last_error_code = agg.last_error_code;
+    } else if (newStatus === "sent") {
+      if (cur.failed_at) patch.failed_at = null;
+      if (cur.last_error_code) patch.last_error_code = null;
+    }
+
+    if (
+      cur.status === "processing" &&
+      (newStatus === "sent" || newStatus === "failed")
+    ) {
+      patch.claim_token = null;
+      patch.claimed_at = null;
+      patch.lease_expires_at = null;
+    }
+
+    if (Object.keys(patch).length === 0) {
+      return { ok: true, changed: false, reason: "no_change", new_status: cur.status };
+    }
+
+    // CAS: pin em todas as colunas lidas. Se outro writer avançou o estado,
+    // o UPDATE não bate e nós reciclamos com um snapshot fresco.
+    let q = client
+      .from("whatsapp_notifications")
+      .update(patch)
+      .eq("id", notif.id)
+      .eq("status", cur.status);
+    q = cur.sent_at == null ? q.is("sent_at", null) : q.eq("sent_at", cur.sent_at);
+    q =
+      cur.delivered_at == null
+        ? q.is("delivered_at", null)
+        : q.eq("delivered_at", cur.delivered_at);
+    q =
+      cur.read_at == null ? q.is("read_at", null) : q.eq("read_at", cur.read_at);
+    q =
+      cur.failed_at == null
+        ? q.is("failed_at", null)
+        : q.eq("failed_at", cur.failed_at);
+
+    const { error: upErr } = await q;
+    if (upErr) {
+      return {
+        ok: false,
+        changed: false,
+        transient: isTransientDbError(upErr),
+        reason: "update_failed",
+      };
+    }
+
+    // Confirma que o CAS pegou: relê e verifica se o patch está refletido.
+    // Se não estiver, outro writer venceu — tentamos de novo com estado fresco.
+    const { data: verify } = await client
+      .from("whatsapp_notifications")
+      .select(
+        "status, sent_at, delivered_at, read_at, failed_at, last_error_code",
+      )
+      .eq("id", notif.id)
+      .maybeSingle();
+    if (!verify) {
+      // Estado corrompido; não reintenta.
+      return { ok: true, changed: false, reason: "verify_missing" };
+    }
+    const matches =
+      (patch.status == null || verify.status === patch.status) &&
+      (patch.sent_at === undefined || verify.sent_at === patch.sent_at) &&
+      (patch.delivered_at === undefined ||
+        verify.delivered_at === patch.delivered_at) &&
+      (patch.read_at === undefined || verify.read_at === patch.read_at) &&
+      (patch.failed_at === undefined || verify.failed_at === patch.failed_at) &&
+      (patch.last_error_code === undefined ||
+        verify.last_error_code === patch.last_error_code);
+    if (matches) {
+      return { ok: true, changed: true, new_status: newStatus };
+    }
+    // Concorrente venceu — próxima iteração.
   }
 
-  // Callback em processing → limpar lease/claim ao promover para terminal.
-  if (cur.status === "processing" && (newStatus === "sent" || newStatus === "failed")) {
-    patch.claim_token = null;
-    patch.claimed_at = null;
-    patch.lease_expires_at = null;
-  }
-
-  if (Object.keys(patch).length === 0) {
-    return { ok: true, changed: false, reason: "no_change", new_status: cur.status };
-  }
-
-  // Update condicional para não sobrescrever transições concorrentes.
-  // Aceitamos o update se o status ainda é o que lemos OU já é o alvo (idempotente).
-  const q = client
-    .from("whatsapp_notifications")
-    .update(patch)
-    .eq("id", notif.id)
-    .in("status", Array.from(new Set([cur.status, newStatus])));
-
-  const { error: upErr } = await q;
-  if (upErr) return { ok: false, changed: false, reason: "update_failed" };
-  return { ok: true, changed: true, new_status: newStatus };
+  // Esgotou CAS. Não é falha permanente do provedor; peça retry.
+  return {
+    ok: false,
+    changed: false,
+    transient: true,
+    reason: "cas_exhausted",
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -639,14 +766,14 @@ export interface ProcessOutcome {
   updated: number;
   state_changed: number;
   anomalies: number;
+  retryableErrors: number;
+  permanentErrors: number;
+  requiresWebhookRetry: boolean;
 }
 
-export async function persistAndApplyEvents(
-  events: ReadonlyArray<ParsedStatusEvent>,
-  client: SupabaseLike = supabaseAdmin as unknown as SupabaseLike,
-): Promise<ProcessOutcome> {
-  const summary: ProcessOutcome = {
-    received: events.length,
+function emptyProcessOutcome(): ProcessOutcome {
+  return {
+    received: 0,
     inserted: 0,
     duplicates: 0,
     matched: 0,
@@ -655,10 +782,20 @@ export async function persistAndApplyEvents(
     updated: 0,
     state_changed: 0,
     anomalies: 0,
+    retryableErrors: 0,
+    permanentErrors: 0,
+    requiresWebhookRetry: false,
   };
+}
+
+export async function persistAndApplyEvents(
+  events: ReadonlyArray<ParsedStatusEvent>,
+  client: SupabaseLike = supabaseAdmin as unknown as SupabaseLike,
+): Promise<ProcessOutcome> {
+  const summary = emptyProcessOutcome();
+  summary.received = events.length;
   if (events.length === 0) return summary;
 
-  // Agrupa eventos por provider_message_id.
   const byPmid = new Map<string, ParsedStatusEvent[]>();
   for (const ev of events) {
     const arr = byPmid.get(ev.provider_message_id) ?? [];
@@ -667,36 +804,68 @@ export async function persistAndApplyEvents(
   }
 
   for (const [pmid, list] of byPmid) {
-    // 1) Correlaciona: existe notificação com esse PMID?
+    // 1) Correlaciona.
     let notifId: string | null = null;
+    let notifLookupTransientFail = false;
     try {
-      const { data } = await client
+      const { data, error } = await client
         .from("whatsapp_notifications")
         .select("id")
         .eq("provider_message_id", pmid)
         .maybeSingle();
-      notifId = data?.id ?? null;
+      if (error) {
+        if (isTransientDbError(error)) notifLookupTransientFail = true;
+      } else {
+        notifId = data?.id ?? null;
+      }
     } catch {
-      notifId = null;
+      notifLookupTransientFail = true;
+    }
+    if (notifLookupTransientFail) {
+      summary.retryableErrors++;
+      summary.requiresWebhookRetry = true;
+      // Prossegue tentando persistir eventos (dedupe garante idempotência).
     }
     if (notifId) summary.matched += list.length;
     else summary.unmatched += list.length;
 
-    // 2) Persiste cada evento (idempotente via event_key).
+    // 2) Persiste eventos (idempotente via event_key).
+    // IMPORTANTE: duplicata NÃO curto-circuita o apply — o apply reprocessa
+    // usando TODOS os eventos persistidos (self-heal de partial-write).
     for (const ev of list) {
       const r = await persistStatusEvent(ev, notifId, client);
       if (r.kind === "inserted") summary.inserted++;
       else if (r.kind === "duplicate") summary.duplicates++;
-      else summary.invalid++;
+      else {
+        // erro
+        if (r.transient) {
+          summary.retryableErrors++;
+          summary.requiresWebhookRetry = true;
+        } else {
+          summary.permanentErrors++;
+          summary.invalid++;
+        }
+      }
     }
 
-    // 3) Se há notificação, aplica agregado (usa todos os eventos do PMID).
+    // 3) Se há notificação (ou surgiu por reconciliação anterior), aplica.
+    //    O apply relê TODOS os eventos por PMID, garantindo reparo de replays.
     if (notifId) {
       const applied = await applyProviderStatusAggregate(pmid, list, client);
       if (applied.ok && applied.changed) {
         summary.updated++;
         summary.state_changed++;
-      } else if (applied.reason === "terminal_state" || applied.reason === "pending_no_promotion") {
+      } else if (!applied.ok) {
+        if (applied.transient) {
+          summary.retryableErrors++;
+          summary.requiresWebhookRetry = true;
+        } else {
+          summary.permanentErrors++;
+        }
+      } else if (
+        applied.reason === "terminal_state" ||
+        applied.reason === "pending_no_promotion"
+      ) {
         summary.anomalies++;
       }
     }
@@ -706,14 +875,12 @@ export async function persistAndApplyEvents(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Reconciliação: quando o envio real (Fase D) persistir PMID depois, este
-// helper vincula os eventos "unmatched" já registrados e recalcula estado.
+// Reconciliação
 
 export async function reconcileStatusEvents(
   provider_message_id: string,
   client: SupabaseLike = supabaseAdmin as unknown as SupabaseLike,
 ): Promise<{ associated: number; applied: ApplyOutcome | null }> {
-  // Localiza a notificação alvo
   const { data: notif } = await client
     .from("whatsapp_notifications")
     .select("id")
@@ -721,7 +888,6 @@ export async function reconcileStatusEvents(
     .maybeSingle();
   if (!notif) return { associated: 0, applied: null };
 
-  // Associa eventos ainda com notification_id NULL
   const { data: pending } = await client
     .from("whatsapp_notification_status_events")
     .select("id, event_status, event_at, error_code")
@@ -743,25 +909,9 @@ export async function reconcileStatusEvents(
       .is("notification_id", null);
   }
 
-  // Recalcula agregado com TODOS os eventos conhecidos.
-  const { data: allEvents } = await client
-    .from("whatsapp_notification_status_events")
-    .select("event_status, event_at, error_code")
-    .eq("provider_message_id", provider_message_id);
-
-  const events = ((allEvents ?? []) as Array<{
-    event_status: ProviderStatus;
-    event_at: string;
-    error_code: string | null;
-  }>).map((r) => ({
-    event_status: r.event_status,
-    event_at: r.event_at,
-    error_code: r.error_code,
-  }));
-
   const applied = await applyProviderStatusAggregate(
     provider_message_id,
-    events,
+    [], // apply relê todos os eventos por PMID
     client,
   );
 
@@ -769,58 +919,69 @@ export async function reconcileStatusEvents(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Entrada de alto nível (usada pelo webhook) — recebe o `payload` já validado
-// e retorna o summary. Nunca lança.
+// Entrada de alto nível (usada pelo webhook).
+//
+// Contrato: NUNCA lança. O caller deve inspecionar `requiresWebhookRetry` e
+// retornar HTTP não-2xx à Meta quando true.
 
 export interface ProcessMetaStatusCallbacksOptions {
   expected_phone_number_id?: string | null;
   client?: SupabaseLike;
 }
 
+export type MetaStatusProcessingResult = ProcessOutcome & {
+  unknown_status: number;
+  wrong_phone_number: number;
+};
+
 export async function processMetaStatusCallbacks(
-  payload: {
-    entry?: Array<{
-      changes?: Array<{
-        value?: unknown;
-      }>;
-    }>;
-  } | null | undefined,
+  payload:
+    | {
+        entry?: Array<{
+          changes?: Array<{
+            value?: unknown;
+          }>;
+        }>;
+      }
+    | null
+    | undefined,
   opts: ProcessMetaStatusCallbacksOptions = {},
-): Promise<ProcessOutcome & { unknown_status: number; wrong_phone_number: number }> {
+): Promise<MetaStatusProcessingResult> {
   const client = opts.client ?? (supabaseAdmin as unknown as SupabaseLike);
-  const totalSummary: ProcessOutcome & {
-    unknown_status: number;
-    wrong_phone_number: number;
-  } = {
-    received: 0,
-    inserted: 0,
-    duplicates: 0,
-    matched: 0,
-    unmatched: 0,
-    invalid: 0,
-    updated: 0,
-    state_changed: 0,
-    anomalies: 0,
+  const totalSummary: MetaStatusProcessingResult = {
+    ...emptyProcessOutcome(),
     unknown_status: 0,
     wrong_phone_number: 0,
   };
   if (!payload || !Array.isArray(payload.entry)) return totalSummary;
 
   const allEvents: ParsedStatusEvent[] = [];
-  for (const entry of payload.entry) {
-    if (!entry || !Array.isArray(entry.changes)) continue;
-    for (const change of entry.changes) {
-      const v = change?.value;
-      if (!v || typeof v !== "object") continue;
-      const parsed = parseStatusesFromChangeValue(
-        v as { statuses?: unknown; metadata?: unknown },
-        { expected_phone_number_id: opts.expected_phone_number_id ?? null },
-      );
-      totalSummary.invalid += parsed.invalid;
-      totalSummary.unknown_status += parsed.unknown_status;
-      totalSummary.wrong_phone_number += parsed.wrong_phone_number;
-      allEvents.push(...parsed.events);
+  try {
+    for (const entry of payload.entry) {
+      if (!entry || !Array.isArray(entry.changes)) continue;
+      for (const change of entry.changes) {
+        const v = change?.value;
+        if (!v || typeof v !== "object") continue;
+        const parsed = parseStatusesFromChangeValue(
+          v as { statuses?: unknown; metadata?: unknown },
+          { expected_phone_number_id: opts.expected_phone_number_id ?? null },
+        );
+        totalSummary.invalid += parsed.invalid;
+        totalSummary.unknown_status += parsed.unknown_status;
+        totalSummary.wrong_phone_number += parsed.wrong_phone_number;
+        allEvents.push(...parsed.events);
+      }
     }
+  } catch (e) {
+    // Parser é síncrono/puro — mas se algo escapar, tratamos como retryable
+    // conservadoramente sem expor detalhes.
+    totalSummary.retryableErrors++;
+    totalSummary.requiresWebhookRetry = true;
+    console.error({
+      event: "wa_status_parser_unexpected",
+      errorName: e instanceof Error ? e.name : "unknown",
+    });
+    return totalSummary;
   }
 
   if (allEvents.length === 0) return totalSummary;
@@ -835,6 +996,9 @@ export async function processMetaStatusCallbacks(
   totalSummary.updated += persisted.updated;
   totalSummary.state_changed += persisted.state_changed;
   totalSummary.anomalies += persisted.anomalies;
+  totalSummary.retryableErrors += persisted.retryableErrors;
+  totalSummary.permanentErrors += persisted.permanentErrors;
+  if (persisted.requiresWebhookRetry) totalSummary.requiresWebhookRetry = true;
 
   return totalSummary;
 }

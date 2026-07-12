@@ -551,7 +551,16 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
         }
 
         // WA-C9.2 Fase C — Callbacks de status (sent/delivered/read/failed).
-        // Rodam DEPOIS do HMAC/Zod e ANTES da extração de mensagens. Nunca lança.
+        // Rodam DEPOIS do HMAC/Zod e ANTES da extração de mensagens.
+        //
+        // Contrato:
+        //   - Sucesso (mesmo com eventos inválidos/desconhecidos/duplicatas plenas)
+        //     → seguimos o fluxo e retornamos 2xx no fim.
+        //   - Falha transitória (INSERT/SELECT/UPDATE, timeout, 5xx do PostgREST,
+        //     CAS esgotado) → `requiresWebhookRetry = true`. Respondemos 500
+        //     imediatamente para a Meta reenviar o webhook. Não processamos
+        //     mensagens no mesmo request: o retry replaya tudo, e message pipeline
+        //     é idempotente por external_id.
         try {
           const { processMetaStatusCallbacks } = await import(
             "@/server/whatsapp-meta-status-callbacks.server"
@@ -564,18 +573,45 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
             },
             { expected_phone_number_id: expectedPhoneId },
           );
-          if (statusSummary.received > 0) {
+          if (statusSummary.received > 0 || statusSummary.retryableErrors > 0) {
             console.info(
               "[wa-webhook] meta_status_callbacks",
               JSON.stringify(statusSummary),
             );
           }
+          if (statusSummary.requiresWebhookRetry) {
+            await logWebhookEvent({
+              provider: "whatsapp",
+              status: "failed",
+              http_status: 500,
+              error_message: "status_callback_transient",
+              processing_time_ms: Date.now() - startedAt,
+            });
+            return jsonResponse(
+              { error: "transient_status_processing_failure" },
+              500,
+            );
+          }
         } catch (statusErr) {
+          // Exceção não capturada pelo módulo (defesa em profundidade).
+          // Trata como transitório: peça retry, não devore o callback.
           console.error({
-            event: "wa_status_callbacks_failed",
+            event: "wa_status_callbacks_unhandled",
             errorName: statusErr instanceof Error ? statusErr.name : "unknown",
           });
+          await logWebhookEvent({
+            provider: "whatsapp",
+            status: "failed",
+            http_status: 500,
+            error_message: "status_callback_unhandled",
+            processing_time_ms: Date.now() - startedAt,
+          });
+          return jsonResponse(
+            { error: "transient_status_processing_failure" },
+            500,
+          );
         }
+
 
         const flatMessages = extractIncomingMessages(payload);
 
