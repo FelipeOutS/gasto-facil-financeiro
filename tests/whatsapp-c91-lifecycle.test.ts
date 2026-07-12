@@ -251,19 +251,19 @@ describe("WA-C9.1 :: revalidateContaForDispatch", () => {
 describe("WA-C9.1 :: markFailed respeita estados terminais", () => {
   it("notificação cancelled não volta para pending", async () => {
     const n = addNotif({ status: "cancelled" });
-    await markFailed(String(n.id), "boom", { retryable: true, currentAttempt: 0, maxAttempts: 5 }, { client: fake.client });
+    await markFailed(String(n.id), "boom", { retryable: true, currentAttempt: 0, maxAttempts: 5 }, null, { client: fake.client });
     expect(fake.tables.whatsapp_notifications[0].status).toBe("cancelled");
   });
 
   it("notificação skipped não volta para pending", async () => {
     const n = addNotif({ status: "skipped", skipped_reason: "payable_paid" });
-    await markFailed(String(n.id), "boom", { retryable: true, currentAttempt: 0, maxAttempts: 5 }, { client: fake.client });
+    await markFailed(String(n.id), "boom", { retryable: true, currentAttempt: 0, maxAttempts: 5 }, null, { client: fake.client });
     expect(fake.tables.whatsapp_notifications[0].status).toBe("skipped");
   });
 
   it("notificação processing pode voltar a pending (retry normal)", async () => {
     const n = addNotif({ status: "processing" });
-    await markFailed(String(n.id), "transient", { retryable: true, currentAttempt: 0, maxAttempts: 5 }, { client: fake.client });
+    await markFailed(String(n.id), "transient", { retryable: true, currentAttempt: 0, maxAttempts: 5 }, null, { client: fake.client });
     expect(fake.tables.whatsapp_notifications[0].status).toBe("pending");
   });
 });
