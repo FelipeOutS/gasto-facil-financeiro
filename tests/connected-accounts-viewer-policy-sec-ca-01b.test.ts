@@ -49,7 +49,7 @@ describe.skipIf(!hasDb)("WA-SEC-CA-01B — policy viewer bloqueia antes do trigg
          AND p.proname='connected_accounts_viewer_update_allowed';
     `);
     // prosecdef=true (SECURITY DEFINER), provolatile='s' (STABLE), search_path fixo.
-    expect(row).toContain("t|s|");
+    expect(row).toContain("true|s|");
     expect(row).toContain("search_path=public");
     expect(row).toContain("pg_temp");
   });
