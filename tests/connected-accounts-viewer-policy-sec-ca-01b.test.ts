@@ -21,7 +21,7 @@
  * cross-user) fica registrada como skip condicional pendente de credenciais
  * de QA no CI, sem esconder a lacuna.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { spawnSync } from "node:child_process";
 
 const hasDb = !!process.env.PGHOST;
