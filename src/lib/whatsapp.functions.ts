@@ -38,10 +38,8 @@ export const getWhatsAppConfigStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertFeatureAccess(context.userId, "whatsapp");
-    const has = (v: string | undefined | null) =>
-      typeof v === "string" && v.trim().length > 0;
-    const flag = (v: string | undefined | null) =>
-      (v ?? "").trim().toLowerCase() === "true";
+    const has = (v: string | undefined | null) => typeof v === "string" && v.trim().length > 0;
+    const flag = (v: string | undefined | null) => (v ?? "").trim().toLowerCase() === "true";
     return {
       access_token: has(process.env.WHATSAPP_ACCESS_TOKEN),
       phone_number_id: has(process.env.WHATSAPP_PHONE_NUMBER_ID),
@@ -60,9 +58,7 @@ export const listWhatsAppLinks = createServerFn({ method: "GET" })
     const sb = context.supabase as any;
     const { data, error } = await sb
       .from("whatsapp_links")
-      .select(
-        "id, telefone, ativo, ultimo_uso, created_at, opt_in_em, opt_in_version, revogado_em",
-      )
+      .select("id, telefone, ativo, ultimo_uso, created_at, opt_in_em, opt_in_version, revogado_em")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return { links: data ?? [] };
@@ -125,7 +121,6 @@ export const confirmWhatsAppLinkConsent = createServerFn({ method: "POST" })
     }
     return { consentimento_atualizado: "ok" as const };
   });
-
 
 export const upsertWhatsAppLink = createServerFn({ method: "POST" })
   .inputValidator((d) =>
@@ -259,9 +254,7 @@ export const testarWebhookWhatsApp = createServerFn({ method: "POST" })
  * garante que cartões, faturas, dashboard e relatórios recalculem.
  */
 export const deleteGastoFromWhatsApp = createServerFn({ method: "POST" })
-  .inputValidator((d) =>
-    z.object({ messageId: z.string().uuid() }).parse(d),
-  )
+  .inputValidator((d) => z.object({ messageId: z.string().uuid() }).parse(d))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     await assertWhatsAppAccess(context.userId);
@@ -275,15 +268,11 @@ export const deleteGastoFromWhatsApp = createServerFn({ method: "POST" })
       .eq("id", data.messageId)
       .maybeSingle();
     if (msgErr) throw new Error(msgErr.message);
-    if (!msg || msg.user_id !== userId)
-      throw new Error("Mensagem não encontrada.");
+    if (!msg || msg.user_id !== userId) throw new Error("Mensagem não encontrada.");
 
     if (msg.gasto_id) {
       // Remove o gasto real (RLS garante que só o dono pode apagar).
-      const { error: delErr } = await sb
-        .from("gastos")
-        .delete()
-        .eq("id", msg.gasto_id);
+      const { error: delErr } = await sb.from("gastos").delete().eq("id", msg.gasto_id);
       if (delErr) throw new Error(delErr.message);
 
       // Limpa contas a pagar vinculadas, se houver.
@@ -309,9 +298,7 @@ export const deleteGastoFromWhatsApp = createServerFn({ method: "POST" })
 
 /** Reprocessa uma mensagem (cria novo gasto a partir do mesmo texto). */
 export const reprocessarMensagemWhatsApp = createServerFn({ method: "POST" })
-  .inputValidator((d) =>
-    z.object({ messageId: z.string().uuid() }).parse(d),
-  )
+  .inputValidator((d) => z.object({ messageId: z.string().uuid() }).parse(d))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     await assertWhatsAppAccess(context.userId);
@@ -325,8 +312,7 @@ export const reprocessarMensagemWhatsApp = createServerFn({ method: "POST" })
       .eq("id", data.messageId)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    if (!msg || msg.user_id !== userId)
-      throw new Error("Mensagem não encontrada.");
+    if (!msg || msg.user_id !== userId) throw new Error("Mensagem não encontrada.");
 
     // Remove o log antigo para liberar a dedupe e processa de novo.
     await sb.from("whatsapp_messages").delete().eq("id", data.messageId);
@@ -347,10 +333,7 @@ export const deleteWhatsAppMessageLog = createServerFn({ method: "POST" })
     await assertWhatsAppAccess(context.userId);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
-    const { error } = await sb
-      .from("whatsapp_messages")
-      .delete()
-      .eq("id", data.messageId);
+    const { error } = await sb.from("whatsapp_messages").delete().eq("id", data.messageId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -380,14 +363,10 @@ export const enviarMensagemTesteWhatsApp = createServerFn({ method: "POST" })
       );
     }
     if (!phoneId) {
-      throw new Error(
-        "Configure o secret WHATSAPP_PHONE_NUMBER_ID para enviar mensagens.",
-      );
+      throw new Error("Configure o secret WHATSAPP_PHONE_NUMBER_ID para enviar mensagens.");
     }
     const to = normTel(data.telefone);
-    const { buildWhatsAppGraphUrl } = await import(
-      "@/server/whatsapp-graph-version.server"
-    );
+    const { buildWhatsAppGraphUrl } = await import("@/server/whatsapp-graph-version.server");
     const built = buildWhatsAppGraphUrl({ kind: "messages", phoneNumberId: phoneId });
     if (!built.ok) {
       // META-GRAPH-UPGRADE-01 — fail-closed

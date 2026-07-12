@@ -92,23 +92,17 @@ test("messages: URL canônica com env v20.0", () => {
 test("register: URL canônica", () => {
   const r = buildWhatsAppGraphUrl({ kind: "register", phoneNumberId: "12345" });
   expect(r.ok).toBe(true);
-  expect((r as { url: string }).url).toBe(
-    "https://graph.facebook.com/v20.0/12345/register",
-  );
+  expect((r as { url: string }).url).toBe("https://graph.facebook.com/v20.0/12345/register");
 });
 
 test("subscribed_apps: URL canônica", () => {
   const r = buildWhatsAppGraphUrl({ kind: "subscribed_apps", wabaId: "77" });
-  expect((r as { url: string }).url).toBe(
-    "https://graph.facebook.com/v20.0/77/subscribed_apps",
-  );
+  expect((r as { url: string }).url).toBe("https://graph.facebook.com/v20.0/77/subscribed_apps");
 });
 
 test("media_lookup: URL canônica", () => {
   const r = buildWhatsAppGraphUrl({ kind: "media_lookup", mediaId: "abc_DEF-123" });
-  expect((r as { url: string }).url).toBe(
-    "https://graph.facebook.com/v20.0/abc_DEF-123",
-  );
+  expect((r as { url: string }).url).toBe("https://graph.facebook.com/v20.0/abc_DEF-123");
 });
 
 test("admin_path: aceita paths server-controlled", () => {
@@ -116,9 +110,7 @@ test("admin_path: aceita paths server-controlled", () => {
     kind: "admin_path",
     path: "me?fields=id",
   });
-  expect((r as { url: string }).url).toBe(
-    "https://graph.facebook.com/v20.0/me?fields=id",
-  );
+  expect((r as { url: string }).url).toBe("https://graph.facebook.com/v20.0/me?fields=id");
 });
 
 test.each([
@@ -212,15 +204,11 @@ test("fail-closed: sem env válida, sendWhatsAppRaw (via mock de fetch) não bat
 test("com env v20.0, URL construída é idêntica ao hardcode anterior (messages)", () => {
   setEnv("v20.0");
   const r = buildWhatsAppGraphUrl({ kind: "messages", phoneNumberId: "999" });
-  expect((r as { url: string }).url).toBe(
-    "https://graph.facebook.com/v20.0/999/messages",
-  );
+  expect((r as { url: string }).url).toBe("https://graph.facebook.com/v20.0/999/messages");
 });
 
 test("com env v20.0, URL construída é idêntica ao hardcode anterior (media_lookup)", () => {
   setEnv("v20.0");
   const r = buildWhatsAppGraphUrl({ kind: "media_lookup", mediaId: "MID123" });
-  expect((r as { url: string }).url).toBe(
-    "https://graph.facebook.com/v20.0/MID123",
-  );
+  expect((r as { url: string }).url).toBe("https://graph.facebook.com/v20.0/MID123");
 });

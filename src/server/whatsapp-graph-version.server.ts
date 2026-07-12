@@ -103,9 +103,7 @@ const ADMIN_PATH_SAFE = /^[A-Za-z0-9_./?=&%,:-]+$/;
  * validado. Falha fechada quando a versão não é autorizada ou o recurso
  * não passa nas validações estritas.
  */
-export function buildWhatsAppGraphUrl(
-  resource: WhatsAppGraphResource,
-): WhatsAppGraphUrlResult {
+export function buildWhatsAppGraphUrl(resource: WhatsAppGraphResource): WhatsAppGraphUrlResult {
   const v = getWhatsAppGraphVersion();
   if (!v.ok) {
     return { ok: false, reason: "configuration_error", configReason: v.reason };
