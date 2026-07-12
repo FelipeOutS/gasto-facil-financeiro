@@ -3853,6 +3853,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      whatsapp_attempt_prepare_atomic: {
+        Args: {
+          p_attempt_token: string
+          p_claim_token: string
+          p_client_reference: string
+          p_notification_id: string
+          p_now?: string
+          p_request_hash: string
+          p_template_key: string
+          p_template_language: string
+          p_template_name: string
+        }
+        Returns: {
+          attempt_id: string
+          outcome: string
+        }[]
+      }
       whatsapp_baixa_conta_atomic: {
         Args: {
           p_conta_id: string
