@@ -4568,18 +4568,21 @@ async function sendWhatsAppRaw(
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   if (!token || !phoneId) return { sent: false, reason: "not_configured" };
+  const built = buildWhatsAppGraphUrl({ kind: "messages", phoneNumberId: phoneId });
+  if (!built.ok) {
+    // META-GRAPH-UPGRADE-01 — fail-closed: sem versão autorizada,
+    // nenhuma mensagem sai. Não expor conteúdo do erro.
+    return { sent: false, reason: "configuration_error" };
+  }
   try {
-    const res = await fetch(
-      `https://graph.facebook.com/v20.0/${phoneId}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
+    const res = await fetch(built.url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify(body),
+    });
     if (!res.ok) {
       console.error({
         event: "wa_reply_failed",
