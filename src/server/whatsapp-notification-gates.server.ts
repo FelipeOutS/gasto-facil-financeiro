@@ -12,7 +12,15 @@ import type {
 
 export type GateDecision =
   | { allow: true }
-  | { allow: false; reason: SkippedReason };
+  | {
+      allow: false;
+      reason: SkippedReason;
+      /**
+       * WA-C8.1 — presente APENAS quando `reason === "quiet_hours"`.
+       * Instante UTC em que a notificação deve reaparecer como due.
+       */
+      nextAllowedAt?: Date;
+    };
 
 export interface GatesDeps {
   client?: typeof supabaseAdmin;
