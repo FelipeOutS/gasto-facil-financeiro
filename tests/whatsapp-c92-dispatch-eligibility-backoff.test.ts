@@ -394,11 +394,16 @@ describe("WA-C9.2 :: claimForProcessing elegibilidade", () => {
 // =========================================================================
 describe("WA-C9.2 :: backoff efetivo via markFailed", () => {
   it("18. markFailed retryable cria next_attempt_at futuro; item não reaparece imediatamente", async () => {
+    // Usa relógio real para casar com Date.now() dentro de markFailed.
+    const realNow = new Date();
     const id = await seed(fake, {
-      scheduled_at: past(60).toISOString(),
+      scheduled_at: new Date(realNow.getTime() - 60 * 60_000).toISOString(),
       next_attempt_at: null,
     });
-    await claimForProcessing(id, { client: fake.client, now: nowFn });
+    await claimForProcessing(id, {
+      client: fake.client,
+      now: () => realNow,
+    });
     const res = await markFailed(
       id,
       "network_error",
@@ -409,9 +414,6 @@ describe("WA-C9.2 :: backoff efetivo via markFailed", () => {
     const row = fake.tables.whatsapp_notifications[0] as unknown as NotificationRow;
     expect(row.status).toBe("pending");
     expect(row.next_attempt_at).not.toBeNull();
-    // next_attempt_at é ~1min no futuro em relação a Date.now(); nowFn=T0 é
-    // no passado, então o item pode aparecer. Simulamos "next tick imediato"
-    // usando o instante do próprio next_attempt_at menos 1s.
     const nextAt = new Date(row.next_attempt_at as string);
     const justBefore = new Date(nextAt.getTime() - 1000);
     const early = await listDuePending(50, {
@@ -421,7 +423,7 @@ describe("WA-C9.2 :: backoff efetivo via markFailed", () => {
     expect(early).toHaveLength(0);
     const onTime = await listDuePending(50, {
       client: fake.client,
-      now: () => nextAt,
+      now: () => new Date(nextAt.getTime() + 1000),
     });
     expect(onTime).toHaveLength(1);
   });
