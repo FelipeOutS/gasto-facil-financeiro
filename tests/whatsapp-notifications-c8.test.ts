@@ -395,7 +395,14 @@ describe("WA-C8 :: gates", () => {
       { client: fake.client, now: () => new Date("2026-06-28T03:00:00Z") },
     );
     expect(r.allow).toBe(false);
-    if (!r.allow) expect(r.reason).toBe("quiet_hours");
+    if (!r.allow) {
+      expect(r.reason).toBe("quiet_hours");
+      // WA-C8.1 — quiet_hours agora inclui nextAllowedAt (bloqueio temporário).
+      expect(r.nextAllowedAt).toBeDefined();
+      expect(r.nextAllowedAt!.getTime()).toBeGreaterThan(
+        new Date("2026-06-28T03:00:00Z").getTime(),
+      );
+    }
   });
 
   it("janela 24h ausente + sem HSM → no_session_window", async () => {

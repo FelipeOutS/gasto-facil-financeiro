@@ -259,6 +259,43 @@ export async function markFailed(
   return { scheduledRetry: canRetry };
 }
 
+/**
+ * WA-C8.1 — Reagendamento seguro para quiet hours.
+ *
+ * Ao contrário de `markSkipped`, quiet_hours é um bloqueio TEMPORÁRIO:
+ *  - a mesma linha volta a `pending` com `scheduled_at = nextAllowedAt`;
+ *  - `attempt_count` permanece inalterado (não é falha de envio);
+ *  - `dedupe_key` permanece;
+ *  - `skipped_reason` é limpo;
+ *  - só reagenda se ainda estiver em `processing` (protege race com
+ *    cancelamento/pagamento/skip concorrentes — estados terminais não
+ *    são reabertos).
+ *
+ * Retorna `true` quando exatamente 1 linha foi atualizada.
+ */
+export async function rescheduleForQuietHours(
+  id: string,
+  nextAllowedAt: Date,
+  deps?: NotificationsDeps,
+): Promise<boolean> {
+  const c = client(deps);
+  const { data, error } = await c
+    .from("whatsapp_notifications")
+    .update({
+      status: "pending",
+      scheduled_at: nextAllowedAt.toISOString(),
+      skipped_reason: null,
+    })
+    .eq("id", id)
+    .eq("status", "processing")
+    .select("id");
+  if (error) {
+    console.error("[wa-notif] reschedule quiet_hours failed", error.code);
+    return false;
+  }
+  return (data ?? []).length > 0;
+}
+
 /** Cancela uma notificação pendente. Filtra por user_id (não toca a de outro user). */
 export async function cancelByDedupe(
   userId: string,
