@@ -15,6 +15,7 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import {
   rescheduleForQuietHours,
+  recoverStuckReschedule,
   enqueueNotification,
   claimForProcessing,
   listDuePending,
