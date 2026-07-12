@@ -71,6 +71,7 @@ function buildFake() {
       in: (col: string, vals: unknown[]) => typeof api;
       lte: (col: string, val: unknown) => typeof api;
       gte: (col: string, val: unknown) => typeof api;
+      or: (expr: string) => typeof api;
       order: (col: string, opts?: { ascending?: boolean }) => typeof api;
       limit: (n: number) => typeof api;
       maybeSingle: () => Promise<{ data: Row | null; error: null }>;
