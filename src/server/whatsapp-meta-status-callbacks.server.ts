@@ -464,6 +464,7 @@ export async function persistStatusEvent(
         pricing_category: ev.pricing_category,
         phone_number_id: ev.phone_number_id,
         event_key: ev.event_key,
+        client_reference: ev.client_reference,
       })
       .select("id")
       .maybeSingle();
