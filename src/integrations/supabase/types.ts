@@ -3240,6 +3240,7 @@ export type Database = {
       }
       whatsapp_notification_status_events: {
         Row: {
+          client_reference: string | null
           conversation_id: string | null
           error_category: string | null
           error_code: string | null
@@ -3256,6 +3257,7 @@ export type Database = {
           received_at: string
         }
         Insert: {
+          client_reference?: string | null
           conversation_id?: string | null
           error_category?: string | null
           error_code?: string | null
@@ -3272,6 +3274,7 @@ export type Database = {
           received_at?: string
         }
         Update: {
+          client_reference?: string | null
           conversation_id?: string | null
           error_category?: string | null
           error_code?: string | null
@@ -3853,6 +3856,44 @@ export type Database = {
         }
         Returns: undefined
       }
+      whatsapp_attempt_finalize_accepted_atomic: {
+        Args: {
+          p_attempt_id: string
+          p_attempt_token: string
+          p_finished_at?: string
+          p_http_status: number
+          p_provider_message_id: string
+        }
+        Returns: {
+          outcome: string
+        }[]
+      }
+      whatsapp_attempt_finalize_ambiguous_atomic: {
+        Args: {
+          p_attempt_id: string
+          p_attempt_token: string
+          p_error_code: string
+          p_finished_at?: string
+          p_http_status: number
+        }
+        Returns: {
+          outcome: string
+        }[]
+      }
+      whatsapp_attempt_finalize_rejected_atomic: {
+        Args: {
+          p_attempt_id: string
+          p_attempt_token: string
+          p_error_category: string
+          p_error_code: string
+          p_finished_at?: string
+          p_http_status: number
+          p_retryable: boolean
+        }
+        Returns: {
+          outcome: string
+        }[]
+      }
       whatsapp_attempt_mark_sending_atomic: {
         Args: { p_attempt_id: string; p_attempt_token: string; p_now?: string }
         Returns: {
@@ -3876,6 +3917,19 @@ export type Database = {
           outcome: string
         }[]
       }
+      whatsapp_attempt_reconcile_callback_atomic: {
+        Args: {
+          p_client_reference: string
+          p_event_at?: string
+          p_event_status: string
+          p_provider_message_id: string
+        }
+        Returns: {
+          attempt_id: string
+          notification_id: string
+          outcome: string
+        }[]
+      }
       whatsapp_baixa_conta_atomic: {
         Args: {
           p_conta_id: string
@@ -3889,6 +3943,12 @@ export type Database = {
           nome: string
           result: string
           valor: number
+        }[]
+      }
+      whatsapp_notification_recover_with_attempt_atomic: {
+        Args: { p_backoff?: string; p_notification_id: string; p_now?: string }
+        Returns: {
+          outcome: string
         }[]
       }
     }
