@@ -562,10 +562,11 @@ export async function recoverStuckProcessing(
     errors: 0,
   };
 
-  // 1) Seleciona candidatos por lease vencido.
+  // 1) Seleciona candidatos por lease vencido. (Fila; a RPC valida ownership e
+  //    reconstrói o estado consciente do attempt associado.)
   const { data: candidates, error: selErr } = await c
     .from("whatsapp_notifications")
-    .select("id, claim_token")
+    .select("id")
     .eq("status", "processing")
     .lte("lease_expires_at", nowIso)
     .order("lease_expires_at", { ascending: true })
@@ -579,45 +580,50 @@ export async function recoverStuckProcessing(
     return summary;
   }
 
-  const list = (candidates ?? []) as Array<{ id: string; claim_token: string | null }>;
-  const nextAttemptIso = new Date(now.getTime() + RECOVERY_BACKOFF_MS).toISOString();
+  const list = (candidates ?? []) as Array<{ id: string }>;
+  if (list.length === 0) return summary;
+
+  // 2) Delega recovery a `whatsapp_notification_recover_with_attempt_atomic`.
+  //    Import dinâmico mantém o wrapper (que tem seu próprio admin()) fora do
+  //    bundle client via graph splitting.
+  const attemptsMod = await import("@/server/whatsapp-notification-attempts.server");
+
+  const outcomesRepairedOrRequeued: ReadonlySet<string> = new Set([
+    "recovered_without_attempt",
+    "accepted_repaired",
+    "ambiguous_quarantined",
+    "cancelled_repending",
+    "planned_cancelled",
+  ]);
+  const outcomesStateChangedNoop: ReadonlySet<string> = new Set([
+    "noop",
+    "lease_valid",
+    "rejected_preserved",
+    "sending_ambiguous",
+    "not_found",
+  ]);
 
   for (const row of list) {
     try {
-      let q = c
-        .from("whatsapp_notifications")
-        .update({
-          status: "pending",
-          next_attempt_at: nextAttemptIso,
-          last_error_code: "processing_timeout",
-          skipped_reason: null,
-          ...CLAIM_CLEAR,
-        })
-        .eq("id", row.id)
-        .eq("status", "processing")
-        .lte("lease_expires_at", nowIso);
-      // Filtro por claim_token original (protege race worker↔recovery e
-      // dois recoveries simultâneos). Se claim_token for null (linha legada),
-      // usa `is null` — mas Fase B espera token setado no claim.
-      if (row.claim_token != null) {
-        q = q.eq("claim_token", row.claim_token);
-      } else {
-        // linha legada sem token: não recuperar automaticamente nesta fase.
-        summary.state_changed++;
-        continue;
-      }
-      const { data, error } = await q.select("id");
-      if (error) {
+      const rr = await attemptsMod.recoverNotificationWithAttempt(
+        {
+          notificationId: row.id,
+          now: nowIso,
+          backoffInterval: "00:05:00",
+        },
+        c as unknown as import("@/server/whatsapp-outbound-adapter.server").SupabaseLike,
+      );
+      if (!rr.ok) {
         summary.errors++;
-        console.error(
-          "[wa-notif] recoverStuckProcessing row_failed",
-          JSON.stringify({ id: row.id, code: (error as { code?: string }).code ?? null }),
-        );
         continue;
       }
-      if ((data ?? []).length > 0) {
+      if (outcomesRepairedOrRequeued.has(rr.outcome)) {
         summary.recovered++;
+      } else if (outcomesStateChangedNoop.has(rr.outcome)) {
+        summary.state_changed++;
       } else {
+        // outcome desconhecido: contabiliza como state_changed (não errou, mas
+        // não recuperou explicitamente). fail-open, sem masking de erros.
         summary.state_changed++;
       }
     } catch (err) {
