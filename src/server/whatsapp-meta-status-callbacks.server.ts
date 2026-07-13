@@ -790,6 +790,12 @@ export interface ProcessOutcome {
   retryableErrors: number;
   permanentErrors: number;
   requiresWebhookRetry: boolean;
+  // D.2A — reconciliação attempt via RPC atômica.
+  callback_attempts_reconciled?: number;
+  callback_attempts_already_reconciled?: number;
+  callback_attempts_unmatched?: number;
+  callback_attempts_conflict?: number;
+  callback_attempts_anomaly?: number;
 }
 
 function emptyProcessOutcome(): ProcessOutcome {
@@ -806,6 +812,11 @@ function emptyProcessOutcome(): ProcessOutcome {
     retryableErrors: 0,
     permanentErrors: 0,
     requiresWebhookRetry: false,
+    callback_attempts_reconciled: 0,
+    callback_attempts_already_reconciled: 0,
+    callback_attempts_unmatched: 0,
+    callback_attempts_conflict: 0,
+    callback_attempts_anomaly: 0,
   };
 }
 
