@@ -318,6 +318,18 @@ export function parseStatusesFromChangeValue(
       error_code,
     });
 
+    // D.2A — biz_opaque_callback_data: SOMENTE string; nunca participa de event_key.
+    // Strings vazias, com caracteres de controle, ou fora do limite viram null.
+    // Trim NÃO é aplicado para transformar valor inválido em válido.
+    let client_reference: string | null = null;
+    const rawCref = (raw as { biz_opaque_callback_data?: unknown }).biz_opaque_callback_data;
+    if (typeof rawCref === "string" && rawCref.length > 0 && rawCref.length <= 256) {
+      // eslint-disable-next-line no-control-regex
+      if (!/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(rawCref)) {
+        client_reference = rawCref;
+      }
+    }
+
     out.events.push({
       provider_message_id: pmid,
       event_status,
@@ -330,6 +342,7 @@ export function parseStatusesFromChangeValue(
       pricing_category,
       phone_number_id: metaPhoneId,
       event_key,
+      client_reference,
     });
   }
 
