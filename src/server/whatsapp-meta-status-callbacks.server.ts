@@ -820,9 +820,46 @@ function emptyProcessOutcome(): ProcessOutcome {
   };
 }
 
+/**
+ * D.2A — Interface injetável para o wrapper de reconciliação attempt.
+ * Default: usa `reconcileAttemptFromCallback` do módulo de attempts.
+ */
+export interface AttemptReconciler {
+  reconcile(input: {
+    providerMessageId: string;
+    eventStatus: ProviderStatus;
+    clientReference: string | null;
+    eventAt: string;
+  }): Promise<{
+    ok: boolean;
+    outcome: string | null;
+    reason?: string;
+  }>;
+}
+
+async function defaultAttemptReconciler(client: SupabaseLike): Promise<AttemptReconciler> {
+  const mod = await import("@/server/whatsapp-notification-attempts.server");
+  return {
+    async reconcile(input) {
+      const r = await mod.reconcileAttemptFromCallback(
+        {
+          providerMessageId: input.providerMessageId,
+          eventStatus: input.eventStatus,
+          clientReference: input.clientReference,
+          eventAt: input.eventAt,
+        },
+        client,
+      );
+      if (r.ok) return { ok: true, outcome: r.outcome };
+      return { ok: false, outcome: null, reason: r.reason };
+    },
+  };
+}
+
 export async function persistAndApplyEvents(
   events: ReadonlyArray<ParsedStatusEvent>,
   client: SupabaseLike = supabaseAdmin as unknown as SupabaseLike,
+  reconciler?: AttemptReconciler,
 ): Promise<ProcessOutcome> {
   const summary = emptyProcessOutcome();
   summary.received = events.length;
@@ -834,6 +871,8 @@ export async function persistAndApplyEvents(
     arr.push(ev);
     byPmid.set(ev.provider_message_id, arr);
   }
+
+  const rec = reconciler ?? (await defaultAttemptReconciler(client));
 
   for (const [pmid, list] of byPmid) {
     // 1) Correlaciona.
@@ -880,6 +919,47 @@ export async function persistAndApplyEvents(
       }
     }
 
+    // 2.5) D.2A — Reconciliação attempt via RPC atômica.
+    //      Ordem: PMID primeiro, client_reference como fallback (feito pela RPC).
+    //      Uma chamada por PMID; a RPC é idempotente. Erros isolados por PMID.
+    const representative = pickRepresentative(list);
+    try {
+      const rr = await rec.reconcile({
+        providerMessageId: pmid,
+        eventStatus: representative.event_status,
+        clientReference: representative.client_reference ?? null,
+        eventAt: representative.event_at,
+      });
+      if (rr.ok && rr.outcome) {
+        switch (rr.outcome) {
+          case "reconciled":
+            summary.callback_attempts_reconciled =
+              (summary.callback_attempts_reconciled ?? 0) + 1;
+            break;
+          case "unmatched":
+            summary.callback_attempts_unmatched =
+              (summary.callback_attempts_unmatched ?? 0) + 1;
+            break;
+          case "conflict_pmid":
+          case "conflict_state":
+            summary.callback_attempts_conflict =
+              (summary.callback_attempts_conflict ?? 0) + 1;
+            break;
+          case "notification_missing":
+            summary.callback_attempts_anomaly =
+              (summary.callback_attempts_anomaly ?? 0) + 1;
+            break;
+        }
+      } else {
+        // Falha da RPC não derruba o lote; se transitória, pede retry ao webhook.
+        summary.retryableErrors++;
+        summary.requiresWebhookRetry = true;
+      }
+    } catch {
+      summary.retryableErrors++;
+      summary.requiresWebhookRetry = true;
+    }
+
     // 3) Se há notificação (ou surgiu por reconciliação anterior), aplica.
     //    O apply relê TODOS os eventos por PMID, garantindo reparo de replays.
     if (notifId) {
@@ -904,6 +984,25 @@ export async function persistAndApplyEvents(
   }
 
   return summary;
+}
+
+/**
+ * Escolhe o evento "representante" do lote por PMID para chamar a RPC de
+ * reconciliação uma única vez por PMID. Prioridade: sent > delivered > read > failed
+ * (correlação de PMID→attempt não depende do status; usamos o mais autoritativo).
+ */
+function pickRepresentative(list: ParsedStatusEvent[]): ParsedStatusEvent {
+  const priority: Record<ProviderStatus, number> = {
+    sent: 4,
+    delivered: 3,
+    read: 2,
+    failed: 1,
+  };
+  let best = list[0];
+  for (const ev of list) {
+    if (priority[ev.event_status] > priority[best.event_status]) best = ev;
+  }
+  return best;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
