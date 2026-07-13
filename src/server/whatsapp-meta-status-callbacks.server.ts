@@ -57,6 +57,7 @@ export interface RawMetaStatus {
   conversation?: { id?: unknown } | null;
   pricing?: { category?: unknown } | null;
   errors?: unknown;
+  biz_opaque_callback_data?: unknown;
 }
 
 export type ErrorCategory =
