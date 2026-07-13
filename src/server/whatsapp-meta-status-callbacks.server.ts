@@ -41,6 +41,12 @@ export interface ParsedStatusEvent {
   pricing_category: string | null;
   phone_number_id: string | null;
   event_key: string;
+  /**
+   * D.2A — Referência opaca ecoada pela Meta (biz_opaque_callback_data).
+   * Nunca participa da event_key. Preservada apenas para lookup auxiliar
+   * e persistência. null quando ausente ou inválida.
+   */
+  client_reference: string | null;
 }
 
 export interface RawMetaStatus {
