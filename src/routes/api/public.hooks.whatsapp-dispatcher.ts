@@ -239,21 +239,11 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
             continue;
           }
 
-          // 4) Dry-run: revert processing → pending mantendo dedupe/attempt.
+          // 4) WA-C9.2 Fase D.2B.2 (hardening) — chegar aqui já implica
+          //    `WHATSAPP_DISPATCH_ENABLED=true` e `WHATSAPP_OUTBOUND_HTTP_ENABLED=true`
+          //    (early exit no topo). Não há mais branch dry-run mutável.
           summary.would_send++;
-          if (!dispatchEnabled) {
-            await revertProcessingToPending(n.id, token);
-            console.info(
-              "[wa-dispatcher] would_send",
-              JSON.stringify({
-                id: n.id,
-                type: n.notification_type,
-                category: n.category,
-                priority: n.priority,
-              }),
-            );
-            continue;
-          }
+
 
           // 5) WA-C9.2 Fase D.2B.2 — Envio real ATRÁS da dupla trava.
           //    Enquanto WHATSAPP_OUTBOUND_HTTP_ENABLED/WHATSAPP_CANARY_ENABLED
