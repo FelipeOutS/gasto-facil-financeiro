@@ -174,9 +174,7 @@ export function createMetaWhatsAppNotificationTransport(
   }
 
   const phoneNumberId =
-    typeof input.phoneNumberId === "string" && input.phoneNumberId !== ""
-      ? input.phoneNumberId
-      : process.env.WHATSAPP_PHONE_NUMBER_ID;
+    "phoneNumberId" in input ? input.phoneNumberId : process.env.WHATSAPP_PHONE_NUMBER_ID;
   if (phoneNumberId == null || phoneNumberId === "") {
     return { ok: false, reason: "phone_number_id_missing" };
   }
@@ -185,9 +183,7 @@ export function createMetaWhatsAppNotificationTransport(
   }
 
   const accessToken =
-    typeof input.accessToken === "string" && input.accessToken !== ""
-      ? input.accessToken
-      : process.env.WHATSAPP_ACCESS_TOKEN;
+    "accessToken" in input ? input.accessToken : process.env.WHATSAPP_ACCESS_TOKEN;
   if (accessToken == null || accessToken === "" || typeof accessToken !== "string") {
     return { ok: false, reason: "access_token_missing" };
   }
