@@ -480,7 +480,7 @@ describe("WA-C9.2 ownership :: worker antigo pós-recovery", () => {
     const past = new Date(Date.now() - 60_000).toISOString();
     seedProcessing({ lease_expires_at: past, claim_token: "OLD" });
     // recovery: OLD → pending, claim_token null
-    const rec = await recoverStuckProcessing(50, { client: fake.client });
+    const rec = await recoverStuckProcessing(50, { client: fake.client, allowLegacyFakePath: true });
     expect(rec.recovered).toBe(1);
     const row = fake.tables.whatsapp_notifications[0] as NotificationRow;
     expect(row.status).toBe("pending");
@@ -550,7 +550,7 @@ describe("WA-C9.2 ownership :: novo claim após recovery", () => {
     const past = new Date(Date.now() - 60_000).toISOString();
     seedProcessing({ lease_expires_at: past, claim_token: "TOK-OLD" });
     // Recovery devolve a pending.
-    await recoverStuckProcessing(50, { client: fake.client });
+    await recoverStuckProcessing(50, { client: fake.client, allowLegacyFakePath: true });
     // Novo claim via injeção determinística.
     // Precisa reelegibilizar: força status=pending, scheduled_at<=now, next_attempt_at<=now.
     const row = fake.tables.whatsapp_notifications[0] as Record<string, unknown>;
