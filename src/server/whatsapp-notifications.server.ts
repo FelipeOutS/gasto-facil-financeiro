@@ -660,8 +660,8 @@ export async function recoverStuckProcessing(
     return summary;
   }
 
-  // 3) Legacy fallback (Fase B) — sem RPC injetada; usado por mocks e testes.
-  //    Em produção esse caminho não é acionado (supabaseAdmin expõe `.rpc`).
+  // 3) Legacy fallback (Fase B) — SOMENTE quando `allowLegacyFakePath: true`
+  //    é passado explicitamente pelo teste. Nunca ativado em produção.
   const nextAttemptIso = new Date(now.getTime() + RECOVERY_BACKOFF_MS).toISOString();
   for (const row of list) {
     try {
