@@ -20,9 +20,12 @@ import {
 import {
   parseStatusesFromChangeValue,
   persistAndApplyEvents,
+  createLegacyNoopAttemptReconciler,
   type AttemptReconciler,
   type SupabaseLike,
 } from "@/server/whatsapp-meta-status-callbacks.server";
+
+import { recoverStuckProcessing } from "@/server/whatsapp-notifications.server";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Utilitários
@@ -741,5 +744,212 @@ describe("D.2A :: persistAndApplyEvents wiring", () => {
     expect(calls.length).toBe(1);
     // Representative deve ser o de maior prioridade (sent)
     expect(calls[0].eventStatus).toBe("sent");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 9) HARDENING FINAL — fail-closed sem `.rpc`, sem downgrade silencioso.
+//
+// Estes testes GARANTEM que a ausência de `.rpc` no client:
+//   - NÃO é tratada como sucesso;
+//   - NÃO retorna `unmatched` no reconciler default;
+//   - NÃO executa UPDATE legado no recovery;
+//   - NÃO altera ownership;
+//   - GERA requiresWebhookRetry no callback;
+//   - GERA erro discriminado no recovery.
+//
+// Compatibilidade legada dos fakes existe SOMENTE via opt-in explícito:
+//   - `persistAndApplyEvents(events, client, createLegacyNoopAttemptReconciler())`
+//   - `recoverStuckProcessing(limit, { ..., allowLegacyFakePath: true })`
+
+describe("D.2A HARDENING :: reconciler default sem `.rpc`", () => {
+  function fakeNoRpc(notifs: Array<Record<string, unknown>> = []) {
+    // Sem `.rpc` — simula wiring quebrado em produção OU fake Fase C.
+    const events: Array<Record<string, unknown>> = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const client: any = {
+      from(table: string): unknown {
+        const rows =
+          table === "whatsapp_notifications"
+            ? notifs
+            : table === "whatsapp_notification_status_events"
+            ? events
+            : [];
+        const filters: Array<(r: Record<string, unknown>) => boolean> = [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const q: any = {
+          _pendingInsert: null as Record<string, unknown> | null,
+          _pendingUpdate: null as Record<string, unknown> | null,
+          select() { return q; },
+          insert(row: Record<string, unknown>) { q._pendingInsert = row; return q; },
+          update(patch: Record<string, unknown>) { q._pendingUpdate = patch; return q; },
+          eq(col: string, val: unknown) { filters.push((r) => r[col] === val); return q; },
+          in(col: string, vals: unknown[]) { filters.push((r) => vals.includes(r[col])); return q; },
+          is(col: string, val: unknown) {
+            filters.push((r) => (val === null ? r[col] == null : r[col] === val));
+            return q;
+          },
+          maybeSingle() {
+            const found = rows.find((r) => filters.every((f) => f(r)));
+            if (q._pendingInsert) {
+              const inserted = { id: `id-${rows.length + 1}`, ...q._pendingInsert };
+              rows.push(inserted);
+              return Promise.resolve({ data: inserted, error: null });
+            }
+            return Promise.resolve({ data: found ?? null, error: null });
+          },
+          then(resolve: (v: { data: unknown; error: null }) => unknown) {
+            if (q._pendingUpdate) {
+              for (const r of rows) {
+                if (filters.every((f) => f(r))) Object.assign(r, q._pendingUpdate);
+              }
+              return Promise.resolve({ data: null, error: null }).then(resolve);
+            }
+            const matched = rows.filter((r) => filters.every((f) => f(r)));
+            return Promise.resolve({ data: matched, error: null }).then(resolve);
+          },
+        };
+        return q;
+      },
+    };
+    return { client: client as SupabaseLike, events, notifs };
+  }
+
+  it("client sem `.rpc` → NÃO retorna unmatched como sucesso silencioso", async () => {
+    const fc = fakeNoRpc([]);
+    const parsed = parseStatusesFromChangeValue({
+      statuses: [{ id: "wamid.h1", status: "sent", timestamp: "1752316200" }],
+    });
+    // Default reconciler (nenhum passado) → fail-closed.
+    const s = await persistAndApplyEvents(parsed.events, fc.client);
+    expect(s.callback_attempts_unmatched ?? 0).toBe(0);
+    expect(s.callback_attempts_reconciled ?? 0).toBe(0);
+  });
+
+  it("client sem `.rpc` → requiresWebhookRetry=true e retryableErrors>=1", async () => {
+    const fc = fakeNoRpc([]);
+    const parsed = parseStatusesFromChangeValue({
+      statuses: [{ id: "wamid.h2", status: "sent", timestamp: "1752316200" }],
+    });
+    const s = await persistAndApplyEvents(parsed.events, fc.client);
+    expect(s.requiresWebhookRetry).toBe(true);
+    expect(s.retryableErrors).toBeGreaterThanOrEqual(1);
+  });
+
+  it("evento é persistido mesmo com reconciler fail-closed (self-heal posterior)", async () => {
+    const fc = fakeNoRpc([]);
+    const parsed = parseStatusesFromChangeValue({
+      statuses: [{ id: "wamid.h3", status: "sent", timestamp: "1752316200" }],
+    });
+    await persistAndApplyEvents(parsed.events, fc.client);
+    expect(fc.events.length).toBe(1);
+    expect(fc.events[0].provider_message_id).toBe("wamid.h3");
+  });
+
+  it("opt-in explícito via createLegacyNoopAttemptReconciler() → unmatched benigno", async () => {
+    const fc = fakeNoRpc([]);
+    const parsed = parseStatusesFromChangeValue({
+      statuses: [{ id: "wamid.h4", status: "sent", timestamp: "1752316200" }],
+    });
+    const s = await persistAndApplyEvents(parsed.events, fc.client, createLegacyNoopAttemptReconciler());
+    expect(s.requiresWebhookRetry).toBe(false);
+    expect(s.callback_attempts_unmatched).toBe(1);
+  });
+
+  it("createLegacyNoopAttemptReconciler retorna ok/unmatched", async () => {
+    const rec = createLegacyNoopAttemptReconciler();
+    const r = await rec.reconcile({
+      providerMessageId: "wamid.x",
+      eventStatus: "sent",
+      clientReference: null,
+      eventAt: new Date().toISOString(),
+    });
+    expect(r.ok).toBe(true);
+    expect(r.outcome).toBe("unmatched");
+  });
+});
+
+describe("D.2A HARDENING :: recoverStuckProcessing sem `.rpc`", () => {
+  function buildRecoveryFake(rows: Array<Record<string, unknown>>) {
+    const table = rows;
+    // Fake sem `.rpc` — simula wiring quebrado ou fake antigo.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const client: any = {
+      from() {
+        const filters: Array<(r: Record<string, unknown>) => boolean> = [];
+        let patch: Record<string, unknown> | null = null;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const q: any = {
+          select() { return q; },
+          update(p: Record<string, unknown>) { patch = p; return q; },
+          eq(col: string, v: unknown) { filters.push((r) => r[col] === v); return q; },
+          lte(col: string, v: unknown) {
+            filters.push((r) => r[col] != null && String(r[col]) <= String(v));
+            return q;
+          },
+          order() { return q; },
+          limit() {
+            return Promise.resolve({
+              data: table.filter((r) => filters.every((f) => f(r))),
+              error: null,
+            });
+          },
+          then(resolve: (v: { data: unknown; error: null }) => unknown) {
+            if (patch) {
+              const matched = table.filter((r) => filters.every((f) => f(r)));
+              for (const r of matched) Object.assign(r, patch);
+              return Promise.resolve({ data: matched, error: null }).then(resolve);
+            }
+            return Promise.resolve({ data: [], error: null }).then(resolve);
+          },
+        };
+        return q;
+      },
+    };
+    return { client, table };
+  }
+
+  const past = new Date(Date.UTC(2026, 6, 12, 8, 0, 0)).toISOString();
+  const nowFn = () => new Date(Date.UTC(2026, 6, 12, 10, 0, 0));
+
+  it("sem `.rpc` e SEM allowLegacyFakePath → errors=1, nenhuma linha alterada", async () => {
+    const fake = buildRecoveryFake([
+      { id: "n-a", status: "processing", lease_expires_at: past, claim_token: "tok" },
+    ]);
+    const s = await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+    });
+    expect(s.errors).toBe(1);
+    expect(s.recovered).toBe(0);
+    expect(s.state_changed).toBe(0);
+    // Ownership preservada — nenhuma reversão silenciosa.
+    expect(fake.table[0].status).toBe("processing");
+    expect(fake.table[0].claim_token).toBe("tok");
+    expect(fake.table[0].next_attempt_at).toBeUndefined();
+  });
+
+  it("sem `.rpc` COM allowLegacyFakePath: true → executa legacy path", async () => {
+    const fake = buildRecoveryFake([
+      { id: "n-b", status: "processing", lease_expires_at: past, claim_token: "tok" },
+    ]);
+    const s = await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
+    expect(s.errors).toBe(0);
+    expect(s.recovered + s.state_changed).toBeGreaterThanOrEqual(1);
+  });
+
+  it("allowLegacyFakePath NÃO é ativado por default, env, ou ausência de `.rpc`", async () => {
+    const fake = buildRecoveryFake([
+      { id: "n-c", status: "processing", lease_expires_at: past, claim_token: "tok" },
+    ]);
+    // Nenhum flag; default undefined.
+    const s = await recoverStuckProcessing(50, { client: fake.client, now: nowFn });
+    expect(s.errors).toBe(1);
+    // Nenhum UPDATE.
+    expect(fake.table[0].next_attempt_at).toBeUndefined();
   });
 });

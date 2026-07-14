@@ -139,6 +139,12 @@ export interface NotificationsDeps {
   now?: () => Date;
   /** Injeção para testes de concorrência / determinismo. */
   randomUUID?: () => string;
+  /**
+   * D.2A HARDENING — opt-in EXPLÍCITO para testes de Fase B que usam fakes
+   * sem `.rpc`. Nunca setado em produção. Nunca inferido do runtime. Nunca
+   * lido de env. Default false ⇒ ausência de `.rpc` é fail-closed.
+   */
+  allowLegacyFakePath?: boolean;
 }
 
 function client(deps?: NotificationsDeps) {
@@ -585,9 +591,24 @@ export async function recoverStuckProcessing(
 
   // 2) Preferência: RPC consciente de attempts
   //    (`whatsapp_notification_recover_with_attempt_atomic`).
-  //    Detecta via `client.rpc`. Mocks legados de Fase B sem `.rpc` seguem
-  //    pelo caminho de UPDATE preservado (comportamento inalterado nesses testes).
+  //    D.2A HARDENING: em produção `supabaseAdmin.rpc` SEMPRE existe. A
+  //    ausência de `.rpc` é erro de infraestrutura, NUNCA sinal de downgrade.
+  //    O caminho legado (UPDATE) só é acionado quando o teste passa
+  //    `allowLegacyFakePath: true` EXPLICITAMENTE. Sem esse opt-in explícito,
+  //    a ausência de `.rpc` retorna erro discriminado sem tocar em linhas.
   const hasRpc = typeof (c as unknown as { rpc?: unknown }).rpc === "function";
+  const allowLegacy = deps?.allowLegacyFakePath === true;
+  if (!hasRpc && !allowLegacy) {
+    console.error(
+      "[wa-notif] recoverStuckProcessing rpc_unavailable",
+      JSON.stringify({
+        detail: "supabase client missing .rpc and no explicit legacy opt-in",
+        candidates: list.length,
+      }),
+    );
+    summary.errors++;
+    return summary;
+  }
   if (hasRpc) {
     const attemptsMod = await import(
       "@/server/whatsapp-notification-attempts.server"
@@ -639,8 +660,8 @@ export async function recoverStuckProcessing(
     return summary;
   }
 
-  // 3) Legacy fallback (Fase B) — sem RPC injetada; usado por mocks e testes.
-  //    Em produção esse caminho não é acionado (supabaseAdmin expõe `.rpc`).
+  // 3) Legacy fallback (Fase B) — SOMENTE quando `allowLegacyFakePath: true`
+  //    é passado explicitamente pelo teste. Nunca ativado em produção.
   const nextAttemptIso = new Date(now.getTime() + RECOVERY_BACKOFF_MS).toISOString();
   for (const row of list) {
     try {
