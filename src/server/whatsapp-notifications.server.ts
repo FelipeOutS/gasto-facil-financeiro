@@ -139,6 +139,12 @@ export interface NotificationsDeps {
   now?: () => Date;
   /** Injeção para testes de concorrência / determinismo. */
   randomUUID?: () => string;
+  /**
+   * D.2A HARDENING — opt-in EXPLÍCITO para testes de Fase B que usam fakes
+   * sem `.rpc`. Nunca setado em produção. Nunca inferido do runtime. Nunca
+   * lido de env. Default false ⇒ ausência de `.rpc` é fail-closed.
+   */
+  allowLegacyFakePath?: boolean;
 }
 
 function client(deps?: NotificationsDeps) {
