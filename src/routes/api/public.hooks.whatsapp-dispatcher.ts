@@ -55,6 +55,16 @@ function verifySignature(rawBody: string, signature: string | null): boolean {
   }
 }
 
+/**
+ * WA-C9.2 Fase D.2B.2 (hardening) — parser estrito de flag boolean.
+ * Aceita EXCLUSIVAMENTE a string "true" (case-insensitive, sem espaços).
+ * Rejeita "1", "yes", "on", "enabled", vazio, undefined.
+ */
+function parseStrictBool(v: string | undefined): boolean {
+  if (typeof v !== "string") return false;
+  return v.trim().toLowerCase() === "true";
+}
+
 export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
   server: {
     handlers: {
@@ -64,8 +74,53 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
           return new Response("invalid signature", { status: 401 });
         }
 
-        const dispatchEnabled =
-          (process.env.WHATSAPP_DISPATCH_ENABLED ?? "false").toLowerCase() === "true";
+        // ─── WA-C9.2 Fase D.2B.2 HARDENING ──────────────────────────────────
+        // Early exit imediatamente após HMAC. Enquanto o envio operacional
+        // estiver desligado, o handler NÃO deve tocar o banco: nada de
+        // recovery, listagem, claim, revalidate, template, gates, revert,
+        // reschedule, skip, factory, prepare, mark sending ou transport.
+        const dispatchEnabled = parseStrictBool(process.env.WHATSAPP_DISPATCH_ENABLED);
+        const outboundHttpEnabled = parseStrictBool(process.env.WHATSAPP_OUTBOUND_HTTP_ENABLED);
+
+        if (!dispatchEnabled || !outboundHttpEnabled) {
+          const disabledSummary = {
+            considered: 0,
+            skipped: 0,
+            rescheduled_quiet_hours: 0,
+            would_send: 0,
+            dispatch_enabled: dispatchEnabled,
+            outbound_http_enabled: outboundHttpEnabled,
+            disabled: true,
+            reason: !dispatchEnabled ? "dispatcher_disabled" : "outbound_http_disabled",
+            recovered_stuck_processing: 0,
+            recovery_state_changed: 0,
+            recovery_errors: 0,
+            attempts_prepared: 0,
+            attempts_prepare_failed: 0,
+            attempts_marked_sending: 0,
+            attempts_mark_sending_failed: 0,
+            transport_accepted: 0,
+            transport_rejected: 0,
+            transport_ambiguous: 0,
+            finalize_accepted: 0,
+            finalize_rejected: 0,
+            finalize_ambiguous: 0,
+            finalize_errors: 0,
+            outbound_gate_blocked: 0,
+            outbound_factory_errors: 0,
+            ownership_changed: 0,
+            state_changed: 0,
+          };
+          console.info(
+            "[wa-dispatcher] disabled_early_exit",
+            JSON.stringify({
+              dispatch_enabled: dispatchEnabled,
+              outbound_http_enabled: outboundHttpEnabled,
+              reason: disabledSummary.reason,
+            }),
+          );
+          return Response.json(disabledSummary);
+        }
 
         // 0) WA-C9.2 Fase B — recovery de processing preso ANTES da listagem.
         const recovery = await recoverStuckProcessing(50);
@@ -85,6 +140,8 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
           rescheduled_quiet_hours: 0,
           would_send: 0,
           dispatch_enabled: dispatchEnabled,
+          outbound_http_enabled: outboundHttpEnabled,
+          disabled: false,
           recovered_stuck_processing: recovery.recovered,
           recovery_state_changed: recovery.state_changed,
           recovery_errors: recovery.errors,
@@ -182,21 +239,11 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
             continue;
           }
 
-          // 4) Dry-run: revert processing → pending mantendo dedupe/attempt.
+          // 4) WA-C9.2 Fase D.2B.2 (hardening) — chegar aqui já implica
+          //    `WHATSAPP_DISPATCH_ENABLED=true` e `WHATSAPP_OUTBOUND_HTTP_ENABLED=true`
+          //    (early exit no topo). Não há mais branch dry-run mutável.
           summary.would_send++;
-          if (!dispatchEnabled) {
-            await revertProcessingToPending(n.id, token);
-            console.info(
-              "[wa-dispatcher] would_send",
-              JSON.stringify({
-                id: n.id,
-                type: n.notification_type,
-                category: n.category,
-                priority: n.priority,
-              }),
-            );
-            continue;
-          }
+
 
           // 5) WA-C9.2 Fase D.2B.2 — Envio real ATRÁS da dupla trava.
           //    Enquanto WHATSAPP_OUTBOUND_HTTP_ENABLED/WHATSAPP_CANARY_ENABLED
