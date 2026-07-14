@@ -736,7 +736,7 @@ export async function executeNotificationAttemptDryTechnical(
       recipient: prepared.recipientDigits,
       templateName: prepared.request.template.name,
       languageCode: prepared.request.template.language.code,
-      components: prepared.request.template.components,
+      components: prepared.request.template.components ?? [],
       clientReference: prepared.clientReference,
       attemptToken: prepared.attemptToken,
       timeoutMs: input.timeoutMs,
