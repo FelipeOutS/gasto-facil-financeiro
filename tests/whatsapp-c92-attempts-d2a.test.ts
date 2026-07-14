@@ -706,13 +706,16 @@ describe("D.2A :: persistAndApplyEvents wiring", () => {
     expect(s.retryableErrors).toBeGreaterThanOrEqual(1);
   });
 
-  it("callback failed com PMID válido: reconcile é chamado e failed não vira rejected", async () => {
-    const fc = fakeClient({
-      notifs: [{ id: "n1", provider_message_id: "wamid.f", status: "processing", sent_at: T(9), delivered_at: null, read_at: null, failed_at: null, last_error_code: null }],
-    });
+  it("callback failed é encaminhado ao reconciler com event_status='failed'", async () => {
+    const fc = fakeClient({ notifs: [] });
     const parsed = parseStatusesFromChangeValue({
       statuses: [{ id: "wamid.f", status: "failed", timestamp: "1752316200", errors: [{ code: 131047 }] }],
     });
+    const { rec, calls } = makeReconciler([{ ok: true, outcome: "reconciled" }]);
+    const s = await persistAndApplyEvents(parsed.events, fc.client, rec);
+    expect(s.inserted).toBe(1);
+    expect(calls[0].eventStatus).toBe("failed");
+  });
     const { rec, calls } = makeReconciler([{ ok: true, outcome: "reconciled" }]);
     const s = await persistAndApplyEvents(parsed.events, fc.client, rec);
     expect(s.inserted).toBe(1);
