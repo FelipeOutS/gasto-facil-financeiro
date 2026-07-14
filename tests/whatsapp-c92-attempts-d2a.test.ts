@@ -7,7 +7,7 @@
  * transport, NENHUMA Graph API, NENHUMA notification real.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 
 import {
   finalizeAttemptAccepted,
