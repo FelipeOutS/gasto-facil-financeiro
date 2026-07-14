@@ -847,7 +847,9 @@ async function defaultAttemptReconciler(client: SupabaseLike): Promise<AttemptRe
     return {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async reconcile(_input) {
-        return { ok: true, outcome: null };
+        // No-op benigno: outcome "unmatched" evita marcar retry no webhook
+        // e mantém contadores D.2A previsíveis em ambientes de teste Fase C.
+        return { ok: true, outcome: "unmatched" };
       },
     };
   }
