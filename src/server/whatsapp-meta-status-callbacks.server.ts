@@ -837,19 +837,43 @@ export interface AttemptReconciler {
   }>;
 }
 
+/**
+ * D.2A HARDENING — reconciler no-op EXPLÍCITO para testes de Fase C que não
+ * conhecem attempts. NUNCA é retornado pela default factory; deve ser passado
+ * de forma explícita via `persistAndApplyEvents(events, client, reconciler)`
+ * ou `processMetaStatusCallbacks(payload, { reconciler })`.
+ *
+ * Não pode ser ativado por env, por default, nem inferido em runtime pela
+ * ausência de `.rpc`. A ausência de `.rpc` em produção é erro de infra e
+ * DEVE derivar em `requiresWebhookRetry=true`.
+ */
+export function createLegacyNoopAttemptReconciler(): AttemptReconciler {
+  return {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async reconcile(_input) {
+      return { ok: true, outcome: "unmatched" };
+    },
+  };
+}
+
 async function defaultAttemptReconciler(client: SupabaseLike): Promise<AttemptReconciler> {
-  // Se o client injetado não expõe `.rpc` (mock legado de Fase C sem attempts),
-  // a reconciliação vira no-op silencioso — a Fase C não conhece attempts e
-  // seus testes não devem observar contadores D.2A novos como falha.
   const hasRpc =
     typeof (client as unknown as { rpc?: unknown }).rpc === "function";
   if (!hasRpc) {
+    // HARDENING: fail-closed. Nenhum downgrade silencioso. Ausência de `.rpc`
+    // em produção significa wiring/config quebrada — não pode ser tratada como
+    // sucesso. O caller (persistAndApplyEvents) converterá em requiresWebhookRetry.
+    console.error(
+      JSON.stringify({
+        module: "wa-status-callbacks-d2a",
+        event: "reconciler_rpc_unavailable",
+        detail: "supabase client missing .rpc; refusing silent downgrade",
+      }),
+    );
     return {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async reconcile(_input) {
-        // No-op benigno: outcome "unmatched" evita marcar retry no webhook
-        // e mantém contadores D.2A previsíveis em ambientes de teste Fase C.
-        return { ok: true, outcome: "unmatched" };
+        return { ok: false, outcome: null, reason: "rpc_unavailable" };
       },
     };
   }
