@@ -1097,6 +1097,12 @@ export async function reconcileStatusEvents(
 export interface ProcessMetaStatusCallbacksOptions {
   expected_phone_number_id?: string | null;
   client?: SupabaseLike;
+  /**
+   * D.2A HARDENING — reconciler explícito. Somente para testes que precisam
+   * suprimir a reconciliação attempt (Fase C sem attempts). Produção NUNCA
+   * passa este campo; o default fail-closed é aplicado.
+   */
+  reconciler?: AttemptReconciler;
 }
 
 export type MetaStatusProcessingResult = ProcessOutcome & {
