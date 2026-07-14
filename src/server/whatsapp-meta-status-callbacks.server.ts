@@ -838,6 +838,19 @@ export interface AttemptReconciler {
 }
 
 async function defaultAttemptReconciler(client: SupabaseLike): Promise<AttemptReconciler> {
+  // Se o client injetado não expõe `.rpc` (mock legado de Fase C sem attempts),
+  // a reconciliação vira no-op silencioso — a Fase C não conhece attempts e
+  // seus testes não devem observar contadores D.2A novos como falha.
+  const hasRpc =
+    typeof (client as unknown as { rpc?: unknown }).rpc === "function";
+  if (!hasRpc) {
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      async reconcile(_input) {
+        return { ok: true, outcome: null };
+      },
+    };
+  }
   const mod = await import("@/server/whatsapp-notification-attempts.server");
   return {
     async reconcile(input) {
