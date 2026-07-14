@@ -41,6 +41,12 @@ export interface ParsedStatusEvent {
   pricing_category: string | null;
   phone_number_id: string | null;
   event_key: string;
+  /**
+   * D.2A — Referência opaca ecoada pela Meta (biz_opaque_callback_data).
+   * Nunca participa da event_key. Preservada apenas para lookup auxiliar
+   * e persistência. null quando ausente ou inválida.
+   */
+  client_reference: string | null;
 }
 
 export interface RawMetaStatus {
@@ -51,6 +57,7 @@ export interface RawMetaStatus {
   conversation?: { id?: unknown } | null;
   pricing?: { category?: unknown } | null;
   errors?: unknown;
+  biz_opaque_callback_data?: unknown;
 }
 
 export type ErrorCategory =
@@ -311,6 +318,18 @@ export function parseStatusesFromChangeValue(
       error_code,
     });
 
+    // D.2A — biz_opaque_callback_data: SOMENTE string; nunca participa de event_key.
+    // Strings vazias, com caracteres de controle, ou fora do limite viram null.
+    // Trim NÃO é aplicado para transformar valor inválido em válido.
+    let client_reference: string | null = null;
+    const rawCref = (raw as { biz_opaque_callback_data?: unknown }).biz_opaque_callback_data;
+    if (typeof rawCref === "string" && rawCref.length > 0 && rawCref.length <= 256) {
+      // eslint-disable-next-line no-control-regex
+      if (!/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(rawCref)) {
+        client_reference = rawCref;
+      }
+    }
+
     out.events.push({
       provider_message_id: pmid,
       event_status,
@@ -323,6 +342,7 @@ export function parseStatusesFromChangeValue(
       pricing_category,
       phone_number_id: metaPhoneId,
       event_key,
+      client_reference,
     });
   }
 
@@ -444,6 +464,7 @@ export async function persistStatusEvent(
         pricing_category: ev.pricing_category,
         phone_number_id: ev.phone_number_id,
         event_key: ev.event_key,
+        client_reference: ev.client_reference,
       })
       .select("id")
       .maybeSingle();
@@ -769,6 +790,12 @@ export interface ProcessOutcome {
   retryableErrors: number;
   permanentErrors: number;
   requiresWebhookRetry: boolean;
+  // D.2A — reconciliação attempt via RPC atômica.
+  callback_attempts_reconciled?: number;
+  callback_attempts_already_reconciled?: number;
+  callback_attempts_unmatched?: number;
+  callback_attempts_conflict?: number;
+  callback_attempts_anomaly?: number;
 }
 
 function emptyProcessOutcome(): ProcessOutcome {
@@ -785,12 +812,54 @@ function emptyProcessOutcome(): ProcessOutcome {
     retryableErrors: 0,
     permanentErrors: 0,
     requiresWebhookRetry: false,
+    callback_attempts_reconciled: 0,
+    callback_attempts_already_reconciled: 0,
+    callback_attempts_unmatched: 0,
+    callback_attempts_conflict: 0,
+    callback_attempts_anomaly: 0,
+  };
+}
+
+/**
+ * D.2A — Interface injetável para o wrapper de reconciliação attempt.
+ * Default: usa `reconcileAttemptFromCallback` do módulo de attempts.
+ */
+export interface AttemptReconciler {
+  reconcile(input: {
+    providerMessageId: string;
+    eventStatus: ProviderStatus;
+    clientReference: string | null;
+    eventAt: string;
+  }): Promise<{
+    ok: boolean;
+    outcome: string | null;
+    reason?: string;
+  }>;
+}
+
+async function defaultAttemptReconciler(client: SupabaseLike): Promise<AttemptReconciler> {
+  const mod = await import("@/server/whatsapp-notification-attempts.server");
+  return {
+    async reconcile(input) {
+      const r = await mod.reconcileAttemptFromCallback(
+        {
+          providerMessageId: input.providerMessageId,
+          eventStatus: input.eventStatus,
+          clientReference: input.clientReference,
+          eventAt: input.eventAt,
+        },
+        client,
+      );
+      if (r.ok) return { ok: true, outcome: r.outcome };
+      return { ok: false, outcome: null, reason: r.reason };
+    },
   };
 }
 
 export async function persistAndApplyEvents(
   events: ReadonlyArray<ParsedStatusEvent>,
   client: SupabaseLike = supabaseAdmin as unknown as SupabaseLike,
+  reconciler?: AttemptReconciler,
 ): Promise<ProcessOutcome> {
   const summary = emptyProcessOutcome();
   summary.received = events.length;
@@ -802,6 +871,8 @@ export async function persistAndApplyEvents(
     arr.push(ev);
     byPmid.set(ev.provider_message_id, arr);
   }
+
+  const rec = reconciler ?? (await defaultAttemptReconciler(client));
 
   for (const [pmid, list] of byPmid) {
     // 1) Correlaciona.
@@ -848,6 +919,47 @@ export async function persistAndApplyEvents(
       }
     }
 
+    // 2.5) D.2A — Reconciliação attempt via RPC atômica.
+    //      Ordem: PMID primeiro, client_reference como fallback (feito pela RPC).
+    //      Uma chamada por PMID; a RPC é idempotente. Erros isolados por PMID.
+    const representative = pickRepresentative(list);
+    try {
+      const rr = await rec.reconcile({
+        providerMessageId: pmid,
+        eventStatus: representative.event_status,
+        clientReference: representative.client_reference ?? null,
+        eventAt: representative.event_at,
+      });
+      if (rr.ok && rr.outcome) {
+        switch (rr.outcome) {
+          case "reconciled":
+            summary.callback_attempts_reconciled =
+              (summary.callback_attempts_reconciled ?? 0) + 1;
+            break;
+          case "unmatched":
+            summary.callback_attempts_unmatched =
+              (summary.callback_attempts_unmatched ?? 0) + 1;
+            break;
+          case "conflict_pmid":
+          case "conflict_state":
+            summary.callback_attempts_conflict =
+              (summary.callback_attempts_conflict ?? 0) + 1;
+            break;
+          case "notification_missing":
+            summary.callback_attempts_anomaly =
+              (summary.callback_attempts_anomaly ?? 0) + 1;
+            break;
+        }
+      } else {
+        // Falha da RPC não derruba o lote; se transitória, pede retry ao webhook.
+        summary.retryableErrors++;
+        summary.requiresWebhookRetry = true;
+      }
+    } catch {
+      summary.retryableErrors++;
+      summary.requiresWebhookRetry = true;
+    }
+
     // 3) Se há notificação (ou surgiu por reconciliação anterior), aplica.
     //    O apply relê TODOS os eventos por PMID, garantindo reparo de replays.
     if (notifId) {
@@ -872,6 +984,25 @@ export async function persistAndApplyEvents(
   }
 
   return summary;
+}
+
+/**
+ * Escolhe o evento "representante" do lote por PMID para chamar a RPC de
+ * reconciliação uma única vez por PMID. Prioridade: sent > delivered > read > failed
+ * (correlação de PMID→attempt não depende do status; usamos o mais autoritativo).
+ */
+function pickRepresentative(list: ParsedStatusEvent[]): ParsedStatusEvent {
+  const priority: Record<ProviderStatus, number> = {
+    sent: 4,
+    delivered: 3,
+    read: 2,
+    failed: 1,
+  };
+  let best = list[0];
+  for (const ev of list) {
+    if (priority[ev.event_status] > priority[best.event_status]) best = ev;
+  }
+  return best;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
