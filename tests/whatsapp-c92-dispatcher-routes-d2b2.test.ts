@@ -115,6 +115,10 @@ mock.module("@/server/whatsapp-contas-lembretes.server", () => ({
     counts.revalidateConta++;
     return { ok: true as const };
   },
+  gerarLembretesContasUsuario: async () => [],
+  cancelarLembretesDaConta: async () => 0,
+  findRecentSentLembreteForUser: async () => null,
+  renderLembreteConta: () => ({ text: "" }),
 }));
 
 mock.module("@/integrations/supabase/client.server", () => ({
