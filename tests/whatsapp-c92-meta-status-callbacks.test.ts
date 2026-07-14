@@ -441,14 +441,14 @@ describe("persistAndApplyEvents", () => {
         { id: "wamid.a", status: "delivered", timestamp: "1752316260" },
       ],
     });
-    const s1 = await persistAndApplyEvents(parsed.events, client);
+    const s1 = await persistAndApplyEvents(parsed.events, client, LEGACY_RECONCILER);
     expect(s1.inserted).toBe(2);
     expect(s1.duplicates).toBe(0);
     expect(s1.matched).toBe(2);
     expect(s1.state_changed).toBe(1);
 
     // Replay do mesmo lote — 100% duplicatas, sem mudança de estado nova.
-    const s2 = await persistAndApplyEvents(parsed.events, client);
+    const s2 = await persistAndApplyEvents(parsed.events, client, LEGACY_RECONCILER);
     expect(s2.duplicates).toBe(2);
     expect(s2.inserted).toBe(0);
 
@@ -465,7 +465,7 @@ describe("persistAndApplyEvents", () => {
     const parsed = parseStatusesFromChangeValue({
       statuses: [{ id: "wamid.zz", status: "delivered", timestamp: "1752316200" }],
     });
-    const s = await persistAndApplyEvents(parsed.events, client);
+    const s = await persistAndApplyEvents(parsed.events, client, LEGACY_RECONCILER);
     expect(s.unmatched).toBe(1);
     expect(s.inserted).toBe(1);
     expect(notifs).toHaveLength(0);
@@ -490,7 +490,7 @@ describe("persistAndApplyEvents", () => {
     const parsed = parseStatusesFromChangeValue({
       statuses: [{ id: "wamid.c", status: "delivered", timestamp: "1752316200" }],
     });
-    const s = await persistAndApplyEvents(parsed.events, client);
+    const s = await persistAndApplyEvents(parsed.events, client, LEGACY_RECONCILER);
     expect(s.anomalies).toBe(1);
     expect(s.state_changed).toBe(0);
     expect(notifs[0].status).toBe("cancelled");
@@ -514,7 +514,7 @@ describe("persistAndApplyEvents", () => {
     const parsed = parseStatusesFromChangeValue({
       statuses: [{ id: "wamid.p", status: "sent", timestamp: "1752316200" }],
     });
-    await persistAndApplyEvents(parsed.events, client);
+    await persistAndApplyEvents(parsed.events, client, LEGACY_RECONCILER);
     expect(notifs[0].status).toBe("pending");
     expect(notifs[0].sent_at).toBeTruthy();
   });
@@ -741,7 +741,7 @@ describe("WA-C9.2 Fase C — HTTP semantics & self-heal", () => {
       ],
     };
 
-    const r = await processMetaStatusCallbacks(payload, { client });
+    const r = await processMetaStatusCallbacks(payload, { client, reconciler: LEGACY_RECONCILER });
     expect(r.requiresWebhookRetry).toBe(true);
     expect(r.retryableErrors).toBeGreaterThan(0);
   });
@@ -805,7 +805,7 @@ describe("WA-C9.2 Fase C — HTTP semantics & self-heal", () => {
     // ISO; para o teste focar no self-heal usamos o evento já persistido.
     // Se a timestamp gerada por parse não bater com T(11), o event_key
     // também difere, mas o SELF-HEAL relê tudo do PMID e ainda promove.
-    const r = await processMetaStatusCallbacks(payload, { client: base.client });
+    const r = await processMetaStatusCallbacks(payload, { client: base.client, reconciler: LEGACY_RECONCILER });
     expect(r.requiresWebhookRetry).toBe(false);
     expect(base.notifs[0].status).toBe("sent");
     expect(base.notifs[0].delivered_at).toBeTruthy();
@@ -830,7 +830,7 @@ describe("WA-C9.2 Fase C — HTTP semantics & self-heal", () => {
         },
       ],
     };
-    const r = await processMetaStatusCallbacks(payload, { client: base.client });
+    const r = await processMetaStatusCallbacks(payload, { client: base.client, reconciler: LEGACY_RECONCILER });
     expect(r.requiresWebhookRetry).toBe(false);
     expect(r.received).toBe(0);
   });
