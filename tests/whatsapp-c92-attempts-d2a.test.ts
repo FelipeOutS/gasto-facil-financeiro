@@ -20,9 +20,12 @@ import {
 import {
   parseStatusesFromChangeValue,
   persistAndApplyEvents,
+  createLegacyNoopAttemptReconciler,
   type AttemptReconciler,
   type SupabaseLike,
 } from "@/server/whatsapp-meta-status-callbacks.server";
+
+import { recoverStuckProcessing } from "@/server/whatsapp-notifications.server";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Utilitários
