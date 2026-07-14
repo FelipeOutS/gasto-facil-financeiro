@@ -31,8 +31,12 @@ describe("migration candidata — canary template", () => {
     expect(sql).toContain("baixa");
   });
 
-  it("não altera templates produtivos gi_conta_*", () => {
-    expect(sql).not.toMatch(/gi_conta_/);
+  it("não altera templates produtivos gi_conta_* (fora de comentários)", () => {
+    const nonComment = sql
+      .split("\n")
+      .filter((ln) => !ln.trim().startsWith("--"))
+      .join("\n");
+    expect(nonComment).not.toMatch(/gi_conta_/);
   });
 
   it("não usa ON CONFLICT DO UPDATE silencioso", () => {
