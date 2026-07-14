@@ -15,10 +15,16 @@ import {
   persistAndApplyEvents,
   applyProviderStatusAggregate,
   reconcileStatusEvents,
+  createLegacyNoopAttemptReconciler,
   type ParsedStatusEvent,
   type CurrentNotification,
   type SupabaseLike,
 } from "@/server/whatsapp-meta-status-callbacks.server";
+
+// D.2A HARDENING — reconciler explícito p/ testes de Fase C (sem attempts).
+// Sem esta injeção, o default fail-closed retornaria rpc_unavailable e
+// marcaria requiresWebhookRetry=true — comportamento correto de produção.
+const LEGACY_RECONCILER = createLegacyNoopAttemptReconciler();
 
 const T = (h: number, m = 0, s = 0) =>
   new Date(Date.UTC(2026, 6, 12, h, m, s)).toISOString();
