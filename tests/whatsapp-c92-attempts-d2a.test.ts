@@ -649,9 +649,7 @@ describe("D.2A :: persistAndApplyEvents wiring", () => {
   }
 
   it("persiste client_reference no INSERT do status event", async () => {
-    const fc = fakeClient({
-      notifs: [{ id: "n1", provider_message_id: "wamid.a", status: "processing", sent_at: null, delivered_at: null, read_at: null, failed_at: null, last_error_code: null, claim_token: "t", claimed_at: T(9), lease_expires_at: T(19) }],
-    });
+    const fc = fakeClient({ notifs: [] });
     const parsed = parseStatusesFromChangeValue({
       statuses: [{ id: "wamid.a", status: "sent", timestamp: "1752316200", biz_opaque_callback_data: "ref-1" }],
     });
