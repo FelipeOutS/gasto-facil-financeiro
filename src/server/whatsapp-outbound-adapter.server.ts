@@ -68,7 +68,8 @@ export interface WhatsAppTemplateRequest {
   template: {
     name: string;
     language: { code: string };
-    components: WhatsAppTemplateComponent[];
+    /** Omitido quando o template não possui parâmetros dinâmicos. */
+    components?: WhatsAppTemplateComponent[];
   };
   biz_opaque_callback_data: string;
 }
@@ -221,17 +222,71 @@ export function buildWhatsAppTemplateRequest(input: {
   components: WhatsAppTemplateComponent[];
   clientReference: string;
 }): WhatsAppTemplateRequest {
-  return {
+  const req: WhatsAppTemplateRequest = {
     messaging_product: "whatsapp",
     to: input.recipientDigits,
     type: "template",
     template: {
       name: input.templateName,
       language: { code: input.languageCode },
-      components: input.components,
     },
     biz_opaque_callback_data: input.clientReference,
   };
+  if (Array.isArray(input.components) && input.components.length > 0) {
+    req.template.components = input.components;
+  }
+  return req;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Language resolver — WA-C9.2 Fase E.1E
+//
+// Precedência:
+//   1) languageOverride explícito passado pelo executor (server-only);
+//   2) template.payload_schema.language (metadata declarativo);
+//   3) template.language (legado, se ainda presente);
+//   4) fallback global "pt_BR".
+//
+// Só aceita locales explícitos: pt_BR, en_US. Fail-closed em qualquer
+// valor inválido — nunca acomoda locale vindo de payload de notification
+// ou de request público (o caller deve garantir server-only trust).
+
+export const SUPPORTED_TEMPLATE_LANGUAGES = Object.freeze(["pt_BR", "en_US"] as const);
+export type SupportedTemplateLanguage = (typeof SUPPORTED_TEMPLATE_LANGUAGES)[number];
+
+export type LanguageResolution =
+  | { ok: true; code: SupportedTemplateLanguage; source: "override" | "payload_schema" | "template_field" | "fallback" }
+  | { ok: false; reason: "override_invalid" | "payload_schema_invalid" };
+
+function isSupportedLanguage(v: unknown): v is SupportedTemplateLanguage {
+  if (typeof v !== "string") return false;
+  const trimmed = v.trim();
+  if (trimmed === "" || trimmed !== v) return false;
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u001f\u007f]/.test(trimmed)) return false;
+  return (SUPPORTED_TEMPLATE_LANGUAGES as readonly string[]).includes(trimmed);
+}
+
+export function resolveTemplateLanguage(
+  template: NotificationTemplateRow,
+  override?: string | null | undefined,
+): LanguageResolution {
+  if (override !== undefined && override !== null) {
+    if (!isSupportedLanguage(override)) return { ok: false, reason: "override_invalid" };
+    return { ok: true, code: override, source: "override" };
+  }
+  const schema = (template.payload_schema ?? {}) as Record<string, unknown>;
+  if ("language" in schema && schema.language !== undefined && schema.language !== null) {
+    if (!isSupportedLanguage(schema.language)) return { ok: false, reason: "payload_schema_invalid" };
+    return { ok: true, code: schema.language, source: "payload_schema" };
+  }
+  const legacy = template.language;
+  if (legacy !== undefined && legacy !== null && legacy !== "") {
+    if (isSupportedLanguage(legacy)) return { ok: true, code: legacy, source: "template_field" };
+    // Legacy inválido é ignorado silenciosamente para não quebrar produtivos;
+    // cai no fallback pt_BR.
+  }
+  return { ok: true, code: "pt_BR", source: "fallback" };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -306,6 +361,7 @@ export type PrepareResult =
     }
   | { kind: "invalid_recipient"; reason: "empty" | "invalid" }
   | { kind: "invalid_template"; reason: RenderError["reason"]; param?: string }
+  | { kind: "invalid_template_language"; reason: "override_invalid" | "payload_schema_invalid" }
   | { kind: "state_changed" } // notification not processing / bad claim / lease expired
   | { kind: "active_attempt_exists" } // planned/sending
   | { kind: "quarantined" } // ambiguous ativo — bloqueia retry
@@ -330,11 +386,15 @@ export async function prepareNotificationAttempt(
     return { kind: "invalid_template", reason: rendered.reason, param: (rendered as { param?: string }).param };
   }
 
-  // 3. Gerar tokens + hash + request.
+  // 3. Resolver idioma (override → payload_schema → legacy → fallback).
+  const langRes = resolveTemplateLanguage(input.template, input.languageOverride);
+  if (!langRes.ok) return { kind: "invalid_template_language", reason: langRes.reason };
+
+  // 4. Gerar tokens + hash + request.
   const attemptToken = uuid(deps);
   const clientReference = buildClientReference(attemptToken);
   const templateName = String(input.template.meta_template_name);
-  const languageCode = input.languageOverride ?? input.template.language ?? "pt_BR";
+  const languageCode = langRes.code;
   const request = buildWhatsAppTemplateRequest({
     recipientDigits: recipient.digits,
     templateName,
@@ -611,6 +671,7 @@ export type ExecuteResult =
   | { kind: "ambiguous"; attemptId: string; reason: string }
   | { kind: "state_changed" }
   | { kind: "invalid_template"; reason: string; param?: string }
+  | { kind: "invalid_template_language"; reason: "override_invalid" | "payload_schema_invalid" }
   | { kind: "invalid_recipient"; reason: "empty" | "invalid" }
   | { kind: "active_attempt_exists" }
   | { kind: "quarantined" }
@@ -644,6 +705,9 @@ export async function executeNotificationAttemptDryTechnical(
         param: prepared.param,
       });
       return { kind: "invalid_template", reason: prepared.reason, param: prepared.param };
+    case "invalid_template_language":
+      logStructured({ event: "invalid_template_language", reason: prepared.reason });
+      return { kind: "invalid_template_language", reason: prepared.reason };
     case "state_changed":
       logStructured({ event: "ownership_lost", notification_id: input.notificationId });
       return { kind: "state_changed" };
@@ -672,7 +736,7 @@ export async function executeNotificationAttemptDryTechnical(
       recipient: prepared.recipientDigits,
       templateName: prepared.request.template.name,
       languageCode: prepared.request.template.language.code,
-      components: prepared.request.template.components,
+      components: prepared.request.template.components ?? [],
       clientReference: prepared.clientReference,
       attemptToken: prepared.attemptToken,
       timeoutMs: input.timeoutMs,
