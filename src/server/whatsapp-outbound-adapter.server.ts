@@ -68,7 +68,8 @@ export interface WhatsAppTemplateRequest {
   template: {
     name: string;
     language: { code: string };
-    components: WhatsAppTemplateComponent[];
+    /** Omitido quando o template não possui parâmetros dinâmicos. */
+    components?: WhatsAppTemplateComponent[];
   };
   biz_opaque_callback_data: string;
 }
