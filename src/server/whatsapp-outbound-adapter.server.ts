@@ -667,6 +667,7 @@ export type ExecuteResult =
   | { kind: "ambiguous"; attemptId: string; reason: string }
   | { kind: "state_changed" }
   | { kind: "invalid_template"; reason: string; param?: string }
+  | { kind: "invalid_template_language"; reason: "override_invalid" | "payload_schema_invalid" }
   | { kind: "invalid_recipient"; reason: "empty" | "invalid" }
   | { kind: "active_attempt_exists" }
   | { kind: "quarantined" }
