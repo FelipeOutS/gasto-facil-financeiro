@@ -198,7 +198,50 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
             continue;
           }
 
-          // 5) Envio real será implementado em fase futura (atrás da flag).
+          // 5) WA-C9.2 Fase D.2B.2 — Envio real ATRÁS da dupla trava.
+          //    Enquanto WHATSAPP_OUTBOUND_HTTP_ENABLED/WHATSAPP_CANARY_ENABLED
+          //    permanecerem OFF, `runOutboundForNotification` retorna `gated`
+          //    e a linha volta para `pending`.
+          const { runOutboundForNotification } = await import(
+            "@/server/whatsapp-dispatcher-outbound.server"
+          );
+          const outcome = await runOutboundForNotification(
+            { id: n.id, user_id: n.user_id, notification_type: n.notification_type, payload: n.payload },
+            token,
+          );
+          switch (outcome.kind) {
+            case "gated":
+            case "no_recipient":
+            case "no_template":
+            case "transport_unavailable": {
+              await revertProcessingToPending(n.id, token);
+              console.info(
+                "[wa-dispatcher] outbound_deferred",
+                JSON.stringify({
+                  id: n.id,
+                  type: n.notification_type,
+                  category: n.category,
+                  kind: outcome.kind,
+                }),
+              );
+              break;
+            }
+            case "executed": {
+              // A finalização autoritativa é da RPC atômica (D.2A). Não
+              // mexemos em notification.status aqui: a máquina de estados
+              // é responsabilidade das RPCs finalize_* / reconcile_callback.
+              console.info(
+                "[wa-dispatcher] outbound_executed",
+                JSON.stringify({
+                  id: n.id,
+                  type: n.notification_type,
+                  category: n.category,
+                  result_kind: outcome.result.kind,
+                }),
+              );
+              break;
+            }
+          }
         }
 
         return Response.json(summary);
