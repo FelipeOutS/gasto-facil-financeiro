@@ -716,13 +716,6 @@ describe("D.2A :: persistAndApplyEvents wiring", () => {
     expect(s.inserted).toBe(1);
     expect(calls[0].eventStatus).toBe("failed");
   });
-    const { rec, calls } = makeReconciler([{ ok: true, outcome: "reconciled" }]);
-    const s = await persistAndApplyEvents(parsed.events, fc.client, rec);
-    expect(s.inserted).toBe(1);
-    expect(calls[0].eventStatus).toBe("failed");
-    // Notification pode ir para failed pelo redutor; attempt permanece do lado da RPC
-    // (aqui só verificamos que o wiring não chamou finalizeAttemptRejected — não temos rpc client)
-  });
 
   it("PMID diferente → conflict_pmid é contabilizado como conflict", async () => {
     const fc = fakeClient({ notifs: [] });
