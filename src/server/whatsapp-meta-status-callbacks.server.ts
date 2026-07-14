@@ -1162,7 +1162,7 @@ export async function processMetaStatusCallbacks(
 
   if (allEvents.length === 0) return totalSummary;
 
-  const persisted = await persistAndApplyEvents(allEvents, client);
+  const persisted = await persistAndApplyEvents(allEvents, client, opts.reconciler);
   totalSummary.received += persisted.received;
   totalSummary.inserted += persisted.inserted;
   totalSummary.duplicates += persisted.duplicates;
