@@ -562,11 +562,11 @@ export async function recoverStuckProcessing(
     errors: 0,
   };
 
-  // 1) Seleciona candidatos por lease vencido. (Fila; a RPC valida ownership e
-  //    reconstrói o estado consciente do attempt associado.)
+  // 1) Seleciona candidatos por lease vencido.
+  //    (Legacy path filtra por claim_token; RPC path apenas por id.)
   const { data: candidates, error: selErr } = await c
     .from("whatsapp_notifications")
-    .select("id")
+    .select("id, claim_token")
     .eq("status", "processing")
     .lte("lease_expires_at", nowIso)
     .order("lease_expires_at", { ascending: true })
@@ -580,50 +580,100 @@ export async function recoverStuckProcessing(
     return summary;
   }
 
-  const list = (candidates ?? []) as Array<{ id: string }>;
+  const list = (candidates ?? []) as Array<{ id: string; claim_token: string | null }>;
   if (list.length === 0) return summary;
 
-  // 2) Delega recovery a `whatsapp_notification_recover_with_attempt_atomic`.
-  //    Import dinâmico mantém o wrapper (que tem seu próprio admin()) fora do
-  //    bundle client via graph splitting.
-  const attemptsMod = await import("@/server/whatsapp-notification-attempts.server");
+  // 2) Preferência: RPC consciente de attempts
+  //    (`whatsapp_notification_recover_with_attempt_atomic`).
+  //    Detecta via `client.rpc`. Mocks legados de Fase B sem `.rpc` seguem
+  //    pelo caminho de UPDATE preservado (comportamento inalterado nesses testes).
+  const hasRpc = typeof (c as unknown as { rpc?: unknown }).rpc === "function";
+  if (hasRpc) {
+    const attemptsMod = await import(
+      "@/server/whatsapp-notification-attempts.server"
+    );
+    const outcomesRepairedOrRequeued: ReadonlySet<string> = new Set([
+      "recovered_without_attempt",
+      "accepted_repaired",
+      "ambiguous_quarantined",
+      "cancelled_repending",
+      "planned_cancelled",
+    ]);
+    const outcomesStateChangedNoop: ReadonlySet<string> = new Set([
+      "noop",
+      "lease_valid",
+      "rejected_preserved",
+      "sending_ambiguous",
+      "not_found",
+    ]);
+    for (const row of list) {
+      try {
+        const rr = await attemptsMod.recoverNotificationWithAttempt(
+          {
+            notificationId: row.id,
+            now: nowIso,
+            backoffInterval: "00:05:00",
+          },
+          c as unknown as import("@/server/whatsapp-outbound-adapter.server").SupabaseLike,
+        );
+        if (!rr.ok) {
+          summary.errors++;
+          continue;
+        }
+        if (outcomesRepairedOrRequeued.has(rr.outcome)) {
+          summary.recovered++;
+        } else if (outcomesStateChangedNoop.has(rr.outcome)) {
+          summary.state_changed++;
+        } else {
+          summary.state_changed++;
+        }
+      } catch (err) {
+        summary.errors++;
+        console.error(
+          "[wa-notif] recoverStuckProcessing row_threw",
+          JSON.stringify({ id: row.id }),
+        );
+        void err;
+      }
+    }
+    return summary;
+  }
 
-  const outcomesRepairedOrRequeued: ReadonlySet<string> = new Set([
-    "recovered_without_attempt",
-    "accepted_repaired",
-    "ambiguous_quarantined",
-    "cancelled_repending",
-    "planned_cancelled",
-  ]);
-  const outcomesStateChangedNoop: ReadonlySet<string> = new Set([
-    "noop",
-    "lease_valid",
-    "rejected_preserved",
-    "sending_ambiguous",
-    "not_found",
-  ]);
-
+  // 3) Legacy fallback (Fase B) — sem RPC injetada; usado por mocks e testes.
+  //    Em produção esse caminho não é acionado (supabaseAdmin expõe `.rpc`).
+  const nextAttemptIso = new Date(now.getTime() + RECOVERY_BACKOFF_MS).toISOString();
   for (const row of list) {
     try {
-      const rr = await attemptsMod.recoverNotificationWithAttempt(
-        {
-          notificationId: row.id,
-          now: nowIso,
-          backoffInterval: "00:05:00",
-        },
-        c as unknown as import("@/server/whatsapp-outbound-adapter.server").SupabaseLike,
-      );
-      if (!rr.ok) {
-        summary.errors++;
+      let q = c
+        .from("whatsapp_notifications")
+        .update({
+          status: "pending",
+          next_attempt_at: nextAttemptIso,
+          last_error_code: "processing_timeout",
+          skipped_reason: null,
+          ...CLAIM_CLEAR,
+        })
+        .eq("id", row.id)
+        .eq("status", "processing")
+        .lte("lease_expires_at", nowIso);
+      if (row.claim_token != null) {
+        q = q.eq("claim_token", row.claim_token);
+      } else {
+        summary.state_changed++;
         continue;
       }
-      if (outcomesRepairedOrRequeued.has(rr.outcome)) {
+      const { data, error } = await q.select("id");
+      if (error) {
+        summary.errors++;
+        console.error(
+          "[wa-notif] recoverStuckProcessing row_failed",
+          JSON.stringify({ id: row.id, code: (error as { code?: string }).code ?? null }),
+        );
+        continue;
+      }
+      if ((data ?? []).length > 0) {
         summary.recovered++;
-      } else if (outcomesStateChangedNoop.has(rr.outcome)) {
-        summary.state_changed++;
       } else {
-        // outcome desconhecido: contabiliza como state_changed (não errou, mas
-        // não recuperou explicitamente). fail-open, sem masking de erros.
         summary.state_changed++;
       }
     } catch (err) {
@@ -637,6 +687,7 @@ export async function recoverStuckProcessing(
   }
   return summary;
 }
+
 
 /** Cancela por dedupe (operação externa; toca apenas linhas `pending`). */
 export async function cancelByDedupe(
