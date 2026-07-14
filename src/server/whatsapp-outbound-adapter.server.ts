@@ -361,6 +361,7 @@ export type PrepareResult =
     }
   | { kind: "invalid_recipient"; reason: "empty" | "invalid" }
   | { kind: "invalid_template"; reason: RenderError["reason"]; param?: string }
+  | { kind: "invalid_template_language"; reason: "override_invalid" | "payload_schema_invalid" }
   | { kind: "state_changed" } // notification not processing / bad claim / lease expired
   | { kind: "active_attempt_exists" } // planned/sending
   | { kind: "quarantined" } // ambiguous ativo — bloqueia retry
