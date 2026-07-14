@@ -705,6 +705,9 @@ export async function executeNotificationAttemptDryTechnical(
         param: prepared.param,
       });
       return { kind: "invalid_template", reason: prepared.reason, param: prepared.param };
+    case "invalid_template_language":
+      logStructured({ event: "invalid_template_language", reason: prepared.reason });
+      return { kind: "invalid_template_language", reason: prepared.reason };
     case "state_changed":
       logStructured({ event: "ownership_lost", notification_id: input.notificationId });
       return { kind: "state_changed" };
