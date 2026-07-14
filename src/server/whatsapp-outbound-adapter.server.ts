@@ -386,11 +386,15 @@ export async function prepareNotificationAttempt(
     return { kind: "invalid_template", reason: rendered.reason, param: (rendered as { param?: string }).param };
   }
 
-  // 3. Gerar tokens + hash + request.
+  // 3. Resolver idioma (override → payload_schema → legacy → fallback).
+  const langRes = resolveTemplateLanguage(input.template, input.languageOverride);
+  if (!langRes.ok) return { kind: "invalid_template_language", reason: langRes.reason };
+
+  // 4. Gerar tokens + hash + request.
   const attemptToken = uuid(deps);
   const clientReference = buildClientReference(attemptToken);
   const templateName = String(input.template.meta_template_name);
-  const languageCode = input.languageOverride ?? input.template.language ?? "pt_BR";
+  const languageCode = langRes.code;
   const request = buildWhatsAppTemplateRequest({
     recipientDigits: recipient.digits,
     templateName,
