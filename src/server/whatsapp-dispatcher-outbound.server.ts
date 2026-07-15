@@ -111,17 +111,52 @@ async function defaultLoadRecipient(
   return row.telefone ?? null;
 }
 
-async function defaultLoadTemplate(
+/**
+ * WA-C9.2 Fase E.3A — Loader corrigido.
+ *
+ * Regressão observada em produção: a query anterior selecionava a coluna
+ * `language`, que NÃO existe em `whatsapp_notification_templates`. O
+ * PostgREST retornava `error` + `data=null` e o dispatcher classificava
+ * como `no_template`, revertendo a notification para `pending` sem tocar
+ * o transport.
+ *
+ * Correção mínima: selecionar apenas colunas reais do schema. O idioma
+ * continua sendo resolvido por `resolveTemplateLanguage` a partir de
+ * `payload_schema.language` (fallback `pt_BR`).
+ *
+ * Erros reais de query são logados de forma sanitizada (apenas mensagem
+ * e código) e retornam `null` — fail-closed — sem expor SQL, credenciais
+ * ou payload.
+ */
+export async function defaultLoadTemplate(
   key: string,
   client: SupabaseLike,
 ): Promise<NotificationTemplateRow | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const c = client as any;
-  const { data } = await c
+  const { data, error } = await c
     .from("whatsapp_notification_templates")
-    .select("key, category, meta_template_name, language, payload_schema, active")
+    .select(
+      "key, category, meta_template_name, payload_schema, active, requires_template_window, default_priority",
+    )
     .eq("key", key)
     .maybeSingle();
+  if (error) {
+    try {
+      console.log(
+        JSON.stringify({
+          module: "wa-dispatcher-outbound",
+          event: "template_query_error",
+          key,
+          code: (error as { code?: unknown })?.code ?? null,
+          message: (error as { message?: unknown })?.message ?? null,
+        }),
+      );
+    } catch {
+      // no-op
+    }
+    return null;
+  }
   if (!data) return null;
   return data as NotificationTemplateRow;
 }
