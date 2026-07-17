@@ -2541,6 +2541,7 @@ async function processarSessaoComprovanteAtiva(args: {
       ? sessao.status
       : "img_aguardando_confirmacao") as ComprovanteStatus,
     decisao,
+    externalMessageId: msg.external_id ?? undefined,
   });
   await supabaseAdmin.from("whatsapp_messages").update({ status: "expirada" }).eq("id", sessao.id);
   if (out.status === "salva") {
