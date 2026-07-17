@@ -35,10 +35,14 @@ mock.module("../src/server/whatsapp-entitlement.server", () => ({
 mock.module("@/server/whatsapp-c11-gates.server", () => ({
   runInboundProductionGate: async () => ({ allowed: true as const, userId: "u-admin-master" }),
   runNotificationCreationGate: async () => ({ allowed: true as const }),
+  canCreateNotificationForUser: async () => ({ allowed: true as const, reason: "allowed" as const }),
+  isInboundGateOk: () => true,
 }));
 mock.module("../src/server/whatsapp-c11-gates.server", () => ({
   runInboundProductionGate: async () => ({ allowed: true as const, userId: "u-admin-master" }),
   runNotificationCreationGate: async () => ({ allowed: true as const }),
+  canCreateNotificationForUser: async () => ({ allowed: true as const, reason: "allowed" as const }),
+  isInboundGateOk: () => true,
 }));
 import {
   gerarLembretesContasUsuario,
