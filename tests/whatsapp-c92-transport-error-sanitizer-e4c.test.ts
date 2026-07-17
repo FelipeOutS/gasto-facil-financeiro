@@ -164,10 +164,9 @@ describe("sanitizeTransportError", () => {
       "cause_errno",
       "duration_ms",
       "error_name",
-      "error_received" in r ? "error_received" : "error_name", // dummy
       "response_received",
       "timed_out",
-    ].filter((k, i, a) => a.indexOf(k) === i).sort());
+    ]);
   });
 
   it("classificação continua ambiguous no transport (contrato)", () => {
