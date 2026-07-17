@@ -2425,7 +2425,7 @@ async function processarReceita(args: {
   // Confirmação final: persiste.
   if (current === "rec_aguardando_confirmacao") {
     if (decisao === "confirm") {
-      const result = await persistirReceita(userId, session);
+      const result = await persistirReceita(userId, session, msg.external_id ?? undefined);
       if (!result.ok) {
         // mantém sessão para o usuário tentar de novo
         await gravarSessao(
