@@ -269,14 +269,36 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           // Deriva canonical override quando o topic é explicito (refund/chargeback via
           // notification separada do MP mesmo com status ainda "approved" no recurso).
           let overrideCanonical: CanonicalBillingStatus | null = null;
+          let cancellationKind: "immediate" | "scheduled" | null = null;
           if (topic.includes("refund")) overrideCanonical = "refunded";
           else if (topic.includes("chargeback") || topic.includes("charged_back"))
             overrideCanonical = "chargeback";
           else if (rawStatus === "cancelled" || rawStatus === "canceled") {
-            // Cancelamento imediato por padrão. Cancelamento agendado só é aplicável
-            // via reconciliador quando o operador tem evidência clara. No webhook
-            // seguimos fail-closed: bloqueia acesso ao receber cancelled.
-            overrideCanonical = "cancelled_immediate";
+            // WA-C11 F2.2: classificar via resolver autoritativo, sem confiar em
+            // hint do frontend. Lê current_period_end persistido para preservar
+            // período pago vigente (scheduled) vs. encerrar imediatamente.
+            const { data: planRow } = await supabaseAdmin
+              .from("user_plans")
+              .select("current_period_end")
+              .eq("user_id", userId)
+              .maybeSingle();
+            const resolved = resolveMercadoPagoCancellationKind({
+              rawStatus: payment.status ?? null,
+              dateApproved: (payment as { date_approved?: string }).date_approved ?? null,
+              dateLastUpdated:
+                (payment as { date_last_updated?: string }).date_last_updated ?? null,
+              months,
+              currentPeriodEnd: planRow?.current_period_end ?? null,
+            });
+            if (resolved.kind === "scheduled") {
+              overrideCanonical = "cancelled_scheduled";
+              cancellationKind = "scheduled";
+            } else if (resolved.kind === "immediate") {
+              overrideCanonical = "cancelled_immediate";
+              cancellationKind = "immediate";
+            }
+            // unknown/not_cancelled: sem override — helper aplica normalização
+            // padrão preservando fail-closed sem encurtar período pago.
           }
 
           const applyResult = await applyMercadoPagoBillingEvent({
@@ -297,6 +319,7 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
             months,
             eventType: topic,
             overrideCanonical,
+            cancellationKind,
           });
 
           applyOutcome = applyResult.outcome;
