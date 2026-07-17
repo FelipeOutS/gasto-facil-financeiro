@@ -98,6 +98,8 @@ const INCLUDE = [
   "whatsapp-c92-dispatcher-concurrency-d2b2.test.ts",
   "whatsapp-c92-dispatcher-hardening-d2b2.test.ts",
   "whatsapp-c92-template-loader-e3a.test.ts",
+  "whatsapp-c92-transport-error-sanitizer-e4c.test.ts",
+  "whatsapp-c92-recovery-anti-ambiguous-e4c.test.ts",
   "whatsapp-contas-lembretes-c9.test.ts",
   "whatsapp-c91-lifecycle.test.ts",
   "whatsapp-boleto-c10a.test.ts",
