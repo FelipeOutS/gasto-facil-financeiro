@@ -193,21 +193,21 @@ describe("assertFinancialActionQuotaForWhatsApp — entitlement", () => {
 });
 
 describe("assertFinancialActionQuotaForWhatsApp — cycle", () => {
-  it("bloqueia quando cycle.source=invalid", async () => {
+  it("plano ausente: cai para calendar_month e permite", async () => {
     const r = await assertFinancialActionQuotaForWhatsApp(
       { userId: USER, externalMessageId: MSGID, actionType: "expense" },
-      baseDeps({
-        loadPlanRow: async () => ({
-          plano: "premium_annual",
-          status: "canceled",
-          current_period_start: null,
-          current_period_end: null,
-          access_until: null,
-        }),
-      }),
+      baseDeps({ loadPlanRow: async () => null }),
     );
-    expect(r.allowed).toBe(false);
-    expect(r.reason).toBe("cycle_invalid");
+    expect(r.allowed).toBe(true);
+    expect(r.cycleSource).toBe("calendar_month");
+  });
+
+  it("cycle billing autoritativo quando plano tem período válido", async () => {
+    const r = await assertFinancialActionQuotaForWhatsApp(
+      { userId: USER, externalMessageId: MSGID, actionType: "expense" },
+      baseDeps(),
+    );
+    expect(r.cycleSource).toBe("billing_cycle");
   });
 });
 
