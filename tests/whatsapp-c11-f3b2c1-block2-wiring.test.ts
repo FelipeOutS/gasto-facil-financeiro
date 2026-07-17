@@ -123,8 +123,10 @@ mock.module("@/server/whatsapp-financial-quota-gate.server", () => ({
 // Mocks para o path Pix legacy (handlePagarPessoaIntent):
 mock.module("@/server/whatsapp-favorecidos.server", () => ({
   findFavorecidosByNome: async () => [],
-  recordFavorecido: () => {},
-  findFavorecidoByExactNome: async () => null,
+  findFavorecidoByPixKey: async () => null,
+  createFavorecido: async () => ({ id: "fav-1" }),
+  updateFavorecidoPix: async () => ({ ok: true }),
+  rotuloTipoPix: (_t: string) => "chave",
 }));
 mock.module("@/server/contas-vencimento.server", () => ({
   findVencimentoByTerm: async () => [],
