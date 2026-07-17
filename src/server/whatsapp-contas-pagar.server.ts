@@ -34,6 +34,11 @@ import {
   type ContaVencimentoRow,
 } from "./contas-vencimento.server";
 import { nowInAppTz } from "./cartao-fatura.server";
+// WA-C11 3B.2.C.1 Block 4 — quota financeira para baixa de conta.
+import {
+  assertFinancialActionQuotaForWhatsApp,
+  financialQuotaBlockedReply,
+} from "@/server/whatsapp-financial-quota-gate.server";
 
 // Live-binding para permitir mock.module() em testes (mesmo padrão WA-F3/WA-C2).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
