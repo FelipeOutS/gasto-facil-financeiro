@@ -219,9 +219,22 @@ function makeBuilder(table: string): any {
     }
     if (ctx.op === "update") {
       if (table === "whatsapp_messages") {
+        // Aplica update aos inserts que casam com os filtros e coleta
+        // ids para suportar CAS via `.select("id")` (WA-C11 Block 2).
+        const matchedIds: Array<{ id: string }> = [];
         state.inserts.forEach((entry, idx) => {
           if (entry.table === "whatsapp_messages" && matchesFilters(entry.row, idx)) {
+            // Aplica notFilters (WA-C11 pix claim: status NOT IN (...)).
+            let notBlocked = false;
+            for (const nf of (ctx.notFilters as Array<{ col: string; op: string; val: unknown }> | undefined) ?? []) {
+              const actual = (entry.row as Record<string, unknown>)[nf.col];
+              if (nf.op === "in" && Array.isArray(nf.val) && (nf.val as unknown[]).includes(actual)) {
+                notBlocked = true; break;
+              }
+            }
+            if (notBlocked) return;
             entry.row = { ...entry.row, ...ctx.payload };
+            matchedIds.push({ id: `m-${idx + 1}` });
           }
         });
         const s = ctx.payload?.status;
@@ -238,6 +251,13 @@ function makeBuilder(table: string): any {
             status: s,
             parsed: ctx.payload?.parsed ?? state.pendingRow.parsed,
           };
+        }
+        // Se o caller pediu `.select(...)`, devolve a lista; caso contrário
+        // mantém o retorno legado (null) para não quebrar leituras antigas.
+        // Detectamos via presença de `select` chamado antes de finalizar —
+        // no fake atual `.select()` só troca o retorno se houver ids.
+        if (matchedIds.length > 0) {
+          return { data: matchedIds, error: null };
         }
       }
       // WA-C3/WA-C4 — update condicional de contas_a_pagar. Suporta
