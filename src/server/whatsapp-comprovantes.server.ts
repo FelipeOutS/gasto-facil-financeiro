@@ -17,6 +17,10 @@
  */
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runExtractor, type OcrResult } from "@/server/ocr-comprovante.server";
+import {
+  assertFinancialActionQuotaForWhatsApp,
+  financialQuotaBlockedReply,
+} from "@/server/whatsapp-financial-quota-gate.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
 import {
   merchantKeyFor,
@@ -772,7 +776,21 @@ export async function persistirGastoComprovante(
   userId: string,
   s: ComprovanteSession,
   cats: CategoriaRow[],
+  externalMessageId?: string,
 ): Promise<{ ok: boolean; gastoId?: string; resposta: string }> {
+  // WA-C11 3B.2.C — Financial quota gate. Fail-closed sem external_id.
+  if (!externalMessageId || externalMessageId.trim().length === 0) {
+    console.error("[whatsapp-comprovante] persistirGastoComprovante missing externalMessageId");
+    return { ok: false, resposta: M.erroAoSalvar() };
+  }
+  const gateOutcome = await assertFinancialActionQuotaForWhatsApp({
+    userId,
+    externalMessageId,
+    actionType: "expense_receipt",
+  });
+  if (!gateOutcome.allowed) {
+    return { ok: false, resposta: financialQuotaBlockedReply(gateOutcome) };
+  }
   const cat = categoriaSugestaoLabel(s, cats);
   const data = s.data ?? todayLocalISO();
   const [y, mo] = data.split("-").map(Number);
