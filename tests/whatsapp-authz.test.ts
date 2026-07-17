@@ -49,6 +49,22 @@ const fakeAdmin = {
   },
   rpc: async (name: string) => {
     if (name === "can_use_whatsapp") return { data: linkState.betaOk, error: null };
+    if (name === "has_feature_access") {
+      // Espelha `public.has_feature_access(user_id,'whatsapp')`:
+      // Admin Master (via is_full_access) OU (assinatura ativa E plano
+      // elegível). Aqui a decisão do bypass Admin Master é feita pelo
+      // helper via `auth.admin.getUserById` — este mock só cobre plano.
+      const ELIGIBLE = new Set([
+        "pessoal_premium",
+        "mei_essencial",
+        "mei_inteligente",
+        "empresa",
+      ]);
+      const ok =
+        linkState.subscription.active &&
+        ELIGIBLE.has(linkState.subscription.plan);
+      return { data: ok, error: null };
+    }
     return { data: null, error: null };
   },
   auth: {

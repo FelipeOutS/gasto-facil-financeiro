@@ -77,7 +77,10 @@ export type SkippedReason =
   | "payable_paid"
   | "payable_cancelled"
   | "payable_changed"
-  | "payable_not_found";
+  | "payable_not_found"
+  // WA-C11 Fase 1 — entitlement revogado entre criação e envio (downgrade,
+  // cancelamento, expiração, beta revogado, link/opt-in perdido).
+  | "entitlement_revoked";
 
 export interface EnqueueInput {
   userId: string;
@@ -162,12 +165,50 @@ function newToken(deps?: NotificationsDeps): string {
 /**
  * Enfileira uma notificação. Idempotente por (user_id, dedupe_key).
  * Retorna a linha existente ou recém-criada (ou null em falha não-recuperável).
+ *
+ * WA-C11 Fase 1 — Camada de proteção na CRIAÇÃO: revalida entitlement do
+ * `user_id` via fonte única antes de gravar. Usuário sem direito NUNCA
+ * gera notification produtiva. A camada de envio (dispatcher) revalida
+ * novamente no momento do dispatch (defesa em profundidade).
+ *
+ * Bypass: se `deps.skipEntitlementCheck === true` (canary helper Admin
+ * Master, testes internos). Nenhum outro caller pode usar.
  */
 export async function enqueueNotification(
   input: EnqueueInput,
-  deps?: NotificationsDeps,
+  deps?: NotificationsDeps & { skipEntitlementCheck?: boolean },
 ): Promise<NotificationRow | null> {
   const c = client(deps);
+
+  if (!deps?.skipEntitlementCheck) {
+    try {
+      const { getWhatsAppEntitlement } = await import(
+        "@/server/whatsapp-entitlement.server"
+      );
+      const ent = await getWhatsAppEntitlement(input.userId);
+      if (!ent.allowed) {
+        try {
+          console.info(
+            "[wa-notif]",
+            JSON.stringify({
+              event: "whatsapp_notification_blocked_entitlement",
+              reason: ent.reason,
+              type: input.type,
+              category: input.category,
+            }),
+          );
+        } catch {
+          // no-op
+        }
+        return null;
+      }
+    } catch {
+      // Fail-closed: qualquer erro no gate bloqueia a criação.
+      return null;
+    }
+  }
+
+
   const row = {
     user_id: input.userId,
     notification_type: input.type,

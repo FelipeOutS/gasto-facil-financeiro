@@ -33,20 +33,6 @@ import { isAdminMasterEmail } from "./admin-master.server";
 const sb = _supabaseAdmin as any;
 
 
-/**
- * Planos pagos que liberam WhatsApp.
- * Espelha `public.has_feature_access(_user_id, 'whatsapp')` no SQL.
- * Mantido como conjunto local explícito para que o gate funcione mesmo
- * se a RPC falhar.
- */
-const WHATSAPP_ELIGIBLE_PAID_PLANS = new Set<string>([
-  "pessoal_premium",
-  "mei_essencial",
-  "mei_inteligente",
-  "empresa",
-  "admin_master",
-]);
-
 export type AuthzResult = {
   allowed: boolean;
   userId?: string;
@@ -77,21 +63,13 @@ async function isAdminMaster(userId: string): Promise<{ isAdmin: boolean; email:
   }
 }
 
-
-async function hasEligiblePaidPlan(userId: string, email: string | null): Promise<boolean> {
-  try {
-    const { getSubscriptionForUserIdentity } = await import("./subscription.server");
-    const sub = await getSubscriptionForUserIdentity({ userId, email, repairLink: false });
-    if (!sub.active) return false;
-    return WHATSAPP_ELIGIBLE_PAID_PLANS.has(String(sub.plan));
-  } catch {
-    return false;
-  }
-}
-
 /**
  * Gate único. Não emite nenhum sinal externo (sem reply, sem log
  * sensível); o caller decide o que fazer com `allowed=false`.
+ *
+ * WA-C11 Fase 1 — a decisão de plano/beta é delegada a
+ * `getWhatsAppEntitlement` (fonte única). Este módulo cuida somente da
+ * resolução telefone → user_id + link ativo + opt-in.
  */
 export async function canUseWhatsAppForSender(
   senderPhone: string | null | undefined,
@@ -117,22 +95,26 @@ export async function canUseWhatsAppForSender(
 
     const userId: string = link.user_id;
 
-    // (5) Admin Master sempre passa.
-    const { isAdmin, email } = await isAdminMaster(userId);
+    // (5) Admin Master sempre passa (bypass explícito, auditado).
+    const { isAdmin } = await isAdminMaster(userId);
     if (isAdmin) return { allowed: true, userId };
 
     // (6) Canary fechado: só admin master.
     if (opts?.canaryOnly) return { allowed: false };
 
-    // (7) Beta fechada: precisa estar em whatsapp_beta_access E ter plano pago elegível.
+    // (7) WA-C11 Fase 1 — Delegação para a fonte única de entitlement.
+    // Cobre: plano elegível (SQL `has_feature_access`) + beta_access +
+    // assinatura ativa/não cancelada/não expirada. Gratuito com beta
+    // ativo permanece BLOQUEADO por construção.
     try {
-      const { data: betaOk } = await sb.rpc("can_use_whatsapp", { _user_id: userId });
-      if (betaOk !== true) return { allowed: false };
+      const { getWhatsAppEntitlement } = await import(
+        "@/server/whatsapp-entitlement.server"
+      );
+      const ent = await getWhatsAppEntitlement(userId);
+      if (!ent.allowed) return { allowed: false };
     } catch {
       return { allowed: false };
     }
-    const paidOk = await hasEligiblePaidPlan(userId, email);
-    if (!paidOk) return { allowed: false };
 
     return { allowed: true, userId };
   } catch {
