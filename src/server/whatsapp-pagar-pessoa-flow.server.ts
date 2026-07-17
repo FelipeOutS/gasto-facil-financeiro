@@ -74,6 +74,13 @@ import {
   deletePendingPixKey,
   hashPixKey,
 } from "./whatsapp-pix-secret.server";
+// WA-C11 3B.2.C.1 Block 2 — quota financeira do WhatsApp para "pagar pessoa".
+// Ordem: sessão → claim `pp_persistindo` → gate → insert. Fail-closed sem
+// `external_id` (idempotência da quota depende dele).
+import {
+  assertFinancialActionQuotaForWhatsApp,
+  financialQuotaBlockedReply,
+} from "./whatsapp-financial-quota-gate.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin: any = _supabaseAdmin;
