@@ -430,7 +430,7 @@ export async function handlePagarPessoaIntent(args: {
     const { data: claimRows, error: claimErr } = await supabaseAdmin
       .from("whatsapp_messages")
       .update({ status: "pix_persistindo" })
-      .eq("id", args._row.id)
+      .eq("user_id", args.userId)
       .eq("external_id", externalId)
       .not("status", "in", "(pix_persistindo,salva,falha)")
       .select("id");
