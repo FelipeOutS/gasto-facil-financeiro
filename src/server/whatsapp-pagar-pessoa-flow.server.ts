@@ -1587,6 +1587,12 @@ async function passoConfirmarPixInline(args: {
   if (result.kind === "race_in_progress") {
     return { status: "duplicada", resposta: T.ainda_processando() };
   }
+  if (result.kind === "quota_blocked") {
+    await deps.atualizarSessao(
+      sessao.id, "falha", sessionComFav, result.resposta,
+    );
+    return { status: "erro", resposta: result.resposta };
+  }
   // WA-Q-PixInline-Terminal — erro de persistência: fecha em terminal
   // de falha em vez de deixar a prévia pendurada.
   await deps.atualizarSessao(
