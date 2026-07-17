@@ -125,12 +125,11 @@ describe("sanitizeTransportError", () => {
     expect(r.cause_code).toBeNull();
   });
 
-  it("cause.code excedendo 32 chars normalizado", () => {
+  it("cause.code excedendo 32 chars é slice+validado (aceito quando alfanumérico)", () => {
     const err = new Error("x") as Error & { cause?: unknown };
     err.cause = { code: "A".repeat(500) };
     const r = base({ error: err });
-    expect(r.cause_code).toBeNull(); // pós-slice, quebra o regex uppercase strict (passa em A×32? sim)
-    // Ajuste: 32 As satisfaz A-Z0-9_- e length<=32 → deve valer 'AAAA…A' (32)
+    expect(r.cause_code).toBe("A".repeat(32));
   });
 
   it("cause.code allowlist com underscore/hífen aceito", () => {
