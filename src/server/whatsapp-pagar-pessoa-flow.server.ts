@@ -1119,6 +1119,9 @@ async function criarGastoAvulso(args: {
   if (result.kind === "race_in_progress") {
     return { status: "duplicada", resposta: T.ainda_processando() };
   }
+  if (result.kind === "quota_blocked") {
+    return { status: "erro", resposta: result.resposta };
+  }
   return { status: "erro", resposta: T.erroGenerico() };
 }
 
