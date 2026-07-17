@@ -118,6 +118,7 @@ export type RecoverOutcome =
   | "planned_cancelled"
   | "sending_ambiguous"
   | "ambiguous_quarantined"
+  | "ambiguous_skipped"
   | "accepted_repaired"
   | "rejected_preserved"
   | "cancelled_repending";
@@ -129,6 +130,7 @@ const RECOVER_OUTCOMES: ReadonlySet<string> = new Set<RecoverOutcome>([
   "planned_cancelled",
   "sending_ambiguous",
   "ambiguous_quarantined",
+  "ambiguous_skipped",
   "accepted_repaired",
   "rejected_preserved",
   "cancelled_repending",
