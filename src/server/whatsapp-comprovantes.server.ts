@@ -17,6 +17,10 @@
  */
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 import { runExtractor, type OcrResult } from "@/server/ocr-comprovante.server";
+import {
+  assertFinancialActionQuotaForWhatsApp,
+  financialQuotaBlockedReply,
+} from "@/server/whatsapp-financial-quota-gate.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
 import {
   merchantKeyFor,
@@ -772,7 +776,21 @@ export async function persistirGastoComprovante(
   userId: string,
   s: ComprovanteSession,
   cats: CategoriaRow[],
+  externalMessageId?: string,
 ): Promise<{ ok: boolean; gastoId?: string; resposta: string }> {
+  // WA-C11 3B.2.C — Financial quota gate. Fail-closed sem external_id.
+  if (!externalMessageId || externalMessageId.trim().length === 0) {
+    console.error("[whatsapp-comprovante] persistirGastoComprovante missing externalMessageId");
+    return { ok: false, resposta: M.erroAoSalvar() };
+  }
+  const gateOutcome = await assertFinancialActionQuotaForWhatsApp({
+    userId,
+    externalMessageId,
+    actionType: "expense_receipt",
+  });
+  if (!gateOutcome.allowed) {
+    return { ok: false, resposta: financialQuotaBlockedReply(gateOutcome) };
+  }
   const cat = categoriaSugestaoLabel(s, cats);
   const data = s.data ?? todayLocalISO();
   const [y, mo] = data.split("-").map(Number);
@@ -926,6 +944,7 @@ async function avancarAposConfirmacao(
   userId: string,
   session: ComprovanteSession,
   cats: CategoriaRow[],
+  externalMessageId?: string,
 ): Promise<ComprovanteResult> {
   // 1) Categoria obrigatória quando OCR não identificou com confiança.
   if (session.categoriaNaoIdentificada && !session.categoriaId) {
@@ -963,7 +982,7 @@ async function avancarAposConfirmacao(
     };
   }
   // 4) Persiste.
-  const saved = await persistirGastoComprovante(userId, session, cats);
+  const saved = await persistirGastoComprovante(userId, session, cats, externalMessageId);
   if (!saved.ok) return { status: "erro", resposta: saved.resposta, session };
   return {
     status: "salva",
@@ -1073,8 +1092,9 @@ export async function processarRespostaImagem(args: {
   session: ComprovanteSession;
   status: ComprovanteStatus;
   decisao: "confirm" | "cancel" | "outro";
+  externalMessageId?: string;
 }): Promise<ComprovanteResult> {
-  const { userId, texto, session, status, decisao } = args;
+  const { userId, texto, session, status, decisao, externalMessageId } = args;
   const cats = await carregarCategoriasDespesa(userId);
 
   if (decisao === "cancel") {
@@ -1198,7 +1218,7 @@ export async function processarRespostaImagem(args: {
     };
     if (usarHoje) next.data = todayLocalISO();
     if (dataInformada && !usarNota && !usarHoje) next.data = dataInformada;
-    return avancarAposConfirmacao(userId, next, cats);
+    return avancarAposConfirmacao(userId, next, cats, externalMessageId);
   }
 
   // ----- aguardando categoria obrigatória -----
@@ -1214,7 +1234,7 @@ export async function processarRespostaImagem(args: {
       categoriaSelecionadaManual: true, // WA-M1.2
       categoriaOptions: undefined,
     };
-    return avancarAposConfirmacao(userId, next, cats);
+    return avancarAposConfirmacao(userId, next, cats, externalMessageId);
   }
 
   // ----- aguardando forma de pagamento -----
@@ -1229,7 +1249,7 @@ export async function processarRespostaImagem(args: {
       };
     }
     const next: ComprovanteSession = { ...session, formaPagamento: forma };
-    return avancarAposConfirmacao(userId, next, cats);
+    return avancarAposConfirmacao(userId, next, cats, externalMessageId);
   }
 
   // ----- aguardando confirmação principal -----
@@ -1283,7 +1303,7 @@ export async function processarRespostaImagem(args: {
     }
 
     if (decisao === "confirm") {
-      return avancarAposConfirmacao(userId, session, cats);
+      return avancarAposConfirmacao(userId, session, cats, externalMessageId);
     }
     // resposta desconhecida — reapresenta o resumo
     return {

@@ -101,6 +101,20 @@ mock.module("@/server/whatsapp-merchant-memory.server", () => ({
     "Sugestão baseada em lançamentos confirmados anteriormente.",
 }));
 
+mock.module("@/server/whatsapp-financial-quota-gate.server", () => ({
+  assertFinancialActionQuotaForWhatsApp: async () => ({
+    allowed: true,
+    reason: "allowed",
+    duplicate: false,
+    adminMaster: false,
+    planCode: "free_ads",
+    idempotencyKey: "wa:financial:test:expense_receipt:v1",
+    cycleSource: "calendar_month",
+    quota: { limit: 100, used: 1, remaining: 99 },
+  }),
+  financialQuotaBlockedReply: () => "blocked",
+}));
+
 const {
   processarRespostaImagem,
   persistirGastoComprovante,
@@ -194,6 +208,7 @@ describe("WA-M1.2 — seleção manual de categoria em comprovantes", () => {
       session: s,
       status: "img_aguardando_categoria_obrigatoria",
       decisao: "outro",
+      externalMessageId: "wamid.T2c",
     });
     expect(r.session?.categoriaSelecionadaManual).toBe(true);
     expect(r.session?.categoriaId).toBe("cat-ali");
@@ -206,7 +221,7 @@ describe("WA-M1.2 — seleção manual de categoria em comprovantes", () => {
       categoriaLabel: "Transporte",
       categoriaSelecionadaManual: true,
     });
-    const r = await persistirGastoComprovante("user-1", s as never, CATS as never);
+    const r = await persistirGastoComprovante("user-1", s as never, CATS as never, "wamid.T2");
     expect(r.ok).toBe(true);
     expect(memoryCalls).toHaveLength(1);
     expect(memoryCalls[0].evidence).toBe("manual");
@@ -218,6 +233,7 @@ describe("WA-M1.2 — seleção manual de categoria em comprovantes", () => {
       "user-1",
       baseSession() as never,
       CATS as never,
+      "wamid.T2b",
     );
     expect(r.ok).toBe(true);
     expect(memoryCalls[0].evidence).toBe("confirmed");
@@ -228,7 +244,7 @@ describe("WA-M1.2 — seleção manual de categoria em comprovantes", () => {
       categoriaNaoIdentificada: true,
       categoriaSelecionadaManual: false,
     });
-    const r = await persistirGastoComprovante("user-1", s as never, CATS as never);
+    const r = await persistirGastoComprovante("user-1", s as never, CATS as never, "wamid.T2");
     expect(r.ok).toBe(true);
     expect(memoryCalls[0].evidence).toBe("manual");
   });

@@ -26,6 +26,10 @@ import {
 import { suggestCategoryFromText } from "@/lib/categories";
 import type { Cartao, FormaPagamento } from "@/lib/types";
 import { canUseWhatsApp } from "./whatsapp-beta.server";
+import {
+  assertFinancialActionQuotaForWhatsApp,
+  financialQuotaBlockedReply,
+} from "./whatsapp-financial-quota-gate.server";
 import { buildWhatsAppGraphUrl } from "./whatsapp-graph-version.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
 import {
@@ -1856,7 +1860,21 @@ export async function verificarGastoExiste(gastoId: string | null | undefined): 
 export async function persistirGasto(
   userId: string,
   s: Session,
+  externalMessageId?: string,
 ): Promise<{ gastoId?: string; resposta: string; ok: boolean }> {
+  // WA-C11 3B.2.C — Financial quota gate. Fail-closed sem external_id.
+  if (!externalMessageId || externalMessageId.trim().length === 0) {
+    console.error("[whatsapp] persistirGasto missing externalMessageId");
+    return { ok: false, resposta: M.erroAoSalvar() };
+  }
+  const gateOutcome = await assertFinancialActionQuotaForWhatsApp({
+    userId,
+    externalMessageId,
+    actionType: "expense",
+  });
+  if (!gateOutcome.allowed) {
+    return { ok: false, resposta: financialQuotaBlockedReply(gateOutcome) };
+  }
   // Sempre derivamos a categoria a partir do nome do gasto — nunca da mensagem
   // original (evita "Mercado mercado 45,90" virar categoria/descrição).
   const categorias = await carregarCategorias(userId);
@@ -2523,6 +2541,7 @@ async function processarSessaoComprovanteAtiva(args: {
       ? sessao.status
       : "img_aguardando_confirmacao") as ComprovanteStatus,
     decisao,
+    externalMessageId: msg.external_id ?? undefined,
   });
   await supabaseAdmin.from("whatsapp_messages").update({ status: "expirada" }).eq("id", sessao.id);
   if (out.status === "salva") {
@@ -4411,7 +4430,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     }
 
     // confirm → grava gasto
-    const result = await persistirGasto(userId, sessao.session);
+    const result = await persistirGasto(userId, sessao.session, msg.external_id ?? undefined);
     if (!result.ok) return { status: "erro", resposta: result.resposta };
     await fecharSessoesAnteriores(userId, msg.telefone, "salva", result.gastoId);
     await gravarSessao(
