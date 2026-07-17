@@ -101,6 +101,20 @@ mock.module("@/server/whatsapp-merchant-memory.server", () => ({
     "Sugestão baseada em lançamentos confirmados anteriormente.",
 }));
 
+mock.module("@/server/whatsapp-financial-quota-gate.server", () => ({
+  assertFinancialActionQuotaForWhatsApp: async () => ({
+    allowed: true,
+    reason: "allowed",
+    duplicate: false,
+    adminMaster: false,
+    planCode: "free_ads",
+    idempotencyKey: "wa:financial:test:expense_receipt:v1",
+    cycleSource: "calendar_month",
+    quota: { limit: 100, used: 1, remaining: 99 },
+  }),
+  financialQuotaBlockedReply: () => "blocked",
+}));
+
 const {
   processarRespostaImagem,
   persistirGastoComprovante,
