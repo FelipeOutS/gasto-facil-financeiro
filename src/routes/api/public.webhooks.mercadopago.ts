@@ -30,7 +30,6 @@ function json(body: unknown, status = 200): Response {
 }
 
 const APPROVED = new Set(["approved", "authorized"]);
-const FAILED = new Set(["rejected", "cancelled", "refunded", "charged_back"]);
 
 type MpPayment = {
   id?: number | string;
