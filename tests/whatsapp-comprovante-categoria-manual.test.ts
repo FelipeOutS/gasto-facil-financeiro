@@ -208,6 +208,7 @@ describe("WA-M1.2 — seleção manual de categoria em comprovantes", () => {
       session: s,
       status: "img_aguardando_categoria_obrigatoria",
       decisao: "outro",
+      externalMessageId: "wamid.T2c",
     });
     expect(r.session?.categoriaSelecionadaManual).toBe(true);
     expect(r.session?.categoriaId).toBe("cat-ali");
