@@ -4429,7 +4429,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     }
 
     // confirm → grava gasto
-    const result = await persistirGasto(userId, sessao.session, msg.external_id);
+    const result = await persistirGasto(userId, sessao.session, msg.external_id ?? undefined);
     if (!result.ok) return { status: "erro", resposta: result.resposta };
     await fecharSessoesAnteriores(userId, msg.telefone, "salva", result.gastoId);
     await gravarSessao(
