@@ -128,6 +128,13 @@ mock.module("@/server/whatsapp-favorecidos.server", () => ({
 }));
 mock.module("@/server/contas-vencimento.server", () => ({
   findVencimentoByTerm: async () => [],
+  todayISOInAppTz: () => new Date().toISOString().slice(0, 10),
+  tomorrowISOInAppTz: () => new Date(Date.now() + 86_400_000).toISOString().slice(0, 10),
+  weekRangeInAppTz: () => ({ start: "2026-01-01", end: "2026-01-07" }),
+  monthRangeInAppTz: () => ({ start: "2026-01-01", end: "2026-01-31" }),
+  getVencimentosPorPeriodo: async () => [],
+  getVencimentosComStatusAnterior: async () => [],
+  distinctNamesFrom: () => [],
 }));
 mock.module("@/server/whatsapp-pix-reveal-token.server", () => ({
   issueRevealToken: () => "tok",
