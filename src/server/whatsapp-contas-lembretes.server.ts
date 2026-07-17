@@ -190,6 +190,26 @@ export async function gerarLembretesContasUsuario(
   deps?: LembretesDeps,
 ): Promise<LembreteGerado[]> {
   if (!userId) return [];
+
+  // WA-C11 Fase 1 — gate de entitlement no call-site de criação.
+  // Não geramos lembrete para usuário sem direito (plano/beta/assinatura/
+  // link revogado). Falha do gate bloqueia (fail-closed).
+  try {
+    const { getWhatsAppEntitlement } = await import(
+      "@/server/whatsapp-entitlement.server"
+    );
+    const ent = await getWhatsAppEntitlement(userId);
+    if (!ent.allowed) {
+      console.info(
+        "[wa-c9] lembretes_gate_block",
+        JSON.stringify({ reason: ent.reason }),
+      );
+      return [];
+    }
+  } catch {
+    return [];
+  }
+
   const tz = deps?.timezone ?? "America/Sao_Paulo";
   const now = deps?.now?.() ?? new Date();
   const reminderHour = deps?.reminderHourLocal ?? 8;
@@ -198,6 +218,7 @@ export async function gerarLembretesContasUsuario(
   const recurringHorizonISO = addDaysISO(todayISO, 7);
 
   const contas = await fetchContas(userId, deps);
+
   const out: LembreteGerado[] = [];
   let counts = { hoje: 0, amanha: 0, atrasada: 0, recorrente: 0, skipped_paid_or_cancelled: 0 };
 
