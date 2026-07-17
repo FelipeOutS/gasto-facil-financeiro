@@ -27,6 +27,8 @@ import type {
   WhatsAppNotificationTransport,
 } from "@/server/whatsapp-outbound-adapter.server";
 import { buildWhatsAppTemplateRequest } from "@/server/whatsapp-outbound-adapter.server";
+import { sanitizeTransportError } from "@/server/whatsapp-transport-error-sanitizer.server";
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constantes de segurança
