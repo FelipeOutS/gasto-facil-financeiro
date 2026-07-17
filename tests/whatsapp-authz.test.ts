@@ -99,6 +99,42 @@ mock.module("./rate-limit.server", () => ({
   }),
 }));
 
+// Mock direto do helper de entitlement — o `canUseWhatsAppForSender`
+// delega para ele. Espelha a decisão via linkState.
+const entitlementResult = () => {
+  const ELIGIBLE = new Set([
+    "pessoal_premium",
+    "mei_essencial",
+    "mei_inteligente",
+    "empresa",
+  ]);
+  const isAdmin = linkState.email === "felipe.out.silva@outlook.com"
+    || linkState.email === "michael@medeiroscenografia.com.br";
+  if (isAdmin) {
+    return {
+      allowed: true,
+      reason: "admin_master",
+      adminMaster: true,
+      betaAllowed: true,
+      featureIncluded: true,
+      planActive: true,
+    };
+  }
+  const eligible = linkState.subscription.active && ELIGIBLE.has(linkState.subscription.plan);
+  if (!eligible) return { allowed: false, reason: "plan_not_eligible" };
+  if (!linkState.betaOk) return { allowed: false, reason: "beta_access_missing" };
+  return { allowed: true, reason: "allowed" };
+};
+mock.module("@/server/whatsapp-entitlement.server", () => ({
+  getWhatsAppEntitlement: async () => entitlementResult(),
+  assertWhatsAppEntitlement: async () => {
+    const r = entitlementResult();
+    if (!r.allowed) throw new Response("blocked", { status: 403 });
+    return r;
+  },
+}));
+
+
 const {
   canUseWhatsAppForSender,
   shouldSendBlockedReply,
