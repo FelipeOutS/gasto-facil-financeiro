@@ -31,6 +31,15 @@ mock.module("../src/server/whatsapp-entitlement.server", () => ({
   getWhatsAppEntitlement: async () => ({ allowed: true, reason: "allowed" }),
   assertWhatsAppEntitlement: async () => ({ allowed: true, reason: "allowed" }),
 }));
+// WA-C11 Fase 3B — bypass do gate C11 (runtime/rollout/quota) em dry-run.
+mock.module("@/server/whatsapp-c11-gates.server", () => ({
+  runInboundProductionGate: async () => ({ allowed: true as const, userId: "u-admin-master" }),
+  runNotificationCreationGate: async () => ({ allowed: true as const }),
+}));
+mock.module("../src/server/whatsapp-c11-gates.server", () => ({
+  runInboundProductionGate: async () => ({ allowed: true as const, userId: "u-admin-master" }),
+  runNotificationCreationGate: async () => ({ allowed: true as const }),
+}));
 import {
   gerarLembretesContasUsuario,
   renderLembreteConta,
