@@ -49,6 +49,22 @@ const fakeAdmin = {
   },
   rpc: async (name: string) => {
     if (name === "can_use_whatsapp") return { data: linkState.betaOk, error: null };
+    if (name === "has_feature_access") {
+      // Espelha `public.has_feature_access(user_id,'whatsapp')`:
+      // Admin Master (via is_full_access) OU (assinatura ativa E plano
+      // elegível). Aqui a decisão do bypass Admin Master é feita pelo
+      // helper via `auth.admin.getUserById` — este mock só cobre plano.
+      const ELIGIBLE = new Set([
+        "pessoal_premium",
+        "mei_essencial",
+        "mei_inteligente",
+        "empresa",
+      ]);
+      const ok =
+        linkState.subscription.active &&
+        ELIGIBLE.has(linkState.subscription.plan);
+      return { data: ok, error: null };
+    }
     return { data: null, error: null };
   },
   auth: {
@@ -82,6 +98,42 @@ mock.module("./rate-limit.server", () => ({
     retryAfterSeconds: 86400,
   }),
 }));
+
+// Mock direto do helper de entitlement — o `canUseWhatsAppForSender`
+// delega para ele. Espelha a decisão via linkState.
+const entitlementResult = () => {
+  const ELIGIBLE = new Set([
+    "pessoal_premium",
+    "mei_essencial",
+    "mei_inteligente",
+    "empresa",
+  ]);
+  const isAdmin = linkState.email === "felipe.out.silva@outlook.com"
+    || linkState.email === "michael@medeiroscenografia.com.br";
+  if (isAdmin) {
+    return {
+      allowed: true,
+      reason: "admin_master",
+      adminMaster: true,
+      betaAllowed: true,
+      featureIncluded: true,
+      planActive: true,
+    };
+  }
+  const eligible = linkState.subscription.active && ELIGIBLE.has(linkState.subscription.plan);
+  if (!eligible) return { allowed: false, reason: "plan_not_eligible" };
+  if (!linkState.betaOk) return { allowed: false, reason: "beta_access_missing" };
+  return { allowed: true, reason: "allowed" };
+};
+mock.module("@/server/whatsapp-entitlement.server", () => ({
+  getWhatsAppEntitlement: async () => entitlementResult(),
+  assertWhatsAppEntitlement: async () => {
+    const r = entitlementResult();
+    if (!r.allowed) throw new Response("blocked", { status: 403 });
+    return r;
+  },
+}));
+
 
 const {
   canUseWhatsAppForSender,

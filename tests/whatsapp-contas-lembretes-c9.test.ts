@@ -4,7 +4,17 @@
  * Cobre o gerador, o renderer e a ponte de respostas pós-lembrete.
  * Nenhum teste envia mensagem real.
  */
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
+
+// WA-C11 Fase 1 — gate de entitlement é bypassado em testes DRY-RUN.
+mock.module("@/server/whatsapp-entitlement.server", () => ({
+  getWhatsAppEntitlement: async () => ({ allowed: true, reason: "allowed" }),
+  assertWhatsAppEntitlement: async () => ({ allowed: true, reason: "allowed" }),
+}));
+mock.module("../src/server/whatsapp-entitlement.server", () => ({
+  getWhatsAppEntitlement: async () => ({ allowed: true, reason: "allowed" }),
+  assertWhatsAppEntitlement: async () => ({ allowed: true, reason: "allowed" }),
+}));
 import {
   gerarLembretesContasUsuario,
   renderLembreteConta,

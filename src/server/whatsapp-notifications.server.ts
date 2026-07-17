@@ -77,7 +77,10 @@ export type SkippedReason =
   | "payable_paid"
   | "payable_cancelled"
   | "payable_changed"
-  | "payable_not_found";
+  | "payable_not_found"
+  // WA-C11 Fase 1 — entitlement revogado entre criação e envio (downgrade,
+  // cancelamento, expiração, beta revogado, link/opt-in perdido).
+  | "entitlement_revoked";
 
 export interface EnqueueInput {
   userId: string;
@@ -162,12 +165,19 @@ function newToken(deps?: NotificationsDeps): string {
 /**
  * Enfileira uma notificação. Idempotente por (user_id, dedupe_key).
  * Retorna a linha existente ou recém-criada (ou null em falha não-recuperável).
+ *
+ * Autorização por plano/beta é feita nos call-sites (ex.: contas-lembretes)
+ * via `getWhatsAppEntitlement`. O dispatcher revalida no envio como defesa
+ * em profundidade.
  */
 export async function enqueueNotification(
   input: EnqueueInput,
   deps?: NotificationsDeps,
 ): Promise<NotificationRow | null> {
   const c = client(deps);
+
+
+
   const row = {
     user_id: input.userId,
     notification_type: input.type,

@@ -179,6 +179,36 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
             continue;
           }
 
+          // 1.6) WA-C11 Fase 1 — revalidação de entitlement no momento do
+          // envio. Bloqueia downgrade / cancelamento / expiração / beta
+          // revogado / link revogado ocorridos entre a criação e o dispatch.
+          try {
+            const { getWhatsAppEntitlement } = await import(
+              "@/server/whatsapp-entitlement.server"
+            );
+            const ent = await getWhatsAppEntitlement(claimed.user_id);
+            if (!ent.allowed) {
+              await markSkipped(n.id, "entitlement_revoked", token);
+              summary.skipped++;
+              console.info(
+                "[wa-dispatcher] entitlement_revoked_skip",
+                JSON.stringify({
+                  type: n.notification_type,
+                  category: n.category,
+                  reason: ent.reason,
+                }),
+              );
+              continue;
+            }
+          } catch {
+            // fail-closed: qualquer falha no gate cancela o envio.
+            await markSkipped(n.id, "entitlement_revoked", token);
+            summary.skipped++;
+            continue;
+          }
+
+
+
           // 2) Template
           const tpl = await loadTemplate(n.notification_type);
           if (!tpl || !tpl.active) {

@@ -20,7 +20,17 @@
  *  - pertence exclusivamente ao Admin Master (userId "u-admin-master")
  *  - vencimento = hoje (BRT) para gerar `conta_vencendo_hoje`
  */
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
+
+// WA-C11 Fase 1 — bypass do gate de entitlement em teste dry-run.
+mock.module("@/server/whatsapp-entitlement.server", () => ({
+  getWhatsAppEntitlement: async () => ({ allowed: true, reason: "allowed" }),
+  assertWhatsAppEntitlement: async () => ({ allowed: true, reason: "allowed" }),
+}));
+mock.module("../src/server/whatsapp-entitlement.server", () => ({
+  getWhatsAppEntitlement: async () => ({ allowed: true, reason: "allowed" }),
+  assertWhatsAppEntitlement: async () => ({ allowed: true, reason: "allowed" }),
+}));
 import {
   gerarLembretesContasUsuario,
   renderLembreteConta,
