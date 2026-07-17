@@ -28,12 +28,13 @@ import {
   MAX_PARCELAS,
   MIN_PARCELAS,
   reaisParaCentavos,
-// WA-C11 3B.2.C.1 Block 4 — quota financeira para parcelamento.
 } from "@/lib/parcelamento";
+// WA-C11 3B.2.C.1 Block 4 — quota financeira para parcelamento.
 import {
   assertFinancialActionQuotaForWhatsApp,
   financialQuotaBlockedReply,
 } from "@/server/whatsapp-financial-quota-gate.server";
+import {
   calcularParcelasCentavos,
 } from "./cartao-parcelamento.server";
 // ----- Dependency-injection seam -----
