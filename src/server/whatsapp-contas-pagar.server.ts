@@ -637,7 +637,11 @@ export async function processarBaixaConta(args: {
 
 // ---------- persistência ----------
 
-async function persistirBaixa(args: {
+// Exportado a partir do WA-C11 3B.2.C.1 Block 4 para permitir testes
+// direcionados do quota gate financeiro sem simular todo o fluxo do
+// handler `processarBaixaConta`. Continua sendo chamado apenas pelo
+// próprio módulo em produção.
+export async function persistirBaixa(args: {
   userId: string;
   msg: WhatsAppMessageRow;
   texto: string;
