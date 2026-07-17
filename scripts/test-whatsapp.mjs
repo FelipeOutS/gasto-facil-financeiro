@@ -107,6 +107,7 @@ const INCLUDE = [
   "whatsapp-c11-financial-quota-gate.test.ts",
   "whatsapp-c11-f3b2c1-block1-wiring.test.ts",
   "whatsapp-c11-f3b2c1-block2-wiring.test.ts",
+  "whatsapp-c11-f3b2c1-block3-wiring.test.ts",
   "whatsapp-c92-transport-error-sanitizer-e4c.test.ts",
   "whatsapp-c92-recovery-anti-ambiguous-e4c.test.ts",
   "whatsapp-contas-lembretes-c9.test.ts",
