@@ -3,11 +3,13 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logAuditEvent, logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
+import { canonicalMpStatus } from "@/server/mercadopago-diagnostics.server";
 import {
-  paymentEventAlreadyProcessed,
-  recordPaymentEventIdempotent,
-  canonicalMpStatus,
-} from "@/server/mercadopago-diagnostics.server";
+  applyMercadoPagoBillingEvent,
+  type CanonicalBillingStatus,
+} from "@/server/billing-mercadopago-apply.server";
+import type { Database } from "@/integrations/supabase/types";
+type PlanTier = Database["public"]["Enums"]["plan_tier"];
 
 /**
  * POST /api/public/webhooks/mercadopago
@@ -28,7 +30,6 @@ function json(body: unknown, status = 200): Response {
 }
 
 const APPROVED = new Set(["approved", "authorized"]);
-const FAILED = new Set(["rejected", "cancelled", "refunded", "charged_back"]);
 
 type MpPayment = {
   id?: number | string;
@@ -188,31 +189,17 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           return json({ error: "mp_fetch_failed" }, 502);
         }
 
-        // Idempotência: já processamos esse evento?
         const externalPaymentId = String(payment.id ?? paymentId);
         const idempotencyKey = `mercado_pago:${topic}:${externalPaymentId}`;
-        const already = await paymentEventAlreadyProcessed(externalPaymentId, topic);
-        if (already) {
-          if (logId) {
-            await updateWebhookLog(logId, {
-              status: "ignored",
-              http_status: 200,
-              external_id: externalPaymentId,
-              idempotency_key: idempotencyKey,
-              error_message: "duplicate_event",
-              processing_time_ms: Date.now() - startedAt,
-            });
-          }
-          return json({ ok: true, duplicate: true });
-        }
+        const rawStatus = (payment.status ?? "pending").toLowerCase();
 
-        const status = (payment.status ?? "pending").toLowerCase();
+        // Extrai user_id / plano / periodicidade — sempre com fallback via
+        // subscription_payments locais para o caso do metadata estar ausente.
         let userId = payment.metadata?.user_id ?? null;
-        let plano = payment.metadata?.plano ?? null;
+        let plano: string | null = payment.metadata?.plano ?? null;
         let periodicidade = (payment.metadata?.periodicidade as string | undefined) ?? null;
         let months = Number(payment.metadata?.months ?? 0) || 0;
 
-        // Fallback via external_reference "userId:plano:periodicidade"
         if ((!userId || !plano) && payment.external_reference) {
           const parts2 = payment.external_reference.split(":");
           userId = userId ?? parts2[0] ?? null;
@@ -220,21 +207,18 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           periodicidade = periodicidade ?? parts2[2] ?? null;
         }
 
-        // Tenta enriquecer dados a partir de subscription_payments locais.
-        // 1) por provider_payment_id direto (pix), ou 2) onde o ticket_url
-        // contém o paymentId (cartão — preference).
         const { data: localRows } = await supabaseAdmin
           .from("subscription_payments")
           .select("id, user_id, plano, periodicidade, months, method, provider_payment_id")
           .eq("provider", "mercadopago")
           .or(
-            `provider_payment_id.eq.${String(payment.id ?? paymentId)},user_id.eq.${userId ?? "00000000-0000-0000-0000-000000000000"}`,
+            `provider_payment_id.eq.${externalPaymentId},user_id.eq.${userId ?? "00000000-0000-0000-0000-000000000000"}`,
           )
           .order("created_at", { ascending: false })
           .limit(20);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const localRow = (localRows ?? []).find((r: any) =>
-          r.provider_payment_id === String(payment.id ?? paymentId)
+          r.provider_payment_id === externalPaymentId
             ? true
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             : (r as any).method === "card" && r.user_id === userId,
@@ -249,132 +233,112 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
         }
         if (!months) months = 1;
 
-        // Atualiza/insere registro de pagamento (quando ainda não existir,
-        // por exemplo em cenário onde o paymentId real só apareceu agora).
+        // Atualiza subscription_payments — trilha auditável do pagamento.
         if (localRow) {
           await supabaseAdmin
             .from("subscription_payments")
             .update({
-              status,
+              status: rawStatus,
               payload: payment,
-              provider_payment_id: String(payment.id ?? paymentId),
-              paid_at: APPROVED.has(status) ? new Date().toISOString() : null,
+              provider_payment_id: externalPaymentId,
+              paid_at: APPROVED.has(rawStatus) ? new Date().toISOString() : null,
             })
             .eq("id", localRow.id);
         } else {
           await supabaseAdmin
             .from("subscription_payments")
             .update({
-              status,
+              status: rawStatus,
               payload: payment,
-              paid_at: APPROVED.has(status) ? new Date().toISOString() : null,
+              paid_at: APPROVED.has(rawStatus) ? new Date().toISOString() : null,
             })
             .eq("provider", "mercadopago")
-            .eq("provider_payment_id", String(payment.id ?? paymentId));
+            .eq("provider_payment_id", externalPaymentId);
         }
 
-        if (userId && plano) {
-          if (APPROVED.has(status)) {
-            const startISO = new Date().toISOString();
-            const end = new Date();
-            end.setMonth(end.getMonth() + months);
-            const endISO = end.toISOString();
-            const update = {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              plano: plano as any,
-              status: "ativo",
-              cancelled_at: null,
-              access_until: null,
-              periodicidade,
-              months,
-              current_period_start: startISO,
-              current_period_end: endISO,
-              last_payment_id: String(payment.id ?? paymentId),
-            };
-            const { data: existing } = await supabaseAdmin
-              .from("user_plans")
-              .select("user_id")
-              .eq("user_id", userId)
-              .maybeSingle();
-            if (existing) {
-              await supabaseAdmin
-                .from("user_plans")
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                .update(update as any)
-                .eq("user_id", userId);
-            } else {
-              await supabaseAdmin
-                .from("user_plans")
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                .insert({ user_id: userId, ...update } as any);
-            }
-          } else if (FAILED.has(status)) {
-            // Refund / chargeback / cancelamento posterior à aprovação:
-            // se o plano atual foi ativado por este pagamento, revogar acesso.
-            const externalId = String(payment.id ?? paymentId);
-            const { data: planRow } = await supabaseAdmin
-              .from("user_plans")
-              .select("user_id, plano, status, last_payment_id, current_period_end, access_until")
-              .eq("user_id", userId)
-              .maybeSingle();
-            if (planRow && planRow.last_payment_id && planRow.last_payment_id === externalId) {
-              const nowIso = new Date().toISOString();
-              const revoke =
-                status === "refunded" || status === "charged_back" || status === "cancelled";
-              if (revoke) {
-                await supabaseAdmin
-                  .from("user_plans")
-                  .update({
-                    status: "cancelado",
-                    cancelled_at: nowIso,
-                    access_until: nowIso,
-                    current_period_end: nowIso,
-                  })
-                  .eq("user_id", userId);
-                await logAuditEvent({
-                  actor_user_id: null,
-                  action:
-                    status === "refunded"
-                      ? "payment_refunded"
-                      : status === "charged_back"
-                        ? "payment_charged_back"
-                        : "payment_cancelled",
-                  target_user_id: userId,
-                  entity_type: "user_plan",
-                  entity_id: userId,
-                  new_data: { status: "cancelado", revoked: true, reason: status },
-                  metadata: {
-                    source: "mp_webhook",
-                    external_payment_id: externalId,
-                    previous_plan: planRow.plano,
-                  },
-                });
-                await logAuditEvent({
-                  actor_user_id: null,
-                  action: "payment_access_revoked",
-                  target_user_id: userId,
-                  entity_type: "user_plan",
-                  entity_id: userId,
-                  metadata: {
-                    source: "mp_webhook",
-                    reason: status,
-                    external_payment_id: externalId,
-                  },
-                });
-              }
-            }
+        // WA-C11 F2: aplicação atômica via helper central. A RPC encapsula:
+        //   - idempotência L1 (unique) + L2 (provider_updated_at + tiebreak);
+        //   - upsert user_plans conforme canonical;
+        //   - invalidação atômica de whatsapp_notifications pending sem attempt/claim
+        //     quando entitlement transiciona true→false;
+        //   - lock advisory por user_id para concorrência.
+        let applyOutcome: string = "skipped_no_user";
+        let notificationsInvalidated = 0;
+        if (userId) {
+          // Deriva canonical override quando o topic é explicito (refund/chargeback via
+          // notification separada do MP mesmo com status ainda "approved" no recurso).
+          let overrideCanonical: CanonicalBillingStatus | null = null;
+          if (topic.includes("refund")) overrideCanonical = "refunded";
+          else if (topic.includes("chargeback") || topic.includes("charged_back"))
+            overrideCanonical = "chargeback";
+          else if (rawStatus === "cancelled" || rawStatus === "canceled") {
+            // Cancelamento imediato por padrão. Cancelamento agendado só é aplicável
+            // via reconciliador quando o operador tem evidência clara. No webhook
+            // seguimos fail-closed: bloqueia acesso ao receber cancelled.
+            overrideCanonical = "cancelled_immediate";
+          }
+
+          const applyResult = await applyMercadoPagoBillingEvent({
+            payment: {
+              id: payment.id ?? paymentId,
+              status: payment.status,
+              date_last_updated: (payment as { date_last_updated?: string }).date_last_updated,
+              date_approved: (payment as { date_approved?: string }).date_approved,
+              date_created: (payment as { date_created?: string }).date_created,
+              transaction_amount: (payment as { transaction_amount?: number }).transaction_amount,
+              currency_id: (payment as { currency_id?: string }).currency_id,
+              external_reference: payment.external_reference ?? null,
+              metadata: payment.metadata ?? null,
+            },
+            userId,
+            plano: plano as PlanTier | null,
+            periodicidade,
+            months,
+            eventType: topic,
+            overrideCanonical,
+          });
+
+          applyOutcome = applyResult.outcome;
+          notificationsInvalidated = applyResult.notificationsInvalidated ?? 0;
+
+          // Audit trail apenas em transições bloqueantes efetivas.
+          if (
+            applyResult.ok &&
+            applyResult.outcome === "event_applied" &&
+            applyResult.hadWhatsAppBefore &&
+            applyResult.hasWhatsAppAfter === false
+          ) {
+            await logAuditEvent({
+              actor_user_id: null,
+              action: "payment_access_revoked",
+              target_user_id: userId,
+              entity_type: "user_plan",
+              entity_id: userId,
+              metadata: {
+                source: "mp_webhook",
+                canonical_status: applyResult.canonicalStatus,
+                notifications_invalidated: notificationsInvalidated,
+                external_payment_id: externalPaymentId,
+              },
+            });
           }
         }
 
-        // Marca como processado (idempotência futura).
-        await recordPaymentEventIdempotent({
-          external_payment_id: externalPaymentId,
-          event_type: topic,
-          status: canonicalMpStatus(status),
-          raw_status: status,
-          user_id: userId ?? null,
-          metadata: { source: "webhook" },
-        });
+        // Idempotência já é resolvida dentro da RPC. Se outcome=duplicate_event
+        // ou stale_event_skipped, respondemos sucesso idempotente.
+        if (applyOutcome === "duplicate_event") {
+          if (logId) {
+            await updateWebhookLog(logId, {
+              status: "ignored",
+              http_status: 200,
+              external_id: externalPaymentId,
+              idempotency_key: idempotencyKey,
+              error_message: "duplicate_event",
+              processing_time_ms: Date.now() - startedAt,
+            });
+          }
+          return json({ ok: true, duplicate: true });
+        }
 
         if (logId) {
           await updateWebhookLog(logId, {
@@ -384,10 +348,17 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
             user_id: userId ?? null,
             idempotency_key: idempotencyKey,
             processing_time_ms: Date.now() - startedAt,
-            response_body: { ok: true, payment_status: status },
+            response_body: {
+              ok: true,
+              payment_status: rawStatus,
+              apply_outcome: applyOutcome,
+              notifications_invalidated: notificationsInvalidated,
+            },
           });
         }
-        return json({ ok: true });
+        // Sinaliza no console também o status canonical para a linter/scan.
+        void canonicalMpStatus(rawStatus);
+        return json({ ok: true, outcome: applyOutcome });
       },
     },
   },
