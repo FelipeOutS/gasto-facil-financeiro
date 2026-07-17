@@ -142,6 +142,29 @@ mock.module("@/server/whatsapp-comprovantes.server", () => ({
   },
 }));
 
+// WA-C11 Fase 3B.2.B — gate produtivo unificado. Testes de webhook HTTP
+// verificam o pipeline técnico (download, OCR, parser); o gate C11 é
+// bypassado com allowed=true. Cobertura do gate está em
+// tests/whatsapp-c11-f3b2b-inbound-gate.test.ts.
+mock.module("@/server/whatsapp-c11-gates.server", () => ({
+  runInboundProductionGate: async () => ({
+    allowed: true,
+    reason: "allowed",
+    duplicate: false,
+    adminMaster: false,
+    planCode: "pessoal_premium",
+    cycleSource: "calendar_month",
+    quota: null,
+  }),
+  canCreateNotificationForUser: async () => ({
+    allowed: true,
+    reason: "allowed",
+    adminMaster: false,
+    planCode: "pessoal_premium",
+    cycleSource: "calendar_month",
+  }),
+}));
+
 mock.module("@/integrations/supabase/client.server", () => ({
   supabaseAdmin: {
     from: () => ({
