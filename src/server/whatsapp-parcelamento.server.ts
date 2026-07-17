@@ -30,6 +30,11 @@ import {
   reaisParaCentavos,
   calcularParcelasCentavos,
 } from "./cartao-parcelamento.server";
+// WA-C11 3B.2.C.1 Block 4 — quota financeira para parcelamento.
+import {
+  assertFinancialActionQuotaForWhatsApp,
+  financialQuotaBlockedReply,
+} from "@/server/whatsapp-financial-quota-gate.server";
 // ----- Dependency-injection seam -----
 // O orquestrador (`whatsapp.server.ts`) é quem importa este módulo. Para
 // evitar dependência circular em runtime — que quebrava o mock de
@@ -806,7 +811,11 @@ function resolveCategoriaId(
   return out ? { id: out.id, nome: out.nome } : { id: null, nome: "Outros" };
 }
 
-async function persistir(args: {
+// Exportado a partir do WA-C11 3B.2.C.1 Block 4 para permitir testes
+// direcionados do quota gate financeiro sem simular todo o fluxo de
+// confirmação. Continua sendo chamado apenas pelo próprio módulo em
+// produção (avancarFluxo → persistir).
+export async function persistir(args: {
   userId: string;
   msg: WhatsAppMessageRow;
   texto: string;
@@ -863,6 +872,14 @@ async function persistir(args: {
   const grupoId = randomUUID();
   const baseObs = `WhatsApp: ${session.mensagemOriginal}`.slice(0, 1000);
 
+  // WA-C11 3B.2.C.1 Block 4 — fail-closed sem `external_id`: idempotência
+  // da quota financeira depende dele. Sem claim, sem gate, sem RPC.
+  if (!msg.external_id || msg.external_id.trim().length === 0) {
+    console.error("[whatsapp] parcelamento persistir missing externalMessageId");
+    logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
+    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
+  }
+
   // WA-F3.3 — Idempotência concorrente: antes da RPC, fazemos um "claim
   // atômico" da mensagem de confirmação gravando uma linha em status
   // intermediário `parc_persistindo` com o `external_id` da mensagem.
@@ -871,20 +888,38 @@ async function persistir(args: {
   // — apenas um sobreviverá para chamar a RPC. Sem claim, sem RPC.
   // A linha final "salva" é gravada como UPDATE desta mesma sessão de
   // claim, evitando colidir consigo mesmo no índice único.
-  let claimSessionId: string | null = null;
-  if (msg.external_id) {
-    const claim = await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "parc_persistindo",
-      { ...session, grupo_parcelamento_id: grupoId } as unknown as never,
-      "",
-    ) as { ok?: boolean; sessionId?: string | null } | undefined;
-    if (!claim?.ok || !claim.sessionId) {
-      logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
-      return { status: "erro", resposta: "Já estou processando essa compra. Aguarde um instante." };
-    }
-    claimSessionId = claim.sessionId;
+  const claim = await deps.gravarSessao(
+    userId, msg.telefone, msg.external_id, texto, recebidaEm,
+    "parc_persistindo",
+    { ...session, grupo_parcelamento_id: grupoId } as unknown as never,
+    "",
+  ) as { ok?: boolean; sessionId?: string | null } | undefined;
+  if (!claim?.ok || !claim.sessionId) {
+    logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
+    return { status: "erro", resposta: "Já estou processando essa compra. Aguarde um instante." };
   }
+  const claimSessionId: string = claim.sessionId;
+
+  // WA-C11 3B.2.C.1 Block 4 — quota financeira DEPOIS do claim, ANTES da RPC.
+  // discriminator = `grupoId` (determinístico da sessão) para permitir que
+  // dois workers concorrentes com o mesmo `external_id` mas grupos
+  // distintos jamais aconteçam (o claim atômico impede) — o discriminator
+  // apenas reforça a determinística da key. Uma única RPC criará N
+  // parcelas atomicamente e consumirá UMA unidade de quota.
+  const gateOutcome = await assertFinancialActionQuotaForWhatsApp({
+    userId,
+    externalMessageId: msg.external_id,
+    actionType: "installment",
+    discriminator: grupoId,
+  });
+  if (!gateOutcome.allowed) {
+    try {
+      await deps.atualizarSessao(claimSessionId, "erro", session, "quota_blocked");
+    } catch { /* claim cleanup nunca quebra o fluxo de resposta */ }
+    logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
+    return { status: "erro", resposta: financialQuotaBlockedReply(gateOutcome) };
+  }
+
 
   // WA-F3.2/3.3 — persistência atômica via RPC `create_installment_purchase`.
   // SECURITY DEFINER + search_path fixo + validações server-side (cartão

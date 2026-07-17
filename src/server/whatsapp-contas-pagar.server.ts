@@ -34,6 +34,11 @@ import {
   type ContaVencimentoRow,
 } from "./contas-vencimento.server";
 import { nowInAppTz } from "./cartao-fatura.server";
+// WA-C11 3B.2.C.1 Block 4 — quota financeira para baixa de conta.
+import {
+  assertFinancialActionQuotaForWhatsApp,
+  financialQuotaBlockedReply,
+} from "@/server/whatsapp-financial-quota-gate.server";
 
 // Live-binding para permitir mock.module() em testes (mesmo padrão WA-F3/WA-C2).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -632,7 +637,11 @@ export async function processarBaixaConta(args: {
 
 // ---------- persistência ----------
 
-async function persistirBaixa(args: {
+// Exportado a partir do WA-C11 3B.2.C.1 Block 4 para permitir testes
+// direcionados do quota gate financeiro sem simular todo o fluxo do
+// handler `processarBaixaConta`. Continua sendo chamado apenas pelo
+// próprio módulo em produção.
+export async function persistirBaixa(args: {
   userId: string;
   msg: WhatsAppMessageRow;
   texto: string;
@@ -646,6 +655,31 @@ async function persistirBaixa(args: {
     logEvent("failed", 0, "error");
     return { status: "erro", resposta: "Não consegui identificar a conta. Pode começar de novo?" };
   }
+
+  // WA-C11 3B.2.C.1 Block 4 — fail-closed sem `external_id`: idempotência
+  // da quota depende dele. Não abre RPC, não altera conta. Log sanitizado.
+  const externalMessageId = msg.external_id ?? null;
+  if (!externalMessageId || externalMessageId.trim().length === 0) {
+    console.error("[whatsapp] persistirBaixa missing externalMessageId");
+    logEvent("failed", 0, "error");
+    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
+  }
+
+  // WA-C11 3B.2.C.1 Block 4 — quota financeira ANTES da RPC de baixa.
+  // A RPC `whatsapp_baixa_conta_atomic` já é idempotente (noop quando
+  // conta já paga com gasto vinculado); usamos `session.contaId` como
+  // discriminador determinístico da idempotency key financeira.
+  const gateOutcome = await assertFinancialActionQuotaForWhatsApp({
+    userId,
+    externalMessageId,
+    actionType: "bill_payment",
+    discriminator: session.contaId,
+  });
+  if (!gateOutcome.allowed) {
+    logEvent("failed", 0, "error");
+    return { status: "erro", resposta: financialQuotaBlockedReply(gateOutcome) };
+  }
+
   // WA-3.30 — baixa ATÔMICA via RPC public.whatsapp_baixa_conta_atomic.
   // Na mesma transação: cria gasto correspondente + marca conta como pago
   // + grava contas_a_pagar.gasto_id. Se qualquer passo falhar, tudo é
