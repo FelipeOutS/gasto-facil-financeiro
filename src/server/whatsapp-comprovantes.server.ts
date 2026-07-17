@@ -1092,8 +1092,9 @@ export async function processarRespostaImagem(args: {
   session: ComprovanteSession;
   status: ComprovanteStatus;
   decisao: "confirm" | "cancel" | "outro";
+  externalMessageId?: string;
 }): Promise<ComprovanteResult> {
-  const { userId, texto, session, status, decisao } = args;
+  const { userId, texto, session, status, decisao, externalMessageId } = args;
   const cats = await carregarCategoriasDespesa(userId);
 
   if (decisao === "cancel") {
