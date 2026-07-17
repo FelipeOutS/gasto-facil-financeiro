@@ -15,6 +15,44 @@ mock.module("../src/server/whatsapp-entitlement.server", () => ({
   getWhatsAppEntitlement: async () => ({ allowed: true, reason: "allowed" }),
   assertWhatsAppEntitlement: async () => ({ allowed: true, reason: "allowed" }),
 }));
+// WA-C11 Fase 3B.2.B — gate unificado é bypassado (produção real cobre
+// runtime/rollout/ciclo/capacidade; testes de geração são DRY-RUN).
+mock.module("@/server/whatsapp-c11-gates.server", () => ({
+  canCreateNotificationForUser: async () => ({
+    allowed: true,
+    reason: "allowed",
+    adminMaster: false,
+    planCode: "pessoal_premium",
+    cycleSource: "calendar_month",
+  }),
+  runInboundProductionGate: async () => ({
+    allowed: true,
+    reason: "allowed",
+    duplicate: false,
+    adminMaster: false,
+    planCode: "pessoal_premium",
+    cycleSource: "calendar_month",
+    quota: null,
+  }),
+}));
+mock.module("../src/server/whatsapp-c11-gates.server", () => ({
+  canCreateNotificationForUser: async () => ({
+    allowed: true,
+    reason: "allowed",
+    adminMaster: false,
+    planCode: "pessoal_premium",
+    cycleSource: "calendar_month",
+  }),
+  runInboundProductionGate: async () => ({
+    allowed: true,
+    reason: "allowed",
+    duplicate: false,
+    adminMaster: false,
+    planCode: "pessoal_premium",
+    cycleSource: "calendar_month",
+    quota: null,
+  }),
+}));
 import {
   gerarLembretesContasUsuario,
   renderLembreteConta,
