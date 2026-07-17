@@ -74,6 +74,13 @@ import {
   deletePendingPixKey,
   hashPixKey,
 } from "./whatsapp-pix-secret.server";
+// WA-C11 3B.2.C.1 Block 2 — quota financeira do WhatsApp para "pagar pessoa".
+// Ordem: sessão → claim `pp_persistindo` → gate → insert. Fail-closed sem
+// `external_id` (idempotência da quota depende dele).
+import {
+  assertFinancialActionQuotaForWhatsApp,
+  financialQuotaBlockedReply,
+} from "./whatsapp-financial-quota-gate.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin: any = _supabaseAdmin;
@@ -462,6 +469,7 @@ type PersistResult =
   | { kind: "ok"; gastoId: string }
   | { kind: "race_duplicate"; gastoId: string | null }
   | { kind: "race_in_progress" }
+  | { kind: "quota_blocked"; resposta: string }
   | { kind: "error" };
 
 /**
@@ -471,10 +479,11 @@ type PersistResult =
  * devolvemos `race_in_progress`/`race_duplicate` em vez de criar um
  * segundo gasto.
  *
- * Quando não há `external_id`, segue direto para o insert do gasto
- * (sem claim — não há como detectar duplicidade de retry nesse caso).
+ * WA-C11 3B.2.C.1 Block 2 — sem `external_id` esta função falha fechada:
+ * a chave de idempotência da quota financeira depende do `external_id`;
+ * sem ela não é seguro consumir quota nem escrever.
  */
-async function persistirGastoComClaim(args: {
+export async function persistirGastoComClaim(args: {
   userId: string;
   telefone: string;
   externalId: string | null;
@@ -490,12 +499,19 @@ async function persistirGastoComClaim(args: {
   // Conversão única centavos → reais na fronteira do insert.
   const valorReais = centavosParaReais(valorCentavos);
 
+  // WA-C11 3B.2.C.1 Block 2 — fail-closed sem external_id.
+  const externalIdTrim = (externalId ?? "").trim();
+  if (externalIdTrim.length === 0) {
+    logEvent("missing_external_id", "fail");
+    return { kind: "error" };
+  }
+
   // Pré-check de idempotência (retries sequenciais sem race ativa).
-  if (externalId) {
+  {
     const { data: prev } = await supabaseAdmin
       .from("whatsapp_messages")
       .select("id, gasto_id, status, parsed")
-      .eq("external_id", externalId)
+      .eq("external_id", externalIdTrim)
       .maybeSingle();
     const parsed = (prev?.parsed ?? {}) as { kind?: string };
     if (prev && parsed.kind === "pagar_pessoa") {
@@ -512,11 +528,11 @@ async function persistirGastoComClaim(args: {
 
   // Claim atômico. Mesmo external_id → 23505 (unique violation).
   let claimedSessionId: string | null = null;
-  if (externalId) {
+  {
     const claim = await deps.gravarSessao(
       userId,
       telefone,
-      externalId,
+      externalIdTrim,
       texto,
       recebidaEm,
       "pp_persistindo",
@@ -530,7 +546,7 @@ async function persistirGastoComClaim(args: {
         const { data: again } = await supabaseAdmin
           .from("whatsapp_messages")
           .select("id, gasto_id, status, parsed")
-          .eq("external_id", externalId)
+          .eq("external_id", externalIdTrim)
           .maybeSingle();
         const p = (again?.parsed ?? {}) as { kind?: string };
         if (again && p.kind === "pagar_pessoa") {
@@ -546,6 +562,25 @@ async function persistirGastoComClaim(args: {
     }
     claimedSessionId = claim.sessionId;
   }
+
+  // WA-C11 3B.2.C.1 Block 2 — quota SOMENTE após vencer o claim.
+  // Perdedores do claim retornam acima sem consumir quota.
+  const gateOutcome = await assertFinancialActionQuotaForWhatsApp({
+    userId,
+    externalMessageId: externalIdTrim,
+    actionType: "expense_pay_person",
+  });
+  if (!gateOutcome.allowed) {
+    const resposta = financialQuotaBlockedReply(gateOutcome);
+    if (claimedSessionId) {
+      await deps.atualizarSessao(
+        claimedSessionId, "falha", session, resposta,
+      );
+    }
+    logEvent("quota_blocked", "fail", { reason: gateOutcome.reason });
+    return { kind: "quota_blocked", resposta };
+  }
+
 
   // Insere o gasto.
   const catId = await resolveOutrosCategoriaId(userId);
@@ -602,19 +637,13 @@ async function persistirGastoComClaim(args: {
 
   const gastoId = row.id as string;
 
+  // WA-C11 3B.2.C.1 Block 2 — claim é obrigatório (fail-closed acima),
+  // então `claimedSessionId` sempre existe aqui.
   if (claimedSessionId) {
     await deps.atualizarSessao(
       claimedSessionId,
       "salva",
       { ...session, kind: "pagar_pessoa" },
-      T.gastoRegistrado({ valor: valorCentavos, nome, descricao: session.descricao }),
-      gastoId,
-    );
-  } else {
-    // Sem external_id (caminho secundário): grava sessão final agora.
-    await deps.gravarSessao(
-      userId, telefone, externalId, texto, recebidaEm, "salva",
-      session,
       T.gastoRegistrado({ valor: valorCentavos, nome, descricao: session.descricao }),
       gastoId,
     );
@@ -1090,6 +1119,9 @@ async function criarGastoAvulso(args: {
   if (result.kind === "race_in_progress") {
     return { status: "duplicada", resposta: T.ainda_processando() };
   }
+  if (result.kind === "quota_blocked") {
+    return { status: "erro", resposta: result.resposta };
+  }
   return { status: "erro", resposta: T.erroGenerico() };
 }
 
@@ -1554,6 +1586,12 @@ async function passoConfirmarPixInline(args: {
   }
   if (result.kind === "race_in_progress") {
     return { status: "duplicada", resposta: T.ainda_processando() };
+  }
+  if (result.kind === "quota_blocked") {
+    await deps.atualizarSessao(
+      sessao.id, "falha", sessionComFav, result.resposta,
+    );
+    return { status: "erro", resposta: result.resposta };
   }
   // WA-Q-PixInline-Terminal — erro de persistência: fecha em terminal
   // de falha em vez de deixar a prévia pendurada.

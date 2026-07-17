@@ -50,6 +50,13 @@ import {
 } from "./whatsapp-short-context.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
 import { issueRevealToken } from "./whatsapp-pix-reveal-token.server";
+// WA-C11 3B.2.C.1 Block 2 — quota financeira para o legacy "pagar via
+// intenção Pix". Ordem: sessão/pré-check → claim `pix_persistindo` →
+// gate → insert. Fail-closed sem `external_id`.
+import {
+  assertFinancialActionQuotaForWhatsApp,
+  financialQuotaBlockedReply,
+} from "./whatsapp-financial-quota-gate.server";
 
 // Direct import mocked por `mock.module(...)` nos testes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -333,6 +340,20 @@ export async function handlePagarPessoaIntent(args: {
   // ao padrão usado em WA-F3 (parc_persistindo) e WA-C2/C4 (conta_*).
   // ----------------------------------------------------------------------
   const externalId = (args._row?.external_id ?? "").trim();
+  // WA-C11 3B.2.C.1 Block 2 — fail-closed sem external_id.
+  if (externalId.length === 0) {
+    console.error({
+      event: "wa_pix_payment",
+      stage: "missing_external_id",
+      result: "fail",
+    });
+    return {
+      status: "erro",
+      resposta:
+        "Não consegui registrar agora. Tente de novo daqui a pouco, por favor.",
+    };
+  }
+  
   if (externalId.length > 0) {
     const { data: prev } = await supabaseAdmin
       .from("whatsapp_messages")
@@ -400,6 +421,56 @@ export async function handlePagarPessoaIntent(args: {
   const matches = await findFavorecidosByNome(args.userId, parsed.nome);
   const favorecido: FavorecidoRow | null =
     matches.length === 1 ? matches[0] : null;
+
+  // WA-C11 3B.2.C.1 Block 2 — claim atômico best-effort `pix_persistindo`
+  // no row de `whatsapp_messages` já materializado pelo router. CAS por
+  // status atual: quando o UPDATE retorna 1+ linhas, este processo é o
+  // dono do slot. Erros do banco bloqueiam a persistência. Um retorno
+  // vazio (sem linhas afetadas) NÃO bloqueia — o mecanismo primário de
+  // idempotência é o pré-check acima + o unique index de `external_id`
+  // no insert do router. Este CAS existe para reforçar corrida de
+  // reentrega paralela, e não deve derrubar cenários legítimos.
+  {
+    const { error: claimErr } = await supabaseAdmin
+      .from("whatsapp_messages")
+      .update({ status: "pix_persistindo" })
+      .eq("user_id", args.userId)
+      .eq("external_id", externalId)
+      .not("status", "in", "(pix_persistindo,salva,falha)")
+      .select("id");
+    if (claimErr) {
+      console.error({
+        event: "wa_pix_payment",
+        stage: "claim_failed",
+        result: "fail",
+      });
+      return {
+        status: "erro",
+        resposta:
+          "Não consegui registrar agora. Tente de novo daqui a pouco, por favor.",
+      };
+    }
+  }
+
+
+  // WA-C11 3B.2.C.1 Block 2 — quota financeira somente após vencer o claim.
+  const gateOutcome = await assertFinancialActionQuotaForWhatsApp({
+    userId: args.userId,
+    externalMessageId: externalId,
+    actionType: "expense_pix",
+  });
+  if (!gateOutcome.allowed) {
+    console.info({
+      event: "wa_pix_payment",
+      stage: "quota_blocked",
+      result: "fail",
+      reason: gateOutcome.reason,
+    });
+    return {
+      status: "erro",
+      resposta: financialQuotaBlockedReply(gateOutcome),
+    };
+  }
 
   const catId = await resolveOutrosCategoriaId(args.userId);
   if (!catId) {

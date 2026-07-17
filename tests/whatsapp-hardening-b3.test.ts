@@ -349,6 +349,10 @@ async function ensureRoute() {
     shouldSendBlockedReply: async () => false,
     WHATSAPP_BLOCKED_REPLY: "blocked",
   }));
+  mock.module("@/server/whatsapp-c11-gates.server", () => ({
+    runInboundProductionGate: async () => ({ allowed: true as const, userId: "u-1" }),
+    runNotificationCreationGate: async () => ({ allowed: true as const }),
+  }));
   mock.module("@/server/whatsapp-comprovantes.server", () => ({
     podeUsarOcrComprovante: async () => true,
   }));

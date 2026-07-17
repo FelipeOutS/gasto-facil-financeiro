@@ -219,9 +219,22 @@ function makeBuilder(table: string): any {
     }
     if (ctx.op === "update") {
       if (table === "whatsapp_messages") {
+        // Aplica update aos inserts que casam com os filtros e coleta
+        // ids para suportar CAS via `.select("id")` (WA-C11 Block 2).
+        const matchedIds: Array<{ id: string }> = [];
         state.inserts.forEach((entry, idx) => {
           if (entry.table === "whatsapp_messages" && matchesFilters(entry.row, idx)) {
+            // Aplica notFilters (WA-C11 pix claim: status NOT IN (...)).
+            let notBlocked = false;
+            for (const nf of (ctx.notFilters as Array<{ col: string; op: string; val: unknown }> | undefined) ?? []) {
+              const actual = (entry.row as Record<string, unknown>)[nf.col];
+              if (nf.op === "in" && Array.isArray(nf.val) && (nf.val as unknown[]).includes(actual)) {
+                notBlocked = true; break;
+              }
+            }
+            if (notBlocked) return;
             entry.row = { ...entry.row, ...ctx.payload };
+            matchedIds.push({ id: `m-${idx + 1}` });
           }
         });
         const s = ctx.payload?.status;
@@ -238,6 +251,13 @@ function makeBuilder(table: string): any {
             status: s,
             parsed: ctx.payload?.parsed ?? state.pendingRow.parsed,
           };
+        }
+        // Se o caller pediu `.select(...)`, devolve a lista; caso contrário
+        // mantém o retorno legado (null) para não quebrar leituras antigas.
+        // Detectamos via presença de `select` chamado antes de finalizar —
+        // no fake atual `.select()` só troca o retorno se houver ids.
+        if (matchedIds.length > 0) {
+          return { data: matchedIds, error: null };
         }
       }
       // WA-C3/WA-C4 — update condicional de contas_a_pagar. Suporta
@@ -733,6 +753,19 @@ mock.module("@/server/subscription.server", () => ({
 mock.module("./subscription.server", () => ({
   getSubscriptionForUserIdentity: async () => ({ active: true, plan: "admin_master" }),
 }));
+
+// WA-C11 3B.2.C.1 — gate financeiro sempre "allowed" nos testes legados
+// que não simulam quota. Testes específicos (Block 1/2 wiring, Fase 3
+// helpers) sobrescrevem esse mock localmente com seu próprio `mock.module`.
+const _gateFake = {
+  assertFinancialActionQuotaForWhatsApp: async () => ({
+    allowed: true as const,
+  }),
+  financialQuotaBlockedReply: () =>
+    "Você atingiu o limite do plano no WhatsApp. Tente novamente mais tarde.",
+};
+mock.module("@/server/whatsapp-financial-quota-gate.server", () => _gateFake);
+mock.module("./whatsapp-financial-quota-gate.server", () => _gateFake);
 
 export function resetState(opts?: {
   cartoes?: Record<string, unknown>[];
