@@ -2060,6 +2060,7 @@ export type Database = {
           payment_id: string | null
           processed_at: string
           provider: string
+          provider_updated_at: string | null
           raw_status: string | null
           status: string
           subscription_id: string | null
@@ -2074,6 +2075,7 @@ export type Database = {
           payment_id?: string | null
           processed_at?: string
           provider?: string
+          provider_updated_at?: string | null
           raw_status?: string | null
           status: string
           subscription_id?: string | null
@@ -2088,6 +2090,7 @@ export type Database = {
           payment_id?: string | null
           processed_at?: string
           provider?: string
+          provider_updated_at?: string | null
           raw_status?: string | null
           status?: string
           subscription_id?: string | null
@@ -3667,6 +3670,24 @@ export type Database = {
       assert_free_ads_quota: {
         Args: { _resource: string; _user_id: string }
         Returns: undefined
+      }
+      billing_apply_mercadopago_event_atomic: {
+        Args: {
+          p_canonical_status: string
+          p_event_type: string
+          p_external_payment_id: string
+          p_metadata?: Json
+          p_months: number
+          p_period_end: string
+          p_period_start: string
+          p_periodicidade: string
+          p_plano: Database["public"]["Enums"]["plan_tier"]
+          p_provider: string
+          p_provider_updated_at: string
+          p_raw_status: string
+          p_user_id: string
+        }
+        Returns: Json
       }
       can_admin_account: { Args: { _owner: string }; Returns: boolean }
       can_create_in_account: { Args: { _owner: string }; Returns: boolean }
