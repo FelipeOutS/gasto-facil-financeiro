@@ -3,11 +3,13 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logAuditEvent, logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
+import { canonicalMpStatus } from "@/server/mercadopago-diagnostics.server";
 import {
-  paymentEventAlreadyProcessed,
-  recordPaymentEventIdempotent,
-  canonicalMpStatus,
-} from "@/server/mercadopago-diagnostics.server";
+  applyMercadoPagoBillingEvent,
+  type CanonicalBillingStatus,
+} from "@/server/billing-mercadopago-apply.server";
+import type { Database } from "@/integrations/supabase/types";
+type PlanTier = Database["public"]["Enums"]["plan_tier"];
 
 /**
  * POST /api/public/webhooks/mercadopago
