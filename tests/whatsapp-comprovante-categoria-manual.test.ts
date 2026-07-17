@@ -232,6 +232,7 @@ describe("WA-M1.2 — seleção manual de categoria em comprovantes", () => {
       "user-1",
       baseSession() as never,
       CATS as never,
+      "wamid.T2b",
     );
     expect(r.ok).toBe(true);
     expect(memoryCalls[0].evidence).toBe("confirmed");
