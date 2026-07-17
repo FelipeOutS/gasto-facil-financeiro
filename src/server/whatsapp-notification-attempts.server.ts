@@ -442,6 +442,7 @@ export async function recoverNotificationWithAttempt(
       planned_cancelled: "recovery_planned_cancelled",
       sending_ambiguous: "recovery_sending_ambiguous",
       ambiguous_quarantined: "recovery_ambiguous_quarantined",
+      ambiguous_skipped: "recovery_skipped_ambiguous",
       accepted_repaired: "recovery_accepted_repaired",
       rejected_preserved: "recovery_rejected_preserved",
       cancelled_repending: "recovery_cancelled_requeued",
