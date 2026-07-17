@@ -220,7 +220,7 @@ describe("WA-M1.2 — seleção manual de categoria em comprovantes", () => {
       categoriaLabel: "Transporte",
       categoriaSelecionadaManual: true,
     });
-    const r = await persistirGastoComprovante("user-1", s as never, CATS as never);
+    const r = await persistirGastoComprovante("user-1", s as never, CATS as never, "wamid.T2");
     expect(r.ok).toBe(true);
     expect(memoryCalls).toHaveLength(1);
     expect(memoryCalls[0].evidence).toBe("manual");
@@ -242,7 +242,7 @@ describe("WA-M1.2 — seleção manual de categoria em comprovantes", () => {
       categoriaNaoIdentificada: true,
       categoriaSelecionadaManual: false,
     });
-    const r = await persistirGastoComprovante("user-1", s as never, CATS as never);
+    const r = await persistirGastoComprovante("user-1", s as never, CATS as never, "wamid.T2");
     expect(r.ok).toBe(true);
     expect(memoryCalls[0].evidence).toBe("manual");
   });
