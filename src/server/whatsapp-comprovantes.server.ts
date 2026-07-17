@@ -944,6 +944,7 @@ async function avancarAposConfirmacao(
   userId: string,
   session: ComprovanteSession,
   cats: CategoriaRow[],
+  externalMessageId?: string,
 ): Promise<ComprovanteResult> {
   // 1) Categoria obrigatória quando OCR não identificou com confiança.
   if (session.categoriaNaoIdentificada && !session.categoriaId) {
@@ -981,7 +982,7 @@ async function avancarAposConfirmacao(
     };
   }
   // 4) Persiste.
-  const saved = await persistirGastoComprovante(userId, session, cats);
+  const saved = await persistirGastoComprovante(userId, session, cats, externalMessageId);
   if (!saved.ok) return { status: "erro", resposta: saved.resposta, session };
   return {
     status: "salva",
