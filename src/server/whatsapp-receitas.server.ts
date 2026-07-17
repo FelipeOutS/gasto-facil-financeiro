@@ -15,6 +15,13 @@ import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.
 import { whatsappMessages as M } from "./whatsapp-messages";
 import { getSubscriptionForUserIdentity } from "./subscription.server";
 import type { TipoReceita } from "@/lib/types";
+// WA-C11 3B.2.C.1 Block 3 — quota financeira do WhatsApp para receitas
+// (única e recorrente). Ordem: sessão em confirmação → gate → escrita.
+// Fail-closed sem `external_id` (idempotência da quota depende dele).
+import {
+  assertFinancialActionQuotaForWhatsApp,
+  financialQuotaBlockedReply,
+} from "@/server/whatsapp-financial-quota-gate.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin = _supabaseAdmin as any;
