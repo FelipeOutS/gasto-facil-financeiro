@@ -248,20 +248,30 @@ export async function paymentEventAlreadyProcessed(
 }
 
 /**
- * Reconcilia um pagamento por ID. Usa o diagnóstico e, se MP estiver approved,
- * marca o pagamento local como aprovado e ativa/renova a assinatura.
- * Idempotente: nunca duplica ativação.
+ * Reconcilia um pagamento por ID. WA-C11 F2: agora delega toda a aplicação
+ * de estado ao helper central `applyMercadoPagoBillingEvent`, que invoca a
+ * RPC atômica `billing_apply_mercadopago_event_atomic`.
+ *
+ * Webhook e reconciliador compartilham exatamente a mesma lógica de:
+ *   - idempotência (L1 unique + L2 provider_updated_at);
+ *   - transições de plano;
+ *   - invalidação de notifications quando entitlement transiciona;
+ *   - preservação de attempts/canary/beta_access/opt-in/links.
  *
  * Quem chama é responsável por garantir que o caller é admin.
+ * Suporta `dry_run=true` para diagnóstico sem escrita.
  */
 export async function reconcileMercadoPagoPaymentById(
   paymentId: string,
   actor: { user_id?: string | null; email?: string | null },
+  options: { dry_run?: boolean } = {},
 ): Promise<{
   ok: boolean;
   applied: boolean;
   diagnosis: DiagnosisResult;
   message: string;
+  outcome?: string;
+  notifications_invalidated?: number;
 }> {
   const diagnosis = await diagnoseMercadoPagoPayment(paymentId);
 
@@ -269,80 +279,70 @@ export async function reconcileMercadoPagoPaymentById(
     return { ok: false, applied: false, diagnosis, message: "payment_not_found" };
   }
 
-  if (diagnosis.mercado_pago_status !== "approved") {
+  if (options.dry_run) {
     return {
       ok: true,
       applied: false,
       diagnosis,
-      message: `mp_status_is_${diagnosis.mercado_pago_status}`,
+      message: `dry_run:${diagnosis.mercado_pago_status}`,
     };
   }
 
-  // approved
   const { user_id: userId, plan } = diagnosis;
-  let applied = false;
-
-  // 1) marcar pagamento local como aprovado se ainda não estiver
-  if (diagnosis.local_payment_status && diagnosis.local_payment_status !== "approved") {
-    await supabaseAdmin
-      .from("subscription_payments")
-      .update({ status: "approved", paid_at: new Date().toISOString() })
-      .eq("provider", "mercadopago")
-      .eq("provider_payment_id", diagnosis.external_payment_id);
-    applied = true;
+  if (!userId) {
+    return { ok: true, applied: false, diagnosis, message: "user_not_found" };
   }
 
-  // 2) ativar assinatura se inativa / divergente
-  if (userId && plan && diagnosis.local_subscription_status !== "ativo") {
-    const startISO = new Date().toISOString();
-    const end = new Date();
-    end.setMonth(end.getMonth() + 1); // padrão mensal; ciclo correto vem do trigger
-    const { data: existing } = await supabaseAdmin
-      .from("user_plans")
-      .select("user_id")
-      .eq("user_id", userId)
-      .maybeSingle();
-    const update = {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      plano: plan as any,
-      status: "ativo",
-      cancelled_at: null,
-      access_until: null,
-      current_period_start: startISO,
-      current_period_end: end.toISOString(),
-      last_payment_id: diagnosis.external_payment_id,
-    };
-    if (existing) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await supabaseAdmin.from("user_plans").update(update as any).eq("user_id", userId);
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await supabaseAdmin.from("user_plans").insert({ user_id: userId, ...update } as any);
-    }
-    applied = true;
+  // Consulta payment novamente para obter campos temporais (necessários para o helper).
+  const payment = await fetchPayment(paymentId);
+  if (!payment) {
+    return { ok: false, applied: false, diagnosis, message: "payment_not_found" };
   }
 
-  // Registra idempotência + audit log
-  await recordPaymentEventIdempotent({
-    external_payment_id: diagnosis.external_payment_id,
-    event_type: "manual_reconcile",
-    status: "approved",
-    raw_status: diagnosis.mp_raw_status,
-    user_id: userId,
-    metadata: { source: "manual_reconcile", actor_email: actor.email ?? null },
+  // Delega ao helper central. cancellationKind não é inferível pela reconciliação
+  // sem contexto adicional — default fail-closed (immediate).
+  const { applyMercadoPagoBillingEvent } = await import("./billing-mercadopago-apply.server");
+  const applyResult = await applyMercadoPagoBillingEvent({
+    payment: {
+      id: payment.id ?? paymentId,
+      status: payment.status,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      date_last_updated: (payment as any).date_last_updated,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      date_approved: (payment as any).date_approved,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      date_created: (payment as any).date_created,
+      transaction_amount: payment.transaction_amount ?? null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      currency_id: (payment as any).currency_id ?? null,
+      external_reference: payment.external_reference ?? null,
+      metadata: payment.metadata ?? null,
+    },
+    userId,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    plano: (plan ?? null) as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    periodicidade: ((payment.metadata as any)?.periodicidade as string | undefined) ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    months: Number((payment.metadata as any)?.months ?? 1) || 1,
+    eventType: "manual_reconcile",
   });
 
   await logAuditEvent({
     actor_user_id: actor.user_id ?? null,
     actor_email: actor.email ?? null,
-    action: applied ? "payment_reconciled_approved" : "payment_reconciled_noop",
+    action:
+      applyResult.outcome === "event_applied"
+        ? "payment_reconciled_applied"
+        : "payment_reconciled_noop",
     target_user_id: userId,
     entity_type: "payment",
     entity_id: diagnosis.external_payment_id,
     new_data: {
       mp_status: diagnosis.mercado_pago_status,
-      plan,
-      applied,
+      canonical_status: applyResult.canonicalStatus,
+      outcome: applyResult.outcome,
+      notifications_invalidated: applyResult.notificationsInvalidated ?? 0,
     },
     metadata: {
       source: "manual_reconcile",
@@ -351,9 +351,11 @@ export async function reconcileMercadoPagoPaymentById(
   });
 
   return {
-    ok: true,
-    applied,
+    ok: applyResult.ok,
+    applied: applyResult.outcome === "event_applied",
     diagnosis,
-    message: applied ? "reconciled" : "already_consistent",
+    message: applyResult.outcome,
+    outcome: applyResult.outcome,
+    notifications_invalidated: applyResult.notificationsInvalidated ?? 0,
   };
 }
