@@ -7,7 +7,7 @@
  * Sem tocar Supabase real, sem tocar Meta, sem escritas financeiras.
  * Dependências injetadas via `FinancialGateDeps`.
  */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import {
   assertFinancialActionQuotaForWhatsApp,
   buildFinancialActionKey,
