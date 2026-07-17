@@ -811,7 +811,11 @@ function resolveCategoriaId(
   return out ? { id: out.id, nome: out.nome } : { id: null, nome: "Outros" };
 }
 
-async function persistir(args: {
+// Exportado a partir do WA-C11 3B.2.C.1 Block 4 para permitir testes
+// direcionados do quota gate financeiro sem simular todo o fluxo de
+// confirmação. Continua sendo chamado apenas pelo próprio módulo em
+// produção (avancarFluxo → persistir).
+export async function persistir(args: {
   userId: string;
   msg: WhatsAppMessageRow;
   texto: string;
