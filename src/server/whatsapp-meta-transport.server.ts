@@ -27,6 +27,8 @@ import type {
   WhatsAppNotificationTransport,
 } from "@/server/whatsapp-outbound-adapter.server";
 import { buildWhatsAppTemplateRequest } from "@/server/whatsapp-outbound-adapter.server";
+import { sanitizeTransportError } from "@/server/whatsapp-transport-error-sanitizer.server";
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constantes de segurança
@@ -350,8 +352,24 @@ export class MetaWhatsAppNotificationTransport
 
     if (fetchError !== undefined || !response) {
       const errName = fetchError instanceof Error ? fetchError.name : "unknown";
+      const sanitized = sanitizeTransportError({
+        error: fetchError,
+        timedOut,
+        aborted: !timedOut && errName === "AbortError",
+        responseReceived: false,
+        durationMs: durationMs,
+      });
       if (timedOut || errName === "AbortError") {
-        this.#log({ event: "meta_request_timeout", duration_ms: durationMs });
+        this.#log({
+          event: "meta_request_timeout",
+          duration_ms: durationMs,
+          error_name: sanitized.error_name,
+          cause_code: sanitized.cause_code,
+          cause_errno: sanitized.cause_errno,
+          timed_out: sanitized.timed_out,
+          aborted: sanitized.aborted,
+          response_received: sanitized.response_received,
+        });
         return {
           kind: "ambiguous",
           reason: timedOut ? "timeout" : "aborted",
@@ -360,7 +378,12 @@ export class MetaWhatsAppNotificationTransport
       this.#log({
         event: "meta_request_ambiguous",
         duration_ms: durationMs,
-        error_name: errName,
+        error_name: sanitized.error_name,
+        cause_code: sanitized.cause_code,
+        cause_errno: sanitized.cause_errno,
+        timed_out: sanitized.timed_out,
+        aborted: sanitized.aborted,
+        response_received: sanitized.response_received,
       });
       return { kind: "ambiguous", reason: "network_error" };
     }
