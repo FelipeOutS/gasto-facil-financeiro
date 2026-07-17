@@ -340,6 +340,20 @@ export async function handlePagarPessoaIntent(args: {
   // ao padrão usado em WA-F3 (parc_persistindo) e WA-C2/C4 (conta_*).
   // ----------------------------------------------------------------------
   const externalId = (args._row?.external_id ?? "").trim();
+  // WA-C11 3B.2.C.1 Block 2 — fail-closed sem external_id.
+  if (externalId.length === 0) {
+    console.error({
+      event: "wa_pix_payment",
+      stage: "missing_external_id",
+      result: "fail",
+    });
+    return {
+      status: "erro",
+      resposta:
+        "Não consegui registrar agora. Tente de novo daqui a pouco, por favor.",
+    };
+  }
+  const _externalIdIgnored = null;
   if (externalId.length > 0) {
     const { data: prev } = await supabaseAdmin
       .from("whatsapp_messages")
