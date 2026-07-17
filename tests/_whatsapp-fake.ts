@@ -734,6 +734,19 @@ mock.module("./subscription.server", () => ({
   getSubscriptionForUserIdentity: async () => ({ active: true, plan: "admin_master" }),
 }));
 
+// WA-C11 3B.2.C.1 — gate financeiro sempre "allowed" nos testes legados
+// que não simulam quota. Testes específicos (Block 1/2 wiring, Fase 3
+// helpers) sobrescrevem esse mock localmente com seu próprio `mock.module`.
+const _gateFake = {
+  assertFinancialActionQuotaForWhatsApp: async () => ({
+    allowed: true as const,
+  }),
+  financialQuotaBlockedReply: () =>
+    "Você atingiu o limite do plano no WhatsApp. Tente novamente mais tarde.",
+};
+mock.module("@/server/whatsapp-financial-quota-gate.server", () => _gateFake);
+mock.module("./whatsapp-financial-quota-gate.server", () => _gateFake);
+
 export function resetState(opts?: {
   cartoes?: Record<string, unknown>[];
   categorias?: Record<string, unknown>[];
