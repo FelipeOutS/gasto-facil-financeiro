@@ -191,24 +191,29 @@ export async function gerarLembretesContasUsuario(
 ): Promise<LembreteGerado[]> {
   if (!userId) return [];
 
-  // WA-C11 Fase 1 — gate de entitlement no call-site de criação.
-  // Não geramos lembrete para usuário sem direito (plano/beta/assinatura/
-  // link revogado). Falha do gate bloqueia (fail-closed).
+  // WA-C11 Fase 3B.2.B — gate produtivo unificado.
+  // Cadeia obrigatória ANTES do fetch/enqueue:
+  //   runtime.global_enabled → runtime.notification_creation_enabled →
+  //   entitlement (plano+beta+admin+link+opt-in) → rollout → ciclo →
+  //   capacidade outbound (snapshot; NÃO reserva).
+  // Reserva outbound é responsabilidade do dispatcher (WA-C11 3B.2.d).
+  // Fail-closed: qualquer bloqueio devolve lista vazia sem tocar banco.
   try {
-    const { getWhatsAppEntitlement } = await import(
-      "@/server/whatsapp-entitlement.server"
+    const { canCreateNotificationForUser } = await import(
+      "@/server/whatsapp-c11-gates.server"
     );
-    const ent = await getWhatsAppEntitlement(userId);
-    if (!ent.allowed) {
+    const gate = await canCreateNotificationForUser({ userId });
+    if (!gate.allowed) {
       console.info(
         "[wa-c9] lembretes_gate_block",
-        JSON.stringify({ reason: ent.reason }),
+        JSON.stringify({ reason: gate.reason }),
       );
       return [];
     }
   } catch {
     return [];
   }
+
 
   const tz = deps?.timezone ?? "America/Sao_Paulo";
   const now = deps?.now?.() ?? new Date();
