@@ -100,6 +100,7 @@ const INCLUDE = [
   "whatsapp-c92-template-loader-e3a.test.ts",
   "whatsapp-c11-entitlement.test.ts",
   "whatsapp-c11-f2-billing.test.ts",
+  "whatsapp-c11-f22-cancellation-resolver.test.ts",
   "whatsapp-c92-transport-error-sanitizer-e4c.test.ts",
   "whatsapp-c92-recovery-anti-ambiguous-e4c.test.ts",
   "whatsapp-contas-lembretes-c9.test.ts",
