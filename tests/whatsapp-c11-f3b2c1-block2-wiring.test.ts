@@ -306,7 +306,9 @@ describe("WA-C11 3B.2.C.1 Block 2 — handlePagarPessoaIntent (pix legacy)", () 
     expect(insertedGastos).toHaveLength(1);
   });
 
-  it("claim perdido (0 rows) → sem chamada ao gate e sem insert", async () => {
+  it("claim CAS best-effort (0 rows) → segue para gate (idempotência via unique index)", async () => {
+    // WA-C11 3B.2.C.1 Block 2 — o CAS é best-effort: 0 linhas não bloqueia,
+    // pois idempotência primária vem do pré-check + unique index de external_id.
     pixClaimUpdateRowsAffected = 0;
     const r = await handlePagarPessoaIntent({
       userId: "u1",
@@ -314,10 +316,11 @@ describe("WA-C11 3B.2.C.1 Block 2 — handlePagarPessoaIntent (pix legacy)", () 
       texto: "paguei 50 para maria",
       _row: baseRow as never,
     });
-    expect(r.status).toBe("duplicada");
-    expect(gateCalls).toHaveLength(0);
-    expect(insertedGastos).toHaveLength(0);
+    expect(r.status).toBe("salva");
+    expect(gateCalls).toHaveLength(1);
+    expect(insertedGastos).toHaveLength(1);
   });
+
 
   it("gate quota_denied → sem insert, mensagem neutra", async () => {
     gateOutcome = { allowed: false, reason: "quota_denied" };
