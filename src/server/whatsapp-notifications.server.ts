@@ -616,7 +616,6 @@ export async function recoverStuckProcessing(
     const outcomesRepairedOrRequeued: ReadonlySet<string> = new Set([
       "recovered_without_attempt",
       "accepted_repaired",
-      "ambiguous_quarantined",
       "cancelled_repending",
       "planned_cancelled",
     ]);
@@ -626,6 +625,10 @@ export async function recoverStuckProcessing(
       "rejected_preserved",
       "sending_ambiguous",
       "not_found",
+      // E.4C: ambiguous não reconciliada NÃO é retentável — guarda atômica na RPC.
+      "ambiguous_skipped",
+      // Retrocompatibilidade: quarentena legacy também é noop na contabilidade.
+      "ambiguous_quarantined",
     ]);
     for (const row of list) {
       try {
