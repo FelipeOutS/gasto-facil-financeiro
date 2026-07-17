@@ -422,6 +422,63 @@ export async function handlePagarPessoaIntent(args: {
   const favorecido: FavorecidoRow | null =
     matches.length === 1 ? matches[0] : null;
 
+  // WA-C11 3B.2.C.1 Block 2 — claim atômico `pix_persistindo` no próprio
+  // row de `whatsapp_messages` já materializado pelo router. CAS por
+  // status atual: se outra invocação paralela já claimou, o UPDATE não
+  // afeta linhas e devolvemos "processando".
+  {
+    const { data: claimRows, error: claimErr } = await supabaseAdmin
+      .from("whatsapp_messages")
+      .update({ status: "pix_persistindo" })
+      .eq("id", args._row.id)
+      .eq("external_id", externalId)
+      .not("status", "in", "(pix_persistindo,salva,falha)")
+      .select("id");
+    if (claimErr) {
+      console.error({
+        event: "wa_pix_payment",
+        stage: "claim_failed",
+        result: "fail",
+      });
+      return {
+        status: "erro",
+        resposta:
+          "Não consegui registrar agora. Tente de novo daqui a pouco, por favor.",
+      };
+    }
+    if (!Array.isArray(claimRows) || claimRows.length === 0) {
+      console.info({
+        event: "wa_pix_payment",
+        stage: "race_in_progress_detected",
+        result: "race",
+      });
+      return {
+        status: "duplicada",
+        resposta:
+          "Ainda estou processando esse pagamento. Aguarde alguns segundos.",
+      };
+    }
+  }
+
+  // WA-C11 3B.2.C.1 Block 2 — quota financeira somente após vencer o claim.
+  const gateOutcome = await assertFinancialActionQuotaForWhatsApp({
+    userId: args.userId,
+    externalMessageId: externalId,
+    actionType: "expense_pix",
+  });
+  if (!gateOutcome.allowed) {
+    console.info({
+      event: "wa_pix_payment",
+      stage: "quota_blocked",
+      result: "fail",
+      reason: gateOutcome.reason,
+    });
+    return {
+      status: "erro",
+      resposta: financialQuotaBlockedReply(gateOutcome),
+    };
+  }
+
   const catId = await resolveOutrosCategoriaId(args.userId);
   if (!catId) {
     console.error({
