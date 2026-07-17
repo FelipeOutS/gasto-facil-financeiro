@@ -637,19 +637,13 @@ export async function persistirGastoComClaim(args: {
 
   const gastoId = row.id as string;
 
+  // WA-C11 3B.2.C.1 Block 2 — claim é obrigatório (fail-closed acima),
+  // então `claimedSessionId` sempre existe aqui.
   if (claimedSessionId) {
     await deps.atualizarSessao(
       claimedSessionId,
       "salva",
       { ...session, kind: "pagar_pessoa" },
-      T.gastoRegistrado({ valor: valorCentavos, nome, descricao: session.descricao }),
-      gastoId,
-    );
-  } else {
-    // Sem external_id (caminho secundário): grava sessão final agora.
-    await deps.gravarSessao(
-      userId, telefone, externalId, texto, recebidaEm, "salva",
-      session,
       T.gastoRegistrado({ valor: valorCentavos, nome, descricao: session.descricao }),
       gastoId,
     );
