@@ -250,6 +250,14 @@ mock.module("@/server/whatsapp-authz.server", () => ({
     "Olá! No momento, este número não está vinculado a uma conta ativa.",
 }));
 
+mock.module("@/server/whatsapp-c11-gates.server", () => ({
+  runInboundProductionGate: async () => ({
+    allowed: true as const,
+    userId: fakeState.elig.userId ?? "u-audio-dur",
+  }),
+  runNotificationCreationGate: async () => ({ allowed: true as const }),
+}));
+
 mock.module("@/server/whatsapp-comprovantes.server", () => ({
   podeUsarOcrComprovante: async () => true,
 }));
