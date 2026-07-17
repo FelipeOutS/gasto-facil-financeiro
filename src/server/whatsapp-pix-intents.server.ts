@@ -422,12 +422,16 @@ export async function handlePagarPessoaIntent(args: {
   const favorecido: FavorecidoRow | null =
     matches.length === 1 ? matches[0] : null;
 
-  // WA-C11 3B.2.C.1 Block 2 — claim atômico `pix_persistindo` no próprio
-  // row de `whatsapp_messages` já materializado pelo router. CAS por
-  // status atual: se outra invocação paralela já claimou, o UPDATE não
-  // afeta linhas e devolvemos "processando".
+  // WA-C11 3B.2.C.1 Block 2 — claim atômico best-effort `pix_persistindo`
+  // no row de `whatsapp_messages` já materializado pelo router. CAS por
+  // status atual: quando o UPDATE retorna 1+ linhas, este processo é o
+  // dono do slot. Erros do banco bloqueiam a persistência. Um retorno
+  // vazio (sem linhas afetadas) NÃO bloqueia — o mecanismo primário de
+  // idempotência é o pré-check acima + o unique index de `external_id`
+  // no insert do router. Este CAS existe para reforçar corrida de
+  // reentrega paralela, e não deve derrubar cenários legítimos.
   {
-    const { data: claimRows, error: claimErr } = await supabaseAdmin
+    const { error: claimErr } = await supabaseAdmin
       .from("whatsapp_messages")
       .update({ status: "pix_persistindo" })
       .eq("user_id", args.userId)
@@ -446,19 +450,8 @@ export async function handlePagarPessoaIntent(args: {
           "Não consegui registrar agora. Tente de novo daqui a pouco, por favor.",
       };
     }
-    if (!Array.isArray(claimRows) || claimRows.length === 0) {
-      console.info({
-        event: "wa_pix_payment",
-        stage: "race_in_progress_detected",
-        result: "race",
-      });
-      return {
-        status: "duplicada",
-        resposta:
-          "Ainda estou processando esse pagamento. Aguarde alguns segundos.",
-      };
-    }
   }
+
 
   // WA-C11 3B.2.C.1 Block 2 — quota financeira somente após vencer o claim.
   const gateOutcome = await assertFinancialActionQuotaForWhatsApp({
