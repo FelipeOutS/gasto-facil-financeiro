@@ -353,7 +353,7 @@ export async function handlePagarPessoaIntent(args: {
         "Não consegui registrar agora. Tente de novo daqui a pouco, por favor.",
     };
   }
-  const _externalIdIgnored = null;
+  
   if (externalId.length > 0) {
     const { data: prev } = await supabaseAdmin
       .from("whatsapp_messages")
