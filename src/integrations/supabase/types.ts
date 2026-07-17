@@ -3512,6 +3512,234 @@ export type Database = {
           },
         ]
       }
+      whatsapp_plan_quotas: {
+        Row: {
+          created_at: string
+          daily_inbound_limit: number
+          daily_outbound_limit: number
+          enabled: boolean
+          financial_actions_monthly_limit: number
+          id: string
+          inbound_monthly_limit: number
+          notes: string | null
+          outbound_monthly_limit: number
+          per_minute_limit: number
+          plan_code: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          daily_inbound_limit?: number
+          daily_outbound_limit?: number
+          enabled?: boolean
+          financial_actions_monthly_limit?: number
+          id?: string
+          inbound_monthly_limit?: number
+          notes?: string | null
+          outbound_monthly_limit?: number
+          per_minute_limit?: number
+          plan_code: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          daily_inbound_limit?: number
+          daily_outbound_limit?: number
+          enabled?: boolean
+          financial_actions_monthly_limit?: number
+          id?: string
+          inbound_monthly_limit?: number
+          notes?: string | null
+          outbound_monthly_limit?: number
+          per_minute_limit?: number
+          plan_code?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_runtime_config: {
+        Row: {
+          global_daily_outbound_limit: number
+          global_enabled: boolean
+          id: number
+          inbound_enabled: boolean
+          maintenance_message_enabled: boolean
+          new_links_enabled: boolean
+          notification_creation_enabled: boolean
+          outbound_enabled: boolean
+          reason: string | null
+          rollout_enabled: boolean
+          rollout_percentage: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          global_daily_outbound_limit?: number
+          global_enabled?: boolean
+          id?: number
+          inbound_enabled?: boolean
+          maintenance_message_enabled?: boolean
+          new_links_enabled?: boolean
+          notification_creation_enabled?: boolean
+          outbound_enabled?: boolean
+          reason?: string | null
+          rollout_enabled?: boolean
+          rollout_percentage?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          global_daily_outbound_limit?: number
+          global_enabled?: boolean
+          id?: number
+          inbound_enabled?: boolean
+          maintenance_message_enabled?: boolean
+          new_links_enabled?: boolean
+          notification_creation_enabled?: boolean
+          outbound_enabled?: boolean
+          reason?: string | null
+          rollout_enabled?: boolean
+          rollout_percentage?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_runtime_config_audit: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          correlation_id: string | null
+          fields_changed: string[]
+          id: string
+          new_value: Json
+          previous_value: Json
+          reason: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          correlation_id?: string | null
+          fields_changed?: string[]
+          id?: string
+          new_value: Json
+          previous_value: Json
+          reason?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          correlation_id?: string | null
+          fields_changed?: string[]
+          id?: string
+          new_value?: Json
+          previous_value?: Json
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_usage_counters: {
+        Row: {
+          cycle_end: string
+          cycle_start: string
+          daily_bucket: string
+          daily_inbound_used: number
+          daily_outbound_used: number
+          financial_actions_used: number
+          id: string
+          inbound_used: number
+          outbound_committed: number
+          outbound_reserved: number
+          plan_code: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cycle_end: string
+          cycle_start: string
+          daily_bucket: string
+          daily_inbound_used?: number
+          daily_outbound_used?: number
+          financial_actions_used?: number
+          id?: string
+          inbound_used?: number
+          outbound_committed?: number
+          outbound_reserved?: number
+          plan_code: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cycle_end?: string
+          cycle_start?: string
+          daily_bucket?: string
+          daily_inbound_used?: number
+          daily_outbound_used?: number
+          financial_actions_used?: number
+          id?: string
+          inbound_used?: number
+          outbound_committed?: number
+          outbound_reserved?: number
+          plan_code?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_usage_events: {
+        Row: {
+          committed_at: string | null
+          created_at: string
+          cycle_start: string
+          id: string
+          idempotency_key: string
+          inbound_message_id: string | null
+          notification_id: string | null
+          provider_message_id: string | null
+          reason: string | null
+          released_at: string | null
+          state: string
+          units: number
+          usage_type: string
+          user_id: string
+        }
+        Insert: {
+          committed_at?: string | null
+          created_at?: string
+          cycle_start: string
+          id?: string
+          idempotency_key: string
+          inbound_message_id?: string | null
+          notification_id?: string | null
+          provider_message_id?: string | null
+          reason?: string | null
+          released_at?: string | null
+          state: string
+          units?: number
+          usage_type: string
+          user_id: string
+        }
+        Update: {
+          committed_at?: string | null
+          created_at?: string
+          cycle_start?: string
+          id?: string
+          idempotency_key?: string
+          inbound_message_id?: string | null
+          notification_id?: string | null
+          provider_message_id?: string | null
+          reason?: string | null
+          released_at?: string | null
+          state?: string
+          units?: number
+          usage_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       contas_a_pagar_shared: {
@@ -3966,11 +4194,127 @@ export type Database = {
           valor: number
         }[]
       }
+      whatsapp_commit_outbound_quota_atomic: {
+        Args: {
+          p_notification_id: string
+          p_now?: string
+          p_provider_message_id: string
+          p_user_id: string
+        }
+        Returns: {
+          outcome: string
+          state: string
+        }[]
+      }
+      whatsapp_consume_financial_action_quota_atomic: {
+        Args: {
+          p_cycle_end: string
+          p_cycle_start: string
+          p_idempotency_key: string
+          p_now?: string
+          p_plan_code: string
+          p_user_id: string
+        }
+        Returns: {
+          allowed: boolean
+          cycle_end: string
+          cycle_start: string
+          duplicate: boolean
+          limit: number
+          reason: string
+          remaining: number
+          state: string
+          used: number
+        }[]
+      }
+      whatsapp_consume_inbound_quota_atomic: {
+        Args: {
+          p_cycle_end: string
+          p_cycle_start: string
+          p_inbound_message_id: string
+          p_now?: string
+          p_plan_code: string
+          p_user_id: string
+        }
+        Returns: {
+          allowed: boolean
+          cycle_end: string
+          cycle_start: string
+          duplicate: boolean
+          limit: number
+          reason: string
+          remaining: number
+          state: string
+          used: number
+        }[]
+      }
+      whatsapp_get_usage_snapshot: {
+        Args: {
+          p_cycle_end: string
+          p_cycle_start: string
+          p_plan_code: string
+          p_user_id: string
+        }
+        Returns: {
+          cycle_end: string
+          cycle_start: string
+          daily_inbound_limit: number
+          daily_inbound_used: number
+          daily_outbound_limit: number
+          daily_outbound_used: number
+          financial_limit: number
+          financial_used: number
+          inbound_limit: number
+          inbound_used: number
+          outbound_committed: number
+          outbound_limit: number
+          outbound_reserved: number
+          plan_code: string
+        }[]
+      }
       whatsapp_notification_recover_with_attempt_atomic: {
         Args: { p_backoff?: string; p_notification_id: string; p_now?: string }
         Returns: {
           outcome: string
         }[]
+      }
+      whatsapp_release_outbound_quota_atomic: {
+        Args: {
+          p_notification_id: string
+          p_now?: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: {
+          outcome: string
+          state: string
+        }[]
+      }
+      whatsapp_reserve_outbound_quota_atomic: {
+        Args: {
+          p_cycle_end: string
+          p_cycle_start: string
+          p_notification_id: string
+          p_now?: string
+          p_plan_code: string
+          p_user_id: string
+        }
+        Returns: {
+          allowed: boolean
+          cycle_end: string
+          cycle_start: string
+          duplicate: boolean
+          limit: number
+          reason: string
+          remaining: number
+          reservation_id: string
+          state: string
+          used: number
+        }[]
+      }
+      whatsapp_user_in_rollout: {
+        Args: { _pct: number; _user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
