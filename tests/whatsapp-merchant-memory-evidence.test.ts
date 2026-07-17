@@ -101,7 +101,7 @@ beforeEach(() => {
 
 describe("WA-M1.1 evidência manual vs confirmada", () => {
   it("texto: categoria automática confirmada grava evidence=confirmed", async () => {
-    const r = await persistirGasto("user-1", baseSession({ categorySelectionSource: "automatic" }) as never);
+    const r = await persistirGasto("user-1", baseSession({ categorySelectionSource: "automatic" }) as never, "wamid.T1");
     expect(r.ok).toBe(true);
     expect(memoryCalls).toHaveLength(1);
     expect(memoryCalls[0].evidence).toBe("confirmed");
@@ -146,7 +146,7 @@ describe("WA-M1.1 evidência manual vs confirmada", () => {
   });
 
   it("sem categorySelectionSource (default) cai em confirmed (fail-safe)", async () => {
-    const r = await persistirGasto("user-1", baseSession() as never);
+    const r = await persistirGasto("user-1", baseSession() as never, "wamid.T1");
     expect(r.ok).toBe(true);
     expect(memoryCalls[0].evidence).toBe("confirmed");
   });
@@ -154,13 +154,13 @@ describe("WA-M1.1 evidência manual vs confirmada", () => {
   it("sem merchantKey não grava memória", async () => {
     const s = baseSession({ categorySelectionSource: "manual" }) as Record<string, unknown>;
     delete s.merchantKey;
-    const r = await persistirGasto("user-1", s as never);
+    const r = await persistirGasto("user-1", s as never, "wamid.T1");
     expect(r.ok).toBe(true);
     expect(memoryCalls).toHaveLength(0);
   });
 
   it("um único gasto é inserido por chamada de persistirGasto", async () => {
-    await persistirGasto("user-1", baseSession({ categorySelectionSource: "manual" }) as never);
+    await persistirGasto("user-1", baseSession({ categorySelectionSource: "manual" }) as never, "wamid.T1");
     expect(insertedGastos).toHaveLength(1);
     expect(insertedGastos[0].user_id).toBe("user-1");
   });
