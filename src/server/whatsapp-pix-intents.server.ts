@@ -50,6 +50,13 @@ import {
 } from "./whatsapp-short-context.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
 import { issueRevealToken } from "./whatsapp-pix-reveal-token.server";
+// WA-C11 3B.2.C.1 Block 2 — quota financeira para o legacy "pagar via
+// intenção Pix". Ordem: sessão/pré-check → claim `pix_persistindo` →
+// gate → insert. Fail-closed sem `external_id`.
+import {
+  assertFinancialActionQuotaForWhatsApp,
+  financialQuotaBlockedReply,
+} from "./whatsapp-financial-quota-gate.server";
 
 // Direct import mocked por `mock.module(...)` nos testes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
