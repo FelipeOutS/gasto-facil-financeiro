@@ -115,6 +115,7 @@ describe("WA-M1.1 evidência manual vs confirmada", () => {
         memoryApplied: true,
         memoryAppliedCategoriaId: "cat-transp",
       }) as never,
+      "wamid.T1b",
     );
     expect(r.ok).toBe(true);
     expect(memoryCalls).toHaveLength(1);
@@ -126,6 +127,7 @@ describe("WA-M1.1 evidência manual vs confirmada", () => {
     const r = await persistirGasto(
       "user-1",
       baseSession({ source: "audio", categorySelectionSource: "automatic" }) as never,
+      "wamid.T1c",
     );
     expect(r.ok).toBe(true);
     expect(memoryCalls[0].evidence).toBe("confirmed");
@@ -140,6 +142,7 @@ describe("WA-M1.1 evidência manual vs confirmada", () => {
         memoryApplied: true,
         memoryAppliedCategoriaId: "cat-transp",
       }) as never,
+      "wamid.T1d",
     );
     expect(r.ok).toBe(true);
     expect(memoryCalls[0].evidence).toBe("manual");
