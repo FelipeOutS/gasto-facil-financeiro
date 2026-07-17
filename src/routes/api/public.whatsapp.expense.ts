@@ -42,6 +42,7 @@ import {
 } from "@/server/whatsapp-audio-duration.server";
 import { runTranscriber } from "@/server/whatsapp-transcription.server";
 import { normalizeVoiceMoney } from "@/server/whatsapp-voice-number-normalizer.server";
+import { runInboundProductionGate } from "@/server/whatsapp-c11-gates.server";
 
 /**
  * Webhook público do WhatsApp Cloud API (Meta).
@@ -677,6 +678,38 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
             results.push({ status: "nao_elegivel" });
             continue;
           }
+
+          // ── WA-C11 FASE 3B.2.B — Gate produtivo unificado ─────────────
+          // Após eligibility (link + opt-in), aplicar a cadeia obrigatória
+          // ANTES de qualquer download, Whisper, OCR, LLM, parser ou
+          // persistência: runtime.global_enabled → runtime.inbound_enabled
+          // → entitlement (plano+beta+admin) → rollout → ciclo → quota
+          // inbound atômica (idempotency = external_id da Meta).
+          //
+          // Bloqueio de qualquer gate: HTTP 200 (evita replay infinito),
+          // outcome estruturado, ZERO IA/OCR/parser/escrita financeira.
+          // Callbacks de status Meta rodam ANTES deste bloco e não são
+          // afetados pelas travas de runtime.
+          if (!msg.external_id || !elig.userId) {
+            // sem external_id da Meta não temos idempotency key estável.
+            results.push({ status: "sem_external_id" });
+            continue;
+          }
+          const gate = await runInboundProductionGate({
+            userId: elig.userId,
+            externalMessageId: msg.external_id,
+          });
+          if (!gate.allowed) {
+            results.push({ status: `blocked_${gate.reason}` });
+            continue;
+          }
+          if (gate.duplicate) {
+            // Quota já contada para este external_id em request anterior.
+            // Deixamos o dedupe existente (`externalIdAlreadyConfirmed`)
+            // decidir se o processamento financeiro segue ou é curto-
+            // circuitado dentro dos blocos de mídia/texto abaixo.
+          }
+
           try {
             // WA-G5A.1 — ordem obrigatória para imagens:
             //   1) eligibilidade do telefone (já validada acima);
