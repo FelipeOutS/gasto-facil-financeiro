@@ -1218,7 +1218,7 @@ export async function processarRespostaImagem(args: {
     };
     if (usarHoje) next.data = todayLocalISO();
     if (dataInformada && !usarNota && !usarHoje) next.data = dataInformada;
-    return avancarAposConfirmacao(userId, next, cats);
+    return avancarAposConfirmacao(userId, next, cats, externalMessageId);
   }
 
   // ----- aguardando categoria obrigatória -----
@@ -1234,7 +1234,7 @@ export async function processarRespostaImagem(args: {
       categoriaSelecionadaManual: true, // WA-M1.2
       categoriaOptions: undefined,
     };
-    return avancarAposConfirmacao(userId, next, cats);
+    return avancarAposConfirmacao(userId, next, cats, externalMessageId);
   }
 
   // ----- aguardando forma de pagamento -----
@@ -1249,7 +1249,7 @@ export async function processarRespostaImagem(args: {
       };
     }
     const next: ComprovanteSession = { ...session, formaPagamento: forma };
-    return avancarAposConfirmacao(userId, next, cats);
+    return avancarAposConfirmacao(userId, next, cats, externalMessageId);
   }
 
   // ----- aguardando confirmação principal -----
@@ -1303,7 +1303,7 @@ export async function processarRespostaImagem(args: {
     }
 
     if (decisao === "confirm") {
-      return avancarAposConfirmacao(userId, session, cats);
+      return avancarAposConfirmacao(userId, session, cats, externalMessageId);
     }
     // resposta desconhecida — reapresenta o resumo
     return {
