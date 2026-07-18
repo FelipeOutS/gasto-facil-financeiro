@@ -32,6 +32,12 @@ import type {
 } from "./whatsapp-comprovantes.server";
 import { extrairValor } from "./whatsapp-parcelamento.server";
 import { randomUUID } from "crypto";
+// WA-C11 3B.2.C.1 Block 5 — quota financeira para criação de conta por texto.
+import {
+  assertFinancialActionQuotaForWhatsApp,
+  financialQuotaBlockedReply,
+} from "@/server/whatsapp-financial-quota-gate.server";
+
 
 // Live-binding para permitir mock.module() em testes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
