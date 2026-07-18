@@ -32,6 +32,12 @@ import type {
 } from "./whatsapp-comprovantes.server";
 import { extrairValor } from "./whatsapp-parcelamento.server";
 import { randomUUID } from "crypto";
+// WA-C11 3B.2.C.1 Block 5 — quota financeira para criação de conta por texto.
+import {
+  assertFinancialActionQuotaForWhatsApp,
+  financialQuotaBlockedReply,
+} from "@/server/whatsapp-financial-quota-gate.server";
+
 
 // Live-binding para permitir mock.module() em testes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -853,7 +859,7 @@ async function avancarFluxo(args: {
 
 // ---------- persistência ----------
 
-async function persistir(args: {
+export async function persistir(args: {
   userId: string;
   msg: WhatsAppMessageRow;
   texto: string;
@@ -862,25 +868,48 @@ async function persistir(args: {
   sessaoId: string;
   deps: WhatsAppContaCriarDeps;
 }): Promise<ProcessOutcome> {
-  const { userId, msg, texto, recebidaEm, session, deps } = args;
+  const { userId, msg, texto, recebidaEm, session, sessaoId, deps } = args;
   if (!session.nome || !session.valorCentavos || !session.dataVencimento) {
     logDecision({ stage: "failed", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "error" });
     return { status: "erro", resposta: "Não consegui montar essa conta. Vamos começar de novo?" };
   }
 
+  // WA-C11 3B.2.C.1 Block 5 — fail-closed sem `external_id`.
+  const externalMessageId = msg.external_id ?? null;
+  if (!externalMessageId || externalMessageId.trim().length === 0) {
+    console.error("[whatsapp] contas-criar persistir missing externalMessageId");
+    logDecision({ stage: "failed", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "error" });
+    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
+  }
+
   // Claim atômico de idempotência (mesmo padrão WA-F3.3).
   let claimSessionId: string | null = null;
-  if (msg.external_id) {
-    const claim = await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "conta_persistindo", session as never, "",
-    );
-    if (!claim?.ok || !claim.sessionId) {
-      logDecision({ stage: "failed", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "error" });
-      return { status: "erro", resposta: "Já estou processando essa conta. Aguarde um instante." };
-    }
-    claimSessionId = claim.sessionId;
+  const claim = await deps.gravarSessao(
+    userId, msg.telefone, externalMessageId, texto, recebidaEm,
+    "conta_persistindo", session as never, "",
+  );
+  if (!claim?.ok || !claim.sessionId) {
+    logDecision({ stage: "failed", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "error" });
+    return { status: "erro", resposta: "Já estou processando essa conta. Aguarde um instante." };
   }
+  claimSessionId = claim.sessionId;
+
+  // WA-C11 3B.2.C.1 Block 5 — quota financeira DEPOIS do claim, ANTES do insert.
+  // discriminator = `sessaoId` (identificador estável da intenção).
+  const gateOutcome = await assertFinancialActionQuotaForWhatsApp({
+    userId,
+    externalMessageId,
+    actionType: "bill_create_text",
+    discriminator: sessaoId,
+  });
+  if (!gateOutcome.allowed) {
+    try {
+      await deps.atualizarSessao(claimSessionId, "erro", session as never, "quota_blocked");
+    } catch { /* claim cleanup nunca quebra o fluxo de resposta */ }
+    logDecision({ stage: "failed", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "error" });
+    return { status: "erro", resposta: financialQuotaBlockedReply(gateOutcome) };
+  }
+
 
   const freq = session.recorrente ? (session.frequenciaRecorrencia ?? "mensal") : null;
   const datas = freq
