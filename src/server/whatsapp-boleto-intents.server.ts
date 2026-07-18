@@ -1037,7 +1037,7 @@ async function sessaoExpirar(id: string, _deps: WhatsAppBoletoDeps): Promise<voi
   await supabaseAdmin.from("whatsapp_messages").update({ status: "expirada" }).eq("id", id);
 }
 
-async function persistirManual(args: {
+export async function persistirManual(args: {
   userId: string;
   msg: WhatsAppMessageRow;
   texto: string;
@@ -1046,22 +1046,43 @@ async function persistirManual(args: {
   sessaoId: string;
   deps: WhatsAppBoletoDeps;
 }): Promise<ProcessOutcome> {
-  const { userId, msg, texto, recebidaEm, session, deps } = args;
+  const { userId, msg, texto, recebidaEm, session, sessaoId, deps } = args;
   if (session.valorCentavos == null || !session.vencimentoISO || !session.identificacao) {
     return { status: "erro", resposta: "Não consegui montar essa conta. Vamos começar de novo?" };
   }
-  // Claim atômico — bloqueia retries do webhook.
-  let claimSessionId: string | null = null;
-  if (msg.external_id) {
-    const claim = await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "bol_persistindo", session as never, "",
-    );
-    if (!claim?.ok || !claim.sessionId) {
-      return { status: "erro", resposta: "Já estou processando essa conta. Aguarde um instante." };
-    }
-    claimSessionId = claim.sessionId;
+
+  // WA-C11 3B.2.C.1 Block 5 — fail-closed sem `external_id`.
+  const externalMessageId = msg.external_id ?? null;
+  if (!externalMessageId || externalMessageId.trim().length === 0) {
+    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
   }
+
+  // Claim atômico — bloqueia retries do webhook.
+  const claim = await deps.gravarSessao(
+    userId, msg.telefone, externalMessageId, texto, recebidaEm,
+    "bol_persistindo", session as never, "",
+  );
+  if (!claim?.ok || !claim.sessionId) {
+    return { status: "erro", resposta: "Já estou processando essa conta. Aguarde um instante." };
+  }
+  const claimSessionId: string = claim.sessionId;
+
+  // WA-C11 3B.2.C.1 Block 5 — quota financeira DEPOIS do claim, ANTES do insert.
+  // discriminator = `sessaoId` (fallback manual não tem fingerprint;
+  // sessaoId identifica a intenção nesta sessão).
+  const gateOutcome = await assertFinancialActionQuotaForWhatsApp({
+    userId,
+    externalMessageId,
+    actionType: "bill_create_boleto",
+    discriminator: sessaoId,
+  });
+  if (!gateOutcome.allowed) {
+    try {
+      await deps.atualizarSessao(claimSessionId, "erro", session as never, "quota_blocked");
+    } catch { /* cleanup jamais quebra a resposta */ }
+    return { status: "erro", resposta: financialQuotaBlockedReply(gateOutcome) };
+  }
+
   const [y, m] = session.vencimentoISO.split("-").map(Number);
   const id = randomUUID();
   const nowIso = new Date().toISOString();
