@@ -859,7 +859,7 @@ async function avancarFluxo(args: {
 
 // ---------- persistência ----------
 
-async function persistir(args: {
+export async function persistir(args: {
   userId: string;
   msg: WhatsAppMessageRow;
   texto: string;
