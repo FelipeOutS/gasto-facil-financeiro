@@ -105,6 +105,8 @@ export interface OutboundWireDeps extends RunOutboundDeps {
   commitQuota?: typeof commitOutboundQuota;
   /** Release override para testes. */
   releaseQuota?: typeof releaseOutboundQuota;
+  /** Mark ambiguous override para testes. */
+  markAmbiguous?: typeof markReservationAmbiguous;
   /** Executor injetável (default: `runOutboundForNotification`). */
   runOutbound?: typeof runOutboundForNotification;
 }
