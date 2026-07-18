@@ -4272,10 +4272,34 @@ export type Database = {
           plan_code: string
         }[]
       }
+      whatsapp_mark_reservation_ambiguous_atomic: {
+        Args: {
+          p_notification_id: string
+          p_now?: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: {
+          outcome: string
+          state: string
+        }[]
+      }
       whatsapp_notification_recover_with_attempt_atomic: {
         Args: { p_backoff?: string; p_notification_id: string; p_now?: string }
         Returns: {
           outcome: string
+        }[]
+      }
+      whatsapp_reconcile_reservation_from_callback_atomic: {
+        Args: {
+          p_notification_id: string
+          p_now?: string
+          p_provider_message_id: string
+          p_user_id: string
+        }
+        Returns: {
+          outcome: string
+          state: string
         }[]
       }
       whatsapp_release_outbound_quota_atomic: {

@@ -62,6 +62,7 @@ import {
   reserveOutboundQuota,
   commitOutboundQuota,
   releaseOutboundQuota,
+  markReservationAmbiguous,
   type QuotaReserveResult,
   type QuotaFinalizeResult,
   type CycleWindow,
@@ -104,6 +105,8 @@ export interface OutboundWireDeps extends RunOutboundDeps {
   commitQuota?: typeof commitOutboundQuota;
   /** Release override para testes. */
   releaseQuota?: typeof releaseOutboundQuota;
+  /** Mark ambiguous override para testes. */
+  markAmbiguous?: typeof markReservationAmbiguous;
   /** Executor injetável (default: `runOutboundForNotification`). */
   runOutbound?: typeof runOutboundForNotification;
 }
@@ -162,6 +165,7 @@ export async function runOutboundWithQuota(
   const reserve = deps.reserveQuota ?? reserveOutboundQuota;
   const commit = deps.commitQuota ?? commitOutboundQuota;
   const release = deps.releaseQuota ?? releaseOutboundQuota;
+  const markAmb = deps.markAmbiguous ?? markReservationAmbiguous;
   const run = deps.runOutbound ?? runOutboundForNotification;
   const now = deps.now?.() ?? new Date();
 
@@ -281,11 +285,22 @@ export async function runOutboundWithQuota(
           };
         }
         case "ambiguous": {
-          // NUNCA liberar. NUNCA commitar. Reservation permanece `reserved`
-          // até reconciliação por callback (fase B.2.e). Nenhum retry.
+          // NUNCA liberar. NUNCA commitar. Marcamos a reservation como
+          // `ambiguous` de forma DURÁVEL via RPC atômica: bloqueia retry
+          // e sinaliza reconciliação futura por callback com PMID.
+          // Reservation permanece contando quota (não devolve) até que
+          // um callback prove aceite (→ committed) ou até expiração de
+          // ciclo. Nenhum retry produtivo.
+          const mark = await markAmb({
+            userId: notification.user_id,
+            notificationId: notification.id,
+            reason: r.reason ?? "transport_ambiguous",
+            now,
+          });
           safeLog("left_ambiguous", {
             n: notification.id.slice(0, 8),
             reason: r.reason,
+            mark_outcome: mark.outcome,
           });
           return { kind: "left_ambiguous", reason: r.reason };
         }

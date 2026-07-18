@@ -74,6 +74,26 @@ export const WHATSAPP_OPT_IN_VERSION = "whatsapp-expense-v1";
  */
 export const WHATSAPP_CONSENT_REFRESH_VERSION = "whatsapp-lancamentos-v1";
 
+/**
+ * WA-C11 Fase 3B.2.E — Gate de novos vínculos.
+ * Bloqueia criação ou reativação quando `new_links_enabled=false` ou
+ * `global_enabled=false`. NUNCA aplicado em: opt-out, refresh de consentimento
+ * de vínculo já existente sem reativação, ou listagem/leitura.
+ */
+async function assertNewLinksAllowed(): Promise<void> {
+  const { readRuntimeConfig } = await import("@/server/whatsapp-runtime-config.server");
+  const rc = await readRuntimeConfig();
+  if (!rc.global_enabled || !rc.new_links_enabled) {
+    throw new Response(
+      JSON.stringify({
+        error: "new_links_disabled",
+        message: "Novos vínculos de WhatsApp estão temporariamente desabilitados.",
+      }),
+      { status: 423, headers: { "Content-Type": "application/json" } },
+    );
+  }
+}
+
 export const confirmWhatsAppLinkConsent = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z
@@ -93,7 +113,7 @@ export const confirmWhatsAppLinkConsent = createServerFn({ method: "POST" })
     // Localiza o vínculo do PRÓPRIO usuário (RLS já restringe a auth.uid()).
     const { data: link, error: selErr } = await sb
       .from("whatsapp_links")
-      .select("id, ativo, telefone")
+      .select("id, ativo, telefone, revogado_em")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -103,9 +123,13 @@ export const confirmWhatsAppLinkConsent = createServerFn({ method: "POST" })
       return { consentimento_atualizado: "falhou" as const };
     }
 
+    // Se o vínculo está revogado ou inativo, isto é reativação — cai no gate.
+    const isReactivation = !link.ativo || link.revogado_em !== null;
+    if (isReactivation) {
+      await assertNewLinksAllowed();
+    }
+
     const nowIso = new Date().toISOString();
-    // Atualiza SOMENTE campos de consentimento. Não toca em telefone,
-    // user_id, ativo (mantém estado atual) nem cria novo vínculo.
     const { error: updErr } = await sb
       .from("whatsapp_links")
       .update({
@@ -136,6 +160,8 @@ export const upsertWhatsAppLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     await assertWhatsAppAccess(context.userId);
+    // WA-C11 3B.2.E — novo vínculo ou reativação: gate obrigatório.
+    await assertNewLinksAllowed();
     if (data.aceitou_opt_in !== true) {
       throw new Error(
         "Para usar o lançamento por WhatsApp, você precisa aceitar o consentimento de uso desse canal.",
@@ -147,6 +173,9 @@ export const upsertWhatsAppLink = createServerFn({ method: "POST" })
     const sb = context.supabase as any;
     const { userId } = context;
 
+    // Cross-user: existência global do telefone (RLS não vê linhas de outros;
+    // usamos a query com filtro explícito, e a unicidade real vem da constraint
+    // do banco). Se pertence a outro usuário, negamos sem revelar identidade.
     const { data: existing } = await sb
       .from("whatsapp_links")
       .select("id, user_id")
@@ -169,7 +198,8 @@ export const upsertWhatsAppLink = createServerFn({ method: "POST" })
       const { error } = await sb
         .from("whatsapp_links")
         .update({ ativo: data.ativo ?? true, ...consentPayload })
-        .eq("id", existing.id);
+        .eq("id", existing.id)
+        .eq("user_id", userId);
       if (error) throw new Error(error.message);
       return { id: existing.id, telefone: tel };
     }
@@ -188,23 +218,45 @@ export const upsertWhatsAppLink = createServerFn({ method: "POST" })
     return { id: created.id, telefone: tel };
   });
 
+/**
+ * WA-C11 Fase 3B.2.E — Opt-out incondicional via web.
+ *
+ * Requisitos:
+ *   - Autenticação Supabase obrigatória.
+ *   - Ownership server-side (filtro explícito por user_id).
+ *   - NÃO exige entitlement/beta/plano ativo/rollout: o dono sempre pode
+ *     revogar seu próprio consentimento e sair do canal.
+ *   - Soft revoke (LGPD): mantém histórico, mas impede o webhook de
+ *     processar mensagens deste vínculo até novo consentimento explícito
+ *     (que passará por `assertNewLinksAllowed`).
+ */
 export const deleteWhatsAppLink = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
-    await assertWhatsAppAccess(context.userId);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as any;
-    // Soft revoke (LGPD): mantém auditoria, mas impede o webhook de
-    // processar mensagens deste número até novo consentimento.
-    const { error } = await sb
+    const { userId } = context;
+
+    // Filtro explícito por user_id: nunca depende apenas de RLS.
+    const { data: updated, error } = await sb
       .from("whatsapp_links")
       .update({
         ativo: false,
         revogado_em: new Date().toISOString(),
       })
-      .eq("id", data.id);
+      .eq("id", data.id)
+      .eq("user_id", userId)
+      .select("id")
+      .maybeSingle();
     if (error) throw new Error(error.message);
+    if (!updated) {
+      // Não vaza identidade: mesma mensagem para "não existe" e "de outro dono".
+      throw new Response(
+        JSON.stringify({ error: "not_found", message: "Vínculo não encontrado." }),
+        { status: 404, headers: { "Content-Type": "application/json" } },
+      );
+    }
     return { ok: true };
   });
 
