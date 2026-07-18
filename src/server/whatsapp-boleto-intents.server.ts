@@ -541,7 +541,7 @@ async function findDuplicateBoleto(
 
 // ---------- persistência ----------
 
-async function persistir(args: {
+export async function persistir(args: {
   userId: string;
   msg: WhatsAppMessageRow;
   texto: string;
@@ -560,19 +560,41 @@ async function persistir(args: {
     return { status: "erro", resposta: "Não consegui montar essa conta. Vamos começar de novo?" };
   }
 
-  // Claim atômico — bloqueia retries do webhook com mesmo external_id.
-  let claimSessionId: string | null = null;
-  if (msg.external_id) {
-    const claim = await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "bol_persistindo", session as never, "",
-    );
-    if (!claim?.ok || !claim.sessionId) {
-      logBoleto("failed", session.fingerprint, "error");
-      return { status: "erro", resposta: "Já estou processando esse boleto. Aguarde um instante." };
-    }
-    claimSessionId = claim.sessionId;
+  // WA-C11 3B.2.C.1 Block 5 — fail-closed sem `external_id`.
+  const externalMessageId = msg.external_id ?? null;
+  if (!externalMessageId || externalMessageId.trim().length === 0) {
+    logBoleto("failed", session.fingerprint, "error");
+    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
   }
+
+  // Claim atômico — bloqueia retries do webhook com mesmo external_id.
+  const claim = await deps.gravarSessao(
+    userId, msg.telefone, externalMessageId, texto, recebidaEm,
+    "bol_persistindo", session as never, "",
+  );
+  if (!claim?.ok || !claim.sessionId) {
+    logBoleto("failed", session.fingerprint, "error");
+    return { status: "erro", resposta: "Já estou processando esse boleto. Aguarde um instante." };
+  }
+  const claimSessionId: string = claim.sessionId;
+
+  // WA-C11 3B.2.C.1 Block 5 — quota financeira DEPOIS do claim, ANTES do insert.
+  // discriminator = `session.fingerprint` (estável, não-PII, converge com o
+  // caminho manual quando o mesmo boleto reaparecer).
+  const gateOutcome = await assertFinancialActionQuotaForWhatsApp({
+    userId,
+    externalMessageId,
+    actionType: "bill_create_boleto",
+    discriminator: session.fingerprint,
+  });
+  if (!gateOutcome.allowed) {
+    try {
+      await deps.atualizarSessao(claimSessionId, "erro", session as never, "quota_blocked");
+    } catch { /* claim cleanup nunca quebra a resposta */ }
+    logBoleto("failed", session.fingerprint, "error");
+    return { status: "erro", resposta: financialQuotaBlockedReply(gateOutcome) };
+  }
+
 
   const [y, m] = session.vencimentoISO.split("-").map(Number);
   const id = randomUUID();
