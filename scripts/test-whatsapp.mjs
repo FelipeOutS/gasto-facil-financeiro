@@ -111,6 +111,7 @@ const INCLUDE = [
   "whatsapp-c11-f3b2c1-block4-wiring.test.ts",
   "whatsapp-c11-f3b2c1-block5-wiring.test.ts",
   "whatsapp-c11-f3b2d-boleto-mutex.test.ts",
+  "whatsapp-c11-f3b2d-outbound-wire.test.ts",
 
   "whatsapp-c92-transport-error-sanitizer-e4c.test.ts",
   "whatsapp-c92-recovery-anti-ambiguous-e4c.test.ts",

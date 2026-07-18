@@ -275,22 +275,28 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
           summary.would_send++;
 
 
-          // 5) WA-C9.2 Fase D.2B.2 — Envio real ATRÁS da dupla trava.
-          //    Enquanto WHATSAPP_OUTBOUND_HTTP_ENABLED/WHATSAPP_CANARY_ENABLED
-          //    permanecerem OFF, `runOutboundForNotification` retorna `gated`
-          //    e a linha volta para `pending`.
-          const { runOutboundForNotification } = await import(
-            "@/server/whatsapp-dispatcher-outbound.server"
+          // 5) WA-C11 Fase 3B.2.D — Envio real com wiring de quota outbound.
+          //    Reserva atômica ANTES do transport; commit em accepted;
+          //    release em rejeição definitiva / falha local pré-HTTP;
+          //    reservation permanece `reserved` em ambiguous (nunca libera).
+          //    A dupla-trava (env + runtime) já foi validada no topo do
+          //    handler; `runOutboundWithQuota` revalida internamente e o
+          //    gate `isOutboundHttpAllowed` reavalia imediatamente antes
+          //    do transport.
+          const { runOutboundWithQuota } = await import(
+            "@/server/whatsapp-outbound-quota-wire.server"
           );
-          const outcome = await runOutboundForNotification(
+          const outcome = await runOutboundWithQuota(
             { id: n.id, user_id: n.user_id, notification_type: n.notification_type, payload: n.payload },
             token,
           );
           switch (outcome.kind) {
-            case "gated":
-            case "no_recipient":
-            case "no_template":
-            case "transport_unavailable": {
+            case "plan_load_failed":
+            case "cycle_invalid":
+            case "quota_denied":
+            case "reserved_then_gated":
+            case "reserved_then_local_error":
+            case "state_changed": {
               await revertProcessingToPending(n.id, token);
               console.info(
                 "[wa-dispatcher] outbound_deferred",
@@ -303,17 +309,19 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
               );
               break;
             }
-            case "executed": {
-              // A finalização autoritativa é da RPC atômica (D.2A). Não
-              // mexemos em notification.status aqui: a máquina de estados
-              // é responsabilidade das RPCs finalize_* / reconcile_callback.
+            case "committed":
+            case "released_after_reject":
+            case "left_ambiguous": {
+              // Finalização autoritativa é das RPCs atômicas do adapter
+              // (D.2A) + reconciliação por callback (fase B.2.e). Não
+              // mexemos em notification.status aqui.
               console.info(
-                "[wa-dispatcher] outbound_executed",
+                "[wa-dispatcher] outbound_finalized",
                 JSON.stringify({
                   id: n.id,
                   type: n.notification_type,
                   category: n.category,
-                  result_kind: outcome.result.kind,
+                  kind: outcome.kind,
                 }),
               );
               break;
