@@ -1,111 +1,122 @@
-# Fase P2/P3 — Auditoria de UX, Estabilidade e Produto
+# WA-C11 FASE 3B.2.D — plano de execução em sub-blocos
 
-Plano organizado a partir da leitura das telas do Mercado Inteligente, Gastos/Cartões/Dashboard, componentes compartilhados (`PremiumLockModal`, `EmptyState`, `AppEmptyStateVisual`, `AppPageHeader`, `SectionBlock`, `MobileShell`, `sonner`) e da estrutura de i18n (PT/EN paralelos). Nada será alterado nesta etapa — esta é a fase de diagnóstico e priorização.
+## Por que dividir
 
----
+O prompt B.2.D exige, em um único ciclo:
 
-## A. Melhorias P2 recomendadas
+1. auditoria + prova do Section 0 (discriminador do boleto);
+2. wiring do endpoint dispatcher com nova ordem obrigatória (HMAC → env flags → runtime → recovery → per-notification);
+3. nova API atômica `reserveOutboundQuota` / `commitOutboundQuota` / `releaseOutboundQuota` com máquina de estados `reserved / ambiguous / committed / released`;
+4. adapter outbound com classificação estruturada (`accepted / definitive_not_accepted / ambiguous / local_pre_http_failure`);
+5. revalidação anti-TOCTOU imediatamente antes do transport;
+6. 46+ testes direcionados (early-exit, reservation, commit, release, ambiguous, revalidação, canary);
+7. regressão integral de dispatcher, gates, adapter, templates, notifications, claims, lease recovery, retries, callbacks, status events, entitlement, beta, rollout, quotas, quiet hours, canary v1, todos os C11 e Blocks 1–5;
+8. snapshot READ-ONLY do banco.
 
-| # | Rota/Tela | Problema | Impacto | Sugestão | Risco |
-|---|---|---|---|---|---|
-| A1 | `/mercado` (home) | Seções (`SectionBlock`) sem estado vazio dedicado quando o usuário nunca usou listas/carrinho/histórico — aparecem blocos quase em branco. | Sensação de app vazio no primeiro uso. | Usar `AppEmptyStateVisual` por seção com CTA claro ("Criar lista", "Adicionar ao carrinho"). | Baixo (apenas UI). |
-| A2 | `/mercado/carrinho` | Finalização: lock anti-duplo clique já existe, mas o feedback de "criando gasto" é um toast curto; sem confirmação visual do gasto gerado. | Usuário não percebe vínculo Carrinho → Gasto. | Após `addGastoAuto`, mostrar toast com ação "Ver em /gastos" + badge "origem: Mercado" no item. | Baixo (UI/toast). |
-| A3 | `/mercado/historico` | Excluir histórico não explica que gasto/cartão/preço comunitário permanecem. | Usuário teme perder dados financeiros. | Dialog de confirmação com bullets do que é e do que não é apagado. | Baixo. |
-| A4 | `/mercado/preco-comunitario` | Sem indicação visual de quais preços são próprios vs comunidade; sem filtro por mercado/distância. | Confusão sobre origem do preço. | Badge "Seu preço"/"Comunidade" + filtros básicos. | Médio (lê dados; sem alterar RLS). |
-| A5 | `/mercado/importar-cupom` (NFC-e) | Erros de OCR/parse aparecem genéricos ("Falha ao processar"). | Usuário não sabe se foi rede, QR inválido ou rate limit. | Mapear via `getFriendlyErrorKey` + tratar 429 com mensagem específica. Não alterar parser/rate limit. | Baixo. |
-| A6 | `/mercado/listas` e `/mercado/listas/$id` | Ações principais (adicionar item, mover para carrinho) competem visualmente; sem progresso "X de Y comprados". | Baixa orientação. | Header com progresso + CTA primário único por contexto. | Baixo. |
-| A7 | `/gastos` | Gastos vindos do Mercado não mostram origem distinguível. | Auditoria difícil. | Tag/ícone "Mercado" no item + filtro "origem". (Sem alterar `addGastoAuto`.) | Baixo (UI; campo já gravado). |
-| A8 | `/cartoes/$id` | Fatura: itens crédito-Mercado sem link de volta ao histórico da compra. | Rastreabilidade. | Link leve "Ver compra" quando houver `origemMercadoId`. | Baixo. |
-| A9 | `/meu-plano` e `PremiumLockModal` consumidores | Algumas telas premium mostram bloqueio sem preview do recurso. | Conversão fraca. | Tela bloqueada com preview borrado + CTA único. (Sem alterar `PremiumLockModal` em si.) | Baixo. |
-| A10 | Toasts globais | Mix de `toast.success/error` com tons e durações inconsistentes. | Ruído visual. | Padronizar via wrapper (`notify.success/error/info`) sem trocar `sonner`. | Baixo. |
-| A11 | Mobile — headers do Mercado | Vários headers usam `flex flex-wrap`, podem clipar em 360px. | Layout quebra. | Aplicar padrão `grid-cols-[minmax(0,1fr)_auto]` + `min-w-0`/`truncate`. | Baixo. |
-| A12 | Dashboard | Cards repetem KPIs do mês corrente sem hierarquia clara. | Densidade confusa. | Agrupar em "Hoje / Mês / Tendências" com 1 card destaque. | Médio (somente layout). |
+Concluir tudo isso em um único turno **sem** quebrar a baseline `2077/2077` é operacionalmente inseguro: a nova API de reservation muda o contrato do `whatsapp-quota.server.ts` que já é consumido por Blocks 1–5, e a reordenação do endpoint invalida mocks de `dispatcher-wiring-d2b2`, `dispatcher-routes-d2b2`, `dispatcher-concurrency-d2b2` e `dispatcher-hardening-d2b2`. Precisa ser incremental.
 
----
+## Sub-blocos propostos
 
-## B. Melhorias P3 recomendadas (polimento)
+### D.1 — Fechamento do Section 0 (boleto automático vs manual)
 
-- B1. Skeletons dedicados por seção do Mercado (hoje cai em `BrandLoader` cheio).
-- B2. Microinterações: `animate-rise`/`animate-pop` já existem em `EmptyState` — estender a cards de lista/carrinho.
-- B3. Estados vazios ilustrados (usar `AppEmptyStateVisual` com tom por módulo) em `/mercado/precos`, `/precos-historico`, `/meus-mercados`, `/orcamento`, `/calculadoras`, `/cesta`.
-- B4. Revisão de textos: encurtar títulos longos em `meu-plano.json`, `gastos.json`, `cartoes.json`.
-- B5. Padronizar copy de confirmação ("Tem certeza?" → frases ativas: "Excluir esta lista?").
-- B6. Espaçamento: padronizar `mt-6` do `SectionBlock` com tokens; revisar `gap` em cards densos.
-- B7. Hierarquia: usar `AppPageHeader` com `tone` consistente por módulo (mercado=accent, gastos=danger leve, cartões=info).
-- B8. Acessibilidade: `aria-live` em toasts críticos do Mercado, foco visível em CTAs primários.
-- B9. Dark mode: revisar contraste de badges "Comunidade"/"Seu preço".
-- B10. Favicon/OG por rota leaf (`/mercado/*`) — hoje cai no root.
+Auditar por código se os caminhos são mutuamente exclusivos:
+- verificar em `whatsapp-boleto-intents.server.ts` se `persistir` (auto/OCR) e `persistirManual` (fallback) podem coexistir para a mesma mensagem;
+- inspecionar as sessões `boleto` / `boleto_selecao` / `boleto_manual` e o roteador que decide entre eles;
+- provar por teste dedicado (`whatsapp-c11-f3b2d-boleto-mutex.test.ts`) que:
+  - uma sessão `boleto` finalizada bloqueia entrada em `boleto_manual` e vice-versa;
+  - o mesmo `external_id` não pode chegar aos dois inserts;
+  - concorrência entre os dois caminhos com mesma mensagem falha o segundo claim.
 
----
+Se a prova A (mutex) fechar, mantém os discriminadores atuais e documenta.
+Se falhar, aplica a opção B: novo discriminador comercial estável (hash do payload OCR) persistido antes da bifurcação, chave idempotente compartilhada.
 
-## C. Quick wins seguros (baixo risco, alto retorno)
+**Entrega D.1:** teste novo verde + comentário de prova nos dois `persistir*`; nenhuma outra alteração; runner integral verde.
 
-1. Padronizar mensagens de erro com `getFriendlyErrorKey` nas telas `/mercado/*` que ainda usam string crua.
-2. Adicionar `truncate` + `min-w-0` nos headers mobile do Mercado (A11).
-3. Tag "Mercado" no item de `/gastos` (A7) — campo já existe.
-4. Toast pós-finalização do carrinho com ação "Ver gasto" (A2).
-5. Dialog informativo no excluir histórico (A3).
-6. Empty states ilustrados nas 6 telas do Mercado sem estado vazio (B3).
-7. Wrapper `notify.*` para uniformizar toasts (A10).
-8. Skeleton por seção em `/mercado` (B1).
+### D.2 — API atômica de reservation
 
-Cada um é isolado, sem tocar lógica de negócio, RLS, planos ou pagamentos.
+Estender `src/server/whatsapp-quota.server.ts` com:
 
----
+- `reserveOutboundQuota({ userId, notificationId, planCode, cycle, now }, client?)`
+  - idempotency key: `wa:outbound:<notification_id>:v1`;
+  - retorno: `{ allowed, reason, reservation_id, state, duplicate, limit, used, remaining }`;
+  - state inicial `reserved`; retry retorna a mesma reservation;
+  - respeita limite mensal + diário + global configurados em `whatsapp_plan_quotas`;
+  - plano `free_ads` nunca reserva outbound (falha `plan_not_eligible`);
+  - ciclo inválido → falha `cycle_invalid`.
 
-## D. Itens que NÃO devem ser mexidos (hotfix P0/P1 congelado)
+- `commitOutboundQuota({ reservationId, providerMessageId, notificationId }, client?)`
+  - idempotente por `reservationId`;
+  - transição válida somente `reserved → committed`;
+  - persistência do `provider_message_id` via o fluxo atômico existente (reaproveita `finalize_outbound_accepted` da D.2A);
+  - segundo commit e callbacks `sent/delivered/read` são no-op.
 
-Confirmado — permanecem intocados nesta fase:
+- `releaseOutboundQuota({ reservationId, reason }, client?)`
+  - transição válida somente `reserved → released`;
+  - idempotente; nunca produz contador negativo;
+  - bloqueia release a partir de `ambiguous` ou `committed`.
 
-- Auth, RLS, planos, `FeatureKeys`, `PremiumLockModal` (consumo OK; componente não).
-- Mercado Pago (incl. webhook), checkout, migrations.
-- WhatsApp (endpoint público + flags).
-- OCR, Joanin, Google Maps, parser NFC-e.
-- Rate limit nos 9 endpoints caros.
-- `addGastoAuto` e fluxo Mercado → Histórico → Preço Comunitário → Gastos → Cartões.
-- Isolamento de `localStorage` por `activeUserId`.
-- `src/integrations/supabase/*` (auto-gen).
+- `markReservationAmbiguous({ reservationId, reason }, client?)`
+  - transição válida somente `reserved → ambiguous`;
+  - idempotente; permanece `ambiguous`.
 
-Qualquer melhoria P2/P3 que esbarre nesses pontos será **parada e reportada**, não implementada silenciosamente.
+Migração SQL: nova tabela `whatsapp_outbound_reservations`
+(`id uuid pk`, `user_id`, `notification_id unique`, `idempotency_key unique`,
+`plan_code`, `cycle_start`, `cycle_end`, `state text check in (…)`,
+`reserved_at`, `committed_at`, `released_at`, `ambiguous_at`,
+`provider_message_id`, `reason`) + RLS + `GRANT` para `service_role` (uso interno via `supabaseAdmin` apenas — dispatcher é server-only).
 
----
+Testes novos: `whatsapp-c11-f3b2d-outbound-reservation.test.ts` cobrindo (8–15, 17, 26, 27) da lista do prompt.
 
-## E. Ordem sugerida de implementação (lotes pequenos)
+**Entrega D.2:** nova API + tabela + testes; sem tocar dispatcher; runner integral verde. Contadores existentes de Blocks 1–5 intactos (a reserva outbound é contador separado dos financial actions).
 
-**Lote 1 — UX Mercado (base)**
-A1, A3, A6, B3, B1. Foco: empty states, confirmações, skeletons.
+### D.3 — Wiring do endpoint dispatcher
 
-**Lote 2 — Textos e i18n**
-B4, B5 + Quick win #1 (`getFriendlyErrorKey` em `/mercado/*`). Auditoria PT/EN, sem novas chaves hardcoded.
+Refatorar `src/routes/api/public.hooks.whatsapp-dispatcher.ts` para a ordem obrigatória (HMAC → env flags → runtime `global_enabled` + `outbound_enabled` + `rollout_enabled` → recovery → listagem → loop). Introduzir helper `readRuntimeConfigForDispatch()` que retorna outcome estruturado; se qualquer flag runtime OFF, retornar summary com `disabled: true, reason: <flag>` **sem** consultar fila/recovery/claim.
 
-**Lote 3 — Dashboard / Gastos / Cartões**
-A7, A8, A12. Tag de origem, link fatura→compra, hierarquia do dashboard.
+Extender `whatsapp-dispatcher-outbound.server.ts` `runOutboundForNotification` para revalidar em ordem: runtime global → outbound → rollout → entitlement → beta → bucket rollout → link ativo → opt-in → ciclo, imediatamente antes de reservar e novamente imediatamente antes do transport. Cada falha usa `releaseOutboundQuota` se já reservou.
 
-**Lote 4 — Performance leve e acabamento**
-A10 (toasts), A11 (mobile headers), B2, B6, B7, B8, B9, B10.
+Testes: `whatsapp-c11-f3b2d-dispatcher-order.test.ts` cobrindo (1–7, 37–42, 43–46) — early-exit por HMAC/env/runtime, canary v1 intacta, zero Graph quando bloqueado, runtime desligado após claim libera reservation.
 
-**Lote 5 — Premium preview**
-A9: preview borrado + CTA único nas telas bloqueadas (sem alterar `PremiumLockModal`).
+**Entrega D.3:** endpoint refatorado; runner integral verde; canary v1 permanece com attempt `ambiguous_skipped` original.
 
-**Lote 6 (futuro, fora desta fase) — ver seção abaixo.**
+### D.4 — Commit / Release / Ambiguous no fluxo real
 
----
+Refatorar `whatsapp-outbound-adapter.server.ts` para retornar contrato estruturado
+```
+{
+  outcome: "accepted" | "definitive_not_accepted" | "ambiguous" | "local_pre_http_failure",
+  http_started: boolean,
+  http_status: number | null,
+  provider_message_id: string | null,
+  provider_error_code: string | null,
+  network_error: string | null,
+  definitive_not_accepted: boolean,
+}
+```
+`runOutboundForNotification` mapeia:
+- `accepted` → `commitOutboundQuota` + finalize existente;
+- `definitive_not_accepted` (com `definitive_not_accepted=true` do adapter) → `releaseOutboundQuota(reason=provider_rejected)`;
+- `local_pre_http_failure` → `releaseOutboundQuota(reason=local_error)`;
+- `ambiguous` (timeout / 5xx / sem PMID) → `markReservationAmbiguous`; notification vai para estado terminal de investigação e recovery ignora.
 
-## Fase futura — Plano Free com Ads
+Testes: `whatsapp-c11-f3b2d-outbound-gates.test.ts` completos (16–36).
 
-Documentado, **não implementar agora**:
+**Entrega D.4:** máquina completa; runner integral verde.
 
-- Definir oficialmente o plano free (hoje "free" = sem assinatura/legado/teste técnico).
-- Quais recursos liberar (provável: Mercado básico, gastos limitados, sem OCR/IA).
-- Limites de uso por dia/mês nos endpoints caros (reaproveitar `enforceUserRateLimit`).
-- Onde anúncios aparecem (nunca em telas financeiras sensíveis: gastos, cartões, fatura, preço comunitário com dados próprios).
-- Conformidade LGPD: consentimento, opt-out, sem PII para redes de ads.
-- Ajuste em `meu-plano`, `PremiumLockModal`, upgrade flow.
-- Impacto em OCR/IA/importações (mantê-los pagos ou com cota muito baixa).
-- Fase isolada de produto + monetização + permissões; não misturar com UX P2/P3.
+### D.5 — Regressão integral, snapshot e veredito
 
----
+- Reexecutar via `bun run scripts/test-whatsapp.mjs` todos os arquivos.
+- Registrar as três suítes novas no runner (D.1, D.2, D.3, D.4).
+- `bunx tsgo --noEmit`.
+- Snapshot READ-ONLY: `SELECT` em `whatsapp_runtime_config`, `whatsapp_notifications` canary, `whatsapp_notification_attempts`, `whatsapp_outbound_reservations`, `whatsapp_usage_counters`.
+- Veredito A/B/C/D/E/F/G/H conforme prompt.
 
-## Próximo passo
+## Recomendação
 
-Confirmar quais lotes (1 a 5) inicio e em que ordem. Sugiro começar pelo **Lote 1** por ser o de maior ganho percebido e menor risco. Nada será alterado até a sua aprovação.
+Autorizar **apenas o D.1** neste turno (Section 0 fechado com prova). É a única parte que não altera contratos externos; qualquer descoberta lá muda o desenho do D.2 (chave idempotente compartilhada vs discriminadores separados).
+
+Ao final do D.1 apresento o resultado e aguardo autorização explícita para D.2.
+
+## Observação importante
+
+Se preferir que eu execute todos os cinco sub-blocos em turnos consecutivos sem revisão intermediária, é possível — mas o veredito de cada um sai só ao final do último. A divisão preserva a política do próprio prompt ("Não iniciar B.2.e automaticamente. Aguardar autorização explícita.") aplicada dentro do próprio B.2.D.
