@@ -30,6 +30,12 @@ import {
   type BoletoParsed,
 } from "./whatsapp-boleto-parser";
 import { formatBancoEmissor } from "./whatsapp-boleto-banco";
+// WA-C11 3B.2.C.1 Block 5 — quota financeira para criação de conta por boleto.
+import {
+  assertFinancialActionQuotaForWhatsApp,
+  financialQuotaBlockedReply,
+} from "@/server/whatsapp-financial-quota-gate.server";
+
 
 // Live-binding para permitir mock.module() em testes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
