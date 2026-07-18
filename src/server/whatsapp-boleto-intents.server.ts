@@ -541,6 +541,28 @@ async function findDuplicateBoleto(
 
 // ---------- persistência ----------
 
+/**
+ * WA-C11 FASE 3B.2.D — PROVA DE MUTEX (Section 0).
+ *
+ * `persistir` (caminho automático / OCR) só é invocado a partir de:
+ *   1. `avancarFluxo(...)` → última etapa quando `session.kind === "boleto"`;
+ *   2. `processarSelecaoCandidato(...)` → após o usuário escolher um candidato
+ *      de uma sessão `boleto_selecao`, promovendo-a a `boleto`.
+ *
+ * `persistirManual` (fallback OCR sem candidato válido) só é invocado a partir de:
+ *   3. `processarBoletoManual(...)` quando `session.kind === "boleto_manual"`.
+ *
+ * O dispatcher em `processarBoleto` (linhas ~360-377) faz branch por
+ * `session.kind` via `isBoletoSelecaoSession` / `isBoletoManualSession` /
+ * `isBoletoSession`. Um objeto sessão tem exatamente UM `kind`, então
+ * um único evento de mensagem atinge NO MÁXIMO um dos dois `persistir*`.
+ *
+ * O `external_id` da mensagem WhatsApp é único e a sessão é única por
+ * telefone × external_id (garantido pelo motor de sessões). Portanto:
+ *   - o discriminador de quota `bill_create_boleto:<fingerprint>` (auto) e
+ *     `bill_create_boleto:<sessaoId>` (manual) NUNCA são consumidos pela
+ *     mesma mensagem, e não há risco de bitributação.
+ */
 export async function persistir(args: {
   userId: string;
   msg: WhatsAppMessageRow;
@@ -550,6 +572,7 @@ export async function persistir(args: {
   sessaoId: string;
   deps: WhatsAppBoletoDeps;
 }): Promise<ProcessOutcome> {
+
   const { userId, msg, texto, recebidaEm, session, deps } = args;
   if (
     session.valorCentavos == null ||
