@@ -1060,6 +1060,12 @@ async function sessaoExpirar(id: string, _deps: WhatsAppBoletoDeps): Promise<voi
   await supabaseAdmin.from("whatsapp_messages").update({ status: "expirada" }).eq("id", id);
 }
 
+/**
+ * WA-C11 FASE 3B.2.D — PROVA DE MUTEX (Section 0).
+ * Ver comentário completo em `persistir` acima. Este caminho só é
+ * atingido quando `session.kind === "boleto_manual"`, mutuamente
+ * exclusivo com o caminho automático `persistir` (kind = "boleto").
+ */
 export async function persistirManual(args: {
   userId: string;
   msg: WhatsAppMessageRow;
@@ -1069,6 +1075,7 @@ export async function persistirManual(args: {
   sessaoId: string;
   deps: WhatsAppBoletoDeps;
 }): Promise<ProcessOutcome> {
+
   const { userId, msg, texto, recebidaEm, session, sessaoId, deps } = args;
   if (session.valorCentavos == null || !session.vencimentoISO || !session.identificacao) {
     return { status: "erro", resposta: "Não consegui montar essa conta. Vamos começar de novo?" };
