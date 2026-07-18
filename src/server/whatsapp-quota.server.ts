@@ -281,6 +281,77 @@ export async function releaseOutboundQuota(
   }
 }
 
+/**
+ * WA-C11 Fase 3B.2.E — Marca a reserva como ambiguous.
+ * Chamado APENAS quando o transport retornou ambiguous (network_error /
+ * timeout / server_error 5xx) e nenhuma evidência clara existe. Impede
+ * retry produtivo até que um callback com PMID reconcilie.
+ * RPC recusa transições fora de `reserved → ambiguous`.
+ */
+export async function markReservationAmbiguous(
+  args: { userId: string; notificationId: string; reason: string; now?: Date },
+  client: unknown = sb,
+): Promise<QuotaFinalizeResult> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = client as any;
+    const { data, error } = await c.rpc("whatsapp_mark_reservation_ambiguous_atomic", {
+      p_user_id: args.userId,
+      p_notification_id: args.notificationId,
+      p_reason: args.reason,
+      p_now: toIso(args.now ?? new Date()),
+    });
+    if (error) {
+      safeLog("mark_ambiguous_rpc_error", { code: (error as { code?: unknown })?.code ?? null });
+      return { outcome: "db_error", state: null };
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    const rr = (row ?? {}) as Record<string, unknown>;
+    return {
+      outcome: typeof rr.outcome === "string" ? rr.outcome : "unknown",
+      state: typeof rr.state === "string" ? rr.state : null,
+    };
+  } catch {
+    safeLog("mark_ambiguous_exception", {});
+    return { outcome: "db_error", state: null };
+  }
+}
+
+/**
+ * WA-C11 Fase 3B.2.E — Reconcilia reserva a partir de callback Meta.
+ * Callback com PMID válido é evidência de aceite. Promove reservation
+ * `reserved` ou `ambiguous` para `committed` de forma idempotente.
+ * Nunca cria nova reservation; nunca consome duas vezes.
+ */
+export async function reconcileReservationFromCallback(
+  args: { userId: string; notificationId: string; providerMessageId: string; now?: Date },
+  client: unknown = sb,
+): Promise<QuotaFinalizeResult> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = client as any;
+    const { data, error } = await c.rpc("whatsapp_reconcile_reservation_from_callback_atomic", {
+      p_user_id: args.userId,
+      p_notification_id: args.notificationId,
+      p_provider_message_id: args.providerMessageId,
+      p_now: toIso(args.now ?? new Date()),
+    });
+    if (error) {
+      safeLog("reconcile_rpc_error", { code: (error as { code?: unknown })?.code ?? null });
+      return { outcome: "db_error", state: null };
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    const rr = (row ?? {}) as Record<string, unknown>;
+    return {
+      outcome: typeof rr.outcome === "string" ? rr.outcome : "unknown",
+      state: typeof rr.state === "string" ? rr.state : null,
+    };
+  } catch {
+    safeLog("reconcile_exception", {});
+    return { outcome: "db_error", state: null };
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Snapshot
 
