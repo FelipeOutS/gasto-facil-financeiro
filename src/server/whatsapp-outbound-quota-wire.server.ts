@@ -165,6 +165,7 @@ export async function runOutboundWithQuota(
   const reserve = deps.reserveQuota ?? reserveOutboundQuota;
   const commit = deps.commitQuota ?? commitOutboundQuota;
   const release = deps.releaseQuota ?? releaseOutboundQuota;
+  const markAmb = deps.markAmbiguous ?? markReservationAmbiguous;
   const run = deps.runOutbound ?? runOutboundForNotification;
   const now = deps.now?.() ?? new Date();
 
