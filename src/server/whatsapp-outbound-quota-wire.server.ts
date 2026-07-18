@@ -62,6 +62,7 @@ import {
   reserveOutboundQuota,
   commitOutboundQuota,
   releaseOutboundQuota,
+  markReservationAmbiguous,
   type QuotaReserveResult,
   type QuotaFinalizeResult,
   type CycleWindow,
