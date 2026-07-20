@@ -84,7 +84,7 @@ function AppIdiomaPage() {
   return (
     <div className="min-h-screen min-h-dvh bg-background px-4 py-6 text-foreground safe-top">
       <div className="mx-auto flex max-w-md flex-col">
-        <Link to="/landing" className="mb-6 inline-flex w-fit" aria-label="Gasto Inteligente">
+        <Link to="/" className="mb-6 inline-flex w-fit" aria-label="Gasto Inteligente">
           <BrandMark className="h-10 w-auto" />
         </Link>
         {content}

@@ -55,7 +55,7 @@ export const MORE_ITEMS: MoreItem[] = [
   { to: "/contas-conectadas", labelKey: "contasConectadas", descKey: "contasConectadas", icon: Users, feature: "contas_conectadas" },
   { to: "/meu-plano", labelKey: "meuPlano", descKey: "meuPlano", icon: Crown },
   { to: "/categorias", labelKey: "categorias", descKey: "categorias", icon: Settings2 },
-  { to: "/landing", labelKey: "landing", descKey: "landing", icon: Sparkles },
+  
 ];
 
 export const MORE_PATHS = [...MORE_ITEMS.map((i) => i.to), ADMIN_ITEM.to, "/app/mais"];
