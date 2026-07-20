@@ -34,10 +34,12 @@ const OPTOUT_COMMANDS: readonly string[] = Object.freeze([
   "sair do whatsapp",
   "descadastrar whatsapp",
   "descadastrar do whatsapp",
-  // Comandos curtos — só válidos quando MENSAGEM INTEGRAL (após normalização)
+  // Comandos curtos — só válidos quando MENSAGEM INTEGRAL (após normalização).
+  // NOTA: "cancelar" NÃO está listado — o domínio já usa "cancelar" para
+  // reset de sessão in-flight (ver isResetCommand). Opt-out exige forma
+  // explícita ("cancelar whatsapp", "descadastrar", etc).
   "parar",
   "sair",
-  "cancelar",
   "descadastrar",
   "stop",
   "unsubscribe",

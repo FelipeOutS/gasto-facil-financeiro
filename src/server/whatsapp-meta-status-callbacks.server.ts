@@ -23,6 +23,7 @@
 
 import { createHash } from "node:crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { reconcileOutboundQuotaFromMetaStatus } from "./whatsapp-callback-quota-reconcile.server";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tipos públicos
@@ -916,17 +917,19 @@ export async function persistAndApplyEvents(
   for (const [pmid, list] of byPmid) {
     // 1) Correlaciona.
     let notifId: string | null = null;
+    let notifUserId: string | null = null;
     let notifLookupTransientFail = false;
     try {
       const { data, error } = await client
         .from("whatsapp_notifications")
-        .select("id")
+        .select("id, user_id")
         .eq("provider_message_id", pmid)
         .maybeSingle();
       if (error) {
         if (isTransientDbError(error)) notifLookupTransientFail = true;
       } else {
-        notifId = data?.id ?? null;
+        notifId = (data?.id as string | null) ?? null;
+        notifUserId = ((data as { user_id?: string } | null)?.user_id as string | null) ?? null;
       }
     } catch {
       notifLookupTransientFail = true;
@@ -1018,6 +1021,25 @@ export async function persistAndApplyEvents(
         applied.reason === "pending_no_promotion"
       ) {
         summary.anomalies++;
+      }
+    }
+
+    // 4) WA-C11 3B.2.E.1 — Reconciliação de quota outbound.
+    //    Traduz status Meta em commit idempotente da reservation:
+    //      sent/delivered/read → commit (aceite comprovado)
+    //      failed com PMID     → NÃO libera (Meta cobra pela tentativa)
+    //    Uma chamada por PMID, com o status mais autoritativo do lote.
+    //    Erros isolados por PMID; nunca lançam.
+    if (notifId && notifUserId) {
+      try {
+        await reconcileOutboundQuotaFromMetaStatus({
+          userId: notifUserId,
+          notificationId: notifId,
+          providerMessageId: pmid,
+          status: representative.event_status,
+        });
+      } catch {
+        // Best-effort: falha na reconciliação de quota não derruba o webhook.
       }
     }
   }
