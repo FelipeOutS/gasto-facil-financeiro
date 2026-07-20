@@ -241,7 +241,7 @@ function CofrePremiumGate() {
           </Link>
         </Button>
         <Button asChild variant="outline">
-          <Link to="/">{t("gate.back")}</Link>
+          <Link to="/app">{t("gate.back")}</Link>
         </Button>
       </div>
     </div>
@@ -332,7 +332,7 @@ function PageHeader({
     <header className="mb-6 animate-fade-in">
       <div className="mb-3 flex items-center justify-between gap-3">
         <nav aria-label="breadcrumb" className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
-          <Link to="/" className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 hover:bg-accent/40 hover:text-foreground">
+          <Link to="/app" className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 hover:bg-accent/40 hover:text-foreground">
             <Home className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Dashboard</span>
           </Link>
@@ -350,7 +350,7 @@ function PageHeader({
           ))}
         </nav>
         <Link
-          to="/"
+          to="/app"
           className="hidden shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground sm:inline-flex"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao Dashboard

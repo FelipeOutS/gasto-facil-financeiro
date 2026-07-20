@@ -171,7 +171,7 @@ function ContasAReceberPage() {
       <header className="flex items-center justify-between gap-3 pt-2">
         <div className="flex items-center gap-2">
           <Link
-            to="/"
+            to="/app"
             className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:bg-card-elevated hover:text-foreground"
             aria-label={t("header.back")}
           >

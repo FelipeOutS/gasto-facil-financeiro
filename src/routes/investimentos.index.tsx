@@ -144,7 +144,7 @@ function InvestimentosBloqueado() {
             <Link to="/meu-plano">{t("investimentos.locked.plans")}</Link>
           </Button>
           <Button asChild variant="link" className="text-muted-foreground">
-            <Link to="/">{t("investimentos.locked.back")}</Link>
+            <Link to="/app">{t("investimentos.locked.back")}</Link>
           </Button>
         </div>
       </div>

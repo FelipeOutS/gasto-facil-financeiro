@@ -52,7 +52,7 @@ function AcceptInvitePage() {
     try {
       await refuseInviteByToken(token);
       toast.success(t("invite.toastRefused"));
-      navigate({ to: "/" });
+      navigate({ to: "/app" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("invite.toastRefuseError"));
     } finally { setWorking(false); }

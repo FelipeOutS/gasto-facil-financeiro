@@ -210,7 +210,7 @@ export function GuestOnly({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loading && session && !isLoginBioUnlockRequired() && !isLoginBioInProgress()) {
-      void navigate({ to: "/" });
+      void navigate({ to: "/app" });
     }
   }, [loading, session, navigate]);
 

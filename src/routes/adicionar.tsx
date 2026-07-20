@@ -143,7 +143,7 @@ function Adicionar() {
     <MobileShell>
       <header className="flex items-center gap-3 pt-2">
         <Link
-          to="/"
+          to="/app"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
           aria-label={t("header.back")}
         >
@@ -328,7 +328,7 @@ function Adicionar() {
 
       <div className="mt-6">
         <Button asChild variant="outline" className="w-full">
-          <Link to="/">{t("cancel")}</Link>
+          <Link to="/app">{t("cancel")}</Link>
         </Button>
       </div>
 

@@ -288,7 +288,7 @@ function AppMaisPage() {
       {/* Dashboard + pessoal */}
       <section className="mt-5 space-y-2">
         <Link
-          to="/"
+          to="/app"
           preload="intent"
           preloadDelay={0}
           className="flex min-h-[68px] items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-card active:scale-[0.99]"

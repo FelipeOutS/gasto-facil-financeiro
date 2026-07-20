@@ -82,7 +82,7 @@ function Manual() {
                 toast.success(
                   "Gasto salvo offline. Ele será sincronizado quando a internet voltar.",
                 );
-                navigate({ to: "/" });
+                navigate({ to: "/app" });
               } catch (err) {
                 console.error("[offline] enqueue failed", err);
                 toast.error(i18n.t("common:errors.saveOffline"));
@@ -94,7 +94,7 @@ function Manual() {
             const save = () => {
               addGasto(data);
               toast.success(t("manual.toastSaved"));
-              navigate({ to: "/" });
+              navigate({ to: "/app" });
             };
             if (dup) {
               setPending(() => save);

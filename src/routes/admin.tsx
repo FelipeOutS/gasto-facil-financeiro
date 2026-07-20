@@ -338,7 +338,7 @@ function AdminPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Esta área é exclusiva do administrador master.
           </p>
-          <Button className="mt-4" onClick={() => navigate({ to: "/" })}>
+          <Button className="mt-4" onClick={() => navigate({ to: "/app" })}>
             Voltar ao Dashboard
           </Button>
         </div>

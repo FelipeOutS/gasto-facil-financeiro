@@ -2911,7 +2911,7 @@ function FreeAdsPlanCard() {
       return;
     }
     if (storedPlan === "free_ads" && status === "ativo") {
-      void navigate({ to: "/" });
+      void navigate({ to: "/app" });
       return;
     }
     if (isAdminMaster) {
@@ -2923,7 +2923,7 @@ function FreeAdsPlanCard() {
     try {
       const result = await chooseFreeAds();
       if (result.ok) {
-        void navigate({ to: "/" });
+        void navigate({ to: "/app" });
       } else if (result.reason === "paid_plan_active" || result.reason === "admin_master") {
         void navigate({ to: "/meu-plano", hash: "planos-disponiveis" });
       } else {

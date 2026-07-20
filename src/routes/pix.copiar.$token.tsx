@@ -173,7 +173,7 @@ function CopiarPixPage() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => void navigate({ to: "/" })}
+                onClick={() => void navigate({ to: "/app" })}
               >
                 <ArrowLeft className="mr-2" /> Voltar
               </Button>

@@ -554,7 +554,7 @@ function PrecoComunitarioPage() {
           <Link to="/mercado"><ArrowLeft className="h-5 w-5" /></Link>
         </Button>
         <Button asChild variant="ghost" size="icon" aria-label={t("communityPrices.home")}>
-          <Link to="/"><Home className="h-5 w-5" /></Link>
+          <Link to="/app"><Home className="h-5 w-5" /></Link>
         </Button>
       </div>
 

@@ -113,7 +113,7 @@ function LoginForm() {
     console.log("[AndroidBiometricLogin] rota destino:", "/");
     // Soft navigate — evita perder a sessão em memória do Supabase em
     // WebViews que limpam storage entre reloads.
-    void navigate({ to: "/", replace: true });
+    void navigate({ to: "/app", replace: true });
   }
 
   async function handleBiometric() {
@@ -248,7 +248,7 @@ function LoginForm() {
       return;
     }
     toast.success(t("login.welcomeBack"));
-    void navigate({ to: "/" });
+    void navigate({ to: "/app" });
   }
 
   async function handleAcceptEnableBio() {
@@ -261,13 +261,13 @@ function LoginForm() {
     } finally {
       setEnablingBio(false);
       setAskEnableBio(false);
-      void navigate({ to: "/" });
+      void navigate({ to: "/app" });
     }
   }
 
   function handleDeclineEnableBio() {
     setAskEnableBio(false);
-    void navigate({ to: "/" });
+    void navigate({ to: "/app" });
   }
 
   // === Painel de pós-login: oferecer ativar biometria ===
