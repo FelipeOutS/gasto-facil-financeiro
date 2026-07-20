@@ -83,7 +83,7 @@ function OnboardingPage() {
         onboarding_completed: true,
         onboarding_completed_at: new Date().toISOString(),
       });
-      void navigate({ to: "/" });
+      void navigate({ to: "/app" });
     } finally {
       setSaving(false);
     }
@@ -210,7 +210,7 @@ function OnboardingPage() {
         {step === 5 && (
           <StepDone
             modules={modules}
-            onGoDashboard={() => navigate({ to: "/" })}
+            onGoDashboard={() => navigate({ to: "/app" })}
             t={t}
           />
         )}
