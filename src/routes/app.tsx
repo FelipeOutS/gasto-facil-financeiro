@@ -140,7 +140,11 @@ function AppRoot() {
   if (needsBiometricUnlock) return <BrandLoader message={t("loader.biometricValidating")} />;
   if (shouldShowBiometricLogin) return <BrandLoader message={t("loader.biometricOpening")} />;
   if (!session) return <BrandLoader message={null} />;
-  return <Index />;
+  return (
+    <AuthGate>
+      <Index />
+    </AuthGate>
+  );
 }
 
 function Index() {
