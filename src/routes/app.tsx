@@ -98,7 +98,7 @@ import {
   AppActionCard,
 } from "@/components/app-v2";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/app")({
   head: () => ({
     meta: [
       { title: "Gasto Inteligente — Controle financeiro simples, visual e inteligente" },
