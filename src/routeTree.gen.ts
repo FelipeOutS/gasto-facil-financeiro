@@ -44,6 +44,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as RendaIndexRouteImport } from './routes/renda.index'
 import { Route as PtIndexRouteImport } from './routes/pt.index'
 import { Route as MetasIndexRouteImport } from './routes/metas.index'
@@ -311,6 +312,11 @@ const AdminRoute = AdminRouteImport.update({
 const AdicionarRoute = AdicionarRouteImport.update({
   id: '/adicionar',
   path: '/adicionar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RendaIndexRoute = RendaIndexRouteImport.update({
@@ -799,6 +805,7 @@ const ApiIntegrationsMercadopagoActionRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
   '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
@@ -929,6 +936,7 @@ export interface FileRoutesByFullPath {
   '/app/integracoes/mercado-pago/': typeof AppIntegracoesMercadoPagoIndexRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
   '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
@@ -1060,6 +1068,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
   '/admin': typeof AdminRoute
   '/alertas': typeof AlertasRoute
@@ -1192,6 +1201,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/adicionar'
     | '/admin'
     | '/alertas'
@@ -1322,6 +1332,7 @@ export interface FileRouteTypes {
     | '/app/integracoes/mercado-pago/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/adicionar'
     | '/admin'
     | '/alertas'
@@ -1452,6 +1463,7 @@ export interface FileRouteTypes {
     | '/app/integracoes/mercado-pago'
   id:
     | '__root__'
+    | '/'
     | '/adicionar'
     | '/admin'
     | '/alertas'
@@ -1583,6 +1595,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AdicionarRoute: typeof AdicionarRoute
   AdminRoute: typeof AdminRoute
   AlertasRoute: typeof AlertasRoute
@@ -1957,6 +1970,13 @@ declare module '@tanstack/react-router' {
       path: '/adicionar'
       fullPath: '/adicionar'
       preLoaderRoute: typeof AdicionarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/renda/': {
@@ -2625,6 +2645,7 @@ const GastosRouteWithChildren =
   GastosRoute._addFileChildren(GastosRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
   AdminRoute: AdminRoute,
   AlertasRoute: AlertasRoute,
