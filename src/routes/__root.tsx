@@ -292,6 +292,8 @@ const WIDE_PREFIXES = [
 ];
 
 function isPublicPath(p: string) {
+  // Raiz é sempre pública (landing page). Nunca envolve MobileShell.
+  if (p === "/") return true;
   for (const pre of PUBLIC_PATH_PREFIXES) {
     if (p === pre || p.startsWith(pre + "/")) return true;
   }
