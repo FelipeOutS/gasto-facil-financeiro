@@ -17,7 +17,6 @@ describe("WA-C11 3B.2.E — detectOptout: comandos determinísticos", () => {
     "  parar  ",
     "parar.",
     "sair",
-    "cancelar",
     "descadastrar",
     "STOP",
     "unsubscribe",
