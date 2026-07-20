@@ -84,7 +84,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { makeRevenueT, revenueSuffix } from "@/lib/revenue-vocab";
-import { PublicLanding } from "@/components/landing/PublicLanding";
+import { AuthGate } from "@/components/AuthGate";
 import { BrandLoader } from "@/components/BrandLoader";
 import {
   isLoginBioBridgeAvailable,
