@@ -2619,6 +2619,59 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     }
   }
 
+  // WA-C11 3B.2.E.1 — OPT-OUT PRECEDÊNCIA ABSOLUTA.
+  // Roda ANTES de qualquer gate (runtime, entitlement, beta, rollout, quota,
+  // IA, OCR, Whisper, parser). Ownership resolvido server-side via
+  // whatsapp_links por telefone — jamais aceita user_id do body.
+  // Aceita vínculo mesmo inativo/revogado para permitir opt-out repetido.
+  {
+    const rawTexto = (msg.texto ?? "").trim();
+    const optout = detectOptout(rawTexto);
+    if (optout.isOptout) {
+      let optoutUserId: string | null =
+        typeof msg.authorizedUserId === "string" && msg.authorizedUserId.length > 0
+          ? msg.authorizedUserId
+          : null;
+      if (!optoutUserId) {
+        const digits = (msg.telefone ?? "").replace(/\D/g, "");
+        const candidatos = new Set<string>([msg.telefone, digits]);
+        if (digits.startsWith("55")) candidatos.add(digits.slice(2));
+        else if (digits) candidatos.add(`55${digits}`);
+        const { data } = await supabaseAdmin
+          .from("whatsapp_links")
+          .select("user_id")
+          .in("telefone", Array.from(candidatos).filter(Boolean))
+          .limit(1)
+          .maybeSingle();
+        optoutUserId = (data?.user_id as string | undefined) ?? null;
+      }
+      if (!optoutUserId) {
+        // Sem correlação server-side segura: não altera terceiros. Responde
+        // de forma neutra e encerra — não vaza existência de outro usuário.
+        return {
+          status: "cancelada",
+          resposta:
+            "Ok, cancelamos o envio de mensagens por aqui. Se quiser reativar, é só voltar ao app.",
+        };
+      }
+      try {
+        await executeOptoutRevocation({
+          userId: optoutUserId,
+          origin: "whatsapp",
+          matchedCommand: optout.matchedCommand,
+          correlationId: msg.external_id ?? `wa-optout-${Date.now()}`,
+        });
+      } catch {
+        // Fail-closed silencioso: nunca vaza; nunca segue com outros gates.
+      }
+      return {
+        status: "cancelada",
+        resposta:
+          "Pronto. Você não vai mais receber mensagens do Gasto Inteligente por aqui. Se mudar de ideia, é só reativar no app.",
+      };
+    }
+  }
+
   let texto = (msg.texto ?? "").trim();
   // Permitir mensagens só-imagem (Fase WA-G5A): se vier uma foto sem
   // texto, seguimos o pipeline e roteamos para o handler de comprovante.
