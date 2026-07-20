@@ -50,6 +50,11 @@ describe("WA-C11 3B.2.E — falso-positivos financeiros NUNCA são opt-out", () 
     expect(detectOptout("cancelar conta de luz").isOptout).toBe(false);
     expect(detectOptout("cancelar boleto do banco").isOptout).toBe(false);
   });
+  it("'cancelar' standalone é reset in-flight, não opt-out (E.1)", () => {
+    expect(detectOptout("cancelar").isOptout).toBe(false);
+    expect(detectOptout("CANCELAR").isOptout).toBe(false);
+    expect(detectOptout("cancelar!").isOptout).toBe(false);
+  });
 });
 
 describe("WA-C11 3B.2.E — normalizeOptoutInput", () => {
