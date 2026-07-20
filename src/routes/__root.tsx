@@ -253,7 +253,7 @@ const PUBLIC_PATH_PREFIXES = [
   "/recuperar-senha",
   "/reset-password",
   "/confirmar",
-  "/landing",
+  
   "/termos",
   "/privacidade",
   "/lgpd",

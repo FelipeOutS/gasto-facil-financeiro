@@ -44,7 +44,7 @@ function ContaPage() {
 
   async function handleLogout() {
     await signOut();
-    void navigate({ to: "/landing" });
+    void navigate({ to: "/" });
   }
 
   const tipo = (profile?.tipo_cadastro as TipoCadastro) ?? null;

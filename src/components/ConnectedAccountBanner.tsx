@@ -13,7 +13,7 @@ import { useActiveAccount } from "@/lib/active-account";
 const HIDDEN_ROUTES = new Set([
   "/login",
   "/cadastro",
-  "/landing",
+  
   "/onboarding",
   "/recuperar-senha",
   "/reset-password",

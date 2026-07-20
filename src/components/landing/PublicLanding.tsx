@@ -185,7 +185,7 @@ export function LandingAnchorLink({
   onClick?: () => void;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const onLanding = pathname === "/" || pathname === "/landing";
+  const onLanding = pathname === "/";
 
   if (onLanding) {
     return (

@@ -40,7 +40,7 @@ const SUBSCRIPTION_ALLOWLIST = new Set<string>([
   "/perfil",
   "/admin",
   "/categorias",
-  "/landing",
+  
   "/manual",
 ]);
 
@@ -266,7 +266,7 @@ export function AuthShell({
 
       <div className="relative mx-auto flex w-full max-w-md flex-col animate-fade-in">
         <Link
-          to="/landing"
+          to="/"
           className="mb-6 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
