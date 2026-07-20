@@ -116,6 +116,9 @@ const INCLUDE = [
   "whatsapp-c11-f3b2e-callback-reconcile.test.ts",
   "whatsapp-c11-f3b2e1-optout-precedencia.test.ts",
   "whatsapp-c11-f3b2e1-status-callback-wire.test.ts",
+  "whatsapp-c11-f3b3-admin-auth.test.ts",
+  "whatsapp-c11-f3b3-runtime-admin.test.ts",
+  "whatsapp-c11-f3b3-quota-admin.test.ts",
 
   "whatsapp-c92-transport-error-sanitizer-e4c.test.ts",
   "whatsapp-c92-recovery-anti-ambiguous-e4c.test.ts",
