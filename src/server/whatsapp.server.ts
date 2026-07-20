@@ -26,6 +26,7 @@ import {
 import { suggestCategoryFromText } from "@/lib/categories";
 import type { Cartao, FormaPagamento } from "@/lib/types";
 import { canUseWhatsApp } from "./whatsapp-beta.server";
+import { detectOptout, executeOptoutRevocation } from "./whatsapp-optout.server";
 import {
   assertFinancialActionQuotaForWhatsApp,
   financialQuotaBlockedReply,
