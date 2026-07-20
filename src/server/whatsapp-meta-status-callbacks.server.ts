@@ -1023,6 +1023,25 @@ export async function persistAndApplyEvents(
         summary.anomalies++;
       }
     }
+
+    // 4) WA-C11 3B.2.E.1 — Reconciliação de quota outbound.
+    //    Traduz status Meta em commit idempotente da reservation:
+    //      sent/delivered/read → commit (aceite comprovado)
+    //      failed com PMID     → NÃO libera (Meta cobra pela tentativa)
+    //    Uma chamada por PMID, com o status mais autoritativo do lote.
+    //    Erros isolados por PMID; nunca lançam.
+    if (notifId && notifUserId) {
+      try {
+        await reconcileOutboundQuotaFromMetaStatus({
+          userId: notifUserId,
+          notificationId: notifId,
+          providerMessageId: pmid,
+          status: representative.event_status,
+        });
+      } catch {
+        // Best-effort: falha na reconciliação de quota não derruba o webhook.
+      }
+    }
   }
 
   return summary;
