@@ -3122,6 +3122,98 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_meta_templates: {
+        Row: {
+          active: boolean
+          approved_at: string | null
+          body: string
+          category: string
+          components: Json
+          created_at: string
+          created_by: string | null
+          examples: Json
+          footer: string | null
+          id: string
+          internal_key: string
+          language: string
+          last_synced_at: string | null
+          meta_name: string
+          notification_key: string
+          placeholder_schema: Json
+          provider_template_id: string | null
+          quality_score: string | null
+          rejected_at: string | null
+          rejection_reason: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          active?: boolean
+          approved_at?: string | null
+          body: string
+          category: string
+          components?: Json
+          created_at?: string
+          created_by?: string | null
+          examples?: Json
+          footer?: string | null
+          id?: string
+          internal_key: string
+          language: string
+          last_synced_at?: string | null
+          meta_name: string
+          notification_key: string
+          placeholder_schema?: Json
+          provider_template_id?: string | null
+          quality_score?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version: number
+        }
+        Update: {
+          active?: boolean
+          approved_at?: string | null
+          body?: string
+          category?: string
+          components?: Json
+          created_at?: string
+          created_by?: string | null
+          examples?: Json
+          footer?: string | null
+          id?: string
+          internal_key?: string
+          language?: string
+          last_synced_at?: string | null
+          meta_name?: string
+          notification_key?: string
+          placeholder_schema?: Json
+          provider_template_id?: string | null
+          quality_score?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_meta_templates_notification_key_fkey"
+            columns: ["notification_key"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_notification_templates"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       whatsapp_notification_attempts: {
         Row: {
           attempt_status: string
