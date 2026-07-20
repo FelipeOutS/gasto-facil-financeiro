@@ -917,17 +917,19 @@ export async function persistAndApplyEvents(
   for (const [pmid, list] of byPmid) {
     // 1) Correlaciona.
     let notifId: string | null = null;
+    let notifUserId: string | null = null;
     let notifLookupTransientFail = false;
     try {
       const { data, error } = await client
         .from("whatsapp_notifications")
-        .select("id")
+        .select("id, user_id")
         .eq("provider_message_id", pmid)
         .maybeSingle();
       if (error) {
         if (isTransientDbError(error)) notifLookupTransientFail = true;
       } else {
-        notifId = data?.id ?? null;
+        notifId = (data?.id as string | null) ?? null;
+        notifUserId = ((data as { user_id?: string } | null)?.user_id as string | null) ?? null;
       }
     } catch {
       notifLookupTransientFail = true;
