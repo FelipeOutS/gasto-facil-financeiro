@@ -355,7 +355,7 @@ function OrcamentoPage() {
       <header className="pt-2">
         <div className="flex items-start gap-3">
           <Link
-            to="/"
+            to="/app"
             className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground lg:hidden"
             aria-label={t("back")}
           >

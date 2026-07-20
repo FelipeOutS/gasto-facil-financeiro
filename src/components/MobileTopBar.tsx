@@ -44,7 +44,7 @@ export function MobileTopBar() {
 
         {/* Centro — Logo da marca, realmente centralizado */}
         <Link
-          to="/"
+          to="/app"
           aria-label="Gasto Inteligente"
           className="flex items-center justify-center active:scale-[0.98]"
         >

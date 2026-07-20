@@ -556,7 +556,7 @@ function RelatoriosPage() {
               <Link to="/adicionar">{t("onboarding.cta")}</Link>
             </Button>
             <Button asChild variant="outline" size="sm" className="min-h-11">
-              <Link to="/">{t("onboarding.secondaryCta")}</Link>
+              <Link to="/app">{t("onboarding.secondaryCta")}</Link>
             </Button>
           </div>
           <p className="mt-3 text-[12px] text-muted-foreground">

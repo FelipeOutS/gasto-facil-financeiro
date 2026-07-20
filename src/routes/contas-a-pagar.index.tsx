@@ -294,7 +294,7 @@ function ContasAPagarPage() {
     <MobileShell>
       <header className="flex items-center gap-3 pt-2">
         <Link
-          to="/"
+          to="/app"
           className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
           aria-label={t("header.back")}
         >
