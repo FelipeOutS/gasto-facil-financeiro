@@ -101,50 +101,45 @@ import {
 export const Route = createFileRoute("/app")({
   head: () => ({
     meta: [
-      { title: "Gasto Inteligente — Controle financeiro simples, visual e inteligente" },
-      {
-        name: "description",
-        content:
-          "Organize gastos, cartões, contas, metas e renda em um só lugar — para pessoa física, MEI e empresa.",
-      },
-      { property: "og:title", content: "Gasto Inteligente — Controle financeiro simples, visual e inteligente" },
-      { property: "og:description", content: "Organize gastos, cartões, contas, metas e renda em um só lugar." },
-      { property: "og:url", content: "https://gastointeligente.com.br/" },
-      { property: "og:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
-      { property: "og:image:width", content: "1200" },
-      { property: "og:image:height", content: "630" },
-      { property: "og:image:alt", content: "Gasto Inteligente — controle financeiro simples, visual e inteligente" },
-      { name: "twitter:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
-    ],
-    links: [
-      { rel: "canonical", href: "https://gastointeligente.com.br/" },
+      { title: "Gasto Inteligente" },
+      { name: "robots", content: "noindex,nofollow" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
     ],
   }),
-  component: IndexGate,
+  component: AppRoot,
 });
 
-function IndexGate() {
+function AppRoot() {
   const { t } = useTranslation("dashboard");
   const { session, loading } = useAuth();
   const navigate = useNavigate();
   const needsBiometricUnlock = !!session && isLoginBioUnlockRequired();
   const bioLoginInProgress = isLoginBioInProgress();
-  const shouldShowBiometricLogin = !session && !bioLoginInProgress && isLoginBioBridgeAvailable() && isLoginBioEnabled();
+  const shouldShowBiometricLogin =
+    !session && !bioLoginInProgress && isLoginBioBridgeAvailable() && isLoginBioEnabled();
 
   useEffect(() => {
-    if (!loading && needsBiometricUnlock) {
+    if (loading) return;
+    if (needsBiometricUnlock) {
+      void navigate({ to: "/login", replace: true });
+      return;
+    }
+    if (shouldShowBiometricLogin) {
+      void navigate({ to: "/login", replace: true });
+      return;
+    }
+    if (!session) {
+      // Sessão ausente numa rota privada → envia para /login (o AuthGate
+      // interno também cobre, mas isso evita flash de conteúdo).
       void navigate({ to: "/login", replace: true });
     }
-    if (!loading && shouldShowBiometricLogin) {
-      void navigate({ to: "/login", replace: true });
-    }
-  }, [loading, needsBiometricUnlock, shouldShowBiometricLogin, navigate]);
+  }, [loading, session, needsBiometricUnlock, shouldShowBiometricLogin, navigate]);
 
   if (loading) return <BrandLoader message={null} />;
   if (!session && bioLoginInProgress) return <BrandLoader message={t("loader.biometricValidating")} />;
   if (needsBiometricUnlock) return <BrandLoader message={t("loader.biometricValidating")} />;
   if (shouldShowBiometricLogin) return <BrandLoader message={t("loader.biometricOpening")} />;
-  if (!session) return <PublicLanding />;
+  if (!session) return <BrandLoader message={null} />;
   return <Index />;
 }
 
