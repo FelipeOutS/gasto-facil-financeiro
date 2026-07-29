@@ -183,10 +183,19 @@ function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className="dark" suppressHydrationWarning>
       <head>
+        {/* Google Tag Manager — container único, o mais alto possível no <head>.
+            Nenhum ID de GA4 é inserido no código; tags/eventos ficam no painel GTM. */}
+        <script dangerouslySetInnerHTML={{ __html: GTM_HEAD_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
       <body suppressHydrationWarning>
+        {/* Google Tag Manager (noscript) — imediatamente após a abertura do <body>. */}
+        <noscript
+          dangerouslySetInnerHTML={{
+            __html: `<iframe src="https://www.googletagmanager.com/ns.html?id=${GTM_CONTAINER_ID}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
+          }}
+        />
         <ThemeProvider>
           <AccentProvider>
             <AuthProvider>
