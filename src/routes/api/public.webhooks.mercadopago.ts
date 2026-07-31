@@ -143,28 +143,22 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           request_body: body,
         });
 
-        // Validação de assinatura
-        const signatureHeader = request.headers.get("x-signature") ?? "";
-        const requestId = request.headers.get("x-request-id") ?? "";
-        const parts = Object.fromEntries(
-          signatureHeader.split(",").map((kv) => {
-            const [k, ...rest] = kv.split("=");
-            return [k?.trim() ?? "", rest.join("=").trim()];
-          }),
-        ) as Record<string, string>;
-        const ts = parts.ts;
-        const v1 = parts.v1;
-        if (!ts || !v1 || !dataId) {
-          if (logId) await updateWebhookLog(logId, { status: "failed", http_status: 401, error_message: "missing_signature", processing_time_ms: Date.now() - startedAt });
-          return json({ error: "missing_signature" }, 401);
-        }
-        const manifest = `id:${dataId};request-id:${requestId};ts:${ts};`;
-        const expected = createHmac("sha256", webhookSecret).update(manifest).digest("hex");
-        const a = Buffer.from(expected, "hex");
-        const b = Buffer.from(v1, "hex");
-        if (a.length !== b.length || !timingSafeEqual(a, b)) {
-          if (logId) await updateWebhookLog(logId, { status: "failed", http_status: 401, error_message: "invalid_signature", processing_time_ms: Date.now() - startedAt });
-          return json({ error: "invalid_signature" }, 401);
+        // Validação de assinatura ANTES de qualquer leitura/escrita de negócio.
+        const verification = verifyMercadoPagoSignature({
+          signatureHeader: request.headers.get("x-signature"),
+          requestId: request.headers.get("x-request-id"),
+          dataId,
+          secret: webhookSecret,
+        });
+        if (!verification.ok) {
+          if (logId)
+            await updateWebhookLog(logId, {
+              status: "failed",
+              http_status: verification.httpStatus,
+              error_message: verification.reason ?? "invalid_signature",
+              processing_time_ms: Date.now() - startedAt,
+            });
+          return json({ error: verification.reason ?? "invalid_signature" }, verification.httpStatus);
         }
 
 
