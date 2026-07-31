@@ -283,6 +283,7 @@ async function contarReceitasMesAtual(userId: string): Promise<number> {
     .from("receitas")
     .select("id")
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .gte("data", monthStart);
   return Array.isArray(data) ? data.length : 0;
 }
@@ -400,6 +401,7 @@ export async function persistirReceita(
         .select("id, recorrencia_id, valor, data, user_id")
         .eq("id", receitaId)
         .eq("user_id", userId)
+        .is("deleted_at", null)
         .maybeSingle(),
       supabaseAdmin
         .from("recorrencias")

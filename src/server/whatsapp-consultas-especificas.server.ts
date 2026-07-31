@@ -221,6 +221,7 @@ async function loadReceitas(userId: string, from: string, toExclusive: string): 
     .from("receitas")
     .select("descricao, valor, data, tipo")
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .gte("data", from)
     .lt("data", toExclusive);
   return Array.isArray(data) ? (data as ReceitaRow[]) : [];

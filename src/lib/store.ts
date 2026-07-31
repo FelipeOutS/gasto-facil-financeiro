@@ -2988,6 +2988,17 @@ export function updateReceita(
 ) {
   const target = memReceitas.find((r) => r.id === id);
   if (!target) return;
+  if (fields.valor !== undefined) {
+    const amount = validateFinancialAmount(fields.valor);
+    if (!amount.ok) {
+      const msg = financialAmountMessage(amount.code);
+      if (typeof window !== "undefined") {
+        void import("sonner").then(({ toast }) => toast.error(msg));
+      }
+      return;
+    }
+    fields = { ...fields, valor: amount.value };
+  }
   const now = new Date().toISOString();
 
   const buildPatch = (r: Receita): Receita => {
