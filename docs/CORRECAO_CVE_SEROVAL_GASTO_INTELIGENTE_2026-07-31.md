@@ -208,3 +208,93 @@ Arquivos a reverter em caso de regressão em produção: `package.json`, `bun.lo
 - Flakiness de timing em `tests/whatsapp-boleto-c10b-integration.test.ts` (pré-existente).
 - O override é uma trava temporária: quando os pacotes TanStack subirem o piso de `seroval` para `>= 1.5.3`, o bloco `overrides` pode ser removido.
 - Fora deste escopo e ainda abertos: teste ponta a ponta do Mercado Pago (`payment_events = 0`), templates Meta em `draft`, teto de valor em `gastos`/`contas_a_pagar`/`contas_a_receber`, PWA/Android/iOS.
+
+---
+
+## 12. Etapa final — publicação e validação em produção (2026-07-31)
+
+### 12.1 Validação pré-publicação
+
+| Verificação | Resultado |
+|---|---|
+| `seroval` instalado | **1.5.6** |
+| `seroval-plugins` instalado | **1.5.6** |
+| Versões `<= 1.5.2` na árvore | **nenhuma** (`find node_modules -name 'seroval*'` → 1 instalação de cada) |
+| Lockfile | `bun.lockb` (binário) convertido para **`bun.lock` (texto)** com `bun install --save-text-lockfile`; resolve `seroval@1.5.6` e `seroval-plugins@1.5.6`; `bun install --frozen-lockfile` → "no changes" |
+| Override no `package.json` | `"overrides": { "seroval": "1.5.6", "seroval-plugins": "1.5.6" }` (formato npm/Bun; bloco `pnpm.overrides` de `entities` intacto) |
+| Advisory GHSA-mv8w-475r-vwqw | **não aplicável** — finding crítico de supply chain encerrado no scanner |
+| Findings críticos / altos / médios / baixos | **0 / 0 / 0 / 0** |
+| Typecheck (`tsgo --noEmit`) | **0 erros** |
+| Runner integral | **127 arquivos, 2296 aprovados, 0 falhas** (40,9s) |
+| Build de produção | **exit 0**, `✓ built in 1m 2s`; `dist/server/wrangler.json` com `compatibility_flags: ["nodejs_compat"]` |
+
+Nenhuma condição de interrupção foi acionada.
+
+### 12.2 Override e ambiente de deploy
+
+O override está no formato `overrides` de topo do `package.json`, lido tanto pelo Bun quanto pelo npm. Como o lockfile agora é **texto versionado (`bun.lock`)** e resolve explicitamente `seroval@1.5.6`/`seroval-plugins@1.5.6`, o build de produção (Lovable → Cloudflare Worker) **não pode reinstalar uma versão vulnerável**: o install de deploy é determinístico a partir do lockfile e, mesmo em resolução nova, o override força 1.5.6. O `bun.lockb` binário foi removido para evitar ambiguidade entre dois lockfiles. O lockfile é versionado e faz parte da publicação.
+
+### 12.3 Publicação
+
+| Item | Valor |
+|---|---|
+| Data/hora | **2026-07-31, ~19:28 UTC** |
+| URL publicada | https://gastointeligente.com.br (também `https://www.gastointeligente.com.br` e `https://gasto-facil-financeiro.lovable.app`) |
+| Conteúdo | `package.json` (override), `bun.lock` (novo lockfile de texto), remoção de `bun.lockb`, `tests/seroval-cve-2026-59940-serializacao.test.ts`, `scripts/test-whatsapp.mjs` (1 linha), documentação do Prompt 3 |
+| Fora do escopo | nenhuma migration, nenhum dado, nenhum runtime de aplicação alterado |
+
+### 12.4 Smoke tests em produção (somente leitura)
+
+Rotas públicas — HTTP 200, HTML renderizado, sem tela branca e sem erro de console/página:
+`/` (315,9 kB), `/login`, `/cadastro`, `/recuperar-senha`, `/termos`, `/privacidade`, `/lgpd`, `/status`. `GET /api/health` → **200**.
+
+Rotas de aplicação — HTTP **200** em todas: `/app`, `/gastos`, `/renda`, `/meu-plano`, `/cartoes`, `/metas`, `/orcamento`, `/guardado`, `/perfil`, `/contas-a-pagar`, `/contas-a-receber`, `/gasto-ai`, `/mercado`. Sem sessão, `/app` redireciona corretamente para `/login` (um único salto, sem loop).
+
+Worker: SSR entregando HTML, assets carregando, server functions respondendo (health 200), `nodejs_compat` presente na config gerada, nenhum erro novo observado.
+
+**Limitação:** o ambiente de automação está `signed_out` (sem sessão gerenciada), portanto Dashboard, Gastos, Receitas, Contas, Cartões, Metas, Orçamento, Guardado, Importações, Mercado Inteligente, Gasto AI, Perfil e Plano foram validados **até o gate de autenticação** (HTTP 200 + redirecionamento correto), não com dados de usuário logado. Recomenda-se um smoke manual logado. **Nenhum lançamento foi criado.**
+
+### 12.5 Regressão do Prompt 2 (consultas somente leitura, pós-publicação)
+
+| Item | Esperado | Verificado |
+|---|---|---|
+| Receitas físicas | 124 | **124** |
+| Receitas ativas | 112 | **112** |
+| Receitas em soft delete | 12 | **12** |
+| Soma operacional | R$ 515.757,00 | **515757.00** |
+| Constraint `receitas_valor_valid_range_check` | ativa | **presente** |
+| Gastos "Csa" | 12 / R$ 48.000,00 | **12 / 48000.00** |
+| `assert_free_ads_quota` ignora soft delete | sim | **sim** |
+| `tg_free_ads_quota_receitas` ignora soft delete | sim | **sim** |
+| Receitas fictícias de volta aos cálculos | nenhuma | **nenhuma** |
+
+### 12.6 Security scan — antes / depois local / depois da publicação
+
+| Item | Antes da correção | Depois da correção local | Depois da publicação |
+|---|---|---|---|
+| Versão de `seroval` | 1.5.1 | 1.5.6 | **1.5.6** |
+| Advisory crítico (GHSA-mv8w-475r-vwqw) | **ativo** | remediado na árvore | **encerrado no scanner** |
+| Findings críticos | 1 (supply chain) | 0 | **0** |
+| Findings altos | 0 | 0 | **0** |
+| Findings médios | 0 | 0 | **0** |
+| Findings baixos | 0 | 0 | **0** |
+
+Achados de backend permanecem apenas em nível `warn` (buckets públicos e funções `SECURITY DEFINER` executáveis por anon), pré-existentes e fora do escopo do Prompt 3.
+
+### 12.7 Rollback
+
+Executável e não executado (produção estável):
+
+1. `package.json`: remover o bloco de topo `"overrides"` (mantendo `pnpm.overrides`).
+2. `bun install` para regenerar `bun.lock` (volta a resolver `seroval@1.5.1`/`seroval-plugins@1.5.1`).
+3. Opcional: remover `tests/seroval-cve-2026-59940-serializacao.test.ts` e a linha correspondente em `scripts/test-whatsapp.mjs`.
+4. `bunx tsgo --noEmit`, `bun scripts/test-whatsapp.mjs`, `bun run build` e publicar novamente.
+
+Gatilhos que justificariam rollback: tela branca em qualquer rota, falha de hidratação, erro de server function, falha do Worker, loop de autenticação ou regressão de rotas.
+
+### 12.8 Pendências
+
+- Smoke manual logado nas rotas autenticadas (ambiente automatizado sem sessão).
+- Flakiness de timing pré-existente em `tests/whatsapp-boleto-c10b-integration.test.ts`.
+- Override é trava temporária: removível quando os pacotes TanStack subirem o piso de `seroval` para `>= 1.5.3`.
+- Fora de escopo e abertos: Mercado Pago ponta a ponta (Prompt 4), templates Meta em `draft`, teto de valor em `gastos`/`contas_a_pagar`/`contas_a_receber`, PWA/Android/iOS.
