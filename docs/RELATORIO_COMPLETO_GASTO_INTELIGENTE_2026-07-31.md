@@ -6,6 +6,8 @@
 
 > **ATUALIZAÇÃO 2026-07-31 (pós-correção):** o achado de dados fictícios foi **RESOLVIDO**. As 12 receitas de R$ 55.555.555.555,00 estão em quarentena (soft delete, nada apagado), a soma operacional de `receitas` caiu para **R$ 515.757,00**, e o banco/app passaram a impedir valores acima de R$ 999.999.999,99. Execução detalhada em `docs/CORRECAO_DADOS_FICTICIOS_GASTO_INTELIGENTE_2026-07-31.md`.
 
+> **ATUALIZAÇÃO 2026-07-31 (dependências):** a CVE crítica do `seroval` (`GHSA-mv8w-475r-vwqw` / `CVE-2026-59940`, vulnerável `<= 1.5.2`) foi **corrigida**: resolução travada em `seroval@1.5.6` e `seroval-plugins@1.5.6` por `overrides`, sem tocar em TanStack, React, Vite ou runtime. Dependency scan: 0 findings críticos e 0 altos. Typecheck 0 erros, runner **2296 aprovados / 0 falhas** em 127 arquivos, build de produção verde com `nodejs_compat` preservado. Riscos restantes desta frente: rotas autenticadas validadas apenas até o gate (ambiente sem sessão) e flakiness pré-existente em `whatsapp-boleto-c10b-integration`.
+
 ---
 
 ## 2. RESUMO EXECUTIVO
@@ -441,7 +443,7 @@ Recomenda-se rotular WhatsApp como "em breve / beta por convite" enquanto o outb
 
 | # | Achado | Classificação | Evidência |
 |---|---|---|---|
-| S1 | Vulnerabilidade crítica em dependências: `seroval` via `@tanstack/react-router`, `react-start`, `router-plugin` (GHSA-mv8w-475r-vwqw) | **Crítico** | scan de supply chain |
+| S1 | ~~Vulnerabilidade crítica em dependências: `seroval` via `@tanstack/react-router`, `react-start`, `router-plugin` (GHSA-mv8w-475r-vwqw / CVE-2026-59940)~~ — **RESOLVIDO em 2026-07-31**: `seroval` e `seroval-plugins` travados em **1.5.6** (faixa vulnerável `<= 1.5.2`) via `overrides`, sem alterar TanStack/React/Vite. Detalhes em `docs/CORRECAO_CVE_SEROVAL_GASTO_INTELIGENTE_2026-07-31.md` | **Resolvido** | árvore real + teste automatizado |
 | S2 | ~~Dados fictícios de altíssimo valor em produção (12 receitas × R$ 55,5 bi)~~ — **RESOLVIDO** em 2026-07-31 (quarentena + teto de valor) | **Resolvido** | `receitas`, descrição "5555", 2026-05-05 |
 | S3 | Pipeline atômico de billing nunca exercitado (`payment_events`=0) — risco de plano não liberado após pagamento | **Alto** | `payment_events` vs `subscription_payments` |
 | S4 | `FORCE RLS` ausente em 66 de 68 tabelas (só `whatsapp_meta_templates` e `whatsapp_notifications` têm) | **Médio** | `pg_class.relforcerowsecurity` |
@@ -522,7 +524,7 @@ Testes com `skip`: nenhum relevante detectado (0 falhas, 0 skips reportados pelo
 | Tarefa | Prio | Dependência | Risco | Área | Critério de aceite | Paralelo | Terceiros |
 |---|---|---|---|---|---|---|---|
 | ~~Quarentenar/corrigir as 12 receitas fictícias~~ **CONCLUÍDO 2026-07-31** | Concluída | Decisão do dono | Perda de dado se apagado errado | Financeiro | Soma de `receitas` volta a valor plausível | Não | Não |
-| Corrigir CVE `seroval` (atualizar `@tanstack/*`) | Crítica | — | Regressão de build | Plataforma | Scan sem finding crítico; runner 2249 verdes | Sim | Não |
+| ~~Corrigir CVE `seroval`~~ **CONCLUÍDO 2026-07-31** (override `seroval`/`seroval-plugins` 1.5.6; TanStack inalterado) | Concluída | — | — | Plataforma | Scan sem finding crítico; runner 2296 verdes | — | Não |
 | Liberar a notificação presa em `processing` | Alta | — | Baixo | WhatsApp | Fila sem registros órfãos | Sim | Não |
 | Rodar `prettier --write` e reduzir lint a <200 erros | Alta | — | Diff enorme | Plataforma | eslint sem `prettier/prettier` | Sim | Não |
 | Criar secrets ausentes ou remover referências obsoletas | Alta | — | Baixo | Plataforma | Nenhuma env referenciada sem definição | Sim | Não |
@@ -562,7 +564,7 @@ E2E Playwright em CI, monitoramento e alertas de erro, Consent Mode, exclusão d
 | Secrets `WHATSAPP_META_MGMT_ENABLED`/`SUBMISSION_ENABLED` ausentes | WhatsApp | Alta | Submissão bloqueada em código | Criar secrets | Não | Criar antes do 4C |
 | ~~Dados fictícios em `receitas`~~ **CONCLUÍDO** | Financeiro | Resolvida | Relatórios inválidos | Limpeza controlada | Não | Decisão do dono |
 | `payment_events` = 0 | Pagamentos | Alta | Plano pode não liberar | Teste ponta a ponta sandbox | Sim (MP) | Executar teste |
-| CVE `seroval` | Plataforma | Crítica | Supply chain | Atualizar deps | Não | Bump + runner |
+| ~~CVE `seroval`~~ **CONCLUÍDO 2026-07-31** | Plataforma | Resolvida | — | Override 1.5.6 aplicado | Não | Runner 2296 verdes |
 | Quotas zeradas p/ `pessoal_manual` | Planos | Alta | Cliente pagante sem WhatsApp | Definir quotas | Não | Decisão comercial |
 | `whatsapp_beta_access` vazio | WhatsApp | Alta | Beta impossível | Popular | Não | Escolher 5–20 usuários |
 | Nenhum `cron.job` | Operação | Média | Sem automação | Criar 1 job após go-live | Não | Fase 3 |

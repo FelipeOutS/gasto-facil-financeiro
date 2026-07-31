@@ -26,6 +26,7 @@ const INCLUDE = [
   "admin-master-server.test.ts",
   "receitas-soft-delete-e-teto-valor.test.ts",
   "recorrencia-mensal-dias-29-30-31.test.ts",
+  "seroval-cve-2026-59940-serializacao.test.ts",
   "whatsapp-audio.test.ts",
   "whatsapp-audio-duration.test.ts",
   "whatsapp-authz.test.ts",
