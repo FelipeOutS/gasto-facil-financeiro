@@ -180,7 +180,7 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
         if (topic.includes("payment")) {
           paymentId = dataId;
         } else if (topic.includes("merchant_order")) {
-          const mo = await fetchMerchantOrder(accessToken, dataId);
+          const mo = await fetchMerchantOrder(accessToken, dataId ?? "");
           paymentId = mo?.paymentId ?? null;
         } else {
           // tipo desconhecido — tenta como payment
