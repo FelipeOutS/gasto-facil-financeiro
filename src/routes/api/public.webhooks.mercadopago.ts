@@ -341,15 +341,16 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
 
         // Atualiza subscription_payments — trilha auditável do pagamento.
         // Payload SANITIZADO: sem dados do pagador, documento, cartão ou tokens.
-        const safePayload = sanitizeMercadoPagoPayload(payment);
+        const safePayload = {
+          ...sanitizeMercadoPagoPayload(payment),
+          body_sha256: payloadHash(rawBody),
+        };
         const auditPatch = {
           status: rawStatus,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           payload: safePayload as any,
           paid_at: APPROVED.has(rawStatus) ? new Date().toISOString() : null,
           environment: webhookEnvironment,
-          received_at: new Date().toISOString(),
-          payload_hash: payloadHash(rawBody),
         };
         if (localRow) {
           await supabaseAdmin
