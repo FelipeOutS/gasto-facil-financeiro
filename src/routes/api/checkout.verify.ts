@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { resolveMercadoPagoConfig } from "@/server/mercadopago-config.server";
 
 /**
  * POST /api/checkout/verify
