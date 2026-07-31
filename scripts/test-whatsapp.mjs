@@ -159,6 +159,10 @@ const INCLUDE = [
   "whatsapp-graph-version-unification.test.ts",
 
   "free-ads-plan.test.ts",
+
+  // Prompt 4A — Mercado Pago (config, catálogo, referência opaca, webhook,
+  // sanitização, reconciliação dry-run e entitlement multiplataforma).
+  "mercadopago-integration-scenarios.test.ts",
 ];
 
 // Validação: arquivos listados existem; reporta extras WhatsApp não cobertos.
