@@ -523,6 +523,12 @@ function makeBuilder(table: string): any {
       return builder;
     },
     not(col: string, op: string, val: unknown) { ctx.notFilters.push({ col, op, val }); return builder; },
+    /**
+     * Prompt 2 — suporte a `.is(col, null)` (filtro de soft delete).
+     * As linhas do fake nunca são soft-deleted, portanto `.is("deleted_at", null)`
+     * é um no-op de matching; registramos apenas para introspecção.
+     */
+    is(col: string, val: unknown) { ctx.isFilters.push({ col, val }); return builder; },
     gte(col: string, val: unknown) {
       ctx.range = ctx.range ?? {};
       (ctx.range[col] = ctx.range[col] ?? {}).gte = val;
