@@ -235,24 +235,28 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
         if (!months) months = 1;
 
         // Atualiza subscription_payments — trilha auditável do pagamento.
+        // Payload SANITIZADO: sem dados do pagador, documento, cartão ou tokens.
+        const safePayload = sanitizeMercadoPagoPayload(payment);
+        const auditPatch = {
+          status: rawStatus,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          payload: safePayload as any,
+          paid_at: APPROVED.has(rawStatus) ? new Date().toISOString() : null,
+          environment: webhookEnvironment,
+          received_at: new Date().toISOString(),
+          payload_hash: payloadHash(rawBody),
+        };
         if (localRow) {
           await supabaseAdmin
             .from("subscription_payments")
-            .update({
-              status: rawStatus,
-              payload: payment,
-              provider_payment_id: externalPaymentId,
-              paid_at: APPROVED.has(rawStatus) ? new Date().toISOString() : null,
-            })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .update({ ...auditPatch, provider_payment_id: externalPaymentId } as any)
             .eq("id", localRow.id);
         } else {
           await supabaseAdmin
             .from("subscription_payments")
-            .update({
-              status: rawStatus,
-              payload: payment,
-              paid_at: APPROVED.has(rawStatus) ? new Date().toISOString() : null,
-            })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .update(auditPatch as any)
             .eq("provider", "mercadopago")
             .eq("provider_payment_id", externalPaymentId);
         }
