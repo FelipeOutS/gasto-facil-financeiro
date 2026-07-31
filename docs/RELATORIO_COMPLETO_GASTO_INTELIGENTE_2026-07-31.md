@@ -389,7 +389,10 @@ Em `whatsapp_notification_templates` existem ainda `gi_conta_recorrente_pendente
 
 **Biometria — PARCIAL.** Existem `src/lib/biometric-login.ts` e `src/lib/vault/quick-unlock.ts`, referenciados em `login.tsx`, `app.tsx`, `app_.mais.tsx` e `app_.cofre-pessoal.tsx`. **Não há** implementação WebAuthn (`navigator.credentials.create/get`) nem endpoint de challenge/verify no servidor — o que existe é desbloqueio local com PIN/atalho, não autenticação biométrica com prova criptográfica.
 
+**Sobre o problema "digital retorna para a tela de login":** o comportamento é **esperado** com a implementação atual — como não há credencial WebAuthn nem bridge nativa que restaure a sessão, o retorno do prompt biométrico não hidrata sessão do Lovable Cloud, e o `AuthGate` redireciona para `/login`. **Estado: NÃO RESOLVIDO.** Correção exige WebAuthn real (ou bridge Android devolvendo refresh token em armazenamento seguro).
+
 ### Aplicativo iOS / iPhone
+
 
 **Decisão oficial registrada em 31/07/2026:** além do site e do aplicativo Android, o Gasto Inteligente terá **um aplicativo para iPhone distribuído pela App Store**, como frente oficial de produto. Nesta etapa **nada foi implementado** — apenas o registro da frente e a preparação arquitetural.
 
