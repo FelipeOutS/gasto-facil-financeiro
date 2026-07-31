@@ -4,6 +4,8 @@
 
 > Convenções de segurança adotadas neste relatório: nenhum valor de variável de ambiente, token, chave ou senha é exibido. Apenas nome, uso e estado (configurada / ausente / obsoleta). IDs de projeto são omitidos ou mascarados.
 
+> **ATUALIZAÇÃO 2026-07-31 (pós-correção):** o achado de dados fictícios foi **RESOLVIDO**. As 12 receitas de R$ 55.555.555.555,00 estão em quarentena (soft delete, nada apagado), a soma operacional de `receitas` caiu para **R$ 515.757,00**, e o banco/app passaram a impedir valores acima de R$ 999.999.999,99. Execução detalhada em `docs/CORRECAO_DADOS_FICTICIOS_GASTO_INTELIGENTE_2026-07-31.md`.
+
 ---
 
 ## 2. RESUMO EXECUTIVO
@@ -103,7 +105,7 @@ Meta (templates/WABA), Mercado Pago, Lovable AI Gateway, BrasilAPI, Joanin Onlin
 | Área | Funcionalidade | Status | Interface | Backend | Banco | Segurança | Testes | Produção | Evidência | O que falta |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Financeiro | Gastos (CRUD, categorias, recorrência, parcelas) | CONCLUÍDO | Sim | Sim | 124 linhas | RLS 8 pol. | Indireto | Sim | `src/routes/gastos.tsx`, tabela `gastos` | Testes unitários próprios de UI |
-| Financeiro | Receitas | FUNCIONAL COM PENDÊNCIAS | Sim | Sim | 124 linhas | RLS 8 pol. | Indireto | Sim | tabela `receitas` | **Dados fictícios de R$ 5,5 bi poluindo somas** |
+| Financeiro | Receitas | FUNCIONAL | Sim | Sim | 124 linhas | RLS 8 pol. | Indireto | Sim | tabela `receitas` | RESOLVIDO: 12 registros em quarentena + teto de valor no banco e no app |
 | Financeiro | Contas a pagar | CONCLUÍDO | Sim | Sim | 19 linhas | RLS 8 pol. | Sim | Sim | `contas-a-pagar.*.tsx`, `whatsapp_baixa_conta_atomic` | — |
 | Financeiro | Contas a receber | FUNCIONAL COM PENDÊNCIAS | Sim | Sim | 2 linhas | RLS 8 pol. | Parcial | Sim | `contas-a-receber.*.tsx` | Uso real quase nulo; relatórios não exercitados |
 | Financeiro | Cartões e faturas | FUNCIONAL COM PENDÊNCIAS | Sim | Sim | 5 cartões / 1 fatura | RLS 8 pol. | Parcial | Sim | `src/server/cartao-fatura.server.ts`, `cartao-limite`, `cartao-parcelamento` | Baixo volume real; pagamento de fatura pouco exercitado |
@@ -440,7 +442,7 @@ Recomenda-se rotular WhatsApp como "em breve / beta por convite" enquanto o outb
 | # | Achado | Classificação | Evidência |
 |---|---|---|---|
 | S1 | Vulnerabilidade crítica em dependências: `seroval` via `@tanstack/react-router`, `react-start`, `router-plugin` (GHSA-mv8w-475r-vwqw) | **Crítico** | scan de supply chain |
-| S2 | Dados fictícios de altíssimo valor em produção (12 receitas × R$ 5,55 bi) distorcendo relatórios financeiros | **Alto** | `receitas`, descrição "5555", 2026-05-05 |
+| S2 | ~~Dados fictícios de altíssimo valor em produção (12 receitas × R$ 55,5 bi)~~ — **RESOLVIDO** em 2026-07-31 (quarentena + teto de valor) | **Resolvido** | `receitas`, descrição "5555", 2026-05-05 |
 | S3 | Pipeline atômico de billing nunca exercitado (`payment_events`=0) — risco de plano não liberado após pagamento | **Alto** | `payment_events` vs `subscription_payments` |
 | S4 | `FORCE RLS` ausente em 66 de 68 tabelas (só `whatsapp_meta_templates` e `whatsapp_notifications` têm) | **Médio** | `pg_class.relforcerowsecurity` |
 | S5 | 63 funções `SECURITY DEFINER` — exige revisão contínua de `search_path` e de restrição por `auth.role()` | **Médio** | `pg_proc.prosecdef` |
@@ -519,7 +521,7 @@ Testes com `skip`: nenhum relevante detectado (0 falhas, 0 skips reportados pelo
 ### Fase 0 — Proteções urgentes
 | Tarefa | Prio | Dependência | Risco | Área | Critério de aceite | Paralelo | Terceiros |
 |---|---|---|---|---|---|---|---|
-| Quarentenar/corrigir as 12 receitas fictícias de R$ 5,55 bi | Crítica | Decisão do dono | Perda de dado se apagado errado | Financeiro | Soma de `receitas` volta a valor plausível | Não | Não |
+| ~~Quarentenar/corrigir as 12 receitas fictícias~~ **CONCLUÍDO 2026-07-31** | Concluída | Decisão do dono | Perda de dado se apagado errado | Financeiro | Soma de `receitas` volta a valor plausível | Não | Não |
 | Corrigir CVE `seroval` (atualizar `@tanstack/*`) | Crítica | — | Regressão de build | Plataforma | Scan sem finding crítico; runner 2249 verdes | Sim | Não |
 | Liberar a notificação presa em `processing` | Alta | — | Baixo | WhatsApp | Fila sem registros órfãos | Sim | Não |
 | Rodar `prettier --write` e reduzir lint a <200 erros | Alta | — | Diff enorme | Plataforma | eslint sem `prettier/prettier` | Sim | Não |
@@ -558,7 +560,7 @@ E2E Playwright em CI, monitoramento e alertas de erro, Consent Mode, exclusão d
 |---|---|---|---|---|---|---|
 | Templates Meta em `draft` | WhatsApp | Crítica | Outbound impossível | Submeter e aguardar | **Sim (Meta)** | Turno 4C |
 | Secrets `WHATSAPP_META_MGMT_ENABLED`/`SUBMISSION_ENABLED` ausentes | WhatsApp | Alta | Submissão bloqueada em código | Criar secrets | Não | Criar antes do 4C |
-| Dados fictícios de R$ 5,55 bi em `receitas` | Financeiro | Crítica | Relatórios inválidos | Limpeza controlada | Não | Decisão do dono |
+| ~~Dados fictícios em `receitas`~~ **CONCLUÍDO** | Financeiro | Resolvida | Relatórios inválidos | Limpeza controlada | Não | Decisão do dono |
 | `payment_events` = 0 | Pagamentos | Alta | Plano pode não liberar | Teste ponta a ponta sandbox | Sim (MP) | Executar teste |
 | CVE `seroval` | Plataforma | Crítica | Supply chain | Atualizar deps | Não | Bump + runner |
 | Quotas zeradas p/ `pessoal_manual` | Planos | Alta | Cliente pagante sem WhatsApp | Definir quotas | Não | Decisão comercial |
