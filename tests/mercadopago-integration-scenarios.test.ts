@@ -5,7 +5,7 @@
  * escreve no banco e nenhum teste ativa plano de usuário real. Tudo aqui é
  * função pura ou mock local.
  */
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import {
   resolveMercadoPagoConfig,
   environmentForPersistence,
