@@ -387,6 +387,7 @@ async function loadReceitas(
     .from("receitas")
     .select("valor, data")
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .gte("data", from)
     .lt("data", toExclusive);
   return Array.isArray(data) ? (data as ReceitaRow[]) : [];
@@ -553,6 +554,7 @@ async function loadReceitasDetalhadas(
     .from("receitas")
     .select("descricao, tipo, valor, data")
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .gte("data", from)
     .lt("data", toExclusive)
     .order("data", { ascending: false });
@@ -872,7 +874,8 @@ async function handleListarRecorrencias(userId: string): Promise<ConsultaResult>
   const { data: recRaw } = await supabaseAdmin
     .from("receitas")
     .select("recorrencia_id")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .is("deleted_at", null);
   const receitaLinks = new Set<string>();
   for (const r of (Array.isArray(recRaw) ? recRaw : []) as Array<{ recorrencia_id: string | null }>) {
     if (r?.recorrencia_id) receitaLinks.add(r.recorrencia_id);

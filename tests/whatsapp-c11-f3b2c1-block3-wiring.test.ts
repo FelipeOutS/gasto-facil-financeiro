@@ -69,6 +69,8 @@ mock.module("@/integrations/supabase/client.server", () => ({
           select() {
             const q: Record<string, unknown> = {};
             q.eq = () => q;
+            // Prompt 2 — filtro de soft delete (`.is("deleted_at", null)`).
+            q.is = () => q;
             q.gte = () => Promise.resolve({ data: [], error: null });
             q.maybeSingle = async () => ({ data: readbackReceita, error: null });
             return q;
@@ -80,6 +82,7 @@ mock.module("@/integrations/supabase/client.server", () => ({
           select() {
             const q: Record<string, unknown> = {};
             q.eq = () => q;
+            q.is = () => q;
             q.maybeSingle = async () => ({ data: readbackRecorrencia, error: null });
             return q;
           },

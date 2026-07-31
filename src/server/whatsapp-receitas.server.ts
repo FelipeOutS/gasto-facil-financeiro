@@ -15,6 +15,7 @@ import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.
 import { whatsappMessages as M } from "./whatsapp-messages";
 import { getSubscriptionForUserIdentity } from "./subscription.server";
 import type { TipoReceita } from "@/lib/types";
+import { validateFinancialAmount } from "@/lib/financial-limits";
 // WA-C11 3B.2.C.1 Block 3 — quota financeira do WhatsApp para receitas
 // (única e recorrente). Ordem: sessão em confirmação → gate → escrita.
 // Fail-closed sem `external_id` (idempotência da quota depende dele).
@@ -283,6 +284,7 @@ async function contarReceitasMesAtual(userId: string): Promise<number> {
     .from("receitas")
     .select("id")
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .gte("data", monthStart);
   return Array.isArray(data) ? data.length : 0;
 }
@@ -354,7 +356,9 @@ export async function persistirReceita(
   const tipo: TipoReceita = s.tipo ?? "outros";
   const descricao = (s.descricao || s.tipoLabel || "Renda").trim();
   const valor = Number(s.valor || 0);
-  if (!Number.isFinite(valor) || valor <= 0) {
+  // Teto compartilhado (MAX_FINANCIAL_ENTRY_AMOUNT) — mesma regra do cliente
+  // e da constraint receitas_valor_valid_range_check.
+  if (!validateFinancialAmount(valor).ok) {
     return { ok: false, resposta: M.receita.erroAoSalvar() };
   }
 
@@ -400,6 +404,7 @@ export async function persistirReceita(
         .select("id, recorrencia_id, valor, data, user_id")
         .eq("id", receitaId)
         .eq("user_id", userId)
+        .is("deleted_at", null)
         .maybeSingle(),
       supabaseAdmin
         .from("recorrencias")

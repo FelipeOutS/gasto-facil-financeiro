@@ -125,7 +125,7 @@ const PENDING = [
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeBuilder(table: string): any {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ctx: any = { table, op: "select", payload: null, filters: {}, notFilters: [] };
+  const ctx: any = { table, op: "select", payload: null, filters: {}, notFilters: [], isFilters: [] };
 
   const finalize = async () => {
     const matchesFilters = (row: Record<string, unknown>, idx: number) => {
@@ -523,6 +523,12 @@ function makeBuilder(table: string): any {
       return builder;
     },
     not(col: string, op: string, val: unknown) { ctx.notFilters.push({ col, op, val }); return builder; },
+    /**
+     * Prompt 2 — suporte a `.is(col, null)` (filtro de soft delete).
+     * As linhas do fake nunca são soft-deleted, portanto `.is("deleted_at", null)`
+     * é um no-op de matching; registramos apenas para introspecção.
+     */
+    is(col: string, val: unknown) { ctx.isFilters.push({ col, val }); return builder; },
     gte(col: string, val: unknown) {
       ctx.range = ctx.range ?? {};
       (ctx.range[col] = ctx.range[col] ?? {}).gte = val;
