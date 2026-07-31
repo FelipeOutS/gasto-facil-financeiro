@@ -27,6 +27,8 @@ import {
 } from "./types";
 import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
 import { parseDateLocal, toLocalISODate } from "./format";
+import { addMonthsPreservingDay } from "./recurrence-date";
+import { validateFinancialAmount, financialAmountMessage } from "./financial-limits";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { markContaAPagarPaid, unmarkContaAPagarPaid } from "@/lib/contas.functions";
@@ -956,7 +958,7 @@ export async function hydrateUser(userId: string): Promise<void> {
     // Load the rest in parallel
     const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes, transferenciasRes, extratosRes, faturasRes] = await Promise.all([
       supabase.from("gastos").select("*").eq("user_id", userId),
-      supabase.from("receitas").select("*").eq("user_id", userId),
+      supabase.from("receitas").select("*").eq("user_id", userId).is("deleted_at", null),
       supabase.from("limites").select("*").eq("user_id", userId),
       supabase.from("aprendizado_categoria").select("*").eq("user_id", userId),
       supabase.from("dinheiro_guardado").select("*").eq("user_id", userId),
@@ -1824,8 +1826,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
     const valorParcela = Math.round((input.valor / total) * 100) / 100;
     const grupo = crypto.randomUUID();
     for (let i = 0; i < total; i++) {
-      const d = new Date(baseDate);
-      d.setMonth(d.getMonth() + i);
+      const d = addMonthsPreservingDay(baseDate, i);
       const iso = toLocalISODate(d);
       const id = crypto.randomUUID();
       out.push({
@@ -1880,8 +1881,7 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
     const meses = Math.max(1, input.recorrenteMeses ?? 12);
     const recId = crypto.randomUUID();
     for (let i = 0; i < meses; i++) {
-      const d = new Date(baseDate);
-      d.setMonth(d.getMonth() + i);
+      const d = addMonthsPreservingDay(baseDate, i);
       const iso = toLocalISODate(d);
       const id = crypto.randomUUID();
       out.push({
@@ -2537,6 +2537,15 @@ export async function addReceita(input: NovaReceitaInput): Promise<Receita[]> {
   if (!ensureCanWrite("addReceita", { allowBasic: true })) {
     throw new Error("Você precisa de uma assinatura ativa para usar este recurso.");
   }
+  const amount = validateFinancialAmount(input.valor);
+  if (!amount.ok) {
+    const msg = financialAmountMessage(amount.code);
+    if (typeof window !== "undefined") {
+      void import("sonner").then(({ toast }) => toast.error(msg));
+    }
+    throw new Error(msg);
+  }
+  input = { ...input, valor: amount.value };
   const now = new Date().toISOString();
   const baseDate = new Date(input.data + "T00:00:00");
   const created: Receita[] = [];
@@ -2547,8 +2556,7 @@ export async function addReceita(input: NovaReceitaInput): Promise<Receita[]> {
     const meses = Math.max(1, input.recorrenteMeses ?? 12);
     const recId = crypto.randomUUID();
     for (let i = 0; i < meses; i++) {
-      const d = new Date(baseDate);
-      d.setMonth(d.getMonth() + i);
+      const d = addMonthsPreservingDay(baseDate, i);
       const iso = d.toISOString().slice(0, 10);
       const id = crypto.randomUUID();
       created.push({
@@ -2647,6 +2655,11 @@ export async function addReceitaAwait(
   offlineClientId?: string,
 ): Promise<{ ok: boolean; error?: string; duplicate?: boolean }> {
   if (!userId) return { ok: false, error: "no_user" };
+  const amountAwait = validateFinancialAmount(input.valor);
+  if (!amountAwait.ok) {
+    return { ok: false, error: financialAmountMessage(amountAwait.code) };
+  }
+  input = { ...input, valor: amountAwait.value };
   const baseDate = new Date(input.data + "T00:00:00");
   const id = crypto.randomUUID();
   const clienteId = input.clienteId ?? null;
@@ -3646,7 +3659,7 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
     if (freq === "semanal") d.setDate(d.getDate() + 7 * i);
     else if (freq === "quinzenal") d.setDate(d.getDate() + 14 * i);
     else if (freq === "anual") d.setFullYear(d.getFullYear() + i);
-    else d.setMonth(d.getMonth() + i); // mensal
+    else return addMonthsPreservingDay(base, i); // mensal (sem overflow)
     return d;
   }
 
