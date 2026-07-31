@@ -194,45 +194,137 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
         const idempotencyKey = `mercado_pago:${topic}:${externalPaymentId}`;
         const rawStatus = (payment.status ?? "pending").toLowerCase();
 
-        // Extrai user_id / plano / periodicidade — sempre com fallback via
-        // subscription_payments locais para o caso do metadata estar ausente.
-        let userId = payment.metadata?.user_id ?? null;
-        let plano: string | null = payment.metadata?.plano ?? null;
-        let periodicidade = (payment.metadata?.periodicidade as string | undefined) ?? null;
-        let months = Number(payment.metadata?.months ?? 0) || 0;
+        // ------------------------------------------------------------------
+        // Resolução DETERMINÍSTICA do usuário/plano.
+        //
+        // Ordem: sessão interna de checkout (referência opaca validada por
+        // checksum → provider_payment_id → preference_id). Nada de fallback
+        // "qualquer pagamento do mesmo usuário", que podia cruzar cobranças
+        // de usuários com múltiplos pagamentos pendentes.
+        // ------------------------------------------------------------------
+        const resolution = await resolveCheckoutSession({
+          externalReference: payment.external_reference ?? null,
+          providerPaymentId: externalPaymentId,
+          providerPreferenceId:
+            (payment as { preference_id?: string }).preference_id ??
+            (payment as { metadata?: { checkout_session_id?: string } }).metadata
+              ?.checkout_session_id ??
+            null,
+          environment: webhookEnvironment === "sandbox" ? "sandbox" : "production",
+          allowExpired: true,
+        });
 
-        if ((!userId || !plano) && payment.external_reference) {
-          const parts2 = payment.external_reference.split(":");
-          userId = userId ?? parts2[0] ?? null;
-          plano = plano ?? parts2[1] ?? null;
-          periodicidade = periodicidade ?? parts2[2] ?? null;
+        let userId: string | null = null;
+        let plano: string | null = null;
+        let periodicidade: string | null = null;
+        let months = 0;
+        let checkoutSessionId: string | null = null;
+        let localRow: { id: string; user_id: string; plano: string | null } | null = null;
+
+        if (resolution.ok) {
+          const s = resolution.session;
+          userId = s.user_id;
+          plano = s.plan_key;
+          periodicidade = s.periodicity;
+          months = Number(s.expected_amount_cents) >= 0 ? 0 : 0;
+          checkoutSessionId = s.id;
+          periodicidade = s.periodicity;
+
+          // Validação de oferta: o que o provedor cobrou tem de coincidir com
+          // a oferta oficial persistida. Divergência ⇒ não libera plano.
+          const offerCheck = validateOfferAgainstProvider({
+            expected: {
+              planKey: s.plan_key,
+              periodicity: s.periodicity,
+              amountCents: s.expected_amount_cents,
+              currency: s.currency,
+            },
+            provider: {
+              amountCents:
+                typeof (payment as { transaction_amount?: number }).transaction_amount === "number"
+                  ? Math.round(
+                      ((payment as { transaction_amount?: number }).transaction_amount as number) *
+                        100,
+                    )
+                  : null,
+              currency: (payment as { currency_id?: string }).currency_id ?? null,
+            },
+          });
+          if (!offerCheck.ok) {
+            console.warn("[mp webhook] oferta divergente — plano NÃO liberado", {
+              mismatches: offerCheck.mismatches,
+              external_payment_id: externalPaymentId,
+            });
+            if (logId) {
+              await updateWebhookLog(logId, {
+                status: "failed",
+                http_status: 409,
+                external_id: externalPaymentId,
+                error_message: `offer_mismatch:${offerCheck.mismatches.join("|")}`,
+                processing_time_ms: Date.now() - startedAt,
+              });
+            }
+            return json({ error: "offer_mismatch" }, 409);
+          }
+          const meta = (resolution.session as unknown as { metadata?: { months?: number } })
+            .metadata;
+          months = Number(meta?.months ?? 0) || 0;
+        } else if (
+          resolution.error === "environment_mismatch" ||
+          resolution.error === "invalid_reference"
+        ) {
+          // Fail-closed: evento de outro ambiente ou referência forjada.
+          if (logId) {
+            await updateWebhookLog(logId, {
+              status: "failed",
+              http_status: 409,
+              external_id: externalPaymentId,
+              error_message: resolution.error,
+              processing_time_ms: Date.now() - startedAt,
+            });
+          }
+          return json({ error: resolution.error }, 409);
         }
 
-        const { data: localRows } = await supabaseAdmin
-          .from("subscription_payments")
-          .select("id, user_id, plano, periodicidade, months, method, provider_payment_id")
-          .eq("provider", "mercadopago")
-          .or(
-            `provider_payment_id.eq.${externalPaymentId},user_id.eq.${userId ?? "00000000-0000-0000-0000-000000000000"}`,
-          )
-          .order("created_at", { ascending: false })
-          .limit(20);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const localRow = (localRows ?? []).find((r: any) =>
-          r.provider_payment_id === externalPaymentId
-            ? true
+        // Pagamentos LEGADOS (criados antes do Prompt 4A, sem sessão interna):
+        // resolução estrita pelo provider_payment_id — nunca por usuário.
+        if (!userId) {
+          const { data: legacyRow } = await supabaseAdmin
+            .from("subscription_payments")
+            .select("id, user_id, plano, periodicidade, months, method, provider_payment_id")
+            .eq("provider", "mercadopago")
+            .eq("provider_payment_id", externalPaymentId)
+            .maybeSingle();
+          if (legacyRow) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            : (r as any).method === "card" && r.user_id === userId,
-        );
-        if (localRow) {
-          userId = userId ?? localRow.user_id;
-          plano = plano ?? localRow.plano;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          periodicidade = periodicidade ?? (localRow as any).periodicidade ?? null;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          months = months || Number((localRow as any).months ?? 0) || 0;
+            const lr = legacyRow as any;
+            userId = lr.user_id ?? null;
+            plano = lr.plano ?? null;
+            periodicidade = lr.periodicidade ?? null;
+            months = Number(lr.months ?? 0) || 0;
+            localRow = { id: lr.id, user_id: lr.user_id, plano: lr.plano ?? null };
+          }
         }
+
+        if (!localRow && checkoutSessionId) {
+          const { data: sessionRow } = await supabaseAdmin
+            .from("subscription_payments")
+            .select("id, user_id, plano")
+            .eq("checkout_session_id", checkoutSessionId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (sessionRow) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const sr = sessionRow as any;
+            localRow = { id: sr.id, user_id: sr.user_id, plano: sr.plano ?? null };
+          }
+        }
+
         if (!months) months = 1;
+        if (checkoutSessionId && APPROVED.has(rawStatus)) {
+          await markCheckoutSessionConsumed(checkoutSessionId, "approved");
+        }
 
         // Atualiza subscription_payments — trilha auditável do pagamento.
         // Payload SANITIZADO: sem dados do pagador, documento, cartão ou tokens.
