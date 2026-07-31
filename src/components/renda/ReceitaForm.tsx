@@ -12,6 +12,7 @@ import { requireOnline, isOnline } from "@/lib/use-online-status";
 import { enqueueIncome } from "@/lib/offline/offline-income-queue";
 import { TIPOS_RECEITA, type Receita, type TipoReceita } from "@/lib/types";
 import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
+import { validateFinancialAmount, financialAmountMessage } from "@/lib/financial-limits";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import { useClientes } from "@/lib/clientes";
@@ -69,7 +70,7 @@ type Props =
     };
 
 export function ReceitaForm(props: Props) {
-  const { t } = useTranslation("renda");
+  const { t, i18n } = useTranslation("renda");
   const { user } = useAuth();
   const { plan, isAdminMaster } = usePlan();
   const { ativos: clientesAtivos } = useClientes();
@@ -91,7 +92,7 @@ export function ReceitaForm(props: Props) {
         valorStr: "",
         data: todayISO(),
         tipo: (props.preset?.tipo ?? "salario") as TipoReceita,
-        recorrente: isFreeAdsPlan ? false : props.preset?.recorrente ?? true,
+        recorrente: isFreeAdsPlan ? false : (props.preset?.recorrente ?? true),
         clienteId: null as string | null,
       };
 
@@ -156,12 +157,20 @@ export function ReceitaForm(props: Props) {
   }
 
   async function handleSaveCreate() {
-    const valor = parseBRLInput(valorStr);
+    const valorRaw = parseBRLInput(valorStr);
     const desc = descricao.trim();
-    if (!valor || !desc) {
+    if (!valorRaw || !desc) {
       toast.error(t("toast.fillFields"));
       return;
     }
+    const amount = validateFinancialAmount(valorRaw);
+    if (!amount.ok) {
+      toast.error(
+        financialAmountMessage(amount.code, i18n.language.startsWith("en") ? "en" : "pt"),
+      );
+      return;
+    }
+    const valor = amount.value;
     if (isFreeAdsPlan && recorrente) {
       toast.error(t("toast.recurringPaidOnly"));
       setRecorrente(false);
@@ -177,8 +186,7 @@ export function ReceitaForm(props: Props) {
       if (r.mes !== mesNova || r.ano !== anoNova) return false;
       if (r.tipo !== tipo) return false;
       const rDesc = normalizeDescricao(r.descricao);
-      const descMatch =
-        rDesc === descNorm || rDesc.includes(descNorm) || descNorm.includes(rDesc);
+      const descMatch = rDesc === descNorm || rDesc.includes(descNorm) || descNorm.includes(rDesc);
       const valorMatch = Math.abs(r.valor - valor) <= Math.max(1, valor * 0.05);
       return descMatch && valorMatch;
     });
@@ -202,11 +210,19 @@ export function ReceitaForm(props: Props) {
 
   async function handleSaveEdit() {
     if (!receita) return;
-    const valor = parseBRLInput(valorStr);
-    if (!valor || !descricao.trim()) {
+    const valorRaw = parseBRLInput(valorStr);
+    if (!valorRaw || !descricao.trim()) {
       toast.error(t("toast.fillFields"));
       return;
     }
+    const amountEdit = validateFinancialAmount(valorRaw);
+    if (!amountEdit.ok) {
+      toast.error(
+        financialAmountMessage(amountEdit.code, i18n.language.startsWith("en") ? "en" : "pt"),
+      );
+      return;
+    }
+    const valor = amountEdit.value;
     if (!(await requireOnline())) return;
     updateReceita(
       receita.id,
@@ -257,16 +273,14 @@ export function ReceitaForm(props: Props) {
           </SelectTrigger>
           <SelectContent>
             {TIPOS_RECEITA.map((tp) => (
-              <SelectItem key={tp.id} value={tp.id}>{t(`tipo.${tp.id}`)}</SelectItem>
+              <SelectItem key={tp.id} value={tp.id}>
+                {t(`tipo.${tp.id}`)}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
-      <ClienteSelect
-        value={clienteId}
-        onChange={setClienteId}
-        clientesAtivos={clientesAtivos}
-      />
+      <ClienteSelect value={clienteId} onChange={setClienteId} clientesAtivos={clientesAtivos} />
 
       {!isEdit && (
         <>
@@ -292,7 +306,9 @@ export function ReceitaForm(props: Props) {
           </div>
           {!isFreeAdsPlan && recorrente && (
             <div>
-              <Label className="text-xs text-muted-foreground">{t("dialog.fields.repeatMonths")}</Label>
+              <Label className="text-xs text-muted-foreground">
+                {t("dialog.fields.repeatMonths")}
+              </Label>
               <Input
                 type="number"
                 min={1}
@@ -308,9 +324,7 @@ export function ReceitaForm(props: Props) {
 
       {isEdit && showScope && (
         <div className="rounded-xl border border-border bg-card-elevated p-3">
-          <p className="text-xs font-medium text-muted-foreground">
-            {t("dialog.scopeTitle")}
-          </p>
+          <p className="text-xs font-medium text-muted-foreground">{t("dialog.scopeTitle")}</p>
           <RadioGroup
             value={scope}
             onValueChange={(v) => setScope(v as UpdateReceitaScope)}
@@ -344,14 +358,14 @@ export function ReceitaForm(props: Props) {
               </span>
             </label>
           </RadioGroup>
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            {t("dialog.scopeDateNote")}
-          </p>
+          <p className="mt-2 text-[11px] text-muted-foreground">{t("dialog.scopeDateNote")}</p>
         </div>
       )}
 
       <div className="flex justify-end gap-2 pt-2">
-        <Button variant="outline" onClick={props.onCancel}>{t("dialog.cancel")}</Button>
+        <Button variant="outline" onClick={props.onCancel}>
+          {t("dialog.cancel")}
+        </Button>
         <Button onClick={isEdit ? handleSaveEdit : handleSaveCreate}>
           {isEdit ? t("dialog.saveEdit") : t("dialog.save")}
         </Button>
@@ -359,7 +373,9 @@ export function ReceitaForm(props: Props) {
 
       <AlertDialog
         open={!!confirmDup}
-        onOpenChange={(o) => { if (!o) setConfirmDup(null); }}
+        onOpenChange={(o) => {
+          if (!o) setConfirmDup(null);
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -24,6 +24,8 @@ const TESTS_DIR = "tests";
 // Arquivos que compõem a suíte de WhatsApp + dependências relacionadas.
 const INCLUDE = [
   "admin-master-server.test.ts",
+  "receitas-soft-delete-e-teto-valor.test.ts",
+  "recorrencia-mensal-dias-29-30-31.test.ts",
   "whatsapp-audio.test.ts",
   "whatsapp-audio-duration.test.ts",
   "whatsapp-authz.test.ts",

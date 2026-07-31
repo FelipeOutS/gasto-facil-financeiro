@@ -40,7 +40,7 @@ export function addMonthsPreservingDay(base: Date, i: number): Date {
 /** Versão ISO (YYYY-MM-DD) — entrada e saída em data local, sem UTC shift. */
 export function addMonthsPreservingDayISO(baseISO: string, i: number): string {
   const [y, m, d] = baseISO.slice(0, 10).split("-").map(Number);
-  const base = new Date(y!, (m! - 1), d!, 12, 0, 0, 0);
+  const base = new Date(y!, m! - 1, d!, 12, 0, 0, 0);
   const next = addMonthsPreservingDay(base, i);
   const mm = String(next.getMonth() + 1).padStart(2, "0");
   const dd = String(next.getDate()).padStart(2, "0");

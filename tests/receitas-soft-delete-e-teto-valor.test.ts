@@ -91,7 +91,7 @@ describe("contrato de código: leituras de receitas filtram soft delete", () => 
     );
   });
 
-  it("toda leitura de receitas no servidor tem .is(\"deleted_at\", null)", () => {
+  it('toda leitura de receitas no servidor tem .is("deleted_at", null)', () => {
     for (const file of files.slice(1)) {
       const src = readFileSync(file, "utf8");
       const selects = src.split('.from("receitas")').slice(1);

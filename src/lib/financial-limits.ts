@@ -44,8 +44,7 @@ const MESSAGES_EN: Record<FinancialAmountErrorCode, string> = {
   not_finite: "Enter a valid numeric amount.",
   too_small: "The amount must be greater than zero.",
   too_many_decimals: "Use at most two decimal places.",
-  too_large:
-    "The amount exceeds the maximum allowed for a financial entry (999,999,999.99).",
+  too_large: "The amount exceeds the maximum allowed for a financial entry (999,999,999.99).",
 };
 
 /** Mensagem amigável (nunca expõe erro técnico do banco). */
