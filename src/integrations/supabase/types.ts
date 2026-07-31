@@ -2188,6 +2188,9 @@ export type Database = {
           cliente_id: string | null
           created_at: string
           data: string
+          deleted_at: string | null
+          deleted_reason: string | null
+          deleted_source: string | null
           descricao: string
           horario: string | null
           id: string
@@ -2208,6 +2211,9 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           data: string
+          deleted_at?: string | null
+          deleted_reason?: string | null
+          deleted_source?: string | null
           descricao: string
           horario?: string | null
           id?: string
@@ -2228,6 +2234,9 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           data?: string
+          deleted_at?: string | null
+          deleted_reason?: string | null
+          deleted_source?: string | null
           descricao?: string
           horario?: string | null
           id?: string
