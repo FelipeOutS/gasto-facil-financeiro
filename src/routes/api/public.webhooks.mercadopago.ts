@@ -241,9 +241,7 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           userId = s.user_id;
           plano = s.plan_key;
           periodicidade = s.periodicity;
-          months = Number(s.expected_amount_cents) >= 0 ? 0 : 0;
           checkoutSessionId = s.id;
-          periodicidade = s.periodicity;
 
           // Validação de oferta: o que o provedor cobrou tem de coincidir com
           // a oferta oficial persistida. Divergência ⇒ não libera plano.
