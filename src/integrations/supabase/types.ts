@@ -2050,53 +2050,163 @@ export type Database = {
           },
         ]
       }
+      payment_checkout_sessions: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          currency: string
+          environment: string
+          expected_amount_cents: number
+          expires_at: string
+          external_reference: string
+          id: string
+          metadata: Json | null
+          method: string | null
+          periodicity: string
+          plan_key: string
+          provider: string
+          provider_payment_id: string | null
+          provider_preference_id: string | null
+          purchase_origin: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          currency?: string
+          environment: string
+          expected_amount_cents: number
+          expires_at: string
+          external_reference: string
+          id?: string
+          metadata?: Json | null
+          method?: string | null
+          periodicity: string
+          plan_key: string
+          provider?: string
+          provider_payment_id?: string | null
+          provider_preference_id?: string | null
+          purchase_origin?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          currency?: string
+          environment?: string
+          expected_amount_cents?: number
+          expires_at?: string
+          external_reference?: string
+          id?: string
+          metadata?: Json | null
+          method?: string | null
+          periodicity?: string
+          plan_key?: string
+          provider?: string
+          provider_payment_id?: string | null
+          provider_preference_id?: string | null
+          purchase_origin?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_events: {
         Row: {
+          checkout_session_id: string | null
           created_at: string
+          environment: string | null
+          error_code: string | null
+          event_id: string | null
           event_type: string | null
           external_payment_id: string
           id: string
+          idempotency_key: string | null
           metadata: Json | null
+          payload_hash: string | null
+          payload_sanitized: Json | null
           payment_id: string | null
+          plano_resolved: string | null
           processed_at: string
+          processing_result: string | null
           provider: string
+          provider_payment_id: string | null
           provider_updated_at: string | null
+          purchase_origin: string | null
           raw_status: string | null
+          received_at: string | null
           status: string
           subscription_id: string | null
           user_id: string | null
         }
         Insert: {
+          checkout_session_id?: string | null
           created_at?: string
+          environment?: string | null
+          error_code?: string | null
+          event_id?: string | null
           event_type?: string | null
           external_payment_id: string
           id?: string
+          idempotency_key?: string | null
           metadata?: Json | null
+          payload_hash?: string | null
+          payload_sanitized?: Json | null
           payment_id?: string | null
+          plano_resolved?: string | null
           processed_at?: string
+          processing_result?: string | null
           provider?: string
+          provider_payment_id?: string | null
           provider_updated_at?: string | null
+          purchase_origin?: string | null
           raw_status?: string | null
+          received_at?: string | null
           status: string
           subscription_id?: string | null
           user_id?: string | null
         }
         Update: {
+          checkout_session_id?: string | null
           created_at?: string
+          environment?: string | null
+          error_code?: string | null
+          event_id?: string | null
           event_type?: string | null
           external_payment_id?: string
           id?: string
+          idempotency_key?: string | null
           metadata?: Json | null
+          payload_hash?: string | null
+          payload_sanitized?: Json | null
           payment_id?: string | null
+          plano_resolved?: string | null
           processed_at?: string
+          processing_result?: string | null
           provider?: string
+          provider_payment_id?: string | null
           provider_updated_at?: string | null
+          purchase_origin?: string | null
           raw_status?: string | null
+          received_at?: string | null
           status?: string
           subscription_id?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payment_events_checkout_session_id_fkey"
+            columns: ["checkout_session_id"]
+            isOneToOne: false
+            referencedRelation: "payment_checkout_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -2331,9 +2441,11 @@ export type Database = {
       subscription_payments: {
         Row: {
           amount_cents: number
+          checkout_session_id: string | null
           created_at: string
           currency: string
           discount_percent: number
+          environment: string | null
           id: string
           method: string
           months: number
@@ -2343,6 +2455,7 @@ export type Database = {
           plano: Database["public"]["Enums"]["plan_tier"]
           provider: string
           provider_payment_id: string | null
+          purchase_origin: string | null
           qr_code: string | null
           qr_code_base64: string | null
           status: string
@@ -2352,9 +2465,11 @@ export type Database = {
         }
         Insert: {
           amount_cents: number
+          checkout_session_id?: string | null
           created_at?: string
           currency?: string
           discount_percent?: number
+          environment?: string | null
           id?: string
           method?: string
           months?: number
@@ -2364,6 +2479,7 @@ export type Database = {
           plano: Database["public"]["Enums"]["plan_tier"]
           provider?: string
           provider_payment_id?: string | null
+          purchase_origin?: string | null
           qr_code?: string | null
           qr_code_base64?: string | null
           status?: string
@@ -2373,9 +2489,11 @@ export type Database = {
         }
         Update: {
           amount_cents?: number
+          checkout_session_id?: string | null
           created_at?: string
           currency?: string
           discount_percent?: number
+          environment?: string | null
           id?: string
           method?: string
           months?: number
@@ -2385,6 +2503,7 @@ export type Database = {
           plano?: Database["public"]["Enums"]["plan_tier"]
           provider?: string
           provider_payment_id?: string | null
+          purchase_origin?: string | null
           qr_code?: string | null
           qr_code_base64?: string | null
           status?: string
@@ -2392,7 +2511,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subscription_payments_checkout_session_id_fkey"
+            columns: ["checkout_session_id"]
+            isOneToOne: false
+            referencedRelation: "payment_checkout_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppressed_emails: {
         Row: {

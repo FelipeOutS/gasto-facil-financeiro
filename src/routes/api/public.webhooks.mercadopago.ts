@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logAuditEvent, logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
@@ -9,6 +8,20 @@ import {
   type CanonicalBillingStatus,
 } from "@/server/billing-mercadopago-apply.server";
 import { resolveMercadoPagoCancellationKind } from "@/server/mercadopago-cancellation-resolver.server";
+import {
+  environmentForPersistence,
+  resolveMercadoPagoConfig,
+} from "@/server/mercadopago-config.server";
+import { verifyMercadoPagoSignature } from "@/server/mercadopago-webhook-verify.server";
+import {
+  markCheckoutSessionConsumed,
+  resolveCheckoutSession,
+} from "@/server/mercadopago-checkout-session.server";
+import { validateOfferAgainstProvider } from "@/server/mercadopago-plan-catalog.server";
+import {
+  payloadHash,
+  sanitizeMercadoPagoPayload,
+} from "@/server/mercadopago-payload-sanitize.server";
 import type { Database } from "@/integrations/supabase/types";
 type PlanTier = Database["public"]["Enums"]["plan_tier"];
 
@@ -74,9 +87,17 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
     handlers: {
       POST: async ({ request }) => {
         const startedAt = Date.now();
-        const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
-        const webhookSecret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
-        if (!accessToken || !webhookSecret) {
+        // Configuração central fail-closed: sandbox e produção nunca se
+        // misturam; nada de leitura direta de process.env aqui.
+        const cfg = resolveMercadoPagoConfig();
+        const accessToken = cfg.accessToken;
+        const webhookSecret = cfg.webhookSecret;
+        const webhookEnvironment = environmentForPersistence(cfg);
+        if (!accessToken || !webhookSecret || !cfg.allowHistoricalVerification) {
+          console.warn("[mp webhook] configuração indisponível", {
+            state: cfg.state,
+            environment: cfg.environment,
+          });
           return json({ error: "webhook_not_configured" }, 503);
         }
 
@@ -143,28 +164,22 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           request_body: body,
         });
 
-        // Validação de assinatura
-        const signatureHeader = request.headers.get("x-signature") ?? "";
-        const requestId = request.headers.get("x-request-id") ?? "";
-        const parts = Object.fromEntries(
-          signatureHeader.split(",").map((kv) => {
-            const [k, ...rest] = kv.split("=");
-            return [k?.trim() ?? "", rest.join("=").trim()];
-          }),
-        ) as Record<string, string>;
-        const ts = parts.ts;
-        const v1 = parts.v1;
-        if (!ts || !v1 || !dataId) {
-          if (logId) await updateWebhookLog(logId, { status: "failed", http_status: 401, error_message: "missing_signature", processing_time_ms: Date.now() - startedAt });
-          return json({ error: "missing_signature" }, 401);
-        }
-        const manifest = `id:${dataId};request-id:${requestId};ts:${ts};`;
-        const expected = createHmac("sha256", webhookSecret).update(manifest).digest("hex");
-        const a = Buffer.from(expected, "hex");
-        const b = Buffer.from(v1, "hex");
-        if (a.length !== b.length || !timingSafeEqual(a, b)) {
-          if (logId) await updateWebhookLog(logId, { status: "failed", http_status: 401, error_message: "invalid_signature", processing_time_ms: Date.now() - startedAt });
-          return json({ error: "invalid_signature" }, 401);
+        // Validação de assinatura ANTES de qualquer leitura/escrita de negócio.
+        const verification = verifyMercadoPagoSignature({
+          signatureHeader: request.headers.get("x-signature"),
+          requestId: request.headers.get("x-request-id"),
+          dataId,
+          secret: webhookSecret,
+        });
+        if (!verification.ok) {
+          if (logId)
+            await updateWebhookLog(logId, {
+              status: "failed",
+              http_status: verification.httpStatus,
+              error_message: verification.reason ?? "invalid_signature",
+              processing_time_ms: Date.now() - startedAt,
+            });
+          return json({ error: verification.reason ?? "invalid_signature" }, verification.httpStatus);
         }
 
 
@@ -173,7 +188,7 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
         if (topic.includes("payment")) {
           paymentId = dataId;
         } else if (topic.includes("merchant_order")) {
-          const mo = await fetchMerchantOrder(accessToken, dataId);
+          const mo = await fetchMerchantOrder(accessToken, dataId ?? "");
           paymentId = mo?.paymentId ?? null;
         } else {
           // tipo desconhecido — tenta como payment
@@ -194,65 +209,160 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
         const idempotencyKey = `mercado_pago:${topic}:${externalPaymentId}`;
         const rawStatus = (payment.status ?? "pending").toLowerCase();
 
-        // Extrai user_id / plano / periodicidade — sempre com fallback via
-        // subscription_payments locais para o caso do metadata estar ausente.
-        let userId = payment.metadata?.user_id ?? null;
-        let plano: string | null = payment.metadata?.plano ?? null;
-        let periodicidade = (payment.metadata?.periodicidade as string | undefined) ?? null;
-        let months = Number(payment.metadata?.months ?? 0) || 0;
+        // ------------------------------------------------------------------
+        // Resolução DETERMINÍSTICA do usuário/plano.
+        //
+        // Ordem: sessão interna de checkout (referência opaca validada por
+        // checksum → provider_payment_id → preference_id). Nada de fallback
+        // "qualquer pagamento do mesmo usuário", que podia cruzar cobranças
+        // de usuários com múltiplos pagamentos pendentes.
+        // ------------------------------------------------------------------
+        const resolution = await resolveCheckoutSession({
+          externalReference: payment.external_reference ?? null,
+          providerPaymentId: externalPaymentId,
+          providerPreferenceId:
+            (payment as { preference_id?: string }).preference_id ??
+            (payment as { metadata?: { checkout_session_id?: string } }).metadata
+              ?.checkout_session_id ??
+            null,
+          environment: webhookEnvironment === "sandbox" ? "sandbox" : "production",
+          allowExpired: true,
+        });
 
-        if ((!userId || !plano) && payment.external_reference) {
-          const parts2 = payment.external_reference.split(":");
-          userId = userId ?? parts2[0] ?? null;
-          plano = plano ?? parts2[1] ?? null;
-          periodicidade = periodicidade ?? parts2[2] ?? null;
+        let userId: string | null = null;
+        let plano: string | null = null;
+        let periodicidade: string | null = null;
+        let months = 0;
+        let checkoutSessionId: string | null = null;
+        let localRow: { id: string; user_id: string; plano: string | null } | null = null;
+
+        if (resolution.ok) {
+          const s = resolution.session;
+          userId = s.user_id;
+          plano = s.plan_key;
+          periodicidade = s.periodicity;
+          checkoutSessionId = s.id;
+
+          // Validação de oferta: o que o provedor cobrou tem de coincidir com
+          // a oferta oficial persistida. Divergência ⇒ não libera plano.
+          const offerCheck = validateOfferAgainstProvider({
+            expected: {
+              planKey: s.plan_key,
+              periodicity: s.periodicity,
+              amountCents: s.expected_amount_cents,
+              currency: s.currency,
+            },
+            provider: {
+              amountCents:
+                typeof (payment as { transaction_amount?: number }).transaction_amount === "number"
+                  ? Math.round(
+                      ((payment as { transaction_amount?: number }).transaction_amount as number) *
+                        100,
+                    )
+                  : null,
+              currency: (payment as { currency_id?: string }).currency_id ?? null,
+            },
+          });
+          if (!offerCheck.ok) {
+            console.warn("[mp webhook] oferta divergente — plano NÃO liberado", {
+              mismatches: offerCheck.mismatches,
+              external_payment_id: externalPaymentId,
+            });
+            if (logId) {
+              await updateWebhookLog(logId, {
+                status: "failed",
+                http_status: 409,
+                external_id: externalPaymentId,
+                error_message: `offer_mismatch:${offerCheck.mismatches.join("|")}`,
+                processing_time_ms: Date.now() - startedAt,
+              });
+            }
+            return json({ error: "offer_mismatch" }, 409);
+          }
+          const meta = (resolution.session as unknown as { metadata?: { months?: number } })
+            .metadata;
+          months = Number(meta?.months ?? 0) || 0;
+        } else if (
+          resolution.error === "environment_mismatch" ||
+          resolution.error === "invalid_reference"
+        ) {
+          // Fail-closed: evento de outro ambiente ou referência forjada.
+          if (logId) {
+            await updateWebhookLog(logId, {
+              status: "failed",
+              http_status: 409,
+              external_id: externalPaymentId,
+              error_message: resolution.error,
+              processing_time_ms: Date.now() - startedAt,
+            });
+          }
+          return json({ error: resolution.error }, 409);
         }
 
-        const { data: localRows } = await supabaseAdmin
-          .from("subscription_payments")
-          .select("id, user_id, plano, periodicidade, months, method, provider_payment_id")
-          .eq("provider", "mercadopago")
-          .or(
-            `provider_payment_id.eq.${externalPaymentId},user_id.eq.${userId ?? "00000000-0000-0000-0000-000000000000"}`,
-          )
-          .order("created_at", { ascending: false })
-          .limit(20);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const localRow = (localRows ?? []).find((r: any) =>
-          r.provider_payment_id === externalPaymentId
-            ? true
+        // Pagamentos LEGADOS (criados antes do Prompt 4A, sem sessão interna):
+        // resolução estrita pelo provider_payment_id — nunca por usuário.
+        if (!userId) {
+          const { data: legacyRow } = await supabaseAdmin
+            .from("subscription_payments")
+            .select("id, user_id, plano, periodicidade, months, method, provider_payment_id")
+            .eq("provider", "mercadopago")
+            .eq("provider_payment_id", externalPaymentId)
+            .maybeSingle();
+          if (legacyRow) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            : (r as any).method === "card" && r.user_id === userId,
-        );
-        if (localRow) {
-          userId = userId ?? localRow.user_id;
-          plano = plano ?? localRow.plano;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          periodicidade = periodicidade ?? (localRow as any).periodicidade ?? null;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          months = months || Number((localRow as any).months ?? 0) || 0;
+            const lr = legacyRow as any;
+            userId = lr.user_id ?? null;
+            plano = lr.plano ?? null;
+            periodicidade = lr.periodicidade ?? null;
+            months = Number(lr.months ?? 0) || 0;
+            localRow = { id: lr.id, user_id: lr.user_id, plano: lr.plano ?? null };
+          }
         }
+
+        if (!localRow && checkoutSessionId) {
+          const { data: sessionRow } = await supabaseAdmin
+            .from("subscription_payments")
+            .select("id, user_id, plano")
+            .eq("checkout_session_id", checkoutSessionId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (sessionRow) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const sr = sessionRow as any;
+            localRow = { id: sr.id, user_id: sr.user_id, plano: sr.plano ?? null };
+          }
+        }
+
         if (!months) months = 1;
+        if (checkoutSessionId && APPROVED.has(rawStatus)) {
+          await markCheckoutSessionConsumed(checkoutSessionId, "approved");
+        }
 
         // Atualiza subscription_payments — trilha auditável do pagamento.
+        // Payload SANITIZADO: sem dados do pagador, documento, cartão ou tokens.
+        const safePayload = {
+          ...sanitizeMercadoPagoPayload(payment),
+          body_sha256: payloadHash(rawBody),
+        };
+        const auditPatch = {
+          status: rawStatus,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          payload: safePayload as any,
+          paid_at: APPROVED.has(rawStatus) ? new Date().toISOString() : null,
+          environment: webhookEnvironment,
+        };
         if (localRow) {
           await supabaseAdmin
             .from("subscription_payments")
-            .update({
-              status: rawStatus,
-              payload: payment,
-              provider_payment_id: externalPaymentId,
-              paid_at: APPROVED.has(rawStatus) ? new Date().toISOString() : null,
-            })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .update({ ...auditPatch, provider_payment_id: externalPaymentId } as any)
             .eq("id", localRow.id);
         } else {
           await supabaseAdmin
             .from("subscription_payments")
-            .update({
-              status: rawStatus,
-              payload: payment,
-              paid_at: APPROVED.has(rawStatus) ? new Date().toISOString() : null,
-            })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .update(auditPatch as any)
             .eq("provider", "mercadopago")
             .eq("provider_payment_id", externalPaymentId);
         }

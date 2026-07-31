@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { resolveMercadoPagoConfig } from "@/server/mercadopago-config.server";
 
 /**
  * POST /api/checkout/verify
@@ -74,7 +75,11 @@ export const Route = createFileRoute("/api/checkout/verify")({
           .maybeSingle();
         if (readErr || !row) return json({ error: "not_found" }, 404);
 
-        const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+        // Prompt 4A: token e ambiente vêm do módulo central fail-closed.
+        // Verificação de pagamentos históricos é permitida mesmo quando novos
+        // checkouts estão bloqueados.
+        const cfg = resolveMercadoPagoConfig();
+        const accessToken = cfg.allowHistoricalVerification ? cfg.accessToken : null;
         if (!accessToken) {
           return json({ status: row.status ?? "pending", note: "no_token" });
         }

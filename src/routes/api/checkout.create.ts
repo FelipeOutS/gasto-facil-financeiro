@@ -2,50 +2,30 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { isPlanAvailableForNewSubscriptions, type PlanTier } from "@/lib/plans";
+import {
+  environmentForPersistence,
+  resolveMercadoPagoConfig,
+} from "@/server/mercadopago-config.server";
+import { resolveCatalogOffer } from "@/server/mercadopago-plan-catalog.server";
+import {
+  attachProviderIdsToSession,
+  createCheckoutSession,
+} from "@/server/mercadopago-checkout-session.server";
 
 /**
  * POST /api/checkout/create
  *
- * Cria uma cobrança no Mercado Pago para o plano + periodicidade escolhidos
- * e registra a tentativa em `subscription_payments` (status 'pending').
- *
- * - method = "pix": cria pagamento Pix direto (`/v1/payments`) e devolve QR Code.
- * - method = "card": cria preferência (`/checkout/preferences`) com Pix + cartão
- *   habilitados e devolve `init_point` para redirecionar ao Checkout Pro.
- *
- * Também marca `user_plans.status = 'aguardando_pagamento'`, plano e periodicidade.
+ * Prompt 4A — endurecido:
+ *   - ambiente resolvido pelo módulo central (`mercadopago-config.server`);
+ *     sandbox nunca usa credencial de produção e vice-versa;
+ *   - preço/periodicidade/moeda/duração vêm do catálogo SERVER-SIDE
+ *     (`mercadopago-plan-catalog.server`) — o cliente só escolhe plan_key;
+ *   - `external_reference` é OPACA e persistida em `payment_checkout_sessions`;
+ *   - `notification_url` explícita, derivada do ambiente;
+ *   - expiração calculada no servidor, enviada ao provedor e persistida.
  *
  * Body: { plano: PlanTier, periodicidade?: 'mensal'|'trimestral'|'semestral'|'anual', method?: 'pix' | 'card' }
  */
-
-type Plano =
-  | "pessoal_manual"
-  | "pessoal_premium"
-  | "mei_essencial"
-  | "mei_inteligente"
-  | "empresa";
-
-type Periodicidade = "mensal" | "trimestral" | "semestral" | "anual";
-
-const PLAN_BASE: Record<Plano, { cents: number; name: string }> = {
-  pessoal_manual: { cents: 2500, name: "Controle Simples Pessoal" },
-  pessoal_premium: { cents: 5000, name: "Controle Completo Pessoal" },
-  mei_essencial: { cents: 3990, name: "Essencial para MEI" },
-  mei_inteligente: { cents: 9000, name: "MEI Completo" },
-  empresa: { cents: 18000, name: "Empresa" },
-};
-
-const PERIOD_INFO: Record<Periodicidade, { months: number; discount: number; label: string }> = {
-  mensal: { months: 1, discount: 0, label: "Mensal" },
-  trimestral: { months: 3, discount: 5, label: "Trimestral" },
-  semestral: { months: 6, discount: 10, label: "Semestral" },
-  anual: { months: 12, discount: 20, label: "Anual" },
-};
-
-function priceForPeriod(plano: Plano, period: Periodicidade): number {
-  const base = PLAN_BASE[plano].cents * PERIOD_INFO[period].months;
-  return Math.round(base * (1 - PERIOD_INFO[period].discount / 100));
-}
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -85,11 +65,18 @@ export const Route = createFileRoute("/api/checkout/create")({
         } catch {
           return json({ error: "invalid_body" }, 400);
         }
-        const plano = body.plano as Plano | undefined;
+
         const method = (body.method as "pix" | "card") ?? "pix";
-        const periodicidade = (body.periodicidade as Periodicidade) ?? "mensal";
-        if (!plano || !(plano in PLAN_BASE)) return json({ error: "invalid_plan" }, 400);
-        if (!isPlanAvailableForNewSubscriptions(plano as PlanTier)) {
+        if (method !== "pix" && method !== "card") return json({ error: "invalid_method" }, 400);
+
+        // ---- Catálogo server-side: única fonte de preço/moeda/duração ----
+        const resolved = resolveCatalogOffer({
+          planKey: body.plano,
+          periodicity: body.periodicidade ?? "mensal",
+        });
+        if (!resolved.ok) {
+          if (resolved.error === "invalid_plan") return json({ error: "invalid_plan" }, 400);
+          if (resolved.error === "invalid_period") return json({ error: "invalid_period" }, 400);
           return json(
             {
               error: "plan_unavailable",
@@ -98,18 +85,42 @@ export const Route = createFileRoute("/api/checkout/create")({
             410,
           );
         }
-        if (!(periodicidade in PERIOD_INFO)) return json({ error: "invalid_period" }, 400);
-        if (method !== "pix" && method !== "card") return json({ error: "invalid_method" }, 400);
+        const offer = resolved.offer;
+        if (!isPlanAvailableForNewSubscriptions(offer.planKey as PlanTier)) {
+          return json(
+            {
+              error: "plan_unavailable",
+              detail: "Este plano não está mais disponível para novas assinaturas.",
+            },
+            410,
+          );
+        }
 
-        const info = PLAN_BASE[plano];
-        const periodInfo = PERIOD_INFO[periodicidade];
-        const totalCents = priceForPeriod(plano, periodicidade);
-        const description = `Assinatura ${info.name} — ${periodInfo.label}`;
+        // ---- Ambiente fail-closed ----
+        const cfg = resolveMercadoPagoConfig();
+        if (!cfg.allowNewCheckouts || !cfg.accessToken || !cfg.notificationUrl) {
+          console.warn("[checkout/create] bloqueado por configuração", {
+            state: cfg.state,
+            environment: cfg.environment,
+            messages: cfg.diagnostics,
+          });
+          return json(
+            {
+              error: "payment_environment_not_configured",
+              detail: "Pagamentos temporariamente indisponíveis. Configuração pendente.",
+              state: cfg.state,
+            },
+            503,
+          );
+        }
+        if (cfg.legacyFallbackUsed) {
+          console.warn(
+            "[checkout/create] usando credenciais LEGADAS de produção (fallback documentado)",
+          );
+        }
+        const environment = environmentForPersistence(cfg);
 
-        // Atualiza/insere o registro de plano do usuário como aguardando_pagamento.
-        // IMPORTANTE: nunca rebaixar um plano que já está ativo dentro do período pago.
-        // Isso evita que abrir um novo checkout (ex.: tentar mudar de plano) marque
-        // o usuário como "aguardando_pagamento" e suma o badge "Plano ativo".
+        // ---- Marca o plano como aguardando pagamento (sem rebaixar ativo) ----
         const { data: existingPlan } = await supabaseAdmin
           .from("user_plans")
           .select("user_id, status, current_period_end, plano")
@@ -122,13 +133,11 @@ export const Route = createFileRoute("/api/checkout/create")({
             new Date(existingPlan.current_period_end as string).getTime() > Date.now());
         const planUpdate = {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          plano: plano as any,
-          // Mantém "ativo" se já estiver ativo no período pago; caso contrário
-          // marca como aguardando_pagamento até o webhook/verify confirmar.
+          plano: offer.planKey as any,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           status: (isCurrentlyActive ? "ativo" : "aguardando_pagamento") as any,
-          periodicidade,
-          months: periodInfo.months,
+          periodicidade: offer.periodicity,
+          months: offer.months,
         };
         if (existingPlan) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -140,87 +149,84 @@ export const Route = createFileRoute("/api/checkout/create")({
             .insert({ user_id: user.id, ...planUpdate } as any);
         }
 
-        const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
-        if (!accessToken) {
-          const { data: row } = await supabaseAdmin
-            .from("subscription_payments")
-            .insert({
-              user_id: user.id,
-              plano,
-              amount_cents: totalCents,
-              method,
-              periodicidade,
-              months: periodInfo.months,
-              discount_percent: periodInfo.discount,
-              provider: "mercadopago",
-              status: "pending",
-              payload: { note: "missing_access_token" },
-            })
-            .select("id")
-            .single();
-          return json({
-            pendingIntegration: true,
-            paymentId: row?.id ?? null,
-            message:
-              "Integração de pagamento pendente. Configure o gateway para finalizar a cobrança.",
-          });
+        // ---- Sessão interna de checkout (referência opaca + expiração) ----
+        const created = await createCheckoutSession({
+          userId: user.id,
+          offer,
+          method,
+          config: cfg,
+        });
+        if (!created.ok) {
+          console.error("[checkout/create] falha ao criar sessão interna", created.error);
+          return json({ error: "checkout_session_error" }, 503);
         }
+        const { session, externalReference, expiresAt } = created;
 
-        const metadata = {
+        const paymentInsertBase = {
           user_id: user.id,
-          plano,
-          plan_type: plano,
-          plan_name: info.name,
-          periodicidade,
-          months: periodInfo.months,
-          discount_percent: periodInfo.discount,
-          amount: totalCents / 100,
+          plano: offer.planKey,
+          amount_cents: offer.amountCents,
+          currency: offer.currency,
+          method,
+          periodicidade: offer.periodicity,
+          months: offer.months,
+          discount_percent: offer.discountPercent,
+          provider: "mercadopago",
+          environment,
+          purchase_origin: "mercado_pago_web",
+          checkout_session_id: session.id,
+        };
+
+        // Metadata do provedor — sem PII adicional; a resolução autoritativa
+        // acontece pela referência opaca, não por este metadata.
+        const metadata = {
+          checkout_session_id: session.id,
+          plan_key: offer.planKey,
+          periodicidade: offer.periodicity,
+          months: offer.months,
+          environment,
           source: "gasto_inteligente",
         };
 
         // ============================================================
-        // Cartão (e Pix opcional dentro do mesmo checkout): usa Checkout Pro
-        // (preference). O usuário é redirecionado para o ambiente seguro do
-        // Mercado Pago para inserir os dados do cartão.
+        // Cartão — Checkout Pro (preference)
         // ============================================================
         if (method === "card") {
-          const origin =
-            request.headers.get("origin") ??
-            (() => {
-              try { return new URL(request.url).origin; } catch { return ""; }
-            })();
-          const idempotencyKey = `${user.id}-${plano}-${periodicidade}-${Date.now()}`;
-          const prefRes = await fetch("https://api.mercadopago.com/checkout/preferences", {
+          const idempotencyKey = `${session.id}-card`;
+          const backBase = cfg.siteBaseUrl ?? "";
+          const prefRes = await fetch(`${cfg.apiBaseUrl}/checkout/preferences`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${accessToken}`,
+              Authorization: `Bearer ${cfg.accessToken}`,
               "X-Idempotency-Key": idempotencyKey,
             },
             body: JSON.stringify({
               items: [
                 {
-                  id: `${plano}-${periodicidade}`,
-                  title: description,
-                  description,
+                  id: `${offer.planKey}-${offer.periodicity}`,
+                  title: offer.description,
+                  description: offer.description,
                   quantity: 1,
-                  currency_id: "BRL",
-                  unit_price: totalCents / 100,
+                  currency_id: offer.currency,
+                  unit_price: offer.amountCents / 100,
                 },
               ],
               payer: { email: user.email ?? `user-${user.id}@example.com` },
               metadata,
-              external_reference: `${user.id}:${plano}:${periodicidade}`,
+              external_reference: externalReference,
+              notification_url: cfg.notificationUrl,
+              expires: true,
+              expiration_date_to: expiresAt.toISOString(),
               back_urls: {
-                success: `${origin}/meu-plano?status=success`,
-                pending: `${origin}/meu-plano?status=pending`,
-                failure: `${origin}/meu-plano?status=failure`,
+                success: `${backBase}/meu-plano?status=success`,
+                pending: `${backBase}/meu-plano?status=pending`,
+                failure: `${backBase}/meu-plano?status=failure`,
               },
               auto_return: "approved",
               binary_mode: false,
               statement_descriptor: "GastoInteligente",
               payment_methods: {
-                // Cartão DEVE estar liberado. Excluímos apenas boleto explicitamente.
                 excluded_payment_types: [{ id: "ticket" }, { id: "atm" }],
                 installments: 12,
               },
@@ -229,49 +235,45 @@ export const Route = createFileRoute("/api/checkout/create")({
           const prefData = (await prefRes.json().catch(() => ({}))) as {
             id?: string;
             init_point?: string;
-            sandbox_init_point?: string;
             message?: string;
           };
           if (!prefRes.ok || !prefData.init_point) {
             await supabaseAdmin.from("subscription_payments").insert({
-              user_id: user.id,
-              plano,
-              amount_cents: totalCents,
-              method,
-              periodicidade,
-              months: periodInfo.months,
-              discount_percent: periodInfo.discount,
-              provider: "mercadopago",
+              ...paymentInsertBase,
               status: "rejected",
-              payload: prefData,
-            });
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              payload: { error: "preference_error" } as any,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any);
+            await attachProviderIdsToSession({ sessionId: session.id, status: "rejected" });
             return json(
               { error: "gateway_error", detail: prefData.message ?? "Falha ao criar checkout." },
               502,
             );
           }
+          await attachProviderIdsToSession({
+            sessionId: session.id,
+            preferenceId: prefData.id ?? null,
+            status: "pending",
+          });
           const { data: row, error } = await supabaseAdmin
             .from("subscription_payments")
             .insert({
-              user_id: user.id,
-              plano,
-              amount_cents: totalCents,
-              method,
-              periodicidade,
-              months: periodInfo.months,
-              discount_percent: periodInfo.discount,
-              provider: "mercadopago",
+              ...paymentInsertBase,
               provider_payment_id: prefData.id ?? null,
               status: "pending",
               ticket_url: prefData.init_point ?? null,
-              payload: prefData,
-            })
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              payload: { preference_id: prefData.id ?? null } as any,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any)
             .select("id, status, ticket_url")
             .single();
           if (error) return json({ error: "db_error" }, 500);
           return json({
             pendingIntegration: false,
             method: "card",
+            expiresAt: expiresAt.toISOString(),
             payment: {
               id: row.id,
               status: row.status,
@@ -284,22 +286,24 @@ export const Route = createFileRoute("/api/checkout/create")({
         }
 
         // ============================================================
-        // Pix (fluxo já existente — preservado). Cria pagamento direto.
+        // Pix — pagamento direto
         // ============================================================
-        const idempotencyKey = `${user.id}-${plano}-${periodicidade}-${Date.now()}`;
-        const mpRes = await fetch("https://api.mercadopago.com/v1/payments", {
+        const mpRes = await fetch(`${cfg.apiBaseUrl}/v1/payments`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-            "X-Idempotency-Key": idempotencyKey,
+            Authorization: `Bearer ${cfg.accessToken}`,
+            "X-Idempotency-Key": `${session.id}-pix`,
           },
           body: JSON.stringify({
-            transaction_amount: totalCents / 100,
-            description,
+            transaction_amount: offer.amountCents / 100,
+            description: offer.description,
             payment_method_id: "pix",
             payer: { email: user.email ?? `user-${user.id}@example.com` },
             metadata,
+            external_reference: externalReference,
+            notification_url: cfg.notificationUrl,
+            date_of_expiration: expiresAt.toISOString(),
           }),
         });
 
@@ -307,58 +311,56 @@ export const Route = createFileRoute("/api/checkout/create")({
           id?: number | string;
           status?: string;
           point_of_interaction?: {
-            transaction_data?: {
-              qr_code?: string;
-              qr_code_base64?: string;
-              ticket_url?: string;
-            };
+            transaction_data?: { qr_code?: string; qr_code_base64?: string; ticket_url?: string };
           };
           message?: string;
         };
 
         if (!mpRes.ok) {
           await supabaseAdmin.from("subscription_payments").insert({
-            user_id: user.id,
-            plano,
-            amount_cents: totalCents,
-            method,
-            periodicidade,
-            months: periodInfo.months,
-            discount_percent: periodInfo.discount,
-            provider: "mercadopago",
+            ...paymentInsertBase,
             status: "rejected",
-            payload: mpData,
-          });
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            payload: { error: "payment_error" } as any,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any);
+          await attachProviderIdsToSession({ sessionId: session.id, status: "rejected" });
           return json(
             { error: "gateway_error", detail: mpData.message ?? "Falha ao criar cobrança" },
             502,
           );
         }
 
+        await attachProviderIdsToSession({
+          sessionId: session.id,
+          paymentId: mpData.id ? String(mpData.id) : null,
+          status: "pending",
+        });
+
         const tx = mpData.point_of_interaction?.transaction_data;
         const { data: row, error } = await supabaseAdmin
           .from("subscription_payments")
           .insert({
-            user_id: user.id,
-            plano,
-            amount_cents: totalCents,
-            method,
-            periodicidade,
-            months: periodInfo.months,
-            discount_percent: periodInfo.discount,
-            provider: "mercadopago",
+            ...paymentInsertBase,
             provider_payment_id: mpData.id ? String(mpData.id) : null,
             status: mpData.status ?? "pending",
             qr_code: tx?.qr_code ?? null,
             qr_code_base64: tx?.qr_code_base64 ?? null,
             ticket_url: tx?.ticket_url ?? null,
-            payload: mpData,
-          })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            payload: { id: mpData.id ?? null, status: mpData.status ?? null } as any,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any)
           .select("id, qr_code, qr_code_base64, ticket_url, status")
           .single();
 
         if (error) return json({ error: "db_error" }, 500);
-        return json({ pendingIntegration: false, method: "pix", payment: row });
+        return json({
+          pendingIntegration: false,
+          method: "pix",
+          expiresAt: expiresAt.toISOString(),
+          payment: row,
+        });
       },
     },
   },
