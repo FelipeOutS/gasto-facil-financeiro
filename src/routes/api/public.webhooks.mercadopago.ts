@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createHmac, timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logAuditEvent, logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
@@ -9,6 +8,20 @@ import {
   type CanonicalBillingStatus,
 } from "@/server/billing-mercadopago-apply.server";
 import { resolveMercadoPagoCancellationKind } from "@/server/mercadopago-cancellation-resolver.server";
+import {
+  environmentForPersistence,
+  resolveMercadoPagoConfig,
+} from "@/server/mercadopago-config.server";
+import { verifyMercadoPagoSignature } from "@/server/mercadopago-webhook-verify.server";
+import {
+  markCheckoutSessionConsumed,
+  resolveCheckoutSession,
+} from "@/server/mercadopago-checkout-session.server";
+import { validateOfferAgainstProvider } from "@/server/mercadopago-plan-catalog.server";
+import {
+  payloadHash,
+  sanitizeMercadoPagoPayload,
+} from "@/server/mercadopago-payload-sanitize.server";
 import type { Database } from "@/integrations/supabase/types";
 type PlanTier = Database["public"]["Enums"]["plan_tier"];
 
