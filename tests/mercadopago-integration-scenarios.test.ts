@@ -200,9 +200,8 @@ describe("Prompt 4A — Mercado Pago: cenários estruturais", () => {
 
     // Credencial de produção declarada como sandbox ⇒ bloqueio.
     const mismatch = resolveMercadoPagoConfig({
-      MERCADO_PAGO_ENVIRONMENT: "sandbox",
+      ...SANDBOX_ENV,
       MERCADO_PAGO_SANDBOX_ACCESS_TOKEN: "APP_USR-producao",
-      MERCADO_PAGO_SANDBOX_WEBHOOK_SECRET: "x",
     });
     expect(mismatch.allowNewCheckouts).toBe(false);
     expect(mismatch.state).toBe("credential_environment_mismatch");
