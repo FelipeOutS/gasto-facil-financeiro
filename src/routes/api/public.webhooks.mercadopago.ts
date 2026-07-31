@@ -87,9 +87,17 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
     handlers: {
       POST: async ({ request }) => {
         const startedAt = Date.now();
-        const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
-        const webhookSecret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
-        if (!accessToken || !webhookSecret) {
+        // Configuração central fail-closed: sandbox e produção nunca se
+        // misturam; nada de leitura direta de process.env aqui.
+        const cfg = resolveMercadoPagoConfig();
+        const accessToken = cfg.accessToken;
+        const webhookSecret = cfg.webhookSecret;
+        const webhookEnvironment = environmentForPersistence(cfg);
+        if (!accessToken || !webhookSecret || !cfg.allowHistoricalVerification) {
+          console.warn("[mp webhook] configuração indisponível", {
+            state: cfg.state,
+            environment: cfg.environment,
+          });
           return json({ error: "webhook_not_configured" }, 503);
         }
 
