@@ -391,7 +391,30 @@ Em `whatsapp_notification_templates` existem ainda `gi_conta_recorrente_pendente
 
 **Sobre o problema "digital retorna para a tela de login":** o comportamento é **esperado** com a implementação atual — como não há credencial WebAuthn nem bridge nativa que restaure a sessão, o retorno do prompt biométrico não hidrata sessão do Lovable Cloud, e o `AuthGate` redireciona para `/login`. **Estado: NÃO RESOLVIDO.** Correção exige WebAuthn real (ou bridge Android devolvendo refresh token em armazenamento seguro).
 
+### Aplicativo iOS / iPhone
+
+
+**Decisão oficial registrada em 31/07/2026:** além do site e do aplicativo Android, o Gasto Inteligente terá **um aplicativo para iPhone distribuído pela App Store**, como frente oficial de produto. Nesta etapa **nada foi implementado** — apenas o registro da frente e a preparação arquitetural.
+
+| Item | Estado atual |
+|---|---|
+| Projeto iOS (Xcode / React Native / Capacitor) | **NÃO EXISTE** — nenhum diretório `ios/`, `android/`, `capacitor.config.*` ou `metro.config.*` no repositório |
+| Conta Apple Developer / App Store Connect | **NÃO CRIADA** (fora de escopo desta etapa) |
+| Backend reutilizável por app móvel | **PARCIAL** — 87 módulos em `src/server/` + 13 arquivos `*.functions.ts` (createServerFn) e 20 rotas em `src/routes/api/`; porém `createServerFn` é RPC acoplada ao runtime TanStack, não um contrato HTTP versionado consumível por app nativo |
+| Regras de negócio no cliente | **RISCO ALTO** — `src/lib/store.ts` é um store local com `localStorage` como fonte de verdade parcial e hidratação por usuário (`hydrateUser`); mercado/listas/cesta/orçamento/preços têm stores locais em `src/lib/mercado/*` |
+| Dependências de APIs exclusivas de web | Presentes: `localStorage` em ~30 módulos, `window`/`document`, tema, sidebar, app-lock, quick-unlock |
+| Autenticação compartilhável | **SIM** — Lovable Cloud (Supabase Auth) com JWT + refresh token; mesma conta e mesmo banco servem web, Android e iOS |
+| Notificações multicanal | **PARCIAL** — existe pipeline de eventos e canal WhatsApp/e-mail; **não existe** abstração de canal `push_ios` / `push_android` nem tabela de device tokens |
+| Deep links / Universal Links | **NÃO PREPARADOS** — rotas file-based funcionam como URLs, mas sem `apple-app-site-association` nem tratamento de link expirado/deslogado/registro de terceiro |
+| Assinaturas | **RISCO COMERCIAL** — cobrança 100% via Mercado Pago; a App Store exige IAP para desbloqueio de conteúdo digital comprado no app |
+| Pré-requisitos bloqueantes | Dados fictícios em produção, CVE `seroval`, billing MP não exercitado, banco definitivo/cutover indefinido |
+
+**Recomendação de arquitetura (resumo):** **estratégia principal = React Native (Expo) compartilhando um pacote de domínio TypeScript com o site**, com Capacitor como **alternativa de curto prazo** para chegar à App Store rapidamente, PWA apenas como **complemento** (nunca substituta) e Swift nativo como **não recomendado** (duplicação total do frontend). Detalhamento completo, comparativo, riscos, roadmap IOS-0..IOS-5, MVP e critérios de aceite em **`docs/PLANO_APLICATIVO_IOS_GASTO_INTELIGENTE.md`**.
+
+**Estimativa adicional de trabalho:** **≈ 38–58 prompts** para a frente iOS (sendo ≈ 10–14 de IOS-0, compartilhados com Android), a somar ao total de ≈ 48–81 prompts da seção 23.
+
 ---
+
 
 ## 15. LANDING PAGE E EXPERIÊNCIA COMERCIAL
 
