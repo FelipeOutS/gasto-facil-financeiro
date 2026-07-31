@@ -125,7 +125,7 @@ const PENDING = [
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeBuilder(table: string): any {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ctx: any = { table, op: "select", payload: null, filters: {}, notFilters: [] };
+  const ctx: any = { table, op: "select", payload: null, filters: {}, notFilters: [], isFilters: [] };
 
   const finalize = async () => {
     const matchesFilters = (row: Record<string, unknown>, idx: number) => {
