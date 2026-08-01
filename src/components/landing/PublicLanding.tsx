@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CookiePreferencesLink } from "@/components/CookieConsentBanner";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -3791,6 +3792,7 @@ export function Footer() {
               <li><Link to="/termos" className="transition-colors hover:text-slate-900">{t("footer.links.terms")}</Link></li>
               <li><Link to="/privacidade" className="transition-colors hover:text-slate-900">{t("footer.links.privacy")}</Link></li>
               <li><Link to="/lgpd" className="transition-colors hover:text-slate-900">{t("footer.links.lgpd")}</Link></li>
+              <li><CookiePreferencesLink /></li>
             </ul>
           </div>
         </div>
