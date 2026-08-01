@@ -111,17 +111,10 @@ function clearKnownNonEssentialCookies() {
 
 type DataLayerWindow = Window & { dataLayer?: unknown[] };
 
-function pushDataLayer(args: unknown[]) {
-  const w = window as DataLayerWindow;
-  w.dataLayer = w.dataLayer || [];
-  w.dataLayer.push(arguments.length ? args : args);
-}
-
 /** gtag() no formato exigido pelo Consent Mode (arguments-like). */
 function gtag(...args: unknown[]) {
   const w = window as DataLayerWindow;
   w.dataLayer = w.dataLayer || [];
-  // eslint-disable-next-line prefer-rest-params
   w.dataLayer.push(args);
 }
 
@@ -228,6 +221,3 @@ export function useCookieConsent() {
   }
   return ctx;
 }
-
-// Evita "unused" caso pushDataLayer não seja usado externamente.
-void pushDataLayer;
