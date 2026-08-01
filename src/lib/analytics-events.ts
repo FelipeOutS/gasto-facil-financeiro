@@ -79,4 +79,3 @@ export function __resetAnalyticsEventsForTests(opts?: { keepSessionMarker?: bool
     /* ignore */
   }
 }
-
