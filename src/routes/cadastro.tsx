@@ -65,8 +65,11 @@ function CadastroForm() {
       toast.error(traduzirErroAuth(error.message));
       return;
     }
+    // Conta criada com sucesso (confirmado pelo backend) → evento único.
+    trackSignUpCompleted();
     setEnviado(true);
   }
+
 
   async function reenviar() {
     if (!email) return;
