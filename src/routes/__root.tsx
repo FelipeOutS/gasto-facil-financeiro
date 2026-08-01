@@ -90,24 +90,50 @@ export const Route = createRootRoute({
       { name: "theme-color", media: "(prefers-color-scheme: dark)", content: THEME_COLOR_DARK },
       { property: "og:site_name", content: "Gasto Inteligente" },
       { property: "og:type", content: "website" },
-      { property: "og:title", content: "Gasto Inteligente — Controle financeiro pessoal, MEI e empresas" },
+      {
+        property: "og:title",
+        content: "Gasto Inteligente — Controle financeiro pessoal, MEI e empresas",
+      },
       {
         property: "og:description",
         content:
           "Organize gastos, receitas, cartões, metas, mercado, relatórios e previsões financeiras em um só lugar.",
       },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Gasto Inteligente — Controle financeiro pessoal, MEI e empresas" },
+      {
+        name: "twitter:title",
+        content: "Gasto Inteligente — Controle financeiro pessoal, MEI e empresas",
+      },
       {
         name: "twitter:description",
         content:
           "Organize gastos, receitas, cartões, metas, mercado, relatórios e previsões financeiras em um só lugar.",
       },
-      { name: "description", content: "Gasto Inteligente: controle financeiro pessoal com registro manual, foto e importação de investimentos." },
-      { property: "og:description", content: "Gasto Inteligente: controle financeiro pessoal com registro manual, foto e importação de investimentos." },
-      { name: "twitter:description", content: "Gasto Inteligente: controle financeiro pessoal com registro manual, foto e importação de investimentos." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/727ea37a-7137-4b26-8a7e-78b184885840/id-preview-3104884e--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1782072328943.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/727ea37a-7137-4b26-8a7e-78b184885840/id-preview-3104884e--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1782072328943.png" },
+      {
+        name: "description",
+        content:
+          "Gasto Inteligente: controle financeiro pessoal com registro manual, foto e importação de investimentos.",
+      },
+      {
+        property: "og:description",
+        content:
+          "Gasto Inteligente: controle financeiro pessoal com registro manual, foto e importação de investimentos.",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "Gasto Inteligente: controle financeiro pessoal com registro manual, foto e importação de investimentos.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/727ea37a-7137-4b26-8a7e-78b184885840/id-preview-3104884e--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1782072328943.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/727ea37a-7137-4b26-8a7e-78b184885840/id-preview-3104884e--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1782072328943.png",
+      },
     ],
     links: [
       {
@@ -197,13 +223,13 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <ThemeProvider>
           <AccentProvider>
             <CookieConsentProvider>
-            <AuthProvider>
-              <AppLockProvider>
-                <ActiveAccountProvider>
-                  <SubscriptionGuardProvider>{children}</SubscriptionGuardProvider>
-                </ActiveAccountProvider>
-              </AppLockProvider>
-            </AuthProvider>
+              <AuthProvider>
+                <AppLockProvider>
+                  <ActiveAccountProvider>
+                    <SubscriptionGuardProvider>{children}</SubscriptionGuardProvider>
+                  </ActiveAccountProvider>
+                </AppLockProvider>
+              </AuthProvider>
             </CookieConsentProvider>
           </AccentProvider>
         </ThemeProvider>
@@ -263,7 +289,7 @@ const PUBLIC_PATH_PREFIXES = [
   "/recuperar-senha",
   "/reset-password",
   "/confirmar",
-  
+
   "/termos",
   "/privacidade",
   "/lgpd",
@@ -331,7 +357,6 @@ function PersistentAppShell({ pathname }: { pathname: string }) {
     </MobileShell>
   );
 }
-
 
 /**
  * Mantém a fila offline de gastos viva no app inteiro: ao logar, dispara
