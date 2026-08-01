@@ -1,8 +1,15 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "bun:test";
+import {
+  trackSignUpCompleted,
+  analyticsAllowed,
+  __resetAnalyticsEventsForTests,
+} from "../src/lib/analytics-events";
 
 const COOKIE = "gi_cookie_consent_v1";
 
-/** Ambiente de navegador mínimo (evita dependência de jsdom). */
+type BrowserGlobals = Record<string, unknown>;
+
+/** Ambiente de navegador mínimo (sem jsdom). */
 function installBrowserGlobals() {
   const store = new Map<string, string>();
   const sessionStorage = {
@@ -11,68 +18,67 @@ function installBrowserGlobals() {
     removeItem: (k: string) => void store.delete(k),
     clear: () => store.clear(),
   };
-  const win: Record<string, unknown> = { dataLayer: [], sessionStorage };
-  (globalThis as unknown as Record<string, unknown>).window = win;
-  (globalThis as unknown as Record<string, unknown>).document = { cookie: "" };
-  return win;
+  const g = globalThis as unknown as BrowserGlobals;
+  g.window = { dataLayer: [] as unknown[], sessionStorage };
+  g.document = { cookie: "" };
 }
 
 function setConsent(value: string | null) {
-  ((globalThis as unknown as Record<string, unknown>).document as { cookie: string }).cookie =
-    value === null ? "" : `${COOKIE}=${value}`;
-}
-
-async function freshModule() {
-  vi.resetModules();
-  return await import("../src/lib/analytics-events");
+  const g = globalThis as unknown as BrowserGlobals;
+  (g.document as { cookie: string }).cookie = value === null ? "" : `${COOKIE}=${value}`;
 }
 
 function dataLayer(): unknown[] {
-  return ((globalThis as unknown as Record<string, unknown>).window as { dataLayer: unknown[] })
-    .dataLayer;
+  const g = globalThis as unknown as BrowserGlobals;
+  return (g.window as { dataLayer: unknown[] }).dataLayer;
+}
+
+/** Simula um novo carregamento de página (module scope zerado, sessão preservada). */
+function simulatePageReload() {
+  const g = globalThis as unknown as BrowserGlobals;
+  const win = g.window as { dataLayer: unknown[] };
+  win.dataLayer = [];
+  __resetAnalyticsEventsForTests({ keepSessionMarker: true });
 }
 
 describe("analytics sign_up", () => {
   beforeEach(() => {
     installBrowserGlobals();
     setConsent(null);
+    __resetAnalyticsEventsForTests();
   });
 
-  it("não dispara quando Analytics foi recusado", async () => {
+  it("não dispara quando Analytics foi recusado", () => {
     setConsent("a0m0");
-    const m = await freshModule();
-    m.trackSignUpCompleted();
+    expect(analyticsAllowed()).toBe(false);
+    trackSignUpCompleted();
     expect(dataLayer()).toHaveLength(0);
   });
 
-  it("não dispara quando ainda não há escolha salva", async () => {
-    const m = await freshModule();
-    m.trackSignUpCompleted();
+  it("não dispara quando ainda não há escolha salva", () => {
+    trackSignUpCompleted();
     expect(dataLayer()).toHaveLength(0);
   });
 
-  it("dispara exatamente um sign_up sem parâmetros extras quando autorizado", async () => {
+  it("dispara exatamente um sign_up sem parâmetros extras quando autorizado", () => {
     setConsent("a1m0");
-    const m = await freshModule();
-    m.trackSignUpCompleted();
-    m.trackSignUpCompleted(); // clique duplo / re-render
+    trackSignUpCompleted();
+    trackSignUpCompleted(); // clique duplo / re-render
     expect(dataLayer()).toEqual([{ event: "sign_up" }]);
   });
 
-  it("não repete após reload da página (marcador de sessão)", async () => {
+  it("não repete após reload da página", () => {
     setConsent("a1m0");
-    const first = await freshModule();
-    first.trackSignUpCompleted();
-    const afterReload = await freshModule(); // novo module scope = novo page load
-    afterReload.trackSignUpCompleted();
-    expect(dataLayer()).toHaveLength(1);
+    trackSignUpCompleted();
+    simulatePageReload();
+    trackSignUpCompleted();
+    expect(dataLayer()).toHaveLength(0);
   });
 
-  it("não envia retroativamente se o consentimento vier depois", async () => {
-    const m = await freshModule();
-    m.trackSignUpCompleted();
+  it("não envia retroativamente se o consentimento vier depois", () => {
+    trackSignUpCompleted();
     setConsent("a1m0");
-    m.trackSignUpCompleted();
+    trackSignUpCompleted();
     expect(dataLayer()).toHaveLength(0);
   });
 });
