@@ -11,14 +11,15 @@ function installBrowserGlobals() {
     removeItem: (k: string) => void store.delete(k),
     clear: () => store.clear(),
   };
-  const win: any = { dataLayer: [], sessionStorage };
-  (globalThis as any).window = win;
-  (globalThis as any).document = { cookie: "" };
+  const win: Record<string, unknown> = { dataLayer: [], sessionStorage };
+  (globalThis as unknown as Record<string, unknown>).window = win;
+  (globalThis as unknown as Record<string, unknown>).document = { cookie: "" };
   return win;
 }
 
 function setConsent(value: string | null) {
-  (globalThis as any).document.cookie = value === null ? "" : `${COOKIE}=${value}`;
+  ((globalThis as unknown as Record<string, unknown>).document as { cookie: string }).cookie =
+    value === null ? "" : `${COOKIE}=${value}`;
 }
 
 async function freshModule() {
@@ -27,7 +28,8 @@ async function freshModule() {
 }
 
 function dataLayer(): unknown[] {
-  return (globalThis as any).window.dataLayer;
+  return ((globalThis as unknown as Record<string, unknown>).window as { dataLayer: unknown[] })
+    .dataLayer;
 }
 
 describe("analytics sign_up", () => {
