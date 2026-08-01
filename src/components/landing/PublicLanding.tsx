@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CookiePreferencesLink } from "@/components/CookieConsentBanner";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -134,8 +135,7 @@ function smoothScrollToSection(sectionId: string) {
   const distance = targetPosition - startPosition;
   let startTime: number | null = null;
 
-  const easeInOutCubic = (t: number) =>
-    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
   const animation = (currentTime: number) => {
     if (startTime === null) startTime = currentTime;
@@ -303,7 +303,11 @@ function Header() {
       )}
     >
       <div className="mx-auto flex h-12 w-full max-w-7xl items-center justify-between px-4 sm:h-14 sm:px-6 md:h-16 lg:px-8">
-        <a href="#inicio" onClick={(e) => handleAnchorClick(e, "#inicio")} className="flex items-center gap-2">
+        <a
+          href="#inicio"
+          onClick={(e) => handleAnchorClick(e, "#inicio")}
+          className="flex items-center gap-2"
+        >
           <img
             src="/logos/brand/icone-gasto-inteligente-light.svg"
             alt="Gasto Inteligente"
@@ -419,10 +423,8 @@ function Hero() {
           backgroundImage:
             "linear-gradient(rgba(15,23,42,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.045) 1px, transparent 1px)",
           backgroundSize: "44px 44px",
-          maskImage:
-            "radial-gradient(ellipse at top, rgba(0,0,0,0.7) 0%, transparent 70%)",
-          WebkitMaskImage:
-            "radial-gradient(ellipse at top, rgba(0,0,0,0.7) 0%, transparent 70%)",
+          maskImage: "radial-gradient(ellipse at top, rgba(0,0,0,0.7) 0%, transparent 70%)",
+          WebkitMaskImage: "radial-gradient(ellipse at top, rgba(0,0,0,0.7) 0%, transparent 70%)",
         }}
       />
       <div className="mx-auto -mt-1 grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 pt-0 pb-16 sm:mt-0 sm:px-6 sm:pt-2 md:pt-8 md:pb-24 lg:grid-cols-12 lg:gap-12 lg:px-8">
@@ -497,10 +499,7 @@ function Hero() {
         {/* Visual mockup */}
         <div className="relative lg:col-span-6">
           {/* decorative blob behind mockup */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -inset-6 -z-10 hidden md:block"
-          >
+          <div aria-hidden className="pointer-events-none absolute -inset-6 -z-10 hidden md:block">
             <svg viewBox="0 0 600 600" className="h-full w-full">
               <defs>
                 <linearGradient id="hero-blob" x1="0" y1="0" x2="1" y2="1">
@@ -553,7 +552,9 @@ function Hero() {
                   <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
                     {t("mockup.float.alert")}
                   </p>
-                  <p className="text-xs font-bold leading-tight text-slate-900">{t("mockup.float.alertText")}</p>
+                  <p className="text-xs font-bold leading-tight text-slate-900">
+                    {t("mockup.float.alertText")}
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -571,7 +572,9 @@ function Hero() {
                   <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
                     {t("mockup.float.goalTrip")}
                   </p>
-                  <p className="text-sm font-bold tabular-nums text-slate-900">{t("mockup.float.goalDone", { pct: 68 })}</p>
+                  <p className="text-sm font-bold tabular-nums text-slate-900">
+                    {t("mockup.float.goalDone", { pct: 68 })}
+                  </p>
                 </div>
               </div>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
@@ -593,14 +596,14 @@ function Hero() {
                     <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
                       {t("mockup.float.invoice")}
                     </p>
-                    <p className="text-xs font-bold text-slate-900">{t("mockup.float.invoiceOpen")}</p>
+                    <p className="text-xs font-bold text-slate-900">
+                      {t("mockup.float.invoiceOpen")}
+                    </p>
                   </div>
                 </div>
               </div>
               <p className="mt-1.5 text-sm font-extrabold tabular-nums text-slate-900">R$ 1.180</p>
             </motion.div>
-
-
           </motion.div>
         </div>
       </div>
@@ -668,9 +671,7 @@ function NotebookFrame({ children }: { children: React.ReactNode }) {
           <div className="mx-auto mb-1 h-1 w-12 rounded-full bg-slate-700/70 flex items-center justify-center">
             <span className="h-1 w-1 rounded-full bg-slate-500" />
           </div>
-          <div className="overflow-hidden rounded-[9px] bg-white aspect-[16/10]">
-            {children}
-          </div>
+          <div className="overflow-hidden rounded-[9px] bg-white aspect-[16/10]">{children}</div>
         </div>
       </div>
     </div>
@@ -709,10 +710,34 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
 function useRadarKpis() {
   const { t } = useTranslation("landing");
   return [
-    { l: t("mockup.radar.balance"), v: "R$ 4.852,30", s: t("mockup.radar.balanceHint"), icon: <Wallet className="h-2.5 w-2.5 text-slate-500" />, bg: "bg-slate-100" },
-    { l: t("mockup.radar.income"), v: "R$ 5.420,00", s: t("mockup.radar.incomeHint"), icon: <ArrowUpRight className="h-2.5 w-2.5 text-emerald-600" />, bg: "bg-emerald-50" },
-    { l: t("mockup.radar.expenses"), v: "R$ 1.248,90", s: t("mockup.radar.expensesHint"), icon: <ArrowDownRight className="h-2.5 w-2.5 text-rose-600" />, bg: "bg-rose-50" },
-    { l: t("mockup.radar.toPay"), v: "R$ 320,00", s: t("mockup.radar.toPayHint"), icon: <Calendar className="h-2.5 w-2.5 text-amber-600" />, bg: "bg-amber-50" },
+    {
+      l: t("mockup.radar.balance"),
+      v: "R$ 4.852,30",
+      s: t("mockup.radar.balanceHint"),
+      icon: <Wallet className="h-2.5 w-2.5 text-slate-500" />,
+      bg: "bg-slate-100",
+    },
+    {
+      l: t("mockup.radar.income"),
+      v: "R$ 5.420,00",
+      s: t("mockup.radar.incomeHint"),
+      icon: <ArrowUpRight className="h-2.5 w-2.5 text-emerald-600" />,
+      bg: "bg-emerald-50",
+    },
+    {
+      l: t("mockup.radar.expenses"),
+      v: "R$ 1.248,90",
+      s: t("mockup.radar.expensesHint"),
+      icon: <ArrowDownRight className="h-2.5 w-2.5 text-rose-600" />,
+      bg: "bg-rose-50",
+    },
+    {
+      l: t("mockup.radar.toPay"),
+      v: "R$ 320,00",
+      s: t("mockup.radar.toPayHint"),
+      icon: <Calendar className="h-2.5 w-2.5 text-amber-600" />,
+      bg: "bg-amber-50",
+    },
   ];
 }
 
@@ -770,16 +795,18 @@ function DesktopDashboardMock() {
       <div className="flex-1 overflow-hidden p-3">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-[7px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.sidebar.monthSummary")}</p>
-            <p className="text-[15px] font-bold leading-tight text-slate-900">{t("mockup.sidebar.exampleMonth")}</p>
+            <p className="text-[7px] font-semibold uppercase tracking-widest text-slate-400">
+              {t("mockup.sidebar.monthSummary")}
+            </p>
+            <p className="text-[15px] font-bold leading-tight text-slate-900">
+              {t("mockup.sidebar.exampleMonth")}
+            </p>
             <p className="text-[7.5px] text-slate-500">{t("mockup.sidebar.exampleSubtitle")}</p>
           </div>
           <span className="grid h-5 w-5 place-items-center rounded-full border border-slate-200 bg-white">
             <Bell className="h-2.5 w-2.5 text-slate-500" />
           </span>
         </div>
-
-
 
         {/* Alertas */}
         <div className="mt-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5">
@@ -796,13 +823,17 @@ function DesktopDashboardMock() {
         </div>
 
         {/* TÁ TUDO NO RADAR */}
-        <p className="mt-2 text-[6.5px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.radar.title")}</p>
+        <p className="mt-2 text-[6.5px] font-semibold uppercase tracking-widest text-slate-400">
+          {t("mockup.radar.title")}
+        </p>
         <div className="mt-1 grid grid-cols-4 gap-1.5">
           {radarKpis.map((k) => (
             <div key={k.l} className="rounded-lg border border-slate-200 bg-white p-1.5">
               <div className="flex items-center justify-between">
                 <p className="text-[6px] font-semibold tracking-wider text-slate-500">{k.l}</p>
-                <span className={cn("grid h-3 w-3 place-items-center rounded-full", k.bg)}>{k.icon}</span>
+                <span className={cn("grid h-3 w-3 place-items-center rounded-full", k.bg)}>
+                  {k.icon}
+                </span>
               </div>
               <p className="mt-0.5 text-[10px] font-bold tabular-nums text-slate-900">{k.v}</p>
               <p className="text-[6px] text-slate-400">{k.s}</p>
@@ -817,7 +848,9 @@ function DesktopDashboardMock() {
               <span className="grid h-3 w-3 place-items-center rounded-full bg-amber-100">
                 <Sparkles className="h-1.5 w-1.5 text-amber-600" />
               </span>
-              <p className="text-[6.5px] font-bold uppercase tracking-wider text-amber-700">{t("mockup.smartLimit.title")}</p>
+              <p className="text-[6.5px] font-bold uppercase tracking-wider text-amber-700">
+                {t("mockup.smartLimit.title")}
+              </p>
             </div>
             <span className="flex items-center gap-0.5 rounded-full border border-amber-300 bg-white px-1 py-0.5 text-[5.5px] font-semibold text-amber-700">
               <Gauge className="h-1.5 w-1.5" /> {t("mockup.smartLimit.watchPace")}
@@ -827,15 +860,21 @@ function DesktopDashboardMock() {
           <div className="mt-1 flex items-end justify-between gap-2">
             <div>
               <div className="flex items-baseline gap-1">
-                <p className="text-[14px] font-bold leading-none tabular-nums text-amber-700">R$ 13,73</p>
-                <span className="text-[7px] font-semibold text-amber-600">{t("mockup.smartLimit.perDay")}</span>
+                <p className="text-[14px] font-bold leading-none tabular-nums text-amber-700">
+                  R$ 13,73
+                </p>
+                <span className="text-[7px] font-semibold text-amber-600">
+                  {t("mockup.smartLimit.perDay")}
+                </span>
               </div>
               <p className="mt-0.5 text-[5.5px] leading-snug text-amber-800/80">
                 {t("mockup.smartLimit.keepBelow", { value: "R$ 13,73" })}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-[5.5px] font-semibold uppercase tracking-wider text-slate-500">{t("mockup.smartLimit.goalLabel")}</p>
+              <p className="text-[5.5px] font-semibold uppercase tracking-wider text-slate-500">
+                {t("mockup.smartLimit.goalLabel")}
+              </p>
               <p className="text-[8px] font-bold tabular-nums text-slate-900">R$ 350,00</p>
             </div>
           </div>
@@ -846,20 +885,30 @@ function DesktopDashboardMock() {
               <span>14%</span>
             </div>
             <div className="mt-0.5 h-0.5 overflow-hidden rounded-full bg-amber-100">
-              <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500" style={{ width: "14%" }} />
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500"
+                style={{ width: "14%" }}
+              />
             </div>
           </div>
 
           <div className="mt-1 grid grid-cols-3 gap-1">
             {[
               { l: t("mockup.smartLimit.variable"), v: "R$ 48,00", i: Wallet, t: "text-blue-600" },
-              { l: t("mockup.smartLimit.remaining"), v: "R$ 302,00", i: ArrowUpRight, t: "text-emerald-600" },
+              {
+                l: t("mockup.smartLimit.remaining"),
+                v: "R$ 302,00",
+                i: ArrowUpRight,
+                t: "text-emerald-600",
+              },
               { l: t("mockup.smartLimit.daysLeft"), v: "22", i: Gauge, t: "text-amber-600" },
             ].map((s) => (
               <div key={s.l} className="rounded-md border border-amber-200 bg-white px-1 py-0.5">
                 <div className="flex items-center gap-1">
                   <s.i className={cn("h-1.5 w-1.5", s.t)} />
-                  <p className="text-[5px] font-semibold uppercase tracking-wider text-slate-500 truncate">{s.l}</p>
+                  <p className="text-[5px] font-semibold uppercase tracking-wider text-slate-500 truncate">
+                    {s.l}
+                  </p>
                 </div>
                 <p className="text-[7px] font-bold tabular-nums text-slate-900">{s.v}</p>
               </div>
@@ -898,8 +947,12 @@ function TabletDashboardMock() {
 
         {/* header */}
         <div className="mt-2">
-          <p className="text-[6.5px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.sidebar.monthSummary")}</p>
-          <p className="text-[14px] font-bold leading-tight text-slate-900">{t("mockup.sidebar.exampleMonth")}</p>
+          <p className="text-[6.5px] font-semibold uppercase tracking-widest text-slate-400">
+            {t("mockup.sidebar.monthSummary")}
+          </p>
+          <p className="text-[14px] font-bold leading-tight text-slate-900">
+            {t("mockup.sidebar.exampleMonth")}
+          </p>
           <p className="text-[6.5px] text-slate-500">{t("mockup.sidebar.exampleSubtitle")}</p>
         </div>
 
@@ -918,13 +971,17 @@ function TabletDashboardMock() {
         </div>
 
         {/* radar */}
-        <p className="mt-2 text-[5.5px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.radar.title")}</p>
+        <p className="mt-2 text-[5.5px] font-semibold uppercase tracking-widest text-slate-400">
+          {t("mockup.radar.title")}
+        </p>
         <div className="mt-1 grid grid-cols-2 gap-1.5">
           {radarKpis.map((k) => (
             <div key={k.l} className="rounded-lg border border-slate-200 bg-white p-1.5">
               <div className="flex items-center justify-between">
                 <p className="text-[5.5px] font-semibold tracking-wider text-slate-500">{k.l}</p>
-                <span className={cn("grid h-3 w-3 place-items-center rounded-full", k.bg)}>{k.icon}</span>
+                <span className={cn("grid h-3 w-3 place-items-center rounded-full", k.bg)}>
+                  {k.icon}
+                </span>
               </div>
               <p className="mt-0.5 text-[9px] font-bold tabular-nums text-slate-900">{k.v}</p>
               <p className="text-[5.5px] text-slate-400">{k.s}</p>
@@ -939,19 +996,27 @@ function TabletDashboardMock() {
               <span className="grid h-3 w-3 place-items-center rounded-full bg-amber-100">
                 <Sparkles className="h-1.5 w-1.5 text-amber-600" />
               </span>
-              <p className="text-[6px] font-bold uppercase tracking-wider text-amber-700">{t("mockup.smartLimit.title")}</p>
+              <p className="text-[6px] font-bold uppercase tracking-wider text-amber-700">
+                {t("mockup.smartLimit.title")}
+              </p>
             </div>
             <span className="flex items-center gap-0.5 rounded-full border border-amber-300 bg-white px-1 py-0.5 text-[5.5px] font-semibold text-amber-700">
               <Gauge className="h-1.5 w-1.5" /> {t("mockup.smartLimit.watchPace")}
             </span>
           </div>
-          <p className="mt-1 text-[6px] font-semibold text-amber-800">{t("mockup.smartLimit.ignoresFixed")}</p>
+          <p className="mt-1 text-[6px] font-semibold text-amber-800">
+            {t("mockup.smartLimit.ignoresFixed")}
+          </p>
           <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-amber-300 bg-white px-1.5 py-0.5 text-[5.5px] font-semibold text-amber-700">
             <SlidersHorizontal className="h-1.5 w-1.5" /> {t("mockup.smartLimit.onlyVariable")}
           </span>
           <div className="mt-1 flex items-baseline gap-1">
-            <p className="text-[16px] font-bold leading-none tabular-nums text-amber-700">R$ 13,73</p>
-            <span className="text-[7px] font-semibold text-amber-600">{t("mockup.smartLimit.perDay")}</span>
+            <p className="text-[16px] font-bold leading-none tabular-nums text-amber-700">
+              R$ 13,73
+            </p>
+            <span className="text-[7px] font-semibold text-amber-600">
+              {t("mockup.smartLimit.perDay")}
+            </span>
           </div>
           <p className="mt-0.5 text-[5.5px] leading-snug text-amber-800/80">
             {t("mockup.smartLimit.keepBelow", { value: "R$ 13,73" })}
@@ -970,8 +1035,18 @@ function TabletDashboardMock() {
             { i: LayoutGrid, l: t("mockup.nav.more") },
           ].map(({ i: Icon, l, active }) => (
             <div key={l} className="flex flex-col items-center gap-0.5">
-              <Icon className={cn("h-2.5 w-2.5", active ? "text-slate-900" : "text-slate-400")} strokeWidth={active ? 2.4 : 1.8} />
-              <span className={cn("text-[5px] font-semibold", active ? "text-slate-900" : "text-slate-400")}>{l}</span>
+              <Icon
+                className={cn("h-2.5 w-2.5", active ? "text-slate-900" : "text-slate-400")}
+                strokeWidth={active ? 2.4 : 1.8}
+              />
+              <span
+                className={cn(
+                  "text-[5px] font-semibold",
+                  active ? "text-slate-900" : "text-slate-400",
+                )}
+              >
+                {l}
+              </span>
             </div>
           ))}
         </div>
@@ -1037,8 +1112,22 @@ function FluxoLineChart({ className, compact = false }: { className?: string; co
       })}
       <path d={areaPath(despesas)} fill="url(#fluxoDespesas)" />
       <path d={areaPath(receitas)} fill="url(#fluxoReceitas)" />
-      <path d={toPath(despesas)} fill="none" stroke="#3b82f6" strokeWidth={1.4} strokeLinejoin="round" strokeLinecap="round" />
-      <path d={toPath(receitas)} fill="none" stroke="#10b981" strokeWidth={1.6} strokeLinejoin="round" strokeLinecap="round" />
+      <path
+        d={toPath(despesas)}
+        fill="none"
+        stroke="#3b82f6"
+        strokeWidth={1.4}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <path
+        d={toPath(receitas)}
+        fill="none"
+        stroke="#10b981"
+        strokeWidth={1.6}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
       {!compact &&
         receitas.map((v, i) => {
           const x = pad.l + i * xStep;
@@ -1077,9 +1166,15 @@ function MobileDashboardMock() {
 
         {/* header */}
         <div className="mt-1.5 min-w-0">
-          <p className="text-[5px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.sidebar.monthSummary")}</p>
-          <p className="text-[10px] font-bold leading-tight text-slate-900">{t("mockup.sidebar.exampleMonth")}</p>
-          <p className="text-[5px] text-slate-500 truncate">{t("mockup.sidebar.exampleSubtitle")}</p>
+          <p className="text-[5px] font-semibold uppercase tracking-widest text-slate-400">
+            {t("mockup.sidebar.monthSummary")}
+          </p>
+          <p className="text-[10px] font-bold leading-tight text-slate-900">
+            {t("mockup.sidebar.exampleMonth")}
+          </p>
+          <p className="text-[5px] text-slate-500 truncate">
+            {t("mockup.sidebar.exampleSubtitle")}
+          </p>
         </div>
 
         {/* Alertas */}
@@ -1097,7 +1192,9 @@ function MobileDashboardMock() {
         </div>
 
         {/* radar */}
-        <p className="mt-1.5 text-[4.5px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.radar.title")}</p>
+        <p className="mt-1.5 text-[4.5px] font-semibold uppercase tracking-widest text-slate-400">
+          {t("mockup.radar.title")}
+        </p>
         <div className="mt-0.5 grid grid-cols-2 gap-1">
           {radarKpis.map((k) => (
             <div key={k.l} className="rounded-md border border-slate-200 bg-white p-1">
@@ -1107,7 +1204,9 @@ function MobileDashboardMock() {
                   {k.icon}
                 </span>
               </div>
-              <p className="mt-0.5 text-[7px] font-bold tabular-nums text-slate-900 truncate">{k.v}</p>
+              <p className="mt-0.5 text-[7px] font-bold tabular-nums text-slate-900 truncate">
+                {k.v}
+              </p>
               <p className="text-[4.5px] text-slate-400 truncate">{k.s}</p>
             </div>
           ))}
@@ -1120,13 +1219,17 @@ function MobileDashboardMock() {
               <span className="grid h-2.5 w-2.5 shrink-0 place-items-center rounded-full bg-amber-100">
                 <Sparkles className="h-1 w-1 text-amber-600" />
               </span>
-              <p className="whitespace-pre-line text-[5px] font-bold uppercase leading-tight tracking-wider text-amber-700">{smartTitleShort}</p>
+              <p className="whitespace-pre-line text-[5px] font-bold uppercase leading-tight tracking-wider text-amber-700">
+                {smartTitleShort}
+              </p>
             </div>
             <span className="flex shrink-0 items-center gap-0.5 rounded-full border border-amber-300 bg-white px-1 py-0.5 text-[4.5px] font-semibold text-amber-700">
               <Gauge className="h-1 w-1" /> {t("mockup.smartLimit.watchPace")}
             </span>
           </div>
-          <p className="mt-1 text-[5px] font-semibold text-amber-800">{t("mockup.smartLimit.ignoresFixed")}</p>
+          <p className="mt-1 text-[5px] font-semibold text-amber-800">
+            {t("mockup.smartLimit.ignoresFixed")}
+          </p>
           <span className="mt-1 inline-flex items-center gap-0.5 rounded-full border border-amber-300 bg-white px-1 py-0.5 text-[4.5px] font-semibold text-amber-700">
             <SlidersHorizontal className="h-1 w-1" /> {t("mockup.smartLimit.onlyVariable")}
           </span>
@@ -1144,8 +1247,18 @@ function MobileDashboardMock() {
             { i: LayoutGrid, l: t("mockup.nav.more") },
           ].map(({ i: Icon, l, active }) => (
             <div key={l} className="flex flex-col items-center gap-0.5">
-              <Icon className={cn("h-2 w-2", active ? "text-slate-900" : "text-slate-400")} strokeWidth={active ? 2.4 : 1.8} />
-              <span className={cn("text-[4px] font-semibold", active ? "text-slate-900" : "text-slate-400")}>{l}</span>
+              <Icon
+                className={cn("h-2 w-2", active ? "text-slate-900" : "text-slate-400")}
+                strokeWidth={active ? 2.4 : 1.8}
+              />
+              <span
+                className={cn(
+                  "text-[4px] font-semibold",
+                  active ? "text-slate-900" : "text-slate-400",
+                )}
+              >
+                {l}
+              </span>
             </div>
           ))}
         </div>
@@ -1178,24 +1291,48 @@ function HeroDashboardMock() {
         </div>
         {/* KPI grid */}
         <div className="mt-4 grid grid-cols-2 gap-2.5">
-          <KpiMini label={t("mockup.dashboard.balance")} value="R$ 3.142,80" tone="brand" icon={<Wallet className="h-3.5 w-3.5" />} />
-          <KpiMini label={t("mockup.dashboard.income")} value="R$ 6.420,00" tone="success" icon={<ArrowUpRight className="h-3.5 w-3.5" />} />
-          <KpiMini label={t("mockup.dashboard.expenses")} value="R$ 3.277,20" tone="danger" icon={<ArrowDownRight className="h-3.5 w-3.5" />} />
-          <KpiMini label={t("mockup.dashboard.toPay")} value="R$ 980,00" tone="warning" icon={<Receipt className="h-3.5 w-3.5" />} />
+          <KpiMini
+            label={t("mockup.dashboard.balance")}
+            value="R$ 3.142,80"
+            tone="brand"
+            icon={<Wallet className="h-3.5 w-3.5" />}
+          />
+          <KpiMini
+            label={t("mockup.dashboard.income")}
+            value="R$ 6.420,00"
+            tone="success"
+            icon={<ArrowUpRight className="h-3.5 w-3.5" />}
+          />
+          <KpiMini
+            label={t("mockup.dashboard.expenses")}
+            value="R$ 3.277,20"
+            tone="danger"
+            icon={<ArrowDownRight className="h-3.5 w-3.5" />}
+          />
+          <KpiMini
+            label={t("mockup.dashboard.toPay")}
+            value="R$ 980,00"
+            tone="warning"
+            icon={<Receipt className="h-3.5 w-3.5" />}
+          />
         </div>
         {/* Chart */}
         <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-700">{t("mockup.dashboard.monthFlow")}</p>
+              <p className="text-xs font-semibold text-slate-700">
+                {t("mockup.dashboard.monthFlow")}
+              </p>
               <p className="text-[10px] text-slate-400">{t("mockup.dashboard.incomeVsExpenses")}</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                <span className="h-1.5 w-2 rounded-full bg-emerald-500" />{t("mockup.dashboard.incomeShort")}
+                <span className="h-1.5 w-2 rounded-full bg-emerald-500" />
+                {t("mockup.dashboard.incomeShort")}
               </span>
               <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                <span className="h-1.5 w-2 rounded-full bg-blue-500" />{t("mockup.dashboard.expensesShort")}
+                <span className="h-1.5 w-2 rounded-full bg-blue-500" />
+                {t("mockup.dashboard.expensesShort")}
               </span>
               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                 +12%
@@ -1204,13 +1341,19 @@ function HeroDashboardMock() {
           </div>
           <FluxoLineChart className="mt-3 h-24 w-full" />
           <div className="mt-1 flex items-center justify-between text-[9px] text-slate-400">
-            <span>01</span><span>07</span><span>14</span><span>21</span><span>28</span>
+            <span>01</span>
+            <span>07</span>
+            <span>14</span>
+            <span>21</span>
+            <span>28</span>
           </div>
         </div>
         {/* Limite */}
         <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-700">{t("mockup.dashboard.smartLimit")}</p>
+            <p className="text-xs font-semibold text-slate-700">
+              {t("mockup.dashboard.smartLimit")}
+            </p>
             <p className="text-xs font-semibold tabular-nums text-slate-500">62%</p>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
@@ -1244,7 +1387,9 @@ function KpiMini({
     <div className="rounded-xl border border-slate-200 bg-white p-2.5">
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{label}</p>
-        <span className={cn("grid h-6 w-6 place-items-center rounded-md", toneMap[tone])}>{icon}</span>
+        <span className={cn("grid h-6 w-6 place-items-center rounded-md", toneMap[tone])}>
+          {icon}
+        </span>
       </div>
       <p className="mt-1 text-sm font-bold tabular-nums text-slate-900 sm:text-base">{value}</p>
     </div>
@@ -1322,10 +1467,7 @@ function HowItWorks() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/60 to-white py-24 sm:py-28">
       {/* Decorative background */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
-      >
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute left-1/2 top-10 h-[420px] w-[820px] -translate-x-1/2 rounded-full bg-gradient-to-br from-blue-100/40 via-transparent to-violet-100/40 blur-3xl" />
         <div
           className="absolute inset-0 opacity-[0.35]"
@@ -1402,9 +1544,7 @@ function HowItWorks() {
                   {s.tag}
                 </span>
 
-                <h3 className="mt-3 text-xl font-bold tracking-tight text-slate-900">
-                  {s.title}
-                </h3>
+                <h3 className="mt-3 text-xl font-bold tracking-tight text-slate-900">{s.title}</h3>
                 <p className="mt-2 text-[14.5px] leading-relaxed text-slate-600">{s.text}</p>
 
                 {/* Mobile connector arrow (between cards) */}
@@ -1530,12 +1670,42 @@ const SCREENS: { key: ScreenKey; label: string; icon: typeof LayoutDashboard; de
 ];
 
 const SCREEN_HIGHLIGHTS: Record<ScreenKey, string[]> = {
-  dashboard: ["Saldo, receitas e despesas", "Fluxo do mês em gráfico", "Limite inteligente", "Alertas e calendário"],
-  gastos: ["Filtro por mês de referência", "Categorias e formas de pagamento", "Total e média do mês", "Lista clara e organizada"],
-  cartoes: ["Cartão visual com limite", "Fatura aberta e vencimento", "Compras e parcelas", "Marcar fatura como paga"],
-  metas: ["Capa visual da meta", "Progresso animado", "Quanto falta para concluir", "Histórico de aportes"],
-  investimentos: ["Carteira total e variação", "Gráfico de crescimento", "Distribuição por classe", "Resumo visual rápido"],
-  guardado: ["Total reservado", "Valor por banco e carteira", "Visual seguro e limpo", "Acompanhamento mensal"],
+  dashboard: [
+    "Saldo, receitas e despesas",
+    "Fluxo do mês em gráfico",
+    "Limite inteligente",
+    "Alertas e calendário",
+  ],
+  gastos: [
+    "Filtro por mês de referência",
+    "Categorias e formas de pagamento",
+    "Total e média do mês",
+    "Lista clara e organizada",
+  ],
+  cartoes: [
+    "Cartão visual com limite",
+    "Fatura aberta e vencimento",
+    "Compras e parcelas",
+    "Marcar fatura como paga",
+  ],
+  metas: [
+    "Capa visual da meta",
+    "Progresso animado",
+    "Quanto falta para concluir",
+    "Histórico de aportes",
+  ],
+  investimentos: [
+    "Carteira total e variação",
+    "Gráfico de crescimento",
+    "Distribuição por classe",
+    "Resumo visual rápido",
+  ],
+  guardado: [
+    "Total reservado",
+    "Valor por banco e carteira",
+    "Visual seguro e limpo",
+    "Acompanhamento mensal",
+  ],
 };
 
 function ScreensTabs() {
@@ -1561,7 +1731,10 @@ function ScreensTabs() {
   const highlights = t(`screens.highlights.${active}`, { returnObjects: true }) as string[];
 
   return (
-    <section id="como-funciona" className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white py-20 sm:py-24">
+    <section
+      id="como-funciona"
+      className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white py-20 sm:py-24"
+    >
       {/* soft background accents */}
       <div
         aria-hidden
@@ -1749,7 +1922,9 @@ function FeatureSplit({
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 sm:px-6 lg:grid-cols-12 lg:gap-14 lg:px-8">
         <Reveal className={cn("lg:col-span-5", reverse && "lg:order-2")}>
           <Eyebrow>{eyebrow}</Eyebrow>
-          <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">{title}</h2>
+          <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+            {title}
+          </h2>
           <p className="mt-4 text-base leading-relaxed text-slate-600">{text}</p>
           <ul className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {bullets.map((b) => (
@@ -1773,7 +1948,9 @@ function FeatureSplit({
 function MockShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="rounded-[28px] border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3 shadow-[0_36px_70px_-30px_rgba(15,23,42,0.32)]">
-      <div className="rounded-[22px] border border-slate-200/70 bg-white p-4 sm:p-5">{children}</div>
+      <div className="rounded-[22px] border border-slate-200/70 bg-white p-4 sm:p-5">
+        {children}
+      </div>
     </div>
   );
 }
@@ -1781,10 +1958,30 @@ function MockShell({ children }: { children: React.ReactNode }) {
 function GastosMock() {
   const { t } = useTranslation("landing");
   const items = [
-    { c: t("mockup.gastos.items.market"), avatarKey: "Mercado", v: "R$ 340,90", t: t("mockup.gastos.when.today") },
-    { c: t("mockup.gastos.items.restaurant"), avatarKey: "Restaurante", v: "R$ 78,50", t: t("mockup.gastos.when.yesterday") },
-    { c: t("mockup.gastos.items.transport"), avatarKey: "Transporte", v: "R$ 24,00", t: t("mockup.gastos.when.daysAgo", { n: 2 }) },
-    { c: t("mockup.gastos.items.subscription"), avatarKey: "Assinatura", v: "R$ 39,90", t: t("mockup.gastos.when.daysAgo", { n: 3 }) },
+    {
+      c: t("mockup.gastos.items.market"),
+      avatarKey: "Mercado",
+      v: "R$ 340,90",
+      t: t("mockup.gastos.when.today"),
+    },
+    {
+      c: t("mockup.gastos.items.restaurant"),
+      avatarKey: "Restaurante",
+      v: "R$ 78,50",
+      t: t("mockup.gastos.when.yesterday"),
+    },
+    {
+      c: t("mockup.gastos.items.transport"),
+      avatarKey: "Transporte",
+      v: "R$ 24,00",
+      t: t("mockup.gastos.when.daysAgo", { n: 2 }),
+    },
+    {
+      c: t("mockup.gastos.items.subscription"),
+      avatarKey: "Assinatura",
+      v: "R$ 39,90",
+      t: t("mockup.gastos.when.daysAgo", { n: 3 }),
+    },
   ];
   const filters = [
     t("mockup.gastos.filterDate"),
@@ -1796,7 +1993,9 @@ function GastosMock() {
     <MockShell>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.gastos.eyebrow")}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+            {t("mockup.gastos.eyebrow")}
+          </p>
           <p className="text-base font-bold text-slate-900">R$ 3.277,20</p>
         </div>
         <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 sm:flex-wrap sm:justify-end sm:overflow-visible">
@@ -1832,11 +2031,15 @@ function GastosMock() {
       </ul>
       <div className="mt-3 grid grid-cols-2 gap-2.5">
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("mockup.gastos.total")}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            {t("mockup.gastos.total")}
+          </p>
           <p className="text-sm font-bold tabular-nums text-slate-900">R$ 3.277,20</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("mockup.gastos.average")}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            {t("mockup.gastos.average")}
+          </p>
           <p className="text-sm font-bold tabular-nums text-slate-900">R$ 109,24</p>
         </div>
       </div>
@@ -1872,18 +2075,26 @@ function CartaoMock() {
         <div className="relative mt-5 flex items-center gap-3">
           <div className="h-7 w-9 rounded-md bg-gradient-to-br from-amber-200 via-amber-300 to-amber-500 shadow-inner ring-1 ring-amber-100/40" />
           <div className="flex flex-col">
-            <span className="text-[9px] uppercase tracking-widest opacity-60">{t("mockup.card.contactless")}</span>
+            <span className="text-[9px] uppercase tracking-widest opacity-60">
+              {t("mockup.card.contactless")}
+            </span>
           </div>
         </div>
-        <p className="relative mt-3 font-mono text-base tracking-widest opacity-90">•••• •••• •••• 4218</p>
+        <p className="relative mt-3 font-mono text-base tracking-widest opacity-90">
+          •••• •••• •••• 4218
+        </p>
         <div className="relative mt-4 flex items-end justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-wider opacity-70">{t("mockup.card.limitAvailable")}</p>
+            <p className="text-[10px] uppercase tracking-wider opacity-70">
+              {t("mockup.card.limitAvailable")}
+            </p>
             <p className="text-lg font-bold tabular-nums">R$ 4.820,00</p>
             <p className="mt-0.5 text-[10px] opacity-60">{t("mockup.card.ofTotal")}</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] uppercase tracking-wider opacity-70">{t("mockup.card.due")}</p>
+            <p className="text-[10px] uppercase tracking-wider opacity-70">
+              {t("mockup.card.due")}
+            </p>
             <p className="text-sm font-semibold">15/12</p>
             <p className="text-[10px] opacity-60">VISA</p>
           </div>
@@ -1936,7 +2147,11 @@ function CartaoMock() {
 function MetaCover({ kind }: { kind: "apartment" | "beach" | "car" | "reserve" }) {
   if (kind === "apartment") {
     return (
-      <svg viewBox="0 0 600 220" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
+      <svg
+        viewBox="0 0 600 220"
+        preserveAspectRatio="xMidYMid slice"
+        className="absolute inset-0 h-full w-full"
+      >
         <defs>
           <linearGradient id="apt-sky" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#fde68a" />
@@ -1992,7 +2207,14 @@ function MetaCover({ kind }: { kind: "apartment" | "beach" | "car" | "reserve" }
         <g fill="#fde68a" opacity="0.85">
           {Array.from({ length: 5 }).map((_, r) =>
             Array.from({ length: 3 }).map((_, c) => (
-              <rect key={`s-${r}-${c}`} x={340 + c * 24} y={112 + r * 20} width="14" height="11" rx="1.5" />
+              <rect
+                key={`s-${r}-${c}`}
+                x={340 + c * 24}
+                y={112 + r * 20}
+                width="14"
+                height="11"
+                rx="1.5"
+              />
             )),
           )}
         </g>
@@ -2001,7 +2223,14 @@ function MetaCover({ kind }: { kind: "apartment" | "beach" | "car" | "reserve" }
         <g fill="#fde68a" opacity="0.85">
           {Array.from({ length: 4 }).map((_, r) =>
             Array.from({ length: 2 }).map((_, c) => (
-              <rect key={`l-${r}-${c}`} x={150 + c * 20} y={130 + r * 22} width="12" height="11" rx="1.5" />
+              <rect
+                key={`l-${r}-${c}`}
+                x={150 + c * 20}
+                y={130 + r * 22}
+                width="12"
+                height="11"
+                rx="1.5"
+              />
             )),
           )}
         </g>
@@ -2012,7 +2241,11 @@ function MetaCover({ kind }: { kind: "apartment" | "beach" | "car" | "reserve" }
   }
   if (kind === "beach") {
     return (
-      <svg viewBox="0 0 600 220" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
+      <svg
+        viewBox="0 0 600 220"
+        preserveAspectRatio="xMidYMid slice"
+        className="absolute inset-0 h-full w-full"
+      >
         <defs>
           <linearGradient id="b-sky" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#fde68a" />
@@ -2032,7 +2265,11 @@ function MetaCover({ kind }: { kind: "apartment" | "beach" | "car" | "reserve" }
   }
   if (kind === "car") {
     return (
-      <svg viewBox="0 0 600 220" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
+      <svg
+        viewBox="0 0 600 220"
+        preserveAspectRatio="xMidYMid slice"
+        className="absolute inset-0 h-full w-full"
+      >
         <defs>
           <linearGradient id="c-sky" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#fb7185" />
@@ -2050,7 +2287,11 @@ function MetaCover({ kind }: { kind: "apartment" | "beach" | "car" | "reserve" }
   }
   // reserve / piggy
   return (
-    <svg viewBox="0 0 600 220" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
+    <svg
+      viewBox="0 0 600 220"
+      preserveAspectRatio="xMidYMid slice"
+      className="absolute inset-0 h-full w-full"
+    >
       <defs>
         <linearGradient id="r-bg" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#10b981" />
@@ -2066,8 +2307,24 @@ function MetaCover({ kind }: { kind: "apartment" | "beach" | "car" | "reserve" }
       <g transform="translate(225,60)">
         <ellipse cx="75" cy="70" rx="80" ry="55" fill="#fbbf24" />
         <circle cx="125" cy="55" r="10" fill="#0f172a" />
-        <rect x="20" y="20" width="50" height="14" rx="3" fill="#fbbf24" transform="rotate(-12,45,27)" />
-        <rect x="55" y="25" width="6" height="3" rx="1" fill="#0f172a" transform="rotate(-12,45,27)" />
+        <rect
+          x="20"
+          y="20"
+          width="50"
+          height="14"
+          rx="3"
+          fill="#fbbf24"
+          transform="rotate(-12,45,27)"
+        />
+        <rect
+          x="55"
+          y="25"
+          width="6"
+          height="3"
+          rx="1"
+          fill="#0f172a"
+          transform="rotate(-12,45,27)"
+        />
         <rect x="45" y="120" width="10" height="20" fill="#f59e0b" />
         <rect x="95" y="120" width="10" height="20" fill="#f59e0b" />
         <circle cx="140" cy="48" r="2.5" fill="#0f172a" />
@@ -2084,7 +2341,12 @@ function MetaMock() {
   const pct = Math.round((guardado / objetivo) * 100);
   const falta = objetivo - guardado;
 
-  const otherGoals: { name: string; pct: number; saved: string; cover: "beach" | "car" | "reserve" }[] = [
+  const otherGoals: {
+    name: string;
+    pct: number;
+    saved: string;
+    cover: "beach" | "car" | "reserve";
+  }[] = [
     { name: t("mockup.meta.names.beach"), pct: 68, saved: "R$ 3.400", cover: "beach" },
     { name: t("mockup.meta.names.car"), pct: 32, saved: "R$ 8.000", cover: "car" },
     { name: t("mockup.meta.names.reserve"), pct: 84, saved: "R$ 8.400", cover: "reserve" },
@@ -2101,7 +2363,9 @@ function MetaMock() {
           <div
             aria-hidden
             className="absolute inset-0"
-            style={{ background: "linear-gradient(180deg, rgba(15,23,42,0) 50%, rgba(15,23,42,0.45) 100%)" }}
+            style={{
+              background: "linear-gradient(180deg, rgba(15,23,42,0) 50%, rgba(15,23,42,0.45) 100%)",
+            }}
           />
           <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-blue-700 backdrop-blur">
             <Target className="h-3 w-3" /> {t("mockup.meta.active")}
@@ -2116,7 +2380,9 @@ function MetaMock() {
 
         {/* Body */}
         <div className="p-4 sm:p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("mockup.meta.eyebrow")}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            {t("mockup.meta.eyebrow")}
+          </p>
           <h4 className="mt-0.5 text-lg font-bold text-slate-900">{t("mockup.meta.title")}</h4>
 
           {/* Saved + total */}
@@ -2147,9 +2413,14 @@ function MetaMock() {
               />
             </div>
             <div className="mt-1.5 flex items-center justify-between text-[11px]">
-              <span className="font-semibold text-emerald-700">{t("mockup.meta.complete", { pct })}</span>
+              <span className="font-semibold text-emerald-700">
+                {t("mockup.meta.complete", { pct })}
+              </span>
               <span className="text-slate-500">
-                {t("mockup.meta.remaining")} <span className="font-semibold text-slate-700">R$ {falta.toLocaleString("pt-BR")},00</span>
+                {t("mockup.meta.remaining")}{" "}
+                <span className="font-semibold text-slate-700">
+                  R$ {falta.toLocaleString("pt-BR")},00
+                </span>
               </span>
             </div>
           </div>
@@ -2159,10 +2430,11 @@ function MetaMock() {
       {/* Other goals — variety */}
       <div className="mt-4">
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t("mockup.meta.otherGoals")}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            {t("mockup.meta.otherGoals")}
+          </p>
           <span className="text-[10px] font-medium text-slate-400">{t("mockup.meta.active3")}</span>
         </div>
-
 
         <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
           {otherGoals.map((g) => (
@@ -2174,7 +2446,9 @@ function MetaMock() {
                 <MetaCover kind={g.cover} />
               </div>
               <div className="p-1.5 sm:p-2">
-                <p className="line-clamp-1 text-[10px] font-semibold leading-tight text-slate-800 sm:text-[11px]">{g.name}</p>
+                <p className="line-clamp-1 text-[10px] font-semibold leading-tight text-slate-800 sm:text-[11px]">
+                  {g.name}
+                </p>
                 <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
                   <motion.div
                     initial={{ width: 0 }}
@@ -2199,15 +2473,38 @@ function MetaMock() {
 
 function ContasConectadasMock() {
   const contas = [
-    { nome: "Maria Silva", email: "maria@exemplo.com", nivel: "Administrador", cor: "#10b981", iniciais: "MS", status: "Aceito" },
-    { nome: "João Pereira", email: "joao@exemplo.com", nivel: "Ver e lançar", cor: "#3b82f6", iniciais: "JP", status: "Aceito" },
-    { nome: "Contador", email: "contador@escritorio.com", nivel: "Somente ver", cor: "#a855f7", iniciais: "CT", status: "Pendente" },
+    {
+      nome: "Maria Silva",
+      email: "maria@exemplo.com",
+      nivel: "Administrador",
+      cor: "#10b981",
+      iniciais: "MS",
+      status: "Aceito",
+    },
+    {
+      nome: "João Pereira",
+      email: "joao@exemplo.com",
+      nivel: "Ver e lançar",
+      cor: "#3b82f6",
+      iniciais: "JP",
+      status: "Aceito",
+    },
+    {
+      nome: "Contador",
+      email: "contador@escritorio.com",
+      nivel: "Somente ver",
+      cor: "#a855f7",
+      iniciais: "CT",
+      status: "Pendente",
+    },
   ];
   return (
     <MockShell>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Contas conectadas</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+            Contas conectadas
+          </p>
           <p className="text-2xl font-extrabold tabular-nums text-slate-900">3 pessoas</p>
           <p className="mt-0.5 text-[11px] text-slate-500">com acesso à sua conta</p>
         </div>
@@ -2217,8 +2514,14 @@ function ContasConectadasMock() {
       </div>
       <div className="mt-4 space-y-2">
         {contas.map((c) => (
-          <div key={c.email} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-full text-[11px] font-bold text-white" style={{ backgroundColor: c.cor }}>
+          <div
+            key={c.email}
+            className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-2.5"
+          >
+            <span
+              className="grid h-9 w-9 place-items-center rounded-full text-[11px] font-bold text-white"
+              style={{ backgroundColor: c.cor }}
+            >
               {c.iniciais}
             </span>
             <div className="min-w-0 flex-1">
@@ -2226,8 +2529,17 @@ function ContasConectadasMock() {
               <p className="truncate text-[11px] text-slate-500">{c.email}</p>
             </div>
             <div className="flex flex-col items-end gap-1">
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">{c.nivel}</span>
-              <span className={cn("text-[10px] font-medium", c.status === "Aceito" ? "text-emerald-600" : "text-amber-600")}>{c.status}</span>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+                {c.nivel}
+              </span>
+              <span
+                className={cn(
+                  "text-[10px] font-medium",
+                  c.status === "Aceito" ? "text-emerald-600" : "text-amber-600",
+                )}
+              >
+                {c.status}
+              </span>
             </div>
           </div>
         ))}
@@ -2247,7 +2559,9 @@ function InvestimentosMock() {
     <MockShell>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.invest.wallet")}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+            {t("mockup.invest.wallet")}
+          </p>
           <p className="text-2xl font-extrabold tabular-nums text-slate-900">R$ 48.320,90</p>
           <p className="mt-0.5 text-[11px] text-slate-500">{t("mockup.invest.totalAssets")}</p>
         </div>
@@ -2255,7 +2569,9 @@ function InvestimentosMock() {
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
             <ArrowUpRight className="h-3.5 w-3.5" /> +4,2%
           </span>
-          <span className="text-[10px] font-medium text-slate-400">{t("mockup.invest.vsLastMonth")}</span>
+          <span className="text-[10px] font-medium text-slate-400">
+            {t("mockup.invest.vsLastMonth")}
+          </span>
         </div>
       </div>
 
@@ -2312,7 +2628,9 @@ function InvestimentosMock() {
               <span className="shrink-0 text-[9px] font-bold text-emerald-600">{c.chip}</span>
             </div>
             <p className="mt-1 text-xs font-bold tabular-nums text-slate-900 sm:text-sm">{c.v}</p>
-            <p className="text-[9px] text-slate-500 sm:text-[10px]">{t("mockup.invest.ofPortfolio", { pct: c.pct })}</p>
+            <p className="text-[9px] text-slate-500 sm:text-[10px]">
+              {t("mockup.invest.ofPortfolio", { pct: c.pct })}
+            </p>
           </div>
         ))}
       </div>
@@ -2323,16 +2641,54 @@ function InvestimentosMock() {
 function GuardadoMock() {
   const { t } = useTranslation("landing");
   const items = [
-    { l: "Nubank", v: "R$ 2.100", pct: 43, logo: "/logos/bancos/nubank.svg", brand: "#820ad1", initial: "N", bar: "bg-violet-500", logoBg: "#fff" as string | null },
-    { l: "Inter", v: "R$ 1.480", pct: 30, logo: "/logos/bancos/banco-inter.svg", brand: "#ff7a00", initial: "I", bar: "bg-amber-500", logoBg: "#ff7a00" as string | null },
-    { l: "C6 Bank", v: "R$ 980", pct: 20, logo: "/logos/bancos/Logo_C6_Bank.svg", brand: "#1f1f1f", initial: "C6", bar: "bg-slate-700", logoBg: "#1f1f1f" as string | null },
-    { l: t("mockup.guardado.wallet"), v: "R$ 320", pct: 7, logo: null as string | null, brand: "#10b981", initial: "💵", bar: "bg-emerald-500", logoBg: null as string | null },
+    {
+      l: "Nubank",
+      v: "R$ 2.100",
+      pct: 43,
+      logo: "/logos/bancos/nubank.svg",
+      brand: "#820ad1",
+      initial: "N",
+      bar: "bg-violet-500",
+      logoBg: "#fff" as string | null,
+    },
+    {
+      l: "Inter",
+      v: "R$ 1.480",
+      pct: 30,
+      logo: "/logos/bancos/banco-inter.svg",
+      brand: "#ff7a00",
+      initial: "I",
+      bar: "bg-amber-500",
+      logoBg: "#ff7a00" as string | null,
+    },
+    {
+      l: "C6 Bank",
+      v: "R$ 980",
+      pct: 20,
+      logo: "/logos/bancos/Logo_C6_Bank.svg",
+      brand: "#1f1f1f",
+      initial: "C6",
+      bar: "bg-slate-700",
+      logoBg: "#1f1f1f" as string | null,
+    },
+    {
+      l: t("mockup.guardado.wallet"),
+      v: "R$ 320",
+      pct: 7,
+      logo: null as string | null,
+      brand: "#10b981",
+      initial: "💵",
+      bar: "bg-emerald-500",
+      logoBg: null as string | null,
+    },
   ];
   return (
     <MockShell>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{t("mockup.guardado.totalSaved")}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+            {t("mockup.guardado.totalSaved")}
+          </p>
           <p className="text-2xl font-extrabold tabular-nums text-slate-900">R$ 4.880,00</p>
           <p className="mt-0.5 text-[11px] text-slate-500">{t("mockup.guardado.reservesIn")}</p>
         </div>
@@ -2358,7 +2714,10 @@ function GuardadoMock() {
 
       <ul className="mt-4 grid grid-cols-2 gap-2.5">
         {items.map((it) => (
-          <li key={it.l} className="rounded-xl border border-slate-200 bg-white p-3 transition-shadow hover:shadow-[0_12px_28px_-18px_rgba(15,23,42,0.25)]">
+          <li
+            key={it.l}
+            className="rounded-xl border border-slate-200 bg-white p-3 transition-shadow hover:shadow-[0_12px_28px_-18px_rgba(15,23,42,0.25)]"
+          >
             <div className="flex items-center justify-between">
               <span
                 className="grid h-9 w-9 place-items-center overflow-hidden rounded-full ring-1 ring-slate-200"
@@ -2426,9 +2785,7 @@ function MoreFeatures() {
           <h2 className="mt-3 text-[1.65rem] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl">
             {t("more.title")}
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-base text-slate-600">
-            {t("more.subtitle")}
-          </p>
+          <p className="mx-auto mt-3 max-w-xl text-base text-slate-600">{t("more.subtitle")}</p>
         </div>
 
         <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
@@ -2443,12 +2800,8 @@ function MoreFeatures() {
                 >
                   <it.icon className="h-5 w-5" />
                 </div>
-                <h3 className="text-[15px] font-semibold text-slate-900">
-                  {it.title}
-                </h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-                  {it.text}
-                </p>
+                <h3 className="text-[15px] font-semibold text-slate-900">{it.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{it.text}</p>
               </div>
             </Reveal>
           ))}
@@ -2463,11 +2816,36 @@ function MoreFeatures() {
 function EmpresaInteligenteSection() {
   const { t } = useTranslation("landing");
   const cards = [
-    { icon: Building2, title: t("empresa.c1Title"), text: t("empresa.c1Text"), tone: "from-emerald-50 to-emerald-100/40 text-emerald-700 ring-emerald-100" },
-    { icon: Users, title: t("empresa.c2Title"), text: t("empresa.c2Text"), tone: "from-violet-50 to-violet-100/40 text-violet-700 ring-violet-100" },
-    { icon: LineChart, title: t("empresa.c3Title"), text: t("empresa.c3Text"), tone: "from-sky-50 to-sky-100/40 text-sky-700 ring-sky-100" },
-    { icon: ClipboardList, title: t("empresa.c4Title"), text: t("empresa.c4Text"), tone: "from-amber-50 to-amber-100/40 text-amber-700 ring-amber-100" },
-    { icon: Activity, title: t("empresa.c5Title"), text: t("empresa.c5Text"), tone: "from-rose-50 to-rose-100/40 text-rose-700 ring-rose-100" },
+    {
+      icon: Building2,
+      title: t("empresa.c1Title"),
+      text: t("empresa.c1Text"),
+      tone: "from-emerald-50 to-emerald-100/40 text-emerald-700 ring-emerald-100",
+    },
+    {
+      icon: Users,
+      title: t("empresa.c2Title"),
+      text: t("empresa.c2Text"),
+      tone: "from-violet-50 to-violet-100/40 text-violet-700 ring-violet-100",
+    },
+    {
+      icon: LineChart,
+      title: t("empresa.c3Title"),
+      text: t("empresa.c3Text"),
+      tone: "from-sky-50 to-sky-100/40 text-sky-700 ring-sky-100",
+    },
+    {
+      icon: ClipboardList,
+      title: t("empresa.c4Title"),
+      text: t("empresa.c4Text"),
+      tone: "from-amber-50 to-amber-100/40 text-amber-700 ring-amber-100",
+    },
+    {
+      icon: Activity,
+      title: t("empresa.c5Title"),
+      text: t("empresa.c5Text"),
+      tone: "from-rose-50 to-rose-100/40 text-rose-700 ring-rose-100",
+    },
   ];
 
   const trust = [
@@ -2477,10 +2855,7 @@ function EmpresaInteligenteSection() {
   ];
 
   return (
-    <section
-      id="mei-empresa"
-      className="relative overflow-hidden bg-white py-20 sm:py-28"
-    >
+    <section id="mei-empresa" className="relative overflow-hidden bg-white py-20 sm:py-28">
       {/* soft refined gradient accents */}
       <div
         aria-hidden
@@ -2495,11 +2870,9 @@ function EmpresaInteligenteSection() {
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-[0.18]"
         style={{
-          backgroundImage:
-            "radial-gradient(rgba(15,23,42,0.08) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(rgba(15,23,42,0.08) 1px, transparent 1px)",
           backgroundSize: "26px 26px",
-          maskImage:
-            "radial-gradient(ellipse at center, rgba(0,0,0,0.55), transparent 75%)",
+          maskImage: "radial-gradient(ellipse at center, rgba(0,0,0,0.55), transparent 75%)",
         }}
       />
 
@@ -2530,10 +2903,7 @@ function EmpresaInteligenteSection() {
                 <Reveal
                   key={c.title}
                   delay={i * 0.06}
-                  className={cn(
-                    i === 1 && "sm:translate-y-6",
-                    i === 3 && "sm:translate-y-6",
-                  )}
+                  className={cn(i === 1 && "sm:translate-y-6", i === 3 && "sm:translate-y-6")}
                 >
                   <div className="group relative h-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.18)] backdrop-blur transition-all hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_22px_44px_-18px_rgba(15,23,42,0.28)]">
                     <div
@@ -2544,12 +2914,8 @@ function EmpresaInteligenteSection() {
                     >
                       <c.icon className="h-5 w-5" />
                     </div>
-                    <h3 className="text-[15px] font-semibold text-slate-900">
-                      {c.title}
-                    </h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-                      {c.text}
-                    </p>
+                    <h3 className="text-[15px] font-semibold text-slate-900">{c.title}</h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{c.text}</p>
                     <ArrowUpRight className="absolute right-4 top-4 h-4 w-4 text-slate-300 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-slate-600" />
                   </div>
                 </Reveal>
@@ -2565,9 +2931,7 @@ function EmpresaInteligenteSection() {
                       <t.icon className="h-4 w-4" />
                     </span>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-900">
-                        {t.title}
-                      </p>
+                      <p className="text-sm font-semibold text-slate-900">{t.title}</p>
                       <p className="truncate text-xs text-slate-500">{t.text}</p>
                     </div>
                   </div>
@@ -2681,8 +3045,18 @@ function EmpresaVisual() {
           <LayoutDashboard className="h-3.5 w-3.5 text-slate-400" />
         </div>
         <div className="mt-3 space-y-2 text-sm">
-          <Row label={t("mockup.empresaFloating.incomeLabel")} value="R$ 28.560" trend="up" delta="+12%" />
-          <Row label={t("mockup.empresaFloating.expensesLabel")} value="R$ 16.230" trend="down" delta="-4%" />
+          <Row
+            label={t("mockup.empresaFloating.incomeLabel")}
+            value="R$ 28.560"
+            trend="up"
+            delta="+12%"
+          />
+          <Row
+            label={t("mockup.empresaFloating.expensesLabel")}
+            value="R$ 16.230"
+            trend="down"
+            delta="-4%"
+          />
           <div className="my-2 border-t border-dashed border-slate-200" />
           <div className="flex items-center justify-between">
             <span className="text-slate-600">{t("mockup.empresaFloating.balanceLabel")}</span>
@@ -2760,16 +3134,10 @@ function Row({
         <span
           className={cn(
             "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
-            up
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-rose-50 text-rose-600",
+            up ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-600",
           )}
         >
-          {up ? (
-            <TrendingUp className="h-2.5 w-2.5" />
-          ) : (
-            <TrendingDown className="h-2.5 w-2.5" />
-          )}
+          {up ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
           {delta}
         </span>
       </span>
@@ -2777,13 +3145,7 @@ function Row({
   );
 }
 
-function MiniChart({
-  color,
-  points,
-}: {
-  color: "emerald" | "violet";
-  points: number[];
-}) {
+function MiniChart({ color, points }: { color: "emerald" | "violet"; points: number[] }) {
   const w = 170;
   const h = 36;
   const max = Math.max(...points);
@@ -2803,7 +3165,14 @@ function MiniChart({
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="mt-2 h-9 w-full">
       <path d={area} fill={fill} />
-      <path d={path} fill="none" stroke={stroke} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d={path}
+        fill="none"
+        stroke={stroke}
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -2939,7 +3308,10 @@ function FreeAdsPlanCard() {
   return (
     <Reveal className="h-full">
       <div className="group relative flex h-full min-h-[520px] flex-col overflow-hidden rounded-3xl border border-emerald-200 bg-gradient-to-b from-emerald-50/80 via-white to-white px-5 py-6 text-slate-900 shadow-[0_10px_30px_-18px_rgba(15,118,110,0.2)] transition-all duration-300 hover:-translate-y-1 hover:border-emerald-300 hover:shadow-[0_22px_44px_-18px_rgba(15,118,110,0.28)] sm:px-6 xl:px-5">
-        <div aria-hidden className="pointer-events-none absolute -right-14 -top-16 h-36 w-36 rounded-full bg-emerald-100/70 blur-2xl" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-14 -top-16 h-36 w-36 rounded-full bg-emerald-100/70 blur-2xl"
+        />
         <div className="relative flex items-center justify-between gap-2">
           <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-800 ring-1 ring-emerald-200">
             {t("plans.freeAds.badge")}
@@ -2962,18 +3334,24 @@ function FreeAdsPlanCard() {
           </span>
           <span className="text-xs font-medium text-slate-500">/{t("plans.perMonth")}</span>
         </div>
-        <p className="relative mt-0.5 text-[11px] text-emerald-700">{t("plans.freeAds.description")}</p>
+        <p className="relative mt-0.5 text-[11px] text-emerald-700">
+          {t("plans.freeAds.description")}
+        </p>
 
         <div className="relative my-3 h-px w-full bg-gradient-to-r from-transparent via-emerald-200 to-transparent" />
         <ul className="relative space-y-1.5">
-          {Array.isArray(features) && features.map((feature) => (
-            <li key={feature} className="flex items-start gap-2 text-[12.5px] leading-snug text-slate-700">
-              <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700">
-                <Check className="h-2.5 w-2.5" strokeWidth={3} />
-              </span>
-              <span>{feature}</span>
-            </li>
-          ))}
+          {Array.isArray(features) &&
+            features.map((feature) => (
+              <li
+                key={feature}
+                className="flex items-start gap-2 text-[12.5px] leading-snug text-slate-700"
+              >
+                <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+                  <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                </span>
+                <span>{feature}</span>
+              </li>
+            ))}
         </ul>
         <p className="relative mt-3 text-[11px] leading-relaxed text-slate-500">
           {t("plans.freeAds.paidNote")}
@@ -2993,7 +3371,13 @@ function FreeAdsPlanCard() {
   );
 }
 
-function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[number]; index: number }) {
+function PlanCardItem({
+  plan: p,
+  index: i,
+}: {
+  plan: (typeof COMMERCIAL_PLANS)[number];
+  index: number;
+}) {
   const { t } = useTranslation("landing");
   const [expanded, setExpanded] = useState(false);
   const tag = HIGHLIGHT[p.tier];
@@ -3016,7 +3400,7 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
       ? t("plans.highlightPremium")
       : t("plans.highlightMEI")
     : "";
-  const description = (t(`plans.descriptions.${p.tier}`, { defaultValue: "" }) as string);
+  const description = t(`plans.descriptions.${p.tier}`, { defaultValue: "" }) as string;
   const planName = t(`plans.names.${p.tier}`, { defaultValue: p.name });
 
   return (
@@ -3070,7 +3454,12 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
           )}
         </div>
 
-        <h3 className={cn("relative mt-3 text-base lg:text-[1.0625rem] font-bold tracking-tight", featured ? "text-white" : "text-slate-900")}>
+        <h3
+          className={cn(
+            "relative mt-3 text-base lg:text-[1.0625rem] font-bold tracking-tight",
+            featured ? "text-white" : "text-slate-900",
+          )}
+        >
           {planName}
         </h3>
         <p
@@ -3091,11 +3480,18 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
           >
             {priceMain.trim()}
           </span>
-          <span className={cn("text-xs font-medium", featured ? "text-slate-400" : "text-slate-500")}>
+          <span
+            className={cn("text-xs font-medium", featured ? "text-slate-400" : "text-slate-500")}
+          >
             /{t("plans.perMonth")}
           </span>
         </div>
-        <p className={cn("relative mt-0.5 text-[11px]", featured ? "text-slate-400" : "text-slate-400")}>
+        <p
+          className={cn(
+            "relative mt-0.5 text-[11px]",
+            featured ? "text-slate-400" : "text-slate-400",
+          )}
+        >
           {t("plans.cancelAnytime")}
         </p>
 
@@ -3120,7 +3516,9 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
               <span
                 className={cn(
                   "mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full",
-                  featured ? "bg-emerald-400/20 text-emerald-300" : "bg-emerald-50 text-emerald-700",
+                  featured
+                    ? "bg-emerald-400/20 text-emerald-300"
+                    : "bg-emerald-50 text-emerald-700",
                 )}
               >
                 <Check className="h-2.5 w-2.5" strokeWidth={3} />
@@ -3165,7 +3563,10 @@ function PlanCardItem({ plan: p, index: i }: { plan: (typeof COMMERCIAL_PLANS)[n
 function Plans() {
   const { t } = useTranslation("landing");
   return (
-    <section id="planos" className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/40 to-white py-20 sm:py-24">
+    <section
+      id="planos"
+      className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/40 to-white py-20 sm:py-24"
+    >
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-0 opacity-60"
@@ -3225,7 +3626,11 @@ function Plans() {
         {/* Helper note */}
         <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-slate-500">
           {t("plans.helperA")}{" "}
-          <a href="#duvidas" onClick={(e) => handleAnchorClick(e, "#duvidas")} className="font-semibold text-blue-700 underline-offset-2 hover:underline">
+          <a
+            href="#duvidas"
+            onClick={(e) => handleAnchorClick(e, "#duvidas")}
+            className="font-semibold text-blue-700 underline-offset-2 hover:underline"
+          >
             {t("plans.helperLink")}
           </a>{" "}
           {t("plans.helperB")}
@@ -3283,8 +3688,7 @@ function BanksStrip() {
           backgroundImage:
             "radial-gradient(circle at 1px 1px, rgba(15,23,42,0.05) 1px, transparent 0)",
           backgroundSize: "26px 26px",
-          maskImage:
-            "radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, transparent 75%)",
+          maskImage: "radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, transparent 75%)",
           WebkitMaskImage:
             "radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, transparent 75%)",
         }}
@@ -3304,8 +3708,7 @@ function BanksStrip() {
         <div
           className="banks-marquee relative mt-12 overflow-hidden"
           style={{
-            maskImage:
-              "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)",
+            maskImage: "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)",
             WebkitMaskImage:
               "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)",
           }}
@@ -3379,16 +3782,12 @@ function Testimonials() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-white py-24 sm:py-28">
       {/* Decorative background */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
-      >
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute left-1/2 top-0 h-[480px] w-[920px] -translate-x-1/2 rounded-full bg-gradient-to-br from-blue-100/50 via-transparent to-emerald-100/40 blur-3xl" />
         <div
           className="absolute inset-0 opacity-[0.04]"
           style={{
-            backgroundImage:
-              "radial-gradient(circle at 1px 1px, rgb(15 23 42) 1px, transparent 0)",
+            backgroundImage: "radial-gradient(circle at 1px 1px, rgb(15 23 42) 1px, transparent 0)",
             backgroundSize: "28px 28px",
           }}
         />
@@ -3421,101 +3820,101 @@ function Testimonials() {
             const meta = TESTIMONIAL_META[i] ?? TESTIMONIAL_META[0];
             const tt = { ...item, ...meta };
             return (
-            <Reveal key={tt.name} delay={i * 0.08}>
-              <figure
-                className={cn(
-                  "group relative flex h-full flex-col overflow-hidden rounded-3xl p-7 sm:p-8 md:p-9 lg:p-8 transition-all duration-300",
-                  tt.highlight
-                    ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white shadow-[0_30px_70px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/10 lg:-translate-y-2 hover:-translate-y-3"
-                    : "border border-slate-200/80 bg-white/90 backdrop-blur shadow-[0_18px_44px_-26px_rgba(15,23,42,0.22)] hover:-translate-y-1 hover:shadow-[0_28px_60px_-26px_rgba(15,23,42,0.32)] hover:border-slate-300",
-                )}
-              >
-                {tt.highlight && (
-                  <>
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-400/30 to-blue-500/20 blur-2xl"
-                    />
-                    <span className="absolute right-5 top-5 inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/90 ring-1 ring-white/15 backdrop-blur">
-                      <Sparkles className="h-3 w-3" /> {t("testimonials.highlightTag")}
-                    </span>
-                  </>
-                )}
-
-                {/* Decorative quote mark */}
-                <span
-                  aria-hidden
+              <Reveal key={tt.name} delay={i * 0.08}>
+                <figure
                   className={cn(
-                    "absolute left-6 top-3 select-none font-serif text-[88px] leading-none",
-                    tt.highlight ? "text-white/10" : "text-slate-100",
+                    "group relative flex h-full flex-col overflow-hidden rounded-3xl p-7 sm:p-8 md:p-9 lg:p-8 transition-all duration-300",
+                    tt.highlight
+                      ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white shadow-[0_30px_70px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/10 lg:-translate-y-2 hover:-translate-y-3"
+                      : "border border-slate-200/80 bg-white/90 backdrop-blur shadow-[0_18px_44px_-26px_rgba(15,23,42,0.22)] hover:-translate-y-1 hover:shadow-[0_28px_60px_-26px_rgba(15,23,42,0.32)] hover:border-slate-300",
                   )}
                 >
-                  “
-                </span>
-
-                <div
-                  className={cn(
-                    "relative flex items-center gap-1",
-                    tt.highlight ? "text-amber-300" : "text-amber-400",
+                  {tt.highlight && (
+                    <>
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-400/30 to-blue-500/20 blur-2xl"
+                      />
+                      <span className="absolute right-5 top-5 inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/90 ring-1 ring-white/15 backdrop-blur">
+                        <Sparkles className="h-3 w-3" /> {t("testimonials.highlightTag")}
+                      </span>
+                    </>
                   )}
-                >
-                  {Array.from({ length: 5 }).map((_, k) => (
-                    <Star key={k} className="h-[18px] w-[18px] fill-current drop-shadow-sm" />
-                  ))}
-                </div>
 
-                <blockquote
-                  className={cn(
-                    "relative mt-5 flex-1 text-[15px] leading-[1.7] sm:text-[15.5px] md:text-base md:leading-[1.75] lg:text-[15.5px] lg:leading-relaxed",
-                    tt.highlight ? "text-white/90" : "text-slate-700",
-                  )}
-                >
-                  {tt.text}
-                </blockquote>
-
-                <figcaption
-                  className={cn(
-                    "relative mt-7 flex items-center gap-3 border-t pt-5 md:gap-4",
-                    tt.highlight ? "border-white/10" : "border-slate-100",
-                  )}
-                >
+                  {/* Decorative quote mark */}
                   <span
+                    aria-hidden
                     className={cn(
-                      "relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow-md ring-2 md:h-12 md:w-12 md:text-base",
-                      tt.color,
-                      tt.highlight ? "ring-white/20" : "ring-white",
+                      "absolute left-6 top-3 select-none font-serif text-[88px] leading-none",
+                      tt.highlight ? "text-white/10" : "text-slate-100",
                     )}
                   >
-                    {tt.initials}
+                    “
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className={cn(
-                        "text-sm font-semibold tracking-tight md:text-[15px] lg:truncate",
-                        tt.highlight ? "text-white" : "text-slate-900",
-                      )}
-                    >
-                      {tt.name}
-                    </p>
-                    <p
-                      className={cn(
-                        "text-[12px] md:text-[13px] lg:truncate",
-                        tt.highlight ? "text-white/60" : "text-slate-500",
-                      )}
-                    >
-                      {tt.role}
-                    </p>
-                  </div>
-                  <ShieldCheck
+
+                  <div
                     className={cn(
-                      "ml-auto h-4 w-4 shrink-0 md:h-5 md:w-5",
-                      tt.highlight ? "text-emerald-300" : "text-emerald-500",
+                      "relative flex items-center gap-1",
+                      tt.highlight ? "text-amber-300" : "text-amber-400",
                     )}
-                    aria-label={t("testimonials.verifiedAria")}
-                  />
-                </figcaption>
-              </figure>
-            </Reveal>
+                  >
+                    {Array.from({ length: 5 }).map((_, k) => (
+                      <Star key={k} className="h-[18px] w-[18px] fill-current drop-shadow-sm" />
+                    ))}
+                  </div>
+
+                  <blockquote
+                    className={cn(
+                      "relative mt-5 flex-1 text-[15px] leading-[1.7] sm:text-[15.5px] md:text-base md:leading-[1.75] lg:text-[15.5px] lg:leading-relaxed",
+                      tt.highlight ? "text-white/90" : "text-slate-700",
+                    )}
+                  >
+                    {tt.text}
+                  </blockquote>
+
+                  <figcaption
+                    className={cn(
+                      "relative mt-7 flex items-center gap-3 border-t pt-5 md:gap-4",
+                      tt.highlight ? "border-white/10" : "border-slate-100",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow-md ring-2 md:h-12 md:w-12 md:text-base",
+                        tt.color,
+                        tt.highlight ? "ring-white/20" : "ring-white",
+                      )}
+                    >
+                      {tt.initials}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={cn(
+                          "text-sm font-semibold tracking-tight md:text-[15px] lg:truncate",
+                          tt.highlight ? "text-white" : "text-slate-900",
+                        )}
+                      >
+                        {tt.name}
+                      </p>
+                      <p
+                        className={cn(
+                          "text-[12px] md:text-[13px] lg:truncate",
+                          tt.highlight ? "text-white/60" : "text-slate-500",
+                        )}
+                      >
+                        {tt.role}
+                      </p>
+                    </div>
+                    <ShieldCheck
+                      className={cn(
+                        "ml-auto h-4 w-4 shrink-0 md:h-5 md:w-5",
+                        tt.highlight ? "text-emerald-300" : "text-emerald-500",
+                      )}
+                      aria-label={t("testimonials.verifiedAria")}
+                    />
+                  </figcaption>
+                </figure>
+              </Reveal>
             );
           })}
         </div>
@@ -3621,8 +4020,14 @@ function FinalCTA() {
             }}
           />
           {/* glow blobs */}
-          <div aria-hidden className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-blue-500/30 blur-3xl" />
-          <div aria-hidden className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-emerald-500/30 blur-3xl" />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-blue-500/30 blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-emerald-500/30 blur-3xl"
+          />
 
           <div className="relative grid grid-cols-1 items-center gap-10 lg:grid-cols-12">
             {/* Copy */}
@@ -3655,9 +4060,16 @@ function FinalCTA() {
               </div>
 
               <ul className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-300">
-                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> {t("finalCta.noCommitment")}</li>
-                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> {t("finalCta.cancelAnytime")}</li>
-                <li className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-300" /> {t("finalCta.browser")}</li>
+                <li className="inline-flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-300" /> {t("finalCta.noCommitment")}
+                </li>
+                <li className="inline-flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-300" />{" "}
+                  {t("finalCta.cancelAnytime")}
+                </li>
+                <li className="inline-flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-300" /> {t("finalCta.browser")}
+                </li>
               </ul>
             </div>
 
@@ -3671,12 +4083,16 @@ function FinalCTA() {
                 className="relative rounded-2xl border border-white/15 bg-white/95 p-4 text-slate-900 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.5)] backdrop-blur"
               >
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Visão geral</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                    Visão geral
+                  </p>
                   <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
                     +12% este mês
                   </span>
                 </div>
-                <p className="mt-1 text-2xl font-extrabold tabular-nums text-slate-900">R$ 6.420,00</p>
+                <p className="mt-1 text-2xl font-extrabold tabular-nums text-slate-900">
+                  R$ 6.420,00
+                </p>
                 <div className="mt-3 flex h-16 items-end gap-1">
                   {[40, 55, 35, 70, 50, 78, 60, 88, 46, 72, 84, 58].map((h, i) => (
                     <div key={i} className="flex-1 overflow-hidden rounded-t-md bg-slate-100">
@@ -3689,11 +4105,15 @@ function FinalCTA() {
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Meta</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                      Meta
+                    </p>
                     <p className="text-sm font-bold text-slate-900">68% concluída</p>
                   </div>
                   <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">A pagar</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                      A pagar
+                    </p>
                     <p className="text-sm font-bold tabular-nums text-slate-900">R$ 980,00</p>
                   </div>
                 </div>
@@ -3712,7 +4132,9 @@ function FinalCTA() {
                   <Target className="h-4 w-4" />
                 </span>
                 <div className="text-left">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">Meta</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">
+                    Meta
+                  </p>
                   <p className="text-xs font-bold">Apartamento · 11%</p>
                 </div>
               </motion.div>
@@ -3755,42 +4177,123 @@ export function Footer() {
 
           {/* Produto */}
           <div className="md:col-span-3 lg:col-span-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("footer.product")}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              {t("footer.product")}
+            </p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><LandingAnchorLink section="recursos" className="transition-colors hover:text-slate-900">{t("footer.links.features")}</LandingAnchorLink></li>
-              <li><LandingAnchorLink section="como-funciona" className="transition-colors hover:text-slate-900">{t("footer.links.how")}</LandingAnchorLink></li>
-              <li><LandingAnchorLink section="planos" className="transition-colors hover:text-slate-900">{t("footer.links.plans")}</LandingAnchorLink></li>
-              <li><LandingAnchorLink section="duvidas" className="transition-colors hover:text-slate-900">{t("footer.links.faq")}</LandingAnchorLink></li>
+              <li>
+                <LandingAnchorLink
+                  section="recursos"
+                  className="transition-colors hover:text-slate-900"
+                >
+                  {t("footer.links.features")}
+                </LandingAnchorLink>
+              </li>
+              <li>
+                <LandingAnchorLink
+                  section="como-funciona"
+                  className="transition-colors hover:text-slate-900"
+                >
+                  {t("footer.links.how")}
+                </LandingAnchorLink>
+              </li>
+              <li>
+                <LandingAnchorLink
+                  section="planos"
+                  className="transition-colors hover:text-slate-900"
+                >
+                  {t("footer.links.plans")}
+                </LandingAnchorLink>
+              </li>
+              <li>
+                <LandingAnchorLink
+                  section="duvidas"
+                  className="transition-colors hover:text-slate-900"
+                >
+                  {t("footer.links.faq")}
+                </LandingAnchorLink>
+              </li>
             </ul>
           </div>
 
           {/* Conta */}
           <div className="md:col-span-3 lg:col-span-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("footer.account")}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              {t("footer.account")}
+            </p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><Link to="/login" className="transition-colors hover:text-slate-900">{t("footer.links.signIn")}</Link></li>
-              <li><Link to="/cadastro" className="transition-colors hover:text-slate-900">{t("footer.links.signUp")}</Link></li>
-              <li><Link to="/recuperar-senha" className="transition-colors hover:text-slate-900">{t("footer.links.reset")}</Link></li>
+              <li>
+                <Link to="/login" className="transition-colors hover:text-slate-900">
+                  {t("footer.links.signIn")}
+                </Link>
+              </li>
+              <li>
+                <Link to="/cadastro" className="transition-colors hover:text-slate-900">
+                  {t("footer.links.signUp")}
+                </Link>
+              </li>
+              <li>
+                <Link to="/recuperar-senha" className="transition-colors hover:text-slate-900">
+                  {t("footer.links.reset")}
+                </Link>
+              </li>
             </ul>
           </div>
 
           {/* Suporte */}
           <div className="md:col-span-3 lg:col-span-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("footer.support")}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              {t("footer.support")}
+            </p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><LandingAnchorLink section="duvidas" className="transition-colors hover:text-slate-900">{t("footer.links.help")}</LandingAnchorLink></li>
-              <li><a href="mailto:contato@gastointeligente.com.br" className="transition-colors hover:text-slate-900">{t("footer.links.contact")}</a></li>
-              <li><Link to="/status" className="transition-colors hover:text-slate-900">{t("footer.links.status")}</Link></li>
+              <li>
+                <LandingAnchorLink
+                  section="duvidas"
+                  className="transition-colors hover:text-slate-900"
+                >
+                  {t("footer.links.help")}
+                </LandingAnchorLink>
+              </li>
+              <li>
+                <a
+                  href="mailto:contato@gastointeligente.com.br"
+                  className="transition-colors hover:text-slate-900"
+                >
+                  {t("footer.links.contact")}
+                </a>
+              </li>
+              <li>
+                <Link to="/status" className="transition-colors hover:text-slate-900">
+                  {t("footer.links.status")}
+                </Link>
+              </li>
             </ul>
           </div>
 
           {/* Legal */}
           <div className="md:col-span-3 lg:col-span-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("footer.legal")}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              {t("footer.legal")}
+            </p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><Link to="/termos" className="transition-colors hover:text-slate-900">{t("footer.links.terms")}</Link></li>
-              <li><Link to="/privacidade" className="transition-colors hover:text-slate-900">{t("footer.links.privacy")}</Link></li>
-              <li><Link to="/lgpd" className="transition-colors hover:text-slate-900">{t("footer.links.lgpd")}</Link></li>
+              <li>
+                <Link to="/termos" className="transition-colors hover:text-slate-900">
+                  {t("footer.links.terms")}
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacidade" className="transition-colors hover:text-slate-900">
+                  {t("footer.links.privacy")}
+                </Link>
+              </li>
+              <li>
+                <Link to="/lgpd" className="transition-colors hover:text-slate-900">
+                  {t("footer.links.lgpd")}
+                </Link>
+              </li>
+              <li>
+                <CookiePreferencesLink />
+              </li>
             </ul>
           </div>
         </div>
@@ -3798,7 +4301,9 @@ export function Footer() {
 
       <div className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-slate-500 sm:flex-row sm:px-6 lg:px-8">
-          <p suppressHydrationWarning>{t("footer.copyright", { year: new Date().getFullYear() })}</p>
+          <p suppressHydrationWarning>
+            {t("footer.copyright", { year: new Date().getFullYear() })}
+          </p>
           <p className="inline-flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             {t("footer.madeWith")}
@@ -3825,9 +4330,16 @@ function SectionHeader({
   return (
     <div className={cn(center && "text-center")}>
       <Eyebrow>{eyebrow}</Eyebrow>
-      <h2 className="mt-3 text-[1.65rem] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl">{title}</h2>
+      <h2 className="mt-3 text-[1.65rem] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl">
+        {title}
+      </h2>
       {subtitle && (
-        <p className={cn("mt-3 text-base text-slate-600", center ? "mx-auto max-w-2xl" : "max-w-2xl")}>
+        <p
+          className={cn(
+            "mt-3 text-base text-slate-600",
+            center ? "mx-auto max-w-2xl" : "max-w-2xl",
+          )}
+        >
           {subtitle}
         </p>
       )}
@@ -3896,9 +4408,7 @@ function GastoAISection() {
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
             {t("ai.title")}
           </h2>
-          <p className="mt-4 text-base leading-relaxed text-slate-600">
-            {t("ai.text")}
-          </p>
+          <p className="mt-4 text-base leading-relaxed text-slate-600">{t("ai.text")}</p>
           <ul className="mt-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {bullets.map((b) => (
               <li key={b} className="flex items-start gap-2 text-sm text-slate-700">
@@ -3946,7 +4456,10 @@ function GastoAISection() {
                 {/* Messages */}
                 <ul className="mt-4 space-y-3">
                   {messages.map((m, i) => (
-                    <li key={i} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
+                    <li
+                      key={i}
+                      className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
+                    >
                       <div
                         className={cn(
                           "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-sm",
@@ -3981,7 +4494,9 @@ function GastoAISection() {
                 {/* Input */}
                 <div className="mt-4 flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-2 pl-4 pr-1">
                   <MessageCircle className="h-4 w-4 text-slate-400" />
-                  <p className="flex-1 truncate text-sm text-slate-500">{t("ai.inputPlaceholder")}</p>
+                  <p className="flex-1 truncate text-sm text-slate-500">
+                    {t("ai.inputPlaceholder")}
+                  </p>
                   <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-900 text-white">
                     <Send className="h-4 w-4" />
                   </span>
@@ -4065,10 +4580,7 @@ function OrcamentoMock() {
                 </div>
                 <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                   <div
-                    className={cn(
-                      "h-full rounded-full",
-                      estourou ? "bg-rose-500" : cat.color,
-                    )}
+                    className={cn("h-full rounded-full", estourou ? "bg-rose-500" : cat.color)}
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -4086,10 +4598,34 @@ function OrcamentoMock() {
 function ContasMock() {
   const { t } = useTranslation("landing");
   const contas = [
-    { n: t("mockup.contas.items.rent"), v: "R$ 1.450,00", d: "05/12", tone: "ok" as const, label: t("mockup.contas.labels.paid") },
-    { n: t("mockup.contas.items.internet"), v: "R$ 119,90", d: "12/12", tone: "warn" as const, label: t("mockup.contas.labels.in3") },
-    { n: t("mockup.contas.items.energy"), v: "R$ 248,30", d: "18/12", tone: "info" as const, label: t("mockup.contas.labels.in9") },
-    { n: t("mockup.contas.items.client"), v: "R$ 1.800,00", d: "20/12", tone: "income" as const, label: t("mockup.contas.labels.toReceive") },
+    {
+      n: t("mockup.contas.items.rent"),
+      v: "R$ 1.450,00",
+      d: "05/12",
+      tone: "ok" as const,
+      label: t("mockup.contas.labels.paid"),
+    },
+    {
+      n: t("mockup.contas.items.internet"),
+      v: "R$ 119,90",
+      d: "12/12",
+      tone: "warn" as const,
+      label: t("mockup.contas.labels.in3"),
+    },
+    {
+      n: t("mockup.contas.items.energy"),
+      v: "R$ 248,30",
+      d: "18/12",
+      tone: "info" as const,
+      label: t("mockup.contas.labels.in9"),
+    },
+    {
+      n: t("mockup.contas.items.client"),
+      v: "R$ 1.800,00",
+      d: "20/12",
+      tone: "income" as const,
+      label: t("mockup.contas.labels.toReceive"),
+    },
   ];
   return (
     <MockShell>
@@ -4154,7 +4690,9 @@ function ContasMock() {
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{c.n}</p>
-                  <p className="text-[11px] text-slate-500">{t("mockup.contas.due", { date: c.d })}</p>
+                  <p className="text-[11px] text-slate-500">
+                    {t("mockup.contas.due", { date: c.d })}
+                  </p>
                 </div>
               </div>
               <div className="text-right">
@@ -4200,7 +4738,8 @@ function IntelligenceSection() {
       icon: Gauge,
       title: t("intelligence.cards.scoreTitle"),
       text: t("intelligence.cards.scoreText"),
-      iconCls: "border-emerald-100 bg-gradient-to-br from-emerald-50 to-emerald-100/40 text-emerald-700",
+      iconCls:
+        "border-emerald-100 bg-gradient-to-br from-emerald-50 to-emerald-100/40 text-emerald-700",
     },
     {
       icon: Activity,
@@ -4218,7 +4757,8 @@ function IntelligenceSection() {
       icon: Lightbulb,
       title: t("intelligence.cards.tipsTitle"),
       text: t("intelligence.cards.tipsText"),
-      iconCls: "border-violet-100 bg-gradient-to-br from-violet-50 to-violet-100/40 text-violet-700",
+      iconCls:
+        "border-violet-100 bg-gradient-to-br from-violet-50 to-violet-100/40 text-violet-700",
     },
     {
       icon: Bot,
@@ -4248,8 +4788,12 @@ function IntelligenceSection() {
                   <span className="truncate">{t("intelligence.preview.scoreLabel")}</span>
                 </div>
                 <div className="mt-3 flex items-end gap-3">
-                  <span className="num text-5xl font-extrabold tracking-tight text-slate-900">82</span>
-                  <span className="mb-1 text-xs font-medium text-emerald-700">{t("intelligence.preview.scoreStatus")}</span>
+                  <span className="num text-5xl font-extrabold tracking-tight text-slate-900">
+                    82
+                  </span>
+                  <span className="mb-1 text-xs font-medium text-emerald-700">
+                    {t("intelligence.preview.scoreStatus")}
+                  </span>
                 </div>
                 <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                   <div className="h-full w-[82%] rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600" />
@@ -4278,7 +4822,9 @@ function IntelligenceSection() {
                   <Bell className="h-3.5 w-3.5" />
                   <span>{t("intelligence.preview.alertTag")}</span>
                 </div>
-                <p className="mt-2 text-sm font-medium text-slate-800">{t("intelligence.preview.alertSample")}</p>
+                <p className="mt-2 text-sm font-medium text-slate-800">
+                  {t("intelligence.preview.alertSample")}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-4 sm:p-5">
@@ -4286,7 +4832,9 @@ function IntelligenceSection() {
                   <Lightbulb className="h-3.5 w-3.5" />
                   <span>{t("intelligence.preview.tipTag")}</span>
                 </div>
-                <p className="mt-2 text-sm font-medium text-slate-800">{t("intelligence.preview.tipSample")}</p>
+                <p className="mt-2 text-sm font-medium text-slate-800">
+                  {t("intelligence.preview.tipSample")}
+                </p>
               </div>
             </div>
           </div>
@@ -4297,7 +4845,12 @@ function IntelligenceSection() {
           {cards.map((c, i) => (
             <Reveal key={c.title} delay={i * 0.04}>
               <div className="group h-full rounded-3xl border border-slate-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.18)]">
-                <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-2xl border", c.iconCls)}>
+                <span
+                  className={cn(
+                    "inline-flex h-10 w-10 items-center justify-center rounded-2xl border",
+                    c.iconCls,
+                  )}
+                >
                   <c.icon className="h-5 w-5" />
                 </span>
                 <h3 className="mt-4 text-base font-bold text-slate-900">{c.title}</h3>
@@ -4364,10 +4917,11 @@ function AppExperienceSection() {
             </div>
           </Reveal>
 
-
           <Reveal delay={0.05}>
             <div>
-              <h3 className="text-xl font-bold text-slate-900 sm:text-2xl">{t("appExperience.block1Title")}</h3>
+              <h3 className="text-xl font-bold text-slate-900 sm:text-2xl">
+                {t("appExperience.block1Title")}
+              </h3>
               <p className="mt-3 text-base text-slate-600">{t("appExperience.block1Text")}</p>
               <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
                 {chips.map((c) => (
@@ -4393,8 +4947,12 @@ function AppExperienceSection() {
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50 text-emerald-700">
                 <MessageCircle className="h-5 w-5" />
               </span>
-              <h4 className="mt-4 text-base font-bold text-slate-900">{t("appExperience.whatsappTitle")}</h4>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{t("appExperience.whatsappText")}</p>
+              <h4 className="mt-4 text-base font-bold text-slate-900">
+                {t("appExperience.whatsappTitle")}
+              </h4>
+              <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+                {t("appExperience.whatsappText")}
+              </p>
               <div className="mt-4 space-y-2">
                 <div className="ml-auto max-w-[78%] rounded-2xl rounded-br-sm bg-emerald-500 px-3 py-1.5 text-xs text-white">
                   {t("appExperience.whatsappSample.user")}
@@ -4412,8 +4970,12 @@ function AppExperienceSection() {
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-700">
                 <Lock className="h-5 w-5" />
               </span>
-              <h4 className="mt-4 text-base font-bold text-slate-900">{t("appExperience.vaultTitle")}</h4>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{t("appExperience.vaultText")}</p>
+              <h4 className="mt-4 text-base font-bold text-slate-900">
+                {t("appExperience.vaultTitle")}
+              </h4>
+              <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+                {t("appExperience.vaultText")}
+              </p>
               <div className="mt-4 space-y-2">
                 {["•••• •••• •••• 4821", "••••••••••••", "•••••• ••••••"].map((mask, i) => (
                   <div
@@ -4433,12 +4995,21 @@ function AppExperienceSection() {
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-100 bg-amber-50 text-amber-700">
                 <Landmark className="h-5 w-5" />
               </span>
-              <h4 className="mt-4 text-base font-bold text-slate-900">{t("appExperience.radarTitle")}</h4>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{t("appExperience.radarText")}</p>
+              <h4 className="mt-4 text-base font-bold text-slate-900">
+                {t("appExperience.radarTitle")}
+              </h4>
+              <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+                {t("appExperience.radarText")}
+              </p>
               <ul className="mt-4 grid grid-cols-2 gap-2 text-xs">
                 {radarItems.map((it) => (
-                  <li key={it.k} className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2">
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{it.k}</div>
+                  <li
+                    key={it.k}
+                    className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2"
+                  >
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                      {it.k}
+                    </div>
                     <div className="num text-sm font-bold text-slate-900">{it.v}</div>
                   </li>
                 ))}
@@ -4479,7 +5050,9 @@ function PhoneAppMock() {
           {/* Conteúdo */}
           <div className="space-y-3 p-3 pb-20">
             <div className="rounded-2xl bg-slate-900 p-3 text-white">
-              <div className="text-[10px] uppercase tracking-wider text-slate-300">{t("appExperience.phone.balance")}</div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-300">
+                {t("appExperience.phone.balance")}
+              </div>
               <div className="num mt-1 text-xl font-extrabold">R$ 4.280,75</div>
               <div className="mt-2 grid grid-cols-2 gap-2 text-[10px]">
                 <div className="rounded-lg bg-white/10 px-2 py-1.5">
@@ -4494,7 +5067,9 @@ function PhoneAppMock() {
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-3">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-700">{t("appExperience.phone.smartLimit")}</span>
+                <span className="text-[11px] font-semibold text-slate-700">
+                  {t("appExperience.phone.smartLimit")}
+                </span>
                 <span className="num text-[10px] font-bold text-emerald-700">R$ 1.180</span>
               </div>
               <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
@@ -4502,10 +5077,16 @@ function PhoneAppMock() {
               </div>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-3">
-              <div className="text-[11px] font-semibold text-slate-700">{t("appExperience.phone.nextBills")}</div>
+              <div className="text-[11px] font-semibold text-slate-700">
+                {t("appExperience.phone.nextBills")}
+              </div>
               <ul className="mt-2 space-y-1.5">
                 {[
-                  { n: t("appExperience.phone.billLight"), v: "R$ 132", d: t("appExperience.phone.tomorrow") },
+                  {
+                    n: t("appExperience.phone.billLight"),
+                    v: "R$ 132",
+                    d: t("appExperience.phone.tomorrow"),
+                  },
                   { n: "Netflix", v: "R$ 39,90", d: t("appExperience.phone.inDays", { n: 3 }) },
                 ].map((it) => (
                   <li key={it.n} className="flex items-center justify-between gap-2 text-[11px]">
@@ -4583,7 +5164,8 @@ function PlanejamentoSection() {
       icon: Calculator,
       title: t("planningSection.cards.daily.title"),
       text: t("planningSection.cards.daily.description"),
-      iconCls: "border-emerald-100 bg-gradient-to-br from-emerald-50 to-emerald-100/40 text-emerald-700",
+      iconCls:
+        "border-emerald-100 bg-gradient-to-br from-emerald-50 to-emerald-100/40 text-emerald-700",
     },
     {
       icon: TrendingDown,
@@ -4595,7 +5177,8 @@ function PlanejamentoSection() {
       icon: Activity,
       title: t("planningSection.cards.planned.title"),
       text: t("planningSection.cards.planned.description"),
-      iconCls: "border-violet-100 bg-gradient-to-br from-violet-50 to-violet-100/40 text-violet-700",
+      iconCls:
+        "border-violet-100 bg-gradient-to-br from-violet-50 to-violet-100/40 text-violet-700",
     },
   ];
 
@@ -4631,9 +5214,18 @@ function PlanejamentoSection() {
                   <div className="h-full w-[20%] bg-gradient-to-r from-violet-400 to-violet-600" />
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-600">
-                  <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-blue-500" />{t("planningSection.mock.essentials")} · 50%</span>
-                  <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" />{t("planningSection.mock.variables")} · 30%</span>
-                  <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-violet-500" />{t("planningSection.mock.reserve")} · 20%</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-blue-500" />
+                    {t("planningSection.mock.essentials")} · 50%
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    {t("planningSection.mock.variables")} · 30%
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-violet-500" />
+                    {t("planningSection.mock.reserve")} · 20%
+                  </span>
                 </div>
               </div>
 
@@ -4645,8 +5237,12 @@ function PlanejamentoSection() {
                     <span className="truncate">{t("planningSection.mock.dailyLimit")}</span>
                   </div>
                   <div className="mt-2 flex items-end justify-between gap-2">
-                    <span className="num text-2xl font-extrabold tracking-tight text-slate-900">{t("planningSection.mock.dailyValue")}</span>
-                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">{t("planningSection.mock.dailyStatus")}</span>
+                    <span className="num text-2xl font-extrabold tracking-tight text-slate-900">
+                      {t("planningSection.mock.dailyValue")}
+                    </span>
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                      {t("planningSection.mock.dailyStatus")}
+                    </span>
                   </div>
                 </div>
                 <div className="rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-4">
@@ -4654,7 +5250,9 @@ function PlanejamentoSection() {
                     <TrendingDown className="h-3.5 w-3.5" />
                     <span>{t("planningSection.mock.forecast")}</span>
                   </div>
-                  <p className="mt-2 text-sm font-medium text-slate-800">{t("planningSection.mock.forecastText")}</p>
+                  <p className="mt-2 text-sm font-medium text-slate-800">
+                    {t("planningSection.mock.forecastText")}
+                  </p>
                 </div>
               </div>
 
@@ -4676,7 +5274,12 @@ function PlanejamentoSection() {
             {cards.map((c, i) => (
               <Reveal key={c.title} delay={i * 0.05}>
                 <div className="group h-full rounded-3xl border border-slate-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.18)]">
-                  <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-2xl border", c.iconCls)}>
+                  <span
+                    className={cn(
+                      "inline-flex h-10 w-10 items-center justify-center rounded-2xl border",
+                      c.iconCls,
+                    )}
+                  >
                     <c.icon className="h-5 w-5" />
                   </span>
                   <h3 className="mt-4 text-base font-bold text-slate-900">{c.title}</h3>
@@ -4716,13 +5319,15 @@ function ContasSection() {
       icon: ArrowDownRight,
       title: t("billsSection.cards.receivable.title"),
       text: t("billsSection.cards.receivable.description"),
-      iconCls: "border-emerald-100 bg-gradient-to-br from-emerald-50 to-emerald-100/40 text-emerald-700",
+      iconCls:
+        "border-emerald-100 bg-gradient-to-br from-emerald-50 to-emerald-100/40 text-emerald-700",
     },
     {
       icon: Repeat,
       title: t("billsSection.cards.subscriptions.title"),
       text: t("billsSection.cards.subscriptions.description"),
-      iconCls: "border-violet-100 bg-gradient-to-br from-violet-50 to-violet-100/40 text-violet-700",
+      iconCls:
+        "border-violet-100 bg-gradient-to-br from-violet-50 to-violet-100/40 text-violet-700",
     },
     {
       icon: Bell,
@@ -4733,7 +5338,12 @@ function ContasSection() {
   ];
 
   // Mini calendário ilustrativo (1..30); destaques: 5, 12, 18, 24
-  const highlights: Record<number, string> = { 5: "bg-rose-500", 12: "bg-emerald-500", 18: "bg-violet-500", 24: "bg-amber-500" };
+  const highlights: Record<number, string> = {
+    5: "bg-rose-500",
+    12: "bg-emerald-500",
+    18: "bg-violet-500",
+    24: "bg-amber-500",
+  };
   const days = Array.from({ length: 30 }, (_, i) => i + 1);
 
   return (
@@ -4763,7 +5373,10 @@ function ContasSection() {
               {/* Calendário compacto 7 colunas */}
               <div className="mt-4 grid grid-cols-7 gap-1 sm:gap-1.5">
                 {["D", "S", "T", "Q", "Q", "S", "S"].map((d, i) => (
-                  <div key={i} className="text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  <div
+                    key={i}
+                    className="text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500"
+                  >
                     {d}
                   </div>
                 ))}
@@ -4774,7 +5387,9 @@ function ContasSection() {
                       key={n}
                       className={cn(
                         "relative flex aspect-square items-center justify-center rounded-md border text-[11px] font-medium",
-                        hl ? "border-slate-200 bg-white text-slate-900" : "border-slate-100 bg-white text-slate-500"
+                        hl
+                          ? "border-slate-200 bg-white text-slate-900"
+                          : "border-slate-100 bg-white text-slate-500",
                       )}
                     >
                       <span className="num">{n}</span>
@@ -4792,8 +5407,12 @@ function ContasSection() {
                       <Wallet className="h-4 w-4" />
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-900">{t("billsSection.mock.bill1")}</p>
-                      <p className="truncate text-[11px] text-slate-500">{t("billsSection.mock.bill1Status")}</p>
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {t("billsSection.mock.bill1")}
+                      </p>
+                      <p className="truncate text-[11px] text-slate-500">
+                        {t("billsSection.mock.bill1Status")}
+                      </p>
                     </div>
                   </div>
                   <span className="shrink-0 rounded-full border border-rose-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-rose-700">
@@ -4806,8 +5425,12 @@ function ContasSection() {
                       <ArrowDownRight className="h-4 w-4" />
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-900">{t("billsSection.mock.bill2")}</p>
-                      <p className="truncate text-[11px] text-slate-500">{t("billsSection.mock.bill2Status")}</p>
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {t("billsSection.mock.bill2")}
+                      </p>
+                      <p className="truncate text-[11px] text-slate-500">
+                        {t("billsSection.mock.bill2Status")}
+                      </p>
                     </div>
                   </div>
                   <span className="shrink-0 rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
@@ -4820,8 +5443,12 @@ function ContasSection() {
                       <Repeat className="h-4 w-4" />
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-900">{t("billsSection.mock.bill3")}</p>
-                      <p className="truncate text-[11px] text-slate-500">{t("billsSection.mock.bill3Status")}</p>
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {t("billsSection.mock.bill3")}
+                      </p>
+                      <p className="truncate text-[11px] text-slate-500">
+                        {t("billsSection.mock.bill3Status")}
+                      </p>
                     </div>
                   </div>
                   <span className="shrink-0 rounded-full border border-violet-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-violet-700">
@@ -4837,7 +5464,12 @@ function ContasSection() {
             {cards.map((c, i) => (
               <Reveal key={c.title} delay={i * 0.05}>
                 <div className="group h-full rounded-3xl border border-slate-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.18)]">
-                  <span className={cn("inline-flex h-10 w-10 items-center justify-center rounded-2xl border", c.iconCls)}>
+                  <span
+                    className={cn(
+                      "inline-flex h-10 w-10 items-center justify-center rounded-2xl border",
+                      c.iconCls,
+                    )}
+                  >
                     <c.icon className="h-5 w-5" />
                   </span>
                   <h3 className="mt-4 text-base font-bold text-slate-900">{c.title}</h3>
@@ -4862,7 +5494,6 @@ function ContasSection() {
   );
 }
 
-
 /* ============================== MERCADO INTELIGENTE SECTION ============================== */
 
 function MercadoInteligenteSection() {
@@ -4875,7 +5506,10 @@ function MercadoInteligenteSection() {
   ] as const;
 
   return (
-    <section id="mercado-inteligente" className="relative overflow-hidden bg-slate-50 py-20 sm:py-24">
+    <section
+      id="mercado-inteligente"
+      className="relative overflow-hidden bg-slate-50 py-20 sm:py-24"
+    >
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader
           center
@@ -4934,7 +5568,10 @@ function ImportacaoInteligenteSection() {
   ] as const;
 
   return (
-    <section id="importacao-inteligente" className="relative overflow-hidden bg-white py-20 sm:py-24">
+    <section
+      id="importacao-inteligente"
+      className="relative overflow-hidden bg-white py-20 sm:py-24"
+    >
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader
           center

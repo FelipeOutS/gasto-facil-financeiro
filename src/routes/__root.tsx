@@ -16,6 +16,8 @@ import { AuthProvider } from "@/lib/auth-context";
 import { AppLockProvider } from "@/lib/app-lock";
 import { ThemeProvider } from "@/lib/theme";
 import { AccentProvider } from "@/lib/accent";
+import { CookieConsentProvider } from "@/lib/cookie-consent";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { SubscriptionGuardProvider } from "@/lib/subscription-guard";
 import { ActiveAccountProvider } from "@/lib/active-account";
 import { ConnectedAccountBanner } from "@/components/ConnectedAccountBanner";
@@ -43,9 +45,9 @@ const THEME_COLOR_DARK = "#1E2126";
 const THEME_COLOR_LIGHT = "#FAFAFB";
 const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('gf-theme')||'dark';var r=t;if(t==='system'){r=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}var d=document.documentElement;if(r==='light'){d.classList.add('light');d.classList.remove('dark');d.style.colorScheme='light';}else{d.classList.add('dark');d.classList.remove('light');d.style.colorScheme='dark';}var c=r==='light'?'${THEME_COLOR_LIGHT}':'${THEME_COLOR_DARK}';var m=document.querySelector('meta[name=\"theme-color\"]:not([media])');if(!m){m=document.createElement('meta');m.setAttribute('name','theme-color');document.head.appendChild(m);}m.setAttribute('content',c);}catch(e){}})();`;
 
-// Google Tag Manager — único contêiner do projeto (instalação global).
-const GTM_CONTAINER_ID = "GTM-MCF5CMWP";
-const GTM_HEAD_SCRIPT = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${GTM_CONTAINER_ID}');`;
+// Google Tag Manager (GTM-MCF5CMWP) — NÃO é injetado no HTML.
+// O contêiner só é carregado em runtime, via CookieConsentProvider, depois de
+// consentimento explícito para Analytics ou Marketing (Consent Mode v2 básico).
 
 function NotFoundComponent() {
   return (
@@ -88,24 +90,50 @@ export const Route = createRootRoute({
       { name: "theme-color", media: "(prefers-color-scheme: dark)", content: THEME_COLOR_DARK },
       { property: "og:site_name", content: "Gasto Inteligente" },
       { property: "og:type", content: "website" },
-      { property: "og:title", content: "Gasto Inteligente — Controle financeiro pessoal, MEI e empresas" },
+      {
+        property: "og:title",
+        content: "Gasto Inteligente — Controle financeiro pessoal, MEI e empresas",
+      },
       {
         property: "og:description",
         content:
           "Organize gastos, receitas, cartões, metas, mercado, relatórios e previsões financeiras em um só lugar.",
       },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Gasto Inteligente — Controle financeiro pessoal, MEI e empresas" },
+      {
+        name: "twitter:title",
+        content: "Gasto Inteligente — Controle financeiro pessoal, MEI e empresas",
+      },
       {
         name: "twitter:description",
         content:
           "Organize gastos, receitas, cartões, metas, mercado, relatórios e previsões financeiras em um só lugar.",
       },
-      { name: "description", content: "Gasto Inteligente: controle financeiro pessoal com registro manual, foto e importação de investimentos." },
-      { property: "og:description", content: "Gasto Inteligente: controle financeiro pessoal com registro manual, foto e importação de investimentos." },
-      { name: "twitter:description", content: "Gasto Inteligente: controle financeiro pessoal com registro manual, foto e importação de investimentos." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/727ea37a-7137-4b26-8a7e-78b184885840/id-preview-3104884e--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1782072328943.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/727ea37a-7137-4b26-8a7e-78b184885840/id-preview-3104884e--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1782072328943.png" },
+      {
+        name: "description",
+        content:
+          "Gasto Inteligente: controle financeiro pessoal com registro manual, foto e importação de investimentos.",
+      },
+      {
+        property: "og:description",
+        content:
+          "Gasto Inteligente: controle financeiro pessoal com registro manual, foto e importação de investimentos.",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "Gasto Inteligente: controle financeiro pessoal com registro manual, foto e importação de investimentos.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/727ea37a-7137-4b26-8a7e-78b184885840/id-preview-3104884e--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1782072328943.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/727ea37a-7137-4b26-8a7e-78b184885840/id-preview-3104884e--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app-1782072328943.png",
+      },
     ],
     links: [
       {
@@ -187,28 +215,22 @@ function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className="dark" suppressHydrationWarning>
       <head>
-        {/* Google Tag Manager — container único, o mais alto possível no <head>.
-            Nenhum ID de GA4 é inserido no código; tags/eventos ficam no painel GTM. */}
-        <script dangerouslySetInnerHTML={{ __html: GTM_HEAD_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
       <body suppressHydrationWarning>
-        {/* Google Tag Manager (noscript) — imediatamente após a abertura do <body>. */}
-        <noscript
-          dangerouslySetInnerHTML={{
-            __html: `<iframe src="https://www.googletagmanager.com/ns.html?id=${GTM_CONTAINER_ID}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
-          }}
-        />
+        {/* Sem iframe noscript do GTM: o contêiner não pode carregar antes do consentimento. */}
         <ThemeProvider>
           <AccentProvider>
-            <AuthProvider>
-              <AppLockProvider>
-                <ActiveAccountProvider>
-                  <SubscriptionGuardProvider>{children}</SubscriptionGuardProvider>
-                </ActiveAccountProvider>
-              </AppLockProvider>
-            </AuthProvider>
+            <CookieConsentProvider>
+              <AuthProvider>
+                <AppLockProvider>
+                  <ActiveAccountProvider>
+                    <SubscriptionGuardProvider>{children}</SubscriptionGuardProvider>
+                  </ActiveAccountProvider>
+                </AppLockProvider>
+              </AuthProvider>
+            </CookieConsentProvider>
           </AccentProvider>
         </ThemeProvider>
         <Scripts />
@@ -241,6 +263,7 @@ function RootComponent() {
       <ConnectedAccountBanner />
       <OfflineQueueMount />
       <PersistentAppShell pathname={pathname} />
+      <CookieConsentBanner />
       <Toaster position="top-center" />
       <ConfirmDialogHost />
     </>
@@ -266,7 +289,7 @@ const PUBLIC_PATH_PREFIXES = [
   "/recuperar-senha",
   "/reset-password",
   "/confirmar",
-  
+
   "/termos",
   "/privacidade",
   "/lgpd",
@@ -334,7 +357,6 @@ function PersistentAppShell({ pathname }: { pathname: string }) {
     </MobileShell>
   );
 }
-
 
 /**
  * Mantém a fila offline de gastos viva no app inteiro: ao logar, dispara
