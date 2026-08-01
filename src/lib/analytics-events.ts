@@ -70,11 +70,13 @@ export function trackSignUpCompleted(): void {
 }
 
 /** Uso exclusivo em testes. */
-export function __resetAnalyticsEventsForTests(): void {
+export function __resetAnalyticsEventsForTests(opts?: { keepSessionMarker?: boolean }): void {
   signUpSentInThisPageLoad = false;
+  if (opts?.keepSessionMarker) return;
   try {
     window.sessionStorage.removeItem(SIGN_UP_ONCE_KEY);
   } catch {
     /* ignore */
   }
 }
+
