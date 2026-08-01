@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { PasswordChecklist } from "@/components/PasswordChecklist";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { senhaForte, traduzirErroAuth } from "@/lib/auth-messages";
+import { trackSignUpCompleted } from "@/lib/analytics-events";
+
 
 export const Route = createFileRoute("/cadastro")({
   head: () => {
@@ -65,8 +67,11 @@ function CadastroForm() {
       toast.error(traduzirErroAuth(error.message));
       return;
     }
+    // Conta criada com sucesso (confirmado pelo backend) → evento único.
+    trackSignUpCompleted();
     setEnviado(true);
   }
+
 
   async function reenviar() {
     if (!email) return;
