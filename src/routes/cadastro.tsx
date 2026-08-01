@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { PasswordChecklist } from "@/components/PasswordChecklist";
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { senhaForte, traduzirErroAuth } from "@/lib/auth-messages";
+import { trackSignUpCompleted } from "@/lib/analytics-events";
+
 
 export const Route = createFileRoute("/cadastro")({
   head: () => {
