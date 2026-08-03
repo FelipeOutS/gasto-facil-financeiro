@@ -282,33 +282,12 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
         const user = await getUserFromRequest(request);
         if (!user) return unauthorizedResponse("Você precisa estar logado.");
 
-        // Gate de plano (mercado_avancado).
-        if (!isAdminMasterUser(user)) {
-          try {
-            const { getSubscriptionForUserIdentity } = await import("@/server/subscription.server");
-            const { planAllowsFeature } = await import("@/lib/plans");
-            const sub = await getSubscriptionForUserIdentity({
-              userId: user.id,
-              email: user.email ?? null,
-              repairLink: false,
-            });
-            if (!sub.active) {
-              return premiumForbiddenResponse(
-                "mercado_avancado",
-                "Sua assinatura não está ativa. Acesse Meu plano para liberar este recurso.",
-              );
-            }
-            if (!planAllowsFeature(sub.plan, "mercado_avancado")) {
-              return premiumForbiddenResponse(
-                "mercado_avancado",
-                "Importação online está disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa.",
-                "Controle Completo Pessoal",
-              );
-            }
-          } catch (err) {
-            console.error("[mercado-joanin-import] gate erro", err);
-            return premiumForbiddenResponse("mercado_avancado", "Não foi possível validar seu plano.");
-          }
+        // WA-SEC-JOANIN-01 — Restrição total a Admin Master (owner) em produção.
+        if (!(await isAdminMasterUser(user))) {
+          return Response.json(
+            { success: false, code: "forbidden", message: "Acesso restrito para manutenção." },
+            { status: 403 }
+          );
         }
 
         const rl = await enforceUserRateLimit({
@@ -425,3 +404,5 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
     },
   },
 });
+
+
