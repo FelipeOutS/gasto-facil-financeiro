@@ -1,40 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { checkRateLimit, RATE_LIMIT_PRESETS, enforceUserRateLimit } from "@/server/rate-limit.server";
-import { getSubscriptionForUserIdentity } from "@/server/subscription.server";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { planAllowsFeature, type PlanTier } from "@/lib/plans";
-
-const MAX_MESSAGE_LEN = 1500;
-const HISTORY_LIMIT = 30;
-
-export const sendChatMessage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ message: z.string() }).parse(d))
-  .handler(async ({ data, context }) => {
-    return { 
-      reply: "Simulado", 
-      assistantMessageId: "msg-" + Math.random().toString(36).slice(2, 7),
-      createdAt: new Date().toISOString()
-    };
-  });
-
-export const getChatHistory = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    return { messages: [] };
-  });
-
-export const clearChatHistory = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    return { ok: true };
-  });
 
 export interface ForecastData {
   ok: boolean;
-  status: "positivo" | "negativo" | "neutro";
+  status: "positivo" | "negativo" | "atencao";
   label: string;
   hoje: string;
   temDados: boolean;
@@ -51,7 +21,7 @@ export interface ForecastData {
 
 export const getMonthForecast = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ mes: z.number().optional(), ano: z.number().optional() }).optional().parse(d))
+  .inputValidator((d: any) => z.object({ mes: z.number().optional(), ano: z.number().optional() }).optional().parse(d))
   .handler(async ({ data, context }): Promise<ForecastData> => {
     return { 
       ok: true,
@@ -73,9 +43,9 @@ export const getMonthForecast = createServerFn({ method: "GET" })
 
 export const getMonthlySmartSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ mes: z.number().optional(), ano: z.number().optional(), lang: z.string().optional() }).optional().parse(d))
+  .inputValidator((d: any) => z.object({ mes: z.number().optional(), ano: z.number().optional(), lang: z.string().optional() }).optional().parse(d))
   .handler(async ({ data, context }) => {
-    return { ok: true, reply: "Resumo simulado", error: null };
+    return { ok: true, reply: "Resumo simulado", error: null as { message: string } | null };
   });
 
 export const aiChat = createServerFn({ method: "POST" })
@@ -84,4 +54,27 @@ export const aiChat = createServerFn({ method: "POST" })
     const { hasAdminMasterRole } = await import("@/server/admin-master.server");
     if (await hasAdminMasterRole(context.userId)) return { ok: true };
     return { ok: false, error: "not_admin" };
+  });
+
+export const sendChatMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: any) => z.object({ message: z.string() }).parse(d))
+  .handler(async ({ data, context }) => {
+    return { 
+      reply: "Simulado", 
+      assistantMessageId: "msg-" + Math.random().toString(36).slice(2, 7),
+      createdAt: new Date().toISOString()
+    };
+  });
+
+export const getChatHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    return { messages: [] };
+  });
+
+export const clearChatHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    return { ok: true };
   });
