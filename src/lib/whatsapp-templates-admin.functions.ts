@@ -1,5 +1,4 @@
-import { createServerFn } from "@tanstack/react-stack";
-import { z } from "zod";
+import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
@@ -21,14 +20,14 @@ export const whatsappAdminSyncTemplates = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdminMaster(context.userId);
-    const { syncRemoteTemplates, type SyncPatch } = await import("@/server/whatsapp-meta-template-sync.server");
+    const { syncRemoteTemplates } = await import("@/server/whatsapp-meta-template-sync.server");
     const { buildServiceRoleCatalogLoader } = await import("@/server/whatsapp-meta-templates-catalog.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const loader = await buildServiceRoleCatalogLoader();
     
     // Patch applier que persiste no banco
-    const applyPatch = async (patch: SyncPatch) => {
+    const applyPatch = async (patch: any) => {
       const { error } = await supabaseAdmin
         .from("whatsapp_meta_templates")
         .update({
@@ -54,3 +53,4 @@ export const whatsappAdminListLocalTemplates = createServerFn({ method: "GET" })
     const loader = await buildServiceRoleCatalogLoader();
     return await loader.listAll();
   });
+
