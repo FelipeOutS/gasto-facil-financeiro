@@ -128,7 +128,6 @@ function blocked(
  *   - O bloqueio cruzado agora foca na ORIGEM do secret: se o secret veio
  *     da variável de produção, ele não pode ser usado no modo sandbox.
  */
- */
 export function resolveMercadoPagoConfig(env: Env = process.env as Env): MpResolvedConfig {
   const diagnostics: string[] = [];
   const raw = env["MERCADO_PAGO_ENVIRONMENT"];
