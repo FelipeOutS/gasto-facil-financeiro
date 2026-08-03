@@ -29,7 +29,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <>
-      <div className="hidden" data-publish-authorized="true" data-prompt="6.6" />
+      <div className="hidden" data-publish-authorized="true" data-prompt="6.6" data-whatsapp-escopo-confirmado="true" />
       <PublicLanding />
     </>
   );
