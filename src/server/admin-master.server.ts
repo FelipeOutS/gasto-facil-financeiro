@@ -6,9 +6,11 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
  * Sistema de autorização de Admin Master baseado em ROLES PERSISTIDAS no banco.
  *
  * Política (WA-SEC-ADMIN-01):
- *  - A fonte primária de verdade é a tabela `public.user_roles`.
+ *  - A fonte primária de verdade é a tabela `public.user_roles` (role 'owner').
  *  - O Admin Master DEVE possuir a role 'owner' para ações críticas.
- *  - Mantemos isAdminMasterEmail como camada de defesa em profundidade (opcional/complementar).
+ *  - O e-mail (env ADMIN_MASTER_EMAILS) NÃO é mais a fonte decisiva de autorização.
+ *  - Mantemos isAdminMasterEmail apenas para diagnóstico e logs complementares.
+
  */
 
 /**
@@ -57,7 +59,7 @@ export async function assertAdminMaster(user: { id: string; email?: string | nul
   const hasRole = await hasAdminMasterRole(user.id);
   if (!hasRole) {
     // Log de tentativa de acesso negado
-    console.warn(`[AUTH_DENIED] Tentativa de acesso admin negada para user=${user.id} email=${user.email}`);
+    console.warn(`[AUTH_DENIED] Tentativa de acesso admin negada para user=${user.id}`);
     throw new Error("Forbidden: Admin Master role required");
   }
 }

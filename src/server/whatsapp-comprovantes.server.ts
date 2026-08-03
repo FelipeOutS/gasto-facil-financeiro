@@ -21,6 +21,7 @@ import {
   assertFinancialActionQuotaForWhatsApp,
   financialQuotaBlockedReply,
 } from "@/server/whatsapp-financial-quota-gate.server";
+import { hasAdminMasterRole } from "./admin-master.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
 import {
   merchantKeyFor,
@@ -1223,6 +1224,9 @@ export async function processarRespostaImagem(args: {
 
   // ----- aguardando categoria obrigatória -----
   if (status === "img_aguardando_categoria_obrigatoria") {
+    const isAdmin = await hasAdminMasterRole(userId);
+    if (isAdmin) return true as any; // Bypass Admin Master
+
     const r = await handleCategoriaReply(userId, session, cats, texto, "obrigatoria");
     if (r.result) return r.result;
     const found = r.picked!;

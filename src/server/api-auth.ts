@@ -64,10 +64,11 @@ export function unauthorizedResponse(message = "Você precisa estar logado para 
  * Bypass de Admin Master para rotas internas: delega para a fonte única
  * server-side em `src/server/admin-master.server.ts`.
  */
-import { isAdminMasterEmail as _isAdminMasterEmail } from "./admin-master.server";
+import { hasAdminMasterRole } from "./admin-master.server";
 
-export function isAdminMasterUser(user: { email?: string | null } | null | undefined): boolean {
-  return _isAdminMasterEmail(user?.email);
+export async function isAdminMasterUser(user: { id: string; email?: string | null } | null | undefined): Promise<boolean> {
+  if (!user?.id) return false;
+  return hasAdminMasterRole(user.id);
 }
 
 
@@ -112,7 +113,7 @@ export async function ensurePremiumFeatureAccess(
   feature: "importacoes" | "importar_extrato" | "importar_fatura" | "importar_conta" | "investimentos",
 ): Promise<Response | null> {
   if (!user) return unauthorizedResponse("Você precisa estar logado.");
-  if (isAdminMasterUser(user)) return null;
+  if (await isAdminMasterUser(user)) return null;
   try {
     const { getSubscriptionForUserIdentity } = await import("@/server/subscription.server");
     const { planAllowsFeature } = await import("@/lib/plans");

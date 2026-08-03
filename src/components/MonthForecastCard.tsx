@@ -54,7 +54,14 @@ const STATUS_STYLES = {
     text: "text-rose-600 dark:text-rose-400",
     icon: TrendingDown,
   },
+  neutro: {
+    bg: "from-slate-500/10 via-card to-card",
+    ring: "ring-slate-500/30",
+    text: "text-slate-600 dark:text-slate-400",
+    icon: TrendingUp, // fallback
+  },
 } as const;
+
 
 export function MonthForecastCard({ mes, ano, className }: Props) {
   const { t } = useTranslation("dashboard");
