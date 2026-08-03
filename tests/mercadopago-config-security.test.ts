@@ -33,18 +33,29 @@ describe("Mercado Pago Config - Fail-Closed & Cross-Environment Blocking", () =>
     expect(cfg.diagnostics).toContain("Token de produção com prefixo de teste (TEST-) — BLOQUEIO CRUZADO");
   });
 
-  it("should block sandbox environment with production token", () => {
+  it("should allow sandbox environment with APP_USR- token (Prompt 4A.1)", () => {
     const env = { 
       MERCADO_PAGO_ENVIRONMENT: "sandbox",
-      MERCADO_PAGO_SANDBOX_ACCESS_TOKEN: "APP_USR-should-fail",
+      MERCADO_PAGO_SANDBOX_ACCESS_TOKEN: "APP_USR-test-token",
       MERCADO_PAGO_SANDBOX_WEBHOOK_SECRET: "secret",
       MERCADO_PAGO_SANDBOX_PUBLIC_KEY: "pk",
       MERCADO_PAGO_SANDBOX_BASE_URL: "https://preview.lovable.app"
     };
     const cfg = resolveMercadoPagoConfig(env);
+    expect(cfg.ok).toBe(true);
+    expect(cfg.environment).toBe("sandbox");
+    expect(cfg.accessToken).toBe("APP_USR-test-token");
+  });
+
+  it("should still block production environment with TEST- token", () => {
+    const env = { 
+      MERCADO_PAGO_ENVIRONMENT: "production",
+      MERCADO_PAGO_PRODUCTION_ACCESS_TOKEN: "TEST-should-fail",
+      MERCADO_PAGO_PRODUCTION_WEBHOOK_SECRET: "secret"
+    };
+    const cfg = resolveMercadoPagoConfig(env);
     expect(cfg.ok).toBe(false);
     expect(cfg.state).toBe("credential_environment_mismatch");
-    expect(cfg.diagnostics).toContain("Token configurado em MERCADO_PAGO_SANDBOX_ACCESS_TOKEN tem prefixo de produção (APP_USR-) — BLOQUEIO CRUZADO");
   });
 
   it("should block production with preview URL", () => {

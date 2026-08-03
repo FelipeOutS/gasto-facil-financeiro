@@ -58,14 +58,20 @@ export const DEFAULT_CHECKOUT_TTL_MINUTES = 30;
 
 type Env = Record<string, string | undefined>;
 
-/** Classifica um token do MP pelo prefixo, sem revelar seu valor. */
+/** 
+ * Classifica um token do MP pelo prefixo.
+ * ATENÇÃO (Prompt 4A.1): O prefixo não é garantia absoluta de ambiente.
+ * Credenciais de teste podem usar APP_USR-.
+ */
 export function classifyTokenPrefix(
   token: string | null | undefined,
 ): "production" | "sandbox" | "unknown" {
   const t = (token ?? "").trim();
   if (!t) return "unknown";
-  if (t.startsWith("APP_USR-")) return "production";
+  // O prefixo TEST- é garantidamente sandbox.
   if (t.startsWith("TEST-")) return "sandbox";
+  // APP_USR- pode ser produção OU sandbox (conta de teste).
+  if (t.startsWith("APP_USR-")) return "production"; 
   return "unknown";
 }
 
@@ -113,22 +119,15 @@ function blocked(
 /**
  * Resolve a configuração do Mercado Pago.
  *
- * Regras de ambiente:
- *   - `MERCADO_PAGO_ENVIRONMENT=production` → produção;
- *   - `MERCADO_PAGO_ENVIRONMENT=sandbox`    → sandbox;
- *   - valor inválido (inclusive capitalização inesperada, ex. "Production")
- *     → `unresolved_environment`, novos fluxos BLOQUEADOS;
- *   - ausente/vazio → modo legado: se existir `MERCADO_PAGO_ACCESS_TOKEN`
- *     com prefixo `APP_USR-` (produção comprovada pelo próprio prefixo),
- *     resolve como `legacy_production` e mantém produção operante com aviso
- *     sanitizado. Qualquer outra combinação é ambígua e BLOQUEIA novos fluxos.
- *
- * Regras de credencial:
- *   - sandbox usa EXCLUSIVAMENTE os secrets `MERCADO_PAGO_SANDBOX_*`;
- *     nenhum fallback para produção, em nenhuma hipótese;
- *   - produção prioriza `MERCADO_PAGO_PRODUCTION_*` e cai para os secrets
- *     legados (`MERCADO_PAGO_ACCESS_TOKEN` / `_WEBHOOK_SECRET`) com aviso;
- *   - prefixo do token precisa combinar com o ambiente resolvido.
+ * Regras de ambiente (Prompt 4A.1 — Revisado):
+ *   - O ambiente é determinado PRIMARIAMENTE por `MERCADO_PAGO_ENVIRONMENT`.
+ *   - `production` → Usa secrets `PRODUCTION_*` ou legados.
+ *   - `sandbox`    → Usa secrets `SANDBOX_*`. NUNCA usa fallbacks de produção.
+ *   - O prefixo do token (`APP_USR-`) não é mais usado para rejeitar tokens
+ *     no modo sandbox, pois contas de teste podem usar esse prefixo.
+ *   - O bloqueio cruzado agora foca na ORIGEM do secret: se o secret veio
+ *     da variável de produção, ele não pode ser usado no modo sandbox.
+ */
  */
 export function resolveMercadoPagoConfig(env: Env = process.env as Env): MpResolvedConfig {
   const diagnostics: string[] = [];
@@ -183,10 +182,9 @@ export function resolveMercadoPagoConfig(env: Env = process.env as Env): MpResol
       return blocked("missing_sandbox_credentials", diagnostics, env, "sandbox");
     }
 
-    if (classifyTokenPrefix(accessToken) === "production") {
-      diagnostics.push("Token configurado em MERCADO_PAGO_SANDBOX_ACCESS_TOKEN tem prefixo de produção (APP_USR-) — BLOQUEIO CRUZADO");
-      return blocked("credential_environment_mismatch", diagnostics, env, "sandbox");
-    }
+    // Prompt 4A.1: Removido bloqueio baseado apenas no prefixo APP_USR-,
+    // pois credenciais de teste podem ter esse prefixo.
+    // O isolamento é garantido por usar apenas os secrets MERCADO_PAGO_SANDBOX_*.
 
     const siteBaseUrl = pick(env, "MERCADO_PAGO_SANDBOX_BASE_URL");
     if (!siteBaseUrl) {
@@ -233,6 +231,7 @@ export function resolveMercadoPagoConfig(env: Env = process.env as Env): MpResol
     return blocked("missing_production_credentials", diagnostics, env, "production");
   }
 
+  // O bloqueio de TEST- em produção continua válido, pois TEST- nunca é produção.
   if (classifyTokenPrefix(accessToken) === "sandbox") {
     diagnostics.push("Token de produção com prefixo de teste (TEST-) — BLOQUEIO CRUZADO");
     return blocked("credential_environment_mismatch", diagnostics, env, "production");
