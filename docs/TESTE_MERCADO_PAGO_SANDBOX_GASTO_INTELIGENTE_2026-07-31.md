@@ -1,9 +1,13 @@
 ---
-name: Checkout de Teste Mercado Pago Sandbox
-description: Documentação do estado do E2E Sandbox (Prompt 4B).
+name: Ativação Oficial do Mercado Pago em Produção
+description: Registro da transição para produção oficial e cancelamento do ambiente sandbox.
 type: feature
 ---
-# E2E SANDBOX PARCIAL — BLOQUEADO POR CREDENCIAIS (Prompt 4A.1)
+# ATIVAÇÃO OFICIAL DO MERCADO PAGO EM PRODUÇÃO (Prompt 4)
+
+## ESTADO: SANDBOX CANCELADO / PRODUÇÃO PREPARADA
+
+Este documento registra a decisão estratégica de pular o ambiente sandbox e ativar a integração oficial do Mercado Pago diretamente em produção.
 
 Este documento registra a correção da premissa de detecção de ambiente e o estado atual do E2E Sandbox.
 
@@ -29,17 +33,19 @@ Anteriormente, o sistema rejeitava tokens com prefixo `APP_USR-` no modo sandbox
 - **URL de Produção em Preview:** Proibido em modo produção.
 - **Token TEST- em Produção:** Bloqueado via `classifyTokenPrefix`.
 
-## 4. Próximos Passos
-Para prosseguir com o E2E real, é necessário injetar os segredos via Lovable Secrets:
-1. `MERCADO_PAGO_ENVIRONMENT = sandbox`
-2. `MERCADO_PAGO_SANDBOX_ACCESS_TOKEN = ...` (Aceita `APP_USR-` ou `TEST-`)
-3. `MERCADO_PAGO_SANDBOX_WEBHOOK_SECRET = ...`
-4. `MERCADO_PAGO_SANDBOX_PUBLIC_KEY = ...`
-5. `MERCADO_PAGO_SANDBOX_BASE_URL = https://id-preview--5de62d63-2340-4175-8a16-26c2beff1e71.lovable.app`
+## 4. Próximos Passos (PRODUÇÃO)
+Para ativar o checkout real no domínio oficial, é necessário injetar os segredos de produção via Lovable Secrets:
+1. `MERCADO_PAGO_ENVIRONMENT = production`
+2. `MERCADO_PAGO_PRODUCTION_ACCESS_TOKEN = ...`
+3. `MERCADO_PAGO_PRODUCTION_WEBHOOK_SECRET = ...`
+4. `MERCADO_PAGO_PRODUCTION_PUBLIC_KEY = ...`
+5. `MERCADO_PAGO_PRODUCTION_BASE_URL = https://gastointeligente.com.br`
 
-## 5. Auditoria de Regressão
-- **Prompt 2 (Dados Fictícios):** Preservado.
-- **Prompt 3 (Seroval):** Preservado.
-- **Prompt 4A (Estrutura):** Refatorado para suportar tokens `APP_USR-` em sandbox.
+## 5. Auditoria de Prontidão
+- **Sandbox:** CANCELADO por decisão oficial.
+- **Produção:** PREPARADA com infraestrutura fail-closed.
+- **Domínio Oficial:** https://gastointeligente.com.br (Único autorizado).
+- **Webhook:** /api/public/webhooks/mercadopago
+- **Estado:** AGUARDANDO PRIMEIRA TRANSAÇÃO OFICIAL.
 
-Documento atualizado em: 2026-08-03 18:45 UTC.
+Documento atualizado em: 2026-08-03 18:46 UTC.
