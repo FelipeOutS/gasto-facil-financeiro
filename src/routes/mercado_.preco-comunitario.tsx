@@ -172,6 +172,7 @@ function PrecoComunitarioPage() {
 
 
 
+
   // Manual state
   const [manualOpen, setManualOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
