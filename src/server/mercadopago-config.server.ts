@@ -167,7 +167,7 @@ export function resolveMercadoPagoConfig(env: Env = process.env as Env): MpResol
     
     // Se não há NENHUMA credencial sandbox, retorna erro controlado de não configurado
     if (!accessToken && !webhookSecret && !publicKey) {
-      diagnostics.push("Sandbox não configurado (MERCADO_PAGO_SANDBOX_* ausentes)");
+      diagnostics.push("Sandbox CANCELADO por decisão do proprietário (Prompt 4 OFICIAL). Ative o modo produção.");
       return blocked("sandbox_not_configured", diagnostics, env, "sandbox");
     }
 
