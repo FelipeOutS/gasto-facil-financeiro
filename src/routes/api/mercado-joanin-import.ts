@@ -282,8 +282,14 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
         const user = await getUserFromRequest(request);
         if (!user) return unauthorizedResponse("Você precisa estar logado.");
 
-        // Gate de plano (mercado_avancado).
-        if (!isAdminMasterUser(user)) {
+        // WA-SEC-JOANIN-01 — Restrição total a Admin Master (owner) em produção.
+        if (!(await isAdminMasterUser(user))) {
+          return Response.json(
+            { success: false, code: "forbidden", message: "Acesso restrito para manutenção." },
+            { status: 403 }
+          );
+        }
+
           try {
             const { getSubscriptionForUserIdentity } = await import("@/server/subscription.server");
             const { planAllowsFeature } = await import("@/lib/plans");
