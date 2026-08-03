@@ -30,18 +30,9 @@ const MIME_TO_EXT: Record<string, string> = {
 };
 
 async function ensureAdminMaster(userId: string): Promise<void> {
-  const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
-  if (error || !data?.user) throw new Error("FORBIDDEN");
-  const email = (data.user.email ?? "").trim().toLowerCase();
-  const { isAdminMasterEmail } = await import("@/server/admin-master.server");
-  if (!isAdminMasterEmail(email)) {
-    // Fallback: também aceita owner role.
-    const { data: roles } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-    const isOwner = (roles ?? []).some((r: { role: string }) => r.role === "owner");
-    if (!isOwner) throw new Error("FORBIDDEN");
+  const { hasAdminMasterRole } = await import("@/server/admin-master.server");
+  if (!(await hasAdminMasterRole(userId))) {
+    throw new Error("FORBIDDEN");
   }
 }
 

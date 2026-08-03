@@ -54,7 +54,7 @@ export async function checkFeatureAccess(
 
     const sub = await getSubscriptionForUserIdentity({
       userId,
-      email,
+      email: data.user?.email ?? null,
       repairLink: false,
     });
 

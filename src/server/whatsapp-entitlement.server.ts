@@ -244,6 +244,8 @@ export async function getWhatsAppEntitlement(
       let plan: PlanTier | null = null;
       let planActive = false;
       try {
+        const { data: authUser } = await sb.auth.admin.getUserById(userId);
+        const email = authUser?.user?.email ?? null;
         const sub = await getSubscriptionForUserIdentity({
           userId,
           email,

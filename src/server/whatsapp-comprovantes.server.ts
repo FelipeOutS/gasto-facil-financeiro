@@ -23,6 +23,10 @@ import {
 } from "@/server/whatsapp-financial-quota-gate.server";
 import { hasAdminMasterRole } from "./admin-master.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
+import {
+  merchantKeyFor,
+  recordMerchantMemory,
+} from "./whatsapp-merchant-memory.server";
 import { createHash } from "crypto";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
