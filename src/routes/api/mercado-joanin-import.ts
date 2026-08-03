@@ -290,33 +290,6 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
           );
         }
 
-          try {
-            const { getSubscriptionForUserIdentity } = await import("@/server/subscription.server");
-            const { planAllowsFeature } = await import("@/lib/plans");
-            const sub = await getSubscriptionForUserIdentity({
-              userId: user.id,
-              email: user.email ?? null,
-              repairLink: false,
-            });
-            if (!sub.active) {
-              return premiumForbiddenResponse(
-                "mercado_avancado",
-                "Sua assinatura não está ativa. Acesse Meu plano para liberar este recurso.",
-              );
-            }
-            if (!planAllowsFeature(sub.plan, "mercado_avancado")) {
-              return premiumForbiddenResponse(
-                "mercado_avancado",
-                "Importação online está disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa.",
-                "Controle Completo Pessoal",
-              );
-            }
-          } catch (err) {
-            console.error("[mercado-joanin-import] gate erro", err);
-            return premiumForbiddenResponse("mercado_avancado", "Não foi possível validar seu plano.");
-          }
-        }
-
         const rl = await enforceUserRateLimit({
           scope: "onlineImport",
           userId: user.id,
@@ -431,4 +404,5 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
     },
   },
 });
+
 
