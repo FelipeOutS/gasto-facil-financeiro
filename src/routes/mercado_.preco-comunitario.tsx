@@ -599,7 +599,14 @@ function PrecoComunitarioPage() {
             title: t("communityPrices.onlineImport.cardTitle"),
             desc: t("communityPrices.onlineImport.cardDescription"),
             cta: t("communityPrices.v2.actions.onlineCta"),
-            onClick: () => setOnlineImportOpen(true),
+            onClick: () => {
+              if (isAdminMaster) {
+                setOnlineImportOpen(true);
+              } else {
+                notify.info("Importação online temporariamente em manutenção para melhorias.");
+              }
+            },
+
           },
           {
             key: "manual",
