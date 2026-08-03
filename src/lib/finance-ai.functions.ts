@@ -32,9 +32,27 @@ export const clearChatHistory = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export interface ForecastData {
+  ok: boolean;
+  status: "positivo" | "negativo" | "neutro";
+  label: string;
+  hoje: string;
+  temDados: boolean;
+  resultadoPrevisto: number;
+  resultadoAtual: number;
+  entradasConfirmadas: number;
+  entradasPrevistas: number;
+  saidasConfirmadas: number;
+  saidasPendentes: number;
+  impactos: Array<{ nome: string; valor: number; detalhe?: string }>;
+  receitas: Array<{ nome: string; valor: number; detalhe?: string }>;
+  faturasDetalhe: Array<{ cartao: string; total: number; pago: number; pendente: number; nome?: string; detalhe?: string; valor?: number }>;
+}
+
 export const getMonthForecast = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d) => z.object({ mes: z.number().optional(), ano: z.number().optional() }).optional().parse(d))
+  .handler(async ({ data, context }): Promise<ForecastData> => {
     return { 
       ok: true,
       status: "positivo",
@@ -55,8 +73,9 @@ export const getMonthForecast = createServerFn({ method: "GET" })
 
 export const getMonthlySmartSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    return { ok: true, reply: "Resumo simulado" };
+  .inputValidator((d) => z.object({ mes: z.number().optional(), ano: z.number().optional(), lang: z.string().optional() }).optional().parse(d))
+  .handler(async ({ data, context }) => {
+    return { ok: true, reply: "Resumo simulado", error: null };
   });
 
 export const aiChat = createServerFn({ method: "POST" })
