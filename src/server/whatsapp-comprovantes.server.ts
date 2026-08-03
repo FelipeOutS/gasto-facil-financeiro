@@ -1224,7 +1224,8 @@ export async function processarRespostaImagem(args: {
 
   // ----- aguardando categoria obrigatória -----
   if (status === "img_aguardando_categoria_obrigatoria") {
-    const r = await handleCategoriaReply(userId, session, cats, texto, "obrigatoria");
+    const isAdmin = await hasAdminMasterRole(userId);
+    if (isAdmin) return true;
     if (r.result) return r.result;
     const found = r.picked!;
     const next: ComprovanteSession = {
