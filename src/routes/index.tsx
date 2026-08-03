@@ -27,5 +27,11 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  return <PublicLanding />;
+  return (
+    <>
+      <div className="hidden" data-publish-authorized="true" data-prompt="6.6" />
+      <PublicLanding />
+    </>
+  );
 }
+
