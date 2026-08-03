@@ -8,7 +8,8 @@
  *   - devolver access token, webhook secret e public key do ambiente correto;
  *   - devolver URL base da API, notification_url, back_urls e redirect_uri;
  *   - expor estado de configuração + diagnóstico SANITIZADO (nunca valores);
- *   - garantir que sandbox JAMAIS use credencial de produção e vice-versa.
+ *   - garantir que sandbox JAMAIS use credencial de produção e vice-versa;
+ *   - bloquear cruzamento de tokens (TEST- em produção, APP_USR- em sandbox).
  *
  * Nenhuma rota deve ler `process.env.MERCADO_PAGO_*` diretamente.
  */
@@ -23,7 +24,8 @@ export type MpConfigState =
   | "missing_production_credentials"
   | "missing_sandbox_credentials"
   | "missing_sandbox_base_url"
-  | "credential_environment_mismatch";
+  | "credential_environment_mismatch"
+  | "sandbox_not_configured";
 
 export interface MpResolvedConfig {
   /** true somente quando é seguro criar novos checkouts. */
@@ -164,26 +166,38 @@ export function resolveMercadoPagoConfig(env: Env = process.env as Env): MpResol
     const accessToken = pick(env, "MERCADO_PAGO_SANDBOX_ACCESS_TOKEN");
     const webhookSecret = pick(env, "MERCADO_PAGO_SANDBOX_WEBHOOK_SECRET");
     const publicKey = pick(env, "MERCADO_PAGO_SANDBOX_PUBLIC_KEY");
+    
+    // Se não há NENHUMA credencial sandbox, retorna erro controlado de não configurado
+    if (!accessToken && !webhookSecret && !publicKey) {
+      diagnostics.push("Sandbox não configurado (MERCADO_PAGO_SANDBOX_* ausentes)");
+      return blocked("sandbox_not_configured", diagnostics, env, "sandbox");
+    }
+
     const missing: string[] = [];
     if (!accessToken) missing.push("MERCADO_PAGO_SANDBOX_ACCESS_TOKEN");
     if (!webhookSecret) missing.push("MERCADO_PAGO_SANDBOX_WEBHOOK_SECRET");
     if (!publicKey) missing.push("MERCADO_PAGO_SANDBOX_PUBLIC_KEY");
+    
     if (missing.length > 0) {
-      diagnostics.push(`Sandbox sem credenciais obrigatórias: ${missing.join(", ")} (sem fallback para produção)`);
+      diagnostics.push(`Sandbox com credenciais incompletas: ${missing.join(", ")} (sem fallback para produção)`);
       return blocked("missing_sandbox_credentials", diagnostics, env, "sandbox");
     }
+
     if (classifyTokenPrefix(accessToken) === "production") {
-      diagnostics.push("Token configurado em MERCADO_PAGO_SANDBOX_ACCESS_TOKEN tem prefixo de produção — bloqueado");
+      diagnostics.push("Token configurado em MERCADO_PAGO_SANDBOX_ACCESS_TOKEN tem prefixo de produção (APP_USR-) — BLOQUEIO CRUZADO");
       return blocked("credential_environment_mismatch", diagnostics, env, "sandbox");
     }
+
     const siteBaseUrl = pick(env, "MERCADO_PAGO_SANDBOX_BASE_URL");
     if (!siteBaseUrl) {
       diagnostics.push("Sandbox sem MERCADO_PAGO_SANDBOX_BASE_URL — não é permitido usar o domínio de produção");
       return blocked("missing_sandbox_base_url", diagnostics, env, "sandbox");
     }
+
     const notificationUrl =
       pick(env, "MERCADO_PAGO_SANDBOX_NOTIFICATION_URL") ??
       `${siteBaseUrl.replace(/\/+$/, "")}${WEBHOOK_PATH}`;
+
     return {
       ok: true,
       environment: "sandbox",
@@ -218,20 +232,30 @@ export function resolveMercadoPagoConfig(env: Env = process.env as Env): MpResol
     );
     return blocked("missing_production_credentials", diagnostics, env, "production");
   }
+
   if (classifyTokenPrefix(accessToken) === "sandbox") {
-    diagnostics.push("Token de produção com prefixo de teste (TEST-) — bloqueado");
+    diagnostics.push("Token de produção com prefixo de teste (TEST-) — BLOQUEIO CRUZADO");
     return blocked("credential_environment_mismatch", diagnostics, env, "production");
   }
+
   if (legacyFallbackUsed) {
     diagnostics.push(
       "Usando secrets LEGADOS de produção (MERCADO_PAGO_ACCESS_TOKEN / MERCADO_PAGO_WEBHOOK_SECRET). Migrar para MERCADO_PAGO_PRODUCTION_*; fallback será removido em prompt posterior.",
     );
   }
 
+  // Em produção, forçamos o domínio oficial se não houver override explícito.
+  // JAMAIS permitimos URL de preview em produção.
   const siteBaseUrl = (pick(env, "MERCADO_PAGO_PRODUCTION_BASE_URL") ?? PRODUCTION_SITE_URL).replace(
     /\/+$/,
     "",
   );
+  
+  if (siteBaseUrl.includes("lovable.app") || siteBaseUrl.includes("localhost")) {
+    diagnostics.push("URL de produção configurada para preview/localhost — BLOQUEADO por segurança");
+    return blocked("unresolved_environment", diagnostics, env, "production");
+  }
+
   const notificationUrl =
     pick(env, "MERCADO_PAGO_PRODUCTION_NOTIFICATION_URL") ?? `${siteBaseUrl}${WEBHOOK_PATH}`;
 
@@ -303,3 +327,4 @@ export function isCheckoutExpired(expiresAt: string | Date | null, now: Date = n
   if (!Number.isFinite(t)) return true;
   return t <= now.getTime();
 }
+
