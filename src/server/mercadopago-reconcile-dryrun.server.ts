@@ -75,6 +75,7 @@ export function classifyHistoricalPayment(
     findings.push("sem_provider_payment_id");
     return { classification: "INCOMPLETO", findings };
   }
+  
   if (legacyEnv) findings.push("environment_legacy_unknown");
   if (noLink) findings.push("sem_checkout_session_vinculada");
 
@@ -88,13 +89,16 @@ export function classifyHistoricalPayment(
 
   const localCanonical = canonicalMpStatus(local.status);
   const providerCanonical = canonicalMpStatus(provider.status);
+  
   if (localCanonical !== providerCanonical) {
     findings.push(`status_divergente_local_${localCanonical}_provedor_${providerCanonical}`);
   }
+  
   const providerCents =
     typeof provider.transaction_amount === "number"
       ? Math.round(provider.transaction_amount * 100)
       : null;
+      
   if (
     providerCents !== null &&
     local.amount_cents !== null &&
@@ -102,6 +106,7 @@ export function classifyHistoricalPayment(
   ) {
     findings.push("valor_divergente");
   }
+  
   if (
     provider.currency_id &&
     local.currency &&
@@ -112,7 +117,11 @@ export function classifyHistoricalPayment(
 
   const divergent = findings.some((f) => f.startsWith("status_divergente") || f.endsWith("divergente"));
   if (divergent) return { classification: "DIVERGENTE", findings };
-  return { classification: legacyEnv ? "LEGADO" : "CONSISTENTE", findings };
+  
+  // Se é consistente mas não tem ambiente/sessão, é LEGADO
+  if (legacyEnv) return { classification: "LEGADO", findings };
+  
+  return { classification: "CONSISTENTE", findings };
 }
 
 export function buildReconRow(
@@ -190,3 +199,4 @@ export async function reconcileDryRun(options: {
 
   return { dry_run: true, writes_performed: 0, total: rows.length, by_classification, rows };
 }
+
