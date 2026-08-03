@@ -582,8 +582,8 @@ E2E Playwright em CI, monitoramento e alertas de erro, Consent Mode, exclusão d
 1. **O sistema pode receber usuários reais hoje?** **SIM.** Já recebe: 20 usuários, RLS em 68/68 tabelas, zero grants para `anon`, typecheck limpo, 2249 testes verdes.
 2. **Pode receber pagamentos reais?** **PARCIALMENTE.** Checkout e webhook existem e há 8 pagamentos históricos, mas o pipeline atômico atual nunca processou um evento (`payment_events`=0).
 3. **Os dados financeiros estão protegidos?** **SIM.** RLS universal, `anon` sem grants, HMAC em todos os webhooks, rate limit atômico, logs sem PII, cofre criptografado. Ressalva: `FORCE RLS` ausente na maioria das tabelas.
-4. **A migração pode continuar?** **NÃO FOI POSSÍVEL VALIDAR.** Só existe um ambiente acessível; nenhum artefato de migração entre dois bancos foi encontrado no projeto.
-5. **O banco novo está pronto para cutover?** **NÃO FOI POSSÍVEL VALIDAR** — não há segundo banco identificável.
+4. **A migração pode continuar?** **NÃO APLICÁVEL.** Confirmado que existe apenas um ambiente oficial (`vnlx...egak`).
+5. **O banco novo está pronto para cutover?** **NÃO APLICÁVEL** — o banco atual é a fonte oficial única.
 6. **O WhatsApp pode receber mensagens reais?** **NÃO.** `global_enabled=false` e `inbound_enabled=false` em `whatsapp_runtime_config`.
 7. **O WhatsApp pode enviar mensagens reais?** **NÃO.** Early-exit duplo no dispatcher + `outbound_enabled=false` + `global_daily_outbound_limit=0`.
 8. **Os templates estão aprovados?** **NÃO.** Os 3 estão `draft`, `active=false`, `provider_template_id` nulo, `submitted_at` nulo.
