@@ -611,7 +611,7 @@ E2E Playwright em CI, monitoramento e alertas de erro, Consent Mode, exclusão d
 
 | Frente | Prompts estimados |
 |---|---|
-| Migração de banco | 2–10 (2 se não existir migração; até 10 se existir) |
+| Migração de banco | CONCLUÍDA (N/A) |
 | Núcleo financeiro | 8–12 |
 | Planos e Mercado Pago | 5–8 |
 | WhatsApp | 6–10 (após aprovação Meta) |
