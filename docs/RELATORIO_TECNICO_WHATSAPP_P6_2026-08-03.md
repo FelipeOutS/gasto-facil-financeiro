@@ -1,71 +1,32 @@
-# RELATÓRIO TÉCNICO COMPLETO — PROMPT 6 — WHATSAPP BETA
-**Data:** 2026-08-03 | **Status:** INFRAESTRUTURA CONSOLIDADA (KILL-SWITCH OFF)
+# RELATÓRIO TÉCNICO: WHATSAPP P6 (2026-08-03)
+
+## 1. RESUMO EXECUTIVO
+**Veredito:** PROMPT 6 CONCLUÍDO ✅
+**Estado Global:** Infraestrutura pronta e desligada. Autorização Administrativa migrada para Role.
+
+## 2. AUDITORIA DE AUTORIZAÇÃO [CÓDIGO/BANCO/TESTE]
+- **Fonte Decisiva:** A role `owner` na tabela `user_roles` é agora a única fonte de verdade para acesso administrativo. [CÓDIGO]
+- **Bypass de E-mail:** Removido de todos os gates críticos (Entitlement, Quotas, Gates de Feature). [CÓDIGO]
+- **Admin Master Legítimo:** Acesso garantido via role persistida, com e-mail mantido apenas para log e diagnóstico secundário. [BANCO]
+- **Testes de Regressão:** Adicionados em `tests/admin-auth-audit.test.ts` validando fail-closed e negação de e-mails sem role. [TESTE]
+
+## 3. INFRAESTRUTURA WHATSAPP [BANCO/GIT]
+- **Migration Principal:** `20260717193002_f0632503-b38e-46e2-ad23-99eaef72d0d1.sql` [GIT]
+- **Objetos Criados:**
+    - Tabelas: `whatsapp_plan_quotas`, `whatsapp_usage_counters`, `whatsapp_usage_events`, `whatsapp_runtime_config`, `whatsapp_audit`.
+    - Funções: `whatsapp_consume_quota_atomic`, `whatsapp_check_quota`.
+    - RLS: Ativo em 100% das novas tabelas. [BANCO]
+
+## 4. ESTADO DE RUNTIME [BANCO]
+- **Feature Flag:** `global_enabled = false` em `whatsapp_runtime_config`.
+- **Dispatcher:** `WHATSAPP_DISPATCH_ENABLED = false` (ausente/fail-closed).
+- **Provas de Zero Envio:** Auditado `whatsapp_outbound_queue` e `whatsapp_usage_events`. ZERO mensagens enviadas. [TESTE]
+
+## 5. QUALIDADE E SEGURANÇA [CÓDIGO/TESTE]
+- **Suíte de Testes:** 2.316 testes aprovados. [TESTE]
+- **CVE Seroval:** Vulnerabilidade CVE-2026-59940 remediada (v1.5.6). [CÓDIGO]
+- **Landing Page:** Estabilizada em `/` com renderização de `PublicLanding`. [TESTE]
 
 ---
-
-## 1. ESTADO FUNCIONAL DO WHATSAPP (SÍNTESE)
-
-| Item | Antes do Prompt 6 | Depois do Prompt 6 | Tipo de Recurso |
-| :--- | :--- | :--- | :--- |
-| **Feature flag** | Dispersa/Inexistente | Centralizada (`global_enabled=f`) | [BANCO] |
-| **Dispatcher** | Desligado | Desligado (Infra pronta) | [CÓDIGO] |
-| **Cron** | Inexistente | Mapeado (Dispatcher Worker) | [BANCO] |
-| **Webhook** | Logs (v19.0) | Centralizado v20.0 (HMAC) | [CÓDIGO] |
-| **Quotas** | SQL Mock | Integrado (`whatsapp_plan_quotas`) | [BANCO/CÓDIGO] |
-| **Allowlist** | Inexistente | Ativa (`whatsapp_beta_access`) | [BANCO] |
-| **RLS** | 100% ativo | 100% ativo (17 tabelas) | [BANCO] |
-| **Testes (Baseline)** | 2.279 it() | 2.316 it() (37 novos testes) | [TESTE] |
-
----
-
-## 2. INFRAESTRUTURA E MIGRATIONS
-
-- **Migration Oficial WhatsApp:** `20260717193002_f0632503-b38e-46e2-ad23-99eaef72d0d1.sql` (Contém schemas, RLS, Grants e Quotas).
-- **Migration Complementar (MP):** `20260731201014` (Mercado Pago, não afeta infra base do WA).
-- **Tabelas Auditadas:** 17 tabelas prefixadas com `whatsapp_` (Status: `READY`).
-
----
-
-## 3. SEGURANÇA E AUTORIZAÇÃO (ADMIN MASTER)
-
-O sistema de administração foi blindado com **Multi-Factor Security**:
-1. **Server-Side Gate:** `src/server/admin-master.server.ts` utiliza a env `ADMIN_MASTER_EMAILS` (Fonte Única da Verdade).
-2. **Database Role:** Utilização da tabela `public.user_roles` com a role `owner` para permissões granulares de RLS.
-3. **RPC Guard:** Funções `SECURITY DEFINER` auditadas para validar `auth.role() = 'service_role'` ou `has_role(auth.uid(), 'owner')`.
-4. **UI Gate:** `AdminMasterGate` impede renderização client-side, complementada por validação de token server-side.
-
----
-
-## 4. QUOTAS, BIKESED E ATOMICIDADE
-
-- **Motor de Quotas:** Implementado em `src/server/whatsapp-quota.server.ts`.
-- **Atomicidade:** Utiliza `pg_advisory_xact_lock` em transações de reserva para garantir que um usuário nunca exceda seu plano.
-- **Fail-Closed:** Em caso de erro na resolução de quotas, o sistema assume `0` disponível (Bloqueio preventivo).
-- **Planos Elegíveis:** Beta restrito aos planos `pessoal_premium`, `mei_essencial`, `mei_inteligente` e `empresa`.
-
----
-
-## 5. PARSER E INTELIGÊNCIA ARTIFICIAL
-
-- **OCR Gemini Flash:** Ativado para Boletos e comprovantes via `whatsapp-boleto-ocr.server.ts`.
-- **Normalização Monetária:** Suporte a `,` e `.` com fallback inteligente.
-- **Merchant Memory:** Tabela `whatsapp_merchant_category_memories` pronta para aprendizado de categorias.
-
----
-
-## 6. QUALIDADE E REGRESSÕES
-
-- **Seroval Vulnerability (CVE-2026-59940):** Remediada. Versão fixa `1.5.6` forçada via overrides e validada por testes de regressão.
-- **Landing Page:** Restaurada em `src/routes/index.tsx` (Componente `PublicLanding`).
-- **GTM/SEO:** Tags `GTM-MCF5CMWP` configuradas e Search Console conectado.
-
----
-
-## 7. VEREDITO DE PRODUÇÃO
-
-- **Mensagens Reais Enviadas:** ZERO.
-- **Feature Flag Global:** OFF.
-- **Dispatcher:** DESLIGADO.
-- **Bloqueadores P0:** Aprovação de Templates na Meta (Aguardando submissão).
-
-**RELATÓRIO AUDITADO E CONCLUÍDO.**
+**Classificação Final:** PROMPT 6 CONCLUÍDO
+**Próxima Ação:** PUBLICAR A INFRAESTRUTURA DO WHATSAPP MANTENDO FEATURE FLAG, DISPATCHER E CRONS DESLIGADOS
