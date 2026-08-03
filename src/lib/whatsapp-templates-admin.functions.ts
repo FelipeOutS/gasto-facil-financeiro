@@ -51,6 +51,14 @@ export const whatsappAdminListLocalTemplates = createServerFn({ method: "GET" })
     await assertAdminMaster(context.userId);
     const { buildServiceRoleCatalogLoader } = await import("@/server/whatsapp-meta-templates-catalog.server");
     const loader = await buildServiceRoleCatalogLoader();
-    return await loader.listAll();
+    const list = await loader.listAll();
+    // Normaliza unknown para JSON-safe object para o TanStack Start
+    return list.map(t => ({
+      ...t,
+      placeholder_schema: (t.placeholder_schema || {}) as Record<string, any>,
+      examples: (t.examples || {}) as Record<string, any>,
+      components: (t.components || []) as any[]
+    }));
   });
+
 
