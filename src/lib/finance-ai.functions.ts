@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export interface ForecastData {
   ok: boolean;
-  status: "positivo" | "negativo" | "atencao";
+  status: "positivo" | "negativo" | "atencao" | "neutro";
   label: string;
   hoje: string;
   temDados: boolean;
@@ -45,7 +45,11 @@ export const getMonthlySmartSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: any) => z.object({ mes: z.number().optional(), ano: z.number().optional(), lang: z.string().optional() }).optional().parse(d))
   .handler(async ({ data, context }) => {
-    return { ok: true, reply: "Resumo simulado", error: null as { message: string } | null };
+    return { 
+      ok: true, 
+      reply: "Resumo simulado", 
+      error: null as { message: string } | null 
+    };
   });
 
 export const aiChat = createServerFn({ method: "POST" })
