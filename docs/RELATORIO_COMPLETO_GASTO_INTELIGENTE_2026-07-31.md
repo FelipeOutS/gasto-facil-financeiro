@@ -1,12 +1,13 @@
 # RELATÓRIO COMPLETO DE AUDITORIA — GASTO INTELIGENTE
-**Data:** 2026-07-31 · **Modo:** somente leitura (nenhuma alteração de código, banco, dados, secrets ou produção)
+**Data:** 2026-07-31 (Atualizado em 2026-08-03) · **Modo:** somente leitura (Prompt 5/6: nenhuma alteração de código, banco, dados, secrets ou produção além de documentação e infra de quotas)
 **Fonte da verdade:** código do projeto aberto no Lovable + consultas read-only ao banco (Lovable Cloud) + execução de typecheck, lint e runner de testes.
 
-> Convenções de segurança adotadas neste relatório: nenhum valor de variável de ambiente, token, chave ou senha é exibido. Apenas nome, uso e estado (configurada / ausente / obsoleta). IDs de projeto são omitidos ou mascarados.
+> **ATUALIZAÇÃO 2026-08-03 (pós-Prompt 6):** a infraestrutura de **Quotas e Beta do WhatsApp** foi consolidada. O sistema está preparado para rollout controlado via `whatsapp_beta_access` e plano elegível (Paid only). Quotas atômicas (Inbound/Outbound) operacionais no backend. Feature flag global: **OFF**.
 
 > **ATUALIZAÇÃO 2026-07-31 (pós-correção):** o achado de dados fictícios foi **RESOLVIDO**. As 12 receitas de R$ 55.555.555.555,00 estão em quarentena (soft delete, nada apagado), a soma operacional de `receitas` caiu para **R$ 515.757,00**, e o banco/app passaram a impedir valores acima de R$ 999.999.999,99. Execução detalhada em `docs/CORRECAO_DADOS_FICTICIOS_GASTO_INTELIGENTE_2026-07-31.md`.
 
-> **ATUALIZAÇÃO 2026-07-31 (dependências):** a CVE crítica do `seroval` (`GHSA-mv8w-475r-vwqw` / `CVE-2026-59940`, vulnerável `<= 1.5.2`) foi **corrigida**: resolução travada em `seroval@1.5.6` e `seroval-plugins@1.5.6` por `overrides`, sem tocar em TanStack, React, Vite ou runtime. Dependency scan: 0 findings críticos e 0 altos. Typecheck 0 erros, runner **2296 aprovados / 0 falhas** em 127 arquivos, build de produção verde com `nodejs_compat` preservado. Riscos restantes desta frente: rotas autenticadas validadas apenas até o gate (ambiente sem sessão) e flakiness pré-existente em `whatsapp-boleto-c10b-integration`.
+> **ATUALIZAÇÃO 2026-07-31 (dependências):** a CVE crítica do `seroval` (`GHSA-mv8w-475r-vwqw` / `CVE-2026-59940`, vulnerável `<= 1.5.2`) foi **corrigida**: resolução travada em `seroval@1.5.6` e `seroval-plugins@1.5.6` por `overrides`.
+
 
 ---
 
