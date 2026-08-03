@@ -20,15 +20,18 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 async function assertAdminMasterOrThrow(userId: string): Promise<void> {
+  const { assertAdminMaster } = await import("@/server/admin-master.server");
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { isAdminMasterEmail } = await import("@/server/admin-master.server");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const adm = supabaseAdmin as any;
   const { data } = await adm.auth.admin.getUserById(userId);
   const email: string | null = data?.user?.email ?? null;
-  if (!isAdminMasterEmail(email)) {
+
+  try {
+    await assertAdminMaster({ id: userId, email });
+  } catch (err) {
     throw new Response(
-      JSON.stringify({ error: "forbidden", message: "Acesso restrito ao Admin Master." }),
+      JSON.stringify({ error: "forbidden", message: "Acesso restrito ao Admin Master (Role 'owner' exigida)." }),
       { status: 403, headers: { "Content-Type": "application/json" } },
     );
   }
