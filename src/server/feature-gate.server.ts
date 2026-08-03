@@ -11,7 +11,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getSubscriptionForUserIdentity } from "./subscription.server";
 import { planAllowsFeature, type FeatureKey, type PlanTier } from "@/lib/plans";
-import { isAdminMasterEmail } from "@/server/admin-master.server";
+import { hasAdminMasterRole } from "@/server/admin-master.server";
 
 function lockedResponse(message: string): Response {
   return new Response(
@@ -47,9 +47,8 @@ export async function checkFeatureAccess(
   }
   try {
     const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
-    const email = data.user?.email ?? null;
-
-    if (isAdminMasterEmail(email)) {
+    const isAdmin = await hasAdminMasterRole(userId);
+    if (isAdmin) {
       return { ok: true, plan: "admin_master", isAdmin: true };
     }
 

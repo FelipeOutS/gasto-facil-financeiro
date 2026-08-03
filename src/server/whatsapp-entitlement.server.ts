@@ -25,7 +25,7 @@
  *     header, JWT claims, localStorage) — sempre revalida no banco.
  */
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
-import { isAdminMasterEmail } from "@/server/admin-master.server";
+import { hasAdminMasterRole } from "@/server/admin-master.server";
 import { getSubscriptionForUserIdentity } from "@/server/subscription.server";
 import type { PlanTier } from "@/lib/plans";
 
@@ -203,8 +203,7 @@ export async function getWhatsAppEntitlement(
   }
 
   try {
-    const email = await getUserEmail(userId);
-    const isAdmin = isAdminMasterEmail(email);
+    const isAdmin = await hasAdminMasterRole(userId);
 
     // Fonte primária — SQL. Cobre plano + assinatura + Admin Master.
     const featureIncluded = await hasWhatsAppFeatureSQL(userId);

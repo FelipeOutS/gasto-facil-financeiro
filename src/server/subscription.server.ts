@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getEffectiveUserPlan, type PlanTier, type SubscriptionStatus } from "@/lib/plans";
-import { isAdminMasterEmail } from "@/server/admin-master.server";
+import { hasAdminMasterRole } from "@/server/admin-master.server";
 
 const APPROVED_PAYMENT_STATUSES = new Set(["approved", "paid", "authorized", "aprovado", "aprovada"]);
 
@@ -151,7 +151,8 @@ export async function getSubscriptionForUserIdentity(input: {
   const email = normalizeEmail(input.email);
   const nowMs = Date.now();
 
-  if (isAdminMasterEmail(email)) {
+  const isAdmin = await hasAdminMasterRole(input.userId);
+  if (isAdmin) {
     return { ...emptySubscription(input.userId, email, "admin_master"), plan: "admin_master", storedPlan: "admin_master", status: "ativo", active: true, debug: { checkedUserId: input.userId, checkedEmail: email, source: "admin", reason: "admin_master", matchedPaymentId: null } };
   }
 

@@ -64,10 +64,10 @@ export function unauthorizedResponse(message = "Você precisa estar logado para 
  * Bypass de Admin Master para rotas internas: delega para a fonte única
  * server-side em `src/server/admin-master.server.ts`.
  */
-import { isAdminMasterEmail as _isAdminMasterEmail } from "./admin-master.server";
+import { hasAdminMasterRole } from "./admin-master.server";
 
 export function isAdminMasterUser(user: { email?: string | null } | null | undefined): boolean {
-  return _isAdminMasterEmail(user?.email);
+  return hasAdminMasterRole(user?.id);
 }
 
 

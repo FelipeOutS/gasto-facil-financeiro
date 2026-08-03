@@ -27,7 +27,7 @@
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 import { createHash } from "crypto";
 import { checkRateLimit } from "./rate-limit.server";
-import { isAdminMasterEmail } from "./admin-master.server";
+import { hasAdminMasterRole } from "./admin-master.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = _supabaseAdmin as any;
@@ -53,13 +53,12 @@ function hashPhone(digits: string): string {
   return createHash("sha256").update(digits).digest("hex").slice(0, 32);
 }
 
-async function isAdminMaster(userId: string): Promise<{ isAdmin: boolean; email: string | null }> {
+async function isAdminMaster(userId: string): Promise<{ isAdmin: boolean }> {
   try {
-    const { data } = await sb.auth.admin.getUserById(userId);
-    const email: string | null = (data?.user?.email ?? "").trim().toLowerCase() || null;
-    return { isAdmin: isAdminMasterEmail(email), email };
+    const isAdmin = await hasAdminMasterRole(userId);
+    return { isAdmin };
   } catch {
-    return { isAdmin: false, email: null };
+    return { isAdmin: false };
   }
 }
 
