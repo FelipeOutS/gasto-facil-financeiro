@@ -169,7 +169,7 @@ export function DesktopSidebar() {
         to={to}
         preload="intent"
         preloadDelay={0}
-        onClick={(e) => handleNavClick(to, e)}
+        onClick={(e: MouseEvent<HTMLAnchorElement>) => handleNavClick(to, e)}
         className={linkClasses}
         aria-label={label}
       >
@@ -312,7 +312,7 @@ export function DesktopSidebar() {
                       to="/app"
                       preload="intent"
                       preloadDelay={0}
-                      onClick={(e) => handleNavClick("/app", e)}
+                      onClick={(e: MouseEvent<HTMLAnchorElement>) => handleNavClick("/app", e)}
                       aria-label={t("items.dashboard")}
                       className={cn(
                         "group relative flex items-center justify-center rounded-xl px-2 py-2 text-sm font-medium transition-all",
@@ -334,7 +334,7 @@ export function DesktopSidebar() {
                   to="/app"
                   preload="intent"
                   preloadDelay={0}
-                  onClick={(e) => handleNavClick("/app", e)}
+                  onClick={(e: MouseEvent<HTMLAnchorElement>) => handleNavClick("/app", e)}
                   className={cn(
                     "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
                     dashboardActive

@@ -64,7 +64,7 @@ export function BottomNav() {
           to={to}
           preload="intent"
           preloadDelay={0}
-          onClick={(event) => handleNavClick(to, event)}
+          onClick={(event: MouseEvent<HTMLAnchorElement>) => handleNavClick(to, event)}
           className={cn(
             "relative flex flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-medium transition-all duration-200 active:scale-95",
             active ? "text-brand" : "text-muted-foreground hover:text-foreground",
