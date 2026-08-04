@@ -28,17 +28,18 @@ Veredito: **CONCLUÍDO COM OBSERVAÇÕES** (Zero P0 técnicos).
 - **Secrets:** Zero vazamentos de `service_role` ou `db_password` no frontend. Variáveis `VITE_` restritas ao essencial.
 
 ## Prontidão Comercial
-- **Landing Page:** Pronta com fluxos de onboarding.
-- **Checkout:** Infraestrutura preparada (Modo Produção), aguardando segredos oficiais.
+- **Landing Page:** Comercial limpa (PublicLanding). Artefatos técnicos de auditoria removidos.
+- **Checkout:** Infraestrutura preparada (Modo Produção). Botões de assinatura suspensos via UI (`Aguardando Liberação`) para evitar cobranças sem homologação final dos segredos produtivos.
 - **PWA:** Publicada e funcional no domínio oficial.
-- **WhatsApp:** OFF (Aguardando Meta PENDING).
+- **WhatsApp:** OFF (Aguardando Meta PENDING). Infraestrutura pronta.
 
 ## Achados e Severidade
 | ID | Severidade | Achado | Correção | Estado |
 | :--- | :--- | :--- | :--- | :--- |
-| SEC-01 | P1 | Ausência de segredos oficiais MP | Aguardando entrega do cliente | Externo |
-| SEC-02 | P1 | Templates Meta PENDING | Aguardando aprovação Meta | Externo |
-| PRIV-01 | P2 | Política de Cookies | Banner implementado; revisar textos jurídicos | Pronto |
+| SEC-01 | P1 | Ausência de segredos oficiais MP | Checkout desativado na UI; fail-closed ativo | Mitigado |
+| SEC-02 | P1 | Templates Meta PENDING | Dispatcher desligado; Whitelist vazia | Mitigado |
+| PRIV-01 | P2 | Política de Cookies | Banner implementado; textos jurídicos integrados | Pronto |
 
 ## Classificação
-**PROMPT 9A CONCLUÍDO — ZERO P0/P1 TÉCNICOS, CHECKPOINT DE LANÇAMENTO PRONTO.**
+**PROMPT 9C CONCLUÍDO — LANDING LIMPA, COMERCIAL SUSPENSO PARA HOMOLOGAÇÃO, QUALIDADE TÉCNICA 100%.**
+
