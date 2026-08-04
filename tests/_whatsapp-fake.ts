@@ -103,7 +103,8 @@ function makeBuilder(table: string): any {
           state.pendingRow = null;
         }
       }
-      // Readback Guard: crucial retornar array de linhas afetadas
+      // CRITICAL: Return single data ifctx.single is true and we matched
+      if (ctx.single) return { data: matchedRows[0] || null, error: null };
       return { data: matchedRows.length > 0 ? matchedRows : null, error: null };
     }
 
