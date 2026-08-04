@@ -53,7 +53,7 @@ const WABA_ID_PATTERN = /^[0-9]{5,32}$/;
 function readWabaId():
   | { ok: true; wabaId: string }
   | { ok: false; reason: "waba_missing" | "waba_invalid" } {
-  const raw = process.env.WHATSAPP_WABA_ID;
+  const raw = process.env.WHATSAPP_WABA_ID || process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
   if (typeof raw !== "string" || raw.length === 0) return { ok: false, reason: "waba_missing" };
   if (!WABA_ID_PATTERN.test(raw)) return { ok: false, reason: "waba_invalid" };
   return { ok: true, wabaId: raw };
