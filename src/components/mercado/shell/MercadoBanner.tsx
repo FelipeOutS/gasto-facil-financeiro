@@ -11,7 +11,17 @@ export interface MercadoBannerProps {
   imageSrcWebp?: string;
   imageAlt?: string;
   /** Tonalidade de fundo: usa token do mercado. */
-  tone?: "brand" | "fresh" | "meat" | "bakery" | "drinks" | "dairy" | "cleaning" | "pantry" | "household" | "community";
+  tone?:
+    | "brand"
+    | "fresh"
+    | "meat"
+    | "bakery"
+    | "drinks"
+    | "dairy"
+    | "cleaning"
+    | "pantry"
+    | "household"
+    | "community";
   /** CTA — passar Link/Button já estilizado para manter type-safety de rota. */
   cta?: ReactNode;
   className?: string;
@@ -82,9 +92,7 @@ export function MercadoBanner({
           {title}
         </h3>
         {subtitle && (
-          <p className="text-xs leading-snug text-muted-foreground md:text-sm">
-            {subtitle}
-          </p>
+          <p className="text-xs leading-snug text-muted-foreground md:text-sm">{subtitle}</p>
         )}
         {cta && <div className="mt-1">{cta}</div>}
       </div>

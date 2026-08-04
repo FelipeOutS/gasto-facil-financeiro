@@ -36,9 +36,7 @@ async function getUserFromRequest(request: Request) {
   if (!token) return null;
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
   const anon =
-    process.env.SUPABASE_PUBLISHABLE_KEY ??
-    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-    "";
+    process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";
   if (!url) return null;
   const sb = createClient(url, anon, {
     global: { headers: { Authorization: `Bearer ${token}` } },
@@ -113,10 +111,9 @@ export const Route = createFileRoute("/api/checkout/verify")({
             const approved = payments.find((p) => (p.status ?? "").toLowerCase() === "approved");
             const target = approved ?? payments[payments.length - 1];
             if (target?.id) {
-              const pRes = await fetch(
-                `https://api.mercadopago.com/v1/payments/${target.id}`,
-                { headers: { Authorization: `Bearer ${accessToken}` } },
-              );
+              const pRes = await fetch(`https://api.mercadopago.com/v1/payments/${target.id}`, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+              });
               if (pRes.ok) {
                 payment = (await pRes.json()) as typeof payment;
                 status = (payment.status ?? status).toLowerCase();
@@ -126,10 +123,9 @@ export const Route = createFileRoute("/api/checkout/verify")({
           }
         } else {
           // Pix — provider_payment_id é o paymentId direto.
-          const res = await fetch(
-            `https://api.mercadopago.com/v1/payments/${providerPaymentId}`,
-            { headers: { Authorization: `Bearer ${accessToken}` } },
-          );
+          const res = await fetch(`https://api.mercadopago.com/v1/payments/${providerPaymentId}`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
           if (!res.ok) return json({ error: "mp_fetch_failed" }, 502);
           payment = (await res.json()) as typeof payment;
           status = (payment.status ?? "pending").toLowerCase();
@@ -187,7 +183,6 @@ export const Route = createFileRoute("/api/checkout/verify")({
           return json({ status });
         }
         return json({ status: "pending" });
-
       },
     },
   },

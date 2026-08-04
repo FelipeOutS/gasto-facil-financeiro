@@ -27,9 +27,7 @@ import { spawnSync } from "node:child_process";
 
 const hasDb = !!process.env.PGHOST;
 const hasQaJwt =
-  !!process.env.QA_JWT_OWNER &&
-  !!process.env.QA_JWT_VIEWER &&
-  !!process.env.QA_JWT_THIRD;
+  !!process.env.QA_JWT_OWNER && !!process.env.QA_JWT_VIEWER && !!process.env.QA_JWT_THIRD;
 
 const FUNC_SIG =
   "public.connected_accounts_viewer_update_allowed(uuid, public.connected_account_status, public.connected_account_access, uuid, uuid, text, text, timestamptz, timestamptz, timestamptz)";
@@ -69,7 +67,9 @@ suite("WA-SEC-CA-01B — policy viewer bloqueia antes do trigger", () => {
   });
 
   it("authenticated TEM EXECUTE (necessário para WITH CHECK avaliar)", () => {
-    const authHas = psql(`SELECT has_function_privilege('authenticated', '${FUNC_SIG}', 'EXECUTE');`);
+    const authHas = psql(
+      `SELECT has_function_privilege('authenticated', '${FUNC_SIG}', 'EXECUTE');`,
+    );
     expect(authHas).toBe("t");
   });
 
@@ -137,13 +137,16 @@ suite("WA-SEC-CA-01B — policy viewer bloqueia antes do trigger", () => {
       `  'admin'::public.connected_account_access, NULL, NULL,\n` +
       `  'x@x','tok', now(), now(), now());\n` +
       `ROLLBACK;`;
-    
+
     // Se o sandbox_exec não tiver EXECUTE, o psql vai falhar com "permission denied".
     // No ambiente gerenciado, o runner deve rodar com permissões suficientes ou pular.
     try {
       const r = spawnSync("psql", ["-X", "-A", "-t"], { input: script, encoding: "utf8" });
       const out = (r.stdout ?? "").trim();
-      const bool = out.split(/\n/).map((s) => s.trim()).find((l) => l === "t" || l === "f");
+      const bool = out
+        .split(/\n/)
+        .map((s) => s.trim())
+        .find((l) => l === "t" || l === "f");
       if (bool === undefined && r.stderr.includes("permission denied")) {
         console.warn("Skipping logic check: sandbox_exec lacks EXECUTE on the secure function.");
         return;

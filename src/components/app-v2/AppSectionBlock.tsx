@@ -30,14 +30,10 @@ export function AppSectionBlock({
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             {title && (
-              <h3 className="text-sm font-semibold text-foreground sm:text-base">
-                {title}
-              </h3>
+              <h3 className="text-sm font-semibold text-foreground sm:text-base">{title}</h3>
             )}
             {description && (
-              <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
-                {description}
-              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">{description}</p>
             )}
           </div>
           {action && <div className="shrink-0">{action}</div>}

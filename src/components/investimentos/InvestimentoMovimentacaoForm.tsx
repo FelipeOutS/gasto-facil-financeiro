@@ -88,12 +88,16 @@ export function InvestimentoMovimentacaoForm({
       setTipo(editing.tipo);
       setData(editing.data ?? todayISO());
       setQuantidade(editing.quantidade != null ? String(editing.quantidade).replace(".", ",") : "");
-      setValorUnitario(editing.valor_unitario != null ? String(editing.valor_unitario).replace(".", ",") : "");
-      setValorTotal(editing.valor_total != null ? String(editing.valor_total).replace(".", ",") : "");
+      setValorUnitario(
+        editing.valor_unitario != null ? String(editing.valor_unitario).replace(".", ",") : "",
+      );
+      setValorTotal(
+        editing.valor_total != null ? String(editing.valor_total).replace(".", ",") : "",
+      );
       setInstituicao(editing.instituicao ?? "");
       setObservacao(editing.observacao ?? "");
     } else {
-      setAtivoId(defaultAtivoId ?? (ativos[0]?.id ?? ""));
+      setAtivoId(defaultAtivoId ?? ativos[0]?.id ?? "");
       setTipo("compra");
       setData(todayISO());
       setQuantidade("");
@@ -192,7 +196,9 @@ export function InvestimentoMovimentacaoForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIPOS_MOVIMENTACAO.filter((m) => TIPOS_MOV_PRINCIPAIS.includes(m.id) || m.id === tipo).map((m) => (
+                {TIPOS_MOVIMENTACAO.filter(
+                  (m) => TIPOS_MOV_PRINCIPAIS.includes(m.id) || m.id === tipo,
+                ).map((m) => (
                   <SelectItem key={m.id} value={m.id}>
                     {getTipoMovimentacaoLabel(m.id, tr)}
                   </SelectItem>
@@ -210,11 +216,19 @@ export function InvestimentoMovimentacaoForm({
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-xs text-muted-foreground">Quantidade</label>
-              <Input value={quantidade} onChange={(e) => setQuantidade(e.target.value)} placeholder="0" />
+              <Input
+                value={quantidade}
+                onChange={(e) => setQuantidade(e.target.value)}
+                placeholder="0"
+              />
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Valor unitário</label>
-              <Input value={valorUnitario} onChange={(e) => setValorUnitario(e.target.value)} placeholder="0,00" />
+              <Input
+                value={valorUnitario}
+                onChange={(e) => setValorUnitario(e.target.value)}
+                placeholder="0,00"
+              />
             </div>
           </div>
         )}
@@ -223,7 +237,11 @@ export function InvestimentoMovimentacaoForm({
           <label className="text-xs text-muted-foreground">
             Valor total{variavel ? " (calculado)" : ""}
           </label>
-          <Input value={valorTotal} onChange={(e) => setValorTotal(e.target.value)} placeholder="0,00" />
+          <Input
+            value={valorTotal}
+            onChange={(e) => setValorTotal(e.target.value)}
+            placeholder="0,00"
+          />
         </div>
 
         <div>
@@ -248,7 +266,8 @@ export function InvestimentoMovimentacaoForm({
         {ativoSelecionado && !variavel && (
           <p className="text-[11px] text-muted-foreground flex items-start gap-1.5">
             <Info className="h-3 w-3 mt-0.5 shrink-0" />
-            Para renda fixa, quantidade não é obrigatória. Os totais do investimento serão recalculados automaticamente.
+            Para renda fixa, quantidade não é obrigatória. Os totais do investimento serão
+            recalculados automaticamente.
           </p>
         )}
       </div>

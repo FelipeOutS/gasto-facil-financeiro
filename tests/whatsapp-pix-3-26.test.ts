@@ -21,15 +21,9 @@ import "./_whatsapp-fake";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { resetState, state } from "./_whatsapp-fake";
 
-const { isValidPixKey, detectPixKeyType } = await import(
-  "../src/server/whatsapp-pix-parser"
-);
-const { handleSavePixIntent } = await import(
-  "../src/server/whatsapp-pix-intents.server"
-);
-const { _resetShortContext } = await import(
-  "../src/server/whatsapp-short-context.server"
-);
+const { isValidPixKey, detectPixKeyType } = await import("../src/server/whatsapp-pix-parser");
+const { handleSavePixIntent } = await import("../src/server/whatsapp-pix-intents.server");
+const { _resetShortContext } = await import("../src/server/whatsapp-short-context.server");
 
 const userId = "u1";
 const telefone = "5511999998888";
@@ -44,9 +38,7 @@ function fornecedorInserts() {
   return state.inserts.filter((i) => i.table === "fornecedores");
 }
 function pendingSecretInserts() {
-  return state.inserts.filter(
-    (i) => i.table === "whatsapp_pix_pending_secrets",
-  );
+  return state.inserts.filter((i) => i.table === "whatsapp_pix_pending_secrets");
 }
 
 // -------------------------------------------------------------------------
@@ -85,9 +77,7 @@ describe("WA-PIX-3.26 :: isValidPixKey", () => {
     expect(isValidPixKey("cnpj", "12345678000199")).toBe(false);
   });
   it("UUID válido é aleatoria", () => {
-    expect(
-      isValidPixKey("aleatoria", "550e8400-e29b-41d4-a716-446655440000"),
-    ).toBe(true);
+    expect(isValidPixKey("aleatoria", "550e8400-e29b-41d4-a716-446655440000")).toBe(true);
   });
   it("UUID inválido rejeita", () => {
     expect(isValidPixKey("aleatoria", "abc-123")).toBe(false);

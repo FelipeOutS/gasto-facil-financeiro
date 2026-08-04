@@ -32,9 +32,15 @@ function msg(texto: string, externalId = "e-1") {
 
 function nubank(diaFechamento = 1) {
   return {
-    id: "c-nu", nome: "Nubank", banco: "Nubank",
-    limite_total: 0, dia_fechamento: diaFechamento, dia_vencimento: 10, cor: "#000",
-    created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    id: "c-nu",
+    nome: "Nubank",
+    banco: "Nubank",
+    limite_total: 0,
+    dia_fechamento: diaFechamento,
+    dia_vencimento: 10,
+    cor: "#000",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   };
 }
 
@@ -63,9 +69,11 @@ describe("WA-F3.3-Fix-UX — ack de categoria no parcelamento", () => {
     expect(out.resposta).toContain("Categoria: Mercado");
 
     // (4) sessão persistida com manualCategoria*
-    const parsed = ultimaSessaoParsed() as
-      | { manualCategoriaId?: string; manualCategoriaLabel?: string; categorySelectionSource?: string }
-      | null;
+    const parsed = ultimaSessaoParsed() as {
+      manualCategoriaId?: string;
+      manualCategoriaLabel?: string;
+      categorySelectionSource?: string;
+    } | null;
     expect(parsed?.manualCategoriaId).toBe("cat-mer");
     expect(parsed?.manualCategoriaLabel).toBe("Mercado");
     expect(parsed?.categorySelectionSource).toBe("manual");
@@ -100,9 +108,11 @@ describe("WA-F3.3-Fix-UX — ack de categoria no parcelamento", () => {
     expect(out.resposta.startsWith("✓ Categoria atualizada")).toBe(false);
 
     // Sessão segue sem manualCategoria*.
-    const parsed = ultimaSessaoParsed() as
-      | { manualCategoriaId?: string; manualCategoriaLabel?: string; categorySelectionSource?: string }
-      | null;
+    const parsed = ultimaSessaoParsed() as {
+      manualCategoriaId?: string;
+      manualCategoriaLabel?: string;
+      categorySelectionSource?: string;
+    } | null;
     expect(parsed?.manualCategoriaId).toBeUndefined();
     expect(parsed?.manualCategoriaLabel).toBeUndefined();
     expect(parsed?.categorySelectionSource).not.toBe("manual");

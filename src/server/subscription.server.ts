@@ -2,7 +2,13 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getEffectiveUserPlan, type PlanTier, type SubscriptionStatus } from "@/lib/plans";
 import { hasAdminMasterRole } from "@/server/admin-master.server";
 
-const APPROVED_PAYMENT_STATUSES = new Set(["approved", "paid", "authorized", "aprovado", "aprovada"]);
+const APPROVED_PAYMENT_STATUSES = new Set([
+  "approved",
+  "paid",
+  "authorized",
+  "aprovado",
+  "aprovada",
+]);
 
 type PaymentRow = {
   id: string;
@@ -61,7 +67,15 @@ export type CurrentUserSubscription = {
   debug: {
     checkedUserId: string | null;
     checkedEmail: string | null;
-    source: "admin" | "active_payment" | "user_plan" | "trial" | "cancelled" | "pending" | "expired" | "none";
+    source:
+      | "admin"
+      | "active_payment"
+      | "user_plan"
+      | "trial"
+      | "cancelled"
+      | "pending"
+      | "expired"
+      | "none";
     reason: string;
     matchedPaymentId: string | null;
   };
@@ -94,7 +108,11 @@ function isPaymentActive(payment: PaymentRow, nowMs: number) {
   return new Date(start).getTime() <= nowMs && new Date(end).getTime() >= nowMs;
 }
 
-function emptySubscription(userId: string | null, email: string | null, reason: string): CurrentUserSubscription {
+function emptySubscription(
+  userId: string | null,
+  email: string | null,
+  reason: string,
+): CurrentUserSubscription {
   return {
     userId,
     email,
@@ -117,7 +135,13 @@ function emptySubscription(userId: string | null, email: string | null, reason: 
     paymentMethod: null,
     paymentAmountCents: null,
     paidAt: null,
-    debug: { checkedUserId: userId, checkedEmail: email, source: "none", reason, matchedPaymentId: null },
+    debug: {
+      checkedUserId: userId,
+      checkedEmail: email,
+      source: "none",
+      reason,
+      matchedPaymentId: null,
+    },
   };
 }
 
@@ -134,7 +158,9 @@ async function paymentsForEmail(email: string): Promise<PaymentRow[]> {
     paths.map((path) =>
       supabaseAdmin
         .from("subscription_payments")
-        .select("id, user_id, plano, method, status, amount_cents, periodicidade, months, provider_payment_id, paid_at, created_at, payload")
+        .select(
+          "id, user_id, plano, method, status, amount_cents, periodicidade, months, provider_payment_id, paid_at, created_at, payload",
+        )
         .eq(path, email)
         .order("created_at", { ascending: false })
         .limit(20),
@@ -153,14 +179,29 @@ export async function getSubscriptionForUserIdentity(input: {
 
   const isAdmin = await hasAdminMasterRole(input.userId);
   if (isAdmin) {
-    return { ...emptySubscription(input.userId, email, "admin_master"), plan: "admin_master", storedPlan: "admin_master", status: "ativo", active: true, debug: { checkedUserId: input.userId, checkedEmail: email, source: "admin", reason: "admin_master", matchedPaymentId: null } };
+    return {
+      ...emptySubscription(input.userId, email, "admin_master"),
+      plan: "admin_master",
+      storedPlan: "admin_master",
+      status: "ativo",
+      active: true,
+      debug: {
+        checkedUserId: input.userId,
+        checkedEmail: email,
+        source: "admin",
+        reason: "admin_master",
+        matchedPaymentId: null,
+      },
+    };
   }
 
   const [planRes, paymentsByUserRes, paymentsByEmail] = await Promise.all([
     supabaseAdmin.from("user_plans").select("*").eq("user_id", input.userId).maybeSingle(),
     supabaseAdmin
       .from("subscription_payments")
-      .select("id, user_id, plano, method, status, amount_cents, periodicidade, months, provider_payment_id, paid_at, created_at, payload")
+      .select(
+        "id, user_id, plano, method, status, amount_cents, periodicidade, months, provider_payment_id, paid_at, created_at, payload",
+      )
       .eq("user_id", input.userId)
       .order("created_at", { ascending: false })
       .limit(50),
@@ -173,7 +214,8 @@ export async function getSubscriptionForUserIdentity(input: {
     paymentMap.set(payment.id, payment);
   }
   const payments = [...paymentMap.values()].sort(
-    (a, b) => new Date(b.paid_at ?? b.created_at).getTime() - new Date(a.paid_at ?? a.created_at).getTime(),
+    (a, b) =>
+      new Date(b.paid_at ?? b.created_at).getTime() - new Date(a.paid_at ?? a.created_at).getTime(),
   );
   const activePayment = payments.find((payment) => isPaymentActive(payment, nowMs));
 
@@ -189,7 +231,10 @@ export async function getSubscriptionForUserIdentity(input: {
   if (activePayment) {
     const { start, end, months } = paymentPeriod(activePayment);
     if (input.repairLink && activePayment.user_id !== input.userId) {
-      await supabaseAdmin.from("subscription_payments").update({ user_id: input.userId }).eq("id", activePayment.id);
+      await supabaseAdmin
+        .from("subscription_payments")
+        .update({ user_id: input.userId })
+        .eq("id", activePayment.id);
     }
     return {
       userId: input.userId,
@@ -213,29 +258,126 @@ export async function getSubscriptionForUserIdentity(input: {
       paymentMethod: activePayment.method ?? null,
       paymentAmountCents: activePayment.amount_cents ?? null,
       paidAt: activePayment.paid_at ?? activePayment.created_at,
-      debug: { checkedUserId: input.userId, checkedEmail: email, source: "active_payment", reason: "approved_payment_inside_period", matchedPaymentId: activePayment.id },
+      debug: {
+        checkedUserId: input.userId,
+        checkedEmail: email,
+        source: "active_payment",
+        reason: "approved_payment_inside_period",
+        matchedPaymentId: activePayment.id,
+      },
     };
   }
 
   if (!planRow) return emptySubscription(input.userId, email, "no_user_plan_or_active_payment");
 
   const storedPlan = getEffectiveUserPlan({ email: null }, planRow.plano);
-  const trialPlan = getEffectiveUserPlan({ email: null }, planRow.trial_plan_type) === "sem_assinatura" ? null : getEffectiveUserPlan({ email: null }, planRow.trial_plan_type);
+  const trialPlan =
+    getEffectiveUserPlan({ email: null }, planRow.trial_plan_type) === "sem_assinatura"
+      ? null
+      : getEffectiveUserPlan({ email: null }, planRow.trial_plan_type);
   const trialEndMs = planRow.trial_ends_at ? new Date(planRow.trial_ends_at).getTime() : 0;
   if (trialPlan && trialEndMs > nowMs) {
-    return { ...emptySubscription(input.userId, email, "trial_active"), plan: trialPlan, storedPlan, status: "teste", active: true, trialPlan, trialStartedAt: planRow.trial_started_at, trialEndsAt: planRow.trial_ends_at, trialUsed: Boolean(planRow.trial_used), debug: { checkedUserId: input.userId, checkedEmail: email, source: "trial", reason: "trial_inside_period", matchedPaymentId: null } };
+    return {
+      ...emptySubscription(input.userId, email, "trial_active"),
+      plan: trialPlan,
+      storedPlan,
+      status: "teste",
+      active: true,
+      trialPlan,
+      trialStartedAt: planRow.trial_started_at,
+      trialEndsAt: planRow.trial_ends_at,
+      trialUsed: Boolean(planRow.trial_used),
+      debug: {
+        checkedUserId: input.userId,
+        checkedEmail: email,
+        source: "trial",
+        reason: "trial_inside_period",
+        matchedPaymentId: null,
+      },
+    };
   }
 
   const accessUntilMs = planRow.access_until ? new Date(planRow.access_until).getTime() : 0;
   if (planRow.cancelled_at && accessUntilMs > nowMs) {
-    return { ...emptySubscription(input.userId, email, "cancelled_but_inside_paid_period"), plan: storedPlan, storedPlan, status: "cancelado", active: true, cancelledAt: planRow.cancelled_at, accessUntil: planRow.access_until, currentPeriodStart: planRow.current_period_start, currentPeriodEnd: planRow.current_period_end, periodicidade: planRow.periodicidade, months: planRow.months, lastPaymentId: planRow.last_payment_id, debug: { checkedUserId: input.userId, checkedEmail: email, source: "cancelled", reason: "access_until_in_future", matchedPaymentId: planRow.last_payment_id } };
+    return {
+      ...emptySubscription(input.userId, email, "cancelled_but_inside_paid_period"),
+      plan: storedPlan,
+      storedPlan,
+      status: "cancelado",
+      active: true,
+      cancelledAt: planRow.cancelled_at,
+      accessUntil: planRow.access_until,
+      currentPeriodStart: planRow.current_period_start,
+      currentPeriodEnd: planRow.current_period_end,
+      periodicidade: planRow.periodicidade,
+      months: planRow.months,
+      lastPaymentId: planRow.last_payment_id,
+      debug: {
+        checkedUserId: input.userId,
+        checkedEmail: email,
+        source: "cancelled",
+        reason: "access_until_in_future",
+        matchedPaymentId: planRow.last_payment_id,
+      },
+    };
   }
 
   const planEndMs = planRow.current_period_end ? new Date(planRow.current_period_end).getTime() : 0;
-  if (normalizedStatus(planRow.status) === "ativo" && storedPlan !== "sem_assinatura" && storedPlan !== "free" && (!planEndMs || planEndMs >= nowMs)) {
-    return { ...emptySubscription(input.userId, email, "user_plan_active"), plan: storedPlan, storedPlan, status: "ativo", active: true, trialStartedAt: planRow.trial_started_at, trialEndsAt: planRow.trial_ends_at, trialUsed: Boolean(planRow.trial_used), currentPeriodStart: planRow.current_period_start, currentPeriodEnd: planRow.current_period_end, periodicidade: planRow.periodicidade, months: planRow.months, lastPaymentId: planRow.last_payment_id, debug: { checkedUserId: input.userId, checkedEmail: email, source: "user_plan", reason: "user_plan_active_inside_period", matchedPaymentId: planRow.last_payment_id } };
+  if (
+    normalizedStatus(planRow.status) === "ativo" &&
+    storedPlan !== "sem_assinatura" &&
+    storedPlan !== "free" &&
+    (!planEndMs || planEndMs >= nowMs)
+  ) {
+    return {
+      ...emptySubscription(input.userId, email, "user_plan_active"),
+      plan: storedPlan,
+      storedPlan,
+      status: "ativo",
+      active: true,
+      trialStartedAt: planRow.trial_started_at,
+      trialEndsAt: planRow.trial_ends_at,
+      trialUsed: Boolean(planRow.trial_used),
+      currentPeriodStart: planRow.current_period_start,
+      currentPeriodEnd: planRow.current_period_end,
+      periodicidade: planRow.periodicidade,
+      months: planRow.months,
+      lastPaymentId: planRow.last_payment_id,
+      debug: {
+        checkedUserId: input.userId,
+        checkedEmail: email,
+        source: "user_plan",
+        reason: "user_plan_active_inside_period",
+        matchedPaymentId: planRow.last_payment_id,
+      },
+    };
   }
 
-  const status = normalizedStatus(planRow.status) === "aguardando_pagamento" ? "aguardando_pagamento" : planEndMs > 0 && planEndMs < nowMs ? "expirado" : "sem_assinatura";
-  return { ...emptySubscription(input.userId, email, status), storedPlan, status, trialStartedAt: planRow.trial_started_at, trialEndsAt: planRow.trial_ends_at, trialUsed: Boolean(planRow.trial_used), currentPeriodStart: planRow.current_period_start, currentPeriodEnd: planRow.current_period_end, periodicidade: planRow.periodicidade, months: planRow.months, lastPaymentId: planRow.last_payment_id, debug: { checkedUserId: input.userId, checkedEmail: email, source: status === "aguardando_pagamento" ? "pending" : status === "expirado" ? "expired" : "none", reason: status, matchedPaymentId: null } };
+  const status =
+    normalizedStatus(planRow.status) === "aguardando_pagamento"
+      ? "aguardando_pagamento"
+      : planEndMs > 0 && planEndMs < nowMs
+        ? "expirado"
+        : "sem_assinatura";
+  return {
+    ...emptySubscription(input.userId, email, status),
+    storedPlan,
+    status,
+    trialStartedAt: planRow.trial_started_at,
+    trialEndsAt: planRow.trial_ends_at,
+    trialUsed: Boolean(planRow.trial_used),
+    currentPeriodStart: planRow.current_period_start,
+    currentPeriodEnd: planRow.current_period_end,
+    periodicidade: planRow.periodicidade,
+    months: planRow.months,
+    lastPaymentId: planRow.last_payment_id,
+    debug: {
+      checkedUserId: input.userId,
+      checkedEmail: email,
+      source:
+        status === "aguardando_pagamento" ? "pending" : status === "expirado" ? "expired" : "none",
+      reason: status,
+      matchedPaymentId: null,
+    },
+  };
 }

@@ -79,18 +79,16 @@ describe("WA-C11 3B.3 — readRuntimeConfig", () => {
   });
 
   test("registro ausente ⇒ fail-closed OFF", async () => {
-    const { readRuntimeConfig, FAIL_CLOSED_RUNTIME } = await import(
-      "../src/server/whatsapp-runtime-config.server"
-    );
+    const { readRuntimeConfig, FAIL_CLOSED_RUNTIME } =
+      await import("../src/server/whatsapp-runtime-config.server");
     const c = makeClient(null);
     const r = await readRuntimeConfig(c);
     expect(r).toEqual({ ...FAIL_CLOSED_RUNTIME });
   });
 
   test("erro de banco ⇒ fail-closed OFF", async () => {
-    const { readRuntimeConfig, FAIL_CLOSED_RUNTIME } = await import(
-      "../src/server/whatsapp-runtime-config.server"
-    );
+    const { readRuntimeConfig, FAIL_CLOSED_RUNTIME } =
+      await import("../src/server/whatsapp-runtime-config.server");
     const c = makeClient(BASE_OFF, "read");
     const r = await readRuntimeConfig(c);
     expect(r).toEqual({ ...FAIL_CLOSED_RUNTIME });
@@ -195,11 +193,7 @@ describe("WA-C11 3B.3 — updateRuntimeConfig", () => {
   test("nenhuma alteração invoca dispatcher/Graph (sem side-effects fora do client)", async () => {
     const { updateRuntimeConfig } = await import("../src/server/whatsapp-runtime-config.server");
     const c = makeClient(BASE_OFF);
-    await updateRuntimeConfig(
-      { rollout_percentage: 5 },
-      { adminUserId: "u1", reason: "beta" },
-      c,
-    );
+    await updateRuntimeConfig({ rollout_percentage: 5 }, { adminUserId: "u1", reason: "beta" }, c);
     // O client fake é a única superfície tocada. Se algum código chamasse
     // outra tabela, faria throw. Se chamasse Graph, seria observável — este
     // teste garante que o único efeito é a linha do singleton.

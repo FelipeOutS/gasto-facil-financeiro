@@ -116,7 +116,6 @@ export function detectLimiteIntent(texto: string): LimiteIntent | null {
     return null;
   }
 
-
   // "comprometido" / "parcelas futuras" no cartão
   if (
     /\bcomprometid[ao]s?\b/.test(t) ||
@@ -173,9 +172,7 @@ function ambiguousCardMessage(cartoes: CartaoRow[]): string {
     .map((c) => `• ${(c.nome ?? "").trim() || (c.banco ?? "").trim() || "Cartão"}`)
     .join("\n");
   return (
-    "Encontrei mais de um cartão.\n\n" +
-    "Digite o nome de um deles para eu consultar:\n" +
-    linhas
+    "Encontrei mais de um cartão.\n\n" + "Digite o nome de um deles para eu consultar:\n" + linhas
   );
 }
 
@@ -267,7 +264,9 @@ export async function handleLimiteIntent(
       resposta: formatResumoConsolidado(resumos),
     };
     logLimiteQuery({
-      intent: "limit_total", cardsMatchedCount: resumos.length, result: out.status,
+      intent: "limit_total",
+      cardsMatchedCount: resumos.length,
+      result: out.status,
     });
     return out;
   }
@@ -290,7 +289,9 @@ export async function handleLimiteIntent(
         resposta: ambiguousCardMessage(matches),
       };
       logLimiteQuery({
-        intent: "limit_card", cardsMatchedCount: matches.length, result: out.status,
+        intent: "limit_card",
+        cardsMatchedCount: matches.length,
+        result: out.status,
       });
       return out;
     }
@@ -316,7 +317,8 @@ export async function handleLimiteIntent(
         };
         logLimiteQuery({
           intent: intent.kind === "limit_lowest" ? "limit_lowest" : "limit_highest",
-          cardsMatchedCount: resumos.length, result: out.status,
+          cardsMatchedCount: resumos.length,
+          result: out.status,
         });
         return out;
       }
@@ -330,13 +332,19 @@ export async function handleLimiteIntent(
       };
       logLimiteQuery({
         intent: intent.kind === "limit_lowest" ? "limit_lowest" : "limit_highest",
-        cardsMatchedCount: resumos.length, result: out.status,
+        cardsMatchedCount: resumos.length,
+        result: out.status,
       });
       return out;
     }
-    const escolhido = intent.kind === "limit_lowest"
-      ? elegiveis.reduce((a, b) => ((b.disponivelEstimado ?? 0) < (a.disponivelEstimado ?? 0) ? b : a))
-      : elegiveis.reduce((a, b) => ((b.disponivelEstimado ?? 0) > (a.disponivelEstimado ?? 0) ? b : a));
+    const escolhido =
+      intent.kind === "limit_lowest"
+        ? elegiveis.reduce((a, b) =>
+            (b.disponivelEstimado ?? 0) < (a.disponivelEstimado ?? 0) ? b : a,
+          )
+        : elegiveis.reduce((a, b) =>
+            (b.disponivelEstimado ?? 0) > (a.disponivelEstimado ?? 0) ? b : a,
+          );
     const nome = (escolhido.cartao.nome ?? "Cartão").trim();
     const verbo = intent.kind === "limit_lowest" ? "menor" : "maior";
     const out: LimiteResult = {
@@ -348,7 +356,8 @@ export async function handleLimiteIntent(
     };
     logLimiteQuery({
       intent: intent.kind === "limit_lowest" ? "limit_lowest" : "limit_highest",
-      cardsMatchedCount: elegiveis.length, result: out.status,
+      cardsMatchedCount: elegiveis.length,
+      result: out.status,
     });
     return out;
   }
@@ -373,7 +382,9 @@ export async function handleLimiteIntent(
         resposta: ambiguousCardMessage(alvo),
       };
       logLimiteQuery({
-        intent: "commitment", cardsMatchedCount: alvo.length, result: out.status,
+        intent: "commitment",
+        cardsMatchedCount: alvo.length,
+        result: out.status,
       });
       return out;
     }
@@ -382,8 +393,7 @@ export async function handleLimiteIntent(
     if (alvo.length === 0) {
       const out: LimiteResult = {
         status: "no_limit_data",
-        resposta:
-          "Ainda não encontrei cartões cadastrados no Gasto Inteligente.",
+        resposta: "Ainda não encontrei cartões cadastrados no Gasto Inteligente.",
       };
       logLimiteQuery({ intent: "commitment", cardsMatchedCount: 0, result: out.status });
       return out;
@@ -394,7 +404,9 @@ export async function handleLimiteIntent(
         resposta: ambiguousCardMessage(alvo),
       };
       logLimiteQuery({
-        intent: "commitment", cardsMatchedCount: alvo.length, result: out.status,
+        intent: "commitment",
+        cardsMatchedCount: alvo.length,
+        result: out.status,
       });
       return out;
     }

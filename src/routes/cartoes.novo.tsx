@@ -7,9 +7,7 @@ import i18n from "@/i18n";
 
 export const Route = createFileRoute("/cartoes/novo")({
   head: () => ({
-    meta: [
-      { title: i18n.t("cartoes:form.newTitle") + " — Gasto Inteligente" },
-    ],
+    meta: [{ title: i18n.t("cartoes:form.newTitle") + " — Gasto Inteligente" }],
   }),
   component: NovoCartaoPage,
 });
@@ -60,11 +58,7 @@ function NovoCartaoPage() {
       </header>
 
       <div className="mt-4 flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card">
-        <CartaoForm
-          editing={null}
-          onCancel={back}
-          onSaved={() => navigate({ to: "/cartoes" })}
-        />
+        <CartaoForm editing={null} onCancel={back} onSaved={() => navigate({ to: "/cartoes" })} />
       </div>
     </MobileShell>
   );

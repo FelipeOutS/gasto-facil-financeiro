@@ -34,14 +34,26 @@ function msg(texto: string, externalId = "e-1") {
 }
 
 const cartaoNubank = {
-  id: "c-nu", nome: "Nubank", banco: "Nubank",
-  limite_total: 0, dia_fechamento: 1, dia_vencimento: 10, cor: "#000",
-  created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+  id: "c-nu",
+  nome: "Nubank",
+  banco: "Nubank",
+  limite_total: 0,
+  dia_fechamento: 1,
+  dia_vencimento: 10,
+  cor: "#000",
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
 };
 const cartaoInter = {
-  id: "c-int", nome: "Inter", banco: "Inter",
-  limite_total: 0, dia_fechamento: 1, dia_vencimento: 15, cor: "#000",
-  created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+  id: "c-int",
+  nome: "Inter",
+  banco: "Inter",
+  limite_total: 0,
+  dia_fechamento: 1,
+  dia_vencimento: 15,
+  cor: "#000",
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
 };
 
 // Hoje fictício para tornar mês determinístico.
@@ -146,31 +158,52 @@ describe("WA-F4 — helpers financeiros", () => {
         // Nubank agosto: 200 + parcela 100
         gastoCredito({ cartaoId: "c-nu", invoiceMonth: "2026-08", valor: 200 }),
         gastoCredito({
-          cartaoId: "c-nu", invoiceMonth: "2026-08", valor: 100,
+          cartaoId: "c-nu",
+          invoiceMonth: "2026-08",
+          valor: 100,
           parcela: { atual: 2, total: 3, grupo: "grp-tenis", desc: "Tênis" },
         }),
         gastoCredito({
-          cartaoId: "c-nu", invoiceMonth: "2026-09", valor: 100,
+          cartaoId: "c-nu",
+          invoiceMonth: "2026-09",
+          valor: 100,
           parcela: { atual: 3, total: 3, grupo: "grp-tenis", desc: "Tênis" },
         }),
         gastoCredito({
-          cartaoId: "c-nu", invoiceMonth: "2026-06", valor: 100,
+          cartaoId: "c-nu",
+          invoiceMonth: "2026-06",
+          valor: 100,
           parcela: { atual: 1, total: 3, grupo: "grp-tenis", desc: "Tênis" },
         }),
         // Inter agosto: 50
         gastoCredito({ cartaoId: "c-int", invoiceMonth: "2026-08", valor: 50 }),
         // Pix / débito devem ser ignorados em fatura
         {
-          id: "g-pix", user_id: "u1", cartao_id: "c-nu", invoice_month: "2026-08",
-          valor: 999, data: "2026-08-10", forma_pagamento: "pix", confirmado: true,
+          id: "g-pix",
+          user_id: "u1",
+          cartao_id: "c-nu",
+          invoice_month: "2026-08",
+          valor: 999,
+          data: "2026-08-10",
+          forma_pagamento: "pix",
+          confirmado: true,
         },
         {
-          id: "g-deb", user_id: "u1", cartao_id: "c-nu", invoice_month: "2026-08",
-          valor: 999, data: "2026-08-10", forma_pagamento: "debito", confirmado: true,
+          id: "g-deb",
+          user_id: "u1",
+          cartao_id: "c-nu",
+          invoice_month: "2026-08",
+          valor: 999,
+          data: "2026-08-10",
+          forma_pagamento: "debito",
+          confirmado: true,
         },
         // Outro usuário não deve vazar.
         gastoCredito({
-          cartaoId: "c-nu", invoiceMonth: "2026-08", valor: 5000, user_id: "u-other",
+          cartaoId: "c-nu",
+          invoiceMonth: "2026-08",
+          valor: 5000,
+          user_id: "u-other",
         }),
       ],
     }),
@@ -201,11 +234,15 @@ describe("WA-F4 — helpers financeiros", () => {
       cartoes: [cartaoNubank],
       gastos: [
         gastoCredito({
-          cartaoId: "c-nu", invoiceMonth: "2026-01", valor: 100,
+          cartaoId: "c-nu",
+          invoiceMonth: "2026-01",
+          valor: 100,
           parcela: { atual: 1, total: 2, grupo: "grp-old", desc: "Antigo" },
         }),
         gastoCredito({
-          cartaoId: "c-nu", invoiceMonth: "2026-02", valor: 100,
+          cartaoId: "c-nu",
+          invoiceMonth: "2026-02",
+          valor: 100,
           parcela: { atual: 2, total: 2, grupo: "grp-old", desc: "Antigo" },
         }),
       ],
@@ -298,11 +335,15 @@ describe("WA-F4 — lista de parceladas, paginação e detalhe ambíguo", () => 
     for (let i = 1; i <= 6; i++) {
       gastos.push(
         gastoCredito({
-          cartaoId: "c-nu", invoiceMonth: "2026-08", valor: 100,
+          cartaoId: "c-nu",
+          invoiceMonth: "2026-08",
+          valor: 100,
           parcela: { atual: 1, total: 2, grupo: `grp-${i}`, desc: `Compra ${i}` },
         }),
         gastoCredito({
-          cartaoId: "c-nu", invoiceMonth: "2026-09", valor: 100,
+          cartaoId: "c-nu",
+          invoiceMonth: "2026-09",
+          valor: 100,
           parcela: { atual: 2, total: 2, grupo: `grp-${i}`, desc: `Compra ${i}` },
         }),
       );
@@ -324,25 +365,35 @@ describe("WA-F4 — lista de parceladas, paginação e detalhe ambíguo", () => 
       cartoes: [cartaoNubank],
       gastos: [
         gastoCredito({
-          cartaoId: "c-nu", invoiceMonth: "2026-08", valor: 100,
+          cartaoId: "c-nu",
+          invoiceMonth: "2026-08",
+          valor: 100,
           parcela: { atual: 1, total: 2, grupo: "g-a", desc: "Curso A" },
         }),
         gastoCredito({
-          cartaoId: "c-nu", invoiceMonth: "2026-09", valor: 100,
+          cartaoId: "c-nu",
+          invoiceMonth: "2026-09",
+          valor: 100,
           parcela: { atual: 2, total: 2, grupo: "g-a", desc: "Curso A" },
         }),
         gastoCredito({
-          cartaoId: "c-nu", invoiceMonth: "2026-08", valor: 200,
+          cartaoId: "c-nu",
+          invoiceMonth: "2026-08",
+          valor: 200,
           parcela: { atual: 1, total: 2, grupo: "g-b", desc: "Curso B" },
         }),
         gastoCredito({
-          cartaoId: "c-nu", invoiceMonth: "2026-09", valor: 200,
+          cartaoId: "c-nu",
+          invoiceMonth: "2026-09",
+          valor: 200,
           parcela: { atual: 2, total: 2, grupo: "g-b", desc: "Curso B" },
         }),
       ],
     });
     const r = await handleFutureFaturaIntent(
-      "u1", { kind: "installment_detail", termo: "curso" }, HOJE,
+      "u1",
+      { kind: "installment_detail", termo: "curso" },
+      HOJE,
     );
     expect(r.status).toBe("ambiguous_installment");
     expect("nextSession" in r).toBe(true);
@@ -355,7 +406,9 @@ describe("WA-F4 — pipeline (não cria/altera/exclui nada)", () => {
       cartoes: [cartaoNubank],
       gastos: [
         gastoCredito({
-          cartaoId: "c-nu", invoiceMonth: "2026-08", valor: 100,
+          cartaoId: "c-nu",
+          invoiceMonth: "2026-08",
+          valor: 100,
           parcela: { atual: 2, total: 3, grupo: "grp-tenis", desc: "Tênis" },
         }),
       ],

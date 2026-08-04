@@ -70,10 +70,15 @@ function BrandLogoBase({
   const failed = idx >= candidates.length;
   const sizeCls = SIZE_CLASSES[size];
   const radius =
-    variant === "circle" ? "rounded-full" :
-    rounded === "full" ? "rounded-full" :
-    rounded === "2xl" ? "rounded-2xl" :
-    rounded === "lg"  ? "rounded-lg" : "rounded-xl";
+    variant === "circle"
+      ? "rounded-full"
+      : rounded === "full"
+        ? "rounded-full"
+        : rounded === "2xl"
+          ? "rounded-2xl"
+          : rounded === "lg"
+            ? "rounded-lg"
+            : "rounded-xl";
 
   if (failed || !candidates.length) {
     if (fallback !== undefined && fallback !== null) {
@@ -85,7 +90,9 @@ function BrandLogoBase({
           aria-hidden
           className={cn(
             "grid shrink-0 place-items-center bg-muted text-muted-foreground",
-            radius, sizeCls, className,
+            radius,
+            sizeCls,
+            className,
           )}
         >
           {fallbackIcon}
@@ -97,7 +104,9 @@ function BrandLogoBase({
         aria-hidden
         className={cn(
           "grid shrink-0 place-items-center font-semibold text-white",
-          radius, sizeCls, className,
+          radius,
+          sizeCls,
+          className,
         )}
         style={{ background: colorForSeed(name || cleanDomain || "?") }}
       >
@@ -111,7 +120,9 @@ function BrandLogoBase({
       aria-hidden
       className={cn(
         "relative grid shrink-0 place-items-center overflow-hidden bg-white/95 ring-1 ring-border/60",
-        radius, sizeCls, className,
+        radius,
+        sizeCls,
+        className,
       )}
     >
       <img

@@ -35,12 +35,7 @@ function NovoInvestimentoPage() {
       <p className="text-sm text-muted-foreground mb-4">
         Cadastre as informações do ativo. Apenas Nome é obrigatório.
       </p>
-      <InvestimentoForm
-        userId={user?.id}
-        editing={null}
-        onCancel={back}
-        onSaved={back}
-      />
+      <InvestimentoForm userId={user?.id} editing={null} onCancel={back} onSaved={back} />
     </MobileShell>
   );
 }

@@ -81,10 +81,7 @@ export function isValidationError(err: ErrorLike): boolean {
  * permitindo que cada fluxo defina sua mensagem contextual (ex.:
  * "errors.save", "errors.load", "errors.delete").
  */
-export function getFriendlyErrorKey(
-  err: ErrorLike,
-  fallbackKey = "errors.server",
-): string {
+export function getFriendlyErrorKey(err: ErrorLike, fallbackKey = "errors.server"): string {
   if (isAuthExpiredError(err)) return "errors.authExpired";
   if (isNetworkError(err)) return "errors.network";
   if (isServerError(err)) return "errors.server";

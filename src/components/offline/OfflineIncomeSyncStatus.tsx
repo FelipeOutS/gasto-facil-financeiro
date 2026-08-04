@@ -12,10 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
 import { useOfflineIncomeQueue } from "@/lib/offline/use-offline-income-sync";
-import {
-  removeIncome,
-  type OfflineIncome,
-} from "@/lib/offline/offline-income-queue";
+import { removeIncome, type OfflineIncome } from "@/lib/offline/offline-income-queue";
 import { formatBRL } from "@/lib/format";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EditOfflineIncomeDialog } from "./EditOfflineIncomeDialog";
@@ -72,11 +69,22 @@ export function OfflineIncomeSyncStatus({ className }: { className?: string }) {
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <Button size="sm" variant="ghost" onClick={handleSync} disabled={busy} className="h-7 px-2 text-xs">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleSync}
+            disabled={busy}
+            className="h-7 px-2 text-xs"
+          >
             <RefreshCw className={"mr-1 h-3 w-3 " + (busy ? "animate-spin" : "")} />
             Sincronizar
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => setOpen(true)} className="h-7 px-2 text-xs">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setOpen(true)}
+            className="h-7 px-2 text-xs"
+          >
             Ver
           </Button>
         </div>
@@ -98,13 +106,18 @@ export function OfflineIncomeSyncStatus({ className }: { className?: string }) {
             <TabsContent value="pending">
               <div className="max-h-[55vh] space-y-2 overflow-y-auto">
                 {items.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-muted-foreground">Nenhuma pendência.</p>
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    Nenhuma pendência.
+                  </p>
                 ) : (
                   items.map((it) => {
                     const isSyncing = it.status === "syncing";
                     const canEdit = it.status === "pending" || it.status === "failed";
                     return (
-                      <div key={it.local_id} className="rounded-xl border border-border bg-card p-3">
+                      <div
+                        key={it.local_id}
+                        className="rounded-xl border border-border bg-card p-3"
+                      >
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium">{it.descricao}</p>
                           <p className="text-xs text-muted-foreground">
@@ -126,10 +139,22 @@ export function OfflineIncomeSyncStatus({ className }: { className?: string }) {
                           )}
                         </div>
                         <div className="mt-2 flex flex-wrap items-center justify-end gap-1">
-                          <Button size="sm" variant="ghost" disabled={!canEdit} onClick={() => handleEdit(it)} className="h-7 px-2 text-xs">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            disabled={!canEdit}
+                            onClick={() => handleEdit(it)}
+                            className="h-7 px-2 text-xs"
+                          >
                             <Pencil className="mr-1 h-3 w-3" /> Editar
                           </Button>
-                          <Button size="sm" variant="ghost" disabled={isSyncing || busy} onClick={handleSync} className="h-7 px-2 text-xs">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            disabled={isSyncing || busy}
+                            onClick={handleSync}
+                            className="h-7 px-2 text-xs"
+                          >
                             <RefreshCw className={"mr-1 h-3 w-3 " + (busy ? "animate-spin" : "")} />
                             Sincronizar agora
                           </Button>

@@ -1,12 +1,6 @@
 // CRUD da tabela user_alerts e sincronização com os drafts gerados.
 import { supabase } from "@/integrations/supabase/client";
-import type {
-  AlertCategory,
-  AlertPriority,
-  AlertStatus,
-  DraftAlert,
-  UserAlert,
-} from "./types";
+import type { AlertCategory, AlertPriority, AlertStatus, DraftAlert, UserAlert } from "./types";
 import { categoryOf, PRIORITY_RANK } from "./types";
 
 type DbRow = {
@@ -88,7 +82,10 @@ export async function markAllAsRead(userId: string): Promise<void> {
 }
 
 export async function deleteAlert(id: string): Promise<void> {
-  const { error } = await supabase.from("user_alerts" as never).delete().eq("id", id);
+  const { error } = await supabase
+    .from("user_alerts" as never)
+    .delete()
+    .eq("id", id);
   if (error) throw error;
 }
 
@@ -117,12 +114,10 @@ export async function syncDrafts(userId: string, drafts: DraftAlert[]): Promise<
   }));
 
   // upsert com ignoreDuplicates = true respeita o índice único (user_id, dedupe_key, period_key)
-  const { error } = await supabase
-    .from("user_alerts" as never)
-    .upsert(payload as never, {
-      onConflict: "user_id,dedupe_key,period_key",
-      ignoreDuplicates: true,
-    });
+  const { error } = await supabase.from("user_alerts" as never).upsert(payload as never, {
+    onConflict: "user_id,dedupe_key,period_key",
+    ignoreDuplicates: true,
+  });
   if (error) {
     // não bloqueia a UI se a sync falhar
     console.warn("[alerts] sync error", error);
@@ -130,10 +125,14 @@ export async function syncDrafts(userId: string, drafts: DraftAlert[]): Promise<
   return listAlerts(userId);
 }
 
-export function filterByCategory(alerts: UserAlert[], cat: AlertCategory | "todos" | "nao_lidos" | "importantes"): UserAlert[] {
+export function filterByCategory(
+  alerts: UserAlert[],
+  cat: AlertCategory | "todos" | "nao_lidos" | "importantes",
+): UserAlert[] {
   if (cat === "todos") return alerts;
   if (cat === "nao_lidos") return alerts.filter((a) => a.status === "unread");
-  if (cat === "importantes") return alerts.filter((a) => a.priority === "critica" || a.priority === "alta");
+  if (cat === "importantes")
+    return alerts.filter((a) => a.priority === "critica" || a.priority === "alta");
   return alerts.filter((a) => categoryOf(a.type) === cat);
 }
 

@@ -37,9 +37,7 @@ export function BrandLoader({
           height={64}
           className="h-14 w-14 sm:h-16 sm:w-16 motion-safe:animate-[brand-pulse_1.8s_ease-in-out_infinite]"
         />
-        {message && (
-          <p className="text-sm text-slate-300/90 text-center">{message}</p>
-        )}
+        {message && <p className="text-sm text-slate-300/90 text-center">{message}</p>}
       </div>
     </div>
   );

@@ -13,8 +13,14 @@ export const Route = createFileRoute("/privacidade")({
         { property: "og:title", content: t("privacidade.metaTitle") },
         { property: "og:description", content: t("privacidade.ogDesc") },
         { property: "og:url", content: "https://gastointeligente.com.br/privacidade" },
-        { property: "og:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
-        { name: "twitter:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
+        {
+          property: "og:image",
+          content: "https://gastointeligente.com.br/og-gasto-inteligente.png",
+        },
+        {
+          name: "twitter:image",
+          content: "https://gastointeligente.com.br/og-gasto-inteligente.png",
+        },
       ],
       links: [{ rel: "canonical", href: "https://gastointeligente.com.br/privacidade" }],
     };
@@ -32,9 +38,15 @@ function PrivacidadePage() {
 
       <h2>{t("privacidade.s1.h")}</h2>
       <ul>
-        <li><strong>{t("privacidade.s1.i1Strong")}</strong> {t("privacidade.s1.i1")}</li>
-        <li><strong>{t("privacidade.s1.i2Strong")}</strong> {t("privacidade.s1.i2")}</li>
-        <li><strong>{t("privacidade.s1.i3Strong")}</strong> {t("privacidade.s1.i3")}</li>
+        <li>
+          <strong>{t("privacidade.s1.i1Strong")}</strong> {t("privacidade.s1.i1")}
+        </li>
+        <li>
+          <strong>{t("privacidade.s1.i2Strong")}</strong> {t("privacidade.s1.i2")}
+        </li>
+        <li>
+          <strong>{t("privacidade.s1.i3Strong")}</strong> {t("privacidade.s1.i3")}
+        </li>
       </ul>
 
       <h2>{t("privacidade.s2.h")}</h2>

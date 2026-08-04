@@ -24,13 +24,17 @@ function toLocalISODate(d: Date): string {
 }
 
 function pricedOf(it: ListaItem): number | null {
-  const pago = typeof it?.precoPago === "number" && Number.isFinite(it.precoPago) && it.precoPago > 0
-    ? (it.precoPago as number)
-    : null;
+  const pago =
+    typeof it?.precoPago === "number" && Number.isFinite(it.precoPago) && it.precoPago > 0
+      ? (it.precoPago as number)
+      : null;
   if (pago !== null) return pago;
-  const est = typeof it?.precoEstimado === "number" && Number.isFinite(it.precoEstimado) && it.precoEstimado > 0
-    ? (it.precoEstimado as number)
-    : null;
+  const est =
+    typeof it?.precoEstimado === "number" &&
+    Number.isFinite(it.precoEstimado) &&
+    it.precoEstimado > 0
+      ? (it.precoEstimado as number)
+      : null;
   return est;
 }
 
@@ -60,14 +64,12 @@ export function createGastoFromFinalizedPurchase(
 ): FinalizedPurchaseGastoResult {
   const items = Array.isArray(input.items) ? input.items : [];
   const valid = items.filter(
-    (it) =>
-      typeof it?.nome === "string" &&
-      it.nome.trim().length > 0 &&
-      pricedOf(it) !== null,
+    (it) => typeof it?.nome === "string" && it.nome.trim().length > 0 && pricedOf(it) !== null,
   );
-  const total = Math.round(
-    valid.reduce((s, it) => s + (pricedOf(it) as number) * (it.quantidade || 1), 0) * 100,
-  ) / 100;
+  const total =
+    Math.round(
+      valid.reduce((s, it) => s + (pricedOf(it) as number) * (it.quantidade || 1), 0) * 100,
+    ) / 100;
 
   if (total <= 0) {
     return {
@@ -88,18 +90,14 @@ export function createGastoFromFinalizedPurchase(
   });
   if (valid.length > 30) lines.push(`… +${valid.length - 30}`);
   const baseNote = `Compra finalizada pelo Mercado Inteligente.`;
-  const observacao = [baseNote, input.notes?.trim(), lines.join("\n")]
-    .filter(Boolean)
-    .join("\n\n");
+  const observacao = [baseNote, input.notes?.trim(), lines.join("\n")].filter(Boolean).join("\n\n");
 
   // Cartão (de crédito) só faz sentido vinculado quando o pagamento é crédito.
   // A tabela `cartoes` modela APENAS cartões de crédito (com limite, fechamento
   // e vencimento de fatura). Vincular um débito ao cartão consumiria
   // incorretamente o limite e poluiria a fatura — por isso ignoramos.
   const cartaoId =
-    input.cartaoId && input.formaPagamento === "credito"
-      ? input.cartaoId
-      : undefined;
+    input.cartaoId && input.formaPagamento === "credito" ? input.cartaoId : undefined;
 
   try {
     const created = addGastoAuto({

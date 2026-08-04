@@ -44,20 +44,13 @@ export const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
         ref={ref}
         className={cn(
           "inline-flex items-center gap-1.5 rounded-full border font-medium",
-          size === "sm"
-            ? "px-2 py-0.5 text-[11px]"
-            : "px-2.5 py-1 text-xs",
+          size === "sm" ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs",
           toneClasses[tone],
           className,
         )}
         {...props}
       >
-        {dot && (
-          <span
-            className={cn("h-1.5 w-1.5 rounded-full", dotClasses[tone])}
-            aria-hidden
-          />
-        )}
+        {dot && <span className={cn("h-1.5 w-1.5 rounded-full", dotClasses[tone])} aria-hidden />}
         {children}
       </span>
     );

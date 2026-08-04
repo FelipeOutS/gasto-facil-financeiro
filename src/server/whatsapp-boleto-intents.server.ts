@@ -25,10 +25,7 @@
 import * as _supa from "@/integrations/supabase/client.server";
 import { randomUUID } from "crypto";
 import type { WhatsAppMessageRow, ProcessOutcome } from "./whatsapp.server";
-import {
-  detectBoletoFromText,
-  type BoletoParsed,
-} from "./whatsapp-boleto-parser";
+import { detectBoletoFromText, type BoletoParsed } from "./whatsapp-boleto-parser";
 import { formatBancoEmissor } from "./whatsapp-boleto-banco";
 // WA-C11 3B.2.C.1 Block 5 — quota financeira para criação de conta por boleto.
 import {
@@ -36,10 +33,12 @@ import {
   financialQuotaBlockedReply,
 } from "@/server/whatsapp-financial-quota-gate.server";
 
-
 // Live-binding para permitir mock.module() em testes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const supabaseAdmin: any = new Proxy({}, { get: (_t, p) => (_supa.supabaseAdmin as never)[p as never] });
+const supabaseAdmin: any = new Proxy(
+  {},
+  { get: (_t, p) => (_supa.supabaseAdmin as never)[p as never] },
+);
 
 // ---------- estados ----------
 
@@ -128,18 +127,34 @@ export function isAnyBoletoSession(s: unknown): boolean {
 
 export type WhatsAppBoletoDeps = {
   gravarSessao: (
-    userId: string, telefone: string, externalId: string | null,
-    texto: string, recebidaEm: string, status: string,
+    userId: string,
+    telefone: string,
+    externalId: string | null,
+    texto: string,
+    recebidaEm: string,
+    status: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    session: any, resposta: string, gastoId?: string,
-  ) => Promise<{ ok: boolean; sessionId: string | null; status: string | null; errorCode: string | null }>;
+    session: any,
+    resposta: string,
+    gastoId?: string,
+  ) => Promise<{
+    ok: boolean;
+    sessionId: string | null;
+    status: string | null;
+    errorCode: string | null;
+  }>;
   atualizarSessao: (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    id: string, status: string, session: any, resposta: string, gastoId?: string,
+    id: string,
+    status: string,
+    session: any,
+    resposta: string,
+    gastoId?: string,
   ) => Promise<unknown>;
   fecharSessoesAnteriores: (
-    userId: string, telefone: string,
-    motivo: "salva" | "cancelada" | "expirada", gastoId?: string,
+    userId: string,
+    telefone: string,
+    motivo: "salva" | "cancelada" | "expirada",
+    gastoId?: string,
   ) => Promise<void>;
 };
 
@@ -156,7 +171,11 @@ type Stage =
   | "cancelled"
   | "failed";
 
-function logBoleto(stage: Stage, fingerprint: string, result: "ok" | "invalid" | "duplicate" | "error") {
+function logBoleto(
+  stage: Stage,
+  fingerprint: string,
+  result: "ok" | "invalid" | "duplicate" | "error",
+) {
   console.info({
     event: "wa_boleto_decision",
     stage,
@@ -177,7 +196,9 @@ function formatDateBR(iso: string): string {
 function todayLocalISO(): string {
   const fmt = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Sao_Paulo",
-    year: "numeric", month: "2-digit", day: "2-digit",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   });
   return fmt.format(new Date());
 }
@@ -217,7 +238,10 @@ function previewMessage(s: BoletoSession): string {
     `• Código: ${s.mascara}`,
   ];
   if (s.vencimentoISO && s.vencimentoISO < todayLocalISO()) {
-    linhas.push("", `⚠️ Esse boleto venceu em ${formatDateBR(s.vencimentoISO)}. Confirme o valor atual antes de pagar.`);
+    linhas.push(
+      "",
+      `⚠️ Esse boleto venceu em ${formatDateBR(s.vencimentoISO)}. Confirme o valor atual antes de pagar.`,
+    );
   }
   linhas.push(
     "",
@@ -269,8 +293,8 @@ export async function processarBoleto(args: {
         "Você está cadastrando um boleto 🧾",
         "Você pode:",
         "• Enviar o dado pedido (valor, vencimento ou identificação) para continuar",
-        "• Enviar \"cancelar\" para descartar este boleto",
-        "• Enviar \"menu\" para ver as opções globais",
+        '• Enviar "cancelar" para descartar este boleto',
+        '• Enviar "menu" para ver as opções globais',
         "",
         "Seus dados ficam salvos enquanto você decide.",
       ].join("\n");
@@ -281,8 +305,8 @@ export async function processarBoleto(args: {
       const r = [
         "Você tem um boleto em andamento. O que deseja fazer?",
         "• Envie o dado pedido para continuar o cadastro",
-        "• Envie \"cancelar\" para descartar o boleto e abrir o menu",
-        "• Envie \"ajuda\" para ver opções",
+        '• Envie "cancelar" para descartar o boleto e abrir o menu',
+        '• Envie "ajuda" para ver opções',
       ].join("\n");
       await deps.atualizarSessao(sessao.id, sessao.status, session as never, r);
       return { status: "pendente", resposta: r };
@@ -297,15 +321,24 @@ export async function processarBoleto(args: {
     if (isBoletoSession(original)) sanitized.codigoBarras = "";
     if (isBoletoSelecaoSession(original)) {
       sanitized.candidatos = original.candidatos.map((c) => ({
-        fingerprint: c.fingerprint, mascara: c.mascara, tipo: c.tipo,
-        valorCentavos: c.valorCentavos, vencimentoISO: c.vencimentoISO,
+        fingerprint: c.fingerprint,
+        mascara: c.mascara,
+        tipo: c.tipo,
+        valorCentavos: c.valorCentavos,
+        vencimentoISO: c.vencimentoISO,
       }));
     }
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     const r = "Cadastro do boleto cancelado. 👍";
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "cancelada", sanitized as never, r,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "cancelada",
+      sanitized as never,
+      r,
     );
     const fp = isBoletoSession(original) ? original.fingerprint : "n/a";
     logBoleto("cancelled", fp, "ok");
@@ -319,7 +352,8 @@ export async function processarBoleto(args: {
       logBoleto("detected", "n/a", "invalid");
       return {
         status: "erro",
-        resposta: "Não consegui validar esse código como boleto. Confira se a linha digitável está completa ou envie novamente.",
+        resposta:
+          "Não consegui validar esse código como boleto. Confira se a linha digitável está completa ou envie novamente.",
       };
     }
     logBoleto("detected", parsed.fingerprint, "ok");
@@ -346,11 +380,20 @@ export async function processarBoleto(args: {
       ];
       const resp = linhas.join("\n");
       const claim = await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "bol_aguardando_duplicidade", session as never, resp,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "bol_aguardando_duplicidade",
+        session as never,
+        resp,
       );
       if (!claim?.ok) {
-        return { status: "erro", resposta: "Já estou processando esse boleto. Aguarde um instante." };
+        return {
+          status: "erro",
+          resposta: "Já estou processando esse boleto. Aguarde um instante.",
+        };
       }
       logBoleto("awaiting_duplicate_decision", parsed.fingerprint, "duplicate");
       return { status: "pendente", resposta: resp };
@@ -361,14 +404,25 @@ export async function processarBoleto(args: {
   // ---- WA-C10.b: seleção de candidato (sessão veio de OCR multi-candidato) ----
   if (isBoletoSelecaoSession(sessao.session)) {
     return await processarSelecaoCandidato({
-      userId, msg, texto, recebidaEm, sessao, deps,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      sessao,
+      deps,
     });
   }
 
   // ---- WA-C10.b: fallback manual (OCR só achou valor/vencimento) ----
   if (isBoletoManualSession(sessao.session)) {
     return await processarBoletoManual({
-      userId, msg, texto, recebidaEm, decisao, sessao, deps,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      decisao,
+      sessao,
+      deps,
     });
   }
 
@@ -383,20 +437,40 @@ export async function processarBoleto(args: {
       await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
       const r = 'Veja suas contas digitando "minhas contas". 📋';
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "cancelada", session as never, r,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "cancelada",
+        session as never,
+        r,
       );
       return { status: "salva", resposta: r };
     }
     if (/^2\b|continuar/i.test(t)) {
-      return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps });
+      return await avancarFluxo({
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessaoId: sessao.id,
+        deps,
+      });
     }
     if (/^3\b|cancelar/i.test(t)) {
       await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
       const r = "Cadastro cancelado. 👍";
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "cancelada", session as never, r,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "cancelada",
+        session as never,
+        r,
       );
       return { status: "cancelada", resposta: r };
     }
@@ -413,7 +487,15 @@ export async function processarBoleto(args: {
       return { status: "pendente", resposta: r };
     }
     session.valorCentavos = v;
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps });
+    return await avancarFluxo({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      session,
+      sessaoId: sessao.id,
+      deps,
+    });
   }
 
   if (current === "bol_aguardando_vencimento") {
@@ -424,35 +506,84 @@ export async function processarBoleto(args: {
       return { status: "pendente", resposta: r };
     }
     session.vencimentoISO = d;
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps });
+    return await avancarFluxo({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      session,
+      sessaoId: sessao.id,
+      deps,
+    });
   }
 
   if (current === "bol_aguardando_identificacao") {
     const nome = t.slice(0, 80).trim();
     if (nome.length < 2) {
-      const r = "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade";
+      const r =
+        "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade";
       await deps.atualizarSessao(sessao.id, current, session as never, r);
       return { status: "pendente", resposta: r };
     }
     session.identificacao = nome.charAt(0).toUpperCase() + nome.slice(1);
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps });
+    return await avancarFluxo({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      session,
+      sessaoId: sessao.id,
+      deps,
+    });
   }
 
   if (current === "bol_aguardando_confirmacao") {
     if (decisao === "confirm" || /^(1|sim|confirmar?|ok|confirmo)\b/i.test(t)) {
-      return await persistir({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps });
+      return await persistir({
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessaoId: sessao.id,
+        deps,
+      });
     }
     if (/^2\b|corrigir\s+valor|^valor\b/i.test(t)) {
       session.valorCentavos = null;
-      return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps });
+      return await avancarFluxo({
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessaoId: sessao.id,
+        deps,
+      });
     }
     if (/^3\b|corrigir\s+venc|^venc/i.test(t)) {
       session.vencimentoISO = null;
-      return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps });
+      return await avancarFluxo({
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessaoId: sessao.id,
+        deps,
+      });
     }
     if (/^4\b|corrigir\s+identi|identifica|nome/i.test(t)) {
       session.identificacao = null;
-      return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps });
+      return await avancarFluxo({
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessaoId: sessao.id,
+        deps,
+      });
     }
     const r = "Não entendi. Responda 1 para confirmar, 2-4 para corrigir ou 5 para cancelar.";
     await deps.atualizarSessao(sessao.id, current, session as never, r);
@@ -485,7 +616,8 @@ async function avancarFluxo(args: {
     return { status: "pendente", resposta: r };
   }
   if (!session.identificacao) {
-    const r = "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade";
+    const r =
+      "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade";
     await transicao("bol_aguardando_identificacao", session, r, args);
     return { status: "pendente", resposta: r };
   }
@@ -499,8 +631,12 @@ async function transicao(
   session: BoletoSession,
   resposta: string,
   args: {
-    userId: string; msg: WhatsAppMessageRow; texto: string; recebidaEm: string;
-    sessaoId: string | null; deps: WhatsAppBoletoDeps;
+    userId: string;
+    msg: WhatsAppMessageRow;
+    texto: string;
+    recebidaEm: string;
+    sessaoId: string | null;
+    deps: WhatsAppBoletoDeps;
   },
 ): Promise<void> {
   const { userId, msg, texto, recebidaEm, sessaoId, deps } = args;
@@ -508,14 +644,23 @@ async function transicao(
     await supabaseAdmin.from("whatsapp_messages").update({ status: "expirada" }).eq("id", sessaoId);
   }
   await deps.gravarSessao(
-    userId, msg.telefone, msg.external_id, texto, recebidaEm,
-    status, session as never, resposta,
+    userId,
+    msg.telefone,
+    msg.external_id,
+    texto,
+    recebidaEm,
+    status,
+    session as never,
+    resposta,
   );
   logBoleto(
-    status === "bol_aguardando_valor" ? "awaiting_value"
-      : status === "bol_aguardando_vencimento" ? "awaiting_due_date"
-      : status === "bol_aguardando_identificacao" ? "awaiting_identification"
-      : "awaiting_confirmation",
+    status === "bol_aguardando_valor"
+      ? "awaiting_value"
+      : status === "bol_aguardando_vencimento"
+        ? "awaiting_due_date"
+        : status === "bol_aguardando_identificacao"
+          ? "awaiting_identification"
+          : "awaiting_confirmation",
     session.fingerprint,
     "ok",
   );
@@ -572,13 +717,8 @@ export async function persistir(args: {
   sessaoId: string;
   deps: WhatsAppBoletoDeps;
 }): Promise<ProcessOutcome> {
-
   const { userId, msg, texto, recebidaEm, session, deps } = args;
-  if (
-    session.valorCentavos == null ||
-    !session.vencimentoISO ||
-    !session.identificacao
-  ) {
+  if (session.valorCentavos == null || !session.vencimentoISO || !session.identificacao) {
     logBoleto("failed", session.fingerprint, "error");
     return { status: "erro", resposta: "Não consegui montar essa conta. Vamos começar de novo?" };
   }
@@ -587,13 +727,22 @@ export async function persistir(args: {
   const externalMessageId = msg.external_id ?? null;
   if (!externalMessageId || externalMessageId.trim().length === 0) {
     logBoleto("failed", session.fingerprint, "error");
-    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
+    return {
+      status: "erro",
+      resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?",
+    };
   }
 
   // Claim atômico — bloqueia retries do webhook com mesmo external_id.
   const claim = await deps.gravarSessao(
-    userId, msg.telefone, externalMessageId, texto, recebidaEm,
-    "bol_persistindo", session as never, "",
+    userId,
+    msg.telefone,
+    externalMessageId,
+    texto,
+    recebidaEm,
+    "bol_persistindo",
+    session as never,
+    "",
   );
   if (!claim?.ok || !claim.sessionId) {
     logBoleto("failed", session.fingerprint, "error");
@@ -613,11 +762,12 @@ export async function persistir(args: {
   if (!gateOutcome.allowed) {
     try {
       await deps.atualizarSessao(claimSessionId, "erro", session as never, "quota_blocked");
-    } catch { /* claim cleanup nunca quebra a resposta */ }
+    } catch {
+      /* claim cleanup nunca quebra a resposta */
+    }
     logBoleto("failed", session.fingerprint, "error");
     return { status: "erro", resposta: financialQuotaBlockedReply(gateOutcome) };
   }
-
 
   const [y, m] = session.vencimentoISO.split("-").map(Number);
   const id = randomUUID();
@@ -652,7 +802,10 @@ export async function persistir(args: {
   const { error: insErr } = await supabaseAdmin.from("contas_a_pagar").insert([row]);
   if (insErr) {
     logBoleto("failed", session.fingerprint, "error");
-    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
+    return {
+      status: "erro",
+      resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?",
+    };
   }
 
   // Readback obrigatório.
@@ -687,16 +840,23 @@ export async function persistir(args: {
     await deps.atualizarSessao(claimSessionId, "salva", finalSession as never, "ok");
   } else {
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "salva", finalSession as never, "ok",
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "salva",
+      finalSession as never,
+      "ok",
     );
   }
 
   logBoleto("persisted", session.fingerprint, "ok");
   const vencFmt = formatDateBR(session.vencimentoISO);
-  const aviso = session.vencimentoISO < todayLocalISO()
-    ? `Conta marcada como pendente (vencida em ${vencFmt}). Confirme o valor atual antes de pagar.`
-    : `Vencimento: ${vencFmt}.`;
+  const aviso =
+    session.vencimentoISO < todayLocalISO()
+      ? `Conta marcada como pendente (vencida em ${vencFmt}). Confirme o valor atual antes de pagar.`
+      : `Vencimento: ${vencFmt}.`;
   return {
     status: "salva",
     resposta: [
@@ -775,11 +935,20 @@ export async function iniciarBoletoDeMidia(args: {
       ];
       const resp = linhas.join("\n");
       const claim = await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "bol_aguardando_duplicidade", session as never, resp,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "bol_aguardando_duplicidade",
+        session as never,
+        resp,
       );
       if (!claim?.ok) {
-        return { status: "erro", resposta: "Já estou processando esse boleto. Aguarde um instante." };
+        return {
+          status: "erro",
+          resposta: "Já estou processando esse boleto. Aguarde um instante.",
+        };
       }
       logBoleto("awaiting_duplicate_decision", parsed.fingerprint, "duplicate");
       return { status: "pendente", resposta: resp };
@@ -807,14 +976,22 @@ export async function iniciarBoletoDeMidia(args: {
     const extras = [
       p.valorCentavos != null ? formatBRL(p.valorCentavos) : null,
       p.vencimentoISO ? formatDateBR(p.vencimentoISO) : null,
-    ].filter(Boolean).join(" • ");
+    ]
+      .filter(Boolean)
+      .join(" • ");
     linhas.push(`${i + 1}. Boleto ${p.mascaraExibicao}${extras ? ` (${extras})` : ""}`);
   });
   linhas.push(`${candidatos.length + 1}. Nenhum deles`);
   const resp = linhas.join("\n");
   const claim = await deps.gravarSessao(
-    userId, msg.telefone, msg.external_id, texto, recebidaEm,
-    "bol_aguardando_selecao_candidato", session as never, resp,
+    userId,
+    msg.telefone,
+    msg.external_id,
+    texto,
+    recebidaEm,
+    "bol_aguardando_selecao_candidato",
+    session as never,
+    resp,
   );
   if (!claim?.ok) {
     return { status: "erro", resposta: "Já estou processando esse boleto. Aguarde um instante." };
@@ -837,10 +1014,17 @@ async function processarSelecaoCandidato(args: {
   if (idx === sel.candidatos.length) {
     // "Nenhum deles".
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
-    const r = "Tudo bem, descartei essa imagem. Se quiser, envie outra foto/PDF ou cole a linha digitável.";
+    const r =
+      "Tudo bem, descartei essa imagem. Se quiser, envie outra foto/PDF ou cole a linha digitável.";
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "cancelada", { kind: "boleto_selecao", origem: sel.origem, descartado: true } as never, r,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "cancelada",
+      { kind: "boleto_selecao", origem: sel.origem, descartado: true } as never,
+      r,
     );
     return { status: "cancelada", resposta: r };
   }
@@ -863,7 +1047,10 @@ async function processarSelecaoCandidato(args: {
     banco: chosen.banco,
   } as BoletoParsed;
   return await iniciarBoletoDeMidia({
-    userId, msg, texto, recebidaEm,
+    userId,
+    msg,
+    texto,
+    recebidaEm,
     origem: sel.origem,
     candidatos: [parsed],
     identificacaoSugerida: sel.identificacaoSugerida,
@@ -888,20 +1075,37 @@ export async function iniciarBoletoManualFallback(args: {
   identificacaoSugerida: string | null;
   deps: WhatsAppBoletoDeps;
 }): Promise<ProcessOutcome> {
-  const { userId, msg, texto, recebidaEm, origem, valorCentavos, vencimentoISO, identificacaoSugerida, deps } = args;
+  const {
+    userId,
+    msg,
+    texto,
+    recebidaEm,
+    origem,
+    valorCentavos,
+    vencimentoISO,
+    identificacaoSugerida,
+    deps,
+  } = args;
   const session: BoletoManualSession = {
     kind: "boleto_manual",
     origem,
     valorCentavos,
     vencimentoISO,
-    identificacao: identificacaoSugerida && identificacaoSugerida.trim().length >= 2
-      ? identificacaoSugerida.trim().slice(0, 80)
-      : null,
+    identificacao:
+      identificacaoSugerida && identificacaoSugerida.trim().length >= 2
+        ? identificacaoSugerida.trim().slice(0, 80)
+        : null,
   };
   const resp = manualFallbackPrompt(session);
   const claim = await deps.gravarSessao(
-    userId, msg.telefone, msg.external_id, texto, recebidaEm,
-    "bol_aguardando_confirmacao_manual", session as never, resp,
+    userId,
+    msg.telefone,
+    msg.external_id,
+    texto,
+    recebidaEm,
+    "bol_aguardando_confirmacao_manual",
+    session as never,
+    resp,
   );
   if (!claim?.ok) {
     return { status: "erro", resposta: "Já estou processando esse arquivo. Aguarde um instante." };
@@ -964,7 +1168,8 @@ async function processarBoletoManual(args: {
   if (sessao.status === "bol_aguardando_identificacao") {
     const nome = t.slice(0, 80).trim();
     if (nome.length < 2) {
-      const r = "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade";
+      const r =
+        "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade";
       await deps.atualizarSessao(sessao.id, sessao.status, s as never, r);
       return { status: "pendente", resposta: r };
     }
@@ -976,33 +1181,65 @@ async function processarBoletoManual(args: {
   if (decisao === "confirm" || /^(1|sim|confirmar?|ok|confirmo)\b/i.test(t)) {
     if (s.valorCentavos == null) {
       s.valorCentavos = null;
-      return await transicionarManual(s, args, "bol_aguardando_valor",
-        "Qual é o valor desta conta? (ex.: R$ 120,00)");
+      return await transicionarManual(
+        s,
+        args,
+        "bol_aguardando_valor",
+        "Qual é o valor desta conta? (ex.: R$ 120,00)",
+      );
     }
     if (!s.vencimentoISO) {
-      return await transicionarManual(s, args, "bol_aguardando_vencimento",
-        "Qual é a data de vencimento? (ex.: 10/07/2026)");
+      return await transicionarManual(
+        s,
+        args,
+        "bol_aguardando_vencimento",
+        "Qual é a data de vencimento? (ex.: 10/07/2026)",
+      );
     }
     if (!s.identificacao) {
-      return await transicionarManual(s, args, "bol_aguardando_identificacao",
-        "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade");
+      return await transicionarManual(
+        s,
+        args,
+        "bol_aguardando_identificacao",
+        "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade",
+      );
     }
-    return await persistirManual({ userId, msg, texto, recebidaEm, session: s, sessaoId: sessao.id, deps });
+    return await persistirManual({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      session: s,
+      sessaoId: sessao.id,
+      deps,
+    });
   }
   if (/^2\b|corrigir\s+valor|^valor\b/i.test(t)) {
     s.valorCentavos = null;
-    return await transicionarManual(s, args, "bol_aguardando_valor",
-      "Qual é o valor desta conta? (ex.: R$ 120,00)");
+    return await transicionarManual(
+      s,
+      args,
+      "bol_aguardando_valor",
+      "Qual é o valor desta conta? (ex.: R$ 120,00)",
+    );
   }
   if (/^3\b|corrigir\s+venc|^venc/i.test(t)) {
     s.vencimentoISO = null;
-    return await transicionarManual(s, args, "bol_aguardando_vencimento",
-      "Qual é a data de vencimento? (ex.: 10/07/2026)");
+    return await transicionarManual(
+      s,
+      args,
+      "bol_aguardando_vencimento",
+      "Qual é a data de vencimento? (ex.: 10/07/2026)",
+    );
   }
   if (/^4\b|corrigir\s+identi|identifica|nome/i.test(t)) {
     s.identificacao = null;
-    return await transicionarManual(s, args, "bol_aguardando_identificacao",
-      "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade");
+    return await transicionarManual(
+      s,
+      args,
+      "bol_aguardando_identificacao",
+      "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade",
+    );
   }
   const r = "Não entendi. Responda 1 para confirmar, 2-4 para corrigir ou 5 para cancelar.";
   await deps.atualizarSessao(sessao.id, sessao.status, s as never, r);
@@ -1012,7 +1249,10 @@ async function processarBoletoManual(args: {
 async function transicionarManual(
   s: BoletoManualSession,
   args: {
-    userId: string; msg: WhatsAppMessageRow; texto: string; recebidaEm: string;
+    userId: string;
+    msg: WhatsAppMessageRow;
+    texto: string;
+    recebidaEm: string;
     sessao: { id: string; status: string; session: unknown; recebida_em: string };
     deps: WhatsAppBoletoDeps;
   },
@@ -1025,34 +1265,75 @@ async function transicionarManual(
     if (s.valorCentavos == null) {
       const r = "Qual é o valor desta conta? (ex.: R$ 120,00)";
       await sessaoExpirar(sessao.id, deps);
-      await deps.gravarSessao(userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "bol_aguardando_valor", s as never, r);
+      await deps.gravarSessao(
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "bol_aguardando_valor",
+        s as never,
+        r,
+      );
       return { status: "pendente", resposta: r };
     }
     if (!s.vencimentoISO) {
       const r = "Qual é a data de vencimento? (ex.: 10/07/2026)";
       await sessaoExpirar(sessao.id, deps);
-      await deps.gravarSessao(userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "bol_aguardando_vencimento", s as never, r);
+      await deps.gravarSessao(
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "bol_aguardando_vencimento",
+        s as never,
+        r,
+      );
       return { status: "pendente", resposta: r };
     }
     if (!s.identificacao) {
-      const r = "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade";
+      const r =
+        "Como você quer identificar essa conta?\nEx.: Internet, Condomínio, Energia, Faculdade";
       await sessaoExpirar(sessao.id, deps);
-      await deps.gravarSessao(userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "bol_aguardando_identificacao", s as never, r);
+      await deps.gravarSessao(
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "bol_aguardando_identificacao",
+        s as never,
+        r,
+      );
       return { status: "pendente", resposta: r };
     }
     const r = manualFallbackPrompt(s);
     await sessaoExpirar(sessao.id, deps);
-    await deps.gravarSessao(userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "bol_aguardando_confirmacao_manual", s as never, r);
+    await deps.gravarSessao(
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "bol_aguardando_confirmacao_manual",
+      s as never,
+      r,
+    );
     return { status: "pendente", resposta: r };
   }
   await sessaoExpirar(sessao.id, deps);
   const r = prompt ?? manualFallbackPrompt(s);
-  await deps.gravarSessao(userId, msg.telefone, msg.external_id, texto, recebidaEm,
-    override, s as never, r);
+  await deps.gravarSessao(
+    userId,
+    msg.telefone,
+    msg.external_id,
+    texto,
+    recebidaEm,
+    override,
+    s as never,
+    r,
+  );
   return { status: "pendente", resposta: r };
 }
 
@@ -1075,7 +1356,6 @@ export async function persistirManual(args: {
   sessaoId: string;
   deps: WhatsAppBoletoDeps;
 }): Promise<ProcessOutcome> {
-
   const { userId, msg, texto, recebidaEm, session, sessaoId, deps } = args;
   if (session.valorCentavos == null || !session.vencimentoISO || !session.identificacao) {
     return { status: "erro", resposta: "Não consegui montar essa conta. Vamos começar de novo?" };
@@ -1084,13 +1364,22 @@ export async function persistirManual(args: {
   // WA-C11 3B.2.C.1 Block 5 — fail-closed sem `external_id`.
   const externalMessageId = msg.external_id ?? null;
   if (!externalMessageId || externalMessageId.trim().length === 0) {
-    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
+    return {
+      status: "erro",
+      resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?",
+    };
   }
 
   // Claim atômico — bloqueia retries do webhook.
   const claim = await deps.gravarSessao(
-    userId, msg.telefone, externalMessageId, texto, recebidaEm,
-    "bol_persistindo", session as never, "",
+    userId,
+    msg.telefone,
+    externalMessageId,
+    texto,
+    recebidaEm,
+    "bol_persistindo",
+    session as never,
+    "",
   );
   if (!claim?.ok || !claim.sessionId) {
     return { status: "erro", resposta: "Já estou processando essa conta. Aguarde um instante." };
@@ -1109,7 +1398,9 @@ export async function persistirManual(args: {
   if (!gateOutcome.allowed) {
     try {
       await deps.atualizarSessao(claimSessionId, "erro", session as never, "quota_blocked");
-    } catch { /* cleanup jamais quebra a resposta */ }
+    } catch {
+      /* cleanup jamais quebra a resposta */
+    }
     return { status: "erro", resposta: financialQuotaBlockedReply(gateOutcome) };
   }
 
@@ -1141,7 +1432,10 @@ export async function persistirManual(args: {
   } as Record<string, unknown>;
   const { error: insErr } = await supabaseAdmin.from("contas_a_pagar").insert([row]);
   if (insErr) {
-    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
+    return {
+      status: "erro",
+      resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?",
+    };
   }
   await deps.fecharSessoesAnteriores(userId, msg.telefone, "salva");
   const finalSession: Record<string, unknown> = {
@@ -1157,14 +1451,21 @@ export async function persistirManual(args: {
     await deps.atualizarSessao(claimSessionId, "salva", finalSession as never, "ok");
   } else {
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "salva", finalSession as never, "ok",
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "salva",
+      finalSession as never,
+      "ok",
     );
   }
   const vencFmt = formatDateBR(session.vencimentoISO);
-  const aviso = session.vencimentoISO < todayLocalISO()
-    ? `Conta marcada como pendente (vencida em ${vencFmt}). Confirme antes de pagar.`
-    : `Vencimento: ${vencFmt}.`;
+  const aviso =
+    session.vencimentoISO < todayLocalISO()
+      ? `Conta marcada como pendente (vencida em ${vencFmt}). Confirme antes de pagar.`
+      : `Vencimento: ${vencFmt}.`;
   return {
     status: "salva",
     resposta: [

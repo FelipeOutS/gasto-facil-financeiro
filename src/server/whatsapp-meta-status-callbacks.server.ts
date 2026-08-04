@@ -90,12 +90,7 @@ export interface CurrentNotification {
 // ─────────────────────────────────────────────────────────────────────────────
 // Constantes
 
-const ALLOWED_STATUS: ReadonlyArray<ProviderStatus> = [
-  "sent",
-  "delivered",
-  "read",
-  "failed",
-];
+const ALLOWED_STATUS: ReadonlyArray<ProviderStatus> = ["sent", "delivered", "read", "failed"];
 
 const MAX_ERROR_TITLE = 200;
 const MAX_ERROR_MESSAGE = 1000;
@@ -252,9 +247,7 @@ export function parseStatusesFromChangeValue(
     changeValue.metadata &&
     typeof changeValue.metadata === "object" &&
     "phone_number_id" in (changeValue.metadata as Record<string, unknown>)
-      ? sanitizeCode(
-          (changeValue.metadata as Record<string, unknown>).phone_number_id,
-        )
+      ? sanitizeCode((changeValue.metadata as Record<string, unknown>).phone_number_id)
       : null;
 
   if (
@@ -354,9 +347,7 @@ export function parseStatusesFromChangeValue(
 // Redutor puro. Não toca DB.
 
 export function reduceProviderStatusEvents(
-  events: ReadonlyArray<
-    Pick<ParsedStatusEvent, "event_status" | "event_at" | "error_code">
-  >,
+  events: ReadonlyArray<Pick<ParsedStatusEvent, "event_status" | "event_at" | "error_code">>,
   current: CurrentNotification,
 ): AggregateState {
   const merged: {
@@ -528,9 +519,7 @@ export interface ApplyOutcome {
  */
 export async function applyProviderStatusAggregate(
   provider_message_id: string,
-  eventsForPmid: ReadonlyArray<
-    Pick<ParsedStatusEvent, "event_status" | "event_at" | "error_code">
-  >,
+  eventsForPmid: ReadonlyArray<Pick<ParsedStatusEvent, "event_status" | "event_at" | "error_code">>,
   client: SupabaseLike = supabaseAdmin as unknown as SupabaseLike,
 ): Promise<ApplyOutcome> {
   // Fonte da verdade: TODOS os eventos persistidos para este PMID +
@@ -620,8 +609,7 @@ export async function applyProviderStatusAggregate(
     if (cur.status === "pending") {
       const patchOnly: Record<string, unknown> = {};
       if (cur.sent_at == null && agg.sent_at) patchOnly.sent_at = agg.sent_at;
-      if (cur.delivered_at == null && agg.delivered_at)
-        patchOnly.delivered_at = agg.delivered_at;
+      if (cur.delivered_at == null && agg.delivered_at) patchOnly.delivered_at = agg.delivered_at;
       if (cur.read_at == null && agg.read_at) patchOnly.read_at = agg.read_at;
 
       if (Object.keys(patchOnly).length === 0) {
@@ -687,19 +675,14 @@ export async function applyProviderStatusAggregate(
     if (newStatus !== cur.status) patch.status = newStatus;
 
     if (newStatus === "failed") {
-      if (agg.failed_at && cur.failed_at !== agg.failed_at)
-        patch.failed_at = agg.failed_at;
-      if (agg.last_error_code !== cur.last_error_code)
-        patch.last_error_code = agg.last_error_code;
+      if (agg.failed_at && cur.failed_at !== agg.failed_at) patch.failed_at = agg.failed_at;
+      if (agg.last_error_code !== cur.last_error_code) patch.last_error_code = agg.last_error_code;
     } else if (newStatus === "sent") {
       if (cur.failed_at) patch.failed_at = null;
       if (cur.last_error_code) patch.last_error_code = null;
     }
 
-    if (
-      cur.status === "processing" &&
-      (newStatus === "sent" || newStatus === "failed")
-    ) {
+    if (cur.status === "processing" && (newStatus === "sent" || newStatus === "failed")) {
       patch.claim_token = null;
       patch.claimed_at = null;
       patch.lease_expires_at = null;
@@ -721,12 +704,8 @@ export async function applyProviderStatusAggregate(
       cur.delivered_at == null
         ? q.is("delivered_at", null)
         : q.eq("delivered_at", cur.delivered_at);
-    q =
-      cur.read_at == null ? q.is("read_at", null) : q.eq("read_at", cur.read_at);
-    q =
-      cur.failed_at == null
-        ? q.is("failed_at", null)
-        : q.eq("failed_at", cur.failed_at);
+    q = cur.read_at == null ? q.is("read_at", null) : q.eq("read_at", cur.read_at);
+    q = cur.failed_at == null ? q.is("failed_at", null) : q.eq("failed_at", cur.failed_at);
 
     const { error: upErr } = await q;
     if (upErr) {
@@ -742,9 +721,7 @@ export async function applyProviderStatusAggregate(
     // Se não estiver, outro writer venceu — tentamos de novo com estado fresco.
     const { data: verify } = await client
       .from("whatsapp_notifications")
-      .select(
-        "status, sent_at, delivered_at, read_at, failed_at, last_error_code",
-      )
+      .select("status, sent_at, delivered_at, read_at, failed_at, last_error_code")
       .eq("id", notif.id)
       .maybeSingle();
     if (!verify) {
@@ -754,12 +731,10 @@ export async function applyProviderStatusAggregate(
     const matches =
       (patch.status == null || verify.status === patch.status) &&
       (patch.sent_at === undefined || verify.sent_at === patch.sent_at) &&
-      (patch.delivered_at === undefined ||
-        verify.delivered_at === patch.delivered_at) &&
+      (patch.delivered_at === undefined || verify.delivered_at === patch.delivered_at) &&
       (patch.read_at === undefined || verify.read_at === patch.read_at) &&
       (patch.failed_at === undefined || verify.failed_at === patch.failed_at) &&
-      (patch.last_error_code === undefined ||
-        verify.last_error_code === patch.last_error_code);
+      (patch.last_error_code === undefined || verify.last_error_code === patch.last_error_code);
     if (matches) {
       return { ok: true, changed: true, new_status: newStatus };
     }
@@ -850,7 +825,6 @@ export interface AttemptReconciler {
  */
 export function createLegacyNoopAttemptReconciler(): AttemptReconciler {
   return {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async reconcile(_input) {
       return { ok: true, outcome: "unmatched" };
     },
@@ -858,8 +832,7 @@ export function createLegacyNoopAttemptReconciler(): AttemptReconciler {
 }
 
 async function defaultAttemptReconciler(client: SupabaseLike): Promise<AttemptReconciler> {
-  const hasRpc =
-    typeof (client as unknown as { rpc?: unknown }).rpc === "function";
+  const hasRpc = typeof (client as unknown as { rpc?: unknown }).rpc === "function";
   if (!hasRpc) {
     // HARDENING: fail-closed. Nenhum downgrade silencioso. Ausência de `.rpc`
     // em produção significa wiring/config quebrada — não pode ser tratada como
@@ -872,7 +845,6 @@ async function defaultAttemptReconciler(client: SupabaseLike): Promise<AttemptRe
       }),
     );
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async reconcile(_input) {
         return { ok: false, outcome: null, reason: "rpc_unavailable" };
       },
@@ -975,21 +947,17 @@ export async function persistAndApplyEvents(
       if (rr.ok && rr.outcome) {
         switch (rr.outcome) {
           case "reconciled":
-            summary.callback_attempts_reconciled =
-              (summary.callback_attempts_reconciled ?? 0) + 1;
+            summary.callback_attempts_reconciled = (summary.callback_attempts_reconciled ?? 0) + 1;
             break;
           case "unmatched":
-            summary.callback_attempts_unmatched =
-              (summary.callback_attempts_unmatched ?? 0) + 1;
+            summary.callback_attempts_unmatched = (summary.callback_attempts_unmatched ?? 0) + 1;
             break;
           case "conflict_pmid":
           case "conflict_state":
-            summary.callback_attempts_conflict =
-              (summary.callback_attempts_conflict ?? 0) + 1;
+            summary.callback_attempts_conflict = (summary.callback_attempts_conflict ?? 0) + 1;
             break;
           case "notification_missing":
-            summary.callback_attempts_anomaly =
-              (summary.callback_attempts_anomaly ?? 0) + 1;
+            summary.callback_attempts_anomaly = (summary.callback_attempts_anomaly ?? 0) + 1;
             break;
         }
       } else {
@@ -1016,10 +984,7 @@ export async function persistAndApplyEvents(
         } else {
           summary.permanentErrors++;
         }
-      } else if (
-        applied.reason === "terminal_state" ||
-        applied.reason === "pending_no_promotion"
-      ) {
+      } else if (applied.reason === "terminal_state" || applied.reason === "pending_no_promotion") {
         summary.anomalies++;
       }
     }

@@ -4,11 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import {
-  ClipboardList,
-  ChevronRight,
-  Landmark,
-} from "lucide-react";
+import { ClipboardList, ChevronRight, Landmark } from "lucide-react";
 import {
   getCartoes,
   getCategorias,
@@ -163,8 +159,7 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
     void loadBcbRadar()
       .then((r) => {
         if (cancel || r.failed) return;
-        const find = (k: "SELIC" | "CDI" | "IPCA") =>
-          r.indicators.find((i) => i.key === k)?.value;
+        const find = (k: "SELIC" | "CDI" | "IPCA") => r.indicators.find((i) => i.key === k)?.value;
         setMacro({ selic: find("SELIC"), cdi: find("CDI"), ipca: find("IPCA") });
       })
       .catch(() => {
@@ -211,12 +206,8 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
             <ClipboardList className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-semibold leading-tight">
-              {t("monthlyDiagnosis.title")}
-            </h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("monthlyDiagnosis.empty")}
-            </p>
+            <h3 className="text-sm font-semibold leading-tight">{t("monthlyDiagnosis.title")}</h3>
+            <p className="mt-1 text-xs text-muted-foreground">{t("monthlyDiagnosis.empty")}</p>
           </div>
         </div>
       </PremiumCard>
@@ -238,17 +229,13 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-sm font-semibold leading-tight">
-              {t("monthlyDiagnosis.title")}
-            </h3>
-            <StatusBadge tone={tone.badge}>{t(`monthlyDiagnosis.levels.${diag.status}`)}</StatusBadge>
+            <h3 className="text-sm font-semibold leading-tight">{t("monthlyDiagnosis.title")}</h3>
+            <StatusBadge tone={tone.badge}>
+              {t(`monthlyDiagnosis.levels.${diag.status}`)}
+            </StatusBadge>
           </div>
-          <p className="mt-1 text-sm font-semibold leading-snug">
-            {diag.title}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {diag.summary}
-          </p>
+          <p className="mt-1 text-sm font-semibold leading-snug">{diag.title}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{diag.summary}</p>
         </div>
       </div>
 
@@ -261,7 +248,9 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-border/60 bg-muted/30 p-2.5 text-[11px] leading-relaxed text-muted-foreground">
           <Landmark className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
           <div className="min-w-0">
-            <span className="mr-1 font-medium text-foreground">{t("monthlyDiagnosis.scenarioLabel")}</span>
+            <span className="mr-1 font-medium text-foreground">
+              {t("monthlyDiagnosis.scenarioLabel")}
+            </span>
             <span>{macroContexto}</span>
           </div>
         </div>
@@ -270,13 +259,7 @@ export function DashboardDiagnosticoMensalCard({ className }: { className?: stri
       {diag.nextActions.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
           {diag.nextActions.map((a) => (
-            <Button
-              key={a.href}
-              asChild
-              size="sm"
-              variant="outline"
-              className="h-9 px-3 text-xs"
-            >
+            <Button key={a.href} asChild size="sm" variant="outline" className="h-9 px-3 text-xs">
               <Link to={a.href}>
                 {a.label}
                 <ChevronRight className="ml-0.5 h-3.5 w-3.5" />

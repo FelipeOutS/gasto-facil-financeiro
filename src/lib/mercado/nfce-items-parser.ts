@@ -196,9 +196,7 @@ function tryParseLine(rawLine: string): CupomItemPreview | undefined {
   // Padrão "Qtd x Vunit" e "Vtotal"
   // Ex.: "2 UN X 12,99 = 25,98", "2 x 12,99 25,98", "1,000 X 24,90 24,90"
   const qVuVt = line.match(
-    new RegExp(
-      `(${NUM})\\s*(?:${UNIT_REGEX.source})?\\s*[xX]\\s*(${NUM})(?:\\s*=?\\s*(${NUM}))?`,
-    ),
+    new RegExp(`(${NUM})\\s*(?:${UNIT_REGEX.source})?\\s*[xX]\\s*(${NUM})(?:\\s*=?\\s*(${NUM}))?`),
   );
 
   let quantidade: number | undefined;
@@ -235,7 +233,12 @@ function tryParseLine(rawLine: string): CupomItemPreview | undefined {
   // trechos numéricos finais para deixar só o texto descritivo.
   let nome = line
     .replace(/^\s*\d{1,4}\s*[-.)]?\s*/, "") // "001 ", "12-"
-    .replace(new RegExp(`(${NUM})\\s*(?:${UNIT_REGEX.source})?\\s*[xX]\\s*(${NUM})(?:\\s*=?\\s*(${NUM}))?`), "")
+    .replace(
+      new RegExp(
+        `(${NUM})\\s*(?:${UNIT_REGEX.source})?\\s*[xX]\\s*(${NUM})(?:\\s*=?\\s*(${NUM}))?`,
+      ),
+      "",
+    )
     .replace(new RegExp(`(?:${UNIT_REGEX.source}\\s*)?(${NUM})\\s*$`), "")
     .replace(/r\$/gi, "")
     .replace(/[|]+/g, " ")

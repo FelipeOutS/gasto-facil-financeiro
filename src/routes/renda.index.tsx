@@ -60,13 +60,7 @@ import {
 import { requireOnline, isOnline } from "@/lib/use-online-status";
 import { enqueueIncome } from "@/lib/offline/offline-income-queue";
 import { TIPOS_RECEITA, type Receita, type TipoReceita } from "@/lib/types";
-import {
-  formatBRL,
-  formatDateBR,
-  formatMonthYear,
-  parseBRLInput,
-  todayISO,
-} from "@/lib/format";
+import { formatBRL, formatDateBR, formatMonthYear, parseBRLInput, todayISO } from "@/lib/format";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,20 +100,40 @@ import { cn } from "@/lib/utils";
 import { useClientes } from "@/lib/clientes";
 import { ClienteSelect, nomeExibicaoCliente } from "@/components/ClienteSelect";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  AppPageHeader,
-  AppModuleBanner,
-  AppEmptyStateVisual,
-} from "@/components/app-v2";
+import { AppPageHeader, AppModuleBanner, AppEmptyStateVisual } from "@/components/app-v2";
 
 type RendaSearch = { ano?: number; mes?: number };
 
 const MONTH_NAMES_PT = [
-  "janeiro", "fevereiro", "março", "marco", "abril", "maio", "junho",
-  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+  "janeiro",
+  "fevereiro",
+  "março",
+  "marco",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
 ];
 
-const MONTH_SHORT_FALLBACK = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const MONTH_SHORT_FALLBACK = [
+  "jan",
+  "fev",
+  "mar",
+  "abr",
+  "mai",
+  "jun",
+  "jul",
+  "ago",
+  "set",
+  "out",
+  "nov",
+  "dez",
+];
 
 function normalizeDescricao(s: string): string {
   return s
@@ -162,7 +176,16 @@ const TIPO_COLORS: Record<TipoReceita, string> = {
   outros: "var(--cat-outros)",
 };
 
-const PIE_FALLBACK = ["#22c55e", "#3b82f6", "#a855f7", "#f59e0b", "#06b6d4", "#ec4899", "#84cc16", "#94a3b8"];
+const PIE_FALLBACK = [
+  "#22c55e",
+  "#3b82f6",
+  "#a855f7",
+  "#f59e0b",
+  "#06b6d4",
+  "#ec4899",
+  "#84cc16",
+  "#94a3b8",
+];
 
 export const Route = createFileRoute("/renda/")({
   head: () => ({ meta: [{ title: "Renda — Gasto Inteligente" }] }),
@@ -226,20 +249,14 @@ function RendaPage() {
     () => doMes.filter((r) => r.tipo === "salario").reduce((s, r) => s + r.valor, 0),
     [doMes],
   );
-  const recorrentesMes = useMemo(
-    () => doMes.filter((r) => r.recorrente),
-    [doMes],
-  );
+  const recorrentesMes = useMemo(() => doMes.filter((r) => r.recorrente), [doMes]);
   const recorrentesValor = useMemo(
     () => recorrentesMes.reduce((s, r) => s + r.valor, 0),
     [recorrentesMes],
   );
   const outrasMes = totalMes - salarioMes;
   const extraMes = useMemo(
-    () =>
-      doMes
-        .filter((r) => r.tipo !== "salario")
-        .reduce((s, r) => s + r.valor, 0),
+    () => doMes.filter((r) => r.tipo !== "salario").reduce((s, r) => s + r.valor, 0),
     [doMes],
   );
 
@@ -338,7 +355,10 @@ function RendaPage() {
     if (recorrentesMes.length > 0) {
       out.push({
         icon: Repeat,
-        text: t("insights.recurring", { count: recorrentesMes.length, value: formatBRL(recorrentesValor) }),
+        text: t("insights.recurring", {
+          count: recorrentesMes.length,
+          value: formatBRL(recorrentesValor),
+        }),
         tone: "good",
       });
     }
@@ -366,9 +386,7 @@ function RendaPage() {
         lista.push({ receita: r, data: r.data });
       }
     }
-    return lista
-      .sort((a, b) => a.data.localeCompare(b.data))
-      .slice(0, 5);
+    return lista.sort((a, b) => a.data.localeCompare(b.data)).slice(0, 5);
   }, [receitas]);
 
   // Histórico
@@ -458,9 +476,7 @@ function RendaPage() {
           recorrente: false,
           clienteId: payload.clienteId ?? null,
         });
-        toast.success(
-          "Receita salva offline. Ela será sincronizada quando a internet voltar.",
-        );
+        toast.success("Receita salva offline. Ela será sincronizada quando a internet voltar.");
         setOpen(false);
         reset();
         return;
@@ -535,8 +551,7 @@ function RendaPage() {
       if (r.mes !== mesNova || r.ano !== anoNova) return false;
       if (r.tipo !== tipo) return false;
       const rDesc = normalizeDescricao(r.descricao);
-      const descMatch =
-        rDesc === descNorm || rDesc.includes(descNorm) || descNorm.includes(rDesc);
+      const descMatch = rDesc === descNorm || rDesc.includes(descNorm) || descNorm.includes(rDesc);
       const valorMatch = Math.abs(r.valor - valor) <= Math.max(1, valor * 0.05);
       return descMatch && valorMatch;
     });
@@ -617,16 +632,13 @@ function RendaPage() {
           <Button
             size="sm"
             className="h-10 rounded-full px-4 font-semibold"
-            onClick={() =>
-              isMobile ? navigate({ to: "/renda/nova" }) : setOpen(true)
-            }
+            onClick={() => (isMobile ? navigate({ to: "/renda/nova" }) : setOpen(true))}
           >
             <Plus className="mr-1 h-4 w-4" />
             {t("v3.banner.cta")}
           </Button>
         }
       />
-
 
       {/* NAV DE MÊS */}
       <div className="mt-4 flex items-center justify-between rounded-2xl border border-border bg-card px-2 py-2 shadow-sm">
@@ -637,9 +649,7 @@ function RendaPage() {
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <p className="text-sm font-semibold capitalize">
-          {formatMonthYear(ym.ano, ym.mes)}
-        </p>
+        <p className="text-sm font-semibold capitalize">{formatMonthYear(ym.ano, ym.mes)}</p>
         <button
           onClick={() => changeMonth(1)}
           className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground transition-all hover:bg-card-elevated hover:text-foreground active:scale-95"
@@ -676,7 +686,10 @@ function RendaPage() {
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                 {t("summary.totalLabel")}
               </p>
-              <Money value={totalMes} className="num mt-1 block text-4xl font-extrabold tracking-tight sm:text-5xl" />
+              <Money
+                value={totalMes}
+                className="num mt-1 block text-4xl font-extrabold tracking-tight sm:text-5xl"
+              />
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className="text-xs text-muted-foreground">
                   {t("summary.entries", { count: doMes.length })}
@@ -690,8 +703,15 @@ function RendaPage() {
                         : "bg-destructive/15 text-destructive",
                     )}
                   >
-                    {variacaoPct >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                    {t("summary.variation", { sign: variacaoPct >= 0 ? "+" : "", value: variacaoPct.toFixed(1) })}
+                    {variacaoPct >= 0 ? (
+                      <TrendingUp className="h-3 w-3" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3" />
+                    )}
+                    {t("summary.variation", {
+                      sign: variacaoPct >= 0 ? "+" : "",
+                      value: variacaoPct.toFixed(1),
+                    })}
                   </span>
                 )}
               </div>
@@ -768,7 +788,13 @@ function RendaPage() {
       )}
 
       {/* CTA NOVA ENTRADA + ATALHOS */}
-      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (!o) reset();
+        }}
+      >
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
           {isMobile ? (
             <Button
@@ -791,10 +817,28 @@ function RendaPage() {
             </DialogTrigger>
           )}
           <div className="flex flex-wrap gap-1.5">
-            <QuickAction icon={Briefcase} label={t("cta.quick.salario")} onClick={() => openWithPreset({ tipo: "salario", recorrente: !isFreeAdsPlan })} />
-            <QuickAction icon={Coins} label={t("cta.quick.freela")} onClick={() => openWithPreset({ tipo: "freelance", recorrente: false })} />
-            {!isFreeAdsPlan && <QuickAction icon={Repeat} label={t("cta.quick.recorrente")} onClick={() => openWithPreset({ tipo: "salario", recorrente: true })} />}
-            <QuickAction icon={Receipt} label={t("cta.quick.avulsa")} onClick={() => openWithPreset({ tipo: "outros", recorrente: false })} />
+            <QuickAction
+              icon={Briefcase}
+              label={t("cta.quick.salario")}
+              onClick={() => openWithPreset({ tipo: "salario", recorrente: !isFreeAdsPlan })}
+            />
+            <QuickAction
+              icon={Coins}
+              label={t("cta.quick.freela")}
+              onClick={() => openWithPreset({ tipo: "freelance", recorrente: false })}
+            />
+            {!isFreeAdsPlan && (
+              <QuickAction
+                icon={Repeat}
+                label={t("cta.quick.recorrente")}
+                onClick={() => openWithPreset({ tipo: "salario", recorrente: true })}
+              />
+            )}
+            <QuickAction
+              icon={Receipt}
+              label={t("cta.quick.avulsa")}
+              onClick={() => openWithPreset({ tipo: "outros", recorrente: false })}
+            />
           </div>
         </div>
 
@@ -805,7 +849,9 @@ function RendaPage() {
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs text-muted-foreground">{t("dialog.fields.descricao")}</Label>
+              <Label className="text-xs text-muted-foreground">
+                {t("dialog.fields.descricao")}
+              </Label>
               <Input
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
@@ -842,7 +888,9 @@ function RendaPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {TIPOS_RECEITA.map((tp) => (
-                    <SelectItem key={tp.id} value={tp.id}>{tipoLabel(tp.id)}</SelectItem>
+                    <SelectItem key={tp.id} value={tp.id}>
+                      {tipoLabel(tp.id)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -856,7 +904,9 @@ function RendaPage() {
               <div>
                 <p className="text-sm font-medium">{t("dialog.fields.repeat")}</p>
                 <p className="text-xs text-muted-foreground">
-                  {isFreeAdsPlan ? t("dialog.fields.repeatPaidOnly") : t("dialog.fields.repeatHint")}
+                  {isFreeAdsPlan
+                    ? t("dialog.fields.repeatPaidOnly")
+                    : t("dialog.fields.repeatHint")}
                 </p>
               </div>
               <Switch
@@ -874,7 +924,9 @@ function RendaPage() {
             </div>
             {!isFreeAdsPlan && recorrente && (
               <div>
-                <Label className="text-xs text-muted-foreground">{t("dialog.fields.repeatMonths")}</Label>
+                <Label className="text-xs text-muted-foreground">
+                  {t("dialog.fields.repeatMonths")}
+                </Label>
                 <Input
                   type="number"
                   min={1}
@@ -887,7 +939,9 @@ function RendaPage() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>{t("dialog.cancel")}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              {t("dialog.cancel")}
+            </Button>
             <Button onClick={handleSave}>{t("dialog.save")}</Button>
           </DialogFooter>
         </DialogContent>
@@ -912,10 +966,12 @@ function RendaPage() {
               return (
                 <div className="hidden flex-wrap items-center gap-1.5 sm:flex">
                   <span className="rounded-full border border-border bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    {t("charts.average")} <span className="text-foreground tabular-nums">{formatBRL(media)}</span>
+                    {t("charts.average")}{" "}
+                    <span className="text-foreground tabular-nums">{formatBRL(media)}</span>
                   </span>
                   <span className="rounded-full border border-border bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    {t("charts.peak")} <span className="text-foreground tabular-nums">{formatBRL(pico)}</span>
+                    {t("charts.peak")}{" "}
+                    <span className="text-foreground tabular-nums">{formatBRL(pico)}</span>
                   </span>
                 </div>
               );
@@ -930,8 +986,18 @@ function RendaPage() {
                     <stop offset="100%" stopColor="oklch(0.72 0.18 152)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.32 0.008 260)" vertical={false} />
-                <XAxis dataKey="label" stroke="oklch(0.78 0.005 260)" fontSize={11} tickLine={false} axisLine={false} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="oklch(0.32 0.008 260)"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="label"
+                  stroke="oklch(0.78 0.005 260)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
                 <YAxis
                   stroke="oklch(0.78 0.005 260)"
                   fontSize={11}
@@ -956,7 +1022,13 @@ function RendaPage() {
                   strokeWidth={2.5}
                   fill="url(#rendaArea)"
                 />
-                <Line type="monotone" dataKey="total" stroke="oklch(0.72 0.18 152)" strokeWidth={2.5} dot={{ r: 3 }} />
+                <Line
+                  type="monotone"
+                  dataKey="total"
+                  stroke="oklch(0.72 0.18 152)"
+                  strokeWidth={2.5}
+                  dot={{ r: 3 }}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -1047,23 +1119,31 @@ function RendaPage() {
               </div>
               <div className="text-right">
                 <p className="text-[11px] text-muted-foreground">{t("forecast.toReceive")}</p>
-                <Money value={aReceberMes} className="num text-base font-semibold text-foreground" />
+                <Money
+                  value={aReceberMes}
+                  className="num text-base font-semibold text-foreground"
+                />
               </div>
             </div>
             <div className="h-2.5 w-full overflow-hidden rounded-full bg-card-elevated">
               <motion.div
                 className="h-full rounded-full bg-gradient-to-r from-success to-emerald-300"
                 initial={{ width: 0 }}
-                animate={{ width: `${totalMes > 0 ? Math.min(100, (recebidoMes / totalMes) * 100) : 0}%` }}
+                animate={{
+                  width: `${totalMes > 0 ? Math.min(100, (recebidoMes / totalMes) * 100) : 0}%`,
+                }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
               />
             </div>
             <div className="flex items-center justify-between text-[11px] text-muted-foreground">
               <span>
-                {t("forecast.total")} <span className="num font-semibold text-foreground">{formatBRL(totalMes)}</span>
+                {t("forecast.total")}{" "}
+                <span className="num font-semibold text-foreground">{formatBRL(totalMes)}</span>
               </span>
               <span>
-                {t("forecast.completed", { pct: totalMes > 0 ? ((recebidoMes / totalMes) * 100).toFixed(0) : "0" })}
+                {t("forecast.completed", {
+                  pct: totalMes > 0 ? ((recebidoMes / totalMes) * 100).toFixed(0) : "0",
+                })}
               </span>
             </div>
           </div>
@@ -1143,7 +1223,9 @@ function RendaPage() {
               <SelectContent>
                 <SelectItem value="todas">{t("filters.allTypes")}</SelectItem>
                 {TIPOS_RECEITA.map((tp) => (
-                  <SelectItem key={tp.id} value={tp.id}>{tipoLabel(tp.id)}</SelectItem>
+                  <SelectItem key={tp.id} value={tp.id}>
+                    {tipoLabel(tp.id)}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1203,14 +1285,10 @@ function RendaPage() {
                 }
               />
             ) : (
-              <EmptyRenda
-                title={t("empty.filterTitle")}
-                subtitle={t("empty.filterSubtitle")}
-              />
+              <EmptyRenda title={t("empty.filterTitle")} subtitle={t("empty.filterSubtitle")} />
             )
           ) : (
             <ul className="space-y-2">
-
               <AnimatePresence initial={false}>
                 {doMesFiltrado.map((r, i) => (
                   <motion.div
@@ -1224,7 +1302,9 @@ function RendaPage() {
                       r={r}
                       onEdit={() => openEdit(r)}
                       onDelete={() => setDeleteTarget(r)}
-                      clienteNome={r.clienteId ? nomeExibicaoCliente(clientesPorId[r.clienteId]) : undefined}
+                      clienteNome={
+                        r.clienteId ? nomeExibicaoCliente(clientesPorId[r.clienteId]) : undefined
+                      }
                     />
                   </motion.div>
                 ))}
@@ -1238,9 +1318,15 @@ function RendaPage() {
           {recorrentesMes.length === 0 ? (
             <EmptyRenda
               title={t("empty.recurringTitle")}
-                subtitle={isFreeAdsPlan ? t("dialog.fields.repeatPaidOnly") : t("empty.recurringSubtitle")}
-                onAction={isFreeAdsPlan ? undefined : () => openWithPreset({ tipo: "salario", recorrente: true })}
-                actionLabel={isFreeAdsPlan ? undefined : t("empty.recurringAction")}
+              subtitle={
+                isFreeAdsPlan ? t("dialog.fields.repeatPaidOnly") : t("empty.recurringSubtitle")
+              }
+              onAction={
+                isFreeAdsPlan
+                  ? undefined
+                  : () => openWithPreset({ tipo: "salario", recorrente: true })
+              }
+              actionLabel={isFreeAdsPlan ? undefined : t("empty.recurringAction")}
             />
           ) : (
             <ul className="space-y-2">
@@ -1250,7 +1336,9 @@ function RendaPage() {
                   r={r}
                   onEdit={() => openEdit(r)}
                   onDelete={() => setDeleteTarget(r)}
-                  clienteNome={r.clienteId ? nomeExibicaoCliente(clientesPorId[r.clienteId]) : undefined}
+                  clienteNome={
+                    r.clienteId ? nomeExibicaoCliente(clientesPorId[r.clienteId]) : undefined
+                  }
                 />
               ))}
             </ul>
@@ -1304,7 +1392,11 @@ function RendaPage() {
                                 r={r}
                                 onEdit={() => openEdit(r)}
                                 onDelete={() => setDeleteTarget(r)}
-                                clienteNome={r.clienteId ? nomeExibicaoCliente(clientesPorId[r.clienteId]) : undefined}
+                                clienteNome={
+                                  r.clienteId
+                                    ? nomeExibicaoCliente(clientesPorId[r.clienteId])
+                                    : undefined
+                                }
                               />
                             ))}
                           </ul>
@@ -1332,9 +1424,7 @@ function RendaPage() {
         <TabsContent value="previsoes" className="mt-3 space-y-3">
           <div className="rounded-3xl border border-border bg-card p-4">
             <h3 className="text-sm font-bold">{t("forecasts.title")}</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("forecasts.subtitle")}
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("forecasts.subtitle")}</p>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => {
                 const d = new Date(ym.ano, ym.mes - 1 + i + 1, 1);
@@ -1348,7 +1438,10 @@ function RendaPage() {
                     <p className="text-[11px] capitalize text-muted-foreground">
                       {monthShort[m - 1]}/{String(a).slice(-2)}
                     </p>
-                    <Money value={previsto} className="num mt-0.5 block text-base font-bold text-success" />
+                    <Money
+                      value={previsto}
+                      className="num mt-0.5 block text-base font-bold text-success"
+                    />
                   </div>
                 );
               })}
@@ -1362,7 +1455,9 @@ function RendaPage() {
 
       <AlertDialog
         open={!!confirmDup}
-        onOpenChange={(o) => { if (!o) setConfirmDup(null); }}
+        onOpenChange={(o) => {
+          if (!o) setConfirmDup(null);
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -1425,7 +1520,9 @@ function MiniStat({
   return (
     <div className="group min-w-0 overflow-hidden rounded-2xl bg-card-elevated/80 p-3 backdrop-blur-sm transition-all hover:bg-card-elevated hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-center justify-between gap-2">
-        <p className="truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+        <p className="truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+          {label}
+        </p>
         <Icon className={cn("h-3.5 w-3.5 shrink-0", accent)} />
       </div>
       <Money
@@ -1439,7 +1536,9 @@ function MiniStat({
           <p className="truncate text-[10px] font-medium text-muted-foreground tabular-nums">
             {t("miniStat.pctMonth", { pct: pct.toFixed(0) })}
           </p>
-        ) : <span />}
+        ) : (
+          <span />
+        )}
       </div>
       {pct !== null && (
         <div className="mt-1 h-1 overflow-hidden rounded-full bg-muted/60">
@@ -1589,9 +1688,7 @@ function ReceitaItem({
               {t("item.client", { name: clienteNome })}
             </p>
           ) : null}
-          <p className="num mt-0.5 text-sm font-semibold text-success">
-            +{formatBRL(r.valor)}
-          </p>
+          <p className="num mt-0.5 text-sm font-semibold text-success">+{formatBRL(r.valor)}</p>
         </div>
       </button>
       <div className="flex shrink-0 items-center gap-1 opacity-70 transition-opacity group-hover:opacity-100">
@@ -1619,13 +1716,7 @@ function ReceitaItem({
 // =====================================================================
 // Diálogo de edição
 // =====================================================================
-function EditReceitaDialog({
-  receita,
-  onClose,
-}: {
-  receita: Receita | null;
-  onClose: () => void;
-}) {
+function EditReceitaDialog({ receita, onClose }: { receita: Receita | null; onClose: () => void }) {
   const { t } = useTranslation("renda");
   const open = !!receita;
   const [descricao, setDescricao] = useState("");
@@ -1665,7 +1756,12 @@ function EditReceitaDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("dialog.editTitle")}</DialogTitle>
@@ -1708,7 +1804,9 @@ function EditReceitaDialog({
               </SelectTrigger>
               <SelectContent>
                 {TIPOS_RECEITA.map((tp) => (
-                  <SelectItem key={tp.id} value={tp.id}>{t(`tipo.${tp.id}`)}</SelectItem>
+                  <SelectItem key={tp.id} value={tp.id}>
+                    {t(`tipo.${tp.id}`)}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1721,9 +1819,7 @@ function EditReceitaDialog({
 
           {receita?.recorrente && receita.recorrenciaId && (
             <div className="rounded-xl border border-border bg-card-elevated p-3">
-              <p className="text-xs font-medium text-muted-foreground">
-                {t("dialog.scopeTitle")}
-              </p>
+              <p className="text-xs font-medium text-muted-foreground">{t("dialog.scopeTitle")}</p>
               <RadioGroup
                 value={scope}
                 onValueChange={(v) => setScope(v as UpdateReceitaScope)}
@@ -1757,14 +1853,14 @@ function EditReceitaDialog({
                   </span>
                 </label>
               </RadioGroup>
-              <p className="mt-2 text-[11px] text-muted-foreground">
-                {t("dialog.scopeDateNote")}
-              </p>
+              <p className="mt-2 text-[11px] text-muted-foreground">{t("dialog.scopeDateNote")}</p>
             </div>
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>{t("dialog.cancel")}</Button>
+          <Button variant="outline" onClick={onClose}>
+            {t("dialog.cancel")}
+          </Button>
           <Button onClick={handleSave}>{t("dialog.saveEdit")}</Button>
         </DialogFooter>
       </DialogContent>
@@ -1807,13 +1903,16 @@ function DeleteReceitaDialog({
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{t("delete.title")}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {t("delete.body")}
-          </AlertDialogDescription>
+          <AlertDialogDescription>{t("delete.body")}</AlertDialogDescription>
         </AlertDialogHeader>
 
         {receita?.recorrente && receita.recorrenciaId && (

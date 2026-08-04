@@ -27,7 +27,6 @@ import {
   Check,
 } from "lucide-react";
 
-
 import { useServerFn } from "@tanstack/react-start";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
@@ -41,20 +40,14 @@ import { MercadoBanner } from "@/components/mercado/shell/MercadoBanner";
 import { SectionBlock } from "@/components/mercado/shell/SectionBlock";
 import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
 import bannerOrcamentoWebp from "@/assets/mercado/banner-orcamento.webp";
-import {
-  parseNfceQrContent,
-  type ParsedNfceQrResult,
-} from "@/lib/mercado/nfce-parser";
+import { parseNfceQrContent, type ParsedNfceQrResult } from "@/lib/mercado/nfce-parser";
 import {
   parseCupomItemsFromText,
   makeEmptyCupomItem,
   type CupomItemPreview,
   type CupomParseResult,
 } from "@/lib/mercado/nfce-items-parser";
-import {
-  fetchNfceFromUrl,
-  type NfceFetchResult,
-} from "@/lib/mercado/nfce-fetch.functions";
+import { fetchNfceFromUrl, type NfceFetchResult } from "@/lib/mercado/nfce-fetch.functions";
 import {
   useMercadoListas,
   addLista,
@@ -67,16 +60,9 @@ import { submitHistoricoToCommunity } from "@/lib/mercado/community-prices-from-
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-
-
-
-
-
 export const Route = createFileRoute("/mercado_/importar-cupom")({
   head: () => ({
-    meta: [
-      { title: i18n.t("mercado:meta.importarCupomTitle", { lng: i18n.language }) },
-    ],
+    meta: [{ title: i18n.t("mercado:meta.importarCupomTitle", { lng: i18n.language }) }],
   }),
   component: ImportarCupomPage,
 });
@@ -194,9 +180,7 @@ function ResultCard({ result }: { result: ParsedNfceQrResult }) {
       )}
 
       <p className="mt-4 rounded-2xl bg-card-elevated p-3 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
-        {isInvalid
-          ? t("importarCupom.result.invalidHint")
-          : t("importarCupom.result.itemsLater")}
+        {isInvalid ? t("importarCupom.result.invalidHint") : t("importarCupom.result.itemsLater")}
       </p>
     </section>
   );
@@ -253,7 +237,10 @@ function DestinationCard() {
   const preview = listas.slice(0, 4);
   const extra = Math.max(0, listas.length - preview.length);
 
-  const options: Array<{ key: "optionNewList" | "optionExistingList" | "optionCart"; icon: typeof ListPlus }> = [
+  const options: Array<{
+    key: "optionNewList" | "optionExistingList" | "optionCart";
+    icon: typeof ListPlus;
+  }> = [
     { key: "optionNewList", icon: ListPlus },
     { key: "optionExistingList", icon: ListChecks },
     { key: "optionCart", icon: ShoppingCart },
@@ -412,7 +399,6 @@ function ItemsPreviewCard({
     if (!result) setResult({ status: "parsed", items: [empty], warnings: [] });
   }
 
-
   function parseMaybeNumber(v: string): number | undefined {
     if (!v.trim()) return undefined;
     const n = Number.parseFloat(v.replace(",", "."));
@@ -426,20 +412,14 @@ function ItemsPreviewCard({
         if (typeof it.valorTotal === "number" && Number.isFinite(it.valorTotal)) {
           return acc + it.valorTotal;
         }
-        if (
-          typeof it.valorUnitario === "number" &&
-          Number.isFinite(it.valorUnitario)
-        ) {
+        if (typeof it.valorUnitario === "number" && Number.isFinite(it.valorUnitario)) {
           return acc + it.valorUnitario * (it.quantidade || 1);
         }
         return acc;
       }, 0),
     [items],
   );
-  const lowCount = useMemo(
-    () => items.filter((it) => it.confianca === "baixa").length,
-    [items],
-  );
+  const lowCount = useMemo(() => items.filter((it) => it.confianca === "baixa").length, [items]);
 
   return (
     <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
@@ -521,8 +501,7 @@ function ItemsPreviewCard({
       )}
 
       {result &&
-        (result.status === "receipt_url_detected" ||
-          result.status === "receipt_url_no_items") &&
+        (result.status === "receipt_url_detected" || result.status === "receipt_url_no_items") &&
         items.length === 0 && (
           <div className="mt-4 rounded-2xl border border-dashed border-warning/40 bg-warning/5 p-4">
             <p className="text-sm font-semibold text-foreground">
@@ -549,7 +528,9 @@ function ItemsPreviewCard({
                 disabled={retryLoading}
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card-elevated px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-card active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <RefreshCw className={cn("h-4 w-4 text-muted-foreground", retryLoading && "animate-spin")} />
+                <RefreshCw
+                  className={cn("h-4 w-4 text-muted-foreground", retryLoading && "animate-spin")}
+                />
                 {t("importarCupom.receiptUrl.retry")}
               </button>
             </div>
@@ -566,10 +547,7 @@ function ItemsPreviewCard({
 
           <ul className="mt-3 grid gap-3">
             {items.map((it) => (
-              <li
-                key={it.id}
-                className="rounded-2xl border border-border/60 bg-card-elevated p-3"
-              >
+              <li key={it.id} className="rounded-2xl border border-border/60 bg-card-elevated p-3">
                 <div className="flex items-start justify-between gap-2">
                   <ConfidenceBadge value={it.confianca} />
                   <button
@@ -636,9 +614,7 @@ function ItemsPreviewCard({
                     <input
                       type="text"
                       inputMode="decimal"
-                      value={
-                        typeof it.valorUnitario === "number" ? String(it.valorUnitario) : ""
-                      }
+                      value={typeof it.valorUnitario === "number" ? String(it.valorUnitario) : ""}
                       onChange={(e) =>
                         updateItem(it.id, {
                           valorUnitario: parseMaybeNumber(e.target.value),
@@ -654,9 +630,7 @@ function ItemsPreviewCard({
                     <input
                       type="text"
                       inputMode="decimal"
-                      value={
-                        typeof it.valorTotal === "number" ? String(it.valorTotal) : ""
-                      }
+                      value={typeof it.valorTotal === "number" ? String(it.valorTotal) : ""}
                       onChange={(e) =>
                         updateItem(it.id, {
                           valorTotal: parseMaybeNumber(e.target.value),
@@ -730,15 +704,7 @@ function ItemsPreviewCard({
   );
 }
 
-
-
-const LISTA_TIPOS: ListaTipo[] = [
-  "compraMes",
-  "reposicao",
-  "farmacia",
-  "churrasco",
-  "outros",
-];
+const LISTA_TIPOS: ListaTipo[] = ["compraMes", "reposicao", "farmacia", "churrasco", "outros"];
 
 function sanitizeItemsForImport(items: CupomItemPreview[]): Array<{
   nome: string;
@@ -752,9 +718,7 @@ function sanitizeItemsForImport(items: CupomItemPreview[]): Array<{
       const nome = (it.nome ?? "").trim();
       if (!nome) return null;
       const q =
-        typeof it.quantidade === "number" &&
-        Number.isFinite(it.quantidade) &&
-        it.quantidade > 0
+        typeof it.quantidade === "number" && Number.isFinite(it.quantidade) && it.quantidade > 0
           ? it.quantidade
           : 1;
       const preco =
@@ -763,10 +727,7 @@ function sanitizeItemsForImport(items: CupomItemPreview[]): Array<{
         it.valorUnitario > 0
           ? it.valorUnitario
           : undefined;
-      const barcode =
-        typeof it.codigoBarras === "string"
-          ? it.codigoBarras.replace(/\D/g, "")
-          : "";
+      const barcode = typeof it.codigoBarras === "string" ? it.codigoBarras.replace(/\D/g, "") : "";
       return {
         nome,
         quantidade: q,
@@ -797,7 +758,6 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
   // Finalização da compra (cupom) — usa o mesmo modal padrão do Carrinho/Lista.
   const [marketDialogOpen, setMarketDialogOpen] = useState(false);
 
-
   const validItems = useMemo(() => sanitizeItemsForImport(items), [items]);
   const hasValid = validItems.length > 0;
 
@@ -810,7 +770,6 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     setObservation("");
     setSelectedListaId(null);
   }
-
 
   function openNew() {
     if (!hasValid) {
@@ -948,13 +907,8 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     }
   }
 
-
   const validItemsTotal = useMemo(
-    () =>
-      validItems.reduce(
-        (acc, it) => acc + (it.precoEstimado ?? 0) * (it.quantidade || 1),
-        0,
-      ),
+    () => validItems.reduce((acc, it) => acc + (it.precoEstimado ?? 0) * (it.quantidade || 1), 0),
     [validItems],
   );
   const itensSemPreco = useMemo(
@@ -1002,9 +956,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
       let community: Awaited<ReturnType<typeof submitHistoricoToCommunity>> = null;
       let communityError: string | undefined;
       try {
-        community = entry.mercadoNome
-          ? await submitHistoricoToCommunity(entry, "receipt")
-          : null;
+        community = entry.mercadoNome ? await submitHistoricoToCommunity(entry, "receipt") : null;
       } catch (err) {
         community = null;
         communityError = err instanceof Error ? err.message : String(err);
@@ -1021,7 +973,6 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
       });
 
       if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
         console.log("[mercado/finalize]", {
           source: "cupom",
           historyId: entry.id,
@@ -1033,7 +984,9 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
           gastoId: gastoResult.gastoId,
           gastoReason: gastoResult.reason,
           gastoError: gastoResult.error,
-          communitySubmitted: Boolean(community && (community.inserted > 0 || community.updated > 0)),
+          communitySubmitted: Boolean(
+            community && (community.inserted > 0 || community.updated > 0),
+          ),
           communityError,
         });
       }
@@ -1076,8 +1029,6 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     }
   }
 
-
-
   return (
     <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
       <div className="flex items-start gap-3">
@@ -1095,7 +1046,6 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
       </div>
 
       <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-
         <button
           type="button"
           onClick={openNew}
@@ -1196,8 +1146,6 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
           </span>
         </button>
       </div>
-
-
 
       {!hasValid && (
         <p className="mt-3 flex items-start gap-2 rounded-2xl bg-card-elevated p-3 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
@@ -1339,9 +1287,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
                             )}
                           </span>
                         </span>
-                        {sel && (
-                          <Check className="mt-1 h-4 w-4 shrink-0 text-primary" />
-                        )}
+                        {sel && <Check className="mt-1 h-4 w-4 shrink-0 text-primary" />}
                       </button>
                     </li>
                   );
@@ -1567,9 +1513,7 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
                                 )}
                               </span>
                             </span>
-                            {sel && (
-                              <Check className="mt-1 h-4 w-4 shrink-0 text-primary" />
-                            )}
+                            {sel && <Check className="mt-1 h-4 w-4 shrink-0 text-primary" />}
                           </button>
                         </li>
                       );
@@ -1621,8 +1565,6 @@ function ImportActionsCard({ items }: { items: CupomItemPreview[] }) {
     </section>
   );
 }
-
-
 
 function NfceFetchCard({
   loading,
@@ -1707,17 +1649,13 @@ function NfceFetchCard({
           )}
           {typeof result.totalDeclared === "number" && (
             <div className="text-[12.5px] text-foreground">
-              <span className="font-semibold">
-                {t("importarCupom.nfceFetch.totalDeclared")}:{" "}
-              </span>
+              <span className="font-semibold">{t("importarCupom.nfceFetch.totalDeclared")}: </span>
               <span className="tabular-nums">{formatBRL(result.totalDeclared)}</span>
             </div>
           )}
           {result.items.length > 0 && (
             <div className="text-[12.5px] text-foreground">
-              <span className="font-semibold">
-                {t("importarCupom.nfceFetch.itemsRead")}:{" "}
-              </span>
+              <span className="font-semibold">{t("importarCupom.nfceFetch.itemsRead")}: </span>
               {result.items.length}
             </div>
           )}
@@ -1732,9 +1670,6 @@ function NfceFetchCard({
     </section>
   );
 }
-
-
-
 
 function ImportarCupomPage() {
   const { t } = useTranslation("mercado");
@@ -1789,7 +1724,11 @@ function ImportarCupomPage() {
         items: r.items,
         warnings: r.warnings,
       });
-    } else if (r.status === "total_only" || r.status === "link_no_items" || r.status === "protected") {
+    } else if (
+      r.status === "total_only" ||
+      r.status === "link_no_items" ||
+      r.status === "protected"
+    ) {
       setPreviewResult({
         status: "receipt_url_no_items",
         items: [],
@@ -1827,9 +1766,6 @@ function ImportarCupomPage() {
       setNfceLoading(false);
     }
   }
-
-
-
 
   return (
     <MobileShell wide>
@@ -1883,7 +1819,6 @@ function ImportarCupomPage() {
           <span>{t("receiptImportV2.disclaimer")}</span>
         </p>
       </SectionBlock>
-
 
       <section className="mt-4 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
         <div className="flex items-start gap-3">
@@ -1961,15 +1896,9 @@ function ImportarCupomPage() {
       {parsed && <ResultCard result={parsed} />}
 
       {parsed?.url &&
-        (parsed.status === "valid_nfce_url" ||
-          parsed.status === "possible_nfce_url") && (
-          <NfceFetchCard
-            loading={nfceLoading}
-            result={nfceResult}
-            onFetch={handleFetchReceipt}
-          />
+        (parsed.status === "valid_nfce_url" || parsed.status === "possible_nfce_url") && (
+          <NfceFetchCard loading={nfceLoading} result={nfceResult} onFetch={handleFetchReceipt} />
         )}
-
 
       {(parsed || manual.trim().length > 0) && (
         <ItemsPreviewCard
@@ -1983,19 +1912,16 @@ function ImportarCupomPage() {
         />
       )}
 
-      {parsed &&
-        (parsed.status === "valid_nfce_url" ||
-          parsed.status === "possible_nfce_url") && (
-          <>
-            <NextStepCard />
-            {previewItems.length > 0 ? (
-              <ImportActionsCard items={previewItems} />
-            ) : (
-              <DestinationCard />
-            )}
-          </>
-        )}
-
+      {parsed && (parsed.status === "valid_nfce_url" || parsed.status === "possible_nfce_url") && (
+        <>
+          <NextStepCard />
+          {previewItems.length > 0 ? (
+            <ImportActionsCard items={previewItems} />
+          ) : (
+            <DestinationCard />
+          )}
+        </>
+      )}
 
       <section className="mt-4 rounded-3xl border border-border/60 bg-card-elevated p-4 md:p-5">
         <div className="flex items-start gap-3">
@@ -2017,4 +1943,3 @@ function ImportarCupomPage() {
     </MobileShell>
   );
 }
-

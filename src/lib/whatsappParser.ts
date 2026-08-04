@@ -91,8 +91,18 @@ function parseValor(text: string): number | null {
 // ---------- data ----------
 
 const MESES: Record<string, number> = {
-  jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, jun: 6,
-  jul: 7, ago: 8, set: 9, out: 10, nov: 11, dez: 12,
+  jan: 1,
+  fev: 2,
+  mar: 3,
+  abr: 4,
+  mai: 5,
+  jun: 6,
+  jul: 7,
+  ago: 8,
+  set: 9,
+  out: 10,
+  nov: 11,
+  dez: 12,
 };
 
 function parseData(textRaw: string): { iso: string; matched: boolean } {
@@ -235,7 +245,10 @@ function parseParcelas(textRaw: string): number | undefined {
 // ---------- formato organizado (chave: valor) ----------
 
 function parseEstruturado(message: string): Partial<ParsedExpense> | null {
-  const lines = message.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const lines = message
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
   if (lines.length < 2) return null;
   const obj: Record<string, string> = {};
   let hits = 0;
@@ -248,7 +261,7 @@ function parseEstruturado(message: string): Partial<ParsedExpense> | null {
   if (hits < 2) return null;
   return {
     nome: obj["local"] || obj["estabelecimento"] || obj["nome"] || obj["descricao"] || "",
-    valor: obj["valor"] ? parseValor(obj["valor"]) ?? 0 : 0,
+    valor: obj["valor"] ? (parseValor(obj["valor"]) ?? 0) : 0,
     data: obj["data"] ? parseData(obj["data"]).iso : todayISO(),
     categoriaSugestao: obj["categoria"] || obj["categoria"],
     cartaoNomeDetectado: obj["cartao"] || obj["cartão"],
@@ -265,16 +278,18 @@ function parseEstruturado(message: string): Partial<ParsedExpense> | null {
  */
 export function cleanDescricao(input: string | null | undefined): string {
   if (!input) return "";
-  return String(input)
-    .replace(/\s+/g, " ")
-    .replace(/^[\s,.;:\-_/\\|·•]+/, "")
-    // WA-V1.3 — `.` foi incluído no conjunto final para remover ponto
-    // residual deixado por `extractNome` ao apagar valor/data/pagamento
-    // (ex.: "Almoço, ." → "Almoço", "Café ." → "Café", "Uber,," → "Uber").
-    // Pontuação interna legítima (ex.: "Café & Cia.") segue preservada
-    // porque o conjunto só atua nas bordas após colapsar espaços.
-    .replace(/[\s,.;:\-_/\\|·•]+$/, "")
-    .trim();
+  return (
+    String(input)
+      .replace(/\s+/g, " ")
+      .replace(/^[\s,.;:\-_/\\|·•]+/, "")
+      // WA-V1.3 — `.` foi incluído no conjunto final para remover ponto
+      // residual deixado por `extractNome` ao apagar valor/data/pagamento
+      // (ex.: "Almoço, ." → "Almoço", "Café ." → "Café", "Uber,," → "Uber").
+      // Pontuação interna legítima (ex.: "Café & Cia.") segue preservada
+      // porque o conjunto só atua nas bordas após colapsar espaços.
+      .replace(/[\s,.;:\-_/\\|·•]+$/, "")
+      .trim()
+  );
 }
 
 // ---------- nome do estabelecimento ----------
@@ -354,9 +369,9 @@ export function parseWhatsAppExpenseMessage(
   }
 
   const parcelas = parseParcelas(original);
-  const nome = (estr?.nome && estr.nome.length > 1
-    ? estr.nome
-    : extractNome(original, valor ?? null)) || "Gasto WhatsApp";
+  const nome =
+    (estr?.nome && estr.nome.length > 1 ? estr.nome : extractNome(original, valor ?? null)) ||
+    "Gasto WhatsApp";
 
   // confiança — ausência de data NÃO penaliza (usa hoje por padrão)
   let confianca = 0;

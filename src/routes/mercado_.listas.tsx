@@ -30,7 +30,6 @@ import bannerOrcamento from "@/assets/mercado/banner-orcamento.jpg";
 import bannerOrcamentoWebp from "@/assets/mercado/banner-orcamento.webp";
 import emptyLista from "@/assets/mercado/empty-lista.webp";
 
-
 export const Route = createFileRoute("/mercado_/listas")({
   head: () => ({ meta: [{ title: i18n.t("mercado:meta.listasTitle", { lng: i18n.language }) }] }),
   component: MercadoListasPage,
@@ -73,7 +72,6 @@ function MercadoListasPage() {
   function handleOpenLista(id: string) {
     void navigate({ to: "/mercado/listas/$id", params: { id } });
   }
-
 
   const dateFormatter = new Intl.DateTimeFormat(i18next.language || "pt-BR", {
     day: "2-digit",
@@ -195,7 +193,6 @@ function MercadoListasPage() {
               }}
             />
           ))}
-
         </section>
       )}
 
@@ -317,10 +314,7 @@ function ListaCard({
           aria-labelledby={`del-${lista.id}-title`}
           className="rounded-2xl border border-destructive/30 bg-destructive/5 p-3"
         >
-          <p
-            id={`del-${lista.id}-title`}
-            className="text-sm font-semibold text-destructive"
-          >
+          <p id={`del-${lista.id}-title`} className="text-sm font-semibold text-destructive">
             {t("listas.card.deleteConfirmTitle")}
           </p>
           <p className="mt-1 text-[12px] leading-snug text-muted-foreground">

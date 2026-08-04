@@ -155,9 +155,16 @@ function friendlyTitle(row: Row, type: NormalizedType, direction: Direction): st
   if (type === "assinatura") return "Assinatura";
   if (type === "fee") return "Taxa Mercado Pago";
   if (type === "refund") return "Estorno";
-  if (type === "account_money") return direction === "expense" ? "Saída — Saldo em conta" : "Entrada — Saldo em conta";
-  if (type === "credit_card") return direction === "expense" ? "Compra no cartão de crédito" : "Recebimento via cartão de crédito";
-  if (type === "debit_card") return direction === "expense" ? "Compra no cartão de débito" : "Recebimento via cartão de débito";
+  if (type === "account_money")
+    return direction === "expense" ? "Saída — Saldo em conta" : "Entrada — Saldo em conta";
+  if (type === "credit_card")
+    return direction === "expense"
+      ? "Compra no cartão de crédito"
+      : "Recebimento via cartão de crédito";
+  if (type === "debit_card")
+    return direction === "expense"
+      ? "Compra no cartão de débito"
+      : "Recebimento via cartão de débito";
   if (type === "boleto") return direction === "expense" ? "Pagamento de boleto" : "Boleto recebido";
   return desc || "Movimentação Mercado Pago";
 }
@@ -179,7 +186,11 @@ function normalize(row: Row): Normalized {
   if (type === "cashback" || type === "rendimento") direction = "income";
 
   const signed =
-    direction === "expense" ? -Math.abs(amountRaw) : direction === "income" ? Math.abs(amountRaw) : amountRaw;
+    direction === "expense"
+      ? -Math.abs(amountRaw)
+      : direction === "income"
+        ? Math.abs(amountRaw)
+        : amountRaw;
 
   const status = statusInfo(row.status);
   const when = row.occurred_at ? new Date(row.occurred_at) : null;
@@ -239,7 +250,12 @@ function timeAgo(iso: string | null): string | null {
   if (diff < 60) return "agora mesmo";
   if (diff < 3600) return `há ${Math.floor(diff / 60)} min`;
   if (diff < 86400) return `há ${Math.floor(diff / 3600)} h`;
-  return d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 // ---------- filter types ----------
@@ -259,10 +275,15 @@ type TypeFilter = "all" | NormalizedType;
 type StatusFilter = "all" | "approved" | "pending" | "rejected" | "refunded" | "cancelled";
 type SortKey = "date_desc" | "date_asc" | "amount_desc" | "amount_asc" | "az" | "za";
 
-function periodRange(p: PeriodKey, fromStr: string, toStr: string): { from: Date | null; to: Date | null } {
+function periodRange(
+  p: PeriodKey,
+  fromStr: string,
+  toStr: string,
+): { from: Date | null; to: Date | null } {
   const now = new Date();
   const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const endOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+  const endOfDay = (d: Date) =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
   switch (p) {
     case "today":
       return { from: startOfDay(now), to: endOfDay(now) };
@@ -375,10 +396,7 @@ function MovimentacoesPage() {
   }, []);
 
   // normaliza
-  const normalized = useMemo(
-    () => rows.map((r) => ({ row: r, n: normalize(r) })),
-    [rows],
-  );
+  const normalized = useMemo(() => rows.map((r) => ({ row: r, n: normalize(r) })), [rows]);
 
   const { from, to } = useMemo(
     () => periodRange(period, customFrom, customTo),
@@ -417,15 +435,18 @@ function MovimentacoesPage() {
       if (max !== null && !Number.isNaN(max) && abs > max) return false;
       // busca
       if (q) {
-        const hay = `${n.title} ${row.title ?? ""} ${row.description ?? ""} ${n.methodLabel} ${row.provider_transaction_id ?? ""}`.toLowerCase();
+        const hay =
+          `${n.title} ${row.title ?? ""} ${row.description ?? ""} ${n.methodLabel} ${row.provider_transaction_id ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
     });
 
     list.sort((a, b) => {
-      if (sort === "amount_desc") return Math.abs(Number(b.row.amount ?? 0)) - Math.abs(Number(a.row.amount ?? 0));
-      if (sort === "amount_asc") return Math.abs(Number(a.row.amount ?? 0)) - Math.abs(Number(b.row.amount ?? 0));
+      if (sort === "amount_desc")
+        return Math.abs(Number(b.row.amount ?? 0)) - Math.abs(Number(a.row.amount ?? 0));
+      if (sort === "amount_asc")
+        return Math.abs(Number(a.row.amount ?? 0)) - Math.abs(Number(b.row.amount ?? 0));
       if (sort === "az") return a.n.title.localeCompare(b.n.title, "pt-BR");
       if (sort === "za") return b.n.title.localeCompare(a.n.title, "pt-BR");
       const da = a.row.occurred_at ? new Date(a.row.occurred_at).getTime() : 0;
@@ -523,7 +544,8 @@ function MovimentacoesPage() {
           </p>
           {lastSyncAgo && (
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Última sincronização: <span className="font-medium text-foreground">{lastSyncAgo}</span>
+              Última sincronização:{" "}
+              <span className="font-medium text-foreground">{lastSyncAgo}</span>
             </p>
           )}
         </div>
@@ -552,7 +574,12 @@ function MovimentacoesPage() {
 
       {/* Cards de resumo */}
       <section className="mt-5 grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-6">
-        <SummaryCard label="Total importado" value={String(summary.count)} hint="registros" tone="neutral" />
+        <SummaryCard
+          label="Total importado"
+          value={String(summary.count)}
+          hint="registros"
+          tone="neutral"
+        />
         <SummaryCard label="Entradas" value={formatBRL(summary.entradas)} tone="positive" />
         <SummaryCard label="Saídas" value={formatBRL(summary.saidas)} tone="negative" />
         <SummaryCard
@@ -584,18 +611,30 @@ function MovimentacoesPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <QuickChip active={period === "today"} onClick={() => setPeriod("today")}>Hoje</QuickChip>
-          <QuickChip active={period === "last7"} onClick={() => setPeriod("last7")}>7 dias</QuickChip>
-          <QuickChip active={period === "last30"} onClick={() => setPeriod("last30")}>30 dias</QuickChip>
-          <QuickChip active={period === "thisMonth"} onClick={() => setPeriod("thisMonth")}>Este mês</QuickChip>
-          <QuickChip active={period === "all"} onClick={() => setPeriod("all")}>Tudo</QuickChip>
+          <QuickChip active={period === "today"} onClick={() => setPeriod("today")}>
+            Hoje
+          </QuickChip>
+          <QuickChip active={period === "last7"} onClick={() => setPeriod("last7")}>
+            7 dias
+          </QuickChip>
+          <QuickChip active={period === "last30"} onClick={() => setPeriod("last30")}>
+            30 dias
+          </QuickChip>
+          <QuickChip active={period === "thisMonth"} onClick={() => setPeriod("thisMonth")}>
+            Este mês
+          </QuickChip>
+          <QuickChip active={period === "all"} onClick={() => setPeriod("all")}>
+            Tudo
+          </QuickChip>
 
           <button
             type="button"
             onClick={() => setFiltersOpen((v) => !v)}
             className={cn(
               "ml-auto inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-xs font-semibold transition-colors",
-              filtersOpen ? "border-primary text-primary" : "border-border text-foreground hover:bg-card-elevated/40",
+              filtersOpen
+                ? "border-primary text-primary"
+                : "border-border text-foreground hover:bg-card-elevated/40",
             )}
           >
             <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -605,7 +644,9 @@ function MovimentacoesPage() {
                 {activeFiltersCount}
               </span>
             )}
-            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", filtersOpen && "rotate-180")} />
+            <ChevronDown
+              className={cn("h-3.5 w-3.5 transition-transform", filtersOpen && "rotate-180")}
+            />
           </button>
 
           {activeFiltersCount > 0 && (
@@ -830,7 +871,9 @@ function SummaryCard({
   return (
     <div className="rounded-2xl border border-border/70 bg-card p-3">
       <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className={cn("num mt-1 truncate font-bold", small ? "text-sm" : "text-base", toneClass)}>{value}</p>
+      <p className={cn("num mt-1 truncate font-bold", small ? "text-sm" : "text-base", toneClass)}>
+        {value}
+      </p>
       {hint && <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{hint}</p>}
     </div>
   );
@@ -922,7 +965,9 @@ function DateField({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[10px] uppercase tracking-widest text-muted-foreground">{label}</span>
+      <span className="mb-1 block text-[10px] uppercase tracking-widest text-muted-foreground">
+        {label}
+      </span>
       <input
         type="date"
         value={value}
@@ -946,7 +991,9 @@ function NumberField({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[10px] uppercase tracking-widest text-muted-foreground">{label}</span>
+      <span className="mb-1 block text-[10px] uppercase tracking-widest text-muted-foreground">
+        {label}
+      </span>
       <input
         type="text"
         inputMode="decimal"
@@ -970,7 +1017,8 @@ function TransactionItem({
   expanded: boolean;
   onToggle: () => void;
 }) {
-  const Icon = n.type === "refund" ? Undo2 : n.direction === "expense" ? ArrowUpRight : ArrowDownLeft;
+  const Icon =
+    n.type === "refund" ? Undo2 : n.direction === "expense" ? ArrowUpRight : ArrowDownLeft;
   const iconBg =
     n.type === "refund"
       ? "text-amber-600 dark:text-amber-400 bg-amber-500/10"
@@ -1052,12 +1100,7 @@ function TransactionItem({
               <DetailRow label="Moeda" value={row.currency} />
             )}
             {row.provider_transaction_id && (
-              <DetailRow
-                label="ID da transação"
-                value={row.provider_transaction_id}
-                mono
-                full
-              />
+              <DetailRow label="ID da transação" value={row.provider_transaction_id} mono full />
             )}
             {row.title && row.title !== n.title && (
               <DetailRow label="Título original" value={row.title} mono full />

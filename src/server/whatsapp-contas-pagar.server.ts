@@ -42,9 +42,12 @@ import {
 
 // Live-binding para permitir mock.module() em testes (mesmo padrão WA-F3/WA-C2).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const supabaseAdmin: any = new Proxy({}, {
-  get: (_t, prop) => (_supa.supabaseAdmin as never)[prop as never],
-});
+const supabaseAdmin: any = new Proxy(
+  {},
+  {
+    get: (_t, prop) => (_supa.supabaseAdmin as never)[prop as never],
+  },
+);
 
 // ---------- tipos / estados ----------
 
@@ -72,18 +75,34 @@ export function isBaixaContaSession(s: unknown): s is BaixaContaSession {
 
 export type WhatsAppBaixaContaDeps = {
   gravarSessao: (
-    userId: string, telefone: string, externalId: string | null,
-    texto: string, recebidaEm: string, status: string,
+    userId: string,
+    telefone: string,
+    externalId: string | null,
+    texto: string,
+    recebidaEm: string,
+    status: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    session: any, resposta: string, gastoId?: string,
-  ) => Promise<{ ok: boolean; sessionId: string | null; status: string | null; errorCode: string | null }>;
+    session: any,
+    resposta: string,
+    gastoId?: string,
+  ) => Promise<{
+    ok: boolean;
+    sessionId: string | null;
+    status: string | null;
+    errorCode: string | null;
+  }>;
   atualizarSessao: (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    id: string, status: string, session: any, resposta: string, gastoId?: string,
+    id: string,
+    status: string,
+    session: any,
+    resposta: string,
+    gastoId?: string,
   ) => Promise<unknown>;
   fecharSessoesAnteriores: (
-    userId: string, telefone: string,
-    motivo: "salva" | "cancelada" | "expirada", gastoId?: string,
+    userId: string,
+    telefone: string,
+    motivo: "salva" | "cancelada" | "expirada",
+    gastoId?: string,
   ) => Promise<void>;
 };
 
@@ -101,7 +120,14 @@ type Stage =
   | "failed"
   | "reminders_cancelled";
 
-type Result = "ok" | "not_found" | "ambiguous" | "conflict" | "error" | "inconsistent" | "readback_failed";
+type Result =
+  | "ok"
+  | "not_found"
+  | "ambiguous"
+  | "conflict"
+  | "error"
+  | "inconsistent"
+  | "readback_failed";
 
 function logEvent(stage: Stage, candidatesCount: number, result: Result) {
   console.info({
@@ -177,7 +203,9 @@ export function detectMarkAsPaidIntent(
     if (termo) return { termo, paymentDate: dateText };
   }
   // 2) "quitei <termo>" / "quitar <termo>"
-  m = t.match(/\bquit(?:ei|ar|a|e)\s+(?:(?:a|o|as|os|minha|meu|essa|esse|uma|um)\s+)?([a-z0-9 ]{2,40})$/);
+  m = t.match(
+    /\bquit(?:ei|ar|a|e)\s+(?:(?:a|o|as|os|minha|meu|essa|esse|uma|um)\s+)?([a-z0-9 ]{2,40})$/,
+  );
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
     if (termo) return { termo, paymentDate: dateText };
@@ -189,7 +217,9 @@ export function detectMarkAsPaidIntent(
     if (termo) return { termo, paymentDate: dateText };
   }
   // 4) "marcar <termo> como pago" / "marca <termo> como pago"
-  m = t.match(/\bmarc(?:ar|a|e|ou)\s+(?:(?:a|o|as|os|minha|meu|essa|esse)\s+)?([a-z0-9 ]{2,40})\s+como\s+pag[ao]\b/);
+  m = t.match(
+    /\bmarc(?:ar|a|e|ou)\s+(?:(?:a|o|as|os|minha|meu|essa|esse)\s+)?([a-z0-9 ]{2,40})\s+como\s+pag[ao]\b/,
+  );
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
     if (termo) return { termo, paymentDate: dateText };
@@ -198,7 +228,9 @@ export function detectMarkAsPaidIntent(
   //    WA-C3.2 — preserva o nome composto inteiro (ex.: "conta de luz",
   //    "plano de saúde"). O regex aceita um artigo inicial opcional, mas
   //    NÃO consome "conta de" como prefixo descartável: ele entra no termo.
-  m = t.match(/\b(?:(?:a|o|as|os|minha|meu|essa|esse)\s+)?([a-z0-9][a-z0-9 ]{1,40})\s+(?:foi|esta|ja\s+foi)\s+pag[ao]\b/);
+  m = t.match(
+    /\b(?:(?:a|o|as|os|minha|meu|essa|esse)\s+)?([a-z0-9][a-z0-9 ]{1,40})\s+(?:foi|esta|ja\s+foi)\s+pag[ao]\b/,
+  );
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
     if (termo) return { termo, paymentDate: dateText };
@@ -246,8 +278,18 @@ function extractAndStripDate(textNorm: string): { dateText: string | null; clean
  * "plano de saúde", "seguro do carro").
  */
 const EDGE_FILLERS = new Set([
-  "a","o","as","os","minha","meu","essa","esse","uma","um",
-  "ja","já",
+  "a",
+  "o",
+  "as",
+  "os",
+  "minha",
+  "meu",
+  "essa",
+  "esse",
+  "uma",
+  "um",
+  "ja",
+  "já",
 ]);
 
 function stripFillers(raw: string): string {
@@ -274,15 +316,19 @@ function parseDataPagamento(textRaw: string, hoje: Date = nowInAppTz()): string 
   if (!t) return null;
   if (/\bhoje\b/.test(t)) return todayISOInAppTz(hoje);
   if (/\bontem\b/.test(t)) {
-    const d = new Date(hoje); d.setDate(d.getDate() - 1);
+    const d = new Date(hoje);
+    d.setDate(d.getDate() - 1);
     return todayISOInAppTz(d);
   }
   if (/\bamanha\b/.test(t)) {
-    const d = new Date(hoje); d.setDate(d.getDate() + 1);
+    const d = new Date(hoje);
+    d.setDate(d.getDate() + 1);
     return todayISOInAppTz(d);
   }
   // "em 5 de julho [de 2026]" / "5 de julho"
-  let m = t.match(/\b(?:em\s+)?(\d{1,2})\s+de\s+(janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\s+de\s+(\d{2,4}))?\b/);
+  let m = t.match(
+    /\b(?:em\s+)?(\d{1,2})\s+de\s+(janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\s+de\s+(\d{2,4}))?\b/,
+  );
   if (m) {
     const dia = Number(m[1]);
     const mes = MESES[m[2]];
@@ -299,7 +345,9 @@ function parseDataPagamento(textRaw: string, hoje: Date = nowInAppTz()): string 
   if (m) {
     const dia = Number(m[1]);
     if (dia >= 1 && dia <= 31) {
-      const next = new Date(hoje); next.setDate(1); next.setMonth(next.getMonth() + 1);
+      const next = new Date(hoje);
+      next.setDate(1);
+      next.setMonth(next.getMonth() + 1);
       const y = next.getFullYear();
       const mm = next.getMonth() + 1;
       const last = new Date(y, mm, 0).getDate();
@@ -336,8 +384,18 @@ function parseDataPagamento(textRaw: string, hoje: Date = nowInAppTz()): string 
 }
 
 const MESES: Record<string, number> = {
-  janeiro: 1, fevereiro: 2, marco: 3, abril: 4, maio: 5, junho: 6,
-  julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
+  janeiro: 1,
+  fevereiro: 2,
+  marco: 3,
+  abril: 4,
+  maio: 5,
+  junho: 6,
+  julho: 7,
+  agosto: 8,
+  setembro: 9,
+  outubro: 10,
+  novembro: 11,
+  dezembro: 12,
 };
 
 function isFutureISO(iso: string, hoje: Date = nowInAppTz()): boolean {
@@ -357,7 +415,6 @@ function previewSingle(row: ContaVencimentoRow, dataPagamento: string): string {
     'Confirma marcar como paga? Responda "sim", informe outra data (ex.: "ontem" ou "03/07") ou "cancelar".',
   ].join("\n");
 }
-
 
 function ambiguousList(rows: ContaVencimentoRow[], termo: string): string {
   // Sem valor nesta etapa, conforme especificação.
@@ -432,8 +489,14 @@ export async function processarBaixaConta(args: {
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     const resposta = "Tudo bem, não marquei nenhuma conta como paga.";
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "cancelada", (sessao.session as never), resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "cancelada",
+      sessao.session as never,
+      resposta,
     );
     logEvent("cancelled", 0, "ok");
     return { status: "cancelada", resposta };
@@ -469,18 +532,28 @@ export async function processarBaixaConta(args: {
       if (isFutureISO(dataPag)) {
         const resposta = askFutureConfirm(dataPag);
         await deps.gravarSessao(
-          userId, msg.telefone, msg.external_id, texto, recebidaEm,
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
           "conta_pagamento_aguardando_data",
-          session as never, resposta,
+          session as never,
+          resposta,
         );
         logEvent("awaiting_confirmation", 1, "ok");
         return { status: "pendente", resposta };
       }
       const resposta = previewSingle(row, dataPag);
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
         "conta_pagamento_aguardando_confirmacao",
-        session as never, resposta,
+        session as never,
+        resposta,
       );
       logEvent("awaiting_confirmation", 1, "ok");
       return { status: "pendente", resposta };
@@ -494,9 +567,14 @@ export async function processarBaixaConta(args: {
     };
     const resposta = ambiguousList(rows, intent.termo);
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
       "conta_pagamento_aguardando_escolha",
-      session as never, resposta,
+      session as never,
+      resposta,
     );
     logEvent("awaiting_choice", rows.length, "ambiguous");
     return { status: "pendente", resposta };
@@ -520,7 +598,10 @@ export async function processarBaixaConta(args: {
     if (!chosenId) {
       const resposta = `Não entendi. Responda com o número da conta (ex.: 1) ou "cancelar".`;
       await deps.atualizarSessao(
-        sessao.id, "conta_pagamento_aguardando_escolha", session as never, resposta,
+        sessao.id,
+        "conta_pagamento_aguardando_escolha",
+        session as never,
+        resposta,
       );
       return { status: "pendente", resposta };
     }
@@ -529,8 +610,14 @@ export async function processarBaixaConta(args: {
       await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
       const resposta = "Essa conta já foi atualizada ou não está mais pendente.";
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "sem_pendencia", session as never, resposta,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "sem_pendencia",
+        session as never,
+        resposta,
       );
       logEvent("already_updated", 0, "conflict");
       return { status: "consulta", resposta };
@@ -544,7 +631,10 @@ export async function processarBaixaConta(args: {
     };
     const resposta = previewSingle(conta, dataPag);
     await deps.atualizarSessao(
-      sessao.id, "conta_pagamento_aguardando_confirmacao", novaSession as never, resposta,
+      sessao.id,
+      "conta_pagamento_aguardando_confirmacao",
+      novaSession as never,
+      resposta,
     );
     logEvent("awaiting_confirmation", 1, "ok");
     return { status: "pendente", resposta };
@@ -562,7 +652,10 @@ export async function processarBaixaConta(args: {
       if (isFutureISO(novaData)) {
         const resposta = askFutureConfirm(novaData);
         await deps.atualizarSessao(
-          sessao.id, "conta_pagamento_aguardando_data", session as never, resposta,
+          sessao.id,
+          "conta_pagamento_aguardando_data",
+          session as never,
+          resposta,
         );
         return { status: "pendente", resposta };
       }
@@ -572,21 +665,33 @@ export async function processarBaixaConta(args: {
         await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
         const resposta = "Essa conta já foi atualizada ou não está mais pendente.";
         await deps.gravarSessao(
-          userId, msg.telefone, msg.external_id, texto, recebidaEm,
-          "sem_pendencia", session as never, resposta,
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
+          "sem_pendencia",
+          session as never,
+          resposta,
         );
         logEvent("already_updated", 0, "conflict");
         return { status: "consulta", resposta };
       }
       const resposta = previewSingle(conta, novaData);
       await deps.atualizarSessao(
-        sessao.id, "conta_pagamento_aguardando_confirmacao", session as never, resposta,
+        sessao.id,
+        "conta_pagamento_aguardando_confirmacao",
+        session as never,
+        resposta,
       );
       return { status: "pendente", resposta };
     }
     const resposta = 'Não entendi. Responda "sim" para confirmar a data futura ou "cancelar".';
     await deps.atualizarSessao(
-      sessao.id, "conta_pagamento_aguardando_data", session as never, resposta,
+      sessao.id,
+      "conta_pagamento_aguardando_data",
+      session as never,
+      resposta,
     );
     return { status: "pendente", resposta };
   }
@@ -600,7 +705,10 @@ export async function processarBaixaConta(args: {
       if (isFutureISO(novaData)) {
         const resposta = askFutureConfirm(novaData);
         await deps.atualizarSessao(
-          sessao.id, "conta_pagamento_aguardando_data", session as never, resposta,
+          sessao.id,
+          "conta_pagamento_aguardando_data",
+          session as never,
+          resposta,
         );
         return { status: "pendente", resposta };
       }
@@ -609,15 +717,24 @@ export async function processarBaixaConta(args: {
         await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
         const resposta = "Essa conta já foi atualizada ou não está mais pendente.";
         await deps.gravarSessao(
-          userId, msg.telefone, msg.external_id, texto, recebidaEm,
-          "sem_pendencia", session as never, resposta,
+          userId,
+          msg.telefone,
+          msg.external_id,
+          texto,
+          recebidaEm,
+          "sem_pendencia",
+          session as never,
+          resposta,
         );
         logEvent("already_updated", 0, "conflict");
         return { status: "consulta", resposta };
       }
       const resposta = previewSingle(conta, novaData);
       await deps.atualizarSessao(
-        sessao.id, "conta_pagamento_aguardando_confirmacao", session as never, resposta,
+        sessao.id,
+        "conta_pagamento_aguardando_confirmacao",
+        session as never,
+        resposta,
       );
       return { status: "pendente", resposta };
     }
@@ -627,7 +744,10 @@ export async function processarBaixaConta(args: {
     const resposta =
       'Não entendi. Responda "sim" para confirmar, informe outra data ou "cancelar".';
     await deps.atualizarSessao(
-      sessao.id, "conta_pagamento_aguardando_confirmacao", session as never, resposta,
+      sessao.id,
+      "conta_pagamento_aguardando_confirmacao",
+      session as never,
+      resposta,
     );
     return { status: "pendente", resposta };
   }
@@ -662,7 +782,10 @@ export async function persistirBaixa(args: {
   if (!externalMessageId || externalMessageId.trim().length === 0) {
     console.error("[whatsapp] persistirBaixa missing externalMessageId");
     logEvent("failed", 0, "error");
-    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
+    return {
+      status: "erro",
+      resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?",
+    };
   }
 
   // WA-C11 3B.2.C.1 Block 4 — quota financeira ANTES da RPC de baixa.
@@ -689,20 +812,19 @@ export async function persistirBaixa(args: {
   //     cria gasto silenciosamente)
   //   - conta ainda pendente => 'paid' (gasto criado + vínculo)
   //   - conta não localizada => 'not_found'
-  const { data: rpcData, error } = await supabaseAdmin.rpc(
-    "whatsapp_baixa_conta_atomic",
-    {
-      p_user_id: userId,
-      p_conta_id: session.contaId,
-      p_data_pagamento: session.dataPagamento,
-      p_origem: "whatsapp",
-    },
-  );
+  const { data: rpcData, error } = await supabaseAdmin.rpc("whatsapp_baixa_conta_atomic", {
+    p_user_id: userId,
+    p_conta_id: session.contaId,
+    p_data_pagamento: session.dataPagamento,
+    p_origem: "whatsapp",
+  });
 
   if (error) {
     logEvent("failed", 0, "error");
     await deps.atualizarSessao(
-      sessao.id, "conta_pagamento_aguardando_confirmacao", session as never,
+      sessao.id,
+      "conta_pagamento_aguardando_confirmacao",
+      session as never,
       "Não consegui salvar agora. Pode tentar de novo daqui a pouco?",
     );
     return {
@@ -719,8 +841,14 @@ export async function persistirBaixa(args: {
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
     const resposta = "Essa conta já foi atualizada ou não está mais pendente.";
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "sem_pendencia", session as never, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "sem_pendencia",
+      session as never,
+      resposta,
     );
     logEvent("already_updated", 0, "conflict");
     return { status: "consulta", resposta };
@@ -732,11 +860,17 @@ export async function persistirBaixa(args: {
     logEvent("failed", 0, "inconsistent");
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
     const resposta =
-      "Encontrei uma inconsistência nessa conta (já paga mas sem gasto vinculado). "
-      + "Peça para revisarem manualmente.";
+      "Encontrei uma inconsistência nessa conta (já paga mas sem gasto vinculado). " +
+      "Peça para revisarem manualmente.";
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "sem_pendencia", session as never, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "sem_pendencia",
+      session as never,
+      resposta,
     );
     return { status: "erro", resposta };
   }
@@ -767,8 +901,13 @@ export async function persistirBaixa(args: {
     .eq("id", session.contaId)
     .eq("user_id", userId)
     .maybeSingle();
-  if (readbackErr || !readback || readback.status !== "pago"
-      || !readback.gasto_id || readback.gasto_id !== gastoIdRet) {
+  if (
+    readbackErr ||
+    !readback ||
+    readback.status !== "pago" ||
+    !readback.gasto_id ||
+    readback.gasto_id !== gastoIdRet
+  ) {
     logEvent("failed", 0, "readback_failed");
     return {
       status: "erro",

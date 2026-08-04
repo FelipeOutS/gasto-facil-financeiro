@@ -99,8 +99,13 @@ function buildFake() {
       upsert(row: Row | Row[], opts?: { onConflict?: string; ignoreDuplicates?: boolean }) {
         const rows = Array.isArray(row) ? row : [row];
         for (const r of rows) {
-          const cols = (opts?.onConflict ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-          const existing = cols.length ? data.find((d) => cols.every((c) => d[c] === r[c])) : undefined;
+          const cols = (opts?.onConflict ?? "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+          const existing = cols.length
+            ? data.find((d) => cols.every((c) => d[c] === r[c]))
+            : undefined;
           if (existing) {
             if (opts?.ignoreDuplicates) continue;
             Object.assign(existing, r);
@@ -162,7 +167,9 @@ let tokenSeq: number;
 const nowFn = () => T0;
 const nextUuid = () => `tok-${++tokenSeq}`;
 
-async function seedPending(dedupe = `k-${Math.random().toString(36).slice(2)}`): Promise<NotificationRow> {
+async function seedPending(
+  dedupe = `k-${Math.random().toString(36).slice(2)}`,
+): Promise<NotificationRow> {
   const row = await enqueueNotification(
     {
       userId: "u1",
@@ -199,7 +206,11 @@ beforeEach(() => {
 describe("WA-C9.2/B :: claimForProcessing → lease & token", () => {
   it("1. claim elegível grava claim_token único", async () => {
     const p = await seedPending();
-    const c = await claimForProcessing(p.id, { client: fake.client, now: nowFn, randomUUID: nextUuid });
+    const c = await claimForProcessing(p.id, {
+      client: fake.client,
+      now: nowFn,
+      randomUUID: nextUuid,
+    });
     expect(c).not.toBeNull();
     expect(c!.claim_token).toBe("tok-1");
   });
@@ -221,7 +232,11 @@ describe("WA-C9.2/B :: claimForProcessing → lease & token", () => {
   it("5. claim preserva attempt_count, dedupe_key, scheduled_at", async () => {
     const p = await seedPending("dk-preserve");
     (fake.tables.whatsapp_notifications[0] as Row).attempt_count = 2;
-    const c = await claimForProcessing(p.id, { client: fake.client, now: nowFn, randomUUID: nextUuid });
+    const c = await claimForProcessing(p.id, {
+      client: fake.client,
+      now: nowFn,
+      randomUUID: nextUuid,
+    });
     expect(c!.attempt_count).toBe(2);
     expect(c!.dedupe_key).toBe("dk-preserve");
     expect(c!.scheduled_at).toBe(past(60).toISOString());
@@ -229,8 +244,16 @@ describe("WA-C9.2/B :: claimForProcessing → lease & token", () => {
 
   it("6. dois claims sequenciais no mesmo ID: segundo retorna null", async () => {
     const p = await seedPending();
-    const a = await claimForProcessing(p.id, { client: fake.client, now: nowFn, randomUUID: nextUuid });
-    const b = await claimForProcessing(p.id, { client: fake.client, now: nowFn, randomUUID: nextUuid });
+    const a = await claimForProcessing(p.id, {
+      client: fake.client,
+      now: nowFn,
+      randomUUID: nextUuid,
+    });
+    const b = await claimForProcessing(p.id, {
+      client: fake.client,
+      now: nowFn,
+      randomUUID: nextUuid,
+    });
     expect(a).not.toBeNull();
     expect(b).toBeNull();
   });
@@ -361,7 +384,9 @@ describe("WA-C9.2/B :: renewProcessingLease", () => {
     const later = () => new Date(T0.getTime() + 60_000);
     const ok = await renewProcessingLease(id, token, { client: fake.client, now: later });
     expect(ok).toBe(true);
-    expect(row.lease_expires_at).toBe(new Date(T0.getTime() + 60_000 + LEASE_DURATION_MS).toISOString());
+    expect(row.lease_expires_at).toBe(
+      new Date(T0.getTime() + 60_000 + LEASE_DURATION_MS).toISOString(),
+    );
   });
 
   it("19. renew preserva claimed_at, attempt_count, dedupe_key, scheduled_at", async () => {
@@ -380,7 +405,10 @@ describe("WA-C9.2/B :: renewProcessingLease", () => {
   it("20. renew com token INCORRETO falha", async () => {
     const { id, row } = await seedProcessing();
     const before = row.lease_expires_at;
-    const ok = await renewProcessingLease(id, "wrong", { client: fake.client, now: () => at(60_000) });
+    const ok = await renewProcessingLease(id, "wrong", {
+      client: fake.client,
+      now: () => at(60_000),
+    });
     expect(ok).toBe(false);
     expect(row.lease_expires_at).toBe(before);
   });
@@ -389,7 +417,11 @@ describe("WA-C9.2/B :: renewProcessingLease", () => {
     const { id, token, row } = await seedProcessing();
     // Recovery: força lease vencido e roda recuperação.
     row.lease_expires_at = past(1).toISOString();
-    await recoverStuckProcessing(50, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+    await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
     expect(row.status).toBe("pending");
     // Worker antigo tenta renovar
     const ok = await renewProcessingLease(id, token, { client: fake.client, now: nowFn });
@@ -404,7 +436,11 @@ describe("WA-C9.2/B :: recoverStuckProcessing", () => {
     const { row } = await seedProcessing();
     // lease futuro
     row.lease_expires_at = at(60_000).toISOString();
-    const s = await recoverStuckProcessing(50, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+    const s = await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
     expect(s.recovered).toBe(0);
     expect(row.status).toBe("processing");
   });
@@ -412,7 +448,11 @@ describe("WA-C9.2/B :: recoverStuckProcessing", () => {
   it("23. lease expirado: processing → pending", async () => {
     const { row } = await seedProcessing();
     row.lease_expires_at = past(1).toISOString();
-    const s = await recoverStuckProcessing(50, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+    const s = await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
     expect(s.recovered).toBe(1);
     expect(row.status).toBe("pending");
   });
@@ -420,14 +460,22 @@ describe("WA-C9.2/B :: recoverStuckProcessing", () => {
   it("24. recovery agenda next_attempt_at = now + 5 min", async () => {
     const { row } = await seedProcessing();
     row.lease_expires_at = past(1).toISOString();
-    await recoverStuckProcessing(50, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+    await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
     expect(row.next_attempt_at).toBe(new Date(T0.getTime() + RECOVERY_BACKOFF_MS).toISOString());
   });
 
   it("25. recovery grava last_error_code=processing_timeout", async () => {
     const { row } = await seedProcessing();
     row.lease_expires_at = past(1).toISOString();
-    await recoverStuckProcessing(50, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+    await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
     expect(row.last_error_code).toBe("processing_timeout");
   });
 
@@ -435,7 +483,11 @@ describe("WA-C9.2/B :: recoverStuckProcessing", () => {
     const { row } = await seedProcessing("dk-1");
     row.attempt_count = 2;
     row.lease_expires_at = past(1).toISOString();
-    await recoverStuckProcessing(50, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+    await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
     expect(row.attempt_count).toBe(2);
     expect(row.dedupe_key).toBe("dk-1");
   });
@@ -443,7 +495,11 @@ describe("WA-C9.2/B :: recoverStuckProcessing", () => {
   it("27. recovery limpa claim_token, claimed_at, lease_expires_at", async () => {
     const { row } = await seedProcessing();
     row.lease_expires_at = past(1).toISOString();
-    await recoverStuckProcessing(50, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+    await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
     expect(row.claim_token).toBeNull();
     expect(row.claimed_at).toBeNull();
     expect(row.lease_expires_at).toBeNull();
@@ -455,7 +511,11 @@ describe("WA-C9.2/B :: recoverStuckProcessing", () => {
     row.lease_expires_at = past(1).toISOString();
     // volta lease para testar cenário: linha ficou com sent mas lease_expires_at ainda setado?
     // Como markSent limpa lease → não há candidato para recovery, o que é o desejado.
-    const s = await recoverStuckProcessing(50, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+    const s = await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
     expect(s.recovered).toBe(0);
     expect(row.status).toBe("sent");
   });
@@ -471,7 +531,11 @@ describe("WA-C9.2/B :: recoverStuckProcessing", () => {
       // Nota: em produção, transições terminais limpam lease. Aqui simulamos
       // um cenário defensivo onde a linha ficou com status terminal + lease
       // ativo (não deveria acontecer). Recovery ainda assim NÃO reabre.
-      const s = await recoverStuckProcessing(50, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+      const s = await recoverStuckProcessing(50, {
+        client: fake.client,
+        now: nowFn,
+        allowLegacyFakePath: true,
+      });
       expect(s.recovered).toBe(0);
       expect(row.status).toBe(target);
     }
@@ -491,7 +555,11 @@ describe("WA-C9.2/B :: recoverStuckProcessing", () => {
   it("31. worker antigo não marca sent após recovery", async () => {
     const { id, token, row } = await seedProcessing();
     row.lease_expires_at = past(1).toISOString();
-    await recoverStuckProcessing(50, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+    await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
     const ok = await markSent(id, "wamid", token, { client: fake.client });
     expect(ok).toBe(false);
     expect(row.status).toBe("pending");
@@ -500,7 +568,11 @@ describe("WA-C9.2/B :: recoverStuckProcessing", () => {
   it("32. worker antigo não marca failed após recovery", async () => {
     const { id, token, row } = await seedProcessing();
     row.lease_expires_at = past(1).toISOString();
-    await recoverStuckProcessing(50, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+    await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
     const res = await markFailed(
       id,
       "boom",
@@ -515,7 +587,11 @@ describe("WA-C9.2/B :: recoverStuckProcessing", () => {
   it("33. worker antigo não reagenda quiet_hours após recovery", async () => {
     const { id, token, row } = await seedProcessing();
     row.lease_expires_at = past(1).toISOString();
-    await recoverStuckProcessing(50, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+    await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
     const oldScheduled = row.scheduled_at;
     const res = await rescheduleForQuietHours(id, at(3_600_000), token, { client: fake.client });
     expect(res.ok).toBe(false);
@@ -525,7 +601,11 @@ describe("WA-C9.2/B :: recoverStuckProcessing", () => {
   it("34. novo claim após recovery gera token novo", async () => {
     const { row } = await seedProcessing();
     row.lease_expires_at = past(1).toISOString();
-    await recoverStuckProcessing(50, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+    await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
     // next_attempt_at futuro (+5 min) impede novo claim antes do backoff
     const early = await claimForProcessing(row.id as string, {
       client: fake.client,
@@ -550,12 +630,20 @@ describe("WA-C9.2/B :: recoverStuckProcessing", () => {
       const { row } = await seedProcessing(`dk-${i}`);
       row.lease_expires_at = new Date(T0.getTime() - (10 - i) * 60_000).toISOString();
     }
-    const s = await recoverStuckProcessing(2, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+    const s = await recoverStuckProcessing(2, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
     expect(s.recovered).toBe(2);
   });
 
   it("36. sem candidatos: summary zerado", async () => {
-    const s = await recoverStuckProcessing(50, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+    const s = await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
     expect(s).toEqual({ recovered: 0, state_changed: 0, errors: 0 });
   });
 
@@ -565,7 +653,11 @@ describe("WA-C9.2/B :: recoverStuckProcessing", () => {
     row.status = "processing";
     row.lease_expires_at = past(5).toISOString();
     row.claim_token = null;
-    const s = await recoverStuckProcessing(50, { client: fake.client, now: nowFn, allowLegacyFakePath: true });
+    const s = await recoverStuckProcessing(50, {
+      client: fake.client,
+      now: nowFn,
+      allowLegacyFakePath: true,
+    });
     expect(s.recovered).toBe(0);
     expect(s.state_changed).toBeGreaterThan(0);
     expect(row.status).toBe("processing");

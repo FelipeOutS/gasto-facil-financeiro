@@ -2,10 +2,7 @@ import { useTranslation } from "react-i18next";
 import { TrendingDown, TrendingUp, Minus, Info } from "lucide-react";
 import { Money } from "@/components/Money";
 import { cn } from "@/lib/utils";
-import {
-  usePrecoInsight,
-  type PrecoInsightStatus,
-} from "@/lib/mercado/precos-history";
+import { usePrecoInsight, type PrecoInsightStatus } from "@/lib/mercado/precos-history";
 
 interface Props {
   nome: string | undefined;
@@ -14,36 +11,34 @@ interface Props {
   className?: string;
 }
 
-const toneByStatus: Record<
-  PrecoInsightStatus,
-  { wrap: string; icon: string; Icon: typeof Info }
-> = {
-  bom: {
-    wrap: "border-success/30 bg-success/10 text-success",
-    icon: "text-success",
-    Icon: TrendingDown,
-  },
-  normal: {
-    wrap: "border-border/60 bg-muted/40 text-muted-foreground",
-    icon: "text-muted-foreground",
-    Icon: Minus,
-  },
-  alto: {
-    wrap: "border-warning/30 bg-warning/10 text-warning",
-    icon: "text-warning",
-    Icon: TrendingUp,
-  },
-  muito_alto: {
-    wrap: "border-destructive/30 bg-destructive/10 text-destructive",
-    icon: "text-destructive",
-    Icon: TrendingUp,
-  },
-  sem_historico: {
-    wrap: "border-border/60 bg-muted/40 text-muted-foreground",
-    icon: "text-muted-foreground",
-    Icon: Info,
-  },
-};
+const toneByStatus: Record<PrecoInsightStatus, { wrap: string; icon: string; Icon: typeof Info }> =
+  {
+    bom: {
+      wrap: "border-success/30 bg-success/10 text-success",
+      icon: "text-success",
+      Icon: TrendingDown,
+    },
+    normal: {
+      wrap: "border-border/60 bg-muted/40 text-muted-foreground",
+      icon: "text-muted-foreground",
+      Icon: Minus,
+    },
+    alto: {
+      wrap: "border-warning/30 bg-warning/10 text-warning",
+      icon: "text-warning",
+      Icon: TrendingUp,
+    },
+    muito_alto: {
+      wrap: "border-destructive/30 bg-destructive/10 text-destructive",
+      icon: "text-destructive",
+      Icon: TrendingUp,
+    },
+    sem_historico: {
+      wrap: "border-border/60 bg-muted/40 text-muted-foreground",
+      icon: "text-muted-foreground",
+      Icon: Info,
+    },
+  };
 
 const titleKey: Record<PrecoInsightStatus, string> = {
   bom: "precoInsight.goodTitle",
@@ -93,20 +88,17 @@ export function PrecoInsight({ nome, codigoBarras, precoUnitario, className }: P
           <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] tabular-nums opacity-80">
             {insight.menorPreco !== undefined && (
               <span>
-                {t("precoInsight.lowest")}:{" "}
-                <Money value={insight.menorPreco} />
+                {t("precoInsight.lowest")}: <Money value={insight.menorPreco} />
               </span>
             )}
             {insight.precoMedio !== undefined && (
               <span>
-                {t("precoInsight.average")}:{" "}
-                <Money value={insight.precoMedio} />
+                {t("precoInsight.average")}: <Money value={insight.precoMedio} />
               </span>
             )}
             {insight.ultimoPreco !== undefined && (
               <span>
-                {t("precoInsight.last")}:{" "}
-                <Money value={insight.ultimoPreco} />
+                {t("precoInsight.last")}: <Money value={insight.ultimoPreco} />
               </span>
             )}
           </p>

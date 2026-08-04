@@ -97,8 +97,7 @@ mock.module("@/server/whatsapp-merchant-memory.server", () => ({
     return { ok: true };
   },
   logMerchantMemoryDecision: () => {},
-  MERCHANT_MEMORY_HINT_LINE:
-    "Sugestão baseada em lançamentos confirmados anteriormente.",
+  MERCHANT_MEMORY_HINT_LINE: "Sugestão baseada em lançamentos confirmados anteriormente.",
 }));
 
 mock.module("@/server/whatsapp-financial-quota-gate.server", () => ({
@@ -115,10 +114,8 @@ mock.module("@/server/whatsapp-financial-quota-gate.server", () => ({
   financialQuotaBlockedReply: () => "blocked",
 }));
 
-const {
-  processarRespostaImagem,
-  persistirGastoComprovante,
-} = await import("@/server/whatsapp-comprovantes.server");
+const { processarRespostaImagem, persistirGastoComprovante } =
+  await import("@/server/whatsapp-comprovantes.server");
 
 type CompSession = {
   kind: "imagem_comprovante";

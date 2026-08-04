@@ -40,9 +40,7 @@ function NovaListaPage() {
     }
     setSubmitting(true);
     try {
-      const estimateValue = estimate
-        ? Number(estimate.replace(",", "."))
-        : undefined;
+      const estimateValue = estimate ? Number(estimate.replace(",", ".")) : undefined;
       addLista({
         name: trimmed,
         tipo,
@@ -158,9 +156,7 @@ function NovaListaPage() {
               inputMode="decimal"
               maxLength={12}
               value={estimate}
-              onChange={(e) =>
-                setEstimate(e.target.value.replace(/[^\d.,]/g, ""))
-              }
+              onChange={(e) => setEstimate(e.target.value.replace(/[^\d.,]/g, ""))}
               placeholder={t("nova.fields.estimate.placeholder")}
               className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-base text-foreground placeholder:text-muted-foreground/60 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
             />
@@ -208,5 +204,5 @@ function NovaListaPage() {
         </div>
       </form>
     </MobileShell>
-  )
+  );
 }

@@ -12,10 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
 import { useOfflineExpenseQueue } from "@/lib/offline/use-offline-sync";
-import {
-  removeExpense,
-  type OfflineExpense,
-} from "@/lib/offline/offline-expense-queue";
+import { removeExpense, type OfflineExpense } from "@/lib/offline/offline-expense-queue";
 import { formatBRL } from "@/lib/format";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EditOfflineExpenseDialog } from "./EditOfflineExpenseDialog";

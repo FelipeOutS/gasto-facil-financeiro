@@ -15,7 +15,12 @@ const userId = "user-optout-e1";
 
 beforeEach(() => {
   resetState();
-  state.linkData = { user_id: userId, ativo: true, opt_in_em: "2024-01-01T00:00:00Z", revogado_em: null };
+  state.linkData = {
+    user_id: userId,
+    ativo: true,
+    opt_in_em: "2024-01-01T00:00:00Z",
+    revogado_em: null,
+  };
 });
 
 test("'parar' encerra o pipeline com status cancelada e não cria gasto", async () => {

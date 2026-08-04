@@ -131,8 +131,7 @@ mock.module("@/server/whatsapp-authz.server", () => ({
     return fakeState.elig;
   },
   shouldSendBlockedReply: async (_phone: string) => fakeState.shouldBlockReply,
-  WHATSAPP_BLOCKED_REPLY:
-    "Olá! No momento, este número não está vinculado a uma conta ativa.",
+  WHATSAPP_BLOCKED_REPLY: "Olá! No momento, este número não está vinculado a uma conta ativa.",
 }));
 
 mock.module("@/server/whatsapp-comprovantes.server", () => ({
@@ -216,9 +215,11 @@ afterEach(() => {
 
 const { Route } = await import("../src/routes/api/public.whatsapp.expense");
 type HttpHandler = (ctx: { request: Request }) => Promise<Response>;
-const handlers = (Route as unknown as {
-  options: { server: { handlers: Record<string, HttpHandler> } };
-}).options.server.handlers;
+const handlers = (
+  Route as unknown as {
+    options: { server: { handlers: Record<string, HttpHandler> } };
+  }
+).options.server.handlers;
 const POST = handlers.POST;
 const GET = handlers.GET;
 
@@ -253,12 +254,14 @@ function metaTextPayload(text = "uber 25", id = "wamid.text-1") {
   };
 }
 
-function metaImagePayload(opts: {
-  id?: string;
-  mediaId?: string;
-  mime?: string;
-  sha?: string;
-} = {}) {
+function metaImagePayload(
+  opts: {
+    id?: string;
+    mediaId?: string;
+    mime?: string;
+    sha?: string;
+  } = {},
+) {
   return {
     object: "whatsapp_business_account",
     entry: [
@@ -502,7 +505,9 @@ test("respostas para número bloqueado não expõem plano, e-mail, banco, usuár
 
 test("logs do webhook NÃO contêm telefone bruto, token, URL de mídia, base64 ou data URL", async () => {
   await POST({ request: signedPostRequest(metaTextPayload("uber 25", "wamid.log-1")) });
-  await POST({ request: signedPostRequest(metaImagePayload({ mime: "image/jpeg", id: "wamid.log-2" })) });
+  await POST({
+    request: signedPostRequest(metaImagePayload({ mime: "image/jpeg", id: "wamid.log-2" })),
+  });
   const serialized = JSON.stringify(fakeState.calls.logEvents);
   expect(serialized).not.toContain(PHONE);
   expect(serialized).not.toContain("graph.facebook.com");

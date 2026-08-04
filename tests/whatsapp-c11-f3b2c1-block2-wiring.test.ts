@@ -32,7 +32,12 @@ let gateOutcome: { allowed: boolean; reason: string } = {
 };
 
 // Estado do fake supabaseAdmin para whatsapp_messages / categorias / gastos.
-let whatsappMessagesRow: { id: string; status: string; gasto_id: string | null; parsed: Record<string, unknown> } | null = null;
+let whatsappMessagesRow: {
+  id: string;
+  status: string;
+  gasto_id: string | null;
+  parsed: Record<string, unknown>;
+} | null = null;
 let pixClaimUpdateRowsAffected: number = 1;
 
 const CATS = [{ id: "cat-outros", legacy_id: "outros", nome: "Outros", user_id: "u1" }];
@@ -143,12 +148,8 @@ mock.module("@/server/whatsapp-pix-reveal-token.server", () => ({
 }));
 
 // ---------- imports pós-mock ----------
-const { persistirGastoComClaim } = await import(
-  "@/server/whatsapp-pagar-pessoa-flow.server"
-);
-const { handlePagarPessoaIntent } = await import(
-  "@/server/whatsapp-pix-intents.server"
-);
+const { persistirGastoComClaim } = await import("@/server/whatsapp-pagar-pessoa-flow.server");
+const { handlePagarPessoaIntent } = await import("@/server/whatsapp-pix-intents.server");
 
 // Deps stub para `persistirGastoComClaim`.
 const deps = {
@@ -320,7 +321,6 @@ describe("WA-C11 3B.2.C.1 Block 2 — handlePagarPessoaIntent (pix legacy)", () 
     expect(gateCalls).toHaveLength(1);
     expect(insertedGastos).toHaveLength(1);
   });
-
 
   it("gate quota_denied → sem insert, mensagem neutra", async () => {
     gateOutcome = { allowed: false, reason: "quota_denied" };

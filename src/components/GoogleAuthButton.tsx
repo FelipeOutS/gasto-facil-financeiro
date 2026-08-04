@@ -25,8 +25,9 @@ export function GoogleAuthButton({ label, separatorText }: Props) {
       }
       if (result.redirected) return;
       window.location.href = "/";
-    } catch (e: any) {
-      toast.error(traduzirErroAuth(e?.message ?? "Falha ao entrar com Google"));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Falha ao entrar com Google";
+      toast.error(traduzirErroAuth(msg));
       setLoading(false);
     }
   }

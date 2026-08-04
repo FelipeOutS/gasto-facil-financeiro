@@ -14,9 +14,6 @@ import { test, expect, beforeEach, mock } from "bun:test";
 // ANTES do módulo ser importado.
 process.env.ADMIN_MASTER_EMAILS = "felipe.out.silva@outlook.com,michael@medeiroscenografia.com.br";
 
-
-
-
 // -------- mocks --------
 const linkState: {
   link: null | {
@@ -55,15 +52,8 @@ const fakeAdmin = {
       // Admin Master (via is_full_access) OU (assinatura ativa E plano
       // elegível). Aqui a decisão do bypass Admin Master é feita pelo
       // helper via `auth.admin.getUserById` — este mock só cobre plano.
-      const ELIGIBLE = new Set([
-        "pessoal_premium",
-        "mei_essencial",
-        "mei_inteligente",
-        "empresa",
-      ]);
-      const ok =
-        linkState.subscription.active &&
-        ELIGIBLE.has(linkState.subscription.plan);
+      const ELIGIBLE = new Set(["pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"]);
+      const ok = linkState.subscription.active && ELIGIBLE.has(linkState.subscription.plan);
       return { data: ok, error: null };
     }
     return { data: null, error: null };
@@ -79,10 +69,12 @@ mock.module("@/integrations/supabase/client.server", () => ({ supabaseAdmin: fak
 mock.module("../src/integrations/supabase/client.server", () => ({ supabaseAdmin: fakeAdmin }));
 mock.module("@/server/admin-master.server", () => ({
   hasAdminMasterRole: async (userId: string) => {
-    const isAdmin = (linkState.email === "felipe.out.silva@outlook.com"
-      || linkState.email === "michael@medeiroscenografia.com.br") && userId === "u1";
+    const isAdmin =
+      (linkState.email === "felipe.out.silva@outlook.com" ||
+        linkState.email === "michael@medeiroscenografia.com.br") &&
+      userId === "u1";
     return isAdmin;
-  }
+  },
 }));
 mock.module("@/server/subscription.server", () => ({
   getSubscriptionForUserIdentity: async () => linkState.subscription,
@@ -111,14 +103,11 @@ mock.module("./rate-limit.server", () => ({
 // Mock direto do helper de entitlement — o `canUseWhatsAppForSender`
 // delega para ele. Espelha a decisão via linkState.
 const entitlementResult = () => {
-  const ELIGIBLE = new Set([
-    "pessoal_premium",
-    "mei_essencial",
-    "mei_inteligente",
-    "empresa",
-  ]);
-  const isAdmin = (linkState.email === "felipe.out.silva@outlook.com"
-    || linkState.email === "michael@medeiroscenografia.com.br") && linkState.link?.user_id === "u1";
+  const ELIGIBLE = new Set(["pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"]);
+  const isAdmin =
+    (linkState.email === "felipe.out.silva@outlook.com" ||
+      linkState.email === "michael@medeiroscenografia.com.br") &&
+    linkState.link?.user_id === "u1";
 
   if (isAdmin) {
     return {
@@ -149,14 +138,8 @@ mock.module("@/server/whatsapp-entitlement.server", () => ({
   },
 }));
 
-
-
-const {
-  canUseWhatsAppForSender,
-  shouldSendBlockedReply,
-  normalizePhone,
-  WHATSAPP_BLOCKED_REPLY,
-} = await import("../src/server/whatsapp-authz.server");
+const { canUseWhatsAppForSender, shouldSendBlockedReply, normalizePhone, WHATSAPP_BLOCKED_REPLY } =
+  await import("../src/server/whatsapp-authz.server");
 
 const PHONE = "5511999998888";
 const ACTIVE_LINK = {
@@ -292,5 +275,7 @@ test("segundo envio dentro de 24h é bloqueado pelo rate-limit", async () => {
 
 test("mensagem neutra de bloqueio não revela conta/plano", () => {
   expect(WHATSAPP_BLOCKED_REPLY).toContain("não está autorizado");
-  expect(WHATSAPP_BLOCKED_REPLY).not.toMatch(/plano gratuito|free|conta inexistente|usuário não encontrado/i);
+  expect(WHATSAPP_BLOCKED_REPLY).not.toMatch(
+    /plano gratuito|free|conta inexistente|usuário não encontrado/i,
+  );
 });

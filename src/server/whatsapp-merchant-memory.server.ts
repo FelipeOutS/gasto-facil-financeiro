@@ -42,17 +42,42 @@ export type MerchantMemoryLookup = {
 
 /** Termos genéricos: não criam nem consultam memória. */
 const GENERIC_MERCHANT_TERMS: ReadonlySet<string> = new Set([
-  "gasto", "gastos", "despesa", "despesas",
-  "compra", "compras", "pagamento", "pagamentos",
-  "pix", "cartao", "cartoes", "debito", "credito",
-  "outros", "outro",
-  "almoco", "jantar", "cafe", "lanche", "refeicao",
-  "mercado", "supermercado",
-  "uber", "taxi", "transporte", // muito amplos sozinhos
-  "farmacia", "drogaria",
-  "padaria", "padoca",
-  "restaurante", "bar",
-  "comida", "agua", "internet", "luz", "telefone",
+  "gasto",
+  "gastos",
+  "despesa",
+  "despesas",
+  "compra",
+  "compras",
+  "pagamento",
+  "pagamentos",
+  "pix",
+  "cartao",
+  "cartoes",
+  "debito",
+  "credito",
+  "outros",
+  "outro",
+  "almoco",
+  "jantar",
+  "cafe",
+  "lanche",
+  "refeicao",
+  "mercado",
+  "supermercado",
+  "uber",
+  "taxi",
+  "transporte", // muito amplos sozinhos
+  "farmacia",
+  "drogaria",
+  "padaria",
+  "padoca",
+  "restaurante",
+  "bar",
+  "comida",
+  "agua",
+  "internet",
+  "luz",
+  "telefone",
 ]);
 
 const MIN_KEY_LENGTH = 4;
@@ -109,14 +134,15 @@ export function logMerchantMemoryDecision(args: {
   // Sem PII: nada de userId real, merchant_key, descrição, categoria, valor,
   // telefone, OCR, transcript ou URLs. Apenas a decisão.
   try {
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify({
-      event: "wa_merchant_memory_decision",
-      source: args.source,
-      memoryFound: args.memoryFound,
-      memoryApplied: args.memoryApplied,
-      reason: args.reason,
-    }));
+    console.log(
+      JSON.stringify({
+        event: "wa_merchant_memory_decision",
+        source: args.source,
+        memoryFound: args.memoryFound,
+        memoryApplied: args.memoryApplied,
+        reason: args.reason,
+      }),
+    );
   } catch {
     // ignore
   }
@@ -136,9 +162,7 @@ export async function lookupMerchantMemory(args: {
   merchantKey: string;
   activeCategoryIds: ReadonlySet<string>;
 }): Promise<
-  | { kind: "none" }
-  | { kind: "ambiguous" }
-  | { kind: "eligible"; lookup: MerchantMemoryLookup }
+  { kind: "none" } | { kind: "ambiguous" } | { kind: "eligible"; lookup: MerchantMemoryLookup }
 > {
   if (!args.userId || !args.merchantKey) return { kind: "none" };
 
@@ -168,8 +192,7 @@ export async function lookupMerchantMemory(args: {
   if (eligible.length > 1) return { kind: "ambiguous" };
 
   const r = eligible[0];
-  const evidence: MerchantMemoryEvidence =
-    r.manual_confirmed_count >= 1 ? "manual" : "confirmed";
+  const evidence: MerchantMemoryEvidence = r.manual_confirmed_count >= 1 ? "manual" : "confirmed";
 
   return {
     kind: "eligible",
@@ -228,16 +251,14 @@ export async function recordMerchantMemory(args: {
     return { ok: !error };
   }
 
-  const { error } = await supabaseAdmin
-    .from("whatsapp_merchant_category_memories")
-    .insert({
-      user_id: args.userId,
-      merchant_key: args.merchantKey,
-      category_id: args.categoryId,
-      confirmed_count: incConfirmed,
-      manual_confirmed_count: incManual,
-      last_confirmed_at: new Date().toISOString(),
-    });
+  const { error } = await supabaseAdmin.from("whatsapp_merchant_category_memories").insert({
+    user_id: args.userId,
+    merchant_key: args.merchantKey,
+    category_id: args.categoryId,
+    confirmed_count: incConfirmed,
+    manual_confirmed_count: incManual,
+    last_confirmed_at: new Date().toISOString(),
+  });
   return { ok: !error };
 }
 

@@ -12,18 +12,10 @@
  * Nenhum teste chama Meta, Graph API, Gemini, OCR, Whisper ou Supabase real.
  */
 import { test, expect } from "bun:test";
-import type {
-  WhatsAppRuntimeConfig,
-} from "@/server/whatsapp-runtime-config.server";
-import type {
-  EntitlementResult,
-} from "@/server/whatsapp-entitlement.server";
-import type {
-  RolloutDecision,
-} from "@/server/whatsapp-rollout.server";
-import type {
-  QuotaConsumeResult,
-} from "@/server/whatsapp-quota.server";
+import type { WhatsAppRuntimeConfig } from "@/server/whatsapp-runtime-config.server";
+import type { EntitlementResult } from "@/server/whatsapp-entitlement.server";
+import type { RolloutDecision } from "@/server/whatsapp-rollout.server";
+import type { QuotaConsumeResult } from "@/server/whatsapp-quota.server";
 import type { PlanRow } from "@/server/whatsapp-cycle-resolver.server";
 import { runInboundProductionGate } from "@/server/whatsapp-c11-gates.server";
 
@@ -135,8 +127,7 @@ function makeDeps(a: DepsFactoryArgs = {}) {
       a.entSpy?.(userId);
       return a.entitlement ?? ent();
     },
-    evaluateRollout: async () =>
-      a.rollout ?? ({ allowed: true, reason: null } as RolloutDecision),
+    evaluateRollout: async () => a.rollout ?? ({ allowed: true, reason: null } as RolloutDecision),
     consumeInboundQuota: async (args: unknown) => {
       a.quotaSpy?.(args);
       return a.quota ?? quotaOk();

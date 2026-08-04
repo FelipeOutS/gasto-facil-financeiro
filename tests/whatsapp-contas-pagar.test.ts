@@ -7,20 +7,12 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
 
-const {
-  detectMarkAsPaidIntent,
-  isBaixaContaSession,
-} = await import("../src/server/whatsapp-contas-pagar.server");
+const { detectMarkAsPaidIntent, isBaixaContaSession } =
+  await import("../src/server/whatsapp-contas-pagar.server");
 
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
-const { handleDueIntent } = await import(
-  "../src/server/whatsapp-contas.server"
-);
-const { todayISOInAppTz } = await import(
-  "../src/server/contas-vencimento.server"
-);
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
+const { handleDueIntent } = await import("../src/server/whatsapp-contas.server");
+const { todayISOInAppTz } = await import("../src/server/contas-vencimento.server");
 
 function msg(texto: string, externalId = `ext-${Math.random().toString(36).slice(2, 10)}`) {
   return {
@@ -84,7 +76,9 @@ describe("WA-C3 — detectMarkAsPaidIntent", () => {
 describe("WA-C3 — fluxo: conta única clara", () => {
   beforeEach(() =>
     resetState({
-      contas: [makeConta({ id: "c-int", nome: "Internet", valor: 119.9, data_vencimento: "2026-07-05" })],
+      contas: [
+        makeConta({ id: "c-int", nome: "Internet", valor: 119.9, data_vencimento: "2026-07-05" }),
+      ],
     }),
   );
 
@@ -176,7 +170,9 @@ describe("WA-C3 — segurança", () => {
 
   it("conta já paga não recebe baixa novamente", async () => {
     resetState({
-      contas: [makeConta({ id: "c-p", nome: "Internet", status: "pago", data_pagamento: "2026-01-10" })],
+      contas: [
+        makeConta({ id: "c-p", nome: "Internet", status: "pago", data_pagamento: "2026-01-10" }),
+      ],
     });
     const out = await processarMensagemWhatsApp(msg("paguei a internet"));
     // findVencimentoByTerm só retorna pendentes → ninguém para baixar.
@@ -247,12 +243,20 @@ describe("WA-C3 — recorrência: só altera UMA ocorrência", () => {
     resetState({
       contas: [
         makeConta({
-          id: "c-int-jul", nome: "Internet", data_vencimento: "2026-07-05",
-          recorrente: true, frequencia_recorrencia: "mensal", recorrencia_id: "rec-1",
+          id: "c-int-jul",
+          nome: "Internet",
+          data_vencimento: "2026-07-05",
+          recorrente: true,
+          frequencia_recorrencia: "mensal",
+          recorrencia_id: "rec-1",
         }),
         makeConta({
-          id: "c-int-ago", nome: "Internet", data_vencimento: "2026-08-05",
-          recorrente: true, frequencia_recorrencia: "mensal", recorrencia_id: "rec-1",
+          id: "c-int-ago",
+          nome: "Internet",
+          data_vencimento: "2026-08-05",
+          recorrente: true,
+          frequencia_recorrencia: "mensal",
+          recorrencia_id: "rec-1",
         }),
       ],
     }),
@@ -318,7 +322,11 @@ describe("WA-C3 — logs seguros", () => {
     const orig = console.info;
     console.info = (...args: unknown[]) => {
       for (const a of args) {
-        if (a && typeof a === "object" && (a as Record<string, unknown>).event === "wa_payable_account_payment") {
+        if (
+          a &&
+          typeof a === "object" &&
+          (a as Record<string, unknown>).event === "wa_payable_account_payment"
+        ) {
           events.push(a as Record<string, unknown>);
         }
       }
@@ -334,9 +342,7 @@ describe("WA-C3 — logs seguros", () => {
       expect(json).not.toContain("c-int");
       expect(json).not.toContain("u1");
       expect(json).not.toContain("5511999998888");
-      expect(Object.keys(e).sort()).toEqual([
-        "candidatesCount", "event", "result", "stage",
-      ]);
+      expect(Object.keys(e).sort()).toEqual(["candidatesCount", "event", "result", "stage"]);
     }
   });
 });

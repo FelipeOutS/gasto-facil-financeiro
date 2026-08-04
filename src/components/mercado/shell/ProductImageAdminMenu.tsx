@@ -107,7 +107,8 @@ export function ProductImageAdminMenu({
     } catch (err) {
       const msg = err instanceof Error ? err.message : "UPLOAD_FAILED";
       if (msg === "FILE_TOO_LARGE") toast.error(t("shell.product.adminImage.toast.tooLarge"));
-      else if (msg === "INVALID_MIME") toast.error(t("shell.product.adminImage.toast.invalidFormat"));
+      else if (msg === "INVALID_MIME")
+        toast.error(t("shell.product.adminImage.toast.invalidFormat"));
       else if (msg === "FORBIDDEN") toast.error(t("shell.product.adminImage.toast.forbidden"));
       else toast.error(t("shell.product.adminImage.toast.uploadFailed"));
     } finally {
@@ -133,7 +134,9 @@ export function ProductImageAdminMenu({
     setOpen(false);
     setBusy("refresh");
     try {
-      const res = await refreshFn({ data: { priceId, force: currentImageSource === "admin_upload" ? false : true } });
+      const res = await refreshFn({
+        data: { priceId, force: currentImageSource === "admin_upload" ? false : true },
+      });
       if (res.ok) {
         toast.success(t("shell.product.adminImage.toast.refreshed"));
         onChanged?.({ imageUrl: res.imageUrl ?? null, imageSource: res.imageSource ?? null });
@@ -256,7 +259,10 @@ export function ProductImageAdminMenu({
                 className="h-full w-full object-contain"
               />
             </div>
-            <p className="mt-2 truncate text-[11px] text-muted-foreground" title={preview.file.name}>
+            <p
+              className="mt-2 truncate text-[11px] text-muted-foreground"
+              title={preview.file.name}
+            >
               {preview.file.name} · {(preview.file.size / 1024).toFixed(0)} KB
             </p>
             <div className="mt-3 flex items-center gap-2">
@@ -274,7 +280,9 @@ export function ProductImageAdminMenu({
                 disabled={busy === "upload"}
                 className="h-10 flex-1 rounded-full bg-brand-grad text-sm font-semibold text-primary-foreground shadow-elevated disabled:opacity-60"
               >
-                {busy === "upload" ? t("shell.product.adminImage.preview.uploading") : t("shell.product.adminImage.preview.confirm")}
+                {busy === "upload"
+                  ? t("shell.product.adminImage.preview.uploading")
+                  : t("shell.product.adminImage.preview.confirm")}
               </button>
             </div>
           </div>

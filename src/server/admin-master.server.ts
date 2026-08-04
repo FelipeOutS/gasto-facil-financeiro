@@ -17,16 +17,23 @@ function getParsedEmails(): string[] {
   const raw = process.env.ADMIN_MASTER_EMAILS ?? "";
   if (!raw.trim()) {
     _cachedEmails = [];
-    console.warn("[admin_master_config_missing] Nenhuma env ADMIN_MASTER_EMAILS configurada ou válida.");
+    console.warn(
+      "[admin_master_config_missing] Nenhuma env ADMIN_MASTER_EMAILS configurada ou válida.",
+    );
     return [];
   }
-  _cachedEmails = Array.from(new Set(
-    raw.split(",")
-      .map(e => e.trim().toLowerCase())
-      .filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))
-  ));
+  _cachedEmails = Array.from(
+    new Set(
+      raw
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)),
+    ),
+  );
   if (_cachedEmails.length === 0) {
-    console.warn("[admin_master_config_missing] Nenhuma env ADMIN_MASTER_EMAILS configurada ou válida.");
+    console.warn(
+      "[admin_master_config_missing] Nenhuma env ADMIN_MASTER_EMAILS configurada ou válida.",
+    );
   }
   return _cachedEmails;
 }
@@ -69,7 +76,9 @@ export function isAdminMasterEmail(email?: string | null): boolean {
   return getParsedEmails().includes(email.trim().toLowerCase());
 }
 
-export async function assertAdminMaster(user: { id: string; email?: string | null } | null | undefined): Promise<void> {
+export async function assertAdminMaster(
+  user: { id: string; email?: string | null } | null | undefined,
+): Promise<void> {
   if (!user) throw new Error("Unauthorized: No session");
   const hasRole = await hasAdminMasterRole(user.id);
   if (!hasRole) {

@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getUserFromRequest, unauthorizedResponse, ensurePremiumFeatureAccess } from "@/server/api-auth";
+import {
+  getUserFromRequest,
+  unauthorizedResponse,
+  ensurePremiumFeatureAccess,
+} from "@/server/api-auth";
 import { enforceUserRateLimit } from "@/server/rate-limit.server";
 import { runExtractor } from "@/server/ocr-comprovante.server";
 
@@ -24,7 +28,12 @@ export const Route = createFileRoute("/api/ocr-gasto")({
         if (!__user) return unauthorizedResponse();
         const __gate = await ensurePremiumFeatureAccess(__user, "importacoes");
         if (__gate) return __gate;
-        const __rl = await enforceUserRateLimit({ scope: "import", userId: __user.id, route: "ocr-gasto", request });
+        const __rl = await enforceUserRateLimit({
+          scope: "import",
+          userId: __user.id,
+          route: "ocr-gasto",
+          request,
+        });
         if (__rl) return __rl;
         try {
           const body = (await request.json()) as { imageBase64?: string };

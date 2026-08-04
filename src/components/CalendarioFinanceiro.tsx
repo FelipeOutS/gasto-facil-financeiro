@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronLeft, ChevronRight, ArrowDown, ArrowUp, AlertTriangle, CheckCircle2, CalendarDays } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ArrowDown,
+  ArrowUp,
+  AlertTriangle,
+  CheckCircle2,
+  CalendarDays,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import {
   Dialog,
@@ -14,7 +22,11 @@ import { cn } from "@/lib/utils";
 import { formatBRL, formatMonthYear, parseDateLocal, todayISO } from "@/lib/format";
 import { getContasAPagar, statusContaEfetivo, useStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
-import { listarContasReceber, statusEfetivo as statusReceberEfetivo, type ContaReceber } from "@/lib/contas-receber";
+import {
+  listarContasReceber,
+  statusEfetivo as statusReceberEfetivo,
+  type ContaReceber,
+} from "@/lib/contas-receber";
 
 type EventoTipo = "pagar" | "receber";
 
@@ -65,9 +77,10 @@ export function CalendarioFinanceiro({
 }) {
   const { t, i18n } = useTranslation("dashboard");
   const weekdaysRaw = t("calendario.weekdays", { returnObjects: true }) as unknown;
-  const WEEKDAYS: string[] = Array.isArray(weekdaysRaw) && weekdaysRaw.length === 7
-    ? (weekdaysRaw as string[])
-    : WEEKDAYS_FALLBACK;
+  const WEEKDAYS: string[] =
+    Array.isArray(weekdaysRaw) && weekdaysRaw.length === 7
+      ? (weekdaysRaw as string[])
+      : WEEKDAYS_FALLBACK;
   const { user } = useAuth();
   const contas = useStore(() => getContasAPagar());
   const [receber, setReceber] = useState<ContaReceber[]>([]);
@@ -133,7 +146,11 @@ export function CalendarioFinanceiro({
 
   function statusInfo(status: string, tipo: EventoTipo) {
     if (status === "pago" || status === "recebido") {
-      return { dot: "bg-emerald-500", label: tipo === "pagar" ? t("calendario.paga") : t("calendario.recebida"), tone: "text-emerald-400" };
+      return {
+        dot: "bg-emerald-500",
+        label: tipo === "pagar" ? t("calendario.paga") : t("calendario.recebida"),
+        tone: "text-emerald-400",
+      };
     }
     if (status === "atrasado") {
       return { dot: "bg-rose-500", label: t("calendario.atrasada"), tone: "text-rose-400" };
@@ -252,13 +269,17 @@ export function CalendarioFinanceiro({
       {/* KPIs do mês */}
       <div className="relative mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-3">
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-2.5 py-2">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("calendario.aPagar")}</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            {t("calendario.aPagar")}
+          </p>
           <p className="mt-0.5 truncate text-sm font-bold text-amber-300">
             <Money value={resumoMes.pagar} />
           </p>
         </div>
         <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 px-2.5 py-2">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("calendario.aReceber")}</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            {t("calendario.aReceber")}
+          </p>
           <p className="mt-0.5 truncate text-sm font-bold text-sky-300">
             <Money value={resumoMes.receber} />
           </p>
@@ -271,7 +292,9 @@ export function CalendarioFinanceiro({
               : "border-border bg-background/40",
           )}
         >
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("calendario.atrasadas")}</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            {t("calendario.atrasadas")}
+          </p>
           <p
             className={cn(
               "mt-0.5 text-sm font-bold",
@@ -313,9 +336,7 @@ export function CalendarioFinanceiro({
                   dim
                     ? "border-transparent text-muted-foreground/40 hover:bg-accent/30"
                     : "border-border/60 bg-background/40 hover:-translate-y-0.5 hover:border-brand/50 hover:bg-card-elevated hover:shadow-md",
-                  isHoje &&
-                    !dim &&
-                    "border-brand/60 bg-brand/5 ring-1 ring-brand/40",
+                  isHoje && !dim && "border-brand/60 bg-brand/5 ring-1 ring-brand/40",
                   hasEvents && !dim && "border-border",
                 )}
               >
@@ -349,12 +370,9 @@ export function CalendarioFinanceiro({
                       {r.temAtrasada && (
                         <span className="inline-flex h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_4px] shadow-rose-500/60" />
                       )}
-                      {r.temPaga &&
-                        !r.temAtrasada &&
-                        r.pagar === 0 &&
-                        r.receber === 0 && (
-                          <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                        )}
+                      {r.temPaga && !r.temAtrasada && r.pagar === 0 && r.receber === 0 && (
+                        <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      )}
                     </div>
                     {(r.pagar > 0 || r.receber > 0) && !compact && (
                       <span
@@ -369,7 +387,9 @@ export function CalendarioFinanceiro({
                       >
                         {r.pagar > 0 && r.receber === 0 && `−${formatBRL(r.pagar)}`}
                         {r.receber > 0 && r.pagar === 0 && `+${formatBRL(r.receber)}`}
-                        {r.pagar > 0 && r.receber > 0 && t("calendario.itens", { count: evs.length })}
+                        {r.pagar > 0 &&
+                          r.receber > 0 &&
+                          t("calendario.itens", { count: evs.length })}
                       </span>
                     )}
                   </div>
@@ -392,7 +412,8 @@ export function CalendarioFinanceiro({
               <span className="h-2 w-2 rounded-full bg-rose-500" /> {t("calendario.atrasada")}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" /> {t("calendario.pagaRecebida")}
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />{" "}
+              {t("calendario.pagaRecebida")}
             </span>
           </div>
         )}
@@ -441,17 +462,22 @@ export function CalendarioFinanceiro({
 
         {/* Próximos vencimentos */}
         <div className="mt-4">
-          <p className="text-xs font-semibold text-muted-foreground">{t("calendario.proximosVencimentos")}</p>
+          <p className="text-xs font-semibold text-muted-foreground">
+            {t("calendario.proximosVencimentos")}
+          </p>
           {proximos.length === 0 ? (
             <p className="mt-2 text-xs text-muted-foreground">{t("calendario.nenhumProximo")}</p>
           ) : (
             <ul className="mt-2 space-y-1.5">
               {proximos.map((ev) => {
                 const info = statusInfo(ev.status, ev.tipo);
-                const dataFmt = (parseDateLocal(ev.iso) ?? new Date()).toLocaleDateString(localeBcp, {
-                  day: "2-digit",
-                  month: "short",
-                });
+                const dataFmt = (parseDateLocal(ev.iso) ?? new Date()).toLocaleDateString(
+                  localeBcp,
+                  {
+                    day: "2-digit",
+                    month: "short",
+                  },
+                );
                 return (
                   <li key={ev.id}>
                     <Link
@@ -487,7 +513,9 @@ export function CalendarioFinanceiro({
             <DialogDescription>
               {eventosDoDia.length === 0
                 ? t("calendario.semLancamentos")
-                : (eventosDoDia.length === 1 ? t("calendario.lancamentoSing", { count: 1 }) : t("calendario.lancamentoPlur", { count: eventosDoDia.length }))}
+                : eventosDoDia.length === 1
+                  ? t("calendario.lancamentoSing", { count: 1 })
+                  : t("calendario.lancamentoPlur", { count: eventosDoDia.length })}
             </DialogDescription>
           </DialogHeader>
 

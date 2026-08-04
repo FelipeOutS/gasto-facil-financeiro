@@ -3,14 +3,7 @@
 // contas a pagar, cartões, recorrências, orçamento, metas, guardado) e
 // devolve um diagnóstico explicável (0–100, level, positives, warnings).
 
-import type {
-  Cartao,
-  ContaAPagar,
-  Gasto,
-  Guardado,
-  Meta,
-  Receita,
-} from "@/lib/types";
+import type { Cartao, ContaAPagar, Gasto, Guardado, Meta, Receita } from "@/lib/types";
 import type { Recorrencia } from "@/lib/recorrencias";
 import type { LinhaOrcamento } from "@/lib/orcamento";
 
@@ -209,13 +202,8 @@ export function calculateFinancialHealthScore(
   }
 
   // D) Recorrências / renda -------------------------------------------------
-  const recAtivas = recorrencias.filter(
-    (r) => r.status === "ativa" || r.status === "suspeita",
-  );
-  const totalRecorrente = recAtivas.reduce(
-    (s, r) => s + recorrenciaMensalEstimada(r),
-    0,
-  );
+  const recAtivas = recorrencias.filter((r) => r.status === "ativa" || r.status === "suspeita");
+  const totalRecorrente = recAtivas.reduce((s, r) => s + recorrenciaMensalEstimada(r), 0);
   if (renda > 0 && totalRecorrente > 0) {
     const share = totalRecorrente / renda;
     if (share > 0.2) {
@@ -289,17 +277,10 @@ export type EconomicHealthInput = {
  * saúde financeira a partir do cenário macro (Selic/CDI/IPCA).
  * Retorna `null` quando não há dados suficientes para gerar a nota.
  */
-export function buildEconomicHealthNote(
-  input: EconomicHealthInput,
-): string | null {
+export function buildEconomicHealthNote(input: EconomicHealthInput): string | null {
   const { level, selic, cdi, ipca } = input;
 
-  const jurosRef =
-    typeof selic === "number"
-      ? selic
-      : typeof cdi === "number"
-        ? cdi
-        : null;
+  const jurosRef = typeof selic === "number" ? selic : typeof cdi === "number" ? cdi : null;
 
   // Sem nenhum indicador → não exibe bloco
   if (jurosRef == null && (ipca == null || Number.isNaN(ipca))) {

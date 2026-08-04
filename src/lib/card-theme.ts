@@ -23,33 +23,52 @@ export type CardTheme = {
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
   let h = hex.replace("#", "").trim();
-  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  if (h.length === 3)
+    h = h
+      .split("")
+      .map((c) => c + c)
+      .join("");
   const n = parseInt(h, 16);
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
 function rgbToHex(r: number, g: number, b: number): string {
-  const c = (v: number) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0");
+  const c = (v: number) =>
+    Math.max(0, Math.min(255, Math.round(v)))
+      .toString(16)
+      .padStart(2, "0");
   return `#${c(r)}${c(g)}${c(b)}`;
 }
 function rgbToHsl(r: number, g: number, b: number) {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h = 0, s = 0;
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
+  let h = 0,
+    s = 0;
   const l = (max + min) / 2;
   if (max !== min) {
     const d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
     switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
     }
     h /= 6;
   }
   return { h: h * 360, s: s * 100, l: l * 100 };
 }
 function hslToRgb(h: number, s: number, l: number) {
-  h /= 360; s /= 100; l /= 100;
+  h /= 360;
+  s /= 100;
+  l /= 100;
   if (s === 0) {
     const v = l * 255;
     return { r: v, g: v, b: v };
@@ -95,9 +114,7 @@ function midShade(hex: string): string {
 
 /* -------------------- issuer overrides -------------------- */
 
-const PREMIUM_BLACK_ISSUERS = new Set(
-  ["mercado pago", "mercadopago", "c6", "c6 bank", "c6bank"],
-);
+const PREMIUM_BLACK_ISSUERS = new Set(["mercado pago", "mercadopago", "c6", "c6 bank", "c6bank"]);
 
 function normalizeIssuer(s?: string): string {
   return (s || "").trim().toLowerCase();

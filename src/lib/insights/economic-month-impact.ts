@@ -7,12 +7,7 @@
  * o Radar BCB, o Diagnóstico Mensal nem a Saúde Financeira.
  */
 
-export type EconomicImpactTone =
-  | "success"
-  | "warning"
-  | "destructive"
-  | "info"
-  | "muted";
+export type EconomicImpactTone = "success" | "warning" | "destructive" | "info" | "muted";
 
 export interface EconomicMonthImpactInput {
   selic?: number | null;
@@ -38,9 +33,7 @@ const JUROS_ALTOS = 12; // % a.a.
 const IPCA_ALTO = 0.6; // % mês
 
 function maiorJuros(selic?: number | null, cdi?: number | null): number | null {
-  const vals = [selic, cdi].filter(
-    (v): v is number => typeof v === "number" && Number.isFinite(v),
-  );
+  const vals = [selic, cdi].filter((v): v is number => typeof v === "number" && Number.isFinite(v));
   if (vals.length === 0) return null;
   return Math.max(...vals);
 }
@@ -49,10 +42,7 @@ export function buildEconomicMonthImpact(
   input: EconomicMonthImpactInput,
 ): EconomicMonthImpact | null {
   const juros = maiorJuros(input.selic, input.cdi);
-  const ipca =
-    typeof input.ipca === "number" && Number.isFinite(input.ipca)
-      ? input.ipca
-      : null;
+  const ipca = typeof input.ipca === "number" && Number.isFinite(input.ipca) ? input.ipca : null;
 
   // Precisamos de ao menos um indicador BCB.
   if (juros === null && ipca === null) return null;

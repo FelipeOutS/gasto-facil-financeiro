@@ -8,19 +8,11 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
 
-const {
-  detectFaturaIntent,
-  handleFaturaIntent,
-} = await import("../src/server/whatsapp-faturas.server");
-const {
-  faturaCorrenteRef,
-  cicloFatura,
-  proximoFechamentoData,
-  proximoVencimentoFaturaAberta,
-} = await import("../src/server/cartao-fatura.server");
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
+const { detectFaturaIntent, handleFaturaIntent } =
+  await import("../src/server/whatsapp-faturas.server");
+const { faturaCorrenteRef, cicloFatura, proximoFechamentoData, proximoVencimentoFaturaAberta } =
+  await import("../src/server/cartao-fatura.server");
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 
 function todayParts() {
   const d = new Date();
@@ -44,9 +36,16 @@ function isoFuture(offsetDays: number): string {
 
 const baseCartoes = (extras: Record<string, unknown>[] = []) => [
   {
-    id: "c-nu", user_id: "u1", nome: "Nubank", banco: "Nubank",
-    limite_total: 2000, dia_fechamento: 1, dia_vencimento: 10, cor: "#000",
-    created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    id: "c-nu",
+    user_id: "u1",
+    nome: "Nubank",
+    banco: "Nubank",
+    limite_total: 2000,
+    dia_fechamento: 1,
+    dia_vencimento: 10,
+    cor: "#000",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   ...extras,
 ];
@@ -69,7 +68,9 @@ describe("detectFaturaIntent (puro)", () => {
     expect(detectFaturaIntent("quando fecha meu cartão?")?.kind).toBe("invoice_closing_date");
   });
   it("reconhece maior fatura", () => {
-    expect(detectFaturaIntent("qual cartão está com a maior fatura?")?.kind).toBe("invoice_highest");
+    expect(detectFaturaIntent("qual cartão está com a maior fatura?")?.kind).toBe(
+      "invoice_highest",
+    );
     expect(detectFaturaIntent("qual fatura está mais alta?")?.kind).toBe("invoice_highest");
   });
   it("ignora frases que não são consulta de fatura", () => {
@@ -109,8 +110,24 @@ describe("handleFaturaIntent — usuário com um cartão", () => {
   });
   it("consolidado calcula fatura corrente de um cartão", async () => {
     state.gastosData = [
-      { user_id: "u1", cartao_id: "c-nu", valor: 120.5, data: isoToday(), forma_pagamento: "credito", confirmado: true, invoice_month: null },
-      { user_id: "u1", cartao_id: "c-nu", valor: 30, data: isoToday(), forma_pagamento: "credito", confirmado: true, invoice_month: null },
+      {
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 120.5,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+      },
+      {
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 30,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+      },
     ];
     const out = await handleFaturaIntent("u1", { kind: "invoice_total" });
     expect(out.status).toBe("answered");
@@ -119,7 +136,15 @@ describe("handleFaturaIntent — usuário com um cartão", () => {
   });
   it("consulta por cartão específico mostra vencimento, fechamento e limite", async () => {
     state.gastosData = [
-      { user_id: "u1", cartao_id: "c-nu", valor: 100, data: isoToday(), forma_pagamento: "credito", confirmado: true, invoice_month: null },
+      {
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 100,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+      },
     ];
     const out = await handleFaturaIntent("u1", { kind: "invoice_card", termo: "Nubank" });
     expect(out.status).toBe("answered");
@@ -135,17 +160,40 @@ describe("handleFaturaIntent — usuário com vários cartões", () => {
     resetState({
       cartoes: baseCartoes([
         {
-          id: "c-it", user_id: "u1", nome: "Inter", banco: "Inter",
-          limite_total: 1000, dia_fechamento: 1, dia_vencimento: 10, cor: "#000",
-          created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+          id: "c-it",
+          user_id: "u1",
+          nome: "Inter",
+          banco: "Inter",
+          limite_total: 1000,
+          dia_fechamento: 1,
+          dia_vencimento: 10,
+          cor: "#000",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         },
       ]),
     });
   });
   it("consolidado soma todas as faturas e indica a maior", async () => {
     state.gastosData = [
-      { user_id: "u1", cartao_id: "c-nu", valor: 300, data: isoToday(), forma_pagamento: "credito", confirmado: true, invoice_month: null },
-      { user_id: "u1", cartao_id: "c-it", valor: 700, data: isoToday(), forma_pagamento: "credito", confirmado: true, invoice_month: null },
+      {
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 300,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+      },
+      {
+        user_id: "u1",
+        cartao_id: "c-it",
+        valor: 700,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+      },
     ];
     const out = await handleFaturaIntent("u1", { kind: "invoice_total" });
     expect(out.status).toBe("answered");
@@ -162,8 +210,24 @@ describe("handleFaturaIntent — usuário com vários cartões", () => {
   });
   it("maior fatura responde com cartão e valor", async () => {
     state.gastosData = [
-      { user_id: "u1", cartao_id: "c-nu", valor: 50, data: isoToday(), forma_pagamento: "credito", confirmado: true, invoice_month: null },
-      { user_id: "u1", cartao_id: "c-it", valor: 500, data: isoToday(), forma_pagamento: "credito", confirmado: true, invoice_month: null },
+      {
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 50,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+      },
+      {
+        user_id: "u1",
+        cartao_id: "c-it",
+        valor: 500,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+      },
     ];
     const out = await handleFaturaIntent("u1", { kind: "invoice_highest" });
     expect(out.status).toBe("answered");
@@ -173,11 +237,21 @@ describe("handleFaturaIntent — usuário com vários cartões", () => {
 });
 
 describe("handleFaturaIntent — regras de exclusão", () => {
-  beforeEach(() => { resetState({ cartoes: baseCartoes() }); });
+  beforeEach(() => {
+    resetState({ cartoes: baseCartoes() });
+  });
 
   it("gasto sem cartão não entra na fatura", async () => {
     state.gastosData = [
-      { user_id: "u1", cartao_id: null, valor: 999, data: isoToday(), forma_pagamento: "debito", confirmado: true, invoice_month: null },
+      {
+        user_id: "u1",
+        cartao_id: null,
+        valor: 999,
+        data: isoToday(),
+        forma_pagamento: "debito",
+        confirmado: true,
+        invoice_month: null,
+      },
     ];
     const out = await handleFaturaIntent("u1", { kind: "invoice_total" });
     expect(out.resposta).toContain(BRL("R$ 0,00"));
@@ -185,7 +259,15 @@ describe("handleFaturaIntent — regras de exclusão", () => {
 
   it("gasto futuro de fatura seguinte não entra (invoice_month diferente)", async () => {
     state.gastosData = [
-      { user_id: "u1", cartao_id: "c-nu", valor: 200, data: isoFuture(40), forma_pagamento: "credito", confirmado: true, invoice_month: "2099-12" },
+      {
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 200,
+        data: isoFuture(40),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: "2099-12",
+      },
     ];
     const out = await handleFaturaIntent("u1", { kind: "invoice_total" });
     expect(out.resposta).toContain(BRL("R$ 0,00"));
@@ -199,8 +281,24 @@ describe("handleFaturaIntent — regras de exclusão", () => {
 
   it("cartão ambíguo pede desambiguação", async () => {
     state.cartoesData = [
-      { id: "c-nu", user_id: "u1", nome: "Nubank", banco: "Nubank", limite_total: 0, dia_fechamento: 1, dia_vencimento: 10 },
-      { id: "c-nu2", user_id: "u1", nome: "Nubank Ouro", banco: "Nubank", limite_total: 0, dia_fechamento: 1, dia_vencimento: 10 },
+      {
+        id: "c-nu",
+        user_id: "u1",
+        nome: "Nubank",
+        banco: "Nubank",
+        limite_total: 0,
+        dia_fechamento: 1,
+        dia_vencimento: 10,
+      },
+      {
+        id: "c-nu2",
+        user_id: "u1",
+        nome: "Nubank Ouro",
+        banco: "Nubank",
+        limite_total: 0,
+        dia_fechamento: 1,
+        dia_vencimento: 10,
+      },
     ];
     const out = await handleFaturaIntent("u1", { kind: "invoice_card", termo: "nubank" });
     expect(out.status).toBe("ambiguous_card");
@@ -213,7 +311,15 @@ describe("Pipeline WhatsApp — consulta de fatura", () => {
   beforeEach(() => {
     resetState({ cartoes: baseCartoes() });
     state.gastosData = [
-      { user_id: "u1", cartao_id: "c-nu", valor: 100, data: isoToday(), forma_pagamento: "credito", confirmado: true, invoice_month: null },
+      {
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 100,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+      },
     ];
   });
 
@@ -262,7 +368,15 @@ describe("Privacidade — não vaza dados de outro usuário", () => {
   it("findCartoesDoUsuarioByTerm filtra por user_id (cartões de outro usuário ficam fora)", async () => {
     resetState({
       cartoes: [
-        { id: "c-out", user_id: "outro", nome: "Bradesco", banco: "Bradesco", limite_total: 0, dia_fechamento: 1, dia_vencimento: 10 },
+        {
+          id: "c-out",
+          user_id: "outro",
+          nome: "Bradesco",
+          banco: "Bradesco",
+          limite_total: 0,
+          dia_fechamento: 1,
+          dia_vencimento: 10,
+        },
       ],
     });
     // O fake mock não filtra cartoes por user_id (retorna todos), mas o
@@ -281,7 +395,15 @@ describe("Log seguro de wa_invoice_query", () => {
   it("não contém valor, nome de cartão, userId, telefone ou texto", async () => {
     resetState({ cartoes: baseCartoes() });
     state.gastosData = [
-      { user_id: "u1", cartao_id: "c-nu", valor: 777, data: isoToday(), forma_pagamento: "credito", confirmado: true, invoice_month: null },
+      {
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 777,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+      },
     ];
     const events: unknown[] = [];
     const origInfo = console.info;
@@ -294,8 +416,12 @@ describe("Log seguro de wa_invoice_query", () => {
     } finally {
       console.info = origInfo;
     }
-    const fatura = events.find((e): e is Record<string, unknown> =>
-      typeof e === "object" && e !== null && (e as Record<string, unknown>).event === "wa_invoice_query");
+    const fatura = events.find(
+      (e): e is Record<string, unknown> =>
+        typeof e === "object" &&
+        e !== null &&
+        (e as Record<string, unknown>).event === "wa_invoice_query",
+    );
     expect(fatura).toBeDefined();
     const serialized = JSON.stringify(fatura);
     expect(serialized).not.toContain("777");

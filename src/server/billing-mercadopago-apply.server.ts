@@ -129,11 +129,7 @@ export function normalizeCanonicalStatus(
  * Retorna ISO string ou null (a RPC lida com null aceitando ordem por external_payment_id).
  */
 export function extractProviderUpdatedAt(payment: AuthoritativeMpPayment): string | null {
-  const raw =
-    payment.date_last_updated ??
-    payment.date_approved ??
-    payment.date_created ??
-    null;
+  const raw = payment.date_last_updated ?? payment.date_approved ?? payment.date_created ?? null;
   if (!raw) return null;
   const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return null;
@@ -157,7 +153,8 @@ function logSanitized(
       k === "email" ||
       k === "external_reference" ||
       k === "raw_body"
-    ) continue;
+    )
+      continue;
     safe[k] = v;
   }
   const line = `[billing-apply] ${msg} ${JSON.stringify(safe)}`;
@@ -203,9 +200,10 @@ export async function applyMercadoPagoBillingEvent(
     source: input.eventType,
     environment: input.environment ?? "production",
     status_detail: input.payment.status_detail ?? null,
-    amount: typeof input.payment.transaction_amount === "number"
-      ? input.payment.transaction_amount
-      : null,
+    amount:
+      typeof input.payment.transaction_amount === "number"
+        ? input.payment.transaction_amount
+        : null,
     currency: input.payment.currency_id ?? null,
   };
 
@@ -213,7 +211,7 @@ export async function applyMercadoPagoBillingEvent(
     const { data, error } = await supabaseAdmin.rpc(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       "billing_apply_mercadopago_event_atomic" as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       {
         p_user_id: input.userId,
         p_provider: "mercado_pago",

@@ -3,7 +3,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-
 const CONTA_GASTO_ORIGEM = "contas_a_pagar";
 
 const formaSchema = z.enum([
@@ -158,8 +157,7 @@ export const markContaAPagarPaid = createServerFn({ method: "POST" })
           ? conta.mes_referencia
           : null);
       const ymPag = monthYear(dataPagamento);
-      const invoiceMonth =
-        mesRefInput ?? `${ymPag.ano}-${String(ymPag.mes).padStart(2, "0")}`;
+      const invoiceMonth = mesRefInput ?? `${ymPag.ano}-${String(ymPag.mes).padStart(2, "0")}`;
       const [refAnoStr, refMesStr] = invoiceMonth.split("-");
       const refAno = Number(refAnoStr);
       const refMes = Number(refMesStr);
@@ -176,9 +174,7 @@ export const markContaAPagarPaid = createServerFn({ method: "POST" })
           .eq("user_id", userId)
           .eq("mes", refMes)
           .eq("ano", refAno);
-        const candidata = (faturas ?? []).find(
-          (f: any) => f.status !== "paga",
-        );
+        const candidata = (faturas ?? []).find((f: any) => f.status !== "paga");
         if (candidata) {
           await sb
             .from("faturas_cartao")

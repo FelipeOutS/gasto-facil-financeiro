@@ -169,20 +169,21 @@ afterEach(() => {
 });
 
 // ─── Importa as rotas DEPOIS dos mocks ────────────────────────────────────
-const { Route: DispatcherRoute } = await import(
-  "../src/routes/api/public.hooks.whatsapp-dispatcher"
-);
-const { Route: WebhookRoute } = await import(
-  "../src/routes/api/public.whatsapp.expense"
-);
+const { Route: DispatcherRoute } =
+  await import("../src/routes/api/public.hooks.whatsapp-dispatcher");
+const { Route: WebhookRoute } = await import("../src/routes/api/public.whatsapp.expense");
 
 type HttpHandler = (ctx: { request: Request }) => Promise<Response>;
-const dispatcherPOST = (DispatcherRoute as unknown as {
-  options: { server: { handlers: { POST: HttpHandler } } };
-}).options.server.handlers.POST;
-const webhookHandlers = (WebhookRoute as unknown as {
-  options: { server: { handlers: Record<string, HttpHandler> } };
-}).options.server.handlers;
+const dispatcherPOST = (
+  DispatcherRoute as unknown as {
+    options: { server: { handlers: { POST: HttpHandler } } };
+  }
+).options.server.handlers.POST;
+const webhookHandlers = (
+  WebhookRoute as unknown as {
+    options: { server: { handlers: Record<string, HttpHandler> } };
+  }
+).options.server.handlers;
 
 function signBody(body: string): string {
   return createHmac("sha256", DISPATCHER_SECRET).update(body).digest("hex");
@@ -235,7 +236,7 @@ test("dispatcher: POST com HMAC inválido → 401 e nenhuma operação", async (
 });
 
 test("dispatcher: HMAC assinado sobre outro corpo → 401", async () => {
-  const res = await callDispatcher({ body: "{}", signature: signBody("{\"x\":1}") });
+  const res = await callDispatcher({ body: "{}", signature: signBody('{"x":1}') });
   expect(res.status).toBe(401);
   assertNoOperationalCalls();
 });

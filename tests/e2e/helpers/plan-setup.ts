@@ -12,7 +12,12 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { E2EEnv } from "./env";
 
 export type PlanSetupResult =
-  | { mode: "admin"; userId: string; restore: () => Promise<void>; assertNoFreeAds: () => Promise<void> }
+  | {
+      mode: "admin";
+      userId: string;
+      restore: () => Promise<void>;
+      assertNoFreeAds: () => Promise<void>;
+    }
   | { mode: "manual"; reason: string };
 
 function adminClient(env: E2EEnv): SupabaseClient {
@@ -30,9 +35,7 @@ async function resolveUserId(admin: SupabaseClient, env: E2EEnv): Promise<string
   // Em produção real isso não é chamado (sem service role).
   const { data, error } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
   if (error) throw error;
-  const match = data.users.find(
-    (u) => (u.email ?? "").toLowerCase() === env.qaEmail.toLowerCase(),
-  );
+  const match = data.users.find((u) => (u.email ?? "").toLowerCase() === env.qaEmail.toLowerCase());
   return match?.id ?? null;
 }
 

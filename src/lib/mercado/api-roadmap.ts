@@ -26,13 +26,7 @@ export type MercadoApiStatus =
 
 export type MercadoApiFutureFeature = {
   /** Identificador estável (não traduzir). */
-  id:
-    | "barcode"
-    | "cep"
-    | "places"
-    | "ocr"
-    | "nfce"
-    | "communityPrices";
+  id: "barcode" | "cep" | "places" | "ocr" | "nfce" | "communityPrices";
   /** Nome curto e amigável apenas para documentação interna. */
   label: string;
   /** Provedor externo previsto (pode mudar). */
@@ -52,8 +46,7 @@ export const MERCADO_API_ROADMAP: ReadonlyArray<MercadoApiFutureFeature> = [
     label: "Código de barras (Open Food Facts)",
     provider: "world.openfoodfoods.org",
     status: "ativo-local",
-    purpose:
-      "Preencher apenas o nome do produto a partir de um EAN/UPC ao adicionar item à lista.",
+    purpose: "Preencher apenas o nome do produto a partir de um EAN/UPC ao adicionar item à lista.",
     privacy:
       "Envia apenas o código de barras digitado. Não envia preço, lista, identidade do usuário nem localização. Resultado é descartado após preencher o nome (sem persistência automática).",
     requiresBackend: false,
@@ -96,8 +89,7 @@ export const MERCADO_API_ROADMAP: ReadonlyArray<MercadoApiFutureFeature> = [
     label: "NFC-e por QR Code / chave de acesso",
     provider: "Portais SEFAZ estaduais (variam por UF)",
     status: "futuro",
-    purpose:
-      "Importar automaticamente itens e preços de uma NFC-e a partir do QR Code do cupom.",
+    purpose: "Importar automaticamente itens e preços de uma NFC-e a partir do QR Code do cupom.",
     privacy:
       "A chave da NFC-e é um identificador fiscal sensível. Toda consulta deve ocorrer via backend próprio (proxy) para evitar CORS e proteger headers. Exigir opt-in e nunca armazenar a chave sem necessidade.",
     requiresBackend: true,

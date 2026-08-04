@@ -73,8 +73,7 @@ export const Route = createFileRoute("/assinaturas/")({
       { title: "Assinaturas e recorrências — Gasto Inteligente" },
       {
         name: "description",
-        content:
-          "Veja quais gastos voltam todo mês e quanto eles pesam no seu orçamento.",
+        content: "Veja quais gastos voltam todo mês e quanto eles pesam no seu orçamento.",
       },
     ],
   }),
@@ -143,9 +142,7 @@ function AssinaturasPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Recorrencia | null>(null);
   const [historicoOpen, setHistoricoOpen] = useState<Recorrencia | null>(null);
-  const [filtroStatus, setFiltroStatus] = useState<"todas" | StatusRecorrencia>(
-    "todas",
-  );
+  const [filtroStatus, setFiltroStatus] = useState<"todas" | StatusRecorrencia>("todas");
   const [debugAnalise, setDebugAnalise] = useState<null | {
     gastos: number;
     analisados: number;
@@ -159,7 +156,7 @@ function AssinaturasPage() {
 
   const categoriaNomePorId = useMemo(() => {
     const map = new Map(categorias.map((c) => [c.id, c.nome]));
-    return (id: string | null | undefined) => (id ? map.get(id) ?? null : null);
+    return (id: string | null | undefined) => (id ? (map.get(id) ?? null) : null);
   }, [categorias]);
 
   function openCreate() {
@@ -200,7 +197,10 @@ function AssinaturasPage() {
         suspeitas: r.suspeitas,
         assinaturas: r.assinaturas,
         fixas: r.fixas,
-        nomes: gastosAtuais.map((g) => g.estabelecimento || g.descricao).filter(Boolean).slice(0, 20),
+        nomes: gastosAtuais
+          .map((g) => g.estabelecimento || g.descricao)
+          .filter(Boolean)
+          .slice(0, 20),
       });
       if (r.criadas + r.suspeitas > 0) {
         toast.success(
@@ -249,9 +249,7 @@ function AssinaturasPage() {
         out.push(t("insights.topCard", { count: topCartao[1], card: card.nome }));
       }
     }
-    const aumentos = recs.filter(
-      (r) => r.ultimoValor && Math.abs(r.valor - r.ultimoValor) > 0.5,
-    );
+    const aumentos = recs.filter((r) => r.ultimoValor && Math.abs(r.valor - r.ultimoValor) > 0.5);
     for (const r of aumentos.slice(0, 1)) {
       const diff = r.valor - (r.ultimoValor ?? 0);
       if (diff > 0) {
@@ -262,9 +260,7 @@ function AssinaturasPage() {
   }, [recs, totais, t]);
 
   const orcamentoAssinaturas = useMemo(() => {
-    const cat = categorias.find(
-      (c) => c.nome.toLowerCase() === "assinaturas",
-    );
+    const cat = categorias.find((c) => c.nome.toLowerCase() === "assinaturas");
     if (!cat) return null;
     const hoje = new Date();
     const limite = getLimite(cat.id, hoje.getMonth() + 1, hoje.getFullYear());
@@ -295,9 +291,7 @@ function AssinaturasPage() {
         fixas: r.fixas,
         nomes: nomes.slice(0, 20),
       });
-      toast.success(
-        t("toasts.syncDone", { ativas: r.criadas, suspeitas: r.suspeitas }),
-      );
+      toast.success(t("toasts.syncDone", { ativas: r.criadas, suspeitas: r.suspeitas }));
     } finally {
       setSyncing(false);
     }
@@ -361,12 +355,8 @@ function AssinaturasPage() {
       <header className="pt-6 pb-4 lg:pt-10">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">
-              {t("title")}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("subtitle")}
-            </p>
+            <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">{t("title")}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <Button
@@ -423,9 +413,7 @@ function AssinaturasPage() {
               {t("suspects.heading", { count: suspeitas.length })}
             </h2>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t("suspects.hint")}
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{t("suspects.hint")}</p>
           <ul className="mt-3 space-y-2">
             {suspeitas.map((r) => (
               <li
@@ -436,38 +424,27 @@ function AssinaturasPage() {
                   <TransactionAvatar
                     estabelecimento={r.nome}
                     categoria={
-                      r.categoriaId
-                        ? getCategoriaById(r.categoriaId) ?? undefined
-                        : undefined
+                      r.categoriaId ? (getCategoriaById(r.categoriaId) ?? undefined) : undefined
                     }
                     size="md"
                   />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{r.nome}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {formatBRL(r.valor)} · {tipoLabel(r.tipoRecorrencia)} · {getCategoriaById(r.categoriaId ?? "")?.nome ?? t("suspects.noCategory")} · {freqLabel(r.frequencia)}
+                      {formatBRL(r.valor)} · {tipoLabel(r.tipoRecorrencia)} ·{" "}
+                      {getCategoriaById(r.categoriaId ?? "")?.nome ?? t("suspects.noCategory")} ·{" "}
+                      {freqLabel(r.frequencia)}
                     </p>
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openEdit(r)}
-                  >
+                  <Button size="sm" variant="outline" onClick={() => openEdit(r)}>
                     {t("actions.edit")}
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleIgnorar(r)}
-                  >
+                  <Button size="sm" variant="outline" onClick={() => handleIgnorar(r)}>
                     {t("actions.ignore")}
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleConfirmarSuspeita(r)}
-                  >
+                  <Button size="sm" onClick={() => handleConfirmarSuspeita(r)}>
                     <Check className="h-4 w-4" /> {t("actions.confirm")}
                   </Button>
                 </div>
@@ -490,17 +467,14 @@ function AssinaturasPage() {
           </ul>
           {orcamentoAssinaturas && (
             <div className="mt-3 rounded-xl border border-border/40 bg-background/40 p-3 text-xs">
-              <p className="font-medium text-foreground">
-                {t("insights.budgetTitle")}
-              </p>
+              <p className="font-medium text-foreground">{t("insights.budgetTitle")}</p>
               <p className="text-muted-foreground">
                 {t("insights.budgetLine", {
                   limit: formatBRL(orcamentoAssinaturas.limite),
                   total: formatBRL(orcamentoAssinaturas.totalRec),
                 })}
               </p>
-              {orcamentoAssinaturas.totalRec >
-                orcamentoAssinaturas.limite * 0.8 && (
+              {orcamentoAssinaturas.totalRec > orcamentoAssinaturas.limite * 0.8 && (
                 <p className="mt-1 flex items-center gap-1 text-amber-400">
                   <AlertTriangle className="h-3 w-3" />
                   {t("insights.budgetWarn")}
@@ -512,22 +486,20 @@ function AssinaturasPage() {
       )}
 
       <div className="mt-6 flex items-center gap-2 overflow-x-auto pb-2">
-        {(["todas", "ativa", "pausada", "suspeita", "cancelada"] as const).map(
-          (s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setFiltroStatus(s)}
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                filtroStatus === s
-                  ? "border-brand bg-brand-soft text-brand-on-soft"
-                  : "border-border/60 text-muted-foreground hover:bg-accent/40"
-              }`}
-            >
-              {s === "todas" ? t("status.all") : statusLabel(s)}
-            </button>
-          ),
-        )}
+        {(["todas", "ativa", "pausada", "suspeita", "cancelada"] as const).map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => setFiltroStatus(s)}
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+              filtroStatus === s
+                ? "border-brand bg-brand-soft text-brand-on-soft"
+                : "border-border/60 text-muted-foreground hover:bg-accent/40"
+            }`}
+          >
+            {s === "todas" ? t("status.all") : statusLabel(s)}
+          </button>
+        ))}
       </div>
 
       <section className="mt-2 space-y-3">
@@ -537,11 +509,11 @@ function AssinaturasPage() {
             <p className="mt-3 text-sm font-medium">
               {filtroStatus === "todas"
                 ? t("empty.none")
-                : t("empty.noneStatus", { status: statusLabel(filtroStatus as StatusRecorrencia).toLowerCase() })}
+                : t("empty.noneStatus", {
+                    status: statusLabel(filtroStatus as StatusRecorrencia).toLowerCase(),
+                  })}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("empty.hint")}
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("empty.hint")}</p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               <Button className="min-h-11" onClick={openCreate}>
                 <Plus className="h-4 w-4" /> {t("empty.cta")}
@@ -565,7 +537,9 @@ function AssinaturasPage() {
                 <p>{t("debug.suspects", { n: debugAnalise.suspeitas })}</p>
                 <p>{t("debug.subs", { n: debugAnalise.assinaturas })}</p>
                 <p>{t("debug.fixed", { n: debugAnalise.fixas })}</p>
-                <p className="mt-2 truncate">{t("debug.sample", { names: debugAnalise.nomes.join(", ") || t("prazo.dash") })}</p>
+                <p className="mt-2 truncate">
+                  {t("debug.sample", { names: debugAnalise.nomes.join(", ") || t("prazo.dash") })}
+                </p>
               </div>
             )}
           </div>
@@ -601,18 +575,13 @@ function AssinaturasPage() {
         />
       )}
 
-      <Dialog
-        open={!!historicoOpen}
-        onOpenChange={(o) => !o && setHistoricoOpen(null)}
-      >
+      <Dialog open={!!historicoOpen} onOpenChange={(o) => !o && setHistoricoOpen(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{historicoOpen?.nome}</DialogTitle>
             <DialogDescription>{t("history.title")}</DialogDescription>
           </DialogHeader>
-          {historicoOpen && (
-            <HistoricoLista rec={historicoOpen} gastos={gastos} />
-          )}
+          {historicoOpen && <HistoricoLista rec={historicoOpen} gastos={gastos} />}
         </DialogContent>
       </Dialog>
 
@@ -624,7 +593,6 @@ function AssinaturasPage() {
         feature="assinaturas_recorrencias"
       />
     </MobileShell>
-
   );
 }
 
@@ -686,18 +654,11 @@ function RecorrenciaCard({
   return (
     <article className="rounded-2xl border border-border/60 bg-card/50 p-3 transition-colors hover:bg-card/70 lg:p-4">
       <div className="flex items-start gap-3">
-        <TransactionAvatar
-          estabelecimento={rec.nome}
-          categoria={cat}
-          size="md"
-        />
+        <TransactionAvatar estabelecimento={rec.nome} categoria={cat} size="md" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h3 className="truncate text-sm font-semibold">{rec.nome}</h3>
-            <Badge
-              variant="outline"
-              className={`shrink-0 text-[10px] ${STATUS_BADGE[rec.status]}`}
-            >
+            <Badge variant="outline" className={`shrink-0 text-[10px] ${STATUS_BADGE[rec.status]}`}>
               {statusLabel(rec.status)}
             </Badge>
             {rec.moeda && rec.moeda !== "BRL" && (
@@ -717,14 +678,18 @@ function RecorrenciaCard({
               </span>
             ) : null}
             <span className="ml-1 text-xs font-normal text-muted-foreground">
-              /{rec.frequencia === "mensal" ? t("freq.monthShort") : freqLabel(rec.frequencia).toLowerCase()}
+              /
+              {rec.frequencia === "mensal"
+                ? t("freq.monthShort")
+                : freqLabel(rec.frequencia).toLowerCase()}
             </span>
           </p>
           <p className="mt-1 truncate text-xs text-muted-foreground">
             {tipoLabel(rec.tipoRecorrencia)} · {cat?.nome ?? t("card.noCategory")}
             {formaLabel && ` · ${formaLabel}`}
             {cartao && ` · ${cartao.nome}`}
-            {rec.proximaCobranca && ` · ${t("card.nextLabel", { when: describePrazo(t, rec.proximaCobranca) })}`}
+            {rec.proximaCobranca &&
+              ` · ${t("card.nextLabel", { when: describePrazo(t, rec.proximaCobranca) })}`}
           </p>
           {aumentou && (
             <p className="mt-1.5 flex items-center gap-1 text-[11px] text-amber-400">
@@ -793,16 +758,11 @@ function HistoricoLista({
   gastos: ReturnType<typeof getGastos>;
 }) {
   const { t } = useTranslation("assinaturas");
-  const historico = useMemo(
-    () => historicoDaRecorrencia(rec, gastos),
-    [rec, gastos],
-  );
+  const historico = useMemo(() => historicoDaRecorrencia(rec, gastos), [rec, gastos]);
   return (
     <div className="space-y-2">
       {historico.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          {t("history.empty")}
-        </p>
+        <p className="text-sm text-muted-foreground">{t("history.empty")}</p>
       )}
       {historico.map((g) => (
         <div
@@ -815,10 +775,7 @@ function HistoricoLista({
               {parseDateLocal(g.data)?.toLocaleDateString("pt-BR")}
             </p>
           </div>
-          <a
-            href={`/gastos?highlight=${g.id}`}
-            className="text-xs text-brand hover:underline"
-          >
+          <a href={`/gastos?highlight=${g.id}`} className="text-xs text-brand hover:underline">
             {t("history.view")}
           </a>
         </div>
@@ -828,7 +785,9 @@ function HistoricoLista({
           <div>
             <p className="font-medium text-brand">{formatBRL(rec.valor)}</p>
             <p className="text-xs text-muted-foreground">
-              {t("history.forecast", { date: parseDateLocal(rec.proximaCobranca)?.toLocaleDateString("pt-BR") ?? "" })}
+              {t("history.forecast", {
+                date: parseDateLocal(rec.proximaCobranca)?.toLocaleDateString("pt-BR") ?? "",
+              })}
             </p>
           </div>
           <Badge variant="outline" className="text-[10px]">

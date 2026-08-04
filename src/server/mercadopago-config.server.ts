@@ -58,7 +58,7 @@ export const DEFAULT_CHECKOUT_TTL_MINUTES = 30;
 
 type Env = Record<string, string | undefined>;
 
-/** 
+/**
  * Classifica um token do MP pelo prefixo.
  * ATENÇÃO (Prompt 4A.1): O prefixo não é garantia absoluta de ambiente.
  * Credenciais de teste podem usar APP_USR-.
@@ -71,7 +71,7 @@ export function classifyTokenPrefix(
   // O prefixo TEST- é garantidamente sandbox.
   if (t.startsWith("TEST-")) return "sandbox";
   // APP_USR- pode ser produção OU sandbox (conta de teste).
-  if (t.startsWith("APP_USR-")) return "production"; 
+  if (t.startsWith("APP_USR-")) return "production";
   return "unknown";
 }
 
@@ -140,7 +140,9 @@ export function resolveMercadoPagoConfig(env: Env = process.env as Env): MpResol
   if (declared === "production" || declared === "sandbox") {
     environment = declared;
   } else if (declared.length > 0) {
-    diagnostics.push("MERCADO_PAGO_ENVIRONMENT com valor inválido (esperado 'production' ou 'sandbox')");
+    diagnostics.push(
+      "MERCADO_PAGO_ENVIRONMENT com valor inválido (esperado 'production' ou 'sandbox')",
+    );
     return blocked("unresolved_environment", diagnostics, env);
   } else {
     // Ausente/vazio — modo legado retrocompatível.
@@ -164,10 +166,12 @@ export function resolveMercadoPagoConfig(env: Env = process.env as Env): MpResol
     const accessToken = pick(env, "MERCADO_PAGO_SANDBOX_ACCESS_TOKEN");
     const webhookSecret = pick(env, "MERCADO_PAGO_SANDBOX_WEBHOOK_SECRET");
     const publicKey = pick(env, "MERCADO_PAGO_SANDBOX_PUBLIC_KEY");
-    
+
     // Se não há NENHUMA credencial sandbox, retorna erro controlado de não configurado
     if (!accessToken && !webhookSecret && !publicKey) {
-      diagnostics.push("Sandbox CANCELADO por decisão do proprietário (Prompt 4 OFICIAL). Ative o modo produção.");
+      diagnostics.push(
+        "Sandbox CANCELADO por decisão do proprietário (Prompt 4 OFICIAL). Ative o modo produção.",
+      );
       return blocked("sandbox_not_configured", diagnostics, env, "sandbox");
     }
 
@@ -175,9 +179,11 @@ export function resolveMercadoPagoConfig(env: Env = process.env as Env): MpResol
     if (!accessToken) missing.push("MERCADO_PAGO_SANDBOX_ACCESS_TOKEN");
     if (!webhookSecret) missing.push("MERCADO_PAGO_SANDBOX_WEBHOOK_SECRET");
     if (!publicKey) missing.push("MERCADO_PAGO_SANDBOX_PUBLIC_KEY");
-    
+
     if (missing.length > 0) {
-      diagnostics.push(`Sandbox com credenciais incompletas: ${missing.join(", ")} (sem fallback para produção)`);
+      diagnostics.push(
+        `Sandbox com credenciais incompletas: ${missing.join(", ")} (sem fallback para produção)`,
+      );
       return blocked("missing_sandbox_credentials", diagnostics, env, "sandbox");
     }
 
@@ -187,7 +193,9 @@ export function resolveMercadoPagoConfig(env: Env = process.env as Env): MpResol
 
     const siteBaseUrl = pick(env, "MERCADO_PAGO_SANDBOX_BASE_URL");
     if (!siteBaseUrl) {
-      diagnostics.push("Sandbox sem MERCADO_PAGO_SANDBOX_BASE_URL — não é permitido usar o domínio de produção");
+      diagnostics.push(
+        "Sandbox sem MERCADO_PAGO_SANDBOX_BASE_URL — não é permitido usar o domínio de produção",
+      );
       return blocked("missing_sandbox_base_url", diagnostics, env, "sandbox");
     }
 
@@ -244,13 +252,14 @@ export function resolveMercadoPagoConfig(env: Env = process.env as Env): MpResol
 
   // Em produção, forçamos o domínio oficial se não houver override explícito.
   // JAMAIS permitimos URL de preview em produção.
-  const siteBaseUrl = (pick(env, "MERCADO_PAGO_PRODUCTION_BASE_URL") ?? PRODUCTION_SITE_URL).replace(
-    /\/+$/,
-    "",
-  );
-  
+  const siteBaseUrl = (
+    pick(env, "MERCADO_PAGO_PRODUCTION_BASE_URL") ?? PRODUCTION_SITE_URL
+  ).replace(/\/+$/, "");
+
   if (siteBaseUrl.includes("lovable.app") || siteBaseUrl.includes("localhost")) {
-    diagnostics.push("URL de produção configurada para preview/localhost — BLOQUEADO por segurança");
+    diagnostics.push(
+      "URL de produção configurada para preview/localhost — BLOQUEADO por segurança",
+    );
     return blocked("unresolved_environment", diagnostics, env, "production");
   }
 
@@ -263,11 +272,13 @@ export function resolveMercadoPagoConfig(env: Env = process.env as Env): MpResol
     state: legacyMode || legacyFallbackUsed ? "legacy_production" : "ok",
     accessToken,
     webhookSecret,
-    publicKey: pick(env, "MERCADO_PAGO_PRODUCTION_PUBLIC_KEY") ?? pick(env, "MERCADO_PAGO_PUBLIC_KEY"),
+    publicKey:
+      pick(env, "MERCADO_PAGO_PRODUCTION_PUBLIC_KEY") ?? pick(env, "MERCADO_PAGO_PUBLIC_KEY"),
     apiBaseUrl: MP_API_BASE_URL,
     siteBaseUrl,
     notificationUrl,
-    redirectUri: pick(env, "MERCADO_PAGO_PRODUCTION_REDIRECT_URI") ?? pick(env, "MERCADO_PAGO_REDIRECT_URI"),
+    redirectUri:
+      pick(env, "MERCADO_PAGO_PRODUCTION_REDIRECT_URI") ?? pick(env, "MERCADO_PAGO_REDIRECT_URI"),
     allowNewCheckouts: true,
     allowHistoricalVerification: true,
     legacyFallbackUsed,
@@ -277,9 +288,7 @@ export function resolveMercadoPagoConfig(env: Env = process.env as Env): MpResol
 }
 
 /** Diagnóstico 100% sanitizado — seguro para log e para painel admin. */
-export function mercadoPagoConfigDiagnostics(
-  env: Env = process.env as Env,
-): {
+export function mercadoPagoConfigDiagnostics(env: Env = process.env as Env): {
   environment: MpEnvironment | null;
   state: MpConfigState;
   allowNewCheckouts: boolean;
@@ -309,7 +318,9 @@ export function mercadoPagoConfigDiagnostics(
 }
 
 /** Ambiente persistido em novas linhas (`environment` das tabelas). */
-export function environmentForPersistence(cfg: MpResolvedConfig): "production" | "sandbox" | "legacy_unknown" {
+export function environmentForPersistence(
+  cfg: MpResolvedConfig,
+): "production" | "sandbox" | "legacy_unknown" {
   return cfg.environment ?? "legacy_unknown";
 }
 
@@ -319,10 +330,12 @@ export function checkoutExpiresAt(cfg: MpResolvedConfig, now: Date = new Date())
 }
 
 /** true quando o checkout já venceu (comparação server-side). */
-export function isCheckoutExpired(expiresAt: string | Date | null, now: Date = new Date()): boolean {
+export function isCheckoutExpired(
+  expiresAt: string | Date | null,
+  now: Date = new Date(),
+): boolean {
   if (!expiresAt) return true;
   const t = expiresAt instanceof Date ? expiresAt.getTime() : new Date(expiresAt).getTime();
   if (!Number.isFinite(t)) return true;
   return t <= now.getTime();
 }
-

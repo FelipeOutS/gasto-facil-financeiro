@@ -15,23 +15,69 @@
  *  email | telefone | cpf | cnpj | aleatoria | desconhecida
  */
 
-export type PixKeyType =
-  | "email"
-  | "telefone"
-  | "cpf"
-  | "cnpj"
-  | "aleatoria"
-  | "desconhecida";
+export type PixKeyType = "email" | "telefone" | "cpf" | "cnpj" | "aleatoria" | "desconhecida";
 
 // --- Stopwords que não podem ser nome de favorecido ----------------------
 const NOME_STOPWORDS = new Set([
-  "pix", "chave", "conta", "fatura", "internet", "luz", "agua", "água",
-  "aluguel", "academia", "boleto", "cartao", "cartão", "credito", "crédito",
-  "debito", "débito", "dinheiro", "reais", "real", "voce", "você", "mim",
-  "eu", "ele", "ela", "alguem", "alguém", "favorecido", "pessoa",
-  "fornecedor", "isso", "essa", "esse", "minha", "meu", "essa", "uma",
-  "um", "a", "o", "as", "os", "de", "do", "da", "dos", "das", "para",
-  "pra", "pro", "ao", "à", "à", "ja", "já", "hoje", "ontem", "amanha",
+  "pix",
+  "chave",
+  "conta",
+  "fatura",
+  "internet",
+  "luz",
+  "agua",
+  "água",
+  "aluguel",
+  "academia",
+  "boleto",
+  "cartao",
+  "cartão",
+  "credito",
+  "crédito",
+  "debito",
+  "débito",
+  "dinheiro",
+  "reais",
+  "real",
+  "voce",
+  "você",
+  "mim",
+  "eu",
+  "ele",
+  "ela",
+  "alguem",
+  "alguém",
+  "favorecido",
+  "pessoa",
+  "fornecedor",
+  "isso",
+  "essa",
+  "esse",
+  "minha",
+  "meu",
+  "essa",
+  "uma",
+  "um",
+  "a",
+  "o",
+  "as",
+  "os",
+  "de",
+  "do",
+  "da",
+  "dos",
+  "das",
+  "para",
+  "pra",
+  "pro",
+  "ao",
+  "à",
+  "à",
+  "ja",
+  "já",
+  "hoje",
+  "ontem",
+  "amanha",
   "amanhã",
 ]);
 
@@ -134,9 +180,7 @@ export function isValidPixKey(type: PixKeyType, key: string): boolean {
     case "cnpj":
       return isValidCNPJ(digits);
     case "aleatoria":
-      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        k,
-      );
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(k);
     case "desconhecida":
     default:
       return false;
@@ -290,11 +334,17 @@ export function parseSavePix(texto: string): SavePixParsed | null {
 
 function cleanNome(s: string): string {
   // remove preposições residuais à direita e palavras de tipo de chave.
-  const tokens = s.trim().split(/\s+/).filter((w) => {
-    const n = norm(w);
-    return n.length > 0 && !NOME_STOPWORDS.has(n)
-      && !/^(cpf|cnpj|email|telefone|celular|chave|aleatoria|aleatória)$/i.test(w);
-  });
+  const tokens = s
+    .trim()
+    .split(/\s+/)
+    .filter((w) => {
+      const n = norm(w);
+      return (
+        n.length > 0 &&
+        !NOME_STOPWORDS.has(n) &&
+        !/^(cpf|cnpj|email|telefone|celular|chave|aleatoria|aleatória)$/i.test(w)
+      );
+    });
   if (tokens.length === 0) return "";
   return normNome(tokens.join(" "));
 }
@@ -319,7 +369,9 @@ export function detectQueryPixIntent(texto: string): boolean {
     // "chave pix do João" / "chave do João" isolado no início
     /^\s*(?:a\s+|o\s+)?chave(?:\s+pix)?\s+(?:do|da|de|dos|das)\s+\S+/i.test(t) ||
     // "pix do João" isolado (sem separador de key → não é save)
-    /^\s*(?:o\s+|a\s+)?pix\s+(?:do|da|de|dos|das)\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'.\s-]{0,60}\s*[?.!]?\s*$/i.test(t) ||
+    /^\s*(?:o\s+|a\s+)?pix\s+(?:do|da|de|dos|das)\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'.\s-]{0,60}\s*[?.!]?\s*$/i.test(
+      t,
+    ) ||
     /\bquero\s+pagar\s+\w+.*\bpix\b/i.test(t)
   );
 }
@@ -329,8 +381,7 @@ export type QueryPixParsed = { nome: string };
 export function parseQueryPix(texto: string): QueryPixParsed | null {
   if (!texto) return null;
   // "pix do/da NOME"
-  const re =
-    /pix\s+(?:do|da|de|dos|das)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'.-]{0,40}?)(?:\s*[?.!]|\s*$)/i;
+  const re = /pix\s+(?:do|da|de|dos|das)\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s'.-]{0,40}?)(?:\s*[?.!]|\s*$)/i;
   const m = texto.match(re);
   if (m) {
     const nome = cleanNome(m[1]);
@@ -359,8 +410,15 @@ export function parseQueryPix(texto: string): QueryPixParsed | null {
 // =========================================================================
 
 const VERBOS_PAGAMENTO = [
-  "paguei", "pago", "quitei", "ja paguei", "já paguei",
-  "acabei de pagar", "transferi", "pix pra", "pix para",
+  "paguei",
+  "pago",
+  "quitei",
+  "ja paguei",
+  "já paguei",
+  "acabei de pagar",
+  "transferi",
+  "pix pra",
+  "pix para",
 ];
 
 const VERBO_RE = new RegExp(
@@ -392,7 +450,11 @@ export function detectPagarPessoaIntent(texto: string): boolean {
   // Precisa de destinatário: "para/pra/pro/ao/pelo + nome" OU pattern direto.
   if (/\b(?:para|pra|pro|ao|a|pelo|pela)\s+[a-zà-ÿ][a-zà-ÿ]+/.test(t)) return true;
   // "paguei o joão 50" / "paguei maria 120"
-  if (/^(?:paguei|pago|quitei|ja\s+paguei|acabei\s+de\s+pagar)\s+(?:o\s+|a\s+)?[a-zà-ÿ][a-zà-ÿ]+\s+(?:r?\$?\s*)?\d/i.test(raw)) {
+  if (
+    /^(?:paguei|pago|quitei|ja\s+paguei|acabei\s+de\s+pagar)\s+(?:o\s+|a\s+)?[a-zà-ÿ][a-zà-ÿ]+\s+(?:r?\$?\s*)?\d/i.test(
+      raw,
+    )
+  ) {
     return true;
   }
   return false;
@@ -413,8 +475,7 @@ export function parsePagarPessoa(texto: string): PagarPessoaParsed | null {
   const nome = extrairNomePessoa(texto);
   if (!nome) return null;
   const descricao = extrairDescricaoPagamento(texto);
-  const formaPagamento =
-    /\bpix\b/i.test(texto) || /\bno\s+pix\b/i.test(texto) ? "pix" : "outro";
+  const formaPagamento = /\bpix\b/i.test(texto) || /\bno\s+pix\b/i.test(texto) ? "pix" : "outro";
   return { nome, valorCentavos: valor, descricao, formaPagamento };
 }
 
@@ -470,9 +531,18 @@ function extrairNomePessoa(texto: string): string | null {
 // NÃO é aplicada globalmente (NOME_STOPWORDS continua conservador) para não
 // quebrar nomes compostos legítimos em outros parsers.
 const PAGAR_PESSOA_EXTRA_STOPWORDS = new Set([
-  "no", "na", "nos", "nas",
-  "pelo", "pela", "pelos", "pelas",
-  "via", "com", "usando", "por",
+  "no",
+  "na",
+  "nos",
+  "nas",
+  "pelo",
+  "pela",
+  "pelos",
+  "pelas",
+  "via",
+  "com",
+  "usando",
+  "por",
 ]);
 
 function cleanNomeStrict(s: string): string {
@@ -600,7 +670,10 @@ export function parsePagarPixInline(texto: string): PagarPixInlineParsed | null 
 
 function normalizeHint(raw: string | undefined): PixKeyHint | undefined {
   if (!raw) return undefined;
-  const h = raw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const h = raw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
   if (h === "celular" || h === "telefone") return "telefone";
   if (h === "cpf") return "cpf";
   if (h === "cnpj") return "cnpj";
@@ -650,9 +723,7 @@ export function maskPixKey(pixKey: string, type: PixKeyType): string {
     case "email": {
       const [user, dom] = k.split("@");
       if (!user || !dom) return "***";
-      const uMask = user.length <= 2
-        ? user[0] + "*"
-        : user[0] + "***" + user.slice(-1);
+      const uMask = user.length <= 2 ? user[0] + "*" : user[0] + "***" + user.slice(-1);
       return `${uMask}@${dom}`;
     }
     case "telefone": {
@@ -694,4 +765,3 @@ export function maskPixKey(pixKey: string, type: PixKeyType): string {
       return "***";
   }
 }
-

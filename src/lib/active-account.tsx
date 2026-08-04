@@ -148,7 +148,6 @@ export function ActiveAccountProvider({ children }: { children: ReactNode }) {
     // O store já emite/atualiza componentes via subscribe; hydrateUser repovoa caches.
   }
 
-
   const switchTo = useCallback(
     async (ownerId: string | null) => {
       if (!viewerId) return;
@@ -162,7 +161,7 @@ export function ActiveAccountProvider({ children }: { children: ReactNode }) {
 
   const isOwnAccount = !viewerId || activeOwnerId === viewerId || activeOwnerId === null;
   const activeConnection = useMemo(
-    () => (isOwnAccount ? null : connections.find((c) => c.ownerId === activeOwnerId) ?? null),
+    () => (isOwnAccount ? null : (connections.find((c) => c.ownerId === activeOwnerId) ?? null)),
     [isOwnAccount, connections, activeOwnerId],
   );
   const accessLevel: AccessLevel | null = activeConnection?.accessLevel ?? null;

@@ -106,7 +106,16 @@ export function DashboardCartoesInsights({
         const limite = c.limiteTotal || 0;
         const pct = limite > 0 ? Math.min(150, (usado / limite) * 100) : 0;
         const status = statusEfetivoFatura(c, mesCorr, anoCorr, hoje);
-        return { cartao: c, usado, limite, pct, qtd: gastos.length, status, mes: mesCorr, ano: anoCorr };
+        return {
+          cartao: c,
+          usado,
+          limite,
+          pct,
+          qtd: gastos.length,
+          status,
+          mes: mesCorr,
+          ano: anoCorr,
+        };
       })
       .filter((u) => u.qtd > 0 || u.usado > 0)
       .sort((a, b) => b.usado - a.usado)
@@ -195,9 +204,10 @@ export function DashboardCartoesInsights({
       (p) => p.status !== "paga" && p.diasRestantes >= 0 && p.diasRestantes <= 5,
     );
     if (proximaQueVence) {
-      const unit = proximaQueVence.diasRestantes === 1
-        ? t("cartoesInsights.diaSing")
-        : t("cartoesInsights.diaPlur");
+      const unit =
+        proximaQueVence.diasRestantes === 1
+          ? t("cartoesInsights.diaSing")
+          : t("cartoesInsights.diaPlur");
       return {
         tone: "warning" as const,
         text: t("cartoesInsights.venceEmDias", {
@@ -249,7 +259,8 @@ export function DashboardCartoesInsights({
   const showMaiores = slot !== "insights";
 
   // Quando o dashboard pede só um slot, evita renderizar um wrapper vazio.
-  if (slot === "lists" && proximosVencimentos.length === 0 && maioresGastos.length === 0) return null;
+  if (slot === "lists" && proximosVencimentos.length === 0 && maioresGastos.length === 0)
+    return null;
   if (slot === "insights" && usoCartoes.length === 0 && !comparacao) return null;
 
   const containerCls =
@@ -261,47 +272,42 @@ export function DashboardCartoesInsights({
 
   return (
     <div className={cn(containerCls, className)}>
-
       {/* Insight + comparação */}
       {showInsight && (
-      <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 ">
-
-
-        <div className="flex items-start gap-3">
-          <span
-            className={cn(
-              "grid h-9 w-9 shrink-0 place-items-center rounded-full",
-              insight.tone === "destructive" && "bg-destructive/15 text-destructive",
-              insight.tone === "warning" && "bg-warning/15 text-warning",
-              insight.tone === "info" && "bg-brand-soft text-brand-on-soft",
-              insight.tone === "success" && "bg-success/15 text-success",
-            )}
-          >
-            <Sparkles className="h-4 w-4" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              {t("cartoesInsights.insightLabel")}
-            </p>
-            <p className="mt-1 text-sm font-medium leading-relaxed">{insight.text}</p>
-            {comparacao && (
-              <ComparacaoMesAnterior
-                diff={comparacao.diff}
-                pct={comparacao.pct}
-                totalMes={totalMes}
-                totalMesAnterior={totalMesAnterior}
-              />
-            )}
+        <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 ">
+          <div className="flex items-start gap-3">
+            <span
+              className={cn(
+                "grid h-9 w-9 shrink-0 place-items-center rounded-full",
+                insight.tone === "destructive" && "bg-destructive/15 text-destructive",
+                insight.tone === "warning" && "bg-warning/15 text-warning",
+                insight.tone === "info" && "bg-brand-soft text-brand-on-soft",
+                insight.tone === "success" && "bg-success/15 text-success",
+              )}
+            >
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                {t("cartoesInsights.insightLabel")}
+              </p>
+              <p className="mt-1 text-sm font-medium leading-relaxed">{insight.text}</p>
+              {comparacao && (
+                <ComparacaoMesAnterior
+                  diff={comparacao.diff}
+                  pct={comparacao.pct}
+                  totalMes={totalMes}
+                  totalMesAnterior={totalMesAnterior}
+                />
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
       )}
 
       {/* Cartões com maior uso */}
       {showCartoes && usoCartoes.length > 0 && (
         <section className="rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 ">
-
-
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
@@ -319,11 +325,7 @@ export function DashboardCartoesInsights({
             {usoCartoes.map((u) => {
               const passou = u.limite > 0 && u.usado > u.limite;
               const proximo = u.limite > 0 && u.pct >= 80 && !passou;
-              const barColor = passou
-                ? "bg-destructive"
-                : proximo
-                  ? "bg-warning"
-                  : "bg-brand";
+              const barColor = passou ? "bg-destructive" : proximo ? "bg-warning" : "bg-brand";
               return (
                 <li
                   key={u.cartao.id}
@@ -355,9 +357,16 @@ export function DashboardCartoesInsights({
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold">{u.cartao.nome}</p>
                       <p className="truncate text-[11px] text-muted-foreground">
-                        {u.qtd} {u.qtd === 1 ? t("cartoesInsights.compraSing") : t("cartoesInsights.compraPlur")} ·{" "}
+                        {u.qtd}{" "}
+                        {u.qtd === 1
+                          ? t("cartoesInsights.compraSing")
+                          : t("cartoesInsights.compraPlur")}{" "}
+                        ·{" "}
                         {u.limite > 0
-                          ? t("cartoesInsights.usadoDe", { usado: formatBRL(u.usado), limite: formatBRL(u.limite) })
+                          ? t("cartoesInsights.usadoDe", {
+                              usado: formatBRL(u.usado),
+                              limite: formatBRL(u.limite),
+                            })
                           : formatBRL(u.usado)}
                       </p>
                     </div>
@@ -365,7 +374,11 @@ export function DashboardCartoesInsights({
                       <p
                         className={cn(
                           "num shrink-0 text-xs font-semibold",
-                          passou ? "text-destructive" : proximo ? "text-warning" : "text-muted-foreground",
+                          passou
+                            ? "text-destructive"
+                            : proximo
+                              ? "text-warning"
+                              : "text-muted-foreground",
                         )}
                       >
                         {Math.round(u.pct)}%
@@ -389,9 +402,12 @@ export function DashboardCartoesInsights({
 
       {/* Próximos vencimentos de fatura */}
       {showVenc && proximosVencimentos.length > 0 && (
-        <section className={cn("rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4", slot !== "lists" && "sm:col-span-2")}>
-
-
+        <section
+          className={cn(
+            "rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4",
+            slot !== "lists" && "sm:col-span-2",
+          )}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />
@@ -409,7 +425,8 @@ export function DashboardCartoesInsights({
             {proximosVencimentos.map((p) => {
               const dias = p.diasRestantes;
               const absDias = Math.abs(dias);
-              const unit = absDias === 1 ? t("cartoesInsights.diaSing") : t("cartoesInsights.diaPlur");
+              const unit =
+                absDias === 1 ? t("cartoesInsights.diaSing") : t("cartoesInsights.diaPlur");
               const labelDias =
                 p.status === "vencida"
                   ? t("cartoesInsights.vencidaHa", { dias: absDias, unit })
@@ -450,7 +467,10 @@ export function DashboardCartoesInsights({
                         </span>
                       </div>
                       <p className="truncate text-[11px] text-muted-foreground">
-                        {t("cartoesInsights.venceDia", { dia: p.dataVencimento.getDate().toString().padStart(2, "0") })} ·{" "}
+                        {t("cartoesInsights.venceDia", {
+                          dia: p.dataVencimento.getDate().toString().padStart(2, "0"),
+                        })}{" "}
+                        ·{" "}
                         <span
                           className={cn(
                             p.status === "vencida"
@@ -478,8 +498,12 @@ export function DashboardCartoesInsights({
 
       {/* Maiores gastos do mês */}
       {showMaiores && maioresGastos.length > 0 && (
-        <section className={cn("rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4", slot !== "lists" && "sm:col-span-2")}>
-
+        <section
+          className={cn(
+            "rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4",
+            slot !== "lists" && "sm:col-span-2",
+          )}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Flame className="h-3.5 w-3.5 text-muted-foreground" />
@@ -504,10 +528,7 @@ export function DashboardCartoesInsights({
                   key={g.id}
                   className="flex items-center gap-3 rounded-2xl border border-border bg-card-elevated/40 p-3"
                 >
-                  <TransactionAvatar
-                    estabelecimento={g.estabelecimento}
-                    categoria={cat}
-                  />
+                  <TransactionAvatar estabelecimento={g.estabelecimento} categoria={cat} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">
                       {g.estabelecimento || g.descricao}
@@ -542,11 +563,7 @@ function ComparacaoMesAnterior({
   const { t } = useTranslation("dashboard");
   if (totalMes === 0 && totalMesAnterior === 0) return null;
   if (totalMesAnterior === 0) {
-    return (
-      <p className="mt-2 text-[11px] text-muted-foreground">
-        {t("cartoesInsights.compAdd")}
-      </p>
-    );
+    return <p className="mt-2 text-[11px] text-muted-foreground">{t("cartoesInsights.compAdd")}</p>;
   }
   const subiu = diff > 0;
   const igual = Math.abs(diff) < 0.5;
@@ -568,8 +585,7 @@ function ComparacaoMesAnterior({
     >
       <Icon className="h-3 w-3" />
       {t("cartoesInsights.compDiff", { valor: formatBRL(Math.abs(diff)), direcao })}
-      {pct !== null && Math.abs(pct) >= 1 ? ` (${subiu ? "+" : ""}${Math.round(pct)}%)` : ""}
-      .
+      {pct !== null && Math.abs(pct) >= 1 ? ` (${subiu ? "+" : ""}${Math.round(pct)}%)` : ""}.
     </p>
   );
 }

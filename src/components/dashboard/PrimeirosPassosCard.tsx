@@ -8,7 +8,6 @@ import { useAuth } from "@/lib/auth-context";
 import type { TipoCadastro } from "@/lib/profile-utils";
 import { tipoEfetivo } from "@/lib/profile-utils";
 
-
 /**
  * Onboarding leve do Dashboard — orienta usuários novos a fazerem o primeiro
  * lançamento. Não bloqueia o usuário, é apenas guia visual. Persiste a dispensa
@@ -54,13 +53,12 @@ export function PrimeirosPassosCard({
 }: PrimeirosPassosCardProps) {
   const { t } = useTranslation("dashboard");
   const { user, profile } = useAuth();
-  
+
   const tipo = tipoEfetivo(profile?.tipo_cadastro as TipoCadastro);
   const isBusiness = tipo === "mei" || tipo === "empresa";
   // free_ads (Fase 1E-B2J-B): libera gastos, receitas, metas e cartão
   // (1 cartão básico) no checklist. Demais planos (pago/sem_assinatura/
   // admin) continuam vendo o checklist completo.
-
 
   const [dismissed, setDismissed] = useState<boolean>(() => isDismissed(user?.id ?? null));
 
@@ -133,9 +131,7 @@ export function PrimeirosPassosCard({
             <Sparkles className="h-4 w-4" />
           </span>
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold sm:text-base">
-              {t("firstSteps.title")}
-            </h2>
+            <h2 className="text-sm font-semibold sm:text-base">{t("firstSteps.title")}</h2>
             <p className="mt-0.5 text-xs text-muted-foreground sm:text-[13px]">
               {t("firstSteps.description")}
             </p>
@@ -158,7 +154,11 @@ export function PrimeirosPassosCard({
             <li key={item.id}>
               <Link
                 to={item.to}
-                search={("search" in item ? item.search : undefined) as Record<string, unknown> | undefined}
+                search={
+                  ("search" in item ? item.search : undefined) as
+                    | Record<string, unknown>
+                    | undefined
+                }
                 className={cn(
                   "group flex items-center gap-2.5 rounded-xl border border-transparent px-2.5 py-2 text-sm transition-colors hover:border-border hover:bg-card-elevated",
                   item.done && "opacity-70",
@@ -175,12 +175,7 @@ export function PrimeirosPassosCard({
                 >
                   {item.done ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
                 </span>
-                <span
-                  className={cn(
-                    "min-w-0 flex-1 truncate",
-                    item.done && "line-through",
-                  )}
-                >
+                <span className={cn("min-w-0 flex-1 truncate", item.done && "line-through")}>
                   {item.label}
                 </span>
                 {!item.done && (
@@ -214,9 +209,7 @@ export function PrimeirosPassosCard({
         </Link>
       </div>
 
-      <p className="mt-3 text-[11px] leading-snug text-muted-foreground">
-        {t("firstSteps.hint")}
-      </p>
+      <p className="mt-3 text-[11px] leading-snug text-muted-foreground">{t("firstSteps.hint")}</p>
     </section>
   );
 }

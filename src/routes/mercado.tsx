@@ -88,14 +88,56 @@ const CARDS: CardDef[] = [
   { key: "listas", icon: ListChecks, status: "open", to: "/mercado/listas" },
   { key: "calculadoras", icon: Calculator, status: "open", to: "/mercado/calculadoras" },
   { key: "orcamento", icon: WalletCards, status: "open", to: "/mercado/orcamento" },
-  { key: "historico", icon: History, status: "open", to: "/mercado/historico", feature: "mercado_avancado" },
+  {
+    key: "historico",
+    icon: History,
+    status: "open",
+    to: "/mercado/historico",
+    feature: "mercado_avancado",
+  },
   { key: "carrinho", icon: ShoppingCart, status: "open", to: "/mercado/carrinho" },
-  { key: "importarCupom", icon: Receipt, status: "open", to: "/mercado/importar-cupom", feature: "mercado_importar_cupom" },
-  { key: "precoComunitario", icon: BadgePercent, status: "open", to: "/mercado/preco-comunitario", feature: "mercado_avancado" },
-  { key: "mercados", icon: Store, status: "open", to: "/mercado/mercados", feature: "mercado_avancado" },
-  { key: "meusMercados", icon: MapPin, status: "open", to: "/mercado/meus-mercados", feature: "mercado_avancado" },
-  { key: "precos", icon: BarChart3, status: "open", to: "/mercado/precos", feature: "mercado_avancado" },
-  { key: "cesta", icon: PackageCheck, status: "open", to: "/mercado/cesta", feature: "mercado_avancado" },
+  {
+    key: "importarCupom",
+    icon: Receipt,
+    status: "open",
+    to: "/mercado/importar-cupom",
+    feature: "mercado_importar_cupom",
+  },
+  {
+    key: "precoComunitario",
+    icon: BadgePercent,
+    status: "open",
+    to: "/mercado/preco-comunitario",
+    feature: "mercado_avancado",
+  },
+  {
+    key: "mercados",
+    icon: Store,
+    status: "open",
+    to: "/mercado/mercados",
+    feature: "mercado_avancado",
+  },
+  {
+    key: "meusMercados",
+    icon: MapPin,
+    status: "open",
+    to: "/mercado/meus-mercados",
+    feature: "mercado_avancado",
+  },
+  {
+    key: "precos",
+    icon: BarChart3,
+    status: "open",
+    to: "/mercado/precos",
+    feature: "mercado_avancado",
+  },
+  {
+    key: "cesta",
+    icon: PackageCheck,
+    status: "open",
+    to: "/mercado/cesta",
+    feature: "mercado_avancado",
+  },
 ];
 
 type QuickAction = {
@@ -110,8 +152,20 @@ const QUICK_ACTIONS: QuickAction[] = [
   { key: "listas", icon: ListChecks, to: "/mercado/listas", tone: "fresh" },
   { key: "carrinho", icon: ShoppingCart, to: "/mercado/carrinho", tone: "drinks" },
   { key: "orcamento", icon: WalletCards, to: "/mercado/orcamento", tone: "bakery" },
-  { key: "precoComunitario", icon: BadgePercent, to: "/mercado/preco-comunitario", feature: "mercado_avancado", tone: "community" },
-  { key: "meusMercados", icon: MapPin, to: "/mercado/meus-mercados", feature: "mercado_avancado", tone: "meat" },
+  {
+    key: "precoComunitario",
+    icon: BadgePercent,
+    to: "/mercado/preco-comunitario",
+    feature: "mercado_avancado",
+    tone: "community",
+  },
+  {
+    key: "meusMercados",
+    icon: MapPin,
+    to: "/mercado/meus-mercados",
+    feature: "mercado_avancado",
+    tone: "meat",
+  },
 ];
 
 const CATEGORY_ICONS: Record<MercadoCategoryKey, string> = {
@@ -132,7 +186,19 @@ const CATEGORY_MATCHERS: Record<MercadoCategoryKey, string[]> = {
   bebidas: ["bebida", "refrigerante", "suco", "cerveja", "vinho", "água", "agua"],
   laticinios: ["laticínio", "laticinio", "leite", "queijo", "iogurte", "manteiga"],
   limpeza: ["limpeza", "sabão", "sabao", "detergente", "amaciante", "desinfetante"],
-  mercearia: ["mercearia", "arroz", "feijão", "feijao", "massa", "macarrão", "macarrao", "óleo", "oleo", "açúcar", "acucar"],
+  mercearia: [
+    "mercearia",
+    "arroz",
+    "feijão",
+    "feijao",
+    "massa",
+    "macarrão",
+    "macarrao",
+    "óleo",
+    "oleo",
+    "açúcar",
+    "acucar",
+  ],
   utilidades: ["utilidade", "utensílio", "utensilio", "papel", "descart", "higiene"],
 };
 
@@ -180,7 +246,9 @@ function MercadoHubPage() {
       setRecentLoading(true);
       try {
         const { data, error } = await (supabase.from("community_market_prices" as never) as any)
-          .select("id,product_name,category,price,unit,market_name,source,seen_at,image_url,image_source,image_confidence,brand,barcode")
+          .select(
+            "id,product_name,category,price,unit,market_name,source,seen_at,image_url,image_source,image_confidence,brand,barcode",
+          )
           .eq("status", "active")
           .order("seen_at", { ascending: false })
           .limit(24);
@@ -257,7 +325,6 @@ function MercadoHubPage() {
         onSearchChange={setSearchValue}
       />
 
-
       {/* Hero banner */}
       <div className="mt-5">
         <MercadoBanner
@@ -330,7 +397,10 @@ function MercadoHubPage() {
               >
                 <span
                   className="grid h-10 w-10 place-items-center rounded-xl ring-1 ring-border/60"
-                  style={{ backgroundColor: `color-mix(in oklab, ${tint} 22%, var(--card))`, color: tint }}
+                  style={{
+                    backgroundColor: `color-mix(in oklab, ${tint} 22%, var(--card))`,
+                    color: tint,
+                  }}
                 >
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
@@ -341,7 +411,10 @@ function MercadoHubPage() {
                   {isLocked ? (
                     <Lock className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                   ) : (
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    <ChevronRight
+                      className="h-4 w-4 shrink-0 text-muted-foreground"
+                      aria-hidden="true"
+                    />
                   )}
                 </div>
               </Link>
@@ -375,19 +448,12 @@ function MercadoHubPage() {
           </div>
         ) : filteredRecent.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border/60 bg-card-elevated/40 p-6 text-center">
-            <img
-              src={emptyComunitario}
-              alt=""
-              className="h-24 w-24 opacity-90"
-              loading="lazy"
-            />
+            <img src={emptyComunitario} alt="" className="h-24 w-24 opacity-90" loading="lazy" />
             <div>
               <p className="text-sm font-semibold text-foreground">
                 {t("homeV2.recentEmptyTitle")}
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {t("homeV2.recentEmptyDesc")}
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("homeV2.recentEmptyDesc")}</p>
             </div>
             <Link
               to="/mercado/preco-comunitario"
@@ -412,9 +478,7 @@ function MercadoHubPage() {
                 marketName={r.market_name}
                 source={SOURCE_MAP[r.source] ?? "community"}
                 seenAtLabel={
-                  r.seen_at
-                    ? new Date(r.seen_at).toLocaleDateString(dateLocale)
-                    : undefined
+                  r.seen_at ? new Date(r.seen_at).toLocaleDateString(dateLocale) : undefined
                 }
               />
             ))}
@@ -480,9 +544,7 @@ function MercadoHubPage() {
               <ShoppingCart className="h-4 w-4 text-brand" aria-hidden="true" />
               {t("homeV2.quickActions.carrinho")}
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {t("hub.cards.carrinho.desc")}
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">{t("hub.cards.carrinho.desc")}</p>
             <span className="mt-auto pt-3 inline-flex items-center gap-1 text-xs font-semibold text-brand">
               {t("homeV2.nextPurchase.openCart")}
               <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -676,7 +738,10 @@ function MercadoHubPage() {
                 <Link
                   key={card.key}
                   to="/meu-plano"
-                  className={cn(baseClasses, "hover:bg-card-elevated active:scale-[0.99] opacity-90")}
+                  className={cn(
+                    baseClasses,
+                    "hover:bg-card-elevated active:scale-[0.99] opacity-90",
+                  )}
                   aria-label={t("hub.lockedCta")}
                 >
                   {innerBody}

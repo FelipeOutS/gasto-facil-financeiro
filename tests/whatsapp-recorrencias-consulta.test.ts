@@ -7,9 +7,8 @@
 import { test, expect, describe, beforeEach } from "bun:test";
 import { state } from "./_whatsapp-fake";
 
-const { detectConsultaIntent, handleConsulta } = await import(
-  "../src/server/whatsapp-consultas.server"
-);
+const { detectConsultaIntent, handleConsulta } =
+  await import("../src/server/whatsapp-consultas.server");
 
 const USER = "u1";
 
@@ -43,9 +42,7 @@ describe("WA-Q-Recorrencias — detecção de intenção", () => {
   }
 
   test("não confunde com 'gastos por categoria'", () => {
-    expect(detectConsultaIntent("gastos por categoria")).toBe(
-      "gastos_por_categoria_mes",
-    );
+    expect(detectConsultaIntent("gastos por categoria")).toBe("gastos_por_categoria_mes");
   });
   test("não confunde com 'limites'", () => {
     expect(detectConsultaIntent("limites")).toBe("orcamento_mes");
@@ -63,9 +60,39 @@ describe("WA-Q-Recorrencias — handler não escreve nada", () => {
 
   test("filtra por status='ativa' — excluídas/canceladas não aparecem", async () => {
     state.recorrenciasData = [
-      { id: "r1", user_id: USER, nome: "Spotify", valor: 23.9, frequencia: "mensal", proxima_cobranca: "2026-07-05", status: "ativa", forma_pagamento: "credito", categoria_id: "cat-int" },
-      { id: "r2", user_id: USER, nome: "Netflix antigo", valor: 39.9, frequencia: "mensal", proxima_cobranca: "2026-07-02", status: "excluida", forma_pagamento: "credito", categoria_id: "cat-int" },
-      { id: "r3", user_id: USER, nome: "Serviço suspeito", valor: 10, frequencia: "mensal", proxima_cobranca: "2026-07-10", status: "suspeita", forma_pagamento: "credito", categoria_id: null },
+      {
+        id: "r1",
+        user_id: USER,
+        nome: "Spotify",
+        valor: 23.9,
+        frequencia: "mensal",
+        proxima_cobranca: "2026-07-05",
+        status: "ativa",
+        forma_pagamento: "credito",
+        categoria_id: "cat-int",
+      },
+      {
+        id: "r2",
+        user_id: USER,
+        nome: "Netflix antigo",
+        valor: 39.9,
+        frequencia: "mensal",
+        proxima_cobranca: "2026-07-02",
+        status: "excluida",
+        forma_pagamento: "credito",
+        categoria_id: "cat-int",
+      },
+      {
+        id: "r3",
+        user_id: USER,
+        nome: "Serviço suspeito",
+        valor: 10,
+        frequencia: "mensal",
+        proxima_cobranca: "2026-07-10",
+        status: "suspeita",
+        forma_pagamento: "credito",
+        categoria_id: null,
+      },
     ];
     const out = await handleConsulta(USER, "listar_recorrencias");
     expect(out.resposta).toMatch(/Spotify/);
@@ -77,8 +104,28 @@ describe("WA-Q-Recorrencias — handler não escreve nada", () => {
 
   test("separa receitas (linkadas a receitas.recorrencia_id) e despesas", async () => {
     state.recorrenciasData = [
-      { id: "r-inc", user_id: USER, nome: "Salário", valor: 3500, frequencia: "mensal", proxima_cobranca: "2026-07-05", status: "ativa", forma_pagamento: null, categoria_id: null },
-      { id: "r-exp", user_id: USER, nome: "Spotify", valor: 23.9, frequencia: "mensal", proxima_cobranca: "2026-07-03", status: "ativa", forma_pagamento: "credito", categoria_id: "cat-int" },
+      {
+        id: "r-inc",
+        user_id: USER,
+        nome: "Salário",
+        valor: 3500,
+        frequencia: "mensal",
+        proxima_cobranca: "2026-07-05",
+        status: "ativa",
+        forma_pagamento: null,
+        categoria_id: null,
+      },
+      {
+        id: "r-exp",
+        user_id: USER,
+        nome: "Spotify",
+        valor: 23.9,
+        frequencia: "mensal",
+        proxima_cobranca: "2026-07-03",
+        status: "ativa",
+        forma_pagamento: "credito",
+        categoria_id: "cat-int",
+      },
     ];
     state.receitasData = [
       { id: "rec-1", user_id: USER, recorrencia_id: "r-inc", valor: 3500, data: "2026-06-05" },

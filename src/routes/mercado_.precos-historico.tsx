@@ -53,11 +53,7 @@ function PrecosHistoricoPage() {
     () => filterRegistrosPrecoPorMercado(registros, filtroEfetivo),
     [registros, filtroEfetivo],
   );
-  const resumos = useMemo(
-    () => agruparResumosPorProduto(registrosFiltrados),
-    [registrosFiltrados],
-  );
-
+  const resumos = useMemo(() => agruparResumosPorProduto(registrosFiltrados), [registrosFiltrados]);
 
   function handleBack() {
     void navigate({ to: "/mercado", replace: true });
@@ -123,8 +119,6 @@ function PrecosHistoricoPage() {
           tone="community"
         />
       </div>
-
-
 
       {/* Aviso local */}
       <section className="mt-5 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
@@ -221,10 +215,24 @@ function PrecosHistoricoPage() {
               </header>
 
               <div className="grid grid-cols-2 gap-2">
-                <Tile label={t("precosHistorico.card.min")} value={<Money value={r.precoMin} />} tone="success" />
-                <Tile label={t("precosHistorico.card.max")} value={<Money value={r.precoMax} />} tone="destructive" />
-                <Tile label={t("precosHistorico.card.avg")} value={<Money value={r.precoMedio} />} />
-                <Tile label={t("precosHistorico.card.last")} value={<Money value={r.ultimoPreco} />} />
+                <Tile
+                  label={t("precosHistorico.card.min")}
+                  value={<Money value={r.precoMin} />}
+                  tone="success"
+                />
+                <Tile
+                  label={t("precosHistorico.card.max")}
+                  value={<Money value={r.precoMax} />}
+                  tone="destructive"
+                />
+                <Tile
+                  label={t("precosHistorico.card.avg")}
+                  value={<Money value={r.precoMedio} />}
+                />
+                <Tile
+                  label={t("precosHistorico.card.last")}
+                  value={<Money value={r.ultimoPreco} />}
+                />
               </div>
 
               <p className="truncate text-[11px] text-muted-foreground">
@@ -274,13 +282,7 @@ function EmptyHistory({ t }: { t: (k: string) => string }) {
   );
 }
 
-function FilteredEmpty({
-  isSem,
-  t,
-}: {
-  isSem: boolean;
-  t: (k: string) => string;
-}) {
+function FilteredEmpty({ isSem, t }: { isSem: boolean; t: (k: string) => string }) {
   return (
     <section className="mt-5 grid place-items-center rounded-3xl border border-dashed border-border/60 bg-card p-8 text-center shadow-card">
       <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">

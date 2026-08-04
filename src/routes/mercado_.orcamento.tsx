@@ -142,9 +142,7 @@ function OrcamentoPage() {
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-brand-soft text-sm font-bold text-brand ring-1 ring-border/60">
                   {i + 1}
                 </span>
-                <p className="text-sm leading-snug text-foreground">
-                  {t(`budgetV2.steps.${k}`)}
-                </p>
+                <p className="text-sm leading-snug text-foreground">{t(`budgetV2.steps.${k}`)}</p>
               </li>
             ))}
           </ol>
@@ -152,7 +150,6 @@ function OrcamentoPage() {
       )}
 
       <section className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-3">
-
         {/* Form */}
         <form
           onSubmit={handleSubmit}
@@ -188,9 +185,7 @@ function OrcamentoPage() {
             {t("budget.form.save")}
           </button>
 
-          {savedAt && (
-            <p className="mt-2 text-[12px] text-success">{t("budget.form.saved")}</p>
-          )}
+          {savedAt && <p className="mt-2 text-[12px] text-success">{t("budget.form.saved")}</p>}
         </form>
 
         {/* Summary */}
@@ -211,8 +206,14 @@ function OrcamentoPage() {
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-            <SummaryTile label={t("budget.summary.limit")} value={<Money value={resumo.orcamento} />} />
-            <SummaryTile label={t("budget.summary.spent")} value={<Money value={resumo.gastoMes} />} />
+            <SummaryTile
+              label={t("budget.summary.limit")}
+              value={<Money value={resumo.orcamento} />}
+            />
+            <SummaryTile
+              label={t("budget.summary.spent")}
+              value={<Money value={resumo.gastoMes} />}
+            />
             <SummaryTile
               label={t("budget.summary.remaining")}
               value={<Money value={resumo.saldoRestante} />}

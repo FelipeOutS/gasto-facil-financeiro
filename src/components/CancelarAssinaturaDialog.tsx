@@ -18,12 +18,7 @@ type Props = {
   onCancelled?: () => void;
 };
 
-export function CancelarAssinaturaDialog({
-  open,
-  onOpenChange,
-  userId,
-  onCancelled,
-}: Props) {
+export function CancelarAssinaturaDialog({ open, onOpenChange, userId, onCancelled }: Props) {
   const [loading, setLoading] = useState(false);
 
   async function confirmar() {
@@ -49,9 +44,8 @@ export function CancelarAssinaturaDialog({
         <DialogHeader>
           <DialogTitle>Cancelar assinatura</DialogTitle>
           <DialogDescription>
-            Você continuará com acesso aos recursos do plano até o fim do
-            período já pago. Depois disso, os recursos premium serão
-            bloqueados, mas seus dados continuarão salvos.
+            Você continuará com acesso aos recursos do plano até o fim do período já pago. Depois
+            disso, os recursos premium serão bloqueados, mas seus dados continuarão salvos.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex-col gap-2 sm:flex-col">

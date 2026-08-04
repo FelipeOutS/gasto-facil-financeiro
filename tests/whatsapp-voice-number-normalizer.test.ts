@@ -10,9 +10,7 @@ describe("normalizeVoiceMoney", () => {
     );
   });
   it("dez reais e cinquenta centavos", () => {
-    expect(n("Paguei dez reais e cinquenta centavos no café.")).toBe(
-      "Paguei R$ 10,50 no café.",
-    );
+    expect(n("Paguei dez reais e cinquenta centavos no café.")).toBe("Paguei R$ 10,50 no café.");
   });
   it("cem reais", () => {
     expect(n("gastei cem reais")).toBe("gastei R$ 100,00");

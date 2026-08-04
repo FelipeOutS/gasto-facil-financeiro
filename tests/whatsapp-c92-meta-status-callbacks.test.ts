@@ -26,13 +26,10 @@ import {
 // marcaria requiresWebhookRetry=true — comportamento correto de produção.
 const LEGACY_RECONCILER = createLegacyNoopAttemptReconciler();
 
-const T = (h: number, m = 0, s = 0) =>
-  new Date(Date.UTC(2026, 6, 12, h, m, s)).toISOString();
+const T = (h: number, m = 0, s = 0) => new Date(Date.UTC(2026, 6, 12, h, m, s)).toISOString();
 
 const EV = (
-  overrides: Partial<
-    Pick<ParsedStatusEvent, "event_status" | "event_at" | "error_code">
-  >,
+  overrides: Partial<Pick<ParsedStatusEvent, "event_status" | "event_at" | "error_code">>,
 ): Pick<ParsedStatusEvent, "event_status" | "event_at" | "error_code"> => ({
   event_status: "sent",
   event_at: T(10),
@@ -304,10 +301,7 @@ describe("reduceProviderStatusEvents", () => {
       failed_at: null,
       last_error_code: null,
     };
-    const r = reduceProviderStatusEvents(
-      [EV({ event_status: "sent", event_at: T(20) })],
-      cur,
-    );
+    const r = reduceProviderStatusEvents([EV({ event_status: "sent", event_at: T(20) })], cur);
     expect(r.sent_at).toBe(T(9));
     expect(r.delivered_at).toBe(T(10));
     expect(r.read_at).toBe(T(11));
@@ -352,8 +346,8 @@ function fakeClient(initial: {
         table === "whatsapp_notifications"
           ? notifs
           : table === "whatsapp_notification_status_events"
-          ? events
-          : [];
+            ? events
+            : [];
       const filters: Array<(r: Record<string, unknown>) => boolean> = [];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const q: any = {
@@ -379,9 +373,7 @@ function fakeClient(initial: {
           return q;
         },
         is(col: string, val: unknown) {
-          filters.push((r) =>
-            val === null ? r[col] == null : r[col] === val,
-          );
+          filters.push((r) => (val === null ? r[col] == null : r[col] === val));
           return q;
         },
         maybeSingle() {
@@ -737,9 +729,7 @@ describe("WA-C9.2 Fase C — HTTP semantics & self-heal", () => {
           changes: [
             {
               value: {
-                statuses: [
-                  { id: "wamid.t1", status: "delivered", timestamp: "1752316200" },
-                ],
+                statuses: [{ id: "wamid.t1", status: "delivered", timestamp: "1752316200" }],
               },
             },
           ],
@@ -798,9 +788,7 @@ describe("WA-C9.2 Fase C — HTTP semantics & self-heal", () => {
           changes: [
             {
               value: {
-                statuses: [
-                  { id: "wamid.heal", status: "delivered", timestamp: "1752316260" },
-                ],
+                statuses: [{ id: "wamid.heal", status: "delivered", timestamp: "1752316260" }],
               },
             },
           ],
@@ -811,7 +799,10 @@ describe("WA-C9.2 Fase C — HTTP semantics & self-heal", () => {
     // ISO; para o teste focar no self-heal usamos o evento já persistido.
     // Se a timestamp gerada por parse não bater com T(11), o event_key
     // também difere, mas o SELF-HEAL relê tudo do PMID e ainda promove.
-    const r = await processMetaStatusCallbacks(payload, { client: base.client, reconciler: LEGACY_RECONCILER });
+    const r = await processMetaStatusCallbacks(payload, {
+      client: base.client,
+      reconciler: LEGACY_RECONCILER,
+    });
     expect(r.requiresWebhookRetry).toBe(false);
     expect(base.notifs[0].status).toBe("sent");
     expect(base.notifs[0].delivered_at).toBeTruthy();
@@ -836,9 +827,11 @@ describe("WA-C9.2 Fase C — HTTP semantics & self-heal", () => {
         },
       ],
     };
-    const r = await processMetaStatusCallbacks(payload, { client: base.client, reconciler: LEGACY_RECONCILER });
+    const r = await processMetaStatusCallbacks(payload, {
+      client: base.client,
+      reconciler: LEGACY_RECONCILER,
+    });
     expect(r.requiresWebhookRetry).toBe(false);
     expect(r.received).toBe(0);
   });
 });
-

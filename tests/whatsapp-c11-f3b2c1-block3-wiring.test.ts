@@ -292,9 +292,8 @@ describe("WA-C11 3B.2.C.1 Block 3 — persistirReceita (income_recurring)", () =
 
   it("ordem: gate ANTES da RPC", async () => {
     const seen: string[] = [];
-    const prevAssert = (
-      await import("@/server/whatsapp-financial-quota-gate.server")
-    ).assertFinancialActionQuotaForWhatsApp;
+    const prevAssert = (await import("@/server/whatsapp-financial-quota-gate.server"))
+      .assertFinancialActionQuotaForWhatsApp;
     // não conseguimos reordenar mocks — validamos indiretamente:
     // se o gate bloqueia, RPC NUNCA é chamada.
     gateOutcome = { allowed: false, reason: "quota_denied" };

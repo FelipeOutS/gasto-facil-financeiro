@@ -60,12 +60,7 @@ function readCache(key: BcbIndicatorKey): BcbIndicator | null {
     const raw = ls.getItem(cacheKey(key));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as BcbIndicator;
-    if (
-      !parsed ||
-      typeof parsed.value !== "number" ||
-      !Number.isFinite(parsed.value)
-    )
-      return null;
+    if (!parsed || typeof parsed.value !== "number" || !Number.isFinite(parsed.value)) return null;
     return parsed;
   } catch {
     return null;
@@ -104,8 +99,7 @@ async function fetchSgs(code: number): Promise<SgsRow[]> {
     );
     if (!res.ok) throw new Error(`BCB SGS ${code} HTTP ${res.status}`);
     const data = (await res.json()) as SgsRow[];
-    if (!Array.isArray(data) || data.length === 0)
-      throw new Error(`BCB SGS ${code} sem dados`);
+    if (!Array.isArray(data) || data.length === 0) throw new Error(`BCB SGS ${code} sem dados`);
     return data;
   } finally {
     clearTimeout(timer);
@@ -153,9 +147,7 @@ export interface BcbRadarResult {
  * Carrega os 3 indicadores em paralelo, tolerando falhas parciais.
  * Passe `force: true` para ignorar o TTL do cache (botão "Atualizar" manual).
  */
-export async function loadBcbRadar(
-  opts: { force?: boolean } = {},
-): Promise<BcbRadarResult> {
+export async function loadBcbRadar(opts: { force?: boolean } = {}): Promise<BcbRadarResult> {
   const keys: BcbIndicatorKey[] = ["SELIC", "CDI", "IPCA"];
   const settled = await Promise.allSettled(keys.map((k) => loadOne(k, opts)));
   const indicators: BcbIndicator[] = [];
@@ -168,4 +160,3 @@ export async function loadBcbRadar(
     failed: indicators.length === 0,
   };
 }
-

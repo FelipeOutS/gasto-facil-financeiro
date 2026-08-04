@@ -114,9 +114,7 @@ function CalculadorasPage() {
       </div>
 
       <div className="mt-4 rounded-2xl border border-border/60 bg-card-elevated/60 p-3">
-        <p className="text-sm font-semibold text-foreground">
-          {t("calculatorsV2.intro.title")}
-        </p>
+        <p className="text-sm font-semibold text-foreground">{t("calculatorsV2.intro.title")}</p>
         <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
           {t("calculatorsV2.intro.description")}
         </p>
@@ -148,7 +146,6 @@ function CalculadorasPage() {
     </MobileShell>
   );
 }
-
 
 // ----------------- Compare price by unit -----------------
 
@@ -387,8 +384,18 @@ function CompareResult({
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
-        <UnitPriceTile name={nameA} price={result.priceA} unit={unitLabel} highlight={result.winner === "A"} />
-        <UnitPriceTile name={nameB} price={result.priceB} unit={unitLabel} highlight={result.winner === "B"} />
+        <UnitPriceTile
+          name={nameA}
+          price={result.priceA}
+          unit={unitLabel}
+          highlight={result.winner === "A"}
+        />
+        <UnitPriceTile
+          name={nameB}
+          price={result.priceB}
+          unit={unitLabel}
+          highlight={result.winner === "B"}
+        />
       </div>
       <div
         className={cn(
@@ -436,9 +443,7 @@ function UnitPriceTile({
     <div
       className={cn(
         "rounded-2xl border p-3 transition-colors",
-        highlight
-          ? "border-success/40 bg-success/10"
-          : "border-border/60 bg-card-elevated/60",
+        highlight ? "border-success/40 bg-success/10" : "border-border/60 bg-card-elevated/60",
       )}
     >
       <p className="truncate text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
@@ -489,10 +494,7 @@ function EstimateCard() {
   const [quantity, setQuantity] = useState("1");
   const [budget, setBudget] = useState("");
 
-  const total = useMemo(
-    () => items.reduce((acc, it) => acc + it.value * it.quantity, 0),
-    [items],
-  );
+  const total = useMemo(() => items.reduce((acc, it) => acc + it.value * it.quantity, 0), [items]);
   const budgetNum = parseNumber(budget);
   const hasBudget = budgetNum !== undefined && budgetNum > 0;
   const over = hasBudget && total > (budgetNum as number);
@@ -507,10 +509,7 @@ function EstimateCard() {
     }
     const v = parseNumber(value) ?? 0;
     const q = parseNumber(quantity) ?? 1;
-    setItems((cur) => [
-      ...cur,
-      { id: genId(), name: trimmed, value: v, quantity: q > 0 ? q : 1 },
-    ]);
+    setItems((cur) => [...cur, { id: genId(), name: trimmed, value: v, quantity: q > 0 ? q : 1 }]);
     setName("");
     setValue("");
     setQuantity("1");
@@ -527,9 +526,7 @@ function EstimateCard() {
           <ShoppingBasket className="h-5 w-5" />
         </span>
         <div className="min-w-0">
-          <h2 className="text-base font-semibold md:text-lg">
-            {t("calculators.estimate.title")}
-          </h2>
+          <h2 className="text-base font-semibold md:text-lg">{t("calculators.estimate.title")}</h2>
           <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground md:text-[13px]">
             {t("calculators.estimate.subtitle")}
           </p>

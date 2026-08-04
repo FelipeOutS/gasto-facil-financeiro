@@ -49,8 +49,7 @@ export const Route = createFileRoute("/fornecedores_/relatorio")({
       { title: "Relatório por Fornecedor — Gasto Inteligente" },
       {
         name: "description",
-        content:
-          "Acompanhe quanto sua empresa gasta com cada fornecedor.",
+        content: "Acompanhe quanto sua empresa gasta com cada fornecedor.",
       },
     ],
   }),
@@ -64,12 +63,7 @@ type StatusFiltro = "todos" | "pagos" | "pendentes";
 const CONTA_GASTO_ORIGEM = "contas_a_pagar";
 
 function nomeExibicao(f: Fornecedor): string {
-  return (
-    f.apelido?.trim() ||
-    f.nome_fantasia?.trim() ||
-    f.razao_social?.trim() ||
-    f.nome
-  );
+  return f.apelido?.trim() || f.nome_fantasia?.trim() || f.razao_social?.trim() || f.nome;
 }
 
 function intervaloPeriodo(p: Periodo): { inicio: Date; fim: Date } {
@@ -208,23 +202,16 @@ function RelatorioFornecedoresPage() {
     if (fornecedorFiltro !== "todos") {
       list = list.filter((b) => b.fornecedor.id === fornecedorFiltro);
     }
-    list.sort(
-      (a, b) =>
-        b.totalPago + b.totalPendente - (a.totalPago + a.totalPendente),
-    );
+    list.sort((a, b) => b.totalPago + b.totalPendente - (a.totalPago + a.totalPendente));
     return list;
   }, [gastos, contas, porId, inicio, fim, fornecedorFiltro, status, origem]);
 
   const totais = useMemo(() => {
     const totalPago = agregados.reduce((s, a) => s + a.totalPago, 0);
     const totalPendente = agregados.reduce((s, a) => s + a.totalPendente, 0);
-    const qtdFornecedores = agregados.filter(
-      (a) => a.qtdLancamentos > 0,
-    ).length;
+    const qtdFornecedores = agregados.filter((a) => a.qtdLancamentos > 0).length;
     const contasPendentes = agregados.reduce(
-      (s, a) =>
-        s +
-        a.contas.filter((c) => statusContaEfetivo(c) !== "pago").length,
+      (s, a) => s + a.contas.filter((c) => statusContaEfetivo(c) !== "pago").length,
       0,
     );
     const maior = agregados[0];
@@ -285,10 +272,7 @@ function RelatorioFornecedoresPage() {
           <label className="mb-1 block text-[11px] font-medium text-muted-foreground">
             Fornecedor
           </label>
-          <Select
-            value={fornecedorFiltro}
-            onValueChange={(v) => setFornecedorFiltro(v)}
-          >
+          <Select value={fornecedorFiltro} onValueChange={(v) => setFornecedorFiltro(v)}>
             <SelectTrigger className="h-9">
               <SelectValue />
             </SelectTrigger>
@@ -303,9 +287,7 @@ function RelatorioFornecedoresPage() {
           </Select>
         </div>
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-muted-foreground">
-            Status
-          </label>
+          <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Status</label>
           <Select value={status} onValueChange={(v) => setStatus(v as StatusFiltro)}>
             <SelectTrigger className="h-9">
               <SelectValue />
@@ -318,9 +300,7 @@ function RelatorioFornecedoresPage() {
           </Select>
         </div>
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-muted-foreground">
-            Origem
-          </label>
+          <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Origem</label>
           <Select value={origem} onValueChange={(v) => setOrigem(v as OrigemFiltro)}>
             <SelectTrigger className="h-9">
               <SelectValue />
@@ -350,11 +330,7 @@ function RelatorioFornecedoresPage() {
         <KpiCard
           icon={<TrendingUp className="h-4 w-4" />}
           label="Maior fornecedor"
-          value={
-            totais.maior
-              ? nomeExibicao(totais.maior.fornecedor)
-              : "—"
-          }
+          value={totais.maior ? nomeExibicao(totais.maior.fornecedor) : "—"}
           hint={
             totais.maior
               ? formatBRL(totais.maior.totalPago + totais.maior.totalPendente)
@@ -390,8 +366,7 @@ function RelatorioFornecedoresPage() {
           <ul className="space-y-2">
             {agregados.map((a) => {
               const total = a.totalPago + a.totalPendente;
-              const participacao =
-                totais.totalGeral > 0 ? (total / totais.totalGeral) * 100 : 0;
+              const participacao = totais.totalGeral > 0 ? (total / totais.totalGeral) * 100 : 0;
               return (
                 <li key={a.fornecedor.id}>
                   <button
@@ -407,16 +382,11 @@ function RelatorioFornecedoresPage() {
                         <p className="truncate text-sm font-semibold">
                           {nomeExibicao(a.fornecedor)}
                         </p>
-                        <p className="text-sm font-semibold tabular-nums">
-                          {formatBRL(total)}
-                        </p>
+                        <p className="text-sm font-semibold tabular-nums">{formatBRL(total)}</p>
                       </div>
                       <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
                         <span>
-                          Pago{" "}
-                          <strong className="text-foreground">
-                            {formatBRL(a.totalPago)}
-                          </strong>
+                          Pago <strong className="text-foreground">{formatBRL(a.totalPago)}</strong>
                         </span>
                         {a.totalPendente > 0 && (
                           <span>
@@ -430,8 +400,7 @@ function RelatorioFornecedoresPage() {
                         <span>{participacao.toFixed(1)}% do total</span>
                         {a.ultimaMovimentacao && (
                           <span>
-                            Última:{" "}
-                            {format(parseISO(a.ultimaMovimentacao), "dd/MM/yyyy")}
+                            Última: {format(parseISO(a.ultimaMovimentacao), "dd/MM/yyyy")}
                           </span>
                         )}
                       </div>
@@ -457,9 +426,7 @@ function RelatorioFornecedoresPage() {
             <>
               <DialogHeader>
                 <DialogTitle>{nomeExibicao(detalhe.fornecedor)}</DialogTitle>
-                <DialogDescription>
-                  Movimentações no período selecionado.
-                </DialogDescription>
+                <DialogDescription>Movimentações no período selecionado.</DialogDescription>
               </DialogHeader>
 
               <div className="grid grid-cols-2 gap-2">
@@ -474,8 +441,7 @@ function RelatorioFornecedoresPage() {
                   <p
                     className={cn(
                       "mt-0.5 text-base font-semibold tabular-nums",
-                      detalhe.totalPendente > 0 &&
-                        "text-amber-600 dark:text-amber-400",
+                      detalhe.totalPendente > 0 && "text-amber-600 dark:text-amber-400",
                     )}
                   >
                     {formatBRL(detalhe.totalPendente)}
@@ -486,9 +452,7 @@ function RelatorioFornecedoresPage() {
               <div className="max-h-[50vh] space-y-3 overflow-y-auto pr-1">
                 {detalhe.gastos.length > 0 && (
                   <div>
-                    <p className="mb-1.5 text-xs font-semibold">
-                      Gastos ({detalhe.gastos.length})
-                    </p>
+                    <p className="mb-1.5 text-xs font-semibold">Gastos ({detalhe.gastos.length})</p>
                     <ul className="space-y-1.5">
                       {detalhe.gastos
                         .slice()
@@ -499,15 +463,10 @@ function RelatorioFornecedoresPage() {
                             className="flex items-center justify-between gap-2 rounded-lg border bg-card p-2 text-xs"
                           >
                             <div className="min-w-0">
-                              <p className="truncate font-medium">
-                                {g.descricao}
-                              </p>
+                              <p className="truncate font-medium">{g.descricao}</p>
                               <p className="text-[11px] text-muted-foreground">
-                                {format(parseISO(g.data), "dd/MM/yyyy")} ·{" "}
-                                {g.formaPagamento}
-                                {g.origem === CONTA_GASTO_ORIGEM
-                                  ? " · via conta paga"
-                                  : ""}
+                                {format(parseISO(g.data), "dd/MM/yyyy")} · {g.formaPagamento}
+                                {g.origem === CONTA_GASTO_ORIGEM ? " · via conta paga" : ""}
                               </p>
                             </div>
                             <p className="shrink-0 font-semibold tabular-nums">
@@ -527,9 +486,7 @@ function RelatorioFornecedoresPage() {
                     <ul className="space-y-1.5">
                       {detalhe.contas
                         .slice()
-                        .sort((a, b) =>
-                          b.dataVencimento.localeCompare(a.dataVencimento),
-                        )
+                        .sort((a, b) => b.dataVencimento.localeCompare(a.dataVencimento))
                         .map((c) => {
                           const eff = statusContaEfetivo(c);
                           return (
@@ -540,11 +497,7 @@ function RelatorioFornecedoresPage() {
                               <div className="min-w-0">
                                 <p className="truncate font-medium">{c.nome}</p>
                                 <p className="text-[11px] text-muted-foreground">
-                                  Venc.{" "}
-                                  {format(
-                                    parseISO(c.dataVencimento),
-                                    "dd/MM/yyyy",
-                                  )}
+                                  Venc. {format(parseISO(c.dataVencimento), "dd/MM/yyyy")}
                                   {c.formaPagamento ? ` · ${c.formaPagamento}` : ""}
                                 </p>
                               </div>
@@ -576,12 +529,11 @@ function RelatorioFornecedoresPage() {
                   </div>
                 )}
 
-                {detalhe.gastos.length === 0 &&
-                  detalhe.contas.length === 0 && (
-                    <p className="text-center text-xs text-muted-foreground">
-                      Sem movimentações neste período.
-                    </p>
-                  )}
+                {detalhe.gastos.length === 0 && detalhe.contas.length === 0 && (
+                  <p className="text-center text-xs text-muted-foreground">
+                    Sem movimentações neste período.
+                  </p>
+                )}
               </div>
             </>
           )}
@@ -617,20 +569,15 @@ function KpiCard({
           className={cn(
             "grid h-6 w-6 place-items-center rounded-md bg-muted text-foreground/70",
             accent === "primary" && "bg-primary/10 text-primary",
-            accent === "warning" &&
-              "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+            accent === "warning" && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
           )}
         >
           {icon}
         </span>
         <span className="truncate">{label}</span>
       </div>
-      <p className="mt-1.5 truncate text-base font-semibold tabular-nums">
-        {value}
-      </p>
-      {hint && (
-        <p className="text-[11px] text-muted-foreground">{hint}</p>
-      )}
+      <p className="mt-1.5 truncate text-base font-semibold tabular-nums">{value}</p>
+      {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -641,9 +588,7 @@ function EmptyRanking() {
       <div className="mx-auto grid h-10 w-10 place-items-center rounded-2xl bg-primary/10 text-primary">
         <CalendarIcon className="h-5 w-5" />
       </div>
-      <p className="mt-2 text-sm font-medium">
-        Nenhuma movimentação no período
-      </p>
+      <p className="mt-2 text-sm font-medium">Nenhuma movimentação no período</p>
       <p className="mt-1 text-xs text-muted-foreground">
         Vincule fornecedores aos seus gastos e contas para ver o ranking aqui.
       </p>

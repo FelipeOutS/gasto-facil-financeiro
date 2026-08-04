@@ -122,12 +122,7 @@ const RECEITA_KEYWORDS = [
   "reembolso",
 ];
 
-const GASTO_HINT_PATTERNS = [
-  /\bgastei\b/,
-  /\bpaguei\b/,
-  /\bcomprei\b/,
-  /\bdebitou\b/,
-];
+const GASTO_HINT_PATTERNS = [/\bgastei\b/, /\bpaguei\b/, /\bcomprei\b/, /\bdebitou\b/];
 
 export function isReceitaIntent(texto: string): boolean {
   const t = normalize(texto);
@@ -208,13 +203,25 @@ export function parseFrequencia(texto: string): Frequencia | null {
 }
 
 const DIA_SEMANA_MAP: Record<string, number> = {
-  domingo: 0, dom: 0,
-  segunda: 1, seg: 1, "segunda-feira": 1,
-  terca: 2, ter: 2, "terca-feira": 2,
-  quarta: 3, qua: 3, "quarta-feira": 3,
-  quinta: 4, qui: 4, "quinta-feira": 4,
-  sexta: 5, sex: 5, "sexta-feira": 5,
-  sabado: 6, sab: 6,
+  domingo: 0,
+  dom: 0,
+  segunda: 1,
+  seg: 1,
+  "segunda-feira": 1,
+  terca: 2,
+  ter: 2,
+  "terca-feira": 2,
+  quarta: 3,
+  qua: 3,
+  "quarta-feira": 3,
+  quinta: 4,
+  qui: 4,
+  "quinta-feira": 4,
+  sexta: 5,
+  sex: 5,
+  "sexta-feira": 5,
+  sabado: 6,
+  sab: 6,
 };
 
 export function parseDiaSemana(texto: string): number | null {
@@ -242,18 +249,24 @@ function descricaoFromTipo(label: string): string {
 
 // ---------- (helpers de pré-projeção removidos em WA-R1-Fix) ----------
 
-
 // WA-R1-Fix: a função `gerarDatasRecorrencia` foi removida. A criação de
 // receitas recorrentes agora é feita atomicamente pela RPC
 // `create_recurring_income`, que cria 1 receita atual + 1 recorrência ativa
 // (sem pré-projeção de 12 meses).
 
-
 export function resumoRecorrencia(s: ReceitaSession): string {
   if (!s.recorrente) return "Não";
   if (s.frequencia === "mensal") return `Todo mês, dia ${s.diaMes}`;
   if (s.frequencia === "semanal") {
-    const nomes = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
+    const nomes = [
+      "domingo",
+      "segunda-feira",
+      "terça-feira",
+      "quarta-feira",
+      "quinta-feira",
+      "sexta-feira",
+      "sábado",
+    ];
     return `Toda semana, ${nomes[s.diaSemana ?? 0]}`;
   }
   if (s.frequencia === "quinzenal") return "A cada 15 dias";
@@ -352,7 +365,6 @@ export async function persistirReceita(
     return { ok: false, resposta: financialQuotaBlockedReply(gateOutcome) };
   }
 
-
   const tipo: TipoReceita = s.tipo ?? "outros";
   const descricao = (s.descricao || s.tipoLabel || "Renda").trim();
   const valor = Number(s.valor || 0);
@@ -413,14 +425,23 @@ export async function persistirReceita(
         .eq("user_id", userId)
         .maybeSingle(),
     ]);
-    const recRow = recCheck?.data as
-      | { id: string; recorrencia_id: string | null; valor: number; data: string; user_id: string }
-      | null;
-    const recoRow = recoCheck?.data as
-      | { id: string; frequencia: string; proxima_cobranca: string | null; status: string; user_id: string }
-      | null;
+    const recRow = recCheck?.data as {
+      id: string;
+      recorrencia_id: string | null;
+      valor: number;
+      data: string;
+      user_id: string;
+    } | null;
+    const recoRow = recoCheck?.data as {
+      id: string;
+      frequencia: string;
+      proxima_cobranca: string | null;
+      status: string;
+      user_id: string;
+    } | null;
     if (
-      !recRow || !recoRow ||
+      !recRow ||
+      !recoRow ||
       recRow.recorrencia_id !== recorrenciaId ||
       recoRow.status !== "ativa" ||
       !recoRow.proxima_cobranca
@@ -620,7 +641,11 @@ export function nextStepReceita(
     } else if (s.frequencia === "semanal") {
       const d = parseDiaSemana(texto);
       if (d === null) {
-        return { status: "rec_aguardando_dia", session: s, resposta: M.receita.diaSemanaInvalido() };
+        return {
+          status: "rec_aguardando_dia",
+          session: s,
+          resposta: M.receita.diaSemanaInvalido(),
+        };
       }
       s.diaSemana = d;
     }

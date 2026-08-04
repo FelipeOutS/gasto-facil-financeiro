@@ -2,7 +2,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type StatusContaReceber = "pendente" | "parcial" | "recebido" | "atrasado" | "cancelado";
 
-export type TipoRecebimento = "cliente" | "venda" | "freelance" | "salario" | "aluguel" | "reembolso" | "outro";
+export type TipoRecebimento =
+  | "cliente"
+  | "venda"
+  | "freelance"
+  | "salario"
+  | "aluguel"
+  | "reembolso"
+  | "outro";
 
 export const TIPOS_RECEBIMENTO: Array<{ id: TipoRecebimento; label: string }> = [
   { id: "cliente", label: "Cliente" },
@@ -69,7 +76,9 @@ function todayISO(): string {
 }
 
 /** Calcula o status efetivo (atrasado se vencido e ainda há saldo) */
-export function statusEfetivo(c: Pick<ContaReceber, "status" | "valor_restante" | "data_prevista">): StatusContaReceber {
+export function statusEfetivo(
+  c: Pick<ContaReceber, "status" | "valor_restante" | "data_prevista">,
+): StatusContaReceber {
   if (c.status === "recebido" || c.status === "cancelado") return c.status as StatusContaReceber;
   if (Number(c.valor_restante) <= 0) return "recebido";
   const hoje = todayISO();
@@ -88,7 +97,10 @@ export async function listarContasReceber(userId: string): Promise<ContaReceber[
   return (data ?? []) as ContaReceber[];
 }
 
-export async function criarContaReceber(userId: string, input: NovaContaReceberInput): Promise<ContaReceber> {
+export async function criarContaReceber(
+  userId: string,
+  input: NovaContaReceberInput,
+): Promise<ContaReceber> {
   const valor = Number(input.valor_total) || 0;
   const payload = {
     user_id: userId,
@@ -106,11 +118,7 @@ export async function criarContaReceber(userId: string, input: NovaContaReceberI
     origem: "manual",
     cliente_id: input.cliente_id ?? null,
   };
-  const { data, error } = await supabase
-    .from("contas_a_receber")
-    .insert(payload)
-    .select()
-    .single();
+  const { data, error } = await supabase.from("contas_a_receber").insert(payload).select().single();
   if (error) throw error;
   return data as ContaReceber;
 }
@@ -121,12 +129,15 @@ export async function atualizarContaReceber(
 ): Promise<ContaReceber> {
   const patch: Record<string, unknown> = {};
   if (fields.titulo !== undefined) patch.titulo = fields.titulo.trim();
-  if (fields.pagador_nome !== undefined) patch.pagador_nome = fields.pagador_nome?.toString().trim() || null;
+  if (fields.pagador_nome !== undefined)
+    patch.pagador_nome = fields.pagador_nome?.toString().trim() || null;
   if (fields.tipo_recebimento !== undefined) patch.tipo_recebimento = fields.tipo_recebimento;
   if (fields.data_prevista !== undefined) patch.data_prevista = fields.data_prevista;
   if (fields.categoria !== undefined) patch.categoria = fields.categoria?.toString().trim() || null;
-  if (fields.forma_recebimento !== undefined) patch.forma_recebimento = fields.forma_recebimento || null;
-  if (fields.observacao !== undefined) patch.observacao = fields.observacao?.toString().trim() || null;
+  if (fields.forma_recebimento !== undefined)
+    patch.forma_recebimento = fields.forma_recebimento || null;
+  if (fields.observacao !== undefined)
+    patch.observacao = fields.observacao?.toString().trim() || null;
   if (fields.cliente_id !== undefined) patch.cliente_id = fields.cliente_id ?? null;
 
   if (fields.valor_total !== undefined) {
@@ -185,9 +196,10 @@ export async function marcarRecebida(
   if (e1) throw e1;
   const total = Number((cur as { valor_total: number } | null)?.valor_total ?? 0);
   const jaRecebido = Number((cur as { valor_recebido: number } | null)?.valor_recebido ?? 0);
-  const recebidoAgora = options?.valor_recebido_agora !== undefined
-    ? Number(options.valor_recebido_agora) || 0
-    : Math.max(0, total - jaRecebido);
+  const recebidoAgora =
+    options?.valor_recebido_agora !== undefined
+      ? Number(options.valor_recebido_agora) || 0
+      : Math.max(0, total - jaRecebido);
   const novoRecebido = Math.min(total, jaRecebido + recebidoAgora);
   const novoRestante = Math.max(0, total - novoRecebido);
   const status: StatusContaReceber = novoRestante <= 0 ? "recebido" : "parcial";

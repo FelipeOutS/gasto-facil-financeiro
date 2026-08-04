@@ -13,10 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, RefreshCcw, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  diagnoseMpPayment,
-  reconcileMpPaymentById,
-} from "@/lib/admin.functions";
+import { diagnoseMpPayment, reconcileMpPaymentById } from "@/lib/admin.functions";
 
 type Diagnosis = {
   mercado_pago_status: string;
@@ -54,7 +51,12 @@ function toneFor(status: string | null | undefined): "ok" | "warn" | "error" | u
   const s = (status ?? "").toLowerCase();
   if (["approved", "paid", "authorized", "ativo", "active"].includes(s)) return "ok";
   if (["pending", "in_process", "in_mediation"].includes(s)) return "warn";
-  if (["rejected", "cancelled", "canceled", "refunded", "charged_back", "expired", "failed"].includes(s)) return "error";
+  if (
+    ["rejected", "cancelled", "canceled", "refunded", "charged_back", "expired", "failed"].includes(
+      s,
+    )
+  )
+    return "error";
   return undefined;
 }
 
@@ -87,7 +89,10 @@ export function PaymentDiagnoseDialog({
     setDiag(null);
     setConfirmReconcile(false);
     try {
-      const res = (await diagnoseFn({ data: { paymentId } })) as { ok: boolean; diagnosis: Diagnosis };
+      const res = (await diagnoseFn({ data: { paymentId } })) as {
+        ok: boolean;
+        diagnosis: Diagnosis;
+      };
       setDiag(res.diagnosis);
       if (res.diagnosis.recommended_action === "payment_not_found") {
         setError("O Mercado Pago não encontrou esse pagamento. Verifique o ID.");
@@ -110,9 +115,7 @@ export function PaymentDiagnoseDialog({
   }, [open, paymentId, load]);
 
   const canReconcile =
-    diag &&
-    diag.mercado_pago_status === "approved" &&
-    diag.local_subscription_status !== "ativo";
+    diag && diag.mercado_pago_status === "approved" && diag.local_subscription_status !== "ativo";
 
   const handleReconcile = async () => {
     if (!paymentId) return;
@@ -175,16 +178,25 @@ export function PaymentDiagnoseDialog({
 
             <div className="grid grid-cols-2 gap-3">
               <Field label="Status MP (canônico)">
-                <StatusPill value={diag.mercado_pago_status} tone={toneFor(diag.mercado_pago_status)} />
+                <StatusPill
+                  value={diag.mercado_pago_status}
+                  tone={toneFor(diag.mercado_pago_status)}
+                />
               </Field>
               <Field label="Status MP (raw)">
                 <span className="text-xs">{diag.mp_raw_status ?? "—"}</span>
               </Field>
               <Field label="Pagamento local">
-                <StatusPill value={diag.local_payment_status} tone={toneFor(diag.local_payment_status)} />
+                <StatusPill
+                  value={diag.local_payment_status}
+                  tone={toneFor(diag.local_payment_status)}
+                />
               </Field>
               <Field label="Plano local">
-                <StatusPill value={diag.local_subscription_status} tone={toneFor(diag.local_subscription_status)} />
+                <StatusPill
+                  value={diag.local_subscription_status}
+                  tone={toneFor(diag.local_subscription_status)}
+                />
               </Field>
               <Field label="Plano">
                 <span className="text-xs">{diag.plan ?? "—"}</span>
@@ -204,16 +216,22 @@ export function PaymentDiagnoseDialog({
               </Field>
               {currentPeriodEnd ? (
                 <Field label="Fim do ciclo">
-                  <span className="text-xs">{new Date(currentPeriodEnd).toLocaleString("pt-BR")}</span>
+                  <span className="text-xs">
+                    {new Date(currentPeriodEnd).toLocaleString("pt-BR")}
+                  </span>
                 </Field>
               ) : null}
               <Field label="Ação recomendada">
-                <Badge variant="outline" className="text-xs">{diag.recommended_action}</Badge>
+                <Badge variant="outline" className="text-xs">
+                  {diag.recommended_action}
+                </Badge>
               </Field>
             </div>
 
             <div>
-              <div className="mb-1 text-xs font-semibold text-muted-foreground">Inconsistências</div>
+              <div className="mb-1 text-xs font-semibold text-muted-foreground">
+                Inconsistências
+              </div>
               {diag.inconsistencies.length === 0 ? (
                 <div className="flex items-center gap-1 text-xs text-emerald-600">
                   <CheckCircle2 className="h-3 w-3" /> Nenhuma detectada
@@ -227,15 +245,18 @@ export function PaymentDiagnoseDialog({
               )}
             </div>
 
-            {diag.mercado_pago_status === "approved" && diag.local_subscription_status === "ativo" ? (
+            {diag.mercado_pago_status === "approved" &&
+            diag.local_subscription_status === "ativo" ? (
               <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-2 text-xs text-emerald-700">
                 Pagamento aprovado e plano já está ativo. Nada a reconciliar.
               </div>
             ) : null}
 
-            {diag.mercado_pago_status !== "approved" && diag.recommended_action !== "payment_not_found" ? (
+            {diag.mercado_pago_status !== "approved" &&
+            diag.recommended_action !== "payment_not_found" ? (
               <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-2 text-xs text-amber-700">
-                Este pagamento não está aprovado no Mercado Pago. A reconciliação automática não será aplicada.
+                Este pagamento não está aprovado no Mercado Pago. A reconciliação automática não
+                será aplicada.
               </div>
             ) : null}
 
@@ -245,11 +266,7 @@ export function PaymentDiagnoseDialog({
                   Confirmar reconciliação manual deste pagamento?
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => void handleReconcile()}
-                    disabled={reconciling}
-                  >
+                  <Button size="sm" onClick={() => void handleReconcile()} disabled={reconciling}>
                     {reconciling ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null}
                     Confirmar
                   </Button>

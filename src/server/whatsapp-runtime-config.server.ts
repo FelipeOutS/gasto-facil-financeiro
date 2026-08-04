@@ -66,9 +66,7 @@ function coerceInt(v: unknown, min: number, max: number): number {
 /**
  * Lê o singleton. Fail-closed: qualquer erro devolve FAIL_CLOSED_RUNTIME.
  */
-export async function readRuntimeConfig(
-  client: unknown = sb,
-): Promise<WhatsAppRuntimeConfig> {
+export async function readRuntimeConfig(client: unknown = sb): Promise<WhatsAppRuntimeConfig> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = client as any;
@@ -138,13 +136,17 @@ export async function updateRuntimeConfig(
   if (requiresReason(patch) && (!ctx.reason || ctx.reason.trim().length < 3)) {
     return { ok: false, error: "reason_required" };
   }
-  const normalized: Record<string, unknown> = { updated_by: ctx.adminUserId, reason: ctx.reason ?? null };
+  const normalized: Record<string, unknown> = {
+    updated_by: ctx.adminUserId,
+    reason: ctx.reason ?? null,
+  };
   if (patch.global_enabled !== undefined) normalized.global_enabled = !!patch.global_enabled;
   if (patch.inbound_enabled !== undefined) normalized.inbound_enabled = !!patch.inbound_enabled;
   if (patch.outbound_enabled !== undefined) normalized.outbound_enabled = !!patch.outbound_enabled;
   if (patch.notification_creation_enabled !== undefined)
     normalized.notification_creation_enabled = !!patch.notification_creation_enabled;
-  if (patch.new_links_enabled !== undefined) normalized.new_links_enabled = !!patch.new_links_enabled;
+  if (patch.new_links_enabled !== undefined)
+    normalized.new_links_enabled = !!patch.new_links_enabled;
   if (patch.rollout_enabled !== undefined) normalized.rollout_enabled = !!patch.rollout_enabled;
   if (patch.rollout_percentage !== undefined) {
     const p = coerceInt(patch.rollout_percentage, -1, 101);

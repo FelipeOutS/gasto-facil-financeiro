@@ -319,7 +319,12 @@ test("runOutbound: chamado 3× para a mesma notification (execute injetado idemp
     phoneNumberId: "1234567890",
     logger: () => {},
   };
-  const notif = { id: "n-idem", user_id: "u-1", notification_type: "gi_conta_vencendo_hoje", payload: {} };
+  const notif = {
+    id: "n-idem",
+    user_id: "u-1",
+    notification_type: "gi_conta_vencendo_hoje",
+    payload: {},
+  };
   await runOutboundForNotification(notif, "T1", deps);
   await runOutboundForNotification(notif, "T2", deps);
   await runOutboundForNotification(notif, "T3", deps);

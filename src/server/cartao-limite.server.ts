@@ -141,7 +141,6 @@ export async function getComprometimentoFuturoCartao(
     faturaAtual: r.faturaAtual,
     proximaFaturaEstimada: r.proximaFaturaEstimada,
     parcelasFuturasAposProximo: r.parcelasFuturasAposProximo,
-    totalComprometido:
-      r.faturaAtual + r.proximaFaturaEstimada + r.parcelasFuturasAposProximo,
+    totalComprometido: r.faturaAtual + r.proximaFaturaEstimada + r.parcelasFuturasAposProximo,
   };
 }

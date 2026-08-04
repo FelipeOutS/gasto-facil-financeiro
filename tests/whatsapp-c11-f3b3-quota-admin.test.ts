@@ -49,7 +49,7 @@ function makeQuotaClient(rows: QuotaFields[], mode: "none" | "db_error" = "none"
             async maybeSingle() {
               if (mode === "db_error") return { data: null, error: { message: "boom" } };
               const p = chain._plan;
-              return { data: p ? store.get(p) ?? null : null, error: null };
+              return { data: p ? (store.get(p) ?? null) : null, error: null };
             },
             order() {
               return this;
@@ -73,7 +73,11 @@ function makeQuotaClient(rows: QuotaFields[], mode: "none" | "db_error" = "none"
                       if (mode === "db_error") return { data: null, error: { message: "boom" } };
                       const existing = store.get(chain._plan);
                       if (!existing) return { data: null, error: null };
-                      const merged = { ...existing, ...patch, updated_at: new Date().toISOString() };
+                      const merged = {
+                        ...existing,
+                        ...patch,
+                        updated_at: new Date().toISOString(),
+                      };
                       store.set(chain._plan, merged);
                       return { data: merged, error: null };
                     },
@@ -211,9 +215,7 @@ describe("WA-C11 3B.3 — updatePlanQuota", () => {
   test("consistência diário/mensal após merge com estado atual", async () => {
     const { updatePlanQuota } = await import("../src/server/whatsapp-quota-admin.server");
     // Estado atual: mensal=50. Patch aumenta diário para 100 ⇒ diário > mensal.
-    const c = makeQuotaClient([
-      { ...zeroFor("empresa"), outbound_monthly_limit: 50 },
-    ]);
+    const c = makeQuotaClient([{ ...zeroFor("empresa"), outbound_monthly_limit: 50 }]);
     const r = await updatePlanQuota(
       "empresa",
       { daily_outbound_limit: 100 },
@@ -239,9 +241,7 @@ describe("WA-C11 3B.3 — updatePlanQuota", () => {
 
   test("client não define updated_by — helper força adminUserId", async () => {
     const { updatePlanQuota } = await import("../src/server/whatsapp-quota-admin.server");
-    const c = makeQuotaClient([
-      { ...zeroFor("empresa"), outbound_monthly_limit: 10 },
-    ]);
+    const c = makeQuotaClient([{ ...zeroFor("empresa"), outbound_monthly_limit: 10 }]);
     const r = await updatePlanQuota(
       "empresa",
       // Tentativa mal-intencionada de sobrescrever updated_by via patch.

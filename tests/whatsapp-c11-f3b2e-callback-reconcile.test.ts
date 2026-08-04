@@ -72,9 +72,7 @@ describe("WA-C11 3B.2.E — reconciler: aceite promove commit", () => {
   });
 
   it("invalid_state (released tardio) → not_applicable, NÃO regressa", async () => {
-    const reconcile = vi
-      .fn()
-      .mockResolvedValue({ outcome: "invalid_state", state: "released" });
+    const reconcile = vi.fn().mockResolvedValue({ outcome: "invalid_state", state: "released" });
     const r = await reconcileOutboundQuotaFromMetaStatus(
       { ...baseIds, providerMessageId: "wamid.abc", status: "sent" },
       { reconcile: reconcile as never },

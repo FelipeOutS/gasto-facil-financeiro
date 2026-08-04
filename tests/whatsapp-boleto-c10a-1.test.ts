@@ -10,10 +10,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
 
-const {
-  tryParseBoleto,
-  _buildBoletoCobrancaForTest,
-} = await import("../src/server/whatsapp-boleto-parser");
+const { tryParseBoleto, _buildBoletoCobrancaForTest } =
+  await import("../src/server/whatsapp-boleto-parser");
 
 const {
   __setBoletoPepperForTest,
@@ -22,9 +20,7 @@ const {
   BoletoSecretMissingError,
 } = await import("../src/server/whatsapp-boleto-secret.server");
 
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 
 function msg(texto: string, externalId = `ext-${Math.random().toString(36).slice(2, 10)}`) {
   return {
@@ -190,7 +186,7 @@ describe("WA-C10.a.1 — menu/ajuda em sessão ativa", () => {
     expect(rOk.status).toBe("salva");
   });
 
-  it("cancelar (\"5\" no menu de confirmação) limpa código bruto da sessão final", async () => {
+  it('cancelar ("5" no menu de confirmação) limpa código bruto da sessão final', async () => {
     const { linha } = _buildBoletoCobrancaForTest({ valorCentavos: 2200 });
     await processarMensagemWhatsApp(msg(linha));
     await processarMensagemWhatsApp(msg("Internet"));

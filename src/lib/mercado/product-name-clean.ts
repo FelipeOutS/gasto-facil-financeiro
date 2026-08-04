@@ -391,17 +391,12 @@ export type ProductNameClean = {
  * `hintedBrand` é considerada antes da extração automática — se vier vazia,
  * tentamos detectar pelo dicionário interno.
  */
-export function cleanProductName(
-  rawName: string,
-  hintedBrand?: string | null,
-): ProductNameClean {
+export function cleanProductName(rawName: string, hintedBrand?: string | null): ProductNameClean {
   const normalized = normalizeMarketProductTerms(rawName, hintedBrand);
   if (!normalized) return { cleanedName: "", extractedBrand: hintedBrand?.trim() || null };
 
   // Primeiro, tira padrões numéricos com unidade.
-  let work = ` ${normalized} `
-    .replace(NUMBER_X_NUMBER_RE, " ")
-    .replace(NUMERIC_UNIT_RE, " ");
+  let work = ` ${normalized} `.replace(NUMBER_X_NUMBER_RE, " ").replace(NUMERIC_UNIT_RE, " ");
 
   // Tenta extrair marca: usa a hint se vier; senão procura no dicionário.
   let extractedBrand: string | null = hintedBrand?.trim() || null;
@@ -418,10 +413,7 @@ export function cleanProductName(
     // Remove a marca explícita do nome também para não duplicar na query.
     const normalizedBrand = normalizeForKey(extractedBrand);
     if (normalizedBrand) {
-      const re = new RegExp(
-        `(^|\\s)${normalizedBrand.replace(/\s+/g, "\\s+")}(\\s|$)`,
-        "i",
-      );
+      const re = new RegExp(`(^|\\s)${normalizedBrand.replace(/\s+/g, "\\s+")}(\\s|$)`, "i");
       work = work.replace(re, " ");
     }
   }
@@ -436,4 +428,3 @@ export function cleanProductName(
   const cleanedName = tokens.join(" ").trim();
   return { cleanedName, extractedBrand };
 }
-

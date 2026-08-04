@@ -33,8 +33,12 @@ afterEach(async () => {
 describe("admin-master.server — fail-closed (WA-B4)", () => {
   test("env válida: e-mails são reconhecidos", async () => {
     process.env.ADMIN_MASTER_EMAILS = "alice@example.com, bob@example.com";
-    const { isAdminMasterEmail, getAdminMasterSource, getAdminMasterEmails, isAdminMasterConfigured } =
-      await load();
+    const {
+      isAdminMasterEmail,
+      getAdminMasterSource,
+      getAdminMasterEmails,
+      isAdminMasterConfigured,
+    } = await load();
     expect(getAdminMasterSource()).toBe("env");
     expect(isAdminMasterConfigured()).toBe(true);
     expect(getAdminMasterEmails()).toEqual(["alice@example.com", "bob@example.com"]);
@@ -44,8 +48,12 @@ describe("admin-master.server — fail-closed (WA-B4)", () => {
 
   test("env ausente: lista vazia, ninguém vira admin (fail-closed)", async () => {
     delete process.env.ADMIN_MASTER_EMAILS;
-    const { isAdminMasterEmail, getAdminMasterSource, getAdminMasterEmails, isAdminMasterConfigured } =
-      await load();
+    const {
+      isAdminMasterEmail,
+      getAdminMasterSource,
+      getAdminMasterEmails,
+      isAdminMasterConfigured,
+    } = await load();
     expect(getAdminMasterSource()).toBe("none");
     expect(isAdminMasterConfigured()).toBe(false);
     expect(getAdminMasterEmails()).toEqual([]);

@@ -71,7 +71,7 @@ function baseDeps(overrides: Partial<RunOutboundDeps> = {}): RunOutboundDeps {
     loadTemplate: async () => tmpl(),
     phoneNumberId: "1234567890",
     execute: async () =>
-      ({ kind: "accepted", attemptId: "a-1", providerMessageId: "wamid.PMID" } as ExecuteResult),
+      ({ kind: "accepted", attemptId: "a-1", providerMessageId: "wamid.PMID" }) as ExecuteResult,
     logger: () => {},
     ...overrides,
   };
@@ -196,7 +196,7 @@ test("execute accepted → executed{accepted}", async () => {
     TOKEN,
     baseDeps({
       execute: async () =>
-        ({ kind: "accepted", attemptId: "a-ok", providerMessageId: "wamid.OK" } as ExecuteResult),
+        ({ kind: "accepted", attemptId: "a-ok", providerMessageId: "wamid.OK" }) as ExecuteResult,
     }),
   );
   expect(out.kind).toBe("executed");

@@ -3,10 +3,7 @@
 // Mantém a API pública intacta e SSR-safe.
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import {
-  useMercadoHistorico,
-  type MercadoCompraHistorico,
-} from "./listas-store";
+import { useMercadoHistorico, type MercadoCompraHistorico } from "./listas-store";
 
 // Chave legada (anônima, pré-sync). Preservada para migração one-shot.
 export const MERCADO_ORCAMENTO_LEGACY_ANON_KEY = "gi:mercado:orcamento:v1";
@@ -33,12 +30,14 @@ function currentMonthKey(d = new Date()): string {
 export function normalizeOrcamento(raw: unknown): MercadoOrcamento | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
-  const valor = typeof r.valorMensal === "number" && Number.isFinite(r.valorMensal)
-    ? Math.max(0, r.valorMensal)
-    : 0;
-  const mes = typeof r.mesReferencia === "string" && /^\d{4}-\d{2}$/.test(r.mesReferencia)
-    ? r.mesReferencia
-    : currentMonthKey();
+  const valor =
+    typeof r.valorMensal === "number" && Number.isFinite(r.valorMensal)
+      ? Math.max(0, r.valorMensal)
+      : 0;
+  const mes =
+    typeof r.mesReferencia === "string" && /^\d{4}-\d{2}$/.test(r.mesReferencia)
+      ? r.mesReferencia
+      : currentMonthKey();
   const upd = typeof r.atualizadoEm === "string" ? r.atualizadoEm : new Date().toISOString();
   return { valorMensal: valor, mesReferencia: mes, atualizadoEm: upd };
 }
@@ -125,9 +124,7 @@ export function setOrcamentoMercado(input: {
 }): MercadoOrcamento {
   const next: MercadoOrcamento = {
     valorMensal:
-      Number.isFinite(input.valorMensal) && input.valorMensal > 0
-        ? Number(input.valorMensal)
-        : 0,
+      Number.isFinite(input.valorMensal) && input.valorMensal > 0 ? Number(input.valorMensal) : 0,
     mesReferencia:
       input.mesReferencia && /^\d{4}-\d{2}$/.test(input.mesReferencia)
         ? input.mesReferencia
@@ -136,7 +133,11 @@ export function setOrcamentoMercado(input: {
   };
   safeWrite(next);
   emit();
-  try { syncHooks.onUpsertOrcamento?.(next); } catch { /* ignore */ }
+  try {
+    syncHooks.onUpsertOrcamento?.(next);
+  } catch {
+    /* ignore */
+  }
   return next;
 }
 

@@ -71,8 +71,7 @@ const WRITE_ACTION_VERBS =
   /\b(gastei|paguei|comprei|recebi|ganhei|transferi|cadastr(ar|e|ei)|criar|crie|criei|adicionar|adicione|adicionei|nova|novo|salvar|salve|salvei|editar|edite|editei|alterar|altere|alterei|excluir|apagar|remover|cancelar|cancele|cancelei|marcar|marque|marquei|adi[ae]r|adi[ae]i|quitei|dei baixa)\b/;
 
 // Presença de valor monetário mínimo (R$, R$X, X reais, X,XX, X.XX).
-const HAS_MONEY =
-  /(r\$\s*\d+|\bR\$\s*\d+|\b\d+\s*(reais|conto|contos)\b|\b\d+[.,]\d{2}\b)/i;
+const HAS_MONEY = /(r\$\s*\d+|\bR\$\s*\d+|\b\d+\s*(reais|conto|contos)\b|\b\d+[.,]\d{2}\b)/i;
 
 /**
  * Fallbacks nomeados. Se a mensagem consulta uma área conhecida do produto
@@ -95,13 +94,22 @@ const AREA_PATTERNS: Array<{ area: KnownArea; re: RegExp }> = [
   { area: "cartoes", re: /\b(meus?|minhas?|listar|ver|quais)?\s*cart[oõ]es?\b/ },
   { area: "bancos", re: /\b(meus?|minhas?)?\s*(bancos?|contas? banc[aá]rias?|saldo(s)?)\b/ },
   { area: "boletos", re: /\b(meus?|minhas?|listar|ver)?\s*boletos?\b/ },
-  { area: "favorecidos", re: /\b(meus?|minhas?)?\s*(favorecidos?|chaves? pix|pix salvos?|contatos? pix)\b/ },
+  {
+    area: "favorecidos",
+    re: /\b(meus?|minhas?)?\s*(favorecidos?|chaves? pix|pix salvos?|contatos? pix)\b/,
+  },
   { area: "assinatura", re: /\b(minha|meu)\s+(assinatura|plano)\b/ },
   { area: "investimentos", re: /\b(meus?|minhas?)?\s*(investimentos?|carteira|rendimentos?)\b/ },
-  { area: "dinheiro_guardado", re: /\b(meu|meus|minha|minhas)?\s*(dinheiro guardado|reservas?|poupan[cç]a)\b/ },
+  {
+    area: "dinheiro_guardado",
+    re: /\b(meu|meus|minha|minhas)?\s*(dinheiro guardado|reservas?|poupan[cç]a)\b/,
+  },
   { area: "categorias", re: /\b(minhas?|listar|ver)\s+categorias?\b/ },
   { area: "historico", re: /\b(meu|meus)\s+(hist[oó]rico|lan[cç]amentos?)\b/ },
-  { area: "impacto_renda", re: /\b(impacto (dos|das)?\s*(gastos|despesas)\s+na\s+renda|gastos?\s+na\s+renda)\b/ },
+  {
+    area: "impacto_renda",
+    re: /\b(impacto (dos|das)?\s*(gastos|despesas)\s+na\s+renda|gastos?\s+na\s+renda)\b/,
+  },
 ];
 
 export type QueryGuardDecision =

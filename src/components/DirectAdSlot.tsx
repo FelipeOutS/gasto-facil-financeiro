@@ -19,13 +19,21 @@ export function DirectAdSlot({ ad, className, slotId }: DirectAdSlotProps) {
       aria-label={t("ads.sponsoredLabel")}
       data-ad-slot={slotId}
       data-ad-provider="direct"
-      className={cn("flex items-center gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3", className)}
+      className={cn(
+        "flex items-center gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3",
+        className,
+      )}
     >
-      <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+      <span
+        aria-hidden="true"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground"
+      >
         <Megaphone className="h-4 w-4" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("ads.sponsoredLabel")}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {t("ads.sponsoredLabel")}
+        </p>
         <p className="text-sm font-medium text-foreground">{t("ads.partnerSpaceTitle")}</p>
         <p className="text-xs text-muted-foreground">{t("ads.partnerSpaceDescription")}</p>
       </div>

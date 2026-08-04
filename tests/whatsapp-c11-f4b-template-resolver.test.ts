@@ -63,7 +63,18 @@ describe("WA-C11 4B.2.a — placeholders {{1}} data", () => {
   });
 
   test("mês zero, treze, e formatos ISO/horário/vazio/arbitrários rejeitados", () => {
-    for (const bad of ["00/01/2026", "01/00/2026", "01/13/2026", "2026-07-20", "07-20-2026", "20/07/2026 10:00", "", "abc", "20/7/2026", "20/07/26"]) {
+    for (const bad of [
+      "00/01/2026",
+      "01/00/2026",
+      "01/13/2026",
+      "2026-07-20",
+      "07-20-2026",
+      "20/07/2026 10:00",
+      "",
+      "abc",
+      "20/7/2026",
+      "20/07/26",
+    ]) {
       expect(validateDatePlaceholder(bad).ok).toBe(false);
     }
   });
@@ -78,7 +89,13 @@ describe("WA-C11 4B.2.a — placeholders {{1}} data", () => {
 
 describe("WA-C11 4B.2.a — placeholders {{2}} rótulo", () => {
   test("aceita rótulos comuns sem falso-positivo", () => {
-    for (const ok of ["Energia elétrica", "Internet residencial", "Aluguel", "Água", "Assinatura mensal"]) {
+    for (const ok of [
+      "Energia elétrica",
+      "Internet residencial",
+      "Aluguel",
+      "Água",
+      "Assinatura mensal",
+    ]) {
       const r = sanitizeLabelPlaceholder(ok);
       expect(r.usedFallback).toBe(false);
       expect(r.value).toBe(ok);
@@ -191,19 +208,25 @@ describe("WA-C11 4B.2.a — resolver fail-closed", () => {
     ["disabled", "not_approved"],
     ["unknown", "not_approved"],
   ] as const)("status=%s reprova com %s", (status, expected) => {
-    const r = projectApprovedTemplate({ ...approvedLocal, status }, {
-      notificationKey: "gi_conta_vencendo_hoje",
-      placeholders: validPlaceholders,
-    });
+    const r = projectApprovedTemplate(
+      { ...approvedLocal, status },
+      {
+        notificationKey: "gi_conta_vencendo_hoje",
+        placeholders: validPlaceholders,
+      },
+    );
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.detail).toBe(expected);
   });
 
   test("active=false reprova com inactive", () => {
-    const r = projectApprovedTemplate({ ...approvedLocal, active: false }, {
-      notificationKey: "gi_conta_vencendo_hoje",
-      placeholders: validPlaceholders,
-    });
+    const r = projectApprovedTemplate(
+      { ...approvedLocal, active: false },
+      {
+        notificationKey: "gi_conta_vencendo_hoje",
+        placeholders: validPlaceholders,
+      },
+    );
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.detail).toBe("inactive");
   });
@@ -219,10 +242,13 @@ describe("WA-C11 4B.2.a — resolver fail-closed", () => {
   });
 
   test("provider_template_id ausente reprova", () => {
-    const r = projectApprovedTemplate({ ...approvedLocal, provider_template_id: null }, {
-      notificationKey: "gi_conta_vencendo_hoje",
-      placeholders: validPlaceholders,
-    });
+    const r = projectApprovedTemplate(
+      { ...approvedLocal, provider_template_id: null },
+      {
+        notificationKey: "gi_conta_vencendo_hoje",
+        placeholders: validPlaceholders,
+      },
+    );
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.detail).toBe("provider_id_missing");
   });
@@ -238,7 +264,12 @@ describe("WA-C11 4B.2.a — resolver fail-closed", () => {
   });
 
   test("evento desconhecido → not_allowed (jamais hello_world, jamais en_US)", () => {
-    for (const bad of ["hello_world", "gi_teste_integracao_canary", "gi_conta_recorrente_pendente", ""]) {
+    for (const bad of [
+      "hello_world",
+      "gi_teste_integracao_canary",
+      "gi_conta_recorrente_pendente",
+      "",
+    ]) {
       const r = projectApprovedTemplate(approvedLocal, {
         notificationKey: bad,
         placeholders: validPlaceholders,

@@ -24,10 +24,10 @@ function lockedResponse(message: string): Response {
 }
 
 function unauthorizedResponse(message = "Você precisa estar logado."): Response {
-  return new Response(
-    JSON.stringify({ error: "unauthorized", message }),
-    { status: 401, headers: { "Content-Type": "application/json" } },
-  );
+  return new Response(JSON.stringify({ error: "unauthorized", message }), {
+    status: 401,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 export type FeatureAccessResult =
@@ -69,13 +69,18 @@ export async function checkFeatureAccess(
       return {
         ok: false,
         status: 403,
-        reason: "Este recurso está disponível apenas em planos superiores. Faça upgrade em Meu plano.",
+        reason:
+          "Este recurso está disponível apenas em planos superiores. Faça upgrade em Meu plano.",
       };
     }
     return { ok: true, plan: sub.plan, isAdmin: false };
   } catch (err) {
     console.error("[checkFeatureAccess] erro", { feature, err });
-    return { ok: false, status: 403, reason: "Não foi possível validar seu plano. Tente novamente." };
+    return {
+      ok: false,
+      status: 403,
+      reason: "Não foi possível validar seu plano. Tente novamente.",
+    };
   }
 }
 

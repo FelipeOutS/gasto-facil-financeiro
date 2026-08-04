@@ -1,5 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getUserFromRequest, unauthorizedResponse, isAdminMasterUser, forbiddenResponse } from "@/server/api-auth";
+import {
+  getUserFromRequest,
+  unauthorizedResponse,
+  isAdminMasterUser,
+  forbiddenResponse,
+} from "@/server/api-auth";
 import { startMercadoPagoOAuth } from "@/server/mercado-pago-integration.server";
 
 /**

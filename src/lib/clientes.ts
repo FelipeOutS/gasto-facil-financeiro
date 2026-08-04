@@ -76,11 +76,7 @@ export async function salvarClienteManual(
     email: input.email?.trim() || null,
     observacoes: input.observacoes?.trim() || null,
   };
-  const { data, error } = await supabase
-    .from("clientes")
-    .insert(payload)
-    .select(COLS)
-    .single();
+  const { data, error } = await supabase.from("clientes").insert(payload).select(COLS).single();
   if (error) throw error;
   return data as Cliente;
 }
@@ -120,11 +116,7 @@ export async function salvarClientePorCnpj(
     source,
     cnpj_cache_fetched_at: fetchedAt,
   };
-  const { data, error } = await supabase
-    .from("clientes")
-    .insert(payload)
-    .select(COLS)
-    .single();
+  const { data, error } = await supabase.from("clientes").insert(payload).select(COLS).single();
   if (error) throw error;
   return data as Cliente;
 }
@@ -137,10 +129,7 @@ export interface EdicaoCliente {
   observacoes?: string | null;
 }
 
-export async function atualizarCliente(
-  id: string,
-  patch: EdicaoCliente,
-): Promise<Cliente> {
+export async function atualizarCliente(id: string, patch: EdicaoCliente): Promise<Cliente> {
   const payload: {
     nome?: string;
     apelido?: string | null;
@@ -149,13 +138,10 @@ export async function atualizarCliente(
     observacoes?: string | null;
   } = {};
   if (patch.nome !== undefined) payload.nome = patch.nome.trim();
-  if (patch.apelido !== undefined)
-    payload.apelido = patch.apelido?.trim() || null;
-  if (patch.telefone !== undefined)
-    payload.telefone = patch.telefone?.trim() || null;
+  if (patch.apelido !== undefined) payload.apelido = patch.apelido?.trim() || null;
+  if (patch.telefone !== undefined) payload.telefone = patch.telefone?.trim() || null;
   if (patch.email !== undefined) payload.email = patch.email?.trim() || null;
-  if (patch.observacoes !== undefined)
-    payload.observacoes = patch.observacoes?.trim() || null;
+  if (patch.observacoes !== undefined) payload.observacoes = patch.observacoes?.trim() || null;
   const { data, error } = await supabase
     .from("clientes")
     .update(payload)
@@ -166,14 +152,8 @@ export async function atualizarCliente(
   return data as Cliente;
 }
 
-export async function alternarAtivoCliente(
-  id: string,
-  ativo: boolean,
-): Promise<void> {
-  const { error } = await supabase
-    .from("clientes")
-    .update({ ativo })
-    .eq("id", id);
+export async function alternarAtivoCliente(id: string, ativo: boolean): Promise<void> {
+  const { error } = await supabase.from("clientes").update({ ativo }).eq("id", id);
   if (error) throw error;
 }
 
@@ -182,10 +162,7 @@ export async function removerCliente(id: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function existeClienteComCnpj(
-  userId: string,
-  cnpj: string,
-): Promise<boolean> {
+export async function existeClienteComCnpj(userId: string, cnpj: string): Promise<boolean> {
   const { data, error } = await supabase
     .from("clientes")
     .select("id")

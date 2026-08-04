@@ -68,7 +68,9 @@ test.describe("free_ads — fluxos básicos", () => {
     await expect(page).toHaveURL(/\/adicionar/);
     // OCR/câmera/WhatsApp não devem estar acessíveis: confirma via rotas pagas.
     await page.goto("/gasto-ai");
-    await expect(page.locator("body")).toContainText(/plano|premium|dispon[ií]vel/i, { timeout: 10_000 });
+    await expect(page.locator("body")).toContainText(/plano|premium|dispon[ií]vel/i, {
+      timeout: 10_000,
+    });
   });
 
   test("C) receita manual — recorrência bloqueada", async ({ page }) => {

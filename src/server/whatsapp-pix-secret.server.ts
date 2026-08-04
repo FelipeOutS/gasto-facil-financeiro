@@ -44,9 +44,7 @@ function getKey(): Buffer {
  */
 export function hashPixKey(pixKeyNormalized: string): string {
   const raw = process.env.WHATSAPP_PIX_KEY_ENC_SECRET ?? "";
-  return createHmac("sha256", raw)
-    .update(pixKeyNormalized.trim().toLowerCase())
-    .digest("hex");
+  return createHmac("sha256", raw).update(pixKeyNormalized.trim().toLowerCase()).digest("hex");
 }
 
 export type PendingPixSecretRef = {
@@ -74,10 +72,7 @@ export async function storePendingPixKey(args: {
   try {
     const iv = randomBytes(12);
     const cipher = createCipheriv(ALGO, getKey(), iv);
-    const enc = Buffer.concat([
-      cipher.update(pixKeyPlaintext, "utf8"),
-      cipher.final(),
-    ]);
+    const enc = Buffer.concat([cipher.update(pixKeyPlaintext, "utf8"), cipher.final()]);
     const tag = cipher.getAuthTag();
     ciphertext = enc.toString("base64");
     ivB64 = iv.toString("base64");
@@ -135,11 +130,7 @@ export async function consumePendingPixKey(args: {
 
   let plaintext: string | null = null;
   try {
-    const decipher = createDecipheriv(
-      ALGO,
-      getKey(),
-      Buffer.from(data.key_iv as string, "base64"),
-    );
+    const decipher = createDecipheriv(ALGO, getKey(), Buffer.from(data.key_iv as string, "base64"));
     decipher.setAuthTag(Buffer.from(data.key_auth_tag as string, "base64"));
     const dec = Buffer.concat([
       decipher.update(Buffer.from(data.key_ciphertext as string, "base64")),
@@ -163,11 +154,7 @@ export async function deletePendingPixKey(args: {
   const { userId, secretId } = args;
   if (!userId || !secretId) return;
   try {
-    await supabaseAdmin
-      .from(TABLE)
-      .delete()
-      .eq("id", secretId)
-      .eq("user_id", userId);
+    await supabaseAdmin.from(TABLE).delete().eq("id", secretId).eq("user_id", userId);
   } catch {
     /* noop */
   }
@@ -176,10 +163,7 @@ export async function deletePendingPixKey(args: {
 /** Housekeeping — apaga linhas expiradas. Pode ser chamado por cron. */
 export async function purgeExpiredPendingPixKeys(): Promise<void> {
   try {
-    await supabaseAdmin
-      .from(TABLE)
-      .delete()
-      .lt("expires_at", new Date().toISOString());
+    await supabaseAdmin.from(TABLE).delete().lt("expires_at", new Date().toISOString());
   } catch {
     /* noop */
   }

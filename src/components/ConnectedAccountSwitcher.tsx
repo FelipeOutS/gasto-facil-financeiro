@@ -24,7 +24,10 @@ const LEVEL_ICON = {
 } as const;
 
 function initials(text: string): string {
-  const parts = text.trim().split(/[\s@.]+/).filter(Boolean);
+  const parts = text
+    .trim()
+    .split(/[\s@.]+/)
+    .filter(Boolean);
   if (!parts.length) return "?";
   const a = parts[0]?.[0] ?? "";
   const b = parts.length > 1 ? parts[1][0] : "";
@@ -81,10 +84,7 @@ export function ConnectedAccountSwitcher({ className }: { className?: string }) 
           <Users className="h-3.5 w-3.5" /> {t("switcher.trocarConta")}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => void switchTo(null)}
-          className="flex items-center gap-2"
-        >
+        <DropdownMenuItem onClick={() => void switchTo(null)} className="flex items-center gap-2">
           <span className="grid h-7 w-7 place-items-center rounded-full bg-brand text-[10px] font-bold text-white">
             {initials(ownName)}
           </span>

@@ -5,7 +5,7 @@ describe("Mercado Pago Plan Catalog - Server-Side Validation", () => {
   it("should resolve a valid plan and periodicity", () => {
     const result = resolveCatalogOffer({
       planKey: "pessoal_premium",
-      periodicity: "anual"
+      periodicity: "anual",
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -18,7 +18,7 @@ describe("Mercado Pago Plan Catalog - Server-Side Validation", () => {
   it("should reject an invalid plan key", () => {
     const result = resolveCatalogOffer({
       planKey: "non_existent_plan",
-      periodicity: "mensal"
+      periodicity: "mensal",
     });
     expect(result.ok).toBe(false);
     expect(result.error).toBe("invalid_plan");
@@ -27,7 +27,7 @@ describe("Mercado Pago Plan Catalog - Server-Side Validation", () => {
   it("should reject an invalid periodicity", () => {
     const result = resolveCatalogOffer({
       planKey: "pessoal_premium",
-      periodicity: "daily"
+      periodicity: "daily",
     });
     expect(result.ok).toBe(false);
     expect(result.error).toBe("invalid_period");
@@ -36,7 +36,7 @@ describe("Mercado Pago Plan Catalog - Server-Side Validation", () => {
   it("should reject a plan not allowed for new subscriptions", () => {
     const result = resolveCatalogOffer({
       planKey: "pessoal_manual", // allowNew: false
-      periodicity: "mensal"
+      periodicity: "mensal",
     });
     expect(result.ok).toBe(false);
     expect(result.error).toBe("plan_unavailable");

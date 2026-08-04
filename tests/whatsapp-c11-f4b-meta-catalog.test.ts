@@ -36,7 +36,11 @@ describe("WA-C11 4B.2.a — catálogo/mapeamento fechado", () => {
   });
 
   test("resolveAllowedMapping aceita os três eventos aprovados", () => {
-    for (const k of ["gi_conta_vencendo_hoje", "gi_conta_vencendo_amanha", "gi_conta_atrasada"] as const) {
+    for (const k of [
+      "gi_conta_vencendo_hoje",
+      "gi_conta_vencendo_amanha",
+      "gi_conta_atrasada",
+    ] as const) {
       const r = resolveAllowedMapping(k);
       expect(r.ok).toBe(true);
     }

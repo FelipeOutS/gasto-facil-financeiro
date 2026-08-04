@@ -71,8 +71,18 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const COLOR_OPTIONS = [
-  "#820ad1", "#00b1ea", "#ec7000", "#cc092f", "#ec0000", "#fae128",
-  "#1c5aa8", "#ff7a00", "#3a3a3a", "#21c25e", "#048b3a", "#0f2a4a",
+  "#820ad1",
+  "#00b1ea",
+  "#ec7000",
+  "#cc092f",
+  "#ec0000",
+  "#fae128",
+  "#1c5aa8",
+  "#ff7a00",
+  "#3a3a3a",
+  "#21c25e",
+  "#048b3a",
+  "#0f2a4a",
 ];
 
 export const Route = createFileRoute("/guardado")({
@@ -80,10 +90,7 @@ export const Route = createFileRoute("/guardado")({
   component: GuardadoPage,
 });
 
-type DialogMode =
-  | { kind: "closed" }
-  | { kind: "create" }
-  | { kind: "edit"; reserva: Guardado };
+type DialogMode = { kind: "closed" } | { kind: "create" } | { kind: "edit"; reserva: Guardado };
 
 function tipoLabel(tipo: TipoReserva, t: (k: string) => string) {
   return t("tipo." + tipo) || TIPOS_RESERVA.find((x) => x.id === tipo)?.label || tipo;
@@ -149,9 +156,12 @@ function GuardadoPage() {
       <section className="relative mt-4 overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card via-card to-card-elevated p-5 shadow-elevated animate-rise">
         <div
           className="pointer-events-none absolute -right-6 -top-6 h-48 w-48 rounded-full opacity-40 blur-3xl"
-          style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.55), transparent 70%)" }}
+          style={{
+            background: "radial-gradient(circle, hsl(var(--primary) / 0.55), transparent 70%)",
+          }}
         />
-        <div className="pointer-events-none absolute -left-10 bottom-0 h-40 w-40 rounded-full opacity-30 blur-3xl"
+        <div
+          className="pointer-events-none absolute -left-10 bottom-0 h-40 w-40 rounded-full opacity-30 blur-3xl"
           style={{ background: "radial-gradient(circle, #06b6d4aa, transparent 70%)" }}
         />
         <div className="relative flex items-start justify-between gap-3">
@@ -161,7 +171,10 @@ function GuardadoPage() {
               {t("badge")}
             </div>
             <p className="mt-3 text-xs font-medium text-muted-foreground">{t("totalLabel")}</p>
-            <Money value={total} className="num mt-1 block text-4xl font-extrabold tracking-tight" />
+            <Money
+              value={total}
+              className="num mt-1 block text-4xl font-extrabold tracking-tight"
+            />
             <p className="mt-1 text-xs text-muted-foreground">
               {t("stats", {
                 count: guardado.length,
@@ -219,7 +232,9 @@ function GuardadoPage() {
                 />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">{t("bankDialog.colorLabel")}</Label>
+                <Label className="text-xs text-muted-foreground">
+                  {t("bankDialog.colorLabel")}
+                </Label>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {COLOR_OPTIONS.map((c) => (
                     <button
@@ -238,7 +253,9 @@ function GuardadoPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setOpenB(false)}>{t("bankDialog.cancel")}</Button>
+              <Button variant="outline" onClick={() => setOpenB(false)}>
+                {t("bankDialog.cancel")}
+              </Button>
               <Button onClick={handleSaveBanco}>{t("bankDialog.add")}</Button>
             </DialogFooter>
           </DialogContent>
@@ -252,12 +269,8 @@ function GuardadoPage() {
             <span className="grid h-12 w-12 place-items-center rounded-full bg-success/15 text-success animate-pop">
               <Wallet className="h-6 w-6" />
             </span>
-            <p className="mt-3 text-sm font-semibold text-foreground">
-              {t("reserves.emptyTitle")}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("reserves.emptyDesc")}
-            </p>
+            <p className="mt-3 text-sm font-semibold text-foreground">{t("reserves.emptyTitle")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("reserves.emptyDesc")}</p>
             <Button
               size="sm"
               className="card-press rounded-full mt-4"
@@ -272,7 +285,10 @@ function GuardadoPage() {
             {guardado.map((g) => {
               const banco = bancos.find((b) => b.id === g.bancoId);
               return (
-                <li key={g.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover-lift">
+                <li
+                  key={g.id}
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover-lift"
+                >
                   <span
                     className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-white text-xs font-bold"
                     style={{ background: banco?.colorHex ?? "var(--cat-outros)" }}
@@ -282,10 +298,16 @@ function GuardadoPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{banco?.nome ?? "Banco"}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {tipoLabel(g.tipoReserva, t)} · {t("reserves.updatedAt", { date: formatDateBR(g.dataAtualizacao) })}
+                      {tipoLabel(g.tipoReserva, t)} ·{" "}
+                      {t("reserves.updatedAt", { date: formatDateBR(g.dataAtualizacao) })}
                       {g.metaId ? (
                         <>
-                          {" "}· <span className="font-semibold text-primary">{t("reserves.metaLabel")}: {metas.find((m) => m.id === g.metaId)?.nome ?? "—"}</span>
+                          {" "}
+                          ·{" "}
+                          <span className="font-semibold text-primary">
+                            {t("reserves.metaLabel")}:{" "}
+                            {metas.find((m) => m.id === g.metaId)?.nome ?? "—"}
+                          </span>
                         </>
                       ) : null}
                     </p>
@@ -328,15 +350,26 @@ function GuardadoPage() {
           {bancos.map((b) => {
             const valorTotal = porBanco.get(b.id) ?? 0;
             return (
-              <li key={b.id} className="flex items-center gap-2 rounded-2xl border border-border bg-card p-3">
-                <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: b.colorHex }} />
+              <li
+                key={b.id}
+                className="flex items-center gap-2 rounded-2xl border border-border bg-card p-3"
+              >
+                <span
+                  className="h-3 w-3 shrink-0 rounded-full"
+                  style={{ background: b.colorHex }}
+                />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-medium">{b.nome}</p>
-                  <p className="num truncate text-[11px] text-muted-foreground">{formatBRL(valorTotal)}</p>
+                  <p className="num truncate text-[11px] text-muted-foreground">
+                    {formatBRL(valorTotal)}
+                  </p>
                 </div>
                 {b.criadoPeloUsuario && (
                   <button
-                    onClick={() => { deleteBanco(b.id); toast.success(t("banks.removed")); }}
+                    onClick={() => {
+                      deleteBanco(b.id);
+                      toast.success(t("banks.removed"));
+                    }}
                     className="text-muted-foreground hover:text-destructive"
                     aria-label={t("banks.deleteLabel")}
                   >
@@ -355,18 +388,14 @@ function GuardadoPage() {
         mode={dialog}
         bancos={bancos}
         onClose={() => setDialog({ kind: "closed" })}
-        onDuplicateDetected={(existente, valorNovo) =>
-          setPendingSimilar({ existente, valorNovo })
-        }
+        onDuplicateDetected={(existente, valorNovo) => setPendingSimilar({ existente, valorNovo })}
       />
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("deleteReserveDialog.title")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("deleteReserveDialog.desc")}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{t("deleteReserveDialog.desc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("deleteReserveDialog.cancel")}</AlertDialogCancel>
@@ -385,16 +414,11 @@ function GuardadoPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog
-        open={!!pendingSimilar}
-        onOpenChange={(o) => !o && setPendingSimilar(null)}
-      >
+      <AlertDialog open={!!pendingSimilar} onOpenChange={(o) => !o && setPendingSimilar(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("similarDialog.title")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("similarDialog.desc")}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{t("similarDialog.desc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
@@ -491,7 +515,13 @@ function ReservaFormDialog({
         onDuplicateDetected(similar, valor);
         return;
       }
-      addGuardado({ bancoId, valor, tipoReserva, observacao: obs.trim() || undefined, metaId: metaIdFinal });
+      addGuardado({
+        bancoId,
+        valor,
+        tipoReserva,
+        observacao: obs.trim() || undefined,
+        metaId: metaIdFinal,
+      });
       toast.success(t("toasts.valueSaved"));
       onClose();
       return;
@@ -527,7 +557,9 @@ function ReservaFormDialog({
               </SelectTrigger>
               <SelectContent>
                 {bancos.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>{b.nome}</SelectItem>
+                  <SelectItem key={b.id} value={b.id}>
+                    {b.nome}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -551,7 +583,9 @@ function ReservaFormDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {TIPOS_RESERVA.map((tr) => (
-                    <SelectItem key={tr.id} value={tr.id}>{tipoLabel(tr.id, t)}</SelectItem>
+                    <SelectItem key={tr.id} value={tr.id}>
+                      {tipoLabel(tr.id, t)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -566,13 +600,13 @@ function ReservaFormDialog({
               <SelectContent>
                 <SelectItem value="nenhuma">{t("form.metaNone")}</SelectItem>
                 {metas.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.nome}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              {t("form.metaHelp")}
-            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">{t("form.metaHelp")}</p>
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">{t("form.obsLabel")}</Label>
@@ -585,7 +619,9 @@ function ReservaFormDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>{t("form.cancel")}</Button>
+          <Button variant="outline" onClick={onClose}>
+            {t("form.cancel")}
+          </Button>
           <Button onClick={handleSave}>{isCreate ? t("form.save") : t("form.saveEdit")}</Button>
         </DialogFooter>
       </DialogContent>

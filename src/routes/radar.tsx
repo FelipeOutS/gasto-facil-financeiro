@@ -87,7 +87,10 @@ function formatMesRef(iso: string | null | undefined, lang: string): string | nu
   try {
     const d = new Date(iso);
     if (!Number.isFinite(d.getTime())) return null;
-    return d.toLocaleDateString(lang === "en" ? "en-US" : "pt-BR", { month: "long", year: "numeric" });
+    return d.toLocaleDateString(lang === "en" ? "en-US" : "pt-BR", {
+      month: "long",
+      year: "numeric",
+    });
   } catch {
     return null;
   }
@@ -204,17 +207,39 @@ function RadarPage() {
       <section className="mt-6 rounded-2xl border bg-card p-4">
         <h2 className="text-sm font-semibold">{t("radar.explainTitle")}</h2>
         <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
-          <li><Trans i18nKey="radar.explainSelic" ns="misc" components={{ bold: <span className="font-medium text-foreground" /> }} /></li>
-          <li><Trans i18nKey="radar.explainIpca" ns="misc" components={{ bold: <span className="font-medium text-foreground" /> }} /></li>
-          <li><Trans i18nKey="radar.explainCurr" ns="misc" components={{ bold: <span className="font-medium text-foreground" /> }} /></li>
+          <li>
+            <Trans
+              i18nKey="radar.explainSelic"
+              ns="misc"
+              components={{ bold: <span className="font-medium text-foreground" /> }}
+            />
+          </li>
+          <li>
+            <Trans
+              i18nKey="radar.explainIpca"
+              ns="misc"
+              components={{ bold: <span className="font-medium text-foreground" /> }}
+            />
+          </li>
+          <li>
+            <Trans
+              i18nKey="radar.explainCurr"
+              ns="misc"
+              components={{ bold: <span className="font-medium text-foreground" /> }}
+            />
+          </li>
         </ul>
-        <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">{t("radar.disclaimer")}</p>
+        <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+          {t("radar.disclaimer")}
+        </p>
       </section>
 
       <section className="mt-6 rounded-2xl border border-dashed bg-muted/30 p-4">
         <h2 className="text-sm font-semibold">{t("radar.soonTitle")}</h2>
         <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
-          {(t("radar.soon", { returnObjects: true }) as string[]).map((s) => <li key={s}>{s}</li>)}
+          {(t("radar.soon", { returnObjects: true }) as string[]).map((s) => (
+            <li key={s}>{s}</li>
+          ))}
         </ul>
       </section>
 
@@ -304,17 +329,25 @@ function IndicadorCard(props: IndicadorCardProps) {
         ) : (
           <span className="text-2xl font-semibold tabular-nums">{valorTexto}</span>
         )}
-        <VariationPill pct={ind?.variationPercent ?? null} formato={formato} label={variationLabel} />
+        <VariationPill
+          pct={ind?.variationPercent ?? null}
+          formato={formato}
+          label={variationLabel}
+        />
       </div>
 
       {mesRef && (
-        <p className="text-[11px] text-muted-foreground">{t("radar.reference", { when: mesRef })}</p>
+        <p className="text-[11px] text-muted-foreground">
+          {t("radar.reference", { when: mesRef })}
+        </p>
       )}
 
       <p className="text-xs leading-relaxed text-muted-foreground">{mensagem}</p>
 
       <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
-        <span>{ind ? t("radar.updatedAt", { when: formatHora(ind.fetchedAt, i18nInst.language) }) : "—"}</span>
+        <span>
+          {ind ? t("radar.updatedAt", { when: formatHora(ind.fetchedAt, i18nInst.language) }) : "—"}
+        </span>
         {onClick && actionLabel && (
           <span className="font-medium text-primary group-hover:underline">{actionLabel} →</span>
         )}

@@ -57,9 +57,26 @@ type Diagnostics = {
 };
 
 const UNIT_TOKENS = [
-  "kg", "g", "un", "und", "unid", "pct", "pacote", "cx", "caixa", "lata",
-  "frasco", "garrafa", "litro", "l", "ml", "bandeja", "fardo", "dúzia",
-  "duzia", "saco",
+  "kg",
+  "g",
+  "un",
+  "und",
+  "unid",
+  "pct",
+  "pacote",
+  "cx",
+  "caixa",
+  "lata",
+  "frasco",
+  "garrafa",
+  "litro",
+  "l",
+  "ml",
+  "bandeja",
+  "fardo",
+  "dúzia",
+  "duzia",
+  "saco",
 ];
 
 function decodeHtmlEntities(input: string): string {
@@ -77,7 +94,10 @@ function decodeHtmlEntities(input: string): string {
 }
 
 function stripTags(input: string): string {
-  return input.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return input
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function parseBrPrice(raw: string): number | null {
@@ -90,7 +110,10 @@ function parseBrPrice(raw: string): number | null {
 }
 
 function extractUnitFromPriceLabel(label: string): string | null {
-  const after = label.replace(/R\$\s*[\d.,]+/i, " ").trim().toLowerCase();
+  const after = label
+    .replace(/R\$\s*[\d.,]+/i, " ")
+    .trim()
+    .toLowerCase();
   if (!after) return null;
   const token = after.split(/\s+/)[0]?.replace(/[^\p{Letter}]/gu, "") ?? "";
   if (!token) return null;
@@ -137,7 +160,9 @@ function categoryFromPath(pathname: string): string | null {
   return null;
 }
 
-function validateUrl(raw: string | undefined | null): { ok: true; url: URL } | { ok: false; reason: string } {
+function validateUrl(
+  raw: string | undefined | null,
+): { ok: true; url: URL } | { ok: false; reason: string } {
   if (!raw) return { ok: true, url: new URL(DEFAULT_URL) };
   let u: URL;
   try {
@@ -166,7 +191,8 @@ function parseJoaninHtml(
   maxItems: number,
 ): { items: ImportedItem[]; rawCards: number; skeletons: number; hasCarregarMais: boolean } {
   const items: ImportedItem[] = [];
-  const cardRe = /<app-produtos-produto-adicionar[\s\S]{0,8000}?<\/app-produtos-produto-adicionar>/g;
+  const cardRe =
+    /<app-produtos-produto-adicionar[\s\S]{0,8000}?<\/app-produtos-produto-adicionar>/g;
   const cards = html.match(cardRe) ?? [];
   let skeletons = 0;
   const sourceUrlStr = baseUrl.toString();
@@ -222,7 +248,8 @@ function parseJoaninHtml(
       validUntil: null,
       city: null,
       neighborhood: null,
-      notes: "Preço público importado para revisão. Pode variar por loja, região e data. Confira no mercado antes de comprar.",
+      notes:
+        "Preço público importado para revisão. Pode variar por loja, região e data. Confira no mercado antes de comprar.",
       confidence: 0.85,
     });
   }
@@ -242,7 +269,9 @@ function parseJoaninHtml(
   };
 }
 
-async function fetchHtml(url: URL): Promise<{ ok: boolean; html?: string; status: number; error?: string }> {
+async function fetchHtml(
+  url: URL,
+): Promise<{ ok: boolean; html?: string; status: number; error?: string }> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
@@ -251,7 +280,7 @@ async function fetchHtml(url: URL): Promise<{ ok: boolean; html?: string; status
       headers: {
         "User-Agent":
           "Mozilla/5.0 (compatible; GastoInteligenteBot/1.0; +https://gastointeligente.com.br)",
-        "Accept": "text/html,application/xhtml+xml",
+        Accept: "text/html,application/xhtml+xml",
         "Accept-Language": "pt-BR,pt;q=0.9",
       },
       signal: controller.signal,
@@ -286,7 +315,7 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
         if (!(await isAdminMasterUser(user))) {
           return Response.json(
             { success: false, code: "forbidden", message: "Acesso restrito para manutenção." },
-            { status: 403 }
+            { status: 403 },
           );
         }
 
@@ -298,11 +327,16 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
         });
         if (rl) return rl;
 
-        const body = await request.json().catch(() => ({} as Record<string, unknown>));
+        const body = await request.json().catch(() => ({}) as Record<string, unknown>);
         const validated = validateUrl((body as { url?: string }).url);
         if (!validated.ok) {
           return Response.json(
-            { success: false, code: "invalid_url", items: [], message: "URL inválida ou fora do domínio joaninonline.com.br." },
+            {
+              success: false,
+              code: "invalid_url",
+              items: [],
+              message: "URL inválida ou fora do domínio joaninonline.com.br.",
+            },
             { status: 400 },
           );
         }
@@ -310,9 +344,10 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
         const origin = classifyPath(url.pathname);
         const marketName = sanitizeMarketName((body as { marketName?: string }).marketName);
         const maxItemsRaw = Number((body as { maxItems?: number }).maxItems);
-        const maxItems = Number.isFinite(maxItemsRaw) && maxItemsRaw > 0
-          ? Math.min(Math.floor(maxItemsRaw), MAX_ITEMS_CAP)
-          : DEFAULT_MAX_ITEMS;
+        const maxItems =
+          Number.isFinite(maxItemsRaw) && maxItemsRaw > 0
+            ? Math.min(Math.floor(maxItemsRaw), MAX_ITEMS_CAP)
+            : DEFAULT_MAX_ITEMS;
 
         const fetched = await fetchHtml(url);
         const diagnostics: Diagnostics = {
@@ -326,10 +361,19 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
 
         if (!fetched.ok || !fetched.html) {
           if (process.env.NODE_ENV !== "production") {
-            console.warn("[mercado-joanin-import] fetch falhou", { status: fetched.status, error: fetched.error });
+            console.warn("[mercado-joanin-import] fetch falhou", {
+              status: fetched.status,
+              error: fetched.error,
+            });
           }
           return Response.json(
-            { success: false, code: "site_unavailable", items: [], diagnostics, message: "Não foi possível acessar a fonte online agora." },
+            {
+              success: false,
+              code: "site_unavailable",
+              items: [],
+              diagnostics,
+              message: "Não foi possível acessar a fonte online agora.",
+            },
             { status: 200 },
           );
         }
@@ -370,7 +414,8 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
         }
 
         if (parsed.items.length === 0) {
-          const dynamicOnly = parsed.skeletons > 0 && (origin === "placement" || origin === "category");
+          const dynamicOnly =
+            parsed.skeletons > 0 && (origin === "placement" || origin === "category");
           const code = dynamicOnly ? "placement_no_public_data" : "no_products_found";
           return Response.json(
             {
@@ -404,5 +449,3 @@ export const Route = createFileRoute("/api/mercado-joanin-import")({
     },
   },
 });
-
-

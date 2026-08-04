@@ -11,13 +11,7 @@ import { addItemLista, addLista, type MercadoLista } from "./listas-store";
 export const MERCADO_CESTA_STORAGE_KEY = "gi:mercado:cesta:v1";
 export const MERCADO_CESTA_LEGACY_ANON_KEY = MERCADO_CESTA_STORAGE_KEY;
 
-export type CestaTipo =
-  | "compraMes"
-  | "reposicao"
-  | "limpeza"
-  | "farmacia"
-  | "churrasco"
-  | "outros";
+export type CestaTipo = "compraMes" | "reposicao" | "limpeza" | "farmacia" | "churrasco" | "outros";
 
 export type MercadoCestaItem = {
   id: string;
@@ -98,9 +92,7 @@ export function normalizeCesta(raw: unknown): MercadoCestaPadrao | null {
   if (typeof r.id !== "string") return null;
   const now = new Date().toISOString();
   const itens: MercadoCestaItem[] = Array.isArray(r.itens)
-    ? (r.itens as unknown[])
-        .map(normalizeItem)
-        .filter((x): x is MercadoCestaItem => x !== null)
+    ? (r.itens as unknown[]).map(normalizeItem).filter((x): x is MercadoCestaItem => x !== null)
     : [];
   return {
     id: r.id,
@@ -197,13 +189,21 @@ function pushUpsert(id: string) {
   if (!cestaSyncHooks.onUpsertCesta) return;
   const snap = safeRead().find((c) => c.id === id);
   if (snap) {
-    try { cestaSyncHooks.onUpsertCesta(snap); } catch { /* ignore */ }
+    try {
+      cestaSyncHooks.onUpsertCesta(snap);
+    } catch {
+      /* ignore */
+    }
   }
 }
 
 function pushDelete(id: string) {
   if (!cestaSyncHooks.onDeleteCesta) return;
-  try { cestaSyncHooks.onDeleteCesta(id); } catch { /* ignore */ }
+  try {
+    cestaSyncHooks.onDeleteCesta(id);
+  } catch {
+    /* ignore */
+  }
 }
 
 export function addCestaPadrao(input: {
@@ -279,9 +279,7 @@ export function addItemCesta(
     atualizadoEm: now,
   };
   mutate((cur) =>
-    cur.map((c) =>
-      c.id === cestaId ? { ...c, itens: [...c.itens, item], atualizadoEm: now } : c,
-    ),
+    cur.map((c) => (c.id === cestaId ? { ...c, itens: [...c.itens, item], atualizadoEm: now } : c)),
   );
   pushUpsert(cestaId);
   return item;
@@ -307,8 +305,7 @@ export function updateItemCesta(
             (patch.quantidade as number) > 0
               ? (patch.quantidade as number)
               : it.quantidade,
-          unidade:
-            patch.unidade !== undefined ? patch.unidade?.trim() || undefined : it.unidade,
+          unidade: patch.unidade !== undefined ? patch.unidade?.trim() || undefined : it.unidade,
           precoEstimado:
             patch.precoEstimado !== undefined
               ? typeof patch.precoEstimado === "number" &&
@@ -383,7 +380,9 @@ function subscribe(listener: Listener): () => void {
       // Reage tanto à chave legada quanto à chave por usuário ativo.
       if (
         e.key === MERCADO_CESTA_STORAGE_KEY ||
-        (e.key && cestaActiveUserId && e.key === `${MERCADO_CESTA_STORAGE_KEY}:${cestaActiveUserId}`)
+        (e.key &&
+          cestaActiveUserId &&
+          e.key === `${MERCADO_CESTA_STORAGE_KEY}:${cestaActiveUserId}`)
       ) {
         listener();
       }

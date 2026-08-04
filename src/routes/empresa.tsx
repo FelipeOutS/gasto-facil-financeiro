@@ -35,12 +35,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
-import {
-  formatarCnpj,
-  limparCnpj,
-  MSG_CNPJ_INVALIDO,
-  validarCnpj,
-} from "@/lib/cnpj";
+import { formatarCnpj, limparCnpj, MSG_CNPJ_INVALIDO, validarCnpj } from "@/lib/cnpj";
 import {
   atualizarMinhaEmpresa,
   getMinhaEmpresa,
@@ -80,8 +75,7 @@ function aplicarMascaraCnpj(v: string): string {
   if (d.length <= 2) return d;
   if (d.length <= 5) return `${d.slice(0, 2)}.${d.slice(2)}`;
   if (d.length <= 8) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5)}`;
-  if (d.length <= 12)
-    return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8)}`;
+  if (d.length <= 12) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8)}`;
   return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
 }
 
@@ -216,12 +210,7 @@ function EmpresaPage() {
         setEmpresa(atualizada);
         toast.success(t("toasts.updated"));
       } else {
-        const nova = await salvarMinhaEmpresa(
-          user.id,
-          resp.company,
-          resp.source,
-          fetchedAt,
-        );
+        const nova = await salvarMinhaEmpresa(user.id, resp.company, resp.source, fetchedAt);
         setEmpresa(nova);
         toast.success(t("toasts.saved"));
       }
@@ -273,9 +262,7 @@ function EmpresaPage() {
           </span>
           <div>
             <h1 className="text-2xl font-semibold">{t("header.title")}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("header.subtitle")}
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{t("header.subtitle")}</p>
           </div>
         </div>
       </header>
@@ -376,14 +363,10 @@ function EmpresaPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("remove.title")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("remove.description")}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{t("remove.description")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={removendo}>
-              {t("remove.cancel")}
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={removendo}>{t("remove.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
@@ -443,20 +426,12 @@ function EmpresaSalvaCard({
     <section className="rounded-2xl border bg-card p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-muted-foreground">
-            {t("saved.title")}
-          </h2>
-          <p className="mt-1 truncate text-lg font-semibold">
-            {empresa.razao_social ?? "—"}
-          </p>
+          <h2 className="text-sm font-semibold text-muted-foreground">{t("saved.title")}</h2>
+          <p className="mt-1 truncate text-lg font-semibold">{empresa.razao_social ?? "—"}</p>
           {empresa.nome_fantasia && (
-            <p className="truncate text-sm text-muted-foreground">
-              {empresa.nome_fantasia}
-            </p>
+            <p className="truncate text-sm text-muted-foreground">{empresa.nome_fantasia}</p>
           )}
-          <p className="mt-2 font-mono text-sm tabular-nums">
-            {formatarCnpj(empresa.cnpj)}
-          </p>
+          <p className="mt-2 font-mono text-sm tabular-nums">{formatarCnpj(empresa.cnpj)}</p>
         </div>
         {empresa.situacao_cadastral && (
           <span
@@ -488,10 +463,7 @@ function EmpresaSalvaCard({
 
       <p className="mt-4 text-[11px] text-muted-foreground">
         {t("saved.lastUpdate", {
-          when: formatarDataHora(
-            empresa.cnpj_cache_fetched_at ?? empresa.updated_at,
-            localeCode,
-          ),
+          when: formatarDataHora(empresa.cnpj_cache_fetched_at ?? empresa.updated_at, localeCode),
         })}
       </p>
 
@@ -534,9 +506,7 @@ function InfoLinha({
     <div className="flex items-start gap-2">
       <span className="mt-0.5 shrink-0 text-muted-foreground">{icon}</span>
       <div className="min-w-0">
-        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
         <p className="text-sm">{value}</p>
       </div>
     </div>
@@ -636,11 +606,12 @@ function ResultadoConsulta({
 }) {
   if (!resp.company) {
     const msg = resp.message ?? "";
-    const heading = msg.includes("inválido") || msg.toLowerCase().includes("invalid")
-      ? t("result.errors.invalid")
-      : msg.includes("encontramos") || msg.toLowerCase().includes("not found")
-        ? t("result.errors.notFound")
-        : t("result.errors.generic");
+    const heading =
+      msg.includes("inválido") || msg.toLowerCase().includes("invalid")
+        ? t("result.errors.invalid")
+        : msg.includes("encontramos") || msg.toLowerCase().includes("not found")
+          ? t("result.errors.notFound")
+          : t("result.errors.generic");
     return (
       <section className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
         <div className="flex items-start gap-2">
@@ -676,9 +647,7 @@ function ResultadoConsulta({
 
   const atividade = c.cnaePrincipalDescricao
     ? `${c.cnaePrincipalDescricao}${
-        c.cnaePrincipalCodigo
-          ? t("saved.cnaeSuffix", { code: c.cnaePrincipalCodigo })
-          : ""
+        c.cnaePrincipalCodigo ? t("saved.cnaeSuffix", { code: c.cnaePrincipalCodigo }) : ""
       }`
     : "—";
 
@@ -687,9 +656,7 @@ function ResultadoConsulta({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold">{t("result.title")}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("result.subtitle")}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("result.subtitle")}</p>
         </div>
         <span
           className={cn(
@@ -707,9 +674,7 @@ function ResultadoConsulta({
           ) : (
             <>
               <CheckCircle2 className="h-3 w-3" />
-              {resp.source === "cache"
-                ? t("result.badgeCache")
-                : t("result.badgeFresh")}
+              {resp.source === "cache" ? t("result.badgeCache") : t("result.badgeFresh")}
             </>
           )}
         </span>
@@ -769,9 +734,7 @@ function ResultadoConsulta({
           ) : (
             <CheckCircle2 className="h-4 w-4" />
           )}
-          {modoAtualizar
-            ? t("result.updateCompany")
-            : t("result.saveAsCompany")}
+          {modoAtualizar ? t("result.updateCompany") : t("result.saveAsCompany")}
         </Button>
         <Button onClick={onBuscarOutro} variant="outline">
           {t("result.searchOther")}
@@ -806,13 +769,7 @@ function InfoBloco({
   );
 }
 
-function GrupoAtalhos({
-  titulo,
-  children,
-}: {
-  titulo: string;
-  children: React.ReactNode;
-}) {
+function GrupoAtalhos({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
     <section>
       <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">

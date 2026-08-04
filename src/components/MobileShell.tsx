@@ -18,11 +18,7 @@ import { useSidebarCollapsed } from "@/lib/sidebar-collapsed";
 const PersistentShellContext = createContext(false);
 
 export function PersistentShellProvider({ children }: { children: ReactNode }) {
-  return (
-    <PersistentShellContext.Provider value={true}>
-      {children}
-    </PersistentShellContext.Provider>
-  );
+  return <PersistentShellContext.Provider value={true}>{children}</PersistentShellContext.Provider>;
 }
 
 export function MobileShell({
@@ -44,18 +40,26 @@ export function MobileShell({
   // AuthGate/Sidebar/TopBar/BottomNav/<main>. Apenas devolvemos o conteúdo.
   // Props como `wide` e `hideNav` são resolvidas a nível de root pelo
   // pathname para preservar layout responsivo.
+  const collapsed = useSidebarCollapsed();
+  const showNav = !hideNav;
+
   if (insidePersistent) {
     return <>{children}</>;
   }
-
-  const showNav = !hideNav;
-  const collapsed = useSidebarCollapsed();
 
   const inner = (
     <div className="min-h-screen min-h-dvh w-full bg-background">
       {showNav && <DesktopSidebar />}
       {showNav && <MobileTopBar />}
-      <div className={showNav ? (collapsed ? "lg:pl-20 transition-[padding] duration-300" : "lg:pl-64 transition-[padding] duration-300") : ""}>
+      <div
+        className={
+          showNav
+            ? collapsed
+              ? "lg:pl-20 transition-[padding] duration-300"
+              : "lg:pl-64 transition-[padding] duration-300"
+            : ""
+        }
+      >
         <main
           className={
             "mx-auto flex w-full flex-col px-3 pt-4 pb-[calc(112px+env(safe-area-inset-bottom))] sm:px-5 md:px-6 lg:min-h-screen lg:px-6 lg:pt-5 lg:pb-12 xl:px-7 2xl:px-8 " +
@@ -77,7 +81,6 @@ export function MobileShell({
       {showNav && <MobileNotificationsFab />}
     </div>
   );
-
 
   if (unprotected) return inner;
   return <AuthGate>{inner}</AuthGate>;

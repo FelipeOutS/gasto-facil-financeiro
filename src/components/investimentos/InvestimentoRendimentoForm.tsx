@@ -62,7 +62,7 @@ export function InvestimentoRendimentoForm({
       setStatus(editing.status);
       setObservacao(editing.observacao ?? "");
     } else {
-      setAtivoId(defaultAtivoId ?? (ativos[0]?.id ?? ""));
+      setAtivoId(defaultAtivoId ?? ativos[0]?.id ?? "");
       setTipo("dividendo");
       setDataPag(todayISO());
       setValor("");
@@ -157,11 +157,21 @@ export function InvestimentoRendimentoForm({
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="text-xs text-muted-foreground">Data de pagamento</label>
-          <Input type="date" value={dataPag} onChange={(e) => setDataPag(e.target.value)} className="min-h-11" />
+          <Input
+            type="date"
+            value={dataPag}
+            onChange={(e) => setDataPag(e.target.value)}
+            className="min-h-11"
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground">Valor recebido</label>
-          <Input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" className="min-h-11" />
+          <Input
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            placeholder="0,00"
+            className="min-h-11"
+          />
         </div>
       </div>
 

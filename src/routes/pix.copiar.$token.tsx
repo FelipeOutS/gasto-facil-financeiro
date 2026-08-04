@@ -130,20 +130,12 @@ function CopiarPixPage() {
                 <p className="text-base font-medium">{state.nome}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">
-                  Chave Pix ({state.tipoLabel})
-                </p>
-                <p
-                  id="pix-chave-plain"
-                  className="text-base font-mono break-all select-all"
-                >
+                <p className="text-sm text-muted-foreground">Chave Pix ({state.tipoLabel})</p>
+                <p id="pix-chave-plain" className="text-base font-mono break-all select-all">
                   {state.chave}
                 </p>
               </div>
-              <Button
-                className="w-full"
-                onClick={() => void handleCopy(state.chave)}
-              >
+              <Button className="w-full" onClick={() => void handleCopy(state.chave)}>
                 {copied ? (
                   <>
                     <Check className="mr-2" /> Copiada!
@@ -155,8 +147,8 @@ function CopiarPixPage() {
                 )}
               </Button>
               <p className="text-xs text-muted-foreground">
-                Este link é de uso único. Se precisar copiar de novo, peça a
-                chave outra vez no WhatsApp.
+                Este link é de uso único. Se precisar copiar de novo, peça a chave outra vez no
+                WhatsApp.
               </p>
             </>
           )}
@@ -166,8 +158,8 @@ function CopiarPixPage() {
               <div className="flex items-start gap-2 text-sm text-muted-foreground">
                 <ShieldAlert className="mt-0.5 shrink-0" />
                 <p>
-                  Este link expirou ou já foi usado. Para copiar novamente,
-                  peça pelo WhatsApp: <em>"qual a chave Pix do [nome]?"</em>
+                  Este link expirou ou já foi usado. Para copiar novamente, peça pelo WhatsApp:{" "}
+                  <em>"qual a chave Pix do [nome]?"</em>
                 </p>
               </div>
               <Button

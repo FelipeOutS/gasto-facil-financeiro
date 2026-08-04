@@ -95,9 +95,7 @@ export interface DiagnosisResult {
  * Diagnostica um pagamento do Mercado Pago. NUNCA modifica o estado local.
  * Compara dados remotos com locais e detecta inconsistências.
  */
-export async function diagnoseMercadoPagoPayment(
-  paymentId: string,
-): Promise<DiagnosisResult> {
+export async function diagnoseMercadoPagoPayment(paymentId: string): Promise<DiagnosisResult> {
   const inconsistencies: string[] = [];
   const payment = await fetchPayment(paymentId);
 
@@ -152,10 +150,7 @@ export async function diagnoseMercadoPagoPayment(
       inconsistencies.push("approved_in_mp_but_local_status_" + localPayment.status);
       recommended = "mark_payment_paid";
     }
-    if (
-      userId &&
-      (!localPlan || localPlan.status !== "ativo" || localPlan.plano !== plano)
-    ) {
+    if (userId && (!localPlan || localPlan.status !== "ativo" || localPlan.plano !== plano)) {
       inconsistencies.push("approved_in_mp_but_subscription_not_active");
       recommended = "activate_subscription";
     }

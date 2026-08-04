@@ -136,9 +136,20 @@ export function detectConsultaEspecifica(texto: string): EspecificaIntent | null
 }
 
 const PERIODO_SUFFIXES = [
-  "este mes", "esse mes", "neste mes", "nesse mes", "do mes", "no mes",
-  "este mês", "esse mês", "neste mês", "nesse mês", "do mês", "no mês",
-  "hoje", "agora",
+  "este mes",
+  "esse mes",
+  "neste mes",
+  "nesse mes",
+  "do mes",
+  "no mes",
+  "este mês",
+  "esse mês",
+  "neste mês",
+  "nesse mês",
+  "do mês",
+  "no mês",
+  "hoje",
+  "agora",
 ];
 function stripPeriodoSuffix(raw: string): string {
   let s = raw.trim();
@@ -164,7 +175,9 @@ function looksLikeTipoReceita(termo: string): boolean {
   for (const t of TIPOS_RECEITA) {
     if (n.includes(norm(t.label)) || n.includes(t.id)) return true;
   }
-  if (/\b(freela|freelancer|freelance|salario|comissao|venda|vendas|reembolso|bonus|pix)\b/.test(n)) {
+  if (
+    /\b(freela|freelancer|freelance|salario|comissao|venda|vendas|reembolso|bonus|pix)\b/.test(n)
+  ) {
     return true;
   }
   return false;
@@ -172,13 +185,13 @@ function looksLikeTipoReceita(termo: string): boolean {
 
 // ---------- tipo de receita: mapeamento termo → tipo ----------
 const TIPO_ALIASES: Array<{ tipo: TipoReceita; label: string; words: string[] }> = [
-  { tipo: "salario",   label: "Salário",    words: ["salario"] },
-  { tipo: "freelance", label: "Freelance",  words: ["freelancer", "freela", "freelance"] },
-  { tipo: "comissao",  label: "Comissão",   words: ["comissao", "comissoes"] },
-  { tipo: "venda",     label: "Venda",      words: ["venda", "vendas", "vendi"] },
-  { tipo: "reembolso", label: "Reembolso",  words: ["reembolso", "reembolsos"] },
-  { tipo: "pix",       label: "Pix",        words: ["pix"] },
-  { tipo: "bonus",     label: "Bônus",      words: ["bonus"] },
+  { tipo: "salario", label: "Salário", words: ["salario"] },
+  { tipo: "freelance", label: "Freelance", words: ["freelancer", "freela", "freelance"] },
+  { tipo: "comissao", label: "Comissão", words: ["comissao", "comissoes"] },
+  { tipo: "venda", label: "Venda", words: ["venda", "vendas", "vendi"] },
+  { tipo: "reembolso", label: "Reembolso", words: ["reembolso", "reembolsos"] },
+  { tipo: "pix", label: "Pix", words: ["pix"] },
+  { tipo: "bonus", label: "Bônus", words: ["bonus"] },
 ];
 
 function matchTipoReceita(termo: string): { tipo: TipoReceita; label: string } | null {
@@ -216,7 +229,11 @@ async function loadGastos(userId: string, from: string, toExclusive: string): Pr
   return Array.isArray(data) ? (data as GastoRow[]) : [];
 }
 
-async function loadReceitas(userId: string, from: string, toExclusive: string): Promise<ReceitaRow[]> {
+async function loadReceitas(
+  userId: string,
+  from: string,
+  toExclusive: string,
+): Promise<ReceitaRow[]> {
   const { data } = await supabaseAdmin
     .from("receitas")
     .select("descricao, valor, data, tipo")
@@ -235,10 +252,7 @@ async function loadReceitas(userId: string, from: string, toExclusive: string): 
  * Supabase devolvia erro, deixando a busca por categoria sempre vazia.
  */
 async function loadCategoriasDespesa(userId: string): Promise<CategoriaRow[]> {
-  const { data } = await supabaseAdmin
-    .from("categorias")
-    .select("id, nome")
-    .eq("user_id", userId);
+  const { data } = await supabaseAdmin.from("categorias").select("id, nome").eq("user_id", userId);
   if (!Array.isArray(data)) return [];
   return data as CategoriaRow[];
 }
@@ -268,13 +282,13 @@ function singularize(s: string): string {
   if (s.length < 4) return s;
   if (s.endsWith("oes")) return s.slice(0, -3) + "ao"; // cartoes -> cartao
   if (s.endsWith("aes")) return s.slice(0, -3) + "ao"; // paes -> pao
-  if (s.endsWith("ais")) return s.slice(0, -2) + "l";  // animais -> animal
-  if (s.endsWith("eis")) return s.slice(0, -2) + "l";  // moveis -> movel
-  if (s.endsWith("ois")) return s.slice(0, -2) + "l";  // farois -> farol
-  if (s.endsWith("uis")) return s.slice(0, -2) + "l";  // azuis -> azul
-  if (s.endsWith("ns"))  return s.slice(0, -2) + "m";  // homens -> homem
+  if (s.endsWith("ais")) return s.slice(0, -2) + "l"; // animais -> animal
+  if (s.endsWith("eis")) return s.slice(0, -2) + "l"; // moveis -> movel
+  if (s.endsWith("ois")) return s.slice(0, -2) + "l"; // farois -> farol
+  if (s.endsWith("uis")) return s.slice(0, -2) + "l"; // azuis -> azul
+  if (s.endsWith("ns")) return s.slice(0, -2) + "m"; // homens -> homem
   if (s.endsWith("res") || s.endsWith("ses") || s.endsWith("zes")) return s.slice(0, -2);
-  if (s.endsWith("s"))   return s.slice(0, -1);
+  if (s.endsWith("s")) return s.slice(0, -1);
   return s;
 }
 
@@ -282,10 +296,7 @@ function normCat(s: string): string {
   return singularize(norm(s));
 }
 
-function findCategoriasByTermo(
-  categorias: CategoriaRow[],
-  termo: string,
-): CategoriaRow[] {
+function findCategoriasByTermo(categorias: CategoriaRow[], termo: string): CategoriaRow[] {
   const t = normCat(termo);
   if (!t) return [];
   // Match por inclusão bidirecional — não usar short-circuit em exato,
@@ -316,9 +327,7 @@ export type EspecificaResult =
  * preferido é o primeiro com letra maiúscula; senão o primeiro nome
  * trimmed.
  */
-function agruparCategorias(
-  categorias: CategoriaRow[],
-): Array<{ ids: string[]; nome: string }> {
+function agruparCategorias(categorias: CategoriaRow[]): Array<{ ids: string[]; nome: string }> {
   const map = new Map<string, { ids: string[]; nomes: string[] }>();
   for (const c of categorias) {
     const raw = (c.nome ?? "").trim();
@@ -375,7 +384,10 @@ async function handleGastosOntem(userId: string): Promise<EspecificaResult> {
     return { status: "consulta", resposta: M.consultaEspecifica.gastosOntemSemRegistros() };
   }
   const itens = gastos
-    .map((g) => ({ descricao: (g.descricao ?? "").trim() || "Gasto", valor: Number(g.valor ?? 0) || 0 }))
+    .map((g) => ({
+      descricao: (g.descricao ?? "").trim() || "Gasto",
+      valor: Number(g.valor ?? 0) || 0,
+    }))
     .sort((a, b) => b.valor - a.valor);
   const total = itens.reduce((acc, g) => acc + g.valor, 0);
   const maior = itens[0];
@@ -386,9 +398,10 @@ async function handleGastosOntem(userId: string): Promise<EspecificaResult> {
       total: formatBRL(total),
       quantidade: itens.length,
       maior: { descricao: maior.descricao, valor: formatBRL(maior.valor) },
-      itens: itens.length > 1
-        ? topItens.map((g) => ({ descricao: g.descricao, valor: formatBRL(g.valor) }))
-        : [],
+      itens:
+        itens.length > 1
+          ? topItens.map((g) => ({ descricao: g.descricao, valor: formatBRL(g.valor) }))
+          : [],
     }),
   };
 }

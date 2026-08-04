@@ -92,9 +92,8 @@ mock.module("./logs.server", () => ({
   logAuditEvent: async () => {},
 }));
 
-const { checkRateLimit, enforceUserRateLimit, RATE_LIMIT_PRESETS } = await import(
-  "../src/server/rate-limit.server"
-);
+const { checkRateLimit, enforceUserRateLimit, RATE_LIMIT_PRESETS } =
+  await import("../src/server/rate-limit.server");
 
 const originalDateNow = Date.now;
 

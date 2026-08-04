@@ -118,7 +118,10 @@ function HistoricoImportacoesPage() {
           <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
             Quando você importar extratos da B3, corretora, CSV ou PDF, eles aparecerão aqui.
           </p>
-          <Button className="mt-4 min-h-11" onClick={() => navigate({ to: "/investimentos/importar" })}>
+          <Button
+            className="mt-4 min-h-11"
+            onClick={() => navigate({ to: "/investimentos/importar" })}
+          >
             Importar agora
           </Button>
         </div>
@@ -149,8 +152,8 @@ function HistoricoImportacoesPage() {
                       </span>
                     </div>
                     <div className="text-xs text-muted-foreground mt-1.5">
-                      {(r.ativos ?? 0)} ativos · {(r.movimentacoes ?? 0)} movimentações ·{" "}
-                      {(r.rendimentos ?? 0)} rendimentos
+                      {r.ativos ?? 0} ativos · {r.movimentacoes ?? 0} movimentações ·{" "}
+                      {r.rendimentos ?? 0} rendimentos
                     </div>
                   </div>
                   <Button
@@ -175,12 +178,14 @@ function HistoricoImportacoesPage() {
             <AlertDialogTitle>Excluir esta importação?</AlertDialogTitle>
             <AlertDialogDescription>
               Escolha como deseja remover esta importação. "Apenas histórico" mantém os ativos,
-              movimentações e rendimentos criados. "Tudo relacionado" remove também os dados
-              gerados por ela.
+              movimentações e rendimentos criados. "Tudo relacionado" remove também os dados gerados
+              por ela.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel disabled={excluindo} className="min-h-11">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={excluindo} className="min-h-11">
+              Cancelar
+            </AlertDialogCancel>
             <Button
               variant="outline"
               disabled={excluindo}

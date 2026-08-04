@@ -44,7 +44,9 @@ function NovaMovimentacaoPage() {
         if (!cancel) setLoading(false);
       }
     })();
-    return () => { cancel = true; };
+    return () => {
+      cancel = true;
+    };
   }, [user?.id]);
 
   const ativo = ativos.find((a) => a.id === id) ?? null;

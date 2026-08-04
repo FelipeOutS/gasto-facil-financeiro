@@ -198,13 +198,17 @@ export async function finalizeAttemptAccepted(
     if (rpc.error) return { ok: false, reason: "database_error" };
     const outcome = extractOutcome(rpc.data);
     if (!outcome || !FINALIZE_ACCEPTED_OUTCOMES.has(outcome)) {
-      logStructured({ event: "attempt_finalize_accepted_unknown_outcome", attempt_id: maskId(input.attemptId) });
+      logStructured({
+        event: "attempt_finalize_accepted_unknown_outcome",
+        attempt_id: maskId(input.attemptId),
+      });
       return { ok: false, reason: "unknown_outcome" };
     }
     logStructured({
-      event: outcome === "accepted" || outcome === "accepted_idempotent"
-        ? "attempt_finalize_accepted"
-        : `attempt_finalize_${outcome}`,
+      event:
+        outcome === "accepted" || outcome === "accepted_idempotent"
+          ? "attempt_finalize_accepted"
+          : `attempt_finalize_${outcome}`,
       attempt_id: maskId(input.attemptId),
       http_status: input.httpStatus,
     });
@@ -259,13 +263,17 @@ export async function finalizeAttemptRejected(
     if (rpc.error) return { ok: false, reason: "database_error" };
     const outcome = extractOutcome(rpc.data);
     if (!outcome || !FINALIZE_REJECTED_OUTCOMES.has(outcome)) {
-      logStructured({ event: "attempt_finalize_rejected_unknown_outcome", attempt_id: maskId(input.attemptId) });
+      logStructured({
+        event: "attempt_finalize_rejected_unknown_outcome",
+        attempt_id: maskId(input.attemptId),
+      });
       return { ok: false, reason: "unknown_outcome" };
     }
     logStructured({
-      event: outcome === "rejected" || outcome === "rejected_idempotent"
-        ? "attempt_finalize_rejected"
-        : `attempt_finalize_${outcome}`,
+      event:
+        outcome === "rejected" || outcome === "rejected_idempotent"
+          ? "attempt_finalize_rejected"
+          : `attempt_finalize_${outcome}`,
       attempt_id: maskId(input.attemptId),
       http_status: input.httpStatus,
       error_category: errCat,
@@ -315,13 +323,17 @@ export async function finalizeAttemptAmbiguous(
     if (rpc.error) return { ok: false, reason: "database_error" };
     const outcome = extractOutcome(rpc.data);
     if (!outcome || !FINALIZE_AMBIGUOUS_OUTCOMES.has(outcome)) {
-      logStructured({ event: "attempt_finalize_ambiguous_unknown_outcome", attempt_id: maskId(input.attemptId) });
+      logStructured({
+        event: "attempt_finalize_ambiguous_unknown_outcome",
+        attempt_id: maskId(input.attemptId),
+      });
       return { ok: false, reason: "unknown_outcome" };
     }
     logStructured({
-      event: outcome === "ambiguous" || outcome === "ambiguous_idempotent"
-        ? "attempt_finalize_ambiguous"
-        : `attempt_finalize_${outcome}`,
+      event:
+        outcome === "ambiguous" || outcome === "ambiguous_idempotent"
+          ? "attempt_finalize_ambiguous"
+          : `attempt_finalize_${outcome}`,
       attempt_id: maskId(input.attemptId),
       error_code: errCode,
     });
@@ -369,7 +381,11 @@ export async function reconcileAttemptFromCallback(
     });
     if (rpc.error) return { ok: false, reason: "database_error" };
     const rows = Array.isArray(rpc.data) ? rpc.data : rpc.data ? [rpc.data] : [];
-    const first = (rows[0] ?? {}) as { outcome?: string; attempt_id?: string | null; notification_id?: string | null };
+    const first = (rows[0] ?? {}) as {
+      outcome?: string;
+      attempt_id?: string | null;
+      notification_id?: string | null;
+    };
     const outcome = typeof first.outcome === "string" ? first.outcome : null;
     if (!outcome || !RECONCILE_OUTCOMES.has(outcome)) {
       logStructured({ event: "callback_attempt_unknown_outcome" });
@@ -415,9 +431,10 @@ export async function recoverNotificationWithAttempt(
   if (!isUuid(input.notificationId)) {
     return { ok: false, reason: "invalid_input", detail: "notification_id" };
   }
-  const backoff = typeof input.backoffInterval === "string" && input.backoffInterval.length <= 32
-    ? input.backoffInterval
-    : "00:05:00";
+  const backoff =
+    typeof input.backoffInterval === "string" && input.backoffInterval.length <= 32
+      ? input.backoffInterval
+      : "00:05:00";
 
   const c = (clientOverride ?? (await admin())) as unknown as {
     rpc(fn: string, args: Record<string, unknown>): Promise<{ data: unknown; error: unknown }>;
@@ -431,7 +448,10 @@ export async function recoverNotificationWithAttempt(
     if (rpc.error) return { ok: false, reason: "database_error" };
     const outcome = extractOutcome(rpc.data);
     if (!outcome || !RECOVER_OUTCOMES.has(outcome)) {
-      logStructured({ event: "recovery_unknown_outcome", notification_id: maskId(input.notificationId) });
+      logStructured({
+        event: "recovery_unknown_outcome",
+        notification_id: maskId(input.notificationId),
+      });
       return { ok: false, reason: "unknown_outcome" };
     }
     const eventNameMap: Record<RecoverOutcome, string> = {

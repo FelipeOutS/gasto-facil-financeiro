@@ -12,10 +12,27 @@
  */
 
 const KNOWN_PUBLIC_SUFFIXES = new Set([
-  "com.br", "com.mx", "com.ar", "com.co", "com.pe", "com.uy", "com.pt",
-  "co.uk", "co.jp", "co.kr", "co.in", "co.za", "co.nz",
-  "org.br", "net.br", "gov.br", "edu.br",
-  "com.au", "com.tr", "com.sg", "com.hk",
+  "com.br",
+  "com.mx",
+  "com.ar",
+  "com.co",
+  "com.pe",
+  "com.uy",
+  "com.pt",
+  "co.uk",
+  "co.jp",
+  "co.kr",
+  "co.in",
+  "co.za",
+  "co.nz",
+  "org.br",
+  "net.br",
+  "gov.br",
+  "edu.br",
+  "com.au",
+  "com.tr",
+  "com.sg",
+  "com.hk",
 ]);
 
 /** Extract the principal public domain from an arbitrary URL/string. */

@@ -21,22 +21,16 @@ const {
   extractBoletoCandidatesFromPdfAsync,
   __PDF_EXTRACT_LIMITS_FOR_TEST,
 } = await import("../src/server/whatsapp-pdf-text-extract.server");
-const { _buildBoletoCobrancaForTest, tryParseBoleto } = await import(
-  "../src/server/whatsapp-boleto-parser"
-);
-const { __setBoletoOcrExtractorForTests } = await import(
-  "../src/server/whatsapp-boleto-ocr.server"
-);
-const { __setBoletoPepperForTest, __resetBoletoPepperCacheForTest } = await import(
-  "../src/server/whatsapp-boleto-secret.server"
-);
-const { __resetBoletoOcrCacheForTests } = await import(
-  "../src/server/whatsapp-boleto-ocr-cache.server"
-);
+const { _buildBoletoCobrancaForTest, tryParseBoleto } =
+  await import("../src/server/whatsapp-boleto-parser");
+const { __setBoletoOcrExtractorForTests } =
+  await import("../src/server/whatsapp-boleto-ocr.server");
+const { __setBoletoPepperForTest, __resetBoletoPepperCacheForTest } =
+  await import("../src/server/whatsapp-boleto-secret.server");
+const { __resetBoletoOcrCacheForTests } =
+  await import("../src/server/whatsapp-boleto-ocr-cache.server");
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
-const { enforceUserRateLimit, checkRateLimit } = await import(
-  "../src/server/rate-limit.server"
-);
+const { enforceUserRateLimit, checkRateLimit } = await import("../src/server/rate-limit.server");
 
 // silence used import warning
 void gzipSync;
@@ -274,9 +268,7 @@ describe("WA-C10.b.2 — rate limit fail-closed em OCR de boleto", () => {
       return { data: null, error: null };
     };
     try {
-      const out = await processarMensagemWhatsApp(
-        pdfMsg(pdf.toString("base64"), "pdf-rl-closed"),
-      );
+      const out = await processarMensagemWhatsApp(pdfMsg(pdf.toString("base64"), "pdf-rl-closed"));
       expect(extractorCalls).toBe(0);
       expect(out.status).toBe("erro");
     } finally {

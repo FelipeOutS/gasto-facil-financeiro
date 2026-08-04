@@ -14,11 +14,9 @@ export type OfflineFriendlyError = {
   technical: string;
 };
 
-const GENERIC =
-  "Não foi possível sincronizar esta pendência. Revise os dados e tente novamente.";
+const GENERIC = "Não foi possível sincronizar esta pendência. Revise os dados e tente novamente.";
 
-const CONNECTION =
-  "Não foi possível sincronizar agora. Verifique sua conexão e tente novamente.";
+const CONNECTION = "Não foi possível sincronizar agora. Verifique sua conexão e tente novamente.";
 
 const PERMISSION =
   "Não foi possível sincronizar por falta de permissão. Entre novamente na conta e tente de novo.";
@@ -91,11 +89,7 @@ export function normalizeOfflineError(raw: unknown): OfflineFriendlyError {
     t.includes("is not present in table");
 
   if (isFk) {
-    if (
-      t.includes("categoria") ||
-      t.includes("category") ||
-      t.includes("categoria_id")
-    ) {
+    if (t.includes("categoria") || t.includes("category") || t.includes("categoria_id")) {
       return { friendly: FK_CATEGORIA, technical };
     }
     if (
@@ -107,11 +101,7 @@ export function normalizeOfflineError(raw: unknown): OfflineFriendlyError {
     ) {
       return { friendly: FK_CARTAO, technical };
     }
-    if (
-      t.includes("cliente") ||
-      t.includes("client") ||
-      t.includes("cliente_id")
-    ) {
+    if (t.includes("cliente") || t.includes("client") || t.includes("cliente_id")) {
       return { friendly: FK_CLIENTE, technical };
     }
     return { friendly: GENERIC, technical };

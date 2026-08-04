@@ -31,7 +31,9 @@ function AtualizarLotePage() {
   const { user } = useAuth();
   const [ativos, setAtivos] = useState<Ativo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [valores, setValores] = useState<Record<string, { valor: string; preco: string; obs: string }>>({});
+  const [valores, setValores] = useState<
+    Record<string, { valor: string; preco: string; obs: string }>
+  >({});
   const [data, setData] = useState(todayISO());
   const [salvando, setSalvando] = useState(false);
 
@@ -67,11 +69,16 @@ function AtualizarLotePage() {
         if (!cancel) setLoading(false);
       }
     })();
-    return () => { cancel = true; };
+    return () => {
+      cancel = true;
+    };
   }, [user?.id]);
 
   function setCampo(id: string, campo: "valor" | "preco" | "obs", v: string) {
-    setValores((prev) => ({ ...prev, [id]: { ...(prev[id] ?? { valor: "", preco: "", obs: "" }), [campo]: v } }));
+    setValores((prev) => ({
+      ...prev,
+      [id]: { ...(prev[id] ?? { valor: "", preco: "", obs: "" }), [campo]: v },
+    }));
   }
 
   async function salvarTodos() {
@@ -94,7 +101,10 @@ function AtualizarLotePage() {
       if (valorNovo === valorAnterior && (precoNovo ?? null) === precoAnterior && !entry.obs) {
         continue;
       }
-      if (!Number.isFinite(valorNovo)) { erros++; continue; }
+      if (!Number.isFinite(valorNovo)) {
+        erros++;
+        continue;
+      }
       try {
         await atualizarValorAtivo(user.id, a, {
           valor_novo: valorNovo,
@@ -161,12 +171,16 @@ function AtualizarLotePage() {
               const ult = descreverUltimaAtualizacao(a.ultima_atualizacao);
               const entry = valores[a.id] ?? { valor: "", preco: "", obs: "" };
               return (
-                <div key={a.id} className="rounded-2xl border border-border/60 bg-card/40 p-3 space-y-2">
+                <div
+                  key={a.id}
+                  className="rounded-2xl border border-border/60 bg-card/40 p-3 space-y-2"
+                >
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{a.nome}</div>
                       <div className="text-[11px] text-muted-foreground">
-                        {getTipoInvestimentoLabel(a.tipo, tr)} · Aplicado {formatBRL(Number(a.valor_aplicado || 0))}
+                        {getTipoInvestimentoLabel(a.tipo, tr)} · Aplicado{" "}
+                        {formatBRL(Number(a.valor_aplicado || 0))}
                       </div>
                     </div>
                     <Badge

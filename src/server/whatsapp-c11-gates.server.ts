@@ -132,8 +132,7 @@ async function defaultLoadPlanRow(userId: string): Promise<PlanRow | null> {
       status: typeof r.status === "string" ? r.status : null,
       current_period_start:
         typeof r.current_period_start === "string" ? r.current_period_start : null,
-      current_period_end:
-        typeof r.current_period_end === "string" ? r.current_period_end : null,
+      current_period_end: typeof r.current_period_end === "string" ? r.current_period_end : null,
       access_until: typeof r.access_until === "string" ? r.access_until : null,
     };
   } catch {
@@ -449,8 +448,7 @@ export async function canCreateNotificationForUser(
     }
     // Mensal e diário devem ambos ter espaço se limites > 0. Limite 0
     // (plano gratuito) → zero capacidade → bloqueia.
-    const monthlyRemaining =
-      s.outboundLimit - (s.outboundReserved + s.outboundCommitted);
+    const monthlyRemaining = s.outboundLimit - (s.outboundReserved + s.outboundCommitted);
     const dailyRemaining =
       s.dailyOutboundLimit > 0 ? s.dailyOutboundLimit - s.dailyOutboundUsed : Infinity;
     if (s.outboundLimit <= 0 || monthlyRemaining <= 0 || dailyRemaining <= 0) {

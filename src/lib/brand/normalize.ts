@@ -7,31 +7,84 @@
 
 const STOP_WORDS = new Set([
   // pagamento / transação
-  "pagamento", "pgto", "compra", "compras", "pix", "boleto",
-  "transferencia", "transf", "ted", "doc",
-  "debito", "credito", "cartao",
+  "pagamento",
+  "pgto",
+  "compra",
+  "compras",
+  "pix",
+  "boleto",
+  "transferencia",
+  "transf",
+  "ted",
+  "doc",
+  "debito",
+  "credito",
+  "cartao",
   // jurídico
-  "ltda", "sa", "eireli", "me", "mei", "epp",
-  "comercio", "industria", "servicos", "servico",
+  "ltda",
+  "sa",
+  "eireli",
+  "me",
+  "mei",
+  "epp",
+  "comercio",
+  "industria",
+  "servicos",
+  "servico",
   // canais
-  "mercado", "loja", "store", "shop",
-  "assinatura", "mensalidade", "plano",
-  "aplicativo", "app", "site", "web", "online",
-  "conta", "login", "acesso", "portal",
-  "minha", "meu", "oficial",
+  "mercado",
+  "loja",
+  "store",
+  "shop",
+  "assinatura",
+  "mensalidade",
+  "plano",
+  "aplicativo",
+  "app",
+  "site",
+  "web",
+  "online",
+  "conta",
+  "login",
+  "acesso",
+  "portal",
+  "minha",
+  "meu",
+  "oficial",
   // país / moeda
-  "brl", "br", "brasil",
+  "brl",
+  "br",
+  "brasil",
   // inglês comum
-  "the", "of", "and", "inc", "llc", "corp", "co",
+  "the",
+  "of",
+  "and",
+  "inc",
+  "llc",
+  "corp",
+  "co",
   // genéricos que costumam vir junto de nomes
-  "pedido", "pedidos", "trip", "ride", "rides",
-  "marketplace", "bill", "billing", "subscription", "storage",
+  "pedido",
+  "pedidos",
+  "trip",
+  "ride",
+  "rides",
+  "marketplace",
+  "bill",
+  "billing",
+  "subscription",
+  "storage",
 ]);
 
 /** Quando o nome aparece SOZINHO, mantemos. Senão, removemos. */
 const SOFT_STOP_WORDS = new Set([
-  "supermercado", "restaurante", "lanchonete", "padaria",
-  "farmacia", "drogaria", "posto",
+  "supermercado",
+  "restaurante",
+  "lanchonete",
+  "padaria",
+  "farmacia",
+  "drogaria",
+  "posto",
 ]);
 
 export function stripDiacritics(s: string): string {
@@ -44,7 +97,10 @@ export function normalizeMerchantName(input: string | null | undefined): string 
 
   // Domínios: extrai o miolo antes de qualquer "/" ou ".com.."
   // Ex.: "apple.com/bill" → "apple"; "netflix.com" → "netflix"
-  base = base.replace(/\b([a-z0-9-]+)\.(com|net|org|io|dev|app|co|gov)(\.[a-z]{2})?(\/[^ ]*)?/g, " $1 ");
+  base = base.replace(
+    /\b([a-z0-9-]+)\.(com|net|org|io|dev|app|co|gov)(\.[a-z]{2})?(\/[^ ]*)?/g,
+    " $1 ",
+  );
 
   base = base
     .replace(/\*+/g, " ")

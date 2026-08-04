@@ -2,7 +2,6 @@ import { createRouter, Link, useRouter, useRouterState } from "@tanstack/react-r
 import { useEffect } from "react";
 import { routeTree } from "./routeTree.gen";
 
-
 function isRecoverableRouteLoadError(error: Error) {
   const text = `${error.name} ${error.message} ${error.stack ?? ""}`.toLowerCase();
   return (
@@ -32,7 +31,6 @@ function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => vo
       window.location.reload();
     }
   }, [error, isRouteLoadError, pathname]);
-
 
   return (
     <div className="fixed inset-0 z-[10000] flex min-h-screen min-h-dvh items-center justify-center overflow-auto bg-background px-4 text-foreground">
@@ -85,7 +83,6 @@ function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => vo
             Ir para o início
           </Link>
         </div>
-
       </div>
     </div>
   );

@@ -17,9 +17,7 @@ vi.mock("@/server/whatsapp-callback-quota-reconcile.server", () => ({
   reconcileOutboundQuotaFromMetaStatus: reconcileMock,
 }));
 
-const { persistAndApplyEvents } = await import(
-  "@/server/whatsapp-meta-status-callbacks.server"
-);
+const { persistAndApplyEvents } = await import("@/server/whatsapp-meta-status-callbacks.server");
 
 type FakeClient = {
   from: (t: string) => unknown;

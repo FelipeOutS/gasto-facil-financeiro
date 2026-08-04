@@ -90,13 +90,11 @@ function rowToConta(r: Record<string, unknown>): ContaVencimentoRow {
     nome: String(r.nome ?? ""),
     valor: Number(r.valor ?? 0) || 0,
     dataVencimento: String(r.data_vencimento ?? ""),
-    status:
-      String(r.status ?? "pendente") === "pago" ? "pago" : "pendente",
+    status: String(r.status ?? "pendente") === "pago" ? "pago" : "pendente",
     dataPagamento: (r.data_pagamento as string | null) ?? null,
     categoriaId: (r.categoria_id as string | null) ?? null,
     recorrente: Boolean(r.recorrente ?? false),
-    frequenciaRecorrencia:
-      (r.frequencia_recorrencia as string | null) ?? null,
+    frequenciaRecorrencia: (r.frequencia_recorrencia as string | null) ?? null,
   };
 }
 

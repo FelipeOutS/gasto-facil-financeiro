@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getUserFromRequest, unauthorizedResponse, ensurePremiumFeatureAccess } from "@/server/api-auth";
+import {
+  getUserFromRequest,
+  unauthorizedResponse,
+  ensurePremiumFeatureAccess,
+} from "@/server/api-auth";
 import { enforceUserRateLimit } from "@/server/rate-limit.server";
 
 /**
@@ -101,15 +105,17 @@ export const Route = createFileRoute("/api/import-conta")({
         if (!__user) return unauthorizedResponse();
         const __gate = await ensurePremiumFeatureAccess(__user, "importar_conta");
         if (__gate) return __gate;
-        const __rl = await enforceUserRateLimit({ scope: "import", userId: __user.id, route: "import-conta", request });
+        const __rl = await enforceUserRateLimit({
+          scope: "import",
+          userId: __user.id,
+          route: "import-conta",
+          request,
+        });
         if (__rl) return __rl;
         try {
           const apiKey = process.env.LOVABLE_API_KEY;
           if (!apiKey) {
-            return Response.json(
-              { error: "LOVABLE_API_KEY não configurada." },
-              { status: 500 },
-            );
+            return Response.json({ error: "LOVABLE_API_KEY não configurada." }, { status: 500 });
           }
 
           const body = (await request.json()) as {
@@ -131,8 +137,7 @@ export const Route = createFileRoute("/api/import-conta")({
           }
 
           const userContent: Array<
-            | { type: "text"; text: string }
-            | { type: "image_url"; image_url: { url: string } }
+            { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }
           > = [];
           userContent.push({
             type: "text",
@@ -145,73 +150,69 @@ export const Route = createFileRoute("/api/import-conta")({
             userContent.push({ type: "image_url", image_url: { url } });
           }
 
-          const aiResp = await fetch(
-            "https://ai.gateway.lovable.dev/v1/chat/completions",
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                model: "google/gemini-2.5-flash",
-                messages: [
-                  { role: "system", content: SYSTEM_PROMPT },
-                  { role: "user", content: userContent },
-                ],
-                tools: [
-                  {
-                    type: "function",
-                    function: {
-                      name: "registrar_conta_a_pagar",
-                      description:
-                        "Estrutura a conta a pagar identificada para revisão do usuário.",
-                      parameters: {
-                        type: "object",
-                        properties: {
-                          conta: {
-                            type: ["object", "null"],
-                            properties: {
-                              nome: { type: ["string", "null"] },
-                              beneficiario: { type: ["string", "null"] },
-                              valor: { type: ["number", "null"] },
-                              dataVencimento: { type: ["string", "null"] },
-                              formaPagamento: {
-                                type: ["string", "null"],
-                                enum: [...FORMAS_VALIDAS, null],
-                              },
-                              codigoBoleto: { type: ["string", "null"] },
-                              codigoPix: { type: ["string", "null"] },
-                              chavePix: { type: ["string", "null"] },
-                              bancoEmissor: { type: ["string", "null"] },
-                              categoriaSugerida: {
-                                type: ["string", "null"],
-                                enum: [...CATEGORIAS_VALIDAS, null],
-                              },
-                              observacao: { type: ["string", "null"] },
-                              confianca: {
-                                type: "string",
-                                enum: ["alta", "media", "baixa"],
-                              },
+          const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash",
+              messages: [
+                { role: "system", content: SYSTEM_PROMPT },
+                { role: "user", content: userContent },
+              ],
+              tools: [
+                {
+                  type: "function",
+                  function: {
+                    name: "registrar_conta_a_pagar",
+                    description: "Estrutura a conta a pagar identificada para revisão do usuário.",
+                    parameters: {
+                      type: "object",
+                      properties: {
+                        conta: {
+                          type: ["object", "null"],
+                          properties: {
+                            nome: { type: ["string", "null"] },
+                            beneficiario: { type: ["string", "null"] },
+                            valor: { type: ["number", "null"] },
+                            dataVencimento: { type: ["string", "null"] },
+                            formaPagamento: {
+                              type: ["string", "null"],
+                              enum: [...FORMAS_VALIDAS, null],
                             },
-                            required: ["confianca"],
-                            additionalProperties: false,
+                            codigoBoleto: { type: ["string", "null"] },
+                            codigoPix: { type: ["string", "null"] },
+                            chavePix: { type: ["string", "null"] },
+                            bancoEmissor: { type: ["string", "null"] },
+                            categoriaSugerida: {
+                              type: ["string", "null"],
+                              enum: [...CATEGORIAS_VALIDAS, null],
+                            },
+                            observacao: { type: ["string", "null"] },
+                            confianca: {
+                              type: "string",
+                              enum: ["alta", "media", "baixa"],
+                            },
                           },
-                          observacao: { type: ["string", "null"] },
+                          required: ["confianca"],
+                          additionalProperties: false,
                         },
-                        required: ["conta"],
-                        additionalProperties: false,
+                        observacao: { type: ["string", "null"] },
                       },
+                      required: ["conta"],
+                      additionalProperties: false,
                     },
                   },
-                ],
-                tool_choice: {
-                  type: "function",
-                  function: { name: "registrar_conta_a_pagar" },
                 },
-              }),
-            },
-          );
+              ],
+              tool_choice: {
+                type: "function",
+                function: { name: "registrar_conta_a_pagar" },
+              },
+            }),
+          });
 
           if (!aiResp.ok) {
             const t = await aiResp.text();
@@ -228,10 +229,7 @@ export const Route = createFileRoute("/api/import-conta")({
                 { status: 402 },
               );
             }
-            return Response.json(
-              { error: "Não consegui ler essa conta agora." },
-              { status: 502 },
-            );
+            return Response.json({ error: "Não consegui ler essa conta agora." }, { status: 502 });
           }
 
           const json = await aiResp.json();
@@ -248,10 +246,7 @@ export const Route = createFileRoute("/api/import-conta")({
           try {
             parsed = JSON.parse(argsStr);
           } catch {
-            return Response.json(
-              { error: "Resposta inválida da IA." },
-              { status: 502 },
-            );
+            return Response.json({ error: "Resposta inválida da IA." }, { status: 502 });
           }
 
           const c = parsed.conta;
@@ -268,13 +263,11 @@ export const Route = createFileRoute("/api/import-conta")({
           const valor =
             typeof c.valor === "number" && c.valor > 0 ? Number(c.valor.toFixed(2)) : null;
           const venc =
-            typeof c.dataVencimento === "string" &&
-            /^\d{4}-\d{2}-\d{2}$/.test(c.dataVencimento)
+            typeof c.dataVencimento === "string" && /^\d{4}-\d{2}-\d{2}$/.test(c.dataVencimento)
               ? c.dataVencimento
               : null;
           const forma =
-            typeof c.formaPagamento === "string" &&
-            FORMAS_VALIDAS.includes(c.formaPagamento)
+            typeof c.formaPagamento === "string" && FORMAS_VALIDAS.includes(c.formaPagamento)
               ? c.formaPagamento
               : null;
           const cat =
@@ -285,10 +278,7 @@ export const Route = createFileRoute("/api/import-conta")({
 
           const conta = {
             nome: typeof c.nome === "string" ? c.nome.slice(0, 80) : null,
-            beneficiario:
-              typeof c.beneficiario === "string"
-                ? c.beneficiario.slice(0, 120)
-                : null,
+            beneficiario: typeof c.beneficiario === "string" ? c.beneficiario.slice(0, 120) : null,
             valor,
             dataVencimento: venc,
             formaPagamento: forma,
@@ -304,11 +294,9 @@ export const Route = createFileRoute("/api/import-conta")({
               typeof c.chavePix === "string" && c.chavePix.trim()
                 ? c.chavePix.trim().slice(0, 120)
                 : null,
-            bancoEmissor:
-              typeof c.bancoEmissor === "string" ? c.bancoEmissor.slice(0, 80) : null,
+            bancoEmissor: typeof c.bancoEmissor === "string" ? c.bancoEmissor.slice(0, 80) : null,
             categoriaSugerida: cat,
-            observacao:
-              typeof c.observacao === "string" ? c.observacao.slice(0, 300) : null,
+            observacao: typeof c.observacao === "string" ? c.observacao.slice(0, 300) : null,
             confianca:
               c.confianca === "alta" || c.confianca === "media" || c.confianca === "baixa"
                 ? c.confianca
@@ -317,8 +305,7 @@ export const Route = createFileRoute("/api/import-conta")({
 
           return Response.json({
             conta,
-            observacao:
-              typeof parsed.observacao === "string" ? parsed.observacao : null,
+            observacao: typeof parsed.observacao === "string" ? parsed.observacao : null,
           });
         } catch (err) {
           console.error("[import-conta] erro", err);

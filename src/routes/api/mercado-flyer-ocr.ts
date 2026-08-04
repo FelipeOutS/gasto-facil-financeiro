@@ -102,8 +102,7 @@ const TOOL_SCHEMA = {
 };
 
 // Regex auxiliar p/ contar candidatos a preço BR no texto OCR.
-const BR_PRICE_RE =
-  /(?:R\$\s*)?\d{1,3}(?:\.\d{3})*(?:,\d{2})|(?:R\$\s*)?\d+,\d{2}|\b\d+\.\d{2}\b/g;
+const BR_PRICE_RE = /(?:R\$\s*)?\d{1,3}(?:\.\d{3})*(?:,\d{2})|(?:R\$\s*)?\d+,\d{2}|\b\d+\.\d{2}\b/g;
 
 function countPriceCandidates(text: string): number {
   const m = text.match(BR_PRICE_RE);
@@ -112,15 +111,15 @@ function countPriceCandidates(text: string): number {
 
 function parseBrazilianPrice(value: string): number | null {
   const cleaned = value.replace(/R\$\s*/i, "").trim();
-  const normalized = cleaned.includes(",")
-    ? cleaned.replace(/\./g, "").replace(",", ".")
-    : cleaned;
+  const normalized = cleaned.includes(",") ? cleaned.replace(/\./g, "").replace(",", ".") : cleaned;
   const price = Number(normalized);
   return Number.isFinite(price) && price > 0 ? price : null;
 }
 
 function isUnsafeFallbackLine(line: string): boolean {
-  return /(@|https?:\/\/|www\.|cpf|cnpj|telefone|whats|whatsapp|sac|ouvidoria|cart[aã]o|pix)/i.test(line);
+  return /(@|https?:\/\/|www\.|cpf|cnpj|telefone|whats|whatsapp|sac|ouvidoria|cart[aã]o|pix)/i.test(
+    line,
+  );
 }
 
 function cleanFallbackProductName(line: string): string {
@@ -133,7 +132,10 @@ function cleanFallbackProductName(line: string): string {
     .slice(0, 160);
 }
 
-function extractFallbackItems(rawText: string, fallbackMarketName: string | undefined): DetectedItem[] {
+function extractFallbackItems(
+  rawText: string,
+  fallbackMarketName: string | undefined,
+): DetectedItem[] {
   const lines = rawText
     .split(/\r?\n/)
     .map((line) => line.replace(/\s+/g, " ").trim())
@@ -150,12 +152,14 @@ function extractFallbackItems(rawText: string, fallbackMarketName: string | unde
 
       const sameLineName = cleanFallbackProductName(line);
       const prevLine = index > 0 ? lines[index - 1] : "";
-      const prevName = prevLine && !isUnsafeFallbackLine(prevLine) ? cleanFallbackProductName(prevLine) : "";
-      const productName = sameLineName.length >= 3 && !isUnsafeFallbackLine(sameLineName)
-        ? sameLineName
-        : prevName.length >= 3
-          ? prevName
-          : "Produto não identificado";
+      const prevName =
+        prevLine && !isUnsafeFallbackLine(prevLine) ? cleanFallbackProductName(prevLine) : "";
+      const productName =
+        sameLineName.length >= 3 && !isUnsafeFallbackLine(sameLineName)
+          ? sameLineName
+          : prevName.length >= 3
+            ? prevName
+            : "Produto não identificado";
 
       const key = `${productName.toLowerCase()}|${price.toFixed(2)}`;
       if (seen.has(key)) continue;
@@ -241,7 +245,13 @@ function logOcrDiagnostic(diagnostic: OcrDiagnostic) {
 
 function normalizeImagePayload(img: string):
   | { ok: true; cleanBase64: string; imageMime: string }
-  | { ok: false; code: "unsupported_image_format" | "invalid_image_payload"; reason: string; imageMime: string; cleanBase64: string } {
+  | {
+      ok: false;
+      code: "unsupported_image_format" | "invalid_image_payload";
+      reason: string;
+      imageMime: string;
+      cleanBase64: string;
+    } {
   const trimmed = img.trim();
   const dataUrlMatch = trimmed.match(/^data:(image\/(?:jpeg|jpg|png|webp));base64,(.+)$/i);
   const heicMatch = trimmed.match(/^data:(image\/(?:heic|heif));base64,/i);
@@ -256,7 +266,13 @@ function normalizeImagePayload(img: string):
   }
 
   const imageMime = dataUrlMatch?.[1]?.toLowerCase() ?? "unknown";
-  const cleanBase64 = (dataUrlMatch ? dataUrlMatch[2] : trimmed.includes(",") ? trimmed.split(",").pop() : trimmed)?.replace(/\s/g, "") ?? "";
+  const cleanBase64 =
+    (dataUrlMatch
+      ? dataUrlMatch[2]
+      : trimmed.includes(",")
+        ? trimmed.split(",").pop()
+        : trimmed
+    )?.replace(/\s/g, "") ?? "";
 
   if (!dataUrlMatch && !/^[A-Za-z0-9+/]+={0,2}$/.test(cleanBase64)) {
     return {
@@ -286,7 +302,13 @@ async function callVision(
   base64: string,
 ): Promise<
   | { ok: true; text: string; status: number }
-  | { ok: false; status: number; errorCode: string | null; errorMessage: string | null; reason: string }
+  | {
+      ok: false;
+      status: number;
+      errorCode: string | null;
+      errorMessage: string | null;
+      reason: string;
+    }
 > {
   const resp = await fetch(
     `https://vision.googleapis.com/v1/images:annotate?key=${encodeURIComponent(apiKey)}`,
@@ -322,11 +344,20 @@ async function callVision(
   try {
     json = await resp.json();
   } catch {
-    return { ok: false, status: 502, errorCode: "vision_invalid_json", errorMessage: null, reason: "vision_invalid_json" };
+    return {
+      ok: false,
+      status: 502,
+      errorCode: "vision_invalid_json",
+      errorMessage: null,
+      reason: "vision_invalid_json",
+    };
   }
   const r0 = json?.responses?.[0];
   if (r0?.error) {
-    const errorCode = String(r0.error.status ?? r0.error.code ?? "vision_response_error").slice(0, 80);
+    const errorCode = String(r0.error.status ?? r0.error.code ?? "vision_response_error").slice(
+      0,
+      80,
+    );
     const errorMessage = String(r0.error.message ?? "vision_response_error").slice(0, 160);
     return {
       ok: false,
@@ -410,9 +441,7 @@ function parseStructured(
             ? it.validUntil
             : null,
         notes:
-          typeof it.notes === "string" && it.notes.trim()
-            ? it.notes.trim().slice(0, 240)
-            : null,
+          typeof it.notes === "string" && it.notes.trim() ? it.notes.trim().slice(0, 240) : null,
         confidence:
           typeof it.confidence === "number" && it.confidence >= 0 && it.confidence <= 1
             ? it.confidence
@@ -444,7 +473,12 @@ async function runOcrPipeline(params: {
 }) {
   const hasGoogleVisionKey = Boolean(params.visionKey);
   if (!params.visionKey) {
-    const diagnostic = createDiagnostic({ hasGoogleVisionKey, stage: "config", status: "error", code: "ocr_config_missing" });
+    const diagnostic = createDiagnostic({
+      hasGoogleVisionKey,
+      stage: "config",
+      status: "error",
+      code: "ocr_config_missing",
+    });
     logOcrDiagnostic(diagnostic);
     return Response.json(
       {
@@ -459,7 +493,10 @@ async function runOcrPipeline(params: {
     );
   }
   if (!params.aiKey) {
-    return Response.json({ success: false, error: "Serviço de IA indisponível.", code: "ai_config_missing" }, { status: 500 });
+    return Response.json(
+      { success: false, error: "Serviço de IA indisponível.", code: "ai_config_missing" },
+      { status: 500 },
+    );
   }
 
   const normalized = normalizeImagePayload(params.imageBase64);
@@ -477,7 +514,14 @@ async function runOcrPipeline(params: {
     diagnostic.code = normalized.code;
     logOcrDiagnostic(diagnostic);
     return Response.json(
-      { success: false, error: normalized.reason, code: normalized.code, items: [], warnings: [normalized.code], debugInfo: safeDiagnosticForResponse(diagnostic) },
+      {
+        success: false,
+        error: normalized.reason,
+        code: normalized.code,
+        items: [],
+        warnings: [normalized.code],
+        debugInfo: safeDiagnosticForResponse(diagnostic),
+      },
       { status: normalized.code === "unsupported_image_format" ? 415 : 400 },
     );
   }
@@ -487,7 +531,13 @@ async function runOcrPipeline(params: {
     diagnostic.code = "image_too_large";
     logOcrDiagnostic(diagnostic);
     return Response.json(
-      { success: false, error: "Imagem muito grande. Use uma foto até 10 MB.", code: "image_too_large", items: [], debugInfo: safeDiagnosticForResponse(diagnostic) },
+      {
+        success: false,
+        error: "Imagem muito grande. Use uma foto até 10 MB.",
+        code: "image_too_large",
+        items: [],
+        debugInfo: safeDiagnosticForResponse(diagnostic),
+      },
       { status: 413 },
     );
   }
@@ -524,7 +574,14 @@ async function runOcrPipeline(params: {
     diagnostic.code = "no_text_detected";
     logOcrDiagnostic(diagnostic);
     return Response.json(
-      { success: false, items: [], warnings: ["no_text_detected"], code: "no_text_detected", message: "Não encontramos texto legível nessa foto.", debugInfo: safeDiagnosticForResponse(diagnostic) },
+      {
+        success: false,
+        items: [],
+        warnings: ["no_text_detected"],
+        code: "no_text_detected",
+        message: "Não encontramos texto legível nessa foto.",
+        debugInfo: safeDiagnosticForResponse(diagnostic),
+      },
       { status: 200 },
     );
   }
@@ -534,13 +591,21 @@ async function runOcrPipeline(params: {
     diagnostic.code = "text_found_but_no_prices";
     logOcrDiagnostic(diagnostic);
     return Response.json(
-      { success: false, items: [], warnings: ["text_found_but_no_prices"], code: "text_found_but_no_prices", message: "Encontramos texto no panfleto, mas nenhum preço claro foi detectado.", debugInfo: safeDiagnosticForResponse(diagnostic) },
+      {
+        success: false,
+        items: [],
+        warnings: ["text_found_but_no_prices"],
+        code: "text_found_but_no_prices",
+        message: "Encontramos texto no panfleto, mas nenhum preço claro foi detectado.",
+        debugInfo: safeDiagnosticForResponse(diagnostic),
+      },
       { status: 200 },
     );
   }
 
   const hintParts: string[] = [];
-  if (params.marketName) hintParts.push(`Mercado informado pelo usuário: ${String(params.marketName).slice(0, 80)}.`);
+  if (params.marketName)
+    hintParts.push(`Mercado informado pelo usuário: ${String(params.marketName).slice(0, 80)}.`);
   if (params.city) hintParts.push(`Cidade: ${String(params.city).slice(0, 80)}.`);
   if (params.neighborhood) hintParts.push(`Bairro: ${String(params.neighborhood).slice(0, 80)}.`);
 
@@ -555,26 +620,47 @@ async function runOcrPipeline(params: {
     const fallbackItems = extractFallbackItems(rawText, params.marketName);
     diagnostic.stage = fallbackItems.length > 0 ? "fallback" : "gemini";
     diagnostic.status = fallbackItems.length > 0 ? "partial" : "error";
-    diagnostic.code = r.status === 429 ? "rate_limited" : r.status === 402 ? "credits" : "gemini_gateway_error";
+    diagnostic.code =
+      r.status === 429 ? "rate_limited" : r.status === 402 ? "credits" : "gemini_gateway_error";
     diagnostic.usedFallback = fallbackItems.length > 0;
     diagnostic.finalItemCount = fallbackItems.length;
     logOcrDiagnostic(diagnostic);
     if (fallbackItems.length > 0 && r.status !== 429 && r.status !== 402) {
       return Response.json(
-        { success: true, code: "gemini_gateway_error", items: fallbackItems, warnings: ["gemini_gateway_error", "fallback_regex_used"], message: "O texto foi lido, mas a IA não conseguiu organizar os produtos. Criamos sugestões parciais para revisão.", debugInfo: safeDiagnosticForResponse(diagnostic) },
+        {
+          success: true,
+          code: "gemini_gateway_error",
+          items: fallbackItems,
+          warnings: ["gemini_gateway_error", "fallback_regex_used"],
+          message:
+            "O texto foi lido, mas a IA não conseguiu organizar os produtos. Criamos sugestões parciais para revisão.",
+          debugInfo: safeDiagnosticForResponse(diagnostic),
+        },
         { status: 200 },
       );
     }
     const code = diagnostic.code;
     return Response.json(
-      { success: false, error: r.status === 429 ? "Muitas leituras seguidas. Aguarde alguns segundos e tente de novo." : "Não conseguimos estruturar os itens agora.", code, items: [], warnings: [code], debugInfo: safeDiagnosticForResponse(diagnostic) },
+      {
+        success: false,
+        error:
+          r.status === 429
+            ? "Muitas leituras seguidas. Aguarde alguns segundos e tente de novo."
+            : "Não conseguimos estruturar os itens agora.",
+        code,
+        items: [],
+        warnings: [code],
+        debugInfo: safeDiagnosticForResponse(diagnostic),
+      },
       { status: r.status === 429 || r.status === 402 ? r.status : 502 },
     );
   }
 
   const j = await r.json();
   const args = j?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
-  const parsed = args ? parseStructured(args, params.marketName) : { items: [], warnings: ["missing_tool_call"] };
+  const parsed = args
+    ? parseStructured(args, params.marketName)
+    : { items: [], warnings: ["missing_tool_call"] };
   diagnostic.geminiItemCount = parsed.items.length;
   diagnostic.finalItemCount = parsed.items.length;
 
@@ -588,7 +674,15 @@ async function runOcrPipeline(params: {
       diagnostic.finalItemCount = fallbackItems.length;
       logOcrDiagnostic(diagnostic);
       return Response.json(
-        { success: true, items: fallbackItems, warnings: [...parsed.warnings, "text_found_but_no_items", "fallback_regex_used"], code: "text_found_but_no_items", message: "O texto foi lido, mas a IA não estruturou os produtos. Criamos sugestões parciais para revisão.", debugInfo: safeDiagnosticForResponse(diagnostic) },
+        {
+          success: true,
+          items: fallbackItems,
+          warnings: [...parsed.warnings, "text_found_but_no_items", "fallback_regex_used"],
+          code: "text_found_but_no_items",
+          message:
+            "O texto foi lido, mas a IA não estruturou os produtos. Criamos sugestões parciais para revisão.",
+          debugInfo: safeDiagnosticForResponse(diagnostic),
+        },
         { status: 200 },
       );
     }
@@ -596,7 +690,15 @@ async function runOcrPipeline(params: {
     diagnostic.code = "text_found_but_no_items";
     logOcrDiagnostic(diagnostic);
     return Response.json(
-      { success: false, items: [], warnings: [...parsed.warnings, "text_found_but_no_items"], code: "text_found_but_no_items", message: "Encontramos texto no panfleto, mas não conseguimos montar os produtos automaticamente.", debugInfo: safeDiagnosticForResponse(diagnostic) },
+      {
+        success: false,
+        items: [],
+        warnings: [...parsed.warnings, "text_found_but_no_items"],
+        code: "text_found_but_no_items",
+        message:
+          "Encontramos texto no panfleto, mas não conseguimos montar os produtos automaticamente.",
+        debugInfo: safeDiagnosticForResponse(diagnostic),
+      },
       { status: 200 },
     );
   }
@@ -605,7 +707,15 @@ async function runOcrPipeline(params: {
   diagnostic.status = "ok";
   diagnostic.code = "success";
   logOcrDiagnostic(diagnostic);
-  return Response.json({ success: true, items: parsed.items, warnings: parsed.warnings, debugInfo: safeDiagnosticForResponse(diagnostic) }, { status: 200 });
+  return Response.json(
+    {
+      success: true,
+      items: parsed.items,
+      warnings: parsed.warnings,
+      debugInfo: safeDiagnosticForResponse(diagnostic),
+    },
+    { status: 200 },
+  );
 }
 
 export const Route = createFileRoute("/api/mercado-flyer-ocr")({
@@ -640,7 +750,10 @@ export const Route = createFileRoute("/api/mercado-flyer-ocr")({
             }
           } catch (err) {
             console.error("[mercado-flyer-ocr] gate erro", err);
-            return premiumForbiddenResponse("mercado_avancado", "Não foi possível validar seu plano.");
+            return premiumForbiddenResponse(
+              "mercado_avancado",
+              "Não foi possível validar seu plano.",
+            );
           }
         }
 
@@ -656,7 +769,7 @@ export const Route = createFileRoute("/api/mercado-flyer-ocr")({
         if (!(await isAdminMasterUser(user))) {
           return Response.json(
             { success: false, code: "forbidden", message: "Acesso restrito para manutenção." },
-            { status: 403 }
+            { status: 403 },
           );
         }
 
@@ -673,7 +786,10 @@ export const Route = createFileRoute("/api/mercado-flyer-ocr")({
             ? `data:image/png;base64,${SIMPLE_FLYER_TEST_IMAGE_BASE64}`
             : body?.imageBase64;
           if (!img || typeof img !== "string") {
-            return Response.json({ success: false, error: "Envie uma imagem válida.", code: "invalid_image_payload" }, { status: 400 });
+            return Response.json(
+              { success: false, error: "Envie uma imagem válida.", code: "invalid_image_payload" },
+              { status: 400 },
+            );
           }
 
           return runOcrPipeline({
@@ -686,7 +802,10 @@ export const Route = createFileRoute("/api/mercado-flyer-ocr")({
           });
         } catch (err) {
           console.error("[mercado-flyer-ocr] erro", err);
-          return Response.json({ success: false, error: "Erro inesperado ao ler o panfleto.", code: "unknown_error" }, { status: 500 });
+          return Response.json(
+            { success: false, error: "Erro inesperado ao ler o panfleto.", code: "unknown_error" },
+            { status: 500 },
+          );
         }
       },
     },

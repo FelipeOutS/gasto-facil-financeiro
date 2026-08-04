@@ -80,13 +80,16 @@ export type LabelSanitizationResult = {
 
 // Padrões de conteúdo sensível — aplicados sobre a string já normalizada.
 const HTML_PATTERN = /<[^>]*>|&#?\w+;/;
-const URL_PATTERN = /\b(?:https?:\/\/|www\.)|\b[a-z0-9.-]+\.(?:com|br|net|org|io|co|app|dev|shop|xyz)\b/i;
+const URL_PATTERN =
+  /\b(?:https?:\/\/|www\.)|\b[a-z0-9.-]+\.(?:com|br|net|org|io|co|app|dev|shop|xyz)\b/i;
 const CPF_PATTERN = /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/;
 const CNPJ_PATTERN = /\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/;
-const BOLETO_LINE_PATTERN = /\b\d{5}[.\s]?\d{5}[.\s]?\d{5}[.\s]?\d{6}[.\s]?\d{5}[.\s]?\d{6}[.\s]?\d[.\s]?\d{14}\b|\b\d{44,48}\b/;
+const BOLETO_LINE_PATTERN =
+  /\b\d{5}[.\s]?\d{5}[.\s]?\d{5}[.\s]?\d{6}[.\s]?\d{5}[.\s]?\d{6}[.\s]?\d[.\s]?\d{14}\b|\b\d{44,48}\b/;
 const CARD_PATTERN = /\b(?:\d[ -]?){13,19}\b/;
 const PHONE_PATTERN = /(?:\+?55[\s-]?)?(?:\(?\d{2}\)?[\s-]?)?9?\d{4}[\s-]?\d{4}\b/;
-const MONETARY_PATTERN = /(?:R\$\s?\d)|(?:\b\d{1,3}(?:\.\d{3})+,\d{2}\b)|(?:\b\d+,\d{2}\s?(?:reais|BRL)\b)/i;
+const MONETARY_PATTERN =
+  /(?:R\$\s?\d)|(?:\b\d{1,3}(?:\.\d{3})+,\d{2}\b)|(?:\b\d+,\d{2}\s?(?:reais|BRL)\b)/i;
 const PIX_EMAIL = /\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\b/i;
 // Pix chave aleatória: UUID v4-like
 const PIX_RANDOM = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i;

@@ -51,10 +51,7 @@ export type PlanoParcelamento = {
  *
  * Exemplo: (10000, 3) → [3334, 3333, 3333]
  */
-export function calcularParcelasCentavos(
-  totalCentavos: number,
-  n: number,
-): number[] {
+export function calcularParcelasCentavos(totalCentavos: number, n: number): number[] {
   if (!Number.isFinite(totalCentavos) || !Number.isInteger(totalCentavos)) {
     throw new Error("totalCentavos precisa ser inteiro");
   }

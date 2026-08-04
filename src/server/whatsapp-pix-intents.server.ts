@@ -44,10 +44,7 @@ import {
 // detectar colisão entre "paguei <nome>" e uma conta pendente do mesmo
 // favorecido. Reusa o mesmo lookup já validado em WA-C3.
 import { findVencimentoByTerm } from "./contas-vencimento.server";
-import {
-  recordFavorecido,
-  getLastFavorecido,
-} from "./whatsapp-short-context.server";
+import { recordFavorecido, getLastFavorecido } from "./whatsapp-short-context.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
 import { issueRevealToken } from "./whatsapp-pix-reveal-token.server";
 // WA-C11 3B.2.C.1 Block 2 — quota financeira para o legacy "pagar via
@@ -109,10 +106,7 @@ export async function handleSavePixIntent(args: {
   // Rejeita tipo "desconhecida", CPF/CNPJ com dígito inválido, telefone
   // fora do padrão celular BR, email malformado e UUID inválido. Zero
   // favorecido criado/atualizado, zero sessão, zero claim.
-  if (
-    parsed.pixKeyType === "desconhecida" ||
-    !isValidPixKey(parsed.pixKeyType, parsed.pixKey)
-  ) {
+  if (parsed.pixKeyType === "desconhecida" || !isValidPixKey(parsed.pixKeyType, parsed.pixKey)) {
     console.info({
       event: "wa_pix_save",
       stage: "invalid_key_rejected",
@@ -129,12 +123,7 @@ export async function handleSavePixIntent(args: {
   );
 
   if (exato) {
-    const ok = await updateFavorecidoPix(
-      args.userId,
-      exato.id,
-      parsed.pixKey,
-      parsed.pixKeyType,
-    );
+    const ok = await updateFavorecidoPix(args.userId, exato.id, parsed.pixKey, parsed.pixKeyType);
     console.info({
       event: "wa_pix_save",
       stage: "update",
@@ -144,8 +133,7 @@ export async function handleSavePixIntent(args: {
     if (!ok) {
       return {
         status: "erro",
-        resposta:
-          "Não consegui salvar agora. Tente de novo daqui a pouco, por favor.",
+        resposta: "Não consegui salvar agora. Tente de novo daqui a pouco, por favor.",
       };
     }
     recordFavorecido(args.telefone, exato.nome);
@@ -173,8 +161,7 @@ export async function handleSavePixIntent(args: {
   if (!novo) {
     return {
       status: "erro",
-      resposta:
-        "Não consegui salvar agora. Tente de novo daqui a pouco, por favor.",
+      resposta: "Não consegui salvar agora. Tente de novo daqui a pouco, por favor.",
     };
   }
   recordFavorecido(args.telefone, novo.nome);
@@ -200,8 +187,7 @@ export async function handleQueryPixIntent(args: {
   if (!termo) {
     return {
       status: "sem_pendencia",
-      resposta:
-        'Me diga de quem você quer o Pix. Ex.: "qual o Pix do João?"',
+      resposta: 'Me diga de quem você quer o Pix. Ex.: "qual o Pix do João?"',
     };
   }
 
@@ -250,8 +236,7 @@ export async function handleQueryPixIntent(args: {
     });
     if (issued) {
       const base =
-        process.env.PUBLIC_SITE_URL?.replace(/\/+$/, "") ??
-        "https://gastointeligente.com.br";
+        process.env.PUBLIC_SITE_URL?.replace(/\/+$/, "") ?? "https://gastointeligente.com.br";
       copiarUrl = `${base}/pix/copiar/${issued.token}`;
     }
   } catch {
@@ -304,8 +289,7 @@ async function resolveOutrosCategoriaId(userId: string): Promise<string | null> 
   if (!Array.isArray(data) || data.length === 0) return null;
   const outros = data.find(
     (c: { legacy_id?: string | null; nome?: string }) =>
-      c.legacy_id === OUTROS_LEGACY ||
-      (c.nome ?? "").toLowerCase().trim() === "outros",
+      c.legacy_id === OUTROS_LEGACY || (c.nome ?? "").toLowerCase().trim() === "outros",
   );
   return (outros as { id: string } | undefined)?.id ?? null;
 }
@@ -325,8 +309,7 @@ export async function handlePagarPessoaIntent(args: {
     });
     return {
       status: "sem_pendencia",
-      resposta:
-        'Não entendi. Tente "paguei R$ 50 ao João" ou "paguei 50 para Maria do almoço".',
+      resposta: 'Não entendi. Tente "paguei R$ 50 ao João" ou "paguei 50 para Maria do almoço".',
     };
   }
 
@@ -349,11 +332,10 @@ export async function handlePagarPessoaIntent(args: {
     });
     return {
       status: "erro",
-      resposta:
-        "Não consegui registrar agora. Tente de novo daqui a pouco, por favor.",
+      resposta: "Não consegui registrar agora. Tente de novo daqui a pouco, por favor.",
     };
   }
-  
+
   if (externalId.length > 0) {
     const { data: prev } = await supabaseAdmin
       .from("whatsapp_messages")
@@ -361,8 +343,7 @@ export async function handlePagarPessoaIntent(args: {
       .eq("external_id", externalId)
       .eq("status", "salva")
       .maybeSingle();
-    const prevParsed =
-      (prev?.parsed ?? null) as { kind?: string } | null;
+    const prevParsed = (prev?.parsed ?? null) as { kind?: string } | null;
     if (prev && prevParsed?.kind === "pagar_pessoa" && prev.gasto_id) {
       console.info({
         event: "wa_pix_payment",
@@ -372,8 +353,7 @@ export async function handlePagarPessoaIntent(args: {
       return {
         status: "duplicada",
         gastoId: prev.gasto_id as string,
-        resposta:
-          "Esse pagamento já tinha sido registrado. Está tudo certo. ✅",
+        resposta: "Esse pagamento já tinha sido registrado. Está tudo certo. ✅",
       };
     }
   }
@@ -387,10 +367,7 @@ export async function handlePagarPessoaIntent(args: {
   // automática ficará para WA-C7.2.b (state machine completo); aqui o
   // objetivo é simplesmente evitar duplicidade contábil silenciosa.
   // ----------------------------------------------------------------------
-  const contasPendentes = await findVencimentoByTerm(
-    args.userId,
-    parsed.nome,
-  );
+  const contasPendentes = await findVencimentoByTerm(args.userId, parsed.nome);
   if (contasPendentes.length > 0) {
     console.info({
       event: "wa_pix_payment",
@@ -398,9 +375,7 @@ export async function handlePagarPessoaIntent(args: {
       result: "not_found",
       candidatesCount: contasPendentes.length,
     });
-    const nomesDistintos = Array.from(
-      new Set(contasPendentes.map((c) => c.nome)),
-    ).slice(0, 5);
+    const nomesDistintos = Array.from(new Set(contasPendentes.map((c) => c.nome))).slice(0, 5);
     const lista = nomesDistintos.map((n, i) => `${i + 1}. ${n}`).join("\n");
     const linhas = [
       contasPendentes.length === 1
@@ -419,8 +394,7 @@ export async function handlePagarPessoaIntent(args: {
   }
 
   const matches = await findFavorecidosByNome(args.userId, parsed.nome);
-  const favorecido: FavorecidoRow | null =
-    matches.length === 1 ? matches[0] : null;
+  const favorecido: FavorecidoRow | null = matches.length === 1 ? matches[0] : null;
 
   // WA-C11 3B.2.C.1 Block 2 — claim atômico best-effort `pix_persistindo`
   // no row de `whatsapp_messages` já materializado pelo router. CAS por
@@ -446,12 +420,10 @@ export async function handlePagarPessoaIntent(args: {
       });
       return {
         status: "erro",
-        resposta:
-          "Não consegui registrar agora. Tente de novo daqui a pouco, por favor.",
+        resposta: "Não consegui registrar agora. Tente de novo daqui a pouco, por favor.",
       };
     }
   }
-
 
   // WA-C11 3B.2.C.1 Block 2 — quota financeira somente após vencer o claim.
   const gateOutcome = await assertFinancialActionQuotaForWhatsApp({
@@ -481,8 +453,7 @@ export async function handlePagarPessoaIntent(args: {
     });
     return {
       status: "erro",
-      resposta:
-        "Não encontrei a categoria padrão para salvar. Tente de novo em instantes.",
+      resposta: "Não encontrei a categoria padrão para salvar. Tente de novo em instantes.",
     };
   }
 
@@ -491,7 +462,11 @@ export async function handlePagarPessoaIntent(args: {
   const y = hoje.getFullYear();
   const mo = hoje.getMonth() + 1;
   const descricao = parsed.descricao ?? `Pagamento para ${parsed.nome}`;
-  const obs = `WhatsApp: pagamento para ${parsed.nome}${parsed.descricao ? ` — ${parsed.descricao}` : ""}`.slice(0, 240);
+  const obs =
+    `WhatsApp: pagamento para ${parsed.nome}${parsed.descricao ? ` — ${parsed.descricao}` : ""}`.slice(
+      0,
+      240,
+    );
 
   const { data: row, error } = await supabaseAdmin
     .from("gastos")
@@ -524,8 +499,7 @@ export async function handlePagarPessoaIntent(args: {
     });
     return {
       status: "erro",
-      resposta:
-        "Não consegui registrar agora. Tente de novo daqui a pouco, por favor.",
+      resposta: "Não consegui registrar agora. Tente de novo daqui a pouco, por favor.",
     };
   }
 

@@ -56,15 +56,20 @@ export const Route = createFileRoute("/alertas")({
   component: AlertasPage,
 });
 
-type FilterKey =
-  | "todos"
-  | "nao_lidos"
-  | "importantes"
-  | AlertCategory;
+type FilterKey = "todos" | "nao_lidos" | "importantes" | AlertCategory;
 
 const FILTER_KEYS: FilterKey[] = [
-  "todos", "nao_lidos", "importantes", "cartoes", "contas", "contas_receber",
-  "assinaturas", "gastos", "orcamento", "investimentos", "sistema",
+  "todos",
+  "nao_lidos",
+  "importantes",
+  "cartoes",
+  "contas",
+  "contas_receber",
+  "assinaturas",
+  "gastos",
+  "orcamento",
+  "investimentos",
+  "sistema",
 ];
 
 type PriorityTone = {
@@ -121,11 +126,13 @@ function iconForType(type: string): LucideIcon {
     type === "gasto_fora_padrao_categoria" ||
     type === "gastos_aumento" ||
     type === "assinatura_aumento"
-  ) return TrendingUp;
+  )
+    return TrendingUp;
   if (type === "assinatura_esquecida") return Clock;
   if (type.includes("vencida") || type.includes("estouro")) return AlertTriangle;
   if (type.includes("hoje")) return Clock;
-  if (type.includes("amanha") || type.includes("vencendo") || type.includes("em5")) return CalendarClock;
+  if (type.includes("amanha") || type.includes("vencendo") || type.includes("em5"))
+    return CalendarClock;
   switch (cat) {
     case "cartoes":
       return CreditCard;
@@ -158,7 +165,10 @@ function useFormatRelativo() {
     if (hours < 24) return t("alertas.rel.hour", { n: hours });
     const days = Math.floor(hours / 24);
     if (days < 7) return t("alertas.rel.day", { n: days });
-    return d.toLocaleDateString(i18nInst.language === "en" ? "en-US" : "pt-BR", { day: "2-digit", month: "short" });
+    return d.toLocaleDateString(i18nInst.language === "en" ? "en-US" : "pt-BR", {
+      day: "2-digit",
+      month: "short",
+    });
   };
 }
 
@@ -200,18 +210,13 @@ function AlertCard({
                 {alert.title}
                 {isUnread && (
                   <span
-                    className={cn(
-                      "ml-2 inline-block h-2 w-2 rounded-full align-middle",
-                      tone.dot,
-                    )}
+                    className={cn("ml-2 inline-block h-2 w-2 rounded-full align-middle", tone.dot)}
                     aria-label={t("alertas.unread")}
                   />
                 )}
               </h3>
               {alert.description && (
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {alert.description}
-                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{alert.description}</p>
               )}
             </div>
             <StatusBadge tone={tone.tone} className="shrink-0">
@@ -233,16 +238,31 @@ function AlertCard({
               </Button>
             )}
             {isUnread && (
-              <Button size="sm" variant="ghost" onClick={onMarkRead} className="min-h-11 px-2.5 text-xs">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onMarkRead}
+                className="min-h-11 px-2.5 text-xs"
+              >
                 <Eye className="mr-1 h-3.5 w-3.5" />
                 {t("alertas.markRead")}
               </Button>
             )}
-            <Button size="sm" variant="ghost" onClick={onResolve} className="min-h-11 px-2.5 text-xs">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onResolve}
+              className="min-h-11 px-2.5 text-xs"
+            >
               <Check className="mr-1 h-3.5 w-3.5" />
               {t("alertas.resolve")}
             </Button>
-            <Button size="sm" variant="ghost" onClick={onIgnore} className="min-h-11 px-2.5 text-xs text-muted-foreground">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onIgnore}
+              className="min-h-11 px-2.5 text-xs text-muted-foreground"
+            >
               <EyeOff className="mr-1 h-3.5 w-3.5" />
               {t("alertas.ignore")}
             </Button>
@@ -293,11 +313,12 @@ function AlertasPage() {
     return groups;
   }, [filter, filtered]);
 
-  const summaryHeadline = stats.total === 0
-    ? t("alertas.summary.allClearTitle")
-    : stats.total === 1
-      ? t("alertas.summary.oneToReview")
-      : t("alertas.summary.manyToReview", { n: stats.total });
+  const summaryHeadline =
+    stats.total === 0
+      ? t("alertas.summary.allClearTitle")
+      : stats.total === 1
+        ? t("alertas.summary.oneToReview")
+        : t("alertas.summary.manyToReview", { n: stats.total });
 
   return (
     <MobileShell>
@@ -307,14 +328,19 @@ function AlertasPage() {
             <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
               {t("alertas.kicker")}
             </p>
-            <h1 className="mt-0.5 text-[26px] font-bold leading-tight tracking-tight">{t("alertas.title")}</h1>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("alertas.subtitle")}
-            </p>
+            <h1 className="mt-0.5 text-[26px] font-bold leading-tight tracking-tight">
+              {t("alertas.title")}
+            </h1>
+            <p className="mt-1 text-xs text-muted-foreground">{t("alertas.subtitle")}</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {unreadCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={markAllRead} className="min-h-11 px-3 text-xs">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={markAllRead}
+                className="min-h-11 px-3 text-xs"
+              >
                 <CheckCheck className="mr-1.5 h-4 w-4" />
                 {t("alertas.markAll")}
               </Button>
@@ -343,22 +369,36 @@ function AlertasPage() {
                       : "bg-primary/10 text-primary",
                 )}
               >
-                {stats.total === 0 ? <Sparkles className="h-5 w-5" /> : <Bell className="h-5 w-5" />}
+                {stats.total === 0 ? (
+                  <Sparkles className="h-5 w-5" />
+                ) : (
+                  <Bell className="h-5 w-5" />
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <h2 className="text-sm font-semibold leading-tight">{summaryHeadline}</h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {stats.total === 0
-                    ? t("alertas.summary.allClearDesc")
-                    : t("alertas.subtitle")}
+                  {stats.total === 0 ? t("alertas.summary.allClearDesc") : t("alertas.subtitle")}
                 </p>
               </div>
             </div>
             {stats.total > 0 && (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <SummaryStat label={t("alertas.summary.total")} value={stats.total} tone="default" />
-                <SummaryStat label={t("alertas.summary.critical")} value={stats.critical} tone="destructive" />
-                <SummaryStat label={t("alertas.summary.important")} value={stats.important} tone="warning" />
+                <SummaryStat
+                  label={t("alertas.summary.total")}
+                  value={stats.total}
+                  tone="default"
+                />
+                <SummaryStat
+                  label={t("alertas.summary.critical")}
+                  value={stats.critical}
+                  tone="destructive"
+                />
+                <SummaryStat
+                  label={t("alertas.summary.important")}
+                  value={stats.important}
+                  tone="warning"
+                />
                 <SummaryStat label={t("alertas.summary.unread")} value={stats.unread} tone="info" />
               </div>
             )}
@@ -386,12 +426,9 @@ function AlertasPage() {
               <Link to="/orcamento">{t("alertas.onboarding.secondaryCta")}</Link>
             </Button>
           </div>
-          <p className="mt-3 text-[12px] text-muted-foreground">
-            {t("alertas.onboarding.helper")}
-          </p>
+          <p className="mt-3 text-[12px] text-muted-foreground">{t("alertas.onboarding.helper")}</p>
         </section>
       )}
-
 
       {/* Filtros */}
       <div className="mt-4 -mx-4 sm:-mx-5 md:-mx-6 px-4 sm:px-5 md:px-6 overflow-x-auto">
@@ -506,9 +543,7 @@ function SummaryStat({
       <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
-      <div className={cn("mt-0.5 text-lg font-semibold tabular-nums", toneClass)}>
-        {value}
-      </div>
+      <div className={cn("mt-0.5 text-lg font-semibold tabular-nums", toneClass)}>{value}</div>
     </div>
   );
 }

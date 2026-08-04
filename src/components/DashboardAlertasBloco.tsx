@@ -24,7 +24,11 @@ import { categoryOf, type AlertPriority } from "@/lib/alerts/types";
 function priorityMeta(p: AlertPriority) {
   switch (p) {
     case "critica":
-      return { bg: "bg-destructive/10", fg: "text-destructive", badge: "bg-destructive/15 text-destructive" };
+      return {
+        bg: "bg-destructive/10",
+        fg: "text-destructive",
+        badge: "bg-destructive/15 text-destructive",
+      };
     case "alta":
       return {
         bg: "bg-warning/10",
@@ -50,7 +54,8 @@ function priorityMeta(p: AlertPriority) {
 function iconForType(type: string): LucideIcon {
   if (type.includes("vencida") || type.includes("estouro")) return AlertTriangle;
   if (type.includes("hoje")) return Clock;
-  if (type.includes("amanha") || type.includes("vencendo") || type.includes("em5")) return CalendarClock;
+  if (type.includes("amanha") || type.includes("vencendo") || type.includes("em5"))
+    return CalendarClock;
   const cat = categoryOf(type);
   switch (cat) {
     case "cartoes":
@@ -126,7 +131,9 @@ export function DashboardAlertasBloco({ className }: { className?: string }) {
                   to={a.action_url || "/alertas"}
                   className="flex items-center gap-3 rounded-xl border border-border/40 bg-background/40 px-3 py-2.5 transition-colors hover:bg-accent/40"
                 >
-                  <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", meta.bg)}>
+                  <span
+                    className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", meta.bg)}
+                  >
                     <Icon className={cn("h-4 w-4", meta.fg)} />
                   </span>
                   <div className="min-w-0 flex-1">

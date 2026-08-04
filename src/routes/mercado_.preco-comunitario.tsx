@@ -23,7 +23,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { formatBRL } from "@/lib/format";
@@ -47,11 +53,16 @@ import { lookupProductImage } from "@/lib/mercado/product-image.functions";
 import { toPersistableImage } from "@/lib/mercado/product-image-persist";
 import { ImageOff, Search as SearchIcon, X as XIcon } from "lucide-react";
 
-
-
 export const Route = createFileRoute("/mercado_/preco-comunitario")({
   head: () => ({
-    meta: [{ title: i18n.t("mercado:communityPrices.title", { lng: i18n.language, defaultValue: "Preço Comunitário" }) }],
+    meta: [
+      {
+        title: i18n.t("mercado:communityPrices.title", {
+          lng: i18n.language,
+          defaultValue: "Preço Comunitário",
+        }),
+      },
+    ],
   }),
   component: PrecoComunitarioPage,
 });
@@ -113,7 +124,19 @@ const CATEGORY_MATCHERS: Record<MercadoCategoryKey, string[]> = {
   bebidas: ["bebida", "refrigerante", "suco", "cerveja", "vinho", "água", "agua"],
   laticinios: ["laticínio", "laticinio", "leite", "queijo", "iogurte", "manteiga"],
   limpeza: ["limpeza", "sabão", "sabao", "detergente", "amaciante", "desinfetante"],
-  mercearia: ["mercearia", "arroz", "feijão", "feijao", "massa", "macarrão", "macarrao", "óleo", "oleo", "açúcar", "acucar"],
+  mercearia: [
+    "mercearia",
+    "arroz",
+    "feijão",
+    "feijao",
+    "massa",
+    "macarrão",
+    "macarrao",
+    "óleo",
+    "oleo",
+    "açúcar",
+    "acucar",
+  ],
   utilidades: ["utilidade", "utensílio", "utensilio", "papel", "descart", "higiene"],
 };
 
@@ -123,7 +146,6 @@ const SOURCE_MAP: Record<string, ProductSource> = {
   receipt: "receipt",
   manual: "manual",
 };
-
 
 const emptyManualForm = (): ManualForm => ({
   productName: "",
@@ -145,7 +167,6 @@ const emptyManualForm = (): ManualForm => ({
   imageRemoved: false,
 });
 
-
 function PrecoComunitarioPage() {
   const { t, i18n: i18nInst } = useTranslation("mercado");
   const dateLocale = i18nInst.language?.startsWith("en") ? "en-US" : "pt-BR";
@@ -162,16 +183,14 @@ function PrecoComunitarioPage() {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterSource, setFilterSource] = useState<SourceKey | "">("");
   const [sortBy, setSortBy] = useState<SortKey>("recent");
-  const [categoryChip, setCategoryChip] = useState<MercadoCategoryKey | "todos" | "outros">("todos");
+  const [categoryChip, setCategoryChip] = useState<MercadoCategoryKey | "todos" | "outros">(
+    "todos",
+  );
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Batch scan wizard
   const [batchOpen, setBatchOpen] = useState(false);
   const [onlineImportOpen, setOnlineImportOpen] = useState(false);
-
-
-
-
 
   // Manual state
   const [manualOpen, setManualOpen] = useState(false);
@@ -252,11 +271,9 @@ function PrecoComunitarioPage() {
     const withSaved = items.filter((i) => !!i.image_url).length;
     const withBrand = items.filter((i) => !!i.brand).length;
     const withBarcode = items.filter((i) => !!i.barcode).length;
-    // eslint-disable-next-line no-console
-    console.groupCollapsed(
-      `[mercado/image-audit] ${withSaved}/${total} com imagem salva`,
-    );
-    // eslint-disable-next-line no-console
+
+    console.groupCollapsed(`[mercado/image-audit] ${withSaved}/${total} com imagem salva`);
+
     console.table({
       total,
       com_image_url_salva: withSaved,
@@ -264,14 +281,13 @@ function PrecoComunitarioPage() {
       com_barcode: withBarcode,
       sem_imagem_salva: total - withSaved,
     });
-    // eslint-disable-next-line no-console
+
     console.info(
       "Itens sem image_url tentarão lookup automático via ProductCard (runtime) + backfill (somente owner, confiança média/alta).",
     );
-    // eslint-disable-next-line no-console
+
     console.groupEnd();
   }, [items, loading]);
-
 
   // Backfill incremental de imagem para itens do próprio usuário sem
   // image_url salvo. Roda lazy, em segundo plano, com concorrência baixa.
@@ -410,11 +426,6 @@ function PrecoComunitarioPage() {
     setCategoryChip("todos");
   }
 
-
-
-
-
-
   function applyImageChange(
     id: string,
     next: { imageUrl: string | null; imageSource: string | null; imageConfidence?: number | null },
@@ -474,17 +485,23 @@ function PrecoComunitarioPage() {
   async function saveManual() {
     if (!user) return;
     const price = Number(manualForm.price.replace(",", "."));
-    if (!manualForm.productName.trim() || !manualForm.marketName.trim() || !Number.isFinite(price) || price <= 0) {
+    if (
+      !manualForm.productName.trim() ||
+      !manualForm.marketName.trim() ||
+      !Number.isFinite(price) ||
+      price <= 0
+    ) {
       notify.error(t("communityPrices.errors.manualRequired"));
       return;
     }
-    const imageFields = manualForm.imageRemoved || !manualForm.imageUrl
-      ? { image_url: null, image_source: null, image_confidence: null }
-      : {
-          image_url: manualForm.imageUrl,
-          image_source: manualForm.imageSource ?? "manual",
-          image_confidence: manualForm.imageConfidence,
-        };
+    const imageFields =
+      manualForm.imageRemoved || !manualForm.imageUrl
+        ? { image_url: null, image_source: null, image_confidence: null }
+        : {
+            image_url: manualForm.imageUrl,
+            image_source: manualForm.imageSource ?? "manual",
+            image_confidence: manualForm.imageConfidence,
+          };
     const payload: Record<string, unknown> = {
       product_name: manualForm.productName.trim(),
       normalized_product_name: manualForm.productName.trim().toLowerCase(),
@@ -545,17 +562,20 @@ function PrecoComunitarioPage() {
     notify.success(t("communityPrices.success.removed"));
   }
 
-  const sourceLabel = (s: string) =>
-    t(`communityPrices.source.${s}`, { defaultValue: s });
+  const sourceLabel = (s: string) => t(`communityPrices.source.${s}`, { defaultValue: s });
 
   return (
     <MobileShell wide>
       <div className="flex items-center gap-2">
         <Button asChild variant="ghost" size="icon" aria-label={t("communityPrices.back")}>
-          <Link to="/mercado"><ArrowLeft className="h-5 w-5" /></Link>
+          <Link to="/mercado">
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
         </Button>
         <Button asChild variant="ghost" size="icon" aria-label={t("communityPrices.home")}>
-          <Link to="/app"><Home className="h-5 w-5" /></Link>
+          <Link to="/app">
+            <Home className="h-5 w-5" />
+          </Link>
         </Button>
       </div>
 
@@ -564,7 +584,9 @@ function PrecoComunitarioPage() {
           <BadgePercent className="h-6 w-6" />
         </span>
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{t("communityPrices.title")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+            {t("communityPrices.title")}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("communityPrices.subtitle")}</p>
         </div>
       </header>
@@ -612,7 +634,6 @@ function PrecoComunitarioPage() {
                 notify.info("Importação online restrita para manutenção.");
               }
             },
-
           },
           {
             key: "manual",
@@ -637,7 +658,10 @@ function PrecoComunitarioPage() {
             >
               <span
                 className="grid h-10 w-10 place-items-center rounded-xl ring-1 ring-border/60"
-                style={{ backgroundColor: `color-mix(in oklab, ${a.tone} 22%, var(--card))`, color: a.tone }}
+                style={{
+                  backgroundColor: `color-mix(in oklab, ${a.tone} 22%, var(--card))`,
+                  color: a.tone,
+                }}
               >
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
@@ -827,14 +851,11 @@ function PrecoComunitarioPage() {
         </SectionBlock>
       )}
 
-
       {/* Produtos encontrados */}
       <SectionBlock
         title={t("communityPrices.v2.found.title")}
         description={
-          !loading
-            ? t("communityPrices.v2.found.count", { count: filtered.length })
-            : undefined
+          !loading ? t("communityPrices.v2.found.count", { count: filtered.length }) : undefined
         }
       >
         {loading ? (
@@ -844,12 +865,7 @@ function PrecoComunitarioPage() {
         ) : filtered.length === 0 ? (
           items.length === 0 ? (
             <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border/60 bg-card-elevated/40 p-6 text-center">
-              <img
-                src={emptyComunitario}
-                alt=""
-                loading="lazy"
-                className="h-28 w-28 opacity-90"
-              />
+              <img src={emptyComunitario} alt="" loading="lazy" className="h-28 w-28 opacity-90" />
               <div>
                 <p className="text-sm font-semibold text-foreground">
                   {t("communityPrices.v2.empty.title")}
@@ -863,11 +879,7 @@ function PrecoComunitarioPage() {
                   <Camera className="mr-2 h-4 w-4" />
                   {t("communityPrices.v2.empty.scanCta")}
                 </Button>
-                <Button
-                  onClick={() => openManual()}
-                  variant="secondary"
-                  className="min-h-11"
-                >
+                <Button onClick={() => openManual()} variant="secondary" className="min-h-11">
                   <Plus className="mr-2 h-4 w-4" />
                   {t("communityPrices.v2.empty.manualCta")}
                 </Button>
@@ -913,7 +925,9 @@ function PrecoComunitarioPage() {
                           <p className="text-[10px] text-muted-foreground">{validUntilLabel}</p>
                         )}
                         {it.notes && (
-                          <p className="line-clamp-2 text-[10px] text-muted-foreground">{it.notes}</p>
+                          <p className="line-clamp-2 text-[10px] text-muted-foreground">
+                            {it.notes}
+                          </p>
                         )}
                         <p className="text-[10px] italic text-muted-foreground">
                           {t("communityPrices.itemHint")}
@@ -948,7 +962,6 @@ function PrecoComunitarioPage() {
         )}
       </SectionBlock>
 
-
       {/* Batch scan wizard */}
       <BatchScanWizard open={batchOpen} onOpenChange={setBatchOpen} onSaved={reload} />
       <OnlineImportWizard
@@ -958,14 +971,20 @@ function PrecoComunitarioPage() {
         onOpenFlyerScan={() => setBatchOpen(true)}
       />
 
-
-
       {/* Manual dialog */}
-      <Dialog open={manualOpen} onOpenChange={(o) => { setManualOpen(o); if (!o) setEditingId(null); }}>
+      <Dialog
+        open={manualOpen}
+        onOpenChange={(o) => {
+          setManualOpen(o);
+          if (!o) setEditingId(null);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingId ? t("communityPrices.manual.editTitle") : t("communityPrices.manual.title")}
+              {editingId
+                ? t("communityPrices.manual.editTitle")
+                : t("communityPrices.manual.title")}
             </DialogTitle>
             <DialogDescription>{t("communityPrices.manual.description")}</DialogDescription>
           </DialogHeader>
@@ -1012,10 +1031,14 @@ function PrecoComunitarioPage() {
               <select
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
                 value={manualForm.source}
-                onChange={(e) => setManualForm((f) => ({ ...f, source: e.target.value as SourceKey }))}
+                onChange={(e) =>
+                  setManualForm((f) => ({ ...f, source: e.target.value as SourceKey }))
+                }
               >
                 {SOURCE_KEYS.map((s) => (
-                  <option key={s} value={s}>{sourceLabel(s)}</option>
+                  <option key={s} value={s}>
+                    {sourceLabel(s)}
+                  </option>
                 ))}
               </select>
             </div>
@@ -1146,7 +1169,15 @@ function PrecoComunitarioPage() {
             </div>
           </div>
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button variant="ghost" onClick={() => { setManualOpen(false); setEditingId(null); setImageSearched(false); }} className="min-h-11">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setManualOpen(false);
+                setEditingId(null);
+                setImageSearched(false);
+              }}
+              className="min-h-11"
+            >
               {t("communityPrices.manual.cancel")}
             </Button>
             <Button onClick={saveManual} className="min-h-11">

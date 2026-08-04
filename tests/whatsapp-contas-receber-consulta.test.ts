@@ -7,9 +7,8 @@
 import { test, expect, describe, beforeEach } from "bun:test";
 import { state } from "./_whatsapp-fake";
 
-const { detectConsultaIntent, handleConsulta } = await import(
-  "../src/server/whatsapp-consultas.server"
-);
+const { detectConsultaIntent, handleConsulta } =
+  await import("../src/server/whatsapp-consultas.server");
 
 const USER = "u1";
 
@@ -68,11 +67,56 @@ describe("WA-Q-ContasReceber — handler é 100% read-only", () => {
 
   test("filtra por status pendente/parcial; exclui recebido/cancelado e outros usuários", async () => {
     state.contasReceberData = [
-      { id: "c1", user_id: USER, titulo: "Freela site", pagador_nome: "ACME", valor_total: 1000, valor_restante: 1000, data_prevista: "2026-07-15", status: "pendente" },
-      { id: "c2", user_id: USER, titulo: "Consultoria", pagador_nome: null, valor_total: 500, valor_restante: 200, data_prevista: "2026-07-05", status: "parcial" },
-      { id: "c3", user_id: USER, titulo: "Já recebido", pagador_nome: null, valor_total: 100, valor_restante: 0, data_prevista: "2026-06-10", status: "recebido" },
-      { id: "c4", user_id: USER, titulo: "Cancelado", pagador_nome: null, valor_total: 300, valor_restante: 300, data_prevista: "2026-06-20", status: "cancelado" },
-      { id: "c5", user_id: "outro", titulo: "Não é meu", pagador_nome: null, valor_total: 999, valor_restante: 999, data_prevista: "2026-07-01", status: "pendente" },
+      {
+        id: "c1",
+        user_id: USER,
+        titulo: "Freela site",
+        pagador_nome: "ACME",
+        valor_total: 1000,
+        valor_restante: 1000,
+        data_prevista: "2026-07-15",
+        status: "pendente",
+      },
+      {
+        id: "c2",
+        user_id: USER,
+        titulo: "Consultoria",
+        pagador_nome: null,
+        valor_total: 500,
+        valor_restante: 200,
+        data_prevista: "2026-07-05",
+        status: "parcial",
+      },
+      {
+        id: "c3",
+        user_id: USER,
+        titulo: "Já recebido",
+        pagador_nome: null,
+        valor_total: 100,
+        valor_restante: 0,
+        data_prevista: "2026-06-10",
+        status: "recebido",
+      },
+      {
+        id: "c4",
+        user_id: USER,
+        titulo: "Cancelado",
+        pagador_nome: null,
+        valor_total: 300,
+        valor_restante: 300,
+        data_prevista: "2026-06-20",
+        status: "cancelado",
+      },
+      {
+        id: "c5",
+        user_id: "outro",
+        titulo: "Não é meu",
+        pagador_nome: null,
+        valor_total: 999,
+        valor_restante: 999,
+        data_prevista: "2026-07-01",
+        status: "pendente",
+      },
     ];
     const out = await handleConsulta(USER, "listar_contas_receber");
     expect(out.resposta).toMatch(/Freela site/);
@@ -90,7 +134,16 @@ describe("WA-Q-ContasReceber — handler é 100% read-only", () => {
 
   test("marca conta com data_prevista no passado como atrasada", async () => {
     state.contasReceberData = [
-      { id: "c1", user_id: USER, titulo: "Atrasada", pagador_nome: "X", valor_total: 100, valor_restante: 100, data_prevista: "2020-01-01", status: "pendente" },
+      {
+        id: "c1",
+        user_id: USER,
+        titulo: "Atrasada",
+        pagador_nome: "X",
+        valor_total: 100,
+        valor_restante: 100,
+        data_prevista: "2020-01-01",
+        status: "pendente",
+      },
     ];
     const out = await handleConsulta(USER, "listar_contas_receber");
     expect(out.resposta).toMatch(/atrasada/i);

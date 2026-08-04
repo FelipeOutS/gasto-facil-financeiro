@@ -36,16 +36,18 @@ export interface OutboundGateInput {
    */
   canaryUserIds?: readonly string[];
   /** Overrides de env exclusivos para testes. */
-  env?: Partial<Record<
-    | "WHATSAPP_ENABLED"
-    | "WHATSAPP_CANARY_ENABLED"
-    | "WHATSAPP_DISPATCH_ENABLED"
-    | "WHATSAPP_OUTBOUND_HTTP_ENABLED"
-    | "WHATSAPP_PHONE_NUMBER_ID"
-    | "WHATSAPP_ACCESS_TOKEN"
-    | "WHATSAPP_CANARY_USERS",
-    string | undefined
-  >>;
+  env?: Partial<
+    Record<
+      | "WHATSAPP_ENABLED"
+      | "WHATSAPP_CANARY_ENABLED"
+      | "WHATSAPP_DISPATCH_ENABLED"
+      | "WHATSAPP_OUTBOUND_HTTP_ENABLED"
+      | "WHATSAPP_PHONE_NUMBER_ID"
+      | "WHATSAPP_ACCESS_TOKEN"
+      | "WHATSAPP_CANARY_USERS",
+      string | undefined
+    >
+  >;
 }
 
 /**
@@ -59,7 +61,10 @@ function parseStrictBool(v: string | undefined): boolean {
 
 const DIGITS_ONLY = /^[0-9]+$/;
 
-function envOf(input: OutboundGateInput, key: keyof NonNullable<OutboundGateInput["env"]>): string | undefined {
+function envOf(
+  input: OutboundGateInput,
+  key: keyof NonNullable<OutboundGateInput["env"]>,
+): string | undefined {
   const local = input.env?.[key];
   if (local !== undefined) return local;
   return process.env[key as string];
@@ -70,8 +75,10 @@ export function isOutboundHttpAllowed(input: OutboundGateInput = {}): OutboundGa
 
   if (!parseStrictBool(envOf(input, "WHATSAPP_ENABLED"))) reasons.push("whatsapp_disabled");
   if (!parseStrictBool(envOf(input, "WHATSAPP_CANARY_ENABLED"))) reasons.push("canary_disabled");
-  if (!parseStrictBool(envOf(input, "WHATSAPP_DISPATCH_ENABLED"))) reasons.push("dispatch_disabled");
-  if (!parseStrictBool(envOf(input, "WHATSAPP_OUTBOUND_HTTP_ENABLED"))) reasons.push("outbound_http_disabled");
+  if (!parseStrictBool(envOf(input, "WHATSAPP_DISPATCH_ENABLED")))
+    reasons.push("dispatch_disabled");
+  if (!parseStrictBool(envOf(input, "WHATSAPP_OUTBOUND_HTTP_ENABLED")))
+    reasons.push("outbound_http_disabled");
 
   // Canary user gate: se um userId foi passado, precisa estar na lista.
   if (input.userId !== undefined && input.userId !== null && input.userId !== "") {

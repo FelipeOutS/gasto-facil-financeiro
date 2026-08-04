@@ -38,18 +38,13 @@ export function SugestaoDistribuicaoRenda({ renda, labels, onCta }: Props) {
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold">{labels.title}</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
-            {labels.description}
-          </p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">{labels.description}</p>
         </div>
       </div>
 
       <ul className="mt-3 space-y-1.5">
         {items.map((it) => (
-          <li
-            key={it.label}
-            className="flex items-center justify-between gap-2 text-xs"
-          >
+          <li key={it.label} className="flex items-center justify-between gap-2 text-xs">
             <span className="inline-flex min-w-0 items-center gap-2">
               <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${it.dot}`} />
               <span className="truncate">{it.label}</span>

@@ -9,13 +9,7 @@
  * carregados pelos hooks/stores existentes. RLS continua valendo na
  * camada de leitura.
  */
-import type {
-  ContaAPagar,
-  Categoria,
-  Cartao,
-  Gasto,
-  Receita,
-} from "@/lib/types";
+import type { ContaAPagar, Categoria, Cartao, Gasto, Receita } from "@/lib/types";
 import { statusContaEfetivo } from "@/lib/store";
 import {
   statusEfetivo as statusContaReceberEfetivo,
@@ -63,12 +57,7 @@ export interface GastoPacote {
 }
 
 export type StatusContaPagarEff = "pago" | "pendente" | "atrasado";
-export type StatusContaReceberEff =
-  | "recebido"
-  | "pendente"
-  | "atrasado"
-  | "parcial"
-  | "cancelado";
+export type StatusContaReceberEff = "recebido" | "pendente" | "atrasado" | "parcial" | "cancelado";
 
 export interface ContaPagarPacote {
   id: string;
@@ -196,22 +185,14 @@ function nomeCliente(
 ): string {
   if (!c) return "";
   return (
-    c.apelido?.trim() ||
-    c.nome_fantasia?.trim() ||
-    c.razao_social?.trim() ||
-    c.nome?.trim() ||
-    ""
+    c.apelido?.trim() || c.nome_fantasia?.trim() || c.razao_social?.trim() || c.nome?.trim() || ""
   );
 }
 
 function nomeFornecedor(f: Fornecedor | undefined | null): string {
   if (!f) return "";
   return (
-    f.apelido?.trim() ||
-    f.nome_fantasia?.trim() ||
-    f.razao_social?.trim() ||
-    f.nome?.trim() ||
-    ""
+    f.apelido?.trim() || f.nome_fantasia?.trim() || f.razao_social?.trim() || f.nome?.trim() || ""
   );
 }
 
@@ -228,34 +209,22 @@ function calcResumoFinanceiro(
 ): ResumoFinanceiro {
   const receitasMes = input.receitas.filter((r) => dataNoMes(r.data, periodo));
   const gastosMes = input.gastos.filter((g) => dataNoMes(g.data, periodo));
-  const contasPagarMes = input.contasAPagar.filter((c) =>
-    dataNoMes(c.dataVencimento, periodo),
-  );
-  const contasReceberMes = input.contasAReceber.filter((c) =>
-    dataNoMes(c.data_prevista, periodo),
-  );
+  const contasPagarMes = input.contasAPagar.filter((c) => dataNoMes(c.dataVencimento, periodo));
+  const contasReceberMes = input.contasAReceber.filter((c) => dataNoMes(c.data_prevista, periodo));
 
-  const totalReceitasRecebidas = receitasMes.reduce(
-    (s, r) => s + (Number(r.valor) || 0),
-    0,
-  );
-  let totalDespesasPagas = gastosMes.reduce(
-    (s, g) => s + (Number(g.valor) || 0),
-    0,
-  );
+  const totalReceitasRecebidas = receitasMes.reduce((s, r) => s + (Number(r.valor) || 0), 0);
+  let totalDespesasPagas = gastosMes.reduce((s, g) => s + (Number(g.valor) || 0), 0);
   let contasReceberEmAberto = 0;
   let contasPagarEmAberto = 0;
   for (const c of contasPagarMes) {
     const eff = statusContaEfetivo(c);
     if (eff === "pago") totalDespesasPagas += Number(c.valor) || 0;
-    else if (eff === "pendente" || eff === "atrasado")
-      contasPagarEmAberto += Number(c.valor) || 0;
+    else if (eff === "pendente" || eff === "atrasado") contasPagarEmAberto += Number(c.valor) || 0;
   }
   for (const c of contasReceberMes) {
     const eff = statusContaReceberEfetivo(c);
     if (eff === "pendente" || eff === "atrasado" || eff === "parcial") {
-      contasReceberEmAberto +=
-        Number(c.valor_restante) || Number(c.valor_total) || 0;
+      contasReceberEmAberto += Number(c.valor_restante) || Number(c.valor_total) || 0;
     }
   }
 
@@ -308,16 +277,9 @@ function calcVariacao(
   return { chave, rotulo, atual, anterior, diferenca, variacaoPercentual, tipo, formato };
 }
 
-function calcComparativo(
-  input: MontarPacoteInput,
-  resumoAtual: ResumoFinanceiro,
-): ComparativoMes {
+function calcComparativo(input: MontarPacoteInput, resumoAtual: ResumoFinanceiro): ComparativoMes {
   const periodoAnt = periodoAnterior(input.periodo);
-  const resumoAnt = calcResumoFinanceiro(
-    input,
-    periodoAnt,
-    input.opcoes.incluirEmAberto,
-  );
+  const resumoAnt = calcResumoFinanceiro(input, periodoAnt, input.opcoes.incluirEmAberto);
   const variacoes: VariacaoIndicador[] = [
     calcVariacao(
       "receitas",
@@ -386,9 +348,7 @@ export interface MontarPacoteInput {
   cartoesPorId: Record<string, Cartao>;
 }
 
-export function montarPacoteContador(
-  input: MontarPacoteInput,
-): PacoteContador {
+export function montarPacoteContador(input: MontarPacoteInput): PacoteContador {
   const { periodo, opcoes } = input;
 
   // ----- Receitas no mês
@@ -402,9 +362,7 @@ export function montarPacoteContador(
       descricao: r.descricao,
       valor: Number(r.valor) || 0,
       tipoLabel: r.tipo,
-      clienteNome: r.clienteId
-        ? nomeCliente(input.clientesPorId[r.clienteId]) || null
-        : null,
+      clienteNome: r.clienteId ? nomeCliente(input.clientesPorId[r.clienteId]) || null : null,
     }));
 
   // ----- Gastos no mês
@@ -430,9 +388,7 @@ export function montarPacoteContador(
     });
 
   // ----- Contas a pagar do mês (por dataVencimento)
-  const contasPagarMes = input.contasAPagar.filter((c) =>
-    dataNoMes(c.dataVencimento, periodo),
-  );
+  const contasPagarMes = input.contasAPagar.filter((c) => dataNoMes(c.dataVencimento, periodo));
   const pagas: ContaPagarPacote[] = [];
   const pendentes: ContaPagarPacote[] = [];
   const atrasadas: ContaPagarPacote[] = [];
@@ -460,9 +416,7 @@ export function montarPacoteContador(
   atrasadas.sort(sortCP);
 
   // ----- Contas a receber do mês (por data_prevista)
-  const contasReceberMes = input.contasAReceber.filter((c) =>
-    dataNoMes(c.data_prevista, periodo),
-  );
+  const contasReceberMes = input.contasAReceber.filter((c) => dataNoMes(c.data_prevista, periodo));
   const recebidas: ContaReceberPacote[] = [];
   const pendentesR: ContaReceberPacote[] = [];
   const atrasadasR: ContaReceberPacote[] = [];
@@ -476,9 +430,7 @@ export function montarPacoteContador(
       valor: Number(c.valor_total) || 0,
       valorRestante: Number(c.valor_restante) || 0,
       status: eff,
-      clienteNome: c.cliente_id
-        ? nomeCliente(input.clientesPorId[c.cliente_id]) || null
-        : null,
+      clienteNome: c.cliente_id ? nomeCliente(input.clientesPorId[c.cliente_id]) || null : null,
     };
     if (eff === "recebido") recebidas.push(item);
     else if (eff === "parcial") parciais.push(item);
@@ -529,8 +481,7 @@ export function montarPacoteContador(
     b.qtdLancamentos += 1;
   }
   const porCliente = Array.from(porClienteMap.values()).sort(
-    (a, b) =>
-      b.totalRecebido + b.totalEmAberto - (a.totalRecebido + a.totalEmAberto),
+    (a, b) => b.totalRecebido + b.totalEmAberto - (a.totalRecebido + a.totalEmAberto),
   );
 
   // ----- Resumo por fornecedor (priorizando gastos para "pago")
@@ -568,8 +519,7 @@ export function montarPacoteContador(
     b.qtdLancamentos += 1;
   }
   const porFornecedor = Array.from(porFornMap.values()).sort(
-    (a, b) =>
-      b.totalPago + b.totalEmAberto - (a.totalPago + a.totalEmAberto),
+    (a, b) => b.totalPago + b.totalEmAberto - (a.totalPago + a.totalEmAberto),
   );
 
   // ----- Pendências
@@ -590,14 +540,12 @@ export function montarPacoteContador(
   // ----- Resumo financeiro
   const totalReceitasRecebidas = receitas.reduce((s, r) => s + r.valor, 0);
   const totalDespesasPagas =
-    gastos.reduce((s, g) => s + g.valor, 0) +
-    pagas.reduce((s, c) => s + c.valor, 0);
-  const contasReceberEmAberto = [...pendentesR, ...atrasadasR, ...parciais]
-    .reduce((s, c) => s + (c.valorRestante || c.valor), 0);
-  const contasPagarEmAbertoTotal = [...pendentes, ...atrasadas].reduce(
-    (s, c) => s + c.valor,
+    gastos.reduce((s, g) => s + g.valor, 0) + pagas.reduce((s, c) => s + c.valor, 0);
+  const contasReceberEmAberto = [...pendentesR, ...atrasadasR, ...parciais].reduce(
+    (s, c) => s + (c.valorRestante || c.valor),
     0,
   );
+  const contasPagarEmAbertoTotal = [...pendentes, ...atrasadas].reduce((s, c) => s + c.valor, 0);
   const resumo: ResumoFinanceiro = {
     totalReceitasRecebidas,
     totalDespesasPagas,
@@ -625,9 +573,7 @@ export function montarPacoteContador(
     porCliente: opcoes.incluirClientes ? porCliente : [],
     porFornecedor: opcoes.incluirFornecedores ? porFornecedor : [],
     pendencias,
-    comparativo: opcoes.incluirComparativo
-      ? calcComparativo(input, resumo)
-      : null,
+    comparativo: opcoes.incluirComparativo ? calcComparativo(input, resumo) : null,
   };
 }
 
@@ -690,22 +636,17 @@ export function gerarResumoTexto(p: PacoteContador): string {
   linhas.push(`Receitas recebidas: ${brl(p.resumo.totalReceitasRecebidas)}`);
   linhas.push(`Despesas pagas: ${brl(p.resumo.totalDespesasPagas)}`);
   linhas.push(`Saldo do período: ${brl(p.resumo.saldoPeriodo)}`);
-  linhas.push(
-    `Contas a receber em aberto: ${brl(p.resumo.contasReceberEmAberto)}`,
-  );
+  linhas.push(`Contas a receber em aberto: ${brl(p.resumo.contasReceberEmAberto)}`);
   linhas.push(`Contas a pagar em aberto: ${brl(p.resumo.contasPagarEmAberto)}`);
   linhas.push(`Clientes movimentados: ${p.resumo.qtdClientesMovimentados}`);
   linhas.push(`Fornecedores movimentados: ${p.resumo.qtdFornecedoresMovimentados}`);
 
   if (p.comparativo) {
     linhas.push("");
-    linhas.push(
-      `Comparativo com ${rotuloPeriodo(p.comparativo.periodoAnterior)}:`,
-    );
+    linhas.push(`Comparativo com ${rotuloPeriodo(p.comparativo.periodoAnterior)}:`);
     const vReceita = p.comparativo.variacoes.find((x) => x.chave === "receitas");
     const vDespesa = p.comparativo.variacoes.find((x) => x.chave === "despesas");
-    const ambosSemBase =
-      vReceita?.tipo !== "comparavel" && vDespesa?.tipo !== "comparavel";
+    const ambosSemBase = vReceita?.tipo !== "comparavel" && vDespesa?.tipo !== "comparavel";
     if (ambosSemBase) {
       linhas.push("Sem base suficiente para comparar com o mês anterior.");
     } else {
@@ -725,9 +666,7 @@ export function gerarResumoTexto(p: PacoteContador): string {
         }
       }
       if (partes.length > 0) {
-        linhas.push(
-          `Em relação ao mês anterior, ${partes.join(" e ")}.`,
-        );
+        linhas.push(`Em relação ao mês anterior, ${partes.join(" e ")}.`);
       }
     }
   }
@@ -781,14 +720,24 @@ export function gerarCsvPacote(p: PacoteContador): string {
   out.push("Receitas");
   out.push(csvLine(["Data", "Descrição", "Valor", "Tipo", "Cliente"]));
   for (const r of p.receitas) {
-    out.push(csvLine([fmtData(r.data), r.descricao, r.valor.toFixed(2), r.tipoLabel, r.clienteNome ?? ""]));
+    out.push(
+      csvLine([fmtData(r.data), r.descricao, r.valor.toFixed(2), r.tipoLabel, r.clienteNome ?? ""]),
+    );
   }
   out.push("");
 
   // Gastos
   out.push("Despesas");
   out.push(
-    csvLine(["Data", "Descrição", "Valor", "Categoria", "Forma de pagamento", "Cartão", "Fornecedor"]),
+    csvLine([
+      "Data",
+      "Descrição",
+      "Valor",
+      "Categoria",
+      "Forma de pagamento",
+      "Cartão",
+      "Fornecedor",
+    ]),
   );
   for (const g of p.gastos) {
     out.push(
@@ -827,9 +776,7 @@ export function gerarCsvPacote(p: PacoteContador): string {
 
   // Contas a receber
   out.push("Contas a receber");
-  out.push(
-    csvLine(["Previsão", "Descrição", "Valor", "Valor restante", "Status", "Cliente"]),
-  );
+  out.push(csvLine(["Previsão", "Descrição", "Valor", "Valor restante", "Status", "Cliente"]));
   for (const c of [
     ...p.contasAReceber.recebidas,
     ...p.contasAReceber.parciais,
@@ -854,12 +801,7 @@ export function gerarCsvPacote(p: PacoteContador): string {
     out.push(csvLine(["Cliente", "Recebido", "Em aberto", "Lançamentos"]));
     for (const c of p.porCliente) {
       out.push(
-        csvLine([
-          c.nome,
-          c.totalRecebido.toFixed(2),
-          c.totalEmAberto.toFixed(2),
-          c.qtdLancamentos,
-        ]),
+        csvLine([c.nome, c.totalRecebido.toFixed(2), c.totalEmAberto.toFixed(2), c.qtdLancamentos]),
       );
     }
     out.push("");
@@ -870,31 +812,19 @@ export function gerarCsvPacote(p: PacoteContador): string {
     out.push(csvLine(["Fornecedor", "Pago", "Em aberto", "Lançamentos"]));
     for (const f of p.porFornecedor) {
       out.push(
-        csvLine([
-          f.nome,
-          f.totalPago.toFixed(2),
-          f.totalEmAberto.toFixed(2),
-          f.qtdLancamentos,
-        ]),
+        csvLine([f.nome, f.totalPago.toFixed(2), f.totalEmAberto.toFixed(2), f.qtdLancamentos]),
       );
     }
     out.push("");
   }
 
   if (p.comparativo) {
-    out.push(
-      `Comparativo com mês anterior (${rotuloPeriodo(p.comparativo.periodoAnterior)})`,
-    );
-    out.push(
-      csvLine(["Indicador", "Mês atual", "Mês anterior", "Diferença", "Variação"]),
-    );
+    out.push(`Comparativo com mês anterior (${rotuloPeriodo(p.comparativo.periodoAnterior)})`);
+    out.push(csvLine(["Indicador", "Mês atual", "Mês anterior", "Diferença", "Variação"]));
     for (const v of p.comparativo.variacoes) {
-      const atual =
-        v.formato === "valor" ? v.atual.toFixed(2) : String(v.atual);
-      const anterior =
-        v.formato === "valor" ? v.anterior.toFixed(2) : String(v.anterior);
-      const dif =
-        v.formato === "valor" ? v.diferenca.toFixed(2) : String(v.diferenca);
+      const atual = v.formato === "valor" ? v.atual.toFixed(2) : String(v.atual);
+      const anterior = v.formato === "valor" ? v.anterior.toFixed(2) : String(v.anterior);
+      const dif = v.formato === "valor" ? v.diferenca.toFixed(2) : String(v.diferenca);
       let variacao: string;
       if (v.tipo === "zerado") variacao = "Sem variação";
       else if (v.tipo === "novo") variacao = "Sem base anterior";

@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { 
-  generateOpaqueExternalReference, 
+import {
+  generateOpaqueExternalReference,
   verifyOpaqueExternalReference,
   checkoutRefSecret,
-  CHECKOUT_REF_PREFIX
+  CHECKOUT_REF_PREFIX,
 } from "../src/server/mercadopago-checkout-session.server";
 
 describe("Mercado Pago Checkout Session - Opaque Reference", () => {

@@ -26,9 +26,7 @@ export type E2EEnv = {
   serviceRoleKey: string | null;
 };
 
-export type E2EEnvResult =
-  | { ok: true; env: E2EEnv }
-  | { ok: false; reason: string };
+export type E2EEnvResult = { ok: true; env: E2EEnv } | { ok: false; reason: string };
 
 export function readE2EEnv(): E2EEnvResult {
   const baseUrl = process.env.E2E_BASE_URL;

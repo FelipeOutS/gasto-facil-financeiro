@@ -1,5 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getUserFromRequest, unauthorizedResponse, isAdminMasterUser, forbiddenResponse } from "@/server/api-auth";
+import {
+  getUserFromRequest,
+  unauthorizedResponse,
+  isAdminMasterUser,
+  forbiddenResponse,
+} from "@/server/api-auth";
 import {
   syncMercadoPagoTransactions,
   disconnectMercadoPago,
@@ -30,7 +35,8 @@ export const Route = createFileRoute("/api/integrations/mercadopago/$action")({
         if (!isAdminMasterUser(user)) return forbiddenResponse();
 
         if (params.action === "sync") {
-          let body: { period?: string; beginDate?: string; endDate?: string; months?: unknown } = {};
+          let body: { period?: string; beginDate?: string; endDate?: string; months?: unknown } =
+            {};
           try {
             const text = await request.text();
             if (text) body = JSON.parse(text);
@@ -43,13 +49,21 @@ export const Route = createFileRoute("/api/integrations/mercadopago/$action")({
             const raw = body.months as unknown[];
             if (raw.length === 0) {
               return Response.json(
-                { ok: false, error: "no_months", message: "Selecione pelo menos um mês para sincronizar." },
+                {
+                  ok: false,
+                  error: "no_months",
+                  message: "Selecione pelo menos um mês para sincronizar.",
+                },
                 { status: 400 },
               );
             }
             if (raw.length > 12) {
               return Response.json(
-                { ok: false, error: "too_many_months", message: "Selecione no máximo 12 meses por sincronização." },
+                {
+                  ok: false,
+                  error: "too_many_months",
+                  message: "Selecione no máximo 12 meses por sincronização.",
+                },
                 { status: 400 },
               );
             }
@@ -60,13 +74,21 @@ export const Route = createFileRoute("/api/integrations/mercadopago/$action")({
             for (const item of raw) {
               if (typeof item !== "string" || !re.test(item)) {
                 return Response.json(
-                  { ok: false, error: "invalid_month", message: "Formato de mês inválido. Use AAAA-MM." },
+                  {
+                    ok: false,
+                    error: "invalid_month",
+                    message: "Formato de mês inválido. Use AAAA-MM.",
+                  },
                   { status: 400 },
                 );
               }
               if (item > nowKey) {
                 return Response.json(
-                  { ok: false, error: "future_month", message: "Não é possível sincronizar meses futuros." },
+                  {
+                    ok: false,
+                    error: "future_month",
+                    message: "Não é possível sincronizar meses futuros.",
+                  },
                   { status: 400 },
                 );
               }
@@ -86,16 +108,17 @@ export const Route = createFileRoute("/api/integrations/mercadopago/$action")({
             "last12",
             "custom",
           ]);
-          const period = body.period && allowed.has(body.period)
-            ? (body.period as
-                | "last30"
-                | "current_month"
-                | "last_month"
-                | "last3"
-                | "last6"
-                | "last12"
-                | "custom")
-            : "last30";
+          const period =
+            body.period && allowed.has(body.period)
+              ? (body.period as
+                  | "last30"
+                  | "current_month"
+                  | "last_month"
+                  | "last3"
+                  | "last6"
+                  | "last12"
+                  | "custom")
+              : "last30";
           const result = await syncMercadoPagoTransactions(user.id, {
             period,
             beginDate: body.beginDate,

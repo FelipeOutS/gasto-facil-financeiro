@@ -128,8 +128,7 @@ async function defaultLoadPlan(userId: string): Promise<PlanRow | null> {
       status: typeof r.status === "string" ? r.status : null,
       current_period_start:
         typeof r.current_period_start === "string" ? r.current_period_start : null,
-      current_period_end:
-        typeof r.current_period_end === "string" ? r.current_period_end : null,
+      current_period_end: typeof r.current_period_end === "string" ? r.current_period_end : null,
       access_until: typeof r.access_until === "string" ? r.access_until : null,
     };
   } catch {

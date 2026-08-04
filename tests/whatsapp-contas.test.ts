@@ -10,11 +10,8 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import { state, resetState, gastosInserts } from "./_whatsapp-fake";
 
-const {
-  detectDueIntent,
-  handleDueIntent,
-  handleDuePagination,
-} = await import("../src/server/whatsapp-contas.server");
+const { detectDueIntent, handleDueIntent, handleDuePagination } =
+  await import("../src/server/whatsapp-contas.server");
 const {
   getVencimentosPorPeriodo,
   getVencimentosComStatusAnterior,
@@ -24,9 +21,7 @@ const {
   weekRangeInAppTz,
   monthRangeInAppTz,
 } = await import("../src/server/contas-vencimento.server");
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 
 const NBSP = "\u00a0";
 const BRL = (s: string) => s.replace(/R\$ /g, `R$${NBSP}`);
@@ -102,7 +97,14 @@ describe("getVencimentosPorPeriodo / getVencimentosComStatusAnterior", () => {
         conta({ id: "c", nome: "Aluguel", valor: 1200, data_vencimento: isoPlus(3) }),
         conta({ id: "d", nome: "Plano de saúde", valor: 970.2, data_vencimento: isoPlus(10) }),
         // PAGO — não pode aparecer
-        conta({ id: "e", nome: "Luz", valor: 200, data_vencimento: TODAY, status: "pago", data_pagamento: TODAY }),
+        conta({
+          id: "e",
+          nome: "Luz",
+          valor: 200,
+          data_vencimento: TODAY,
+          status: "pago",
+          data_pagamento: TODAY,
+        }),
         // Atrasada
         conta({ id: "f", nome: "Telefone", valor: 80, data_vencimento: isoPlus(-5) }),
         // Outro user — nunca deve aparecer
@@ -205,12 +207,14 @@ describe("handleDueIntent — paginação (5 itens)", () => {
   beforeEach(() => {
     const items: Record<string, unknown>[] = [];
     for (let i = 0; i < 7; i += 1) {
-      items.push(conta({
-        id: `m-${i}`,
-        nome: `Conta ${String.fromCharCode(65 + i)}`,
-        valor: 10 + i,
-        data_vencimento: `${MONTH.yearMonth}-${String(i + 5).padStart(2, "0")}`,
-      }));
+      items.push(
+        conta({
+          id: `m-${i}`,
+          nome: `Conta ${String.fromCharCode(65 + i)}`,
+          valor: 10 + i,
+          data_vencimento: `${MONTH.yearMonth}-${String(i + 5).padStart(2, "0")}`,
+        }),
+      );
     }
     resetState({ contas: items });
   });
@@ -230,7 +234,10 @@ describe("handleDueIntent — paginação (5 itens)", () => {
   });
   it("após o fim, mostra no_more_items", async () => {
     const out = await handleDuePagination("u1", {
-      kind: "consulta_vencimentos", mode: "month", page: 5, referenceMonth: MONTH.yearMonth,
+      kind: "consulta_vencimentos",
+      mode: "month",
+      page: 5,
+      referenceMonth: MONTH.yearMonth,
     });
     expect(out.status).toBe("no_more_items");
   });
@@ -293,9 +300,7 @@ describe("handleDueIntent — busca por termo", () => {
 describe("Pipeline WhatsApp — consulta de vencimentos", () => {
   beforeEach(() => {
     resetState({
-      contas: [
-        conta({ id: "a", nome: "Internet", valor: 119.9, data_vencimento: TODAY }),
-      ],
+      contas: [conta({ id: "a", nome: "Internet", valor: 119.9, data_vencimento: TODAY })],
     });
   });
   it("responde sem criar gasto/conta/receita/recorrência", async () => {
@@ -334,12 +339,14 @@ describe("Pipeline WhatsApp — consulta de vencimentos", () => {
   it("paginação: 'ver mais' avança e 'cancelar' encerra", async () => {
     const items: Record<string, unknown>[] = [];
     for (let i = 0; i < 7; i += 1) {
-      items.push(conta({
-        id: `p-${i}`,
-        nome: `Conta ${i}`,
-        valor: 10,
-        data_vencimento: `${MONTH.yearMonth}-${String(i + 3).padStart(2, "0")}`,
-      }));
+      items.push(
+        conta({
+          id: `p-${i}`,
+          nome: `Conta ${i}`,
+          valor: 10,
+          data_vencimento: `${MONTH.yearMonth}-${String(i + 3).padStart(2, "0")}`,
+        }),
+      );
     }
     resetState({ contas: items });
     const r1 = await processarMensagemWhatsApp({
@@ -389,7 +396,8 @@ describe("Log seguro de wa_due_date_query", () => {
     }
     const ev = events.find(
       (e): e is Record<string, unknown> =>
-        typeof e === "object" && e !== null &&
+        typeof e === "object" &&
+        e !== null &&
         (e as Record<string, unknown>).event === "wa_due_date_query",
     );
     expect(ev).toBeDefined();

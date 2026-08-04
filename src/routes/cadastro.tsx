@@ -16,7 +16,6 @@ import { GoogleAuthButton } from "@/components/GoogleAuthButton";
 import { senhaForte, traduzirErroAuth } from "@/lib/auth-messages";
 import { trackSignUpCompleted } from "@/lib/analytics-events";
 
-
 export const Route = createFileRoute("/cadastro")({
   head: () => {
     const t = i18n.getFixedT(null, "auth");
@@ -72,7 +71,6 @@ function CadastroForm() {
     setEnviado(true);
   }
 
-
   async function reenviar() {
     if (!email) return;
     setReenviando(true);
@@ -105,15 +103,11 @@ function CadastroForm() {
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-brand/10 text-brand">
               <MailCheck className="h-7 w-7" />
             </div>
-            <p className="mt-4 text-sm text-foreground">
-              {t("signup.sentTo")}
-            </p>
+            <p className="mt-4 text-sm text-foreground">{t("signup.sentTo")}</p>
             <p className="mt-1 break-all text-base font-semibold">{email}</p>
             <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
               {t("signup.checkInbox")}{" "}
-              <strong className="text-foreground">
-                {t("signup.checkSpam")}
-              </strong>
+              <strong className="text-foreground">{t("signup.checkSpam")}</strong>
             </p>
           </div>
 

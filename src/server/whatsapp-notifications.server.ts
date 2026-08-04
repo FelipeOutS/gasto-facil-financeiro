@@ -176,8 +176,6 @@ export async function enqueueNotification(
 ): Promise<NotificationRow | null> {
   const c = client(deps);
 
-
-
   const row = {
     user_id: input.userId,
     notification_type: input.type,
@@ -364,10 +362,7 @@ export async function markSkipped(
     return (data ?? []).length > 0;
   }
   if (!isValidClaimToken(claimToken)) return false;
-  const { data } = await base
-    .eq("status", "processing")
-    .eq("claim_token", claimToken)
-    .select("id");
+  const { data } = await base.eq("status", "processing").eq("claim_token", claimToken).select("id");
   return (data ?? []).length > 0;
 }
 
@@ -620,9 +615,7 @@ export async function recoverStuckProcessing(
     return summary;
   }
   if (hasRpc) {
-    const attemptsMod = await import(
-      "@/server/whatsapp-notification-attempts.server"
-    );
+    const attemptsMod = await import("@/server/whatsapp-notification-attempts.server");
     const outcomesRepairedOrRequeued: ReadonlySet<string> = new Set([
       "recovered_without_attempt",
       "accepted_repaired",
@@ -712,16 +705,12 @@ export async function recoverStuckProcessing(
       }
     } catch (err) {
       summary.errors++;
-      console.error(
-        "[wa-notif] recoverStuckProcessing row_threw",
-        JSON.stringify({ id: row.id }),
-      );
+      console.error("[wa-notif] recoverStuckProcessing row_threw", JSON.stringify({ id: row.id }));
       void err;
     }
   }
   return summary;
 }
-
 
 /** Cancela por dedupe (operação externa; toca apenas linhas `pending`). */
 export async function cancelByDedupe(

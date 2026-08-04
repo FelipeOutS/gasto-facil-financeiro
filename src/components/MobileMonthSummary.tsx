@@ -1,4 +1,14 @@
-import { ChevronLeft, ChevronRight, ArrowUp, ArrowDown, CalendarClock, Wallet, PiggyBank, Eye, EyeOff } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ArrowUp,
+  ArrowDown,
+  CalendarClock,
+  Wallet,
+  PiggyBank,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { formatBRL, formatBRLCompact, formatMonthYear } from "@/lib/format";

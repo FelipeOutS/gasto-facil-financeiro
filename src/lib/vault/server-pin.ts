@@ -41,13 +41,7 @@ async function derivePinKey(pin: string, saltB64: string, iterations: number): P
   const enc = new TextEncoder().encode(pin);
   const buf = new Uint8Array(new ArrayBuffer(enc.byteLength));
   buf.set(enc);
-  const base = await crypto.subtle.importKey(
-    "raw",
-    buf,
-    { name: "PBKDF2" },
-    false,
-    ["deriveKey"],
-  );
+  const base = await crypto.subtle.importKey("raw", buf, { name: "PBKDF2" }, false, ["deriveKey"]);
   return crypto.subtle.deriveKey(
     { name: "PBKDF2", salt: vaultB64decode(saltB64), iterations, hash: "SHA-256" },
     base,
@@ -92,12 +86,15 @@ export async function enableServerPin(pin: string, masterKey: CryptoKey): Promis
   const raw = await exportMasterKeyRaw(masterKey);
   const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, wrapKey, raw);
 
-  const { error } = await supabase.rpc("vault_pin_set" as never, {
-    p_salt: salt,
-    p_iterations: PIN_ITERATIONS,
-    p_wrapped_key: vaultB64encode(new Uint8Array(ct)),
-    p_wrap_iv: vaultB64encode(iv),
-  } as never);
+  const { error } = await supabase.rpc(
+    "vault_pin_set" as never,
+    {
+      p_salt: salt,
+      p_iterations: PIN_ITERATIONS,
+      p_wrapped_key: vaultB64encode(new Uint8Array(ct)),
+      p_wrap_iv: vaultB64encode(iv),
+    } as never,
+  );
   if (error) throw new Error("Falha ao salvar o PIN. Tente novamente.");
 }
 
@@ -132,10 +129,15 @@ export async function unlockWithServerPin(userId: string, pin: string): Promise<
     );
   } catch {
     // PIN incorreto — registra a tentativa no servidor
-    const { data } = await supabase.rpc("vault_pin_record_attempt" as never, {
-      p_success: false,
-    } as never);
-    const row2 = Array.isArray(data) ? (data[0] as { failed_attempts: number; locked_until: string | null } | undefined) : undefined;
+    const { data } = await supabase.rpc(
+      "vault_pin_record_attempt" as never,
+      {
+        p_success: false,
+      } as never,
+    );
+    const row2 = Array.isArray(data)
+      ? (data[0] as { failed_attempts: number; locked_until: string | null } | undefined)
+      : undefined;
     const lockedUntil = row2?.locked_until ? new Date(row2.locked_until).getTime() : null;
     if (lockedUntil && lockedUntil > Date.now()) {
       const mins = Math.max(1, Math.ceil((lockedUntil - Date.now()) / 60_000));

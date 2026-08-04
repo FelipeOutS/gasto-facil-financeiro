@@ -19,9 +19,7 @@
 import { describe, it, expect } from "bun:test";
 
 const URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const ANON =
-  process.env.SUPABASE_PUBLISHABLE_KEY ||
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const ANON = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 const skip = !URL || !ANON;
 
@@ -45,7 +43,11 @@ async function callRpc(name: string, body: Record<string, unknown>) {
   return { status: res.status, text, json: json as Record<string, unknown> | null };
 }
 
-function expectDenied(result: { status: number; text: string; json: Record<string, unknown> | null }) {
+function expectDenied(result: {
+  status: number;
+  text: string;
+  json: Record<string, unknown> | null;
+}) {
   // PostgREST retorna 401/403/404/400 conforme camada que barra.
   // Aceitamos qualquer 4xx com código/mensagem de permissão negada, OU
   // 404 quando o REVOKE remove a rota completamente da Data API.

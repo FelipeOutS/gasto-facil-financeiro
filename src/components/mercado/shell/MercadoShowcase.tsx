@@ -44,11 +44,7 @@ export function MercadoShowcase({
     >
       {Array.isArray(children) ? (
         children.map((child, i) => (
-          <div
-            key={i}
-            className="shrink-0 snap-start"
-            style={{ width: itemMinWidth }}
-          >
+          <div key={i} className="shrink-0 snap-start" style={{ width: itemMinWidth }}>
             {child}
           </div>
         ))

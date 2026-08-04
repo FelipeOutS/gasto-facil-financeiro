@@ -68,7 +68,13 @@ type Step = "source" | "image-upload" | "pdf-upload" | "csv-upload" | "review";
 
 type TipoMov = "despesa" | "receita" | "transferencia_interna";
 type DupStatus = "novo" | "duplicado_lote" | "duplicado_existente";
-type ReviewStatus = "novo" | "pagamento_fatura_cartao" | "reserva" | "resgate_reserva" | "investimentos" | "revisar";
+type ReviewStatus =
+  | "novo"
+  | "pagamento_fatura_cartao"
+  | "reserva"
+  | "resgate_reserva"
+  | "investimentos"
+  | "revisar";
 
 type ItemBruto = {
   descricao: string | null;
@@ -153,7 +159,9 @@ function operationIdExists(id: string) {
   //    populado em todos os imports recentes). É o sinal mais forte de duplicata.
   const matchDireto =
     getGastos().some((g) => g.idOperacaoBanco && normalizeDescricao(g.idOperacaoBanco) === norm) ||
-    getReceitas().some((r) => r.idOperacaoBanco && normalizeDescricao(r.idOperacaoBanco) === norm) ||
+    getReceitas().some(
+      (r) => r.idOperacaoBanco && normalizeDescricao(r.idOperacaoBanco) === norm,
+    ) ||
     getTransferenciasInternas().some(
       (t) => t.idOperacaoBanco && normalizeDescricao(t.idOperacaoBanco) === norm,
     );
@@ -162,9 +170,13 @@ function operationIdExists(id: string) {
   //    `origem`/`observacao` (formato `extrato_*|banco|op:XXX`). Mantém a
   //    detecção para não regredir em bases legadas.
   return (
-    getGastos().some((g) => textHasOperationId(g.observacao, id) || textHasOperationId(g.origem, id)) ||
+    getGastos().some(
+      (g) => textHasOperationId(g.observacao, id) || textHasOperationId(g.origem, id),
+    ) ||
     getReceitas().some((r) => textHasOperationId(r.origem, id)) ||
-    getTransferenciasInternas().some((t) => textHasOperationId(t.observacao, id) || textHasOperationId(t.origemImportacao, id))
+    getTransferenciasInternas().some(
+      (t) => textHasOperationId(t.observacao, id) || textHasOperationId(t.origemImportacao, id),
+    )
   );
 }
 
@@ -217,61 +229,61 @@ export function ImportExtratoDialog({
   );
 
   // ---------- DEDUP ----------
-  const computeDupStatus = useCallback(
-    (rs: ReviewItem[]): ReviewItem[] => {
-      const seen = new Map<string, number>();
-      return rs.map((r, idx) => {
-        if (r.valor === null || !r.data) {
-          return { ...r, dupStatus: "novo" as DupStatus };
-        }
-        const operationKey = r.idOperacao ? `op|${normalizeDescricao(r.idOperacao)}` : null;
-        const key = operationKey || `${r.tipoMovimentacao}|${r.valor.toFixed(2)}|${r.data}|${normalizeDescricao(r.descricao)}`;
-        const prev = seen.get(key);
-        if (prev !== undefined && prev !== idx) {
-          return { ...r, dupStatus: "duplicado_lote" as DupStatus };
-        }
-        seen.set(key, idx);
-        if (r.idOperacao && operationIdExists(r.idOperacao)) {
-          return { ...r, dupStatus: "duplicado_existente" as DupStatus };
-        }
+  const computeDupStatus = useCallback((rs: ReviewItem[]): ReviewItem[] => {
+    const seen = new Map<string, number>();
+    return rs.map((r, idx) => {
+      if (r.valor === null || !r.data) {
+        return { ...r, dupStatus: "novo" as DupStatus };
+      }
+      const operationKey = r.idOperacao ? `op|${normalizeDescricao(r.idOperacao)}` : null;
+      const key =
+        operationKey ||
+        `${r.tipoMovimentacao}|${r.valor.toFixed(2)}|${r.data}|${normalizeDescricao(r.descricao)}`;
+      const prev = seen.get(key);
+      if (prev !== undefined && prev !== idx) {
+        return { ...r, dupStatus: "duplicado_lote" as DupStatus };
+      }
+      seen.set(key, idx);
+      if (r.idOperacao && operationIdExists(r.idOperacao)) {
+        return { ...r, dupStatus: "duplicado_existente" as DupStatus };
+      }
 
-        let existe;
-        if (r.tipoMovimentacao === "despesa") {
-          existe = findDuplicateGastoAdvanced({
-            valor: r.valor,
-            data: r.data,
-            descricao: r.descricao,
-            horario: r.horario ?? undefined,
-          });
-        } else if (r.tipoMovimentacao === "receita") {
-          existe = findDuplicateReceitaAdvanced({
-            valor: r.valor,
-            data: r.data,
-            descricao: r.descricao,
-            horario: r.horario ?? undefined,
-          });
-        } else {
-          existe = findDuplicateTransferenciaAdvanced({
-            valor: r.valor,
-            data: r.data,
-            descricao: r.descricao,
-            horario: r.horario ?? undefined,
-          });
-        }
-        return {
-          ...r,
-          dupStatus: existe ? "duplicado_existente" : "novo",
-        };
-      });
-    },
-    [],
-  );
+      let existe;
+      if (r.tipoMovimentacao === "despesa") {
+        existe = findDuplicateGastoAdvanced({
+          valor: r.valor,
+          data: r.data,
+          descricao: r.descricao,
+          horario: r.horario ?? undefined,
+        });
+      } else if (r.tipoMovimentacao === "receita") {
+        existe = findDuplicateReceitaAdvanced({
+          valor: r.valor,
+          data: r.data,
+          descricao: r.descricao,
+          horario: r.horario ?? undefined,
+        });
+      } else {
+        existe = findDuplicateTransferenciaAdvanced({
+          valor: r.valor,
+          data: r.data,
+          descricao: r.descricao,
+          horario: r.horario ?? undefined,
+        });
+      }
+      return {
+        ...r,
+        dupStatus: existe ? "duplicado_existente" : "novo",
+      };
+    });
+  }, []);
 
   const itensFromBruto = useCallback(
     (brutos: ItemBruto[], origemImport: string): ReviewItem[] => {
       const reviewItems = brutos.map<ReviewItem>((b) => {
         const desc = b.descricao || b.contraparte || "Lançamento";
-        const cat = (b.categoriaSugerida && categorias.find((c) => c.id === b.categoriaSugerida)?.id) ||
+        const cat =
+          (b.categoriaSugerida && categorias.find((c) => c.id === b.categoriaSugerida)?.id) ||
           suggestCategoryFromDescription(desc);
         const formaPg = (b.formaPagamento as FormaPagamento) || "outro";
         const statusRevisao = normalizeReviewStatus(b.statusRevisao ?? null);
@@ -283,7 +295,9 @@ export function ImportExtratoDialog({
           bancoOrigem ? `Banco: ${bancoOrigem}` : null,
           idOperacao ? `ID operação: ${idOperacao}` : null,
           `Origem: ${origem}`,
-        ].filter(Boolean).join(" • ");
+        ]
+          .filter(Boolean)
+          .join(" • ");
         const deveComecarDesmarcado =
           b.tipoMovimentacao === "transferencia_interna" ||
           statusRevisao === "pagamento_fatura_cartao" ||
@@ -332,7 +346,9 @@ export function ImportExtratoDialog({
       setLoading(true);
       setObservacaoIA(null);
       try {
-        const dataUrls = await Promise.all(files.map((f) => fileToDataUrl(f, t("errors.fileRead"))));
+        const dataUrls = await Promise.all(
+          files.map((f) => fileToDataUrl(f, t("errors.fileRead"))),
+        );
         const resp = await apiFetch("/api/import-extrato", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -403,7 +419,12 @@ export function ImportExtratoDialog({
 
         // Parse defensivo: a resposta pode vir como texto puro em erros de proxy/edge.
         const raw = await resp.text();
-        let json: { itens?: ItemBruto[]; resumo?: ExtratoResumo | null; observacao?: string | null; error?: string } = {};
+        let json: {
+          itens?: ItemBruto[];
+          resumo?: ExtratoResumo | null;
+          observacao?: string | null;
+          error?: string;
+        } = {};
         try {
           json = raw ? JSON.parse(raw) : {};
         } catch {
@@ -470,7 +491,11 @@ export function ImportExtratoDialog({
         }
         // mapeamento simples: tenta achar "data", "descricao/historico", "valor"
         const norm = (s: string) =>
-          s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+          s
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim();
         const idxData = headers.findIndex((h) =>
           ["data", "date", "dt"].some((k) => norm(h).includes(k)),
         );
@@ -584,16 +609,17 @@ export function ImportExtratoDialog({
 
     let novosCount = 0;
     const duplicadosIgnorados = items.filter(
-      (i) => !i.selecionado && (i.dupStatus === "duplicado_existente" || i.dupStatus === "duplicado_lote"),
+      (i) =>
+        !i.selecionado &&
+        (i.dupStatus === "duplicado_existente" || i.dupStatus === "duplicado_lote"),
     ).length;
-    const naoConfirmados = items.filter(
-      (i) => !i.selecionado && i.dupStatus === "novo",
-    ).length;
+    const naoConfirmados = items.filter((i) => !i.selecionado && i.dupStatus === "novo").length;
 
     // Gera o batchId que será compartilhado por todos os itens dessa importação.
-    const batchId = (typeof crypto !== "undefined" && "randomUUID" in crypto)
-      ? crypto.randomUUID()
-      : `batch-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const batchId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `batch-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
     let totalDespesas = 0;
     let totalReceitas = 0;
@@ -623,14 +649,13 @@ export function ImportExtratoDialog({
     if (receitas.length > 0) {
       const created = addReceitasBulk(
         receitas.map((r) => {
-          const tipoReceita: TipoReceita =
-            /sal[áa]rio/i.test(r.descricao)
-              ? "salario"
-              : /pix/i.test(r.descricao)
-                ? "pix"
-                : /reembolso|estorno/i.test(r.descricao)
-                  ? "reembolso"
-                  : "outros";
+          const tipoReceita: TipoReceita = /sal[áa]rio/i.test(r.descricao)
+            ? "salario"
+            : /pix/i.test(r.descricao)
+              ? "pix"
+              : /reembolso|estorno/i.test(r.descricao)
+                ? "reembolso"
+                : "outros";
           return {
             descricao: r.descricao,
             valor: r.valor!,
@@ -700,10 +725,7 @@ export function ImportExtratoDialog({
   };
 
   // ---------- RENDER ----------
-  const totalSelecionados = useMemo(
-    () => items.filter((i) => i.selecionado).length,
-    [items],
-  );
+  const totalSelecionados = useMemo(() => items.filter((i) => i.selecionado).length, [items]);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -713,9 +735,7 @@ export function ImportExtratoDialog({
             <Upload className="h-5 w-5" />
             {t("title")}
           </DialogTitle>
-          <DialogDescription className="text-sm">
-            {t("desc")}
-          </DialogDescription>
+          <DialogDescription className="text-sm">{t("desc")}</DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-5">
@@ -804,7 +824,9 @@ export function ImportExtratoDialog({
       </DialogContent>
       <PremiumLockModal
         open={premiumGate.state.open}
-        onOpenChange={(v) => { if (!v) premiumGate.close(); }}
+        onOpenChange={(v) => {
+          if (!v) premiumGate.close();
+        }}
         title={premiumGate.state.title}
         description={premiumGate.state.description}
         feature={premiumGate.state.feature ?? undefined}
@@ -859,27 +881,20 @@ function UploadStep({
   const ref = useRef<HTMLInputElement>(null);
   return (
     <div className="space-y-4">
-      <button
-        onClick={onBack}
-        className="text-xs text-muted-foreground hover:text-foreground"
-      >
+      <button onClick={onBack} className="text-xs text-muted-foreground hover:text-foreground">
         {t("upload.back")}
       </button>
       <div className="rounded-2xl border-2 border-dashed border-border p-10 text-center">
         {loading ? (
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">
-              {t("upload.loading")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("upload.loading")}</p>
           </div>
         ) : (
           <>
             <Sparkles className="mx-auto h-8 w-8 text-primary mb-3" />
             <p className="text-sm font-medium mb-1">{hint}</p>
-            <p className="text-xs text-muted-foreground mb-4">
-              {t("upload.privacy")}
-            </p>
+            <p className="text-xs text-muted-foreground mb-4">{t("upload.privacy")}</p>
             <input
               ref={ref}
               type="file"
@@ -926,11 +941,31 @@ function ReviewStep({
       {resumoExtrato && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 rounded-xl border bg-card p-3 text-xs">
           <ResumoItem label={t("review.banco")} value={resumoExtrato.banco ?? "—"} />
-          <ResumoItem label={t("review.periodo")} value={[resumoExtrato.periodoInicio, resumoExtrato.periodoFim].filter(Boolean).join(" a ") || "—"} />
-          <ResumoItem label={t("review.saldoFinal")} value={resumoExtrato.saldoFinal != null ? formatBRL(resumoExtrato.saldoFinal) : "—"} />
-          <ResumoItem label={t("review.saldoInicial")} value={resumoExtrato.saldoInicial != null ? formatBRL(resumoExtrato.saldoInicial) : "—"} />
-          <ResumoItem label={t("review.entradas")} value={resumoExtrato.totalEntradas != null ? formatBRL(resumoExtrato.totalEntradas) : "—"} />
-          <ResumoItem label={t("review.saidas")} value={resumoExtrato.totalSaidas != null ? formatBRL(resumoExtrato.totalSaidas) : "—"} />
+          <ResumoItem
+            label={t("review.periodo")}
+            value={
+              [resumoExtrato.periodoInicio, resumoExtrato.periodoFim].filter(Boolean).join(" a ") ||
+              "—"
+            }
+          />
+          <ResumoItem
+            label={t("review.saldoFinal")}
+            value={resumoExtrato.saldoFinal != null ? formatBRL(resumoExtrato.saldoFinal) : "—"}
+          />
+          <ResumoItem
+            label={t("review.saldoInicial")}
+            value={resumoExtrato.saldoInicial != null ? formatBRL(resumoExtrato.saldoInicial) : "—"}
+          />
+          <ResumoItem
+            label={t("review.entradas")}
+            value={
+              resumoExtrato.totalEntradas != null ? formatBRL(resumoExtrato.totalEntradas) : "—"
+            }
+          />
+          <ResumoItem
+            label={t("review.saidas")}
+            value={resumoExtrato.totalSaidas != null ? formatBRL(resumoExtrato.totalSaidas) : "—"}
+          />
         </div>
       )}
       {observacaoIA && (
@@ -940,9 +975,7 @@ function ReviewStep({
         </div>
       )}
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium">
-          {t("review.found", { count: items.length })}
-        </p>
+        <p className="text-sm font-medium">{t("review.found", { count: items.length })}</p>
         <Button size="sm" variant="outline" onClick={onAdd}>
           <Plus className="h-3.5 w-3.5 mr-1" /> {t("review.addRow")}
         </Button>
@@ -986,20 +1019,44 @@ function ReviewCard({
   const { t } = useTranslation("import-extrato");
   const dupBadge =
     item.dupStatus === "duplicado_existente"
-      ? { label: t("row.badge.exists"), color: "bg-amber-500/15 text-amber-600 border-amber-500/30" }
+      ? {
+          label: t("row.badge.exists"),
+          color: "bg-amber-500/15 text-amber-600 border-amber-500/30",
+        }
       : item.dupStatus === "duplicado_lote"
-        ? { label: t("row.badge.repeated"), color: "bg-orange-500/15 text-orange-600 border-orange-500/30" }
+        ? {
+            label: t("row.badge.repeated"),
+            color: "bg-orange-500/15 text-orange-600 border-orange-500/30",
+          }
         : item.valor === null || !item.data || !item.descricao
-          ? { label: t("row.badge.incomplete"), color: "bg-red-500/15 text-red-600 border-red-500/30" }
+          ? {
+              label: t("row.badge.incomplete"),
+              color: "bg-red-500/15 text-red-600 border-red-500/30",
+            }
           : item.statusRevisao === "reserva"
-            ? { label: t("row.badge.reserva"), color: "bg-violet-500/15 text-violet-600 border-violet-500/30" }
+            ? {
+                label: t("row.badge.reserva"),
+                color: "bg-violet-500/15 text-violet-600 border-violet-500/30",
+              }
             : item.statusRevisao === "resgate_reserva"
-              ? { label: t("row.badge.resgateReserva"), color: "bg-violet-500/15 text-violet-600 border-violet-500/30" }
+              ? {
+                  label: t("row.badge.resgateReserva"),
+                  color: "bg-violet-500/15 text-violet-600 border-violet-500/30",
+                }
               : item.statusRevisao === "pagamento_fatura_cartao"
-                ? { label: t("row.badge.pagamentoFatura"), color: "bg-sky-500/15 text-sky-600 border-sky-500/30" }
+                ? {
+                    label: t("row.badge.pagamentoFatura"),
+                    color: "bg-sky-500/15 text-sky-600 border-sky-500/30",
+                  }
                 : item.statusRevisao === "revisar"
-                  ? { label: t("row.badge.revisar"), color: "bg-yellow-500/15 text-yellow-600 border-yellow-500/30" }
-                  : { label: t("row.badge.novo"), color: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" };
+                  ? {
+                      label: t("row.badge.revisar"),
+                      color: "bg-yellow-500/15 text-yellow-600 border-yellow-500/30",
+                    }
+                  : {
+                      label: t("row.badge.novo"),
+                      color: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
+                    };
 
   const tipoIcon =
     item.tipoMovimentacao === "despesa" ? (
@@ -1099,7 +1156,9 @@ function ReviewCard({
             <SelectContent>
               <SelectItem value="despesa">{t("row.tipos.despesa")}</SelectItem>
               <SelectItem value="receita">{t("row.tipos.receita")}</SelectItem>
-              <SelectItem value="transferencia_interna">{t("row.tipos.transferencia_interna")}</SelectItem>
+              <SelectItem value="transferencia_interna">
+                {t("row.tipos.transferencia_interna")}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -1126,10 +1185,7 @@ function ReviewCard({
         {item.tipoMovimentacao === "despesa" && (
           <div className="sm:col-span-2">
             <Label className="text-xs">{t("row.categoria")}</Label>
-            <Select
-              value={item.categoriaId}
-              onValueChange={(v) => onUpdate({ categoriaId: v })}
-            >
+            <Select value={item.categoriaId} onValueChange={(v) => onUpdate({ categoriaId: v })}>
               <SelectTrigger className="h-9">
                 <SelectValue />
               </SelectTrigger>
@@ -1147,7 +1203,8 @@ function ReviewCard({
 
       {item.valor !== null && (
         <div className="text-xs text-muted-foreground pt-1">
-          {t("row.total")} <span className="font-semibold text-foreground">{formatBRL(item.valor)}</span>
+          {t("row.total")}{" "}
+          <span className="font-semibold text-foreground">{formatBRL(item.valor)}</span>
         </div>
       )}
     </div>

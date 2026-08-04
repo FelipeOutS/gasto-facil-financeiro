@@ -86,7 +86,8 @@ function stripHtml(html: string): string {
 function detectProtected(html: string, text: string): boolean {
   const t = text.toLowerCase();
   if (/captcha|recaptcha|hcaptcha/.test(html.toLowerCase())) return true;
-  if (/digite os caracteres|preencha o captcha|verifique que você não é um robô/i.test(text)) return true;
+  if (/digite os caracteres|preencha o captcha|verifique que você não é um robô/i.test(text))
+    return true;
   if (t.includes("acesso negado") || t.includes("forbidden")) return true;
   if (t.includes("nota fiscal não encontrada") || t.includes("nfc-e não encontrada")) return true;
   return false;
@@ -102,7 +103,11 @@ function extractMarket(text: string): { name?: string; cnpj?: string } {
   if (cnpj) {
     const idx = text.indexOf(cnpj);
     if (idx > 0) {
-      const before = text.slice(0, idx).split("\n").map((l) => l.trim()).filter(Boolean);
+      const before = text
+        .slice(0, idx)
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
       // Pega a última linha antes do CNPJ que tenha letras e tamanho razoável.
       for (let i = before.length - 1; i >= 0; i--) {
         const l = before[i];
@@ -179,7 +184,7 @@ function extractItems(text: string): CupomItemPreview[] {
     const codeMatch = block.match(codeRe);
     const codigoBarras = codeMatch?.[1];
 
-    let nome = m[1]
+    const nome = m[1]
       .replace(/^\s*\d{1,4}\s*[-.)]?\s*/, "")
       .replace(/\(C[oó]digo:.*$/i, "")
       .replace(/\s{2,}/g, " ")

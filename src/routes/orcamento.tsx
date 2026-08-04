@@ -19,7 +19,10 @@ import { OrcamentoCategoriaCard } from "@/components/orcamento/OrcamentoCategori
 import { OrcamentoLimiteDiarioCard } from "@/components/orcamento/OrcamentoLimiteDiarioCard";
 import { OrcamentoPrevisaoCard } from "@/components/orcamento/OrcamentoPrevisaoCard";
 import type { PrevisaoTipo } from "@/components/orcamento/OrcamentoPrevisaoCard";
-import { PlanejamentoMensalCard, type PlanejamentoEstado } from "@/components/orcamento/PlanejamentoMensalCard";
+import {
+  PlanejamentoMensalCard,
+  type PlanejamentoEstado,
+} from "@/components/orcamento/PlanejamentoMensalCard";
 import { SugestaoDistribuicaoRenda } from "@/components/orcamento/SugestaoDistribuicaoRenda";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
@@ -39,10 +42,7 @@ import {
   useBootstrap,
   useStore,
 } from "@/lib/store";
-import {
-  buildLinhasOrcamento,
-  resumirOrcamento,
-} from "@/lib/orcamento";
+import { buildLinhasOrcamento, resumirOrcamento } from "@/lib/orcamento";
 import { formatBRL, formatMonthYear, parseBRLInput } from "@/lib/format";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
@@ -95,8 +95,12 @@ function OrcamentoPage() {
 
   const linhas = useMemo(
     () =>
-      buildLinhasOrcamento(categorias, gastos, ym.mes, ym.ano, (catId) =>
-        getLimite(catId, ym.mes, ym.ano),
+      buildLinhasOrcamento(
+        categorias,
+        gastos,
+        ym.mes,
+        ym.ano,
+        (catId) => getLimite(catId, ym.mes, ym.ano),
         mesEfetivoGasto,
       ),
     [categorias, gastos, ym],
@@ -244,10 +248,7 @@ function OrcamentoPage() {
       .filter((r) => r.mes === ym.mes && r.ano === ym.ano)
       .reduce((acc, r) => acc + (r.valor || 0), 0);
 
-    const distribuidoCategorias = comLimite.reduce(
-      (acc, l) => acc + (l.planejado || 0),
-      0,
-    );
+    const distribuidoCategorias = comLimite.reduce((acc, l) => acc + (l.planejado || 0), 0);
 
     const distribuidoContasReal = contasAPagar
       .filter((c) => {
@@ -290,12 +291,8 @@ function OrcamentoPage() {
     };
   }, [receitas, contasAPagar, guardado, comLimite, ym, incluirContas]);
 
-
-
   // Edit limit dialog
-  const [editing, setEditing] = useState<{ id: string; nome: string; valor: string } | null>(
-    null,
-  );
+  const [editing, setEditing] = useState<{ id: string; nome: string; valor: string } | null>(null);
 
   function changeMonth(delta: number) {
     const d = new Date(ym.ano, ym.mes - 1 + delta, 1);
@@ -342,9 +339,7 @@ function OrcamentoPage() {
       }
     }
     toast.success(
-      copiados > 0
-        ? t("toasts.copied", { count: copiados })
-        : t("toasts.alreadyApplied"),
+      copiados > 0 ? t("toasts.copied", { count: copiados }) : t("toasts.alreadyApplied"),
     );
   }
 
@@ -368,9 +363,7 @@ function OrcamentoPage() {
             <h1 className="mt-0.5 text-2xl font-bold tracking-tight lg:text-[26px]">
               {t("pageTitle")}
             </h1>
-            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-              {t("pageSubtitle")}
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">{t("pageSubtitle")}</p>
           </div>
           {/* Seletor de mês — desktop: ao lado do título */}
           <div className="hidden shrink-0 items-center gap-1 rounded-full border border-border bg-card p-1 sm:flex">
@@ -461,7 +454,6 @@ function OrcamentoPage() {
         </div>
       )}
 
-
       {/* Resumo superior — só quando já existe algum orçamento ou limite total */}
       {(temOrcamento || (limiteTotal ?? 0) > 0) && (
         <section className="mt-5 grid grid-cols-2 gap-2.5 stagger lg:grid-cols-4">
@@ -478,21 +470,12 @@ function OrcamentoPage() {
                 ? t("summary.pctOfPlan", { value: Math.round(pctGeral) })
                 : undefined
             }
-            tone={
-              qtdEstouro > 0
-                ? "negative"
-                : qtdAtencao > 0
-                  ? "warning"
-                  : "default"
-            }
+            tone={qtdEstouro > 0 ? "negative" : qtdAtencao > 0 ? "warning" : "default"}
           />
           <MetricCard
             label={diff >= 0 ? t("summary.remaining") : t("summary.excess")}
             value={
-              <Money
-                value={Math.abs(diff)}
-                className={cn("num", diff < 0 && "text-destructive")}
-              />
+              <Money value={Math.abs(diff)} className={cn("num", diff < 0 && "text-destructive")} />
             }
             hint={diff >= 0 ? t("summary.belowPlan") : t("summary.abovePlan")}
             tone={diff < 0 ? "negative" : "positive"}
@@ -511,13 +494,7 @@ function OrcamentoPage() {
               {t("summary.status")}
             </span>
             <StatusBadge
-              tone={
-                qtdEstouro > 0
-                  ? "destructive"
-                  : qtdAtencao > 0
-                    ? "warning"
-                    : "success"
-              }
+              tone={qtdEstouro > 0 ? "destructive" : qtdAtencao > 0 ? "warning" : "success"}
               dot
               size="md"
               className="self-start"
@@ -630,8 +607,7 @@ function OrcamentoPage() {
             const livre = renda - distribuido;
             const sobraRelevante = renda > 0 && livre >= renda * 0.2;
             const mostrar =
-              renda > 0 &&
-              (estado === "sem_limites" || (estado === "com_sobra" && sobraRelevante));
+              renda > 0 && (estado === "sem_limites" || (estado === "com_sobra" && sobraRelevante));
             if (!mostrar) return null;
             return (
               <SugestaoDistribuicaoRenda
@@ -715,9 +691,7 @@ function OrcamentoPage() {
               </div>
             </>
           ) : (
-            <p className="mt-3 text-xs text-muted-foreground">
-              {t("totalLimit.none")}
-            </p>
+            <p className="mt-3 text-xs text-muted-foreground">{t("totalLimit.none")}</p>
           )}
         </section>
       )}
@@ -769,9 +743,7 @@ function OrcamentoPage() {
             <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
               {t("noLimit.title")}
             </h2>
-            <span className="text-[11px] text-muted-foreground">
-              {semLimiteComGasto.length}
-            </span>
+            <span className="text-[11px] text-muted-foreground">{semLimiteComGasto.length}</span>
           </div>
           <ul className="space-y-2 stagger">
             {semLimiteComGasto.map((l) => (
@@ -810,9 +782,7 @@ function OrcamentoPage() {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">{t("addMore.title")}</p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
-                {t("addMore.subtitle")}
-              </p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">{t("addMore.subtitle")}</p>
               <div className="mt-2.5 flex flex-wrap gap-1.5">
                 {linhas
                   .filter((l) => l.planejado === 0 && l.realizado === 0)

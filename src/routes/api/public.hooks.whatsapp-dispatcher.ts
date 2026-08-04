@@ -183,9 +183,7 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
           // envio. Bloqueia downgrade / cancelamento / expiração / beta
           // revogado / link revogado ocorridos entre a criação e o dispatch.
           try {
-            const { getWhatsAppEntitlement } = await import(
-              "@/server/whatsapp-entitlement.server"
-            );
+            const { getWhatsAppEntitlement } = await import("@/server/whatsapp-entitlement.server");
             const ent = await getWhatsAppEntitlement(claimed.user_id);
             if (!ent.allowed) {
               await markSkipped(n.id, "entitlement_revoked", token);
@@ -206,8 +204,6 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
             summary.skipped++;
             continue;
           }
-
-
 
           // 2) Template
           const tpl = await loadTemplate(n.notification_type);
@@ -274,7 +270,6 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
           //    (early exit no topo). Não há mais branch dry-run mutável.
           summary.would_send++;
 
-
           // 5) WA-C11 Fase 3B.2.D — Envio real com wiring de quota outbound.
           //    Reserva atômica ANTES do transport; commit em accepted;
           //    release em rejeição definitiva / falha local pré-HTTP;
@@ -283,11 +278,15 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
           //    handler; `runOutboundWithQuota` revalida internamente e o
           //    gate `isOutboundHttpAllowed` reavalia imediatamente antes
           //    do transport.
-          const { runOutboundWithQuota } = await import(
-            "@/server/whatsapp-outbound-quota-wire.server"
-          );
+          const { runOutboundWithQuota } =
+            await import("@/server/whatsapp-outbound-quota-wire.server");
           const outcome = await runOutboundWithQuota(
-            { id: n.id, user_id: n.user_id, notification_type: n.notification_type, payload: n.payload },
+            {
+              id: n.id,
+              user_id: n.user_id,
+              notification_type: n.notification_type,
+              payload: n.payload,
+            },
             token,
           );
           switch (outcome.kind) {

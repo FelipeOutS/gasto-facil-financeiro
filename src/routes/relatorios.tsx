@@ -44,7 +44,10 @@ import {
   Line,
 } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
-import { EvolucaoOrcamentoCard, type EvolucaoMes } from "@/components/relatorios/EvolucaoOrcamentoCard";
+import {
+  EvolucaoOrcamentoCard,
+  type EvolucaoMes,
+} from "@/components/relatorios/EvolucaoOrcamentoCard";
 import {
   TendenciaCategoriasCard,
   type TendenciaCategoria,
@@ -80,10 +83,7 @@ import {
   corDoEstado,
   type EstadoMes,
 } from "@/lib/relatorios";
-import {
-  buildLinhasOrcamento,
-  resumirOrcamento,
-} from "@/lib/orcamento";
+import { buildLinhasOrcamento, resumirOrcamento } from "@/lib/orcamento";
 import { formatBRL, formatBRLCompact, formatMonthYear, parseDateLocal } from "@/lib/format";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
@@ -148,21 +148,48 @@ function RelatoriosPage() {
   }, [periodo]);
 
   const resumo = useMemo(
-    () => buildResumoMensal({ mes: ym.mes, ano: ym.ano, gastos, receitas, contas, movMetas, categorias, guardado }),
+    () =>
+      buildResumoMensal({
+        mes: ym.mes,
+        ano: ym.ano,
+        gastos,
+        receitas,
+        contas,
+        movMetas,
+        categorias,
+        guardado,
+      }),
     [ym, gastos, receitas, contas, movMetas, categorias, guardado],
   );
   const prev = mesAnterior(ym.mes, ym.ano);
   const resumoAnterior = useMemo(
-    () => buildResumoMensal({ mes: prev.mes, ano: prev.ano, gastos, receitas, contas, movMetas, categorias, guardado }),
+    () =>
+      buildResumoMensal({
+        mes: prev.mes,
+        ano: prev.ano,
+        gastos,
+        receitas,
+        contas,
+        movMetas,
+        categorias,
+        guardado,
+      }),
     [prev, gastos, receitas, contas, movMetas, categorias, guardado],
   );
-  const comparativo = useMemo(() => buildComparativo(resumo, resumoAnterior), [resumo, resumoAnterior]);
+  const comparativo = useMemo(
+    () => buildComparativo(resumo, resumoAnterior),
+    [resumo, resumoAnterior],
+  );
 
   // Orçamento do mês
   const linhasOrc = useMemo(
     () =>
-      buildLinhasOrcamento(categorias, gastos.filter((g) => g.confirmado !== false), ym.mes, ym.ano, (catId) =>
-        getLimite(catId, ym.mes, ym.ano),
+      buildLinhasOrcamento(
+        categorias,
+        gastos.filter((g) => g.confirmado !== false),
+        ym.mes,
+        ym.ano,
+        (catId) => getLimite(catId, ym.mes, ym.ano),
         mesEfetivoGasto,
       ),
     [categorias, gastos, ym, limitesKey],
@@ -199,15 +226,23 @@ function RelatoriosPage() {
       while (ca * 12 + cm - 1 <= endKey) {
         stack.push({ mes: cm, ano: ca });
         cm++;
-        if (cm > 12) { cm = 1; ca++; }
+        if (cm > 12) {
+          cm = 1;
+          ca++;
+        }
         if (stack.length > 36) break;
       }
     } else {
       const n =
-        periodo === "6m" || periodo === "semestre" ? 6 :
-        periodo === "3m" || periodo === "trimestre" ? 3 :
-        periodo === "ano" ? 12 : 6;
-      let m = ym.mes, a = ym.ano;
+        periodo === "6m" || periodo === "semestre"
+          ? 6
+          : periodo === "3m" || periodo === "trimestre"
+            ? 3
+            : periodo === "ano"
+              ? 12
+              : 6;
+      let m = ym.mes,
+        a = ym.ano;
       for (let i = 0; i < n; i++) {
         stack.unshift({ mes: m, ano: a });
         const p = mesAnterior(m, a);
@@ -216,9 +251,21 @@ function RelatoriosPage() {
       }
     }
     return stack.map((s) => {
-      const r = buildResumoMensal({ mes: s.mes, ano: s.ano, gastos, receitas, contas, movMetas, categorias, guardado });
+      const r = buildResumoMensal({
+        mes: s.mes,
+        ano: s.ano,
+        gastos,
+        receitas,
+        contas,
+        movMetas,
+        categorias,
+        guardado,
+      });
       return {
-        label: new Date(s.ano, s.mes - 1, 1).toLocaleDateString(i18n.language === "en" ? "en-US" : "pt-BR", { month: "short" }).replace(".", "") + (stack.length > 12 ? `/${String(s.ano).slice(-2)}` : ""),
+        label:
+          new Date(s.ano, s.mes - 1, 1)
+            .toLocaleDateString(i18n.language === "en" ? "en-US" : "pt-BR", { month: "short" })
+            .replace(".", "") + (stack.length > 12 ? `/${String(s.ano).slice(-2)}` : ""),
         mes: s.mes,
         ano: s.ano,
         receitas: r.totalReceitas,
@@ -231,7 +278,8 @@ function RelatoriosPage() {
   // Evolução do orçamento — últimos 6 meses (planejado x realizado)
   const evolucaoOrcamento = useMemo<EvolucaoMes[]>(() => {
     const stack: Array<{ mes: number; ano: number }> = [];
-    let m = ym.mes, a = ym.ano;
+    let m = ym.mes,
+      a = ym.ano;
     for (let i = 0; i < 6; i++) {
       stack.unshift({ mes: m, ano: a });
       const p = mesAnterior(m, a);
@@ -248,10 +296,9 @@ function RelatoriosPage() {
         mesEfetivoGasto,
       );
       const res = resumirOrcamento(linhasMes);
-      const label =
-        new Date(s.ano, s.mes - 1, 1)
-          .toLocaleDateString(i18n.language === "en" ? "en-US" : "pt-BR", { month: "short" })
-          .replace(".", "");
+      const label = new Date(s.ano, s.mes - 1, 1)
+        .toLocaleDateString(i18n.language === "en" ? "en-US" : "pt-BR", { month: "short" })
+        .replace(".", "");
       return {
         label,
         mes: s.mes,
@@ -265,7 +312,8 @@ function RelatoriosPage() {
   // Tendência por categoria — Top 5 acumulado nos últimos 6 meses
   const tendenciaCategorias = useMemo<TendenciaCategoria[]>(() => {
     const stack: Array<{ mes: number; ano: number; label: string }> = [];
-    let m = ym.mes, a = ym.ano;
+    let m = ym.mes,
+      a = ym.ano;
     for (let i = 0; i < 6; i++) {
       const label = new Date(a, m - 1, 1)
         .toLocaleDateString(i18n.language === "en" ? "en-US" : "pt-BR", { month: "short" })
@@ -312,8 +360,7 @@ function RelatoriosPage() {
       const mediaRecente = recentes.reduce((s, v) => s + v, 0) / 3;
       const mediaAnterior = anteriores.reduce((s, v) => s + v, 0) / 3;
       const diferenca = mediaRecente - mediaAnterior;
-      const variacaoPct =
-        mediaAnterior > 0 ? (diferenca / mediaAnterior) * 100 : null;
+      const variacaoPct = mediaAnterior > 0 ? (diferenca / mediaAnterior) * 100 : null;
 
       let estado: TendenciaEstado = "estavel";
       if (mediaAnterior === 0 && mediaRecente > 0) {
@@ -337,8 +384,6 @@ function RelatoriosPage() {
       };
     });
   }, [ym, gastos, categorias, i18n.language]);
-
-
 
   // Totais agregados do período (multi-mês)
   const isMultiPeriod = periodo !== "mes" && periodo !== "anterior";
@@ -367,12 +412,18 @@ function RelatoriosPage() {
     const rows: string[] = [];
     rows.push(t("export.period") + ";" + periodoLabel);
     rows.push("");
-    rows.push(`${t("export.month")};${t("export.receitas")};${t("export.despesas")};${t("export.saldo")}`);
+    rows.push(
+      `${t("export.month")};${t("export.receitas")};${t("export.despesas")};${t("export.saldo")}`,
+    );
     for (const m of historicoMeses) {
-      rows.push(`${m.label};${m.receitas.toFixed(2)};${m.despesas.toFixed(2)};${m.saldo.toFixed(2)}`);
+      rows.push(
+        `${m.label};${m.receitas.toFixed(2)};${m.despesas.toFixed(2)};${m.saldo.toFixed(2)}`,
+      );
     }
     rows.push("");
-    rows.push(`${t("export.totals")};${totaisPeriodo.receitas.toFixed(2)};${totaisPeriodo.despesas.toFixed(2)};${totaisPeriodo.saldo.toFixed(2)}`);
+    rows.push(
+      `${t("export.totals")};${totaisPeriodo.receitas.toFixed(2)};${totaisPeriodo.despesas.toFixed(2)};${totaisPeriodo.saldo.toFixed(2)}`,
+    );
     rows.push("");
     rows.push(t("export.gastosCategoria"));
     rows.push(`${t("export.categoria")};${t("export.valor")};${t("export.pct")}`);
@@ -423,9 +474,7 @@ function RelatoriosPage() {
           <h1 className="mt-0.5 text-[26px] font-bold capitalize leading-tight tracking-tight">
             {formatMonthYear(ym.ano, ym.mes)}
           </h1>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t(`subtitle.${tipo}`)}
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{t(`subtitle.${tipo}`)}</p>
         </div>
         <div className="flex items-center gap-1 shrink-0 rounded-full border border-border bg-card p-1">
           <button
@@ -512,26 +561,45 @@ function RelatoriosPage() {
       </div>
 
       {/* Totais do período (multi-mês) */}
-      {(isMultiPeriod) && historicoMeses.length > 1 && (
+      {isMultiPeriod && historicoMeses.length > 1 && (
         <section className="mt-4 rounded-2xl border border-brand/20 bg-brand-soft/30 p-4 animate-rise">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{t("totals.title")}</p>
-              <p className="text-sm font-medium">{t("totals.monthsCount", { period: periodoLabel, count: historicoMeses.length })}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                {t("totals.title")}
+              </p>
+              <p className="text-sm font-medium">
+                {t("totals.monthsCount", { period: periodoLabel, count: historicoMeses.length })}
+              </p>
             </div>
           </div>
           <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
             <div className="rounded-xl bg-card/60 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("totals.receitas")}</p>
-              <p className="mt-0.5 text-lg font-bold tabular-nums text-success">{formatBRL(totaisPeriodo.receitas)}</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                {t("totals.receitas")}
+              </p>
+              <p className="mt-0.5 text-lg font-bold tabular-nums text-success">
+                {formatBRL(totaisPeriodo.receitas)}
+              </p>
             </div>
             <div className="rounded-xl bg-card/60 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("totals.despesas")}</p>
-              <p className="mt-0.5 text-lg font-bold tabular-nums text-destructive">{formatBRL(totaisPeriodo.despesas)}</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                {t("totals.despesas")}
+              </p>
+              <p className="mt-0.5 text-lg font-bold tabular-nums text-destructive">
+                {formatBRL(totaisPeriodo.despesas)}
+              </p>
             </div>
             <div className="rounded-xl bg-card/60 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("totals.saldo")}</p>
-              <p className={cn("mt-0.5 text-lg font-bold tabular-nums", totaisPeriodo.saldo < 0 ? "text-destructive" : "text-brand")}>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                {t("totals.saldo")}
+              </p>
+              <p
+                className={cn(
+                  "mt-0.5 text-lg font-bold tabular-nums",
+                  totaisPeriodo.saldo < 0 ? "text-destructive" : "text-brand",
+                )}
+              >
                 {formatBRL(totaisPeriodo.saldo)}
               </p>
             </div>
@@ -545,12 +613,8 @@ function RelatoriosPage() {
           <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
             {t("onboarding.title")}
           </p>
-          <h2 className="mt-1 text-base font-semibold leading-snug">
-            {t("empty.title")}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("onboarding.description")}
-          </p>
+          <h2 className="mt-1 text-base font-semibold leading-snug">{t("empty.title")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t("onboarding.description")}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button asChild size="sm" className="min-h-11">
               <Link to="/adicionar">{t("onboarding.cta")}</Link>
@@ -559,27 +623,49 @@ function RelatoriosPage() {
               <Link to="/app">{t("onboarding.secondaryCta")}</Link>
             </Button>
           </div>
-          <p className="mt-3 text-[12px] text-muted-foreground">
-            {t("onboarding.helper")}
-          </p>
+          <p className="mt-3 text-[12px] text-muted-foreground">{t("onboarding.helper")}</p>
         </section>
       )}
 
       {/* ===== KPIs principais ===== */}
       <SectionLabel>{t("sections.resumo")}</SectionLabel>
       <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-
-        <Kpi label={t("kpi.receitas")} valor={resumo.totalReceitas} icon={<ArrowUp className="h-4 w-4" />} tone="success" />
-        <Kpi label={t("kpi.despesas")} valor={resumo.totalDespesas} icon={<ArrowDown className="h-4 w-4" />} tone="destructive" />
+        <Kpi
+          label={t("kpi.receitas")}
+          valor={resumo.totalReceitas}
+          icon={<ArrowUp className="h-4 w-4" />}
+          tone="success"
+        />
+        <Kpi
+          label={t("kpi.despesas")}
+          valor={resumo.totalDespesas}
+          icon={<ArrowDown className="h-4 w-4" />}
+          tone="destructive"
+        />
         <Kpi
           label={t("kpi.saldo")}
           valor={resumo.saldo}
           icon={<Wallet className="h-4 w-4" />}
           tone={resumo.saldo < 0 ? "destructive" : "brand"}
         />
-        <Kpi label={t("kpi.cartao")} valor={resumo.totalCartao} icon={<CreditCard className="h-4 w-4" />} tone="warning" />
-        <Kpi label={t("kpi.contas")} valor={resumo.totalPagoContas} icon={<CalendarClock className="h-4 w-4" />} tone="muted" />
-        <Kpi label={t("kpi.guardado")} valor={resumo.totalGuardado} icon={<Target className="h-4 w-4" />} tone="success" />
+        <Kpi
+          label={t("kpi.cartao")}
+          valor={resumo.totalCartao}
+          icon={<CreditCard className="h-4 w-4" />}
+          tone="warning"
+        />
+        <Kpi
+          label={t("kpi.contas")}
+          valor={resumo.totalPagoContas}
+          icon={<CalendarClock className="h-4 w-4" />}
+          tone="muted"
+        />
+        <Kpi
+          label={t("kpi.guardado")}
+          valor={resumo.totalGuardado}
+          icon={<Target className="h-4 w-4" />}
+          tone="success"
+        />
         <Kpi
           label={t("kpi.maiorGasto")}
           valor={resumo.maiorGasto?.valor ?? 0}
@@ -698,8 +784,18 @@ function RelatoriosPage() {
                   formatter={(v: number) => formatBRL(v)}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="receitas" name={t("kpi.receitas")} fill="var(--success)" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="despesas" name={t("kpi.despesas")} fill="var(--destructive)" radius={[6, 6, 0, 0]} />
+                <Bar
+                  dataKey="receitas"
+                  name={t("kpi.receitas")}
+                  fill="var(--success)"
+                  radius={[6, 6, 0, 0]}
+                />
+                <Bar
+                  dataKey="despesas"
+                  name={t("kpi.despesas")}
+                  fill="var(--destructive)"
+                  radius={[6, 6, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -753,10 +849,15 @@ function RelatoriosPage() {
                     <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
                       <div
                         className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${Math.min(100, c.pct)}%`, background: categoryColor(cat) }}
+                        style={{
+                          width: `${Math.min(100, c.pct)}%`,
+                          background: categoryColor(cat),
+                        }}
                       />
                     </div>
-                    <div className="mt-0.5 text-[11px] text-muted-foreground">{t("chart.pctDoMes", { pct: c.pct.toFixed(0) })}</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">
+                      {t("chart.pctDoMes", { pct: c.pct.toFixed(0) })}
+                    </div>
                   </li>
                 );
               })}
@@ -810,8 +911,6 @@ function RelatoriosPage() {
         }}
       />
 
-
-
       {/* ===== Top 5 maiores despesas ===== */}
       {resumo.topGastos.length > 0 && (
         <>
@@ -832,7 +931,10 @@ function RelatoriosPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{g.descricao}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {cat?.nome ?? "Outros"} · {parseDateLocal(g.data)?.toLocaleDateString(i18n.language === "en" ? "en-US" : "pt-BR")}
+                      {cat?.nome ?? "Outros"} ·{" "}
+                      {parseDateLocal(g.data)?.toLocaleDateString(
+                        i18n.language === "en" ? "en-US" : "pt-BR",
+                      )}
                     </p>
                   </div>
                   <span className="tabular-nums text-sm font-semibold">{formatBRL(g.valor)}</span>
@@ -897,7 +999,9 @@ function RelatoriosPage() {
             <h3 className={cn("text-2xl font-bold leading-tight", cores.text)}>
               {tituloDoEstado(classificacao.estado)}
             </h3>
-            <p className="text-xs text-muted-foreground">{t("fechamento.pontuacao", { pontuacao: classificacao.pontuacao })}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("fechamento.pontuacao", { pontuacao: classificacao.pontuacao })}
+            </p>
           </div>
         </div>
 
@@ -911,11 +1015,18 @@ function RelatoriosPage() {
           <FechRow label={t("fechamento.saldoFinal")} valor={resumo.saldo} highlight />
           <FechRow label={t("fechamento.guardado")} valor={resumo.totalGuardado} />
           <FechRow label={t("fechamento.contasPagas")} valor={resumo.qtdContasPagas} isCount />
-          <FechRow label={t("fechamento.contasPendentes")} valor={resumo.qtdContasPendentes + resumo.qtdContasAtrasadas} isCount />
+          <FechRow
+            label={t("fechamento.contasPendentes")}
+            valor={resumo.qtdContasPendentes + resumo.qtdContasAtrasadas}
+            isCount
+          />
           <FechRow label={t("fechamento.orcEstourados")} valor={resOrc.qtdEstouro} isCount />
           <FechRow
             label={t("fechamento.melhorCategoria")}
-            text={resOrc.linhas.find((l) => l.status === "ok" && l.planejado > 0)?.cat.nome ?? t("fechamento.none")}
+            text={
+              resOrc.linhas.find((l) => l.status === "ok" && l.planejado > 0)?.cat.nome ??
+              t("fechamento.none")
+            }
           />
         </div>
 
@@ -931,7 +1042,12 @@ function RelatoriosPage() {
             {t("actions.generateSummary")}
           </Button>
           {showResumo && (
-            <Button variant="ghost" size="sm" onClick={() => setResumoSeed((s) => s + 1)} className="gap-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setResumoSeed((s) => s + 1)}
+              className="gap-1.5"
+            >
               <RefreshCw className="h-3.5 w-3.5" /> {t("actions.anotherVersion")}
             </Button>
           )}
@@ -1025,18 +1141,23 @@ function ComparativoCard({
     muted: "text-muted-foreground bg-muted border-border",
   }[tone];
   const pct =
-    Math.abs(anterior) > 0.005
-      ? (delta / Math.abs(anterior)) * 100
-      : atual !== 0
-        ? null
-        : 0;
+    Math.abs(anterior) > 0.005 ? (delta / Math.abs(anterior)) * 100 : atual !== 0 ? null : 0;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 animate-rise">
-      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
       <div className="mt-1 text-2xl font-bold tabular-nums">{formatBRL(atual)}</div>
-      <p className="mt-0.5 text-xs text-muted-foreground">{t("comparativo.anterior", { valor: formatBRL(anterior) })}</p>
-      <div className={cn("mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium", toneCls)}>
+      <p className="mt-0.5 text-xs text-muted-foreground">
+        {t("comparativo.anterior", { valor: formatBRL(anterior) })}
+      </p>
+      <div
+        className={cn(
+          "mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium",
+          toneCls,
+        )}
+      >
         <Icon className="h-3.5 w-3.5" />
         {delta === 0
           ? t("comparativo.noChange")
@@ -1067,9 +1188,7 @@ function ChartCard({
 }
 
 function EmptyChart({ label }: { label: string }) {
-  return (
-    <div className="grid h-64 place-items-center text-sm text-muted-foreground">{label}</div>
-  );
+  return <div className="grid h-64 place-items-center text-sm text-muted-foreground">{label}</div>;
 }
 
 function FechRow({
@@ -1092,7 +1211,9 @@ function FechRow({
         highlight && "border-brand/30 bg-brand-soft/40",
       )}
     >
-      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
       <p className="mt-1 text-base font-bold tabular-nums">
         {text !== undefined ? text : isCount ? Math.round(valor ?? 0) : formatBRL(valor ?? 0)}
       </p>

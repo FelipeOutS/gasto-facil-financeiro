@@ -16,18 +16,10 @@ import "./_whatsapp-fake";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { resetState, state } from "./_whatsapp-fake";
 
-const {
-  detectQueryPixIntent,
-  parseQueryPix,
-  detectSavePixIntent,
-  maskPixKey,
-} = await import("../src/server/whatsapp-pix-parser");
-const { handleQueryPixIntent } = await import(
-  "../src/server/whatsapp-pix-intents.server"
-);
-const { _resetShortContext } = await import(
-  "../src/server/whatsapp-short-context.server"
-);
+const { detectQueryPixIntent, parseQueryPix, detectSavePixIntent, maskPixKey } =
+  await import("../src/server/whatsapp-pix-parser");
+const { handleQueryPixIntent } = await import("../src/server/whatsapp-pix-intents.server");
+const { _resetShortContext } = await import("../src/server/whatsapp-short-context.server");
 
 const userId = "u1";
 const other = "u2";
@@ -103,14 +95,19 @@ describe("WA-PIX-Q-01 :: handler", () => {
     resetState({
       favorecidos: [
         {
-          id: "f1", user_id: userId, nome: "João Silva",
-          apelido: null, ativo: true,
-          pix_key: chaveReal, pix_key_type: "telefone",
+          id: "f1",
+          user_id: userId,
+          nome: "João Silva",
+          apelido: null,
+          ativo: true,
+          pix_key: chaveReal,
+          pix_key_type: "telefone",
         },
       ],
     });
     const out = await handleQueryPixIntent({
-      userId, telefone,
+      userId,
+      telefone,
       texto: "qual a chave Pix do João Silva?",
       _row: fakeRow,
     });
@@ -153,14 +150,19 @@ describe("WA-PIX-Q-01 :: handler", () => {
     resetState({
       favorecidos: [
         {
-          id: "f2", user_id: other, nome: "João Silva",
-          apelido: null, ativo: true,
-          pix_key: "+5511999998888", pix_key_type: "telefone",
+          id: "f2",
+          user_id: other,
+          nome: "João Silva",
+          apelido: null,
+          ativo: true,
+          pix_key: "+5511999998888",
+          pix_key_type: "telefone",
         },
       ],
     });
     const out = await handleQueryPixIntent({
-      userId, telefone,
+      userId,
+      telefone,
       texto: "qual a chave Pix do João Silva?",
       _row: fakeRow,
     });
@@ -172,12 +174,31 @@ describe("WA-PIX-Q-01 :: handler", () => {
   it("desambigua quando 2+ favorecidos com o mesmo nome", async () => {
     resetState({
       favorecidos: [
-        { id: "a", user_id: userId, nome: "João Silva", apelido: null, ativo: true, pix_key: "a@x.com", pix_key_type: "email" },
-        { id: "b", user_id: userId, nome: "João Silveira", apelido: null, ativo: true, pix_key: "b@x.com", pix_key_type: "email" },
+        {
+          id: "a",
+          user_id: userId,
+          nome: "João Silva",
+          apelido: null,
+          ativo: true,
+          pix_key: "a@x.com",
+          pix_key_type: "email",
+        },
+        {
+          id: "b",
+          user_id: userId,
+          nome: "João Silveira",
+          apelido: null,
+          ativo: true,
+          pix_key: "b@x.com",
+          pix_key_type: "email",
+        },
       ],
     });
     const out = await handleQueryPixIntent({
-      userId, telefone, texto: "chave Pix do João", _row: fakeRow,
+      userId,
+      telefone,
+      texto: "chave Pix do João",
+      _row: fakeRow,
     });
     expect(out.resposta).toContain("mais de uma pessoa");
     // WA-PIX-UX-01.c — ambiguidade NUNCA emite botão CTA (nenhum favorecido
@@ -189,11 +210,22 @@ describe("WA-PIX-Q-01 :: handler", () => {
   it("responde 'sem chave' quando favorecido existe mas não tem Pix", async () => {
     resetState({
       favorecidos: [
-        { id: "f1", user_id: userId, nome: "João Silva", apelido: null, ativo: true, pix_key: null, pix_key_type: null },
+        {
+          id: "f1",
+          user_id: userId,
+          nome: "João Silva",
+          apelido: null,
+          ativo: true,
+          pix_key: null,
+          pix_key_type: null,
+        },
       ],
     });
     const out = await handleQueryPixIntent({
-      userId, telefone, texto: "qual a chave Pix do João Silva?", _row: fakeRow,
+      userId,
+      telefone,
+      texto: "qual a chave Pix do João Silva?",
+      _row: fakeRow,
     });
     expect(out.resposta.toLowerCase()).toContain("sem chave pix");
     expect(out.interactive).toBeUndefined();

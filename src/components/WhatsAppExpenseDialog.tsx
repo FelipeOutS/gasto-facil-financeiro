@@ -13,13 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Sparkles, Copy, Check, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import {
-  addGasto,
-  getCartoes,
-  getCategorias,
-  suggestCategory,
-  useStore,
-} from "@/lib/store";
+import { addGasto, getCartoes, getCategorias, suggestCategory, useStore } from "@/lib/store";
 import { parseWhatsAppExpenseMessage } from "@/lib/whatsappParser";
 import { FORMAS_PAGAMENTO } from "@/lib/types";
 import { formatBRL } from "@/lib/format";
@@ -63,9 +57,7 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
 
   const categoria = categorias.find((c) => c.id === categoriaId);
   const cartao = parsed?.cartaoId ? cartoes.find((c) => c.id === parsed.cartaoId) : undefined;
-  const formaLabel = parsed?.formaPagamento
-    ? t(`pagamento.${parsed.formaPagamento}`)
-    : "—";
+  const formaLabel = parsed?.formaPagamento ? t(`pagamento.${parsed.formaPagamento}`) : "—";
   // ensure FORMAS_PAGAMENTO stays imported (used elsewhere) – referenced for type narrow
   void FORMAS_PAGAMENTO;
 
@@ -129,9 +121,7 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
             </span>
             <div>
               <DialogTitle>{t("whatsapp.title")}</DialogTitle>
-              <DialogDescription className="text-xs">
-                {t("whatsapp.desc")}
-              </DialogDescription>
+              <DialogDescription className="text-xs">{t("whatsapp.desc")}</DialogDescription>
             </div>
           </div>
         </DialogHeader>

@@ -31,10 +31,7 @@ const NOTIF_ID = "11111111-2222-3333-4444-555555555555";
 describe("recovery guard anti-ambiguous (E.4C)", () => {
   it("ambiguous_skipped é outcome válido e propagado", async () => {
     const fake = fakeClient("ambiguous_skipped");
-    const r = await recoverNotificationWithAttempt(
-      { notificationId: NOTIF_ID },
-      fake as never,
-    );
+    const r = await recoverNotificationWithAttempt({ notificationId: NOTIF_ID }, fake as never);
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.outcome).toBe("ambiguous_skipped" as RecoverOutcome);
     expect(fake.calls).toHaveLength(1);
@@ -43,30 +40,21 @@ describe("recovery guard anti-ambiguous (E.4C)", () => {
 
   it("ambiguous_quarantined legado ainda aceito (retrocompat)", async () => {
     const fake = fakeClient("ambiguous_quarantined");
-    const r = await recoverNotificationWithAttempt(
-      { notificationId: NOTIF_ID },
-      fake as never,
-    );
+    const r = await recoverNotificationWithAttempt({ notificationId: NOTIF_ID }, fake as never);
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.outcome).toBe("ambiguous_quarantined" as RecoverOutcome);
   });
 
   it("outcome desconhecido é fail-closed (unknown_outcome)", async () => {
     const fake = fakeClient("something_new");
-    const r = await recoverNotificationWithAttempt(
-      { notificationId: NOTIF_ID },
-      fake as never,
-    );
+    const r = await recoverNotificationWithAttempt({ notificationId: NOTIF_ID }, fake as never);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("unknown_outcome");
   });
 
   it("invalid notificationId nunca chama RPC", async () => {
     const fake = fakeClient("noop");
-    const r = await recoverNotificationWithAttempt(
-      { notificationId: "not-a-uuid" },
-      fake as never,
-    );
+    const r = await recoverNotificationWithAttempt({ notificationId: "not-a-uuid" }, fake as never);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("invalid_input");
     expect(fake.calls).toHaveLength(0);
@@ -75,10 +63,7 @@ describe("recovery guard anti-ambiguous (E.4C)", () => {
   it("outcomes de terminação (rejected/accepted) inalterados no contrato", async () => {
     for (const o of ["rejected_preserved", "accepted_repaired", "recovered_without_attempt"]) {
       const fake = fakeClient(o);
-      const r = await recoverNotificationWithAttempt(
-        { notificationId: NOTIF_ID },
-        fake as never,
-      );
+      const r = await recoverNotificationWithAttempt({ notificationId: NOTIF_ID }, fake as never);
       expect(r.ok).toBe(true);
       if (r.ok) expect(r.outcome).toBe(o as RecoverOutcome);
     }
@@ -113,11 +98,22 @@ function buildRecoverySupabase(outcomesByRow: Record<string, string>) {
     from(_t: string) {
       let filtered = rows.slice();
       const api = {
-        select() { return api; },
-        eq(k: string, v: unknown) { filtered = filtered.filter((r: Record<string, unknown>) => r[k] === v); return api; },
-        lte(_k: string, _v: unknown) { return api; },
-        order() { return api; },
-        limit() { return api; },
+        select() {
+          return api;
+        },
+        eq(k: string, v: unknown) {
+          filtered = filtered.filter((r: Record<string, unknown>) => r[k] === v);
+          return api;
+        },
+        lte(_k: string, _v: unknown) {
+          return api;
+        },
+        order() {
+          return api;
+        },
+        limit() {
+          return api;
+        },
         async then(res: (v: unknown) => unknown) {
           // Emula PostgREST: quando não chamamos update, retorna data
           return res({ data: filtered, error: null });

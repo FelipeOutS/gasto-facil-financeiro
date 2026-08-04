@@ -47,12 +47,10 @@ function IntegracoesIndexPage() {
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
             Conta
           </p>
-          <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">
-            Integrações
-          </h1>
+          <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">Integrações</h1>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            Conecte serviços para importar movimentações automaticamente e
-            automatizar seu controle financeiro.
+            Conecte serviços para importar movimentações automaticamente e automatizar seu controle
+            financeiro.
           </p>
         </div>
       </header>
@@ -64,13 +62,10 @@ function IntegracoesIndexPage() {
             <ShieldCheck className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-foreground">
-              Conexão segura e oficial
-            </p>
+            <p className="text-sm font-semibold text-foreground">Conexão segura e oficial</p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              As integrações importam movimentações automaticamente por
-              autorização oficial (OAuth). Sua senha nunca é exposta e os
-              tokens ficam armazenados de forma segura no servidor.
+              As integrações importam movimentações automaticamente por autorização oficial (OAuth).
+              Sua senha nunca é exposta e os tokens ficam armazenados de forma segura no servidor.
             </p>
           </div>
         </div>
@@ -98,17 +93,15 @@ function IntegracoesIndexPage() {
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-base font-semibold leading-tight">
-                  Mercado Pago
-                </p>
+                <p className="text-base font-semibold leading-tight">Mercado Pago</p>
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   Disponível
                 </span>
               </div>
               <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                Importe pagamentos, recebimentos, Pix e movimentações da sua
-                conta Mercado Pago de forma automática.
+                Importe pagamentos, recebimentos, Pix e movimentações da sua conta Mercado Pago de
+                forma automática.
               </p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {["Pix", "Pagamentos", "Recebimentos", "Cartão"].map((t) => (
@@ -158,8 +151,8 @@ function IntegracoesIndexPage() {
           Para importar dados de outros bancos como{" "}
           <span className="font-medium text-foreground">Nubank</span>,{" "}
           <span className="font-medium text-foreground">Itaú</span> e{" "}
-          <span className="font-medium text-foreground">Bradesco</span>, será
-          necessário Open Finance — em breve no Gasto Inteligente.
+          <span className="font-medium text-foreground">Bradesco</span>, será necessário Open
+          Finance — em breve no Gasto Inteligente.
         </p>
       </section>
     </MobileShell>
@@ -188,9 +181,7 @@ function ComingSoonCard({
               Em breve
             </span>
           </div>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            {description}
-          </p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{description}</p>
         </div>
       </div>
     </div>

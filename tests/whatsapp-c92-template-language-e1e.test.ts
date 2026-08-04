@@ -108,7 +108,9 @@ describe("resolveTemplateLanguage — fail-closed", () => {
   });
 
   it("payload_schema.language não-string → payload_schema_invalid", () => {
-    const r = resolveTemplateLanguage(tpl({ payload_schema: { language: 42 as unknown as string } }));
+    const r = resolveTemplateLanguage(
+      tpl({ payload_schema: { language: 42 as unknown as string } }),
+    );
     expect(r.ok).toBe(false);
   });
 

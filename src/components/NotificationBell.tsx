@@ -21,11 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAlerts } from "@/lib/alerts/use-alerts";
-import {
-  categoryOf,
-  type AlertPriority,
-  type UserAlert,
-} from "@/lib/alerts/types";
+import { categoryOf, type AlertPriority, type UserAlert } from "@/lib/alerts/types";
 
 function priorityMeta(p: AlertPriority): { bg: string; fg: string; badge: string } {
   switch (p) {
@@ -60,7 +56,8 @@ function priorityMeta(p: AlertPriority): { bg: string; fg: string; badge: string
 function iconForType(type: string): LucideIcon {
   if (type.includes("vencida") || type.includes("estouro")) return AlertTriangle;
   if (type.includes("hoje")) return Clock;
-  if (type.includes("amanha") || type.includes("vencendo") || type.includes("em5")) return CalendarClock;
+  if (type.includes("amanha") || type.includes("vencendo") || type.includes("em5"))
+    return CalendarClock;
   const cat = categoryOf(type);
   switch (cat) {
     case "cartoes":
@@ -88,13 +85,20 @@ function ItemRow({ alert, onClose }: { alert: UserAlert; onClose: () => void }) 
   const Icon = iconForType(alert.type);
   return (
     <li className="flex gap-3 px-4 py-3 border-b border-border/40 last:border-b-0">
-      <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", meta.bg)}>
+      <div
+        className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", meta.bg)}
+      >
         <Icon className={cn("h-4 w-4", meta.fg)} />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
           <p className="truncate text-sm font-semibold">{alert.title}</p>
-          <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold", meta.badge)}>
+          <span
+            className={cn(
+              "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+              meta.badge,
+            )}
+          >
             {t(`notifications.priority.${alert.priority}`)}
           </span>
         </div>
@@ -110,7 +114,9 @@ function ItemRow({ alert, onClose }: { alert: UserAlert; onClose: () => void }) 
               className="h-7 px-2 text-xs"
               onClick={onClose}
             >
-              <Link to={alert.action_url}>{alert.action_label || t("notifications.actionDefault")}</Link>
+              <Link to={alert.action_url}>
+                {alert.action_label || t("notifications.actionDefault")}
+              </Link>
             </Button>
           </div>
         )}
@@ -183,7 +189,11 @@ export function NotificationBell() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label={unreadCount > 0 ? t("notifications.ariaUnread", { count: unreadCount }) : t("notifications.ariaDefault")}
+          aria-label={
+            unreadCount > 0
+              ? t("notifications.ariaUnread", { count: unreadCount })
+              : t("notifications.ariaDefault")
+          }
           className={cn(
             "relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
             "border border-border/60 bg-card/60 backdrop-blur transition-all",
@@ -195,7 +205,9 @@ export function NotificationBell() {
             className={cn(
               "h-[18px] w-[18px] transition-colors",
               total > 0 ? "text-foreground" : "text-muted-foreground",
-              unreadCount > 0 && !open && "motion-safe:animate-[bell-shake_2.4s_ease-in-out_infinite]",
+              unreadCount > 0 &&
+                !open &&
+                "motion-safe:animate-[bell-shake_2.4s_ease-in-out_infinite]",
             )}
           />
           {unreadCount > 0 && (

@@ -40,7 +40,7 @@ const SUBSCRIPTION_ALLOWLIST = new Set<string>([
   "/perfil",
   "/admin",
   "/categorias",
-  
+
   "/manual",
 ]);
 
@@ -84,7 +84,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (loading || !requiresBioUnlock) return;
-    console.log("[AndroidBiometricLogin] AuthGate aguardando desbloqueio biométrico antes da rota protegida");
+    console.log(
+      "[AndroidBiometricLogin] AuthGate aguardando desbloqueio biométrico antes da rota protegida",
+    );
     void navigate({ to: "/login", replace: true });
   }, [loading, requiresBioUnlock, navigate]);
 
@@ -97,16 +99,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     if (hasActiveAccess) return;
     if (isSubscriptionAllowed(pathname)) return;
     void navigate({ to: "/meu-plano" });
-  }, [
-    loading,
-    session,
-    plan.loading,
-    rolesLoading,
-    isAdmin,
-    hasActiveAccess,
-    pathname,
-    navigate,
-  ]);
+  }, [loading, session, plan.loading, rolesLoading, isAdmin, hasActiveAccess, pathname, navigate]);
 
   useEffect(() => {
     if (!loading && !session && !redirecting) {
@@ -133,7 +126,14 @@ export function AuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (loading || !session) return;
     if (onboardingChecked) return;
-    const skip = ["/onboarding", "/login", "/cadastro", "/recuperar-senha", "/reset-password", "/confirmar"];
+    const skip = [
+      "/onboarding",
+      "/login",
+      "/cadastro",
+      "/recuperar-senha",
+      "/reset-password",
+      "/confirmar",
+    ];
     if (skip.includes(pathname)) {
       setOnboardingChecked(true);
       return;
@@ -249,7 +249,7 @@ export function AuthShell({
       }
       style={{
         minHeight: "100vh",
-        // eslint-disable-next-line
+
         ...(typeof CSS !== "undefined" && CSS.supports?.("min-height: 100dvh")
           ? { minHeight: "100dvh" }
           : {}),
@@ -259,8 +259,14 @@ export function AuthShell({
     >
       {background ?? (
         <>
-          <div aria-hidden className="pointer-events-none absolute -top-32 -left-24 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl dark:bg-blue-500/10" />
-          <div aria-hidden className="pointer-events-none absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-emerald-300/20 blur-3xl dark:bg-emerald-500/10" />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-32 -left-24 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl dark:bg-blue-500/10"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-emerald-300/20 blur-3xl dark:bg-emerald-500/10"
+          />
         </>
       )}
 
@@ -274,23 +280,23 @@ export function AuthShell({
         </Link>
 
         <div className="rounded-3xl border border-border/60 bg-card/95 px-6 py-8 shadow-xl shadow-slate-900/5 backdrop-blur-sm sm:px-9 sm:py-10 dark:shadow-black/30">
-          <Link to="/" className="mx-auto flex items-center justify-center" aria-label="Gasto Inteligente">
+          <Link
+            to="/"
+            className="mx-auto flex items-center justify-center"
+            aria-label="Gasto Inteligente"
+          >
             <BrandMark variant="login" className="h-14 w-auto" />
           </Link>
 
           <div className="mt-6 text-center">
             <h1 className="text-2xl font-bold tracking-tight sm:text-[1.6rem]">{title}</h1>
-            {subtitle && (
-              <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>
-            )}
+            {subtitle && <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>}
           </div>
 
           <div className="mt-7">{children}</div>
 
           {footer && (
-            <div className="mt-6 border-t border-border/60 pt-5 text-center text-sm">
-              {footer}
-            </div>
+            <div className="mt-6 border-t border-border/60 pt-5 text-center text-sm">{footer}</div>
           )}
         </div>
       </div>

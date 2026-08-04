@@ -177,9 +177,7 @@ function Confirmar() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">
-            {t("eyebrow")}
-          </p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">{t("eyebrow")}</p>
           <h1 className="text-xl font-bold tracking-tight">
             {step === "sucesso" ? t("headerDone") : t("header")}
           </h1>
@@ -192,9 +190,7 @@ function Confirmar() {
             <Check className="h-8 w-8" />
           </div>
           <h2 className="mt-4 text-lg font-semibold">{t("success.title")}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("success.subtitle")}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("success.subtitle")}</p>
           <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
             <Button onClick={() => navigate({ to: "/gastos" })} className="rounded-xl card-press">
               {t("success.view")}
@@ -217,9 +213,7 @@ function Confirmar() {
 
       {(step === "upload" || step === "analisando" || step === "erro") && (
         <>
-          <p className="mt-3 text-sm text-muted-foreground">
-            {t("intro")}
-          </p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("intro")}</p>
 
           <input
             ref={fileRef}
@@ -258,9 +252,7 @@ function Confirmar() {
                 className="flex w-full flex-col items-center justify-center gap-2 p-10 text-muted-foreground hover:bg-card-elevated transition-colors"
               >
                 <ImageUp className="h-7 w-7" />
-                <p className="text-sm font-medium text-foreground">
-                  {t("upload.cta")}
-                </p>
+                <p className="text-sm font-medium text-foreground">{t("upload.cta")}</p>
                 <p className="text-xs">{t("upload.formats")}</p>
               </button>
             )}
@@ -272,17 +264,21 @@ function Confirmar() {
                 <Loader2 className="h-6 w-6 animate-spin" />
               </div>
               <p className="mt-3 font-semibold">{t("analyzing.title")}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {t("analyzing.subtitle")}
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("analyzing.subtitle")}</p>
               <div className="mt-4 mx-auto flex max-w-xs items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand animate-pulse-soft" />
                 <span>{t("analyzing.values")}</span>
                 <span className="mx-1 text-border">·</span>
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand/60 animate-pulse-soft" style={{ animationDelay: "0.3s" }} />
+                <span
+                  className="inline-block h-1.5 w-1.5 rounded-full bg-brand/60 animate-pulse-soft"
+                  style={{ animationDelay: "0.3s" }}
+                />
                 <span>{t("analyzing.date")}</span>
                 <span className="mx-1 text-border">·</span>
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand/40 animate-pulse-soft" style={{ animationDelay: "0.6s" }} />
+                <span
+                  className="inline-block h-1.5 w-1.5 rounded-full bg-brand/40 animate-pulse-soft"
+                  style={{ animationDelay: "0.6s" }}
+                />
                 <span>{t("analyzing.category")}</span>
               </div>
             </div>
@@ -291,9 +287,7 @@ function Confirmar() {
           {step === "erro" && (
             <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-5 animate-fade-in">
               <p className="font-semibold">{t("error.title")}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {erro || t("error.fallback")}
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{erro || t("error.fallback")}</p>
               <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                 <Button
                   variant="outline"
@@ -351,12 +345,13 @@ function Confirmar() {
                     : t("review.foundOne")}
                 </h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {result.valoresEncontrados.length > 1
-                    ? t("review.subMany")
-                    : t("review.subOne")}
+                  {result.valoresEncontrados.length > 1 ? t("review.subMany") : t("review.subOne")}
                 </p>
               </div>
-              <ConfiancaBadge nivel={result.confianca} label={t(`confidence.${result.confianca}`)} />
+              <ConfiancaBadge
+                nivel={result.confianca}
+                label={t(`confidence.${result.confianca}`)}
+              />
             </div>
 
             {imagem && (
@@ -374,8 +369,7 @@ function Confirmar() {
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2 stagger">
                   {result.valoresEncontrados.map((v, idx) => {
-                    const ativo =
-                      (overrideValor ?? result.valor ?? -1) === v;
+                    const ativo = (overrideValor ?? result.valor ?? -1) === v;
                     return (
                       <button
                         key={`${v}-${idx}`}
@@ -412,11 +406,7 @@ function Confirmar() {
             submitLabel={t("review.submit")}
             onSubmit={async (data) => {
               if (!(await requireOnline())) return;
-              const dup = findPossibleDuplicate(
-                data.valor,
-                data.data,
-                data.estabelecimento,
-              );
+              const dup = findPossibleDuplicate(data.valor, data.data, data.estabelecimento);
               const save = () => {
                 if (!canWrite) {
                   requireSubscription(t("guard"));
@@ -434,9 +424,7 @@ function Confirmar() {
             }}
           />
 
-          <p className="text-center text-xs text-muted-foreground">
-            {t("review.tip")}
-          </p>
+          <p className="text-center text-xs text-muted-foreground">{t("review.tip")}</p>
         </div>
       )}
 
@@ -444,9 +432,7 @@ function Confirmar() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("dup.title")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("dup.desc")}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{t("dup.desc")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("dup.cancel")}</AlertDialogCancel>
@@ -463,7 +449,9 @@ function Confirmar() {
       </AlertDialog>
       <PremiumLockModal
         open={premiumGate.state.open}
-        onOpenChange={(v) => { if (!v) premiumGate.close(); }}
+        onOpenChange={(v) => {
+          if (!v) premiumGate.close();
+        }}
         title={premiumGate.state.title}
         description={premiumGate.state.description}
         feature={premiumGate.state.feature ?? undefined}

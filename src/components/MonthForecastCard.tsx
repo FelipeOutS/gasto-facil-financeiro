@@ -62,7 +62,6 @@ const STATUS_STYLES = {
   },
 } as const;
 
-
 export function MonthForecastCard({ mes, ano, className }: Props) {
   const { t } = useTranslation("dashboard");
   const plan = usePlan();
@@ -85,8 +84,11 @@ export function MonthForecastCard({ mes, ano, className }: Props) {
       .then((r) => {
         if (!cancel) setData(r as Forecast);
       })
-      .catch((e: any) => {
-        if (!cancel) setError(typeof e?.message === "string" ? e.message : t("forecast.errorFallback"));
+      .catch((e) => {
+        if (!cancel) {
+          const msg = e instanceof Error ? e.message : t("forecast.errorFallback");
+          setError(msg);
+        }
       })
       .finally(() => {
         if (!cancel) setLoading(false);
@@ -164,7 +166,12 @@ export function MonthForecastCard({ mes, ano, className }: Props) {
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
-            <span className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-background/70 ring-1", cfg.ring)}>
+            <span
+              className={cn(
+                "grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-background/70 ring-1",
+                cfg.ring,
+              )}
+            >
               <Icon className={cn("h-5 w-5", cfg.text)} />
             </span>
             <div className="min-w-0">
@@ -177,7 +184,13 @@ export function MonthForecastCard({ mes, ano, className }: Props) {
             </div>
           </div>
           {data && (
-            <span className={cn("rounded-full bg-background/70 px-2.5 py-1 text-[11px] font-semibold ring-1", cfg.ring, cfg.text)}>
+            <span
+              className={cn(
+                "rounded-full bg-background/70 px-2.5 py-1 text-[11px] font-semibold ring-1",
+                cfg.ring,
+                cfg.text,
+              )}
+            >
               {t(`forecast.status.${status}`)}
             </span>
           )}
@@ -190,9 +203,7 @@ export function MonthForecastCard({ mes, ano, className }: Props) {
         ) : error ? (
           <p className="mt-4 text-sm text-destructive">{error}</p>
         ) : !data?.temDados ? (
-          <p className="mt-4 text-sm text-muted-foreground">
-            {t("forecast.noData")}
-          </p>
+          <p className="mt-4 text-sm text-muted-foreground">{t("forecast.noData")}</p>
         ) : (
           <>
             <div className="mt-4 flex flex-col gap-1">
@@ -255,9 +266,7 @@ export function MonthForecastCard({ mes, ano, className }: Props) {
         )}
       </section>
 
-      {data && (
-        <ForecastDetailDialog open={detailOpen} onOpenChange={setDetailOpen} data={data} />
-      )}
+      {data && <ForecastDetailDialog open={detailOpen} onOpenChange={setDetailOpen} data={data} />}
     </>
   );
 }
@@ -281,7 +290,9 @@ function Pill({
         <span
           className={cn(
             "grid h-5 w-5 place-items-center rounded-full",
-            tone === "up" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-rose-500/15 text-rose-600 dark:text-rose-400",
+            tone === "up"
+              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+              : "bg-rose-500/15 text-rose-600 dark:text-rose-400",
           )}
         >
           {icon}
@@ -290,7 +301,9 @@ function Pill({
           {label}
         </span>
       </div>
-      <div className="mt-1 truncate text-base font-bold tabular-nums sm:text-lg">{formatBRL(value)}</div>
+      <div className="mt-1 truncate text-base font-bold tabular-nums sm:text-lg">
+        {formatBRL(value)}
+      </div>
       {sub && <div className="truncate text-[11px] text-muted-foreground">{sub}</div>}
     </div>
   );
@@ -337,18 +350,30 @@ function ForecastDetailDialog({
           <Block title={t("forecast.dialog.entradas")}>
             <Row label={t("forecast.dialog.confirmadasIn")} value={data.entradasConfirmadas} />
             <Row label={t("forecast.dialog.previstasIn")} value={data.entradasPrevistas} muted />
-            <Row label={t("forecast.dialog.totalPrevisto")} value={data.entradasConfirmadas + data.entradasPrevistas} strong />
+            <Row
+              label={t("forecast.dialog.totalPrevisto")}
+              value={data.entradasConfirmadas + data.entradasPrevistas}
+              strong
+            />
           </Block>
 
           <Block title={t("forecast.dialog.saidas")}>
             <Row label={t("forecast.dialog.confirmadasOut")} value={data.saidasConfirmadas} />
             <Row label={t("forecast.dialog.pendentesOut")} value={data.saidasPendentes} muted />
-            <Row label={t("forecast.dialog.totalPrevisto")} value={data.saidasConfirmadas + data.saidasPendentes} strong />
+            <Row
+              label={t("forecast.dialog.totalPrevisto")}
+              value={data.saidasConfirmadas + data.saidasPendentes}
+              strong
+            />
           </Block>
 
           <Block title={t("forecast.dialog.resultado")}>
             <Row label={t("forecast.dialog.atual")} value={data.resultadoAtual} />
-            <Row label={t("forecast.dialog.previstoFechamento")} value={data.resultadoPrevisto} strong />
+            <Row
+              label={t("forecast.dialog.previstoFechamento")}
+              value={data.resultadoPrevisto}
+              strong
+            />
           </Block>
 
           {data.faturasDetalhe.length > 0 && (
@@ -374,7 +399,9 @@ function ForecastDetailDialog({
                 <div key={i} className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
                     <div className="truncate font-medium">{it.nome}</div>
-                    {it.detalhe && <div className="text-xs text-muted-foreground">{it.detalhe}</div>}
+                    {it.detalhe && (
+                      <div className="text-xs text-muted-foreground">{it.detalhe}</div>
+                    )}
                   </div>
                   <span className="shrink-0 tabular-nums font-medium">{formatBRL(it.valor)}</span>
                 </div>
@@ -404,16 +431,30 @@ function ForecastDetailDialog({
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-3">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {title}
+      </p>
       <div className="space-y-1.5">{children}</div>
     </div>
   );
 }
 
-function Row({ label, value, muted, strong }: { label: string; value: number; muted?: boolean; strong?: boolean }) {
+function Row({
+  label,
+  value,
+  muted,
+  strong,
+}: {
+  label: string;
+  value: number;
+  muted?: boolean;
+  strong?: boolean;
+}) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className={cn(muted && "text-muted-foreground", strong && "font-semibold")}>{label}</span>
+      <span className={cn(muted && "text-muted-foreground", strong && "font-semibold")}>
+        {label}
+      </span>
       <span className={cn("shrink-0 tabular-nums", strong && "font-bold")}>{formatBRL(value)}</span>
     </div>
   );

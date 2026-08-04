@@ -54,9 +54,7 @@ function AdicionarMetaPage() {
           </span>
           Atualizar valor
         </h1>
-        {meta && (
-          <p className="mt-1 text-sm text-muted-foreground">{meta.nome}</p>
-        )}
+        {meta && <p className="mt-1 text-sm text-muted-foreground">{meta.nome}</p>}
       </header>
 
       <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-card">

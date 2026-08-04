@@ -64,7 +64,10 @@ export function generateOpaqueExternalReference(secret: string): string {
 }
 
 /** Verifica formato + checksum ANTES de qualquer consulta ao banco. */
-export function verifyOpaqueExternalReference(ref: string | null | undefined, secret: string): boolean {
+export function verifyOpaqueExternalReference(
+  ref: string | null | undefined,
+  secret: string,
+): boolean {
   if (!ref || typeof ref !== "string") return false;
   const parts = ref.split(".");
   if (parts.length !== 3) return false;
@@ -120,7 +123,7 @@ export async function createCheckoutSession(input: {
 
   const { data, error } = await supabaseAdmin
     .from("payment_checkout_sessions")
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     .insert({
       user_id: input.userId,
       plan_key: input.offer.planKey,
@@ -252,7 +255,10 @@ export async function resolveCheckoutSession(input: {
 }
 
 /** Marca a sessão como consumida (idempotente). */
-export async function markCheckoutSessionConsumed(sessionId: string, status = "consumed"): Promise<void> {
+export async function markCheckoutSessionConsumed(
+  sessionId: string,
+  status = "consumed",
+): Promise<void> {
   await supabaseAdmin
     .from("payment_checkout_sessions")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -21,12 +21,19 @@ export function PlaceholderAdSlot({ className, slotId }: PlaceholderAdSlotProps)
         className,
       )}
     >
-      <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+      <span
+        aria-hidden="true"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground"
+      >
         <Megaphone className="h-4 w-4" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">{t("ads.sponsoredLabel")}</p>
-        <p className="truncate text-sm font-medium text-foreground/80">{t("ads.placeholderTitle")}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">
+          {t("ads.sponsoredLabel")}
+        </p>
+        <p className="truncate text-sm font-medium text-foreground/80">
+          {t("ads.placeholderTitle")}
+        </p>
         <p className="truncate text-xs text-muted-foreground">{t("ads.placeholderSubtitle")}</p>
       </div>
     </aside>

@@ -121,7 +121,10 @@ export async function handleMercadoPagoCallback(params: {
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    await markIntegrationError(verified.uid, `oauth_exchange_failed: ${res.status} ${text.slice(0, 200)}`);
+    await markIntegrationError(
+      verified.uid,
+      `oauth_exchange_failed: ${res.status} ${text.slice(0, 200)}`,
+    );
     return { ok: false, error: "oauth_exchange_failed" };
   }
   const json = (await res.json()) as {
@@ -140,22 +143,20 @@ export async function handleMercadoPagoCallback(params: {
     ? new Date(Date.now() + json.expires_in * 1000).toISOString()
     : null;
 
-  const { error } = await supabaseAdmin
-    .from("user_integrations")
-    .upsert(
-      {
-        user_id: verified.uid,
-        provider: PROVIDER,
-        provider_user_id: json.user_id != null ? String(json.user_id) : null,
-        access_token: json.access_token,
-        refresh_token: json.refresh_token ?? null,
-        expires_at: expiresAt,
-        scope: json.scope ?? null,
-        status: "connected",
-        last_error: null,
-      },
-      { onConflict: "user_id,provider" },
-    );
+  const { error } = await supabaseAdmin.from("user_integrations").upsert(
+    {
+      user_id: verified.uid,
+      provider: PROVIDER,
+      provider_user_id: json.user_id != null ? String(json.user_id) : null,
+      access_token: json.access_token,
+      refresh_token: json.refresh_token ?? null,
+      expires_at: expiresAt,
+      scope: json.scope ?? null,
+      status: "connected",
+      last_error: null,
+    },
+    { onConflict: "user_id,provider" },
+  );
 
   if (error) {
     return { ok: false, error: "db_upsert_failed" };
@@ -164,17 +165,15 @@ export async function handleMercadoPagoCallback(params: {
 }
 
 async function markIntegrationError(userId: string, message: string) {
-  await supabaseAdmin
-    .from("user_integrations")
-    .upsert(
-      {
-        user_id: userId,
-        provider: PROVIDER,
-        status: "error",
-        last_error: message,
-      },
-      { onConflict: "user_id,provider" },
-    );
+  await supabaseAdmin.from("user_integrations").upsert(
+    {
+      user_id: userId,
+      provider: PROVIDER,
+      status: "error",
+      last_error: message,
+    },
+    { onConflict: "user_id,provider" },
+  );
 }
 
 // ============= Token refresh =============
@@ -278,11 +277,16 @@ function mapPaymentMethod(p: MpPayment): string {
   if (t === "debit_card") return "debit_card";
   if (t === "account_money") return "account_money";
   if (t === "bank_transfer" || (p.payment_method_id ?? "").toLowerCase() === "pix") return "pix";
-  if (t === "ticket" || (p.payment_method_id ?? "").toLowerCase().includes("bolbradesco")) return "boleto";
+  if (t === "ticket" || (p.payment_method_id ?? "").toLowerCase().includes("bolbradesco"))
+    return "boleto";
   return t || (p.payment_method_id ?? "outro");
 }
 
-export function mapMercadoPagoTransactionToGastoInteligente(p: MpPayment, userId: string, integrationId: string) {
+export function mapMercadoPagoTransactionToGastoInteligente(
+  p: MpPayment,
+  userId: string,
+  integrationId: string,
+) {
   const status = (p.status ?? "").toLowerCase();
   const opType = (p.operation_type ?? "").toLowerCase();
   let type: string = "receita";
@@ -569,7 +573,6 @@ export async function syncMercadoPagoTransactions(
       .from("user_integrations")
       .update({ last_sync_at: new Date().toISOString(), last_error: null, status: "connected" })
       .eq("id", integration.id);
-
 
     return { ok: true, summary };
   } catch (err) {

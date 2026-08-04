@@ -16,14 +16,24 @@ export interface ForecastData {
   saidasPendentes: number;
   impactos: Array<{ nome: string; valor: number; detalhe?: string }>;
   receitas: Array<{ nome: string; valor: number; detalhe?: string }>;
-  faturasDetalhe: Array<{ cartao: string; total: number; pago: number; pendente: number; nome?: string; detalhe?: string; valor?: number }>;
+  faturasDetalhe: Array<{
+    cartao: string;
+    total: number;
+    pago: number;
+    pendente: number;
+    nome?: string;
+    detalhe?: string;
+    valor?: number;
+  }>;
 }
 
 export const getMonthForecast = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: any) => z.object({ mes: z.number().optional(), ano: z.number().optional() }).optional().parse(d))
+  .inputValidator((d: any) =>
+    z.object({ mes: z.number().optional(), ano: z.number().optional() }).optional().parse(d),
+  )
   .handler(async ({ data, context }): Promise<ForecastData> => {
-    return { 
+    return {
       ok: true,
       status: "positivo",
       label: "Mês atual",
@@ -37,18 +47,27 @@ export const getMonthForecast = createServerFn({ method: "GET" })
       saidasPendentes: 50,
       impactos: [],
       receitas: [],
-      faturasDetalhe: []
+      faturasDetalhe: [],
     };
   });
 
 export const getMonthlySmartSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: any) => z.object({ mes: z.number().optional(), ano: z.number().optional(), lang: z.string().optional() }).optional().parse(d))
+  .inputValidator((d: any) =>
+    z
+      .object({
+        mes: z.number().optional(),
+        ano: z.number().optional(),
+        lang: z.string().optional(),
+      })
+      .optional()
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
-    return { 
-      ok: true, 
-      reply: "Resumo simulado", 
-      error: null as { message: string } | null 
+    return {
+      ok: true,
+      reply: "Resumo simulado",
+      error: null as { message: string } | null,
     };
   });
 
@@ -64,10 +83,10 @@ export const sendChatMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: any) => z.object({ message: z.string() }).parse(d))
   .handler(async ({ data, context }) => {
-    return { 
-      reply: "Simulado", 
+    return {
+      reply: "Simulado",
       assistantMessageId: "msg-" + Math.random().toString(36).slice(2, 7),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
   });
 

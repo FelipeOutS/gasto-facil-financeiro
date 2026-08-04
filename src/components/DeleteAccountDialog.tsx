@@ -87,10 +87,9 @@ export function DeleteAccountDialog({
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
               <span className="block">
-                Essa ação é permanente. Ao excluir sua conta, você perderá o
-                acesso aos seus dados, planos, gastos, cartões, contas,
-                investimentos, metas, relatórios e demais informações
-                cadastradas.
+                Essa ação é permanente. Ao excluir sua conta, você perderá o acesso aos seus dados,
+                planos, gastos, cartões, contas, investimentos, metas, relatórios e demais
+                informações cadastradas.
               </span>
               <span className="block rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
                 Essa ação não poderá ser desfeita.
@@ -134,10 +133,8 @@ export function DeleteAccountDialog({
           </DialogTitle>
           <DialogDescription>
             Para confirmar, digite{" "}
-            <span className="font-mono font-semibold text-destructive">
-              EXCLUIR
-            </span>{" "}
-            no campo abaixo.
+            <span className="font-mono font-semibold text-destructive">EXCLUIR</span> no campo
+            abaixo.
           </DialogDescription>
         </DialogHeader>
 
@@ -155,11 +152,7 @@ export function DeleteAccountDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={deleting}
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={deleting}>
             Cancelar
           </Button>
           <Button
@@ -203,8 +196,7 @@ export function ZonaDeRiscoCard() {
           </p>
           <h3 className="mt-1 text-sm font-semibold">Excluir minha conta</h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Remove definitivamente seus dados do app. Essa ação não pode ser
-            desfeita.
+            Remove definitivamente seus dados do app. Essa ação não pode ser desfeita.
           </p>
           <Button
             variant="outline"

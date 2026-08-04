@@ -59,9 +59,7 @@ function readWabaId():
   return { ok: true, wabaId: raw };
 }
 
-function readAccessToken():
-  | { ok: true; token: string }
-  | { ok: false; reason: "token_missing" } {
+function readAccessToken(): { ok: true; token: string } | { ok: false; reason: "token_missing" } {
   const raw = process.env.WHATSAPP_ACCESS_TOKEN;
   if (typeof raw !== "string" || raw.length === 0) return { ok: false, reason: "token_missing" };
   return { ok: true, token: raw };
@@ -74,11 +72,7 @@ export type UrlBuildResult =
   | { ok: true; url: string }
   | {
       ok: false;
-      reason:
-        | "waba_missing"
-        | "waba_invalid"
-        | "graph_config_error"
-        | "invalid_path";
+      reason: "waba_missing" | "waba_invalid" | "graph_config_error" | "invalid_path";
     };
 
 /**
@@ -98,9 +92,10 @@ export function buildMessageTemplatesUrl(query?: {
     parts.push(`limit=${query.limit}`);
   }
   if (query?.after) parts.push(`after=${encodeURIComponent(query.after)}`);
-  const path = parts.length > 0
-    ? `${waba.wabaId}/message_templates?${parts.join("&")}`
-    : `${waba.wabaId}/message_templates`;
+  const path =
+    parts.length > 0
+      ? `${waba.wabaId}/message_templates?${parts.join("&")}`
+      : `${waba.wabaId}/message_templates`;
   const built = buildWhatsAppGraphUrl({ kind: "admin_path", path });
   if (!built.ok) {
     return {
@@ -154,19 +149,18 @@ export type PayloadPrepareResult =
 
 export function prepareSubmissionPayload(local: CatalogTemplateRow): PayloadPrepareResult {
   if (!resolveAllowedMapping(local.internal_key).ok) return { ok: false, reason: "not_allowed" };
-  if (!local.body || local.body.length === 0) return { ok: false, reason: "invalid_local_template" };
+  if (!local.body || local.body.length === 0)
+    return { ok: false, reason: "invalid_local_template" };
   if (local.language !== "pt_BR") return { ok: false, reason: "invalid_local_template" };
   if (local.category !== "UTILITY") return { ok: false, reason: "invalid_local_template" };
   const components: unknown[] = [
-    { 
-      type: "BODY", 
-      text: local.body, 
+    {
+      type: "BODY",
+      text: local.body,
       example: {
-        body_text: [Object.values(local.examples || { "1": "Exemplo" })]
-      }
+        body_text: [Object.values(local.examples || { "1": "Exemplo" })],
+      },
     },
-
-
   ];
   if (local.footer && local.footer.length > 0) {
     components.push({ type: "FOOTER", text: local.footer });
@@ -194,7 +188,15 @@ export function prepareSubmissionPayload(local: CatalogTemplateRow): PayloadPrep
 
 export type DryRunResult =
   | FlagOutcomeDisabled
-  | { ok: false; reason: "invalid_local_template" | "not_allowed" | "not_draft" | "already_active" | "duplicate_local" }
+  | {
+      ok: false;
+      reason:
+        | "invalid_local_template"
+        | "not_allowed"
+        | "not_draft"
+        | "already_active"
+        | "duplicate_local";
+    }
   | {
       ok: true;
       dry_run: true;
@@ -211,7 +213,8 @@ export function prepareDryRun(
   local: CatalogTemplateRow,
   existingLocalByMeta?: CatalogTemplateRow | null,
 ): DryRunResult {
-  if (!isMgmtEnabled()) return { ok: false, reason: "disabled", flag: "WHATSAPP_META_MGMT_ENABLED" };
+  if (!isMgmtEnabled())
+    return { ok: false, reason: "disabled", flag: "WHATSAPP_META_MGMT_ENABLED" };
   if (local.status !== "draft") return { ok: false, reason: "not_draft" };
   if (local.active !== false) return { ok: false, reason: "already_active" };
   const prepared = prepareSubmissionPayload(local);
@@ -285,7 +288,8 @@ export type ListRemoteOptions = {
 };
 
 export async function listRemoteTemplates(opts: ListRemoteOptions = {}): Promise<RemoteListResult> {
-  if (!isMgmtEnabled()) return { ok: false, reason: "disabled", flag: "WHATSAPP_META_MGMT_ENABLED" };
+  if (!isMgmtEnabled())
+    return { ok: false, reason: "disabled", flag: "WHATSAPP_META_MGMT_ENABLED" };
   const tok = readAccessToken();
   if (!tok.ok) return { ok: false, reason: "token_missing" };
   const url = buildMessageTemplatesUrl({
@@ -307,10 +311,7 @@ export async function listRemoteTemplates(opts: ListRemoteOptions = {}): Promise
   }
   const fetchFn = opts.fetchFn ?? fetch;
   const controller = new AbortController();
-  const timeoutMs = Math.min(
-    Math.max(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS, 1_000),
-    30_000,
-  );
+  const timeoutMs = Math.min(Math.max(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS, 1_000), 30_000);
   const timer = setTimeout(() => controller.abort("timeout"), timeoutMs);
   try {
     const res = await fetchFn(url.url, {
@@ -322,13 +323,23 @@ export async function listRemoteTemplates(opts: ListRemoteOptions = {}): Promise
       signal: controller.signal,
     });
     if (!res.ok) {
-      return { ok: false, reason: "http_error", status: res.status, correlationId: opts.correlationId };
+      return {
+        ok: false,
+        reason: "http_error",
+        status: res.status,
+        correlationId: opts.correlationId,
+      };
     }
     let text: string;
     try {
       text = await res.text();
     } catch {
-      return { ok: false, reason: "http_error", status: res.status, correlationId: opts.correlationId };
+      return {
+        ok: false,
+        reason: "http_error",
+        status: res.status,
+        correlationId: opts.correlationId,
+      };
     }
     let parsed: unknown;
     try {
@@ -385,7 +396,17 @@ function normalizeRemoteList(parsed: unknown): RemoteTemplateSummary[] {
 
 export type RemoteFetchOneResult =
   | FlagOutcomeDisabled
-  | { ok: false; reason: "not_allowed" | "not_found" | "http_error" | "invalid_json" | "timeout" | "token_missing" | "graph_config_error" }
+  | {
+      ok: false;
+      reason:
+        | "not_allowed"
+        | "not_found"
+        | "http_error"
+        | "invalid_json"
+        | "timeout"
+        | "token_missing"
+        | "graph_config_error";
+    }
   | { ok: true; template: RemoteTemplateSummary };
 
 export async function fetchRemoteTemplateByName(
@@ -393,13 +414,17 @@ export async function fetchRemoteTemplateByName(
   language: string,
   opts: ListRemoteOptions = {},
 ): Promise<RemoteFetchOneResult> {
-  if (!isMgmtEnabled()) return { ok: false, reason: "disabled", flag: "WHATSAPP_META_MGMT_ENABLED" };
+  if (!isMgmtEnabled())
+    return { ok: false, reason: "disabled", flag: "WHATSAPP_META_MGMT_ENABLED" };
   // Consulta é feita listando (com paginação restrita) e correlacionando
   // por (name, language) — não aceitamos ID vindo do client.
   const list = await listRemoteTemplates(opts);
   if (!list.ok) {
     if (list.reason === "disabled") return { ok: false, reason: "disabled", flag: list.flag };
-    return { ok: false, reason: list.reason as RemoteFetchOneResult extends { reason: infer R } ? R : never };
+    return {
+      ok: false,
+      reason: list.reason as RemoteFetchOneResult extends { reason: infer R } ? R : never,
+    };
   }
   const found = list.templates.find((t) => t.name === metaName && t.language === language);
   if (!found) return { ok: false, reason: "not_found" };

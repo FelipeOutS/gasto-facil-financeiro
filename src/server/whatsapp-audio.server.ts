@@ -79,8 +79,14 @@ export function detectAudioMimeFromBytes(buf: Uint8Array): RealAudioMime | null 
   }
   // WAV: "RIFF" .... "WAVE"
   if (
-    buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
-    buf[8] === 0x57 && buf[9] === 0x41 && buf[10] === 0x56 && buf[11] === 0x45
+    buf[0] === 0x52 &&
+    buf[1] === 0x49 &&
+    buf[2] === 0x46 &&
+    buf[3] === 0x46 &&
+    buf[8] === 0x57 &&
+    buf[9] === 0x41 &&
+    buf[10] === 0x56 &&
+    buf[11] === 0x45
   ) {
     return "audio/wav";
   }
@@ -115,7 +121,8 @@ function compatibleMime(declared: string, real: RealAudioMime): boolean {
   if (real === "audio/ogg" && (declared === "audio/oga" || declared === "audio/opus")) return true;
   if (real === "audio/mpeg" && declared === "audio/mp3") return true;
   if (real === "audio/mp4" && (declared === "audio/m4a" || declared === "audio/x-m4a")) return true;
-  if (real === "audio/wav" && (declared === "audio/x-wav" || declared === "audio/wave")) return true;
+  if (real === "audio/wav" && (declared === "audio/x-wav" || declared === "audio/wave"))
+    return true;
   return false;
 }
 
@@ -160,8 +167,7 @@ export function validateDownloadedAudio(
 
 // ---------- Mensagens seguras ao usuário ----------
 
-export const WHATSAPP_AUDIO_DISABLED_REPLY =
-  "Áudios ainda não estão disponíveis neste canal.";
+export const WHATSAPP_AUDIO_DISABLED_REPLY = "Áudios ainda não estão disponíveis neste canal.";
 
 export const WHATSAPP_AUDIO_UNINTELLIGIBLE_REPLY =
   "Não consegui entender bem o áudio.\n\n" +
@@ -187,11 +193,7 @@ export type WhatsAppAudioDecision =
   | "transcription_unsupported_language"
   | "routed_to_text_pipeline";
 
-export type AudioDurationBucket =
-  | "under_30s"
-  | "30_to_60s"
-  | "60_to_120s"
-  | "over_limit";
+export type AudioDurationBucket = "under_30s" | "30_to_60s" | "60_to_120s" | "over_limit";
 
 export type WhatsAppAudioDecisionLog = {
   event: "wa_audio_decision";
@@ -230,6 +232,6 @@ export function logAudioDecision(input: {
     audioBytesBucket: input.audioBytesBucket,
     audioDurationBucket: input.audioDurationBucket ?? null,
   };
-  // eslint-disable-next-line no-console
+
   console.info(log);
 }

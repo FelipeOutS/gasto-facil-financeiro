@@ -17,7 +17,7 @@ let hiddenSince: number | null = null;
 // In-memory cache of decrypted secrets per entry id. Lives only while
 // the vault is unlocked; cleared on lock.
 type Secret = { username?: string; password?: string; notes?: string };
-let secretCache = new Map<string, Secret>();
+const secretCache = new Map<string, Secret>();
 
 export function getCachedSecret(id: string): Secret | undefined {
   return secretCache.get(id);
@@ -65,8 +65,7 @@ export function useVaultKey(): {
     function tick() {
       if (cachedKey) {
         const inactive = Date.now() - lastActivity > INACTIVITY_MS;
-        const hiddenTooLong =
-          hiddenSince !== null && Date.now() - hiddenSince > HIDDEN_LOCK_MS;
+        const hiddenTooLong = hiddenSince !== null && Date.now() - hiddenSince > HIDDEN_LOCK_MS;
         if (inactive || hiddenTooLong) setMasterKey(null);
       }
       timerRef.current = window.setTimeout(tick, 15_000);
@@ -81,11 +80,7 @@ export function useVaultKey(): {
         hiddenSince = Date.now();
       } else {
         // Returning to foreground: check immediately
-        if (
-          cachedKey &&
-          hiddenSince !== null &&
-          Date.now() - hiddenSince > HIDDEN_LOCK_MS
-        ) {
+        if (cachedKey && hiddenSince !== null && Date.now() - hiddenSince > HIDDEN_LOCK_MS) {
           setMasterKey(null);
         }
         hiddenSince = null;

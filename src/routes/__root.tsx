@@ -35,29 +35,30 @@ import { PWAUpdateToast } from "@/components/pwa/PWAUpdateToast";
 
 import appCss from "../styles.css?url";
 
-    if (typeof window !== "undefined" && "serviceWorker" in navigator && import.meta.env.PROD) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker
-          .register("/sw.js")
-          .then((registration) => {
-            registration.onupdatefound = () => {
-              const installingWorker = registration.installing;
-              if (installingWorker) {
-                installingWorker.onstatechange = () => {
-                  if (installingWorker.state === "installed" && navigator.serviceWorker.controller) {
-                    // Update available: notify user
-                    window.dispatchEvent(new CustomEvent("pwa-update-available", { detail: registration }));
-                  }
-                };
+if (typeof window !== "undefined" && "serviceWorker" in navigator && import.meta.env.PROD) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((registration) => {
+        registration.onupdatefound = () => {
+          const installingWorker = registration.installing;
+          if (installingWorker) {
+            installingWorker.onstatechange = () => {
+              if (installingWorker.state === "installed" && navigator.serviceWorker.controller) {
+                // Update available: notify user
+                window.dispatchEvent(
+                  new CustomEvent("pwa-update-available", { detail: registration }),
+                );
               }
             };
-          })
-          .catch((err) => {
-            console.error("SW registration failed:", err);
-          });
+          }
+        };
+      })
+      .catch((err) => {
+        console.error("SW registration failed:", err);
       });
-    }
-
+  });
+}
 
 const rootSearchSchema = z.object({
   lang: fallback(z.enum(["pt", "en"]).optional(), undefined).optional(),

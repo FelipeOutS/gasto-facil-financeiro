@@ -52,7 +52,8 @@ export function PWAUpdateToast() {
                   Nova versão disponível
                 </h3>
                 <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                  Uma nova versão do Gasto Inteligente está pronta. Atualize agora para as melhorias mais recentes.
+                  Uma nova versão do Gasto Inteligente está pronta. Atualize agora para as melhorias
+                  mais recentes.
                 </p>
               </div>
               <button

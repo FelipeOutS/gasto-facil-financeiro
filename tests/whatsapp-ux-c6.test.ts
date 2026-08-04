@@ -15,12 +15,8 @@
 import { test, expect, beforeEach } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
 
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
-const { monthRangeInAppTz } = await import(
-  "../src/server/contas-vencimento.server"
-);
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
+const { monthRangeInAppTz } = await import("../src/server/contas-vencimento.server");
 const MONTH = monthRangeInAppTz();
 const {
   detectMenuOption,
@@ -64,7 +60,9 @@ beforeEach(() => {
 
 test("WA-C6: saudação posiciona WhatsApp como atalho e cita site/app", async () => {
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "oi", external_id: "c6-bv-1",
+    telefone: tel,
+    texto: "oi",
+    external_id: "c6-bv-1",
   });
   expect(r.status).toBe("consulta");
   expect(r.resposta).toContain("Gasto Inteligente");
@@ -74,7 +72,9 @@ test("WA-C6: saudação posiciona WhatsApp como atalho e cita site/app", async (
 
 test("WA-C6: 'menu' devolve menu numerado 1..8 com itens chave", async () => {
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "menu", external_id: "c6-aj-1",
+    telefone: tel,
+    texto: "menu",
+    external_id: "c6-aj-1",
   });
   for (const linha of [
     "1. Registrar gasto",
@@ -92,7 +92,9 @@ test("WA-C6: 'menu' devolve menu numerado 1..8 com itens chave", async () => {
 
 test("WA-C6: 'ajuda' devolve exemplos práticos e NÃO o menu numerado", async () => {
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "ajuda", external_id: "c6-aj-2",
+    telefone: tel,
+    texto: "ajuda",
+    external_id: "c6-aj-2",
   });
   expect(r.status).toBe("consulta");
   // contém exemplos práticos
@@ -106,7 +108,9 @@ test("WA-C6: 'ajuda' devolve exemplos práticos e NÃO o menu numerado", async (
 
 test("WA-C6: 'comandos' devolve lista curta de atalhos (não menu, não ajuda)", async () => {
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "comandos", external_id: "c6-cmd-1",
+    telefone: tel,
+    texto: "comandos",
+    external_id: "c6-cmd-1",
   });
   expect(r.status).toBe("consulta");
   expect(r.resposta).toMatch(/Comandos r[aá]pidos/i);
@@ -149,7 +153,9 @@ test("WA-C6 dispatchMenuOption: 1/5/6/7 são guidance; 3/4/8 são rewrite", () =
 
 test("WA-C6: enviar '1' fora de sessão responde com guia de registro de gasto", async () => {
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "1", external_id: "c6-num-1",
+    telefone: tel,
+    texto: "1",
+    external_id: "c6-num-1",
   });
   expect(r.status).toBe("consulta");
   expect(r.resposta).toMatch(/registrar um gasto/i);
@@ -157,7 +163,9 @@ test("WA-C6: enviar '1' fora de sessão responde com guia de registro de gasto",
 
 test("WA-C6: enviar '8' fora de sessão dispara ajuda com exemplos práticos", async () => {
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "8", external_id: "c6-num-8",
+    telefone: tel,
+    texto: "8",
+    external_id: "c6-num-8",
   });
   expect(r.status).toBe("consulta");
   expect(r.resposta).toMatch(/exemplos?/i);
@@ -169,14 +177,20 @@ test("WA-C6: '3' fora de sessão entra no fluxo de contas (rewrite → minhas co
   resetState({
     contas: [
       {
-        id: "cap-1", user_id: "u1", nome: "Internet",
-        valor: 119.9, data_vencimento: `${MONTH.yearMonth}-05`,
-        status: "pendente", data_pagamento: null,
+        id: "cap-1",
+        user_id: "u1",
+        nome: "Internet",
+        valor: 119.9,
+        data_vencimento: `${MONTH.yearMonth}-05`,
+        status: "pendente",
+        data_pagamento: null,
       },
     ],
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "3", external_id: "c6-num-3",
+    telefone: tel,
+    texto: "3",
+    external_id: "c6-num-3",
   });
   // Cai no handler de contas existente — não é uma resposta genérica.
   expect(r.resposta).toMatch(/Internet|compromisso|vencimento/i);
@@ -184,11 +198,15 @@ test("WA-C6: '3' fora de sessão entra no fluxo de contas (rewrite → minhas co
 
 test("WA-C6: '1' DURANTE sessão de confirmação NÃO dispara menu (regressão)", async () => {
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "Mercado 30,00 hoje no pix", external_id: "c6-sess-a",
+    telefone: tel,
+    texto: "Mercado 30,00 hoje no pix",
+    external_id: "c6-sess-a",
   });
   expect(state.pendingRow?.status).toBe("aguardando_confirmacao");
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "1", external_id: "c6-sess-b",
+    telefone: tel,
+    texto: "1",
+    external_id: "c6-sess-b",
   });
   // Não devolveu a guia de registro nem o menu — continua na sessão.
   expect(r.resposta).not.toMatch(/registrar um gasto.*Uber 29,90/is);
@@ -231,26 +249,38 @@ test("WA-C6 pipeline: listar contas grava contexto e 'paguei a primeira' dispara
   resetState({
     contas: [
       {
-        id: "cap-1", user_id: "u1", nome: "Internet",
-        valor: 119.9, data_vencimento: `${MONTH.yearMonth}-10`,
-        status: "pendente", data_pagamento: null,
+        id: "cap-1",
+        user_id: "u1",
+        nome: "Internet",
+        valor: 119.9,
+        data_vencimento: `${MONTH.yearMonth}-10`,
+        status: "pendente",
+        data_pagamento: null,
       },
       {
-        id: "cap-2", user_id: "u1", nome: "Aluguel",
-        valor: 1500, data_vencimento: `${MONTH.yearMonth}-15`,
-        status: "pendente", data_pagamento: null,
+        id: "cap-2",
+        user_id: "u1",
+        nome: "Aluguel",
+        valor: 1500,
+        data_vencimento: `${MONTH.yearMonth}-15`,
+        status: "pendente",
+        data_pagamento: null,
       },
     ],
   });
   // 1) Listar
   const r1 = await processarMensagemWhatsApp({
-    telefone: tel, texto: "minhas contas", external_id: "c6-mem-1",
+    telefone: tel,
+    texto: "minhas contas",
+    external_id: "c6-mem-1",
   });
   expect(r1.resposta).toContain("Internet");
 
   // 2) "paguei a primeira" — rewrite para "paguei Internet" e cai no handler.
   const r2 = await processarMensagemWhatsApp({
-    telefone: tel, texto: "paguei a primeira", external_id: "c6-mem-2",
+    telefone: tel,
+    texto: "paguei a primeira",
+    external_id: "c6-mem-2",
   });
   // Espera-se que o handler de baixa tenha encontrado a conta Internet.
   expect(r2.resposta).toMatch(/Internet/i);

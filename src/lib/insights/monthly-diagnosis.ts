@@ -4,20 +4,10 @@
 // mesmos dados já disponíveis no Dashboard. 100% client-side, sem IA,
 // sem persistência, sem chamadas externas.
 
-import type {
-  Cartao,
-  ContaAPagar,
-  Gasto,
-  Guardado,
-  Meta,
-  Receita,
-} from "@/lib/types";
+import type { Cartao, ContaAPagar, Gasto, Guardado, Meta, Receita } from "@/lib/types";
 import type { Recorrencia } from "@/lib/recorrencias";
 import type { LinhaOrcamento } from "@/lib/orcamento";
-import {
-  calculateFinancialHealthScore,
-  type FinancialHealthLevel,
-} from "./financial-health-score";
+import { calculateFinancialHealthScore, type FinancialHealthLevel } from "./financial-health-score";
 
 export type MonthlyDiagnosisStatus = FinancialHealthLevel;
 
@@ -68,10 +58,7 @@ export function buildMacroContext(input: MacroContextInput): string | null {
   const saldoPositivo = typeof saldo === "number" && saldo > 0;
   const saldoNegativo = typeof saldo === "number" && saldo < 0;
   const gastosAltos =
-    typeof renda === "number" &&
-    renda > 0 &&
-    typeof gastos === "number" &&
-    gastos / renda >= 0.9;
+    typeof renda === "number" && renda > 0 && typeof gastos === "number" && gastos / renda >= 0.9;
 
   // Combinações priorizadas (usuário + macro).
   if (jurosAltos && saldoNegativo) {
@@ -196,9 +183,7 @@ function summaryFor(
   return "Seu mês tem alguns pontos críticos. Pequenos ajustes já ajudam a melhorar.";
 }
 
-export function generateMonthlyDiagnosis(
-  input: MonthlyDiagnosisInput,
-): MonthlyDiagnosis | null {
+export function generateMonthlyDiagnosis(input: MonthlyDiagnosisInput): MonthlyDiagnosis | null {
   const {
     gastosDoMes,
     receitasDoMes,
@@ -279,17 +264,10 @@ export function generateMonthlyDiagnosis(
   }
 
   // D) Recorrências altas
-  const recAtivas = recorrencias.filter(
-    (r) => r.status === "ativa" || r.status === "suspeita",
-  );
-  const totalRecorrente = recAtivas.reduce(
-    (s, r) => s + recorrenciaMensalEstimada(r),
-    0,
-  );
+  const recAtivas = recorrencias.filter((r) => r.status === "ativa" || r.status === "suspeita");
+  const totalRecorrente = recAtivas.reduce((s, r) => s + recorrenciaMensalEstimada(r), 0);
   if (renda > 0 && totalRecorrente / renda > 0.2) {
-    risks.push(
-      "Suas assinaturas e recorrências estão consumindo uma parte relevante da renda.",
-    );
+    risks.push("Suas assinaturas e recorrências estão consumindo uma parte relevante da renda.");
     if (!topRiskShort) topRiskShort = "o peso das assinaturas na sua renda.";
     pushAction({ label: "Ver assinaturas", href: "/assinaturas" });
   }
@@ -310,9 +288,7 @@ export function generateMonthlyDiagnosis(
   const temGuardado = guardado.some((g) => (g.valor || 0) > 0);
   const temMetaAtiva = metas.some((m) => (m.valorAtual || 0) > 0);
   if (temGuardado || temMetaAtiva) {
-    highlights.push(
-      "Você já possui dinheiro reservado ou metas em andamento.",
-    );
+    highlights.push("Você já possui dinheiro reservado ou metas em andamento.");
   } else if (renda > 0 && saldo > 0 && actions.length < MAX_ACTIONS) {
     // Sugere construir reserva quando há sobra
     pushAction({ label: "Guardar dinheiro", href: "/guardado" });

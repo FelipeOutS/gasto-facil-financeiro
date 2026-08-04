@@ -78,13 +78,17 @@ test("validateDownloadedImage: aceita quando declaredMime ausente, desde que byt
 test("validateDownloadedImage: rejeita acima de 15 MB", () => {
   // construímos um array de tamanho MAX+1 com header JPEG válido.
   const big = new Uint8Array(MAX_IMAGE_BYTES + 1);
-  big[0] = 0xff; big[1] = 0xd8; big[2] = 0xff;
+  big[0] = 0xff;
+  big[1] = 0xd8;
+  big[2] = 0xff;
   expect(validateDownloadedImage(big, "image/jpeg")).toBeNull();
 });
 
 test("validateDownloadedImage: aceita logo abaixo do limite", () => {
   const ok = new Uint8Array(MAX_IMAGE_BYTES - 1024);
-  ok[0] = 0xff; ok[1] = 0xd8; ok[2] = 0xff;
+  ok[0] = 0xff;
+  ok[1] = 0xd8;
+  ok[2] = 0xff;
   expect(validateDownloadedImage(ok, "image/jpeg")?.mimeType).toBe("image/jpeg");
 });
 

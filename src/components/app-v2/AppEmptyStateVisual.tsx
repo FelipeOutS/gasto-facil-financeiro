@@ -41,16 +41,9 @@ export function AppEmptyStateVisual({
       role="status"
       aria-live="polite"
     >
-      <div
-        className="relative grid h-24 w-24 place-items-center"
-        aria-hidden="true"
-      >
+      <div className="relative grid h-24 w-24 place-items-center" aria-hidden="true">
         {illustration ?? (
-          <svg
-            viewBox="0 0 96 96"
-            className="absolute inset-0 h-full w-full"
-            aria-hidden="true"
-          >
+          <svg viewBox="0 0 96 96" className="absolute inset-0 h-full w-full" aria-hidden="true">
             <defs>
               <radialGradient id="appv2-blob-grad" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor={color} stopOpacity="0.45" />
@@ -80,13 +73,9 @@ export function AppEmptyStateVisual({
         )}
       </div>
       <div className="space-y-1">
-        <p className="text-sm font-semibold text-foreground sm:text-base">
-          {title}
-        </p>
+        <p className="text-sm font-semibold text-foreground sm:text-base">{title}</p>
         {description ? (
-          <p className="text-xs text-muted-foreground sm:text-sm">
-            {description}
-          </p>
+          <p className="text-xs text-muted-foreground sm:text-sm">{description}</p>
         ) : (
           <p className="sr-only">{t("appV2.empty.default")}</p>
         )}

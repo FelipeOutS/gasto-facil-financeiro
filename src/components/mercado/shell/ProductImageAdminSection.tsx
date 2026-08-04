@@ -113,7 +113,8 @@ export function ProductImageAdminSection({
     } catch (err) {
       const msg = err instanceof Error ? err.message : "UPLOAD_FAILED";
       if (msg === "FILE_TOO_LARGE") toast.error(t("shell.product.adminImage.toast.tooLarge"));
-      else if (msg === "INVALID_MIME") toast.error(t("shell.product.adminImage.toast.invalidFormat"));
+      else if (msg === "INVALID_MIME")
+        toast.error(t("shell.product.adminImage.toast.invalidFormat"));
       else if (msg === "FORBIDDEN") toast.error(t("shell.product.adminImage.toast.forbidden"));
       else toast.error(t("shell.product.adminImage.toast.uploadFailed"));
     } finally {
@@ -123,7 +124,10 @@ export function ProductImageAdminSection({
 
   async function handleRemove() {
     if (!currentImageUrl) return;
-    if (typeof window !== "undefined" && !window.confirm(t("communityPrices.image.section.confirmRemove"))) {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(t("communityPrices.image.section.confirmRemove"))
+    ) {
       return;
     }
     setBusy("remove");
@@ -294,7 +298,10 @@ export function ProductImageAdminSection({
                 className="h-full w-full object-contain"
               />
             </div>
-            <p className="mt-2 truncate text-[11px] text-muted-foreground" title={preview.file.name}>
+            <p
+              className="mt-2 truncate text-[11px] text-muted-foreground"
+              title={preview.file.name}
+            >
               {preview.file.name} · {(preview.file.size / 1024).toFixed(0)} KB
             </p>
             <div className="mt-3 flex items-center gap-2">

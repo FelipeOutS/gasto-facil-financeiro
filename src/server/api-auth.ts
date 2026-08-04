@@ -11,9 +11,7 @@ export async function getUserFromRequest(request: Request) {
   if (!token) return null;
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
   const anon =
-    process.env.SUPABASE_PUBLISHABLE_KEY ??
-    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-    "";
+    process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";
   if (!url || !anon) return null;
   const sb = createClient(url, anon, {
     global: { headers: { Authorization: `Bearer ${token}` } },
@@ -53,7 +51,9 @@ function safeDecode(value: string): string {
   }
 }
 
-export function unauthorizedResponse(message = "Você precisa estar logado para conectar o Mercado Pago."): Response {
+export function unauthorizedResponse(
+  message = "Você precisa estar logado para conectar o Mercado Pago.",
+): Response {
   return new Response(JSON.stringify({ error: "unauthorized", message }), {
     status: 401,
     headers: { "Content-Type": "application/json" },
@@ -66,11 +66,12 @@ export function unauthorizedResponse(message = "Você precisa estar logado para 
  */
 import { hasAdminMasterRole } from "./admin-master.server";
 
-export async function isAdminMasterUser(user: { id: string; email?: string | null } | null | undefined): Promise<boolean> {
+export async function isAdminMasterUser(
+  user: { id: string; email?: string | null } | null | undefined,
+): Promise<boolean> {
   if (!user?.id) return false;
   return hasAdminMasterRole(user.id);
 }
-
 
 export function forbiddenResponse(message = "Acesso restrito ao administrador master."): Response {
   return new Response(JSON.stringify({ error: "forbidden", message }), {
@@ -110,7 +111,12 @@ export function premiumForbiddenResponse(
  */
 export async function ensurePremiumFeatureAccess(
   user: { id: string; email?: string | null } | null | undefined,
-  feature: "importacoes" | "importar_extrato" | "importar_fatura" | "importar_conta" | "investimentos",
+  feature:
+    | "importacoes"
+    | "importar_extrato"
+    | "importar_fatura"
+    | "importar_conta"
+    | "investimentos",
 ): Promise<Response | null> {
   if (!user) return unauthorizedResponse("Você precisa estar logado.");
   if (await isAdminMasterUser(user)) return null;

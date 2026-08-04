@@ -84,16 +84,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { FORMAS_PAGAMENTO } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -284,13 +276,13 @@ function GastosPage() {
     // Reset suave: remove filtros e período para o item ser visível.
     const eff = mesEfetivoGasto(alvo);
     const targetYm = `${eff.ano}-${String(eff.mes).padStart(2, "0")}`;
-      setQ("");
-      setPeriodo("todos");
-      setMesRef(targetYm);
-      setCatFilter("todas");
-      setPagFilter("todas");
-      setValorMin("");
-      setValorMax("");
+    setQ("");
+    setPeriodo("todos");
+    setMesRef(targetYm);
+    setCatFilter("todas");
+    setPagFilter("todas");
+    setValorMin("");
+    setValorMax("");
     // Scroll até o card depois do render.
     setTimeout(() => {
       const el = document.getElementById(`gasto-${highlightId}`);
@@ -300,7 +292,9 @@ function GastosPage() {
 
   const [q, setQ] = useState("");
   const [periodo, setPeriodo] = useState<PeriodoId>("todos");
-  const [selectedReferenceMonth, setSelectedReferenceMonth] = useState<string>(() => readInitialReferenceMonth());
+  const [selectedReferenceMonth, setSelectedReferenceMonth] = useState<string>(() =>
+    readInitialReferenceMonth(),
+  );
   const mesRef = selectedReferenceMonth; // "todos" | "YYYY-MM"
   const setMesRef = setSelectedReferenceMonth;
   const [customFrom, setCustomFrom] = useState<Date | undefined>();
@@ -420,9 +414,7 @@ function GastosPage() {
     if (q.trim()) {
       const t = q.trim().toLowerCase();
       list = list.filter(
-        (g) =>
-          g.descricao.toLowerCase().includes(t) ||
-          g.estabelecimento.toLowerCase().includes(t),
+        (g) => g.descricao.toLowerCase().includes(t) || g.estabelecimento.toLowerCase().includes(t),
       );
     }
     const sorted = [...list];
@@ -463,7 +455,8 @@ function GastosPage() {
   // Opções de mês de referência: ano ativo completo + meses presentes nos gastos.
   const mesesDisponiveis = useMemo(() => {
     const set = new Set<string>();
-    const baseYm = mesRef !== MES_REF_ALL && /^\d{4}-\d{2}$/.test(mesRef) ? mesRef : currentReferenceMonth();
+    const baseYm =
+      mesRef !== MES_REF_ALL && /^\d{4}-\d{2}$/.test(mesRef) ? mesRef : currentReferenceMonth();
     const [baseYear] = baseYm.split("-").map(Number);
     for (let m = 1; m <= 12; m++) set.add(`${baseYear}-${String(m).padStart(2, "0")}`);
     for (const g of gastos) {
@@ -474,9 +467,10 @@ function GastosPage() {
     return Array.from(set).sort(); // asc YYYY-MM
   }, [gastos, mesRef]);
 
-  const referenceMonthCaption = mesRef === MES_REF_ALL
-    ? t("monthRef.captionAll")
-    : t("monthRef.caption", { month: ymToLabel(mesRef) });
+  const referenceMonthCaption =
+    mesRef === MES_REF_ALL
+      ? t("monthRef.captionAll")
+      : t("monthRef.caption", { month: ymToLabel(mesRef) });
 
   const mesRefIdx = mesRef === "todos" ? -1 : mesesDisponiveis.indexOf(mesRef);
   function shiftMes(delta: number) {
@@ -493,7 +487,6 @@ function GastosPage() {
     if (next < 0 || next >= mesesDisponiveis.length) return;
     setMesRef(mesesDisponiveis[next]);
   }
-
 
   // Limpa seleção quando filtros mudam (mantém apenas IDs ainda visíveis)
   useEffect(() => {
@@ -547,7 +540,9 @@ function GastosPage() {
       const ids = Array.from(selected);
       const n = await bulkDeleteGastos(ids);
       if (n > 0) {
-        toast.success(n === 1 ? t("bulk.deletedOne", { count: n }) : t("bulk.deletedMany", { count: n }));
+        toast.success(
+          n === 1 ? t("bulk.deletedOne", { count: n }) : t("bulk.deletedMany", { count: n }),
+        );
         clearSelection();
       } else {
         toast.error(t("bulk.deleteError"));
@@ -558,12 +553,10 @@ function GastosPage() {
     }
   }
 
-  const categoriaAtiva = catFilter !== "todas"
-    ? categorias.find((c) => c.id === catFilter)
-    : undefined;
-  const pagamentoAtivo = pagFilter !== "todas"
-    ? FORMAS_PAGAMENTO.find((f) => f.id === pagFilter)
-    : undefined;
+  const categoriaAtiva =
+    catFilter !== "todas" ? categorias.find((c) => c.id === catFilter) : undefined;
+  const pagamentoAtivo =
+    pagFilter !== "todas" ? FORMAS_PAGAMENTO.find((f) => f.id === pagFilter) : undefined;
 
   const minNum = parseFloat(valorMin.replace(",", "."));
   const maxNum = parseFloat(valorMax.replace(",", "."));
@@ -574,7 +567,10 @@ function GastosPage() {
     if (periodo === "todos") return null;
     if (periodo === "personalizado") {
       if (customFrom && customTo) {
-        return t("periodo.fromTo", { from: formatDateBR(toISODate(customFrom)), to: formatDateBR(toISODate(customTo)) });
+        return t("periodo.fromTo", {
+          from: formatDateBR(toISODate(customFrom)),
+          to: formatDateBR(toISODate(customTo)),
+        });
       }
       if (customFrom) return t("periodo.from", { from: formatDateBR(toISODate(customFrom)) });
       if (customTo) return t("periodo.to", { from: "", to: formatDateBR(toISODate(customTo)) });
@@ -582,7 +578,6 @@ function GastosPage() {
     }
     return t(`periodo.${PERIODO_KEYS[periodo]}`);
   }, [periodo, customFrom, customTo, t]);
-
 
   const hasAnyFilter =
     !!periodoChipLabel ||
@@ -664,7 +659,6 @@ function GastosPage() {
           </Button>
         }
       />
-
 
       {/* SELETOR PRINCIPAL: Mês de referência */}
       <section className="mt-4 rounded-2xl border border-border bg-card p-3 sm:p-4 animate-rise">
@@ -816,7 +810,9 @@ function GastosPage() {
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-3 space-y-3" align="start">
                   <div>
-                    <p className="text-xs font-medium mb-1.5 text-muted-foreground">{t("periodo.startDate")}</p>
+                    <p className="text-xs font-medium mb-1.5 text-muted-foreground">
+                      {t("periodo.startDate")}
+                    </p>
                     <Calendar
                       mode="single"
                       selected={customFrom}
@@ -828,7 +824,9 @@ function GastosPage() {
                     />
                   </div>
                   <div>
-                    <p className="text-xs font-medium mb-1.5 text-muted-foreground">{t("periodo.endDate")}</p>
+                    <p className="text-xs font-medium mb-1.5 text-muted-foreground">
+                      {t("periodo.endDate")}
+                    </p>
                     <Calendar
                       mode="single"
                       selected={customTo}
@@ -875,7 +873,6 @@ function GastosPage() {
           </SelectContent>
         </Select>
       </div>
-
 
       {/* Filtros avançados */}
       <Collapsible open={advOpen} onOpenChange={setAdvOpen} className="mt-3">
@@ -985,9 +982,13 @@ function GastosPage() {
           )}
           {pagamentoAtivo && (
             <ActiveChip
-              label={t("filters.active.payment", { name: tPag(pagamentoAtivo.id, pagamentoAtivo.label) })}
+              label={t("filters.active.payment", {
+                name: tPag(pagamentoAtivo.id, pagamentoAtivo.label),
+              })}
               onRemove={() => setPagFilter("todas")}
-              removeLabel={t("filters.active.remove", { label: tPag(pagamentoAtivo.id, pagamentoAtivo.label) })}
+              removeLabel={t("filters.active.remove", {
+                label: tPag(pagamentoAtivo.id, pagamentoAtivo.label),
+              })}
             />
           )}
           {hasMin && (
@@ -1050,7 +1051,11 @@ function GastosPage() {
           icon={<TrendingUp className="h-4 w-4" />}
           label={t("summary.avg")}
           value={<Money value={media} />}
-          hint={filtered.length ? t("summary.avgHint", { count: filtered.length }) : t("summary.noValue")}
+          hint={
+            filtered.length
+              ? t("summary.avgHint", { count: filtered.length })
+              : t("summary.noValue")
+          }
         />
         <AppSummaryCard
           tone="metas"
@@ -1066,7 +1071,6 @@ function GastosPage() {
           hint={topCategoria ? formatBRL(topCategoria.valor) : t("summary.noData")}
         />
       </div>
-
 
       {/* Barra de seleção em massa */}
       {filtered.length > 0 && (
@@ -1102,7 +1106,11 @@ function GastosPage() {
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="h-10 sm:h-8 rounded-full px-3 text-xs">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-10 sm:h-8 rounded-full px-3 text-xs"
+                  >
                     <CalendarIcon className="mr-1 h-3.5 w-3.5" />
                     {t("bulk.moveToMonth")}
                   </Button>
@@ -1138,7 +1146,6 @@ function GastosPage() {
               </Button>
             </div>
           )}
-
         </div>
       )}
 
@@ -1192,18 +1199,13 @@ function GastosPage() {
                       </li>
                     ))}
                   </ol>
-                  <p className="max-w-sm text-[11px] text-muted-foreground">
-                    {t("empty.helper")}
-                  </p>
+                  <p className="max-w-sm text-[11px] text-muted-foreground">{t("empty.helper")}</p>
                 </div>
               }
             />
           )}
         </div>
       ) : (
-
-
-
         <ul className="mt-3 space-y-2 pb-4" data-fornecedores-map>
           <AnimatePresence initial={false}>
             {filtered.map((g, idx) => {
@@ -1228,7 +1230,8 @@ function GastosPage() {
                   }}
                   className={cn(
                     "flex items-center gap-3 rounded-2xl border border-border bg-card p-3 hover-lift",
-                    highlightId === g.id && "ring-2 ring-emerald-500/70 border-emerald-500/40 bg-emerald-500/5",
+                    highlightId === g.id &&
+                      "ring-2 ring-emerald-500/70 border-emerald-500/40 bg-emerald-500/5",
                     selected.has(g.id) && "border-primary/50 bg-primary/5",
                   )}
                 >
@@ -1345,7 +1348,10 @@ function GastosPage() {
         }}
       />
 
-      <AlertDialog open={confirmBulk} onOpenChange={(o) => !o && !excluindoBulk && setConfirmBulk(false)}>
+      <AlertDialog
+        open={confirmBulk}
+        onOpenChange={(o) => !o && !excluindoBulk && setConfirmBulk(false)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("bulk.confirmTitle")}</AlertDialogTitle>
@@ -1379,7 +1385,15 @@ function GastosPage() {
   );
 }
 
-function ActiveChip({ label, onRemove, removeLabel }: { label: string; onRemove: () => void; removeLabel?: string }) {
+function ActiveChip({
+  label,
+  onRemove,
+  removeLabel,
+}: {
+  label: string;
+  onRemove: () => void;
+  removeLabel?: string;
+}) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card-elevated px-3 py-1 text-xs font-medium animate-fade-in">
       {label}
@@ -1395,7 +1409,6 @@ function ActiveChip({ label, onRemove, removeLabel }: { label: string; onRemove:
 }
 
 type StatTone = "neutral" | "brand" | "info" | "success";
-
 
 function SummaryStat({
   label,
@@ -1425,11 +1438,7 @@ function SummaryStat({
       label={label}
       icon={icon}
       tone={metricTone}
-      value={
-        <span className={cn("num", highlight && "text-xl sm:text-2xl")}>
-          {value}
-        </span>
-      }
+      value={<span className={cn("num", highlight && "text-xl sm:text-2xl")}>{value}</span>}
       hint={hint}
       className={cn(
         "hover-lift card-press animate-rise",
@@ -1462,7 +1471,15 @@ function HeroFinanceArt() {
         </linearGradient>
       </defs>
       {/* Eixo */}
-      <line x1="6" y1="68" x2="118" y2="68" stroke="currentColor" strokeOpacity="0.18" strokeWidth="1.5" />
+      <line
+        x1="6"
+        y1="68"
+        x2="118"
+        y2="68"
+        stroke="currentColor"
+        strokeOpacity="0.18"
+        strokeWidth="1.5"
+      />
       {/* Barras */}
       {[
         { x: 12, h: 22, fill: "url(#heroBar2)", delay: 0 },
@@ -1494,7 +1511,9 @@ function HeroFinanceArt() {
         transition={{ delay: 0.4, duration: 0.9 }}
       />
       <motion.circle
-        cx="110" cy="18" r="3.5"
+        cx="110"
+        cy="18"
+        r="3.5"
         fill="oklch(0.78 0.16 55)"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}

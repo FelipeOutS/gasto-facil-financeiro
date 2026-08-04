@@ -15,10 +15,7 @@ import {
   revalidateContaForDispatch,
   findRecentSentLembreteForUser,
 } from "../src/server/whatsapp-contas-lembretes.server";
-import {
-  markFailed,
-  cancelByEntity,
-} from "../src/server/whatsapp-notifications.server";
+import { markFailed, cancelByEntity } from "../src/server/whatsapp-notifications.server";
 import {
   parseLembreteCommand,
   _resetShortContext,
@@ -69,15 +66,34 @@ function buildFake() {
 
     const api: Record<string, unknown> = {};
     Object.assign(api, {
-      select() { return api; },
-      eq(c: string, v: unknown) { ctx.filters.push((r) => r[c] === v); return api; },
-      in(c: string, vs: unknown[]) { ctx.filters.push((r) => vs.includes(r[c])); return api; },
-      lte(c: string, v: unknown) { ctx.filters.push((r) => String(r[c]) <= String(v)); return api; },
-      gte(c: string, v: unknown) { ctx.filters.push((r) => String(r[c]) >= String(v)); return api; },
-      order(col: string, opts?: { ascending?: boolean }) {
-        ctx.orderBy = col; ctx.orderAsc = opts?.ascending ?? true; return api;
+      select() {
+        return api;
       },
-      limit(n: number) { ctx.limitN = n; return api; },
+      eq(c: string, v: unknown) {
+        ctx.filters.push((r) => r[c] === v);
+        return api;
+      },
+      in(c: string, vs: unknown[]) {
+        ctx.filters.push((r) => vs.includes(r[c]));
+        return api;
+      },
+      lte(c: string, v: unknown) {
+        ctx.filters.push((r) => String(r[c]) <= String(v));
+        return api;
+      },
+      gte(c: string, v: unknown) {
+        ctx.filters.push((r) => String(r[c]) >= String(v));
+        return api;
+      },
+      order(col: string, opts?: { ascending?: boolean }) {
+        ctx.orderBy = col;
+        ctx.orderAsc = opts?.ascending ?? true;
+        return api;
+      },
+      limit(n: number) {
+        ctx.limitN = n;
+        return api;
+      },
       async maybeSingle() {
         const rows = applyAll();
         return { data: rows[0] ?? null, error: null };
@@ -85,7 +101,10 @@ function buildFake() {
       then(resolve: (v: { data: Row[]; error: null }) => unknown) {
         return Promise.resolve(resolve({ data: applyAll() as Row[], error: null }));
       },
-      update(patch: Row) { ctx.updatePatch = patch; return api; },
+      update(patch: Row) {
+        ctx.updatePatch = patch;
+        return api;
+      },
     });
     return api;
   }
@@ -185,7 +204,8 @@ describe("WA-C9.1 :: revalidateContaForDispatch", () => {
     const n = addNotif();
     const r = await revalidateContaForDispatch(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      n as any, { client: fake.client },
+      n as any,
+      { client: fake.client },
     );
     expect(r.ok).toBe(true);
   });
@@ -219,7 +239,7 @@ describe("WA-C9.1 :: revalidateContaForDispatch", () => {
 
   it("valor mudou → payable_changed", async () => {
     addConta({ valor: 150 }); // 15000 centavos
-    const n = addNotif();     // payload valor_centavos: 12000
+    const n = addNotif(); // payload valor_centavos: 12000
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const r = await revalidateContaForDispatch(n as any, { client: fake.client });
     expect(r.ok).toBe(false);
@@ -236,11 +256,17 @@ describe("WA-C9.1 :: revalidateContaForDispatch", () => {
   });
 
   it("categoria diferente passa direto (ok)", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const r = await revalidateContaForDispatch({
-      user_id: "u1", category: "metas", entity_type: null, entity_id: null, payload: {},
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any, { client: fake.client });
+    const r = await revalidateContaForDispatch(
+      {
+        user_id: "u1",
+        category: "metas",
+        entity_type: null,
+        entity_id: null,
+        payload: {},
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any,
+      { client: fake.client },
+    );
     expect(r.ok).toBe(true);
   });
 });
@@ -251,28 +277,62 @@ describe("WA-C9.1 :: revalidateContaForDispatch", () => {
 describe("WA-C9.1 :: markFailed respeita estados terminais", () => {
   it("notificação cancelled não volta para pending", async () => {
     const n = addNotif({ status: "cancelled" });
-    await markFailed(String(n.id), "boom", { retryable: true, currentAttempt: 0, maxAttempts: 5 }, null, { client: fake.client });
+    await markFailed(
+      String(n.id),
+      "boom",
+      { retryable: true, currentAttempt: 0, maxAttempts: 5 },
+      null,
+      { client: fake.client },
+    );
     expect(fake.tables.whatsapp_notifications[0].status).toBe("cancelled");
   });
 
   it("notificação skipped não volta para pending", async () => {
     const n = addNotif({ status: "skipped", skipped_reason: "payable_paid" });
-    await markFailed(String(n.id), "boom", { retryable: true, currentAttempt: 0, maxAttempts: 5 }, null, { client: fake.client });
+    await markFailed(
+      String(n.id),
+      "boom",
+      { retryable: true, currentAttempt: 0, maxAttempts: 5 },
+      null,
+      { client: fake.client },
+    );
     expect(fake.tables.whatsapp_notifications[0].status).toBe("skipped");
   });
 
   it("processing só volta a pending via worker path (com claim_token) — WA-C9.2 Fase B hardening", () => {
     // Sem token (admin path) NÃO altera processing.
-    const n1 = addNotif({ status: "processing", claim_token: "TOK-X", claimed_at: new Date().toISOString(), lease_expires_at: new Date(Date.now() + 60_000).toISOString() });
-    void markFailed(String(n1.id), "transient", { retryable: true, currentAttempt: 0, maxAttempts: 5 }, null, { client: fake.client });
+    const n1 = addNotif({
+      status: "processing",
+      claim_token: "TOK-X",
+      claimed_at: new Date().toISOString(),
+      lease_expires_at: new Date(Date.now() + 60_000).toISOString(),
+    });
+    void markFailed(
+      String(n1.id),
+      "transient",
+      { retryable: true, currentAttempt: 0, maxAttempts: 5 },
+      null,
+      { client: fake.client },
+    );
     expect(fake.tables.whatsapp_notifications[0].status).toBe("processing");
     expect(fake.tables.whatsapp_notifications[0].claim_token).toBe("TOK-X");
   });
 
   it("worker com token correto retoma processing → pending (retry normal)", async () => {
     fake.tables.whatsapp_notifications.length = 0;
-    const n = addNotif({ status: "processing", claim_token: "TOK-Y", claimed_at: new Date().toISOString(), lease_expires_at: new Date(Date.now() + 60_000).toISOString() });
-    await markFailed(String(n.id), "transient", { retryable: true, currentAttempt: 0, maxAttempts: 5 }, "TOK-Y", { client: fake.client });
+    const n = addNotif({
+      status: "processing",
+      claim_token: "TOK-Y",
+      claimed_at: new Date().toISOString(),
+      lease_expires_at: new Date(Date.now() + 60_000).toISOString(),
+    });
+    await markFailed(
+      String(n.id),
+      "transient",
+      { retryable: true, currentAttempt: 0, maxAttempts: 5 },
+      "TOK-Y",
+      { client: fake.client },
+    );
     expect(fake.tables.whatsapp_notifications[0].status).toBe("pending");
     expect(fake.tables.whatsapp_notifications[0].claim_token).toBeNull();
   });
@@ -294,8 +354,13 @@ describe("WA-C9.1 :: findRecentSentLembreteForUser", () => {
 
   it("dois lembretes de contas distintas → ambiguous", async () => {
     addNotif({ status: "sent", sent_at: RECENT, entity_id: "c-1" });
-    addNotif({ id: "n-2", status: "sent", sent_at: RECENT, entity_id: "c-2",
-      dedupe_key: "payable_due:c-2:2026-06-28:conta_vencendo_hoje" });
+    addNotif({
+      id: "n-2",
+      status: "sent",
+      sent_at: RECENT,
+      entity_id: "c-2",
+      dedupe_key: "payable_due:c-2:2026-06-28:conta_vencendo_hoje",
+    });
     const r = await findRecentSentLembreteForUser("u1", {}, { client: fake.client, now: NOW });
     expect(r.kind).toBe("ambiguous");
   });
@@ -318,10 +383,25 @@ describe("WA-C9.1 :: findRecentSentLembreteForUser", () => {
   });
 
   it("provider_message_id (reply_to) tem prioridade", async () => {
-    addNotif({ status: "sent", sent_at: RECENT, entity_id: "c-1", provider_message_id: "wamid.AAA" });
-    addNotif({ id: "n-2", status: "sent", sent_at: RECENT, entity_id: "c-2", provider_message_id: "wamid.BBB",
-      dedupe_key: "payable_due:c-2:2026-06-28:conta_vencendo_hoje" });
-    const r = await findRecentSentLembreteForUser("u1", { providerMessageId: "wamid.BBB" }, { client: fake.client, now: NOW });
+    addNotif({
+      status: "sent",
+      sent_at: RECENT,
+      entity_id: "c-1",
+      provider_message_id: "wamid.AAA",
+    });
+    addNotif({
+      id: "n-2",
+      status: "sent",
+      sent_at: RECENT,
+      entity_id: "c-2",
+      provider_message_id: "wamid.BBB",
+      dedupe_key: "payable_due:c-2:2026-06-28:conta_vencendo_hoje",
+    });
+    const r = await findRecentSentLembreteForUser(
+      "u1",
+      { providerMessageId: "wamid.BBB" },
+      { client: fake.client, now: NOW },
+    );
     expect(r.kind).toBe("single");
     if (r.kind === "single") expect(r.contaId).toBe("c-2");
   });

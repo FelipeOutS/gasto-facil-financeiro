@@ -108,10 +108,7 @@ export const whatsappMessages = {
   // ---- erros e edge cases ----
   naoEntendiSimNao() {
     // Mantemos "Não entendi" para preservar contratos de teste e clareza.
-    return (
-      `Não entendi essa parte 😅\n\n` +
-      `Você confirma esse gasto? Responda sim ou não.`
-    );
+    return `Não entendi essa parte 😅\n\n` + `Você confirma esse gasto? Responda sim ou não.`;
   },
 
   semPendencia() {
@@ -126,35 +123,23 @@ export const whatsappMessages = {
   },
 
   faltaDescricaoEValor() {
-    return (
-      `Claro! Me diga o gasto e o valor. 💸\n\n` +
-      `Ex.: Uber R$ 48,90`
-    );
+    return `Claro! Me diga o gasto e o valor. 💸\n\n` + `Ex.: Uber R$ 48,90`;
   },
 
   faltaValor(descricao?: string) {
     const ref = descricao && descricao.trim().length > 0 ? descricao.trim() : "esse gasto";
-    return (
-      `Qual foi o valor de ${ref}?\n\n` +
-      `Ex.: R$ 48,90`
-    );
+    return `Qual foi o valor de ${ref}?\n\n` + `Ex.: R$ 48,90`;
   },
 
   faltaNome() {
-    return (
-      `Esse valor foi de quê?\n\n` +
-      `Ex.: Uber, mercado ou restaurante.`
-    );
+    return `Esse valor foi de quê?\n\n` + `Ex.: Uber, mercado ou restaurante.`;
   },
 
   // WA — usado quando já existe sessão de gasto pendente aguardando
   // descrição e valor e o usuário envia uma mensagem que não traz nem
   // descrição nem valor (ex.: "oi", "ajuda", "menu").
   aguardandoGastoEValor() {
-    return (
-      `Ainda estou aguardando o gasto e o valor.\n\n` +
-      `Ex.: Uber R$ 48,90`
-    );
+    return `Ainda estou aguardando o gasto e o valor.\n\n` + `Ex.: Uber R$ 48,90`;
   },
 
   cartaoNaoEncontradoNoParse(digitado: string, listaCartoes: string) {
@@ -183,10 +168,7 @@ export const whatsappMessages = {
       return `Perfeito. Qual valor você recebeu?`;
     },
     perguntaRecorrencia() {
-      return (
-        `Esse valor costuma entrar de forma recorrente?\n\n` +
-        `Responda sim ou não.`
-      );
+      return `Esse valor costuma entrar de forma recorrente?\n\n` + `Responda sim ou não.`;
     },
     perguntaFrequencia() {
       return (
@@ -210,9 +192,7 @@ export const whatsappMessages = {
       return `Não consegui entender o dia. Me diga um número entre 1 e 31.`;
     },
     diaSemanaInvalido() {
-      return (
-        `Não consegui entender o dia. Tente segunda, terça, quarta, quinta, sexta, sábado ou domingo.`
-      );
+      return `Não consegui entender o dia. Tente segunda, terça, quarta, quinta, sexta, sábado ou domingo.`;
     },
     valorInvalido() {
       return `Não consegui identificar o valor. Me diga um número, ex.: 1500 ou R$ 350,00.`;
@@ -250,11 +230,7 @@ export const whatsappMessages = {
         `Você já consegue vê-la no Gasto Inteligente.`
       );
     },
-    salvaRecorrente(args: {
-      valor: string;
-      descricao: string;
-      resumoRecorrencia: string;
-    }) {
+    salvaRecorrente(args: { valor: string; descricao: string; resumoRecorrencia: string }) {
       return (
         `Pronto! Sua renda recorrente foi registrada ✅\n\n` +
         `${args.valor} em ${args.descricao}.\n` +
@@ -266,10 +242,7 @@ export const whatsappMessages = {
       return `Tudo certo, não registrei essa renda.`;
     },
     naoEntendiSimNao() {
-      return (
-        `Não entendi essa parte 😅\n\n` +
-        `Posso registrar essa renda? Responda sim ou não.`
-      );
+      return `Não entendi essa parte 😅\n\n` + `Posso registrar essa renda? Responda sim ou não.`;
     },
     quotaExcedida() {
       return (
@@ -422,7 +395,9 @@ export const whatsappMessages = {
 
     // WA-C6 — sufixo curto com próximos passos sugeridos.
     // Não muda regras: apenas anexa uma linha às respostas finais.
-    sugestoesPos(acao: "gasto_salvo" | "conta_criada" | "conta_paga" | "conta_cancelada" | "conta_editada") {
+    sugestoesPos(
+      acao: "gasto_salvo" | "conta_criada" | "conta_paga" | "conta_cancelada" | "conta_editada",
+    ) {
       if (acao === "gasto_salvo") {
         return `Próximo passo: registre outro gasto, peça “resumo da semana” ou digite “menu”.`;
       }
@@ -437,7 +412,6 @@ export const whatsappMessages = {
       }
       return `Próximo passo: diga “minhas contas” ou “menu”.`;
     },
-
 
     resumoSemana(args: {
       receitas: string;
@@ -479,9 +453,7 @@ export const whatsappMessages = {
         ``,
       ];
       if (args.percentual === null) {
-        linhas.push(
-          `Ainda não há receitas registradas suficientes para calcular essa comparação.`,
-        );
+        linhas.push(`Ainda não há receitas registradas suficientes para calcular essa comparação.`);
       } else {
         linhas.push(`Você já usou ${args.percentual}% das suas receitas registradas.`);
       }
@@ -493,9 +465,7 @@ export const whatsappMessages = {
       itens: Array<{ descricao: string; valor: string }>;
       total: string;
     }) {
-      const periodoLabel = args.escopo === "semana"
-        ? "dos últimos 7 dias"
-        : "deste mês";
+      const periodoLabel = args.escopo === "semana" ? "dos últimos 7 dias" : "deste mês";
       if (args.itens.length === 0) {
         return args.escopo === "semana"
           ? `Ainda não encontrei gastos registrados nos últimos 7 dias.`
@@ -506,9 +476,10 @@ export const whatsappMessages = {
         linhas.push(`${i + 1}. ${g.descricao} — ${g.valor}`);
       });
       linhas.push(``);
-      const rotulo = args.itens.length === 1
-        ? `Total: ${args.total}.`
-        : `Total dos ${args.itens.length} maiores: ${args.total}.`;
+      const rotulo =
+        args.itens.length === 1
+          ? `Total: ${args.total}.`
+          : `Total dos ${args.itens.length} maiores: ${args.total}.`;
       linhas.push(rotulo);
       return linhas.join("\n");
     },
@@ -551,7 +522,9 @@ export const whatsappMessages = {
       });
       linhas.push(``);
       if (args.totalRegistros > args.itens.length) {
-        linhas.push(`Mostrando as ${args.itens.length} mais recentes de ${args.totalRegistros} no mês.`);
+        linhas.push(
+          `Mostrando as ${args.itens.length} mais recentes de ${args.totalRegistros} no mês.`,
+        );
       }
       linhas.push(`Total recebido no mês: ${args.total}.`);
       return linhas.join("\n");
@@ -572,7 +545,9 @@ export const whatsappMessages = {
       });
       linhas.push(``);
       if (args.totalRegistros > args.itens.length) {
-        linhas.push(`Mostrando os ${args.itens.length} mais recentes de ${args.totalRegistros} no mês.`);
+        linhas.push(
+          `Mostrando os ${args.itens.length} mais recentes de ${args.totalRegistros} no mês.`,
+        );
       }
       linhas.push(`Total gasto no mês: ${args.total}.`);
       return linhas.join("\n");
@@ -722,18 +697,14 @@ export const whatsappMessages = {
       ].join("\n");
     },
     apenasValor(valorFmt: string) {
-      return [
-        `Consegui identificar o valor de ${valorFmt}.`,
-        ``,
-        `Esse gasto foi de quê?`,
-      ].join("\n");
+      return [`Consegui identificar o valor de ${valorFmt}.`, ``, `Esse gasto foi de quê?`].join(
+        "\n",
+      );
     },
     apenasDescricao(descricao: string) {
-      return [
-        `Consegui identificar "${descricao}".`,
-        ``,
-        `Qual foi o valor desse gasto?`,
-      ].join("\n");
+      return [`Consegui identificar "${descricao}".`, ``, `Qual foi o valor desse gasto?`].join(
+        "\n",
+      );
     },
     resumo(args: {
       descricao: string;
@@ -762,11 +733,7 @@ export const whatsappMessages = {
       return `Qual descrição devo usar?`;
     },
     pedirNovaCategoria(corpoOpcoes: string) {
-      return [
-        `Claro. Qual categoria você quer usar?`,
-        ``,
-        corpoOpcoes.trim(),
-      ].join("\n");
+      return [`Claro. Qual categoria você quer usar?`, ``, corpoOpcoes.trim()].join("\n");
     },
     pedirNovoPagamento() {
       return [
@@ -790,11 +757,7 @@ export const whatsappMessages = {
       ].join("\n");
     },
     perguntaCategoriaObrigatoria(corpoOpcoes: string) {
-      return [
-        `Em qual categoria esse gasto entra?`,
-        ``,
-        corpoOpcoes.trim(),
-      ].join("\n");
+      return [`Em qual categoria esse gasto entra?`, ``, corpoOpcoes.trim()].join("\n");
     },
     categoriaNaoEncontrada() {
       return [
@@ -804,11 +767,7 @@ export const whatsappMessages = {
       ].join("\n");
     },
     pedirNovaData() {
-      return [
-        `Qual data devo usar?`,
-        ``,
-        `Ex.: hoje, ontem ou 15/06/2026.`,
-      ].join("\n");
+      return [`Qual data devo usar?`, ``, `Ex.: hoje, ontem ou 15/06/2026.`].join("\n");
     },
     perguntaFormaPagamento() {
       return [
@@ -888,23 +847,10 @@ export const whatsappMessages = {
         `Toque no botão abaixo para copiar a chave completa em um toque. Link seguro, expira em 10 min.`,
       ].join("\n");
     },
-    consultaUnica(args: {
-      nome: string;
-      tipo: string;
-      chave: string;
-      copiarUrl?: string | null;
-    }) {
-      const linhas = [
-        `Favorecido: ${args.nome}`,
-        `Chave Pix: ${args.tipo}`,
-        args.chave,
-        ``,
-      ];
+    consultaUnica(args: { nome: string; tipo: string; chave: string; copiarUrl?: string | null }) {
+      const linhas = [`Favorecido: ${args.nome}`, `Chave Pix: ${args.tipo}`, args.chave, ``];
       if (args.copiarUrl) {
-        linhas.push(
-          `Copiar chave Pix (link seguro, expira em 10 min):`,
-          args.copiarUrl,
-        );
+        linhas.push(`Copiar chave Pix (link seguro, expira em 10 min):`, args.copiarUrl);
       } else {
         linhas.push(`Para copiar a chave completa, abra no Gasto Inteligente.`);
       }
@@ -952,10 +898,7 @@ export const whatsappMessages = {
       return linhas.join("\n");
     },
     fallbackManual(args: { valor?: string; venc?: string }) {
-      const linhas = [
-        `Encontrei possivelmente:`,
-        ``,
-      ];
+      const linhas = [`Encontrei possivelmente:`, ``];
       if (args.valor) linhas.push(`• Valor: ${args.valor}`);
       if (args.venc) linhas.push(`• Vencimento: ${args.venc}`);
       if (!args.valor && !args.venc) linhas.push(`• (nenhum dado confiável)`);

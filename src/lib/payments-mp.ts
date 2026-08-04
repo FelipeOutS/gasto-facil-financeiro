@@ -58,8 +58,7 @@ export async function criarCheckout(
     if (!res.ok) {
       return {
         ok: false,
-        reason:
-          (json.detail as string) ?? (json.error as string) ?? "Falha ao gerar cobrança.",
+        reason: (json.detail as string) ?? (json.error as string) ?? "Falha ao gerar cobrança.",
       };
     }
     if (json.pendingIntegration) {
@@ -101,9 +100,9 @@ function endOfCurrentMonthISO(): string {
   return end.toISOString();
 }
 
-export async function cancelarAssinatura(userId: string): Promise<
-  { ok: true; accessUntil: string } | { ok: false; reason: string }
-> {
+export async function cancelarAssinatura(
+  userId: string,
+): Promise<{ ok: true; accessUntil: string } | { ok: false; reason: string }> {
   // Lê estado atual
   const { data: row, error: readErr } = await supabase
     .from("user_plans")
@@ -118,9 +117,7 @@ export async function cancelarAssinatura(userId: string): Promise<
 
   const accessUntil =
     existing ??
-    (trialEnd && new Date(trialEnd).getTime() > Date.now()
-      ? trialEnd
-      : endOfCurrentMonthISO());
+    (trialEnd && new Date(trialEnd).getTime() > Date.now() ? trialEnd : endOfCurrentMonthISO());
 
   const { error } = await supabase
     .from("user_plans")
@@ -151,7 +148,9 @@ export type PaymentHistoryRow = {
 export async function listarPagamentos(userId: string): Promise<PaymentHistoryRow[]> {
   const { data, error } = await supabase
     .from("subscription_payments")
-    .select("id, plano, amount_cents, method, status, paid_at, created_at, periodicidade, months, discount_percent")
+    .select(
+      "id, plano, amount_cents, method, status, paid_at, created_at, periodicidade, months, discount_percent",
+    )
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(20);
@@ -159,14 +158,20 @@ export async function listarPagamentos(userId: string): Promise<PaymentHistoryRo
   return (data ?? []) as PaymentHistoryRow[];
 }
 
-export function statusLabelMP(status: string): { label: string; tone: "ok" | "warn" | "danger" | "muted" } {
+export function statusLabelMP(status: string): {
+  label: string;
+  tone: "ok" | "warn" | "danger" | "muted";
+} {
   const s = status.toLowerCase();
   if (["approved", "authorized", "paid", "ativo"].includes(s))
     return { label: "Aprovado", tone: "ok" };
   if (["pending", "in_process", "in_mediation", "aguardando_pagamento"].includes(s))
     return { label: "Pendente", tone: "warn" };
   if (["rejected", "cancelled", "refunded", "charged_back", "expired"].includes(s))
-    return { label: status === "rejected" ? "Recusado" : status === "expired" ? "Vencido" : "Cancelado", tone: "danger" };
+    return {
+      label: status === "rejected" ? "Recusado" : status === "expired" ? "Vencido" : "Cancelado",
+      tone: "danger",
+    };
   return { label: status, tone: "muted" };
 }
 

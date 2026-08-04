@@ -1,4 +1,3 @@
-
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -57,7 +56,9 @@ function Manual() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">{t("manual.kicker")}</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            {t("manual.kicker")}
+          </p>
           <h1 className="text-2xl font-bold tracking-tight">{t("manual.title")}</h1>
         </div>
       </header>
@@ -104,7 +105,6 @@ function Manual() {
           }}
         />
       </div>
-
 
       <AlertDialog open={!!pending} onOpenChange={(o) => !o && setPending(null)}>
         <AlertDialogContent>

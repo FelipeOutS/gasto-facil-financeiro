@@ -99,9 +99,10 @@ function extractCauseErrno(err: unknown): number | null {
 export function sanitizeTransportError(
   input: SanitizeTransportErrorInput,
 ): SanitizedTransportError {
-  const duration = Number.isFinite(input.durationMs) && input.durationMs >= 0
-    ? Math.min(Math.floor(input.durationMs), 24 * 60 * 60 * 1000)
-    : 0;
+  const duration =
+    Number.isFinite(input.durationMs) && input.durationMs >= 0
+      ? Math.min(Math.floor(input.durationMs), 24 * 60 * 60 * 1000)
+      : 0;
   return {
     error_name: extractErrorName(input.error),
     cause_code: extractCauseCode(input.error),

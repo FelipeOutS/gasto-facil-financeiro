@@ -15,7 +15,9 @@ import { senhaForte, traduzirErroAuth } from "@/lib/auth-messages";
 export const Route = createFileRoute("/reset-password")({
   head: () => {
     const t = i18n.getFixedT(null, "auth");
-    return { meta: [{ title: t("metaTitleReset") }, { name: "robots", content: "noindex,follow" }] };
+    return {
+      meta: [{ title: t("metaTitleReset") }, { name: "robots", content: "noindex,follow" }],
+    };
   },
   component: ResetPasswordPage,
 });
@@ -160,8 +162,8 @@ function ResetPasswordPage() {
     status === "ready"
       ? t("reset.subtitleReady")
       : status === "invalid"
-      ? t("reset.linkInvalid")
-      : t("reset.subtitleWait");
+        ? t("reset.linkInvalid")
+        : t("reset.subtitleWait");
 
   return (
     <AuthShell title={t("reset.title")} subtitle={subtitle}>
@@ -207,9 +209,7 @@ function ResetPasswordPage() {
               <p className="text-xs text-destructive">{t("reset.mismatch")}</p>
             )}
           </div>
-          {disabledReason && (
-            <p className="text-xs text-muted-foreground">{disabledReason}</p>
-          )}
+          {disabledReason && <p className="text-xs text-muted-foreground">{disabledReason}</p>}
           <Button
             type="submit"
             size="lg"

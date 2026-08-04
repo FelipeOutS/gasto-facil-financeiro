@@ -16,10 +16,7 @@
  * - log seguro, sem PII/valor/cartão/descrição/texto.
  */
 import * as _supa from "@/integrations/supabase/client.server";
-import {
-  parseWhatsAppExpenseMessage,
-  cleanDescricao,
-} from "@/lib/whatsappParser";
+import { parseWhatsAppExpenseMessage, cleanDescricao } from "@/lib/whatsappParser";
 import { suggestCategoryFromText } from "@/lib/categories";
 import type { Cartao } from "@/lib/types";
 import {
@@ -47,15 +44,10 @@ import {
 // tipos são apagados pelo compilador e não criam aresta de runtime.
 import type { WhatsAppMessageRow, ProcessOutcome } from "./whatsapp.server";
 import { recordMerchantMemory, merchantKeyFor } from "./whatsapp-merchant-memory.server";
-import type {
-  CategoriaPickerRow,
-  CategoriaPickerState,
-} from "./whatsapp-comprovantes.server";
+import type { CategoriaPickerRow, CategoriaPickerState } from "./whatsapp-comprovantes.server";
 import { randomUUID } from "crypto";
 
-export type CategoriaCmdIntent =
-  | { kind: "ask" }
-  | { kind: "direct"; termo: string };
+export type CategoriaCmdIntent = { kind: "ask" } | { kind: "direct"; termo: string };
 
 export type SaveSessionLite = {
   ok: boolean;
@@ -71,18 +63,29 @@ export type WhatsAppParcelamentoDeps = {
   maskCartaoLabel: (c: Cartao) => string;
   isGenericExpenseDescription: (nome: string | undefined | null) => boolean;
   gravarSessao: (
-    userId: string, telefone: string, externalId: string | null,
-    texto: string, recebidaEm: string, status: string,
+    userId: string,
+    telefone: string,
+    externalId: string | null,
+    texto: string,
+    recebidaEm: string,
+    status: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    session: any, resposta: string, gastoId?: string,
+    session: any,
+    resposta: string,
+    gastoId?: string,
   ) => Promise<unknown>;
   atualizarSessao: (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    id: string, status: string, session: any, resposta: string, gastoId?: string,
+    id: string,
+    status: string,
+    session: any,
+    resposta: string,
+    gastoId?: string,
   ) => Promise<unknown>;
   fecharSessoesAnteriores: (
-    userId: string, telefone: string,
-    motivo: "salva" | "cancelada" | "expirada", gastoId?: string,
+    userId: string,
+    telefone: string,
+    motivo: "salva" | "cancelada" | "expirada",
+    gastoId?: string,
   ) => Promise<void>;
   // WA-F3.3 — picker compartilhado (lista curta, paginação, resolução
   // por número/nome). Reutiliza integralmente os helpers já testados
@@ -110,15 +113,24 @@ export type WhatsAppParcelamentoDeps = {
   detectCategoriaCommand: (texto: string) => CategoriaCmdIntent | null;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Lazy live-binding: garante que mock.module() em testes seja
 // resolvido a cada chamada, sem snapshot no escopo de módulo.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin: any = new Proxy({}, { get: (_t, prop) => (_supa.supabaseAdmin as any)[prop] });
 
 const MESES_PT = [
-  "janeiro", "fevereiro", "março", "abril", "maio", "junho",
-  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
 ];
 
 function nomeMes(ym: string): string {
@@ -141,10 +153,29 @@ function normalize(s: string): string {
 // ---------- detecção ----------
 
 const CARD_BRAND_HINTS = [
-  "credito", "crédito", "cartao", "cartão", "fatura",
-  "nubank", "inter", "itau", "santander", "bradesco", "mercado pago",
-  "mercadopago", "c6", "caixa", "picpay", "will", "btg", "bb",
-  "banco do brasil", "next", "neon", "porto", "safra",
+  "credito",
+  "crédito",
+  "cartao",
+  "cartão",
+  "fatura",
+  "nubank",
+  "inter",
+  "itau",
+  "santander",
+  "bradesco",
+  "mercado pago",
+  "mercadopago",
+  "c6",
+  "caixa",
+  "picpay",
+  "will",
+  "btg",
+  "bb",
+  "banco do brasil",
+  "next",
+  "neon",
+  "porto",
+  "safra",
 ];
 
 function hasCardHint(t: string): boolean {
@@ -251,9 +282,20 @@ function logDecision(args: {
 // ---------- helpers de parser numérico ----------
 
 const NUMEROS_EXTENSO: Record<string, number> = {
-  "um": 1, "uma": 1, "dois": 2, "duas": 2, "tres": 3,
-  "quatro": 4, "cinco": 5, "seis": 6, "sete": 7, "oito": 8,
-  "nove": 9, "dez": 10, "onze": 11, "doze": 12,
+  um: 1,
+  uma: 1,
+  dois: 2,
+  duas: 2,
+  tres: 3,
+  quatro: 4,
+  cinco: 5,
+  seis: 6,
+  sete: 7,
+  oito: 8,
+  nove: 9,
+  dez: 10,
+  onze: 11,
+  doze: 12,
 };
 
 /** Extrai valor monetário (R$) do texto em formato brasileiro.
@@ -288,7 +330,8 @@ export function extrairValor(textRaw: string): number | null {
   // Candidatos numéricos. Anchoras (?<![\d:/-]) e (?![\d:/-]) evitam
   // captura parcial de datas/horas/finais de cartão.
   // Negative lookahead descarta tokens seguidos de "x|vezes|parcelas|prest".
-  const re = /(?<![\d:/-])(?:r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+,\d{1,2}|\d+\.\d{1,2}|\d+)(?![\d:/-])(?!\s*(?:x|vezes?|parcelas?|prest))/gi;
+  const re =
+    /(?<![\d:/-])(?:r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+,\d{1,2}|\d+\.\d{1,2}|\d+)(?![\d:/-])(?!\s*(?:x|vezes?|parcelas?|prest))/gi;
 
   const matches = [...t.matchAll(re)];
   if (matches.length === 0) return null;
@@ -348,7 +391,10 @@ function extrairDescricao(textRaw: string): string {
   let t = textRaw.trim();
   // Remove indicadores de parcelamento, valor, cartão.
   t = t
-    .replace(/\b(?:parcelad[oa]\s+em|dividid[oa]\s+em|em)\s+\d{1,2}\s*(?:x|vezes|parcelas?|presta[cç][oõ]es?)\b/gi, " ")
+    .replace(
+      /\b(?:parcelad[oa]\s+em|dividid[oa]\s+em|em)\s+\d{1,2}\s*(?:x|vezes|parcelas?|presta[cç][oõ]es?)\b/gi,
+      " ",
+    )
     .replace(/\b\d{1,2}\s*(?:vezes|parcelas?|presta[cç][oõ]es?)\b/gi, " ")
     .replace(/\b\d{1,2}\s*x\b/gi, " ")
     .replace(/\bR\$\s*[\d.,]+/gi, " ")
@@ -357,7 +403,10 @@ function extrairDescricao(textRaw: string): string {
     .replace(/\b\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?\b/g, " ")
     .replace(/\b\d+(?:,\d{1,2})\b/g, " ")
     .replace(/\b\d{3,}(?:\.\d{1,2})?\b/g, " ")
-    .replace(/\b(?:no|na|do|da|de|com)\s+(?:cart(?:ão|ao)\s+)?(?:credito|crédito|nubank|inter|itau|itaú|santander|bradesco|caixa|mercado\s*pago|c6|picpay|will|btg|bb|banco do brasil|next|neon|porto|safra)\b/gi, " ")
+    .replace(
+      /\b(?:no|na|do|da|de|com)\s+(?:cart(?:ão|ao)\s+)?(?:credito|crédito|nubank|inter|itau|itaú|santander|bradesco|caixa|mercado\s*pago|c6|picpay|will|btg|bb|banco do brasil|next|neon|porto|safra)\b/gi,
+      " ",
+    )
     .replace(/\b(?:cart(?:ão|ao)|credito|crédito|fatura)\b/gi, " ")
     .replace(/\b(?:comprei|compra|paguei|gastei|foi|um|uma|umas?|uns)\b/gi, " ")
     .replace(/\s+/g, " ")
@@ -381,7 +430,10 @@ export function parseInstallmentMessage(
   text: string,
   cartoes: Cartao[],
   intent: { count: number },
-  deps: Pick<WhatsAppParcelamentoDeps, "matchCartao" | "displayCartaoNome" | "isGenericExpenseDescription">,
+  deps: Pick<
+    WhatsAppParcelamentoDeps,
+    "matchCartao" | "displayCartaoNome" | "isGenericExpenseDescription"
+  >,
 ): ParcelamentoDraft {
   // Reusa o parser principal só para resolver cartão e valor — depois
   // refinamos com nossos próprios extratores.
@@ -393,9 +445,8 @@ export function parseInstallmentMessage(
   // → valor=3) e não deve ser usado aqui — nem como fallback.
   const valor = extrairValor(text);
   const descricao = (() => {
-    const fromParser = parsed.nome && !deps.isGenericExpenseDescription(parsed.nome)
-      ? parsed.nome
-      : "";
+    const fromParser =
+      parsed.nome && !deps.isGenericExpenseDescription(parsed.nome) ? parsed.nome : "";
     if (fromParser && fromParser.length >= 2) return fromParser;
     const d = extrairDescricao(text);
     return d && d.length >= 2 ? d : "";
@@ -421,7 +472,10 @@ function previewMessage(args: {
   primeiraYm: string;
   categoria: string;
 }): string {
-  const parcelaCent = calcularParcelasCentavos(reaisParaCentavos(args.valorTotal), args.totalParcelas);
+  const parcelaCent = calcularParcelasCentavos(
+    reaisParaCentavos(args.valorTotal),
+    args.totalParcelas,
+  );
   const valorPrim = parcelaCent[0] / 100;
   const valorPrimFmt = formatBRL(valorPrim);
   return [
@@ -444,7 +498,10 @@ function askValor(): string {
 function askQuantidade(): string {
   return `Em quantas parcelas você dividiu? (mínimo ${MIN_PARCELAS}, máximo ${MAX_PARCELAS})`;
 }
-function askCartao(cartoes: Cartao[], deps: Pick<WhatsAppParcelamentoDeps, "maskCartaoLabel">): string {
+function askCartao(
+  cartoes: Cartao[],
+  deps: Pick<WhatsAppParcelamentoDeps, "maskCartaoLabel">,
+): string {
   const linhas = cartoes.map((c) => `• ${deps.maskCartaoLabel(c)}`).join("\n");
   return `Em qual cartão foi essa compra?\n\n${linhas}`;
 }
@@ -463,11 +520,16 @@ export async function processarParcelamento(args: {
   const { userId, msg, texto, recebidaEm, decisao, sessao, deps } = args;
   const cartoes = await deps.carregarCartoes(userId);
   // Cancelamento explícito vence sobre tudo.
-  const isHardCancel = /\b(cancelar|cancela|cancelado|cancelada)\b/i.test(texto) || decisao === "cancel";
+  const isHardCancel =
+    /\b(cancelar|cancela|cancelado|cancelada)\b/i.test(texto) || decisao === "cancel";
   if (sessao && isHardCancel) {
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
       "cancelada",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       sessao.session as any,
@@ -479,7 +541,10 @@ export async function processarParcelamento(args: {
       cardMatchedCount: 0,
       result: "ok",
     });
-    return { status: "cancelada", resposta: "Compra parcelada cancelada. Quando quiser, é só me contar de novo. 👍" };
+    return {
+      status: "cancelada",
+      resposta: "Compra parcelada cancelada. Quando quiser, é só me contar de novo. 👍",
+    };
   }
 
   // Sem sessão: inicia a partir do texto.
@@ -496,7 +561,12 @@ export async function processarParcelamento(args: {
       cardMatchedCount: draft.cartaoId ? 1 : (draft.cartaoAmbiguous?.length ?? 0),
       result: "ok",
     });
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, deps,
+    return await avancarFluxo({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      deps,
       session: {
         kind: "parcelamento",
         mensagemOriginal: texto,
@@ -525,41 +595,98 @@ export async function processarParcelamento(args: {
     const v = extrairValor(texto);
     if (!v || v <= 0) {
       const r = `Não consegui ler o valor. ${askValor()}`;
-      await deps.atualizarSessao(sessao.id, "parc_aguardando_total", session as unknown as never, r);
+      await deps.atualizarSessao(
+        sessao.id,
+        "parc_aguardando_total",
+        session as unknown as never,
+        r,
+      );
       return { status: "pendente", resposta: r };
     }
     session.valorTotal = v;
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
+    return await avancarFluxo({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      deps,
+      session,
+      cartoes,
+      sessaoId: sessao.id,
+    });
   }
 
   if (current === "parc_aguardando_quantidade") {
     const n = extrairQuantidadeParcelas(texto);
     if (!n) {
       const r = `Não consegui ler. ${askQuantidade()}`;
-      await deps.atualizarSessao(sessao.id, "parc_aguardando_quantidade", session as unknown as never, r);
+      await deps.atualizarSessao(
+        sessao.id,
+        "parc_aguardando_quantidade",
+        session as unknown as never,
+        r,
+      );
       return { status: "pendente", resposta: r };
     }
     session.totalParcelas = n;
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
+    return await avancarFluxo({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      deps,
+      session,
+      cartoes,
+      sessaoId: sessao.id,
+    });
   }
 
   if (current === "parc_aguardando_cartao") {
     const { match, ambiguous } = deps.matchCartao(texto, cartoes);
     if (ambiguous && ambiguous.length > 1) {
       const r = `Achei mais de um cartão parecido: ${ambiguous.join(", ")}. Me diga o nome exato.`;
-      await deps.atualizarSessao(sessao.id, "parc_aguardando_cartao", session as unknown as never, r);
-      logDecision({ stage: "awaiting_card", installmentsCountPresent: true, cardMatchedCount: ambiguous.length, result: "ambiguous" });
+      await deps.atualizarSessao(
+        sessao.id,
+        "parc_aguardando_cartao",
+        session as unknown as never,
+        r,
+      );
+      logDecision({
+        stage: "awaiting_card",
+        installmentsCountPresent: true,
+        cardMatchedCount: ambiguous.length,
+        result: "ambiguous",
+      });
       return { status: "pendente", resposta: r };
     }
     if (!match) {
       const r = `Não encontrei esse cartão. ${askCartao(cartoes, deps)}`;
-      await deps.atualizarSessao(sessao.id, "parc_aguardando_cartao", session as unknown as never, r);
-      logDecision({ stage: "awaiting_card", installmentsCountPresent: true, cardMatchedCount: 0, result: "invalid" });
+      await deps.atualizarSessao(
+        sessao.id,
+        "parc_aguardando_cartao",
+        session as unknown as never,
+        r,
+      );
+      logDecision({
+        stage: "awaiting_card",
+        installmentsCountPresent: true,
+        cardMatchedCount: 0,
+        result: "invalid",
+      });
       return { status: "pendente", resposta: r };
     }
     session.cartaoId = match.id;
     session.cartaoNome = deps.displayCartaoNome(match);
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
+    return await avancarFluxo({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      deps,
+      session,
+      cartoes,
+      sessaoId: sessao.id,
+    });
   }
 
   if (current === "parc_aguardando_confirmacao") {
@@ -567,11 +694,28 @@ export async function processarParcelamento(args: {
     const catCmd = deps.detectCategoriaCommand(texto);
     if (catCmd) {
       return await handleCategoriaCmd({
-        userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps, cartoes, cmd: catCmd,
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessaoId: sessao.id,
+        deps,
+        cartoes,
+        cmd: catCmd,
       });
     }
     if (decisao === "confirm") {
-      return await persistir({ userId, msg, texto, recebidaEm, session, cartoes, sessaoId: sessao.id, deps });
+      return await persistir({
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        cartoes,
+        sessaoId: sessao.id,
+        deps,
+      });
     }
     // Ajuste por frase livre: tenta reinterpretar campos do texto.
     const intent = detectInstallmentIntent(texto);
@@ -585,7 +729,16 @@ export async function processarParcelamento(args: {
       session.cartaoId = match.id;
       session.cartaoNome = deps.displayCartaoNome(match);
     }
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
+    return await avancarFluxo({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      deps,
+      session,
+      cartoes,
+      sessaoId: sessao.id,
+    });
   }
 
   // WA-F3.3 — picker de categoria ativo: trata qualquer mensagem como
@@ -609,15 +762,34 @@ export async function processarParcelamento(args: {
       session.manualCategoriaId = r.cat.id;
       session.manualCategoriaLabel = r.cat.nome;
       session.categoriaOptions = undefined;
-      return await avancarFluxo({ userId, msg, texto, recebidaEm, deps, session, cartoes, sessaoId: sessao.id });
+      return await avancarFluxo({
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        deps,
+        session,
+        cartoes,
+        sessaoId: sessao.id,
+      });
     }
     if (r.kind === "relist") {
       session.categoriaOptions = r.options;
-      await deps.atualizarSessao(sessao.id, "parc_aguardando_categoria", session as unknown as never, r.body);
+      await deps.atualizarSessao(
+        sessao.id,
+        "parc_aguardando_categoria",
+        session as unknown as never,
+        r.body,
+      );
       return { status: "parc_aguardando_categoria", resposta: r.body };
     }
     const aviso = `Não entendi. Digite o número, o nome da categoria, "mais" para ver outras opções ou "cancelar".`;
-    await deps.atualizarSessao(sessao.id, "parc_aguardando_categoria", session as unknown as never, aviso);
+    await deps.atualizarSessao(
+      sessao.id,
+      "parc_aguardando_categoria",
+      session as unknown as never,
+      aviso,
+    );
     return { status: "parc_aguardando_categoria", resposta: aviso };
   }
 
@@ -646,19 +818,33 @@ async function handleCategoriaCmd(args: {
     });
     session.categoriaOptions = options;
     const resposta = `Qual categoria devo usar?\n\n${body}`;
-    await deps.atualizarSessao(sessaoId, "parc_aguardando_categoria", session as unknown as never, resposta);
+    await deps.atualizarSessao(
+      sessaoId,
+      "parc_aguardando_categoria",
+      session as unknown as never,
+      resposta,
+    );
     return { status: "parc_aguardando_categoria", resposta };
   }
   // direct
   const r = await deps.resolveCategoriaPickerInput({
     userId,
-    holder: { descricao: session.descricao ?? null, categoriaSugerida: null, categoriaOptions: undefined },
+    holder: {
+      descricao: session.descricao ?? null,
+      categoriaSugerida: null,
+      categoriaOptions: undefined,
+    },
     cats,
     texto: cmd.termo,
   });
   if (r.kind !== "picked") {
     const resposta = `Não encontrei a categoria "${cmd.termo}". Digite "categoria" para ver a lista de opções.`;
-    await deps.atualizarSessao(sessaoId, "parc_aguardando_confirmacao", session as unknown as never, resposta);
+    await deps.atualizarSessao(
+      sessaoId,
+      "parc_aguardando_confirmacao",
+      session as unknown as never,
+      resposta,
+    );
     return { status: "aguardando_confirmacao", resposta };
   }
   session.categorySelectionSource = "manual";
@@ -687,7 +873,12 @@ async function avancarFluxo(args: {
   if (!session.valorTotal || session.valorTotal <= 0) {
     const r = askValor();
     await persistTransition("parc_aguardando_total", session, r, sessaoId, args);
-    logDecision({ stage: "awaiting_total", installmentsCountPresent: true, cardMatchedCount: cartoes.length, result: "ok" });
+    logDecision({
+      stage: "awaiting_total",
+      installmentsCountPresent: true,
+      cardMatchedCount: cartoes.length,
+      result: "ok",
+    });
     return { status: "pendente", resposta: r };
   }
 
@@ -699,7 +890,12 @@ async function avancarFluxo(args: {
   ) {
     const r = askQuantidade();
     await persistTransition("parc_aguardando_quantidade", session, r, sessaoId, args);
-    logDecision({ stage: "awaiting_quantity", installmentsCountPresent: false, cardMatchedCount: cartoes.length, result: "ok" });
+    logDecision({
+      stage: "awaiting_quantity",
+      installmentsCountPresent: false,
+      cardMatchedCount: cartoes.length,
+      result: "ok",
+    });
     return { status: "pendente", resposta: r };
   }
 
@@ -708,13 +904,24 @@ async function avancarFluxo(args: {
     if (args.cartaoAmbiguous && args.cartaoAmbiguous.length > 1) {
       const r = `Achei mais de um cartão parecido: ${args.cartaoAmbiguous.join(", ")}. Me diga o nome exato.`;
       await persistTransition("parc_aguardando_cartao", session, r, sessaoId, args);
-      logDecision({ stage: "awaiting_card", installmentsCountPresent: true, cardMatchedCount: args.cartaoAmbiguous.length, result: "ambiguous" });
+      logDecision({
+        stage: "awaiting_card",
+        installmentsCountPresent: true,
+        cardMatchedCount: args.cartaoAmbiguous.length,
+        result: "ambiguous",
+      });
       return { status: "pendente", resposta: r };
     }
     if (cartoes.length === 0) {
-      const r = "Você ainda não tem cartões cadastrados no Gasto Inteligente. Cadastre o cartão pelo app antes de lançar uma compra parcelada.";
+      const r =
+        "Você ainda não tem cartões cadastrados no Gasto Inteligente. Cadastre o cartão pelo app antes de lançar uma compra parcelada.";
       await persistTransition("cancelada", session, r, sessaoId, args);
-      logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 0, result: "invalid" });
+      logDecision({
+        stage: "failed",
+        installmentsCountPresent: true,
+        cardMatchedCount: 0,
+        result: "invalid",
+      });
       return { status: "erro", resposta: r };
     }
     if (cartoes.length === 1) {
@@ -723,13 +930,22 @@ async function avancarFluxo(args: {
     } else {
       const r = askCartao(cartoes, deps);
       await persistTransition("parc_aguardando_cartao", session, r, sessaoId, args);
-      logDecision({ stage: "awaiting_card", installmentsCountPresent: true, cardMatchedCount: cartoes.length, result: "ok" });
+      logDecision({
+        stage: "awaiting_card",
+        installmentsCountPresent: true,
+        cardMatchedCount: cartoes.length,
+        result: "ok",
+      });
       return { status: "pendente", resposta: r };
     }
   }
 
   // 4) Descrição: se ainda for vazia, usa um label genérico de momento.
-  if (!session.descricao || session.descricao.length < 2 || deps.isGenericExpenseDescription(session.descricao)) {
+  if (
+    !session.descricao ||
+    session.descricao.length < 2 ||
+    deps.isGenericExpenseDescription(session.descricao)
+  ) {
     session.descricao = "Compra parcelada";
   }
 
@@ -750,8 +966,9 @@ async function avancarFluxo(args: {
   } else {
     const sugestaoCat = suggestCategoryFromText(session.descricao) || "outros";
     categoriaLabel =
-      sugestaoCat === "outros" ? "Outros" :
-      sugestaoCat.charAt(0).toUpperCase() + sugestaoCat.slice(1);
+      sugestaoCat === "outros"
+        ? "Outros"
+        : sugestaoCat.charAt(0).toUpperCase() + sugestaoCat.slice(1);
   }
   const previewBody = previewMessage({
     descricao: session.descricao,
@@ -764,11 +981,14 @@ async function avancarFluxo(args: {
   // WA-F3.3-Fix-UX — consome ack pendente e prefixa a prévia.
   const ack = session.pendingCategoryAck;
   session.pendingCategoryAck = undefined;
-  const resposta = ack
-    ? `✓ Categoria atualizada para ${ack}.\n\n${previewBody}`
-    : previewBody;
+  const resposta = ack ? `✓ Categoria atualizada para ${ack}.\n\n${previewBody}` : previewBody;
   await persistTransition("parc_aguardando_confirmacao", session, resposta, sessaoId, args);
-  logDecision({ stage: "awaiting_confirmation", installmentsCountPresent: true, cardMatchedCount: 1, result: "ok" });
+  logDecision({
+    stage: "awaiting_confirmation",
+    installmentsCountPresent: true,
+    cardMatchedCount: 1,
+    result: "ok",
+  });
   return { status: "aguardando_confirmacao", resposta };
 }
 
@@ -777,21 +997,35 @@ async function persistTransition(
   session: ParcelamentoSession,
   resposta: string,
   sessaoId: string | null,
-  args: { userId: string; msg: WhatsAppMessageRow; texto: string; recebidaEm: string; deps: WhatsAppParcelamentoDeps },
+  args: {
+    userId: string;
+    msg: WhatsAppMessageRow;
+    texto: string;
+    recebidaEm: string;
+    deps: WhatsAppParcelamentoDeps;
+  },
 ): Promise<void> {
   const { userId, msg, texto, recebidaEm, deps } = args;
   if (sessaoId) {
     await supabaseAdmin.from("whatsapp_messages").update({ status: "expirada" }).eq("id", sessaoId);
   }
   await deps.gravarSessao(
-    userId, msg.telefone, msg.external_id, texto, recebidaEm,
-    newStatus, session as unknown as never, resposta,
+    userId,
+    msg.telefone,
+    msg.external_id,
+    texto,
+    recebidaEm,
+    newStatus,
+    session as unknown as never,
+    resposta,
   );
 }
 
 // ---------- persistência ----------
 
-async function carregarCategoriasMin(userId: string): Promise<Array<{ id: string; legacy_id?: string | null; nome: string }>> {
+async function carregarCategoriasMin(
+  userId: string,
+): Promise<Array<{ id: string; legacy_id?: string | null; nome: string }>> {
   const { data } = await supabaseAdmin
     .from("categorias")
     .select("id, legacy_id, nome")
@@ -806,8 +1040,7 @@ function resolveCategoriaId(
   const key = suggestCategoryFromText(descricao) || "outros";
   const byLegacy = cats.find((c) => (c.legacy_id ?? "").toLowerCase() === key);
   if (byLegacy) return { id: byLegacy.id, nome: byLegacy.nome };
-  const out = cats.find((c) => (c.legacy_id ?? "").toLowerCase() === "outros")
-    ?? cats[0];
+  const out = cats.find((c) => (c.legacy_id ?? "").toLowerCase() === "outros") ?? cats[0];
   return out ? { id: out.id, nome: out.nome } : { id: null, nome: "Outros" };
 }
 
@@ -828,7 +1061,12 @@ export async function persistir(args: {
   const { userId, msg, texto, recebidaEm, session, cartoes, sessaoId, deps } = args;
   const cartao = cartoes.find((c) => c.id === session.cartaoId);
   if (!cartao || !session.valorTotal || !session.totalParcelas) {
-    logDecision({ stage: "failed", installmentsCountPresent: !!session.totalParcelas, cardMatchedCount: 0, result: "error" });
+    logDecision({
+      stage: "failed",
+      installmentsCountPresent: !!session.totalParcelas,
+      cardMatchedCount: 0,
+      result: "error",
+    });
     return { status: "erro", resposta: "Não consegui montar essa compra. Vamos começar de novo?" };
   }
   let plano;
@@ -839,8 +1077,16 @@ export async function persistir(args: {
       diaFechamentoCartao: cartao.diaFechamento,
     });
   } catch {
-    logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
-    return { status: "erro", resposta: "Não consegui dividir esse valor nessas parcelas. Verifique e tente de novo." };
+    logDecision({
+      stage: "failed",
+      installmentsCountPresent: true,
+      cardMatchedCount: 1,
+      result: "error",
+    });
+    return {
+      status: "erro",
+      resposta: "Não consegui dividir esse valor nessas parcelas. Verifique e tente de novo.",
+    };
   }
   // WA-F3.3-Fix-CatHardening — categoria: escolha manual tem precedência
   // absoluta, mas SOMENTE quando (a) `categorySelectionSource === "manual"`,
@@ -855,14 +1101,20 @@ export async function persistir(args: {
   let cat: { id: string | null; nome: string };
   if (session.categorySelectionSource === "manual" || session.manualCategoriaId) {
     if (
-      session.categorySelectionSource !== "manual"
-      || !session.manualCategoriaId
-      || !cats.some((c) => c.id === session.manualCategoriaId)
+      session.categorySelectionSource !== "manual" ||
+      !session.manualCategoriaId ||
+      !cats.some((c) => c.id === session.manualCategoriaId)
     ) {
-      logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
+      logDecision({
+        stage: "failed",
+        installmentsCountPresent: true,
+        cardMatchedCount: 1,
+        result: "error",
+      });
       return {
         status: "erro",
-        resposta: "A categoria que você escolheu não está mais disponível. Digite \"categoria\" para escolher outra.",
+        resposta:
+          'A categoria que você escolheu não está mais disponível. Digite "categoria" para escolher outra.',
       };
     }
     cat = { id: session.manualCategoriaId, nome: session.manualCategoriaLabel ?? "Categoria" };
@@ -876,8 +1128,16 @@ export async function persistir(args: {
   // da quota financeira depende dele. Sem claim, sem gate, sem RPC.
   if (!msg.external_id || msg.external_id.trim().length === 0) {
     console.error("[whatsapp] parcelamento persistir missing externalMessageId");
-    logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
-    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
+    logDecision({
+      stage: "failed",
+      installmentsCountPresent: true,
+      cardMatchedCount: 1,
+      result: "error",
+    });
+    return {
+      status: "erro",
+      resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?",
+    };
   }
 
   // WA-F3.3 — Idempotência concorrente: antes da RPC, fazemos um "claim
@@ -888,14 +1148,23 @@ export async function persistir(args: {
   // — apenas um sobreviverá para chamar a RPC. Sem claim, sem RPC.
   // A linha final "salva" é gravada como UPDATE desta mesma sessão de
   // claim, evitando colidir consigo mesmo no índice único.
-  const claim = await deps.gravarSessao(
-    userId, msg.telefone, msg.external_id, texto, recebidaEm,
+  const claim = (await deps.gravarSessao(
+    userId,
+    msg.telefone,
+    msg.external_id,
+    texto,
+    recebidaEm,
     "parc_persistindo",
     { ...session, grupo_parcelamento_id: grupoId } as unknown as never,
     "",
-  ) as { ok?: boolean; sessionId?: string | null } | undefined;
+  )) as { ok?: boolean; sessionId?: string | null } | undefined;
   if (!claim?.ok || !claim.sessionId) {
-    logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
+    logDecision({
+      stage: "failed",
+      installmentsCountPresent: true,
+      cardMatchedCount: 1,
+      result: "error",
+    });
     return { status: "erro", resposta: "Já estou processando essa compra. Aguarde um instante." };
   }
   const claimSessionId: string = claim.sessionId;
@@ -915,11 +1184,17 @@ export async function persistir(args: {
   if (!gateOutcome.allowed) {
     try {
       await deps.atualizarSessao(claimSessionId, "erro", session, "quota_blocked");
-    } catch { /* claim cleanup nunca quebra o fluxo de resposta */ }
-    logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
+    } catch {
+      /* claim cleanup nunca quebra o fluxo de resposta */
+    }
+    logDecision({
+      stage: "failed",
+      installmentsCountPresent: true,
+      cardMatchedCount: 1,
+      result: "error",
+    });
     return { status: "erro", resposta: financialQuotaBlockedReply(gateOutcome) };
   }
-
 
   // WA-F3.2/3.3 — persistência atômica via RPC `create_installment_purchase`.
   // SECURITY DEFINER + search_path fixo + validações server-side (cartão
@@ -934,23 +1209,25 @@ export async function persistir(args: {
     ano: p.ano,
     invoice_month: p.invoiceMonth,
   }));
-  const { data: rpcRows, error: rpcErr } = await supabaseAdmin.rpc(
-    "create_installment_purchase",
-    {
-      p_user_id: userId,
-      p_cartao_id: cartao.id,
-      p_categoria_id: cat.id,
-      p_descricao: session.descricao,
-      p_estabelecimento: session.descricao,
-      p_observacao: baseObs,
-      p_origem: "whatsapp",
-      p_grupo_id: grupoId,
-      p_total_parcelas: plano.totalParcelas,
-      p_parcelas: parcelasPayload,
-    },
-  );
+  const { data: rpcRows, error: rpcErr } = await supabaseAdmin.rpc("create_installment_purchase", {
+    p_user_id: userId,
+    p_cartao_id: cartao.id,
+    p_categoria_id: cat.id,
+    p_descricao: session.descricao,
+    p_estabelecimento: session.descricao,
+    p_observacao: baseObs,
+    p_origem: "whatsapp",
+    p_grupo_id: grupoId,
+    p_total_parcelas: plano.totalParcelas,
+    p_parcelas: parcelasPayload,
+  });
   if (rpcErr) {
-    logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
+    logDecision({
+      stage: "failed",
+      installmentsCountPresent: true,
+      cardMatchedCount: 1,
+      result: "error",
+    });
     // WA-F3.4-Fix — não deixar a sessão de claim órfã em `parc_persistindo`.
     // Marcamos como `erro` (terminal) para que a próxima mensagem "sim"
     // (com novo external_id) possa reentrar no fluxo de confirmação a
@@ -961,9 +1238,14 @@ export async function persistir(args: {
     if (claimSessionId) {
       try {
         await deps.atualizarSessao(claimSessionId, "erro", session, "rpc_failed");
-      } catch { /* claim cleanup nunca quebra o fluxo de resposta */ }
+      } catch {
+        /* claim cleanup nunca quebra o fluxo de resposta */
+      }
     }
-    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
+    return {
+      status: "erro",
+      resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?",
+    };
   }
 
   // Readback obrigatório: confirma que TODAS as parcelas foram
@@ -978,21 +1260,45 @@ export async function persistir(args: {
     .eq("user_id", userId)
     .eq("grupo_parcelamento_id", grupoId);
   const rbRows: Array<{ id: string; parcela_atual: number | null; categoria_id: string | null }> =
-    Array.isArray(readback) ? readback : Array.isArray(rpcRows)
-      ? (rpcRows as Array<{ id: string; parcela_atual: number | null; categoria_id?: string | null }>)
-          .map((r) => ({ id: r.id, parcela_atual: r.parcela_atual ?? null, categoria_id: r.categoria_id ?? cat.id ?? null }))
-      : [];
+    Array.isArray(readback)
+      ? readback
+      : Array.isArray(rpcRows)
+        ? (
+            rpcRows as Array<{
+              id: string;
+              parcela_atual: number | null;
+              categoria_id?: string | null;
+            }>
+          ).map((r) => ({
+            id: r.id,
+            parcela_atual: r.parcela_atual ?? null,
+            categoria_id: r.categoria_id ?? cat.id ?? null,
+          }))
+        : [];
   const categoriaMismatch = cat.id != null && rbRows.some((r) => r.categoria_id !== cat.id);
   if (readErr || rbRows.length !== plano.totalParcelas || categoriaMismatch) {
-    logDecision({ stage: "failed", installmentsCountPresent: true, cardMatchedCount: 1, result: "error" });
+    logDecision({
+      stage: "failed",
+      installmentsCountPresent: true,
+      cardMatchedCount: 1,
+      result: "error",
+    });
     if (claimSessionId) {
       try {
-        await deps.atualizarSessao(claimSessionId, "erro", session, categoriaMismatch ? "categoria_mismatch" : "readback_failed");
-      } catch { /* idem */ }
+        await deps.atualizarSessao(
+          claimSessionId,
+          "erro",
+          session,
+          categoriaMismatch ? "categoria_mismatch" : "readback_failed",
+        );
+      } catch {
+        /* idem */
+      }
     }
     return {
       status: "erro",
-      resposta: "Salvei mas não consegui confirmar todas as parcelas. Pode me chamar de novo em alguns minutos?",
+      resposta:
+        "Salvei mas não consegui confirmar todas as parcelas. Pode me chamar de novo em alguns minutos?",
     };
   }
   const inseridos: string[] = rbRows
@@ -1015,8 +1321,15 @@ export async function persistir(args: {
     await deps.atualizarSessao(claimSessionId, "salva", finalSession, "ok", inseridos[0]);
   } else {
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "salva", finalSession, "ok", inseridos[0],
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "salva",
+      finalSession,
+      "ok",
+      inseridos[0],
     );
   }
 
@@ -1045,6 +1358,11 @@ export async function persistir(args: {
     `${session.descricao} — ${plano.totalParcelas}x de ${formatBRL(valorPrim)} no ${session.cartaoNome}.`,
     `A primeira parcela entra na fatura de ${nomeMes(plano.parcelas[0].invoiceMonth)}.`,
   ].join("\n");
-  logDecision({ stage: "confirmed", installmentsCountPresent: true, cardMatchedCount: 1, result: "ok" });
+  logDecision({
+    stage: "confirmed",
+    installmentsCountPresent: true,
+    cardMatchedCount: 1,
+    result: "ok",
+  });
   return { status: "salva", gastoId: inseridos[0], resposta };
 }

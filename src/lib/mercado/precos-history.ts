@@ -279,10 +279,7 @@ export function __replacePrecosCache(items: MercadoPrecoLocal[]) {
 export type MercadoPrecoLocal = MercadoPrecoUsuarioRegistro;
 
 /** Chave determinística para agrupar registros do mesmo produto. */
-export function buildProdutoKey(input: {
-  nome?: string;
-  codigoBarras?: string;
-}): string {
+export function buildProdutoKey(input: { nome?: string; codigoBarras?: string }): string {
   const ean = (input.codigoBarras ?? "").trim();
   if (ean) return `ean:${ean}`;
   // Normaliza: minúsculas, remove acentos (NFD), colapsa espaços.
@@ -320,24 +317,19 @@ function normalizePreco(raw: unknown): MercadoPrecoLocal | null {
     historicoId: typeof r.historicoId === "string" ? r.historicoId : undefined,
     produtoNome: r.produtoNome,
     categoria: typeof r.categoria === "string" && r.categoria ? r.categoria : undefined,
-    codigoBarras:
-      typeof r.codigoBarras === "string" && r.codigoBarras ? r.codigoBarras : undefined,
+    codigoBarras: typeof r.codigoBarras === "string" && r.codigoBarras ? r.codigoBarras : undefined,
     unidade: typeof r.unidade === "string" && r.unidade ? r.unidade : undefined,
     quantidade: qtd,
     precoUnitario,
     precoTotal: num(r.precoTotal) ?? precoUnitario * qtd,
     fromPaidPrice: Boolean(r.fromPaidPrice),
     compradoEm:
-      typeof r.compradoEm === "string" && r.compradoEm
-        ? r.compradoEm
-        : "1970-01-01T00:00:00.000Z",
+      typeof r.compradoEm === "string" && r.compradoEm ? r.compradoEm : "1970-01-01T00:00:00.000Z",
     origem,
     cidade: typeof r.cidade === "string" && r.cidade ? r.cidade : undefined,
     uf: typeof r.uf === "string" && r.uf ? r.uf : undefined,
     estabelecimento:
-      typeof r.estabelecimento === "string" && r.estabelecimento
-        ? r.estabelecimento
-        : undefined,
+      typeof r.estabelecimento === "string" && r.estabelecimento ? r.estabelecimento : undefined,
     visibility: "private",
     contribuirAnonimamente: false,
   };
@@ -512,9 +504,7 @@ export function filterRegistrosPrecoPorMercado(
   }
   const alvo = normalizeMercado(filtro).toLowerCase();
   if (!alvo) return registros;
-  return registros.filter(
-    (r) => normalizeMercado(r.estabelecimento).toLowerCase() === alvo,
-  );
+  return registros.filter((r) => normalizeMercado(r.estabelecimento).toLowerCase() === alvo);
 }
 
 /**
@@ -552,7 +542,11 @@ export function registrarPrecosDaCompra(compra: MercadoCompraHistorico): number 
   emitPrecos();
   // Push para Supabase (best-effort, não bloqueia o fluxo local).
   if (precosSyncHooks.onUpsertRegistros) {
-    try { precosSyncHooks.onUpsertRegistros(novos); } catch { /* ignore */ }
+    try {
+      precosSyncHooks.onUpsertRegistros(novos);
+    } catch {
+      /* ignore */
+    }
   }
   return novos.length;
 }
@@ -590,11 +584,7 @@ function getPrecosServerSnapshot(): MercadoPrecoLocal[] {
 }
 
 export function useHistoricoPrecos(): MercadoPrecoLocal[] {
-  const data = useSyncExternalStore(
-    subscribePrecos,
-    getPrecosSnapshot,
-    getPrecosServerSnapshot,
-  );
+  const data = useSyncExternalStore(subscribePrecos, getPrecosSnapshot, getPrecosServerSnapshot);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   return mounted ? data : [];
@@ -618,11 +608,7 @@ function getResumosServerSnapshot(): ResumoPrecoProduto[] {
 }
 
 export function useResumosPrecos(): ResumoPrecoProduto[] {
-  const data = useSyncExternalStore(
-    subscribePrecos,
-    getResumosSnapshot,
-    getResumosServerSnapshot,
-  );
+  const data = useSyncExternalStore(subscribePrecos, getResumosSnapshot, getResumosServerSnapshot);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   return mounted ? data : [];
@@ -632,12 +618,7 @@ export function useResumosPrecos(): ResumoPrecoProduto[] {
 // E14 — Inteligência local de preços (pura, sem React, sem I/O)
 // ---------------------------------------------------------------------------
 
-export type PrecoInsightStatus =
-  | "sem_historico"
-  | "bom"
-  | "normal"
-  | "alto"
-  | "muito_alto";
+export type PrecoInsightStatus = "sem_historico" | "bom" | "normal" | "alto" | "muito_alto";
 
 export interface PrecoLocalInsight {
   status: PrecoInsightStatus;
@@ -686,8 +667,7 @@ export function buildPrecoLocalInsight(input: {
   }
 
   const { precoMedio, precoMin, ultimoPreco, registros } = resumo;
-  const diffPercent =
-    precoMedio > 0 ? ((preco - precoMedio) / precoMedio) * 100 : 0;
+  const diffPercent = precoMedio > 0 ? ((preco - precoMedio) / precoMedio) * 100 : 0;
 
   let status: PrecoInsightStatus;
   if (preco <= precoMin) {
@@ -790,9 +770,7 @@ const MERCADO_SEM_KEY = "__sem__";
  *      - `medio` caso contrário.
  *  - `melhoresProdutos`: top 3 produtos com menor `diffPercent` (mais baratos vs média global).
  */
-export function buildResumoMercados(
-  registros: MercadoPrecoLocal[],
-): ResumoMercadosGlobal {
+export function buildResumoMercados(registros: MercadoPrecoLocal[]): ResumoMercadosGlobal {
   if (!Array.isArray(registros) || registros.length === 0) {
     return {
       mercados: [],
@@ -806,10 +784,19 @@ export function buildResumoMercados(
   }
 
   // Filtra registros utilizáveis (preço > 0 e produtoKey válido).
-  type Valid = { reg: MercadoPrecoLocal; produtoKey: string; mercadoKey: string; mercadoNome: string };
+  type Valid = {
+    reg: MercadoPrecoLocal;
+    produtoKey: string;
+    mercadoKey: string;
+    mercadoNome: string;
+  };
   const valid: Valid[] = [];
   for (const r of registros) {
-    if (typeof r.precoUnitario !== "number" || !Number.isFinite(r.precoUnitario) || r.precoUnitario <= 0) {
+    if (
+      typeof r.precoUnitario !== "number" ||
+      !Number.isFinite(r.precoUnitario) ||
+      r.precoUnitario <= 0
+    ) {
       continue;
     }
     const produtoKey = buildProdutoKey({ nome: r.produtoNome, codigoBarras: r.codigoBarras });
@@ -962,4 +949,3 @@ export function useResumoMercados(): ResumoMercadosGlobal {
   const registros = useHistoricoPrecos();
   return buildResumoMercados(registros);
 }
-

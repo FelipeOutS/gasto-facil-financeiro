@@ -11,16 +11,10 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
 
-const {
-  detectMarkAsPaidIntent,
-} = await import("../src/server/whatsapp-contas-pagar.server");
+const { detectMarkAsPaidIntent } = await import("../src/server/whatsapp-contas-pagar.server");
 
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
-const { todayISOInAppTz } = await import(
-  "../src/server/contas-vencimento.server"
-);
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
+const { todayISOInAppTz } = await import("../src/server/contas-vencimento.server");
 
 function msg(texto: string, externalId = `ext-${Math.random().toString(36).slice(2, 10)}`) {
   return {
@@ -237,7 +231,11 @@ describe("WA-C3.1 — segurança preservada", () => {
     const orig = console.info;
     console.info = (...args: unknown[]) => {
       for (const a of args) {
-        if (a && typeof a === "object" && (a as Record<string, unknown>).event === "wa_payable_account_payment") {
+        if (
+          a &&
+          typeof a === "object" &&
+          (a as Record<string, unknown>).event === "wa_payable_account_payment"
+        ) {
           events.push(a as Record<string, unknown>);
         }
       }

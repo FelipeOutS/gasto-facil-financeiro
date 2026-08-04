@@ -32,7 +32,6 @@ import { hasAdminMasterRole } from "./admin-master.server";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = _supabaseAdmin as any;
 
-
 export type AuthzResult = {
   allowed: boolean;
   userId?: string;
@@ -106,9 +105,7 @@ export async function canUseWhatsAppForSender(
     // assinatura ativa/não cancelada/não expirada. Gratuito com beta
     // ativo permanece BLOQUEADO por construção.
     try {
-      const { getWhatsAppEntitlement } = await import(
-        "@/server/whatsapp-entitlement.server"
-      );
+      const { getWhatsAppEntitlement } = await import("@/server/whatsapp-entitlement.server");
       const ent = await getWhatsAppEntitlement(userId);
       if (!ent.allowed) return { allowed: false };
     } catch {

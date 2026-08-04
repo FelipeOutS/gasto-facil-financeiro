@@ -13,7 +13,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-
 function forbidden(): Response {
   return new Response(
     JSON.stringify({ error: "forbidden", message: "Acesso restrito ao Admin Master." }),
@@ -122,8 +121,7 @@ export const whatsappBetaAdminGrant = createServerFn({ method: "POST" })
     try {
       const { data: list } = await sb.auth.admin.listUsers({ page: 1, perPage: 200 });
       const found = (list?.users ?? []).find(
-        (u: { email?: string | null }) =>
-          (u.email ?? "").trim().toLowerCase() === email,
+        (u: { email?: string | null }) => (u.email ?? "").trim().toLowerCase() === email,
       );
       if (found) targetId = found.id;
     } catch {

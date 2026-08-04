@@ -21,12 +21,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { formatBRL, parseBRLInput, toLocalISODate } from "@/lib/format";
-import {
-  useStore,
-  getCartoes,
-  getCategorias,
-  addGasto,
-} from "@/lib/store";
+import { useStore, getCartoes, getCategorias, addGasto } from "@/lib/store";
 import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
 import { getEconomicRadar } from "@/lib/radar.functions";
 import { toast } from "sonner";
@@ -108,12 +103,7 @@ export function CompraInternacionalCard({ cartaoIdInicial, compact }: Props) {
   }
 
   return (
-    <div
-      className={cn(
-        "rounded-2xl border bg-card p-4 shadow-sm",
-        compact && "p-3",
-      )}
-    >
+    <div className={cn("rounded-2xl border bg-card p-4 shadow-sm", compact && "p-3")}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-primary/10 text-primary">
@@ -121,14 +111,10 @@ export function CompraInternacionalCard({ cartaoIdInicial, compact }: Props) {
           </span>
           <div>
             <h3 className="text-sm font-semibold">{t("compraInternacional.title")}</h3>
-            <p className="text-xs text-muted-foreground">
-              {t("compraInternacional.subtitle")}
-            </p>
+            <p className="text-xs text-muted-foreground">{t("compraInternacional.subtitle")}</p>
           </div>
         </div>
-        {loading && (
-          <RefreshCw className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-        )}
+        {loading && <RefreshCw className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
       </div>
 
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[120px_1fr]">
@@ -146,7 +132,9 @@ export function CompraInternacionalCard({ cartaoIdInicial, compact }: Props) {
         </div>
         <div className="space-y-1">
           <Label className="text-[11px]" htmlFor="ci-valor">
-            {t("compraInternacional.valueIn", { moeda: t(`compraInternacional.currencyNames.${moeda}`) })}
+            {t("compraInternacional.valueIn", {
+              moeda: t(`compraInternacional.currencyNames.${moeda}`),
+            })}
           </Label>
           <Input
             id="ci-valor"
@@ -205,19 +193,17 @@ export function CompraInternacionalCard({ cartaoIdInicial, compact }: Props) {
             {valorBRL > 0 && (
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 {t("compraInternacional.withTaxes")}{" "}
-                <strong className="tabular-nums">
-                  {formatBRL(valorBRLComTaxas)}
-                </strong>
+                <strong className="tabular-nums">{formatBRL(valorBRLComTaxas)}</strong>
               </p>
             )}
           </div>
           {cotacao && (
             <div className="text-right">
               <p className="text-[11px] text-muted-foreground">{t("compraInternacional.rate")}</p>
-              <p className="text-sm font-medium tabular-nums">
-                {formatBRL(cotacao.value)}
+              <p className="text-sm font-medium tabular-nums">{formatBRL(cotacao.value)}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {t("compraInternacional.per", { moeda })}
               </p>
-              <p className="text-[10px] text-muted-foreground">{t("compraInternacional.per", { moeda })}</p>
             </div>
           )}
         </div>
@@ -357,9 +343,7 @@ function ConfirmRegistrarDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{t("compraInternacional.confirm.title")}</DialogTitle>
-          <DialogDescription>
-            {t("compraInternacional.confirm.description")}
-          </DialogDescription>
+          <DialogDescription>{t("compraInternacional.confirm.description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
@@ -382,11 +366,7 @@ function ConfirmRegistrarDialog({
             </div>
             <div>
               <Label className="text-xs">{t("compraInternacional.confirm.date")}</Label>
-              <Input
-                type="date"
-                value={data}
-                onChange={(e) => setData(e.target.value)}
-              />
+              <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -439,7 +419,9 @@ function ConfirmRegistrarDialog({
                 <SelectValue placeholder={t("compraInternacional.confirm.noCategory")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none__">{t("compraInternacional.confirm.noCategory")}</SelectItem>
+                <SelectItem value="__none__">
+                  {t("compraInternacional.confirm.noCategory")}
+                </SelectItem>
                 {categorias.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.nome}
@@ -468,7 +450,9 @@ function ConfirmRegistrarDialog({
             {t("compraInternacional.confirm.cancel")}
           </Button>
           <Button type="button" onClick={handleSalvar} disabled={saving}>
-            {saving ? t("compraInternacional.confirm.saving") : t("compraInternacional.confirm.save")}
+            {saving
+              ? t("compraInternacional.confirm.saving")
+              : t("compraInternacional.confirm.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

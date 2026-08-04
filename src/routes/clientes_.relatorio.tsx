@@ -35,11 +35,7 @@ import { cn } from "@/lib/utils";
 import { useBootstrap, useStore, getReceitas } from "@/lib/store";
 import { useClientes, type Cliente } from "@/lib/clientes";
 import { nomeExibicaoCliente } from "@/components/ClienteSelect";
-import {
-  listarContasReceber,
-  statusEfetivo,
-  type ContaReceber,
-} from "@/lib/contas-receber";
+import { listarContasReceber, statusEfetivo, type ContaReceber } from "@/lib/contas-receber";
 import { useAuth } from "@/lib/auth-context";
 import type { Receita } from "@/lib/types";
 
@@ -49,8 +45,7 @@ export const Route = createFileRoute("/clientes_/relatorio")({
       { title: "Relatório por Cliente — Gasto Inteligente" },
       {
         name: "description",
-        content:
-          "Acompanhe quanto sua empresa recebe de cada cliente e o que está em aberto.",
+        content: "Acompanhe quanto sua empresa recebe de cada cliente e o que está em aberto.",
       },
     ],
   }),
@@ -220,10 +215,7 @@ function RelatorioClientesPage() {
     if (clienteFiltro !== "todos") {
       list = list.filter((b) => b.cliente.id === clienteFiltro);
     }
-    list.sort(
-      (a, b) =>
-        b.totalRecebido + b.totalPendente - (a.totalRecebido + a.totalPendente),
-    );
+    list.sort((a, b) => b.totalRecebido + b.totalPendente - (a.totalRecebido + a.totalPendente));
     return list;
   }, [receitas, contas, porId, inicio, fim, clienteFiltro, status, origem]);
 
@@ -313,9 +305,7 @@ function RelatorioClientesPage() {
           </Select>
         </div>
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-muted-foreground">
-            Status
-          </label>
+          <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Status</label>
           <Select value={status} onValueChange={(v) => setStatus(v as StatusFiltro)}>
             <SelectTrigger className="h-9">
               <SelectValue />
@@ -328,9 +318,7 @@ function RelatorioClientesPage() {
           </Select>
         </div>
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-muted-foreground">
-            Origem
-          </label>
+          <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Origem</label>
           <Select value={origem} onValueChange={(v) => setOrigem(v as OrigemFiltro)}>
             <SelectTrigger className="h-9">
               <SelectValue />
@@ -360,14 +348,10 @@ function RelatorioClientesPage() {
         <KpiCard
           icon={<TrendingUp className="h-4 w-4" />}
           label="Maior cliente"
-          value={
-            totais.maior ? nomeExibicaoCliente(totais.maior.cliente) : "—"
-          }
+          value={totais.maior ? nomeExibicaoCliente(totais.maior.cliente) : "—"}
           hint={
             totais.maior
-              ? formatBRL(
-                  totais.maior.totalRecebido + totais.maior.totalPendente,
-                )
+              ? formatBRL(totais.maior.totalRecebido + totais.maior.totalPendente)
               : undefined
           }
         />
@@ -400,8 +384,7 @@ function RelatorioClientesPage() {
           <ul className="space-y-2">
             {agregados.map((a) => {
               const total = a.totalRecebido + a.totalPendente;
-              const participacao =
-                totais.totalGeral > 0 ? (total / totais.totalGeral) * 100 : 0;
+              const participacao = totais.totalGeral > 0 ? (total / totais.totalGeral) * 100 : 0;
               return (
                 <li key={a.cliente.id}>
                   <button
@@ -422,16 +405,12 @@ function RelatorioClientesPage() {
                             </span>
                           )}
                         </p>
-                        <p className="text-sm font-semibold tabular-nums">
-                          {formatBRL(total)}
-                        </p>
+                        <p className="text-sm font-semibold tabular-nums">{formatBRL(total)}</p>
                       </div>
                       <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
                         <span>
                           Recebido{" "}
-                          <strong className="text-foreground">
-                            {formatBRL(a.totalRecebido)}
-                          </strong>
+                          <strong className="text-foreground">{formatBRL(a.totalRecebido)}</strong>
                         </span>
                         {a.totalPendente > 0 && (
                           <span>
@@ -445,8 +424,7 @@ function RelatorioClientesPage() {
                         <span>{participacao.toFixed(1)}% do total</span>
                         {a.ultimaMovimentacao && (
                           <span>
-                            Última:{" "}
-                            {format(parseISO(a.ultimaMovimentacao), "dd/MM/yyyy")}
+                            Última: {format(parseISO(a.ultimaMovimentacao), "dd/MM/yyyy")}
                           </span>
                         )}
                       </div>
@@ -472,9 +450,7 @@ function RelatorioClientesPage() {
             <>
               <DialogHeader>
                 <DialogTitle>{nomeExibicaoCliente(detalhe.cliente)}</DialogTitle>
-                <DialogDescription>
-                  Movimentações no período selecionado.
-                </DialogDescription>
+                <DialogDescription>Movimentações no período selecionado.</DialogDescription>
               </DialogHeader>
 
               <div className="grid grid-cols-2 gap-2">
@@ -489,8 +465,7 @@ function RelatorioClientesPage() {
                   <p
                     className={cn(
                       "mt-0.5 text-base font-semibold tabular-nums",
-                      detalhe.totalPendente > 0 &&
-                        "text-amber-600 dark:text-amber-400",
+                      detalhe.totalPendente > 0 && "text-amber-600 dark:text-amber-400",
                     )}
                   >
                     {formatBRL(detalhe.totalPendente)}
@@ -514,12 +489,9 @@ function RelatorioClientesPage() {
                             className="flex items-center justify-between gap-2 rounded-lg border bg-card p-2 text-xs"
                           >
                             <div className="min-w-0">
-                              <p className="truncate font-medium">
-                                {r.descricao}
-                              </p>
+                              <p className="truncate font-medium">{r.descricao}</p>
                               <p className="text-[11px] text-muted-foreground">
-                                {format(parseISO(r.data), "dd/MM/yyyy")} ·{" "}
-                                {r.tipo}
+                                {format(parseISO(r.data), "dd/MM/yyyy")} · {r.tipo}
                               </p>
                             </div>
                             <p className="shrink-0 font-semibold tabular-nums">
@@ -552,18 +524,10 @@ function RelatorioClientesPage() {
                               className="flex items-center justify-between gap-2 rounded-lg border bg-card p-2 text-xs"
                             >
                               <div className="min-w-0">
-                                <p className="truncate font-medium">
-                                  {c.titulo}
-                                </p>
+                                <p className="truncate font-medium">{c.titulo}</p>
                                 <p className="text-[11px] text-muted-foreground">
-                                  Previsto{" "}
-                                  {format(
-                                    parseISO(c.data_prevista),
-                                    "dd/MM/yyyy",
-                                  )}
-                                  {c.forma_recebimento
-                                    ? ` · ${c.forma_recebimento}`
-                                    : ""}
+                                  Previsto {format(parseISO(c.data_prevista), "dd/MM/yyyy")}
+                                  {c.forma_recebimento ? ` · ${c.forma_recebimento}` : ""}
                                 </p>
                               </div>
                               <div className="flex shrink-0 items-center gap-2">
@@ -589,11 +553,8 @@ function RelatorioClientesPage() {
                                 </Badge>
                                 <p className="font-semibold tabular-nums">
                                   {formatBRL(
-                                    Number(
-                                      eff === "recebido"
-                                        ? c.valor_total
-                                        : c.valor_restante,
-                                    ) || 0,
+                                    Number(eff === "recebido" ? c.valor_total : c.valor_restante) ||
+                                      0,
                                   )}
                                 </p>
                               </div>
@@ -604,12 +565,11 @@ function RelatorioClientesPage() {
                   </div>
                 )}
 
-                {detalhe.receitas.length === 0 &&
-                  detalhe.contas.length === 0 && (
-                    <p className="text-center text-xs text-muted-foreground">
-                      Sem movimentações neste período.
-                    </p>
-                  )}
+                {detalhe.receitas.length === 0 && detalhe.contas.length === 0 && (
+                  <p className="text-center text-xs text-muted-foreground">
+                    Sem movimentações neste período.
+                  </p>
+                )}
               </div>
             </>
           )}
@@ -645,17 +605,14 @@ function KpiCard({
           className={cn(
             "grid h-6 w-6 place-items-center rounded-md bg-muted text-foreground/70",
             accent === "primary" && "bg-primary/10 text-primary",
-            accent === "warning" &&
-              "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+            accent === "warning" && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
           )}
         >
           {icon}
         </span>
         <span className="truncate">{label}</span>
       </div>
-      <p className="mt-1.5 truncate text-base font-semibold tabular-nums">
-        {value}
-      </p>
+      <p className="mt-1.5 truncate text-base font-semibold tabular-nums">{value}</p>
       {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
     </div>
   );
@@ -667,9 +624,7 @@ function EmptyRanking() {
       <div className="mx-auto grid h-10 w-10 place-items-center rounded-2xl bg-primary/10 text-primary">
         <CalendarIcon className="h-5 w-5" />
       </div>
-      <p className="mt-2 text-sm font-medium">
-        Sem movimentações no período
-      </p>
+      <p className="mt-2 text-sm font-medium">Sem movimentações no período</p>
       <p className="mt-1 text-xs text-muted-foreground">
         Vincule clientes às suas receitas e contas a receber para ver o ranking aqui.
       </p>

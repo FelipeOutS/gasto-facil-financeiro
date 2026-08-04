@@ -59,7 +59,10 @@ function buildOggOpus(durationSeconds: number): Buffer {
   function buildPage(g: number, payload: Buffer, headerType: number, seq: number): Buffer {
     const segTable: number[] = [];
     let remaining = payload.length;
-    while (remaining >= 255) { segTable.push(255); remaining -= 255; }
+    while (remaining >= 255) {
+      segTable.push(255);
+      remaining -= 255;
+    }
     segTable.push(remaining);
     return Buffer.concat([
       Buffer.from("OggS", "ascii"),
@@ -192,8 +195,7 @@ mock.module("@/server/whatsapp-authz.server", () => ({
     return fakeState.elig;
   },
   shouldSendBlockedReply: async () => true,
-  WHATSAPP_BLOCKED_REPLY:
-    "Olá! No momento, este número não está vinculado a uma conta ativa.",
+  WHATSAPP_BLOCKED_REPLY: "Olá! No momento, este número não está vinculado a uma conta ativa.",
 }));
 
 mock.module("@/server/whatsapp-c11-gates.server", () => ({
@@ -305,9 +307,11 @@ afterEach(() => {
 
 const { Route } = await import("../src/routes/api/public.whatsapp.expense");
 type HttpHandler = (ctx: { request: Request }) => Promise<Response>;
-const handlers = (Route as unknown as {
-  options: { server: { handlers: Record<string, HttpHandler> } };
-}).options.server.handlers;
+const handlers = (
+  Route as unknown as {
+    options: { server: { handlers: Record<string, HttpHandler> } };
+  }
+).options.server.handlers;
 const POST = handlers.POST;
 
 // ---------------- fixtures ----------------

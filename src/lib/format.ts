@@ -49,7 +49,9 @@ export function parseDateLocal(value: string | Date | null | undefined): Date | 
   // ISO YYYY-MM-DD (optionally with time)
   const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (isoMatch) {
-    const y = +isoMatch[1], m = +isoMatch[2], d = +isoMatch[3];
+    const y = +isoMatch[1],
+      m = +isoMatch[2],
+      d = +isoMatch[3];
     if (m < 1 || m > 12 || d < 1 || d > 31) return null;
     const r = new Date(y, m - 1, d);
     if (r.getFullYear() !== y || r.getMonth() !== m - 1 || r.getDate() !== d) return null;
@@ -60,7 +62,8 @@ export function parseDateLocal(value: string | Date | null | undefined): Date | 
   const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
   if (dmy) {
     let y = +dmy[3];
-    const d = +dmy[1], m = +dmy[2];
+    const d = +dmy[1],
+      m = +dmy[2];
     if (y < 100) y += 2000;
     if (m < 1 || m > 12 || d < 1 || d > 31) return null;
     const r = new Date(y, m - 1, d);
@@ -97,7 +100,11 @@ function currentDateLocale(): string {
 export function formatDateBR(iso: string | Date): string {
   const d = parseDateLocal(iso);
   if (!d) return "";
-  return d.toLocaleDateString(currentDateLocale(), { day: "2-digit", month: "2-digit", year: "numeric" });
+  return d.toLocaleDateString(currentDateLocale(), {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 export function formatMonthYear(year: number, month: number): string {

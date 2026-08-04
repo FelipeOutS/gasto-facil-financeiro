@@ -1,13 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Percent,
-  LineChart,
-  Landmark,
-  RefreshCw,
-  AlertCircle,
-  Lightbulb,
-} from "lucide-react";
+import { Percent, LineChart, Landmark, RefreshCw, AlertCircle, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -74,16 +67,14 @@ export function RadarEconomicoInteligenteCard({
   const cdi = get("CDI");
   const ipca = get("IPCA");
   const stale = data?.partiallyStale ?? false;
-  const leituraPratica = !loading && data?.indicators.length
-    ? gerarLeituraPratica({ selic, cdi, ipca, userContext })
-    : null;
+  const leituraPratica =
+    !loading && data?.indicators.length
+      ? gerarLeituraPratica({ selic, cdi, ipca, userContext })
+      : null;
 
   return (
     <section
-      className={cn(
-        "flex h-full flex-col rounded-2xl border bg-card p-5 shadow-sm",
-        className,
-      )}
+      className={cn("flex h-full flex-col rounded-2xl border bg-card p-5 shadow-sm", className)}
       aria-label={tD("radarInteligente.aria")}
     >
       <header className="flex items-start justify-between gap-3">
@@ -94,9 +85,7 @@ export function RadarEconomicoInteligenteCard({
             </span>
             <h3 className="text-sm font-semibold">{tD("radarInteligente.title")}</h3>
           </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {tD("radarInteligente.subtitle")}
-          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{tD("radarInteligente.subtitle")}</p>
         </div>
         <Button
           type="button"
@@ -130,7 +119,6 @@ export function RadarEconomicoInteligenteCard({
         </div>
       )}
 
-
       <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-3 md:grid-cols-1 lg:grid-cols-3">
         <IndicadorMini
           loading={loading}
@@ -158,9 +146,7 @@ export function RadarEconomicoInteligenteCard({
           titulo="IPCA"
           icone={<LineChart className="h-3.5 w-3.5" />}
           unidade={tD("radarInteligente.units.perMonth")}
-          interpretacao={
-            ipca ? interpretarIpca(ipca.value) : "Inflação oficial do consumidor."
-          }
+          interpretacao={ipca ? interpretarIpca(ipca.value) : "Inflação oficial do consumidor."}
         />
       </div>
 
@@ -228,26 +214,20 @@ function IndicadorMini({
 function interpretarSelic(v: number): string {
   if (v >= 12)
     return "Selic alta: crédito e parcelamentos mais caros; renda fixa tende a render mais.";
-  if (v >= 8)
-    return "Selic moderada: equilíbrio entre crédito e investimentos conservadores.";
+  if (v >= 8) return "Selic moderada: equilíbrio entre crédito e investimentos conservadores.";
   return "Selic baixa: crédito tende a ficar mais acessível, mas renda fixa rende menos.";
 }
 
 function interpretarCdi(v: number): string {
-  if (v >= 12)
-    return "CDI alto: pode favorecer reserva em aplicações conservadoras.";
-  if (v >= 8)
-    return "CDI moderado: rendimento conservador segue atrativo.";
+  if (v >= 12) return "CDI alto: pode favorecer reserva em aplicações conservadoras.";
+  if (v >= 8) return "CDI moderado: rendimento conservador segue atrativo.";
   return "CDI baixo: rendimento conservador pode perder força.";
 }
 
 function interpretarIpca(v: number): string {
-  if (v >= 0.6)
-    return "IPCA alto no mês: atenção ao custo de vida e gastos variáveis.";
-  if (v >= 0.2)
-    return "IPCA moderado: acompanhe gastos recorrentes e categorias variáveis.";
-  if (v >= 0)
-    return "Inflação mais controlada, mas ainda exige acompanhamento.";
+  if (v >= 0.6) return "IPCA alto no mês: atenção ao custo de vida e gastos variáveis.";
+  if (v >= 0.2) return "IPCA moderado: acompanhe gastos recorrentes e categorias variáveis.";
+  if (v >= 0) return "Inflação mais controlada, mas ainda exige acompanhamento.";
   return "Deflação no mês: preços caíram em média.";
 }
 
@@ -264,8 +244,7 @@ function gerarLeituraPratica(args: {
 }): string {
   const { selic, cdi, ipca, userContext } = args;
   const jurosAltos = (selic?.value ?? 0) >= 12 || (cdi?.value ?? 0) >= 12;
-  const jurosModerados =
-    !jurosAltos && ((selic?.value ?? 0) >= 8 || (cdi?.value ?? 0) >= 8);
+  const jurosModerados = !jurosAltos && ((selic?.value ?? 0) >= 8 || (cdi?.value ?? 0) >= 8);
   const inflacaoAlta = (ipca?.value ?? 0) >= 0.6;
   const inflacaoModerada = !inflacaoAlta && (ipca?.value ?? 0) >= 0.2;
 

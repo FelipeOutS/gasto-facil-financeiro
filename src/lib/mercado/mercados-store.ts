@@ -77,7 +77,10 @@ function cleanCep(v: unknown): string | undefined {
 
 function cleanUf(v: unknown): string | undefined {
   if (typeof v !== "string") return undefined;
-  const t = v.replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase();
+  const t = v
+    .replace(/[^a-zA-Z]/g, "")
+    .slice(0, 2)
+    .toUpperCase();
   return t ? t : undefined;
 }
 
@@ -86,10 +89,8 @@ export function normalizeMercadoLocal(raw: unknown): MercadoLocal | null {
   const r = raw as Record<string, unknown>;
   const nome = cleanStr(r.nome);
   if (!nome) return null;
-  const id =
-    typeof r.id === "string" && r.id.trim() ? r.id : newId();
-  const criadoEm =
-    typeof r.criadoEm === "string" && r.criadoEm ? r.criadoEm : nowIso();
+  const id = typeof r.id === "string" && r.id.trim() ? r.id : newId();
+  const criadoEm = typeof r.criadoEm === "string" && r.criadoEm ? r.criadoEm : nowIso();
   const atualizadoEm =
     typeof r.atualizadoEm === "string" && r.atualizadoEm ? r.atualizadoEm : criadoEm;
   return {
@@ -196,7 +197,9 @@ function subscribe(listener: Listener): () => void {
     const onStorage = (e: StorageEvent) => {
       if (
         e.key === MERCADOS_LOCAIS_STORAGE_KEY ||
-        (e.key && mercadosActiveUserId && e.key === `${MERCADOS_LOCAIS_STORAGE_KEY}:${mercadosActiveUserId}`)
+        (e.key &&
+          mercadosActiveUserId &&
+          e.key === `${MERCADOS_LOCAIS_STORAGE_KEY}:${mercadosActiveUserId}`)
       ) {
         listener();
       }
@@ -225,12 +228,20 @@ function sortMercados(arr: MercadoLocal[]): MercadoLocal[] {
 
 function pushUpsert(m: MercadoLocal) {
   if (!mercadosSyncHooks.onUpsertMercado) return;
-  try { mercadosSyncHooks.onUpsertMercado(m); } catch { /* ignore */ }
+  try {
+    mercadosSyncHooks.onUpsertMercado(m);
+  } catch {
+    /* ignore */
+  }
 }
 
 function pushDelete(id: string) {
   if (!mercadosSyncHooks.onDeleteMercado) return;
-  try { mercadosSyncHooks.onDeleteMercado(id); } catch { /* ignore */ }
+  try {
+    mercadosSyncHooks.onDeleteMercado(id);
+  } catch {
+    /* ignore */
+  }
 }
 
 // ---------- API pública --------------------------------------------------
@@ -283,13 +294,11 @@ export function updateMercadoLocal(
     ...prev,
     nome,
     cep: input.cep !== undefined ? cleanCep(input.cep) : prev.cep,
-    endereco:
-      input.endereco !== undefined ? cleanStr(input.endereco) : prev.endereco,
+    endereco: input.endereco !== undefined ? cleanStr(input.endereco) : prev.endereco,
     bairro: input.bairro !== undefined ? cleanStr(input.bairro) : prev.bairro,
     cidade: input.cidade !== undefined ? cleanStr(input.cidade) : prev.cidade,
     uf: input.uf !== undefined ? cleanUf(input.uf) : prev.uf,
-    observacao:
-      input.observacao !== undefined ? cleanStr(input.observacao) : prev.observacao,
+    observacao: input.observacao !== undefined ? cleanStr(input.observacao) : prev.observacao,
     favorito: input.favorito !== undefined ? Boolean(input.favorito) : prev.favorito,
     atualizadoEm: nowIso(),
   };

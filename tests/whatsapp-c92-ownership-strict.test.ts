@@ -34,7 +34,7 @@ function buildFake() {
   const tables: Record<string, Row[]> = { whatsapp_notifications: [] };
 
   function makeQuery(table: string) {
-    let rows: Row[] = tables[table] ?? [];
+    const rows: Row[] = tables[table] ?? [];
     const filters: Array<(r: Row) => boolean> = [];
     let mode: "select" | "update" | "insert" | "upsert" = "select";
     let updatePatch: Row | null = null;
@@ -480,7 +480,10 @@ describe("WA-C9.2 ownership :: worker antigo pós-recovery", () => {
     const past = new Date(Date.now() - 60_000).toISOString();
     seedProcessing({ lease_expires_at: past, claim_token: "OLD" });
     // recovery: OLD → pending, claim_token null
-    const rec = await recoverStuckProcessing(50, { client: fake.client, allowLegacyFakePath: true });
+    const rec = await recoverStuckProcessing(50, {
+      client: fake.client,
+      allowLegacyFakePath: true,
+    });
     expect(rec.recovered).toBe(1);
     const row = fake.tables.whatsapp_notifications[0] as NotificationRow;
     expect(row.status).toBe("pending");
@@ -499,12 +502,9 @@ describe("WA-C9.2 ownership :: worker antigo pós-recovery", () => {
     expect(failed.updated).toBe(false);
     const skipped = await markSkipped("n-1", "template_missing", "OLD", { client: fake.client });
     expect(skipped).toBe(false);
-    const resched = await rescheduleForQuietHours(
-      "n-1",
-      new Date("2026-07-10T14:00:00Z"),
-      "OLD",
-      { client: fake.client },
-    );
+    const resched = await rescheduleForQuietHours("n-1", new Date("2026-07-10T14:00:00Z"), "OLD", {
+      client: fake.client,
+    });
     expect(resched.ok).toBe(false);
 
     const after = fake.tables.whatsapp_notifications[0] as NotificationRow;
@@ -600,13 +600,9 @@ describe("WA-C9.2 ownership :: invariantes globais", () => {
         claimed_at: null,
         lease_expires_at: null,
       });
-      await markFailed(
-        "n-1",
-        "x",
-        { retryable: true, currentAttempt: 0, maxAttempts: 5 },
-        null,
-        { client: fake.client },
-      );
+      await markFailed("n-1", "x", { retryable: true, currentAttempt: 0, maxAttempts: 5 }, null, {
+        client: fake.client,
+      });
       await markSkipped("n-1", "user_disabled", null, { client: fake.client });
       const after = fake.tables.whatsapp_notifications[0] as NotificationRow;
       expect(after.status).toBe(term);

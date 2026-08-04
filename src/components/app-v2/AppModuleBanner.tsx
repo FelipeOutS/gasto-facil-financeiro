@@ -60,9 +60,7 @@ export function AppModuleBanner({
             alt={resolvedAlt}
             loading={priority ? "eager" : "lazy"}
             decoding="async"
-            {...(priority
-              ? { fetchPriority: "high" as const }
-              : { fetchPriority: "low" as const })}
+            {...(priority ? { fetchPriority: "high" as const } : { fetchPriority: "low" as const })}
             className="pointer-events-none absolute right-0 top-0 h-full w-1/2 object-cover object-right opacity-90 sm:w-2/5"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).style.display = "none";
@@ -75,9 +73,7 @@ export function AppModuleBanner({
           {title}
         </h2>
         {subtitle && (
-          <p className="text-xs leading-snug text-muted-foreground md:text-sm">
-            {subtitle}
-          </p>
+          <p className="text-xs leading-snug text-muted-foreground md:text-sm">{subtitle}</p>
         )}
         {cta && <div className="mt-1">{cta}</div>}
       </div>

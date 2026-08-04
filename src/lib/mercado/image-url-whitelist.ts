@@ -29,9 +29,7 @@ const JOANIN_HOST_SUFFIXES = [".joaninonline.com.br", "joaninonline.com.br"];
 
 function isJoaninHost(hostname: string): boolean {
   const h = hostname.toLowerCase();
-  return JOANIN_HOST_SUFFIXES.some((s) =>
-    s.startsWith(".") ? h.endsWith(s) : h === s,
-  );
+  return JOANIN_HOST_SUFFIXES.some((s) => (s.startsWith(".") ? h.endsWith(s) : h === s));
 }
 
 // Bucket público do próprio projeto (uploads do Admin Master). Aceitamos
@@ -46,11 +44,7 @@ function isMercadoBucketUrl(u: URL): boolean {
   return u.pathname.startsWith(MERCADO_BUCKET_PATH_PREFIX);
 }
 
-export type AllowedImageOrigin =
-  | "openfoodfacts"
-  | "joanin"
-  | "local"
-  | "admin_upload";
+export type AllowedImageOrigin = "openfoodfacts" | "joanin" | "local" | "admin_upload";
 
 export type ImageValidationResult =
   | { ok: true; url: string; origin: AllowedImageOrigin }

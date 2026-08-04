@@ -28,12 +28,8 @@ function getApiKey(): string | undefined {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const env = import.meta.env as any;
-    const key =
-      env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY ??
-      env.VITE_GOOGLE_MAPS_API_KEY; // fallback legado, sem expor
-    return typeof key === "string" && key.trim().length > 0
-      ? key.trim()
-      : undefined;
+    const key = env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY ?? env.VITE_GOOGLE_MAPS_API_KEY; // fallback legado, sem expor
+    return typeof key === "string" && key.trim().length > 0 ? key.trim() : undefined;
   } catch {
     return undefined;
   }
@@ -108,8 +104,7 @@ export function loadGoogleMaps(): Promise<typeof google.maps> {
     const timeoutId = window.setTimeout(() => {
       cleanup();
       const msg =
-        "O mapa demorou muito para carregar. " +
-        "Verifique sua conexão e tente novamente.";
+        "O mapa demorou muito para carregar. " + "Verifique sua conexão e tente novamente.";
       setState({ status: "error", message: msg });
       reject(new Error(msg));
     }, 20000);
@@ -136,8 +131,7 @@ export function loadGoogleMaps(): Promise<typeof google.maps> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const maps = (window as any).google?.maps;
       if (!maps) {
-        const msg =
-          "O Google Maps não iniciou corretamente. Tente recarregar a página.";
+        const msg = "O Google Maps não iniciou corretamente. Tente recarregar a página.";
         setState({ status: "error", message: msg });
         reject(new Error(msg));
         return;

@@ -48,13 +48,9 @@ export function toPersistableImage(
   }
 
   const source: ImageSourceTag =
-    v.origin === "openfoodfacts"
-      ? "open_food_facts"
-      : v.origin === "joanin"
-        ? "joanin"
-        : "manual";
+    v.origin === "openfoodfacts" ? "open_food_facts" : v.origin === "joanin" ? "joanin" : "manual";
 
-  const confidence = result.confidence ? CONF_MAP[result.confidence] ?? null : null;
+  const confidence = result.confidence ? (CONF_MAP[result.confidence] ?? null) : null;
 
   return { image_url: v.url, image_source: source, image_confidence: confidence };
 }

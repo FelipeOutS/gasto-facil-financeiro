@@ -65,17 +65,12 @@ export type LembreteContaContext = {
 type LembreteEntry = LembreteContaContext & { at: number };
 const lembreteStore = new Map<string, LembreteEntry>();
 
-export function recordLembreteConta(
-  telefone: string,
-  ctx: LembreteContaContext,
-): void {
+export function recordLembreteConta(telefone: string, ctx: LembreteContaContext): void {
   if (!telefone || !ctx?.contaId) return;
   lembreteStore.set(telefone, { ...ctx, at: Date.now() });
 }
 
-export function getLembreteConta(
-  telefone: string,
-): LembreteContaContext | null {
+export function getLembreteConta(telefone: string): LembreteContaContext | null {
   const e = lembreteStore.get(telefone);
   if (!e) return null;
   if (Date.now() - e.at > LEMBRETE_TTL_MS) {
@@ -97,8 +92,7 @@ export type LembreteResponseKind =
   | { kind: "detalhes" }
   | { kind: "ignorar" };
 
-const RE_PAGUEI =
-  /^\s*(?:1\.?|paguei|j[aá]\s+paguei|quitei|marcar\s+como\s+paga|pagou|pago)\b/i;
+const RE_PAGUEI = /^\s*(?:1\.?|paguei|j[aá]\s+paguei|quitei|marcar\s+como\s+paga|pagou|pago)\b/i;
 const RE_ADIAR = /^\s*(?:2\.?|adiar|postergar|adia)\b/i;
 const RE_DETALHES = /^\s*(?:3\.?|ver\s+detalhes|detalhes?)\b/i;
 const RE_IGNORAR = /^\s*(?:4\.?|ignorar|ignora|depois)\b/i;
@@ -201,27 +195,54 @@ function norm(s: string): string {
 }
 
 const ORDINAIS: Record<string, number> = {
-  "primeira": 1, "primeiro": 1, "1a": 1, "1o": 1, "1ª": 1, "1º": 1,
-  "segunda": 2, "segundo": 2, "2a": 2, "2o": 2,
-  "terceira": 3, "terceiro": 3, "3a": 3, "3o": 3,
-  "quarta": 4, "quarto": 4, "4a": 4, "4o": 4,
-  "quinta": 5, "quinto": 5, "5a": 5, "5o": 5,
-  "sexta": 6, "sexto": 6,
-  "setima": 7, "setimo": 7,
-  "oitava": 8, "oitavo": 8,
-  "nona": 9, "nono": 9,
-  "decima": 10, "decimo": 10,
+  primeira: 1,
+  primeiro: 1,
+  "1a": 1,
+  "1o": 1,
+  "1ª": 1,
+  "1º": 1,
+  segunda: 2,
+  segundo: 2,
+  "2a": 2,
+  "2o": 2,
+  terceira: 3,
+  terceiro: 3,
+  "3a": 3,
+  "3o": 3,
+  quarta: 4,
+  quarto: 4,
+  "4a": 4,
+  "4o": 4,
+  quinta: 5,
+  quinto: 5,
+  "5a": 5,
+  "5o": 5,
+  sexta: 6,
+  sexto: 6,
+  setima: 7,
+  setimo: 7,
+  oitava: 8,
+  oitavo: 8,
+  nona: 9,
+  nono: 9,
+  decima: 10,
+  decimo: 10,
 };
 
 type Action = "pagar" | "editar" | "cancelar";
 
 function detectAction(t: string): Action | null {
-  if (/\b(paguei|quitei|quitar|dar\s+baixa|baixar|marcar\s+como\s+pago|ja\s+paguei|ja\s+quitei|resolvido|resolvi|acabei\s+de\s+pagar|pode\s+marcar)\b/.test(t)) {
+  if (
+    /\b(paguei|quitei|quitar|dar\s+baixa|baixar|marcar\s+como\s+pago|ja\s+paguei|ja\s+quitei|resolvido|resolvi|acabei\s+de\s+pagar|pode\s+marcar)\b/.test(
+      t,
+    )
+  ) {
     return "pagar";
   }
   if (/\b(pagar|paga)\b/.test(t)) return "pagar";
   if (/\b(editar|edita|alterar|altera|mudar|muda|corrigir|corrige)\b/.test(t)) return "editar";
-  if (/\b(cancelar|cancela|excluir|exclui|remover|remove|apagar|apaga)\b/.test(t)) return "cancelar";
+  if (/\b(cancelar|cancela|excluir|exclui|remover|remove|apagar|apaga)\b/.test(t))
+    return "cancelar";
   return null;
 }
 
@@ -271,7 +292,9 @@ export function resolveOrdinal(telefone: string, texto: string): string | null {
 
   if (!action) {
     // "paguei" sozinho com lista de 1 item.
-    if (/^(paguei|ja paguei|quitei|ja quitei|resolvido|resolvi|pode marcar(?: como pago)?)$/.test(t)) {
+    if (
+      /^(paguei|ja paguei|quitei|ja quitei|resolvido|resolvi|pode marcar(?: como pago)?)$/.test(t)
+    ) {
       if (entry.itens.length === 1) {
         entry.lastIndex = 1;
         return `paguei ${entry.itens[0].nome}`;
@@ -338,10 +361,7 @@ const PREP_DESTINATARIO_RE = /\b(?:para|pra|pro|ao|à)\s+[a-zà-ÿ]/i;
  *  - "paguei João 50"                 → null  (já tem destinatário)
  *  - "paguei a fatura"                → null  (sinal de conta a pagar)
  */
-export function resolvePagueiSemNome(
-  telefone: string,
-  texto: string,
-): string | null {
+export function resolvePagueiSemNome(telefone: string, texto: string): string | null {
   const raw = (texto ?? "").trim();
   if (!raw) return null;
   if (!VERBO_PAGUEI_RE.test(raw)) return null;

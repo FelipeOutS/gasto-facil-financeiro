@@ -45,11 +45,8 @@ mock.module("@/integrations/supabase/client.server", () => ({
 }));
 
 // Agora sim carrega o helper (usa o mock acima).
-const {
-  applyMercadoPagoBillingEvent,
-  normalizeCanonicalStatus,
-  extractProviderUpdatedAt,
-} = await import("../src/server/billing-mercadopago-apply.server");
+const { applyMercadoPagoBillingEvent, normalizeCanonicalStatus, extractProviderUpdatedAt } =
+  await import("../src/server/billing-mercadopago-apply.server");
 
 // ---------------- helpers ----------------
 const USER = "11111111-1111-1111-1111-111111111111";
@@ -140,21 +137,29 @@ test("F9. extractProviderUpdatedAt: prioridade date_last_updated", () => {
 
 test("F10. extractProviderUpdatedAt: fallback para date_approved e date_created", () => {
   const a = extractProviderUpdatedAt({
-    id: "1", status: "approved", date_approved: "2026-01-10T00:00:00Z",
+    id: "1",
+    status: "approved",
+    date_approved: "2026-01-10T00:00:00Z",
   } as never);
   expect(a).toBe("2026-01-10T00:00:00.000Z");
 
   const b = extractProviderUpdatedAt({
-    id: "1", status: "pending", date_created: "2026-01-05T00:00:00Z",
+    id: "1",
+    status: "pending",
+    date_created: "2026-01-05T00:00:00Z",
   } as never);
   expect(b).toBe("2026-01-05T00:00:00.000Z");
 });
 
 test("F11. extractProviderUpdatedAt: null quando sem timestamps ou inválido", () => {
   expect(extractProviderUpdatedAt({ id: "1", status: "approved" } as never)).toBe(null);
-  expect(extractProviderUpdatedAt({
-    id: "1", status: "approved", date_last_updated: "not-a-date",
-  } as never)).toBe(null);
+  expect(
+    extractProviderUpdatedAt({
+      id: "1",
+      status: "approved",
+      date_last_updated: "not-a-date",
+    } as never),
+  ).toBe(null);
 });
 
 // ============================================================================
@@ -191,7 +196,10 @@ test("A2. authorized é canonicalizado como approved", async () => {
   state.rpcResponse = { outcome: "event_applied" };
   await applyMercadoPagoBillingEvent({
     payment: makePayment({ status: "authorized" }),
-    userId: USER, plano: "pessoal_premium", periodicidade: "mensal", months: 1,
+    userId: USER,
+    plano: "pessoal_premium",
+    periodicidade: "mensal",
+    months: 1,
     eventType: "payment.updated",
   });
   expect(state.recorded[0].args.p_canonical_status).toBe("approved");
@@ -204,7 +212,10 @@ test("A3-A4. pending / in_process → canonical=pending (event_noop na RPC)", as
     state.rpcResponse = { outcome: "event_noop" };
     await applyMercadoPagoBillingEvent({
       payment: makePayment({ status: s }),
-      userId: USER, plano: null, periodicidade: null, months: 1,
+      userId: USER,
+      plano: null,
+      periodicidade: null,
+      months: 1,
       eventType: "payment.updated",
     });
     expect(state.recorded[0].args.p_canonical_status).toBe("pending");
@@ -215,7 +226,10 @@ test("A5. rejected → canonical=rejected (event_noop, não destrói plano vigen
   state.rpcResponse = { outcome: "event_noop" };
   const r = await applyMercadoPagoBillingEvent({
     payment: makePayment({ status: "rejected" }),
-    userId: USER, plano: null, periodicidade: null, months: 1,
+    userId: USER,
+    plano: null,
+    periodicidade: null,
+    months: 1,
     eventType: "payment.updated",
   });
   expect(r.outcome).toBe("event_noop");
@@ -224,12 +238,17 @@ test("A5. rejected → canonical=rejected (event_noop, não destrói plano vigen
 
 test("A6. cancelled imediato → canonical=cancelled_immediate", async () => {
   state.rpcResponse = {
-    outcome: "event_applied", had_whatsapp_before: true, has_whatsapp_after: false,
+    outcome: "event_applied",
+    had_whatsapp_before: true,
+    has_whatsapp_after: false,
     notifications_invalidated: 3,
   };
   const r = await applyMercadoPagoBillingEvent({
     payment: makePayment({ status: "cancelled" }),
-    userId: USER, plano: null, periodicidade: null, months: 1,
+    userId: USER,
+    plano: null,
+    periodicidade: null,
+    months: 1,
     eventType: "payment.updated",
     overrideCanonical: "cancelled_immediate",
   });
@@ -241,7 +260,10 @@ test("A7. cancelled agendado preserva canonical=cancelled_scheduled", async () =
   state.rpcResponse = { outcome: "event_applied" };
   await applyMercadoPagoBillingEvent({
     payment: makePayment({ status: "cancelled" }),
-    userId: USER, plano: null, periodicidade: null, months: 1,
+    userId: USER,
+    plano: null,
+    periodicidade: null,
+    months: 1,
     eventType: "subscription.updated",
     cancellationKind: "scheduled",
   });
@@ -250,12 +272,17 @@ test("A7. cancelled agendado preserva canonical=cancelled_scheduled", async () =
 
 test("A8. refunded → canonical=refunded, invalida notifications", async () => {
   state.rpcResponse = {
-    outcome: "event_applied", had_whatsapp_before: true, has_whatsapp_after: false,
+    outcome: "event_applied",
+    had_whatsapp_before: true,
+    has_whatsapp_after: false,
     notifications_invalidated: 2,
   };
   const r = await applyMercadoPagoBillingEvent({
     payment: makePayment({ status: "refunded" }),
-    userId: USER, plano: null, periodicidade: null, months: 1,
+    userId: USER,
+    plano: null,
+    periodicidade: null,
+    months: 1,
     eventType: "payment.updated",
   });
   expect(state.recorded[0].args.p_canonical_status).toBe("refunded");
@@ -266,7 +293,10 @@ test("A9. chargeback → canonical=chargeback", async () => {
   state.rpcResponse = { outcome: "event_applied" };
   await applyMercadoPagoBillingEvent({
     payment: makePayment({ status: "charged_back" }),
-    userId: USER, plano: null, periodicidade: null, months: 1,
+    userId: USER,
+    plano: null,
+    periodicidade: null,
+    months: 1,
     eventType: "payment.updated",
   });
   expect(state.recorded[0].args.p_canonical_status).toBe("chargeback");
@@ -276,7 +306,10 @@ test("A10. expired → canonical=expired", async () => {
   state.rpcResponse = { outcome: "event_applied" };
   await applyMercadoPagoBillingEvent({
     payment: makePayment({ status: "expired" }),
-    userId: USER, plano: null, periodicidade: null, months: 1,
+    userId: USER,
+    plano: null,
+    periodicidade: null,
+    months: 1,
     eventType: "payment.updated",
   });
   expect(state.recorded[0].args.p_canonical_status).toBe("expired");
@@ -286,7 +319,10 @@ test("A11. status desconhecido → canonical=unknown (fail-closed)", async () =>
   state.rpcResponse = { outcome: "unknown_status" };
   const r = await applyMercadoPagoBillingEvent({
     payment: makePayment({ status: "mystery_status_xyz" }),
-    userId: USER, plano: null, periodicidade: null, months: 1,
+    userId: USER,
+    plano: null,
+    periodicidade: null,
+    months: 1,
     eventType: "payment.updated",
   });
   expect(state.recorded[0].args.p_canonical_status).toBe("unknown");
@@ -297,7 +333,9 @@ test("A22. usuário não fornecido → invalid_input, RPC NÃO é chamada", asyn
   const r = await applyMercadoPagoBillingEvent({
     payment: makePayment(),
     userId: "",
-    plano: "pessoal_premium", periodicidade: "mensal", months: 1,
+    plano: "pessoal_premium",
+    periodicidade: "mensal",
+    months: 1,
     eventType: "payment.updated",
   });
   expect(r.ok).toBe(false);
@@ -311,7 +349,9 @@ test("A23. cross-user: RPC é invocada com user_id fornecido pelo caller — nun
   await applyMercadoPagoBillingEvent({
     payment: makePayment({ metadata: { user_id: OTHER_USER, plano: "pessoal_premium" } }),
     userId: USER,
-    plano: "pessoal_premium", periodicidade: "mensal", months: 1,
+    plano: "pessoal_premium",
+    periodicidade: "mensal",
+    months: 1,
     eventType: "payment.updated",
   });
   // A RPC recebe USER (autoritativo do server), não OTHER_USER (do payload).
@@ -326,7 +366,10 @@ test("B24. duplicate_event: helper propaga sem re-executar", async () => {
   state.rpcResponse = { outcome: "duplicate_event", event_id: "existing-1" };
   const r = await applyMercadoPagoBillingEvent({
     payment: makePayment(),
-    userId: USER, plano: "pessoal_premium", periodicidade: "mensal", months: 1,
+    userId: USER,
+    plano: "pessoal_premium",
+    periodicidade: "mensal",
+    months: 1,
     eventType: "payment.updated",
   });
   expect(r.outcome).toBe("duplicate_event");
@@ -337,7 +380,10 @@ test("B27. stale_event_skipped: helper propaga", async () => {
   state.rpcResponse = { outcome: "stale_event_skipped" };
   const r = await applyMercadoPagoBillingEvent({
     payment: makePayment({ date_last_updated: "2025-01-01T00:00:00Z" }),
-    userId: USER, plano: "pessoal_premium", periodicidade: "mensal", months: 1,
+    userId: USER,
+    plano: "pessoal_premium",
+    periodicidade: "mensal",
+    months: 1,
     eventType: "payment.updated",
   });
   expect(r.outcome).toBe("stale_event_skipped");
@@ -346,8 +392,15 @@ test("B27. stale_event_skipped: helper propaga", async () => {
 test("B32. timestamp ausente: RPC recebe null, sem crash", async () => {
   state.rpcResponse = { outcome: "event_applied" };
   await applyMercadoPagoBillingEvent({
-    payment: makePayment({ date_last_updated: undefined, date_approved: undefined, date_created: undefined }),
-    userId: USER, plano: "pessoal_premium", periodicidade: "mensal", months: 1,
+    payment: makePayment({
+      date_last_updated: undefined,
+      date_approved: undefined,
+      date_created: undefined,
+    }),
+    userId: USER,
+    plano: "pessoal_premium",
+    periodicidade: "mensal",
+    months: 1,
     eventType: "payment.updated",
   });
   expect(state.recorded[0].args.p_provider_updated_at).toBe(null);
@@ -368,7 +421,8 @@ test("D49. downgrade bloqueia entitlement: had=true, has=false, invalidated>0", 
     payment: makePayment({ status: "approved" }),
     userId: USER,
     plano: "pessoal_manual", // plano sem WhatsApp
-    periodicidade: "mensal", months: 1,
+    periodicidade: "mensal",
+    months: 1,
     eventType: "payment.updated",
   });
   expect(r.hadWhatsAppBefore).toBe(true);
@@ -385,7 +439,10 @@ test("D51. cancelled_scheduled: entitlement preservado até vigência", async ()
   };
   const r = await applyMercadoPagoBillingEvent({
     payment: makePayment({ status: "cancelled" }),
-    userId: USER, plano: null, periodicidade: null, months: 1,
+    userId: USER,
+    plano: null,
+    periodicidade: null,
+    months: 1,
     eventType: "subscription.updated",
     cancellationKind: "scheduled",
   });
@@ -402,7 +459,10 @@ test("D64. reupgrade: helper trata como event_applied sem tocar em notifications
   };
   const r = await applyMercadoPagoBillingEvent({
     payment: makePayment(),
-    userId: USER, plano: "pessoal_premium", periodicidade: "mensal", months: 1,
+    userId: USER,
+    plano: "pessoal_premium",
+    periodicidade: "mensal",
+    months: 1,
     eventType: "payment.updated",
   });
   expect(r.notificationsInvalidated).toBe(0);
@@ -417,7 +477,10 @@ test("E1. RPC retorna erro (ex: 42501 permission denied) → helper retorna ok:f
   state.rpcError = { code: "42501", message: "permission denied for function ..." };
   const r = await applyMercadoPagoBillingEvent({
     payment: makePayment(),
-    userId: USER, plano: "pessoal_premium", periodicidade: "mensal", months: 1,
+    userId: USER,
+    plano: "pessoal_premium",
+    periodicidade: "mensal",
+    months: 1,
     eventType: "payment.updated",
   });
   expect(r.ok).toBe(false);
@@ -429,7 +492,10 @@ test("E2. RPC lança exceção → helper captura e retorna ok:false", async () 
   state.rpcThrows = true;
   const r = await applyMercadoPagoBillingEvent({
     payment: makePayment(),
-    userId: USER, plano: "pessoal_premium", periodicidade: "mensal", months: 1,
+    userId: USER,
+    plano: "pessoal_premium",
+    periodicidade: "mensal",
+    months: 1,
     eventType: "payment.updated",
   });
   expect(r.ok).toBe(false);
@@ -441,7 +507,10 @@ test("E3. RPC recebe metadata sanitizado — sem token, sem payload bruto, sem P
   state.rpcResponse = { outcome: "event_applied" };
   await applyMercadoPagoBillingEvent({
     payment: makePayment({ transaction_amount: 99.9, currency_id: "BRL" }),
-    userId: USER, plano: "pessoal_premium", periodicidade: "mensal", months: 1,
+    userId: USER,
+    plano: "pessoal_premium",
+    periodicidade: "mensal",
+    months: 1,
     eventType: "payment.updated",
   });
   const meta = state.recorded[0].args.p_metadata as Record<string, unknown>;
@@ -460,7 +529,10 @@ test("E4. p_provider é sempre 'mercado_pago' (nunca inferido do payload)", asyn
   state.rpcResponse = { outcome: "event_applied" };
   await applyMercadoPagoBillingEvent({
     payment: makePayment(),
-    userId: USER, plano: "pessoal_premium", periodicidade: "mensal", months: 1,
+    userId: USER,
+    plano: "pessoal_premium",
+    periodicidade: "mensal",
+    months: 1,
     eventType: "payment.updated",
   });
   expect(state.recorded[0].args.p_provider).toBe("mercado_pago");

@@ -69,7 +69,9 @@ function ensureCanWrite(action: string, opts?: { allowBasic?: boolean }): boolea
  * (ERRCODE check_violation + message `free_ads_quota_exceeded:<resource>`).
  * Mostra toast amigável e retorna true se tratou.
  */
-export function handleFreeAdsQuotaError(error: { code?: string; message?: string } | null | undefined): boolean {
+export function handleFreeAdsQuotaError(
+  error: { code?: string; message?: string } | null | undefined,
+): boolean {
   if (!error) return false;
   const msg = error.message ?? "";
   const m = /free_ads_quota_exceeded:([a-z_]+)/i.exec(msg);
@@ -305,7 +307,7 @@ function rowToGasto(r: GastoRow, catUuidToKey: Map<string, string>): Gasto {
     valor: Number(r.valor),
     data: r.data,
     estabelecimento: r.estabelecimento,
-    categoriaId: r.categoria_id ? catUuidToKey.get(r.categoria_id) ?? r.categoria_id : "outros",
+    categoriaId: r.categoria_id ? (catUuidToKey.get(r.categoria_id) ?? r.categoria_id) : "outros",
     formaPagamento: r.forma_pagamento as FormaPagamento,
     observacao: r.observacao ?? undefined,
     imagemUrl: r.imagem_url ?? undefined,
@@ -359,13 +361,20 @@ function normalizeFormaPagamentoValue(value: unknown): FormaPagamento {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[\s-]+/g, "_");
-  if (["credito", "cartao", "cartao_credito", "cartao_de_credito", "credit_card", "credit"].includes(normalized)) {
+  if (
+    ["credito", "cartao", "cartao_credito", "cartao_de_credito", "credit_card", "credit"].includes(
+      normalized,
+    )
+  ) {
     return "credito";
   }
   if (normalized === "debito" || normalized === "cartao_de_debito") return "debito";
-  if (normalized === "vale_alimentacao" || normalized === "vale_alimentacao_") return "vale_alimentacao";
+  if (normalized === "vale_alimentacao" || normalized === "vale_alimentacao_")
+    return "vale_alimentacao";
   if (normalized === "vale_refeicao" || normalized === "vale_refeicao_") return "vale_refeicao";
-  return FORMAS_VALIDAS.has(normalized as FormaPagamento) ? (normalized as FormaPagamento) : "outro";
+  return FORMAS_VALIDAS.has(normalized as FormaPagamento)
+    ? (normalized as FormaPagamento)
+    : "outro";
 }
 
 function gastoCartaoId(g: Gasto): string | undefined {
@@ -376,18 +385,26 @@ function gastoCartaoId(g: Gasto): string | undefined {
 function isImportadoOuFatura(g: Gasto): boolean {
   const legacy = g as LegacyGastoShape;
   const origem = String(g.origem ?? "").toLowerCase();
-  return origem.includes("fatura") || origem.includes("import") || legacy.importado === true || !!legacy.faturaId;
+  return (
+    origem.includes("fatura") ||
+    origem.includes("import") ||
+    legacy.importado === true ||
+    !!legacy.faturaId
+  );
 }
 
 function inferNearestInvoiceDate(date: Date, context: Date): Date {
   const candidates = [context.getFullYear() - 1, context.getFullYear(), context.getFullYear() + 1]
     .map((year) => new Date(year, date.getMonth(), date.getDate()))
     .filter((d) => d.getMonth() === date.getMonth() && d.getDate() === date.getDate());
-  return candidates.reduce((best, candidate) =>
-    Math.abs(candidate.getTime() - context.getTime()) < Math.abs(best.getTime() - context.getTime())
-      ? candidate
-      : best,
-  candidates[0] ?? date);
+  return candidates.reduce(
+    (best, candidate) =>
+      Math.abs(candidate.getTime() - context.getTime()) <
+      Math.abs(best.getTime() - context.getTime())
+        ? candidate
+        : best,
+    candidates[0] ?? date,
+  );
 }
 
 function normalizeInvoiceDateIfNeeded(dateISO: string, contextDate: Date, force = false): string {
@@ -412,7 +429,9 @@ function normalizeGastoForCalculations(g: Gasto): { gasto: Gasto; row?: GastoUpd
     row.cartao_id = cartao;
   }
 
-  const formaNormalizada = normalizeFormaPagamentoValue((g as LegacyGastoShape).forma_pagamento ?? g.formaPagamento);
+  const formaNormalizada = normalizeFormaPagamentoValue(
+    (g as LegacyGastoShape).forma_pagamento ?? g.formaPagamento,
+  );
   if (cartao && normalized.formaPagamento !== "credito") {
     normalized.formaPagamento = "credito";
     row.forma_pagamento = "credito";
@@ -423,8 +442,12 @@ function normalizeGastoForCalculations(g: Gasto): { gasto: Gasto; row?: GastoUpd
 
   const parsed = parseDateLocal(normalized.data);
   if (parsed) {
-    const context = parseDateLocal((g as LegacyGastoShape).createdAt ?? (g as LegacyGastoShape).created_at ?? g.criadoEm) ?? new Date();
-    const shouldFixInvoiceYear = (cartao && normalized.formaPagamento === "credito") || isImportadoOuFatura(g);
+    const context =
+      parseDateLocal(
+        (g as LegacyGastoShape).createdAt ?? (g as LegacyGastoShape).created_at ?? g.criadoEm,
+      ) ?? new Date();
+    const shouldFixInvoiceYear =
+      (cartao && normalized.formaPagamento === "credito") || isImportadoOuFatura(g);
     const normalizedDate = shouldFixInvoiceYear
       ? normalizeInvoiceDateIfNeeded(normalized.data, context, isImportadoOuFatura(g))
       : toLocalISODate(parsed);
@@ -460,8 +483,15 @@ function normalizeGastosForCalculations(gastos: Gasto[], persist = false): Gasto
     if (result.row) updates.push({ id: g.id, row: result.row });
     return result.gasto;
   });
-  if (updates.length > 0 && typeof window !== "undefined" && window.localStorage.getItem("gf:debug-finance") === "1") {
-    console.info("[financeiro:normalizacao] gastos ajustados", updates.map(({ id, row }) => ({ id, ...row })));
+  if (
+    updates.length > 0 &&
+    typeof window !== "undefined" &&
+    window.localStorage.getItem("gf:debug-finance") === "1"
+  ) {
+    console.info(
+      "[financeiro:normalizacao] gastos ajustados",
+      updates.map(({ id, row }) => ({ id, ...row })),
+    );
   }
   if (persist && activeUserId && updates.length > 0) {
     void Promise.all(
@@ -536,7 +566,10 @@ type AprendizadoRow = {
   categoria_id: string;
   created_at: string;
 };
-function rowToAprendizado(r: AprendizadoRow, catUuidToKey: Map<string, string>): AprendizadoCategoria {
+function rowToAprendizado(
+  r: AprendizadoRow,
+  catUuidToKey: Map<string, string>,
+): AprendizadoCategoria {
   return {
     id: r.id,
     estabelecimento: r.estabelecimento,
@@ -584,7 +617,7 @@ function rowToGuardado(
 ): Guardado {
   return {
     id: r.legacy_id || r.id,
-    bancoId: r.banco_id ? bancoUuidToKey.get(r.banco_id) ?? r.banco_id : "",
+    bancoId: r.banco_id ? (bancoUuidToKey.get(r.banco_id) ?? r.banco_id) : "",
     valor: Number(r.valor),
     tipoReserva: r.tipo_reserva as TipoReserva,
     observacao: r.observacao ?? undefined,
@@ -592,7 +625,7 @@ function rowToGuardado(
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
     importBatchId: r.import_batch_id ?? undefined,
-    metaId: r.meta_id ? metaUuidToKey.get(r.meta_id) ?? r.meta_id : undefined,
+    metaId: r.meta_id ? (metaUuidToKey.get(r.meta_id) ?? r.meta_id) : undefined,
   };
 }
 
@@ -621,7 +654,7 @@ function rowToMeta(r: MetaRow, bancoUuidToKey: Map<string, string>): Meta {
     prazo: r.prazo ?? undefined,
     descricao: r.descricao ?? undefined,
     colorHex: r.color_hex,
-    bancoId: r.banco_id ? bancoUuidToKey.get(r.banco_id) ?? r.banco_id : undefined,
+    bancoId: r.banco_id ? (bancoUuidToKey.get(r.banco_id) ?? r.banco_id) : undefined,
     imagemKey: imagemKey ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
@@ -649,7 +682,7 @@ function rowToMovMeta(
     metaId: metaUuidToKey.get(r.meta_id) ?? r.meta_id,
     valor: Number(r.valor),
     data: r.data,
-    bancoId: r.banco_id ? bancoUuidToKey.get(r.banco_id) ?? r.banco_id : undefined,
+    bancoId: r.banco_id ? (bancoUuidToKey.get(r.banco_id) ?? r.banco_id) : undefined,
     observacao: r.observacao ?? undefined,
     criadoEm: r.created_at,
     importBatchId: r.import_batch_id ?? undefined,
@@ -718,7 +751,7 @@ function rowToContaAPagar(r: ContaAPagarRow, catUuidToKey: Map<string, string>):
     nome: r.nome,
     valor: Number(r.valor),
     dataVencimento: r.data_vencimento,
-    categoriaId: r.categoria_id ? catUuidToKey.get(r.categoria_id) ?? r.categoria_id : undefined,
+    categoriaId: r.categoria_id ? (catUuidToKey.get(r.categoria_id) ?? r.categoria_id) : undefined,
     observacao: r.observacao ?? undefined,
     recorrente: r.recorrente,
     recorrenciaId: r.recorrencia_id ?? undefined,
@@ -806,9 +839,12 @@ type ExtratoImportadoRow = {
   updated_at: string;
 };
 function rowToExtratoImportado(r: ExtratoImportadoRow): ExtratoImportado {
-  const tipo: TipoOrigemExtrato = r.tipo_origem === "csv" || r.tipo_origem === "imagem" ? r.tipo_origem : "pdf";
+  const tipo: TipoOrigemExtrato =
+    r.tipo_origem === "csv" || r.tipo_origem === "imagem" ? r.tipo_origem : "pdf";
   const status: StatusExtratoImportado =
-    r.status === "parcial" || r.status === "revertido" || r.status === "erro" ? r.status : "importado";
+    r.status === "parcial" || r.status === "revertido" || r.status === "erro"
+      ? r.status
+      : "importado";
   return {
     id: r.id,
     nomeArquivo: r.nome_arquivo ?? undefined,
@@ -865,7 +901,9 @@ async function ensureDefaultCategorias(userId: string): Promise<void> {
     .eq("user_id", userId)
     .not("legacy_id", "is", null);
 
-  const existingKeys = new Set((existing ?? []).map((r: { legacy_id: string | null }) => r.legacy_id));
+  const existingKeys = new Set(
+    (existing ?? []).map((r: { legacy_id: string | null }) => r.legacy_id),
+  );
   const toInsert = DEFAULT_CATEGORIES.filter((c) => !existingKeys.has(c.id)).map((c) => ({
     user_id: userId,
     nome: c.nome,
@@ -910,120 +948,136 @@ export async function hydrateUser(userId: string): Promise<void> {
   hydrationInFlightPromise = (async () => {
     setHydrationStatus("loading");
     try {
-    await Promise.all([
-      ensureDefaultCategorias(userId),
-      ensureDefaultBancos(userId),
-    ]);
+      await Promise.all([ensureDefaultCategorias(userId), ensureDefaultBancos(userId)]);
 
-    // Load categorias + bancos first (needed for FK mapping)
-    const [catRes, bancoRes] = await Promise.all([
-      supabase.from("categorias").select("*").eq("user_id", userId),
-      supabase.from("bancos").select("*").eq("user_id", userId),
-    ]);
-    if (catRes.error) throw catRes.error;
-    if (bancoRes.error) throw bancoRes.error;
+      // Load categorias + bancos first (needed for FK mapping)
+      const [catRes, bancoRes] = await Promise.all([
+        supabase.from("categorias").select("*").eq("user_id", userId),
+        supabase.from("bancos").select("*").eq("user_id", userId),
+      ]);
+      if (catRes.error) throw catRes.error;
+      if (bancoRes.error) throw bancoRes.error;
 
-    categoriaKeyToUuid.clear();
-    bancoKeyToUuid.clear();
-    const catUuidToKey = new Map<string, string>();
-    const bancoUuidToKey = new Map<string, string>();
+      categoriaKeyToUuid.clear();
+      bancoKeyToUuid.clear();
+      const catUuidToKey = new Map<string, string>();
+      const bancoUuidToKey = new Map<string, string>();
 
-    memCategorias = (catRes.data ?? []).map((r: CategoriaRow) => {
-      categoriaKeyToUuid.set(r.legacy_id || r.id, r.id);
-      catUuidToKey.set(r.id, r.legacy_id || r.id);
-      return rowToCategoria(r);
-    });
-    memBancos = (bancoRes.data ?? []).map((r: BancoRow) => {
-      const key = r.legacy_id || r.id;
-      bancoKeyToUuid.set(key, r.id);
-      bancoUuidToKey.set(r.id, key);
-      return rowToBanco(r);
-    });
+      memCategorias = (catRes.data ?? []).map((r: CategoriaRow) => {
+        categoriaKeyToUuid.set(r.legacy_id || r.id, r.id);
+        catUuidToKey.set(r.id, r.legacy_id || r.id);
+        return rowToCategoria(r);
+      });
+      memBancos = (bancoRes.data ?? []).map((r: BancoRow) => {
+        const key = r.legacy_id || r.id;
+        bancoKeyToUuid.set(key, r.id);
+        bancoUuidToKey.set(r.id, key);
+        return rowToBanco(r);
+      });
 
-    // Load metas (needed before mov FK mapping)
-    const metasRes = await supabase
-      .from("metas_financeiras")
-      .select("*")
-      .eq("user_id", userId);
-    if (metasRes.error) throw metasRes.error;
-    metaKeyToUuid.clear();
-    const metaUuidToKey = new Map<string, string>();
-    memMetas = (metasRes.data ?? []).map((r: MetaRow) => {
-      const key = r.legacy_id || r.id;
-      metaKeyToUuid.set(key, r.id);
-      metaUuidToKey.set(r.id, key);
-      return rowToMeta(r, bancoUuidToKey);
-    });
+      // Load metas (needed before mov FK mapping)
+      const metasRes = await supabase.from("metas_financeiras").select("*").eq("user_id", userId);
+      if (metasRes.error) throw metasRes.error;
+      metaKeyToUuid.clear();
+      const metaUuidToKey = new Map<string, string>();
+      memMetas = (metasRes.data ?? []).map((r: MetaRow) => {
+        const key = r.legacy_id || r.id;
+        metaKeyToUuid.set(key, r.id);
+        metaUuidToKey.set(r.id, key);
+        return rowToMeta(r, bancoUuidToKey);
+      });
 
-    // Load the rest in parallel
-    const [gastosRes, receitasRes, limitesRes, aprendRes, guardadoRes, movRes, cartoesRes, contasRes, transferenciasRes, extratosRes, faturasRes] = await Promise.all([
-      supabase.from("gastos").select("*").eq("user_id", userId),
-      supabase.from("receitas").select("*").eq("user_id", userId).is("deleted_at", null),
-      supabase.from("limites").select("*").eq("user_id", userId),
-      supabase.from("aprendizado_categoria").select("*").eq("user_id", userId),
-      supabase.from("dinheiro_guardado").select("*").eq("user_id", userId),
-      supabase.from("movimentacoes_meta").select("*").eq("user_id", userId),
-      sbAny.from("cartoes").select("*").eq("user_id", userId),
-      sbAny.from("contas_a_pagar").select("*").eq("user_id", userId),
-      sbAny.from("transferencias_internas").select("*").eq("user_id", userId),
-      sbAny.from("extratos_importados").select("*").eq("user_id", userId).order("data_importacao", { ascending: false }),
-      sbAny.from("faturas_cartao").select("*").eq("user_id", userId),
-    ]);
+      // Load the rest in parallel
+      const [
+        gastosRes,
+        receitasRes,
+        limitesRes,
+        aprendRes,
+        guardadoRes,
+        movRes,
+        cartoesRes,
+        contasRes,
+        transferenciasRes,
+        extratosRes,
+        faturasRes,
+      ] = await Promise.all([
+        supabase.from("gastos").select("*").eq("user_id", userId),
+        supabase.from("receitas").select("*").eq("user_id", userId).is("deleted_at", null),
+        supabase.from("limites").select("*").eq("user_id", userId),
+        supabase.from("aprendizado_categoria").select("*").eq("user_id", userId),
+        supabase.from("dinheiro_guardado").select("*").eq("user_id", userId),
+        supabase.from("movimentacoes_meta").select("*").eq("user_id", userId),
+        sbAny.from("cartoes").select("*").eq("user_id", userId),
+        sbAny.from("contas_a_pagar").select("*").eq("user_id", userId),
+        sbAny.from("transferencias_internas").select("*").eq("user_id", userId),
+        sbAny
+          .from("extratos_importados")
+          .select("*")
+          .eq("user_id", userId)
+          .order("data_importacao", { ascending: false }),
+        sbAny.from("faturas_cartao").select("*").eq("user_id", userId),
+      ]);
 
-    if (gastosRes.error) throw gastosRes.error;
-    if (receitasRes.error) throw receitasRes.error;
-    if (limitesRes.error) throw limitesRes.error;
-    if (aprendRes.error) throw aprendRes.error;
-    if (guardadoRes.error) throw guardadoRes.error;
-    if (movRes.error) throw movRes.error;
-    // Tables abaixo são opcionais — apenas avisa, não quebra hidratação.
-    if (cartoesRes.error) console.warn("[store] cartoes load warning", cartoesRes.error);
-    if (contasRes.error) console.warn("[store] contas_a_pagar load warning", contasRes.error);
-    if (transferenciasRes.error) console.warn("[store] transferencias_internas load warning", transferenciasRes.error);
-    if (extratosRes.error) console.warn("[store] extratos_importados load warning", extratosRes.error);
+      if (gastosRes.error) throw gastosRes.error;
+      if (receitasRes.error) throw receitasRes.error;
+      if (limitesRes.error) throw limitesRes.error;
+      if (aprendRes.error) throw aprendRes.error;
+      if (guardadoRes.error) throw guardadoRes.error;
+      if (movRes.error) throw movRes.error;
+      // Tables abaixo são opcionais — apenas avisa, não quebra hidratação.
+      if (cartoesRes.error) console.warn("[store] cartoes load warning", cartoesRes.error);
+      if (contasRes.error) console.warn("[store] contas_a_pagar load warning", contasRes.error);
+      if (transferenciasRes.error)
+        console.warn("[store] transferencias_internas load warning", transferenciasRes.error);
+      if (extratosRes.error)
+        console.warn("[store] extratos_importados load warning", extratosRes.error);
 
-    memGastos = normalizeGastosForCalculations(
-      (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey)),
-      true,
-    );
-    memGastos = memGastos.map(applyCategoriaInferida);
-    memReceitas = (receitasRes.data ?? []).map((r: ReceitaRow) => rowToReceita(r));
-    memLimites = (limitesRes.data ?? []).map((r: LimiteRow) => rowToLimite(r));
-    memAprendizado = (aprendRes.data ?? []).map((r: AprendizadoRow) =>
-      rowToAprendizado(r, catUuidToKey),
-    );
-    memGuardado = (guardadoRes.data ?? []).map((r: GuardadoRow) => rowToGuardado(r, bancoUuidToKey, metaUuidToKey));
-    memMov = (movRes.data ?? []).map((r: MovMetaRow) => rowToMovMeta(r, metaUuidToKey, bancoUuidToKey));
-    memCartoes = (cartoesRes.error ? [] : (cartoesRes.data ?? [])).map(
-      (r: CartaoRow) => rowToCartao(r),
-    );
-    memContas = (contasRes.error ? [] : (contasRes.data ?? [])).map(
-      (r: ContaAPagarRow) => rowToContaAPagar(r, catUuidToKey),
-    );
-    memTransferencias = (transferenciasRes.error ? [] : (transferenciasRes.data ?? [])).map(
-      (r: TransferenciaInternaRow) => rowToTransferenciaInterna(r),
-    );
-    memExtratos = (extratosRes.error ? [] : (extratosRes.data ?? [])).map(
-      (r: ExtratoImportadoRow) => rowToExtratoImportado(r),
-    );
-    if (faturasRes.error) {
-      console.warn("[store] faturas_cartao load warning", faturasRes.error);
-      memFaturas = [];
-    } else {
-      memFaturas = (faturasRes.data ?? []).map(rowToFatura);
-    }
+      memGastos = normalizeGastosForCalculations(
+        (gastosRes.data ?? []).map((r: GastoRow) => rowToGasto(r, catUuidToKey)),
+        true,
+      );
+      memGastos = memGastos.map(applyCategoriaInferida);
+      memReceitas = (receitasRes.data ?? []).map((r: ReceitaRow) => rowToReceita(r));
+      memLimites = (limitesRes.data ?? []).map((r: LimiteRow) => rowToLimite(r));
+      memAprendizado = (aprendRes.data ?? []).map((r: AprendizadoRow) =>
+        rowToAprendizado(r, catUuidToKey),
+      );
+      memGuardado = (guardadoRes.data ?? []).map((r: GuardadoRow) =>
+        rowToGuardado(r, bancoUuidToKey, metaUuidToKey),
+      );
+      memMov = (movRes.data ?? []).map((r: MovMetaRow) =>
+        rowToMovMeta(r, metaUuidToKey, bancoUuidToKey),
+      );
+      memCartoes = (cartoesRes.error ? [] : (cartoesRes.data ?? [])).map((r: CartaoRow) =>
+        rowToCartao(r),
+      );
+      memContas = (contasRes.error ? [] : (contasRes.data ?? [])).map((r: ContaAPagarRow) =>
+        rowToContaAPagar(r, catUuidToKey),
+      );
+      memTransferencias = (transferenciasRes.error ? [] : (transferenciasRes.data ?? [])).map(
+        (r: TransferenciaInternaRow) => rowToTransferenciaInterna(r),
+      );
+      memExtratos = (extratosRes.error ? [] : (extratosRes.data ?? [])).map(
+        (r: ExtratoImportadoRow) => rowToExtratoImportado(r),
+      );
+      if (faturasRes.error) {
+        console.warn("[store] faturas_cartao load warning", faturasRes.error);
+        memFaturas = [];
+      } else {
+        memFaturas = (faturasRes.data ?? []).map(rowToFatura);
+      }
 
-    hydratedUserId = userId;
-    setHydrationStatus("ready");
+      hydratedUserId = userId;
+      setHydrationStatus("ready");
 
-    // Backfill em background: recupera lotes antigos que foram importados
-    // antes do sistema de batch existir. Não bloqueia hidratação.
-    void backfillExtratosImportados().catch((err) => {
-      console.warn("[store] backfillExtratosImportados failed", err);
-    });
-    void reclassificarCategoriasExistentes().catch((err) => {
-      console.warn("[store] reclassificarCategoriasExistentes failed", err);
-    });
+      // Backfill em background: recupera lotes antigos que foram importados
+      // antes do sistema de batch existir. Não bloqueia hidratação.
+      void backfillExtratosImportados().catch((err) => {
+        console.warn("[store] backfillExtratosImportados failed", err);
+      });
+      void reclassificarCategoriasExistentes().catch((err) => {
+        console.warn("[store] reclassificarCategoriasExistentes failed", err);
+      });
     } catch (e) {
       console.error("[store] hydrateUser failed", e);
       setHydrationStatus("error");
@@ -1055,7 +1109,12 @@ export async function migrateLegacyDataToUser(userId: string): Promise<void> {
   try {
     // Pull from anonymous + legacy global keys
     const sources = [
-      { gastos: "gf:gastos", receitas: "gf:receitas", limites: "gf:limites", apr: "gf:aprendizado" },
+      {
+        gastos: "gf:gastos",
+        receitas: "gf:receitas",
+        limites: "gf:limites",
+        apr: "gf:aprendizado",
+      },
       {
         gastos: "gf:u:anon:gastos",
         receitas: "gf:u:anon:receitas",
@@ -1085,32 +1144,16 @@ export async function migrateLegacyDataToUser(userId: string): Promise<void> {
     const legacyGuardado: Guardado[] = [];
     const legacyMetas: Meta[] = [];
     const legacyMov: MovimentacaoMeta[] = [];
-    for (const src of [
-      "gf:bancos",
-      "gf:u:anon:bancos",
-      `gf:u:${userId}:bancos`,
-    ]) {
+    for (const src of ["gf:bancos", "gf:u:anon:bancos", `gf:u:${userId}:bancos`]) {
       legacyBancos.push(...readJSON<Banco[]>(src, []));
     }
-    for (const src of [
-      "gf:guardado",
-      "gf:u:anon:guardado",
-      `gf:u:${userId}:guardado`,
-    ]) {
+    for (const src of ["gf:guardado", "gf:u:anon:guardado", `gf:u:${userId}:guardado`]) {
       legacyGuardado.push(...readJSON<Guardado[]>(src, []));
     }
-    for (const src of [
-      "gf:metas",
-      "gf:u:anon:metas",
-      `gf:u:${userId}:metas`,
-    ]) {
+    for (const src of ["gf:metas", "gf:u:anon:metas", `gf:u:${userId}:metas`]) {
       legacyMetas.push(...readJSON<Meta[]>(src, []));
     }
-    for (const src of [
-      "gf:movMetas",
-      "gf:u:anon:movMetas",
-      `gf:u:${userId}:movMetas`,
-    ]) {
+    for (const src of ["gf:movMetas", "gf:u:anon:movMetas", `gf:u:${userId}:movMetas`]) {
       legacyMov.push(...readJSON<MovimentacaoMeta[]>(src, []));
     }
 
@@ -1265,7 +1308,7 @@ export async function migrateLegacyDataToUser(userId: string): Promise<void> {
     if (legacyGuardado.length > 0) {
       const rows: GuardadoInsert[] = legacyGuardado.map((g) => ({
         user_id: userId,
-        banco_id: g.bancoId ? bancoKeyToUuidMig.get(g.bancoId) ?? null : null,
+        banco_id: g.bancoId ? (bancoKeyToUuidMig.get(g.bancoId) ?? null) : null,
         valor: g.valor,
         tipo_reserva: g.tipoReserva,
         observacao: g.observacao ?? null,
@@ -1288,7 +1331,7 @@ export async function migrateLegacyDataToUser(userId: string): Promise<void> {
         prazo: m.prazo ?? null,
         descricao: m.descricao ?? null,
         color_hex: m.colorHex || "#10b981",
-        banco_id: m.bancoId ? bancoKeyToUuidMig.get(m.bancoId) ?? null : null,
+        banco_id: m.bancoId ? (bancoKeyToUuidMig.get(m.bancoId) ?? null) : null,
         legacy_id: m.id,
       }));
       const { data: insertedMetas } = await supabase
@@ -1311,7 +1354,7 @@ export async function migrateLegacyDataToUser(userId: string): Promise<void> {
             meta_id: metaUuid,
             valor: mv.valor,
             data: mv.data || new Date().toISOString().slice(0, 10),
-            banco_id: mv.bancoId ? bancoKeyToUuidMig.get(mv.bancoId) ?? null : null,
+            banco_id: mv.bancoId ? (bancoKeyToUuidMig.get(mv.bancoId) ?? null) : null,
             observacao: mv.observacao ?? null,
             legacy_id: mv.id,
           } as MovMetaInsert;
@@ -1482,9 +1525,7 @@ export function updateCartao(id: string, patch: Partial<NovoCartaoInput>) {
   if (!ensureCanWrite("updateCartao", { allowBasic: true })) return;
   const now = new Date().toISOString();
   const prev = memCartoes;
-  memCartoes = memCartoes.map((c) =>
-    c.id === id ? { ...c, ...patch, atualizadoEm: now } : c,
-  );
+  memCartoes = memCartoes.map((c) => (c.id === id ? { ...c, ...patch, atualizadoEm: now } : c));
   emit();
   if (!activeUserId) return;
   const row: Record<string, unknown> = {};
@@ -1544,7 +1585,8 @@ export function resumoFaturaCartao(cartaoId: string, hoje: Date = new Date()) {
   const cartao = memCartoes.find((c) => c.id === cartaoId);
   const analisados = normalizeGastosForCalculations(memGastos);
   const gastosCartao = analisados.filter(
-    (g) => gastoCartaoId(g) === cartaoId && g.formaPagamento === "credito" && g.confirmado !== false,
+    (g) =>
+      gastoCartaoId(g) === cartaoId && g.formaPagamento === "credito" && g.confirmado !== false,
   );
 
   let inicio: Date;
@@ -1578,7 +1620,10 @@ export function resumoFaturaCartao(cartaoId: string, hoje: Date = new Date()) {
   let refM0 = hoje.getMonth();
   if (diaFechRef && hoje.getDate() <= diaFechRef) {
     refM0 -= 1;
-    if (refM0 < 0) { refM0 = 11; refY -= 1; }
+    if (refM0 < 0) {
+      refM0 = 11;
+      refY -= 1;
+    }
   }
   const currentYm = `${refY}-${String(refM0 + 1).padStart(2, "0")}`;
   const considerados = gastosCartao.filter((g) => {
@@ -1647,17 +1692,25 @@ function categoriaUuidFor(key: string): string | null {
 
 function categoriaKeyFromUuid(uuid: string | null | undefined): string {
   if (!uuid) return "outros";
-  const categoria = memCategorias.find((c) => categoriaKeyToUuid.get(c.id) === uuid || c.id === uuid);
+  const categoria = memCategorias.find(
+    (c) => categoriaKeyToUuid.get(c.id) === uuid || c.id === uuid,
+  );
   return categoria?.id ?? uuid;
 }
 
-function inferCategoriaForGasto(g: Pick<Gasto, "descricao" | "estabelecimento" | "observacao">): string {
-  return suggestCategoryFromText(`${g.estabelecimento ?? ""} ${g.descricao ?? ""} ${g.observacao ?? ""}`.trim());
+function inferCategoriaForGasto(
+  g: Pick<Gasto, "descricao" | "estabelecimento" | "observacao">,
+): string {
+  return suggestCategoryFromText(
+    `${g.estabelecimento ?? ""} ${g.descricao ?? ""} ${g.observacao ?? ""}`.trim(),
+  );
 }
 
 function applyCategoriaInferida(g: Gasto): Gasto {
   const categoriaId = inferCategoriaForGasto(g);
-  return categoriaId && categoriaId !== "outros" && categoriaId !== g.categoriaId ? { ...g, categoriaId } : g;
+  return categoriaId && categoriaId !== "outros" && categoriaId !== g.categoriaId
+    ? { ...g, categoriaId }
+    : g;
 }
 
 export async function reclassificarCategoriasExistentes(): Promise<number> {
@@ -1683,17 +1736,24 @@ export async function reclassificarCategoriasExistentes(): Promise<number> {
 
   const results = await Promise.all(
     updates.map(({ id, categoriaUuid }) =>
-      supabase.from("gastos").update({ categoria_id: categoriaUuid }).eq("id", id).eq("user_id", userId),
+      supabase
+        .from("gastos")
+        .update({ categoria_id: categoriaUuid })
+        .eq("id", id)
+        .eq("user_id", userId),
     ),
   );
   const failed = results.find((r) => r.error);
-  if (failed?.error) console.error("[store] reclassificarCategoriasExistentes update failed", failed.error);
+  if (failed?.error)
+    console.error("[store] reclassificarCategoriasExistentes update failed", failed.error);
 
   const successIds = new Set(updates.filter((_, idx) => !results[idx].error).map((u) => u.id));
   memGastos = memGastos.map((g) => {
     if (!successIds.has(g.id)) return g;
     const update = updates.find((u) => u.id === g.id);
-    return update ? { ...g, categoriaId: update.categoriaKey, atualizadoEm: new Date().toISOString() } : g;
+    return update
+      ? { ...g, categoriaId: update.categoriaKey, atualizadoEm: new Date().toISOString() }
+      : g;
   });
   emit();
   void refreshGastos();
@@ -1748,7 +1808,10 @@ export type NovoGastoInput = {
   fornecedorId?: string | null;
 };
 
-function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: GastoInsert; client: Gasto }[] {
+function buildGastosFromInput(
+  input: NovoGastoInput,
+  userId: string,
+): { row: GastoInsert; client: Gasto }[] {
   const now = new Date().toISOString();
   const isFaturaImport = !!input.origem?.toLowerCase().includes("fatura");
   const inputData = isFaturaImport
@@ -1973,12 +2036,12 @@ function buildGastosFromInput(input: NovoGastoInput, userId: string): { row: Gas
     });
   }
   // Stamp horario/origem/importBatch/invoiceMonth on every produced row + client (fields are optional).
-  const batchId = input.importBatchId && input.importBatchId.trim() ? input.importBatchId.trim() : null;
-  const opId = input.idOperacaoBanco && input.idOperacaoBanco.trim() ? input.idOperacaoBanco.trim() : null;
+  const batchId =
+    input.importBatchId && input.importBatchId.trim() ? input.importBatchId.trim() : null;
+  const opId =
+    input.idOperacaoBanco && input.idOperacaoBanco.trim() ? input.idOperacaoBanco.trim() : null;
   const invoiceMonthVal =
-    input.invoiceMonth && /^\d{4}-\d{2}$/.test(input.invoiceMonth)
-      ? input.invoiceMonth
-      : null;
+    input.invoiceMonth && /^\d{4}-\d{2}$/.test(input.invoiceMonth) ? input.invoiceMonth : null;
   const fornecedorVal =
     input.fornecedorId && input.fornecedorId.trim() ? input.fornecedorId.trim() : null;
   for (const o of out) {
@@ -2054,7 +2117,6 @@ function addGastoUnchecked(input: NovoGastoInput): Gasto[] {
   }
   return created;
 }
-
 
 /**
  * Versão assíncrona usada pela fila offline: insere no Supabase e aguarda
@@ -2325,7 +2387,9 @@ function diffMinutes(a: string | undefined, b: string | undefined): number {
   const mb = b.match(/^(\d{1,2}):(\d{2})$/);
   if (!ma || !mb) return Number.POSITIVE_INFINITY;
   return Math.abs(
-    parseInt(ma[1], 10) * 60 + parseInt(ma[2], 10) - (parseInt(mb[1], 10) * 60 + parseInt(mb[2], 10)),
+    parseInt(ma[1], 10) * 60 +
+      parseInt(ma[2], 10) -
+      (parseInt(mb[1], 10) * 60 + parseInt(mb[2], 10)),
   );
 }
 
@@ -2746,10 +2810,9 @@ export function addReceitasBulk(inputs: NovaReceitaBulkInput[]): Receita[] {
   const rows: ReceitaInsert[] = [];
 
   for (const inp of inputs) {
-    const dataIso =
-      /^\d{4}-\d{2}-\d{2}$/.test(inp.data)
-        ? inp.data
-        : toLocalISODate(parseDateLocal(inp.data) ?? new Date());
+    const dataIso = /^\d{4}-\d{2}-\d{2}$/.test(inp.data)
+      ? inp.data
+      : toLocalISODate(parseDateLocal(inp.data) ?? new Date());
     const baseDate = parseDateLocal(dataIso) ?? new Date();
     const id = crypto.randomUUID();
     created.push({
@@ -2848,10 +2911,9 @@ export function addTransferenciasInternasBulk(
   const rows: Array<Record<string, unknown>> = [];
 
   for (const inp of inputs) {
-    const dataIso =
-      /^\d{4}-\d{2}-\d{2}$/.test(inp.data)
-        ? inp.data
-        : toLocalISODate(parseDateLocal(inp.data) ?? new Date());
+    const dataIso = /^\d{4}-\d{2}-\d{2}$/.test(inp.data)
+      ? inp.data
+      : toLocalISODate(parseDateLocal(inp.data) ?? new Date());
     const baseDate = parseDateLocal(dataIso) ?? new Date();
     const id = crypto.randomUUID();
     const valor = Math.abs(inp.valor);
@@ -3033,9 +3095,7 @@ export function updateReceita(
       )
       .map(buildPatch);
   } else {
-    affected = memReceitas
-      .filter((r) => r.recorrenciaId === target.recorrenciaId)
-      .map(buildPatch);
+    affected = memReceitas.filter((r) => r.recorrenciaId === target.recorrenciaId).map(buildPatch);
   }
 
   const affectedMap = new Map(affected.map((r) => [r.id, r]));
@@ -3173,9 +3233,7 @@ export function findReservaSimilar(
   bancoId: string,
   tipoReserva: TipoReserva,
 ): Guardado | undefined {
-  return memGuardado.find(
-    (g) => g.bancoId === bancoId && g.tipoReserva === tipoReserva,
-  );
+  return memGuardado.find((g) => g.bancoId === bancoId && g.tipoReserva === tipoReserva);
 }
 
 export function addGuardado(input: NovoGuardadoInput): Guardado {
@@ -3221,9 +3279,7 @@ export function addGuardado(input: NovoGuardadoInput): Guardado {
 export function updateGuardado(id: string, patch: Partial<Guardado>) {
   const now = new Date().toISOString();
   memGuardado = memGuardado.map((g) =>
-    g.id === id
-      ? { ...g, ...patch, atualizadoEm: now, dataAtualizacao: now.slice(0, 10) }
-      : g,
+    g.id === id ? { ...g, ...patch, atualizadoEm: now, dataAtualizacao: now.slice(0, 10) } : g,
   );
   emit();
   if (!activeUserId) return;
@@ -3395,7 +3451,8 @@ export function updateMeta(id: string, patch: Partial<Meta>) {
   if (patch.prazo !== undefined) row.prazo = patch.prazo ?? null;
   if (patch.descricao !== undefined) row.descricao = patch.descricao ?? null;
   if (patch.colorHex !== undefined) row.color_hex = patch.colorHex;
-  if (patch.bancoId !== undefined) row.banco_id = patch.bancoId ? bancoUuidFor(patch.bancoId) : null;
+  if (patch.bancoId !== undefined)
+    row.banco_id = patch.bancoId ? bancoUuidFor(patch.bancoId) : null;
   if (patch.imagemKey !== undefined) row.imagem_key = patch.imagemKey ?? null;
   void supabase
     .from("metas_financeiras")
@@ -3414,9 +3471,7 @@ export function updateMeta(id: string, patch: Partial<Meta>) {
  */
 export function deleteMeta(id: string) {
   // Desvincula reservas locais (preserva o dinheiro em Guardado).
-  memGuardado = memGuardado.map((g) =>
-    g.metaId === id ? { ...g, metaId: undefined } : g,
-  );
+  memGuardado = memGuardado.map((g) => (g.metaId === id ? { ...g, metaId: undefined } : g));
   memMetas = memMetas.filter((m) => m.id !== id);
   emit();
   if (!activeUserId) return;
@@ -3729,37 +3784,25 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
     valor: fields.valor ?? current.valor,
     dataVencimento: fields.dataVencimento ?? current.dataVencimento,
     categoriaId:
-      fields.categoriaId === null
-        ? undefined
-        : fields.categoriaId ?? current.categoriaId,
+      fields.categoriaId === null ? undefined : (fields.categoriaId ?? current.categoriaId),
     observacao: fields.observacao ?? current.observacao,
     beneficiario:
-      fields.beneficiario === null
-        ? undefined
-        : fields.beneficiario ?? current.beneficiario,
+      fields.beneficiario === null ? undefined : (fields.beneficiario ?? current.beneficiario),
     formaPagamento:
       fields.formaPagamento === null
         ? undefined
-        : fields.formaPagamento ?? current.formaPagamento,
+        : (fields.formaPagamento ?? current.formaPagamento),
     codigoBoleto:
-      fields.codigoBoleto === null
-        ? undefined
-        : fields.codigoBoleto ?? current.codigoBoleto,
-    codigoPix:
-      fields.codigoPix === null ? undefined : fields.codigoPix ?? current.codigoPix,
-    chavePix:
-      fields.chavePix === null ? undefined : fields.chavePix ?? current.chavePix,
+      fields.codigoBoleto === null ? undefined : (fields.codigoBoleto ?? current.codigoBoleto),
+    codigoPix: fields.codigoPix === null ? undefined : (fields.codigoPix ?? current.codigoPix),
+    chavePix: fields.chavePix === null ? undefined : (fields.chavePix ?? current.chavePix),
     bancoEmissor:
-      fields.bancoEmissor === null
-        ? undefined
-        : fields.bancoEmissor ?? current.bancoEmissor,
+      fields.bancoEmissor === null ? undefined : (fields.bancoEmissor ?? current.bancoEmissor),
     mesReferencia:
-      fields.mesReferencia === null
-        ? undefined
-        : fields.mesReferencia ?? current.mesReferencia,
+      fields.mesReferencia === null ? undefined : (fields.mesReferencia ?? current.mesReferencia),
     fornecedorId:
       fields.fornecedorId === undefined
-        ? current.fornecedorId ?? null
+        ? (current.fornecedorId ?? null)
         : fields.fornecedorId && fields.fornecedorId !== ""
           ? fields.fornecedorId
           : null,
@@ -3787,9 +3830,7 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
       valor: updated.valor,
       categoriaId: updated.categoriaId || "outros",
       observacao: updated.observacao,
-      ...(fields.fornecedorId !== undefined
-        ? { fornecedorId: updated.fornecedorId ?? null }
-        : {}),
+      ...(fields.fornecedorId !== undefined ? { fornecedorId: updated.fornecedorId ?? null } : {}),
     });
   }
 
@@ -3803,9 +3844,7 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
     row.ano = updated.ano;
   }
   if (fields.categoriaId !== undefined) {
-    row.categoria_id = fields.categoriaId
-      ? categoriaUuidFor(fields.categoriaId)
-      : null;
+    row.categoria_id = fields.categoriaId ? categoriaUuidFor(fields.categoriaId) : null;
   }
   if (fields.observacao !== undefined) row.observacao = fields.observacao ?? null;
   if (fields.beneficiario !== undefined) row.beneficiario = fields.beneficiario ?? null;
@@ -3815,7 +3854,8 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
   if (fields.chavePix !== undefined) row.chave_pix = fields.chavePix ?? null;
   if (fields.bancoEmissor !== undefined) row.banco_emissor = fields.bancoEmissor ?? null;
   if (fields.fornecedorId !== undefined)
-    row.fornecedor_id = fields.fornecedorId && fields.fornecedorId !== "" ? fields.fornecedorId : null;
+    row.fornecedor_id =
+      fields.fornecedorId && fields.fornecedorId !== "" ? fields.fornecedorId : null;
   if (fields.mesReferencia !== undefined) row.mes_referencia = fields.mesReferencia ?? null;
   else if (fields.dataVencimento !== undefined && updated.mesReferencia)
     row.mes_referencia = updated.mesReferencia;
@@ -3830,10 +3870,7 @@ export function updateContaAPagar(id: string, fields: ContaEditableFields) {
 }
 
 /** Verifica se já existe conta com o mesmo código de boleto ou Pix. */
-export function findContaByCodigo(
-  codigo: string,
-  tipo: "boleto" | "pix",
-): ContaAPagar | undefined {
+export function findContaByCodigo(codigo: string, tipo: "boleto" | "pix"): ContaAPagar | undefined {
   const norm = codigo.replace(/\s+/g, "");
   return memContas.find((c) => {
     const v = tipo === "boleto" ? c.codigoBoleto : c.codigoPix;
@@ -3879,11 +3916,7 @@ export function deleteContaAPagar(id: string, options?: { excluirGastoVinculado?
 }
 
 /** Exclui todas as ocorrências futuras de uma conta recorrente. */
-export function deleteContaRecorrencia(
-  recorrenciaId: string,
-  fromMes?: number,
-  fromAno?: number,
-) {
+export function deleteContaRecorrencia(recorrenciaId: string, fromMes?: number, fromAno?: number) {
   const shouldRemove = (c: ContaAPagar) => {
     if (c.recorrenciaId !== recorrenciaId) return false;
     if (fromMes == null || fromAno == null) return true;
@@ -3965,9 +3998,7 @@ function findGastosVinculadosConta(
   const opId = contaGastoOperationId(conta.id);
   const normalizedName = normalizeContaText(nome);
   const linkedByOtherConta = new Set(
-    memContas
-      .filter((c) => c.id !== conta.id && c.gastoId)
-      .map((c) => c.gastoId as string),
+    memContas.filter((c) => c.id !== conta.id && c.gastoId).map((c) => c.gastoId as string),
   );
 
   const direct = memGastos.filter((g) => g.id === conta.gastoId || g.idOperacaoBanco === opId);
@@ -3977,17 +4008,26 @@ function findGastosVinculadosConta(
     if (g.origem !== CONTA_A_PAGAR_GASTO_ORIGEM) return false;
     if (Math.abs((g.valor ?? 0) - valor) > 0.01) return false;
     if (normalizeContaText(g.descricao || g.estabelecimento) !== normalizedName) return false;
-    return daysBetweenISO(g.data, dataPagamento) <= 3 || daysBetweenISO(g.data, conta.dataVencimento) <= 3;
+    return (
+      daysBetweenISO(g.data, dataPagamento) <= 3 ||
+      daysBetweenISO(g.data, conta.dataVencimento) <= 3
+    );
   });
 
-  return [...direct, ...fallback].filter((g, index, arr) => arr.findIndex((x) => x.id === g.id) === index);
+  return [...direct, ...fallback].filter(
+    (g, index, arr) => arr.findIndex((x) => x.id === g.id) === index,
+  );
 }
 
 async function deleteGastosPersistidos(ids: string[]): Promise<void> {
   if (!activeUserId || ids.length === 0) return;
   memGastos = memGastos.filter((g) => !ids.includes(g.id));
   emit();
-  const { error } = await supabase.from("gastos").delete().eq("user_id", activeUserId).in("id", ids);
+  const { error } = await supabase
+    .from("gastos")
+    .delete()
+    .eq("user_id", activeUserId)
+    .in("id", ids);
   if (error) throw error;
 }
 
@@ -3999,10 +4039,7 @@ async function deleteGastosPersistidos(ids: string[]): Promise<void> {
  * Tipos típicos: `conta_a_pagar`, `fatura`, `cartao`, `gasto`, `recorrencia`,
  * `categoria`, `conta_a_receber`.
  */
-export async function resolveAlertasDe(
-  entityType: string,
-  entityId: string,
-): Promise<void> {
+export async function resolveAlertasDe(entityType: string, entityId: string): Promise<void> {
   if (!activeUserId || !entityId) return;
   const now = new Date().toISOString();
   const { error } = await sbAny
@@ -4082,7 +4119,11 @@ async function upsertGastoVinculadoConta(
   };
 
   if (existing) {
-    const { error } = await sbAny.from("gastos").update(row).eq("id", existing.id).eq("user_id", activeUserId);
+    const { error } = await sbAny
+      .from("gastos")
+      .update(row)
+      .eq("id", existing.id)
+      .eq("user_id", activeUserId);
     if (error) throw error;
     memGastos = memGastos.map((g) =>
       g.id === existing.id
@@ -4113,7 +4154,9 @@ async function upsertGastoVinculadoConta(
   }
 
   const id = crypto.randomUUID();
-  const { error } = await sbAny.from("gastos").insert({ id, user_id: activeUserId, ...row, created_at: now });
+  const { error } = await sbAny
+    .from("gastos")
+    .insert({ id, user_id: activeUserId, ...row, created_at: now });
   if (error) throw error;
   memGastos = [
     ...memGastos,
@@ -4167,7 +4210,8 @@ export async function marcarContaComoPago(
 
   // Valores efetivos (override do modal de pagamento, ou fallback para a conta)
   const nomeEf = (options?.nome ?? conta.nome).trim() || conta.nome;
-  const valorEf = typeof options?.valor === "number" && options.valor > 0 ? options.valor : conta.valor;
+  const valorEf =
+    typeof options?.valor === "number" && options.valor > 0 ? options.valor : conta.valor;
   const categoriaEf = options?.categoriaId ?? conta.categoriaId;
 
   const saved = await markContaAPagarPaid({
@@ -4454,7 +4498,9 @@ export async function backfillExtratosImportados(): Promise<number> {
   const isExtratoOrigem = (o?: string | null): o is string =>
     !!o && /^extrato_(pdf|csv|imagem)\|/i.test(o);
 
-  const parseBancoFromOrigem = (origem: string): { tipoOrigem: TipoOrigemExtrato; banco: string } => {
+  const parseBancoFromOrigem = (
+    origem: string,
+  ): { tipoOrigem: TipoOrigemExtrato; banco: string } => {
     // Formato: "extrato_pdf|Mercado Pago" ou "extrato_pdf|Mercado Pago|op:..."
     const parts = origem.split("|");
     const head = (parts[0] || "").toLowerCase();
@@ -4462,8 +4508,8 @@ export async function backfillExtratosImportados(): Promise<number> {
     const tipoOrigem: TipoOrigemExtrato = head.includes("csv")
       ? "csv"
       : head.includes("imagem")
-      ? "imagem"
-      : "pdf";
+        ? "imagem"
+        : "pdf";
     return { tipoOrigem, banco };
   };
 
@@ -4528,10 +4574,7 @@ export async function backfillExtratosImportados(): Promise<number> {
     const { banco, tipoOrigem } = parseBancoFromOrigem(c.origem);
     const ts = new Date(c.createdAt).getTime();
     const grupo = grupos.find(
-      (g) =>
-        g.banco === banco &&
-        g.tipoOrigem === tipoOrigem &&
-        ts - g.maxTs <= WINDOW_MS,
+      (g) => g.banco === banco && g.tipoOrigem === tipoOrigem && ts - g.maxTs <= WINDOW_MS,
     );
     if (grupo) {
       grupo.itens.push(c);
@@ -4619,7 +4662,9 @@ export async function backfillExtratosImportados(): Promise<number> {
       if (it.table === "gastos") {
         memGastos = memGastos.map((x) => (x.id === it.id ? { ...x, importBatchId: batchId } : x));
       } else if (it.table === "receitas") {
-        memReceitas = memReceitas.map((x) => (x.id === it.id ? { ...x, importBatchId: batchId } : x));
+        memReceitas = memReceitas.map((x) =>
+          x.id === it.id ? { ...x, importBatchId: batchId } : x,
+        );
       } else {
         memTransferencias = memTransferencias.map((x) =>
           x.id === it.id ? { ...x, importBatchId: batchId } : x,
@@ -4653,7 +4698,6 @@ export async function backfillExtratosImportados(): Promise<number> {
   if (totalLotesCriados > 0) emit();
   return totalLotesCriados;
 }
-
 
 export function useStore<T>(selector: () => T): T {
   return useSyncExternalStore(subscribe, selector, selector);
@@ -4759,9 +4803,8 @@ export function mesEfetivoGasto(g: Gasto): { mes: number; ano: number } {
     const cartao = g.cartaoId ? memCartoes.find((c) => c.id === g.cartaoId) : undefined;
     const d = parseDateLocal(g.data);
     if (d && cartao?.diaFechamento && cartao.diaFechamento > 0) {
-      const ref = d.getDate() > cartao.diaFechamento
-        ? d
-        : new Date(d.getFullYear(), d.getMonth() - 1, 1);
+      const ref =
+        d.getDate() > cartao.diaFechamento ? d : new Date(d.getFullYear(), d.getMonth() - 1, 1);
       return { mes: ref.getMonth() + 1, ano: ref.getFullYear() };
     }
   }
@@ -4789,10 +4832,19 @@ export function lotesImportacaoFatura(
   ano: number,
 ): Array<{ batchId: string; qtd: number; total: number; primeira: string; origem?: string }> {
   const compras = gastosDaFatura(cartaoId, mes, ano).filter((g) => g.importBatchId);
-  const map = new Map<string, { batchId: string; qtd: number; total: number; primeira: string; origem?: string }>();
+  const map = new Map<
+    string,
+    { batchId: string; qtd: number; total: number; primeira: string; origem?: string }
+  >();
   for (const g of compras) {
     const k = g.importBatchId!;
-    const cur = map.get(k) ?? { batchId: k, qtd: 0, total: 0, primeira: g.criadoEm ?? "", origem: g.origem };
+    const cur = map.get(k) ?? {
+      batchId: k,
+      qtd: 0,
+      total: 0,
+      primeira: g.criadoEm ?? "",
+      origem: g.origem,
+    };
     cur.qtd += 1;
     cur.total += g.valor;
     if (g.criadoEm && (!cur.primeira || g.criadoEm < cur.primeira)) cur.primeira = g.criadoEm;
@@ -4901,7 +4953,10 @@ export async function bulkDeleteGastos(ids: string[]): Promise<number> {
     void sbAny
       .from("contas_a_pagar")
       .update({ status: "pendente", data_pagamento: null, gasto_id: null })
-      .in("id", contasVinculadas.map((c) => c.id))
+      .in(
+        "id",
+        contasVinculadas.map((c) => c.id),
+      )
       .then(({ error }: { error: { message: string } | null }) => {
         if (error) console.error("[store] bulkDeleteGastos: cleanup contas failed", error);
       });
@@ -4912,7 +4967,10 @@ export async function bulkDeleteGastos(ids: string[]): Promise<number> {
     .from("gastos")
     .delete()
     .eq("user_id", activeUserId)
-    .in("id", alvo.map((g) => g.id));
+    .in(
+      "id",
+      alvo.map((g) => g.id),
+    );
   if (error) {
     console.error("[store] bulkDeleteGastos failed", error);
     void refreshGastos();
@@ -4956,9 +5014,7 @@ export function gastosDaFatura(cartaoId: string, mes: number, ano: number): Gast
   return analisados
     .filter(
       (g) =>
-        gastoCartaoId(g) === cartaoId &&
-        g.formaPagamento === "credito" &&
-        g.confirmado !== false,
+        gastoCartaoId(g) === cartaoId && g.formaPagamento === "credito" && g.confirmado !== false,
     )
     .filter((g) => {
       // Fonte da verdade: invoice_month (mês da fatura escolhido pelo usuário).
@@ -4991,7 +5047,12 @@ export function resumoFaturaPorMes(cartaoId: string, mes: number, ano: number) {
  * Convenção: `mes/ano` = MÊS DE REFERÊNCIA das compras. O fechamento ocorre
  * normalmente no mês seguinte (ex.: fatura "Maio" fech=5 fecha em 05/06).
  */
-export function statusEfetivoFatura(cartao: Cartao, mes: number, ano: number, hoje: Date = new Date()): StatusFatura {
+export function statusEfetivoFatura(
+  cartao: Cartao,
+  mes: number,
+  ano: number,
+  hoje: Date = new Date(),
+): StatusFatura {
   const registro = getFatura(cartao.id, mes, ano);
   if (registro?.status === "paga") return "paga";
   const diaFech = cartao.diaFechamento ?? 1;
@@ -5080,14 +5141,20 @@ export function mesReferenciaFatura(
 }
 
 /** Label "Maio de 2026" do mês de referência da fatura. */
-export function mesReferenciaFaturaLabel(
-  _cartao: Cartao,
-  mes: number,
-  ano: number,
-): string {
+export function mesReferenciaFaturaLabel(_cartao: Cartao, mes: number, ano: number): string {
   const nomes = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro",
   ];
   return `${nomes[mes - 1]} de ${ano}`;
 }
@@ -5172,7 +5239,11 @@ export async function marcarFaturaPaga(
   void resolveAlertasPorDedupeKey(`fatura_vencendo:${cartaoId}:${ymKey}`);
 }
 
-export async function desmarcarFaturaPaga(cartaoId: string, mes: number, ano: number): Promise<void> {
+export async function desmarcarFaturaPaga(
+  cartaoId: string,
+  mes: number,
+  ano: number,
+): Promise<void> {
   if (!activeUserId) return;
   if (!ensureCanWrite("desmarcarFaturaPaga")) return;
   const existente = getFatura(cartaoId, mes, ano);

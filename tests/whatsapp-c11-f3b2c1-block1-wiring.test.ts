@@ -101,9 +101,7 @@ mock.module("@/server/whatsapp-financial-quota-gate.server", () => ({
 }));
 
 const { persistirGasto } = await import("@/server/whatsapp.server");
-const { persistirGastoComprovante } = await import(
-  "@/server/whatsapp-comprovantes.server"
-);
+const { persistirGastoComprovante } = await import("@/server/whatsapp-comprovantes.server");
 
 function textSession() {
   return {
@@ -173,11 +171,7 @@ describe("WA-C11 3B.2.C.1 Block 1 — persistirGasto quota gate", () => {
 
 describe("WA-C11 3B.2.C.1 Block 1 — persistirGastoComprovante quota gate", () => {
   it("fail-closed sem externalMessageId → sem insert", async () => {
-    const r = await persistirGastoComprovante(
-      "user-2",
-      compSession() as never,
-      CATS as never,
-    );
+    const r = await persistirGastoComprovante("user-2", compSession() as never, CATS as never);
     expect(r.ok).toBe(false);
     expect(insertedGastos).toHaveLength(0);
     expect(gateCalls).toHaveLength(0);

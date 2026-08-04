@@ -10,10 +10,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logAuditEvent } from "@/server/logs.server";
 
-const ADMIN_EMAILS = [
-  "felipe.out.silva@outlook.com",
-  "michael@medeiroscenografia.com.br",
-];
+const ADMIN_EMAILS = ["felipe.out.silva@outlook.com", "michael@medeiroscenografia.com.br"];
 
 async function ensureAdmin(userId: string): Promise<string> {
   try {
@@ -130,10 +127,7 @@ export type SystemHealthData = {
     age_minutes: number;
   }>;
   payment_plan_inconsistencies: Array<{
-    type:
-      | "approved_no_active_plan"
-      | "approved_period_expired"
-      | "active_plan_failed_payment";
+    type: "approved_no_active_plan" | "approved_period_expired" | "active_plan_failed_payment";
     user_id_short: string | null;
     user_email: string | null;
     payment_id: string | null;
@@ -224,9 +218,7 @@ export const getSystemHealthDashboard = createServerFn({ method: "POST" })
       .gte("created_at", since24h);
 
     const aggWh = (provider: string) => {
-      const rows = (whAgg ?? []).filter(
-        (r) => (r.provider ?? "").toLowerCase().includes(provider),
-      );
+      const rows = (whAgg ?? []).filter((r) => (r.provider ?? "").toLowerCase().includes(provider));
       const acc = { total: rows.length, processed: 0, failed: 0, ignored: 0 };
       for (const r of rows) {
         const s = (r.status ?? "").toLowerCase();
@@ -302,7 +294,14 @@ export const getSystemHealthDashboard = createServerFn({ method: "POST" })
           .from("user_plans")
           .select("user_id,status,current_period_end,last_payment_id")
           .in("user_id", allUserIds)
-      : { data: [] as { user_id: string; status: string; current_period_end: string | null; last_payment_id: string | null }[] };
+      : {
+          data: [] as {
+            user_id: string;
+            status: string;
+            current_period_end: string | null;
+            last_payment_id: string | null;
+          }[],
+        };
     const planByUser = new Map((plansForUsers ?? []).map((p) => [p.user_id, p]));
     const emailMap = await emailsForUserIds(allUserIds);
     const nowMs = Date.now();
@@ -323,10 +322,7 @@ export const getSystemHealthDashboard = createServerFn({ method: "POST" })
           current_period_end: plan?.current_period_end ?? null,
           recommended_action: "Reconciliar via diagnóstico Mercado Pago",
         });
-      } else if (
-        !plan.current_period_end ||
-        new Date(plan.current_period_end).getTime() < nowMs
-      ) {
+      } else if (!plan.current_period_end || new Date(plan.current_period_end).getTime() < nowMs) {
         payment_plan_inconsistencies.push({
           type: "approved_period_expired",
           user_id_short: shortId(p.user_id),
@@ -343,7 +339,11 @@ export const getSystemHealthDashboard = createServerFn({ method: "POST" })
     for (const f of failedArr) {
       if (!f.user_id) continue;
       const plan = planByUser.get(f.user_id);
-      if (plan?.status === "ativo" && plan.last_payment_id && plan.last_payment_id === f.provider_payment_id) {
+      if (
+        plan?.status === "ativo" &&
+        plan.last_payment_id &&
+        plan.last_payment_id === f.provider_payment_id
+      ) {
         payment_plan_inconsistencies.push({
           type: "active_plan_failed_payment",
           user_id_short: shortId(f.user_id),
@@ -377,7 +377,7 @@ export const getSystemHealthDashboard = createServerFn({ method: "POST" })
       id: p.id,
       created_at: p.created_at,
       user_id_short: shortId(p.user_id),
-      user_email: p.user_id ? pendingEmails.get(p.user_id) ?? null : null,
+      user_email: p.user_id ? (pendingEmails.get(p.user_id) ?? null) : null,
       provider_payment_id: p.provider_payment_id,
       amount_cents: p.amount_cents,
       status: p.status,
@@ -389,7 +389,9 @@ export const getSystemHealthDashboard = createServerFn({ method: "POST" })
     const [failedWebhooksQ, rlBlocksQ, payEventsQ, auditsQ] = await Promise.all([
       supabaseAdmin
         .from("webhook_logs")
-        .select("id,created_at,provider,event_type,external_id,http_status,error_message,processing_time_ms")
+        .select(
+          "id,created_at,provider,event_type,external_id,http_status,error_message,processing_time_ms",
+        )
         .eq("status", "failed")
         .order("created_at", { ascending: false })
         .limit(20),
@@ -533,7 +535,9 @@ export const getLogRetentionPreview = createServerFn({ method: "POST" })
 
     const results = await Promise.all(
       policies.map(async (pol) => {
-        const cutoff = new Date(Date.now() - pol.retention_days * 24 * 60 * 60 * 1000).toISOString();
+        const cutoff = new Date(
+          Date.now() - pol.retention_days * 24 * 60 * 60 * 1000,
+        ).toISOString();
         const [{ count: total }, { count: eligible }] = await Promise.all([
           supabaseAdmin.from(pol.table).select("id", { count: "exact", head: true }),
           supabaseAdmin
@@ -588,9 +592,7 @@ export const runLogRetentionCleanup = createServerFn({ method: "POST" })
     const results: LogRetentionCleanupResult["results"] = [];
 
     for (const pol of RETENTION_POLICY) {
-      const cutoff = new Date(
-        Date.now() - pol.retention_days * 24 * 60 * 60 * 1000,
-      ).toISOString();
+      const cutoff = new Date(Date.now() - pol.retention_days * 24 * 60 * 60 * 1000).toISOString();
       try {
         // Pre-count elegíveis (mais confiável que `count: exact` no delete em alguns providers)
         const { count: eligible, error: countErr } = await supabaseAdmin

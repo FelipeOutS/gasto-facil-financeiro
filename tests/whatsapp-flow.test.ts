@@ -19,8 +19,6 @@ import {
 } from "../src/server/whatsapp.server";
 import type { Cartao } from "../src/lib/types";
 
-
-
 let pass = 0;
 let fail = 0;
 const failures: string[] = [];
@@ -42,7 +40,10 @@ function header(s: string) {
 
 const TZ = "America/Sao_Paulo";
 const fmtBR = new Intl.DateTimeFormat("en-CA", {
-  timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit",
+  timeZone: TZ,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
 });
 const hojeISO = fmtBR.format(new Date());
 const ontemISO = (() => {
@@ -72,7 +73,7 @@ const cartoesUser: Cartao[] = [
 ];
 
 // =====================================================================
-header("1. \"Gastei R$ 35,90 no mercado hoje no cartão Nubank\"");
+header('1. "Gastei R$ 35,90 no mercado hoje no cartão Nubank"');
 {
   const p = parseWhatsAppExpenseMessage(
     "Gastei R$ 35,90 no mercado hoje no cartão Nubank",
@@ -91,12 +92,9 @@ header("1. \"Gastei R$ 35,90 no mercado hoje no cartão Nubank\"");
 }
 
 // =====================================================================
-header("2. \"Paguei R$ 18 no pix ontem com lanche\"");
+header('2. "Paguei R$ 18 no pix ontem com lanche"');
 {
-  const p = parseWhatsAppExpenseMessage(
-    "Paguei R$ 18 no pix ontem com lanche",
-    cartoesUser,
-  );
+  const p = parseWhatsAppExpenseMessage("Paguei R$ 18 no pix ontem com lanche", cartoesUser);
   ok("valor 18", p.valor === 18);
   ok("forma pix", p.formaPagamento === "pix");
   ok("data ontem", p.data === ontemISO, `got ${p.data}`);
@@ -105,7 +103,7 @@ header("2. \"Paguei R$ 18 no pix ontem com lanche\"");
 }
 
 // =====================================================================
-header("3. \"Uber 27 reais no crédito\" (sem cartão)");
+header('3. "Uber 27 reais no crédito" (sem cartão)');
 {
   const p = parseWhatsAppExpenseMessage("Uber 27 reais no crédito", cartoesUser);
   ok("valor 27", p.valor === 27);
@@ -117,24 +115,18 @@ header("3. \"Uber 27 reais no crédito\" (sem cartão)");
 }
 
 // =====================================================================
-header("4. \"Gastei no mercado hoje no cartão Nubank\" (sem valor)");
+header('4. "Gastei no mercado hoje no cartão Nubank" (sem valor)');
 {
-  const p = parseWhatsAppExpenseMessage(
-    "Gastei no mercado hoje no cartão Nubank",
-    cartoesUser,
-  );
+  const p = parseWhatsAppExpenseMessage("Gastei no mercado hoje no cartão Nubank", cartoesUser);
   ok("valor zero", p.valor === 0);
   const falt = detectarFaltantes(p, cartoesUser);
   ok("falta valor", !!falt && /valor/i.test(falt));
 }
 
 // =====================================================================
-header("5. \"Comprei remédio R$ 42,50 no débito\"");
+header('5. "Comprei remédio R$ 42,50 no débito"');
 {
-  const p = parseWhatsAppExpenseMessage(
-    "Comprei remédio R$ 42,50 no débito",
-    cartoesUser,
-  );
+  const p = parseWhatsAppExpenseMessage("Comprei remédio R$ 42,50 no débito", cartoesUser);
   ok("valor 42.50", p.valor === 42.5);
   ok("forma débito", p.formaPagamento === "debito");
   ok("nome contém Remédio", /rem[eé]dio/i.test(p.nome), `nome="${p.nome}"`);
@@ -142,12 +134,9 @@ header("5. \"Comprei remédio R$ 42,50 no débito\"");
 }
 
 // =====================================================================
-header("6. \"Paguei R$ 120 de internet hoje no Pix\"");
+header('6. "Paguei R$ 120 de internet hoje no Pix"');
 {
-  const p = parseWhatsAppExpenseMessage(
-    "Paguei R$ 120 de internet hoje no Pix",
-    cartoesUser,
-  );
+  const p = parseWhatsAppExpenseMessage("Paguei R$ 120 de internet hoje no Pix", cartoesUser);
   ok("valor 120", p.valor === 120);
   ok("forma pix", p.formaPagamento === "pix");
   ok("nome contém Internet", /internet/i.test(p.nome), `nome="${p.nome}"`);
@@ -155,7 +144,7 @@ header("6. \"Paguei R$ 120 de internet hoje no Pix\"");
 }
 
 // =====================================================================
-header("7. \"R$ 15 padaria\" (sem forma)");
+header('7. "R$ 15 padaria" (sem forma)');
 {
   const p = parseWhatsAppExpenseMessage("R$ 15 padaria", cartoesUser);
   ok("valor 15", p.valor === 15);
@@ -166,7 +155,7 @@ header("7. \"R$ 15 padaria\" (sem forma)");
 }
 
 // =====================================================================
-header("8. \"sim\" sem pendência ativa");
+header('8. "sim" sem pendência ativa');
 {
   ok("classifica como confirm", classificarResposta("sim") === "confirm");
   // Comportamento esperado: o pipeline deve responder \"sem_pendencia\"
@@ -175,7 +164,7 @@ header("8. \"sim\" sem pendência ativa");
 }
 
 // =====================================================================
-header("9. \"não\" após pendência ativa");
+header('9. "não" após pendência ativa');
 {
   ok("classifica como cancel (não)", classificarResposta("não") === "cancel");
   ok("classifica como cancel (nao)", classificarResposta("nao") === "cancel");
@@ -204,10 +193,7 @@ header("11. Usuário sem plano ativo (lógica)");
 // =====================================================================
 header("12. Cartão citado não cadastrado");
 {
-  const p = parseWhatsAppExpenseMessage(
-    "Gastei R$ 50 no mercado hoje no cartão Itaú",
-    cartoesUser,
-  );
+  const p = parseWhatsAppExpenseMessage("Gastei R$ 50 no mercado hoje no cartão Itaú", cartoesUser);
   ok("valor 50", p.valor === 50);
   ok("forma credito", p.formaPagamento === "credito");
   ok("sem cartaoId (Itaú não cadastrado)", !p.cartaoId);
@@ -224,10 +210,7 @@ header("13. Cartão ambíguo (mais de um match)");
     makeCartao({ id: "c-nu1", nome: "Nubank Roxinho", banco: "Nubank" }),
     makeCartao({ id: "c-nu2", nome: "Nubank Ultravioleta", banco: "Nubank" }),
   ];
-  const p = parseWhatsAppExpenseMessage(
-    "Gastei R$ 50 no mercado hoje no Nubank",
-    cartoesAmbig,
-  );
+  const p = parseWhatsAppExpenseMessage("Gastei R$ 50 no mercado hoje no Nubank", cartoesAmbig);
   // Esperado: parser detecta ambiguidade e detectarFaltantes pede para escolher.
   ok("sem cartaoId resolvido", !p.cartaoId);
   ok("ambiguo presente", !!p.cartaoAmbiguo && p.cartaoAmbiguo.ids.length === 2);
@@ -310,7 +293,6 @@ header("Coleta inteligente quando faltam descrição e/ou valor");
   );
   ok("mensagem (c) sem emoji", !!r3 && !/[\u{1F300}-\u{1FAFF}]/u.test(r3));
 }
-
 
 // =====================================================================
 header("Comandos genéricos de lançamento de gasto");
@@ -399,12 +381,8 @@ header("Comandos genéricos de lançamento de gasto");
   // "Uber 48,90" continua válido.
   const pUberValor = parseWhatsAppExpenseMessage("Uber 48,90", cartoesUser);
   ok(`"Uber 48,90" tem valor 48.90`, pUberValor.valor === 48.9);
-  ok(
-    `"Uber 48,90" tem nome não genérico`,
-    !isGenericExpenseDescription(pUberValor.nome),
-  );
+  ok(`"Uber 48,90" tem nome não genérico`, !isGenericExpenseDescription(pUberValor.nome));
 }
-
 
 // =====================================================================
 
@@ -420,4 +398,3 @@ if (failures.length) {
 test("whatsapp-flow (runner legado): todos os asserts passaram", () => {
   expect({ pass, fail, failures }).toEqual({ pass, fail: 0, failures: [] });
 });
-

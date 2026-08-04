@@ -99,7 +99,14 @@ export const Route = createFileRoute("/contas-a-pagar/")({
 
 type FilterId = "todas" | "pendentes" | "proximas" | "atrasadas" | "pagas" | "recorrentes";
 
-const FILTRO_IDS: FilterId[] = ["todas", "pendentes", "proximas", "atrasadas", "pagas", "recorrentes"];
+const FILTRO_IDS: FilterId[] = [
+  "todas",
+  "pendentes",
+  "proximas",
+  "atrasadas",
+  "pagas",
+  "recorrentes",
+];
 
 function normalizar(s: string): string {
   return s
@@ -323,7 +330,6 @@ function ContasAPagarPage() {
           >
             <ChevronRight className="h-4 w-4" />
           </button>
-
         </div>
       </header>
 
@@ -360,9 +366,7 @@ function ContasAPagarPage() {
         {(totais.pago > 0 || totais.qtdPago > 0) && (
           <div className="mt-3 flex items-center justify-between rounded-xl border border-border bg-background/40 px-3 py-2">
             <span className="text-[11px] text-muted-foreground">{t("summary.paidMonth")}</span>
-            <span className="num text-sm font-semibold text-success">
-              {formatBRL(totais.pago)}
-            </span>
+            <span className="num text-sm font-semibold text-success">{formatBRL(totais.pago)}</span>
           </div>
         )}
 
@@ -373,9 +377,7 @@ function ContasAPagarPage() {
             </p>
             <div className="mt-1 flex items-baseline justify-between gap-2">
               <p className="truncate text-sm font-semibold">{proximaConta.nome}</p>
-              <p className="num shrink-0 text-sm font-semibold">
-                {formatBRL(proximaConta.valor)}
-              </p>
+              <p className="num shrink-0 text-sm font-semibold">{formatBRL(proximaConta.valor)}</p>
             </div>
             <p className="mt-0.5 text-[11px] text-muted-foreground">
               {t("summary.dueOn", { date: formatDateBR(proximaConta.dataVencimento) })}
@@ -498,18 +500,13 @@ function ContasAPagarPage() {
         )}
       </div>
 
-
       {/* Lista */}
       <section className="mt-3 space-y-2.5">
         {doMes.length === 0 ? (
           <EmptyState onAdd={openCreate} />
         ) : filtradas.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground animate-fade-in space-y-3">
-            <p>
-              {busca
-                ? t("search.noResults", { query: busca })
-                : t("search.emptyFilter")}
-            </p>
+            <p>{busca ? t("search.noResults", { query: busca }) : t("search.emptyFilter")}</p>
             {(busca || filtro !== "todas") && (
               <Button
                 variant="outline"
@@ -566,10 +563,7 @@ function ContasAPagarPage() {
         />
       )}
 
-      <AlertDialog
-        open={!!confirmDelete}
-        onOpenChange={(o) => !o && setConfirmDelete(null)}
-      >
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("delete.title")}</AlertDialogTitle>
@@ -617,10 +611,7 @@ function ContasAPagarPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog
-        open={!!confirmDesmarcar}
-        onOpenChange={(o) => !o && setConfirmDesmarcar(null)}
-      >
+      <AlertDialog open={!!confirmDesmarcar} onOpenChange={(o) => !o && setConfirmDesmarcar(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("undo.title")}</AlertDialogTitle>
@@ -654,10 +645,7 @@ function ContasAPagarPage() {
       </AlertDialog>
 
       {/* Excluir conta recorrente — escopo */}
-      <AlertDialog
-        open={!!confirmDeleteRec}
-        onOpenChange={(o) => !o && setConfirmDeleteRec(null)}
-      >
+      <AlertDialog open={!!confirmDeleteRec} onOpenChange={(o) => !o && setConfirmDeleteRec(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("deleteRec.title")}</AlertDialogTitle>
@@ -854,15 +842,19 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-
-function nomeExibicaoFornecedor(f: { apelido?: string | null; nome_fantasia?: string | null; razao_social?: string | null; nome?: string | null } | undefined): string | null {
+function nomeExibicaoFornecedor(
+  f:
+    | {
+        apelido?: string | null;
+        nome_fantasia?: string | null;
+        razao_social?: string | null;
+        nome?: string | null;
+      }
+    | undefined,
+): string | null {
   if (!f) return null;
   return (
-    f.apelido?.trim() ||
-    f.nome_fantasia?.trim() ||
-    f.razao_social?.trim() ||
-    f.nome?.trim() ||
-    null
+    f.apelido?.trim() || f.nome_fantasia?.trim() || f.razao_social?.trim() || f.nome?.trim() || null
   );
 }
 
@@ -907,7 +899,7 @@ function ContaCard({
       )}
     >
       <div className="flex items-start gap-3">
-        {(fornecedorNome || conta.beneficiario || conta.nome) ? (
+        {fornecedorNome || conta.beneficiario || conta.nome ? (
           <BrandLogo
             name={fornecedorNome || conta.beneficiario || conta.nome}
             domain={extractDomain(conta.bancoEmissor ?? null)}
@@ -935,12 +927,16 @@ function ContaCard({
             </p>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-            <span className="num">{t("card.dueShort", { date: formatDateBR(conta.dataVencimento) })}</span>
+            <span className="num">
+              {t("card.dueShort", { date: formatDateBR(conta.dataVencimento) })}
+            </span>
             {conta.recorrente && (
               <span className="inline-flex items-center gap-1">
                 <Repeat className="h-3 w-3" />
                 {conta.frequenciaRecorrencia
-                  ? t(`frequency.${conta.frequenciaRecorrencia}`, { defaultValue: t("card.recurringFallback") })
+                  ? t(`frequency.${conta.frequenciaRecorrencia}`, {
+                      defaultValue: t("card.recurringFallback"),
+                    })
                   : t("card.recurringFallback")}
               </span>
             )}
@@ -970,12 +966,7 @@ function ContaCard({
 
       <div className="mt-3 flex items-center gap-2">
         {status === "pago" ? (
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={onDesmarcar}
-          >
+          <Button variant="outline" size="sm" className="flex-1" onClick={onDesmarcar}>
             <RotateCcw className="mr-1 h-3.5 w-3.5" />
             {t("card.undoPaid")}
           </Button>
@@ -1021,9 +1012,7 @@ function CodigoCopiavel({ label, valor }: { label: string; valor: string }) {
   return (
     <div className="flex items-center gap-2 rounded-lg border border-border bg-card-elevated/40 px-2 py-1.5">
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
+        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
         <p className="truncate text-[11px] font-mono">{valor}</p>
       </div>
       <Button
@@ -1082,9 +1071,7 @@ function StatusBadge({ status, dias }: { status: StatusConta; dias: number }) {
     );
   }
   return (
-    <PremiumStatusBadge tone="muted">
-      {t("status.pendingDays", { days: dias })}
-    </PremiumStatusBadge>
+    <PremiumStatusBadge tone="muted">{t("status.pendingDays", { days: dias })}</PremiumStatusBadge>
   );
 }
 
@@ -1110,9 +1097,7 @@ function ContaFormDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? t("form.editTitle") : t("form.newTitle")}</DialogTitle>
-          <DialogDescription>
-            {isEdit ? t("form.editDesc") : t("form.newDesc")}
-          </DialogDescription>
+          <DialogDescription>{isEdit ? t("form.editDesc") : t("form.newDesc")}</DialogDescription>
         </DialogHeader>
         <ContaPagarForm
           conta={conta}
@@ -1124,7 +1109,6 @@ function ContaFormDialog({
     </Dialog>
   );
 }
-
 
 // ---------- Pagar dialog ----------
 
@@ -1140,9 +1124,7 @@ function PagarDialog({
   const { t } = useTranslation("contas-a-pagar");
   const categorias = getCategorias();
   const [nome, setNome] = useState(conta.nome);
-  const [valorStr, setValorStr] = useState(
-    conta.valor.toFixed(2).replace(".", ","),
-  );
+  const [valorStr, setValorStr] = useState(conta.valor.toFixed(2).replace(".", ","));
   const [categoriaId, setCategoriaId] = useState<string>(conta.categoriaId ?? "");
   const [criarGasto, setCriarGasto] = useState(true);
   const [forma, setForma] = useState<FormaPagamento>(conta.formaPagamento ?? "pix");
@@ -1170,11 +1152,7 @@ function PagarDialog({
         valor: valorNum,
         categoriaId: categoriaId || undefined,
       });
-      toast.success(
-        criarGasto
-          ? t("pay.toastWithExpense")
-          : t("pay.toastOnly"),
-      );
+      toast.success(criarGasto ? t("pay.toastWithExpense") : t("pay.toastOnly"));
       onClose();
     } catch (e) {
       toastFromError(e, t("pay.toastError"));
@@ -1186,9 +1164,7 @@ function PagarDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("pay.title")}</DialogTitle>
-          <DialogDescription>
-            {t("pay.desc")}
-          </DialogDescription>
+          <DialogDescription>{t("pay.desc")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -1277,9 +1253,7 @@ function PagarDialog({
               <div className="min-w-0">
                 <p className="text-sm font-medium">{t("pay.asExpenseTitle")}</p>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  {categoriasCount === 0
-                    ? t("pay.asExpenseHintNoCats")
-                    : t("pay.asExpenseHint")}
+                  {categoriasCount === 0 ? t("pay.asExpenseHintNoCats") : t("pay.asExpenseHint")}
                 </p>
               </div>
               <Switch checked={criarGasto} onCheckedChange={setCriarGasto} />

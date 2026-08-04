@@ -318,8 +318,8 @@ export function ImportInvestimentosFlow({
       const posBrutas: PosicaoBruta[] = Array.isArray(data?.posicoes)
         ? data.posicoes
         : Array.isArray(data?.itens)
-        ? data.itens
-        : [];
+          ? data.itens
+          : [];
       const movBrutas: MovimentacaoBruta[] = Array.isArray(data?.movimentacoes)
         ? data.movimentacoes
         : [];
@@ -339,9 +339,8 @@ export function ImportInvestimentosFlow({
         setAviso(ti("preview.aviso.movsOnly"));
       } else {
         const naoProntos =
-          posEdit.filter(
-            (i) => i.confianca === "baixa" || (!i.valorAplicado && !i.valorAtual),
-          ).length +
+          posEdit.filter((i) => i.confianca === "baixa" || (!i.valorAplicado && !i.valorAtual))
+            .length +
           movEdit.filter((m) => m.confianca === "baixa" || !m.data || !m.valorTotal).length;
         if (naoProntos > 0) {
           setAviso(ti("preview.aviso.needsReview"));
@@ -469,8 +468,7 @@ export function ImportInvestimentosFlow({
           ativoId = found.id;
         } else if (m.nome || m.ticker) {
           // cria ativo esqueleto a partir da movimentação (ex: PDF só de movs)
-          const ehEntrada =
-            m.tipo === "compra" || m.tipo === "aplicacao";
+          const ehEntrada = m.tipo === "compra" || m.tipo === "aplicacao";
           const valorRef = ehEntrada ? Number(m.valorTotal || 0) : 0;
           const novo = await criarAtivo(userId, {
             nome: m.nome || m.ticker || "Ativo importado",
@@ -556,19 +554,15 @@ export function ImportInvestimentosFlow({
       }
     }
 
-    const ignorados =
-      posicoes.length + movs.length - posSalvar.length - movSalvar.length;
+    const ignorados = posicoes.length + movs.length - posSalvar.length - movSalvar.length;
     setResumo({ posImportadas: posOk, movImportadas: movOk, ignorados, erros: falhas });
     setStep("feito");
     if (posOk + movOk > 0) {
-      toast.success(
-        ti("toast.partialSuccess", { positions: posOk, movements: movOk }),
-      );
+      toast.success(ti("toast.partialSuccess", { positions: posOk, movements: movOk }));
     }
     if (falhas > 0) toast.error(ti("toast.partialErrors", { count: falhas }));
     onImported();
   }
-
 
   function baixarModelo() {
     const ws = XLSX.utils.aoa_to_sheet([
@@ -584,14 +578,33 @@ export function ImportInvestimentosFlow({
         ti("template.headers.date"),
       ],
       ["Petrobras PN", "PETR4", "acoes", 100, "32,50", "3.250,00", "3.500,00", "XP", "01/05/2026"],
-      ["Tesouro IPCA+ 2029", "", "tesouro", "", "", "5.000,00", "5.420,00", "Banco Inter", "10/01/2024"],
-      ["CDB Inter 110% CDI", "", "cdb", "", "", "10.000,00", "10.580,00", "Banco Inter", "01/03/2025"],
+      [
+        "Tesouro IPCA+ 2029",
+        "",
+        "tesouro",
+        "",
+        "",
+        "5.000,00",
+        "5.420,00",
+        "Banco Inter",
+        "10/01/2024",
+      ],
+      [
+        "CDB Inter 110% CDI",
+        "",
+        "cdb",
+        "",
+        "",
+        "10.000,00",
+        "10.580,00",
+        "Banco Inter",
+        "01/03/2025",
+      ],
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, ti("template.sheetName"));
     XLSX.writeFile(wb, ti("template.fileName"));
   }
-
 
   const posProntos = posicoes.filter(
     (i) => !i._ignorado && i.confianca !== "baixa" && (i.valorAplicado || i.valorAtual),
@@ -643,11 +656,11 @@ export function ImportInvestimentosFlow({
                   <Upload className="h-6 w-6 text-primary" />
                 )}
               </div>
-              <div className="font-medium text-sm">
-                {ti("upload.dropzone")}
-              </div>
+              <div className="font-medium text-sm">{ti("upload.dropzone")}</div>
               <div className="text-xs text-muted-foreground mt-1">
-                {ti("upload.supportedFormats", { formats: info.aceita.replace(/\./g, "").toUpperCase() })}
+                {ti("upload.supportedFormats", {
+                  formats: info.aceita.replace(/\./g, "").toUpperCase(),
+                })}
               </div>
               <input
                 ref={inputRef}
@@ -679,9 +692,7 @@ export function ImportInvestimentosFlow({
 
             <div className="flex items-start gap-2 rounded-lg bg-muted/40 p-2.5 text-[11px] text-muted-foreground">
               <ShieldCheck className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-              <span>
-                {ti("upload.privacy")}
-              </span>
+              <span>{ti("upload.privacy")}</span>
             </div>
           </div>
         )}
@@ -690,9 +701,7 @@ export function ImportInvestimentosFlow({
           <div className="py-10 text-center">
             <Loader2 className="h-8 w-8 mx-auto animate-spin text-primary mb-3" />
             <div className="text-sm font-medium">{ti("processing.title")}</div>
-            <div className="text-xs text-muted-foreground mt-1">
-              {ti("processing.description")}
-            </div>
+            <div className="text-xs text-muted-foreground mt-1">{ti("processing.description")}</div>
           </div>
         )}
 
@@ -700,7 +709,10 @@ export function ImportInvestimentosFlow({
           <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
             <div className="flex flex-wrap gap-2 text-xs">
               <Badge variant="secondary">
-                {ti("preview.badges.summary", { positions: posicoes.length, movements: movs.length })}
+                {ti("preview.badges.summary", {
+                  positions: posicoes.length,
+                  movements: movs.length,
+                })}
               </Badge>
               {posProntos + movProntas > 0 && (
                 <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/15">
@@ -718,7 +730,9 @@ export function ImportInvestimentosFlow({
                 </Badge>
               )}
               {totalIgnorados > 0 && (
-                <Badge variant="outline">{ti("preview.badges.ignored", { count: totalIgnorados })}</Badge>
+                <Badge variant="outline">
+                  {ti("preview.badges.ignored", { count: totalIgnorados })}
+                </Badge>
               )}
             </div>
 
@@ -759,9 +773,7 @@ export function ImportInvestimentosFlow({
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <ArrowDownUp className="h-4 w-4 text-primary" />
                   {ti("preview.sections.movements")}
-                  <span className="text-xs text-muted-foreground font-normal">
-                    ({movs.length})
-                  </span>
+                  <span className="text-xs text-muted-foreground font-normal">({movs.length})</span>
                 </div>
                 <div className="space-y-2">
                   {movs.map((m) => (
@@ -795,7 +807,11 @@ export function ImportInvestimentosFlow({
             </div>
             <div className="text-base font-semibold">{ti("done.title")}</div>
             <div className="text-sm text-muted-foreground">
-              {ti("done.summary", { positions: resumo.posImportadas, movements: resumo.movImportadas, ignored: resumo.ignorados })}
+              {ti("done.summary", {
+                positions: resumo.posImportadas,
+                movements: resumo.movImportadas,
+                ignored: resumo.ignorados,
+              })}
               {resumo.erros > 0 ? ti("done.summaryWithErrors", { errors: resumo.erros }) : ""}.
             </div>
           </div>
@@ -852,7 +868,9 @@ export function ImportInvestimentosFlow({
       </DialogContent>
       <PremiumLockModal
         open={premiumGate.state.open}
-        onOpenChange={(v) => { if (!v) premiumGate.close(); }}
+        onOpenChange={(v) => {
+          if (!v) premiumGate.close();
+        }}
         title={premiumGate.state.title}
         description={premiumGate.state.description}
         feature={premiumGate.state.feature ?? undefined}
@@ -874,32 +892,26 @@ function PosicaoCard({
   const status = item._ignorado
     ? { label: ti("status.ignored"), cls: "bg-muted text-muted-foreground" }
     : item._duplicado
-    ? {
-        label: ti("status.duplicated"),
-        cls: "bg-orange-500/15 text-orange-700 dark:text-orange-400",
-      }
-    : item.confianca === "baixa" || (!item.valorAplicado && !item.valorAtual)
-    ? {
-        label: ti("status.needsReview"),
-        cls: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-      }
-    : {
-        label: ti("status.ready"),
-        cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-      };
+      ? {
+          label: ti("status.duplicated"),
+          cls: "bg-orange-500/15 text-orange-700 dark:text-orange-400",
+        }
+      : item.confianca === "baixa" || (!item.valorAplicado && !item.valorAtual)
+        ? {
+            label: ti("status.needsReview"),
+            cls: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+          }
+        : {
+            label: ti("status.ready"),
+            cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+          };
 
   return (
-    <div
-      className={`rounded-xl border border-border/60 p-3 ${
-        item._ignorado ? "opacity-50" : ""
-      }`}
-    >
+    <div className={`rounded-xl border border-border/60 p-3 ${item._ignorado ? "opacity-50" : ""}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="font-medium text-sm truncate">
-              {item.nome || item.ticker || "—"}
-            </div>
+            <div className="font-medium text-sm truncate">{item.nome || item.ticker || "—"}</div>
             {item.ticker && (
               <Badge variant="outline" className="text-[10px]">
                 {item.ticker}
@@ -913,12 +925,26 @@ function PosicaoCard({
             </span>
           </div>
           <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-            {item.quantidade != null && <span>{ti("fields.qty")}: {item.quantidade}</span>}
-            {item.precoMedio != null && <span>{ti("fields.avgPrice")}: {formatBRL(item.precoMedio)}</span>}
-            {item.valorAplicado != null && (
-              <span>{ti("fields.applied")}: {formatBRL(item.valorAplicado)}</span>
+            {item.quantidade != null && (
+              <span>
+                {ti("fields.qty")}: {item.quantidade}
+              </span>
             )}
-            {item.valorAtual != null && <span>{ti("fields.current")}: {formatBRL(item.valorAtual)}</span>}
+            {item.precoMedio != null && (
+              <span>
+                {ti("fields.avgPrice")}: {formatBRL(item.precoMedio)}
+              </span>
+            )}
+            {item.valorAplicado != null && (
+              <span>
+                {ti("fields.applied")}: {formatBRL(item.valorAplicado)}
+              </span>
+            )}
+            {item.valorAtual != null && (
+              <span>
+                {ti("fields.current")}: {formatBRL(item.valorAtual)}
+              </span>
+            )}
             {item.instituicao && <span>{item.instituicao}</span>}
             {item.dataInicio && <span>{item.dataInicio}</span>}
           </div>
@@ -948,10 +974,7 @@ function PosicaoCard({
       {editando && (
         <div className="grid grid-cols-2 gap-2 mt-3">
           <Field label={ti("fields.name")}>
-            <Input
-              value={item.nome ?? ""}
-              onChange={(e) => onChange({ nome: e.target.value })}
-            />
+            <Input value={item.nome ?? ""} onChange={(e) => onChange({ nome: e.target.value })} />
           </Field>
           <Field label={ti("fields.ticker")}>
             <Input
@@ -1042,7 +1065,6 @@ function PosicaoCard({
   );
 }
 
-
 function MovimentacaoCard({
   item,
   onChange,
@@ -1057,37 +1079,31 @@ function MovimentacaoCard({
   const status = item._ignorado
     ? { label: ti("status.ignored"), cls: "bg-muted text-muted-foreground" }
     : item._duplicado
-    ? {
-        label: ti("status.duplicated"),
-        cls: "bg-orange-500/15 text-orange-700 dark:text-orange-400",
-      }
-    : precisaRevisar
-    ? {
-        label: ti("status.needsReview"),
-        cls: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-      }
-    : {
-        label: ti("status.ready"),
-        cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-      };
+      ? {
+          label: ti("status.duplicated"),
+          cls: "bg-orange-500/15 text-orange-700 dark:text-orange-400",
+        }
+      : precisaRevisar
+        ? {
+            label: ti("status.needsReview"),
+            cls: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+          }
+        : {
+            label: ti("status.ready"),
+            cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+          };
 
   const tipoLabel = getTipoMovimentacaoLabel(item.tipo, tInv);
 
   return (
-    <div
-      className={`rounded-xl border border-border/60 p-3 ${
-        item._ignorado ? "opacity-50" : ""
-      }`}
-    >
+    <div className={`rounded-xl border border-border/60 p-3 ${item._ignorado ? "opacity-50" : ""}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="secondary" className="text-[10px]">
               {tipoLabel}
             </Badge>
-            <div className="font-medium text-sm truncate">
-              {item.nome || item.ticker || "—"}
-            </div>
+            <div className="font-medium text-sm truncate">{item.nome || item.ticker || "—"}</div>
             {item.ticker && (
               <Badge variant="outline" className="text-[10px]">
                 {item.ticker}
@@ -1102,12 +1118,20 @@ function MovimentacaoCard({
           </div>
           <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
             {item.data && <span>{item.data}</span>}
-            {item.quantidade != null && <span>{ti("fields.qty")}: {item.quantidade}</span>}
+            {item.quantidade != null && (
+              <span>
+                {ti("fields.qty")}: {item.quantidade}
+              </span>
+            )}
             {item.valorUnitario != null && (
-              <span>{ti("fields.unit")}: {formatBRL(item.valorUnitario)}</span>
+              <span>
+                {ti("fields.unit")}: {formatBRL(item.valorUnitario)}
+              </span>
             )}
             {item.valorTotal != null && (
-              <span>{ti("fields.total")}: {formatBRL(item.valorTotal)}</span>
+              <span>
+                {ti("fields.total")}: {formatBRL(item.valorTotal)}
+              </span>
             )}
             {item.instituicao && <span>{item.instituicao}</span>}
           </div>
@@ -1161,10 +1185,7 @@ function MovimentacaoCard({
             />
           </Field>
           <Field label={ti("fields.assetName")}>
-            <Input
-              value={item.nome ?? ""}
-              onChange={(e) => onChange({ nome: e.target.value })}
-            />
+            <Input value={item.nome ?? ""} onChange={(e) => onChange({ nome: e.target.value })} />
           </Field>
           <Field label={ti("fields.ticker")}>
             <Input
@@ -1231,9 +1252,7 @@ function MovimentacaoCard({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="text-[10px] font-medium text-muted-foreground mb-0.5 block">
-        {label}
-      </span>
+      <span className="text-[10px] font-medium text-muted-foreground mb-0.5 block">{label}</span>
       {children}
     </label>
   );

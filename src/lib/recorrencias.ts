@@ -7,31 +7,15 @@
  */
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  getGastos,
-  getCartoes,
-  useStore,
-  addGasto,
-  type NovoGastoInput,
-} from "@/lib/store";
+import { getGastos, getCartoes, useStore, addGasto, type NovoGastoInput } from "@/lib/store";
 import type { Gasto, FormaPagamento } from "@/lib/types";
 import { suggestCategoryFromText } from "@/lib/categories";
 import { hasMerchantLogo } from "@/lib/logos";
 import { parseDateLocal, toLocalISODate } from "@/lib/format";
 
-export type FrequenciaRecorrencia =
-  | "mensal"
-  | "semanal"
-  | "quinzenal"
-  | "anual"
-  | "personalizada";
+export type FrequenciaRecorrencia = "mensal" | "semanal" | "quinzenal" | "anual" | "personalizada";
 
-export type StatusRecorrencia =
-  | "ativa"
-  | "pausada"
-  | "cancelada"
-  | "suspeita"
-  | "aguardando";
+export type StatusRecorrencia = "ativa" | "pausada" | "cancelada" | "suspeita" | "aguardando";
 
 export type TipoRecorrencia = "assinatura" | "recorrencia_fixa";
 
@@ -109,7 +93,9 @@ let categoriaKeyToUuidRec = new Map<string, string>();
 let categoriaUuidToKeyRec = new Map<string, string>();
 
 function isUuid(v: string | null | undefined): boolean {
-  return !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+  return (
+    !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v)
+  );
 }
 
 async function syncCategoriaMaps(userId: string): Promise<void> {
@@ -135,7 +121,10 @@ function categoriaKeyFromDb(id: string | null | undefined): string | null {
   return categoriaUuidToKeyRec.get(id) ?? id;
 }
 
-async function categoriaDbId(userId: string | null, id: string | null | undefined): Promise<string | null> {
+async function categoriaDbId(
+  userId: string | null,
+  id: string | null | undefined,
+): Promise<string | null> {
   if (!id || id === "outros") return null;
   if (isUuid(id)) return id;
   if (userId && categoriaKeyToUuidRec.size === 0) await syncCategoriaMaps(userId);
@@ -253,10 +242,7 @@ function inferFrequencia(datasOrdenadas: string[]): FrequenciaRecorrencia {
 }
 
 /** Adiciona o intervalo da frequência a uma data ISO. */
-export function proximaDataApartirDe(
-  iso: string,
-  freq: FrequenciaRecorrencia,
-): string {
+export function proximaDataApartirDe(iso: string, freq: FrequenciaRecorrencia): string {
   const d = parseDateLocal(iso) ?? new Date();
   switch (freq) {
     case "semanal":
@@ -393,8 +379,7 @@ function textoSugereRecorrencia(
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
-  if (catNorm && RECURRENCE_CATEGORY_KEYS.some((k) => catNorm.includes(k)))
-    return true;
+  if (catNorm && RECURRENCE_CATEGORY_KEYS.some((k) => catNorm.includes(k))) return true;
   return false;
 }
 
@@ -465,7 +450,8 @@ export function detectarRecorrencias(
         nome,
         valor: g.valor,
         ultimoValor: undefined,
-        categoriaId: categoriaSugeridaParaRecorrencia(tipoRecorrencia, nome, g.categoriaId) ?? undefined,
+        categoriaId:
+          categoriaSugeridaParaRecorrencia(tipoRecorrencia, nome, g.categoriaId) ?? undefined,
         formaPagamento: g.formaPagamento,
         cartaoId: g.cartaoId,
         frequencia: "mensal",
@@ -519,7 +505,9 @@ export function detectarRecorrencias(
           detectionKey,
           nome,
           valor: ultimo.valor,
-          categoriaId: categoriaSugeridaParaRecorrencia(tipoRecorrencia, nome, ultimo.categoriaId) ?? undefined,
+          categoriaId:
+            categoriaSugeridaParaRecorrencia(tipoRecorrencia, nome, ultimo.categoriaId) ??
+            undefined,
           formaPagamento: ultimo.formaPagamento,
           cartaoId: ultimo.cartaoId,
           frequencia: "mensal",
@@ -559,7 +547,8 @@ export function detectarRecorrencias(
         nome,
         valor: ultimo.valor,
         ultimoValor: penultimo.valor,
-        categoriaId: categoriaSugeridaParaRecorrencia(tipoRecorrencia, nome, ultimo.categoriaId) ?? undefined,
+        categoriaId:
+          categoriaSugeridaParaRecorrencia(tipoRecorrencia, nome, ultimo.categoriaId) ?? undefined,
         formaPagamento: ultimo.formaPagamento,
         cartaoId: ultimo.cartaoId,
         frequencia: freq,
@@ -661,14 +650,11 @@ export async function atualizarRecorrencia(
   if (patch.categoriaId !== undefined)
     update.categoria_id = await categoriaDbId(hydratedUserId, patch.categoriaId);
   if (patch.frequencia !== undefined) update.frequencia = patch.frequencia;
-  if (patch.proximaCobranca !== undefined)
-    update.proxima_cobranca = patch.proximaCobranca;
-  if (patch.formaPagamento !== undefined)
-    update.forma_pagamento = patch.formaPagamento;
+  if (patch.proximaCobranca !== undefined) update.proxima_cobranca = patch.proximaCobranca;
+  if (patch.formaPagamento !== undefined) update.forma_pagamento = patch.formaPagamento;
   if (patch.cartaoId !== undefined) update.cartao_id = patch.cartaoId;
   if (patch.status !== undefined) update.status = patch.status;
-  if (patch.tipoRecorrencia !== undefined)
-    update.tipo_recorrencia = patch.tipoRecorrencia;
+  if (patch.tipoRecorrencia !== undefined) update.tipo_recorrencia = patch.tipoRecorrencia;
   if (patch.observacao !== undefined) update.observacao = patch.observacao;
   if (patch.ultimoValor !== undefined) update.ultimo_valor = patch.ultimoValor;
   if (patch.moeda !== undefined) update.moeda = patch.moeda;
@@ -733,7 +719,14 @@ export async function sincronizarDeteccoes(
   userId: string,
   gastos: Gasto[],
   opts?: { categoriaNomePorId?: (id: string | null | undefined) => string | null },
-): Promise<{ criadas: number; suspeitas: number; analisados: number; encontradas: number; assinaturas: number; fixas: number }> {
+): Promise<{
+  criadas: number;
+  suspeitas: number;
+  analisados: number;
+  encontradas: number;
+  assinaturas: number;
+  fixas: number;
+}> {
   await hydrateRecorrencias(userId);
   await syncCategoriaMaps(userId);
   // Busca TODAS as detection_keys (incluindo soft-deleted) para evitar recriar

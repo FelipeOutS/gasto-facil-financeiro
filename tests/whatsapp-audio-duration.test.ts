@@ -35,7 +35,10 @@ function buildOggOpus(durationSeconds: number): Buffer {
   function page(g: number, payload: Buffer, hdr: number, seq: number): Buffer {
     const segTable: number[] = [];
     let r = payload.length;
-    while (r >= 255) { segTable.push(255); r -= 255; }
+    while (r >= 255) {
+      segTable.push(255);
+      r -= 255;
+    }
     segTable.push(r);
     return Buffer.concat([
       Buffer.from("OggS", "ascii"),
@@ -49,10 +52,7 @@ function buildOggOpus(durationSeconds: number): Buffer {
       payload,
     ]);
   }
-  return Buffer.concat([
-    page(0, opusHead, 0x02, 0),
-    page(granule, Buffer.from([0xfc]), 0x04, 1),
-  ]);
+  return Buffer.concat([page(0, opusHead, 0x02, 0), page(granule, Buffer.from([0xfc]), 0x04, 1)]);
 }
 
 function buildWav(durationSeconds: number): Buffer {
@@ -96,10 +96,7 @@ function buildOggOpusNoGranule(): Buffer {
       payload,
     ]);
   }
-  return Buffer.concat([
-    pageZero(opusHead, 0x02, 0),
-    pageZero(Buffer.from([0xfc]), 0x04, 1),
-  ]);
+  return Buffer.concat([pageZero(opusHead, 0x02, 0), pageZero(Buffer.from([0xfc]), 0x04, 1)]);
 }
 
 // ============================================================
@@ -246,8 +243,7 @@ mock.module("@/server/whatsapp.server", () => ({
 mock.module("@/server/whatsapp-authz.server", () => ({
   canUseWhatsAppForSender: async () => fakeState.elig,
   shouldSendBlockedReply: async () => true,
-  WHATSAPP_BLOCKED_REPLY:
-    "Olá! No momento, este número não está vinculado a uma conta ativa.",
+  WHATSAPP_BLOCKED_REPLY: "Olá! No momento, este número não está vinculado a uma conta ativa.",
 }));
 
 mock.module("@/server/whatsapp-c11-gates.server", () => ({
@@ -277,7 +273,8 @@ mock.module("@/integrations/supabase/client.server", () => ({
 mock.module("@/server/whatsapp-transcription.server", () => ({
   runTranscriber: async (buffer: Uint8Array, mimeType: string) => {
     fakeState.calls.transcribe += 1;
-    void buffer; void mimeType;
+    void buffer;
+    void mimeType;
     return { ok: true, text: "ok", language: "pt" };
   },
   __setTranscriberForTests: () => {},
@@ -348,34 +345,42 @@ afterEach(() => {
 
 const { Route } = await import("../src/routes/api/public.whatsapp.expense");
 type HttpHandler = (ctx: { request: Request }) => Promise<Response>;
-const POST = (Route as unknown as {
-  options: { server: { handlers: Record<string, HttpHandler> } };
-}).options.server.handlers.POST;
+const POST = (
+  Route as unknown as {
+    options: { server: { handlers: Record<string, HttpHandler> } };
+  }
+).options.server.handlers.POST;
 
 const PHONE = "5511988887777";
 function metaAudioPayload(opts: { id?: string; mediaId?: string; mime?: string } = {}) {
   return {
     object: "whatsapp_business_account",
-    entry: [{
-      id: "entry-1",
-      changes: [{
-        field: "messages",
-        value: {
-          messages: [{
-            id: opts.id ?? "wamid.dur-1",
-            from: PHONE,
-            timestamp: String(Math.floor(Date.now() / 1000)),
-            type: "audio",
-            audio: {
-              id: opts.mediaId ?? "media-dur-1",
-              mime_type: opts.mime ?? "audio/ogg; codecs=opus",
-              sha256: "fakehash",
-              voice: true,
+    entry: [
+      {
+        id: "entry-1",
+        changes: [
+          {
+            field: "messages",
+            value: {
+              messages: [
+                {
+                  id: opts.id ?? "wamid.dur-1",
+                  from: PHONE,
+                  timestamp: String(Math.floor(Date.now() / 1000)),
+                  type: "audio",
+                  audio: {
+                    id: opts.mediaId ?? "media-dur-1",
+                    mime_type: opts.mime ?? "audio/ogg; codecs=opus",
+                    sha256: "fakehash",
+                    voice: true,
+                  },
+                },
+              ],
             },
-          }],
-        },
-      }],
-    }],
+          },
+        ],
+      },
+    ],
   };
 }
 

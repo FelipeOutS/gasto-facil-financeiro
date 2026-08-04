@@ -5,7 +5,9 @@ import { cn } from "@/lib/utils";
 import { getCategoryArt } from "@/components/CategoryArt";
 import { getCategoryVisual, resolveCategoryKey } from "@/lib/category-visual";
 
-export function categoryColor(cat?: Pick<Categoria, "colorVar" | "colorHex" | "nome" | "id">): string {
+export function categoryColor(
+  cat?: Pick<Categoria, "colorVar" | "colorHex" | "nome" | "id">,
+): string {
   if (!cat) return "var(--cat-outros)";
   if (cat.colorHex) return cat.colorHex;
   if (cat.colorVar) return `var(${cat.colorVar})`;
@@ -40,8 +42,7 @@ export function CategoryIcon({
 }) {
   const Icon = (categoria && ICON_MAP[categoria.iconName]) || MoreHorizontal;
   const color = categoryColor(categoria);
-  const dim =
-    size === "sm" ? "h-8 w-8" : size === "lg" ? "h-12 w-12" : "h-10 w-10";
+  const dim = size === "sm" ? "h-8 w-8" : size === "lg" ? "h-12 w-12" : "h-10 w-10";
   const iconDim = size === "sm" ? "h-4 w-4" : size === "lg" ? "h-6 w-6" : "h-5 w-5";
   const artDim = size === "sm" ? "h-6 w-6" : size === "lg" ? "h-9 w-9" : "h-7 w-7";
 

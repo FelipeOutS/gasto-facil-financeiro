@@ -41,10 +41,7 @@ function EditarMovimentacaoPage() {
     let cancel = false;
     (async () => {
       try {
-        const [as, ms] = await Promise.all([
-          listarAtivos(user.id),
-          listarMovimentacoes(user.id),
-        ]);
+        const [as, ms] = await Promise.all([listarAtivos(user.id), listarMovimentacoes(user.id)]);
         if (cancel) return;
         setAtivos(as);
         setMov(ms.find((m) => m.id === movId) ?? null);
@@ -55,10 +52,12 @@ function EditarMovimentacaoPage() {
         if (!cancel) setLoading(false);
       }
     })();
-    return () => { cancel = true; };
+    return () => {
+      cancel = true;
+    };
   }, [user?.id, movId]);
 
-  const ativo = mov ? ativos.find((a) => a.id === mov.ativo_id) ?? null : null;
+  const ativo = mov ? (ativos.find((a) => a.id === mov.ativo_id) ?? null) : null;
 
   return (
     <MobileShell wide>

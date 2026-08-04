@@ -40,7 +40,9 @@ import {
 export const Route = createFileRoute("/login")({
   head: () => {
     const t = i18n.getFixedT(null, "auth");
-    return { meta: [{ title: t("metaTitleLogin") }, { name: "robots", content: "noindex,follow" }] };
+    return {
+      meta: [{ title: t("metaTitleLogin") }, { name: "robots", content: "noindex,follow" }],
+    };
   },
   component: LoginPage,
 });

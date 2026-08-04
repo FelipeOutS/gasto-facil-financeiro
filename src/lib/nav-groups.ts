@@ -51,10 +51,26 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/gastos", labelKey: "gastos", descKey: "gastos", icon: List },
       { to: "/renda", labelKey: "renda", descKey: "renda", icon: ArrowUp },
-      { to: "/contas-a-pagar", labelKey: "contasPagar", descKey: "contasPagar", icon: CalendarClock },
-      { to: "/contas-a-receber", labelKey: "contasReceber", descKey: "contasReceber", icon: HandCoins },
+      {
+        to: "/contas-a-pagar",
+        labelKey: "contasPagar",
+        descKey: "contasPagar",
+        icon: CalendarClock,
+      },
+      {
+        to: "/contas-a-receber",
+        labelKey: "contasReceber",
+        descKey: "contasReceber",
+        icon: HandCoins,
+      },
       { to: "/assinaturas", labelKey: "assinaturas", descKey: "assinaturas", icon: Repeat },
-      { to: "/orcamento", labelKey: "orcamento", descKey: "orcamento", icon: PieChart, feature: "orcamento_basico" },
+      {
+        to: "/orcamento",
+        labelKey: "orcamento",
+        descKey: "orcamento",
+        icon: PieChart,
+        feature: "orcamento_basico",
+      },
       { to: "/mercado", labelKey: "mercado", descKey: "mercado", icon: ShoppingCart },
     ],
   },
@@ -62,8 +78,20 @@ export const NAV_GROUPS: NavGroup[] = [
     id: "planejamento",
     labelKey: "groups.planejamento",
     items: [
-      { to: "/cartoes", labelKey: "cartoes", descKey: "cartoes", icon: CreditCard, feature: "cartoes_basico" },
-      { to: "/investimentos", labelKey: "investimentos", descKey: "investimentos", icon: TrendingUp, feature: "investimentos" },
+      {
+        to: "/cartoes",
+        labelKey: "cartoes",
+        descKey: "cartoes",
+        icon: CreditCard,
+        feature: "cartoes_basico",
+      },
+      {
+        to: "/investimentos",
+        labelKey: "investimentos",
+        descKey: "investimentos",
+        icon: TrendingUp,
+        feature: "investimentos",
+      },
       { to: "/metas", labelKey: "metas", descKey: "metas", icon: Target },
       { to: "/guardado", labelKey: "guardado", descKey: "guardado", icon: Wallet },
     ],
@@ -72,35 +100,89 @@ export const NAV_GROUPS: NavGroup[] = [
     id: "empresa",
     labelKey: "groups.empresa",
     items: [
-      { to: "/empresa", labelKey: "empresa", descKey: "empresa", icon: Building2, feature: "empresa_inteligente" },
-      { to: "/fornecedores", labelKey: "fornecedores", descKey: "fornecedores", icon: Store, feature: "empresa_inteligente" },
-      { to: "/clientes", labelKey: "clientes", descKey: "clientes", icon: Contact, feature: "empresa_inteligente" },
-      { to: "/contador", labelKey: "contador", descKey: "contador", icon: ClipboardList, feature: "empresa_inteligente" },
+      {
+        to: "/empresa",
+        labelKey: "empresa",
+        descKey: "empresa",
+        icon: Building2,
+        feature: "empresa_inteligente",
+      },
+      {
+        to: "/fornecedores",
+        labelKey: "fornecedores",
+        descKey: "fornecedores",
+        icon: Store,
+        feature: "empresa_inteligente",
+      },
+      {
+        to: "/clientes",
+        labelKey: "clientes",
+        descKey: "clientes",
+        icon: Contact,
+        feature: "empresa_inteligente",
+      },
+      {
+        to: "/contador",
+        labelKey: "contador",
+        descKey: "contador",
+        icon: ClipboardList,
+        feature: "empresa_inteligente",
+      },
     ],
   },
   {
     id: "insights",
     labelKey: "groups.insights",
     items: [
-      { to: "/relatorios", labelKey: "relatorios", descKey: "relatorios", icon: BarChart3, feature: "relatorios_avancados" },
+      {
+        to: "/relatorios",
+        labelKey: "relatorios",
+        descKey: "relatorios",
+        icon: BarChart3,
+        feature: "relatorios_avancados",
+      },
       { to: "/alertas", labelKey: "alertas", descKey: "alertas", icon: Bell },
       { to: "/radar", labelKey: "radar", descKey: "radar", icon: Globe },
-      { to: "/gasto-ai", labelKey: "gastoAi", descKey: "gastoAi", icon: Sparkles, feature: "gasto_ai" },
+      {
+        to: "/gasto-ai",
+        labelKey: "gastoAi",
+        descKey: "gastoAi",
+        icon: Sparkles,
+        feature: "gasto_ai",
+      },
     ],
   },
   {
     id: "conexoes",
     labelKey: "groups.conexoes",
     items: [
-      { to: "/whatsapp", labelKey: "whatsapp", descKey: "whatsapp", icon: Bell, feature: "whatsapp" },
-      { to: "/contas-conectadas", labelKey: "contasConectadas", descKey: "contasConectadas", icon: Users, feature: "contas_conectadas" },
+      {
+        to: "/whatsapp",
+        labelKey: "whatsapp",
+        descKey: "whatsapp",
+        icon: Bell,
+        feature: "whatsapp",
+      },
+      {
+        to: "/contas-conectadas",
+        labelKey: "contasConectadas",
+        descKey: "contasConectadas",
+        icon: Users,
+        feature: "contas_conectadas",
+      },
     ],
   },
   {
     id: "conta",
     labelKey: "groups.conta",
     items: [
-      { to: "/app/cofre-pessoal", labelKey: "cofrePessoal", descKey: "cofrePessoal", icon: LockKeyhole, feature: "cofre_pessoal" },
+      {
+        to: "/app/cofre-pessoal",
+        labelKey: "cofrePessoal",
+        descKey: "cofrePessoal",
+        icon: LockKeyhole,
+        feature: "cofre_pessoal",
+      },
       { to: "/meu-plano", labelKey: "meuPlano", descKey: "meuPlano", icon: Crown },
       { to: "/categorias", labelKey: "categorias", descKey: "categorias", icon: Settings2 },
     ],
@@ -155,9 +237,7 @@ export function getLockedNavItems(
     .flatMap((g) =>
       g.items.filter(
         (it) =>
-          !!it.feature &&
-          !UPGRADE_CARD_FEATURE_BLOCKLIST.includes(it.feature) &&
-          !can(it.feature),
+          !!it.feature && !UPGRADE_CARD_FEATURE_BLOCKLIST.includes(it.feature) && !can(it.feature),
       ),
     );
 }

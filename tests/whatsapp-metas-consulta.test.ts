@@ -7,9 +7,8 @@
 import { test, expect, describe, beforeEach } from "bun:test";
 import { state } from "./_whatsapp-fake";
 
-const { detectConsultaIntent, handleConsulta } = await import(
-  "../src/server/whatsapp-consultas.server"
-);
+const { detectConsultaIntent, handleConsulta } =
+  await import("../src/server/whatsapp-consultas.server");
 
 const USER = "u1";
 
@@ -152,9 +151,30 @@ describe("WA-Q-Metas — handler é 100% read-only", () => {
 
   test("ordena por prazo ASC (mais próximo primeiro); metas sem prazo vão para o fim", async () => {
     state.metasData = [
-      { id: "a", user_id: USER, nome: "Longe", valor_objetivo: 100, valor_atual: 1, prazo: "2027-06-01" },
-      { id: "b", user_id: USER, nome: "Perto", valor_objetivo: 100, valor_atual: 1, prazo: "2026-07-10" },
-      { id: "c", user_id: USER, nome: "SemPrazo", valor_objetivo: 100, valor_atual: 1, prazo: null },
+      {
+        id: "a",
+        user_id: USER,
+        nome: "Longe",
+        valor_objetivo: 100,
+        valor_atual: 1,
+        prazo: "2027-06-01",
+      },
+      {
+        id: "b",
+        user_id: USER,
+        nome: "Perto",
+        valor_objetivo: 100,
+        valor_atual: 1,
+        prazo: "2026-07-10",
+      },
+      {
+        id: "c",
+        user_id: USER,
+        nome: "SemPrazo",
+        valor_objetivo: 100,
+        valor_atual: 1,
+        prazo: null,
+      },
     ];
     const out = await handleConsulta(USER, "listar_metas");
     const iPerto = out.resposta.indexOf("Perto");
@@ -183,7 +203,14 @@ describe("WA-Q-Metas — handler é 100% read-only", () => {
 
   test("nenhuma escrita em gastos, receitas, recorrências, contas, metas ou movimentacoes_meta", async () => {
     state.metasData = [
-      { id: "m1", user_id: USER, nome: "Reserva", valor_objetivo: 500, valor_atual: 100, prazo: null },
+      {
+        id: "m1",
+        user_id: USER,
+        nome: "Reserva",
+        valor_objetivo: 500,
+        valor_atual: 100,
+        prazo: null,
+      },
     ];
     await handleConsulta(USER, "listar_metas");
     const escritas = state.inserts.filter((i) =>
@@ -196,7 +223,7 @@ describe("WA-Q-Metas — handler é 100% read-only", () => {
         "transferencias_internas",
         "metas_financeiras",
         "movimentacoes_meta",
-      ].includes(i.table)
+      ].includes(i.table),
     );
     expect(escritas.length).toBe(0);
   });

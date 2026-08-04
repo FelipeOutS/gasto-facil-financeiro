@@ -35,8 +35,7 @@ const MAX_INFLATED_PER_STREAM = 2 * 1024 * 1024;
 const MAX_INFLATED_TOTAL = 6 * 1024 * 1024;
 
 const RE_BOLETO_DIGITS = /[0-9](?:[ .]?[0-9]){43,60}/g;
-const RE_FLATE_OBJ =
-  /<<([^>]{0,2048}?)\/Filter\s*\/FlateDecode([^>]{0,2048}?)>>\s*stream\r?\n/g;
+const RE_FLATE_OBJ = /<<([^>]{0,2048}?)\/Filter\s*\/FlateDecode([^>]{0,2048}?)>>\s*stream\r?\n/g;
 
 function bytesToLatin1(bytes: Uint8Array): string {
   let s = "";
@@ -68,7 +67,10 @@ async function inflateOnce(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const DS: any = (globalThis as any).DecompressionStream;
   if (typeof DS !== "function") return null;
-  let reader: { read: () => Promise<{ value?: Uint8Array; done: boolean }>; cancel: () => Promise<unknown> } | null = null;
+  let reader: {
+    read: () => Promise<{ value?: Uint8Array; done: boolean }>;
+    cancel: () => Promise<unknown>;
+  } | null = null;
   try {
     const ds = new DS(format);
     const writer = ds.writable.getWriter();
@@ -85,7 +87,11 @@ async function inflateOnce(
       if (value) {
         total += value.byteLength;
         if (total > capBytes) {
-          try { await reader!.cancel(); } catch { /* noop */ }
+          try {
+            await reader!.cancel();
+          } catch {
+            /* noop */
+          }
           await writePromise;
           await closePromise;
           return null;
@@ -97,20 +103,24 @@ async function inflateOnce(
     await closePromise;
     const out = new Uint8Array(total);
     let off = 0;
-    for (const c of chunks) { out.set(c, off); off += c.byteLength; }
+    for (const c of chunks) {
+      out.set(c, off);
+      off += c.byteLength;
+    }
     return out;
   } catch {
     if (reader) {
-      try { await reader.cancel(); } catch { /* noop */ }
+      try {
+        await reader.cancel();
+      } catch {
+        /* noop */
+      }
     }
     return null;
   }
 }
 
-async function inflateFlateStream(
-  bytes: Uint8Array,
-  capBytes: number,
-): Promise<Uint8Array | null> {
+async function inflateFlateStream(bytes: Uint8Array, capBytes: number): Promise<Uint8Array | null> {
   // PDF FlateDecode geralmente é zlib (cabeçalho 78 9C / 78 DA). Algumas
   // ferramentas emitem deflate puro. Tenta zlib primeiro, depois raw.
   const a = await inflateOnce(bytes, "deflate", capBytes);
@@ -174,9 +184,7 @@ export function extractBoletoCandidatesFromPdf(buf: Uint8Array): string[] {
  * em claro quanto de streams FlateDecode. Usa `DecompressionStream` nativo
  * do runtime. Falha silenciosa preserva o caller (handler cai em OCR).
  */
-export async function extractBoletoCandidatesFromPdfAsync(
-  buf: Uint8Array,
-): Promise<string[]> {
+export async function extractBoletoCandidatesFromPdfAsync(buf: Uint8Array): Promise<string[]> {
   if (!buf || buf.byteLength === 0) return [];
   const out: string[] = [];
   const seen = new Set<string>();

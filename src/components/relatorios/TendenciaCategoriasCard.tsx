@@ -1,10 +1,5 @@
 import { TrendingUp, TrendingDown, Minus, Sparkles } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  ResponsiveContainer,
-  Tooltip as RTooltip,
-} from "recharts";
+import { LineChart, Line, ResponsiveContainer, Tooltip as RTooltip } from "recharts";
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -82,9 +77,7 @@ export function TendenciaCategoriasCard({ categorias, labels }: Props) {
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold">{labels.title}</h3>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
-            {labels.description}
-          </p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">{labels.description}</p>
         </div>
       </header>
 
@@ -97,10 +90,7 @@ export function TendenciaCategoriasCard({ categorias, labels }: Props) {
               ? ""
               : `${c.variacaoPct > 0 ? "+" : ""}${Math.round(c.variacaoPct)}%`;
           return (
-            <li
-              key={c.catId}
-              className="rounded-xl bg-card-elevated p-3"
-            >
+            <li key={c.catId} className="rounded-xl bg-card-elevated p-3">
               <div className="flex items-center gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{c.nome}</p>
@@ -157,11 +147,7 @@ export function TendenciaCategoriasCard({ categorias, labels }: Props) {
                       {sinal}
                       {formatBRL(Math.abs(c.diferenca))}
                     </p>
-                    {pctTxt && (
-                      <p className="text-[10px] text-muted-foreground">
-                        {pctTxt}
-                      </p>
-                    )}
+                    {pctTxt && <p className="text-[10px] text-muted-foreground">{pctTxt}</p>}
                   </div>
                 )}
               </div>

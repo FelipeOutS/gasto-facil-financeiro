@@ -179,9 +179,11 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
               error_message: verification.reason ?? "invalid_signature",
               processing_time_ms: Date.now() - startedAt,
             });
-          return json({ error: verification.reason ?? "invalid_signature" }, verification.httpStatus);
+          return json(
+            { error: verification.reason ?? "invalid_signature" },
+            verification.httpStatus,
+          );
         }
-
 
         // Resolve paymentId (pode vir direto ou via merchant_order)
         let paymentId: string | null = null;
@@ -195,13 +197,24 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           paymentId = dataId;
         }
         if (!paymentId) {
-          if (logId) await updateWebhookLog(logId, { status: "ignored", http_status: 200, processing_time_ms: Date.now() - startedAt });
+          if (logId)
+            await updateWebhookLog(logId, {
+              status: "ignored",
+              http_status: 200,
+              processing_time_ms: Date.now() - startedAt,
+            });
           return json({ ok: true, ignored: true });
         }
 
         const payment = await fetchPayment(accessToken, paymentId);
         if (!payment) {
-          if (logId) await updateWebhookLog(logId, { status: "failed", http_status: 502, error_message: "mp_fetch_failed", processing_time_ms: Date.now() - startedAt });
+          if (logId)
+            await updateWebhookLog(logId, {
+              status: "failed",
+              http_status: 502,
+              error_message: "mp_fetch_failed",
+              processing_time_ms: Date.now() - startedAt,
+            });
           return json({ error: "mp_fetch_failed" }, 502);
         }
 

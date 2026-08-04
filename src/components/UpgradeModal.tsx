@@ -40,9 +40,7 @@ export function UpgradeModal({ open, onOpenChange, feature, featureLabel, benefi
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
             {t("premium.unlockFromPlan")}
           </p>
-          <p className="mt-1 text-2xl font-bold text-primary">
-            {PLAN_LABEL[min]}
-          </p>
+          <p className="mt-1 text-2xl font-bold text-primary">{PLAN_LABEL[min]}</p>
         </div>
 
         <DialogFooter className="flex-col gap-2 sm:flex-col">

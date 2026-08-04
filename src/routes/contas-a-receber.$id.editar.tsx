@@ -86,9 +86,7 @@ function EditarContaReceberPage() {
           </div>
         ) : !conta ? (
           <div className="py-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              Conta a receber não encontrada.
-            </p>
+            <p className="text-sm text-muted-foreground">Conta a receber não encontrada.</p>
             <Button className="mt-4" onClick={() => navigate({ to: "/contas-a-receber" })}>
               {t("header.back")}
             </Button>

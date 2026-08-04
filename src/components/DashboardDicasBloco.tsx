@@ -152,23 +152,19 @@ export function DashboardDicasBloco({ className }: { className?: string }) {
       padding="default"
       className={cn("animate-rise flex flex-col", className)}
     >
-
       <div className="flex items-start gap-3">
         <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
           <Sparkles className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-sm font-semibold leading-tight">
-              {t("tipsBlock.title")}
-            </h3>
+            <h3 className="text-sm font-semibold leading-tight">{t("tipsBlock.title")}</h3>
             <span className="text-[11px] text-muted-foreground">
-              {insights.length} {insights.length === 1 ? t("tipsBlock.tipSing") : t("tipsBlock.tipPlur")}
+              {insights.length}{" "}
+              {insights.length === 1 ? t("tipsBlock.tipSing") : t("tipsBlock.tipPlur")}
             </span>
           </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {t("tipsBlock.subtitle")}
-          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{t("tipsBlock.subtitle")}</p>
         </div>
       </div>
 
@@ -176,26 +172,19 @@ export function DashboardDicasBloco({ className }: { className?: string }) {
         {visiveis.map((insight) => {
           const Icon = iconForInsight(insight.type);
           return (
-            <div
-              key={insight.id}
-              className="rounded-xl border border-border/60 bg-card/60 p-3"
-            >
+            <div key={insight.id} className="rounded-xl border border-border/60 bg-card/60 p-3">
               <div className="flex items-start gap-3">
                 <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-muted/40 text-foreground">
                   <Icon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <h4 className="text-sm font-semibold leading-snug">
-                      {insight.title}
-                    </h4>
+                    <h4 className="text-sm font-semibold leading-snug">{insight.title}</h4>
                     <StatusBadge tone={badgeToneForPriority(insight.priority)} className="shrink-0">
                       {t(`tipsBlock.priority.${insight.priority}`)}
                     </StatusBadge>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {insight.description}
-                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">{insight.description}</p>
                   {insight.actionHref && insight.actionLabel && (
                     <div className="mt-2">
                       <Button
@@ -226,12 +215,12 @@ export function DashboardDicasBloco({ className }: { className?: string }) {
         >
           {expanded
             ? t("tipsBlock.showLess")
-            : t("tipsBlock.showMore", { count: restantes.length, unit: restantes.length === 1 ? t("tipsBlock.tipSing") : t("tipsBlock.tipPlur") })}
+            : t("tipsBlock.showMore", {
+                count: restantes.length,
+                unit: restantes.length === 1 ? t("tipsBlock.tipSing") : t("tipsBlock.tipPlur"),
+              })}
           <ChevronDown
-            className={cn(
-              "h-3.5 w-3.5 transition-transform",
-              expanded && "rotate-180",
-            )}
+            className={cn("h-3.5 w-3.5 transition-transform", expanded && "rotate-180")}
           />
         </button>
       )}

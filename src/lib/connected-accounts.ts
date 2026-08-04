@@ -27,8 +27,7 @@ export const ACCESS_LEVEL_INFO: Record<AccessLevel, { title: string; description
   },
   view_create: {
     title: "Visualizar e lançar",
-    description:
-      "Permite visualizar e também adicionar novos registros financeiros.",
+    description: "Permite visualizar e também adicionar novos registros financeiros.",
   },
   admin: {
     title: "Administrador da conta",
@@ -85,10 +84,16 @@ export async function listIncomingConnections(ownerUserId: string, _ownerEmail: 
 
   const seen = new Set<string>();
   const rows: ConnectedAccount[] = [];
-  for (const r of [...((owned.data ?? []) as ConnectedAccount[]), ...((invites.data ?? []) as Omit<ConnectedAccount, "invite_token">[])]) {
+  for (const r of [
+    ...((owned.data ?? []) as ConnectedAccount[]),
+    ...((invites.data ?? []) as Omit<ConnectedAccount, "invite_token">[]),
+  ]) {
     if (seen.has(r.id)) continue;
     seen.add(r.id);
-    rows.push({ ...(r as ConnectedAccount), invite_token: (r as ConnectedAccount).invite_token ?? "" });
+    rows.push({
+      ...(r as ConnectedAccount),
+      invite_token: (r as ConnectedAccount).invite_token ?? "",
+    });
   }
   return rows;
 }
@@ -120,8 +125,14 @@ export async function createInvite(params: {
   return data as ConnectedAccount;
 }
 
-export async function updateAccessLevel(id: string, accessLevel: AccessLevel, nickname?: string | null) {
-  const patch: { access_level: AccessLevel; nickname?: string | null } = { access_level: accessLevel };
+export async function updateAccessLevel(
+  id: string,
+  accessLevel: AccessLevel,
+  nickname?: string | null,
+) {
+  const patch: { access_level: AccessLevel; nickname?: string | null } = {
+    access_level: accessLevel,
+  };
   if (typeof nickname !== "undefined") patch.nickname = nickname?.trim() || null;
   const { error } = await supabase.from("connected_accounts").update(patch).eq("id", id);
   if (error) throw error;
@@ -130,7 +141,11 @@ export async function updateAccessLevel(id: string, accessLevel: AccessLevel, ni
 export async function removeConnection(id: string, byUserId: string) {
   const { error } = await supabase
     .from("connected_accounts")
-    .update({ status: "removed", removed_at: new Date().toISOString(), removed_by_user_id: byUserId })
+    .update({
+      status: "removed",
+      removed_at: new Date().toISOString(),
+      removed_by_user_id: byUserId,
+    })
     .eq("id", id);
   if (error) throw error;
 }

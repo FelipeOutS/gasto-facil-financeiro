@@ -5,12 +5,8 @@
 import { test, expect, beforeEach } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
 
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
-const { detectConsultaIntent } = await import(
-  "../src/server/whatsapp-consultas.server"
-);
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
+const { detectConsultaIntent } = await import("../src/server/whatsapp-consultas.server");
 
 const tel = "5511999998888";
 
@@ -91,12 +87,16 @@ test("resumo da semana com receitas e despesas + maior grupo", async () => {
   resetState({
     gastos: [
       { descricao: "Mercado X", valor: 100, data: daysAgoISO(2), categoria_id: "cat-mer" },
-      { descricao: "Uber",      valor: 30,  data: daysAgoISO(1), categoria_id: "cat-trans" },
-      { descricao: "Mercado Y", valor: 70,  data: daysAgoISO(3), categoria_id: "cat-mer" },
+      { descricao: "Uber", valor: 30, data: daysAgoISO(1), categoria_id: "cat-trans" },
+      { descricao: "Mercado Y", valor: 70, data: daysAgoISO(3), categoria_id: "cat-mer" },
     ],
     receitas: [{ valor: 500, data: daysAgoISO(2) }],
   });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "resumo da semana", external_id: "rs-1" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "resumo da semana",
+    external_id: "rs-1",
+  });
   expect(r.status).toBe("consulta");
   expect(r.resposta).toContain("Resumo dos últimos 7 dias");
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 500,00");
@@ -111,7 +111,11 @@ test("resumo da semana sem receitas mostra R$ 0,00", async () => {
     gastos: [{ descricao: "Padaria", valor: 12, data: daysAgoISO(1), categoria_id: "cat-out" }],
     receitas: [],
   });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "como foi minha semana", external_id: "rs-2" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "como foi minha semana",
+    external_id: "rs-2",
+  });
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("Receitas: R$ 0,00");
 });
 
@@ -121,7 +125,11 @@ test("resumo do mês com percentual válido", async () => {
     gastos: [{ descricao: "Mercado", valor: 250, data: monthStart(), categoria_id: "cat-mer" }],
     receitas: [{ valor: 1000, data: monthStart() }],
   });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "resumo do mês", external_id: "rm-1" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "resumo do mês",
+    external_id: "rm-1",
+  });
   expect(r.resposta).toContain("Resumo de");
   expect(r.resposta).toContain("25% das suas receitas");
 });
@@ -132,7 +140,11 @@ test("resumo do mês sem receitas substitui linha de percentual", async () => {
     gastos: [{ descricao: "Mercado", valor: 250, data: monthStart(), categoria_id: "cat-mer" }],
     receitas: [],
   });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "como foi meu mês", external_id: "rm-2" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "como foi meu mês",
+    external_id: "rm-2",
+  });
   expect(r.resposta).toContain("Ainda não há receitas registradas suficientes");
   expect(r.resposta).not.toContain("%");
 });
@@ -141,13 +153,17 @@ test("resumo do mês sem receitas substitui linha de percentual", async () => {
 test("maiores gastos com 3 itens lista descrição real e total", async () => {
   resetState({
     gastos: [
-      { descricao: "Mercado",    valor: 200, data: daysAgoISO(1), categoria_id: "cat-mer" },
-      { descricao: "Uber",       valor: 60,  data: daysAgoISO(2), categoria_id: "cat-trans" },
-      { descricao: "Restaurante",valor: 120, data: daysAgoISO(3), categoria_id: "cat-rest" },
-      { descricao: "Café",       valor: 10,  data: daysAgoISO(4), categoria_id: "cat-rest" },
+      { descricao: "Mercado", valor: 200, data: daysAgoISO(1), categoria_id: "cat-mer" },
+      { descricao: "Uber", valor: 60, data: daysAgoISO(2), categoria_id: "cat-trans" },
+      { descricao: "Restaurante", valor: 120, data: daysAgoISO(3), categoria_id: "cat-rest" },
+      { descricao: "Café", valor: 10, data: daysAgoISO(4), categoria_id: "cat-rest" },
     ],
   });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "meus maiores gastos", external_id: "mg-1" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "meus maiores gastos",
+    external_id: "mg-1",
+  });
   expect(r.resposta).toContain("1. Mercado");
   expect(r.resposta).toContain("2. Restaurante");
   expect(r.resposta).toContain("3. Uber");
@@ -160,7 +176,11 @@ test("maiores gastos com menos de 3 itens mostra apenas os existentes", async ()
   resetState({
     gastos: [{ descricao: "Mercado", valor: 50, data: daysAgoISO(1), categoria_id: "cat-mer" }],
   });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "maiores gastos", external_id: "mg-2" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "maiores gastos",
+    external_id: "mg-2",
+  });
   expect(r.resposta).toContain("1. Mercado");
   expect(r.resposta).not.toContain("2.");
 });
@@ -168,7 +188,11 @@ test("maiores gastos com menos de 3 itens mostra apenas os existentes", async ()
 // ---------------------------------------------------------------------
 test("maiores gastos sem registros responde mensagem dedicada", async () => {
   resetState({ gastos: [] });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "maiores gastos", external_id: "mg-3" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "maiores gastos",
+    external_id: "mg-3",
+  });
   expect(r.resposta).toContain("Ainda não encontrei gastos registrados nos últimos 7 dias");
 });
 
@@ -178,7 +202,11 @@ test("impacto despesas/renda com percentual", async () => {
     gastos: [{ descricao: "X", valor: 200, data: monthStart(), categoria_id: "cat-mer" }],
     receitas: [{ valor: 1000, data: monthStart() }],
   });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "quanto meus gastos afetam minha renda", external_id: "im-1" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "quanto meus gastos afetam minha renda",
+    external_id: "im-1",
+  });
   expect(r.resposta).toContain("20% da sua renda");
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 800,00"); // saldo
 });
@@ -189,7 +217,11 @@ test("impacto sem receitas pede cadastro de entradas", async () => {
     gastos: [{ descricao: "X", valor: 200, data: monthStart(), categoria_id: "cat-mer" }],
     receitas: [],
   });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "qual porcentagem da minha renda eu gastei", external_id: "im-2" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "qual porcentagem da minha renda eu gastei",
+    external_id: "im-2",
+  });
   expect(r.resposta).toContain("Ainda não há receitas registradas neste mês");
   expect(r.resposta).not.toContain("%");
 });
@@ -205,7 +237,11 @@ test("usuário sem vínculo não recebe resposta de consulta nem persiste nada",
 // ---------------------------------------------------------------------
 test("sessão pendente de gasto prevalece sobre intenção de consulta", async () => {
   // 1) cria sessão pendente (aguardando_forma_pagamento)
-  const r0 = await processarMensagemWhatsApp({ telefone: tel, texto: "Mercado 30,00", external_id: "sp-a" });
+  const r0 = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Mercado 30,00",
+    external_id: "sp-a",
+  });
   expect(["aguardando_forma_pagamento", "aguardando_confirmacao"]).toContain(r0.status);
   // 2) mesmo enviando "menu" não responde consulta; mantém o pendente
   const r1 = await processarMensagemWhatsApp({ telefone: tel, texto: "menu", external_id: "sp-b" });
@@ -214,9 +250,17 @@ test("sessão pendente de gasto prevalece sobre intenção de consulta", async (
 
 // ---------------------------------------------------------------------
 test("sessão pendente de receita prevalece sobre intenção de consulta", async () => {
-  await processarMensagemWhatsApp({ telefone: tel, texto: "Quero lançar uma renda", external_id: "spr-a" });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Quero lançar uma renda",
+    external_id: "spr-a",
+  });
   expect(state.pendingRow?.status).toBe("rec_aguardando_tipo");
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "resumo da semana", external_id: "spr-b" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "resumo da semana",
+    external_id: "spr-b",
+  });
   expect(r.status).not.toBe("consulta");
 });
 
@@ -228,11 +272,15 @@ test("WA-G2.1 resumo do mês ignora receita recorrente futura no mesmo mês", as
   resetState({
     gastos: [{ descricao: "Mercado", valor: 200, data: monthStart(), categoria_id: "cat-mer" }],
     receitas: [
-      { valor: 1000, data: monthStart() },            // já recebida
-      { valor: 5000, data: daysAheadISO(3) },         // recorrente futura — deve ser ignorada
+      { valor: 1000, data: monthStart() }, // já recebida
+      { valor: 5000, data: daysAheadISO(3) }, // recorrente futura — deve ser ignorada
     ],
   });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "resumo do mês", external_id: "g21-rm-1" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "resumo do mês",
+    external_id: "g21-rm-1",
+  });
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 1.000,00"); // só receita já recebida
   expect(r.resposta).not.toContain("6.000");
   expect(r.resposta).toContain("20% das suas receitas"); // 200/1000
@@ -246,7 +294,11 @@ test("WA-G2.1 impacto despesas ignora receita recorrente futura no mesmo mês", 
       { valor: 5000, data: daysAheadISO(5) },
     ],
   });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "quanto meus gastos afetam minha renda", external_id: "g21-im-1" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "quanto meus gastos afetam minha renda",
+    external_id: "g21-im-1",
+  });
   expect(r.resposta).toContain("20% da sua renda");
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 800,00"); // saldo 1000-200
 });
@@ -256,19 +308,27 @@ test("WA-G2.1 receita com data de hoje é incluída no resumo do mês", async ()
     gastos: [],
     receitas: [{ valor: 1500, data: todayISO() }],
   });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "resumo do mês", external_id: "g21-rm-2" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "resumo do mês",
+    external_id: "g21-rm-2",
+  });
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 1.500,00");
 });
 
 test("WA-G2.1 despesa com data futura não é incluída no resumo do mês", async () => {
   resetState({
     gastos: [
-      { descricao: "Hoje",   valor: 100, data: todayISO(),         categoria_id: "cat-mer" },
-      { descricao: "Futuro", valor: 999, data: daysAheadISO(2),    categoria_id: "cat-mer" },
+      { descricao: "Hoje", valor: 100, data: todayISO(), categoria_id: "cat-mer" },
+      { descricao: "Futuro", valor: 999, data: daysAheadISO(2), categoria_id: "cat-mer" },
     ],
     receitas: [{ valor: 1000, data: monthStart() }],
   });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "resumo do mês", external_id: "g21-rm-3" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "resumo do mês",
+    external_id: "g21-rm-3",
+  });
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 100,00"); // despesas
   expect(r.resposta).not.toContain("999");
 });
@@ -278,7 +338,11 @@ test("WA-G2.1 resumo semanal permanece inalterado (não foi afetado)", async () 
     gastos: [{ descricao: "Uber", valor: 30, data: daysAgoISO(1), categoria_id: "cat-trans" }],
     receitas: [{ valor: 500, data: daysAgoISO(2) }],
   });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "resumo da semana", external_id: "g21-rs-1" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "resumo da semana",
+    external_id: "g21-rs-1",
+  });
   expect(r.resposta).toContain("Resumo dos últimos 7 dias");
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 500,00");
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 30,00");

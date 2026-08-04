@@ -63,9 +63,7 @@ export function FluxoCaixaChart({
       const d = new Date(ano, mes - 1 - i, 1);
       const m = d.getMonth() + 1;
       const y = d.getFullYear();
-      const e = receitas
-        .filter((r) => r.mes === m && r.ano === y)
-        .reduce((s, r) => s + r.valor, 0);
+      const e = receitas.filter((r) => r.mes === m && r.ano === y).reduce((s, r) => s + r.valor, 0);
       const g = gastos
         .filter((g) => {
           const data = parseDateLocal(g.data);
@@ -104,9 +102,7 @@ export function FluxoCaixaChart({
             {t("fluxo.eyebrow")}
           </p>
           <h2 className="mt-0.5 text-base font-semibold sm:text-lg">{t("fluxo.title")}</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {t("fluxo.subtitle")}
-          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{t("fluxo.subtitle")}</p>
         </div>
         {!semHistoricoSuficiente && (
           <div className="flex items-center gap-1 self-start rounded-full border border-border bg-card-elevated p-1">
@@ -165,65 +161,159 @@ export function FluxoCaixaChart({
         <div className="mt-4 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card-elevated/40 px-6 py-6 text-center">
           <TrendingUp className="h-6 w-6 text-muted-foreground" />
           <p className="mt-2 text-sm font-medium">{t("fluxo.emptyTitle")}</p>
-          <p className="mt-1 max-w-xs text-xs text-muted-foreground">
-            {t("fluxo.emptyDesc")}
-          </p>
+          <p className="mt-1 max-w-xs text-xs text-muted-foreground">{t("fluxo.emptyDesc")}</p>
         </div>
       ) : (
         <div className="mt-4 h-[220px] w-full sm:h-[260px] lg:h-[300px] xl:h-[340px]">
-        <ResponsiveContainer width="100%" height="100%">
-          {tipo === "area" ? (
-            <AreaChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--success)" stopOpacity={0.45} />
-                  <stop offset="100%" stopColor="var(--success)" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="gOut" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--destructive)" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="var(--destructive)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => formatBRLCompact(Number(v))} width={64} />
-              <RTooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Area type="monotone" dataKey="entradas" name={labelEntradas} stroke="var(--success)" strokeWidth={2} fill="url(#gIn)" />
-              <Area type="monotone" dataKey="gastos" name={labelGastos} stroke="var(--destructive)" strokeWidth={2} fill="url(#gOut)" />
-            </AreaChart>
-          ) : tipo === "line" ? (
-            <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => formatBRLCompact(Number(v))} width={64} />
-              <RTooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="entradas" name={labelEntradas} stroke="var(--success)" strokeWidth={2.5} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="gastos" name={labelGastos} stroke="var(--destructive)" strokeWidth={2.5} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="saldo" name={labelSaldo} stroke="var(--brand)" strokeWidth={2} strokeDasharray="4 4" dot={false} />
-            </LineChart>
-          ) : tipo === "bar" ? (
-            <BarChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="mes" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => formatBRLCompact(Number(v))} width={64} />
-              <RTooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="entradas" name={labelEntradas} fill="var(--success)" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="gastos" name={labelGastos} fill="var(--destructive)" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          ) : (
-            <PieChart>
-              <RTooltip contentStyle={tooltipStyle} formatter={(v: number, n) => [formatBRL(v), n]} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Pie data={donutData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={85} paddingAngle={3} stroke="none">
-                <Cell fill="var(--success)" />
-                <Cell fill="var(--destructive)" />
-              </Pie>
-            </PieChart>
-          )}
-        </ResponsiveContainer>
+          <ResponsiveContainer width="100%" height="100%">
+            {tipo === "area" ? (
+              <AreaChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gIn" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--success)" stopOpacity={0.45} />
+                    <stop offset="100%" stopColor="var(--success)" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gOut" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--destructive)" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="var(--destructive)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis
+                  dataKey="mes"
+                  stroke="var(--muted-foreground)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="var(--muted-foreground)"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v) => formatBRLCompact(Number(v))}
+                  width={64}
+                />
+                <RTooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Area
+                  type="monotone"
+                  dataKey="entradas"
+                  name={labelEntradas}
+                  stroke="var(--success)"
+                  strokeWidth={2}
+                  fill="url(#gIn)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="gastos"
+                  name={labelGastos}
+                  stroke="var(--destructive)"
+                  strokeWidth={2}
+                  fill="url(#gOut)"
+                />
+              </AreaChart>
+            ) : tipo === "line" ? (
+              <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis
+                  dataKey="mes"
+                  stroke="var(--muted-foreground)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="var(--muted-foreground)"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v) => formatBRLCompact(Number(v))}
+                  width={64}
+                />
+                <RTooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Line
+                  type="monotone"
+                  dataKey="entradas"
+                  name={labelEntradas}
+                  stroke="var(--success)"
+                  strokeWidth={2.5}
+                  dot={{ r: 3 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="gastos"
+                  name={labelGastos}
+                  stroke="var(--destructive)"
+                  strokeWidth={2.5}
+                  dot={{ r: 3 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="saldo"
+                  name={labelSaldo}
+                  stroke="var(--brand)"
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  dot={false}
+                />
+              </LineChart>
+            ) : tipo === "bar" ? (
+              <BarChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis
+                  dataKey="mes"
+                  stroke="var(--muted-foreground)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="var(--muted-foreground)"
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v) => formatBRLCompact(Number(v))}
+                  width={64}
+                />
+                <RTooltip contentStyle={tooltipStyle} formatter={(v: number) => formatBRL(v)} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar
+                  dataKey="entradas"
+                  name={labelEntradas}
+                  fill="var(--success)"
+                  radius={[6, 6, 0, 0]}
+                />
+                <Bar
+                  dataKey="gastos"
+                  name={labelGastos}
+                  fill="var(--destructive)"
+                  radius={[6, 6, 0, 0]}
+                />
+              </BarChart>
+            ) : (
+              <PieChart>
+                <RTooltip
+                  contentStyle={tooltipStyle}
+                  formatter={(v: number, n) => [formatBRL(v), n]}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Pie
+                  data={donutData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={50}
+                  outerRadius={85}
+                  paddingAngle={3}
+                  stroke="none"
+                >
+                  <Cell fill="var(--success)" />
+                  <Cell fill="var(--destructive)" />
+                </Pie>
+              </PieChart>
+            )}
+          </ResponsiveContainer>
         </div>
       )}
     </section>

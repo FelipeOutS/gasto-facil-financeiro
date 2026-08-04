@@ -34,11 +34,7 @@ import {
   type Periodicidade,
   type PlanTier,
 } from "@/lib/plans";
-import {
-  getVocab,
-  tipoCadastroLabel,
-  type TipoCadastro,
-} from "@/lib/profile-utils";
+import { getVocab, tipoCadastroLabel, type TipoCadastro } from "@/lib/profile-utils";
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
 import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
@@ -101,7 +97,12 @@ function MeuPlanoPage() {
   const aguardando = !loading && !isAdminMaster && status === "aguardando_pagamento";
   const expirado = !loading && !isAdminMaster && status === "expirado";
   const ativoPago =
-    !loading && !isAdminMaster && status === "ativo" && storedPlan !== "sem_assinatura" && storedPlan !== "free" && !isTrialActive;
+    !loading &&
+    !isAdminMaster &&
+    status === "ativo" &&
+    storedPlan !== "sem_assinatura" &&
+    storedPlan !== "free" &&
+    !isTrialActive;
 
   const [submitting, setSubmitting] = useState<PlanTier | null>(null);
   const [periodicidade, setPeriodicidade] = useState<Periodicidade>("mensal");
@@ -132,11 +133,9 @@ function MeuPlanoPage() {
   // Quando desligado, o card aparece como informativo ("Em breve") mas o botão fica
   // desativado. Não afeta `chooseFreeAdsPlan` (a server function continua segura).
   // Usuários já em `free_ads/ativo` continuam vendo "Plano atual" normalmente.
-  const freeAdsSignupEnabled =
-    (import.meta.env.VITE_ENABLE_FREE_ADS_SIGNUP ?? "false") === "true";
+  const freeAdsSignupEnabled = (import.meta.env.VITE_ENABLE_FREE_ADS_SIGNUP ?? "false") === "true";
   const freeAdsCtaLocked =
-    !freeAdsSignupEnabled &&
-    (freeAdsButtonMode === "start" || freeAdsButtonMode === "continue");
+    !freeAdsSignupEnabled && (freeAdsButtonMode === "start" || freeAdsButtonMode === "continue");
 
   async function handleChooseFreeAds() {
     if (freeAdsSubmitting) return;
@@ -204,7 +203,9 @@ function MeuPlanoPage() {
   const ultimoAprovado = historico.find((h) =>
     ["approved", "paid", "authorized"].includes((h.status ?? "").toLowerCase()),
   );
-  const planoAtualPeriodo = (ultimoAprovado as unknown as { periodicidade?: Periodicidade } | undefined)?.periodicidade ?? null;
+  const planoAtualPeriodo =
+    (ultimoAprovado as unknown as { periodicidade?: Periodicidade } | undefined)?.periodicidade ??
+    null;
   const planoAtualMetodo = paymentMethod ?? ultimoAprovado?.method ?? null;
   const planoAtualTotal = paymentAmountCents ?? ultimoAprovado?.amount_cents ?? null;
   const planoAtualPagoEm = paidAt ?? ultimoAprovado?.paid_at ?? null;
@@ -274,7 +275,6 @@ function MeuPlanoPage() {
       setSubmitting(null);
     }
   }
-
 
   async function checarPagamento() {
     if (!pixCharge?.paymentId || !user?.id) return;
@@ -390,14 +390,31 @@ function MeuPlanoPage() {
               </h2>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              {tp("card.type", { value: isAdminMaster ? tp("card.adminMaster") : tipoCadastroLabel(tipo) })}
+              {tp("card.type", {
+                value: isAdminMaster ? tp("card.adminMaster") : tipoCadastroLabel(tipo),
+              })}
             </p>
             {ativoPago && (
               <p className="mt-1 text-xs text-muted-foreground">
                 {commercialPlanByTier(plan)?.priceLabel}
-                {(activePeriodicidade ?? planoAtualPeriodo) ? tp("card.perFreq", { value: periodLabel((activePeriodicidade ?? planoAtualPeriodo) as Periodicidade) }) : ""}
-                {planoAtualMetodo ? tp("card.method", { value: planoAtualMetodo.toLowerCase() === "pix" ? tp("methods.pix") : planoAtualMetodo }) : ""}
-                {planoAtualTotal !== null ? tp("card.totalPaid", { value: formatBRL(planoAtualTotal) }) : ""}
+                {(activePeriodicidade ?? planoAtualPeriodo)
+                  ? tp("card.perFreq", {
+                      value: periodLabel(
+                        (activePeriodicidade ?? planoAtualPeriodo) as Periodicidade,
+                      ),
+                    })
+                  : ""}
+                {planoAtualMetodo
+                  ? tp("card.method", {
+                      value:
+                        planoAtualMetodo.toLowerCase() === "pix"
+                          ? tp("methods.pix")
+                          : planoAtualMetodo,
+                    })
+                  : ""}
+                {planoAtualTotal !== null
+                  ? tp("card.totalPaid", { value: formatBRL(planoAtualTotal) })
+                  : ""}
               </p>
             )}
             {isAdminMaster && (
@@ -416,24 +433,16 @@ function MeuPlanoPage() {
                 {tp("card.activePeriod", {
                   start: formatDate(currentPeriodStart),
                   end: formatDate(currentPeriodEnd),
-                  paid: planoAtualPagoEm ? tp("card.paidOn", { date: formatDate(planoAtualPagoEm) }) : "",
+                  paid: planoAtualPagoEm
+                    ? tp("card.paidOn", { date: formatDate(planoAtualPagoEm) })
+                    : "",
                 })}
               </p>
             )}
-            {expirado && (
-              <p className="mt-2 text-xs text-destructive">
-                {tp("card.expiredNote")}
-              </p>
-            )}
-            {recusado && (
-              <p className="mt-2 text-xs text-destructive">
-                {tp("card.rejectedNote")}
-              </p>
-            )}
+            {expirado && <p className="mt-2 text-xs text-destructive">{tp("card.expiredNote")}</p>}
+            {recusado && <p className="mt-2 text-xs text-destructive">{tp("card.rejectedNote")}</p>}
             {!isAdminMaster && semAssinatura && !recusado && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                {tp("card.noSubNote")}
-              </p>
+              <p className="mt-2 text-xs text-muted-foreground">{tp("card.noSubNote")}</p>
             )}
           </div>
           {!loading && (
@@ -443,7 +452,9 @@ function MeuPlanoPage() {
               size="md"
               className="shrink-0 uppercase tracking-wide"
             >
-              {isAdminMaster ? tp("status.ativo") : tp(`status.${status}`, { defaultValue: status })}
+              {isAdminMaster
+                ? tp("status.ativo")
+                : tp(`status.${status}`, { defaultValue: status })}
             </StatusBadge>
           )}
         </div>
@@ -451,7 +462,8 @@ function MeuPlanoPage() {
         {!isAdminMaster && isTrialActive && (
           <div className="mt-3 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
             <p>
-              <strong>{tp("trial.activeTitle")}</strong>{tp("trial.activeRelease", { plan: planName(plan) })}
+              <strong>{tp("trial.activeTitle")}</strong>
+              {tp("trial.activeRelease", { plan: planName(plan) })}
             </p>
             <p className="mt-0.5 text-primary/80">
               {tp("trial.daysLeft", { count: trialDaysLeft })}
@@ -471,11 +483,10 @@ function MeuPlanoPage() {
         {!isAdminMaster && isCancelled && accessUntil && (
           <div className="mt-3 rounded-xl border border-muted-foreground/30 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
             <p>
-              <strong>{tp("cancelled.title")}</strong>{tp("cancelled.untilPrefix", { date: formatDate(accessUntil) })}
+              <strong>{tp("cancelled.title")}</strong>
+              {tp("cancelled.untilPrefix", { date: formatDate(accessUntil) })}
             </p>
-            <p className="mt-0.5">
-              {tp("cancelled.after")}
-            </p>
+            <p className="mt-0.5">{tp("cancelled.after")}</p>
           </div>
         )}
 
@@ -544,7 +555,6 @@ function MeuPlanoPage() {
       {/* Cards de upgrade — recursos premium ainda não liberados no plano atual */}
       <UpgradeCardsList max={6} />
 
-
       {/* QR Code Pix — exibido após gerar cobrança */}
       {!isAdminMaster && pixCharge && (pixCharge.qr_code_base64 || pixCharge.ticket_url) && (
         <section className="mt-4 overflow-hidden rounded-3xl border border-amber-500/30 bg-amber-500/5 p-5">
@@ -603,9 +613,7 @@ function MeuPlanoPage() {
               {verifying ? tp("pix.verifying") : tp("pix.verify")}
             </Button>
           )}
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            {tp("pix.afterApproval")}
-          </p>
+          <p className="mt-3 text-[11px] text-muted-foreground">{tp("pix.afterApproval")}</p>
         </section>
       )}
 
@@ -623,9 +631,7 @@ function MeuPlanoPage() {
               key={f.feature}
               className={cn(
                 "rounded-2xl border p-3.5 transition-colors",
-                allowed
-                  ? "border-emerald-500/20 bg-emerald-500/5"
-                  : "border-border bg-card",
+                allowed ? "border-emerald-500/20 bg-emerald-500/5" : "border-border bg-card",
               )}
             >
               <div className="flex items-start justify-between gap-2">
@@ -640,24 +646,33 @@ function MeuPlanoPage() {
                   </span>
                 )}
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {f.description}
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{f.description}</p>
             </div>
           );
         })}
       </section>
 
-      <h3 id="planos-disponiveis" className="mt-8 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+      <h3
+        id="planos-disponiveis"
+        className="mt-8 text-sm font-semibold uppercase tracking-widest text-muted-foreground"
+      >
         {tp("sections.plans")}
       </h3>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {PERIODICIDADES.map((p) => {
           const active = periodicidade === p.key;
           return (
-            <button key={p.key} type="button" onClick={() => setPeriodicidade(p.key)}
-              className={cn("relative rounded-2xl border p-3 text-left transition-colors",
-                active ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40")}>
+            <button
+              key={p.key}
+              type="button"
+              onClick={() => setPeriodicidade(p.key)}
+              className={cn(
+                "relative rounded-2xl border p-3 text-left transition-colors",
+                active
+                  ? "border-primary bg-primary/10"
+                  : "border-border bg-card hover:border-primary/40",
+              )}
+            >
               <p className="text-sm font-semibold">{periodLabel(p.key)}</p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 {p.discountPercent > 0 ? `${p.discountPercent}% off` : t("billing.noDiscount")}
@@ -675,10 +690,20 @@ function MeuPlanoPage() {
         {(["pix", "card"] as const).map((m) => {
           const active = metodoPagamento === m;
           return (
-            <button key={m} type="button" onClick={() => setMetodoPagamento(m)}
-              className={cn("rounded-2xl border p-3 text-center transition-colors",
-                active ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40")}>
-              <p className="text-sm font-semibold">{m === "pix" ? tp("methods.pix") : tp("methods.card")}</p>
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMetodoPagamento(m)}
+              className={cn(
+                "rounded-2xl border p-3 text-center transition-colors",
+                active
+                  ? "border-primary bg-primary/10"
+                  : "border-border bg-card hover:border-primary/40",
+              )}
+            >
+              <p className="text-sm font-semibold">
+                {m === "pix" ? tp("methods.pix") : tp("methods.card")}
+              </p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 {m === "pix" ? tp("methods.pixDesc") : tp("methods.cardDesc")}
               </p>
@@ -686,9 +711,7 @@ function MeuPlanoPage() {
           );
         })}
       </div>
-      <p className="mt-2 text-[11px] text-muted-foreground">
-        {t("billing.secureInfo")}
-      </p>
+      <p className="mt-2 text-[11px] text-muted-foreground">{t("billing.secureInfo")}</p>
       <section className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {COMMERCIAL_PLANS.map((p) => {
           const isCurrent = !isAdminMaster && plan === p.tier && ativoPago;
@@ -761,10 +784,16 @@ function MeuPlanoPage() {
                 </div>
                 {pr.discountCents > 0 ? (
                   <p className="mt-1 text-[11px] font-semibold text-success">
-                    {t("billing.save", { value: formatBRL(pr.discountCents), percent: pr.discountPercent })}
+                    {t("billing.save", {
+                      value: formatBRL(pr.discountCents),
+                      percent: pr.discountPercent,
+                    })}
                   </p>
                 ) : (
-                  <p className="mt-1 text-[11px] text-muted-foreground">{formatBRL(p.priceCents)}{periodSuffix("mensal")}</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    {formatBRL(p.priceCents)}
+                    {periodSuffix("mensal")}
+                  </p>
                 )}
               </div>
 
@@ -794,7 +823,8 @@ function MeuPlanoPage() {
                   <Button
                     className={cn(
                       "w-full rounded-xl font-semibold min-h-11",
-                      isRecommended && "bg-gradient-to-r from-primary to-primary/85 hover:opacity-90 shadow-md shadow-primary/20",
+                      isRecommended &&
+                        "bg-gradient-to-r from-primary to-primary/85 hover:opacity-90 shadow-md shadow-primary/20",
                     )}
                     disabled={submitting !== null}
                     onClick={() => escolherPlano(p.tier)}
@@ -824,7 +854,6 @@ function MeuPlanoPage() {
         })}
       </section>
 
-
       {/* Plano Gratuito com Anúncios — ativação voluntária via chooseFreeAdsPlan. */}
       {freeAdsButtonMode !== "hidden" && (
         <section className="mt-5">
@@ -832,7 +861,9 @@ function MeuPlanoPage() {
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-sm font-bold">{tp("freeAds.name")}</p>
-                <span className="text-xs font-semibold text-muted-foreground">{tp("freeAds.price")}</span>
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {tp("freeAds.price")}
+                </span>
                 {freeAdsButtonMode === "current" && (
                   <span className="rounded-full border border-success/30 bg-success/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-success">
                     {tp("freeAds.currentBadge")}
@@ -859,7 +890,9 @@ function MeuPlanoPage() {
             <Button
               type="button"
               size="sm"
-              variant={freeAdsButtonMode === "current" || freeAdsCtaLocked ? "secondary" : "default"}
+              variant={
+                freeAdsButtonMode === "current" || freeAdsCtaLocked ? "secondary" : "default"
+              }
               disabled={freeAdsButtonMode === "current" || freeAdsSubmitting || freeAdsCtaLocked}
               onClick={handleChooseFreeAds}
               className="shrink-0 rounded-xl min-h-10"
@@ -879,7 +912,6 @@ function MeuPlanoPage() {
         </section>
       )}
 
-
       {/* Investimentos: seção dedicada abaixo dos planos */}
       <section className="mt-5">
         <div className="flex flex-col gap-2 rounded-3xl border border-dashed border-border bg-card/50 p-5 sm:flex-row sm:items-center sm:justify-between">
@@ -890,16 +922,12 @@ function MeuPlanoPage() {
                 {tp("investments.soon")}
               </span>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {tp("investments.desc")}
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{tp("investments.desc")}</p>
           </div>
         </div>
       </section>
 
-      <p className="mt-8 text-center text-[11px] text-muted-foreground">
-        {tp("footer")}
-      </p>
+      <p className="mt-8 text-center text-[11px] text-muted-foreground">{tp("footer")}</p>
 
       {/* ===== Histórico de pagamentos ===== */}
       {!isAdminMaster && (
@@ -937,13 +965,16 @@ function MeuPlanoPage() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{label}</p>
                         <p className="text-[11px] text-muted-foreground">
-                          {formatDate(dt)} ·{" "}
-                          {h.method.toUpperCase()} ·{" "}
+                          {formatDate(dt)} · {h.method.toUpperCase()} ·{" "}
                           {(h.amount_cents / 100).toLocaleString(isEnglish ? "en-US" : "pt-BR", {
                             style: "currency",
                             currency: "BRL",
                           })}
-                          {h.periodicidade ? tp("card.perFreq", { value: periodLabel(h.periodicidade as Periodicidade) }) : ""}
+                          {h.periodicidade
+                            ? tp("card.perFreq", {
+                                value: periodLabel(h.periodicidade as Periodicidade),
+                              })
+                            : ""}
                         </p>
                       </div>
                       <StatusBadge tone={badgeTone} dot className="uppercase tracking-wide">

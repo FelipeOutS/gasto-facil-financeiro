@@ -97,9 +97,7 @@ export function BetaAdminSection() {
   return (
     <section className="pt-3 border-t border-amber-500/20 space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-amber-300">
-          WA-F · Beta fechada do WhatsApp
-        </h3>
+        <h3 className="text-sm font-semibold text-amber-300">WA-F · Beta fechada do WhatsApp</h3>
         <Button variant="outline" size="sm" onClick={carregar} disabled={loading}>
           {loading ? "Atualizando..." : "Atualizar"}
         </Button>
@@ -153,7 +151,9 @@ export function BetaAdminSection() {
           >
             <span>
               status: {it.status}
-              {it.expires_at ? ` · expira: ${new Date(it.expires_at).toLocaleDateString("pt-BR")}` : ""}
+              {it.expires_at
+                ? ` · expira: ${new Date(it.expires_at).toLocaleDateString("pt-BR")}`
+                : ""}
               {it.observacao ? ` · ${it.observacao.slice(0, 40)}` : ""}
             </span>
             {it.status !== "revogado" && (

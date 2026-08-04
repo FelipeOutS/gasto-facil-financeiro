@@ -1699,7 +1699,7 @@ export async function buscarSessaoComprovanteAtiva(
   // de flag server-side `WHATSAPP_SESSION_AUDIT_FALLBACK=true`, desligada
   // por padrão. O hard gate de comprovante (busca por status + parsed.kind
   // logo acima) continua intocado.
-  let fallbackRows: SessaoRow[] = [];
+  const fallbackRows: SessaoRow[] = [];
   let fallbackStoredKindPath: string | null = null;
   const auditFallbackOn =
     (process.env.WHATSAPP_SESSION_AUDIT_FALLBACK ?? "").trim().toLowerCase() === "true";
@@ -3511,7 +3511,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
           texto,
           recebidaEm,
           "aguardando_consulta_fatura",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           {
             nome: "",
             valor: 0,
@@ -3585,7 +3585,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
             texto,
             recebidaEm,
             "aguardando_consulta_parcelamento",
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             {
               nome: "",
               valor: 0,
@@ -3667,7 +3667,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
           texto,
           recebidaEm,
           "aguardando_consulta_vencimentos",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           {
             nome: "",
             valor: 0,
@@ -3988,7 +3988,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
           texto,
           recebidaEm,
           "aguardando_consulta_fatura",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           {
             nome: "",
             valor: 0,
@@ -4075,7 +4075,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
           texto,
           recebidaEm,
           "aguardando_consulta_vencimentos",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           {
             nome: "",
             valor: 0,
@@ -4125,7 +4125,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
           texto,
           recebidaEm,
           "aguardando_consulta_parcelamento",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           {
             nome: "",
             valor: 0,
@@ -4174,7 +4174,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
           texto,
           recebidaEm,
           "consulta_categoria_ambigua",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           {
             nome: "",
             valor: 0,

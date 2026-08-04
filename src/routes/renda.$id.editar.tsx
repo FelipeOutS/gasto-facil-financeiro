@@ -76,9 +76,7 @@ function EditarReceitaPage() {
           </div>
         ) : !receita ? (
           <div className="py-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              {t("notFound.title")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("notFound.title")}</p>
             <Button className="mt-4" onClick={() => navigate({ to: "/renda" })}>
               {t("back")}
             </Button>

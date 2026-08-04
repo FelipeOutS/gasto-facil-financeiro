@@ -100,9 +100,7 @@ export function PlanejamentoMensalCard({
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold">{labels.title}</h2>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
-            {labels.description}
-          </p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">{labels.description}</p>
         </div>
       </div>
 
@@ -259,29 +257,23 @@ export function PlanejamentoMensalCard({
           >
             {estado === "excesso" ? (
               <>
-                {labels.withExcess}{" "}
-                <Money value={excesso} className="num font-semibold" />
+                {labels.withExcess} <Money value={excesso} className="num font-semibold" />
               </>
             ) : estado === "tudo_distribuido" ? (
               labels.allAssigned
             ) : (
               <>
-                {labels.withFree}{" "}
-                <Money value={Math.max(0, livre)} className="num font-semibold" />
+                {labels.withFree} <Money value={Math.max(0, livre)} className="num font-semibold" />
               </>
             )}
           </p>
 
           {/* Notas sobre duplicidade */}
           {hasBillsReal && !incluirContas && (
-            <p className="mt-2 text-[11px] text-muted-foreground">
-              {labels.billsExcludedNote}
-            </p>
+            <p className="mt-2 text-[11px] text-muted-foreground">{labels.billsExcludedNote}</p>
           )}
           {hasBillsReal && incluirContas && hasCats && (
-            <p className="mt-2 text-[11px] text-muted-foreground">
-              {labels.billsDuplicateHint}
-            </p>
+            <p className="mt-2 text-[11px] text-muted-foreground">{labels.billsDuplicateHint}</p>
           )}
 
           {suggestionSlot}

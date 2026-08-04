@@ -46,12 +46,7 @@ export function __getMercadoActiveUserId(): string | null {
 
 export const MERCADO_LEGACY_ANON_KEY = MERCADO_LISTAS_STORAGE_KEY;
 
-export type ListaTipo =
-  | "compraMes"
-  | "reposicao"
-  | "churrasco"
-  | "farmacia"
-  | "outros";
+export type ListaTipo = "compraMes" | "reposicao" | "churrasco" | "farmacia" | "outros";
 
 export type ListaStatus = "planning" | "ongoing" | "done";
 
@@ -134,12 +129,9 @@ function normalize(raw: unknown): MercadoLista | null {
               typeof it.precoPago === "number" && Number.isFinite(it.precoPago)
                 ? it.precoPago
                 : undefined,
-            categoria:
-              typeof it.categoria === "string" && it.categoria ? it.categoria : undefined,
+            categoria: typeof it.categoria === "string" && it.categoria ? it.categoria : undefined,
             codigoBarras:
-              typeof it.codigoBarras === "string" && it.codigoBarras
-                ? it.codigoBarras
-                : undefined,
+              typeof it.codigoBarras === "string" && it.codigoBarras ? it.codigoBarras : undefined,
             origem:
               it.origem === "manual" ||
               it.origem === "lista" ||
@@ -206,7 +198,6 @@ function safeWrite(next: MercadoLista[]) {
   }
 }
 
-
 function emit() {
   for (const l of Array.from(listeners)) {
     try {
@@ -227,15 +218,22 @@ function pushUpsert(id: string) {
   if (!syncHooks.onUpsertLista) return;
   const fresh = safeRead().find((l) => l.id === id);
   if (fresh) {
-    try { syncHooks.onUpsertLista(fresh); } catch { /* ignore */ }
+    try {
+      syncHooks.onUpsertLista(fresh);
+    } catch {
+      /* ignore */
+    }
   }
 }
 
 function pushDelete(id: string) {
   if (!syncHooks.onDeleteLista) return;
-  try { syncHooks.onDeleteLista(id); } catch { /* ignore */ }
+  try {
+    syncHooks.onDeleteLista(id);
+  } catch {
+    /* ignore */
+  }
 }
-
 
 export function getListas(): MercadoLista[] {
   return safeRead();
@@ -288,14 +286,14 @@ export function addItemLista(
   if (!nome) return null;
   const now = new Date().toISOString();
   const barcode =
-    typeof input.codigoBarras === "string"
-      ? input.codigoBarras.replace(/\D/g, "")
-      : "";
+    typeof input.codigoBarras === "string" ? input.codigoBarras.replace(/\D/g, "") : "";
   const item: ListaItem = {
     id: genId("itm"),
     nome,
     quantidade:
-      typeof input.quantidade === "number" && Number.isFinite(input.quantidade) && input.quantidade > 0
+      typeof input.quantidade === "number" &&
+      Number.isFinite(input.quantidade) &&
+      input.quantidade > 0
         ? input.quantidade
         : 1,
     unidade: input.unidade?.trim() || undefined,
@@ -377,9 +375,7 @@ export function addItensLista(
         ? input.precoEstimado
         : undefined;
     const barcode =
-      typeof input.codigoBarras === "string"
-        ? input.codigoBarras.replace(/\D/g, "")
-        : "";
+      typeof input.codigoBarras === "string" ? input.codigoBarras.replace(/\D/g, "") : "";
     const origem: ListaItem["origem"] =
       input.origem && validOrigens.includes(input.origem) ? input.origem : "manual";
     novos.push({
@@ -412,7 +408,6 @@ export function addItensLista(
   return updated;
 }
 
-
 export function updateItemLista(
   listaId: string,
   itemId: string,
@@ -433,10 +428,7 @@ export function updateItemLista(
             (patch.quantidade as number) > 0
               ? (patch.quantidade as number)
               : it.quantidade,
-          unidade:
-            patch.unidade !== undefined
-              ? patch.unidade?.trim() || undefined
-              : it.unidade,
+          unidade: patch.unidade !== undefined ? patch.unidade?.trim() || undefined : it.unidade,
           precoEstimado:
             patch.precoEstimado !== undefined
               ? typeof patch.precoEstimado === "number" &&
@@ -494,8 +486,7 @@ export function updateListaDados(
   if (idx === -1) return null;
   const prev = atuais[idx];
 
-  const nextName =
-    input.name !== undefined ? input.name.trim() : prev.name;
+  const nextName = input.name !== undefined ? input.name.trim() : prev.name;
   if (!nextName) return null;
 
   const validTipos: ListaTipo[] = ["compraMes", "reposicao", "churrasco", "farmacia", "outros"];
@@ -596,7 +587,8 @@ export function computeResumo(l: MercadoLista): ResumoLista {
   const totalCompradoEstimado = l.entries
     .filter((e) => e.comprado)
     .reduce((a, e) => a + (e.precoEstimado ?? 0) * (e.quantidade || 1), 0);
-  const percentualConcluido = totalItens === 0 ? 0 : Math.round((itensComprados / totalItens) * 100);
+  const percentualConcluido =
+    totalItens === 0 ? 0 : Math.round((itensComprados / totalItens) * 100);
   return {
     totalItens,
     itensComprados,
@@ -622,8 +614,7 @@ export function computeOrcamentoLista(l: MercadoLista): OrcamentoLista {
     0,
   );
   const rawBudget = l.estimate;
-  const hasBudget =
-    typeof rawBudget === "number" && Number.isFinite(rawBudget) && rawBudget > 0;
+  const hasBudget = typeof rawBudget === "number" && Number.isFinite(rawBudget) && rawBudget > 0;
   const budget = hasBudget ? (rawBudget as number) : 0;
   const diferenca = budget - totalEstimado;
   const percentualUsado = hasBudget ? Math.round((totalEstimado / budget) * 100) : 0;
@@ -732,7 +723,6 @@ export type MercadoCompraHistorico = {
   observacao?: string;
 };
 
-
 const historicoListeners = new Set<Listener>();
 
 export function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null {
@@ -761,12 +751,9 @@ export function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null 
               typeof it.precoPago === "number" && Number.isFinite(it.precoPago)
                 ? it.precoPago
                 : undefined,
-            categoria:
-              typeof it.categoria === "string" && it.categoria ? it.categoria : undefined,
+            categoria: typeof it.categoria === "string" && it.categoria ? it.categoria : undefined,
             codigoBarras:
-              typeof it.codigoBarras === "string" && it.codigoBarras
-                ? it.codigoBarras
-                : undefined,
+              typeof it.codigoBarras === "string" && it.codigoBarras ? it.codigoBarras : undefined,
             origem:
               it.origem === "manual" ||
               it.origem === "lista" ||
@@ -810,7 +797,6 @@ export function normalizeHistorico(raw: unknown): MercadoCompraHistorico | null 
   };
 }
 
-
 function safeReadHistorico(): MercadoCompraHistorico[] {
   if (!isBrowser()) return [];
   try {
@@ -818,9 +804,7 @@ function safeReadHistorico(): MercadoCompraHistorico[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed
-      .map(normalizeHistorico)
-      .filter((x): x is MercadoCompraHistorico => x !== null);
+    return parsed.map(normalizeHistorico).filter((x): x is MercadoCompraHistorico => x !== null);
   } catch {
     return [];
   }
@@ -861,7 +845,11 @@ export function removerCompraHistorico(id: string): boolean {
   safeWriteHistorico(next);
   emitHistorico();
   if (historicoSyncHooks.onDeleteHistorico) {
-    try { historicoSyncHooks.onDeleteHistorico(id); } catch { /* ignore */ }
+    try {
+      historicoSyncHooks.onDeleteHistorico(id);
+    } catch {
+      /* ignore */
+    }
   }
   return true;
 }
@@ -901,7 +889,11 @@ export function finalizarListaCompra(
 
   // Push para Supabase (best-effort, não bloqueia o fluxo local).
   if (historicoSyncHooks.onUpsertHistorico) {
-    try { historicoSyncHooks.onUpsertHistorico(entry); } catch { /* ignore */ }
+    try {
+      historicoSyncHooks.onUpsertHistorico(entry);
+    } catch {
+      /* ignore */
+    }
   }
 
   // E13: registra preços no histórico local de preços por produto.
@@ -951,9 +943,7 @@ export function registrarCompraFinalizadaDoCupom(input: {
 
   const now = new Date().toISOString();
   const concluidaEm =
-    typeof input.concluidaEm === "string" && input.concluidaEm.trim()
-      ? input.concluidaEm
-      : now;
+    typeof input.concluidaEm === "string" && input.concluidaEm.trim() ? input.concluidaEm : now;
 
   const validOrigens: NonNullable<ListaItem["origem"]>[] = [
     "manual",
@@ -978,8 +968,7 @@ export function registrarCompraFinalizadaDoCupom(input: {
       it.precoEstimado > 0
         ? it.precoEstimado
         : undefined;
-    const barcode =
-      typeof it.codigoBarras === "string" ? it.codigoBarras.replace(/\D/g, "") : "";
+    const barcode = typeof it.codigoBarras === "string" ? it.codigoBarras.replace(/\D/g, "") : "";
     const origem: ListaItem["origem"] =
       it.origem && validOrigens.includes(it.origem) ? it.origem : "cupom";
     snapshot.push({
@@ -1039,7 +1028,11 @@ export function registrarCompraFinalizadaDoCupom(input: {
 
   // Push para Supabase (best-effort).
   if (historicoSyncHooks.onUpsertHistorico) {
-    try { historicoSyncHooks.onUpsertHistorico(entry); } catch { /* ignore */ }
+    try {
+      historicoSyncHooks.onUpsertHistorico(entry);
+    } catch {
+      /* ignore */
+    }
   }
 
   // Alimenta histórico local de preços (dedup por historicoId).
@@ -1051,7 +1044,6 @@ export function registrarCompraFinalizadaDoCupom(input: {
 
   return entry;
 }
-
 
 function subscribeHistorico(listener: Listener): () => void {
   historicoListeners.add(listener);

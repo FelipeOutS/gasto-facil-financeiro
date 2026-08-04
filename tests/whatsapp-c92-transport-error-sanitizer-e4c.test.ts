@@ -61,7 +61,9 @@ describe("sanitizeTransportError", () => {
   });
 
   it("mensagem com URL não vaza para nenhum campo", () => {
-    const err = new Error("failed https://graph.facebook.com/v20.0/1234/messages?access_token=EAAG");
+    const err = new Error(
+      "failed https://graph.facebook.com/v20.0/1234/messages?access_token=EAAG",
+    );
     const r = base({ error: err });
     // Nenhum campo carrega mensagem livre.
     const serialized = JSON.stringify(r);
@@ -152,7 +154,9 @@ describe("sanitizeTransportError", () => {
   });
 
   it("duration_ms enorme é capado", () => {
-    expect(base({ durationMs: 999_999_999_999 }).duration_ms).toBeLessThanOrEqual(24 * 60 * 60 * 1000);
+    expect(base({ durationMs: 999_999_999_999 }).duration_ms).toBeLessThanOrEqual(
+      24 * 60 * 60 * 1000,
+    );
   });
 
   it("output determinístico contém apenas chaves permitidas", () => {

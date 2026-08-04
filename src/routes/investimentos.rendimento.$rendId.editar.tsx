@@ -7,12 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { InvestimentoRendimentoForm } from "@/components/investimentos/InvestimentoRendimentoForm";
-import {
-  listarAtivos,
-  listarRendimentos,
-  type Ativo,
-  type Rendimento,
-} from "@/lib/investimentos";
+import { listarAtivos, listarRendimentos, type Ativo, type Rendimento } from "@/lib/investimentos";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/investimentos/rendimento/$rendId/editar")({
@@ -41,10 +36,7 @@ function EditarRendimentoPage() {
     let cancel = false;
     (async () => {
       try {
-        const [as, rs] = await Promise.all([
-          listarAtivos(user.id),
-          listarRendimentos(user.id),
-        ]);
+        const [as, rs] = await Promise.all([listarAtivos(user.id), listarRendimentos(user.id)]);
         if (cancel) return;
         setAtivos(as);
         setRend(rs.find((r) => r.id === rendId) ?? null);
@@ -55,10 +47,12 @@ function EditarRendimentoPage() {
         if (!cancel) setLoading(false);
       }
     })();
-    return () => { cancel = true; };
+    return () => {
+      cancel = true;
+    };
   }, [user?.id, rendId]);
 
-  const ativo = rend ? ativos.find((a) => a.id === rend.ativo_id) ?? null : null;
+  const ativo = rend ? (ativos.find((a) => a.id === rend.ativo_id) ?? null) : null;
 
   return (
     <MobileShell wide>
