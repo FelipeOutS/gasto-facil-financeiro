@@ -16,6 +16,7 @@ process.env.ADMIN_MASTER_EMAILS = "felipe.out.silva@outlook.com,michael@medeiros
 
 
 
+
 // -------- mocks --------
 const linkState: {
   link: null | {
@@ -76,9 +77,17 @@ const fakeAdmin = {
 
 mock.module("@/integrations/supabase/client.server", () => ({ supabaseAdmin: fakeAdmin }));
 mock.module("../src/integrations/supabase/client.server", () => ({ supabaseAdmin: fakeAdmin }));
+mock.module("@/server/admin-master.server", () => ({
+  hasAdminMasterRole: async (userId: string) => {
+    const isAdmin = (linkState.email === "felipe.out.silva@outlook.com"
+      || linkState.email === "michael@medeiroscenografia.com.br") && userId === "u1";
+    return isAdmin;
+  }
+}));
 mock.module("@/server/subscription.server", () => ({
   getSubscriptionForUserIdentity: async () => linkState.subscription,
 }));
+
 mock.module("./subscription.server", () => ({
   getSubscriptionForUserIdentity: async () => linkState.subscription,
 }));
@@ -108,8 +117,9 @@ const entitlementResult = () => {
     "mei_inteligente",
     "empresa",
   ]);
-  const isAdmin = linkState.email === "felipe.out.silva@outlook.com"
-    || linkState.email === "michael@medeiroscenografia.com.br";
+  const isAdmin = (linkState.email === "felipe.out.silva@outlook.com"
+    || linkState.email === "michael@medeiroscenografia.com.br") && linkState.link?.user_id === "u1";
+
   if (isAdmin) {
     return {
       allowed: true,
@@ -126,13 +136,19 @@ const entitlementResult = () => {
   return { allowed: true, reason: "allowed" };
 };
 mock.module("@/server/whatsapp-entitlement.server", () => ({
-  getWhatsAppEntitlement: async () => entitlementResult(),
-  assertWhatsAppEntitlement: async () => {
+  getWhatsAppEntitlement: async (userId: string) => {
+    // No teste `canUseWhatsAppForSender`, o userId passado é o do link (u1).
+    // O mock de entitlement deve respeitar o email atual do linkState.
+    const r = entitlementResult();
+    return r;
+  },
+  assertWhatsAppEntitlement: async (userId: string) => {
     const r = entitlementResult();
     if (!r.allowed) throw new Response("blocked", { status: 403 });
     return r;
   },
 }));
+
 
 
 const {

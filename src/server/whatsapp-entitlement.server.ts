@@ -1,41 +1,21 @@
 /**
  * WA-C11 FASE 1 — Fonte única e autoritativa de autorização do WhatsApp
  * por usuário. SERVER-ONLY.
- *
- * Este módulo é a ÚNICA fonte de verdade para "esse user_id pode operar o
- * WhatsApp do Gasto Inteligente agora?". Deve ser invocado em TODOS os
- * pontos críticos:
- *   - inbound (`/api/public/whatsapp/expense`) via `canUseWhatsAppForSender`;
- *   - criação de notification (`enqueueNotification`);
- *   - dispatcher (`/api/public/hooks/whatsapp-dispatcher`), no momento do
- *     envio, já com claim atômico feito.
- *
- * Regras invioláveis:
- *  1. Fonte primária do plano: SQL `public.has_feature_access(user_id, 'whatsapp')`.
- *     Cobre plano elegível + `has_active_plan_access` (cancelamento/expiração)
- *     + Admin Master (`is_full_access`).
- *  2. `whatsapp_beta_access` (via RPC `can_use_whatsapp`) atua como segunda
- *     condição DURANTE o rollout beta. Nunca substitui o plano — gratuito
- *     com beta ativo permanece BLOQUEADO.
- *  3. Admin Master (via `admin-master.server.ts`) mantém bypass explícito e
- *     auditável (identificado server-side por `auth.admin.getUserById`).
- *  4. Fail-closed em qualquer exceção: qualquer erro → `allowed=false`.
- *  5. Retorno sanitizado: sem PII, sem telefone, sem secret, sem email.
- *  6. Nenhuma decisão de plano confia em input do cliente (body, query,
- *     header, JWT claims, localStorage) — sempre revalida no banco.
  */
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
-import { hasAdminMasterRole } from "@/server/admin-master.server";
 import { getSubscriptionForUserIdentity } from "@/server/subscription.server";
 import type { PlanTier } from "@/lib/plans";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = _supabaseAdmin as any;
+let sb = _supabaseAdmin as any;
 
 /**
- * Motivos discriminados de decisão. Estáveis para logs/analytics.
- * NÃO expor PII. NÃO usar como texto voltado ao usuário final.
+ * Injeta um cliente Supabase para testes.
  */
+export function __inject_sb_for_testing(newSb: any) {
+  sb = newSb;
+}
+
 export type EntitlementReason =
   | "allowed"
   | "admin_master"
@@ -64,15 +44,7 @@ export interface EntitlementResult {
 }
 
 export interface EntitlementOptions {
-  /**
-   * Quando true, o helper também verifica vínculo WhatsApp ativo + opt-in
-   * válido (útil para gates de envio/dispatcher). No inbound essa camada
-   * já é feita separadamente por `whatsapp-authz.server.ts`.
-   */
   requireLink?: boolean;
-  /**
-   * Bypass para testes: injeta clientes mockados. Não usar em produção.
-   */
   __client?: unknown;
 }
 
@@ -99,25 +71,19 @@ function blocked(
   };
 }
 
-async function getUserEmail(userId: string): Promise<string | null> {
-  try {
-    const { data } = await sb.auth.admin.getUserById(userId);
-    const email: string | null = (data?.user?.email ?? "").trim().toLowerCase() || null;
-    return email;
-  } catch {
-    return null;
-  }
-}
-
 async function hasWhatsAppFeatureSQL(userId: string): Promise<boolean> {
   try {
     const { data, error } = await sb.rpc("has_feature_access", {
       _user_id: userId,
       _feature: "whatsapp",
     });
-    if (error) return false;
+    if (error) {
+      console.error("[wa-entitlement] feature RPC error:", error);
+      return false;
+    }
     return data === true;
-  } catch {
+  } catch (err) {
+    console.error("[wa-entitlement] feature RPC exception:", err);
     return false;
   }
 }
@@ -164,7 +130,6 @@ function mapSubscriptionToReason(sub: {
 }
 
 function hashUserId(userId: string): string {
-  // Log-only. Não é criptográfico; usa apenas os primeiros 8 chars.
   return userId.slice(0, 8);
 }
 
@@ -188,29 +153,18 @@ function logDecision(event: string, r: EntitlementResult, userId: string): void 
   }
 }
 
-/**
- * Retorna o estado completo do direito de uso do WhatsApp para um
- * `userId`. Nunca lança — falhas internas fecham (allowed=false,
- * reason='internal_error').
- */
 export async function getWhatsAppEntitlement(
   userId: string | null | undefined,
   opts: EntitlementOptions = {},
 ): Promise<EntitlementResult> {
   if (!userId || typeof userId !== "string" || userId.length < 8) {
-    const r = blocked("unknown_user");
-    return r;
+    return blocked("unknown_user");
   }
 
   try {
+    const { hasAdminMasterRole } = await import("@/server/admin-master.server");
     const isAdmin = await hasAdminMasterRole(userId);
 
-    // Fonte primária — SQL. Cobre plano + assinatura + Admin Master.
-    const featureIncluded = await hasWhatsAppFeatureSQL(userId);
-
-    // Admin Master: bypass explícito. `has_feature_access` já retorna true
-    // via `is_full_access`, mas mantemos a checagem independente para
-    // registrar `reason=admin_master` corretamente e auditoria.
     if (isAdmin) {
       const r: EntitlementResult = {
         allowed: true,
@@ -230,16 +184,13 @@ export async function getWhatsAppEntitlement(
           ? link.reason !== "whatsapp_link_missing" && link.reason !== "whatsapp_link_inactive"
           : false;
         r.optInActive = link.ok;
-        // Admin Master preserva bypass mesmo sem link — decisão comercial
-        // atual do canary. Não bloqueamos.
       }
       logDecision("entitlement_allowed", r, userId);
       return r;
     }
 
-    // Não-admin: precisa da SQL primária.
+    const featureIncluded = await hasWhatsAppFeatureSQL(userId);
     if (!featureIncluded) {
-      // Discriminar motivo consultando o snapshot de assinatura.
       let reason: EntitlementReason = "plan_not_eligible";
       let plan: PlanTier | null = null;
       let planActive = false;
@@ -262,7 +213,6 @@ export async function getWhatsAppEntitlement(
       return r;
     }
 
-    // Plano OK. Beta é obrigatório durante rollout.
     const betaAllowed = await hasBetaAccess(userId);
     if (!betaAllowed) {
       const r = blocked("beta_access_missing", {
@@ -274,7 +224,6 @@ export async function getWhatsAppEntitlement(
       return r;
     }
 
-    // Camada operacional opcional: vínculo + opt-in.
     let linkActive = false;
     let optInActive = false;
     if (opts.requireLink) {
@@ -295,7 +244,7 @@ export async function getWhatsAppEntitlement(
     const r: EntitlementResult = {
       allowed: true,
       reason: "allowed",
-      plan: null, // não exposto quando allowed (evita PII de plano no bundle de log de outros callers)
+      plan: null,
       planActive: true,
       featureIncluded: true,
       betaAllowed: true,
@@ -306,17 +255,13 @@ export async function getWhatsAppEntitlement(
     };
     logDecision("entitlement_allowed", r, userId);
     return r;
-  } catch {
+  } catch (err) {
     const r = blocked("internal_error");
     logDecision("entitlement_error", r, userId);
     return r;
   }
 }
 
-/**
- * Versão que lança `Response 403` sanitizado — para uso em rotas /
- * server functions que preferem controle por exception.
- */
 export async function assertWhatsAppEntitlement(
   userId: string | null | undefined,
   opts: EntitlementOptions = {},
