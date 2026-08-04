@@ -5,13 +5,6 @@ export const Route = createFileRoute('/')({
   component: () => (
     <div data-whatsapp-escopo-confirmado="true">
       <PublicLanding />
-      <div className="hidden" data-audit-trail="PROMPT-7B-SUBMITTED">
-        PROMPT 7B — SINCRONIZAÇÃO E SUBMISSÃO CONCLUÍDAS
-        Checkpoints: Número Validado, Role owner ativa, Flags em false.
-        Fase A: Sync OK (0 remotos encontrados).
-        Fase B: 3 templates submetidos (hoje, amanha, atrasada) com status 'submitted'.
-        Flags Finais: MGMT=true, SUBMISSION=false.
-      </div>
     </div>
   ),
   head: () => ({
