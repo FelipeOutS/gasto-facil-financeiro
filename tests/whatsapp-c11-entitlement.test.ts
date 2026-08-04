@@ -57,6 +57,7 @@ mock.module("@/integrations/supabase/client.server", () => ({
   }
 }));
 
+// Importação via caminho relativo para forçar fresh evaluation
 import { getWhatsAppEntitlement, assertWhatsAppEntitlement } from "../src/server/whatsapp-entitlement.server";
 
 beforeEach(() => {

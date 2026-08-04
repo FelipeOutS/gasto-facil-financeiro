@@ -9,12 +9,6 @@ import type { PlanTier } from "@/lib/plans";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let sb = _supabaseAdmin as any;
 
-/**
- * Injeta um cliente Supabase para testes.
- */
-export function __inject_sb_for_testing(newSb: any) {
-  sb = newSb;
-}
 
 export type EntitlementReason =
   | "allowed"
