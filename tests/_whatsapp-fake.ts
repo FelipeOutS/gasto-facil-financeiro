@@ -3,7 +3,9 @@ import { mock } from "bun:test";
 export const state = {
   inserts: [] as Array<{ table: string; row: Record<string, unknown> }>,
   pendingRow: null as any,
-  cartoesData: [] as Record<string, unknown>[],
+  cartoesData: [
+    { id: "c-nu", nome: "Nubank", user_id: "u1", ultimos_digitos: "1234" }
+  ] as Record<string, unknown>[],
   categoriasData: [
     { id: "cat-out", legacy_id: "outros", nome: "Outros", user_id: "u1" },
     { id: "cat-int", legacy_id: "internet", nome: "Internet", user_id: "u1" },
@@ -19,17 +21,14 @@ const PENDING_STATES = [
 
 function makeBuilder(table: string): any {
   const ctx: any = { 
-    table, 
-    op: "select", 
-    payload: null, 
+    table, op: "select", payload: null, 
     filters: {} as Record<string, any>, 
     inFilters: {} as Record<string, any[]>,
-    single: false,
-    selectCols: "*"
+    single: false, selectCols: "*"
   };
 
   const finalize = async () => {
-    // 1. Caso especial: Tabelas Fixas / Autorização
+    // 1. Tabelas Fixas
     if (ctx.op === "select") {
       if (table === "whatsapp_links") {
         const link = { user_id: "u1", telefone: "5511999998888", ativo: true, opt_in_em: "2026-01-01T00:00:00Z", revogado_em: null };
@@ -42,78 +41,69 @@ function makeBuilder(table: string): any {
     const matchesFilters = (row: Record<string, unknown>, idx: number) => {
       for (let [col, val] of Object.entries(ctx.filters)) {
         let actual = row[col];
-        if (col.includes("->>")) {
-           const parts = col.split("->>");
-           actual = (row[parts[0]] as any)?.[parts[1]];
-        }
+        if (col.includes("->>")) actual = (row[col.split("->>")[0]] as any)?.[col.split("->>")[1]];
         if (col === "id" && !row.id) actual = `m-${idx + 1}`;
         if (actual !== val) return false;
       }
       for (let [col, vals] of Object.entries(ctx.inFilters)) {
         let actual = row[col];
-        if (col.includes("->>")) {
-           const parts = col.split("->>");
-           actual = (row[parts[0]] as any)?.[parts[1]];
-        }
+        if (col.includes("->>")) actual = (row[col.split("->>")[0]] as any)?.[col.split("->>")[1]];
         if (col === "id" && !row.id) actual = `m-${idx + 1}`;
         if (!vals.includes(actual)) return false;
       }
       return true;
     };
 
-    // 2. INSERT
+    const syncPending = () => {
+      const last = state.inserts.findLast(i => 
+        i.table === "whatsapp_messages" && 
+        i.row.user_id && i.row.telefone && 
+        !["salva", "cancelada", "expirada"].includes(i.row.status as string)
+      )?.row;
+      state.pendingRow = last ? { 
+        id: last.id, status: last.status, 
+        session: last.parsed || last.session, 
+        recebida_em: last.recebida_em, gasto_id: last.gasto_id || null 
+      } : null;
+    };
+
     if (ctx.op === "insert") {
       const rows = Array.isArray(ctx.payload) ? ctx.payload : [ctx.payload];
-      const insertedRows: any[] = [];
-      for (const r of rows) {
+      const inserted: any[] = rows.map(r => {
         const newRow = { ...r, id: r.id || `m-${state.inserts.length + 1}`, recebida_em: r.recebida_em || new Date().toISOString() };
         state.inserts.push({ table, row: newRow });
-        insertedRows.push(newRow);
-      }
-      const lastRow = insertedRows[insertedRows.length - 1];
-      if (table === "whatsapp_messages" && PENDING_STATES.includes(lastRow.status as string)) {
-        state.pendingRow = { id: lastRow.id as string, status: lastRow.status as string, session: lastRow.parsed as Record<string, unknown>, recebida_em: lastRow.recebida_em, gasto_id: lastRow.gasto_id || null };
-      }
-      return { data: insertedRows, error: null };
+        return newRow;
+      });
+      if (table === "whatsapp_messages") syncPending();
+      return { data: ctx.single ? inserted[0] : inserted, error: null };
     }
 
-    // 3. UPDATE
     if (ctx.op === "update") {
-      let matchedRows: any[] = [];
+      let matched: any[] = [];
       state.inserts.forEach((entry, idx) => {
         if (entry.table === table && matchesFilters(entry.row, idx)) {
            entry.row = { ...entry.row, ...ctx.payload };
-           matchedRows.push(entry.row);
+           matched.push(entry.row);
         }
       });
-      if (table === "whatsapp_messages") {
-        const lastMatching = state.inserts.findLast(i => i.table === table && i.row.user_id && i.row.telefone && !["salva", "cancelada", "expirada"].includes(i.row.status as string))?.row;
-        state.pendingRow = lastMatching ? { id: lastMatching.id as string, status: lastMatching.status as string, session: lastMatching.parsed as Record<string, unknown>, recebida_em: lastMatching.recebida_em, gasto_id: lastMatching.gasto_id || null } : null;
-      }
-      if (ctx.single) return { data: matchedRows[0] || null, error: null };
-      return { data: matchedRows.length > 0 ? matchedRows : null, error: null };
+      if (table === "whatsapp_messages") syncPending();
+      return { data: ctx.single ? (matched[0] || null) : (matched.length > 0 ? matched : null), error: null };
     }
 
-    // 4. SELECT / FALLBACK
     const rows = state.inserts.filter((i, idx) => i.table === table && matchesFilters(i.row, idx)).map(i => i.row);
-    if (ctx.single) return { data: rows[0] || null, error: null };
-    return { data: rows, error: null };
+    return { data: ctx.single ? (rows[0] || null) : rows, error: null };
   };
 
   const builder: any = {
-    select: (cols: string = "*") => { ctx.selectCols = cols; return builder; },
-    insert(p: any) { ctx.op = "insert"; ctx.payload = p; return builder; },
-    update(p: any) { ctx.op = "update"; ctx.payload = p; return builder; },
-    delete() { ctx.op = "delete"; return builder; },
-    eq(c: string, v: any) { ctx.filters[c] = v; return builder; },
-    in(c: string, v: any[]) { ctx.inFilters[c] = v; return builder; },
-    gte() { return builder; },
-    not() { return builder; },
-    order() { return builder; },
-    limit() { return builder; },
+    select: (c: string = "*") => { ctx.selectCols = c; return builder; },
+    insert: (p: any) => { ctx.op = "insert"; ctx.payload = p; return builder; },
+    update: (p: any) => { ctx.op = "update"; ctx.payload = p; return builder; },
+    eq: (c: string, v: any) => { ctx.filters[c] = v; return builder; },
+    in: (c: string, v: any[]) => { ctx.inFilters[c] = v; return builder; },
     maybeSingle: () => { ctx.single = true; return finalize(); },
     single: () => { ctx.single = true; return finalize(); },
     selectSingle: () => { ctx.single = true; return finalize(); },
+    limit: () => builder, order: () => builder, gte: () => builder, not: () => builder,
     then: (res: any) => finalize().then(res),
   };
   return builder;
@@ -126,7 +116,7 @@ export const fakeAdmin = {
       const c = state.contasData.find(x => x.id === a.p_conta_id);
       if (c?.status === "pago") return { data: [{ result: c.gasto_id ? "noop" : "inconsistent" }] };
       const gid = `g-${state.inserts.length + 1}`;
-      state.inserts.push({ table: "gastos", row: { id: gid, user_id: "u1", descricao: c?.nome, valor: c?.valor, categoria_id: c?.categoria_id, forma_pagamento: c?.forma_pagamento || "outros", origem: "whatsapp", data: new Date().toISOString().slice(0, 10) } });
+      state.inserts.push({ table: "gastos", row: { id: gid, user_id: "u1", descricao: c?.nome, valor: c?.valor, categoria_id: c?.categoria_id, forma_pagamento: c?.forma_pagamento || "outros", origem: "whatsapp", data: new Date().toISOString().slice(0, 10), cartao_id: c?.cartao_id || null } });
       const idx = state.contasData.findIndex(x => x.id === a.p_conta_id);
       if (idx !== -1) state.contasData[idx] = { ...state.contasData[idx], status: "pago", gasto_id: gid };
       return { data: [{ result: "paid", gasto_id: gid }] };

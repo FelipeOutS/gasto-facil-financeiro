@@ -6,7 +6,7 @@ const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.serve
 const tel = "5511999998888";
 
 beforeEach(() => {
-  resetState();
+  resetState(); state.cartoesData = [{ id: "c-nu", nome: "Nubank", user_id: "u1", ultimos_digitos: "1234" }];
 });
 
 test("Pix completo NÃO grava gasto antes da confirmação", async () => {
@@ -136,7 +136,7 @@ test("Confirmação salva como crédito vincula cartao_id correto", async () => 
 
 test("Variantes de confirmação salvam o gasto", async () => {
   for (const palavra of ["ok", "salvar", "confirmar", "✅"]) {
-    resetState();
+    resetState(); state.cartoesData = [{ id: "c-nu", nome: "Nubank", user_id: "u1", ultimos_digitos: "1234" }];
     await processarMensagemWhatsApp({
       telefone: tel, texto: "Uber 29,90 pix", external_id: `v-${palavra}-1`,
     });
