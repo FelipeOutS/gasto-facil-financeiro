@@ -28,13 +28,14 @@ function makeBuilder(table: string): any {
   };
 
   const finalize = async () => {
-    // Caso especial: whatsapp_links (autorização)
+    // Autorização
     if (table === "whatsapp_links" && ctx.op === "select") {
       const link = { user_id: "u1", ativo: true, opt_in_em: "2026-01-01T00:00:00Z", revogado_em: null };
       return ctx.single ? { data: link, error: null } : { data: [link], error: null };
     }
 
     const matchesFilters = (row: Record<string, unknown>, idx: number) => {
+      // Filtros EQ
       for (let [col, val] of Object.entries(ctx.filters)) {
         let actual = row[col];
         if (col.includes("->>")) {
@@ -44,8 +45,13 @@ function makeBuilder(table: string): any {
         if (col === "id" && !row.id) actual = `m-${idx + 1}`;
         if (actual !== val) return false;
       }
+      // Filtros IN
       for (let [col, vals] of Object.entries(ctx.inFilters)) {
         let actual = row[col];
+        if (col.includes("->>")) {
+           const parts = col.split("->>");
+           actual = (row[parts[0]] as any)?.[parts[1]];
+        }
         if (col === "id" && !row.id) actual = `m-${idx + 1}`;
         if (!vals.includes(actual)) return false;
       }
@@ -85,6 +91,8 @@ function makeBuilder(table: string): any {
            matchedRows.push(entry.row);
         }
       });
+      
+      // Sincronização de pendingRow (Estado de Sessão)
       if (table === "whatsapp_messages") {
         const lastMatching = state.inserts.findLast(i => 
           i.table === table && 
@@ -104,7 +112,7 @@ function makeBuilder(table: string): any {
           state.pendingRow = null;
         }
       }
-      // Readback Guard espera array de linhas afetadas ou objeto se .single()
+
       if (ctx.single) return { data: matchedRows[0] || null, error: null };
       return { data: matchedRows.length > 0 ? matchedRows : null, error: null };
     }
