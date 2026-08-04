@@ -2,11 +2,8 @@ import { createFileRoute } from '@tanstack/react-router';
 import { PublicLanding } from '@/components/landing/PublicLanding';
 
 export const Route = createFileRoute('/')({
-  component: () => (
-    <div data-whatsapp-escopo-confirmado="true">
-      <PublicLanding />
-    </div>
-  ),
+  component: () => <PublicLanding />,
+
   head: () => ({
     title: 'Gasto Inteligente - Seu Controle Financeiro via WhatsApp',
     meta: [
