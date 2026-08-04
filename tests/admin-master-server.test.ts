@@ -4,11 +4,11 @@
  * Cobre a fonte única server-side de Admin Master (WA-B1 + WA-B4 fail-closed).
  */
 import { test, expect, beforeEach, afterEach, describe } from "bun:test";
+import * as mod from "../src/server/admin-master.server";
 
 const MODULE_PATH = "../src/server/admin-master.server";
 
 async function load() {
-  const mod = await import(MODULE_PATH);
   mod.__resetAdminMasterCacheForTests();
   return mod;
 }
