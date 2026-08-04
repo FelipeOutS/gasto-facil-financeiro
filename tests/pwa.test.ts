@@ -25,14 +25,15 @@ describe('PWA 8B Validation', () => {
 
   it('should have controlled update in sw.js', () => {
     const swContent = fs.readFileSync(path.resolve(process.cwd(), 'public/sw.js'), 'utf-8');
-    // Ensure skipWaiting is NOT called automatically (only in comments or message handler)
     const installBlock = swContent.match(/self\.addEventListener\('install'[\s\S]*?\}\);/)?.[0] || "";
-    const activeSkipWaiting = installBlock.split('\n')
+    
+    // Filtra comentários para verificar se a chamada está ativa
+    const activeLines = installBlock.split('\n')
       .filter(line => !line.trim().startsWith('//'))
       .join('\n');
     
-    expect(activeSkipWaiting).not.toContain('self.skipWaiting()');
-    expect(swContent).toContain('event.data === \'SKIP_WAITING\'');
+    expect(activeLines).not.toContain('self.skipWaiting()');
+    expect(swContent).toContain("event.data === 'SKIP_WAITING'");
   });
 
   it('should block all sensitive patterns and auth headers', () => {
