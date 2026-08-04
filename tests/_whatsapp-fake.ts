@@ -13,12 +13,6 @@ export const state = {
   contasData: [] as Record<string, any>[],
 };
 
-const PENDING_STATES = [
-  "aguardando_confirmacao", "aguardando_forma_pagamento", "aguardando_cartao",
-  "aguardando_descricao_e_valor_gasto", "conta_pagamento_aguardando_confirmacao",
-  "conta_pagamento_aguardando_escolha", "conta_pagamento_aguardando_data"
-];
-
 function makeBuilder(table: string): any {
   const ctx: any = { 
     table, op: "select", payload: null, 
@@ -28,7 +22,6 @@ function makeBuilder(table: string): any {
   };
 
   const finalize = async () => {
-    // 1. Tabelas Fixas
     if (ctx.op === "select") {
       if (table === "whatsapp_links") {
         const link = { user_id: "u1", telefone: "5511999998888", ativo: true, opt_in_em: "2026-01-01T00:00:00Z", revogado_em: null };
@@ -87,7 +80,9 @@ function makeBuilder(table: string): any {
         }
       });
       if (table === "whatsapp_messages") syncPending();
-      return { data: ctx.single ? (matched[0] || null) : (matched.length > 0 ? matched : null), error: null };
+      // Readback Guard: .select("id, status")
+      const resultData = matched.map(r => ({ id: r.id, status: r.status }));
+      return { data: ctx.single ? (resultData[0] || null) : (resultData.length > 0 ? resultData : null), error: null };
     }
 
     const rows = state.inserts.filter((i, idx) => i.table === table && matchesFilters(i.row, idx)).map(i => i.row);
@@ -103,7 +98,7 @@ function makeBuilder(table: string): any {
     maybeSingle: () => { ctx.single = true; return finalize(); },
     single: () => { ctx.single = true; return finalize(); },
     selectSingle: () => { ctx.single = true; return finalize(); },
-    limit: () => builder, order: () => builder, gte: () => builder, not: () => builder,
+    limit: () => builder, order: () => builder, gte: () => builder, not: () => builder, delete: () => builder,
     then: (res: any) => finalize().then(res),
   };
   return builder;
@@ -135,6 +130,7 @@ mock.module("@/server/whatsapp-merchant-memory.server", () => ({ lookupMerchantM
 
 export function resetState(o?: any) { 
   state.inserts = []; state.pendingRow = null; 
+  state.cartoesData = [{ id: "c-nu", nome: "Nubank", user_id: "u1", ultimos_digitos: "1234" }];
   state.contasData = o?.contas ?? [];
   if (o?.contas) o.contas.forEach((c: any) => state.inserts.push({ table: "contas_a_pagar", row: c }));
 }

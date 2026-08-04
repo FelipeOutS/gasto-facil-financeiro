@@ -74,7 +74,7 @@ test("mensagem duplicada pelo webhook não cria gasto duplicado", async () => {
   const dup = await processarMensagemWhatsApp({
     telefone: tel, texto: "sim", external_id: "w2",
   });
-  expect(dup.status).toBe("sem_pendencia");
+  expect(dup.status).toBe("duplicada");
   expect(gastosInserts()).toHaveLength(1);
 });
 
