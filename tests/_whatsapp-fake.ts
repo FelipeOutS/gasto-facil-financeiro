@@ -18,7 +18,7 @@ export const state = {
     user_id: string;
     telefone: string;
     ativo: boolean;
-    opt_in_em: string | null;
+    opt_in_em: string | null; plan?: string; feature_whatsapp?: boolean;
     revogado_em: string | null;
   },
   categoriasData: [
