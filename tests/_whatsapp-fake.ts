@@ -28,14 +28,23 @@ function makeBuilder(table: string): any {
   };
 
   const finalize = async () => {
+    if (table === "whatsapp_links") {
+      // Mock universal para links de WhatsApp
+      const link = { 
+        user_id: "u1", 
+        ativo: true, 
+        opt_in_em: "2026-01-01T00:00:00Z", 
+        revogado_em: null 
+      };
+      return ctx.single ? { data: link, error: null } : { data: [link], error: null };
+    }
+
     const matchesFilters = (row: Record<string, unknown>, idx: number) => {
-      // Filtros EQ
       for (let [col, val] of Object.entries(ctx.filters)) {
         let actual = row[col];
         if (col === "id" && !row.id) actual = `m-${idx + 1}`;
         if (actual !== val) return false;
       }
-      // Filtros IN
       for (let [col, vals] of Object.entries(ctx.inFilters)) {
         let actual = row[col];
         if (col === "id" && !row.id) actual = `m-${idx + 1}`;
@@ -97,19 +106,6 @@ function makeBuilder(table: string): any {
         }
       }
       return { data: matchedRows.length > 0 ? matchedRows : null, error: null };
-    }
-
-    if (table === "whatsapp_links") {
-      // Forçar retorno para canUseWhatsAppForSender passar
-      return { 
-        data: [{ 
-          user_id: "u1", 
-          ativo: true, 
-          opt_in_em: "2026-01-01T00:00:00Z", 
-          revogado_em: null 
-        }], 
-        error: null 
-      };
     }
 
     const rows = state.inserts
