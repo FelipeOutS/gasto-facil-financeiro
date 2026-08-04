@@ -61,4 +61,23 @@ export const whatsappAdminListLocalTemplates = createServerFn({ method: "GET" })
     }));
   });
 
+export const whatsappAdminSubmitTemplate = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({ internalKey: z.string(), version: z.number() }).parse(d))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    await assertAdminMaster(context.userId);
+    const { buildServiceRoleCatalogLoader } = await import("@/server/whatsapp-meta-templates-catalog.server");
+    const { submitTemplateToMeta } = await import("@/server/whatsapp-meta-template-submission.server");
+    
+    const loader = await buildServiceRoleCatalogLoader();
+    const local = await loader.getByInternalKeyAndVersion(data.internalKey, data.version);
+    
+    if (!local) {
+      return { ok: false, reason: "not_found" };
+    }
+
+    return await submitTemplateToMeta(local);
+  });
+
+
 
