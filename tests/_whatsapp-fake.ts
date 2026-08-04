@@ -79,8 +79,7 @@ function makeBuilder(table: string): any {
           state.pendingRow = null;
         }
       }
-      // CRITICAL: Always return at least one row if something was updated to satisfy Readback Guard
-      return { data: matchedRows.length > 0 ? matchedRows : [{}], error: null };
+      return { data: matchedRows, error: null };
     }
 
     if (ctx.op === "delete") {
