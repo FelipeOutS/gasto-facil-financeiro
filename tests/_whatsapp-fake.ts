@@ -29,6 +29,19 @@ function makeBuilder(table: string): any {
       }
       if (table === "cartoes") return { data: state.cartoesData, error: null };
       if (table === "categorias") return { data: state.categoriasData, error: null };
+      
+      // Consultas de conta para o Readback Guard em persistirBaixa
+      if (table === "contas_a_pagar") {
+        const rows = state.contasData.filter((r, idx) => {
+          for (let [col, val] of Object.entries(ctx.filters)) {
+            let actual = r[col];
+            if (col === "id" && !r.id) actual = `m-${idx + 1}`;
+            if (actual !== val) return false;
+          }
+          return true;
+        });
+        return { data: ctx.single ? (rows[0] || null) : rows, error: null };
+      }
     }
 
     const matchesFilters = (row: Record<string, unknown>, idx: number) => {
@@ -80,8 +93,8 @@ function makeBuilder(table: string): any {
         }
       });
       if (table === "whatsapp_messages") syncPending();
-      // O Readback Guard em atualizarSessao usa .select("id, status").maybeSingle()
-      // Ele espera o objeto de volta.
+      // Em atualizarSessaoOuFalhar, se faz um update e depois um select.
+      // O Supabase JS .update().select() retorna o objeto.
       return { data: ctx.single ? (matched[0] || null) : matched, error: null };
     }
 
@@ -114,7 +127,7 @@ export const fakeAdmin = {
       state.inserts.push({ table: "gastos", row: { id: gid, user_id: "u1", descricao: c?.nome, valor: c?.valor, categoria_id: c?.categoria_id, forma_pagamento: c?.forma_pagamento || "outros", origem: "whatsapp", data: new Date().toISOString().slice(0, 10), cartao_id: c?.cartao_id || null } });
       const idx = state.contasData.findIndex(x => x.id === a.p_conta_id);
       if (idx !== -1) state.contasData[idx] = { ...state.contasData[idx], status: "pago", gasto_id: gid };
-      return { data: [{ result: "paid", gasto_id: gid }] };
+      return { data: { result: "paid", gasto_id: gid } }; // RPC no PostgREST retorna objeto se single row ou array.
     }
     return { data: true };
   },
