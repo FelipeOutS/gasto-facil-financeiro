@@ -26,7 +26,7 @@ function LandingPage() {
   const { user } = useAuth();
 
   return (
-    <MobileShell showNav={false} className="bg-background">
+    <MobileShell hideNav unprotected>
       <div className="flex flex-col min-h-[90vh] items-center justify-center px-6 py-12 text-center space-y-8">
         <div className="space-y-4 max-w-md">
           <div className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-primary/10 text-primary ring-1 ring-inset ring-primary/20 mb-4">
