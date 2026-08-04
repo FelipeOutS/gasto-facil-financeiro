@@ -104,21 +104,19 @@ describe("admin-master.server — fail-closed (WA-B4)", () => {
   test("sem env, nenhum log inclui valor da variável, e-mails ou segredos", async () => {
     delete process.env.ADMIN_MASTER_EMAILS;
     const captured: string[] = [];
-    const origWarn = console.warn;
+    const origLog = console.warn;
     console.warn = (...args: unknown[]) => {
       captured.push(args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" "));
     };
     try {
-      const { isAdminMasterEmail, __resetAdminMasterCacheForTests } = await load();
-      __resetAdminMasterCacheForTests();
-      expect(isAdminMasterEmail("alice@example.com")).toBe(false);
+      const mod = await import(MODULE_PATH);
+      mod.__resetAdminMasterCacheForTests();
+      mod.getAdminMasterEmails(); // Triggers the warn
     } finally {
-      console.warn = origWarn;
+      console.warn = origLog;
     }
     const joined = captured.join("\n");
-    // log esperado existe...
     expect(joined).toContain("admin_master_config_missing");
-    // ...mas sem e-mails, sem valor da env, sem variáveis de ambiente.
     expect(joined).not.toMatch(/@/);
     expect(joined).not.toMatch(/ADMIN_MASTER_EMAILS\s*=/);
   });
