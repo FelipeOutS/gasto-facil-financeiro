@@ -12,8 +12,8 @@ vi.mock('../src/integrations/supabase/client.server', () => ({
 }));
 
 describe('Admin Master Authorization Audit', () => {
-  const adminId = 'admin-uuid';
-  const commonId = 'user-uuid';
+  const adminId = '11111111-1111-4111-8111-111111111111';
+  const commonId = '22222222-2222-4222-8222-222222222222';
   const adminEmail = 'admin@gastointeligente.com.br';
   const commonEmail = 'user@example.com';
 
