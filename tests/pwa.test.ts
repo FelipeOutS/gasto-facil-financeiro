@@ -26,7 +26,7 @@ describe("PWA 8B Validation", () => {
   it("should have controlled update in sw.js", () => {
     const swContent = fs.readFileSync(path.resolve(process.cwd(), "public/sw.js"), "utf-8");
     const installBlock =
-      swContent.match(/self\.addEventListener\('install'[\s\S]*?\}\);/)?.[0] || "";
+      swContent.match(/self\.addEventListener\("install"[\s\S]*?\}\);/)?.[0] || "";
 
     // Filtra comentários para verificar se a chamada está ativa
     const activeLines = installBlock
@@ -35,13 +35,13 @@ describe("PWA 8B Validation", () => {
       .join("\n");
 
     expect(activeLines).not.toContain("self.skipWaiting()");
-    expect(swContent).toContain("event.data === 'SKIP_WAITING'");
+    expect(swContent).toContain('event.data === "SKIP_WAITING"');
   });
 
   it("should block all sensitive patterns and auth headers", () => {
     const swContent = fs.readFileSync(path.resolve(process.cwd(), "public/sw.js"), "utf-8");
-    expect(swContent).toContain("'mercadopago.com'");
-    expect(swContent).toContain("request.headers.has('Authorization')");
+    expect(swContent).toContain('"mercadopago.com"');
+    expect(swContent).toContain('request.headers.has("Authorization")');
     expect(swContent).toContain("const isSensitive = SENSITIVE_PATTERNS.some");
   });
 
