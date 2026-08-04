@@ -590,7 +590,13 @@ function PrecoComunitarioPage() {
             title: t("communityPrices.actions.scanTitle"),
             desc: t("communityPrices.actions.scanDescription"),
             cta: t("communityPrices.v2.actions.scanCta"),
-            onClick: () => setBatchOpen(true),
+            onClick: () => {
+              if (isAdminMaster) {
+                setBatchOpen(true);
+              } else {
+                notify.info("Importação via Panfleto restrita para manutenção.");
+              }
+            },
           },
           {
             key: "online",
@@ -603,7 +609,7 @@ function PrecoComunitarioPage() {
               if (isAdminMaster) {
                 setOnlineImportOpen(true);
               } else {
-                notify.info("Importação online temporariamente em manutenção para melhorias.");
+                notify.info("Importação online restrita para manutenção.");
               }
             },
 

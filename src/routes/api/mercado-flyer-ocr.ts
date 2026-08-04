@@ -652,6 +652,14 @@ export const Route = createFileRoute("/api/mercado-flyer-ocr")({
         });
         if (rl) return rl;
 
+        // WA-SEC-JOANIN-01 — Restrição total a Admin Master (owner) em produção.
+        if (!(await isAdminMasterUser(user))) {
+          return Response.json(
+            { success: false, code: "forbidden", message: "Acesso restrito para manutenção." },
+            { status: 403 }
+          );
+        }
+
         try {
           const body = (await request.json()) as {
             imageBase64?: string;
