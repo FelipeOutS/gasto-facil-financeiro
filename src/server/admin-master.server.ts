@@ -17,6 +17,7 @@ function getParsedEmails(): string[] {
   const raw = process.env.ADMIN_MASTER_EMAILS ?? "";
   if (!raw.trim()) {
     _cachedEmails = [];
+    console.warn("[admin_master_config_missing] Nenhuma env ADMIN_MASTER_EMAILS configurada ou válida.");
     return [];
   }
   _cachedEmails = Array.from(new Set(
