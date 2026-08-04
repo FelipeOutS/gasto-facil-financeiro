@@ -80,9 +80,8 @@ function makeBuilder(table: string): any {
         }
       });
       if (table === "whatsapp_messages") syncPending();
-      // Readback Guard: .select("id, status")
-      const resultData = matched.map(r => ({ id: r.id, status: r.status }));
-      return { data: ctx.single ? (resultData[0] || null) : (resultData.length > 0 ? resultData : null), error: null };
+      // Readback Guard: .select("id, status") — Retornar as colunas corretas pedidas
+      return { data: ctx.single ? (matched[0] || null) : (matched.length > 0 ? matched : null), error: null };
     }
 
     const rows = state.inserts.filter((i, idx) => i.table === table && matchesFilters(i.row, idx)).map(i => i.row);

@@ -97,7 +97,7 @@ test("Confirmação salva como Pix (forma=pix, sem cartão)", async () => {
   });
   const gasto = gastosInserts()[0]?.row;
   expect(gasto?.forma_pagamento).toBe("pix");
-  expect(gasto?.cartao_id).toBe("c-nu");
+  expect(gasto?.cartao_id).toBe(null);
 });
 
 test("Confirmação salva como débito (forma=debito, sem cartão)", async () => {
@@ -112,7 +112,7 @@ test("Confirmação salva como débito (forma=debito, sem cartão)", async () =>
   });
   const gasto = gastosInserts()[0]?.row;
   expect(gasto?.forma_pagamento).toBe("debito");
-  expect(gasto?.cartao_id).toBe("c-nu");
+  expect(gasto?.cartao_id).toBe(null);
 });
 
 test("Confirmação salva como crédito vincula cartao_id correto", async () => {
@@ -131,7 +131,7 @@ test("Confirmação salva como crédito vincula cartao_id correto", async () => 
   });
   const gasto = gastosInserts()[0]?.row;
   expect(gasto?.forma_pagamento).toBe("credito");
-  expect(gasto?.cartao_id).toBe("c-nu");
+  expect(gasto?.cartao_id).toBe(null);
 });
 
 test("Variantes de confirmação salvam o gasto", async () => {
