@@ -13,6 +13,7 @@ import {
   Zap,
   Receipt,
   XCircle,
+  RefreshCw,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { UpgradeCardsList } from "@/components/UpgradeCardsList";
@@ -133,7 +134,7 @@ function MeuPlanoPage() {
   // Quando desligado, o card aparece como informativo ("Em breve") mas o botão fica
   // desativado. Não afeta `chooseFreeAdsPlan` (a server function continua segura).
   // Usuários já em `free_ads/ativo` continuam vendo "Plano atual" normalmente.
-  const freeAdsSignupEnabled = (import.meta.env.VITE_ENABLE_FREE_ADS_SIGNUP ?? "false") === "true";
+  const freeAdsSignupEnabled = true; // Forçado para liberação comercial do plano gratuito
   const freeAdsCtaLocked =
     !freeAdsSignupEnabled && (freeAdsButtonMode === "start" || freeAdsButtonMode === "continue");
 
@@ -826,7 +827,7 @@ function MeuPlanoPage() {
                         isRecommended &&
                           "bg-gradient-to-r from-primary to-primary/85 shadow-md shadow-primary/20",
                       )}
-                      onClick={() => void handleCheckout(p.tier)}
+                      onClick={() => void escolherPlano(p.tier)}
                       disabled={submitting !== null}
                     >
                       {submitting === p.tier ? (
