@@ -29,19 +29,17 @@ function makeBuilder(table: string): any {
 
   const finalize = async () => {
     if (table === "whatsapp_links") {
-      // Mock universal para links de WhatsApp
-      const link = { 
-        user_id: "u1", 
-        ativo: true, 
-        opt_in_em: "2026-01-01T00:00:00Z", 
-        revogado_em: null 
-      };
+      const link = { user_id: "u1", ativo: true, opt_in_em: "2026-01-01T00:00:00Z", revogado_em: null };
       return ctx.single ? { data: link, error: null } : { data: [link], error: null };
     }
 
     const matchesFilters = (row: Record<string, unknown>, idx: number) => {
       for (let [col, val] of Object.entries(ctx.filters)) {
         let actual = row[col];
+        if (col.includes("->>")) {
+           const parts = col.split("->>");
+           actual = (row[parts[0]] as any)?.[parts[1]];
+        }
         if (col === "id" && !row.id) actual = `m-${idx + 1}`;
         if (actual !== val) return false;
       }
@@ -105,6 +103,7 @@ function makeBuilder(table: string): any {
           state.pendingRow = null;
         }
       }
+      // Readback Guard: crucial retornar array de linhas afetadas
       return { data: matchedRows.length > 0 ? matchedRows : null, error: null };
     }
 
