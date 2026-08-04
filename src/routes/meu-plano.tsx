@@ -820,26 +820,22 @@ function MeuPlanoPage() {
                     {isAdminMaster ? t("billing.totalAccess") : t("billing.currentPlan")}
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2">
-                    <div className="rounded-xl bg-amber-500/10 p-3 text-center">
-                      <p className="text-[10px] font-bold uppercase tracking-tight text-amber-600 dark:text-amber-400">
-                        Aguardando Liberação
-                      </p>
-                      <p className="mt-0.5 text-[10px] leading-tight text-amber-700/80 dark:text-amber-400/80">
-                        Assinaturas suspensas para homologação comercial do Mercado Pago.
-                      </p>
-                    </div>
                     <Button
                       className={cn(
-                        "w-full rounded-xl font-semibold min-h-11 opacity-50 cursor-not-allowed",
+                        "w-full rounded-xl font-semibold min-h-11",
                         isRecommended &&
                           "bg-gradient-to-r from-primary to-primary/85 shadow-md shadow-primary/20",
                       )}
-                      disabled={true}
+                      onClick={() => void handleCheckout(p.tier)}
+                      disabled={submitting !== null}
                     >
+                      {submitting === p.tier ? (
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Zap className="mr-2 h-3.5 w-3.5" />
+                      )}
                       {t("billing.subscribe")}
                     </Button>
-                  </div>
 
                 )}
                 {!isAdminMaster && !trialUsed && !isCurrent && !isPending && (
@@ -893,30 +889,24 @@ function MeuPlanoPage() {
                 })()}
               </ul>
             </div>
-            {freeAdsButtonMode !== "current" && (
-              <div className="rounded-xl bg-amber-500/10 p-3 text-center sm:max-w-[200px]">
-                <p className="text-[10px] font-bold uppercase tracking-tight text-amber-600 dark:text-amber-400">
-                  Aguardando Liberação
-                </p>
-                <p className="mt-0.5 text-[10px] leading-tight text-amber-700/80 dark:text-amber-400/80">
-                  O plano gratuito será liberado após a homologação comercial.
-                </p>
-              </div>
-            )}
             <Button
               type="button"
               size="sm"
               variant={
                 freeAdsButtonMode === "current" || freeAdsCtaLocked ? "secondary" : "default"
               }
-              disabled={true}
+              disabled={freeAdsCtaLocked || submitting !== null}
               onClick={handleChooseFreeAds}
-              className="shrink-0 rounded-xl min-h-10 opacity-50"
-              title={tp("freeAds.disabledReason")}
+              className="shrink-0 rounded-xl min-h-10"
+              title={freeAdsButtonMode === "current" ? tp("freeAds.currentBadge") : ""}
             >
-              {freeAdsButtonMode === "current"
-                ? tp("freeAds.currentBadge")
-                : tp("freeAds.comingSoon")}
+              {submitting === "free_ads" ? (
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              ) : freeAdsButtonMode === "current" ? (
+                tp("freeAds.currentBadge")
+              ) : (
+                tp("freeAds.cta")
+              )}
             </Button>
           </div>
         </section>
