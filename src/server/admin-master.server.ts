@@ -67,3 +67,11 @@ export async function assertAdminMaster(user: { id: string; email?: string | nul
     throw new Error("Forbidden: Admin Master role required");
   }
 }
+
+/**
+ * Exportado apenas para testes para limpar o cache de e-mails da env se necessário.
+ */
+export function __resetAdminMasterCacheForTests() {
+  // Atualmente não há cache de módulo, a função isAdminMasterEmail lê da env a cada chamada.
+  // Mantemos o stub para compatibilidade com a suíte de testes existente.
+}
