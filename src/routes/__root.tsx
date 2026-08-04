@@ -31,6 +31,7 @@ import { useOfflineIncomeQueue } from "@/lib/offline/use-offline-income-sync";
 import { preloadAllBankLogos, preloadAllMerchantLogos } from "@/lib/logos";
 import "@/i18n";
 import { useLocale } from "@/i18n/use-locale";
+import { PWAUpdateToast } from "@/components/pwa/PWAUpdateToast";
 
 import appCss from "../styles.css?url";
 
