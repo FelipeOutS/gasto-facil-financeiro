@@ -25,9 +25,7 @@ describe('Admin Master Authorization Audit', () => {
 
   describe('hasAdminMasterRole', () => {
     it('should return true if user has owner role in database', async () => {
-      // Usamos a implementação direta do mock ja injetado pelo vi.mock
-      const fromSpy = vi.mocked(supabaseAdmin.from);
-      fromSpy.mockReturnValue({
+      vi.mocked(supabaseAdmin.from).mockReturnValue({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         maybeSingle: vi.fn().mockResolvedValue({ data: { role: 'owner' }, error: null })
