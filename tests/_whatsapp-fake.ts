@@ -11,7 +11,7 @@ export const state = {
   contasData: [] as Record<string, any>[],
 };
 
-const PENDING = [
+const PENDING_STATES = [
   "aguardando_confirmacao", "aguardando_forma_pagamento", "aguardando_cartao",
   "aguardando_descricao_e_valor_gasto", "conta_pagamento_aguardando_confirmacao",
   "conta_pagamento_aguardando_escolha", "conta_pagamento_aguardando_data"
@@ -28,7 +28,8 @@ function makeBuilder(table: string): any {
   };
 
   const finalize = async () => {
-    if (table === "whatsapp_links") {
+    // Caso especial: whatsapp_links (autorização)
+    if (table === "whatsapp_links" && ctx.op === "select") {
       const link = { user_id: "u1", ativo: true, opt_in_em: "2026-01-01T00:00:00Z", revogado_em: null };
       return ctx.single ? { data: link, error: null } : { data: [link], error: null };
     }
@@ -64,7 +65,7 @@ function makeBuilder(table: string): any {
         insertedRows.push(newRow);
       }
       const lastRow = insertedRows[insertedRows.length - 1];
-      if (table === "whatsapp_messages" && PENDING.includes(lastRow.status as string)) {
+      if (table === "whatsapp_messages" && PENDING_STATES.includes(lastRow.status as string)) {
         state.pendingRow = {
           id: lastRow.id as string,
           status: lastRow.status as string,
@@ -103,7 +104,7 @@ function makeBuilder(table: string): any {
           state.pendingRow = null;
         }
       }
-      // CRITICAL: Return single data ifctx.single is true and we matched
+      // Readback Guard espera array de linhas afetadas ou objeto se .single()
       if (ctx.single) return { data: matchedRows[0] || null, error: null };
       return { data: matchedRows.length > 0 ? matchedRows : null, error: null };
     }
@@ -145,13 +146,9 @@ export const fakeAdmin = {
       state.inserts.push({ 
         table: "gastos", 
         row: { 
-          id: gid, 
-          descricao: c?.nome, 
-          valor: c?.valor, 
-          categoria_id: c?.categoria_id, 
-          forma_pagamento: c?.forma_pagamento || "outros", 
-          origem: "whatsapp", 
-          data: new Date().toISOString().slice(0, 10) 
+          id: gid, user_id: "u1", descricao: c?.nome, valor: c?.valor, 
+          categoria_id: c?.categoria_id, forma_pagamento: c?.forma_pagamento || "outros", 
+          origem: "whatsapp", data: new Date().toISOString().slice(0, 10) 
         } 
       });
       const contaIdx = state.contasData.findIndex(x => x.id === a.p_conta_id);
