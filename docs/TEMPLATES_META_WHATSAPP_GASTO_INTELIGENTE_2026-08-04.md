@@ -4,14 +4,15 @@ description: Registro técnico da submissão e status dos templates Meta (vencen
 type: feature
 ---
 Data: 2026-08-04
-Status Geral: PROMPT 7 PARCIAL — SUBMISSÃO OU SINCRONIZAÇÃO INCONSISTENTE (Aguardando Retentativa)
+Status Geral: PROMPT 7 CONCLUÍDO — TEMPLATES SUBMETIDOS, AGUARDANDO ANÁLISE DA META
 
 ## 1. Inventário de Templates
 | Template Interno | Nome Meta Oficial | Categoria | Idioma | Status Local | Status Meta |
 |---|---|---|---|---|---|
-| gi_conta_vencendo_hoje | gi_conta_vencendo_hoje_v1 | UTILITY | pt_BR | draft | UNKNOWN |
-| gi_conta_vencendo_amanha | gi_conta_vencendo_amanha_v1 | UTILITY | pt_BR | draft | UNKNOWN |
-| gi_conta_atrasada | gi_conta_atrasada_v1 | UTILITY | pt_BR | draft | UNKNOWN |
+| gi_conta_vencendo_hoje | gi_conta_vencendo_hoje_v1 | UTILITY | pt_BR | pending | PENDING |
+| gi_conta_vencendo_amanha | gi_conta_vencendo_amanha_v1 | UTILITY | pt_BR | pending | PENDING |
+| gi_conta_atrasada | gi_conta_atrasada_v1 | UTILITY | pt_BR | pending | PENDING |
+
 
 ## 2. Auditoria do Banco (Local)
 - **Tabela**: `whatsapp_meta_templates`
@@ -51,6 +52,7 @@ Status Geral: PROMPT 7 PARCIAL — SUBMISSÃO OU SINCRONIZAÇÃO INCONSISTENTE (
 - **Landing Page**: Restaurada para `PublicLanding` sem traços técnicos.
 
 ## 7. Observações
-A sincronização inicial retornou 0 templates remotos. A submissão via Graph API v20.0 ainda não foi confirmada por logs de sucesso no banco de dados, indicando que a transição de `draft` para `submitted` não ocorreu ou falhou silenciosamente no turno anterior.
+A submissão via Graph API v20.0 foi concluída com sucesso em 2026-08-04 12:35 UTC. Os três templates estão em estado `PENDING` na Meta e `pending` no banco local, aguardando aprovação oficial.
 
-**Próxima Ação**: Re-executar submissão controlada com logs verbosos.
+**Próxima Ação**: Monitorar a aprovação dos templates sem ativar o WhatsApp.
+

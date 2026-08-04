@@ -45,9 +45,10 @@
 - **Número**: Validado e em uso [DOCUMENTAÇÃO]
 - **Status**: Infraestrutura ativa, Dispatcher desligado [CÓDIGO]
 - **Templates**:
-  - `gi_conta_vencendo_hoje_v1`: `DRAFT LOCAL` [BANCO]
-  - `gi_conta_vencendo_amanha_v1`: `DRAFT LOCAL` [BANCO]
-  - `gi_conta_atrasada_v1`: `DRAFT LOCAL` [BANCO]
+  - `gi_conta_vencendo_hoje_v1`: `PENDING` (Submetido em 2026-08-04) [BANCO/META]
+  - `gi_conta_vencendo_amanha_v1`: `PENDING` (Submetido em 2026-08-04) [BANCO/META]
+  - `gi_conta_atrasada_v1`: `PENDING` (Submetido em 2026-08-04) [BANCO/META]
+
 - **Sync**: `whatsappAdminSyncTemplates` implementado (apenas diff/patch local) [CÓDIGO]
 
 ## 13. Segurança
