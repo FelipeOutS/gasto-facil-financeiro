@@ -34,6 +34,15 @@ import { useLocale } from "@/i18n/use-locale";
 
 import appCss from "../styles.css?url";
 
+if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch((err) => {
+      console.error("SW registration failed:", err);
+    });
+  });
+}
+
+
 const rootSearchSchema = z.object({
   lang: fallback(z.enum(["pt", "en"]).optional(), undefined).optional(),
 });
@@ -162,6 +171,7 @@ export const Route = createRootRoute({
       { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32x32.png" },
       { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16x16.png" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
       {
         rel: "preload",
         as: "image",
