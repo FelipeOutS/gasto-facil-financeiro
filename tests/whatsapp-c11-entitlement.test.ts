@@ -3,7 +3,6 @@
  */
 import { test, expect, beforeEach, mock } from "bun:test";
 
-// Configura Mocks ANTES de qualquer import que possa carregar o módulo real
 const state = {
   email: "user@example.com",
   featureAccess: false,
@@ -24,7 +23,9 @@ mock.module("@/server/admin-master.server", () => ({
 }));
 
 mock.module("@/server/subscription.server", () => ({
-  getSubscriptionForUserIdentity: async () => state.subscription,
+  getSubscriptionForUserIdentity: async (params: any) => {
+    return state.subscription;
+  },
 }));
 
 mock.module("@/integrations/supabase/client.server", () => ({ 
@@ -35,7 +36,10 @@ mock.module("@/integrations/supabase/client.server", () => ({
           if (table === "user_roles" && col === "user_id") state.userIdPassedToRoles = val;
           return {
             maybeSingle: async () => {
-              if (table === "user_roles") return { data: state.userIdPassedToRoles === ADMIN_USER ? { role: "owner" } : null, error: null };
+              if (table === "user_roles") {
+                const isOwner = state.userIdPassedToRoles === ADMIN_USER;
+                return { data: isOwner ? { role: "owner" } : null, error: null };
+              }
               return { data: null, error: null };
             },
             order: () => ({ limit: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) })
@@ -53,7 +57,6 @@ mock.module("@/integrations/supabase/client.server", () => ({
   }
 }));
 
-// Agora importamos o módulo real
 import { getWhatsAppEntitlement, assertWhatsAppEntitlement } from "../src/server/whatsapp-entitlement.server";
 
 beforeEach(() => {

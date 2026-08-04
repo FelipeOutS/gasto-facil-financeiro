@@ -103,6 +103,7 @@ export async function enforceUserRateLimit(params: {
   request?: Request;
   failMode?: "open" | "closed";
 }): Promise<Response | null> {
+
   const preset = RATE_LIMIT_PRESETS[params.scope === "ai" ? "aiPerUser" : params.scope === "flyerOcr" ? "flyerOcrPerUser" : params.scope === "onlineImport" ? "onlineImportPerUser" : params.scope === "whatsappBoletoOcr" ? "whatsappBoletoOcrPerUser" : "importPerUser"];
   const ip = params.request ? getClientIp(params.request) : null;
   const ua = params.request?.headers.get("user-agent") ?? null;
