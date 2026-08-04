@@ -162,9 +162,10 @@ export function prepareSubmissionPayload(local: CatalogTemplateRow): PayloadPrep
       type: "BODY", 
       text: local.body, 
       example: {
-        body_text: [Object.values(local.examples ?? {} as any)]
+        body_text: [Object.values(local.examples || { "1": "Exemplo" })]
       }
     },
+
 
   ];
   if (local.footer && local.footer.length > 0) {
