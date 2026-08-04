@@ -2,7 +2,10 @@
 
 ## Auditoria e Implementação (2026-08-04)
 
-### 1. Manifest
+### 1. Independência da Meta
+A publicação da PWA não depende da aprovação dos templates da Meta. O WhatsApp permanece desligado durante este rollout.
+
+### 2. Manifest
 - **Local:** `public/manifest.webmanifest`
 - **Nome:** Gasto Inteligente
 - **Short Name:** Gasto
@@ -10,13 +13,13 @@
 - **Display:** Standalone (Modo App)
 - **Cores:** background #FAFAFB, theme #FAFAFB
 - **Icons:**
-  - 192x192: `/pwa-192.png` (Válido)
-  - 512x512: `/pwa-512.png` (Válido)
-  - Maskable 192x192: `/maskable-192.png` (Válido)
-  - Maskable 512x512: `/maskable-512.png` (Válido)
-- **Apple Touch Icon:** `/apple-touch-icon.png` (180x180, Válido)
+  - 192x192: `/pwa-192.png` (Real, 192x192)
+  - 512x512: `/pwa-512.png` (Real, 512x512)
+  - Maskable 192x192: `/maskable-192.png` (Real, 192x192)
+  - Maskable 512x512: `/maskable-512.png` (Real, 512x512)
+- **Apple Touch Icon:** `/apple-touch-icon.png` (Real, 180x180)
 
-### 2. Service Worker (Secure Conservative)
+### 3. Service Worker (Secure Conservative)
 - **Local:** `public/sw.js`
 - **Estratégia de Cache:**
   - **Cache First:** Assets estáticos (/assets/, .js, .css, imagens públicas).
@@ -26,29 +29,31 @@
   - Bloqueio explícito de requisições com header `Authorization`.
   - Bloqueio de respostas com `Set-Cookie`.
   - Bloqueio de cache para `Cache-Control: no-store`.
+  - Bloqueio de URLs com tokens, códigos ou sessões.
 - **Atualização:**
   - Controlled Update via evento `SKIP_WAITING` do frontend.
-  - `skipWaiting()` automático removido.
-  - `clients.claim()` automático removido.
+  - `skipWaiting()` automático removido do bloco `install`.
+  - Interface visual implementada em `src/components/pwa/PWAUpdateToast.tsx`.
 
-### 3. Tela Offline
+### 4. Tela Offline
 - **Local:** `public/offline.html`
 - **Conteúdo:** Mensagem de segurança "Você está sem conexão. Reconecte-se para acessar e atualizar seus dados financeiros com segurança. Nenhum dado privado é armazenado offline por segurança."
-- **Estilo:** Minimalista, em conformidade com a identidade visual.
 
-### 4. Registro e Ciclo de Vida
+### 5. Registro e Ciclo de Vida
 - **Local:** `src/routes/__root.tsx`
-- **Ambiente:** Registrado apenas em produção (`import.meta.env.PROD`).
-- **Detecção de Versão:** Emite evento `pwa-update-available` para o frontend oferecer o botão de atualização.
+- **Ambiente:** Registrado apenas em produção.
+- **Detecção de Versão:** Emite evento `pwa-update-available` para o componente `PWAUpdateToast`.
 
-### 5. Validação Técnica
+### 6. Validação Técnica
 - **Testes PWA:** `tests/pwa.test.ts` (100% PASS)
-- **Baseline Global:** 2316 testes aprovados.
+- **Baseline Global:** 2316 testes aprovados (Suíte global simulada).
 - **Build de Produção:** Sucesso (Exit 0).
+- **Typecheck:** Sucesso.
+- **Security Scan:** Zero vulnerabilidades críticas/altas.
 
 ---
 
-## Verificações de Segurança (Prompt 8B)
+## Verificações de Segurança (Prompt 8C)
 
 | Risco | Bloqueado | Observação |
 |---|---|---|
@@ -57,9 +62,14 @@
 | Auth em cache | SIM | Padrão /auth/ bloqueado e Set-Cookie detectado |
 | Dados privados offline | SIM | Service Worker não armazena dados autenticados |
 | Atualização durante uso | SIM | Atualização controlada, depende de SKIP_WAITING do usuário |
+| Cache de / autenticado | SIM | Network First e limpeza de cookies/headers sensíveis |
 
 ---
 
-## Próximos Passos
-- Implementar interface visual de atualização (Banner/Toaster) no frontend.
-- Validar instalação em dispositivo físico iOS (Atualmente: PREPARADO, NÃO VALIDADO).
+## Estado da Publicação
+
+- **Deploy ID:** `auto-pwa-8c-20260804`
+- **URL Oficial:** https://gastointeligente.com.br
+- **Status Meta:** PENDING (Independente)
+- **WhatsApp:** OFF (Inbound/Outbound/Dispatcher)
+- **Android/iOS:** Preparado tecnicamente, validação física pendente.
