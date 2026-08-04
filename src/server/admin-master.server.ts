@@ -15,6 +15,7 @@ let _cachedEmails: string[] | null = null;
 function getParsedEmails(): string[] {
   if (_cachedEmails) return _cachedEmails;
   const raw = process.env.ADMIN_MASTER_EMAILS ?? "";
+  console.log("[admin-master] raw env:", `"${raw}"`); // DEBUG log
   if (!raw.trim()) {
     _cachedEmails = [];
     return [];
