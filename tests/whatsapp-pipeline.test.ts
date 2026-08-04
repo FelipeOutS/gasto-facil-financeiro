@@ -131,7 +131,7 @@ test("Confirmação salva como crédito vincula cartao_id correto", async () => 
   });
   const gasto = gastosInserts()[0]?.row;
   expect(gasto?.forma_pagamento).toBe("credito");
-  expect(gasto?.cartao_id).toBe(null);
+  expect(gasto?.cartao_id).toBe("c-nu");
 });
 
 test("Variantes de confirmação salvam o gasto", async () => {

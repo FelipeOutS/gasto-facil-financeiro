@@ -80,8 +80,9 @@ function makeBuilder(table: string): any {
         }
       });
       if (table === "whatsapp_messages") syncPending();
-      // Readback Guard: .select("id, status") — Retornar as colunas corretas pedidas
-      return { data: ctx.single ? (matched[0] || null) : (matched.length > 0 ? matched : null), error: null };
+      // O Readback Guard em atualizarSessao usa .select("id, status").maybeSingle()
+      // Ele espera o objeto de volta.
+      return { data: ctx.single ? (matched[0] || null) : matched, error: null };
     }
 
     const rows = state.inserts.filter((i, idx) => i.table === table && matchesFilters(i.row, idx)).map(i => i.row);
