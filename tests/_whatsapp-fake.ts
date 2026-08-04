@@ -28,14 +28,20 @@ function makeBuilder(table: string): any {
   };
 
   const finalize = async () => {
-    // Autorização
+    // Tabelas estáticas ou mockadas por estado
     if (table === "whatsapp_links" && ctx.op === "select") {
-      const link = { user_id: "u1", ativo: true, opt_in_em: "2026-01-01T00:00:00Z", revogado_em: null };
+      const link = { user_id: "u1", telefone: "5511999998888", ativo: true, opt_in_em: "2026-01-01T00:00:00Z", revogado_em: null };
       return ctx.single ? { data: link, error: null } : { data: [link], error: null };
+    }
+    if (table === "cartoes" && ctx.op === "select") {
+      return { data: state.cartoesData, error: null };
+    }
+    if (table === "categorias" && ctx.op === "select") {
+      return { data: state.categoriasData, error: null };
     }
 
     const matchesFilters = (row: Record<string, unknown>, idx: number) => {
-      // Filtros EQ
+      // EQ
       for (let [col, val] of Object.entries(ctx.filters)) {
         let actual = row[col];
         if (col.includes("->>")) {
@@ -45,7 +51,7 @@ function makeBuilder(table: string): any {
         if (col === "id" && !row.id) actual = `m-${idx + 1}`;
         if (actual !== val) return false;
       }
-      // Filtros IN
+      // IN
       for (let [col, vals] of Object.entries(ctx.inFilters)) {
         let actual = row[col];
         if (col.includes("->>")) {
@@ -92,7 +98,6 @@ function makeBuilder(table: string): any {
         }
       });
       
-      // Sincronização de pendingRow (Estado de Sessão)
       if (table === "whatsapp_messages") {
         const lastMatching = state.inserts.findLast(i => 
           i.table === table && 
