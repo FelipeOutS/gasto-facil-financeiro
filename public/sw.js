@@ -1,9 +1,9 @@
 /**
  * Gasto Inteligente - Secure Service Worker
- * Focus: PWA installation, performance, and extreme data privacy.
+ * Focus: PWA installation, controlled updates, and extreme data privacy.
  */
 
-const CACHE_NAME = 'gi-v1-static';
+const CACHE_NAME = 'gi-v2-static';
 const OFFLINE_URL = '/offline.html';
 
 // Assets that are safe to cache (public, versioned, non-sensitive)
@@ -11,11 +11,12 @@ const PUBLIC_ASSETS = [
   '/',
   OFFLINE_URL,
   '/manifest.webmanifest',
-  '/styles.css',
-  '/logos/brand/icone-gasto-inteligente-light.svg',
-  '/logos/brand/logo-gasto-inteligente-sidebar-light.svg',
-  '/favicon.ico',
-  '/apple-touch-icon.png'
+  '/pwa-192.png',
+  '/pwa-512.png',
+  '/maskable-192.png',
+  '/maskable-512.png',
+  '/apple-touch-icon.png',
+  '/favicon.ico'
 ];
 
 // Sensitive patterns that MUST NEVER be cached
@@ -32,7 +33,8 @@ const SENSITIVE_PATTERNS = [
   '/relatorios',
   '/admin',
   '/gasto-ai',
-  'supabase.co'
+  'supabase.co',
+  'mercadopago.com'
 ];
 
 self.addEventListener('install', (event) => {
@@ -41,7 +43,7 @@ self.addEventListener('install', (event) => {
       return cache.addAll(PUBLIC_ASSETS);
     })
   );
-  self.skipWaiting();
+  // REMOVED: self.skipWaiting() - Controlled update required
 });
 
 self.addEventListener('activate', (event) => {
@@ -56,34 +58,62 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
-  self.clients.claim();
+  // REMOVED: self.clients.claim() - Controlled update required
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+  
+  // Rule: Any non-GET request is Network Only
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Rule: Authorization header present? Network Only.
+  if (event.request.headers.has('Authorization')) {
+    return;
+  }
+
   const isSensitive = SENSITIVE_PATTERNS.some(p => url.pathname.includes(p) || url.origin.includes(p));
+  
+  // Rule: Sensitive pattern or non-recognized public asset? Network Only.
+  if (isSensitive) {
+    return;
+  }
+
   const isStatic = PUBLIC_ASSETS.includes(url.pathname) || 
                    url.pathname.endsWith('.js') || 
                    url.pathname.endsWith('.css') || 
                    url.pathname.startsWith('/assets/');
 
-  // Network Only for everything sensitive or API calls
-  if (isSensitive || event.request.method !== 'GET') {
-    return; // Browser default behavior
-  }
-
-  // Cache First for static assets, Network First for the rest
   if (isStatic) {
+    // Cache First for static assets
     event.respondWith(
       caches.match(event.request).then((response) => {
         return response || fetch(event.request);
       })
     );
   } else {
+    // Network First for everything else (e.g. Landing Page /)
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match(OFFLINE_URL);
-      })
+      fetch(event.request)
+        .then((response) => {
+          // Never cache a response with Set-Cookie or no-store
+          const cacheControl = response.headers.get('Cache-Control');
+          if (response.headers.has('Set-Cookie') || (cacheControl && cacheControl.includes('no-store'))) {
+            return response;
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(OFFLINE_URL);
+        })
     );
   }
 });
