@@ -16,9 +16,7 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import { state, resetState, gastosInserts } from "./_whatsapp-fake";
 
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 
 function msg(texto: string, externalId = `ext-${Math.random().toString(36).slice(2, 10)}`) {
   return {
@@ -53,7 +51,9 @@ function makeConta(opts: Partial<Record<string, unknown>> = {}): Record<string, 
 describe("WA-3.30 — baixa atômica: cria gasto + vincula", () => {
   beforeEach(() =>
     resetState({
-      contas: [makeConta({ id: "c-internet", nome: "Internet", valor: 119.9, categoria_id: "cat-int" })],
+      contas: [
+        makeConta({ id: "c-internet", nome: "Internet", valor: 119.9, categoria_id: "cat-int" }),
+      ],
     }),
   );
 
@@ -124,9 +124,18 @@ describe("WA-3.30 — idempotência e inconsistência", () => {
       ],
       gastos: [
         {
-          id: "g-existing", user_id: "u1", descricao: "Internet", valor: 119.9,
-          data: "2026-07-02", categoria_id: "cat-int", forma_pagamento: "outros",
-          mes: 7, ano: 2026, tipo_gasto: "unico", confirmado: true, origem: "whatsapp",
+          id: "g-existing",
+          user_id: "u1",
+          descricao: "Internet",
+          valor: 119.9,
+          data: "2026-07-02",
+          categoria_id: "cat-int",
+          forma_pagamento: "outros",
+          mes: 7,
+          ano: 2026,
+          tipo_gasto: "unico",
+          confirmado: true,
+          origem: "whatsapp",
           estabelecimento: "",
         },
       ],
@@ -144,10 +153,15 @@ describe("WA-3.30 — idempotência e inconsistência", () => {
     // Chamamos a RPC diretamente para cobrir o branch, já que o fluxo
     // conversacional filtra conta paga antes.
     resetState({
-      contas: [makeConta({
-        id: "c-internet", nome: "Internet", status: "pago",
-        data_pagamento: "2026-07-02", gasto_id: null,
-      })],
+      contas: [
+        makeConta({
+          id: "c-internet",
+          nome: "Internet",
+          status: "pago",
+          data_pagamento: "2026-07-02",
+          gasto_id: null,
+        }),
+      ],
     });
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin.rpc("whatsapp_baixa_conta_atomic", {

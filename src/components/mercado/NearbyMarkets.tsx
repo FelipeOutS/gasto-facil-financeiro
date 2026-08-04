@@ -18,10 +18,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  GoogleMapView,
-  type GoogleMapViewHandle,
-} from "@/components/mercado/GoogleMapView";
+import { GoogleMapView, type GoogleMapViewHandle } from "@/components/mercado/GoogleMapView";
 import {
   searchNearbyMarkets,
   geocodeMarketSearchLocation,
@@ -60,9 +57,7 @@ function haversineMeters(a: Coords, b: Coords): number {
   const dLng = toRad(b.lng - a.lng);
   const lat1 = toRad(a.lat);
   const lat2 = toRad(b.lat);
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
@@ -148,10 +143,7 @@ export function NearbyMarkets() {
     setStatus({ kind: "locating" });
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        void runSearch(
-          { lat: pos.coords.latitude, lng: pos.coords.longitude },
-          null,
-        );
+        void runSearch({ lat: pos.coords.latitude, lng: pos.coords.longitude }, null);
       },
       (err) => {
         if (err.code === err.PERMISSION_DENIED) {
@@ -176,11 +168,7 @@ export function NearbyMarkets() {
       setStatus({ kind: "geocoding" });
       try {
         const res = await geocode({ data: { query } });
-        if (
-          res.error ||
-          typeof res.latitude !== "number" ||
-          typeof res.longitude !== "number"
-        ) {
+        if (res.error || typeof res.latitude !== "number" || typeof res.longitude !== "number") {
           if (res.error === "no_address_found") {
             setManualError(t("nearby.noAddressFound"));
             setStatus({ kind: "idle" });
@@ -189,10 +177,7 @@ export function NearbyMarkets() {
           setStatus({ kind: "error", reason: "geocode" });
           return;
         }
-        await runSearch(
-          { lat: res.latitude, lng: res.longitude },
-          res.formattedAddress,
-        );
+        await runSearch({ lat: res.latitude, lng: res.longitude }, res.formattedAddress);
       } catch {
         setStatus({ kind: "error", reason: "geocode" });
       }
@@ -241,9 +226,7 @@ export function NearbyMarkets() {
   };
 
   const isBusy =
-    status.kind === "locating" ||
-    status.kind === "geocoding" ||
-    status.kind === "searching";
+    status.kind === "locating" || status.kind === "geocoding" || status.kind === "searching";
 
   const tk = (suffix: string, opts?: Record<string, unknown>) =>
     t(`marketsV2.nearby.${suffix}`, opts);
@@ -258,12 +241,8 @@ export function NearbyMarkets() {
           <Compass className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-base font-semibold md:text-lg">
-            {tk("title")}
-          </h2>
-          <p className="mt-1 text-sm leading-snug text-muted-foreground">
-            {tk("description")}
-          </p>
+          <h2 className="truncate text-base font-semibold md:text-lg">{tk("title")}</h2>
+          <p className="mt-1 text-sm leading-snug text-muted-foreground">{tk("description")}</p>
         </div>
       </div>
 
@@ -276,15 +255,8 @@ export function NearbyMarkets() {
 
         {/* Search controls */}
         <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-          <form
-            onSubmit={handleManualSearch}
-            className="flex flex-col gap-2"
-            aria-busy={isBusy}
-          >
-            <label
-              htmlFor="nearby-manual-search"
-              className="text-sm font-medium"
-            >
+          <form onSubmit={handleManualSearch} className="flex flex-col gap-2" aria-busy={isBusy}>
+            <label htmlFor="nearby-manual-search" className="text-sm font-medium">
               {tk("manualSearchLabel")}
             </label>
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -315,9 +287,7 @@ export function NearbyMarkets() {
                 {tk("searchButton")}
               </Button>
             </div>
-            {manualError && (
-              <p className="text-xs text-destructive">{manualError}</p>
-            )}
+            {manualError && <p className="text-xs text-destructive">{manualError}</p>}
           </form>
 
           <div className="mt-4 flex flex-col gap-2 border-t border-border/40 pt-4">
@@ -392,12 +362,8 @@ export function NearbyMarkets() {
             <div className="flex items-start gap-2">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">
-                  {tk("deniedTitle")}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {tk("deniedDescription")}
-                </p>
+                <p className="text-sm font-semibold text-foreground">{tk("deniedTitle")}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{tk("deniedDescription")}</p>
               </div>
             </div>
           </div>
@@ -409,12 +375,8 @@ export function NearbyMarkets() {
             <div className="flex items-start gap-2">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">
-                  {tk("errorTitle")}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {tk("errorDescription")}
-                </p>
+                <p className="text-sm font-semibold text-foreground">{tk("errorTitle")}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{tk("errorDescription")}</p>
               </div>
             </div>
             <Button
@@ -441,9 +403,7 @@ export function NearbyMarkets() {
               <Store className="h-6 w-6" />
             </div>
             <p className="mt-3 text-sm font-semibold">{tk("emptyTitle")}</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {tk("emptyDescription")}
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{tk("emptyDescription")}</p>
             {status.locationLabel && (
               <p className="mt-2 text-[11px] text-muted-foreground">
                 {t("nearby.lastSearchLabel", {
@@ -459,9 +419,7 @@ export function NearbyMarkets() {
           <div className="space-y-3">
             <div className="flex flex-wrap items-end justify-between gap-2">
               <div>
-                <h3 className="text-sm font-semibold md:text-base">
-                  {tk("resultsTitle")}
-                </h3>
+                <h3 className="text-sm font-semibold md:text-base">{tk("resultsTitle")}</h3>
                 <p className="text-xs text-muted-foreground">
                   {tk("resultsCount", { count: status.markets.length })}
                 </p>
@@ -507,9 +465,7 @@ export function NearbyMarkets() {
                           <Store className="h-4 w-4" />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold">
-                            {m.name}
-                          </p>
+                          <p className="truncate text-sm font-semibold">{m.name}</p>
                           {m.address && (
                             <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                               {m.address}
@@ -529,8 +485,7 @@ export function NearbyMarkets() {
                               <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                                 <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
                                 {m.rating.toFixed(1)}
-                                {typeof m.userRatingCount === "number" &&
-                                  ` · ${m.userRatingCount}`}
+                                {typeof m.userRatingCount === "number" && ` · ${m.userRatingCount}`}
                               </span>
                             )}
                           </div>

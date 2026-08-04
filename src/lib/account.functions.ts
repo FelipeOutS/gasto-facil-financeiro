@@ -56,10 +56,7 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
 
     // 1) Remove o profile (id = user_id em profiles)
     {
-      const { error } = await supabaseAdmin
-        .from("profiles")
-        .delete()
-        .eq("id", userId);
+      const { error } = await supabaseAdmin.from("profiles").delete().eq("id", userId);
       if (error) {
         console.error("[deleteMyAccount] profiles", error);
       }
@@ -68,10 +65,7 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
     // 2) Limpa as demais tabelas user-scoped
     for (const table of USER_DATA_TABLES) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabaseAdmin as any)
-        .from(table)
-        .delete()
-        .eq("user_id", userId);
+      const { error } = await (supabaseAdmin as any).from(table).delete().eq("user_id", userId);
       if (error) {
         console.error(`[deleteMyAccount] ${table}`, error.message);
         // Continua tentando as outras tabelas

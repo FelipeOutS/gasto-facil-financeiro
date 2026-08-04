@@ -33,16 +33,38 @@ export const PREMIUM_ROUTE_RULES: PremiumRouteRule[] = [
   // `tg_free_ads_quota_cartoes`. Faturas (faturas_cartao) continuam
   // exigindo a feature paga `cartoes` no RLS.
   { path: "/cartoes", feature: "cartoes_basico", title: "Cartões e faturas é um recurso premium" },
-  { path: "/assinaturas", feature: "assinaturas_recorrencias", title: "Assinaturas é um recurso premium" },
-  { path: "/contas-a-pagar", feature: "contas_a_pagar", title: "Contas a pagar é um recurso premium" },
-  { path: "/contas-a-receber", feature: "contas_a_receber", title: "Contas a receber é um recurso premium" },
+  {
+    path: "/assinaturas",
+    feature: "assinaturas_recorrencias",
+    title: "Assinaturas é um recurso premium",
+  },
+  {
+    path: "/contas-a-pagar",
+    feature: "contas_a_pagar",
+    title: "Contas a pagar é um recurso premium",
+  },
+  {
+    path: "/contas-a-receber",
+    feature: "contas_a_receber",
+    title: "Contas a receber é um recurso premium",
+  },
   // Fase 1E-B2I — `/orcamento` usa `orcamento_basico`, que libera free_ads
   // e planos pagos. Sem assinatura continua bloqueado. A quota de 1
   // orçamento para free_ads é enforçada server-side pelo trigger
   // `tg_free_ads_quota_limites`.
   { path: "/orcamento", feature: "orcamento_basico", title: "Orçamento é um recurso premium" },
-  { path: "/relatorios", feature: "relatorios_avancados", title: "Relatórios avançados é um recurso premium" },
-  { path: "/gasto-ai", feature: "gasto_ai", title: "Gasto Inteligente AI é um recurso premium", description: "Converse com uma IA sobre seus gastos, metas e organização financeira. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
+  {
+    path: "/relatorios",
+    feature: "relatorios_avancados",
+    title: "Relatórios avançados é um recurso premium",
+  },
+  {
+    path: "/gasto-ai",
+    feature: "gasto_ai",
+    title: "Gasto Inteligente AI é um recurso premium",
+    description:
+      "Converse com uma IA sobre seus gastos, metas e organização financeira. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa.",
+  },
   // Etapa 66 — /metas é liberada para todos os planos pagos (metas básicas).
   // O gate de `metas_visuais` permanece DENTRO do MetaForm para proteger
   // upload de capa / galeria / visual personalizado. Não bloqueamos a rota
@@ -54,20 +76,98 @@ export const PREMIUM_ROUTE_RULES: PremiumRouteRule[] = [
   // pelo trigger `tg_free_ads_quota_receitas`.
   { path: "/renda", feature: "receitas_basico", title: "Receitas é um recurso premium" },
   { path: "/guardado", feature: "lancamentos_ilimitados", title: "Guardado é um recurso premium" },
-  { path: "/contas-conectadas", feature: "contas_conectadas", title: "Contas conectadas é um recurso premium", description: "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização. Disponível nos planos Controle Completo Pessoal, MEI e Empresa." },
-  { path: "/empresa", feature: "empresa_inteligente", title: "Empresa Inteligente é um recurso para MEI e Empresa", description: "Consulte seu CNPJ e mantenha os dados da sua empresa organizados no Gasto Inteligente. Disponível nos planos Essencial para MEI, MEI Completo e Empresa." },
-  { path: "/fornecedores", feature: "empresa_inteligente", title: "Fornecedores é um recurso para MEI e Empresa", description: "Cadastre fornecedores por CNPJ e organize melhor seus gastos empresariais. Disponível nos planos Essencial para MEI, MEI Completo e Empresa." },
-  { path: "/clientes", feature: "empresa_inteligente", title: "Clientes é um recurso para MEI e Empresa", description: "Cadastre clientes por CNPJ e organize melhor suas receitas empresariais. Disponível nos planos Essencial para MEI, MEI Completo e Empresa." },
-  { path: "/contador", feature: "empresa_inteligente", title: "Pacote para Contador é um recurso para MEI e Empresa", description: "Gere um resumo mensal organizado para enviar ao seu contador. Disponível nos planos Essencial para MEI, MEI Completo e Empresa." },
+  {
+    path: "/contas-conectadas",
+    feature: "contas_conectadas",
+    title: "Contas conectadas é um recurso premium",
+    description:
+      "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização. Disponível nos planos Controle Completo Pessoal, MEI e Empresa.",
+  },
+  {
+    path: "/empresa",
+    feature: "empresa_inteligente",
+    title: "Empresa Inteligente é um recurso para MEI e Empresa",
+    description:
+      "Consulte seu CNPJ e mantenha os dados da sua empresa organizados no Gasto Inteligente. Disponível nos planos Essencial para MEI, MEI Completo e Empresa.",
+  },
+  {
+    path: "/fornecedores",
+    feature: "empresa_inteligente",
+    title: "Fornecedores é um recurso para MEI e Empresa",
+    description:
+      "Cadastre fornecedores por CNPJ e organize melhor seus gastos empresariais. Disponível nos planos Essencial para MEI, MEI Completo e Empresa.",
+  },
+  {
+    path: "/clientes",
+    feature: "empresa_inteligente",
+    title: "Clientes é um recurso para MEI e Empresa",
+    description:
+      "Cadastre clientes por CNPJ e organize melhor suas receitas empresariais. Disponível nos planos Essencial para MEI, MEI Completo e Empresa.",
+  },
+  {
+    path: "/contador",
+    feature: "empresa_inteligente",
+    title: "Pacote para Contador é um recurso para MEI e Empresa",
+    description:
+      "Gere um resumo mensal organizado para enviar ao seu contador. Disponível nos planos Essencial para MEI, MEI Completo e Empresa.",
+  },
   // Etapa 16 — Mercado Inteligente avançado.
-  { path: "/mercado/historico", feature: "mercado_avancado", title: "Histórico de compras é um recurso premium", description: "Acompanhe suas compras anteriores e a evolução dos gastos de mercado. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
-  { path: "/mercado/precos", feature: "mercado_avancado", title: "Comparação de preços é um recurso premium", description: "Compare preços por mercado usando o seu histórico local. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
-  { path: "/mercado/precos-historico", feature: "mercado_avancado", title: "Histórico de preços é um recurso premium", description: "Veja a evolução de preços dos itens que você compra com frequência. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
-  { path: "/mercado/cesta", feature: "mercado_avancado", title: "Cesta padrão é um recurso premium", description: "Monte uma cesta recorrente com os itens que você compra todo mês. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
-  { path: "/mercado/meus-mercados", feature: "mercado_avancado", title: "Meus mercados é um recurso premium", description: "Cadastre os mercados onde você costuma comprar e marque favoritos. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
-  { path: "/mercado/mercados", feature: "mercado_avancado", title: "Comparativo por mercado é um recurso premium", description: "Descubra onde você costuma pagar melhores preços. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
-  { path: "/mercado/importar-cupom", feature: "mercado_importar_cupom", title: "Importação de cupom é um recurso premium", description: "Importe informações de cupons fiscais por QR Code/NFC-e para reduzir lançamentos manuais. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
-  { path: "/mercado/preco-comunitario", feature: "mercado_avancado", title: "Preço Comunitário é um recurso premium", description: "Leia panfletos de mercado por foto e registre preços informados pela comunidade. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa." },
+  {
+    path: "/mercado/historico",
+    feature: "mercado_avancado",
+    title: "Histórico de compras é um recurso premium",
+    description:
+      "Acompanhe suas compras anteriores e a evolução dos gastos de mercado. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa.",
+  },
+  {
+    path: "/mercado/precos",
+    feature: "mercado_avancado",
+    title: "Comparação de preços é um recurso premium",
+    description:
+      "Compare preços por mercado usando o seu histórico local. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa.",
+  },
+  {
+    path: "/mercado/precos-historico",
+    feature: "mercado_avancado",
+    title: "Histórico de preços é um recurso premium",
+    description:
+      "Veja a evolução de preços dos itens que você compra com frequência. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa.",
+  },
+  {
+    path: "/mercado/cesta",
+    feature: "mercado_avancado",
+    title: "Cesta padrão é um recurso premium",
+    description:
+      "Monte uma cesta recorrente com os itens que você compra todo mês. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa.",
+  },
+  {
+    path: "/mercado/meus-mercados",
+    feature: "mercado_avancado",
+    title: "Meus mercados é um recurso premium",
+    description:
+      "Cadastre os mercados onde você costuma comprar e marque favoritos. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa.",
+  },
+  {
+    path: "/mercado/mercados",
+    feature: "mercado_avancado",
+    title: "Comparativo por mercado é um recurso premium",
+    description:
+      "Descubra onde você costuma pagar melhores preços. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa.",
+  },
+  {
+    path: "/mercado/importar-cupom",
+    feature: "mercado_importar_cupom",
+    title: "Importação de cupom é um recurso premium",
+    description:
+      "Importe informações de cupons fiscais por QR Code/NFC-e para reduzir lançamentos manuais. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa.",
+  },
+  {
+    path: "/mercado/preco-comunitario",
+    feature: "mercado_avancado",
+    title: "Preço Comunitário é um recurso premium",
+    description:
+      "Leia panfletos de mercado por foto e registre preços informados pela comunidade. Disponível nos planos Controle Completo Pessoal, MEI Completo e Empresa.",
+  },
 ];
 
 export function findPremiumRule(pathname: string): PremiumRouteRule | null {

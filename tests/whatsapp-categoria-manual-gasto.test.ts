@@ -19,10 +19,8 @@
 import { describe, test, expect, beforeEach } from "bun:test";
 import { state, resetState, gastosInserts } from "./_whatsapp-fake";
 
-const {
-  processarMensagemWhatsApp,
-  detectCategoriaCommand,
-} = await import("../src/server/whatsapp.server");
+const { processarMensagemWhatsApp, detectCategoriaCommand } =
+  await import("../src/server/whatsapp.server");
 
 const tel = "5511999998888";
 
@@ -120,14 +118,18 @@ describe("WA-M1.3 — fluxo texto: abrir lista e escolher por número", () => {
     expect(state.pendingRow?.status).toBe("aguardando_confirmacao");
 
     const rList = await processarMensagemWhatsApp({
-      telefone: tel, texto: "categoria", external_id: "A-3",
+      telefone: tel,
+      texto: "categoria",
+      external_id: "A-3",
     });
     expect(rList.status).toBe("aguardando_categoria_gasto");
     expect(rList.resposta).toMatch(/Qual categoria/i);
     expect(state.pendingRow?.parsed?.categoriaOptions).toBeTruthy();
 
     const rPick = await processarMensagemWhatsApp({
-      telefone: tel, texto: "1", external_id: "A-4",
+      telefone: tel,
+      texto: "1",
+      external_id: "A-4",
     });
     expect(rPick.status).toBe("aguardando_confirmacao");
     expect(rPick.resposta).toMatch(/Categoria atualizada/);
@@ -139,7 +141,9 @@ describe("WA-M1.3 — fluxo texto: abrir lista e escolher por número", () => {
     await chegaEmConfirmacao("Cinema 30", "B");
     await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "B-3" });
     const r = await processarMensagemWhatsApp({
-      telefone: tel, texto: "Lazer", external_id: "B-4",
+      telefone: tel,
+      texto: "Lazer",
+      external_id: "B-4",
     });
     expect(r.status).toBe("aguardando_confirmacao");
     expect(state.pendingRow?.parsed?.manualCategoriaId).toBe("cat-lazer");
@@ -151,7 +155,9 @@ describe("WA-M1.3 — comandos diretos durante confirmação", () => {
   test("'categoria Transporte' marca manual sem abrir lista", async () => {
     await chegaEmConfirmacao("Uber 25", "C");
     const r = await processarMensagemWhatsApp({
-      telefone: tel, texto: "categoria Transporte", external_id: "C-3",
+      telefone: tel,
+      texto: "categoria Transporte",
+      external_id: "C-3",
     });
     expect(r.status).toBe("aguardando_confirmacao");
     expect(r.resposta).toMatch(/Categoria atualizada para: Transporte/);
@@ -162,7 +168,9 @@ describe("WA-M1.3 — comandos diretos durante confirmação", () => {
   test("'coloca em Lazer' marca manual", async () => {
     await chegaEmConfirmacao("Cinema 30", "D");
     const r = await processarMensagemWhatsApp({
-      telefone: tel, texto: "coloca em Lazer", external_id: "D-3",
+      telefone: tel,
+      texto: "coloca em Lazer",
+      external_id: "D-3",
     });
     expect(r.status).toBe("aguardando_confirmacao");
     expect(state.pendingRow?.parsed?.manualCategoriaId).toBe("cat-lazer");
@@ -171,7 +179,9 @@ describe("WA-M1.3 — comandos diretos durante confirmação", () => {
   test("'muda para Farmácia' marca manual", async () => {
     await chegaEmConfirmacao("Remédio 50", "E");
     const r = await processarMensagemWhatsApp({
-      telefone: tel, texto: "muda para Farmácia", external_id: "E-3",
+      telefone: tel,
+      texto: "muda para Farmácia",
+      external_id: "E-3",
     });
     expect(r.status).toBe("aguardando_confirmacao");
     expect(state.pendingRow?.parsed?.manualCategoriaId).toBe("cat-farm");
@@ -180,7 +190,9 @@ describe("WA-M1.3 — comandos diretos durante confirmação", () => {
   test("comando direto para categoria inexistente avisa e mantém sessão", async () => {
     await chegaEmConfirmacao("Almoço 42", "F");
     const r = await processarMensagemWhatsApp({
-      telefone: tel, texto: "coloca em Inexistente", external_id: "F-3",
+      telefone: tel,
+      texto: "coloca em Inexistente",
+      external_id: "F-3",
     });
     expect(r.status).toBe("aguardando_confirmacao");
     expect(r.resposta).toMatch(/Não encontrei a categoria/);
@@ -192,7 +204,9 @@ describe("WA-M1.3 — persistência e evidência", () => {
   test("confirmação automática (sem alteração) salva gasto", async () => {
     await chegaEmConfirmacao("Almoço 42", "G");
     const r = await processarMensagemWhatsApp({
-      telefone: tel, texto: "sim", external_id: "G-3",
+      telefone: tel,
+      texto: "sim",
+      external_id: "G-3",
     });
     expect(r.status).toBe("salva");
     expect(gastosInserts()).toHaveLength(1);
@@ -201,10 +215,14 @@ describe("WA-M1.3 — persistência e evidência", () => {
   test("alteração manual + sim salva gasto com manualCategoriaId", async () => {
     await chegaEmConfirmacao("Almoço 42", "H");
     await processarMensagemWhatsApp({
-      telefone: tel, texto: "coloca em Lazer", external_id: "H-3",
+      telefone: tel,
+      texto: "coloca em Lazer",
+      external_id: "H-3",
     });
     const r = await processarMensagemWhatsApp({
-      telefone: tel, texto: "sim", external_id: "H-4",
+      telefone: tel,
+      texto: "sim",
+      external_id: "H-4",
     });
     expect(r.status).toBe("salva");
     expect(gastosInserts()).toHaveLength(1);
@@ -215,7 +233,9 @@ describe("WA-M1.3 — persistência e evidência", () => {
 describe("WA-M1.3 — proteções", () => {
   test("comando 'categoria' SEM sessão ativa não muda categoria", async () => {
     const r = await processarMensagemWhatsApp({
-      telefone: tel, texto: "categoria", external_id: "I-1",
+      telefone: tel,
+      texto: "categoria",
+      external_id: "I-1",
     });
     // Sem sessão: cai no parser de gasto, vira pendente com falta de valor/descrição.
     expect(["pendente", "sem_pendencia", "valor_invalido"]).toContain(r.status);
@@ -227,7 +247,9 @@ describe("WA-M1.3 — proteções", () => {
     await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "J-3" });
     expect(state.pendingRow?.status).toBe("aguardando_categoria_gasto");
     const r = await processarMensagemWhatsApp({
-      telefone: tel, texto: "cancelar", external_id: "J-4",
+      telefone: tel,
+      texto: "cancelar",
+      external_id: "J-4",
     });
     expect(r.status).toBe("cancelada");
     expect(gastosInserts()).toHaveLength(0);
@@ -237,7 +259,9 @@ describe("WA-M1.3 — proteções", () => {
     await chegaEmConfirmacao("Almoço 42", "K");
     await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "K-3" });
     const r = await processarMensagemWhatsApp({
-      telefone: tel, texto: "sim", external_id: "K-4",
+      telefone: tel,
+      texto: "sim",
+      external_id: "K-4",
     });
     expect(r.status).toBe("aguardando_categoria_gasto");
     expect(gastosInserts()).toHaveLength(0);
@@ -246,20 +270,31 @@ describe("WA-M1.3 — proteções", () => {
   test("categorias de outro usuário nunca aparecem na lista", async () => {
     await chegaEmConfirmacao("Almoço 42", "L");
     const r = await processarMensagemWhatsApp({
-      telefone: tel, texto: "categoria", external_id: "L-3",
+      telefone: tel,
+      texto: "categoria",
+      external_id: "L-3",
     });
     expect(r.resposta).not.toMatch(/Secreta/);
   });
 
   test("áudio: 'categoria' também abre lista", async () => {
     await processarMensagemWhatsApp({
-      telefone: tel, texto: "Almoço 42", external_id: "M-1", source: "audio" as never,
+      telefone: tel,
+      texto: "Almoço 42",
+      external_id: "M-1",
+      source: "audio" as never,
     });
     await processarMensagemWhatsApp({
-      telefone: tel, texto: "pix", external_id: "M-2", source: "audio" as never,
+      telefone: tel,
+      texto: "pix",
+      external_id: "M-2",
+      source: "audio" as never,
     });
     const r = await processarMensagemWhatsApp({
-      telefone: tel, texto: "categoria", external_id: "M-3", source: "audio" as never,
+      telefone: tel,
+      texto: "categoria",
+      external_id: "M-3",
+      source: "audio" as never,
     });
     expect(r.status).toBe("aguardando_categoria_gasto");
   });

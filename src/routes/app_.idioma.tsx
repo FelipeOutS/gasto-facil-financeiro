@@ -15,7 +15,9 @@ export const Route = createFileRoute("/app_/idioma")({
 function AppIdiomaPage() {
   const { t, i18n } = useTranslation();
   const { session } = useAuth();
-  const locale: Locale = (i18n.resolvedLanguage || i18n.language || "pt").toLowerCase().startsWith("en")
+  const locale: Locale = (i18n.resolvedLanguage || i18n.language || "pt")
+    .toLowerCase()
+    .startsWith("en")
     ? "en"
     : "pt";
 
@@ -45,7 +47,9 @@ function AppIdiomaPage() {
         </button>
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">{t("lang.appTitle")}</h1>
-          <p className="mt-1 text-sm leading-snug text-muted-foreground">{t("lang.appDescription")}</p>
+          <p className="mt-1 text-sm leading-snug text-muted-foreground">
+            {t("lang.appDescription")}
+          </p>
         </div>
       </header>
 

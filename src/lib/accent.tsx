@@ -213,10 +213,7 @@ function applyAccent(id: AccentId) {
       "--brand-tint",
       `color-mix(in oklab, ${brand} ${tintPct}%, transparent)`,
     );
-    root.style.setProperty(
-      "--brand-border",
-      `color-mix(in oklab, ${brand} 45%, transparent)`,
-    );
+    root.style.setProperty("--brand-border", `color-mix(in oklab, ${brand} 45%, transparent)`);
     root.style.setProperty("--primary", brand);
     root.style.setProperty("--primary-foreground", fg);
     root.style.setProperty("--ring", brand);

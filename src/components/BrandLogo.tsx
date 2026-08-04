@@ -32,8 +32,7 @@ const failedUrls = new Set<string>();
  * via SVG local — não há requisição externa.
  */
 function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props) {
-  const resolved: BrandResolved =
-    variant === "bank" ? getBankLogo(name) : getMerchantLogo(name);
+  const resolved: BrandResolved = variant === "bank" ? getBankLogo(name) : getMerchantLogo(name);
 
   // Logo.dev como fallback p/ qualquer nome sem SVG local.
   // Para bancos usamos trustedOnly p/ não cair em favicons genéricos.
@@ -42,9 +41,7 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
     return getLogoCandidates(null, name, { trustedOnly: variant === "bank" });
   }, [resolved.logoUrl, name, variant]);
 
-  const [dynIdx, setDynIdx] = useState(() =>
-    skipFailed(dynamicCandidates, 0),
-  );
+  const [dynIdx, setDynIdx] = useState(() => skipFailed(dynamicCandidates, 0));
   useEffect(() => {
     setDynIdx(skipFailed(dynamicCandidates, 0));
   }, [dynamicCandidates]);
@@ -237,9 +234,7 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
       style={{ background: bg, color: "#fff" }}
     >
       {resolved.initial && resolved.initial !== "?" ? (
-        <span className="text-xs font-bold leading-none text-white">
-          {resolved.initial}
-        </span>
+        <span className="text-xs font-bold leading-none text-white">{resolved.initial}</span>
       ) : (
         <FallbackIcon className="h-4 w-4 text-white" />
       )}

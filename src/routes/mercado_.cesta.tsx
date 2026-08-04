@@ -42,14 +42,7 @@ export const Route = createFileRoute("/mercado_/cesta")({
   component: CestaPadraoPage,
 });
 
-const TIPOS: CestaTipo[] = [
-  "compraMes",
-  "reposicao",
-  "limpeza",
-  "farmacia",
-  "churrasco",
-  "outros",
-];
+const TIPOS: CestaTipo[] = ["compraMes", "reposicao", "limpeza", "farmacia", "churrasco", "outros"];
 
 function CestaPadraoPage() {
   const { t } = useTranslation("mercado");
@@ -78,7 +71,10 @@ function CestaPadraoPage() {
   }
 
   async function handleDelete(c: MercadoCestaPadrao) {
-    const ok = await confirmAsync({ title: t("cesta.confirm.delete", { name: c.nome }), destructive: true });
+    const ok = await confirmAsync({
+      title: t("cesta.confirm.delete", { name: c.nome }),
+      destructive: true,
+    });
     if (!ok) return;
     removeCestaPadrao(c.id);
     if (expandedId === c.id) setExpandedId(null);
@@ -206,9 +202,7 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
             <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-soft text-xs font-bold text-brand">
               {i + 1}
             </span>
-            <p className="text-[12px] leading-snug text-foreground">
-              {t(`basketV2.steps.${k}`)}
-            </p>
+            <p className="text-[12px] leading-snug text-foreground">{t(`basketV2.steps.${k}`)}</p>
           </li>
         ))}
       </ol>
@@ -481,8 +475,7 @@ function EditPanel({ cesta }: { cesta: MercadoCestaPadrao }) {
       nome: n,
       quantidade: Number.isFinite(qtd) && qtd > 0 ? qtd : 1,
       unidade: itemUnidade.trim() || undefined,
-      precoEstimado:
-        preco !== undefined && Number.isFinite(preco) && preco > 0 ? preco : undefined,
+      precoEstimado: preco !== undefined && Number.isFinite(preco) && preco > 0 ? preco : undefined,
     });
     if (created) {
       setItemNome("");
@@ -578,9 +571,7 @@ function EditPanel({ cesta }: { cesta: MercadoCestaPadrao }) {
         className="grid gap-3 rounded-2xl border border-border/60 bg-card-elevated p-3"
       >
         <h4 className="text-sm font-semibold text-foreground">{t("cesta.addItem.title")}</h4>
-        <p className="text-[11px] leading-snug text-muted-foreground">
-          {t("cesta.addItem.hint")}
-        </p>
+        <p className="text-[11px] leading-snug text-muted-foreground">{t("cesta.addItem.hint")}</p>
         <div className="grid gap-2 sm:grid-cols-2">
           <label className="grid gap-1.5 sm:col-span-2">
             <span className="text-xs font-medium text-muted-foreground">
@@ -667,7 +658,11 @@ function ItemRow({
     updateItemCesta(cestaId, item.id, {
       quantidade: Number.isFinite(q) && q > 0 ? q : item.quantidade,
       precoEstimado:
-        p !== undefined && Number.isFinite(p) && p > 0 ? p : preco === "" ? undefined : item.precoEstimado,
+        p !== undefined && Number.isFinite(p) && p > 0
+          ? p
+          : preco === ""
+            ? undefined
+            : item.precoEstimado,
     });
   }
 
@@ -675,9 +670,7 @@ function ItemRow({
     <li className="flex flex-col gap-2 bg-card p-3 sm:flex-row sm:items-center">
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">{item.nome}</p>
-        {item.unidade && (
-          <p className="text-[11px] text-muted-foreground">{item.unidade}</p>
-        )}
+        {item.unidade && <p className="text-[11px] text-muted-foreground">{item.unidade}</p>}
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <label className="flex items-center gap-1 text-[11px] text-muted-foreground">

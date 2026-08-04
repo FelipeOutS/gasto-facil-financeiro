@@ -26,10 +26,7 @@ import * as _supa from "@/integrations/supabase/client.server";
 import { nowInAppTz } from "./cartao-fatura.server";
 import { suggestCategoryFromText } from "@/lib/categories";
 import type { WhatsAppMessageRow, ProcessOutcome } from "./whatsapp.server";
-import type {
-  CategoriaPickerRow,
-  CategoriaPickerState,
-} from "./whatsapp-comprovantes.server";
+import type { CategoriaPickerRow, CategoriaPickerState } from "./whatsapp-comprovantes.server";
 import { extrairValor } from "./whatsapp-parcelamento.server";
 import { randomUUID } from "crypto";
 // WA-C11 3B.2.C.1 Block 5 — quota financeira para criação de conta por texto.
@@ -38,10 +35,12 @@ import {
   financialQuotaBlockedReply,
 } from "@/server/whatsapp-financial-quota-gate.server";
 
-
 // Live-binding para permitir mock.module() em testes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const supabaseAdmin: any = new Proxy({}, { get: (_t, prop) => (_supa.supabaseAdmin as never)[prop as never] });
+const supabaseAdmin: any = new Proxy(
+  {},
+  { get: (_t, prop) => (_supa.supabaseAdmin as never)[prop as never] },
+);
 
 // ---------- tipos ----------
 
@@ -85,18 +84,34 @@ export function isContaSession(s: unknown): s is ContaSession {
 
 export type WhatsAppContaCriarDeps = {
   gravarSessao: (
-    userId: string, telefone: string, externalId: string | null,
-    texto: string, recebidaEm: string, status: string,
+    userId: string,
+    telefone: string,
+    externalId: string | null,
+    texto: string,
+    recebidaEm: string,
+    status: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    session: any, resposta: string, gastoId?: string,
-  ) => Promise<{ ok: boolean; sessionId: string | null; status: string | null; errorCode: string | null }>;
+    session: any,
+    resposta: string,
+    gastoId?: string,
+  ) => Promise<{
+    ok: boolean;
+    sessionId: string | null;
+    status: string | null;
+    errorCode: string | null;
+  }>;
   atualizarSessao: (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    id: string, status: string, session: any, resposta: string, gastoId?: string,
+    id: string,
+    status: string,
+    session: any,
+    resposta: string,
+    gastoId?: string,
   ) => Promise<unknown>;
   fecharSessoesAnteriores: (
-    userId: string, telefone: string,
-    motivo: "salva" | "cancelada" | "expirada", gastoId?: string,
+    userId: string,
+    telefone: string,
+    motivo: "salva" | "cancelada" | "expirada",
+    gastoId?: string,
   ) => Promise<void>;
   loadCategoriasParaPicker: (userId: string) => Promise<CategoriaPickerRow[]>;
   buildCategoriaListBody: (args: {
@@ -118,7 +133,9 @@ export type WhatsAppContaCriarDeps = {
     | { kind: "relist"; options: CategoriaPickerState; body: string }
     | { kind: "invalid" }
   >;
-  detectCategoriaCommand: (texto: string) => { kind: "ask" } | { kind: "direct"; termo: string } | null;
+  detectCategoriaCommand: (
+    texto: string,
+  ) => { kind: "ask" } | { kind: "direct"; termo: string } | null;
 };
 
 // ---------- log seguro ----------
@@ -174,11 +191,7 @@ function norm(s: string): string {
  * não importe nenhum módulo do bundle client. Se essa regra mudar no
  * site, atualize ambos em par.
  */
-export function expandRecurrenceDates(
-  baseISO: string,
-  freq: Frequencia,
-  total: number,
-): string[] {
+export function expandRecurrenceDates(baseISO: string, freq: Frequencia, total: number): string[] {
   const out: string[] = [];
   const [y, m, d] = baseISO.split("-").map(Number);
   for (let i = 0; i < total; i++) {
@@ -204,18 +217,50 @@ function totalOcorrenciasFor(freq: Frequencia): number {
 
 // ---------- detector de intenção ----------
 
-const VERBOS_GASTO_OU_RECEITA =
-  /\b(gastei|paguei|comprei|recebi|ganhei|sobr[ao]|saldo)\b/;
+const VERBOS_GASTO_OU_RECEITA = /\b(gastei|paguei|comprei|recebi|ganhei|sobr[ao]|saldo)\b/;
 const FATURA_OU_CARTAO =
   /\bfatura\b|\bcart(?:ao|oes|ão|ões)\b|\bnubank\b|\binter\b|\bitau\b|\bita[uú]\b|\bbradesco\b|\bsantander\b|\bcaixa\b|\bc6\b|\bpicpay\b|\bmercado\s*pago\b/;
 
 const PALAVRAS_CONTA = [
-  "conta","aluguel","mensalidade","plano","seguro","internet",
-  "luz","energia","agua","água","gas","gás","condominio","condomínio",
-  "iptu","iptv","streaming","academia","escola","faculdade","creche",
-  "boleto","financiamento","emprestimo","empréstimo","prestacao","prestação",
-  "consorcio","consórcio","netflix","spotify","celular","telefone","tv",
-  "saude","saúde","plano de saude","plano de saúde","cartao de credito"
+  "conta",
+  "aluguel",
+  "mensalidade",
+  "plano",
+  "seguro",
+  "internet",
+  "luz",
+  "energia",
+  "agua",
+  "água",
+  "gas",
+  "gás",
+  "condominio",
+  "condomínio",
+  "iptu",
+  "iptv",
+  "streaming",
+  "academia",
+  "escola",
+  "faculdade",
+  "creche",
+  "boleto",
+  "financiamento",
+  "emprestimo",
+  "empréstimo",
+  "prestacao",
+  "prestação",
+  "consorcio",
+  "consórcio",
+  "netflix",
+  "spotify",
+  "celular",
+  "telefone",
+  "tv",
+  "saude",
+  "saúde",
+  "plano de saude",
+  "plano de saúde",
+  "cartao de credito",
 ];
 
 const PALAVRAS_VENCE =
@@ -264,7 +309,11 @@ export function detectFrequencia(textRaw: string): Frequencia | null {
   const t = norm(textRaw);
   if (/\btoda\s+semana\b|\bsemanal(?:mente)?\b/.test(t)) return "semanal";
   if (/\banual(?:mente)?\b|\btodo\s+ano\b|\bpor\s+ano\b/.test(t)) return "anual";
-  if (/\btodo\s+(?:m[eê]s|mes)\b|\bmensal(?:mente)?\b|\bpor\s+m[eê]s\b|\bcada\s+m[eê]s\b|\btodo\s+dia\s+\d{1,2}\b/.test(t))
+  if (
+    /\btodo\s+(?:m[eê]s|mes)\b|\bmensal(?:mente)?\b|\bpor\s+m[eê]s\b|\bcada\s+m[eê]s\b|\btodo\s+dia\s+\d{1,2}\b/.test(
+      t,
+    )
+  )
     return "mensal";
 
   return null;
@@ -273,15 +322,27 @@ export function detectFrequencia(textRaw: string): Frequencia | null {
 /** `true` somente quando o texto NEGA recorrência ("é única", "uma vez", "só esse mês"). */
 export function detectExplicitlyOneShot(textRaw: string): boolean {
   const t = norm(textRaw);
-  return /\b(unica|única|uma vez|so esse mes|só esse mês|apenas esse mes|so dessa vez|nao e recorrente|não é recorrente|nao recorrente|não recorrente)\b/.test(t);
+  return /\b(unica|única|uma vez|so esse mes|só esse mês|apenas esse mes|so dessa vez|nao e recorrente|não é recorrente|nao recorrente|não recorrente)\b/.test(
+    t,
+  );
 }
 
 // ---------- parser de data ----------
 
 const MESES_PT: Record<string, number> = {
-  janeiro: 1, fevereiro: 2, marco: 3, março: 3, abril: 4,
-  maio: 5, junho: 6, julho: 7, agosto: 8, setembro: 9,
-  outubro: 10, novembro: 11, dezembro: 12,
+  janeiro: 1,
+  fevereiro: 2,
+  marco: 3,
+  março: 3,
+  abril: 4,
+  maio: 5,
+  junho: 6,
+  julho: 7,
+  agosto: 8,
+  setembro: 9,
+  outubro: 10,
+  novembro: 11,
+  dezembro: 12,
 };
 
 function toLocalISO(y: number, m: number, d: number): string {
@@ -306,18 +367,30 @@ export function extrairDataVencimento(
   textRaw: string,
   hoje: Date = nowInAppTz(),
   _recurring = false,
-): { iso: string; dia: number; mes: number; ano: number } | { kind: "dia_somente"; dia: number } | null {
+):
+  | { iso: string; dia: number; mes: number; ano: number }
+  | { kind: "dia_somente"; dia: number }
+  | null {
   const t = norm(textRaw);
   if (!t) return null;
 
   if (/\bamanha\b|\bamanhã\b/.test(t)) {
-    const d = new Date(hoje); d.setDate(d.getDate() + 1);
-    return { iso: toLocalISO(d.getFullYear(), d.getMonth() + 1, d.getDate()),
-             dia: d.getDate(), mes: d.getMonth() + 1, ano: d.getFullYear() };
+    const d = new Date(hoje);
+    d.setDate(d.getDate() + 1);
+    return {
+      iso: toLocalISO(d.getFullYear(), d.getMonth() + 1, d.getDate()),
+      dia: d.getDate(),
+      mes: d.getMonth() + 1,
+      ano: d.getFullYear(),
+    };
   }
   if (/\bhoje\b/.test(t)) {
-    return { iso: toLocalISO(hoje.getFullYear(), hoje.getMonth() + 1, hoje.getDate()),
-             dia: hoje.getDate(), mes: hoje.getMonth() + 1, ano: hoje.getFullYear() };
+    return {
+      iso: toLocalISO(hoje.getFullYear(), hoje.getMonth() + 1, hoje.getDate()),
+      dia: hoje.getDate(),
+      mes: hoje.getMonth() + 1,
+      ano: hoje.getFullYear(),
+    };
   }
 
   // "5 de julho [de 2026]" / "20 de julho"
@@ -396,17 +469,28 @@ function resolveNextOccurrence(
     }
     // avança um mês
     m0 += 1;
-    if (m0 > 11) { m0 = 0; y += 1; }
+    if (m0 > 11) {
+      m0 = 0;
+      y += 1;
+    }
   }
   // fallback defensivo (não deve ocorrer)
-  return { iso: toLocalISO(y, m0 + 1, Math.min(dia, lastDayOfMonth(y, m0 + 1))), dia, mes: m0 + 1, ano: y };
+  return {
+    iso: toLocalISO(y, m0 + 1, Math.min(dia, lastDayOfMonth(y, m0 + 1))),
+    dia,
+    mes: m0 + 1,
+    ano: y,
+  };
 }
 
 // ---------- categoria sugerida (determinística) ----------
 
 const KW_CATEGORIA: Array<{ key: string; re: RegExp }> = [
   { key: "moradia", re: /\b(aluguel|condominio|condomínio|iptu)\b/ },
-  { key: "casa", re: /\b(internet|luz|energia|agua|água|gas|gás|telefone|celular|tv|streaming|netflix|spotify)\b/ },
+  {
+    key: "casa",
+    re: /\b(internet|luz|energia|agua|água|gas|gás|telefone|celular|tv|streaming|netflix|spotify)\b/,
+  },
   { key: "saude", re: /\b(plano de saude|plano de saúde|saude|saúde|odonto|farmacia|farmácia)\b/ },
   { key: "educacao", re: /\b(escola|faculdade|creche|curso|mensalidade)\b/ },
   { key: "transporte", re: /\b(seguro auto|seguro do carro|financiamento (do )?carro)\b/ },
@@ -440,7 +524,10 @@ function extrairNome(textRaw: string): string | null {
     .replace(/\b(mensal|semanal|anual)(?:mente)?\b/gi, " ")
     .replace(/\b(vence|vencendo|vencimento|vencer|vencimentos|venceu)\b/gi, " ")
     .replace(/\b(amanha|amanhã|hoje)\b/gi, " ")
-    .replace(/\b(cadastrar|cadastra|cadastre|registrar|registra|criar|adicionar|inserir|salvar|lan[cç]ar|tenho|uma|um|de|do|da|que|para|pra|por|em|no|na|com|minha|meu|essa|esse|isso)\b/gi, " ")
+    .replace(
+      /\b(cadastrar|cadastra|cadastre|registrar|registra|criar|adicionar|inserir|salvar|lan[cç]ar|tenho|uma|um|de|do|da|que|para|pra|por|em|no|na|com|minha|meu|essa|esse|isso)\b/gi,
+      " ",
+    )
     .replace(/[.,;:!?]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -501,7 +588,6 @@ export function parsePayableAccountMessage(textRaw: string, hoje: Date = new Dat
     diaInformado,
   };
 }
-
 
 // ---------- formatação ----------
 
@@ -572,8 +658,14 @@ export async function processarContaAPagar(args: {
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     const resposta = "Conta cancelada. Quando quiser, é só me contar de novo. 👍";
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "cancelada", sessao.session as never, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "cancelada",
+      sessao.session as never,
+      resposta,
     );
     logDecision({
       stage: "cancelled",
@@ -625,7 +717,15 @@ export async function processarContaAPagar(args: {
       return { status: "pendente", resposta: r };
     }
     session.nome = nome;
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps });
+    return await avancarFluxo({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      session,
+      sessaoId: sessao.id,
+      deps,
+    });
   }
 
   if (current === "conta_aguardando_valor") {
@@ -636,7 +736,15 @@ export async function processarContaAPagar(args: {
       return { status: "pendente", resposta: r };
     }
     session.valorCentavos = Math.round(v * 100);
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps });
+    return await avancarFluxo({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      session,
+      sessaoId: sessao.id,
+      deps,
+    });
   }
 
   if (current === "conta_aguardando_vencimento") {
@@ -655,12 +763,21 @@ export async function processarContaAPagar(args: {
     }
     session.dataVencimento = r.iso;
     session.diaInformado = null;
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps });
+    return await avancarFluxo({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      session,
+      sessaoId: sessao.id,
+      deps,
+    });
   }
 
   if (current === "conta_aguardando_recorrencia") {
     const freq = detectFrequencia(texto);
-    const oneShot = detectExplicitlyOneShot(texto) ||
+    const oneShot =
+      detectExplicitlyOneShot(texto) ||
       /^(unica|única|nao|não|so essa vez|só essa vez)$/i.test(norm(texto));
     if (freq) {
       session.recorrente = true;
@@ -670,10 +787,23 @@ export async function processarContaAPagar(args: {
       session.frequenciaRecorrencia = null;
     } else {
       const aviso = `Não entendi. ${askRecorrencia()}`;
-      await deps.atualizarSessao(sessao.id, "conta_aguardando_recorrencia", session as never, aviso);
+      await deps.atualizarSessao(
+        sessao.id,
+        "conta_aguardando_recorrencia",
+        session as never,
+        aviso,
+      );
       return { status: "pendente", resposta: aviso };
     }
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps });
+    return await avancarFluxo({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      session,
+      sessaoId: sessao.id,
+      deps,
+    });
   }
 
   if (current === "conta_aguardando_categoria") {
@@ -693,7 +823,15 @@ export async function processarContaAPagar(args: {
       session.categoriaId = r.cat.id;
       session.categoriaLabel = r.cat.nome;
       session.categoriaOptions = undefined;
-      return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps });
+      return await avancarFluxo({
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessaoId: sessao.id,
+        deps,
+      });
     }
     if (r.kind === "relist") {
       session.categoriaOptions = r.options;
@@ -709,22 +847,57 @@ export async function processarContaAPagar(args: {
     // Comando de categoria (ask/direct) tem prioridade sobre "sim".
     const catCmd = deps.detectCategoriaCommand(texto);
     if (catCmd) {
-      return await handleCategoriaCmd({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps, cmd: catCmd });
+      return await handleCategoriaCmd({
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessaoId: sessao.id,
+        deps,
+        cmd: catCmd,
+      });
     }
     if (decisao === "confirm") {
-      return await persistir({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps });
+      return await persistir({
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessaoId: sessao.id,
+        deps,
+      });
     }
     // Ajustes livres: valor / vencimento / recorrência / nome.
     const novoValor = extrairValor(texto);
-    if (novoValor && novoValor > 0 && /\b(valor|certo|na verdade|na real|foi|paguei|total)\b/i.test(texto)) {
+    if (
+      novoValor &&
+      novoValor > 0 &&
+      /\b(valor|certo|na verdade|na real|foi|paguei|total)\b/i.test(texto)
+    ) {
       session.valorCentavos = Math.round(novoValor * 100);
     }
     const novaFreq = detectFrequencia(texto);
-    if (novaFreq) { session.recorrente = true; session.frequenciaRecorrencia = novaFreq; }
-    if (detectExplicitlyOneShot(texto)) { session.recorrente = false; session.frequenciaRecorrencia = null; }
+    if (novaFreq) {
+      session.recorrente = true;
+      session.frequenciaRecorrencia = novaFreq;
+    }
+    if (detectExplicitlyOneShot(texto)) {
+      session.recorrente = false;
+      session.frequenciaRecorrencia = null;
+    }
     const novaData = extrairDataVencimento(texto, new Date(), session.recorrente === true);
     if (novaData && "iso" in novaData) session.dataVencimento = novaData.iso;
-    return await avancarFluxo({ userId, msg, texto, recebidaEm, session, sessaoId: sessao.id, deps });
+    return await avancarFluxo({
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      session,
+      sessaoId: sessao.id,
+      deps,
+    });
   }
 
   return { status: "sem_pendencia", resposta: "" };
@@ -761,7 +934,12 @@ async function handleCategoriaCmd(args: {
   });
   if (r.kind !== "picked") {
     const resposta = `Não encontrei a categoria "${cmd.termo}". Digite "categoria" para ver a lista de opções.`;
-    await deps.atualizarSessao(sessaoId, "conta_aguardando_confirmacao", session as never, resposta);
+    await deps.atualizarSessao(
+      sessaoId,
+      "conta_aguardando_confirmacao",
+      session as never,
+      resposta,
+    );
     return { status: "pendente", resposta };
   }
   session.categorySelectionSource = "manual";
@@ -776,15 +954,27 @@ async function persistTransition(
   session: ContaSession,
   resposta: string,
   sessaoId: string | null,
-  args: { userId: string; msg: WhatsAppMessageRow; texto: string; recebidaEm: string; deps: WhatsAppContaCriarDeps },
+  args: {
+    userId: string;
+    msg: WhatsAppMessageRow;
+    texto: string;
+    recebidaEm: string;
+    deps: WhatsAppContaCriarDeps;
+  },
 ): Promise<void> {
   const { userId, msg, texto, recebidaEm, deps } = args;
   if (sessaoId) {
     await supabaseAdmin.from("whatsapp_messages").update({ status: "expirada" }).eq("id", sessaoId);
   }
   await deps.gravarSessao(
-    userId, msg.telefone, msg.external_id, texto, recebidaEm,
-    newStatus, session as never, resposta,
+    userId,
+    msg.telefone,
+    msg.external_id,
+    texto,
+    recebidaEm,
+    newStatus,
+    session as never,
+    resposta,
   );
 }
 
@@ -803,7 +993,12 @@ async function avancarFluxo(args: {
   if (!session.nome || session.nome.length < 2) {
     const r = askNome();
     await persistTransition("conta_aguardando_nome", session, r, args.sessaoId, args);
-    logDecision({ stage: "awaiting_name", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "ok" });
+    logDecision({
+      stage: "awaiting_name",
+      recurringPresent: !!session.recorrente,
+      frequencyPresent: !!session.frequenciaRecorrencia,
+      result: "ok",
+    });
     return { status: "pendente", resposta: r };
   }
 
@@ -811,7 +1006,12 @@ async function avancarFluxo(args: {
   if (!session.valorCentavos || session.valorCentavos <= 0) {
     const r = askValor(session.nome);
     await persistTransition("conta_aguardando_valor", session, r, args.sessaoId, args);
-    logDecision({ stage: "awaiting_value", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "ok" });
+    logDecision({
+      stage: "awaiting_value",
+      recurringPresent: !!session.recorrente,
+      frequencyPresent: !!session.frequenciaRecorrencia,
+      result: "ok",
+    });
     return { status: "pendente", resposta: r };
   }
 
@@ -821,7 +1021,12 @@ async function avancarFluxo(args: {
     if (session.diaInformado) r = confirmarDataSomenteDia(session.diaInformado);
     else r = askVencimento();
     await persistTransition("conta_aguardando_vencimento", session, r, args.sessaoId, args);
-    logDecision({ stage: "awaiting_due_date", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "ok" });
+    logDecision({
+      stage: "awaiting_due_date",
+      recurringPresent: !!session.recorrente,
+      frequencyPresent: !!session.frequenciaRecorrencia,
+      result: "ok",
+    });
     return { status: "pendente", resposta: r };
   }
 
@@ -829,7 +1034,12 @@ async function avancarFluxo(args: {
   if (session.recorrente === null) {
     const r = askRecorrencia();
     await persistTransition("conta_aguardando_recorrencia", session, r, args.sessaoId, args);
-    logDecision({ stage: "awaiting_recurrence", recurringPresent: false, frequencyPresent: false, result: "ok" });
+    logDecision({
+      stage: "awaiting_recurrence",
+      recurringPresent: false,
+      frequencyPresent: false,
+      result: "ok",
+    });
     return { status: "pendente", resposta: r };
   }
 
@@ -837,10 +1047,11 @@ async function avancarFluxo(args: {
   if (!session.categoriaId) {
     const cats = await args.deps.loadCategoriasParaPicker(args.userId);
     const key = sugerirCategoriaKey(session.nome) ?? "outros";
-    const found = cats.find((c) => (c.legacy_id ?? "").toLowerCase() === key)
-      ?? cats.find((c) => (c.legacy_id ?? "").toLowerCase() === "outros")
-      ?? cats[0]
-      ?? null;
+    const found =
+      cats.find((c) => (c.legacy_id ?? "").toLowerCase() === key) ??
+      cats.find((c) => (c.legacy_id ?? "").toLowerCase() === "outros") ??
+      cats[0] ??
+      null;
     if (found) {
       session.categoriaId = found.id;
       session.categoriaLabel = found.nome;
@@ -853,7 +1064,12 @@ async function avancarFluxo(args: {
   // 6) Prévia + aguarda confirmação.
   const resposta = previewMessage(session);
   await persistTransition("conta_aguardando_confirmacao", session, resposta, args.sessaoId, args);
-  logDecision({ stage: "awaiting_confirmation", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "ok" });
+  logDecision({
+    stage: "awaiting_confirmation",
+    recurringPresent: !!session.recorrente,
+    frequencyPresent: !!session.frequenciaRecorrencia,
+    result: "ok",
+  });
   return { status: "pendente", resposta };
 }
 
@@ -870,7 +1086,12 @@ export async function persistir(args: {
 }): Promise<ProcessOutcome> {
   const { userId, msg, texto, recebidaEm, session, sessaoId, deps } = args;
   if (!session.nome || !session.valorCentavos || !session.dataVencimento) {
-    logDecision({ stage: "failed", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "error" });
+    logDecision({
+      stage: "failed",
+      recurringPresent: !!session.recorrente,
+      frequencyPresent: !!session.frequenciaRecorrencia,
+      result: "error",
+    });
     return { status: "erro", resposta: "Não consegui montar essa conta. Vamos começar de novo?" };
   }
 
@@ -878,18 +1099,37 @@ export async function persistir(args: {
   const externalMessageId = msg.external_id ?? null;
   if (!externalMessageId || externalMessageId.trim().length === 0) {
     console.error("[whatsapp] contas-criar persistir missing externalMessageId");
-    logDecision({ stage: "failed", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "error" });
-    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
+    logDecision({
+      stage: "failed",
+      recurringPresent: !!session.recorrente,
+      frequencyPresent: !!session.frequenciaRecorrencia,
+      result: "error",
+    });
+    return {
+      status: "erro",
+      resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?",
+    };
   }
 
   // Claim atômico de idempotência (mesmo padrão WA-F3.3).
   let claimSessionId: string | null = null;
   const claim = await deps.gravarSessao(
-    userId, msg.telefone, externalMessageId, texto, recebidaEm,
-    "conta_persistindo", session as never, "",
+    userId,
+    msg.telefone,
+    externalMessageId,
+    texto,
+    recebidaEm,
+    "conta_persistindo",
+    session as never,
+    "",
   );
   if (!claim?.ok || !claim.sessionId) {
-    logDecision({ stage: "failed", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "error" });
+    logDecision({
+      stage: "failed",
+      recurringPresent: !!session.recorrente,
+      frequencyPresent: !!session.frequenciaRecorrencia,
+      result: "error",
+    });
     return { status: "erro", resposta: "Já estou processando essa conta. Aguarde um instante." };
   }
   claimSessionId = claim.sessionId;
@@ -905,11 +1145,17 @@ export async function persistir(args: {
   if (!gateOutcome.allowed) {
     try {
       await deps.atualizarSessao(claimSessionId, "erro", session as never, "quota_blocked");
-    } catch { /* claim cleanup nunca quebra o fluxo de resposta */ }
-    logDecision({ stage: "failed", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "error" });
+    } catch {
+      /* claim cleanup nunca quebra o fluxo de resposta */
+    }
+    logDecision({
+      stage: "failed",
+      recurringPresent: !!session.recorrente,
+      frequencyPresent: !!session.frequenciaRecorrencia,
+      result: "error",
+    });
     return { status: "erro", resposta: financialQuotaBlockedReply(gateOutcome) };
   }
-
 
   const freq = session.recorrente ? (session.frequenciaRecorrencia ?? "mensal") : null;
   const datas = freq
@@ -952,11 +1198,18 @@ export async function persistir(args: {
     } as Record<string, unknown>;
   });
 
-
   const { error: insertErr } = await supabaseAdmin.from("contas_a_pagar").insert(rows);
   if (insertErr) {
-    logDecision({ stage: "failed", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "error" });
-    return { status: "erro", resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?" };
+    logDecision({
+      stage: "failed",
+      recurringPresent: !!session.recorrente,
+      frequencyPresent: !!session.frequenciaRecorrencia,
+      result: "error",
+    });
+    return {
+      status: "erro",
+      resposta: "Não consegui salvar agora. Pode tentar de novo daqui a pouco?",
+    };
   }
 
   // Readback obrigatório: confirma que TODAS as ocorrências foram gravadas.
@@ -968,10 +1221,16 @@ export async function persistir(args: {
     .in("id", ids);
   const got: Array<{ id: string }> = Array.isArray(readback) ? readback : [];
   if (readErr || got.length !== rows.length) {
-    logDecision({ stage: "failed", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "error" });
+    logDecision({
+      stage: "failed",
+      recurringPresent: !!session.recorrente,
+      frequencyPresent: !!session.frequenciaRecorrencia,
+      result: "error",
+    });
     return {
       status: "erro",
-      resposta: "Salvei mas não consegui confirmar todas as parcelas. Pode me chamar de novo em alguns minutos?",
+      resposta:
+        "Salvei mas não consegui confirmar todas as parcelas. Pode me chamar de novo em alguns minutos?",
     };
   }
 
@@ -988,8 +1247,14 @@ export async function persistir(args: {
     await deps.atualizarSessao(claimSessionId, "salva", finalSession, "ok");
   } else {
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "salva", finalSession, "ok",
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "salva",
+      finalSession,
+      "ok",
     );
   }
 
@@ -1007,6 +1272,11 @@ export async function persistir(args: {
         `Vencimento: ${formatDateBR(session.dataVencimento)}.`,
       ].join("\n");
 
-  logDecision({ stage: "persisted", recurringPresent: !!session.recorrente, frequencyPresent: !!session.frequenciaRecorrencia, result: "ok" });
+  logDecision({
+    stage: "persisted",
+    recurringPresent: !!session.recorrente,
+    frequencyPresent: !!session.frequenciaRecorrencia,
+    result: "ok",
+  });
   return { status: "salva", resposta };
 }

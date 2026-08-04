@@ -14,11 +14,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import i18n from "@/i18n";
-import {
-  sendChatMessage,
-  getChatHistory,
-  clearChatHistory,
-} from "@/lib/finance-ai.functions";
+import { sendChatMessage, getChatHistory, clearChatHistory } from "@/lib/finance-ai.functions";
 import { requireOnline } from "@/lib/use-online-status";
 import { confirmAsync } from "@/components/ConfirmDialog";
 
@@ -29,10 +25,7 @@ export const Route = createFileRoute("/gasto-ai")({
   head: () => {
     const t = i18n.getFixedT(i18n.language, "misc");
     return {
-      meta: [
-        { title: t("ai.metaTitle") },
-        { name: "description", content: t("ai.metaDesc") },
-      ],
+      meta: [{ title: t("ai.metaTitle") }, { name: "description", content: t("ai.metaDesc") }],
     };
   },
   component: GastoAIPage,
@@ -150,9 +143,7 @@ function GastoAIPage() {
             </span>
             <div>
               <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{t("ai.title")}</h1>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                {t("ai.subtitle")}
-              </p>
+              <p className="mt-0.5 text-sm text-muted-foreground">{t("ai.subtitle")}</p>
             </div>
           </div>
           {messages.length > 0 && (
@@ -179,10 +170,7 @@ function GastoAIPage() {
         </div>
 
         <div className="flex flex-col overflow-hidden rounded-3xl border border-border/60 bg-card/70 shadow-card backdrop-blur-sm">
-          <div
-            ref={scrollRef}
-            className="h-[58vh] overflow-y-auto px-3 py-4 sm:px-5 sm:py-5"
-          >
+          <div ref={scrollRef} className="h-[58vh] overflow-y-auto px-3 py-4 sm:px-5 sm:py-5">
             {loadingHistory ? (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -195,9 +183,7 @@ function GastoAIPage() {
                 </span>
                 <div>
                   <p className="text-sm font-semibold">{t("ai.emptyTitle")}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {t("ai.emptyDesc")}
-                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t("ai.emptyDesc")}</p>
                 </div>
               </div>
             ) : (
@@ -225,9 +211,7 @@ function GastoAIPage() {
                     >
                       {m.role === "assistant" ? (
                         <div className="ai-markdown text-sm leading-relaxed">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {m.content}
-                          </ReactMarkdown>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
                         </div>
                       ) : (
                         <p className="whitespace-pre-wrap">{m.content}</p>
@@ -285,12 +269,14 @@ function GastoAIPage() {
                 className="h-11 w-11 shrink-0 rounded-2xl bg-brand-grad p-0"
                 aria-label={t("ai.send")}
               >
-                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {sending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
               </Button>
             </form>
-            <p className="mt-2 text-[11px] text-muted-foreground">
-              {t("ai.disclaimer")}
-            </p>
+            <p className="mt-2 text-[11px] text-muted-foreground">{t("ai.disclaimer")}</p>
           </div>
         </div>
       </div>

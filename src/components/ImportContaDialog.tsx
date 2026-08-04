@@ -256,14 +256,17 @@ export function ImportContaDialog({
         const valor = c.valor;
         const venc = c.dataVencimento ?? "";
         const nm = c.nome ?? "";
-        const dupCheck = checarDuplicado({
-          valor,
-          dataVencimento: venc,
-          nome: nm,
-          beneficiario: c.beneficiario ?? undefined,
-          codigoBoleto: c.codigoBoleto ?? undefined,
-          codigoPix: c.codigoPix ?? undefined,
-        }, t);
+        const dupCheck = checarDuplicado(
+          {
+            valor,
+            dataVencimento: venc,
+            nome: nm,
+            beneficiario: c.beneficiario ?? undefined,
+            codigoBoleto: c.codigoBoleto ?? undefined,
+            codigoPix: c.codigoPix ?? undefined,
+          },
+          t,
+        );
         return {
           uid: crypto.randomUUID(),
           selecionado: !dupCheck.dup,
@@ -312,9 +315,7 @@ export function ImportContaDialog({
   async function handlePdf(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const isPdf =
-      file.type === "application/pdf" ||
-      file.name.toLowerCase().endsWith(".pdf");
+    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
     if (!isPdf) {
       toast.error(t("errors.pickPdf"));
       return;
@@ -339,8 +340,7 @@ export function ImportContaDialog({
   async function handleSalvar() {
     const valor = parseBRLInput(valorStr);
     if (!nome.trim()) return toast.error(t("errors.needName"));
-    if (!Number.isFinite(valor) || valor <= 0)
-      return toast.error(t("errors.invalidValue"));
+    if (!Number.isFinite(valor) || valor <= 0) return toast.error(t("errors.invalidValue"));
     if (!vencimento) return toast.error(t("errors.needDue"));
 
     if (codigoBoleto.trim()) {
@@ -410,8 +410,7 @@ export function ImportContaDialog({
     // Validações
     for (const it of selecionados) {
       const v = parseBRLInput(it.valorStr);
-      if (!it.nome.trim())
-        return toast.error(t("errors.needNameItem"));
+      if (!it.nome.trim()) return toast.error(t("errors.needNameItem"));
       if (!Number.isFinite(v) || v <= 0)
         return toast.error(t("errors.invalidValueItem", { name: it.nome }));
       if (!it.vencimento) return toast.error(t("errors.needDueItem", { name: it.nome }));
@@ -502,9 +501,7 @@ export function ImportContaDialog({
                 />
                 <Upload className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
                 <p className="text-sm font-medium">{t("imagem.hint")}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t("imagem.format")}
-                </p>
+                <p className="mt-1 text-xs text-muted-foreground">{t("imagem.format")}</p>
                 <Button
                   className="mt-3"
                   onClick={() => fileRef.current?.click()}
@@ -557,11 +554,7 @@ export function ImportContaDialog({
                 <FileType2 className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
                 <p className="text-sm font-medium">{t("pdf.hint")}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{t("pdf.info")}</p>
-                <Button
-                  className="mt-3"
-                  onClick={() => pdfRef.current?.click()}
-                  disabled={loading}
-                >
+                <Button className="mt-3" onClick={() => pdfRef.current?.click()} disabled={loading}>
                   {loading ? (
                     <>
                       <Loader2 className="mr-1 h-4 w-4 animate-spin" />
@@ -625,9 +618,7 @@ export function ImportContaDialog({
                 <Label>{t("fields.forma")}</Label>
                 <Select
                   value={forma || "_none"}
-                  onValueChange={(v) =>
-                    setForma((v === "_none" ? "" : v) as FormaPagamento | "")
-                  }
+                  onValueChange={(v) => setForma((v === "_none" ? "" : v) as FormaPagamento | "")}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder={t("fields.selecione")} />
@@ -767,21 +758,14 @@ export function ImportContaDialog({
                   <div className="flex items-start gap-2">
                     <Checkbox
                       checked={it.selecionado}
-                      onCheckedChange={(c) =>
-                        patchItem(it.uid, { selecionado: c === true })
-                      }
+                      onCheckedChange={(c) => patchItem(it.uid, { selecionado: c === true })}
                       className="mt-1"
                     />
                     <div className="flex-1 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-semibold">
-                          {it.nome || t("lote.noName")}
-                        </span>
+                        <span className="text-sm font-semibold">{it.nome || t("lote.noName")}</span>
                         {it.duplicado && (
-                          <Badge
-                            variant="outline"
-                            className="border-warning/50 text-warning"
-                          >
+                          <Badge variant="outline" className="border-warning/50 text-warning">
                             {t("lote.exists")}
                           </Badge>
                         )}
@@ -820,9 +804,7 @@ export function ImportContaDialog({
                       <Label className="text-xs">{t("fields.beneficiario")}</Label>
                       <Input
                         value={it.beneficiario}
-                        onChange={(e) =>
-                          patchItem(it.uid, { beneficiario: e.target.value })
-                        }
+                        onChange={(e) => patchItem(it.uid, { beneficiario: e.target.value })}
                       />
                     </div>
                     <div className="space-y-1">
@@ -894,9 +876,7 @@ export function ImportContaDialog({
                           <Label className="text-xs">{t("fields.codigoBoleto")}</Label>
                           <Input
                             value={it.codigoBoleto}
-                            onChange={(e) =>
-                              patchItem(it.uid, { codigoBoleto: e.target.value })
-                            }
+                            onChange={(e) => patchItem(it.uid, { codigoBoleto: e.target.value })}
                           />
                         </div>
                       )}
@@ -906,9 +886,7 @@ export function ImportContaDialog({
                           <Textarea
                             rows={2}
                             value={it.codigoPix}
-                            onChange={(e) =>
-                              patchItem(it.uid, { codigoPix: e.target.value })
-                            }
+                            onChange={(e) => patchItem(it.uid, { codigoPix: e.target.value })}
                           />
                         </div>
                       )}
@@ -917,9 +895,7 @@ export function ImportContaDialog({
                           <Label className="text-xs">{t("fields.chavePix")}</Label>
                           <Input
                             value={it.chavePix}
-                            onChange={(e) =>
-                              patchItem(it.uid, { chavePix: e.target.value })
-                            }
+                            onChange={(e) => patchItem(it.uid, { chavePix: e.target.value })}
                           />
                         </div>
                       )}
@@ -932,9 +908,7 @@ export function ImportContaDialog({
                       <Textarea
                         rows={2}
                         value={it.observacao}
-                        onChange={(e) =>
-                          patchItem(it.uid, { observacao: e.target.value })
-                        }
+                        onChange={(e) => patchItem(it.uid, { observacao: e.target.value })}
                       />
                     </div>
                   )}
@@ -971,7 +945,9 @@ export function ImportContaDialog({
       </DialogContent>
       <PremiumLockModal
         open={premiumGate.state.open}
-        onOpenChange={(v) => { if (!v) premiumGate.close(); }}
+        onOpenChange={(v) => {
+          if (!v) premiumGate.close();
+        }}
         title={premiumGate.state.title}
         description={premiumGate.state.description}
         feature={premiumGate.state.feature ?? undefined}

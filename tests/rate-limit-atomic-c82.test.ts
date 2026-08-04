@@ -74,9 +74,7 @@ mock.module("@/integrations/supabase/client.server", () => ({
 }));
 mock.module("../src/server/logs.server", () => ({ logAuditEvent: async () => {} }));
 
-const { checkRateLimit, enforceUserRateLimit } = await import(
-  "../src/server/rate-limit.server"
-);
+const { checkRateLimit, enforceUserRateLimit } = await import("../src/server/rate-limit.server");
 
 const originalDateNow = Date.now;
 beforeEach(() => {

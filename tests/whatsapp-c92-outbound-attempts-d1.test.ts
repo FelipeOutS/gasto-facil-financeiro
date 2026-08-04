@@ -126,11 +126,7 @@ function fakeClient(initial?: {
               const ctok = q._insert.claim_token;
               const status = q._insert.attempt_status as AttemptStatus;
               // UNIQUE (notification_id, claim_token) — fecha B.
-              if (
-                attempts.some(
-                  (a) => a.notification_id === nid && a.claim_token === ctok,
-                )
-              ) {
+              if (attempts.some((a) => a.notification_id === nid && a.claim_token === ctok)) {
                 return Promise.resolve({
                   data: null,
                   error: { code: "23505", message: "unique_violation notification_claim" },
@@ -140,8 +136,7 @@ function fakeClient(initial?: {
                 ACTIVE.includes(status) &&
                 attempts.some(
                   (a) =>
-                    a.notification_id === nid &&
-                    ACTIVE.includes(a.attempt_status as AttemptStatus),
+                    a.notification_id === nid && ACTIVE.includes(a.attempt_status as AttemptStatus),
                 )
               ) {
                 return Promise.resolve({
@@ -243,9 +238,7 @@ function fakeClient(initial?: {
         const aid = args.p_attempt_id as string;
         const atok = args.p_attempt_token as string;
         const nowIso = String(args.p_now ?? new Date().toISOString());
-        const att = attempts.find(
-          (a) => a.id === aid && a.attempt_token === atok,
-        );
+        const att = attempts.find((a) => a.id === aid && a.attempt_token === atok);
         if (!att) return { data: [{ outcome: "not_found" }], error: null };
         if (att.attempt_status !== "planned") {
           return { data: [{ outcome: "state_changed" }], error: null };
@@ -393,9 +386,9 @@ describe("buildNotificationRequestHash", () => {
     ).not.toBe(buildNotificationRequestHash(base));
   });
   it("muda com recipient diferente", () => {
-    expect(
-      buildNotificationRequestHash({ ...base, recipientHash: "b".repeat(64) }),
-    ).not.toBe(buildNotificationRequestHash(base));
+    expect(buildNotificationRequestHash({ ...base, recipientHash: "b".repeat(64) })).not.toBe(
+      buildNotificationRequestHash(base),
+    );
   });
   it("não contém telefone em claro", () => {
     const h = buildNotificationRequestHash(base);
@@ -479,10 +472,7 @@ describe("prepareNotificationAttempt", () => {
 
   it("rejeita recipient inválido", async () => {
     const { client } = fakeClient();
-    const r = await prepareNotificationAttempt(
-      { ...baseInput, recipient: "abc" },
-      { client, now },
-    );
+    const r = await prepareNotificationAttempt({ ...baseInput, recipient: "abc" }, { client, now });
     expect(r.kind).toBe("invalid_recipient");
   });
 
@@ -587,7 +577,9 @@ describe("markAttemptSending / accepted / rejected / ambiguous / cancel", () => 
 
   it("planned → sending com token correto", async () => {
     const s = await setup();
-    expect(await markAttemptSending(s.attemptId, s.attemptToken, { client: s.client, now })).toBe(true);
+    expect(await markAttemptSending(s.attemptId, s.attemptToken, { client: s.client, now })).toBe(
+      true,
+    );
     expect(s.attempts[0].attempt_status).toBe("sending");
   });
 
@@ -928,7 +920,9 @@ describe("markAttemptSending — revalidação atômica de ownership (Requisito 
   async function prepared() {
     const { client, notifs, attempts } = fakeClient();
     const r = await prepareNotificationAttempt(baseInput, {
-      client, now, randomUUID: () => "att-token-owner-A",
+      client,
+      now,
+      randomUUID: () => "att-token-owner-A",
     });
     if (r.kind !== "prepared") throw new Error("prepare failed in setup");
     return { client, notifs, attempts, attemptId: r.attemptId, attemptToken: r.attemptToken };
@@ -939,7 +933,9 @@ describe("markAttemptSending — revalidação atômica de ownership (Requisito 
     // Simula o webhook de callback processando 'sent' entre prepare e sending.
     s.notifs[0].status = "sent";
     const transport = new FakeWhatsAppNotificationTransport({
-      kind: "accepted", providerMessageId: "wamid.NOT_ALLOWED", httpStatus: 200,
+      kind: "accepted",
+      providerMessageId: "wamid.NOT_ALLOWED",
+      httpStatus: 200,
     });
     const ok = await markAttemptSending(s.attemptId, s.attemptToken, { client: s.client, now });
     expect(ok).toBe(false);

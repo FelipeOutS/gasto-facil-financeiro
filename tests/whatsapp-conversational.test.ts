@@ -5,12 +5,8 @@
 import { test, expect, beforeEach } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
 
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
-const { detectConversationalIntent } = await import(
-  "../src/server/whatsapp-consultas.server"
-);
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
+const { detectConversationalIntent } = await import("../src/server/whatsapp-consultas.server");
 
 const tel = "5511999998888";
 
@@ -81,21 +77,33 @@ test("GI abre o menu completo", async () => {
 });
 
 test("Gasto Inteligente abre o menu completo", async () => {
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "Gasto Inteligente", external_id: "g3-m-2" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Gasto Inteligente",
+    external_id: "g3-m-2",
+  });
   expect(r.status).toBe("consulta");
   expect(r.resposta).toContain("Registrar gasto");
   expect(r.resposta).toContain("Ajuda");
 });
 
 test("ajuda devolve exemplos práticos (não o menu numerado)", async () => {
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "ajuda", external_id: "g3-m-3" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "ajuda",
+    external_id: "g3-m-3",
+  });
   expect(r.resposta).toMatch(/exemplos?/i);
   expect(r.resposta).toContain("Uber 29,90");
   expect(r.resposta).not.toContain("1. Registrar gasto");
 });
 
 test("comandos devolve lista curta de atalhos", async () => {
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "comandos", external_id: "g3-m-4" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "comandos",
+    external_id: "g3-m-4",
+  });
   expect(r.resposta).toMatch(/Comandos r[aá]pidos/i);
   expect(r.resposta).toContain("minhas contas");
   expect(r.resposta).not.toContain("Uber 29,90");
@@ -103,16 +111,28 @@ test("comandos devolve lista curta de atalhos", async () => {
 
 // ---------- anti-repetição ----------
 test("menu repetido em sequência envia versão curta", async () => {
-  const r1 = await processarMensagemWhatsApp({ telefone: tel, texto: "menu", external_id: "g3-rep-1" });
+  const r1 = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "menu",
+    external_id: "g3-rep-1",
+  });
   expect(r1.resposta).toContain("Registrar gasto");
-  const r2 = await processarMensagemWhatsApp({ telefone: tel, texto: "menu", external_id: "g3-rep-2" });
+  const r2 = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "menu",
+    external_id: "g3-rep-2",
+  });
   expect(r2.resposta).not.toContain("Registrar gasto");
   expect(r2.resposta).toContain("Você pode me enviar");
 });
 
 // ---------- finanças genérico ----------
 test("quero ver minhas finanças abre opções de consulta sem dados", async () => {
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "quero ver minhas finanças", external_id: "g3-f-1" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "quero ver minhas finanças",
+    external_id: "g3-f-1",
+  });
   expect(r.status).toBe("consulta");
   expect(r.resposta).toContain("O que você quer consultar");
   expect(r.resposta).toContain("Resumo da semana");
@@ -122,13 +142,21 @@ test("quero ver minhas finanças abre opções de consulta sem dados", async () 
 });
 
 test("como estão minhas finanças cai em finanças genérico (não resumo do mês)", async () => {
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "como estão minhas finanças", external_id: "g3-f-2" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "como estão minhas finanças",
+    external_id: "g3-f-2",
+  });
   expect(r.resposta).toContain("O que você quer consultar");
 });
 
 // ---------- cancelar sem sessão ----------
 test("cancelar sem sessão ativa responde com mensagem de reinício", async () => {
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "cancelar", external_id: "g3-c-1" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "cancelar",
+    external_id: "g3-c-1",
+  });
   expect(r.status).toBe("cancelada");
   expect(r.resposta).toContain("vamos começar de novo");
   expect(r.resposta).not.toContain("Não tem nada em andamento");
@@ -138,17 +166,33 @@ test("cancelar sem sessão ativa responde com mensagem de reinício", async () =
 // ---------- cancelar com sessão (regressão) ----------
 test("cancelar com sessão de gasto encerra e devolve mensagem de reinício", async () => {
   // cria sessão aguardando_confirmacao
-  await processarMensagemWhatsApp({ telefone: tel, texto: "Mercado 30 hoje pix", external_id: "g3-cg-a" });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Mercado 30 hoje pix",
+    external_id: "g3-cg-a",
+  });
   expect(state.pendingRow?.status).toBe("aguardando_confirmacao");
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "cancelar", external_id: "g3-cg-b" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "cancelar",
+    external_id: "g3-cg-b",
+  });
   expect(r.status).toBe("cancelada");
   expect(r.resposta).toContain("vamos começar de novo");
 });
 
 test("cancelar com sessão de receita encerra e devolve mensagem de reinício", async () => {
-  await processarMensagemWhatsApp({ telefone: tel, texto: "Quero lançar uma renda", external_id: "g3-cr-a" });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Quero lançar uma renda",
+    external_id: "g3-cr-a",
+  });
   expect(state.pendingRow?.status).toBe("rec_aguardando_tipo");
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "cancelar", external_id: "g3-cr-b" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "cancelar",
+    external_id: "g3-cr-b",
+  });
   expect(r.status).toBe("cancelada");
   expect(r.resposta).toContain("vamos começar de novo");
 });
@@ -161,14 +205,26 @@ test("sessão pendente de gasto prevalece sobre saudação", async () => {
 });
 
 test("sessão pendente de receita prevalece sobre menu", async () => {
-  await processarMensagemWhatsApp({ telefone: tel, texto: "Quero lançar uma renda", external_id: "g3-p-3" });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "menu", external_id: "g3-p-4" });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "Quero lançar uma renda",
+    external_id: "g3-p-3",
+  });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "menu",
+    external_id: "g3-p-4",
+  });
   expect(r.status).not.toBe("consulta");
 });
 
 test("sessão pendente prevalece sobre consulta financeira genérica", async () => {
   await processarMensagemWhatsApp({ telefone: tel, texto: "Mercado 30,00", external_id: "g3-p-5" });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "quero ver minhas finanças", external_id: "g3-p-6" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "quero ver minhas finanças",
+    external_id: "g3-p-6",
+  });
   expect(r.status).not.toBe("consulta");
 });
 
@@ -176,11 +232,15 @@ test("sessão pendente prevalece sobre consulta financeira genérica", async () 
 test("WA-G3 maiores_gastos_mes ignora despesas futuras do mesmo mês", async () => {
   resetState({
     gastos: [
-      { descricao: "Hoje",   valor: 100, data: monthStart(),       categoria_id: "cat-mer" },
-      { descricao: "Futuro", valor: 999, data: daysAheadISO(2),    categoria_id: "cat-mer" },
+      { descricao: "Hoje", valor: 100, data: monthStart(), categoria_id: "cat-mer" },
+      { descricao: "Futuro", valor: 999, data: daysAheadISO(2), categoria_id: "cat-mer" },
     ],
   });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "maiores gastos do mês", external_id: "g3-mg-1" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "maiores gastos do mês",
+    external_id: "g3-mg-1",
+  });
   expect(r.status).toBe("consulta");
   expect(r.resposta).toContain("1. Hoje");
   expect(r.resposta).not.toContain("Futuro");
@@ -192,7 +252,11 @@ test("nenhuma das novas intenções cria gasto, receita ou recorrência", async 
   await processarMensagemWhatsApp({ telefone: tel, texto: "oi", external_id: "g3-n-1" });
   await processarMensagemWhatsApp({ telefone: tel, texto: "menu", external_id: "g3-n-2" });
   await processarMensagemWhatsApp({ telefone: tel, texto: "GI", external_id: "g3-n-3" });
-  await processarMensagemWhatsApp({ telefone: tel, texto: "quero ver minhas finanças", external_id: "g3-n-4" });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "quero ver minhas finanças",
+    external_id: "g3-n-4",
+  });
   await processarMensagemWhatsApp({ telefone: tel, texto: "cancelar", external_id: "g3-n-5" });
   expect(state.inserts.some((i) => i.table === "gastos")).toBe(false);
   expect(state.inserts.some((i) => i.table === "receitas")).toBe(false);

@@ -79,7 +79,12 @@ function sendInput(overrides: Partial<TransportSendInput> = {}): TransportSendIn
 
 function makeTransport(
   fetchFn: FetchLike,
-  opts: { logger?: (e: Record<string, unknown>) => void; now?: () => number; responseMaxBytes?: number; timeoutMs?: number } = {},
+  opts: {
+    logger?: (e: Record<string, unknown>) => void;
+    now?: () => number;
+    responseMaxBytes?: number;
+    timeoutMs?: number;
+  } = {},
 ) {
   return new MetaWhatsAppNotificationTransport({
     graphApiVersion: "v20.0",
@@ -99,42 +104,55 @@ function makeTransport(
 describe("createMetaWhatsAppNotificationTransport — factory fail-closed", () => {
   it("fail: phone_number_id_missing", () => {
     const r = createMetaWhatsAppNotificationTransport({
-      accessToken: "t", fetchFn: makeFetch(() => jsonResponse(200, {})).fetchFn, phoneNumberId: "",
+      accessToken: "t",
+      fetchFn: makeFetch(() => jsonResponse(200, {})).fetchFn,
+      phoneNumberId: "",
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("phone_number_id_missing");
   });
   it("fail: phone_number_id_invalid (não-digits)", () => {
     const r = createMetaWhatsAppNotificationTransport({
-      accessToken: "t", phoneNumberId: "abc-123", fetchFn: makeFetch(() => jsonResponse(200, {})).fetchFn,
+      accessToken: "t",
+      phoneNumberId: "abc-123",
+      fetchFn: makeFetch(() => jsonResponse(200, {})).fetchFn,
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("phone_number_id_invalid");
   });
   it("fail: access_token_missing", () => {
     const r = createMetaWhatsAppNotificationTransport({
-      phoneNumberId: "1", accessToken: "", fetchFn: makeFetch(() => jsonResponse(200, {})).fetchFn,
+      phoneNumberId: "1",
+      accessToken: "",
+      fetchFn: makeFetch(() => jsonResponse(200, {})).fetchFn,
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("access_token_missing");
   });
   it("fail: timeout_invalid (fora do intervalo)", () => {
     const r = createMetaWhatsAppNotificationTransport({
-      phoneNumberId: "1", accessToken: "t", timeoutMs: 999, fetchFn: makeFetch(() => jsonResponse(200, {})).fetchFn,
+      phoneNumberId: "1",
+      accessToken: "t",
+      timeoutMs: 999,
+      fetchFn: makeFetch(() => jsonResponse(200, {})).fetchFn,
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("timeout_invalid");
   });
   it("ok: retorna transporte quando tudo válido", () => {
     const r = createMetaWhatsAppNotificationTransport({
-      phoneNumberId: "1234567890", accessToken: "t", fetchFn: makeFetch(() => jsonResponse(200, {})).fetchFn,
+      phoneNumberId: "1234567890",
+      accessToken: "t",
+      fetchFn: makeFetch(() => jsonResponse(200, {})).fetchFn,
     });
     expect(r.ok).toBe(true);
     if (r.ok) expect(typeof r.transport.sendTemplate).toBe("function");
   });
   it("resultado NUNCA contém accessToken via keys/toJSON", () => {
     const r = createMetaWhatsAppNotificationTransport({
-      phoneNumberId: "1234567890", accessToken: "SECRET_LEAKABLE", fetchFn: makeFetch(() => jsonResponse(200, {})).fetchFn,
+      phoneNumberId: "1234567890",
+      accessToken: "SECRET_LEAKABLE",
+      fetchFn: makeFetch(() => jsonResponse(200, {})).fetchFn,
     });
     if (!r.ok) throw new Error("expected ok");
     const s = JSON.stringify(r.transport);
@@ -173,7 +191,9 @@ describe("MetaWhatsAppNotificationTransport — request shape", () => {
 
   it("logs padrão NÃO contêm token nem PMID cru", async () => {
     const events: Record<string, unknown>[] = [];
-    const { fetchFn } = makeFetch(() => jsonResponse(200, { messages: [{ id: "wamid.SUPERSECRETPMID" }] }));
+    const { fetchFn } = makeFetch(() =>
+      jsonResponse(200, { messages: [{ id: "wamid.SUPERSECRETPMID" }] }),
+    );
     const t = makeTransport(fetchFn, { logger: (e) => events.push(e) });
     await t.sendTemplate(sendInput());
     const joined = JSON.stringify(events);
@@ -207,7 +227,10 @@ describe("sendTemplate — classificação", () => {
 
   it("2xx com error estruturado → ambiguous(2xx_with_error)", async () => {
     const { fetchFn } = makeFetch(() =>
-      jsonResponse(200, { messages: [{ id: "wamid.X" }], error: { code: 131047, message: "policy" } }),
+      jsonResponse(200, {
+        messages: [{ id: "wamid.X" }],
+        error: { code: 131047, message: "policy" },
+      }),
     );
     const t = makeTransport(fetchFn);
     const r = await t.sendTemplate(sendInput());
@@ -216,7 +239,9 @@ describe("sendTemplate — classificação", () => {
   });
 
   it("401 estruturado → rejected authentication não-retryable", async () => {
-    const { fetchFn } = makeFetch(() => jsonResponse(401, { error: { code: 190, message: "invalid token" } }));
+    const { fetchFn } = makeFetch(() =>
+      jsonResponse(401, { error: { code: 190, message: "invalid token" } }),
+    );
     const t = makeTransport(fetchFn);
     const r = await t.sendTemplate(sendInput());
     expect(r.kind).toBe("rejected");
@@ -227,7 +252,9 @@ describe("sendTemplate — classificação", () => {
   });
 
   it("403 estruturado → rejected configuration não-retryable", async () => {
-    const { fetchFn } = makeFetch(() => jsonResponse(403, { error: { code: 10, message: "forbidden" } }));
+    const { fetchFn } = makeFetch(() =>
+      jsonResponse(403, { error: { code: 10, message: "forbidden" } }),
+    );
     const t = makeTransport(fetchFn);
     const r = await t.sendTemplate(sendInput());
     expect(r.kind).toBe("rejected");
@@ -238,7 +265,9 @@ describe("sendTemplate — classificação", () => {
   });
 
   it("429 estruturado → rejected rate_limit retryable", async () => {
-    const { fetchFn } = makeFetch(() => jsonResponse(429, { error: { code: 80007, message: "rate limit" } }));
+    const { fetchFn } = makeFetch(() =>
+      jsonResponse(429, { error: { code: 80007, message: "rate limit" } }),
+    );
     const t = makeTransport(fetchFn);
     const r = await t.sendTemplate(sendInput());
     expect(r.kind).toBe("rejected");
@@ -249,7 +278,9 @@ describe("sendTemplate — classificação", () => {
   });
 
   it("400 estruturado → rejected permanent não-retryable", async () => {
-    const { fetchFn } = makeFetch(() => jsonResponse(400, { error: { code: 100, message: "bad param" } }));
+    const { fetchFn } = makeFetch(() =>
+      jsonResponse(400, { error: { code: 100, message: "bad param" } }),
+    );
     const t = makeTransport(fetchFn);
     const r = await t.sendTemplate(sendInput());
     expect(r.kind).toBe("rejected");
@@ -260,7 +291,9 @@ describe("sendTemplate — classificação", () => {
   });
 
   it("500 estruturado → ambiguous(5xx_inconclusive)", async () => {
-    const { fetchFn } = makeFetch(() => jsonResponse(500, { error: { code: 1, message: "server" } }));
+    const { fetchFn } = makeFetch(() =>
+      jsonResponse(500, { error: { code: 1, message: "server" } }),
+    );
     const t = makeTransport(fetchFn);
     const r = await t.sendTemplate(sendInput());
     expect(r.kind).toBe("ambiguous");
@@ -356,7 +389,13 @@ describe("parsers puros", () => {
   });
   it("extractMetaError sanitiza título/mensagem", () => {
     const info = extractMetaError({
-      error: { code: 190, error_subcode: 460, type: "OAuth", message: "invalid\u0000token", error_user_title: "  Erro  " },
+      error: {
+        code: 190,
+        error_subcode: 460,
+        type: "OAuth",
+        message: "invalid\u0000token",
+        error_user_title: "  Erro  ",
+      },
     });
     expect(info?.code).toBe("190");
     expect(info?.subcode).toBe("460");
@@ -426,7 +465,13 @@ describe("isOutboundHttpAllowed — dupla trava", () => {
 
   it("todas as flags off → acumula todas as razões de flag", () => {
     const r = isOutboundHttpAllowed({
-      env: { ...fullEnv, WHATSAPP_ENABLED: "false", WHATSAPP_CANARY_ENABLED: "false", WHATSAPP_DISPATCH_ENABLED: "false", WHATSAPP_OUTBOUND_HTTP_ENABLED: "false" },
+      env: {
+        ...fullEnv,
+        WHATSAPP_ENABLED: "false",
+        WHATSAPP_CANARY_ENABLED: "false",
+        WHATSAPP_DISPATCH_ENABLED: "false",
+        WHATSAPP_OUTBOUND_HTTP_ENABLED: "false",
+      },
     });
     expect(r.allowed).toBe(false);
     if (!r.allowed) {

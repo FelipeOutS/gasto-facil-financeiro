@@ -1,17 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import {
-  ArrowLeft,
-  Home,
-  Info,
-  Plus,
-  Star,
-  Pencil,
-  Trash2,
-  Save,
-  X,
-  Store,
-} from "lucide-react";
+import { ArrowLeft, Home, Info, Plus, Star, Pencil, Trash2, Save, X, Store } from "lucide-react";
 import { NearbyMarkets } from "@/components/mercado/NearbyMarkets";
 import { MercadoBanner, SectionBlock } from "@/components/mercado/shell";
 import bannerMercados from "@/assets/mercado/banner-mercados.jpg";
@@ -133,11 +122,7 @@ function MeusMercadosPage() {
   function handleToggleFav(m: MercadoLocal) {
     const next = toggleMercadoFavorito(m.id);
     if (!next) return;
-    notify.success(
-      next.favorito
-        ? t("meusMercados.toast.favOn")
-        : t("meusMercados.toast.favOff"),
-    );
+    notify.success(next.favorito ? t("meusMercados.toast.favOn") : t("meusMercados.toast.favOff"));
   }
 
   const isNew = mode === "new";
@@ -191,9 +176,6 @@ function MeusMercadosPage() {
         <NearbyMarkets />
       </section>
 
-
-
-
       {mode === "list" && (
         <SectionBlock
           title={
@@ -206,11 +188,7 @@ function MeusMercadosPage() {
           }
           description={t("marketsV2.saved.description")}
           action={
-            <Button
-              type="button"
-              onClick={openNew}
-              className="min-h-11 rounded-full font-semibold"
-            >
+            <Button type="button" onClick={openNew} className="min-h-11 rounded-full font-semibold">
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">{t("meusMercados.addCta")}</span>
               <span className="sm:hidden">{t("meusMercados.addCtaShort")}</span>
@@ -302,9 +280,7 @@ function MercadoCard({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
-            <h3 className="min-w-0 truncate text-base font-semibold md:text-lg">
-              {m.nome}
-            </h3>
+            <h3 className="min-w-0 truncate text-base font-semibold md:text-lg">{m.nome}</h3>
             {m.favorito && (
               <span
                 className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-amber-600 dark:text-amber-400"
@@ -326,9 +302,7 @@ function MercadoCard({
             </p>
           )}
           {m.observacao && (
-            <p className="mt-2 line-clamp-3 text-sm text-foreground/90">
-              {m.observacao}
-            </p>
+            <p className="mt-2 line-clamp-3 text-sm text-foreground/90">{m.observacao}</p>
           )}
         </div>
       </div>
@@ -341,17 +315,11 @@ function MercadoCard({
           onClick={onToggleFav}
           className="min-h-11 rounded-full"
           aria-label={
-            m.favorito
-              ? t("meusMercados.card.unmarkFavorite")
-              : t("meusMercados.card.markFavorite")
+            m.favorito ? t("meusMercados.card.unmarkFavorite") : t("meusMercados.card.markFavorite")
           }
         >
-          <Star
-            className={`h-4 w-4 ${m.favorito ? "fill-current text-amber-500" : ""}`}
-          />
-          {m.favorito
-            ? t("meusMercados.card.unmarkFavorite")
-            : t("meusMercados.card.markFavorite")}
+          <Star className={`h-4 w-4 ${m.favorito ? "fill-current text-amber-500" : ""}`} />
+          {m.favorito ? t("meusMercados.card.unmarkFavorite") : t("meusMercados.card.markFavorite")}
         </Button>
         <Button
           type="button"
@@ -412,8 +380,7 @@ function MercadoForm({
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
         <div className="md:col-span-2">
           <Label htmlFor="mkt-nome">
-            {t("meusMercados.fields.name")}{" "}
-            <span className="text-destructive">*</span>
+            {t("meusMercados.fields.name")} <span className="text-destructive">*</span>
           </Label>
           <Input
             id="mkt-nome"
@@ -447,7 +414,10 @@ function MercadoForm({
             onChange={(e) =>
               update(
                 "uf",
-                e.target.value.replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase(),
+                e.target.value
+                  .replace(/[^a-zA-Z]/g, "")
+                  .slice(0, 2)
+                  .toUpperCase(),
               )
             }
             placeholder={t("meusMercados.fields.ufPlaceholder")}
@@ -458,9 +428,7 @@ function MercadoForm({
         </div>
 
         <div className="md:col-span-2">
-          <Label htmlFor="mkt-endereco">
-            {t("meusMercados.fields.address")}
-          </Label>
+          <Label htmlFor="mkt-endereco">{t("meusMercados.fields.address")}</Label>
           <Input
             id="mkt-endereco"
             value={form.endereco ?? ""}
@@ -472,9 +440,7 @@ function MercadoForm({
         </div>
 
         <div>
-          <Label htmlFor="mkt-bairro">
-            {t("meusMercados.fields.neighborhood")}
-          </Label>
+          <Label htmlFor="mkt-bairro">{t("meusMercados.fields.neighborhood")}</Label>
           <Input
             id="mkt-bairro"
             value={form.bairro ?? ""}

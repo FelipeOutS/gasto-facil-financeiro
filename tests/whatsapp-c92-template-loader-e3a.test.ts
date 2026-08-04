@@ -51,9 +51,10 @@ interface FakeCall {
   maybeSingle: number;
 }
 
-function makeFakeClient(
-  responder: (call: FakeCall) => { data: unknown; error: unknown },
-): { client: SupabaseLike; calls: FakeCall[] } {
+function makeFakeClient(responder: (call: FakeCall) => { data: unknown; error: unknown }): {
+  client: SupabaseLike;
+  calls: FakeCall[];
+} {
   const calls: FakeCall[] = [];
   const client: SupabaseLike = {
     from(table: string) {

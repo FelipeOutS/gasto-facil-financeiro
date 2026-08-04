@@ -39,9 +39,7 @@ export interface Fornecedor {
 const COLS =
   "id, user_id, cnpj, nome, apelido, razao_social, nome_fantasia, situacao_cadastral, cnae_principal_codigo, cnae_principal_descricao, telefone, email, observacoes, logradouro, numero, complemento, bairro, cep, municipio, uf, ativo, source, cnpj_cache_fetched_at, created_at, updated_at";
 
-export async function listarFornecedores(
-  userId: string,
-): Promise<Fornecedor[]> {
+export async function listarFornecedores(userId: string): Promise<Fornecedor[]> {
   const { data, error } = await supabase
     .from("fornecedores")
     .select(COLS)
@@ -75,11 +73,7 @@ export async function salvarFornecedorManual(
     email: input.email?.trim() || null,
     observacoes: input.observacoes?.trim() || null,
   };
-  const { data, error } = await supabase
-    .from("fornecedores")
-    .insert(payload)
-    .select(COLS)
-    .single();
+  const { data, error } = await supabase.from("fornecedores").insert(payload).select(COLS).single();
   if (error) throw error;
   return data as Fornecedor;
 }
@@ -89,7 +83,12 @@ export async function salvarFornecedorPorCnpj(
   company: EmpresaConsultada,
   source: string | null,
   fetchedAt: string | null,
-  extras?: { telefone?: string | null; email?: string | null; observacoes?: string | null; apelido?: string | null },
+  extras?: {
+    telefone?: string | null;
+    email?: string | null;
+    observacoes?: string | null;
+    apelido?: string | null;
+  },
 ): Promise<Fornecedor> {
   const payload = {
     user_id: userId,
@@ -114,11 +113,7 @@ export async function salvarFornecedorPorCnpj(
     source,
     cnpj_cache_fetched_at: fetchedAt,
   };
-  const { data, error } = await supabase
-    .from("fornecedores")
-    .insert(payload)
-    .select(COLS)
-    .single();
+  const { data, error } = await supabase.from("fornecedores").insert(payload).select(COLS).single();
   if (error) throw error;
   return data as Fornecedor;
 }
@@ -146,8 +141,7 @@ export async function atualizarFornecedor(
   if (patch.apelido !== undefined) payload.apelido = patch.apelido?.trim() || null;
   if (patch.telefone !== undefined) payload.telefone = patch.telefone?.trim() || null;
   if (patch.email !== undefined) payload.email = patch.email?.trim() || null;
-  if (patch.observacoes !== undefined)
-    payload.observacoes = patch.observacoes?.trim() || null;
+  if (patch.observacoes !== undefined) payload.observacoes = patch.observacoes?.trim() || null;
   const { data, error } = await supabase
     .from("fornecedores")
     .update(payload)
@@ -158,14 +152,8 @@ export async function atualizarFornecedor(
   return data as Fornecedor;
 }
 
-export async function alternarAtivoFornecedor(
-  id: string,
-  ativo: boolean,
-): Promise<void> {
-  const { error } = await supabase
-    .from("fornecedores")
-    .update({ ativo })
-    .eq("id", id);
+export async function alternarAtivoFornecedor(id: string, ativo: boolean): Promise<void> {
+  const { error } = await supabase.from("fornecedores").update({ ativo }).eq("id", id);
   if (error) throw error;
 }
 
@@ -174,10 +162,7 @@ export async function removerFornecedor(id: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function existeFornecedorComCnpj(
-  userId: string,
-  cnpj: string,
-): Promise<boolean> {
+export async function existeFornecedorComCnpj(userId: string, cnpj: string): Promise<boolean> {
   const { data, error } = await supabase
     .from("fornecedores")
     .select("id")

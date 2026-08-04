@@ -72,10 +72,7 @@ export type PdfValidationResult =
  *    bater com "application/pdf".
  *  - O parser nunca lê conteúdo do PDF além da contagem de páginas.
  */
-export function validateDownloadedPdf(
-  buf: Uint8Array,
-  declaredMime?: string,
-): PdfValidationResult {
+export function validateDownloadedPdf(buf: Uint8Array, declaredMime?: string): PdfValidationResult {
   if (!buf || buf.byteLength === 0) return { ok: false, reason: "empty" };
   if (buf.byteLength > MAX_PDF_BYTES) return { ok: false, reason: "too_large" };
   if (declaredMime) {

@@ -146,11 +146,7 @@ describe("WA-Q-Hardening — detectConsultaShape (negativos = pass, deixa parser
   });
 
   describe("comandos de pagamento a pessoa (Pix / gradual)", () => {
-    const pag = [
-      "Paguei João",
-      "Paguei o Pedro",
-      "Paguei 50 ao João do almoço",
-    ];
+    const pag = ["Paguei João", "Paguei o Pedro", "Paguei 50 ao João do almoço"];
     for (const t of pag) {
       it(`pass para "${t}"`, () => isPass(t));
     }

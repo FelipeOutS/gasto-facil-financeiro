@@ -18,11 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -136,7 +132,8 @@ export function OfflineHistoryDialog({ open, onOpenChange, userId }: Props) {
           <DialogHeader>
             <DialogTitle>Histórico offline</DialogTitle>
             <DialogDescription>
-              Gastos e receitas criados sem internet, sincronizados, editados, removidos ou com falha.
+              Gastos e receitas criados sem internet, sincronizados, editados, removidos ou com
+              falha.
             </DialogDescription>
           </DialogHeader>
 
@@ -158,10 +155,7 @@ export function OfflineHistoryDialog({ open, onOpenChange, userId }: Props) {
               </p>
             ) : (
               filtered.map((ev) => (
-                <div
-                  key={ev.id}
-                  className="rounded-xl border border-border bg-card p-3"
-                >
+                <div key={ev.id} className="rounded-xl border border-border bg-card p-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -179,9 +173,7 @@ export function OfflineHistoryDialog({ open, onOpenChange, userId }: Props) {
                         <span className="num">{formatBRL(ev.amount)}</span>
                       </p>
                       {ev.error_message && (
-                        <p className="mt-1 text-[11px] text-destructive">
-                          {ev.error_message}
-                        </p>
+                        <p className="mt-1 text-[11px] text-destructive">{ev.error_message}</p>
                       )}
                     </div>
                     <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-muted/50 px-2 py-1 text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -217,8 +209,8 @@ export function OfflineHistoryDialog({ open, onOpenChange, userId }: Props) {
           <AlertDialogHeader>
             <AlertDialogTitle>Limpar histórico offline?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação apaga apenas o registro local de atividades offline.
-              Não afeta gastos ou receitas já salvos.
+              Esta ação apaga apenas o registro local de atividades offline. Não afeta gastos ou
+              receitas já salvos.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -247,7 +239,8 @@ export function OfflineHistoryTrigger({ userId }: { userId: string | null }) {
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold">Histórico offline</span>
           <span className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
-            Consulte gastos e receitas criados sem internet, sincronizados, editados, removidos ou com falha.
+            Consulte gastos e receitas criados sem internet, sincronizados, editados, removidos ou
+            com falha.
           </span>
         </span>
       </button>

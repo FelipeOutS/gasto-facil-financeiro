@@ -138,11 +138,17 @@ function readTombstones(uid: string | null): Tombstone[] {
         typeof (t as Tombstone).id === "string" &&
         typeof (t as Tombstone).deletedAt === "string",
     );
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 function writeTombstones(uid: string | null, ts: Tombstone[]) {
   if (!uid) return;
-  try { localStorage.setItem(tombstoneKey(uid), JSON.stringify(ts)); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(tombstoneKey(uid), JSON.stringify(ts));
+  } catch {
+    /* ignore */
+  }
 }
 function addTombstone(uid: string | null, id: string) {
   if (!uid || !id) return;
@@ -166,27 +172,37 @@ function removeTombstones(uid: string | null, ids: Iterable<string>) {
 // v2 ignora o dirty:v1, que podia ter sido populado automaticamente por
 // seed antigo. A partir daqui, dirty nasce apenas de mutação local real.
 const LISTAS_DIRTY_KEY_BASE = "gi:mercado:listas:dirty:v2";
-function dirtyKey(uid: string) { return `${LISTAS_DIRTY_KEY_BASE}:${uid}`; }
+function dirtyKey(uid: string) {
+  return `${LISTAS_DIRTY_KEY_BASE}:${uid}`;
+}
 function readDirty(uid: string | null): Set<string> {
   if (!uid) return new Set();
   try {
     const raw = localStorage.getItem(dirtyKey(uid));
     if (!raw) return new Set();
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return new Set(parsed.filter((x): x is string => typeof x === "string"));
+    if (Array.isArray(parsed))
+      return new Set(parsed.filter((x): x is string => typeof x === "string"));
     if (parsed && typeof parsed === "object") return new Set(Object.keys(parsed));
     return new Set();
-  } catch { return new Set(); }
+  } catch {
+    return new Set();
+  }
 }
 function writeDirty(uid: string | null, ids: Set<string>) {
   if (!uid) return;
-  try { localStorage.setItem(dirtyKey(uid), JSON.stringify(Array.from(ids))); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(dirtyKey(uid), JSON.stringify(Array.from(ids)));
+  } catch {
+    /* ignore */
+  }
 }
 function markDirtyUpsert(uid: string | null, id: string) {
   if (!uid || !id) return;
   const cur = readDirty(uid);
   if (cur.has(id)) return;
-  cur.add(id); writeDirty(uid, cur);
+  cur.add(id);
+  writeDirty(uid, cur);
 }
 function clearDirtyUpsert(uid: string | null, id: string) {
   if (!uid || !id) return;
@@ -206,15 +222,21 @@ function clearDirtyUpsert(uid: string | null, id: string) {
 // pois daí em diante toda mutação local nova já marca dirty:v2.
 const LISTAS_SAFETY_FLAG_BASE = "gi:mercado:listas:dirty-v2-safety-checked:v1";
 const LISTAS_QUARANTINE_KEY_BASE = "gi:mercado:listas:pending-review:v1";
-function safetyFlagKey(uid: string) { return `${LISTAS_SAFETY_FLAG_BASE}:${uid}`; }
-function quarantineKey(uid: string) { return `${LISTAS_QUARANTINE_KEY_BASE}:${uid}`; }
+function safetyFlagKey(uid: string) {
+  return `${LISTAS_SAFETY_FLAG_BASE}:${uid}`;
+}
+function quarantineKey(uid: string) {
+  return `${LISTAS_QUARANTINE_KEY_BASE}:${uid}`;
+}
 function readQuarantine(uid: string): MercadoLista[] {
   try {
     const raw = localStorage.getItem(quarantineKey(uid));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? (parsed as MercadoLista[]) : [];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 function addToQuarantine(uid: string, items: MercadoLista[]) {
   if (!uid || items.length === 0) return;
@@ -223,7 +245,9 @@ function addToQuarantine(uid: string, items: MercadoLista[]) {
     const map = new Map(cur.map((l) => [l.id, l]));
     for (const it of items) map.set(it.id, it);
     localStorage.setItem(quarantineKey(uid), JSON.stringify(Array.from(map.values())));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 async function pullListas(userId: string) {
@@ -241,7 +265,11 @@ async function pullListas(userId: string) {
   const localById = new Map(local.map((l) => [l.id, l]));
   const dirtySet = readDirty(userId);
   const safetyDone = (() => {
-    try { return localStorage.getItem(safetyFlagKey(userId)) === "1"; } catch { return true; }
+    try {
+      return localStorage.getItem(safetyFlagKey(userId)) === "1";
+    } catch {
+      return true;
+    }
   })();
   const merged: MercadoLista[] = [];
   const orphans: MercadoLista[] = [];
@@ -271,16 +299,30 @@ async function pullListas(userId: string) {
   //     * pulls subsequentes: excluído em outro dispositivo -> remove do cache.
   for (const l of local) {
     if (serverById.has(l.id)) continue;
-    if (tombSet.has(l.id)) { deleteRetries.push(l.id); continue; }
-    if (dirtySet.has(l.id)) { merged.push(l); orphans.push(l); continue; }
-    if (!safetyDone) { toQuarantine.push(l); continue; }
+    if (tombSet.has(l.id)) {
+      deleteRetries.push(l.id);
+      continue;
+    }
+    if (dirtySet.has(l.id)) {
+      merged.push(l);
+      orphans.push(l);
+      continue;
+    }
+    if (!safetyDone) {
+      toQuarantine.push(l);
+      continue;
+    }
     // implicit delete: outro dispositivo removeu. Não adiciona ao merged.
   }
   merged.sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""));
   __replaceListasCache(merged);
   if (!safetyDone) {
     if (toQuarantine.length > 0) addToQuarantine(userId, toQuarantine);
-    try { localStorage.setItem(safetyFlagKey(userId), "1"); } catch { /* ignore */ }
+    try {
+      localStorage.setItem(safetyFlagKey(userId), "1");
+    } catch {
+      /* ignore */
+    }
   }
   for (const o of orphans) void pushUpsertLista(o);
   for (const id of deleteRetries) void pushDeleteLista(id);
@@ -292,8 +334,6 @@ async function pullListas(userId: string) {
     .map((t) => t.id);
   if (confirmed.length > 0) removeTombstones(userId, confirmed);
 }
-
-
 
 async function pushUpsertLista(l: MercadoLista) {
   const uid = __getMercadoActiveUserId();
@@ -349,7 +389,11 @@ async function migrateLegacyListasOnce(userId: string) {
     }
   }
   localStorage.setItem(flag, "1");
-  try { localStorage.removeItem(MERCADO_LEGACY_ANON_KEY); } catch { /* ignore */ }
+  try {
+    localStorage.removeItem(MERCADO_LEGACY_ANON_KEY);
+  } catch {
+    /* ignore */
+  }
 }
 
 // ============================================================
@@ -424,19 +468,19 @@ async function pullHistoricoCompras(userId: string) {
     .eq("user_id", userId)
     .order("concluida_em", { ascending: false });
   if (error) throw error;
-  const server = (data as HistoricoRow[] | null)
-    ?.map(historicoRowToEntry)
-    .filter((x): x is MercadoCompraHistorico => x !== null) ?? [];
+  const server =
+    (data as HistoricoRow[] | null)
+      ?.map(historicoRowToEntry)
+      .filter((x): x is MercadoCompraHistorico => x !== null) ?? [];
   const local = getHistoricoCompras();
   const serverIds = new Set(server.map((h) => h.id));
   const orphans = local.filter((h) => !serverIds.has(h.id));
   const merged = [...server, ...orphans].sort((a, b) =>
-    (b.concluidaEm ?? "").localeCompare(a.concluidaEm ?? "")
+    (b.concluidaEm ?? "").localeCompare(a.concluidaEm ?? ""),
   );
   __replaceHistoricoCache(merged);
   for (const o of orphans) void pushUpsertHistoricoCompra(o);
 }
-
 
 async function pushUpsertHistoricoCompra(h: MercadoCompraHistorico) {
   const uid = __getMercadoActiveUserId();
@@ -464,9 +508,7 @@ function readLegacyAnonHistorico(): MercadoCompraHistorico[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed
-      .map(normalizeHistorico)
-      .filter((x): x is MercadoCompraHistorico => x !== null);
+    return parsed.map(normalizeHistorico).filter((x): x is MercadoCompraHistorico => x !== null);
   } catch {
     return [];
   }
@@ -492,7 +534,11 @@ async function migrateLegacyHistoricoOnce(userId: string) {
     }
   }
   localStorage.setItem(flag, "1");
-  try { localStorage.removeItem(MERCADO_HISTORICO_LEGACY_ANON_KEY); } catch { /* ignore */ }
+  try {
+    localStorage.removeItem(MERCADO_HISTORICO_LEGACY_ANON_KEY);
+  } catch {
+    /* ignore */
+  }
 }
 
 // ============================================================
@@ -592,12 +638,11 @@ async function pullPrecosUsuario(userId: string) {
   const serverIds = new Set(server.map((p) => p.id));
   const orphans = local.filter((p) => !serverIds.has(p.id));
   const merged = [...server, ...orphans].sort((a, b) =>
-    (b.compradoEm ?? "").localeCompare(a.compradoEm ?? "")
+    (b.compradoEm ?? "").localeCompare(a.compradoEm ?? ""),
   );
   __replacePrecosCache(merged);
   if (orphans.length > 0) void pushUpsertRegistrosPreco(orphans);
 }
-
 
 async function pushUpsertRegistrosPreco(regs: MercadoPrecoLocal[]) {
   const uid = __getMercadoActiveUserId();
@@ -628,9 +673,15 @@ function readLegacyAnonPrecos(): MercadoPrecoLocal[] {
           }
         }
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
-  try { push(localStorage.getItem(MERCADO_PRECOS_LEGACY_ANON_KEY)); } catch { /* ignore */ }
+  try {
+    push(localStorage.getItem(MERCADO_PRECOS_LEGACY_ANON_KEY));
+  } catch {
+    /* ignore */
+  }
   return out;
 }
 
@@ -647,7 +698,9 @@ async function migrateLegacyPrecosOnce(userId: string) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) current = parsed as MercadoPrecoLocal[];
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   const map = new Map<string, MercadoPrecoLocal>();
   for (const r of [...legacy, ...current]) if (r && r.id) map.set(r.id, r);
   const all = Array.from(map.values());
@@ -662,7 +715,11 @@ async function migrateLegacyPrecosOnce(userId: string) {
     }
   }
   localStorage.setItem(flag, "1");
-  try { localStorage.removeItem(MERCADO_PRECOS_LEGACY_ANON_KEY); } catch { /* ignore */ }
+  try {
+    localStorage.removeItem(MERCADO_PRECOS_LEGACY_ANON_KEY);
+  } catch {
+    /* ignore */
+  }
 }
 
 // ============================================================
@@ -726,7 +783,9 @@ function readCestasTombstones(uid: string | null): Set<string> {
       );
     }
     return new Set();
-  } catch { return new Set(); }
+  } catch {
+    return new Set();
+  }
 }
 function addCestaTombstone(uid: string | null, id: string) {
   if (!uid || !id) return;
@@ -736,39 +795,53 @@ function addCestaTombstone(uid: string | null, id: string) {
   try {
     localStorage.setItem(
       cestasTombstoneKey(uid),
-      JSON.stringify(Array.from(cur).map((tid) => ({ id: tid, deletedAt: new Date().toISOString() }))),
+      JSON.stringify(
+        Array.from(cur).map((tid) => ({ id: tid, deletedAt: new Date().toISOString() })),
+      ),
     );
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
-
-
 
 // ----- Dirty upserts de cestas (mesmo princípio de listas dirty:v2) -----
 // Sem isso, pullCestas re-upserta toda cesta local-only — inclusive cestas
 // que foram excluídas em outro dispositivo — causando "ressurreição".
 const CESTAS_DIRTY_KEY_BASE = "gi:mercado:cestas:dirty:v1";
 const CESTAS_SAFETY_FLAG_BASE = "gi:mercado:cestas:dirty-safety-checked:v1";
-function cestasDirtyKey(uid: string) { return `${CESTAS_DIRTY_KEY_BASE}:${uid}`; }
-function cestasSafetyFlagKey(uid: string) { return `${CESTAS_SAFETY_FLAG_BASE}:${uid}`; }
+function cestasDirtyKey(uid: string) {
+  return `${CESTAS_DIRTY_KEY_BASE}:${uid}`;
+}
+function cestasSafetyFlagKey(uid: string) {
+  return `${CESTAS_SAFETY_FLAG_BASE}:${uid}`;
+}
 function readCestasDirty(uid: string | null): Set<string> {
   if (!uid) return new Set();
   try {
     const raw = localStorage.getItem(cestasDirtyKey(uid));
     if (!raw) return new Set();
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return new Set(parsed.filter((x): x is string => typeof x === "string"));
+    if (Array.isArray(parsed))
+      return new Set(parsed.filter((x): x is string => typeof x === "string"));
     return new Set();
-  } catch { return new Set(); }
+  } catch {
+    return new Set();
+  }
 }
 function writeCestasDirty(uid: string | null, ids: Set<string>) {
   if (!uid) return;
-  try { localStorage.setItem(cestasDirtyKey(uid), JSON.stringify(Array.from(ids))); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(cestasDirtyKey(uid), JSON.stringify(Array.from(ids)));
+  } catch {
+    /* ignore */
+  }
 }
 function markCestaDirty(uid: string | null, id: string) {
   if (!uid || !id) return;
   const cur = readCestasDirty(uid);
   if (cur.has(id)) return;
-  cur.add(id); writeCestasDirty(uid, cur);
+  cur.add(id);
+  writeCestasDirty(uid, cur);
 }
 function clearCestaDirty(uid: string | null, id: string) {
   if (!uid || !id) return;
@@ -776,8 +849,6 @@ function clearCestaDirty(uid: string | null, id: string) {
   if (!cur.delete(id)) return;
   writeCestasDirty(uid, cur);
 }
-
-
 
 async function pushUpsertCesta(c: MercadoCestaPadrao) {
   const uid = __getMercadoCestaActiveUserId();
@@ -815,7 +886,6 @@ async function pushDeleteCesta(id: string) {
   }
 }
 
-
 async function pullCestas(userId: string) {
   const { data, error } = await supabase
     .from("mercado_cestas_padrao")
@@ -834,14 +904,27 @@ async function pullCestas(userId: string) {
 
   const dirty = readCestasDirty(userId);
   const safetyDone = (() => {
-    try { return localStorage.getItem(cestasSafetyFlagKey(userId)) === "1"; } catch { return true; }
+    try {
+      return localStorage.getItem(cestasSafetyFlagKey(userId)) === "1";
+    } catch {
+      return true;
+    }
   })();
 
   // Server + conflict resolution (last-write-wins por atualizadoEm).
   for (const s of server) {
-    if (tombs.has(s.id)) { toRetryDelete.push(s.id); continue; }
+    if (tombs.has(s.id)) {
+      toRetryDelete.push(s.id);
+      continue;
+    }
     const l = localById.get(s.id);
-    if (l && dirty.has(l.id) && l.atualizadoEm && s.atualizadoEm && l.atualizadoEm > s.atualizadoEm) {
+    if (
+      l &&
+      dirty.has(l.id) &&
+      l.atualizadoEm &&
+      s.atualizadoEm &&
+      l.atualizadoEm > s.atualizadoEm
+    ) {
       merged.push(l);
       toRePushUpsert.push(l);
     } else {
@@ -857,7 +940,11 @@ async function pullCestas(userId: string) {
   for (const l of local) {
     if (serverById.has(l.id)) continue;
     if (tombs.has(l.id)) continue;
-    if (dirty.has(l.id)) { merged.push(l); toRePushUpsert.push(l); continue; }
+    if (dirty.has(l.id)) {
+      merged.push(l);
+      toRePushUpsert.push(l);
+      continue;
+    }
     if (!safetyDone) {
       markCestaDirty(userId, l.id);
       merged.push(l);
@@ -869,11 +956,17 @@ async function pullCestas(userId: string) {
   merged.sort((a, b) => (b.atualizadoEm ?? "").localeCompare(a.atualizadoEm ?? ""));
   __replaceCestaCache(merged);
   if (!safetyDone) {
-    try { localStorage.setItem(cestasSafetyFlagKey(userId), "1"); } catch { /* ignore */ }
+    try {
+      localStorage.setItem(cestasSafetyFlagKey(userId), "1");
+    } catch {
+      /* ignore */
+    }
   }
 
   // Best-effort: re-push pendências e retentativas de delete.
-  for (const id of toRetryDelete) { void pushDeleteCesta(id); }
+  for (const id of toRetryDelete) {
+    void pushDeleteCesta(id);
+  }
   if (toRePushUpsert.length > 0) {
     const rows = toRePushUpsert.map((c) => cestaToRow(c, userId));
     try {
@@ -888,7 +981,6 @@ async function pullCestas(userId: string) {
     } catch (e) {
       console.warn("[mercado-sync] cestas re-push threw:", e);
     }
-
   }
 }
 
@@ -907,7 +999,9 @@ async function migrateLegacyCestasOnce(userId: string) {
           .filter((c): c is MercadoCestaPadrao => c !== null);
       }
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   // Combina com o que já está na chave por usuário, sem duplicar por id.
   const userKey = `${MERCADO_CESTA_STORAGE_KEY}:${userId}`;
@@ -922,7 +1016,9 @@ async function migrateLegacyCestasOnce(userId: string) {
           .filter((c): c is MercadoCestaPadrao => c !== null);
       }
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   const map = new Map<string, MercadoCestaPadrao>();
   for (const c of [...current, ...legacy]) map.set(c.id, c);
   const all = Array.from(map.values());
@@ -942,8 +1038,16 @@ async function migrateLegacyCestasOnce(userId: string) {
       return;
     }
   }
-  try { localStorage.setItem(flag, "1"); } catch { /* ignore */ }
-  try { localStorage.removeItem(MERCADO_CESTA_LEGACY_ANON_KEY); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(flag, "1");
+  } catch {
+    /* ignore */
+  }
+  try {
+    localStorage.removeItem(MERCADO_CESTA_LEGACY_ANON_KEY);
+  } catch {
+    /* ignore */
+  }
 }
 
 // ============================================================
@@ -975,17 +1079,15 @@ async function pushUpsertOrcamento(o: MercadoOrcamento) {
   const uid = __getMercadoOrcamentoActiveUserId();
   if (!uid) return;
   try {
-    const { error } = await supabase
-      .from("mercado_orcamentos")
-      .upsert(
-        {
-          user_id: uid,
-          mes_referencia: o.mesReferencia,
-          valor_mensal: o.valorMensal,
-          atualizado_em: o.atualizadoEm,
-        },
-        { onConflict: "user_id,mes_referencia" },
-      );
+    const { error } = await supabase.from("mercado_orcamentos").upsert(
+      {
+        user_id: uid,
+        mes_referencia: o.mesReferencia,
+        valor_mensal: o.valorMensal,
+        atualizado_em: o.atualizadoEm,
+      },
+      { onConflict: "user_id,mes_referencia" },
+    );
     if (error) console.warn("[mercado-sync] upsert orcamento failed:", error.message);
   } catch (e) {
     console.warn("[mercado-sync] upsert orcamento threw:", e);
@@ -1032,7 +1134,9 @@ async function migrateLegacyOrcamentoOnce(userId: string) {
   const flag = `gi:mercado:orcamento:migrated:v1:${userId}`;
   try {
     if (localStorage.getItem(flag) === "1") return;
-  } catch { return; }
+  } catch {
+    return;
+  }
 
   const userKey = `${MERCADO_ORCAMENTO_STORAGE_KEY}:${userId}`;
   // Se a chave por usuário ainda não existe, tenta promover a chave legada anônima.
@@ -1047,13 +1151,18 @@ async function migrateLegacyOrcamentoOnce(userId: string) {
         }
       }
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
-  try { localStorage.setItem(flag, "1"); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(flag, "1");
+  } catch {
+    /* ignore */
+  }
   // Não removemos a chave anônima legada para não afetar outras abas/usuários
   // sem login. A migração é one-shot por usuário via flag.
 }
-
 
 // ============================================================
 // Mercados salvos (E35 / Parte 3)
@@ -1116,9 +1225,15 @@ const MERCADOS_DIRTY_KEY_BASE = "gi:mercado:mercados:dirty:v1";
 const MERCADOS_TOMBSTONE_KEY_BASE = "gi:mercado:mercados:deleted:v1";
 const MERCADOS_SAFETY_FLAG_BASE = "gi:mercado:mercados:dirty-safety-checked:v1";
 
-function mercadosDirtyKey(uid: string) { return `${MERCADOS_DIRTY_KEY_BASE}:${uid}`; }
-function mercadosTombKey(uid: string) { return `${MERCADOS_TOMBSTONE_KEY_BASE}:${uid}`; }
-function mercadosSafetyKey(uid: string) { return `${MERCADOS_SAFETY_FLAG_BASE}:${uid}`; }
+function mercadosDirtyKey(uid: string) {
+  return `${MERCADOS_DIRTY_KEY_BASE}:${uid}`;
+}
+function mercadosTombKey(uid: string) {
+  return `${MERCADOS_TOMBSTONE_KEY_BASE}:${uid}`;
+}
+function mercadosSafetyKey(uid: string) {
+  return `${MERCADOS_SAFETY_FLAG_BASE}:${uid}`;
+}
 
 function readMercadosDirty(uid: string | null): Set<string> {
   if (!uid) return new Set();
@@ -1126,19 +1241,27 @@ function readMercadosDirty(uid: string | null): Set<string> {
     const raw = localStorage.getItem(mercadosDirtyKey(uid));
     if (!raw) return new Set();
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return new Set(parsed.filter((x): x is string => typeof x === "string"));
+    if (Array.isArray(parsed))
+      return new Set(parsed.filter((x): x is string => typeof x === "string"));
     return new Set();
-  } catch { return new Set(); }
+  } catch {
+    return new Set();
+  }
 }
 function writeMercadosDirty(uid: string | null, ids: Set<string>) {
   if (!uid) return;
-  try { localStorage.setItem(mercadosDirtyKey(uid), JSON.stringify(Array.from(ids))); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(mercadosDirtyKey(uid), JSON.stringify(Array.from(ids)));
+  } catch {
+    /* ignore */
+  }
 }
 function markMercadoDirty(uid: string | null, id: string) {
   if (!uid || !id) return;
   const cur = readMercadosDirty(uid);
   if (cur.has(id)) return;
-  cur.add(id); writeMercadosDirty(uid, cur);
+  cur.add(id);
+  writeMercadosDirty(uid, cur);
 }
 function clearMercadoDirty(uid: string | null, id: string) {
   if (!uid || !id) return;
@@ -1161,7 +1284,9 @@ function readMercadosTombstones(uid: string | null): Set<string> {
       );
     }
     return new Set();
-  } catch { return new Set(); }
+  } catch {
+    return new Set();
+  }
 }
 function addMercadoTombstone(uid: string | null, id: string) {
   if (!uid || !id) return;
@@ -1171,9 +1296,13 @@ function addMercadoTombstone(uid: string | null, id: string) {
   try {
     localStorage.setItem(
       mercadosTombKey(uid),
-      JSON.stringify(Array.from(cur).map((tid) => ({ id: tid, deletedAt: new Date().toISOString() }))),
+      JSON.stringify(
+        Array.from(cur).map((tid) => ({ id: tid, deletedAt: new Date().toISOString() })),
+      ),
     );
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 function removeMercadoTombstones(uid: string | null, ids: Iterable<string>) {
   if (!uid) return;
@@ -1181,14 +1310,20 @@ function removeMercadoTombstones(uid: string | null, ids: Iterable<string>) {
   if (drop.size === 0) return;
   const cur = readMercadosTombstones(uid);
   let changed = false;
-  for (const id of drop) { if (cur.delete(id)) changed = true; }
+  for (const id of drop) {
+    if (cur.delete(id)) changed = true;
+  }
   if (!changed) return;
   try {
     localStorage.setItem(
       mercadosTombKey(uid),
-      JSON.stringify(Array.from(cur).map((tid) => ({ id: tid, deletedAt: new Date().toISOString() }))),
+      JSON.stringify(
+        Array.from(cur).map((tid) => ({ id: tid, deletedAt: new Date().toISOString() })),
+      ),
     );
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 async function pushUpsertMercado(m: MercadoLocal) {
@@ -1242,7 +1377,11 @@ async function pullMercados(userId: string) {
   const serverById = new Map(server.map((m) => [m.id, m]));
   const localById = new Map(local.map((m) => [m.id, m]));
   const safetyDone = (() => {
-    try { return localStorage.getItem(mercadosSafetyKey(userId)) === "1"; } catch { return true; }
+    try {
+      return localStorage.getItem(mercadosSafetyKey(userId)) === "1";
+    } catch {
+      return true;
+    }
   })();
 
   const merged: MercadoLocal[] = [];
@@ -1251,9 +1390,18 @@ async function pullMercados(userId: string) {
 
   // Server + conflict resolution (last-write-wins por atualizadoEm).
   for (const s of server) {
-    if (tombs.has(s.id)) { toRetryDelete.push(s.id); continue; }
+    if (tombs.has(s.id)) {
+      toRetryDelete.push(s.id);
+      continue;
+    }
     const l = localById.get(s.id);
-    if (l && dirty.has(l.id) && l.atualizadoEm && s.atualizadoEm && l.atualizadoEm > s.atualizadoEm) {
+    if (
+      l &&
+      dirty.has(l.id) &&
+      l.atualizadoEm &&
+      s.atualizadoEm &&
+      l.atualizadoEm > s.atualizadoEm
+    ) {
       merged.push(l);
       toRePushUpsert.push(l);
     } else {
@@ -1269,7 +1417,11 @@ async function pullMercados(userId: string) {
   for (const l of local) {
     if (serverById.has(l.id)) continue;
     if (tombs.has(l.id)) continue;
-    if (dirty.has(l.id)) { merged.push(l); toRePushUpsert.push(l); continue; }
+    if (dirty.has(l.id)) {
+      merged.push(l);
+      toRePushUpsert.push(l);
+      continue;
+    }
     if (!safetyDone) {
       markMercadoDirty(userId, l.id);
       merged.push(l);
@@ -1281,7 +1433,11 @@ async function pullMercados(userId: string) {
 
   __replaceMercadosCache(merged);
   if (!safetyDone) {
-    try { localStorage.setItem(mercadosSafetyKey(userId), "1"); } catch { /* ignore */ }
+    try {
+      localStorage.setItem(mercadosSafetyKey(userId), "1");
+    } catch {
+      /* ignore */
+    }
   }
 
   for (const id of toRetryDelete) void pushDeleteMercado(id);
@@ -1315,7 +1471,9 @@ async function migrateLegacyMercadosOnce(userId: string) {
   const flag = `gi:mercado:mercados:migrated:v1:${userId}`;
   try {
     if (localStorage.getItem(flag) === "1") return;
-  } catch { return; }
+  } catch {
+    return;
+  }
 
   const userKey = `${MERCADOS_LOCAIS_STORAGE_KEY}:${userId}`;
   let legacy: MercadoLocal[] = [];
@@ -1329,7 +1487,9 @@ async function migrateLegacyMercadosOnce(userId: string) {
           .filter((m): m is MercadoLocal => m !== null);
       }
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   // Combina com o que já estiver na chave por usuário, sem duplicar.
   let current: MercadoLocal[] = [];
@@ -1343,7 +1503,9 @@ async function migrateLegacyMercadosOnce(userId: string) {
           .filter((m): m is MercadoLocal => m !== null);
       }
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 
   const map = new Map<string, MercadoLocal>();
   for (const m of [...current, ...legacy]) map.set(m.id, m);
@@ -1364,7 +1526,11 @@ async function migrateLegacyMercadosOnce(userId: string) {
       return;
     }
   }
-  try { localStorage.setItem(flag, "1"); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(flag, "1");
+  } catch {
+    /* ignore */
+  }
   // Não removemos a chave anônima legada: pode estar em uso por outras abas
   // sem login; a migração é one-shot via flag por usuário.
 }
@@ -1372,7 +1538,6 @@ async function migrateLegacyMercadosOnce(userId: string) {
 // ============================================================
 // Wiring
 // ============================================================
-
 
 let hooksRegistered = false;
 function ensureHooks() {
@@ -1393,11 +1558,17 @@ function ensureHooks() {
     },
   });
   __setMercadoHistoricoSyncHooks({
-    onUpsertHistorico: (h) => { void pushUpsertHistoricoCompra(h); },
-    onDeleteHistorico: (id) => { void pushDeleteHistoricoCompra(id); },
+    onUpsertHistorico: (h) => {
+      void pushUpsertHistoricoCompra(h);
+    },
+    onDeleteHistorico: (id) => {
+      void pushDeleteHistoricoCompra(id);
+    },
   });
   __setMercadoPrecosSyncHooks({
-    onUpsertRegistros: (regs) => { void pushUpsertRegistrosPreco(regs); },
+    onUpsertRegistros: (regs) => {
+      void pushUpsertRegistrosPreco(regs);
+    },
   });
   __setMercadoCestaSyncHooks({
     onUpsertCesta: (c) => {
@@ -1410,7 +1581,9 @@ function ensureHooks() {
     },
   });
   __setMercadoOrcamentoSyncHooks({
-    onUpsertOrcamento: (o) => { void pushUpsertOrcamento(o); },
+    onUpsertOrcamento: (o) => {
+      void pushUpsertOrcamento(o);
+    },
   });
   __setMercadoMercadosSyncHooks({
     onUpsertMercado: (m) => {
@@ -1439,7 +1612,15 @@ type ListasSyncState = {
 };
 let listasSyncState: ListasSyncState = { status: "idle", lastSyncedAt: null, errorMessage: null };
 const listasSyncListeners = new Set<() => void>();
-function emitListasSync() { for (const l of listasSyncListeners) { try { l(); } catch { /* ignore */ } } }
+function emitListasSync() {
+  for (const l of listasSyncListeners) {
+    try {
+      l();
+    } catch {
+      /* ignore */
+    }
+  }
+}
 function setListasSyncState(next: Partial<ListasSyncState>) {
   listasSyncState = { ...listasSyncState, ...next };
   emitListasSync();
@@ -1447,7 +1628,12 @@ function setListasSyncState(next: Partial<ListasSyncState>) {
 
 export function useMercadoListasSyncState(): ListasSyncState {
   return useSyncExternalStore(
-    (cb) => { listasSyncListeners.add(cb); return () => { listasSyncListeners.delete(cb); }; },
+    (cb) => {
+      listasSyncListeners.add(cb);
+      return () => {
+        listasSyncListeners.delete(cb);
+      };
+    },
     () => listasSyncState,
     () => listasSyncState,
   );
@@ -1467,7 +1653,11 @@ export async function refreshMercadoListas(): Promise<{ ok: boolean; error?: str
   }
   try {
     await pullListas(uid);
-    setListasSyncState({ status: "synced", lastSyncedAt: new Date().toISOString(), errorMessage: null });
+    setListasSyncState({
+      status: "synced",
+      lastSyncedAt: new Date().toISOString(),
+      errorMessage: null,
+    });
     return { ok: true };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -1536,11 +1726,16 @@ export function useMercadoSync() {
         }
       } finally {
         if (!cancelled && listasOk) {
-          setListasSyncState({ status: "synced", lastSyncedAt: new Date().toISOString(), errorMessage: null });
+          setListasSyncState({
+            status: "synced",
+            lastSyncedAt: new Date().toISOString(),
+            errorMessage: null,
+          });
         }
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id, loading]);
 }
-

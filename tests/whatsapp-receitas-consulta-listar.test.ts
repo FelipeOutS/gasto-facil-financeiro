@@ -47,8 +47,22 @@ test("detectConsultaIntent classifica todas as variações como listar_receitas_
 test("'minhas receitas do mês' lista as receitas e NÃO cria sessão de receita/gasto", async () => {
   resetState({
     receitas: [
-      { id: "r1", user_id: "u1", descricao: "Salário", tipo: "salario", valor: 3500, data: todayISO() },
-      { id: "r2", user_id: "u1", descricao: "Freela", tipo: "freelance", valor: 800, data: monthStart() },
+      {
+        id: "r1",
+        user_id: "u1",
+        descricao: "Salário",
+        tipo: "salario",
+        valor: 3500,
+        data: todayISO(),
+      },
+      {
+        id: "r2",
+        user_id: "u1",
+        descricao: "Freela",
+        tipo: "freelance",
+        valor: 800,
+        data: monthStart(),
+      },
     ],
   });
   const r = await processarMensagemWhatsApp({

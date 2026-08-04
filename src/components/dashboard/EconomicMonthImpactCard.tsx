@@ -10,11 +10,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  loadBcbRadar,
-  type BcbIndicator,
-  type BcbIndicatorKey,
-} from "@/lib/economy/bcb";
+import { loadBcbRadar, type BcbIndicator, type BcbIndicatorKey } from "@/lib/economy/bcb";
 import {
   buildEconomicMonthImpact,
   type EconomicImpactTone,
@@ -132,11 +128,7 @@ export function EconomicMonthImpactCard({
 
   return (
     <div
-      className={cn(
-        "rounded-2xl border bg-card p-5 transition-colors",
-        styles.border,
-        className,
-      )}
+      className={cn("rounded-2xl border bg-card p-5 transition-colors", styles.border, className)}
     >
       <div className="flex items-start gap-3">
         <div
@@ -153,18 +145,12 @@ export function EconomicMonthImpactCard({
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
             {t("economicImpact.eyebrow")}
           </p>
-          <h3 className="mt-0.5 text-sm font-semibold text-foreground">
-            {impact.title}
-          </h3>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            {impact.description}
-          </p>
+          <h3 className="mt-0.5 text-sm font-semibold text-foreground">{impact.title}</h3>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{impact.description}</p>
           {impact.actionLabel && impact.actionHref && (
             <button
               type="button"
-              onClick={() =>
-                void navigate({ to: impact.actionHref as string })
-              }
+              onClick={() => void navigate({ to: impact.actionHref as string })}
               className={cn(
                 "mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors sm:min-h-0 sm:py-1",
                 styles.bg,

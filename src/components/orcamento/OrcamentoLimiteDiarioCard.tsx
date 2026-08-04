@@ -123,9 +123,7 @@ export function OrcamentoLimiteDiarioCard({
             </p>
           </>
         ) : (
-          <p className="mt-1 text-sm font-medium text-muted-foreground">
-            {mensagem}
-          </p>
+          <p className="mt-1 text-sm font-medium text-muted-foreground">{mensagem}</p>
         )}
       </div>
     </div>

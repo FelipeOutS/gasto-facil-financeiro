@@ -1,14 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, ChevronLeft, ChevronRight, Trophy, TrendingDown, TrendingUp } from "lucide-react";
 import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip as RTooltip,
-} from "recharts";
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Trophy,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RTooltip } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
@@ -87,16 +88,26 @@ function ResumoPage() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">{t("resumo.kicker")}</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            {t("resumo.kicker")}
+          </p>
           <h1 className="text-2xl font-bold tracking-tight capitalize">
             {formatMonthYear(ym.ano, ym.mes)}
           </h1>
         </div>
         <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
-          <button onClick={() => changeMonth(-1)} className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={t("resumo.prevMonth")}>
+          <button
+            onClick={() => changeMonth(-1)}
+            className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label={t("resumo.prevMonth")}
+          >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <button onClick={() => changeMonth(1)} className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={t("resumo.nextMonth")}>
+          <button
+            onClick={() => changeMonth(1)}
+            className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label={t("resumo.nextMonth")}
+          >
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
@@ -140,7 +151,9 @@ function ResumoPage() {
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 grid place-items-center">
                 <div className="text-center">
-                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{t("resumo.total")}</p>
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                    {t("resumo.total")}
+                  </p>
                   <p className="num text-xl font-bold">{formatBRLCompact(total)}</p>
                 </div>
               </div>
@@ -148,7 +161,10 @@ function ResumoPage() {
 
             <ul className="mt-4 space-y-2">
               {porCategoria.map((c, i) => (
-                <li key={c.id} className="flex items-center gap-3 rounded-xl bg-card-elevated p-2.5">
+                <li
+                  key={c.id}
+                  className="flex items-center gap-3 rounded-xl bg-card-elevated p-2.5"
+                >
                   <span className="num w-5 text-center text-xs font-semibold text-muted-foreground">
                     {i + 1}
                   </span>
@@ -185,7 +201,9 @@ function ResumoPage() {
                     <p className="truncate text-sm font-medium">
                       {g.estabelecimento || g.descricao}
                     </p>
-                    <p className="text-xs text-muted-foreground">{cat?.nome ?? t("resumo.outros")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {cat?.nome ?? t("resumo.outros")}
+                    </p>
                   </div>
                   <p className="num text-sm font-semibold">{formatBRL(g.valor)}</p>
                 </li>
@@ -200,11 +218,15 @@ function ResumoPage() {
         <h2 className="text-sm font-semibold">{t("resumo.compare.title")}</h2>
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-card-elevated p-3">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{t("resumo.compare.current")}</p>
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+              {t("resumo.compare.current")}
+            </p>
             <p className="num mt-1 text-lg font-semibold">{formatBRL(total)}</p>
           </div>
           <div className="rounded-2xl bg-card-elevated p-3">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{t("resumo.compare.previous")}</p>
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+              {t("resumo.compare.previous")}
+            </p>
             <p className="num mt-1 text-lg font-semibold">{formatBRL(totalAnt)}</p>
           </div>
         </div>

@@ -26,7 +26,12 @@ import { toastFromError } from "@/lib/premium-error";
 import { refreshGastos } from "@/lib/store";
 import { ExternalLink } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { getWhatsAppConfigStatus, upsertWhatsAppLink, deleteWhatsAppLink, confirmWhatsAppLinkConsent } from "@/lib/whatsapp.functions";
+import {
+  getWhatsAppConfigStatus,
+  upsertWhatsAppLink,
+  deleteWhatsAppLink,
+  confirmWhatsAppLinkConsent,
+} from "@/lib/whatsapp.functions";
 import {
   whatsappAdminCheckRegistration,
   whatsappAdminGetOpsChecklist,
@@ -46,7 +51,7 @@ import {
   formatWhatsAppNumberShort,
   getOfficialWhatsAppDeepLink,
 } from "@/lib/whatsapp-config";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 import { supabase as _supabase } from "@/integrations/supabase/client";
 // As tabelas whatsapp_* foram criadas após a regeneração de tipos.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -184,9 +189,7 @@ function WhatsAppPage() {
   const [novoTel, setNovoTel] = useState("");
   const [adding, setAdding] = useState(false);
   const [aceitouOptIn, setAceitouOptIn] = useState(false);
-  const [testTexto, setTestTexto] = useState(
-    "gastei R$ 48,90 no mercado hoje no Nubank",
-  );
+  const [testTexto, setTestTexto] = useState("gastei R$ 48,90 no mercado hoje no Nubank");
   const [testando, setTestando] = useState(false);
   const [copiado, setCopiado] = useState(false);
   const upsertLinkFn = useServerFn(upsertWhatsAppLink);
@@ -194,8 +197,7 @@ function WhatsAppPage() {
 
   // URL pública estável usada na configuração do painel da Meta.
   // Sempre o domínio publicado, nunca preview/localhost.
-  const PUBLIC_WEBHOOK_URL =
-    "https://gastointeligente.com.br/api/public/whatsapp/expense";
+  const PUBLIC_WEBHOOK_URL = "https://gastointeligente.com.br/api/public/whatsapp/expense";
   // Verify Token NÃO vive no frontend. Configure-o em Secrets (WHATSAPP_VERIFY_TOKEN)
   // e use o mesmo valor no painel da Meta. Nunca exibido na UI nem retornado por server fn.
 
@@ -357,7 +359,12 @@ function WhatsAppPage() {
     numero_apto_para_conversa_whatsapp: "sim" | "nao" | "desconhecido";
     plataforma_do_numero: "cloud_api" | "outro" | "desconhecido";
     status_de_registro_confiavel: "sim" | "nao";
-    acao_recomendada: "registrar_cloud_api" | "migrar_para_cloud_api" | "revisar_meta" | "aguardar" | "nenhuma";
+    acao_recomendada:
+      | "registrar_cloud_api"
+      | "migrar_para_cloud_api"
+      | "revisar_meta"
+      | "aguardar"
+      | "nenhuma";
     tipo_plataforma_meta: "cloud_api" | "on_premise" | "coexistence" | "nao_informado" | "outro";
     status_numero_meta: "connected" | "disconnected" | "pendente" | "nao_informado" | "outro";
     verificacao_numero_meta: "verificado" | "nao_verificado" | "desconhecido";
@@ -395,18 +402,8 @@ function WhatsAppPage() {
     meta_error_subcode: number | null;
     numero_registrado_cloud_api: "sim" | "nao" | "desconhecido";
     numero_apto_para_conversa_whatsapp: "sim" | "nao" | "desconhecido";
-    tipo_plataforma_meta:
-      | "cloud_api"
-      | "on_premise"
-      | "coexistence"
-      | "nao_informado"
-      | "outro";
-    status_numero_meta:
-      | "connected"
-      | "disconnected"
-      | "pendente"
-      | "nao_informado"
-      | "outro";
+    tipo_plataforma_meta: "cloud_api" | "on_premise" | "coexistence" | "nao_informado" | "outro";
+    status_numero_meta: "connected" | "disconnected" | "pendente" | "nao_informado" | "outro";
     acao_recomendada:
       | "nenhuma"
       | "revisar_meta"
@@ -474,7 +471,8 @@ function WhatsAppPage() {
       const r = await confirmConsentFn({
         data: {
           aceitou: true,
-          user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 400) : undefined,
+          user_agent:
+            typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 400) : undefined,
         },
       });
       setConsentResult(r.consentimento_atualizado);
@@ -516,7 +514,9 @@ function WhatsAppPage() {
   async function refresh() {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         setLinks([]);
         setMsgs([]);
@@ -525,7 +525,9 @@ function WhatsAppPage() {
       const [linksRes, msgsRes] = await Promise.all([
         supabase
           .from("whatsapp_links")
-          .select("id, telefone, ativo, ultimo_uso, created_at, opt_in_em, opt_in_version, revogado_em")
+          .select(
+            "id, telefone, ativo, ultimo_uso, created_at, opt_in_em, opt_in_version, revogado_em",
+          )
           .order("created_at", { ascending: false }),
         supabase
           .from("whatsapp_messages")
@@ -548,7 +550,6 @@ function WhatsAppPage() {
 
   useEffect(() => {
     void refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function adicionar() {
@@ -651,10 +652,20 @@ function WhatsAppPage() {
 
   const [limpando, setLimpando] = useState(false);
   async function limparDuplicados() {
-    if (!(await confirmAsync({ title: "Remover duplicados", description: "Manter apenas o gasto mais antigo de cada grupo de duplicados criados via WhatsApp?", confirmText: "Manter o mais antigo" }))) return;
+    if (
+      !(await confirmAsync({
+        title: "Remover duplicados",
+        description:
+          "Manter apenas o gasto mais antigo de cada grupo de duplicados criados via WhatsApp?",
+        confirmText: "Manter o mais antigo",
+      }))
+    )
+      return;
     setLimpando(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Sessão expirada");
       const { data, error } = await supabase
         .from("gastos")
@@ -689,10 +700,7 @@ function WhatsAppPage() {
         .from("whatsapp_messages")
         .update({ gasto_id: null })
         .in("gasto_id", idsParaApagar);
-      const { error: delErr } = await supabase
-        .from("gastos")
-        .delete()
-        .in("id", idsParaApagar);
+      const { error: delErr } = await supabase.from("gastos").delete().in("id", idsParaApagar);
       if (delErr) throw new Error(delErr.message);
       toast.success(`${idsParaApagar.length} duplicado(s) removido(s).`);
       await Promise.all([refresh(), refreshGastos()]);
@@ -739,14 +747,17 @@ function WhatsAppPage() {
               </span>
               <h1 className="text-xl font-semibold">Lance gastos pelo WhatsApp</h1>
               {MODO_TESTE && (
-                <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px] uppercase tracking-wide">
+                <Badge
+                  variant="outline"
+                  className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px] uppercase tracking-wide"
+                >
                   Modo teste
                 </Badge>
               )}
             </div>
             <p className="text-sm text-muted-foreground mt-1.5">
-              Envie uma mensagem simples e o Gasto Inteligente identifica valor, categoria,
-              data e forma de pagamento para você confirmar antes de salvar.
+              Envie uma mensagem simples e o Gasto Inteligente identifica valor, categoria, data e
+              forma de pagamento para você confirmar antes de salvar.
             </p>
           </div>
           <Button variant="outline" size="icon" onClick={refresh} disabled={loading}>
@@ -796,8 +807,6 @@ function WhatsAppPage() {
           </section>
         )}
 
-
-
         {/* Aviso de modo teste */}
         {MODO_TESTE && (
           <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs text-amber-100 flex items-start gap-3">
@@ -805,13 +814,11 @@ function WhatsAppPage() {
             <div className="space-y-1.5">
               <p className="font-semibold text-amber-300 text-sm">Modo teste</p>
               <p>
-                O número oficial do Gasto Inteligente ainda está em configuração. Por enquanto,
-                você pode conhecer o funcionamento e testar a interpretação das mensagens
-                pelo simulador abaixo.
+                O número oficial do Gasto Inteligente ainda está em configuração. Por enquanto, você
+                pode conhecer o funcionamento e testar a interpretação das mensagens pelo simulador
+                abaixo.
               </p>
-              <p className="text-amber-200/90">
-                Nenhum gasto é salvo sem a sua confirmação.
-              </p>
+              <p className="text-amber-200/90">Nenhum gasto é salvo sem a sua confirmação.</p>
             </div>
           </div>
         )}
@@ -842,7 +849,8 @@ function WhatsAppPage() {
               disabled={adding || !novoTel.trim() || !aceitouOptIn}
               className="bg-emerald-500 hover:bg-emerald-600 text-white"
             >
-              <Plus className="h-4 w-4 mr-1" /> {links.length === 0 ? "Vincular WhatsApp" : "Adicionar outro"}
+              <Plus className="h-4 w-4 mr-1" />{" "}
+              {links.length === 0 ? "Vincular WhatsApp" : "Adicionar outro"}
             </Button>
           </div>
 
@@ -860,15 +868,15 @@ function WhatsAppPage() {
             />
             <span className="space-y-1.5 leading-relaxed">
               <span className="block text-foreground">
-                Concordo em vincular meu WhatsApp ao Gasto Inteligente para enviar mensagens
-                de lançamento de gastos. Entendo que esse canal é{" "}
+                Concordo em vincular meu WhatsApp ao Gasto Inteligente para enviar mensagens de
+                lançamento de gastos. Entendo que esse canal é{" "}
                 <strong>exclusivo para registrar despesas</strong> e{" "}
                 <strong>não é suporte/atendimento</strong>.
               </span>
               <span className="block text-muted-foreground">
-                As mensagens enviadas podem conter dados financeiros e serão usadas para
-                interpretar e registrar seus gastos no app. Você pode desvincular seu número
-                a qualquer momento. Veja mais na{" "}
+                As mensagens enviadas podem conter dados financeiros e serão usadas para interpretar
+                e registrar seus gastos no app. Você pode desvincular seu número a qualquer momento.
+                Veja mais na{" "}
                 <Link
                   to="/privacidade"
                   className="underline underline-offset-2 text-emerald-300 hover:text-emerald-200"
@@ -880,7 +888,6 @@ function WhatsAppPage() {
             </span>
           </label>
 
-
           {/* Re-confirmação de consentimento LGPD em vínculo já existente */}
           {links.some((l) => l.ativo && (!l.opt_in_em || l.revogado_em)) && (
             <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 space-y-3">
@@ -889,8 +896,8 @@ function WhatsAppPage() {
               </p>
               <p className="text-xs text-amber-200/90 leading-relaxed">
                 Seu número já está vinculado, mas o consentimento de uso do canal precisa ser
-                reconfirmado para seguir com o lançamento de gastos por WhatsApp. Nenhuma
-                mensagem é enviada e seu telefone não é alterado.
+                reconfirmado para seguir com o lançamento de gastos por WhatsApp. Nenhuma mensagem é
+                enviada e seu telefone não é alterado.
               </p>
               <label className="flex items-start gap-2 text-xs text-amber-100/95 cursor-pointer">
                 <input
@@ -900,8 +907,8 @@ function WhatsAppPage() {
                   className="mt-0.5 accent-amber-400"
                 />
                 <span>
-                  Autorizo o uso do meu WhatsApp vinculado como canal para lançar gastos no
-                  Gasto Inteligente, conforme a{" "}
+                  Autorizo o uso do meu WhatsApp vinculado como canal para lançar gastos no Gasto
+                  Inteligente, conforme a{" "}
                   <Link
                     to="/privacidade"
                     className="underline underline-offset-2 text-amber-200 hover:text-amber-100"
@@ -923,46 +930,57 @@ function WhatsAppPage() {
                 </Button>
                 {consentResult && (
                   <pre className="rounded-md bg-card-elevated px-2 py-1 text-[11px] font-mono">
-{`consentimento_atualizado: ${consentResult}`}
+                    {`consentimento_atualizado: ${consentResult}`}
                   </pre>
                 )}
               </div>
             </div>
           )}
 
-
           {links.length === 0 && !loading && (
-            <p className="text-xs text-muted-foreground">
-              Você ainda não vinculou nenhum número.
-            </p>
+            <p className="text-xs text-muted-foreground">Você ainda não vinculou nenhum número.</p>
           )}
 
           <ul className="space-y-2">
             {links.map((l) => {
               const codigo = activationCode(l.id);
               return (
-                <li key={l.id} className="rounded-xl bg-card-elevated px-3 py-3 text-sm space-y-2.5">
+                <li
+                  key={l.id}
+                  className="rounded-xl bg-card-elevated px-3 py-3 text-sm space-y-2.5"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium num">{maskTel(l.telefone)}</p>
                         {MODO_TESTE ? (
-                          <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]">
+                          <Badge
+                            variant="outline"
+                            className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]"
+                          >
                             Aguardando ativação
                           </Badge>
                         ) : l.ativo ? (
-                          <Badge variant="outline" className="border-emerald-500/40 text-emerald-300 bg-emerald-500/10 text-[10px]">
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-500/40 text-emerald-300 bg-emerald-500/10 text-[10px]"
+                          >
                             Ativo
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="border-zinc-500/40 text-zinc-300 text-[10px]">
+                          <Badge
+                            variant="outline"
+                            className="border-zinc-500/40 text-zinc-300 text-[10px]"
+                          >
                             Inativo
                           </Badge>
                         )}
                       </div>
                       <p className="text-[11px] text-muted-foreground mt-0.5">
                         Vinculado em {new Date(l.created_at).toLocaleDateString("pt-BR")}
-                        {l.ultimo_uso ? ` · Última mensagem ${new Date(l.ultimo_uso).toLocaleDateString("pt-BR")}` : " · Sem uso ainda"}
+                        {l.ultimo_uso
+                          ? ` · Última mensagem ${new Date(l.ultimo_uso).toLocaleDateString("pt-BR")}`
+                          : " · Sem uso ainda"}
                       </p>
                     </div>
                     <button
@@ -978,7 +996,9 @@ function WhatsAppPage() {
 
                   <div className="rounded-lg border border-dashed border-emerald-500/30 bg-emerald-500/5 p-3 space-y-1">
                     <p className="text-[11px] text-muted-foreground">Código de ativação</p>
-                    <p className="font-mono text-base font-semibold text-emerald-300 tracking-wide">{codigo}</p>
+                    <p className="font-mono text-base font-semibold text-emerald-300 tracking-wide">
+                      {codigo}
+                    </p>
                     <p className="text-[11px] text-muted-foreground leading-relaxed">
                       {MODO_TESTE
                         ? "Quando o número oficial do Gasto Inteligente estiver ativo, você enviará esse código por WhatsApp para finalizar a ativação."
@@ -1081,8 +1101,8 @@ function WhatsAppPage() {
                 </Badge>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Executa apenas verificações de leitura na Meta. Não envia mensagens, não
-                registra o número e não expõe credenciais.
+                Executa apenas verificações de leitura na Meta. Não envia mensagens, não registra o
+                número e não expõe credenciais.
               </p>
               <Button
                 type="button"
@@ -1094,7 +1114,7 @@ function WhatsAppPage() {
               </Button>
               {preflightResult && (
                 <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
-{`token_para_waba: ${preflightResult.token_para_waba}
+                  {`token_para_waba: ${preflightResult.token_para_waba}
 numero_oficial_na_waba: ${preflightResult.numero_oficial_na_waba}
 app_inscrito_na_waba: ${preflightResult.app_inscrito_na_waba}
 webhook_handshake: ${preflightResult.webhook_handshake}
@@ -1125,7 +1145,7 @@ erro_categoria: ${preflightResult.erro_categoria}`}
                 </Button>
                 {opsChecklist && (
                   <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
-{`numero_registrado: ${opsChecklist.numero_registrado}
+                    {`numero_registrado: ${opsChecklist.numero_registrado}
 app_inscrito_na_waba: ${opsChecklist.app_inscrito_na_waba}
 webhook_configurado: ${opsChecklist.webhook_configurado}
 modo_canario_preparado: ${opsChecklist.modo_canario_preparado}
@@ -1150,7 +1170,7 @@ processamento_real_ativo: ${opsChecklist.processamento_real_ativo}`}
                 </Button>
                 {canaryReadiness && (
                   <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
-{`admin_canary_phone_ready: ${canaryReadiness.admin_canary_phone_ready}
+                    {`admin_canary_phone_ready: ${canaryReadiness.admin_canary_phone_ready}
 admin_link_ativo: ${canaryReadiness.admin_link_ativo}
 admin_opt_in_valido: ${canaryReadiness.admin_opt_in_valido}
 admin_email_autorizado: ${canaryReadiness.admin_email_autorizado}`}
@@ -1173,7 +1193,7 @@ admin_email_autorizado: ${canaryReadiness.admin_email_autorizado}`}
                 </Button>
                 {categoriaCheck && (
                   <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
-{`categoria_alimentacao_disponivel: ${categoriaCheck.categoria_alimentacao_disponivel}
+                    {`categoria_alimentacao_disponivel: ${categoriaCheck.categoria_alimentacao_disponivel}
 categoria_resolvida_para_padaria: ${categoriaCheck.categoria_resolvida_para_padaria}`}
                   </pre>
                 )}
@@ -1181,10 +1201,6 @@ categoria_resolvida_para_padaria: ${categoriaCheck.categoria_resolvida_para_pada
 
               {/* WA-F — Gestão da beta fechada (Admin Master) */}
               <BetaAdminSection />
-
-
-
-
 
               {/* WA-E2.audit — Auditoria read-only do estado real do número (Admin Master) */}
               <div className="pt-2 border-t border-amber-500/20 space-y-2">
@@ -1199,7 +1215,7 @@ categoria_resolvida_para_padaria: ${categoriaCheck.categoria_resolvida_para_pada
                 </Button>
                 {auditRealState && (
                   <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
-{`numero_meta_encontrado: ${auditRealState.numero_meta_encontrado}
+                    {`numero_meta_encontrado: ${auditRealState.numero_meta_encontrado}
 numero_verificado_na_meta: ${auditRealState.numero_verificado_na_meta}
 numero_registrado_cloud_api: ${auditRealState.numero_registrado_cloud_api}
 numero_apto_para_conversa_whatsapp: ${auditRealState.numero_apto_para_conversa_whatsapp}
@@ -1231,21 +1247,20 @@ phone_number_id_atual_esta_na_waba_oficial: ${auditRealState.phone_number_id_atu
                 </Button>
                 {registerStrategy && (
                   <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
-{`estrategia_registro: ${registerStrategy}`}
+                    {`estrategia_registro: ${registerStrategy}`}
                   </pre>
                 )}
 
                 {/* Registro Cloud API já concluído — trava operacional ativa (WHATSAPP_REGISTER_LOCK). */}
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Registro na Cloud API já concluído. Execução de novo /register
-                  está travada operacionalmente. Auditoria, preflight, checklist
-                  técnico e prontidão do canário continuam disponíveis em
-                  modo read-only.
+                  Registro na Cloud API já concluído. Execução de novo /register está travada
+                  operacionalmente. Auditoria, preflight, checklist técnico e prontidão do canário
+                  continuam disponíveis em modo read-only.
                 </p>
 
                 {registerResult && (
                   <pre className="rounded-lg bg-card-elevated p-3 text-[11px] font-mono leading-relaxed whitespace-pre overflow-x-auto">
-{`registro_cloud_api_executado: ${registerResult.registro_cloud_api_executado}
+                    {`registro_cloud_api_executado: ${registerResult.registro_cloud_api_executado}
 registro_http_status: ${registerResult.registro_http_status}
 meta_error_code: ${registerResult.meta_error_code ?? "null"}
 meta_error_subcode: ${registerResult.meta_error_subcode ?? "null"}
@@ -1257,8 +1272,6 @@ acao_recomendada: ${registerResult.acao_recomendada}`}
                 )}
               </div>
             </section>
-
-
 
             {/* Status técnico + secrets */}
             <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
@@ -1299,14 +1312,32 @@ acao_recomendada: ${registerResult.acao_recomendada}`}
                       ? configStatus[row.key as keyof typeof configStatus]
                       : null;
                     return (
-                      <li key={row.key} className="flex items-center justify-between gap-2 rounded-lg bg-card-elevated px-2.5 py-2">
+                      <li
+                        key={row.key}
+                        className="flex items-center justify-between gap-2 rounded-lg bg-card-elevated px-2.5 py-2"
+                      >
                         <span className="font-mono text-[11px] truncate">{row.label}</span>
                         {ok === null ? (
-                          <Badge variant="outline" className="border-border text-muted-foreground text-[10px]">verificando…</Badge>
+                          <Badge
+                            variant="outline"
+                            className="border-border text-muted-foreground text-[10px]"
+                          >
+                            verificando…
+                          </Badge>
                         ) : ok ? (
-                          <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 text-[10px]">Configurado</Badge>
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-500/40 text-emerald-400 text-[10px]"
+                          >
+                            Configurado
+                          </Badge>
                         ) : (
-                          <Badge variant="outline" className="border-rose-500/40 text-rose-400 text-[10px]">Pendente</Badge>
+                          <Badge
+                            variant="outline"
+                            className="border-rose-500/40 text-rose-400 text-[10px]"
+                          >
+                            Pendente
+                          </Badge>
                         )}
                       </li>
                     );
@@ -1315,7 +1346,10 @@ acao_recomendada: ${registerResult.acao_recomendada}`}
                 {configStatus && !configStatus.access_token && (
                   <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-[11px] text-amber-300 flex items-start gap-2">
                     <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                    <p>Configure o secret <span className="font-mono">WHATSAPP_ACCESS_TOKEN</span> para ativar o envio real.</p>
+                    <p>
+                      Configure o secret <span className="font-mono">WHATSAPP_ACCESS_TOKEN</span>{" "}
+                      para ativar o envio real.
+                    </p>
                   </div>
                 )}
               </div>
@@ -1326,36 +1360,61 @@ acao_recomendada: ${registerResult.acao_recomendada}`}
               <div>
                 <h2 className="text-sm font-semibold">Configurar na Meta (WhatsApp Cloud API)</h2>
                 <p className="text-[11px] text-muted-foreground mt-1">
-                  No painel da Meta, abra seu app de WhatsApp → Configuration → Webhook → Edit. Cole os dois campos abaixo.
+                  No painel da Meta, abra seu app de WhatsApp → Configuration → Webhook → Edit. Cole
+                  os dois campos abaixo.
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Callback URL</p>
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Callback URL
+                </p>
                 <div className="flex items-center gap-2 rounded-lg bg-card-elevated px-3 py-2 text-xs font-mono break-all">
                   <span className="flex-1">{webhookUrl}</span>
-                  <button type="button" onClick={copiarUrl} className="shrink-0 rounded-md p-1.5 hover:bg-border" aria-label="Copiar URL">
-                    {copiado ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                  <button
+                    type="button"
+                    onClick={copiarUrl}
+                    className="shrink-0 rounded-md p-1.5 hover:bg-border"
+                    aria-label="Copiar URL"
+                  >
+                    {copiado ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-400" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
                   </button>
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Verify Token</p>
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Verify Token
+                </p>
                 <div className="rounded-lg bg-card-elevated px-3 py-2 text-[11px] text-muted-foreground leading-relaxed">
                   Por segurança, o Verify Token não é exibido aqui. Configure-o diretamente no
-                  painel seguro de Secrets (chave <span className="font-mono">WHATSAPP_VERIFY_TOKEN</span>)
-                  e use exatamente o mesmo valor no campo <span className="font-mono">Verify token</span> da Meta.
+                  painel seguro de Secrets (chave{" "}
+                  <span className="font-mono">WHATSAPP_VERIFY_TOKEN</span>) e use exatamente o mesmo
+                  valor no campo <span className="font-mono">Verify token</span> da Meta.
                 </div>
               </div>
 
               <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 p-3 space-y-1.5 text-[11px] text-muted-foreground">
                 <p className="font-medium text-emerald-400">Passo a passo</p>
                 <ol className="list-decimal list-inside space-y-0.5">
-                  <li>Cole a Callback URL no campo <span className="font-mono">Callback URL</span> da Meta.</li>
-                  <li>Cole o Verify Token no campo <span className="font-mono">Verify token</span>.</li>
-                  <li>Clique em <span className="font-medium">Verify and save</span>.</li>
-                  <li>Em <span className="font-medium">Webhook fields</span>, assine <span className="font-mono">messages</span>.</li>
+                  <li>
+                    Cole a Callback URL no campo <span className="font-mono">Callback URL</span> da
+                    Meta.
+                  </li>
+                  <li>
+                    Cole o Verify Token no campo <span className="font-mono">Verify token</span>.
+                  </li>
+                  <li>
+                    Clique em <span className="font-medium">Verify and save</span>.
+                  </li>
+                  <li>
+                    Em <span className="font-medium">Webhook fields</span>, assine{" "}
+                    <span className="font-mono">messages</span>.
+                  </li>
                 </ol>
               </div>
 
@@ -1378,7 +1437,8 @@ acao_recomendada: ${registerResult.acao_recomendada}`}
         <div className="rounded-xl border border-dashed border-border bg-card/40 p-3 text-[11px] text-muted-foreground flex items-start gap-2">
           <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0 text-emerald-400" />
           <p>
-            Nunca envie número completo do cartão, CVV, senha ou dados bancários sensíveis. Use apenas nome do gasto, valor, categoria, cartão e data.
+            Nunca envie número completo do cartão, CVV, senha ou dados bancários sensíveis. Use
+            apenas nome do gasto, valor, categoria, cartão e data.
           </p>
         </div>
       </div>
@@ -1386,7 +1446,13 @@ acao_recomendada: ${registerResult.acao_recomendada}`}
   );
 }
 
-function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Promise<void> | void }) {
+function MessageActions({
+  msg,
+  onChanged,
+}: {
+  msg: Message;
+  onChanged: () => Promise<void> | void;
+}) {
   const [busy, setBusy] = useState<string | null>(null);
 
   async function verEmGastos() {
@@ -1400,7 +1466,11 @@ function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Pro
       toast.error("Esse gasto não foi encontrado. Você pode reprocessar a mensagem.");
       await supabase
         .from("whatsapp_messages")
-        .update({ status: "gasto_excluido", gasto_id: null, resposta_sugerida: "Gasto não encontrado." })
+        .update({
+          status: "gasto_excluido",
+          gasto_id: null,
+          resposta_sugerida: "Gasto não encontrado.",
+        })
         .eq("id", msg.id);
       await onChanged();
       return;
@@ -1410,7 +1480,15 @@ function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Pro
 
   async function excluirGasto() {
     if (!msg.gasto_id) return;
-    if (!(await confirmAsync({ title: "Excluir gasto?", description: "Essa ação também atualizará cartões, faturas, dashboard e relatórios.", destructive: true, confirmText: "Excluir" }))) return;
+    if (
+      !(await confirmAsync({
+        title: "Excluir gasto?",
+        description: "Essa ação também atualizará cartões, faturas, dashboard e relatórios.",
+        destructive: true,
+        confirmText: "Excluir",
+      }))
+    )
+      return;
     setBusy("delete-gasto");
     try {
       const { error: delErr } = await supabase.from("gastos").delete().eq("id", msg.gasto_id);
@@ -1421,7 +1499,11 @@ function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Pro
         .eq("gasto_id", msg.gasto_id);
       await supabase
         .from("whatsapp_messages")
-        .update({ status: "gasto_excluido", gasto_id: null, resposta_sugerida: "Gasto excluído pelo usuário." })
+        .update({
+          status: "gasto_excluido",
+          gasto_id: null,
+          resposta_sugerida: "Gasto excluído pelo usuário.",
+        })
         .eq("id", msg.id);
       toast.success("Gasto excluído. Tudo recalculado.");
       await Promise.all([onChanged(), refreshGastos()]);
@@ -1457,7 +1539,15 @@ function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Pro
   }
 
   async function excluirLog() {
-    if (!(await confirmAsync({ title: "Excluir registro?", description: "Excluir apenas o registro desta mensagem. O gasto não será removido.", destructive: true, confirmText: "Excluir registro" }))) return;
+    if (
+      !(await confirmAsync({
+        title: "Excluir registro?",
+        description: "Excluir apenas o registro desta mensagem. O gasto não será removido.",
+        destructive: true,
+        confirmText: "Excluir registro",
+      }))
+    )
+      return;
     setBusy("delete-log");
     try {
       const { error } = await supabase.from("whatsapp_messages").delete().eq("id", msg.id);
@@ -1474,7 +1564,12 @@ function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Pro
   const isSalva = msg.status === "salva" && !!msg.gasto_id;
   const isExcluido = msg.status === "gasto_excluido";
   const isDuplicada = msg.status === "duplicada";
-  const podeReproc = isExcluido || isDuplicada || msg.status === "pendente" || msg.status === "erro" || msg.status === "valor_invalido";
+  const podeReproc =
+    isExcluido ||
+    isDuplicada ||
+    msg.status === "pendente" ||
+    msg.status === "erro" ||
+    msg.status === "valor_invalido";
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 pt-1">
@@ -1500,7 +1595,13 @@ function MessageActions({ msg, onChanged }: { msg: Message; onChanged: () => Pro
         </Button>
       )}
       {podeReproc && (
-        <Button size="sm" variant="outline" onClick={reprocessar} disabled={busy === "reproc"} className="h-7 text-[11px]">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={reprocessar}
+          disabled={busy === "reproc"}
+          className="h-7 text-[11px]"
+        >
           <RefreshCw className="h-3 w-3 mr-1" /> Reprocessar
         </Button>
       )}
@@ -1554,8 +1655,7 @@ function SimuladorCard({
 
   const categoriaLabel = useMemo(() => {
     if (!preview) return null;
-    const key =
-      suggestCategoryFromText(preview.categoriaSugestao || preview.nome) || "outros";
+    const key = suggestCategoryFromText(preview.categoriaSugestao || preview.nome) || "outros";
     const cat = DEFAULT_CATEGORIES.find((c) => c.id === key);
     return cat?.nome ?? "Outros";
   }, [preview]);
@@ -1585,12 +1685,15 @@ function SimuladorCard({
             Simulador de lançamento
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Digite uma mensagem como se fosse pelo WhatsApp e veja como o Gasto
-            Inteligente entende o que você escreveu.
+            Digite uma mensagem como se fosse pelo WhatsApp e veja como o Gasto Inteligente entende
+            o que você escreveu.
           </p>
         </div>
         {modoTeste && (
-          <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]">
+          <Badge
+            variant="outline"
+            className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]"
+          >
             Apenas simulação
           </Badge>
         )}
@@ -1625,7 +1728,10 @@ function SimuladorCard({
             <p className="text-[11px] text-emerald-300 font-medium uppercase tracking-wide flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5" /> Resultado da simulação
             </p>
-            <Badge variant="outline" className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]">
+            <Badge
+              variant="outline"
+              className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]"
+            >
               Aguardando confirmação
             </Badge>
           </div>
@@ -1656,9 +1762,10 @@ function SimuladorCard({
             )}
           </div>
           <p className="text-[11px] text-muted-foreground border-t border-border/60 pt-2">
-            Nada foi salvo. {modoTeste
-              ? "Quando o número oficial estiver ativo, você confirmaria com um \"sim\" no WhatsApp."
-              : "Para salvar de verdade, envie a mensagem pelo WhatsApp e responda \"sim\"."}
+            Nada foi salvo.{" "}
+            {modoTeste
+              ? 'Quando o número oficial estiver ativo, você confirmaria com um "sim" no WhatsApp.'
+              : 'Para salvar de verdade, envie a mensagem pelo WhatsApp e responda "sim".'}
           </p>
         </div>
       )}

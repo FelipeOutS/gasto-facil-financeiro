@@ -74,7 +74,12 @@ describe("D.2A :: finalizeAttemptAccepted", () => {
   it("rejeita UUID inválido de attemptId", async () => {
     const rc = mkRpcClient([]);
     const r = await finalizeAttemptAccepted(
-      { attemptId: "not-uuid", attemptToken: UUID_B, providerMessageId: "wamid.x", httpStatus: 200 },
+      {
+        attemptId: "not-uuid",
+        attemptToken: UUID_B,
+        providerMessageId: "wamid.x",
+        httpStatus: 200,
+      },
       rc.client,
     );
     expect(r.ok).toBe(false);
@@ -115,7 +120,12 @@ describe("D.2A :: finalizeAttemptAccepted", () => {
   it("rejeita PMID acima do limite", async () => {
     const rc = mkRpcClient([]);
     const r = await finalizeAttemptAccepted(
-      { attemptId: UUID_A, attemptToken: UUID_B, providerMessageId: "a".repeat(257), httpStatus: 200 },
+      {
+        attemptId: UUID_A,
+        attemptToken: UUID_B,
+        providerMessageId: "a".repeat(257),
+        httpStatus: 200,
+      },
       rc.client,
     );
     expect(r.ok).toBe(false);
@@ -288,7 +298,14 @@ describe("D.2A :: finalizeAttemptRejected", () => {
     );
     expect(r1.ok).toBe(false);
     const r2 = await finalizeAttemptRejected(
-      { attemptId: "bad", attemptToken: UUID_B, httpStatus: 400, errorCode: "e", errorCategory: "c", retryable: false },
+      {
+        attemptId: "bad",
+        attemptToken: UUID_B,
+        httpStatus: 400,
+        errorCode: "e",
+        errorCategory: "c",
+        retryable: false,
+      },
       rc.client,
     );
     expect(r2.ok).toBe(false);
@@ -388,7 +405,12 @@ describe("D.2A :: reconcileAttemptFromCallback", () => {
   });
 
   it("mapeia unmatched, conflict_pmid, conflict_state, notification_missing", async () => {
-    for (const outcome of ["unmatched", "conflict_pmid", "conflict_state", "notification_missing"]) {
+    for (const outcome of [
+      "unmatched",
+      "conflict_pmid",
+      "conflict_state",
+      "notification_missing",
+    ]) {
       const rc = mkRpcClient([rpcRow(outcome)]);
       const r = await reconcileAttemptFromCallback(
         { providerMessageId: "wamid.x", eventStatus: "failed" },
@@ -431,10 +453,7 @@ describe("D.2A :: reconcileAttemptFromCallback", () => {
 describe("D.2A :: recoverNotificationWithAttempt", () => {
   it("delega à RPC com backoff default 00:05:00", async () => {
     const rc = mkRpcClient([rpcRow("recovered_without_attempt")]);
-    const r = await recoverNotificationWithAttempt(
-      { notificationId: UUID_A },
-      rc.client,
-    );
+    const r = await recoverNotificationWithAttempt({ notificationId: UUID_A }, rc.client);
     expect(r).toEqual({ ok: true, outcome: "recovered_without_attempt" });
     expect(rc.calls[0].fn).toBe("whatsapp_notification_recover_with_attempt_atomic");
     expect(rc.calls[0].args.p_notification_id).toBe(UUID_A);
@@ -539,8 +558,18 @@ describe("D.2A :: parser biz_opaque_callback_data", () => {
     const out = parseStatusesFromChangeValue({
       metadata: { phone_number_id: "9999" },
       statuses: [
-        { id: "wamid.a", status: "sent", timestamp: "1752316200", biz_opaque_callback_data: { bad: 1 } },
-        { id: "wamid.b", status: "delivered", timestamp: "1752316260", biz_opaque_callback_data: "ok" },
+        {
+          id: "wamid.a",
+          status: "sent",
+          timestamp: "1752316200",
+          biz_opaque_callback_data: { bad: 1 },
+        },
+        {
+          id: "wamid.b",
+          status: "delivered",
+          timestamp: "1752316260",
+          biz_opaque_callback_data: "ok",
+        },
       ],
     });
     expect(out.events.length).toBe(2);
@@ -553,9 +582,7 @@ describe("D.2A :: parser biz_opaque_callback_data", () => {
 // 7) persistAndApplyEvents — persistência de client_reference + reconciliação
 
 describe("D.2A :: persistAndApplyEvents wiring", () => {
-  function fakeClient(initial: {
-    notifs?: Array<Record<string, unknown>>;
-  }) {
+  function fakeClient(initial: { notifs?: Array<Record<string, unknown>> }) {
     const notifs = initial.notifs ?? [];
     const events: Array<Record<string, unknown>> = [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -565,8 +592,8 @@ describe("D.2A :: persistAndApplyEvents wiring", () => {
           table === "whatsapp_notifications"
             ? notifs
             : table === "whatsapp_notification_status_events"
-            ? events
-            : [];
+              ? events
+              : [];
         const filters: Array<(r: Record<string, unknown>) => boolean> = [];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const q: any = {
@@ -592,9 +619,7 @@ describe("D.2A :: persistAndApplyEvents wiring", () => {
             return q;
           },
           is(col: string, val: unknown) {
-            filters.push((r) =>
-              val === null ? r[col] == null : r[col] === val,
-            );
+            filters.push((r) => (val === null ? r[col] == null : r[col] === val));
             return q;
           },
           maybeSingle() {
@@ -632,11 +657,14 @@ describe("D.2A :: persistAndApplyEvents wiring", () => {
     return { client, events, notifs };
   }
 
-  const T = (h: number) =>
-    new Date(Date.UTC(2026, 6, 12, h, 0, 0)).toISOString();
+  const T = (h: number) => new Date(Date.UTC(2026, 6, 12, h, 0, 0)).toISOString();
 
   function makeReconciler(program: Array<{ ok: boolean; outcome: string | null }>) {
-    const calls: Array<{ providerMessageId: string; clientReference: string | null; eventStatus: string }> = [];
+    const calls: Array<{
+      providerMessageId: string;
+      clientReference: string | null;
+      eventStatus: string;
+    }> = [];
     let i = 0;
     const rec: AttemptReconciler = {
       async reconcile(input) {
@@ -654,7 +682,14 @@ describe("D.2A :: persistAndApplyEvents wiring", () => {
   it("persiste client_reference no INSERT do status event", async () => {
     const fc = fakeClient({ notifs: [] });
     const parsed = parseStatusesFromChangeValue({
-      statuses: [{ id: "wamid.a", status: "sent", timestamp: "1752316200", biz_opaque_callback_data: "ref-1" }],
+      statuses: [
+        {
+          id: "wamid.a",
+          status: "sent",
+          timestamp: "1752316200",
+          biz_opaque_callback_data: "ref-1",
+        },
+      ],
     });
     const { rec, calls } = makeReconciler([{ ok: true, outcome: "reconciled" }]);
     const s = await persistAndApplyEvents(parsed.events, fc.client, rec);
@@ -668,7 +703,14 @@ describe("D.2A :: persistAndApplyEvents wiring", () => {
   it("referência inválida persiste como null e reconcile é invocado com null", async () => {
     const fc = fakeClient({ notifs: [] });
     const parsed = parseStatusesFromChangeValue({
-      statuses: [{ id: "wamid.b", status: "sent", timestamp: "1752316200", biz_opaque_callback_data: { bad: 1 } }],
+      statuses: [
+        {
+          id: "wamid.b",
+          status: "sent",
+          timestamp: "1752316200",
+          biz_opaque_callback_data: { bad: 1 },
+        },
+      ],
     });
     const { rec, calls } = makeReconciler([{ ok: true, outcome: "unmatched" }]);
     const s = await persistAndApplyEvents(parsed.events, fc.client, rec);
@@ -712,7 +754,9 @@ describe("D.2A :: persistAndApplyEvents wiring", () => {
   it("callback failed é encaminhado ao reconciler com event_status='failed'", async () => {
     const fc = fakeClient({ notifs: [] });
     const parsed = parseStatusesFromChangeValue({
-      statuses: [{ id: "wamid.f", status: "failed", timestamp: "1752316200", errors: [{ code: 131047 }] }],
+      statuses: [
+        { id: "wamid.f", status: "failed", timestamp: "1752316200", errors: [{ code: 131047 }] },
+      ],
     });
     const { rec, calls } = makeReconciler([{ ok: true, outcome: "reconciled" }]);
     const s = await persistAndApplyEvents(parsed.events, fc.client, rec);
@@ -723,7 +767,14 @@ describe("D.2A :: persistAndApplyEvents wiring", () => {
   it("PMID diferente → conflict_pmid é contabilizado como conflict", async () => {
     const fc = fakeClient({ notifs: [] });
     const parsed = parseStatusesFromChangeValue({
-      statuses: [{ id: "wamid.g", status: "sent", timestamp: "1752316200", biz_opaque_callback_data: "ref-g" }],
+      statuses: [
+        {
+          id: "wamid.g",
+          status: "sent",
+          timestamp: "1752316200",
+          biz_opaque_callback_data: "ref-g",
+        },
+      ],
     });
     const { rec } = makeReconciler([{ ok: true, outcome: "conflict_pmid" }]);
     const s = await persistAndApplyEvents(parsed.events, fc.client, rec);
@@ -773,18 +824,32 @@ describe("D.2A HARDENING :: reconciler default sem `.rpc`", () => {
           table === "whatsapp_notifications"
             ? notifs
             : table === "whatsapp_notification_status_events"
-            ? events
-            : [];
+              ? events
+              : [];
         const filters: Array<(r: Record<string, unknown>) => boolean> = [];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const q: any = {
           _pendingInsert: null as Record<string, unknown> | null,
           _pendingUpdate: null as Record<string, unknown> | null,
-          select() { return q; },
-          insert(row: Record<string, unknown>) { q._pendingInsert = row; return q; },
-          update(patch: Record<string, unknown>) { q._pendingUpdate = patch; return q; },
-          eq(col: string, val: unknown) { filters.push((r) => r[col] === val); return q; },
-          in(col: string, vals: unknown[]) { filters.push((r) => vals.includes(r[col])); return q; },
+          select() {
+            return q;
+          },
+          insert(row: Record<string, unknown>) {
+            q._pendingInsert = row;
+            return q;
+          },
+          update(patch: Record<string, unknown>) {
+            q._pendingUpdate = patch;
+            return q;
+          },
+          eq(col: string, val: unknown) {
+            filters.push((r) => r[col] === val);
+            return q;
+          },
+          in(col: string, vals: unknown[]) {
+            filters.push((r) => vals.includes(r[col]));
+            return q;
+          },
           is(col: string, val: unknown) {
             filters.push((r) => (val === null ? r[col] == null : r[col] === val));
             return q;
@@ -851,7 +916,11 @@ describe("D.2A HARDENING :: reconciler default sem `.rpc`", () => {
     const parsed = parseStatusesFromChangeValue({
       statuses: [{ id: "wamid.h4", status: "sent", timestamp: "1752316200" }],
     });
-    const s = await persistAndApplyEvents(parsed.events, fc.client, createLegacyNoopAttemptReconciler());
+    const s = await persistAndApplyEvents(
+      parsed.events,
+      fc.client,
+      createLegacyNoopAttemptReconciler(),
+    );
     expect(s.requiresWebhookRetry).toBe(false);
     expect(s.callback_attempts_unmatched).toBe(1);
   });
@@ -880,14 +949,24 @@ describe("D.2A HARDENING :: recoverStuckProcessing sem `.rpc`", () => {
         let patch: Record<string, unknown> | null = null;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const q: any = {
-          select() { return q; },
-          update(p: Record<string, unknown>) { patch = p; return q; },
-          eq(col: string, v: unknown) { filters.push((r) => r[col] === v); return q; },
+          select() {
+            return q;
+          },
+          update(p: Record<string, unknown>) {
+            patch = p;
+            return q;
+          },
+          eq(col: string, v: unknown) {
+            filters.push((r) => r[col] === v);
+            return q;
+          },
           lte(col: string, v: unknown) {
             filters.push((r) => r[col] != null && String(r[col]) <= String(v));
             return q;
           },
-          order() { return q; },
+          order() {
+            return q;
+          },
           limit() {
             return Promise.resolve({
               data: table.filter((r) => filters.every((f) => f(r))),

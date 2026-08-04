@@ -44,9 +44,7 @@ function verifySignature(rawBody: string, signature: string | null): boolean {
   }
 }
 
-export const Route = createFileRoute(
-  "/api/public/hooks/whatsapp-contas-lembretes-generate",
-)({
+export const Route = createFileRoute("/api/public/hooks/whatsapp-contas-lembretes-generate")({
   server: {
     handlers: {
       POST: async ({ request }) => {
@@ -55,9 +53,7 @@ export const Route = createFileRoute(
           return new Response("invalid signature", { status: 401 });
         }
 
-        const { supabaseAdmin } = await import(
-          "@/integrations/supabase/client.server"
-        );
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
         // Usuários com canal WhatsApp ativo. Sem PII no log; só contagem.
         const { data: links } = await supabaseAdmin
@@ -67,9 +63,7 @@ export const Route = createFileRoute(
 
         const userIds = Array.from(
           new Set(
-            ((links as { user_id: string }[] | null) ?? [])
-              .map((l) => l.user_id)
-              .filter(Boolean),
+            ((links as { user_id: string }[] | null) ?? []).map((l) => l.user_id).filter(Boolean),
           ),
         );
 

@@ -21,23 +21,13 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
 
-const { detectEdicaoContaIntent, isEdicaoContaSession } = await import(
-  "../src/server/whatsapp-contas-editar.server"
-);
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
-const { handleDueIntent } = await import(
-  "../src/server/whatsapp-contas.server"
-);
-const { todayISOInAppTz } = await import(
-  "../src/server/contas-vencimento.server"
-);
+const { detectEdicaoContaIntent, isEdicaoContaSession } =
+  await import("../src/server/whatsapp-contas-editar.server");
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
+const { handleDueIntent } = await import("../src/server/whatsapp-contas.server");
+const { todayISOInAppTz } = await import("../src/server/contas-vencimento.server");
 
-function msg(
-  texto: string,
-  externalId = `ext-${Math.random().toString(36).slice(2, 10)}`,
-) {
+function msg(texto: string, externalId = `ext-${Math.random().toString(36).slice(2, 10)}`) {
   return {
     external_id: externalId,
     telefone: "5511999998888",
@@ -71,9 +61,13 @@ function makeConta(opts: Partial<Record<string, unknown>>): Record<string, unkno
 // ============================================================================
 describe("WA-C4 — detectEdicaoContaIntent", () => {
   it("reconhece alteração de vencimento", () => {
-    expect(detectEdicaoContaIntent("mudar o vencimento da internet para dia 10")?.operation).toBe("due_date");
+    expect(detectEdicaoContaIntent("mudar o vencimento da internet para dia 10")?.operation).toBe(
+      "due_date",
+    );
     expect(detectEdicaoContaIntent("adiar aluguel para 15/07")?.operation).toBe("due_date");
-    expect(detectEdicaoContaIntent("a conta de luz vence agora no dia 20")?.operation).toBe("due_date");
+    expect(detectEdicaoContaIntent("a conta de luz vence agora no dia 20")?.operation).toBe(
+      "due_date",
+    );
   });
   it("reconhece alteração de valor (formato BR)", () => {
     expect(detectEdicaoContaIntent("o valor da academia agora é 99,90")?.operation).toBe("amount");
@@ -81,7 +75,9 @@ describe("WA-C4 — detectEdicaoContaIntent", () => {
     expect(detectEdicaoContaIntent("internet agora custa 129,90")?.operation).toBe("amount");
   });
   it("reconhece alteração de categoria", () => {
-    expect(detectEdicaoContaIntent("alterar categoria da conta de luz para Moradia")?.operation).toBe("category");
+    expect(
+      detectEdicaoContaIntent("alterar categoria da conta de luz para Moradia")?.operation,
+    ).toBe("category");
     expect(detectEdicaoContaIntent("mudar categoria da internet")?.operation).toBe("category");
   });
   it("reconhece alteração de nome", () => {
@@ -274,9 +270,7 @@ describe("WA-C4 — múltiplas contas pedem escolha", () => {
   );
 
   it("oferece escolha numérica sem valor", async () => {
-    const out = await processarMensagemWhatsApp(
-      msg("adiar internet para dia 15"),
-    );
+    const out = await processarMensagemWhatsApp(msg("adiar internet para dia 15"));
     expect(out.resposta).toMatch(/Escolha qual/);
     expect(out.resposta).toMatch(/1\. Internet/);
     expect(out.resposta).toMatch(/2\. Internet/);
@@ -316,20 +310,33 @@ describe("WA-C4 — recorrência exige escopo", () => {
     resetState({
       contas: [
         makeConta({
-          id: "c-int-jul", nome: "Internet", data_vencimento: "2027-07-05",
-          recorrente: true, recorrencia_id: "rec-1",
+          id: "c-int-jul",
+          nome: "Internet",
+          data_vencimento: "2027-07-05",
+          recorrente: true,
+          recorrencia_id: "rec-1",
         }),
         makeConta({
-          id: "c-int-ago", nome: "Internet", data_vencimento: "2027-08-05",
-          recorrente: true, recorrencia_id: "rec-1",
+          id: "c-int-ago",
+          nome: "Internet",
+          data_vencimento: "2027-08-05",
+          recorrente: true,
+          recorrencia_id: "rec-1",
         }),
         makeConta({
-          id: "c-int-set", nome: "Internet", data_vencimento: "2027-09-05",
-          recorrente: true, recorrencia_id: "rec-1",
+          id: "c-int-set",
+          nome: "Internet",
+          data_vencimento: "2027-09-05",
+          recorrente: true,
+          recorrencia_id: "rec-1",
         }),
         makeConta({
-          id: "c-int-jun-paga", nome: "Internet", data_vencimento: "2027-06-05",
-          status: "pago", recorrente: true, recorrencia_id: "rec-1",
+          id: "c-int-jun-paga",
+          nome: "Internet",
+          data_vencimento: "2027-06-05",
+          status: "pago",
+          recorrente: true,
+          recorrencia_id: "rec-1",
         }),
       ],
     }),
@@ -422,9 +429,7 @@ describe("WA-C4 — integração com WA-C1", () => {
     const ym = TODAY.slice(0, 7);
     const day = TODAY.slice(-2);
     resetState({
-      contas: [
-        makeConta({ id: "c-int", nome: "Internet", valor: 100, data_vencimento: TODAY }),
-      ],
+      contas: [makeConta({ id: "c-int", nome: "Internet", valor: 100, data_vencimento: TODAY })],
     });
     await processarMensagemWhatsApp(msg(`mudar internet para 250 reais`));
     await processarMensagemWhatsApp(msg("sim", "ext-c"));
@@ -449,7 +454,11 @@ describe("WA-C4 — logs sem PII", () => {
     const orig = console.info;
     console.info = (...args: unknown[]) => {
       for (const a of args) {
-        if (a && typeof a === "object" && (a as Record<string, unknown>).event === "wa_payable_account_edit") {
+        if (
+          a &&
+          typeof a === "object" &&
+          (a as Record<string, unknown>).event === "wa_payable_account_edit"
+        ) {
           events.push(a as Record<string, unknown>);
         }
       }
@@ -468,7 +477,14 @@ describe("WA-C4 — logs sem PII", () => {
       expect(json).not.toContain("2026-07-05");
       // chaves permitidas apenas.
       const keys = Object.keys(e).sort();
-      expect(keys).toEqual(["affectedCountBucket", "candidatesCount", "event", "operation", "result", "stage"]);
+      expect(keys).toEqual([
+        "affectedCountBucket",
+        "candidatesCount",
+        "event",
+        "operation",
+        "result",
+        "stage",
+      ]);
     }
   });
 });
@@ -477,9 +493,7 @@ describe("WA-C4 — logs sem PII", () => {
 // Gasto comum não é afetado
 // ============================================================================
 describe("WA-C4 — gasto comum permanece com parser de gasto", () => {
-  beforeEach(() =>
-    resetState({ contas: [makeConta({ id: "c-int", nome: "Internet" })] }),
-  );
+  beforeEach(() => resetState({ contas: [makeConta({ id: "c-int", nome: "Internet" })] }));
   it("'gastei 50 no mercado' não cai em edição", async () => {
     const out = await processarMensagemWhatsApp(msg("gastei 50 no mercado"));
     expect(out.resposta).not.toContain("Confere pra mim");

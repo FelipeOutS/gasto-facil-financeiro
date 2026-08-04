@@ -40,7 +40,11 @@ function detectLanguage(text: string): string | null {
   if (!text) return null;
   const t = text.toLowerCase();
   if (/[áàâãéêíóôõúç]/.test(t)) return "pt";
-  if (/\b(gastei|recebi|reais|cartao|cartão|pix|debito|débito|credito|crédito|salario|salário|quanto|hoje|ontem)\b/.test(t)) {
+  if (
+    /\b(gastei|recebi|reais|cartao|cartão|pix|debito|débito|credito|crédito|salario|salário|quanto|hoje|ontem)\b/.test(
+      t,
+    )
+  ) {
     return "pt";
   }
   return null;
@@ -78,13 +82,14 @@ export async function transcribeWhatsAppAudio(
     });
     if (!resp.ok) {
       // Sem err.message do upstream: apenas status numérico.
-      // eslint-disable-next-line no-console
+
       console.error({ event: "wa_audio_transcription_failed", httpStatus: resp.status });
       return { ok: false, reason: "failed" };
     }
-    const data = (await resp.json().catch(() => null)) as
-      | { text?: string; language?: string }
-      | null;
+    const data = (await resp.json().catch(() => null)) as {
+      text?: string;
+      language?: string;
+    } | null;
     if (!data || typeof data.text !== "string") return { ok: false, reason: "failed" };
     const text = data.text.trim();
     if (text.length === 0) return { ok: false, reason: "empty" };
@@ -98,7 +103,7 @@ export async function transcribeWhatsAppAudio(
     return { ok: true, text, language: detectedLanguage };
   } catch (err) {
     // err.message poderia conter URL/headers — registra apenas o nome.
-    // eslint-disable-next-line no-console
+
     console.error({
       event: "wa_audio_transcription_failed",
       errorName: err instanceof Error ? err.name : "unknown",

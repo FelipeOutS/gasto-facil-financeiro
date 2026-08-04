@@ -67,9 +67,7 @@ function EditarContaPage() {
           </div>
         ) : !conta ? (
           <div className="py-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              Conta a pagar não encontrada.
-            </p>
+            <p className="text-sm text-muted-foreground">Conta a pagar não encontrada.</p>
             <Button className="mt-4" onClick={() => navigate({ to: "/contas-a-pagar" })}>
               {t("header.back")}
             </Button>

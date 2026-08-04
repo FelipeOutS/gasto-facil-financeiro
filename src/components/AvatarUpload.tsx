@@ -60,7 +60,14 @@ export function AvatarUpload() {
 
   async function handleRemove() {
     if (!user || !profile?.avatar_url) return;
-    if (!(await confirmAsync({ title: "Remover sua foto de perfil?", destructive: true, confirmText: "Remover" }))) return;
+    if (
+      !(await confirmAsync({
+        title: "Remover sua foto de perfil?",
+        destructive: true,
+        confirmText: "Remover",
+      }))
+    )
+      return;
     setBusy(true);
     try {
       const m = profile.avatar_url.match(/\/avatars\/(.+?)(\?|$)/);
@@ -127,9 +134,7 @@ export function AvatarUpload() {
             Remover foto
           </Button>
         )}
-        <p className="text-[11px] text-muted-foreground">
-          JPG, PNG ou WEBP até 3 MB.
-        </p>
+        <p className="text-[11px] text-muted-foreground">JPG, PNG ou WEBP até 3 MB.</p>
       </div>
     </div>
   );

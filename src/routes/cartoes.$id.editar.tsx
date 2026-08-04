@@ -10,9 +10,7 @@ import i18n from "@/i18n";
 
 export const Route = createFileRoute("/cartoes/$id/editar")({
   head: () => ({
-    meta: [
-      { title: i18n.t("cartoes:form.editTitle") + " — Gasto Inteligente" },
-    ],
+    meta: [{ title: i18n.t("cartoes:form.editTitle") + " — Gasto Inteligente" }],
   }),
   component: EditarCartaoPage,
 });

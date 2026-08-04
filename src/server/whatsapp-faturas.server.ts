@@ -35,8 +35,6 @@ import {
   type CompraParcelada,
 } from "./cartao-fatura.server";
 
-
-
 export type FaturaIntent =
   | { kind: "invoice_total" }
   | { kind: "invoice_card"; termo: string }
@@ -66,7 +64,6 @@ export type FaturaResult =
   | { status: "ambiguous_card"; resposta: string }
   | { status: "no_invoice_data"; resposta: string }
   | { status: "no_more_items"; resposta: string };
-
 
 function norm(s: string): string {
   return (s ?? "")
@@ -116,7 +113,9 @@ export function detectFaturaIntent(texto: string): FaturaIntent | null {
   if (
     /\b(?:ultim(?:a|as)|recentes?)\s+(?:compras?|gastos?|lan[cç]amentos?)\b/.test(t) ||
     /\b(?:compras?|gastos?|lan[cç]amentos?)\s+recentes?\b/.test(t) ||
-    /\bo\s+que\s+(?:eu\s+)?comprei\s+(?:recentemente|hoje)\b.*\b(?:cart(?:ao|oes)|credito|fatura)\b/.test(t)
+    /\bo\s+que\s+(?:eu\s+)?comprei\s+(?:recentemente|hoje)\b.*\b(?:cart(?:ao|oes)|credito|fatura)\b/.test(
+      t,
+    )
   ) {
     return { kind: "invoice_recent", termo: extractCartaoTermo(t) };
   }
@@ -127,8 +126,12 @@ export function detectFaturaIntent(texto: string): FaturaIntent | null {
   if (
     /\bo\s+que\s+tem\s+na\b.*\bfatura\b/.test(t) ||
     /\b(?:quais|que)\s+(?:compras?|gastos?|lan[cç]amentos?)\b/.test(t) ||
-    /\b(?:compras?|gastos?|lan[cç]amentos?)\s+(?:da|do|na|no)\s+(?:fatura|cart(?:ao|oes)|credito)\b/.test(t) ||
-    /\b(?:me\s+)?mostr(?:a|e|ar)\s+(?:as\s+)?(?:compras?|gastos?|lan[cç]amentos?|fatura)\b/.test(t) ||
+    /\b(?:compras?|gastos?|lan[cç]amentos?)\s+(?:da|do|na|no)\s+(?:fatura|cart(?:ao|oes)|credito)\b/.test(
+      t,
+    ) ||
+    /\b(?:me\s+)?mostr(?:a|e|ar)\s+(?:as\s+)?(?:compras?|gastos?|lan[cç]amentos?|fatura)\b/.test(
+      t,
+    ) ||
     /\bver\s+(?:as\s+)?(?:compras?|gastos?|lan[cç]amentos?|fatura)\b/.test(t) ||
     /\bdetalh(?:ar|es?)\s+(?:a\s+)?fatura\b/.test(t)
   ) {
@@ -142,7 +145,6 @@ export function detectFaturaIntent(texto: string): FaturaIntent | null {
     const termo = extractCartaoTermo(t);
     if (termo) return { kind: "invoice_items", termo };
   }
-
 
   // ---- WA-F1 (mantido) ----
 
@@ -187,7 +189,6 @@ export function detectFaturaIntent(texto: string): FaturaIntent | null {
 
   return null;
 }
-
 
 /**
  * Extrai um possível nome de cartão a partir da pergunta. Captura padrões
@@ -241,12 +242,7 @@ function logFaturaDetailQuery(args: {
   intent: "invoice_items" | "invoice_recent" | "invoice_largest" | "invoice_page";
   cardsMatchedCount: number;
   itemsReturnedCount: number;
-  result:
-    | "answered"
-    | "ambiguous_card"
-    | "card_not_found"
-    | "no_invoice_data"
-    | "no_more_items";
+  result: "answered" | "ambiguous_card" | "card_not_found" | "no_invoice_data" | "no_more_items";
 }) {
   console.info({
     event: "wa_invoice_detail_query",
@@ -256,7 +252,6 @@ function logFaturaDetailQuery(args: {
     result: args.result,
   });
 }
-
 
 function ambiguousCardMessage(cartoes: CartaoRow[]): string {
   const linhas = cartoes
@@ -303,7 +298,6 @@ export async function handleFaturaIntent(
     return handleFaturaDetailIntent(userId, intent);
   }
 
-
   if (intent.kind === "invoice_total") {
     const cartoes = await loadCartoesDoUsuario(userId);
     if (cartoes.length === 0) {
@@ -319,7 +313,11 @@ export async function handleFaturaIntent(
         status: "answered",
         resposta: `Sua fatura atual está em ${formatBRL(0)}.`,
       };
-      logFaturaQuery({ intent: intent.kind, cardsMatchedCount: cartoes.length, result: out.status });
+      logFaturaQuery({
+        intent: intent.kind,
+        cardsMatchedCount: cartoes.length,
+        result: out.status,
+      });
       return out;
     }
     const total = ativos.reduce((s, f) => s + f.total, 0);
@@ -353,7 +351,11 @@ export async function handleFaturaIntent(
         status: "ambiguous_card",
         resposta: ambiguousCardMessage(matches),
       };
-      logFaturaQuery({ intent: intent.kind, cardsMatchedCount: matches.length, result: out.status });
+      logFaturaQuery({
+        intent: intent.kind,
+        cardsMatchedCount: matches.length,
+        result: out.status,
+      });
       return out;
     }
     const f = await getFaturaAtualPorCartao(userId, matches[0], hoje);
@@ -383,7 +385,11 @@ export async function handleFaturaIntent(
         status: "ambiguous_card",
         resposta: ambiguousCardMessage(cartoes),
       };
-      logFaturaQuery({ intent: intent.kind, cardsMatchedCount: cartoes.length, result: out.status });
+      logFaturaQuery({
+        intent: intent.kind,
+        cardsMatchedCount: cartoes.length,
+        result: out.status,
+      });
       return out;
     }
     const f = await getFaturaAtualPorCartao(userId, cartoes[0], hoje);
@@ -419,10 +425,6 @@ export async function handleFaturaIntent(
   logFaturaQuery({ intent: intent.kind, cardsMatchedCount: resumos.length, result: out.status });
   return out;
 }
-
-
-
-
 
 // =====================================================================
 // WA-F2 — Detalhamento de fatura: itens, recentes, maiores, paginação.
@@ -476,8 +478,7 @@ export type PaginationCommand = "next" | "prev" | "cancel";
 export function detectPaginationCommand(texto: string): PaginationCommand | null {
   const t = norm(texto);
   if (!t) return null;
-  if (/^(ver\s+mais|mais|proxim[ao]s?(?:\s+compras?)?|continuar|seguinte)$/.test(t))
-    return "next";
+  if (/^(ver\s+mais|mais|proxim[ao]s?(?:\s+compras?)?|continuar|seguinte)$/.test(t)) return "next";
   if (/^(voltar|anterior|pagina\s+anterior)$/.test(t)) return "prev";
   if (/^(cancelar|cancela|sair|encerrar|parar)$/.test(t)) return "cancel";
   return null;
@@ -578,14 +579,18 @@ export async function handleFaturaDetailIntent(
         `Não encontrei nenhum cartão com o nome "${intent.termo}".\n\n` +
         `Confira o nome cadastrado no Gasto Inteligente.`;
       logFaturaDetailQuery({
-        intent: intent.kind, cardsMatchedCount: 0, itemsReturnedCount: 0,
+        intent: intent.kind,
+        cardsMatchedCount: 0,
+        itemsReturnedCount: 0,
         result: "card_not_found",
       });
       return { status: "card_not_found", resposta };
     }
     if (matches.length > 1) {
       logFaturaDetailQuery({
-        intent: intent.kind, cardsMatchedCount: matches.length, itemsReturnedCount: 0,
+        intent: intent.kind,
+        cardsMatchedCount: matches.length,
+        itemsReturnedCount: 0,
         result: "ambiguous_card",
       });
       return { status: "ambiguous_card", resposta: ambiguousDetailMessage(matches) };
@@ -596,14 +601,18 @@ export async function handleFaturaDetailIntent(
     const ativos = resumos.filter((r) => r.itens.length > 0);
     if (resumos.length === 0) {
       logFaturaDetailQuery({
-        intent: intent.kind, cardsMatchedCount: 0, itemsReturnedCount: 0,
+        intent: intent.kind,
+        cardsMatchedCount: 0,
+        itemsReturnedCount: 0,
         result: "no_invoice_data",
       });
       return { status: "no_invoice_data", resposta: noDataMessage() };
     }
     if (ativos.length === 0) {
       logFaturaDetailQuery({
-        intent: intent.kind, cardsMatchedCount: resumos.length, itemsReturnedCount: 0,
+        intent: intent.kind,
+        cardsMatchedCount: resumos.length,
+        itemsReturnedCount: 0,
         result: "no_invoice_data",
       });
       return {
@@ -615,7 +624,9 @@ export async function handleFaturaDetailIntent(
     }
     if (ativos.length > 1) {
       logFaturaDetailQuery({
-        intent: intent.kind, cardsMatchedCount: ativos.length, itemsReturnedCount: 0,
+        intent: intent.kind,
+        cardsMatchedCount: ativos.length,
+        itemsReturnedCount: 0,
         result: "ambiguous_card",
       });
       return {
@@ -634,11 +645,7 @@ async function renderPage(
   cartao: CartaoRow,
   mode: FaturaDetailMode,
   page: number,
-  intentKind:
-    | "invoice_items"
-    | "invoice_recent"
-    | "invoice_largest"
-    | "invoice_page",
+  intentKind: "invoice_items" | "invoice_recent" | "invoice_largest" | "invoice_page",
   hoje: Date,
 ): Promise<FaturaResult> {
   const fatura = await getFaturaAtualPorCartao(userId, cartao, hoje);
@@ -647,7 +654,9 @@ async function renderPage(
 
   if (page > 0 && page * PAGE_SIZE >= ordenados.length) {
     logFaturaDetailQuery({
-      intent: intentKind, cardsMatchedCount: 1, itemsReturnedCount: 0,
+      intent: intentKind,
+      cardsMatchedCount: 1,
+      itemsReturnedCount: 0,
       result: "no_more_items",
     });
     return {
@@ -659,7 +668,9 @@ async function renderPage(
   }
   if (ordenados.length === 0) {
     logFaturaDetailQuery({
-      intent: intentKind, cardsMatchedCount: 1, itemsReturnedCount: 0,
+      intent: intentKind,
+      cardsMatchedCount: 1,
+      itemsReturnedCount: 0,
       result: "no_invoice_data",
     });
     return {
@@ -671,11 +682,17 @@ async function renderPage(
   }
 
   const { resposta, itemsReturnedCount, hasMore } = formatItemsResponse(
-    cartao.nome, ordenados, page, mode, fatura.total,
+    cartao.nome,
+    ordenados,
+    page,
+    mode,
+    fatura.total,
   );
 
   logFaturaDetailQuery({
-    intent: intentKind, cardsMatchedCount: 1, itemsReturnedCount,
+    intent: intentKind,
+    cardsMatchedCount: 1,
+    itemsReturnedCount,
     result: "answered",
   });
 
@@ -706,17 +723,21 @@ export async function handleFaturaPagination(
   const cartao = cartoes.find((c) => c.id === state.cartaoId) ?? null;
   if (!cartao) {
     logFaturaDetailQuery({
-      intent: "invoice_page", cardsMatchedCount: 0, itemsReturnedCount: 0,
+      intent: "invoice_page",
+      cardsMatchedCount: 0,
+      itemsReturnedCount: 0,
       result: "card_not_found",
     });
     return {
       status: "card_not_found",
-      resposta: "Não encontrei mais esse cartão.\n\nDigite \"fatura\" para começar de novo.",
+      resposta: 'Não encontrei mais esse cartão.\n\nDigite "fatura" para começar de novo.',
     };
   }
   if (direction === "prev" && state.page <= 0) {
     logFaturaDetailQuery({
-      intent: "invoice_page", cardsMatchedCount: 1, itemsReturnedCount: 0,
+      intent: "invoice_page",
+      cardsMatchedCount: 1,
+      itemsReturnedCount: 0,
       result: "no_more_items",
     });
     return {
@@ -728,7 +749,6 @@ export async function handleFaturaPagination(
   return renderPage(userId, cartao, state.mode, nextPage, "invoice_page", hoje);
 }
 
-
 // =====================================================================
 // WA-F4 — Próximas faturas, parcelas futuras e saldo de compras parceladas.
 // Apenas leitura. Reutiliza estritamente os helpers de
@@ -737,13 +757,34 @@ export async function handleFaturaPagination(
 // =====================================================================
 
 const MESES_PT: Record<string, number> = {
-  janeiro: 1, fevereiro: 2, marco: 3, abril: 4, maio: 5, junho: 6,
-  julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
+  janeiro: 1,
+  fevereiro: 2,
+  marco: 3,
+  abril: 4,
+  maio: 5,
+  junho: 6,
+  julho: 7,
+  agosto: 8,
+  setembro: 9,
+  outubro: 10,
+  novembro: 11,
+  dezembro: 12,
 };
 
 const NOME_MES_PT = [
-  "", "janeiro", "fevereiro", "março", "abril", "maio", "junho",
-  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+  "",
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
 ];
 
 function monthLabel(mes: number): string {
@@ -831,9 +872,7 @@ export function resolveTargetInvoiceMonth(
   hoje: Date = nowInAppTz(),
 ): { ym: string; mes: number; ano: number } | null {
   const t = normF4(texto);
-  const re = new RegExp(
-    `\\b(${Object.keys(MESES_PT).join("|")})\\b(?:\\s+(?:de\\s+)?(\\d{4}))?`,
-  );
+  const re = new RegExp(`\\b(${Object.keys(MESES_PT).join("|")})\\b(?:\\s+(?:de\\s+)?(\\d{4}))?`);
   const m = t.match(re);
   if (!m) return null;
   const mes = MESES_PT[m[1]];
@@ -927,9 +966,10 @@ export function detectFutureFaturaIntent(
     ym = target.ym;
   } else {
     // Próximo mês civil quando não há mês explícito.
-    const nextMonth = hoje.getMonth() + 2 > 12
-      ? { m: 1, y: hoje.getFullYear() + 1 }
-      : { m: hoje.getMonth() + 2, y: hoje.getFullYear() };
+    const nextMonth =
+      hoje.getMonth() + 2 > 12
+        ? { m: 1, y: hoje.getFullYear() + 1 }
+        : { m: hoje.getMonth() + 2, y: hoje.getFullYear() };
     ym = `${nextMonth.y}-${String(nextMonth.m).padStart(2, "0")}`;
   }
   const termo = extractCartaoTermoF4(t);
@@ -938,14 +978,9 @@ export function detectFutureFaturaIntent(
 }
 
 /** Detecta se mensagem solicita mês explícito mas > 12 meses à frente. */
-export function isBeyondHorizon(
-  texto: string,
-  hoje: Date = nowInAppTz(),
-): boolean {
+export function isBeyondHorizon(texto: string, hoje: Date = nowInAppTz()): boolean {
   const t = normF4(texto);
-  const re = new RegExp(
-    `\\b(${Object.keys(MESES_PT).join("|")})\\b(?:\\s+(?:de\\s+)?(\\d{4}))?`,
-  );
+  const re = new RegExp(`\\b(${Object.keys(MESES_PT).join("|")})\\b(?:\\s+(?:de\\s+)?(\\d{4}))?`);
   const m = t.match(re);
   if (!m) return false;
   const mes = MESES_PT[m[1]];
@@ -997,7 +1032,9 @@ export async function handleFutureFaturaIntent(
     if (ativos.length === 0) {
       const out: FutureFaturaResult = { status: "no_future_data", resposta: noFutureDataMsg() };
       logFutureQuery({
-        intent: intent.kind, cardsMatchedCount: resumos.length, groupsMatchedCount: 0,
+        intent: intent.kind,
+        cardsMatchedCount: resumos.length,
+        groupsMatchedCount: 0,
         result: out.status,
       });
       return out;
@@ -1014,7 +1051,9 @@ export async function handleFutureFaturaIntent(
       `\n\nEsse valor pode mudar conforme novas compras forem registradas.`;
     const out: FutureFaturaResult = { status: "answered", resposta: corpo };
     logFutureQuery({
-      intent: intent.kind, cardsMatchedCount: ativos.length, groupsMatchedCount: 0,
+      intent: intent.kind,
+      cardsMatchedCount: ativos.length,
+      groupsMatchedCount: 0,
       result: out.status,
     });
     return out;
@@ -1030,16 +1069,22 @@ export async function handleFutureFaturaIntent(
           `Confira o nome cadastrado no Gasto Inteligente.`,
       };
       logFutureQuery({
-        intent: intent.kind, cardsMatchedCount: 0, groupsMatchedCount: 0, result: out.status,
+        intent: intent.kind,
+        cardsMatchedCount: 0,
+        groupsMatchedCount: 0,
+        result: out.status,
       });
       return out;
     }
     if (matches.length > 1) {
       const out: FutureFaturaResult = {
-        status: "ambiguous_card", resposta: ambiguousCardMsg_F4(matches),
+        status: "ambiguous_card",
+        resposta: ambiguousCardMsg_F4(matches),
       };
       logFutureQuery({
-        intent: intent.kind, cardsMatchedCount: matches.length, groupsMatchedCount: 0,
+        intent: intent.kind,
+        cardsMatchedCount: matches.length,
+        groupsMatchedCount: 0,
         result: out.status,
       });
       return out;
@@ -1048,14 +1093,19 @@ export async function handleFutureFaturaIntent(
     if (!f || f.total <= 0) {
       const out: FutureFaturaResult = { status: "no_future_data", resposta: noFutureDataMsg() };
       logFutureQuery({
-        intent: intent.kind, cardsMatchedCount: 1, groupsMatchedCount: 0, result: out.status,
+        intent: intent.kind,
+        cardsMatchedCount: 1,
+        groupsMatchedCount: 0,
+        result: out.status,
       });
       return out;
     }
     const parsed = parseInvoiceMonth(intent.invoiceMonth)!;
     const monthName = monthLabel(parsed.mes);
     const linhas: string[] = [];
-    linhas.push(`A fatura estimada do ${f.cartaoNome} para ${monthName} está em ${formatBRL_F4(f.total)}.`);
+    linhas.push(
+      `A fatura estimada do ${f.cartaoNome} para ${monthName} está em ${formatBRL_F4(f.total)}.`,
+    );
     const venc = formatDDMM_F4(f.vencimento);
     const fech = formatDDMM_F4(f.fechamento);
     if (venc || fech) linhas.push("");
@@ -1063,7 +1113,10 @@ export async function handleFutureFaturaIntent(
     if (fech) linhas.push(`Fechamento: ${fech}`);
     const out: FutureFaturaResult = { status: "answered", resposta: linhas.join("\n") };
     logFutureQuery({
-      intent: intent.kind, cardsMatchedCount: 1, groupsMatchedCount: 0, result: out.status,
+      intent: intent.kind,
+      cardsMatchedCount: 1,
+      groupsMatchedCount: 0,
+      result: out.status,
     });
     return out;
   }
@@ -1078,7 +1131,10 @@ export async function handleFutureFaturaIntent(
           "Quando registrar uma compra parcelada, eu acompanho aqui.",
       };
       logFutureQuery({
-        intent: intent.kind, cardsMatchedCount: 0, groupsMatchedCount: 0, result: out.status,
+        intent: intent.kind,
+        cardsMatchedCount: 0,
+        groupsMatchedCount: 0,
+        result: out.status,
       });
       return out;
     }
@@ -1095,16 +1151,21 @@ export async function handleFutureFaturaIntent(
         `Digite "minhas compras parceladas" para ver a lista.`,
     };
     logFutureQuery({
-      intent: intent.kind, cardsMatchedCount: 0, groupsMatchedCount: 0, result: out.status,
+      intent: intent.kind,
+      cardsMatchedCount: 0,
+      groupsMatchedCount: 0,
+      result: out.status,
     });
     return out;
   }
   if (matches.length > 1) {
-    const linhas = matches.slice(0, 5).map((c, i) => `${i + 1}. ${c.descricao}`).join("\n");
+    const linhas = matches
+      .slice(0, 5)
+      .map((c, i) => `${i + 1}. ${c.descricao}`)
+      .join("\n");
     const out: FutureFaturaResult = {
       status: "ambiguous_installment",
-      resposta:
-        "Encontrei mais de uma compra parcelada com esse nome. Qual delas?\n\n" + linhas,
+      resposta: "Encontrei mais de uma compra parcelada com esse nome. Qual delas?\n\n" + linhas,
       nextSession: {
         kind: "consulta_parcelamento",
         mode: "detalhe",
@@ -1115,7 +1176,9 @@ export async function handleFutureFaturaIntent(
       },
     };
     logFutureQuery({
-      intent: intent.kind, cardsMatchedCount: 0, groupsMatchedCount: matches.length,
+      intent: intent.kind,
+      cardsMatchedCount: 0,
+      groupsMatchedCount: matches.length,
       result: out.status,
     });
     return out;
@@ -1131,7 +1194,9 @@ function renderInstallmentPage(
   const start = page * PARCELADOS_PAGE_SIZE;
   if (start >= compras.length) {
     logFutureQuery({
-      intent: intentKind, cardsMatchedCount: 0, groupsMatchedCount: 0,
+      intent: intentKind,
+      cardsMatchedCount: 0,
+      groupsMatchedCount: 0,
       result: "no_more_items",
     });
     return {
@@ -1152,7 +1217,9 @@ function renderInstallmentPage(
   const partes = [titulo, "", ...linhas, "", "Digite o nome da compra para ver mais detalhes."];
   if (hasMore) partes.push('Digite "ver mais" para continuar.');
   logFutureQuery({
-    intent: intentKind, cardsMatchedCount: 0, groupsMatchedCount: slice.length,
+    intent: intentKind,
+    cardsMatchedCount: 0,
+    groupsMatchedCount: slice.length,
     result: "answered",
   });
   const next: ParceladoSessionState = {
@@ -1193,7 +1260,9 @@ async function renderInstallmentDetail(
   }
   linhas.push(`• Cartão: ${nomeCartao}`);
   logFutureQuery({
-    intent: "installment_detail", cardsMatchedCount: 1, groupsMatchedCount: 1,
+    intent: "installment_detail",
+    cardsMatchedCount: 1,
+    groupsMatchedCount: 1,
     result: "answered",
   });
   return { status: "answered", resposta: linhas.join("\n") };
@@ -1212,7 +1281,11 @@ export async function handleParceladoPagination(
   const t = normF4(texto);
 
   // Modo "detalhe" + lista ambígua → aceita "1".."5".
-  if (state.mode === "detalhe" && state.installmentGroupIds && state.installmentGroupIds.length > 0) {
+  if (
+    state.mode === "detalhe" &&
+    state.installmentGroupIds &&
+    state.installmentGroupIds.length > 0
+  ) {
     const m = t.match(/^([1-9])$/);
     if (m) {
       const idx = Number(m[1]) - 1;
@@ -1220,7 +1293,7 @@ export async function handleParceladoPagination(
       if (!grupoId) {
         return {
           status: "no_more_items",
-          resposta: "Opção inválida. Digite o número correspondente ou \"cancelar\".",
+          resposta: 'Opção inválida. Digite o número correspondente ou "cancelar".',
         };
       }
       const detalhe = await getDetalheCompraParcelada(userId, grupoId, hoje);

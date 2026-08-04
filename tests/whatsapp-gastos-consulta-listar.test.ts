@@ -53,7 +53,13 @@ test("detectConsultaIntent classifica todas as variações como listar_gastos_me
 test("extractCartaoTermo (via detectFaturaIntent) NÃO captura 'mes' como nome de cartão", () => {
   // Mesmo que a consulta chegasse no detectFaturaIntent, o termo "mes"
   // deve ser rejeitado pelo STOP list — nunca virar busca por cartão.
-  for (const frase of ["gastos do mes", "compras do mes", "lancamentos do mes", "gastos da semana", "gastos do dia"]) {
+  for (const frase of [
+    "gastos do mes",
+    "compras do mes",
+    "lancamentos do mes",
+    "gastos da semana",
+    "gastos do dia",
+  ]) {
     const r = detectFaturaIntent(frase);
     if (r && "termo" in r) {
       expect([frase, r.termo]).toEqual([frase, null]);
@@ -64,8 +70,22 @@ test("extractCartaoTermo (via detectFaturaIntent) NÃO captura 'mes' como nome d
 test("'meus gastos do mês' lista gastos e NÃO abre sessão de criação nem busca cartão", async () => {
   resetState({
     gastos: [
-      { id: "g1", user_id: "u1", descricao: "Uber", valor: 29.9, data: todayISO(), categoria_id: null },
-      { id: "g2", user_id: "u1", descricao: "Mercado", valor: 148, data: monthStart(), categoria_id: null },
+      {
+        id: "g1",
+        user_id: "u1",
+        descricao: "Uber",
+        valor: 29.9,
+        data: todayISO(),
+        categoria_id: null,
+      },
+      {
+        id: "g2",
+        user_id: "u1",
+        descricao: "Mercado",
+        valor: 148,
+        data: monthStart(),
+        categoria_id: null,
+      },
     ],
   });
   const r = await processarMensagemWhatsApp({

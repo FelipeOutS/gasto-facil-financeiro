@@ -15,15 +15,9 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
 
-const { detectMarkAsPaidIntent } = await import(
-  "../src/server/whatsapp-contas-pagar.server"
-);
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
-const { findVencimentoByTerm } = await import(
-  "../src/server/contas-vencimento.server"
-);
+const { detectMarkAsPaidIntent } = await import("../src/server/whatsapp-contas-pagar.server");
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
+const { findVencimentoByTerm } = await import("../src/server/contas-vencimento.server");
 
 function msg(texto: string, externalId = `ext-${Math.random().toString(36).slice(2, 10)}`) {
   return {
@@ -182,9 +176,7 @@ describe("WA-C3.2 — segurança preservada", () => {
     resetState({
       contas: [makeConta({ id: "c-luz", nome: "Conta de Luz" })],
     });
-    const out = await processarMensagemWhatsApp(
-      msg("paguei 89,90 na conta de luz ontem"),
-    );
+    const out = await processarMensagemWhatsApp(msg("paguei 89,90 na conta de luz ontem"));
     expect(out.resposta).not.toContain("Encontrei esta conta pendente");
     expect(state.contasData[0].status).toBe("pendente");
   });

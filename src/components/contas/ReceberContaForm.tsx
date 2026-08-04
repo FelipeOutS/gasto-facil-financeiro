@@ -14,11 +14,7 @@ import {
 import { toast } from "sonner";
 import { toastFromError } from "@/lib/premium-error";
 import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
-import {
-  type ContaReceber,
-  FORMAS_RECEBIMENTO,
-  marcarRecebida,
-} from "@/lib/contas-receber";
+import { type ContaReceber, FORMAS_RECEBIMENTO, marcarRecebida } from "@/lib/contas-receber";
 import { cn } from "@/lib/utils";
 
 export type ReceberContaFormProps = {
@@ -113,16 +109,14 @@ export function ReceberContaForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label htmlFor="rc-data">{t("receive.date")}</Label>
-          <Input
-            id="rc-data"
-            type="date"
-            value={data}
-            onChange={(e) => setData(e.target.value)}
-          />
+          <Input id="rc-data" type="date" value={data} onChange={(e) => setData(e.target.value)} />
         </div>
         <div className="space-y-1.5">
           <Label>{t("receive.forma")}</Label>
-          <Select value={forma || "__none"} onValueChange={(v) => setForma(v === "__none" ? "" : v)}>
+          <Select
+            value={forma || "__none"}
+            onValueChange={(v) => setForma(v === "__none" ? "" : v)}
+          >
             <SelectTrigger>
               <SelectValue placeholder={t("receive.none")} />
             </SelectTrigger>
@@ -141,7 +135,7 @@ export function ReceberContaForm({
       <div
         className={cn(
           "flex gap-2 pt-2",
-          fullWidthActions ? "flex-col-reverse sm:flex-row sm:justify-end" : "justify-end"
+          fullWidthActions ? "flex-col-reverse sm:flex-row sm:justify-end" : "justify-end",
         )}
       >
         {onCancel && (

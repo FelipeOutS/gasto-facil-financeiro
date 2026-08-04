@@ -7,8 +7,7 @@ const variantClasses: Record<Variant, string> = {
   default: "bg-card border-border shadow-card",
   elevated: "bg-card-elevated border-border/70 shadow-elevated",
   subtle: "bg-card/60 border-border/50",
-  highlight:
-    "bg-gradient-to-br from-primary/10 via-card to-card border-primary/30 shadow-card",
+  highlight: "bg-gradient-to-br from-primary/10 via-card to-card border-primary/30 shadow-card",
 };
 
 export interface PremiumCardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
@@ -40,8 +39,7 @@ export const PremiumCard = React.forwardRef<HTMLDivElement, PremiumCardProps>(
     ref,
   ) => {
     const hasHeader = Boolean(title || description || icon || action);
-    const pad =
-      padding === "none" ? "" : padding === "compact" ? "p-4" : "p-5";
+    const pad = padding === "none" ? "" : padding === "compact" ? "p-4" : "p-5";
     return (
       <div
         ref={ref}
@@ -62,19 +60,13 @@ export const PremiumCard = React.forwardRef<HTMLDivElement, PremiumCardProps>(
               </span>
             )}
             <div className="min-w-0 flex-1">
-              {title && (
-                <h3 className="text-sm font-semibold leading-tight">{title}</h3>
-              )}
-              {description && (
-                <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
-              )}
+              {title && <h3 className="text-sm font-semibold leading-tight">{title}</h3>}
+              {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
             </div>
             {action && <div className="shrink-0">{action}</div>}
           </div>
         )}
-        {children && (
-          <div className={cn(hasHeader && "mt-4")}>{children}</div>
-        )}
+        {children && <div className={cn(hasHeader && "mt-4")}>{children}</div>}
       </div>
     );
   },

@@ -55,7 +55,6 @@ function AppMaisPage() {
   const [loginBioEnabled, setLoginBioEnabled] = useState(false);
   const [togglingLoginBio, setTogglingLoginBio] = useState(false);
 
-
   useEffect(() => {
     setLoginBioAvailable(isLoginBioBridgeAvailable());
     setLoginBioEnabled(isLoginBioEnabled());

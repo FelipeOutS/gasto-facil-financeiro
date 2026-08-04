@@ -10,7 +10,10 @@
  *   da UX de cada fluxo.
  */
 
-import { submitPurchaseToCommunityPrices, type SubmitPurchaseResult } from "@/lib/mercado/community-prices-from-purchase.functions";
+import {
+  submitPurchaseToCommunityPrices,
+  type SubmitPurchaseResult,
+} from "@/lib/mercado/community-prices-from-purchase.functions";
 import type { ListaItem, MercadoCompraHistorico } from "@/lib/mercado/listas-store";
 
 export type CommunitySubmitInput = {
@@ -79,7 +82,6 @@ export async function submitFinalizedPurchase(
     return await submitPurchaseToCommunityPrices({ data: payload });
   } catch (err) {
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
       console.warn("[mercado] community submit failed", err);
     }
     return null;

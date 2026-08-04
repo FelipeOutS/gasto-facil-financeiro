@@ -148,9 +148,7 @@ export function ExtratosImportadosDialog({
   const confirmRevertExtrato = confirmRevertId
     ? extratos.find((e) => e.id === confirmRevertId)
     : null;
-  const confirmRevertEditados = confirmRevertId
-    ? getItensEditadosDoBatch(confirmRevertId)
-    : null;
+  const confirmRevertEditados = confirmRevertId ? getItensEditadosDoBatch(confirmRevertId) : null;
 
   return (
     <>
@@ -212,7 +210,8 @@ export function ExtratosImportadosDialog({
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="font-medium truncate">
-                                  {e.nomeArquivo || t("extratoLabel", { tipo: e.tipoOrigem.toUpperCase() })}
+                                  {e.nomeArquivo ||
+                                    t("extratoLabel", { tipo: e.tipoOrigem.toUpperCase() })}
                                 </span>
                                 <StatusBadge status={e.status} />
                               </div>
@@ -236,7 +235,8 @@ export function ExtratosImportadosDialog({
                 <div className="rounded-xl border bg-card p-4">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium">
-                      {selected.nomeArquivo || t("extratoLabel", { tipo: selected.tipoOrigem.toUpperCase() })}
+                      {selected.nomeArquivo ||
+                        t("extratoLabel", { tipo: selected.tipoOrigem.toUpperCase() })}
                     </span>
                     <StatusBadge status={selected.status} />
                   </div>
@@ -251,37 +251,71 @@ export function ExtratosImportadosDialog({
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 text-sm">
-                    <Stat label={t("stats.receitas")} value={formatBRL(selected.totalReceitas)} positive />
-                    <Stat label={t("stats.despesas")} value={formatBRL(selected.totalDespesas)} negative />
-                    <Stat label={t("stats.transferencias")} value={formatBRL(selected.totalTransferencias)} />
+                    <Stat
+                      label={t("stats.receitas")}
+                      value={formatBRL(selected.totalReceitas)}
+                      positive
+                    />
+                    <Stat
+                      label={t("stats.despesas")}
+                      value={formatBRL(selected.totalDespesas)}
+                      negative
+                    />
+                    <Stat
+                      label={t("stats.transferencias")}
+                      value={formatBRL(selected.totalTransferencias)}
+                    />
                     <Stat label={t("stats.movim")} value={String(selected.qtdMovimentacoes)} />
                   </div>
 
-                  {editadosDoSelecionado && editadosDoSelecionado.total > 0 && selected.status !== "revertido" && (
-                    <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
-                      <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                      <div>
-                        <Trans
-                          i18nKey="editedWarn"
-                          ns="extratos-importados"
-                          count={editadosDoSelecionado.total}
-                          values={{ count: editadosDoSelecionado.total }}
-                          components={{ 0: <strong /> }}
-                        />
+                  {editadosDoSelecionado &&
+                    editadosDoSelecionado.total > 0 &&
+                    selected.status !== "revertido" && (
+                      <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
+                        <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <Trans
+                            i18nKey="editedWarn"
+                            ns="extratos-importados"
+                            count={editadosDoSelecionado.total}
+                            values={{ count: editadosDoSelecionado.total }}
+                            components={{ 0: <strong /> }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
 
-                <ItemList title={t("lists.despesas")} items={itensDoSelecionado.gastos.map(g => ({
-                  id: g.id, descricao: g.descricao, valor: g.valor, data: g.data,
-                }))} tone="negative" />
-                <ItemList title={t("lists.receitas")} items={itensDoSelecionado.receitas.map(r => ({
-                  id: r.id, descricao: r.descricao, valor: r.valor, data: r.data,
-                }))} tone="positive" />
-                <ItemList title={t("lists.transferencias")} items={itensDoSelecionado.transferencias.map(tr => ({
-                  id: tr.id, descricao: tr.descricao, valor: tr.valor, data: tr.data,
-                }))} tone="neutral" />
+                <ItemList
+                  title={t("lists.despesas")}
+                  items={itensDoSelecionado.gastos.map((g) => ({
+                    id: g.id,
+                    descricao: g.descricao,
+                    valor: g.valor,
+                    data: g.data,
+                  }))}
+                  tone="negative"
+                />
+                <ItemList
+                  title={t("lists.receitas")}
+                  items={itensDoSelecionado.receitas.map((r) => ({
+                    id: r.id,
+                    descricao: r.descricao,
+                    valor: r.valor,
+                    data: r.data,
+                  }))}
+                  tone="positive"
+                />
+                <ItemList
+                  title={t("lists.transferencias")}
+                  items={itensDoSelecionado.transferencias.map((tr) => ({
+                    id: tr.id,
+                    descricao: tr.descricao,
+                    valor: tr.valor,
+                    data: tr.data,
+                  }))}
+                  tone="neutral"
+                />
               </div>
             )}
           </div>
@@ -316,10 +350,7 @@ export function ExtratosImportadosDialog({
         </DialogContent>
       </Dialog>
 
-      <AlertDialog
-        open={!!confirmRevertId}
-        onOpenChange={(v) => !v && setConfirmRevertId(null)}
-      >
+      <AlertDialog open={!!confirmRevertId} onOpenChange={(v) => !v && setConfirmRevertId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("confirmRevert.title")}</AlertDialogTitle>
@@ -355,16 +386,11 @@ export function ExtratosImportadosDialog({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog
-        open={!!confirmDeleteId}
-        onOpenChange={(v) => !v && setConfirmDeleteId(null)}
-      >
+      <AlertDialog open={!!confirmDeleteId} onOpenChange={(v) => !v && setConfirmDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("confirmDelete.title")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("confirmDelete.body")}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{t("confirmDelete.body")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={working}>{t("confirmDelete.cancel")}</AlertDialogCancel>
@@ -397,9 +423,7 @@ function Stat({
 }) {
   return (
     <div className="rounded-lg border bg-background/40 p-2">
-      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-        {label}
-      </div>
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
       <div
         className={cn(
           "font-semibold mt-0.5",

@@ -59,9 +59,7 @@ export const chooseFreeAdsPlan = createServerFn({ method: "POST" })
     // 2. Estado atual.
     const { data: current, error: selErr } = await supabaseAdmin
       .from("user_plans")
-      .select(
-        "plano, status, current_period_end, cancelled_at, access_until, trial_ends_at",
-      )
+      .select("plano, status, current_period_end, cancelled_at, access_until, trial_ends_at")
       .eq("user_id", userId)
       .maybeSingle();
     if (selErr) {
@@ -73,8 +71,7 @@ export const chooseFreeAdsPlan = createServerFn({ method: "POST" })
     const periodEndMs = current?.current_period_end
       ? new Date(current.current_period_end).getTime()
       : 0;
-    const periodStillActive =
-      !current?.current_period_end || periodEndMs > now.getTime();
+    const periodStillActive = !current?.current_period_end || periodEndMs > now.getTime();
 
     const isPaidPlan =
       !!current?.plano &&
@@ -82,8 +79,7 @@ export const chooseFreeAdsPlan = createServerFn({ method: "POST" })
       current.plano !== "sem_assinatura" &&
       current.plano !== "free_ads";
 
-    const isPaidActive =
-      isPaidPlan && current?.status === "ativo" && periodStillActive;
+    const isPaidActive = isPaidPlan && current?.status === "ativo" && periodStillActive;
 
     if (isPaidActive) {
       return { ok: false as const, reason: "paid_plan_active" as const };
@@ -114,10 +110,7 @@ export const chooseFreeAdsPlan = createServerFn({ method: "POST" })
     } as const;
 
     if (current) {
-      const { error } = await supabaseAdmin
-        .from("user_plans")
-        .update(patch)
-        .eq("user_id", userId);
+      const { error } = await supabaseAdmin.from("user_plans").update(patch).eq("user_id", userId);
       if (error) {
         console.warn("[chooseFreeAdsPlan] update falhou", error);
         return { ok: false as const, reason: "db_error" as const };

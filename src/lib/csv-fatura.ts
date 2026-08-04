@@ -117,13 +117,37 @@ export type CsvColumnRole =
   | "ignorar";
 
 const HEADER_HINTS: Record<Exclude<CsvColumnRole, "ignorar">, string[]> = {
-  data: ["data", "date", "dt", "lancamento", "lançamento", "transaction date", "data lancamento", "data lançamento", "data compra"],
+  data: [
+    "data",
+    "date",
+    "dt",
+    "lancamento",
+    "lançamento",
+    "transaction date",
+    "data lancamento",
+    "data lançamento",
+    "data compra",
+  ],
   descricao: ["descricao", "descrição", "description", "historico", "histórico", "memo", "detalhe"],
-  estabelecimento: ["estabelecimento", "merchant", "loja", "fornecedor", "vendor", "comercio", "comércio"],
+  estabelecimento: [
+    "estabelecimento",
+    "merchant",
+    "loja",
+    "fornecedor",
+    "vendor",
+    "comercio",
+    "comércio",
+  ],
   valor: ["valor", "amount", "preco", "preço", "total", "value", "montante", "vlr"],
   categoria: ["categoria", "category", "tipo", "classificacao", "classificação"],
   parcela: ["parcela", "parcelas", "installment", "parc", "parc."],
-  totalParcelas: ["total parcelas", "total de parcelas", "qtd parcelas", "n parcelas", "parcelas total"],
+  totalParcelas: [
+    "total parcelas",
+    "total de parcelas",
+    "qtd parcelas",
+    "n parcelas",
+    "parcelas total",
+  ],
   observacao: ["observacao", "observação", "obs", "note", "notes", "comentario", "comentário"],
 };
 
@@ -138,9 +162,7 @@ function normHeader(s: string): string {
 export function autoMapHeaders(headers: string[]): CsvColumnRole[] {
   return headers.map((h) => {
     const n = normHeader(h);
-    for (const role of Object.keys(HEADER_HINTS) as Array<
-      Exclude<CsvColumnRole, "ignorar">
-    >) {
+    for (const role of Object.keys(HEADER_HINTS) as Array<Exclude<CsvColumnRole, "ignorar">>) {
       if (HEADER_HINTS[role].some((hint) => n === hint || n.includes(hint))) {
         return role;
       }
@@ -220,9 +242,7 @@ function toIso(y: number, mo: number, d: number): string | null {
   return `${String(y).padStart(4, "0")}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
-export function parseParcela(
-  raw: string,
-): { atual: number; total: number } | null {
+export function parseParcela(raw: string): { atual: number; total: number } | null {
   if (!raw) return null;
   const s = raw.trim();
   // 01/10, 1/10, 03 de 12
@@ -246,9 +266,10 @@ export function parseParcela(
  * Extrai parcela embutida na descrição (ex: "MAGAZINE LUIZA 03/12") e
  * retorna a descrição "limpa" sem o sufixo de parcela.
  */
-export function extractParcelaFromDescricao(
-  desc: string,
-): { descricaoLimpa: string; parcela: { atual: number; total: number } | null } {
+export function extractParcelaFromDescricao(desc: string): {
+  descricaoLimpa: string;
+  parcela: { atual: number; total: number } | null;
+} {
   if (!desc) return { descricaoLimpa: "", parcela: null };
   const re = /\s*(?:-\s*)?(\d{1,2})\s*\/\s*(\d{1,2})\s*$/;
   const m = desc.match(re);
@@ -272,34 +293,127 @@ export function extractParcelaFromDescricao(
 const CAT_RULES: Array<{ id: CategoryId; matches: string[] }> = [
   {
     id: "alimentacao",
-    matches: ["ifood", "restaurante", "lanche", "padaria", "pizz", "burger", "mc donalds", "mcdonalds", "burger king", "subway", "outback", "ze delivery"],
+    matches: [
+      "ifood",
+      "restaurante",
+      "lanche",
+      "padaria",
+      "pizz",
+      "burger",
+      "mc donalds",
+      "mcdonalds",
+      "burger king",
+      "subway",
+      "outback",
+      "ze delivery",
+    ],
   },
   {
     id: "transporte",
-    matches: ["uber", "99", "99app", "cabify", "posto", "gasolina", "combustivel", "estacionamento", "pedagio", "pedágio", "taxi"],
+    matches: [
+      "uber",
+      "99",
+      "99app",
+      "cabify",
+      "posto",
+      "gasolina",
+      "combustivel",
+      "estacionamento",
+      "pedagio",
+      "pedágio",
+      "taxi",
+    ],
   },
   {
     id: "assinaturas",
-    matches: ["netflix", "spotify", "amazon prime", "disney", "hbo", "globoplay", "deezer", "apple.com/bill", "youtube premium", "icloud"],
+    matches: [
+      "netflix",
+      "spotify",
+      "amazon prime",
+      "disney",
+      "hbo",
+      "globoplay",
+      "deezer",
+      "apple.com/bill",
+      "youtube premium",
+      "icloud",
+    ],
   },
-  { id: "farmacia", matches: ["farmacia", "drogaria", "drogasil", "raia", "pacheco", "pague menos"] },
-  { id: "mercado", matches: ["mercado", "supermercado", "atacado", "carrefour", "extra", "assai", "sams", "atacadao"] },
+  {
+    id: "farmacia",
+    matches: ["farmacia", "drogaria", "drogasil", "raia", "pacheco", "pague menos"],
+  },
+  {
+    id: "mercado",
+    matches: [
+      "mercado",
+      "supermercado",
+      "atacado",
+      "carrefour",
+      "extra",
+      "assai",
+      "sams",
+      "atacadao",
+    ],
+  },
   {
     id: "online",
-    matches: ["shopee", "mercado livre", "mercadolivre", "amazon", "aliexpress", "magalu", "magazine luiza", "americanas", "submarino"],
+    matches: [
+      "shopee",
+      "mercado livre",
+      "mercadolivre",
+      "amazon",
+      "aliexpress",
+      "magalu",
+      "magazine luiza",
+      "americanas",
+      "submarino",
+    ],
   },
-  { id: "contas", matches: ["boleto", "energia", "agua", "água", "internet", "telefonia", "vivo", "claro", "tim", "sabesp", "enel"] },
-  { id: "saude", matches: ["clinic", "consulta", "exame", "hospital", "dentista", "psicolog", "amil", "unimed", "hapvida"] },
+  {
+    id: "contas",
+    matches: [
+      "boleto",
+      "energia",
+      "agua",
+      "água",
+      "internet",
+      "telefonia",
+      "vivo",
+      "claro",
+      "tim",
+      "sabesp",
+      "enel",
+    ],
+  },
+  {
+    id: "saude",
+    matches: [
+      "clinic",
+      "consulta",
+      "exame",
+      "hospital",
+      "dentista",
+      "psicolog",
+      "amil",
+      "unimed",
+      "hapvida",
+    ],
+  },
   { id: "lazer", matches: ["cinema", "ingresso", "show", "teatro", "parque", "viagem"] },
-  { id: "educacao", matches: ["curso", "udemy", "alura", "coursera", "escola", "faculdade", "mensalidade"] },
+  {
+    id: "educacao",
+    matches: ["curso", "udemy", "alura", "coursera", "escola", "faculdade", "mensalidade"],
+  },
   { id: "pet", matches: ["petshop", "petz", "cobasi", "racao", "ração", "veterinari"] },
 ];
 
-export function suggestCategoryFromDescription(
-  desc: string | null | undefined,
-): string {
+export function suggestCategoryFromDescription(desc: string | null | undefined): string {
   if (!desc) return "outros";
-  const n = desc.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const n = desc
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
   for (const rule of CAT_RULES) {
     if (rule.matches.some((m) => n.includes(m))) return rule.id;
   }
@@ -325,10 +439,7 @@ export function parseCsvFile(text: string): CsvParseResult {
   return { headers, rows, autoMap };
 }
 
-export function rowsToItens(
-  rows: string[][],
-  mapping: CsvColumnRole[],
-): FaturaItemBruto[] {
+export function rowsToItens(rows: string[][], mapping: CsvColumnRole[]): FaturaItemBruto[] {
   return rows.map<FaturaItemBruto>((row) => {
     const get = (role: CsvColumnRole): string => {
       const idx = mapping.indexOf(role);
@@ -371,15 +482,15 @@ export function rowsToItens(
     }
 
     const sugerida =
-      catRaw && catRaw.trim() ? catRaw.trim().toLowerCase() : suggestCategoryFromDescription(descricao);
+      catRaw && catRaw.trim()
+        ? catRaw.trim().toLowerCase()
+        : suggestCategoryFromDescription(descricao);
 
     let confianca: "alta" | "media" | "baixa" = "alta";
     if (valor === null || data === null || !descricao) confianca = "baixa";
 
     const horario =
-      extractHorario(get("data")) ||
-      extractHorario(get("descricao")) ||
-      extractHorario(obs);
+      extractHorario(get("data")) || extractHorario(get("descricao")) || extractHorario(obs);
 
     return {
       descricao: descricao || null,
@@ -400,12 +511,7 @@ export function rowsToItens(
  * Chave de duplicidade
  * ------------------------------------------------------------------------ */
 
-export function dupKey(
-  cartaoId: string,
-  data: string,
-  descricao: string,
-  valor: number,
-): string {
+export function dupKey(cartaoId: string, data: string, descricao: string, valor: number): string {
   const desc = descricao
     .toLowerCase()
     .normalize("NFD")

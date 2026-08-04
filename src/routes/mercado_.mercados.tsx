@@ -43,8 +43,7 @@ function ComparativoMercadosPage() {
   });
 
   const isEmpty = resumo.totalRegistros === 0;
-  const onlyUnknown =
-    !isEmpty && resumo.totalMercadosNomeados === 0 && resumo.hasSemMercado;
+  const onlyUnknown = !isEmpty && resumo.totalMercadosNomeados === 0 && resumo.hasSemMercado;
 
   return (
     <MobileShell wide>
@@ -100,12 +99,7 @@ function ComparativoMercadosPage() {
 
           <section className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {resumo.mercados.map((m) => (
-              <MercadoCard
-                key={m.mercadoKey}
-                m={m}
-                t={t}
-                dateFormatter={dateFormatter}
-              />
+              <MercadoCard key={m.mercadoKey} m={m} t={t} dateFormatter={dateFormatter} />
             ))}
           </section>
         </>
@@ -120,9 +114,7 @@ function EmptyState({ t }: { t: (k: string) => string }) {
       <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand ring-1 ring-border/60">
         <PackageSearch className="h-6 w-6" />
       </span>
-      <h2 className="mt-3 text-base font-semibold md:text-lg">
-        {t("mercados.empty.title")}
-      </h2>
+      <h2 className="mt-3 text-base font-semibold md:text-lg">{t("mercados.empty.title")}</h2>
       <p className="mt-1 max-w-md text-sm leading-snug text-muted-foreground">
         {t("mercados.empty.desc")}
       </p>
@@ -209,10 +201,7 @@ function SummaryTile({ label, value }: { label: string; value: number }) {
   );
 }
 
-const STATUS_TONE: Record<
-  ResumoMercadoStatus,
-  { ring: string; text: string; bg: string }
-> = {
+const STATUS_TONE: Record<ResumoMercadoStatus, { ring: string; text: string; bg: string }> = {
   melhor: { ring: "ring-success/30", text: "text-success", bg: "bg-success/10" },
   medio: { ring: "ring-border/60", text: "text-foreground", bg: "bg-card-elevated" },
   pouco_dado: { ring: "ring-warning/30", text: "text-warning", bg: "bg-warning/10" },
@@ -228,12 +217,8 @@ function MercadoCard({
   dateFormatter: Intl.DateTimeFormat;
 }) {
   const tone = STATUS_TONE[m.status];
-  const statusLabel = t(
-    `mercados.status.${m.status === "pouco_dado" ? "poucoDado" : m.status}`,
-  );
-  const statusDesc = t(
-    `mercados.statusDesc.${m.status === "pouco_dado" ? "poucoDado" : m.status}`,
-  );
+  const statusLabel = t(`mercados.status.${m.status === "pouco_dado" ? "poucoDado" : m.status}`);
+  const statusDesc = t(`mercados.statusDesc.${m.status === "pouco_dado" ? "poucoDado" : m.status}`);
 
   const nome = m.semMercado ? t("mercados.card.unknownMarket") : m.mercadoNome;
 
@@ -259,13 +244,7 @@ function MercadoCard({
         </div>
       </header>
 
-      <div
-        className={cn(
-          "rounded-2xl p-3 ring-1",
-          tone.bg,
-          tone.ring,
-        )}
-      >
+      <div className={cn("rounded-2xl p-3 ring-1", tone.bg, tone.ring)}>
         <p className={cn("text-sm font-semibold", tone.text)}>{statusLabel}</p>
         <p className="mt-1 text-[12px] leading-snug text-muted-foreground">{statusDesc}</p>
         {m.diffMedioPercent !== null && !m.semMercado && (

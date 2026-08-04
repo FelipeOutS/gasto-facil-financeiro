@@ -28,9 +28,15 @@ function msg(texto: string, externalId = "e-1") {
 
 function nubank() {
   return {
-    id: "c-nu", nome: "Nubank", banco: "Nubank",
-    limite_total: 0, dia_fechamento: 1, dia_vencimento: 10, cor: "#000",
-    created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    id: "c-nu",
+    nome: "Nubank",
+    banco: "Nubank",
+    limite_total: 0,
+    dia_fechamento: 1,
+    dia_vencimento: 10,
+    cor: "#000",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   };
 }
 
@@ -39,14 +45,16 @@ function memoryInserts() {
 }
 
 describe("WA-F3.3-Fix-CatHardening", () => {
-  beforeEach(() => resetState({
-    cartoes: [nubank()],
-    categorias: [
-      { id: "cat-out", legacy_id: "outros", nome: "Outros", user_id: "u1" },
-      { id: "cat-mer", legacy_id: "mercado", nome: "Mercado", user_id: "u1" },
-      { id: "cat-casa", legacy_id: "casa", nome: "Casa", user_id: "u1" },
-    ],
-  }));
+  beforeEach(() =>
+    resetState({
+      cartoes: [nubank()],
+      categorias: [
+        { id: "cat-out", legacy_id: "outros", nome: "Outros", user_id: "u1" },
+        { id: "cat-mer", legacy_id: "mercado", nome: "Mercado", user_id: "u1" },
+        { id: "cat-casa", legacy_id: "casa", nome: "Casa", user_id: "u1" },
+      ],
+    }),
+  );
 
   it("categoria manual (Casa) → todas as 6 parcelas persistem com cat-casa", async () => {
     // Geladeira reproduz o cenário real do smoke test 3.12.
@@ -77,7 +85,6 @@ describe("WA-F3.3-Fix-CatHardening", () => {
     expect(uniqueCats.size).toBe(1);
     expect([...uniqueCats][0]).toBe("cat-out");
   });
-
 
   it("memória de merchant e categoria das parcelas são SEMPRE a mesma id final", async () => {
     await processarMensagemWhatsApp(msg("Geladeira 600 em 3x no Nubank", "e-1"));
@@ -110,14 +117,24 @@ describe("WA-F3.3-Fix-CatHardening", () => {
           const idx = state.inserts.length + 1;
           const id = `g-${idx}`;
           const row = {
-            id, user_id: userId, cartao_id: cartaoId,
+            id,
+            user_id: userId,
+            cartao_id: cartaoId,
             categoria_id: "cat-mer", // <-- bug simulado
-            descricao, estabelecimento: descricao,
-            valor: p.valor, data: p.data, mes: p.mes, ano: p.ano,
+            descricao,
+            estabelecimento: descricao,
+            valor: p.valor,
+            data: p.data,
+            mes: p.mes,
+            ano: p.ano,
             invoice_month: p.invoice_month,
-            forma_pagamento: "credito", tipo_gasto: "parcelado",
-            parcela_atual: p.numero, total_parcelas: total,
-            grupo_parcelamento_id: grupoId, origem: "whatsapp", confirmado: true,
+            forma_pagamento: "credito",
+            tipo_gasto: "parcelado",
+            parcela_atual: p.numero,
+            total_parcelas: total,
+            grupo_parcelamento_id: grupoId,
+            origem: "whatsapp",
+            confirmado: true,
           };
           state.inserts.push({ table: "gastos", row });
           state.gastosData.push(row);
@@ -160,7 +177,9 @@ describe("WA-F3.3-Fix-CatHardening", () => {
     const sucesso = [a, b].filter((r) => r.status === "salva");
     expect(sucesso.length).toBe(1);
     const grupos = new Set(
-      gastosInserts().map((g) => g.row.grupo_parcelamento_id as string).filter(Boolean),
+      gastosInserts()
+        .map((g) => g.row.grupo_parcelamento_id as string)
+        .filter(Boolean),
     );
     expect(grupos.size).toBe(1);
     expect(gastosInserts().length).toBe(6);

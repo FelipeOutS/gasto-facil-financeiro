@@ -1,21 +1,19 @@
 // Gera "drafts" de alertas a partir dos dados do usuário.
 // Não escreve no banco — apenas calcula. O sync com a tabela é feito em service.ts.
 
-import type {
-  Cartao,
-  ContaAPagar,
-  Gasto,
-  Categoria,
-  Limite,
-} from "@/lib/types";
+import type { Cartao, ContaAPagar, Gasto, Categoria, Limite } from "@/lib/types";
 import type { Recorrencia } from "@/lib/recorrencias";
 import type { ContaReceber } from "@/lib/contas-receber";
 import type { Ativo } from "@/lib/investimentos";
-import { mesEfetivoGasto, resumoFaturaCartao, statusContaEfetivo, statusEfetivoFatura, faturaCorrente, mesReferenciaFaturaLabel } from "@/lib/store";
 import {
-  buildLinhasOrcamento,
-  buildAlertasOrcamento,
-} from "@/lib/orcamento";
+  mesEfetivoGasto,
+  resumoFaturaCartao,
+  statusContaEfetivo,
+  statusEfetivoFatura,
+  faturaCorrente,
+  mesReferenciaFaturaLabel,
+} from "@/lib/store";
+import { buildLinhasOrcamento, buildAlertasOrcamento } from "@/lib/orcamento";
 import { todayLocalISO } from "@/lib/alertas-contas";
 import { statusEfetivo as statusContaReceber } from "@/lib/contas-receber";
 import type { DraftAlert } from "./types";
@@ -132,11 +130,12 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
             drafts.push({
               type: "fatura_vencendo",
               title: `Fatura de ${refLabel} (${cartao.nome}) vence em breve`,
-              description: dias === 0
-                ? `A fatura de ${refLabel} vence hoje.`
-                : dias === 1
-                  ? `A fatura de ${refLabel} vence amanhã.`
-                  : `A fatura de ${refLabel} vence em ${dias} dias.`,
+              description:
+                dias === 0
+                  ? `A fatura de ${refLabel} vence hoje.`
+                  : dias === 1
+                    ? `A fatura de ${refLabel} vence amanhã.`
+                    : `A fatura de ${refLabel} vence em ${dias} dias.`,
               priority: dias <= 1 ? "alta" : "media",
               related_entity_type: "cartao",
               related_entity_id: cartao.id,
@@ -311,9 +310,10 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
         drafts.push({
           type: "assinatura_vencendo",
           title: `Assinatura ${r.nome}`,
-          description: dias === 0
-            ? "Cobrança prevista para hoje."
-            : `Cobrança prevista em ${dias} ${dias === 1 ? "dia" : "dias"}.`,
+          description:
+            dias === 0
+              ? "Cobrança prevista para hoje."
+              : `Cobrança prevista em ${dias} ${dias === 1 ? "dia" : "dias"}.`,
           priority: "media",
           related_entity_type: "recorrencia",
           related_entity_id: r.id,
@@ -352,7 +352,8 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
     src.gastos.filter((g) => g.confirmado !== false),
     month,
     year,
-    (catId) => src.limites.find((l) => l.tipo === catId && l.mes === month && l.ano === year)?.valor,
+    (catId) =>
+      src.limites.find((l) => l.tipo === catId && l.mes === month && l.ano === year)?.valor,
     mesEfetivoGasto,
   );
   const alertasOrc = buildAlertasOrcamento(linhasOrc);
@@ -427,7 +428,10 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
     const totaisPorMes = new Map<string, Map<string, number>>(); // ym -> catId -> valor
     function bump(ym: string, catId: string, v: number) {
       let m = totaisPorMes.get(ym);
-      if (!m) { m = new Map(); totaisPorMes.set(ym, m); }
+      if (!m) {
+        m = new Map();
+        totaisPorMes.set(ym, m);
+      }
       m.set(catId, (m.get(catId) ?? 0) + v);
     }
     for (const g of gastosConfirmados) {
@@ -596,7 +600,13 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
         action_url: "/gastos",
         dedupe_key: `gasto_acima_media_estab:${g.id}`,
         period_key: period,
-        metadata: { estabelecimento: g.estabelecimento, valor: g.valor, media, ratio, amostras: valores.length },
+        metadata: {
+          estabelecimento: g.estabelecimento,
+          valor: g.valor,
+          media,
+          ratio,
+          amostras: valores.length,
+        },
       });
     }
   }
@@ -657,12 +667,15 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
         action_url: "/cartoes",
         dedupe_key: `cartao_cobranca_suspeita:${g.id}`,
         period_key: period,
-        metadata: { valor: g.valor, cartaoId: g.cartaoId, motivo: hitKeyword ? "keyword" : "valor_alto", mediana: med },
+        metadata: {
+          valor: g.valor,
+          cartaoId: g.cartaoId,
+          motivo: hitKeyword ? "keyword" : "valor_alto",
+          mediana: med,
+        },
       });
     }
   }
-
-
 
   // ============= Investimentos =============
   if (src.investimentos) {
@@ -673,9 +686,8 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
           drafts.push({
             type: "investimento_vencendo",
             title: `Investimento ${a.nome} vencendo`,
-            description: dias === 0
-              ? "Vence hoje."
-              : `Vence em ${dias} ${dias === 1 ? "dia" : "dias"}.`,
+            description:
+              dias === 0 ? "Vence hoje." : `Vence em ${dias} ${dias === 1 ? "dia" : "dias"}.`,
             priority: "media",
             related_entity_type: "investimento",
             related_entity_id: a.id,

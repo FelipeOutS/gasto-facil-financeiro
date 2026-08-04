@@ -33,7 +33,6 @@ export function MobileMoreSheet({ trigger }: { trigger: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
-
   const groups = useMemo(
     () =>
       filterVisibleGroups(
@@ -122,15 +121,20 @@ export function MobileMoreSheet({ trigger }: { trigger: ReactNode }) {
         <SheetHeader className="border-b border-border/60 px-4 py-4 text-left">
           <SheetTitle className="sr-only">{t("more.title")}</SheetTitle>
           <SheetDescription className="sr-only">{t("more.description")}</SheetDescription>
-          <Link
-            to="/app/perfil"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-3"
-          >
-            <UserAvatar url={profile?.avatar_url} name={displayName} email={user?.email} size={44} />
+          <Link to="/app/perfil" onClick={() => setOpen(false)} className="flex items-center gap-3">
+            <UserAvatar
+              url={profile?.avatar_url}
+              name={displayName}
+              email={user?.email}
+              size={44}
+            />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-semibold leading-tight">{displayName}</span>
-              <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">{user?.email}</span>
+              <span className="block truncate text-sm font-semibold leading-tight">
+                {displayName}
+              </span>
+              <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
+                {user?.email}
+              </span>
             </span>
           </Link>
           <div className="mt-3 flex items-center justify-between gap-2 rounded-xl bg-card-elevated px-3 py-2">

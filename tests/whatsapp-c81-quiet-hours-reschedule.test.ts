@@ -444,9 +444,14 @@ describe("WA-C8.1 :: rescheduleForQuietHours (persistência)", () => {
 
   it("status pending → resultado = state_changed (não é erro)", async () => {
     const row = await enqueueNotification(baseEnqueue, { client: fake.client });
-    const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), currentToken(), {
-      client: fake.client,
-    });
+    const res = await rescheduleForQuietHours(
+      row!.id,
+      new Date("2026-06-28T10:00:00Z"),
+      currentToken(),
+      {
+        client: fake.client,
+      },
+    );
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.status).toBe("state_changed");
     const after = fake.tables.whatsapp_notifications[0] as unknown as NotificationRow;
@@ -462,9 +467,14 @@ describe("WA-C8.1 :: rescheduleForQuietHours (persistência)", () => {
         client: fake.client,
       });
       (fake.tables.whatsapp_notifications[0] as Row).status = term;
-      const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), currentToken(), {
-        client: fake.client,
-      });
+      const res = await rescheduleForQuietHours(
+        row!.id,
+        new Date("2026-06-28T10:00:00Z"),
+        currentToken(),
+        {
+          client: fake.client,
+        },
+      );
       expect(res.ok).toBe(false);
       if (!res.ok) expect(res.status).toBe("state_changed");
       const after = fake.tables.whatsapp_notifications[0] as unknown as NotificationRow;
@@ -527,9 +537,14 @@ describe("WA-C8.1 :: erro de banco no UPDATE", () => {
       code: "PGRST000",
       message: "connection reset",
     });
-    const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), currentToken(), {
-      client: fake.client,
-    });
+    const res = await rescheduleForQuietHours(
+      row!.id,
+      new Date("2026-06-28T10:00:00Z"),
+      currentToken(),
+      {
+        client: fake.client,
+      },
+    );
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.status).toBe("error");
     // Linha permanece em processing — não vira sent/skipped/cancelled.
@@ -542,9 +557,14 @@ describe("WA-C8.1 :: erro de banco no UPDATE", () => {
   it("UPDATE sem erro + zero linhas afetadas → state_changed (não error)", async () => {
     const row = await enqueueNotification(baseEnqueue, { client: fake.client });
     // Sem claim: status permanece pending → filtro falha, 0 linhas, sem erro.
-    const res = await rescheduleForQuietHours(row!.id, new Date("2026-06-28T10:00:00Z"), currentToken(), {
-      client: fake.client,
-    });
+    const res = await rescheduleForQuietHours(
+      row!.id,
+      new Date("2026-06-28T10:00:00Z"),
+      currentToken(),
+      {
+        client: fake.client,
+      },
+    );
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.status).toBe("state_changed");
   });

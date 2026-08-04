@@ -44,10 +44,7 @@ import {
 } from "@/lib/store";
 import { useFornecedores } from "@/lib/fornecedores";
 import { useClientes } from "@/lib/clientes";
-import {
-  listarContasReceber,
-  type ContaReceber,
-} from "@/lib/contas-receber";
+import { listarContasReceber, type ContaReceber } from "@/lib/contas-receber";
 import { getMinhaEmpresa, type MinhaEmpresa } from "@/lib/empresa";
 import {
   montarPacoteContador,
@@ -175,8 +172,7 @@ function PacoteContadorPage() {
     ],
   );
 
-  const loading =
-    !ready || loadingForn || loadingCli || loadingEmpresa || loadingCR;
+  const loading = !ready || loadingForn || loadingCli || loadingEmpresa || loadingCR;
 
   async function copiarResumo() {
     const texto = gerarResumoTexto(pacote);
@@ -205,9 +201,7 @@ function PacoteContadorPage() {
         }
         throw new Error("execCommand falhou");
       } catch {
-        toast.error(
-          "Não foi possível copiar automaticamente. Selecione o texto manualmente.",
-        );
+        toast.error("Não foi possível copiar automaticamente. Selecione o texto manualmente.");
       }
     }
   }
@@ -259,8 +253,8 @@ function PacoteContadorPage() {
             <div>
               <h1 className="text-2xl font-semibold">Pacote para Contador</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Gere um resumo mensal com receitas, despesas, clientes,
-                fornecedores e pendências para enviar ao seu contador.
+                Gere um resumo mensal com receitas, despesas, clientes, fornecedores e pendências
+                para enviar ao seu contador.
               </p>
             </div>
           </div>
@@ -285,9 +279,7 @@ function PacoteContadorPage() {
       <section className="no-print mt-6 rounded-2xl border bg-card p-3">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <div>
-            <label className="mb-1 block text-[11px] font-medium text-muted-foreground">
-              Mês
-            </label>
+            <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Mês</label>
             <Select value={String(mes)} onValueChange={(v) => setMes(Number(v))}>
               <SelectTrigger className="h-9">
                 <SelectValue />
@@ -302,9 +294,7 @@ function PacoteContadorPage() {
             </Select>
           </div>
           <div>
-            <label className="mb-1 block text-[11px] font-medium text-muted-foreground">
-              Ano
-            </label>
+            <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Ano</label>
             <Select value={String(ano)} onValueChange={(v) => setAno(Number(v))}>
               <SelectTrigger className="h-9">
                 <SelectValue />
@@ -334,23 +324,17 @@ function PacoteContadorPage() {
           <ToggleRow
             label="Incluir resumo por fornecedores"
             value={opcoes.incluirFornecedores}
-            onChange={(v) =>
-              setOpcoes((o) => ({ ...o, incluirFornecedores: v }))
-            }
+            onChange={(v) => setOpcoes((o) => ({ ...o, incluirFornecedores: v }))}
           />
           <ToggleRow
             label="Incluir pendências do mês"
             value={opcoes.incluirPendencias}
-            onChange={(v) =>
-              setOpcoes((o) => ({ ...o, incluirPendencias: v }))
-            }
+            onChange={(v) => setOpcoes((o) => ({ ...o, incluirPendencias: v }))}
           />
           <ToggleRow
             label="Incluir comparativo com mês anterior"
             value={opcoes.incluirComparativo}
-            onChange={(v) =>
-              setOpcoes((o) => ({ ...o, incluirComparativo: v }))
-            }
+            onChange={(v) => setOpcoes((o) => ({ ...o, incluirComparativo: v }))}
           />
         </div>
       </section>
@@ -361,9 +345,7 @@ function PacoteContadorPage() {
           <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
             Pacote para Contador
           </p>
-          <h2 className="mt-1 text-xl font-semibold">
-            Pacote de {rotuloPeriodo(pacote.periodo)}
-          </h2>
+          <h2 className="mt-1 text-xl font-semibold">Pacote de {rotuloPeriodo(pacote.periodo)}</h2>
           <p className="mt-1 text-[11px] text-muted-foreground">
             Gerado em{" "}
             {format(parseISO(pacote.geradoEm), "dd 'de' MMMM 'de' yyyy, HH:mm", {
@@ -378,10 +360,7 @@ function PacoteContadorPage() {
               <Linha label="Razão social" value={empresa.razao_social} />
               <Linha label="Nome fantasia" value={empresa.nome_fantasia} />
               <Linha label="CNPJ" value={empresa.cnpj} />
-              <Linha
-                label="Atividade principal"
-                value={empresa.cnae_principal_descricao}
-              />
+              <Linha label="Atividade principal" value={empresa.cnae_principal_descricao} />
               <Linha
                 label="Cidade/UF"
                 value={
@@ -390,10 +369,7 @@ function PacoteContadorPage() {
                     : empresa.municipio || empresa.uf
                 }
               />
-              <Linha
-                label="Situação cadastral"
-                value={empresa.situacao_cadastral}
-              />
+              <Linha label="Situação cadastral" value={empresa.situacao_cadastral} />
             </div>
           ) : (
             <div className="mt-3 flex items-start gap-2 rounded-lg border border-dashed bg-muted/30 p-3 text-xs">
@@ -439,9 +415,7 @@ function PacoteContadorPage() {
                 icon={<Wallet className="h-4 w-4" />}
                 label="Saldo do período"
                 value={formatBRL(pacote.resumo.saldoPeriodo)}
-                accent={
-                  pacote.resumo.saldoPeriodo < 0 ? "warning" : "primary"
-                }
+                accent={pacote.resumo.saldoPeriodo < 0 ? "warning" : "primary"}
                 variacao={variacaoPor(pacote, "saldo")}
               />
               <KpiCard
@@ -514,10 +488,7 @@ function PacoteContadorPage() {
             {pacote.receitas.length > 0 && (
               <ul className="divide-y rounded-xl border bg-card text-xs">
                 {pacote.receitas.map((r) => (
-                  <li
-                    key={r.id}
-                    className="flex items-center justify-between gap-2 p-2"
-                  >
+                  <li key={r.id} className="flex items-center justify-between gap-2 p-2">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{r.descricao}</p>
                       <p className="text-[11px] text-muted-foreground">
@@ -525,9 +496,7 @@ function PacoteContadorPage() {
                         {r.clienteNome ? ` · ${r.clienteNome}` : ""}
                       </p>
                     </div>
-                    <p className="shrink-0 font-semibold tabular-nums">
-                      {formatBRL(r.valor)}
-                    </p>
+                    <p className="shrink-0 font-semibold tabular-nums">{formatBRL(r.valor)}</p>
                   </li>
                 ))}
               </ul>
@@ -539,10 +508,7 @@ function PacoteContadorPage() {
             {pacote.gastos.length > 0 && (
               <ul className="divide-y rounded-xl border bg-card text-xs">
                 {pacote.gastos.map((g) => (
-                  <li
-                    key={g.id}
-                    className="flex items-center justify-between gap-2 p-2"
-                  >
+                  <li key={g.id} className="flex items-center justify-between gap-2 p-2">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{g.descricao}</p>
                       <p className="text-[11px] text-muted-foreground">
@@ -553,9 +519,7 @@ function PacoteContadorPage() {
                         {g.fornecedorNome ? ` · ${g.fornecedorNome}` : ""}
                       </p>
                     </div>
-                    <p className="shrink-0 font-semibold tabular-nums">
-                      {formatBRL(g.valor)}
-                    </p>
+                    <p className="shrink-0 font-semibold tabular-nums">{formatBRL(g.valor)}</p>
                   </li>
                 ))}
               </ul>
@@ -563,34 +527,22 @@ function PacoteContadorPage() {
           </Secao>
 
           {/* Contas a pagar */}
-          <Secao
-            titulo="Contas a pagar"
-            vazio="Sem contas a pagar no período."
-          >
+          <Secao titulo="Contas a pagar" vazio="Sem contas a pagar no período.">
             <ListaContasPagar pacote={pacote} />
           </Secao>
 
           {/* Contas a receber */}
-          <Secao
-            titulo="Contas a receber"
-            vazio="Sem contas a receber no período."
-          >
+          <Secao titulo="Contas a receber" vazio="Sem contas a receber no período.">
             <ListaContasReceber pacote={pacote} />
           </Secao>
 
           {/* Por cliente */}
           {opcoes.incluirClientes && (
-            <Secao
-              titulo="Resumo por cliente"
-              vazio="Sem clientes movimentados no período."
-            >
+            <Secao titulo="Resumo por cliente" vazio="Sem clientes movimentados no período.">
               {pacote.porCliente.length > 0 && (
                 <ul className="divide-y rounded-xl border bg-card text-xs">
                   {pacote.porCliente.map((c) => (
-                    <li
-                      key={c.clienteId}
-                      className="flex items-center justify-between gap-2 p-2"
-                    >
+                    <li key={c.clienteId} className="flex items-center justify-between gap-2 p-2">
                       <div className="min-w-0">
                         <p className="truncate font-medium">{c.nome}</p>
                         <p className="text-[11px] text-muted-foreground">
@@ -598,9 +550,7 @@ function PacoteContadorPage() {
                         </p>
                       </div>
                       <div className="shrink-0 text-right">
-                        <p className="font-semibold tabular-nums">
-                          {formatBRL(c.totalRecebido)}
-                        </p>
+                        <p className="font-semibold tabular-nums">{formatBRL(c.totalRecebido)}</p>
                         {c.totalEmAberto > 0 && (
                           <p className="text-[11px] text-amber-600 dark:text-amber-400">
                             Em aberto {formatBRL(c.totalEmAberto)}
@@ -616,10 +566,7 @@ function PacoteContadorPage() {
 
           {/* Por fornecedor */}
           {opcoes.incluirFornecedores && (
-            <Secao
-              titulo="Resumo por fornecedor"
-              vazio="Sem fornecedores movimentados no período."
-            >
+            <Secao titulo="Resumo por fornecedor" vazio="Sem fornecedores movimentados no período.">
               {pacote.porFornecedor.length > 0 && (
                 <ul className="divide-y rounded-xl border bg-card text-xs">
                   {pacote.porFornecedor.map((f) => (
@@ -634,9 +581,7 @@ function PacoteContadorPage() {
                         </p>
                       </div>
                       <div className="shrink-0 text-right">
-                        <p className="font-semibold tabular-nums">
-                          {formatBRL(f.totalPago)}
-                        </p>
+                        <p className="font-semibold tabular-nums">{formatBRL(f.totalPago)}</p>
                         {f.totalEmAberto > 0 && (
                           <p className="text-[11px] text-amber-600 dark:text-amber-400">
                             Em aberto {formatBRL(f.totalEmAberto)}
@@ -722,24 +667,16 @@ function KpiCard({
           className={cn(
             "grid h-6 w-6 place-items-center rounded-md bg-muted text-foreground/70",
             accent === "primary" && "bg-primary/10 text-primary",
-            accent === "warning" &&
-              "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+            accent === "warning" && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
           )}
         >
           {icon}
         </span>
         <span className="truncate">{label}</span>
       </div>
-      <p className="mt-1.5 truncate text-base font-semibold tabular-nums">
-        {value}
-      </p>
+      <p className="mt-1.5 truncate text-base font-semibold tabular-nums">{value}</p>
       {variacao && (
-        <p
-          className={cn(
-            "mt-0.5 truncate text-[10px]",
-            variacaoTextoCor(variacao),
-          )}
-        >
+        <p className={cn("mt-0.5 truncate text-[10px]", variacaoTextoCor(variacao))}>
           {rotuloVariacao(variacao)}
         </p>
       )}
@@ -762,20 +699,15 @@ function variacaoTextoCor(v: VariacaoIndicador): string {
   if (v.tipo !== "comparavel") return "text-muted-foreground";
   const dif = v.diferenca;
   if (dif === 0) return "text-muted-foreground";
-  const subirEhRuim =
-    v.chave === "despesas" || v.chave === "contasPagarEmAberto";
+  const subirEhRuim = v.chave === "despesas" || v.chave === "contasPagarEmAberto";
   const subindo = dif > 0;
   const positivo = subirEhRuim ? !subindo : subindo;
-  return positivo
-    ? "text-emerald-600 dark:text-emerald-400"
-    : "text-amber-600 dark:text-amber-400";
+  return positivo ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400";
 }
 
 function VariacaoBadge({ v }: { v: VariacaoIndicador }) {
   return (
-    <span className={cn("text-[11px] font-medium", variacaoTextoCor(v))}>
-      {rotuloVariacao(v)}
-    </span>
+    <span className={cn("text-[11px] font-medium", variacaoTextoCor(v))}>{rotuloVariacao(v)}</span>
   );
 }
 
@@ -792,17 +724,29 @@ function Secao({
   return (
     <section className="mt-6 print-block">
       <h3 className="mb-2 text-sm font-semibold">{titulo}</h3>
-      {hasContent ? children : (
-        <p className="text-xs text-muted-foreground">{vazio}</p>
-      )}
+      {hasContent ? children : <p className="text-xs text-muted-foreground">{vazio}</p>}
     </section>
   );
 }
 
 function StatusBadgePagar({ status }: { status: "pago" | "pendente" | "atrasado" }) {
-  if (status === "pago") return <Badge variant="secondary" className="text-[10px]">Pago</Badge>;
-  if (status === "atrasado") return <Badge variant="destructive" className="text-[10px]">Atrasado</Badge>;
-  return <Badge variant="outline" className="text-[10px]">Pendente</Badge>;
+  if (status === "pago")
+    return (
+      <Badge variant="secondary" className="text-[10px]">
+        Pago
+      </Badge>
+    );
+  if (status === "atrasado")
+    return (
+      <Badge variant="destructive" className="text-[10px]">
+        Atrasado
+      </Badge>
+    );
+  return (
+    <Badge variant="outline" className="text-[10px]">
+      Pendente
+    </Badge>
+  );
 }
 
 function StatusBadgeReceber({
@@ -810,30 +754,47 @@ function StatusBadgeReceber({
 }: {
   status: "recebido" | "pendente" | "atrasado" | "parcial" | "cancelado";
 }) {
-  if (status === "recebido") return <Badge variant="secondary" className="text-[10px]">Recebido</Badge>;
-  if (status === "parcial") return <Badge variant="outline" className="text-[10px]">Parcial</Badge>;
-  if (status === "atrasado") return <Badge variant="destructive" className="text-[10px]">Atrasado</Badge>;
-  if (status === "cancelado") return <Badge variant="outline" className="text-[10px]">Cancelado</Badge>;
-  return <Badge variant="outline" className="text-[10px]">Pendente</Badge>;
+  if (status === "recebido")
+    return (
+      <Badge variant="secondary" className="text-[10px]">
+        Recebido
+      </Badge>
+    );
+  if (status === "parcial")
+    return (
+      <Badge variant="outline" className="text-[10px]">
+        Parcial
+      </Badge>
+    );
+  if (status === "atrasado")
+    return (
+      <Badge variant="destructive" className="text-[10px]">
+        Atrasado
+      </Badge>
+    );
+  if (status === "cancelado")
+    return (
+      <Badge variant="outline" className="text-[10px]">
+        Cancelado
+      </Badge>
+    );
+  return (
+    <Badge variant="outline" className="text-[10px]">
+      Pendente
+    </Badge>
+  );
 }
 
 function ListaContasPagar({ pacote }: { pacote: PacoteContador }) {
   const { pagas, pendentes, atrasadas } = pacote.contasAPagar;
   const todas = [...atrasadas, ...pendentes, ...pagas];
   if (todas.length === 0) {
-    return (
-      <p className="text-xs text-muted-foreground">
-        Sem contas a pagar no período.
-      </p>
-    );
+    return <p className="text-xs text-muted-foreground">Sem contas a pagar no período.</p>;
   }
   return (
     <ul className="divide-y rounded-xl border bg-card text-xs">
       {todas.map((c) => (
-        <li
-          key={c.id}
-          className="flex items-center justify-between gap-2 p-2"
-        >
+        <li key={c.id} className="flex items-center justify-between gap-2 p-2">
           <div className="min-w-0">
             <p className="truncate font-medium">{c.descricao}</p>
             <p className="text-[11px] text-muted-foreground">
@@ -855,27 +816,18 @@ function ListaContasReceber({ pacote }: { pacote: PacoteContador }) {
   const { recebidas, pendentes, atrasadas, parciais } = pacote.contasAReceber;
   const todas = [...atrasadas, ...parciais, ...pendentes, ...recebidas];
   if (todas.length === 0) {
-    return (
-      <p className="text-xs text-muted-foreground">
-        Sem contas a receber no período.
-      </p>
-    );
+    return <p className="text-xs text-muted-foreground">Sem contas a receber no período.</p>;
   }
   return (
     <ul className="divide-y rounded-xl border bg-card text-xs">
       {todas.map((c) => (
-        <li
-          key={c.id}
-          className="flex items-center justify-between gap-2 p-2"
-        >
+        <li key={c.id} className="flex items-center justify-between gap-2 p-2">
           <div className="min-w-0">
             <p className="truncate font-medium">{c.descricao}</p>
             <p className="text-[11px] text-muted-foreground">
               Previsto {format(parseISO(c.dataPrevista), "dd/MM/yyyy")}
               {c.clienteNome ? ` · ${c.clienteNome}` : ""}
-              {c.status === "parcial"
-                ? ` · Restante ${formatBRL(c.valorRestante)}`
-                : ""}
+              {c.status === "parcial" ? ` · Restante ${formatBRL(c.valorRestante)}` : ""}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -946,10 +898,7 @@ function Pendencias({ pacote }: { pacote: PacoteContador }) {
   return (
     <ul className="space-y-1.5 text-xs">
       {items.map((it) => (
-        <li
-          key={it.key}
-          className="flex items-start gap-2 rounded-lg border bg-card p-2"
-        >
+        <li key={it.key} className="flex items-start gap-2 rounded-lg border bg-card p-2">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
           <span>{it.texto}</span>
         </li>

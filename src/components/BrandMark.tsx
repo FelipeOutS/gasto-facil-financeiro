@@ -63,9 +63,7 @@ export function BrandMark({
   const SYMBOL_FALLBACK_DARK = SOURCES.symbol.dark;
   const SYMBOL_FALLBACK_LIGHT = SOURCES.symbol.light;
 
-  const onErrorFallback = (fallback: string) => (
-    e: React.SyntheticEvent<HTMLImageElement>,
-  ) => {
+  const onErrorFallback = (fallback: string) => (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
     if (img.src.endsWith(fallback)) return;
     img.src = fallback;
@@ -78,10 +76,7 @@ export function BrandMark({
         alt={imgAlt}
         aria-hidden={ariaHidden}
         onError={onErrorFallback(SYMBOL_FALLBACK_DARK)}
-        className={cn(
-          "hidden dark:block w-auto max-w-full object-contain select-none",
-          className,
-        )}
+        className={cn("hidden dark:block w-auto max-w-full object-contain select-none", className)}
         draggable={false}
       />
       <img
@@ -89,10 +84,7 @@ export function BrandMark({
         alt={imgAlt}
         aria-hidden={ariaHidden}
         onError={onErrorFallback(SYMBOL_FALLBACK_LIGHT)}
-        className={cn(
-          "block dark:hidden w-auto max-w-full object-contain select-none",
-          className,
-        )}
+        className={cn("block dark:hidden w-auto max-w-full object-contain select-none", className)}
         draggable={false}
       />
     </>

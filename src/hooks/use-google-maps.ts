@@ -38,8 +38,7 @@ export function useGoogleMaps(): UseGoogleMapsResult {
   const applyMarkers = useCallback(() => {
     const map = mapRef.current;
     const pending = pendingMarkersRef.current;
-    const maps = (window as unknown as { google?: { maps?: typeof google.maps } })
-      .google?.maps;
+    const maps = (window as unknown as { google?: { maps?: typeof google.maps } }).google?.maps;
     if (!map || !maps || !pending) return;
 
     markersRef.current.forEach((m) => m.setMap(null));
@@ -75,8 +74,7 @@ export function useGoogleMaps(): UseGoogleMapsResult {
       return;
     }
     if (!containerRef.current) return;
-    const maps = (window as unknown as { google?: { maps?: typeof google.maps } })
-      .google?.maps;
+    const maps = (window as unknown as { google?: { maps?: typeof google.maps } }).google?.maps;
     if (!maps) return;
     try {
       mapRef.current = new maps.Map(containerRef.current, {

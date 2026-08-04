@@ -94,7 +94,11 @@ export function sanitizeReason(raw: unknown): string | null {
   return trimmed;
 }
 
-function validateNumberField(v: unknown): { ok: true; value: number } | { ok: false; err: "invalid_number" | "negative_value" | "value_too_large" } {
+function validateNumberField(
+  v: unknown,
+):
+  | { ok: true; value: number }
+  | { ok: false; err: "invalid_number" | "negative_value" | "value_too_large" } {
   if (typeof v !== "number") return { ok: false, err: "invalid_number" };
   if (!Number.isFinite(v)) return { ok: false, err: "invalid_number" };
   if (!Number.isInteger(v)) return { ok: false, err: "invalid_number" };
@@ -223,7 +227,10 @@ export async function updatePlanQuota(
     if (curErr) return { ok: false, error: "db_error" };
     if (!current) return { ok: false, error: "unknown_plan" };
 
-    const merged = { ...(current as Record<string, unknown>), ...(val.patch as Record<string, unknown>) };
+    const merged = {
+      ...(current as Record<string, unknown>),
+      ...(val.patch as Record<string, unknown>),
+    };
     const inD = Number(merged.daily_inbound_limit ?? 0);
     const inM = Number(merged.inbound_monthly_limit ?? 0);
     const outD = Number(merged.daily_outbound_limit ?? 0);

@@ -35,9 +35,7 @@ export function SectionHeader({
       <div className="min-w-0 flex-1">
         <h2 className={cn("leading-tight", sizeClasses[size])}>{title}</h2>
         {description && (
-          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-            {description}
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">{description}</p>
         )}
       </div>
       {action && <div className="shrink-0">{action}</div>}

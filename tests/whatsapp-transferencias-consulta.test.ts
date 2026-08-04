@@ -7,9 +7,8 @@
 import { test, expect, describe, beforeEach } from "bun:test";
 import { state } from "./_whatsapp-fake";
 
-const { detectConsultaIntent, handleConsulta } = await import(
-  "../src/server/whatsapp-consultas.server"
-);
+const { detectConsultaIntent, handleConsulta } =
+  await import("../src/server/whatsapp-consultas.server");
 
 const USER = "u1";
 
@@ -127,8 +126,28 @@ describe("WA-Q-Transferencias — handler é 100% read-only", () => {
 
   test("ordena por data DESC (mais recente primeiro)", async () => {
     state.transferenciasData = [
-      { id: "a", user_id: USER, descricao: "antigo", valor: 100, data: "2026-05-01", horario: null, origem: "A", destino: "B", observacao: null },
-      { id: "b", user_id: USER, descricao: "recente", valor: 100, data: "2026-06-30", horario: null, origem: "C", destino: "D", observacao: null },
+      {
+        id: "a",
+        user_id: USER,
+        descricao: "antigo",
+        valor: 100,
+        data: "2026-05-01",
+        horario: null,
+        origem: "A",
+        destino: "B",
+        observacao: null,
+      },
+      {
+        id: "b",
+        user_id: USER,
+        descricao: "recente",
+        valor: 100,
+        data: "2026-06-30",
+        horario: null,
+        origem: "C",
+        destino: "D",
+        observacao: null,
+      },
     ];
     const out = await handleConsulta(USER, "listar_transferencias");
     const idxRecente = out.resposta.indexOf("30/06/2026");
@@ -158,11 +177,28 @@ describe("WA-Q-Transferencias — handler é 100% read-only", () => {
 
   test("nenhuma escrita em gastos, receitas, recorrências, contas ou transferências", async () => {
     state.transferenciasData = [
-      { id: "t1", user_id: USER, descricao: null, valor: 100, data: "2026-06-01", horario: null, origem: "A", destino: "B", observacao: null },
+      {
+        id: "t1",
+        user_id: USER,
+        descricao: null,
+        valor: 100,
+        data: "2026-06-01",
+        horario: null,
+        origem: "A",
+        destino: "B",
+        observacao: null,
+      },
     ];
     await handleConsulta(USER, "listar_transferencias");
     const escritas = state.inserts.filter((i) =>
-      ["gastos", "receitas", "recorrencias", "contas_a_pagar", "contas_a_receber", "transferencias_internas"].includes(i.table)
+      [
+        "gastos",
+        "receitas",
+        "recorrencias",
+        "contas_a_pagar",
+        "contas_a_receber",
+        "transferencias_internas",
+      ].includes(i.table),
     );
     expect(escritas.length).toBe(0);
   });

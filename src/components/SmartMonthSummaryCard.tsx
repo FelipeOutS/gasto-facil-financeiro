@@ -43,8 +43,8 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
       } else {
         setReply(res.reply);
       }
-    } catch (e: any) {
-      const msg = typeof e?.message === "string" && e.message ? e.message : t("smartSummary.errorFallback");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : t("smartSummary.errorFallback");
       setError(msg);
     } finally {
       setLoading(false);
@@ -64,7 +64,10 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
       setLockOpen(true);
       return;
     }
-    void navigate({ to: "/gasto-ai", search: { q: t("smartSummary.suggestion") } as any });
+    void navigate({
+      to: "/gasto-ai",
+      search: { q: t("smartSummary.suggestion") } as Record<string, unknown>,
+    });
   }
 
   return (
@@ -112,10 +115,23 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
             <div className="flex items-start gap-2">
               <Lock className="mt-0.5 h-4 w-4 text-primary" />
               <p className="text-sm text-foreground/80">
-                <Trans i18nKey="smartSummary.locked" t={t} components={[<strong key="0" />, <span key="1" />, <strong key="2" />, <span key="3" />, <strong key="4" />]} />
+                <Trans
+                  i18nKey="smartSummary.locked"
+                  t={t}
+                  components={[
+                    <strong key="0" />,
+                    <span key="1" />,
+                    <strong key="2" />,
+                    <span key="3" />,
+                    <strong key="4" />,
+                  ]}
+                />
               </p>
             </div>
-            <Button onClick={() => setLockOpen(true)} className="w-full rounded-2xl bg-brand-grad sm:w-auto">
+            <Button
+              onClick={() => setLockOpen(true)}
+              className="w-full rounded-2xl bg-brand-grad sm:w-auto"
+            >
               <Sparkles className="mr-2 h-4 w-4" />
               {t("smartSummary.unlock")}
             </Button>
@@ -128,10 +144,14 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
         ) : error ? (
           <div className="rounded-2xl border border-amber-500/25 bg-amber-500/5 p-3">
             <p className="text-sm font-medium text-foreground/90">
-              {t("smartSummary.unavailableTitle", { defaultValue: "Resumo temporariamente indisponível" })}
+              {t("smartSummary.unavailableTitle", {
+                defaultValue: "Resumo temporariamente indisponível",
+              })}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {t("smartSummary.unavailableBody", { defaultValue: "Aguarde alguns instantes e tente novamente." })}
+              {t("smartSummary.unavailableBody", {
+                defaultValue: "Aguarde alguns instantes e tente novamente.",
+              })}
             </p>
             <button
               type="button"
@@ -142,7 +162,6 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
               {t("smartSummary.retry")}
             </button>
           </div>
-
         ) : reply ? (
           <div className="ai-markdown text-sm leading-relaxed text-foreground/90">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{reply}</ReactMarkdown>
@@ -153,9 +172,7 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
       </div>
 
       <div className="relative mt-4 flex flex-wrap items-center justify-between gap-2 pt-1">
-        <p className="text-[11px] text-muted-foreground">
-          {t("smartSummary.tagline")}
-        </p>
+        <p className="text-[11px] text-muted-foreground">{t("smartSummary.tagline")}</p>
         <Button
           variant="outline"
           size="sm"

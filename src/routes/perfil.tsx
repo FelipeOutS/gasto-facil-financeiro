@@ -70,8 +70,7 @@ function PerfilPage() {
   }, [profile]);
 
   const tipo = form.tipo_cadastro;
-  const tipoLabel = (k: TipoCadastro) =>
-    k ? t(`tipo.${k}`) : t("tipo.naoDefinido");
+  const tipoLabel = (k: TipoCadastro) => (k ? t(`tipo.${k}`) : t("tipo.naoDefinido"));
 
   const erroValidacao = useMemo<string | null>(() => {
     if (!tipo) return null;
@@ -80,15 +79,12 @@ function PerfilPage() {
       if (form.cpf && !isValidCPF(form.cpf)) return t("validation.cpf");
     }
     if (tipo === "mei") {
-      if (!form.responsavel_nome.trim() && !form.nome.trim())
-        return t("validation.responsavel");
-      if (form.cnpj && !isValidCNPJ(form.cnpj))
-        return t("validation.cnpj");
+      if (!form.responsavel_nome.trim() && !form.nome.trim()) return t("validation.responsavel");
+      if (form.cnpj && !isValidCNPJ(form.cnpj)) return t("validation.cnpj");
     }
     if (tipo === "empresa") {
       if (!form.razao_social.trim()) return t("validation.razao");
-      if (form.cnpj && !isValidCNPJ(form.cnpj))
-        return t("validation.cnpj");
+      if (form.cnpj && !isValidCNPJ(form.cnpj)) return t("validation.cnpj");
     }
     return null;
   }, [tipo, form, t]);
@@ -113,10 +109,8 @@ function PerfilPage() {
       cpf: tipo === "pessoa_fisica" && form.cpf ? onlyDigits(form.cpf) : null,
       cnpj: tipo !== "pessoa_fisica" && form.cnpj ? onlyDigits(form.cnpj) : null,
       razao_social: tipo === "empresa" ? form.razao_social.trim() || null : null,
-      nome_fantasia:
-        tipo !== "pessoa_fisica" ? form.nome_fantasia.trim() || null : null,
-      responsavel_nome:
-        tipo !== "pessoa_fisica" ? form.responsavel_nome.trim() || null : null,
+      nome_fantasia: tipo !== "pessoa_fisica" ? form.nome_fantasia.trim() || null : null,
+      responsavel_nome: tipo !== "pessoa_fisica" ? form.responsavel_nome.trim() || null : null,
       telefone: form.telefone ? onlyDigits(form.telefone) : null,
     };
     const { error } = await updateProfile(payload);
@@ -141,9 +135,7 @@ function PerfilPage() {
         </Link>
         <div>
           <h1 className="text-xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-xs text-muted-foreground">
-            {t("subtitle")}
-          </p>
+          <p className="text-xs text-muted-foreground">{t("subtitle")}</p>
         </div>
       </header>
 
@@ -151,9 +143,7 @@ function PerfilPage() {
         {/* Foto de perfil */}
         <section className="rounded-3xl border border-border bg-card p-4 shadow-card">
           <h2 className="text-sm font-semibold">{t("avatar.title")}</h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t("avatar.desc")}
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{t("avatar.desc")}</p>
           <div className="mt-4">
             <AvatarUpload />
           </div>
@@ -162,9 +152,7 @@ function PerfilPage() {
         {/* Tipo de cadastro */}
         <section className="rounded-3xl border border-border bg-card p-4 shadow-card">
           <h2 className="text-sm font-semibold">{t("tipo.title")}</h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t("tipo.subtitle")}
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{t("tipo.subtitle")}</p>
           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
             <TipoCard
               icon={<UserIcon className="h-4 w-4" />}
@@ -210,9 +198,7 @@ function PerfilPage() {
                   <Input
                     inputMode="numeric"
                     value={form.cpf}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, cpf: maskCPF(e.target.value) }))
-                    }
+                    onChange={(e) => setForm((f) => ({ ...f, cpf: maskCPF(e.target.value) }))}
                     placeholder="000.000.000-00"
                     aria-invalid={Boolean(form.cpf) && !isValidCPF(form.cpf)}
                   />
@@ -225,18 +211,14 @@ function PerfilPage() {
                 <Field label={t("data.responsavelNome")} required>
                   <Input
                     value={form.responsavel_nome}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, responsavel_nome: e.target.value }))
-                    }
+                    onChange={(e) => setForm((f) => ({ ...f, responsavel_nome: e.target.value }))}
                     placeholder={t("data.responsavelPlaceholderMEI")}
                   />
                 </Field>
                 <Field label={t("data.nomeFantasia")}>
                   <Input
                     value={form.nome_fantasia}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, nome_fantasia: e.target.value }))
-                    }
+                    onChange={(e) => setForm((f) => ({ ...f, nome_fantasia: e.target.value }))}
                     placeholder={t("data.optional")}
                   />
                 </Field>
@@ -244,9 +226,7 @@ function PerfilPage() {
                   <Input
                     inputMode="numeric"
                     value={form.cnpj}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, cnpj: maskCNPJ(e.target.value) }))
-                    }
+                    onChange={(e) => setForm((f) => ({ ...f, cnpj: maskCNPJ(e.target.value) }))}
                     placeholder="00.000.000/0000-00"
                     aria-invalid={Boolean(form.cnpj) && !isValidCNPJ(form.cnpj)}
                   />
@@ -259,27 +239,21 @@ function PerfilPage() {
                 <Field label={t("data.razaoSocial")} required>
                   <Input
                     value={form.razao_social}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, razao_social: e.target.value }))
-                    }
+                    onChange={(e) => setForm((f) => ({ ...f, razao_social: e.target.value }))}
                     placeholder={t("data.razaoPlaceholder")}
                   />
                 </Field>
                 <Field label={t("data.nomeFantasia")}>
                   <Input
                     value={form.nome_fantasia}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, nome_fantasia: e.target.value }))
-                    }
+                    onChange={(e) => setForm((f) => ({ ...f, nome_fantasia: e.target.value }))}
                     placeholder={t("data.optional")}
                   />
                 </Field>
                 <Field label={t("data.responsavelNomeOpt")}>
                   <Input
                     value={form.responsavel_nome}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, responsavel_nome: e.target.value }))
-                    }
+                    onChange={(e) => setForm((f) => ({ ...f, responsavel_nome: e.target.value }))}
                     placeholder={t("data.responsavelPlaceholderEmpresa")}
                   />
                 </Field>
@@ -287,9 +261,7 @@ function PerfilPage() {
                   <Input
                     inputMode="numeric"
                     value={form.cnpj}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, cnpj: maskCNPJ(e.target.value) }))
-                    }
+                    onChange={(e) => setForm((f) => ({ ...f, cnpj: maskCNPJ(e.target.value) }))}
                     placeholder="00.000.000/0000-00"
                     aria-invalid={Boolean(form.cnpj) && !isValidCNPJ(form.cnpj)}
                   />
@@ -305,9 +277,7 @@ function PerfilPage() {
               <Input
                 inputMode="numeric"
                 value={form.telefone}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, telefone: maskTelefone(e.target.value) }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, telefone: maskTelefone(e.target.value) }))}
                 placeholder={t("data.telefonePlaceholder")}
               />
             </Field>

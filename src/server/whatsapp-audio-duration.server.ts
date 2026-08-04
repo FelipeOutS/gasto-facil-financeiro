@@ -35,11 +35,7 @@ export type AudioDurationResult = {
   reason: DurationReason;
 };
 
-export type AudioDurationBucket =
-  | "under_30s"
-  | "30_to_60s"
-  | "60_to_120s"
-  | "over_limit";
+export type AudioDurationBucket = "under_30s" | "30_to_60s" | "60_to_120s" | "over_limit";
 
 export function bucketForDuration(
   seconds: number | null,
@@ -58,7 +54,7 @@ function readU16BE(b: Uint8Array, o: number): number {
   return (b[o] << 8) | b[o + 1];
 }
 function readU32BE(b: Uint8Array, o: number): number {
-  return ((b[o] * 0x1000000) + (b[o + 1] << 16) + (b[o + 2] << 8) + b[o + 3]) >>> 0;
+  return (b[o] * 0x1000000 + (b[o + 1] << 16) + (b[o + 2] << 8) + b[o + 3]) >>> 0;
 }
 function readU32LE(b: Uint8Array, o: number): number {
   return (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] * 0x1000000)) >>> 0;
@@ -114,9 +110,7 @@ function durationOgg(buf: Uint8Array): AudioDurationResult {
   // Caminhe do fim para a última página "OggS" e leia granule_position
   // (8 bytes LE no offset 6 do header da página).
   for (let i = buf.length - 27; i >= 0; i--) {
-    if (
-      buf[i] === 0x4f && buf[i + 1] === 0x67 && buf[i + 2] === 0x67 && buf[i + 3] === 0x53
-    ) {
+    if (buf[i] === 0x4f && buf[i + 1] === 0x67 && buf[i + 2] === 0x67 && buf[i + 3] === 0x53) {
       const granule = readU64LEAsNumber(buf, i + 6);
       if (granule <= 0) return { ok: false, durationSeconds: null, reason: "duration_unavailable" };
       const samples = Math.max(0, granule - preSkip);
@@ -139,8 +133,7 @@ function durationWav(buf: Uint8Array): AudioDurationResult {
   let byteRate = 0;
   let dataSize = 0;
   while (off + 8 <= buf.length) {
-    const id =
-      String.fromCharCode(buf[off], buf[off + 1], buf[off + 2], buf[off + 3]);
+    const id = String.fromCharCode(buf[off], buf[off + 1], buf[off + 2], buf[off + 3]);
     const size = readU32LE(buf, off + 4);
     if (id === "fmt ") {
       if (off + 8 + 16 > buf.length) break;
@@ -174,8 +167,7 @@ function durationFlac(buf: Uint8Array): AudioDurationResult {
   }
   const si = 8; // início do payload STREAMINFO
   // sample rate: 20 bits começando em byte 10 do payload (si + 10)
-  const sr =
-    (buf[si + 10] << 12) | (buf[si + 11] << 4) | (buf[si + 12] >> 4);
+  const sr = (buf[si + 10] << 12) | (buf[si + 11] << 4) | (buf[si + 12] >> 4);
   // total samples: 36 bits — 4 bits baixos do byte 13 + 32 bits do byte 14..17
   const totalHi = buf[si + 13] & 0x0f;
   const totalLo = readU32BE(buf, si + 14);
@@ -190,7 +182,12 @@ function durationFlac(buf: Uint8Array): AudioDurationResult {
 
 function durationMp4(buf: Uint8Array): AudioDurationResult {
   // Procura átomos no nível raiz; entra em moov → trak/mvhd; usa mvhd.
-  function findAtom(b: Uint8Array, name: string, start: number, end: number): { off: number; size: number } | null {
+  function findAtom(
+    b: Uint8Array,
+    name: string,
+    start: number,
+    end: number,
+  ): { off: number; size: number } | null {
     let o = start;
     while (o + 8 <= end) {
       const size = readU32BE(b, o);
@@ -230,7 +227,10 @@ function durationMp4(buf: Uint8Array): AudioDurationResult {
 
 // ---------- MP3 ----------
 
-function mp3FrameInfo(b: Uint8Array, o: number): { samples: number; sampleRate: number; bitrate: number; frameLen: number } | null {
+function mp3FrameInfo(
+  b: Uint8Array,
+  o: number,
+): { samples: number; sampleRate: number; bitrate: number; frameLen: number } | null {
   if (o + 4 > b.length) return null;
   if (b[o] !== 0xff || (b[o + 1] & 0xe0) !== 0xe0) return null;
   const versionId = (b[o + 1] >> 3) & 0x03; // 0=MPEG2.5, 2=MPEG2, 3=MPEG1
@@ -270,10 +270,7 @@ function durationMp3(buf: Uint8Array): AudioDurationResult {
   let start = 0;
   if (buf.length > 10 && buf[0] === 0x49 && buf[1] === 0x44 && buf[2] === 0x33) {
     const size =
-      ((buf[6] & 0x7f) << 21) |
-      ((buf[7] & 0x7f) << 14) |
-      ((buf[8] & 0x7f) << 7) |
-      (buf[9] & 0x7f);
+      ((buf[6] & 0x7f) << 21) | ((buf[7] & 0x7f) << 14) | ((buf[8] & 0x7f) << 7) | (buf[9] & 0x7f);
     start = 10 + size;
   }
   // Procurar sync
@@ -302,7 +299,7 @@ function durationMp3(buf: Uint8Array): AudioDurationResult {
   })();
   if (xingOff > 0 && xingOff + 8 <= buf.length) {
     const flags = readU32BE(buf, xingOff + 4);
-    if ((flags & 0x01) && xingOff + 12 <= buf.length) {
+    if (flags & 0x01 && xingOff + 12 <= buf.length) {
       const frames = readU32BE(buf, xingOff + 8);
       if (frames > 0) {
         const seconds = (frames * frame.samples) / frame.sampleRate;
@@ -351,9 +348,7 @@ function durationWebm(buf: Uint8Array): AudioDurationResult {
       }
     }
     // TimecodeScale: 0x2A 0xD7 0xB1
-    if (
-      buf[i] === 0x2a && buf[i + 1] === 0xd7 && buf[i + 2] === 0xb1
-    ) {
+    if (buf[i] === 0x2a && buf[i + 1] === 0xd7 && buf[i + 2] === 0xb1) {
       const sizeByte = buf[i + 3];
       if (sizeByte >= 0x80) {
         const size = sizeByte & 0x7f;

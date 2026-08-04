@@ -4,7 +4,17 @@ import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { PLAN_LABEL } from "@/lib/plans";
 import { usePlan } from "@/lib/use-plan";
-import { getAdminDashboard, deleteUserById, grantPlanManually, setUserStatusManually, diagnoseMpPayment, reconcileMpPaymentById, listRecentPaymentEvents, type AdminDashboardData, type AdminUserRow } from "@/lib/admin.functions";
+import {
+  getAdminDashboard,
+  deleteUserById,
+  grantPlanManually,
+  setUserStatusManually,
+  diagnoseMpPayment,
+  reconcileMpPaymentById,
+  listRecentPaymentEvents,
+  type AdminDashboardData,
+  type AdminUserRow,
+} from "@/lib/admin.functions";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -28,12 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -73,10 +78,7 @@ import {
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
-    meta: [
-      { title: "Admin — Gasto Inteligente" },
-      { name: "robots", content: "noindex,nofollow" },
-    ],
+    meta: [{ title: "Admin — Gasto Inteligente" }, { name: "robots", content: "noindex,nofollow" }],
   }),
   component: AdminPage,
 });
@@ -114,9 +116,14 @@ function getDisplayStatus(u: AdminUserRow): DisplayStatus {
   const paid = u.last_payment_status === "approved" || u.last_payment_status === "paid";
   const hasPlan = !!u.plano && u.plano !== "free" && u.plano !== "sem_assinatura";
   if (u.status === "ativo" && paid && hasPlan) return "ativo";
-  if (u.status === "cancelado" || u.status === "vencido" || u.status === "expirado" ||
-      u.last_payment_status === "rejected" || u.last_payment_status === "expired" ||
-      u.last_payment_status === "cancelled") {
+  if (
+    u.status === "cancelado" ||
+    u.status === "vencido" ||
+    u.status === "expirado" ||
+    u.last_payment_status === "rejected" ||
+    u.last_payment_status === "expired" ||
+    u.last_payment_status === "cancelled"
+  ) {
     return "cancelado_vencido";
   }
   // "Aguardando pagamento" só vale se o usuário escolheu plano e o pagamento
@@ -215,7 +222,6 @@ function AdminPage() {
     return (row?.plano ?? "").toLowerCase() === "admin_master";
   };
 
-
   async function confirmDelete() {
     if (!toDelete) return;
     setDeleting(true);
@@ -239,7 +245,8 @@ function AdminPage() {
     const sd = periodToDate(filterPeriod);
     const q = search.trim().toLowerCase();
     return usersList.filter((u) => {
-      if (q && !(u.email.toLowerCase().includes(q) || (u.nome ?? "").toLowerCase().includes(q))) return false;
+      if (q && !(u.email.toLowerCase().includes(q) || (u.nome ?? "").toLowerCase().includes(q)))
+        return false;
       if (filterPlan !== "all" && u.plano !== filterPlan) return false;
       if (filterStatus !== "all" && getDisplayStatus(u) !== filterStatus) return false;
       if (filterMethod !== "all" && u.last_payment_method !== filterMethod) return false;
@@ -257,7 +264,10 @@ function AdminPage() {
       const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
       map.set(key, (map.get(key) ?? 0) + (p.amount_cents ?? 0));
     }
-    return [...map.entries()].sort().slice(-12).map(([k, v]) => ({ mes: k, valor: v / 100 }));
+    return [...map.entries()]
+      .sort()
+      .slice(-12)
+      .map(([k, v]) => ({ mes: k, valor: v / 100 }));
   }, [paymentsList]);
 
   const usersByMonth = useMemo(() => {
@@ -267,7 +277,10 @@ function AdminPage() {
       const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
       map.set(key, (map.get(key) ?? 0) + 1);
     }
-    return [...map.entries()].sort().slice(-12).map(([k, v]) => ({ mes: k, total: v }));
+    return [...map.entries()]
+      .sort()
+      .slice(-12)
+      .map(([k, v]) => ({ mes: k, total: v }));
   }, [usersList]);
 
   const planMix = useMemo(() => {
@@ -276,7 +289,10 @@ function AdminPage() {
       if (p.status !== "approved" && p.status !== "paid") continue;
       map.set(p.plano, (map.get(p.plano) ?? 0) + 1);
     }
-    return [...map.entries()].map(([k, v]) => ({ name: PLAN_LABEL[k as keyof typeof PLAN_LABEL] ?? k, value: v }));
+    return [...map.entries()].map(([k, v]) => ({
+      name: PLAN_LABEL[k as keyof typeof PLAN_LABEL] ?? k,
+      value: v,
+    }));
   }, [paymentsList]);
 
   const methodMix = useMemo(() => {
@@ -285,7 +301,10 @@ function AdminPage() {
       if (p.status !== "approved" && p.status !== "paid") continue;
       map.set(p.method, (map.get(p.method) ?? 0) + 1);
     }
-    return [...map.entries()].map(([k, v]) => ({ name: k === "pix" ? "Pix" : k === "card" ? "Cartão" : k, value: v }));
+    return [...map.entries()].map(([k, v]) => ({
+      name: k === "pix" ? "Pix" : k === "card" ? "Cartão" : k,
+      value: v,
+    }));
   }, [paymentsList]);
 
   const statusMix = useMemo(() => {
@@ -318,7 +337,9 @@ function AdminPage() {
     const headers = Object.keys(rows[0] ?? { vazio: "" });
     const csv = [
       headers.join(";"),
-      ...rows.map((r) => headers.map((h) => `"${String((r as any)[h] ?? "").replace(/"/g, '""')}"`).join(";")),
+      ...rows.map((r) =>
+        headers.map((h) => `"${String((r as any)[h] ?? "").replace(/"/g, '""')}"`).join(";"),
+      ),
     ].join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -349,7 +370,9 @@ function AdminPage() {
   if (authorized !== true || loading) {
     return (
       <MobileShell wide>
-        <div className="py-10 text-center text-sm text-muted-foreground">Carregando dados administrativos…</div>
+        <div className="py-10 text-center text-sm text-muted-foreground">
+          Carregando dados administrativos…
+        </div>
       </MobileShell>
     );
   }
@@ -369,7 +392,9 @@ function AdminPage() {
   // que reflete corretamente "Plano ativo / Cancelado-Vencido / Conta criada".
   const commonUsers = usersList.filter((u) => !isProtectedAdmin(u.email));
   const activeCount = commonUsers.filter((u) => getDisplayStatus(u) === "ativo").length;
-  const cancelledCount = commonUsers.filter((u) => getDisplayStatus(u) === "cancelado_vencido").length;
+  const cancelledCount = commonUsers.filter(
+    (u) => getDisplayStatus(u) === "cancelado_vencido",
+  ).length;
   const noPlanCount = commonUsers.filter((u) => {
     const ds = getDisplayStatus(u);
     return ds === "conta_criada" || ds === "aguardando";
@@ -380,10 +405,30 @@ function AdminPage() {
     { label: "Plano ativo", value: activeCount, icon: CheckCircle2, color: "text-emerald-500" },
     { label: "Sem plano", value: noPlanCount, icon: XCircle, color: "text-muted-foreground" },
     { label: "Cancelados/vencidos", value: cancelledCount, icon: Ban, color: "text-orange-500" },
-    { label: "Receita total", value: fmtMoney(t.revenueAllCents), icon: DollarSign, color: "text-emerald-500" },
-    { label: "Receita do mês", value: fmtMoney(t.revenueMonthCents), icon: TrendingUp, color: "text-emerald-500" },
-    { label: "Recorrente (MRR)", value: fmtMoney(t.mrrCents), icon: Repeat, color: "text-violet-500" },
-    { label: "Plano mais vendido", value: t.topPlan ? (PLAN_LABEL[t.topPlan as keyof typeof PLAN_LABEL] ?? t.topPlan) : "—", icon: Crown, color: "text-amber-500" },
+    {
+      label: "Receita total",
+      value: fmtMoney(t.revenueAllCents),
+      icon: DollarSign,
+      color: "text-emerald-500",
+    },
+    {
+      label: "Receita do mês",
+      value: fmtMoney(t.revenueMonthCents),
+      icon: TrendingUp,
+      color: "text-emerald-500",
+    },
+    {
+      label: "Recorrente (MRR)",
+      value: fmtMoney(t.mrrCents),
+      icon: Repeat,
+      color: "text-violet-500",
+    },
+    {
+      label: "Plano mais vendido",
+      value: t.topPlan ? (PLAN_LABEL[t.topPlan as keyof typeof PLAN_LABEL] ?? t.topPlan) : "—",
+      icon: Crown,
+      color: "text-amber-500",
+    },
   ];
 
   const PIE_COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444", "#06b6d4", "#ec4899"];
@@ -407,11 +452,15 @@ function AdminPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Painel Admin</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground">Visão geral de usuários, planos e arrecadação.</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Visão geral de usuários, planos e arrecadação.
+            </p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <Button variant="outline" asChild className="gap-2 flex-1 sm:flex-none">
-              <a href="/admin/saude"><Activity className="h-4 w-4" /> Saúde do Sistema</a>
+              <a href="/admin/saude">
+                <Activity className="h-4 w-4" /> Saúde do Sistema
+              </a>
             </Button>
             <Button variant="outline" onClick={exportCsv} className="gap-2 flex-1 sm:flex-none">
               <Download className="h-4 w-4" /> Exportar CSV
@@ -432,11 +481,15 @@ function AdminPage() {
           {cards.map((c) => (
             <Card key={c.label}>
               <CardContent className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4">
-                <div className={`grid h-9 w-9 sm:h-10 sm:w-10 shrink-0 place-items-center rounded-xl bg-muted ${c.color}`}>
+                <div
+                  className={`grid h-9 w-9 sm:h-10 sm:w-10 shrink-0 place-items-center rounded-xl bg-muted ${c.color}`}
+                >
                   <c.icon className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] sm:text-[11px] uppercase tracking-wide text-muted-foreground leading-tight break-words">{c.label}</p>
+                  <p className="text-[10px] sm:text-[11px] uppercase tracking-wide text-muted-foreground leading-tight break-words">
+                    {c.label}
+                  </p>
                   <p className="text-sm sm:text-lg font-bold leading-tight truncate">{c.value}</p>
                 </div>
               </CardContent>
@@ -446,7 +499,9 @@ function AdminPage() {
 
         <div className="mt-4 sm:mt-6 grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2">
           <Card>
-            <CardHeader className="p-3 sm:p-6 sm:pb-2"><CardTitle className="text-sm">Receita por mês</CardTitle></CardHeader>
+            <CardHeader className="p-3 sm:p-6 sm:pb-2">
+              <CardTitle className="text-sm">Receita por mês</CardTitle>
+            </CardHeader>
             <CardContent className="h-56 sm:h-64 p-2 sm:p-6 sm:pt-0">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={revByMonth} margin={{ top: 5, right: 8, left: -10, bottom: 0 }}>
@@ -460,13 +515,22 @@ function AdminPage() {
                     itemStyle={tooltipStyle.itemStyle}
                     cursor={{ stroke: "hsl(var(--border))", strokeWidth: 1 }}
                   />
-                  <Line type="monotone" dataKey="valor" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5, stroke: "hsl(var(--background))", strokeWidth: 2 }} />
+                  <Line
+                    type="monotone"
+                    dataKey="valor"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    activeDot={{ r: 5, stroke: "hsl(var(--background))", strokeWidth: 2 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="p-3 sm:p-6 sm:pb-2"><CardTitle className="text-sm">Novos usuários por mês</CardTitle></CardHeader>
+            <CardHeader className="p-3 sm:p-6 sm:pb-2">
+              <CardTitle className="text-sm">Novos usuários por mês</CardTitle>
+            </CardHeader>
             <CardContent className="h-56 sm:h-64 p-2 sm:p-6 sm:pt-0">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={usersByMonth} margin={{ top: 5, right: 8, left: -10, bottom: 0 }}>
@@ -485,29 +549,45 @@ function AdminPage() {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="p-3 sm:p-6 sm:pb-2"><CardTitle className="text-sm">Planos vendidos</CardTitle></CardHeader>
+            <CardHeader className="p-3 sm:p-6 sm:pb-2">
+              <CardTitle className="text-sm">Planos vendidos</CardTitle>
+            </CardHeader>
             <CardContent className="h-60 sm:h-64 p-2 sm:p-6 sm:pt-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={planMix} dataKey="value" nameKey="name" outerRadius="65%">
-                    {planMix.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                    {planMix.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
                   </Pie>
-                  <Tooltip contentStyle={tooltipStyle.contentStyle} labelStyle={tooltipStyle.labelStyle} itemStyle={tooltipStyle.itemStyle} />
+                  <Tooltip
+                    contentStyle={tooltipStyle.contentStyle}
+                    labelStyle={tooltipStyle.labelStyle}
+                    itemStyle={tooltipStyle.itemStyle}
+                  />
                   <Legend verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="p-3 sm:p-6 sm:pb-2"><CardTitle className="text-sm">Pix vs Cartão / Status</CardTitle></CardHeader>
+            <CardHeader className="p-3 sm:p-6 sm:pb-2">
+              <CardTitle className="text-sm">Pix vs Cartão / Status</CardTitle>
+            </CardHeader>
             <CardContent className="p-2 sm:p-6 sm:pt-0 grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="h-52 sm:h-60">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={methodMix} dataKey="value" nameKey="name" outerRadius="60%">
-                      {methodMix.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                      {methodMix.map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
                     </Pie>
-                    <Tooltip contentStyle={tooltipStyle.contentStyle} labelStyle={tooltipStyle.labelStyle} itemStyle={tooltipStyle.itemStyle} />
+                    <Tooltip
+                      contentStyle={tooltipStyle.contentStyle}
+                      labelStyle={tooltipStyle.labelStyle}
+                      itemStyle={tooltipStyle.itemStyle}
+                    />
                     <Legend verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: 11 }} />
                   </PieChart>
                 </ResponsiveContainer>
@@ -516,9 +596,15 @@ function AdminPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={statusMix} dataKey="value" nameKey="name" outerRadius="60%">
-                      {statusMix.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                      {statusMix.map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
                     </Pie>
-                    <Tooltip contentStyle={tooltipStyle.contentStyle} labelStyle={tooltipStyle.labelStyle} itemStyle={tooltipStyle.itemStyle} />
+                    <Tooltip
+                      contentStyle={tooltipStyle.contentStyle}
+                      labelStyle={tooltipStyle.labelStyle}
+                      itemStyle={tooltipStyle.itemStyle}
+                    />
                     <Legend verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: 11 }} />
                   </PieChart>
                 </ResponsiveContainer>
@@ -532,17 +618,30 @@ function AdminPage() {
           <CardContent className="grid grid-cols-1 gap-2 sm:gap-3 p-3 sm:p-4 md:grid-cols-5">
             <div className="relative md:col-span-2">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input className="pl-8 w-full" placeholder="Buscar nome ou e-mail" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input
+                className="pl-8 w-full"
+                placeholder="Buscar nome ou e-mail"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
             <Select value={filterPlan} onValueChange={setFilterPlan}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="Plano" /></SelectTrigger>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Plano" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os planos</SelectItem>
-                {Object.entries(PLAN_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                {Object.entries(PLAN_LABEL).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>
+                    {v}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="ativo">Plano ativo</SelectItem>
@@ -552,7 +651,9 @@ function AdminPage() {
               </SelectContent>
             </Select>
             <Select value={filterMethod} onValueChange={setFilterMethod}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="Pagamento" /></SelectTrigger>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Pagamento" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas formas</SelectItem>
                 <SelectItem value="pix">Pix</SelectItem>
@@ -560,7 +661,9 @@ function AdminPage() {
               </SelectContent>
             </Select>
             <Select value={filterPeriod} onValueChange={setFilterPeriod}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="Período" /></SelectTrigger>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todo o período</SelectItem>
                 <SelectItem value="today">Hoje</SelectItem>
@@ -576,7 +679,9 @@ function AdminPage() {
 
         {/* Lista de usuários */}
         <Card className="mt-4">
-          <CardHeader className="p-3 sm:p-6"><CardTitle className="text-sm">Usuários ({filteredUsers.length})</CardTitle></CardHeader>
+          <CardHeader className="p-3 sm:p-6">
+            <CardTitle className="text-sm">Usuários ({filteredUsers.length})</CardTitle>
+          </CardHeader>
           <CardContent className="p-0">
             {/* Mobile: cards */}
             <div className="md:hidden flex flex-col gap-2 p-3">
@@ -594,12 +699,19 @@ function AdminPage() {
                         <p className="font-medium text-sm truncate">{u.nome ?? "—"}</p>
                         <p className="text-[11px] text-muted-foreground truncate">{u.email}</p>
                       </div>
-                      <Badge variant="outline" className={`text-[10px] shrink-0 ${STATUS_COLORS[ds]}`}>{STATUS_LABEL[ds]}</Badge>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] shrink-0 ${STATUS_COLORS[ds]}`}
+                      >
+                        {STATUS_LABEL[ds]}
+                      </Badge>
                     </div>
                     <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
                       <div className="min-w-0">
                         <span className="text-muted-foreground">Plano: </span>
-                        <span className="font-medium">{PLAN_LABEL[u.plano as keyof typeof PLAN_LABEL] ?? u.plano}</span>
+                        <span className="font-medium">
+                          {PLAN_LABEL[u.plano as keyof typeof PLAN_LABEL] ?? u.plano}
+                        </span>
                       </div>
                       <div className="min-w-0">
                         <span className="text-muted-foreground">Ciclo: </span>
@@ -608,7 +720,11 @@ function AdminPage() {
                       <div className="min-w-0">
                         <span className="text-muted-foreground">Pgto: </span>
                         <span className="font-medium">
-                          {u.last_payment_method === "pix" ? "Pix" : u.last_payment_method === "card" ? "Cartão" : "—"}
+                          {u.last_payment_method === "pix"
+                            ? "Pix"
+                            : u.last_payment_method === "card"
+                              ? "Cartão"
+                              : "—"}
                         </span>
                       </div>
                       <div className="min-w-0">
@@ -624,7 +740,10 @@ function AdminPage() {
                         <span className="font-medium">{fmtDate(u.next_payment_at)}</span>
                       </div>
                     </div>
-                    <div className="mt-2 flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                    <div
+                      className="mt-2 flex items-center justify-end gap-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Button
                         size="sm"
                         variant="ghost"
@@ -647,7 +766,9 @@ function AdminPage() {
                 );
               })}
               {filteredUsers.length === 0 && (
-                <p className="text-center text-sm text-muted-foreground py-6">Nenhum usuário encontrado.</p>
+                <p className="text-center text-sm text-muted-foreground py-6">
+                  Nenhum usuário encontrado.
+                </p>
               )}
             </div>
 
@@ -673,21 +794,35 @@ function AdminPage() {
                     const ds = getDisplayStatus(u);
                     const protectedRow = isProtectedAdmin(u.email) || u.user_id === user?.id;
                     return (
-                      <TableRow key={u.user_id} className="cursor-pointer" onClick={() => setSelected(u)}>
+                      <TableRow
+                        key={u.user_id}
+                        className="cursor-pointer"
+                        onClick={() => setSelected(u)}
+                      >
                         <TableCell className="font-medium">{u.nome ?? "—"}</TableCell>
                         <TableCell className="text-xs">{u.email}</TableCell>
                         <TableCell className="text-xs">{fmtDate(u.created_at)}</TableCell>
-                        <TableCell className="text-xs">{PLAN_LABEL[u.plano as keyof typeof PLAN_LABEL] ?? u.plano}</TableCell>
+                        <TableCell className="text-xs">
+                          {PLAN_LABEL[u.plano as keyof typeof PLAN_LABEL] ?? u.plano}
+                        </TableCell>
                         <TableCell className="text-xs">{u.periodicidade ?? "—"}</TableCell>
                         <TableCell className="text-xs">
                           {u.last_payment_method ? (
-                            <Badge variant="outline" className="text-[10px]">{u.last_payment_method === "pix" ? "Pix" : "Cartão"}</Badge>
-                          ) : "—"}
+                            <Badge variant="outline" className="text-[10px]">
+                              {u.last_payment_method === "pix" ? "Pix" : "Cartão"}
+                            </Badge>
+                          ) : (
+                            "—"
+                          )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[ds]}`}>{STATUS_LABEL[ds]}</Badge>
+                          <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[ds]}`}>
+                            {STATUS_LABEL[ds]}
+                          </Badge>
                         </TableCell>
-                        <TableCell className="text-right text-xs">{fmtMoney(u.total_paid_cents)}</TableCell>
+                        <TableCell className="text-right text-xs">
+                          {fmtMoney(u.total_paid_cents)}
+                        </TableCell>
                         <TableCell className="text-xs">{fmtDate(u.next_payment_at)}</TableCell>
                         <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1">
@@ -705,7 +840,11 @@ function AdminPage() {
                               variant="ghost"
                               className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
                               disabled={protectedRow}
-                              title={protectedRow ? "Não é permitido excluir este usuário" : "Excluir usuário"}
+                              title={
+                                protectedRow
+                                  ? "Não é permitido excluir este usuário"
+                                  : "Excluir usuário"
+                              }
                               onClick={() => setToDelete(u)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -716,7 +855,14 @@ function AdminPage() {
                     );
                   })}
                   {filteredUsers.length === 0 && (
-                    <TableRow><TableCell colSpan={10} className="text-center text-sm text-muted-foreground py-6">Nenhum usuário encontrado.</TableCell></TableRow>
+                    <TableRow>
+                      <TableCell
+                        colSpan={10}
+                        className="text-center text-sm text-muted-foreground py-6"
+                      >
+                        Nenhum usuário encontrado.
+                      </TableCell>
+                    </TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -731,24 +877,69 @@ function AdminPage() {
 
         <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
           <DialogContent className="max-w-2xl">
-            <DialogHeader><DialogTitle>Detalhes do usuário</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Detalhes do usuário</DialogTitle>
+            </DialogHeader>
             {selected && (
               <div className="space-y-4 text-sm">
                 <div className="grid grid-cols-2 gap-3">
-                  <div><p className="text-xs text-muted-foreground">Nome</p><p className="font-medium">{selected.nome ?? "—"}</p></div>
-                  <div><p className="text-xs text-muted-foreground">E-mail</p><p className="font-medium break-all">{selected.email}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Telefone</p><p className="font-medium">{selected.telefone ?? "—"}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Tipo</p><p className="font-medium">{selected.tipo_cadastro ?? "—"}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Cadastro</p><p className="font-medium">{fmtDate(selected.created_at)}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Plano</p><p className="font-medium">{PLAN_LABEL[selected.plano as keyof typeof PLAN_LABEL] ?? selected.plano}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Status do plano</p>
-                    {(() => { const ds = getDisplayStatus(selected); return (<Badge variant="outline" className={STATUS_COLORS[ds]}>{STATUS_LABEL[ds]}</Badge>); })()}
+                  <div>
+                    <p className="text-xs text-muted-foreground">Nome</p>
+                    <p className="font-medium">{selected.nome ?? "—"}</p>
                   </div>
-                  <div><p className="text-xs text-muted-foreground">Ciclo</p><p className="font-medium">{selected.periodicidade ?? "—"}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Início</p><p className="font-medium">{fmtDate(selected.current_period_start)}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Vencimento</p><p className="font-medium">{fmtDate(selected.current_period_end)}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Total pago</p><p className="font-medium">{fmtMoney(selected.total_paid_cents)}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Pagamentos</p><p className="font-medium">{selected.payments_count}</p></div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">E-mail</p>
+                    <p className="font-medium break-all">{selected.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Telefone</p>
+                    <p className="font-medium">{selected.telefone ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Tipo</p>
+                    <p className="font-medium">{selected.tipo_cadastro ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Cadastro</p>
+                    <p className="font-medium">{fmtDate(selected.created_at)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Plano</p>
+                    <p className="font-medium">
+                      {PLAN_LABEL[selected.plano as keyof typeof PLAN_LABEL] ?? selected.plano}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Status do plano</p>
+                    {(() => {
+                      const ds = getDisplayStatus(selected);
+                      return (
+                        <Badge variant="outline" className={STATUS_COLORS[ds]}>
+                          {STATUS_LABEL[ds]}
+                        </Badge>
+                      );
+                    })()}
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Ciclo</p>
+                    <p className="font-medium">{selected.periodicidade ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Início</p>
+                    <p className="font-medium">{fmtDate(selected.current_period_start)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Vencimento</p>
+                    <p className="font-medium">{fmtDate(selected.current_period_end)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total pago</p>
+                    <p className="font-medium">{fmtMoney(selected.total_paid_cents)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Pagamentos</p>
+                    <p className="font-medium">{selected.payments_count}</p>
+                  </div>
                 </div>
                 <div>
                   <p className="text-xs font-semibold mb-2">Histórico de pagamentos</p>
@@ -764,17 +955,46 @@ function AdminPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {paymentsList.filter((p) => p.user_id === selected.user_id).map((p) => (
-                          <TableRow key={p.id}>
-                            <TableCell className="text-xs">{fmtDate(p.paid_at ?? p.created_at)}</TableCell>
-                            <TableCell className="text-xs">{PLAN_LABEL[p.plano as keyof typeof PLAN_LABEL] ?? p.plano}</TableCell>
-                            <TableCell className="text-xs">{p.method === "pix" ? "Pix" : p.method === "card" ? "Cartão" : p.method}</TableCell>
-                            <TableCell><Badge variant="outline" className={`text-[10px] ${PAY_STATUS_COLORS[p.status] ?? ""}`}>{p.status}</Badge></TableCell>
-                            <TableCell className="text-right text-xs">{fmtMoney(p.amount_cents)}</TableCell>
+                        {paymentsList
+                          .filter((p) => p.user_id === selected.user_id)
+                          .map((p) => (
+                            <TableRow key={p.id}>
+                              <TableCell className="text-xs">
+                                {fmtDate(p.paid_at ?? p.created_at)}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {PLAN_LABEL[p.plano as keyof typeof PLAN_LABEL] ?? p.plano}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {p.method === "pix"
+                                  ? "Pix"
+                                  : p.method === "card"
+                                    ? "Cartão"
+                                    : p.method}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[10px] ${PAY_STATUS_COLORS[p.status] ?? ""}`}
+                                >
+                                  {p.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right text-xs">
+                                {fmtMoney(p.amount_cents)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        {paymentsList.filter((p) => p.user_id === selected.user_id).length ===
+                          0 && (
+                          <TableRow>
+                            <TableCell
+                              colSpan={5}
+                              className="text-center text-xs text-muted-foreground py-3"
+                            >
+                              Sem pagamentos.
+                            </TableCell>
                           </TableRow>
-                        ))}
-                        {paymentsList.filter((p) => p.user_id === selected.user_id).length === 0 && (
-                          <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-3">Sem pagamentos.</TableCell></TableRow>
                         )}
                       </TableBody>
                     </Table>
@@ -814,14 +1034,20 @@ function AdminPage() {
                     <p className="font-medium text-foreground">{toDelete?.nome ?? "—"}</p>
                     <p className="text-xs text-muted-foreground break-all">{toDelete?.email}</p>
                   </div>
-                  <p className="text-destructive font-medium">Esta ação é irreversível e removerá todos os dados vinculados (perfil, planos, pagamentos e histórico).</p>
+                  <p className="text-destructive font-medium">
+                    Esta ação é irreversível e removerá todos os dados vinculados (perfil, planos,
+                    pagamentos e histórico).
+                  </p>
                 </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
               <AlertDialogAction
-                onClick={(e) => { e.preventDefault(); void confirmDelete(); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  void confirmDelete();
+                }}
                 disabled={deleting}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
@@ -869,12 +1095,16 @@ function ManualGrantSection({ target, onDone }: { target: AdminUserRow; onDone: 
 
   return (
     <div className="rounded-md border border-border/60 p-3 space-y-3">
-      <p className="text-xs font-semibold flex items-center gap-2"><Crown className="h-3.5 w-3.5 text-amber-500" /> Conceder plano manualmente (Admin Master)</p>
+      <p className="text-xs font-semibold flex items-center gap-2">
+        <Crown className="h-3.5 w-3.5 text-amber-500" /> Conceder plano manualmente (Admin Master)
+      </p>
       <div className="grid grid-cols-2 gap-2">
         <div>
           <p className="text-[10px] text-muted-foreground mb-1">Plano</p>
           <Select value={plano} onValueChange={setPlano}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="pessoal_premium">Controle Completo Pessoal</SelectItem>
               <SelectItem value="mei_essencial">Essencial para MEI</SelectItem>
@@ -886,7 +1116,9 @@ function ManualGrantSection({ target, onDone }: { target: AdminUserRow; onDone: 
         <div>
           <p className="text-[10px] text-muted-foreground mb-1">Ciclo</p>
           <Select value={periodicidade} onValueChange={setPeriodicidade}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="mensal">Mensal</SelectItem>
               <SelectItem value="trimestral">Trimestral</SelectItem>
@@ -897,29 +1129,54 @@ function ManualGrantSection({ target, onDone }: { target: AdminUserRow; onDone: 
         </div>
         <div>
           <p className="text-[10px] text-muted-foreground mb-1">Início</p>
-          <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-8 text-xs" />
+          <Input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="h-8 text-xs"
+          />
         </div>
         <div>
           <p className="text-[10px] text-muted-foreground mb-1">Vencimento (opcional)</p>
-          <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-8 text-xs" />
+          <Input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="h-8 text-xs"
+          />
         </div>
         <div>
           <p className="text-[10px] text-muted-foreground mb-1">Valor R$ (opcional)</p>
-          <Input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" className="h-8 text-xs" />
+          <Input
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0,00"
+            className="h-8 text-xs"
+          />
         </div>
         <div>
           <p className="text-[10px] text-muted-foreground mb-1">Observação</p>
-          <Input value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Motivo da concessão" className="h-8 text-xs" />
+          <Input
+            value={obs}
+            onChange={(e) => setObs(e.target.value)}
+            placeholder="Motivo da concessão"
+            className="h-8 text-xs"
+          />
         </div>
       </div>
       <div className="flex justify-end">
-        <Button size="sm" onClick={submit} disabled={saving}>{saving ? "Salvando..." : "Conceder plano"}</Button>
+        <Button size="sm" onClick={submit} disabled={saving}>
+          {saving ? "Salvando..." : "Conceder plano"}
+        </Button>
       </div>
     </div>
   );
 }
 
-const EDIT_STATUS_OPTIONS: { value: "ativo" | "aguardando_pagamento" | "cancelado" | "expirado" | "sem_assinatura"; label: string }[] = [
+const EDIT_STATUS_OPTIONS: {
+  value: "ativo" | "aguardando_pagamento" | "cancelado" | "expirado" | "sem_assinatura";
+  label: string;
+}[] = [
   { value: "sem_assinatura", label: "Sem assinatura / Conta criada" },
   { value: "aguardando_pagamento", label: "Aguardando pagamento" },
   { value: "ativo", label: "Plano ativo" },
@@ -958,7 +1215,12 @@ function EditStatusDialog({
       await setUserStatusManually({
         data: {
           targetUserId: target.user_id,
-          status: status as "ativo" | "aguardando_pagamento" | "cancelado" | "expirado" | "sem_assinatura",
+          status: status as
+            | "ativo"
+            | "aguardando_pagamento"
+            | "cancelado"
+            | "expirado"
+            | "sem_assinatura",
           forceActivate,
           clearPlan,
         },
@@ -987,29 +1249,49 @@ function EditStatusDialog({
             <div>
               <p className="text-xs text-muted-foreground mb-1">Novo status</p>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {EDIT_STATUS_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             {status === "ativo" && (
               <label className="flex items-start gap-2 text-xs">
-                <input type="checkbox" checked={forceActivate} onChange={(e) => setForceActivate(e.target.checked)} className="mt-0.5" />
-                <span>Confirmar pagamento manualmente (ativar mesmo sem pagamento aprovado registrado).</span>
+                <input
+                  type="checkbox"
+                  checked={forceActivate}
+                  onChange={(e) => setForceActivate(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <span>
+                  Confirmar pagamento manualmente (ativar mesmo sem pagamento aprovado registrado).
+                </span>
               </label>
             )}
             {(status === "sem_assinatura" || status === "cancelado" || status === "expirado") && (
               <label className="flex items-start gap-2 text-xs">
-                <input type="checkbox" checked={clearPlan} onChange={(e) => setClearPlan(e.target.checked)} className="mt-0.5" />
+                <input
+                  type="checkbox"
+                  checked={clearPlan}
+                  onChange={(e) => setClearPlan(e.target.checked)}
+                  className="mt-0.5"
+                />
                 <span>Limpar plano vinculado e remover assinatura antiga.</span>
               </label>
             )}
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" onClick={onClose} disabled={saving}>Cancelar</Button>
-              <Button onClick={submit} disabled={saving}>{saving ? "Salvando..." : "Salvar status"}</Button>
+              <Button variant="ghost" onClick={onClose} disabled={saving}>
+                Cancelar
+              </Button>
+              <Button onClick={submit} disabled={saving}>
+                {saving ? "Salvando..." : "Salvar status"}
+              </Button>
             </div>
           </div>
         )}
@@ -1049,10 +1331,23 @@ type PaymentEventRow = {
 function MpStatusBadge({ status }: { status: string }) {
   const s = (status ?? "").toLowerCase();
   let cls = "bg-muted text-muted-foreground border-border";
-  if (s === "approved" || s === "paid" || s === "authorized") cls = "bg-emerald-500/15 text-emerald-600 border-emerald-500/30";
-  else if (s === "rejected" || s === "cancelled" || s === "canceled" || s === "refunded" || s === "charged_back") cls = "bg-red-500/15 text-red-600 border-red-500/30";
-  else if (s === "pending" || s === "in_process" || s === "in_mediation") cls = "bg-amber-500/15 text-amber-600 border-amber-500/30";
-  return <Badge variant="outline" className={cls}>{status || "—"}</Badge>;
+  if (s === "approved" || s === "paid" || s === "authorized")
+    cls = "bg-emerald-500/15 text-emerald-600 border-emerald-500/30";
+  else if (
+    s === "rejected" ||
+    s === "cancelled" ||
+    s === "canceled" ||
+    s === "refunded" ||
+    s === "charged_back"
+  )
+    cls = "bg-red-500/15 text-red-600 border-red-500/30";
+  else if (s === "pending" || s === "in_process" || s === "in_mediation")
+    cls = "bg-amber-500/15 text-amber-600 border-amber-500/30";
+  return (
+    <Badge variant="outline" className={cls}>
+      {status || "—"}
+    </Badge>
+  );
 }
 
 function MpDiagnosticSection() {
@@ -1061,7 +1356,10 @@ function MpDiagnosticSection() {
   const [reconciling, setReconciling] = useState(false);
   const [confirmRec, setConfirmRec] = useState(false);
   const [diagnosis, setDiagnosis] = useState<DiagnosisData | null>(null);
-  const [resultMsg, setResultMsg] = useState<{ kind: "success" | "info" | "error"; text: string } | null>(null);
+  const [resultMsg, setResultMsg] = useState<{
+    kind: "success" | "info" | "error";
+    text: string;
+  } | null>(null);
   const [events, setEvents] = useState<PaymentEventRow[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
 
@@ -1084,7 +1382,10 @@ function MpDiagnosticSection() {
 
   async function runDiagnose() {
     const id = paymentId.trim();
-    if (!id) { toast.error("Informe o ID do pagamento"); return; }
+    if (!id) {
+      toast.error("Informe o ID do pagamento");
+      return;
+    }
     setLoading(true);
     setResultMsg(null);
     setConfirmRec(false);
@@ -1114,10 +1415,19 @@ function MpDiagnosticSection() {
       setDiagnosis(r.diagnosis as DiagnosisData);
       let kind: "success" | "info" | "error" = "info";
       let text = r.message;
-      if (r.message === "reconciled" && r.applied) { kind = "success"; text = "Pagamento reconciliado e assinatura ativada."; }
-      else if (r.message === "already_consistent") { kind = "info"; text = "Nada a fazer — pagamento e assinatura já estão consistentes."; }
-      else if (r.message === "payment_not_found") { kind = "error"; text = "Pagamento não encontrado no Mercado Pago."; }
-      else if (r.message?.startsWith("mp_status_is_")) { kind = "info"; text = `Pagamento não aprovado (status: ${r.message.replace("mp_status_is_", "")}).`; }
+      if (r.message === "reconciled" && r.applied) {
+        kind = "success";
+        text = "Pagamento reconciliado e assinatura ativada.";
+      } else if (r.message === "already_consistent") {
+        kind = "info";
+        text = "Nada a fazer — pagamento e assinatura já estão consistentes.";
+      } else if (r.message === "payment_not_found") {
+        kind = "error";
+        text = "Pagamento não encontrado no Mercado Pago.";
+      } else if (r.message?.startsWith("mp_status_is_")) {
+        kind = "info";
+        text = `Pagamento não aprovado (status: ${r.message.replace("mp_status_is_", "")}).`;
+      }
       setResultMsg({ kind, text });
       setConfirmRec(false);
       void loadEvents();
@@ -1137,7 +1447,10 @@ function MpDiagnosticSection() {
     ? "border-amber-500/40 bg-amber-500/5"
     : diagnosis?.mercado_pago_status === "approved"
       ? "border-emerald-500/40 bg-emerald-500/5"
-      : diagnosis?.mercado_pago_status && ["rejected","cancelled","refunded","charged_back"].includes(diagnosis.mercado_pago_status)
+      : diagnosis?.mercado_pago_status &&
+          ["rejected", "cancelled", "refunded", "charged_back"].includes(
+            diagnosis.mercado_pago_status,
+          )
         ? "border-red-500/40 bg-red-500/5"
         : "border-border";
 
@@ -1172,12 +1485,19 @@ function MpDiagnosticSection() {
         {confirmRec && (
           <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-3 text-sm">
             <p className="font-medium">Tem certeza que deseja reconciliar este pagamento?</p>
-            <p className="text-xs text-muted-foreground mt-1">Se o Mercado Pago indicar pagamento aprovado, a assinatura será ativada.</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Se o Mercado Pago indicar pagamento aprovado, a assinatura será ativada.
+            </p>
             <div className="flex gap-2 mt-3">
               <Button size="sm" onClick={() => void runReconcile()} disabled={reconciling}>
                 {reconciling ? "Reconciliando…" : "Confirmar reconciliação"}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setConfirmRec(false)} disabled={reconciling}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setConfirmRec(false)}
+                disabled={reconciling}
+              >
                 Cancelar
               </Button>
             </div>
@@ -1185,11 +1505,15 @@ function MpDiagnosticSection() {
         )}
 
         {resultMsg && (
-          <div className={`rounded-md border p-3 text-sm ${
-            resultMsg.kind === "success" ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400"
-              : resultMsg.kind === "error" ? "border-red-500/40 bg-red-500/5 text-red-700 dark:text-red-400"
-                : "border-border bg-muted/30"
-          }`}>
+          <div
+            className={`rounded-md border p-3 text-sm ${
+              resultMsg.kind === "success"
+                ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400"
+                : resultMsg.kind === "error"
+                  ? "border-red-500/40 bg-red-500/5 text-red-700 dark:text-red-400"
+                  : "border-border bg-muted/30"
+            }`}
+          >
             {resultMsg.text}
           </div>
         )}
@@ -1199,21 +1523,33 @@ function MpDiagnosticSection() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
               <div>
                 <p className="text-xs text-muted-foreground">Status no Mercado Pago</p>
-                <div className="mt-1"><MpStatusBadge status={diagnosis.mercado_pago_status} /></div>
-                {diagnosis.mp_raw_status && diagnosis.mp_raw_status !== diagnosis.mercado_pago_status && (
-                  <p className="text-[10px] text-muted-foreground mt-1">raw: {diagnosis.mp_raw_status}</p>
-                )}
+                <div className="mt-1">
+                  <MpStatusBadge status={diagnosis.mercado_pago_status} />
+                </div>
+                {diagnosis.mp_raw_status &&
+                  diagnosis.mp_raw_status !== diagnosis.mercado_pago_status && (
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      raw: {diagnosis.mp_raw_status}
+                    </p>
+                  )}
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Status local (pagamento)</p>
-                <div className="mt-1"><MpStatusBadge status={diagnosis.local_payment_status ?? "—"} /></div>
+                <div className="mt-1">
+                  <MpStatusBadge status={diagnosis.local_payment_status ?? "—"} />
+                </div>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Status local (assinatura)</p>
                 <div className="mt-1">
-                  <Badge variant="outline" className={diagnosis.local_subscription_status === "ativo"
-                    ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
-                    : "bg-muted text-muted-foreground"}>
+                  <Badge
+                    variant="outline"
+                    className={
+                      diagnosis.local_subscription_status === "ativo"
+                        ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
+                        : "bg-muted text-muted-foreground"
+                    }
+                  >
                     {diagnosis.local_subscription_status ?? "—"}
                   </Badge>
                 </div>
@@ -1224,11 +1560,19 @@ function MpDiagnosticSection() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Plano</p>
-                <p className="font-medium text-xs">{diagnosis.plan ? (PLAN_LABEL[diagnosis.plan as keyof typeof PLAN_LABEL] ?? diagnosis.plan) : "—"}</p>
+                <p className="font-medium text-xs">
+                  {diagnosis.plan
+                    ? (PLAN_LABEL[diagnosis.plan as keyof typeof PLAN_LABEL] ?? diagnosis.plan)
+                    : "—"}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Valor</p>
-                <p className="font-medium text-xs">{diagnosis.amount != null ? `R$ ${diagnosis.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}</p>
+                <p className="font-medium text-xs">
+                  {diagnosis.amount != null
+                    ? `R$ ${diagnosis.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+                    : "—"}
+                </p>
               </div>
               <div className="col-span-2 sm:col-span-3">
                 <p className="text-xs text-muted-foreground">ID do pagamento</p>
@@ -1238,9 +1582,13 @@ function MpDiagnosticSection() {
 
             {diagnosis.inconsistencies.length > 0 && (
               <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs">
-                <p className="font-semibold text-amber-700 dark:text-amber-400 mb-1">Inconsistências encontradas:</p>
+                <p className="font-semibold text-amber-700 dark:text-amber-400 mb-1">
+                  Inconsistências encontradas:
+                </p>
                 <ul className="list-disc pl-4 space-y-0.5 text-amber-700 dark:text-amber-400">
-                  {diagnosis.inconsistencies.map((i) => <li key={i}>{i}</li>)}
+                  {diagnosis.inconsistencies.map((i) => (
+                    <li key={i}>{i}</li>
+                  ))}
                 </ul>
               </div>
             )}
@@ -1256,7 +1604,12 @@ function MpDiagnosticSection() {
         <div>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold">Últimos eventos de pagamento</p>
-            <Button size="sm" variant="ghost" onClick={() => void loadEvents()} disabled={eventsLoading}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => void loadEvents()}
+              disabled={eventsLoading}
+            >
               {eventsLoading ? "Atualizando…" : "Atualizar"}
             </Button>
           </div>
@@ -1274,15 +1627,30 @@ function MpDiagnosticSection() {
               <TableBody>
                 {events.map((ev) => (
                   <TableRow key={ev.id}>
-                    <TableCell className="text-xs whitespace-nowrap">{new Date(ev.created_at).toLocaleString("pt-BR")}</TableCell>
-                    <TableCell className="text-xs font-mono break-all max-w-[120px] truncate">{ev.external_payment_id}</TableCell>
-                    <TableCell><MpStatusBadge status={ev.status} /></TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">
+                      {new Date(ev.created_at).toLocaleString("pt-BR")}
+                    </TableCell>
+                    <TableCell className="text-xs font-mono break-all max-w-[120px] truncate">
+                      {ev.external_payment_id}
+                    </TableCell>
+                    <TableCell>
+                      <MpStatusBadge status={ev.status} />
+                    </TableCell>
                     <TableCell className="text-xs">{ev.event_type ?? "—"}</TableCell>
-                    <TableCell className="text-xs break-all">{ev.user_email ?? ev.user_id ?? "—"}</TableCell>
+                    <TableCell className="text-xs break-all">
+                      {ev.user_email ?? ev.user_id ?? "—"}
+                    </TableCell>
                   </TableRow>
                 ))}
                 {events.length === 0 && !eventsLoading && (
-                  <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-3">Nenhum evento registrado ainda.</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="text-center text-xs text-muted-foreground py-3"
+                    >
+                      Nenhum evento registrado ainda.
+                    </TableCell>
+                  </TableRow>
                 )}
               </TableBody>
             </Table>
@@ -1292,4 +1660,3 @@ function MpDiagnosticSection() {
     </Card>
   );
 }
-

@@ -29,7 +29,6 @@ import type {
 import { buildWhatsAppTemplateRequest } from "@/server/whatsapp-outbound-adapter.server";
 import { sanitizeTransportError } from "@/server/whatsapp-transport-error-sanitizer.server";
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Constantes de segurança
 export const META_TRANSPORT_DEFAULTS = Object.freeze({
@@ -191,9 +190,7 @@ export function createMetaWhatsAppNotificationTransport(
   }
 
   const timeoutMs =
-    input.timeoutMs === undefined
-      ? META_TRANSPORT_DEFAULTS.TIMEOUT_MS_DEFAULT
-      : input.timeoutMs;
+    input.timeoutMs === undefined ? META_TRANSPORT_DEFAULTS.TIMEOUT_MS_DEFAULT : input.timeoutMs;
   if (!isValidTimeout(timeoutMs)) {
     return { ok: false, reason: "timeout_invalid" };
   }
@@ -201,7 +198,7 @@ export function createMetaWhatsAppNotificationTransport(
   const fetchFn: FetchLike | undefined =
     input.fetchFn ??
     (typeof globalThis.fetch === "function"
-      ? ((globalThis.fetch as unknown) as FetchLike)
+      ? (globalThis.fetch as unknown as FetchLike)
       : undefined);
   if (!fetchFn) {
     // Sem fetch injetado nem global disponível: falha fechada como configuração.
@@ -215,8 +212,7 @@ export function createMetaWhatsAppNotificationTransport(
     timeoutMs,
     fetchFn,
     logger: input.logger,
-    responseMaxBytes:
-      input.responseMaxBytes ?? META_TRANSPORT_DEFAULTS.RESPONSE_MAX_BYTES,
+    responseMaxBytes: input.responseMaxBytes ?? META_TRANSPORT_DEFAULTS.RESPONSE_MAX_BYTES,
     now: input.now,
   };
 
@@ -226,9 +222,7 @@ export function createMetaWhatsAppNotificationTransport(
 // ─────────────────────────────────────────────────────────────────────────────
 // Transport real
 
-export class MetaWhatsAppNotificationTransport
-  implements WhatsAppNotificationTransport
-{
+export class MetaWhatsAppNotificationTransport implements WhatsAppNotificationTransport {
   // NUNCA torne `accessToken` público. NUNCA serialize esta classe.
   readonly #accessToken: string;
   readonly #phoneNumberId: string;
@@ -244,17 +238,14 @@ export class MetaWhatsAppNotificationTransport
     if (!cfg.phoneNumberId || !DIGITS_ONLY.test(cfg.phoneNumberId))
       throw new Error("meta_transport_phone_number_id_invalid");
     if (!cfg.accessToken) throw new Error("meta_transport_access_token_required");
-    if (!isValidTimeout(cfg.timeoutMs))
-      throw new Error("meta_transport_timeout_invalid");
-    if (typeof cfg.fetchFn !== "function")
-      throw new Error("meta_transport_fetch_required");
+    if (!isValidTimeout(cfg.timeoutMs)) throw new Error("meta_transport_timeout_invalid");
+    if (typeof cfg.fetchFn !== "function") throw new Error("meta_transport_fetch_required");
     this.#accessToken = cfg.accessToken;
     this.#phoneNumberId = cfg.phoneNumberId;
     this.#timeoutMs = cfg.timeoutMs;
     this.#fetchFn = cfg.fetchFn;
     this.#log = cfg.logger ?? defaultLogger;
-    this.#responseMaxBytes =
-      cfg.responseMaxBytes ?? META_TRANSPORT_DEFAULTS.RESPONSE_MAX_BYTES;
+    this.#responseMaxBytes = cfg.responseMaxBytes ?? META_TRANSPORT_DEFAULTS.RESPONSE_MAX_BYTES;
     this.#now = cfg.now ?? (() => Date.now());
   }
 
@@ -312,9 +303,8 @@ export class MetaWhatsAppNotificationTransport
       if (externalSignal.aborted) controller.abort();
       else externalSignal.addEventListener("abort", abortFromExternal);
     }
-    const timeoutMs = request.timeoutMs && isValidTimeout(request.timeoutMs)
-      ? request.timeoutMs
-      : this.#timeoutMs;
+    const timeoutMs =
+      request.timeoutMs && isValidTimeout(request.timeoutMs) ? request.timeoutMs : this.#timeoutMs;
     let timedOut = false;
     const timer = setTimeout(() => {
       timedOut = true;
@@ -425,14 +415,18 @@ export class MetaWhatsAppNotificationTransport
       const reader = (response.body as ReadableStream<Uint8Array>).getReader();
       const chunks: Uint8Array[] = [];
       let total = 0;
-      // eslint-disable-next-line no-constant-condition
+
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
         if (value) {
           total += value.byteLength;
           if (total > max) {
-            try { await reader.cancel(); } catch { /* no-op */ }
+            try {
+              await reader.cancel();
+            } catch {
+              /* no-op */
+            }
             const err = new Error("response_too_large");
             err.name = "MetaResponseTooLarge";
             throw err;
@@ -442,7 +436,10 @@ export class MetaWhatsAppNotificationTransport
       }
       const merged = new Uint8Array(total);
       let off = 0;
-      for (const c of chunks) { merged.set(c, off); off += c.byteLength; }
+      for (const c of chunks) {
+        merged.set(c, off);
+        off += c.byteLength;
+      }
       return new TextDecoder("utf-8", { fatal: false }).decode(merged);
     }
     if (typeof response.arrayBuffer === "function") {
@@ -476,12 +473,22 @@ export class MetaWhatsAppNotificationTransport
       }
       const pmid = extractProviderMessageId(parsed.value);
       if (!pmid) {
-        this.#log({ event: "meta_request_ambiguous", http_status: status, duration_ms: durationMs, reason: "missing_pmid" });
+        this.#log({
+          event: "meta_request_ambiguous",
+          http_status: status,
+          duration_ms: durationMs,
+          reason: "missing_pmid",
+        });
         return { kind: "ambiguous", reason: "missing_pmid", httpStatus: status };
       }
       // 2xx com erro estruturado presente: também tratamos como ambiguous.
       if (extractMetaError(parsed.value)) {
-        this.#log({ event: "meta_request_ambiguous", http_status: status, duration_ms: durationMs, reason: "2xx_with_error" });
+        this.#log({
+          event: "meta_request_ambiguous",
+          http_status: status,
+          duration_ms: durationMs,
+          reason: "2xx_with_error",
+        });
         return { kind: "ambiguous", reason: "2xx_with_error", httpStatus: status };
       }
       this.#log({
@@ -499,8 +506,18 @@ export class MetaWhatsAppNotificationTransport
       const category = categorizeStatus(status, metaError.code);
       // 5xx sem prova conclusiva de rejeição pré-envio → ambiguous.
       if (status >= 500) {
-        this.#log({ event: "meta_request_ambiguous", http_status: status, duration_ms: durationMs, reason: "5xx_inconclusive" });
-        return { kind: "ambiguous", reason: "5xx_inconclusive", httpStatus: status, errorCode: metaError.code };
+        this.#log({
+          event: "meta_request_ambiguous",
+          http_status: status,
+          duration_ms: durationMs,
+          reason: "5xx_inconclusive",
+        });
+        return {
+          kind: "ambiguous",
+          reason: "5xx_inconclusive",
+          httpStatus: status,
+          errorCode: metaError.code,
+        };
       }
       this.#log({
         event: "meta_request_rejected",
@@ -521,19 +538,57 @@ export class MetaWhatsAppNotificationTransport
 
     // Sem erro estruturado.
     if (status === 401) {
-      this.#log({ event: "meta_request_rejected", http_status: status, error_category: "authentication", duration_ms: durationMs });
-      return { kind: "rejected", httpStatus: status, errorCode: "http_401", errorCategory: "authentication", retryable: false };
+      this.#log({
+        event: "meta_request_rejected",
+        http_status: status,
+        error_category: "authentication",
+        duration_ms: durationMs,
+      });
+      return {
+        kind: "rejected",
+        httpStatus: status,
+        errorCode: "http_401",
+        errorCategory: "authentication",
+        retryable: false,
+      };
     }
     if (status === 403) {
-      this.#log({ event: "meta_request_rejected", http_status: status, error_category: "configuration", duration_ms: durationMs });
-      return { kind: "rejected", httpStatus: status, errorCode: "http_403", errorCategory: "configuration", retryable: false };
+      this.#log({
+        event: "meta_request_rejected",
+        http_status: status,
+        error_category: "configuration",
+        duration_ms: durationMs,
+      });
+      return {
+        kind: "rejected",
+        httpStatus: status,
+        errorCode: "http_403",
+        errorCategory: "configuration",
+        retryable: false,
+      };
     }
     if (status === 429) {
-      this.#log({ event: "meta_request_rejected", http_status: status, error_category: "rate_limit", duration_ms: durationMs });
-      return { kind: "rejected", httpStatus: status, errorCode: "http_429", errorCategory: "rate_limit", retryable: true };
+      this.#log({
+        event: "meta_request_rejected",
+        http_status: status,
+        error_category: "rate_limit",
+        duration_ms: durationMs,
+      });
+      return {
+        kind: "rejected",
+        httpStatus: status,
+        errorCode: "http_429",
+        errorCategory: "rate_limit",
+        retryable: true,
+      };
     }
     // 400/404/5xx sem estrutura → ambiguous (conservador).
-    this.#log({ event: "meta_request_ambiguous", http_status: status, duration_ms: durationMs, reason: "unstructured_error" });
+    this.#log({
+      event: "meta_request_ambiguous",
+      http_status: status,
+      duration_ms: durationMs,
+      reason: "unstructured_error",
+    });
     return { kind: "ambiguous", reason: "unstructured_error", httpStatus: status };
   }
 }
@@ -541,9 +596,9 @@ export class MetaWhatsAppNotificationTransport
 // ─────────────────────────────────────────────────────────────────────────────
 // Parser + classificador — puros e testáveis
 
-export function parseJsonSafe(text: string):
-  | { ok: true; value: unknown }
-  | { ok: false; reason: "empty" | "invalid_json" } {
+export function parseJsonSafe(
+  text: string,
+): { ok: true; value: unknown } | { ok: false; reason: "empty" | "invalid_json" } {
   if (text == null || text === "") return { ok: false, reason: "empty" };
   try {
     return { ok: true, value: JSON.parse(text) };

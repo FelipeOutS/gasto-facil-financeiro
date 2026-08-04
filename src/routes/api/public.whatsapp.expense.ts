@@ -484,7 +484,6 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
         // payload. Apenas retorna 503 com mensagem genérica.
         if (!isWhatsAppEnabled()) {
           if (import.meta.env.DEV) {
-            // eslint-disable-next-line no-console
             console.warn("[whatsapp] whatsapp_not_configured — webhook in safe mode");
           }
           await logWebhookEvent({

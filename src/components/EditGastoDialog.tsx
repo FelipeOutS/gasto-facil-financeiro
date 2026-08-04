@@ -19,12 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CategoryIcon } from "./CategoryIcon";
-import {
-  getCartoes,
-  getCategorias,
-  updateGasto,
-  useStore,
-} from "@/lib/store";
+import { getCartoes, getCategorias, updateGasto, useStore } from "@/lib/store";
 import { requireOnline } from "@/lib/use-online-status";
 import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
 import type { Gasto } from "@/lib/types";
@@ -70,7 +65,9 @@ export function EditGastoForm({
   const [invoiceMonth, setInvoiceMonth] = useState<string>(
     gasto.invoiceMonth && /^\d{4}-\d{2}$/.test(gasto.invoiceMonth)
       ? gasto.invoiceMonth
-      : (gasto.data ? gasto.data.slice(0, 7) : ""),
+      : gasto.data
+        ? gasto.data.slice(0, 7)
+        : "",
   );
 
   const valor = parseBRLInput(valorStr);
@@ -233,10 +230,7 @@ export function EditGastoForm({
               {t("form.editar.cartao")}
             </Label>
             {cartoes.length > 0 ? (
-              <Select
-                value={cartaoId ?? ""}
-                onValueChange={(v) => setCartaoId(v || undefined)}
-              >
+              <Select value={cartaoId ?? ""} onValueChange={(v) => setCartaoId(v || undefined)}>
                 <SelectTrigger className="mt-1.5 h-11 bg-card-elevated">
                   <SelectValue placeholder={t("form.selecionarCartao")} />
                 </SelectTrigger>
@@ -259,9 +253,7 @@ export function EditGastoForm({
                 </SelectContent>
               </Select>
             ) : (
-              <p className="mt-2 text-xs text-muted-foreground">
-                {t("form.editar.nenhumCartao")}
-              </p>
+              <p className="mt-2 text-xs text-muted-foreground">{t("form.editar.nenhumCartao")}</p>
             )}
           </div>
         )}

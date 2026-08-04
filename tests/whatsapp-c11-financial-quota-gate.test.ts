@@ -61,9 +61,7 @@ function baseDeps(overrides: Partial<FinancialGateDeps> = {}): FinancialGateDeps
 
 describe("buildFinancialActionKey", () => {
   it("gera key estável determinística", () => {
-    expect(buildFinancialActionKey(MSGID, "expense")).toBe(
-      `wa:financial:${MSGID}:expense:v1`,
-    );
+    expect(buildFinancialActionKey(MSGID, "expense")).toBe(`wa:financial:${MSGID}:expense:v1`);
   });
 
   it("inclui discriminator quando fornecido", () => {

@@ -96,21 +96,37 @@ export function BarcodeScannerButton({ onDetected, className }: Props) {
       rafRef.current = null;
     }
     if (zxingControlsRef.current) {
-      try { zxingControlsRef.current.stop(); } catch { /* ignore */ }
+      try {
+        zxingControlsRef.current.stop();
+      } catch {
+        /* ignore */
+      }
       zxingControlsRef.current = null;
     }
     if (zxingRef.current?.reset) {
-      try { zxingRef.current.reset(); } catch { /* ignore */ }
+      try {
+        zxingRef.current.reset();
+      } catch {
+        /* ignore */
+      }
     }
     zxingRef.current = null;
     if (streamRef.current) {
       for (const track of streamRef.current.getTracks()) {
-        try { track.stop(); } catch { /* ignore */ }
+        try {
+          track.stop();
+        } catch {
+          /* ignore */
+        }
       }
       streamRef.current = null;
     }
     if (videoRef.current) {
-      try { videoRef.current.pause(); } catch { /* ignore */ }
+      try {
+        videoRef.current.pause();
+      } catch {
+        /* ignore */
+      }
       videoRef.current.srcObject = null;
     }
     nativeDetectorRef.current = null;
@@ -143,7 +159,9 @@ export function BarcodeScannerButton({ onDetected, className }: Props) {
             if (handleDetected(c.rawValue ?? "")) return;
           }
         }
-      } catch { /* keep scanning */ }
+      } catch {
+        /* keep scanning */
+      }
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
@@ -206,14 +224,24 @@ export function BarcodeScannerButton({ onDetected, className }: Props) {
           formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "itf"],
         });
         const v = videoRef.current;
-        if (!v) { stopCamera(); setStatus("error"); return; }
+        if (!v) {
+          stopCamera();
+          setStatus("error");
+          return;
+        }
         v.srcObject = stream;
         v.setAttribute("playsinline", "true");
-        try { await v.play(); } catch { /* ignore */ }
+        try {
+          await v.play();
+        } catch {
+          /* ignore */
+        }
         setStatus("scanning");
         nativeScanLoop();
         return;
-      } catch { /* fall through to zxing */ }
+      } catch {
+        /* fall through to zxing */
+      }
     }
 
     setStatus("scanning");
@@ -230,7 +258,10 @@ export function BarcodeScannerButton({ onDetected, className }: Props) {
     setStatus("decoding");
     try {
       const reader = await loadZxing();
-      if (!reader) { setStatus("unsupported"); return; }
+      if (!reader) {
+        setStatus("unsupported");
+        return;
+      }
       zxingRef.current = reader;
       const url = URL.createObjectURL(file);
       try {
@@ -253,8 +284,9 @@ export function BarcodeScannerButton({ onDetected, className }: Props) {
   }
 
   useEffect(() => {
-    return () => { stopCamera(); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      stopCamera();
+    };
   }, []);
 
   return (
@@ -299,8 +331,8 @@ export function BarcodeScannerButton({ onDetected, className }: Props) {
               {status === "decoding"
                 ? t("detail.barcodeScanner.decoding")
                 : status === "scanning"
-                ? t("detail.barcodeScanner.scanning")
-                : t("detail.barcodeScanner.scan")}
+                  ? t("detail.barcodeScanner.scanning")
+                  : t("detail.barcodeScanner.scan")}
             </span>
             <button
               type="button"
@@ -329,7 +361,8 @@ export function BarcodeScannerButton({ onDetected, className }: Props) {
           ) : status === "denied" ? (
             <div className="mt-3 space-y-2">
               <p className="text-[12px] text-muted-foreground">
-                {t("detail.barcodeScanner.permissionDenied")} {t("detail.barcodeScanner.manualFallback")}
+                {t("detail.barcodeScanner.permissionDenied")}{" "}
+                {t("detail.barcodeScanner.manualFallback")}
               </p>
               <button
                 type="button"

@@ -127,9 +127,7 @@ export async function findFavorecidoByPixKey(
     .eq("ativo", true);
   if (error || !Array.isArray(data)) return null;
   const rows = data as FavorecidoRow[];
-  const match = rows.find(
-    (r) => (r.pix_key ?? "").trim().toLowerCase() === key,
-  );
+  const match = rows.find((r) => (r.pix_key ?? "").trim().toLowerCase() === key);
   return match ?? null;
 }
 

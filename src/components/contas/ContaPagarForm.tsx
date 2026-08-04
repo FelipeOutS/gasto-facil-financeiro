@@ -12,11 +12,7 @@ import {
   useStore,
 } from "@/lib/store";
 import type { ContaAPagar, FrequenciaRecorrencia } from "@/lib/types";
-import {
-  FORMAS_PAGAMENTO,
-  FREQUENCIAS_RECORRENCIA,
-  type FormaPagamento,
-} from "@/lib/types";
+import { FORMAS_PAGAMENTO, FREQUENCIAS_RECORRENCIA, type FormaPagamento } from "@/lib/types";
 import { formatMonthYear, parseBRLInput, todayISO } from "@/lib/format";
 import { useFornecedores } from "@/lib/fornecedores";
 import { mesReferenciaOpcoes, ymFromDate } from "@/lib/mes-referencia";
@@ -66,12 +62,8 @@ export function ContaPagarForm({
   const categorias = useStore(() => getCategorias());
 
   const [nome, setNome] = useState(conta?.nome ?? "");
-  const [valorStr, setValorStr] = useState(
-    conta ? String(conta.valor).replace(".", ",") : "",
-  );
-  const [dataVenc, setDataVenc] = useState(
-    conta?.dataVencimento ?? defaultDate ?? todayISO(),
-  );
+  const [valorStr, setValorStr] = useState(conta ? String(conta.valor).replace(".", ",") : "");
+  const [dataVenc, setDataVenc] = useState(conta?.dataVencimento ?? defaultDate ?? todayISO());
   const [categoriaId, setCategoriaId] = useState<string>(conta?.categoriaId ?? "");
   const [observacao, setObservacao] = useState(conta?.observacao ?? "");
   const [mesReferencia, setMesReferencia] = useState<string>(() => {
@@ -112,9 +104,9 @@ export function ContaPagarForm({
 
   const [sincronizarGasto, setSincronizarGasto] = useState(true);
 
-  const [editScopeFields, setEditScopeFields] = useState<null | Parameters<
-    typeof updateContaAPagar
-  >[1]>(null);
+  const [editScopeFields, setEditScopeFields] = useState<
+    null | Parameters<typeof updateContaAPagar>[1]
+  >(null);
 
   function handleSave() {
     const valor = parseBRLInput(valorStr);
@@ -154,9 +146,7 @@ export function ContaPagarForm({
       }
       updateContaAPagar(conta.id, fields);
       toast.success(
-        isPaga && sincronizarGasto
-          ? t("form.toastUpdatedSync")
-          : t("form.toastUpdated"),
+        isPaga && sincronizarGasto ? t("form.toastUpdatedSync") : t("form.toastUpdated"),
       );
     } else {
       addContaAPagar({
@@ -189,13 +179,7 @@ export function ContaPagarForm({
     if (scope !== "single" && conta.recorrenciaId) {
       const propagatedFields = { ...editScopeFields };
       delete propagatedFields.atualizarGastoVinculado;
-      updateContaRecorrencia(
-        conta.recorrenciaId,
-        propagatedFields,
-        scope,
-        conta.mes,
-        conta.ano,
-      );
+      updateContaRecorrencia(conta.recorrenciaId, propagatedFields, scope, conta.mes, conta.ano);
     }
 
     toast.success(
@@ -301,9 +285,7 @@ export function ContaPagarForm({
           >
             <div>
               <p className="text-sm font-medium">{t("form.moreDetails")}</p>
-              <p className="text-[11px] text-muted-foreground">
-                {t("form.moreDetailsHint")}
-              </p>
+              <p className="text-[11px] text-muted-foreground">{t("form.moreDetailsHint")}</p>
             </div>
             <ChevronRight
               className={cn(
@@ -432,9 +414,7 @@ export function ContaPagarForm({
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium">{t("form.recurring")}</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {t("form.recurringHint")}
-                </p>
+                <p className="text-[11px] text-muted-foreground">{t("form.recurringHint")}</p>
               </div>
               <Switch checked={recorrente} onCheckedChange={setRecorrente} />
             </div>
@@ -489,10 +469,7 @@ export function ContaPagarForm({
                 <p className="text-sm font-medium">{t("form.syncTitle")}</p>
                 <p className="text-[11px] text-muted-foreground">{t("form.syncHint")}</p>
               </div>
-              <Switch
-                checked={sincronizarGasto}
-                onCheckedChange={setSincronizarGasto}
-              />
+              <Switch checked={sincronizarGasto} onCheckedChange={setSincronizarGasto} />
             </div>
           </div>
         )}
@@ -511,18 +488,12 @@ export function ContaPagarForm({
         >
           {t("form.cancel")}
         </Button>
-        <Button
-          onClick={handleSave}
-          className={cn(fullWidthActions && "min-h-11 sm:min-h-0")}
-        >
+        <Button onClick={handleSave} className={cn(fullWidthActions && "min-h-11 sm:min-h-0")}>
           {isEdit ? t("form.save") : t("form.create")}
         </Button>
       </div>
 
-      <AlertDialog
-        open={!!editScopeFields}
-        onOpenChange={(o) => !o && setEditScopeFields(null)}
-      >
+      <AlertDialog open={!!editScopeFields} onOpenChange={(o) => !o && setEditScopeFields(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <div className="mb-2 inline-flex w-fit items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-medium text-primary">

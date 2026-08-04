@@ -18,14 +18,7 @@ const HOST_ALLOW_SUFFIXES = [
   // alguns estados publicam em subdomínios fora do .gov.br padrão; aqui restringimos a .gov.br.
 ];
 
-const HOST_HINTS = [
-  "fazenda",
-  "sefaz",
-  "set.",
-  "sef.",
-  "economia",
-  "receita",
-];
+const HOST_HINTS = ["fazenda", "sefaz", "set.", "sef.", "economia", "receita"];
 
 const InputSchema = z.object({
   url: z.string().url().max(2048),

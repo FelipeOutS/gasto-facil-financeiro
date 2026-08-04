@@ -110,9 +110,7 @@ function ruleCategoriaDominante(input: InsightInput): FinancialInsight | null {
 
 function ruleRecorrenciasAcumuladas(input: InsightInput): FinancialInsight | null {
   const { recorrencias, receitasDoMes } = input;
-  const ativas = recorrencias.filter(
-    (r) => r.status === "ativa" || r.status === "suspeita",
-  );
+  const ativas = recorrencias.filter((r) => r.status === "ativa" || r.status === "suspeita");
   if (ativas.length < 2) return null;
 
   const totalMensal = ativas.reduce((s, r) => s + recorrenciaMensalEstimada(r), 0);

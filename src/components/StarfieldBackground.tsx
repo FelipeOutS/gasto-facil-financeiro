@@ -11,16 +11,9 @@ import "@/styles/starfield.css";
  * Uso: posicione dentro de um container `relative` e o componente cobre
  * 100% via position:absolute inset:0. Não recebe pointer events.
  */
-export function StarfieldBackground({
-  className = "",
-}: {
-  className?: string;
-}) {
+export function StarfieldBackground({ className = "" }: { className?: string }) {
   return (
-    <div
-      aria-hidden="true"
-      className={`starfield ${className}`.trim()}
-    >
+    <div aria-hidden="true" className={`starfield ${className}`.trim()}>
       <div className="starfield__layer starfield__layer--sm" />
       <div className="starfield__layer starfield__layer--md" />
       <div className="starfield__layer starfield__layer--lg" />

@@ -105,13 +105,11 @@ export const setProductImageAdmin = createServerFn({ method: "POST" })
 
     const path = buildStoragePath(data.priceId, ext);
 
-    const { error: upErr } = await supabaseAdmin.storage
-      .from(BUCKET)
-      .upload(path, bytes, {
-        contentType: data.mimeType,
-        cacheControl: "3600",
-        upsert: false,
-      });
+    const { error: upErr } = await supabaseAdmin.storage.from(BUCKET).upload(path, bytes, {
+      contentType: data.mimeType,
+      cacheControl: "3600",
+      upsert: false,
+    });
     if (upErr) {
       console.error("[setProductImageAdmin] upload", upErr.message);
       throw new Error("UPLOAD_FAILED");

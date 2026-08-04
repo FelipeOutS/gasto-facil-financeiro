@@ -306,7 +306,6 @@ export type FaturaCartao = {
   observacao?: string;
 };
 
-
 // ---------- Contas a pagar ----------
 export type StatusConta = "pendente" | "pago" | "atrasado";
 

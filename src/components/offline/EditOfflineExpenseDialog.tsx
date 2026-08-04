@@ -8,10 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { GastoForm } from "@/components/GastoForm";
-import {
-  updateExpense,
-  type OfflineExpense,
-} from "@/lib/offline/offline-expense-queue";
+import { updateExpense, type OfflineExpense } from "@/lib/offline/offline-expense-queue";
 import { recordHistoryEvent } from "@/lib/offline/offline-sync-history";
 import type { NovoGastoInput } from "@/lib/store";
 
@@ -74,11 +71,7 @@ export function EditOfflineExpenseDialog({ item, open, onOpenChange }: Props) {
           </DialogDescription>
         </DialogHeader>
         {item && (
-          <GastoForm
-            initial={item.input}
-            submitLabel="Salvar alterações"
-            onSubmit={handleSubmit}
-          />
+          <GastoForm initial={item.input} submitLabel="Salvar alterações" onSubmit={handleSubmit} />
         )}
       </DialogContent>
     </Dialog>

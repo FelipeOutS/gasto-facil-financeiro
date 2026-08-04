@@ -40,9 +40,14 @@ function buildSupabaseMock() {
         const r = rows.find((x) =>
           Object.entries(filter).every(([k, v]) => (x as Record<string, unknown>)[k] === v),
         );
-        return { data: r ? { id: "row-" + r.merchant_key + "-" + r.category_id, ...r } : null, error: null };
+        return {
+          data: r ? { id: "row-" + r.merchant_key + "-" + r.category_id, ...r } : null,
+          error: null,
+        };
       };
-      (q as { then?: unknown }).then = (resolve: (v: { data: MemRow[]; error: null }) => unknown) => {
+      (q as { then?: unknown }).then = (
+        resolve: (v: { data: MemRow[]; error: null }) => unknown,
+      ) => {
         const list = rows.filter((x) =>
           Object.entries(filter).every(([k, v]) => (x as Record<string, unknown>)[k] === v),
         );
@@ -92,8 +97,9 @@ const activeIds = new Set(["cat-presentes", "cat-saude", "cat-mercado"]);
 
 describe("merchantKeyFor — normalização", () => {
   it("normaliza acentos, caixa e pontuação", () => {
-    expect(mem.merchantKeyFor("Caboclo Ventania Artigos de Fé"))
-      .toBe("caboclo ventania artigos de fe");
+    expect(mem.merchantKeyFor("Caboclo Ventania Artigos de Fé")).toBe(
+      "caboclo ventania artigos de fe",
+    );
   });
   it("remove pontuação, asteriscos e identificadores numéricos longos", () => {
     expect(mem.merchantKeyFor("UBER *TRIP")).toBe("uber trip");
@@ -121,14 +127,34 @@ describe("merchantKeyFor — normalização", () => {
 
 describe("lookupMerchantMemory — elegibilidade", () => {
   it("uma confirmação automática não basta", async () => {
-    rows.push({ user_id: "u1", merchant_key: "caboclo ventania", category_id: "cat-presentes", confirmed_count: 1, manual_confirmed_count: 0 });
-    const r = await mem.lookupMerchantMemory({ userId: "u1", merchantKey: "caboclo ventania", activeCategoryIds: activeIds });
+    rows.push({
+      user_id: "u1",
+      merchant_key: "caboclo ventania",
+      category_id: "cat-presentes",
+      confirmed_count: 1,
+      manual_confirmed_count: 0,
+    });
+    const r = await mem.lookupMerchantMemory({
+      userId: "u1",
+      merchantKey: "caboclo ventania",
+      activeCategoryIds: activeIds,
+    });
     expect(r.kind).toBe("none");
   });
 
   it("duas confirmações automáticas tornam elegível", async () => {
-    rows.push({ user_id: "u1", merchant_key: "caboclo ventania", category_id: "cat-presentes", confirmed_count: 2, manual_confirmed_count: 0 });
-    const r = await mem.lookupMerchantMemory({ userId: "u1", merchantKey: "caboclo ventania", activeCategoryIds: activeIds });
+    rows.push({
+      user_id: "u1",
+      merchant_key: "caboclo ventania",
+      category_id: "cat-presentes",
+      confirmed_count: 2,
+      manual_confirmed_count: 0,
+    });
+    const r = await mem.lookupMerchantMemory({
+      userId: "u1",
+      merchantKey: "caboclo ventania",
+      activeCategoryIds: activeIds,
+    });
     expect(r.kind).toBe("eligible");
     if (r.kind === "eligible") {
       expect(r.lookup.categoryId).toBe("cat-presentes");
@@ -137,35 +163,86 @@ describe("lookupMerchantMemory — elegibilidade", () => {
   });
 
   it("uma confirmação manual torna elegível imediatamente", async () => {
-    rows.push({ user_id: "u1", merchant_key: "caboclo ventania", category_id: "cat-presentes", confirmed_count: 1, manual_confirmed_count: 1 });
-    const r = await mem.lookupMerchantMemory({ userId: "u1", merchantKey: "caboclo ventania", activeCategoryIds: activeIds });
+    rows.push({
+      user_id: "u1",
+      merchant_key: "caboclo ventania",
+      category_id: "cat-presentes",
+      confirmed_count: 1,
+      manual_confirmed_count: 1,
+    });
+    const r = await mem.lookupMerchantMemory({
+      userId: "u1",
+      merchantKey: "caboclo ventania",
+      activeCategoryIds: activeIds,
+    });
     expect(r.kind).toBe("eligible");
     if (r.kind === "eligible") expect(r.lookup.evidence).toBe("manual");
   });
 
   it("histórico conflitante é ambíguo", async () => {
-    rows.push({ user_id: "u1", merchant_key: "caboclo ventania", category_id: "cat-presentes", confirmed_count: 2, manual_confirmed_count: 0 });
-    rows.push({ user_id: "u1", merchant_key: "caboclo ventania", category_id: "cat-saude", confirmed_count: 0, manual_confirmed_count: 1 });
-    const r = await mem.lookupMerchantMemory({ userId: "u1", merchantKey: "caboclo ventania", activeCategoryIds: activeIds });
+    rows.push({
+      user_id: "u1",
+      merchant_key: "caboclo ventania",
+      category_id: "cat-presentes",
+      confirmed_count: 2,
+      manual_confirmed_count: 0,
+    });
+    rows.push({
+      user_id: "u1",
+      merchant_key: "caboclo ventania",
+      category_id: "cat-saude",
+      confirmed_count: 0,
+      manual_confirmed_count: 1,
+    });
+    const r = await mem.lookupMerchantMemory({
+      userId: "u1",
+      merchantKey: "caboclo ventania",
+      activeCategoryIds: activeIds,
+    });
     expect(r.kind).toBe("ambiguous");
   });
 
   it("categoria inativa é ignorada", async () => {
-    rows.push({ user_id: "u1", merchant_key: "x estab", category_id: "cat-inativa", confirmed_count: 5, manual_confirmed_count: 5 });
-    const r = await mem.lookupMerchantMemory({ userId: "u1", merchantKey: "x estab", activeCategoryIds: activeIds });
+    rows.push({
+      user_id: "u1",
+      merchant_key: "x estab",
+      category_id: "cat-inativa",
+      confirmed_count: 5,
+      manual_confirmed_count: 5,
+    });
+    const r = await mem.lookupMerchantMemory({
+      userId: "u1",
+      merchantKey: "x estab",
+      activeCategoryIds: activeIds,
+    });
     expect(r.kind).toBe("none");
   });
 
   it("memória de outro usuário nunca interfere", async () => {
-    rows.push({ user_id: "u-other", merchant_key: "caboclo ventania", category_id: "cat-presentes", confirmed_count: 10, manual_confirmed_count: 10 });
-    const r = await mem.lookupMerchantMemory({ userId: "u1", merchantKey: "caboclo ventania", activeCategoryIds: activeIds });
+    rows.push({
+      user_id: "u-other",
+      merchant_key: "caboclo ventania",
+      category_id: "cat-presentes",
+      confirmed_count: 10,
+      manual_confirmed_count: 10,
+    });
+    const r = await mem.lookupMerchantMemory({
+      userId: "u1",
+      merchantKey: "caboclo ventania",
+      activeCategoryIds: activeIds,
+    });
     expect(r.kind).toBe("none");
   });
 });
 
 describe("recordMerchantMemory — escrita", () => {
   it("cria registro novo na primeira gravação", async () => {
-    const r = await mem.recordMerchantMemory({ userId: "u1", merchantKey: "k loja", categoryId: "cat-presentes", evidence: "manual" });
+    const r = await mem.recordMerchantMemory({
+      userId: "u1",
+      merchantKey: "k loja",
+      categoryId: "cat-presentes",
+      evidence: "manual",
+    });
     expect(r.ok).toBe(true);
     expect(rows.length).toBe(1);
     expect(rows[0].manual_confirmed_count).toBe(1);
@@ -173,21 +250,41 @@ describe("recordMerchantMemory — escrita", () => {
   });
 
   it("incrementa contadores em gravações subsequentes", async () => {
-    await mem.recordMerchantMemory({ userId: "u1", merchantKey: "k loja", categoryId: "cat-presentes", evidence: "confirmed" });
-    await mem.recordMerchantMemory({ userId: "u1", merchantKey: "k loja", categoryId: "cat-presentes", evidence: "manual" });
+    await mem.recordMerchantMemory({
+      userId: "u1",
+      merchantKey: "k loja",
+      categoryId: "cat-presentes",
+      evidence: "confirmed",
+    });
+    await mem.recordMerchantMemory({
+      userId: "u1",
+      merchantKey: "k loja",
+      categoryId: "cat-presentes",
+      evidence: "manual",
+    });
     expect(rows.length).toBe(1);
     expect(rows[0].confirmed_count).toBe(2);
     expect(rows[0].manual_confirmed_count).toBe(1);
   });
 
   it("não grava sem categoria", async () => {
-    const r = await mem.recordMerchantMemory({ userId: "u1", merchantKey: "k loja", categoryId: "", evidence: "confirmed" });
+    const r = await mem.recordMerchantMemory({
+      userId: "u1",
+      merchantKey: "k loja",
+      categoryId: "",
+      evidence: "confirmed",
+    });
     expect(r.ok).toBe(false);
     expect(rows.length).toBe(0);
   });
 
   it("não grava sem merchant key", async () => {
-    const r = await mem.recordMerchantMemory({ userId: "u1", merchantKey: "", categoryId: "cat-presentes", evidence: "confirmed" });
+    const r = await mem.recordMerchantMemory({
+      userId: "u1",
+      merchantKey: "",
+      categoryId: "cat-presentes",
+      evidence: "confirmed",
+    });
     expect(r.ok).toBe(false);
   });
 });

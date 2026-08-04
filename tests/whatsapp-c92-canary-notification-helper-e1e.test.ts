@@ -66,7 +66,10 @@ function makeClient(state: FakeState) {
       limit: (_n: number) => Promise<{ data: Row[]; error: unknown }>;
       maybeSingle: () => Promise<{ data: Row | null; error: unknown }>;
     } = {
-      select(c: string) { selectCols = c; return api; },
+      select(c: string) {
+        selectCols = c;
+        return api;
+      },
       eq(k: string, v: unknown) {
         if (k.includes(".")) {
           joinConstraint = [k, v];
@@ -75,8 +78,14 @@ function makeClient(state: FakeState) {
         }
         return api;
       },
-      in(k: string, v: unknown[]) { inFilter = [k, v]; return api; },
-      insert(row: Row) { pendingInsert = row; return api; },
+      in(k: string, v: unknown[]) {
+        inFilter = [k, v];
+        return api;
+      },
+      insert(row: Row) {
+        pendingInsert = row;
+        return api;
+      },
       async limit(_n: number) {
         return { data: filterRows(), error: null };
       },
@@ -100,11 +109,15 @@ function makeClient(state: FakeState) {
 
     function filterRows(): Row[] {
       const source =
-        table === "whatsapp_notification_templates" ? state.templates :
-        table === "whatsapp_links" ? state.links :
-        table === "whatsapp_notifications" ? state.notifications :
-        table === "whatsapp_notification_attempts" ? state.attempts :
-        [];
+        table === "whatsapp_notification_templates"
+          ? state.templates
+          : table === "whatsapp_links"
+            ? state.links
+            : table === "whatsapp_notifications"
+              ? state.notifications
+              : table === "whatsapp_notification_attempts"
+                ? state.attempts
+                : [];
       let rows = source.filter((r) => filters.every(([k, v]) => r[k] === v));
       if (inFilter) {
         const [k, vs] = inFilter;
@@ -181,7 +194,9 @@ describe("buildFirstWhatsAppCanaryNotification — puro", () => {
 
 describe("createFirstWhatsAppCanaryNotification — happy path e idempotência", () => {
   let state: FakeState;
-  beforeEach(() => { state = seedHappy(); });
+  beforeEach(() => {
+    state = seedHappy();
+  });
 
   it("cria uma notification na primeira chamada", async () => {
     const r = await createFirstWhatsAppCanaryNotification({ client: makeClient(state) });
@@ -218,20 +233,23 @@ describe("createFirstWhatsAppCanaryNotification — happy path e idempotência",
 
 describe("createFirstWhatsAppCanaryNotification — precondições fail-closed", () => {
   it("template ausente", async () => {
-    const s = seedHappy(); s.templates = [];
+    const s = seedHappy();
+    s.templates = [];
     const r = await createFirstWhatsAppCanaryNotification({ client: makeClient(s) });
     expect(r).toEqual({ kind: "precondition_failed", reason: "template_missing" });
     expect(s.notifications.length).toBe(0);
   });
 
   it("template inativo", async () => {
-    const s = seedHappy(); s.templates[0]!.active = false;
+    const s = seedHappy();
+    s.templates[0]!.active = false;
     const r = await createFirstWhatsAppCanaryNotification({ client: makeClient(s) });
     expect(r).toEqual({ kind: "precondition_failed", reason: "template_inactive" });
   });
 
   it("meta_template_name divergente", async () => {
-    const s = seedHappy(); s.templates[0]!.meta_template_name = "outro";
+    const s = seedHappy();
+    s.templates[0]!.meta_template_name = "outro";
     const r = await createFirstWhatsAppCanaryNotification({ client: makeClient(s) });
     expect(r).toEqual({ kind: "precondition_failed", reason: "meta_template_name_mismatch" });
   });
@@ -251,37 +269,43 @@ describe("createFirstWhatsAppCanaryNotification — precondições fail-closed",
   });
 
   it("categoria divergente", async () => {
-    const s = seedHappy(); s.templates[0]!.category = "contas_a_pagar";
+    const s = seedHappy();
+    s.templates[0]!.category = "contas_a_pagar";
     const r = await createFirstWhatsAppCanaryNotification({ client: makeClient(s) });
     expect(r).toEqual({ kind: "precondition_failed", reason: "category_mismatch" });
   });
 
   it("link ausente", async () => {
-    const s = seedHappy(); s.links = [];
+    const s = seedHappy();
+    s.links = [];
     const r = await createFirstWhatsAppCanaryNotification({ client: makeClient(s) });
     expect(r).toEqual({ kind: "precondition_failed", reason: "link_missing" });
   });
 
   it("link inativo", async () => {
-    const s = seedHappy(); s.links[0]!.ativo = false;
+    const s = seedHappy();
+    s.links[0]!.ativo = false;
     const r = await createFirstWhatsAppCanaryNotification({ client: makeClient(s) });
     expect(r).toEqual({ kind: "precondition_failed", reason: "link_inactive" });
   });
 
   it("link revogado", async () => {
-    const s = seedHappy(); s.links[0]!.revogado_em = "2026-06-01T00:00:00Z";
+    const s = seedHappy();
+    s.links[0]!.revogado_em = "2026-06-01T00:00:00Z";
     const r = await createFirstWhatsAppCanaryNotification({ client: makeClient(s) });
     expect(r).toEqual({ kind: "precondition_failed", reason: "link_revoked" });
   });
 
   it("opt_in ausente", async () => {
-    const s = seedHappy(); s.links[0]!.opt_in_em = null;
+    const s = seedHappy();
+    s.links[0]!.opt_in_em = null;
     const r = await createFirstWhatsAppCanaryNotification({ client: makeClient(s) });
     expect(r).toEqual({ kind: "precondition_failed", reason: "optin_missing" });
   });
 
   it("telefone inválido", async () => {
-    const s = seedHappy(); s.links[0]!.telefone = "abc";
+    const s = seedHappy();
+    s.links[0]!.telefone = "abc";
     const r = await createFirstWhatsAppCanaryNotification({ client: makeClient(s) });
     expect(r).toEqual({ kind: "precondition_failed", reason: "phone_invalid" });
   });

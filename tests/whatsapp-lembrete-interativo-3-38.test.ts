@@ -35,13 +35,19 @@ mock.module("../src/server/whatsapp-entitlement.server", () => ({
 mock.module("@/server/whatsapp-c11-gates.server", () => ({
   runInboundProductionGate: async () => ({ allowed: true as const, userId: "u-admin-master" }),
   runNotificationCreationGate: async () => ({ allowed: true as const }),
-  canCreateNotificationForUser: async () => ({ allowed: true as const, reason: "allowed" as const }),
+  canCreateNotificationForUser: async () => ({
+    allowed: true as const,
+    reason: "allowed" as const,
+  }),
   isInboundGateOk: () => true,
 }));
 mock.module("../src/server/whatsapp-c11-gates.server", () => ({
   runInboundProductionGate: async () => ({ allowed: true as const, userId: "u-admin-master" }),
   runNotificationCreationGate: async () => ({ allowed: true as const }),
-  canCreateNotificationForUser: async () => ({ allowed: true as const, reason: "allowed" as const }),
+  canCreateNotificationForUser: async () => ({
+    allowed: true as const,
+    reason: "allowed" as const,
+  }),
   isInboundGateOk: () => true,
 }));
 import {
@@ -117,21 +123,48 @@ function buildFake(seed?: {
     }
     const api: Record<string, unknown> = {};
     Object.assign(api, {
-      select() { return api; },
-      eq(col: string, val: unknown) { ctx.filters.push((r) => r[col] === val); return api; },
-      in(col: string, vals: unknown[]) { ctx.filters.push((r) => vals.includes(r[col])); return api; },
-      lte(col: string, val: unknown) { ctx.filters.push((r) => String(r[col]) <= String(val)); return api; },
-      gte(col: string, val: unknown) { ctx.filters.push((r) => String(r[col]) >= String(val)); return api; },
-      order(col: string, opts?: { ascending?: boolean }) { ctx.orderBy = col; ctx.orderAsc = opts?.ascending ?? true; return api; },
-      limit(n: number) { ctx.limitN = n; return api; },
-      async maybeSingle() { const rows = applyAll(); return { data: rows[0] ?? null, error: null }; },
+      select() {
+        return api;
+      },
+      eq(col: string, val: unknown) {
+        ctx.filters.push((r) => r[col] === val);
+        return api;
+      },
+      in(col: string, vals: unknown[]) {
+        ctx.filters.push((r) => vals.includes(r[col]));
+        return api;
+      },
+      lte(col: string, val: unknown) {
+        ctx.filters.push((r) => String(r[col]) <= String(val));
+        return api;
+      },
+      gte(col: string, val: unknown) {
+        ctx.filters.push((r) => String(r[col]) >= String(val));
+        return api;
+      },
+      order(col: string, opts?: { ascending?: boolean }) {
+        ctx.orderBy = col;
+        ctx.orderAsc = opts?.ascending ?? true;
+        return api;
+      },
+      limit(n: number) {
+        ctx.limitN = n;
+        return api;
+      },
+      async maybeSingle() {
+        const rows = applyAll();
+        return { data: rows[0] ?? null, error: null };
+      },
       then(resolve: (v: { data: Row[]; error: null }) => unknown) {
         return Promise.resolve(resolve({ data: applyAll() as Row[], error: null }));
       },
       upsert(row: Row | Row[], opts?: { onConflict?: string; ignoreDuplicates?: boolean }) {
         const rows = Array.isArray(row) ? row : [row];
         for (const r of rows) {
-          const conflictCols = (opts?.onConflict ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+          const conflictCols = (opts?.onConflict ?? "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
           const existing = conflictCols.length
             ? data.find((d) => conflictCols.every((c) => d[c] === r[c]))
             : undefined;
@@ -144,7 +177,10 @@ function buildFake(seed?: {
         }
         return api;
       },
-      update(patch: Row) { ctx.updatePatch = patch; return api; },
+      update(patch: Row) {
+        ctx.updatePatch = patch;
+        return api;
+      },
     });
     return api;
   }
@@ -215,7 +251,9 @@ function baseSeed() {
       active: true,
     } as Row,
     // sessão 24h aberta (mensagem recente do usuário)
-    msg: [{ user_id: ADMIN_USER, created_at: new Date(NOW.getTime() - 60_000).toISOString() }] as Row[],
+    msg: [
+      { user_id: ADMIN_USER, created_at: new Date(NOW.getTime() - 60_000).toISOString() },
+    ] as Row[],
   };
 }
 
@@ -225,18 +263,20 @@ beforeEach(() => {
   _resetShortContext();
 });
 
-const contaFetcher = (userId: string) =>
-  async () =>
-    (fake.tables.contas_a_pagar as Row[])
-      .filter((c) => c.user_id === userId && c.status === "pendente")
-      .map((c) => ({
-        id: c.id,
-        nome: c.nome,
-        valor: c.valor,
-        data_vencimento: c.data_vencimento,
-        status: c.status,
-        recorrente: c.recorrente,
-      } as ContaPendenteMinimal));
+const contaFetcher = (userId: string) => async () =>
+  (fake.tables.contas_a_pagar as Row[])
+    .filter((c) => c.user_id === userId && c.status === "pendente")
+    .map(
+      (c) =>
+        ({
+          id: c.id,
+          nome: c.nome,
+          valor: c.valor,
+          data_vencimento: c.data_vencimento,
+          status: c.status,
+          recorrente: c.recorrente,
+        }) as ContaPendenteMinimal,
+    );
 
 // =====================================================================
 // 1) Geração do lembrete
@@ -302,7 +342,12 @@ describe("WA-3.38 :: geração do lembrete", () => {
 describe("WA-3.38 :: gates e revalidação (dry-run)", () => {
   it("canDispatch.allow=true; isQuietHour=false para Admin Master", async () => {
     const decision = await canDispatch(
-      { userId: ADMIN_USER, category: "contas_a_pagar", requiresTemplateWindow: false, hasMetaTemplate: true },
+      {
+        userId: ADMIN_USER,
+        category: "contas_a_pagar",
+        requiresTemplateWindow: false,
+        hasMetaTemplate: true,
+      },
       { client: fake.client, now: () => NOW },
     );
     expect(decision.allow).toBe(true);

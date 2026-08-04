@@ -43,30 +43,32 @@ export function LanguageSwitcher({
         <span>{SHORT_LABEL[locale]}</span>
       </Link>
       <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label={t("lang.select")}
-        className={cn(triggerClasses, "hidden lg:inline-flex", className)}
-      >
-        <Globe className="h-4 w-4" aria-hidden="true" />
-        <span>{SHORT_LABEL[locale]}</span>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align={align} className="min-w-[180px]">
-        {SUPPORTED_LOCALES.map((code) => (
-          <DropdownMenuItem
-            key={code}
-            onSelect={() => setLocale(code)}
-            className="cursor-pointer"
-          >
-            <span className="flex flex-1 items-center gap-2">
-              <span className="inline-flex h-5 w-7 items-center justify-center rounded bg-muted text-[10px] font-bold uppercase tracking-wider">
-                {SHORT_LABEL[code]}
+        <DropdownMenuTrigger
+          aria-label={t("lang.select")}
+          className={cn(triggerClasses, "hidden lg:inline-flex", className)}
+        >
+          <Globe className="h-4 w-4" aria-hidden="true" />
+          <span>{SHORT_LABEL[locale]}</span>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align={align} className="min-w-[180px]">
+          {SUPPORTED_LOCALES.map((code) => (
+            <DropdownMenuItem
+              key={code}
+              onSelect={() => setLocale(code)}
+              className="cursor-pointer"
+            >
+              <span className="flex flex-1 items-center gap-2">
+                <span className="inline-flex h-5 w-7 items-center justify-center rounded bg-muted text-[10px] font-bold uppercase tracking-wider">
+                  {SHORT_LABEL[code]}
+                </span>
+                {t(`lang.${code}`)}
               </span>
-              {t(`lang.${code}`)}
-            </span>
-            {locale === code && <Check className="ml-2 h-4 w-4 text-primary" aria-hidden="true" />}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
+              {locale === code && (
+                <Check className="ml-2 h-4 w-4 text-primary" aria-hidden="true" />
+              )}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
       </DropdownMenu>
     </>
   );

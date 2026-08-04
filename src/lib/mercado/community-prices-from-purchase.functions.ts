@@ -87,9 +87,7 @@ export const submitPurchaseToCommunityPrices = createServerFn({ method: "POST" }
           .ilike("market_name", market)
           .limit(20);
         if (Array.isArray(existing)) {
-          const match = existing.find(
-            (r: { unit: string | null }) => (r.unit ?? null) === unit,
-          );
+          const match = existing.find((r: { unit: string | null }) => (r.unit ?? null) === unit);
           if (match) dupId = match.id as string;
         }
       } catch {
@@ -110,8 +108,7 @@ export const submitPurchaseToCommunityPrices = createServerFn({ method: "POST" }
         barcode: item.barcode?.trim() || null,
         image_url: item.imageUrl?.trim() || null,
         image_source: item.imageSource ?? null,
-        image_confidence:
-          typeof item.imageConfidence === "number" ? item.imageConfidence : null,
+        image_confidence: typeof item.imageConfidence === "number" ? item.imageConfidence : null,
         status: "active",
       };
 
@@ -125,9 +122,7 @@ export const submitPurchaseToCommunityPrices = createServerFn({ method: "POST" }
         else updated++;
       } else {
         payload.user_id = userId;
-        const { error } = await supabase
-          .from("community_market_prices")
-          .insert(payload);
+        const { error } = await supabase.from("community_market_prices").insert(payload);
         if (error) skipped++;
         else inserted++;
       }

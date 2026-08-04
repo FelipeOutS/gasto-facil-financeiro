@@ -9,7 +9,10 @@ import { requireOnline } from "@/lib/use-online-status";
  * is offline, this throws and shows the standard friendly toast so the caller
  * can stop its loading state in a single try/catch.
  */
-export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+export async function apiFetch(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+): Promise<Response> {
   if (!(await requireOnline())) {
     throw new Error("offline");
   }

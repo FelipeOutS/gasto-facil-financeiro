@@ -31,7 +31,10 @@ async function assertAdminMasterOrThrow(userId: string): Promise<void> {
     await assertAdminMaster({ id: userId, email });
   } catch (err) {
     throw new Response(
-      JSON.stringify({ error: "forbidden", message: "Acesso restrito ao Admin Master (Role 'owner' exigida)." }),
+      JSON.stringify({
+        error: "forbidden",
+        message: "Acesso restrito ao Admin Master (Role 'owner' exigida).",
+      }),
       { status: 403, headers: { "Content-Type": "application/json" } },
     );
   }
@@ -52,10 +55,7 @@ export const whatsappAdminReadRuntimeSnapshot = createServerFn({ method: "GET" }
     const effective = {
       inbound_effective: runtime.global_enabled && runtime.inbound_enabled,
       outbound_effective:
-        envDispatch &&
-        envOutboundHttp &&
-        runtime.global_enabled &&
-        runtime.outbound_enabled,
+        envDispatch && envOutboundHttp && runtime.global_enabled && runtime.outbound_enabled,
       dispatcher_effective: envDispatch && runtime.global_enabled,
       notification_creation_effective:
         runtime.global_enabled && runtime.notification_creation_enabled,
@@ -130,11 +130,10 @@ export const whatsappAdminUpdatePlanQuota = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdminMasterOrThrow(context.userId);
     const { updatePlanQuota } = await import("@/server/whatsapp-quota-admin.server");
-    return updatePlanQuota(
-      data.plan_code,
-      data.patch,
-      { adminUserId: context.userId, reason: data.reason },
-    );
+    return updatePlanQuota(data.plan_code, data.patch, {
+      adminUserId: context.userId,
+      reason: data.reason,
+    });
   });
 
 export const whatsappAdminGetUsageSnapshot = createServerFn({ method: "GET" })

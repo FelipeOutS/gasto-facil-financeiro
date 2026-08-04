@@ -24,12 +24,8 @@ const {
   detectPaginationCommand,
   cleanDescricaoDisplay,
 } = await import("../src/server/whatsapp-faturas.server");
-const { getItensFaturaAtualPorCartao } = await import(
-  "../src/server/cartao-fatura.server"
-);
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
+const { getItensFaturaAtualPorCartao } = await import("../src/server/cartao-fatura.server");
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 
 const NBSP = "\u00a0";
 const BRL = (s: string) => s.replace(/R\$ /g, `R$${NBSP}`);
@@ -50,14 +46,35 @@ function isoFuture(n: number): string {
 }
 
 const baseCartoes = () => [
-  { id: "c-nu", user_id: "u1", nome: "Nubank", banco: "Nubank",
-    limite_total: 2000, dia_fechamento: 1, dia_vencimento: 10 },
+  {
+    id: "c-nu",
+    user_id: "u1",
+    nome: "Nubank",
+    banco: "Nubank",
+    limite_total: 2000,
+    dia_fechamento: 1,
+    dia_vencimento: 10,
+  },
 ];
 const baseDoisCartoes = () => [
-  { id: "c-nu", user_id: "u1", nome: "Nubank", banco: "Nubank",
-    limite_total: 2000, dia_fechamento: 1, dia_vencimento: 10 },
-  { id: "c-it", user_id: "u1", nome: "Inter", banco: "Inter",
-    limite_total: 3000, dia_fechamento: 1, dia_vencimento: 10 },
+  {
+    id: "c-nu",
+    user_id: "u1",
+    nome: "Nubank",
+    banco: "Nubank",
+    limite_total: 2000,
+    dia_fechamento: 1,
+    dia_vencimento: 10,
+  },
+  {
+    id: "c-it",
+    user_id: "u1",
+    nome: "Inter",
+    banco: "Inter",
+    limite_total: 3000,
+    dia_fechamento: 1,
+    dia_vencimento: 10,
+  },
 ];
 
 // ---------------------------------------------------------------- detect
@@ -82,7 +99,10 @@ describe("detectFaturaIntent — WA-F2", () => {
   it("extrai termo de cartão em compras", () => {
     const a = detectFaturaIntent("compras do Nubank");
     expect(a?.kind).toBe("invoice_items");
-    if (a && (a.kind === "invoice_items" || a.kind === "invoice_recent" || a.kind === "invoice_largest")) {
+    if (
+      a &&
+      (a.kind === "invoice_items" || a.kind === "invoice_recent" || a.kind === "invoice_largest")
+    ) {
       expect(a.termo).toBe("nubank");
     }
   });
@@ -123,13 +143,24 @@ describe("cleanDescricaoDisplay (puro)", () => {
 // ---------------------------------------------------------------- helper
 
 describe("getItensFaturaAtualPorCartao — regras de exclusão", () => {
-  beforeEach(() => { resetState({ cartoes: baseCartoes() }); });
+  beforeEach(() => {
+    resetState({ cartoes: baseCartoes() });
+  });
 
   it("gasto sem cartão NÃO entra", async () => {
     state.gastosData = [
-      { id: "g1", user_id: "u1", cartao_id: null, valor: 50,
-        data: isoToday(), forma_pagamento: "debito", confirmado: true,
-        invoice_month: null, descricao: "X", estabelecimento: "X" },
+      {
+        id: "g1",
+        user_id: "u1",
+        cartao_id: null,
+        valor: 50,
+        data: isoToday(),
+        forma_pagamento: "debito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "X",
+        estabelecimento: "X",
+      },
     ];
     const itens = await getItensFaturaAtualPorCartao("u1", state.cartoesData[0] as never);
     expect(itens).toEqual([]);
@@ -137,9 +168,18 @@ describe("getItensFaturaAtualPorCartao — regras de exclusão", () => {
 
   it("gasto futuro de outra fatura (invoice_month diferente) NÃO entra", async () => {
     state.gastosData = [
-      { id: "g1", user_id: "u1", cartao_id: "c-nu", valor: 80,
-        data: isoFuture(40), forma_pagamento: "credito", confirmado: true,
-        invoice_month: "2099-12", descricao: "Próx", estabelecimento: "Próx" },
+      {
+        id: "g1",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 80,
+        data: isoFuture(40),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: "2099-12",
+        descricao: "Próx",
+        estabelecimento: "Próx",
+      },
     ];
     const itens = await getItensFaturaAtualPorCartao("u1", state.cartoesData[0] as never);
     expect(itens).toEqual([]);
@@ -147,15 +187,42 @@ describe("getItensFaturaAtualPorCartao — regras de exclusão", () => {
 
   it("gasto em dinheiro/Pix/débito NÃO entra", async () => {
     state.gastosData = [
-      { id: "g1", user_id: "u1", cartao_id: "c-nu", valor: 10,
-        data: isoToday(), forma_pagamento: "dinheiro", confirmado: true,
-        invoice_month: null, descricao: "A", estabelecimento: "A" },
-      { id: "g2", user_id: "u1", cartao_id: "c-nu", valor: 20,
-        data: isoToday(), forma_pagamento: "pix", confirmado: true,
-        invoice_month: null, descricao: "B", estabelecimento: "B" },
-      { id: "g3", user_id: "u1", cartao_id: "c-nu", valor: 30,
-        data: isoToday(), forma_pagamento: "debito", confirmado: true,
-        invoice_month: null, descricao: "C", estabelecimento: "C" },
+      {
+        id: "g1",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 10,
+        data: isoToday(),
+        forma_pagamento: "dinheiro",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "A",
+        estabelecimento: "A",
+      },
+      {
+        id: "g2",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 20,
+        data: isoToday(),
+        forma_pagamento: "pix",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "B",
+        estabelecimento: "B",
+      },
+      {
+        id: "g3",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 30,
+        data: isoToday(),
+        forma_pagamento: "debito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "C",
+        estabelecimento: "C",
+      },
     ];
     const itens = await getItensFaturaAtualPorCartao("u1", state.cartoesData[0] as never);
     expect(itens).toEqual([]);
@@ -164,20 +231,50 @@ describe("getItensFaturaAtualPorCartao — regras de exclusão", () => {
   it("parcela só aparece quando parcela_atual e total_parcelas são consistentes", async () => {
     state.gastosData = [
       // Confiável → exibe "2/6"
-      { id: "g1", user_id: "u1", cartao_id: "c-nu", valor: 120,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "Loja X", estabelecimento: "Loja X",
-        parcela_atual: 2, total_parcelas: 6 },
+      {
+        id: "g1",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 120,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "Loja X",
+        estabelecimento: "Loja X",
+        parcela_atual: 2,
+        total_parcelas: 6,
+      },
       // Apenas total_parcelas → não confiável
-      { id: "g2", user_id: "u1", cartao_id: "c-nu", valor: 50,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "Loja Y", estabelecimento: "Loja Y",
-        parcela_atual: null, total_parcelas: 3 },
+      {
+        id: "g2",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 50,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "Loja Y",
+        estabelecimento: "Loja Y",
+        parcela_atual: null,
+        total_parcelas: 3,
+      },
       // Inconsistente (atual > total) → não confiável
-      { id: "g3", user_id: "u1", cartao_id: "c-nu", valor: 70,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "Loja Z", estabelecimento: "Loja Z",
-        parcela_atual: 9, total_parcelas: 3 },
+      {
+        id: "g3",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 70,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "Loja Z",
+        estabelecimento: "Loja Z",
+        parcela_atual: 9,
+        total_parcelas: 3,
+      },
     ];
     const itens = await getItensFaturaAtualPorCartao("u1", state.cartoesData[0] as never);
     expect(itens).toHaveLength(3);
@@ -192,19 +289,48 @@ describe("getItensFaturaAtualPorCartao — regras de exclusão", () => {
 // ---------------------------------------------------------------- handler
 
 describe("handleFaturaDetailIntent — fluxo principal", () => {
-  beforeEach(() => { resetState({ cartoes: baseCartoes() }); });
+  beforeEach(() => {
+    resetState({ cartoes: baseCartoes() });
+  });
 
   it("usuário com um cartão recebe lista de compras (recentes, ordenadas)", async () => {
     state.gastosData = [
-      { id: "g1", user_id: "u1", cartao_id: "c-nu", valor: 152.8,
-        data: isoDaysAgo(1), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "Mercado Central", estabelecimento: "Mercado" },
-      { id: "g2", user_id: "u1", cartao_id: "c-nu", valor: 34.9,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "UBER *TRIP", estabelecimento: "Uber" },
-      { id: "g3", user_id: "u1", cartao_id: "c-nu", valor: 28.5,
-        data: isoDaysAgo(2), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "Farmácia", estabelecimento: "Drogasil" },
+      {
+        id: "g1",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 152.8,
+        data: isoDaysAgo(1),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "Mercado Central",
+        estabelecimento: "Mercado",
+      },
+      {
+        id: "g2",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 34.9,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "UBER *TRIP",
+        estabelecimento: "Uber",
+      },
+      {
+        id: "g3",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 28.5,
+        data: isoDaysAgo(2),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "Farmácia",
+        estabelecimento: "Drogasil",
+      },
     ];
     const out = await handleFaturaDetailIntent("u1", { kind: "invoice_items", termo: null });
     expect(out.status).toBe("answered");
@@ -219,12 +345,30 @@ describe("handleFaturaDetailIntent — fluxo principal", () => {
   it("vários cartões ativos → pede desambiguação (sem valor/limite)", async () => {
     state.cartoesData = baseDoisCartoes();
     state.gastosData = [
-      { id: "g1", user_id: "u1", cartao_id: "c-nu", valor: 50,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "A", estabelecimento: "A" },
-      { id: "g2", user_id: "u1", cartao_id: "c-it", valor: 70,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "B", estabelecimento: "B" },
+      {
+        id: "g1",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 50,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "A",
+        estabelecimento: "A",
+      },
+      {
+        id: "g2",
+        user_id: "u1",
+        cartao_id: "c-it",
+        valor: 70,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "B",
+        estabelecimento: "B",
+      },
     ];
     const out = await handleFaturaDetailIntent("u1", { kind: "invoice_items", termo: null });
     expect(out.status).toBe("ambiguous_card");
@@ -238,12 +382,30 @@ describe("handleFaturaDetailIntent — fluxo principal", () => {
   it("cartão específico só retorna gastos daquele cartão", async () => {
     state.cartoesData = baseDoisCartoes();
     state.gastosData = [
-      { id: "g1", user_id: "u1", cartao_id: "c-nu", valor: 100,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "Mercado", estabelecimento: "Mercado" },
-      { id: "g2", user_id: "u1", cartao_id: "c-it", valor: 500,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "Loja", estabelecimento: "Loja" },
+      {
+        id: "g1",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 100,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "Mercado",
+        estabelecimento: "Mercado",
+      },
+      {
+        id: "g2",
+        user_id: "u1",
+        cartao_id: "c-it",
+        valor: 500,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "Loja",
+        estabelecimento: "Loja",
+      },
     ];
     const out = await handleFaturaDetailIntent("u1", { kind: "invoice_items", termo: "nubank" });
     expect(out.status).toBe("answered");
@@ -255,15 +417,42 @@ describe("handleFaturaDetailIntent — fluxo principal", () => {
 
   it("maiores compras ordenam por valor (desc) e usam numeração", async () => {
     state.gastosData = [
-      { id: "g1", user_id: "u1", cartao_id: "c-nu", valor: 50,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "Pequeno", estabelecimento: "P" },
-      { id: "g2", user_id: "u1", cartao_id: "c-nu", valor: 420,
-        data: isoDaysAgo(3), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "Loja Exemplo", estabelecimento: "L" },
-      { id: "g3", user_id: "u1", cartao_id: "c-nu", valor: 80,
-        data: isoDaysAgo(1), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "Médio", estabelecimento: "M" },
+      {
+        id: "g1",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 50,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "Pequeno",
+        estabelecimento: "P",
+      },
+      {
+        id: "g2",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 420,
+        data: isoDaysAgo(3),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "Loja Exemplo",
+        estabelecimento: "L",
+      },
+      {
+        id: "g3",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 80,
+        data: isoDaysAgo(1),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "Médio",
+        estabelecimento: "M",
+      },
     ];
     const out = await handleFaturaDetailIntent("u1", { kind: "invoice_largest", termo: null });
     expect(out.status).toBe("answered");
@@ -296,12 +485,30 @@ describe("handleFaturaDetailIntent — fluxo principal", () => {
 
   it("não inclui gasto de outro usuário", async () => {
     state.gastosData = [
-      { id: "g1", user_id: "u1", cartao_id: "c-nu", valor: 100,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "Meu", estabelecimento: "X" },
-      { id: "g2", user_id: "u2", cartao_id: "c-nu", valor: 999,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "Outro", estabelecimento: "Y" },
+      {
+        id: "g1",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 100,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "Meu",
+        estabelecimento: "X",
+      },
+      {
+        id: "g2",
+        user_id: "u2",
+        cartao_id: "c-nu",
+        valor: 999,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "Outro",
+        estabelecimento: "Y",
+      },
     ];
     const out = await handleFaturaDetailIntent("u1", { kind: "invoice_items", termo: null });
     expect(out.resposta).toContain("Meu");
@@ -316,16 +523,24 @@ describe("handleFaturaPagination — paginação", () => {
   beforeEach(() => {
     resetState({ cartoes: baseCartoes() });
     state.gastosData = Array.from({ length: 7 }, (_, i) => ({
-      id: `g${i + 1}`, user_id: "u1", cartao_id: "c-nu",
-      valor: 10 + i, data: isoDaysAgo(i),
-      forma_pagamento: "credito", confirmado: true, invoice_month: null,
-      descricao: `Compra ${i + 1}`, estabelecimento: `E${i + 1}`,
+      id: `g${i + 1}`,
+      user_id: "u1",
+      cartao_id: "c-nu",
+      valor: 10 + i,
+      data: isoDaysAgo(i),
+      forma_pagamento: "credito",
+      confirmado: true,
+      invoice_month: null,
+      descricao: `Compra ${i + 1}`,
+      estabelecimento: `E${i + 1}`,
     }));
   });
 
   it("ver mais abre próxima página", async () => {
     const out = await handleFaturaPagination(
-      "u1", { kind: "consulta_fatura", cartaoId: "c-nu", mode: "recentes", page: 0 }, "next",
+      "u1",
+      { kind: "consulta_fatura", cartaoId: "c-nu", mode: "recentes", page: 0 },
+      "next",
     );
     expect(out.status).toBe("answered");
     const linhas = out.resposta.split("\n").filter((l) => l.startsWith("•"));
@@ -335,7 +550,9 @@ describe("handleFaturaPagination — paginação", () => {
 
   it("voltar retorna à página anterior", async () => {
     const out = await handleFaturaPagination(
-      "u1", { kind: "consulta_fatura", cartaoId: "c-nu", mode: "recentes", page: 1 }, "prev",
+      "u1",
+      { kind: "consulta_fatura", cartaoId: "c-nu", mode: "recentes", page: 1 },
+      "prev",
     );
     expect(out.status).toBe("answered");
     const linhas = out.resposta.split("\n").filter((l) => l.startsWith("•"));
@@ -344,14 +561,18 @@ describe("handleFaturaPagination — paginação", () => {
 
   it("voltar da primeira página → resposta neutra", async () => {
     const out = await handleFaturaPagination(
-      "u1", { kind: "consulta_fatura", cartaoId: "c-nu", mode: "recentes", page: 0 }, "prev",
+      "u1",
+      { kind: "consulta_fatura", cartaoId: "c-nu", mode: "recentes", page: 0 },
+      "prev",
     );
     expect(out.status).toBe("no_more_items");
   });
 
   it("ver mais sem itens adicionais → no_more_items", async () => {
     const out = await handleFaturaPagination(
-      "u1", { kind: "consulta_fatura", cartaoId: "c-nu", mode: "recentes", page: 1 }, "next",
+      "u1",
+      { kind: "consulta_fatura", cartaoId: "c-nu", mode: "recentes", page: 1 },
+      "next",
     );
     expect(out.status).toBe("no_more_items");
   });
@@ -363,9 +584,18 @@ describe("Pipeline WhatsApp — WA-F2", () => {
   beforeEach(() => {
     resetState({ cartoes: baseCartoes() });
     state.gastosData = [
-      { id: "g1", user_id: "u1", cartao_id: "c-nu", valor: 100,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "Mercado", estabelecimento: "M" },
+      {
+        id: "g1",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 100,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "Mercado",
+        estabelecimento: "M",
+      },
     ];
   });
 
@@ -406,10 +636,16 @@ describe("Pipeline WhatsApp — WA-F2", () => {
 
   it("paginação ver mais funciona via pipeline + sessão temporária", async () => {
     state.gastosData = Array.from({ length: 8 }, (_, i) => ({
-      id: `g${i + 1}`, user_id: "u1", cartao_id: "c-nu",
-      valor: 10 + i, data: isoDaysAgo(i),
-      forma_pagamento: "credito", confirmado: true, invoice_month: null,
-      descricao: `Compra ${i + 1}`, estabelecimento: `E${i + 1}`,
+      id: `g${i + 1}`,
+      user_id: "u1",
+      cartao_id: "c-nu",
+      valor: 10 + i,
+      data: isoDaysAgo(i),
+      forma_pagamento: "credito",
+      confirmado: true,
+      invoice_month: null,
+      descricao: `Compra ${i + 1}`,
+      estabelecimento: `E${i + 1}`,
     }));
     const r1 = await processarMensagemWhatsApp({
       telefone: "5511999998888",
@@ -440,18 +676,28 @@ describe("Pipeline WhatsApp — WA-F2", () => {
 
   it("cancelar encerra a paginação", async () => {
     state.gastosData = Array.from({ length: 8 }, (_, i) => ({
-      id: `g${i + 1}`, user_id: "u1", cartao_id: "c-nu",
-      valor: 10 + i, data: isoDaysAgo(i),
-      forma_pagamento: "credito", confirmado: true, invoice_month: null,
-      descricao: `Compra ${i + 1}`, estabelecimento: `E${i + 1}`,
+      id: `g${i + 1}`,
+      user_id: "u1",
+      cartao_id: "c-nu",
+      valor: 10 + i,
+      data: isoDaysAgo(i),
+      forma_pagamento: "credito",
+      confirmado: true,
+      invoice_month: null,
+      descricao: `Compra ${i + 1}`,
+      estabelecimento: `E${i + 1}`,
     }));
     await processarMensagemWhatsApp({
-      telefone: "5511999998888", texto: "últimas compras",
-      external_id: "ext-c-1", recebida_em: new Date().toISOString(),
+      telefone: "5511999998888",
+      texto: "últimas compras",
+      external_id: "ext-c-1",
+      recebida_em: new Date().toISOString(),
     });
     const r = await processarMensagemWhatsApp({
-      telefone: "5511999998888", texto: "cancelar",
-      external_id: "ext-c-2", recebida_em: new Date().toISOString(),
+      telefone: "5511999998888",
+      texto: "cancelar",
+      external_id: "ext-c-2",
+      recebida_em: new Date().toISOString(),
     });
     // Aceita tanto "consulta" (cancelar local) quanto "cancelada"
     // (reset global captura primeiro). Ambos encerram a paginação.
@@ -466,25 +712,38 @@ describe("Log seguro wa_invoice_detail_query", () => {
   beforeEach(() => {
     resetState({ cartoes: baseCartoes() });
     state.gastosData = [
-      { id: "g1", user_id: "u1", cartao_id: "c-nu", valor: 152.8,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: null, descricao: "Mercado Central", estabelecimento: "M" },
+      {
+        id: "g1",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 152.8,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
+        descricao: "Mercado Central",
+        estabelecimento: "M",
+      },
     ];
   });
 
   it("não inclui valor, descrição, cartão, userId, telefone ou pergunta", async () => {
     const captured: unknown[] = [];
     const orig = console.info;
-    console.info = mock((...args: unknown[]) => { captured.push(...args); });
+    console.info = mock((...args: unknown[]) => {
+      captured.push(...args);
+    });
     try {
       await handleFaturaDetailIntent("u1", { kind: "invoice_items", termo: null });
     } finally {
       console.info = orig;
     }
-    const logs = captured.filter((e): e is { event?: unknown } =>
-      typeof e === "object" && e !== null && "event" in e,
+    const logs = captured.filter(
+      (e): e is { event?: unknown } => typeof e === "object" && e !== null && "event" in e,
     );
-    const detalheLog = logs.find((e) => (e as { event?: unknown }).event === "wa_invoice_detail_query");
+    const detalheLog = logs.find(
+      (e) => (e as { event?: unknown }).event === "wa_invoice_detail_query",
+    );
     expect(detalheLog).toBeDefined();
     const flat = JSON.stringify(detalheLog);
     expect(flat).not.toContain("152");

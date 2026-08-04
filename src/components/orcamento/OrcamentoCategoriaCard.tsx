@@ -35,23 +35,11 @@ export function OrcamentoCategoriaCard({
   const estourado = status === "estouro";
   const atencao = status === "atencao";
 
-  const barraCor = estourado
-    ? "bg-destructive"
-    : atencao
-      ? "bg-warning"
-      : "bg-brand";
+  const barraCor = estourado ? "bg-destructive" : atencao ? "bg-warning" : "bg-brand";
 
-  const statusTone = estourado
-    ? "destructive"
-    : atencao
-      ? "warning"
-      : "success";
+  const statusTone = estourado ? "destructive" : atencao ? "warning" : "success";
 
-  const statusLabel = estourado
-    ? labels.outOfPlan
-    : atencao
-      ? labels.attention
-      : labels.ok;
+  const statusLabel = estourado ? labels.outOfPlan : atencao ? labels.attention : labels.ok;
 
   return (
     <li className="hover-lift rounded-2xl border border-border bg-card p-4 shadow-card transition-colors hover:border-brand/40 hover:bg-card-elevated">

@@ -28,9 +28,15 @@ function msg(texto: string, externalId = "e-1") {
 // fora do ciclo (irrelevante para WA-F3.3; é estabilidade de teste).
 function nubank(diaFechamento = 1) {
   return {
-    id: "c-nu", nome: "Nubank", banco: "Nubank",
-    limite_total: 0, dia_fechamento: diaFechamento, dia_vencimento: 10, cor: "#000",
-    created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    id: "c-nu",
+    nome: "Nubank",
+    banco: "Nubank",
+    limite_total: 0,
+    dia_fechamento: diaFechamento,
+    dia_vencimento: 10,
+    cor: "#000",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   };
 }
 
@@ -192,7 +198,9 @@ describe("WA-F3.3 — blindagem da RPC (validações server-side)", () => {
       const out = await processarMensagemWhatsApp(msg("sim", "e-2"));
       expect(out.status).toBe("erro");
       expect(gastosInserts().length).toBe(0);
-    } finally { fakeAdmin.rpc = original; }
+    } finally {
+      fakeAdmin.rpc = original;
+    }
   });
 
   it("rejeita parcela com valor zero (não cria parcial)", async () => {
@@ -202,7 +210,9 @@ describe("WA-F3.3 — blindagem da RPC (validações server-side)", () => {
       const out = await processarMensagemWhatsApp(msg("sim", "e-2"));
       expect(out.status).toBe("erro");
       expect(gastosInserts().length).toBe(0);
-    } finally { fakeAdmin.rpc = original; }
+    } finally {
+      fakeAdmin.rpc = original;
+    }
   });
 
   it("rejeita sequência de parcelas inválida (com furo)", async () => {
@@ -212,7 +222,9 @@ describe("WA-F3.3 — blindagem da RPC (validações server-side)", () => {
       const out = await processarMensagemWhatsApp(msg("sim", "e-2"));
       expect(out.status).toBe("erro");
       expect(gastosInserts().length).toBe(0);
-    } finally { fakeAdmin.rpc = original; }
+    } finally {
+      fakeAdmin.rpc = original;
+    }
   });
 
   it("rejeita cartão pertencente a OUTRO usuário", async () => {
@@ -222,7 +234,9 @@ describe("WA-F3.3 — blindagem da RPC (validações server-side)", () => {
       const out = await processarMensagemWhatsApp(msg("sim", "e-2"));
       expect(out.status).toBe("erro");
       expect(gastosInserts().length).toBe(0);
-    } finally { fakeAdmin.rpc = original; }
+    } finally {
+      fakeAdmin.rpc = original;
+    }
   });
 
   it("rejeita categoria pertencente a OUTRO usuário", async () => {
@@ -233,7 +247,9 @@ describe("WA-F3.3 — blindagem da RPC (validações server-side)", () => {
       const out = await processarMensagemWhatsApp(msg("sim", "e-3"));
       expect(out.status).toBe("erro");
       expect(gastosInserts().filter((g) => g.row.grupo_parcelamento_id).length).toBe(0);
-    } finally { fakeAdmin.rpc = original; }
+    } finally {
+      fakeAdmin.rpc = original;
+    }
   });
 });
 
@@ -254,7 +270,9 @@ describe("WA-F3.3 — idempotência concorrente (mesmo external_message_id)", ()
     expect(bloqueada.length).toBe(1);
     // Apenas UM grupo_parcelamento_id existe.
     const grupos = new Set(
-      gastosInserts().map((g) => g.row.grupo_parcelamento_id as string).filter(Boolean),
+      gastosInserts()
+        .map((g) => g.row.grupo_parcelamento_id as string)
+        .filter(Boolean),
     );
     expect(grupos.size).toBe(1);
     expect(gastosInserts().length).toBe(3);

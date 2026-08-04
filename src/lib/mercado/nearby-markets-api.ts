@@ -27,10 +27,7 @@
  *   de salvar no cadastro local. Nenhum mercado é persistido automaticamente.
  */
 
-export type MercadoNearbyProvider =
-  | "manual_only"
-  | "google_places"
-  | "openstreetmap_overpass";
+export type MercadoNearbyProvider = "manual_only" | "google_places" | "openstreetmap_overpass";
 
 export type MercadoNearbyResult = {
   /** Identificador interno estável (uuid local ou hash do placeId). */
@@ -108,8 +105,7 @@ export type MercadoNearbyResponse =
  *   2. Implementar a chamada real no handler da server fn.
  *   3. Trocar `ACTIVE_NEARBY_PROVIDER` para "google_places".
  */
-export const ACTIVE_NEARBY_PROVIDER: MercadoNearbyProvider =
-  "openstreetmap_overpass";
+export const ACTIVE_NEARBY_PROVIDER: MercadoNearbyProvider = "openstreetmap_overpass";
 
 // ---------------------------------------------------------------------------
 // Normalizadores (puros, sem efeito colateral, client-safe)
@@ -161,8 +157,7 @@ export const NEARBY_PROVIDER_DESCRIPTORS: Readonly<
     id: "manual_only",
     label: "Cadastro manual",
     requiresBackend: false,
-    notes:
-      "Estado padrão. Sem busca automática. O usuário cadastra cada mercado à mão.",
+    notes: "Estado padrão. Sem busca automática. O usuário cadastra cada mercado à mão.",
   },
   google_places: {
     id: "google_places",
@@ -194,9 +189,7 @@ export const NEARBY_PROVIDER_DESCRIPTORS: Readonly<
  * server fn correspondente (ex.: `findNearbyMarketsServerFn` em
  * `nearby-markets.functions.ts`). Nunca colocar fetch externo aqui.
  */
-export async function findNearbyMarkets(
-  query: MercadoNearbyQuery,
-): Promise<MercadoNearbyResponse> {
+export async function findNearbyMarkets(query: MercadoNearbyQuery): Promise<MercadoNearbyResponse> {
   if (!isValidNearbyQuery(query)) {
     return {
       ok: false,

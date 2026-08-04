@@ -103,8 +103,18 @@ function logDueQuery(args: {
 }
 
 const MES_NOMES = [
-  "janeiro", "fevereiro", "marco", "abril", "maio", "junho",
-  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+  "janeiro",
+  "fevereiro",
+  "marco",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
 ];
 
 function parseMonthFromText(t: string): string | null {
@@ -228,7 +238,6 @@ export function detectDueIntent(texto: string): DueIntent | null {
     return { kind: "month", yearMonth: mesYM };
   }
 
-
   // "quais contas tenho para pagar" / "minhas contas" / "o que tenho para pagar"
   if (
     /\bquais\s+contas\s+(?:eu\s+)?tenho\b/.test(t) ||
@@ -266,9 +275,7 @@ function renderHeader(mode: DueIntent["kind"], ym: string | null): string {
 function renderItens(rows: ContaVencimentoRow[], includeDate: boolean): string {
   return rows
     .map((r) => {
-      const left = includeDate
-        ? `• ${fmtDM(r.dataVencimento)} — ${r.nome}`
-        : `• ${r.nome}`;
+      const left = includeDate ? `• ${fmtDM(r.dataVencimento)} — ${r.nome}` : `• ${r.nome}`;
       return `${left} — ${fmtBRL(r.valor)}`;
     })
     .join("\n");
@@ -318,10 +325,7 @@ function paginate(
  * Handler principal: resolve intent → consulta helper → monta resposta.
  * Não persiste sessão; isso fica a cargo do pipeline (whatsapp.server).
  */
-export async function handleDueIntent(
-  userId: string,
-  intent: DueIntent,
-): Promise<DueResult> {
+export async function handleDueIntent(userId: string, intent: DueIntent): Promise<DueResult> {
   const hoje = nowInAppTz();
 
   if (intent.kind === "today") {
@@ -336,12 +340,20 @@ export async function handleDueIntent(
       return out;
     }
     const { body, nextSession } = paginate(
-      rows, "today", 0, null,
+      rows,
+      "today",
+      0,
+      null,
       `Você tem ${rows.length} vencimento${rows.length > 1 ? "s" : ""} previsto${rows.length > 1 ? "s" : ""} para hoje:`,
       false,
       "Total previsto para hoje",
     );
-    const out: DueResult = { status: "answered", resposta: body, nextSession, items: rows.map((r) => r.nome) };
+    const out: DueResult = {
+      status: "answered",
+      resposta: body,
+      nextSession,
+      items: rows.map((r) => r.nome),
+    };
     logDueQuery({ intent: "due_today", itemsReturnedCount: rows.length, result: out.status });
     return out;
   }
@@ -358,12 +370,20 @@ export async function handleDueIntent(
       return out;
     }
     const { body, nextSession } = paginate(
-      rows, "tomorrow", 0, null,
+      rows,
+      "tomorrow",
+      0,
+      null,
       `Você tem ${rows.length} vencimento${rows.length > 1 ? "s" : ""} previsto${rows.length > 1 ? "s" : ""} para amanhã:`,
       false,
       "Total previsto para amanhã",
     );
-    const out: DueResult = { status: "answered", resposta: body, nextSession, items: rows.map((r) => r.nome) };
+    const out: DueResult = {
+      status: "answered",
+      resposta: body,
+      nextSession,
+      items: rows.map((r) => r.nome),
+    };
     logDueQuery({ intent: "due_tomorrow", itemsReturnedCount: rows.length, result: out.status });
     return out;
   }
@@ -380,12 +400,20 @@ export async function handleDueIntent(
       return out;
     }
     const { body, nextSession } = paginate(
-      rows, "week", 0, null,
+      rows,
+      "week",
+      0,
+      null,
       renderHeader("week", null),
       true,
       "Total previsto na semana",
     );
-    const out: DueResult = { status: "answered", resposta: body, nextSession, items: rows.map((r) => r.nome) };
+    const out: DueResult = {
+      status: "answered",
+      resposta: body,
+      nextSession,
+      items: rows.map((r) => r.nome),
+    };
     logDueQuery({ intent: "due_week", itemsReturnedCount: rows.length, result: out.status });
     return out;
   }
@@ -402,12 +430,20 @@ export async function handleDueIntent(
       return out;
     }
     const { body, nextSession } = paginate(
-      rows, "month", 0, yearMonth,
+      rows,
+      "month",
+      0,
+      yearMonth,
       renderHeader("month", yearMonth),
       true,
       "Total previsto no mês",
     );
-    const out: DueResult = { status: "answered", resposta: body, nextSession, items: rows.map((r) => r.nome) };
+    const out: DueResult = {
+      status: "answered",
+      resposta: body,
+      nextSession,
+      items: rows.map((r) => r.nome),
+    };
     logDueQuery({ intent: "due_month", itemsReturnedCount: rows.length, result: out.status });
     return out;
   }
@@ -428,12 +464,20 @@ export async function handleDueIntent(
     // Como `contas_a_pagar.status` é confiável ('pendente'/'pago'),
     // podemos afirmar "atraso" com segurança.
     const { body, nextSession } = paginate(
-      rows, "overdue", 0, null,
+      rows,
+      "overdue",
+      0,
+      null,
       `Você tem ${rows.length} conta${rows.length > 1 ? "s" : ""} em atraso (vencimento anterior e ainda em aberto):`,
       true,
       "Total em atraso",
     );
-    const out: DueResult = { status: "answered", resposta: body, nextSession, items: rows.map((r) => r.nome) };
+    const out: DueResult = {
+      status: "answered",
+      resposta: body,
+      nextSession,
+      items: rows.map((r) => r.nome),
+    };
     logDueQuery({ intent: "due_overdue", itemsReturnedCount: rows.length, result: out.status });
     return out;
   }
@@ -452,7 +496,10 @@ export async function handleDueIntent(
   }
   const nomes = Array.from(new Set(rows.map((r) => r.nome)));
   if (nomes.length > 1) {
-    const lista = nomes.slice(0, 5).map((n, i) => `${i + 1}. ${n}`).join("\n");
+    const lista = nomes
+      .slice(0, 5)
+      .map((n, i) => `${i + 1}. ${n}`)
+      .join("\n");
     const out: DueResult = {
       status: "ambiguous_item",
       resposta:
@@ -517,11 +564,7 @@ export async function handleDuePagination(
   const slice = rows.slice(start, start + PAGE_SIZE);
   const remaining = rows.length - (start + slice.length);
   const includeDate = state.mode !== "today" && state.mode !== "tomorrow";
-  const lines: string[] = [
-    "Continuando os vencimentos:",
-    "",
-    renderItens(slice, includeDate),
-  ];
+  const lines: string[] = ["Continuando os vencimentos:", "", renderItens(slice, includeDate)];
   let nextSession: DueSessionState | null = null;
   if (remaining > 0) {
     lines.push("", `Digite "ver mais" para continuar (${remaining} restantes).`);

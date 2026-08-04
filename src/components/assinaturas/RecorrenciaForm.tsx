@@ -84,9 +84,10 @@ export function RecorrenciaForm({
   const fetchRadar = useServerFn(getEconomicRadar);
   useEffect(() => {
     fetchRadar()
-      .then((r: any) => {
-        const usd = r?.indicators?.find((i: any) => i.key === "USD_BRL");
-        const eur = r?.indicators?.find((i: any) => i.key === "EUR_BRL");
+      .then((r) => {
+        const indicators = (r as { indicators?: Array<{ key: string; value: number }> }).indicators || [];
+        const usd = indicators.find((i) => i.key === "USD_BRL");
+        const eur = indicators.find((i) => i.key === "EUR_BRL");
         setCotacaoUSD(usd?.value ?? null);
         setCotacaoEUR(eur?.value ?? null);
       })
@@ -109,9 +110,7 @@ export function RecorrenciaForm({
       setValor(editing.valor.toFixed(2).replace(".", ","));
       setMoeda((editing.moeda ?? "BRL") as "BRL" | "USD" | "EUR");
       setValorOriginal(
-        editing.valorOriginal != null
-          ? editing.valorOriginal.toFixed(2).replace(".", ",")
-          : "",
+        editing.valorOriginal != null ? editing.valorOriginal.toFixed(2).replace(".", ",") : "",
       );
       setCategoriaId(editing.categoriaId ?? "");
       setFrequencia(editing.frequencia);
@@ -197,10 +196,7 @@ export function RecorrenciaForm({
       </div>
       <div>
         <label className="text-xs font-medium">{t("dialog.currency")}</label>
-        <Select
-          value={moeda}
-          onValueChange={(v) => setMoeda(v as "BRL" | "USD" | "EUR")}
-        >
+        <Select value={moeda} onValueChange={(v) => setMoeda(v as "BRL" | "USD" | "EUR")}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -230,9 +226,7 @@ export function RecorrenciaForm({
               readOnly
               value={
                 (moeda === "USD" ? cotacaoUSD : cotacaoEUR)
-                  ? formatBRL(
-                      (moeda === "USD" ? cotacaoUSD : cotacaoEUR) as number,
-                    )
+                  ? formatBRL((moeda === "USD" ? cotacaoUSD : cotacaoEUR) as number)
                   : "—"
               }
               className="bg-muted/40"
@@ -346,10 +340,7 @@ export function RecorrenciaForm({
       </div>
       <div>
         <label className="text-xs font-medium">{t("dialog.status")}</label>
-        <Select
-          value={status}
-          onValueChange={(v) => setStatus(v as StatusRecorrencia)}
-        >
+        <Select value={status} onValueChange={(v) => setStatus(v as StatusRecorrencia)}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -364,11 +355,7 @@ export function RecorrenciaForm({
       </div>
       <div>
         <label className="text-xs font-medium">{t("dialog.note")}</label>
-        <Textarea
-          value={observacao}
-          onChange={(e) => setObservacao(e.target.value)}
-          rows={2}
-        />
+        <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={2} />
       </div>
       <div
         className={
@@ -416,9 +403,7 @@ export function RecorrenciaDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {editing ? t("dialog.titleEdit") : t("dialog.titleNew")}
-          </DialogTitle>
+          <DialogTitle>{editing ? t("dialog.titleEdit") : t("dialog.titleNew")}</DialogTitle>
           <DialogDescription>
             {editing ? t("dialog.descEdit") : t("dialog.descNew")}
           </DialogDescription>

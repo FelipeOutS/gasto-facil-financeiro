@@ -157,7 +157,6 @@ function SystemHealthPage() {
   const [cleanupLast, setCleanupLast] = useState<LogRetentionCleanupResult | null>(null);
   const runCleanupFn = useServerFn(runLogRetentionCleanup);
 
-
   const openDiagnose = useCallback((paymentId: string, periodEnd?: string | null) => {
     setDiagPaymentId(paymentId);
     setDiagPeriodEnd(periodEnd ?? null);
@@ -215,7 +214,6 @@ function SystemHealthPage() {
       setCleanupOpen(false);
     }
   }, [runCleanupFn, loadRetention, load]);
-
 
   useEffect(() => {
     void load();
@@ -340,11 +338,7 @@ function SystemHealthPage() {
               <CreditCard className="h-4 w-4" /> Pagamentos (últimas 24h)
             </h2>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <MetricCard
-                title="Aprovados"
-                value={data.payments.approved_24h}
-                tone="ok"
-              />
+              <MetricCard title="Aprovados" value={data.payments.approved_24h} tone="ok" />
               <MetricCard
                 title="Pendentes"
                 value={data.payments.pending_24h}
@@ -377,9 +371,7 @@ function SystemHealthPage() {
                     <Clock className="h-4 w-4" />
                     Pagamentos pendentes há mais de 30 min
                   </span>
-                  <Badge variant="outline">
-                    {data.payments.pending_older_than_30min}
-                  </Badge>
+                  <Badge variant="outline">{data.payments.pending_older_than_30min}</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -463,9 +455,7 @@ function SystemHealthPage() {
             {/* Inconsistências pagamento ↔ plano */}
             <Card
               className={`mt-4 ${
-                data.payment_plan_inconsistencies.length > 0
-                  ? "border-red-500/40 bg-red-500/5"
-                  : ""
+                data.payment_plan_inconsistencies.length > 0 ? "border-red-500/40 bg-red-500/5" : ""
               }`}
             >
               <CardHeader className="pb-2">
@@ -474,9 +464,7 @@ function SystemHealthPage() {
                     <AlertTriangle className="h-4 w-4" />
                     Inconsistências pagamento ↔ plano
                   </span>
-                  <Badge variant="outline">
-                    {data.payment_plan_inconsistencies.length}
-                  </Badge>
+                  <Badge variant="outline">{data.payment_plan_inconsistencies.length}</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -534,7 +522,9 @@ function SystemHealthPage() {
                                   <Button
                                     size="sm"
                                     className="h-7 px-2"
-                                    onClick={() => openDiagnose(r.provider_payment_id!, r.current_period_end)}
+                                    onClick={() =>
+                                      openDiagnose(r.provider_payment_id!, r.current_period_end)
+                                    }
                                   >
                                     <Stethoscope className="mr-1 h-3 w-3" />
                                     Diagnosticar
@@ -642,9 +632,7 @@ function SystemHealthPage() {
                         <li key={r.table} className="flex justify-between">
                           <span className="font-mono">{r.table}</span>
                           <span className={r.success ? "text-emerald-600" : "text-red-600"}>
-                            {r.success
-                              ? `${r.deleted} apagado(s)`
-                              : `falhou: ${r.error ?? "erro"}`}
+                            {r.success ? `${r.deleted} apagado(s)` : `falhou: ${r.error ?? "erro"}`}
                           </span>
                         </li>
                       ))}
@@ -662,10 +650,10 @@ function SystemHealthPage() {
                     Confirmar limpeza de logs antigos
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta ação apagará logs antigos conforme a política de retenção
-                    (webhook_logs 90d, audit_logs 180d, rate_limit_events 30d,
-                    payment_events 180d). Ela <strong>não</strong> apagará usuários,
-                    pagamentos, planos, gastos ou receitas. Deseja continuar?
+                    Esta ação apagará logs antigos conforme a política de retenção (webhook_logs
+                    90d, audit_logs 180d, rate_limit_events 30d, payment_events 180d). Ela{" "}
+                    <strong>não</strong> apagará usuários, pagamentos, planos, gastos ou receitas.
+                    Deseja continuar?
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -678,9 +666,7 @@ function SystemHealthPage() {
                     disabled={cleanupRunning}
                     className="bg-red-600 hover:bg-red-700"
                   >
-                    {cleanupRunning ? (
-                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                    ) : null}
+                    {cleanupRunning ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null}
                     Confirmar limpeza
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -711,7 +697,10 @@ function SystemHealthPage() {
                 { label: "Data", render: (r) => fmtDateTime(r.created_at) },
                 { label: "Rota", render: (r) => r.route },
                 { label: "Chave", render: (r) => r.key_masked ?? "—" },
-                { label: "Usuário", render: (r) => r.user_id ? r.user_id.slice(0, 8) + "…" : "—" },
+                {
+                  label: "Usuário",
+                  render: (r) => (r.user_id ? r.user_id.slice(0, 8) + "…" : "—"),
+                },
                 { label: "IP", render: (r) => r.ip_masked ?? "—" },
                 { label: "Método", render: (r) => r.method ?? "—" },
               ]}
@@ -727,7 +716,10 @@ function SystemHealthPage() {
                 { label: "Tipo", render: (r) => r.event_type ?? "—" },
                 { label: "Status", render: (r) => r.status },
                 { label: "Raw", render: (r) => r.raw_status ?? "—" },
-                { label: "Usuário", render: (r) => r.user_id ? r.user_id.slice(0, 8) + "…" : "—" },
+                {
+                  label: "Usuário",
+                  render: (r) => (r.user_id ? r.user_id.slice(0, 8) + "…" : "—"),
+                },
                 {
                   label: "Ação",
                   render: (r) =>

@@ -10,21 +10,11 @@ type Props = {
   className?: string;
 };
 
-export function SavedMarketsChips({
-  label,
-  emptyHint,
-  selected,
-  onSelect,
-  className,
-}: Props) {
+export function SavedMarketsChips({ label, emptyHint, selected, onSelect, className }: Props) {
   const mercados = useMercadosLocais();
 
   if (mercados.length === 0) {
-    return (
-      <p className={cn("mt-2 text-[11px] text-muted-foreground", className)}>
-        {emptyHint}
-      </p>
-    );
+    return <p className={cn("mt-2 text-[11px] text-muted-foreground", className)}>{emptyHint}</p>;
   }
 
   const selectedNorm = (selected || "").trim().toLowerCase();

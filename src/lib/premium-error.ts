@@ -16,10 +16,10 @@
 import { toast } from "sonner";
 
 export type PremiumErrorKind =
-  | "feature_locked"   // plano não inclui o recurso (mesmo ativo)
-  | "plan_expired"     // plano venceu / cancelado / sem acesso vigente
-  | "plan_required"    // usuário sem assinatura nenhuma
-  | "permission";      // negação genérica de permissão
+  | "feature_locked" // plano não inclui o recurso (mesmo ativo)
+  | "plan_expired" // plano venceu / cancelado / sem acesso vigente
+  | "plan_required" // usuário sem assinatura nenhuma
+  | "permission"; // negação genérica de permissão
 
 export type PremiumErrorInfo = {
   kind: PremiumErrorKind;
@@ -78,7 +78,7 @@ function extractMessage(err: unknown): string {
       typeof anyErr.error === "string"
         ? anyErr.error
         : anyErr.error && typeof (anyErr.error as { message?: unknown }).message === "string"
-          ? ((anyErr.error as { message: string }).message)
+          ? (anyErr.error as { message: string }).message
           : "";
     const code = typeof anyErr.code === "string" ? anyErr.code : "";
     return [fromMessage, fromError, code].filter(Boolean).join(" | ");
@@ -103,22 +103,19 @@ export function parsePremiumError(err: unknown): PremiumErrorInfo | null {
   if (matches(raw, PLAN_EXPIRED_HINTS)) {
     return {
       kind: "plan_expired",
-      message:
-        "Seu plano expirou. Renove sua assinatura para continuar usando este recurso.",
+      message: "Seu plano expirou. Renove sua assinatura para continuar usando este recurso.",
     };
   }
   if (matches(raw, FEATURE_LOCKED_HINTS)) {
     return {
       kind: "feature_locked",
-      message:
-        "Seu plano atual não inclui este recurso. Faça upgrade para liberar.",
+      message: "Seu plano atual não inclui este recurso. Faça upgrade para liberar.",
     };
   }
   if (matches(raw, PLAN_REQUIRED_HINTS)) {
     return {
       kind: "plan_required",
-      message:
-        "Este recurso faz parte dos planos pagos do Gasto Inteligente.",
+      message: "Este recurso faz parte dos planos pagos do Gasto Inteligente.",
     };
   }
   if (matches(raw, PERMISSION_HINTS)) {

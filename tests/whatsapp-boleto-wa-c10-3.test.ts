@@ -23,10 +23,10 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
 
 const { _buildBoletoCobrancaForTest } = await import("../src/server/whatsapp-boleto-parser");
-const { __setBoletoOcrExtractorForTests } = await import("../src/server/whatsapp-boleto-ocr.server");
-const { __setBoletoPepperForTest, __resetBoletoPepperCacheForTest } = await import(
-  "../src/server/whatsapp-boleto-secret.server"
-);
+const { __setBoletoOcrExtractorForTests } =
+  await import("../src/server/whatsapp-boleto-ocr.server");
+const { __setBoletoPepperForTest, __resetBoletoPepperCacheForTest } =
+  await import("../src/server/whatsapp-boleto-secret.server");
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 
 const PNG_DATA_URL =
@@ -36,12 +36,14 @@ const PNG_DATA_URL =
 const JPEG_DATA_URL =
   "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==";
 
-function imgMsg(opts: {
-  externalId?: string;
-  mime?: "image/png" | "image/jpeg";
-  sha256?: string;
-  caption?: string;
-} = {}) {
+function imgMsg(
+  opts: {
+    externalId?: string;
+    mime?: "image/png" | "image/jpeg";
+    sha256?: string;
+    caption?: string;
+  } = {},
+) {
   const dataUrl = opts.mime === "image/jpeg" ? JPEG_DATA_URL : PNG_DATA_URL;
   return {
     external_id: opts.externalId ?? `m-${Math.random().toString(36).slice(2, 10)}`,
@@ -115,7 +117,9 @@ describe("WA-C10.3 — roteamento determinístico boleto/comprovante em imagens"
         identificacao: "Energia",
       };
     });
-    const out = await processarMensagemWhatsApp(imgMsg({ mime: "image/jpeg", sha256: "jpg-sha-2" }));
+    const out = await processarMensagemWhatsApp(
+      imgMsg({ mime: "image/jpeg", sha256: "jpg-sha-2" }),
+    );
     expect(out.status).toBe("pendente");
     // Deve ser a mensagem do fallback manual de BOLETO, não a de comprovante.
     expect(out.resposta).toMatch(/não consegui validar a linha digitável/i);
@@ -136,7 +140,9 @@ describe("WA-C10.3 — roteamento determinístico boleto/comprovante em imagens"
       vencimentoISO: null,
       identificacao: null,
     }));
-    const out = await processarMensagemWhatsApp(imgMsg({ mime: "image/jpeg", sha256: "no-boleto" }));
+    const out = await processarMensagemWhatsApp(
+      imgMsg({ mime: "image/jpeg", sha256: "no-boleto" }),
+    );
     // Aceita qualquer estado válido do fluxo de comprovante (ilegível,
     // aguardando_confirmacao, etc.), mas nunca cria conta a pagar.
     expect(out).toBeDefined();

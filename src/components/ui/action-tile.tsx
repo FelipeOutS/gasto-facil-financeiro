@@ -2,8 +2,10 @@ import * as React from "react";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export interface ActionTileProps
-  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "title"> {
+export interface ActionTileProps extends Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  "title"
+> {
   title: React.ReactNode;
   description?: React.ReactNode;
   icon?: React.ReactNode;
@@ -22,16 +24,7 @@ const toneIcon = {
 
 export const ActionTile = React.forwardRef<HTMLButtonElement, ActionTileProps>(
   (
-    {
-      className,
-      title,
-      description,
-      icon,
-      trailing,
-      hideChevron,
-      tone = "default",
-      ...props
-    },
+    { className, title, description, icon, trailing, hideChevron, tone = "default", ...props },
     ref,
   ) => {
     return (
@@ -48,10 +41,7 @@ export const ActionTile = React.forwardRef<HTMLButtonElement, ActionTileProps>(
       >
         {icon && (
           <span
-            className={cn(
-              "grid h-10 w-10 shrink-0 place-items-center rounded-xl",
-              toneIcon[tone],
-            )}
+            className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-xl", toneIcon[tone])}
           >
             {icon}
           </span>
@@ -59,9 +49,7 @@ export const ActionTile = React.forwardRef<HTMLButtonElement, ActionTileProps>(
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{title}</p>
           {description && (
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
-              {description}
-            </p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{description}</p>
           )}
         </div>
         {trailing}

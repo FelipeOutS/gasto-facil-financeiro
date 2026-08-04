@@ -432,13 +432,9 @@ describe("WA-C9.2 :: backoff efetivo via markFailed", () => {
       scheduled_at: past(60).toISOString(),
       next_attempt_at: null,
     });
-    await markFailed(
-      id,
-      "perma",
-      { retryable: true, currentAttempt: 4, maxAttempts: 5 },
-      null,
-      { client: fake.client },
-    );
+    await markFailed(id, "perma", { retryable: true, currentAttempt: 4, maxAttempts: 5 }, null, {
+      client: fake.client,
+    });
     const row = fake.tables.whatsapp_notifications[0] as unknown as NotificationRow;
     expect(row.status).toBe("failed");
     const out = await listDuePending(50, { client: fake.client, now: nowFn });

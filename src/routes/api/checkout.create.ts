@@ -40,9 +40,7 @@ async function getUserFromRequest(request: Request) {
   if (!token) return null;
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
   const anon =
-    process.env.SUPABASE_PUBLISHABLE_KEY ??
-    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-    "";
+    process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "";
   if (!url) return null;
   const sb = createClient(url, anon, {
     global: { headers: { Authorization: `Bearer ${token}` } },
@@ -140,8 +138,10 @@ export const Route = createFileRoute("/api/checkout/create")({
           months: offer.months,
         };
         if (existingPlan) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await supabaseAdmin.from("user_plans").update(planUpdate as any).eq("user_id", user.id);
+          await supabaseAdmin
+            .from("user_plans")
+            .update(planUpdate as any)
+            .eq("user_id", user.id);
         } else {
           await supabaseAdmin
             .from("user_plans")

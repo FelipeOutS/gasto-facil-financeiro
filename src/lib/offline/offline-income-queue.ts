@@ -188,10 +188,7 @@ export async function removeIncome(localId: string): Promise<void> {
   }
 }
 
-export async function updateIncome(
-  localId: string,
-  patch: Partial<OfflineIncome>,
-): Promise<void> {
+export async function updateIncome(localId: string, patch: Partial<OfflineIncome>): Promise<void> {
   await tx("readwrite", (s) => {
     return new Promise<void>((resolve, reject) => {
       const req = s.get(localId);

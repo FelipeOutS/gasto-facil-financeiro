@@ -85,8 +85,16 @@ ok(
   "card de R$ 25 não aparece nos planos comerciais",
   !COMMERCIAL_PLANS.some((plan) => plan.tier === "pessoal_manual"),
 );
-for (const tier of ["pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"] as PlanTier[]) {
-  ok(`${tier} continua visível`, COMMERCIAL_PLANS.some((plan) => plan.tier === tier));
+for (const tier of [
+  "pessoal_premium",
+  "mei_essencial",
+  "mei_inteligente",
+  "empresa",
+] as PlanTier[]) {
+  ok(
+    `${tier} continua visível`,
+    COMMERCIAL_PLANS.some((plan) => plan.tier === tier),
+  );
   ok(`${tier} continua disponível para checkout`, isPlanAvailableForNewSubscriptions(tier));
 }
 eq(
@@ -99,7 +107,8 @@ const checkoutSource = await Bun.file("src/routes/api/checkout.create.ts").text(
 ok(
   "checkout server bloqueia plano descontinuado antes de alterar user_plans",
   checkoutSource.indexOf("isPlanAvailableForNewSubscriptions") >= 0 &&
-    checkoutSource.indexOf("isPlanAvailableForNewSubscriptions") < checkoutSource.indexOf('.from("user_plans")'),
+    checkoutSource.indexOf("isPlanAvailableForNewSubscriptions") <
+      checkoutSource.indexOf('.from("user_plans")'),
 );
 ok(
   "checkout retorna mensagem amigável para plano descontinuado",
@@ -107,17 +116,43 @@ ok(
 );
 
 const landingSource = await Bun.file("src/components/landing/PublicLanding.tsx").text();
-ok("landing exibe card gratuito antes dos planos pagos", landingSource.indexOf("<FreeAdsPlanCard />") < landingSource.indexOf("COMMERCIAL_PLANS.map"));
-ok("CTA gratuito usa o fluxo seguro chooseFreeAdsPlan", landingSource.includes("useServerFn(chooseFreeAdsPlan)"));
-ok("card gratuito não chama criarCheckout", !landingSource.slice(landingSource.indexOf("function FreeAdsPlanCard"), landingSource.indexOf("function PlanCardItem")).includes("criarCheckout"));
+ok(
+  "landing exibe card gratuito antes dos planos pagos",
+  landingSource.indexOf("<FreeAdsPlanCard />") < landingSource.indexOf("COMMERCIAL_PLANS.map"),
+);
+ok(
+  "CTA gratuito usa o fluxo seguro chooseFreeAdsPlan",
+  landingSource.includes("useServerFn(chooseFreeAdsPlan)"),
+);
+ok(
+  "card gratuito não chama criarCheckout",
+  !landingSource
+    .slice(
+      landingSource.indexOf("function FreeAdsPlanCard"),
+      landingSource.indexOf("function PlanCardItem"),
+    )
+    .includes("criarCheckout"),
+);
 
 const defaultPlanMigration = await Bun.file(
   "supabase/migrations/20260615004941_820ecfb5-7a04-4558-8143-4b1661b99ec9.sql",
 ).text();
-ok("novo usuário comum recebe free_ads", defaultPlanMigration.includes("'free_ads'::public.plan_tier"));
-ok("novo usuário recebe status ativo", defaultPlanMigration.includes("'ativo'::public.subscription_status"));
-ok("cadastro padrão é idempotente", defaultPlanMigration.includes("ON CONFLICT (user_id) DO NOTHING"));
-ok("Admin Master não recebe plano desnecessário", defaultPlanMigration.includes("public.is_admin_email(NEW.email)"));
+ok(
+  "novo usuário comum recebe free_ads",
+  defaultPlanMigration.includes("'free_ads'::public.plan_tier"),
+);
+ok(
+  "novo usuário recebe status ativo",
+  defaultPlanMigration.includes("'ativo'::public.subscription_status"),
+);
+ok(
+  "cadastro padrão é idempotente",
+  defaultPlanMigration.includes("ON CONFLICT (user_id) DO NOTHING"),
+);
+ok(
+  "Admin Master não recebe plano desnecessário",
+  defaultPlanMigration.includes("public.is_admin_email(NEW.email)"),
+);
 
 console.log("\n▶ free_ads — features BÁSICAS liberadas");
 const basicAllowed: FeatureKey[] = [
@@ -177,14 +212,21 @@ for (const f of [...basicAllowed, "cartoes", "orcamento"] as FeatureKey[]) {
 
 console.log("\n▶ Admin master — passa em qualquer feature");
 for (const f of [...basicAllowed, ...paidBlocked]) {
-  ok(`planAllowsFeature(admin_master, ${f}) === true`, planAllowsFeature("admin_master", f) === true);
+  ok(
+    `planAllowsFeature(admin_master, ${f}) === true`,
+    planAllowsFeature("admin_master", f) === true,
+  );
 }
 
 console.log("\n▶ Fase 1E-B2Q — arquitetura híbrida de anúncios");
 const placeholderConfig = resolveAdsConfig({ enableRealAds: "false", provider: "placeholder" });
 eq("anúncios reais desligados por padrão", placeholderConfig.enableRealAds, false);
 eq("provider placeholder é reconhecido", placeholderConfig.provider, "placeholder");
-eq("provider inválido faz fallback seguro", resolveAdsConfig({ provider: "unknown" }).provider, "placeholder");
+eq(
+  "provider inválido faz fallback seguro",
+  resolveAdsConfig({ provider: "unknown" }).provider,
+  "placeholder",
+);
 eq("consentimento é exigido por padrão", resolveAdsConfig({}).requireConsent, true);
 eq("modo de teste AdSense é ligado por padrão", resolveAdsConfig({}).adsenseTestMode, true);
 ok(
@@ -215,8 +257,15 @@ ok(
     true,
   ) === true,
 );
-eq("somente dashboard-middle possui anúncio direto", Object.keys(DIRECT_ADS).join(","), "dashboard-middle");
-ok("dashboard-middle possui campanha direct habilitada", getEnabledDirectAd("dashboard-middle") !== null);
+eq(
+  "somente dashboard-middle possui anúncio direto",
+  Object.keys(DIRECT_ADS).join(","),
+  "dashboard-middle",
+);
+ok(
+  "dashboard-middle possui campanha direct habilitada",
+  getEnabledDirectAd("dashboard-middle") !== null,
+);
 for (const slotId of ["gastos-bottom", "renda-bottom", "mercado-bottom"]) {
   eq(`${slotId} não possui campanha direct e cai em placeholder`, getEnabledDirectAd(slotId), null);
 }
@@ -228,7 +277,9 @@ ok(
     dashboardAd.hash === "planos-disponiveis",
 );
 const dashboardDestination =
-  dashboardAd.kind === "internal" ? `${dashboardAd.to}#${dashboardAd.hash ?? ""}` : dashboardAd.href;
+  dashboardAd.kind === "internal"
+    ? `${dashboardAd.to}#${dashboardAd.hash ?? ""}`
+    : dashboardAd.href;
 ok(
   "destino interno não contém tracking nem identificadores pessoais",
   !dashboardDestination.startsWith("http") &&

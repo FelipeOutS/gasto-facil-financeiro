@@ -20,12 +20,7 @@ import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = _supabaseAdmin as any;
 
-export type WhatsAppBetaStatus =
-  | "admin"
-  | "ativo"
-  | "expirado"
-  | "revogado"
-  | "sem_acesso";
+export type WhatsAppBetaStatus = "admin" | "ativo" | "expirado" | "revogado" | "sem_acesso";
 
 export async function canUseWhatsApp(userId: string | null | undefined): Promise<boolean> {
   if (!userId) return false;

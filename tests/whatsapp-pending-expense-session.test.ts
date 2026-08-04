@@ -15,9 +15,7 @@
 import { test, expect, beforeEach } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
 
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 
 const tel = "5511999998888";
 
@@ -27,7 +25,9 @@ beforeEach(() => {
 
 test("registrar gasto cria sessão aguardando_descricao_e_valor_gasto", async () => {
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "registrar gasto", external_id: "g1",
+    telefone: tel,
+    texto: "registrar gasto",
+    external_id: "g1",
   });
   expect(r.resposta).toMatch(/me diga o gasto e o valor/i);
   expect(state.pendingRow?.status).toBe("aguardando_descricao_e_valor_gasto");
@@ -36,10 +36,14 @@ test("registrar gasto cria sessão aguardando_descricao_e_valor_gasto", async ()
 
 test("oi durante sessão de gasto pendente mantém sessão e não abre saudação", async () => {
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "registrar gasto", external_id: "g1",
+    telefone: tel,
+    texto: "registrar gasto",
+    external_id: "g1",
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "oi", external_id: "g2",
+    telefone: tel,
+    texto: "oi",
+    external_id: "g2",
   });
   expect(r.resposta).toMatch(/ainda estou aguardando o gasto e o valor/i);
   expect(r.resposta).not.toMatch(/assistente do gasto inteligente/i);
@@ -48,10 +52,14 @@ test("oi durante sessão de gasto pendente mantém sessão e não abre saudaçã
 
 test("ajuda durante sessão de gasto pendente mantém sessão", async () => {
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "registrar gasto", external_id: "g1",
+    telefone: tel,
+    texto: "registrar gasto",
+    external_id: "g1",
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "ajuda", external_id: "g2",
+    telefone: tel,
+    texto: "ajuda",
+    external_id: "g2",
   });
   expect(r.resposta).toMatch(/ainda estou aguardando o gasto e o valor/i);
   expect(state.pendingRow?.status).toBe("aguardando_descricao_e_valor_gasto");
@@ -59,10 +67,14 @@ test("ajuda durante sessão de gasto pendente mantém sessão", async () => {
 
 test("menu durante sessão de gasto pendente mantém sessão", async () => {
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "registrar gasto", external_id: "g1",
+    telefone: tel,
+    texto: "registrar gasto",
+    external_id: "g1",
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "menu", external_id: "g2",
+    telefone: tel,
+    texto: "menu",
+    external_id: "g2",
   });
   expect(r.resposta).toMatch(/ainda estou aguardando o gasto e o valor/i);
   expect(state.pendingRow?.status).toBe("aguardando_descricao_e_valor_gasto");
@@ -70,10 +82,14 @@ test("menu durante sessão de gasto pendente mantém sessão", async () => {
 
 test("48,90 após registrar gasto pede descrição", async () => {
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "registrar gasto", external_id: "g1",
+    telefone: tel,
+    texto: "registrar gasto",
+    external_id: "g1",
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "48,90", external_id: "g2",
+    telefone: tel,
+    texto: "48,90",
+    external_id: "g2",
   });
   expect(r.resposta).toMatch(/esse valor foi de qu[eê]/i);
   expect(state.pendingRow?.status).toBe("aguardando_descricao_e_valor_gasto");
@@ -82,10 +98,14 @@ test("48,90 após registrar gasto pede descrição", async () => {
 
 test("Uber após registrar gasto pede valor", async () => {
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "registrar gasto", external_id: "g1",
+    telefone: tel,
+    texto: "registrar gasto",
+    external_id: "g1",
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "Uber", external_id: "g2",
+    telefone: tel,
+    texto: "Uber",
+    external_id: "g2",
   });
   expect(r.resposta).toMatch(/qual foi o valor de uber/i);
   expect(state.pendingRow?.status).toBe("aguardando_descricao_e_valor_gasto");
@@ -94,10 +114,14 @@ test("Uber após registrar gasto pede valor", async () => {
 
 test("Uber 48,90 após registrar gasto segue para forma de pagamento", async () => {
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "registrar gasto", external_id: "g1",
+    telefone: tel,
+    texto: "registrar gasto",
+    external_id: "g1",
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "Uber 48,90", external_id: "g2",
+    telefone: tel,
+    texto: "Uber 48,90",
+    external_id: "g2",
   });
   expect(r.status).toBe("aguardando_forma_pagamento");
   expect(r.resposta).toMatch(/pix.*dinheiro.*d[eé]bito.*cart[aã]o/i);
@@ -107,10 +131,14 @@ test("Uber 48,90 após registrar gasto segue para forma de pagamento", async () 
 
 test("cancelar encerra a sessão de gasto pendente", async () => {
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "registrar gasto", external_id: "g1",
+    telefone: tel,
+    texto: "registrar gasto",
+    external_id: "g1",
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "cancelar", external_id: "g2",
+    telefone: tel,
+    texto: "cancelar",
+    external_id: "g2",
   });
   expect(r.status).toBe("cancelada");
   expect(r.resposta).toMatch(/vamos começar de novo/i);
@@ -120,13 +148,17 @@ test("cancelar encerra a sessão de gasto pendente", async () => {
 test("sessão de receita pendente continua prevalecendo sobre saudação", async () => {
   // Inicia receita
   const r1 = await processarMensagemWhatsApp({
-    telefone: tel, texto: "recebi 500 de freelancer", external_id: "r1",
+    telefone: tel,
+    texto: "recebi 500 de freelancer",
+    external_id: "r1",
   });
   expect(r1.status).toBe("pendente");
   expect(state.pendingRow?.parsed?.kind).toBe("receita");
   // "oi" não deve disparar saudação — mantém fluxo de receita
   const r2 = await processarMensagemWhatsApp({
-    telefone: tel, texto: "oi", external_id: "r2",
+    telefone: tel,
+    texto: "oi",
+    external_id: "r2",
   });
   expect(r2.resposta).not.toMatch(/assistente do gasto inteligente/i);
   expect(state.pendingRow?.parsed?.kind).toBe("receita");
@@ -134,7 +166,9 @@ test("sessão de receita pendente continua prevalecendo sobre saudação", async
 
 test("fluxo direto Uber 48,90 (sem comando genérico) continua funcionando", async () => {
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "Uber 48,90", external_id: "d1",
+    telefone: tel,
+    texto: "Uber 48,90",
+    external_id: "d1",
   });
   expect(r.status).toBe("aguardando_forma_pagamento");
   expect(state.pendingRow?.parsed?.valor).toBe(48.9);

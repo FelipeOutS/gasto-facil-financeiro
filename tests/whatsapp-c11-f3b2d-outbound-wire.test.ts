@@ -111,7 +111,13 @@ function makeDeps(
 
 describe("WA-C11 3B.2.D — runOutboundWithQuota", () => {
   it("plan_load_failed / cycle_invalid quando ciclo não resolve (plan null com data inválida)", async () => {
-    const spies: Spies = { reserved: 0, committed: 0, released: 0, releaseReasons: [], runCalls: 0 };
+    const spies: Spies = {
+      reserved: 0,
+      committed: 0,
+      released: 0,
+      releaseReasons: [],
+      runCalls: 0,
+    };
     // plan null → resolveCycleForPlan usa calendar month; nunca inválido em Date atual.
     // Simulamos plan com billing_cycle invertido (fim antes do começo)
     const badPlan: PlanRow = {
@@ -131,7 +137,13 @@ describe("WA-C11 3B.2.D — runOutboundWithQuota", () => {
   });
 
   it("quota denied (plan_not_eligible) bloqueia transport e não libera", async () => {
-    const spies: Spies = { reserved: 0, committed: 0, released: 0, releaseReasons: [], runCalls: 0 };
+    const spies: Spies = {
+      reserved: 0,
+      committed: 0,
+      released: 0,
+      releaseReasons: [],
+      runCalls: 0,
+    };
     const out = await runOutboundWithQuota(N, TOKEN, {
       ...makeDeps({ kind: "gated", reasons: [] }, spies),
       reserveQuota: async () => {
@@ -146,7 +158,13 @@ describe("WA-C11 3B.2.D — runOutboundWithQuota", () => {
   });
 
   it("quota denied (limit_reached) NÃO chama transport nem release", async () => {
-    const spies: Spies = { reserved: 0, committed: 0, released: 0, releaseReasons: [], runCalls: 0 };
+    const spies: Spies = {
+      reserved: 0,
+      committed: 0,
+      released: 0,
+      releaseReasons: [],
+      runCalls: 0,
+    };
     const out = await runOutboundWithQuota(N, TOKEN, {
       ...makeDeps({ kind: "gated", reasons: [] }, spies),
       reserveQuota: async () => reserveDenied("outbound_monthly_limit"),
@@ -157,7 +175,13 @@ describe("WA-C11 3B.2.D — runOutboundWithQuota", () => {
   });
 
   it("accepted → commit (uma vez)", async () => {
-    const spies: Spies = { reserved: 0, committed: 0, released: 0, releaseReasons: [], runCalls: 0 };
+    const spies: Spies = {
+      reserved: 0,
+      committed: 0,
+      released: 0,
+      releaseReasons: [],
+      runCalls: 0,
+    };
     const runOutcome: RunOutboundOutcome = {
       kind: "executed",
       result: { kind: "accepted", attemptId: "att-1", providerMessageId: "wamid.ABC" },
@@ -170,7 +194,13 @@ describe("WA-C11 3B.2.D — runOutboundWithQuota", () => {
   });
 
   it("rejected → release documentado", async () => {
-    const spies: Spies = { reserved: 0, committed: 0, released: 0, releaseReasons: [], runCalls: 0 };
+    const spies: Spies = {
+      reserved: 0,
+      committed: 0,
+      released: 0,
+      releaseReasons: [],
+      runCalls: 0,
+    };
     const runOutcome: RunOutboundOutcome = {
       kind: "executed",
       result: {
@@ -189,7 +219,13 @@ describe("WA-C11 3B.2.D — runOutboundWithQuota", () => {
   });
 
   it("ambiguous NÃO libera, NÃO commita, deixa reservation reserved", async () => {
-    const spies: Spies = { reserved: 0, committed: 0, released: 0, releaseReasons: [], runCalls: 0 };
+    const spies: Spies = {
+      reserved: 0,
+      committed: 0,
+      released: 0,
+      releaseReasons: [],
+      runCalls: 0,
+    };
     const runOutcome: RunOutboundOutcome = {
       kind: "executed",
       result: { kind: "ambiguous", attemptId: "att-3", reason: "transport_threw" },
@@ -201,7 +237,13 @@ describe("WA-C11 3B.2.D — runOutboundWithQuota", () => {
   });
 
   it("gated após reserve → release (nenhum HTTP)", async () => {
-    const spies: Spies = { reserved: 0, committed: 0, released: 0, releaseReasons: [], runCalls: 0 };
+    const spies: Spies = {
+      reserved: 0,
+      committed: 0,
+      released: 0,
+      releaseReasons: [],
+      runCalls: 0,
+    };
     const runOutcome: RunOutboundOutcome = { kind: "gated", reasons: ["outbound_http_disabled"] };
     const out = await runOutboundWithQuota(N, TOKEN, makeDeps(runOutcome, spies));
     expect(out.kind).toBe("reserved_then_gated");
@@ -212,7 +254,13 @@ describe("WA-C11 3B.2.D — runOutboundWithQuota", () => {
 
   it("no_recipient / no_template / transport_unavailable → release local_pre_http", async () => {
     for (const kind of ["no_recipient", "no_template", "transport_unavailable"] as const) {
-      const spies: Spies = { reserved: 0, committed: 0, released: 0, releaseReasons: [], runCalls: 0 };
+      const spies: Spies = {
+        reserved: 0,
+        committed: 0,
+        released: 0,
+        releaseReasons: [],
+        runCalls: 0,
+      };
       const runOutcome: RunOutboundOutcome =
         kind === "transport_unavailable"
           ? { kind, reason: "no_env" }
@@ -225,7 +273,13 @@ describe("WA-C11 3B.2.D — runOutboundWithQuota", () => {
   });
 
   it("execute state_changed → release (state_changed_pre_http)", async () => {
-    const spies: Spies = { reserved: 0, committed: 0, released: 0, releaseReasons: [], runCalls: 0 };
+    const spies: Spies = {
+      reserved: 0,
+      committed: 0,
+      released: 0,
+      releaseReasons: [],
+      runCalls: 0,
+    };
     const runOutcome: RunOutboundOutcome = {
       kind: "executed",
       result: { kind: "state_changed" },
@@ -243,7 +297,13 @@ describe("WA-C11 3B.2.D — runOutboundWithQuota", () => {
       { kind: "executed", result: { kind: "database_error" } },
     ];
     for (const runOutcome of cases) {
-      const spies: Spies = { reserved: 0, committed: 0, released: 0, releaseReasons: [], runCalls: 0 };
+      const spies: Spies = {
+        reserved: 0,
+        committed: 0,
+        released: 0,
+        releaseReasons: [],
+        runCalls: 0,
+      };
       const out = await runOutboundWithQuota(N, TOKEN, makeDeps(runOutcome, spies));
       expect(out.kind).toBe("reserved_then_local_error");
       expect(spies.released).toBe(1);
@@ -252,7 +312,13 @@ describe("WA-C11 3B.2.D — runOutboundWithQuota", () => {
   });
 
   it("duplicate reservation em state committed → não chama transport (idempotência)", async () => {
-    const spies: Spies = { reserved: 0, committed: 0, released: 0, releaseReasons: [], runCalls: 0 };
+    const spies: Spies = {
+      reserved: 0,
+      committed: 0,
+      released: 0,
+      releaseReasons: [],
+      runCalls: 0,
+    };
     const runOutcome: RunOutboundOutcome = {
       kind: "executed",
       result: { kind: "accepted", attemptId: "att-x", providerMessageId: "wamid.X" },
@@ -270,7 +336,13 @@ describe("WA-C11 3B.2.D — runOutboundWithQuota", () => {
   });
 
   it("duplicate reservation em state ambiguous → não chama transport nem libera", async () => {
-    const spies: Spies = { reserved: 0, committed: 0, released: 0, releaseReasons: [], runCalls: 0 };
+    const spies: Spies = {
+      reserved: 0,
+      committed: 0,
+      released: 0,
+      releaseReasons: [],
+      runCalls: 0,
+    };
     const out = await runOutboundWithQuota(
       N,
       TOKEN,
@@ -286,7 +358,13 @@ describe("WA-C11 3B.2.D — runOutboundWithQuota", () => {
   });
 
   it("duplicate reservation em state reserved → chama transport normalmente (worker duplicado, ok idempotente)", async () => {
-    const spies: Spies = { reserved: 0, committed: 0, released: 0, releaseReasons: [], runCalls: 0 };
+    const spies: Spies = {
+      reserved: 0,
+      committed: 0,
+      released: 0,
+      releaseReasons: [],
+      runCalls: 0,
+    };
     const runOutcome: RunOutboundOutcome = {
       kind: "executed",
       result: { kind: "accepted", attemptId: "att-y", providerMessageId: "wamid.Y" },
@@ -309,7 +387,13 @@ describe("WA-C11 3B.2.D — runOutboundWithQuota", () => {
       "outbound_daily_limit",
       "db_error",
     ]) {
-      const spies: Spies = { reserved: 0, committed: 0, released: 0, releaseReasons: [], runCalls: 0 };
+      const spies: Spies = {
+        reserved: 0,
+        committed: 0,
+        released: 0,
+        releaseReasons: [],
+        runCalls: 0,
+      };
       const out = await runOutboundWithQuota(N, TOKEN, {
         ...makeDeps({ kind: "gated", reasons: [] }, spies),
         reserveQuota: async () => reserveDenied(reason),
@@ -323,7 +407,13 @@ describe("WA-C11 3B.2.D — runOutboundWithQuota", () => {
 
   it("logs sanitizados: nenhum telefone/PMID cru no reason de release", async () => {
     // Sanity: reason string do release nunca contém dígitos de telefone
-    const spies: Spies = { reserved: 0, committed: 0, released: 0, releaseReasons: [], runCalls: 0 };
+    const spies: Spies = {
+      reserved: 0,
+      committed: 0,
+      released: 0,
+      releaseReasons: [],
+      runCalls: 0,
+    };
     const runOutcome: RunOutboundOutcome = {
       kind: "executed",
       result: {

@@ -16,10 +16,7 @@ export function limparCnpj(input: string | null | undefined): string {
 export function formatarCnpj(cnpj: string | null | undefined): string {
   const limpo = limparCnpj(cnpj);
   if (limpo.length !== 14) return limpo;
-  return limpo.replace(
-    /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
-    "$1.$2.$3/$4-$5",
-  );
+  return limpo.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
 }
 
 /** Verifica se a string contém exatamente 14 dígitos numéricos. */
@@ -39,9 +36,7 @@ export function validarCnpj(cnpj: string | null | undefined): boolean {
   if (/^(\d)\1{13}$/.test(numeros)) return false;
 
   const calcDV = (base: string, pesos: number[]): number => {
-    const soma = base
-      .split("")
-      .reduce((acc, ch, i) => acc + Number(ch) * pesos[i]!, 0);
+    const soma = base.split("").reduce((acc, ch, i) => acc + Number(ch) * pesos[i]!, 0);
     const resto = soma % 11;
     return resto < 2 ? 0 : 11 - resto;
   };
@@ -57,5 +52,4 @@ export function validarCnpj(cnpj: string | null | undefined): boolean {
 }
 
 /** Mensagem padrão para CNPJ inválido (uso no frontend). */
-export const MSG_CNPJ_INVALIDO =
-  "CNPJ inválido. Confira os números e tente novamente.";
+export const MSG_CNPJ_INVALIDO = "CNPJ inválido. Confira os números e tente novamente.";

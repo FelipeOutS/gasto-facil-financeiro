@@ -203,12 +203,54 @@ const FEATURE_PLAN_WHITELIST: Partial<Record<FeatureKey, PlanTier[]>> = {
 
   // Fase 1E-B2B — features básicas: free_ads + todos os planos pagos.
   // Espelhado em public.has_feature_access (SQL).
-  gastos_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
-  receitas_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
-  mercado_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
-  cartoes_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
-  orcamento_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
-  metas_basico: ["free_ads", "pessoal_manual", "pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"],
+  gastos_basico: [
+    "free_ads",
+    "pessoal_manual",
+    "pessoal_premium",
+    "mei_essencial",
+    "mei_inteligente",
+    "empresa",
+  ],
+  receitas_basico: [
+    "free_ads",
+    "pessoal_manual",
+    "pessoal_premium",
+    "mei_essencial",
+    "mei_inteligente",
+    "empresa",
+  ],
+  mercado_basico: [
+    "free_ads",
+    "pessoal_manual",
+    "pessoal_premium",
+    "mei_essencial",
+    "mei_inteligente",
+    "empresa",
+  ],
+  cartoes_basico: [
+    "free_ads",
+    "pessoal_manual",
+    "pessoal_premium",
+    "mei_essencial",
+    "mei_inteligente",
+    "empresa",
+  ],
+  orcamento_basico: [
+    "free_ads",
+    "pessoal_manual",
+    "pessoal_premium",
+    "mei_essencial",
+    "mei_inteligente",
+    "empresa",
+  ],
+  metas_basico: [
+    "free_ads",
+    "pessoal_manual",
+    "pessoal_premium",
+    "mei_essencial",
+    "mei_inteligente",
+    "empresa",
+  ],
 };
 
 export function planAllowsFeature(plan: PlanTier, feature: FeatureKey): boolean {
@@ -228,9 +270,7 @@ export function plansAllowingFeature(feature: FeatureKey): PlanTier[] {
   // Para fins comerciais (UI de planos), filtramos free_ads das whitelists —
   // ele aparece apenas via planAllowsFeature direto, nunca como "plano que
   // vende esta feature".
-  if (whitelist) return whitelist.filter(
-    (p) => p !== "free_ads" && p !== "pessoal_manual",
-  );
+  if (whitelist) return whitelist.filter((p) => p !== "free_ads" && p !== "pessoal_manual");
   const min = FEATURE_MIN_PLAN[feature];
   return (Object.keys(PLAN_ORDER) as PlanTier[]).filter(
     (p) =>
@@ -298,10 +338,7 @@ export function getEffectiveUserPlan(
 }
 
 /** Plano sugerido para upgrade considerando o tipo de cadastro. */
-export function suggestedUpgrade(
-  current: PlanTier,
-  tipo: TipoCadastro,
-): PlanTier {
+export function suggestedUpgrade(current: PlanTier, tipo: TipoCadastro): PlanTier {
   if (current === "admin_master") return current;
   if (tipo === "empresa") return "empresa";
   if (tipo === "mei") return current === "mei_essencial" ? "mei_inteligente" : "mei_essencial";
@@ -316,28 +353,112 @@ export type PlanFeature = {
 
 export const PLAN_FEATURES: PlanFeature[] = [
   // Básicos (free_ads + planos pagos)
-  { feature: "gastos_basico", label: "Gastos manuais", description: "Cadastre seus gastos manualmente (limite mensal no plano gratuito)." },
-  { feature: "receitas_basico", label: "Receitas manuais", description: "Cadastre suas receitas manualmente (limite mensal no plano gratuito)." },
-  { feature: "mercado_basico", label: "Mercado básico", description: "Listas e itens essenciais para suas compras." },
-  { feature: "metas_basico", label: "Metas básicas", description: "Defina metas simples de economia." },
-  { feature: "orcamento_basico", label: "Orçamento básico", description: "1 orçamento mensal por categoria." },
-  { feature: "cartoes_basico", label: "1 cartão manual", description: "Cadastre 1 cartão manualmente para acompanhar gastos." },
+  {
+    feature: "gastos_basico",
+    label: "Gastos manuais",
+    description: "Cadastre seus gastos manualmente (limite mensal no plano gratuito).",
+  },
+  {
+    feature: "receitas_basico",
+    label: "Receitas manuais",
+    description: "Cadastre suas receitas manualmente (limite mensal no plano gratuito).",
+  },
+  {
+    feature: "mercado_basico",
+    label: "Mercado básico",
+    description: "Listas e itens essenciais para suas compras.",
+  },
+  {
+    feature: "metas_basico",
+    label: "Metas básicas",
+    description: "Defina metas simples de economia.",
+  },
+  {
+    feature: "orcamento_basico",
+    label: "Orçamento básico",
+    description: "1 orçamento mensal por categoria.",
+  },
+  {
+    feature: "cartoes_basico",
+    label: "1 cartão manual",
+    description: "Cadastre 1 cartão manualmente para acompanhar gastos.",
+  },
   // Premium
-  { feature: "lancamentos_ilimitados", label: "Lançamentos ilimitados", description: "Sem limite mensal de gastos e receitas." },
-  { feature: "contas_a_pagar", label: "Contas a pagar", description: "Controle vencimentos e pagamentos do mês." },
-  { feature: "contas_a_receber", label: "Contas a receber", description: "Acompanhe valores a receber e baixas." },
-  { feature: "assinaturas_recorrencias", label: "Assinaturas e recorrências", description: "Automatize lançamentos recorrentes e assinaturas." },
-  { feature: "cartoes", label: "Faturas, importação e parcelamento", description: "Múltiplos cartões, faturas, parcelamento e marcar como paga." },
-  { feature: "orcamento", label: "Orçamento avançado", description: "Múltiplos orçamentos e categorias avançadas." },
-  { feature: "importar_extrato", label: "Importar extrato bancário", description: "Importe PDF/CSV do seu banco automaticamente." },
-  { feature: "importar_fatura", label: "Importar fatura de cartão", description: "Importe a fatura em PDF ou imagem." },
-  { feature: "importar_conta", label: "Importar boleto/Pix", description: "Identifique automaticamente boletos e Pix." },
-  { feature: "metas_visuais", label: "Metas com imagens", description: "Capa visual real para cada meta." },
-  { feature: "relatorios_avancados", label: "Relatórios avançados", description: "Comparativos, tendências e insights." },
-  { feature: "investimentos", label: "Investimentos", description: "Acompanhe seus investimentos." },
-  { feature: "recursos_mei", label: "Recursos do MEI", description: "Linguagem e visão financeira do MEI." },
-  { feature: "recursos_empresa", label: "Recursos empresariais", description: "Visão financeira e relatórios da empresa." },
-  { feature: "contas_conectadas", label: "Contas conectadas", description: "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização." },
+  {
+    feature: "lancamentos_ilimitados",
+    label: "Lançamentos ilimitados",
+    description: "Sem limite mensal de gastos e receitas.",
+  },
+  {
+    feature: "contas_a_pagar",
+    label: "Contas a pagar",
+    description: "Controle vencimentos e pagamentos do mês.",
+  },
+  {
+    feature: "contas_a_receber",
+    label: "Contas a receber",
+    description: "Acompanhe valores a receber e baixas.",
+  },
+  {
+    feature: "assinaturas_recorrencias",
+    label: "Assinaturas e recorrências",
+    description: "Automatize lançamentos recorrentes e assinaturas.",
+  },
+  {
+    feature: "cartoes",
+    label: "Faturas, importação e parcelamento",
+    description: "Múltiplos cartões, faturas, parcelamento e marcar como paga.",
+  },
+  {
+    feature: "orcamento",
+    label: "Orçamento avançado",
+    description: "Múltiplos orçamentos e categorias avançadas.",
+  },
+  {
+    feature: "importar_extrato",
+    label: "Importar extrato bancário",
+    description: "Importe PDF/CSV do seu banco automaticamente.",
+  },
+  {
+    feature: "importar_fatura",
+    label: "Importar fatura de cartão",
+    description: "Importe a fatura em PDF ou imagem.",
+  },
+  {
+    feature: "importar_conta",
+    label: "Importar boleto/Pix",
+    description: "Identifique automaticamente boletos e Pix.",
+  },
+  {
+    feature: "metas_visuais",
+    label: "Metas com imagens",
+    description: "Capa visual real para cada meta.",
+  },
+  {
+    feature: "relatorios_avancados",
+    label: "Relatórios avançados",
+    description: "Comparativos, tendências e insights.",
+  },
+  {
+    feature: "investimentos",
+    label: "Investimentos",
+    description: "Acompanhe seus investimentos.",
+  },
+  {
+    feature: "recursos_mei",
+    label: "Recursos do MEI",
+    description: "Linguagem e visão financeira do MEI.",
+  },
+  {
+    feature: "recursos_empresa",
+    label: "Recursos empresariais",
+    description: "Visão financeira e relatórios da empresa.",
+  },
+  {
+    feature: "contas_conectadas",
+    label: "Contas conectadas",
+    description: "Convide outra pessoa por e-mail e acompanhe a conta dela com autorização.",
+  },
 ];
 
 /* ===========================================================
@@ -490,9 +611,29 @@ export type PeriodicidadeInfo = {
 
 export const PERIODICIDADES: PeriodicidadeInfo[] = [
   { key: "mensal", label: "Mensal", months: 1, discountPercent: 0, suffix: "/mês" },
-  { key: "trimestral", label: "Trimestral", months: 3, discountPercent: 5, suffix: "a cada 3 meses" },
-  { key: "semestral", label: "Semestral", months: 6, discountPercent: 10, badge: "Mais economia", suffix: "a cada 6 meses" },
-  { key: "anual", label: "Anual", months: 12, discountPercent: 20, badge: "Melhor custo-benefício", suffix: "por ano" },
+  {
+    key: "trimestral",
+    label: "Trimestral",
+    months: 3,
+    discountPercent: 5,
+    suffix: "a cada 3 meses",
+  },
+  {
+    key: "semestral",
+    label: "Semestral",
+    months: 6,
+    discountPercent: 10,
+    badge: "Mais economia",
+    suffix: "a cada 6 meses",
+  },
+  {
+    key: "anual",
+    label: "Anual",
+    months: 12,
+    discountPercent: 20,
+    badge: "Melhor custo-benefício",
+    suffix: "por ano",
+  },
 ];
 
 export function getPeriodicidade(key: Periodicidade): PeriodicidadeInfo {
@@ -500,7 +641,10 @@ export function getPeriodicidade(key: Periodicidade): PeriodicidadeInfo {
 }
 
 /** Retorna preço total (em centavos) para o plano com o período escolhido. */
-export function priceForPeriod(plan: CommercialPlan, period: Periodicidade): {
+export function priceForPeriod(
+  plan: CommercialPlan,
+  period: Periodicidade,
+): {
   totalCents: number;
   baseCents: number;
   discountCents: number;

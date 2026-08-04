@@ -25,8 +25,7 @@ import type { SupabaseLike } from "@/server/whatsapp-outbound-adapter.server";
 import { normalizePhone } from "@/server/whatsapp-authz.server";
 
 /** UUID do Admin Master (destinatário exclusivo do primeiro canary). */
-export const ADMIN_MASTER_CANARY_USER_ID =
-  "3324b9f8-ea68-465c-8e1e-ab1cc8caebf1" as const;
+export const ADMIN_MASTER_CANARY_USER_ID = "3324b9f8-ea68-465c-8e1e-ab1cc8caebf1" as const;
 
 /** Chave do template interno mapeado para o Meta `hello_world`. */
 export const FIRST_CANARY_TEMPLATE_KEY = "gi_teste_integracao_canary" as const;
@@ -186,9 +185,7 @@ async function checkNoResidualProcessing(
   return null;
 }
 
-async function checkNoActiveAttempt(
-  client: AnyClient,
-): Promise<CreateFirstCanaryOutcome | null> {
+async function checkNoActiveAttempt(client: AnyClient): Promise<CreateFirstCanaryOutcome | null> {
   // Attempts vivos do Admin (planned/sending) implicam outbound em curso —
   // não iniciamos o primeiro canary enquanto houver qualquer atividade.
   const { data, error } = await client

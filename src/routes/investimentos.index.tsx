@@ -121,9 +121,7 @@ function InvestimentosBloqueado() {
     <MobileShell wide>
       <div className="mx-auto mt-10 max-w-md rounded-3xl border border-border bg-card p-6 text-center shadow-card">
         <h1 className="text-xl font-bold">{t("investimentos.locked.title")}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {t("investimentos.locked.desc")}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">{t("investimentos.locked.desc")}</p>
         {Array.isArray(features) && features.length > 0 && (
           <div className="mt-5 rounded-2xl border border-border/60 bg-muted/30 p-4 text-left">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -132,7 +130,10 @@ function InvestimentosBloqueado() {
             <ul className="mt-2 space-y-1.5 text-sm">
               {features.map((f, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span aria-hidden className="mt-1 inline-block size-1.5 shrink-0 rounded-full bg-primary" />
+                  <span
+                    aria-hidden
+                    className="mt-1 inline-block size-1.5 shrink-0 rounded-full bg-primary"
+                  />
                   <span>{f}</span>
                 </li>
               ))}
@@ -178,8 +179,16 @@ function InvestimentosPage() {
   const [openAtualizarLote, setOpenAtualizarLote] = useState(false);
   const [atualizandoAtivo, setAtualizandoAtivo] = useState<Ativo | null>(null);
   const [editing, setEditing] = useState<Ativo | null>(null);
-  const [movDialog, setMovDialog] = useState<{ open: boolean; mov: Movimentacao | null; ativoId?: string | null }>({ open: false, mov: null });
-  const [rendDialog, setRendDialog] = useState<{ open: boolean; rend: Rendimento | null; ativoId?: string | null }>({ open: false, rend: null });
+  const [movDialog, setMovDialog] = useState<{
+    open: boolean;
+    mov: Movimentacao | null;
+    ativoId?: string | null;
+  }>({ open: false, mov: null });
+  const [rendDialog, setRendDialog] = useState<{
+    open: boolean;
+    rend: Rendimento | null;
+    ativoId?: string | null;
+  }>({ open: false, rend: null });
   const [detalheAtivo, setDetalheAtivo] = useState<Ativo | null>(null);
 
   const openCreate = () => {
@@ -257,10 +266,6 @@ function InvestimentosPage() {
     else setOpenAtualizarLote(true);
   };
 
-
-
-
-
   async function reload() {
     if (!userId) return;
     setLoading(true);
@@ -301,7 +306,12 @@ function InvestimentosPage() {
     if (totais.rendimentosAno > 0)
       out.push(t("investimentos.insights.recebidoAno", { val: formatBRL(totais.rendimentosAno) }));
     if (distribuicao[0] && distribuicao[0].pct >= 40)
-      out.push(t("investimentos.insights.maiorTipo", { label: getTipoInvestimentoLabel(distribuicao[0].tipo, tInv), pct: distribuicao[0].pct.toFixed(0) }));
+      out.push(
+        t("investimentos.insights.maiorTipo", {
+          label: getTipoInvestimentoLabel(distribuicao[0].tipo, tInv),
+          pct: distribuicao[0].pct.toFixed(0),
+        }),
+      );
     if (totais.rendimentosMes === 0) out.push(t("investimentos.insights.semRendMes"));
     if (movs.length < 3) out.push(t("investimentos.insights.poucasMov"));
     return out;
@@ -360,17 +370,29 @@ function InvestimentosPage() {
         </div>
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-border/40 bg-muted/20 p-2.5 text-[11px] text-muted-foreground max-w-3xl">
           <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-          <span>
-            {t("investimentos.infoCalc")}
-          </span>
+          <span>{t("investimentos.infoCalc")}</span>
         </div>
       </header>
       {/* Cards de topo */}
       <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mt-2">
-        <KpiCard icon={<Wallet className="h-4 w-4" />} label={t("investimentos.kpi.patrimony")} value={formatBRL(totais.patrimonio)} />
-        <KpiCard icon={<PiggyBank className="h-4 w-4" />} label={t("investimentos.kpi.applied")} value={formatBRL(totais.aplicado)} />
         <KpiCard
-          icon={totais.lucro >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+          icon={<Wallet className="h-4 w-4" />}
+          label={t("investimentos.kpi.patrimony")}
+          value={formatBRL(totais.patrimonio)}
+        />
+        <KpiCard
+          icon={<PiggyBank className="h-4 w-4" />}
+          label={t("investimentos.kpi.applied")}
+          value={formatBRL(totais.aplicado)}
+        />
+        <KpiCard
+          icon={
+            totais.lucro >= 0 ? (
+              <TrendingUp className="h-4 w-4" />
+            ) : (
+              <TrendingDown className="h-4 w-4" />
+            )
+          }
           label={t("investimentos.kpi.profit")}
           value={`${totais.lucro >= 0 ? "+" : ""}${formatBRL(totais.lucro)}`}
           tone={totais.lucro >= 0 ? "pos" : "neg"}
@@ -393,11 +415,20 @@ function InvestimentosPage() {
         <section className="lg:col-span-2 rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold">{t("investimentos.wallet.title")}</h2>
-            <span className="text-xs text-muted-foreground">{t(ativos.length === 1 ? "investimentos.wallet.countOne" : "investimentos.wallet.countOther", { count: ativos.length })}</span>
+            <span className="text-xs text-muted-foreground">
+              {t(
+                ativos.length === 1
+                  ? "investimentos.wallet.countOne"
+                  : "investimentos.wallet.countOther",
+                { count: ativos.length },
+              )}
+            </span>
           </div>
 
           {loading ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">{t("investimentos.wallet.loading")}</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">
+              {t("investimentos.wallet.loading")}
+            </p>
           ) : ativos.length === 0 ? (
             <EmptyState
               title={t("investimentos.wallet.emptyTitle")}
@@ -413,9 +444,7 @@ function InvestimentosPage() {
               {ativos.map((a) => {
                 const lucro = Number(a.valor_atual || 0) - Number(a.valor_aplicado || 0);
                 const rent =
-                  Number(a.valor_aplicado || 0) > 0
-                    ? (lucro / Number(a.valor_aplicado)) * 100
-                    : 0;
+                  Number(a.valor_aplicado || 0) > 0 ? (lucro / Number(a.valor_aplicado)) * 100 : 0;
                 const ult = descreverUltimaAtualizacao(a.ultima_atualizacao);
                 return (
                   <li key={a.id} className="py-3 flex items-center gap-3">
@@ -425,14 +454,18 @@ function InvestimentosPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium truncate">{a.nome}</span>
-                        <Badge variant="secondary" className="text-[10px]">{getTipoInvestimentoLabel(a.tipo, tInv)}</Badge>
+                        <Badge variant="secondary" className="text-[10px]">
+                          {getTipoInvestimentoLabel(a.tipo, tInv)}
+                        </Badge>
                         {a.instituicao && (
                           <span className="text-[11px] text-muted-foreground">{a.instituicao}</span>
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
                         {a.quantidade ? `${a.quantidade} · ` : ""}
-                        {t("investimentos.wallet.applied")} {formatBRL(Number(a.valor_aplicado || 0))} · {t("investimentos.wallet.current")} {formatBRL(Number(a.valor_atual || 0))}
+                        {t("investimentos.wallet.applied")}{" "}
+                        {formatBRL(Number(a.valor_aplicado || 0))} ·{" "}
+                        {t("investimentos.wallet.current")} {formatBRL(Number(a.valor_atual || 0))}
                       </div>
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         <Badge
@@ -451,11 +484,17 @@ function InvestimentosPage() {
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <div className={`text-sm font-semibold ${lucro >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-                        {lucro >= 0 ? "+" : ""}{formatBRL(lucro)}
+                      <div
+                        className={`text-sm font-semibold ${lucro >= 0 ? "text-emerald-500" : "text-rose-500"}`}
+                      >
+                        {lucro >= 0 ? "+" : ""}
+                        {formatBRL(lucro)}
                       </div>
-                      <div className={`text-[11px] ${rent >= 0 ? "text-emerald-500/80" : "text-rose-500/80"}`}>
-                        {rent >= 0 ? "+" : ""}{rent.toFixed(2)}%
+                      <div
+                        className={`text-[11px] ${rent >= 0 ? "text-emerald-500/80" : "text-rose-500/80"}`}
+                      >
+                        {rent >= 0 ? "+" : ""}
+                        {rent.toFixed(2)}%
                       </div>
                     </div>
                     <div className="flex gap-0.5 sm:gap-1 ml-2 shrink-0">
@@ -477,7 +516,13 @@ function InvestimentosPage() {
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-10 w-10 sm:h-8 sm:w-8 shrink-0" title={t("investimentos.wallet.edit")} onClick={() => openEdit(a)}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-10 w-10 sm:h-8 sm:w-8 shrink-0"
+                        title={t("investimentos.wallet.edit")}
+                        onClick={() => openEdit(a)}
+                      >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
                       <Button
@@ -486,7 +531,10 @@ function InvestimentosPage() {
                         className="h-10 w-10 sm:h-8 sm:w-8 shrink-0 text-rose-500 hover:text-rose-500"
                         title={t("investimentos.wallet.delete")}
                         onClick={async () => {
-                          const ok = await confirmAsync({ title: t("investimentos.wallet.confirmDelete", { name: a.nome }), destructive: true });
+                          const ok = await confirmAsync({
+                            title: t("investimentos.wallet.confirmDelete", { name: a.nome }),
+                            destructive: true,
+                          });
                           if (!ok) return;
                           await excluirAtivo(a.id);
                           toast.success(t("investimentos.wallet.deleted"));
@@ -494,7 +542,6 @@ function InvestimentosPage() {
                         }}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-
                       </Button>
                     </div>
                   </li>
@@ -552,15 +599,25 @@ function InvestimentosPage() {
       <section className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-4 mt-4">
         <h2 className="font-semibold mb-3">{t("investimentos.evol.title")}</h2>
         {ativos.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            {t("investimentos.evol.empty")}
-          </p>
+          <p className="text-xs text-muted-foreground">{t("investimentos.evol.empty")}</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-            <MiniStat label={t("investimentos.evol.patrimony")} value={formatBRL(totais.patrimonio)} />
-            <MiniStat label={t("investimentos.evol.contributed")} value={formatBRL(totais.aplicado)} />
-            <MiniStat label={t("investimentos.evol.variation")} value={`${totais.lucro >= 0 ? "+" : ""}${formatBRL(totais.lucro)}`} />
-            <MiniStat label={t("investimentos.evol.incomeMonth")} value={formatBRL(totais.rendimentosMes)} />
+            <MiniStat
+              label={t("investimentos.evol.patrimony")}
+              value={formatBRL(totais.patrimonio)}
+            />
+            <MiniStat
+              label={t("investimentos.evol.contributed")}
+              value={formatBRL(totais.aplicado)}
+            />
+            <MiniStat
+              label={t("investimentos.evol.variation")}
+              value={`${totais.lucro >= 0 ? "+" : ""}${formatBRL(totais.lucro)}`}
+            />
+            <MiniStat
+              label={t("investimentos.evol.incomeMonth")}
+              value={formatBRL(totais.rendimentosMes)}
+            />
           </div>
         )}
       </section>
@@ -591,7 +648,9 @@ function InvestimentosPage() {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-medium capitalize">{m.tipo}</span>
                         {m.instituicao && (
-                          <span className="text-[10px] text-muted-foreground">· {m.instituicao}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            · {m.instituicao}
+                          </span>
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground truncate">
@@ -600,7 +659,9 @@ function InvestimentosPage() {
                     </div>
                     <div className="text-right shrink-0">
                       <div className="font-semibold">{formatBRL(Number(m.valor_total || 0))}</div>
-                      {m.quantidade ? <div className="text-[11px] text-muted-foreground">{m.quantidade}</div> : null}
+                      {m.quantidade ? (
+                        <div className="text-[11px] text-muted-foreground">{m.quantidade}</div>
+                      ) : null}
                     </div>
                     <div className="flex gap-0.5 shrink-0">
                       <Button
@@ -618,7 +679,10 @@ function InvestimentosPage() {
                         className="h-7 w-7 text-rose-500 hover:text-rose-500"
                         title={t("investimentos.wallet.delete")}
                         onClick={async () => {
-                          const ok = await confirmAsync({ title: t("investimentos.movs.confirmDelete"), destructive: true });
+                          const ok = await confirmAsync({
+                            title: t("investimentos.movs.confirmDelete"),
+                            destructive: true,
+                          });
                           if (!ok) return;
                           try {
                             const aId = m.ativo_id;
@@ -670,8 +734,12 @@ function InvestimentosPage() {
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <div className="font-semibold text-emerald-500">+{formatBRL(Number(r.valor || 0))}</div>
-                      <Badge variant="secondary" className="text-[10px]">{r.status}</Badge>
+                      <div className="font-semibold text-emerald-500">
+                        +{formatBRL(Number(r.valor || 0))}
+                      </div>
+                      <Badge variant="secondary" className="text-[10px]">
+                        {r.status}
+                      </Badge>
                     </div>
                     <div className="flex gap-0.5 shrink-0">
                       <Button
@@ -689,7 +757,10 @@ function InvestimentosPage() {
                         className="h-7 w-7 text-rose-500 hover:text-rose-500"
                         title={t("investimentos.wallet.delete")}
                         onClick={async () => {
-                          const ok = await confirmAsync({ title: t("investimentos.rends.confirmDelete"), destructive: true });
+                          const ok = await confirmAsync({
+                            title: t("investimentos.rends.confirmDelete"),
+                            destructive: true,
+                          });
                           if (!ok) return;
                           try {
                             await excluirRendimento(r.id);
@@ -705,7 +776,7 @@ function InvestimentosPage() {
                       </Button>
                     </div>
                   </li>
-                )
+                );
               })}
             </ul>
           )}
@@ -720,18 +791,22 @@ function InvestimentosPage() {
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="font-semibold">{t("investimentos.b3.title")}</h2>
-              <Badge variant="outline" className="text-[10px]">{t("investimentos.b3.notConnected")}</Badge>
-              <Badge variant="secondary" className="text-[10px]">{t("investimentos.b3.manualAvail")}</Badge>
-              <Badge variant="outline" className="text-[10px]">{t("investimentos.b3.apiSoon")}</Badge>
+              <Badge variant="outline" className="text-[10px]">
+                {t("investimentos.b3.notConnected")}
+              </Badge>
+              <Badge variant="secondary" className="text-[10px]">
+                {t("investimentos.b3.manualAvail")}
+              </Badge>
+              <Badge variant="outline" className="text-[10px]">
+                {t("investimentos.b3.apiSoon")}
+              </Badge>
             </div>
             <p className="text-xs text-muted-foreground mt-2 max-w-2xl">
               {t("investimentos.b3.desc")}
             </p>
             <div className="flex items-start gap-2 mt-3 rounded-lg bg-muted/40 p-2.5 text-[11px] text-muted-foreground">
               <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-              <span>
-                {t("investimentos.b3.security")}
-              </span>
+              <span>{t("investimentos.b3.security")}</span>
             </div>
           </div>
         </div>
@@ -741,7 +816,11 @@ function InvestimentosPage() {
         onOpenChange={setOpenAdd}
         editing={editing}
         userId={userId}
-        onSaved={() => { setOpenAdd(false); setEditing(null); reload(); }}
+        onSaved={() => {
+          setOpenAdd(false);
+          setEditing(null);
+          reload();
+        }}
       />
       <ImportDialog
         open={openImport}
@@ -761,40 +840,64 @@ function InvestimentosPage() {
         ativo={atualizandoAtivo}
         userId={userId}
         onClose={() => setAtualizandoAtivo(null)}
-        onSaved={() => { setAtualizandoAtivo(null); reload(); }}
+        onSaved={() => {
+          setAtualizandoAtivo(null);
+          reload();
+        }}
       />
       <AtualizarLoteDialog
         open={openAtualizarLote}
         onOpenChange={setOpenAtualizarLote}
         ativos={ativos}
         userId={userId}
-        onSaved={() => { setOpenAtualizarLote(false); reload(); }}
+        onSaved={() => {
+          setOpenAtualizarLote(false);
+          reload();
+        }}
       />
       <MovimentacaoDialog
         state={movDialog}
         ativos={ativos}
         userId={userId}
         onClose={() => setMovDialog({ open: false, mov: null })}
-        onSaved={() => { setMovDialog({ open: false, mov: null }); reload(); }}
+        onSaved={() => {
+          setMovDialog({ open: false, mov: null });
+          reload();
+        }}
       />
       <RendimentoDialog
         state={rendDialog}
         ativos={ativos}
         userId={userId}
         onClose={() => setRendDialog({ open: false, rend: null })}
-        onSaved={() => { setRendDialog({ open: false, rend: null }); reload(); }}
+        onSaved={() => {
+          setRendDialog({ open: false, rend: null });
+          reload();
+        }}
       />
       <DetalheAtivoDialog
         ativo={detalheAtivo}
         movimentacoes={movs}
         rendimentos={rends}
         onClose={() => setDetalheAtivo(null)}
-        onEditar={(a) => { setDetalheAtivo(null); openEdit(a); }}
-        onAtualizarValor={(a) => { setDetalheAtivo(null); openAtualizarValor(a); }}
+        onEditar={(a) => {
+          setDetalheAtivo(null);
+          openEdit(a);
+        }}
+        onAtualizarValor={(a) => {
+          setDetalheAtivo(null);
+          openAtualizarValor(a);
+        }}
         onAddMovimentacao={(a) => openMovimentacao(a.id)}
-        onAddRendimento={(a) => { setDetalheAtivo(null); openRendimento(a.id); }}
+        onAddRendimento={(a) => {
+          setDetalheAtivo(null);
+          openRendimento(a.id);
+        }}
         onExcluirAtivo={async (a) => {
-          const ok = await confirmAsync({ title: t("investimentos.detail.confirmDeleteAtivo", { name: a.nome }), destructive: true });
+          const ok = await confirmAsync({
+            title: t("investimentos.detail.confirmDeleteAtivo", { name: a.nome }),
+            destructive: true,
+          });
           if (!ok) return;
           try {
             await excluirAtivo(a.id);
@@ -808,7 +911,7 @@ function InvestimentosPage() {
         }}
       />
     </MobileShell>
-  )
+  );
 }
 
 // Helper local para formatar data ISO (yyyy-mm-dd) em pt-BR
@@ -830,8 +933,7 @@ function KpiCard({
   value: string;
   tone?: "pos" | "neg";
 }) {
-  const valueClass =
-    tone === "pos" ? "text-emerald-500" : tone === "neg" ? "text-rose-500" : "";
+  const valueClass = tone === "pos" ? "text-emerald-500" : tone === "neg" ? "text-rose-500" : "";
   return (
     <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur-xl p-3.5">
       <div className="flex items-center gap-2 text-muted-foreground text-[11px] uppercase tracking-wide">
@@ -852,7 +954,15 @@ function MiniStat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function EmptyState({ title, description, cta }: { title: string; description: string; cta?: React.ReactNode }) {
+function EmptyState({
+  title,
+  description,
+  cta,
+}: {
+  title: string;
+  description: string;
+  cta?: React.ReactNode;
+}) {
   return (
     <div className="py-10 text-center">
       <div className="mx-auto h-12 w-12 rounded-2xl bg-brand-soft/60 grid place-items-center text-brand-on-soft mb-3">
@@ -910,7 +1020,6 @@ function AddAtivoDialog({
       const total = qtd * pm;
       setValorAplicado(total.toFixed(2).replace(".", ","));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quantidade, precoMedio, isRendaVariavel]);
 
   useEffect(() => {
@@ -921,7 +1030,6 @@ function AddAtivoDialog({
       const total = qtd * pa;
       setValorAtual(total.toFixed(2).replace(".", ","));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quantidade, precoAtual, isRendaVariavel]);
 
   useEffect(() => {
@@ -942,11 +1050,21 @@ function AddAtivoDialog({
       setLiquidez(editing.liquidez ?? "");
       setObservacao(editing.observacao ?? "");
     } else {
-      setNome(""); setTicker(""); setTipo("acoes"); setInstituicao("");
-      setQuantidade(""); setPrecoMedio(""); setPrecoAtual("");
-      setValorAplicado(""); setValorAtual("");
-      setRentTipo(""); setRentPct(""); setDataInicio(todayISO()); setDataVenc("");
-      setLiquidez(""); setObservacao("");
+      setNome("");
+      setTicker("");
+      setTipo("acoes");
+      setInstituicao("");
+      setQuantidade("");
+      setPrecoMedio("");
+      setPrecoAtual("");
+      setValorAplicado("");
+      setValorAtual("");
+      setRentTipo("");
+      setRentPct("");
+      setDataInicio(todayISO());
+      setDataVenc("");
+      setLiquidez("");
+      setObservacao("");
     }
   }, [editing, open]);
 
@@ -1000,7 +1118,9 @@ function AddAtivoDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editing ? tInv("dialogs.addAsset.titleEdit") : tInv("dialogs.addAsset.titleCreate")}</DialogTitle>
+          <DialogTitle>
+            {editing ? tInv("dialogs.addAsset.titleEdit") : tInv("dialogs.addAsset.titleCreate")}
+          </DialogTitle>
           <DialogDescription>{tInv("dialogs.addAsset.description")}</DialogDescription>
         </DialogHeader>
 
@@ -1009,25 +1129,31 @@ function AddAtivoDialog({
           <div className="flex items-start gap-2 rounded-lg bg-muted/40 p-2.5 text-[11px] text-muted-foreground">
             <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
             <span>
-              {isRendaVariavel
-                ? tInv("forms.aux.hintVariable")
-                : tInv("forms.aux.hintFixed")}
+              {isRendaVariavel ? tInv("forms.aux.hintVariable") : tInv("forms.aux.hintFixed")}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <Field label={`${tInv("forms.labels.type")} ${tInv("forms.aux.required")}`}>
               <Select value={tipo} onValueChange={(v) => setTipo(v as TipoInvestimento)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {TIPOS_INVESTIMENTO.map((it) => (
-                    <SelectItem key={it.id} value={it.id}>{getTipoInvestimentoLabel(it.id, tInv)}</SelectItem>
+                    <SelectItem key={it.id} value={it.id}>
+                      {getTipoInvestimentoLabel(it.id, tInv)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </Field>
             <Field label={tInv("forms.labels.institution")}>
-              <Input value={instituicao} onChange={(e) => setInstituicao(e.target.value)} placeholder={tInv("forms.placeholders.institution")} />
+              <Input
+                value={instituicao}
+                onChange={(e) => setInstituicao(e.target.value)}
+                placeholder={tInv("forms.placeholders.institution")}
+              />
             </Field>
           </div>
 
@@ -1035,7 +1161,11 @@ function AddAtivoDialog({
             <Input
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              placeholder={isRendaVariavel ? tInv("forms.placeholders.assetNameVariable") : tInv("forms.placeholders.assetNameFixed")}
+              placeholder={
+                isRendaVariavel
+                  ? tInv("forms.placeholders.assetNameVariable")
+                  : tInv("forms.placeholders.assetNameFixed")
+              }
             />
           </Field>
 
@@ -1055,25 +1185,49 @@ function AddAtivoDialog({
             <>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <Field label={tInv("forms.labels.quantity")}>
-                  <Input value={quantidade} onChange={(e) => setQuantidade(e.target.value)} placeholder={tInv("forms.placeholders.quantity")} />
+                  <Input
+                    value={quantidade}
+                    onChange={(e) => setQuantidade(e.target.value)}
+                    placeholder={tInv("forms.placeholders.quantity")}
+                  />
                 </Field>
                 <Field label={tInv("forms.labels.avgPrice")}>
-                  <Input value={precoMedio} onChange={(e) => setPrecoMedio(e.target.value)} placeholder={tInv("forms.placeholders.avgPrice")} />
+                  <Input
+                    value={precoMedio}
+                    onChange={(e) => setPrecoMedio(e.target.value)}
+                    placeholder={tInv("forms.placeholders.avgPrice")}
+                  />
                 </Field>
                 <Field label={tInv("forms.labels.currentPrice")}>
-                  <Input value={precoAtual} onChange={(e) => setPrecoAtual(e.target.value)} placeholder={tInv("forms.placeholders.currentPrice")} />
+                  <Input
+                    value={precoAtual}
+                    onChange={(e) => setPrecoAtual(e.target.value)}
+                    placeholder={tInv("forms.placeholders.currentPrice")}
+                  />
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <Field label={tInv("forms.labels.appliedValueAuto")}>
-                  <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder={tInv("forms.placeholders.appliedValueSmall")} />
+                  <Input
+                    value={valorAplicado}
+                    onChange={(e) => setValorAplicado(e.target.value)}
+                    placeholder={tInv("forms.placeholders.appliedValueSmall")}
+                  />
                 </Field>
                 <Field label={tInv("forms.labels.currentValueAuto")}>
-                  <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder={tInv("forms.placeholders.currentValueSmall")} />
+                  <Input
+                    value={valorAtual}
+                    onChange={(e) => setValorAtual(e.target.value)}
+                    placeholder={tInv("forms.placeholders.currentValueSmall")}
+                  />
                 </Field>
               </div>
               <Field label={tInv("forms.labels.purchaseDate")}>
-                <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+                <Input
+                  type="date"
+                  value={dataInicio}
+                  onChange={(e) => setDataInicio(e.target.value)}
+                />
               </Field>
             </>
           )}
@@ -1083,37 +1237,65 @@ function AddAtivoDialog({
             <>
               <div className="grid grid-cols-2 gap-3">
                 <Field label={`${tInv("forms.labels.appliedValue")} ${tInv("forms.aux.required")}`}>
-                  <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder={tInv("forms.placeholders.appliedValueLarge")} />
+                  <Input
+                    value={valorAplicado}
+                    onChange={(e) => setValorAplicado(e.target.value)}
+                    placeholder={tInv("forms.placeholders.appliedValueLarge")}
+                  />
                 </Field>
                 <Field label={tInv("forms.labels.currentValue")}>
-                  <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder={tInv("forms.placeholders.currentValueLarge")} />
+                  <Input
+                    value={valorAtual}
+                    onChange={(e) => setValorAtual(e.target.value)}
+                    placeholder={tInv("forms.placeholders.currentValueLarge")}
+                  />
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <Field label={tInv("forms.labels.rentabilityType")}>
                   <Select value={rentTipo} onValueChange={setRentTipo}>
-                    <SelectTrigger><SelectValue placeholder={tInv("forms.placeholders.rentabilityDash")} /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder={tInv("forms.placeholders.rentabilityDash")} />
+                    </SelectTrigger>
                     <SelectContent>
                       {RENT_TIPOS.map((rt) => (
-                        <SelectItem key={rt.id} value={rt.id}>{getRentabilidadeTipoLabel(rt.id, tInv)}</SelectItem>
+                        <SelectItem key={rt.id} value={rt.id}>
+                          {getRentabilidadeTipoLabel(rt.id, tInv)}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </Field>
                 <Field label={tInv("forms.labels.rentabilityPct")}>
-                  <Input value={rentPct} onChange={(e) => setRentPct(e.target.value)} placeholder={tInv("forms.placeholders.rentabilityPct")} />
+                  <Input
+                    value={rentPct}
+                    onChange={(e) => setRentPct(e.target.value)}
+                    placeholder={tInv("forms.placeholders.rentabilityPct")}
+                  />
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <Field label={tInv("forms.labels.applicationDate")}>
-                  <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+                  <Input
+                    type="date"
+                    value={dataInicio}
+                    onChange={(e) => setDataInicio(e.target.value)}
+                  />
                 </Field>
                 <Field label={tInv("forms.labels.maturity")}>
-                  <Input type="date" value={dataVenc} onChange={(e) => setDataVenc(e.target.value)} />
+                  <Input
+                    type="date"
+                    value={dataVenc}
+                    onChange={(e) => setDataVenc(e.target.value)}
+                  />
                 </Field>
               </div>
               <Field label={tInv("forms.labels.liquidity")}>
-                <Input value={liquidez} onChange={(e) => setLiquidez(e.target.value)} placeholder={tInv("forms.placeholders.liquidity")} />
+                <Input
+                  value={liquidez}
+                  onChange={(e) => setLiquidez(e.target.value)}
+                  placeholder={tInv("forms.placeholders.liquidity")}
+                />
               </Field>
 
               {/* Avançado: ticker/quantidade/preços ocultos por padrão */}
@@ -1127,7 +1309,11 @@ function AddAtivoDialog({
               {showAvancado && (
                 <div className="grid gap-3 rounded-lg border border-dashed border-border/60 p-3">
                   <Field label={tInv("forms.labels.tickerOptional")}>
-                    <Input value={ticker} onChange={(e) => setTicker(e.target.value)} placeholder={tInv("forms.placeholders.tickerDash")} />
+                    <Input
+                      value={ticker}
+                      onChange={(e) => setTicker(e.target.value)}
+                      placeholder={tInv("forms.placeholders.tickerDash")}
+                    />
                   </Field>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <Field label={tInv("forms.labels.quantity")}>
@@ -1150,14 +1336,26 @@ function AddAtivoDialog({
             <>
               <div className="grid grid-cols-2 gap-3">
                 <Field label={tInv("forms.labels.appliedValue")}>
-                  <Input value={valorAplicado} onChange={(e) => setValorAplicado(e.target.value)} placeholder={tInv("forms.placeholders.appliedValueLarge")} />
+                  <Input
+                    value={valorAplicado}
+                    onChange={(e) => setValorAplicado(e.target.value)}
+                    placeholder={tInv("forms.placeholders.appliedValueLarge")}
+                  />
                 </Field>
                 <Field label={tInv("forms.labels.currentValue")}>
-                  <Input value={valorAtual} onChange={(e) => setValorAtual(e.target.value)} placeholder={tInv("forms.placeholders.currentValueLarge")} />
+                  <Input
+                    value={valorAtual}
+                    onChange={(e) => setValorAtual(e.target.value)}
+                    placeholder={tInv("forms.placeholders.currentValueLarge")}
+                  />
                 </Field>
               </div>
               <Field label={tInv("forms.labels.applicationDate")}>
-                <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+                <Input
+                  type="date"
+                  value={dataInicio}
+                  onChange={(e) => setDataInicio(e.target.value)}
+                />
               </Field>
             </>
           )}
@@ -1168,9 +1366,15 @@ function AddAtivoDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>{tInv("forms.aux.cancel")}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {tInv("forms.aux.cancel")}
+          </Button>
           <Button onClick={handleSave} disabled={saving}>
-            {saving ? tInv("forms.aux.saving") : editing ? tInv("forms.aux.save") : tInv("forms.aux.register")}
+            {saving
+              ? tInv("forms.aux.saving")
+              : editing
+                ? tInv("forms.aux.save")
+                : tInv("forms.aux.register")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1253,8 +1457,8 @@ function ImportDialog({
           <div className="flex items-start gap-2 rounded-lg bg-muted/40 p-2.5 text-[11px] text-muted-foreground mt-1">
             <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
             <span>
-              Não pedimos senha, CPF, token bancário ou acesso à sua conta. A importação
-              usa apenas arquivos enviados por você.
+              Não pedimos senha, CPF, token bancário ou acesso à sua conta. A importação usa apenas
+              arquivos enviados por você.
             </span>
           </div>
           <DialogFooter>
@@ -1348,9 +1552,7 @@ function HistoricoImportacoesDialog({
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{tInv("dialogs2.importHistory.title")}</DialogTitle>
-            <DialogDescription>
-              {tInv("dialogs2.importHistory.description")}
-            </DialogDescription>
+            <DialogDescription>{tInv("dialogs2.importHistory.description")}</DialogDescription>
           </DialogHeader>
 
           {importacoes.length === 0 ? (
@@ -1372,10 +1574,7 @@ function HistoricoImportacoesDialog({
                 const statusTranslated = tInv(statusKey);
                 const statusLabel = statusTranslated === statusKey ? imp.status : statusTranslated;
                 return (
-                  <li
-                    key={imp.id}
-                    className="rounded-xl border border-border/60 bg-card/40 p-3"
-                  >
+                  <li key={imp.id} className="rounded-xl border border-border/60 bg-card/40 p-3">
                     <div className="flex items-start justify-between gap-2 flex-wrap">
                       <div className="min-w-0 flex-1">
                         <div className="font-medium text-sm truncate">
@@ -1425,7 +1624,9 @@ function HistoricoImportacoesDialog({
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>{tInv("dialogs2.importHistory.close")}</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              {tInv("dialogs2.importHistory.close")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1442,13 +1643,24 @@ function HistoricoImportacoesDialog({
           </DialogHeader>
 
           {carregandoDetalhe ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">{i18n.t("common:loading.investmentDetails")}</p>
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              {i18n.t("common:loading.investmentDetails")}
+            </p>
           ) : itensDetalhe ? (
             <div className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                <MiniStat label={tInv("dialogs2.importHistory.details.assets")} value={String(itensDetalhe.ativos.length)} />
-                <MiniStat label={tInv("dialogs2.importHistory.details.movements")} value={String(itensDetalhe.movimentacoes.length)} />
-                <MiniStat label={tInv("dialogs2.importHistory.details.incomes")} value={String(itensDetalhe.rendimentos.length)} />
+                <MiniStat
+                  label={tInv("dialogs2.importHistory.details.assets")}
+                  value={String(itensDetalhe.ativos.length)}
+                />
+                <MiniStat
+                  label={tInv("dialogs2.importHistory.details.movements")}
+                  value={String(itensDetalhe.movimentacoes.length)}
+                />
+                <MiniStat
+                  label={tInv("dialogs2.importHistory.details.incomes")}
+                  value={String(itensDetalhe.rendimentos.length)}
+                />
               </div>
 
               {itensDetalhe.ativos.length > 0 && (
@@ -1460,7 +1672,9 @@ function HistoricoImportacoesDialog({
                     {itensDetalhe.ativos.map((a) => (
                       <li key={a.id} className="flex justify-between gap-2">
                         <span className="truncate">{a.nome}</span>
-                        <span className="text-xs text-muted-foreground">{getTipoInvestimentoLabel(a.tipo, tInv)}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {getTipoInvestimentoLabel(a.tipo, tInv)}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -1508,10 +1722,13 @@ function HistoricoImportacoesDialog({
           ) : null}
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDetalhe(null)}>{tInv("dialogs2.importHistory.close")}</Button>
+            <Button variant="outline" onClick={() => setDetalhe(null)}>
+              {tInv("dialogs2.importHistory.close")}
+            </Button>
             {detalhe && (
               <Button variant="destructive" onClick={() => setConfirmar(detalhe)}>
-                <Trash2 className="h-4 w-4 mr-1.5" /> {tInv("dialogs2.importHistory.details.delete")}
+                <Trash2 className="h-4 w-4 mr-1.5" />{" "}
+                {tInv("dialogs2.importHistory.details.delete")}
               </Button>
             )}
           </DialogFooter>
@@ -1557,10 +1774,14 @@ function HistoricoImportacoesDialog({
                 <History className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-sm">{tInv("dialogs2.importHistory.confirm.onlyHistoryTitle")}</p>
+                <p className="font-semibold text-sm">
+                  {tInv("dialogs2.importHistory.confirm.onlyHistoryTitle")}
+                </p>
                 <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
                   {tInv("dialogs2.importHistory.confirm.onlyHistoryDesc1")}{" "}
-                  <strong className="text-foreground">{tInv("dialogs2.importHistory.confirm.onlyHistoryDescStrong")}</strong>{" "}
+                  <strong className="text-foreground">
+                    {tInv("dialogs2.importHistory.confirm.onlyHistoryDescStrong")}
+                  </strong>{" "}
                   {tInv("dialogs2.importHistory.confirm.onlyHistoryDesc2")}
                 </p>
               </div>
@@ -1586,7 +1807,9 @@ function HistoricoImportacoesDialog({
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
                   {tInv("dialogs2.importHistory.confirm.allDesc1")}{" "}
-                  <strong className="text-foreground">{tInv("dialogs2.importHistory.confirm.allDescStrong")}</strong>{" "}
+                  <strong className="text-foreground">
+                    {tInv("dialogs2.importHistory.confirm.allDescStrong")}
+                  </strong>{" "}
                   {tInv("dialogs2.importHistory.confirm.allDesc2")}
                 </p>
               </div>
@@ -1596,7 +1819,9 @@ function HistoricoImportacoesDialog({
             <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/25 bg-amber-500/8 p-3">
               <ShieldCheck className="h-4 w-4 mt-0.5 shrink-0 text-amber-500" />
               <p className="text-xs text-amber-200/90 leading-relaxed">
-                <strong className="text-amber-300">{tInv("dialogs2.importHistory.confirm.warningStrong")}</strong>{" "}
+                <strong className="text-amber-300">
+                  {tInv("dialogs2.importHistory.confirm.warningStrong")}
+                </strong>{" "}
                 {tInv("dialogs2.importHistory.confirm.warningRest")}
               </p>
             </div>
@@ -1644,21 +1869,13 @@ function AtualizarValorDialog({
   const [data, setData] = useState(todayISO());
   const [salvando, setSalvando] = useState(false);
 
-  const isVariavel = ativo
-    ? ["acoes", "fii", "etf", "bdr", "cripto"].includes(ativo.tipo)
-    : false;
+  const isVariavel = ativo ? ["acoes", "fii", "etf", "bdr", "cripto"].includes(ativo.tipo) : false;
 
   useEffect(() => {
     if (!ativo) return;
-    setValorAtual(
-      ativo.valor_atual != null ? String(ativo.valor_atual).replace(".", ",") : "",
-    );
-    setPrecoAtual(
-      ativo.preco_atual != null ? String(ativo.preco_atual).replace(".", ",") : "",
-    );
-    setQuantidade(
-      ativo.quantidade != null ? String(ativo.quantidade).replace(".", ",") : "",
-    );
+    setValorAtual(ativo.valor_atual != null ? String(ativo.valor_atual).replace(".", ",") : "");
+    setPrecoAtual(ativo.preco_atual != null ? String(ativo.preco_atual).replace(".", ",") : "");
+    setQuantidade(ativo.quantidade != null ? String(ativo.quantidade).replace(".", ",") : "");
     setObservacao("");
     setData(todayISO());
   }, [ativo]);
@@ -1689,7 +1906,9 @@ function AtualizarValorDialog({
         preco_novo: precoAtual ? parseBRLInput(precoAtual) : null,
         quantidade: quantidade ? Number(quantidade.replace(",", ".")) : null,
         observacao: observacao || null,
-        data_atualizacao: new Date(data + "T" + new Date().toTimeString().slice(0, 8)).toISOString(),
+        data_atualizacao: new Date(
+          data + "T" + new Date().toTimeString().slice(0, 8),
+        ).toISOString(),
         origem: "manual",
       });
       toast.success(tInv("forms.aux.success.valueUpdated"));
@@ -1709,9 +1928,7 @@ function AtualizarValorDialog({
           <DialogTitle className="flex items-center gap-2">
             <RefreshCw className="h-4 w-4" /> {tInv("dialogs.updateValue.title")}
           </DialogTitle>
-          <DialogDescription>
-            {tInv("dialogs.updateValue.description")}
-          </DialogDescription>
+          <DialogDescription>{tInv("dialogs.updateValue.description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
@@ -1725,7 +1942,9 @@ function AtualizarValorDialog({
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">{tInv("forms.labels.appliedValue")}</label>
+            <label className="text-xs text-muted-foreground">
+              {tInv("forms.labels.appliedValue")}
+            </label>
             <Input
               value={formatBRL(Number(ativo.valor_aplicado || 0))}
               disabled
@@ -1736,7 +1955,9 @@ function AtualizarValorDialog({
           {isVariavel && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs text-muted-foreground">{tInv("forms.labels.currentPrice")}</label>
+                <label className="text-xs text-muted-foreground">
+                  {tInv("forms.labels.currentPrice")}
+                </label>
                 <Input
                   value={precoAtual}
                   onChange={(e) => setPrecoAtual(e.target.value)}
@@ -1744,7 +1965,9 @@ function AtualizarValorDialog({
                 />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">{tInv("forms.labels.quantity")}</label>
+                <label className="text-xs text-muted-foreground">
+                  {tInv("forms.labels.quantity")}
+                </label>
                 <Input
                   value={quantidade}
                   onChange={(e) => setQuantidade(e.target.value)}
@@ -1756,7 +1979,8 @@ function AtualizarValorDialog({
 
           <div>
             <label className="text-xs text-muted-foreground">
-              {tInv("forms.labels.currentValue")}{isVariavel ? " " + tInv("forms.aux.calculated") : ""}
+              {tInv("forms.labels.currentValue")}
+              {isVariavel ? " " + tInv("forms.aux.calculated") : ""}
             </label>
             <Input
               value={valorAtual}
@@ -1766,12 +1990,16 @@ function AtualizarValorDialog({
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">{tInv("forms.labels.updateDate")}</label>
+            <label className="text-xs text-muted-foreground">
+              {tInv("forms.labels.updateDate")}
+            </label>
             <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">{tInv("forms.labels.observation")}</label>
+            <label className="text-xs text-muted-foreground">
+              {tInv("forms.labels.observation")}
+            </label>
             <Textarea
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
@@ -1782,7 +2010,9 @@ function AtualizarValorDialog({
 
           {ativo.ultima_atualizacao && (
             <div className="text-[11px] text-muted-foreground">
-              {tInv("dialogs.updateValue.lastUpdate", { date: formatarDataHora(ativo.ultima_atualizacao) })}
+              {tInv("dialogs.updateValue.lastUpdate", {
+                date: formatarDataHora(ativo.ultima_atualizacao),
+              })}
             </div>
           )}
         </div>
@@ -1815,7 +2045,9 @@ function AtualizarLoteDialog({
   onSaved: () => void;
 }) {
   const { t: tInv } = useTranslation("investimentos");
-  const [valores, setValores] = useState<Record<string, { valor: string; preco: string; obs: string }>>({});
+  const [valores, setValores] = useState<
+    Record<string, { valor: string; preco: string; obs: string }>
+  >({});
   const [data, setData] = useState(todayISO());
   const [salvando, setSalvando] = useState(false);
 
@@ -1834,7 +2066,10 @@ function AtualizarLoteDialog({
   }, [open, ativos]);
 
   function setCampo(id: string, campo: "valor" | "preco" | "obs", v: string) {
-    setValores((prev) => ({ ...prev, [id]: { ...(prev[id] ?? { valor: "", preco: "", obs: "" }), [campo]: v } }));
+    setValores((prev) => ({
+      ...prev,
+      [id]: { ...(prev[id] ?? { valor: "", preco: "", obs: "" }), [campo]: v },
+    }));
   }
 
   async function salvarTodos() {
@@ -1856,11 +2091,7 @@ function AtualizarLoteDialog({
       const valorAnterior = Number(a.valor_atual ?? 0);
       const precoAnterior = a.preco_atual != null ? Number(a.preco_atual) : null;
       // Pula se nada mudou
-      if (
-        valorNovo === valorAnterior &&
-        (precoNovo ?? null) === precoAnterior &&
-        !entry.obs
-      ) {
+      if (valorNovo === valorAnterior && (precoNovo ?? null) === precoAnterior && !entry.obs) {
         continue;
       }
       if (!Number.isFinite(valorNovo)) {
@@ -1895,13 +2126,13 @@ function AtualizarLoteDialog({
           <DialogTitle className="flex items-center gap-2">
             <RefreshCw className="h-4 w-4" /> {tInv("dialogs2.batchUpdate.title")}
           </DialogTitle>
-          <DialogDescription>
-            {tInv("dialogs2.batchUpdate.description")}
-          </DialogDescription>
+          <DialogDescription>{tInv("dialogs2.batchUpdate.description")}</DialogDescription>
         </DialogHeader>
 
         <div className="flex items-center gap-2 mb-2">
-          <label className="text-xs text-muted-foreground">{tInv("dialogs2.batchUpdate.updateDate")}</label>
+          <label className="text-xs text-muted-foreground">
+            {tInv("dialogs2.batchUpdate.updateDate")}
+          </label>
           <Input
             type="date"
             value={data}
@@ -1926,7 +2157,10 @@ function AtualizarLoteDialog({
                     <div>
                       <div className="text-sm font-medium">{a.nome}</div>
                       <div className="text-[11px] text-muted-foreground">
-                        {getTipoInvestimentoLabel(a.tipo, tInv)} · {tInv("dialogs2.batchUpdate.appliedShort", { value: formatBRL(Number(a.valor_aplicado || 0)) })}
+                        {getTipoInvestimentoLabel(a.tipo, tInv)} ·{" "}
+                        {tInv("dialogs2.batchUpdate.appliedShort", {
+                          value: formatBRL(Number(a.valor_aplicado || 0)),
+                        })}
                       </div>
                     </div>
                     <Badge
@@ -1940,7 +2174,9 @@ function AtualizarLoteDialog({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     {isVariavel && (
                       <div>
-                        <label className="text-[11px] text-muted-foreground">{tInv("dialogs2.batchUpdate.currentPrice")}</label>
+                        <label className="text-[11px] text-muted-foreground">
+                          {tInv("dialogs2.batchUpdate.currentPrice")}
+                        </label>
                         <Input
                           value={entry.preco}
                           onChange={(e) => setCampo(a.id, "preco", e.target.value)}
@@ -1949,7 +2185,9 @@ function AtualizarLoteDialog({
                       </div>
                     )}
                     <div className={isVariavel ? "" : "md:col-span-2"}>
-                      <label className="text-[11px] text-muted-foreground">{tInv("dialogs2.batchUpdate.currentValue")}</label>
+                      <label className="text-[11px] text-muted-foreground">
+                        {tInv("dialogs2.batchUpdate.currentValue")}
+                      </label>
                       <Input
                         value={entry.valor}
                         onChange={(e) => setCampo(a.id, "valor", e.target.value)}
@@ -1957,7 +2195,9 @@ function AtualizarLoteDialog({
                       />
                     </div>
                     <div className={isVariavel ? "" : "md:col-span-1"}>
-                      <label className="text-[11px] text-muted-foreground">{tInv("dialogs2.batchUpdate.observation")}</label>
+                      <label className="text-[11px] text-muted-foreground">
+                        {tInv("dialogs2.batchUpdate.observation")}
+                      </label>
                       <Input
                         value={entry.obs}
                         onChange={(e) => setCampo(a.id, "obs", e.target.value)}
@@ -2023,7 +2263,10 @@ function MovimentacaoDialog({
   const [observacao, setObservacao] = useState("");
   const [salvando, setSalvando] = useState(false);
 
-  const ativoSelecionado = useMemo(() => ativos.find((a) => a.id === ativoId) ?? null, [ativos, ativoId]);
+  const ativoSelecionado = useMemo(
+    () => ativos.find((a) => a.id === ativoId) ?? null,
+    [ativos, ativoId],
+  );
   const variavel = ativoSelecionado ? isRendaVariavel(ativoSelecionado.tipo) : false;
 
   useEffect(() => {
@@ -2033,12 +2276,16 @@ function MovimentacaoDialog({
       setTipo(editing.tipo);
       setData(editing.data ?? todayISO());
       setQuantidade(editing.quantidade != null ? String(editing.quantidade).replace(".", ",") : "");
-      setValorUnitario(editing.valor_unitario != null ? String(editing.valor_unitario).replace(".", ",") : "");
-      setValorTotal(editing.valor_total != null ? String(editing.valor_total).replace(".", ",") : "");
+      setValorUnitario(
+        editing.valor_unitario != null ? String(editing.valor_unitario).replace(".", ",") : "",
+      );
+      setValorTotal(
+        editing.valor_total != null ? String(editing.valor_total).replace(".", ",") : "",
+      );
       setInstituicao(editing.instituicao ?? "");
       setObservacao(editing.observacao ?? "");
     } else {
-      setAtivoId(state.ativoId ?? (ativos[0]?.id ?? ""));
+      setAtivoId(state.ativoId ?? ativos[0]?.id ?? "");
       setTipo("compra");
       setData(todayISO());
       setQuantidade("");
@@ -2095,7 +2342,11 @@ function MovimentacaoDialog({
         await criarMovimentacao(userId, payload);
       }
       await recalcularAtivoPorMovimentacoes(userId, ativoId);
-      toast.success(editing ? tInv("forms.aux.success.movementUpdated") : tInv("forms.aux.success.movementCreated"));
+      toast.success(
+        editing
+          ? tInv("forms.aux.success.movementUpdated")
+          : tInv("forms.aux.success.movementCreated"),
+      );
       onSaved();
     } catch (e) {
       console.error(e);
@@ -2135,13 +2386,17 @@ function MovimentacaoDialog({
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-muted-foreground">{tInv("forms.labels.movementType")}</label>
+              <label className="text-xs text-muted-foreground">
+                {tInv("forms.labels.movementType")}
+              </label>
               <Select value={tipo} onValueChange={(v) => setTipo(v as TipoMovimentacao)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TIPOS_MOVIMENTACAO.filter((m) => TIPOS_MOV_PRINCIPAIS.includes(m.id) || m.id === tipo).map((m) => (
+                  {TIPOS_MOVIMENTACAO.filter(
+                    (m) => TIPOS_MOV_PRINCIPAIS.includes(m.id) || m.id === tipo,
+                  ).map((m) => (
                     <SelectItem key={m.id} value={m.id}>
                       {getTipoMovimentacaoLabel(m.id, tInv)}
                     </SelectItem>
@@ -2158,7 +2413,9 @@ function MovimentacaoDialog({
           {variavel && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs text-muted-foreground">{tInv("forms.labels.quantity")}</label>
+                <label className="text-xs text-muted-foreground">
+                  {tInv("forms.labels.quantity")}
+                </label>
                 <Input
                   value={quantidade}
                   onChange={(e) => setQuantidade(e.target.value)}
@@ -2166,7 +2423,9 @@ function MovimentacaoDialog({
                 />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">{tInv("forms.labels.unitPrice")}</label>
+                <label className="text-xs text-muted-foreground">
+                  {tInv("forms.labels.unitPrice")}
+                </label>
                 <Input
                   value={valorUnitario}
                   onChange={(e) => setValorUnitario(e.target.value)}
@@ -2178,7 +2437,8 @@ function MovimentacaoDialog({
 
           <div>
             <label className="text-xs text-muted-foreground">
-              {tInv("forms.labels.totalAmount")}{variavel ? ` ${tInv("forms.aux.calculated")}` : ""}
+              {tInv("forms.labels.totalAmount")}
+              {variavel ? ` ${tInv("forms.aux.calculated")}` : ""}
             </label>
             <Input
               value={valorTotal}
@@ -2188,7 +2448,9 @@ function MovimentacaoDialog({
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">{tInv("forms.labels.institution")}</label>
+            <label className="text-xs text-muted-foreground">
+              {tInv("forms.labels.institution")}
+            </label>
             <Input
               value={instituicao}
               onChange={(e) => setInstituicao(e.target.value)}
@@ -2197,7 +2459,9 @@ function MovimentacaoDialog({
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">{tInv("forms.labels.observation")}</label>
+            <label className="text-xs text-muted-foreground">
+              {tInv("forms.labels.observation")}
+            </label>
             <Textarea
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
@@ -2215,9 +2479,15 @@ function MovimentacaoDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={salvando}>{tInv("forms.aux.cancel")}</Button>
+          <Button variant="outline" onClick={onClose} disabled={salvando}>
+            {tInv("forms.aux.cancel")}
+          </Button>
           <Button onClick={salvar} disabled={salvando}>
-            {salvando ? tInv("forms.aux.saving") : editing ? tInv("forms.aux.save") : tInv("forms.aux.add")}
+            {salvando
+              ? tInv("forms.aux.saving")
+              : editing
+                ? tInv("forms.aux.save")
+                : tInv("forms.aux.add")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -2259,7 +2529,7 @@ function RendimentoDialog({
       setStatus(editing.status);
       setObservacao(editing.observacao ?? "");
     } else {
-      setAtivoId(state.ativoId ?? (ativos[0]?.id ?? ""));
+      setAtivoId(state.ativoId ?? ativos[0]?.id ?? "");
       setTipo("dividendo");
       setDataPag(todayISO());
       setValor("");
@@ -2293,7 +2563,9 @@ function RendimentoDialog({
     try {
       if (editing) await atualizarRendimento(editing.id, payload);
       else await criarRendimento(userId, payload);
-      toast.success(editing ? tInv("forms.aux.success.incomeUpdated") : tInv("forms.aux.success.incomeCreated"));
+      toast.success(
+        editing ? tInv("forms.aux.success.incomeUpdated") : tInv("forms.aux.success.incomeCreated"),
+      );
       onSaved();
     } catch (e) {
       console.error(e);
@@ -2363,17 +2635,23 @@ function RendimentoDialog({
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-muted-foreground">{tInv("forms.labels.paymentDate")}</label>
+              <label className="text-xs text-muted-foreground">
+                {tInv("forms.labels.paymentDate")}
+              </label>
               <Input type="date" value={dataPag} onChange={(e) => setDataPag(e.target.value)} />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">{tInv("forms.labels.amountReceived")}</label>
+              <label className="text-xs text-muted-foreground">
+                {tInv("forms.labels.amountReceived")}
+              </label>
               <Input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" />
             </div>
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground">{tInv("forms.labels.observation")}</label>
+            <label className="text-xs text-muted-foreground">
+              {tInv("forms.labels.observation")}
+            </label>
             <Textarea
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
@@ -2384,9 +2662,15 @@ function RendimentoDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={salvando}>{tInv("forms.aux.cancel")}</Button>
+          <Button variant="outline" onClick={onClose} disabled={salvando}>
+            {tInv("forms.aux.cancel")}
+          </Button>
           <Button onClick={salvar} disabled={salvando}>
-            {salvando ? tInv("forms.aux.saving") : editing ? tInv("forms.aux.save") : tInv("forms.aux.add")}
+            {salvando
+              ? tInv("forms.aux.saving")
+              : editing
+                ? tInv("forms.aux.save")
+                : tInv("forms.aux.add")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -2422,9 +2706,12 @@ function DetalheAtivoDialog({
   const movs = movimentacoes.filter((m) => m.ativo_id === ativo.id);
   const rends = rendimentos.filter((r) => r.ativo_id === ativo.id);
   const lucro = Number(ativo.valor_atual || 0) - Number(ativo.valor_aplicado || 0);
-  const rent = Number(ativo.valor_aplicado || 0) > 0 ? (lucro / Number(ativo.valor_aplicado)) * 100 : 0;
+  const rent =
+    Number(ativo.valor_aplicado || 0) > 0 ? (lucro / Number(ativo.valor_aplicado)) * 100 : 0;
   const ult = descreverUltimaAtualizacao(ativo.ultima_atualizacao);
-  const totalRends = rends.filter((r) => r.status === "recebido").reduce((s, r) => s + Number(r.valor || 0), 0);
+  const totalRends = rends
+    .filter((r) => r.status === "recebido")
+    .reduce((s, r) => s + Number(r.valor || 0), 0);
 
   return (
     <Dialog open={!!ativo} onOpenChange={(v) => !v && onClose()}>
@@ -2432,7 +2719,9 @@ function DetalheAtivoDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="truncate">{ativo.nome}</span>
-            <Badge variant="secondary" className="text-[10px]">{getTipoInvestimentoLabel(ativo.tipo, tInv)}</Badge>
+            <Badge variant="secondary" className="text-[10px]">
+              {getTipoInvestimentoLabel(ativo.tipo, tInv)}
+            </Badge>
           </DialogTitle>
           <DialogDescription>
             {ativo.instituicao ?? "—"} · {getTipoInvestimentoClasseLabel(ativo.tipo, tInv)}
@@ -2440,8 +2729,14 @@ function DetalheAtivoDialog({
         </DialogHeader>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
-          <MiniStat label={tInv("dialogs2.assetDetail.stats.applied")} value={formatBRL(Number(ativo.valor_aplicado || 0))} />
-          <MiniStat label={tInv("dialogs2.assetDetail.stats.current")} value={formatBRL(Number(ativo.valor_atual || 0))} />
+          <MiniStat
+            label={tInv("dialogs2.assetDetail.stats.applied")}
+            value={formatBRL(Number(ativo.valor_aplicado || 0))}
+          />
+          <MiniStat
+            label={tInv("dialogs2.assetDetail.stats.current")}
+            value={formatBRL(Number(ativo.valor_atual || 0))}
+          />
           <MiniStat
             label={tInv("dialogs2.assetDetail.stats.profit")}
             value={`${lucro >= 0 ? "+" : ""}${formatBRL(lucro)}`}
@@ -2454,20 +2749,34 @@ function DetalheAtivoDialog({
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 text-xs text-muted-foreground">
           {ativo.quantidade != null && (
-            <div><span className="block uppercase tracking-wide text-[10px]">{tInv("dialogs2.assetDetail.labels.quantity")}</span>{ativo.quantidade}</div>
+            <div>
+              <span className="block uppercase tracking-wide text-[10px]">
+                {tInv("dialogs2.assetDetail.labels.quantity")}
+              </span>
+              {ativo.quantidade}
+            </div>
           )}
           {ativo.preco_medio != null && (
-            <div><span className="block uppercase tracking-wide text-[10px]">{tInv("dialogs2.assetDetail.labels.averagePrice")}</span>{formatBRL(Number(ativo.preco_medio))}</div>
+            <div>
+              <span className="block uppercase tracking-wide text-[10px]">
+                {tInv("dialogs2.assetDetail.labels.averagePrice")}
+              </span>
+              {formatBRL(Number(ativo.preco_medio))}
+            </div>
           )}
           <div className="col-span-2 md:col-span-2 flex items-center gap-1.5">
             <Clock className="h-3 w-3" />
             <span>
               {tInv("dialogs2.assetDetail.labels.lastUpdate", {
-                value: ativo.ultima_atualizacao ? formatarDataHora(ativo.ultima_atualizacao) : tInv("dialogs2.assetDetail.labels.registeredValue"),
+                value: ativo.ultima_atualizacao
+                  ? formatarDataHora(ativo.ultima_atualizacao)
+                  : tInv("dialogs2.assetDetail.labels.registeredValue"),
               })}
             </span>
             {ult.desatualizado && ativo.ultima_atualizacao && (
-              <Badge variant="outline" className="text-[9px] border-amber-500/40 text-amber-500">{tInv("dialogs2.assetDetail.labels.outdated")}</Badge>
+              <Badge variant="outline" className="text-[9px] border-amber-500/40 text-amber-500">
+                {tInv("dialogs2.assetDetail.labels.outdated")}
+              </Badge>
             )}
           </div>
         </div>
@@ -2477,15 +2786,23 @@ function DetalheAtivoDialog({
             <Pencil className="h-3.5 w-3.5 mr-1.5" /> {tInv("dialogs2.assetDetail.actions.edit")}
           </Button>
           <Button size="sm" variant="outline" onClick={() => onAtualizarValor(ativo)}>
-            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> {tInv("dialogs2.assetDetail.actions.updateValue")}
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />{" "}
+            {tInv("dialogs2.assetDetail.actions.updateValue")}
           </Button>
           <Button size="sm" variant="outline" onClick={() => onAddMovimentacao(ativo)}>
-            <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" /> {tInv("dialogs2.assetDetail.actions.movement")}
+            <ArrowRightLeft className="h-3.5 w-3.5 mr-1.5" />{" "}
+            {tInv("dialogs2.assetDetail.actions.movement")}
           </Button>
           <Button size="sm" variant="outline" onClick={() => onAddRendimento(ativo)}>
-            <HandCoins className="h-3.5 w-3.5 mr-1.5" /> {tInv("dialogs2.assetDetail.actions.income")}
+            <HandCoins className="h-3.5 w-3.5 mr-1.5" />{" "}
+            {tInv("dialogs2.assetDetail.actions.income")}
           </Button>
-          <Button size="sm" variant="outline" className="text-rose-500 hover:text-rose-500" onClick={() => onExcluirAtivo(ativo)}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-rose-500 hover:text-rose-500"
+            onClick={() => onExcluirAtivo(ativo)}
+          >
             <Trash2 className="h-3.5 w-3.5 mr-1.5" /> {tInv("dialogs2.assetDetail.actions.delete")}
           </Button>
         </div>
@@ -2497,7 +2814,9 @@ function DetalheAtivoDialog({
               <span className="text-[10px] text-muted-foreground">{movs.length}</span>
             </h3>
             {movs.length === 0 ? (
-              <p className="text-xs text-muted-foreground">{tInv("dialogs2.assetDetail.empty.movements")}</p>
+              <p className="text-xs text-muted-foreground">
+                {tInv("dialogs2.assetDetail.empty.movements")}
+              </p>
             ) : (
               <ul className="divide-y divide-border/30 text-xs max-h-64 overflow-y-auto">
                 {movs.map((m) => (
@@ -2505,12 +2824,15 @@ function DetalheAtivoDialog({
                     <div className="min-w-0">
                       <div className="font-medium">{getTipoMovimentacaoLabel(m.tipo, tInv)}</div>
                       <div className="text-[10px] text-muted-foreground">
-                        {formatDataBR(m.data)}{m.instituicao ? ` · ${m.instituicao}` : ""}
+                        {formatDataBR(m.data)}
+                        {m.instituicao ? ` · ${m.instituicao}` : ""}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-semibold">{formatBRL(Number(m.valor_total || 0))}</div>
-                      {m.quantidade ? <div className="text-[10px] text-muted-foreground">{m.quantidade}</div> : null}
+                      {m.quantidade ? (
+                        <div className="text-[10px] text-muted-foreground">{m.quantidade}</div>
+                      ) : null}
                     </div>
                   </li>
                 ))}
@@ -2526,7 +2848,9 @@ function DetalheAtivoDialog({
               </span>
             </h3>
             {rends.length === 0 ? (
-              <p className="text-xs text-muted-foreground">{tInv("dialogs2.assetDetail.empty.income")}</p>
+              <p className="text-xs text-muted-foreground">
+                {tInv("dialogs2.assetDetail.empty.income")}
+              </p>
             ) : (
               <ul className="divide-y divide-border/30 text-xs max-h-64 overflow-y-auto">
                 {rends.map((r) => {
@@ -2535,11 +2859,17 @@ function DetalheAtivoDialog({
                     <li key={r.id} className="py-1.5 flex justify-between gap-2">
                       <div className="min-w-0">
                         <div className="font-medium">{getTipoRendimentoLabel(r.tipo, tInv)}</div>
-                        <div className="text-[10px] text-muted-foreground">{formatDataBR(r.data_pagamento)}</div>
+                        <div className="text-[10px] text-muted-foreground">
+                          {formatDataBR(r.data_pagamento)}
+                        </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold text-emerald-500">+{formatBRL(Number(r.valor || 0))}</div>
-                        <Badge variant="secondary" className="text-[9px]">{tInv(statusKey)}</Badge>
+                        <div className="font-semibold text-emerald-500">
+                          +{formatBRL(Number(r.valor || 0))}
+                        </div>
+                        <Badge variant="secondary" className="text-[9px]">
+                          {tInv(statusKey)}
+                        </Badge>
                       </div>
                     </li>
                   );
@@ -2550,9 +2880,11 @@ function DetalheAtivoDialog({
         </div>
 
         <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={onClose}>{tInv("dialogs2.assetDetail.actions.close")}</Button>
+          <Button variant="outline" onClick={onClose}>
+            {tInv("dialogs2.assetDetail.actions.close")}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

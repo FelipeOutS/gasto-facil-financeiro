@@ -12,26 +12,20 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
 
 const { stripMediaFields } = await import("../src/server/whatsapp-media-sanitize.server");
-const { extractBoletoCandidatesFromPdf } = await import(
-  "../src/server/whatsapp-pdf-text-extract.server"
-);
-const {
-  getCachedOcr,
-  setCachedOcr,
-  __resetBoletoOcrCacheForTests,
-} = await import("../src/server/whatsapp-boleto-ocr-cache.server");
-const { _buildBoletoCobrancaForTest, tryParseBoleto } = await import(
-  "../src/server/whatsapp-boleto-parser"
-);
-const { __setBoletoOcrExtractorForTests } = await import(
-  "../src/server/whatsapp-boleto-ocr.server"
-);
-const { __setBoletoPepperForTest, __resetBoletoPepperCacheForTest } = await import(
-  "../src/server/whatsapp-boleto-secret.server"
-);
+const { extractBoletoCandidatesFromPdf } =
+  await import("../src/server/whatsapp-pdf-text-extract.server");
+const { getCachedOcr, setCachedOcr, __resetBoletoOcrCacheForTests } =
+  await import("../src/server/whatsapp-boleto-ocr-cache.server");
+const { _buildBoletoCobrancaForTest, tryParseBoleto } =
+  await import("../src/server/whatsapp-boleto-parser");
+const { __setBoletoOcrExtractorForTests } =
+  await import("../src/server/whatsapp-boleto-ocr.server");
+const { __setBoletoPepperForTest, __resetBoletoPepperCacheForTest } =
+  await import("../src/server/whatsapp-boleto-secret.server");
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 
-const PNG_TINY = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
+const PNG_TINY =
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
 
 beforeEach(() => {
   resetState();
@@ -115,25 +109,37 @@ describe("WA-C10.b.1 — extractBoletoCandidatesFromPdf", () => {
 
 describe("WA-C10.b.1 — boleto OCR cache", () => {
   it("retorna resultado anteriormente armazenado pelo mesmo usuário", () => {
-    const value = { candidatos: [], sugestoes: { valorCentavos: 100, vencimentoISO: null, identificacao: null } };
+    const value = {
+      candidatos: [],
+      sugestoes: { valorCentavos: 100, vencimentoISO: null, identificacao: null },
+    };
     setCachedOcr("u1", "hash-aaaa-bbbb", "image", value);
     expect(getCachedOcr("u1", "hash-aaaa-bbbb", "image")).toEqual(value);
   });
 
   it("NÃO cruza entre usuários distintos", () => {
-    const value = { candidatos: [], sugestoes: { valorCentavos: 100, vencimentoISO: null, identificacao: null } };
+    const value = {
+      candidatos: [],
+      sugestoes: { valorCentavos: 100, vencimentoISO: null, identificacao: null },
+    };
     setCachedOcr("u1", "hash-aaaa-bbbb", "image", value);
     expect(getCachedOcr("u2", "hash-aaaa-bbbb", "image")).toBeNull();
   });
 
   it("não armazena quando hash ausente", () => {
-    const value = { candidatos: [], sugestoes: { valorCentavos: null, vencimentoISO: null, identificacao: null } };
+    const value = {
+      candidatos: [],
+      sugestoes: { valorCentavos: null, vencimentoISO: null, identificacao: null },
+    };
     setCachedOcr("u1", null, "image", value);
     expect(getCachedOcr("u1", null, "image")).toBeNull();
   });
 
   it("separa cache por kind (image ≠ pdf)", () => {
-    const v = { candidatos: [], sugestoes: { valorCentavos: 1, vencimentoISO: null, identificacao: null } };
+    const v = {
+      candidatos: [],
+      sugestoes: { valorCentavos: 1, vencimentoISO: null, identificacao: null },
+    };
     setCachedOcr("u1", "abcd1234", "image", v);
     expect(getCachedOcr("u1", "abcd1234", "pdf")).toBeNull();
   });

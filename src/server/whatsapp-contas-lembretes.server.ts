@@ -109,12 +109,7 @@ function diffDaysISO(a: string, b: string): number {
  * Implementação aproximada: usa offset do fuso "agora" — bom o bastante para
  * janela de minutos/horas (não há DST agressivo em America/Sao_Paulo).
  */
-function scheduledAtForLocalHour(
-  dayISO: string,
-  tz: string,
-  hour: number,
-  now: Date,
-): Date {
+function scheduledAtForLocalHour(dayISO: string, tz: string, hour: number, now: Date): Date {
   const reference = ymdInTz(now, tz); // YYYY-MM-DD local
   const refLocalMidnightUTC = Date.UTC(
     ...(reference.split("-").map(Number) as [number, number, number]),
@@ -128,21 +123,23 @@ function scheduledAtForLocalHour(
       timeZone: tz,
       hour: "2-digit",
       hour12: false,
-    }).formatToParts(now).find((p) => p.type === "hour")?.value ?? "0",
+    })
+      .formatToParts(now)
+      .find((p) => p.type === "hour")?.value ?? "0",
   );
   const minutesOfNowLocal = Number(
     new Intl.DateTimeFormat("en-US", {
       timeZone: tz,
       minute: "2-digit",
-    }).formatToParts(now).find((p) => p.type === "minute")?.value ?? "0",
+    })
+      .formatToParts(now)
+      .find((p) => p.type === "minute")?.value ?? "0",
   );
   const nowMsUTC = now.getTime();
-  const localMidnightUTC =
-    nowMsUTC - (hoursOfNowLocal * 3600 + minutesOfNowLocal * 60) * 1000;
+  const localMidnightUTC = nowMsUTC - (hoursOfNowLocal * 3600 + minutesOfNowLocal * 60) * 1000;
   // Diferença entre dayISO e referência de hoje (em dias):
   const deltaDays = diffDaysISO(dayISO, reference);
-  const targetMs =
-    localMidnightUTC + deltaDays * 24 * 3600_000 + hour * 3600_000;
+  const targetMs = localMidnightUTC + deltaDays * 24 * 3600_000 + hour * 3600_000;
   // Sanity: se a data calculada não bate com dayISO ao formatar em tz,
   // adiciona/subtrai 1h até bater (correção de DST hipotética).
   let candidate = new Date(targetMs);
@@ -160,10 +157,7 @@ function scheduledAtForLocalHour(
  * Lê contas pendentes do usuário (somente colunas necessárias).
  * Default: via supabaseAdmin. Pode ser sobrescrito por `deps.fetchContasPendentes`.
  */
-async function fetchContas(
-  userId: string,
-  deps?: LembretesDeps,
-): Promise<ContaPendenteMinimal[]> {
+async function fetchContas(userId: string, deps?: LembretesDeps): Promise<ContaPendenteMinimal[]> {
   if (deps?.fetchContasPendentes) return deps.fetchContasPendentes(userId);
   const c = client(deps);
   const { data, error } = await c
@@ -199,21 +193,15 @@ export async function gerarLembretesContasUsuario(
   // Reserva outbound é responsabilidade do dispatcher (WA-C11 3B.2.d).
   // Fail-closed: qualquer bloqueio devolve lista vazia sem tocar banco.
   try {
-    const { canCreateNotificationForUser } = await import(
-      "@/server/whatsapp-c11-gates.server"
-    );
+    const { canCreateNotificationForUser } = await import("@/server/whatsapp-c11-gates.server");
     const gate = await canCreateNotificationForUser({ userId });
     if (!gate.allowed) {
-      console.info(
-        "[wa-c9] lembretes_gate_block",
-        JSON.stringify({ reason: gate.reason }),
-      );
+      console.info("[wa-c9] lembretes_gate_block", JSON.stringify({ reason: gate.reason }));
       return [];
     }
   } catch {
     return [];
   }
-
 
   const tz = deps?.timezone ?? "America/Sao_Paulo";
   const now = deps?.now?.() ?? new Date();
@@ -225,7 +213,7 @@ export async function gerarLembretesContasUsuario(
   const contas = await fetchContas(userId, deps);
 
   const out: LembreteGerado[] = [];
-  let counts = { hoje: 0, amanha: 0, atrasada: 0, recorrente: 0, skipped_paid_or_cancelled: 0 };
+  const counts = { hoje: 0, amanha: 0, atrasada: 0, recorrente: 0, skipped_paid_or_cancelled: 0 };
 
   for (const conta of contas) {
     if (!conta || conta.status !== "pendente") {
@@ -239,11 +227,7 @@ export async function gerarLembretesContasUsuario(
     if (due === todayISO) type = "conta_vencendo_hoje";
     else if (due === tomorrowISO) type = "conta_vencendo_amanha";
     else if (due < todayISO) type = "conta_atrasada";
-    else if (
-      conta.recorrente === true &&
-      due > tomorrowISO &&
-      due <= recurringHorizonISO
-    )
+    else if (conta.recorrente === true && due > tomorrowISO && due <= recurringHorizonISO)
       type = "conta_recorrente_pendente";
 
     if (!type) continue;
@@ -399,7 +383,13 @@ export async function revalidateContaForDispatch(
 const LEMBRETE_FALLBACK_TTL_HOURS = 24;
 
 export type RecentLembreteLookup =
-  | { kind: "single"; contaId: string; notificationId: string; nomeCurto: string | null; dueISO: string }
+  | {
+      kind: "single";
+      contaId: string;
+      notificationId: string;
+      nomeCurto: string | null;
+      dueISO: string;
+    }
   | { kind: "ambiguous"; count: number }
   | { kind: "none" };
 
@@ -428,7 +418,11 @@ export async function findRecentSentLembreteForUser(
       .eq("provider_message_id", pmid)
       .maybeSingle();
     const row = data as {
-      id?: string; entity_id?: string | null; payload?: Record<string, unknown> | null; sent_at?: string | null; category?: string | null;
+      id?: string;
+      entity_id?: string | null;
+      payload?: Record<string, unknown> | null;
+      sent_at?: string | null;
+      category?: string | null;
     } | null;
     if (row && row.category === "contas_a_pagar" && row.entity_id) {
       const sentAt = row.sent_at ? new Date(row.sent_at) : null;
@@ -455,7 +449,10 @@ export async function findRecentSentLembreteForUser(
     .order("sent_at", { ascending: false })
     .limit(20);
   const rows = (Array.isArray(data) ? data : []) as Array<{
-    id: string; entity_id: string | null; payload: Record<string, unknown> | null; sent_at: string | null;
+    id: string;
+    entity_id: string | null;
+    payload: Record<string, unknown> | null;
+    sent_at: string | null;
   }>;
   if (rows.length === 0) return { kind: "none" };
   const distinct = new Map<string, { id: string; payload: Record<string, unknown> | null }>();
@@ -465,7 +462,10 @@ export async function findRecentSentLembreteForUser(
   }
   if (distinct.size === 0) return { kind: "none" };
   if (distinct.size > 1) return { kind: "ambiguous", count: distinct.size };
-  const [contaId, info] = distinct.entries().next().value as [string, { id: string; payload: Record<string, unknown> | null }];
+  const [contaId, info] = distinct.entries().next().value as [
+    string,
+    { id: string; payload: Record<string, unknown> | null },
+  ];
   return {
     kind: "single",
     contaId,

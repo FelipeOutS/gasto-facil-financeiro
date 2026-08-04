@@ -23,10 +23,7 @@ import {
 } from "@/server/whatsapp-financial-quota-gate.server";
 import { hasAdminMasterRole } from "./admin-master.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
-import {
-  merchantKeyFor,
-  recordMerchantMemory,
-} from "./whatsapp-merchant-memory.server";
+import { merchantKeyFor, recordMerchantMemory } from "./whatsapp-merchant-memory.server";
 import { createHash } from "crypto";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,7 +79,6 @@ export type ComprovanteSession = {
   };
   mensagemOriginal: string;
 };
-
 
 export function isComprovanteSession(s: unknown): s is ComprovanteSession {
   return !!s && typeof s === "object" && (s as { kind?: string }).kind === "imagem_comprovante";
@@ -164,12 +160,46 @@ function normalize(s: string): string {
 // majoritariamente em maiúsculas; preservações de sigla comuns (ME, EPP,
 // LTDA, SA) ficam em caixa alta. NUNCA inventa palavras.
 const PRESERVAR_SIGLA = new Set([
-  "ME", "EPP", "LTDA", "SA", "S/A", "S.A", "S.A.",
-  "CNPJ", "CPF", "RJ", "SP", "MG", "RS", "DF", "PR", "SC", "BA",
-  "II", "III", "IV", "VI", "VII", "VIII", "IX", "XI", "XII",
+  "ME",
+  "EPP",
+  "LTDA",
+  "SA",
+  "S/A",
+  "S.A",
+  "S.A.",
+  "CNPJ",
+  "CPF",
+  "RJ",
+  "SP",
+  "MG",
+  "RS",
+  "DF",
+  "PR",
+  "SC",
+  "BA",
+  "II",
+  "III",
+  "IV",
+  "VI",
+  "VII",
+  "VIII",
+  "IX",
+  "XI",
+  "XII",
 ]);
 const MINUSCULA_CONJ = new Set([
-  "de", "da", "do", "das", "dos", "e", "a", "o", "em", "para", "por", "com",
+  "de",
+  "da",
+  "do",
+  "das",
+  "dos",
+  "e",
+  "a",
+  "o",
+  "em",
+  "para",
+  "por",
+  "com",
 ]);
 function titleCaseDescricao(input: string): string {
   if (!input) return input;
@@ -262,16 +292,26 @@ function detectFormaPagamento(text: string): string | null {
 
 function rotuloPagamento(f: string | null | undefined): string {
   switch (f) {
-    case "credito": return "Cartão de crédito";
-    case "debito": return "Cartão de débito";
-    case "pix": return "Pix";
-    case "dinheiro": return "Dinheiro";
-    case "boleto": return "Boleto";
-    case "transferencia": return "Transferência";
-    case "vale_alimentacao": return "Vale alimentação";
-    case "vale_refeicao": return "Vale refeição";
-    case "outro": return "Outro";
-    default: return "Não informado";
+    case "credito":
+      return "Cartão de crédito";
+    case "debito":
+      return "Cartão de débito";
+    case "pix":
+      return "Pix";
+    case "dinheiro":
+      return "Dinheiro";
+    case "boleto":
+      return "Boleto";
+    case "transferencia":
+      return "Transferência";
+    case "vale_alimentacao":
+      return "Vale alimentação";
+    case "vale_refeicao":
+      return "Vale refeição";
+    case "outro":
+      return "Outro";
+    default:
+      return "Não informado";
   }
 }
 
@@ -292,10 +332,7 @@ async function carregarCategoriasDespesa(userId: string): Promise<CategoriaRow[]
   }));
 }
 
-function findCategoriaByTerm(
-  cats: CategoriaRow[],
-  termo: string,
-): CategoriaRow | null {
+function findCategoriaByTerm(cats: CategoriaRow[], termo: string): CategoriaRow | null {
   if (!termo) return null;
   const t = normalize(termo);
   // exato por legacy_id ou nome
@@ -326,10 +363,7 @@ function fallbackCategoria(cats: CategoriaRow[]): CategoriaRow | null {
  * Categorias de outro usuário nunca entram em `cats` (filtro por
  * `user_id` em `carregarCategoriasDespesa`).
  */
-function pickCategoria(
-  cats: CategoriaRow[],
-  texto: string,
-): CategoriaRow | null {
+function pickCategoria(cats: CategoriaRow[], texto: string): CategoriaRow | null {
   const raw = (texto || "").trim();
   if (!raw) return null;
   // pontuação/aspas no fim
@@ -352,7 +386,16 @@ function pickCategoria(
 const CATEGORIA_KEYWORDS: Record<string, string[]> = {
   farmacia: ["farmacia", "drogaria", "remedio", "medicamento", "drugstore"],
   saude: ["saude", "medico", "hospital", "clinica", "consulta", "exame", "farmacia", "drogaria"],
-  alimentacao: ["restaurante", "lanchonete", "ifood", "padaria", "cafe", "comida", "almoco", "jantar"],
+  alimentacao: [
+    "restaurante",
+    "lanchonete",
+    "ifood",
+    "padaria",
+    "cafe",
+    "comida",
+    "almoco",
+    "jantar",
+  ],
   mercado: ["mercado", "supermercado", "atacadao", "joanin", "carrefour", "assai", "extra"],
   transporte: ["uber", "99", "taxi", "posto", "combustivel", "gasolina", "metro", "onibus"],
   assinaturas: ["netflix", "spotify", "prime", "internet", "youtube", "disney"],
@@ -372,7 +415,10 @@ function dedupCategoriasByNome(cats: CategoriaRow[]): CategoriaRow[] {
   return Array.from(seen.values());
 }
 
-function findCatByLegacyOrNome(cats: CategoriaRow[], key: string | null | undefined): CategoriaRow | null {
+function findCatByLegacyOrNome(
+  cats: CategoriaRow[],
+  key: string | null | undefined,
+): CategoriaRow | null {
   if (!key) return null;
   const t = normalize(key);
   if (!t) return null;
@@ -394,7 +440,11 @@ async function loadCategoriaHistory(
       .eq("user_id", userId)
       .gte("data", since);
     if (!Array.isArray(data)) return { recentIds: [], topIds: [] };
-    const rows = data as Array<{ categoria_id: string | null; data: string | null; created_at?: string | null }>;
+    const rows = data as Array<{
+      categoria_id: string | null;
+      data: string | null;
+      created_at?: string | null;
+    }>;
     const sorted = [...rows].sort((a, b) => {
       const ka = String(a.created_at || a.data || "");
       const kb = String(b.created_at || b.data || "");
@@ -424,8 +474,7 @@ async function buildShortCategoriaOptions(
 ): Promise<CategoriaRow[]> {
   const deduped = dedupCategoriasByNome(cats);
   const result: CategoriaRow[] = [];
-  const isOutros = (c: CategoriaRow) =>
-    c.legacy_id === "outros" || normalize(c.nome) === "outros";
+  const isOutros = (c: CategoriaRow) => c.legacy_id === "outros" || normalize(c.nome) === "outros";
   const push = (c: CategoriaRow | null | undefined) => {
     if (!c) return;
     if (result.length >= CATEGORIA_SHORT_MAX) return;
@@ -550,15 +599,16 @@ async function bodyOpcoesCategoria(
 
 /** Detecta "ver todas", "mais", "voltar" durante uma sessão de comprovante.
  *  Retorna o novo estado das opções ou null quando o texto não é navegação. */
-type NavCategoriaIntent =
-  | { kind: "ver_todas" }
-  | { kind: "mais" }
-  | { kind: "voltar" };
+type NavCategoriaIntent = { kind: "ver_todas" } | { kind: "mais" } | { kind: "voltar" };
 
 function detectNavCategoria(texto: string): NavCategoriaIntent | null {
   const t = normalize((texto || "").replace(/[.!?\s]+$/g, ""));
   if (!t) return null;
-  if (/^(ver todas|ver categorias|mostrar categorias|todas|todas as categorias|todas categorias)$/.test(t)) {
+  if (
+    /^(ver todas|ver categorias|mostrar categorias|todas|todas as categorias|todas categorias)$/.test(
+      t,
+    )
+  ) {
     return { kind: "ver_todas" };
   }
   if (/^(mais|proxima|próxima|mais categorias|ver mais)$/.test(t)) return { kind: "mais" };
@@ -609,7 +659,9 @@ async function resolveCategoriaInput(args: {
     .replace(/^[•\-.\s]+/, "")
     .replace(/[.!?\s]+$/, "")
     .trim();
-  const t = normalize(limpo).replace(/^categoria\s+/, "").trim();
+  const t = normalize(limpo)
+    .replace(/^categoria\s+/, "")
+    .trim();
   if (!t) return { kind: "invalid" };
 
   const opts = session.categoriaOptions;
@@ -632,7 +684,6 @@ async function resolveCategoriaInput(args: {
   }
   return { kind: "invalid" };
 }
-
 
 // ----- detecção de comandos ---------------------------------------------
 type AjusteField = "valor" | "descricao" | "categoria" | "data" | "pagamento";
@@ -704,8 +755,7 @@ function ocrParaSessao(
   const descricao = ocr.descricao ? titleCaseDescricao(ocr.descricao) : undefined;
   // Categoria fica "não identificada" quando o OCR não sugeriu nada
   // ou retornou confiança baixa — nunca salvamos como Outros sozinhos.
-  const categoriaNaoIdentificada =
-    !ocr.categoriaSugerida || ocr.confianca === "baixa";
+  const categoriaNaoIdentificada = !ocr.categoriaSugerida || ocr.confianca === "baixa";
   // Data fica "incerta" quando o OCR trouxe uma data mas a confiança geral
   // é baixa — não confiar mesmo dentro da janela ±30 dias.
   const dataIncerta = !!ocr.data && ocr.confianca === "baixa";
@@ -746,9 +796,7 @@ function categoriaSugestaoLabel(
   return { label: fb?.nome ?? "Outros", id: fb?.id ?? null };
 }
 
-function dataLabelEValor(
-  s: ComprovanteSession,
-): { label: string; valor: string } {
+function dataLabelEValor(s: ComprovanteSession): { label: string; valor: string } {
   const iso = s.data;
   if (s.dataIncerta && !s.dataConfirmada) {
     return { label: "Data da nota", valor: "Não confirmada" };
@@ -840,9 +888,7 @@ export async function persistirGastoComprovante(
     const key = merchantKeyFor(desc);
     if (key) {
       const evidence =
-        s.categoriaSelecionadaManual || s.categoriaNaoIdentificada
-          ? "manual"
-          : "confirmed";
+        s.categoriaSelecionadaManual || s.categoriaNaoIdentificada ? "manual" : "confirmed";
       try {
         await recordMerchantMemory({
           userId,
@@ -959,10 +1005,7 @@ async function avancarAposConfirmacao(
   }
   // 2) Confirmação de data: nota antiga (>30d), futura ou marcada como incerta
   //    pela confiança baixa do OCR.
-  if (
-    !session.dataConfirmada &&
-    (session.dataIncerta || dataPrecisaConfirmacao(session.data))
-  ) {
+  if (!session.dataConfirmada && (session.dataIncerta || dataPrecisaConfirmacao(session.data))) {
     const resposta = session.dataIncerta
       ? M.imagem.perguntaDataIncerta()
       : M.imagem.perguntaDataConfirmacao(formatDataBR(session.data as string));
@@ -1083,7 +1126,6 @@ async function handleCategoriaReply(
   };
 }
 
-
 /**
  * Processa uma mensagem do usuário enquanto existe uma sessão de imagem.
  */
@@ -1196,7 +1238,8 @@ export async function processarRespostaImagem(args: {
   // ----- aguardando confirmação de DATA (fora da janela ±30 dias OU incerta) -----
   if (status === "img_aguardando_data_confirmacao") {
     const t = normalize(texto);
-    const usarNota = /^(usar data da nota|usar a data da nota|manter data|manter|data da nota|nota)$/.test(t);
+    const usarNota =
+      /^(usar data da nota|usar a data da nota|manter data|manter|data da nota|nota)$/.test(t);
     const usarHoje = /^(usar hoje|hoje|usar a data de hoje)$/.test(t);
     // Quando o usuário responde com uma data direta ("15/06/2026", "ontem")
     // também aceitamos — confirma a data informada manualmente.
@@ -1327,10 +1370,7 @@ export async function processarRespostaImagem(args: {
   };
 }
 
-function rebuildResumoOuPreencher(
-  s: ComprovanteSession,
-  cats: CategoriaRow[],
-): ComprovanteResult {
+function rebuildResumoOuPreencher(s: ComprovanteSession, cats: CategoriaRow[]): ComprovanteResult {
   const temValor = !!s.valor && s.valor > 0;
   const temDesc = !!s.descricao && s.descricao.trim().length >= 2;
   if (!temValor) {
@@ -1362,7 +1402,6 @@ function rebuildResumoOuPreencher(
   };
 }
 
-
 // ----- entitlement: importar foto / OCR ----------------------------------
 /**
  * Mesmo gate server-side que `/api/ocr-gasto` aplica para o site:
@@ -1381,7 +1420,11 @@ export async function podeUsarOcrComprovante(userId: string): Promise<boolean> {
 
     const { getSubscriptionForUserIdentity } = await import("@/server/subscription.server");
     const { planAllowsFeature } = await import("@/lib/plans");
-    const sub = await getSubscriptionForUserIdentity({ userId, email: email || null, repairLink: false });
+    const sub = await getSubscriptionForUserIdentity({
+      userId,
+      email: email || null,
+      repairLink: false,
+    });
     if (!sub.active) return false;
     return planAllowsFeature(sub.plan, "importacoes");
   } catch (err) {

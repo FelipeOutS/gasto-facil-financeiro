@@ -19,12 +19,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AndroidSecureSessionBridge = {
-  saveSession?: (
-    accessToken: string,
-    refreshToken: string,
-    userId: string,
-    email: string,
-  ) => void;
+  saveSession?: (accessToken: string, refreshToken: string, userId: string, email: string) => void;
   hasSession?: () => boolean;
   getSavedEmail?: () => string | null;
   unlockSession?: () => void;
@@ -104,12 +99,7 @@ export function saveSecureSession(session: Session | null | undefined): boolean 
     return false;
   }
   try {
-    b.saveSession(
-      session.access_token,
-      session.refresh_token,
-      session.user.id,
-      session.user.email,
-    );
+    b.saveSession(session.access_token, session.refresh_token, session.user.id, session.user.email);
     return true;
   } catch (e) {
     console.log("[SecureSession] saveSession lançou exceção:", e);
@@ -121,9 +111,7 @@ export function saveSecureSession(session: Session | null | undefined): boolean 
  * Aciona o desbloqueio biométrico nativo. Resolve com o detail do evento
  * `AndroidSecureSessionResult`.
  */
-export function unlockSecureSession(
-  timeoutMs = 60_000,
-): Promise<AndroidSecureSessionResultDetail> {
+export function unlockSecureSession(timeoutMs = 60_000): Promise<AndroidSecureSessionResultDetail> {
   return new Promise((resolve) => {
     const b = getSecureSessionBridge();
     if (!b || typeof b.unlockSession !== "function") {
@@ -132,18 +120,14 @@ export function unlockSecureSession(
     }
     let settled = false;
     const onResult = (event: Event) => {
-      const detail =
-        (event as CustomEvent<AndroidSecureSessionResultDetail>).detail ?? {};
+      const detail = (event as CustomEvent<AndroidSecureSessionResultDetail>).detail ?? {};
       console.log("[SecureSession] resultado biometria:", detail.success);
       finish(detail);
     };
     const finish = (detail: AndroidSecureSessionResultDetail) => {
       if (settled) return;
       settled = true;
-      window.removeEventListener(
-        "AndroidSecureSessionResult",
-        onResult as EventListener,
-      );
+      window.removeEventListener("AndroidSecureSessionResult", onResult as EventListener);
       clearTimeout(timer);
       resolve(detail);
     };
@@ -151,11 +135,9 @@ export function unlockSecureSession(
       () => finish({ success: false, error: "A biometria não respondeu. Tente novamente." }),
       timeoutMs,
     );
-    window.addEventListener(
-      "AndroidSecureSessionResult",
-      onResult as EventListener,
-      { once: true },
-    );
+    window.addEventListener("AndroidSecureSessionResult", onResult as EventListener, {
+      once: true,
+    });
     try {
       b.unlockSession();
     } catch (e) {

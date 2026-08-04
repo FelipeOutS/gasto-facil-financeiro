@@ -396,8 +396,7 @@ function buildImageReq(externalId: string) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-hub-signature-256":
-        "sha256=" + createHmac("sha256", APP_SECRET).update(raw).digest("hex"),
+      "x-hub-signature-256": "sha256=" + createHmac("sha256", APP_SECRET).update(raw).digest("hex"),
     },
     body: raw,
   });

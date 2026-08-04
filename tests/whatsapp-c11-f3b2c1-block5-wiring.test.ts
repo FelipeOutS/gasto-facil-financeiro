@@ -54,9 +54,7 @@ mock.module("@/integrations/supabase/client.server", () => ({
                 }),
               }),
               in: async () => ({
-                data: contasReadbackFound
-                  ? contasInsertRows.map((r) => ({ id: r.id }))
-                  : [],
+                data: contasReadbackFound ? contasInsertRows.map((r) => ({ id: r.id })) : [],
                 error: null,
               }),
             }),
@@ -110,9 +108,7 @@ mock.module("@/server/whatsapp-contas-lembretes.server", () => ({
 }));
 
 // ---------- imports pós-mock ----------
-const { persistir: persistirTexto } = await import(
-  "@/server/whatsapp-contas-criar.server"
-);
+const { persistir: persistirTexto } = await import("@/server/whatsapp-contas-criar.server");
 const { persistir: persistirBoleto, persistirManual: persistirBoletoManual } =
   await import("@/server/whatsapp-boleto-intents.server");
 
@@ -124,10 +120,16 @@ function makeDeps() {
   return {
     gravar,
     atualizar,
-    setClaimFails: () => { claimOk = false; },
+    setClaimFails: () => {
+      claimOk = false;
+    },
     deps: {
       gravarSessao: async (
-        _u: string, _t: string, _e: string | null, _tx: string, _r: string,
+        _u: string,
+        _t: string,
+        _e: string | null,
+        _tx: string,
+        _r: string,
         status: string,
       ) => {
         gravar.push({ status, ok: claimOk });
@@ -138,9 +140,7 @@ function makeDeps() {
           errorCode: null,
         };
       },
-      atualizarSessao: async (
-        id: string, status: string, _s: unknown, resposta: string,
-      ) => {
+      atualizarSessao: async (id: string, status: string, _s: unknown, resposta: string) => {
         atualizar.push({ id, status, resposta });
         return { ok: true };
       },
@@ -353,14 +353,22 @@ describe("WA-C11 3B.2.C.1 Block 5 — persistir(conta texto) quota gate", () => 
     w2.setClaimFails();
     const [r1, r2] = await Promise.all([
       persistirTexto({
-        userId: "u1", msg: contaMsg, texto: "sim",
+        userId: "u1",
+        msg: contaMsg,
+        texto: "sim",
         recebidaEm: new Date().toISOString(),
-        session: contaSession(), sessaoId: "sess-abc", deps: w1.deps,
+        session: contaSession(),
+        sessaoId: "sess-abc",
+        deps: w1.deps,
       }),
       persistirTexto({
-        userId: "u1", msg: contaMsg, texto: "sim",
+        userId: "u1",
+        msg: contaMsg,
+        texto: "sim",
         recebidaEm: new Date().toISOString(),
-        session: contaSession(), sessaoId: "sess-abc", deps: w2.deps,
+        session: contaSession(),
+        sessaoId: "sess-abc",
+        deps: w2.deps,
       }),
     ]);
     const salvos = [r1, r2].filter((r) => r.status === "salva");
@@ -491,14 +499,22 @@ describe("WA-C11 3B.2.C.1 Block 5 — persistir(boleto) quota gate", () => {
     w2.setClaimFails();
     const [r1, r2] = await Promise.all([
       persistirBoleto({
-        userId: "u1", msg: boletoMsg, texto: "sim",
+        userId: "u1",
+        msg: boletoMsg,
+        texto: "sim",
         recebidaEm: new Date().toISOString(),
-        session: boletoSession(), sessaoId: "sess-bol", deps: w1.deps,
+        session: boletoSession(),
+        sessaoId: "sess-bol",
+        deps: w1.deps,
       }),
       persistirBoleto({
-        userId: "u1", msg: boletoMsg, texto: "sim",
+        userId: "u1",
+        msg: boletoMsg,
+        texto: "sim",
         recebidaEm: new Date().toISOString(),
-        session: boletoSession(), sessaoId: "sess-bol", deps: w2.deps,
+        session: boletoSession(),
+        sessaoId: "sess-bol",
+        deps: w2.deps,
       }),
     ]);
     const salvos = [r1, r2].filter((r) => r.status === "salva");

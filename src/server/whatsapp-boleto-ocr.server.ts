@@ -99,14 +99,15 @@ function logOcr(stage: string, sourceType: "image" | "pdf", result: string, cand
 }
 
 // ---------- hook de teste ----------
-type ExtractorFn = (
-  input: BoletoOcrInput,
-) => Promise<{
-  candidatos: string[];
-  valorCentavos: number | null;
-  vencimentoISO: string | null;
-  identificacao: string | null;
-} | { error: BoletoOcrOutcome extends { ok: false; reason: infer R } ? R : never }>;
+type ExtractorFn = (input: BoletoOcrInput) => Promise<
+  | {
+      candidatos: string[];
+      valorCentavos: number | null;
+      vencimentoISO: string | null;
+      identificacao: string | null;
+    }
+  | { error: BoletoOcrOutcome extends { ok: false; reason: infer R } ? R : never }
+>;
 
 let __testExtractor: ExtractorFn | null = null;
 export function __setBoletoOcrExtractorForTests(fn: ExtractorFn | null): void {
@@ -122,7 +123,15 @@ async function callGemini(input: BoletoOcrInput): Promise<
       vencimentoISO: string | null;
       identificacao: string | null;
     }
-  | { error: "missing_api_key" | "rate_limited" | "credits_exhausted" | "gateway_error" | "no_tool_call" | "invalid_json" }
+  | {
+      error:
+        | "missing_api_key"
+        | "rate_limited"
+        | "credits_exhausted"
+        | "gateway_error"
+        | "no_tool_call"
+        | "invalid_json";
+    }
 > {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) return { error: "missing_api_key" };
@@ -192,19 +201,22 @@ async function callGemini(input: BoletoOcrInput): Promise<
   }
 
   const rawCandidatos = Array.isArray(parsed.candidatos) ? (parsed.candidatos as unknown[]) : [];
-  const candidatos = rawCandidatos
-    .filter((c): c is string => typeof c === "string")
-    .slice(0, 8);
+  const candidatos = rawCandidatos.filter((c): c is string => typeof c === "string").slice(0, 8);
 
-  const valor = typeof parsed.valorCentavos === "number" && Number.isFinite(parsed.valorCentavos) && parsed.valorCentavos > 0
-    ? Math.round(parsed.valorCentavos as number)
-    : null;
-  const venc = typeof parsed.vencimentoISO === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.vencimentoISO)
-    ? (parsed.vencimentoISO as string)
-    : null;
-  const ident = typeof parsed.identificacao === "string" && parsed.identificacao.trim().length > 0
-    ? (parsed.identificacao as string).trim().slice(0, 80)
-    : null;
+  const valor =
+    typeof parsed.valorCentavos === "number" &&
+    Number.isFinite(parsed.valorCentavos) &&
+    parsed.valorCentavos > 0
+      ? Math.round(parsed.valorCentavos as number)
+      : null;
+  const venc =
+    typeof parsed.vencimentoISO === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.vencimentoISO)
+      ? (parsed.vencimentoISO as string)
+      : null;
+  const ident =
+    typeof parsed.identificacao === "string" && parsed.identificacao.trim().length > 0
+      ? (parsed.identificacao as string).trim().slice(0, 80)
+      : null;
 
   return { candidatos, valorCentavos: valor, vencimentoISO: venc, identificacao: ident };
 }

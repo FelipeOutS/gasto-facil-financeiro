@@ -13,21 +13,12 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
 
-const {
-  detectLimiteIntent,
-  handleLimiteIntent,
-} = await import("../src/server/whatsapp-limites.server");
-const {
-  getResumoLimiteCartao,
-  getResumoLimitesUsuario,
-  getComprometimentoFuturoCartao,
-} = await import("../src/server/cartao-limite.server");
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
-const { faturaCorrenteRef, nowInAppTz } = await import(
-  "../src/server/cartao-fatura.server"
-);
+const { detectLimiteIntent, handleLimiteIntent } =
+  await import("../src/server/whatsapp-limites.server");
+const { getResumoLimiteCartao, getResumoLimitesUsuario, getComprometimentoFuturoCartao } =
+  await import("../src/server/cartao-limite.server");
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
+const { faturaCorrenteRef, nowInAppTz } = await import("../src/server/cartao-fatura.server");
 
 const NBSP = "\u00a0";
 const BRL = (s: string) => s.replace(/R\$ /g, `R$${NBSP}`);
@@ -53,16 +44,29 @@ function ymPlus(months: number): string {
   const { mes, ano } = faturaCorrenteRef(1, hoje);
   let m0 = mes - 1 + months;
   let y = ano;
-  while (m0 < 0) { m0 += 12; y -= 1; }
-  while (m0 > 11) { m0 -= 12; y += 1; }
+  while (m0 < 0) {
+    m0 += 12;
+    y -= 1;
+  }
+  while (m0 > 11) {
+    m0 -= 12;
+    y += 1;
+  }
   return `${y}-${String(m0 + 1).padStart(2, "0")}`;
 }
 
 const baseCartoes = (extras: Record<string, unknown>[] = []) => [
   {
-    id: "c-nu", user_id: "u1", nome: "Nubank", banco: "Nubank",
-    limite_total: 3000, dia_fechamento: 1, dia_vencimento: 10, cor: "#000",
-    created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    id: "c-nu",
+    user_id: "u1",
+    nome: "Nubank",
+    banco: "Nubank",
+    limite_total: 3000,
+    dia_fechamento: 1,
+    dia_vencimento: 10,
+    cor: "#000",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   ...extras,
 ];
@@ -70,12 +74,8 @@ const baseCartoes = (extras: Record<string, unknown>[] = []) => [
 describe("detectLimiteIntent (puro)", () => {
   it("reconhece consulta consolidada", () => {
     expect(detectLimiteIntent("qual meu limite?")?.kind).toBe("limit_total");
-    expect(detectLimiteIntent("quanto tenho de limite nos cartões?")?.kind).toBe(
-      "limit_total",
-    );
-    expect(detectLimiteIntent("quanto ainda tenho disponível?")?.kind).toBe(
-      "limit_total",
-    );
+    expect(detectLimiteIntent("quanto tenho de limite nos cartões?")?.kind).toBe("limit_total");
+    expect(detectLimiteIntent("quanto ainda tenho disponível?")?.kind).toBe("limit_total");
   });
   it("reconhece consulta de cartão específico", () => {
     const a = detectLimiteIntent("limite do Nubank");
@@ -86,23 +86,15 @@ describe("detectLimiteIntent (puro)", () => {
     expect(c?.kind).toBe("limit_card");
   });
   it("reconhece ranking", () => {
-    expect(detectLimiteIntent("qual cartão tem menos limite?")?.kind).toBe(
-      "limit_lowest",
-    );
-    expect(detectLimiteIntent("qual cartão está mais comprometido?")?.kind).toBe(
-      "commitment",
-    );
+    expect(detectLimiteIntent("qual cartão tem menos limite?")?.kind).toBe("limit_lowest");
+    expect(detectLimiteIntent("qual cartão está mais comprometido?")?.kind).toBe("commitment");
     expect(detectLimiteIntent("qual cartão tem mais limite disponível?")?.kind).toBe(
       "limit_highest",
     );
   });
   it("reconhece comprometimento", () => {
-    expect(detectLimiteIntent("quanto está comprometido no cartão?")?.kind).toBe(
-      "commitment",
-    );
-    expect(detectLimiteIntent("quanto tenho em parcelas futuras?")?.kind).toBe(
-      "commitment",
-    );
+    expect(detectLimiteIntent("quanto está comprometido no cartão?")?.kind).toBe("commitment");
+    expect(detectLimiteIntent("quanto tenho em parcelas futuras?")?.kind).toBe("commitment");
   });
   it("ignora frases neutras / fatura", () => {
     expect(detectLimiteIntent("Uber 29,90")).toBeNull();
@@ -119,8 +111,13 @@ describe("getResumoLimiteCartao — regras financeiras", () => {
   it("cartão com fatura atual: disponível = limite - fatura", async () => {
     state.gastosData = [
       {
-        user_id: "u1", cartao_id: "c-nu", valor: 820, data: isoToday(),
-        forma_pagamento: "credito", confirmado: true, invoice_month: null,
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 820,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
       },
     ];
     const r = await getResumoLimiteCartao("u1", state.cartoesData[0] as never);
@@ -134,8 +131,13 @@ describe("getResumoLimiteCartao — regras financeiras", () => {
   it("sem limite cadastrado: disponivelEstimado é null", async () => {
     state.cartoesData = [
       {
-        id: "c-nu", user_id: "u1", nome: "Nubank", banco: "Nubank",
-        limite_total: 0, dia_fechamento: 1, dia_vencimento: 10,
+        id: "c-nu",
+        user_id: "u1",
+        nome: "Nubank",
+        banco: "Nubank",
+        limite_total: 0,
+        dia_fechamento: 1,
+        dia_vencimento: 10,
       },
     ];
     const r = await getResumoLimiteCartao("u1", state.cartoesData[0] as never);
@@ -148,28 +150,56 @@ describe("getResumoLimiteCartao — regras financeiras", () => {
     const ymAtual = ymPlus(0);
     state.gastosData = [
       {
-        id: "g-1", user_id: "u1", cartao_id: "c-nu", valor: 100,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: ymAtual, grupo_parcelamento_id: "grp1",
-        parcela_atual: 1, total_parcelas: 4,
+        id: "g-1",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 100,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: ymAtual,
+        grupo_parcelamento_id: "grp1",
+        parcela_atual: 1,
+        total_parcelas: 4,
       },
       {
-        id: "g-2", user_id: "u1", cartao_id: "c-nu", valor: 100,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: proxYm, grupo_parcelamento_id: "grp1",
-        parcela_atual: 2, total_parcelas: 4,
+        id: "g-2",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 100,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: proxYm,
+        grupo_parcelamento_id: "grp1",
+        parcela_atual: 2,
+        total_parcelas: 4,
       },
       {
-        id: "g-3", user_id: "u1", cartao_id: "c-nu", valor: 100,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: ymPlus(2), grupo_parcelamento_id: "grp1",
-        parcela_atual: 3, total_parcelas: 4,
+        id: "g-3",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 100,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: ymPlus(2),
+        grupo_parcelamento_id: "grp1",
+        parcela_atual: 3,
+        total_parcelas: 4,
       },
       {
-        id: "g-4", user_id: "u1", cartao_id: "c-nu", valor: 100,
-        data: isoToday(), forma_pagamento: "credito", confirmado: true,
-        invoice_month: ymPlus(3), grupo_parcelamento_id: "grp1",
-        parcela_atual: 4, total_parcelas: 4,
+        id: "g-4",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 100,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: ymPlus(3),
+        grupo_parcelamento_id: "grp1",
+        parcela_atual: 4,
+        total_parcelas: 4,
       },
     ];
     const r = await getResumoLimiteCartao("u1", state.cartoesData[0] as never);
@@ -185,16 +215,31 @@ describe("getResumoLimiteCartao — regras financeiras", () => {
   it("Pix/débito/dinheiro não comprometem limite de crédito", async () => {
     state.gastosData = [
       {
-        user_id: "u1", cartao_id: null, valor: 500, data: isoToday(),
-        forma_pagamento: "pix", confirmado: true, invoice_month: null,
+        user_id: "u1",
+        cartao_id: null,
+        valor: 500,
+        data: isoToday(),
+        forma_pagamento: "pix",
+        confirmado: true,
+        invoice_month: null,
       },
       {
-        user_id: "u1", cartao_id: null, valor: 200, data: isoToday(),
-        forma_pagamento: "debito", confirmado: true, invoice_month: null,
+        user_id: "u1",
+        cartao_id: null,
+        valor: 200,
+        data: isoToday(),
+        forma_pagamento: "debito",
+        confirmado: true,
+        invoice_month: null,
       },
       {
-        user_id: "u1", cartao_id: "c-nu", valor: 50, data: isoToday(),
-        forma_pagamento: "debito", confirmado: true, invoice_month: null,
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 50,
+        data: isoToday(),
+        forma_pagamento: "debito",
+        confirmado: true,
+        invoice_month: null,
       },
     ];
     const r = await getResumoLimiteCartao("u1", state.cartoesData[0] as never);
@@ -206,24 +251,42 @@ describe("getResumoLimiteCartao — regras financeiras", () => {
     const proxYm = nextInvoiceYm();
     state.gastosData = [
       {
-        user_id: "u1", cartao_id: "c-nu", valor: 820, data: isoToday(),
-        forma_pagamento: "credito", confirmado: true, invoice_month: null,
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 820,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
       },
       {
-        id: "p1", user_id: "u1", cartao_id: "c-nu", valor: 340, data: isoToday(),
-        forma_pagamento: "credito", confirmado: true, invoice_month: proxYm,
-        grupo_parcelamento_id: "g-prox", parcela_atual: 1, total_parcelas: 2,
+        id: "p1",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 340,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: proxYm,
+        grupo_parcelamento_id: "g-prox",
+        parcela_atual: 1,
+        total_parcelas: 2,
       },
       {
-        id: "p2", user_id: "u1", cartao_id: "c-nu", valor: 200, data: isoToday(),
-        forma_pagamento: "credito", confirmado: true, invoice_month: ymPlus(2),
-        grupo_parcelamento_id: "g-prox", parcela_atual: 2, total_parcelas: 2,
+        id: "p2",
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 200,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: ymPlus(2),
+        grupo_parcelamento_id: "g-prox",
+        parcela_atual: 2,
+        total_parcelas: 2,
       },
     ];
-    const c = await getComprometimentoFuturoCartao(
-      "u1",
-      state.cartoesData[0] as never,
-    );
+    const c = await getComprometimentoFuturoCartao("u1", state.cartoesData[0] as never);
     expect(c.faturaAtual).toBe(820);
     expect(c.proximaFaturaEstimada).toBe(340);
     expect(c.parcelasFuturasAposProximo).toBe(200);
@@ -236,8 +299,13 @@ describe("handleLimiteIntent — usuário com um cartão", () => {
     resetState({ cartoes: baseCartoes() });
     state.gastosData = [
       {
-        user_id: "u1", cartao_id: "c-nu", valor: 820, data: isoToday(),
-        forma_pagamento: "credito", confirmado: true, invoice_month: null,
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 820,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
       },
     ];
   });
@@ -257,8 +325,13 @@ describe("handleLimiteIntent — usuário com um cartão", () => {
   it("cartão sem limite cadastrado responde de forma transparente", async () => {
     state.cartoesData = [
       {
-        id: "c-nu", user_id: "u1", nome: "Nubank", banco: "Nubank",
-        limite_total: 0, dia_fechamento: 1, dia_vencimento: 10,
+        id: "c-nu",
+        user_id: "u1",
+        nome: "Nubank",
+        banco: "Nubank",
+        limite_total: 0,
+        dia_fechamento: 1,
+        dia_vencimento: 10,
       },
     ];
     const out = await handleLimiteIntent("u1", { kind: "limit_total" });
@@ -274,19 +347,34 @@ describe("handleLimiteIntent — usuário com vários cartões", () => {
     resetState({
       cartoes: baseCartoes([
         {
-          id: "c-it", user_id: "u1", nome: "Inter", banco: "Inter",
-          limite_total: 2000, dia_fechamento: 1, dia_vencimento: 10,
+          id: "c-it",
+          user_id: "u1",
+          nome: "Inter",
+          banco: "Inter",
+          limite_total: 2000,
+          dia_fechamento: 1,
+          dia_vencimento: 10,
         },
       ]),
     });
     state.gastosData = [
       {
-        user_id: "u1", cartao_id: "c-nu", valor: 500, data: isoToday(),
-        forma_pagamento: "credito", confirmado: true, invoice_month: null,
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 500,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
       },
       {
-        user_id: "u1", cartao_id: "c-it", valor: 1500, data: isoToday(),
-        forma_pagamento: "credito", confirmado: true, invoice_month: null,
+        user_id: "u1",
+        cartao_id: "c-it",
+        valor: 1500,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
       },
     ];
   });
@@ -320,12 +408,20 @@ describe("handleLimiteIntent — usuário com vários cartões", () => {
   it("ranking sem disponibilidade confiável usa fallback transparente", async () => {
     state.cartoesData = [
       {
-        id: "c-nu", user_id: "u1", nome: "Nubank", limite_total: 0,
-        dia_fechamento: 1, dia_vencimento: 10,
+        id: "c-nu",
+        user_id: "u1",
+        nome: "Nubank",
+        limite_total: 0,
+        dia_fechamento: 1,
+        dia_vencimento: 10,
       },
       {
-        id: "c-it", user_id: "u1", nome: "Inter", limite_total: 0,
-        dia_fechamento: 1, dia_vencimento: 10,
+        id: "c-it",
+        user_id: "u1",
+        nome: "Inter",
+        limite_total: 0,
+        dia_fechamento: 1,
+        dia_vencimento: 10,
       },
     ];
     const out = await handleLimiteIntent("u1", { kind: "limit_lowest" });
@@ -339,8 +435,22 @@ describe("handleLimiteIntent — cartão não encontrado / ambíguo", () => {
   beforeEach(() => {
     resetState({
       cartoes: [
-        { id: "c-nu", user_id: "u1", nome: "Nubank", limite_total: 3000, dia_fechamento: 1, dia_vencimento: 10 },
-        { id: "c-nu2", user_id: "u1", nome: "Nubank Ouro", limite_total: 5000, dia_fechamento: 1, dia_vencimento: 10 },
+        {
+          id: "c-nu",
+          user_id: "u1",
+          nome: "Nubank",
+          limite_total: 3000,
+          dia_fechamento: 1,
+          dia_vencimento: 10,
+        },
+        {
+          id: "c-nu2",
+          user_id: "u1",
+          nome: "Nubank Ouro",
+          limite_total: 5000,
+          dia_fechamento: 1,
+          dia_vencimento: 10,
+        },
       ],
     });
   });
@@ -364,8 +474,13 @@ describe("Pipeline WhatsApp — consulta de limite", () => {
     resetState({ cartoes: baseCartoes() });
     state.gastosData = [
       {
-        user_id: "u1", cartao_id: "c-nu", valor: 820, data: isoToday(),
-        forma_pagamento: "credito", confirmado: true, invoice_month: null,
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 820,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
       },
     ];
   });
@@ -410,8 +525,13 @@ describe("Log seguro de wa_card_limit_query", () => {
     resetState({ cartoes: baseCartoes() });
     state.gastosData = [
       {
-        user_id: "u1", cartao_id: "c-nu", valor: 777, data: isoToday(),
-        forma_pagamento: "credito", confirmado: true, invoice_month: null,
+        user_id: "u1",
+        cartao_id: "c-nu",
+        valor: 777,
+        data: isoToday(),
+        forma_pagamento: "credito",
+        confirmado: true,
+        invoice_month: null,
       },
     ];
     const events: unknown[] = [];
@@ -427,7 +547,8 @@ describe("Log seguro de wa_card_limit_query", () => {
     }
     const ev = events.find(
       (e): e is Record<string, unknown> =>
-        typeof e === "object" && e !== null &&
+        typeof e === "object" &&
+        e !== null &&
         (e as Record<string, unknown>).event === "wa_card_limit_query",
     );
     expect(ev).toBeDefined();

@@ -9,13 +9,7 @@ import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import { ProductImageAdminMenu } from "./ProductImageAdminMenu";
 
-export type ProductSource =
-  | "online"
-  | "flyer"
-  | "manual"
-  | "store"
-  | "receipt"
-  | "community";
+export type ProductSource = "online" | "flyer" | "manual" | "store" | "receipt" | "community";
 
 export interface ProductCardProps {
   name: string;
@@ -88,7 +82,7 @@ export function ProductCard({
   );
 
   const suggestedUrl =
-    !hasExplicit && !suggestedErrored ? suggestion.data?.imageUrl ?? null : null;
+    !hasExplicit && !suggestedErrored ? (suggestion.data?.imageUrl ?? null) : null;
   const finalImage = hasExplicit ? imageUrl! : suggestedUrl;
   const showImage = !!finalImage;
   const isSuggested = !hasExplicit && !!suggestedUrl;
@@ -186,11 +180,7 @@ export function ProductCard({
           <h3 className="line-clamp-2 text-sm font-semibold text-foreground">{name}</h3>
           <div className="mt-1 flex items-center gap-2">
             <span className="num text-base font-bold text-foreground">{priceLabel}</span>
-            {unitLabel && (
-              <span className="text-[11px] text-muted-foreground">
-                / {unitLabel}
-              </span>
-            )}
+            {unitLabel && <span className="text-[11px] text-muted-foreground">/ {unitLabel}</span>}
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             {marketName && <MarketBadge name={marketName} logoUrl={marketLogoUrl} />}
@@ -270,9 +260,7 @@ export function ProductCard({
         </h3>
         <div className="flex items-baseline gap-1">
           <span className="num text-sm font-bold text-foreground">{priceLabel}</span>
-          {unitLabel && (
-            <span className="text-[10px] text-muted-foreground">/ {unitLabel}</span>
-          )}
+          {unitLabel && <span className="text-[10px] text-muted-foreground">/ {unitLabel}</span>}
         </div>
         {marketName && <MarketBadge name={marketName} logoUrl={marketLogoUrl} />}
         {seenAtLabel && (

@@ -17,11 +17,7 @@ import {
   calendarMonthCycleSaoPaulo,
   resolveCycleForPlan,
 } from "@/server/whatsapp-cycle-resolver.server";
-import {
-  evaluateRolloutSync,
-  evaluateRollout,
-  isPaidPlan,
-} from "@/server/whatsapp-rollout.server";
+import { evaluateRolloutSync, evaluateRollout, isPaidPlan } from "@/server/whatsapp-rollout.server";
 import {
   FAIL_CLOSED_RUNTIME,
   readRuntimeConfig,
@@ -167,7 +163,9 @@ describe("rollout: evaluateRolloutSync (pure decision matrix)", () => {
     expect(evaluateRolloutSync(base)).toEqual({ allowed: true, reason: null });
   });
   it("blocks free plan even if bucket in and beta allowed", () => {
-    expect(evaluateRolloutSync({ ...base, planCode: "free_ads" }).reason).toBe("plan_free_or_manual");
+    expect(evaluateRolloutSync({ ...base, planCode: "free_ads" }).reason).toBe(
+      "plan_free_or_manual",
+    );
   });
   it("blocks when beta denied", () => {
     expect(evaluateRolloutSync({ ...base, betaAllowed: false }).reason).toBe("beta_denied");

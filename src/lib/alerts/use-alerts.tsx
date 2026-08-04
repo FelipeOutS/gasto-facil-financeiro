@@ -15,14 +15,7 @@ import { listarAtivos } from "@/lib/investimentos";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import { generateAlertDrafts } from "./generator";
-import {
-  
-  listAlerts,
-  markAlertStatus,
-  markAllAsRead,
-  sortAlerts,
-  syncDrafts,
-} from "./service";
+import { listAlerts, markAlertStatus, markAllAsRead, sortAlerts, syncDrafts } from "./service";
 import type { AlertStatus, UserAlert } from "./types";
 
 export function useAlerts() {
@@ -159,9 +152,7 @@ export function useAlerts() {
       // depois do F5. A lista visível esconde alertas ignored/resolved.
       setAlerts((prev) =>
         prev.map((a) =>
-          a.id === id
-            ? { ...a, status: "ignored", ignored_at: new Date().toISOString() }
-            : a,
+          a.id === id ? { ...a, status: "ignored", ignored_at: new Date().toISOString() } : a,
         ),
       );
       try {

@@ -23,7 +23,15 @@ import {
 import { FORMAS_PAGAMENTO, type FormaPagamento, type TipoGasto } from "@/lib/types";
 import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
 import { mesReferenciaOpcoes, ymFromDate } from "@/lib/mes-referencia";
-import { ChevronDown, ChevronUp, Repeat, Layers, CreditCard, CalendarDays, Store } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Repeat,
+  Layers,
+  CreditCard,
+  CalendarDays,
+  Store,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -113,7 +121,8 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
           gastoFixo: gastoFixo || tipoGasto === "recorrente",
           essencial,
           cartaoId: formaPagamento === "credito" ? cartaoId : undefined,
-          invoiceMonth: invoiceMonth && /^\d{4}-\d{2}$/.test(invoiceMonth) ? invoiceMonth : undefined,
+          invoiceMonth:
+            invoiceMonth && /^\d{4}-\d{2}$/.test(invoiceMonth) ? invoiceMonth : undefined,
           fornecedorId: fornecedorId || null,
         });
       }}
@@ -180,7 +189,10 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
         </div>
         <div>
           <Label className="text-xs text-muted-foreground">{t("form.pagamento")}</Label>
-          <Select value={formaPagamento} onValueChange={(v) => setFormaPagamento(v as FormaPagamento)}>
+          <Select
+            value={formaPagamento}
+            onValueChange={(v) => setFormaPagamento(v as FormaPagamento)}
+          >
             <SelectTrigger className="mt-1 h-11 bg-card">
               <SelectValue />
             </SelectTrigger>
@@ -236,7 +248,11 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
                 {cartoes.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     <span className="flex items-center gap-2">
-                      <span aria-hidden className="inline-block h-3 w-3 rounded-full" style={{ background: c.cor }} />
+                      <span
+                        aria-hidden
+                        className="inline-block h-3 w-3 rounded-full"
+                        style={{ background: c.cor }}
+                      />
                       {c.nome}
                       {c.banco ? <span className="text-muted-foreground"> · {c.banco}</span> : null}
                     </span>
@@ -247,7 +263,11 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
           ) : (
             <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-card-elevated px-3 py-2">
               <p className="text-xs text-muted-foreground">{t("form.semCartoes")}</p>
-              <Link to="/cartoes" search={{ abrir: undefined }} className="text-xs font-semibold text-brand hover:underline">
+              <Link
+                to="/cartoes"
+                search={{ abrir: undefined }}
+                className="text-xs font-semibold text-brand hover:underline"
+              >
                 {t("form.cadastrarCartao")}
               </Link>
             </div>
@@ -332,9 +352,7 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
                     aria-disabled={blockedForFreeAds}
                     className={cn(
                       "flex items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-xs font-medium",
-                      active
-                        ? "border-foreground/40 bg-card-elevated"
-                        : "border-border bg-card",
+                      active ? "border-foreground/40 bg-card-elevated" : "border-border bg-card",
                       blockedForFreeAds && "opacity-50",
                     )}
                   >

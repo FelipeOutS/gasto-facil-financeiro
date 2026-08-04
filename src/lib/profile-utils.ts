@@ -136,12 +136,10 @@ export function getVocab(tipo: TipoCadastro): Vocab {
         tagLabel: "Perfil MEI",
 
         dashboardEyebrow: "Resumo do seu MEI",
-        dashboardSubtitle:
-          "Acompanhe entradas, gastos e compromissos do seu negócio.",
+        dashboardSubtitle: "Acompanhe entradas, gastos e compromissos do seu negócio.",
 
         relatoriosTitle: "Relatórios do MEI",
-        relatoriosSubtitle:
-          "Veja como o dinheiro entrou, saiu e onde melhorar.",
+        relatoriosSubtitle: "Veja como o dinheiro entrou, saiu e onde melhorar.",
 
         orcamentoTitle: "Orçamento do MEI",
         orcamentoSubtitle: "Controle limites por categoria do seu negócio.",
@@ -163,12 +161,10 @@ export function getVocab(tipo: TipoCadastro): Vocab {
         tagLabel: "Perfil empresarial",
 
         dashboardEyebrow: "Resumo da empresa",
-        dashboardSubtitle:
-          "Veja receitas, despesas, contas e saldo da sua empresa.",
+        dashboardSubtitle: "Veja receitas, despesas, contas e saldo da sua empresa.",
 
         relatoriosTitle: "Relatórios empresariais",
-        relatoriosSubtitle:
-          "Acompanhe desempenho, custos, entradas e saldo da empresa.",
+        relatoriosSubtitle: "Acompanhe desempenho, custos, entradas e saldo da empresa.",
 
         orcamentoTitle: "Orçamento empresarial",
         orcamentoSubtitle: "Acompanhe limites e custos operacionais.",
@@ -194,8 +190,7 @@ export function getVocab(tipo: TipoCadastro): Vocab {
         dashboardSubtitle: "Entenda para onde seu dinheiro foi.",
 
         relatoriosTitle: "Relatórios pessoais",
-        relatoriosSubtitle:
-          "Entenda seus gastos e sua evolução financeira.",
+        relatoriosSubtitle: "Entenda seus gastos e sua evolução financeira.",
 
         orcamentoTitle: "Orçamento do mês",
         orcamentoSubtitle: "Defina limites para organizar seus gastos.",

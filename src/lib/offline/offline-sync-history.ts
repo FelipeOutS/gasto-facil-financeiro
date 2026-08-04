@@ -11,12 +11,7 @@ const STORE = "events";
 const MAX_PER_USER = 100;
 
 export type OfflineHistoryType = "expense" | "income";
-export type OfflineHistoryAction =
-  | "created_offline"
-  | "edited"
-  | "synced"
-  | "failed"
-  | "removed";
+export type OfflineHistoryAction = "created_offline" | "edited" | "synced" | "failed" | "removed";
 
 export type OfflineHistoryEvent = {
   id: string;
@@ -119,12 +114,7 @@ function sanitizeMetadata(
   for (const [k, v] of Object.entries(meta)) {
     const lower = k.toLowerCase();
     if (FORBIDDEN_KEYS.some((bad) => lower.includes(bad))) continue;
-    if (
-      v == null ||
-      typeof v === "string" ||
-      typeof v === "number" ||
-      typeof v === "boolean"
-    ) {
+    if (v == null || typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
       out[k] = v ?? null;
     }
   }

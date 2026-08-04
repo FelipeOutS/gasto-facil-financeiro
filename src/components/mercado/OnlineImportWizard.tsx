@@ -13,14 +13,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Cloud,
-  Loader2,
-  Save,
-  X,
-} from "lucide-react";
+import { AlertTriangle, ArrowLeft, Cloud, Loader2, Save, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -167,7 +160,7 @@ export function OnlineImportWizard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: trimmedUrl, marketName: trimmedMarket }),
       });
-      const json = await res.json().catch(() => ({} as Record<string, unknown>));
+      const json = await res.json().catch(() => ({}) as Record<string, unknown>);
       if (res.status === 429) {
         toast.warning(t("communityPrices.onlineImport.errors.rateLimited"));
         setStep("confirm");
@@ -229,10 +222,7 @@ export function OnlineImportWizard({
 
   function isItemValid(r: ReviewItem) {
     return (
-      r.productName.trim().length > 0 &&
-      r.price != null &&
-      Number.isFinite(r.price) &&
-      r.price > 0
+      r.productName.trim().length > 0 && r.price != null && Number.isFinite(r.price) && r.price > 0
     );
   }
 
@@ -277,10 +267,7 @@ export function OnlineImportWizard({
       for (const r of toSave) {
         const key = normalize(r.productName);
         const dup = existingMap.get(key);
-        const noteParts = [
-          r.notes,
-          t("communityPrices.onlineImport.noteSourceLine"),
-        ];
+        const noteParts = [r.notes, t("communityPrices.onlineImport.noteSourceLine")];
         if (r.oldPrice && r.oldPrice !== r.price) {
           noteParts.push(
             t("communityPrices.onlineImport.oldPriceNote", {
@@ -307,14 +294,13 @@ export function OnlineImportWizard({
           source: "online",
           status: "active",
           seen_at: today,
-          valid_until: r.validUntil && /^\d{4}-\d{2}-\d{2}$/.test(r.validUntil) ? r.validUntil : null,
+          valid_until:
+            r.validUntil && /^\d{4}-\d{2}-\d{2}$/.test(r.validUntil) ? r.validUntil : null,
           city: r.city,
           neighborhood: r.neighborhood,
           notes: noteParts.filter(Boolean).join(" · "),
           confidence:
-            typeof r.confidence === "number" && Number.isFinite(r.confidence)
-              ? r.confidence
-              : 0.85,
+            typeof r.confidence === "number" && Number.isFinite(r.confidence) ? r.confidence : 0.85,
           image_url: validImg.ok ? validImg.url : null,
           image_source: validImg.ok ? "joanin" : null,
           image_confidence: validImg.ok ? 1 : null,
@@ -353,16 +339,16 @@ export function OnlineImportWizard({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t("communityPrices.onlineImport.title")}</DialogTitle>
-          <DialogDescription>
-            {t("communityPrices.onlineImport.description")}
-          </DialogDescription>
+          <DialogDescription>{t("communityPrices.onlineImport.description")}</DialogDescription>
         </DialogHeader>
 
         {step === "confirm" && (
           <div className="space-y-3">
             <div className="rounded-md border border-amber-300/50 bg-amber-50/60 p-3 text-[12px] text-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
               <p>{t("communityPrices.onlineImport.confirmMessage")}</p>
-              <p className="mt-2 text-[11px] opacity-80">{t("communityPrices.onlineImport.cardScopeNotice")}</p>
+              <p className="mt-2 text-[11px] opacity-80">
+                {t("communityPrices.onlineImport.cardScopeNotice")}
+              </p>
             </div>
 
             <div>
@@ -457,7 +443,9 @@ export function OnlineImportWizard({
 
             {onOpenFlyerScan && (
               <div className="rounded-md border border-border bg-muted/20 p-3 text-[12px]">
-                <p className="font-medium">{t("communityPrices.onlineImport.flyerScanHint.title")}</p>
+                <p className="font-medium">
+                  {t("communityPrices.onlineImport.flyerScanHint.title")}
+                </p>
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   {t("communityPrices.onlineImport.flyerScanHint.description")}
                 </p>
@@ -477,18 +465,10 @@ export function OnlineImportWizard({
             )}
 
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button
-                variant="ghost"
-                onClick={() => onOpenChange(false)}
-                className="min-h-11"
-              >
+              <Button variant="ghost" onClick={() => onOpenChange(false)} className="min-h-11">
                 {t("communityPrices.onlineImport.cancel")}
               </Button>
-              <Button
-                onClick={runImport}
-                disabled={isProtectedJoaninUrl(url)}
-                className="min-h-11"
-              >
+              <Button onClick={runImport} disabled={isProtectedJoaninUrl(url)} className="min-h-11">
                 <Cloud className="mr-2 h-4 w-4" />
                 {t("communityPrices.onlineImport.fetchCta")}
               </Button>
@@ -506,9 +486,7 @@ export function OnlineImportWizard({
         {step === "review" && (
           <div className="space-y-3">
             <div className="rounded-md border border-border bg-muted/20 p-2 text-[11px] text-muted-foreground">
-              <p>
-                {t("communityPrices.onlineImport.foundOnPage", { count: items.length })}
-              </p>
+              <p>{t("communityPrices.onlineImport.foundOnPage", { count: items.length })}</p>
               <p className="mt-1">
                 {t("communityPrices.onlineImport.reviewSummary", {
                   count: items.length,
@@ -525,13 +503,17 @@ export function OnlineImportWizard({
                 {diagnostics.warnings.includes("placement_client_rendered_only") && (
                   <div className="flex items-start gap-2 rounded-md border border-amber-300/40 bg-amber-50/50 p-2 text-[11px] text-amber-900 dark:bg-amber-950/20 dark:text-amber-100">
                     <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                    <span>{t("communityPrices.onlineImport.warnings.placementClientRenderedOnly")}</span>
+                    <span>
+                      {t("communityPrices.onlineImport.warnings.placementClientRenderedOnly")}
+                    </span>
                   </div>
                 )}
                 {diagnostics.warnings.includes("pagination_private_blocked") && (
                   <div className="flex items-start gap-2 rounded-md border border-amber-300/40 bg-amber-50/50 p-2 text-[11px] text-amber-900 dark:bg-amber-950/20 dark:text-amber-100">
                     <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                    <span>{t("communityPrices.onlineImport.warnings.paginationPrivateBlocked")}</span>
+                    <span>
+                      {t("communityPrices.onlineImport.warnings.paginationPrivateBlocked")}
+                    </span>
                   </div>
                 )}
                 {diagnostics.warnings.includes("path_unsupported_use_home_or_category") && (
@@ -648,9 +630,7 @@ export function OnlineImportWizard({
                         )}
                       </div>
                       <div>
-                        <Label className="text-xs">
-                          {t("communityPrices.review.fields.unit")}
-                        </Label>
+                        <Label className="text-xs">{t("communityPrices.review.fields.unit")}</Label>
                         <Input
                           value={r.unit ?? ""}
                           onChange={(e) =>
@@ -688,9 +668,7 @@ export function OnlineImportWizard({
                           onChange={(e) =>
                             setItems((cur) =>
                               cur.map((x, i) =>
-                                i === idx
-                                  ? { ...x, validUntil: e.target.value || null }
-                                  : x,
+                                i === idx ? { ...x, validUntil: e.target.value || null } : x,
                               ),
                             )
                           }

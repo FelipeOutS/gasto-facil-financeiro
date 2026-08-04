@@ -10,10 +10,7 @@ import {
   reconcileMercadoPagoPaymentById,
 } from "@/server/mercadopago-diagnostics.server";
 
-const ADMIN_EMAILS = [
-  "felipe.out.silva@outlook.com",
-  "michael@medeiroscenografia.com.br",
-];
+const ADMIN_EMAILS = ["felipe.out.silva@outlook.com", "michael@medeiroscenografia.com.br"];
 
 const USER_DATA_TABLES = [
   "aprendizado_categoria",
@@ -72,7 +69,10 @@ export const deleteUserById = createServerFn({ method: "POST" })
 
     for (const table of USER_DATA_TABLES) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabaseAdmin as any).from(table).delete().eq("user_id", data.targetUserId);
+      const { error } = await (supabaseAdmin as any)
+        .from(table)
+        .delete()
+        .eq("user_id", data.targetUserId);
       if (error) console.error(`[deleteUserById] ${table}`, error.message);
     }
 
@@ -123,7 +123,6 @@ async function ensureAdmin(_supabase: any, userId: string): Promise<string> {
     throw new Error("FORBIDDEN");
   }
 }
-
 
 export type AdminUserRow = {
   user_id: string;
@@ -186,7 +185,10 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
     await ensureAdmin(context.supabase, userId);
 
     // 1) Listar todos os usuários auth (paginação) — best-effort para obter emails
-    const authMap = new Map<string, { email: string | null; phone: string | null; created_at: string }>();
+    const authMap = new Map<
+      string,
+      { email: string | null; phone: string | null; created_at: string }
+    >();
     try {
       let page = 1;
       while (true) {
@@ -214,14 +216,21 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
       supabaseAdmin.from("user_plans").select("*"),
       supabaseAdmin
         .from("subscription_payments")
-        .select("id, user_id, plano, method, status, amount_cents, periodicidade, months, discount_percent, paid_at, created_at")
+        .select(
+          "id, user_id, plano, method, status, amount_cents, periodicidade, months, discount_percent, paid_at, created_at",
+        )
         .order("created_at", { ascending: false }),
     ]);
 
     // Reconcilia pagamentos por cartão pendentes (best-effort) para usuários
     // com tentativas recentes — assim o admin reflete pagamentos aprovados no MP.
     const pendingCardUsers = new Set<string>();
-    for (const p of (paymentsRes.data ?? []) as Array<{ user_id: string; method: string; status: string; created_at: string }>) {
+    for (const p of (paymentsRes.data ?? []) as Array<{
+      user_id: string;
+      method: string;
+      status: string;
+      created_at: string;
+    }>) {
       if (p.method !== "card" || p.status !== "pending") continue;
       const ageMs = Date.now() - new Date(p.created_at).getTime();
       if (ageMs > 3 * 24 * 60 * 60 * 1000) continue;
@@ -229,12 +238,16 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
     }
     if (pendingCardUsers.size > 0) {
       await Promise.allSettled(
-        Array.from(pendingCardUsers).slice(0, 25).map((uid) => reconcilePendingCardPaymentsForUser(uid)),
+        Array.from(pendingCardUsers)
+          .slice(0, 25)
+          .map((uid) => reconcilePendingCardPaymentsForUser(uid)),
       );
       // Recarrega pagamentos pós-reconciliação
       const refreshed = await supabaseAdmin
         .from("subscription_payments")
-        .select("id, user_id, plano, method, status, amount_cents, periodicidade, months, discount_percent, paid_at, created_at")
+        .select(
+          "id, user_id, plano, method, status, amount_cents, periodicidade, months, discount_percent, paid_at, created_at",
+        )
         .order("created_at", { ascending: false });
       if (refreshed.data) paymentsRes.data = refreshed.data;
     }
@@ -273,37 +286,43 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
       }
     }
 
-    const users: AdminUserRow[] = await Promise.all(allAuthUsers.map(async (au) => {
-      const prof: any = profileBy.get(au.id);
-      const sub = await getSubscriptionForUserIdentity({ userId: au.id, email: au.email, repairLink: false });
-      const last = lastPaymentByUser.get(au.id);
-      const paid = paidPaymentsByUser.get(au.id) ?? [];
-      const total = paid.reduce((s, x) => s + (x.amount_cents ?? 0), 0);
-      return {
-        user_id: au.id,
-        email: au.email ?? "",
-        nome: prof?.nome ?? null,
-        telefone: prof?.telefone ?? au.phone ?? null,
-        tipo_cadastro: prof?.tipo_cadastro ?? null,
-        created_at: au.created_at,
-        plano: sub.storedPlan,
-        status: sub.status,
-        periodicidade: sub.periodicidade,
-        months: sub.months,
-        current_period_start: sub.currentPeriodStart,
-        current_period_end: sub.currentPeriodEnd,
-        access_until: sub.accessUntil,
-        cancelled_at: sub.cancelledAt,
-        last_payment_id: sub.lastPaymentId ?? last?.id ?? null,
-        last_payment_amount_cents: sub.paymentAmountCents ?? last?.amount_cents ?? null,
-        last_payment_method: sub.paymentMethod ?? last?.method ?? null,
-        last_payment_status: sub.paymentStatus ?? last?.status ?? null,
-        last_payment_at: sub.paidAt ?? last?.paid_at ?? last?.created_at ?? null,
-        next_payment_at: sub.currentPeriodEnd ?? sub.accessUntil ?? null,
-        total_paid_cents: total,
-        payments_count: paid.length,
-      };
-    }));
+    const users: AdminUserRow[] = await Promise.all(
+      allAuthUsers.map(async (au) => {
+        const prof: any = profileBy.get(au.id);
+        const sub = await getSubscriptionForUserIdentity({
+          userId: au.id,
+          email: au.email,
+          repairLink: false,
+        });
+        const last = lastPaymentByUser.get(au.id);
+        const paid = paidPaymentsByUser.get(au.id) ?? [];
+        const total = paid.reduce((s, x) => s + (x.amount_cents ?? 0), 0);
+        return {
+          user_id: au.id,
+          email: au.email ?? "",
+          nome: prof?.nome ?? null,
+          telefone: prof?.telefone ?? au.phone ?? null,
+          tipo_cadastro: prof?.tipo_cadastro ?? null,
+          created_at: au.created_at,
+          plano: sub.storedPlan,
+          status: sub.status,
+          periodicidade: sub.periodicidade,
+          months: sub.months,
+          current_period_start: sub.currentPeriodStart,
+          current_period_end: sub.currentPeriodEnd,
+          access_until: sub.accessUntil,
+          cancelled_at: sub.cancelledAt,
+          last_payment_id: sub.lastPaymentId ?? last?.id ?? null,
+          last_payment_amount_cents: sub.paymentAmountCents ?? last?.amount_cents ?? null,
+          last_payment_method: sub.paymentMethod ?? last?.method ?? null,
+          last_payment_status: sub.paymentStatus ?? last?.status ?? null,
+          last_payment_at: sub.paidAt ?? last?.paid_at ?? last?.created_at ?? null,
+          next_payment_at: sub.currentPeriodEnd ?? sub.accessUntil ?? null,
+          total_paid_cents: total,
+          payments_count: paid.length,
+        };
+      }),
+    );
 
     // Totais
     const now = new Date();
@@ -342,9 +361,15 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
     // Admin Master não conta como pagante real. Considera "ativo" apenas
     // usuários com plano premium (não admin_master/free/sem_assinatura).
     const activeUsers = users.filter(
-      (u) => u.status === "ativo" && u.plano !== "admin_master" && u.plano !== "free" && u.plano !== "sem_assinatura",
+      (u) =>
+        u.status === "ativo" &&
+        u.plano !== "admin_master" &&
+        u.plano !== "free" &&
+        u.plano !== "sem_assinatura",
     ).length;
-    const noPlanUsers = users.filter((u) => u.status === "sem_assinatura" || u.plano === "free").length;
+    const noPlanUsers = users.filter(
+      (u) => u.status === "sem_assinatura" || u.plano === "free",
+    ).length;
     // 'expirado' é o status real devolvido por getSubscriptionForUserIdentity.
     const cancelledOrExpiredUsers = users.filter(
       (u) => u.status === "cancelado" || u.status === "expirado",
@@ -366,12 +391,7 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
     };
   });
 
-const PLAN_TIERS = [
-  "pessoal_premium",
-  "mei_essencial",
-  "mei_inteligente",
-  "empresa",
-] as const;
+const PLAN_TIERS = ["pessoal_premium", "mei_essencial", "mei_inteligente", "empresa"] as const;
 
 const PERIODS = ["mensal", "trimestral", "semestral", "anual"] as const;
 const PERIOD_MONTHS: Record<(typeof PERIODS)[number], number> = {
@@ -535,7 +555,7 @@ export const setUserStatusManually = createServerFn({ method: "POST" })
       }
     }
 
-    let update: Record<string, unknown> = {
+    const update: Record<string, unknown> = {
       status: data.status,
       updated_at: now.toISOString(),
     };
@@ -560,12 +580,15 @@ export const setUserStatusManually = createServerFn({ method: "POST" })
 
     if (existing) {
       await supabaseAdmin
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from("user_plans").update(update as any).eq("user_id", data.targetUserId);
+
+        .from("user_plans")
+        .update(update as any)
+        .eq("user_id", data.targetUserId);
     } else {
       await supabaseAdmin
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from("user_plans").insert({ user_id: data.targetUserId, plano: "sem_assinatura", ...update } as any);
+
+        .from("user_plans")
+        .insert({ user_id: data.targetUserId, plano: "sem_assinatura", ...update } as any);
     }
 
     const { data: targetUser } = await supabaseAdmin.auth.admin.getUserById(data.targetUserId);
@@ -585,16 +608,12 @@ export const setUserStatusManually = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-
-
 /**
  * Diagnóstico de um pagamento do Mercado Pago. Admin only.
  * NÃO altera estado — apenas reporta.
  */
 export const diagnoseMpPayment = createServerFn({ method: "POST" })
-  .inputValidator((input) =>
-    z.object({ paymentId: z.string().trim().min(3).max(64) }).parse(input),
-  )
+  .inputValidator((input) => z.object({ paymentId: z.string().trim().min(3).max(64) }).parse(input))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     const { userId } = context;
@@ -609,9 +628,7 @@ export const diagnoseMpPayment = createServerFn({ method: "POST" })
  * Idempotente: chamadas repetidas não duplicam ativação.
  */
 export const reconcileMpPaymentById = createServerFn({ method: "POST" })
-  .inputValidator((input) =>
-    z.object({ paymentId: z.string().trim().min(3).max(64) }).parse(input),
-  )
+  .inputValidator((input) => z.object({ paymentId: z.string().trim().min(3).max(64) }).parse(input))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     const { userId } = context;
@@ -620,7 +637,12 @@ export const reconcileMpPaymentById = createServerFn({ method: "POST" })
       user_id: userId,
       email: actorEmail,
     });
-    return { ok: result.ok, applied: result.applied, message: result.message, diagnosis: result.diagnosis };
+    return {
+      ok: result.ok,
+      applied: result.applied,
+      message: result.message,
+      diagnosis: result.diagnosis,
+    };
   });
 
 /**
@@ -637,12 +659,16 @@ export const listRecentPaymentEvents = createServerFn({ method: "POST" })
     const limit = data.limit ?? 20;
     const { data: rows, error } = await supabaseAdmin
       .from("payment_events")
-      .select("id, created_at, provider, external_payment_id, status, raw_status, event_type, user_id")
+      .select(
+        "id, created_at, provider, external_payment_id, status, raw_status, event_type, user_id",
+      )
       .order("created_at", { ascending: false })
       .limit(limit);
     if (error) throw new Error(error.message);
 
-    const userIds = Array.from(new Set((rows ?? []).map((r) => r.user_id).filter(Boolean) as string[]));
+    const userIds = Array.from(
+      new Set((rows ?? []).map((r) => r.user_id).filter(Boolean) as string[]),
+    );
     const emailById = new Map<string, string>();
     for (const uid of userIds) {
       try {
@@ -655,10 +681,7 @@ export const listRecentPaymentEvents = createServerFn({ method: "POST" })
     return {
       events: (rows ?? []).map((r) => ({
         ...r,
-        user_email: r.user_id ? emailById.get(r.user_id) ?? null : null,
+        user_email: r.user_id ? (emailById.get(r.user_id) ?? null) : null,
       })),
     };
   });
-
-
-

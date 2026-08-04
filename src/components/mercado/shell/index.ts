@@ -4,14 +4,8 @@ export type { SectionBlockProps } from "./SectionBlock";
 export { MercadoHeader } from "./MercadoHeader";
 export type { MercadoHeaderProps } from "./MercadoHeader";
 
-export {
-  MercadoCategoryChips,
-  MERCADO_CATEGORIES,
-} from "./MercadoCategoryChips";
-export type {
-  MercadoCategoryChipsProps,
-  MercadoCategoryKey,
-} from "./MercadoCategoryChips";
+export { MercadoCategoryChips, MERCADO_CATEGORIES } from "./MercadoCategoryChips";
+export type { MercadoCategoryChipsProps, MercadoCategoryKey } from "./MercadoCategoryChips";
 
 export { MercadoBanner } from "./MercadoBanner";
 export type { MercadoBannerProps } from "./MercadoBanner";

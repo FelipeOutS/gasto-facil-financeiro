@@ -20,13 +20,7 @@ import {
   Bell,
   HandCoins,
 } from "lucide-react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip as RTooltip,
-} from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RTooltip } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
 import { MobileMonthSummary } from "@/components/MobileMonthSummary";
 import { CalendarioFinanceiro } from "@/components/CalendarioFinanceiro";
@@ -75,10 +69,7 @@ import { EconomicMonthImpactCard } from "@/components/dashboard/EconomicMonthImp
 import { PrimeirosPassosCard } from "@/components/dashboard/PrimeirosPassosCard";
 import { useRecorrencias } from "@/lib/recorrencias";
 import { buildResumoAlertas } from "@/lib/alertas-contas";
-import {
-  buildLinhasOrcamento,
-  resumirOrcamento,
-} from "@/lib/orcamento";
+import { buildLinhasOrcamento, resumirOrcamento } from "@/lib/orcamento";
 import type { Categoria, ContaAPagar, Gasto } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -92,11 +83,7 @@ import {
   isLoginBioInProgress,
   isLoginBioUnlockRequired,
 } from "@/lib/biometric-login";
-import {
-  AppModuleBanner,
-  AppEmptyStateVisual,
-  AppActionCard,
-} from "@/components/app-v2";
+import { AppModuleBanner, AppEmptyStateVisual, AppActionCard } from "@/components/app-v2";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -136,7 +123,8 @@ function AppRoot() {
   }, [loading, session, needsBiometricUnlock, shouldShowBiometricLogin, navigate]);
 
   if (loading) return <BrandLoader message={null} />;
-  if (!session && bioLoginInProgress) return <BrandLoader message={t("loader.biometricValidating")} />;
+  if (!session && bioLoginInProgress)
+    return <BrandLoader message={t("loader.biometricValidating")} />;
   if (needsBiometricUnlock) return <BrandLoader message={t("loader.biometricValidating")} />;
   if (shouldShowBiometricLogin) return <BrandLoader message={t("loader.biometricOpening")} />;
   if (!session) return <BrandLoader message={null} />;
@@ -174,10 +162,7 @@ function Index() {
   // Re-render quando limites mudam
   useStore(() => getLimites().length);
 
-  const gastosConfirmados = useMemo(
-    () => gastos.filter((g) => g.confirmado !== false),
-    [gastos],
-  );
+  const gastosConfirmados = useMemo(() => gastos.filter((g) => g.confirmado !== false), [gastos]);
   const doMes = useMemo(
     () =>
       gastosConfirmados.filter((g) => {
@@ -211,7 +196,8 @@ function Index() {
     navigateRoot({ to: "/cartoes", search: { abrir: cartaoId } });
   };
   useEffect(() => {
-    if (typeof window === "undefined" || window.localStorage.getItem("gf:debug-finance") !== "1") return;
+    if (typeof window === "undefined" || window.localStorage.getItem("gf:debug-finance") !== "1")
+      return;
     const importados = gastosConfirmados.filter((g) => String(g.origem ?? "").includes("fatura"));
     console.info("[financeiro:dashboard] resumo", {
       totalAnalisados: gastos.length,
@@ -222,19 +208,20 @@ function Index() {
       importadosConsiderados: doMes.filter((g) => String(g.origem ?? "").includes("fatura")),
       importadosIgnorados: importados
         .filter((g) => !doMes.some((m) => m.id === g.id))
-        .map((g) => ({ id: g.id, descricao: g.descricao, valor: g.valor, data: g.data, mes: g.mes, ano: g.ano })),
+        .map((g) => ({
+          id: g.id,
+          descricao: g.descricao,
+          valor: g.valor,
+          data: g.data,
+          mes: g.mes,
+          ano: g.ano,
+        })),
     });
   }, [gastos, gastosConfirmados, doMes, ym]);
-  const totalEntradas = useMemo(
-    () => receitasMes.reduce((s, r) => s + r.valor, 0),
-    [receitasMes],
-  );
+  const totalEntradas = useMemo(() => receitasMes.reduce((s, r) => s + r.valor, 0), [receitasMes]);
   const saldo = totalEntradas - total;
 
-  const totalGuardado = useMemo(
-    () => guardado.reduce((s, g) => s + g.valor, 0),
-    [guardado],
-  );
+  const totalGuardado = useMemo(() => guardado.reduce((s, g) => s + g.valor, 0), [guardado]);
   const gastosFixos = useMemo(
     () =>
       doMes
@@ -246,10 +233,7 @@ function Index() {
   const ultimos = useMemo(
     () =>
       [...doMes]
-        .sort(
-          (a, b) =>
-            (a.data < b.data ? 1 : -1) || (a.criadoEm < b.criadoEm ? 1 : -1),
-        )
+        .sort((a, b) => (a.data < b.data ? 1 : -1) || (a.criadoEm < b.criadoEm ? 1 : -1))
         .slice(0, 4),
     [doMes],
   );
@@ -274,15 +258,18 @@ function Index() {
   }, [doMes, total]);
 
   const maior = porCategoria[0];
-  const usoLimite =
-    limiteTotal && limiteTotal > 0 ? Math.min(150, (total / limiteTotal) * 100) : 0;
+  const usoLimite = limiteTotal && limiteTotal > 0 ? Math.min(150, (total / limiteTotal) * 100) : 0;
   const proximoLimite = limiteTotal && total >= limiteTotal * 0.8;
   const passouLimite = limiteTotal && total > limiteTotal;
   const resumoAlertasDashboard = useMemo(() => buildResumoAlertas(contas), [contas]);
   const temAlertasDashboard = resumoAlertasDashboard.totalRelevantes > 0;
   const temOrcamentoMes = useMemo(() => {
-    const linhas = buildLinhasOrcamento(categorias, gastosConfirmados, ym.mes, ym.ano, (catId) =>
-      getLimite(catId, ym.mes, ym.ano),
+    const linhas = buildLinhasOrcamento(
+      categorias,
+      gastosConfirmados,
+      ym.mes,
+      ym.ano,
+      (catId) => getLimite(catId, ym.mes, ym.ano),
       mesEfetivoGasto,
     );
     return resumirOrcamento(linhas).temOrcamento;
@@ -321,10 +308,7 @@ function Index() {
   }, [contas, ym]);
 
   // Metas
-  const metasAndamento = useMemo(
-    () => metas.filter((m) => statusMeta(m) !== "concluida"),
-    [metas],
-  );
+  const metasAndamento = useMemo(() => metas.filter((m) => statusMeta(m) !== "concluida"), [metas]);
   const metaProxima = useMemo(() => {
     let alvo: (typeof metas)[number] | null = null;
     let alvoBreakdown: ReturnType<typeof getMetaProgressoBreakdown> | null = null;
@@ -361,10 +345,7 @@ function Index() {
   }
 
   const isEmpty =
-    gastos.length === 0 &&
-    receitas.length === 0 &&
-    guardado.length === 0 &&
-    metas.length === 0;
+    gastos.length === 0 && receitas.length === 0 && guardado.length === 0 && metas.length === 0;
 
   if (!ready) return <DashboardSkeleton />;
 
@@ -385,9 +366,7 @@ function Index() {
             {t("empty.eyebrow")}
           </p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight">{t("empty.title")}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t("empty.subtitle")}
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("empty.subtitle")}</p>
         </header>
 
         <AppEmptyStateVisual
@@ -402,7 +381,11 @@ function Index() {
           className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2"
           aria-label={t("empty.eyebrow")}
         >
-          <Link to="/adicionar" search={{ tipo: "receita" }} className="block focus-visible:outline-none">
+          <Link
+            to="/adicionar"
+            search={{ tipo: "receita" }}
+            className="block focus-visible:outline-none"
+          >
             <AppActionCard
               tone="receitas"
               icon={<ArrowUp className="h-5 w-5" />}
@@ -410,7 +393,11 @@ function Index() {
               description={t("empty.descriptions.salario")}
             />
           </Link>
-          <Link to="/adicionar" search={{ tipo: "gasto" }} className="block focus-visible:outline-none">
+          <Link
+            to="/adicionar"
+            search={{ tipo: "gasto" }}
+            className="block focus-visible:outline-none"
+          >
             <AppActionCard
               tone="gastos"
               icon={<Plus className="h-5 w-5" />}
@@ -439,9 +426,7 @@ function Index() {
         {/* Mantém o piloto direct visível também no Dashboard sem lançamentos. */}
         <AdSlot className="mt-5" slotId="dashboard-middle" />
 
-        <p className="mt-8 text-center text-xs text-muted-foreground">
-          {t("empty.footer")}
-        </p>
+        <p className="mt-8 text-center text-xs text-muted-foreground">{t("empty.footer")}</p>
       </MobileShell>
     );
   }
@@ -524,18 +509,10 @@ function Index() {
         />
       </div>
 
-
-
-
-
       {/* ===== Resumo financeiro — versão desktop/tablet ===== */}
       <section className="mt-4 hidden grid-cols-1 gap-3 lg:grid lg:grid-cols-12 lg:gap-4">
         <div className="lg:col-span-5">
-          <SaldoHeroCard
-            saldo={saldo}
-            entradas={totalEntradas}
-            despesas={total}
-          />
+          <SaldoHeroCard saldo={saldo} entradas={totalEntradas} despesas={total} />
         </div>
         <div className="grid grid-cols-2 gap-3 lg:col-span-7 lg:grid-cols-3">
           <KpiCard
@@ -590,7 +567,6 @@ function Index() {
         <RadarEconomicoCard className="h-full" />
       </section>
 
-
       {/* Impacto prático do cenário econômico no mês do usuário */}
       <section className="mt-3">
         <EconomicMonthImpactCard
@@ -601,15 +577,12 @@ function Index() {
         />
       </section>
 
-
-
       {/* Saúde financeira + Dicas — par responsivo.
           Se Dicas retornar null (sem insights), o card de Saúde ocupa a linha inteira no desktop. */}
       <section className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-4 md:items-stretch [&>*:only-child]:md:col-span-2">
         <DashboardSaudeFinanceiraCard className="h-full" />
         <DashboardDicasBloco className="h-full" />
       </section>
-
 
       {/* Diagnóstico mensal — leitura amigável do mês com próximas ações */}
       <section className="mt-4">
@@ -618,9 +591,6 @@ function Index() {
 
       {/* AdSlot — apenas free_ads ativo (Fase 1E-B2L) */}
       <AdSlot className="mt-4" slotId="dashboard-middle" />
-
-
-
 
       {/* Aviso contextual: assinaturas em moeda estrangeira */}
       <AssinaturasMoedaEstrangeiraBanner />
@@ -658,23 +628,21 @@ function Index() {
       <SectionLabel>{t("sections.visao")}</SectionLabel>
       <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12 lg:items-stretch lg:gap-5 xl:gap-6">
         <div className="flex min-w-0 lg:col-span-7">
-          <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
-        </div>
-        <div className="flex min-w-0 lg:col-span-5">
-          <CalendarioFinanceiro
+          <FluxoCaixaChart
             ano={ym.ano}
             mes={ym.mes}
-            onChangeMonth={changeMonth}
-            compact
+            gastos={gastosConfirmados}
+            receitas={receitas}
           />
+        </div>
+        <div className="flex min-w-0 lg:col-span-5">
+          <CalendarioFinanceiro ano={ym.ano} mes={ym.mes} onChangeMonth={changeMonth} compact />
         </div>
       </section>
 
       {/* ===== 3. Resumo e próximas ações ===== */}
       <SectionLabel>{t("sections.resumo")}</SectionLabel>
-      <section
-        className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:grid-rows-[auto_1fr] lg:gap-5"
-      >
+      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:grid-rows-[auto_1fr] lg:gap-5">
         {/* Esquerda topo: Resumo inteligente */}
         <div className="flex min-w-0 lg:col-start-1 lg:row-start-1">
           <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} className="w-full" />
@@ -707,62 +675,72 @@ function Index() {
             <RecentTransactionsCard ultimos={ultimos} />
           </div>
         </div>
-        {metaProxima ? (() => {
-          const m = metaProxima.meta;
-          const bd = metaProxima.breakdown;
-          const objetivo = Number(m.valorObjetivo) || 0;
-          const acumulado = bd.total;
-          const restante = bd.restante;
-          const pct = objetivo > 0 ? Math.min(100, (acumulado / objetivo) * 100) : 0;
-          return (
-            <div className="flex min-w-0">
-              <section className="flex h-full w-full flex-col rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-3.5 w-3.5" style={{ color: m.colorHex }} />
-                    <h2 className="text-sm font-semibold">{t("metaProxima.title")}</h2>
+        {metaProxima ? (
+          (() => {
+            const m = metaProxima.meta;
+            const bd = metaProxima.breakdown;
+            const objetivo = Number(m.valorObjetivo) || 0;
+            const acumulado = bd.total;
+            const restante = bd.restante;
+            const pct = objetivo > 0 ? Math.min(100, (acumulado / objetivo) * 100) : 0;
+            return (
+              <div className="flex min-w-0">
+                <section className="flex h-full w-full flex-col rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-3.5 w-3.5" style={{ color: m.colorHex }} />
+                      <h2 className="text-sm font-semibold">{t("metaProxima.title")}</h2>
+                    </div>
+                    <Link
+                      to="/metas"
+                      className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {t("metaProxima.verTodas")}
+                    </Link>
                   </div>
-                  <Link to="/metas" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
-                    {t("metaProxima.verTodas")}
-                  </Link>
-                </div>
-                <div className="mt-3 flex items-baseline justify-between gap-3">
-                  <p className="truncate text-base font-semibold">{m.nome}</p>
-                  <p className="num shrink-0 text-xs text-muted-foreground">
-                    {formatBRL(acumulado)} / {formatBRL(objetivo)}
-                  </p>
-                </div>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{ width: `${pct}%`, background: m.colorHex }}
-                  />
-                </div>
-                <div className="mt-2 flex items-center justify-between text-xs">
-                  <span className="num font-semibold" style={{ color: m.colorHex }}>
-                    {Math.round(pct)}%
-                  </span>
-                  <span className="num text-muted-foreground">
-                    {t("metaProxima.falta", { valor: formatBRL(restante) })}
-                  </span>
-                </div>
-                {bd.guardado > 0 && (
-                  <p className="mt-2 text-[11px] text-muted-foreground">
-                    <Trans
-                      i18nKey="metaProxima.incluiGuardado"
-                      t={t}
-                      values={{ valor: formatBRL(bd.guardado) }}
-                      components={{ strong: <span className="num font-semibold text-foreground" /> }}
+                  <div className="mt-3 flex items-baseline justify-between gap-3">
+                    <p className="truncate text-base font-semibold">{m.nome}</p>
+                    <p className="num shrink-0 text-xs text-muted-foreground">
+                      {formatBRL(acumulado)} / {formatBRL(objetivo)}
+                    </p>
+                  </div>
+                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{ width: `${pct}%`, background: m.colorHex }}
                     />
-                  </p>
-                )}
-                <div className="mt-auto pt-3 text-[11px] text-muted-foreground">
-                  {metasAndamento.length} {metasAndamento.length === 1 ? t("metaProxima.ativaSing") : t("metaProxima.ativaPlur")}
-                </div>
-              </section>
-            </div>
-          );
-        })() : (
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-xs">
+                    <span className="num font-semibold" style={{ color: m.colorHex }}>
+                      {Math.round(pct)}%
+                    </span>
+                    <span className="num text-muted-foreground">
+                      {t("metaProxima.falta", { valor: formatBRL(restante) })}
+                    </span>
+                  </div>
+                  {bd.guardado > 0 && (
+                    <p className="mt-2 text-[11px] text-muted-foreground">
+                      <Trans
+                        i18nKey="metaProxima.incluiGuardado"
+                        t={t}
+                        values={{ valor: formatBRL(bd.guardado) }}
+                        components={{
+                          strong: <span className="num font-semibold text-foreground" />,
+                        }}
+                      />
+                    </p>
+                  )}
+                  <div className="mt-auto pt-3 text-[11px] text-muted-foreground">
+                    {metasAndamento.length}{" "}
+                    {metasAndamento.length === 1
+                      ? t("metaProxima.ativaSing")
+                      : t("metaProxima.ativaPlur")}
+                  </div>
+                </section>
+              </div>
+            );
+          })()
+        ) : (
           <div className="flex min-w-0">
             <Link
               to="/metas"
@@ -843,9 +821,7 @@ function Index() {
                           <p className="text-[9px] uppercase tracking-wide text-muted-foreground">
                             {t("kpi.total")}
                           </p>
-                          <p className="num text-sm font-semibold">
-                            {formatBRLCompact(total)}
-                          </p>
+                          <p className="num text-sm font-semibold">{formatBRLCompact(total)}</p>
                         </div>
                       </div>
                     </div>
@@ -892,11 +868,8 @@ function Index() {
               slot="lists"
             />
           </div>
-
-
         </>
       )}
-
 
       {/* ===== 8. Resumo, orçamento e limites detalhados (secundários) ===== */}
       <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
@@ -1026,7 +999,6 @@ function Index() {
       <AvisoTrialExpirandoBanner />
       <UpgradeCardsList max={4} />
       <AvisoWhatsAppBanner />
-
     </MobileShell>
   );
 }
@@ -1083,7 +1055,12 @@ function HeroGreeting({
         <svg viewBox="0 0 100 100" className="h-full w-full text-brand">
           <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="0.8" />
           <circle cx="50" cy="50" r="28" fill="none" stroke="currentColor" strokeWidth="0.8" />
-          <path d="M10 70 Q 35 30 60 55 T 95 30" fill="none" stroke="currentColor" strokeWidth="1.4" />
+          <path
+            d="M10 70 Q 35 30 60 55 T 95 30"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+          />
         </svg>
       </div>
       <div className="relative flex items-center justify-between gap-3">
@@ -1122,7 +1099,8 @@ function SaldoHeroCard({
 }) {
   const { t } = useTranslation("dashboard");
   const negativo = saldo < 0;
-  const pctReceita = entradas > 0 ? Math.min(100, Math.max(0, ((entradas - despesas) / entradas) * 100)) : 0;
+  const pctReceita =
+    entradas > 0 ? Math.min(100, Math.max(0, ((entradas - despesas) / entradas) * 100)) : 0;
   return (
     <div className="relative h-full overflow-hidden rounded-2xl border border-border bg-card p-3.5 shadow-elevated animate-rise sm:p-4">
       <div
@@ -1157,11 +1135,15 @@ function SaldoHeroCard({
         <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-card-elevated">
           <div
             className="h-full bg-success transition-all"
-            style={{ width: `${entradas + despesas === 0 ? 0 : (entradas / (entradas + despesas)) * 100}%` }}
+            style={{
+              width: `${entradas + despesas === 0 ? 0 : (entradas / (entradas + despesas)) * 100}%`,
+            }}
           />
           <div
             className="h-full bg-destructive/80 transition-all"
-            style={{ width: `${entradas + despesas === 0 ? 0 : (despesas / (entradas + despesas)) * 100}%` }}
+            style={{
+              width: `${entradas + despesas === 0 ? 0 : (despesas / (entradas + despesas)) * 100}%`,
+            }}
           />
         </div>
         <div className="mt-2 flex items-center justify-between text-[11px]">
@@ -1193,10 +1175,30 @@ function QuickActionsBar() {
     icon: React.ReactNode;
     tone: "primary" | "success" | "warning" | "brand";
   }> = [
-    { to: "/adicionar", label: t("quickActions.novoGasto"), icon: <Plus className="h-4 w-4" />, tone: "primary" },
-    { to: "/renda", label: t("quickActions.novaReceita"), icon: <ArrowUp className="h-4 w-4" />, tone: "success" },
-    { to: "/gasto-ai", label: t("quickActions.ia"), icon: <Sparkles className="h-4 w-4" />, tone: "brand" },
-    { to: "/cartoes", label: t("quickActions.importar"), icon: <ReceiptIcon className="h-4 w-4" />, tone: "warning" },
+    {
+      to: "/adicionar",
+      label: t("quickActions.novoGasto"),
+      icon: <Plus className="h-4 w-4" />,
+      tone: "primary",
+    },
+    {
+      to: "/renda",
+      label: t("quickActions.novaReceita"),
+      icon: <ArrowUp className="h-4 w-4" />,
+      tone: "success",
+    },
+    {
+      to: "/gasto-ai",
+      label: t("quickActions.ia"),
+      icon: <Sparkles className="h-4 w-4" />,
+      tone: "brand",
+    },
+    {
+      to: "/cartoes",
+      label: t("quickActions.importar"),
+      icon: <ReceiptIcon className="h-4 w-4" />,
+      tone: "warning",
+    },
   ];
   const toneRing: Record<string, string> = {
     primary: "bg-primary/15 text-primary",
@@ -1215,7 +1217,9 @@ function QuickActionsBar() {
           to={it.to}
           className="card-press hover-lift group flex min-h-[56px] items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 shadow-card transition-colors hover:border-brand/50 hover:bg-card-elevated"
         >
-          <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg", toneRing[it.tone])}>
+          <span
+            className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg", toneRing[it.tone])}
+          >
             {it.icon}
           </span>
           <span className="truncate text-[12px] font-semibold leading-tight text-foreground">
@@ -1259,22 +1263,16 @@ function KpiCard({
         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
           {label}
         </p>
-        <span className={cn("grid h-7 w-7 place-items-center rounded-lg", toneRing)}>
-          {icon}
-        </span>
+        <span className={cn("grid h-7 w-7 place-items-center rounded-lg", toneRing)}>{icon}</span>
       </div>
       <Money
         value={valueNum}
         className="num mt-2 block text-[18px] font-bold leading-tight tracking-tight sm:text-[19px]"
       />
-      {hint && (
-        <p className="mt-0.5 truncate text-[10.5px] text-muted-foreground">{hint}</p>
-      )}
+      {hint && <p className="mt-0.5 truncate text-[10.5px] text-muted-foreground">{hint}</p>}
     </div>
   );
 }
-
-
 
 function LimiteMensalCard({
   total,
@@ -1298,7 +1296,8 @@ function LimiteMensalCard({
             {t("limiteMensal.eyebrow")}
           </p>
           <p className="num mt-1 text-sm font-semibold">
-            {formatBRL(total)} <span className="font-normal text-muted-foreground">/ {formatBRL(limiteTotal)}</span>
+            {formatBRL(total)}{" "}
+            <span className="font-normal text-muted-foreground">/ {formatBRL(limiteTotal)}</span>
           </p>
         </div>
         <PieChartIcon className="h-4 w-4 shrink-0 text-brand" />
@@ -1384,10 +1383,11 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
         {ultimos.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-5 text-center animate-fade-in">
             <ReceiptIcon className="h-7 w-7 text-muted-foreground" />
-            <p className="mt-2 text-xs text-muted-foreground">
-              {t("atividade.vazio")}
-            </p>
-            <Link to="/adicionar" className="mt-2 text-xs font-medium underline hover:text-foreground transition-colors">
+            <p className="mt-2 text-xs text-muted-foreground">{t("atividade.vazio")}</p>
+            <Link
+              to="/adicionar"
+              className="mt-2 text-xs font-medium underline hover:text-foreground transition-colors"
+            >
               {t("atividade.primeiro")}
             </Link>
           </div>
@@ -1422,9 +1422,6 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
     </section>
   );
 }
-
-
-
 
 function WelcomeCard({
   to,
@@ -1527,10 +1524,7 @@ function ContasCard({
             </h2>
           </div>
         </div>
-        <Link
-          to="/contas-a-pagar"
-          className="text-xs text-muted-foreground hover:text-foreground"
-        >
+        <Link to="/contas-a-pagar" className="text-xs text-muted-foreground hover:text-foreground">
           {t("contas.ver")}
         </Link>
       </div>
@@ -1542,9 +1536,7 @@ function ContasCard({
           </p>
           <div className="mt-1 flex items-baseline justify-between gap-2">
             <p className="truncate text-sm font-semibold">{resumo.proxima.nome}</p>
-            <p className="num shrink-0 text-sm font-semibold">
-              {formatBRL(resumo.proxima.valor)}
-            </p>
+            <p className="num shrink-0 text-sm font-semibold">{formatBRL(resumo.proxima.valor)}</p>
           </div>
           <p
             className={cn(
@@ -1640,11 +1632,7 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
   if (resumo.totalRelevantes === 0) return null;
 
   const tone =
-    totalAtrasadas > 0
-      ? "destructive"
-      : totalHoje > 0 || totalAmanha > 0
-        ? "warning"
-        : "brand";
+    totalAtrasadas > 0 ? "destructive" : totalHoje > 0 || totalAmanha > 0 ? "warning" : "brand";
 
   return (
     <section
@@ -1677,25 +1665,33 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
             </p>
             <h2 className="text-sm font-semibold">
               {totalAtrasadas > 0
-                ? t(totalAtrasadas === 1 ? "alertasContas.atrasadasSing" : "alertasContas.atrasadasPlur", { count: totalAtrasadas })
+                ? t(
+                    totalAtrasadas === 1
+                      ? "alertasContas.atrasadasSing"
+                      : "alertasContas.atrasadasPlur",
+                    { count: totalAtrasadas },
+                  )
                 : totalHoje > 0
-                  ? t(totalHoje === 1 ? "alertasContas.hojeSing" : "alertasContas.hojePlur", { count: totalHoje })
+                  ? t(totalHoje === 1 ? "alertasContas.hojeSing" : "alertasContas.hojePlur", {
+                      count: totalHoje,
+                    })
                   : totalAmanha > 0
-                    ? t(totalAmanha === 1 ? "alertasContas.amanhaSing" : "alertasContas.amanhaPlur", { count: totalAmanha })
-                    : t(totalEm7 === 1 ? "alertasContas.proxSing" : "alertasContas.proxPlur", { count: totalEm7 })}
+                    ? t(
+                        totalAmanha === 1 ? "alertasContas.amanhaSing" : "alertasContas.amanhaPlur",
+                        { count: totalAmanha },
+                      )
+                    : t(totalEm7 === 1 ? "alertasContas.proxSing" : "alertasContas.proxPlur", {
+                        count: totalEm7,
+                      })}
             </h2>
           </div>
         </div>
-        <Link
-          to="/contas-a-pagar"
-          className="text-xs text-muted-foreground hover:text-foreground"
-        >
+        <Link to="/contas-a-pagar" className="text-xs text-muted-foreground hover:text-foreground">
           {t("contas.ver")}
         </Link>
       </div>
 
       <div className="mt-3 grid grid-cols-3 gap-1.5 sm:gap-2">
-
         <AlertaPill
           label={t("alertasContas.pillAtrasadas")}
           count={totalAtrasadas}
@@ -1723,9 +1719,7 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
           </p>
           <div className="mt-1 flex items-baseline justify-between gap-2">
             <p className="truncate text-sm font-semibold">{proxima.conta.nome}</p>
-            <p className="num shrink-0 text-sm font-semibold">
-              {formatBRL(proxima.conta.valor)}
-            </p>
+            <p className="num shrink-0 text-sm font-semibold">{formatBRL(proxima.conta.valor)}</p>
           </div>
           <p
             className={cn(
@@ -1803,8 +1797,12 @@ function OrcamentoCard({
   const { t } = useTranslation("dashboard");
   const linhas = useMemo(
     () =>
-      buildLinhasOrcamento(categorias, gastos, mes, ano, (catId) =>
-        getLimite(catId, mes, ano),
+      buildLinhasOrcamento(
+        categorias,
+        gastos,
+        mes,
+        ano,
+        (catId) => getLimite(catId, mes, ano),
         mesEfetivoGasto,
       ),
     [categorias, gastos, mes, ano],
@@ -1814,8 +1812,7 @@ function OrcamentoCard({
   if (!resumo.temOrcamento) return null;
 
   const { totalPlanejado, totalRealizado, pctGeral, qtdOk, qtdAtencao, qtdEstouro, top3 } = resumo;
-  const tone =
-    qtdEstouro > 0 ? "destructive" : qtdAtencao > 0 ? "warning" : "brand";
+  const tone = qtdEstouro > 0 ? "destructive" : qtdAtencao > 0 ? "warning" : "brand";
 
   return (
     <section
@@ -1974,8 +1971,12 @@ function ResumoMesCard({
   const { t } = useTranslation("dashboard");
   const linhas = useMemo(
     () =>
-      buildLinhasOrcamento(categorias, gastosConfirmados, mes, ano, (catId) =>
-        getLimite(catId, mes, ano),
+      buildLinhasOrcamento(
+        categorias,
+        gastosConfirmados,
+        mes,
+        ano,
+        (catId) => getLimite(catId, mes, ano),
         mesEfetivoGasto,
       ),
     [categorias, gastosConfirmados, mes, ano],
@@ -2010,7 +2011,10 @@ function ResumoMesCard({
     emoji = "🚨";
     titulo = t("resumoMes.negativo");
     mensagem = maiorCategoria
-      ? t("resumoMes.negativoMsg", { valor: formatBRL(Math.abs(saldo)), categoria: maiorCategoria.nome })
+      ? t("resumoMes.negativoMsg", {
+          valor: formatBRL(Math.abs(saldo)),
+          categoria: maiorCategoria.nome,
+        })
       : t("resumoMes.negativoMsgSemCat", { valor: formatBRL(Math.abs(saldo)) });
     toneCls = "border-destructive/30 bg-destructive/5";
     textCls = "text-destructive";
@@ -2035,7 +2039,10 @@ function ResumoMesCard({
   } else if (folgaPct >= 0.3 && totalEntradas > 0) {
     emoji = "🚀";
     titulo = t("resumoMes.otimo");
-    mensagem = t("resumoMes.otimoMsg", { valor: formatBRL(saldo), pct: Math.round(folgaPct * 100) });
+    mensagem = t("resumoMes.otimoMsg", {
+      valor: formatBRL(saldo),
+      pct: Math.round(folgaPct * 100),
+    });
     toneCls = "border-success/30 bg-success/5";
     textCls = "text-success";
   } else if (folgaPct >= 0.1 && totalEntradas > 0) {
@@ -2057,7 +2064,12 @@ function ResumoMesCard({
   }
 
   return (
-    <section className={cn("flex w-full flex-col rounded-3xl border p-4 transition-colors animate-rise", toneCls)}>
+    <section
+      className={cn(
+        "flex w-full flex-col rounded-3xl border p-4 transition-colors animate-rise",
+        toneCls,
+      )}
+    >
       <div className="flex items-start gap-3">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-card-elevated text-2xl">
           {emoji}
@@ -2074,15 +2086,28 @@ function ResumoMesCard({
       {!semDados && (
         <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-xl border border-border/60 bg-background/40 p-2.5">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("resumoMes.maiorCategoria")}</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              {t("resumoMes.maiorCategoria")}
+            </p>
             <p className="mt-0.5 truncate text-sm font-semibold">
               {maiorCategoria ? `${maiorCategoria.nome} · ${Math.round(maiorCategoria.pct)}%` : "—"}
             </p>
           </div>
           <div className="rounded-xl border border-border/60 bg-background/40 p-2.5">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("resumoMes.orcamento")}</p>
-            <p className={cn("mt-0.5 truncate text-sm font-semibold", critica ? "text-destructive" : "")}>
-              {critica ? t("resumoMes.estourou", { categoria: critica }) : estouro.length === 0 && linhas.length > 0 ? t("resumoMes.tudoControle") : t("resumoMes.semLimite")}
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              {t("resumoMes.orcamento")}
+            </p>
+            <p
+              className={cn(
+                "mt-0.5 truncate text-sm font-semibold",
+                critica ? "text-destructive" : "",
+              )}
+            >
+              {critica
+                ? t("resumoMes.estourou", { categoria: critica })
+                : estouro.length === 0 && linhas.length > 0
+                  ? t("resumoMes.tudoControle")
+                  : t("resumoMes.semLimite")}
             </p>
           </div>
         </div>
@@ -2098,8 +2123,6 @@ function ResumoMesCard({
     </section>
   );
 }
-
-
 
 function ContasAReceberCard() {
   const { t } = useTranslation("dashboard");
@@ -2191,9 +2214,7 @@ function ContasAReceberCard() {
           </p>
           <div className="mt-1 flex items-baseline justify-between gap-2">
             <p className="truncate text-sm font-semibold">{resumo.proxima.titulo}</p>
-            <p className="num shrink-0 text-sm font-semibold">
-              {formatBRL(resumo.proxima.valor)}
-            </p>
+            <p className="num shrink-0 text-sm font-semibold">{formatBRL(resumo.proxima.valor)}</p>
           </div>
           <p
             className={cn(
@@ -2212,13 +2233,21 @@ function ContasAReceberCard() {
 
       <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground">
         <span className="num">
-          {t(resumo.countAbertas === 1 ? "contasReceber.abertasSing" : "contasReceber.abertasPlur", { count: resumo.countAbertas })}
+          {t(
+            resumo.countAbertas === 1 ? "contasReceber.abertasSing" : "contasReceber.abertasPlur",
+            { count: resumo.countAbertas },
+          )}
         </span>
         {resumo.countAtrasadas > 0 && (
           <>
             <span>·</span>
             <span className="num text-destructive font-medium">
-              {t(resumo.countAtrasadas === 1 ? "contasReceber.atrasadasSing" : "contasReceber.atrasadasPlur", { count: resumo.countAtrasadas })}
+              {t(
+                resumo.countAtrasadas === 1
+                  ? "contasReceber.atrasadasSing"
+                  : "contasReceber.atrasadasPlur",
+                { count: resumo.countAtrasadas },
+              )}
             </span>
           </>
         )}
@@ -2230,14 +2259,15 @@ function ContasAReceberCard() {
 function AssinaturasMoedaEstrangeiraBanner() {
   const { t } = useTranslation("dashboard");
   const recs = useRecorrencias();
-  const ativas = recs.filter(
-    (r) => r.status === "ativa" && r.moeda && r.moeda !== "BRL",
-  );
+  const ativas = recs.filter((r) => r.status === "ativa" && r.moeda && r.moeda !== "BRL");
   if (ativas.length === 0) return null;
   const moedas = Array.from(new Set(ativas.map((r) => r.moeda)));
-  const moedaLabel = moedas.length === 1
-    ? moedas[0] === "USD" ? t("moedaEstrangeira.dolar") : t("moedaEstrangeira.euro")
-    : t("moedaEstrangeira.moedaEstrangeira");
+  const moedaLabel =
+    moedas.length === 1
+      ? moedas[0] === "USD"
+        ? t("moedaEstrangeira.dolar")
+        : t("moedaEstrangeira.euro")
+      : t("moedaEstrangeira.moedaEstrangeira");
   return (
     <Link
       to="/assinaturas"
@@ -2248,13 +2278,13 @@ function AssinaturasMoedaEstrangeiraBanner() {
       </span>
       <div className="min-w-0 text-sm">
         <p className="font-semibold">
-          {t(ativas.length === 1 ? "moedaEstrangeira.umaSing" : "moedaEstrangeira.umaPlur", { count: ativas.length, moeda: moedaLabel })}
+          {t(ativas.length === 1 ? "moedaEstrangeira.umaSing" : "moedaEstrangeira.umaPlur", {
+            count: ativas.length,
+            moeda: moedaLabel,
+          })}
         </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {t("moedaEstrangeira.subtitle")}
-        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{t("moedaEstrangeira.subtitle")}</p>
       </div>
     </Link>
   );
 }
-

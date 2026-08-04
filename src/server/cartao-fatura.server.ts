@@ -23,7 +23,6 @@
  */
 import * as _supa from "@/integrations/supabase/client.server";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 // Lazy live-binding: garante que mock.module() em testes seja
 // resolvido a cada chamada, sem snapshot no escopo de módulo.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,13 +56,24 @@ export type FaturaAtual = {
 export function nowInAppTz(): Date {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: APP_TZ,
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
     hour12: false,
   }).formatToParts(new Date());
   const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
   // Construímos um Date "wallclock" em SP — usado só para cálculos de dia.
-  return new Date(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return new Date(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour"),
+    get("minute"),
+    get("second"),
+  );
 }
 
 /** Espelha `faturaCorrente` do store. */
@@ -73,7 +83,10 @@ export function faturaCorrenteRef(diaFech: number, hoje: Date): { mes: number; a
   let m0 = hoje.getMonth();
   if (baseDay <= Math.max(1, diaFech)) {
     m0 -= 1;
-    if (m0 < 0) { m0 = 11; y -= 1; }
+    if (m0 < 0) {
+      m0 = 11;
+      y -= 1;
+    }
   }
   return { mes: m0 + 1, ano: y };
 }
@@ -99,7 +112,9 @@ export function proximoFechamentoData(diaFech: number, hoje: Date): Date | null 
 
 /** Espelha `proximoVencimentoFaturaAberta` do store. */
 export function proximoVencimentoFaturaAberta(
-  diaFech: number, diaVenc: number, hoje: Date,
+  diaFech: number,
+  diaVenc: number,
+  hoje: Date,
 ): Date | null {
   if (!diaVenc) return null;
   const fech = proximoFechamentoData(diaFech, hoje);
@@ -148,7 +163,8 @@ export async function findCartoesDoUsuarioByTerm(
     const b = norm(c.banco ?? "");
     if (!n && !b) return false;
     return (
-      n === t || b === t ||
+      n === t ||
+      b === t ||
       (n && (n.includes(t) || t.includes(n))) ||
       (b && (b.includes(t) || t.includes(b)))
     );
@@ -188,14 +204,16 @@ export async function getFaturaAtualPorCartao(
     .gte("data", fromIso)
     .lt("data", toIso);
 
-  const rows = Array.isArray(data) ? (data as Array<{
-    valor: number | string | null;
-    data: string;
-    cartao_id: string | null;
-    invoice_month: string | null;
-    forma_pagamento: string | null;
-    confirmado: boolean | null;
-  }>) : [];
+  const rows = Array.isArray(data)
+    ? (data as Array<{
+        valor: number | string | null;
+        data: string;
+        cartao_id: string | null;
+        invoice_month: string | null;
+        forma_pagamento: string | null;
+        confirmado: boolean | null;
+      }>)
+    : [];
 
   let total = 0;
   let qtd = 0;
@@ -302,19 +320,21 @@ export async function getItensFaturaAtualPorCartao(
     .gte("data", fromIso)
     .lt("data", toIso);
 
-  const rows = Array.isArray(data) ? (data as Array<{
-    id: string;
-    descricao: string | null;
-    estabelecimento: string | null;
-    valor: number | string | null;
-    data: string;
-    cartao_id: string | null;
-    invoice_month: string | null;
-    forma_pagamento: string | null;
-    confirmado: boolean | null;
-    parcela_atual: number | null;
-    total_parcelas: number | null;
-  }>) : [];
+  const rows = Array.isArray(data)
+    ? (data as Array<{
+        id: string;
+        descricao: string | null;
+        estabelecimento: string | null;
+        valor: number | string | null;
+        data: string;
+        cartao_id: string | null;
+        invoice_month: string | null;
+        forma_pagamento: string | null;
+        confirmado: boolean | null;
+        parcela_atual: number | null;
+        total_parcelas: number | null;
+      }>)
+    : [];
 
   const out: ItemFatura[] = [];
   for (const g of rows) {
@@ -336,8 +356,7 @@ export async function getItensFaturaAtualPorCartao(
     const pa = Number(g.parcela_atual);
     const tp = Number(g.total_parcelas);
     const parcelaConfiavel =
-      Number.isFinite(pa) && Number.isFinite(tp) &&
-      pa >= 1 && tp >= 2 && pa <= tp;
+      Number.isFinite(pa) && Number.isFinite(tp) && pa >= 1 && tp >= 2 && pa <= tp;
 
     out.push({
       id: String(g.id ?? ""),
@@ -376,9 +395,9 @@ export async function getResumoItensFaturaAtual(
 // =====================================================================
 
 /** Valida e parseia "YYYY-MM". Retorna null se inválido. */
-export function parseInvoiceMonth(ym: string | null | undefined):
-  | { mes: number; ano: number; ym: string }
-  | null {
+export function parseInvoiceMonth(
+  ym: string | null | undefined,
+): { mes: number; ano: number; ym: string } | null {
   if (!ym || typeof ym !== "string") return null;
   const m = ym.match(/^(\d{4})-(0[1-9]|1[0-2])$/);
   if (!m) return null;
@@ -577,11 +596,7 @@ async function loadParcelasDoUsuario(userId: string): Promise<ParcelaRow[]> {
  *   - parcela com invoice_month >= ciclo atual do cartão; OU
  *   - parcela sem invoice_month cuja data cai no ciclo atual ou depois.
  */
-function isParcelaEmAberto(
-  p: ParcelaRow,
-  cartao: CartaoRow,
-  hoje: Date,
-): boolean {
+function isParcelaEmAberto(p: ParcelaRow, cartao: CartaoRow, hoje: Date): boolean {
   const diaFech = Number(cartao.dia_fechamento ?? 1) || 1;
   const { mes, ano } = faturaCorrenteRef(diaFech, hoje);
   const curYm = ymOf(mes, ano);
@@ -596,7 +611,6 @@ function isParcelaEmAberto(
   const d = new Date(p.data + "T00:00:00");
   const fimAtual = cicloFatura(diaFech, mes, ano).fim;
   return d > fimAtual;
-
 }
 
 function buildCompraParcelada(
@@ -706,4 +720,3 @@ export async function findCompraParceladaByTerm(
     return d === t || d.includes(t) || t.includes(d);
   });
 }
-

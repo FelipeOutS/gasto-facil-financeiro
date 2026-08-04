@@ -59,10 +59,7 @@ import {
   todayISOInAppTz,
   type ContaVencimentoRow,
 } from "./contas-vencimento.server";
-import {
-  recordFavorecido,
-  getLastFavorecido,
-} from "./whatsapp-short-context.server";
+import { recordFavorecido, getLastFavorecido } from "./whatsapp-short-context.server";
 import {
   processarBaixaConta,
   type WhatsAppBaixaContaDeps,
@@ -135,7 +132,6 @@ export type PagarPessoaSession = {
   mensagemOriginal: string;
 };
 
-
 export function isPagarPessoaSession(s: unknown): s is PagarPessoaSession {
   if (!s || typeof s !== "object") return false;
   return (s as { kind?: unknown }).kind === "pagar_pessoa";
@@ -147,18 +143,29 @@ export function isPagarPessoaSession(s: unknown): s is PagarPessoaSession {
 
 export type WhatsAppPagarPessoaDeps = {
   gravarSessao: (
-    userId: string, telefone: string, externalId: string | null,
-    texto: string, recebidaEm: string, status: string,
+    userId: string,
+    telefone: string,
+    externalId: string | null,
+    texto: string,
+    recebidaEm: string,
+    status: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    session: any, resposta: string, gastoId?: string,
+    session: any,
+    resposta: string,
+    gastoId?: string,
   ) => Promise<SaveSessionResult>;
   atualizarSessao: (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    id: string, status: string, session: any, resposta: string, gastoId?: string,
+    id: string,
+    status: string,
+    session: any,
+    resposta: string,
+    gastoId?: string,
   ) => Promise<UpdateSessionResult>;
   fecharSessoesAnteriores: (
-    userId: string, telefone: string,
-    motivo: "salva" | "cancelada" | "expirada", gastoId?: string,
+    userId: string,
+    telefone: string,
+    motivo: "salva" | "cancelada" | "expirada",
+    gastoId?: string,
   ) => Promise<void>;
   baixaContaDeps: WhatsAppBaixaContaDeps;
 };
@@ -203,18 +210,10 @@ function redigirPixKeyDoTexto(texto: string, pixKey: string): string {
     candidates.add(digits);
     // Variantes formatadas: (11) 99999-8888 e 11 99999-8888.
     if (digits.length === 11) {
-      candidates.add(
-        `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`,
-      );
-      candidates.add(
-        `${digits.slice(0, 2)} ${digits.slice(2, 7)}-${digits.slice(7)}`,
-      );
-      candidates.add(
-        `+55${digits}`,
-      );
-      candidates.add(
-        `+55 ${digits.slice(0, 2)} ${digits.slice(2, 7)}-${digits.slice(7)}`,
-      );
+      candidates.add(`(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`);
+      candidates.add(`${digits.slice(0, 2)} ${digits.slice(2, 7)}-${digits.slice(7)}`);
+      candidates.add(`+55${digits}`);
+      candidates.add(`+55 ${digits.slice(0, 2)} ${digits.slice(2, 7)}-${digits.slice(7)}`);
     }
   }
   for (const c of candidates) {
@@ -224,7 +223,6 @@ function redigirPixKeyDoTexto(texto: string, pixKey: string): string {
   }
   return out;
 }
-
 
 function logEvent(
   stage: string,
@@ -245,9 +243,7 @@ function todayISO(): string {
 
 const OUTROS_LEGACY = "outros";
 
-async function resolveOutrosCategoriaId(
-  userId: string,
-): Promise<string | null> {
+async function resolveOutrosCategoriaId(userId: string): Promise<string | null> {
   const { data } = await supabaseAdmin
     .from("categorias")
     .select("id, legacy_id, nome")
@@ -255,8 +251,7 @@ async function resolveOutrosCategoriaId(
   if (!Array.isArray(data) || data.length === 0) return null;
   const outros = data.find(
     (c: { legacy_id?: string | null; nome?: string }) =>
-      c.legacy_id === OUTROS_LEGACY ||
-      (c.nome ?? "").toLowerCase().trim() === "outros",
+      c.legacy_id === OUTROS_LEGACY || (c.nome ?? "").toLowerCase().trim() === "outros",
   );
   return (outros as { id: string } | undefined)?.id ?? null;
 }
@@ -315,9 +310,7 @@ function parseNomeIsolado(texto: string): string | null {
 
 const T = {
   perguntarValor(nome: string | null): string {
-    return nome
-      ? `Quanto foi o pagamento para ${nome}?`
-      : `Quanto foi o pagamento?`;
+    return nome ? `Quanto foi o pagamento para ${nome}?` : `Quanto foi o pagamento?`;
   },
   perguntarDescricao(): string {
     return `Qual foi o motivo? (ou responda "pular")`;
@@ -325,11 +318,7 @@ const T = {
   perguntarFavorecido(): string {
     return `Quem você pagou?`;
   },
-  confirmarContaUnica(
-    nome: string,
-    conta: ContaVencimentoRow,
-    valorBate: boolean,
-  ): string {
+  confirmarContaUnica(nome: string, conta: ContaVencimentoRow, valorBate: boolean): string {
     const cab = valorBate
       ? `Encontrei uma conta pendente para ${nome} com esse mesmo valor:`
       : `Encontrei uma conta pendente para ${nome}:`;
@@ -347,13 +336,9 @@ const T = {
       `3. Cancelar`,
     ].join("\n");
   },
-  escolherEntreContas(
-    nome: string,
-    contas: ContaVencimentoRow[],
-  ): string {
+  escolherEntreContas(nome: string, contas: ContaVencimentoRow[]): string {
     const linhas = contas.map(
-      (c, i) =>
-        `${i + 1}. ${c.nome} — ${formatBRL(Math.round(c.valor * 100))}`,
+      (c, i) => `${i + 1}. ${c.nome} — ${formatBRL(Math.round(c.valor * 100))}`,
     );
     return [
       `Encontrei mais de uma conta pendente para ${nome}. Qual delas você pagou?`,
@@ -363,11 +348,7 @@ const T = {
       `${contas.length + 2}. Cancelar`,
     ].join("\n");
   },
-  gastoRegistrado(args: {
-    valor: number;
-    nome: string;
-    descricao: string | null;
-  }): string {
+  gastoRegistrado(args: { valor: number; nome: string; descricao: string | null }): string {
     const desc = args.descricao ? ` — ${args.descricao}` : "";
     return [
       `Anotado! ${formatBRL(args.valor)} pago para ${args.nome}${desc}. ✅`,
@@ -439,10 +420,7 @@ const T = {
       `Favorecido salvo. Nas próximas vezes basta dizer o nome.`,
     ].join("\n");
   },
-  pixInlineDesambig(args: {
-    nomeNovo: string;
-    existente: FavorecidoRow;
-  }): string {
+  pixInlineDesambig(args: { nomeNovo: string; existente: FavorecidoRow }): string {
     const existType = args.existente.pix_key_type ?? "desconhecida";
     const existMasked = args.existente.pix_key
       ? maskPixKey(args.existente.pix_key, existType as PixKeyType)
@@ -573,23 +551,18 @@ export async function persistirGastoComClaim(args: {
   if (!gateOutcome.allowed) {
     const resposta = financialQuotaBlockedReply(gateOutcome);
     if (claimedSessionId) {
-      await deps.atualizarSessao(
-        claimedSessionId, "falha", session, resposta,
-      );
+      await deps.atualizarSessao(claimedSessionId, "falha", session, resposta);
     }
     logEvent("quota_blocked", "fail", { reason: gateOutcome.reason });
     return { kind: "quota_blocked", resposta };
   }
-
 
   // Insere o gasto.
   const catId = await resolveOutrosCategoriaId(userId);
   if (!catId) {
     logEvent("categoria_outros_missing", "fail");
     if (claimedSessionId) {
-      await deps.atualizarSessao(
-        claimedSessionId, "falha", session, T.erroGenerico(),
-      );
+      await deps.atualizarSessao(claimedSessionId, "falha", session, T.erroGenerico());
     }
     return { kind: "error" };
   }
@@ -600,7 +573,10 @@ export async function persistirGastoComClaim(args: {
   const mo = hoje.getMonth() + 1;
   const descricaoFinal = session.descricao ?? `Pagamento para ${nome}`;
   const obs =
-    `WhatsApp: pagamento para ${nome}${session.descricao ? ` — ${session.descricao}` : ""}`.slice(0, 240);
+    `WhatsApp: pagamento para ${nome}${session.descricao ? ` — ${session.descricao}` : ""}`.slice(
+      0,
+      240,
+    );
 
   const { data: row, error } = await supabaseAdmin
     .from("gastos")
@@ -628,9 +604,7 @@ export async function persistirGastoComClaim(args: {
   if (error || !row) {
     logEvent("insert_failed", "fail");
     if (claimedSessionId) {
-      await deps.atualizarSessao(
-        claimedSessionId, "falha", session, T.erroGenerico(),
-      );
+      await deps.atualizarSessao(claimedSessionId, "falha", session, T.erroGenerico());
     }
     return { kind: "error" };
   }
@@ -682,9 +656,14 @@ async function reusarBaixaContaPaga(args: {
     dataPagamento: todayISO(),
   };
   const claim = await deps.gravarSessao(
-    userId, msg.telefone, null, texto, recebidaEm,
+    userId,
+    msg.telefone,
+    null,
+    texto,
+    recebidaEm,
     "conta_pagamento_aguardando_confirmacao",
-    baixaSession, "",
+    baixaSession,
+    "",
   );
   if (!claim.ok || !claim.sessionId) {
     logEvent("baixa_reuse_session_fail", "fail");
@@ -740,13 +719,18 @@ export async function processarPagarPessoaFlow(args: {
     }
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "cancelada", sessao.session, T.cancelado(),
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "cancelada",
+      sessao.session,
+      T.cancelado(),
     );
     logEvent("cancelled", "ok");
     return { status: "cancelada", resposta: T.cancelado() };
   }
-
 
   // -----------------------------------------------------------
   // Entrada sem sessão (a partir do roteador, após detectPagarPessoaIntent
@@ -764,31 +748,75 @@ export async function processarPagarPessoaFlow(args: {
   switch (sessao.status) {
     case "pp_aguardando_favorecido":
       return await passoFavorecido({
-        userId, msg, texto, recebidaEm, session, sessao, deps,
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessao,
+        deps,
       });
     case "pp_aguardando_valor":
       return await passoValor({
-        userId, msg, texto, recebidaEm, session, sessao, deps,
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessao,
+        deps,
       });
     case "pp_aguardando_descricao":
       return await passoDescricao({
-        userId, msg, texto, recebidaEm, session, sessao, deps,
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessao,
+        deps,
       });
     case "pp_aguardando_confirmar_conta":
       return await passoConfirmarContaUnica({
-        userId, msg, texto, recebidaEm, session, sessao, decisao, deps,
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessao,
+        decisao,
+        deps,
       });
     case "pp_aguardando_escolha_conta":
       return await passoEscolherConta({
-        userId, msg, texto, recebidaEm, session, sessao, deps,
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessao,
+        deps,
       });
     case "pp_aguardando_confirmar_pix_inline":
       return await passoConfirmarPixInline({
-        userId, msg, texto, recebidaEm, session, sessao, decisao, deps,
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessao,
+        decisao,
+        deps,
       });
     case "pp_aguardando_desambig_fav_pix":
       return await passoDesambigFavPix({
-        userId, msg, texto, recebidaEm, session, sessao, deps,
+        userId,
+        msg,
+        texto,
+        recebidaEm,
+        session,
+        sessao,
+        deps,
       });
     case "pp_persistindo":
       // Mesmo external_id em corrida — devolve resposta neutra.
@@ -840,7 +868,9 @@ async function entrarFluxo(args: {
   }
   // Se for só "paguei" puro, valor isolado pode pegar números do texto
   // que NÃO são preço — descartamos se a frase é "paguei" pelado.
-  if (/^\s*(paguei|ja\s+paguei|j[aá]\s+paguei|acabei\s+de\s+pagar|quitei)\s*[.!?]*\s*$/i.test(texto)) {
+  if (
+    /^\s*(paguei|ja\s+paguei|j[aá]\s+paguei|acabei\s+de\s+pagar|quitei)\s*[.!?]*\s*$/i.test(texto)
+  ) {
     valor = null;
   }
 
@@ -866,8 +896,14 @@ async function entrarFluxo(args: {
       mensagemOriginal: texto,
     };
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "pp_aguardando_favorecido", session, T.perguntarFavorecido(),
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "pp_aguardando_favorecido",
+      session,
+      T.perguntarFavorecido(),
     );
     logEvent("ask_favorecido", "ok");
     return { status: "pendente", resposta: T.perguntarFavorecido() };
@@ -875,8 +911,7 @@ async function entrarFluxo(args: {
 
   // Tem favorecido. Resolve favorecidoId quando possível.
   const matches = await findFavorecidosByNome(userId, nome);
-  const favorecidoUnico: FavorecidoRow | null =
-    matches.length === 1 ? matches[0] : null;
+  const favorecidoUnico: FavorecidoRow | null = matches.length === 1 ? matches[0] : null;
   const favorecidoId = favorecidoUnico?.id ?? null;
 
   // Sem valor → estado valor.
@@ -898,8 +933,14 @@ async function entrarFluxo(args: {
       mensagemOriginal: texto,
     };
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "pp_aguardando_valor", session, T.perguntarValor(nome),
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "pp_aguardando_valor",
+      session,
+      T.perguntarValor(nome),
     );
     logEvent("ask_valor", "ok");
     return { status: "pendente", resposta: T.perguntarValor(nome) };
@@ -1006,8 +1047,14 @@ async function abrirPreviaPixInlineDeFavorecido(args: {
     reusandoFavorecido: true,
   });
   await deps.gravarSessao(
-    userId, msg.telefone, msg.external_id, texto, recebidaEm,
-    "pp_aguardando_confirmar_pix_inline", session, resposta,
+    userId,
+    msg.telefone,
+    msg.external_id,
+    texto,
+    recebidaEm,
+    "pp_aguardando_confirmar_pix_inline",
+    session,
+    resposta,
   );
   logEvent("pix_inline_preview_from_favorecido", "ok", {
     favorecidoMatched: true,
@@ -1040,7 +1087,12 @@ async function decidirContasOuRegistrar(args: {
 
   if (contas.length === 0) {
     return await criarGastoAvulso({
-      userId, msg, texto, recebidaEm, session, deps,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      session,
+      deps,
     });
   }
 
@@ -1055,8 +1107,14 @@ async function decidirContasOuRegistrar(args: {
     };
     const resposta = T.confirmarContaUnica(nome, conta, valorBate);
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "pp_aguardando_confirmar_conta", newSession, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "pp_aguardando_confirmar_conta",
+      newSession,
+      resposta,
     );
     logEvent("ask_confirm_single", "ok", { valorBate });
     return { status: "pendente", resposta };
@@ -1072,8 +1130,14 @@ async function decidirContasOuRegistrar(args: {
   };
   const resposta = T.escolherEntreContas(nome, top);
   await deps.gravarSessao(
-    userId, msg.telefone, msg.external_id, texto, recebidaEm,
-    "pp_aguardando_escolha_conta", newSession, resposta,
+    userId,
+    msg.telefone,
+    msg.external_id,
+    texto,
+    recebidaEm,
+    "pp_aguardando_escolha_conta",
+    newSession,
+    resposta,
   );
   logEvent("ask_choose_payable", "ok", { candidatesCount: top.length });
   return { status: "pendente", resposta };
@@ -1142,9 +1206,7 @@ async function passoFavorecido(args: {
   const nome = parseNomeIsolado(texto);
   if (!nome) {
     const resposta = `Não entendi o nome. ${T.perguntarFavorecido()}`;
-    await deps.atualizarSessao(
-      sessao.id, "pp_aguardando_favorecido", session, resposta,
-    );
+    await deps.atualizarSessao(sessao.id, "pp_aguardando_favorecido", session, resposta);
     return { status: "pendente", resposta };
   }
   const matches = await findFavorecidosByNome(userId, nome);
@@ -1158,12 +1220,15 @@ async function passoFavorecido(args: {
   if (next.valorCentavos && next.valorCentavos > 0) {
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
     return await decidirContasOuRegistrar({
-      userId, msg, texto, recebidaEm, session: next, deps,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      session: next,
+      deps,
     });
   }
-  await deps.atualizarSessao(
-    sessao.id, "pp_aguardando_valor", next, T.perguntarValor(nome),
-  );
+  await deps.atualizarSessao(sessao.id, "pp_aguardando_valor", next, T.perguntarValor(nome));
   return { status: "pendente", resposta: T.perguntarValor(nome) };
 }
 
@@ -1180,16 +1245,12 @@ async function passoValor(args: {
   const valor = parseValorIsolado(texto);
   if (!valor) {
     const resposta = `Não entendi o valor. Por exemplo: 50 ou R$ 50,00.`;
-    await deps.atualizarSessao(
-      sessao.id, "pp_aguardando_valor", session, resposta,
-    );
+    await deps.atualizarSessao(sessao.id, "pp_aguardando_valor", session, resposta);
     return { status: "pendente", resposta };
   }
   const next: PagarPessoaSession = { ...session, valorCentavos: valor };
   // Pergunta descrição.
-  await deps.atualizarSessao(
-    sessao.id, "pp_aguardando_descricao", next, T.perguntarDescricao(),
-  );
+  await deps.atualizarSessao(sessao.id, "pp_aguardando_descricao", next, T.perguntarDescricao());
   return { status: "pendente", resposta: T.perguntarDescricao() };
 }
 
@@ -1213,7 +1274,12 @@ async function passoDescricao(args: {
   // pp_aguardando_confirmar_conta ou persistir o gasto direto).
   await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
   return await decidirContasOuRegistrar({
-    userId, msg, texto, recebidaEm, session: next, deps,
+    userId,
+    msg,
+    texto,
+    recebidaEm,
+    session: next,
+    deps,
   });
 }
 
@@ -1246,21 +1312,29 @@ async function passoConfirmarContaUnica(args: {
     // Fecha a sessão pp_* atual e delega para reuso da baixa.
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
     return await reusarBaixaContaPaga({
-      userId, msg, texto, recebidaEm, contaId: session.contaId, deps,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      contaId: session.contaId,
+      deps,
     });
   }
   if (escolha === 2) {
     // Registrar como gasto novo (avulso, com claim).
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
     return await criarGastoAvulso({
-      userId, msg, texto, recebidaEm, session, deps,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      session,
+      deps,
     });
   }
   // Não entendi.
   const resposta = T.naoEntendiNumero(3);
-  await deps.atualizarSessao(
-    sessao.id, "pp_aguardando_confirmar_conta", session, resposta,
-  );
+  await deps.atualizarSessao(sessao.id, "pp_aguardando_confirmar_conta", session, resposta);
   return { status: "pendente", resposta };
 }
 
@@ -1288,20 +1362,28 @@ async function passoEscolherConta(args: {
   if (escolha === optNovo || /^novo|^registrar/i.test(texto)) {
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
     return await criarGastoAvulso({
-      userId, msg, texto, recebidaEm, session, deps,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      session,
+      deps,
     });
   }
   if (escolha >= 1 && escolha <= maxConta) {
     const contaId = ids[escolha - 1];
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
     return await reusarBaixaContaPaga({
-      userId, msg, texto, recebidaEm, contaId, deps,
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      contaId,
+      deps,
     });
   }
   const resposta = T.naoEntendiNumero(optCancel);
-  await deps.atualizarSessao(
-    sessao.id, "pp_aguardando_escolha_conta", session, resposta,
-  );
+  await deps.atualizarSessao(sessao.id, "pp_aguardando_escolha_conta", session, resposta);
   return { status: "pendente", resposta };
 }
 
@@ -1358,9 +1440,7 @@ export async function processarPixInlineEntry(args: {
     return { status: "erro", resposta: T.erroGenerico() };
   }
 
-  const buildSession = (
-    over: Partial<PagarPessoaSession>,
-  ): PagarPessoaSession => ({
+  const buildSession = (over: Partial<PagarPessoaSession>): PagarPessoaSession => ({
     kind: "pagar_pessoa",
     nome: parsed.nome,
     valorCentavos: parsed.valorCentavos,
@@ -1397,8 +1477,14 @@ export async function processarPixInlineEntry(args: {
       reusandoFavorecido: true,
     });
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "pp_aguardando_confirmar_pix_inline", session, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "pp_aguardando_confirmar_pix_inline",
+      session,
+      resposta,
     );
     logEvent("pix_inline_preview", "ok", {
       favorecidoMatched: true,
@@ -1411,8 +1497,7 @@ export async function processarPixInlineEntry(args: {
   // 2) Checa conflito por nome (mesmo nome, outra chave).
   const byName = await findFavorecidosByNome(userId, parsed.nome);
   const conflitoNome = byName.find((f) => {
-    if ((f.nome ?? "").trim().toLowerCase() !==
-      parsed.nome.trim().toLowerCase()) return false;
+    if ((f.nome ?? "").trim().toLowerCase() !== parsed.nome.trim().toLowerCase()) return false;
     if (!f.pix_key) return false;
     // Compara via hash — não guarda plaintext do favorecido no scope.
     return hashPixKey(f.pix_key) !== keyHashLocal;
@@ -1427,8 +1512,14 @@ export async function processarPixInlineEntry(args: {
       existente: conflitoNome,
     });
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "pp_aguardando_desambig_fav_pix", session, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "pp_aguardando_desambig_fav_pix",
+      session,
+      resposta,
     );
     logEvent("pix_inline_disambig", "conflict", {
       pixKeyType: parsed.pixKeyType,
@@ -1446,8 +1537,14 @@ export async function processarPixInlineEntry(args: {
     reusandoFavorecido: false,
   });
   await deps.gravarSessao(
-    userId, msg.telefone, msg.external_id, texto, recebidaEm,
-    "pp_aguardando_confirmar_pix_inline", session, resposta,
+    userId,
+    msg.telefone,
+    msg.external_id,
+    texto,
+    recebidaEm,
+    "pp_aguardando_confirmar_pix_inline",
+    session,
+    resposta,
   );
   logEvent("pix_inline_preview", "ok", {
     favorecidoMatched: false,
@@ -1475,8 +1572,7 @@ async function passoConfirmarPixInline(args: {
   const { userId, msg, texto, recebidaEm, session, sessao, decisao, deps } = args;
   const t = texto.trim().toLowerCase();
   const yes =
-    decisao === "confirm" ||
-    /^(1|sim|s|confirmo|confirmar|ok|pode\s+registrar)\b/i.test(t);
+    decisao === "confirm" || /^(1|sim|s|confirmo|confirmar|ok|pode\s+registrar)\b/i.test(t);
   const no =
     decisao === "cancel" ||
     /^(2|3|nao|não|n|cancelar|cancela|descarta|nao\s+quero|não\s+quero)\b/i.test(t);
@@ -1491,11 +1587,8 @@ async function passoConfirmarPixInline(args: {
     return { status: "cancelada", resposta: T.cancelado() };
   }
   if (!yes) {
-    const resposta =
-      `Responda "sim" para registrar o pagamento ou "cancelar" para descartar.`;
-    await deps.atualizarSessao(
-      sessao.id, "pp_aguardando_confirmar_pix_inline", session, resposta,
-    );
+    const resposta = `Responda "sim" para registrar o pagamento ou "cancelar" para descartar.`;
+    await deps.atualizarSessao(sessao.id, "pp_aguardando_confirmar_pix_inline", session, resposta);
     return { status: "pendente", resposta };
   }
 
@@ -1505,10 +1598,11 @@ async function passoConfirmarPixInline(args: {
   // Lê plaintext do secret-store (consumo apaga a linha).
   let pixKey = "";
   if (session.pendingPixSecretId) {
-    pixKey = (await consumePendingPixKey({
-      userId,
-      secretId: session.pendingPixSecretId,
-    })) ?? "";
+    pixKey =
+      (await consumePendingPixKey({
+        userId,
+        secretId: session.pendingPixSecretId,
+      })) ?? "";
   }
   if (!pixKey || pixKeyType === "desconhecida") {
     logEvent("pix_inline_secret_missing", "fail");
@@ -1516,8 +1610,7 @@ async function passoConfirmarPixInline(args: {
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
     return {
       status: "erro",
-      resposta:
-        `A prévia expirou por segurança. Reenvie o Pix para eu registrar novamente.`,
+      resposta: `A prévia expirou por segurança. Reenvie o Pix para eu registrar novamente.`,
     };
   }
 
@@ -1572,9 +1665,7 @@ async function passoConfirmarPixInline(args: {
     // WA-Q-PixInline-Terminal — a sessão da prévia (pp_aguardando_confirmar_pix_inline)
     // é uma linha diferente da mensagem "sim". Fecha explicitamente para
     // não deixar estado pendente residual.
-    await deps.atualizarSessao(
-      sessao.id, "salva", sessionComFav, resposta, result.gastoId,
-    );
+    await deps.atualizarSessao(sessao.id, "salva", sessionComFav, resposta, result.gastoId);
     return { status: "salva", gastoId: result.gastoId, resposta };
   }
   if (result.kind === "race_duplicate") {
@@ -1588,16 +1679,12 @@ async function passoConfirmarPixInline(args: {
     return { status: "duplicada", resposta: T.ainda_processando() };
   }
   if (result.kind === "quota_blocked") {
-    await deps.atualizarSessao(
-      sessao.id, "falha", sessionComFav, result.resposta,
-    );
+    await deps.atualizarSessao(sessao.id, "falha", sessionComFav, result.resposta);
     return { status: "erro", resposta: result.resposta };
   }
   // WA-Q-PixInline-Terminal — erro de persistência: fecha em terminal
   // de falha em vez de deixar a prévia pendurada.
-  await deps.atualizarSessao(
-    sessao.id, "falha", sessionComFav, T.erroGenerico(),
-  );
+  await deps.atualizarSessao(sessao.id, "falha", sessionComFav, T.erroGenerico());
   return { status: "erro", resposta: T.erroGenerico() };
 }
 
@@ -1616,10 +1703,13 @@ async function passoDesambigFavPix(args: {
 }): Promise<ProcessOutcome> {
   const { userId, msg, texto, recebidaEm, session, sessao, deps } = args;
   const t = texto.trim().toLowerCase();
-  const escolha =
-    /^1\b|atualizar/i.test(t) ? 1 :
-    /^2\b|novo|separado/i.test(t) ? 2 :
-    /^3\b|cancelar/i.test(t) ? 3 : 0;
+  const escolha = /^1\b|atualizar/i.test(t)
+    ? 1
+    : /^2\b|novo|separado/i.test(t)
+      ? 2
+      : /^3\b|cancelar/i.test(t)
+        ? 3
+        : 0;
 
   if (escolha === 3) {
     if (session.pendingPixSecretId) {
@@ -1630,9 +1720,7 @@ async function passoDesambigFavPix(args: {
   }
   if (escolha === 0) {
     const resposta = T.naoEntendiNumero(3);
-    await deps.atualizarSessao(
-      sessao.id, "pp_aguardando_desambig_fav_pix", session, resposta,
-    );
+    await deps.atualizarSessao(sessao.id, "pp_aguardando_desambig_fav_pix", session, resposta);
     return { status: "pendente", resposta };
   }
 
@@ -1644,23 +1732,21 @@ async function passoDesambigFavPix(args: {
     // rodar o "sim" depois). Faz peek: lê e re-grava.
     let pixKey = "";
     if (session.pendingPixSecretId) {
-      pixKey = (await consumePendingPixKey({
-        userId,
-        secretId: session.pendingPixSecretId,
-      })) ?? "";
+      pixKey =
+        (await consumePendingPixKey({
+          userId,
+          secretId: session.pendingPixSecretId,
+        })) ?? "";
     }
     if (!pixKey || pixKeyType === "desconhecida") {
       logEvent("pix_inline_secret_missing", "fail");
       await deps.fecharSessoesAnteriores(userId, msg.telefone, "expirada");
       return {
         status: "erro",
-        resposta:
-          `A prévia expirou por segurança. Reenvie o Pix para eu registrar novamente.`,
+        resposta: `A prévia expirou por segurança. Reenvie o Pix para eu registrar novamente.`,
       };
     }
-    const ok = await updateFavorecidoPix(
-      userId, session.favorecidoId, pixKey, pixKeyType,
-    );
+    const ok = await updateFavorecidoPix(userId, session.favorecidoId, pixKey, pixKeyType);
     if (!ok) {
       logEvent("pix_inline_update_fail", "fail");
       return { status: "erro", resposta: T.erroGenerico() };
@@ -1684,9 +1770,7 @@ async function passoDesambigFavPix(args: {
       pixKeyMasked,
       reusandoFavorecido: true,
     });
-    await deps.atualizarSessao(
-      sessao.id, "pp_aguardando_confirmar_pix_inline", next, resposta,
-    );
+    await deps.atualizarSessao(sessao.id, "pp_aguardando_confirmar_pix_inline", next, resposta);
     return { status: "pendente", resposta };
   }
 
@@ -1699,10 +1783,6 @@ async function passoDesambigFavPix(args: {
     pixKeyMasked,
     reusandoFavorecido: false,
   });
-  await deps.atualizarSessao(
-    sessao.id, "pp_aguardando_confirmar_pix_inline", next, resposta,
-  );
+  await deps.atualizarSessao(sessao.id, "pp_aguardando_confirmar_pix_inline", next, resposta);
   return { status: "pendente", resposta };
 }
-
-

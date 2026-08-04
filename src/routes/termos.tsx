@@ -13,8 +13,14 @@ export const Route = createFileRoute("/termos")({
         { property: "og:title", content: t("termos.metaTitle") },
         { property: "og:description", content: t("termos.ogDesc") },
         { property: "og:url", content: "https://gastointeligente.com.br/termos" },
-        { property: "og:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
-        { name: "twitter:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
+        {
+          property: "og:image",
+          content: "https://gastointeligente.com.br/og-gasto-inteligente.png",
+        },
+        {
+          name: "twitter:image",
+          content: "https://gastointeligente.com.br/og-gasto-inteligente.png",
+        },
       ],
       links: [{ rel: "canonical", href: "https://gastointeligente.com.br/termos" }],
     };

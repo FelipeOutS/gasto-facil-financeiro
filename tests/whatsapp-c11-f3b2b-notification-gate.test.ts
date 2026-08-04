@@ -107,8 +107,7 @@ function makeDeps(a: DepsArgs = {}) {
       a.entSpy?.();
       return a.entitlement ?? ent();
     },
-    evaluateRollout: async () =>
-      a.rollout ?? ({ allowed: true, reason: null } as RolloutDecision),
+    evaluateRollout: async () => a.rollout ?? ({ allowed: true, reason: null } as RolloutDecision),
     getUsageSnapshot: async () => {
       a.snapSpy?.();
       return a.snapshot === undefined ? snap() : a.snapshot;
@@ -237,8 +236,13 @@ test("ciclo inválido bloqueia", async () => {
     { userId: USER },
     {
       ...makeDeps({
-        planRow: { plano: "pessoal_premium", status: "ativa",
-          current_period_start: null, current_period_end: null, access_until: null },
+        planRow: {
+          plano: "pessoal_premium",
+          status: "ativa",
+          current_period_start: null,
+          current_period_end: null,
+          access_until: null,
+        },
       }),
       // Sobrescrevemos "now" para forçar calendar_month válido; se o
       // resolver retornasse invalid seria o bloqueio; aqui garantimos
@@ -294,10 +298,7 @@ test("daily outbound esgotado → bloqueada", async () => {
 });
 
 test("snapshot RPC falha (null) → capacity_read_failed (fail-closed)", async () => {
-  const out = await canCreateNotificationForUser(
-    { userId: USER },
-    makeDeps({ snapshot: null }),
-  );
+  const out = await canCreateNotificationForUser({ userId: USER }, makeDeps({ snapshot: null }));
   expect(out.allowed).toBe(false);
   expect(out.reason).toBe("capacity_read_failed");
 });

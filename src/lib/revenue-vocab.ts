@@ -33,10 +33,7 @@ const MISSING = "__rev_missing__";
  * na chave original. Compatível com `<Trans t={t} />`, count,
  * interpolation e demais opções do i18next.
  */
-export function makeRevenueT<T extends TFunction<any, any>>(
-  t: T,
-  suffix: RevenueSuffix,
-): T {
+export function makeRevenueT<T extends TFunction<any, any>>(t: T, suffix: RevenueSuffix): T {
   if (!suffix) return t;
   const wrapper = ((key: string, opts?: Record<string, unknown>) => {
     const variant = (t as unknown as (k: string, o?: Record<string, unknown>) => string)(

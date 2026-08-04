@@ -88,7 +88,9 @@ function PrecosPage() {
       setLoading(true);
       try {
         const { data, error } = await (supabase.from("community_market_prices" as never) as any)
-          .select("id,product_name,category,price,unit,market_name,source,seen_at,image_url,image_source,image_confidence,brand,barcode")
+          .select(
+            "id,product_name,category,price,unit,market_name,source,seen_at,image_url,image_source,image_confidence,brand,barcode",
+          )
           .eq("status", "active")
           .order("seen_at", { ascending: false })
           .limit(200);
@@ -138,8 +140,7 @@ function PrecosPage() {
     [rows],
   );
 
-  const hasFilters =
-    !!search.trim() || market !== ALL || source !== ALL || sortBy !== "recent";
+  const hasFilters = !!search.trim() || market !== ALL || source !== ALL || sortBy !== "recent";
 
   function clearFilters() {
     setSearch("");
@@ -238,7 +239,10 @@ function PrecosPage() {
             />
           </label>
           <Select value={market} onValueChange={setMarket}>
-            <SelectTrigger className="h-11 rounded-2xl" aria-label={t("priceCompareV2.filters.market")}>
+            <SelectTrigger
+              className="h-11 rounded-2xl"
+              aria-label={t("priceCompareV2.filters.market")}
+            >
               <SelectValue placeholder={t("priceCompareV2.filters.market")} />
             </SelectTrigger>
             <SelectContent>
@@ -251,7 +255,10 @@ function PrecosPage() {
             </SelectContent>
           </Select>
           <Select value={source} onValueChange={setSource}>
-            <SelectTrigger className="h-11 rounded-2xl" aria-label={t("priceCompareV2.filters.source")}>
+            <SelectTrigger
+              className="h-11 rounded-2xl"
+              aria-label={t("priceCompareV2.filters.source")}
+            >
               <SelectValue placeholder={t("priceCompareV2.filters.source")} />
             </SelectTrigger>
             <SelectContent>
@@ -264,7 +271,10 @@ function PrecosPage() {
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
-            <SelectTrigger className="h-11 rounded-2xl" aria-label={t("priceCompareV2.filters.sort")}>
+            <SelectTrigger
+              className="h-11 rounded-2xl"
+              aria-label={t("priceCompareV2.filters.sort")}
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -318,9 +328,7 @@ function PrecosPage() {
       <SectionBlock
         title={t("priceCompareV2.sections.results")}
         description={
-          loading
-            ? undefined
-            : t("precosHistorico.card.recordsCount", { count: filtered.length })
+          loading ? undefined : t("precosHistorico.card.recordsCount", { count: filtered.length })
         }
       >
         {loading ? (
@@ -396,12 +404,7 @@ function GlobalEmpty() {
   const { t } = useTranslation("mercado");
   return (
     <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-border/60 bg-card p-6 text-center shadow-card md:p-8">
-      <img
-        src={emptyComunitario}
-        alt=""
-        className="h-24 w-24 opacity-90"
-        loading="lazy"
-      />
+      <img src={emptyComunitario} alt="" className="h-24 w-24 opacity-90" loading="lazy" />
       <div>
         <h3 className="text-base font-semibold text-foreground md:text-lg">
           {t("priceCompareV2.empty.title")}
@@ -489,4 +492,3 @@ function CTACard({
     </Link>
   );
 }
-

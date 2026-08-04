@@ -46,7 +46,9 @@ function EditarInvestimentoPage() {
         if (!cancel) setLoading(false);
       }
     })();
-    return () => { cancel = true; };
+    return () => {
+      cancel = true;
+    };
   }, [user?.id, id]);
 
   return (
@@ -69,15 +71,12 @@ function EditarInvestimentoPage() {
       ) : !ativo ? (
         <div className="rounded-2xl border border-border bg-card p-6 text-center">
           <p className="text-sm text-muted-foreground">Investimento não encontrado.</p>
-          <Button className="mt-4" onClick={back}>Voltar para a lista</Button>
+          <Button className="mt-4" onClick={back}>
+            Voltar para a lista
+          </Button>
         </div>
       ) : (
-        <InvestimentoForm
-          userId={user?.id}
-          editing={ativo}
-          onCancel={back}
-          onSaved={back}
-        />
+        <InvestimentoForm userId={user?.id} editing={ativo} onCancel={back} onSaved={back} />
       )}
     </MobileShell>
   );

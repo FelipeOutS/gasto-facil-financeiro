@@ -13,7 +13,7 @@ import { useActiveAccount } from "@/lib/active-account";
 const HIDDEN_ROUTES = new Set([
   "/login",
   "/cadastro",
-  
+
   "/onboarding",
   "/recuperar-senha",
   "/reset-password",
@@ -30,7 +30,9 @@ export function ConnectedAccountBanner() {
   if (location.pathname.startsWith("/aceitar-convite")) return null;
 
   const nome = activeConnection.nickname || activeConnection.email;
-  const nivel = t(`connectedBanner.access.${activeConnection.accessLevel}`, { defaultValue: activeConnection.accessLevel });
+  const nivel = t(`connectedBanner.access.${activeConnection.accessLevel}`, {
+    defaultValue: activeConnection.accessLevel,
+  });
 
   return (
     <div className="sticky top-0 z-[60] w-full border-b border-amber-400/40 bg-amber-500/15 backdrop-blur-md">

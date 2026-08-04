@@ -115,7 +115,11 @@ beforeEach(() => {
 
 describe("WA-M1.1 evidência manual vs confirmada", () => {
   it("texto: categoria automática confirmada grava evidence=confirmed", async () => {
-    const r = await persistirGasto("user-1", baseSession({ categorySelectionSource: "automatic" }) as never, "wamid.T1");
+    const r = await persistirGasto(
+      "user-1",
+      baseSession({ categorySelectionSource: "automatic" }) as never,
+      "wamid.T1",
+    );
     expect(r.ok).toBe(true);
     expect(memoryCalls).toHaveLength(1);
     expect(memoryCalls[0].evidence).toBe("confirmed");
@@ -177,7 +181,11 @@ describe("WA-M1.1 evidência manual vs confirmada", () => {
   });
 
   it("um único gasto é inserido por chamada de persistirGasto", async () => {
-    await persistirGasto("user-1", baseSession({ categorySelectionSource: "manual" }) as never, "wamid.T1");
+    await persistirGasto(
+      "user-1",
+      baseSession({ categorySelectionSource: "manual" }) as never,
+      "wamid.T1",
+    );
     expect(insertedGastos).toHaveLength(1);
     expect(insertedGastos[0].user_id).toBe("user-1");
   });

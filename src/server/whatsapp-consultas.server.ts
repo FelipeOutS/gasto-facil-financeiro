@@ -209,11 +209,6 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     return "listar_metas";
   }
 
-
-
-
-
-
   // ----- maiores gastos (verificar antes de "mes/semana" sozinhos) -----
   const fala_em_maiores =
     /\bmaiores? gastos?\b/.test(t) ||
@@ -301,8 +296,8 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
   // "gastos da semana") — essas são roteadas por detectConsultaEspecifica.
   const tempModificador = /\b(ontem|hoje|amanha|amanh[aã]|da semana|de hoje|de ontem)\b/.test(t);
   if (
-    !tempModificador && (
-      /\bmeus gastos\b/.test(t) ||
+    !tempModificador &&
+    (/\bmeus gastos\b/.test(t) ||
       /\bminhas despesas\b/.test(t) ||
       /\bgastos (do |deste |desse |neste |nesse )?m[eê]s\b/.test(t) ||
       /\bdespesas (do |deste |desse |neste |nesse )?m[eê]s\b/.test(t) ||
@@ -311,8 +306,7 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
       /\btotal (de |dos )?gastos\b/.test(t) ||
       /\btotal (de |das )?despesas\b/.test(t) ||
       /\blistar (os |as )?(meus |minhas )?(gastos|despesas)\b/.test(t) ||
-      /\bver (os |as )?(meus |minhas )?(gastos|despesas)\b/.test(t)
-    )
+      /\bver (os |as )?(meus |minhas )?(gastos|despesas)\b/.test(t))
   ) {
     return "listar_gastos_mes";
   }
@@ -343,12 +337,21 @@ function monthStartISO(iso: string): string {
 }
 // WA-G3: removida `nextMonthStartISO` — janelas mensais usam "até hoje".
 
-
 function mesPorExtenso(iso: string): string {
   const [, m] = iso.split("-").map(Number);
   const meses = [
-    "janeiro", "fevereiro", "março", "abril", "maio", "junho",
-    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+    "janeiro",
+    "fevereiro",
+    "março",
+    "abril",
+    "maio",
+    "junho",
+    "julho",
+    "agosto",
+    "setembro",
+    "outubro",
+    "novembro",
+    "dezembro",
   ];
   return meses[m - 1] ?? "";
 }
@@ -394,10 +397,7 @@ async function loadReceitas(
 }
 
 async function loadCategoriasMap(userId: string): Promise<Map<string, string>> {
-  const { data } = await supabaseAdmin
-    .from("categorias")
-    .select("id, nome")
-    .eq("user_id", userId);
+  const { data } = await supabaseAdmin.from("categorias").select("id, nome").eq("user_id", userId);
   const map = new Map<string, string>();
   if (Array.isArray(data)) {
     for (const c of data as CategoriaRow[]) {
@@ -432,7 +432,7 @@ function maiorGrupoCategoria(
     }
   }
   if (bestVal <= 0) return null;
-  const nome = bestKey === "__sem__" ? "Outros" : (catMap.get(bestKey) || "Outros");
+  const nome = bestKey === "__sem__" ? "Outros" : catMap.get(bestKey) || "Outros";
   return { nome, valor: bestVal };
 }
 
@@ -499,7 +499,10 @@ async function handleMaioresGastos(
 
   const gastos = await loadGastos(userId, from, to);
   const ordenados = [...gastos]
-    .map((g) => ({ descricao: (g.descricao ?? "").trim() || "Gasto", valor: Number(g.valor ?? 0) || 0 }))
+    .map((g) => ({
+      descricao: (g.descricao ?? "").trim() || "Gasto",
+      valor: Number(g.valor ?? 0) || 0,
+    }))
     .sort((a, b) => b.valor - a.valor)
     .slice(0, 3);
   return {
@@ -584,7 +587,9 @@ async function handleListarReceitasMes(userId: string): Promise<ConsultaResult> 
   const receitas = await loadReceitasDetalhadas(userId, from, to);
   const total = sumValor(receitas);
   const itens = receitas.slice(0, 10).map((r) => ({
-    descricao: (r.descricao ?? "").trim() || (TIPO_RECEITA_LABELS[String(r.tipo ?? "").toLowerCase()] ?? "Receita"),
+    descricao:
+      (r.descricao ?? "").trim() ||
+      (TIPO_RECEITA_LABELS[String(r.tipo ?? "").toLowerCase()] ?? "Receita"),
     tipo: TIPO_RECEITA_LABELS[String(r.tipo ?? "").toLowerCase()] ?? "Outros",
     valor: formatBRL(Number(r.valor ?? 0) || 0),
     data: formatDataBR(r.data),
@@ -759,9 +764,7 @@ async function handleListarMetas(userId: string): Promise<ConsultaResult> {
     const falta = Math.max(0, obj - atu);
     const pct = obj > 0 ? Math.min(100, Math.round((atu / obj) * 100)) : 0;
     const prazo = m.prazo ? ` · prazo: ${formatDataBR(m.prazo)}` : "";
-    linhas.push(
-      `• ${nome} — ${formatBRL(atu)} de ${formatBRL(obj)} (${pct}%)${prazo}`,
-    );
+    linhas.push(`• ${nome} — ${formatBRL(atu)} de ${formatBRL(obj)} (${pct}%)${prazo}`);
     linhas.push(`  Faltam ${formatBRL(falta)}.`);
   }
   if (ativas.length > recentes.length) {
@@ -866,7 +869,7 @@ async function handleListarRecorrencias(userId: string): Promise<ConsultaResult>
       resposta:
         "Você ainda não tem recorrências ativas cadastradas.\n\n" +
         "Para cadastrar uma assinatura, salário ou conta fixa, é só me mandar aqui — " +
-        "ex.: \"receita recorrente salário 3500 dia 5\" ou \"despesa recorrente Spotify 23,90 dia 3\".",
+        'ex.: "receita recorrente salário 3500 dia 5" ou "despesa recorrente Spotify 23,90 dia 3".',
     };
   }
 
@@ -877,7 +880,9 @@ async function handleListarRecorrencias(userId: string): Promise<ConsultaResult>
     .eq("user_id", userId)
     .is("deleted_at", null);
   const receitaLinks = new Set<string>();
-  for (const r of (Array.isArray(recRaw) ? recRaw : []) as Array<{ recorrencia_id: string | null }>) {
+  for (const r of (Array.isArray(recRaw) ? recRaw : []) as Array<{
+    recorrencia_id: string | null;
+  }>) {
     if (r?.recorrencia_id) receitaLinks.add(r.recorrencia_id);
   }
 
@@ -897,7 +902,7 @@ async function handleListarRecorrencias(userId: string): Promise<ConsultaResult>
     const valor = formatBRL(Number(r.valor ?? 0) || 0);
     const freq = fmtFreq(r.frequencia);
     const prox = r.proxima_cobranca ? formatDataBR(r.proxima_cobranca) : "-";
-    const cat = r.categoria_id ? (catMap.get(r.categoria_id) || null) : null;
+    const cat = r.categoria_id ? catMap.get(r.categoria_id) || null : null;
     const catSuffix = cat ? ` · ${cat}` : "";
     return `• ${nome} — ${valor} (${freq}) · próx.: ${prox}${catSuffix}`;
   };
@@ -940,11 +945,7 @@ type LimiteRow = {
   ano: number | null;
 };
 
-async function loadLimitesDoMes(
-  userId: string,
-  mes: number,
-  ano: number,
-): Promise<LimiteRow[]> {
+async function loadLimitesDoMes(userId: string, mes: number, ano: number): Promise<LimiteRow[]> {
   const { data } = await supabaseAdmin
     .from("limites")
     .select("tipo, valor, mes, ano")
@@ -980,9 +981,7 @@ async function handleOrcamentoMes(userId: string): Promise<ConsultaResult> {
   const totalGastoMes = sumValor(gastos);
   const gastoPorCat = new Map<string, number>();
   for (const g of gastos) {
-    const nome = g.categoria_id
-      ? (catMap.get(g.categoria_id) || "Outros")
-      : "Outros";
+    const nome = g.categoria_id ? catMap.get(g.categoria_id) || "Outros" : "Outros";
     const key = nome.trim().toLowerCase();
     gastoPorCat.set(key, (gastoPorCat.get(key) ?? 0) + (Number(g.valor ?? 0) || 0));
   }
@@ -992,9 +991,7 @@ async function handleOrcamentoMes(userId: string): Promise<ConsultaResult> {
   linhas.push("");
 
   // Total primeiro, se houver.
-  const totalRow = limites.find(
-    (l) => (l.tipo ?? "").trim().toLowerCase() === "total",
-  );
+  const totalRow = limites.find((l) => (l.tipo ?? "").trim().toLowerCase() === "total");
   if (totalRow) {
     const orc = Number(totalRow.valor ?? 0) || 0;
     const restante = orc - totalGastoMes;
@@ -1034,7 +1031,6 @@ async function handleOrcamentoMes(userId: string): Promise<ConsultaResult> {
   return { status: "consulta", resposta: linhas.join("\n") };
 }
 
-
 async function handleListarGastosMes(
   userId: string,
   params?: ConsultaParams,
@@ -1061,7 +1057,7 @@ async function handleListarGastosMes(
   const total = sumValor(ordenados);
   const itens = ordenados.slice(0, 10).map((g) => ({
     descricao: (g.descricao ?? "").trim() || "Gasto",
-    categoria: g.categoria_id ? (catMap.get(g.categoria_id) || "Outros") : "Outros",
+    categoria: g.categoria_id ? catMap.get(g.categoria_id) || "Outros" : "Outros",
     valor: formatBRL(Number(g.valor ?? 0) || 0),
     data: formatDataBR(g.data),
   }));
@@ -1087,7 +1083,7 @@ async function handleGastosPorCategoriaMes(userId: string): Promise<ConsultaResu
   const totals = new Map<string, { nome: string; valor: number; quantidade: number }>();
   for (const g of gastos) {
     const key = g.categoria_id ?? "__sem__";
-    const nome = key === "__sem__" ? "Outros" : (catMap.get(key) || "Outros");
+    const nome = key === "__sem__" ? "Outros" : catMap.get(key) || "Outros";
     const cur = totals.get(key) ?? { nome, valor: 0, quantidade: 0 };
     cur.valor += Number(g.valor ?? 0) || 0;
     cur.quantidade += 1;
@@ -1126,31 +1122,57 @@ export type ConversationalIntent =
   | "cancelar_sem_sessao";
 
 const SAUDACOES = new Set<string>([
-  "oi", "ola", "ei", "e ai", "eai",
-  "bom dia", "boa tarde", "boa noite",
-  "hey", "hello", "alo",
+  "oi",
+  "ola",
+  "ei",
+  "e ai",
+  "eai",
+  "bom dia",
+  "boa tarde",
+  "boa noite",
+  "hey",
+  "hello",
+  "alo",
 ]);
 
 // WA-C6 (corrigido): "menu" é a lista numerada; "ajuda" e "comandos"
 // foram separados em intents próprios para devolver respostas distintas.
 const MENU_EXATOS = new Set<string>([
-  "menu", "opcoes", "opcao",
-  "gi", "oi gi", "ola gi", "ei gi", "bom dia gi", "boa tarde gi", "boa noite gi",
-  "gasto inteligente", "oi gasto inteligente", "ola gasto inteligente",
+  "menu",
+  "opcoes",
+  "opcao",
+  "gi",
+  "oi gi",
+  "ola gi",
+  "ei gi",
+  "bom dia gi",
+  "boa tarde gi",
+  "boa noite gi",
+  "gasto inteligente",
+  "oi gasto inteligente",
+  "ola gasto inteligente",
 ]);
 
 const AJUDA_EXATOS = new Set<string>([
-  "ajuda", "ajudar", "help", "me ajuda", "exemplos", "exemplo", "como usar",
+  "ajuda",
+  "ajudar",
+  "help",
+  "me ajuda",
+  "exemplos",
+  "exemplo",
+  "como usar",
 ]);
 
 const COMANDOS_EXATOS = new Set<string>([
-  "comandos", "comando", "lista de comandos", "quais comandos",
-  "atalhos", "atalho",
+  "comandos",
+  "comando",
+  "lista de comandos",
+  "quais comandos",
+  "atalhos",
+  "atalho",
 ]);
 
-const CANCELAR_EXATOS = new Set<string>([
-  "cancelar", "cancela", "cancelado", "cancelada",
-]);
+const CANCELAR_EXATOS = new Set<string>(["cancelar", "cancela", "cancelado", "cancelada"]);
 
 /**
  * Detecta intenção conversacional. Roda apenas quando NÃO há sessão pendente.
@@ -1219,14 +1241,13 @@ export function handleConversational(
   let resposta: string;
   if (intent === "saudacao_whatsapp") {
     const recente = getRecentIntent(telefone);
-    resposta = recente === "saudacao_whatsapp" || recente === "menu_whatsapp"
-      ? M.consulta.menuCurto()
-      : M.consulta.saudacao();
+    resposta =
+      recente === "saudacao_whatsapp" || recente === "menu_whatsapp"
+        ? M.consulta.menuCurto()
+        : M.consulta.saudacao();
   } else if (intent === "menu_whatsapp") {
     const recente = getRecentIntent(telefone);
-    resposta = recente === "menu_whatsapp"
-      ? M.consulta.menuCurto()
-      : M.consulta.ajuda();
+    resposta = recente === "menu_whatsapp" ? M.consulta.menuCurto() : M.consulta.ajuda();
   } else if (intent === "ajuda_whatsapp") {
     resposta = M.consulta.ajudaExemplos();
   } else if (intent === "comandos_whatsapp") {

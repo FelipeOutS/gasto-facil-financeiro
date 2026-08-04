@@ -100,14 +100,7 @@ function linhaToBarcodeCobranca(linha47: string): string {
   const f3 = linha47.slice(21, 32);
   const dv = linha47.slice(32, 33);
   const f5 = linha47.slice(33, 47);
-  return (
-    f1.slice(0, 4) +
-    dv +
-    f5 +
-    f1.slice(4, 9) +
-    f2.slice(0, 10) +
-    f3.slice(0, 10)
-  );
+  return f1.slice(0, 4) + dv + f5 + f1.slice(4, 9) + f2.slice(0, 10) + f3.slice(0, 10);
 }
 
 function barcodeToLinhaCobranca(barcode44: string): string {
@@ -304,8 +297,12 @@ export function _buildBoletoCobrancaForTest(opts: {
 }): { barcode: string; linha: string } {
   const banco = (opts.banco ?? "341").padStart(3, "0").slice(0, 3);
   const moeda = (opts.moeda ?? "9").slice(0, 1);
-  const fator = String(opts.fator ?? 9999).padStart(4, "0").slice(0, 4);
-  const valor = String(opts.valorCentavos ?? 12000).padStart(10, "0").slice(0, 10);
+  const fator = String(opts.fator ?? 9999)
+    .padStart(4, "0")
+    .slice(0, 4);
+  const valor = String(opts.valorCentavos ?? 12000)
+    .padStart(10, "0")
+    .slice(0, 10);
   const livre = (opts.livre ?? "1234567890123456789012345").padStart(25, "0").slice(0, 25);
   const without = banco + moeda + fator + valor + livre;
   const dv = String(dvMod11Cobranca(without));
@@ -321,7 +318,9 @@ export function _buildBoletoArrecadForTest(opts: {
   const seg = (opts.segmento ?? "1").slice(0, 1); // segmento varia
   // Usa identificador mod11 (dígito 3 != 6/7)
   // barcode = "8" + seg + "9" + dv + (40 dígitos)
-  const payload = (opts.identificador ?? "0123456789012345678901234567890123456789").padStart(40, "0").slice(0, 40);
+  const payload = (opts.identificador ?? "0123456789012345678901234567890123456789")
+    .padStart(40, "0")
+    .slice(0, 40);
   const without = "8" + seg + "9" + payload;
   const dv = String(dvMod11Arrecad(without));
   const barcode = "8" + seg + "9" + dv + payload;

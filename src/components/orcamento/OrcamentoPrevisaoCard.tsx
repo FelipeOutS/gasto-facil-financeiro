@@ -121,11 +121,7 @@ export function OrcamentoPrevisaoCard({
           config.iconColor,
         )}
       >
-        {isAtual ? (
-          <TrendingUp className="h-5 w-5" />
-        ) : (
-          <StatusIcon className="h-5 w-5" />
-        )}
+        {isAtual ? <TrendingUp className="h-5 w-5" /> : <StatusIcon className="h-5 w-5" />}
       </span>
 
       <div className="min-w-1 flex-1">
@@ -134,9 +130,7 @@ export function OrcamentoPrevisaoCard({
         </p>
 
         {mensagemCurta ? (
-          <p className="mt-1 text-sm font-medium text-muted-foreground">
-            {mensagemCurta}
-          </p>
+          <p className="mt-1 text-sm font-medium text-muted-foreground">{mensagemCurta}</p>
         ) : (
           <>
             {gastoProjetado !== undefined && (
@@ -164,13 +158,16 @@ export function OrcamentoPrevisaoCard({
                     : null}
             </p>
 
-            {planejado !== undefined && diferenca !== undefined && tipo !== "ja_estourado" && tipo !== "risco_estouro" && (
-              <p className="mt-1.5 text-[11px] font-medium">
-                {diferenca >= 1
-                  ? labels.gapPositive.replace("{{value}}", formatBRL(diferenca))
-                  : labels.gapNegative.replace("{{value}}", formatBRL(Math.abs(diferenca)))}
-              </p>
-            )}
+            {planejado !== undefined &&
+              diferenca !== undefined &&
+              tipo !== "ja_estourado" &&
+              tipo !== "risco_estouro" && (
+                <p className="mt-1.5 text-[11px] font-medium">
+                  {diferenca >= 1
+                    ? labels.gapPositive.replace("{{value}}", formatBRL(diferenca))
+                    : labels.gapNegative.replace("{{value}}", formatBRL(Math.abs(diferenca)))}
+                </p>
+              )}
           </>
         )}
       </div>

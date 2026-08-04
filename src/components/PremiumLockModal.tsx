@@ -144,10 +144,7 @@ export function PremiumLockModal({
             {bullets.length > 0 && (
               <ul className="space-y-2">
                 {bullets.map((b, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-2.5 text-foreground/90"
-                  >
+                  <li key={i} className="flex items-start gap-2.5 text-foreground/90">
                     <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-success/15 text-success">
                       <Check className="h-3 w-3" strokeWidth={3} />
                     </span>
@@ -170,7 +167,11 @@ export function PremiumLockModal({
               {loading ? t("premium.trialActivating") : t("premium.trialCta")}
             </Button>
           )}
-          <Button asChild variant={trialUsed ? "default" : "outline"} className="w-full rounded-2xl min-h-11">
+          <Button
+            asChild
+            variant={trialUsed ? "default" : "outline"}
+            className="w-full rounded-2xl min-h-11"
+          >
             <Link to="/meu-plano" onClick={() => onOpenChange(false)}>
               {t("premium.ctaSeePlans")} <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

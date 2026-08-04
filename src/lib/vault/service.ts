@@ -1,10 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import {
-  encryptSecret,
-  decryptSecret,
-  createMasterKey,
-  type EntrySecret,
-} from "./crypto";
+import { encryptSecret, decryptSecret, createMasterKey, type EntrySecret } from "./crypto";
 import { evaluateStrength, type Strength } from "./strength";
 
 export type VaultSettingsRow = {
@@ -45,7 +40,9 @@ export async function fetchVaultSettings(userId: string): Promise<VaultSettingsR
   return (data as VaultSettingsRow | null) ?? null;
 }
 
-export async function saveVaultSettings(row: Omit<VaultSettingsRow, "hint"> & { hint?: string | null }) {
+export async function saveVaultSettings(
+  row: Omit<VaultSettingsRow, "hint"> & { hint?: string | null },
+) {
   const { error } = await supabase.from("vault_settings" as never).upsert(row as never);
   if (error) throw error;
 }
@@ -106,9 +103,7 @@ export async function updateEntry(input: {
       site: input.site ?? null,
       favorite: input.favorite ?? false,
       password_strength: strength,
-      password_updated_at: changedPwd
-        ? new Date().toISOString()
-        : undefined,
+      password_updated_at: changedPwd ? new Date().toISOString() : undefined,
       ...enc,
     } as never)
     .eq("id", input.id);
@@ -116,7 +111,10 @@ export async function updateEntry(input: {
 }
 
 export async function deleteEntry(id: string) {
-  const { error } = await supabase.from("vault_entries" as never).delete().eq("id", id);
+  const { error } = await supabase
+    .from("vault_entries" as never)
+    .delete()
+    .eq("id", id);
   if (error) throw error;
 }
 

@@ -13,7 +13,11 @@ export function traduzirErroAuth(message: string | undefined | null): string {
   if (m.includes("email not confirmed")) {
     return "Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.";
   }
-  if (m.includes("user already registered") || m.includes("already registered") || m.includes("already exists")) {
+  if (
+    m.includes("user already registered") ||
+    m.includes("already registered") ||
+    m.includes("already exists")
+  ) {
     return "Este e-mail já está cadastrado.";
   }
   if (m.includes("password should be at least") || m.includes("password is too short")) {

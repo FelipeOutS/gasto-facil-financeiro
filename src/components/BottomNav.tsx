@@ -29,7 +29,15 @@ export function BottomNav() {
   }, [location.pathname]);
 
   function handleNavClick(to: string, event: MouseEvent<HTMLAnchorElement>) {
-    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return;
     const isActive = to === "/" ? currentPath === "/" : currentPath.startsWith(to);
     if (isActive) {
       event.preventDefault();
@@ -38,7 +46,15 @@ export function BottomNav() {
     setOptimisticPath(to);
   }
 
-  function renderTab({ to, labelKey, icon: Icon }: { to: string; labelKey: string; icon: typeof Home }) {
+  function renderTab({
+    to,
+    labelKey,
+    icon: Icon,
+  }: {
+    to: string;
+    labelKey: string;
+    icon: typeof Home;
+  }) {
     const active =
       to === "/" ? currentPath === "/" : currentPath === to || currentPath.startsWith(to + "/");
     const showDot = to === "/" && alerta !== "nenhum";
@@ -108,7 +124,6 @@ export function BottomNav() {
             <Plus className="h-6 w-6" strokeWidth={2.6} />
           </Link>
         </li>
-
 
         {RIGHT_TABS_WITH_REPORTS.map(renderTab)}
       </ul>

@@ -59,9 +59,7 @@ const COLS =
   "id, user_id, cnpj, razao_social, nome_fantasia, situacao_cadastral, cnae_principal_codigo, cnae_principal_descricao, logradouro, numero, complemento, bairro, cep, municipio, uf, data_abertura, porte, natureza_juridica, source, cnpj_cache_fetched_at, created_at, updated_at";
 
 /** Retorna a empresa cadastrada do usuário, ou null se não houver. */
-export async function getMinhaEmpresa(
-  userId: string,
-): Promise<MinhaEmpresa | null> {
+export async function getMinhaEmpresa(userId: string): Promise<MinhaEmpresa | null> {
   const { data, error } = await supabase
     .from("user_companies")
     .select(COLS)
@@ -159,10 +157,7 @@ export async function atualizarMinhaEmpresa(
 
 /** Remove a empresa do usuário. */
 export async function removerMinhaEmpresa(id: string): Promise<void> {
-  const { error } = await supabase
-    .from("user_companies")
-    .delete()
-    .eq("id", id);
+  const { error } = await supabase.from("user_companies").delete().eq("id", id);
   if (error) {
     console.error("[empresa] erro removendo empresa:", error.message);
     throw error;

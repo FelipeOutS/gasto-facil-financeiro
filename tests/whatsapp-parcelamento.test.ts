@@ -17,19 +17,11 @@ import { resetState, state, gastosInserts } from "./_whatsapp-fake";
 // todos os outros testes do WhatsApp que precisam do supabaseAdmin
 // mockado (ver whatsapp-faturas-detalhe.test.ts, whatsapp-beta.test.ts,
 // whatsapp-hardening-b3.test.ts etc).
-const {
-  calcularParcelasCentavos,
-  criarPlanoParcelamento,
-  reaisParaCentavos,
-} = await import("../src/server/cartao-parcelamento.server");
-const {
-  detectInstallmentIntent,
-  extrairValor,
-  extrairQuantidadeParcelas,
-} = await import("../src/server/whatsapp-parcelamento.server");
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
+const { calcularParcelasCentavos, criarPlanoParcelamento, reaisParaCentavos } =
+  await import("../src/server/cartao-parcelamento.server");
+const { detectInstallmentIntent, extrairValor, extrairQuantidadeParcelas } =
+  await import("../src/server/whatsapp-parcelamento.server");
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 
 function msg(texto: string, externalId = "e-1") {
   return {
@@ -48,7 +40,7 @@ describe("WA-F3 — financial helper", () => {
     expect(parts.reduce((a, b) => a + b, 0)).toBe(10000);
   });
   it("89,90 em 2x", () => {
-    const parts = calcularParcelasCentavos(reaisParaCentavos(89.90), 2);
+    const parts = calcularParcelasCentavos(reaisParaCentavos(89.9), 2);
     expect(parts.reduce((a, b) => a + b, 0)).toBe(8990);
     expect(parts).toEqual([4495, 4495]);
   });
@@ -72,7 +64,10 @@ describe("WA-F3 — financial helper", () => {
     });
     expect(plano.totalParcelas).toBe(3);
     expect(plano.parcelas.length).toBe(3);
-    expect(plano.parcelas[0].valor + plano.parcelas[1].valor + plano.parcelas[2].valor).toBeCloseTo(100, 2);
+    expect(plano.parcelas[0].valor + plano.parcelas[1].valor + plano.parcelas[2].valor).toBeCloseTo(
+      100,
+      2,
+    );
     // YYYY-MM consecutivos
     expect(plano.parcelas[1].invoiceMonth).not.toBe(plano.parcelas[0].invoiceMonth);
     expect(plano.parcelas[2].invoiceMonth).not.toBe(plano.parcelas[1].invoiceMonth);
@@ -81,16 +76,22 @@ describe("WA-F3 — financial helper", () => {
 
 describe("WA-F3 — detection", () => {
   it("aceita 'em 3 vezes'", () => {
-    expect(detectInstallmentIntent("Comprei um tênis de 300 reais em 3 vezes no Nubank.")).toEqual({ count: 3 });
+    expect(detectInstallmentIntent("Comprei um tênis de 300 reais em 3 vezes no Nubank.")).toEqual({
+      count: 3,
+    });
   });
   it("aceita 'em 12 parcelas'", () => {
-    expect(detectInstallmentIntent("Paguei 1.200 em 12 parcelas no cartão Inter")).toEqual({ count: 12 });
+    expect(detectInstallmentIntent("Paguei 1.200 em 12 parcelas no cartão Inter")).toEqual({
+      count: 12,
+    });
   });
   it("aceita 'em 2x no crédito'", () => {
     expect(detectInstallmentIntent("Foi 89,90 em 2x no crédito.")).toEqual({ count: 2 });
   });
   it("aceita 'parcelada em 10 vezes'", () => {
-    expect(detectInstallmentIntent("Comprei uma televisão de 2 mil reais parcelada em 10 vezes")).toEqual({ count: 10 });
+    expect(
+      detectInstallmentIntent("Comprei uma televisão de 2 mil reais parcelada em 10 vezes"),
+    ).toEqual({ count: 10 });
   });
   it("não confunde 'três vezes essa semana'", () => {
     expect(detectInstallmentIntent("paguei três vezes essa semana")).toBeNull();
@@ -117,7 +118,7 @@ describe("WA-F3 — parsers auxiliares", () => {
     expect(extrairValor("Paguei 1.200 em 12 parcelas")).toBe(1200);
   });
   it("extrairValor entende '89,90'", () => {
-    expect(extrairValor("Foi 89,90 em 2x")).toBe(89.90);
+    expect(extrairValor("Foi 89,90 em 2x")).toBe(89.9);
   });
   it("extrairQuantidadeParcelas digit", () => {
     expect(extrairQuantidadeParcelas("4 vezes")).toBe(4);
@@ -131,14 +132,36 @@ describe("WA-F3 — fluxo conversacional", () => {
   beforeEach(() => {
     resetState({
       cartoes: [
-        { id: "c-nu", nome: "Nubank", banco: "Nubank", limite_total: 0, dia_fechamento: 28, dia_vencimento: 10, cor: "#000", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-        { id: "c-int", nome: "Inter", banco: "Inter", limite_total: 0, dia_fechamento: 1, dia_vencimento: 10, cor: "#000", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+        {
+          id: "c-nu",
+          nome: "Nubank",
+          banco: "Nubank",
+          limite_total: 0,
+          dia_fechamento: 28,
+          dia_vencimento: 10,
+          cor: "#000",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          id: "c-int",
+          nome: "Inter",
+          banco: "Inter",
+          limite_total: 0,
+          dia_fechamento: 1,
+          dia_vencimento: 10,
+          cor: "#000",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
       ],
     });
   });
 
   it("mensagem completa gera prévia sem persistir gastos", async () => {
-    const out = await processarMensagemWhatsApp(msg("Comprei um tênis de 300 reais em 3 vezes no Nubank."));
+    const out = await processarMensagemWhatsApp(
+      msg("Comprei um tênis de 300 reais em 3 vezes no Nubank."),
+    );
     expect(out.status).toBe("aguardando_confirmacao");
     expect(out.resposta).toContain("3x");
     expect(out.resposta).toContain("Nubank");
@@ -154,7 +177,17 @@ describe("WA-F3 — fluxo conversacional", () => {
   it("um único cartão é selecionado automaticamente", async () => {
     resetState({
       cartoes: [
-        { id: "c-nu", nome: "Nubank", banco: "Nubank", limite_total: 0, dia_fechamento: 1, dia_vencimento: 10, cor: "#000", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+        {
+          id: "c-nu",
+          nome: "Nubank",
+          banco: "Nubank",
+          limite_total: 0,
+          dia_fechamento: 1,
+          dia_vencimento: 10,
+          cor: "#000",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
       ],
     });
     const out = await processarMensagemWhatsApp(msg("Algo de 100 em 2x no crédito"));
@@ -163,7 +196,9 @@ describe("WA-F3 — fluxo conversacional", () => {
   });
 
   it("confirmação cria N gastos com grupo_parcelamento_id comum", async () => {
-    await processarMensagemWhatsApp(msg("Comprei um tênis de 300 reais em 3 vezes no Nubank.", "e-1"));
+    await processarMensagemWhatsApp(
+      msg("Comprei um tênis de 300 reais em 3 vezes no Nubank.", "e-1"),
+    );
     expect(gastosInserts().length).toBe(0);
     const out = await processarMensagemWhatsApp(msg("sim", "e-2"));
     expect(out.status).toBe("salva");
@@ -225,7 +260,17 @@ describe("WA-F3.2 — persistência atômica via RPC", () => {
     fake = (await import("./_whatsapp-fake")).fakeAdmin;
     resetState({
       cartoes: [
-        { id: "c-nu", nome: "Nubank", banco: "Nubank", limite_total: 0, dia_fechamento: 28, dia_vencimento: 10, cor: "#000", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+        {
+          id: "c-nu",
+          nome: "Nubank",
+          banco: "Nubank",
+          limite_total: 0,
+          dia_fechamento: 28,
+          dia_vencimento: 10,
+          cor: "#000",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
       ],
     });
   });
@@ -242,7 +287,9 @@ describe("WA-F3.2 — persistência atômica via RPC", () => {
     const ims = gs.map((g) => g.row.invoice_month as string);
     expect(new Set(ims).size).toBe(3);
     // Centavos extras vão para a primeira parcela.
-    const valores = gs.sort((a, b) => (a.row.parcela_atual as number) - (b.row.parcela_atual as number)).map((g) => Math.round(Number(g.row.valor) * 100));
+    const valores = gs
+      .sort((a, b) => (a.row.parcela_atual as number) - (b.row.parcela_atual as number))
+      .map((g) => Math.round(Number(g.row.valor) * 100));
     expect(valores[0]).toBeGreaterThanOrEqual(valores[1]);
     expect(valores[0] + valores[1] + valores[2]).toBe(120050);
   });
@@ -275,7 +322,15 @@ describe("WA-F3.2 — persistência atômica via RPC", () => {
       if (name === "create_installment_purchase") {
         // Devolve só metadados sem gravar em state.gastosData.
         const parcelas = (args?.p_parcelas ?? []) as Array<Record<string, unknown>>;
-        return { data: parcelas.map((p, i) => ({ id: `phantom-${i}`, parcela_atual: p.numero, invoice_month: p.invoice_month, valor: p.valor })), error: null };
+        return {
+          data: parcelas.map((p, i) => ({
+            id: `phantom-${i}`,
+            parcela_atual: p.numero,
+            invoice_month: p.invoice_month,
+            valor: p.valor,
+          })),
+          error: null,
+        };
       }
       return { data: true, error: null };
     };
@@ -307,6 +362,8 @@ describe("WA-F3.2 — persistência atômica via RPC", () => {
     expect(new Set(grupos).size).toBe(1);
     expect(typeof grupos[0]).toBe("string");
     // UUID v4 simplificado.
-    expect(String(grupos[0])).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    expect(String(grupos[0])).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
   });
 });

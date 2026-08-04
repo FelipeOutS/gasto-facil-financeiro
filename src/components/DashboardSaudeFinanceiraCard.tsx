@@ -3,13 +3,7 @@
 // não duplica alertas/dicas — apenas mostra um diagnóstico explicável.
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  HeartPulse,
-  CheckCircle2,
-  AlertTriangle,
-  Activity,
-  type LucideIcon,
-} from "lucide-react";
+import { HeartPulse, CheckCircle2, AlertTriangle, Activity, type LucideIcon } from "lucide-react";
 import {
   getCartoes,
   getCategorias,
@@ -216,12 +210,8 @@ export function DashboardSaudeFinanceiraCard({ className }: { className?: string
             <HeartPulse className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-semibold leading-tight">
-              {t("financialHealth.title")}
-            </h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("financialHealth.empty")}
-            </p>
+            <h3 className="text-sm font-semibold leading-tight">{t("financialHealth.title")}</h3>
+            <p className="mt-1 text-xs text-muted-foreground">{t("financialHealth.empty")}</p>
           </div>
         </div>
       </PremiumCard>
@@ -243,14 +233,12 @@ export function DashboardSaudeFinanceiraCard({ className }: { className?: string
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-sm font-semibold leading-tight">
-              {t("financialHealth.title")}
-            </h3>
-            <StatusBadge tone={tone.badge}>{t(`financialHealth.levels.${health.level}`)}</StatusBadge>
+            <h3 className="text-sm font-semibold leading-tight">{t("financialHealth.title")}</h3>
+            <StatusBadge tone={tone.badge}>
+              {t(`financialHealth.levels.${health.level}`)}
+            </StatusBadge>
           </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {health.description}
-          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{health.description}</p>
         </div>
       </div>
 
@@ -265,20 +253,10 @@ export function DashboardSaudeFinanceiraCard({ className }: { className?: string
       {(health.positives.length > 0 || health.warnings.length > 0) && (
         <ul className="mt-3 space-y-1.5">
           {health.warnings.slice(0, 2).map((w, i) => (
-            <BulletRow
-              key={`w-${i}`}
-              icon={AlertTriangle}
-              iconClass={tone.iconFg}
-              text={w}
-            />
+            <BulletRow key={`w-${i}`} icon={AlertTriangle} iconClass={tone.iconFg} text={w} />
           ))}
           {health.positives.slice(0, 2).map((p, i) => (
-            <BulletRow
-              key={`p-${i}`}
-              icon={CheckCircle2}
-              iconClass="text-success"
-              text={p}
-            />
+            <BulletRow key={`p-${i}`} icon={CheckCircle2} iconClass="text-success" text={p} />
           ))}
         </ul>
       )}
@@ -290,9 +268,7 @@ export function DashboardSaudeFinanceiraCard({ className }: { className?: string
             <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               {t("financialHealth.scenarioLabel")}
             </span>
-            <span className="text-[11px] leading-snug text-foreground">
-              {economicNote}
-            </span>
+            <span className="text-[11px] leading-snug text-foreground">{economicNote}</span>
           </div>
         </div>
       )}

@@ -4,7 +4,15 @@
  * Regra: usuários sem assinatura ativa NÃO podem criar/editar/excluir/importar
  * dados financeiros. Admin Master tem sempre acesso total.
  */
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { Link } from "@tanstack/react-router";
 import { Lock, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
@@ -30,15 +38,9 @@ import { useActiveAccount } from "@/lib/active-account";
 
 /** Status que liberam ações financeiras. */
 const ACTIVE_STATUSES = new Set(
-  [
-    "ativo",
-    "active",
-    "paid",
-    "approved",
-    "authorized",
-    "trialing",
-    "teste",
-  ].map((s) => s.toLowerCase()),
+  ["ativo", "active", "paid", "approved", "authorized", "trialing", "teste"].map((s) =>
+    s.toLowerCase(),
+  ),
 );
 
 export function isStatusActive(status: string | null | undefined): boolean {
@@ -50,7 +52,9 @@ export function isStatusActive(status: string | null | undefined): boolean {
  * Verificação no servidor (defensiva contra burla do front).
  * Lê o e-mail do usuário e a linha em user_plans para decidir.
  */
-export async function ensureCanWriteFinancialData(): Promise<{ ok: true } | { ok: false; reason: string }> {
+export async function ensureCanWriteFinancialData(): Promise<
+  { ok: true } | { ok: false; reason: string }
+> {
   const { data: userRes } = await supabase.auth.getUser();
   const user = userRes?.user;
   if (!user) return { ok: false, reason: i18n.t("common:subscription.needLogin") };
@@ -107,9 +111,21 @@ const Ctx = createContext<GuardCtx | null>(null);
 export function SubscriptionGuardProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation("common");
   const { user } = useAuth();
-  const { isAdminMaster, status, storedPlan, plan, isTrialActive, loading: planLoading } = usePlan();
+  const {
+    isAdminMaster,
+    status,
+    storedPlan,
+    plan,
+    isTrialActive,
+    loading: planLoading,
+  } = usePlan();
   const { hasFullAccess, loading: rolesLoading } = useRoles();
-  const { isOwnAccount, canCreate: connCanCreate, canAdmin: connCanAdmin, accessLevel } = useActiveAccount();
+  const {
+    isOwnAccount,
+    canCreate: connCanCreate,
+    canAdmin: connCanAdmin,
+    accessLevel,
+  } = useActiveAccount();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -121,11 +137,7 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
     if (planLoading || rolesLoading) return false;
     if (isTrialActive) return true;
     // free_ads NÃO concede escrita paga — apenas escrita básica (canWriteBasic).
-    if (
-      storedPlan === "sem_assinatura" ||
-      storedPlan === "free" ||
-      storedPlan === "free_ads"
-    ) {
+    if (storedPlan === "sem_assinatura" || storedPlan === "free" || storedPlan === "free_ads") {
       return false;
     }
     return isStatusActive(status);
@@ -133,11 +145,7 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
 
   // free_ads (ativo) habilita escrita básica, sujeita a quota server-side.
   const freeAdsAllows =
-    !planLoading &&
-    !rolesLoading &&
-    !!user &&
-    storedPlan === "free_ads" &&
-    isStatusActive(status);
+    !planLoading && !rolesLoading && !!user && storedPlan === "free_ads" && isStatusActive(status);
 
   // Em conta própria: depende só da assinatura.
   // Em conta conectada: depende do nível de acesso (não da assinatura do viewer).
@@ -152,21 +160,24 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
     setStoreCanWriteBasic(canWriteBasic);
   }, [canWrite, canWriteBasic]);
 
-  const requireSubscription = useCallback((msg?: string) => {
-    if (!isOwnAccount) {
-      // Em conta conectada o problema não é assinatura, é permissão.
-      const lvlMsg =
-        accessLevel === "view"
-          ? t("subscription.shared.viewOnly")
-          : accessLevel === "view_create"
-            ? t("subscription.shared.viewCreate")
-            : t("subscription.shared.noPermission");
-      toast.error(lvlMsg);
-      return;
-    }
-    setMessage(msg ?? t("subscription.defaultMessage"));
-    setOpen(true);
-  }, [isOwnAccount, accessLevel, t]);
+  const requireSubscription = useCallback(
+    (msg?: string) => {
+      if (!isOwnAccount) {
+        // Em conta conectada o problema não é assinatura, é permissão.
+        const lvlMsg =
+          accessLevel === "view"
+            ? t("subscription.shared.viewOnly")
+            : accessLevel === "view_create"
+              ? t("subscription.shared.viewCreate")
+              : t("subscription.shared.noPermission");
+        toast.error(lvlMsg);
+        return;
+      }
+      setMessage(msg ?? t("subscription.defaultMessage"));
+      setOpen(true);
+    },
+    [isOwnAccount, accessLevel, t],
+  );
 
   const guard = useCallback(
     <T extends (...args: never[]) => unknown>(fn: T): T => {
@@ -198,7 +209,16 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
   );
 
   return (
-    <Ctx.Provider value={{ canWrite, canWriteBasic, canAdmin: isOwnAccount ? subscriptionAllows : connCanAdmin, canUseFeature, requireSubscription, guard }}>
+    <Ctx.Provider
+      value={{
+        canWrite,
+        canWriteBasic,
+        canAdmin: isOwnAccount ? subscriptionAllows : connCanAdmin,
+        canUseFeature,
+        requireSubscription,
+        guard,
+      }}
+    >
       {children}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
@@ -217,11 +237,7 @@ export function SubscriptionGuardProvider({ children }: { children: ReactNode })
                 {t("subscription.viewPlans")} <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button
-              variant="ghost"
-              className="w-full rounded-2xl"
-              onClick={() => setOpen(false)}
-            >
+            <Button variant="ghost" className="w-full rounded-2xl" onClick={() => setOpen(false)}>
               {t("subscription.notNow")}
             </Button>
           </DialogFooter>

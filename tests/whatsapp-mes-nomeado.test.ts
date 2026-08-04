@@ -17,14 +17,10 @@ import { test, expect, beforeEach } from "bun:test";
 import { state, resetState } from "./_whatsapp-fake";
 
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
-const {
-  detectConsultaMensalNomeada,
-  extractPeriodoSuffix,
-  anoCorrenteSaoPaulo,
-} = await import("../src/server/whatsapp-mes-nomeado");
-const { detectConsultaEspecifica } = await import(
-  "../src/server/whatsapp-consultas-especificas.server"
-);
+const { detectConsultaMensalNomeada, extractPeriodoSuffix, anoCorrenteSaoPaulo } =
+  await import("../src/server/whatsapp-mes-nomeado");
+const { detectConsultaEspecifica } =
+  await import("../src/server/whatsapp-consultas-especificas.server");
 
 const tel = "5511999998888";
 const ANO = anoCorrenteSaoPaulo();
@@ -148,9 +144,30 @@ test("detectConsultaEspecifica — 'quanto gastei com mercado em julho' → term
 test("'quanto gastei em julho' → consulta mensal (não busca por termo 'julho') e zero escrita", async () => {
   resetState({
     gastos: [
-      { id: "g1", user_id: "u1", descricao: "Mercado", valor: 100, data: `${ANO}-07-05`, categoria_id: null },
-      { id: "g2", user_id: "u1", descricao: "Uber",    valor:  30, data: `${ANO}-07-10`, categoria_id: null },
-      { id: "g3", user_id: "u1", descricao: "Farmacia", valor: 20, data: `${ANO}-06-30`, categoria_id: null }, // fora
+      {
+        id: "g1",
+        user_id: "u1",
+        descricao: "Mercado",
+        valor: 100,
+        data: `${ANO}-07-05`,
+        categoria_id: null,
+      },
+      {
+        id: "g2",
+        user_id: "u1",
+        descricao: "Uber",
+        valor: 30,
+        data: `${ANO}-07-10`,
+        categoria_id: null,
+      },
+      {
+        id: "g3",
+        user_id: "u1",
+        descricao: "Farmacia",
+        valor: 20,
+        data: `${ANO}-06-30`,
+        categoria_id: null,
+      }, // fora
     ],
   });
   const r = await processarMensagemWhatsApp({
@@ -171,9 +188,30 @@ test("'quanto gastei em julho' → consulta mensal (não busca por termo 'julho'
 test("'quanto gastei em julho de 2026' resolve janela específica", async () => {
   resetState({
     gastos: [
-      { id: "g1", user_id: "u1", descricao: "AlvoJulho2026", valor: 50, data: "2026-07-15", categoria_id: null },
-      { id: "g2", user_id: "u1", descricao: "ForaJunho2026", valor: 60, data: "2026-06-30", categoria_id: null },
-      { id: "g3", user_id: "u1", descricao: "ForaAgosto2026", valor: 70, data: "2026-08-01", categoria_id: null },
+      {
+        id: "g1",
+        user_id: "u1",
+        descricao: "AlvoJulho2026",
+        valor: 50,
+        data: "2026-07-15",
+        categoria_id: null,
+      },
+      {
+        id: "g2",
+        user_id: "u1",
+        descricao: "ForaJunho2026",
+        valor: 60,
+        data: "2026-06-30",
+        categoria_id: null,
+      },
+      {
+        id: "g3",
+        user_id: "u1",
+        descricao: "ForaAgosto2026",
+        valor: 70,
+        data: "2026-08-01",
+        categoria_id: null,
+      },
     ],
   });
   const r = await processarMensagemWhatsApp({
@@ -204,7 +242,14 @@ test("'quanto gastei em janeiro de 2025' — janela histórica sem gastos respon
 test("'gastos de dezembro' precede consulta por descrição", async () => {
   resetState({
     gastos: [
-      { id: "g1", user_id: "u1", descricao: "Presente", valor: 200, data: `${ANO}-12-20`, categoria_id: null },
+      {
+        id: "g1",
+        user_id: "u1",
+        descricao: "Presente",
+        valor: 200,
+        data: `${ANO}-12-20`,
+        categoria_id: null,
+      },
     ],
   });
   const r = await processarMensagemWhatsApp({
@@ -220,7 +265,14 @@ test("'gastos de dezembro' precede consulta por descrição", async () => {
 test("consulta por descrição legítima continua funcionando ('quanto gastei com mercado')", async () => {
   resetState({
     gastos: [
-      { id: "g1", user_id: "u1", descricao: "Mercado Extra", valor: 88, data: `${ANO}-${String((new Date().getUTCMonth() % 12) + 1).padStart(2, "0")}-01`, categoria_id: null },
+      {
+        id: "g1",
+        user_id: "u1",
+        descricao: "Mercado Extra",
+        valor: 88,
+        data: `${ANO}-${String((new Date().getUTCMonth() % 12) + 1).padStart(2, "0")}-01`,
+        categoria_id: null,
+      },
     ],
   });
   const r = await processarMensagemWhatsApp({

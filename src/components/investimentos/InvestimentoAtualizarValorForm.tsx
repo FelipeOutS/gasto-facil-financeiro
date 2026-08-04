@@ -71,7 +71,9 @@ export function InvestimentoAtualizarValorForm({
         preco_novo: precoAtual ? parseBRLInput(precoAtual) : null,
         quantidade: quantidade ? Number(quantidade.replace(",", ".")) : null,
         observacao: observacao || null,
-        data_atualizacao: new Date(data + "T" + new Date().toTimeString().slice(0, 8)).toISOString(),
+        data_atualizacao: new Date(
+          data + "T" + new Date().toTimeString().slice(0, 8),
+        ).toISOString(),
         origem: "manual",
       });
       toast.success("Valor atualizado.");
@@ -141,7 +143,12 @@ export function InvestimentoAtualizarValorForm({
 
       <div>
         <label className="text-xs text-muted-foreground">Data da atualização</label>
-        <Input type="date" value={data} onChange={(e) => setData(e.target.value)} className="min-h-11" />
+        <Input
+          type="date"
+          value={data}
+          onChange={(e) => setData(e.target.value)}
+          className="min-h-11"
+        />
       </div>
 
       <div>

@@ -1,10 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type {
-  AccountType,
-  GoalKey,
-  ModuleKey,
-  OnboardingState,
-} from "./types";
+import type { AccountType, GoalKey, ModuleKey, OnboardingState } from "./types";
 
 // `user_onboarding` ainda não está nos types gerados — usamos cast para
 // liberar acesso até o regen automático.
@@ -44,9 +39,7 @@ function toState(row: Row | null, userId: string): OnboardingState {
   };
 }
 
-export async function fetchOnboarding(
-  userId: string,
-): Promise<OnboardingState> {
+export async function fetchOnboarding(userId: string): Promise<OnboardingState> {
   const { data } = await sb
     .from("user_onboarding")
     .select(
@@ -89,14 +82,12 @@ export async function saveOnboarding(
 }
 
 export async function resetOnboarding(userId: string): Promise<void> {
-  await sb
-    .from("user_onboarding")
-    .upsert(
-      {
-        user_id: userId,
-        onboarding_completed: false,
-        onboarding_completed_at: null,
-      },
-      { onConflict: "user_id" },
-    );
+  await sb.from("user_onboarding").upsert(
+    {
+      user_id: userId,
+      onboarding_completed: false,
+      onboarding_completed_at: null,
+    },
+    { onConflict: "user_id" },
+  );
 }

@@ -1,6 +1,6 @@
 /**
  * WA-C11 FASE 7B — Submissão controlada de templates para a Meta.
- * 
+ *
  * SERVER-ONLY. Requisitos:
  *  - WHATSAPP_META_SUBMISSION_ENABLED=true
  *  - Role 'owner' validada
@@ -10,11 +10,14 @@
  */
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { 
+import {
   prepareSubmissionPayload,
-  buildMessageTemplatesUrl
+  buildMessageTemplatesUrl,
 } from "@/server/whatsapp-meta-template-management.server";
-import type { CatalogTemplateRow, CatalogLoader } from "@/server/whatsapp-meta-templates-catalog.server";
+import type {
+  CatalogTemplateRow,
+  CatalogLoader,
+} from "@/server/whatsapp-meta-templates-catalog.server";
 
 function isSubmissionEnabled(): boolean {
   return process.env.WHATSAPP_META_SUBMISSION_ENABLED === "true";
@@ -24,8 +27,19 @@ function readAccessToken(): string | null {
   return process.env.WHATSAPP_ACCESS_TOKEN || null;
 }
 
-export type SubmissionResult = 
-  | { ok: false; reason: "disabled" | "already_submitted" | "payload_error" | "meta_error" | "token_missing" | "forbidden" | "not_found"; detail?: string }
+export type SubmissionResult =
+  | {
+      ok: false;
+      reason:
+        | "disabled"
+        | "already_submitted"
+        | "payload_error"
+        | "meta_error"
+        | "token_missing"
+        | "forbidden"
+        | "not_found";
+      detail?: string;
+    }
   | { ok: true; provider_template_id: string; status: string };
 
 /**
@@ -33,10 +47,10 @@ export type SubmissionResult =
  */
 export async function submitTemplateToMeta(
   local: CatalogTemplateRow,
-  opts: { fetchFn?: typeof fetch } = {}
+  opts: { fetchFn?: typeof fetch } = {},
 ): Promise<SubmissionResult> {
   if (!isSubmissionEnabled()) return { ok: false, reason: "disabled" };
-  
+
   const token = readAccessToken();
   if (!token) return { ok: false, reason: "token_missing" };
 
@@ -56,7 +70,7 @@ export async function submitTemplateToMeta(
     const res = await fetchFn(url.url, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(prepared.payload),
@@ -66,7 +80,11 @@ export async function submitTemplateToMeta(
 
     if (!res.ok) {
       console.error("[submitTemplateToMeta] Erro Meta:", data);
-      return { ok: false, reason: "meta_error", detail: data?.error?.message || "Erro desconhecido" };
+      return {
+        ok: false,
+        reason: "meta_error",
+        detail: data?.error?.message || "Erro desconhecido",
+      };
     }
 
     // Sucesso: Meta retorna { id: "...", status: "PENDING" | "APPROVED" ... }
@@ -80,7 +98,7 @@ export async function submitTemplateToMeta(
         provider_template_id: providerId,
         status: status,
         submitted_at: new Date().toISOString(),
-        last_synced_at: new Date().toISOString()
+        last_synced_at: new Date().toISOString(),
       })
       .eq("id", local.id);
 

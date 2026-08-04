@@ -9,7 +9,10 @@
  * templates`. Anon e authenticated não conseguem ler nem escrever.
  */
 
-import { resolveAllowedMapping, type AllowedNotificationKey } from "./whatsapp-meta-template-mapping.server";
+import {
+  resolveAllowedMapping,
+  type AllowedNotificationKey,
+} from "./whatsapp-meta-template-mapping.server";
 
 export type CatalogTemplateRow = {
   id: string;
@@ -40,10 +43,7 @@ export type CatalogLoader = {
     internalKey: string,
     version: number,
   ): Promise<CatalogTemplateRow | null>;
-  getByMetaNameAndLanguage(
-    metaName: string,
-    language: string,
-  ): Promise<CatalogTemplateRow | null>;
+  getByMetaNameAndLanguage(metaName: string, language: string): Promise<CatalogTemplateRow | null>;
   listAll(): Promise<CatalogTemplateRow[]>;
 };
 
@@ -100,5 +100,8 @@ export async function loadCanonicalForNotificationKey(
 ): Promise<CatalogTemplateRow | null> {
   const map = resolveAllowedMapping(notificationKey);
   if (!map.ok) return null;
-  return loader.getByInternalKeyAndVersion(map.entry.notificationKey as AllowedNotificationKey, map.entry.version);
+  return loader.getByInternalKeyAndVersion(
+    map.entry.notificationKey as AllowedNotificationKey,
+    map.entry.version,
+  );
 }

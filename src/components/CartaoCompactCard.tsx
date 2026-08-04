@@ -53,7 +53,6 @@ export const CartaoCompactCard = memo(function CartaoCompactCard({
   const r = resumo ?? resumoFaturaCartao(cartao.id);
   const cor = cartao.cor || "#8b5cf6";
   const theme = useMemo(() => getCardTheme(cor, cartao.banco), [cor, cartao.banco]);
-  
 
   return (
     <article
@@ -161,7 +160,6 @@ export const CartaoCompactCard = memo(function CartaoCompactCard({
     </article>
   );
 });
-
 
 /** Tile "Adicionar cartão" — mesmo formato, fundo neutro, ícone +. */
 export function CartaoAddTile({ onClick }: { onClick: () => void }) {

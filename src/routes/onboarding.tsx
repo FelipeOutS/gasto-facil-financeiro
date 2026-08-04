@@ -66,14 +66,10 @@ function OnboardingPage() {
   const recPlan = commercialPlanByTier(recommended);
 
   function toggleGoal(g: GoalKey) {
-    setGoals((prev) =>
-      prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g],
-    );
+    setGoals((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]));
   }
   function toggleModule(m: ModuleKey) {
-    setModules((prev) =>
-      prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m],
-    );
+    setModules((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]));
   }
 
   async function skipAll() {
@@ -126,9 +122,7 @@ function OnboardingPage() {
             <span className="grid h-10 w-10 place-items-center rounded-2xl bg-card shadow-elevated">
               <Wallet className="h-5 w-5 text-foreground" />
             </span>
-            <span className="text-base font-extrabold tracking-tight">
-              {t("brand")}
-            </span>
+            <span className="text-base font-extrabold tracking-tight">{t("brand")}</span>
           </div>
           {step > 0 && step < 5 && (
             <button
@@ -147,47 +141,25 @@ function OnboardingPage() {
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className={cn(
-                  "h-1 flex-1 rounded-full",
-                  step >= i ? "bg-primary" : "bg-card",
-                )}
+                className={cn("h-1 flex-1 rounded-full", step >= i ? "bg-primary" : "bg-card")}
               />
             ))}
           </div>
         )}
 
         {/* Steps */}
-        {step === 0 && (
-          <StepWelcome onStart={() => setStep(1)} onSkip={skipAll} t={t} />
-        )}
+        {step === 0 && <StepWelcome onStart={() => setStep(1)} onSkip={skipAll} t={t} />}
 
         {step === 1 && (
-          <StepAccountType
-            value={accountType}
-            onChange={setAccountType}
-            onNext={next}
-            t={t}
-          />
+          <StepAccountType value={accountType} onChange={setAccountType} onNext={next} t={t} />
         )}
 
         {step === 2 && (
-          <StepGoals
-            value={goals}
-            onToggle={toggleGoal}
-            onBack={back}
-            onNext={next}
-            t={t}
-          />
+          <StepGoals value={goals} onToggle={toggleGoal} onBack={back} onNext={next} t={t} />
         )}
 
         {step === 3 && (
-          <StepModules
-            value={modules}
-            onToggle={toggleModule}
-            onBack={back}
-            onNext={next}
-            t={t}
-          />
+          <StepModules value={modules} onToggle={toggleModule} onBack={back} onNext={next} t={t} />
         )}
 
         {step === 4 && (
@@ -208,11 +180,7 @@ function OnboardingPage() {
         )}
 
         {step === 5 && (
-          <StepDone
-            modules={modules}
-            onGoDashboard={() => navigate({ to: "/app" })}
-            t={t}
-          />
+          <StepDone modules={modules} onGoDashboard={() => navigate({ to: "/app" })} t={t} />
         )}
       </div>
     </div>
@@ -221,38 +189,21 @@ function OnboardingPage() {
 
 /* ============== Steps ============== */
 
-function StepWelcome({
-  onStart,
-  onSkip,
-  t,
-}: {
-  onStart: () => void;
-  onSkip: () => void;
-  t: TFn;
-}) {
+function StepWelcome({ onStart, onSkip, t }: { onStart: () => void; onSkip: () => void; t: TFn }) {
   return (
     <div className="space-y-6">
       <div className="grid h-16 w-16 place-items-center rounded-3xl bg-gradient-to-br from-primary/30 to-primary/5">
         <Sparkles className="h-7 w-7 text-primary" />
       </div>
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight">
-          {t("welcome.title")}
-        </h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          {t("welcome.subtitle")}
-        </p>
+        <h1 className="text-3xl font-extrabold tracking-tight">{t("welcome.title")}</h1>
+        <p className="mt-3 text-sm text-muted-foreground">{t("welcome.subtitle")}</p>
       </div>
       <div className="space-y-3 pt-4">
         <Button size="lg" className="w-full" onClick={onStart}>
           {t("common.start")}
         </Button>
-        <Button
-          size="lg"
-          variant="ghost"
-          className="w-full"
-          onClick={onSkip}
-        >
+        <Button size="lg" variant="ghost" className="w-full" onClick={onSkip}>
           {t("skip")}
         </Button>
       </div>
@@ -274,12 +225,8 @@ function StepAccountType({
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-extrabold tracking-tight">
-          {t("accountType.title")}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("accountType.subtitle")}
-        </p>
+        <h2 className="text-2xl font-extrabold tracking-tight">{t("accountType.title")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t("accountType.subtitle")}</p>
       </div>
       <div className="space-y-3">
         {ACCOUNT_TYPES.map((at) => {
@@ -315,12 +262,7 @@ function StepAccountType({
           );
         })}
       </div>
-      <Button
-        size="lg"
-        className="w-full"
-        disabled={!value}
-        onClick={onNext}
-      >
+      <Button size="lg" className="w-full" disabled={!value} onClick={onNext}>
         {t("common.continue")} <ArrowRight className="ml-1 h-4 w-4" />
       </Button>
     </div>
@@ -343,12 +285,8 @@ function StepGoals({
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-extrabold tracking-tight">
-          {t("goals.title")}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("goals.subtitle")}
-        </p>
+        <h2 className="text-2xl font-extrabold tracking-tight">{t("goals.title")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t("goals.subtitle")}</p>
       </div>
       <div className="grid grid-cols-1 gap-2">
         {GOALS.map((g) => {
@@ -376,12 +314,7 @@ function StepGoals({
         })}
       </div>
       <div className="flex gap-2">
-        <Button
-          size="lg"
-          variant="ghost"
-          className="flex-1"
-          onClick={onBack}
-        >
+        <Button size="lg" variant="ghost" className="flex-1" onClick={onBack}>
           <ArrowLeft className="mr-1 h-4 w-4" /> {t("common.back")}
         </Button>
         <Button size="lg" className="flex-1" onClick={onNext}>
@@ -408,12 +341,8 @@ function StepModules({
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-extrabold tracking-tight">
-          {t("modules.title")}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("modules.subtitle")}
-        </p>
+        <h2 className="text-2xl font-extrabold tracking-tight">{t("modules.title")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t("modules.subtitle")}</p>
       </div>
       <div className="grid grid-cols-2 gap-2">
         {MODULES.map((m) => {
@@ -443,12 +372,7 @@ function StepModules({
         })}
       </div>
       <div className="flex gap-2">
-        <Button
-          size="lg"
-          variant="ghost"
-          className="flex-1"
-          onClick={onBack}
-        >
+        <Button size="lg" variant="ghost" className="flex-1" onClick={onBack}>
           <ArrowLeft className="mr-1 h-4 w-4" /> {t("common.back")}
         </Button>
         <Button size="lg" className="flex-1" onClick={onNext}>
@@ -482,12 +406,8 @@ function StepPlan({
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-extrabold tracking-tight">
-          {t("plan.title")}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("plan.subtitle")}
-        </p>
+        <h2 className="text-2xl font-extrabold tracking-tight">{t("plan.title")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t("plan.subtitle")}</p>
       </div>
 
       <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/15 to-primary/5 p-5 shadow-elevated">
@@ -498,9 +418,7 @@ function StepPlan({
           </span>
         </div>
         <h3 className="mt-2 text-xl font-extrabold">{recommendedLabel}</h3>
-        {priceLabel && (
-          <div className="mt-1 text-sm text-muted-foreground">{priceLabel}</div>
-        )}
+        {priceLabel && <div className="mt-1 text-sm text-muted-foreground">{priceLabel}</div>}
         <ul className="mt-4 space-y-2">
           {highlights.slice(0, 5).map((h) => (
             <li key={h} className="flex items-start gap-2 text-sm">
@@ -512,30 +430,13 @@ function StepPlan({
       </div>
 
       <div className="space-y-2">
-        <Button
-          size="lg"
-          className="w-full"
-          onClick={onSeePlan}
-          disabled={saving}
-        >
+        <Button size="lg" className="w-full" onClick={onSeePlan} disabled={saving}>
           {t("plan.seePlan")}
         </Button>
-        <Button
-          size="lg"
-          variant="ghost"
-          className="w-full"
-          onClick={onContinue}
-          disabled={saving}
-        >
+        <Button size="lg" variant="ghost" className="w-full" onClick={onContinue} disabled={saving}>
           {t("plan.keepCurrent")}
         </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="w-full"
-          onClick={onBack}
-          disabled={saving}
-        >
+        <Button size="sm" variant="ghost" className="w-full" onClick={onBack} disabled={saving}>
           <ArrowLeft className="mr-1 h-4 w-4" /> {t("common.back")}
         </Button>
       </div>
@@ -557,7 +458,11 @@ function StepDone({
       { key: "gastos", label: t("done.shortcuts.gastos"), to: "/adicionar" },
       { key: "cartoes", label: t("done.shortcuts.cartoes"), to: "/cartoes" },
       { key: "contas_a_pagar", label: t("done.shortcuts.contas_a_pagar"), to: "/contas-a-pagar" },
-      { key: "contas_a_receber", label: t("done.shortcuts.contas_a_receber"), to: "/contas-a-receber" },
+      {
+        key: "contas_a_receber",
+        label: t("done.shortcuts.contas_a_receber"),
+        to: "/contas-a-receber",
+      },
       { key: "orcamento", label: t("done.shortcuts.orcamento"), to: "/orcamento" },
       { key: "investimentos", label: t("done.shortcuts.investimentos"), to: "/investimentos" },
     ];
@@ -572,9 +477,7 @@ function StepDone({
       </div>
       <div>
         <h2 className="text-2xl font-extrabold tracking-tight">{t("done.title")}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("done.subtitle")}
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">{t("done.subtitle")}</p>
       </div>
 
       {shortcuts.length > 0 && (
@@ -598,4 +501,3 @@ function StepDone({
     </div>
   );
 }
-

@@ -16,9 +16,7 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import "./_whatsapp-fake";
 import { resetState, state, gastosInserts, fakeAdmin } from "./_whatsapp-fake";
 
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 
 function msg(texto: string, externalId = "e-1") {
   return {
@@ -64,9 +62,7 @@ describe("WA-F3.4 — RPC create_installment_purchase: caso real (6x)", () => {
     expect(gs.every((g) => g.row.cartao_id === "c-mp")).toBe(true);
     const cats = new Set(gs.map((g) => g.row.categoria_id));
     expect(cats.size).toBe(1);
-    const parcs = gs
-      .map((g) => g.row.parcela_atual)
-      .sort((a, b) => (a as number) - (b as number));
+    const parcs = gs.map((g) => g.row.parcela_atual).sort((a, b) => (a as number) - (b as number));
     expect(parcs).toEqual([1, 2, 3, 4, 5, 6]);
     // tipo integer (nunca string/float)
     for (const p of parcs) {
@@ -99,8 +95,7 @@ describe("WA-F3.4 — Rollback e limpeza da sessão de claim", () => {
       expect(gastosInserts().length).toBe(0);
       // sessão de claim NÃO pode estar em parc_persistindo
       const claim = state.inserts.find(
-        (i) =>
-          i.table === "whatsapp_messages" && i.row.external_id === "e-sim",
+        (i) => i.table === "whatsapp_messages" && i.row.external_id === "e-sim",
       );
       expect(claim).toBeTruthy();
       expect(claim!.row.status).not.toBe("parc_persistindo");
@@ -135,8 +130,7 @@ describe("WA-F3.4 — Rollback e limpeza da sessão de claim", () => {
       expect(out.resposta.toLowerCase()).not.toContain("registrei");
       expect(gastosInserts().filter((g) => g.row.grupo_parcelamento_id).length).toBe(0);
       const claim = state.inserts.find(
-        (i) =>
-          i.table === "whatsapp_messages" && i.row.external_id === "e-sim",
+        (i) => i.table === "whatsapp_messages" && i.row.external_id === "e-sim",
       );
       expect(claim!.row.status).toBe("erro");
     } finally {

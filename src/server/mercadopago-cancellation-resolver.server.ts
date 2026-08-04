@@ -17,11 +17,7 @@
  * decide o modo de cancelamento quando o próprio status raw for cancelled.
  */
 
-export type MercadoPagoCancellationKind =
-  | "immediate"
-  | "scheduled"
-  | "not_cancelled"
-  | "unknown";
+export type MercadoPagoCancellationKind = "immediate" | "scheduled" | "not_cancelled" | "unknown";
 
 export interface CancellationResolverInput {
   /** raw status vindo do recurso MP (`payment.status`). */

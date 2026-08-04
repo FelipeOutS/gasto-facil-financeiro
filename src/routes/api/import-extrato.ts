@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getUserFromRequest, unauthorizedResponse, ensurePremiumFeatureAccess } from "@/server/api-auth";
+import {
+  getUserFromRequest,
+  unauthorizedResponse,
+  ensurePremiumFeatureAccess,
+} from "@/server/api-auth";
 import { enforceUserRateLimit } from "@/server/rate-limit.server";
 import { extractText, extractTextItems, getDocumentProxy } from "unpdf";
 
@@ -197,21 +201,23 @@ function decodeBase64Pdf(dataUri: string): Uint8Array | null {
 }
 
 function sanitizeText(text: string): string {
-  return text
-    // 16 dígitos com ou sem espaços/hífens → mantém só últimos 4
-    .replace(/\b(?:\d[ -]?){12}(\d{4})\b/g, "**** **** **** $1")
-    // CPF formatado
-    .replace(/\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/g, "[CPF]")
-    // CPF sem formato (11 dígitos isolados)
-    .replace(/(?<!\d)\d{11}(?!\d)/g, "[CPF]")
-    // CNPJ
-    .replace(/\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g, "[CNPJ]")
-    // Agência/conta longas (ex: 1234-5 / 12345678-9)
-    .replace(/\bAg(?:ência|encia)?[:\s]*\d{4,6}[-\s]?\d{0,2}\b/gi, "[Agência]")
-    .replace(/\bConta[:\s]*\d{5,}[-\s]?\d{0,2}\b/gi, "[Conta]")
-    // CVV
-    .replace(/\bCVV[:\s]*\d{3,4}\b/gi, "[CVV]")
-    .slice(0, 200_000);
+  return (
+    text
+      // 16 dígitos com ou sem espaços/hífens → mantém só últimos 4
+      .replace(/\b(?:\d[ -]?){12}(\d{4})\b/g, "**** **** **** $1")
+      // CPF formatado
+      .replace(/\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/g, "[CPF]")
+      // CPF sem formato (11 dígitos isolados)
+      .replace(/(?<!\d)\d{11}(?!\d)/g, "[CPF]")
+      // CNPJ
+      .replace(/\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g, "[CNPJ]")
+      // Agência/conta longas (ex: 1234-5 / 12345678-9)
+      .replace(/\bAg(?:ência|encia)?[:\s]*\d{4,6}[-\s]?\d{0,2}\b/gi, "[Agência]")
+      .replace(/\bConta[:\s]*\d{5,}[-\s]?\d{0,2}\b/gi, "[Conta]")
+      // CVV
+      .replace(/\bCVV[:\s]*\d{3,4}\b/gi, "[CVV]")
+      .slice(0, 200_000)
+  );
 }
 
 function stripAccents(text: string) {
@@ -236,20 +242,23 @@ function parseDataBR(raw: string, fallbackYear?: number): string | null {
     const y = Number(m[3].length === 2 ? `20${m[3]}` : m[3]);
     const mo = Number(m[2]);
     const d = Number(m[1]);
-    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31)
+      return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   }
   m = raw.match(/\b(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})\b/);
   if (m) {
     const y = Number(m[1]);
     const mo = Number(m[2]);
     const d = Number(m[3]);
-    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31)
+      return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   }
   m = raw.match(/\b(\d{1,2})[\/.\-](\d{1,2})\b/);
   if (m && fallbackYear) {
     const mo = Number(m[2]);
     const d = Number(m[1]);
-    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) return `${fallbackYear}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31)
+      return `${fallbackYear}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   }
   return null;
 }
@@ -263,27 +272,45 @@ function guessYearFromText(text: string): number {
 function suggestCategory(desc: string): string {
   const t = stripAccents(desc).toLowerCase();
   if (/uber|\b99\b|transporte|posto|combustivel|metro|onibus/.test(t)) return "transporte";
-  if (/mercado|mercearia|comercial|supermerc|atacad|carrefour|assai|extra/.test(t)) return "mercado";
-  if (/sabesp|eletropaulo|enel|claro|vivo|tim\b|internet|energia|agua|conta/.test(t)) return "contas";
-  if (/food|burger|lanches|grill|restaurante|ifood|rappi|padaria|pizzaria/.test(t)) return "alimentacao";
+  if (/mercado|mercearia|comercial|supermerc|atacad|carrefour|assai|extra/.test(t))
+    return "mercado";
+  if (/sabesp|eletropaulo|enel|claro|vivo|tim\b|internet|energia|agua|conta/.test(t))
+    return "contas";
+  if (/food|burger|lanches|grill|restaurante|ifood|rappi|padaria|pizzaria/.test(t))
+    return "alimentacao";
   if (/rendimento|juros/.test(t)) return "outros";
   if (/meli dolar|invest|resgate|aplicacao/.test(t)) return "outros";
   return "outros";
 }
 
-function classifyMercadoPago(desc: string, signedValue: number): Pick<ItemBruto, "tipoMovimentacao" | "formaPagamento" | "categoriaSugerida" | "statusRevisao" | "observacao"> {
+function classifyMercadoPago(
+  desc: string,
+  signedValue: number,
+): Pick<
+  ItemBruto,
+  "tipoMovimentacao" | "formaPagamento" | "categoriaSugerida" | "statusRevisao" | "observacao"
+> {
   const t = stripAccents(desc).toLowerCase();
-  if (/pagamento.*cart[aã]o.*cr[eé]dito|cart[aã]o de cr[eé]dito|pagamento.*fatura|fatura.*cart[aã]o/.test(t)) {
+  if (
+    /pagamento.*cart[aã]o.*cr[eé]dito|cart[aã]o de cr[eé]dito|pagamento.*fatura|fatura.*cart[aã]o/.test(
+      t,
+    )
+  ) {
     return {
       tipoMovimentacao: "transferencia_interna",
       formaPagamento: "boleto",
       categoriaSugerida: "contas",
       statusRevisao: "pagamento_fatura_cartao",
-      observacao: "Pagamento de fatura detectado. Não será contado como nova despesa para evitar duplicidade.",
+      observacao:
+        "Pagamento de fatura detectado. Não será contado como nova despesa para evitar duplicidade.",
     };
   }
   // Cofrinho / Guardado — termos do Mercado Pago e nomes de objetivo (ex: "COMPRAR PLAY 5")
-  if (/reserva por gastos|dinheiro reservado|reservado|cofrinho|guardar|guardei|caixinha|meta de poupanca/.test(t)) {
+  if (
+    /reserva por gastos|dinheiro reservado|reservado|cofrinho|guardar|guardei|caixinha|meta de poupanca/.test(
+      t,
+    )
+  ) {
     return {
       tipoMovimentacao: "transferencia_interna",
       formaPagamento: "transferencia",
@@ -292,7 +319,11 @@ function classifyMercadoPago(desc: string, signedValue: number): Pick<ItemBruto,
       observacao: "Movimento para Guardado/Cofrinho. Não conta como gasto comum.",
     };
   }
-  if (/dinheiro retirado|retirado.*reserva|resgate.*reserva|retirei.*cofrinho|resgate.*cofrinho/.test(t)) {
+  if (
+    /dinheiro retirado|retirado.*reserva|resgate.*reserva|retirei.*cofrinho|resgate.*cofrinho/.test(
+      t,
+    )
+  ) {
     return {
       tipoMovimentacao: "transferencia_interna",
       formaPagamento: "transferencia",
@@ -302,7 +333,11 @@ function classifyMercadoPago(desc: string, signedValue: number): Pick<ItemBruto,
     };
   }
   // Transferência entre contas próprias
-  if (/transferencia.*entre.*contas|entre contas proprias|minha conta|conta nubank|conta itau|conta inter|para minha conta/.test(t)) {
+  if (
+    /transferencia.*entre.*contas|entre contas proprias|minha conta|conta nubank|conta itau|conta inter|para minha conta/.test(
+      t,
+    )
+  ) {
     return {
       tipoMovimentacao: "transferencia_interna",
       formaPagamento: "transferencia",
@@ -317,17 +352,37 @@ function classifyMercadoPago(desc: string, signedValue: number): Pick<ItemBruto,
       formaPagamento: "transferencia",
       categoriaSugerida: "outros",
       statusRevisao: /venda de meli dolar/.test(t) ? "investimentos" : "novo",
-      observacao: /venda de meli dolar/.test(t) ? "Investimento/resgate identificado; revise antes de confirmar." : null,
+      observacao: /venda de meli dolar/.test(t)
+        ? "Investimento/resgate identificado; revise antes de confirmar."
+        : null,
     };
   }
   if (/pix recebido|transferencia recebida|recebido/.test(t) && signedValue > 0) {
-    return { tipoMovimentacao: "receita", formaPagamento: "pix", categoriaSugerida: "outros", statusRevisao: "novo", observacao: null };
+    return {
+      tipoMovimentacao: "receita",
+      formaPagamento: "pix",
+      categoriaSugerida: "outros",
+      statusRevisao: "novo",
+      observacao: null,
+    };
   }
   if (/pagamento com qr pix|qr pix|pix enviado|pix/.test(t)) {
-    return { tipoMovimentacao: signedValue > 0 ? "receita" : "despesa", formaPagamento: "pix", categoriaSugerida: suggestCategory(desc), statusRevisao: "novo", observacao: null };
+    return {
+      tipoMovimentacao: signedValue > 0 ? "receita" : "despesa",
+      formaPagamento: "pix",
+      categoriaSugerida: suggestCategory(desc),
+      statusRevisao: "novo",
+      observacao: null,
+    };
   }
   if (/pagamento de conta|boleto|conta/.test(t)) {
-    return { tipoMovimentacao: "despesa", formaPagamento: "boleto", categoriaSugerida: suggestCategory(desc), statusRevisao: "novo", observacao: null };
+    return {
+      tipoMovimentacao: "despesa",
+      formaPagamento: "boleto",
+      categoriaSugerida: suggestCategory(desc),
+      statusRevisao: "novo",
+      observacao: null,
+    };
   }
   return {
     tipoMovimentacao: signedValue > 0 ? "receita" : "despesa",
@@ -338,14 +393,25 @@ function classifyMercadoPago(desc: string, signedValue: number): Pick<ItemBruto,
   };
 }
 
-function parseMercadoPagoStructuredText(text: string): { itens: ItemBruto[]; observacao: string | null; banco: string | null; resumo: ExtratoResumo } | null {
+function parseMercadoPagoStructuredText(text: string): {
+  itens: ItemBruto[];
+  observacao: string | null;
+  banco: string | null;
+  resumo: ExtratoResumo;
+} | null {
   const normalized = stripAccents(text).toLowerCase();
   const hasMercadoPago = /mercado\s*pago/.test(normalized);
-  const hasColumns = /data[\s\S]{0,80}descri[cç][aã]o[\s\S]{0,160}id da opera[cç][aã]o[\s\S]{0,160}valor/i.test(text);
+  const hasColumns =
+    /data[\s\S]{0,80}descri[cç][aã]o[\s\S]{0,160}id da opera[cç][aã]o[\s\S]{0,160}valor/i.test(
+      text,
+    );
   if (!hasMercadoPago && !hasColumns) return null;
 
   const fallbackYear = guessYearFromText(text);
-  const rawLines = text.split(/\r?\n/).map((line) => line.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const rawLines = text
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
 
   // Linhas a ignorar (cabeçalhos, totais)
   const skipLine = (l: string) => {
@@ -435,26 +501,47 @@ function parseMercadoPagoStructuredText(text: string): { itens: ItemBruto[]; obs
     });
   }
 
-  const resumo = extractMercadoPagoResumo(text, hasMercadoPago ? "Mercado Pago" : null, fallbackYear);
+  const resumo = extractMercadoPagoResumo(
+    text,
+    hasMercadoPago ? "Mercado Pago" : null,
+    fallbackYear,
+  );
   if (itens.length === 0 && hasColumns) {
-    return { itens: [], banco: resumo.banco, resumo, observacao: "Encontramos texto no PDF, mas não conseguimos identificar as colunas de movimentação." };
+    return {
+      itens: [],
+      banco: resumo.banco,
+      resumo,
+      observacao:
+        "Encontramos texto no PDF, mas não conseguimos identificar as colunas de movimentação.",
+    };
   }
   return itens.length > 0 ? { itens, banco: resumo.banco, resumo, observacao: null } : null;
 }
 
-function extractMercadoPagoResumo(text: string, banco: string | null, fallbackYear: number): ExtratoResumo {
-  const lines = text.split(/\r?\n/).map((line) => line.replace(/\s+/g, " ").trim()).filter(Boolean);
+function extractMercadoPagoResumo(
+  text: string,
+  banco: string | null,
+  fallbackYear: number,
+): ExtratoResumo {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
   const money = /[+-]?\s*(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|[+-]?\s*(?:R\$\s*)?\d+,\d{2}/g;
   const amountFromLine = (line: string) => {
     const matches = line.match(money);
     return matches?.length ? parseValorBR(matches[matches.length - 1]) : null;
   };
   const findByLabel = (labels: RegExp[]) => {
-    const line = lines.find((l) => labels.some((label) => label.test(stripAccents(l).toLowerCase())));
+    const line = lines.find((l) =>
+      labels.some((label) => label.test(stripAccents(l).toLowerCase())),
+    );
     return line ? amountFromLine(line) : null;
   };
   const periodText = lines.find((l) => /periodo|período/i.test(l)) ?? "";
-  const periodDates = [...periodText.matchAll(/\b\d{1,2}[\/.\-]\d{1,2}(?:[\/.\-]\d{2,4})?\b/g)].map((m) => parseDataBR(m[0], fallbackYear));
+  const periodDates = [...periodText.matchAll(/\b\d{1,2}[\/.\-]\d{1,2}(?:[\/.\-]\d{2,4})?\b/g)].map(
+    (m) => parseDataBR(m[0], fallbackYear),
+  );
   return {
     banco,
     periodoInicio: periodDates[0] ?? null,
@@ -470,7 +557,10 @@ async function extractTextPreservingRows(docProxy: Awaited<ReturnType<typeof get
   const result = await extractTextItems(docProxy);
   return result.items
     .map((pageItems) => {
-      const rows: Array<{ y: number; items: Array<{ str: string; x: number; y: number; height: number }> }> = [];
+      const rows: Array<{
+        y: number;
+        items: Array<{ str: string; x: number; y: number; height: number }>;
+      }> = [];
       for (const item of pageItems) {
         const str = item.str.trim();
         if (!str) continue;
@@ -480,7 +570,14 @@ async function extractTextPreservingRows(docProxy: Awaited<ReturnType<typeof get
       }
       return rows
         .sort((a, b) => b.y - a.y)
-        .map((row) => row.items.sort((a, b) => a.x - b.x).map((item) => item.str).join(" ").replace(/\s+/g, " ").trim())
+        .map((row) =>
+          row.items
+            .sort((a, b) => a.x - b.x)
+            .map((item) => item.str)
+            .join(" ")
+            .replace(/\s+/g, " ")
+            .trim(),
+        )
         .filter(Boolean)
         .join("\n");
     })
@@ -538,13 +635,14 @@ function normalizeItens(rawItens: ItemBruto[]) {
           ? it.categoriaSugerida
           : null;
       const desc = typeof it.descricao === "string" ? it.descricao.trim() : null;
-      const contraparte =
-        typeof it.contraparte === "string" ? it.contraparte.trim() : null;
+      const contraparte = typeof it.contraparte === "string" ? it.contraparte.trim() : null;
       const idOperacao = typeof it.idOperacao === "string" ? it.idOperacao.trim() : null;
       const saldo = typeof it.saldo === "number" && Number.isFinite(it.saldo) ? it.saldo : null;
-      const origemImportacao = typeof it.origemImportacao === "string" ? it.origemImportacao.slice(0, 40) : "extrato_pdf";
+      const origemImportacao =
+        typeof it.origemImportacao === "string" ? it.origemImportacao.slice(0, 40) : "extrato_pdf";
       const bancoOrigem = typeof it.bancoOrigem === "string" ? it.bancoOrigem.slice(0, 60) : null;
-      const statusRevisao = typeof it.statusRevisao === "string" ? it.statusRevisao.slice(0, 60) : null;
+      const statusRevisao =
+        typeof it.statusRevisao === "string" ? it.statusRevisao.slice(0, 60) : null;
       const conf =
         it.confianca === "alta" || it.confianca === "media" || it.confianca === "baixa"
           ? it.confianca
@@ -564,8 +662,7 @@ function normalizeItens(rawItens: ItemBruto[]) {
         categoriaSugerida: cat,
         contraparte,
         confianca: conf,
-        observacao:
-          typeof it.observacao === "string" ? it.observacao.slice(0, 200) : null,
+        observacao: typeof it.observacao === "string" ? it.observacao.slice(0, 200) : null,
       };
     })
     .filter((it) => it.valor !== null || it.descricao);
@@ -579,15 +676,17 @@ export const Route = createFileRoute("/api/import-extrato")({
         if (!__user) return unauthorizedResponse();
         const __gate = await ensurePremiumFeatureAccess(__user, "importar_extrato");
         if (__gate) return __gate;
-        const __rl = await enforceUserRateLimit({ scope: "import", userId: __user.id, route: "import-extrato", request });
+        const __rl = await enforceUserRateLimit({
+          scope: "import",
+          userId: __user.id,
+          route: "import-extrato",
+          request,
+        });
         if (__rl) return __rl;
         try {
           const apiKey = process.env.LOVABLE_API_KEY;
           if (!apiKey) {
-            return Response.json(
-              { error: "LOVABLE_API_KEY não configurada." },
-              { status: 500 },
-            );
+            return Response.json({ error: "LOVABLE_API_KEY não configurada." }, { status: 500 });
           }
 
           const contentType = request.headers.get("content-type") || "";
@@ -612,10 +711,7 @@ export const Route = createFileRoute("/api/import-extrato")({
               );
             }
             if (file.size === 0) {
-              return Response.json(
-                { error: "Arquivo PDF vazio." },
-                { status: 400 },
-              );
+              return Response.json({ error: "Arquivo PDF vazio." }, { status: 400 });
             }
             if (file.size > 15 * 1024 * 1024) {
               return Response.json(
@@ -632,20 +728,14 @@ export const Route = createFileRoute("/api/import-extrato")({
           try {
             body = (await request.json()) as { pdf?: string; imagens?: string[] };
           } catch {
-            return Response.json(
-              { error: "Requisição inválida." },
-              { status: 400 },
-            );
+            return Response.json({ error: "Requisição inválida." }, { status: 400 });
           }
 
           // ---------- PDF (compat JSON base64) ----------
           if (typeof body?.pdf === "string" && body.pdf.length > 0) {
             const bytes = decodeBase64Pdf(body.pdf);
             if (!bytes || bytes.length === 0) {
-              return Response.json(
-                { error: "Envie um arquivo PDF válido." },
-                { status: 400 },
-              );
+              return Response.json({ error: "Envie um arquivo PDF válido." }, { status: 400 });
             }
             if (bytes.length > 12 * 1024 * 1024) {
               return Response.json(
@@ -695,10 +785,7 @@ export const Route = createFileRoute("/api/import-extrato")({
             return await handleAIResponse(aiResp, 0, "ocr");
           }
 
-          return Response.json(
-            { error: "Envie um PDF ou imagens do extrato." },
-            { status: 400 },
-          );
+          return Response.json({ error: "Envie um PDF ou imagens do extrato." }, { status: 400 });
         } catch (err) {
           console.error("[import-extrato] erro", err);
           return Response.json(
@@ -712,7 +799,6 @@ export const Route = createFileRoute("/api/import-extrato")({
 });
 
 // (helper removido — não mandamos mais o PDF como image_url ao gateway)
-
 
 async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
   let extractedText = "";
@@ -729,9 +815,7 @@ async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
       }),
     ]);
     extractedText =
-      typeof result.text === "string"
-        ? result.text
-        : (result.text as string[]).join("\n");
+      typeof result.text === "string" ? result.text : (result.text as string[]).join("\n");
     layoutText = positionedText;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -772,7 +856,8 @@ async function processPdfBytes(bytes: Uint8Array, apiKey: string) {
       return Response.json(
         {
           error:
-            mercadoPago.observacao || "Encontramos texto no PDF, mas não conseguimos identificar as colunas de movimentação.",
+            mercadoPago.observacao ||
+            "Encontramos texto no PDF, mas não conseguimos identificar as colunas de movimentação.",
         },
         { status: 422 },
       );
@@ -845,24 +930,42 @@ async function parseAIResponse(
     const text = await aiResp.text().catch(() => "");
     console.error("[import-extrato] AI gateway error", aiResp.status, text.slice(0, 300));
     if (aiResp.status === 429) {
-      return { error: Response.json({ error: "Muitas leituras seguidas. Tenta de novo em alguns segundos." }, { status: 429 }) };
+      return {
+        error: Response.json(
+          { error: "Muitas leituras seguidas. Tenta de novo em alguns segundos." },
+          { status: 429 },
+        ),
+      };
     }
     if (aiResp.status === 402) {
-      return { error: Response.json({ error: "Sem créditos da IA. Adicione créditos no workspace para continuar." }, { status: 402 }) };
+      return {
+        error: Response.json(
+          { error: "Sem créditos da IA. Adicione créditos no workspace para continuar." },
+          { status: 402 },
+        ),
+      };
     }
     return {
       error: Response.json(
-        { error: "A leitura inteligente está instável agora. Tente novamente em instantes — ou envie prints do extrato (esse caminho costuma funcionar)." },
+        {
+          error:
+            "A leitura inteligente está instável agora. Tente novamente em instantes — ou envie prints do extrato (esse caminho costuma funcionar).",
+        },
         { status: 502 },
       ),
     };
   }
   const json = await aiResp.json().catch(() => null);
-  const toolCall = (json as { choices?: Array<{ message?: { tool_calls?: Array<{ function?: { arguments?: string } }> } }> } | null)
-    ?.choices?.[0]?.message?.tool_calls?.[0];
+  const toolCall = (
+    json as {
+      choices?: Array<{ message?: { tool_calls?: Array<{ function?: { arguments?: string } }> } }>;
+    } | null
+  )?.choices?.[0]?.message?.tool_calls?.[0];
   const argsStr = toolCall?.function?.arguments;
   if (!argsStr) {
-    return { error: Response.json({ error: "A IA não conseguiu estruturar o extrato." }, { status: 502 }) };
+    return {
+      error: Response.json({ error: "A IA não conseguiu estruturar o extrato." }, { status: 502 }),
+    };
   }
   let parsed: { itens?: ItemBruto[]; observacao?: unknown };
   try {
@@ -887,4 +990,3 @@ async function handleAIResponse(aiResp: Response, paginas: number, modo: string)
     observacao: parsed.observacao,
   });
 }
-

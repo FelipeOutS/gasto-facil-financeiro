@@ -32,7 +32,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch } from "@/lib/api-fetch";
@@ -50,7 +56,11 @@ type Step = "market" | "photos" | "processing" | "review";
 
 type PhotoStatus = "pending" | "processing" | "done" | "empty" | "error";
 
-type EmptyReason = "no_text_detected" | "text_found_but_no_items" | "text_found_but_no_prices" | null;
+type EmptyReason =
+  | "no_text_detected"
+  | "text_found_but_no_items"
+  | "text_found_but_no_prices"
+  | null;
 type ErrorReason =
   | "ocr_config_missing"
   | "vision_api_error"
@@ -84,7 +94,6 @@ type Photo = {
   usedFallback?: boolean;
   items: DetectedItem[];
 };
-
 
 type ReviewItem = DetectedItem & {
   id: string;
@@ -215,10 +224,8 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
     () => savedMarkets.find((m) => m.id === selectedMarketId) ?? null,
     [savedMarkets, selectedMarketId],
   );
-  const marketName = manualMode
-    ? manualMarket.trim()
-    : selectedMarket?.nome.trim() ?? "";
-  const marketId = manualMode ? null : selectedMarket?.id ?? null;
+  const marketName = manualMode ? manualMarket.trim() : (selectedMarket?.nome.trim() ?? "");
+  const marketId = manualMode ? null : (selectedMarket?.id ?? null);
 
   function goNextFromMarket() {
     if (!marketName) {
@@ -301,13 +308,17 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageBase64: base64, marketName: marketName || undefined }),
       });
-      const json = await res.json().catch(() => ({} as any));
+      const json = await res.json().catch(() => ({}) as any);
       if (!res.ok) {
         let reason: ErrorReason = "unknown_error";
         if (json?.code === "ocr_config_missing") reason = "ocr_config_missing";
         else if (json?.code === "vision_api_error") reason = "vision_api_error";
         else if (json?.code === "gemini_gateway_error") reason = "gemini_gateway_error";
-        else if (json?.code === "invalid_image_payload" || json?.code === "unsupported_image_format") reason = "invalid_image_payload";
+        else if (
+          json?.code === "invalid_image_payload" ||
+          json?.code === "unsupported_image_format"
+        )
+          reason = "invalid_image_payload";
         else if (json?.code === "rate_limited" || res.status === 429) reason = "rate_limited";
         else if (res.status === 402) reason = "credits";
         return {
@@ -353,18 +364,23 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
     }
   }
 
-
   async function runQueue() {
     setStep("processing");
     stopRef.current = false;
     // Snapshot the queue at start, mark all pending->processing-on-demand
-    const queue = photos.map((p, i) => ({ ...p, status: p.status === "done" ? p.status : ("pending" as PhotoStatus), index: i }));
+    const queue = photos.map((p, i) => ({
+      ...p,
+      status: p.status === "done" ? p.status : ("pending" as PhotoStatus),
+      index: i,
+    }));
     let working = photos.slice();
     for (let i = 0; i < queue.length; i++) {
       if (stopRef.current) break;
       if (working[i].status === "done") continue;
       setCurrentProcessing(i);
-      working = working.map((p, idx) => (idx === i ? { ...p, status: "processing" as PhotoStatus } : p));
+      working = working.map((p, idx) =>
+        idx === i ? { ...p, status: "processing" as PhotoStatus } : p,
+      );
       setPhotos(working);
       const next = await processPhoto(working[i]);
       working = working.map((p, idx) => (idx === i ? next : p));
@@ -413,21 +429,25 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
     }
     if (photo.status === "empty") {
       if (photo.emptyReason === "no_text_detected") return t("communityPrices.batch.errorNoText");
-      if (photo.emptyReason === "text_found_but_no_items") return t("communityPrices.batch.errorTextNoItems");
-      if (photo.emptyReason === "text_found_but_no_prices") return t("communityPrices.batch.errorTextNoPrices");
+      if (photo.emptyReason === "text_found_but_no_items")
+        return t("communityPrices.batch.errorTextNoItems");
+      if (photo.emptyReason === "text_found_but_no_prices")
+        return t("communityPrices.batch.errorTextNoPrices");
       return t("communityPrices.batch.photoEmpty");
     }
     if (photo.status !== "error") return "";
-    if (photo.errorReason === "ocr_config_missing") return t("communityPrices.batch.errorOcrConfigMissing");
+    if (photo.errorReason === "ocr_config_missing")
+      return t("communityPrices.batch.errorOcrConfigMissing");
     if (photo.errorReason === "vision_api_error") return t("communityPrices.batch.errorVisionApi");
-    if (photo.errorReason === "gemini_gateway_error") return t("communityPrices.batch.errorGeminiGateway");
-    if (photo.errorReason === "invalid_image_payload") return t("communityPrices.batch.errorInvalidImagePayload");
+    if (photo.errorReason === "gemini_gateway_error")
+      return t("communityPrices.batch.errorGeminiGateway");
+    if (photo.errorReason === "invalid_image_payload")
+      return t("communityPrices.batch.errorInvalidImagePayload");
     if (photo.errorReason === "rate_limited") return t("communityPrices.batch.errorRateLimited");
     if (photo.errorReason === "credits") return t("communityPrices.batch.errorCredits");
     if (photo.errorReason === "network") return t("communityPrices.batch.errorNetwork");
     return t("communityPrices.batch.errorUnknown");
   }
-
 
   // Duplicate detection (same productName + price)
   const hasDuplicates = useMemo(() => {
@@ -468,13 +488,14 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
     const cleanDate = (v: string | null | undefined) =>
       v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
     const rows = toSave.map((r) => {
-      const imageFields = r.imageRemoved || !r.imageUrl
-        ? { image_url: null, image_source: null, image_confidence: null }
-        : {
-            image_url: r.imageUrl,
-            image_source: r.imageSource ?? "open_food_facts",
-            image_confidence: r.imageConfidence,
-          };
+      const imageFields =
+        r.imageRemoved || !r.imageUrl
+          ? { image_url: null, image_source: null, image_confidence: null }
+          : {
+              image_url: r.imageUrl,
+              image_source: r.imageSource ?? "open_food_facts",
+              image_confidence: r.imageConfidence,
+            };
       return {
         user_id: user.id,
         product_name: r.productName.trim(),
@@ -528,8 +549,12 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
         {step === "market" && (
           <div className="space-y-3">
             <div>
-              <h3 className="text-sm font-semibold">{t("communityPrices.batch.marketStepTitle")}</h3>
-              <p className="text-xs text-muted-foreground">{t("communityPrices.batch.marketStepDescription")}</p>
+              <h3 className="text-sm font-semibold">
+                {t("communityPrices.batch.marketStepTitle")}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                {t("communityPrices.batch.marketStepDescription")}
+              </p>
             </div>
 
             {!manualMode && (
@@ -555,7 +580,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                     {savedMarkets.map((m) => (
                       <option key={m.id} value={m.id}>
                         {m.nome}
-                        {m.bairro || m.cidade ? ` · ${[m.bairro, m.cidade].filter(Boolean).join(", ")}` : ""}
+                        {m.bairro || m.cidade
+                          ? ` · ${[m.bairro, m.cidade].filter(Boolean).join(", ")}`
+                          : ""}
                       </option>
                     ))}
                   </select>
@@ -598,7 +625,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
         {step === "photos" && (
           <div className="space-y-3">
             <div>
-              <h3 className="text-sm font-semibold">{t("communityPrices.batch.photosStepTitle")}</h3>
+              <h3 className="text-sm font-semibold">
+                {t("communityPrices.batch.photosStepTitle")}
+              </h3>
               <p className="text-xs text-muted-foreground">
                 {t("communityPrices.batch.photosStepDescription")}{" "}
                 {t("communityPrices.batch.maxPhotos", { max: MAX_PHOTOS })}
@@ -611,7 +640,6 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
             <div className="rounded-md border border-border bg-muted/30 p-2 text-[11px] text-muted-foreground">
               💡 {t("communityPrices.batch.photoTip")}
             </div>
-
 
             <input
               ref={fileRef}
@@ -642,7 +670,10 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                 </p>
                 <ul className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
                   {photos.map((p, idx) => (
-                    <li key={p.id} className="relative overflow-hidden rounded-md border border-border bg-muted/30">
+                    <li
+                      key={p.id}
+                      className="relative overflow-hidden rounded-md border border-border bg-muted/30"
+                    >
                       <img
                         src={p.previewUrl}
                         alt={t("communityPrices.batch.photoLabel", { index: idx + 1 })}
@@ -680,11 +711,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 {t("communityPrices.batch.back")}
               </Button>
-              <Button
-                onClick={runQueue}
-                className="min-h-11"
-                disabled={photos.length === 0}
-              >
+              <Button onClick={runQueue} className="min-h-11" disabled={photos.length === 0}>
                 <Camera className="mr-2 h-4 w-4" />
                 {t("communityPrices.batch.processPhotos")}
               </Button>
@@ -696,7 +723,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
         {step === "processing" && (
           <div className="space-y-3">
             <div>
-              <h3 className="text-sm font-semibold">{t("communityPrices.batch.processingTitle")}</h3>
+              <h3 className="text-sm font-semibold">
+                {t("communityPrices.batch.processingTitle")}
+              </h3>
               <p className="text-xs text-muted-foreground">
                 {doneCount < photos.length
                   ? t("communityPrices.batch.processingPhoto", {
@@ -734,7 +763,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                         <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                           <Check className="h-3 w-3" />
                           {p.usedFallback
-                            ? t("communityPrices.batch.photoFallbackDone", { count: p.items.length })
+                            ? t("communityPrices.batch.photoFallbackDone", {
+                                count: p.items.length,
+                              })
                             : t("communityPrices.batch.photoDone", { count: p.items.length })}
                         </span>
                       )}
@@ -753,7 +784,6 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                           {getPhotoIssueLabel(p)}
                         </span>
                       )}
-
                     </p>
                   </div>
                   {p.status === "error" && (
@@ -804,7 +834,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
           <div className="space-y-3">
             <div>
               <h3 className="text-sm font-semibold">{t("communityPrices.batch.reviewTitle")}</h3>
-              <p className="text-xs text-muted-foreground">{t("communityPrices.batch.reviewDescription")}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("communityPrices.batch.reviewDescription")}
+              </p>
               <p className="mt-1 inline-flex rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-semibold text-brand-on-soft">
                 {t("communityPrices.batch.reviewMarketBadge", { name: marketName })}
               </p>
@@ -818,7 +850,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                     total: photos.length,
                   })}
                 </div>
-                <div>{t("communityPrices.batch.summaryItemsFound", { count: reviewItems.length })}</div>
+                <div>
+                  {t("communityPrices.batch.summaryItemsFound", { count: reviewItems.length })}
+                </div>
                 {noTextCount > 0 && (
                   <div>{t("communityPrices.batch.summaryNoText", { count: noTextCount })}</div>
                 )}
@@ -828,7 +862,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                   </div>
                 )}
                 {textNoPricesCount > 0 && (
-                  <div>{t("communityPrices.batch.summaryTextNoPrices", { count: textNoPricesCount })}</div>
+                  <div>
+                    {t("communityPrices.batch.summaryTextNoPrices", { count: textNoPricesCount })}
+                  </div>
                 )}
                 {fallbackCount > 0 && (
                   <div>{t("communityPrices.batch.summaryFallback", { count: fallbackCount })}</div>
@@ -837,7 +873,11 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                   <div>{t("communityPrices.batch.summaryErrors", { count: errorCount })}</div>
                 )}
                 {technicalErrorCount > 0 && (
-                  <div>{t("communityPrices.batch.summaryTechnicalErrors", { count: technicalErrorCount })}</div>
+                  <div>
+                    {t("communityPrices.batch.summaryTechnicalErrors", {
+                      count: technicalErrorCount,
+                    })}
+                  </div>
                 )}
               </div>
             )}
@@ -849,14 +889,15 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                   if (!issue) return null;
                   return (
                     <li key={p.id} className="flex items-start gap-1">
-                      <span className="font-semibold">{t("communityPrices.batch.photoLabel", { index: idx + 1 })}:</span>
+                      <span className="font-semibold">
+                        {t("communityPrices.batch.photoLabel", { index: idx + 1 })}:
+                      </span>
                       <span>{issue}</span>
                     </li>
                   );
                 })}
               </ul>
             )}
-
 
             {allFailed && (
               <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-[12px] text-destructive">
@@ -886,7 +927,8 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
             {reviewItems.length > 0 && (
               <ul className="max-h-[45vh] space-y-3 overflow-y-auto pr-1">
                 {reviewItems.map((r, idx) => {
-                  const invalidPrice = r.include && (r.price == null || !Number.isFinite(r.price) || r.price <= 0);
+                  const invalidPrice =
+                    r.include && (r.price == null || !Number.isFinite(r.price) || r.price <= 0);
                   const missingProduct = r.include && !r.productName.trim();
                   const lowConfidence = typeof r.confidence === "number" && r.confidence < 0.5;
                   return (
@@ -901,7 +943,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                             checked={r.include}
                             onChange={(e) =>
                               setReviewItems((cur) =>
-                                cur.map((x, i) => (i === idx ? { ...x, include: e.target.checked } : x)),
+                                cur.map((x, i) =>
+                                  i === idx ? { ...x, include: e.target.checked } : x,
+                                ),
                               )
                             }
                           />
@@ -911,7 +955,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                           </span>
                           {typeof r.confidence === "number" && (
                             <span className="text-[10px] text-muted-foreground">
-                              {t("communityPrices.review.confidence", { value: Math.round(r.confidence * 100) })}
+                              {t("communityPrices.review.confidence", {
+                                value: Math.round(r.confidence * 100),
+                              })}
                             </span>
                           )}
                           {lowConfidence && (
@@ -937,12 +983,16 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                       )}
                       <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
                         <div>
-                          <Label className="text-xs">{t("communityPrices.review.fields.product")}</Label>
+                          <Label className="text-xs">
+                            {t("communityPrices.review.fields.product")}
+                          </Label>
                           <Input
                             value={r.productName}
                             onChange={(e) =>
                               setReviewItems((cur) =>
-                                cur.map((x, i) => (i === idx ? { ...x, productName: e.target.value } : x)),
+                                cur.map((x, i) =>
+                                  i === idx ? { ...x, productName: e.target.value } : x,
+                                ),
                               )
                             }
                           />
@@ -953,7 +1003,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                           )}
                         </div>
                         <div>
-                          <Label className="text-xs">{t("communityPrices.review.fields.price")}</Label>
+                          <Label className="text-xs">
+                            {t("communityPrices.review.fields.price")}
+                          </Label>
                           <Input
                             inputMode="decimal"
                             value={r.price ?? ""}
@@ -963,7 +1015,10 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                               setReviewItems((cur) =>
                                 cur.map((x, i) =>
                                   i === idx
-                                    ? { ...x, price: Number.isFinite(n as number) ? (n as number) : null }
+                                    ? {
+                                        ...x,
+                                        price: Number.isFinite(n as number) ? (n as number) : null,
+                                      }
                                     : x,
                                 ),
                               );
@@ -976,36 +1031,48 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                           )}
                         </div>
                         <div>
-                          <Label className="text-xs">{t("communityPrices.review.fields.unit")}</Label>
+                          <Label className="text-xs">
+                            {t("communityPrices.review.fields.unit")}
+                          </Label>
                           <Input
                             value={r.unit ?? ""}
                             onChange={(e) =>
                               setReviewItems((cur) =>
-                                cur.map((x, i) => (i === idx ? { ...x, unit: e.target.value || null } : x)),
+                                cur.map((x, i) =>
+                                  i === idx ? { ...x, unit: e.target.value || null } : x,
+                                ),
                               )
                             }
                             placeholder={t("communityPrices.review.fields.unitPlaceholder")}
                           />
                         </div>
                         <div>
-                          <Label className="text-xs">{t("communityPrices.review.fields.category")}</Label>
+                          <Label className="text-xs">
+                            {t("communityPrices.review.fields.category")}
+                          </Label>
                           <Input
                             value={r.category ?? ""}
                             onChange={(e) =>
                               setReviewItems((cur) =>
-                                cur.map((x, i) => (i === idx ? { ...x, category: e.target.value || null } : x)),
+                                cur.map((x, i) =>
+                                  i === idx ? { ...x, category: e.target.value || null } : x,
+                                ),
                               )
                             }
                           />
                         </div>
                         <div className="sm:col-span-2">
-                          <Label className="text-xs">{t("communityPrices.review.fields.validUntil")}</Label>
+                          <Label className="text-xs">
+                            {t("communityPrices.review.fields.validUntil")}
+                          </Label>
                           <Input
                             type="date"
                             value={r.validUntil ?? ""}
                             onChange={(e) =>
                               setReviewItems((cur) =>
-                                cur.map((x, i) => (i === idx ? { ...x, validUntil: e.target.value || null } : x)),
+                                cur.map((x, i) =>
+                                  i === idx ? { ...x, validUntil: e.target.value || null } : x,
+                                ),
                               )
                             }
                           />
@@ -1051,7 +1118,9 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                           );
                         }}
                       />
-                      {r.notes && <p className="mt-2 text-[11px] text-muted-foreground">{r.notes}</p>}
+                      {r.notes && (
+                        <p className="mt-2 text-[11px] text-muted-foreground">{r.notes}</p>
+                      )}
                     </li>
                   );
                 })}
@@ -1059,11 +1128,20 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
             )}
 
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-              <Button variant="ghost" onClick={() => setStep("photos")} className="min-h-11" disabled={saving}>
+              <Button
+                variant="ghost"
+                onClick={() => setStep("photos")}
+                className="min-h-11"
+                disabled={saving}
+              >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 {t("communityPrices.batch.back")}
               </Button>
-              <Button onClick={saveAll} className="min-h-11" disabled={saving || reviewItems.length === 0}>
+              <Button
+                onClick={saveAll}
+                className="min-h-11"
+                disabled={saving || reviewItems.length === 0}
+              >
                 {saving ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (

@@ -49,12 +49,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
-import {
-  formatarCnpj,
-  limparCnpj,
-  MSG_CNPJ_INVALIDO,
-  validarCnpj,
-} from "@/lib/cnpj";
+import { formatarCnpj, limparCnpj, MSG_CNPJ_INVALIDO, validarCnpj } from "@/lib/cnpj";
 import type { EmpresaConsultada } from "@/lib/empresa";
 import {
   alternarAtivoFornecedor,
@@ -74,8 +69,7 @@ export const Route = createFileRoute("/fornecedores")({
       { title: "Fornecedores — Gasto Inteligente" },
       {
         name: "description",
-        content:
-          "Cadastre fornecedores por CNPJ e organize melhor seus gastos empresariais.",
+        content: "Cadastre fornecedores por CNPJ e organize melhor seus gastos empresariais.",
       },
     ],
   }),
@@ -95,8 +89,7 @@ function aplicarMascaraCnpj(v: string): string {
   if (d.length <= 2) return d;
   if (d.length <= 5) return `${d.slice(0, 2)}.${d.slice(2)}`;
   if (d.length <= 8) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5)}`;
-  if (d.length <= 12)
-    return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8)}`;
+  if (d.length <= 12) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8)}`;
   return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
 }
 
@@ -139,9 +132,7 @@ function FornecedoresPage() {
   const [salvandoEdit, setSalvandoEdit] = useState(false);
 
   // Remover
-  const [confirmarRemover, setConfirmarRemover] = useState<Fornecedor | null>(
-    null,
-  );
+  const [confirmarRemover, setConfirmarRemover] = useState<Fornecedor | null>(null);
   const [removendo, setRemovendo] = useState(false);
 
   useEffect(() => {
@@ -226,18 +217,12 @@ function FornecedoresPage() {
     setSalvando(true);
     try {
       const fetchedAt = new Date().toISOString();
-      const novo = await salvarFornecedorPorCnpj(
-        user.id,
-        resp.company,
-        resp.source,
-        fetchedAt,
-        {
-          apelido: apelidoCnpj,
-          telefone: telefoneCnpj,
-          email: emailCnpj,
-          observacoes: obsCnpj,
-        },
-      );
+      const novo = await salvarFornecedorPorCnpj(user.id, resp.company, resp.source, fetchedAt, {
+        apelido: apelidoCnpj,
+        telefone: telefoneCnpj,
+        email: emailCnpj,
+        observacoes: obsCnpj,
+      });
       setList((prev) => ordenar([novo, ...prev]));
       toast.success(t("toasts.saved"));
       setNovoAberto(false);
@@ -305,9 +290,7 @@ function FornecedoresPage() {
         email: editEmail,
         observacoes: editObs,
       });
-      setList((prev) =>
-        ordenar(prev.map((x) => (x.id === atualizado.id ? atualizado : x))),
-      );
+      setList((prev) => ordenar(prev.map((x) => (x.id === atualizado.id ? atualizado : x))));
       toast.success(t("toasts.updated"));
       setEditando(null);
     } catch {
@@ -320,9 +303,7 @@ function FornecedoresPage() {
   async function alternarAtivo(f: Fornecedor) {
     try {
       await alternarAtivoFornecedor(f.id, !f.ativo);
-      setList((prev) =>
-        ordenar(prev.map((x) => (x.id === f.id ? { ...x, ativo: !f.ativo } : x))),
-      );
+      setList((prev) => ordenar(prev.map((x) => (x.id === f.id ? { ...x, ativo: !f.ativo } : x))));
       toast.success(f.ativo ? t("toasts.deactivated") : t("toasts.activated"));
     } catch {
       toast.error(t("toasts.toggleError"));
@@ -361,9 +342,7 @@ function FornecedoresPage() {
             </span>
             <div>
               <h1 className="text-2xl font-semibold">{t("header.title")}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("header.subtitle")}
-              </p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("header.subtitle")}</p>
             </div>
           </div>
           <div className="flex shrink-0 gap-2">
@@ -447,18 +426,14 @@ function FornecedoresPage() {
                     {t("dialog.search")}
                   </Button>
                 </div>
-                {erroCnpj && (
-                  <p className="text-xs text-destructive">{erroCnpj}</p>
-                )}
+                {erroCnpj && <p className="text-xs text-destructive">{erroCnpj}</p>}
               </div>
 
               {resp?.company && (
                 <div className="rounded-xl border bg-muted/30 p-3 text-sm">
                   <p className="font-semibold">{resp.company.razaoSocial}</p>
                   {resp.company.nomeFantasia && (
-                    <p className="text-muted-foreground">
-                      {resp.company.nomeFantasia}
-                    </p>
+                    <p className="text-muted-foreground">{resp.company.nomeFantasia}</p>
                   )}
                   <p className="mt-1 font-mono text-xs tabular-nums">
                     {resp.company.cnpjFormatado}
@@ -466,9 +441,7 @@ function FornecedoresPage() {
                   {resp.company.endereco.municipio && (
                     <p className="mt-1 text-xs text-muted-foreground">
                       {resp.company.endereco.municipio}
-                      {resp.company.endereco.uf
-                        ? `/${resp.company.endereco.uf}`
-                        : ""}
+                      {resp.company.endereco.uf ? `/${resp.company.endereco.uf}` : ""}
                     </p>
                   )}
                   {resp.company.situacaoCadastral && (
@@ -535,11 +508,7 @@ function FornecedoresPage() {
               )}
 
               <DialogFooter className="gap-2 sm:gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => setNovoAberto(false)}
-                  disabled={salvando}
-                >
+                <Button variant="ghost" onClick={() => setNovoAberto(false)} disabled={salvando}>
                   {t("dialog.cancel")}
                 </Button>
                 <Button
@@ -605,11 +574,7 @@ function FornecedoresPage() {
               </div>
 
               <DialogFooter className="gap-2 sm:gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => setNovoAberto(false)}
-                  disabled={salvando}
-                >
+                <Button variant="ghost" onClick={() => setNovoAberto(false)} disabled={salvando}>
                   {t("dialog.cancel")}
                 </Button>
                 <Button
@@ -689,11 +654,7 @@ function FornecedoresPage() {
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => setEditando(null)}
-              disabled={salvandoEdit}
-            >
+            <Button variant="ghost" onClick={() => setEditando(null)} disabled={salvandoEdit}>
               {t("edit.cancel")}
             </Button>
             <Button onClick={() => void salvarEdicao()} disabled={salvandoEdit}>
@@ -740,13 +701,7 @@ function ordenar(arr: Fornecedor[]): Fornecedor[] {
   });
 }
 
-function EmptyState({
-  onNovo,
-  t,
-}: {
-  onNovo: () => void;
-  t: (key: string) => string;
-}) {
+function EmptyState({ onNovo, t }: { onNovo: () => void; t: (key: string) => string }) {
   return (
     <section className="rounded-2xl border border-dashed bg-card/40 p-8 text-center">
       <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
@@ -791,56 +746,49 @@ function FornecedorItem({
             size="md"
           />
           <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate text-sm font-semibold">
-              {f.apelido || f.nome_fantasia || f.nome}
-            </p>
-            {!f.ativo && (
-              <Badge variant="secondary" className="text-[10px]">
-                {t("card.inactive")}
-              </Badge>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="truncate text-sm font-semibold">
+                {f.apelido || f.nome_fantasia || f.nome}
+              </p>
+              {!f.ativo && (
+                <Badge variant="secondary" className="text-[10px]">
+                  {t("card.inactive")}
+                </Badge>
+              )}
+              {f.situacao_cadastral && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-[10px]",
+                    f.situacao_cadastral.toLowerCase().includes("ativ")
+                      ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400"
+                      : "border-amber-500/40 text-amber-700 dark:text-amber-400",
+                  )}
+                >
+                  {f.situacao_cadastral}
+                </Badge>
+              )}
+            </div>
+            {f.apelido && f.nome !== f.apelido && (
+              <p className="truncate text-xs text-muted-foreground">{f.nome}</p>
             )}
-            {f.situacao_cadastral && (
-              <Badge
-                variant="outline"
-                className={cn(
-                  "text-[10px]",
-                  f.situacao_cadastral.toLowerCase().includes("ativ")
-                    ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400"
-                    : "border-amber-500/40 text-amber-700 dark:text-amber-400",
-                )}
-              >
-                {f.situacao_cadastral}
-              </Badge>
+            {f.cnpj && (
+              <p className="mt-0.5 font-mono text-[11px] tabular-nums text-muted-foreground">
+                {formatarCnpj(f.cnpj)}
+              </p>
             )}
-          </div>
-          {f.apelido && f.nome !== f.apelido && (
-            <p className="truncate text-xs text-muted-foreground">{f.nome}</p>
-          )}
-          {f.cnpj && (
-            <p className="mt-0.5 font-mono text-[11px] tabular-nums text-muted-foreground">
-              {formatarCnpj(f.cnpj)}
-            </p>
-          )}
-          {cidadeUf && (
-            <p className="mt-0.5 text-xs text-muted-foreground">{cidadeUf}</p>
-          )}
-          {(f.telefone || f.email) && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {f.telefone}
-              {f.telefone && f.email ? " · " : ""}
-              {f.email}
-            </p>
-          )}
+            {cidadeUf && <p className="mt-0.5 text-xs text-muted-foreground">{cidadeUf}</p>}
+            {(f.telefone || f.email) && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {f.telefone}
+                {f.telefone && f.email ? " · " : ""}
+                {f.email}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={onEditar}
-            aria-label={t("card.editAria")}
-          >
+          <Button size="icon" variant="ghost" onClick={onEditar} aria-label={t("card.editAria")}>
             <Pencil className="h-4 w-4" />
           </Button>
           <Button
@@ -849,11 +797,7 @@ function FornecedorItem({
             onClick={onAlternar}
             aria-label={f.ativo ? t("card.deactivate") : t("card.activate")}
           >
-            {f.ativo ? (
-              <PowerOff className="h-4 w-4" />
-            ) : (
-              <Power className="h-4 w-4" />
-            )}
+            {f.ativo ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
           </Button>
           <Button
             size="icon"

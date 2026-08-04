@@ -8,26 +8,17 @@
  */
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 
-const {
-  validateDownloadedPdf,
-  detectPdfFromBytes,
-  estimatePdfPageCount,
-  MAX_PDF_BYTES,
-} = await import("../src/server/whatsapp-pdf-validation.server");
+const { validateDownloadedPdf, detectPdfFromBytes, estimatePdfPageCount, MAX_PDF_BYTES } =
+  await import("../src/server/whatsapp-pdf-validation.server");
 
-const {
-  extractBoletoFromMedia,
-  __setBoletoOcrExtractorForTests,
-} = await import("../src/server/whatsapp-boleto-ocr.server");
+const { extractBoletoFromMedia, __setBoletoOcrExtractorForTests } =
+  await import("../src/server/whatsapp-boleto-ocr.server");
 
-const {
-  _buildBoletoCobrancaForTest,
-  _buildBoletoArrecadForTest,
-} = await import("../src/server/whatsapp-boleto-parser");
+const { _buildBoletoCobrancaForTest, _buildBoletoArrecadForTest } =
+  await import("../src/server/whatsapp-boleto-parser");
 
-const { __setBoletoPepperForTest, __resetBoletoPepperCacheForTest } = await import(
-  "../src/server/whatsapp-boleto-secret.server"
-);
+const { __setBoletoPepperForTest, __resetBoletoPepperCacheForTest } =
+  await import("../src/server/whatsapp-boleto-secret.server");
 
 beforeEach(() => {
   __setBoletoPepperForTest("test-pepper-c10b");
@@ -194,8 +185,16 @@ describe("WA-C10.b — extractBoletoFromMedia", () => {
   });
 
   it("retorna múltiplos candidatos quando há boletos distintos no documento", async () => {
-    const a = _buildBoletoCobrancaForTest({ valorCentavos: 1000, fator: 9000, livre: "1111111111111111111111111" });
-    const b = _buildBoletoCobrancaForTest({ valorCentavos: 2000, fator: 9001, livre: "2222222222222222222222222" });
+    const a = _buildBoletoCobrancaForTest({
+      valorCentavos: 1000,
+      fator: 9000,
+      livre: "1111111111111111111111111",
+    });
+    const b = _buildBoletoCobrancaForTest({
+      valorCentavos: 2000,
+      fator: 9001,
+      livre: "2222222222222222222222222",
+    });
     __setBoletoOcrExtractorForTests(async () => ({
       candidatos: [a.linha, b.linha],
       valorCentavos: null,
@@ -210,7 +209,7 @@ describe("WA-C10.b — extractBoletoFromMedia", () => {
   });
 
   it("propaga erros do gateway via ok=false sem expor dados", async () => {
-    __setBoletoOcrExtractorForTests(async () => ({ error: "rate_limited" } as const));
+    __setBoletoOcrExtractorForTests(async () => ({ error: "rate_limited" }) as const);
     const r = await extractBoletoFromMedia(imgInput);
     expect(r.ok).toBe(false);
     if (r.ok) return;

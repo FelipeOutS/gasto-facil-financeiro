@@ -27,12 +27,13 @@ const PLAN_BASE: Record<CatalogPlanKey, { cents: number; name: string; allowNew:
   empresa: { cents: 18000, name: "Empresa", allowNew: true },
 };
 
-const PERIOD_INFO: Record<CatalogPeriodicity, { months: number; discount: number; label: string }> = {
-  mensal: { months: 1, discount: 0, label: "Mensal" },
-  trimestral: { months: 3, discount: 5, label: "Trimestral" },
-  semestral: { months: 6, discount: 10, label: "Semestral" },
-  anual: { months: 12, discount: 20, label: "Anual" },
-};
+const PERIOD_INFO: Record<CatalogPeriodicity, { months: number; discount: number; label: string }> =
+  {
+    mensal: { months: 1, discount: 0, label: "Mensal" },
+    trimestral: { months: 3, discount: 5, label: "Trimestral" },
+    semestral: { months: 6, discount: 10, label: "Semestral" },
+    anual: { months: 12, discount: 20, label: "Anual" },
+  };
 
 export interface ResolvedCatalogOffer {
   planKey: CatalogPlanKey;
@@ -46,10 +47,7 @@ export interface ResolvedCatalogOffer {
   description: string;
 }
 
-export type CatalogResolveError =
-  | "invalid_plan"
-  | "plan_unavailable"
-  | "invalid_period";
+export type CatalogResolveError = "invalid_plan" | "plan_unavailable" | "invalid_period";
 
 export function isCatalogPlanKey(v: unknown): v is CatalogPlanKey {
   return typeof v === "string" && v in PLAN_BASE;
@@ -107,7 +105,12 @@ export type OfferMismatch =
  */
 export function validateOfferAgainstProvider(input: {
   expected: { planKey: string; periodicity: string; amountCents: number; currency: string };
-  provider: { amountCents?: number | null; currency?: string | null; planKey?: string | null; periodicity?: string | null };
+  provider: {
+    amountCents?: number | null;
+    currency?: string | null;
+    planKey?: string | null;
+    periodicity?: string | null;
+  };
 }): { ok: true } | { ok: false; mismatches: OfferMismatch[] } {
   const mismatches: OfferMismatch[] = [];
   const p = input.provider;
@@ -116,7 +119,8 @@ export function validateOfferAgainstProvider(input: {
     mismatches.push("periodicity_mismatch");
   }
   if (typeof p.amountCents === "number") {
-    if (Math.abs(p.amountCents - input.expected.amountCents) > 1) mismatches.push("amount_mismatch");
+    if (Math.abs(p.amountCents - input.expected.amountCents) > 1)
+      mismatches.push("amount_mismatch");
   }
   if (p.currency && p.currency.toUpperCase() !== input.expected.currency.toUpperCase()) {
     mismatches.push("currency_mismatch");

@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getUserFromRequest, unauthorizedResponse, ensurePremiumFeatureAccess } from "@/server/api-auth";
+import {
+  getUserFromRequest,
+  unauthorizedResponse,
+  ensurePremiumFeatureAccess,
+} from "@/server/api-auth";
 import { enforceUserRateLimit } from "@/server/rate-limit.server";
 
 /**
@@ -96,23 +100,23 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
         if (!__user) return unauthorizedResponse();
         const __gate = await ensurePremiumFeatureAccess(__user, "importar_fatura");
         if (__gate) return __gate;
-        const __rl = await enforceUserRateLimit({ scope: "import", userId: __user.id, route: "import-fatura-imagem", request });
+        const __rl = await enforceUserRateLimit({
+          scope: "import",
+          userId: __user.id,
+          route: "import-fatura-imagem",
+          request,
+        });
         if (__rl) return __rl;
         try {
           const apiKey = process.env.LOVABLE_API_KEY;
           if (!apiKey) {
-            return Response.json(
-              { error: "Serviço de IA indisponível." },
-              { status: 500 },
-            );
+            return Response.json({ error: "Serviço de IA indisponível." }, { status: 500 });
           }
 
           const body = (await request.json()) as { images?: string[] };
           const images = Array.isArray(body?.images) ? body.images : [];
           const valid = images
-            .filter(
-              (s) => typeof s === "string" && s.startsWith("data:image/"),
-            )
+            .filter((s) => typeof s === "string" && s.startsWith("data:image/"))
             .slice(0, 10);
           if (valid.length === 0) {
             return Response.json(
@@ -129,8 +133,7 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
           }
 
           const userContent: Array<
-            | { type: "text"; text: string }
-            | { type: "image_url"; image_url: { url: string } }
+            { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }
           > = [
             {
               type: "text",
@@ -142,84 +145,75 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
             })),
           ];
 
-          const aiResp = await fetch(
-            "https://ai.gateway.lovable.dev/v1/chat/completions",
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                model: "google/gemini-2.5-flash",
-                messages: [
-                  { role: "system", content: SYSTEM_PROMPT },
-                  { role: "user", content: userContent },
-                ],
-                tools: [
-                  {
-                    type: "function",
-                    function: {
-                      name: "registrar_compras_fatura",
-                      description:
-                        "Estrutura a lista de compras encontradas na fatura.",
-                      parameters: {
-                        type: "object",
-                        properties: {
-                          itens: {
-                            type: "array",
-                            items: {
-                              type: "object",
-                              properties: {
-                                descricao: { type: ["string", "null"] },
-                                estabelecimento: { type: ["string", "null"] },
-                                valor: { type: ["number", "null"] },
-                                data: { type: ["string", "null"] },
-                                horario: { type: ["string", "null"] },
-                                parcelaAtual: { type: ["number", "null"] },
-                                totalParcelas: { type: ["number", "null"] },
-                                categoriaSugerida: {
-                                  type: ["string", "null"],
-                                  enum: [...CATEGORIAS_VALIDAS, null],
-                                },
-                                confianca: {
-                                  type: "string",
-                                  enum: ["alta", "media", "baixa"],
-                                },
-                                observacao: { type: ["string", "null"] },
+          const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash",
+              messages: [
+                { role: "system", content: SYSTEM_PROMPT },
+                { role: "user", content: userContent },
+              ],
+              tools: [
+                {
+                  type: "function",
+                  function: {
+                    name: "registrar_compras_fatura",
+                    description: "Estrutura a lista de compras encontradas na fatura.",
+                    parameters: {
+                      type: "object",
+                      properties: {
+                        itens: {
+                          type: "array",
+                          items: {
+                            type: "object",
+                            properties: {
+                              descricao: { type: ["string", "null"] },
+                              estabelecimento: { type: ["string", "null"] },
+                              valor: { type: ["number", "null"] },
+                              data: { type: ["string", "null"] },
+                              horario: { type: ["string", "null"] },
+                              parcelaAtual: { type: ["number", "null"] },
+                              totalParcelas: { type: ["number", "null"] },
+                              categoriaSugerida: {
+                                type: ["string", "null"],
+                                enum: [...CATEGORIAS_VALIDAS, null],
                               },
-                              required: ["confianca"],
-                              additionalProperties: false,
+                              confianca: {
+                                type: "string",
+                                enum: ["alta", "media", "baixa"],
+                              },
+                              observacao: { type: ["string", "null"] },
                             },
+                            required: ["confianca"],
+                            additionalProperties: false,
                           },
-                          observacao: { type: ["string", "null"] },
                         },
-                        required: ["itens"],
-                        additionalProperties: false,
+                        observacao: { type: ["string", "null"] },
                       },
+                      required: ["itens"],
+                      additionalProperties: false,
                     },
                   },
-                ],
-                tool_choice: {
-                  type: "function",
-                  function: { name: "registrar_compras_fatura" },
                 },
-              }),
-            },
-          );
+              ],
+              tool_choice: {
+                type: "function",
+                function: { name: "registrar_compras_fatura" },
+              },
+            }),
+          });
 
           if (!aiResp.ok) {
             const text = await aiResp.text();
-            console.error(
-              "[import-fatura-imagem] AI gateway error",
-              aiResp.status,
-              text,
-            );
+            console.error("[import-fatura-imagem] AI gateway error", aiResp.status, text);
             if (aiResp.status === 429) {
               return Response.json(
                 {
-                  error:
-                    "Muitas leituras seguidas. Tenta de novo em alguns segundos.",
+                  error: "Muitas leituras seguidas. Tenta de novo em alguns segundos.",
                 },
                 { status: 429 },
               );
@@ -227,16 +221,12 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
             if (aiResp.status === 402) {
               return Response.json(
                 {
-                  error:
-                    "Sem créditos da IA. Adicione créditos no workspace para continuar.",
+                  error: "Sem créditos da IA. Adicione créditos no workspace para continuar.",
                 },
                 { status: 402 },
               );
             }
-            return Response.json(
-              { error: "Não consegui ler essa imagem agora." },
-              { status: 502 },
-            );
+            return Response.json({ error: "Não consegui ler essa imagem agora." }, { status: 502 });
           }
 
           const json = await aiResp.json();
@@ -253,21 +243,15 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
           try {
             parsed = JSON.parse(argsStr);
           } catch {
-            return Response.json(
-              { error: "Resposta inválida da IA." },
-              { status: 502 },
-            );
+            return Response.json({ error: "Resposta inválida da IA." }, { status: 502 });
           }
 
           const itensRaw = Array.isArray(parsed.itens) ? parsed.itens : [];
           const itens = itensRaw
             .map((it) => {
-              const valor =
-                typeof it.valor === "number" && it.valor > 0 ? it.valor : null;
+              const valor = typeof it.valor === "number" && it.valor > 0 ? it.valor : null;
               const data =
-                typeof it.data === "string" && /^\d{4}-\d{2}-\d{2}$/.test(it.data)
-                  ? it.data
-                  : null;
+                typeof it.data === "string" && /^\d{4}-\d{2}-\d{2}$/.test(it.data) ? it.data : null;
               const horarioMatch =
                 typeof it.horario === "string"
                   ? it.horario.match(/\b(\d{1,2})[:hH](\d{2})\b/)
@@ -280,14 +264,9 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
                 CATEGORIAS_VALIDAS.includes(it.categoriaSugerida)
                   ? it.categoriaSugerida
                   : null;
-              const desc =
-                typeof it.descricao === "string"
-                  ? it.descricao.slice(0, 80)
-                  : null;
+              const desc = typeof it.descricao === "string" ? it.descricao.slice(0, 80) : null;
               const estab =
-                typeof it.estabelecimento === "string"
-                  ? it.estabelecimento.slice(0, 80)
-                  : null;
+                typeof it.estabelecimento === "string" ? it.estabelecimento.slice(0, 80) : null;
               const pa =
                 typeof it.parcelaAtual === "number" && it.parcelaAtual > 0
                   ? Math.floor(it.parcelaAtual)
@@ -297,9 +276,7 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
                   ? Math.floor(it.totalParcelas)
                   : null;
               const conf =
-                it.confianca === "alta" ||
-                it.confianca === "media" ||
-                it.confianca === "baixa"
+                it.confianca === "alta" || it.confianca === "media" || it.confianca === "baixa"
                   ? it.confianca
                   : "baixa";
               return {
@@ -312,10 +289,7 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
                 totalParcelas: tp,
                 categoriaSugerida: cat,
                 confianca: conf,
-                observacao:
-                  typeof it.observacao === "string"
-                    ? it.observacao.slice(0, 200)
-                    : null,
+                observacao: typeof it.observacao === "string" ? it.observacao.slice(0, 200) : null,
               };
             })
             // Mantém só itens com pelo menos um sinal útil
@@ -323,8 +297,7 @@ export const Route = createFileRoute("/api/import-fatura-imagem")({
 
           return Response.json({
             itens,
-            observacao:
-              typeof parsed.observacao === "string" ? parsed.observacao : null,
+            observacao: typeof parsed.observacao === "string" ? parsed.observacao : null,
           });
         } catch (err) {
           console.error("[import-fatura-imagem] erro", err);

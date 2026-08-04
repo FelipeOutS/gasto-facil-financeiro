@@ -197,7 +197,10 @@ export async function reserveOutboundQuota(
     const row = Array.isArray(data) ? data[0] : data;
     const base = normalizeConsume(row);
     const rr = (row ?? {}) as Record<string, unknown>;
-    return { ...base, reservationId: typeof rr.reservation_id === "string" ? rr.reservation_id : null };
+    return {
+      ...base,
+      reservationId: typeof rr.reservation_id === "string" ? rr.reservation_id : null,
+    };
   } catch {
     safeLog("reserve_exception", {});
     return { ...denied("db_error"), reservationId: null };

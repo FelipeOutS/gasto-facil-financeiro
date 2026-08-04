@@ -47,7 +47,9 @@ function inferCategoriaFromName(nome: string): Categoria {
       criadaPeloUsuario: false,
     } as Categoria;
   }
-  const iconName = (ICON_MAP["MoreHorizontal"] ? "MoreHorizontal" : "MoreHorizontal") as keyof typeof ICON_MAP;
+  const iconName = (
+    ICON_MAP["MoreHorizontal"] ? "MoreHorizontal" : "MoreHorizontal"
+  ) as keyof typeof ICON_MAP;
   return {
     id: safeKey,
     nome: safeKey,
@@ -63,7 +65,8 @@ function TransactionAvatarBase({ estabelecimento, categoria, size = "md", classN
 
   // Categoria que usaremos como fallback visual (preferindo a explícita;
   // depois inferida pelo nome; depois "outros").
-  const categoriaIsOutros = categoria && (categoria.id === "outros" || categoria.nome?.toLowerCase() === "outros");
+  const categoriaIsOutros =
+    categoria && (categoria.id === "outros" || categoria.nome?.toLowerCase() === "outros");
   const categoriaUtil: Categoria | undefined =
     (categoria && !categoriaIsOutros ? categoria : undefined) ||
     (merchantName ? inferCategoriaFromName(merchantName) : undefined) ||

@@ -17,11 +17,7 @@ import {
   Wallet,
   Flag,
 } from "lucide-react";
-import {
-  MetaCover,
-  getMetaCoverKey,
-  type MetaCoverKey,
-} from "@/components/MetaCover";
+import { MetaCover, getMetaCoverKey, type MetaCoverKey } from "@/components/MetaCover";
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import {
@@ -127,9 +123,10 @@ function MetasPage() {
     setDialog({ kind: "remove", meta: m });
   }
 
-  const countLabel = metas.length === 1
-    ? t("summary.countOne", { count: metas.length })
-    : t("summary.countOther", { count: metas.length });
+  const countLabel =
+    metas.length === 1
+      ? t("summary.countOne", { count: metas.length })
+      : t("summary.countOther", { count: metas.length });
 
   return (
     <MobileShell>
@@ -152,9 +149,14 @@ function MetasPage() {
           <span className="grid h-7 w-7 place-items-center rounded-full bg-brand-soft text-brand-on-soft">
             <Target className="h-3.5 w-3.5" />
           </span>
-          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">{t("summary.label")}</p>
+          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            {t("summary.label")}
+          </p>
         </div>
-        <Money value={totalAcumulado} className="num mt-2 block text-4xl font-extrabold tracking-tight" />
+        <Money
+          value={totalAcumulado}
+          className="num mt-2 block text-4xl font-extrabold tracking-tight"
+        />
         <p
           className="mt-1.5 text-xs leading-relaxed text-muted-foreground"
           dangerouslySetInnerHTML={{ __html: countLabel + t("summary.hint") }}
@@ -177,7 +179,9 @@ function MetasPage() {
               <Target className="h-6 w-6" />
             </div>
             <h3 className="mt-3 text-base font-semibold">{t("onboarding.title")}</h3>
-            <p className="mt-1 max-w-sm text-sm text-muted-foreground">{t("onboarding.description")}</p>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              {t("onboarding.description")}
+            </p>
 
             <div className="mt-4 flex items-center gap-3 sm:gap-4">
               {[
@@ -300,7 +304,8 @@ function MetaCard({
   const isDone = status === "concluida";
   const isAlmostDone = pct >= 80 && !isDone;
 
-  const coverKey = (meta.imagemKey as MetaCoverKey | undefined) ?? getMetaCoverKey(meta.nome, meta.descricao);
+  const coverKey =
+    (meta.imagemKey as MetaCoverKey | undefined) ?? getMetaCoverKey(meta.nome, meta.descricao);
 
   return (
     <div
@@ -310,7 +315,9 @@ function MetaCard({
         isDone && "ring-2",
       )}
       style={{
-        boxShadow: isDone ? `0 0 0 1px ${meta.colorHex} inset, 0 12px 30px -16px ${meta.colorHex}` : undefined,
+        boxShadow: isDone
+          ? `0 0 0 1px ${meta.colorHex} inset, 0 12px 30px -16px ${meta.colorHex}`
+          : undefined,
       }}
     >
       <div className="relative h-56 w-full overflow-hidden sm:h-60">
@@ -361,7 +368,10 @@ function MetaCard({
                 {t("card.removeValue")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={onDelete} className="text-destructive focus:text-destructive">
+              <DropdownMenuItem
+                onSelect={onDelete}
+                className="text-destructive focus:text-destructive"
+              >
                 <Trash2 className="mr-2 h-4 w-4" />
                 {t("card.delete")}
               </DropdownMenuItem>
@@ -391,7 +401,10 @@ function MetaCard({
               className="num text-3xl sm:text-4xl font-extrabold tracking-tight leading-none"
             />
             <span className="num text-sm text-muted-foreground whitespace-nowrap">
-              {t("card.of")} <span className="font-semibold text-foreground/80">{formatBRL(meta.valorObjetivo)}</span>
+              {t("card.of")}{" "}
+              <span className="font-semibold text-foreground/80">
+                {formatBRL(meta.valorObjetivo)}
+              </span>
             </span>
           </div>
 
@@ -423,9 +436,13 @@ function MetaCard({
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-emerald-500/15 text-emerald-500">
                 <PiggyBank className="h-3.5 w-3.5" />
               </span>
-              <span className="text-xs text-muted-foreground truncate">{t("card.savedInReserves")}</span>
+              <span className="text-xs text-muted-foreground truncate">
+                {t("card.savedInReserves")}
+              </span>
             </div>
-            <span className="num text-sm font-semibold tabular-nums">{formatBRL(breakdown.guardado)}</span>
+            <span className="num text-sm font-semibold tabular-nums">
+              {formatBRL(breakdown.guardado)}
+            </span>
           </div>
 
           {breakdown.direto > 0 && (
@@ -434,16 +451,22 @@ function MetaCard({
                 <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-sky-500/15 text-sky-500">
                   <Wallet className="h-3.5 w-3.5" />
                 </span>
-                <span className="text-xs text-muted-foreground truncate">{t("card.addedDirect")}</span>
+                <span className="text-xs text-muted-foreground truncate">
+                  {t("card.addedDirect")}
+                </span>
               </div>
-              <span className="num text-sm font-semibold tabular-nums">{formatBRL(breakdown.direto)}</span>
+              <span className="num text-sm font-semibold tabular-nums">
+                {formatBRL(breakdown.direto)}
+              </span>
             </div>
           )}
 
           <div
             className="flex items-center justify-between rounded-xl border px-3 py-2.5"
             style={{
-              borderColor: isDone ? `color-mix(in oklab, ${meta.colorHex} 40%, transparent)` : undefined,
+              borderColor: isDone
+                ? `color-mix(in oklab, ${meta.colorHex} 40%, transparent)`
+                : undefined,
               background: `color-mix(in oklab, ${meta.colorHex} 8%, transparent)`,
             }}
           >

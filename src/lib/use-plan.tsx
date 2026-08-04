@@ -94,12 +94,13 @@ type CachedSubscription = {
 const CACHE_PREFIX = "gf-plan-cache:";
 const RUNTIME_CACHE_TTL_MS = 5 * 60_000;
 
-let runtimeSubscriptionCache:
-  | { userId: string; value: CachedSubscription; loadedAt: number }
-  | null = null;
-let runtimeSubscriptionInFlight:
-  | { userId: string; promise: Promise<CachedSubscription> }
-  | null = null;
+let runtimeSubscriptionCache: {
+  userId: string;
+  value: CachedSubscription;
+  loadedAt: number;
+} | null = null;
+let runtimeSubscriptionInFlight: { userId: string; promise: Promise<CachedSubscription> } | null =
+  null;
 
 function getRuntimeCache(userId: string): CachedSubscription | null {
   if (
@@ -138,26 +139,42 @@ function writeCache(userId: string, value: CachedSubscription) {
 
 export function usePlan(): PlanState {
   const { user, loading: authLoading } = useAuth();
-  const initialCache = user ? getRuntimeCache(user.id) ?? readCache(user.id) : null;
+  const initialCache = user ? (getRuntimeCache(user.id) ?? readCache(user.id)) : null;
   const [storedRaw, setStoredRaw] = useState<string | null>(initialCache?.storedPlan ?? null);
-  const [status, setStatus] = useState<SubscriptionStatus>(initialCache?.status ?? "sem_assinatura");
+  const [status, setStatus] = useState<SubscriptionStatus>(
+    initialCache?.status ?? "sem_assinatura",
+  );
   const [trialEndsAt, setTrialEndsAt] = useState<string | null>(initialCache?.trialEndsAt ?? null);
-  const [trialStartedAt, setTrialStartedAt] = useState<string | null>(initialCache?.trialStartedAt ?? null);
+  const [trialStartedAt, setTrialStartedAt] = useState<string | null>(
+    initialCache?.trialStartedAt ?? null,
+  );
   const [trialPlanRaw, setTrialPlanRaw] = useState<string | null>(initialCache?.trialPlan ?? null);
   const [trialUsed, setTrialUsed] = useState(initialCache?.trialUsed ?? false);
   const [cancelledAt, setCancelledAt] = useState<string | null>(initialCache?.cancelledAt ?? null);
   const [accessUntil, setAccessUntil] = useState<string | null>(initialCache?.accessUntil ?? null);
-  const [paymentMethod, setPaymentMethod] = useState<string | null>(initialCache?.paymentMethod ?? null);
-  const [paymentAmountCents, setPaymentAmountCents] = useState<number | null>(initialCache?.paymentAmountCents ?? null);
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(
+    initialCache?.paymentMethod ?? null,
+  );
+  const [paymentAmountCents, setPaymentAmountCents] = useState<number | null>(
+    initialCache?.paymentAmountCents ?? null,
+  );
   const [paidAt, setPaidAt] = useState<string | null>(initialCache?.paidAt ?? null);
-  const [periodicidade, setPeriodicidade] = useState<string | null>(initialCache?.periodicidade ?? null);
-  const [currentPeriodStart, setCurrentPeriodStart] = useState<string | null>(initialCache?.currentPeriodStart ?? null);
-  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(initialCache?.currentPeriodEnd ?? null);
+  const [periodicidade, setPeriodicidade] = useState<string | null>(
+    initialCache?.periodicidade ?? null,
+  );
+  const [currentPeriodStart, setCurrentPeriodStart] = useState<string | null>(
+    initialCache?.currentPeriodStart ?? null,
+  );
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(
+    initialCache?.currentPeriodEnd ?? null,
+  );
   // `loading` é true APENAS na primeiríssima carga (sem cache). Revalidações
   // ficam em segundo plano e mantêm o último estado válido para evitar
   // o "piscar" entre liberado/bloqueado durante a navegação.
   const [loading, setLoading] = useState(!initialCache);
-  const [hydratedUserId, setHydratedUserId] = useState<string | null>(initialCache && user ? user.id : null);
+  const [hydratedUserId, setHydratedUserId] = useState<string | null>(
+    initialCache && user ? user.id : null,
+  );
 
   // Admin Master é detectado pelo plano efetivo (`admin_master`) devolvido
   // pelo servidor em `getSubscriptionForUserIdentity` — a lista de e-mails
@@ -294,11 +311,8 @@ export function usePlan(): PlanState {
   // Janela do teste
   const now = Date.now();
   const trialEndMs = trialEndsAt ? new Date(trialEndsAt).getTime() : 0;
-  const isTrialActive =
-    !!trialPlan && !!trialEndsAt && trialEndMs > now;
-  const trialDaysLeft = isTrialActive
-    ? Math.max(0, Math.ceil((trialEndMs - now) / 86_400_000))
-    : 0;
+  const isTrialActive = !!trialPlan && !!trialEndsAt && trialEndMs > now;
+  const trialDaysLeft = isTrialActive ? Math.max(0, Math.ceil((trialEndMs - now) / 86_400_000)) : 0;
 
   // Cancelamento: o usuário continua com acesso até access_until.
   const accessUntilMs = accessUntil ? new Date(accessUntil).getTime() : 0;
@@ -355,10 +369,7 @@ export function usePlan(): PlanState {
     loading,
     isAdminMaster,
     refresh: load,
-    can: (feature) =>
-      isAdminMaster
-        ? true
-        : hasActiveAccess && planAllowsFeature(plan, feature),
+    can: (feature) => (isAdminMaster ? true : hasActiveAccess && planAllowsFeature(plan, feature)),
   };
 }
 

@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getUserFromRequest, unauthorizedResponse, ensurePremiumFeatureAccess } from "@/server/api-auth";
+import {
+  getUserFromRequest,
+  unauthorizedResponse,
+  ensurePremiumFeatureAccess,
+} from "@/server/api-auth";
 import { enforceUserRateLimit } from "@/server/rate-limit.server";
 import { extractText, getDocumentProxy } from "unpdf";
 
@@ -97,15 +101,17 @@ function decodeBase64Pdf(dataUri: string): Uint8Array | null {
 
 function sanitizeText(text: string): string {
   // Remove possíveis dados sensíveis óbvios antes de mandar pra IA.
-  return text
-    // Mascaras de cartão (16 dígitos com ou sem espaços/hífens) → mantém só últimos 4
-    .replace(/\b(?:\d[ -]?){12}(\d{4})\b/g, "**** **** **** $1")
-    // CPF
-    .replace(/\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/g, "[CPF]")
-    .replace(/\b\d{11}\b/g, (m) => (m.length === 11 ? "[CPF]" : m))
-    // CVV explícito
-    .replace(/\bCVV[:\s]*\d{3,4}\b/gi, "[CVV]")
-    .slice(0, 60_000); // hard cap
+  return (
+    text
+      // Mascaras de cartão (16 dígitos com ou sem espaços/hífens) → mantém só últimos 4
+      .replace(/\b(?:\d[ -]?){12}(\d{4})\b/g, "**** **** **** $1")
+      // CPF
+      .replace(/\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/g, "[CPF]")
+      .replace(/\b\d{11}\b/g, (m) => (m.length === 11 ? "[CPF]" : m))
+      // CVV explícito
+      .replace(/\bCVV[:\s]*\d{3,4}\b/gi, "[CVV]")
+      .slice(0, 60_000)
+  ); // hard cap
 }
 
 async function callGeminiWithText(apiKey: string, text: string) {
@@ -216,8 +222,7 @@ function normalizeItens(rawItens: ItemBruto[]) {
           ? it.categoriaSugerida
           : null;
       const desc = typeof it.descricao === "string" ? it.descricao.slice(0, 80) : null;
-      const estab =
-        typeof it.estabelecimento === "string" ? it.estabelecimento.slice(0, 80) : null;
+      const estab = typeof it.estabelecimento === "string" ? it.estabelecimento.slice(0, 80) : null;
       const pa =
         typeof it.parcelaAtual === "number" && it.parcelaAtual > 0
           ? Math.floor(it.parcelaAtual)
@@ -240,8 +245,7 @@ function normalizeItens(rawItens: ItemBruto[]) {
         totalParcelas: tp,
         categoriaSugerida: cat,
         confianca: conf,
-        observacao:
-          typeof it.observacao === "string" ? it.observacao.slice(0, 200) : null,
+        observacao: typeof it.observacao === "string" ? it.observacao.slice(0, 200) : null,
       };
     })
     .filter((it) => it.valor !== null || it.descricao || it.estabelecimento);
@@ -255,25 +259,24 @@ export const Route = createFileRoute("/api/import-fatura-pdf")({
         if (!__user) return unauthorizedResponse();
         const __gate = await ensurePremiumFeatureAccess(__user, "importar_fatura");
         if (__gate) return __gate;
-        const __rl = await enforceUserRateLimit({ scope: "import", userId: __user.id, route: "import-fatura-pdf", request });
+        const __rl = await enforceUserRateLimit({
+          scope: "import",
+          userId: __user.id,
+          route: "import-fatura-pdf",
+          request,
+        });
         if (__rl) return __rl;
         try {
           const apiKey = process.env.LOVABLE_API_KEY;
           if (!apiKey) {
-            return Response.json(
-              { error: "LOVABLE_API_KEY não configurada." },
-              { status: 500 },
-            );
+            return Response.json({ error: "LOVABLE_API_KEY não configurada." }, { status: 500 });
           }
 
           const body = (await request.json()) as { pdf?: string };
           const pdf = typeof body?.pdf === "string" ? body.pdf : "";
           const bytes = decodeBase64Pdf(pdf);
           if (!bytes || bytes.length === 0) {
-            return Response.json(
-              { error: "Envie um arquivo PDF válido." },
-              { status: 400 },
-            );
+            return Response.json({ error: "Envie um arquivo PDF válido." }, { status: 400 });
           }
           if (bytes.length > 12 * 1024 * 1024) {
             return Response.json(
@@ -311,7 +314,10 @@ export const Route = createFileRoute("/api/import-fatura-pdf")({
           // 2. Chamada IA
           const aiResp = hasUsefulText
             ? await callGeminiWithText(apiKey, cleanText)
-            : await callGeminiWithPdf(apiKey, pdf.startsWith("data:") ? pdf : `data:application/pdf;base64,${pdf}`);
+            : await callGeminiWithPdf(
+                apiKey,
+                pdf.startsWith("data:") ? pdf : `data:application/pdf;base64,${pdf}`,
+              );
 
           if (!aiResp.ok) {
             const text = await aiResp.text();
@@ -325,16 +331,12 @@ export const Route = createFileRoute("/api/import-fatura-pdf")({
             if (aiResp.status === 402) {
               return Response.json(
                 {
-                  error:
-                    "Sem créditos da IA. Adicione créditos no workspace para continuar.",
+                  error: "Sem créditos da IA. Adicione créditos no workspace para continuar.",
                 },
                 { status: 402 },
               );
             }
-            return Response.json(
-              { error: "Não consegui ler esse PDF agora." },
-              { status: 502 },
-            );
+            return Response.json({ error: "Não consegui ler esse PDF agora." }, { status: 502 });
           }
 
           const json = await aiResp.json();
@@ -359,8 +361,7 @@ export const Route = createFileRoute("/api/import-fatura-pdf")({
             itens,
             paginas: totalPages,
             modo: hasUsefulText ? "texto" : "ocr",
-            observacao:
-              typeof parsed.observacao === "string" ? parsed.observacao : null,
+            observacao: typeof parsed.observacao === "string" ? parsed.observacao : null,
           });
         } catch (err) {
           console.error("[import-fatura-pdf] erro", err);

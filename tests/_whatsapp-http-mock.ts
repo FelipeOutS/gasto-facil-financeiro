@@ -31,8 +31,7 @@ export function buildWhatsAppServerMock(
   overrides: WhatsAppServerMockOverrides = {},
 ): Record<string, unknown> {
   return {
-    WHATSAPP_HANDLER_VERSION:
-      overrides.handlerVersion ?? "receipt-session-durable-v5",
+    WHATSAPP_HANDLER_VERSION: overrides.handlerVersion ?? "receipt-session-durable-v5",
     logWhatsAppInboundReceived: overrides.logWhatsAppInboundReceived ?? (() => {}),
     processarMensagemWhatsApp:
       overrides.processarMensagemWhatsApp ??
@@ -40,7 +39,6 @@ export function buildWhatsAppServerMock(
     sendWhatsAppReply: overrides.sendWhatsAppReply ?? (async () => {}),
     // WA-B6/C10.3 — fake seguro: não envia rede, apenas devolve ok.
     sendWhatsAppInteractiveCtaUrl:
-      overrides.sendWhatsAppInteractiveCtaUrl ??
-      (async () => ({ ok: true, status: 200 })),
+      overrides.sendWhatsAppInteractiveCtaUrl ?? (async () => ({ ok: true, status: 200 })),
   };
 }

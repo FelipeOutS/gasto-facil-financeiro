@@ -33,7 +33,6 @@ const searchSchema = z.object({
   ),
 });
 
-
 export const Route = createFileRoute("/adicionar")({
   validateSearch: zodValidator(searchSchema),
   head: () => ({ meta: [{ title: i18n.t("adicionar:meta.title") }] }),
@@ -130,14 +129,8 @@ function Adicionar() {
   const highlightExpense = tipo === "gasto";
   const highlightIncome = tipo === "receita";
 
-  const incomeTitle = useMemo(
-    () => t(`guidedEntry.types.${incomeKey}.title`),
-    [t, incomeKey],
-  );
-  const incomeDesc = useMemo(
-    () => t(`guidedEntry.types.${incomeKey}.description`),
-    [t, incomeKey],
-  );
+  const incomeTitle = useMemo(() => t(`guidedEntry.types.${incomeKey}.title`), [t, incomeKey]);
+  const incomeDesc = useMemo(() => t(`guidedEntry.types.${incomeKey}.description`), [t, incomeKey]);
 
   return (
     <MobileShell>
@@ -150,7 +143,9 @@ function Adicionar() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">{t("header.kicker")}</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            {t("header.kicker")}
+          </p>
           <h1 className="text-2xl font-bold tracking-tight">{t("header.title")}</h1>
         </div>
       </header>
@@ -165,13 +160,9 @@ function Adicionar() {
                 <Sparkles className="h-4 w-4" />
               </span>
               <div>
-                <h2 className="text-sm font-semibold leading-tight">
-                  {t("guidedEntry.title")}
-                </h2>
+                <h2 className="text-sm font-semibold leading-tight">{t("guidedEntry.title")}</h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {isBusiness
-                    ? t("guidedEntry.descriptionBusiness")
-                    : t("guidedEntry.description")}
+                  {isBusiness ? t("guidedEntry.descriptionBusiness") : t("guidedEntry.description")}
                 </p>
               </div>
             </div>
@@ -189,9 +180,7 @@ function Adicionar() {
           </div>
 
           <ol className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-            {(
-              ["chooseType", "fillDetails", "saveAndTrack"] as const
-            ).map((step, i) => (
+            {(["chooseType", "fillDetails", "saveAndTrack"] as const).map((step, i) => (
               <li
                 key={step}
                 className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-xs"
@@ -244,9 +233,7 @@ function Adicionar() {
                 </span>
                 <span className="text-sm font-semibold">{incomeTitle}</span>
               </span>
-              <span className="text-xs leading-snug text-muted-foreground">
-                {incomeDesc}
-              </span>
+              <span className="text-xs leading-snug text-muted-foreground">{incomeDesc}</span>
             </button>
           </div>
 
@@ -302,7 +289,9 @@ function Adicionar() {
           </span>
           <span className="flex-1">
             <span className="block text-base font-semibold">{t("options.whatsapp.title")}</span>
-            <span className="block text-xs text-muted-foreground">{t("options.whatsapp.desc")}</span>
+            <span className="block text-xs text-muted-foreground">
+              {t("options.whatsapp.desc")}
+            </span>
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
         </button>

@@ -13,8 +13,14 @@ export const Route = createFileRoute("/lgpd")({
         { property: "og:title", content: t("lgpd.metaTitle") },
         { property: "og:description", content: t("lgpd.ogDesc") },
         { property: "og:url", content: "https://gastointeligente.com.br/lgpd" },
-        { property: "og:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
-        { name: "twitter:image", content: "https://gastointeligente.com.br/og-gasto-inteligente.png" },
+        {
+          property: "og:image",
+          content: "https://gastointeligente.com.br/og-gasto-inteligente.png",
+        },
+        {
+          name: "twitter:image",
+          content: "https://gastointeligente.com.br/og-gasto-inteligente.png",
+        },
       ],
       links: [{ rel: "canonical", href: "https://gastointeligente.com.br/lgpd" }],
     };
@@ -32,10 +38,18 @@ function LgpdPage() {
 
       <h2>{t("lgpd.s1.h")}</h2>
       <ul>
-        <li><strong>{t("lgpd.s1.i1Strong")}</strong> {t("lgpd.s1.i1")}</li>
-        <li><strong>{t("lgpd.s1.i2Strong")}</strong> {t("lgpd.s1.i2")}</li>
-        <li><strong>{t("lgpd.s1.i3Strong")}</strong> {t("lgpd.s1.i3")}</li>
-        <li><strong>{t("lgpd.s1.i4Strong")}</strong> {t("lgpd.s1.i4")}</li>
+        <li>
+          <strong>{t("lgpd.s1.i1Strong")}</strong> {t("lgpd.s1.i1")}
+        </li>
+        <li>
+          <strong>{t("lgpd.s1.i2Strong")}</strong> {t("lgpd.s1.i2")}
+        </li>
+        <li>
+          <strong>{t("lgpd.s1.i3Strong")}</strong> {t("lgpd.s1.i3")}
+        </li>
+        <li>
+          <strong>{t("lgpd.s1.i4Strong")}</strong> {t("lgpd.s1.i4")}
+        </li>
       </ul>
 
       <h2>{t("lgpd.s2.h")}</h2>

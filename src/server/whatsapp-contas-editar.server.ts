@@ -40,21 +40,20 @@ import {
   type ContaVencimentoRow,
 } from "./contas-vencimento.server";
 import { nowInAppTz } from "./cartao-fatura.server";
-import type {
-  CategoriaPickerState,
-  CategoriaPickerRow,
-} from "./whatsapp-comprovantes.server";
+import type { CategoriaPickerState, CategoriaPickerRow } from "./whatsapp-comprovantes.server";
 
 // Live-binding para permitir mock.module() em testes (padrão WA-C3/WA-F3).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const supabaseAdmin: any = new Proxy({}, {
-  get: (_t, prop) => (_supa.supabaseAdmin as never)[prop as never],
-});
+const supabaseAdmin: any = new Proxy(
+  {},
+  {
+    get: (_t, prop) => (_supa.supabaseAdmin as never)[prop as never],
+  },
+);
 
 // ---------- tipos / estados ----------
 
-export type EdicaoOperation =
-  | "due_date" | "amount" | "category" | "name" | "cancel";
+export type EdicaoOperation = "due_date" | "amount" | "category" | "name" | "cancel";
 export type RecurrenceScope = "single" | "future_pending";
 
 export type EdicaoContaSession = {
@@ -106,18 +105,34 @@ export function isEdicaoContaSession(s: unknown): s is EdicaoContaSession {
 
 export type WhatsAppEdicaoContaDeps = {
   gravarSessao: (
-    userId: string, telefone: string, externalId: string | null,
-    texto: string, recebidaEm: string, status: string,
+    userId: string,
+    telefone: string,
+    externalId: string | null,
+    texto: string,
+    recebidaEm: string,
+    status: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    session: any, resposta: string, gastoId?: string,
-  ) => Promise<{ ok: boolean; sessionId: string | null; status: string | null; errorCode: string | null }>;
+    session: any,
+    resposta: string,
+    gastoId?: string,
+  ) => Promise<{
+    ok: boolean;
+    sessionId: string | null;
+    status: string | null;
+    errorCode: string | null;
+  }>;
   atualizarSessao: (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    id: string, status: string, session: any, resposta: string, gastoId?: string,
+    id: string,
+    status: string,
+    session: any,
+    resposta: string,
+    gastoId?: string,
   ) => Promise<unknown>;
   fecharSessoesAnteriores: (
-    userId: string, telefone: string,
-    motivo: "salva" | "cancelada" | "expirada", gastoId?: string,
+    userId: string,
+    telefone: string,
+    motivo: "salva" | "cancelada" | "expirada",
+    gastoId?: string,
   ) => Promise<void>;
   loadCategoriasParaPicker: (userId: string) => Promise<CategoriaPickerRow[]>;
   buildCategoriaListBody: (args: {
@@ -139,15 +154,23 @@ export type WhatsAppEdicaoContaDeps = {
     | { kind: "relist"; options: CategoriaPickerState; body: string }
     | { kind: "invalid" }
   >;
-  detectCategoriaCommand: (texto: string) => { kind: "ask" } | { kind: "direct"; termo: string } | null;
+  detectCategoriaCommand: (
+    texto: string,
+  ) => { kind: "ask" } | { kind: "direct"; termo: string } | null;
 };
 
 // ---------- log seguro ----------
 
 type Stage =
-  | "detected" | "account_found" | "awaiting_choice"
-  | "awaiting_scope" | "awaiting_confirmation"
-  | "updated" | "cancelled" | "conflict" | "failed";
+  | "detected"
+  | "account_found"
+  | "awaiting_choice"
+  | "awaiting_scope"
+  | "awaiting_confirmation"
+  | "updated"
+  | "cancelled"
+  | "conflict"
+  | "failed";
 type Result = "ok" | "not_found" | "ambiguous" | "conflict" | "error";
 
 function affectedBucket(n: number): "one" | "few" | "many" | null {
@@ -158,8 +181,11 @@ function affectedBucket(n: number): "one" | "few" | "many" | null {
 }
 
 function logEvent(
-  stage: Stage, operation: EdicaoOperation | null,
-  candidatesCount: number, affected: number | null, result: Result,
+  stage: Stage,
+  operation: EdicaoOperation | null,
+  candidatesCount: number,
+  affected: number | null,
+  result: Result,
 ) {
   console.info({
     event: "wa_payable_account_edit",
@@ -175,10 +201,12 @@ function logEvent(
 
 function norm(s: string): string {
   return (s ?? "")
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[?!;:"']+/g, " ")
-    .replace(/\s+/g, " ").trim();
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function hasMonetaryValue(textRaw: string): boolean {
@@ -194,7 +222,8 @@ function fmtBRL(n: number): string {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 function fmtDateBR(iso: string): string {
-  const [y, m, d] = iso.split("-"); return `${d}/${m}/${y}`;
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
 }
 
 // ---------- detector ----------
@@ -221,7 +250,13 @@ function stripLeadingArticles(s: string): string {
 // (>= 7 dias quando hoje é o mesmo dia da semana). Sem modificador,
 // a data é a próxima ocorrência inclusiva (hoje quando dow bate).
 const WEEKDAYS_DOW: Record<string, number> = {
-  domingo: 0, segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6,
+  domingo: 0,
+  segunda: 1,
+  terca: 2,
+  quarta: 3,
+  quinta: 4,
+  sexta: 5,
+  sabado: 6,
 };
 const WEEKDAY_ALT = "domingo|segunda|terca|quarta|quinta|sexta|sabado";
 const WEEKDAY_EXTRACT_RE = new RegExp(
@@ -235,7 +270,9 @@ function extractDate(t: string): { dateText: string | null; rest: string } {
     /\b(?:em|para|pro|pra|no)?\s*\d{1,2}\s+de\s+(?:janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\s+de\s+\d{2,4})?\b/,
     /\b(?:em|para|pro|pra|no|na)?\s*\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/,
     /\b(?:no\s+|para\s+o\s+|pro\s+|pra\s+o\s+)?dia\s+\d{1,2}(?:\s+do\s+mes\s+que\s+vem)?\b/,
-    /\bamanha\b/, /\bhoje\b/, /\bontem\b/,
+    /\bamanha\b/,
+    /\bhoje\b/,
+    /\bontem\b/,
     WEEKDAY_EXTRACT_RE,
   ];
   for (const re of patterns) {
@@ -247,22 +284,39 @@ function extractDate(t: string): { dateText: string | null; rest: string } {
 
 // parser de data novo (mesmo vocabulário de WA-C3.1).
 const MESES: Record<string, number> = {
-  janeiro: 1, fevereiro: 2, marco: 3, abril: 4, maio: 5, junho: 6,
-  julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
+  janeiro: 1,
+  fevereiro: 2,
+  marco: 3,
+  abril: 4,
+  maio: 5,
+  junho: 6,
+  julho: 7,
+  agosto: 8,
+  setembro: 9,
+  outubro: 10,
+  novembro: 11,
+  dezembro: 12,
 };
 function parseDate(text: string, hoje: Date = nowInAppTz()): string | null {
   const t = norm(text);
   if (!t) return null;
   if (/\bhoje\b/.test(t)) return todayISOInAppTz(hoje);
   if (/\bontem\b/.test(t)) {
-    const d = new Date(hoje); d.setDate(d.getDate() - 1); return todayISOInAppTz(d);
+    const d = new Date(hoje);
+    d.setDate(d.getDate() - 1);
+    return todayISOInAppTz(d);
   }
   if (/\bamanha\b/.test(t)) {
-    const d = new Date(hoje); d.setDate(d.getDate() + 1); return todayISOInAppTz(d);
+    const d = new Date(hoje);
+    d.setDate(d.getDate() + 1);
+    return todayISOInAppTz(d);
   }
-  let m = t.match(/\b(\d{1,2})\s+de\s+(janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\s+de\s+(\d{2,4}))?\b/);
+  let m = t.match(
+    /\b(\d{1,2})\s+de\s+(janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\s+de\s+(\d{2,4}))?\b/,
+  );
   if (m) {
-    const dia = +m[1]; const mes = MESES[m[2]];
+    const dia = +m[1];
+    const mes = MESES[m[2]];
     if (mes && dia >= 1 && dia <= 31) {
       let ano = m[3] ? +m[3] : hoje.getFullYear();
       if (ano < 100) ano = 2000 + ano;
@@ -274,8 +328,11 @@ function parseDate(text: string, hoje: Date = nowInAppTz()): string | null {
   if (m) {
     const dia = +m[1];
     if (dia >= 1 && dia <= 31) {
-      const next = new Date(hoje); next.setDate(1); next.setMonth(next.getMonth() + 1);
-      const y = next.getFullYear(); const mm = next.getMonth() + 1;
+      const next = new Date(hoje);
+      next.setDate(1);
+      next.setMonth(next.getMonth() + 1);
+      const y = next.getFullYear();
+      const mm = next.getMonth() + 1;
       const last = new Date(y, mm, 0).getDate();
       return `${y}-${String(mm).padStart(2, "0")}-${String(Math.min(dia, last)).padStart(2, "0")}`;
     }
@@ -284,14 +341,16 @@ function parseDate(text: string, hoje: Date = nowInAppTz()): string | null {
   if (m) {
     const dia = +m[1];
     if (dia >= 1 && dia <= 31) {
-      const y = hoje.getFullYear(); const mm = hoje.getMonth() + 1;
+      const y = hoje.getFullYear();
+      const mm = hoje.getMonth() + 1;
       const last = new Date(y, mm, 0).getDate();
       return `${y}-${String(mm).padStart(2, "0")}-${String(Math.min(dia, last)).padStart(2, "0")}`;
     }
   }
   m = t.match(/\b(\d{1,2})[/-](\d{1,2})(?:[/-](\d{2,4}))?\b/);
   if (m) {
-    const dia = +m[1]; const mes = +m[2];
+    const dia = +m[1];
+    const mes = +m[2];
     if (dia >= 1 && dia <= 31 && mes >= 1 && mes <= 12) {
       let ano = m[3] ? +m[3] : hoje.getFullYear();
       if (ano < 100) ano = 2000 + ano;
@@ -305,9 +364,9 @@ function parseDate(text: string, hoje: Date = nowInAppTz()): string | null {
   //     ocorrência estrita (delta em [1..7], nunca hoje);
   //   - sem modificador: próxima ocorrência inclusiva (delta em [0..6],
   //     hoje quando o dow bate).
-  m = t.match(new RegExp(
-    `\\b(proxima|proximo)?\\s*(${WEEKDAY_ALT})(?:-feira)?(\\s+que\\s+vem)?\\b`,
-  ));
+  m = t.match(
+    new RegExp(`\\b(proxima|proximo)?\\s*(${WEEKDAY_ALT})(?:-feira)?(\\s+que\\s+vem)?\\b`),
+  );
   if (m) {
     const target = WEEKDAYS_DOW[m[2]];
     if (target !== undefined) {
@@ -328,15 +387,20 @@ function parseDate(text: string, hoje: Date = nowInAppTz()): string | null {
 function parseAmountToCentavos(textRaw: string): number | null {
   let t = textRaw.toLowerCase();
   // remove tokens irrelevantes ANTES (datas, parcelas, finais de cartão).
-  t = t.replace(/\b\d{1,2}\s+de\s+(?:janeiro|fevereiro|marco|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\s+de\s+\d{2,4})?\b/g, " ")
-       .replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g, " ")
-       .replace(/\bdia\s+\d{1,2}\b/g, " ")
-       .replace(/\b\d+\s*x\b/g, " ")
-       .replace(/\b\d+\s*(?:parcelas?|vezes?)\b/g, " ")
-       .replace(/\bfinal\s+\d{2,4}\b/g, " ")
-       .replace(/\bcartao\s+\d+\b/g, " ");
+  t = t
+    .replace(
+      /\b\d{1,2}\s+de\s+(?:janeiro|fevereiro|marco|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\s+de\s+\d{2,4})?\b/g,
+      " ",
+    )
+    .replace(/\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/g, " ")
+    .replace(/\bdia\s+\d{1,2}\b/g, " ")
+    .replace(/\b\d+\s*x\b/g, " ")
+    .replace(/\b\d+\s*(?:parcelas?|vezes?)\b/g, " ")
+    .replace(/\bfinal\s+\d{2,4}\b/g, " ")
+    .replace(/\bcartao\s+\d+\b/g, " ");
   // Padrões com vírgula decimal ou separador de milhar.
-  const reFull = /(r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+,\d{1,2}|\d+(?:\.\d{3})+|\d+)\s*(reais|real|mil)?/g;
+  const reFull =
+    /(r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+,\d{1,2}|\d+(?:\.\d{3})+|\d+)\s*(reais|real|mil)?/g;
   let best = -1;
   let m: RegExpExecArray | null;
   while ((m = reFull.exec(t)) !== null) {
@@ -386,12 +450,17 @@ export function detectEdicaoContaIntent(textRaw: string): EdicaoIntent | null {
   }
 
   // Renomear ... para NOME
-  m = t.match(/^(?:renomear|mudar\s+(?:o\s+)?nome\s+(?:da|do|de)|alterar\s+(?:o\s+)?nome\s+(?:da|do|de))\s+(.+?)\s+para\s+(.+)$/);
+  m = t.match(
+    /^(?:renomear|mudar\s+(?:o\s+)?nome\s+(?:da|do|de)|alterar\s+(?:o\s+)?nome\s+(?:da|do|de))\s+(.+?)\s+para\s+(.+)$/,
+  );
   if (m) {
     const termo = stripLeadingArticles(m[1]);
     const novoNome = textRaw
       .toLowerCase()
-      .replace(/^\s*(?:renomear|mudar\s+(?:o\s+)?nome\s+(?:da|do|de)|alterar\s+(?:o\s+)?nome\s+(?:da|do|de))\s+.+?\s+para\s+/i, "")
+      .replace(
+        /^\s*(?:renomear|mudar\s+(?:o\s+)?nome\s+(?:da|do|de)|alterar\s+(?:o\s+)?nome\s+(?:da|do|de))\s+.+?\s+para\s+/i,
+        "",
+      )
       .trim();
     // Restaura caixa original do trecho após "para".
     const idx = textRaw.toLowerCase().lastIndexOf(" para ");
@@ -401,7 +470,9 @@ export function detectEdicaoContaIntent(textRaw: string): EdicaoIntent | null {
   }
 
   // Categoria
-  m = t.match(/^(?:alterar|mudar|trocar|atualizar|colocar|coloca|coloque|muda|altera)\s+(?:a\s+)?categoria\s+(?:da|do|de)\s+(.+?)(?:\s+para\s+(.+))?$/);
+  m = t.match(
+    /^(?:alterar|mudar|trocar|atualizar|colocar|coloca|coloque|muda|altera)\s+(?:a\s+)?categoria\s+(?:da|do|de)\s+(.+?)(?:\s+para\s+(.+))?$/,
+  );
   if (m) {
     const termo = stripLeadingArticles(m[1]);
     const cat = m[2] ? m[2].trim() : null;
@@ -415,7 +486,9 @@ export function detectEdicaoContaIntent(textRaw: string): EdicaoIntent | null {
   }
 
   // Valor: "o valor da X agora é V" / "mudar X para V (reais)" / "X agora custa V"
-  m = t.match(/^(?:o\s+)?valor\s+(?:da|do|de)\s+(.+?)\s+(?:agora\s+)?(?:e|eh|é|fica|sera|será|passa\s+a\s+ser)\s+(.+)$/);
+  m = t.match(
+    /^(?:o\s+)?valor\s+(?:da|do|de)\s+(.+?)\s+(?:agora\s+)?(?:e|eh|é|fica|sera|será|passa\s+a\s+ser)\s+(.+)$/,
+  );
   if (m) {
     const termo = stripLeadingArticles(m[1]);
     const amountText = m[2];
@@ -423,7 +496,9 @@ export function detectEdicaoContaIntent(textRaw: string): EdicaoIntent | null {
     if (!parseAmountToCentavos(amountText)) return null;
     return { operation: "amount", termo, amountText };
   }
-  m = textRaw.match(/^(?:mudar|alterar|atualizar|trocar)\s+(?:o\s+valor\s+(?:da|do|de)\s+)?(.+?)\s+para\s+(.+)$/i);
+  m = textRaw.match(
+    /^(?:mudar|alterar|atualizar|trocar)\s+(?:o\s+valor\s+(?:da|do|de)\s+)?(.+?)\s+para\s+(.+)$/i,
+  );
   if (m) {
     const termoRaw = m[1];
     const tail = m[2];
@@ -445,7 +520,9 @@ export function detectEdicaoContaIntent(textRaw: string): EdicaoIntent | null {
 
   // Vencimento: "mudar o vencimento da X para DATA", "adiar X para DATA",
   // "antecipar X para DATA", "X vence agora DATA"
-  m = t.match(/^(?:mudar|alterar|atualizar|trocar|ajustar)\s+(?:o\s+)?vencimento\s+(?:da|do|de)\s+(.+?)\s+para\s+(.+)$/);
+  m = t.match(
+    /^(?:mudar|alterar|atualizar|trocar|ajustar)\s+(?:o\s+)?vencimento\s+(?:da|do|de)\s+(.+?)\s+para\s+(.+)$/,
+  );
   if (m) {
     const termo = stripLeadingArticles(m[1]);
     const { dateText } = extractDate(norm(m[2]));
@@ -480,24 +557,33 @@ function validateNewName(s: string): boolean {
 
 function termoSemSufixoMes(termo: string): string {
   // Remove cauda "de janeiro", "de fevereiro" etc., comum em "excluir internet de julho".
-  return termo.replace(
-    /\s+de\s+(?:janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\s*$/i,
-    "",
-  ).trim();
+  return termo
+    .replace(
+      /\s+de\s+(?:janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\s*$/i,
+      "",
+    )
+    .trim();
 }
 
-async function buscarContaPorId(userId: string, contaId: string): Promise<ContaVencimentoRow | null> {
+async function buscarContaPorId(
+  userId: string,
+  contaId: string,
+): Promise<ContaVencimentoRow | null> {
   const { data, error } = await supabaseAdmin
     .from("contas_a_pagar")
-    .select("id,nome,valor,data_vencimento,status,data_pagamento,categoria_id,recorrente,frequencia_recorrencia,recorrencia_id")
-    .eq("user_id", userId).eq("id", contaId).maybeSingle();
+    .select(
+      "id,nome,valor,data_vencimento,status,data_pagamento,categoria_id,recorrente,frequencia_recorrencia,recorrencia_id",
+    )
+    .eq("user_id", userId)
+    .eq("id", contaId)
+    .maybeSingle();
   if (error || !data) return null;
   return {
     id: String(data.id),
     nome: String(data.nome ?? ""),
     valor: Number(data.valor ?? 0) || 0,
     dataVencimento: String(data.data_vencimento ?? ""),
-    status: (String(data.status ?? "pendente") === "pago" ? "pago" : "pendente"),
+    status: String(data.status ?? "pendente") === "pago" ? "pago" : "pendente",
     dataPagamento: data.data_pagamento ?? null,
     categoriaId: data.categoria_id ?? null,
     recorrente: Boolean(data.recorrente ?? false),
@@ -520,7 +606,12 @@ async function getRecorrenciaIdDaConta(contaId: string, userId: string): Promise
 
 // ---------- preview / mensagens ----------
 
-function previewSingle(op: EdicaoOperation, conta: ContaVencimentoRow, sess: EdicaoContaSession, scope?: RecurrenceScope): string {
+function previewSingle(
+  op: EdicaoOperation,
+  conta: ContaVencimentoRow,
+  sess: EdicaoContaSession,
+  scope?: RecurrenceScope,
+): string {
   const head = "Confere pra mim? 👀";
   const linhas: string[] = [head, "", `• Conta: ${conta.nome}`];
   if (op === "due_date") {
@@ -528,7 +619,9 @@ function previewSingle(op: EdicaoOperation, conta: ContaVencimentoRow, sess: Edi
     linhas.push(`• Novo vencimento: ${sess.newDueDate ? fmtDateBR(sess.newDueDate) : "—"}`);
   } else if (op === "amount") {
     linhas.push(`• Valor atual: ${fmtBRL(conta.valor)}`);
-    linhas.push(`• Novo valor: ${sess.newAmountCentavos ? fmtBRL(sess.newAmountCentavos / 100) : "—"}`);
+    linhas.push(
+      `• Novo valor: ${sess.newAmountCentavos ? fmtBRL(sess.newAmountCentavos / 100) : "—"}`,
+    );
   } else if (op === "category") {
     linhas.push(`• Nova categoria: ${sess.newCategoryLabel ?? "—"}`);
   } else if (op === "name") {
@@ -536,7 +629,9 @@ function previewSingle(op: EdicaoOperation, conta: ContaVencimentoRow, sess: Edi
     linhas.push(`• Novo nome: ${sess.newName ?? "—"}`);
   }
   if (scope) {
-    linhas.push(`• Escopo: ${scope === "single" ? "somente esta conta" : "esta conta e as próximas pendentes"}`);
+    linhas.push(
+      `• Escopo: ${scope === "single" ? "somente esta conta" : "esta conta e as próximas pendentes"}`,
+    );
     if (scope === "future_pending") linhas.push("");
     if (scope === "future_pending") linhas.push("Contas já pagas não serão alteradas.");
   }
@@ -553,7 +648,9 @@ function previewCancelamento(conta: ContaVencimentoRow, scope?: RecurrenceScope)
     `• Vencimento: ${fmtDateBR(conta.dataVencimento)}`,
   ];
   if (scope) {
-    linhas.push(`• Escopo: ${scope === "single" ? "somente esta conta" : "esta conta e as próximas pendentes"}`);
+    linhas.push(
+      `• Escopo: ${scope === "single" ? "somente esta conta" : "esta conta e as próximas pendentes"}`,
+    );
   }
   linhas.push("");
   linhas.push("A conta deixará de aparecer como pendente.");
@@ -576,9 +673,10 @@ function askRecurrenceScope(): string {
 
 function ambiguousList(rows: ContaVencimentoRow[], termo: string, op: EdicaoOperation): string {
   const verbo = op === "cancel" ? "cancelar" : "alterar";
-  const linhas = rows.slice(0, 5).map((r, i) =>
-    `${i + 1}. ${r.nome} — vencimento ${fmtDateBR(r.dataVencimento)}`,
-  ).join("\n");
+  const linhas = rows
+    .slice(0, 5)
+    .map((r, i) => `${i + 1}. ${r.nome} — vencimento ${fmtDateBR(r.dataVencimento)}`)
+    .join("\n");
   return [
     `Encontrei mais de uma conta pendente de ${termo}.`,
     "",
@@ -612,7 +710,8 @@ function statusPagaResposta(): string {
 // ---------- persistência ----------
 
 async function applyUpdate(
-  userId: string, sess: EdicaoContaSession,
+  userId: string,
+  sess: EdicaoContaSession,
 ): Promise<{ ok: boolean; affected: number; error?: string }> {
   const conta = sess.contaId ? await buscarContaPorId(userId, sess.contaId) : null;
   if (!conta) return { ok: false, affected: 0, error: "not_found" };
@@ -621,7 +720,9 @@ async function applyUpdate(
   const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (sess.operation === "due_date" && sess.newDueDate) {
     payload.data_vencimento = sess.newDueDate;
-    const [y, mm] = sess.newDueDate.split("-"); payload.mes = +mm; payload.ano = +y;
+    const [y, mm] = sess.newDueDate.split("-");
+    payload.mes = +mm;
+    payload.ano = +y;
   } else if (sess.operation === "amount" && sess.newAmountCentavos) {
     payload.valor = sess.newAmountCentavos / 100;
   } else if (sess.operation === "category" && sess.newCategoryId) {
@@ -652,12 +753,19 @@ async function applyUpdate(
     //   - o valor mudou (payload de centavos ficaria desatualizado).
     // Edição de nome/categoria NÃO invalida (não constam no payload do
     // lembrete; o nome final é resolvido no envio).
-    if (arr.length > 0 && sess.contaId &&
-        (sess.kind === "cancelamento_conta" || sess.operation === "due_date" || sess.operation === "amount")) {
+    if (
+      arr.length > 0 &&
+      sess.contaId &&
+      (sess.kind === "cancelamento_conta" ||
+        sess.operation === "due_date" ||
+        sess.operation === "amount")
+    ) {
       try {
         const { cancelarLembretesDaConta } = await import("./whatsapp-contas-lembretes.server");
         await cancelarLembretesDaConta(userId, sess.contaId);
-      } catch { /* best-effort */ }
+      } catch {
+        /* best-effort */
+      }
     }
     return { ok: arr.length > 0, affected: arr.length };
   }
@@ -680,15 +788,21 @@ async function applyUpdate(
   if (error) return { ok: false, affected: 0, error: "db_error" };
   const arr = Array.isArray(data) ? data : data ? [data] : [];
   // WA-C9.1 — invalida lembretes pendentes de cada conta atingida.
-  if (arr.length > 0 &&
-      (sess.kind === "cancelamento_conta" || sess.operation === "due_date" || sess.operation === "amount")) {
+  if (
+    arr.length > 0 &&
+    (sess.kind === "cancelamento_conta" ||
+      sess.operation === "due_date" ||
+      sess.operation === "amount")
+  ) {
     try {
       const { cancelarLembretesDaConta } = await import("./whatsapp-contas-lembretes.server");
       for (const row of arr) {
         const id = (row as { id?: string } | null)?.id;
         if (id) await cancelarLembretesDaConta(userId, id);
       }
-    } catch { /* best-effort */ }
+    } catch {
+      /* best-effort */
+    }
   }
   return { ok: arr.length > 0, affected: arr.length };
 }
@@ -713,12 +827,24 @@ export async function processarEdicaoConta(args: {
   // Cancelamento em qualquer estado de edição (palavra "cancelar" enquanto
   // o usuário estava editando — diferente do cancelar conta, que vem
   // como nova intenção via detector).
-  if (sessao && sess && status && isHardCancel && status !== "conta_cancelamento_aguardando_confirmacao") {
+  if (
+    sessao &&
+    sess &&
+    status &&
+    isHardCancel &&
+    status !== "conta_cancelamento_aguardando_confirmacao"
+  ) {
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     const resposta = "Tudo bem, não alterei nada.";
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "cancelada", sess as never, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "cancelada",
+      sess as never,
+      resposta,
     );
     logEvent("cancelled", sess.operation, 0, null, "ok");
     return { status: "cancelada", resposta };
@@ -756,8 +882,14 @@ export async function processarEdicaoConta(args: {
       };
       const resposta = ambiguousList(rows, intent.termo, intent.operation);
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "conta_edicao_aguardando_escolha", session as never, resposta,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "conta_edicao_aguardando_escolha",
+        session as never,
+        resposta,
       );
       logEvent("awaiting_choice", intent.operation, rows.length, null, "ambiguous");
       return { status: "pendente", resposta };
@@ -776,8 +908,14 @@ export async function processarEdicaoConta(args: {
     if (!isFinite(idx) || idx < 1 || idx > (sess.candidateContaIds?.length ?? 0)) {
       const resposta = 'Não entendi. Responda com o número da conta ou "cancelar".';
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "conta_edicao_aguardando_escolha", sess as never, resposta,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "conta_edicao_aguardando_escolha",
+        sess as never,
+        resposta,
       );
       return { status: "pendente", resposta };
     }
@@ -788,8 +926,14 @@ export async function processarEdicaoConta(args: {
       const resposta = "Conta não encontrada.";
       await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "cancelada", sess as never, resposta,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "cancelada",
+        sess as never,
+        resposta,
       );
       return { status: "consulta", resposta };
     }
@@ -798,14 +942,22 @@ export async function processarEdicaoConta(args: {
       const resposta = statusPagaResposta();
       await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "cancelada", sess as never, resposta,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "cancelada",
+        sess as never,
+        resposta,
       );
       return { status: "consulta", resposta };
     }
     const intent: EdicaoIntent = {
-      operation: sess.operation!, termo: conta.nome,
-      dateText: null, amountText: null,
+      operation: sess.operation!,
+      termo: conta.nome,
+      dateText: null,
+      amountText: null,
       newCategoryName: sess.newCategoryLabel ?? null,
       newName: sess.newName ?? null,
     };
@@ -817,16 +969,28 @@ export async function processarEdicaoConta(args: {
   if (status === "conta_edicao_aguardando_escopo_recorrencia") {
     const t = texto.trim().toLowerCase();
     let scope: RecurrenceScope | null = null;
-    if (t === "1" || /\bsomente\b/.test(t) || /\besta\s+conta\b/.test(t) || /\bsó\s+esta\b/.test(t)) {
+    if (
+      t === "1" ||
+      /\bsomente\b/.test(t) ||
+      /\besta\s+conta\b/.test(t) ||
+      /\bsó\s+esta\b/.test(t)
+    ) {
       scope = "single";
     } else if (t === "2" || /\bproxim/.test(t) || /\bfutur/.test(t) || /\bdemais\b/.test(t)) {
       scope = "future_pending";
     }
     if (!scope) {
-      const resposta = 'Responda com "1" para somente esta conta, "2" para esta e as próximas pendentes, ou "cancelar".';
+      const resposta =
+        'Responda com "1" para somente esta conta, "2" para esta e as próximas pendentes, ou "cancelar".';
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "conta_edicao_aguardando_escopo_recorrencia", sess as never, resposta,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "conta_edicao_aguardando_escopo_recorrencia",
+        sess as never,
+        resposta,
       );
       return { status: "pendente", resposta };
     }
@@ -834,7 +998,15 @@ export async function processarEdicaoConta(args: {
     if (!conta) {
       return await failOut(userId, msg, texto, recebidaEm, deps, sess);
     }
-    return await mostrarPreviewOuColetar(userId, msg, texto, recebidaEm, conta, { ...sess, recurrenceScope: scope }, deps);
+    return await mostrarPreviewOuColetar(
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      conta,
+      { ...sess, recurrenceScope: scope },
+      deps,
+    );
   }
 
   // Coleta de novos valores (faltavam no comando original).
@@ -843,42 +1015,84 @@ export async function processarEdicaoConta(args: {
     if (!novo) {
       const resposta = 'Não entendi a data. Tente "dia 10", "15/07" ou "ontem".';
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "conta_edicao_aguardando_vencimento", sess as never, resposta,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "conta_edicao_aguardando_vencimento",
+        sess as never,
+        resposta,
       );
       return { status: "pendente", resposta };
     }
     const conta = sess.contaId ? await buscarContaPorId(userId, sess.contaId) : null;
     if (!conta) return await failOut(userId, msg, texto, recebidaEm, deps, sess);
-    return await mostrarPreviewOuColetar(userId, msg, texto, recebidaEm, conta, { ...sess, newDueDate: novo }, deps);
+    return await mostrarPreviewOuColetar(
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      conta,
+      { ...sess, newDueDate: novo },
+      deps,
+    );
   }
   if (status === "conta_edicao_aguardando_valor") {
     const cents = parseAmountToCentavos(texto);
     if (!cents) {
       const resposta = 'Informe um valor válido (ex.: "99,90" ou "R$ 1.250,00").';
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "conta_edicao_aguardando_valor", sess as never, resposta,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "conta_edicao_aguardando_valor",
+        sess as never,
+        resposta,
       );
       return { status: "pendente", resposta };
     }
     const conta = sess.contaId ? await buscarContaPorId(userId, sess.contaId) : null;
     if (!conta) return await failOut(userId, msg, texto, recebidaEm, deps, sess);
-    return await mostrarPreviewOuColetar(userId, msg, texto, recebidaEm, conta, { ...sess, newAmountCentavos: cents }, deps);
+    return await mostrarPreviewOuColetar(
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      conta,
+      { ...sess, newAmountCentavos: cents },
+      deps,
+    );
   }
   if (status === "conta_edicao_aguardando_nome") {
     const novo = texto.trim();
     if (!validateNewName(novo)) {
       const resposta = "Esse nome não parece válido. Tente algo como “Internet Residencial”.";
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "conta_edicao_aguardando_nome", sess as never, resposta,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "conta_edicao_aguardando_nome",
+        sess as never,
+        resposta,
       );
       return { status: "pendente", resposta };
     }
     const conta = sess.contaId ? await buscarContaPorId(userId, sess.contaId) : null;
     if (!conta) return await failOut(userId, msg, texto, recebidaEm, deps, sess);
-    return await mostrarPreviewOuColetar(userId, msg, texto, recebidaEm, conta, { ...sess, newName: novo }, deps);
+    return await mostrarPreviewOuColetar(
+      userId,
+      msg,
+      texto,
+      recebidaEm,
+      conta,
+      { ...sess, newName: novo },
+      deps,
+    );
   }
 
   // Picker de categoria.
@@ -891,7 +1105,8 @@ export async function processarEdicaoConta(args: {
         categoriaSugerida: sess.newCategoryLabel ?? null,
         categoriaOptions: sess.categoriaOptions,
       },
-      cats, texto,
+      cats,
+      texto,
     });
     if (r.kind === "picked") {
       const conta = sess.contaId ? await buscarContaPorId(userId, sess.contaId) : null;
@@ -907,32 +1122,57 @@ export async function processarEdicaoConta(args: {
     if (r.kind === "relist") {
       const next: EdicaoContaSession = { ...sess, categoriaOptions: r.options };
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "conta_edicao_aguardando_categoria", next as never, r.body,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "conta_edicao_aguardando_categoria",
+        next as never,
+        r.body,
       );
       return { status: "pendente", resposta: r.body };
     }
-    const aviso = "Não entendi. Informe o número, o nome da categoria, “mais” para ver outras opções ou “cancelar”.";
+    const aviso =
+      "Não entendi. Informe o número, o nome da categoria, “mais” para ver outras opções ou “cancelar”.";
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "conta_edicao_aguardando_categoria", sess as never, aviso,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "conta_edicao_aguardando_categoria",
+      sess as never,
+      aviso,
     );
     return { status: "pendente", resposta: aviso };
   }
 
   // Confirmação extra de data passada/futura.
-  if ((sess.awaitingFutureDateConfirm || sess.awaitingPastDateConfirm) && status === "conta_edicao_aguardando_confirmacao") {
+  if (
+    (sess.awaitingFutureDateConfirm || sess.awaitingPastDateConfirm) &&
+    status === "conta_edicao_aguardando_confirmacao"
+  ) {
     // Tratamento normal por "confirm/cancel" abaixo.
   }
 
   // Confirmação final (edição) ou cancelamento (cancelar conta).
-  if (status === "conta_edicao_aguardando_confirmacao" || status === "conta_cancelamento_aguardando_confirmacao") {
+  if (
+    status === "conta_edicao_aguardando_confirmacao" ||
+    status === "conta_cancelamento_aguardando_confirmacao"
+  ) {
     if (decisao !== "confirm") {
       // qualquer outra resposta vira "não entendi".
       const resposta = 'Responda "sim" para confirmar ou "cancelar" para desistir.';
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        status, sess as never, resposta,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        status,
+        sess as never,
+        resposta,
       );
       return { status: "pendente", resposta };
     }
@@ -940,8 +1180,14 @@ export async function processarEdicaoConta(args: {
     // confirmação com external_id (índice único). Se outra réplica já
     // gravou, abortamos sem alterar nada.
     const claim = await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "conta_edicao_persistindo", sess as never, "Aplicando alteração…",
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "conta_edicao_persistindo",
+      sess as never,
+      "Aplicando alteração…",
     );
     if (!claim.ok && claim.errorCode === "23505") {
       // duplicada (reentrega) — silencioso, sem efeito.
@@ -951,14 +1197,27 @@ export async function processarEdicaoConta(args: {
 
     const result = await applyUpdate(userId, sess);
     if (!result.ok) {
-      logEvent("failed", sess.operation, 0, 0, result.error === "already_paid" ? "conflict" : "error");
-      const resposta = result.error === "already_paid"
-        ? statusPagaResposta()
-        : 'Não consegui confirmar a alteração agora. Envie "minhas contas" para conferir o estado atual e, se precisar, tente novamente em instantes.';
+      logEvent(
+        "failed",
+        sess.operation,
+        0,
+        0,
+        result.error === "already_paid" ? "conflict" : "error",
+      );
+      const resposta =
+        result.error === "already_paid"
+          ? statusPagaResposta()
+          : 'Não consegui confirmar a alteração agora. Envie "minhas contas" para conferir o estado atual e, se precisar, tente novamente em instantes.';
       await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "cancelada", sess as never, resposta,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "cancelada",
+        sess as never,
+        resposta,
       );
       return { status: "falha", resposta };
     }
@@ -971,8 +1230,14 @@ export async function processarEdicaoConta(args: {
       : respEdicaoSucesso(sess, result.affected);
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "salva");
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "salva", sess as never, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "salva",
+      sess as never,
+      resposta,
     );
     logEvent(isCancel ? "cancelled" : "updated", sess.operation, 1, result.affected, "ok");
     return { status: "salva", resposta };
@@ -997,21 +1262,35 @@ function respCancelamentoSucesso(sess: EdicaoContaSession, affected: number): st
 }
 
 async function failOut(
-  userId: string, msg: WhatsAppMessageRow, texto: string, recebidaEm: string,
-  deps: WhatsAppEdicaoContaDeps, sess: EdicaoContaSession,
+  userId: string,
+  msg: WhatsAppMessageRow,
+  texto: string,
+  recebidaEm: string,
+  deps: WhatsAppEdicaoContaDeps,
+  sess: EdicaoContaSession,
 ): Promise<ProcessOutcome> {
   const resposta = "Não consegui localizar essa conta. Tente novamente.";
   await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
   await deps.gravarSessao(
-    userId, msg.telefone, msg.external_id, texto, recebidaEm,
-    "cancelada", sess as never, resposta,
+    userId,
+    msg.telefone,
+    msg.external_id,
+    texto,
+    recebidaEm,
+    "cancelada",
+    sess as never,
+    resposta,
   );
   return { status: "consulta", resposta };
 }
 
 async function avancarApos1Candidata(
-  userId: string, msg: WhatsAppMessageRow, texto: string, recebidaEm: string,
-  conta: ContaVencimentoRow, intent: EdicaoIntent,
+  userId: string,
+  msg: WhatsAppMessageRow,
+  texto: string,
+  recebidaEm: string,
+  conta: ContaVencimentoRow,
+  intent: EdicaoIntent,
   deps: WhatsAppEdicaoContaDeps,
   base: EdicaoContaSession | null = null,
 ): Promise<ProcessOutcome> {
@@ -1020,8 +1299,14 @@ async function avancarApos1Candidata(
     logEvent("failed", intent.operation, 1, null, "conflict");
     const resposta = statusPagaResposta();
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "cancelada", { kind: "edicao_conta", contaId: conta.id } as never, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "cancelada",
+      { kind: "edicao_conta", contaId: conta.id } as never,
+      resposta,
     );
     return { status: "consulta", resposta };
   }
@@ -1034,7 +1319,9 @@ async function avancarApos1Candidata(
     candidateContaIds: null,
     operation: intent.operation,
     newDueDate: intent.dateText ? parseDate(intent.dateText) : (base?.newDueDate ?? null),
-    newAmountCentavos: intent.amountText ? parseAmountToCentavos(intent.amountText) : (base?.newAmountCentavos ?? null),
+    newAmountCentavos: intent.amountText
+      ? parseAmountToCentavos(intent.amountText)
+      : (base?.newAmountCentavos ?? null),
     newCategoryId: base?.newCategoryId ?? null,
     newCategoryLabel: intent.newCategoryName ?? base?.newCategoryLabel ?? null,
     newName: intent.newName ?? base?.newName ?? null,
@@ -1049,8 +1336,14 @@ async function avancarApos1Candidata(
   if (recId) {
     const resposta = askRecurrenceScope();
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "conta_edicao_aguardando_escopo_recorrencia", sess as never, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "conta_edicao_aguardando_escopo_recorrencia",
+      sess as never,
+      resposta,
     );
     logEvent("awaiting_scope", intent.operation, 1, null, "ok");
     return { status: "pendente", resposta };
@@ -1060,8 +1353,12 @@ async function avancarApos1Candidata(
 }
 
 async function mostrarPreviewOuColetar(
-  userId: string, msg: WhatsAppMessageRow, texto: string, recebidaEm: string,
-  conta: ContaVencimentoRow, sess: EdicaoContaSession,
+  userId: string,
+  msg: WhatsAppMessageRow,
+  texto: string,
+  recebidaEm: string,
+  conta: ContaVencimentoRow,
+  sess: EdicaoContaSession,
   deps: WhatsAppEdicaoContaDeps,
 ): Promise<ProcessOutcome> {
   const op = sess.operation!;
@@ -1069,8 +1366,14 @@ async function mostrarPreviewOuColetar(
   if (sess.kind === "cancelamento_conta") {
     const resposta = previewCancelamento(conta, sess.recurrenceScope ?? undefined);
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "conta_cancelamento_aguardando_confirmacao", sess as never, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "conta_cancelamento_aguardando_confirmacao",
+      sess as never,
+      resposta,
     );
     logEvent("awaiting_confirmation", op, 1, null, "ok");
     return { status: "pendente", resposta };
@@ -1079,24 +1382,42 @@ async function mostrarPreviewOuColetar(
   if (op === "due_date" && !sess.newDueDate) {
     const resposta = `Para quando devo mover o vencimento de ${conta.nome}?`;
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "conta_edicao_aguardando_vencimento", sess as never, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "conta_edicao_aguardando_vencimento",
+      sess as never,
+      resposta,
     );
     return { status: "pendente", resposta };
   }
   if (op === "amount" && !sess.newAmountCentavos) {
     const resposta = `Qual é o novo valor de ${conta.nome}? (ex.: 99,90)`;
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "conta_edicao_aguardando_valor", sess as never, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "conta_edicao_aguardando_valor",
+      sess as never,
+      resposta,
     );
     return { status: "pendente", resposta };
   }
   if (op === "name" && !sess.newName) {
     const resposta = `Qual o novo nome de ${conta.nome}?`;
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "conta_edicao_aguardando_nome", sess as never, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "conta_edicao_aguardando_nome",
+      sess as never,
+      resposta,
     );
     return { status: "pendente", resposta };
   }
@@ -1107,11 +1428,14 @@ async function mostrarPreviewOuColetar(
       const r = await deps.resolveCategoriaPickerInput({
         userId,
         holder: { descricao: conta.nome, categoriaSugerida: null, categoriaOptions: undefined },
-        cats, texto: sess.newCategoryLabel,
+        cats,
+        texto: sess.newCategoryLabel,
       });
       if (r.kind === "picked") {
         const next: EdicaoContaSession = {
-          ...sess, newCategoryId: r.cat.id, newCategoryLabel: r.cat.nome,
+          ...sess,
+          newCategoryId: r.cat.id,
+          newCategoryLabel: r.cat.nome,
         };
         return await mostrarPreviewOuColetar(userId, msg, texto, recebidaEm, conta, next, deps);
       }
@@ -1124,8 +1448,14 @@ async function mostrarPreviewOuColetar(
     const next: EdicaoContaSession = { ...sess, categoriaOptions: options };
     const resposta = `Qual categoria devo usar?\n\n${body}`;
     await deps.gravarSessao(
-      userId, msg.telefone, msg.external_id, texto, recebidaEm,
-      "conta_edicao_aguardando_categoria", next as never, resposta,
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "conta_edicao_aguardando_categoria",
+      next as never,
+      resposta,
     );
     return { status: "pendente", resposta };
   }
@@ -1136,8 +1466,14 @@ async function mostrarPreviewOuColetar(
       const resposta = askPastDateConfirm(sess.newDueDate);
       const next: EdicaoContaSession = { ...sess, awaitingPastDateConfirm: true };
       await deps.gravarSessao(
-        userId, msg.telefone, msg.external_id, texto, recebidaEm,
-        "conta_edicao_aguardando_confirmacao", next as never, resposta,
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "conta_edicao_aguardando_confirmacao",
+        next as never,
+        resposta,
       );
       logEvent("awaiting_confirmation", op, 1, null, "ok");
       return { status: "pendente", resposta };
@@ -1147,8 +1483,14 @@ async function mostrarPreviewOuColetar(
   // Prévia final.
   const resposta = previewSingle(op, conta, sess, sess.recurrenceScope ?? undefined);
   await deps.gravarSessao(
-    userId, msg.telefone, msg.external_id, texto, recebidaEm,
-    "conta_edicao_aguardando_confirmacao", sess as never, resposta,
+    userId,
+    msg.telefone,
+    msg.external_id,
+    texto,
+    recebidaEm,
+    "conta_edicao_aguardando_confirmacao",
+    sess as never,
+    resposta,
   );
   logEvent("awaiting_confirmation", op, 1, null, "ok");
   return { status: "pendente", resposta };

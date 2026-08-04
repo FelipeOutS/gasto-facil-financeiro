@@ -144,10 +144,7 @@ function makeFakeClient(initialLinks: Row[], initialPending: string[]) {
 
 describe("WA-C11 3B.2.E — executeOptoutRevocation", () => {
   it("revoga vínculo ativo e cancela pending sem attempt", async () => {
-    const c = makeFakeClient(
-      [{ id: "l1", ativo: true, revogado_em: null }],
-      ["n1", "n2"],
-    );
+    const c = makeFakeClient([{ id: "l1", ativo: true, revogado_em: null }], ["n1", "n2"]);
     const r = await executeOptoutRevocation({
       userId: "u1",
       origin: "whatsapp",
@@ -163,10 +160,7 @@ describe("WA-C11 3B.2.E — executeOptoutRevocation", () => {
   });
 
   it("é idempotente quando nada estava ativo", async () => {
-    const c = makeFakeClient(
-      [{ id: "l1", ativo: false, revogado_em: "2025-01-01T00:00:00Z" }],
-      [],
-    );
+    const c = makeFakeClient([{ id: "l1", ativo: false, revogado_em: "2025-01-01T00:00:00Z" }], []);
     const r = await executeOptoutRevocation({
       userId: "u1",
       origin: "whatsapp",

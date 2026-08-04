@@ -94,7 +94,6 @@ export function useProductImage(
         .then((res) => {
           cache.set(key, { result: res, fetchedAt: Date.now() });
           if (import.meta.env.DEV && res.debug) {
-            // eslint-disable-next-line no-console
             console.debug(
               `[image-lookup] "${res.debug.productName}" → ${
                 res.imageUrl ? `${res.debug.pickedFrom} (${res.confidence})` : "sem imagem"
@@ -128,7 +127,6 @@ export function useProductImage(
         });
       cache.set(key, { fetchedAt: Date.now(), inFlight });
     }
-
 
     setIsLoading(true);
     inFlight.then((res) => {

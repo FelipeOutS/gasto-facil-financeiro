@@ -137,7 +137,6 @@ export const Route = createFileRoute("/cartoes/")({
   component: CartoesPage,
 });
 
-
 function diasAte(diaAlvo: number, hoje: Date = new Date()): number {
   const ano = hoje.getFullYear();
   const mes = hoje.getMonth();
@@ -147,9 +146,6 @@ function diasAte(diaAlvo: number, hoje: Date = new Date()): number {
   const ms = alvo.getTime() - new Date(ano, mes, diaHoje).getTime();
   return Math.max(0, Math.round(ms / (1000 * 60 * 60 * 24)));
 }
-
-
-
 
 /** Formata o % de uso do limite evitando "0%" quando há gasto. */
 function formatPctLimite(usado: number, limite: number, lessThan1Label: string): string {
@@ -217,8 +213,6 @@ function CartoesPage() {
     navigate({ search: { abrir: undefined, importar: undefined }, replace: true });
   }, [ready, importar, cartoes, navigate, can]);
 
-
-
   const gastos = useStore(() => getGastos());
 
   // Pré-computa resumo de TODOS os cartões em um único memo. Evita chamar
@@ -233,12 +227,15 @@ function CartoesPage() {
   // Status efetivo da fatura corrente por cartão — usado para filtrar
   // cobranças já pagas dos blocos "Próxima fatura" e "Próximos vencimentos".
   const faturaCorrentePorCartao = useMemo(() => {
-    const map = new Map<string, { mes: number; ano: number; status: StatusFatura; pendente: number }>();
+    const map = new Map<
+      string,
+      { mes: number; ano: number; status: StatusFatura; pendente: number }
+    >();
     for (const c of cartoes) {
       const ref = faturaCorrente(c);
       const status = statusEfetivoFatura(c, ref.mes, ref.ano);
       const r = resumosPorCartao.get(c.id);
-      const pendente = status === "paga" ? 0 : r?.usadoMes ?? 0;
+      const pendente = status === "paga" ? 0 : (r?.usadoMes ?? 0);
       map.set(c.id, { mes: ref.mes, ano: ref.ano, status, pendente });
     }
     return map;
@@ -396,9 +393,7 @@ function CartoesPage() {
           {/* Minha carteira — carrossel horizontal */}
           <section className="-mx-4 mt-5 px-4 animate-rise">
             <div className="mb-2 flex items-center justify-between px-0.5">
-              <h2 className="text-sm font-semibold text-foreground">
-                {t("v3.wallet.title")}
-              </h2>
+              <h2 className="text-sm font-semibold text-foreground">{t("v3.wallet.title")}</h2>
               <span className="text-[11px] text-muted-foreground">
                 {t("list.count", { count: cartoes.length })}
               </span>
@@ -427,10 +422,7 @@ function CartoesPage() {
                   />
                 </div>
               ))}
-              <div
-                role="listitem"
-                className="snap-center shrink-0 w-[82%] max-w-[340px]"
-              >
+              <div role="listitem" className="snap-center shrink-0 w-[82%] max-w-[340px]">
                 <CartaoAddTile onClick={handleOpenNew} />
               </div>
             </div>
@@ -564,9 +556,7 @@ function CartoesPage() {
                 : t("list.count", { count: cartoes.length })}
             </h2>
             {cartoes.length > 0 && (
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {t("list.tapHint")}
-              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t("list.tapHint")}</p>
             )}
           </div>
           {cartoes.length > 0 && (
@@ -638,16 +628,9 @@ function CartoesPage() {
       </p>
 
       {/* Form modal */}
-      <CartaoFormDialog
-        open={openForm}
-        onOpenChange={setOpenForm}
-        editing={editing}
-      />
+      <CartaoFormDialog open={openForm} onOpenChange={setOpenForm} editing={editing} />
 
-      <AlertDialog
-        open={!!confirmDelete}
-        onOpenChange={(o) => !o && setConfirmDelete(null)}
-      >
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("remove.title")}</AlertDialogTitle>
@@ -776,9 +759,7 @@ function CompactKpi({
         </p>
       </div>
       <p className="num mt-1 truncate text-base font-bold leading-tight">{value}</p>
-      {hint && (
-        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{hint}</p>
-      )}
+      {hint && <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -821,11 +802,7 @@ function QuickAction({
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   const { t } = useTranslation("cartoes");
-  const steps = [
-    t("v3.empty.steps.name"),
-    t("v3.empty.steps.limit"),
-    t("v3.empty.steps.track"),
-  ];
+  const steps = [t("v3.empty.steps.name"), t("v3.empty.steps.limit"), t("v3.empty.steps.track")];
   return (
     <AppEmptyStateVisual
       tone="cartoes"
@@ -872,7 +849,6 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-
 const CartaoCard = memo(function CartaoCard({
   cartao,
   resumo,
@@ -916,7 +892,9 @@ const CartaoCard = memo(function CartaoCard({
   const vencDate = useMemo(() => proximoVencimentoFaturaAberta(cartao), [cartao]);
   const fechDate = useMemo(() => proximoFechamentoData(cartao), [cartao]);
   const fmtDM = (d: Date | null) =>
-    d ? `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}` : "—";
+    d
+      ? `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`
+      : "—";
 
   async function handleMarcarPaga(e: React.MouseEvent) {
     e.stopPropagation();
@@ -998,13 +976,9 @@ const CartaoCard = memo(function CartaoCard({
 
       {/* Nome do cartão + banco */}
       <div className="relative mt-2.5">
-        <h3 className="truncate text-lg font-bold leading-tight sm:text-xl">
-          {cartao.nome}
-        </h3>
+        <h3 className="truncate text-lg font-bold leading-tight sm:text-xl">{cartao.nome}</h3>
         {bancoLabel && (
-          <p className="mt-0.5 truncate text-[11px] font-medium text-white/75">
-            {bancoLabel}
-          </p>
+          <p className="mt-0.5 truncate text-[11px] font-medium text-white/75">{bancoLabel}</p>
         )}
       </div>
 
@@ -1015,17 +989,13 @@ const CartaoCard = memo(function CartaoCard({
             <p className="text-[10px] uppercase tracking-widest text-white/70">
               {t("card.usedMonth")}
             </p>
-            <p className="num mt-0.5 truncate text-2xl font-bold">
-              {formatBRL(r.usadoMes)}
-            </p>
+            <p className="num mt-0.5 truncate text-2xl font-bold">{formatBRL(r.usadoMes)}</p>
           </div>
           <div className="text-right">
             <p className="text-[10px] uppercase tracking-widest text-white/70">
               {t("card.limitTotal")}
             </p>
-            <p className="num mt-0.5 text-sm font-semibold text-white/90">
-              {formatBRL(r.limite)}
-            </p>
+            <p className="num mt-0.5 text-sm font-semibold text-white/90">{formatBRL(r.limite)}</p>
           </div>
         </div>
 
@@ -1036,8 +1006,12 @@ const CartaoCard = memo(function CartaoCard({
           />
         </div>
         <div className="mt-1.5 flex items-center justify-between text-[11px] text-white/80">
-          <span className="num">{t("card.limitOf", { pct: formatPctLimite(r.usadoMes, r.limite, t("card.lessThan1")) })}</span>
-          <span className="num">{t("card.availableValue", { value: formatBRL(r.disponivel) })}</span>
+          <span className="num">
+            {t("card.limitOf", { pct: formatPctLimite(r.usadoMes, r.limite, t("card.lessThan1")) })}
+          </span>
+          <span className="num">
+            {t("card.availableValue", { value: formatBRL(r.disponivel) })}
+          </span>
         </div>
       </div>
 
@@ -1137,9 +1111,7 @@ function ProximaFaturaCard({
             </span>
           </div>
           <p className="mt-2 truncate text-sm font-bold text-success">{t("summary.invoicePaid")}</p>
-          <p className="num mt-0.5 text-[11px] text-muted-foreground">
-            {t("summary.noPending")}
-          </p>
+          <p className="num mt-0.5 text-[11px] text-muted-foreground">{t("summary.noPending")}</p>
           <p className="num mt-1 text-xs font-semibold text-foreground">{formatBRL(0)}</p>
         </div>
       );
@@ -1189,9 +1161,7 @@ function ProximaFaturaCard({
         )}
       </p>
       {valor > 0 && (
-        <p className="num mt-1 text-xs font-semibold text-foreground">
-          {formatBRL(valor)}
-        </p>
+        <p className="num mt-1 text-xs font-semibold text-foreground">{formatBRL(valor)}</p>
       )}
     </div>
   );
@@ -1199,11 +1169,7 @@ function ProximaFaturaCard({
 
 /* =============== Aside — próximos vencimentos =============== */
 
-function ProximosVencimentos({
-  items,
-}: {
-  items: Array<{ cartao: Cartao; dias: number }>;
-}) {
+function ProximosVencimentos({ items }: { items: Array<{ cartao: Cartao; dias: number }> }) {
   const { t } = useTranslation("cartoes");
   if (items.length === 0) {
     return (
@@ -1242,15 +1208,17 @@ function ProximosVencimentos({
               ? "text-warning"
               : "text-muted-foreground";
           const label =
-            dias === 0 ? t("upcoming.today") : dias === 1 ? t("upcoming.tomorrow") : t("upcoming.daysShort", { count: dias });
+            dias === 0
+              ? t("upcoming.today")
+              : dias === 1
+                ? t("upcoming.tomorrow")
+                : t("upcoming.daysShort", { count: dias });
           return (
             <li
               key={cartao.id}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2 transition-colors",
-                urgente
-                  ? "border border-destructive/30 bg-destructive/10"
-                  : "bg-card-elevated",
+                urgente ? "border border-destructive/30 bg-destructive/10" : "bg-card-elevated",
               )}
             >
               <span
@@ -1258,25 +1226,19 @@ function ProximosVencimentos({
                 style={{ background: theme.background }}
                 aria-hidden
               >
-                <BrandLogo
-                  name={cartao.banco}
-                  variant="bank"
-                  onDark
-                  className="bank-logo-sm"
-                />
+                <BrandLogo name={cartao.banco} variant="bank" onDark className="bank-logo-sm" />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{cartao.nome}</p>
                 <p className="truncate text-[11px] text-muted-foreground">
-                  {formatBanco(cartao.banco) || t("upcoming.cardFallback")} · {t("upcoming.dueDay", { day: cartao.diaVencimento })}
+                  {formatBanco(cartao.banco) || t("upcoming.cardFallback")} ·{" "}
+                  {t("upcoming.dueDay", { day: cartao.diaVencimento })}
                 </p>
               </div>
               <span
                 className={cn(
                   "num shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                  urgente
-                    ? "bg-destructive text-destructive-foreground"
-                    : tone,
+                  urgente ? "bg-destructive text-destructive-foreground" : tone,
                 )}
               >
                 {label}
@@ -1323,9 +1285,7 @@ function UltimasCompras({
 
       {gastos.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-border bg-card-elevated px-3 py-4 text-center">
-          <p className="text-xs text-muted-foreground">
-            {t("recent.emptyHint")}
-          </p>
+          <p className="text-xs text-muted-foreground">{t("recent.emptyHint")}</p>
         </div>
       ) : (
         <ul className="mt-3 space-y-2">
@@ -1340,11 +1300,7 @@ function UltimasCompras({
                 key={g.id}
                 className="flex items-center gap-3 rounded-xl bg-card-elevated px-3 py-2"
               >
-                <TransactionAvatar
-                  estabelecimento={merchantName}
-                  categoria={cat}
-                  size="sm"
-                />
+                <TransactionAvatar estabelecimento={merchantName} categoria={cat} size="sm" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">
                     {g.descricao || g.estabelecimento || t("recent.purchase")}
@@ -1357,9 +1313,7 @@ function UltimasCompras({
                       : ""}
                   </p>
                 </div>
-                <span className="num shrink-0 text-xs font-semibold">
-                  {formatBRL(g.valor)}
-                </span>
+                <span className="num shrink-0 text-xs font-semibold">{formatBRL(g.valor)}</span>
               </li>
             );
           })}
@@ -1382,21 +1336,38 @@ function UltimasCompras({
 
 /* =============== Fatura Sheet (detalhe do cartão) =============== */
 
-
-
-
 type TFn = (key: string, opts?: Record<string, unknown>) => string;
 
 function monthsAbbr(t: TFn): string[] {
   const arr = i18n.t("cartoes:months.abbr", { returnObjects: true }) as unknown;
-  return Array.isArray(arr) ? (arr as string[]) : ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+  return Array.isArray(arr)
+    ? (arr as string[])
+    : ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 }
 function monthsFull(t: TFn): string[] {
   const arr = i18n.t("cartoes:months.full", { returnObjects: true }) as unknown;
-  return Array.isArray(arr) ? (arr as string[]) : ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+  return Array.isArray(arr)
+    ? (arr as string[])
+    : [
+        "Janeiro",
+        "Fevereiro",
+        "Março",
+        "Abril",
+        "Maio",
+        "Junho",
+        "Julho",
+        "Agosto",
+        "Setembro",
+        "Outubro",
+        "Novembro",
+        "Dezembro",
+      ];
 }
 
-function statusBadgeStyle(status: StatusFatura, t: TFn): { label: string; cls: string; icon: React.ReactNode } {
+function statusBadgeStyle(
+  status: StatusFatura,
+  t: TFn,
+): { label: string; cls: string; icon: React.ReactNode } {
   switch (status) {
     case "paga":
       return {
@@ -1506,7 +1477,12 @@ export function FaturaSheet({
     }
     const arr = Array.from(map.values()).sort((a, b) => b.total - a.total);
     if (semCatCount > 0) {
-      arr.push({ id: "__sem__", nome: t("sheet.uncategorized"), total: semCat, count: semCatCount });
+      arr.push({
+        id: "__sem__",
+        nome: t("sheet.uncategorized"),
+        total: semCat,
+        count: semCatCount,
+      });
     }
     return arr;
   })();
@@ -1550,7 +1526,8 @@ export function FaturaSheet({
     proxVencDate = new Date(ref.ano, ref.mes + 1, _diaVencRef);
   }
   const diasParaVencer = Math.ceil(
-    (proxVencDate.getTime() - new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime()) /
+    (proxVencDate.getTime() -
+      new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime()) /
       (1000 * 60 * 60 * 24),
   );
   const vencStr = `${String(proxVencDate.getDate()).padStart(2, "0")}/${String(proxVencDate.getMonth() + 1).padStart(2, "0")}`;
@@ -1613,16 +1590,17 @@ export function FaturaSheet({
   // Evita "Mercado Pago" aparecer 2x (logo + título).
   const bancoNorm = (cartao.banco || "").trim().toLowerCase().replace(/\s+/g, " ");
   const nomeNorm = (cartao.nome || "").trim().toLowerCase().replace(/\s+/g, " ");
-  const nomeDistinto = !!cartao.nome && nomeNorm !== bancoNorm && !nomeNorm.includes(bancoNorm) && !bancoNorm.includes(nomeNorm);
+  const nomeDistinto =
+    !!cartao.nome &&
+    nomeNorm !== bancoNorm &&
+    !nomeNorm.includes(bancoNorm) &&
+    !bancoNorm.includes(nomeNorm);
 
   const content = (
     <>
       {/* Hero — visual do cartão (compacto em mobile/inline) */}
       <div
-        className={cn(
-          "relative overflow-hidden text-white",
-          inline ? "p-5" : "p-6",
-        )}
+        className={cn("relative overflow-hidden text-white", inline ? "p-5" : "p-6")}
         style={{ background: theme.background }}
       >
         <div
@@ -1644,7 +1622,9 @@ export function FaturaSheet({
             Voltar
           </button>
         )}
-        <HeaderEl className={cn("relative flex flex-col gap-1.5 text-left", inline ? "" : "space-y-2")}>
+        <HeaderEl
+          className={cn("relative flex flex-col gap-1.5 text-left", inline ? "" : "space-y-2")}
+        >
           <div className="flex items-start justify-between gap-3">
             <BrandLogo name={cartao.banco} variant="bank" onDark />
             <span
@@ -1660,10 +1640,7 @@ export function FaturaSheet({
           {/* Em inline (mobile), só renderiza o título se for um apelido real */}
           {(!inline || nomeDistinto) && (
             <TitleEl
-              className={cn(
-                "font-bold tracking-tight text-white",
-                inline ? "text-lg" : "text-2xl",
-              )}
+              className={cn("font-bold tracking-tight text-white", inline ? "text-lg" : "text-2xl")}
             >
               {inline && nomeDistinto ? cartao.nome : cartao.nome}
             </TitleEl>
@@ -1674,429 +1651,424 @@ export function FaturaSheet({
           </DescEl>
         </HeaderEl>
 
-
         {/* Navegação de mês */}
         <div className="relative mt-4 flex items-center justify-between rounded-full border border-white/20 bg-white/10 px-1 py-1 backdrop-blur">
           <button
-              type="button"
-              onClick={() => navMes(-1)}
-              className="grid h-8 w-8 place-items-center rounded-full text-white/90 transition hover:bg-white/15 active:scale-95"
-              aria-label={t("sheet.prevMonth")}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <span className="text-sm font-semibold tracking-tight">
-              {(() => {
-                const r = mesReferenciaFatura(cartao, ref.mes, ref.ano);
-                return `${monthsAbbr(t)[r.mes - 1]}/${r.ano}`;
-              })()}
-            </span>
-            <button
-              type="button"
-              onClick={() => navMes(1)}
-              className="grid h-8 w-8 place-items-center rounded-full text-white/90 transition hover:bg-white/15 active:scale-95"
-              aria-label={t("sheet.nextMonth")}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
+            type="button"
+            onClick={() => navMes(-1)}
+            className="grid h-8 w-8 place-items-center rounded-full text-white/90 transition hover:bg-white/15 active:scale-95"
+            aria-label={t("sheet.prevMonth")}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="text-sm font-semibold tracking-tight">
+            {(() => {
+              const r = mesReferenciaFatura(cartao, ref.mes, ref.ano);
+              return `${monthsAbbr(t)[r.mes - 1]}/${r.ano}`;
+            })()}
+          </span>
+          <button
+            type="button"
+            onClick={() => navMes(1)}
+            className="grid h-8 w-8 place-items-center rounded-full text-white/90 transition hover:bg-white/15 active:scale-95"
+            aria-label={t("sheet.nextMonth")}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
 
-          {/* Total da fatura */}
-          <div className="relative mt-4">
-            <p className="text-[10px] font-medium uppercase tracking-widest text-white/70">
-              {t("sheet.totalInvoice")}
-            </p>
-            <p className="num mt-1 text-3xl font-bold tracking-tight">
-              {formatBRL(resumo.total)}
-            </p>
-            {status !== "paga" && status !== "aberta" && diasParaVencer >= 0 && diasParaVencer <= 7 && (
+        {/* Total da fatura */}
+        <div className="relative mt-4">
+          <p className="text-[10px] font-medium uppercase tracking-widest text-white/70">
+            {t("sheet.totalInvoice")}
+          </p>
+          <p className="num mt-1 text-3xl font-bold tracking-tight">{formatBRL(resumo.total)}</p>
+          {status !== "paga" &&
+            status !== "aberta" &&
+            diasParaVencer >= 0 &&
+            diasParaVencer <= 7 && (
               <p className="mt-1 text-[11px] text-white/80">
                 {diasParaVencer === 0
                   ? t("sheet.dueToday")
                   : t("sheet.dueIn", { count: diasParaVencer })}
               </p>
             )}
-            {status === "paga" && registroFatura?.dataPagamento && (
-              <p className="mt-1 text-[11px] text-white/80">
-                {t("sheet.paidOn", { date: (() => {
+          {status === "paga" && registroFatura?.dataPagamento && (
+            <p className="mt-1 text-[11px] text-white/80">
+              {t("sheet.paidOn", {
+                date: (() => {
                   const d = new Date(registroFatura.dataPagamento + "T00:00:00");
                   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-                })() })}
-              </p>
-            )}
-          </div>
-
-          <div className="relative mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <MiniStat label={t("sheet.limit")} value={formatBRL(resumo.limite)} />
-            <MiniStat label={t("sheet.available")} value={formatBRL(resumo.disponivel)} />
-            <MiniStat label={t("sheet.usage")} value={`${Math.round(resumo.pct)}%`} />
-          </div>
-
-          <div className="relative mt-3">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-white/15">
-              <div
-                className="h-full origin-left rounded-full bg-white/95 shadow-[0_0_12px_rgba(255,255,255,0.35)] animate-fill"
-                style={{ width: `${resumo.pct}%` }}
-              />
-            </div>
-          </div>
+                })(),
+              })}
+            </p>
+          )}
         </div>
 
-        {/* Corpo */}
-        <div className="space-y-5 p-5">
-          <div className="grid grid-cols-3 gap-2.5">
-            <InfoCard label={t("sheet.closing")} value={t("sheet.closingDayValue", { day: cartao.diaFechamento ?? "—" })} />
-            <InfoCard label={t("sheet.due")} value={vencStr} />
-            <InfoCard
-              label={t("sheet.entries")}
-              value={String(resumo.qtd)}
-              hint={t("sheet.purchase", { count: resumo.qtd })}
+        <div className="relative mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <MiniStat label={t("sheet.limit")} value={formatBRL(resumo.limite)} />
+          <MiniStat label={t("sheet.available")} value={formatBRL(resumo.disponivel)} />
+          <MiniStat label={t("sheet.usage")} value={`${Math.round(resumo.pct)}%`} />
+        </div>
+
+        <div className="relative mt-3">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-white/15">
+            <div
+              className="h-full origin-left rounded-full bg-white/95 shadow-[0_0_12px_rgba(255,255,255,0.35)] animate-fill"
+              style={{ width: `${resumo.pct}%` }}
             />
           </div>
+        </div>
+      </div>
 
-          {/* Ações principais */}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {/* Corpo */}
+      <div className="space-y-5 p-5">
+        <div className="grid grid-cols-3 gap-2.5">
+          <InfoCard
+            label={t("sheet.closing")}
+            value={t("sheet.closingDayValue", { day: cartao.diaFechamento ?? "—" })}
+          />
+          <InfoCard label={t("sheet.due")} value={vencStr} />
+          <InfoCard
+            label={t("sheet.entries")}
+            value={String(resumo.qtd)}
+            hint={t("sheet.purchase", { count: resumo.qtd })}
+          />
+        </div>
+
+        {/* Ações principais */}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <Button size="sm" className="card-press" onClick={() => setOpenAdd(true)}>
+            <Plus className="mr-1.5 h-4 w-4" />
+            {t("sheet.addPurchase")}
+          </Button>
+          {canCartoesPremium && (
             <Button
               size="sm"
+              variant={status === "paga" ? "secondary" : "default"}
               className="card-press"
-              onClick={() => setOpenAdd(true)}
+              onClick={togglePaga}
+              disabled={resumo.qtd === 0 && status !== "paga"}
             >
-              <Plus className="mr-1.5 h-4 w-4" />
-              {t("sheet.addPurchase")}
+              {status === "paga" ? (
+                <>
+                  <RotateCcw className="mr-1.5 h-4 w-4" />
+                  {t("sheet.reopen")}
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="mr-1.5 h-4 w-4" />
+                  {t("sheet.markPaidShort")}
+                </>
+              )}
             </Button>
-            {canCartoesPremium && (
-              <Button
-                size="sm"
-                variant={status === "paga" ? "secondary" : "default"}
-                className="card-press"
-                onClick={togglePaga}
-                disabled={resumo.qtd === 0 && status !== "paga"}
-              >
-                {status === "paga" ? (
-                  <>
-                    <RotateCcw className="mr-1.5 h-4 w-4" />
-                    {t("sheet.reopen")}
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="mr-1.5 h-4 w-4" />
-                    {t("sheet.markPaidShort")}
-                  </>
-                )}
-              </Button>
-            )}
-            {canImportFatura && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="card-press"
-                onClick={() => onImport(cartao)}
-              >
-                <FileUp className="mr-1.5 h-4 w-4" />
-                {t("sheet.import")}
-              </Button>
-            )}
+          )}
+          {canImportFatura && (
             <Button
               size="sm"
               variant="outline"
               className="card-press"
-              onClick={() => onEdit(cartao)}
+              onClick={() => onImport(cartao)}
             >
-              <Pencil className="mr-1.5 h-4 w-4" />
-              {t("sheet.edit")}
+              <FileUp className="mr-1.5 h-4 w-4" />
+              {t("sheet.import")}
             </Button>
-          </div>
+          )}
+          <Button size="sm" variant="outline" className="card-press" onClick={() => onEdit(cartao)}>
+            <Pencil className="mr-1.5 h-4 w-4" />
+            {t("sheet.edit")}
+          </Button>
+        </div>
 
-          {/* Busca */}
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t("sheet.searchPlaceholder")}
-              className="h-10 pl-9 pr-9"
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground transition hover:bg-card-elevated"
-                aria-label={t("sheet.clearSearch")}
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
+        {/* Busca */}
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("sheet.searchPlaceholder")}
+            className="h-10 pl-9 pr-9"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground transition hover:bg-card-elevated"
+              aria-label={t("sheet.clearSearch")}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
 
-          {/* Chips de categoria */}
-          {totaisPorCategoria.length > 0 && (
-            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <button
-                type="button"
-                onClick={() => setCatFilter(null)}
-                className={cn(
-                  "card-press shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition",
-                  catFilter === null
-                    ? "border-brand bg-brand-soft text-brand-on-soft"
-                    : "border-border bg-card hover:bg-card-elevated",
-                )}
-              >
-                {t("sheet.all")} · {formatBRL(resumo.total)}
-              </button>
-              {totaisPorCategoria.map((c) => {
-                const active = catFilter === c.id;
-                return (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setCatFilter(active ? null : c.id)}
-                    className={cn(
-                      "card-press shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition",
-                      active
-                        ? "border-brand bg-brand-soft text-brand-on-soft"
-                        : "border-border bg-card hover:bg-card-elevated",
-                    )}
+        {/* Chips de categoria */}
+        {totaisPorCategoria.length > 0 && (
+          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <button
+              type="button"
+              onClick={() => setCatFilter(null)}
+              className={cn(
+                "card-press shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                catFilter === null
+                  ? "border-brand bg-brand-soft text-brand-on-soft"
+                  : "border-border bg-card hover:bg-card-elevated",
+              )}
+            >
+              {t("sheet.all")} · {formatBRL(resumo.total)}
+            </button>
+            {totaisPorCategoria.map((c) => {
+              const active = catFilter === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setCatFilter(active ? null : c.id)}
+                  className={cn(
+                    "card-press shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                    active
+                      ? "border-brand bg-brand-soft text-brand-on-soft"
+                      : "border-border bg-card hover:bg-card-elevated",
+                  )}
+                >
+                  {c.nome} · {formatBRL(c.total)}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {lotes.length > 0 && (
+          <section className="rounded-2xl border border-border bg-card p-3">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {t("sheet.imports")}
+            </p>
+            <ul className="space-y-1.5">
+              {lotes.map((l) => (
+                <li
+                  key={l.batchId}
+                  className="flex items-center justify-between gap-2 rounded-xl bg-card-elevated px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-medium">
+                      {l.origem ?? t("sheet.importOriginDefault")} ·{" "}
+                      {t("sheet.purchases", { count: l.qtd })}
+                    </p>
+                    <p className="num text-[11px] text-muted-foreground">
+                      {t("sheet.totalValue", { value: formatBRL(l.total) })}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => setConfirmLote(l.batchId)}
                   >
-                    {c.nome} · {formatBRL(c.total)}
-                  </button>
+                    <Trash2 className="mr-1 h-3.5 w-3.5" />
+                    {t("sheet.deleteBatch")}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* Lista agrupada por data */}
+        <section className="rounded-2xl border border-border bg-card p-2 sm:p-3">
+          {comprasFiltradas.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border bg-card-elevated px-3 py-8 text-center">
+              <Receipt className="mx-auto h-5 w-5 text-muted-foreground" />
+              <p className="mt-2 text-sm font-semibold">
+                {compras.length === 0 ? t("sheet.emptyTitle") : t("sheet.emptyFilteredTitle")}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {compras.length === 0 ? t("sheet.emptyHint") : t("sheet.emptyFilteredHint")}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {gruposPorData.map(([data, items]) => {
+                const dt = new Date(data + "T00:00:00");
+                const totalDia = items.reduce((s, g) => s + g.valor, 0);
+                const dtLabel = t("sheet.dayLabel", {
+                  day: String(dt.getDate()).padStart(2, "0"),
+                  month: monthsFull(t)[dt.getMonth()],
+                });
+                return (
+                  <div key={data}>
+                    <div className="mb-1.5 flex items-center justify-between px-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        {dtLabel}
+                      </p>
+                      <p className="num text-[11px] text-muted-foreground">{formatBRL(totalDia)}</p>
+                    </div>
+                    <ul className="space-y-1.5">
+                      {items.map((g) => {
+                        const cat = g.categoriaId ? getCategoriaById(g.categoriaId) : undefined;
+                        return (
+                          <li key={g.id} className="group">
+                            <button
+                              type="button"
+                              onClick={() => setEditingGasto(g)}
+                              className="card-press flex w-full items-center gap-3 rounded-xl bg-card-elevated px-3 py-2.5 text-left transition hover:bg-card-elevated/80"
+                            >
+                              <TransactionAvatar
+                                estabelecimento={g.estabelecimento || g.descricao}
+                                categoria={cat}
+                                size="md"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold">
+                                  {g.descricao || g.estabelecimento || t("sheet.purchaseDefault")}
+                                </p>
+                                <p className="truncate text-[11px] text-muted-foreground">
+                                  {cat?.nome ?? t("sheet.uncategorized")}
+                                  {g.tipoGasto === "parcelado" && g.totalParcelas
+                                    ? ` · ${g.parcelaAtual ?? 1}/${g.totalParcelas}`
+                                    : ""}
+                                </p>
+                                {g.origem === "mercado_inteligente" && (
+                                  <span
+                                    className="mt-1 inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-brand-on-soft"
+                                    title={t("sheet.originMercadoTitle")}
+                                  >
+                                    <ShoppingBasket className="h-3 w-3" />
+                                    {t("sheet.originMercadoBadge")}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="num shrink-0 text-sm font-semibold">
+                                  {formatBRL(g.valor)}
+                                </span>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <span
+                                      role="button"
+                                      tabIndex={0}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-card focus:outline-none"
+                                      aria-label={t("sheet.purchaseOptions")}
+                                    >
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </span>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent
+                                    align="end"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <DropdownMenuItem onClick={() => setEditingGasto(g)}>
+                                      <Pencil className="mr-2 h-4 w-4" />
+                                      {t("sheet.editItem")}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => setConfirmDelete(g)}
+                                      className="text-destructive focus:text-destructive"
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      {t("sheet.deleteItem")}
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
                 );
               })}
             </div>
           )}
+        </section>
+      </div>
 
-          {lotes.length > 0 && (
-            <section className="rounded-2xl border border-border bg-card p-3">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {t("sheet.imports")}
-              </p>
-              <ul className="space-y-1.5">
-                {lotes.map((l) => (
-                  <li key={l.batchId} className="flex items-center justify-between gap-2 rounded-xl bg-card-elevated px-3 py-2">
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-medium">
-                        {l.origem ?? t("sheet.importOriginDefault")} · {t("sheet.purchases", { count: l.qtd })}
-                      </p>
-                      <p className="num text-[11px] text-muted-foreground">{t("sheet.totalValue", { value: formatBRL(l.total) })}</p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => setConfirmLote(l.batchId)}
-                    >
-                      <Trash2 className="mr-1 h-3.5 w-3.5" />
-                      {t("sheet.deleteBatch")}
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+      {/* Editar gasto */}
+      <EditGastoDialog
+        gasto={editingGasto}
+        open={!!editingGasto}
+        onOpenChange={(o) => !o && setEditingGasto(null)}
+      />
 
-          {/* Lista agrupada por data */}
-          <section className="rounded-2xl border border-border bg-card p-2 sm:p-3">
-            {comprasFiltradas.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-card-elevated px-3 py-8 text-center">
-                <Receipt className="mx-auto h-5 w-5 text-muted-foreground" />
-                <p className="mt-2 text-sm font-semibold">
-                  {compras.length === 0
-                    ? t("sheet.emptyTitle")
-                    : t("sheet.emptyFilteredTitle")}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {compras.length === 0
-                    ? t("sheet.emptyHint")
-                    : t("sheet.emptyFilteredHint")}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {gruposPorData.map(([data, items]) => {
-                  const dt = new Date(data + "T00:00:00");
-                  const totalDia = items.reduce((s, g) => s + g.valor, 0);
-                  const dtLabel = t("sheet.dayLabel", { day: String(dt.getDate()).padStart(2, "0"), month: monthsFull(t)[dt.getMonth()] });
-                  return (
-                    <div key={data}>
-                      <div className="mb-1.5 flex items-center justify-between px-2">
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          {dtLabel}
-                        </p>
-                        <p className="num text-[11px] text-muted-foreground">
-                          {formatBRL(totalDia)}
-                        </p>
-                      </div>
-                      <ul className="space-y-1.5">
-                        {items.map((g) => {
-                          const cat = g.categoriaId ? getCategoriaById(g.categoriaId) : undefined;
-                          return (
-                            <li key={g.id} className="group">
-                              <button
-                                type="button"
-                                onClick={() => setEditingGasto(g)}
-                                className="card-press flex w-full items-center gap-3 rounded-xl bg-card-elevated px-3 py-2.5 text-left transition hover:bg-card-elevated/80"
-                              >
-                                <TransactionAvatar
-                                  estabelecimento={g.estabelecimento || g.descricao}
-                                  categoria={cat}
-                                  size="md"
-                                />
-                                <div className="min-w-0 flex-1">
-                                  <p className="truncate text-sm font-semibold">
-                                    {g.descricao || g.estabelecimento || t("sheet.purchaseDefault")}
-                                  </p>
-                                  <p className="truncate text-[11px] text-muted-foreground">
-                                    {cat?.nome ?? t("sheet.uncategorized")}
-                                    {g.tipoGasto === "parcelado" && g.totalParcelas
-                                      ? ` · ${g.parcelaAtual ?? 1}/${g.totalParcelas}`
-                                      : ""}
-                                  </p>
-                                  {g.origem === "mercado_inteligente" && (
-                                    <span
-                                      className="mt-1 inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-brand-on-soft"
-                                      title={t("sheet.originMercadoTitle")}
-                                    >
-                                      <ShoppingBasket className="h-3 w-3" />
-                                      {t("sheet.originMercadoBadge")}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <span className="num shrink-0 text-sm font-semibold">
-                                    {formatBRL(g.valor)}
-                                  </span>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <span
-                                        role="button"
-                                        tabIndex={0}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-card focus:outline-none"
-                                        aria-label={t("sheet.purchaseOptions")}
-                                      >
-                                        <MoreHorizontal className="h-4 w-4" />
-                                      </span>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent
-                                      align="end"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <DropdownMenuItem onClick={() => setEditingGasto(g)}>
-                                        <Pencil className="mr-2 h-4 w-4" />
-                                        {t("sheet.editItem")}
-                                      </DropdownMenuItem>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem
-                                        onClick={() => setConfirmDelete(g)}
-                                        className="text-destructive focus:text-destructive"
-                                      >
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        {t("sheet.deleteItem")}
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        </div>
+      {/* Adicionar compra */}
+      <Dialog open={openAdd} onOpenChange={setOpenAdd}>
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] overflow-y-auto p-0 sm:max-w-[560px]">
+          <DialogHeader className="border-b border-border px-6 pb-4 pt-6 text-left">
+            <DialogTitle className="text-xl font-bold tracking-tight">
+              {t("sheet.newPurchaseTitle")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("sheet.newPurchaseDesc", {
+                label: mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano),
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-6 py-4">
+            <GastoForm
+              initial={{
+                formaPagamento: "credito",
+                cartaoId: cartao.id,
+                data: toISODateLocal(new Date()),
+              }}
+              submitLabel={t("sheet.submitPurchase")}
+              onSubmit={handleAddCompra}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
 
-        {/* Editar gasto */}
-        <EditGastoDialog
-          gasto={editingGasto}
-          open={!!editingGasto}
-          onOpenChange={(o) => !o && setEditingGasto(null)}
-        />
+      {/* Confirmar exclusão */}
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("sheet.deletePurchaseTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("sheet.deletePurchaseDesc")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("sheet.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCompra}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("sheet.deleteItem")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-        {/* Adicionar compra */}
-        <Dialog open={openAdd} onOpenChange={setOpenAdd}>
-          <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] overflow-y-auto p-0 sm:max-w-[560px]">
-            <DialogHeader className="border-b border-border px-6 pb-4 pt-6 text-left">
-              <DialogTitle className="text-xl font-bold tracking-tight">
-                {t("sheet.newPurchaseTitle")}
-              </DialogTitle>
-              <DialogDescription>
-                {t("sheet.newPurchaseDesc", { label: mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano) })}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="px-6 py-4">
-              <GastoForm
-                initial={{
-                  formaPagamento: "credito",
-                  cartaoId: cartao.id,
-                  data: toISODateLocal(new Date()),
-                }}
-                submitLabel={t("sheet.submitPurchase")}
-                onSubmit={handleAddCompra}
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Confirmar exclusão */}
-        <AlertDialog
-          open={!!confirmDelete}
-          onOpenChange={(o) => !o && setConfirmDelete(null)}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("sheet.deletePurchaseTitle")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("sheet.deletePurchaseDesc")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t("sheet.cancel")}</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteCompra}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {t("sheet.deleteItem")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Confirmar exclusão de lote */}
-        <AlertDialog open={!!confirmLote} onOpenChange={(o) => !o && setConfirmLote(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("sheet.deleteBatchTitle")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("sheet.deleteBatchDesc")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t("sheet.cancel")}</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteLote}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {t("sheet.deleteBatchConfirm")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+      {/* Confirmar exclusão de lote */}
+      <AlertDialog open={!!confirmLote} onOpenChange={(o) => !o && setConfirmLote(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("sheet.deleteBatchTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("sheet.deleteBatchDesc")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("sheet.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteLote}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("sheet.deleteBatchConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 
   if (inline) {
-    return <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">{content}</div>;
+    return (
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+        {content}
+      </div>
+    );
   }
 
   return (
     <Sheet open={!!cartao} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-full overflow-y-auto p-0 sm:max-w-[640px]"
-      >
+      <SheetContent side="right" className="w-full overflow-y-auto p-0 sm:max-w-[640px]">
         {content}
       </SheetContent>
     </Sheet>
@@ -2119,15 +2091,7 @@ function MiniStat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function InfoCard({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
+function InfoCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-3.5">
       <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
@@ -2163,9 +2127,7 @@ function CartaoFormDialog({
           <DialogTitle className="text-xl font-bold tracking-tight sm:text-2xl">
             {editing ? t("form.editTitle") : t("form.newTitle")}
           </DialogTitle>
-          <DialogDescription className="text-sm">
-            {t("form.subtitle")}
-          </DialogDescription>
+          <DialogDescription className="text-sm">{t("form.subtitle")}</DialogDescription>
         </DialogHeader>
 
         <CartaoForm
@@ -2177,4 +2139,3 @@ function CartaoFormDialog({
     </Dialog>
   );
 }
-

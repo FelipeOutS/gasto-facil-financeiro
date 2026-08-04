@@ -61,10 +61,7 @@ export function PremiumInlineLink({
       <button
         type="button"
         onClick={handleClick}
-        className={cn(
-          "inline-flex items-center gap-1",
-          className,
-        )}
+        className={cn("inline-flex items-center gap-1", className)}
       >
         {children}
         {showLockIcon && <Lock className="h-3 w-3 shrink-0 opacity-70" aria-hidden />}

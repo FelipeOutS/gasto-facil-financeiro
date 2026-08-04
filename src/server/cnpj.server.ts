@@ -73,10 +73,7 @@ interface CacheRow {
 }
 
 function formatCnpj(cnpj: string): string {
-  return cnpj.replace(
-    /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
-    "$1.$2.$3/$4-$5",
-  );
+  return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
 }
 
 function asString(v: unknown): string | null {
@@ -155,9 +152,7 @@ async function fetchBrasilApi(cnpj: string): Promise<CacheRow | null> {
   console.info(`[cnpj] BrasilAPI status HTTP: ${res.status}`);
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    console.warn(
-      `[cnpj] BrasilAPI falhou (${res.status}): ${body.slice(0, 300)}`,
-    );
+    console.warn(`[cnpj] BrasilAPI falhou (${res.status}): ${body.slice(0, 300)}`);
     return null;
   }
   const data = (await res.json()) as BrasilApiPayload;
@@ -166,9 +161,7 @@ async function fetchBrasilApi(cnpj: string): Promise<CacheRow | null> {
     cnpj,
     razao_social: asString(data.razao_social),
     nome_fantasia: asString(data.nome_fantasia),
-    situacao_cadastral: asString(
-      data.descricao_situacao_cadastral ?? data.situacao_cadastral,
-    ),
+    situacao_cadastral: asString(data.descricao_situacao_cadastral ?? data.situacao_cadastral),
     cnae_principal_codigo: asString(data.cnae_fiscal),
     cnae_principal_descricao: asString(data.cnae_fiscal_descricao),
     logradouro: asString(data.logradouro),
@@ -180,9 +173,7 @@ async function fetchBrasilApi(cnpj: string): Promise<CacheRow | null> {
     uf: asString(data.uf),
     data_abertura: asString(data.data_inicio_atividade),
     porte: asString(data.descricao_porte ?? data.porte),
-    natureza_juridica: asString(
-      data.descricao_natureza_juridica ?? data.natureza_juridica,
-    ),
+    natureza_juridica: asString(data.descricao_natureza_juridica ?? data.natureza_juridica),
     source: "brasilapi",
     fetched_at: now.toISOString(),
     expires_at: new Date(now.getTime() + TTL_MS).toISOString(),
@@ -232,10 +223,7 @@ async function fetchCnpjWs(cnpj: string): Promise<CacheRow | null> {
   }
   const data = (await res.json()) as CnpjWsPayload;
   const est = data.estabelecimento ?? {};
-  const logradouroFull = [est.tipo_logradouro, est.logradouro]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
+  const logradouroFull = [est.tipo_logradouro, est.logradouro].filter(Boolean).join(" ").trim();
   const now = new Date();
   return {
     cnpj,
@@ -303,9 +291,7 @@ function isFresh(row: CacheRow): boolean {
 // Orquestração
 // ============================================================
 
-export async function consultarCnpjInterno(
-  cnpjInput: string,
-): Promise<CnpjResult> {
+export async function consultarCnpjInterno(cnpjInput: string): Promise<CnpjResult> {
   const cnpj = limparCnpj(cnpjInput);
   console.info(`[cnpj] início da consulta para "${cnpjInput}" → ${cnpj}`);
 
@@ -375,8 +361,7 @@ export async function consultarCnpjInterno(
       source: "cache",
       stale: true,
       company: dtoFromRow(cached),
-      message:
-        "Não conseguimos atualizar os dados agora. Exibindo a última informação disponível.",
+      message: "Não conseguimos atualizar os dados agora. Exibindo a última informação disponível.",
     };
   }
 
@@ -386,7 +371,6 @@ export async function consultarCnpjInterno(
     source: null,
     stale: false,
     company: null,
-    message:
-      "Não conseguimos consultar este CNPJ agora. Tente novamente em alguns minutos.",
+    message: "Não conseguimos consultar este CNPJ agora. Tente novamente em alguns minutos.",
   };
 }

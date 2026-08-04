@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils";
  */
 export function PlanoCard({ className }: { className?: string }) {
   const { t } = useTranslation("dashboard");
-  const { plan, status, storedPlan, isAdminMaster, loading, isTrialActive, trialDaysLeft } = usePlan();
+  const { plan, status, storedPlan, isAdminMaster, loading, isTrialActive, trialDaysLeft } =
+    usePlan();
 
   if (loading) {
     return (
@@ -29,9 +30,7 @@ export function PlanoCard({ className }: { className?: string }) {
   }
 
   const semAssinatura =
-    !isAdminMaster &&
-    !isTrialActive &&
-    (storedPlan === "sem_assinatura" || storedPlan === "free");
+    !isAdminMaster && !isTrialActive && (storedPlan === "sem_assinatura" || storedPlan === "free");
   const aguardando = !isAdminMaster && status === "aguardando_pagamento";
   const ativoPago = !isAdminMaster && status === "ativo" && !semAssinatura;
 
@@ -49,9 +48,7 @@ export function PlanoCard({ className }: { className?: string }) {
           </span>
           <div className="min-w-0">
             <p className="text-sm font-semibold">{t("planCard.fullAccess")}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {t("planCard.fullAccessDesc")}
-            </p>
+            <p className="truncate text-xs text-muted-foreground">{t("planCard.fullAccessDesc")}</p>
           </div>
         </div>
       </div>
@@ -153,9 +150,7 @@ export function PlanoCard({ className }: { className?: string }) {
         </span>
         <div className="min-w-0">
           <p className="text-sm font-semibold">{t("planCard.unlock")}</p>
-          <p className="truncate text-xs text-muted-foreground">
-            {t("planCard.unlockDesc")}
-          </p>
+          <p className="truncate text-xs text-muted-foreground">{t("planCard.unlockDesc")}</p>
         </div>
       </div>
       <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground">

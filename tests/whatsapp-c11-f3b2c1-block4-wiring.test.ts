@@ -98,10 +98,11 @@ mock.module("@/integrations/supabase/client.server", () => ({
       if (table === "categorias") {
         return {
           select: () => ({
-            eq: () => Promise.resolve({
-              data: [{ id: "cat-outros", legacy_id: "outros", nome: "Outros" }],
-              error: null,
-            }),
+            eq: () =>
+              Promise.resolve({
+                data: [{ id: "cat-outros", legacy_id: "outros", nome: "Outros" }],
+                error: null,
+              }),
           }),
         };
       }
@@ -161,12 +162,8 @@ mock.module("@/server/whatsapp-merchant-memory.server", () => ({
 }));
 
 // ---------- imports pós-mock ----------
-const { persistirBaixa } = await import(
-  "@/server/whatsapp-contas-pagar.server"
-);
-const { persistir: persistirParcelamento } = await import(
-  "@/server/whatsapp-parcelamento.server"
-);
+const { persistirBaixa } = await import("@/server/whatsapp-contas-pagar.server");
+const { persistir: persistirParcelamento } = await import("@/server/whatsapp-parcelamento.server");
 
 // ---------- helpers ----------
 const baseMsg = {
@@ -183,7 +180,11 @@ function baixaDeps() {
     atualizar,
     deps: {
       gravarSessao: async (
-        _u: string, _t: string, _e: string | null, _tx: string, _r: string,
+        _u: string,
+        _t: string,
+        _e: string | null,
+        _tx: string,
+        _r: string,
         status: string,
       ) => {
         gravar.push({ status });
@@ -224,7 +225,9 @@ function parcDeps() {
   return {
     gravar,
     atualizar,
-    setClaimFails: () => { claimOk = false; },
+    setClaimFails: () => {
+      claimOk = false;
+    },
     deps: {
       carregarCartoes: async () => [],
       matchCartao: () => ({ match: null }),
@@ -232,7 +235,11 @@ function parcDeps() {
       maskCartaoLabel: (c: { nome: string }) => c.nome,
       isGenericExpenseDescription: () => false,
       gravarSessao: async (
-        _u: string, _t: string, _e: string | null, _tx: string, _r: string,
+        _u: string,
+        _t: string,
+        _e: string | null,
+        _tx: string,
+        _r: string,
         status: string,
       ) => {
         gravar.push({ status, ok: claimOk });

@@ -162,9 +162,10 @@ export function buildResumoMensal(params: {
     pagas = 0,
     atrasadas = 0;
   for (const c of contas) {
-    const mref = c.mesReferencia && /^\d{4}-\d{2}$/.test(c.mesReferencia)
-      ? { ano: Number(c.mesReferencia.slice(0, 4)), mes: Number(c.mesReferencia.slice(5, 7)) }
-      : { mes: c.mes, ano: c.ano };
+    const mref =
+      c.mesReferencia && /^\d{4}-\d{2}$/.test(c.mesReferencia)
+        ? { ano: Number(c.mesReferencia.slice(0, 4)), mes: Number(c.mesReferencia.slice(5, 7)) }
+        : { mes: c.mes, ano: c.ano };
     if (mref.mes !== mes || mref.ano !== ano) continue;
     if (c.status === "pago") pagas++;
     else if (c.dataVencimento < hojeISO) atrasadas++;
@@ -314,7 +315,9 @@ export function classificarMes(params: {
     p += 10;
   } else {
     p -= 15;
-    motivo.push(i18n.t("relatorios:classificacao.atrasadaCount", { count: resumo.qtdContasAtrasadas }));
+    motivo.push(
+      i18n.t("relatorios:classificacao.atrasadaCount", { count: resumo.qtdContasAtrasadas }),
+    );
   }
 
   if (comparativo.saldo.delta > 0) {
@@ -418,7 +421,9 @@ export function gerarInsights(params: {
   const insights: Insight[] = [];
 
   if (resumo.maiorCategoria) {
-    const frases = i18n.t("relatorios:insightTexts.maiorGasto", { returnObjects: true }) as string[];
+    const frases = i18n.t("relatorios:insightTexts.maiorGasto", {
+      returnObjects: true,
+    }) as string[];
     insights.push({
       id: "maior-cat",
       emoji: "🛒",
@@ -439,7 +444,9 @@ export function gerarInsights(params: {
   }
 
   if (qtdDentroOrcamento > 0) {
-    const frases = i18n.t("relatorios:insightTexts.dentroOrcamento", { returnObjects: true }) as string[];
+    const frases = i18n.t("relatorios:insightTexts.dentroOrcamento", {
+      returnObjects: true,
+    }) as string[];
     insights.push({
       id: "dentro-orc",
       emoji: "✅",
@@ -471,7 +478,9 @@ export function gerarInsights(params: {
 
   if (resumo.totalDespesas > 0 && resumo.totalCartao / resumo.totalDespesas > 0.4) {
     const pct = Math.round((resumo.totalCartao / resumo.totalDespesas) * 100);
-    const frases = i18n.t("relatorios:insightTexts.cartaoAlto", { returnObjects: true }) as string[];
+    const frases = i18n.t("relatorios:insightTexts.cartaoAlto", {
+      returnObjects: true,
+    }) as string[];
     insights.push({
       id: "cartao-alto",
       emoji: "💳",
@@ -481,7 +490,9 @@ export function gerarInsights(params: {
   }
 
   if (resumo.saldo < 0) {
-    const frases = i18n.t("relatorios:insightTexts.saldoNegativo", { returnObjects: true }) as string[];
+    const frases = i18n.t("relatorios:insightTexts.saldoNegativo", {
+      returnObjects: true,
+    }) as string[];
     insights.push({
       id: "saldo-neg",
       emoji: "📉",
@@ -490,12 +501,19 @@ export function gerarInsights(params: {
     });
   }
 
-  if (comparativo.maiorAlta && comparativo.maiorAlta.delta > 0 && comparativo.maiorAlta.anterior > 0) {
+  if (
+    comparativo.maiorAlta &&
+    comparativo.maiorAlta.delta > 0 &&
+    comparativo.maiorAlta.anterior > 0
+  ) {
     const v = localeBRL(comparativo.maiorAlta.delta);
     insights.push({
       id: "alta-cat",
       emoji: "📈",
-      texto: i18n.t("relatorios:insightTexts.altaCategoria", { categoria: comparativo.maiorAlta.nome, valor: `+${v}` }),
+      texto: i18n.t("relatorios:insightTexts.altaCategoria", {
+        categoria: comparativo.maiorAlta.nome,
+        valor: `+${v}`,
+      }),
       tom: "alerta",
     });
   }
@@ -505,7 +523,10 @@ export function gerarInsights(params: {
     insights.push({
       id: "reducao-cat",
       emoji: "🪙",
-      texto: i18n.t("relatorios:insightTexts.reducaoCategoria", { valor: v, categoria: comparativo.maiorReducao.nome }),
+      texto: i18n.t("relatorios:insightTexts.reducaoCategoria", {
+        valor: v,
+        categoria: comparativo.maiorReducao.nome,
+      }),
       tom: "positivo",
     });
   }
@@ -536,12 +557,32 @@ export function gerarInsights(params: {
 // ======================================================================
 
 const NOMES_MES_PT = [
-  "janeiro", "fevereiro", "março", "abril", "maio", "junho",
-  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
 ];
 const NOMES_MES_EN = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 function nomeMes(mes: number): string {
@@ -572,10 +613,14 @@ export function gerarResumoTexto(params: {
   }
 
   if (resumo.maiorCategoria) {
-    partes.push(i18n.t("relatorios:resumoTexto.maiorGasto", { categoria: resumo.maiorCategoria.nome }));
+    partes.push(
+      i18n.t("relatorios:resumoTexto.maiorGasto", { categoria: resumo.maiorCategoria.nome }),
+    );
   }
   if (resumo.totalGuardado > 0) {
-    partes.push(i18n.t("relatorios:resumoTexto.guardou", { valor: localeBRL(resumo.totalGuardado) }));
+    partes.push(
+      i18n.t("relatorios:resumoTexto.guardou", { valor: localeBRL(resumo.totalGuardado) }),
+    );
   }
   if (resumo.qtdContasAtrasadas > 0) {
     partes.push(i18n.t("relatorios:resumoTexto.atrasadas", { count: resumo.qtdContasAtrasadas }));

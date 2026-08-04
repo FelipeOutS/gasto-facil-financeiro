@@ -72,12 +72,7 @@ function EditarGastoPage() {
             <Skeleton className="h-32 w-full" />
           </div>
         ) : (
-          <EditGastoForm
-            key={gasto.id}
-            gasto={gasto}
-            onDone={back}
-            onCancel={back}
-          />
+          <EditGastoForm key={gasto.id} gasto={gasto} onDone={back} onCancel={back} />
         )}
       </div>
     </MobileShell>

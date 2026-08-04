@@ -49,7 +49,7 @@ export function ContaReceberForm({
   const [pagador, setPagador] = useState(editing?.pagador_nome ?? "");
   const [tipo, setTipo] = useState<string>(editing?.tipo_recebimento ?? "cliente");
   const [valor, setValor] = useState(
-    editing ? formatBRL(Number(editing.valor_total)).replace("R$", "").trim() : ""
+    editing ? formatBRL(Number(editing.valor_total)).replace("R$", "").trim() : "",
   );
   const [dataPrevista, setDataPrevista] = useState(editing?.data_prevista ?? todayISO());
   const [categoria, setCategoria] = useState(editing?.categoria ?? "");
@@ -169,7 +169,10 @@ export function ContaReceberForm({
         </div>
         <div className="space-y-1.5">
           <Label>{t("form.forma")}</Label>
-          <Select value={forma || "__none"} onValueChange={(v) => setForma(v === "__none" ? "" : v)}>
+          <Select
+            value={forma || "__none"}
+            onValueChange={(v) => setForma(v === "__none" ? "" : v)}
+          >
             <SelectTrigger>
               <SelectValue placeholder={t("form.none")} />
             </SelectTrigger>
@@ -194,11 +197,7 @@ export function ContaReceberForm({
           maxLength={120}
         />
       </div>
-      <ClienteSelect
-        value={clienteId}
-        onChange={setClienteId}
-        clientesAtivos={clientesAtivos}
-      />
+      <ClienteSelect value={clienteId} onChange={setClienteId} clientesAtivos={clientesAtivos} />
       <div className="space-y-1.5">
         <Label htmlFor="cr-categoria">{t("form.category")}</Label>
         <Input
@@ -223,7 +222,7 @@ export function ContaReceberForm({
       <div
         className={cn(
           "flex gap-2 pt-2",
-          fullWidthActions ? "flex-col-reverse sm:flex-row sm:justify-end" : "justify-end"
+          fullWidthActions ? "flex-col-reverse sm:flex-row sm:justify-end" : "justify-end",
         )}
       >
         {onCancel && (

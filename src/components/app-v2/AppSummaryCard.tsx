@@ -49,9 +49,7 @@ export function AppSummaryCard({
         style={{ backgroundColor: color }}
       />
       <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
         {icon && (
           <span
             className="grid h-8 w-8 shrink-0 place-items-center rounded-xl"

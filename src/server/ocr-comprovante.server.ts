@@ -132,9 +132,7 @@ const TOOL_DEF = {
  * `imageBase64` deve ser uma data URL completa: "data:image/...;base64,...".
  * Limite ~15 MB de imagem (≈20 MB em base64).
  */
-export async function extrairDadosComprovante(
-  imageBase64: string,
-): Promise<OcrOutcome> {
+export async function extrairDadosComprovante(imageBase64: string): Promise<OcrOutcome> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) {
     return { ok: false, error: { error: "LOVABLE_API_KEY não configurada.", status: 500 } };
@@ -173,13 +171,20 @@ export async function extrairDadosComprovante(
     const text = await aiResp.text().catch(() => "");
     console.error("[ocr-comprovante] AI gateway error", aiResp.status, text);
     if (aiResp.status === 429) {
-      return { ok: false, error: { error: "Muitas leituras seguidas. Tenta de novo em alguns segundos.", status: 429 } };
+      return {
+        ok: false,
+        error: {
+          error: "Muitas leituras seguidas. Tenta de novo em alguns segundos.",
+          status: 429,
+        },
+      };
     }
     if (aiResp.status === 402) {
       return {
         ok: false,
         error: {
-          error: "Sem créditos da IA. Adicione créditos no workspace para continuar usando a leitura por imagem.",
+          error:
+            "Sem créditos da IA. Adicione créditos no workspace para continuar usando a leitura por imagem.",
           status: 402,
         },
       };

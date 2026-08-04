@@ -18,9 +18,21 @@ export const Route = createFileRoute("/investimentos/importar")({
 type Origem = "b3" | "corretora" | "csv" | "pdf";
 
 const OPCOES: Array<{ id: Origem; label: string; desc: string }> = [
-  { id: "b3", label: "Importar extrato da B3", desc: "Arquivo exportado da Área do Investidor (PDF, CSV ou XLSX)." },
-  { id: "corretora", label: "Importar extrato da corretora", desc: "Relatório oficial da sua corretora (PDF, CSV ou XLSX)." },
-  { id: "csv", label: "Importar CSV / planilha", desc: "Modelo livre com seus ativos. Aceita CSV, XLSX e XLS." },
+  {
+    id: "b3",
+    label: "Importar extrato da B3",
+    desc: "Arquivo exportado da Área do Investidor (PDF, CSV ou XLSX).",
+  },
+  {
+    id: "corretora",
+    label: "Importar extrato da corretora",
+    desc: "Relatório oficial da sua corretora (PDF, CSV ou XLSX).",
+  },
+  {
+    id: "csv",
+    label: "Importar CSV / planilha",
+    desc: "Modelo livre com seus ativos. Aceita CSV, XLSX e XLS.",
+  },
   { id: "pdf", label: "Importar PDF", desc: "Extrato em PDF com prévia antes de salvar." },
 ];
 
@@ -53,7 +65,9 @@ function ImportarInvestimentosPage() {
         if (!cancel) setLoading(false);
       }
     })();
-    return () => { cancel = true; };
+    return () => {
+      cancel = true;
+    };
   }, [user?.id]);
 
   return (
@@ -104,8 +118,12 @@ function ImportarInvestimentosPage() {
         origem={origem}
         userId={user?.id}
         ativosExistentes={ativos}
-        onOpenChange={(v) => { if (!v) setOrigem(null); }}
-        onImported={() => { back(); }}
+        onOpenChange={(v) => {
+          if (!v) setOrigem(null);
+        }}
+        onImported={() => {
+          back();
+        }}
       />
     </MobileShell>
   );

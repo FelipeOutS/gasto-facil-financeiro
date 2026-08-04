@@ -49,7 +49,12 @@ export type SyncOutcome = {
   language: string;
   local_status_before: string;
   remote_status_normalized: string;
-  action: "no_change" | "patched" | "skipped_no_remote" | "skipped_not_local" | "content_divergence";
+  action:
+    | "no_change"
+    | "patched"
+    | "skipped_no_remote"
+    | "skipped_not_local"
+    | "content_divergence";
   provider_template_id: string | null;
 };
 
@@ -202,7 +207,10 @@ export async function syncRemoteTemplates(
  * categoria remota vier preenchida e diferente da local, marcamos como
  * divergência para NUNCA sobrescrever silenciosamente.
  */
-function detectContentDivergence(local: CatalogTemplateRow, remote: RemoteTemplateSummary): boolean {
+function detectContentDivergence(
+  local: CatalogTemplateRow,
+  remote: RemoteTemplateSummary,
+): boolean {
   if (remote.category && remote.category !== local.category) return true;
   return false;
 }

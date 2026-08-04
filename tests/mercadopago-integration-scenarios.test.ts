@@ -152,9 +152,9 @@ describe("Prompt 4A — Mercado Pago: cenários estruturais", () => {
     expect(
       verifyMercadoPagoSignature({ ...base, signatureHeader: `ts=${ts},v1=deadbeef` }).ok,
     ).toBe(false);
-    expect(
-      verifyMercadoPagoSignature({ ...base, signatureHeader: `v1=abcd` }).reason,
-    ).toBe("missing_timestamp");
+    expect(verifyMercadoPagoSignature({ ...base, signatureHeader: `v1=abcd` }).reason).toBe(
+      "missing_timestamp",
+    );
     const good = signMercadoPagoManifest({ ...base, ts });
     // request-id divergente muda o manifesto ⇒ inválido
     expect(
@@ -306,10 +306,20 @@ describe("Prompt 4A — Mercado Pago: cenários estruturais", () => {
     // Entitlement: mesma decisão para qualquer origem de compra.
     const future = new Date(Date.now() + 86_400_000).toISOString();
     const mp: Entitlement[] = [
-      { origin: "mercado_pago_web", planKey: "pessoal_premium", state: "active", validUntil: future },
+      {
+        origin: "mercado_pago_web",
+        planKey: "pessoal_premium",
+        state: "active",
+        validUntil: future,
+      },
     ];
     const apple: Entitlement[] = [
-      { origin: "apple_app_store", planKey: "pessoal_premium", state: "active", validUntil: future },
+      {
+        origin: "apple_app_store",
+        planKey: "pessoal_premium",
+        state: "active",
+        validUntil: future,
+      },
     ];
     expect(resolveEffectivePlan(mp).planKey).toBe(resolveEffectivePlan(apple).planKey);
     // Sem entitlement vivo ⇒ free_ads (tier padrão do projeto).

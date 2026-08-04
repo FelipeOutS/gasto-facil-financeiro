@@ -89,9 +89,7 @@ export const searchNearbyMarkets = createServerFn({ method: "POST" })
       });
 
       if (!res.ok) {
-        console.error(
-          `[nearby-markets] places searchNearby failed: ${res.status}`,
-        );
+        console.error(`[nearby-markets] places searchNearby failed: ${res.status}`);
         return { markets: [], error: "places_request_failed" };
       }
 
@@ -114,19 +112,12 @@ export const searchNearbyMarkets = createServerFn({ method: "POST" })
           placeId: p.id as string,
           name: p.displayName?.text?.trim() || "—",
           address: p.formattedAddress?.trim() || null,
-          latitude:
-            typeof p.location?.latitude === "number" ? p.location.latitude : null,
-          longitude:
-            typeof p.location?.longitude === "number"
-              ? p.location.longitude
-              : null,
+          latitude: typeof p.location?.latitude === "number" ? p.location.latitude : null,
+          longitude: typeof p.location?.longitude === "number" ? p.location.longitude : null,
           rating: typeof p.rating === "number" ? p.rating : null,
-          userRatingCount:
-            typeof p.userRatingCount === "number" ? p.userRatingCount : null,
-          businessStatus:
-            typeof p.businessStatus === "string" ? p.businessStatus : null,
-          googleMapsUri:
-            typeof p.googleMapsUri === "string" ? p.googleMapsUri : null,
+          userRatingCount: typeof p.userRatingCount === "number" ? p.userRatingCount : null,
+          businessStatus: typeof p.businessStatus === "string" ? p.businessStatus : null,
+          googleMapsUri: typeof p.googleMapsUri === "string" ? p.googleMapsUri : null,
         }));
 
       return { markets, error: null };
@@ -178,8 +169,7 @@ export const geocodeMarketSearchLocation = createServerFn({ method: "POST" })
           Authorization: `Bearer ${lovableKey}`,
           "X-Connection-Api-Key": mapsKey,
           "Content-Type": "application/json",
-          "X-Goog-FieldMask":
-            "places.formattedAddress,places.location,places.displayName",
+          "X-Goog-FieldMask": "places.formattedAddress,places.location,places.displayName",
         },
         body: JSON.stringify({
           textQuery: data.query,
@@ -222,17 +212,11 @@ export const geocodeMarketSearchLocation = createServerFn({ method: "POST" })
       return {
         latitude: place.location.latitude,
         longitude: place.location.longitude,
-        formattedAddress:
-          place.formattedAddress?.trim() ||
-          place.displayName?.text?.trim() ||
-          null,
+        formattedAddress: place.formattedAddress?.trim() || place.displayName?.text?.trim() || null,
         error: null,
       };
     } catch (err) {
-      console.error(
-        "[geocode] unexpected error",
-        err instanceof Error ? err.message : "unknown",
-      );
+      console.error("[geocode] unexpected error", err instanceof Error ? err.message : "unknown");
       return {
         latitude: null,
         longitude: null,
@@ -245,10 +229,7 @@ export const geocodeMarketSearchLocation = createServerFn({ method: "POST" })
 // ---------------------------------------------------------------------------
 // Back-compat: shim exigido por nearby-markets-api.ts
 // ---------------------------------------------------------------------------
-import type {
-  MercadoNearbyQuery,
-  MercadoNearbyResponse,
-} from "./nearby-markets-api";
+import type { MercadoNearbyQuery, MercadoNearbyResponse } from "./nearby-markets-api";
 
 const LegacyInputSchema = z
   .object({
@@ -282,10 +263,7 @@ export const findNearbyMarketsServerFn = createServerFn({ method: "POST" })
         error: { code: "provider_unavailable" },
       };
     }
-    const radiusMeters = Math.min(
-      Math.max(Math.round((data.radiusKm ?? 2.5) * 1000), 50),
-      50000,
-    );
+    const radiusMeters = Math.min(Math.max(Math.round((data.radiusKm ?? 2.5) * 1000), 50), 50000);
     const result = await searchNearbyMarkets({
       data: {
         latitude: data.latitude,

@@ -113,7 +113,9 @@ function buildFake() {
 
     const api: Record<string, unknown> = {};
     Object.assign(api, {
-      select() { return api; },
+      select() {
+        return api;
+      },
       eq(col: string, val: unknown) {
         ctx.filters.push((r) => r[col] === val);
         return api;
@@ -135,7 +137,10 @@ function buildFake() {
         ctx.orderAsc = opts?.ascending ?? true;
         return api;
       },
-      limit(n: number) { ctx.limitN = n; return api; },
+      limit(n: number) {
+        ctx.limitN = n;
+        return api;
+      },
       async maybeSingle() {
         const rows = applyAll();
         return { data: rows[0] ?? null, error: null };
@@ -147,7 +152,10 @@ function buildFake() {
         ctx.upsertOpts = opts ?? null;
         const rows = Array.isArray(row) ? row : [row];
         for (const r of rows) {
-          const conflictCols = (opts?.onConflict ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+          const conflictCols = (opts?.onConflict ?? "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
           const existing = conflictCols.length
             ? data.find((d) => conflictCols.every((c) => d[c] === r[c]))
             : undefined;
@@ -160,7 +168,10 @@ function buildFake() {
         }
         return api;
       },
-      update(patch: Row) { ctx.updatePatch = patch; return api; },
+      update(patch: Row) {
+        ctx.updatePatch = patch;
+        return api;
+      },
     });
     return api;
   }
@@ -224,9 +235,7 @@ describe("WA-C9 :: gerador de lembretes", () => {
     const out = await gerarLembretesContasUsuario("u1", {
       client: fake.client,
       now: () => NOW,
-      fetchContasPendentes: fetchFn([
-        baseConta({ id: "c-2", data_vencimento: AMANHA_BRT }),
-      ]),
+      fetchContasPendentes: fetchFn([baseConta({ id: "c-2", data_vencimento: AMANHA_BRT })]),
     });
     expect(out).toHaveLength(1);
     expect(out[0].type).toBe("conta_vencendo_amanha");
@@ -236,9 +245,7 @@ describe("WA-C9 :: gerador de lembretes", () => {
     const out = await gerarLembretesContasUsuario("u1", {
       client: fake.client,
       now: () => NOW,
-      fetchContasPendentes: fetchFn([
-        baseConta({ id: "c-3", data_vencimento: ONTEM_BRT }),
-      ]),
+      fetchContasPendentes: fetchFn([baseConta({ id: "c-3", data_vencimento: ONTEM_BRT })]),
     });
     expect(out).toHaveLength(1);
     expect(out[0].type).toBe("conta_atrasada");
@@ -350,7 +357,7 @@ describe("WA-C9 :: renderer", () => {
       dueISO: ONTEM_BRT,
     });
     expect(r.text).toContain("uma conta sua");
-    expect(r.text).not.toContain("\"");
+    expect(r.text).not.toContain('"');
   });
 });
 

@@ -92,17 +92,14 @@ export function SmartLimiteCard({
 
   const calc = useMemo(() => {
     const today = new Date();
-    const isCurrentMonth =
-      today.getFullYear() === ano && today.getMonth() + 1 === mes;
+    const isCurrentMonth = today.getFullYear() === ano && today.getMonth() + 1 === mes;
     const fimMes = new Date(ano, mes, 0);
     const refDay = isCurrentMonth ? today : new Date(ano, mes - 1, 1);
     const refISO = refDay.toISOString().slice(0, 10);
     const hojeISO = today.toISOString().slice(0, 10);
 
     const diasNoMes = fimMes.getDate();
-    const diasRestantes = isCurrentMonth
-      ? Math.max(1, diasNoMes - today.getDate() + 1)
-      : diasNoMes;
+    const diasRestantes = isCurrentMonth ? Math.max(1, diasNoMes - today.getDate() + 1) : diasNoMes;
 
     // Gastos vinculados a contas (liquidação de obrigação) — não são "novos".
     const gastosLigadosAConta = new Set<string>();
@@ -189,26 +186,18 @@ export function SmartLimiteCard({
     const restanteMeta = temMeta ? metaSalva - gastosElegiveis : 0;
 
     const disponivelMes =
-      totalEntradas -
-      totalVariaveis -
-      totalObrigacoes -
-      contasPendentesAposHoje -
-      recorrenciasPrev;
+      totalEntradas - totalVariaveis - totalObrigacoes - contasPendentesAposHoje - recorrenciasPrev;
 
-    const baseDisponivel = temMeta
-      ? Math.min(restanteMeta, disponivelMes)
-      : disponivelMes;
+    const baseDisponivel = temMeta ? Math.min(restanteMeta, disponivelMes) : disponivelMes;
     const porDia = baseDisponivel / diasRestantes;
 
-    const semDados =
-      totalEntradas <= 0 && gastosElegiveis <= 0 && !temMeta && contas.length === 0;
+    const semDados = totalEntradas <= 0 && gastosElegiveis <= 0 && !temMeta && contas.length === 0;
 
     let status: Status = "saudavel";
     if (semDados) status = "sem_dados";
     else if (temMeta && restanteMeta < 0) status = "meta_excedida";
     else if (disponivelMes < 0) status = "risco";
-    else if (temMeta && restanteMeta / Math.max(1, metaSalva) < 0.2)
-      status = "atencao";
+    else if (temMeta && restanteMeta / Math.max(1, metaSalva) < 0.2) status = "atencao";
     else if (porDia < 20 || (totalEntradas > 0 && disponivelMes < totalEntradas * 0.1))
       status = "atencao";
 
@@ -310,12 +299,7 @@ export function SmartLimiteCard({
               >
                 <Sparkles className="h-4 w-4" />
               </span>
-              <p
-                className={cn(
-                  "text-[11px] font-semibold uppercase tracking-widest",
-                  cfg.subText,
-                )}
-              >
+              <p className={cn("text-[11px] font-semibold uppercase tracking-widest", cfg.subText)}>
                 {t("smartLimite.title")}
               </p>
             </div>
@@ -390,9 +374,7 @@ export function SmartLimiteCard({
         {/* Valor principal */}
         <div className="mt-3 flex items-end gap-2">
           {status === "sem_dados" ? (
-            <p className={cn("text-2xl font-bold sm:text-3xl", cfg.valueText)}>
-              —
-            </p>
+            <p className={cn("text-2xl font-bold sm:text-3xl", cfg.valueText)}>—</p>
           ) : (
             <>
               <Money
@@ -417,7 +399,16 @@ export function SmartLimiteCard({
 
         {/* Texto explicativo */}
         <p className={cn("mt-2 max-w-xl text-[12px] leading-relaxed", cfg.text)}>
-          {getMensagem(t, status, porDia, disponivelMes, temMeta, restanteMeta, mode, totalObrigacoes)}
+          {getMensagem(
+            t,
+            status,
+            porDia,
+            disponivelMes,
+            temMeta,
+            restanteMeta,
+            mode,
+            totalObrigacoes,
+          )}
         </p>
 
         {/* Meta mensal — edição inline */}
@@ -449,12 +440,7 @@ export function SmartLimiteCard({
                   >
                     {t("smartLimite.metaTitle")}
                   </p>
-                  <p
-                    className={cn(
-                      "num truncate text-sm font-bold",
-                      cfg.valueText,
-                    )}
-                  >
+                  <p className={cn("num truncate text-sm font-bold", cfg.valueText)}>
                     {temMeta ? formatBRL(metaSalva) : t("smartLimite.semMeta")}
                   </p>
                 </div>
@@ -489,9 +475,7 @@ export function SmartLimiteCard({
                     cfg.inputRing,
                   )}
                 >
-                  <span className={cn("text-xs font-semibold", cfg.muted)}>
-                    R$
-                  </span>
+                  <span className={cn("text-xs font-semibold", cfg.muted)}>R$</span>
                   <input
                     ref={inputRef}
                     inputMode="decimal"
@@ -534,10 +518,7 @@ export function SmartLimiteCard({
                 <button
                   type="button"
                   onClick={handleClear}
-                  className={cn(
-                    "mt-2 text-[11px] underline-offset-2 hover:underline",
-                    cfg.muted,
-                  )}
+                  className={cn("mt-2 text-[11px] underline-offset-2 hover:underline", cfg.muted)}
                 >
                   {t("smartLimite.remover")}
                 </button>
@@ -558,17 +539,9 @@ export function SmartLimiteCard({
               <span>{temMeta ? t("smartLimite.daMetaUsado") : t("smartLimite.comprometido")}</span>
               <span className="num">{Math.round(pctUsado)}%</span>
             </div>
-            <div
-              className={cn(
-                "mt-1.5 h-2 w-full overflow-hidden rounded-full",
-                cfg.barTrack,
-              )}
-            >
+            <div className={cn("mt-1.5 h-2 w-full overflow-hidden rounded-full", cfg.barTrack)}>
               <div
-                className={cn(
-                  "h-full rounded-full transition-all duration-700 ease-out",
-                  cfg.bar,
-                )}
+                className={cn("h-full rounded-full transition-all duration-700 ease-out", cfg.bar)}
                 style={{ width: `${pctUsado}%` }}
               />
             </div>
@@ -589,7 +562,11 @@ export function SmartLimiteCard({
                 <MiniStat
                   cfg={cfg}
                   icon={<Wallet className="h-3.5 w-3.5" />}
-                  label={mode === "variaveis" ? t("smartLimite.stat.variaveis") : t("smartLimite.stat.jaGasto")}
+                  label={
+                    mode === "variaveis"
+                      ? t("smartLimite.stat.variaveis")
+                      : t("smartLimite.stat.jaGasto")
+                  }
                   value={formatBRL(gastosElegiveis)}
                 />
                 <MiniStat
@@ -630,7 +607,11 @@ export function SmartLimiteCard({
                 <MiniStat
                   cfg={cfg}
                   icon={<Wallet className="h-3.5 w-3.5" />}
-                  label={mode === "variaveis" ? t("smartLimite.stat.variaveis") : t("smartLimite.stat.jaGasto")}
+                  label={
+                    mode === "variaveis"
+                      ? t("smartLimite.stat.variaveis")
+                      : t("smartLimite.stat.jaGasto")
+                  }
                   value={formatBRL(gastosElegiveis)}
                 />
               </>
@@ -680,13 +661,7 @@ function MiniStat({
   cfg: StatusCfg;
 }) {
   return (
-    <div
-      className={cn(
-        "rounded-xl p-2.5 ring-1 backdrop-blur-sm",
-        cfg.statBg,
-        cfg.statRing,
-      )}
-    >
+    <div className={cn("rounded-xl p-2.5 ring-1 backdrop-blur-sm", cfg.statBg, cfg.statRing)}>
       <div
         className={cn(
           "flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide",
@@ -726,18 +701,18 @@ function getMensagem(
   if (mode === "fluxo") return t("smartLimite.msg.fluxo");
   if (status === "meta_excedida") {
     if (mode === "variaveis")
-      return t("smartLimite.msg.metaExcedidaVar", { valor: formatBRL(Math.abs(restanteMeta)), notice });
+      return t("smartLimite.msg.metaExcedidaVar", {
+        valor: formatBRL(Math.abs(restanteMeta)),
+        notice,
+      });
     return t("smartLimite.msg.metaExcedida", { valor: formatBRL(Math.abs(restanteMeta)) });
   }
-  if (status === "risco")
-    return t("smartLimite.msg.risco", { notice });
+  if (status === "risco") return t("smartLimite.msg.risco", { notice });
   if (status === "atencao") {
-    if (temMeta)
-      return t("smartLimite.msg.atencaoMeta", { porDia: formatBRL(porDia), notice });
+    if (temMeta) return t("smartLimite.msg.atencaoMeta", { porDia: formatBRL(porDia), notice });
     return t("smartLimite.msg.atencao", { porDia: formatBRL(porDia) });
   }
-  if (temMeta)
-    return t("smartLimite.msg.saudavelMeta", { porDia: formatBRL(porDia), notice });
+  if (temMeta) return t("smartLimite.msg.saudavelMeta", { porDia: formatBRL(porDia), notice });
   return t("smartLimite.msg.saudavel", { porDia: formatBRL(porDia), notice });
 }
 
@@ -798,11 +773,14 @@ const STATUS_CONFIG: Record<Status, StatusCfg> = {
     metaBg: "bg-white/60 dark:bg-white/5",
     metaRing: "ring-emerald-200/60 dark:ring-white/10",
     inputBg: "bg-white dark:bg-white/10",
-    inputRing: "ring-emerald-300/60 focus-within:ring-emerald-500/60 dark:ring-white/15 dark:focus-within:ring-emerald-300/60",
+    inputRing:
+      "ring-emerald-300/60 focus-within:ring-emerald-500/60 dark:ring-white/15 dark:focus-within:ring-emerald-300/60",
     statBg: "bg-white/70 dark:bg-white/8",
     statRing: "ring-emerald-200/60 dark:ring-white/10",
-    btnPrimary: "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-400 dark:text-emerald-950 dark:hover:bg-emerald-300",
-    btnSecondary: "bg-white/70 text-emerald-800 ring-emerald-200/70 hover:bg-white dark:bg-white/15 dark:text-white dark:ring-white/20 dark:hover:bg-white/25",
+    btnPrimary:
+      "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-400 dark:text-emerald-950 dark:hover:bg-emerald-300",
+    btnSecondary:
+      "bg-white/70 text-emerald-800 ring-emerald-200/70 hover:bg-white dark:bg-white/15 dark:text-white dark:ring-white/20 dark:hover:bg-white/25",
   },
   atencao: {
     darkGradient: "dark:from-amber-900 dark:via-slate-950 dark:to-slate-950",
@@ -827,11 +805,14 @@ const STATUS_CONFIG: Record<Status, StatusCfg> = {
     metaBg: "bg-white/60 dark:bg-white/5",
     metaRing: "ring-amber-200/60 dark:ring-white/10",
     inputBg: "bg-white dark:bg-white/10",
-    inputRing: "ring-amber-300/60 focus-within:ring-amber-500/60 dark:ring-white/15 dark:focus-within:ring-amber-300/60",
+    inputRing:
+      "ring-amber-300/60 focus-within:ring-amber-500/60 dark:ring-white/15 dark:focus-within:ring-amber-300/60",
     statBg: "bg-white/70 dark:bg-white/8",
     statRing: "ring-amber-200/60 dark:ring-white/10",
-    btnPrimary: "bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-400 dark:text-amber-950 dark:hover:bg-amber-300",
-    btnSecondary: "bg-white/70 text-amber-800 ring-amber-200/70 hover:bg-white dark:bg-white/15 dark:text-white dark:ring-white/20 dark:hover:bg-white/25",
+    btnPrimary:
+      "bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-400 dark:text-amber-950 dark:hover:bg-amber-300",
+    btnSecondary:
+      "bg-white/70 text-amber-800 ring-amber-200/70 hover:bg-white dark:bg-white/15 dark:text-white dark:ring-white/20 dark:hover:bg-white/25",
   },
   risco: {
     darkGradient: "dark:from-rose-900 dark:via-slate-950 dark:to-slate-950",
@@ -856,11 +837,14 @@ const STATUS_CONFIG: Record<Status, StatusCfg> = {
     metaBg: "bg-white/60 dark:bg-white/5",
     metaRing: "ring-rose-200/60 dark:ring-white/10",
     inputBg: "bg-white dark:bg-white/10",
-    inputRing: "ring-rose-300/60 focus-within:ring-rose-500/60 dark:ring-white/15 dark:focus-within:ring-rose-300/60",
+    inputRing:
+      "ring-rose-300/60 focus-within:ring-rose-500/60 dark:ring-white/15 dark:focus-within:ring-rose-300/60",
     statBg: "bg-white/70 dark:bg-white/8",
     statRing: "ring-rose-200/60 dark:ring-white/10",
-    btnPrimary: "bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-400 dark:text-rose-950 dark:hover:bg-rose-300",
-    btnSecondary: "bg-white/70 text-rose-800 ring-rose-200/70 hover:bg-white dark:bg-white/15 dark:text-white dark:ring-white/20 dark:hover:bg-white/25",
+    btnPrimary:
+      "bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-400 dark:text-rose-950 dark:hover:bg-rose-300",
+    btnSecondary:
+      "bg-white/70 text-rose-800 ring-rose-200/70 hover:bg-white dark:bg-white/15 dark:text-white dark:ring-white/20 dark:hover:bg-white/25",
   },
   meta_excedida: {
     darkGradient: "dark:from-rose-900 dark:via-slate-950 dark:to-slate-950",
@@ -885,11 +869,14 @@ const STATUS_CONFIG: Record<Status, StatusCfg> = {
     metaBg: "bg-white/60 dark:bg-white/5",
     metaRing: "ring-rose-200/60 dark:ring-white/10",
     inputBg: "bg-white dark:bg-white/10",
-    inputRing: "ring-rose-300/60 focus-within:ring-rose-500/60 dark:ring-white/15 dark:focus-within:ring-rose-300/60",
+    inputRing:
+      "ring-rose-300/60 focus-within:ring-rose-500/60 dark:ring-white/15 dark:focus-within:ring-rose-300/60",
     statBg: "bg-white/70 dark:bg-white/8",
     statRing: "ring-rose-200/60 dark:ring-white/10",
-    btnPrimary: "bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-400 dark:text-rose-950 dark:hover:bg-rose-300",
-    btnSecondary: "bg-white/70 text-rose-800 ring-rose-200/70 hover:bg-white dark:bg-white/15 dark:text-white dark:ring-white/20 dark:hover:bg-white/25",
+    btnPrimary:
+      "bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-400 dark:text-rose-950 dark:hover:bg-rose-300",
+    btnSecondary:
+      "bg-white/70 text-rose-800 ring-rose-200/70 hover:bg-white dark:bg-white/15 dark:text-white dark:ring-white/20 dark:hover:bg-white/25",
   },
   sem_dados: {
     darkGradient: "dark:from-slate-800 dark:via-slate-900 dark:to-slate-950",
@@ -918,6 +905,7 @@ const STATUS_CONFIG: Record<Status, StatusCfg> = {
     statBg: "bg-white/70 dark:bg-white/8",
     statRing: "ring-slate-200 dark:ring-white/10",
     btnPrimary: "bg-primary text-primary-foreground hover:bg-primary/90",
-    btnSecondary: "bg-white text-slate-800 ring-slate-200 hover:bg-slate-50 dark:bg-white/15 dark:text-white dark:ring-white/20 dark:hover:bg-white/25",
+    btnSecondary:
+      "bg-white text-slate-800 ring-slate-200 hover:bg-slate-50 dark:bg-white/15 dark:text-white dark:ring-white/20 dark:hover:bg-white/25",
   },
 };

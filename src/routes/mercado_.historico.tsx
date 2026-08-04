@@ -1,7 +1,20 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Home, History, WalletCards, Check, CircleDashed, Receipt, ListPlus, ShoppingBag, Store, TrendingUp, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Home,
+  History,
+  WalletCards,
+  Check,
+  CircleDashed,
+  Receipt,
+  ListPlus,
+  ShoppingBag,
+  Store,
+  TrendingUp,
+  Trash2,
+} from "lucide-react";
 import { notify } from "@/lib/notify";
 import i18n from "@/i18n";
 import { MobileShell } from "@/components/MobileShell";
@@ -28,7 +41,6 @@ import {
   type MercadoCompraHistorico,
 } from "@/lib/mercado/listas-store";
 
-
 export const Route = createFileRoute("/mercado_/historico")({
   head: () => ({
     meta: [{ title: i18n.t("mercado:historico.metaTitle", { lng: i18n.language }) }],
@@ -42,7 +54,6 @@ function HistoricoPage() {
   const historico = useMercadoHistorico();
   const [pendingDelete, setPendingDelete] = useState<MercadoCompraHistorico | null>(null);
   const [deleting, setDeleting] = useState(false);
-
 
   function handleBack() {
     void navigate({ to: "/mercado", replace: true });
@@ -199,9 +210,18 @@ function HistoricoPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <ul className="mt-1 space-y-1.5 rounded-2xl border border-border/60 bg-card-elevated p-3 text-sm text-muted-foreground">
-            <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden /><span>{t("historyV2.deleteDialog.bulletGasto")}</span></li>
-            <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden /><span>{t("historyV2.deleteDialog.bulletComunitario")}</span></li>
-            <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden /><span>{t("historyV2.deleteDialog.bulletCartao")}</span></li>
+            <li className="flex gap-2">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
+              <span>{t("historyV2.deleteDialog.bulletGasto")}</span>
+            </li>
+            <li className="flex gap-2">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
+              <span>{t("historyV2.deleteDialog.bulletComunitario")}</span>
+            </li>
+            <li className="flex gap-2">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
+              <span>{t("historyV2.deleteDialog.bulletCartao")}</span>
+            </li>
           </ul>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>
@@ -236,7 +256,6 @@ function HistoricoPage() {
       </AlertDialog>
     </MobileShell>
   );
-
 }
 
 function HistoricoCard({
@@ -408,9 +427,7 @@ function SummaryTile({
         <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-soft text-brand ring-1 ring-border/60">
           {icon}
         </span>
-        <span className="text-[10px] font-semibold uppercase tracking-widest">
-          {label}
-        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-widest">{label}</span>
       </div>
       <p
         className={cn(
@@ -423,4 +440,3 @@ function SummaryTile({
     </div>
   );
 }
-

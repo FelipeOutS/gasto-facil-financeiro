@@ -72,7 +72,8 @@ export async function checkRateLimit(
       _user_agent: truncate(options.user_agent ?? null, 512) ?? undefined,
       _method: truncate(options.method ?? null, 16) ?? undefined,
     });
-    if (error) return { blocked: false, count: 0, limit, retryAfterSeconds: windowSeconds, dbError: true };
+    if (error)
+      return { blocked: false, count: 0, limit, retryAfterSeconds: windowSeconds, dbError: true };
     const row = Array.isArray(data) ? data[0] : data;
     const current = Number(row?.current_count ?? 0);
     const blocked = Boolean(row?.blocked);
@@ -103,8 +104,18 @@ export async function enforceUserRateLimit(params: {
   request?: Request;
   failMode?: "open" | "closed";
 }): Promise<Response | null> {
-
-  const preset = RATE_LIMIT_PRESETS[params.scope === "ai" ? "aiPerUser" : params.scope === "flyerOcr" ? "flyerOcrPerUser" : params.scope === "onlineImport" ? "onlineImportPerUser" : params.scope === "whatsappBoletoOcr" ? "whatsappBoletoOcrPerUser" : "importPerUser"];
+  const preset =
+    RATE_LIMIT_PRESETS[
+      params.scope === "ai"
+        ? "aiPerUser"
+        : params.scope === "flyerOcr"
+          ? "flyerOcrPerUser"
+          : params.scope === "onlineImport"
+            ? "onlineImportPerUser"
+            : params.scope === "whatsappBoletoOcr"
+              ? "whatsappBoletoOcrPerUser"
+              : "importPerUser"
+    ];
   const ip = params.request ? getClientIp(params.request) : null;
   const ua = params.request?.headers.get("user-agent") ?? null;
 
@@ -119,7 +130,8 @@ export async function enforceUserRateLimit(params: {
     windowSeconds: preset.windowSeconds,
   });
 
-  if (result.dbError && params.failMode === "closed") return userRateLimitedResponse(preset.windowSeconds);
+  if (result.dbError && params.failMode === "closed")
+    return userRateLimitedResponse(preset.windowSeconds);
   if (!result.blocked) return null;
   return userRateLimitedResponse(result.retryAfterSeconds);
 }

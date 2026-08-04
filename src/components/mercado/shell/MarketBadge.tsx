@@ -44,7 +44,10 @@ export function MarketBadge({ name, logoUrl, size = "sm", className }: MarketBad
             }}
           />
         ) : (
-          <Store className={cn("text-muted-foreground", isMd ? "h-3 w-3" : "h-2.5 w-2.5")} aria-hidden="true" />
+          <Store
+            className={cn("text-muted-foreground", isMd ? "h-3 w-3" : "h-2.5 w-2.5")}
+            aria-hidden="true"
+          />
         )}
       </span>
       <span className="max-w-[140px] truncate font-medium">{name}</span>

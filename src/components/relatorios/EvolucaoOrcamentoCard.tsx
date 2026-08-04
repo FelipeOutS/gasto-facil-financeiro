@@ -47,10 +47,8 @@ export function EvolucaoOrcamentoCard({ meses, labels }: Props) {
 
   // Aderência média (média das aderências individuais, capada para evitar outliers exagerados)
   const aderenciaMedia =
-    comOrcamento.reduce(
-      (acc, m) => acc + Math.min(300, (m.realizado / m.planejado) * 100),
-      0,
-    ) / comOrcamento.length;
+    comOrcamento.reduce((acc, m) => acc + Math.min(300, (m.realizado / m.planejado) * 100), 0) /
+    comOrcamento.length;
 
   // Melhor mês: aderência mais próxima de 100% sem estourar (realizado <= planejado)
   const dentros = comOrcamento.filter((m) => m.realizado <= m.planejado);
@@ -85,9 +83,7 @@ export function EvolucaoOrcamentoCard({ meses, labels }: Props) {
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold">{labels.title}</h3>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
-            {labels.description}
-          </p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">{labels.description}</p>
         </div>
       </header>
 
@@ -95,10 +91,7 @@ export function EvolucaoOrcamentoCard({ meses, labels }: Props) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={meses} margin={{ top: 5, right: 8, left: -18, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.3} />
-            <XAxis
-              dataKey="label"
-              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-            />
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
             <YAxis
               tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
               tickFormatter={(v) => formatBRLCompact(v)}
@@ -160,12 +153,8 @@ export function EvolucaoOrcamentoCard({ meses, labels }: Props) {
               <AlertTriangle className="mr-1 inline h-3 w-3 text-destructive" />
               {labels.biggestOverrun}
             </p>
-            <p className="mt-0.5 text-sm font-bold capitalize">
-              {maiorEstouro.label}
-            </p>
-            <p className="num text-[11px] text-destructive">
-              +{formatBRL(maiorEstouro.excesso)}
-            </p>
+            <p className="mt-0.5 text-sm font-bold capitalize">{maiorEstouro.label}</p>
+            <p className="num text-[11px] text-destructive">+{formatBRL(maiorEstouro.excesso)}</p>
           </div>
         )}
       </div>

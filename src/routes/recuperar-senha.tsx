@@ -13,7 +13,9 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/recuperar-senha")({
   head: () => {
     const t = i18n.getFixedT(null, "auth");
-    return { meta: [{ title: t("metaTitleRecover") }, { name: "robots", content: "noindex,follow" }] };
+    return {
+      meta: [{ title: t("metaTitleRecover") }, { name: "robots", content: "noindex,follow" }],
+    };
   },
   component: RecoverPage,
 });
@@ -58,8 +60,7 @@ function RecoverForm() {
     >
       {sent ? (
         <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground animate-rise">
-          {t("recover.sent")}{" "}
-          <strong className="text-foreground">{email}</strong>
+          {t("recover.sent")} <strong className="text-foreground">{email}</strong>
           {t("recover.sentTail")}
         </div>
       ) : (

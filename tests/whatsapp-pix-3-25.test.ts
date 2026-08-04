@@ -23,15 +23,9 @@ import "./_whatsapp-fake";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { resetState, state } from "./_whatsapp-fake";
 
-const { parsePagarPessoa } = await import(
-  "../src/server/whatsapp-pix-parser"
-);
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
-const { _resetShortContext } = await import(
-  "../src/server/whatsapp-short-context.server"
-);
+const { parsePagarPessoa } = await import("../src/server/whatsapp-pix-parser");
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
+const { _resetShortContext } = await import("../src/server/whatsapp-short-context.server");
 
 const telefone = "5511999998888";
 const userId = "u1";
@@ -98,16 +92,20 @@ describe("WA-PIX-3.25 :: prévia Pix Inline obrigatória", () => {
     resetState({
       favorecidos: [
         {
-          id: "40cb5557", user_id: userId, nome: "João Silva",
-          apelido: null, ativo: true,
-          pix_key: chaveReal, pix_key_type: "telefone",
+          id: "40cb5557",
+          user_id: userId,
+          nome: "João Silva",
+          apelido: null,
+          ativo: true,
+          pix_key: chaveReal,
+          pix_key_type: "telefone",
         },
       ],
     });
     _resetShortContext();
   });
 
-  it('abre prévia com máscara +55 11 9∗∗∗∗-8888 e NÃO cria gasto', async () => {
+  it("abre prévia com máscara +55 11 9∗∗∗∗-8888 e NÃO cria gasto", async () => {
     const r = await processarMensagemWhatsApp({
       telefone,
       texto: "paguei 50 pro João no Pix",
@@ -126,10 +124,14 @@ describe("WA-PIX-3.25 :: prévia Pix Inline obrigatória", () => {
 
   it('"sim" após a prévia cria EXATAMENTE 1 gasto vinculado ao favorecido', async () => {
     await processarMensagemWhatsApp({
-      telefone, texto: "paguei 50 pro João no Pix", external_id: "wa-pix-325-b1",
+      telefone,
+      texto: "paguei 50 pro João no Pix",
+      external_id: "wa-pix-325-b1",
     });
     const r = await processarMensagemWhatsApp({
-      telefone, texto: "sim", external_id: "wa-pix-325-b2",
+      telefone,
+      texto: "sim",
+      external_id: "wa-pix-325-b2",
     });
     expect(r.status).toBe("salva");
     const gastos = gastoInserts();
@@ -148,10 +150,14 @@ describe("WA-PIX-3.25 :: prévia Pix Inline obrigatória", () => {
 
   it('"cancelar" na prévia = ZERO gasto', async () => {
     await processarMensagemWhatsApp({
-      telefone, texto: "paguei 50 pro João no Pix", external_id: "wa-pix-325-c1",
+      telefone,
+      texto: "paguei 50 pro João no Pix",
+      external_id: "wa-pix-325-c1",
     });
     const r = await processarMensagemWhatsApp({
-      telefone, texto: "cancelar", external_id: "wa-pix-325-c2",
+      telefone,
+      texto: "cancelar",
+      external_id: "wa-pix-325-c2",
     });
     expect(r.status).toBe("cancelada");
     expect(gastoInserts()).toHaveLength(0);
@@ -159,14 +165,20 @@ describe("WA-PIX-3.25 :: prévia Pix Inline obrigatória", () => {
 
   it('duplicidade de "sim" (mesmo external_id) → 1 único gasto', async () => {
     await processarMensagemWhatsApp({
-      telefone, texto: "paguei 50 pro João no Pix", external_id: "wa-pix-325-d1",
+      telefone,
+      texto: "paguei 50 pro João no Pix",
+      external_id: "wa-pix-325-d1",
     });
     const [a, b] = await Promise.all([
       processarMensagemWhatsApp({
-        telefone, texto: "sim", external_id: "wa-pix-325-d2",
+        telefone,
+        texto: "sim",
+        external_id: "wa-pix-325-d2",
       }),
       processarMensagemWhatsApp({
-        telefone, texto: "sim", external_id: "wa-pix-325-d2",
+        telefone,
+        texto: "sim",
+        external_id: "wa-pix-325-d2",
       }),
     ]);
     expect(gastoInserts()).toHaveLength(1);
@@ -229,8 +241,24 @@ describe("WA-PIX-3.25 :: ambiguidade não abre prévia Pix", () => {
   it("2 favorecidos com o mesmo nome → NÃO abre prévia com chave errada", async () => {
     resetState({
       favorecidos: [
-        { id: "a", user_id: userId, nome: "João Silva", apelido: null, ativo: true, pix_key: "aaa@x.com", pix_key_type: "email" },
-        { id: "b", user_id: userId, nome: "João Silveira", apelido: null, ativo: true, pix_key: "bbb@x.com", pix_key_type: "email" },
+        {
+          id: "a",
+          user_id: userId,
+          nome: "João Silva",
+          apelido: null,
+          ativo: true,
+          pix_key: "aaa@x.com",
+          pix_key_type: "email",
+        },
+        {
+          id: "b",
+          user_id: userId,
+          nome: "João Silveira",
+          apelido: null,
+          ativo: true,
+          pix_key: "bbb@x.com",
+          pix_key_type: "email",
+        },
       ],
     });
     _resetShortContext();

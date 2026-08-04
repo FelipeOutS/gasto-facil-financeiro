@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getUserFromRequest, unauthorizedResponse, ensurePremiumFeatureAccess } from "@/server/api-auth";
+import {
+  getUserFromRequest,
+  unauthorizedResponse,
+  ensurePremiumFeatureAccess,
+} from "@/server/api-auth";
 import { enforceUserRateLimit } from "@/server/rate-limit.server";
 import { extractText, getDocumentProxy } from "unpdf";
 
@@ -214,8 +218,7 @@ async function callGeminiWithPdf(apiKey: string, pdfDataUri: string) {
 function normalizeContas(raw: ContaBruta[]) {
   return raw
     .map((c) => {
-      const valor =
-        typeof c.valor === "number" && c.valor > 0 ? Number(c.valor.toFixed(2)) : null;
+      const valor = typeof c.valor === "number" && c.valor > 0 ? Number(c.valor.toFixed(2)) : null;
       const venc =
         typeof c.dataVencimento === "string" && /^\d{4}-\d{2}-\d{2}$/.test(c.dataVencimento)
           ? c.dataVencimento
@@ -225,14 +228,12 @@ function normalizeContas(raw: ContaBruta[]) {
           ? c.formaPagamento
           : null;
       const cat =
-        typeof c.categoriaSugerida === "string" &&
-        CATEGORIAS_VALIDAS.includes(c.categoriaSugerida)
+        typeof c.categoriaSugerida === "string" && CATEGORIAS_VALIDAS.includes(c.categoriaSugerida)
           ? c.categoriaSugerida
           : null;
       return {
         nome: typeof c.nome === "string" ? c.nome.slice(0, 80) : null,
-        beneficiario:
-          typeof c.beneficiario === "string" ? c.beneficiario.slice(0, 120) : null,
+        beneficiario: typeof c.beneficiario === "string" ? c.beneficiario.slice(0, 120) : null,
         valor,
         dataVencimento: venc,
         formaPagamento: forma,
@@ -248,8 +249,7 @@ function normalizeContas(raw: ContaBruta[]) {
           typeof c.chavePix === "string" && c.chavePix.trim()
             ? c.chavePix.trim().slice(0, 120)
             : null,
-        bancoEmissor:
-          typeof c.bancoEmissor === "string" ? c.bancoEmissor.slice(0, 80) : null,
+        bancoEmissor: typeof c.bancoEmissor === "string" ? c.bancoEmissor.slice(0, 80) : null,
         categoriaSugerida: cat,
         observacao: typeof c.observacao === "string" ? c.observacao.slice(0, 300) : null,
         confianca:
@@ -258,9 +258,7 @@ function normalizeContas(raw: ContaBruta[]) {
             : "baixa",
       };
     })
-    .filter(
-      (c) => c.valor !== null || c.codigoBoleto || c.codigoPix || c.nome || c.beneficiario,
-    );
+    .filter((c) => c.valor !== null || c.codigoBoleto || c.codigoPix || c.nome || c.beneficiario);
 }
 
 export const Route = createFileRoute("/api/import-conta-pdf")({
@@ -271,25 +269,24 @@ export const Route = createFileRoute("/api/import-conta-pdf")({
         if (!__user) return unauthorizedResponse();
         const __gate = await ensurePremiumFeatureAccess(__user, "importar_conta");
         if (__gate) return __gate;
-        const __rl = await enforceUserRateLimit({ scope: "import", userId: __user.id, route: "import-conta-pdf", request });
+        const __rl = await enforceUserRateLimit({
+          scope: "import",
+          userId: __user.id,
+          route: "import-conta-pdf",
+          request,
+        });
         if (__rl) return __rl;
         try {
           const apiKey = process.env.LOVABLE_API_KEY;
           if (!apiKey) {
-            return Response.json(
-              { error: "LOVABLE_API_KEY não configurada." },
-              { status: 500 },
-            );
+            return Response.json({ error: "LOVABLE_API_KEY não configurada." }, { status: 500 });
           }
 
           const body = (await request.json()) as { pdf?: string };
           const pdf = typeof body?.pdf === "string" ? body.pdf : "";
           const bytes = decodeBase64Pdf(pdf);
           if (!bytes || bytes.length === 0) {
-            return Response.json(
-              { error: "Envie um arquivo PDF válido." },
-              { status: 400 },
-            );
+            return Response.json({ error: "Envie um arquivo PDF válido." }, { status: 400 });
           }
           if (bytes.length > 10 * 1024 * 1024) {
             return Response.json(
@@ -305,9 +302,7 @@ export const Route = createFileRoute("/api/import-conta-pdf")({
             totalPages = docProxy.numPages;
             const result = await extractText(docProxy, { mergePages: true });
             extractedText =
-              typeof result.text === "string"
-                ? result.text
-                : (result.text as string[]).join("\n");
+              typeof result.text === "string" ? result.text : (result.text as string[]).join("\n");
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             if (/password/i.test(msg)) {
@@ -347,10 +342,7 @@ export const Route = createFileRoute("/api/import-conta-pdf")({
                 { status: 402 },
               );
             }
-            return Response.json(
-              { error: "Não foi possível ler este PDF." },
-              { status: 502 },
-            );
+            return Response.json({ error: "Não foi possível ler este PDF." }, { status: 502 });
           }
 
           const json = await aiResp.json();
@@ -366,10 +358,7 @@ export const Route = createFileRoute("/api/import-conta-pdf")({
           try {
             parsed = JSON.parse(argsStr);
           } catch {
-            return Response.json(
-              { error: "Resposta inválida da IA." },
-              { status: 502 },
-            );
+            return Response.json({ error: "Resposta inválida da IA." }, { status: 502 });
           }
           const itens = normalizeContas(Array.isArray(parsed.itens) ? parsed.itens : []);
 
@@ -377,8 +366,7 @@ export const Route = createFileRoute("/api/import-conta-pdf")({
             itens,
             paginas: totalPages,
             modo: hasUsefulText ? "texto" : "ocr",
-            observacao:
-              typeof parsed.observacao === "string" ? parsed.observacao : null,
+            observacao: typeof parsed.observacao === "string" ? parsed.observacao : null,
           });
         } catch (err) {
           console.error("[import-conta-pdf] erro", err);

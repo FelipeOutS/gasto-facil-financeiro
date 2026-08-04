@@ -8,11 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getCardTheme } from "@/lib/card-theme";
 import { formatBRL, parseBRLInput } from "@/lib/format";
-import {
-  addCartao,
-  updateCartao,
-  type NovoCartaoInput,
-} from "@/lib/store";
+import { addCartao, updateCartao, type NovoCartaoInput } from "@/lib/store";
 import { requireOnline } from "@/lib/use-online-status";
 import type { Cartao } from "@/lib/types";
 import { BANCOS_CARTAO_PADRAO } from "@/lib/types";
@@ -139,9 +135,7 @@ export function CartaoForm({
               </div>
 
               <div>
-                <Label className="text-xs text-muted-foreground">
-                  {t("form.bankLabel")}
-                </Label>
+                <Label className="text-xs text-muted-foreground">{t("form.bankLabel")}</Label>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {BANCOS_CARTAO_PADRAO.map((b) => {
                     const active = banco === b.nome;
@@ -269,9 +263,7 @@ export function CartaoForm({
                         <p className="text-[9px] uppercase tracking-widest text-white/70">
                           {t("form.previewLimit")}
                         </p>
-                        <p className="num text-sm font-semibold">
-                          {formatBRL(limite || 0)}
-                        </p>
+                        <p className="num text-sm font-semibold">{formatBRL(limite || 0)}</p>
                       </div>
                       <span className="text-[10px] uppercase tracking-widest text-white/70">
                         {t("form.previewType")}
@@ -286,9 +278,7 @@ export function CartaoForm({
               <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                 {t("form.appearanceTitle")}
               </h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {t("form.appearanceHint")}
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("form.appearanceHint")}</p>
               <div className="mt-3 flex flex-wrap gap-2.5">
                 {CORES_CARTAO.map((c) => {
                   const active = cor === c;
@@ -338,12 +328,7 @@ export function CartaoForm({
           footerClassName,
         )}
       >
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          className="card-press"
-        >
+        <Button type="button" variant="outline" onClick={onCancel} className="card-press">
           {t("form.cancel")}
         </Button>
         <Button

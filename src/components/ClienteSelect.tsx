@@ -10,14 +10,12 @@ import {
 import type { Cliente } from "@/lib/clientes";
 
 /** Nome de exibição priorizado: apelido → nome fantasia → razão social → nome. */
-export function nomeExibicaoCliente(c: Pick<Cliente, "apelido" | "nome_fantasia" | "razao_social" | "nome"> | null | undefined): string {
+export function nomeExibicaoCliente(
+  c: Pick<Cliente, "apelido" | "nome_fantasia" | "razao_social" | "nome"> | null | undefined,
+): string {
   if (!c) return "";
   return (
-    c.apelido?.trim() ||
-    c.nome_fantasia?.trim() ||
-    c.razao_social?.trim() ||
-    c.nome?.trim() ||
-    ""
+    c.apelido?.trim() || c.nome_fantasia?.trim() || c.razao_social?.trim() || c.nome?.trim() || ""
   );
 }
 
@@ -51,7 +49,10 @@ export function ClienteSelect({
       {semClientes ? (
         <div className="mt-1 rounded-lg border border-dashed border-border bg-card-elevated px-3 py-2 text-xs text-muted-foreground">
           Você ainda não tem clientes cadastrados.{" "}
-          <Link to="/clientes" className="font-medium text-primary underline-offset-2 hover:underline">
+          <Link
+            to="/clientes"
+            className="font-medium text-primary underline-offset-2 hover:underline"
+          >
             Cadastrar cliente
           </Link>
         </div>

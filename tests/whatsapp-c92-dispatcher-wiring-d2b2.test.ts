@@ -74,7 +74,7 @@ function baseDeps(overrides: Partial<RunOutboundDeps> = {}): RunOutboundDeps {
     loadTemplate: async () => tmpl(),
     phoneNumberId: "1234567890",
     execute: async () =>
-      ({ kind: "accepted", attemptId: "a-1", providerMessageId: "wamid.PMID" } as ExecuteResult),
+      ({ kind: "accepted", attemptId: "a-1", providerMessageId: "wamid.PMID" }) as ExecuteResult,
     logger: () => {},
     ...overrides,
   };
@@ -239,7 +239,7 @@ describe("runOutboundForNotification — executed", () => {
     for (const k of ["state_changed", "active_attempt_exists", "quarantined"] as const) {
       const out = await runOutboundForNotification(baseNotification(), TOKEN, {
         ...baseDeps(),
-        execute: async () => ({ kind: k } as ExecuteResult),
+        execute: async () => ({ kind: k }) as ExecuteResult,
       });
       expect(out.kind).toBe("executed");
       if (out.kind === "executed") expect(out.result.kind).toBe(k);

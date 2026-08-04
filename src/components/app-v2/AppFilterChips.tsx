@@ -61,9 +61,7 @@ export function AppFilterChips({
                 : "border-border/60 bg-card text-foreground hover:bg-card-elevated",
             )}
             style={
-              isSelected
-                ? { backgroundColor: color, color: "oklch(0.18 0.005 260)" }
-                : undefined
+              isSelected ? { backgroundColor: color, color: "oklch(0.18 0.005 260)" } : undefined
             }
           >
             {item.icon && (

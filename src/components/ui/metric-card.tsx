@@ -64,26 +64,17 @@ export function MetricCard({
           {label}
         </span>
         {icon && (
-          <span
-            className={cn(
-              "grid h-8 w-8 place-items-center rounded-lg",
-              toneIcon[tone],
-            )}
-          >
+          <span className={cn("grid h-8 w-8 place-items-center rounded-lg", toneIcon[tone])}>
             {icon}
           </span>
         )}
       </div>
-      <div className="text-xl font-semibold tracking-tight sm:text-2xl">
-        {value}
-      </div>
+      <div className="text-xl font-semibold tracking-tight sm:text-2xl">{value}</div>
       {(hint || trend) && (
         <div className="flex items-center justify-between gap-2 text-xs">
           {hint && <span className="text-muted-foreground">{hint}</span>}
           {trend && (
-            <span className={cn("font-medium", trendColors[trend.direction])}>
-              {trend.label}
-            </span>
+            <span className={cn("font-medium", trendColors[trend.direction])}>{trend.label}</span>
           )}
         </div>
       )}

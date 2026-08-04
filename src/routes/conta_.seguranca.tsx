@@ -16,10 +16,7 @@ export const Route = createFileRoute("/conta_/seguranca")({
   head: () => {
     const t = i18n.getFixedT(null, "account");
     return {
-      meta: [
-        { title: t("security.metaTitle") },
-        { name: "robots", content: "noindex,follow" },
-      ],
+      meta: [{ title: t("security.metaTitle") }, { name: "robots", content: "noindex,follow" }],
     };
   },
   component: SegurancaPage,
@@ -90,9 +87,7 @@ function SegurancaPage() {
           </span>
           <div className="min-w-0">
             <p className="text-sm font-semibold">{t("security.changePassword")}</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("security.currentNotShown")}
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("security.currentNotShown")}</p>
           </div>
         </div>
       </section>
@@ -124,9 +119,7 @@ function SegurancaPage() {
             <p className="text-xs text-destructive">{t("security.mismatch")}</p>
           )}
         </div>
-        {disabledReason && (
-          <p className="text-xs text-muted-foreground">{disabledReason}</p>
-        )}
+        {disabledReason && <p className="text-xs text-muted-foreground">{disabledReason}</p>}
         <Button
           type="submit"
           size="lg"

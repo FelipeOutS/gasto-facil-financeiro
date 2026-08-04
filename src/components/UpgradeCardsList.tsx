@@ -1,6 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Lock, Sparkles, ArrowRight, Target, Repeat, ShoppingCart, Receipt, FileUp, type LucideIcon } from "lucide-react";
+import {
+  Lock,
+  Sparkles,
+  ArrowRight,
+  Target,
+  Repeat,
+  ShoppingCart,
+  Receipt,
+  FileUp,
+  type LucideIcon,
+} from "lucide-react";
 import { usePlan } from "@/lib/use-plan";
 import { minPlanFor, PLAN_LABEL, type FeatureKey } from "@/lib/plans";
 import { NAV_GROUPS, getLockedNavItems } from "@/lib/nav-groups";
@@ -21,9 +31,19 @@ const SUBFEATURE_TEASERS: SubFeatureTeaser[] = [
   // depois mercado avançado, cupom, e por último automações utilitárias.
   { feature: "importacoes", to: "/gastos", icon: FileUp, labelKey: "importacoes" },
   { feature: "mercado_avancado", to: "/mercado", icon: ShoppingCart, labelKey: "mercadoAvancado" },
-  { feature: "mercado_importar_cupom", to: "/mercado", icon: Receipt, labelKey: "mercadoImportarCupom" },
+  {
+    feature: "mercado_importar_cupom",
+    to: "/mercado",
+    icon: Receipt,
+    labelKey: "mercadoImportarCupom",
+  },
   { feature: "metas_visuais", to: "/metas", icon: Target, labelKey: "metasVisuais" },
-  { feature: "assinaturas_recorrencias", to: "/assinaturas", icon: Repeat, labelKey: "assinaturasAuto" },
+  {
+    feature: "assinaturas_recorrencias",
+    to: "/assinaturas",
+    icon: Repeat,
+    labelKey: "assinaturasAuto",
+  },
 ];
 
 /**
@@ -70,25 +90,18 @@ export function UpgradeCardsList({
   const locked = [...navLocked, ...subLocked].slice(0, max);
   if (locked.length === 0) return null;
 
-
   return (
     <section
       className={
-        "mt-6 rounded-2xl border border-border/60 bg-card/50 p-4 shadow-card " +
-        (className ?? "")
+        "mt-6 rounded-2xl border border-border/60 bg-card/50 p-4 shadow-card " + (className ?? "")
       }
     >
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-brand" />
-          <h3 className="text-sm font-semibold">
-            {title ?? t("upgradeCards.title")}
-          </h3>
+          <h3 className="text-sm font-semibold">{title ?? t("upgradeCards.title")}</h3>
         </div>
-        <Link
-          to="/meu-plano"
-          className="text-[11px] font-semibold text-brand hover:underline"
-        >
+        <Link to="/meu-plano" className="text-[11px] font-semibold text-brand hover:underline">
           {t("upgradeCards.seeAll")}
         </Link>
       </div>
@@ -108,9 +121,7 @@ export function UpgradeCardsList({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5 text-sm font-semibold leading-tight">
-                    <span className="truncate">
-                      {item.label}
-                    </span>
+                    <span className="truncate">{item.label}</span>
                     <Lock className="h-3 w-3 shrink-0 text-muted-foreground/70" />
                   </span>
                   {min && (

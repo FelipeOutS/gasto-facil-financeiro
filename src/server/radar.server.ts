@@ -82,11 +82,9 @@ const SUPPORTED = [
 
 type SupportedKey = (typeof SUPPORTED)[number]["key"];
 
-const AWESOMEAPI_URL =
-  "https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL";
+const AWESOMEAPI_URL = "https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL";
 
-const PTAX_BASE_URL =
-  "https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata";
+const PTAX_BASE_URL = "https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata";
 
 const CURRENCY_KEYS = ["USD_BRL", "EUR_BRL"] as const;
 
@@ -150,9 +148,10 @@ function parseAwesomeDate(d: string | undefined): string | null {
 }
 
 function ptaxDate(d: Date): string {
-  return `${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(
-    d.getUTCDate(),
-  ).padStart(2, "0")}-${d.getUTCFullYear()}`;
+  return `${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(
+    2,
+    "0",
+  )}-${d.getUTCFullYear()}`;
 }
 
 function pctChange(current: number, previous: number | null): number | null {
@@ -181,9 +180,7 @@ async function fetchAwesomeApi(): Promise<Record<string, AwesomeApiQuote>> {
   console.info(`[radar] AwesomeAPI corpo: ${body.slice(0, 1500)}`);
   if (!res.ok) throw new Error(`AwesomeAPI respondeu ${res.status}`);
   const data = JSON.parse(body) as Record<string, AwesomeApiQuote>;
-  console.info(
-    `[radar] AwesomeAPI chaves recebidas: ${Object.keys(data).join(",")}`,
-  );
+  console.info(`[radar] AwesomeAPI chaves recebidas: ${Object.keys(data).join(",")}`);
   return data;
 }
 
@@ -194,7 +191,9 @@ async function fetchPtaxDay(currency: "USD" | "EUR", date: Date): Promise<PtaxRo
     const res = await fetchWithTimeout(url);
     const body = await res.text();
     if (!res.ok) {
-      console.error(`[radar] PTAX ${currency} ${dataCotacao} respondeu ${res.status}: ${body.slice(0, 800)}`);
+      console.error(
+        `[radar] PTAX ${currency} ${dataCotacao} respondeu ${res.status}: ${body.slice(0, 800)}`,
+      );
       return [];
     }
     const parsed = JSON.parse(body) as { value?: PtaxRow[] };
@@ -284,9 +283,7 @@ async function rowFromPtax(
   const previousCurrent = previousClosing ?? previous[previous.length - 1];
   const value = num(current.cotacaoVenda);
   if (value === null) return null;
-  const dayValues = latest
-    .map((r) => num(r.cotacaoVenda))
-    .filter((v): v is number => v !== null);
+  const dayValues = latest.map((r) => num(r.cotacaoVenda)).filter((v): v is number => v !== null);
 
   return {
     indicator_key: cfg.key,
@@ -322,8 +319,7 @@ function rowFromSgs(
   if (value === null) return null;
   const prevValue = prev ? num(prev.valor) : null;
   // Variação em pontos percentuais entre a leitura anterior e a atual.
-  const variation =
-    prevValue !== null && Number.isFinite(prevValue) ? value - prevValue : null;
+  const variation = prevValue !== null && Number.isFinite(prevValue) ? value - prevValue : null;
   const referenceIso = parseBRDate(last.data);
   return {
     indicator_key: cfg.key,
@@ -374,8 +370,7 @@ function dtoFromCache(row: {
     valueBRL: isCurrency ? value : undefined,
     currency: row.currency ?? null,
     source: row.source ?? "",
-    variationPercent:
-      row.variation_percent === null ? null : Number(row.variation_percent),
+    variationPercent: row.variation_percent === null ? null : Number(row.variation_percent),
     high: row.high === null ? null : Number(row.high),
     low: row.low === null ? null : Number(row.low),
     fetchedAt: row.fetched_at,
@@ -439,7 +434,9 @@ async function readCache(): Promise<IndicatorDTO[]> {
     return [];
   }
   if (!data) return [];
-  console.info(`[radar] cache encontrado: ${data.map((r) => r.indicator_key).join(",") || "vazio"}`);
+  console.info(
+    `[radar] cache encontrado: ${data.map((r) => r.indicator_key).join(",") || "vazio"}`,
+  );
   return data.map((r) => dtoFromCache(r as Parameters<typeof dtoFromCache>[0]));
 }
 
@@ -453,7 +450,9 @@ function isFresh(key: SupportedKey, fetchedAt: string): boolean {
 
 async function persist(rows: PersistRow[]): Promise<void> {
   if (rows.length === 0) return;
-  console.info(`[radar] gravando cache: ${rows.map((r) => `${r.indicator_key}=${r.value}`).join(", ")}`);
+  console.info(
+    `[radar] gravando cache: ${rows.map((r) => `${r.indicator_key}=${r.value}`).join(", ")}`,
+  );
   const { error } = await supabaseAdmin
     .from("economic_indicators")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -483,8 +482,7 @@ async function refreshStale(opts: {
     });
   const needsSelic =
     opts.force || !map.get("SELIC") || !isFresh("SELIC", map.get("SELIC")!.fetchedAt);
-  const needsIpca =
-    opts.force || !map.get("IPCA") || !isFresh("IPCA", map.get("IPCA")!.fetchedAt);
+  const needsIpca = opts.force || !map.get("IPCA") || !isFresh("IPCA", map.get("IPCA")!.fetchedAt);
 
   const tasks: Array<Promise<PersistRow[]>> = [];
 
@@ -501,12 +499,18 @@ async function refreshStale(opts: {
             const row = rowFromAwesome(cfg, quotes[awesomeKey], now);
             if (row) out.push(row);
           }
-          console.info(`[radar] AwesomeAPI parseada: ${out.map((r) => `${r.indicator_key}=${r.value}`).join(", ")}`);
+          console.info(
+            `[radar] AwesomeAPI parseada: ${out.map((r) => `${r.indicator_key}=${r.value}`).join(", ")}`,
+          );
           if (out.length === CURRENCY_KEYS.length) return out;
           console.error("[radar] AwesomeAPI retornou payload incompleto; tentando fallback PTAX");
           const fallbackRows = await Promise.all(
             CURRENCY_KEYS.map((k) =>
-              rowFromPtax(SUPPORTED.find((s) => s.key === k)!, k === "USD_BRL" ? "USD" : "EUR", now),
+              rowFromPtax(
+                SUPPORTED.find((s) => s.key === k)!,
+                k === "USD_BRL" ? "USD" : "EUR",
+                now,
+              ),
             ),
           );
           return fallbackRows.filter((r): r is PersistRow => r !== null);
@@ -515,11 +519,17 @@ async function refreshStale(opts: {
           console.info("[radar] tentando fallback PTAX para USD/EUR");
           const fallbackRows = await Promise.all(
             CURRENCY_KEYS.map((k) =>
-              rowFromPtax(SUPPORTED.find((s) => s.key === k)!, k === "USD_BRL" ? "USD" : "EUR", now),
+              rowFromPtax(
+                SUPPORTED.find((s) => s.key === k)!,
+                k === "USD_BRL" ? "USD" : "EUR",
+                now,
+              ),
             ),
           );
           const valid = fallbackRows.filter((r): r is PersistRow => r !== null);
-          console.info(`[radar] fallback PTAX parseado: ${valid.map((r) => `${r.indicator_key}=${r.value}`).join(", ") || "sem dados"}`);
+          console.info(
+            `[radar] fallback PTAX parseado: ${valid.map((r) => `${r.indicator_key}=${r.value}`).join(", ") || "sem dados"}`,
+          );
           return valid;
         }
       })(),
@@ -590,19 +600,19 @@ function radarResult(
   fetchedAt: string,
   message?: string,
 ): RadarResult {
-  const currencies = indicators.filter((i) => CURRENCY_KEYS.includes(i.key as (typeof CURRENCY_KEYS)[number]));
+  const currencies = indicators.filter((i) =>
+    CURRENCY_KEYS.includes(i.key as (typeof CURRENCY_KEYS)[number]),
+  );
   const updatedAt = fetchedAt;
   console.info(
-    `[radar] dados finais enviados: status=${status}; moedas=${currencies
-      .map((i) => `${i.key}=${i.valueBRL ?? i.value}`)
-      .join(",") || "sem moedas"}; updatedAt=${updatedAt}`,
+    `[radar] dados finais enviados: status=${status}; moedas=${
+      currencies.map((i) => `${i.key}=${i.valueBRL ?? i.value}`).join(",") || "sem moedas"
+    }; updatedAt=${updatedAt}`,
   );
   return { indicators, currencies, status, fetchedAt, updatedAt, ...(message ? { message } : {}) };
 }
 
-export async function getRadarIndicators(opts?: {
-  force?: boolean;
-}): Promise<RadarResult> {
+export async function getRadarIndicators(opts?: { force?: boolean }): Promise<RadarResult> {
   console.info(`[radar] início da chamada; force=${!!opts?.force}`);
   const cached = await readCache();
 
@@ -627,9 +637,7 @@ export async function getRadarIndicators(opts?: {
     force: !!opts?.force,
   });
 
-  const indicators = SUPPORTED.map((s) => map.get(s.key)).filter(
-    (x): x is IndicatorDTO => !!x,
-  );
+  const indicators = SUPPORTED.map((s) => map.get(s.key)).filter((x): x is IndicatorDTO => !!x);
 
   if (indicators.length === 0) {
     return radarResult(
@@ -647,11 +655,11 @@ export async function getRadarIndicators(opts?: {
 
   if (anyFailure) {
     const staleIndicators: IndicatorDTO[] = indicators.map((c) =>
-        // Marca como desatualizado apenas os que não foram atualizados nesta rodada.
-        c.fetchedAt === fetchedAt && c.status === "atualizado"
-          ? c
-          : { ...c, status: "desatualizado" as IndicatorStatus },
-      );
+      // Marca como desatualizado apenas os que não foram atualizados nesta rodada.
+      c.fetchedAt === fetchedAt && c.status === "atualizado"
+        ? c
+        : { ...c, status: "desatualizado" as IndicatorStatus },
+    );
     return radarResult(
       staleIndicators,
       "desatualizado",
@@ -662,9 +670,7 @@ export async function getRadarIndicators(opts?: {
 
   return radarResult(
     indicators,
-    indicators.every((i) => i.status === "atualizado")
-      ? "atualizado"
-      : "cache",
+    indicators.every((i) => i.status === "atualizado") ? "atualizado" : "cache",
     fetchedAt,
   );
 }

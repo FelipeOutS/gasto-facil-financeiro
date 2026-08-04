@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getUserFromRequest, unauthorizedResponse, ensurePremiumFeatureAccess } from "@/server/api-auth";
+import {
+  getUserFromRequest,
+  unauthorizedResponse,
+  ensurePremiumFeatureAccess,
+} from "@/server/api-auth";
 import { enforceUserRateLimit } from "@/server/rate-limit.server";
 import { extractText, getDocumentProxy } from "unpdf";
 
@@ -151,8 +155,7 @@ const TOOL_SCHEMA = {
   type: "function" as const,
   function: {
     name: "registrar_investimentos",
-    description:
-      "Estrutura posições e movimentações de investimentos encontradas no documento.",
+    description: "Estrutura posições e movimentações de investimentos encontradas no documento.",
     parameters: {
       type: "object",
       properties: {
@@ -375,7 +378,12 @@ export const Route = createFileRoute("/api/import-investimentos")({
         if (!__user) return unauthorizedResponse();
         const __gate = await ensurePremiumFeatureAccess(__user, "investimentos");
         if (__gate) return __gate;
-        const __rl = await enforceUserRateLimit({ scope: "import", userId: __user.id, route: "import-investimentos", request });
+        const __rl = await enforceUserRateLimit({
+          scope: "import",
+          userId: __user.id,
+          route: "import-investimentos",
+          request,
+        });
         if (__rl) return __rl;
         try {
           const apiKey = process.env.LOVABLE_API_KEY;
@@ -417,10 +425,7 @@ export const Route = createFileRoute("/api/import-investimentos")({
           if (typeof body.pdf === "string" && body.pdf) {
             const bytes = decodeBase64Pdf(body.pdf);
             if (!bytes || bytes.length === 0) {
-              return Response.json(
-                { error: "Envie um arquivo PDF válido." },
-                { status: 400 },
-              );
+              return Response.json({ error: "Envie um arquivo PDF válido." }, { status: 400 });
             }
             if (bytes.length > 12 * 1024 * 1024) {
               return Response.json(
@@ -459,9 +464,7 @@ export const Route = createFileRoute("/api/import-investimentos")({
             if (!hasUsefulText) {
               const aiResp = await callAIWithPdf(
                 apiKey,
-                body.pdf.startsWith("data:")
-                  ? body.pdf
-                  : `data:application/pdf;base64,${body.pdf}`,
+                body.pdf.startsWith("data:") ? body.pdf : `data:application/pdf;base64,${body.pdf}`,
                 origem,
               );
               return await handleAiResponse(aiResp, "ocr", totalPages, true);
@@ -508,10 +511,7 @@ async function handleAiResponse(
         { status: 402 },
       );
     }
-    return Response.json(
-      { error: "Não foi possível ler este arquivo." },
-      { status: 502 },
-    );
+    return Response.json({ error: "Não foi possível ler este arquivo." }, { status: 502 });
   }
 
   const json = await aiResp.json();
@@ -550,8 +550,8 @@ async function handleAiResponse(
   const posicoesRaw = Array.isArray(parsed.posicoes)
     ? parsed.posicoes
     : Array.isArray(parsed.itens)
-    ? parsed.itens
-    : [];
+      ? parsed.itens
+      : [];
   const movsRaw = Array.isArray(parsed.movimentacoes) ? parsed.movimentacoes : [];
   const posicoes = normalizePosicoes(posicoesRaw);
   const movimentacoes = normalizeMovimentacoes(movsRaw);

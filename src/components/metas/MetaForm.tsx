@@ -39,8 +39,16 @@ import { formatBRL, parseBRLInput } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const META_COLORS = [
-  "#34d399", "#60a5fa", "#a78bfa", "#f472b6", "#fb923c",
-  "#fde047", "#22d3ee", "#f87171", "#e879f9", "#94a3b8",
+  "#34d399",
+  "#60a5fa",
+  "#a78bfa",
+  "#f472b6",
+  "#fb923c",
+  "#fde047",
+  "#22d3ee",
+  "#f87171",
+  "#e879f9",
+  "#94a3b8",
 ];
 
 export type MetaFormMode =
@@ -105,7 +113,9 @@ export function MetaForm({
     }
     setUploading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         toast.error(t("upload.errAuth"));
         return;
@@ -268,7 +278,9 @@ export function MetaForm({
                 placeholder="0,00"
                 className="num mt-1 h-11 bg-card-elevated"
               />
-              <p className="mt-1 text-[11px] text-muted-foreground">{t("dialog.goalValueHelper")}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {t("dialog.goalValueHelper")}
+              </p>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">
@@ -281,7 +293,9 @@ export function MetaForm({
                 placeholder="0,00"
                 className="num mt-1 h-11 bg-card-elevated"
               />
-              <p className="mt-1 text-[11px] text-muted-foreground">{t("dialog.savedValueHelper")}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {t("dialog.savedValueHelper")}
+              </p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -304,11 +318,15 @@ export function MetaForm({
                 <SelectContent>
                   <SelectItem value="nenhum">{t("dialog.none")}</SelectItem>
                   {bancos.map((b) => (
-                    <SelectItem key={b.id} value={b.id}>{b.nome}</SelectItem>
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.nome}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <p className="mt-1 text-[11px] text-muted-foreground">{t("dialog.linkedBankHelper")}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {t("dialog.linkedBankHelper")}
+              </p>
             </div>
           </div>
           <div>
@@ -319,7 +337,9 @@ export function MetaForm({
               placeholder={t("dialog.descriptionPlaceholder")}
               className="mt-1 min-h-[60px] bg-card-elevated"
             />
-            <p className="mt-1 text-[11px] text-muted-foreground">{t("dialog.descriptionHelper")}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {t("dialog.descriptionHelper")}
+            </p>
           </div>
           <div>
             <div className="flex items-center justify-between">
@@ -431,7 +451,6 @@ export function MetaForm({
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">{t("dialog.color")}</Label>
-
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">{t("dialog.color")}</Label>
@@ -476,9 +495,7 @@ export function MetaForm({
               autoFocus
             />
             {isAdd && (
-              <p className="mt-1.5 text-[11px] text-muted-foreground">
-                {t("dialog.addValueHint")}
-              </p>
+              <p className="mt-1.5 text-[11px] text-muted-foreground">{t("dialog.addValueHint")}</p>
             )}
           </div>
         </div>
@@ -508,10 +525,7 @@ export function MetaForm({
           </Button>
         )}
         {isAdd && (
-          <Button
-            onClick={handleAddValor}
-            className={fullWidthActions ? "w-full min-h-11" : ""}
-          >
+          <Button onClick={handleAddValor} className={fullWidthActions ? "w-full min-h-11" : ""}>
             {t("dialog.saveValue")}
           </Button>
         )}
@@ -546,7 +560,8 @@ export function MetaFormDialog({
   const isEdit = mode.kind === "edit";
   const isAdd = mode.kind === "add";
   const isRemove = mode.kind === "remove";
-  const baseMeta = mode.kind === "edit" || mode.kind === "add" || mode.kind === "remove" ? mode.meta : null;
+  const baseMeta =
+    mode.kind === "edit" || mode.kind === "add" || mode.kind === "remove" ? mode.meta : null;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -565,13 +580,7 @@ export function MetaFormDialog({
             {isRemove && t("dialog.removeDesc", { name: baseMeta?.nome ?? "" })}
           </DialogDescription>
         </DialogHeader>
-        {open && (
-          <MetaForm
-            mode={mode as MetaFormMode}
-            bancos={bancos}
-            onClose={onClose}
-          />
-        )}
+        {open && <MetaForm mode={mode as MetaFormMode} bancos={bancos} onClose={onClose} />}
         {/* DialogFooter rendered inside MetaForm for unified layout */}
         <DialogFooter className="hidden" />
       </DialogContent>

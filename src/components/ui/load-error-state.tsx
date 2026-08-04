@@ -62,12 +62,7 @@ export function LoadErrorState({
       >
         {icon ?? <AlertTriangle className={isCompact ? "h-5 w-5" : "h-6 w-6"} aria-hidden />}
       </div>
-      <h3
-        className={cn(
-          "mt-3 font-semibold text-foreground",
-          isCompact ? "text-sm" : "text-base",
-        )}
-      >
+      <h3 className={cn("mt-3 font-semibold text-foreground", isCompact ? "text-sm" : "text-base")}>
         {title ?? t("loadError.title")}
       </h3>
       <p className="mt-1 max-w-sm text-sm text-muted-foreground">
@@ -81,10 +76,7 @@ export function LoadErrorState({
             disabled={retrying}
             className="min-h-11 rounded-full font-semibold"
           >
-            <RefreshCw
-              className={cn("mr-2 h-4 w-4", retrying && "animate-spin")}
-              aria-hidden
-            />
+            <RefreshCw className={cn("mr-2 h-4 w-4", retrying && "animate-spin")} aria-hidden />
             {retryLabel ?? t("loadError.retry")}
           </Button>
         </div>

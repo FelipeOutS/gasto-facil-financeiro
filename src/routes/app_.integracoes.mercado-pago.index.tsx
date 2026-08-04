@@ -140,7 +140,9 @@ function MercadoPagoIntegrationPage() {
   const [disconnecting, setDisconnecting] = useState(false);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [lastSyncMsg, setLastSyncMsg] = useState<string | null>(null);
-  const [lastFailedMonths, setLastFailedMonths] = useState<Array<{ month: string; message: string }>>([]);
+  const [lastFailedMonths, setLastFailedMonths] = useState<
+    Array<{ month: string; message: string }>
+  >([]);
 
   const loadStatus = useCallback(async () => {
     try {
@@ -246,7 +248,9 @@ function MercadoPagoIntegrationPage() {
         const failed = failedMonths ?? [];
         setLastFailedMonths(failed);
         if (failed.length > 0) {
-          toast.warning("Sincronização concluída com alertas. Alguns meses não puderam ser importados.");
+          toast.warning(
+            "Sincronização concluída com alertas. Alguns meses não puderam ser importados.",
+          );
         } else {
           toast.success(`Sincronização concluída: ${base}`);
         }
@@ -303,12 +307,10 @@ function MercadoPagoIntegrationPage() {
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
             Integração
           </p>
-          <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">
-            Mercado Pago
-          </h1>
+          <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">Mercado Pago</h1>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            Conecte sua conta Mercado Pago para importar movimentações
-            automaticamente e acompanhar seus dados com mais praticidade.
+            Conecte sua conta Mercado Pago para importar movimentações automaticamente e acompanhar
+            seus dados com mais praticidade.
           </p>
         </div>
       </header>
@@ -323,12 +325,9 @@ function MercadoPagoIntegrationPage() {
               <Wallet className="h-7 w-7" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-base font-semibold leading-tight">
-                Mercado Pago
-              </p>
+              <p className="text-base font-semibold leading-tight">Mercado Pago</p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                Pagamentos, recebimentos, Pix, cartão e taxas — tudo
-                sincronizado automaticamente.
+                Pagamentos, recebimentos, Pix, cartão e taxas — tudo sincronizado automaticamente.
               </p>
               <div className="mt-3">
                 <StatusBadge
@@ -550,13 +549,7 @@ function MercadoPagoIntegrationPage() {
                   )}
                 </div>
 
-
-                <Button
-                  asChild
-                  variant="outline"
-                  size="lg"
-                  className="h-12 rounded-2xl text-base"
-                >
+                <Button asChild variant="outline" size="lg" className="h-12 rounded-2xl text-base">
                   <Link to="/app/integracoes/mercado-pago/movimentacoes">
                     <ListChecks className="mr-2 h-5 w-5" />
                     Ver movimentações importadas
@@ -577,9 +570,7 @@ function MercadoPagoIntegrationPage() {
           {isError && status?.integration?.last_error && (
             <div className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-xs text-destructive">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span className="break-words">
-                Último erro: {status.integration.last_error}
-              </span>
+              <span className="break-words">Último erro: {status.integration.last_error}</span>
             </div>
           )}
         </div>
@@ -592,12 +583,10 @@ function MercadoPagoIntegrationPage() {
             <Info className="h-4 w-4" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground">
-              Integração preparada
-            </p>
+            <p className="text-sm font-semibold text-foreground">Integração preparada</p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              Aguardando configuração das credenciais no servidor. Assim que
-              estiverem disponíveis, você poderá conectar normalmente.
+              Aguardando configuração das credenciais no servidor. Assim que estiverem disponíveis,
+              você poderá conectar normalmente.
             </p>
           </div>
         </section>
@@ -610,9 +599,8 @@ function MercadoPagoIntegrationPage() {
         </span>
         <p className="text-xs leading-relaxed text-muted-foreground">
           Esta integração importa apenas dados disponíveis na sua conta{" "}
-          <span className="font-medium text-foreground">Mercado Pago</span>.
-          Para outros bancos como Nubank, Itaú ou Bradesco, será necessário
-          Open Finance — em breve.
+          <span className="font-medium text-foreground">Mercado Pago</span>. Para outros bancos como
+          Nubank, Itaú ou Bradesco, será necessário Open Finance — em breve.
         </p>
       </section>
 
@@ -623,13 +611,11 @@ function MercadoPagoIntegrationPage() {
             <ShieldCheck className="h-4 w-4" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground">
-              Segurança e transparência
-            </p>
+            <p className="text-sm font-semibold text-foreground">Segurança e transparência</p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              A autorização é feita por OAuth oficial do Mercado Pago. Nunca
-              pedimos sua senha. Seus tokens ficam armazenados de forma segura
-              no servidor e nunca são exibidos no aplicativo.
+              A autorização é feita por OAuth oficial do Mercado Pago. Nunca pedimos sua senha. Seus
+              tokens ficam armazenados de forma segura no servidor e nunca são exibidos no
+              aplicativo.
             </p>
           </div>
         </div>
@@ -717,9 +703,7 @@ function Metric({
     <div
       className={cn(
         "rounded-2xl border p-3.5 transition-colors",
-        highlight
-          ? "border-primary/20 bg-primary/5"
-          : "border-border/60 bg-card-elevated/40",
+        highlight ? "border-primary/20 bg-primary/5" : "border-border/60 bg-card-elevated/40",
       )}
     >
       <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
@@ -733,9 +717,7 @@ function Metric({
       >
         {value}
       </p>
-      {hint && (
-        <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>
-      )}
+      {hint && <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>}
     </div>
   );
 }

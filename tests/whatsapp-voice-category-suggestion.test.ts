@@ -56,7 +56,12 @@ test("áudio: 'Café' sugere Alimentação quando a categoria existe", () => {
 });
 
 test("áudio: 'Mercado' resolve para a categoria Mercado existente", () => {
-  const out = formatarConfirmacao(parsed("Mercado"), undefined, CATEGORIAS_COM_ALIMENTACAO, "audio");
+  const out = formatarConfirmacao(
+    parsed("Mercado"),
+    undefined,
+    CATEGORIAS_COM_ALIMENTACAO,
+    "audio",
+  );
   expect(out).toContain("Mercado");
 });
 
@@ -72,7 +77,12 @@ test("áudio: sem categoria compatível cadastrada, mantém Outros", () => {
 });
 
 test("áudio: 'Restaurante' (keyword global) continua resolvendo para Alimentação", () => {
-  const out = formatarConfirmacao(parsed("Restaurante"), undefined, CATEGORIAS_COM_ALIMENTACAO, "audio");
+  const out = formatarConfirmacao(
+    parsed("Restaurante"),
+    undefined,
+    CATEGORIAS_COM_ALIMENTACAO,
+    "audio",
+  );
   expect(out).toContain("Alimentação");
 });
 

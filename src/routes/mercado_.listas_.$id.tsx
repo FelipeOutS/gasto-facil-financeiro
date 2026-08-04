@@ -161,14 +161,101 @@ const CATEGORY_GROUP_ORDER: CategoryGroupKey[] = [
 ];
 
 const CATEGORY_KEYWORDS: Record<MercadoCategoryKey, string[]> = {
-  hortifruti: ["hortifruti", "fruta", "verdura", "legume", "tomate", "alface", "banana", "maca", "maçã", "cebola", "batata", "cenoura"],
-  acougue: ["acougue", "açougue", "carne", "frango", "boi", "porco", "linguica", "linguiça", "bife", "file", "filé", "peito", "coxa"],
+  hortifruti: [
+    "hortifruti",
+    "fruta",
+    "verdura",
+    "legume",
+    "tomate",
+    "alface",
+    "banana",
+    "maca",
+    "maçã",
+    "cebola",
+    "batata",
+    "cenoura",
+  ],
+  acougue: [
+    "acougue",
+    "açougue",
+    "carne",
+    "frango",
+    "boi",
+    "porco",
+    "linguica",
+    "linguiça",
+    "bife",
+    "file",
+    "filé",
+    "peito",
+    "coxa",
+  ],
   padaria: ["padaria", "pao", "pão", "bolo", "biscoito", "torrada", "croissant", "rosca"],
-  bebidas: ["bebida", "refrigerante", "suco", "agua", "água", "cerveja", "vinho", "cafe", "café", "cha", "chá", "leite condensado"],
-  laticinios: ["laticinio", "laticínio", "leite", "queijo", "iogurte", "manteiga", "requeijao", "requeijão", "creme de leite"],
-  limpeza: ["limpeza", "detergente", "sabao", "sabão", "amaciante", "desinfetante", "esponja", "agua sanitaria", "água sanitária", "alvejante"],
-  mercearia: ["mercearia", "arroz", "feijao", "feijão", "macarrao", "macarrão", "azeite", "oleo", "óleo", "sal", "acucar", "açúcar", "farinha", "molho"],
-  utilidades: ["utilidade", "papel higienico", "papel higiênico", "guardanapo", "fralda", "absorvente", "escova", "pasta de dente", "sabonete", "shampoo"],
+  bebidas: [
+    "bebida",
+    "refrigerante",
+    "suco",
+    "agua",
+    "água",
+    "cerveja",
+    "vinho",
+    "cafe",
+    "café",
+    "cha",
+    "chá",
+    "leite condensado",
+  ],
+  laticinios: [
+    "laticinio",
+    "laticínio",
+    "leite",
+    "queijo",
+    "iogurte",
+    "manteiga",
+    "requeijao",
+    "requeijão",
+    "creme de leite",
+  ],
+  limpeza: [
+    "limpeza",
+    "detergente",
+    "sabao",
+    "sabão",
+    "amaciante",
+    "desinfetante",
+    "esponja",
+    "agua sanitaria",
+    "água sanitária",
+    "alvejante",
+  ],
+  mercearia: [
+    "mercearia",
+    "arroz",
+    "feijao",
+    "feijão",
+    "macarrao",
+    "macarrão",
+    "azeite",
+    "oleo",
+    "óleo",
+    "sal",
+    "acucar",
+    "açúcar",
+    "farinha",
+    "molho",
+  ],
+  utilidades: [
+    "utilidade",
+    "papel higienico",
+    "papel higiênico",
+    "guardanapo",
+    "fralda",
+    "absorvente",
+    "escova",
+    "pasta de dente",
+    "sabonete",
+    "shampoo",
+  ],
 };
 
 function detectCategory(item: ListaItem): CategoryGroupKey {
@@ -273,7 +360,10 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
       {/* Local search */}
       <div className="mt-4">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
           <input
             type="search"
             value={search}
@@ -284,7 +374,6 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
           />
         </div>
       </div>
-
 
       {/* Resumo */}
       <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -349,11 +438,6 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
       {/* Edit list metadata (name, tipo, estimate, observation) */}
       <EditListaCard lista={lista} />
 
-
-
-
-
-
       {/* Form */}
       <AddItemForm listaId={lista.id} />
 
@@ -365,7 +449,9 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
             alt={t("listDetailV2.emptyImageAlt")}
             loading="lazy"
             className="mx-auto h-28 w-auto object-contain sm:h-36"
-            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
           />
           <h2 className="mt-4 text-lg font-semibold">{t("listDetailV2.emptyTitle")}</h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
@@ -383,7 +469,9 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
               <div key={groupKey}>
                 <h3 className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                   {t(`listDetailV2.groupTitle.${groupKey}`)}{" "}
-                  <span className="text-foreground/60 normal-case tracking-normal">· {items.length}</span>
+                  <span className="text-foreground/60 normal-case tracking-normal">
+                    · {items.length}
+                  </span>
                 </h3>
                 <div className="flex flex-col gap-3">
                   {items.map((item) => (
@@ -417,7 +505,10 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
               <p className="truncate text-base font-bold tabular-nums">
                 <Money value={resumo.totalEstimado} />
                 <span className="ml-2 text-[11px] font-medium text-muted-foreground">
-                  {t("listDetailV2.stickyItems", { bought: resumo.itensComprados, total: resumo.totalItens })}
+                  {t("listDetailV2.stickyItems", {
+                    bought: resumo.itensComprados,
+                    total: resumo.totalItens,
+                  })}
                 </span>
               </p>
             </div>
@@ -461,9 +552,7 @@ function DangerZoneCard({ listaId }: { listaId: string }) {
     <section className="mt-6 rounded-3xl border border-destructive/30 bg-destructive/5 p-4 shadow-card md:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-destructive">
-            {t("detail.delete.title")}
-          </h2>
+          <h2 className="text-sm font-semibold text-destructive">{t("detail.delete.title")}</h2>
           <p className="mt-1 text-[13px] leading-snug text-muted-foreground">
             {t("detail.delete.description")}
           </p>
@@ -486,10 +575,7 @@ function DangerZoneCard({ listaId }: { listaId: string }) {
           aria-labelledby="detail-delete-title"
           className="mt-4 rounded-2xl border border-destructive/30 bg-card p-3"
         >
-          <p
-            id="detail-delete-title"
-            className="text-sm font-semibold text-destructive"
-          >
+          <p id="detail-delete-title" className="text-sm font-semibold text-destructive">
             {t("detail.delete.confirmTitle")}
           </p>
           <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
@@ -550,8 +636,7 @@ function EditListaCard({ lista }: { lista: MercadoLista }) {
       return;
     }
     const parsed = estimate ? Number(estimate.replace(/\./g, "").replace(",", ".")) : NaN;
-    const estimateValue: number | null =
-      Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    const estimateValue: number | null = Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 
     const ok = updateListaDados(lista.id, {
       name: trimmed,
@@ -703,7 +788,6 @@ function EditListaCard({ lista }: { lista: MercadoLista }) {
   );
 }
 
-
 function BudgetCard({ lista }: { lista: MercadoLista }) {
   const { t } = useTranslation("mercado");
   const o = useMemo(() => computeOrcamentoLista(lista), [lista]);
@@ -731,8 +815,7 @@ function BudgetCard({ lista }: { lista: MercadoLista }) {
   const pct = o.percentualUsado;
   const barWidth = Math.max(0, Math.min(100, pct));
   const barClass = pct > 100 ? "bg-destructive" : pct > 80 ? "bg-warning" : "bg-success";
-  const pctTextClass =
-    pct > 100 ? "text-destructive" : pct > 80 ? "text-warning" : "text-success";
+  const pctTextClass = pct > 100 ? "text-destructive" : pct > 80 ? "text-warning" : "text-success";
   const diffAbs = Math.abs(o.diferenca);
 
   return (
@@ -748,9 +831,7 @@ function BudgetCard({ lista }: { lista: MercadoLista }) {
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold text-foreground">{t("detail.budget.title")}</h2>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">
-            {t("detail.budget.subtitle")}
-          </p>
+          <p className="mt-0.5 text-[12px] text-muted-foreground">{t("detail.budget.subtitle")}</p>
         </div>
       </div>
 
@@ -796,9 +877,7 @@ function BudgetCard({ lista }: { lista: MercadoLista }) {
           <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
             {t("detail.budget.usedLabel")}
           </span>
-          <span className={cn("text-[12px] font-semibold tabular-nums", pctTextClass)}>
-            {pct}%
-          </span>
+          <span className={cn("text-[12px] font-semibold tabular-nums", pctTextClass)}>{pct}%</span>
         </div>
         <div
           role="progressbar"
@@ -836,8 +915,6 @@ function BudgetCard({ lista }: { lista: MercadoLista }) {
     </section>
   );
 }
-
-
 
 function SummaryTile({
   icon: Icon,
@@ -1056,9 +1133,7 @@ function BarcodeBlock({ onApply }: { onApply: (name: string) => void }) {
           {t("detail.barcode.title")}
         </span>
       </div>
-      <p className="mt-1 text-[12px] text-muted-foreground">
-        {t("detail.barcode.manualHint")}
-      </p>
+      <p className="mt-1 text-[12px] text-muted-foreground">{t("detail.barcode.manualHint")}</p>
       <div className="mt-2 flex flex-col gap-2 sm:flex-row">
         <input
           type="text"
@@ -1082,11 +1157,7 @@ function BarcodeBlock({ onApply }: { onApply: (name: string) => void }) {
           disabled={loading || !code.trim()}
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-card-elevated active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Search className="h-4 w-4" />
-          )}
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           <span>{loading ? t("detail.barcode.loading") : t("detail.barcode.search")}</span>
         </button>
       </div>
@@ -1101,14 +1172,10 @@ function BarcodeBlock({ onApply }: { onApply: (name: string) => void }) {
         />
       </div>
 
-      {error ? (
-        <p className="mt-2 text-[12px] text-destructive">{error}</p>
-      ) : null}
+      {error ? <p className="mt-2 text-[12px] text-destructive">{error}</p> : null}
 
       {result && !result.found ? (
-        <p className="mt-2 text-[12px] text-muted-foreground">
-          {t("detail.barcode.notFound")}
-        </p>
+        <p className="mt-2 text-[12px] text-muted-foreground">{t("detail.barcode.notFound")}</p>
       ) : null}
 
       {result?.found ? (
@@ -1158,8 +1225,6 @@ function BarcodeBlock({ onApply }: { onApply: (name: string) => void }) {
   );
 }
 
-
-
 function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
   const { t } = useTranslation("mercado");
   const [editing, setEditing] = useState(false);
@@ -1170,10 +1235,7 @@ function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
     item.precoEstimado != null ? String(item.precoEstimado) : "",
   );
   const { pool } = useActiveCommunityPrices();
-  const suggestions = useMemo(
-    () => getSuggestionsFor(item.nome, pool),
-    [item.nome, pool],
-  );
+  const suggestions = useMemo(() => getSuggestionsFor(item.nome, pool), [item.nome, pool]);
 
   function applyCommunityPrice(price: number) {
     setPrecoEstimado(String(price));
@@ -1277,10 +1339,7 @@ function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
               codigoBarras={item.codigoBarras}
               precoUnitario={parseNumber(precoEstimado)}
             />
-            <CommunityPriceSuggestion
-              suggestions={suggestions}
-              onUse={applyCommunityPrice}
-            />
+            <CommunityPriceSuggestion suggestions={suggestions} onUse={applyCommunityPrice} />
           </div>
         </div>
         <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -1367,10 +1426,7 @@ function ItemRow({ item, listaId }: { item: ListaItem; listaId: string }) {
         </div>
       </div>
       {!item.comprado && suggestions.length > 0 ? (
-        <CommunityPriceSuggestion
-          suggestions={suggestions}
-          onUse={applyCommunityPrice}
-        />
+        <CommunityPriceSuggestion suggestions={suggestions} onUse={applyCommunityPrice} />
       ) : null}
     </article>
   );
@@ -1431,7 +1487,6 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
       });
 
       if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
         console.log("[mercado/finalize]", {
           source: "lista",
           historyId: entry.id,
@@ -1443,7 +1498,9 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
           gastoId: gastoResult.gastoId,
           gastoReason: gastoResult.reason,
           gastoError: gastoResult.error,
-          communitySubmitted: Boolean(community && (community.inserted > 0 || community.updated > 0)),
+          communitySubmitted: Boolean(
+            community && (community.inserted > 0 || community.updated > 0),
+          ),
           communityError,
         });
       }
@@ -1482,7 +1539,6 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
     }
   }
 
-
   return (
     <section className="mt-5 rounded-3xl border border-border/60 bg-card p-4 shadow-card md:p-5">
       <div className="flex items-start gap-3">
@@ -1490,15 +1546,10 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
           <CheckCircle2 className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-foreground">
-            {t("detail.finalize.cta")}
-          </h2>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">
-            {t("detail.finalize.hint")}
-          </p>
+          <h2 className="text-sm font-semibold text-foreground">{t("detail.finalize.cta")}</h2>
+          <p className="mt-0.5 text-[12px] text-muted-foreground">{t("detail.finalize.hint")}</p>
         </div>
       </div>
-
 
       <button
         type="button"
@@ -1518,4 +1569,3 @@ function FinalizeCard({ lista }: { lista: MercadoLista }) {
     </section>
   );
 }
-

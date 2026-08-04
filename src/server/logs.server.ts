@@ -35,9 +35,7 @@ export function redactHeaders(
   if (!headers) return null;
   const out: Record<string, string> = {};
   const entries: Array<[string, string]> =
-    headers instanceof Headers
-      ? Array.from(headers.entries())
-      : Object.entries(headers);
+    headers instanceof Headers ? Array.from(headers.entries()) : Object.entries(headers);
   for (const [rawKey, value] of entries) {
     const key = String(rawKey).toLowerCase();
     if (SENSITIVE_HEADER_KEYS.includes(key)) {
@@ -104,9 +102,7 @@ export interface WebhookLogInput {
  * Persists a webhook event. Returns the generated id (or null on failure).
  * Never throws.
  */
-export async function logWebhookEvent(
-  input: WebhookLogInput,
-): Promise<string | null> {
+export async function logWebhookEvent(input: WebhookLogInput): Promise<string | null> {
   try {
     const row = {
       provider: input.provider,
@@ -145,10 +141,7 @@ export async function logWebhookEvent(
  * Updates an existing webhook log row (e.g. mark "received" → "processed").
  * Never throws.
  */
-export async function updateWebhookLog(
-  id: string,
-  patch: Partial<WebhookLogInput>,
-): Promise<void> {
+export async function updateWebhookLog(id: string, patch: Partial<WebhookLogInput>): Promise<void> {
   if (!id) return;
   try {
     const update: Record<string, unknown> = {};
@@ -160,7 +153,8 @@ export async function updateWebhookLog(
     if (patch.http_status !== undefined) update.http_status = patch.http_status;
     if (patch.response_body !== undefined) update.response_body = redactBody(patch.response_body);
     if (patch.error_message !== undefined) update.error_message = patch.error_message;
-    if (patch.processing_time_ms !== undefined) update.processing_time_ms = patch.processing_time_ms;
+    if (patch.processing_time_ms !== undefined)
+      update.processing_time_ms = patch.processing_time_ms;
 
     const { error } = await supabaseAdmin
       .from("webhook_logs")

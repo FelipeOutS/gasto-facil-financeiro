@@ -100,17 +100,11 @@ function VariationBadge({ pct }: { pct: number | null }) {
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-        positivo
-          ? "bg-success/10 text-success"
-          : "bg-destructive/10 text-destructive",
+        positivo ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive",
       )}
       title={positivo ? t("radarCard.variation.up") : t("radarCard.variation.down")}
     >
-      {positivo ? (
-        <TrendingUp className="h-3 w-3" />
-      ) : (
-        <TrendingDown className="h-3 w-3" />
-      )}
+      {positivo ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
       {formatPct(pct)}
     </span>
   );
@@ -154,10 +148,10 @@ export function RadarEconomicoCard({ className }: { className?: string }) {
   const eur = data?.indicators.find((i) => i.key === "EUR_BRL");
   const usdValue = usd?.valueBRL ?? usd?.value;
   const eurValue = eur?.valueBRL ?? eur?.value;
-  const hasCurrencyValues =
-    Number.isFinite(usdValue) && Number.isFinite(eurValue);
+  const hasCurrencyValues = Number.isFinite(usdValue) && Number.isFinite(eurValue);
   const stale =
-    !loading && (!hasCurrencyValues || usd?.status === "desatualizado" || eur?.status === "desatualizado");
+    !loading &&
+    (!hasCurrencyValues || usd?.status === "desatualizado" || eur?.status === "desatualizado");
 
   const impactoMsg = (): string => {
     const u = usd?.variationPercent ?? 0;
@@ -188,17 +182,15 @@ export function RadarEconomicoCard({ className }: { className?: string }) {
               </span>
               <h3 className="text-sm font-semibold">{t("radarCard.title")}</h3>
             </div>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {t("radarCard.subtitle")}
-            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{t("radarCard.subtitle")}</p>
           </div>
           {stale && (
-          <span
-            className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning"
-            title={t("radarCard.outdatedTitle")}
-          >
-            <AlertCircle className="h-3 w-3" /> {t("radarCard.outdated")}
-          </span>
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning"
+              title={t("radarCard.outdatedTitle")}
+            >
+              <AlertCircle className="h-3 w-3" /> {t("radarCard.outdated")}
+            </span>
           )}
         </div>
 
@@ -217,11 +209,7 @@ export function RadarEconomicoCard({ className }: { className?: string }) {
         </div>
 
         <p className="mt-3 text-xs leading-relaxed text-muted-foreground sm:mt-auto sm:pt-3">
-          {loading
-            ? t("radarCard.loading")
-            : stale
-              ? t("radarCard.outdatedDesc")
-              : impactoMsg()}
+          {loading ? t("radarCard.loading") : stale ? t("radarCard.outdatedDesc") : impactoMsg()}
         </p>
 
         {!loading && data && data.indicators.length > 0 && (
@@ -250,13 +238,7 @@ export function RadarEconomicoCard({ className }: { className?: string }) {
   );
 }
 
-function CotacaoMini({
-  ind,
-  fallbackKey,
-}: {
-  ind: Indicator | undefined;
-  fallbackKey: string;
-}) {
+function CotacaoMini({ ind, fallbackKey }: { ind: Indicator | undefined; fallbackKey: string }) {
   const { t } = useTranslation("dashboard");
   const key = ind?.key ?? fallbackKey;
   const label = t(`radarCard.label.${key}`, { defaultValue: key });
@@ -339,9 +321,7 @@ export function RadarDetalhesDialog({
             <ArrowRightLeft className="h-5 w-5 text-primary" />
             {t("radarCard.dialog.title")}
           </DialogTitle>
-          <DialogDescription>
-            {t("radarCard.dialog.description")}
-          </DialogDescription>
+          <DialogDescription>{t("radarCard.dialog.description")}</DialogDescription>
         </DialogHeader>
 
         {stale && (
@@ -421,9 +401,7 @@ export function RadarDetalhesDialog({
           {convertido && (
             <div className="rounded-lg border bg-background p-3">
               <p className="text-xs text-muted-foreground">{t("radarCard.dialog.approxValue")}</p>
-              <p className="text-2xl font-semibold tabular-nums">
-                {formatBRL(convertido.brl)}
-              </p>
+              <p className="text-2xl font-semibold tabular-nums">{formatBRL(convertido.brl)}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {t("radarCard.dialog.rateUsed", {
                   cotacao: formatBRL(convertido.cotacao),
@@ -483,9 +461,7 @@ function CotacaoDetalhe({
         </div>
         <div className="rounded-lg bg-muted/40 px-2 py-1">
           <p className="text-muted-foreground">{t("radarCard.dialog.low")}</p>
-          <p className="font-medium tabular-nums">
-            {ind?.low != null ? formatBRL(ind.low) : "—"}
-          </p>
+          <p className="font-medium tabular-nums">{ind?.low != null ? formatBRL(ind.low) : "—"}</p>
         </div>
       </div>
     </div>

@@ -24,11 +24,8 @@ const {
   detectQueryPixIntent,
   detectPagarPessoaIntent,
 } = await import("../src/server/whatsapp-pix-parser");
-const {
-  handleSavePixIntent,
-  handleQueryPixIntent,
-  handlePagarPessoaIntent,
-} = await import("../src/server/whatsapp-pix-intents.server");
+const { handleSavePixIntent, handleQueryPixIntent, handlePagarPessoaIntent } =
+  await import("../src/server/whatsapp-pix-intents.server");
 const { _resetShortContext } = await import("../src/server/whatsapp-short-context.server");
 
 const userId = "u1";
@@ -145,11 +142,22 @@ describe("WA-C7 :: handlers", () => {
   it("handleSavePixIntent atualiza Pix de favorecido existente", async () => {
     resetState({
       favorecidos: [
-        { id: "f1", user_id: userId, nome: "João", apelido: null, ativo: true, pix_key: null, pix_key_type: null },
+        {
+          id: "f1",
+          user_id: userId,
+          nome: "João",
+          apelido: null,
+          ativo: true,
+          pix_key: null,
+          pix_key_type: null,
+        },
       ],
     });
     const out = await handleSavePixIntent({
-      userId, telefone, texto: "salva o Pix do João: joao@email.com", _row: fakeRow,
+      userId,
+      telefone,
+      texto: "salva o Pix do João: joao@email.com",
+      _row: fakeRow,
     });
     expect(out.status).toBe("salva");
     expect(state.favorecidosData.length).toBe(1);
@@ -159,7 +167,10 @@ describe("WA-C7 :: handlers", () => {
   it("handleQueryPixIntent retorna formato pedido quando não há parse", async () => {
     // Sem favorecido cadastrado: termo "joão" → favorecidoNaoEncontrado.
     const out = await handleQueryPixIntent({
-      userId, telefone, texto: "qual o pix do João?", _row: fakeRow,
+      userId,
+      telefone,
+      texto: "qual o pix do João?",
+      _row: fakeRow,
     });
     expect(out.resposta).toContain("Não encontrei");
   });
@@ -167,11 +178,22 @@ describe("WA-C7 :: handlers", () => {
   it("handleQueryPixIntent retorna chave quando favorecido existe", async () => {
     resetState({
       favorecidos: [
-        { id: "f1", user_id: userId, nome: "João", apelido: null, ativo: true, pix_key: "joao@email.com", pix_key_type: "email" },
+        {
+          id: "f1",
+          user_id: userId,
+          nome: "João",
+          apelido: null,
+          ativo: true,
+          pix_key: "joao@email.com",
+          pix_key_type: "email",
+        },
       ],
     });
     const out = await handleQueryPixIntent({
-      userId, telefone, texto: "qual o pix do João?", _row: fakeRow,
+      userId,
+      telefone,
+      texto: "qual o pix do João?",
+      _row: fakeRow,
     });
     expect(out.status).toBe("consulta");
     // WA-PIX-UX-01.c: chave é mascarada no texto; a URL de cópia sai
@@ -187,12 +209,31 @@ describe("WA-C7 :: handlers", () => {
   it("handleQueryPixIntent oferece desambiguação para 2+ matches", async () => {
     resetState({
       favorecidos: [
-        { id: "f1", user_id: userId, nome: "João Silva", apelido: null, ativo: true, pix_key: "a@x.com", pix_key_type: "email" },
-        { id: "f2", user_id: userId, nome: "João Souza", apelido: null, ativo: true, pix_key: "b@x.com", pix_key_type: "email" },
+        {
+          id: "f1",
+          user_id: userId,
+          nome: "João Silva",
+          apelido: null,
+          ativo: true,
+          pix_key: "a@x.com",
+          pix_key_type: "email",
+        },
+        {
+          id: "f2",
+          user_id: userId,
+          nome: "João Souza",
+          apelido: null,
+          ativo: true,
+          pix_key: "b@x.com",
+          pix_key_type: "email",
+        },
       ],
     });
     const out = await handleQueryPixIntent({
-      userId, telefone, texto: "qual o pix do João?", _row: fakeRow,
+      userId,
+      telefone,
+      texto: "qual o pix do João?",
+      _row: fakeRow,
     });
     expect(out.resposta).toContain("mais de uma pessoa");
     expect(out.resposta).toContain("João Silva");
@@ -202,23 +243,41 @@ describe("WA-C7 :: handlers", () => {
   it("handlePagarPessoaIntent cria gasto vinculado quando match único", async () => {
     resetState({
       favorecidos: [
-        { id: "f1", user_id: userId, nome: "João", apelido: null, ativo: true, pix_key: null, pix_key_type: null },
+        {
+          id: "f1",
+          user_id: userId,
+          nome: "João",
+          apelido: null,
+          ativo: true,
+          pix_key: null,
+          pix_key_type: null,
+        },
       ],
     });
     const out = await handlePagarPessoaIntent({
-      userId, telefone, texto: "paguei R$ 50 ao João do almoço", _row: fakeRow,
+      userId,
+      telefone,
+      texto: "paguei R$ 50 ao João do almoço",
+      _row: fakeRow,
     });
     expect(out.status).toBe("salva");
     const gastoInserts = state.inserts.filter((i) => i.table === "gastos");
     expect(gastoInserts.length).toBe(1);
-    const g = gastoInserts[0].row as { valor: number; fornecedor_id: string | null; forma_pagamento: string };
+    const g = gastoInserts[0].row as {
+      valor: number;
+      fornecedor_id: string | null;
+      forma_pagamento: string;
+    };
     expect(g.valor).toBe(5000);
     expect(g.fornecedor_id).toBe("f1");
   });
 
   it("handlePagarPessoaIntent cria gasto sem vínculo quando favorecido inexistente", async () => {
     const out = await handlePagarPessoaIntent({
-      userId, telefone, texto: "paguei 80 para Carlos", _row: fakeRow,
+      userId,
+      telefone,
+      texto: "paguei 80 para Carlos",
+      _row: fakeRow,
     });
     expect(out.status).toBe("salva");
     const gastoInserts = state.inserts.filter((i) => i.table === "gastos");

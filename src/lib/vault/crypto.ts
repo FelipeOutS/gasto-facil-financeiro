@@ -26,18 +26,18 @@ export function generateSalt(): string {
   return b64encode(randomBytes(16));
 }
 
-async function deriveKey(password: string, saltB64: string, iterations: number): Promise<CryptoKey> {
+async function deriveKey(
+  password: string,
+  saltB64: string,
+  iterations: number,
+): Promise<CryptoKey> {
   const enc = new TextEncoder();
   const pwd = enc.encode(password);
   const pwdBuf = new Uint8Array(new ArrayBuffer(pwd.byteLength));
   pwdBuf.set(pwd);
-  const baseKey = await crypto.subtle.importKey(
-    "raw",
-    pwdBuf,
-    { name: "PBKDF2" },
-    false,
-    ["deriveKey"],
-  );
+  const baseKey = await crypto.subtle.importKey("raw", pwdBuf, { name: "PBKDF2" }, false, [
+    "deriveKey",
+  ]);
   return crypto.subtle.deriveKey(
     { name: "PBKDF2", salt: b64decode(saltB64), iterations, hash: "SHA-256" },
     baseKey,
@@ -59,13 +59,10 @@ export async function exportMasterKeyRaw(key: CryptoKey): Promise<Uint8Array<Arr
 export async function importMasterKeyRaw(raw: Uint8Array): Promise<CryptoKey> {
   const buf = new Uint8Array(new ArrayBuffer(raw.byteLength));
   buf.set(raw);
-  return crypto.subtle.importKey(
-    "raw",
-    buf,
-    { name: "AES-GCM", length: 256 },
-    true,
-    ["encrypt", "decrypt"],
-  );
+  return crypto.subtle.importKey("raw", buf, { name: "AES-GCM", length: 256 }, true, [
+    "encrypt",
+    "decrypt",
+  ]);
 }
 
 /** Public helpers used by the quick-unlock module. */
@@ -79,9 +76,13 @@ export function vaultB64decode(str: string): Uint8Array<ArrayBuffer> {
   return b64decode(str);
 }
 
-export async function createMasterKey(
-  password: string,
-): Promise<{ salt: string; iterations: number; verifier: string; verifier_iv: string; key: CryptoKey }> {
+export async function createMasterKey(password: string): Promise<{
+  salt: string;
+  iterations: number;
+  verifier: string;
+  verifier_iv: string;
+  key: CryptoKey;
+}> {
   const salt = generateSalt();
   const iterations = DEFAULT_ITERATIONS;
   const key = await deriveKey(password, salt, iterations);
@@ -117,7 +118,10 @@ export type EntrySecret = {
   notes?: string;
 };
 
-export async function encryptSecret(key: CryptoKey, secret: EntrySecret): Promise<{
+export async function encryptSecret(
+  key: CryptoKey,
+  secret: EntrySecret,
+): Promise<{
   username_cipher: string;
   password_cipher: string;
   notes_cipher: string;
@@ -159,7 +163,11 @@ async function decField(key: CryptoKey, payload: string | null | undefined): Pro
 
 export async function decryptSecret(
   key: CryptoKey,
-  row: { username_cipher: string | null; password_cipher: string | null; notes_cipher: string | null },
+  row: {
+    username_cipher: string | null;
+    password_cipher: string | null;
+    notes_cipher: string | null;
+  },
 ): Promise<EntrySecret> {
   return {
     username: await decField(key, row.username_cipher),

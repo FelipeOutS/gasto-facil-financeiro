@@ -19,7 +19,8 @@ export function generateStrongPassword(length = 18): string {
   const digits = "23456789";
   const symbols = "!@#$%&*?-_=+";
   const all = lowers + uppers + digits + symbols;
-  const pick = (set: string) => set[Math.floor(crypto.getRandomValues(new Uint32Array(1))[0] % set.length)];
+  const pick = (set: string) =>
+    set[Math.floor(crypto.getRandomValues(new Uint32Array(1))[0] % set.length)];
   const req = [pick(lowers), pick(uppers), pick(digits), pick(symbols)];
   const rest: string[] = [];
   for (let i = 0; i < length - 4; i++) rest.push(pick(all));

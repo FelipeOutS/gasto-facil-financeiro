@@ -48,28 +48,16 @@ export function EmptyState({
           className={cn(
             "grid place-items-center rounded-2xl text-foreground motion-safe:animate-pop",
             isCompact ? "h-12 w-12" : "h-14 w-14",
-            isPremium
-              ? "bg-primary/15 text-primary"
-              : "bg-muted/50 text-muted-foreground",
+            isPremium ? "bg-primary/15 text-primary" : "bg-muted/50 text-muted-foreground",
           )}
         >
           {icon}
         </div>
       )}
-      <h3
-        className={cn(
-          "font-semibold",
-          icon ? "mt-3" : "",
-          isCompact ? "text-sm" : "text-base",
-        )}
-      >
+      <h3 className={cn("font-semibold", icon ? "mt-3" : "", isCompact ? "text-sm" : "text-base")}>
         {title}
       </h3>
-      {description && (
-        <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-          {description}
-        </p>
-      )}
+      {description && <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>}
       {(cta || (ctaLabel && onCta)) && (
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
           {cta ?? (
@@ -80,9 +68,7 @@ export function EmptyState({
           {secondaryAction}
         </div>
       )}
-      {!cta && !ctaLabel && secondaryAction && (
-        <div className="mt-4">{secondaryAction}</div>
-      )}
+      {!cta && !ctaLabel && secondaryAction && <div className="mt-4">{secondaryAction}</div>}
     </div>
   );
 }

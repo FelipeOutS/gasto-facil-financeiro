@@ -9,8 +9,6 @@ import type { PlanTier } from "@/lib/plans";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = _supabaseAdmin as any;
 
-
-
 export type EntitlementReason =
   | "allowed"
   | "admin_master"
@@ -93,9 +91,7 @@ async function hasBetaAccess(userId: string): Promise<boolean> {
   }
 }
 
-async function readActiveLink(
-  userId: string,
-): Promise<{ ok: boolean; reason: EntitlementReason }> {
+async function readActiveLink(userId: string): Promise<{ ok: boolean; reason: EntitlementReason }> {
   try {
     const { data } = await sb
       .from("whatsapp_links")
@@ -175,9 +171,10 @@ export async function getWhatsAppEntitlement(
       };
       if (opts.requireLink) {
         const link = await readActiveLink(userId);
-        r.linkActive = link.ok || link.reason === "opt_in_missing"
-          ? link.reason !== "whatsapp_link_missing" && link.reason !== "whatsapp_link_inactive"
-          : false;
+        r.linkActive =
+          link.ok || link.reason === "opt_in_missing"
+            ? link.reason !== "whatsapp_link_missing" && link.reason !== "whatsapp_link_inactive"
+            : false;
         r.optInActive = link.ok;
       }
       logDecision("entitlement_allowed", r, userId);
@@ -263,10 +260,10 @@ export async function assertWhatsAppEntitlement(
 ): Promise<EntitlementResult> {
   const r = await getWhatsAppEntitlement(userId, opts);
   if (!r.allowed) {
-    throw new Response(
-      JSON.stringify({ error: "whatsapp_not_entitled", reason: r.reason }),
-      { status: 403, headers: { "Content-Type": "application/json" } },
-    );
+    throw new Response(JSON.stringify({ error: "whatsapp_not_entitled", reason: r.reason }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
   }
   return r;
 }

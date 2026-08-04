@@ -58,9 +58,7 @@ export function AppActionCard({
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-foreground">{title}</p>
           {description && (
-            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-              {description}
-            </p>
+            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{description}</p>
           )}
         </div>
         {locked && lockedLabel && (

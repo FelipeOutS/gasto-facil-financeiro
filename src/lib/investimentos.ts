@@ -62,7 +62,14 @@ export const TIPOS_MOVIMENTACAO: Array<{ id: TipoMovimentacao; label: string }> 
   { id: "grupamento", label: "Grupamento" },
 ];
 
-export type TipoRendimento = "dividendo" | "jcp" | "rendimento_fii" | "renda_fixa" | "cupom" | "amortizacao" | "outro";
+export type TipoRendimento =
+  | "dividendo"
+  | "jcp"
+  | "rendimento_fii"
+  | "renda_fixa"
+  | "cupom"
+  | "amortizacao"
+  | "outro";
 
 export const TIPOS_RENDIMENTO: Array<{ id: TipoRendimento; label: string }> = [
   { id: "dividendo", label: "Dividendo" },
@@ -254,11 +261,17 @@ export async function atualizarAtivo(id: string, patch: Partial<Ativo>): Promise
 }
 
 export async function excluirAtivo(id: string): Promise<void> {
-  const { error } = await supabase.from("investimentos_ativos" as never).delete().eq("id", id);
+  const { error } = await supabase
+    .from("investimentos_ativos" as never)
+    .delete()
+    .eq("id", id);
   if (error) throw error;
 }
 
-export async function criarMovimentacao(userId: string, payload: Partial<Movimentacao>): Promise<Movimentacao> {
+export async function criarMovimentacao(
+  userId: string,
+  payload: Partial<Movimentacao>,
+): Promise<Movimentacao> {
   const { data, error } = await supabase
     .from("investimentos_movimentacoes" as never)
     .insert({ ...payload, user_id: userId } as never)
@@ -268,7 +281,10 @@ export async function criarMovimentacao(userId: string, payload: Partial<Movimen
   return data as unknown as Movimentacao;
 }
 
-export async function atualizarMovimentacao(id: string, patch: Partial<Movimentacao>): Promise<void> {
+export async function atualizarMovimentacao(
+  id: string,
+  patch: Partial<Movimentacao>,
+): Promise<void> {
   const { error } = await supabase
     .from("investimentos_movimentacoes" as never)
     .update(patch as never)
@@ -277,11 +293,17 @@ export async function atualizarMovimentacao(id: string, patch: Partial<Movimenta
 }
 
 export async function excluirMovimentacao(id: string): Promise<void> {
-  const { error } = await supabase.from("investimentos_movimentacoes" as never).delete().eq("id", id);
+  const { error } = await supabase
+    .from("investimentos_movimentacoes" as never)
+    .delete()
+    .eq("id", id);
   if (error) throw error;
 }
 
-export async function criarRendimento(userId: string, payload: Partial<Rendimento>): Promise<Rendimento> {
+export async function criarRendimento(
+  userId: string,
+  payload: Partial<Rendimento>,
+): Promise<Rendimento> {
   const { data, error } = await supabase
     .from("investimentos_rendimentos" as never)
     .insert({ ...payload, user_id: userId } as never)
@@ -300,7 +322,10 @@ export async function atualizarRendimento(id: string, patch: Partial<Rendimento>
 }
 
 export async function excluirRendimento(id: string): Promise<void> {
-  const { error } = await supabase.from("investimentos_rendimentos" as never).delete().eq("id", id);
+  const { error } = await supabase
+    .from("investimentos_rendimentos" as never)
+    .delete()
+    .eq("id", id);
   if (error) throw error;
 }
 
@@ -431,20 +456,21 @@ export function calcularTotais(ativos: Ativo[], rendimentos: Rendimento[]): Tota
   return { patrimonio, aplicado, lucro, rentabilidade, rendimentosAno, rendimentosMes };
 }
 
-export function distribuicaoPorTipo(ativos: Ativo[]): Array<{ tipo: string; label: string; valor: number; pct: number }> {
+export function distribuicaoPorTipo(
+  ativos: Ativo[],
+): Array<{ tipo: string; label: string; valor: number; pct: number }> {
   const total = ativos.reduce((s, a) => s + Number(a.valor_atual || a.valor_aplicado || 0), 0);
   const map = new Map<string, number>();
   for (const a of ativos) {
     const v = Number(a.valor_atual || a.valor_aplicado || 0);
     map.set(a.tipo, (map.get(a.tipo) ?? 0) + v);
   }
-  return Array.from(map.entries())
-    .map(([tipo, valor]) => ({
-      tipo,
-      label: tipoLabel(tipo),
-      valor,
-      pct: total > 0 ? (valor / total) * 100 : 0,
-    }))
+  return Array.from(map.entries()).map(([tipo, valor]) => ({
+    tipo,
+    label: tipoLabel(tipo),
+    valor,
+    pct: total > 0 ? (valor / total) * 100 : 0,
+  }));
 }
 
 // ===== Importações =====
@@ -461,7 +487,12 @@ export async function listarImportacoes(userId: string): Promise<Importacao[]> {
 
 export async function criarImportacao(
   userId: string,
-  payload: { tipo: string; arquivo_nome?: string | null; status?: string; dados_extraidos?: unknown },
+  payload: {
+    tipo: string;
+    arquivo_nome?: string | null;
+    status?: string;
+    dados_extraidos?: unknown;
+  },
 ): Promise<Importacao> {
   const { data, error } = await supabase
     .from("investimentos_importacoes" as never)
@@ -632,19 +663,17 @@ export async function atualizarValorAtivo(
     .eq("id", ativo.id);
   if (upErr) throw upErr;
 
-  const { error: histErr } = await supabase
-    .from("investimentos_atualizacoes" as never)
-    .insert({
-      user_id: userId,
-      ativo_id: ativo.id,
-      valor_anterior,
-      valor_novo: payload.valor_novo,
-      preco_anterior,
-      preco_novo: payload.preco_novo ?? null,
-      data_atualizacao: dataIso,
-      observacao: payload.observacao ?? null,
-      origem: payload.origem ?? "manual",
-    } as never);
+  const { error: histErr } = await supabase.from("investimentos_atualizacoes" as never).insert({
+    user_id: userId,
+    ativo_id: ativo.id,
+    valor_anterior,
+    valor_novo: payload.valor_novo,
+    preco_anterior,
+    preco_novo: payload.preco_novo ?? null,
+    data_atualizacao: dataIso,
+    observacao: payload.observacao ?? null,
+    origem: payload.origem ?? "manual",
+  } as never);
   if (histErr) throw histErr;
 }
 
@@ -670,7 +699,8 @@ export function descreverUltimaAtualizacao(iso: string | null): {
 } {
   if (!iso) return { label: "Sem atualização recente", diasDesde: null, desatualizado: true };
   const data = new Date(iso);
-  if (isNaN(data.getTime())) return { label: "Sem atualização recente", diasDesde: null, desatualizado: true };
+  if (isNaN(data.getTime()))
+    return { label: "Sem atualização recente", diasDesde: null, desatualizado: true };
   const agora = new Date();
   const diffMs = agora.getTime() - data.getTime();
   const dias = Math.floor(diffMs / (1000 * 60 * 60 * 24));

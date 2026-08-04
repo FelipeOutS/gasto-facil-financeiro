@@ -8,9 +8,8 @@
 import { test, expect, describe, beforeEach } from "bun:test";
 import { state } from "./_whatsapp-fake";
 
-const { detectConsultaIntent, handleConsulta } = await import(
-  "../src/server/whatsapp-consultas.server"
-);
+const { detectConsultaIntent, handleConsulta } =
+  await import("../src/server/whatsapp-consultas.server");
 
 const USER = "u1";
 
@@ -45,9 +44,7 @@ describe("WA-Q-Orcamento — detecção de intenção", () => {
   });
 
   test("não confunde com 'gastos por categoria'", () => {
-    expect(detectConsultaIntent("gastos por categoria")).toBe(
-      "gastos_por_categoria_mes",
-    );
+    expect(detectConsultaIntent("gastos por categoria")).toBe("gastos_por_categoria_mes");
   });
 });
 

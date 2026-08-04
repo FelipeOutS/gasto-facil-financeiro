@@ -107,8 +107,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-
-
     const onBioSessionRestored = (event: Event) => {
       const sess = (event as CustomEvent<{ session?: Session }>).detail?.session ?? null;
       if (!sess) return;
@@ -159,7 +157,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.clearTimeout(loadingFallback);
         if (mounted) setLoading(false);
       });
-
 
     return () => {
       mounted = false;

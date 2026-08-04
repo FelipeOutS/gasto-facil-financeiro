@@ -50,9 +50,7 @@ function ContaPage() {
   const tipo = (profile?.tipo_cadastro as TipoCadastro) ?? null;
   const vocab = getVocab(tipo);
 
-  const tipoLabel = tipo
-    ? t(`tipo.${tipo}` as const)
-    : t("tipo.naoDefinido");
+  const tipoLabel = tipo ? t(`tipo.${tipo}` as const) : t("tipo.naoDefinido");
 
   const nomeExibicao =
     tipo === "empresa"
@@ -74,12 +72,7 @@ function ContaPage() {
 
       <section className="mt-6 rounded-3xl border border-border bg-card p-5 shadow-card">
         <div className="flex items-center gap-3">
-          <UserAvatar
-            url={profile?.avatar_url}
-            name={nomeExibicao}
-            email={user?.email}
-            size={56}
-          />
+          <UserAvatar url={profile?.avatar_url} name={nomeExibicao} email={user?.email} size={56} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-semibold">{nomeExibicao}</p>
             <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
@@ -108,9 +101,7 @@ function ContaPage() {
       {!tipo && (
         <section className="mt-4 rounded-3xl border border-primary/30 bg-primary/5 p-4">
           <p className="text-sm font-semibold">{t("completeProfile")}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t("completeProfileDesc")}
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{t("completeProfileDesc")}</p>
           <Button asChild size="sm" className="mt-3 rounded-xl">
             <Link to="/perfil">{t("completeBtn")}</Link>
           </Button>
@@ -183,7 +174,11 @@ function ContaPage() {
             value={displayCNPJ(profile.cnpj)}
           />
         )}
-        <InfoLine icon={<Mail className="h-4 w-4" />} label={t("fields.email")} value={user?.email ?? t("dash")} />
+        <InfoLine
+          icon={<Mail className="h-4 w-4" />}
+          label={t("fields.email")}
+          value={user?.email ?? t("dash")}
+        />
         {profile?.telefone && (
           <InfoLine
             icon={<Phone className="h-4 w-4" />}
@@ -247,9 +242,7 @@ function LanguageSection() {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold">{t("language.title")}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t("language.description")}
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{t("language.description")}</p>
         </div>
         <LanguageSwitcher variant="ghost-dark" align="end" />
       </div>
@@ -257,15 +250,7 @@ function LanguageSection() {
   );
 }
 
-function InfoLine({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
+function InfoLine({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
       <span className="grid h-8 w-8 place-items-center rounded-full bg-card-elevated text-muted-foreground">

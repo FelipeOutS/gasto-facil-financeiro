@@ -4,9 +4,8 @@
 import { test, expect, beforeEach, afterAll } from "bun:test";
 import { state, resetState, gastosInserts } from "./_whatsapp-fake";
 
-const { processarMensagemWhatsApp, formatarConfirmacao } = await import(
-  "../src/server/whatsapp.server"
-);
+const { processarMensagemWhatsApp, formatarConfirmacao } =
+  await import("../src/server/whatsapp.server");
 
 const tel = "5511999998888";
 
@@ -440,7 +439,7 @@ test('"outro cartão" segue como cartão não cadastrado sem nome literal', asyn
   expect(r.resposta).not.toMatch(/"outro cartão"/i);
 });
 
-test('nome de cartão inexistente ainda mostra o nome literal', async () => {
+test("nome de cartão inexistente ainda mostra o nome literal", async () => {
   await processarMensagemWhatsApp({
     telefone: tel,
     texto: "Uber 12,00",
@@ -461,4 +460,3 @@ test('nome de cartão inexistente ainda mostra o nome literal', async () => {
 });
 
 afterAll(() => {});
-

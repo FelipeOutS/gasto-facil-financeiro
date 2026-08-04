@@ -122,35 +122,147 @@ const KEYWORDS: Array<{ key: MetaCoverKey; terms: string[] }> = [
   {
     key: "viagem_internacional",
     terms: [
-      "internacional", "exterior", "intercâmbio", "intercambio",
-      "paris", "frança", "franca", "europa", "italia", "itália", "japão", "japao",
-      "disney", "estados unidos", "eua", "usa", "miami", "orlando",
-      "londres", "espanha",
+      "internacional",
+      "exterior",
+      "intercâmbio",
+      "intercambio",
+      "paris",
+      "frança",
+      "franca",
+      "europa",
+      "italia",
+      "itália",
+      "japão",
+      "japao",
+      "disney",
+      "estados unidos",
+      "eua",
+      "usa",
+      "miami",
+      "orlando",
+      "londres",
+      "espanha",
     ],
   },
   {
     key: "viagem_nacional",
     terms: [
-      "rio de janeiro", "rj ", "bahia", "nordeste", "brasil", "cristo",
-      "praia", "fernando de noronha", "noronha", "fortaleza", "salvador",
-      "porto seguro", "natal", "maceio", "maceió",
+      "rio de janeiro",
+      "rj ",
+      "bahia",
+      "nordeste",
+      "brasil",
+      "cristo",
+      "praia",
+      "fernando de noronha",
+      "noronha",
+      "fortaleza",
+      "salvador",
+      "porto seguro",
+      "natal",
+      "maceio",
+      "maceió",
     ],
   },
   { key: "viagem", terms: ["viagem", "viajar", "trip", "férias", "ferias", "passeio", "turismo"] },
-  { key: "gamer", terms: ["gamer", "setup", "pc gamer", "videogame", "console", "playstation", "ps5", "ps4", "xbox", "nintendo"] },
+  {
+    key: "gamer",
+    terms: [
+      "gamer",
+      "setup",
+      "pc gamer",
+      "videogame",
+      "console",
+      "playstation",
+      "ps5",
+      "ps4",
+      "xbox",
+      "nintendo",
+    ],
+  },
   { key: "celular", terms: ["celular", "iphone", "smartphone", "samsung", "galaxy", "pixel"] },
   { key: "computador", terms: ["computador", "notebook", "macbook", "imac", " pc"] },
-  { key: "casa", terms: ["casa", "apartamento", "apê", "ape", "moradia", "imóvel", "imovel", "entrada", "financiamento"] },
-  { key: "carro", terms: ["carro", "automóvel", "automovel", "veículo", "veiculo", "civic", "corolla", "hb20"] },
+  {
+    key: "casa",
+    terms: [
+      "casa",
+      "apartamento",
+      "apê",
+      "ape",
+      "moradia",
+      "imóvel",
+      "imovel",
+      "entrada",
+      "financiamento",
+    ],
+  },
+  {
+    key: "carro",
+    terms: ["carro", "automóvel", "automovel", "veículo", "veiculo", "civic", "corolla", "hb20"],
+  },
   { key: "moto", terms: ["moto", "motocicleta", "scooter"] },
-  { key: "casamento", terms: ["casamento", "noivado", "cerimônia", "cerimonia", "festa", "lua de mel", "aliança", "alianca"] },
-  { key: "educacao", terms: ["curso", "faculdade", "estudos", "estudar", "educação", "educacao", "graduação", "graduacao", "pós", " pos ", "mestrado", "mba"] },
-  { key: "saude", terms: ["saúde", "saude", "dentista", "tratamento", "cirurgia", "médico", "medico", "ortodontia"] },
-  { key: "investimento", terms: ["reserva", "emergência", "emergencia", "investimento", "aposentadoria", "guardar", "poupar"] },
+  {
+    key: "casamento",
+    terms: [
+      "casamento",
+      "noivado",
+      "cerimônia",
+      "cerimonia",
+      "festa",
+      "lua de mel",
+      "aliança",
+      "alianca",
+    ],
+  },
+  {
+    key: "educacao",
+    terms: [
+      "curso",
+      "faculdade",
+      "estudos",
+      "estudar",
+      "educação",
+      "educacao",
+      "graduação",
+      "graduacao",
+      "pós",
+      " pos ",
+      "mestrado",
+      "mba",
+    ],
+  },
+  {
+    key: "saude",
+    terms: [
+      "saúde",
+      "saude",
+      "dentista",
+      "tratamento",
+      "cirurgia",
+      "médico",
+      "medico",
+      "ortodontia",
+    ],
+  },
+  {
+    key: "investimento",
+    terms: [
+      "reserva",
+      "emergência",
+      "emergencia",
+      "investimento",
+      "aposentadoria",
+      "guardar",
+      "poupar",
+    ],
+  },
 ];
 
 function normalize(s: string): string {
-  return ` ${s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")} `;
+  return ` ${s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")} `;
 }
 
 /** Retorna a melhor chave de cover para o nome+descrição da meta. */
@@ -198,7 +310,7 @@ export function MetaCover({
     };
   }, [coverKey, isCustom]);
 
-  const url = isCustom ? customUrl ?? "" : metaCoverUrl(coverKey);
+  const url = isCustom ? (customUrl ?? "") : metaCoverUrl(coverKey);
 
   return (
     <div className={cn("relative h-full w-full overflow-hidden bg-muted", className)}>
@@ -220,4 +332,3 @@ export function MetaCover({
     </div>
   );
 }
-

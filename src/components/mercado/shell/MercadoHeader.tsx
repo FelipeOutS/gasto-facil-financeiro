@@ -71,13 +71,8 @@ export function MercadoHeader({
   const buttonInner = (
     <>
       <Store className="h-4 w-4 shrink-0 text-brand" aria-hidden="true" />
-      <span className="truncate">
-        {selectedMarket ?? t("shell.marketNone")}
-      </span>
-      <ChevronDown
-        className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-        aria-hidden="true"
-      />
+      <span className="truncate">{selectedMarket ?? t("shell.marketNone")}</span>
+      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
     </>
   );
 
@@ -87,29 +82,21 @@ export function MercadoHeader({
         <div className="min-w-0">
           {userName ? (
             <p className="text-xs text-muted-foreground md:text-sm">
-              {t("shell.greeting")},{" "}
-              <span className="font-medium text-foreground">{userName}</span>
+              {t("shell.greeting")}, <span className="font-medium text-foreground">{userName}</span>
             </p>
           ) : (
-            <p className="text-xs text-muted-foreground md:text-sm">
-              {t("shell.greetingShort")}
-            </p>
+            <p className="text-xs text-muted-foreground md:text-sm">{t("shell.greetingShort")}</p>
           )}
 
           {useMenu ? (
             <DropdownMenu>
-              <DropdownMenuTrigger
-                className={triggerClass}
-                aria-label={t("shell.marketLabel")}
-              >
+              <DropdownMenuTrigger className={triggerClass} aria-label={t("shell.marketLabel")}>
                 {buttonInner}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[240px]">
                 {marketOptions!.length > 0 && (
                   <>
-                    <DropdownMenuLabel>
-                      {t("shell.marketLabel")}
-                    </DropdownMenuLabel>
+                    <DropdownMenuLabel>{t("shell.marketLabel")}</DropdownMenuLabel>
                     {marketOptions!.map((m) => {
                       const isActive =
                         (m.favorito && !marketOptions!.some((x) => x.favorito && x.id !== m.id)) ||
@@ -121,12 +108,13 @@ export function MercadoHeader({
                           className="flex items-center justify-between gap-2"
                         >
                           <span className="flex min-w-0 items-center gap-2">
-                            <Store className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                            <Store
+                              className="h-4 w-4 shrink-0 text-muted-foreground"
+                              aria-hidden="true"
+                            />
                             <span className="truncate">{m.name}</span>
                           </span>
-                          {isActive && (
-                            <Check className="h-4 w-4 text-brand" aria-hidden="true" />
-                          )}
+                          {isActive && <Check className="h-4 w-4 text-brand" aria-hidden="true" />}
                         </DropdownMenuItem>
                       );
                     })}

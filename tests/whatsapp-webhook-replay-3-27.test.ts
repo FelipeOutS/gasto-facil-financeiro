@@ -49,17 +49,14 @@ describe("WA-3.27 webhook replay é silencioso", () => {
     expect(ROUTE).toMatch(
       /allDuplicates[\s\S]{0,200}results\.every\([\s\S]{0,80}status\s*===\s*["']duplicada["']/,
     );
-    expect(ROUTE).toMatch(
-      /status:\s*allDuplicates\s*\?\s*["']ignored["']\s*:\s*["']processed["']/,
-    );
+    expect(ROUTE).toMatch(/status:\s*allDuplicates\s*\?\s*["']ignored["']\s*:\s*["']processed["']/);
   });
 
   it("nenhum caminho de replay chama sendWhatsAppReply sem guard", () => {
     // Sanity: apenas 1 ocorrência de sendWhatsAppReply na branch de
     // `out.resposta` (a coberta pelo guard). Se aparecer outra chamada
     // solta na mesma pipeline, o guard deixa de proteger.
-    const bloco =
-      ROUTE.split("const out = await processarMensagemWhatsApp(runMsg);")[1] ?? "";
+    const bloco = ROUTE.split("const out = await processarMensagemWhatsApp(runMsg);")[1] ?? "";
     const fim = bloco.indexOf("} catch (e) {");
     const trecho = bloco.slice(0, fim > 0 ? fim : bloco.length);
     // Guard precisa envolver ambos os dispatchers:

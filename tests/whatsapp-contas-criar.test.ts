@@ -15,16 +15,11 @@ const {
   isContaSession,
 } = await import("../src/server/whatsapp-contas-criar.server");
 
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 
-const { detectDueIntent, handleDueIntent } = await import(
-  "../src/server/whatsapp-contas.server"
-);
-const { todayISOInAppTz, monthRangeInAppTz } = await import(
-  "../src/server/contas-vencimento.server"
-);
+const { detectDueIntent, handleDueIntent } = await import("../src/server/whatsapp-contas.server");
+const { todayISOInAppTz, monthRangeInAppTz } =
+  await import("../src/server/contas-vencimento.server");
 
 function msg(texto: string, externalId = `ext-${Math.random().toString(36).slice(2, 8)}`) {
   return {
@@ -39,8 +34,12 @@ function msg(texto: string, externalId = `ext-${Math.random().toString(36).slice
 describe("WA-C2 — detectPayableAccountIntent", () => {
   it("reconhece criação de conta com vencimento", () => {
     expect(detectPayableAccountIntent("Minha internet de 119,90 vence dia 5 todo mês")).toBe(true);
-    expect(detectPayableAccountIntent("Cadastrar aluguel de 1.200 reais para vencer dia 10")).toBe(true);
-    expect(detectPayableAccountIntent("Tenho uma conta de luz de 180 reais que vence em 20 de julho")).toBe(true);
+    expect(detectPayableAccountIntent("Cadastrar aluguel de 1.200 reais para vencer dia 10")).toBe(
+      true,
+    );
+    expect(
+      detectPayableAccountIntent("Tenho uma conta de luz de 180 reais que vence em 20 de julho"),
+    ).toBe(true);
     expect(detectPayableAccountIntent("Criar academia de 89,90 todo dia 8")).toBe(true);
     expect(detectPayableAccountIntent("Plano de saúde de 970 vence dia 15 todo mês")).toBe(true);
   });
@@ -75,7 +74,10 @@ describe("WA-C2 — detectFrequencia / parsePayableAccountMessage", () => {
   });
 
   it("parsePayableAccountMessage extrai nome, valor, recorrência", () => {
-    const d = parsePayableAccountMessage("Internet de 119,90 vence dia 5 todo mês", new Date(2026, 5, 15));
+    const d = parsePayableAccountMessage(
+      "Internet de 119,90 vence dia 5 todo mês",
+      new Date(2026, 5, 15),
+    );
     expect(d.valorCentavos).toBe(11990);
     expect(d.recorrente).toBe(true);
     expect(d.frequenciaRecorrencia).toBe("mensal");
@@ -84,7 +86,10 @@ describe("WA-C2 — detectFrequencia / parsePayableAccountMessage", () => {
   });
 
   it("aluguel R$ 1.200 dia 10 todo mês → mensal", () => {
-    const d = parsePayableAccountMessage("Aluguel de 1.200 vence todo dia 10", new Date(2026, 5, 15));
+    const d = parsePayableAccountMessage(
+      "Aluguel de 1.200 vence todo dia 10",
+      new Date(2026, 5, 15),
+    );
     expect(d.valorCentavos).toBe(120000);
     expect(d.recorrente).toBe(true);
     expect(d.dataVencimento).toMatch(/^2026-(06|07)-10$/);
@@ -147,9 +152,7 @@ describe("WA-C2 — fluxo completo (texto)", () => {
   });
 
   it("conta recorrente mensal: 12 ocorrências sob mesmo recorrencia_id", async () => {
-    const out1 = await processarMensagemWhatsApp(
-      msg("Internet de 119,90 vence dia 5 todo mês"),
-    );
+    const out1 = await processarMensagemWhatsApp(msg("Internet de 119,90 vence dia 5 todo mês"));
     expect(out1.resposta).toContain("Confere pra mim?");
     expect(out1.resposta).toMatch(/Recorrência:\s+Mensal/i);
 
@@ -167,7 +170,9 @@ describe("WA-C2 — fluxo completo (texto)", () => {
   });
 
   it("sem valor: pergunta valor e respeita o restante", async () => {
-    const out1 = await processarMensagemWhatsApp(msg("Cadastrar internet que vence dia 5 todo mês"));
+    const out1 = await processarMensagemWhatsApp(
+      msg("Cadastrar internet que vence dia 5 todo mês"),
+    );
     expect(out1.resposta).toMatch(/valor previsto/i);
     expect(state.contasData.length).toBe(0);
 
@@ -242,7 +247,10 @@ describe("WA-C2 — falha de persistência não envia sucesso falso", () => {
       if (t === "contas_a_pagar") {
         const wrapped = {
           ...b,
-          insert: () => ({ ...b, then: (res: (v: unknown) => void) => res({ error: { code: "X", message: "boom" } }) }),
+          insert: () => ({
+            ...b,
+            then: (res: (v: unknown) => void) => res({ error: { code: "X", message: "boom" } }),
+          }),
         };
         return wrapped;
       }
@@ -281,7 +289,20 @@ describe("WA-C2 — integração com WA-C1", () => {
   it("conta única para hoje aparece em 'o que vence hoje?'", async () => {
     const TODAY = todayISOInAppTz();
     const [y, m, d] = TODAY.split("-").map(Number);
-    const MES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"][m - 1];
+    const MES = [
+      "janeiro",
+      "fevereiro",
+      "março",
+      "abril",
+      "maio",
+      "junho",
+      "julho",
+      "agosto",
+      "setembro",
+      "outubro",
+      "novembro",
+      "dezembro",
+    ][m - 1];
     await processarMensagemWhatsApp(
       msg(`Cadastrar conta de luz de 180 reais que vence em ${d} de ${MES} de ${y}`),
     );
@@ -321,7 +342,11 @@ describe("WA-C2 — logs seguros", () => {
     const orig = console.info;
     console.info = (...args: unknown[]) => {
       for (const a of args) {
-        if (a && typeof a === "object" && (a as Record<string, unknown>).event === "wa_payable_account_decision") {
+        if (
+          a &&
+          typeof a === "object" &&
+          (a as Record<string, unknown>).event === "wa_payable_account_decision"
+        ) {
           events.push(a as Record<string, unknown>);
         }
       }
@@ -389,7 +414,9 @@ describe("WA-C2 — não interrompe sessão financeira ativa", () => {
     await processarMensagemWhatsApp(msg("gastei 30"));
     // Próxima mensagem: o parser de gasto está aguardando descrição.
     // A mensagem com cara de "cadastrar internet" não deve dar bypass.
-    const out = await processarMensagemWhatsApp(msg("cadastrar internet de 119,90 vence dia 5 todo mês", "ext-x"));
+    const out = await processarMensagemWhatsApp(
+      msg("cadastrar internet de 119,90 vence dia 5 todo mês", "ext-x"),
+    );
     // Está em fluxo de gasto, então NÃO deve produzir a prévia da conta a pagar.
     expect(out.resposta).not.toContain("Conta:");
     expect(state.contasData.length).toBe(0);

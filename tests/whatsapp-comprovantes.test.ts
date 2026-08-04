@@ -11,12 +11,8 @@ const {
   buscarSessaoComprovanteAtiva,
   __setExpenseParserForTests,
   __setWhatsAppAuditObserverForTests,
-} = await import(
-  "../src/server/whatsapp.server"
-);
-const { __setOcrExtractorForTests } = await import(
-  "../src/server/ocr-comprovante.server"
-);
+} = await import("../src/server/whatsapp.server");
+const { __setOcrExtractorForTests } = await import("../src/server/ocr-comprovante.server");
 
 const tel = "5511999998888";
 
@@ -38,14 +34,16 @@ function fakeImage(hash = "img-abc-1") {
 }
 
 // Configura o OCR mock para devolver `result` na próxima chamada.
-function mockOcr(result: Partial<{
-  valor: number | null;
-  descricao: string | null;
-  data: string | null;
-  categoriaSugerida: string | null;
-  formaPagamento: string | null;
-  confianca: "alta" | "media" | "baixa";
-}>) {
+function mockOcr(
+  result: Partial<{
+    valor: number | null;
+    descricao: string | null;
+    data: string | null;
+    categoriaSugerida: string | null;
+    formaPagamento: string | null;
+    confianca: "alta" | "media" | "baixa";
+  }>,
+) {
   __setOcrExtractorForTests(async () => ({
     ok: true,
     data: {
@@ -99,10 +97,15 @@ test("Confirmação com 'sim' cria UM único gasto via WhatsApp", async () => {
     formaPagamento: "credito",
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-c1", image: fakeImage("h-c1"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-c1",
+    image: fakeImage("h-c1"),
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "img-c1-yes",
+    telefone: tel,
+    texto: "sim",
+    external_id: "img-c1-yes",
   });
   expect(r.status).toBe("salva");
   const inserts = gastosInserts();
@@ -115,10 +118,15 @@ test("Confirmação com 'sim' cria UM único gasto via WhatsApp", async () => {
 test("Resposta 'não' não cria gasto e encerra a sessão de imagem", async () => {
   mockOcr({ valor: 12, descricao: "Padaria", data: "2026-06-22" });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-n1", image: fakeImage("h-n1"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-n1",
+    image: fakeImage("h-n1"),
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "não", external_id: "img-n1-no",
+    telefone: tel,
+    texto: "não",
+    external_id: "img-n1-no",
   });
   expect(r.status).toBe("cancelada");
   expect(gastosInserts()).toHaveLength(0);
@@ -127,10 +135,15 @@ test("Resposta 'não' não cria gasto e encerra a sessão de imagem", async () =
 test("'cancelar' limpa a sessão de imagem sem criar gasto", async () => {
   mockOcr({ valor: 12, descricao: "Padaria", data: "2026-06-22" });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-x1", image: fakeImage("h-x1"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-x1",
+    image: fakeImage("h-x1"),
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "cancelar", external_id: "img-x1-cancel",
+    telefone: tel,
+    texto: "cancelar",
+    external_id: "img-x1-cancel",
   });
   expect(r.status).toBe("cancelada");
   expect(gastosInserts()).toHaveLength(0);
@@ -140,7 +153,10 @@ test("'cancelar' limpa a sessão de imagem sem criar gasto", async () => {
 test("Imagem ilegível não cria gasto e pede foto mais nítida", async () => {
   mockOcr({ valor: null, descricao: null });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-i1", image: fakeImage("h-i1"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-i1",
+    image: fakeImage("h-i1"),
   });
   expect(r.resposta).toContain("Não consegui ler esta nota");
   expect(gastosInserts()).toHaveLength(0);
@@ -149,7 +165,10 @@ test("Imagem ilegível não cria gasto e pede foto mais nítida", async () => {
 test("Só valor identificado → pergunta a descrição", async () => {
   mockOcr({ valor: 25.5, descricao: null });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-v1", image: fakeImage("h-v1"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-v1",
+    image: fakeImage("h-v1"),
   });
   expect(r.resposta).toContain("Consegui identificar o valor");
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 25,50");
@@ -159,7 +178,10 @@ test("Só valor identificado → pergunta a descrição", async () => {
 test("Só descrição identificada → pergunta o valor", async () => {
   mockOcr({ valor: null, descricao: "iFood" });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-d1", image: fakeImage("h-d1"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-d1",
+    image: fakeImage("h-d1"),
   });
   expect(r.resposta).toContain("iFood");
   expect(r.resposta.toLowerCase()).toContain("qual foi o valor");
@@ -168,14 +190,22 @@ test("Só descrição identificada → pergunta o valor", async () => {
 
 test("Ajuste de valor refaz o resumo com o novo valor", async () => {
   mockOcr({
-    valor: 99, descricao: "Mercado", data: "2026-06-22",
-    categoriaSugerida: "mercado", formaPagamento: "pix",
+    valor: 99,
+    descricao: "Mercado",
+    data: "2026-06-22",
+    categoriaSugerida: "mercado",
+    formaPagamento: "pix",
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-aj1", image: fakeImage("h-aj1"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-aj1",
+    image: fakeImage("h-aj1"),
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "valor 52,90", external_id: "img-aj1-v",
+    telefone: tel,
+    texto: "valor 52,90",
+    external_id: "img-aj1-v",
   });
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 52,90");
   expect(r.resposta).toContain("Li esta nota");
@@ -184,28 +214,43 @@ test("Ajuste de valor refaz o resumo com o novo valor", async () => {
 test("Ajuste de descrição via fluxo 'alterar descrição' → resumo atualizado", async () => {
   mockOcr({ valor: 30, descricao: "Padaria", data: "2026-06-22", formaPagamento: "pix" });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-aj2", image: fakeImage("h-aj2"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-aj2",
+    image: fakeImage("h-aj2"),
   });
   const ask = await processarMensagemWhatsApp({
-    telefone: tel, texto: "alterar descrição", external_id: "img-aj2-a",
+    telefone: tel,
+    texto: "alterar descrição",
+    external_id: "img-aj2-a",
   });
   expect(ask.resposta).toContain("Qual descrição");
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "Padaria Central", external_id: "img-aj2-b",
+    telefone: tel,
+    texto: "Padaria Central",
+    external_id: "img-aj2-b",
   });
   expect(r.resposta).toContain("Padaria Central");
 });
 
 test("Ajuste de categoria usa apenas categoria existente do usuário", async () => {
   mockOcr({
-    valor: 30, descricao: "Uber", data: "2026-06-22",
-    categoriaSugerida: "outros", formaPagamento: "pix",
+    valor: 30,
+    descricao: "Uber",
+    data: "2026-06-22",
+    categoriaSugerida: "outros",
+    formaPagamento: "pix",
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-aj3", image: fakeImage("h-aj3"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-aj3",
+    image: fakeImage("h-aj3"),
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "categoria Transporte", external_id: "img-aj3-c",
+    telefone: tel,
+    texto: "categoria Transporte",
+    external_id: "img-aj3-c",
   });
   expect(r.resposta).toContain("Transporte");
 });
@@ -213,26 +258,44 @@ test("Ajuste de categoria usa apenas categoria existente do usuário", async () 
 test("Ajuste de data com 'ontem' atualiza o resumo", async () => {
   mockOcr({ valor: 30, descricao: "Uber", data: "2026-06-22", formaPagamento: "pix" });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-aj4", image: fakeImage("h-aj4"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-aj4",
+    image: fakeImage("h-aj4"),
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "data ontem", external_id: "img-aj4-d",
+    telefone: tel,
+    texto: "data ontem",
+    external_id: "img-aj4-d",
   });
   expect(r.resposta).toContain("Ontem");
 });
 
 test("Sem forma de pagamento detectada → 'sim' pergunta como pagou antes de salvar", async () => {
-  mockOcr({ valor: 30, descricao: "Uber", data: null, categoriaSugerida: "transporte", formaPagamento: null });
+  mockOcr({
+    valor: 30,
+    descricao: "Uber",
+    data: null,
+    categoriaSugerida: "transporte",
+    formaPagamento: null,
+  });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-p1", image: fakeImage("h-p1"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-p1",
+    image: fakeImage("h-p1"),
   });
   const pre = await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "img-p1-yes",
+    telefone: tel,
+    texto: "sim",
+    external_id: "img-p1-yes",
   });
   expect(pre.resposta).toContain("Como você pagou");
   expect(gastosInserts()).toHaveLength(0);
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "pix", external_id: "img-p1-pix",
+    telefone: tel,
+    texto: "pix",
+    external_id: "img-p1-pix",
   });
   expect(r.status).toBe("salva");
   expect(gastosInserts()).toHaveLength(1);
@@ -242,14 +305,19 @@ test("Sem forma de pagamento detectada → 'sim' pergunta como pagou antes de sa
 test("Imagem durante sessão de gasto pendente NÃO interrompe o fluxo", async () => {
   // Inicia sessão de gasto sem valor
   const start = await processarMensagemWhatsApp({
-    telefone: tel, texto: "registrar gasto", external_id: "gx-1",
+    telefone: tel,
+    texto: "registrar gasto",
+    external_id: "gx-1",
   });
   expect(start.resposta.toLowerCase()).toContain("gasto");
   expect(state.pendingRow?.status).toBe("aguardando_descricao_e_valor_gasto");
   // Imagem chega agora → orienta a cancelar antes
   mockOcr({ valor: 50, descricao: "Uber" });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-gx", image: fakeImage("h-gx"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-gx",
+    image: fakeImage("h-gx"),
   });
   expect(r.resposta).toContain("lançamento em andamento");
   expect(gastosInserts()).toHaveLength(0);
@@ -258,12 +326,17 @@ test("Imagem durante sessão de gasto pendente NÃO interrompe o fluxo", async (
 
 test("Imagem durante sessão de receita pendente NÃO interrompe o fluxo", async () => {
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "Quero lançar uma renda", external_id: "rx-1",
+    telefone: tel,
+    texto: "Quero lançar uma renda",
+    external_id: "rx-1",
   });
   expect(state.pendingRow?.status).toBe("rec_aguardando_tipo");
   mockOcr({ valor: 50, descricao: "Uber" });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-rx", image: fakeImage("h-rx"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-rx",
+    image: fakeImage("h-rx"),
   });
   expect(r.resposta).toContain("lançamento em andamento");
   expect(state.pendingRow?.status).toBe("rec_aguardando_tipo");
@@ -272,17 +345,25 @@ test("Imagem durante sessão de receita pendente NÃO interrompe o fluxo", async
 test("Imagem duplicada (mesmo hash) já salva NÃO cria segundo gasto", async () => {
   mockOcr({ valor: 30, descricao: "Uber", categoriaSugerida: "transporte", formaPagamento: "pix" });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-dup1", image: fakeImage("dup-h"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-dup1",
+    image: fakeImage("dup-h"),
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "img-dup1-yes",
+    telefone: tel,
+    texto: "sim",
+    external_id: "img-dup1-yes",
   });
   expect(gastosInserts()).toHaveLength(1);
 
   // Reenviar a mesma imagem (mesmo hash). Deve ser detectada como duplicada.
   mockOcr({ valor: 30, descricao: "Uber", categoriaSugerida: "transporte", formaPagamento: "pix" });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-dup2", image: fakeImage("dup-h"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-dup2",
+    image: fakeImage("dup-h"),
   });
   expect(r.status).toBe("duplicada");
   expect(gastosInserts()).toHaveLength(1);
@@ -291,14 +372,21 @@ test("Imagem duplicada (mesmo hash) já salva NÃO cria segundo gasto", async ()
 test("'alterar valor' pede o novo valor e depois aceita o ajuste", async () => {
   mockOcr({ valor: 99, descricao: "Mercado", formaPagamento: "pix" });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-av", image: fakeImage("h-av"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-av",
+    image: fakeImage("h-av"),
   });
   const ask = await processarMensagemWhatsApp({
-    telefone: tel, texto: "alterar valor", external_id: "img-av-q",
+    telefone: tel,
+    texto: "alterar valor",
+    external_id: "img-av-q",
   });
   expect(ask.resposta).toContain("Qual valor");
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "75,00", external_id: "img-av-v",
+    telefone: tel,
+    texto: "75,00",
+    external_id: "img-av-v",
   });
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 75,00");
 });
@@ -316,7 +404,10 @@ test("Descrição em CAIXA ALTA é formatada com capitalização normal", async 
     formaPagamento: "pix",
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-tc1", image: fakeImage("h-tc1"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-tc1",
+    image: fakeImage("h-tc1"),
   });
   expect(r.resposta).toContain("Expedito Alves de Lima ME");
   expect(r.resposta).not.toContain("EXPEDITO ALVES");
@@ -324,26 +415,40 @@ test("Descrição em CAIXA ALTA é formatada com capitalização normal", async 
 
 test("OCR com CRÉDITO sugere Cartão de crédito no resumo", async () => {
   mockOcr({
-    valor: 80, descricao: "Padaria", data: null,
-    categoriaSugerida: "alimentacao", formaPagamento: "credito",
+    valor: 80,
+    descricao: "Padaria",
+    data: null,
+    categoriaSugerida: "alimentacao",
+    formaPagamento: "credito",
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-fp-c", image: fakeImage("h-fp-c"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-fp-c",
+    image: fakeImage("h-fp-c"),
   });
   expect(r.resposta).toContain("Pagamento: Cartão de crédito");
 });
 
 test("OCR com PIX sugere Pix no resumo e não pergunta forma de pagamento", async () => {
   mockOcr({
-    valor: 25, descricao: "Lanchonete", data: null,
-    categoriaSugerida: "alimentacao", formaPagamento: "pix",
+    valor: 25,
+    descricao: "Lanchonete",
+    data: null,
+    categoriaSugerida: "alimentacao",
+    formaPagamento: "pix",
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-fp-p", image: fakeImage("h-fp-p"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-fp-p",
+    image: fakeImage("h-fp-p"),
   });
   expect(state.pendingRow?.parsed.formaPagamento).toBe("pix");
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "img-fp-p-yes",
+    telefone: tel,
+    texto: "sim",
+    external_id: "img-fp-p-yes",
   });
   expect(r.status).toBe("salva");
   expect(r.resposta).not.toContain("Como você pagou");
@@ -351,19 +456,29 @@ test("OCR com PIX sugere Pix no resumo e não pergunta forma de pagamento", asyn
 
 test("Data antiga (>30 dias) → pergunta usar nota ou hoje antes de salvar", async () => {
   mockOcr({
-    valor: 40, descricao: "Mercado", data: "2020-01-15",
-    categoriaSugerida: "mercado", formaPagamento: "pix",
+    valor: 40,
+    descricao: "Mercado",
+    data: "2020-01-15",
+    categoriaSugerida: "mercado",
+    formaPagamento: "pix",
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-dt1", image: fakeImage("h-dt1"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-dt1",
+    image: fakeImage("h-dt1"),
   });
   const pre = await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "img-dt1-yes",
+    telefone: tel,
+    texto: "sim",
+    external_id: "img-dt1-yes",
   });
   expect(pre.resposta).toContain("A nota indica a data 15/01/2020");
   expect(gastosInserts()).toHaveLength(0);
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "usar data da nota", external_id: "img-dt1-keep",
+    telefone: tel,
+    texto: "usar data da nota",
+    external_id: "img-dt1-keep",
   });
   expect(r.status).toBe("salva");
   expect(gastosInserts()[0].row.data).toBe("2020-01-15");
@@ -371,17 +486,27 @@ test("Data antiga (>30 dias) → pergunta usar nota ou hoje antes de salvar", as
 
 test("Data antiga + 'usar hoje' grava com a data de hoje", async () => {
   mockOcr({
-    valor: 41, descricao: "Mercado", data: "2020-01-15",
-    categoriaSugerida: "mercado", formaPagamento: "pix",
+    valor: 41,
+    descricao: "Mercado",
+    data: "2020-01-15",
+    categoriaSugerida: "mercado",
+    formaPagamento: "pix",
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-dt2", image: fakeImage("h-dt2"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-dt2",
+    image: fakeImage("h-dt2"),
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "img-dt2-yes",
+    telefone: tel,
+    texto: "sim",
+    external_id: "img-dt2-yes",
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "usar hoje", external_id: "img-dt2-hoje",
+    telefone: tel,
+    texto: "usar hoje",
+    external_id: "img-dt2-hoje",
   });
   expect(r.status).toBe("salva");
   expect(gastosInserts()[0].row.data).not.toBe("2020-01-15");
@@ -389,14 +514,22 @@ test("Data antiga + 'usar hoje' grava com a data de hoje", async () => {
 
 test("Data futura → pergunta confirmação antes de salvar", async () => {
   mockOcr({
-    valor: 30, descricao: "Padaria", data: "2099-12-25",
-    categoriaSugerida: "alimentacao", formaPagamento: "pix",
+    valor: 30,
+    descricao: "Padaria",
+    data: "2099-12-25",
+    categoriaSugerida: "alimentacao",
+    formaPagamento: "pix",
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-dtf", image: fakeImage("h-dtf"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-dtf",
+    image: fakeImage("h-dtf"),
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "img-dtf-yes",
+    telefone: tel,
+    texto: "sim",
+    external_id: "img-dtf-yes",
   });
   expect(r.resposta).toContain("A nota indica a data 25/12/2099");
   expect(gastosInserts()).toHaveLength(0);
@@ -404,20 +537,30 @@ test("Data futura → pergunta confirmação antes de salvar", async () => {
 
 test("Categoria sem confiança NÃO vira Outros automaticamente", async () => {
   mockOcr({
-    valor: 60, descricao: "Loja Diversa", data: null,
-    categoriaSugerida: null, formaPagamento: "pix",
+    valor: 60,
+    descricao: "Loja Diversa",
+    data: null,
+    categoriaSugerida: null,
+    formaPagamento: "pix",
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-cat1", image: fakeImage("h-cat1"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-cat1",
+    image: fakeImage("h-cat1"),
   });
   expect(r.resposta).toContain("Categoria: Não identificada");
   const pre = await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "img-cat1-yes",
+    telefone: tel,
+    texto: "sim",
+    external_id: "img-cat1-yes",
   });
   expect(pre.resposta).toContain("Em qual categoria");
   expect(gastosInserts()).toHaveLength(0);
   const r2 = await processarMensagemWhatsApp({
-    telefone: tel, texto: "Mercado", external_id: "img-cat1-mer",
+    telefone: tel,
+    texto: "Mercado",
+    external_id: "img-cat1-mer",
   });
   expect(r2.status).toBe("salva");
   expect(gastosInserts()[0].row.categoria_id).toBe("cat-mer");
@@ -425,25 +568,40 @@ test("Categoria sem confiança NÃO vira Outros automaticamente", async () => {
 
 test("Categoria com confiança baixa NÃO é assumida sem o usuário escolher", async () => {
   mockOcr({
-    valor: 60, descricao: "Loja X", data: null,
-    categoriaSugerida: "outros", confianca: "baixa", formaPagamento: "pix",
+    valor: 60,
+    descricao: "Loja X",
+    data: null,
+    categoriaSugerida: "outros",
+    confianca: "baixa",
+    formaPagamento: "pix",
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-cat2", image: fakeImage("h-cat2"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-cat2",
+    image: fakeImage("h-cat2"),
   });
   expect(r.resposta).toContain("Categoria: Não identificada");
 });
 
 test("Ajuste manual de pagamento via 'pagamento pix' atualiza o resumo", async () => {
   mockOcr({
-    valor: 70, descricao: "Restaurante", data: null,
-    categoriaSugerida: "alimentacao", formaPagamento: "credito",
+    valor: 70,
+    descricao: "Restaurante",
+    data: null,
+    categoriaSugerida: "alimentacao",
+    formaPagamento: "credito",
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-fp-aj", image: fakeImage("h-fp-aj"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-fp-aj",
+    image: fakeImage("h-fp-aj"),
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "pagamento pix", external_id: "img-fp-aj-v",
+    telefone: tel,
+    texto: "pagamento pix",
+    external_id: "img-fp-aj-v",
   });
   expect(r.resposta).toContain("Pagamento: Pix");
   expect(r.resposta).not.toContain("Pagamento: Cartão de crédito");
@@ -451,18 +609,28 @@ test("Ajuste manual de pagamento via 'pagamento pix' atualiza o resumo", async (
 
 test("'alterar pagamento' pede a nova forma e aceita o ajuste", async () => {
   mockOcr({
-    valor: 70, descricao: "Padaria", data: null,
-    categoriaSugerida: "alimentacao", formaPagamento: "credito",
+    valor: 70,
+    descricao: "Padaria",
+    data: null,
+    categoriaSugerida: "alimentacao",
+    formaPagamento: "credito",
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "img-fp-aj2", image: fakeImage("h-fp-aj2"),
+    telefone: tel,
+    texto: "",
+    external_id: "img-fp-aj2",
+    image: fakeImage("h-fp-aj2"),
   });
   const ask = await processarMensagemWhatsApp({
-    telefone: tel, texto: "alterar pagamento", external_id: "img-fp-aj2-q",
+    telefone: tel,
+    texto: "alterar pagamento",
+    external_id: "img-fp-aj2-q",
   });
   expect(ask.resposta).toContain("Qual forma de pagamento");
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "débito", external_id: "img-fp-aj2-v",
+    telefone: tel,
+    texto: "débito",
+    external_id: "img-fp-aj2-v",
   });
   expect(r.resposta).toContain("Pagamento: Cartão de débito");
 });
@@ -473,14 +641,22 @@ test("'alterar pagamento' pede a nova forma e aceita o ajuste", async () => {
 
 test("'categoria' sozinho durante o resumo NÃO inicia novo gasto", async () => {
   mockOcr({
-    valor: 50, descricao: "Padaria", data: "2026-06-22",
-    categoriaSugerida: "alimentacao", formaPagamento: "pix",
+    valor: 50,
+    descricao: "Padaria",
+    data: "2026-06-22",
+    categoriaSugerida: "alimentacao",
+    formaPagamento: "pix",
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g5a3-1", image: fakeImage("g5a3-h1"),
+    telefone: tel,
+    texto: "",
+    external_id: "g5a3-1",
+    image: fakeImage("g5a3-h1"),
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "categoria", external_id: "g5a3-1-cat",
+    telefone: tel,
+    texto: "categoria",
+    external_id: "g5a3-1-cat",
   });
   expect(r.resposta).toContain("Qual categoria você quer usar");
   expect(r.resposta).not.toContain("Qual foi o valor de");
@@ -491,35 +667,70 @@ test("'categoria' sozinho durante o resumo NÃO inicia novo gasto", async () => 
 });
 
 test("Aceita 'editar categoria' e 'trocar categoria' como pedido de ajuste", async () => {
-  mockOcr({ valor: 50, descricao: "Padaria", data: "2026-06-22", categoriaSugerida: "alimentacao", formaPagamento: "pix" });
+  mockOcr({
+    valor: 50,
+    descricao: "Padaria",
+    data: "2026-06-22",
+    categoriaSugerida: "alimentacao",
+    formaPagamento: "pix",
+  });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g5a3-2", image: fakeImage("g5a3-h2"),
+    telefone: tel,
+    texto: "",
+    external_id: "g5a3-2",
+    image: fakeImage("g5a3-h2"),
   });
   const a = await processarMensagemWhatsApp({
-    telefone: tel, texto: "editar categoria", external_id: "g5a3-2a",
+    telefone: tel,
+    texto: "editar categoria",
+    external_id: "g5a3-2a",
   });
   expect(a.resposta).toContain("Qual categoria você quer usar");
   // restart session
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "cancelar", external_id: "g5a3-2c",
+    telefone: tel,
+    texto: "cancelar",
+    external_id: "g5a3-2c",
   });
-  mockOcr({ valor: 50, descricao: "Padaria", data: "2026-06-22", categoriaSugerida: "alimentacao", formaPagamento: "pix" });
+  mockOcr({
+    valor: 50,
+    descricao: "Padaria",
+    data: "2026-06-22",
+    categoriaSugerida: "alimentacao",
+    formaPagamento: "pix",
+  });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g5a3-2b", image: fakeImage("g5a3-h2b"),
+    telefone: tel,
+    texto: "",
+    external_id: "g5a3-2b",
+    image: fakeImage("g5a3-h2b"),
   });
   const b = await processarMensagemWhatsApp({
-    telefone: tel, texto: "Trocar Categoria", external_id: "g5a3-2bx",
+    telefone: tel,
+    texto: "Trocar Categoria",
+    external_id: "g5a3-2bx",
   });
   expect(b.resposta).toContain("Qual categoria você quer usar");
 });
 
 test("Escolha de categoria por número atualiza o resumo", async () => {
-  mockOcr({ valor: 50, descricao: "Padaria", data: "2026-06-22", categoriaSugerida: "alimentacao", formaPagamento: "pix" });
+  mockOcr({
+    valor: 50,
+    descricao: "Padaria",
+    data: "2026-06-22",
+    categoriaSugerida: "alimentacao",
+    formaPagamento: "pix",
+  });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g5a3-3", image: fakeImage("g5a3-h3"),
+    telefone: tel,
+    texto: "",
+    external_id: "g5a3-3",
+    image: fakeImage("g5a3-h3"),
   });
   const ask = await processarMensagemWhatsApp({
-    telefone: tel, texto: "categoria", external_id: "g5a3-3-ask",
+    telefone: tel,
+    texto: "categoria",
+    external_id: "g5a3-3-ask",
   });
   // lista numerada (curta — prioridade nova: OCR + keywords + uso + restantes,
   // Outros sempre por último)
@@ -528,48 +739,76 @@ test("Escolha de categoria por número atualiza o resumo", async () => {
   expect(ask.resposta).toMatch(/6\.\s+Outros/);
   // user picks "2" → Transporte
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "2", external_id: "g5a3-3-pick",
+    telefone: tel,
+    texto: "2",
+    external_id: "g5a3-3-pick",
   });
   expect(r.resposta).toContain("Categoria: Transporte");
   expect(r.resposta).toContain("Li esta nota");
 });
 
 test("Escolha de categoria por nome durante o ajuste atualiza o resumo", async () => {
-  mockOcr({ valor: 50, descricao: "Padaria", data: "2026-06-22", categoriaSugerida: "alimentacao", formaPagamento: "pix" });
-  await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g5a3-4", image: fakeImage("g5a3-h4"),
+  mockOcr({
+    valor: 50,
+    descricao: "Padaria",
+    data: "2026-06-22",
+    categoriaSugerida: "alimentacao",
+    formaPagamento: "pix",
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "categoria", external_id: "g5a3-4-ask",
+    telefone: tel,
+    texto: "",
+    external_id: "g5a3-4",
+    image: fakeImage("g5a3-h4"),
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "categoria",
+    external_id: "g5a3-4-ask",
   });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "Transporte", external_id: "g5a3-4-pick",
+    telefone: tel,
+    texto: "Transporte",
+    external_id: "g5a3-4-pick",
   });
   expect(r.resposta).toContain("Categoria: Transporte");
 });
 
 test("Data com confiança baixa NÃO é salva automaticamente — pergunta antes", async () => {
   mockOcr({
-    valor: 40, descricao: "Lanchonete", data: "2026-06-20",
-    categoriaSugerida: "alimentacao", confianca: "baixa", formaPagamento: "pix",
+    valor: 40,
+    descricao: "Lanchonete",
+    data: "2026-06-20",
+    categoriaSugerida: "alimentacao",
+    confianca: "baixa",
+    formaPagamento: "pix",
   });
   const r1 = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g5a3-d1", image: fakeImage("g5a3-d1h"),
+    telefone: tel,
+    texto: "",
+    external_id: "g5a3-d1",
+    image: fakeImage("g5a3-d1h"),
   });
   // resumo mostra "Não confirmada"
   expect(r1.resposta).toContain("Data da nota: Não confirmada");
   // user precisa primeiro escolher categoria (sem confiança) e depois data
   const r2 = await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "g5a3-d1-yes",
+    telefone: tel,
+    texto: "sim",
+    external_id: "g5a3-d1-yes",
   });
   expect(r2.resposta).toContain("Em qual categoria");
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "Mercado", external_id: "g5a3-d1-cat",
+    telefone: tel,
+    texto: "Mercado",
+    external_id: "g5a3-d1-cat",
   });
   // agora pergunta de data incerta
   expect(state.pendingRow?.status).toBe("img_aguardando_data_confirmacao");
   const r3 = await processarMensagemWhatsApp({
-    telefone: tel, texto: "usar hoje", external_id: "g5a3-d1-hoje",
+    telefone: tel,
+    texto: "usar hoje",
+    external_id: "g5a3-d1-hoje",
   });
   expect(r3.status).toBe("salva");
   expect(gastosInserts()[0].row.data).not.toBe("2026-06-20");
@@ -584,24 +823,36 @@ test("E2E produção: comando 'categoria' em sessão de comprovante não cai no 
     formaPagamento: "pix",
   });
   const resumo = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g5a31-img", image: fakeImage("g5a31-h"),
+    telefone: tel,
+    texto: "",
+    external_id: "g5a31-img",
+    image: fakeImage("g5a31-h"),
   });
   expect(resumo.resposta).toContain("Li esta nota");
   expect(state.pendingRow?.parsed.kind).toBe("imagem_comprovante");
   expect(state.pendingRow?.status).toBe("img_aguardando_confirmacao");
 
   const ask = await processarMensagemWhatsApp({
-    telefone: tel, texto: "categoria", external_id: "g5a31-cat",
+    telefone: tel,
+    texto: "categoria",
+    external_id: "g5a31-cat",
   });
   expect(ask.resposta).toContain("Claro. Qual categoria você quer usar?");
   expect(ask.resposta).toMatch(/1\.\s+Mercado/);
   expect(ask.resposta).toMatch(/2\.\s+Transporte/);
   expect(ask.resposta).not.toContain("Qual foi o valor de Categoria");
-  expect(state.inserts.some((i) => i.table === "whatsapp_messages" && i.row.status === "aguardando_descricao_e_valor_gasto")).toBe(false);
+  expect(
+    state.inserts.some(
+      (i) =>
+        i.table === "whatsapp_messages" && i.row.status === "aguardando_descricao_e_valor_gasto",
+    ),
+  ).toBe(false);
   expect(gastosInserts()).toHaveLength(0);
 
   const selected = await processarMensagemWhatsApp({
-    telefone: tel, texto: "2", external_id: "g5a31-cat-2",
+    telefone: tel,
+    texto: "2",
+    external_id: "g5a31-cat-2",
   });
   expect(selected.resposta).toContain("Li esta nota");
   expect(selected.resposta).toContain("Expedito Alves de Lima ME");
@@ -614,7 +865,9 @@ test("E2E produção: comando 'categoria' em sessão de comprovante não cai no 
 test("Integração realista: cancelar → imagem → comandos de ajuste ficam no comprovante", async () => {
   async function startReceipt(externalPrefix: string) {
     await processarMensagemWhatsApp({
-      telefone: tel, texto: "cancelar", external_id: `${externalPrefix}-cancel`,
+      telefone: tel,
+      texto: "cancelar",
+      external_id: `${externalPrefix}-cancel`,
     });
     mockOcr({
       valor: 48.9,
@@ -624,7 +877,10 @@ test("Integração realista: cancelar → imagem → comandos de ajuste ficam no
       formaPagamento: "pix",
     });
     const resumo = await processarMensagemWhatsApp({
-      telefone: tel, texto: "", external_id: `${externalPrefix}-img`, image: fakeImage(`${externalPrefix}-h`),
+      telefone: tel,
+      texto: "",
+      external_id: `${externalPrefix}-img`,
+      image: fakeImage(`${externalPrefix}-h`),
     });
     expect(resumo.resposta).toContain("Li esta nota");
     const lookup = await buscarSessaoComprovanteAtiva("u1", tel);
@@ -663,17 +919,27 @@ test("Integração realista: cancelar → imagem → comandos de ajuste ficam no
     });
 
     const response = await processarMensagemWhatsApp({
-      telefone: tel, texto: cmd, external_id: `audit-${idx}-cmd`,
+      telefone: tel,
+      texto: cmd,
+      external_id: `audit-${idx}-cmd`,
     });
     expect(response.resposta).toContain(expected);
     expect(expenseParserCalled).toBe(false);
-    expect(events.some((e) => e.event === "wa_session_lookup" && e.receiptSessionFoundByKind === true)).toBe(true);
-    expect(events.some((e) => e.event === "wa_route_decision" && e.routedTo === "receipt_handler")).toBe(true);
-    expect(events.some((e) => e.event === "wa_route_decision" && e.routedTo === "expense_parser")).toBe(false);
+    expect(
+      events.some((e) => e.event === "wa_session_lookup" && e.receiptSessionFoundByKind === true),
+    ).toBe(true);
+    expect(
+      events.some((e) => e.event === "wa_route_decision" && e.routedTo === "receipt_handler"),
+    ).toBe(true);
+    expect(
+      events.some((e) => e.event === "wa_route_decision" && e.routedTo === "expense_parser"),
+    ).toBe(false);
 
     if (cmd === "categoria") {
       const selected = await processarMensagemWhatsApp({
-        telefone: tel, texto: "2", external_id: `audit-${idx}-cat-2`,
+        telefone: tel,
+        texto: "2",
+        external_id: `audit-${idx}-cat-2`,
       });
       expect(selected.resposta).toContain("Li esta nota");
       expect(selected.resposta).toContain("Categoria: Transporte");
@@ -684,9 +950,18 @@ test("Integração realista: cancelar → imagem → comandos de ajuste ficam no
 });
 
 test("Comandos reservados de comprovante são priorizados mesmo se status salvo vier como pendente", async () => {
-  mockOcr({ valor: 50, descricao: "Padaria", data: null, categoriaSugerida: "alimentacao", formaPagamento: "pix" });
+  mockOcr({
+    valor: 50,
+    descricao: "Padaria",
+    data: null,
+    categoriaSugerida: "alimentacao",
+    formaPagamento: "pix",
+  });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g5a31-lost-img", image: fakeImage("g5a31-lost-h"),
+    telefone: tel,
+    texto: "",
+    external_id: "g5a31-lost-img",
+    image: fakeImage("g5a31-lost-h"),
   });
   const receiptInsert = [...state.inserts].reverse().find((i) => i.table === "whatsapp_messages");
   if (receiptInsert) receiptInsert.row.status = "pendente";
@@ -702,11 +977,20 @@ test("Comandos reservados de comprovante são priorizados mesmo se status salvo 
 
   for (const [cmd, expected] of commands) {
     const r = await processarMensagemWhatsApp({
-      telefone: tel, texto: cmd, external_id: `g5a31-res-${cmd}`,
+      telefone: tel,
+      texto: cmd,
+      external_id: `g5a31-res-${cmd}`,
     });
     expect(r.resposta).toContain(expected);
     expect(r.resposta).not.toContain("Qual foi o valor de Categoria");
-    expect(state.inserts.some((i) => i.table === "whatsapp_messages" && i.row.texto === cmd && i.row.status === "aguardando_descricao_e_valor_gasto")).toBe(false);
+    expect(
+      state.inserts.some(
+        (i) =>
+          i.table === "whatsapp_messages" &&
+          i.row.texto === cmd &&
+          i.row.status === "aguardando_descricao_e_valor_gasto",
+      ),
+    ).toBe(false);
     const latest = [...state.inserts].reverse().find((i) => i.table === "whatsapp_messages");
     if (latest) latest.row.status = "pendente";
     if (state.pendingRow) state.pendingRow.status = "pendente";
@@ -714,9 +998,18 @@ test("Comandos reservados de comprovante são priorizados mesmo se status salvo 
 });
 
 test("Query real por parsed.kind encontra comprovante com status fora de PENDING_STATES", async () => {
-  mockOcr({ valor: 48.9, descricao: "Padaria", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
+  mockOcr({
+    valor: 48.9,
+    descricao: "Padaria",
+    data: null,
+    categoriaSugerida: "mercado",
+    formaPagamento: "pix",
+  });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g5a32-kind-img", image: fakeImage("g5a32-kind-h"),
+    telefone: tel,
+    texto: "",
+    external_id: "g5a32-kind-img",
+    image: fakeImage("g5a32-kind-h"),
   });
   const receiptInsert = [...state.inserts].reverse().find((i) => i.table === "whatsapp_messages");
   if (receiptInsert) receiptInsert.row.status = "pendente";
@@ -732,7 +1025,9 @@ test("Query real por parsed.kind encontra comprovante com status fora de PENDING
     throw new Error("parseWhatsAppExpenseMessage não deveria ser chamado");
   });
   const ask = await processarMensagemWhatsApp({
-    telefone: tel, texto: "categoria", external_id: "g5a32-kind-cat",
+    telefone: tel,
+    texto: "categoria",
+    external_id: "g5a32-kind-cat",
   });
   expect(ask.resposta).toContain("Claro. Qual categoria você quer usar?");
   expect(ask.resposta).not.toContain("Qual foi o valor de Categoria");
@@ -747,9 +1042,18 @@ test("valor, data, pagamento e descrição com comprovante ativo não criam sess
     ["descrição", "Qual descrição devo usar"],
   ] as const) {
     resetState();
-    mockOcr({ valor: 35, descricao: "Loja", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
+    mockOcr({
+      valor: 35,
+      descricao: "Loja",
+      data: null,
+      categoriaSugerida: "mercado",
+      formaPagamento: "pix",
+    });
     await processarMensagemWhatsApp({
-      telefone: tel, texto: "", external_id: `g5a32-${cmd}-img`, image: fakeImage(`g5a32-${cmd}-h`),
+      telefone: tel,
+      texto: "",
+      external_id: `g5a32-${cmd}-img`,
+      image: fakeImage(`g5a32-${cmd}-h`),
     });
     const receiptInsert = [...state.inserts].reverse().find((i) => i.table === "whatsapp_messages");
     if (receiptInsert) receiptInsert.row.status = "pendente";
@@ -759,51 +1063,99 @@ test("valor, data, pagamento e descrição com comprovante ativo não criam sess
       throw new Error(`parseWhatsAppExpenseMessage não deveria ser chamado para ${cmd}`);
     });
     const res = await processarMensagemWhatsApp({
-      telefone: tel, texto: cmd, external_id: `g5a32-${cmd}-cmd`,
+      telefone: tel,
+      texto: cmd,
+      external_id: `g5a32-${cmd}-cmd`,
     });
     expect(res.resposta).toContain(expected);
-    expect(state.inserts.some((i) => i.table === "whatsapp_messages" && i.row.texto === cmd && i.row.status === "aguardando_descricao_e_valor_gasto")).toBe(false);
+    expect(
+      state.inserts.some(
+        (i) =>
+          i.table === "whatsapp_messages" &&
+          i.row.texto === cmd &&
+          i.row.status === "aguardando_descricao_e_valor_gasto",
+      ),
+    ).toBe(false);
     expect(gastosInserts()).toHaveLength(0);
   }
 });
 
 test("Sessão de comprovante finalizada ou cancelada não bloqueia novo gasto", async () => {
-  mockOcr({ valor: 12, descricao: "Padaria", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
+  mockOcr({
+    valor: 12,
+    descricao: "Padaria",
+    data: null,
+    categoriaSugerida: "mercado",
+    formaPagamento: "pix",
+  });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g5a32-final-img", image: fakeImage("g5a32-final-h"),
+    telefone: tel,
+    texto: "",
+    external_id: "g5a32-final-img",
+    image: fakeImage("g5a32-final-h"),
   });
   await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "g5a32-final-sim" });
   const afterSaved = await processarMensagemWhatsApp({
-    telefone: tel, texto: "Uber 20", external_id: "g5a32-after-saved",
+    telefone: tel,
+    texto: "Uber 20",
+    external_id: "g5a32-after-saved",
   });
   expect(afterSaved.resposta).not.toContain("Li esta nota");
   expect(afterSaved.resposta).toContain("Como você pagou");
 
   resetState();
-  mockOcr({ valor: 12, descricao: "Padaria", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
-  await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g5a32-cancel-img", image: fakeImage("g5a32-cancel-h"),
+  mockOcr({
+    valor: 12,
+    descricao: "Padaria",
+    data: null,
+    categoriaSugerida: "mercado",
+    formaPagamento: "pix",
   });
-  await processarMensagemWhatsApp({ telefone: tel, texto: "cancelar", external_id: "g5a32-cancel" });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "",
+    external_id: "g5a32-cancel-img",
+    image: fakeImage("g5a32-cancel-h"),
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "cancelar",
+    external_id: "g5a32-cancel",
+  });
   const afterCancel = await processarMensagemWhatsApp({
-    telefone: tel, texto: "Uber 21", external_id: "g5a32-after-cancel",
+    telefone: tel,
+    texto: "Uber 21",
+    external_id: "g5a32-after-cancel",
   });
   expect(afterCancel.resposta).not.toContain("Li esta nota");
   expect(afterCancel.resposta).toContain("Como você pagou");
 });
 
 test("Cancelar encerra sessão de comprovante e depois 'categoria' volta ao fluxo normal", async () => {
-  mockOcr({ valor: 22, descricao: "Loja", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
+  mockOcr({
+    valor: 22,
+    descricao: "Loja",
+    data: null,
+    categoriaSugerida: "mercado",
+    formaPagamento: "pix",
+  });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g5a31-cancel-img", image: fakeImage("g5a31-cancel-h"),
+    telefone: tel,
+    texto: "",
+    external_id: "g5a31-cancel-img",
+    image: fakeImage("g5a31-cancel-h"),
   });
   const cancel = await processarMensagemWhatsApp({
-    telefone: tel, texto: "cancelar", external_id: "g5a31-cancel",
+    telefone: tel,
+    texto: "cancelar",
+    external_id: "g5a31-cancel",
   });
   expect(cancel.status).toBe("cancelada");
   expect(state.pendingRow).toBeNull();
   const after = await processarMensagemWhatsApp({
-    telefone: tel, texto: "categoria", external_id: "g5a31-after-cancel",
+    telefone: tel,
+    texto: "categoria",
+    external_id: "g5a31-after-cancel",
   });
   expect(after.resposta).toContain("Qual foi o valor de Categoria");
 });
@@ -818,9 +1170,18 @@ test("WA-G5A.4: criação da sessão de comprovante dispara wa_receipt_session_c
   const events: Ev[] = [];
   __setWhatsAppAuditObserverForTests((e) => events.push(e as Ev));
   try {
-    mockOcr({ valor: 30, descricao: "MERCADO X", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
+    mockOcr({
+      valor: 30,
+      descricao: "MERCADO X",
+      data: null,
+      categoriaSugerida: "mercado",
+      formaPagamento: "pix",
+    });
     await processarMensagemWhatsApp({
-      telefone: tel, texto: "", external_id: "g5a4-create", image: fakeImage("g5a4-create-h"),
+      telefone: tel,
+      texto: "",
+      external_id: "g5a4-create",
+      image: fakeImage("g5a4-create-h"),
     });
     const created = events.find((e) => e.event === "wa_receipt_session_created");
     expect(created).toBeDefined();
@@ -836,14 +1197,25 @@ test("WA-G5A.4: 'categoria' após foto encontra a sessão e roteia para receipt_
   resetState();
   type Ev = { event: string } & Record<string, unknown>;
   const events: Ev[] = [];
-  mockOcr({ valor: 30, descricao: "MERCADO X", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
+  mockOcr({
+    valor: 30,
+    descricao: "MERCADO X",
+    data: null,
+    categoriaSugerida: "mercado",
+    formaPagamento: "pix",
+  });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g5a4-cat-img", image: fakeImage("g5a4-cat-h"),
+    telefone: tel,
+    texto: "",
+    external_id: "g5a4-cat-img",
+    image: fakeImage("g5a4-cat-h"),
   });
   __setWhatsAppAuditObserverForTests((e) => events.push(e as Ev));
   try {
     await processarMensagemWhatsApp({
-      telefone: tel, texto: "categoria", external_id: "g5a4-cat-msg",
+      telefone: tel,
+      texto: "categoria",
+      external_id: "g5a4-cat-msg",
     });
     const trace = events.find((e) => e.event === "wa_receipt_session_trace");
     expect(trace).toBeDefined();
@@ -857,9 +1229,18 @@ test("WA-G5A.4: 'categoria' após foto encontra a sessão e roteia para receipt_
 
 test("WA-G5A.4: buscarSessaoComprovanteAtiva expõe storedKindPath e flags de auditoria", async () => {
   resetState();
-  mockOcr({ valor: 40, descricao: "Loja", data: null, categoriaSugerida: "mercado", formaPagamento: "pix" });
+  mockOcr({
+    valor: 40,
+    descricao: "Loja",
+    data: null,
+    categoriaSugerida: "mercado",
+    formaPagamento: "pix",
+  });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g5a4-lookup", image: fakeImage("g5a4-lookup-h"),
+    telefone: tel,
+    texto: "",
+    external_id: "g5a4-lookup",
+    image: fakeImage("g5a4-lookup-h"),
   });
   const lookup = await buscarSessaoComprovanteAtiva("u1", tel);
   expect(lookup.sessao).not.toBeNull();
@@ -870,8 +1251,11 @@ test("WA-G5A.4: buscarSessaoComprovanteAtiva expõe storedKindPath e flags de au
   // imagem, texto, OCR, valor financeiro ou token no payload.
   const keys = Object.keys(lookup);
   expect(keys.sort()).toEqual([
-    "sessao", "sessionFoundByFallbackQuery", "sessionFoundByKind",
-    "sessionFoundByStatus", "storedKindPath",
+    "sessao",
+    "sessionFoundByFallbackQuery",
+    "sessionFoundByKind",
+    "sessionFoundByStatus",
+    "storedKindPath",
   ]);
 });
 
@@ -932,8 +1316,7 @@ test("WA-G5A.5: 'categoria' depois da foto encontra a sessão e NUNCA cai no par
   // Não cria sessão de gasto "aguardando_descricao_e_valor_gasto".
   const semParserGasto = state.inserts.every(
     (i) =>
-      i.table !== "whatsapp_messages" ||
-      i.row?.status !== "aguardando_descricao_e_valor_gasto",
+      i.table !== "whatsapp_messages" || i.row?.status !== "aguardando_descricao_e_valor_gasto",
   );
   expect(semParserGasto).toBe(true);
   // E não responde com a pergunta do parser ("Qual foi o valor de Categoria?").
@@ -958,28 +1341,70 @@ test("WA-G5A.6: lista inicial mostra no máximo 6 categorias", async () => {
       { id: "c8", legacy_id: "educacao", nome: "Educação", user_id: "u1" },
     ],
   });
-  mockOcr({ valor: 50, descricao: "Padaria", categoriaSugerida: "alimentacao", formaPagamento: "pix" });
-  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-1-img", image: fakeImage("g56-1-h") });
-  const ask = await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "g56-1-cat" });
+  mockOcr({
+    valor: 50,
+    descricao: "Padaria",
+    categoriaSugerida: "alimentacao",
+    formaPagamento: "pix",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "",
+    external_id: "g56-1-img",
+    image: fakeImage("g56-1-h"),
+  });
+  const ask = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "categoria",
+    external_id: "g56-1-cat",
+  });
   // máximo 6 opções na lista curta
-  const linhas = (ask.resposta.match(/^\d+\.\s+/gm) ?? []);
+  const linhas = ask.resposta.match(/^\d+\.\s+/gm) ?? [];
   expect(linhas.length).toBeLessThanOrEqual(6);
   expect(ask.resposta).toContain("ver todas");
 });
 
 test("WA-G5A.6: categoria sugerida pelo OCR aparece em primeiro", async () => {
-  mockOcr({ valor: 50, descricao: "Compra", categoriaSugerida: "transporte", formaPagamento: "pix" });
-  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-2-img", image: fakeImage("g56-2-h") });
-  const ask = await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "g56-2-cat" });
+  mockOcr({
+    valor: 50,
+    descricao: "Compra",
+    categoriaSugerida: "transporte",
+    formaPagamento: "pix",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "",
+    external_id: "g56-2-img",
+    image: fakeImage("g56-2-h"),
+  });
+  const ask = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "categoria",
+    external_id: "g56-2-cat",
+  });
   expect(ask.resposta).toMatch(/1\.\s+Transporte/);
 });
 
 test("WA-G5A.6: keywords da descrição priorizam categoria", async () => {
-  mockOcr({ valor: 50, descricao: "Padaria do bairro", categoriaSugerida: null, formaPagamento: "pix" });
-  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-3-img", image: fakeImage("g56-3-h") });
+  mockOcr({
+    valor: 50,
+    descricao: "Padaria do bairro",
+    categoriaSugerida: null,
+    formaPagamento: "pix",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "",
+    external_id: "g56-3-img",
+    image: fakeImage("g56-3-h"),
+  });
   // categoria não identificada → entra direto no obrigatorio com lista curta
   expect(state.pendingRow?.status).toBe("img_aguardando_confirmacao");
-  const sim = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "g56-3-sim" });
+  const sim = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "sim",
+    external_id: "g56-3-sim",
+  });
   // "padaria" mapeia para alimentacao → mas só restaurante existe, sem alimentacao no cats.
   // Mesmo assim a lista deve conter Restaurante perto do topo via "padaria" → alimentacao
   // (não há cat alimentacao, fica null). Verificamos só que a pergunta saiu.
@@ -988,41 +1413,89 @@ test("WA-G5A.6: keywords da descrição priorizam categoria", async () => {
 
 test("WA-G5A.6: escolha por nome sem acento encontra categoria com acento", async () => {
   mockOcr({ valor: 50, descricao: "Drogaria", categoriaSugerida: "saude", formaPagamento: "pix" });
-  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-4-img", image: fakeImage("g56-4-h") });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "",
+    external_id: "g56-4-img",
+    image: fakeImage("g56-4-h"),
+  });
   await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "g56-4-cat" });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "saude", external_id: "g56-4-pick" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "saude",
+    external_id: "g56-4-pick",
+  });
   expect(r.resposta).toContain("Categoria: Saúde");
 });
 
 test("WA-G5A.6: 'ver todas' mostra lista completa", async () => {
   mockOcr({ valor: 50, descricao: "Compra", categoriaSugerida: "mercado", formaPagamento: "pix" });
-  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-5-img", image: fakeImage("g56-5-h") });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "",
+    external_id: "g56-5-img",
+    image: fakeImage("g56-5-h"),
+  });
   await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "g56-5-cat" });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "ver todas", external_id: "g56-5-vt" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "ver todas",
+    external_id: "g56-5-vt",
+  });
   expect(r.resposta.toLowerCase()).toContain("categorias disponíveis");
 });
 
 test("WA-G5A.6: paginação 'mais' avança para a próxima página", async () => {
   // 15 categorias → 2 páginas (12 + 3)
   const many = Array.from({ length: 15 }, (_, i) => ({
-    id: `cx-${i}`, legacy_id: `cat${i}`, nome: `Categoria ${String(i + 1).padStart(2, "0")}`, user_id: "u1",
+    id: `cx-${i}`,
+    legacy_id: `cat${i}`,
+    nome: `Categoria ${String(i + 1).padStart(2, "0")}`,
+    user_id: "u1",
   }));
   resetState({ categorias: many });
   mockOcr({ valor: 50, descricao: "Compra", categoriaSugerida: null, formaPagamento: "pix" });
-  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-6-img", image: fakeImage("g56-6-h") });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "",
+    external_id: "g56-6-img",
+    image: fakeImage("g56-6-h"),
+  });
   // sessão entra em ajuste ao pedir categoria via "sim" (categoria não identif.)
   await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "g56-6-sim" });
-  const all = await processarMensagemWhatsApp({ telefone: tel, texto: "ver todas", external_id: "g56-6-vt" });
+  const all = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "ver todas",
+    external_id: "g56-6-vt",
+  });
   expect(all.resposta).toContain("página 1 de 2");
-  const next = await processarMensagemWhatsApp({ telefone: tel, texto: "mais", external_id: "g56-6-mais" });
+  const next = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "mais",
+    external_id: "g56-6-mais",
+  });
   expect(next.resposta).toContain("página 2 de 2");
 });
 
 test("WA-G5A.6: número fora da lista mantém sessão e não cria gasto", async () => {
-  mockOcr({ valor: 50, descricao: "Padaria", categoriaSugerida: "alimentacao", formaPagamento: "pix" });
-  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-7-img", image: fakeImage("g56-7-h") });
+  mockOcr({
+    valor: 50,
+    descricao: "Padaria",
+    categoriaSugerida: "alimentacao",
+    formaPagamento: "pix",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "",
+    external_id: "g56-7-img",
+    image: fakeImage("g56-7-h"),
+  });
   await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "g56-7-cat" });
-  const r = await processarMensagemWhatsApp({ telefone: tel, texto: "99", external_id: "g56-7-bad" });
+  const r = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "99",
+    external_id: "g56-7-bad",
+  });
   expect(r.resposta.toLowerCase()).toContain("não encontrei");
   expect(state.pendingRow?.status).toBe("img_aguardando_ajuste");
   expect(gastosInserts()).toHaveLength(0);
@@ -1037,9 +1510,23 @@ test("WA-G5A.6: categorias duplicadas visualmente aparecem só uma vez", async (
       { id: "cd", legacy_id: "outros", nome: "Outros", user_id: "u1" },
     ],
   });
-  mockOcr({ valor: 50, descricao: "Compra", categoriaSugerida: "transporte", formaPagamento: "pix" });
-  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-8-img", image: fakeImage("g56-8-h") });
-  const ask = await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "g56-8-cat" });
+  mockOcr({
+    valor: 50,
+    descricao: "Compra",
+    categoriaSugerida: "transporte",
+    formaPagamento: "pix",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "",
+    external_id: "g56-8-img",
+    image: fakeImage("g56-8-h"),
+  });
+  const ask = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "categoria",
+    external_id: "g56-8-cat",
+  });
   const ocorrencias = (ask.resposta.toLowerCase().match(/transporte/g) ?? []).length;
   expect(ocorrencias).toBe(1);
 });
@@ -1054,9 +1541,23 @@ test("WA-G5A.6: categorias de outro usuário nunca aparecem", async () => {
       { id: "u1b", legacy_id: "outros", nome: "Outros", user_id: "u1" },
     ],
   });
-  mockOcr({ valor: 50, descricao: "Compra", categoriaSugerida: "transporte", formaPagamento: "pix" });
-  await processarMensagemWhatsApp({ telefone: tel, texto: "", external_id: "g56-9-img", image: fakeImage("g56-9-h") });
-  const ask = await processarMensagemWhatsApp({ telefone: tel, texto: "categoria", external_id: "g56-9-cat" });
+  mockOcr({
+    valor: 50,
+    descricao: "Compra",
+    categoriaSugerida: "transporte",
+    formaPagamento: "pix",
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "",
+    external_id: "g56-9-img",
+    image: fakeImage("g56-9-h"),
+  });
+  const ask = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "categoria",
+    external_id: "g56-9-cat",
+  });
   expect(ask.resposta).not.toContain("Categoria Outro Usuário");
 });
 
@@ -1068,34 +1569,55 @@ test("WA-G5A.7: duas imagens diferentes (hashes diferentes) NÃO são bloqueadas
   // 1) Primeira nota → confirma e salva.
   mockOcr({ valor: 80, descricao: "Mercado", categoriaSugerida: "mercado", formaPagamento: "pix" });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g57-a-img", image: fakeImage("g57-aaaaaa"),
+    telefone: tel,
+    texto: "",
+    external_id: "g57-a-img",
+    image: fakeImage("g57-aaaaaa"),
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "g57-a-yes",
+    telefone: tel,
+    texto: "sim",
+    external_id: "g57-a-yes",
   });
   expect(gastosInserts()).toHaveLength(1);
 
   // 2) Segunda nota DIFERENTE (hash diferente) → deve passar normalmente.
   mockOcr({ valor: 65, descricao: "Drogaria", categoriaSugerida: "saude", formaPagamento: "pix" });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g57-b-img", image: fakeImage("g57-bbbbbb"),
+    telefone: tel,
+    texto: "",
+    external_id: "g57-b-img",
+    image: fakeImage("g57-bbbbbb"),
   });
   expect(r.status).not.toBe("duplicada");
   expect(r.resposta).toContain("Li esta nota");
 });
 
 test("WA-G5A.7: mesma imagem (hash exato) já salva É bloqueada com mensagem nova", async () => {
-  mockOcr({ valor: 65, descricao: "Stone", categoriaSugerida: "outros", formaPagamento: "credito" });
-  await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g57-exact-1", image: fakeImage("g57-exact"),
+  mockOcr({
+    valor: 65,
+    descricao: "Stone",
+    categoriaSugerida: "outros",
+    formaPagamento: "credito",
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "g57-exact-yes",
+    telefone: tel,
+    texto: "",
+    external_id: "g57-exact-1",
+    image: fakeImage("g57-exact"),
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "sim",
+    external_id: "g57-exact-yes",
   });
   expect(gastosInserts()).toHaveLength(1);
 
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g57-exact-2", image: fakeImage("g57-exact"),
+    telefone: tel,
+    texto: "",
+    external_id: "g57-exact-2",
+    image: fakeImage("g57-exact"),
   });
   expect(r.status).toBe("duplicada");
   expect(r.resposta).toContain("Não criei outro gasto");
@@ -1105,16 +1627,23 @@ test("WA-G5A.7: mesma imagem (hash exato) já salva É bloqueada com mensagem no
 test("WA-G5A.7: hash ausente NÃO dispara duplicidade", async () => {
   mockOcr({ valor: 30, descricao: "Uber", categoriaSugerida: "transporte", formaPagamento: "pix" });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g57-h1", image: fakeImage("g57-haaaaaa"),
+    telefone: tel,
+    texto: "",
+    external_id: "g57-h1",
+    image: fakeImage("g57-haaaaaa"),
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "g57-h1-y",
+    telefone: tel,
+    texto: "sim",
+    external_id: "g57-h1-y",
   });
   expect(gastosInserts()).toHaveLength(1);
 
   mockOcr({ valor: 30, descricao: "Uber", categoriaSugerida: "transporte", formaPagamento: "pix" });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g57-h2",
+    telefone: tel,
+    texto: "",
+    external_id: "g57-h2",
     image: { base64: "data:image/jpeg;base64,/9j/AAAA", mimeType: "image/jpeg", sha256: "" },
   });
   expect(r.status).not.toBe("duplicada");
@@ -1123,35 +1652,60 @@ test("WA-G5A.7: hash ausente NÃO dispara duplicidade", async () => {
 test("WA-G5A.7: hash em formato inválido NÃO dispara duplicidade", async () => {
   mockOcr({ valor: 30, descricao: "Uber", categoriaSugerida: "transporte", formaPagamento: "pix" });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g57-bad1", image: fakeImage("g57-badxxx"),
+    telefone: tel,
+    texto: "",
+    external_id: "g57-bad1",
+    image: fakeImage("g57-badxxx"),
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "g57-bad1-y",
+    telefone: tel,
+    texto: "sim",
+    external_id: "g57-bad1-y",
   });
   expect(gastosInserts()).toHaveLength(1);
 
   mockOcr({ valor: 30, descricao: "Uber", categoriaSugerida: "transporte", formaPagamento: "pix" });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g57-bad2",
+    telefone: tel,
+    texto: "",
+    external_id: "g57-bad2",
     image: { base64: "data:image/jpeg;base64,/9j/AAAA", mimeType: "image/jpeg", sha256: "xx" },
   });
   expect(r.status).not.toBe("duplicada");
 });
 
 test("WA-G5A.7: mesmo valor+estabelecimento com hash diferente NÃO é bloqueado", async () => {
-  mockOcr({ valor: 50, descricao: "Mercado X", categoriaSugerida: "mercado", formaPagamento: "pix" });
-  await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g57-sim-1", image: fakeImage("g57-simaaaa"),
+  mockOcr({
+    valor: 50,
+    descricao: "Mercado X",
+    categoriaSugerida: "mercado",
+    formaPagamento: "pix",
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "g57-sim-1-y",
+    telefone: tel,
+    texto: "",
+    external_id: "g57-sim-1",
+    image: fakeImage("g57-simaaaa"),
+  });
+  await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "sim",
+    external_id: "g57-sim-1-y",
   });
   expect(gastosInserts()).toHaveLength(1);
 
   // Mesma loja, mesmo valor, hash totalmente diferente → transação diferente.
-  mockOcr({ valor: 50, descricao: "Mercado X", categoriaSugerida: "mercado", formaPagamento: "pix" });
+  mockOcr({
+    valor: 50,
+    descricao: "Mercado X",
+    categoriaSugerida: "mercado",
+    formaPagamento: "pix",
+  });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g57-sim-2", image: fakeImage("g57-simbbbb"),
+    telefone: tel,
+    texto: "",
+    external_id: "g57-sim-2",
+    image: fakeImage("g57-simbbbb"),
   });
   expect(r.status).not.toBe("duplicada");
   expect(r.resposta).toContain("Li esta nota");
@@ -1161,10 +1715,15 @@ test("WA-G5A.7: comprovante de outro user_id NÃO interfere no dedup", async () 
   // Salva nota como u1.
   mockOcr({ valor: 40, descricao: "Loja", categoriaSugerida: "outros", formaPagamento: "pix" });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g57-uA-img", image: fakeImage("g57-shared"),
+    telefone: tel,
+    texto: "",
+    external_id: "g57-uA-img",
+    image: fakeImage("g57-shared"),
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "g57-uA-yes",
+    telefone: tel,
+    texto: "sim",
+    external_id: "g57-uA-yes",
   });
   expect(gastosInserts()).toHaveLength(1);
 
@@ -1177,12 +1736,12 @@ test("WA-G5A.7: comprovante de outro user_id NÃO interfere no dedup", async () 
     opt_in_em: new Date().toISOString(),
     revogado_em: null,
   };
-  state.categoriasData = [
-    { id: "cat-out2", legacy_id: "outros", nome: "Outros", user_id: "u2" },
-  ];
+  state.categoriasData = [{ id: "cat-out2", legacy_id: "outros", nome: "Outros", user_id: "u2" }];
   mockOcr({ valor: 40, descricao: "Loja", categoriaSugerida: "outros", formaPagamento: "pix" });
   const r = await processarMensagemWhatsApp({
-    telefone: "5511777776666", texto: "", external_id: "g57-uB-img",
+    telefone: "5511777776666",
+    texto: "",
+    external_id: "g57-uB-img",
     image: fakeImage("g57-shared"),
   });
   expect(r.status).not.toBe("duplicada");
@@ -1191,17 +1750,25 @@ test("WA-G5A.7: comprovante de outro user_id NÃO interfere no dedup", async () 
 test("WA-G5A.7: reenvio com mesmo external_message_id não cria segundo gasto", async () => {
   mockOcr({ valor: 25, descricao: "Padaria", categoriaSugerida: "mercado", formaPagamento: "pix" });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g57-ext-1", image: fakeImage("g57-extaaaa"),
+    telefone: tel,
+    texto: "",
+    external_id: "g57-ext-1",
+    image: fakeImage("g57-extaaaa"),
   });
   await processarMensagemWhatsApp({
-    telefone: tel, texto: "sim", external_id: "g57-ext-yes",
+    telefone: tel,
+    texto: "sim",
+    external_id: "g57-ext-yes",
   });
   expect(gastosInserts()).toHaveLength(1);
 
   // Reenvio técnico do mesmo webhook (mesmo external_id).
   mockOcr({ valor: 25, descricao: "Padaria", categoriaSugerida: "mercado", formaPagamento: "pix" });
   const r = await processarMensagemWhatsApp({
-    telefone: tel, texto: "", external_id: "g57-ext-1", image: fakeImage("g57-extaaaa"),
+    telefone: tel,
+    texto: "",
+    external_id: "g57-ext-1",
+    image: fakeImage("g57-extaaaa"),
   });
   expect(r.status).toBe("duplicada");
   expect(gastosInserts()).toHaveLength(1);

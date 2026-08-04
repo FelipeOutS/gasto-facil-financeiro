@@ -15,10 +15,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import {
-  cacheGet,
-  cacheSet,
-} from "./product-image-cache.server";
+import { cacheGet, cacheSet } from "./product-image-cache.server";
 import { normalizeForKey } from "./product-image-key";
 import {
   cleanProductName,
@@ -31,11 +28,17 @@ const InputSchema = z.object({
   productName: z.string().trim().min(2).max(200),
   brand: z.string().trim().max(100).optional().nullable(),
   barcode: z
-    .preprocess((v) => {
-      if (typeof v !== "string") return undefined;
-      const digits = v.replace(/\D/g, "");
-      return digits.length >= 8 && digits.length <= 14 ? digits : undefined;
-    }, z.string().regex(/^\d{8,14}$/).optional())
+    .preprocess(
+      (v) => {
+        if (typeof v !== "string") return undefined;
+        const digits = v.replace(/\D/g, "");
+        return digits.length >= 8 && digits.length <= 14 ? digits : undefined;
+      },
+      z
+        .string()
+        .regex(/^\d{8,14}$/)
+        .optional(),
+    )
     .optional()
     .nullable(),
   category: z
@@ -72,11 +75,7 @@ const InputSchema = z.object({
 
 export type ProductImageInput = z.infer<typeof InputSchema>;
 
-export type ProductImageSource =
-  | "off_barcode"
-  | "off_search"
-  | "brand_logo"
-  | null;
+export type ProductImageSource = "off_barcode" | "off_search" | "brand_logo" | null;
 
 export type ProductImageConfidence = "high" | "medium" | "low" | null;
 
@@ -257,17 +256,51 @@ function normalizeLookupTerms(raw: string, brand: string | null): string {
   return normalizeMarketProductTerms(raw, brand);
 }
 
-const BEER_BRANDS = ["heineken", "brahma", "skol", "antarctica", "itaipava", "ambev", "stella artois", "budweiser", "amstel", "eisenbahn", "corona", "original", "bohemia", "serramalte"];
-const SOFT_DRINK_BRANDS = ["coca cola", "coca-cola", "coca", "pepsi", "fanta", "sprite", "sukita", "guarana antarctica", "schweppes", "del valle"];
+const BEER_BRANDS = [
+  "heineken",
+  "brahma",
+  "skol",
+  "antarctica",
+  "itaipava",
+  "ambev",
+  "stella artois",
+  "budweiser",
+  "amstel",
+  "eisenbahn",
+  "corona",
+  "original",
+  "bohemia",
+  "serramalte",
+];
+const SOFT_DRINK_BRANDS = [
+  "coca cola",
+  "coca-cola",
+  "coca",
+  "pepsi",
+  "fanta",
+  "sprite",
+  "sukita",
+  "guarana antarctica",
+  "schweppes",
+  "del valle",
+];
 const COFFEE_BRANDS = ["pilao", "melitta", "tres coracoes", "nescafe", "3 coracoes"];
 const FLOUR_BRANDS = ["adria", "renata", "dona benta", "sol", "anaconda"];
 const CHOCOLATE_BRANDS = ["nescau", "toddy", "toddynho", "ovomaltine"];
 
-function inferCategoryTerms(name: string, explicitCategory?: ProductImageInput["category"] | null, brand?: string | null): string[] {
+function inferCategoryTerms(
+  name: string,
+  explicitCategory?: ProductImageInput["category"] | null,
+  brand?: string | null,
+): string[] {
   const text = normalizeForKey(name);
   const brandKey = normalizeForKey(brand);
   const terms: string[] = [];
-  if (explicitCategory === "bebidas" || hasToken(text, ["cerveja", "beer", "lager", "long", "neck"]) || BEER_BRANDS.includes(brandKey)) {
+  if (
+    explicitCategory === "bebidas" ||
+    hasToken(text, ["cerveja", "beer", "lager", "long", "neck"]) ||
+    BEER_BRANDS.includes(brandKey)
+  ) {
     terms.push("cerveja", "beer", "lager");
   }
   if (
@@ -277,9 +310,12 @@ function inferCategoryTerms(name: string, explicitCategory?: ProductImageInput["
   ) {
     terms.push("refrigerante", "soda", "soft drink");
   }
-  if (hasToken(text, ["cafe", "pilao", "melitta"]) || COFFEE_BRANDS.includes(brandKey)) terms.push("cafe", "coffee");
-  if (hasToken(text, ["farinha", "trigo"]) || FLOUR_BRANDS.includes(brandKey)) terms.push("farinha", "farinha trigo", "flour");
-  if (hasToken(text, ["achocolatado", "nescau", "toddy"]) || CHOCOLATE_BRANDS.includes(brandKey)) terms.push("achocolatado", "chocolate milk");
+  if (hasToken(text, ["cafe", "pilao", "melitta"]) || COFFEE_BRANDS.includes(brandKey))
+    terms.push("cafe", "coffee");
+  if (hasToken(text, ["farinha", "trigo"]) || FLOUR_BRANDS.includes(brandKey))
+    terms.push("farinha", "farinha trigo", "flour");
+  if (hasToken(text, ["achocolatado", "nescau", "toddy"]) || CHOCOLATE_BRANDS.includes(brandKey))
+    terms.push("achocolatado", "chocolate milk");
   if (hasToken(text, ["linguica", "ling", "sadia"])) terms.push("linguica", "sausage");
   return unique(terms);
 }
@@ -287,7 +323,8 @@ function inferCategoryTerms(name: string, explicitCategory?: ProductImageInput["
 function packagingTerms(name: string): string[] {
   const text = normalizeForKey(name);
   const terms: string[] = [];
-  if (hasToken(text, ["long", "neck"]) || /\blong\s*neck\b/.test(text)) terms.push("long neck", "longneck");
+  if (hasToken(text, ["long", "neck"]) || /\blong\s*neck\b/.test(text))
+    terms.push("long neck", "longneck");
   if (hasToken(text, ["garrafa"])) terms.push("garrafa");
   if (hasToken(text, ["lata", "latinha"])) terms.push("lata", "can");
   if (hasToken(text, ["pet"])) terms.push("pet");
@@ -299,8 +336,11 @@ function packagingTerms(name: string): string[] {
   return unique(terms);
 }
 
-
-function buildNameAliases(name: string, brand: string | null, category?: ProductImageInput["category"] | null): string[] {
+function buildNameAliases(
+  name: string,
+  brand: string | null,
+  category?: ProductImageInput["category"] | null,
+): string[] {
   const normalized = normalizeLookupTerms(name, brand);
   const categories = inferCategoryTerms(`${name} ${brand ?? ""}`, category);
   const packs = packagingTerms(normalized);
@@ -308,24 +348,68 @@ function buildNameAliases(name: string, brand: string | null, category?: Product
   const brandKey = normalizeForKey(brand);
   const isBeer =
     hasToken(normalized, ["cerveja", "beer", "lager", "long", "neck"]) ||
-    ["heineken", "brahma", "skol", "antarctica", "itaipava", "ambep", "stella artois", "budweiser", "amstel", "eisenbahn", "corona"].includes(brandKey);
+    [
+      "heineken",
+      "brahma",
+      "skol",
+      "antarctica",
+      "itaipava",
+      "ambep",
+      "stella artois",
+      "budweiser",
+      "amstel",
+      "eisenbahn",
+      "corona",
+    ].includes(brandKey);
   const isSoftDrink =
     hasToken(normalized, ["refrigerante", "refri", "soda", "cola"]) ||
-    ["coca cola", "coca", "pepsi", "fanta", "sprite", "sukita", "guarana antarctica", "schweppes"].includes(brandKey);
+    [
+      "coca cola",
+      "coca",
+      "pepsi",
+      "fanta",
+      "sprite",
+      "sukita",
+      "guarana antarctica",
+      "schweppes",
+    ].includes(brandKey);
   if (isBeer) {
-    aliases.push("long neck", "longneck", "garrafa", "lata", "330ml", "355ml", "cerveja", "beer", "lager", "lager beer");
+    aliases.push(
+      "long neck",
+      "longneck",
+      "garrafa",
+      "lata",
+      "330ml",
+      "355ml",
+      "cerveja",
+      "beer",
+      "lager",
+      "lager beer",
+    );
   }
   if (isSoftDrink) {
-    aliases.push("lata", "can", "garrafa", "pet", "350ml", "355ml", "330ml", "2l", "2 litros", "refrigerante", "soda", "soft drink", "cola");
+    aliases.push(
+      "lata",
+      "can",
+      "garrafa",
+      "pet",
+      "350ml",
+      "355ml",
+      "330ml",
+      "2l",
+      "2 litros",
+      "refrigerante",
+      "soda",
+      "soft drink",
+      "cola",
+    );
   }
-  if (hasToken(normalized, ["refrigerante", "refri"])) aliases.push("refrigerante", "soda", "soft drink", "pet", "2l", "2 litros");
+  if (hasToken(normalized, ["refrigerante", "refri"]))
+    aliases.push("refrigerante", "soda", "soft drink", "pet", "2l", "2 litros");
   return unique([...aliases, ...packs, ...categories]);
 }
 
-
-async function lookupByBarcode(
-  barcode: string,
-): Promise<ProductImageHit | null> {
+async function lookupByBarcode(barcode: string): Promise<ProductImageHit | null> {
   const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(
     barcode,
   )}.json?fields=image_front_url,image_url,product_name,brands,selected_images`;
@@ -378,9 +462,16 @@ async function lookupByName(
   const normalizedQuery = normalizeForKey(query);
   const normalizedBrand = brand ? normalizeForKey(brand) : "";
   const strongBrand = isStrongMarketBrand(normalizedBrand);
-  const brandOnlyQuery =
-    !!normalizedBrand && normalizedQuery === normalizedBrand;
-  let best: { img: string; score: number; name: string | null; brands: string | null; brandMatched: boolean; packagingMatched: boolean; categoryMatched: boolean } | null = null;
+  const brandOnlyQuery = !!normalizedBrand && normalizedQuery === normalizedBrand;
+  let best: {
+    img: string;
+    score: number;
+    name: string | null;
+    brands: string | null;
+    brandMatched: boolean;
+    packagingMatched: boolean;
+    categoryMatched: boolean;
+  } | null = null;
   let bestNoImage: { score: number; name: string | null; brands: string | null } | null = null;
   for (const p of products) {
     const img = pickProductImage(p);
@@ -391,23 +482,25 @@ async function lookupByName(
     let score = Math.min(nameSim, 0.45);
     const partialTokens = normalizedQuery.split(/\s+/).filter((tok) => tok.length >= 3);
     const partialHits = partialTokens.filter((tok) => candidateText.includes(tok)).length;
-    if (partialTokens.length > 0) score += Math.min(0.25, (partialHits / partialTokens.length) * 0.25);
+    if (partialTokens.length > 0)
+      score += Math.min(0.25, (partialHits / partialTokens.length) * 0.25);
     let brandMatched = false;
     if (normalizedBrand) {
       const brandSim = similarity(normalizedBrand, candidateBrands);
       const brandSubstr =
-        candidateBrands.includes(normalizedBrand) ||
-        candidateName.includes(normalizedBrand);
+        candidateBrands.includes(normalizedBrand) || candidateName.includes(normalizedBrand);
       brandMatched = brandSubstr || brandSim > 0.78;
       if (brandSubstr) score += strongBrand ? 0.7 : 0.5;
       else if (brandSim > 0.78) score += strongBrand ? 0.45 : 0.3;
       else if (candidateBrands) score -= strongBrand ? 0.9 : 0.55;
     }
     if (img) score += 0.08;
-    const categoryMatched = expectedCategoryTerms.length > 0
-      && expectedCategoryTerms.some((term) => candidateText.includes(normalizeForKey(term)));
-    const packagingMatched = expectedPackagingTerms.length > 0
-      && expectedPackagingTerms.some((term) => candidateText.includes(normalizeForKey(term)));
+    const categoryMatched =
+      expectedCategoryTerms.length > 0 &&
+      expectedCategoryTerms.some((term) => candidateText.includes(normalizeForKey(term)));
+    const packagingMatched =
+      expectedPackagingTerms.length > 0 &&
+      expectedPackagingTerms.some((term) => candidateText.includes(normalizeForKey(term)));
     if (categoryMatched) score += 0.18;
     if (packagingMatched) score += 0.12;
     // Penaliza candidatos que ignoram embalagem/volume esperados (ex.: lata 350ml vs. 2L).
@@ -416,12 +509,24 @@ async function lookupByName(
     if (expectedCategoryTerms.length > 0 && !categoryMatched) score -= 0.08;
     if (!img) {
       if (!bestNoImage || score > bestNoImage.score) {
-        bestNoImage = { score, name: p.product_name ?? null, brands: brandsToString(p.brands) || null };
+        bestNoImage = {
+          score,
+          name: p.product_name ?? null,
+          brands: brandsToString(p.brands) || null,
+        };
       }
       continue;
     }
     if (!best || score > best.score) {
-      best = { img, score, name: p.product_name ?? null, brands: brandsToString(p.brands) || null, brandMatched, packagingMatched, categoryMatched };
+      best = {
+        img,
+        score,
+        name: p.product_name ?? null,
+        brands: brandsToString(p.brands) || null,
+        brandMatched,
+        packagingMatched,
+        categoryMatched,
+      };
     }
   }
   if (!best) {
@@ -448,13 +553,14 @@ async function lookupByName(
     });
     return null;
   }
-  const threshold = brandOnlyQuery && strongBrand
-    ? 0.38
-    : normalizedBrand && strongBrand
-      ? 0.46
-      : normalizedBrand
-        ? 0.58
-        : 0.62;
+  const threshold =
+    brandOnlyQuery && strongBrand
+      ? 0.38
+      : normalizedBrand && strongBrand
+        ? 0.46
+        : normalizedBrand
+          ? 0.58
+          : 0.62;
   if (normalizedBrand && strongBrand && best.brandMatched && best.score >= 0.42) {
     // Marca forte exata não deve cair fora só porque o nome está incompleto ou com typo.
   } else if (best.score < threshold) {
@@ -500,9 +606,7 @@ async function lookupByName(
   };
 }
 
-function lookupBrandLogo(
-  brand: string | null,
-): ProductImageHit | null {
+function lookupBrandLogo(brand: string | null): ProductImageHit | null {
   if (!brand) return null;
   const slug = normalizeForKey(brand).replace(/\s+/g, "-");
   if (!slug) return null;
@@ -525,15 +629,16 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
   const now = new Date().toISOString();
   const isDev = process.env.NODE_ENV !== "production";
 
-  const { cleanedName, extractedBrand } = cleanProductName(
-    input.productName,
-    input.brand ?? null,
-  );
+  const { cleanedName, extractedBrand } = cleanProductName(input.productName, input.brand ?? null);
   const effectiveBrand = extractedBrand || input.brand || null;
   const rawName = normalizeForKey(input.productName);
   const normalizedName = normalizeLookupTerms(cleanedName || rawName, effectiveBrand);
   const aliases = buildNameAliases(`${cleanedName} ${rawName}`, effectiveBrand, input.category);
-  const categoryTerms = inferCategoryTerms(`${input.productName} ${effectiveBrand ?? ""}`, input.category, effectiveBrand);
+  const categoryTerms = inferCategoryTerms(
+    `${input.productName} ${effectiveBrand ?? ""}`,
+    input.category,
+    effectiveBrand,
+  );
   const packTerms = packagingTerms(`${input.productName} ${normalizedName}`);
 
   const debug: ProductImageDebug | undefined = isDev
@@ -571,19 +676,26 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
   const attempts: Array<{ query: string; brand: string | null }> = [];
   if (effectiveBrand) {
     // Categoria + marca → mais robusto no OFF (ex.: "cerveja heineken")
-    for (const term of categoryTerms) attempts.push({ query: `${term} ${effectiveBrand}`, brand: effectiveBrand });
+    for (const term of categoryTerms)
+      attempts.push({ query: `${term} ${effectiveBrand}`, brand: effectiveBrand });
   }
-  if (effectiveBrand && normalizedName) attempts.push({ query: `${effectiveBrand} ${normalizedName}`, brand: effectiveBrand });
+  if (effectiveBrand && normalizedName)
+    attempts.push({ query: `${effectiveBrand} ${normalizedName}`, brand: effectiveBrand });
   if (effectiveBrand) {
-    for (const alias of aliases) attempts.push({ query: `${effectiveBrand} ${alias}`, brand: effectiveBrand });
-    for (const term of categoryTerms) attempts.push({ query: `${effectiveBrand} ${term}`, brand: effectiveBrand });
+    for (const alias of aliases)
+      attempts.push({ query: `${effectiveBrand} ${alias}`, brand: effectiveBrand });
+    for (const term of categoryTerms)
+      attempts.push({ query: `${effectiveBrand} ${term}`, brand: effectiveBrand });
     attempts.push({ query: `${input.productName} ${effectiveBrand}`, brand: effectiveBrand });
     // Marca isolada por último — OFF costuma rate-limitar queries brand-only.
-    if (isStrongMarketBrand(effectiveBrand)) attempts.push({ query: effectiveBrand, brand: effectiveBrand });
+    if (isStrongMarketBrand(effectiveBrand))
+      attempts.push({ query: effectiveBrand, brand: effectiveBrand });
   }
   if (normalizedName) attempts.push({ query: normalizedName, brand: null });
-  if (cleanedName && cleanedName !== normalizedName) attempts.push({ query: cleanedName, brand: null });
-  if (rawName && rawName !== cleanedName && rawName !== normalizedName) attempts.push({ query: rawName, brand: null });
+  if (cleanedName && cleanedName !== normalizedName)
+    attempts.push({ query: cleanedName, brand: null });
+  if (rawName && rawName !== cleanedName && rawName !== normalizedName)
+    attempts.push({ query: rawName, brand: null });
 
   const seen = new Set<string>();
   for (const a of attempts) {
@@ -597,7 +709,7 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
       if (debug) debug.pickedFrom = "search";
       if (isDev) {
         const last = debug?.attempts[debug.attempts.length - 1];
-        // eslint-disable-next-line no-console
+
         console.info("[image-lookup:hit]", {
           product: input.productName,
           brand: effectiveBrand,
@@ -621,7 +733,7 @@ async function lookupCore(input: ProductImageInput): Promise<ProductImageResult>
 
   if (isDev && debug) {
     // Auditoria detalhada quando ficou sem imagem. Sem secrets/PII.
-    // eslint-disable-next-line no-console
+
     console.warn("[image-lookup:miss]", {
       product: debug.productName,
       brand: debug.extractedBrand,

@@ -95,7 +95,7 @@ describe("WA-3.31 — regra determinística (documental)", () => {
     // Regra: com modificador "proxima" o delta nunca é 0 → +7 dias.
     const hoje = new Date(2026, 6, 10); // Fri 10/07/2026
     expect(hoje.getDay()).toBe(5);
-    const delta = ((5 - hoje.getDay() + 7) % 7) || 7;
+    const delta = (5 - hoje.getDay() + 7) % 7 || 7;
     expect(delta).toBe(7);
   });
   it("sexta 10/07/2026 + 'sexta' (sem modificador) ≡ 10/07/2026 (delta=0)", () => {

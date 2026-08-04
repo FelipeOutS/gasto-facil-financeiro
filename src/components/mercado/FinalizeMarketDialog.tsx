@@ -134,9 +134,7 @@ export function FinalizeMarketDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{t("finalizeMarketDialog.title")}</DialogTitle>
-          <DialogDescription>
-            {t("finalizeMarketDialog.description")}
-          </DialogDescription>
+          <DialogDescription>{t("finalizeMarketDialog.description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -181,9 +179,7 @@ export function FinalizeMarketDialog({
                           : "border-border/60 bg-card-elevated text-foreground hover:bg-card",
                       )}
                     >
-                      {m.favorito && (
-                        <Star className="h-3 w-3 shrink-0 fill-current" aria-hidden />
-                      )}
+                      {m.favorito && <Star className="h-3 w-3 shrink-0 fill-current" aria-hidden />}
                       <span className="truncate">{m.nome}</span>
                     </button>
                   );
@@ -262,9 +258,7 @@ export function FinalizeMarketDialog({
                       onChange={(e) => setCartaoId(e.target.value)}
                       className="block w-full min-w-0 rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
                     >
-                      <option value="">
-                        {t("finalizeMarketDialog.cardNone")}
-                      </option>
+                      <option value="">{t("finalizeMarketDialog.cardNone")}</option>
                       {cartoes.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.nome}

@@ -67,7 +67,6 @@ import {
   criarContaReceber,
   atualizarContaReceber,
   excluirContaReceber,
-  
   desmarcarRecebida,
   cancelarContaReceber,
   calcularResumo,
@@ -196,7 +195,9 @@ function ContasAReceberPage() {
           label={t("summary.toReceive")}
           valor={resumo.totalPendente + resumo.totalAtrasado}
           tone="brand"
-          subtitle={t("summary.toReceiveSub", { count: resumo.countPendentes + resumo.countAtrasadas })}
+          subtitle={t("summary.toReceiveSub", {
+            count: resumo.countPendentes + resumo.countAtrasadas,
+          })}
         />
         <ResumoCard
           label={t("summary.overdue")}
@@ -255,10 +256,7 @@ function ContasAReceberPage() {
             cta={
               lista.length === 0 ? (
                 <div className="flex flex-col items-center gap-2">
-                  <Button
-                    className="min-h-11 rounded-full font-semibold"
-                    onClick={openCreate}
-                  >
+                  <Button className="min-h-11 rounded-full font-semibold" onClick={openCreate}>
                     <Plus className="mr-1 h-4 w-4" />
                     {t("empty.addFirst")}
                   </Button>
@@ -266,7 +264,7 @@ function ContasAReceberPage() {
                     {t("empty.helper")}
                   </p>
                 </div>
-              ) : (busca || filtro !== "todas") ? (
+              ) : busca || filtro !== "todas" ? (
                 <Button
                   variant="outline"
                   className="min-h-11 rounded-full"
@@ -280,15 +278,14 @@ function ContasAReceberPage() {
               ) : undefined
             }
           />
-
-
-
         ) : (
           listaFiltrada.map((c) => (
             <ContaCard
               key={c.id}
               conta={c}
-              clienteNome={c.cliente_id ? nomeExibicaoCliente(clientesPorId[c.cliente_id]) : undefined}
+              clienteNome={
+                c.cliente_id ? nomeExibicaoCliente(clientesPorId[c.cliente_id]) : undefined
+              }
               onMarcar={() => openReceive(c)}
               onDesmarcar={async () => {
                 try {
@@ -455,41 +452,39 @@ function ContaCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-1 items-start gap-3">
-          <BrandLogo
-            name={clienteNome || conta.pagador_nome || conta.titulo || "?"}
-            size="sm"
-          />
+          <BrandLogo name={clienteNome || conta.pagador_nome || conta.titulo || "?"} size="sm" />
           <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <StatusBadge status={eff} cancelado={isCancelado} />
-            <p className="text-[11px] text-muted-foreground">{tipoLabel}</p>
-          </div>
-          <h3 className="mt-1 truncate text-sm font-semibold">{conta.titulo}</h3>
-          {conta.pagador_nome && (
-            <p className="truncate text-[12px] text-muted-foreground">
-              {t("card.from", { name: conta.pagador_nome })}
-            </p>
-          )}
-          {clienteNome && (
-            <p className="truncate text-[11px] text-muted-foreground">
-              {t("card.client", { name: clienteNome })}
-            </p>
-          )}
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            {t("card.expectedOn", { date: formatDateBR(conta.data_prevista) })}
-            {conta.data_recebimento && (
-              <> · {t("card.receivedOn", { date: formatDateBR(conta.data_recebimento) })}</>
+            <div className="flex items-center gap-2">
+              <StatusBadge status={eff} cancelado={isCancelado} />
+              <p className="text-[11px] text-muted-foreground">{tipoLabel}</p>
+            </div>
+            <h3 className="mt-1 truncate text-sm font-semibold">{conta.titulo}</h3>
+            {conta.pagador_nome && (
+              <p className="truncate text-[12px] text-muted-foreground">
+                {t("card.from", { name: conta.pagador_nome })}
+              </p>
             )}
-          </p>
+            {clienteNome && (
+              <p className="truncate text-[11px] text-muted-foreground">
+                {t("card.client", { name: clienteNome })}
+              </p>
+            )}
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {t("card.expectedOn", { date: formatDateBR(conta.data_prevista) })}
+              {conta.data_recebimento && (
+                <> · {t("card.receivedOn", { date: formatDateBR(conta.data_recebimento) })}</>
+              )}
+            </p>
           </div>
         </div>
         <div className="text-right">
           <Money value={Number(conta.valor_total)} className="num text-sm font-bold" />
-          {Number(conta.valor_recebido) > 0 && Number(conta.valor_recebido) < Number(conta.valor_total) && (
-            <p className="num mt-0.5 text-[10px] text-muted-foreground">
-              {t("card.receivedAmount", { amount: formatBRL(Number(conta.valor_recebido)) })}
-            </p>
-          )}
+          {Number(conta.valor_recebido) > 0 &&
+            Number(conta.valor_recebido) < Number(conta.valor_total) && (
+              <p className="num mt-0.5 text-[10px] text-muted-foreground">
+                {t("card.receivedAmount", { amount: formatBRL(Number(conta.valor_recebido)) })}
+              </p>
+            )}
           {!isRecebido && !isCancelado && Number(conta.valor_restante) > 0 && (
             <p className="num mt-0.5 text-[10px] text-success">
               {t("card.remainingAmount", { amount: formatBRL(Number(conta.valor_restante)) })}
@@ -506,7 +501,12 @@ function ContaCard({
           </Button>
         )}
         {!isCancelado && isRecebido && (
-          <Button size="sm" variant="outline" className="h-10 rounded-lg sm:h-8" onClick={onDesmarcar}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-10 rounded-lg sm:h-8"
+            onClick={onDesmarcar}
+          >
             <Clock className="mr-1 h-3.5 w-3.5" />
             {t("card.unmark")}
           </Button>
@@ -726,7 +726,10 @@ function ContaReceberFormDialog({
             </div>
             <div className="space-y-1.5">
               <Label>{t("form.forma")}</Label>
-              <Select value={forma || "__none"} onValueChange={(v) => setForma(v === "__none" ? "" : v)}>
+              <Select
+                value={forma || "__none"}
+                onValueChange={(v) => setForma(v === "__none" ? "" : v)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder={t("form.none")} />
                 </SelectTrigger>

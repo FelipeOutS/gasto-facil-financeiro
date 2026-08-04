@@ -10,8 +10,7 @@ import { cn } from "@/lib/utils";
  * `/meu-plano` (para não duplicar a info).
  */
 export function ExpiredAccessBanner() {
-  const { status, isAdminMaster, loading, isCancelled, accessUntil, isTrialActive } =
-    usePlan();
+  const { status, isAdminMaster, loading, isCancelled, accessUntil, isTrialActive } = usePlan();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   if (loading || isAdminMaster) return null;
@@ -19,8 +18,7 @@ export function ExpiredAccessBanner() {
   if (pathname.startsWith("/login") || pathname.startsWith("/cadastro")) return null;
 
   const now = Date.now();
-  const cancelExpired =
-    isCancelled && accessUntil ? new Date(accessUntil).getTime() < now : false;
+  const cancelExpired = isCancelled && accessUntil ? new Date(accessUntil).getTime() < now : false;
 
   let kind: "expired" | "awaiting" | "cancelled" | null = null;
   if (status === "expirado") kind = "expired";
@@ -64,28 +62,18 @@ export function ExpiredAccessBanner() {
 
   return (
     <div
-      className={cn(
-        "mb-3 rounded-2xl border px-3 py-2.5 text-sm shadow-card",
-        config.container,
-      )}
+      className={cn("mb-3 rounded-2xl border px-3 py-2.5 text-sm shadow-card", config.container)}
       role="status"
     >
       <div className="flex items-center gap-3">
         <span
-          className={cn(
-            "grid h-9 w-9 shrink-0 place-items-center rounded-xl",
-            config.iconWrap,
-          )}
+          className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl", config.iconWrap)}
         >
           <Icon className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold leading-tight text-foreground">
-            {config.title}
-          </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            {config.msg}
-          </div>
+          <div className="text-sm font-semibold leading-tight text-foreground">{config.title}</div>
+          <div className="mt-0.5 text-xs text-muted-foreground">{config.msg}</div>
         </div>
         <Link
           to="/meu-plano"

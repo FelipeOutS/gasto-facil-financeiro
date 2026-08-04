@@ -1,9 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import {
-  enableSecureScreen,
-  disableSecureScreen,
-} from "@/lib/android-security";
+import { enableSecureScreen, disableSecureScreen } from "@/lib/android-security";
 import {
   Shield,
   LockKeyhole,
@@ -52,10 +49,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import {
-  createMasterKey,
-  unlockMasterKey,
-} from "@/lib/vault/crypto";
+import { createMasterKey, unlockMasterKey } from "@/lib/vault/crypto";
 import {
   fetchVaultSettings,
   saveVaultSettings,
@@ -125,7 +119,9 @@ function CofrePessoalPage() {
   const { user } = useAuth();
   const { can, isAdminMaster, loading: planLoading } = usePlan();
   const { isUnlocked, masterKey, lock } = useVaultKey();
-  const [bootstrapState, setBootstrapState] = useState<"loading" | "needs_setup" | "needs_unlock" | "ready">("loading");
+  const [bootstrapState, setBootstrapState] = useState<
+    "loading" | "needs_setup" | "needs_unlock" | "ready"
+  >("loading");
   const [settings, setSettings] = useState<VaultSettingsRow | null>(null);
 
   // Etapa 14 — Gate premium do Cofre Pessoal.
@@ -254,7 +250,9 @@ function CofreTransitionBanner() {
     <div className="mb-4 rounded-2xl border border-amber-400/40 bg-amber-500/10 p-4 text-sm">
       <div className="mb-1 flex items-center gap-2 text-amber-700 dark:text-amber-300">
         <AlertTriangle className="h-4 w-4" aria-hidden />
-        <span className="text-xs font-semibold uppercase tracking-wide">{t("transition.badge")}</span>
+        <span className="text-xs font-semibold uppercase tracking-wide">
+          {t("transition.badge")}
+        </span>
       </div>
       <p className="font-semibold">{t("transition.title")}</p>
       <p className="mt-1 text-muted-foreground">{t("transition.description")}</p>
@@ -331,8 +329,14 @@ function PageHeader({
   return (
     <header className="mb-6 animate-fade-in">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <nav aria-label="breadcrumb" className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
-          <Link to="/app" className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 hover:bg-accent/40 hover:text-foreground">
+        <nav
+          aria-label="breadcrumb"
+          className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground"
+        >
+          <Link
+            to="/app"
+            className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 hover:bg-accent/40 hover:text-foreground"
+          >
             <Home className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Dashboard</span>
           </Link>
@@ -340,11 +344,16 @@ function PageHeader({
             <span key={i} className="flex items-center gap-1 truncate">
               <ChevronRight className="h-3 w-3 shrink-0 opacity-60" />
               {c.to ? (
-                <Link to={c.to} className="truncate rounded-md px-1.5 py-0.5 hover:bg-accent/40 hover:text-foreground">
+                <Link
+                  to={c.to}
+                  className="truncate rounded-md px-1.5 py-0.5 hover:bg-accent/40 hover:text-foreground"
+                >
                   {c.label}
                 </Link>
               ) : (
-                <span className="truncate px-1.5 py-0.5 font-medium text-foreground">{c.label}</span>
+                <span className="truncate px-1.5 py-0.5 font-medium text-foreground">
+                  {c.label}
+                </span>
               )}
             </span>
           ))}
@@ -375,7 +384,9 @@ function PageHeader({
             </span>
             <h1 className="truncate text-2xl font-bold tracking-tight lg:text-3xl">{title}</h1>
           </div>
-          {subtitle && <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{subtitle}</p>}
+          {subtitle && (
+            <p className="mt-1.5 text-sm leading-snug text-muted-foreground">{subtitle}</p>
+          )}
         </div>
         {actions && <div className="hidden shrink-0 items-center gap-2 sm:flex">{actions}</div>}
       </div>
@@ -384,13 +395,21 @@ function PageHeader({
   );
 }
 function HeaderHero({ subtitle }: { subtitle: string }) {
-  return <PageHeader title="Cofre Pessoal" subtitle={subtitle} crumbs={[{ label: "Cofre Pessoal" }]} />;
+  return (
+    <PageHeader title="Cofre Pessoal" subtitle={subtitle} crumbs={[{ label: "Cofre Pessoal" }]} />
+  );
 }
 
 // =====================================================================
 // Setup (criar senha mestra)
 // =====================================================================
-function SetupView({ userId, onReady }: { userId: string; onReady: (s: VaultSettingsRow) => void }) {
+function SetupView({
+  userId,
+  onReady,
+}: {
+  userId: string;
+  onReady: (s: VaultSettingsRow) => void;
+}) {
   const [pwd, setPwd] = useState("");
   const [pwd2, setPwd2] = useState("");
   const [hint, setHint] = useState("");
@@ -436,7 +455,8 @@ function SetupView({ userId, onReady }: { userId: string; onReady: (s: VaultSett
         <div className="mb-5 flex items-center gap-3 rounded-xl bg-warning/10 p-3 text-warning-foreground/90">
           <AlertTriangle className="h-5 w-5 shrink-0 text-warning" />
           <p className="text-xs leading-snug">
-            A senha mestra <strong>não pode ser recuperada</strong>. Se você esquecê-la, não conseguiremos abrir seu cofre. Guarde em local seguro.
+            A senha mestra <strong>não pode ser recuperada</strong>. Se você esquecê-la, não
+            conseguiremos abrir seu cofre. Guarde em local seguro.
           </p>
         </div>
         <div className="space-y-4">
@@ -465,7 +485,11 @@ function SetupView({ userId, onReady }: { userId: string; onReady: (s: VaultSett
               <div className="flex items-center gap-2 pt-0.5">
                 {strengthBadge(strength)}
                 <p className="text-[11px] text-muted-foreground">
-                  {strength === "forte" ? "Excelente!" : strength === "media" ? "Boa, mas pode melhorar." : "Use 12+ caracteres, números e símbolos."}
+                  {strength === "forte"
+                    ? "Excelente!"
+                    : strength === "media"
+                      ? "Boa, mas pode melhorar."
+                      : "Use 12+ caracteres, números e símbolos."}
                 </p>
               </div>
             )}
@@ -488,7 +512,9 @@ function SetupView({ userId, onReady }: { userId: string; onReady: (s: VaultSett
               onChange={(e) => setHint(e.target.value)}
               placeholder="Ex.: meu time favorito + ano"
             />
-            <p className="text-[11px] text-muted-foreground">Não escreva a senha aqui. Use apenas uma pista.</p>
+            <p className="text-[11px] text-muted-foreground">
+              Não escreva a senha aqui. Use apenas uma pista.
+            </p>
           </div>
           <Button
             onClick={handleCreate}
@@ -629,11 +655,12 @@ function UnlockView({
   }, [pin, mode]);
 
   const hasServerPin = !!serverPin?.configured && !serverPin?.lockedUntil;
-  const subtitle = mode === "pin"
-    ? "Use o PIN cadastrado na sua conta para abrir o Cofre."
-    : mode === "bio"
-    ? "Use sua biometria para abrir o cofre."
-    : "Digite sua senha mestra para acessar seus logins e dados sensíveis.";
+  const subtitle =
+    mode === "pin"
+      ? "Use o PIN cadastrado na sua conta para abrir o Cofre."
+      : mode === "bio"
+        ? "Use sua biometria para abrir o cofre."
+        : "Digite sua senha mestra para acessar seus logins e dados sensíveis.";
 
   return (
     <>
@@ -641,11 +668,7 @@ function UnlockView({
       <Card className="mx-auto max-w-md p-6">
         <div className="mb-5 grid place-items-center">
           <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand-on-soft">
-            {mode === "bio" ? (
-              <Fingerprint className="h-7 w-7" />
-            ) : (
-              <Lock className="h-7 w-7" />
-            )}
+            {mode === "bio" ? <Fingerprint className="h-7 w-7" /> : <Lock className="h-7 w-7" />}
           </span>
         </div>
 
@@ -664,7 +687,10 @@ function UnlockView({
               {bio && (
                 <button
                   type="button"
-                  onClick={() => { setMode("bio"); setPin(""); }}
+                  onClick={() => {
+                    setMode("bio");
+                    setPin("");
+                  }}
                   className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
                 >
                   Usar biometria
@@ -672,7 +698,10 @@ function UnlockView({
               )}
               <button
                 type="button"
-                onClick={() => { setMode("master"); setPin(""); }}
+                onClick={() => {
+                  setMode("master");
+                  setPin("");
+                }}
                 className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
               >
                 Usar senha mestra
@@ -689,7 +718,11 @@ function UnlockView({
               disabled={busy}
               className="h-12 w-full bg-brand text-brand-foreground text-base font-semibold shadow-md hover:bg-brand/90"
             >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-4 w-4" />}
+              {busy ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Fingerprint className="h-4 w-4" />
+              )}
               {busy ? "Autenticando…" : "Desbloquear com biometria"}
             </Button>
             <div className="flex flex-col gap-1">
@@ -715,7 +748,10 @@ function UnlockView({
 
         {mode === "master" && (
           <form
-            onSubmit={(e) => { e.preventDefault(); handleUnlock(); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleUnlock();
+            }}
             className="space-y-4"
           >
             <div className="space-y-1.5">
@@ -755,8 +791,16 @@ function UnlockView({
               disabled={busy || !pwd || isCoolingDown}
               className="h-12 w-full bg-brand text-brand-foreground text-base font-semibold shadow-md hover:bg-brand/90"
             >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-              {busy ? "Desbloqueando…" : isCoolingDown ? `Aguarde ${cooldownLeft}s` : "Desbloquear cofre"}
+              {busy ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <KeyRound className="h-4 w-4" />
+              )}
+              {busy
+                ? "Desbloqueando…"
+                : isCoolingDown
+                  ? `Aguarde ${cooldownLeft}s`
+                  : "Desbloquear cofre"}
             </Button>
             {(hasServerPin || bio) && (
               <div className="flex flex-col gap-1">
@@ -899,19 +943,22 @@ function VaultMain({
   }, [query]);
 
   // Decifrar tudo em memória uma vez para alimentar busca + cache
-  const reloadDecryptCache = useCallback(async (rows: VaultEntryRow[]) => {
-    await Promise.all(
-      rows.map(async (r) => {
-        if (getCachedSecret(r.id)) return;
-        try {
-          const dec = await decryptOne(masterKey, r);
-          setCachedSecret(r.id, dec.secret);
-        } catch {
-          // ignora um item falho
-        }
-      }),
-    );
-  }, [masterKey]);
+  const reloadDecryptCache = useCallback(
+    async (rows: VaultEntryRow[]) => {
+      await Promise.all(
+        rows.map(async (r) => {
+          if (getCachedSecret(r.id)) return;
+          try {
+            const dec = await decryptOne(masterKey, r);
+            setCachedSecret(r.id, dec.secret);
+          } catch {
+            // ignora um item falho
+          }
+        }),
+      );
+    },
+    [masterKey],
+  );
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -947,13 +994,7 @@ function VaultMain({
       if (strengthFilter !== "todas" && e.password_strength !== strengthFilter) return false;
       if (!q) return true;
       const sec = getCachedSecret(e.id);
-      const hay = [
-        e.name,
-        e.category,
-        e.site ?? "",
-        sec?.username ?? "",
-        sec?.notes ?? "",
-      ]
+      const hay = [e.name, e.category, e.site ?? "", sec?.username ?? "", sec?.notes ?? ""]
         .join(" ")
         .toLowerCase();
       return hay.includes(q);
@@ -963,7 +1004,8 @@ function VaultMain({
       if (sort === "az") return a.name.localeCompare(b.name);
       if (sort === "recent") return b.created_at.localeCompare(a.created_at);
       if (sort === "updated") return b.updated_at.localeCompare(a.updated_at);
-      if (sort === "weak") return (weakOrder[a.password_strength] ?? 9) - (weakOrder[b.password_strength] ?? 9);
+      if (sort === "weak")
+        return (weakOrder[a.password_strength] ?? 9) - (weakOrder[b.password_strength] ?? 9);
       if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
@@ -1078,11 +1120,7 @@ function VaultMain({
   }
   if (view.kind === "backup") {
     return (
-      <BackupView
-        userId={userId}
-        settings={settings}
-        onBack={() => setView({ kind: "list" })}
-      />
+      <BackupView userId={userId} settings={settings} onBack={() => setView({ kind: "list" })} />
     );
   }
   if (view.kind === "quick_unlock") {
@@ -1145,7 +1183,8 @@ function VaultMain({
             </span>
           </div>
           <p className="mt-1 text-muted-foreground">
-            Seus dados são criptografados no seu dispositivo. O cofre se bloqueia sozinho por inatividade ou ao deixar o app em segundo plano.
+            Seus dados são criptografados no seu dispositivo. O cofre se bloqueia sozinho por
+            inatividade ou ao deixar o app em segundo plano.
           </p>
         </div>
       </Card>
@@ -1218,12 +1257,14 @@ function VaultMain({
         <span className="shrink-0 self-center pr-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
           Força
         </span>
-        {([
-          { id: "todas", label: "Todas" },
-          { id: "forte", label: "Fortes" },
-          { id: "media", label: "Médias" },
-          { id: "fraca", label: "Fracas" },
-        ] as const).map((s) => (
+        {(
+          [
+            { id: "todas", label: "Todas" },
+            { id: "forte", label: "Fortes" },
+            { id: "media", label: "Médias" },
+            { id: "fraca", label: "Fracas" },
+          ] as const
+        ).map((s) => (
           <button
             key={s.id}
             onClick={() => setStrengthFilter(s.id as typeof strengthFilter)}
@@ -1233,10 +1274,10 @@ function VaultMain({
                 ? s.id === "forte"
                   ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300"
                   : s.id === "media"
-                  ? "border-amber-500/60 bg-amber-500/15 text-amber-300"
-                  : s.id === "fraca"
-                  ? "border-red-500/60 bg-red-500/15 text-red-300"
-                  : "border-brand bg-brand-soft text-brand-on-soft"
+                    ? "border-amber-500/60 bg-amber-500/15 text-amber-300"
+                    : s.id === "fraca"
+                      ? "border-red-500/60 bg-red-500/15 text-red-300"
+                      : "border-brand bg-brand-soft text-brand-on-soft"
                 : "border-border bg-card text-muted-foreground hover:bg-accent/40 hover:text-foreground",
             )}
           >
@@ -1270,7 +1311,14 @@ function VaultMain({
             <EmptyVault onAdd={() => setView({ kind: "create" })} />
           )
         ) : (
-          <NoResults onClear={() => { setQuery(""); setCat("todos"); setOnlyFav(false); setStrengthFilter("todas"); }} />
+          <NoResults
+            onClear={() => {
+              setQuery("");
+              setCat("todos");
+              setOnlyFav(false);
+              setStrengthFilter("todas");
+            }}
+          />
         )
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -1357,7 +1405,9 @@ function VaultMain({
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">Alterar senha mestra</p>
-              <p className="truncate text-[11px] text-muted-foreground">Troca a senha que protege o cofre.</p>
+              <p className="truncate text-[11px] text-muted-foreground">
+                Troca a senha que protege o cofre.
+              </p>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
           </button>
@@ -1372,7 +1422,9 @@ function VaultMain({
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">Exportar backup criptografado</p>
-            <p className="truncate text-[11px] text-muted-foreground">Baixa um arquivo .json com seus dados cifrados.</p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              Baixa um arquivo .json com seus dados cifrados.
+            </p>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </button>
@@ -1383,7 +1435,9 @@ function VaultMain({
         <div>
           <p className="font-medium text-foreground">Preenchimento automático</p>
           <p className="mt-1 leading-relaxed">
-            Por enquanto, o Cofre Pessoal permite copiar e abrir seus acessos com segurança. O preenchimento direto no teclado do celular (estilo Bitwarden/1Password) exige um aplicativo nativo ou extensão, e está sendo avaliado para uma versão futura.
+            Por enquanto, o Cofre Pessoal permite copiar e abrir seus acessos com segurança. O
+            preenchimento direto no teclado do celular (estilo Bitwarden/1Password) exige um
+            aplicativo nativo ou extensão, e está sendo avaliado para uma versão futura.
           </p>
         </div>
       </Card>
@@ -1397,10 +1451,22 @@ function VaultMain({
   );
 }
 
-function StatCard({ label, value, tone, small }: { label: string; value: number | string; tone?: "success" | "warning"; small?: boolean }) {
+function StatCard({
+  label,
+  value,
+  tone,
+  small,
+}: {
+  label: string;
+  value: number | string;
+  tone?: "success" | "warning";
+  small?: boolean;
+}) {
   return (
     <Card className="p-3.5">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </p>
       <p
         className={cn(
           "mt-1 font-bold tabular-nums",
@@ -1444,15 +1510,22 @@ function NoResults({ onClear }: { onClear: () => void }) {
         <p className="font-semibold">Nenhum resultado</p>
         <p className="mt-1 text-xs text-muted-foreground">Tente outra busca ou limpe os filtros.</p>
       </div>
-      <Button variant="outline" onClick={onClear}>Limpar filtros</Button>
+      <Button variant="outline" onClick={onClear}>
+        Limpar filtros
+      </Button>
     </Card>
   );
 }
 
 function strengthBadge(s: Strength) {
-  if (s === "forte") return <Badge className="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/15">Forte</Badge>;
-  if (s === "media") return <Badge className="bg-amber-500/15 text-amber-400 hover:bg-amber-500/15">Média</Badge>;
-  if (s === "fraca") return <Badge className="bg-red-500/15 text-red-400 hover:bg-red-500/15">Fraca</Badge>;
+  if (s === "forte")
+    return (
+      <Badge className="bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/15">Forte</Badge>
+    );
+  if (s === "media")
+    return <Badge className="bg-amber-500/15 text-amber-400 hover:bg-amber-500/15">Média</Badge>;
+  if (s === "fraca")
+    return <Badge className="bg-red-500/15 text-red-400 hover:bg-red-500/15">Fraca</Badge>;
   return <Badge variant="secondary">—</Badge>;
 }
 
@@ -1576,7 +1649,9 @@ function EntryCard({
     const sec = getCachedSecret(row.id);
     if (sec) {
       setMaskedUser(maskUsername(sec.username ?? ""));
-      return () => { alive = false; };
+      return () => {
+        alive = false;
+      };
     }
     decryptOne(masterKey, row)
       .then((d) => {
@@ -1585,7 +1660,9 @@ function EntryCard({
         setMaskedUser(maskUsername(d.secret.username ?? ""));
       })
       .catch(() => {});
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [row, masterKey]);
 
   async function getSecret() {
@@ -1614,13 +1691,29 @@ function EntryCard({
           </div>
           <p className="truncate text-xs text-muted-foreground">{maskedUser}</p>
           <div className="mt-1 flex items-center gap-2">
-            <Badge variant="outline" className="px-1.5 py-0 text-[10px]">{categoryLabel(row.category)}</Badge>
+            <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+              {categoryLabel(row.category)}
+            </Badge>
             {strengthBadge(row.password_strength)}
           </div>
         </button>
         <div className="flex flex-col gap-1">
-          <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onToggleFav(); }} title="Favoritar" className="h-8 w-8" type="button">
-            {row.favorite ? <Star className="h-4 w-4 fill-amber-400 text-amber-400" /> : <StarOff className="h-4 w-4" />}
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFav();
+            }}
+            title="Favoritar"
+            className="h-8 w-8"
+            type="button"
+          >
+            {row.favorite ? (
+              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+            ) : (
+              <StarOff className="h-4 w-4" />
+            )}
           </Button>
           <Button
             size="icon"
@@ -1719,7 +1812,9 @@ function DetailView({
         <div className="min-w-0 flex-1">
           <p className="truncate text-lg font-semibold">{entry.name}</p>
           {entry.site && (
-            <p className="truncate text-xs text-muted-foreground">{extractDomain(entry.site) ?? entry.site}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {extractDomain(entry.site) ?? entry.site}
+            </p>
           )}
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
             <Badge variant="outline">{categoryLabel(entry.category)}</Badge>
@@ -1736,7 +1831,9 @@ function DetailView({
       <Card className="space-y-5 p-5">
         <Field label="Usuário ou e-mail" value={entry.secret.username ?? ""} copyLabel="Usuário" />
         <div>
-          <Label className="text-[11px] uppercase tracking-widest text-muted-foreground">Senha</Label>
+          <Label className="text-[11px] uppercase tracking-widest text-muted-foreground">
+            Senha
+          </Label>
           <div className="mt-1.5 flex items-center gap-2">
             <Input
               readOnly
@@ -1744,7 +1841,13 @@ function DetailView({
               value={entry.secret.password ?? ""}
               className="font-mono"
             />
-            <Button size="icon" variant="outline" onClick={() => setShowPwd((s) => !s)} title="Mostrar/ocultar" type="button">
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => setShowPwd((s) => !s)}
+              title="Mostrar/ocultar"
+              type="button"
+            >
               {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
             <CopyButton value={entry.secret.password ?? ""} label="Senha" sensitive />
@@ -1774,7 +1877,9 @@ function DetailView({
         )}
         {entry.secret.notes && (
           <div>
-            <Label className="text-[11px] uppercase tracking-widest text-muted-foreground">Observações</Label>
+            <Label className="text-[11px] uppercase tracking-widest text-muted-foreground">
+              Observações
+            </Label>
             <p className="mt-1.5 whitespace-pre-wrap rounded-md border border-border bg-card-elevated p-3 text-sm">
               {entry.secret.notes}
             </p>
@@ -1784,12 +1889,16 @@ function DetailView({
           <div>
             <p className="text-[10px] uppercase tracking-widest">Última alteração da senha</p>
             <p className="mt-0.5 font-medium text-foreground">
-              {entry.password_updated_at ? new Date(entry.password_updated_at).toLocaleString("pt-BR") : "—"}
+              {entry.password_updated_at
+                ? new Date(entry.password_updated_at).toLocaleString("pt-BR")
+                : "—"}
             </p>
           </div>
           <div>
             <p className="text-[10px] uppercase tracking-widest">Criado em</p>
-            <p className="mt-0.5 font-medium text-foreground">{new Date(entry.created_at).toLocaleDateString("pt-BR")}</p>
+            <p className="mt-0.5 font-medium text-foreground">
+              {new Date(entry.created_at).toLocaleDateString("pt-BR")}
+            </p>
           </div>
         </div>
       </Card>
@@ -1803,10 +1912,20 @@ function DetailView({
                 <Pencil className="h-4 w-4" /> Editar
               </Button>
             )}
-            <CopyButton value={entry.secret.password ?? ""} label="Senha" sensitive variant="outline" size="default">
+            <CopyButton
+              value={entry.secret.password ?? ""}
+              label="Senha"
+              sensitive
+              variant="outline"
+              size="default"
+            >
               <span className="ml-1.5">Copiar senha</span>
             </CopyButton>
-            <Button variant="outline" onClick={() => setConfirmingDelete(true)} className="text-red-400 hover:text-red-300">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmingDelete(true)}
+              className="text-red-400 hover:text-red-300"
+            >
               <Trash2 className="h-4 w-4" /> Excluir
             </Button>
           </div>
@@ -1822,15 +1941,19 @@ function DetailView({
                   Esta ação não pode ser desfeita. O acesso será removido do seu cofre.
                 </p>
                 <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                  <Button variant="outline" onClick={() => setConfirmingDelete(false)} disabled={deleting}>
-                    Cancelar
-                  </Button>
                   <Button
-                    variant="destructive"
-                    onClick={handleConfirmDelete}
+                    variant="outline"
+                    onClick={() => setConfirmingDelete(false)}
                     disabled={deleting}
                   >
-                    {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    Cancelar
+                  </Button>
+                  <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleting}>
+                    {deleting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
                     {deleting ? "Excluindo…" : "Excluir definitivamente"}
                   </Button>
                 </div>
@@ -1843,7 +1966,17 @@ function DetailView({
   );
 }
 
-function Field({ label, value, copyLabel, trailing }: { label: string; value: string; copyLabel: string; trailing?: React.ReactNode }) {
+function Field({
+  label,
+  value,
+  copyLabel,
+  trailing,
+}: {
+  label: string;
+  value: string;
+  copyLabel: string;
+  trailing?: React.ReactNode;
+}) {
   return (
     <div>
       <Label className="text-[11px] uppercase tracking-widest text-muted-foreground">{label}</Label>
@@ -1927,12 +2060,20 @@ function EntryForm({
       {/* Bloco 1: Identificação */}
       <Card className="space-y-4 p-5">
         <div className="flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-soft text-brand-on-soft text-xs font-bold">1</span>
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-soft text-brand-on-soft text-xs font-bold">
+            1
+          </span>
           <h2 className="text-sm font-semibold">Identificação do acesso</h2>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="f-name">Nome do acesso</Label>
-          <Input id="f-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Instagram pessoal" autoFocus />
+          <Input
+            id="f-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Ex.: Instagram pessoal"
+            autoFocus
+          />
         </div>
         <div className="space-y-2">
           <Label>Categoria</Label>
@@ -1963,10 +2104,18 @@ function EntryForm({
           <div className="flex items-center gap-3">
             <CompanyLogo site={site || null} name={name || site || "?"} className="h-12 w-12" />
             <div className="min-w-0 flex-1">
-              <Input id="f-site" value={site} onChange={(e) => setSite(e.target.value)} placeholder="exemplo.com.br ou https://exemplo.com" inputMode="url" />
+              <Input
+                id="f-site"
+                value={site}
+                onChange={(e) => setSite(e.target.value)}
+                placeholder="exemplo.com.br ou https://exemplo.com"
+                inputMode="url"
+              />
               {site && extractDomain(site) && (
                 <p className="mt-1 text-[11px] text-muted-foreground">
-                  Salvaremos como <span className="font-medium text-foreground">{extractDomain(site)}</span> para buscar o logo automaticamente.
+                  Salvaremos como{" "}
+                  <span className="font-medium text-foreground">{extractDomain(site)}</span> para
+                  buscar o logo automaticamente.
                 </p>
               )}
             </div>
@@ -1977,17 +2126,29 @@ function EntryForm({
       {/* Bloco 2: Login */}
       <Card className="space-y-4 p-5">
         <div className="flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-soft text-brand-on-soft text-xs font-bold">2</span>
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-soft text-brand-on-soft text-xs font-bold">
+            2
+          </span>
           <h2 className="text-sm font-semibold">Dados de login</h2>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="f-user">Usuário, e-mail ou telefone</Label>
-          <Input id="f-user" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="off" placeholder="seu@email.com" />
+          <Input
+            id="f-user"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            autoComplete="off"
+            placeholder="seu@email.com"
+          />
         </div>
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <Label htmlFor="f-pwd">Senha</Label>
-            <button type="button" onClick={fillStrong} className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline">
+            <button
+              type="button"
+              onClick={fillStrong}
+              className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline"
+            >
               <Sparkles className="h-3 w-3" /> Gerar senha forte
             </button>
           </div>
@@ -2003,7 +2164,10 @@ function EntryForm({
               placeholder="••••••••"
               onFocus={(e) => {
                 // Em telas pequenas, sobe o campo quando o teclado abrir
-                setTimeout(() => e.currentTarget?.scrollIntoView?.({ block: "center", behavior: "smooth" }), 200);
+                setTimeout(
+                  () => e.currentTarget?.scrollIntoView?.({ block: "center", behavior: "smooth" }),
+                  200,
+                );
               }}
             />
             <div className="absolute right-1 top-1/2 flex -translate-y-1/2 gap-0.5">
@@ -2029,7 +2193,11 @@ function EntryForm({
             <div className="flex items-center gap-2 pt-1">
               {strengthBadge(strength)}
               <p className="text-[11px] text-muted-foreground">
-                {strength === "forte" ? "Boa! Sua senha está bem protegida." : strength === "media" ? "Pode melhorar adicionando símbolos e mais caracteres." : "Use 12+ caracteres, com números e símbolos."}
+                {strength === "forte"
+                  ? "Boa! Sua senha está bem protegida."
+                  : strength === "media"
+                    ? "Pode melhorar adicionando símbolos e mais caracteres."
+                    : "Use 12+ caracteres, com números e símbolos."}
               </p>
             </div>
           )}
@@ -2039,7 +2207,9 @@ function EntryForm({
       {/* Bloco 3: Segurança e observações */}
       <Card className="space-y-4 p-5">
         <div className="flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-soft text-brand-on-soft text-xs font-bold">3</span>
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-soft text-brand-on-soft text-xs font-bold">
+            3
+          </span>
           <h2 className="text-sm font-semibold">Segurança e observações</h2>
         </div>
         <div className="space-y-1.5">
@@ -2060,14 +2230,23 @@ function EntryForm({
           onClick={() => setFavorite((v) => !v)}
           className={cn(
             "flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition-colors",
-            favorite ? "border-amber-400/60 bg-amber-400/5" : "border-border bg-card hover:bg-accent/30",
+            favorite
+              ? "border-amber-400/60 bg-amber-400/5"
+              : "border-border bg-card hover:bg-accent/30",
           )}
         >
           <div className="flex items-center gap-2.5">
-            <Star className={cn("h-4 w-4", favorite ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
+            <Star
+              className={cn(
+                "h-4 w-4",
+                favorite ? "fill-amber-400 text-amber-400" : "text-muted-foreground",
+              )}
+            />
             <div>
               <p className="text-sm font-medium">Marcar como favorito</p>
-              <p className="text-[11px] text-muted-foreground">Aparece no topo da lista do cofre.</p>
+              <p className="text-[11px] text-muted-foreground">
+                Aparece no topo da lista do cofre.
+              </p>
             </div>
           </div>
           <span
@@ -2187,14 +2366,19 @@ function ChangeMasterView({
       <PageHeader
         title="Alterar senha mestra"
         subtitle="Troque a senha que protege seu cofre. Todos os acessos serão recriptografados com a nova senha."
-        crumbs={[{ label: "Cofre Pessoal", to: "/app/cofre-pessoal" }, { label: "Alterar senha mestra" }]}
+        crumbs={[
+          { label: "Cofre Pessoal", to: "/app/cofre-pessoal" },
+          { label: "Alterar senha mestra" },
+        ]}
         onBack={onBack}
       />
 
       <Card className="mb-4 flex items-start gap-3 border-amber-500/40 bg-amber-500/5 p-4">
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
         <p className="text-xs leading-relaxed text-foreground/90">
-          Se você esquecer a nova senha mestra, <strong>não será possível recuperar os dados do cofre</strong>. Guarde a nova senha em local seguro antes de continuar.
+          Se você esquecer a nova senha mestra,{" "}
+          <strong>não será possível recuperar os dados do cofre</strong>. Guarde a nova senha em
+          local seguro antes de continuar.
         </p>
       </Card>
 
@@ -2235,7 +2419,11 @@ function ChangeMasterView({
             <div className="flex items-center gap-2 pt-0.5">
               {strengthBadge(strength)}
               <p className="text-[11px] text-muted-foreground">
-                {strength === "forte" ? "Excelente!" : strength === "media" ? "Pode melhorar." : "Use 12+ caracteres, números e símbolos."}
+                {strength === "forte"
+                  ? "Excelente!"
+                  : strength === "media"
+                    ? "Pode melhorar."
+                    : "Use 12+ caracteres, números e símbolos."}
               </p>
             </div>
           )}
@@ -2267,7 +2455,13 @@ function ChangeMasterView({
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
       >
         <div className="mx-auto flex w-full max-w-3xl flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
-          <Button type="button" variant="outline" onClick={onBack} disabled={busy} className="h-11 sm:h-10 sm:w-auto">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onBack}
+            disabled={busy}
+            className="h-11 sm:h-10 sm:w-auto"
+          >
             Cancelar
           </Button>
           <Button
@@ -2336,7 +2530,8 @@ function BackupView({
           <div className="text-xs leading-relaxed">
             <p className="font-medium text-foreground">As senhas continuam protegidas</p>
             <p className="mt-1 text-muted-foreground">
-              O arquivo é exportado com os dados <strong>já criptografados</strong>. Para abrir o backup no futuro, será necessária a senha mestra atual.
+              O arquivo é exportado com os dados <strong>já criptografados</strong>. Para abrir o
+              backup no futuro, será necessária a senha mestra atual.
             </p>
           </div>
         </div>
@@ -2345,7 +2540,8 @@ function BackupView({
           <div className="text-xs leading-relaxed">
             <p className="font-medium text-foreground">A restauração ainda não está disponível</p>
             <p className="mt-1 text-muted-foreground">
-              Você pode guardar o arquivo agora como cópia de segurança. A função de restaurar a partir do backup será liberada em uma versão futura.
+              Você pode guardar o arquivo agora como cópia de segurança. A função de restaurar a
+              partir do backup será liberada em uma versão futura.
             </p>
           </div>
         </div>
@@ -2397,12 +2593,16 @@ function QuickUnlockSettingsView({
 
   useEffect(() => {
     isPlatformAuthenticatorAvailable().then(setBioAvailable);
-    getServerPinStatus(userId).then(setPinStatus).catch(() => setPinStatus(null));
+    getServerPinStatus(userId)
+      .then(setPinStatus)
+      .catch(() => setPinStatus(null));
   }, [userId]);
 
   function refresh() {
     setRec(getQuickUnlock(userId));
-    getServerPinStatus(userId).then(setPinStatus).catch(() => setPinStatus(null));
+    getServerPinStatus(userId)
+      .then(setPinStatus)
+      .catch(() => setPinStatus(null));
   }
 
   function resetPanel() {
@@ -2486,7 +2686,15 @@ function QuickUnlockSettingsView({
   }
 
   async function handleRemovePin() {
-    if (!(await confirmAsync({ title: "Remover o PIN da sua conta?", description: "Você precisará da senha mestra para entrar em todos os dispositivos.", destructive: true, confirmText: "Remover PIN" }))) return;
+    if (
+      !(await confirmAsync({
+        title: "Remover o PIN da sua conta?",
+        description: "Você precisará da senha mestra para entrar em todos os dispositivos.",
+        destructive: true,
+        confirmText: "Remover PIN",
+      }))
+    )
+      return;
     setBusy(true);
     try {
       await disableServerPin();
@@ -2501,7 +2709,14 @@ function QuickUnlockSettingsView({
   }
 
   async function handleRemoveBio() {
-    if (!(await confirmAsync({ title: "Remover a biometria deste dispositivo?", destructive: true, confirmText: "Remover biometria" }))) return;
+    if (
+      !(await confirmAsync({
+        title: "Remover a biometria deste dispositivo?",
+        destructive: true,
+        confirmText: "Remover biometria",
+      }))
+    )
+      return;
     disableQuickUnlock(userId);
     refresh();
     toast.success("Biometria removida deste dispositivo");
@@ -2515,7 +2730,10 @@ function QuickUnlockSettingsView({
       <PageHeader
         title="Desbloqueio rápido"
         subtitle="Use um PIN curto ou sua biometria para abrir o cofre sem digitar a senha mestra toda vez."
-        crumbs={[{ label: "Cofre Pessoal", to: "/app/cofre-pessoal" }, { label: "Desbloqueio rápido" }]}
+        crumbs={[
+          { label: "Cofre Pessoal", to: "/app/cofre-pessoal" },
+          { label: "Desbloqueio rápido" },
+        ]}
         onBack={onBack}
       />
 
@@ -2524,7 +2742,10 @@ function QuickUnlockSettingsView({
         <div>
           <p className="font-medium text-foreground">Como isso funciona</p>
           <p className="mt-1">
-            Seu PIN é usado apenas para desbloqueio rápido neste dispositivo. Por segurança, ele <strong>não pode ser visualizado</strong>, apenas alterado. Sua senha mestra continua sendo a única forma de criar o cofre — a chave do cofre fica guardada cifrada localmente e só é aberta com o PIN ou biometria.
+            Seu PIN é usado apenas para desbloqueio rápido neste dispositivo. Por segurança, ele{" "}
+            <strong>não pode ser visualizado</strong>, apenas alterado. Sua senha mestra continua
+            sendo a única forma de criar o cofre — a chave do cofre fica guardada cifrada localmente
+            e só é aberta com o PIN ou biometria.
           </p>
         </div>
       </Card>
@@ -2559,7 +2780,8 @@ function QuickUnlockSettingsView({
         {hasPin && panel === "none" && (
           <>
             <p className="mt-3 rounded-lg bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground">
-              Por segurança, não exibimos o PIN cadastrado. Você pode alterá-lo ou removê-lo a qualquer momento.
+              Por segurança, não exibimos o PIN cadastrado. Você pode alterá-lo ou removê-lo a
+              qualquer momento.
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <Button
@@ -2601,7 +2823,8 @@ function QuickUnlockSettingsView({
               <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 p-3 text-[11px] text-foreground/90">
                 <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
                 <p>
-                  Por segurança, não exibimos o PIN cadastrado. Confirme sua senha mestra para criar um novo PIN.
+                  Por segurança, não exibimos o PIN cadastrado. Confirme sua senha mestra para criar
+                  um novo PIN.
                 </p>
               </div>
             )}
@@ -2643,7 +2866,11 @@ function QuickUnlockSettingsView({
                     disabled={busy || !masterPwd}
                     onClick={handleVerifyMaster}
                   >
-                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    {busy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="h-4 w-4" />
+                    )}
                     Confirmar
                   </Button>
                 </div>
@@ -2694,7 +2921,14 @@ function QuickUnlockSettingsView({
                   autoFocus
                 />
                 <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1" onClick={() => { setPinConfirm(""); setStage("set"); }}>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setPinConfirm("");
+                      setStage("set");
+                    }}
+                  >
                     Voltar
                   </Button>
                   <Button
@@ -2702,7 +2936,11 @@ function QuickUnlockSettingsView({
                     disabled={busy || pinConfirm.length < 4}
                     onClick={handleSavePin}
                   >
-                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    {busy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check className="h-4 w-4" />
+                    )}
                     {panel === "setup" ? "Ativar PIN" : "Salvar novo PIN"}
                   </Button>
                 </div>
@@ -2729,8 +2967,8 @@ function QuickUnlockSettingsView({
               {hasBio
                 ? `Ativa neste dispositivo desde ${new Date(rec!.createdAt).toLocaleDateString("pt-BR")}`
                 : bioAvailable
-                ? "Usa a biometria nativa deste aparelho quando disponível."
-                : "Indisponível neste dispositivo ou navegador."}
+                  ? "Usa a biometria nativa deste aparelho quando disponível."
+                  : "Indisponível neste dispositivo ou navegador."}
             </p>
           </div>
           {hasBio && (
@@ -2755,7 +2993,11 @@ function QuickUnlockSettingsView({
             disabled={busy || !bioAvailable}
             className="mt-3 h-11 w-full bg-brand text-brand-foreground font-semibold hover:bg-brand/90"
           >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-4 w-4" />}
+            {busy ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Fingerprint className="h-4 w-4" />
+            )}
             Configurar biometria
           </Button>
         )}
@@ -2769,17 +3011,25 @@ function QuickUnlockSettingsView({
           </span>
           <div className="min-w-0">
             <p className="text-sm font-semibold">Segurança</p>
-            <p className="text-[11px] text-muted-foreground">Proteções automáticas do desbloqueio rápido.</p>
+            <p className="text-[11px] text-muted-foreground">
+              Proteções automáticas do desbloqueio rápido.
+            </p>
           </div>
         </div>
         <ul className="mt-3 space-y-2 text-[12px] text-muted-foreground">
           <li className="flex items-start gap-2">
             <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
-            <span>O PIN <strong>nunca</strong> é salvo em texto puro — apenas a chave do cofre cifrada por uma derivação PBKDF2 do seu PIN.</span>
+            <span>
+              O PIN <strong>nunca</strong> é salvo em texto puro — apenas a chave do cofre cifrada
+              por uma derivação PBKDF2 do seu PIN.
+            </span>
           </li>
           <li className="flex items-start gap-2">
             <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
-            <span>Após <strong>5 tentativas incorretas</strong>, o desbloqueio rápido é desativado automaticamente. Use a senha mestra para configurar novamente.</span>
+            <span>
+              Após <strong>5 tentativas incorretas</strong>, o desbloqueio rápido é desativado
+              automaticamente. Use a senha mestra para configurar novamente.
+            </span>
           </li>
           <li className="flex items-start gap-2">
             <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
@@ -2837,9 +3087,7 @@ function HealthView({
           // skip
         }
       }
-      const rep = await analyzeVault(enriched, (done, total) =>
-        setProgress({ done, total }),
-      );
+      const rep = await analyzeVault(enriched, (done, total) => setProgress({ done, total }));
       setReport(rep);
     } catch (e) {
       toast.error(i18n.t("cofre:errors.analysisFailed"));
@@ -2885,7 +3133,11 @@ function HealthView({
             disabled={scanning || entries.length === 0}
             className="bg-brand text-brand-foreground font-semibold hover:bg-brand/90"
           >
-            {scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            {scanning ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
             {report ? "Analisar novamente" : "Iniciar análise"}
           </Button>
         }
@@ -2896,7 +3148,9 @@ function HealthView({
         <div>
           <p className="text-sm font-semibold text-foreground">Verificação privada</p>
           <p className="mt-1 text-muted-foreground">
-            A checagem usa o protocolo k-anonymity do Have I Been Pwned: somente os primeiros 5 caracteres do hash SHA-1 da senha saem do seu dispositivo — a senha em si <strong>nunca é enviada</strong>.
+            A checagem usa o protocolo k-anonymity do Have I Been Pwned: somente os primeiros 5
+            caracteres do hash SHA-1 da senha saem do seu dispositivo — a senha em si{" "}
+            <strong>nunca é enviada</strong>.
           </p>
         </div>
       </Card>
@@ -2910,9 +3164,7 @@ function HealthView({
       {scanning && (
         <Card className="mb-4 flex items-center gap-3 p-4 text-sm">
           <Loader2 className="h-4 w-4 animate-spin text-brand" />
-          <span>
-            Analisando senhas{progress ? ` (${progress.done}/${progress.total})` : "…"}
-          </span>
+          <span>Analisando senhas{progress ? ` (${progress.done}/${progress.total})` : "…"}</span>
         </Card>
       )}
 
@@ -2920,20 +3172,30 @@ function HealthView({
         <>
           <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <ScoreCard score={score ?? 0} />
-            <StatCard label="Senhas vazadas" value={report.pwned.length} tone={report.pwned.length ? "warning" : "success"} />
+            <StatCard
+              label="Senhas vazadas"
+              value={report.pwned.length}
+              tone={report.pwned.length ? "warning" : "success"}
+            />
             <StatCard
               label="Repetidas"
               value={report.reused.reduce((a, g) => a + g.entries.length, 0)}
               tone={report.reused.length ? "warning" : "success"}
             />
-            <StatCard label="Antigas (1+ ano)" value={report.old.length} tone={report.old.length ? "warning" : "success"} />
+            <StatCard
+              label="Antigas (1+ ano)"
+              value={report.old.length}
+              tone={report.old.length ? "warning" : "success"}
+            />
           </div>
 
           {report.pwnedFailed > 0 && (
             <Card className="mb-4 flex items-start gap-3 border-amber-500/30 bg-amber-500/10 p-3 text-xs">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
               <p className="text-foreground/90">
-                Não foi possível verificar {report.pwnedFailed} {report.pwnedFailed === 1 ? "senha" : "senhas"} contra a base de vazamentos (problema de rede). Tente novamente em instantes.
+                Não foi possível verificar {report.pwnedFailed}{" "}
+                {report.pwnedFailed === 1 ? "senha" : "senhas"} contra a base de vazamentos
+                (problema de rede). Tente novamente em instantes.
               </p>
             </Card>
           )}
@@ -3000,7 +3262,8 @@ function HealthView({
 
       {!report && !scanning && entries.length > 0 && (
         <Card className="p-6 text-center text-sm text-muted-foreground">
-          Toque em <strong className="text-foreground">Iniciar análise</strong> para verificar a saúde das suas senhas.
+          Toque em <strong className="text-foreground">Iniciar análise</strong> para verificar a
+          saúde das suas senhas.
         </Card>
       )}
     </>
@@ -3008,18 +3271,20 @@ function HealthView({
 }
 
 function ScoreCard({ score }: { score: number }) {
-  const tone =
-    score >= 85 ? "success" : score >= 60 ? "warning" : "danger";
+  const tone = score >= 85 ? "success" : score >= 60 ? "warning" : "danger";
   const color =
     tone === "success"
       ? "text-emerald-400"
       : tone === "warning"
-      ? "text-amber-400"
-      : "text-rose-400";
+        ? "text-amber-400"
+        : "text-rose-400";
   return (
     <Card className="p-3">
       <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Pontuação</p>
-      <p className={cn("mt-1 text-2xl font-bold tabular-nums", color)}>{score}<span className="text-sm text-muted-foreground">/100</span></p>
+      <p className={cn("mt-1 text-2xl font-bold tabular-nums", color)}>
+        {score}
+        <span className="text-sm text-muted-foreground">/100</span>
+      </p>
     </Card>
   );
 }
@@ -3043,8 +3308,8 @@ function HealthSection({
     tone === "danger"
       ? "text-rose-400 bg-rose-500/10 ring-rose-500/30"
       : tone === "warning"
-      ? "text-amber-400 bg-amber-500/10 ring-amber-500/30"
-      : "text-muted-foreground bg-muted/30 ring-border";
+        ? "text-amber-400 bg-amber-500/10 ring-amber-500/30"
+        : "text-muted-foreground bg-muted/30 ring-border";
   return (
     <Card className="mb-4 overflow-hidden">
       <div className="flex items-center gap-2 border-b border-border px-4 py-3">
@@ -3070,7 +3335,8 @@ function HealthSection({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{it.name}</p>
                   <p className="truncate text-[11px] text-muted-foreground">
-                    {it.site ? `${it.site} · ` : ""}{it.meta}
+                    {it.site ? `${it.site} · ` : ""}
+                    {it.meta}
                   </p>
                 </div>
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />

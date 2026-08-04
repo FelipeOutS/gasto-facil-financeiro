@@ -49,10 +49,12 @@ export interface NotificationTemplateRow {
   meta_template_name: string | null;
   /** ISO language code (ex.: pt_BR). Default pt_BR quando ausente. */
   language?: string | null;
-  payload_schema: {
-    required?: string[];
-    body_params_order?: string[]; // ordem de params no body; default = required
-  } | Record<string, unknown>;
+  payload_schema:
+    | {
+        required?: string[];
+        body_params_order?: string[]; // ordem de params no body; default = required
+      }
+    | Record<string, unknown>;
   active: boolean;
 }
 
@@ -111,20 +113,19 @@ export type TransportResult =
     };
 
 export interface WhatsAppNotificationTransport {
-  sendTemplate(
-    request: TransportSendInput,
-    context?: TransportContext,
-  ): Promise<TransportResult>;
+  sendTemplate(request: TransportSendInput, context?: TransportContext): Promise<TransportResult>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fake transport (testes)
 
-export class FakeWhatsAppNotificationTransport
-  implements WhatsAppNotificationTransport
-{
+export class FakeWhatsAppNotificationTransport implements WhatsAppNotificationTransport {
   public calls: TransportSendInput[] = [];
-  constructor(private readonly script: TransportResult | ((i: TransportSendInput) => TransportResult | Promise<TransportResult>)) {}
+  constructor(
+    private readonly script:
+      | TransportResult
+      | ((i: TransportSendInput) => TransportResult | Promise<TransportResult>),
+  ) {}
   async sendTemplate(input: TransportSendInput): Promise<TransportResult> {
     this.calls.push(input);
     if (typeof this.script === "function") return this.script(input);
@@ -170,7 +171,8 @@ export type RenderError =
 /** Sanitiza string de parâmetro Meta: sem quebras de linha, sem tabs consecutivos, trim, hardlimit. */
 function sanitizeParam(v: unknown): string | null {
   if (v == null) return null;
-  const raw = typeof v === "string" ? v : typeof v === "number" && Number.isFinite(v) ? String(v) : null;
+  const raw =
+    typeof v === "string" ? v : typeof v === "number" && Number.isFinite(v) ? String(v) : null;
   if (raw == null) return null;
   const cleaned = raw.replace(/\s+/g, " ").trim();
   if (!cleaned) return null;
@@ -190,9 +192,10 @@ export function renderTemplateComponents(
     required?: string[];
     body_params_order?: string[];
   };
-  const order = (schema.body_params_order && schema.body_params_order.length > 0)
-    ? schema.body_params_order
-    : (schema.required ?? []);
+  const order =
+    schema.body_params_order && schema.body_params_order.length > 0
+      ? schema.body_params_order
+      : (schema.required ?? []);
 
   const params: Array<{ type: "text"; text: string }> = [];
   const paramsOrdered: string[] = [];
@@ -255,7 +258,11 @@ export const SUPPORTED_TEMPLATE_LANGUAGES = Object.freeze(["pt_BR", "en_US"] as 
 export type SupportedTemplateLanguage = (typeof SUPPORTED_TEMPLATE_LANGUAGES)[number];
 
 export type LanguageResolution =
-  | { ok: true; code: SupportedTemplateLanguage; source: "override" | "payload_schema" | "template_field" | "fallback" }
+  | {
+      ok: true;
+      code: SupportedTemplateLanguage;
+      source: "override" | "payload_schema" | "template_field" | "fallback";
+    }
   | { ok: false; reason: "override_invalid" | "payload_schema_invalid" };
 
 function isSupportedLanguage(v: unknown): v is SupportedTemplateLanguage {
@@ -277,7 +284,8 @@ export function resolveTemplateLanguage(
   }
   const schema = (template.payload_schema ?? {}) as Record<string, unknown>;
   if ("language" in schema && schema.language !== undefined && schema.language !== null) {
-    if (!isSupportedLanguage(schema.language)) return { ok: false, reason: "payload_schema_invalid" };
+    if (!isSupportedLanguage(schema.language))
+      return { ok: false, reason: "payload_schema_invalid" };
     return { ok: true, code: schema.language, source: "payload_schema" };
   }
   const legacy = template.language;
@@ -383,7 +391,11 @@ export async function prepareNotificationAttempt(
   // 2. Renderizar components.
   const rendered = renderTemplateComponents(input.template, input.payload);
   if ("reason" in rendered && rendered.ok === false) {
-    return { kind: "invalid_template", reason: rendered.reason, param: (rendered as { param?: string }).param };
+    return {
+      kind: "invalid_template",
+      reason: rendered.reason,
+      param: (rendered as { param?: string }).param,
+    };
   }
 
   // 3. Resolver idioma (override → payload_schema → legacy → fallback).
@@ -667,7 +679,13 @@ export interface ExecuteInput {
 
 export type ExecuteResult =
   | { kind: "accepted"; attemptId: string; providerMessageId: string }
-  | { kind: "rejected"; attemptId: string; errorCode: string; errorCategory: string; retryable: boolean }
+  | {
+      kind: "rejected";
+      attemptId: string;
+      errorCode: string;
+      errorCategory: string;
+      retryable: boolean;
+    }
   | { kind: "ambiguous"; attemptId: string; reason: string }
   | { kind: "state_changed" }
   | { kind: "invalid_template"; reason: string; param?: string }
@@ -769,17 +787,30 @@ export async function executeNotificationAttemptDryTechnical(
         "persist_after_accept_failed",
         deps,
       );
-      return { kind: "ambiguous", attemptId: prepared.attemptId, reason: "persist_after_accept_failed" };
+      return {
+        kind: "ambiguous",
+        attemptId: prepared.attemptId,
+        reason: "persist_after_accept_failed",
+      };
     }
-    return { kind: "accepted", attemptId: prepared.attemptId, providerMessageId: result.providerMessageId };
+    return {
+      kind: "accepted",
+      attemptId: prepared.attemptId,
+      providerMessageId: result.providerMessageId,
+    };
   }
   if (result.kind === "rejected") {
-    await completeAttemptRejected(prepared.attemptId, prepared.attemptToken, {
-      errorCode: result.errorCode,
-      errorCategory: result.errorCategory,
-      retryable: result.retryable,
-      httpStatus: result.httpStatus,
-    }, deps);
+    await completeAttemptRejected(
+      prepared.attemptId,
+      prepared.attemptToken,
+      {
+        errorCode: result.errorCode,
+        errorCategory: result.errorCategory,
+        retryable: result.retryable,
+        httpStatus: result.httpStatus,
+      },
+      deps,
+    );
     return {
       kind: "rejected",
       attemptId: prepared.attemptId,

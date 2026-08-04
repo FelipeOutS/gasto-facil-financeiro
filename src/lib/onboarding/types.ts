@@ -69,14 +69,12 @@ export const ACCOUNT_TYPES: {
   {
     key: "mei",
     title: "MEI",
-    description:
-      "Para organizar meu dinheiro pessoal e o financeiro do meu negócio.",
+    description: "Para organizar meu dinheiro pessoal e o financeiro do meu negócio.",
   },
   {
     key: "empresa",
     title: "Empresa",
-    description:
-      "Para acompanhar receitas, despesas, contas e relatórios da empresa.",
+    description: "Para acompanhar receitas, despesas, contas e relatórios da empresa.",
   },
 ];
 

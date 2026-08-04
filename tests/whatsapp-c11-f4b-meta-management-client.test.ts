@@ -79,7 +79,9 @@ describe("WA-C11 4B.2.a — cliente Meta (URL builder)", () => {
     const r = buildMessageTemplatesUrl();
     expect(r.ok).toBe(true);
     if (r.ok) {
-      expect(r.url.startsWith("https://graph.facebook.com/v20.0/1234567890/message_templates")).toBe(true);
+      expect(
+        r.url.startsWith("https://graph.facebook.com/v20.0/1234567890/message_templates"),
+      ).toBe(true);
     }
   });
 
@@ -170,7 +172,9 @@ describe("WA-C11 4B.2.a — cliente Meta (fetch com mock, flag ON)", () => {
     expect(r.ok).toBe(true);
     expect(capturedAuth).toBe("Bearer test-token-xyz");
     expect(capturedUrl.includes("test-token-xyz")).toBe(false);
-    expect(capturedUrl.startsWith("https://graph.facebook.com/v20.0/1234567890/message_templates")).toBe(true);
+    expect(
+      capturedUrl.startsWith("https://graph.facebook.com/v20.0/1234567890/message_templates"),
+    ).toBe(true);
   });
 
   test("HTTP 400 → http_error com status; nenhum body persistido", async () => {
@@ -210,12 +214,26 @@ describe("WA-C11 4B.2.a — cliente Meta (fetch com mock, flag ON)", () => {
     const { fetchRemoteTemplateByName } = await loadMgmt();
     const body = {
       data: [
-        { name: "gi_conta_atrasada_v1", language: "pt_BR", status: "APPROVED", category: "UTILITY", id: "111" },
-        { name: "hello_world", language: "en_US", status: "APPROVED", category: "UTILITY", id: "222" },
+        {
+          name: "gi_conta_atrasada_v1",
+          language: "pt_BR",
+          status: "APPROVED",
+          category: "UTILITY",
+          id: "111",
+        },
+        {
+          name: "hello_world",
+          language: "en_US",
+          status: "APPROVED",
+          category: "UTILITY",
+          id: "222",
+        },
       ],
     };
     const fetchFn = ((..._args: unknown[]) =>
-      Promise.resolve(new Response(JSON.stringify(body), { status: 200 }))) as unknown as typeof fetch;
+      Promise.resolve(
+        new Response(JSON.stringify(body), { status: 200 }),
+      )) as unknown as typeof fetch;
     const ok = await fetchRemoteTemplateByName("gi_conta_atrasada_v1", "pt_BR", { fetchFn });
     expect(ok.ok).toBe(true);
     if (ok.ok) expect(ok.template.id).toBe("111");
@@ -257,12 +275,22 @@ describe("WA-C11 4B.2.a — fingerprint + duplicidade local + dry-run", () => {
   test("fingerprint muda quando o body muda", async () => {
     const { computeTemplateFingerprint } = await loadMgmt();
     const a = computeTemplateFingerprint({
-      metaName: baseLocal.meta_name, language: baseLocal.language, category: baseLocal.category,
-      body: "A", footer: null, components: null, placeholderSchema: null,
+      metaName: baseLocal.meta_name,
+      language: baseLocal.language,
+      category: baseLocal.category,
+      body: "A",
+      footer: null,
+      components: null,
+      placeholderSchema: null,
     });
     const b = computeTemplateFingerprint({
-      metaName: baseLocal.meta_name, language: baseLocal.language, category: baseLocal.category,
-      body: "B", footer: null, components: null, placeholderSchema: null,
+      metaName: baseLocal.meta_name,
+      language: baseLocal.language,
+      category: baseLocal.category,
+      body: "B",
+      footer: null,
+      components: null,
+      placeholderSchema: null,
     });
     expect(a).not.toBe(b);
   });

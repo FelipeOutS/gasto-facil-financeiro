@@ -13,9 +13,7 @@ const {
   mascararCodigo,
 } = await import("../src/server/whatsapp-boleto-parser");
 
-const { processarMensagemWhatsApp } = await import(
-  "../src/server/whatsapp.server"
-);
+const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 
 function msg(texto: string, externalId = `ext-${Math.random().toString(36).slice(2, 10)}`) {
   return {
@@ -218,11 +216,17 @@ describe("WA-C10.a — fluxo de cadastro", () => {
     const { linha, barcode } = _buildBoletoCobrancaForTest({ valorCentavos: 30000, fator: 9000 });
     // Semeia uma conta pendente com o mesmo código.
     resetState({
-      contas: [{
-        id: "c-prev", user_id: "u1", nome: "Internet anterior",
-        codigo_boleto: barcode, status: "pendente",
-        valor: 300, data_vencimento: "2026-01-01",
-      }],
+      contas: [
+        {
+          id: "c-prev",
+          user_id: "u1",
+          nome: "Internet anterior",
+          codigo_boleto: barcode,
+          status: "pendente",
+          valor: 300,
+          data_vencimento: "2026-01-01",
+        },
+      ],
     });
     const r1 = await processarMensagemWhatsApp(msg(linha));
     expect(r1.resposta).toMatch(/já está nas suas contas pendentes/i);
@@ -242,11 +246,17 @@ describe("WA-C10.a — fluxo de cadastro", () => {
   it("duplicidade: 'cancelar' não cria conta nova", async () => {
     const { linha, barcode } = _buildBoletoCobrancaForTest({ valorCentavos: 9999 });
     resetState({
-      contas: [{
-        id: "c-prev", user_id: "u1", nome: "Já existe",
-        codigo_boleto: barcode, status: "pendente",
-        valor: 99.99, data_vencimento: "2026-01-01",
-      }],
+      contas: [
+        {
+          id: "c-prev",
+          user_id: "u1",
+          nome: "Já existe",
+          codigo_boleto: barcode,
+          status: "pendente",
+          valor: 99.99,
+          data_vencimento: "2026-01-01",
+        },
+      ],
     });
     await processarMensagemWhatsApp(msg(linha));
     const r2 = await processarMensagemWhatsApp(msg("3"));

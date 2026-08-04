@@ -105,11 +105,9 @@ const CENTS_WORDS = new Set(["centavo", "centavos"]);
 // Helpers
 // ---------------------------------------------------------------------------
 
-const stripAccents = (s: string): string =>
-  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const stripAccents = (s: string): string => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-const isNumberWord = (w: string): boolean =>
-  w in UNITS || w in TENS || w in HUNDREDS || w in SCALE;
+const isNumberWord = (w: string): boolean => w in UNITS || w in TENS || w in HUNDREDS || w in SCALE;
 
 /**
  * Tenta interpretar uma sequência de tokens (já normalizada sem acento,
@@ -117,7 +115,10 @@ const isNumberWord = (w: string): boolean =>
  * Retorna o valor numérico e o número de tokens consumidos; ou null se
  * a sequência não formar um numeral válido.
  */
-function parseNumberWords(tokens: string[], start: number): { value: number; consumed: number } | null {
+function parseNumberWords(
+  tokens: string[],
+  start: number,
+): { value: number; consumed: number } | null {
   let total = 0;
   let current = 0;
   let consumed = 0;
@@ -306,10 +307,7 @@ function build(tokens: Token[], text: string): Replacement[] {
       }
       let endTokenIdx = reaisIdx;
       // "e <numero> centavos"
-      if (
-        tokens[reaisIdx + 1]?.norm === "e" &&
-        tokens[reaisIdx + 2]
-      ) {
+      if (tokens[reaisIdx + 1]?.norm === "e" && tokens[reaisIdx + 2]) {
         const parsed = parseNumberWords(
           tokens.map((x) => x.norm),
           reaisIdx + 2,

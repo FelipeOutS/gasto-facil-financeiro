@@ -70,13 +70,7 @@ import {
   type CsvColumnRole,
 } from "@/lib/csv-fatura";
 
-type Step =
-  | "source"
-  | "image-upload"
-  | "pdf-upload"
-  | "csv-upload"
-  | "csv-mapping"
-  | "review";
+type Step = "source" | "image-upload" | "pdf-upload" | "csv-upload" | "csv-mapping" | "review";
 
 type DupStatus = "novo" | "duplicado_lote" | "duplicado_existente";
 
@@ -129,9 +123,7 @@ export function ImportFaturaDialog({
   const categorias = useStore(() => getCategorias());
 
   const [step, setStep] = useState<Step>("source");
-  const [cartaoId, setCartaoId] = useState<string | undefined>(
-    cartaoIdInicial ?? cartoes[0]?.id,
-  );
+  const [cartaoId, setCartaoId] = useState<string | undefined>(cartaoIdInicial ?? cartoes[0]?.id);
 
   // Imagem
   const [images, setImages] = useState<string[]>([]);
@@ -213,8 +205,7 @@ export function ImportFaturaDialog({
       brutos.forEach((it, i) => {
         const desc = it.descricao || it.estabelecimento || "";
         const sugerida =
-          it.categoriaSugerida ||
-          (desc ? suggestCategoryFromDescription(desc) : "outros");
+          it.categoriaSugerida || (desc ? suggestCategoryFromDescription(desc) : "outros");
 
         // Chave de deduplicação intra-lote (normalizada)
         const key = [
@@ -302,20 +293,15 @@ export function ImportFaturaDialog({
           setImgLoading(false);
           return;
         }
-        const msg =
-          data?.error ||
-          t("errorReadingImage");
+        const msg = data?.error || t("errorReadingImage");
         setErrorMessage(msg);
         toast.error(msg);
         setImgLoading(false);
         return;
       }
-      const itens = Array.isArray(data?.itens)
-        ? (data.itens as FaturaItemBruto[])
-        : [];
+      const itens = Array.isArray(data?.itens) ? (data.itens as FaturaItemBruto[]) : [];
       if (itens.length === 0) {
-        const msg =
-          t("errorReadingImage");
+        const msg = t("errorReadingImage");
         setErrorMessage(msg);
         toast.error(msg);
         setImgLoading(false);
@@ -327,8 +313,7 @@ export function ImportFaturaDialog({
       setStep("review");
     } catch (err) {
       console.error(err);
-      const msg =
-        t("errorReadingImage");
+      const msg = t("errorReadingImage");
       setErrorMessage(msg);
       toast.error(msg);
       setImgLoading(false);
@@ -392,8 +377,7 @@ export function ImportFaturaDialog({
       }
       const itens = Array.isArray(data?.itens) ? (data.itens as FaturaItemBruto[]) : [];
       if (itens.length === 0) {
-        const msg =
-          t("errorNoMovements");
+        const msg = t("errorNoMovements");
         setErrorMessage(msg);
         toast.error(msg);
         setPdfLoading(false);
@@ -412,7 +396,6 @@ export function ImportFaturaDialog({
     }
   }
 
-
   async function handleCsvFile(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
@@ -421,8 +404,7 @@ export function ImportFaturaDialog({
     setCsvText(text);
     const parsed = parseCsvFile(text);
     if (parsed.headers.length === 0 || parsed.rows.length === 0) {
-      const msg =
-        t("errorCsvUnknown");
+      const msg = t("errorCsvUnknown");
       setErrorMessage(msg);
       toast.error(msg);
       return;
@@ -445,8 +427,7 @@ export function ImportFaturaDialog({
 
   function aplicarMapping() {
     if (!csvMap.includes("valor") || !csvMap.includes("data")) {
-      const msg =
-        t("errorCsvUnknown");
+      const msg = t("errorCsvUnknown");
       setErrorMessage(msg);
       toast.error(msg);
       return;
@@ -459,15 +440,9 @@ export function ImportFaturaDialog({
 
   /* ---------- Revisão ---------- */
 
-  const totalSelecionados = useMemo(
-    () => items.filter((i) => i.selecionado).length,
-    [items],
-  );
+  const totalSelecionados = useMemo(() => items.filter((i) => i.selecionado).length, [items]);
   const totalValor = useMemo(
-    () =>
-      items
-        .filter((i) => i.selecionado && i.valor)
-        .reduce((s, i) => s + (i.valor ?? 0), 0),
+    () => items.filter((i) => i.selecionado && i.valor).reduce((s, i) => s + (i.valor ?? 0), 0),
     [items],
   );
   const prontos = useMemo(
@@ -484,12 +459,9 @@ export function ImportFaturaDialog({
     [items],
   );
 
-  const updateItem = useCallback(
-    (id: string, patch: Partial<ReviewItem>) => {
-      setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
-    },
-    [],
-  );
+  const updateItem = useCallback((id: string, patch: Partial<ReviewItem>) => {
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  }, []);
 
   function toggleAll(v: boolean) {
     setItems((prev) => prev.map((it) => ({ ...it, selecionado: v })));
@@ -549,12 +521,12 @@ export function ImportFaturaDialog({
     setSaving(true);
     try {
       // import_batch_id único para essa fatura — permite excluir depois pelo lote.
-      const batchId = (typeof crypto !== "undefined" && "randomUUID" in crypto)
-        ? crypto.randomUUID()
-        : `imp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const batchId =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `imp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const inputs = validos.map((it) => {
-        const isParcelado =
-          !!it.totalParcelas && it.totalParcelas > 1 && !!it.parcelaAtual;
+        const isParcelado = !!it.totalParcelas && it.totalParcelas > 1 && !!it.parcelaAtual;
         return {
           descricao: it.descricao ?? "",
           valor: it.valor ?? 0,
@@ -616,9 +588,7 @@ export function ImportFaturaDialog({
         )}
       >
         <DialogHeader className="shrink-0 border-b border-border px-5 pb-4 pt-5 text-left sm:px-6">
-          <DialogTitle className="text-xl font-bold tracking-tight">
-            {t("title")}
-          </DialogTitle>
+          <DialogTitle className="text-xl font-bold tracking-tight">{t("title")}</DialogTitle>
           <DialogDescription>{t("desc")}</DialogDescription>
         </DialogHeader>
 
@@ -645,9 +615,7 @@ export function ImportFaturaDialog({
             <ImageStep
               images={images}
               onPick={(fl) => void handleImageFiles(fl)}
-              onRemove={(i) =>
-                setImages((prev) => prev.filter((_, idx) => idx !== i))
-              }
+              onRemove={(i) => setImages((prev) => prev.filter((_, idx) => idx !== i))}
               loading={imgLoading}
               stage={imgStage}
               onProcess={() => void processarImagem()}
@@ -667,10 +635,7 @@ export function ImportFaturaDialog({
           )}
 
           {step === "csv-upload" && (
-            <CsvStep
-              onPick={(fl) => void handleCsvFile(fl)}
-              onBack={() => setStep("source")}
-            />
+            <CsvStep onPick={(fl) => void handleCsvFile(fl)} onBack={() => setStep("source")} />
           )}
 
           {step === "csv-mapping" && (
@@ -710,7 +675,9 @@ export function ImportFaturaDialog({
       </DialogContent>
       <PremiumLockModal
         open={premiumGate.state.open}
-        onOpenChange={(v) => { if (!v) premiumGate.close(); }}
+        onOpenChange={(v) => {
+          if (!v) premiumGate.close();
+        }}
         title={premiumGate.state.title}
         description={premiumGate.state.description}
         feature={premiumGate.state.feature ?? undefined}
@@ -743,9 +710,7 @@ function SourceStep({
           {t("source.cardLabel")}
         </Label>
         {cartoes.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t("source.noCards")}
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("source.noCards")}</p>
         ) : (
           <Select value={cartaoId ?? ""} onValueChange={(v) => setCartaoId(v)}>
             <SelectTrigger className="mt-2">
@@ -864,9 +829,7 @@ function ImageStep({
             <Sparkles className="h-7 w-7" />
           </div>
           <h3 className="mt-4 text-base font-semibold">{t("image.loadingTitle")}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("image.loadingSub")}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("image.loadingSub")}</p>
           <ul className="mt-5 space-y-1.5 text-left text-sm">
             {STAGES.map((s, i) => (
               <li
@@ -898,12 +861,8 @@ function ImageStep({
         className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-card-elevated px-4 py-10 text-center transition-colors hover:border-brand"
       >
         <Upload className="h-6 w-6 text-muted-foreground" />
-        <p className="text-sm font-semibold">
-          {t("image.uploadTitle")}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {t("image.uploadHint")}
-        </p>
+        <p className="text-sm font-semibold">{t("image.uploadTitle")}</p>
+        <p className="text-xs text-muted-foreground">{t("image.uploadHint")}</p>
         <input
           id="fatura-img"
           type="file"
@@ -917,10 +876,7 @@ function ImageStep({
       {images.length > 0 && (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {images.map((src, i) => (
-            <div
-              key={i}
-              className="relative overflow-hidden rounded-xl border border-border"
-            >
+            <div key={i} className="relative overflow-hidden rounded-xl border border-border">
               <img
                 src={src}
                 alt={t("image.alt", { n: i + 1 })}
@@ -971,12 +927,8 @@ function CsvStep({
         className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-card-elevated px-4 py-10 text-center transition-colors hover:border-brand"
       >
         <FileSpreadsheet className="h-6 w-6 text-muted-foreground" />
-        <p className="text-sm font-semibold">
-          {t("csv.uploadTitle")}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {t("csv.uploadHint")}
-        </p>
+        <p className="text-sm font-semibold">{t("csv.uploadTitle")}</p>
+        <p className="text-xs text-muted-foreground">{t("csv.uploadHint")}</p>
         <input
           id="fatura-csv"
           type="file"
@@ -988,9 +940,7 @@ function CsvStep({
 
       <div className="rounded-xl bg-card-elevated p-3 text-xs text-muted-foreground">
         <p className="font-semibold text-foreground">{t("csv.tipTitle")}</p>
-        <p className="mt-1">
-          {t("csv.tipBody")}
-        </p>
+        <p className="mt-1">{t("csv.tipBody")}</p>
       </div>
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
@@ -1031,9 +981,18 @@ function CsvMapping({
             className="grid items-center gap-2 rounded-xl border border-border bg-card p-3 sm:grid-cols-[1fr_220px]"
           >
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">{h || t("mapping.column", { n: i + 1 })}</p>
+              <p className="truncate text-sm font-semibold">
+                {h || t("mapping.column", { n: i + 1 })}
+              </p>
               <p className="truncate text-[11px] text-muted-foreground">
-                {t("mapping.example", { value: rows.map((r) => r[i] ?? "").filter(Boolean).slice(0, 2).join(" · ") || "—" })}
+                {t("mapping.example", {
+                  value:
+                    rows
+                      .map((r) => r[i] ?? "")
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .join(" · ") || "—",
+                })}
               </p>
             </div>
             <Select
@@ -1149,9 +1108,7 @@ function ReviewStep({
             <p className="mt-0.5 text-lg font-bold tracking-tight">
               {t("review.invoiceOf", { label: invoiceLabel })}
             </p>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              {t("review.invoiceNote")}
-            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">{t("review.invoiceNote")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -1200,12 +1157,8 @@ function ReviewStep({
       <div className="rounded-2xl border border-border bg-card-elevated p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-base font-bold tracking-tight">
-              {t("review.confirmTitle")}
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              {t("review.confirmDesc")}
-            </p>
+            <h3 className="text-base font-bold tracking-tight">{t("review.confirmTitle")}</h3>
+            <p className="text-xs text-muted-foreground">{t("review.confirmDesc")}</p>
             <p className="mt-1 text-[11px] font-medium text-muted-foreground/80">
               {t("review.nothingSavedYet")}
             </p>
@@ -1263,9 +1216,7 @@ function ReviewStep({
         ))}
         {items.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border bg-card-elevated p-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              {t("review.empty")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("review.empty")}</p>
           </div>
         )}
       </div>
@@ -1320,7 +1271,8 @@ function ReviewRow({
     badge = { label: t("row.badge.exists"), tone: "bg-warning/20 text-warning" };
   else if (item.dupStatus === "duplicado_lote")
     badge = { label: t("row.badge.repeated"), tone: "bg-warning/20 text-warning" };
-  else if (!completo) badge = { label: t("row.badge.incomplete"), tone: "bg-destructive/15 text-destructive" };
+  else if (!completo)
+    badge = { label: t("row.badge.incomplete"), tone: "bg-destructive/15 text-destructive" };
   else if (item.confianca === "baixa")
     badge = { label: t("row.badge.review"), tone: "bg-warning/20 text-warning" };
   else badge = { label: t("row.badge.new"), tone: "bg-success/15 text-success" };
@@ -1455,10 +1407,7 @@ function ReviewRow({
             </Select>
           </Field>
           <Field label={t("row.fields.cartao")}>
-            <Select
-              value={item.cartaoId || ""}
-              onValueChange={(v) => onUpdate({ cartaoId: v })}
-            >
+            <Select value={item.cartaoId || ""} onValueChange={(v) => onUpdate({ cartaoId: v })}>
               <SelectTrigger>
                 <SelectValue placeholder={t("row.fields.pickCard")} />
               </SelectTrigger>
@@ -1529,9 +1478,7 @@ function PdfStep({
             <FileText className="h-7 w-7" />
           </div>
           <h3 className="mt-4 text-base font-semibold">{t("pdf.loadingTitle")}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("pdf.loadingSub")}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("pdf.loadingSub")}</p>
           <Loader2 className="mt-4 h-5 w-5 animate-spin text-brand" />
         </div>
       </div>
@@ -1545,9 +1492,7 @@ function PdfStep({
       >
         <Upload className="h-6 w-6 text-muted-foreground" />
         <p className="text-sm font-semibold">{t("pdf.uploadTitle")}</p>
-        <p className="text-xs text-muted-foreground">
-          {t("pdf.uploadHint")}
-        </p>
+        <p className="text-xs text-muted-foreground">{t("pdf.uploadHint")}</p>
         <input
           id="fatura-pdf"
           type="file"
@@ -1678,9 +1623,7 @@ function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <p className="text-sm font-semibold">{t("history.title")}</p>
-          <p className="text-[11px] text-muted-foreground">
-            {t("history.subtitle")}
-          </p>
+          <p className="text-[11px] text-muted-foreground">{t("history.subtitle")}</p>
         </div>
       </div>
 
@@ -1699,7 +1642,11 @@ function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
                   {cartao?.banco ? ` · ${cartao.banco}` : ""}
                 </p>
                 <p className="truncate text-[11px] text-muted-foreground">
-                  {t("history.invoiceLine", { month: fmtInvoiceMonth(l.invoiceMonth), origin: originLabel(l.origem, t), date: dataImp })}
+                  {t("history.invoiceLine", {
+                    month: fmtInvoiceMonth(l.invoiceMonth),
+                    origin: originLabel(l.origem, t),
+                    date: dataImp,
+                  })}
                 </p>
                 <p className="num text-[11px] text-muted-foreground">
                   {t("history.countLine", { count: l.qtd, total: formatBRL(l.total) })}
@@ -1752,12 +1699,12 @@ function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
                 className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card-elevated px-3 py-2"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">
-                    {g.estabelecimento || g.descricao}
-                  </p>
+                  <p className="truncate text-sm font-medium">{g.estabelecimento || g.descricao}</p>
                   <p className="truncate text-[11px] text-muted-foreground">
                     {t("history.purchaseDate", { date: formatDateBR(g.data) })}
-                    {g.invoiceMonth ? t("history.invoiceMonth", { month: fmtInvoiceMonth(g.invoiceMonth) }) : ""}
+                    {g.invoiceMonth
+                      ? t("history.invoiceMonth", { month: fmtInvoiceMonth(g.invoiceMonth) })
+                      : ""}
                   </p>
                 </div>
                 <p className="num shrink-0 text-sm font-semibold">{formatBRL(g.valor)}</p>

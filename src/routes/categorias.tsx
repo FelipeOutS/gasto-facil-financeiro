@@ -1,7 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Plus, Trash2, User as UserIcon, ChevronRight, Sun, Moon, Monitor, PieChart, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  User as UserIcon,
+  ChevronRight,
+  Sun,
+  Moon,
+  Monitor,
+  PieChart,
+  Check,
+} from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -65,7 +76,9 @@ function CategoriasPage() {
   const mes = today.getMonth() + 1;
   const ano = today.getFullYear();
   const limiteTotal = useStore(() => getLimite("total", mes, ano));
-  const [limiteStr, setLimiteStr] = useState(limiteTotal ? String(limiteTotal).replace(".", ",") : "");
+  const [limiteStr, setLimiteStr] = useState(
+    limiteTotal ? String(limiteTotal).replace(".", ",") : "",
+  );
 
   // New category dialog state
   const [open, setOpen] = useState(false);
@@ -86,7 +99,9 @@ function CategoriasPage() {
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">{t("header.eyebrow")}</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">
+            {t("header.eyebrow")}
+          </p>
           <h1 className="text-2xl font-bold tracking-tight">{t("header.title")}</h1>
         </div>
       </header>
@@ -116,9 +131,7 @@ function CategoriasPage() {
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">{t("budgetShortcut.title")}</p>
-          <p className="truncate text-xs text-muted-foreground">
-            {t("budgetShortcut.subtitle")}
-          </p>
+          <p className="truncate text-xs text-muted-foreground">{t("budgetShortcut.subtitle")}</p>
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </Link>
@@ -126,43 +139,39 @@ function CategoriasPage() {
       {/* Aparência */}
       <section className="mt-5 rounded-3xl border border-border bg-card p-5 animate-rise">
         <h2 className="text-sm font-semibold">{t("appearance.title")}</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {t("appearance.desc")}
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("appearance.desc")}</p>
         <div className="mt-3 grid grid-cols-3 gap-2">
-          {([
-            { id: "light", labelKey: "light", Icon: Sun },
-            { id: "dark", labelKey: "dark", Icon: Moon },
-            { id: "system", labelKey: "system", Icon: Monitor },
-          ] as { id: ThemeChoice; labelKey: "light" | "dark" | "system"; Icon: typeof Sun }[]).map(
-            ({ id, labelKey, Icon }) => {
-              const active = theme === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setTheme(id)}
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-1.5 rounded-2xl border px-3 py-3 text-xs font-medium transition-all card-press",
-                    active
-                      ? "border-brand bg-brand-soft text-brand-on-soft shadow-card"
-                      : "border-border bg-card text-muted-foreground hover:text-foreground",
-                  )}
-                  aria-pressed={active}
-                >
-                  <Icon className={cn("h-4 w-4", active && "text-brand")} />
-                  {t(`appearance.themes.${labelKey}`)}
-                </button>
-              );
-            },
-          )}
+          {(
+            [
+              { id: "light", labelKey: "light", Icon: Sun },
+              { id: "dark", labelKey: "dark", Icon: Moon },
+              { id: "system", labelKey: "system", Icon: Monitor },
+            ] as { id: ThemeChoice; labelKey: "light" | "dark" | "system"; Icon: typeof Sun }[]
+          ).map(({ id, labelKey, Icon }) => {
+            const active = theme === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setTheme(id)}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1.5 rounded-2xl border px-3 py-3 text-xs font-medium transition-all card-press",
+                  active
+                    ? "border-brand bg-brand-soft text-brand-on-soft shadow-card"
+                    : "border-border bg-card text-muted-foreground hover:text-foreground",
+                )}
+                aria-pressed={active}
+              >
+                <Icon className={cn("h-4 w-4", active && "text-brand")} />
+                {t(`appearance.themes.${labelKey}`)}
+              </button>
+            );
+          })}
         </div>
 
         <div className="mt-5">
           <p className="text-xs font-medium text-foreground">{t("appearance.accentTitle")}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {t("appearance.accentDesc")}
-          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{t("appearance.accentDesc")}</p>
           <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-8">
             {ACCENTS.map((a) => {
               const active = accent === a.id;
@@ -213,9 +222,7 @@ function CategoriasPage() {
       {/* Limite mensal */}
       <section className="mt-5 rounded-3xl border border-border bg-card p-5">
         <h2 className="text-sm font-semibold">{t("limit.title")}</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {t("limit.desc")}
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("limit.desc")}</p>
         <div className="mt-3 flex gap-2">
           <div className="flex flex-1 items-baseline gap-2 rounded-xl bg-card-elevated px-3">
             <span className="text-sm font-semibold text-muted-foreground">R$</span>
@@ -232,7 +239,9 @@ function CategoriasPage() {
             onClick={() => {
               const v = parseBRLInput(limiteStr);
               setLimite("total", v, mes, ano);
-              toast.success(v > 0 ? t("limit.savedToast", { value: formatBRL(v) }) : t("limit.removedToast"));
+              toast.success(
+                v > 0 ? t("limit.savedToast", { value: formatBRL(v) }) : t("limit.removedToast"),
+              );
             }}
             className="h-11 rounded-xl"
           >
@@ -277,9 +286,7 @@ function CategoriasPage() {
                         onClick={() => setColorHex(c.hex)}
                         className={cn(
                           "h-8 w-8 rounded-full border-2 transition-all",
-                          colorHex === c.hex
-                            ? "border-foreground scale-110"
-                            : "border-transparent",
+                          colorHex === c.hex ? "border-foreground scale-110" : "border-transparent",
                         )}
                         style={{ background: c.hex }}
                         aria-label={t(`colors.${c.name}` as const, { defaultValue: c.name })}

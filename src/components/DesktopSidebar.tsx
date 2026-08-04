@@ -49,7 +49,10 @@ export function DesktopSidebar() {
   const { canWriteBasic, requireSubscription } = useSubscriptionGuard();
   const alerta = useAlertaContas();
   const { can, isAdminMaster } = usePlan();
-  const [lockState, setLockState] = useState<{ open: boolean; title: string }>({ open: false, title: "" });
+  const [lockState, setLockState] = useState<{ open: boolean; title: string }>({
+    open: false,
+    title: "",
+  });
   const { user, profile } = useAuth();
   const collapsed = useSidebarCollapsed();
 
@@ -101,7 +104,15 @@ export function DesktopSidebar() {
   }
 
   function handleNavClick(to: string, event: MouseEvent<HTMLAnchorElement>) {
-    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return;
     setOptimisticPath(to);
   }
 
@@ -121,7 +132,10 @@ export function DesktopSidebar() {
     );
     const iconNode = (
       <span className="relative">
-        <Icon className={cn("h-4 w-4 shrink-0", active && "text-brand")} strokeWidth={active ? 2.4 : 1.8} />
+        <Icon
+          className={cn("h-4 w-4 shrink-0", active && "text-brand")}
+          strokeWidth={active ? 2.4 : 1.8}
+        />
         {showDot && (
           <span
             aria-hidden
@@ -160,7 +174,10 @@ export function DesktopSidebar() {
         aria-label={label}
       >
         {active && !collapsed && (
-          <span aria-hidden className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand" />
+          <span
+            aria-hidden
+            className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand"
+          />
         )}
         {iconNode}
         {labelNode}
@@ -184,251 +201,279 @@ export function DesktopSidebar() {
 
   return (
     <TooltipProvider delayDuration={200}>
-    <aside
-      className={cn(
-        "hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:flex-col lg:border-r lg:border-border/60 lg:bg-card/40 lg:backdrop-blur-xl transition-[width] duration-300",
-        collapsed ? "lg:w-20" : "lg:w-64",
-      )}
-      aria-label={t("aria.side")}
-    >
-      <div className={cn("pt-5 pb-4", collapsed ? "px-2 flex flex-col items-center gap-3" : "px-5")}>
-        {collapsed ? (
-          <>
-            <BrandMark variant="symbol" className="h-8 w-8" />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={() => setSidebarCollapsed(false)}
-                  aria-label="Expandir menu"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/60"
-                >
-                  <PanelLeftOpen className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Expandir menu</TooltipContent>
-            </Tooltip>
-          </>
-        ) : (
-          <div className="flex items-center justify-between gap-2">
-            <BrandMark variant="sidebar" className="h-10 w-auto" />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={() => setSidebarCollapsed(true)}
-                  aria-label="Recolher menu"
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/60"
-                >
-                  <PanelLeftClose className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Recolher menu</TooltipContent>
-            </Tooltip>
-          </div>
+      <aside
+        className={cn(
+          "hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:flex-col lg:border-r lg:border-border/60 lg:bg-card/40 lg:backdrop-blur-xl transition-[width] duration-300",
+          collapsed ? "lg:w-20" : "lg:w-64",
         )}
-        {!collapsed && (
-          <h2 className="mt-3 text-sm font-semibold tracking-tight text-muted-foreground">{t("header.tagline")}</h2>
-        )}
-      </div>
-
-      {!collapsed && (
-        <div className="px-4 pb-3">
-          <ConnectedAccountSwitcher />
-        </div>
-      )}
-
-      {collapsed ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={() => {
-                if (!canWriteBasic) {
-                  requireSubscription(t("header.addExpenseRequiresPlan"));
-                  return;
-                }
-                navigate({ to: "/adicionar" });
-              }}
-              aria-label={t("header.addExpense")}
-              className="card-press mx-3 mb-4 inline-flex h-10 items-center justify-center rounded-xl bg-brand-grad text-sm font-semibold shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">{t("header.addExpense")}</TooltipContent>
-        </Tooltip>
-      ) : (
-        <button
-          type="button"
-          onClick={() => {
-            if (!canWriteBasic) {
-              requireSubscription(t("header.addExpenseRequiresPlan"));
-              return;
-            }
-            navigate({ to: "/adicionar" });
-          }}
-          className="card-press mx-4 mb-4 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-grad px-4 py-2.5 text-sm font-semibold shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
+        aria-label={t("aria.side")}
+      >
+        <div
+          className={cn("pt-5 pb-4", collapsed ? "px-2 flex flex-col items-center gap-3" : "px-5")}
         >
-          <Plus className="h-4 w-4" />
-          {t("header.addExpense")}
-        </button>
-      )}
-
-      <nav className={cn("flex-1 overflow-y-auto overflow-x-hidden pb-3", collapsed ? "px-2" : "px-3")}>
-        {/* Dashboard fixo no topo */}
-        <ul className="space-y-1">
-          <li>
-            {collapsed ? (
+          {collapsed ? (
+            <>
+              <BrandMark variant="symbol" className="h-8 w-8" />
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link
-                    to="/app"
-                    preload="intent"
-                    preloadDelay={0}
-                    onClick={(e) => handleNavClick("/app", e)}
-                    aria-label={t("items.dashboard")}
-                    className={cn(
-                      "group relative flex items-center justify-center rounded-xl px-2 py-2 text-sm font-medium transition-all",
-                      dashboardActive
-                        ? "bg-brand-soft text-brand-on-soft shadow-card"
-                        : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
-                    )}
+                  <button
+                    type="button"
+                    onClick={() => setSidebarCollapsed(false)}
+                    aria-label="Expandir menu"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/60"
                   >
-                    <Home className={cn("h-4 w-4 shrink-0", dashboardActive && "text-brand")} strokeWidth={dashboardActive ? 2.4 : 1.8} />
-                  </Link>
+                    <PanelLeftOpen className="h-4 w-4" />
+                  </button>
                 </TooltipTrigger>
-                <TooltipContent side="right">{t("items.dashboard")}</TooltipContent>
+                <TooltipContent side="right">Expandir menu</TooltipContent>
               </Tooltip>
-            ) : (
-              <Link
-                to="/app"
-                preload="intent"
-                preloadDelay={0}
-                onClick={(e) => handleNavClick("/app", e)}
-                className={cn(
-                  "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
-                  dashboardActive
-                    ? "bg-brand-soft text-brand-on-soft shadow-card"
-                    : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
-                )}
-              >
-                {dashboardActive && (
-                  <span aria-hidden className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand" />
-                )}
-                <Home className={cn("h-4 w-4 shrink-0", dashboardActive && "text-brand")} strokeWidth={dashboardActive ? 2.4 : 1.8} />
-                <span className="truncate">{t("items.dashboard")}</span>
-              </Link>
-            )}
-          </li>
-        </ul>
+            </>
+          ) : (
+            <div className="flex items-center justify-between gap-2">
+              <BrandMark variant="sidebar" className="h-10 w-auto" />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => setSidebarCollapsed(true)}
+                    aria-label="Recolher menu"
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/60"
+                  >
+                    <PanelLeftClose className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Recolher menu</TooltipContent>
+              </Tooltip>
+            </div>
+          )}
+          {!collapsed && (
+            <h2 className="mt-3 text-sm font-semibold tracking-tight text-muted-foreground">
+              {t("header.tagline")}
+            </h2>
+          )}
+        </div>
 
-        <div className="mt-3 space-y-1">
-          {groups.map((group) => {
-            const open = isOpen(group.id);
-            const hasActive = group.items.some(
-              (it) => currentPath === it.to || currentPath.startsWith(it.to + "/"),
-            );
-            if (collapsed) {
-              // No accordion header when collapsed; just a thin divider + items
-              return (
-                <div key={group.id} className="rounded-xl">
-                  <div aria-hidden className="my-2 mx-2 h-px bg-border/60" />
-                  <ul className="space-y-1">{group.items.map(renderLeaf)}</ul>
-                </div>
-              );
-            }
-            return (
-              <div key={group.id} className="rounded-xl">
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(group.id)}
-                  aria-expanded={open}
+        {!collapsed && (
+          <div className="px-4 pb-3">
+            <ConnectedAccountSwitcher />
+          </div>
+        )}
+
+        {collapsed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!canWriteBasic) {
+                    requireSubscription(t("header.addExpenseRequiresPlan"));
+                    return;
+                  }
+                  navigate({ to: "/adicionar" });
+                }}
+                aria-label={t("header.addExpense")}
+                className="card-press mx-3 mb-4 inline-flex h-10 items-center justify-center rounded-xl bg-brand-grad text-sm font-semibold shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{t("header.addExpense")}</TooltipContent>
+          </Tooltip>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              if (!canWriteBasic) {
+                requireSubscription(t("header.addExpenseRequiresPlan"));
+                return;
+              }
+              navigate({ to: "/adicionar" });
+            }}
+            className="card-press mx-4 mb-4 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-grad px-4 py-2.5 text-sm font-semibold shadow-elevated transition-all hover:opacity-95 active:scale-[0.98]"
+          >
+            <Plus className="h-4 w-4" />
+            {t("header.addExpense")}
+          </button>
+        )}
+
+        <nav
+          className={cn(
+            "flex-1 overflow-y-auto overflow-x-hidden pb-3",
+            collapsed ? "px-2" : "px-3",
+          )}
+        >
+          {/* Dashboard fixo no topo */}
+          <ul className="space-y-1">
+            <li>
+              {collapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to="/app"
+                      preload="intent"
+                      preloadDelay={0}
+                      onClick={(e) => handleNavClick("/app", e)}
+                      aria-label={t("items.dashboard")}
+                      className={cn(
+                        "group relative flex items-center justify-center rounded-xl px-2 py-2 text-sm font-medium transition-all",
+                        dashboardActive
+                          ? "bg-brand-soft text-brand-on-soft shadow-card"
+                          : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
+                      )}
+                    >
+                      <Home
+                        className={cn("h-4 w-4 shrink-0", dashboardActive && "text-brand")}
+                        strokeWidth={dashboardActive ? 2.4 : 1.8}
+                      />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{t("items.dashboard")}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <Link
+                  to="/app"
+                  preload="intent"
+                  preloadDelay={0}
+                  onClick={(e) => handleNavClick("/app", e)}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold uppercase tracking-widest transition-colors",
-                    hasActive ? "text-foreground" : "text-muted-foreground/70 hover:text-foreground",
+                    "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+                    dashboardActive
+                      ? "bg-brand-soft text-brand-on-soft shadow-card"
+                      : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
                   )}
                 >
-                  <span>{t(group.labelKey)}</span>
-                  <ChevronDown
-                    className={cn(
-                      "h-3.5 w-3.5 transition-transform duration-200",
-                      open ? "rotate-0" : "-rotate-90",
-                    )}
+                  {dashboardActive && (
+                    <span
+                      aria-hidden
+                      className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand"
+                    />
+                  )}
+                  <Home
+                    className={cn("h-4 w-4 shrink-0", dashboardActive && "text-brand")}
+                    strokeWidth={dashboardActive ? 2.4 : 1.8}
                   />
-                </button>
-                {open && <ul className="mt-1 space-y-1 pb-1">{group.items.map(renderLeaf)}</ul>}
-              </div>
-            );
-          })}
-        </div>
-      </nav>
+                  <span className="truncate">{t("items.dashboard")}</span>
+                </Link>
+              )}
+            </li>
+          </ul>
 
-      {/* Theme toggle */}
-      <div
-        className={cn(
-          "mt-2 mb-2 flex items-center",
-          collapsed ? "justify-center px-2" : "px-3 justify-center",
-        )}
-      >
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex">
-              <ThemeToggle />
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="right">{t("aria.toggleTheme", { defaultValue: "Alternar tema" })}</TooltipContent>
-        </Tooltip>
-      </div>
-
-      {collapsed ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link
-              to="/conta"
-              aria-label={profile?.nome || user?.email || t("header.fallbackUser")}
-              className="mx-auto mb-3 mt-1 flex items-center justify-center rounded-full transition-opacity hover:opacity-80"
-            >
-              <UserAvatar
-                url={profile?.avatar_url}
-                name={profile?.nome ?? profile?.responsavel_nome}
-                email={user?.email}
-                size={36}
-              />
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            {profile?.nome || profile?.responsavel_nome || user?.email || t("header.fallbackUser")}
-          </TooltipContent>
-        </Tooltip>
-      ) : (
-        <Link
-          to="/conta"
-          className="mx-3 mb-2 mt-2 flex items-center gap-3 rounded-2xl border border-border/60 bg-card/60 px-3 py-2 text-sm transition-colors hover:bg-accent/40"
-        >
-          <UserAvatar
-            url={profile?.avatar_url}
-            name={profile?.nome ?? profile?.responsavel_nome}
-            email={user?.email}
-            size={36}
-          />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">
-              {profile?.nome || profile?.responsavel_nome || user?.email?.split("@")[0] || t("header.fallbackUser")}
-            </p>
-            <p className="truncate text-[11px] text-muted-foreground">{user?.email}</p>
+          <div className="mt-3 space-y-1">
+            {groups.map((group) => {
+              const open = isOpen(group.id);
+              const hasActive = group.items.some(
+                (it) => currentPath === it.to || currentPath.startsWith(it.to + "/"),
+              );
+              if (collapsed) {
+                // No accordion header when collapsed; just a thin divider + items
+                return (
+                  <div key={group.id} className="rounded-xl">
+                    <div aria-hidden className="my-2 mx-2 h-px bg-border/60" />
+                    <ul className="space-y-1">{group.items.map(renderLeaf)}</ul>
+                  </div>
+                );
+              }
+              return (
+                <div key={group.id} className="rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.id)}
+                    aria-expanded={open}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold uppercase tracking-widest transition-colors",
+                      hasActive
+                        ? "text-foreground"
+                        : "text-muted-foreground/70 hover:text-foreground",
+                    )}
+                  >
+                    <span>{t(group.labelKey)}</span>
+                    <ChevronDown
+                      className={cn(
+                        "h-3.5 w-3.5 transition-transform duration-200",
+                        open ? "rotate-0" : "-rotate-90",
+                      )}
+                    />
+                  </button>
+                  {open && <ul className="mt-1 space-y-1 pb-1">{group.items.map(renderLeaf)}</ul>}
+                </div>
+              );
+            })}
           </div>
-        </Link>
-      )}
-      {!collapsed && (
-        <div className="px-5 pb-4 text-[10px] text-muted-foreground/70">© Gasto Inteligente</div>
-      )}
-      <PremiumLockModal
-        open={lockState.open}
-        onOpenChange={(v) => setLockState((s) => ({ ...s, open: v }))}
-        title={lockState.title}
-      />
-    </aside>
+        </nav>
+
+        {/* Theme toggle */}
+        <div
+          className={cn(
+            "mt-2 mb-2 flex items-center",
+            collapsed ? "justify-center px-2" : "px-3 justify-center",
+          )}
+        >
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex">
+                <ThemeToggle />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              {t("aria.toggleTheme", { defaultValue: "Alternar tema" })}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        {collapsed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                to="/conta"
+                aria-label={profile?.nome || user?.email || t("header.fallbackUser")}
+                className="mx-auto mb-3 mt-1 flex items-center justify-center rounded-full transition-opacity hover:opacity-80"
+              >
+                <UserAvatar
+                  url={profile?.avatar_url}
+                  name={profile?.nome ?? profile?.responsavel_nome}
+                  email={user?.email}
+                  size={36}
+                />
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              {profile?.nome ||
+                profile?.responsavel_nome ||
+                user?.email ||
+                t("header.fallbackUser")}
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <Link
+            to="/conta"
+            className="mx-3 mb-2 mt-2 flex items-center gap-3 rounded-2xl border border-border/60 bg-card/60 px-3 py-2 text-sm transition-colors hover:bg-accent/40"
+          >
+            <UserAvatar
+              url={profile?.avatar_url}
+              name={profile?.nome ?? profile?.responsavel_nome}
+              email={user?.email}
+              size={36}
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">
+                {profile?.nome ||
+                  profile?.responsavel_nome ||
+                  user?.email?.split("@")[0] ||
+                  t("header.fallbackUser")}
+              </p>
+              <p className="truncate text-[11px] text-muted-foreground">{user?.email}</p>
+            </div>
+          </Link>
+        )}
+        {!collapsed && (
+          <div className="px-5 pb-4 text-[10px] text-muted-foreground/70">© Gasto Inteligente</div>
+        )}
+        <PremiumLockModal
+          open={lockState.open}
+          onOpenChange={(v) => setLockState((s) => ({ ...s, open: v }))}
+          title={lockState.title}
+        />
+      </aside>
     </TooltipProvider>
   );
 }

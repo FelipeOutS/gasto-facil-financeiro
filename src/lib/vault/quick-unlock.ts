@@ -161,7 +161,10 @@ function androidResultMessage(detail: AndroidBiometricResultDetail, fallback: st
   return fallback;
 }
 
-function androidAuthenticate(_reason: string, timeoutMs = 60_000): Promise<AndroidBiometricResultDetail> {
+function androidAuthenticate(
+  _reason: string,
+  timeoutMs = 60_000,
+): Promise<AndroidBiometricResultDetail> {
   return new Promise((resolve) => {
     const b = getAndroidBridge();
     if (!b?.authenticate) {
@@ -184,7 +187,10 @@ function androidAuthenticate(_reason: string, timeoutMs = 60_000): Promise<Andro
     };
 
     window.addEventListener("AndroidBiometricResult", onResult as EventListener, { once: true });
-    const timer = setTimeout(() => finish({ success: false, error: "A biometria não respondeu. Tente novamente." }), timeoutMs);
+    const timer = setTimeout(
+      () => finish({ success: false, error: "A biometria não respondeu. Tente novamente." }),
+      timeoutMs,
+    );
 
     try {
       b.authenticate();
@@ -195,7 +201,6 @@ function androidAuthenticate(_reason: string, timeoutMs = 60_000): Promise<Andro
     }
   });
 }
-
 
 /* ----------------------------- WebAuthn ----------------------------- */
 
@@ -216,10 +221,7 @@ export async function isPlatformAuthenticatorAvailable(): Promise<boolean> {
     const s = await androidStatus();
     return s === "available" || s === "success";
   }
-  if (
-    typeof window === "undefined" ||
-    typeof window.PublicKeyCredential === "undefined"
-  ) {
+  if (typeof window === "undefined" || typeof window.PublicKeyCredential === "undefined") {
     return false;
   }
   try {
@@ -236,8 +238,10 @@ export async function biometricUnavailableReason(): Promise<string | null> {
     const s = await androidStatus();
     if (s === "available" || s === "success") return null;
     if (s === "no_hardware") return "Este aparelho não tem leitor biométrico.";
-    if (s === "none_enrolled") return "Biometria indisponível ou não cadastrada neste aparelho. Cadastre a digital nas configurações do celular ou use o PIN.";
-    if (s === "hardware_unavailable") return "Biometria temporariamente indisponível neste aparelho.";
+    if (s === "none_enrolled")
+      return "Biometria indisponível ou não cadastrada neste aparelho. Cadastre a digital nas configurações do celular ou use o PIN.";
+    if (s === "hardware_unavailable")
+      return "Biometria temporariamente indisponível neste aparelho.";
     return "Biometria indisponível neste aparelho.";
   }
   const ok = await isPlatformAuthenticatorAvailable();
@@ -251,7 +255,10 @@ function toBuf(u8: Uint8Array): ArrayBuffer {
 }
 
 async function importRawAesKey(raw: ArrayBuffer): Promise<CryptoKey> {
-  return crypto.subtle.importKey("raw", raw, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+  return crypto.subtle.importKey("raw", raw, { name: "AES-GCM", length: 256 }, false, [
+    "encrypt",
+    "decrypt",
+  ]);
 }
 
 /** Cadastra biometria neste dispositivo (Android bridge OU WebAuthn-PRF). */
@@ -326,7 +333,9 @@ export async function enableBiometricUnlock(
       },
       timeout: 60_000,
       attestation: "none",
-      extensions: { prf: { eval: { first: toBuf(prfSalt) } } } as AuthenticationExtensionsClientInputs,
+      extensions: {
+        prf: { eval: { first: toBuf(prfSalt) } },
+      } as AuthenticationExtensionsClientInputs,
     },
   })) as PublicKeyCredential | null;
 
@@ -342,10 +351,14 @@ export async function enableBiometricUnlock(
         allowCredentials: [{ id: cred.rawId, type: "public-key" }],
         userVerification: "required",
         timeout: 60_000,
-        extensions: { prf: { eval: { first: toBuf(prfSalt) } } } as AuthenticationExtensionsClientInputs,
+        extensions: {
+          prf: { eval: { first: toBuf(prfSalt) } },
+        } as AuthenticationExtensionsClientInputs,
       },
     })) as PublicKeyCredential | null;
-    const ext2 = assertion?.getClientExtensionResults() as { prf?: { results?: { first?: ArrayBuffer } } };
+    const ext2 = assertion?.getClientExtensionResults() as {
+      prf?: { results?: { first?: ArrayBuffer } };
+    };
     prfBytes = ext2?.prf?.results?.first;
   }
 
@@ -397,12 +410,16 @@ export async function unlockWithBiometric(userId: string): Promise<CryptoKey> {
       allowCredentials: [{ id: toBuf(vaultB64decode(rec.credentialId)), type: "public-key" }],
       userVerification: "required",
       timeout: 60_000,
-      extensions: { prf: { eval: { first: toBuf(vaultB64decode(rec.prfSalt)) } } } as AuthenticationExtensionsClientInputs,
+      extensions: {
+        prf: { eval: { first: toBuf(vaultB64decode(rec.prfSalt)) } },
+      } as AuthenticationExtensionsClientInputs,
     },
   })) as PublicKeyCredential | null;
 
   if (!assertion) throw new Error("Autenticação biométrica cancelada.");
-  const ext = assertion.getClientExtensionResults() as { prf?: { results?: { first?: ArrayBuffer } } };
+  const ext = assertion.getClientExtensionResults() as {
+    prf?: { results?: { first?: ArrayBuffer } };
+  };
   const prfBytes = ext?.prf?.results?.first;
   if (!prfBytes) throw new Error("Falha ao derivar chave biométrica (PRF não retornou).");
 

@@ -55,19 +55,11 @@ export interface RunOutboundDeps {
   /** Gate override (default: isOutboundHttpAllowed). */
   gate?: (userId: string) => OutboundGateResult;
   /** Factory override do transport Meta (default: createMetaWhatsAppNotificationTransport). */
-  transportFactory?: (
-    input?: MetaTransportFactoryInput,
-  ) => MetaTransportFactoryResult;
+  transportFactory?: (input?: MetaTransportFactoryInput) => MetaTransportFactoryResult;
   /** Carregador de recipient (default: leitura de `whatsapp_links`). */
-  loadRecipient?: (
-    userId: string,
-    client: SupabaseLike,
-  ) => Promise<string | null>;
+  loadRecipient?: (userId: string, client: SupabaseLike) => Promise<string | null>;
   /** Carregador de template completo (default: `whatsapp_notification_templates`). */
-  loadTemplate?: (
-    key: string,
-    client: SupabaseLike,
-  ) => Promise<NotificationTemplateRow | null>;
+  loadTemplate?: (key: string, client: SupabaseLike) => Promise<NotificationTemplateRow | null>;
   /** phoneNumberId override para testes; em produção lê do env via factory. */
   phoneNumberId?: string;
   /** Executor D.1/D.2A injetável (default: executeNotificationAttemptDryTechnical). */
@@ -86,10 +78,7 @@ async function defaultClient(): Promise<SupabaseLike> {
   return mod.supabaseAdmin as unknown as SupabaseLike;
 }
 
-async function defaultLoadRecipient(
-  userId: string,
-  client: SupabaseLike,
-): Promise<string | null> {
+async function defaultLoadRecipient(userId: string, client: SupabaseLike): Promise<string | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const c = client as any;
   const { data } = await c
@@ -198,10 +187,7 @@ function log(logger: RunOutboundDeps["logger"], entry: Record<string, unknown>):
  *  - `executed`: adapter foi chamado; `result` carrega o veredito autoritativo.
  */
 export async function runOutboundForNotification(
-  notification: Pick<
-    NotificationRow,
-    "id" | "user_id" | "notification_type" | "payload"
-  >,
+  notification: Pick<NotificationRow, "id" | "user_id" | "notification_type" | "payload">,
   claimToken: string,
   deps: RunOutboundDeps = {},
 ): Promise<RunOutboundOutcome> {
@@ -264,11 +250,7 @@ export async function runOutboundForNotification(
     recipient,
   };
 
-  const result = await executeFn(
-    input,
-    { client, now: deps.now },
-    built.transport,
-  );
+  const result = await executeFn(input, { client, now: deps.now }, built.transport);
 
   log(deps.logger, {
     event: "outbound_executed",

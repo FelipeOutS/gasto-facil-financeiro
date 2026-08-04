@@ -19,12 +19,7 @@ export interface ProductLookupResult {
   source: ProductLookupSource;
 }
 
-export type ProductLookupErrorCode =
-  | "empty"
-  | "invalid"
-  | "timeout"
-  | "network"
-  | "server";
+export type ProductLookupErrorCode = "empty" | "invalid" | "timeout" | "network" | "server";
 
 export class ProductLookupError extends Error {
   code: ProductLookupErrorCode;
@@ -126,8 +121,7 @@ export async function buscarProdutoPorCodigoBarras(
   const name = typeof p.product_name === "string" ? p.product_name.trim() : "";
   const brand = typeof p.brands === "string" ? p.brands.split(",")[0]?.trim() : "";
   const quantity = typeof p.quantity === "string" ? p.quantity.trim() : "";
-  const imageUrl =
-    p.image_front_small_url || p.image_small_url || p.image_url || undefined;
+  const imageUrl = p.image_front_small_url || p.image_small_url || p.image_url || undefined;
 
   return {
     found: true,

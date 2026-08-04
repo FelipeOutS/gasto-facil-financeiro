@@ -1,10 +1,5 @@
 import { useMemo, useState, type FormEvent } from "react";
-import {
-  createFileRoute,
-  Link,
-  useNavigate,
-  useSearch,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { notify } from "@/lib/notify";
@@ -157,7 +152,9 @@ function ListPicker({ requestedId }: { requestedId?: string }) {
           alt={t("cartV2.emptyImageAlt")}
           loading="lazy"
           className="mx-auto h-32 w-auto object-contain sm:h-40"
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
         />
         <h2 className="mt-4 text-lg font-semibold">{t("cartV2.emptyTitle")}</h2>
         <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
@@ -194,9 +191,7 @@ function ListPicker({ requestedId }: { requestedId?: string }) {
         </p>
       )}
       <h2 className="text-base font-semibold md:text-lg">{t("carrinho.picker.title")}</h2>
-      <p className="mt-0.5 text-[13px] text-muted-foreground">
-        {t("carrinho.picker.description")}
-      </p>
+      <p className="mt-0.5 text-[13px] text-muted-foreground">{t("carrinho.picker.description")}</p>
       <ul className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {listas.map((l) => (
           <ListPickerCard key={l.id} lista={l} />
@@ -226,7 +221,10 @@ function ListPickerCard({ lista }: { lista: MercadoLista }) {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <Mini label={t("carrinho.picker.totalEstimated")} value={<Money value={resumo.totalEstimado} />} />
+        <Mini
+          label={t("carrinho.picker.totalEstimated")}
+          value={<Money value={resumo.totalEstimado} />}
+        />
         <Mini
           label={t("carrinho.picker.budget")}
           value={orc.hasBudget ? <Money value={orc.budget} /> : "—"}
@@ -329,7 +327,6 @@ function CartMode({ lista }: { lista: MercadoLista }) {
       });
 
       if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
         console.log("[mercado/finalize]", {
           source: "carrinho",
           historyId: entry.id,
@@ -341,7 +338,9 @@ function CartMode({ lista }: { lista: MercadoLista }) {
           gastoId: gastoResult.gastoId,
           gastoReason: gastoResult.reason,
           gastoError: gastoResult.error,
-          communitySubmitted: Boolean(community && (community.inserted > 0 || community.updated > 0)),
+          communitySubmitted: Boolean(
+            community && (community.inserted > 0 || community.updated > 0),
+          ),
           communityError,
         });
       }
@@ -380,7 +379,6 @@ function CartMode({ lista }: { lista: MercadoLista }) {
     }
   }
 
-
   return (
     <>
       <MercadoBanner
@@ -414,8 +412,14 @@ function CartMode({ lista }: { lista: MercadoLista }) {
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
-          <Mini label={t("carrinho.summary.totalEstimated")} value={<Money value={resumo.totalEstimado} />} />
-          <Mini label={t("carrinho.summary.totalBought")} value={<Money value={resumo.totalCompradoEstimado} />} />
+          <Mini
+            label={t("carrinho.summary.totalEstimated")}
+            value={<Money value={resumo.totalEstimado} />}
+          />
+          <Mini
+            label={t("carrinho.summary.totalBought")}
+            value={<Money value={resumo.totalCompradoEstimado} />}
+          />
           <Mini label={t("carrinho.summary.bought")} value={String(resumo.itensComprados)} />
           <Mini label={t("carrinho.summary.pending")} value={String(resumo.itensPendentes)} />
           <Mini
@@ -427,9 +431,7 @@ function CartMode({ lista }: { lista: MercadoLista }) {
         <div className="mt-4">
           <div className="flex items-center justify-between gap-2 text-[12px] text-muted-foreground">
             <span>{t("carrinho.summary.progress", { percent: resumo.percentualConcluido })}</span>
-            {orc.hasBudget && (
-              <span className="tabular-nums">{orc.percentualUsado}%</span>
-            )}
+            {orc.hasBudget && <span className="tabular-nums">{orc.percentualUsado}%</span>}
           </div>
           <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-card-elevated ring-1 ring-border/60">
             <div
@@ -573,10 +575,7 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
     item.precoEstimado != null ? String(item.precoEstimado) : "",
   );
   const { pool } = useActiveCommunityPrices();
-  const suggestions = useMemo(
-    () => getSuggestionsFor(item.nome, pool),
-    [item.nome, pool],
-  );
+  const suggestions = useMemo(() => getSuggestionsFor(item.nome, pool), [item.nome, pool]);
 
   function handleToggle() {
     toggleItemComprado(listaId, item.id);
@@ -623,9 +622,7 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
         <button
           type="button"
           onClick={handleToggle}
-          aria-label={
-            item.comprado ? t("carrinho.items.unmark") : t("carrinho.items.mark")
-          }
+          aria-label={item.comprado ? t("carrinho.items.unmark") : t("carrinho.items.mark")}
           className={cn(
             "grid h-11 w-11 shrink-0 place-items-center rounded-2xl ring-1 ring-border/60 transition-colors active:scale-95",
             item.comprado
@@ -633,7 +630,11 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
               : "bg-card-elevated text-muted-foreground hover:text-foreground",
           )}
         >
-          {item.comprado ? <CheckCircle2 className="h-5 w-5" /> : <CircleDashed className="h-5 w-5" />}
+          {item.comprado ? (
+            <CheckCircle2 className="h-5 w-5" />
+          ) : (
+            <CircleDashed className="h-5 w-5" />
+          )}
         </button>
         <div className="min-w-0 flex-1">
           <p
@@ -646,9 +647,13 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
           </p>
           <p className="text-[11px] text-muted-foreground">
             {item.quantidade} {item.unidade || ""} ×{" "}
-            <span className="tabular-nums"><Money value={item.precoEstimado || 0} /></span>
+            <span className="tabular-nums">
+              <Money value={item.precoEstimado || 0} />
+            </span>
             {" = "}
-            <span className="tabular-nums"><Money value={subtotal} /></span>
+            <span className="tabular-nums">
+              <Money value={subtotal} />
+            </span>
           </p>
         </div>
         <button
@@ -699,10 +704,7 @@ function CartItemRow({ listaId, item }: { listaId: string; item: ListaItem }) {
         />
       )}
       {!item.comprado && suggestions.length > 0 ? (
-        <CommunityPriceSuggestion
-          suggestions={suggestions}
-          onUse={applyCommunityPrice}
-        />
+        <CommunityPriceSuggestion suggestions={suggestions} onUse={applyCommunityPrice} />
       ) : null}
     </li>
   );
@@ -796,10 +798,7 @@ function QuickAddForm({ listaId }: { listaId: string }) {
         </p>
       )}
       <QuickAddBarcodeBlock onApplyName={(name) => setNome(name)} />
-      <PrecoInsight
-        nome={nome}
-        precoUnitario={Number(preco.replace(",", ".")) || undefined}
-      />
+      <PrecoInsight nome={nome} precoUnitario={Number(preco.replace(",", ".")) || undefined} />
     </section>
   );
 }
@@ -856,9 +855,7 @@ function QuickAddBarcodeBlock({ onApplyName }: { onApplyName: (name: string) => 
           {t("detail.barcode.title")}
         </span>
       </div>
-      <p className="mt-1 text-[12px] text-muted-foreground">
-        {t("detail.barcode.manualHint")}
-      </p>
+      <p className="mt-1 text-[12px] text-muted-foreground">{t("detail.barcode.manualHint")}</p>
       <div className="mt-2 flex flex-col gap-2 sm:flex-row">
         <input
           type="text"

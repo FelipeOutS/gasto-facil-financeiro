@@ -11,7 +11,14 @@ function normalizeLocale(value: unknown): Locale {
  * Aplica `next` em i18next + localStorage somente quando o valor realmente mudou,
  * evitando disparar `languageChanged` em loop quando o idioma já é o atual.
  */
-function applyLocale(i18nInstance: { language?: string; resolvedLanguage?: string; changeLanguage: (l: string) => Promise<unknown> }, next: Locale) {
+function applyLocale(
+  i18nInstance: {
+    language?: string;
+    resolvedLanguage?: string;
+    changeLanguage: (l: string) => Promise<unknown>;
+  },
+  next: Locale,
+) {
   const currentNormalized = normalizeLocale(i18nInstance.resolvedLanguage || i18nInstance.language);
   if (currentNormalized === next) return;
   void i18nInstance.changeLanguage(next);
