@@ -198,14 +198,14 @@ describe("Prompt 4A — Mercado Pago: cenários estruturais", () => {
     expect(environmentForPersistence(sandbox)).toBe("sandbox");
     expect(sandbox.notificationUrl).toContain("/api/public/webhooks/mercadopago");
 
-    // Credencial de produção declarada como sandbox ⇒ bloqueio.
-    const mismatch = resolveMercadoPagoConfig({
+    // Prompt 4A.1: O prefixo APP_USR- não bloqueia sandbox se for um secret de sandbox.
+    // O bloqueio agora é pela ORIGEM da variável (ver resolveMercadoPagoConfig).
+    const accountTest = resolveMercadoPagoConfig({
       ...SANDBOX_ENV,
-      MERCADO_PAGO_SANDBOX_ACCESS_TOKEN: "APP_USR-producao",
+      MERCADO_PAGO_SANDBOX_ACCESS_TOKEN: "APP_USR-test-account",
     });
-    expect(mismatch.allowNewCheckouts).toBe(false);
-    expect(mismatch.state).toBe("credential_environment_mismatch");
-    expect(classifyTokenPrefix("APP_USR-producao")).not.toBe(classifyTokenPrefix("TEST-abc"));
+    expect(accountTest.allowNewCheckouts).toBe(true);
+    expect(classifyTokenPrefix("APP_USR-test-account")).toBe("production"); // Prefixo indica produção, mas é conta de teste.
   });
 
   // 9
