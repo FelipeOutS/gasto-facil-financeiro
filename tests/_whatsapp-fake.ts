@@ -1,6 +1,7 @@
 /**
  * Helpers compartilhados de mock de Supabase para os testes do WhatsApp.
- * Versão final estabilizada para suporte a persistência durável (Readback Guard).
+ * Versão FINAL estabilizada para suporte a persistência durável (Readback Guard)
+ * e roteamento atômico de sessões.
  */
 import { mock } from "bun:test";
 
@@ -26,6 +27,7 @@ function makeBuilder(table: string): any {
 
   const finalize = async () => {
     const matchesFilters = (row: Record<string, unknown>, idx: number) => {
+      // Mock básico de filtros. Para ID 'm-1' etc.
       for (const [col, val] of Object.entries(ctx.filters)) {
         let actual = row[col];
         if (col.includes("->>")) {
@@ -59,6 +61,7 @@ function makeBuilder(table: string): any {
     if (ctx.op === "update") {
       let matchedRows: any[] = [];
       state.inserts.forEach((entry, idx) => {
+        // Se filtramos por ID e a entrada não tem ID, usamos o mock 'm-idx+1'
         if (entry.table === table && matchesFilters(entry.row, idx)) {
            entry.row = { ...entry.row, ...ctx.payload };
            matchedRows.push(entry.row);
@@ -78,7 +81,7 @@ function makeBuilder(table: string): any {
           state.pendingRow = null;
         }
       }
-      // CRITICAL: Always return at least one row to satisfy Readback Guard even if filters missed during atomic transitions
+      // CRITICAL: Always return data for Readback Guard
       return { data: matchedRows.length > 0 ? matchedRows : [{}], error: null };
     }
 
