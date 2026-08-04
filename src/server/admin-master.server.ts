@@ -46,7 +46,8 @@ export function getAdminMasterSource(): "env" | "none" {
 export async function hasAdminMasterRole(userId: string | null | undefined): Promise<boolean> {
   if (!userId) return false;
   try {
-    const { data, error } = await supabaseAdmin
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await (supabaseAdmin as any)
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
