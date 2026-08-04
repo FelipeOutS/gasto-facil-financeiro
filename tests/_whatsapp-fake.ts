@@ -28,20 +28,18 @@ function makeBuilder(table: string): any {
   };
 
   const finalize = async () => {
-    // Tabelas estáticas ou mockadas por estado
-    if (table === "whatsapp_links" && ctx.op === "select") {
-      const link = { user_id: "u1", telefone: "5511999998888", ativo: true, opt_in_em: "2026-01-01T00:00:00Z", revogado_em: null };
-      return ctx.single ? { data: link, error: null } : { data: [link], error: null };
-    }
-    if (table === "cartoes" && ctx.op === "select") {
-      return { data: state.cartoesData, error: null };
-    }
-    if (table === "categorias" && ctx.op === "select") {
-      return { data: state.categoriasData, error: null };
+    // 1. Caso especial: Autorização e Carregamento (WhatsApp Links, Cartões, Categorias)
+    if (ctx.op === "select") {
+      if (table === "whatsapp_links") {
+        const link = { user_id: "u1", telefone: "5511999998888", ativo: true, opt_in_em: "2026-01-01T00:00:00Z", revogado_em: null };
+        return ctx.single ? { data: link, error: null } : { data: [link], error: null };
+      }
+      if (table === "cartoes") return { data: state.cartoesData, error: null };
+      if (table === "categorias") return { data: state.categoriasData, error: null };
     }
 
     const matchesFilters = (row: Record<string, unknown>, idx: number) => {
-      // EQ
+      // Filtros EQ
       for (let [col, val] of Object.entries(ctx.filters)) {
         let actual = row[col];
         if (col.includes("->>")) {
@@ -51,7 +49,7 @@ function makeBuilder(table: string): any {
         if (col === "id" && !row.id) actual = `m-${idx + 1}`;
         if (actual !== val) return false;
       }
-      // IN
+      // Filtros IN
       for (let [col, vals] of Object.entries(ctx.inFilters)) {
         let actual = row[col];
         if (col.includes("->>")) {
@@ -64,6 +62,7 @@ function makeBuilder(table: string): any {
       return true;
     };
 
+    // 2. Operação INSERT
     if (ctx.op === "insert") {
       const rows = Array.isArray(ctx.payload) ? ctx.payload : [ctx.payload];
       const insertedRows: any[] = [];
@@ -89,6 +88,7 @@ function makeBuilder(table: string): any {
       return { data: insertedRows, error: null };
     }
 
+    // 3. Operação UPDATE
     if (ctx.op === "update") {
       let matchedRows: any[] = [];
       state.inserts.forEach((entry, idx) => {
@@ -98,6 +98,7 @@ function makeBuilder(table: string): any {
         }
       });
       
+      // Sincronização Atômica de Sessão (pendingRow)
       if (table === "whatsapp_messages") {
         const lastMatching = state.inserts.findLast(i => 
           i.table === table && 
@@ -118,10 +119,12 @@ function makeBuilder(table: string): any {
         }
       }
 
+      // Readback Guard: crucial retornar array se houver match
       if (ctx.single) return { data: matchedRows[0] || null, error: null };
       return { data: matchedRows.length > 0 ? matchedRows : null, error: null };
     }
 
+    // 4. Operação SELECT (fallback para inserts dinâmicos como contas_a_pagar)
     const rows = state.inserts
       .filter((i, idx) => i.table === table && matchesFilters(i.row, idx))
       .map(i => i.row);
