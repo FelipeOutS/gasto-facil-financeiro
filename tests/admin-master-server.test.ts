@@ -104,7 +104,6 @@ describe("admin-master.server — fail-closed (WA-B4)", () => {
   test("sem env, nenhum log inclui valor da variável, e-mails ou segredos", async () => {
     delete process.env.ADMIN_MASTER_EMAILS;
     const captured: string[] = [];
-    const mod = await import(MODULE_PATH);
     const origLog = console.warn;
     console.warn = (...args: unknown[]) => {
       captured.push(args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" "));
