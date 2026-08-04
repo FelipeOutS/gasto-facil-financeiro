@@ -1,0 +1,45 @@
+{
+  "name": "Gasto Inteligente",
+  "short_name": "Gasto",
+  "description": "Controle financeiro pessoal, MEI e empresas direto no seu celular.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FAFAFB",
+  "theme_color": "#FAFAFB",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "id": "com.gastointeligente.app",
+  "icons": [
+    {
+      "src": "/logos/brand/favicon-light-32.svg",
+      "sizes": "32x32",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Novo Gasto",
+      "short_name": "Gasto",
+      "description": "Registrar um novo gasto rapidamente",
+      "url": "/gastos/novo",
+      "icons": [{ "src": "/logos/brand/favicon-light-32.svg", "sizes": "32x32" }]
+    }
+  ]
+}
