@@ -137,7 +137,7 @@ describe("WA-3.30 — idempotência e inconsistência", () => {
     const out = await processarMensagemWhatsApp(msg("paguei a internet"));
     expect(out.status).toBe("consulta");
     expect(gastosInserts().length).toBe(0);
-    expect(state.gastosData.length).toBe(1);
+    expect(state.contasData.length).toBe(1);
   });
 
   it("conta paga sem gasto_id: RPC devolve 'inconsistent' e não cria gasto", async () => {
