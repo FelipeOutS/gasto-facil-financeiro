@@ -4,8 +4,24 @@
  * não cadastrado, cancelamento, dedupe, sessão expirada e match por
  * nome/banco/últimos 4 dígitos.
  */
-import { test, expect, beforeEach } from "bun:test";
+import { test, expect, beforeEach, mock } from "bun:test";
 import { state, resetState, gastosInserts } from "./_whatsapp-fake";
+
+// WA-C11: Mock entitlement for session tests
+mock.module("@/server/whatsapp-entitlement.server", () => ({
+  getWhatsAppEntitlement: async () => ({
+    allowed: true,
+    reason: "allowed",
+    plan: "pessoal_premium",
+    planActive: true,
+    featureIncluded: true,
+    betaAllowed: true,
+    adminMaster: false,
+    linkActive: true,
+    optInActive: true,
+    checkedAt: new Date().toISOString(),
+  }),
+}));
 
 const { processarMensagemWhatsApp, matchCartao, maskCartaoLabel } = await import(
   "../src/server/whatsapp.server"

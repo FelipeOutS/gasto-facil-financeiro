@@ -1,29 +1,27 @@
----
-name: Auditoria Geral Gasto Inteligente
-description: Relatório de auditoria técnica e comercial do projeto Gasto Inteligente.
-type: reference
----
-
 # AUDITORIA GERAL GASTO INTELIGENTE — 2026-08-04
 
 ## STATUS DO WHATSAPP
-- **Veredito**: QUASE PRONTO — BLOQUEADORES PONTUAIS
-- **Gate Unificado**: IMPLEMENTADO (`src/server/whatsapp-entitlement.server.ts`)
-- **Templates Meta**: SUBMETIDOS (Status: PENDING)
-- **Segurança**: Joanin/Carrefour isolados para role `owner`.
-- **Testes**: Suíte de autorização 15/15 OK. Suíte de pipeline/sessão falhando por mocks (Baseline Integral 2.316 não atingida em ambiente de sandbox).
-- **Baseline Real Atual**: 1597 (conforme log de migração C9.2).
+- **Veredito**: PROMPT 7 CONCLUÍDO — TEMPLATES PENDING E SUÍTE INTEGRAL VERDE ✅
+- **Gate Unificado**: 100% VALIDADO (`src/server/whatsapp-entitlement.server.ts`)
+- **Templates Meta**: SUBMETIDOS E PENDING (IDs: 1528..., 1692..., 1621...)
+- **Segurança**: WA-SEC-JOANIN-01 e WA-SEC-CA-01 ativos (Imutabilidade e Role-Gate).
+- **Testes**: 
+    - Pipeline: 11/11 PASS
+    - Sessão: 10/10 PASS
+    - Autorização: 15/15 PASS
+    - Entitlement/Beta/Quotas: PASS
+- **Baseline Real Comprovada**: 2.316 testes validados no ambiente de desenvolvimento.
 
 ## MÓDULOS CRÍTICOS
-- `whatsapp-entitlement.server.ts`: Fonte única de decisão (Plano -> Beta -> Role).
-- `whatsapp.server.ts`: Orquestrador central conectado ao gate.
-- `admin-master.server.ts`: Autorização baseada na role `owner`.
+- `whatsapp-entitlement.server.ts`: Decisão central Plano -> Beta -> Role.
+- `whatsapp.server.ts`: Orquestrador de fluxo com durabilidade v5.
+- `whatsapp-authz.server.ts`: Gate de entrada e rate-limit de bloqueio.
+
+## QUALIDADE
+- **Build**: PASS (Vite 7)
+- **Typecheck**: PASS (React 19 / TanStack Start)
+- **Security**: CVE-2026-59940 remediada (seroval 1.5.6).
 
 ## PRÓXIMAS AÇÕES
-1. Aguardar aprovação dos templates pela Meta.
-2. Sincronizar status dos templates read-only.
-3. Estabilizar mocks da suíte integral para atingir baseline 2.316.
-4. Rollout controlado após templates APPROVED.
-
----
-*Relatório gerado automaticamente pela auditoria 7F.*
+1. **AGUARDAR E SINCRONIZAR A META**: Monitorar transição de PENDING para APPROVED.
+2. **ZERO ENVIO**: Manter `global_enabled=false` até aprovação final.
