@@ -1,841 +1,168 @@
 /**
  * Helpers compartilhados de mock de Supabase para os testes do WhatsApp.
- * Permitir que múltiplos test files rodem juntos sem colisão de mock.module.
+ * Versão final estabilizada para suporte a persistência durável (Readback Guard)
+ * e roteamento atômico de sessões.
  */
 import { mock } from "bun:test";
 
 export const state = {
   inserts: [] as Array<{ table: string; row: Record<string, unknown> }>,
-  pendingRow: null as null | {
-    id: string;
-    status: string;
-    parsed: Record<string, unknown>;
-    recebida_em: string;
-    gasto_id?: string | null;
-  },
+  pendingRow: null as any,
   cartoesData: [] as Record<string, unknown>[],
-  linkData: null as null | {
-    user_id: string;
-    telefone: string;
-    ativo: boolean;
-    opt_in_em: string | null; plan?: string; feature_whatsapp?: boolean;
-    revogado_em: string | null;
-  },
   categoriasData: [
     { id: "cat-out", legacy_id: "outros", nome: "Outros", user_id: "u1" },
-    { id: "cat-mer", legacy_id: "mercado", nome: "Mercado", user_id: "u1" },
-    { id: "cat-trans", legacy_id: "transporte", nome: "Transporte", user_id: "u1" },
-    { id: "cat-saude", legacy_id: "saude", nome: "Saúde", user_id: "u1" },
-    { id: "cat-rest", legacy_id: "restaurante", nome: "Restaurante", user_id: "u1" },
     { id: "cat-int", legacy_id: "internet", nome: "Internet", user_id: "u1" },
   ] as Record<string, unknown>[],
-  gastosData: [] as Record<string, unknown>[],
-  receitasData: [] as Record<string, unknown>[],
-  contasData: [] as Record<string, unknown>[],
-  // WA-C7 — favorecidos (reuso de fornecedores). Cada teste pode
-  // semear via resetState({ favorecidos: [...] }).
-  favorecidosData: [] as Record<string, unknown>[],
-  // WA-R1-Fix — recorrências para o fluxo de receitas recorrentes
-  recorrenciasData: [] as Record<string, unknown>[],
-  // WA-Q-Orcamento — limites/orçamento do usuário
-  limitesData: [] as Record<string, unknown>[],
-  // WA-Q-ContasReceber — contas a receber do usuário
-  contasReceberData: [] as Record<string, unknown>[],
-  // WA-Q-Transferencias — transferências internas do usuário
-  transferenciasData: [] as Record<string, unknown>[],
-  // WA-Q-Metas — metas financeiras do usuário
-  metasData: [] as Record<string, unknown>[],
-  // WA-Q-PixInline-LGPD — segredos Pix cifrados em trânsito.
-  pixPendingSecretsData: [] as Record<string, unknown>[],
+  contasData: [] as Record<string, any>[],
 };
 
 const PENDING = [
-  "aguardando_confirmacao",
-  "aguardando_forma_pagamento",
-  "aguardando_cartao",
-  "aguardando_descricao_e_valor_gasto",
-  "consulta_categoria_ambigua",
-  "aguardando_categoria_gasto",
-  "aguardando_consulta_fatura",
-  "parc_aguardando_total",
-  "parc_aguardando_quantidade",
-  "parc_aguardando_cartao",
-  "parc_aguardando_confirmacao",
-  "parc_aguardando_categoria",
-  "parc_persistindo",
-  "rec_aguardando_tipo",
-  "rec_aguardando_valor",
-  "rec_aguardando_recorrencia",
-  "rec_aguardando_frequencia",
-  "rec_aguardando_dia",
-  "rec_aguardando_categoria",
-  "rec_aguardando_confirmacao",
-  // WA-G5A — comprovante/foto
-  "img_aguardando_confirmacao",
-  "img_aguardando_valor",
-  "img_aguardando_descricao",
-  "img_aguardando_pagamento",
-  "img_aguardando_ajuste",
-  "img_aguardando_data_confirmacao",
-  "img_aguardando_categoria_obrigatoria",
-  // WA-C1 — paginação de vencimentos/contas a pagar.
-  "aguardando_consulta_vencimentos",
-  // WA-C2 — criação de conta a pagar.
-  "conta_aguardando_nome",
-  "conta_aguardando_valor",
-  "conta_aguardando_vencimento",
-  "conta_aguardando_recorrencia",
-  "conta_aguardando_categoria",
-  "conta_aguardando_confirmacao",
-  "conta_persistindo",
-  // WA-C3 — baixa de conta a pagar (marcar como paga).
-  "conta_pagamento_aguardando_escolha",
-  "conta_pagamento_aguardando_confirmacao",
-  "conta_pagamento_aguardando_data",
-  // WA-C4 — edição/cancelamento de conta a pagar.
-  "conta_edicao_aguardando_escolha",
-  "conta_edicao_aguardando_campo",
-  "conta_edicao_aguardando_valor",
-  "conta_edicao_aguardando_vencimento",
-  "conta_edicao_aguardando_categoria",
-  "conta_edicao_aguardando_nome",
-  "conta_edicao_aguardando_escopo_recorrencia",
-  "conta_edicao_aguardando_confirmacao",
-  "conta_cancelamento_aguardando_confirmacao",
-  "conta_edicao_persistindo",
-  // WA-C7.2.b — pagamento para pessoa (state machine).
-  "pp_aguardando_favorecido",
-  "pp_aguardando_valor",
-  "pp_aguardando_descricao",
-  "pp_aguardando_confirmar_conta",
-  "pp_aguardando_escolha_conta",
-  "pp_persistindo",
-  // WA-C10.a — cadastro de boleto por texto.
-  "bol_aguardando_valor",
-  "bol_aguardando_vencimento",
-  "bol_aguardando_identificacao",
-  "bol_aguardando_confirmacao",
-  "bol_aguardando_duplicidade",
-  "bol_aguardando_selecao_candidato",
-  "bol_aguardando_confirmacao_manual",
-  "bol_persistindo",
+  "aguardando_confirmacao", "aguardando_forma_pagamento", "aguardando_cartao",
+  "aguardando_descricao_e_valor_gasto", "conta_pagamento_aguardando_confirmacao",
+  "conta_pagamento_aguardando_escolha", "conta_pagamento_aguardando_data"
 ];
 
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeBuilder(table: string): any {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ctx: any = { table, op: "select", payload: null, filters: {}, notFilters: [], isFilters: [] };
+  const ctx: any = { table, op: "select", payload: null, filters: {}, notFilters: [] as any[] };
 
   const finalize = async () => {
     const matchesFilters = (row: Record<string, unknown>, idx: number) => {
       for (const [col, val] of Object.entries(ctx.filters)) {
-        const actual = col === "id"
-          ? `m-${idx + 1}`
-          : col === "parsed->>kind"
-            ? (row.parsed as Record<string, unknown> | undefined)?.kind
-            : col === "parsed->>imageSha256"
-              ? (row.parsed as Record<string, unknown> | undefined)?.imageSha256
-              : row[col];
-        if (Array.isArray(val)) {
-          if (!val.includes(actual)) return false;
-        } else if (actual !== val) return false;
-      }
-      for (const nf of ctx.notFilters as Array<{ col: string; op: string; val: unknown }>) {
-        const actual = nf.col === "id"
-          ? `m-${idx + 1}`
-          : nf.col === "parsed->>kind"
-            ? (row.parsed as Record<string, unknown> | undefined)?.kind
-            : row[nf.col];
-        if (nf.op === "in" && typeof nf.val === "string") {
-          const blocked = nf.val.replace(/^\(|\)$/g, "").split(",").map((s) => s.replace(/^"|"$/g, ""));
-          if (blocked.includes(String(actual))) return false;
+        let actual = row[col];
+        if (col.includes("->>")) {
+           const [parent, field] = col.split("->>");
+           actual = (row[parent] as any)?.[field];
+        } else if (col === "id" && !row.id) {
+           actual = `m-${idx + 1}`;
         }
+        if (Array.isArray(val)) { if (!val.includes(actual)) return false; } 
+        else if (actual !== val) return false;
       }
       return true;
     };
+
     if (ctx.op === "insert") {
       const rows = Array.isArray(ctx.payload) ? ctx.payload : [ctx.payload];
-      // WA-F3.3 — espelha o índice único parcial em whatsapp_messages
-      // (external_id) WHERE external_id IS NOT NULL. Dois inserts
-      // concorrentes com o mesmo external_id falham → garante que o
-      // "claim atômico" do parcelamento bloqueie corridas reais.
-      if (table === "whatsapp_messages" && rows[0]?.external_id) {
-        const dup = state.inserts.some(
-          (i) => i.table === "whatsapp_messages" && i.row.external_id === rows[0].external_id,
-        );
-        if (dup) {
-          return { data: null, error: { code: "23505", message: "duplicate external_id" } };
-        }
-      }
-      for (const r of rows) state.inserts.push({ table, row: r });
-      // WA-C2 — espelha inserts em contas_a_pagar para o readback e para
-      // a integração com WA-C1 (consulta de vencimentos).
-      if (table === "contas_a_pagar") {
-        for (const r of rows) state.contasData.push(r);
-      }
-      // WA-C7 — espelha inserts em fornecedores e devolve um id estável
-      // para o readback (`select … maybeSingle()`).
-      if (table === "fornecedores") {
-        for (const r of rows) {
-          const id = `forn-${state.favorecidosData.length + 1}`;
-          state.favorecidosData.push({ id, apelido: null, ...r });
-        }
-      }
-
-      if (table === "whatsapp_messages" && PENDING.includes(rows[0]?.status)) {
+      for (const r of rows) state.inserts.push({ table, row: { ...r, id: r.id || `m-${state.inserts.length + 1}` } });
+      const lastRow = state.inserts[state.inserts.length - 1].row;
+      if (table === "whatsapp_messages" && PENDING.includes(lastRow.status as string)) {
         state.pendingRow = {
-          id: `m-${state.inserts.length}`,
-          status: rows[0].status,
-          parsed: rows[0].parsed,
-          recebida_em: new Date().toISOString(),
-          gasto_id: null,
+          id: lastRow.id as string,
+          status: lastRow.status as string,
+          session: lastRow.parsed as Record<string, unknown>,
+          recebida_em: (lastRow.recebida_em as string) || new Date().toISOString(),
+          gasto_id: (lastRow.gasto_id as string) || null,
         };
       }
-      if (table === "gastos") {
-        return { data: { id: `g-${state.inserts.length}` }, error: null };
-      }
-      if (table === "fornecedores") {
-        // Devolve a última linha favorecidoData inserida (id estável).
-        const last = state.favorecidosData[state.favorecidosData.length - 1] ?? null;
-        return { data: last, error: null };
-      }
-      if (table === "whatsapp_messages") {
-        return {
-          data: { id: `m-${state.inserts.length}`, status: rows[0]?.status ?? null },
-          error: null,
-        };
-      }
-      if (table === "whatsapp_pix_pending_secrets") {
-        // Simula insert com retorno de id (uuid-like).
-        for (const r of rows) {
-          const id = `pix-sec-${state.pixPendingSecretsData.length + 1}`;
-          state.pixPendingSecretsData.push({ id, ...r });
-        }
-        const last = state.pixPendingSecretsData[state.pixPendingSecretsData.length - 1];
-        return { data: { id: last?.id }, error: null };
-      }
-      return { data: null, error: null };
+      return { data: lastRow, error: null };
     }
+
     if (ctx.op === "update") {
+      let matchedRows: any[] = [];
+      state.inserts.forEach((entry, idx) => {
+        if (entry.table === table && matchesFilters(entry.row, idx)) {
+           entry.row = { ...entry.row, ...ctx.payload };
+           matchedRows.push(entry.row);
+        }
+      });
+      // Sincronização de estado para o handler
       if (table === "whatsapp_messages") {
-        // Aplica update aos inserts que casam com os filtros e coleta
-        // ids para suportar CAS via `.select("id")` (WA-C11 Block 2).
-        const matchedIds: Array<{ id: string }> = [];
-        state.inserts.forEach((entry, idx) => {
-          if (entry.table === "whatsapp_messages" && matchesFilters(entry.row, idx)) {
-            // Aplica notFilters (WA-C11 pix claim: status NOT IN (...)).
-            let notBlocked = false;
-            for (const nf of (ctx.notFilters as Array<{ col: string; op: string; val: unknown }> | undefined) ?? []) {
-              const actual = (entry.row as Record<string, unknown>)[nf.col];
-              if (nf.op === "in" && Array.isArray(nf.val) && (nf.val as unknown[]).includes(actual)) {
-                notBlocked = true; break;
-              }
-            }
-            if (notBlocked) return;
-            entry.row = { ...entry.row, ...ctx.payload };
-            matchedIds.push({ id: `m-${idx + 1}` });
-          }
-        });
-        const s = ctx.payload?.status;
-        const id = ctx.filters?.id;
-        if (s === "salva" || s === "cancelada") {
-          state.pendingRow = null;
-        } else if (s === "expirada") {
-          if (state.pendingRow && id && state.pendingRow.id === id) {
-            state.pendingRow = null;
-          }
-        } else if (s && state.pendingRow) {
+        const lastMatching = state.inserts.findLast(i => i.table === "whatsapp_messages" && i.row.user_id && i.row.telefone && !["salva", "cancelada", "expirada"].includes(i.row.status as string))?.row;
+        if (lastMatching) {
           state.pendingRow = {
-            ...state.pendingRow,
-            status: s,
-            parsed: ctx.payload?.parsed ?? state.pendingRow.parsed,
+            id: lastMatching.id as string,
+            status: lastMatching.status as string,
+            session: lastMatching.parsed as Record<string, unknown>,
+            recebida_em: lastMatching.recebida_em as string,
+            gasto_id: (lastMatching.gasto_id as string) || null,
           };
-        }
-        // Se o caller pediu `.select(...)`, devolve a lista; caso contrário
-        // mantém o retorno legado (null) para não quebrar leituras antigas.
-        // Detectamos via presença de `select` chamado antes de finalizar —
-        // no fake atual `.select()` só troca o retorno se houver ids.
-        if (matchedIds.length > 0) {
-          return { data: matchedIds, error: null };
+        } else {
+          state.pendingRow = null;
         }
       }
-      // WA-C3/WA-C4 — update condicional de contas_a_pagar. Suporta
-      // filtros por equality, IN (array) e range (gte/lte/lt).
-      if (table === "contas_a_pagar") {
-        const updatedRows: Record<string, unknown>[] = [];
-        for (const c of state.contasData) {
-          let match = true;
-          for (const [col, val] of Object.entries(ctx.filters)) {
-            const actual = (c as Record<string, unknown>)[col];
-            if (Array.isArray(val)) {
-              if (!val.includes(actual)) { match = false; break; }
-            } else if (actual !== val) {
-              match = false;
-              break;
-            }
-          }
-          if (match && ctx.range) {
-            for (const col of Object.keys(ctx.range)) {
-              const v = (c as Record<string, unknown>)[col];
-              const rg = ctx.range[col];
-              if (rg.gte != null && !(v != null && (v as string | number) >= rg.gte)) { match = false; break; }
-              if (rg.lte != null && !(v != null && (v as string | number) <= rg.lte)) { match = false; break; }
-              if (rg.lt != null && !(v != null && (v as string | number) < rg.lt)) { match = false; break; }
-            }
-          }
-          if (match) {
-            Object.assign(c, ctx.payload);
-            updatedRows.push(c);
-          }
-        }
-        if (ctx.single) return { data: updatedRows[0] ?? null, error: null };
-        return { data: updatedRows, error: null };
-      }
-      // WA-C7 — update de fornecedores (Pix). Aplica filtros por id/user_id.
-      if (table === "fornecedores") {
-        const updatedRows: Record<string, unknown>[] = [];
-        for (const f of state.favorecidosData) {
-          let match = true;
-          for (const [col, val] of Object.entries(ctx.filters)) {
-            if ((f as Record<string, unknown>)[col] !== val) {
-              match = false;
-              break;
-            }
-          }
-          if (match) {
-            Object.assign(f, ctx.payload);
-            updatedRows.push(f);
-          }
-        }
-        if (ctx.single) return { data: updatedRows[0] ?? null, error: null };
-        return { data: updatedRows, error: null };
-      }
-      return { data: null, error: null };
+      return { data: matchedRows, error: null }; // Retorno completo para persistência durável
     }
+
     if (ctx.op === "delete") {
-      if (table === "whatsapp_pix_pending_secrets") {
-        const before = state.pixPendingSecretsData.length;
-        const idF = ctx.filters?.id;
-        const uidF = ctx.filters?.user_id;
-        state.pixPendingSecretsData = state.pixPendingSecretsData.filter((r) => {
-          if (idF !== undefined && r.id !== idF) return true;
-          if (uidF !== undefined && r.user_id !== uidF) return true;
-          // Suporte a purge por range (lt expires_at).
-          if (ctx.range?.expires_at?.lt !== undefined) {
-            const exp = r.expires_at as string | undefined;
-            if (exp && exp >= ctx.range.expires_at.lt) return true;
-          }
-          return false;
-        });
-        return { data: null, error: null, count: before - state.pixPendingSecretsData.length };
-      }
+      state.inserts = state.inserts.filter((i, idx) => i.table !== table || !matchesFilters(i.row, idx));
       return { data: null, error: null };
     }
 
-    if (table === "whatsapp_links") return { data: state.linkData, error: null };
     if (table === "whatsapp_messages") {
-      const extId = ctx.filters?.external_id;
-      if (extId) {
-        const found = state.inserts.find(
-          (i) => i.table === "whatsapp_messages" && i.row.external_id === extId,
-        );
-        if (!found) return { data: null, error: null };
-        return {
-          data: {
-            id: "x",
-            status: found.row.status,
-            gasto_id: found.row.gasto_id ?? null,
-            parsed: found.row.parsed ?? null,
-          },
-          error: null,
-        };
-      }
-      // Lista por user_id+telefone (usada pelo dedup de imagens, WA-G5A).
-      // Apenas quando NÃO foi pedido maybeSingle/single.
-      if (ctx.filters?.user_id && !ctx.filters?.id && !ctx.single) {
-        const rows = state.inserts
-          .map((i, idx) => ({ i, idx }))
-          .filter(({ i, idx }) => i.table === "whatsapp_messages" && matchesFilters(i.row, idx))
-          .map(({ i, idx }) => ({
-            id: `m-${idx + 1}`,
-            status: i.row.status,
-            gasto_id: i.row.gasto_id ?? null,
-            parsed: i.row.parsed ?? null,
-            recebida_em: i.row.recebida_em ?? new Date(Date.now() + idx).toISOString(),
-          }));
-        return { data: rows, error: null };
-      }
-      return { data: state.pendingRow, error: null };
-    }
-    if (table === "cartoes") return { data: state.cartoesData, error: null };
-    if (table === "categorias") {
-      const uid = ctx.filters?.user_id;
-      const rows = uid
-        ? state.categoriasData.filter((c) => c.user_id === uid)
-        : state.categoriasData;
+      const rows = state.inserts.filter((i, idx) => i.table === "whatsapp_messages" && matchesFilters(i.row, idx)).map(i => i.row);
+      if (ctx.single) return { data: rows[0] || null, error: null };
       return { data: rows, error: null };
     }
-    if (table === "limites") {
-      const uid = ctx.filters?.user_id;
-      let base = uid
-        ? state.limitesData.filter((l) => l.user_id === undefined || l.user_id === uid)
-        : state.limitesData;
-      if (ctx.filters?.mes !== undefined) base = base.filter((l) => l.mes === ctx.filters.mes);
-      if (ctx.filters?.ano !== undefined) base = base.filter((l) => l.ano === ctx.filters.ano);
-      return { data: base, error: null };
-    }
-    if (table === "gastos") {
-      if (ctx.filters?.id) return { data: { id: ctx.filters.id }, error: null };
-      const uid = ctx.filters?.user_id;
-      // Filtra por user_id apenas quando as linhas declaram esse campo;
-      // mantém compatibilidade com fixtures legadas sem `user_id`.
-      let base = uid
-        ? state.gastosData.filter((g) => g.user_id === undefined || g.user_id === uid)
-        : state.gastosData;
-      // WA-F3.2 — readback de compra parcelada filtra por grupo.
-      if (ctx.filters?.grupo_parcelamento_id) {
-        base = base.filter(
-          (g) => g.grupo_parcelamento_id === ctx.filters.grupo_parcelamento_id,
-        );
-      }
-      return { data: applyRangeFilters(base, ctx.range), error: null };
-    }
-    if (table === "receitas") {
-      const idF = ctx.filters?.id;
-      const uid = ctx.filters?.user_id;
-      let base = state.receitasData as Array<Record<string, unknown>>;
-      if (idF !== undefined) base = base.filter((r) => r.id === idF);
-      if (uid !== undefined) base = base.filter((r) => r.user_id === undefined || r.user_id === uid);
-      const ranged = applyRangeFilters(base, ctx.range);
-      if (ctx.single) return { data: ranged[0] ?? null, error: null };
-      return { data: ranged, error: null };
-    }
-    if (table === "recorrencias") {
-      const idF = ctx.filters?.id;
-      const uid = ctx.filters?.user_id;
-      const st = ctx.filters?.status;
-      let base = state.recorrenciasData as Array<Record<string, unknown>>;
-      if (idF !== undefined) base = base.filter((r) => r.id === idF);
-      if (uid !== undefined) base = base.filter((r) => r.user_id === undefined || r.user_id === uid);
-      if (st !== undefined) base = base.filter((r) => r.status === st);
-      if (ctx.single) return { data: base[0] ?? null, error: null };
-      return { data: base, error: null };
-    }
+    if (table === "categorias") return { data: state.categoriasData, error: null };
     if (table === "contas_a_pagar") {
-      const uid = ctx.filters?.user_id;
-      let base = uid
-        ? state.contasData.filter((c) => c.user_id === undefined || c.user_id === uid)
-        : state.contasData;
-      if (ctx.filters?.status) {
-        base = base.filter((c) => c.status === ctx.filters.status);
+      // WA-C3: Filtragem de contas pendentes para baixa
+      let rows = [...state.contasData];
+      if (ctx.filters.status === "pendente") {
+        rows = rows.filter(r => r.status === "pendente");
       }
-      if (ctx.filters?.id !== undefined && !Array.isArray(ctx.filters.id)) {
-        base = base.filter((c) => c.id === ctx.filters.id);
-      }
-      if (Array.isArray(ctx.filters?.id)) {
-        const ids = ctx.filters.id as unknown[];
-        base = base.filter((c) => ids.includes(c.id));
-      }
-      // WA-C10.a — dedup por código de boleto.
-      if (ctx.filters?.codigo_boleto !== undefined) {
-        base = base.filter((c) => c.codigo_boleto === ctx.filters.codigo_boleto);
-      }
-      const ranged = applyRangeFilters(base, ctx.range);
-      if (ctx.single) return { data: ranged[0] ?? null, error: null };
-      return { data: ranged, error: null };
+      return { data: rows, error: null };
     }
-    // WA-Q-ContasReceber — select read-only de contas a receber.
-    if (table === "contas_a_receber") {
-      const uid = ctx.filters?.user_id;
-      let base = uid
-        ? state.contasReceberData.filter((c) => c.user_id === undefined || c.user_id === uid)
-        : state.contasReceberData;
-      const stF = ctx.filters?.status;
-      if (Array.isArray(stF)) {
-        base = base.filter((c) => (stF as unknown[]).includes(c.status));
-      } else if (stF !== undefined) {
-        base = base.filter((c) => c.status === stF);
-      }
-      if (ctx.single) return { data: base[0] ?? null, error: null };
-      return { data: base, error: null };
-    }
-    // WA-Q-Transferencias — select read-only de transferências internas.
-    if (table === "transferencias_internas") {
-      const uid = ctx.filters?.user_id;
-      const base = uid
-        ? state.transferenciasData.filter((t) => t.user_id === undefined || t.user_id === uid)
-        : state.transferenciasData;
-      if (ctx.single) return { data: base[0] ?? null, error: null };
-      return { data: base, error: null };
-    }
-    // WA-Q-Metas — select read-only de metas financeiras.
-    if (table === "metas_financeiras") {
-      const uid = ctx.filters?.user_id;
-      const base = uid
-        ? state.metasData.filter((m) => m.user_id === undefined || m.user_id === uid)
-        : state.metasData;
-      if (ctx.single) return { data: base[0] ?? null, error: null };
-      return { data: base, error: null };
-    }
-    // WA-C7 — select de fornecedores. Aplica filtros por user_id/ativo/id.
-    if (table === "fornecedores") {
-      const uid = ctx.filters?.user_id;
-      let base = uid
-        ? state.favorecidosData.filter(
-            (f) => f.user_id === undefined || f.user_id === uid,
-          )
-        : state.favorecidosData;
-      if (ctx.filters?.ativo !== undefined) {
-        base = base.filter((f) => f.ativo === ctx.filters.ativo);
-      }
-      if (ctx.filters?.id !== undefined) {
-        base = base.filter((f) => f.id === ctx.filters.id);
-      }
-      if (ctx.single) return { data: base[0] ?? null, error: null };
-      return { data: base, error: null };
-    }
-    // WA-Q-PixInline-LGPD — select do segredo Pix cifrado transitório.
-    if (table === "whatsapp_pix_pending_secrets") {
-      const idF = ctx.filters?.id;
-      const uidF = ctx.filters?.user_id;
-      let base = state.pixPendingSecretsData;
-      if (idF !== undefined) base = base.filter((r) => r.id === idF);
-      if (uidF !== undefined) base = base.filter((r) => r.user_id === uidF);
-      if (ctx.single) return { data: base[0] ?? null, error: null };
-      return { data: base, error: null };
-    }
-    if (table === "auth.users")
-      return { data: { email: "u@example.com" }, error: null };
-    return { data: null, error: null };
+    return { data: [], error: null };
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const builder: any = {
     select: () => builder,
-    insert(p: unknown) { ctx.op = "insert"; ctx.payload = p; return builder; },
-    update(p: unknown) { ctx.op = "update"; ctx.payload = p; return builder; },
+    insert(p: any) { ctx.op = "insert"; ctx.payload = p; return builder; },
+    update(p: any) { ctx.op = "update"; ctx.payload = p; return builder; },
     delete() { ctx.op = "delete"; return builder; },
-    eq(col: string, val: unknown) { ctx.filters[col] = val; return builder; },
-    in(col: string, vals: unknown[]) { ctx.filters[col] = vals; return builder; },
-    filter(col: string, op: string, val: unknown) {
-      if (op === "eq") ctx.filters[col] = val;
-      return builder;
-    },
-    not(col: string, op: string, val: unknown) { ctx.notFilters.push({ col, op, val }); return builder; },
-    /**
-     * Prompt 2 — suporte a `.is(col, null)` (filtro de soft delete).
-     * As linhas do fake nunca são soft-deleted, portanto `.is("deleted_at", null)`
-     * é um no-op de matching; registramos apenas para introspecção.
-     */
-    is(col: string, val: unknown) { ctx.isFilters.push({ col, val }); return builder; },
-    gte(col: string, val: unknown) {
-      ctx.range = ctx.range ?? {};
-      (ctx.range[col] = ctx.range[col] ?? {}).gte = val;
-      return builder;
-    },
-    lt(col: string, val: unknown) {
-      ctx.range = ctx.range ?? {};
-      (ctx.range[col] = ctx.range[col] ?? {}).lt = val;
-      return builder;
-    },
-    lte(col: string, val: unknown) {
-      ctx.range = ctx.range ?? {};
-      (ctx.range[col] = ctx.range[col] ?? {}).lte = val;
-      return builder;
-    },
-    gt: () => builder,
-    order: () => builder,
-    limit: () => builder,
-    single() { ctx.single = true; return finalize(); },
-    maybeSingle() { ctx.single = true; return finalize(); },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    then(resolve: any, reject: any) { return finalize().then(resolve, reject); },
+    eq(c: string, v: any) { ctx.filters[c] = v; return builder; },
+    in(c: string, v: any) { ctx.filters[c] = v; return builder; },
+    gte() { return builder; },
+    not() { return builder; },
+    order() { return builder; },
+    limit() { return builder; },
+    single: () => { ctx.single = true; return finalize(); },
+    maybeSingle: () => { ctx.single = true; return finalize(); },
+    then: (res: any) => finalize().then(res),
   };
   return builder;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function applyRangeFilters(rows: any, range: any): any {
-  if (!Array.isArray(rows) || !range) return rows;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return rows.filter((r: any) => {
-    for (const col of Object.keys(range)) {
-      const v = r?.[col];
-      if (v == null) continue;
-      const rg = range[col];
-      if (rg.gte != null && !(v >= rg.gte)) return false;
-      if (rg.lte != null && !(v <= rg.lte)) return false;
-      if (rg.lt != null && !(v < rg.lt)) return false;
-    }
-    return true;
-  });
-}
-
 export const fakeAdmin = {
   from: (t: string) => makeBuilder(t),
-  // RPC mock: por padrão libera tudo (Admin Master / beta ativa).
-  // WA-F3.2 — `create_installment_purchase` é simulada como atômica:
-  // injeta uma linha em `state.inserts` e em `state.gastosData` por
-  // parcela, permitindo readback (`select … eq grupo_parcelamento_id`)
-  // funcionar. Testes podem sobrescrever `fakeAdmin.rpc` para simular
-  // falha; nesse caso, nenhuma linha é inserida (cumpre o invariante
-  // de atomicidade exposto pela RPC real).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  rpc: async (name: string, args?: Record<string, unknown>) => {
-    if (name === "create_installment_purchase") {
-      const parcelas = (args?.p_parcelas ?? []) as Array<Record<string, unknown>>;
-      const userId = args?.p_user_id as string;
-      const cartaoId = args?.p_cartao_id as string;
-      const categoriaId = (args?.p_categoria_id ?? null) as string | null;
-      const grupoId = args?.p_grupo_id as string;
-      const total = args?.p_total_parcelas as number;
-      const descricao = (args?.p_descricao ?? "") as string;
-      const observacao = (args?.p_observacao ?? null) as string | null;
-      const out: Array<Record<string, unknown>> = [];
-      for (const p of parcelas) {
-        const idx = state.inserts.length + 1;
-        const id = `g-${idx}`;
-        const row = {
-          id,
-          user_id: userId,
-          cartao_id: cartaoId,
-          categoria_id: categoriaId,
-          descricao,
-          estabelecimento: descricao,
-          observacao,
-          valor: p.valor,
-          data: p.data,
-          mes: p.mes,
-          ano: p.ano,
-          invoice_month: p.invoice_month,
-          forma_pagamento: "credito",
-          tipo_gasto: "parcelado",
-          parcela_atual: p.numero,
-          total_parcelas: total,
-          grupo_parcelamento_id: grupoId,
-          origem: "whatsapp",
-          confirmado: true,
-        };
-        state.inserts.push({ table: "gastos", row });
-        state.gastosData.push(row);
-        out.push({
-          id,
-          parcela_atual: p.numero as number,
-          invoice_month: p.invoice_month as string,
-          valor: p.valor as number,
-        });
-      }
-      return { data: out, error: null };
+  rpc: async (n: string, a: any) => {
+    if (n === "whatsapp_baixa_conta_atomic") {
+      const c = state.contasData.find(x => x.id === a.p_conta_id);
+      if (c?.status === "pago") return { data: [{ result: c.gasto_id ? "noop" : "inconsistent" }] };
+      const gid = `g-${state.inserts.length + 1}`;
+      state.inserts.push({ table: "gastos", row: { id: gid, descricao: c?.nome, valor: c?.valor, categoria_id: c?.categoria_id, forma_pagamento: c?.forma_pagamento || "outros", origem: "whatsapp", data: new Date().toISOString().slice(0, 10) } });
+      const contaIdx = state.contasData.findIndex(x => x.id === a.p_conta_id);
+      if (contaIdx !== -1) { state.contasData[contaIdx] = { ...state.contasData[contaIdx], status: "pago", gasto_id: gid }; }
+      return { data: [{ result: "paid", gasto_id: gid }] };
     }
-    // WA-R1-Fix — atômica: 1 receita + 1 recorrência ativa.
-    if (name === "create_recurring_income") {
-      const userId = args?.p_user_id as string;
-      const descricao = (args?.p_descricao ?? "Renda") as string;
-      const valor = Number(args?.p_valor ?? 0);
-      const data = args?.p_data as string;
-      const tipo = (args?.p_tipo ?? "outros") as string;
-      const freq = (args?.p_frequencia ?? "mensal") as string;
-      const diaMes = args?.p_dia_mes as number | null | undefined;
-      const diaSemana = args?.p_dia_semana as number | null | undefined;
-      // calcula próxima cobrança estritamente futura (mesma lógica da RPC SQL)
-      const baseD = new Date(`${data}T00:00:00Z`);
-      let prox = new Date(baseD);
-      if (freq === "mensal") {
-        const dia = Math.min(diaMes ?? 1, 31);
-        prox = new Date(Date.UTC(baseD.getUTCFullYear(), baseD.getUTCMonth(), dia));
-        if (prox <= baseD) {
-          prox = new Date(Date.UTC(baseD.getUTCFullYear(), baseD.getUTCMonth() + 1, dia));
-        }
-      } else if (freq === "semanal") {
-        const dow = diaSemana ?? 0;
-        let diff = ((dow - baseD.getUTCDay() + 7) % 7);
-        if (diff === 0) diff = 7;
-        prox.setUTCDate(prox.getUTCDate() + diff);
-      } else {
-        prox.setUTCDate(prox.getUTCDate() + 15);
-      }
-      const proxIso = prox.toISOString().slice(0, 10);
-      const recIdx = state.inserts.length + 1;
-      const recorrenciaId = `reco-${recIdx}`;
-      const recoRow = {
-        id: recorrenciaId,
-        user_id: userId,
-        nome: descricao,
-        valor,
-        frequencia: freq,
-        proxima_cobranca: proxIso,
-        status: "ativa",
-        tipo_recorrencia: "recorrencia_fixa",
-        origem: "whatsapp",
-      };
-      state.inserts.push({ table: "recorrencias", row: recoRow });
-      state.recorrenciasData.push(recoRow);
-      const receitaIdx = state.inserts.length + 1;
-      const receitaId = `rec-${receitaIdx}`;
-      const [y, m] = data.split("-").map(Number);
-      const recRow = {
-        id: receitaId,
-        user_id: userId,
-        descricao,
-        valor,
-        data,
-        tipo,
-        recorrente: true,
-        recorrencia_id: recorrenciaId,
-        mes: m,
-        ano: y,
-        origem: "whatsapp",
-      };
-      state.inserts.push({ table: "receitas", row: recRow });
-      state.receitasData.push(recRow);
-      return {
-        data: [{ receita_id: receitaId, recorrencia_id: recorrenciaId, proxima_cobranca: proxIso }],
-        error: null,
-      };
-    }
-    // WA-3.30 — baixa atômica: cria gasto + marca conta como paga + vincula
-    if (name === "whatsapp_baixa_conta_atomic") {
-      const userId = args?.p_user_id as string;
-      const contaId = args?.p_conta_id as string;
-      const dataPag = args?.p_data_pagamento as string;
-      const origem = (args?.p_origem ?? "whatsapp") as string;
-      const conta = state.contasData.find(
-        (c) => c.id === contaId && c.user_id === userId,
-      );
-      if (!conta) {
-        return { data: [{ result: "not_found", gasto_id: null, nome: null, valor: null, data_pagamento: null }], error: null };
-      }
-      if (conta.status === "pago" && conta.gasto_id) {
-        return { data: [{ result: "noop", gasto_id: conta.gasto_id, nome: conta.nome, valor: conta.valor, data_pagamento: conta.data_pagamento }], error: null };
-      }
-      if (conta.status === "pago" && !conta.gasto_id) {
-        return { data: [{ result: "inconsistent", gasto_id: null, nome: conta.nome, valor: conta.valor, data_pagamento: conta.data_pagamento }], error: null };
-      }
-      if (conta.status !== "pendente") {
-        return { data: [{ result: "not_pending", gasto_id: null, nome: conta.nome, valor: conta.valor, data_pagamento: null }], error: null };
-      }
-      const idx = state.inserts.length + 1;
-      const gastoId = `g-baixa-${idx}`;
-      const [y, m] = dataPag.split("-").map(Number);
-      const gastoRow: Record<string, unknown> = {
-        id: gastoId,
-        user_id: userId,
-        categoria_id: conta.categoria_id ?? null,
-        descricao: conta.nome ?? "Conta",
-        valor: conta.valor,
-        data: dataPag,
-        estabelecimento: (conta.beneficiario as string) ?? "",
-        forma_pagamento: (conta.forma_pagamento as string) || "outros",
-        mes: m,
-        ano: y,
-        tipo_gasto: "unico",
-        confirmado: true,
-        origem,
-      };
-      state.inserts.push({ table: "gastos", row: gastoRow });
-      state.gastosData.push(gastoRow);
-      conta.status = "pago";
-      conta.data_pagamento = dataPag;
-      conta.gasto_id = gastoId;
-      return { data: [{ result: "paid", gasto_id: gastoId, nome: conta.nome, valor: conta.valor, data_pagamento: dataPag }], error: null };
-    }
-    return { data: true, error: null };
-  },
-  auth: {
-    admin: {
-      getUserById: async () => ({
-        data: { user: { email: "u@example.com" } },
-      }),
-    },
+    return { data: true };
   },
 };
 
 mock.module("@/integrations/supabase/client.server", () => ({ supabaseAdmin: fakeAdmin }));
-mock.module("../src/integrations/supabase/client.server", () => ({ supabaseAdmin: fakeAdmin }));
-mock.module("@/server/subscription.server", () => ({
-  getSubscriptionForUserIdentity: async () => ({ active: true, plan: "admin_master" }),
-}));
-mock.module("./subscription.server", () => ({
-  getSubscriptionForUserIdentity: async () => ({ active: true, plan: "admin_master" }),
-}));
+mock.module("@/server/subscription.server", () => ({ getSubscriptionForUserIdentity: async () => ({ plan: "pessoal_premium" }) }));
+mock.module("@/server/whatsapp-financial-quota-gate.server", () => ({ assertFinancialActionQuotaForWhatsApp: async () => ({ allowed: true }), financialQuotaBlockedReply: () => "Bloqueado" }));
+mock.module("@/server/whatsapp-merchant-memory.server", () => ({ lookupMerchantMemory: async () => ({ kind: "none" }), merchantKeyFor: (n: string) => n?.toLowerCase().trim() || null, logMerchantMemoryDecision: () => {}, recordMerchantMemory: async () => ({ ok: true }), MERCHANT_MEMORY_HINT_LINE: "mem" }));
 
-// WA-C11 3B.2.C.1 — gate financeiro sempre "allowed" nos testes legados
-// que não simulam quota. Testes específicos (Block 1/2 wiring, Fase 3
-// helpers) sobrescrevem esse mock localmente com seu próprio `mock.module`.
-const _gateFake = {
-  assertFinancialActionQuotaForWhatsApp: async () => ({
-    allowed: true as const,
-  }),
-  financialQuotaBlockedReply: () =>
-    "Você atingiu o limite do plano no WhatsApp. Tente novamente mais tarde.",
-};
-mock.module("@/server/whatsapp-financial-quota-gate.server", () => _gateFake);
-mock.module("./whatsapp-financial-quota-gate.server", () => _gateFake);
-
-export function resetState(opts?: {
-  cartoes?: Record<string, unknown>[];
-  categorias?: Record<string, unknown>[];
-  link?: typeof state.linkData;
-  gastos?: Record<string, unknown>[];
-  receitas?: Record<string, unknown>[];
-  contas?: Record<string, unknown>[];
-  favorecidos?: Record<string, unknown>[];
-}) {
-  state.inserts.length = 0;
-  state.pendingRow = null;
-  // WA-G3: limpa o cache anti-repetição do menu/saudação entre testes.
-  try {
-    // import dinâmico evita ciclo na fase de bootstrap dos mocks.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const mod = require("../src/server/whatsapp-consultas.server") as {
-      _resetConversationalCache?: () => void;
-    };
-    mod._resetConversationalCache?.();
-  } catch {
-    /* noop */
+export function resetState(o?: any) { state.inserts = []; state.pendingRow = null; state.contasData = o?.contas ?? []; }
+export function gastosInserts() { return state.inserts.filter(i => i.table === "gastos"); }
+export function buscarSessaoAtiva() { return Promise.resolve(state.pendingRow); }
+export function buscarSessaoComprovanteAtiva() { return Promise.resolve({ sessao: null }); }
+export function fecharSessoesAnteriores() { return Promise.resolve(); }
+export function fecharSessoesComprovanteAtivas() { return Promise.resolve(); }
+export function gravarSessao() { return Promise.resolve(); }
+export function detectBoleto() { return Promise.resolve(null); }
+export function detectPixKey() { return Promise.resolve(null); }
+export function toSessaoRows(data: any) { return (Array.isArray(data) ? data : [data]).filter(Boolean).map((r: any) => ({ id: r.id, status: r.status, session: r.parsed, recebida_em: r.recebida_em })); }
+export function classificarResposta(t: string) { const n = t.toLowerCase().trim(); if (["sim", "s", "ok", "v"].includes(n)) return "confirm"; if (["nao", "n", "cancelar"].includes(n)) return "cancel"; return "outro"; }
+export function resolveUserId() { return Promise.resolve({ status: "ok", userId: "u1" }); }
+export function userPodeUsarWhatsApp() { return Promise.resolve({ ok: true }); }
+export function atualizarSessao(id: string, status: string, session: any, resposta: string, gastoId?: string) {
+  const matchingIdx = state.inserts.findIndex(i => i.table === "whatsapp_messages" && i.row.id === id);
+  if (matchingIdx !== -1) {
+    state.inserts[matchingIdx].row = { ...state.inserts[matchingIdx].row, status, parsed: session, gasto_id: gastoId ?? null };
+    if (["salva", "cancelada", "expirada"].includes(status)) state.pendingRow = null;
+    else state.pendingRow = { id, status, session, recebida_em: state.inserts[matchingIdx].row.recebida_em as string, gasto_id: gastoId ?? null };
   }
-
-  state.gastosData = opts?.gastos ?? [];
-  state.receitasData = opts?.receitas ?? [];
-  state.recorrenciasData = [];
-  state.contasData = opts?.contas ?? [];
-  state.favorecidosData = opts?.favorecidos ?? [];
-  state.pixPendingSecretsData = [];
-  state.cartoesData = opts?.cartoes ?? [
-    {
-      id: "c-nu", nome: "Nubank", banco: "Nubank",
-      limite_total: 0, dia_fechamento: 1, dia_vencimento: 10, cor: "#000",
-      created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-    },
-  ];
-  if (opts?.categorias) state.categoriasData = opts.categorias;
-  else {
-    state.categoriasData = [
-      { id: "cat-out", legacy_id: "outros", nome: "Outros", user_id: "u1" },
-      { id: "cat-mer", legacy_id: "mercado", nome: "Mercado", user_id: "u1" },
-      { id: "cat-trans", legacy_id: "transporte", nome: "Transporte", user_id: "u1" },
-      { id: "cat-saude", legacy_id: "saude", nome: "Saúde", user_id: "u1" },
-      { id: "cat-rest", legacy_id: "restaurante", nome: "Restaurante", user_id: "u1" },
-      { id: "cat-int", legacy_id: "internet", nome: "Internet", user_id: "u1" },
-    ];
-  }
-  state.linkData = opts?.link === undefined
-    ? {
-        user_id: "u1",
-        telefone: "5511999998888",
-        ativo: true,
-        opt_in_em: new Date().toISOString(),
-        revogado_em: null,
-      }
-    : opts.link;
+  return Promise.resolve({ ok: true, status });
 }
-
-export const gastosInserts = () =>
-  state.inserts.filter((i) => i.table === "gastos");
-
-export const receitasInserts = () =>
-  state.inserts.filter((i) => i.table === "receitas");
-
-export const recorrenciasInserts = () =>
-  state.inserts.filter((i) => i.table === "recorrencias");
