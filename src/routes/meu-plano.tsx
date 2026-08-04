@@ -820,21 +820,27 @@ function MeuPlanoPage() {
                     {isAdminMaster ? t("billing.totalAccess") : t("billing.currentPlan")}
                   </div>
                 ) : (
-                  <Button
-                    className={cn(
-                      "w-full rounded-xl font-semibold min-h-11",
-                      isRecommended &&
-                        "bg-gradient-to-r from-primary to-primary/85 hover:opacity-90 shadow-md shadow-primary/20",
-                    )}
-                    disabled={submitting !== null}
-                    onClick={() => escolherPlano(p.tier)}
-                  >
-                    {isPending
-                      ? t("billing.newCharge")
-                      : submitting === p.tier
-                        ? t("billing.processing")
-                        : t("billing.subscribe")}
-                  </Button>
+                  <div className="flex flex-col gap-2">
+                    <div className="rounded-xl bg-amber-500/10 p-3 text-center">
+                      <p className="text-[10px] font-bold uppercase tracking-tight text-amber-600 dark:text-amber-400">
+                        Aguardando Liberação
+                      </p>
+                      <p className="mt-0.5 text-[10px] leading-tight text-amber-700/80 dark:text-amber-400/80">
+                        Assinaturas suspensas para homologação comercial do Mercado Pago.
+                      </p>
+                    </div>
+                    <Button
+                      className={cn(
+                        "w-full rounded-xl font-semibold min-h-11 opacity-50 cursor-not-allowed",
+                        isRecommended &&
+                          "bg-gradient-to-r from-primary to-primary/85 shadow-md shadow-primary/20",
+                      )}
+                      disabled={true}
+                    >
+                      {t("billing.subscribe")}
+                    </Button>
+                  </div>
+
                 )}
                 {!isAdminMaster && !trialUsed && !isCurrent && !isPending && (
                   <Button
@@ -887,30 +893,35 @@ function MeuPlanoPage() {
                 })()}
               </ul>
             </div>
+            {freeAdsButtonMode !== "current" && (
+              <div className="rounded-xl bg-amber-500/10 p-3 text-center sm:max-w-[200px]">
+                <p className="text-[10px] font-bold uppercase tracking-tight text-amber-600 dark:text-amber-400">
+                  Aguardando Liberação
+                </p>
+                <p className="mt-0.5 text-[10px] leading-tight text-amber-700/80 dark:text-amber-400/80">
+                  O plano gratuito será liberado após a homologação comercial.
+                </p>
+              </div>
+            )}
             <Button
               type="button"
               size="sm"
               variant={
                 freeAdsButtonMode === "current" || freeAdsCtaLocked ? "secondary" : "default"
               }
-              disabled={freeAdsButtonMode === "current" || freeAdsSubmitting || freeAdsCtaLocked}
+              disabled={true}
               onClick={handleChooseFreeAds}
-              className="shrink-0 rounded-xl min-h-10"
-              title={freeAdsCtaLocked ? tp("freeAds.disabledReason") : undefined}
+              className="shrink-0 rounded-xl min-h-10 opacity-50"
+              title={tp("freeAds.disabledReason")}
             >
-              {freeAdsCtaLocked
-                ? tp("freeAds.comingSoon")
-                : freeAdsSubmitting
-                  ? tp("freeAds.activating")
-                  : freeAdsButtonMode === "current"
-                    ? tp("freeAds.currentBadge")
-                    : freeAdsButtonMode === "continue"
-                      ? tp("freeAds.continueCta")
-                      : tp("freeAds.cta")}
+              {freeAdsButtonMode === "current"
+                ? tp("freeAds.currentBadge")
+                : tp("freeAds.comingSoon")}
             </Button>
           </div>
         </section>
       )}
+
 
       {/* Investimentos: seção dedicada abaixo dos planos */}
       <section className="mt-5">
