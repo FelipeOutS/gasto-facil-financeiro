@@ -11,6 +11,7 @@ const state = {
   entitlementAllowed: true,
 };
 
+// Configura Mocks ANTES dos imports que carregam o código real
 mock.module("@/server/rate-limit.server", () => ({
   enforceUserRateLimit: async () => null,
   checkRateLimit: async () => ({ blocked: false, count: 0, limit: 100, retryAfterSeconds: 0 }),
@@ -37,6 +38,7 @@ mock.module("@/server/whatsapp-entitlement.server", () => ({
   }
 }));
 
+// Agora importamos os módulos reais
 import { resetState, gastosInserts } from "./_whatsapp-fake";
 import { processarMensagemWhatsApp } from "../src/server/whatsapp.server";
 
