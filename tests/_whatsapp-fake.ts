@@ -1,7 +1,5 @@
 /**
  * Helpers compartilhados de mock de Supabase para os testes do WhatsApp.
- * Versão final estabilizada para suporte a persistência durável (Readback Guard)
- * e roteamento atômico de sessões.
  */
 import { mock } from "bun:test";
 
@@ -65,7 +63,6 @@ function makeBuilder(table: string): any {
            matchedRows.push(entry.row);
         }
       });
-      // Sincronização de estado para o handler
       if (table === "whatsapp_messages") {
         const lastMatching = state.inserts.findLast(i => i.table === "whatsapp_messages" && i.row.user_id && i.row.telefone && !["salva", "cancelada", "expirada"].includes(i.row.status as string))?.row;
         if (lastMatching) {
@@ -80,7 +77,7 @@ function makeBuilder(table: string): any {
           state.pendingRow = null;
         }
       }
-      return { data: matchedRows, error: null }; // Retorno completo para persistência durável
+      return { data: matchedRows, error: null };
     }
 
     if (ctx.op === "delete") {
@@ -95,11 +92,8 @@ function makeBuilder(table: string): any {
     }
     if (table === "categorias") return { data: state.categoriasData, error: null };
     if (table === "contas_a_pagar") {
-      // WA-C3: Filtragem de contas pendentes para baixa
       let rows = [...state.contasData];
-      if (ctx.filters.status === "pendente") {
-        rows = rows.filter(r => r.status === "pendente");
-      }
+      if (ctx.filters.status === "pendente") rows = rows.filter(r => r.status === "pendente");
       return { data: rows, error: null };
     }
     return { data: [], error: null };
