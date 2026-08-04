@@ -156,8 +156,8 @@ describe("WA-3.30 — idempotência e inconsistência", () => {
       p_data_pagamento: "2026-07-03",
       p_origem: "whatsapp",
     });
-    const row = Array.isArray(data) ? data[0] : data;
-    expect(row.result).toBe("inconsistent");
+    const res = Array.isArray(data) ? data[0] : data;
+    expect(res.result).toBe("inconsistent");
     expect(gastosInserts().length).toBe(0);
   });
 });

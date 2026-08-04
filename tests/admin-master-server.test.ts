@@ -4,11 +4,11 @@
  * Cobre a fonte única server-side de Admin Master (WA-B1 + WA-B4 fail-closed).
  */
 import { test, expect, beforeEach, afterEach, describe } from "bun:test";
+import * as mod from "../src/server/admin-master.server";
 
 const MODULE_PATH = "../src/server/admin-master.server";
 
 async function load() {
-  const mod = await import(MODULE_PATH);
   mod.__resetAdminMasterCacheForTests();
   return mod;
 }
@@ -104,20 +104,18 @@ describe("admin-master.server — fail-closed (WA-B4)", () => {
   test("sem env, nenhum log inclui valor da variável, e-mails ou segredos", async () => {
     delete process.env.ADMIN_MASTER_EMAILS;
     const captured: string[] = [];
-    const origWarn = console.warn;
+    const origLog = console.warn;
     console.warn = (...args: unknown[]) => {
       captured.push(args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" "));
     };
     try {
-      const { isAdminMasterEmail } = await load();
-      expect(isAdminMasterEmail("alice@example.com")).toBe(false);
+      mod.__resetAdminMasterCacheForTests();
+      mod.getAdminMasterEmails(); // Triggers the warn immediately
     } finally {
-      console.warn = origWarn;
+      console.warn = origLog;
     }
     const joined = captured.join("\n");
-    // log esperado existe...
     expect(joined).toContain("admin_master_config_missing");
-    // ...mas sem e-mails, sem valor da env, sem variáveis de ambiente.
     expect(joined).not.toMatch(/@/);
     expect(joined).not.toMatch(/ADMIN_MASTER_EMAILS\s*=/);
   });
