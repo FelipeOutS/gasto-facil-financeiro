@@ -25,9 +25,13 @@ describe('PWA 8B Validation', () => {
 
   it('should have controlled update in sw.js', () => {
     const swContent = fs.readFileSync(path.resolve(process.cwd(), 'public/sw.js'), 'utf-8');
-    // Check that it's NOT in the install event (where it would trigger auto-update)
-    const installMatch = swContent.match(/self\.addEventListener\('install'[\s\S]*?\}\);/);
-    expect(installMatch?.[0]).not.toContain('self.skipWaiting()');
+    // Ensure skipWaiting is NOT called automatically (only in comments or message handler)
+    const installBlock = swContent.match(/self\.addEventListener\('install'[\s\S]*?\}\);/)?.[0] || "";
+    const activeSkipWaiting = installBlock.split('\n')
+      .filter(line => !line.trim().startsWith('//'))
+      .join('\n');
+    
+    expect(activeSkipWaiting).not.toContain('self.skipWaiting()');
     expect(swContent).toContain('event.data === \'SKIP_WAITING\'');
   });
 
