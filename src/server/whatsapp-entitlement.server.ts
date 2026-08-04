@@ -7,7 +7,8 @@ import { getSubscriptionForUserIdentity } from "@/server/subscription.server";
 import type { PlanTier } from "@/lib/plans";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let sb = _supabaseAdmin as any;
+const sb = _supabaseAdmin as any;
+
 
 
 export type EntitlementReason =

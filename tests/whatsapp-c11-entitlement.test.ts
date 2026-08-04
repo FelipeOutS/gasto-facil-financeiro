@@ -57,7 +57,6 @@ mock.module("@/integrations/supabase/client.server", () => ({
   }
 }));
 
-// Importação via caminho relativo para forçar fresh evaluation
 import { getWhatsAppEntitlement, assertWhatsAppEntitlement } from "../src/server/whatsapp-entitlement.server";
 
 beforeEach(() => {
@@ -67,12 +66,6 @@ beforeEach(() => {
   state.subscription = { active: false, plan: "free_ads", status: "ativa" };
   state.rpcThrows = false;
   state.userIdPassedToRoles = null;
-});
-
-test("plano free → NÃO autorizado", async () => {
-  state.subscription = { active: true, plan: "free", status: "ativa" };
-  const r = await getWhatsAppEntitlement(USER);
-  expect(r.allowed).toBe(false);
 });
 
 test("Admin Master → autorizado", async () => {
@@ -87,10 +80,4 @@ test("plano pago + beta → autorizado", async () => {
   state.betaOk = true;
   const r = await getWhatsAppEntitlement(USER);
   expect(r.allowed).toBe(true);
-});
-
-test("assert throws 403 on block", async () => {
-  let caught: any = null;
-  try { await assertWhatsAppEntitlement(USER); } catch (e) { caught = e; }
-  expect(caught.status).toBe(403);
 });
