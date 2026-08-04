@@ -410,7 +410,10 @@ export function __setWhatsAppAuditObserverForTests(
 // Admin Master OU participante ativo da beta fechada (whatsapp_beta_access).
 // Esta é a única fonte de verdade usada no webhook e nas server functions.
 async function userPodeUsarWhatsApp(userId: string): Promise<{ ok: boolean; reason?: string }> {
-  const ok = await canUseWhatsApp(userId);
+  const { getWhatsAppEntitlement } = await import("./whatsapp-entitlement.server");
+  const ent = await getWhatsAppEntitlement(userId);
+  const ok = ent.allowed;
+
   if (!ok) {
     return {
       ok: false,
