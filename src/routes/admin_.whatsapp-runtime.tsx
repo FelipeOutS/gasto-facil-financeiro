@@ -25,6 +25,7 @@ import {
 import {
   whatsappAdminListLocalTemplates,
   whatsappAdminSyncTemplates,
+  whatsappAdminSubmitTemplate,
 } from "@/lib/whatsapp-templates-admin.functions";
 
 
@@ -66,6 +67,7 @@ function PanelInner() {
   const readUsage = useServerFn(whatsappAdminGetUsageSnapshot);
   const readTemplates = useServerFn(whatsappAdminListLocalTemplates);
   const syncTemplatesFn = useServerFn(whatsappAdminSyncTemplates);
+  const submitTemplateFn = useServerFn(whatsappAdminSubmitTemplate);
 
   const [snap, setSnap] = useState<Snapshot | null>(null);
   const [quotas, setQuotas] = useState<QuotaList | null>(null);
@@ -73,6 +75,7 @@ function PanelInner() {
   const [templates, setTemplates] = useState<Awaited<ReturnType<typeof whatsappAdminListLocalTemplates>> | null>(null);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
 
 
   const refresh = useCallback(async () => {
@@ -274,6 +277,7 @@ function PanelInner() {
                     <TableHead>Status</TableHead>
                     <TableHead>Qualidade</TableHead>
                     <TableHead>Sincronizado</TableHead>
+                    <TableHead className="text-right">Ação</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -306,6 +310,38 @@ function PanelInner() {
                         </TableCell>
                         <TableCell className="text-[10px] text-muted-foreground">
                           {t.last_synced_at ? new Date(t.last_synced_at).toLocaleString('pt-BR') : "Nunca"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {t.status === 'draft' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 text-[10px]"
+                              disabled={submittingId === t.id || loading || syncing}
+                              onClick={async () => {
+                                setSubmittingId(t.id);
+                                try {
+                                  const res = await submitTemplateFn({ data: { internalKey: t.internal_key, version: t.version } });
+                                  if (res.ok) {
+                                    toast.success("Submetido com sucesso");
+                                    void refresh();
+                                  } else {
+                                    toast.error(`Falha: ${res.reason} ${('detail' in res) ? res.detail : ""}`);
+                                  }
+                                } catch (e) {
+                                  toast.error("Erro na submissão");
+                                } finally {
+                                  setSubmittingId(null);
+                                }
+                              }}
+                            >
+                              {submittingId === t.id ? (
+                                <RefreshCcw className="h-3 w-3 animate-spin" />
+                              ) : (
+                                "Submeter Meta"
+                              )}
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))
