@@ -34,13 +34,28 @@ import { useLocale } from "@/i18n/use-locale";
 
 import appCss from "../styles.css?url";
 
-if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch((err) => {
-      console.error("SW registration failed:", err);
-    });
-  });
-}
+    if (typeof window !== "undefined" && "serviceWorker" in navigator && import.meta.env.PROD) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then((registration) => {
+            registration.onupdatefound = () => {
+              const installingWorker = registration.installing;
+              if (installingWorker) {
+                installingWorker.onstatechange = () => {
+                  if (installingWorker.state === "installed" && navigator.serviceWorker.controller) {
+                    // Update available: notify user
+                    window.dispatchEvent(new CustomEvent("pwa-update-available", { detail: registration }));
+                  }
+                };
+              }
+            };
+          })
+          .catch((err) => {
+            console.error("SW registration failed:", err);
+          });
+      });
+    }
 
 
 const rootSearchSchema = z.object({
@@ -171,7 +186,7 @@ export const Route = createRootRoute({
       { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32x32.png" },
       { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16x16.png" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
-      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "manifest", href: "/manifest.webmanifest", crossorigin: "use-credentials" },
       {
         rel: "preload",
         as: "image",
