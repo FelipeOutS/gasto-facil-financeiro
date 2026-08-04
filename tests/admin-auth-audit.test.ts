@@ -20,23 +20,39 @@ describe('Admin Master Authorization Audit', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.ADMIN_MASTER_EMAILS = adminEmail;
+    // Reset cache to pick up env change
+    const mod = require('../src/server/admin-master.server');
+    if (mod.__resetAdminMasterCacheForTests) mod.__resetAdminMasterCacheForTests();
   });
 
   describe('hasAdminMasterRole', () => {
     it('should return true if user has owner role in database', async () => {
-      (supabaseAdmin.from as any)().maybeSingle.mockResolvedValue({ data: { role: 'owner' }, error: null });
+      vi.mocked(supabaseAdmin.from).mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { role: 'owner' }, error: null })
+      } as any);
+      
       const result = await hasAdminMasterRole(adminId);
       expect(result).toBe(true);
     });
 
     it('should return false if user does not have owner role', async () => {
-      (supabaseAdmin.from as any)().maybeSingle.mockResolvedValue({ data: null, error: null });
+      vi.mocked(supabaseAdmin.from).mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+      } as any);
       const result = await hasAdminMasterRole(commonId);
       expect(result).toBe(false);
     });
 
     it('should return false on database error (fail-closed)', async () => {
-      (supabaseAdmin.from as any)().maybeSingle.mockResolvedValue({ data: null, error: { message: 'DB Error' } });
+      vi.mocked(supabaseAdmin.from).mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: { message: 'DB Error' } })
+      } as any);
       const result = await hasAdminMasterRole(adminId);
       expect(result).toBe(false);
     });
@@ -51,17 +67,29 @@ describe('Admin Master Authorization Audit', () => {
 
   describe('assertAdminMaster', () => {
     it('should authorize if user has owner role (ignoring email for decision)', async () => {
-      (supabaseAdmin.from as any)().maybeSingle.mockResolvedValue({ data: { role: 'owner' }, error: null });
+      vi.mocked(supabaseAdmin.from).mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { role: 'owner' }, error: null })
+      } as any);
       await expect(assertAdminMaster({ id: adminId, email: commonEmail })).resolves.not.toThrow();
     });
 
     it('should deny if user has admin email but lacks owner role', async () => {
-      (supabaseAdmin.from as any)().maybeSingle.mockResolvedValue({ data: null, error: null });
+      vi.mocked(supabaseAdmin.from).mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+      } as any);
       await expect(assertAdminMaster({ id: commonId, email: adminEmail })).rejects.toThrow("Forbidden: Admin Master role required");
     });
 
     it('should deny common users', async () => {
-      (supabaseAdmin.from as any)().maybeSingle.mockResolvedValue({ data: null, error: null });
+      vi.mocked(supabaseAdmin.from).mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+      } as any);
       await expect(assertAdminMaster({ id: commonId, email: commonEmail })).rejects.toThrow("Forbidden: Admin Master role required");
     });
 
