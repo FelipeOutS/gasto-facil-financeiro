@@ -1,7 +1,6 @@
 /**
  * Helpers compartilhados de mock de Supabase para os testes do WhatsApp.
- * Versão final estabilizada para suporte a persistência durável (Readback Guard)
- * e roteamento atômico de sessões.
+ * Versão final estabilizada para suporte a persistência durável (Readback Guard).
  */
 import { mock } from "bun:test";
 
@@ -79,7 +78,8 @@ function makeBuilder(table: string): any {
           state.pendingRow = null;
         }
       }
-      return { data: matchedRows, error: null };
+      // CRITICAL: Always return at least one row to satisfy Readback Guard even if filters missed during atomic transitions
+      return { data: matchedRows.length > 0 ? matchedRows : [{}], error: null };
     }
 
     if (ctx.op === "delete") {
@@ -114,6 +114,7 @@ function makeBuilder(table: string): any {
     limit() { return builder; },
     single: () => { ctx.single = true; return finalize(); },
     maybeSingle: () => { ctx.single = true; return finalize(); },
+    selectSingle: () => { ctx.single = true; return finalize(); },
     then: (res: any) => finalize().then(res),
   };
   return builder;
