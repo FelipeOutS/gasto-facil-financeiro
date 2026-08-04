@@ -289,6 +289,7 @@ function RootComponent() {
       <ConnectedAccountBanner />
       <OfflineQueueMount />
       <PersistentAppShell pathname={pathname} />
+      <PWAUpdateToast />
       <CookieConsentBanner />
       <Toaster position="top-center" />
       <ConfirmDialogHost />
