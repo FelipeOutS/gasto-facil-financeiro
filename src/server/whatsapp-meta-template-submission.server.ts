@@ -25,7 +25,7 @@ function readAccessToken(): string | null {
 }
 
 export type SubmissionResult = 
-  | { ok: false; reason: "disabled" | "already_submitted" | "payload_error" | "meta_error" | "token_missing" | "forbidden"; detail?: string }
+  | { ok: false; reason: "disabled" | "already_submitted" | "payload_error" | "meta_error" | "token_missing" | "forbidden" | "not_found"; detail?: string }
   | { ok: true; provider_template_id: string; status: string };
 
 /**

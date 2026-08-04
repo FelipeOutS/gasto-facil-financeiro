@@ -321,12 +321,12 @@ function PanelInner() {
                               onClick={async () => {
                                 setSubmittingId(t.id);
                                 try {
-                                  const res = await submitTemplateFn({ internalKey: t.internal_key, version: t.version });
+                                  const res = await submitTemplateFn({ data: { internalKey: t.internal_key, version: t.version } });
                                   if (res.ok) {
                                     toast.success("Submetido com sucesso");
                                     void refresh();
                                   } else {
-                                    toast.error(`Falha: ${res.reason} ${res.detail || ""}`);
+                                    toast.error(`Falha: ${res.reason} ${('detail' in res) ? res.detail : ""}`);
                                   }
                                 } catch (e) {
                                   toast.error("Erro na submissão");
