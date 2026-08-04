@@ -24,11 +24,12 @@ function makeBuilder(table: string): any {
     payload: null, 
     filters: {} as Record<string, any>, 
     inFilters: {} as Record<string, any[]>,
-    single: false 
+    single: false,
+    selectCols: "*"
   };
 
   const finalize = async () => {
-    // 1. Caso especial: Autorização e Carregamento (WhatsApp Links, Cartões, Categorias)
+    // 1. Caso especial: Tabelas Fixas / Autorização
     if (ctx.op === "select") {
       if (table === "whatsapp_links") {
         const link = { user_id: "u1", telefone: "5511999998888", ativo: true, opt_in_em: "2026-01-01T00:00:00Z", revogado_em: null };
@@ -39,7 +40,6 @@ function makeBuilder(table: string): any {
     }
 
     const matchesFilters = (row: Record<string, unknown>, idx: number) => {
-      // Filtros EQ
       for (let [col, val] of Object.entries(ctx.filters)) {
         let actual = row[col];
         if (col.includes("->>")) {
@@ -49,7 +49,6 @@ function makeBuilder(table: string): any {
         if (col === "id" && !row.id) actual = `m-${idx + 1}`;
         if (actual !== val) return false;
       }
-      // Filtros IN
       for (let [col, vals] of Object.entries(ctx.inFilters)) {
         let actual = row[col];
         if (col.includes("->>")) {
@@ -62,33 +61,23 @@ function makeBuilder(table: string): any {
       return true;
     };
 
-    // 2. Operação INSERT
+    // 2. INSERT
     if (ctx.op === "insert") {
       const rows = Array.isArray(ctx.payload) ? ctx.payload : [ctx.payload];
       const insertedRows: any[] = [];
       for (const r of rows) {
-        const newRow = { 
-          ...r, 
-          id: r.id || `m-${state.inserts.length + 1}`,
-          recebida_em: r.recebida_em || new Date().toISOString()
-        };
+        const newRow = { ...r, id: r.id || `m-${state.inserts.length + 1}`, recebida_em: r.recebida_em || new Date().toISOString() };
         state.inserts.push({ table, row: newRow });
         insertedRows.push(newRow);
       }
       const lastRow = insertedRows[insertedRows.length - 1];
       if (table === "whatsapp_messages" && PENDING_STATES.includes(lastRow.status as string)) {
-        state.pendingRow = {
-          id: lastRow.id as string,
-          status: lastRow.status as string,
-          session: lastRow.parsed as Record<string, unknown>,
-          recebida_em: lastRow.recebida_em,
-          gasto_id: lastRow.gasto_id || null,
-        };
+        state.pendingRow = { id: lastRow.id as string, status: lastRow.status as string, session: lastRow.parsed as Record<string, unknown>, recebida_em: lastRow.recebida_em, gasto_id: lastRow.gasto_id || null };
       }
       return { data: insertedRows, error: null };
     }
 
-    // 3. Operação UPDATE
+    // 3. UPDATE
     if (ctx.op === "update") {
       let matchedRows: any[] = [];
       state.inserts.forEach((entry, idx) => {
@@ -97,44 +86,22 @@ function makeBuilder(table: string): any {
            matchedRows.push(entry.row);
         }
       });
-      
-      // Sincronização Atômica de Sessão (pendingRow)
       if (table === "whatsapp_messages") {
-        const lastMatching = state.inserts.findLast(i => 
-          i.table === table && 
-          i.row.user_id && 
-          i.row.telefone && 
-          !["salva", "cancelada", "expirada"].includes(i.row.status as string)
-        )?.row;
-        if (lastMatching) {
-          state.pendingRow = {
-            id: lastMatching.id as string,
-            status: lastMatching.status as string,
-            session: lastMatching.parsed as Record<string, unknown>,
-            recebida_em: lastMatching.recebida_em,
-            gasto_id: lastMatching.gasto_id || null,
-          };
-        } else {
-          state.pendingRow = null;
-        }
+        const lastMatching = state.inserts.findLast(i => i.table === table && i.row.user_id && i.row.telefone && !["salva", "cancelada", "expirada"].includes(i.row.status as string))?.row;
+        state.pendingRow = lastMatching ? { id: lastMatching.id as string, status: lastMatching.status as string, session: lastMatching.parsed as Record<string, unknown>, recebida_em: lastMatching.recebida_em, gasto_id: lastMatching.gasto_id || null } : null;
       }
-
-      // Readback Guard: crucial retornar array se houver match
       if (ctx.single) return { data: matchedRows[0] || null, error: null };
       return { data: matchedRows.length > 0 ? matchedRows : null, error: null };
     }
 
-    // 4. Operação SELECT (fallback para inserts dinâmicos como contas_a_pagar)
-    const rows = state.inserts
-      .filter((i, idx) => i.table === table && matchesFilters(i.row, idx))
-      .map(i => i.row);
-      
+    // 4. SELECT / FALLBACK
+    const rows = state.inserts.filter((i, idx) => i.table === table && matchesFilters(i.row, idx)).map(i => i.row);
     if (ctx.single) return { data: rows[0] || null, error: null };
     return { data: rows, error: null };
   };
 
   const builder: any = {
-    select: () => builder,
+    select: (cols: string = "*") => { ctx.selectCols = cols; return builder; },
     insert(p: any) { ctx.op = "insert"; ctx.payload = p; return builder; },
     update(p: any) { ctx.op = "update"; ctx.payload = p; return builder; },
     delete() { ctx.op = "delete"; return builder; },
@@ -159,18 +126,9 @@ export const fakeAdmin = {
       const c = state.contasData.find(x => x.id === a.p_conta_id);
       if (c?.status === "pago") return { data: [{ result: c.gasto_id ? "noop" : "inconsistent" }] };
       const gid = `g-${state.inserts.length + 1}`;
-      state.inserts.push({ 
-        table: "gastos", 
-        row: { 
-          id: gid, user_id: "u1", descricao: c?.nome, valor: c?.valor, 
-          categoria_id: c?.categoria_id, forma_pagamento: c?.forma_pagamento || "outros", 
-          origem: "whatsapp", data: new Date().toISOString().slice(0, 10) 
-        } 
-      });
-      const contaIdx = state.contasData.findIndex(x => x.id === a.p_conta_id);
-      if (contaIdx !== -1) { 
-        state.contasData[contaIdx] = { ...state.contasData[contaIdx], status: "pago", gasto_id: gid }; 
-      }
+      state.inserts.push({ table: "gastos", row: { id: gid, user_id: "u1", descricao: c?.nome, valor: c?.valor, categoria_id: c?.categoria_id, forma_pagamento: c?.forma_pagamento || "outros", origem: "whatsapp", data: new Date().toISOString().slice(0, 10) } });
+      const idx = state.contasData.findIndex(x => x.id === a.p_conta_id);
+      if (idx !== -1) state.contasData[idx] = { ...state.contasData[idx], status: "pago", gasto_id: gid };
       return { data: [{ result: "paid", gasto_id: gid }] };
     }
     return { data: true };
@@ -179,39 +137,16 @@ export const fakeAdmin = {
 };
 
 mock.module("@/integrations/supabase/client.server", () => ({ supabaseAdmin: fakeAdmin }));
-mock.module("@/server/subscription.server", () => ({ 
-  getSubscriptionForUserIdentity: async () => ({ active: true, plan: "pessoal_premium", status: "ativo" }) 
-}));
-mock.module("@/server/whatsapp-entitlement.server", () => ({ 
-  getWhatsAppEntitlement: async () => ({ 
-    allowed: true, plan: "pessoal_premium", planActive: true, featureIncluded: true, betaAllowed: true, linkActive: true, optInActive: true 
-  }),
-  assertWhatsAppEntitlement: async () => ({ allowed: true })
-}));
-mock.module("@/server/admin-master.server", () => ({ 
-  hasAdminMasterRole: async () => true, 
-  isAdminMasterEmail: () => true, 
-  assertAdminMaster: async () => {} 
-}));
-mock.module("@/server/whatsapp-financial-quota-gate.server", () => ({ 
-  assertFinancialActionQuotaForWhatsApp: async () => ({ allowed: true }),
-  financialQuotaBlockedReply: () => "Quota bloqueada"
-}));
-mock.module("@/server/whatsapp-merchant-memory.server", () => ({ 
-  lookupMerchantMemory: async () => ({ kind: "none" }),
-  merchantKeyFor: (n: string) => n?.toLowerCase().trim() || null,
-  logMerchantMemoryDecision: () => {},
-  recordMerchantMemory: async () => ({ ok: true }),
-  MERCHANT_MEMORY_HINT_LINE: "mem"
-}));
+mock.module("@/server/subscription.server", () => ({ getSubscriptionForUserIdentity: async () => ({ active: true, plan: "pessoal_premium", status: "ativo" }) }));
+mock.module("@/server/whatsapp-entitlement.server", () => ({ getWhatsAppEntitlement: async () => ({ allowed: true, plan: "pessoal_premium", planActive: true, featureIncluded: true, betaAllowed: true, linkActive: true, optInActive: true }), assertWhatsAppEntitlement: async () => ({ allowed: true }) }));
+mock.module("@/server/admin-master.server", () => ({ hasAdminMasterRole: async () => true, isAdminMasterEmail: () => true, assertAdminMaster: async () => {} }));
+mock.module("@/server/whatsapp-financial-quota-gate.server", () => ({ assertFinancialActionQuotaForWhatsApp: async () => ({ allowed: true }), financialQuotaBlockedReply: () => "Quota bloqueada" }));
+mock.module("@/server/whatsapp-merchant-memory.server", () => ({ lookupMerchantMemory: async () => ({ kind: "none" }), merchantKeyFor: (n: string) => n?.toLowerCase().trim() || null, logMerchantMemoryDecision: () => {}, recordMerchantMemory: async () => ({ ok: true }), MERCHANT_MEMORY_HINT_LINE: "mem" }));
 
 export function resetState(o?: any) { 
-  state.inserts = []; 
-  state.pendingRow = null; 
+  state.inserts = []; state.pendingRow = null; 
   state.contasData = o?.contas ?? [];
-  if (o?.contas) {
-    o.contas.forEach((c: any) => state.inserts.push({ table: "contas_a_pagar", row: c }));
-  }
+  if (o?.contas) o.contas.forEach((c: any) => state.inserts.push({ table: "contas_a_pagar", row: c }));
 }
 export function gastosInserts() { return state.inserts.filter(i => i.table === "gastos"); }
 export function resetCategorias(cats: any[]) { state.categoriasData = cats; }
