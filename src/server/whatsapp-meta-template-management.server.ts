@@ -158,7 +158,14 @@ export function prepareSubmissionPayload(local: CatalogTemplateRow): PayloadPrep
   if (local.language !== "pt_BR") return { ok: false, reason: "invalid_local_template" };
   if (local.category !== "UTILITY") return { ok: false, reason: "invalid_local_template" };
   const components: unknown[] = [
-    { type: "BODY", text: local.body, example: local.examples ?? {} },
+    { 
+      type: "BODY", 
+      text: local.body, 
+      example: {
+        body_text: [Object.values(local.examples ?? {} as any)]
+      }
+    },
+
   ];
   if (local.footer && local.footer.length > 0) {
     components.push({ type: "FOOTER", text: local.footer });
