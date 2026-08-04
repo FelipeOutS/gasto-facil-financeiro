@@ -85,7 +85,8 @@ export function RecorrenciaForm({
   useEffect(() => {
     fetchRadar()
       .then((r) => {
-        const indicators = (r as { indicators?: Array<{ key: string; value: number }> }).indicators || [];
+        const indicators =
+          (r as { indicators?: Array<{ key: string; value: number }> }).indicators || [];
         const usd = indicators.find((i) => i.key === "USD_BRL");
         const eur = indicators.find((i) => i.key === "EUR_BRL");
         setCotacaoUSD(usd?.value ?? null);
