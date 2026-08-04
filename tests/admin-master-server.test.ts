@@ -109,7 +109,8 @@ describe("admin-master.server — fail-closed (WA-B4)", () => {
       captured.push(args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" "));
     };
     try {
-      const { isAdminMasterEmail } = await load();
+      const { isAdminMasterEmail, __resetAdminMasterCacheForTests } = await load();
+      __resetAdminMasterCacheForTests();
       expect(isAdminMasterEmail("alice@example.com")).toBe(false);
     } finally {
       console.warn = origWarn;

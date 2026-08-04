@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { hasAdminMasterRole, isAdminMasterEmail, assertAdminMaster } from '../src/server/admin-master.server';
+import { hasAdminMasterRole, isAdminMasterEmail, assertAdminMaster, __resetAdminMasterCacheForTests } from '../src/server/admin-master.server';
 import { supabaseAdmin } from '../src/integrations/supabase/client.server';
 
 vi.mock('../src/integrations/supabase/client.server', () => ({
@@ -20,14 +20,14 @@ describe('Admin Master Authorization Audit', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.ADMIN_MASTER_EMAILS = adminEmail;
-    // Reset cache to pick up env change
-    const mod = require('../src/server/admin-master.server');
-    if (mod.__resetAdminMasterCacheForTests) mod.__resetAdminMasterCacheForTests();
+    __resetAdminMasterCacheForTests();
   });
 
   describe('hasAdminMasterRole', () => {
     it('should return true if user has owner role in database', async () => {
-      vi.mocked(supabaseAdmin.from).mockReturnValue({
+      // Usamos a implementação direta do mock ja injetado pelo vi.mock
+      const fromSpy = vi.mocked(supabaseAdmin.from);
+      fromSpy.mockReturnValue({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         maybeSingle: vi.fn().mockResolvedValue({ data: { role: 'owner' }, error: null })
