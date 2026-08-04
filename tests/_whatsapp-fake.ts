@@ -96,12 +96,11 @@ function makeBuilder(table: string): any {
           state.pendingRow = null;
         }
       }
-      // Readback Guard: crucial retornar array se houver match
       return { data: matchedRows.length > 0 ? matchedRows : null, error: null };
     }
 
     if (table === "whatsapp_links") {
-      // Mock de autorização para canUseWhatsAppForSender
+      // Forçar retorno para canUseWhatsAppForSender passar
       return { 
         data: [{ 
           user_id: "u1", 
