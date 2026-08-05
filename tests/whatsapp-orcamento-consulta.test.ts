@@ -6,8 +6,8 @@
  * infraestrutura dos demais testes de WhatsApp.
  */
 import { test, expect, describe, beforeEach } from "bun:test";
-import { state, useWhatsAppFakeMocks } from "./_whatsapp-fake";
-useWhatsAppFakeMocks();
+import { state, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const { detectConsultaIntent, handleConsulta } =
   await import("../src/server/whatsapp-consultas.server");

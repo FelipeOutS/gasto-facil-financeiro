@@ -9,8 +9,8 @@
  *  - Logs não vazam base64/data URL/sha completo.
  */
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { state, resetState, useWhatsAppFakeMocks } from "./_whatsapp-fake";
-useWhatsAppFakeMocks();
+import { state, resetState, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const { stripMediaFields } = await import("../src/server/whatsapp-media-sanitize.server");
 const { extractBoletoCandidatesFromPdf } =

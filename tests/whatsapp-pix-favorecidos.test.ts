@@ -10,8 +10,8 @@
  */
 import "./_whatsapp-fake";
 import { describe, it, expect, beforeEach } from "bun:test";
-import { resetState, state, useWhatsAppFakeMocks } from "./_whatsapp-fake";
-useWhatsAppFakeMocks();
+import { resetState, state, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 // IMPORTANTE: usar dynamic import APÓS o side-effect de `_whatsapp-fake`
 // para garantir que `mock.module(...)` seja aplicado antes do supabase

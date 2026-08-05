@@ -705,7 +705,7 @@ export function installWhatsAppFakeMocks(): void {
  * do arquivo) e reinstala antes de cada teste, tornando a suíte global
  * independente da ordem de execução.
  */
-export function useWhatsAppFakeMocks(): void {
+export function setupWhatsAppFakeMocks(): void {
   installWhatsAppFakeMocks();
   beforeEach(installWhatsAppFakeMocks);
 }

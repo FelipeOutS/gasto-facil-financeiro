@@ -6,8 +6,8 @@
  * roteado para extractCartaoTermo e respondia "Não encontrei cartão 'mes'".
  */
 import { test, expect, beforeEach } from "bun:test";
-import { state, resetState, useWhatsAppFakeMocks } from "./_whatsapp-fake";
-useWhatsAppFakeMocks();
+import { state, resetState, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 const { detectConsultaIntent } = await import("../src/server/whatsapp-consultas.server");

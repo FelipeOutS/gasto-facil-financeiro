@@ -11,8 +11,8 @@
  *  - lançamentos já confirmados NÃO são apagados.
  */
 import { test, expect, beforeEach } from "bun:test";
-import { state, resetState, gastosInserts, useWhatsAppFakeMocks } from "./_whatsapp-fake";
-useWhatsAppFakeMocks();
+import { state, resetState, gastosInserts, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const { processarMensagemWhatsApp, isResetCommand } = await import("../src/server/whatsapp.server");
 

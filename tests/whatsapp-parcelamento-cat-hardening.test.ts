@@ -12,8 +12,8 @@
  */
 import { describe, it, expect, beforeEach } from "bun:test";
 import "./_whatsapp-fake";
-import { resetState, state, gastosInserts, fakeAdmin, useWhatsAppFakeMocks } from "./_whatsapp-fake";
-useWhatsAppFakeMocks();
+import { resetState, state, gastosInserts, fakeAdmin, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 

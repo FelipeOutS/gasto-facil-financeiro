@@ -25,8 +25,8 @@ import {
   state,
   fakeAdmin,
   receitasInserts,
-  recorrenciasInserts, useWhatsAppFakeMocks } from "./_whatsapp-fake";
-useWhatsAppFakeMocks();
+  recorrenciasInserts, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 

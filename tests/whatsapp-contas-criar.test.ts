@@ -5,8 +5,8 @@
  * categoria manual, recorrência, integração com WA-C1 e logs seguros.
  */
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
-import { state, resetState, useWhatsAppFakeMocks } from "./_whatsapp-fake";
-useWhatsAppFakeMocks();
+import { state, resetState, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const {
   detectPayableAccountIntent,

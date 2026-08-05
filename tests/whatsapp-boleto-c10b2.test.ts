@@ -14,8 +14,8 @@
  */
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { gzipSync, deflateSync } from "zlib";
-import { state, resetState, useWhatsAppFakeMocks } from "./_whatsapp-fake";
-useWhatsAppFakeMocks();
+import { state, resetState, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const {
   extractBoletoCandidatesFromPdf,

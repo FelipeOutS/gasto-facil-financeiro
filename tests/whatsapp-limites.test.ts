@@ -11,8 +11,8 @@
  * seguros.
  */
 import { beforeEach, describe, expect, it } from "bun:test";
-import { state, resetState, useWhatsAppFakeMocks } from "./_whatsapp-fake";
-useWhatsAppFakeMocks();
+import { state, resetState, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const { detectLimiteIntent, handleLimiteIntent } =
   await import("../src/server/whatsapp-limites.server");

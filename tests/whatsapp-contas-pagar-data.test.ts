@@ -9,8 +9,8 @@
  *   - logs continuam sem PII.
  */
 import { beforeEach, describe, expect, it } from "bun:test";
-import { state, resetState, useWhatsAppFakeMocks } from "./_whatsapp-fake";
-useWhatsAppFakeMocks();
+import { state, resetState, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const { detectMarkAsPaidIntent } = await import("../src/server/whatsapp-contas-pagar.server");
 

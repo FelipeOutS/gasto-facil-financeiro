@@ -14,8 +14,8 @@
  * - zero escrita financeira.
  */
 import { test, expect, beforeEach } from "bun:test";
-import { state, resetState, useWhatsAppFakeMocks } from "./_whatsapp-fake";
-useWhatsAppFakeMocks();
+import { state, resetState, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 const { detectConsultaMensalNomeada, extractPeriodoSuffix, anoCorrenteSaoPaulo } =

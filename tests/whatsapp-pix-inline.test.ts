@@ -11,8 +11,8 @@
  */
 import "./_whatsapp-fake";
 import { describe, it, expect, beforeEach } from "bun:test";
-import { resetState, state, useWhatsAppFakeMocks } from "./_whatsapp-fake";
-useWhatsAppFakeMocks();
+import { resetState, state, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const {
   detectPagarPixInlineIntent,
