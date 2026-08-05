@@ -115,9 +115,16 @@ function matchCond(row: Record<string, any>, c: Cond): boolean {
     case "lte":
       ok = actual !== null && cmp(actual, c.val) <= 0;
       break;
-    case "in":
-      ok = (c.val as any[]).some((v) => String(norm(v)) === String(actual));
+    case "in": {
+      const list = Array.isArray(c.val)
+        ? c.val
+        : String(c.val)
+            .replace(/^\(|\)$/g, "")
+            .split(",")
+            .map((v) => v.trim().replace(/^"|"$/g, ""));
+      ok = list.some((v) => String(norm(v)) === String(actual));
       break;
+    }
     case "like":
       ok = actual !== null && likeToRegex(String(c.val), false).test(String(actual));
       break;
@@ -445,6 +452,22 @@ export function resetState(o?: any) {
   state.contasData.forEach((c: any, i: number) => {
     if (!c.id) c.id = `m-${i + 1}`;
   });
+  // O usuário canônico do fake é "u1": linhas semeadas sem user_id pertencem a ele.
+  for (const key of [
+    "contasData",
+    "contasReceberData",
+    "gastosData",
+    "receitasData",
+    "recorrenciasData",
+    "transferenciasData",
+    "metasData",
+    "limitesData",
+    "favorecidosData",
+  ] as const) {
+    (state[key] as any[]).forEach((r: any) => {
+      if (r && r.user_id === undefined) r.user_id = "u1";
+    });
+  }
   if (o?.contas)
     o.contas.forEach((c: any) => state.inserts.push({ table: "contas_a_pagar", row: c }));
 }
