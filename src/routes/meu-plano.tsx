@@ -130,13 +130,12 @@ function MeuPlanoPage() {
         : expirado || isCancelled || status === "cancelado"
           ? "continue"
           : "start";
-  // Fase 1E-B2M — Kill switch de rollout. Default: desligado (rollout controlado).
-  // Quando desligado, o card aparece como informativo ("Em breve") mas o botão fica
-  // desativado. Não afeta `chooseFreeAdsPlan` (a server function continua segura).
-  // Usuários já em `free_ads/ativo` continuam vendo "Plano atual" normalmente.
-  const freeAdsSignupEnabled = true; // Forçado para liberação comercial do plano gratuito
-  const freeAdsCtaLocked =
-    !freeAdsSignupEnabled && (freeAdsButtonMode === "start" || freeAdsButtonMode === "continue");
+
+  // MODO COMERCIAL LIBERADO: Plano gratuito ativo para todos os usuários.
+  // Planos pagos permanecem visíveis, mas o checkout falha com mensagem amigável
+  // caso os secrets produtivos não estejam presentes (fail-closed em criarCheckout).
+  const freeAdsSignupEnabled = true;
+  const freeAdsCtaLocked = false;
 
   async function handleChooseFreeAds() {
     if (freeAdsSubmitting) return;
@@ -896,7 +895,7 @@ function MeuPlanoPage() {
               variant={
                 freeAdsButtonMode === "current" || freeAdsCtaLocked ? "secondary" : "default"
               }
-              disabled={freeAdsCtaLocked || submitting !== null}
+              disabled={submitting !== null || freeAdsButtonMode === "current" || freeAdsCtaLocked}
               onClick={handleChooseFreeAds}
               className="shrink-0 rounded-xl min-h-10"
               title={freeAdsButtonMode === "current" ? tp("freeAds.currentBadge") : ""}
