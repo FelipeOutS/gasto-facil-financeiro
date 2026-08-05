@@ -18,6 +18,10 @@ export const state = {
   >[],
   categoriasData: [
     { id: "cat-out", legacy_id: "outros", nome: "Outros", user_id: "u1" },
+    { id: "cat-mer", legacy_id: "mercado", nome: "Mercado", user_id: "u1" },
+    { id: "cat-trans", legacy_id: "transporte", nome: "Transporte", user_id: "u1" },
+    { id: "cat-saude", legacy_id: "saude", nome: "Saúde", user_id: "u1" },
+    { id: "cat-rest", legacy_id: "restaurante", nome: "Restaurante", user_id: "u1" },
     { id: "cat-int", legacy_id: "internet", nome: "Internet", user_id: "u1" },
   ] as Record<string, unknown>[],
   contasData: [] as Record<string, any>[],
@@ -51,7 +55,7 @@ const DEDICATED: Record<string, keyof typeof state> = {
 };
 
 /** Tabelas cujo conteúdo é devolvido integralmente (comportamento histórico do fake). */
-const UNFILTERED = new Set(["cartoes", "categorias"]);
+const UNFILTERED = new Set<string>([]);
 
 function rowsOf(table: string): Record<string, any>[] {
   const key = DEDICATED[table];
@@ -186,10 +190,9 @@ function makeBuilder(table: string): any {
     )?.row;
     state.pendingRow = last
       ? {
-          id: last.id,
-          status: last.status,
+          ...last,
           session: last.parsed || last.session,
-          recebida_em: last.recebida_em,
+          parsed: last.parsed || last.session,
           gasto_id: last.gasto_id || null,
         }
       : null;
@@ -436,6 +439,10 @@ export function resetState(o?: any) {
   ];
   state.categoriasData = o?.categorias ?? [
     { id: "cat-out", legacy_id: "outros", nome: "Outros", user_id: "u1" },
+    { id: "cat-mer", legacy_id: "mercado", nome: "Mercado", user_id: "u1" },
+    { id: "cat-trans", legacy_id: "transporte", nome: "Transporte", user_id: "u1" },
+    { id: "cat-saude", legacy_id: "saude", nome: "Saúde", user_id: "u1" },
+    { id: "cat-rest", legacy_id: "restaurante", nome: "Restaurante", user_id: "u1" },
     { id: "cat-int", legacy_id: "internet", nome: "Internet", user_id: "u1" },
   ];
   state.contasData = o?.contas ?? [];
