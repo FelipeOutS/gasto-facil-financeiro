@@ -17,7 +17,8 @@ export const dismissUpsell = createServerFn({ method: "POST" })
   .validator((data: any) => 
     z.object({ type: z.enum(['banner', 'modal']), trigger: z.string().optional() }).parse(data)
   )
-  .handler(async ({ data, context }: { data: { type: 'banner' | 'modal'; trigger?: string }; context: any }) => {
+  .handler(async (args: any) => {
+    const { data, context } = args;
     const userId = (context as any).userId;
     if (!userId) return;
 
