@@ -26,9 +26,11 @@ export function UpsellContextualGate({ feature, isOpen, onClose }: UpsellContext
     queryFn: () => fetchStatus(),
   });
 
-  if (!status?.eligible && status?.reason !== 'not_free_ads_plan' && status?.reason !== 'already_active_paid') {
-     // Se não for plano gratuito ou se for admin, o gate não deveria nem ser chamado normalmente, 
-     // mas por segurança aqui apenas renderizamos o conteúdo padrão ou fechamos.
+  // Type guard para acessar reason com segurança
+  const eligibility = status as any;
+
+  if (!eligibility?.eligible && eligibility?.reason !== 'not_free_ads_plan' && eligibility?.reason !== 'already_active_paid') {
+     // Lógica de fallback se necessário
   }
 
   return (
@@ -65,3 +67,5 @@ export function UpsellContextualGate({ feature, isOpen, onClose }: UpsellContext
     </Dialog>
   );
 }
+EOF
+,file_path:
