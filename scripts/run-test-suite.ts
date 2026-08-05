@@ -43,7 +43,6 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-
 type Result = {
   file: string;
   pass: number;
