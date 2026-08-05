@@ -3196,6 +3196,60 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_csp_reports: {
+        Row: {
+          blocked_uri: string | null
+          column_number: number | null
+          created_at: string
+          disposition: string | null
+          document_uri: string | null
+          effective_directive: string | null
+          id: string
+          line_number: number | null
+          original_policy: string | null
+          referrer: string | null
+          script_sample: string | null
+          source_file: string | null
+          status_code: number | null
+          user_agent: string | null
+          violated_directive: string | null
+        }
+        Insert: {
+          blocked_uri?: string | null
+          column_number?: number | null
+          created_at?: string
+          disposition?: string | null
+          document_uri?: string | null
+          effective_directive?: string | null
+          id?: string
+          line_number?: number | null
+          original_policy?: string | null
+          referrer?: string | null
+          script_sample?: string | null
+          source_file?: string | null
+          status_code?: number | null
+          user_agent?: string | null
+          violated_directive?: string | null
+        }
+        Update: {
+          blocked_uri?: string | null
+          column_number?: number | null
+          created_at?: string
+          disposition?: string | null
+          document_uri?: string | null
+          effective_directive?: string | null
+          id?: string
+          line_number?: number | null
+          original_policy?: string | null
+          referrer?: string | null
+          script_sample?: string | null
+          source_file?: string | null
+          status_code?: number | null
+          user_agent?: string | null
+          violated_directive?: string | null
+        }
+        Relationships: []
+      }
       whatsapp_links: {
         Row: {
           ativo: boolean
@@ -4500,6 +4554,7 @@ export type Database = {
           valor: number
         }[]
       }
+      whatsapp_cleanup_csp_reports: { Args: never; Returns: undefined }
       whatsapp_commit_outbound_quota_atomic: {
         Args: {
           p_notification_id: string
