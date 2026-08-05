@@ -2697,10 +2697,15 @@ export type Database = {
           converted_at: string | null
           created_at: string | null
           dismiss_count: number | null
+          distinct_use_days: number
           id: string
+          last_activity_date: string | null
           last_banner_at: string | null
           last_modal_at: string | null
+          last_shown_at: string | null
           last_trigger: string | null
+          paid_feature_attempt_at: string | null
+          session_count: number
           snooze_until: string | null
           updated_at: string | null
           user_id: string
@@ -2709,10 +2714,15 @@ export type Database = {
           converted_at?: string | null
           created_at?: string | null
           dismiss_count?: number | null
+          distinct_use_days?: number
           id?: string
+          last_activity_date?: string | null
           last_banner_at?: string | null
           last_modal_at?: string | null
+          last_shown_at?: string | null
           last_trigger?: string | null
+          paid_feature_attempt_at?: string | null
+          session_count?: number
           snooze_until?: string | null
           updated_at?: string | null
           user_id: string
@@ -2721,10 +2731,15 @@ export type Database = {
           converted_at?: string | null
           created_at?: string | null
           dismiss_count?: number | null
+          distinct_use_days?: number
           id?: string
+          last_activity_date?: string | null
           last_banner_at?: string | null
           last_modal_at?: string | null
+          last_shown_at?: string | null
           last_trigger?: string | null
+          paid_feature_attempt_at?: string | null
+          session_count?: number
           snooze_until?: string | null
           updated_at?: string | null
           user_id?: string
