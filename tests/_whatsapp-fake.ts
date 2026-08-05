@@ -380,6 +380,35 @@ export const fakeAdmin = {
         state.contasData[idx] = { ...state.contasData[idx], status: "pago", gasto_id: gid };
       return { data: { result: "paid", gasto_id: gid } }; // RPC no PostgREST retorna objeto se single row ou array.
     }
+    if (n === "create_installment_purchase") {
+      // Emula a RPC atômica: grava todas as parcelas sob o mesmo grupo.
+      const parcelas: any[] = Array.isArray(a?.p_parcelas) ? a.p_parcelas : [];
+      if (!parcelas.length) return { data: null, error: { message: "no_installments" } };
+      const rows = parcelas.map((pc, i) => ({
+        id: `gp-${a.p_grupo_id}-${pc.numero ?? i + 1}`,
+        user_id: a.p_user_id,
+        cartao_id: a.p_cartao_id,
+        categoria_id: a.p_categoria_id,
+        descricao: a.p_descricao,
+        estabelecimento: a.p_estabelecimento,
+        observacao: a.p_observacao,
+        origem: a.p_origem ?? "whatsapp",
+        grupo_parcelamento_id: a.p_grupo_id,
+        total_parcelas: a.p_total_parcelas,
+        parcela_atual: pc.numero ?? i + 1,
+        valor: pc.valor,
+        data: pc.data,
+        mes: pc.mes,
+        ano: pc.ano,
+        invoice_month: pc.invoice_month,
+        forma_pagamento: "credito",
+      }));
+      for (const row of rows) {
+        state.gastosData.push(row);
+        state.inserts.push({ table: "gastos", row });
+      }
+      return { data: rows, error: null };
+    }
     return { data: true };
   },
   auth: {
