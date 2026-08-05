@@ -154,6 +154,7 @@ test("Confirmação salva como crédito vincula cartao_id correto", async () => 
   state.cartoesData = [
     {
       id: "c-nu",
+      user_id: "u1",
       nome: "Nubank",
       banco: "Nubank",
       cor: "#000",
