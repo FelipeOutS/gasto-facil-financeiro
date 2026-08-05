@@ -24,9 +24,9 @@ export const SECURITY_HEADERS = {
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
 };
 
-
 export function applySecurityHeaders(headers: Headers) {
   Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
     headers.set(key, value);
   });
 }
+
