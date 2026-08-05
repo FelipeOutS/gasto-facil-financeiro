@@ -2,8 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { checkUpsellEligibility } from "@/server/upsell-eligibility.server";
 import { supabaseAdmin as sb } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const getUpsellStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const userId = (context as any).userId;
     if (!userId) return { eligible: false };
@@ -11,8 +13,11 @@ export const getUpsellStatus = createServerFn({ method: "GET" })
   });
 
 export const dismissUpsell = createServerFn({ method: "POST" })
-    .input(z.object({ type: z.enum(['banner', 'modal']), trigger: z.string().optional() }))
-    .handler(async ({ data, context }: { data: { type: 'banner' | 'modal'; trigger?: string }; context: any }) => {
+  .middleware([requireSupabaseAuth])
+  .validator((data: unknown) => 
+    z.object({ type: z.enum(['banner', 'modal']), trigger: z.string().optional() }).parse(data)
+  )
+  .handler(async ({ data, context }) => {
     const userId = (context as any).userId;
     if (!userId) return;
 
