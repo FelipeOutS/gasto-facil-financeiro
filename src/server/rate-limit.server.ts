@@ -106,7 +106,6 @@ export function userRateLimitedResponse(retryAfterSeconds: number): Response {
   );
 }
 
-
 export async function enforceUserRateLimit(params: {
   scope: "ai" | "import" | "flyerOcr" | "onlineImport" | "whatsappBoletoOcr";
   userId: string;

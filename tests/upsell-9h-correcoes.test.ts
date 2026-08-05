@@ -97,9 +97,10 @@ describe("9H — gate de exibição no cliente", () => {
       "/admin/saude",
       "/renda/nova",
     ]) {
-      const critical = /^\/(login|cadastro|confirmar|recuperar-senha)|^\/onboarding|^\/adicionar|^\/import|^\/exportar|^\/checkout|^\/meu-plano|^\/pagamento|^\/mercado-pago|^\/admin|^\/renda/.test(
-        path,
-      );
+      const critical =
+        /^\/(login|cadastro|confirmar|recuperar-senha)|^\/onboarding|^\/adicionar|^\/import|^\/exportar|^\/checkout|^\/meu-plano|^\/pagamento|^\/mercado-pago|^\/admin|^\/renda/.test(
+          path,
+        );
       expect(critical).toBe(true);
     }
   });

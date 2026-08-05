@@ -25,9 +25,8 @@ const {
   detectPaginationCommand,
   cleanDescricaoDisplay,
 } = await import("../src/server/whatsapp-faturas.server");
-const { getItensFaturaAtualPorCartao, faturaCorrenteRef, cicloFatura } = await import(
-  "../src/server/cartao-fatura.server",
-);
+const { getItensFaturaAtualPorCartao, faturaCorrenteRef, cicloFatura } =
+  await import("../src/server/cartao-fatura.server");
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 
 const NBSP = "\u00a0";

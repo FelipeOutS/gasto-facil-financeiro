@@ -2,11 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  getUpsellStatus,
-  markUpsellShown,
-  recordUpsellActivity,
-} from "@/lib/upsell.functions";
+import { getUpsellStatus, markUpsellShown, recordUpsellActivity } from "@/lib/upsell.functions";
 
 /** Rotas de jornada crítica: nenhuma comunicação automática pode aparecer. */
 export const CRITICAL_ROUTE_PATTERNS: RegExp[] = [
@@ -106,8 +102,7 @@ export function useUpsellGate({ channel, blocked = false, delayMs = 5000 }: Gate
     retry: false,
   });
 
-  const serverAllows =
-    !isLoading && status?.eligible === true && status?.channel === channel;
+  const serverAllows = !isLoading && status?.eligible === true && status?.channel === channel;
 
   useEffect(() => {
     if (!serverAllows || blocked || !online || isCriticalPath(pathname)) {

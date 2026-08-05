@@ -820,23 +820,22 @@ function MeuPlanoPage() {
                     {isAdminMaster ? t("billing.totalAccess") : t("billing.currentPlan")}
                   </div>
                 ) : (
-                    <Button
-                      className={cn(
-                        "w-full rounded-xl font-semibold min-h-11",
-                        isRecommended &&
-                          "bg-gradient-to-r from-primary to-primary/85 shadow-md shadow-primary/20",
-                      )}
-                      onClick={() => void escolherPlano(p.tier)}
-                      disabled={submitting !== null}
-                    >
-                      {submitting === p.tier ? (
-                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Zap className="mr-2 h-3.5 w-3.5" />
-                      )}
-                      {t("billing.subscribe")}
-                    </Button>
-
+                  <Button
+                    className={cn(
+                      "w-full rounded-xl font-semibold min-h-11",
+                      isRecommended &&
+                        "bg-gradient-to-r from-primary to-primary/85 shadow-md shadow-primary/20",
+                    )}
+                    onClick={() => void escolherPlano(p.tier)}
+                    disabled={submitting !== null}
+                  >
+                    {submitting === p.tier ? (
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Zap className="mr-2 h-3.5 w-3.5" />
+                    )}
+                    {t("billing.subscribe")}
+                  </Button>
                 )}
                 {!isAdminMaster && !trialUsed && !isCurrent && !isPending && (
                   <Button
@@ -911,7 +910,6 @@ function MeuPlanoPage() {
           </div>
         </section>
       )}
-
 
       {/* Investimentos: seção dedicada abaixo dos planos */}
       <section className="mt-5">

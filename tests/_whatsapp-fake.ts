@@ -218,7 +218,9 @@ function makeBuilder(table: string): any {
     let out = rows;
     if (ctx.orderBy) {
       const { col, asc } = ctx.orderBy;
-      out = [...out].sort((a, b) => cmp(norm(readPath(a, col)), norm(readPath(b, col))) * (asc ? 1 : -1));
+      out = [...out].sort(
+        (a, b) => cmp(norm(readPath(a, col)), norm(readPath(b, col))) * (asc ? 1 : -1),
+      );
     }
     if (typeof ctx.limitN === "number") out = out.slice(0, ctx.limitN);
     return out;
@@ -277,7 +279,6 @@ function makeBuilder(table: string): any {
       if (table === "whatsapp_messages") syncPending();
       return { data: ctx.single ? inserted[0] : inserted, error: null };
     }
-
 
     if (ctx.op === "update") {
       const matched: any[] = [];
@@ -570,10 +571,12 @@ export const fakeAdmin = {
       };
       state.receitasData.push(receitaRow);
       state.inserts.push({ table: "receitas", row: receitaRow });
-      return { data: [{ receita_id: receitaId, recorrencia_id: recoId, proxima_cobranca: prox }], error: null };
+      return {
+        data: [{ receita_id: receitaId, recorrencia_id: recoId, proxima_cobranca: prox }],
+        error: null,
+      };
     }
     return { data: true };
-
   },
   auth: {
     admin: {
@@ -712,7 +715,6 @@ export function setupWhatsAppFakeMocks(): void {
 
 installWhatsAppFakeMocks();
 
-
 export function resetState(o?: any) {
   state.inserts = [];
   state.pendingRow = null;
@@ -769,7 +771,7 @@ export function resetState(o?: any) {
 function resetConversationalCacheSafely(): void {
   try {
     // Import síncrono via require evita tornar resetState assíncrono.
-     
+
     const mod = require("../src/server/whatsapp-consultas.server");
     mod?._resetConversationalCache?.();
   } catch {
