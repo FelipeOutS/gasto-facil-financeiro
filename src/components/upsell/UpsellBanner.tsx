@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { getUpsellStatus, dismissUpsell } from "@/lib/upsell.functions";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sparkles, X, ChevronRight } from "lucide-react";

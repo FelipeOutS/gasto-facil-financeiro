@@ -37,12 +37,12 @@ export async function checkUpsellEligibility(userId: string): Promise<UpsellElig
 
   // Validar volume de lançamentos (mínimo 5)
   const { count: expenseCount } = await sb
-    .from('expenses')
+    .from('expenses' as any)
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId);
   
   const { count: incomeCount } = await sb
-    .from('incomes')
+    .from('incomes' as any)
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId);
 
