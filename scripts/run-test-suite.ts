@@ -19,13 +19,29 @@ import { join } from "node:path";
 
 const TESTS_DIR = "tests";
 const CONCURRENCY = Number(process.env.TEST_CONCURRENCY ?? 4);
+/** tests/e2e é Playwright (`*.spec.ts`), executado por `bun run test:e2e`. */
+const EXCLUDED_DIRS = new Set(["e2e", "node_modules", "__snapshots__"]);
 
-const files = process.argv.slice(2).length
-  ? process.argv.slice(2)
-  : readdirSync(TESTS_DIR)
-      .filter((f) => f.endsWith(".test.ts"))
-      .sort()
-      .map((f) => join(TESTS_DIR, f));
+/** Descoberta recursiva: aceita .test.ts e .test.tsx em qualquer subpasta. */
+function discover(dir: string): string[] {
+  const out: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (EXCLUDED_DIRS.has(entry.name)) continue;
+      out.push(...discover(full));
+    } else if (/\.test\.tsx?$/.test(entry.name)) {
+      out.push(full);
+    }
+  }
+  return out.sort();
+}
+
+const files = process.argv.slice(2).length ? process.argv.slice(2) : discover(TESTS_DIR);
+if (files.length === 0) {
+  console.error("Nenhum arquivo de teste descoberto — abortando com exit 1.");
+  process.exit(1);
+}
 
 type Result = {
   file: string;
