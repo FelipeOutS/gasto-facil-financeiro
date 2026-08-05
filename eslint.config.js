@@ -24,5 +24,14 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  {
+    // Harness de testes e scripts internos: não são código de produção.
+    // `any` é usado deliberadamente para emular respostas do PostgREST e mocks.
+    files: ["tests/**/*.{ts,tsx}", "scripts/**/*.{ts,tsx}", "src/scripts/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
   eslintPluginPrettier,
 );

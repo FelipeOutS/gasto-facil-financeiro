@@ -20,13 +20,27 @@ export interface UpsellCriteria {
   frequency_allowed: boolean;
 }
 
+/** Valores de configuração do upsell (tabela owner-only, lida via service_role). */
+export type UpsellConfig = Record<string, string | number | boolean | null>;
+
+/** Campos de preferências relevantes para elegibilidade (sem dados financeiros). */
+interface UpsellPrefs {
+  distinct_use_days?: number | null;
+  session_count?: number | null;
+  paid_feature_attempt_at?: string | null;
+  converted_at?: string | null;
+  snooze_until?: string | null;
+  last_banner_at?: string | null;
+  last_modal_at?: string | null;
+}
+
 export interface UpsellEligibility {
   eligible: boolean;
   reason?: string;
   /** Quais canais podem ser exibidos agora (nunca os dois simultaneamente). */
   channel: "banner" | "modal" | "none";
   criteria: UpsellCriteria;
-  config: Record<string, any>;
+  config: UpsellConfig;
 }
 
 const DEFAULTS = {
@@ -37,11 +51,11 @@ const DEFAULTS = {
   max_dismiss_snooze_days: 30,
 };
 
-export async function getUpsellConfig(): Promise<Record<string, any>> {
+export async function getUpsellConfig(): Promise<UpsellConfig> {
   // Leitura server-side (service_role). A tabela não é legível por usuários comuns.
   const { data: rows } = await sb.from("upsell_runtime_config").select("key, value");
-  const config: Record<string, any> = { ...DEFAULTS };
-  for (const row of rows || []) config[row.key] = row.value;
+  const config: UpsellConfig = { ...DEFAULTS };
+  for (const row of rows || []) config[row.key] = row.value as UpsellConfig[string];
   return config;
 }
 
@@ -71,11 +85,7 @@ function emptyCriteria(): UpsellCriteria {
   };
 }
 
-function deny(
-  reason: string,
-  criteria: UpsellCriteria,
-  config: Record<string, any>,
-): UpsellEligibility {
+function deny(reason: string, criteria: UpsellCriteria, config: UpsellConfig): UpsellEligibility {
   return { eligible: false, reason, channel: "none", criteria, config };
 }
 
@@ -152,7 +162,7 @@ export async function checkUpsellEligibility(userId: string): Promise<UpsellElig
     .select("*")
     .eq("user_id", userId)
     .maybeSingle();
-  const p = (prefs ?? {}) as Record<string, any>;
+  const p = (prefs ?? {}) as UpsellPrefs;
 
   criteria.distinct_use_days_2 = (p.distinct_use_days ?? 0) >= 2;
   criteria.sessions_3 = (p.session_count ?? 0) >= 3;
