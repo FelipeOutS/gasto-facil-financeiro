@@ -422,8 +422,29 @@ mock.module("@/server/whatsapp-merchant-memory.server", () => ({
 export function resetState(o?: any) {
   state.inserts = [];
   state.pendingRow = null;
-  state.cartoesData = [{ id: "c-nu", nome: "Nubank", user_id: "u1", ultimos_digitos: "1234" }];
+  state.generic = {};
+  state.linkData = o?.link ?? null;
+  state.cartoesData = o?.cartoes ?? [
+    { id: "c-nu", nome: "Nubank", user_id: "u1", ultimos_digitos: "1234" },
+  ];
+  state.categoriasData = o?.categorias ?? [
+    { id: "cat-out", legacy_id: "outros", nome: "Outros", user_id: "u1" },
+    { id: "cat-int", legacy_id: "internet", nome: "Internet", user_id: "u1" },
+  ];
   state.contasData = o?.contas ?? [];
+  state.contasReceberData = o?.contasReceber ?? [];
+  state.gastosData = o?.gastos ?? [];
+  state.receitasData = o?.receitas ?? [];
+  state.recorrenciasData = o?.recorrencias ?? [];
+  state.transferenciasData = o?.transferencias ?? [];
+  state.metasData = o?.metas ?? [];
+  state.limitesData = o?.limites ?? [];
+  state.favorecidosData = o?.favorecidos ?? [];
+  state.pixPendingSecretsData = o?.pixPendingSecrets ?? [];
+  // Ids sintéticos estáveis para linhas semeadas sem id (compatibilidade histórica).
+  state.contasData.forEach((c: any, i: number) => {
+    if (!c.id) c.id = `m-${i + 1}`;
+  });
   if (o?.contas)
     o.contas.forEach((c: any) => state.inserts.push({ table: "contas_a_pagar", row: c }));
 }
