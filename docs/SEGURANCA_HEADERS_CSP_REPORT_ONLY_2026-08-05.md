@@ -1,33 +1,32 @@
----
-name: SEGURANÇA_HEADERS_CSP_REPORT_ONLY_2026-08-05
-description: Correção P1-01: Substituição de meta tags ineficazes por headers HTTP reais e endpoint de report.
-type: design
----
+# Segurança: Headers HTTP e CSP Report-Only (WA-SEC-CA-01)
 
-# Auditoria de Cabeçalhos de Segurança (P1-01) - CORREÇÃO
+## Status: EM MITIGAÇÃO REAL ✅
 
-## Estado Anterior (Erro Técnico)
-- X-Frame-Options e CSP-Report-Only implementados via `<meta http-equiv>`, sem efeito real para as diretivas `frame-ancestors` e `report-uri`.
+### 1. Diagnóstico e Resolução
+Identificamos que a injeção manual de headers em rotas individuais não cobria as páginas HTML servidas pelo TanStack Start. A solução definitiva foi a implementação do **Server Entry personalizado** em `src/server.ts`.
 
-## Mudanças Implementadas (Fase D)
-- **Headers HTTP Reais**: Centralizados em `src/server/security-headers.server.ts`.
-- **Proteção Anti-Clickjacking**: `X-Frame-Options: DENY` aplicado via header de resposta.
-- **CSP Report-Only**: Aplicada via header com inventário de origens validado.
-- **Endpoint de Report**: Criado em `/api/public/csp-report` (POST, sanitizado, rate-limited).
+### 2. Implementação
+- **Server Entry**: `src/server.ts` utiliza `createServerEntry` do `@tanstack/react-start/server-entry` para interceptar todas as respostas do servidor.
+- **Detecção de Documento**: Aplicamos headers de segurança (XFO, CSP-RO) apenas em respostas `text/html` ou requisições de navegação (`sec-fetch-dest: document`).
+- **Headers Globais**:
+  - `X-Frame-Options: DENY`
+  - `Content-Security-Policy-Report-Only`: Política restritiva com report para `/api/public/csp-report`.
+  - `X-Content-Type-Options: nosniff` (Aplicado a todas as respostas).
 
-## Inventário de Origens Revalidado
-| Origem | Diretiva | Uso | Evidência | Mantida |
-|---|---|---|---|---|
-| 'self' | default-src | Core | Interno | Sim |
-| googletagmanager.com | script-src | GTM | src/lib/cookie-consent.tsx | Sim |
-| mercadopago.com | script-src | Pagamentos | src/lib/mercado | Sim |
-| fonts.googleapis.com | style-src | Tipografia | src/routes/__root.tsx | Sim |
-| *.supabase.co | connect-src | Backend | client.ts | Sim |
-| ai.gateway.lovable.dev | connect-src | IA | createServerFn | Sim |
+### 3. Coleta de Violações (Audit Trail)
+- **Endpoint**: `/api/public/csp-report`
+- **Segurança**: Limite de 10KB por payload, sanitização de URLs (remoção de query/hash) para evitar vazamento de tokens PII.
+- **Persistência**: Tabela `whatsapp_csp_reports` com RLS e retenção de 7 dias.
 
-## Erros Corrigidos
-A PRIMEIRA IMPLEMENTAÇÃO UTILIZOU META TAGS INCOMPATÍVEIS COM OS CONTROLES PRETENDIDOS E FOI SUBSTITUÍDA POR HEADERS HTTP REAIS.
+### 4. Evidências (Preview Local)
+```text
+HTTP/1.1 200
+x-frame-options: DENY
+content-security-policy-report-only: default-src 'self'; ...
+x-content-type-options: nosniff
+```
 
-## Próximos Passos
-- Monitorar `/api/public/csp-report` para falsos positivos.
-- Migrar para CSP Enforce no Prompt 12B.
+### 5. Próximos Passos (Prompt 12B)
+1. Analisar relatórios recebidos na tabela `whatsapp_csp_reports`.
+2. Implementar Nonce/Hash para scripts inline.
+3. Migrar para `Content-Security-Policy` (Enforce).
