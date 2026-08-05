@@ -24,7 +24,9 @@ const {
   detectPaginationCommand,
   cleanDescricaoDisplay,
 } = await import("../src/server/whatsapp-faturas.server");
-const { getItensFaturaAtualPorCartao } = await import("../src/server/cartao-fatura.server");
+const { getItensFaturaAtualPorCartao, faturaCorrenteRef, cicloFatura } = await import(
+  "../src/server/cartao-fatura.server",
+);
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 
 const NBSP = "\u00a0";
@@ -38,6 +40,18 @@ function isoDaysAgo(n: number): string {
   const d = new Date();
   d.setDate(d.getDate() - n);
   return d.toISOString().slice(0, 10);
+}
+/**
+ * i-ésimo dia do ciclo de fatura corrente do cartão base (dia_fechamento = 1).
+ * Necessário porque o ciclo começa no dia seguinte ao fechamento: usar
+ * "N dias atrás" tornava as fixtures de paginação dependentes do dia do mês.
+ */
+function isoInCurrentCycle(i: number): string {
+  const hoje = new Date();
+  const { mes, ano } = faturaCorrenteRef(1, hoje);
+  const { inicio } = cicloFatura(1, mes, ano);
+  const d = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate() + i);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 function isoFuture(n: number): string {
   const d = new Date();
@@ -468,7 +482,7 @@ describe("handleFaturaDetailIntent — fluxo principal", () => {
       user_id: "u1",
       cartao_id: "c-nu",
       valor: 10 + i,
-      data: isoDaysAgo(i),
+      data: isoInCurrentCycle(i),
       forma_pagamento: "credito",
       confirmado: true,
       invoice_month: null,
@@ -527,7 +541,7 @@ describe("handleFaturaPagination — paginação", () => {
       user_id: "u1",
       cartao_id: "c-nu",
       valor: 10 + i,
-      data: isoDaysAgo(i),
+      data: isoInCurrentCycle(i),
       forma_pagamento: "credito",
       confirmado: true,
       invoice_month: null,
@@ -640,7 +654,7 @@ describe("Pipeline WhatsApp — WA-F2", () => {
       user_id: "u1",
       cartao_id: "c-nu",
       valor: 10 + i,
-      data: isoDaysAgo(i),
+      data: isoInCurrentCycle(i),
       forma_pagamento: "credito",
       confirmado: true,
       invoice_month: null,
@@ -680,7 +694,7 @@ describe("Pipeline WhatsApp — WA-F2", () => {
       user_id: "u1",
       cartao_id: "c-nu",
       valor: 10 + i,
-      data: isoDaysAgo(i),
+      data: isoInCurrentCycle(i),
       forma_pagamento: "credito",
       confirmado: true,
       invoice_month: null,

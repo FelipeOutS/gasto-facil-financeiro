@@ -11,7 +11,7 @@ const DEFAULT_LINK = {
 export const state = {
   inserts: [] as Array<{ table: string; row: Record<string, unknown> }>,
   pendingRow: null as any,
-  linkData: null as any,
+  linkData: undefined as any,
   cartoesData: [{ id: "c-nu", nome: "Nubank", user_id: "u1", ultimos_digitos: "1234" }] as Record<
     string,
     unknown
@@ -63,6 +63,22 @@ function rowsOf(table: string): Record<string, any>[] {
   state.generic[table] ??= [];
   return state.generic[table];
 }
+
+/** Status que NÃO representam sessão ativa aguardando resposta do usuário. */
+const TERMINAL_SESSION_STATES = new Set<string>([
+  "salva",
+  "cancelada",
+  "expirada",
+  "falha",
+  "duplicada",
+  "sem_pendencia",
+  "sem_vinculo",
+  "consulta",
+  "erro",
+  // "pendente" NÃO está em PENDING_STATES do servidor: é apenas o registro
+  // de auditoria de uma resposta inválida (ex.: "sin"), sem sessão ativa.
+  "pendente",
+]);
 
 function norm(v: unknown): unknown {
   return v === undefined ? null : v;
@@ -186,7 +202,7 @@ function makeBuilder(table: string): any {
         i.table === "whatsapp_messages" &&
         i.row.user_id &&
         i.row.telefone &&
-        !["salva", "cancelada", "expirada"].includes(i.row.status as string),
+        !TERMINAL_SESSION_STATES.has(i.row.status as string),
     )?.row;
     state.pendingRow = last
       ? {
@@ -211,7 +227,10 @@ function makeBuilder(table: string): any {
   const finalize = async () => {
     if (ctx.op === "select") {
       if (table === "whatsapp_links") {
-        const link = state.linkData ?? DEFAULT_LINK;
+        // `undefined` = nenhum override (usa o vínculo padrão);
+        // `null` explícito = telefone SEM vínculo.
+        const link = state.linkData === undefined ? DEFAULT_LINK : state.linkData;
+        if (!link) return ctx.single ? { data: null, error: null } : { data: [], error: null };
         return ctx.single ? { data: link, error: null } : { data: [link], error: null };
       }
       const all = rowsOf(table);
@@ -226,6 +245,25 @@ function makeBuilder(table: string): any {
     if (ctx.op === "insert") {
       const payloadRows = Array.isArray(ctx.payload) ? ctx.payload : [ctx.payload];
       const store = rowsOf(table);
+      // Emula o índice único parcial idx_whatsapp_messages_external_id
+      // ON whatsapp_messages(external_id) WHERE external_id IS NOT NULL.
+      // Sem isso os testes de idempotência concorrente (dois webhooks com o
+      // mesmo external_message_id) passam indevidamente no fake.
+      if (table === "whatsapp_messages") {
+        for (const r of payloadRows) {
+          const ext = r?.external_id;
+          if (ext !== null && ext !== undefined && store.some((row) => row.external_id === ext)) {
+            return {
+              data: null,
+              error: {
+                code: "23505",
+                message:
+                  'duplicate key value violates unique constraint "idx_whatsapp_messages_external_id"',
+              },
+            };
+          }
+        }
+      }
       const inserted: any[] = payloadRows.map((r) => {
         const newRow = {
           ...r,
@@ -239,6 +277,7 @@ function makeBuilder(table: string): any {
       if (table === "whatsapp_messages") syncPending();
       return { data: ctx.single ? inserted[0] : inserted, error: null };
     }
+
 
     if (ctx.op === "update") {
       const matched: any[] = [];
@@ -358,28 +397,76 @@ export const fakeAdmin = {
   from: (t: string) => makeBuilder(t),
   rpc: async (n: string, a: any) => {
     if (n === "whatsapp_baixa_conta_atomic") {
-      const c = state.contasData.find((x) => x.id === a.p_conta_id);
-      if (c?.status === "pago") return { data: [{ result: c.gasto_id ? "noop" : "inconsistent" }] };
+      // Espelha public.whatsapp_baixa_conta_atomic: ownership por user_id,
+      // data_pagamento vinda do parâmetro e resultados not_found/noop/
+      // inconsistent/not_pending/paid.
+      const idx = state.contasData.findIndex(
+        (x) => x.id === a?.p_conta_id && x.user_id === a?.p_user_id,
+      );
+      if (idx === -1) {
+        return { data: [{ result: "not_found", gasto_id: null }], error: null };
+      }
+      const c = state.contasData[idx];
+      if (c.status === "pago") {
+        return {
+          data: [
+            {
+              result: c.gasto_id ? "noop" : "inconsistent",
+              gasto_id: c.gasto_id ?? null,
+              nome: c.nome,
+              valor: c.valor,
+              data_pagamento: c.data_pagamento ?? null,
+            },
+          ],
+          error: null,
+        };
+      }
+      if (c.status !== "pendente") {
+        return {
+          data: [{ result: "not_pending", gasto_id: null, nome: c.nome, valor: c.valor }],
+          error: null,
+        };
+      }
+      const dataPagamento = String(a?.p_data_pagamento ?? new Date().toISOString().slice(0, 10));
       const gid = `g-${state.inserts.length + 1}`;
-      state.inserts.push({
-        table: "gastos",
-        row: {
-          id: gid,
-          user_id: "u1",
-          descricao: c?.nome,
-          valor: c?.valor,
-          categoria_id: c?.categoria_id,
-          forma_pagamento: c?.forma_pagamento || "outros",
-          origem: "whatsapp",
-          data: new Date().toISOString().slice(0, 10),
-          cartao_id: c?.cartao_id || null,
-        },
-      });
-      const idx = state.contasData.findIndex((x) => x.id === a.p_conta_id);
-      if (idx !== -1)
-        state.contasData[idx] = { ...state.contasData[idx], status: "pago", gasto_id: gid };
-      return { data: { result: "paid", gasto_id: gid } }; // RPC no PostgREST retorna objeto se single row ou array.
+      const gastoRow = {
+        id: gid,
+        user_id: a.p_user_id,
+        descricao: c.nome,
+        valor: c.valor,
+        categoria_id: c.categoria_id ?? null,
+        forma_pagamento: c.forma_pagamento || "outros",
+        origem: a?.p_origem ?? "whatsapp",
+        data: dataPagamento,
+        mes: Number(dataPagamento.slice(5, 7)),
+        ano: Number(dataPagamento.slice(0, 4)),
+        estabelecimento: c.beneficiario ?? "",
+        tipo_gasto: "unico",
+        confirmado: true,
+        cartao_id: c.cartao_id ?? null,
+      };
+      state.inserts.push({ table: "gastos", row: gastoRow });
+      state.gastosData.push(gastoRow);
+      state.contasData[idx] = {
+        ...c,
+        status: "pago",
+        data_pagamento: dataPagamento,
+        gasto_id: gid,
+      };
+      return {
+        data: [
+          {
+            result: "paid",
+            gasto_id: gid,
+            nome: c.nome,
+            valor: c.valor,
+            data_pagamento: dataPagamento,
+          },
+        ],
+        error: null,
+      };
     }
+
     if (n === "create_installment_purchase") {
       // Emula a RPC atômica: grava todas as parcelas sob o mesmo grupo.
       const parcelas: any[] = Array.isArray(a?.p_parcelas) ? a.p_parcelas : [];
@@ -409,7 +496,84 @@ export const fakeAdmin = {
       }
       return { data: rows, error: null };
     }
+    if (n === "create_recurring_income") {
+      // Emula a RPC atômica: 1 recorrência ativa + 1 receita atual vinculada.
+      const valor = Number(a?.p_valor);
+      if (!a?.p_user_id || !Number.isFinite(valor) || valor <= 0) {
+        return { data: null, error: { message: "parametros invalidos" } };
+      }
+      const freq = String(a?.p_frequencia ?? "mensal").toLowerCase();
+      const baseIso = String(a?.p_data);
+      const [by, bm, bd] = baseIso.split("-").map((v: string) => Number(v));
+      const iso = (d: Date) => d.toISOString().slice(0, 10);
+      let prox: string;
+      if (freq === "mensal") {
+        const dia = Number(a?.p_dia_mes);
+        if (!Number.isFinite(dia) || dia < 1 || dia > 31) {
+          return { data: null, error: { message: "dia_mes invalido (1..31)" } };
+        }
+        let y = by;
+        let m = bm;
+        const lastDay = (yy: number, mm: number) => new Date(Date.UTC(yy, mm, 0)).getUTCDate();
+        let cand = new Date(Date.UTC(y, m - 1, Math.min(dia, lastDay(y, m))));
+        if (iso(cand) <= baseIso) {
+          m += 1;
+          if (m > 12) {
+            m = 1;
+            y += 1;
+          }
+          cand = new Date(Date.UTC(y, m - 1, Math.min(dia, lastDay(y, m))));
+        }
+        prox = iso(cand);
+      } else if (freq === "semanal") {
+        const dow = Number(a?.p_dia_semana);
+        if (!Number.isFinite(dow) || dow < 0 || dow > 6) {
+          return { data: null, error: { message: "dia_semana invalido (0..6)" } };
+        }
+        const base = new Date(Date.UTC(by, bm - 1, bd));
+        let diff = (dow - base.getUTCDay() + 7) % 7;
+        if (diff === 0) diff = 7;
+        prox = iso(new Date(base.getTime() + diff * 86400000));
+      } else {
+        const base = new Date(Date.UTC(by, bm - 1, bd));
+        prox = iso(new Date(base.getTime() + 15 * 86400000));
+      }
+      const nome = String(a?.p_descricao ?? "").trim() || "Renda";
+      const recoId = `reco-${state.recorrenciasData.length + 1}`;
+      const recoRow = {
+        id: recoId,
+        user_id: a.p_user_id,
+        nome,
+        valor,
+        frequencia: freq,
+        proxima_cobranca: prox,
+        status: "ativa",
+        tipo_recorrencia: "recorrencia_fixa",
+        origem: a?.p_origem ?? "whatsapp",
+        observacao: a?.p_observacao ?? null,
+      };
+      state.recorrenciasData.push(recoRow);
+      state.inserts.push({ table: "recorrencias", row: recoRow });
+      const receitaId = `rct-${state.receitasData.length + 1}`;
+      const receitaRow = {
+        id: receitaId,
+        user_id: a.p_user_id,
+        descricao: nome,
+        valor,
+        data: baseIso,
+        tipo: a?.p_tipo ?? "outros",
+        recorrente: true,
+        recorrencia_id: recoId,
+        mes: bm,
+        ano: by,
+        origem: a?.p_origem ?? "whatsapp",
+      };
+      state.receitasData.push(receitaRow);
+      state.inserts.push({ table: "receitas", row: receitaRow });
+      return { data: [{ receita_id: receitaId, recorrencia_id: recoId, proxima_cobranca: prox }], error: null };
+    }
     return { data: true };
+
   },
   auth: {
     admin: {
@@ -450,19 +614,87 @@ mock.module("@/server/whatsapp-financial-quota-gate.server", () => ({
   assertFinancialActionQuotaForWhatsApp: async () => ({ allowed: true }),
   financialQuotaBlockedReply: () => "Quota bloqueada",
 }));
+const MEM_TABLE = "whatsapp_merchant_category_memories";
+
+/** Linhas de memória de mercador registradas pelo fake. */
+export function merchantMemoryRows(): Record<string, any>[] {
+  state.generic[MEM_TABLE] ??= [];
+  return state.generic[MEM_TABLE];
+}
+
 mock.module("@/server/whatsapp-merchant-memory.server", () => ({
-  lookupMerchantMemory: async () => ({ kind: "none" }),
   merchantKeyFor: (n: string) => n?.toLowerCase().trim() || null,
   logMerchantMemoryDecision: () => {},
-  recordMerchantMemory: async () => ({ ok: true }),
   MERCHANT_MEMORY_HINT_LINE: "mem",
+  lookupMerchantMemory: async (args: {
+    userId: string;
+    merchantKey: string;
+    activeCategoryIds: ReadonlySet<string>;
+  }) => {
+    const rows = merchantMemoryRows().filter(
+      (r) =>
+        r.user_id === args.userId &&
+        r.merchant_key === args.merchantKey &&
+        (!args.activeCategoryIds || args.activeCategoryIds.has(r.category_id)),
+    );
+    const eligible = rows.filter(
+      (r) => (r.manual_confirmed_count ?? 0) >= 1 || (r.confirmed_count ?? 0) >= 2,
+    );
+    if (eligible.length === 0) return { kind: "none" };
+    if (eligible.length > 1) return { kind: "ambiguous" };
+    const r = eligible[0];
+    return {
+      kind: "eligible",
+      lookup: {
+        categoryId: r.category_id,
+        evidence: (r.manual_confirmed_count ?? 0) >= 1 ? "manual" : "confirmed",
+        manualCount: r.manual_confirmed_count ?? 0,
+        confirmedCount: r.confirmed_count ?? 0,
+      },
+    };
+  },
+  recordMerchantMemory: async (args: {
+    userId: string;
+    merchantKey: string;
+    categoryId: string;
+    evidence: "manual" | "confirmed";
+  }) => {
+    if (!args?.userId || !args?.merchantKey || !args?.categoryId) return { ok: false };
+    const store = merchantMemoryRows();
+    const existing = store.find(
+      (r) =>
+        r.user_id === args.userId &&
+        r.merchant_key === args.merchantKey &&
+        r.category_id === args.categoryId,
+    );
+    const incManual = args.evidence === "manual" ? 1 : 0;
+    if (existing) {
+      existing.confirmed_count = (existing.confirmed_count ?? 0) + 1;
+      existing.manual_confirmed_count = (existing.manual_confirmed_count ?? 0) + incManual;
+      existing.last_confirmed_at = new Date().toISOString();
+      return { ok: true };
+    }
+    const row = {
+      id: `mm-${store.length + 1}`,
+      user_id: args.userId,
+      merchant_key: args.merchantKey,
+      category_id: args.categoryId,
+      confirmed_count: 1,
+      manual_confirmed_count: incManual,
+      last_confirmed_at: new Date().toISOString(),
+    };
+    store.push(row);
+    state.inserts.push({ table: MEM_TABLE, row });
+    return { ok: true };
+  },
 }));
+
 
 export function resetState(o?: any) {
   state.inserts = [];
   state.pendingRow = null;
   state.generic = {};
-  state.linkData = o?.link ?? null;
+  state.linkData = o && "link" in o ? o.link : undefined;
   state.cartoesData = o?.cartoes ?? [
     { id: "c-nu", nome: "Nubank", user_id: "u1", ultimos_digitos: "1234" },
   ];
@@ -506,12 +738,16 @@ export function resetState(o?: any) {
       if (r && r.user_id === undefined) r.user_id = "u1";
     });
   }
-  if (o?.contas)
-    o.contas.forEach((c: any) => state.inserts.push({ table: "contas_a_pagar", row: c }));
 }
 export function gastosInserts() {
   return state.inserts.filter((i) => i.table === "gastos");
 }
 export function resetCategorias(cats: any[]) {
   state.categoriasData = cats;
+}
+export function receitasInserts() {
+  return state.inserts.filter((i) => i.table === "receitas");
+}
+export function recorrenciasInserts() {
+  return state.inserts.filter((i) => i.table === "recorrencias");
 }
