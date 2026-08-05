@@ -3,7 +3,8 @@
  * Reaproveita o mock compartilhado em ./_whatsapp-fake.
  */
 import { test, expect, beforeEach } from "bun:test";
-import { state, resetState } from "./_whatsapp-fake";
+import { state, resetState, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 

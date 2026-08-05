@@ -14,7 +14,8 @@
     "test:whatsapp": "bun scripts/test-whatsapp.mjs",
     "test:whatsapp:ci": "bun scripts/test-whatsapp.mjs",
     "test:e2e": "playwright test",
-    "test:e2e:free-ads": "playwright test tests/e2e/free-ads.spec.ts"
+    "test:e2e:free-ads": "playwright test tests/e2e/free-ads.spec.ts",
+    "test:global": "bun scripts/run-test-suite.ts"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",

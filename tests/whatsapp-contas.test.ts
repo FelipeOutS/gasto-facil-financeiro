@@ -8,7 +8,8 @@
  * confiável (atraso só com `status='pendente'`), logs seguros.
  */
 import { beforeEach, describe, expect, it } from "bun:test";
-import { state, resetState, gastosInserts } from "./_whatsapp-fake";
+import { state, resetState, gastosInserts, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const { detectDueIntent, handleDueIntent, handleDuePagination } =
   await import("../src/server/whatsapp-contas.server");

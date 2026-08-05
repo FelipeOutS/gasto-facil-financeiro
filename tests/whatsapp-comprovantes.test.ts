@@ -3,7 +3,8 @@
  * Mock do OCR via __setOcrExtractorForTests para não chamar a rede.
  */
 import { test, expect, beforeEach } from "bun:test";
-import { state, resetState, gastosInserts } from "./_whatsapp-fake";
+import { state, resetState, gastosInserts, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 import type { ParsedExpense } from "../src/lib/whatsappParser";
 
 const {

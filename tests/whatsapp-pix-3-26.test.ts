@@ -19,7 +19,8 @@
  */
 import "./_whatsapp-fake";
 import { describe, it, expect, beforeEach } from "bun:test";
-import { resetState, state } from "./_whatsapp-fake";
+import { resetState, state, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const { isValidPixKey, detectPixKeyType } = await import("../src/server/whatsapp-pix-parser");
 const { handleSavePixIntent } = await import("../src/server/whatsapp-pix-intents.server");

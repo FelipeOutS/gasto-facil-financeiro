@@ -3,7 +3,8 @@
  * barras ou linha digitável (texto). Sem foto/PDF/OCR (WA-C10.b).
  */
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { state, resetState } from "./_whatsapp-fake";
+import { state, resetState, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const {
   tryParseBoleto,

@@ -20,7 +20,8 @@
  * Regras de URL:
  *  - host fixo `graph.facebook.com` via `buildWhatsAppGraphUrl`
  *  - versão via helper validado
- *  - WABA_ID lido EXCLUSIVAMENTE de `process.env.WHATSAPP_WABA_ID`
+ *  - WABA_ID lido EXCLUSIVAMENTE do ambiente do servidor
+ *    (`WHATSAPP_WABA_ID` ou o nome canônico `WHATSAPP_BUSINESS_ACCOUNT_ID`)
  *  - path fixo `${WABA_ID}/message_templates`
  *  - jamais aceita WABA, token ou URL vindos do chamador
  *

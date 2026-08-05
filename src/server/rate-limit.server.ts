@@ -83,19 +83,29 @@ export async function checkRateLimit(
   }
 }
 
+// Contrato do corpo 429: `code` é o identificador estável para clientes e
+// `error` é mantido por compatibilidade. Nenhum detalhe do limiter (limite,
+// janela, chave, contador, user_id) é exposto.
 export function rateLimitedResponse(retryAfterSeconds: number): Response {
-  return new Response(JSON.stringify({ error: "rate_limited", message: "Muitas tentativas." }), {
-    status: 429,
-    headers: { "Content-Type": "application/json", "Retry-After": String(retryAfterSeconds) },
-  });
+  return new Response(
+    JSON.stringify({ code: "rate_limited", error: "rate_limited", message: "Muitas tentativas." }),
+    {
+      status: 429,
+      headers: { "Content-Type": "application/json", "Retry-After": String(retryAfterSeconds) },
+    },
+  );
 }
 
 export function userRateLimitedResponse(retryAfterSeconds: number): Response {
-  return new Response(JSON.stringify({ error: "rate_limited", message: "Aguarde um pouco." }), {
-    status: 429,
-    headers: { "Content-Type": "application/json", "Retry-After": String(retryAfterSeconds) },
-  });
+  return new Response(
+    JSON.stringify({ code: "rate_limited", error: "rate_limited", message: "Aguarde um pouco." }),
+    {
+      status: 429,
+      headers: { "Content-Type": "application/json", "Retry-After": String(retryAfterSeconds) },
+    },
+  );
 }
+
 
 export async function enforceUserRateLimit(params: {
   scope: "ai" | "import" | "flyerOcr" | "onlineImport" | "whatsappBoletoOcr";

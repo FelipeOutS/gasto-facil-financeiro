@@ -8,7 +8,8 @@
  *  - concorrência paralela com mesmo external_id cria apenas 1 conta.
  */
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { state, resetState } from "./_whatsapp-fake";
+import { state, resetState, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const { tryParseBoleto, _buildBoletoCobrancaForTest } =
   await import("../src/server/whatsapp-boleto-parser");

@@ -6,7 +6,8 @@
  * quota ou fluxo financeiro — mesmo com sessão pendente.
  */
 import { test, expect, beforeEach } from "bun:test";
-import { state, resetState, gastosInserts } from "./_whatsapp-fake";
+import { state, resetState, gastosInserts, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+setupWhatsAppFakeMocks();
 
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 
