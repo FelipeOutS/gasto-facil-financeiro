@@ -1,4 +1,5 @@
 // PROMPT 10A — AUDITORIA ANDROID BLOQUEADA (CÓDIGO NATIVO AUSENTE) — PWA PRONTA PARA USO
+
 import { createFileRoute } from "@tanstack/react-router";
 
 import { PublicLanding } from "@/components/landing/PublicLanding";
