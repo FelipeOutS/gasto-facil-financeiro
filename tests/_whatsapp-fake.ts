@@ -461,6 +461,8 @@ export function resetState(o?: any) {
   });
   // O usuário canônico do fake é "u1": linhas semeadas sem user_id pertencem a ele.
   for (const key of [
+    "cartoesData",
+    "categoriasData",
     "contasData",
     "contasReceberData",
     "gastosData",
