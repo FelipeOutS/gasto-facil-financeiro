@@ -17,6 +17,7 @@ import { getCategoriaById, getGastos, useBootstrap, useStore } from "@/lib/store
 import { formatBRL, formatBRLCompact, formatMonthYear } from "@/lib/format";
 import { UpsellBanner } from "@/components/upsell/UpsellBanner";
 import { UpsellModal } from "@/components/upsell/UpsellModal";
+import { useUpsellActivityTracker } from "@/hooks/use-upsell-gate";
 import i18n from "@/i18n";
 
 export const Route = createFileRoute("/resumo")({
@@ -76,6 +77,8 @@ function ResumoPage() {
     const d = new Date(ym.ano, ym.mes - 1 + delta, 1);
     setYm({ ano: d.getFullYear(), mes: d.getMonth() + 1 });
   }
+
+  useUpsellActivityTracker();
 
   if (!ready) return <PageSkeleton />;
 
