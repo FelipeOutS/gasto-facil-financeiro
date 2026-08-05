@@ -75,6 +75,9 @@ const TERMINAL_SESSION_STATES = new Set<string>([
   "sem_vinculo",
   "consulta",
   "erro",
+  // "pendente" NÃO está em PENDING_STATES do servidor: é apenas o registro
+  // de auditoria de uma resposta inválida (ex.: "sin"), sem sessão ativa.
+  "pendente",
 ]);
 
 function norm(v: unknown): unknown {
