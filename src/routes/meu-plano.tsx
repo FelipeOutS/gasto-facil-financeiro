@@ -895,7 +895,7 @@ function MeuPlanoPage() {
               variant={
                 freeAdsButtonMode === "current" || freeAdsCtaLocked ? "secondary" : "default"
               }
-              disabled={freeAdsCtaLocked || submitting !== null}
+              disabled={submitting !== null || freeAdsButtonMode === "current" || freeAdsCtaLocked}
               onClick={handleChooseFreeAds}
               className="shrink-0 rounded-xl min-h-10"
               title={freeAdsButtonMode === "current" ? tp("freeAds.currentBadge") : ""}
