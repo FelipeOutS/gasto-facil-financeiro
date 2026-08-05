@@ -2602,6 +2602,30 @@ export type Database = {
         }
         Relationships: []
       }
+      upsell_runtime_config: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       user_alerts: {
         Row: {
           action_label: string | null
@@ -2664,6 +2688,45 @@ export type Database = {
           title?: string
           type?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_communication_preferences: {
+        Row: {
+          converted_at: string | null
+          created_at: string | null
+          dismiss_count: number | null
+          id: string
+          last_banner_at: string | null
+          last_modal_at: string | null
+          last_trigger: string | null
+          snooze_until: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string | null
+          dismiss_count?: number | null
+          id?: string
+          last_banner_at?: string | null
+          last_modal_at?: string | null
+          last_trigger?: string | null
+          snooze_until?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string | null
+          dismiss_count?: number | null
+          id?: string
+          last_banner_at?: string | null
+          last_modal_at?: string | null
+          last_trigger?: string | null
+          snooze_until?: string | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
