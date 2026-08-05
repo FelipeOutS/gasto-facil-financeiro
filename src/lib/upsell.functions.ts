@@ -11,8 +11,8 @@ export const getUpsellStatus = createServerFn({ method: "GET" })
   });
 
 export const dismissUpsell = createServerFn({ method: "POST" })
-  .input(z.object({ type: z.enum(['banner', 'modal']), trigger: z.string().optional() }))
-  .handler(async ({ data, context }) => {
+    .input(z.object({ type: z.enum(['banner', 'modal']), trigger: z.string().optional() }))
+    .handler(async ({ data, context }: { data: { type: 'banner' | 'modal'; trigger?: string }; context: any }) => {
     const userId = (context as any).userId;
     if (!userId) return;
 
