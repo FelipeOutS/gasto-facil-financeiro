@@ -18,7 +18,7 @@ export function UpsellBanner() {
   });
 
   const dismissMutation = useMutation({
-    mutationFn: (trigger: string) => dismissFn({ data: { type: 'banner', trigger } }),
+    mutationFn: (trigger: string) => dismissFn({ type: 'banner', trigger } as any),
     onSuccess: () => {
       queryClient.setQueryData(['upsell-status'], (old: any) => ({ ...old, eligible: false }));
     }
