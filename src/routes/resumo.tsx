@@ -80,6 +80,7 @@ function ResumoPage() {
 
   return (
     <MobileShell>
+      <UpsellBanner />
       <header className="flex items-center gap-3 pt-2">
         <Link
           to="/app"
