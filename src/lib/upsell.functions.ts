@@ -14,10 +14,8 @@ export const getUpsellStatus = createServerFn({ method: "GET" })
 
 export const dismissUpsell = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data: unknown) => 
-    z.object({ type: z.enum(['banner', 'modal']), trigger: z.string().optional() }).parse(data)
-  )
-  .handler(async ({ data, context }) => {
+  .validator(z.object({ type: z.enum(['banner', 'modal']), trigger: z.string().optional() }))
+  .handler(async ({ data, context }: { data: { type: 'banner' | 'modal'; trigger?: string }; context: any }) => {
     const userId = (context as any).userId;
     if (!userId) return;
 
