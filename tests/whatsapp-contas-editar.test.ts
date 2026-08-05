@@ -19,7 +19,8 @@
  *   - logs não vazam PII.
  */
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { state, resetState } from "./_whatsapp-fake";
+import { state, resetState, useWhatsAppFakeMocks } from "./_whatsapp-fake";
+useWhatsAppFakeMocks();
 
 const { detectEdicaoContaIntent, isEdicaoContaSession } =
   await import("../src/server/whatsapp-contas-editar.server");

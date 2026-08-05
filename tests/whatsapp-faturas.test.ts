@@ -6,7 +6,8 @@
  * privacidade (não vaza cartão de outro usuário) e log seguro.
  */
 import { beforeEach, describe, expect, it } from "bun:test";
-import { state, resetState } from "./_whatsapp-fake";
+import { state, resetState, useWhatsAppFakeMocks } from "./_whatsapp-fake";
+useWhatsAppFakeMocks();
 
 const { detectFaturaIntent, handleFaturaIntent } =
   await import("../src/server/whatsapp-faturas.server");

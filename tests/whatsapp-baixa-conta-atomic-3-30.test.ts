@@ -14,7 +14,8 @@
  *   - Falha no update da conta → gasto é desfeito (rollback).
  */
 import { beforeEach, describe, expect, it } from "bun:test";
-import { state, resetState, gastosInserts } from "./_whatsapp-fake";
+import { state, resetState, gastosInserts, useWhatsAppFakeMocks } from "./_whatsapp-fake";
+useWhatsAppFakeMocks();
 
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 

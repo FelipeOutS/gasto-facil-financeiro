@@ -1,4 +1,4 @@
-import { mock } from "bun:test";
+import { beforeEach, mock } from "bun:test";
 
 const DEFAULT_LINK = {
   user_id: "u1",
@@ -585,35 +585,6 @@ export const fakeAdmin = {
   },
 };
 
-mock.module("@/integrations/supabase/client.server", () => ({ supabaseAdmin: fakeAdmin }));
-mock.module("@/server/subscription.server", () => ({
-  getSubscriptionForUserIdentity: async () => ({
-    active: true,
-    plan: "pessoal_premium",
-    status: "ativo",
-  }),
-}));
-mock.module("@/server/whatsapp-entitlement.server", () => ({
-  getWhatsAppEntitlement: async () => ({
-    allowed: true,
-    plan: "pessoal_premium",
-    planActive: true,
-    featureIncluded: true,
-    betaAllowed: true,
-    linkActive: true,
-    optInActive: true,
-  }),
-  assertWhatsAppEntitlement: async () => ({ allowed: true }),
-}));
-mock.module("@/server/admin-master.server", () => ({
-  hasAdminMasterRole: async () => true,
-  isAdminMasterEmail: () => true,
-  assertAdminMaster: async () => {},
-}));
-mock.module("@/server/whatsapp-financial-quota-gate.server", () => ({
-  assertFinancialActionQuotaForWhatsApp: async () => ({ allowed: true }),
-  financialQuotaBlockedReply: () => "Quota bloqueada",
-}));
 const MEM_TABLE = "whatsapp_merchant_category_memories";
 
 /** Linhas de memória de mercador registradas pelo fake. */
@@ -622,72 +593,124 @@ export function merchantMemoryRows(): Record<string, any>[] {
   return state.generic[MEM_TABLE];
 }
 
-mock.module("@/server/whatsapp-merchant-memory.server", () => ({
-  merchantKeyFor: (n: string) => n?.toLowerCase().trim() || null,
-  logMerchantMemoryDecision: () => {},
-  MERCHANT_MEMORY_HINT_LINE: "mem",
-  lookupMerchantMemory: async (args: {
-    userId: string;
-    merchantKey: string;
-    activeCategoryIds: ReadonlySet<string>;
-  }) => {
-    const rows = merchantMemoryRows().filter(
-      (r) =>
-        r.user_id === args.userId &&
-        r.merchant_key === args.merchantKey &&
-        (!args.activeCategoryIds || args.activeCategoryIds.has(r.category_id)),
-    );
-    const eligible = rows.filter(
-      (r) => (r.manual_confirmed_count ?? 0) >= 1 || (r.confirmed_count ?? 0) >= 2,
-    );
-    if (eligible.length === 0) return { kind: "none" };
-    if (eligible.length > 1) return { kind: "ambiguous" };
-    const r = eligible[0];
-    return {
-      kind: "eligible",
-      lookup: {
-        categoryId: r.category_id,
-        evidence: (r.manual_confirmed_count ?? 0) >= 1 ? "manual" : "confirmed",
-        manualCount: r.manual_confirmed_count ?? 0,
-        confirmedCount: r.confirmed_count ?? 0,
-      },
-    };
-  },
-  recordMerchantMemory: async (args: {
-    userId: string;
-    merchantKey: string;
-    categoryId: string;
-    evidence: "manual" | "confirmed";
-  }) => {
-    if (!args?.userId || !args?.merchantKey || !args?.categoryId) return { ok: false };
-    const store = merchantMemoryRows();
-    const existing = store.find(
-      (r) =>
-        r.user_id === args.userId &&
-        r.merchant_key === args.merchantKey &&
-        r.category_id === args.categoryId,
-    );
-    const incManual = args.evidence === "manual" ? 1 : 0;
-    if (existing) {
-      existing.confirmed_count = (existing.confirmed_count ?? 0) + 1;
-      existing.manual_confirmed_count = (existing.manual_confirmed_count ?? 0) + incManual;
-      existing.last_confirmed_at = new Date().toISOString();
+/**
+ * Reinstala TODOS os mocks de módulo do harness.
+ *
+ * `mock.module` é global e vivo: outro arquivo de teste que mocke os mesmos
+ * especificadores (ex. `@/integrations/supabase/client.server`) substitui os
+ * mocks deste harness para o resto do processo. Como este módulo é avaliado
+ * uma única vez (cache do registry), os mocks precisam ser reinstaláveis para
+ * que o resultado da suíte não dependa da ordem dos arquivos.
+ */
+export function installWhatsAppFakeMocks(): void {
+  mock.module("@/integrations/supabase/client.server", () => ({ supabaseAdmin: fakeAdmin }));
+  mock.module("@/server/subscription.server", () => ({
+    getSubscriptionForUserIdentity: async () => ({
+      active: true,
+      plan: "pessoal_premium",
+      status: "ativo",
+    }),
+  }));
+  mock.module("@/server/whatsapp-entitlement.server", () => ({
+    getWhatsAppEntitlement: async () => ({
+      allowed: true,
+      plan: "pessoal_premium",
+      planActive: true,
+      featureIncluded: true,
+      betaAllowed: true,
+      linkActive: true,
+      optInActive: true,
+    }),
+    assertWhatsAppEntitlement: async () => ({ allowed: true }),
+  }));
+  mock.module("@/server/admin-master.server", () => ({
+    hasAdminMasterRole: async () => true,
+    isAdminMasterEmail: () => true,
+    assertAdminMaster: async () => {},
+  }));
+  mock.module("@/server/whatsapp-financial-quota-gate.server", () => ({
+    assertFinancialActionQuotaForWhatsApp: async () => ({ allowed: true }),
+    financialQuotaBlockedReply: () => "Quota bloqueada",
+  }));
+  mock.module("@/server/whatsapp-merchant-memory.server", () => ({
+    merchantKeyFor: (n: string) => n?.toLowerCase().trim() || null,
+    logMerchantMemoryDecision: () => {},
+    MERCHANT_MEMORY_HINT_LINE: "mem",
+    lookupMerchantMemory: async (args: {
+      userId: string;
+      merchantKey: string;
+      activeCategoryIds: ReadonlySet<string>;
+    }) => {
+      const rows = merchantMemoryRows().filter(
+        (r) =>
+          r.user_id === args.userId &&
+          r.merchant_key === args.merchantKey &&
+          (!args.activeCategoryIds || args.activeCategoryIds.has(r.category_id)),
+      );
+      const eligible = rows.filter(
+        (r) => (r.manual_confirmed_count ?? 0) >= 1 || (r.confirmed_count ?? 0) >= 2,
+      );
+      if (eligible.length === 0) return { kind: "none" };
+      if (eligible.length > 1) return { kind: "ambiguous" };
+      const r = eligible[0];
+      return {
+        kind: "eligible",
+        lookup: {
+          categoryId: r.category_id,
+          evidence: (r.manual_confirmed_count ?? 0) >= 1 ? "manual" : "confirmed",
+          manualCount: r.manual_confirmed_count ?? 0,
+          confirmedCount: r.confirmed_count ?? 0,
+        },
+      };
+    },
+    recordMerchantMemory: async (args: {
+      userId: string;
+      merchantKey: string;
+      categoryId: string;
+      evidence: "manual" | "confirmed";
+    }) => {
+      if (!args?.userId || !args?.merchantKey || !args?.categoryId) return { ok: false };
+      const store = merchantMemoryRows();
+      const existing = store.find(
+        (r) =>
+          r.user_id === args.userId &&
+          r.merchant_key === args.merchantKey &&
+          r.category_id === args.categoryId,
+      );
+      const incManual = args.evidence === "manual" ? 1 : 0;
+      if (existing) {
+        existing.confirmed_count = (existing.confirmed_count ?? 0) + 1;
+        existing.manual_confirmed_count = (existing.manual_confirmed_count ?? 0) + incManual;
+        existing.last_confirmed_at = new Date().toISOString();
+        return { ok: true };
+      }
+      const row = {
+        id: `mm-${store.length + 1}`,
+        user_id: args.userId,
+        merchant_key: args.merchantKey,
+        category_id: args.categoryId,
+        confirmed_count: 1,
+        manual_confirmed_count: incManual,
+        last_confirmed_at: new Date().toISOString(),
+      };
+      store.push(row);
+      state.inserts.push({ table: MEM_TABLE, row });
       return { ok: true };
-    }
-    const row = {
-      id: `mm-${store.length + 1}`,
-      user_id: args.userId,
-      merchant_key: args.merchantKey,
-      category_id: args.categoryId,
-      confirmed_count: 1,
-      manual_confirmed_count: incManual,
-      last_confirmed_at: new Date().toISOString(),
-    };
-    store.push(row);
-    state.inserts.push({ table: MEM_TABLE, row });
-    return { ok: true };
-  },
-}));
+    },
+  }));
+}
+
+/**
+ * Ativa o harness no arquivo chamador: instala os mocks agora (durante o load
+ * do arquivo) e reinstala antes de cada teste, tornando a suíte global
+ * independente da ordem de execução.
+ */
+export function useWhatsAppFakeMocks(): void {
+  installWhatsAppFakeMocks();
+  beforeEach(installWhatsAppFakeMocks);
+}
+
+installWhatsAppFakeMocks();
 
 
 export function resetState(o?: any) {

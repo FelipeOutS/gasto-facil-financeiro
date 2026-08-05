@@ -3,7 +3,8 @@
  * de criação de receita/gasto.
  */
 import { test, expect, beforeEach } from "bun:test";
-import { state, resetState } from "./_whatsapp-fake";
+import { state, resetState, useWhatsAppFakeMocks } from "./_whatsapp-fake";
+useWhatsAppFakeMocks();
 
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
 const { detectConsultaIntent } = await import("../src/server/whatsapp-consultas.server");

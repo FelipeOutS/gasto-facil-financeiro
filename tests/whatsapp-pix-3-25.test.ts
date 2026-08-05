@@ -21,7 +21,8 @@
  */
 import "./_whatsapp-fake";
 import { describe, it, expect, beforeEach } from "bun:test";
-import { resetState, state } from "./_whatsapp-fake";
+import { resetState, state, useWhatsAppFakeMocks } from "./_whatsapp-fake";
+useWhatsAppFakeMocks();
 
 const { parsePagarPessoa } = await import("../src/server/whatsapp-pix-parser");
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");

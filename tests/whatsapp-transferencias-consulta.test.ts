@@ -5,7 +5,8 @@
  * nem escrever em nenhuma tabela financeira.
  */
 import { test, expect, describe, beforeEach } from "bun:test";
-import { state } from "./_whatsapp-fake";
+import { state, useWhatsAppFakeMocks } from "./_whatsapp-fake";
+useWhatsAppFakeMocks();
 
 const { detectConsultaIntent, handleConsulta } =
   await import("../src/server/whatsapp-consultas.server");

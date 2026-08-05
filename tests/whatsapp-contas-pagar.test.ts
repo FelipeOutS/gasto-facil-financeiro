@@ -5,7 +5,8 @@
  * condicional, integração com WA-C1 e logs seguros.
  */
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { state, resetState } from "./_whatsapp-fake";
+import { state, resetState, useWhatsAppFakeMocks } from "./_whatsapp-fake";
+useWhatsAppFakeMocks();
 
 const { detectMarkAsPaidIntent, isBaixaContaSession } =
   await import("../src/server/whatsapp-contas-pagar.server");

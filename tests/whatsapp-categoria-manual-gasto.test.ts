@@ -17,7 +17,8 @@
  *  - detectCategoriaCommand reconhece todos os padrões e ignora ruído.
  */
 import { describe, test, expect, beforeEach } from "bun:test";
-import { state, resetState, gastosInserts } from "./_whatsapp-fake";
+import { state, resetState, gastosInserts, useWhatsAppFakeMocks } from "./_whatsapp-fake";
+useWhatsAppFakeMocks();
 
 const { processarMensagemWhatsApp, detectCategoriaCommand } =
   await import("../src/server/whatsapp.server");

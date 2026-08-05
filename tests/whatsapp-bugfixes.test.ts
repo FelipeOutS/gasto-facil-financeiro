@@ -2,7 +2,8 @@
  * Regressão dos 3 bugs do canário (data/fuso, resumo duplicado, resposta inválida).
  */
 import { test, expect, beforeEach, afterAll } from "bun:test";
-import { state, resetState, gastosInserts } from "./_whatsapp-fake";
+import { state, resetState, gastosInserts, useWhatsAppFakeMocks } from "./_whatsapp-fake";
+useWhatsAppFakeMocks();
 
 const { processarMensagemWhatsApp, formatarConfirmacao } =
   await import("../src/server/whatsapp.server");

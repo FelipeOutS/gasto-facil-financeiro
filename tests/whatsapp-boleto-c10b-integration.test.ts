@@ -11,7 +11,8 @@
  *  - documento sem magic-bytes %PDF- é rejeitado.
  */
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { state, resetState } from "./_whatsapp-fake";
+import { state, resetState, useWhatsAppFakeMocks } from "./_whatsapp-fake";
+useWhatsAppFakeMocks();
 
 const { _buildBoletoCobrancaForTest } = await import("../src/server/whatsapp-boleto-parser");
 const { __setBoletoOcrExtractorForTests } =

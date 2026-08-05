@@ -14,7 +14,8 @@
  *  - log seguro `wa_invoice_detail_query` sem PII.
  */
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import { state, resetState } from "./_whatsapp-fake";
+import { state, resetState, useWhatsAppFakeMocks } from "./_whatsapp-fake";
+useWhatsAppFakeMocks();
 
 const {
   detectFaturaIntent,

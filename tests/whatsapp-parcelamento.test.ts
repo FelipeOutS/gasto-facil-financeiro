@@ -9,7 +9,8 @@
  */
 import { describe, it, expect, beforeEach } from "bun:test";
 import "./_whatsapp-fake";
-import { resetState, state, gastosInserts } from "./_whatsapp-fake";
+import { resetState, state, gastosInserts, useWhatsAppFakeMocks } from "./_whatsapp-fake";
+useWhatsAppFakeMocks();
 
 // IMPORTANTE: imports dinâmicos top-level garantem que o `mock.module(...)`
 // registrado em `_whatsapp-fake` esteja ativo antes dos módulos de
