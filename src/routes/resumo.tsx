@@ -16,6 +16,7 @@ import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import { getCategoriaById, getGastos, useBootstrap, useStore } from "@/lib/store";
 import { formatBRL, formatBRLCompact, formatMonthYear } from "@/lib/format";
 import { UpsellBanner } from "@/components/upsell/UpsellBanner";
+import { UpsellModal } from "@/components/upsell/UpsellModal";
 import i18n from "@/i18n";
 
 export const Route = createFileRoute("/resumo")({
@@ -81,6 +82,7 @@ function ResumoPage() {
   return (
     <MobileShell>
       <UpsellBanner />
+      <UpsellModal />
       <header className="flex items-center gap-3 pt-2">
         <Link
           to="/app"
