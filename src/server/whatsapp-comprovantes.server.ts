@@ -1267,10 +1267,12 @@ export async function processarRespostaImagem(args: {
 
   // ----- aguardando categoria obrigatória -----
   if (status === "img_aguardando_categoria_obrigatoria") {
-    const isAdmin = await hasAdminMasterRole(userId);
-    if (isAdmin) return true as any; // Bypass Admin Master
-
+    // Sem atalho por papel: o fluxo de categoria obrigatória é idêntico para
+    // qualquer usuário (inclusive owner). Um "bypass" aqui devolvia um valor
+    // fora do contrato (`true`), encerrando a conversa sem `resposta` e
+    // deixando a sessão pendente presa.
     const r = await handleCategoriaReply(userId, session, cats, texto, "obrigatoria");
+
     if (r.result) return r.result;
     const found = r.picked!;
     const next: ComprovanteSession = {
