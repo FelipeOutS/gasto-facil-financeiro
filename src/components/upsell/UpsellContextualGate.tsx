@@ -67,5 +67,3 @@ export function UpsellContextualGate({ feature, isOpen, onClose }: UpsellContext
     </Dialog>
   );
 }
-EOF
-,file_path:
