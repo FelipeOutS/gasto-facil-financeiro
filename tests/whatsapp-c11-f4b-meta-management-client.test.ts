@@ -12,6 +12,8 @@ const ENV_KEYS = [
   "WHATSAPP_META_SUBMISSION_ENABLED",
   "WHATSAPP_GRAPH_VERSION",
   "WHATSAPP_WABA_ID",
+  // Nome canônico usado em produção — é fallback legítimo do WABA no servidor.
+  "WHATSAPP_BUSINESS_ACCOUNT_ID",
   "WHATSAPP_ACCESS_TOKEN",
 ] as const;
 const backup: Record<string, string | undefined> = {};
@@ -31,6 +33,7 @@ function setBaselineOff() {
   process.env.WHATSAPP_META_SUBMISSION_ENABLED = "false";
   process.env.WHATSAPP_GRAPH_VERSION = "v20.0";
   process.env.WHATSAPP_WABA_ID = "1234567890";
+  delete process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
   process.env.WHATSAPP_ACCESS_TOKEN = "test-token-xyz";
 }
 
@@ -87,6 +90,7 @@ describe("WA-C11 4B.2.a — cliente Meta (URL builder)", () => {
 
   test("WABA ausente → waba_missing (zero URL emitida)", async () => {
     delete process.env.WHATSAPP_WABA_ID;
+    delete process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
     const { buildMessageTemplatesUrl } = await loadMgmt();
     const r = buildMessageTemplatesUrl();
     expect(r.ok).toBe(false);
