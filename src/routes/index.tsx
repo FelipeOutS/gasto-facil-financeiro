@@ -1,7 +1,4 @@
-// PROMPT 9F — MENSAGENS INTELIGENTES DE UPGRADE PUBLICADAS — ESTRATÉGIA ATIVA
-
 import { createFileRoute } from "@tanstack/react-router";
-
 import { PublicLanding } from "@/components/landing/PublicLanding";
 
 export const Route = createFileRoute("/")({
