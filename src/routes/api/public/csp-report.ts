@@ -58,3 +58,4 @@ export const Route = createFileRoute("/api/public/csp-report")({
     },
   },
 });
+
