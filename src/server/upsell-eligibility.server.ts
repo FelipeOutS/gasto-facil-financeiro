@@ -26,7 +26,7 @@ export interface UpsellEligibility {
   /** Quais canais podem ser exibidos agora (nunca os dois simultaneamente). */
   channel: "banner" | "modal" | "none";
   criteria: UpsellCriteria;
-  config: Record<string, unknown>;
+  config: Record<string, any>;
 }
 
 const DEFAULTS = {
@@ -74,7 +74,7 @@ function emptyCriteria(): UpsellCriteria {
 function deny(
   reason: string,
   criteria: UpsellCriteria,
-  config: Record<string, unknown>,
+  config: Record<string, any>,
 ): UpsellEligibility {
   return { eligible: false, reason, channel: "none", criteria, config };
 }
