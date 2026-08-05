@@ -23,3 +23,10 @@ Tabela `user_communication_preferences` gerencia:
 
 ## 5. Configuração (Owner)
 Tabela `upsell_runtime_config` permite ajustar intervalos e habilitar/desabilitar globalmente.
+
+## Validação Final (Prompt 9G) - 2026-08-05
+- **Elegibilidade**: Reforçada com trava de 5 lançamentos e 48h (Server-side).
+- **Delay**: Implementado 5s no Banner após confirmação de elegibilidade.
+- **RLS/Owner**: Auditado e confirmado.
+- **Mercado Pago**: Preservado e isolado.
+- **Classificação**: UPSELL VALIDADO EM PRODUÇÃO.

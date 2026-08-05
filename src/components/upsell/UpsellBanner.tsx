@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getUpsellStatus, dismissUpsell } from "@/lib/upsell.functions";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -17,6 +18,17 @@ export function UpsellBanner() {
     staleTime: 1000 * 60 * 5, // 5 min
   });
 
+  const [showDelayed, setShowDelayed] = useState(false);
+
+  useEffect(() => {
+    if (status?.eligible) {
+      const timer = setTimeout(() => setShowDelayed(true), 5000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowDelayed(false);
+    }
+  }, [status?.eligible]);
+
   const dismissMutation = useMutation({
     mutationFn: (trigger: string) => dismissFn({ type: 'banner', trigger } as any),
     onSuccess: () => {
@@ -24,7 +36,7 @@ export function UpsellBanner() {
     }
   });
 
-  if (isLoading || !status?.eligible) return null;
+  if (isLoading || !status?.eligible || !showDelayed) return null;
 
   return (
     <div className="relative mb-6 overflow-hidden rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
