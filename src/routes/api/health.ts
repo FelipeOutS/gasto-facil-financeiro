@@ -6,7 +6,7 @@ export const Route = createFileRoute("/api/health")({
       GET: async () =>
         new Response(JSON.stringify({ ok: true }), {
           status: 200,
-          headers: {
+          headers: { "Content-Security-Policy-Report-Only": "default-src 'self'", "X-Frame-Options": "DENY",
             "Content-Type": "application/json",
             "Cache-Control": "no-store, no-cache, must-revalidate",
           },
