@@ -761,6 +761,20 @@ export function resetState(o?: any) {
       if (r && r.user_id === undefined) r.user_id = "u1";
     });
   }
+  // Cache anti-repetição conversacional é módulo-global (5 min): sem reset,
+  // um menu enviado num teste transforma o próximo em "menu curto".
+  resetConversationalCacheSafely();
+}
+
+function resetConversationalCacheSafely(): void {
+  try {
+    // Import síncrono via require evita tornar resetState assíncrono.
+     
+    const mod = require("../src/server/whatsapp-consultas.server");
+    mod?._resetConversationalCache?.();
+  } catch {
+    // Módulo pode não estar carregado neste arquivo de teste — sem efeito.
+  }
 }
 export function gastosInserts() {
   return state.inserts.filter((i) => i.table === "gastos");
