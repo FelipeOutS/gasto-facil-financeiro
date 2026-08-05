@@ -29,10 +29,25 @@ export async function checkUpsellEligibility(userId: string): Promise<UpsellElig
   if (sub.plan !== 'free_ads') return { eligible: false, reason: 'not_free_ads_plan', config };
   if (sub.active && sub.status === 'ativo') return { eligible: false, reason: 'already_active_paid', config };
   
-  // 3. Validar Histórico de Uso (Mínimo 48h e Uso em 2 dias)
+  // 3. Validar Histórico de Uso (Mínimo 48h, 2 dias distintos e volume)
   const createdAt = new Date(authUser?.user?.created_at || '');
-  const diffHours = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
+  const now = new Date();
+  const diffHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
   if (diffHours < 48) return { eligible: false, reason: 'new_user_grace_period', config };
+
+  // Validar volume de lançamentos (mínimo 5)
+  const { count: expenseCount } = await sb
+    .from('expenses')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId);
+  
+  const { count: incomeCount } = await sb
+    .from('incomes')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId);
+
+  const totalTransactions = (expenseCount || 0) + (incomeCount || 0);
+  if (totalTransactions < 5) return { eligible: false, reason: 'low_usage_volume', config };
 
   // 4. Verificar Preferências e Snooze
   const { data: prefs } = await sb
