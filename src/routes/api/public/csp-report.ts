@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const cspReportSchema = z.object({
   "csp-report": z.object({
@@ -22,18 +23,16 @@ export const Route = createFileRoute("/api/public/csp-report")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        // Opção A: Endpoint Próprio
-        // Requisitos: POST, Limite de tamanho, Sanitização, 204.
-        
         try {
-          // Rate limit simplificado (token bucket no Worker seria ideal, aqui simulamos recepção segura)
+          // 1. Verificar content-type (application/csp-report ou application/json)
           const contentType = request.headers.get("content-type");
           if (!contentType?.includes("application/csp-report") && !contentType?.includes("application/json")) {
             return new Response(null, { status: 415 });
           }
 
+          // 2. Limite de tamanho do body (10KB)
           const bodyText = await request.text();
-          if (bodyText.length > 10000) { // Limite 10KB
+          if (bodyText.length > 10000) {
             return new Response("Payload too large", { status: 413 });
           }
 
@@ -42,20 +41,58 @@ export const Route = createFileRoute("/api/public/csp-report")({
 
           if (validated.success) {
             const report = validated.data["csp-report"];
-            // Sanitização e Log (em produção enviaria para um log aggregator/DB)
-            console.log("[CSP Report]", {
-              uri: report["document-uri"]?.split("?")[0], // Remove query strings
-              directive: report["violated-directive"],
-              blocked: report["blocked-uri"]?.split("?")[0],
-            });
+            
+            // 3. Persistência Sanitizada (Remover queries, fragments, tokens)
+            const sanitizeUrl = (url?: string) => {
+              if (!url) return undefined;
+              try {
+                const u = new URL(url);
+                return `${u.origin}${u.pathname}`; // Remove query e hash
+              } catch {
+                return url.split('?')[0].split('#')[0];
+              }
+            };
+
+            const documentUri = sanitizeUrl(report["document-uri"]);
+            const blockedUri = sanitizeUrl(report["blocked-uri"]);
+
+            // Log no console para monitoramento rápido
+            console.log("[CSP Report Received]", { documentUri, blockedUri, directive: report["effective-directive"] });
+
+            // Persistência no banco (Audit Trail)
+            // Usamos supabaseAdmin pois a tabela tem RLS sem policy de escrita para anon por segurança extra
+            // Embora tenhamos dado GRANT INSERT para anon/authenticated, o admin garante a bypass de RLS
+            // se precisarmos de logs mesmo com falhas de auth.
+            const { error } = await supabaseAdmin
+              .from('whatsapp_csp_reports')
+              .insert({
+                document_uri: documentUri,
+                referrer: sanitizeUrl(report["referrer"]),
+                violated_directive: report["violated-directive"],
+                effective_directive: report["effective-directive"],
+                original_policy: report["original-policy"],
+                disposition: report["disposition"],
+                blocked_uri: blockedUri,
+                line_number: report["line-number"],
+                column_number: report["column-number"],
+                source_file: report["source-file"],
+                status_code: report["status-code"],
+                script_sample: report["script-sample"]?.substring(0, 100), // Limitar tamanho da amostra
+                user_agent: request.headers.get('user-agent')
+              });
+
+            if (error) {
+              console.error("[CSP Report Persistence Error]", error);
+            }
           }
 
+          // Resposta 204 conforme especificação da CSP
           return new Response(null, { status: 204 });
         } catch (e) {
-          return new Response(null, { status: 204 }); // Fail silent para o browser
+          // Fail silent para o browser para não quebrar a navegação do usuário caso o report falhe
+          return new Response(null, { status: 204 });
         }
       },
     },
   },
 });
-
