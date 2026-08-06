@@ -29,12 +29,22 @@ function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => vo
         return;
       }
       window.sessionStorage.setItem(key, "1");
-      
+
       // If it's a chunk load error, try to clear cache before reload
       if ("caches" in window) {
         void caches.keys().then((names) => {
-          for (const name of names) void caches.delete(name);
+          for (const name of names) {
+            // Se for um erro de chunk, limpamos o cache para garantir que
+            // o próximo fetch pegue a versão correta do servidor.
+            void caches.delete(name);
+          }
         });
+      }
+
+      // Além do cache do SW, removemos o cache da própria página para o browser
+      // tentar um hard reload (equivalente ao Ctrl+Shift+R)
+      if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage("SKIP_WAITING");
       }
 
       window.location.reload();

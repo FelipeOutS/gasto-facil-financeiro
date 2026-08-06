@@ -136,7 +136,7 @@ describe("WA-F3.3 — integração com WA-F1 (fatura) e WA-F2 (itens)", () => {
     const cartao = state.cartoesData[0] as Record<string, unknown>;
     const itens = await getItensFaturaAtualPorCartao(
       "u1",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       cartao as any,
     );
 
@@ -161,7 +161,7 @@ describe("WA-F3.3 — integração com WA-F1 (fatura) e WA-F2 (itens)", () => {
     const cartao = state.cartoesData[0] as Record<string, unknown>;
     const fat = await getFaturaAtualPorCartao(
       "u1",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       cartao as any,
     );
     expect(Math.round(fat.total * 100)).toBe(10000);
@@ -189,7 +189,6 @@ describe("WA-F3.3 — blindagem da RPC (validações server-side)", () => {
   });
 
   function stubRpcError(message: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (fakeAdmin as any).rpc = async (name: string) => {
       if (name === "create_installment_purchase") {
         return { data: null, error: { message } };

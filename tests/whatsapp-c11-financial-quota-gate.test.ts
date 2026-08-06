@@ -31,7 +31,6 @@ function baseDeps(overrides: Partial<FinancialGateDeps> = {}): FinancialGateDeps
         rollout_bucket_max: 0,
         allowlist_user_ids: [] as string[],
         blocklist_user_ids: [] as string[],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }) as any,
     getWhatsAppEntitlement: async () => ({
       allowed: true,
@@ -125,7 +124,6 @@ describe("assertFinancialActionQuotaForWhatsApp — runtime kill switch", () => 
             rollout_bucket_max: 0,
             allowlist_user_ids: [],
             blocklist_user_ids: [],
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           }) as any,
         getWhatsAppEntitlement: async () => ({
           allowed: true,

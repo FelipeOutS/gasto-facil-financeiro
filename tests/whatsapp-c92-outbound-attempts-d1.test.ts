@@ -89,14 +89,12 @@ function fakeClient(initial?: {
   const ACTIVE: AttemptStatus[] = ["planned", "sending", "ambiguous"];
 
   const client: SupabaseLike & {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rpc: (name: string, args: Record<string, unknown>) => Promise<{ data: any; error: any }>;
   } = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     from(table: string): any {
       const rows = table === "whatsapp_notifications" ? notifs : attempts;
       const filters: Array<(r: Record<string, unknown>) => boolean> = [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const q: any = {
         _insert: null as Record<string, unknown> | null,
         _update: null as Record<string, unknown> | null,

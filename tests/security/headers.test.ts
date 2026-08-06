@@ -16,7 +16,7 @@ describe("Segurança: Cabeçalhos HTTP (P1-01)", () => {
   test("X-Content-Type-Options deve ser nosniff", () => {
     expect(SECURITY_HEADERS["X-Content-Type-Options"]).toBe("nosniff");
   });
-  
+
   test("Content-Security-Policy enforce deve estar ausente", () => {
     expect((SECURITY_HEADERS as any)["Content-Security-Policy"]).toBeUndefined();
   });
