@@ -110,7 +110,6 @@ function buildFake() {
   }
 
   return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     client: { from } as any,
     tables,
   };
@@ -202,18 +201,14 @@ describe("WA-C9.1 :: revalidateContaForDispatch", () => {
   it("conta pendente e idêntica → ok", async () => {
     addConta();
     const n = addNotif();
-    const r = await revalidateContaForDispatch(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      n as any,
-      { client: fake.client },
-    );
+    const r = await revalidateContaForDispatch(n as any, { client: fake.client });
     expect(r.ok).toBe(true);
   });
 
   it("conta paga → payable_paid", async () => {
     addConta({ status: "pago" });
     const n = addNotif();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const r = await revalidateContaForDispatch(n as any, { client: fake.client });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("payable_paid");
@@ -222,7 +217,7 @@ describe("WA-C9.1 :: revalidateContaForDispatch", () => {
   it("conta cancelada → payable_cancelled", async () => {
     addConta({ status: "cancelado" });
     const n = addNotif();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const r = await revalidateContaForDispatch(n as any, { client: fake.client });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("payable_cancelled");
@@ -231,7 +226,7 @@ describe("WA-C9.1 :: revalidateContaForDispatch", () => {
   it("vencimento mudou → payable_changed", async () => {
     addConta({ data_vencimento: "2026-07-10" });
     const n = addNotif(); // payload due_date: 2026-06-28
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const r = await revalidateContaForDispatch(n as any, { client: fake.client });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("payable_changed");
@@ -240,7 +235,7 @@ describe("WA-C9.1 :: revalidateContaForDispatch", () => {
   it("valor mudou → payable_changed", async () => {
     addConta({ valor: 150 }); // 15000 centavos
     const n = addNotif(); // payload valor_centavos: 12000
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const r = await revalidateContaForDispatch(n as any, { client: fake.client });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("payable_changed");
@@ -249,7 +244,7 @@ describe("WA-C9.1 :: revalidateContaForDispatch", () => {
   it("conta inexistente / outro user → payable_not_found", async () => {
     addConta({ user_id: "u2" });
     const n = addNotif();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const r = await revalidateContaForDispatch(n as any, { client: fake.client });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe("payable_not_found");
@@ -263,7 +258,6 @@ describe("WA-C9.1 :: revalidateContaForDispatch", () => {
         entity_type: null,
         entity_id: null,
         payload: {},
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any,
       { client: fake.client },
     );

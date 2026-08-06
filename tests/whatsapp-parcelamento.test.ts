@@ -297,7 +297,7 @@ describe("WA-F3.2 — persistência atômica via RPC", () => {
 
   it("falha na transação não cria parcela parcial", async () => {
     const original = fake.rpc;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (fake as any).rpc = async (name: string) => {
       if (name === "create_installment_purchase") {
         return { data: null, error: { message: "boom" } };
@@ -318,7 +318,7 @@ describe("WA-F3.2 — persistência atômica via RPC", () => {
   it("falha no readback não envia sucesso falso", async () => {
     const original = fake.rpc;
     // RPC retorna ok, mas não persiste nada → readback encontra 0 linhas.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (fake as any).rpc = async (name: string, args?: Record<string, unknown>) => {
       if (name === "create_installment_purchase") {
         // Devolve só metadados sem gravar em state.gastosData.

@@ -3,20 +3,22 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const cspReportSchema = z.object({
-  "csp-report": z.object({
-    "document-uri": z.string().optional(),
-    "referrer": z.string().optional(),
-    "violated-directive": z.string().optional(),
-    "effective-directive": z.string().optional(),
-    "original-policy": z.string().optional(),
-    "disposition": z.string().optional(),
-    "blocked-uri": z.string().optional(),
-    "line-number": z.number().optional(),
-    "column-number": z.number().optional(),
-    "source-file": z.string().optional(),
-    "status-code": z.number().optional(),
-    "script-sample": z.string().optional(),
-  }).passthrough()
+  "csp-report": z
+    .object({
+      "document-uri": z.string().optional(),
+      referrer: z.string().optional(),
+      "violated-directive": z.string().optional(),
+      "effective-directive": z.string().optional(),
+      "original-policy": z.string().optional(),
+      disposition: z.string().optional(),
+      "blocked-uri": z.string().optional(),
+      "line-number": z.number().optional(),
+      "column-number": z.number().optional(),
+      "source-file": z.string().optional(),
+      "status-code": z.number().optional(),
+      "script-sample": z.string().optional(),
+    })
+    .passthrough(),
 });
 
 export const Route = createFileRoute("/api/public/csp-report")({
@@ -26,7 +28,10 @@ export const Route = createFileRoute("/api/public/csp-report")({
         try {
           // 1. Verificar content-type (application/csp-report ou application/json)
           const contentType = request.headers.get("content-type");
-          if (!contentType?.includes("application/csp-report") && !contentType?.includes("application/json")) {
+          if (
+            !contentType?.includes("application/csp-report") &&
+            !contentType?.includes("application/json")
+          ) {
             return new Response(null, { status: 415 });
           }
 
@@ -41,7 +46,7 @@ export const Route = createFileRoute("/api/public/csp-report")({
 
           if (validated.success) {
             const report = validated.data["csp-report"];
-            
+
             // 3. Persistência Sanitizada (Remover queries, fragments, tokens)
             const sanitizeUrl = (url?: string) => {
               if (!url) return undefined;
@@ -49,7 +54,7 @@ export const Route = createFileRoute("/api/public/csp-report")({
                 const u = new URL(url);
                 return `${u.origin}${u.pathname}`; // Remove query e hash
               } catch {
-                return url.split('?')[0].split('#')[0];
+                return url.split("?")[0].split("#")[0];
               }
             };
 
@@ -57,29 +62,31 @@ export const Route = createFileRoute("/api/public/csp-report")({
             const blockedUri = sanitizeUrl(report["blocked-uri"]);
 
             // Log no console para monitoramento rápido
-            console.log("[CSP Report Received]", { documentUri, blockedUri, directive: report["effective-directive"] });
+            console.log("[CSP Report Received]", {
+              documentUri,
+              blockedUri,
+              directive: report["effective-directive"],
+            });
 
             // Persistência no banco (Audit Trail)
             // Usamos supabaseAdmin pois a tabela tem RLS sem policy de escrita para anon por segurança extra
             // Embora tenhamos dado GRANT INSERT para anon/authenticated, o admin garante a bypass de RLS
             // se precisarmos de logs mesmo com falhas de auth.
-            const { error } = await supabaseAdmin
-              .from('whatsapp_csp_reports')
-              .insert({
-                document_uri: documentUri,
-                referrer: sanitizeUrl(report["referrer"]),
-                violated_directive: report["violated-directive"],
-                effective_directive: report["effective-directive"],
-                original_policy: report["original-policy"],
-                disposition: report["disposition"],
-                blocked_uri: blockedUri,
-                line_number: report["line-number"],
-                column_number: report["column-number"],
-                source_file: report["source-file"],
-                status_code: report["status-code"],
-                script_sample: report["script-sample"]?.substring(0, 100), // Limitar tamanho da amostra
-                user_agent: request.headers.get('user-agent')
-              });
+            const { error } = await supabaseAdmin.from("whatsapp_csp_reports").insert({
+              document_uri: documentUri,
+              referrer: sanitizeUrl(report["referrer"]),
+              violated_directive: report["violated-directive"],
+              effective_directive: report["effective-directive"],
+              original_policy: report["original-policy"],
+              disposition: report["disposition"],
+              blocked_uri: blockedUri,
+              line_number: report["line-number"],
+              column_number: report["column-number"],
+              source_file: report["source-file"],
+              status_code: report["status-code"],
+              script_sample: report["script-sample"]?.substring(0, 100), // Limitar tamanho da amostra
+              user_agent: request.headers.get("user-agent"),
+            });
 
             if (error) {
               console.error("[CSP Report Persistence Error]", error);

@@ -29,7 +29,7 @@ function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => vo
         return;
       }
       window.sessionStorage.setItem(key, "1");
-      
+
       // If it's a chunk load error, try to clear cache before reload
       if ("caches" in window) {
         void caches.keys().then((names) => {

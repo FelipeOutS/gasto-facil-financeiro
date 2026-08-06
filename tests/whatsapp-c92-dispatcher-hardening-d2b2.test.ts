@@ -153,7 +153,7 @@ function fakeClient(rows: UpdateRow[]): {
   const client: SupabaseLike = {
     from: (_table: string) => {
       const filters: Record<string, string> = {};
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       let patch: any = null;
       const builder = {
         update(p: unknown) {

@@ -110,7 +110,7 @@ describe("WA-F3.3-Fix-CatHardening", () => {
     const originalRpc = fakeAdmin.rpc;
     // Stub: RPC simula bug — grava parcelas com categoria_id "cat-mer"
     // mesmo quando o usuário pediu Casa.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (fakeAdmin as any).rpc = async (name: string, args?: Record<string, unknown>) => {
       if (name === "create_installment_purchase") {
         const parcelas = (args?.p_parcelas ?? []) as Array<Record<string, unknown>>;

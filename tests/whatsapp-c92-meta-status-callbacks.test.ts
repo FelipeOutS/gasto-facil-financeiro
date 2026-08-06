@@ -340,7 +340,6 @@ function fakeClient(initial: {
   const notifs = initial.notifs ?? [];
   const events = initial.events ?? [];
   const client: SupabaseLike = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     from(table: string): any {
       const rows =
         table === "whatsapp_notifications"
@@ -349,7 +348,7 @@ function fakeClient(initial: {
             ? events
             : [];
       const filters: Array<(r: Record<string, unknown>) => boolean> = [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const q: any = {
         _pendingInsert: null as Record<string, unknown> | null,
         _pendingUpdate: null as Record<string, unknown> | null,
@@ -638,11 +637,10 @@ function faultyClient(
 ): SupabaseLike {
   let armed = true;
   return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     from(table: string): any {
       const inner = base.client.from(table);
       if (table !== faultOn.table) return inner;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       const wrap: any = {
         ...inner,
         insert(row: Record<string, unknown>) {

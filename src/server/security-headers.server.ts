@@ -1,5 +1,5 @@
 export const SECURITY_HEADERS = {
-  'Content-Security-Policy-Report-Only': [
+  "Content-Security-Policy-Report-Only": [
     "default-src 'self'",
     "base-uri 'self'",
     "object-src 'none'",
@@ -16,12 +16,12 @@ export const SECURITY_HEADERS = {
     "worker-src 'self' blob:",
     "manifest-src 'self'",
     "upgrade-insecure-requests",
-    "report-uri /api/public/csp-report"
-  ].join('; '),
-  'X-Frame-Options': 'DENY',
-  'X-Content-Type-Options': 'nosniff',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+    "report-uri /api/public/csp-report",
+  ].join("; "),
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
 };
 
 /**
@@ -32,5 +32,3 @@ export function applySecurityHeaders(headers: Headers) {
     headers.set(key, value);
   });
 }
-
-

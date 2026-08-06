@@ -585,7 +585,7 @@ describe("D.2A :: persistAndApplyEvents wiring", () => {
   function fakeClient(initial: { notifs?: Array<Record<string, unknown>> }) {
     const notifs = initial.notifs ?? [];
     const events: Array<Record<string, unknown>> = [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const client: any = {
       from(table: string): unknown {
         const rows =
@@ -595,7 +595,7 @@ describe("D.2A :: persistAndApplyEvents wiring", () => {
               ? events
               : [];
         const filters: Array<(r: Record<string, unknown>) => boolean> = [];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const q: any = {
           _pendingInsert: null as Record<string, unknown> | null,
           _pendingUpdate: null as Record<string, unknown> | null,
@@ -817,7 +817,7 @@ describe("D.2A HARDENING :: reconciler default sem `.rpc`", () => {
   function fakeNoRpc(notifs: Array<Record<string, unknown>> = []) {
     // Sem `.rpc` — simula wiring quebrado em produção OU fake Fase C.
     const events: Array<Record<string, unknown>> = [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const client: any = {
       from(table: string): unknown {
         const rows =
@@ -827,7 +827,7 @@ describe("D.2A HARDENING :: reconciler default sem `.rpc`", () => {
               ? events
               : [];
         const filters: Array<(r: Record<string, unknown>) => boolean> = [];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const q: any = {
           _pendingInsert: null as Record<string, unknown> | null,
           _pendingUpdate: null as Record<string, unknown> | null,
@@ -942,12 +942,12 @@ describe("D.2A HARDENING :: recoverStuckProcessing sem `.rpc`", () => {
   function buildRecoveryFake(rows: Array<Record<string, unknown>>) {
     const table = rows;
     // Fake sem `.rpc` — simula wiring quebrado ou fake antigo.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const client: any = {
       from() {
         const filters: Array<(r: Record<string, unknown>) => boolean> = [];
         let patch: Record<string, unknown> | null = null;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const q: any = {
           select() {
             return q;

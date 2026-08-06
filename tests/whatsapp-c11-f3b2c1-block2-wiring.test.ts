@@ -160,7 +160,7 @@ const deps = {
     _texto: string,
     _rec: string,
     status: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     _session: any,
     _resposta: string,
   ) => {
@@ -170,7 +170,7 @@ const deps = {
   atualizarSessao: async (
     id: string,
     status: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     _session: any,
     resposta: string,
   ) => {
@@ -178,7 +178,7 @@ const deps = {
     return { ok: true } as const;
   },
   fecharSessoesAnteriores: async () => {},
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   baixaContaDeps: {} as any,
 };
 

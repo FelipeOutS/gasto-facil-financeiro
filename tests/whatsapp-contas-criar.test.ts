@@ -240,9 +240,9 @@ describe("WA-C2 — falha de persistência não envia sucesso falso", () => {
     await processarMensagemWhatsApp(msg("Conta de luz de 180 reais vence em 20 de julho de 2026"));
     // Substitui o admin.from para falhar APENAS no insert em contas_a_pagar.
     const supa = await import("@/integrations/supabase/client.server");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const orig = (supa.supabaseAdmin as any).from;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (supa.supabaseAdmin as any).from = (t: string) => {
       const b = orig(t);
       if (t === "contas_a_pagar") {
@@ -262,7 +262,7 @@ describe("WA-C2 — falha de persistência não envia sucesso falso", () => {
     expect(out.resposta).not.toContain("Registrei");
     expect(state.contasData.length).toBe(0);
     // Restaura.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     (supa.supabaseAdmin as any).from = orig;
   });
 });

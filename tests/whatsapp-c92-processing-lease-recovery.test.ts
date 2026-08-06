@@ -54,7 +54,7 @@ function buildFake() {
       orderAsc: boolean;
       limitN: number | null;
     } = { filters: [], updatePatch: null, orderBy: null, orderAsc: true, limitN: null };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const api: any = {
       select() {
         return api;
