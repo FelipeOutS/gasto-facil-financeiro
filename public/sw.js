@@ -92,9 +92,9 @@ self.addEventListener("fetch", (event) => {
 
   const isStatic =
     PUBLIC_ASSETS.includes(url.pathname) ||
-    url.pathname.endsWith(".js") ||
-    url.pathname.endsWith(".css") ||
-    url.pathname.startsWith("/assets/");
+    url.pathname.startsWith("/assets/") ||
+    (url.pathname.endsWith(".js") && !url.pathname.includes("chunk-")) ||
+    url.pathname.endsWith(".css");
 
   if (isStatic) {
     // Cache First for static assets
