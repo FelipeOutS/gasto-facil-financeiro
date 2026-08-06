@@ -121,6 +121,8 @@ import { Route as ContasAPagarIdEditarRouteImport } from './routes/contas-a-paga
 import { Route as CartoesIdEditarRouteImport } from './routes/cartoes.$id.editar'
 import { Route as AssinaturasIdEditarRouteImport } from './routes/assinaturas.$id.editar'
 import { Route as ApiPublicCspReportRouteImport } from './routes/api/public/csp-report'
+import { Route as ApiPublicClientLoadErrorRouteImport } from './routes/api/public/client-load-error'
+import { Route as ApiPublicAppVersionRouteImport } from './routes/api/public/app-version'
 import { Route as ApiCheckoutVerifyRouteImport } from './routes/api/checkout.verify'
 import { Route as ApiCheckoutCreateRouteImport } from './routes/api/checkout.create'
 import { Route as AppIntegracoesMercadoPagoIndexRouteImport } from './routes/app_.integracoes.mercado-pago.index'
@@ -705,6 +707,17 @@ const ApiPublicCspReportRoute = ApiPublicCspReportRouteImport.update({
   path: '/api/public/csp-report',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicClientLoadErrorRoute =
+  ApiPublicClientLoadErrorRouteImport.update({
+    id: '/api/public/client-load-error',
+    path: '/api/public/client-load-error',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAppVersionRoute = ApiPublicAppVersionRouteImport.update({
+  id: '/api/public/app-version',
+  path: '/api/public/app-version',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCheckoutVerifyRoute = ApiCheckoutVerifyRouteImport.update({
   id: '/api/checkout/verify',
   path: '/api/checkout/verify',
@@ -904,6 +917,8 @@ export interface FileRoutesByFullPath {
   '/renda/': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
+  '/api/public/app-version': typeof ApiPublicAppVersionRoute
+  '/api/public/client-load-error': typeof ApiPublicClientLoadErrorRoute
   '/api/public/csp-report': typeof ApiPublicCspReportRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
@@ -1036,6 +1051,8 @@ export interface FileRoutesByTo {
   '/renda': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
+  '/api/public/app-version': typeof ApiPublicAppVersionRoute
+  '/api/public/client-load-error': typeof ApiPublicClientLoadErrorRoute
   '/api/public/csp-report': typeof ApiPublicCspReportRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
@@ -1169,6 +1186,8 @@ export interface FileRoutesById {
   '/renda/': typeof RendaIndexRoute
   '/api/checkout/create': typeof ApiCheckoutCreateRoute
   '/api/checkout/verify': typeof ApiCheckoutVerifyRoute
+  '/api/public/app-version': typeof ApiPublicAppVersionRoute
+  '/api/public/client-load-error': typeof ApiPublicClientLoadErrorRoute
   '/api/public/csp-report': typeof ApiPublicCspReportRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
@@ -1303,6 +1322,8 @@ export interface FileRouteTypes {
     | '/renda/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
+    | '/api/public/app-version'
+    | '/api/public/client-load-error'
     | '/api/public/csp-report'
     | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
@@ -1435,6 +1456,8 @@ export interface FileRouteTypes {
     | '/renda'
     | '/api/checkout/create'
     | '/api/checkout/verify'
+    | '/api/public/app-version'
+    | '/api/public/client-load-error'
     | '/api/public/csp-report'
     | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
@@ -1567,6 +1590,8 @@ export interface FileRouteTypes {
     | '/renda/'
     | '/api/checkout/create'
     | '/api/checkout/verify'
+    | '/api/public/app-version'
+    | '/api/public/client-load-error'
     | '/api/public/csp-report'
     | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
@@ -1700,6 +1725,8 @@ export interface RootRouteChildren {
   RendaIndexRoute: typeof RendaIndexRoute
   ApiCheckoutCreateRoute: typeof ApiCheckoutCreateRoute
   ApiCheckoutVerifyRoute: typeof ApiCheckoutVerifyRoute
+  ApiPublicAppVersionRoute: typeof ApiPublicAppVersionRoute
+  ApiPublicClientLoadErrorRoute: typeof ApiPublicClientLoadErrorRoute
   ApiPublicCspReportRoute: typeof ApiPublicCspReportRoute
   AssinaturasIdEditarRoute: typeof AssinaturasIdEditarRoute
   CartoesIdEditarRoute: typeof CartoesIdEditarRoute
@@ -2524,6 +2551,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCspReportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/client-load-error': {
+      id: '/api/public/client-load-error'
+      path: '/api/public/client-load-error'
+      fullPath: '/api/public/client-load-error'
+      preLoaderRoute: typeof ApiPublicClientLoadErrorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/app-version': {
+      id: '/api/public/app-version'
+      path: '/api/public/app-version'
+      fullPath: '/api/public/app-version'
+      preLoaderRoute: typeof ApiPublicAppVersionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/checkout/verify': {
       id: '/api/checkout/verify'
       path: '/api/checkout/verify'
@@ -2758,6 +2799,8 @@ const rootRouteChildren: RootRouteChildren = {
   RendaIndexRoute: RendaIndexRoute,
   ApiCheckoutCreateRoute: ApiCheckoutCreateRoute,
   ApiCheckoutVerifyRoute: ApiCheckoutVerifyRoute,
+  ApiPublicAppVersionRoute: ApiPublicAppVersionRoute,
+  ApiPublicClientLoadErrorRoute: ApiPublicClientLoadErrorRoute,
   ApiPublicCspReportRoute: ApiPublicCspReportRoute,
   AssinaturasIdEditarRoute: AssinaturasIdEditarRoute,
   CartoesIdEditarRoute: CartoesIdEditarRoute,
