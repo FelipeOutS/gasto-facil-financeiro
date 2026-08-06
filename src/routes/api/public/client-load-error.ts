@@ -29,7 +29,7 @@ export const Route = createFileRoute('/api/public/client-load-error')({
           const body = await request.json()
           const data = schema.parse(body)
           
-          const { error } = await supabaseAdmin
+          const { error } = await (supabaseAdmin as any)
             .from('client_load_errors')
             .insert([data])
 
