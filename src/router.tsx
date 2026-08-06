@@ -24,8 +24,19 @@ function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => vo
     if (!isRouteLoadError || typeof window === "undefined") return;
     const key = `gi:route-reload:${pathname}`;
     try {
-      if (window.sessionStorage.getItem(key) === "1") return;
+      if (window.sessionStorage.getItem(key) === "1") {
+        console.warn("[Router error boundary] Reload loop detected, stopping.");
+        return;
+      }
       window.sessionStorage.setItem(key, "1");
+      
+      // If it's a chunk load error, try to clear cache before reload
+      if ("caches" in window) {
+        void caches.keys().then((names) => {
+          for (const name of names) void caches.delete(name);
+        });
+      }
+
       window.location.reload();
     } catch {
       window.location.reload();

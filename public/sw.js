@@ -7,8 +7,9 @@ const CACHE_NAME = "gi-v2-static";
 const OFFLINE_URL = "/offline.html";
 
 // Assets that are safe to cache (public, versioned, non-sensitive)
+// Note: We avoid caching "/" (index) to prevent persistent ChunkLoadErrors on version mismatch.
 const PUBLIC_ASSETS = [
-  "/",
+  
   OFFLINE_URL,
   "/manifest.webmanifest",
   "/pwa-192.png",
