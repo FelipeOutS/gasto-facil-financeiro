@@ -19,38 +19,13 @@ function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => vo
   const isRouteLoadError = isRecoverableRouteLoadError(error);
 
   useEffect(() => {
-    console.error("[Router error boundary]", { pathname, error });
+    // We log for debugging, but we don't clear ALL caches anymore.
+    // The instrumented client-entry handles surgical recovery for version mismatches.
+    console.error("[Router error boundary]", { pathname, error, isRouteLoadError });
 
     if (!isRouteLoadError || typeof window === "undefined") return;
-    const key = `gi:route-reload:${pathname}`;
-    try {
-      if (window.sessionStorage.getItem(key) === "1") {
-        console.warn("[Router error boundary] Reload loop detected, stopping.");
-        return;
-      }
-      window.sessionStorage.setItem(key, "1");
-
-      // If it's a chunk load error, try to clear cache before reload
-      if ("caches" in window) {
-        void caches.keys().then((names) => {
-          for (const name of names) {
-            // Se for um erro de chunk, limpamos o cache para garantir que
-            // o próximo fetch pegue a versão correta do servidor.
-            void caches.delete(name);
-          }
-        });
-      }
-
-      // Além do cache do SW, removemos o cache da própria página para o browser
-      // tentar um hard reload (equivalente ao Ctrl+Shift+R)
-      if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage("SKIP_WAITING");
-      }
-
-      window.location.reload();
-    } catch {
-      window.location.reload();
-    }
+    
+    // Just a basic fallback for manual retry if recovery fails.
   }, [error, isRouteLoadError, pathname]);
 
   return (

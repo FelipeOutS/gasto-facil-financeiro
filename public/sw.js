@@ -3,7 +3,8 @@
  * Focus: PWA installation, controlled updates, and extreme data privacy.
  */
 
-const CACHE_NAME = "gi-v2-static";
+const BUILD_ID = '2026-08-06-P0'; 
+const CACHE_NAME = `gi-${BUILD_ID}`;
 const OFFLINE_URL = "/offline.html";
 
 // Assets that are safe to cache (public, versioned, non-sensitive)
@@ -51,7 +52,9 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          // Only delete caches that belong to this app (prefix "gi-") but have a different version
+          if (cacheName.startsWith("gi-") && cacheName !== CACHE_NAME) {
+            console.log("[SW] Deleting old cache:", cacheName);
             return caches.delete(cacheName);
           }
         }),
@@ -70,12 +73,23 @@ self.addEventListener("message", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // Rule: Any non-GET request is Network Only
+  // Rule 1: Navigation requests MUST go to network first, then offline fallback
+  // We NEVER cache the HTML shell to avoid persistent chunk mismatches.
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match(OFFLINE_URL);
+      })
+    );
+    return;
+  }
+
+  // Rule 2: Any non-GET request is Network Only
   if (event.request.method !== "GET") {
     return;
   }
 
-  // Rule: Authorization header present? Network Only.
+  // Rule 3: Authorization header present? Network Only.
   if (event.request.headers.has("Authorization")) {
     return;
   }
@@ -84,42 +98,20 @@ self.addEventListener("fetch", (event) => {
     (p) => url.pathname.includes(p) || url.origin.includes(p),
   );
 
-  // Rule: Sensitive pattern or non-recognized public asset? Network Only.
+  // Rule 4: Sensitive pattern? Network Only.
   if (isSensitive) {
     return;
   }
 
-  const isStatic =
-    PUBLIC_ASSETS.includes(url.pathname) ||
-    url.pathname.startsWith("/assets/") ||
-    (url.pathname.endsWith(".js") && !url.pathname.includes("chunk-")) ||
-    url.pathname.endsWith(".css");
+  // Rule 5: Hashed assets (assets/*.js|css) should be served by the browser's HTTP cache.
+  // We only intercept specific static assets (icons, manifest) for offline support.
+  const isEssentialStatic = PUBLIC_ASSETS.includes(url.pathname);
 
-  if (isStatic) {
-    // Cache First for static assets
+  if (isEssentialStatic) {
     event.respondWith(
       caches.match(event.request).then((response) => {
         return response || fetch(event.request);
       }),
-    );
-  } else {
-    // Network First for everything else (e.g. Landing Page /)
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          // Never cache a response with Set-Cookie or no-store
-          const cacheControl = response.headers.get("Cache-Control");
-          if (
-            response.headers.has("Set-Cookie") ||
-            (cacheControl && cacheControl.includes("no-store"))
-          ) {
-            return response;
-          }
-          return response;
-        })
-        .catch(() => {
-          return caches.match(OFFLINE_URL);
-        }),
     );
   }
 });
