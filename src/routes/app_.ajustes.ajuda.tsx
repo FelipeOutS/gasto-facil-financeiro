@@ -21,8 +21,9 @@ function AjudaPage() {
   ];
 
   return (
-    <MobileShell>
+    <>
       <SettingsPageHeader 
+
         title={t("help.title")} 
         description={t("sections.help.description")} 
       />
@@ -53,6 +54,6 @@ function AjudaPage() {
           <p className="text-sm font-mono text-foreground/80">{version}</p>
         </div>
       </div>
-    </MobileShell>
+    </>
   );
 }

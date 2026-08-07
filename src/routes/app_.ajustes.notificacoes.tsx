@@ -46,8 +46,9 @@ function NotificacoesPage() {
   ];
 
   return (
-    <MobileShell>
+    <>
       <SettingsPageHeader 
+
         title={t("notifications.title")} 
         description={t("sections.notifications.description")} 
       />
@@ -104,6 +105,6 @@ function NotificacoesPage() {
           </div>
         </section>
       </div>
-    </MobileShell>
+    </>
   );
 }

@@ -104,6 +104,7 @@ import { Route as AdminSaudeRouteImport } from './routes/admin_.saude'
 import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
 import { Route as CartoesIdIndexRouteImport } from './routes/cartoes.$id.index'
 import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integracoes.index'
+import { Route as AppAjustesIndexRouteImport } from './routes/app_.ajustes.index'
 import { Route as RendaIdEditarRouteImport } from './routes/renda.$id.editar'
 import { Route as PixCopiarTokenRouteImport } from './routes/pix.copiar.$token'
 import { Route as MetasIdRemoverRouteImport } from './routes/metas.$id.remover'
@@ -625,6 +626,11 @@ const AppIntegracoesIndexRoute = AppIntegracoesIndexRouteImport.update({
   path: '/app/integracoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppAjustesIndexRoute = AppAjustesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppAjustesRoute,
+} as any)
 const RendaIdEditarRoute = RendaIdEditarRouteImport.update({
   id: '/renda/$id/editar',
   path: '/renda/$id/editar',
@@ -981,6 +987,7 @@ export interface FileRoutesByFullPath {
   '/metas/$id/remover': typeof MetasIdRemoverRoute
   '/pix/copiar/$token': typeof PixCopiarTokenRoute
   '/renda/$id/editar': typeof RendaIdEditarRoute
+  '/app/ajustes/': typeof AppAjustesIndexRoute
   '/app/integracoes/': typeof AppIntegracoesIndexRoute
   '/cartoes/$id/': typeof CartoesIdIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
@@ -1051,7 +1058,6 @@ export interface FileRoutesByTo {
   '/api/mercado-flyer-ocr': typeof ApiMercadoFlyerOcrRoute
   '/api/mercado-joanin-import': typeof ApiMercadoJoaninImportRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
-  '/app/ajustes': typeof AppAjustesRouteWithChildren
   '/app/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
@@ -1121,6 +1127,7 @@ export interface FileRoutesByTo {
   '/metas/$id/remover': typeof MetasIdRemoverRoute
   '/pix/copiar/$token': typeof PixCopiarTokenRoute
   '/renda/$id/editar': typeof RendaIdEditarRoute
+  '/app/ajustes': typeof AppAjustesIndexRoute
   '/app/integracoes': typeof AppIntegracoesIndexRoute
   '/cartoes/$id': typeof CartoesIdIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
@@ -1262,6 +1269,7 @@ export interface FileRoutesById {
   '/metas/$id/remover': typeof MetasIdRemoverRoute
   '/pix/copiar/$token': typeof PixCopiarTokenRoute
   '/renda/$id/editar': typeof RendaIdEditarRoute
+  '/app_/ajustes/': typeof AppAjustesIndexRoute
   '/app_/integracoes/': typeof AppIntegracoesIndexRoute
   '/cartoes/$id/': typeof CartoesIdIndexRoute
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
@@ -1404,6 +1412,7 @@ export interface FileRouteTypes {
     | '/metas/$id/remover'
     | '/pix/copiar/$token'
     | '/renda/$id/editar'
+    | '/app/ajustes/'
     | '/app/integracoes/'
     | '/cartoes/$id/'
     | '/api/integrations/mercadopago/$action'
@@ -1474,7 +1483,6 @@ export interface FileRouteTypes {
     | '/api/mercado-flyer-ocr'
     | '/api/mercado-joanin-import'
     | '/api/ocr-gasto'
-    | '/app/ajustes'
     | '/app/cofre-pessoal'
     | '/app/idioma'
     | '/app/mais'
@@ -1544,6 +1552,7 @@ export interface FileRouteTypes {
     | '/metas/$id/remover'
     | '/pix/copiar/$token'
     | '/renda/$id/editar'
+    | '/app/ajustes'
     | '/app/integracoes'
     | '/cartoes/$id'
     | '/api/integrations/mercadopago/$action'
@@ -1684,6 +1693,7 @@ export interface FileRouteTypes {
     | '/metas/$id/remover'
     | '/pix/copiar/$token'
     | '/renda/$id/editar'
+    | '/app_/ajustes/'
     | '/app_/integracoes/'
     | '/cartoes/$id/'
     | '/api/integrations/mercadopago/$action'
@@ -2507,6 +2517,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIntegracoesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app_/ajustes/': {
+      id: '/app_/ajustes/'
+      path: '/'
+      fullPath: '/app/ajustes/'
+      preLoaderRoute: typeof AppAjustesIndexRouteImport
+      parentRoute: typeof AppAjustesRoute
+    }
     '/renda/$id/editar': {
       id: '/renda/$id/editar'
       path: '/renda/$id/editar'
@@ -2827,6 +2844,7 @@ interface AppAjustesRouteChildren {
   AppAjustesAparenciaRoute: typeof AppAjustesAparenciaRoute
   AppAjustesNotificacoesRoute: typeof AppAjustesNotificacoesRoute
   AppAjustesPreferenciasFinanceirasRoute: typeof AppAjustesPreferenciasFinanceirasRoute
+  AppAjustesIndexRoute: typeof AppAjustesIndexRoute
 }
 
 const AppAjustesRouteChildren: AppAjustesRouteChildren = {
@@ -2835,6 +2853,7 @@ const AppAjustesRouteChildren: AppAjustesRouteChildren = {
   AppAjustesNotificacoesRoute: AppAjustesNotificacoesRoute,
   AppAjustesPreferenciasFinanceirasRoute:
     AppAjustesPreferenciasFinanceirasRoute,
+  AppAjustesIndexRoute: AppAjustesIndexRoute,
 }
 
 const AppAjustesRouteWithChildren = AppAjustesRoute._addFileChildren(
@@ -2985,3 +3004,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

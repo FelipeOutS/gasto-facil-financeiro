@@ -34,8 +34,9 @@ function AparenciaPage() {
   ];
 
   return (
-    <MobileShell>
+    <>
       <SettingsPageHeader 
+
         title={t("appearance.title")} 
         description={t("appearance.description")} 
       />
@@ -94,6 +95,6 @@ function AparenciaPage() {
           <p className="text-[10px] text-brand font-bold uppercase tracking-widest mt-4">Em breve na versão Beta</p>
         </section>
       </div>
-    </MobileShell>
+    </>
   );
 }
