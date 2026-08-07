@@ -68,6 +68,8 @@ import { PrimeirosPassosCard } from "@/components/dashboard/PrimeirosPassosCard"
 import { useRecorrencias } from "@/lib/recorrencias";
 import { buildResumoAlertas } from "@/lib/alertas-contas";
 import { buildLinhasOrcamento, resumirOrcamento } from "@/lib/orcamento";
+import { pctMeta } from "@/lib/meta-progresso";
+
 import type { Categoria, ContaAPagar, Gasto } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
@@ -619,21 +621,23 @@ function Index() {
       </section>
 
 
-      {/* LINHA 9 — Transações recentes + Calendário financeiro */}
+      {/* LINHA 9 — Transações recentes + Meta mais próxima (esquerda) + Calendário */}
       <SectionLabel>{t("sections.visao")}</SectionLabel>
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-        <div className="min-w-0 xl:col-span-7">
+      <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-12">
+        <div className="flex min-w-0 flex-col gap-4 xl:col-span-7">
           <RecentTransactionsCard ultimos={ultimos} />
+          <MetaProximaCard metaProxima={metaProxima} metasAtivas={metasAndamento.length} />
+
         </div>
         <div className="min-w-0 xl:col-span-5">
           <CalendarioFinanceiro ano={ym.ano} mes={ym.mes} onChangeMonth={changeMonth} />
         </div>
       </section>
 
-      {/* LINHA 10 — Resumo do mês + Limite inteligente */}
+      {/* LINHA 10 — Resumo do mês + Impacto (esquerda) / Limite inteligente (direita) */}
       <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="min-w-0">
+      <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-4">
           <ResumoMesCard
             mes={ym.mes}
             ano={ym.ano}
@@ -646,6 +650,12 @@ function Index() {
             contasAtrasadas={contasResumo.atrasadasCount}
             limiteTotal={limiteTotal}
           />
+          <EconomicMonthImpactCard
+            saldo={saldo}
+            receitas={totalEntradas}
+            despesas={total}
+            contasVencidas={contasResumo.atrasadasCount}
+          />
         </div>
         <div className="min-w-0">
           <SmartLimiteCard
@@ -657,8 +667,8 @@ function Index() {
         </div>
       </section>
 
-      {/* Orçamento, alertas de contas, limite mensal, renda e primeiros passos */}
-      <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+      {/* Orçamento, alertas de contas, limite mensal e primeiros passos */}
+      <section className="mt-4 grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
         <div className="min-w-0 space-y-4">
           {temOrcamentoMes && (
             <OrcamentoCard
@@ -686,14 +696,9 @@ function Index() {
             cartoesCount={cartoes.length}
             metasCount={metas.length}
           />
-          <EconomicMonthImpactCard
-            saldo={saldo}
-            receitas={totalEntradas}
-            despesas={total}
-            contasVencidas={contasResumo.atrasadasCount}
-          />
         </div>
       </section>
+
 
       {/* LINHA 11 — Controle financeiro */}
       <SectionLabel>{t("sections.controle")}</SectionLabel>
@@ -730,17 +735,11 @@ function Index() {
           <p className="num text-xs text-muted-foreground">
             {metaProxima
               ? `${metaProxima.meta.nome} · ${Math.round(
-                  metaProxima.breakdown.total > 0
-                    ? Math.min(
-                        100,
-                        ((metaProxima.breakdown.guardado + metaProxima.breakdown.direto) /
-                          metaProxima.breakdown.total) *
-                          100,
-                      )
-                    : 0,
+                  pctMeta(metaProxima.breakdown.total, metaProxima.meta.valorObjetivo),
                 )}%`
               : `${metasAndamento.length}`}
           </p>
+
 
         </Link>
       </section>
@@ -756,6 +755,97 @@ function Index() {
 }
 
 /* ====================== Helpers de UI ====================== */
+
+/** "Meta mais próxima" — restaurado. Usa os dados/regras já existentes. */
+function MetaProximaCard({
+  metaProxima,
+  metasAtivas,
+}: {
+  metaProxima: {
+    meta: import("@/lib/types").Meta;
+    breakdown: { total: number; guardado: number; direto: number; restante: number };
+  } | null;
+  metasAtivas: number;
+}) {
+  const { t } = useTranslation("dashboard");
+
+  if (!metaProxima) {
+    return (
+      <Link
+        to="/metas"
+        className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
+      >
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-card-elevated">
+          <Target className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{t("metasFallback.title")}</p>
+          <p className="truncate text-[11px] text-muted-foreground">
+            {t("metasFallback.andamento", { count: metasAtivas })}
+          </p>
+        </div>
+      </Link>
+    );
+  }
+
+  const m = metaProxima.meta;
+  const bd = metaProxima.breakdown;
+  const objetivo = Number(m.valorObjetivo) || 0;
+  const acumulado = bd.total;
+  const restante = bd.restante;
+  const pct = pctMeta(acumulado, objetivo);
+
+  return (
+    <section className="flex w-full flex-col rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <Sparkles className="h-3.5 w-3.5 shrink-0" style={{ color: m.colorHex }} />
+          <h2 className="truncate text-sm font-semibold">{t("metaProxima.title")}</h2>
+        </div>
+        <Link
+          to="/metas"
+          className="shrink-0 text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {t("metaProxima.verTodas")}
+        </Link>
+      </div>
+      <div className="mt-3 flex items-baseline justify-between gap-3">
+        <p className="truncate text-base font-semibold">{m.nome}</p>
+        <p className="num shrink-0 text-xs text-muted-foreground">
+          {formatBRL(acumulado)} / {formatBRL(objetivo)}
+        </p>
+      </div>
+      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${pct}%`, background: m.colorHex }}
+        />
+      </div>
+      <div className="mt-2 flex items-center justify-between text-xs">
+        <span className="num font-semibold" style={{ color: m.colorHex }}>
+          {Math.round(pct)}%
+        </span>
+        <span className="num text-muted-foreground">
+          {t("metaProxima.falta", { valor: formatBRL(restante) })}
+        </span>
+      </div>
+      {bd.guardado > 0 && (
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          <Trans
+            i18nKey="metaProxima.incluiGuardado"
+            t={t}
+            values={{ valor: formatBRL(bd.guardado) }}
+            components={{ strong: <span className="num font-semibold text-foreground" /> }}
+          />
+        </p>
+      )}
+      <p className="mt-3 text-[11px] text-muted-foreground">
+        {metasAtivas} {metasAtivas === 1 ? t("metaProxima.ativaSing") : t("metaProxima.ativaPlur")}
+      </p>
+    </section>
+  );
+}
+
 
 /** Donut "Por categoria" — sem dependência de gráfico, usando conic-gradient. */
 function CategoriasDonutCard({
@@ -1097,7 +1187,7 @@ function RecentTransactionsCard({ ultimos }: { ultimos: import("@/lib/types").Ga
   const { t, i18n } = useTranslation("dashboard");
   const dateLocale = i18n.language === "en" ? "en-US" : "pt-BR";
   return (
-    <section className="flex h-full w-full flex-col rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
+    <section className="flex w-full flex-col rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
