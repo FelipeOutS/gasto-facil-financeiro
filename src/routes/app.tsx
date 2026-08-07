@@ -493,7 +493,7 @@ function Index() {
               <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
               <div className="grid grid-cols-1 gap-4">
                 <SmartLimiteCard mes={ym.mes} ano={ym.ano} totalEntradas={totalEntradas} totalGastos={total} />
-                <ContasCard resumo={contasResumo} variant="sideTop" />
+                <ContasCard resumo={contasResumo} variant="sideTop" className="h-full" />
               </div>
             </div>
             <SectionLabel>{t("sections.controle")}</SectionLabel>
@@ -576,12 +576,13 @@ function Index() {
             contasAtrasadas={contasResumo.atrasadasCount}
             limiteTotal={limiteTotal}
           />
-          <ContasAReceberCard />
+          <ContasAReceberCard className="h-full" />
           <EconomicMonthImpactCard
             saldo={saldo}
             receitas={totalEntradas}
             despesas={total}
             contasVencidas={contasResumo.atrasadasCount}
+            className="h-full"
           />
         </div>
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -1193,9 +1194,11 @@ type ContasResumo = {
 function ContasCard({
   resumo,
   variant = "default",
+  className,
 }: {
   resumo: ContasResumo;
   variant?: "default" | "sideTop";
+  className?: string;
 }) {
   const { t } = useTranslation("dashboard");
   const hasAtrasada = resumo.atrasadasCount > 0;
@@ -1848,7 +1851,7 @@ function ResumoMesCard({
   );
 }
 
-function ContasAReceberCard() {
+function ContasAReceberCard({ className }: { className?: string }) {
   const { t } = useTranslation("dashboard");
   const { user } = useAuth();
   const userId = user?.id;
@@ -1908,7 +1911,7 @@ function ContasAReceberCard() {
             : t("contasReceber.venceEm", { dias });
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 shadow-card">
+    <section className={cn("rounded-2xl border border-border bg-card p-4 shadow-card", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-success/15 text-success">
