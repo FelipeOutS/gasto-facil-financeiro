@@ -82,6 +82,9 @@ import {
   isLoginBioUnlockRequired,
 } from "@/lib/biometric-login";
 import { AdminMasterBadge } from "@/components/AdminMasterBadge";
+import { AppModuleBanner, AppEmptyStateVisual, AppActionCard } from "@/components/app-v2";
+import { Button } from "@/components/ui/button";
+
 
 
 export const Route = createFileRoute("/app")({
@@ -422,10 +425,10 @@ function Index() {
           </Link>
         </section>
 
-        {/* Mantém o piloto direct visível também no Dashboard sem lançamentos. */}
         <AdSlot className="mt-5" slotId="dashboard-middle" />
 
         <p className="mt-8 text-center text-xs text-muted-foreground">{t("empty.footer")}</p>
+
       </MobileShell>
     );
   }
@@ -480,10 +483,17 @@ function Index() {
 
       <div className="mt-5 lg:hidden">
         <MobileMonthSummary
+          ano={ym.ano}
+          mes={ym.mes}
           saldo={saldo}
-          entradas={totalEntradas}
+          receitas={totalEntradas}
           despesas={total}
           guardado={totalGuardado}
+          aPagar={contasResumo.pendente}
+          atrasadasCount={contasResumo.atrasadasCount}
+          pendentesCount={contasResumo.pendentesCount}
+          onPrev={() => changeMonth(-1)}
+          onNext={() => changeMonth(1)}
         />
       </div>
 
@@ -1199,14 +1209,19 @@ function ContasCard({
         </div>
       )}
 
-      {semContas && (
-        <Link to="/contas-a-pagar" className="mt-3 block">
-          <Button variant="outline" size="sm" className="w-full">
-            <Plus className="mr-1 h-4 w-4" />
+      {!semContas && !tudoPago && (
+        <Link to="/adicionar" search={{ tipo: "conta" }} className="mt-4 block">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-2 rounded-xl border-border bg-card-elevated hover:bg-accent"
+          >
+            <Plus className="h-3.5 w-3.5" />
             {t("contas.adicionar")}
           </Button>
         </Link>
       )}
+
     </section>
   );
 }
