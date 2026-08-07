@@ -68,6 +68,8 @@ import { PrimeirosPassosCard } from "@/components/dashboard/PrimeirosPassosCard"
 import { useRecorrencias } from "@/lib/recorrencias";
 import { buildResumoAlertas } from "@/lib/alertas-contas";
 import { buildLinhasOrcamento, resumirOrcamento } from "@/lib/orcamento";
+import { pctMeta } from "@/lib/meta-progresso";
+
 import type { Categoria, ContaAPagar, Gasto } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
