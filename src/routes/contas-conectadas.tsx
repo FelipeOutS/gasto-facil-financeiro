@@ -111,17 +111,18 @@ function ContasConectadasPage() {
   return (
     <MobileShell wide>
       <div className="mx-auto w-full max-w-5xl space-y-8 py-6 lg:py-10">
-        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              {t("connected.title")}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">{t("connected.subtitle")}</p>
-          </div>
-          <Button onClick={() => setInviteOpen(true)} className="gap-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <SettingsPageHeader
+            title={t("connected.title")}
+            description={t("connected.subtitle")}
+            backTo={from === "ajustes" ? "/app/ajustes" : "/app"}
+            className="mb-0"
+          />
+          <Button onClick={() => setInviteOpen(true)} className="gap-2 sm:mt-8">
             <Plus className="h-4 w-4" /> {t("connected.newConnection")}
           </Button>
-        </header>
+        </div>
+
 
         {/* Contas que EU acompanho */}
         <section className="space-y-4">
