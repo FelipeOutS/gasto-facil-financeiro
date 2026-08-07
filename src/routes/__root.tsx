@@ -31,34 +31,15 @@ import { useOfflineIncomeQueue } from "@/lib/offline/use-offline-income-sync";
 import { preloadAllBankLogos, preloadAllMerchantLogos } from "@/lib/logos";
 import "@/i18n";
 import { useLocale } from "@/i18n/use-locale";
-import { PWAUpdateToast } from "@/components/pwa/PWAUpdateToast";
+import { cleanupLegacyServiceWorkers } from "@/lib/sw-cleanup";
 
 import appCss from "../styles.css?url";
 
-if (typeof window !== "undefined" && "serviceWorker" in navigator && import.meta.env.PROD) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then((registration) => {
-        registration.onupdatefound = () => {
-          const installingWorker = registration.installing;
-          if (installingWorker) {
-            installingWorker.onstatechange = () => {
-              if (installingWorker.state === "installed" && navigator.serviceWorker.controller) {
-                // Update available: notify user
-                window.dispatchEvent(
-                  new CustomEvent("pwa-update-available", { detail: registration }),
-                );
-              }
-            };
-          }
-        };
-      })
-      .catch((err) => {
-        console.error("SW registration failed:", err);
-      });
-  });
-}
+// PWA STABILITY MODE (incidente P0 2026-08-07): o app não registra mais Service
+// Worker. O /sw.js publicado é um worker de limpeza que remove a si mesmo e os
+// caches "gi-". Sem isso, o navegador recorrente continuava controlado por um
+// worker antigo servindo chunks de builds inexistentes.
+// Ver docs/INCIDENTE_P0_CARREGAMENTO_RECORRENTE_2026-08-07.md.
 
 const rootSearchSchema = z.object({
   lang: fallback(z.enum(["pt", "en"]).optional(), undefined).optional(),
@@ -279,6 +260,12 @@ function RootComponent() {
 
   // Sincroniza idioma (URL ↔ i18n ↔ localStorage ↔ <html lang>)
   useLocale();
+
+  // Remove qualquer Service Worker antigo do app (PWA STABILITY MODE).
+  useEffect(() => {
+    void cleanupLegacyServiceWorkers();
+  }, []);
+
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   // Hreflang dinâmico: aponta para /pt{path} e /en{path} para SEO multilíngue.
   // Usa o pathname "limpo" (sem prefixo /pt|/en).
@@ -290,7 +277,7 @@ function RootComponent() {
       <ConnectedAccountBanner />
       <OfflineQueueMount />
       <PersistentAppShell pathname={pathname} />
-      <PWAUpdateToast />
+
       <CookieConsentBanner />
       <Toaster position="top-center" />
       <ConfirmDialogHost />
