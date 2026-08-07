@@ -933,7 +933,10 @@ function AdminPage() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Cadastro</p>
-                    <p className="font-medium">{fmtDate(selected.created_at)}</p>
+                    <p className="font-medium" title={adminDateTimeTooltip(selected.created_at)}>
+                      {fmtDateTime(selected.created_at)}
+                    </p>
+
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Plano</p>
