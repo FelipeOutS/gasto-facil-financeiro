@@ -13,8 +13,18 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 const serverEnv = loadEnv(process.env.NODE_ENV ?? "development", process.cwd(), "");
 Object.assign(process.env, serverEnv);
 
+// BUILD_ID gerado UMA vez por build (no carregamento deste config) e injetado no
+// bundle do cliente, no servidor e no endpoint /api/public/app-version.
+// Ver docs/INCIDENTE_P0_CARREGAMENTO_RECORRENTE_2026-08-07.md.
+const BUILD_TIMESTAMP = new Date();
+const GI_BUILD_ID = `${BUILD_TIMESTAMP.toISOString().slice(0, 10)}-${BUILD_TIMESTAMP.getTime().toString(36)}`;
+
 export default defineConfig({
   vite: {
+    define: {
+      __GI_BUILD_ID__: JSON.stringify(GI_BUILD_ID),
+      __GI_DEPLOYED_AT__: JSON.stringify(BUILD_TIMESTAMP.toISOString()),
+    },
     resolve: {
       alias: {
         "entities/lib/decode.js": path.resolve(__dirname, "node_modules/entities/lib/decode.js"),

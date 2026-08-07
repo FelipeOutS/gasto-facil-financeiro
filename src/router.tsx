@@ -1,8 +1,8 @@
 import { createRouter, Link, useRouter, useRouterState } from "@tanstack/react-router";
 
-
 import { useEffect } from "react";
 import { routeTree } from "./routeTree.gen";
+import { attemptRecovery, classifyLoadError, isVersionSkewCandidate } from "./lib/recovery";
 
 function isRecoverableRouteLoadError(error: Error) {
   const text = `${error.name} ${error.message} ${error.stack ?? ""}`.toLowerCase();
@@ -21,13 +21,21 @@ function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => vo
   const isRouteLoadError = isRecoverableRouteLoadError(error);
 
   useEffect(() => {
-    // We log for debugging, but we don't clear ALL caches anymore.
-    // The instrumented client-entry handles surgical recovery for version mismatches.
-    console.error("[Router error boundary]", { pathname, error, isRouteLoadError });
+    // Diagnóstico sempre; recuperação automática APENAS quando o BUILD_ID do
+    // servidor difere do build carregado (version skew comprovado), no máximo
+    // uma vez por par de builds. Nunca limpamos todos os caches nem dados.
+    console.error("[Router error boundary]", { pathname, isRouteLoadError });
 
-    if (!isRouteLoadError || typeof window === "undefined") return;
-    
-    // Just a basic fallback for manual retry if recovery fails.
+    if (typeof window === "undefined") return;
+
+    const type = classifyLoadError({
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    });
+    if (!isRouteLoadError && !isVersionSkewCandidate(type)) return;
+
+    void attemptRecovery(error, type);
   }, [error, isRouteLoadError, pathname]);
 
   return (

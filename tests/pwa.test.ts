@@ -23,26 +23,28 @@ describe("PWA 8B Validation", () => {
     expect(fs.existsSync(path.resolve(process.cwd(), "public/maskable-512.png"))).toBe(true);
   });
 
-  it("should have controlled update in sw.js", () => {
+  it("sw.js está em PWA STABILITY MODE (worker de limpeza, sem fetch handler)", () => {
     const swContent = fs.readFileSync(path.resolve(process.cwd(), "public/sw.js"), "utf-8");
-    const installBlock =
-      swContent.match(/self\.addEventListener\("install"[\s\S]*?\}\);/)?.[0] || "";
 
-    // Filtra comentários para verificar se a chamada está ativa
-    const activeLines = installBlock
-      .split("\n")
-      .filter((line) => !line.trim().startsWith("//"))
-      .join("\n");
-
-    expect(activeLines).not.toContain("self.skipWaiting()");
-    expect(swContent).toContain('event.data === "SKIP_WAITING"');
+    // Incidente P0 2026-08-07: o worker publicado apenas se remove.
+    expect(swContent).toContain("self.registration.unregister()");
+    expect(swContent).toContain("self.skipWaiting()");
+    expect(swContent).not.toContain('addEventListener("fetch"');
+    expect(swContent).not.toContain("cache.addAll");
   });
 
-  it("should block all sensitive patterns and auth headers", () => {
+  it("apaga apenas caches do app, preservando caches de terceiros", () => {
     const swContent = fs.readFileSync(path.resolve(process.cwd(), "public/sw.js"), "utf-8");
-    expect(swContent).toContain('"mercadopago.com"');
-    expect(swContent).toContain('request.headers.has("Authorization")');
-    expect(swContent).toContain("const isSensitive = SENSITIVE_PATTERNS.some");
+    expect(swContent).toContain('const APP_CACHE_PREFIX = "gi-"');
+    expect(swContent).toContain("isAppOwnedCache");
+    // Nunca um caches.delete indiscriminado.
+    expect(swContent).not.toMatch(/cacheNames\.map\(\(name\) => caches\.delete\(name\)\)/);
+  });
+
+  it("o app não registra mais Service Worker", () => {
+    const root = fs.readFileSync(path.resolve(process.cwd(), "src/routes/__root.tsx"), "utf-8");
+    expect(root).not.toContain('serviceWorker.register("/sw.js")');
+    expect(root).toContain("cleanupLegacyServiceWorkers");
   });
 
   it("should have a secure offline page", () => {
