@@ -66,7 +66,9 @@ export const Route = createFileRoute("/contas-conectadas")({
 function ContasConectadasPage() {
   const { t } = useTranslation("misc");
   const { user } = useAuth();
+  const { from } = useSearch({ from: "/contas-conectadas" });
   const [outgoing, setOutgoing] = useState<ConnectedAccount[]>([]);
+
   const [incoming, setIncoming] = useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
