@@ -1,10 +1,7 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
-import { chooseFreeAdsPlan } from "@/lib/subscription.functions";
+import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  ArrowLeft,
   Check,
   Crown,
   Hourglass,
@@ -16,43 +13,84 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
-import { UpgradeCardsList } from "@/components/UpgradeCardsList";
-import { requireOnline } from "@/lib/use-online-status";
-import { ZonaDeRiscoCard } from "@/components/DeleteAccountDialog";
-import { CancelarAssinaturaDialog } from "@/components/CancelarAssinaturaDialog";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
 import {
-  COMMERCIAL_PLANS,
-  PERIODICIDADES,
-  PLAN_FEATURES,
   PLAN_LABEL,
   commercialPlanByTier,
   formatBRL,
-  planAllowsFeature,
-  priceForPeriod,
-  suggestedUpgrade,
   type Periodicidade,
   type PlanTier,
 } from "@/lib/plans";
 import { getVocab, tipoCadastroLabel, type TipoCadastro } from "@/lib/profile-utils";
-import { Button } from "@/components/ui/button";
-import { StatusBadge, type StatusTone } from "@/components/ui/status-badge";
-import { EmptyState as PremiumEmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import {
-  criarCheckout,
   listarPagamentos,
-  statusLabelMP,
-  verificarPagamento,
   type PaymentHistoryRow,
 } from "@/lib/payments-mp";
-import { toast } from "sonner";
+import { SettingsPageHeader } from "@/components/SettingsPageHeader";
+import { z } from "zod";
+
+const planSearchSchema = z.object({
+  from: z.enum(["ajustes", "conta"]).optional(),
+});
 
 export const Route = createFileRoute("/meu-plano")({
+  validateSearch: planSearchSchema,
   head: () => ({ meta: [{ title: "Meu plano — Gasto Inteligente" }] }),
   component: MeuPlanoPage,
 });
+
+const STATUS_BADGE_TONE: Record<string, any> = {
+  ativo: "success",
+  teste: "info",
+  aguardando_pagamento: "warning",
+  expirado: "destructive",
+  cancelado: "muted",
+  sem_assinatura: "muted",
+};
+
+function MeuPlanoPage() {
+  const { t, i18n } = useTranslation("landing");
+  const { t: tp } = useTranslation("meu-plano");
+  const { profile, user } = useAuth();
+  const { from } = useSearch({ from: "/meu-plano" });
+  const {
+    plan,
+    status,
+    loading,
+    isAdminMaster,
+    isTrialActive,
+    trialDaysLeft,
+    isCancelled,
+    accessUntil,
+    paymentMethod,
+    paymentAmountCents,
+    paidAt,
+    periodicidade: activePeriodicidade,
+    currentPeriodStart,
+    currentPeriodEnd,
+    refresh,
+  } = usePlan();
+  
+  const tipo = (profile?.tipo_cadastro as TipoCadastro) ?? null;
+  const vocab = getVocab(tipo);
+  
+  const semAssinatura = !loading && !isAdminMaster && !isTrialActive && (status === "sem_assinatura" || status === "free");
+  const aguardando = !loading && !isAdminMaster && status === "aguardando_pagamento";
+  const ativoPago = !loading && !isAdminMaster && status === "ativo" && !isTrialActive;
+
+  const [historico, setHistorico] = useState<PaymentHistoryRow[]>([]);
+  
+  useEffect(() => {
+    if (!user?.id) return;
+    void listarPagamentos(user.id).then(setHistorico);
+  }, [user?.id]);
+
+  const backTo = from === "ajustes" ? "/app/ajustes" : "/conta";
+  const planName = (tier: PlanTier) => t(`plans.names.${tier}`, { defaultValue: PLAN_LABEL[tier] });
+  const formatDate = (date: string | Date) => new Date(date).toLocaleDateString(i18n.language?.startsWith("en") ? "en-US" : "pt-BR");
+
 
 const STATUS_BADGE_TONE: Record<string, StatusTone> = {
   ativo: "success",
