@@ -205,6 +205,18 @@ export function DashboardSaudeFinanceiraCard({
 
   // Estado de dados insuficientes — card compacto e educativo
   if (!health) {
+    const emptyBody = (
+      <div className="flex items-start gap-3">
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted/40 text-muted-foreground">
+          <HeartPulse className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-semibold leading-tight">{t("financialHealth.title")}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">{t("financialHealth.empty")}</p>
+        </div>
+      </div>
+    );
+    if (embedded) return <div className={cn("min-w-0", className)}>{emptyBody}</div>;
     return (
       <PremiumCard
         variant="subtle"
@@ -212,28 +224,15 @@ export function DashboardSaudeFinanceiraCard({
         padding="default"
         className={cn("animate-rise", className)}
       >
-        <div className="flex items-start gap-3">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted/40 text-muted-foreground">
-            <HeartPulse className="h-5 w-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-semibold leading-tight">{t("financialHealth.title")}</h3>
-            <p className="mt-1 text-xs text-muted-foreground">{t("financialHealth.empty")}</p>
-          </div>
-        </div>
+        {emptyBody}
       </PremiumCard>
     );
   }
 
   const tone = levelTone(health.level);
 
-  return (
-    <PremiumCard
-      variant="default"
-      rounded="2xl"
-      padding="default"
-      className={cn("animate-rise border", tone.ring, className)}
-    >
+  const body = (
+    <>
       <div className="flex items-start gap-3">
         <div className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-xl", tone.iconBg)}>
           <HeartPulse className={cn("h-5 w-5", tone.iconFg)} />
@@ -249,7 +248,7 @@ export function DashboardSaudeFinanceiraCard({
         </div>
       </div>
 
-      <div className="mt-4 flex items-end gap-2">
+      <div className="mt-3 flex items-end gap-2">
         <span className={cn("text-4xl font-bold leading-none tabular-nums", tone.scoreText)}>
           {health.score}
         </span>
@@ -258,7 +257,7 @@ export function DashboardSaudeFinanceiraCard({
       <p className="mt-1 text-xs font-semibold">{health.title}</p>
 
       {(health.positives.length > 0 || health.warnings.length > 0) && (
-        <ul className="mt-3 space-y-1.5">
+        <ul className="mt-2.5 space-y-1.5">
           {health.warnings.slice(0, 2).map((w, i) => (
             <BulletRow key={`w-${i}`} icon={AlertTriangle} iconClass={tone.iconFg} text={w} />
           ))}
@@ -268,7 +267,8 @@ export function DashboardSaudeFinanceiraCard({
         </ul>
       )}
 
-      {economicNote && (
+      {/* No modo embutido o cenário macro vem do bloco de Diagnóstico, evitando duplicidade. */}
+      {!embedded && economicNote && (
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-border/60 bg-muted/30 px-2.5 py-2">
           <Activity className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
           <div className="min-w-0 flex-1">
@@ -279,6 +279,20 @@ export function DashboardSaudeFinanceiraCard({
           </div>
         </div>
       )}
+    </>
+  );
+
+  if (embedded) return <div className={cn("min-w-0", className)}>{body}</div>;
+
+  return (
+    <PremiumCard
+      variant="default"
+      rounded="2xl"
+      padding="default"
+      className={cn("animate-rise border", tone.ring, className)}
+    >
+      {body}
     </PremiumCard>
   );
 }
+
