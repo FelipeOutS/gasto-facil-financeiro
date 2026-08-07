@@ -122,7 +122,6 @@ const STATUS_COLORS: Record<DisplayStatus, string> = {
   conta_criada: "bg-muted text-muted-foreground border-border",
 };
 
-
 function getDisplayStatus(u: AdminUserRow): DisplayStatus {
   const paid = u.last_payment_status === "approved" || u.last_payment_status === "paid";
   const hasPlan = !!u.plano && u.plano !== "free" && u.plano !== "sem_assinatura";
@@ -258,10 +257,7 @@ function AdminPage() {
     return (
       usersList
         .filter((u) => {
-          if (
-            q &&
-            !(u.email.toLowerCase().includes(q) || (u.nome ?? "").toLowerCase().includes(q))
-          )
+          if (q && !(u.email.toLowerCase().includes(q) || (u.nome ?? "").toLowerCase().includes(q)))
             return false;
           if (filterPlan !== "all" && u.plano !== filterPlan) return false;
           if (filterStatus !== "all" && getDisplayStatus(u) !== filterStatus) return false;
@@ -272,8 +268,6 @@ function AdminPage() {
         // Ordena pelo timestamp real do cadastro (mais recente primeiro)
         .sort(compareCreatedAtDesc)
     );
-
-
   }, [usersList, search, filterPlan, filterStatus, filterMethod, filterPeriod]);
 
   // Charts data
@@ -758,8 +752,6 @@ function AdminPage() {
                             </span>
                           ) : null}
                         </span>
-
-
                       </div>
                       <div className="min-w-0">
                         <span className="text-muted-foreground">Total pago: </span>
