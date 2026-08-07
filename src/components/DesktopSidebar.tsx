@@ -330,7 +330,7 @@ export function DesktopSidebar() {
 
         <nav
           className={cn(
-            "flex-1 overflow-y-auto overflow-x-hidden pb-3 scrollbar-thin scrollbar-thumb-border/60 scrollbar-track-transparent hover:scrollbar-thumb-border",
+            "flex-1 overflow-y-auto overflow-x-hidden pb-3 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40",
             collapsed ? "px-2" : "px-3",
           )}
         >

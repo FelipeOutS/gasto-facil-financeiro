@@ -19,12 +19,11 @@ import {
   Clock,
   Bell,
   HandCoins,
+  ShieldCheck,
 } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RTooltip } from "recharts";
 import { MobileShell } from "@/components/MobileShell";
 import { MobileMonthSummary } from "@/components/MobileMonthSummary";
 import { CalendarioFinanceiro } from "@/components/CalendarioFinanceiro";
-import { PlanoCard } from "@/components/PlanoCard";
 import { CategoryIcon, categoryColor } from "@/components/CategoryIcon";
 import { TransactionAvatar } from "@/components/TransactionAvatar";
 import { FluxoCaixaChart } from "@/components/FluxoCaixaChart";
@@ -53,8 +52,7 @@ import {
   useBootstrap,
   useStore,
 } from "@/lib/store";
-import { formatBRL, formatBRLCompact, formatMonthYear, parseDateLocal } from "@/lib/format";
-import { Button } from "@/components/ui/button";
+import { formatBRL, formatBRLCompact, formatMonthYear } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Money } from "@/components/Money";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -83,8 +81,11 @@ import {
   isLoginBioInProgress,
   isLoginBioUnlockRequired,
 } from "@/lib/biometric-login";
-import { AppModuleBanner, AppEmptyStateVisual, AppActionCard } from "@/components/app-v2";
 import { AdminMasterBadge } from "@/components/AdminMasterBadge";
+import { AppModuleBanner, AppEmptyStateVisual, AppActionCard } from "@/components/app-v2";
+import { Button } from "@/components/ui/button";
+
+
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -424,10 +425,10 @@ function Index() {
           </Link>
         </section>
 
-        {/* Mantém o piloto direct visível também no Dashboard sem lançamentos. */}
         <AdSlot className="mt-5" slotId="dashboard-middle" />
 
         <p className="mt-8 text-center text-xs text-muted-foreground">{t("empty.footer")}</p>
+
       </MobileShell>
     );
   }
@@ -452,131 +453,122 @@ function Index() {
   );
 
   return (
-      <MobileShell wide>
-        <AvisoTrialExpirandoBanner />
-        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
-          {/* Dashboard Left Column (Main Stats) */}
-          <div className="space-y-4 lg:col-span-8">
-            <HeroGreeting
-              nome={profile?.nome ?? null}
-              eyebrow={getVocab(profile?.tipo_cadastro as TipoCadastro).dashboardEyebrow}
-              mesAno={formatMonthYear(ym.ano, ym.mes)}
-              subtitle={t("hero.subtitle")}
-              monthSwitcher={monthSwitcher}
-            />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <SaldoHeroCard saldo={saldo} entradas={totalEntradas} despesas={total} />
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                <KpiCard
-                  label={t("kpi.receitas")}
-                  valueNum={totalEntradas}
-                  icon={<ArrowUp className="h-4 w-4" />}
-                  tone="success"
-                  hint={t("kpi.entradaPlur", { count: receitasMes.length })}
-                />
-                <KpiCard
-                  label={t("kpi.aPagar")}
-                  valueNum={contasResumo.pendente}
-                  icon={<Clock className="h-4 w-4" />}
-                  tone={contasResumo.atrasadasCount > 0 ? "destructive" : "warning"}
-                  hint={
-                    contasResumo.atrasadasCount > 0
-                      ? t("kpi.atrasada", { count: contasResumo.atrasadasCount })
-                      : t("kpi.tudoEmDia")
-                  }
-                />
-              </div>
-            </div>
-            <QuickActionsBar />
-            <SectionLabel>{t("sections.radar")}</SectionLabel>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
-              <div className="grid grid-cols-1 gap-4">
-                <SmartLimiteCard mes={ym.mes} ano={ym.ano} totalEntradas={totalEntradas} totalGastos={total} />
-                <ContasCard resumo={contasResumo} variant="sideTop" className="h-full" />
-              </div>
-            </div>
-            <SectionLabel>{t("sections.controle")}</SectionLabel>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <OrcamentoCard categorias={categorias} gastos={gastosConfirmados} mes={ym.mes} ano={ym.ano} />
-              <div className="grid grid-cols-1 gap-4">
-                <MinhaRendaCard totalEntradas={totalEntradas} ano={ym.ano} mes={ym.mes} />
-                <LimiteMensalCard
-                  total={total}
-                  limiteTotal={limiteTotal ?? 0}
-                  usoLimite={usoLimite}
-                  passouLimite={!!passouLimite}
-                  proximoLimite={!!proximoLimite}
-                  className="h-full"
-                />
-              </div>
-            </div>
-          </div>
-          {/* Dashboard Right Column (Sidebar Insights) */}
-          <div className="space-y-4 lg:col-span-4">
-            <div className="lg:sticky lg:top-4 lg:space-y-4">
-              <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
-              <DashboardAlertasBloco />
-              <DashboardSaudeFinanceiraCard />
-              <DashboardDiagnosticoMensalCard />
-              <DashboardDicasBloco />
-              <PrimeirosPassosCard
-                gastosCount={gastos.length}
-                receitasCount={receitas.length}
-                cartoesCount={cartoes.length}
-                metasCount={metas.length}
-              />
-            </div>
+    <MobileShell wide>
+      <header className="flex items-center justify-between pt-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            {getVocab(profile?.tipo_cadastro as TipoCadastro).dashboardEyebrow}
+          </p>
+          <h1 className="mt-0.5 flex items-center gap-2 text-[18px] font-bold leading-tight tracking-tight sm:text-xl lg:text-[22px]">
+            {new Date().getHours() < 12
+              ? t("hero.greetingMorning")
+              : new Date().getHours() < 18
+                ? t("hero.greetingAfternoon")
+                : t("hero.greetingEvening")}
+            {(profile?.nome ?? "").trim().split(/\s+/)[0] ? `, ${(profile?.nome ?? "").trim().split(/\s+/)[0]}` : ""}
+            <AdminMasterBadge className="mt-0.5" />
+          </h1>
+          <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-card-elevated/70 px-2 py-0.5 text-[10px] font-medium capitalize text-muted-foreground">
+            <CalendarClock className="h-3 w-3" />
+            {formatMonthYear(ym.ano, ym.mes)}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="lg:hidden">{monthSwitcher}</div>
+          <div className="hidden lg:block">
+            <NotificationBell />
           </div>
         </div>
+      </header>
 
-        <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-          <div className="lg:col-span-8">
-            <DashboardCartoesInsights
-              mes={ym.mes}
-              ano={ym.ano}
-              gastosMes={doMes}
-              totalMes={total}
-              totalMesAnterior={totalMesAnterior}
-              maiorCategoria={maior ?? null}
-              onAbrirFatura={abrirFatura}
-              slot="lists"
-            />
-          </div>
-          <div className="lg:col-span-4">
-            <DashboardCartoesInsights
-              mes={ym.mes}
-              ano={ym.ano}
-              gastosMes={doMes}
-              totalMes={total}
-              totalMesAnterior={totalMesAnterior}
-              maiorCategoria={maior ?? null}
-              onAbrirFatura={abrirFatura}
-              slot="insights"
-            />
+      <div className="mt-5 lg:hidden">
+        <MobileMonthSummary
+          ano={ym.ano}
+          mes={ym.mes}
+          saldo={saldo}
+          receitas={totalEntradas}
+          despesas={total}
+          guardado={totalGuardado}
+          aPagar={contasResumo.pendente}
+          atrasadasCount={contasResumo.atrasadasCount}
+          pendentesCount={contasResumo.pendentesCount}
+          onPrev={() => changeMonth(-1)}
+          onNext={() => changeMonth(1)}
+        />
+      </div>
+
+      <div className="mt-6 flex items-center justify-between gap-4">
+        <SectionLabel>{t("kpi.saldo")}</SectionLabel>
+        <div className="hidden lg:block">{monthSwitcher}</div>
+      </div>
+
+      <SaldoHeroCard saldo={saldo} entradas={totalEntradas} despesas={total} />
+
+      <QuickActionsBar />
+
+      <SectionLabel>{t("sections.radar")}</SectionLabel>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="space-y-4">
+          <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
+          <DashboardAlertasBloco />
+          <DashboardSaudeFinanceiraCard />
+          <DashboardDiagnosticoMensalCard />
+          <DashboardDicasBloco />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <RadarEconomicoCard />
+            <RadarEconomicoInteligenteCard />
           </div>
         </div>
-        <SectionLabel>{t("sections.visao")}</SectionLabel>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <RecentTransactionsCard ultimos={ultimos} />
+        <div className="space-y-4">
+          <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
           <CalendarioFinanceiro ano={ym.ano} mes={ym.mes} onChangeMonth={changeMonth} compact />
-        </div>
-        <SectionLabel>{t("sections.resumo")}</SectionLabel>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <ResumoMesCard
+          <SmartLimiteCard
             mes={ym.mes}
             ano={ym.ano}
-            saldo={saldo}
             totalEntradas={totalEntradas}
             totalGastos={total}
-            maiorCategoria={maior ?? null}
-            categorias={categorias}
-            gastosConfirmados={gastosConfirmados}
-            contasAtrasadas={contasResumo.atrasadasCount}
-            limiteTotal={limiteTotal}
           />
-          <ContasAReceberCard className="h-full" />
+        </div>
+      </div>
+
+      <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <DashboardCartoesInsights
+            mes={ym.mes}
+            ano={ym.ano}
+            gastosMes={doMes}
+            totalMes={total}
+            totalMesAnterior={totalMesAnterior}
+            maiorCategoria={maior ?? null}
+            onAbrirFatura={abrirFatura}
+            slot="lists"
+          />
+        </div>
+        <div className="lg:col-span-4">
+          <DashboardCartoesInsights
+            mes={ym.mes}
+            ano={ym.ano}
+            gastosMes={doMes}
+            totalMes={total}
+            totalMesAnterior={totalMesAnterior}
+            maiorCategoria={maior ?? null}
+            onAbrirFatura={abrirFatura}
+            slot="insights"
+          />
+        </div>
+      </div>
+
+      <SectionLabel>{t("sections.visao")}</SectionLabel>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <RecentTransactionsCard ultimos={ultimos} />
+        <div className="space-y-4">
+          <PrimeirosPassosCard
+            gastosCount={gastos.length}
+            receitasCount={receitas.length}
+            cartoesCount={cartoes.length}
+            metasCount={metas.length}
+          />
           <EconomicMonthImpactCard
             saldo={saldo}
             receitas={totalEntradas}
@@ -585,63 +577,37 @@ function Index() {
             className="h-full"
           />
         </div>
-        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <RadarEconomicoCard />
-          <RadarEconomicoInteligenteCard />
-        </div>
-        <AdSlot />
-        <UpgradeCardsList max={4} />
-        <AvisoWhatsAppBanner />
+      </div>
 
-      {/* ===== 8. Resumo, orçamento e limites detalhados (secundários) ===== */}
+      {/* Resumo e orçamento */}
       <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5 xl:gap-6">
-        <div className={cn("flex min-w-0", !temOrcamentoMes && "lg:col-span-2")}>
-          <div className="flex w-full">
-            <ResumoMesCard
-              mes={ym.mes}
-              ano={ym.ano}
-              saldo={saldo}
-              totalEntradas={totalEntradas}
-              totalGastos={total}
-              maiorCategoria={maior ?? null}
-              categorias={categorias}
-              gastosConfirmados={gastosConfirmados}
-              contasAtrasadas={contasResumo.atrasadasCount}
-              limiteTotal={limiteTotal}
-            />
-          </div>
-        </div>
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <ResumoMesCard
+          mes={ym.mes}
+          ano={ym.ano}
+          saldo={saldo}
+          totalEntradas={totalEntradas}
+          totalGastos={total}
+          maiorCategoria={maior ?? null}
+          categorias={categorias}
+          gastosConfirmados={gastosConfirmados}
+          contasAtrasadas={contasResumo.atrasadasCount}
+          limiteTotal={limiteTotal}
+        />
         {temOrcamentoMes && (
-          <div className="flex min-w-0">
-            <div className="flex w-full">
-              <OrcamentoCard
-                categorias={categorias}
-                gastos={gastosConfirmados}
-                mes={ym.mes}
-                ano={ym.ano}
-              />
-            </div>
-          </div>
+          <OrcamentoCard
+            categorias={categorias}
+            gastos={gastosConfirmados}
+            mes={ym.mes}
+            ano={ym.ano}
+          />
         )}
       </section>
 
-      {/* Alertas, limite mensal e renda */}
-      <section className="mt-6 grid min-w-0 grid-cols-1 gap-4 lg:mt-4 lg:gap-5 xl:grid-cols-12 xl:items-stretch xl:gap-6">
-        {temAlertasDashboard && (
-          <div className="flex min-w-0 xl:col-span-8">
-            <div className="flex w-full">
-              <AlertasContasCard contas={contas} />
-            </div>
-          </div>
-        )}
-        <div
-          className={cn(
-            "grid min-w-0 grid-cols-1 gap-4 lg:gap-5",
-            "md:grid-cols-2 xl:grid-cols-1",
-            temAlertasDashboard ? "xl:col-span-4" : "xl:col-span-12 xl:grid-cols-2",
-          )}
-        >
+      {/* Alertas e limites */}
+      <section className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
+        {temAlertasDashboard && <AlertasContasCard contas={contas} />}
+        <div className="space-y-4">
           {!!limiteTotal && (
             <LimiteMensalCard
               total={total}
@@ -655,73 +621,42 @@ function Index() {
         </div>
       </section>
 
-      {/* Atalhos secundários */}
+      {/* Atalhos de controle */}
       <SectionLabel>{t("sections.controle")}</SectionLabel>
-      <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:gap-4">
         <Link
           to="/orcamento"
-          className="card-press hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-brand/60 hover:bg-card-elevated"
+          className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
         >
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              {t("atalhos.orcamentoEyebrow")}
-            </p>
-            <PieChartIcon className="h-3.5 w-3.5 text-brand" />
-          </div>
-          <p className="mt-1.5 text-sm font-bold">{t("atalhos.orcamentoTitle")}</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">{t("atalhos.orcamentoSub")}</p>
+          <PieChartIcon className="h-5 w-5 text-brand" />
+          <p className="text-sm font-semibold">{t("atalhos.orcamentoTitle")}</p>
         </Link>
         <Link
           to="/guardado"
-          className="card-press hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-brand/60 hover:bg-card-elevated"
+          className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
         >
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              {t("atalhos.guardadoEyebrow")}
-            </p>
-            <Wallet className="h-3.5 w-3.5 text-brand" />
-          </div>
-          <Money value={totalGuardado} className="num mt-1.5 block text-lg font-bold" />
-          <p className="mt-0.5 text-[10px] text-muted-foreground">
-            {t("atalhos.guardadoSub", { count: guardado.length })}
-          </p>
+          <Wallet className="h-5 w-5 text-brand" />
+          <p className="text-sm font-semibold">{t("atalhos.guardadoTitle")}</p>
         </Link>
-        <div className="hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              {t("atalhos.fixosEyebrow")}
-            </p>
-            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-          </div>
-          <Money value={gastosFixos} className="num mt-1.5 block text-lg font-bold" />
-          {totalEntradas > 0 ? (
-            <p className="num mt-0.5 text-[10px] text-muted-foreground">
-              {t("atalhos.fixosPctRenda", { pct: Math.round((gastosFixos / totalEntradas) * 100) })}
-            </p>
-          ) : (
-            <p className="mt-0.5 text-[10px] text-muted-foreground">—</p>
-          )}
+        <div className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4">
+          <Lock className="h-5 w-5 text-muted-foreground" />
+          <p className="text-sm font-semibold">{t("atalhos.fixosTitle")}</p>
         </div>
         <Link
           to="/metas"
-          className="card-press hover-lift rounded-2xl border border-border bg-card p-3.5 transition-colors hover:border-brand/60 hover:bg-card-elevated"
+          className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
         >
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              {t("atalhos.metasEyebrow")}
-            </p>
-            <Target className="h-3.5 w-3.5 text-brand" />
-          </div>
-          <p className="num mt-1.5 text-lg font-bold">{metasAndamento.length}</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">{t("atalhos.metasSub")}</p>
+          <Target className="h-5 w-5 text-brand" />
+          <p className="text-sm font-semibold">{t("atalhos.metasTitle")}</p>
         </Link>
       </section>
 
-      {/* ===== 9. Banners + cards de upgrade ao final ===== */}
       <AvisoTrialExpirandoBanner />
       <UpgradeCardsList max={4} />
       <AvisoWhatsAppBanner />
     </MobileShell>
+
+
   );
 }
 
@@ -738,78 +673,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function HeroGreeting({
-  nome,
-  eyebrow,
-  mesAno,
-  subtitle,
-  monthSwitcher,
-}: {
-  nome: string | null;
-  eyebrow: string;
-  mesAno: string;
-  subtitle: string;
-  monthSwitcher: React.ReactNode;
-}) {
-  const { t } = useTranslation("dashboard");
-  const hour = new Date().getHours();
-  const greet =
-    hour < 12
-      ? t("hero.greetingMorning")
-      : hour < 18
-        ? t("hero.greetingAfternoon")
-        : t("hero.greetingEvening");
-  const firstName = (nome ?? "").trim().split(/\s+/)[0] ?? "";
-  return (
-    <header className="relative overflow-hidden rounded-2xl border border-border bg-card px-4 py-3 shadow-card animate-rise sm:px-5 sm:py-3.5">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_100%_0%,var(--brand-soft),transparent_55%),radial-gradient(80%_60%_at_0%_100%,var(--brand-tint,transparent),transparent_60%)]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-brand/15 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute right-4 top-1/2 hidden h-16 w-16 -translate-y-1/2 opacity-[0.07] sm:block"
-      >
-        <svg viewBox="0 0 100 100" className="h-full w-full text-brand">
-          <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="0.8" />
-          <circle cx="50" cy="50" r="28" fill="none" stroke="currentColor" strokeWidth="0.8" />
-          <path
-            d="M10 70 Q 35 30 60 55 T 95 30"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.4"
-          />
-        </svg>
-      </div>
-      <div className="relative flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            {eyebrow}
-          </p>
-          <h1 className="mt-0.5 flex items-center gap-2 text-[18px] font-bold leading-tight tracking-tight sm:text-xl lg:text-[22px]">
-            {greet}
-            {firstName ? `, ${firstName}` : ""}
-            <AdminMasterBadge className="mt-0.5" />
-          </h1>
-          <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-card-elevated/70 px-2 py-0.5 text-[10px] font-medium capitalize text-muted-foreground">
-            <CalendarClock className="h-3 w-3" />
-            {mesAno}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="lg:hidden">{monthSwitcher}</div>
-          <div className="hidden lg:block">
-            <NotificationBell />
-          </div>
-        </div>
-      </div>
-    </header>
-  );
-}
 
 function SaldoHeroCard({
   saldo,
@@ -1294,14 +1157,19 @@ function ContasCard({
         </div>
       )}
 
-      {semContas && (
-        <Link to="/contas-a-pagar" className="mt-3 block">
-          <Button variant="outline" size="sm" className="w-full">
-            <Plus className="mr-1 h-4 w-4" />
+      {!semContas && !tudoPago && (
+        <Link to="/adicionar" search={{ tipo: "conta" }} className="mt-4 block">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-2 rounded-xl border-border bg-card-elevated hover:bg-accent"
+          >
+            <Plus className="h-3.5 w-3.5" />
             {t("contas.adicionar")}
           </Button>
         </Link>
       )}
+
     </section>
   );
 }
@@ -1469,6 +1337,7 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
         </div>
       )}
     </section>
+
   );
 }
 
