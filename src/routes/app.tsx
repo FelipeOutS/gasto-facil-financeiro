@@ -776,7 +776,7 @@ function CategoriasDonutCard({
       ? [
           {
             id: "__outros",
-            nome: t("categorias.outros", { defaultValue: "Outros" }),
+            nome: t("porCategoria.outros"),
             valor: restoValor,
             color: "hsl(var(--muted-foreground))",
             pct: total > 0 ? (restoValor / total) * 100 : 0,
@@ -799,7 +799,7 @@ function CategoriasDonutCard({
       className={cn("rounded-2xl border border-border bg-card p-4 shadow-card", className)}
     >
       <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-        {t("sections.categoriasCartoes")}
+        {t("porCategoria.title")}
       </p>
       {fatias.length === 0 || total <= 0 ? (
         <p className="mt-3 text-xs text-muted-foreground">{t("kpi.tudoEmDia")}</p>
