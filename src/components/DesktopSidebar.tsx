@@ -177,6 +177,24 @@ export function DesktopSidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPath]);
 
+  // Traz o item ativo para a área visível SOMENTE quando ele está fora dela.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const target = el.querySelector<HTMLElement>('[data-nav-active="true"]');
+    if (!target) {
+      syncEdges();
+      return;
+    }
+    const c = el.getBoundingClientRect();
+    const r = target.getBoundingClientRect();
+    if (r.top < c.top + 4 || r.bottom > c.bottom - 4) {
+      target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+    syncEdges();
+  }, [currentPath, collapsed, openState, syncEdges]);
+
+
   function toggleGroup(id: string) {
     setOpenState((s) => {
       const next = { ...s, [id]: s[id] === undefined ? false : !s[id] };
