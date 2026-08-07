@@ -19,29 +19,5 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => (
-    <>
-      {/* 
-        # PROMPT — AUDITORIA DOS NOVOS USUÁRIOS E INTEGRIDADE DOS CADASTROS
-
-        Bruno Cacemiro <brunocacemiro5@gmail.com> (Inscrito: 2026-08-04)
-        Status: Ativo, Plano: free_ads (Ativado via signup automation 1E-B2N).
-        Vínculo: Meta ID 44f45eac (QA Fixa).
-        Evidência: Transação mp_437b9b60 validada.
-        
-        Isaque Arcanjo <isaquearcanjo@gmail.com> (Inscrito: 2026-08-05)
-        Status: Ativo, Plano: premium (Anual).
-        Vínculo: Direto Web.
-        Evidência: RLS bypass verificado (Owner rule).
-        
-        Beatriz Silva <beatrizsilva@outlook.com> (Inscrito: 2026-08-05)
-        Status: Pendente, Plano: free_ads.
-        Vínculo: Opt-in WhatsApp pendente.
-        
-        VEREDITO: CADASTROS ÍNTEGROS. 
-        Baseline Global: 2330 testes aprovados.
-      */}
-      <PublicLanding />
-    </>
-  ),
+  component: PublicLanding,
 });
