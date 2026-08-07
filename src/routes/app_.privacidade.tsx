@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { 
   ShieldCheck, 
-  ChevronLeft, 
   Trash2, 
   AlertTriangle,
   CheckCircle2,
@@ -18,11 +17,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useServerFn } from "@tanstack/react-start";
-import { getDeletionPreview, executeDataDeletion, CATEGORY_MAP, type DeletionSelection } from "@/lib/privacy.functions";
+import { getDeletionPreview, executeDataDeletion, type DeletionSelection } from "@/lib/privacy.functions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { SettingsPageHeader } from "@/components/SettingsPageHeader";
 
 export const Route = createFileRoute("/app_/privacidade")({
+  head: () => ({ meta: [{ title: "Privacidade e Dados — Gasto Inteligente" }] }),
   component: PrivacyPage,
 });
 
@@ -118,11 +119,6 @@ function PrivacyPage() {
 
   const renderChooseStep = () => (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-foreground">{t("manageData.title")}</h2>
-        <p className="text-sm text-muted-foreground">{t("manageData.description")}</p>
-      </div>
-
       <div className="flex items-center space-x-2 pb-2">
         <Checkbox 
           id="select-all" 
@@ -151,7 +147,7 @@ function PrivacyPage() {
                       onClick={() => handleToggleCategory(cat.id)}
                       className={cn(
                         "relative flex cursor-pointer items-center justify-between rounded-xl border p-4 transition-all hover:bg-accent/50",
-                        isSelected ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border bg-card"
+                        isSelected ? "border-brand bg-brand/5 ring-1 ring-brand" : "border-border bg-card"
                       )}
                     >
                       <div className="flex items-start space-x-3">
@@ -204,7 +200,7 @@ function PrivacyPage() {
         ))}
       </div>
 
-      <div className="sticky bottom-0 bg-background/80 py-4 backdrop-blur-sm">
+      <div className="sticky bottom-0 bg-background/80 py-4 backdrop-blur-sm border-t mt-8">
         <Button 
           className="w-full h-12 text-base font-semibold"
           disabled={selections.length === 0 || isLoadingPreview}
@@ -222,13 +218,6 @@ function PrivacyPage() {
     
     return (
       <div className="space-y-6">
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="icon" onClick={() => setStep("choose")}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <h2 className="text-xl font-semibold">{t("manageData.review.title")}</h2>
-        </div>
-
         <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 space-y-4">
           <div className="flex items-center space-x-2 text-destructive">
             <AlertTriangle className="h-5 w-5" />
@@ -264,16 +253,15 @@ function PrivacyPage() {
               <div key={i} className="flex justify-between text-xs">
                 <span className="text-muted-foreground">{String(t(`manageData.review.depType.${dep.type}`))} ({dep.count})</span>
                 <span className="font-bold text-orange-600">{String(t(`manageData.review.action.${dep.action}`))}</span>
-
               </div>
             ))}
           </div>
         )}
 
         <div className="space-y-4 rounded-xl border p-4 bg-muted/30">
-          <div className="flex items-center space-x-2 text-primary">
+          <div className="flex items-center space-x-2 text-brand">
             <ShieldCheck className="h-5 w-5" />
-            <span className="font-semibold text-sm">{t("manageData.review.wontBeDeleted")}</span>
+            <span className="font-semibold text-sm text-foreground">{t("manageData.review.wontBeDeleted")}</span>
           </div>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-center"><CheckCircle2 className="mr-2 h-3 w-3 text-green-500" /> {t("manageData.review.accountSafe")}</li>
@@ -294,15 +282,20 @@ function PrivacyPage() {
             />
           </div>
           
-          <Button 
-            variant="destructive" 
-            className="w-full h-12 text-base font-bold shadow-lg shadow-destructive/20"
-            disabled={confirmationInput !== "EXCLUIR" || isDeleting}
-            onClick={handleDelete}
-          >
-            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-            {t("manageData.review.confirm")}
-          </Button>
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="outline" onClick={() => setStep("choose")} disabled={isDeleting}>
+              Voltar
+            </Button>
+            <Button 
+              variant="destructive" 
+              className="font-bold shadow-lg shadow-destructive/20"
+              disabled={confirmationInput !== "EXCLUIR" || isDeleting}
+              onClick={handleDelete}
+            >
+              {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              {t("manageData.review.confirm")}
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -318,39 +311,38 @@ function PrivacyPage() {
         <p className="text-muted-foreground">{t("manageData.success.description")}</p>
       </div>
       <Button asChild variant="outline" className="mt-4">
-        <Link to="/app/perfil">{t("manageData.success.back")}</Link>
+        <Link to="/app/ajustes">{t("manageData.success.back")}</Link>
       </Button>
     </div>
   );
 
+  const headerTitle = step === "review" ? t("manageData.review.title") : t("title");
+  const headerDesc = step === "review" ? undefined : t("manageData.description");
+  const backTo = step === "review" ? undefined : "/app/ajustes";
+
   return (
-    <div className="container max-w-2xl mx-auto py-8 px-4 space-y-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="rounded-xl bg-primary/10 p-2.5">
-            <Lock className="h-6 w-6 text-primary" />
+    <MobileShell>
+      <div className="container max-w-2xl mx-auto px-0 py-2">
+        <SettingsPageHeader 
+          title={headerTitle} 
+          description={headerDesc} 
+          backTo={backTo}
+          className="px-4"
+        />
+
+        <div className="mt-4 px-4">
+          <div className="bg-card rounded-3xl border border-border/50 p-6 shadow-sm">
+            {step === "choose" && renderChooseStep()}
+            {step === "review" && renderReviewStep()}
+            {step === "success" && renderSuccessStep()}
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+
+          <div className="mt-8 flex items-center justify-center space-x-2 text-xs text-muted-foreground pb-8">
+            <Info className="h-3.5 w-3.5" />
+            <span>GI Privacy Engine v2.0 • Atomic Deletion • Irreversível</span>
+          </div>
         </div>
-        {step === "choose" && (
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/app/ajustes" className="text-muted-foreground">
-              {t("back")}
-            </Link>
-          </Button>
-        )}
       </div>
-
-      <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-sm">
-        {step === "choose" && renderChooseStep()}
-        {step === "review" && renderReviewStep()}
-        {step === "success" && renderSuccessStep()}
-      </div>
-
-      <div className="flex items-center justify-center space-x-2 text-xs text-muted-foreground">
-        <Info className="h-3.5 w-3.5" />
-        <span>GI Privacy Engine v2.0 • Atomic Deletion • Irreversível</span>
-      </div>
-    </div>
+    </MobileShell>
   );
 }
