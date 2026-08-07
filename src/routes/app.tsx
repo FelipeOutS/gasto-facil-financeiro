@@ -588,8 +588,8 @@ function Index() {
 
       {/* LINHA 8 — Maiores gastos + Categorias / Cartões */}
       <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-        <div className="min-w-0 xl:col-span-7">
+      <section className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-12">
+        <div className="min-w-0 xl:col-span-5">
           <DashboardCartoesInsights
             mes={ym.mes}
             ano={ym.ano}
@@ -601,7 +601,7 @@ function Index() {
             slot="lists"
           />
         </div>
-        <div className="min-w-0 xl:col-span-5">
+        <div className="min-w-0 xl:col-span-4">
           <DashboardCartoesInsights
             mes={ym.mes}
             ano={ym.ano}
@@ -613,7 +613,11 @@ function Index() {
             slot="insights"
           />
         </div>
+        <div className="min-w-0 xl:col-span-3">
+          <CategoriasDonutCard itens={porCategoria} total={total} className="h-full" />
+        </div>
       </section>
+
 
       {/* LINHA 9 — Transações recentes + Calendário financeiro */}
       <SectionLabel>{t("sections.visao")}</SectionLabel>
