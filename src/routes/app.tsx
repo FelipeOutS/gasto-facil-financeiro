@@ -454,150 +454,132 @@ function Index() {
   return (
       <MobileShell wide>
         <AvisoTrialExpirandoBanner />
-      {/* ===== Mobile: resumo do mês estilo app financeiro (apenas <lg) ===== */}
-      <div className="lg:hidden">
-        <MobileMonthSummary
-          ano={ym.ano}
-          mes={ym.mes}
-          saldo={saldo}
-          receitas={totalEntradas}
-          despesas={total}
-          guardado={totalGuardado}
-          aPagar={contasResumo.pendente}
-          atrasadasCount={contasResumo.atrasadasCount}
-          pendentesCount={contasResumo.pendentesCount}
-          onPrev={() => changeMonth(-1)}
-          onNext={() => changeMonth(1)}
-        />
-      </div>
-
-      {/* Hero — saudação compacta (desktop/tablet apenas; mobile usa o MobileTopBar) */}
-      <div className="hidden lg:block">
-        <HeroGreeting
-          nome={profile?.nome ?? null}
-          eyebrow={getVocab(profile?.tipo_cadastro as TipoCadastro).dashboardEyebrow}
-          mesAno={formatMonthYear(ym.ano, ym.mes)}
-          subtitle={t("hero.subtitle")}
-          monthSwitcher={monthSwitcher}
-        />
-      </div>
-
-      {/* Onboarding leve — Primeiros passos (some quando checklist completo ou dispensado) */}
-      <div className="mt-3 lg:mt-4">
-        <PrimeirosPassosCard
-          gastosCount={gastos.length}
-          receitasCount={receitas.length}
-          cartoesCount={cartoes.length}
-          metasCount={metas.length}
-        />
-      </div>
-
-      {/* V3 — Banner premium do Dashboard (compacto, complementa o hero/MonthSummary). */}
-      <div className="mt-3 lg:mt-4">
-        <AppModuleBanner
-          tone="relatorios"
-          compact
-          title={t("heroBannerV2.title")}
-          subtitle={t("heroBannerV2.subtitle")}
-          cta={
-            <Link
-              to="/adicionar"
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-card transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
-            >
-              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-              {t("heroBannerV2.cta")}
-            </Link>
-          }
-        />
-      </div>
-
-      {/* ===== Resumo financeiro — versão desktop/tablet ===== */}
-      <section className="mt-4 hidden grid-cols-1 gap-3 lg:grid lg:grid-cols-12 lg:gap-4">
-        <div className="lg:col-span-5">
-          <SaldoHeroCard saldo={saldo} entradas={totalEntradas} despesas={total} />
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
+          {/* Dashboard Left Column (Main Stats) */}
+          <div className="space-y-4 lg:col-span-8">
+            <HeroGreeting
+              nome={profile?.nome ?? null}
+              eyebrow={getVocab(profile?.tipo_cadastro as TipoCadastro).dashboardEyebrow}
+              mesAno={formatMonthYear(ym.ano, ym.mes)}
+              subtitle={t("hero.subtitle")}
+              monthSwitcher={monthSwitcher}
+            />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <SaldoHeroCard saldo={saldo} entradas={totalEntradas} despesas={total} />
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <KpiCard
+                  label={t("kpi.receitas")}
+                  valueNum={totalEntradas}
+                  icon={<ArrowUp className="h-4 w-4" />}
+                  tone="success"
+                  hint={t("kpi.entradaPlur", { count: receitasMes.length })}
+                />
+                <KpiCard
+                  label={t("kpi.aPagar")}
+                  valueNum={contasResumo.pendente}
+                  icon={<Clock className="h-4 w-4" />}
+                  tone={contasResumo.atrasadasCount > 0 ? "destructive" : "warning"}
+                  hint={
+                    contasResumo.atrasadasCount > 0
+                      ? t("kpi.atrasada", { count: contasResumo.atrasadasCount })
+                      : t("kpi.tudoEmDia")
+                  }
+                />
+              </div>
+            </div>
+            <QuickActionsBar />
+            <SectionLabel>{t("sections.radar")}</SectionLabel>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
+              <div className="grid grid-cols-1 gap-4">
+                <SmartLimiteCard mes={ym.mes} ano={ym.ano} totalEntradas={totalEntradas} totalGastos={total} />
+                <ContasCard resumo={contasResumo} variant="sideTop" />
+              </div>
+            </div>
+            <SectionLabel>{t("sections.controle")}</SectionLabel>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <OrcamentoCard categorias={categorias} gastos={gastosConfirmados} mes={ym.mes} ano={ym.ano} />
+              <div className="grid grid-cols-1 gap-4">
+                <MinhaRendaCard totalEntradas={totalEntradas} ano={ym.ano} mes={ym.mes} />
+                <LimiteMensalCard
+                  total={total}
+                  limiteTotal={limiteTotal ?? 0}
+                  usoLimite={usoLimite}
+                  passouLimite={!!passouLimite}
+                  proximoLimite={!!proximoLimite}
+                />
+              </div>
+            </div>
+          </div>
+          {/* Dashboard Right Column (Sidebar Insights) */}
+          <div className="space-y-4 lg:col-span-4">
+            <div className="lg:sticky lg:top-4 lg:space-y-4">
+              <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
+              <DashboardAlertasBloco />
+              <DashboardSaudeFinanceiraCard mes={ym.mes} ano={ym.ano} />
+              <DashboardDiagnosticoMensalCard mes={ym.mes} ano={ym.ano} />
+              <DashboardDicasBloco />
+              <PrimeirosPassosCard />
+            </div>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-3 lg:col-span-7 lg:grid-cols-3">
-          <KpiCard
-            label={t("kpi.receitas")}
-            valueNum={totalEntradas}
-            icon={<ArrowUp className="h-3.5 w-3.5" />}
-            tone="success"
-            hint={`${receitasMes.length} ${receitasMes.length === 1 ? t("kpi.entradaSing") : t("kpi.entradaPlur")}`}
-          />
-          <KpiCard
-            label={t("kpi.despesas")}
-            valueNum={total}
-            icon={<ArrowDown className="h-3.5 w-3.5" />}
-            tone="destructive"
-            hint={`${doMes.length} ${doMes.length === 1 ? t("kpi.lancamentoSing") : t("kpi.lancamentoPlur")}`}
-          />
-          <KpiCard
-            label={t("kpi.aPagar")}
-            valueNum={contasResumo.pendente}
-            icon={<CalendarClock className="h-3.5 w-3.5" />}
-            tone={contasResumo.atrasadasCount > 0 ? "destructive" : "warning"}
-            hint={
-              contasResumo.atrasadasCount > 0
-                ? `${contasResumo.atrasadasCount} ${t("kpi.atrasada")}`
-                : contasResumo.pendentesCount > 0
-                  ? `${contasResumo.pendentesCount} ${t("kpi.pendente")}`
-                  : t("kpi.tudoEmDia")
-            }
-          />
+
+        <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="lg:col-span-8">
+            <DashboardCartoesInsights
+              mes={ym.mes}
+              ano={ym.ano}
+              gastosMes={doMes}
+              totalMes={total}
+              totalMesAnterior={totalMesAnterior}
+              maiorCategoria={maior ?? null}
+              onAbrirFatura={abrirFatura}
+              slot="lists"
+            />
+          </div>
+          <div className="lg:col-span-4">
+            <DashboardCartoesInsights
+              mes={ym.mes}
+              ano={ym.ano}
+              gastosMes={doMes}
+              totalMes={total}
+              totalMesAnterior={totalMesAnterior}
+              maiorCategoria={maior ?? null}
+              onAbrirFatura={abrirFatura}
+              slot="insights"
+            />
+          </div>
         </div>
-      </section>
-
-      {saldo < 0 && (
-        <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive animate-fade-in">
-          <AlertTriangle className="h-3.5 w-3.5" />
-          {t("saldoNegativoAlerta", { valor: formatBRL(-saldo) })}
-        </p>
-      )}
-
-      {/* Ações rápidas — tiles compactos */}
-      <QuickActionsBar />
-
-      {/* Card de assinatura/plano */}
-      <PlanoCard className="mt-4" />
-
-      {/* Indicadores do Banco Central + Radar Econômico — pareados em desktop */}
-      <section className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-4 md:items-stretch">
-        <RadarEconomicoInteligenteCard
-          className="h-full"
-          userContext={{ saldo, receitas: totalEntradas, despesas: total }}
-        />
-        <RadarEconomicoCard className="h-full" />
-      </section>
-
-      {/* Impacto prático do cenário econômico no mês do usuário */}
-      <section className="mt-3">
-        <EconomicMonthImpactCard
-          saldo={saldo}
-          receitas={totalEntradas}
-          despesas={total}
-          contasVencidas={contasResumo.atrasadasCount}
-        />
-      </section>
-
-      {/* Saúde financeira + Dicas — par responsivo.
-          Se Dicas retornar null (sem insights), o card de Saúde ocupa a linha inteira no desktop. */}
-      <section className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-4 md:items-stretch [&>*:only-child]:md:col-span-2">
-        <DashboardSaudeFinanceiraCard className="h-full" />
-        <DashboardDicasBloco className="h-full" />
-      </section>
-
-      {/* Diagnóstico mensal — leitura amigável do mês com próximas ações */}
-      <section className="mt-4">
-        <DashboardDiagnosticoMensalCard />
-      </section>
-
-      {/* AdSlot — apenas free_ads ativo (Fase 1E-B2L) */}
-      <AdSlot className="mt-4" slotId="dashboard-middle" />
-
-      {/* Aviso contextual: assinaturas em moeda estrangeira */}
-      <AssinaturasMoedaEstrangeiraBanner />
-
-      {/* Banner discreto: completar perfil (usuários antigos sem tipo_cadastro) */}
+        <SectionLabel>{t("sections.visao")}</SectionLabel>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <RecentTransactionsCard ultimos={ultimos} />
+          <CalendarioFinanceiro ano={ym.ano} mes={ym.mes} onChangeMonth={changeMonth} compact />
+        </div>
+        <SectionLabel>{t("sections.resumo")}</SectionLabel>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ResumoMesCard
+            mes={ym.mes}
+            ano={ym.ano}
+            saldo={saldo}
+            totalEntradas={totalEntradas}
+            totalGastos={total}
+            maiorCategoria={maior ?? null}
+            categorias={categorias}
+            gastosConfirmados={gastosConfirmados}
+            contasAtrasadas={contasResumo.atrasadasCount}
+            limiteTotal={limiteTotal}
+          />
+          <ContasAReceberCard />
+          <EconomicMonthImpactCard mes={ym.mes} ano={ym.ano} />
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <RadarEconomicoCard />
+          <RadarEconomicoInteligenteCard />
+        </div>
+        <AdSlot />
+        <UpgradeCardsList max={4} />
+        <AvisoWhatsAppBanner />
       {profile && !profile.tipo_cadastro && (
         <Link
           to="/perfil"
