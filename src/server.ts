@@ -3,7 +3,7 @@ import { default as handler } from "@tanstack/react-start/server-entry";
 import { applySecurityHeaders } from "./server/security-headers.server";
 
 export default createServerEntry({
-  async fetch(request: Request, options: any) {
+  async fetch(request: Request, options: Parameters<typeof handler.fetch>[1]) {
     const originalResponse = await handler.fetch(request, options);
 
     // Clonamos os headers para poder modificá-los
