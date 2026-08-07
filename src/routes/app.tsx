@@ -1263,6 +1263,7 @@ function AlertasContasCard({ contas }: { contas: ContaAPagar[] }) {
         </div>
       )}
     </section>
+
   );
 }
 
