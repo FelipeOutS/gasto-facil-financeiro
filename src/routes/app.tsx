@@ -580,25 +580,10 @@ function Index() {
       </div>
 
 
-      {/* ===== 8. Resumo, orçamento e limites detalhados (secundários) ===== */}
-      <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch lg:gap-5 xl:gap-6">
-        <div className={cn("flex min-w-0", !temOrcamentoMes && "lg:col-span-2")}>
-          <div className="flex w-full">
-            <ResumoMesCard
-              mes={ym.mes}
-              ano={ym.ano}
-              saldo={saldo}
-              totalEntradas={totalEntradas}
-              totalGastos={total}
-              maiorCategoria={maior ?? null}
-              categorias={categorias}
-              gastosConfirmados={gastosConfirmados}
-              contasAtrasadas={contasResumo.atrasadasCount}
-              limiteTotal={limiteTotal}
-            />
-          </div>
-        </div>
+      <AvisoWhatsAppBanner />
+      <AdSlot />
+      <UpgradeCardsList max={4} />
+
         {temOrcamentoMes && (
           <div className="flex min-w-0">
             <div className="flex w-full">
