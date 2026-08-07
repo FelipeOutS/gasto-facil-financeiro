@@ -50,14 +50,6 @@ export function setTheme(theme: Theme) {
   window.dispatchEvent(new Event("gi-theme-changed"));
 }
 
-import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
-import { parseDateLocal, toLocalISODate } from "./format";
-import { addMonthsPreservingDay } from "./recurrence-date";
-import { validateFinancialAmount, financialAmountMessage } from "./financial-limits";
-import { supabase } from "@/integrations/supabase/client";
-import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
-import { markContaAPagarPaid, unmarkContaAPagarPaid } from "@/lib/contas.functions";
-
 /**
  * Flag de assinatura ativa publicada pelo SubscriptionGuardProvider.
  * Defaultamos para `false` — só liberamos escrita quando o provider confirmar
