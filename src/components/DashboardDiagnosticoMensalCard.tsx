@@ -201,6 +201,18 @@ export function DashboardDiagnosticoMensalCard({
   );
 
   if (!diag) {
+    const emptyBody = (
+      <div className="flex items-start gap-3">
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted/40 text-muted-foreground">
+          <ClipboardList className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-semibold leading-tight">{t("monthlyDiagnosis.title")}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">{t("monthlyDiagnosis.empty")}</p>
+        </div>
+      </div>
+    );
+    if (embedded) return <div className={cn("min-w-0", className)}>{emptyBody}</div>;
     return (
       <PremiumCard
         variant="subtle"
@@ -208,28 +220,15 @@ export function DashboardDiagnosticoMensalCard({
         padding="default"
         className={cn("animate-rise", className)}
       >
-        <div className="flex items-start gap-3">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-muted/40 text-muted-foreground">
-            <ClipboardList className="h-5 w-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-semibold leading-tight">{t("monthlyDiagnosis.title")}</h3>
-            <p className="mt-1 text-xs text-muted-foreground">{t("monthlyDiagnosis.empty")}</p>
-          </div>
-        </div>
+        {emptyBody}
       </PremiumCard>
     );
   }
 
   const tone = statusTone(diag.status);
 
-  return (
-    <PremiumCard
-      variant="default"
-      rounded="2xl"
-      padding="default"
-      className={cn("animate-rise border", tone.ring, className)}
-    >
+  const body = (
+    <>
       <div className="flex items-start gap-3">
         <div className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-xl", tone.iconBg)}>
           <ClipboardList className={cn("h-5 w-5", tone.iconFg)} />
@@ -275,6 +274,20 @@ export function DashboardDiagnosticoMensalCard({
           ))}
         </div>
       )}
+    </>
+  );
+
+  if (embedded) return <div className={cn("min-w-0", className)}>{body}</div>;
+
+  return (
+    <PremiumCard
+      variant="default"
+      rounded="2xl"
+      padding="default"
+      className={cn("animate-rise border", tone.ring, className)}
+    >
+      {body}
     </PremiumCard>
   );
 }
+
