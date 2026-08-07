@@ -334,7 +334,7 @@ function PrivacyPage() {
         </div>
         {step === "choose" && (
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/app/perfil" className="text-muted-foreground">
+            <Link to="/app/ajustes" className="text-muted-foreground">
               {t("back")}
             </Link>
           </Button>
