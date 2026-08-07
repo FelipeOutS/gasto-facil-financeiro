@@ -525,7 +525,17 @@ export function DesktopSidebar() {
               );
             })}
           </div>
-        </nav>
+          </nav>
+          {/* Fade inferior — indica que existe mais conteúdo abaixo */}
+          <div
+            aria-hidden
+            className={cn(
+              "pointer-events-none absolute inset-x-0 bottom-0 z-10 h-7 bg-gradient-to-t from-card/90 to-transparent transition-opacity duration-200",
+              edges.bottom ? "opacity-100" : "opacity-0",
+            )}
+          />
+        </div>
+
 
         {/* Theme toggle */}
         <div
