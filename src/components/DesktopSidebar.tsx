@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+
 import { useTranslation } from "react-i18next";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import {
