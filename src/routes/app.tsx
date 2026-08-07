@@ -735,17 +735,11 @@ function Index() {
           <p className="num text-xs text-muted-foreground">
             {metaProxima
               ? `${metaProxima.meta.nome} · ${Math.round(
-                  metaProxima.breakdown.total > 0
-                    ? Math.min(
-                        100,
-                        ((metaProxima.breakdown.guardado + metaProxima.breakdown.direto) /
-                          metaProxima.breakdown.total) *
-                          100,
-                      )
-                    : 0,
+                  pctMeta(metaProxima.breakdown.total, metaProxima.meta.valorObjetivo),
                 )}%`
               : `${metasAndamento.length}`}
           </p>
+
 
         </Link>
       </section>
