@@ -1,0 +1,87 @@
+{
+  "title": "Settings",
+  "subtitle": "Personalize your experience and manage your account.",
+  "sections": {
+    "account": {
+      "title": "Account and profile",
+      "description": "Personal data, language and security."
+    },
+    "appearance": {
+      "title": "Appearance",
+      "description": "Theme and accent color."
+    },
+    "finance": {
+      "title": "Financial preferences",
+      "description": "Categories, limits and organization."
+    },
+    "notifications": {
+      "title": "Notifications and alerts",
+      "description": "Choose when you want to be notified."
+    },
+    "privacy": {
+      "title": "Privacy and data",
+      "description": "Manage or delete your data."
+    },
+    "connections": {
+      "title": "Connections",
+      "description": "Connected accounts and services."
+    },
+    "plan": {
+      "title": "Plan and subscription",
+      "description": "Your plan and available features."
+    },
+    "help": {
+      "title": "Help and information",
+      "description": "Support, privacy, terms and version."
+    }
+  },
+  "appearance": {
+    "title": "Appearance",
+    "theme": "Theme",
+    "accent": "Accent color",
+    "preview": "Visual preview"
+  },
+  "finance": {
+    "title": "Financial preferences",
+    "limit": "Total monthly limit",
+    "categories": "Your categories",
+    "newCategory": "New category"
+  },
+  "notifications": {
+    "title": "Notifications and alerts",
+    "groups": {
+      "accounts": "ACCOUNTS AND DUE DATES",
+      "budget": "BUDGET",
+      "goals": "GOALS",
+      "summaries": "SUMMARIES"
+    },
+    "options": {
+      "venceAmanha": "Bill due tomorrow",
+      "venceHoje": "Bill due today",
+      "atrasada": "Overdue bill",
+      "pertoLimite": "Warn when near limit",
+      "ultrapassouLimite": "Warn when over limit",
+      "metaAtingida": "Goal reached",
+      "progressoMeta": "Important progress",
+      "resumoMensal": "Monthly summary"
+    }
+  },
+  "privacy": {
+    "title": "Privacy and data",
+    "manage": "Manage my data",
+    "manageDesc": "Choose which financial information you want to remove.",
+    "export": "Export my data",
+    "exportDesc": "Download a copy of your account information.",
+    "clear": "Clear financial data",
+    "clearDesc": "Your account and plan will remain active.",
+    "deleteAccount": "Delete my account",
+    "riskZone": "RISK ZONE"
+  },
+  "help": {
+    "title": "Help and information",
+    "support": "Support",
+    "terms": "Terms of Use",
+    "privacyPolicy": "Privacy Policy",
+    "version": "Application version"
+  }
+}

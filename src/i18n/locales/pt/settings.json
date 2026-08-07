@@ -1,0 +1,87 @@
+{
+  "title": "Ajustes",
+  "subtitle": "Personalize sua experiência e gerencie sua conta.",
+  "sections": {
+    "account": {
+      "title": "Conta e perfil",
+      "description": "Dados pessoais, idioma e segurança."
+    },
+    "appearance": {
+      "title": "Aparência",
+      "description": "Tema e cor de destaque."
+    },
+    "finance": {
+      "title": "Preferências financeiras",
+      "description": "Categorias, limites e organização."
+    },
+    "notifications": {
+      "title": "Notificações e alertas",
+      "description": "Escolha quando deseja ser avisado."
+    },
+    "privacy": {
+      "title": "Privacidade e dados",
+      "description": "Gerencie ou exclua seus dados."
+    },
+    "connections": {
+      "title": "Conexões",
+      "description": "Contas e serviços conectados."
+    },
+    "plan": {
+      "title": "Plano e assinatura",
+      "description": "Seu plano e recursos disponíveis."
+    },
+    "help": {
+      "title": "Ajuda e informações",
+      "description": "Suporte, privacidade, termos e versão."
+    }
+  },
+  "appearance": {
+    "title": "Aparência",
+    "theme": "Tema",
+    "accent": "Cor de destaque",
+    "preview": "Prévia visual"
+  },
+  "finance": {
+    "title": "Preferências financeiras",
+    "limit": "Limite mensal total",
+    "categories": "Suas categorias",
+    "newCategory": "Nova categoria"
+  },
+  "notifications": {
+    "title": "Notificações e alertas",
+    "groups": {
+      "accounts": "CONTAS E VENCIMENTOS",
+      "budget": "ORÇAMENTO",
+      "goals": "METAS",
+      "summaries": "RESUMOS"
+    },
+    "options": {
+      "venceAmanha": "Conta vence amanhã",
+      "venceHoje": "Conta vence hoje",
+      "atrasada": "Conta atrasada",
+      "pertoLimite": "Avisar quando estiver perto do limite",
+      "ultrapassouLimite": "Avisar ao ultrapassar o limite",
+      "metaAtingida": "Meta atingida",
+      "progressoMeta": "Progresso importante",
+      "resumoMensal": "Resumo mensal"
+    }
+  },
+  "privacy": {
+    "title": "Privacidade e dados",
+    "manage": "Gerenciar meus dados",
+    "manageDesc": "Escolha quais informações financeiras deseja remover.",
+    "export": "Exportar meus dados",
+    "exportDesc": "Baixe uma cópia das informações da sua conta.",
+    "clear": "Limpar dados financeiros",
+    "clearDesc": "Sua conta e seu plano continuarão ativos.",
+    "deleteAccount": "Excluir minha conta",
+    "riskZone": "ZONA DE RISCO"
+  },
+  "help": {
+    "title": "Ajuda e informações",
+    "support": "Suporte",
+    "terms": "Termos de Uso",
+    "privacyPolicy": "Política de Privacidade",
+    "version": "Versão do aplicativo"
+  }
+}

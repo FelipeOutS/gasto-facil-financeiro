@@ -87,6 +87,7 @@ import { Route as AppPerfilRouteImport } from './routes/app_.perfil'
 import { Route as AppMaisRouteImport } from './routes/app_.mais'
 import { Route as AppIdiomaRouteImport } from './routes/app_.idioma'
 import { Route as AppCofrePessoalRouteImport } from './routes/app_.cofre-pessoal'
+import { Route as AppAjustesRouteImport } from './routes/app_.ajustes'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
 import { Route as ApiMercadoJoaninImportRouteImport } from './routes/api/mercado-joanin-import'
 import { Route as ApiMercadoFlyerOcrRouteImport } from './routes/api/mercado-flyer-ocr'
@@ -121,6 +122,9 @@ import { Route as ContasAReceberIdEditarRouteImport } from './routes/contas-a-re
 import { Route as ContasAPagarIdEditarRouteImport } from './routes/contas-a-pagar.$id.editar'
 import { Route as CartoesIdEditarRouteImport } from './routes/cartoes.$id.editar'
 import { Route as AssinaturasIdEditarRouteImport } from './routes/assinaturas.$id.editar'
+import { Route as AppAjustesNotificacoesRouteImport } from './routes/app_.ajustes.notificacoes'
+import { Route as AppAjustesAparenciaRouteImport } from './routes/app_.ajustes.aparencia'
+import { Route as AppAjustesAjudaRouteImport } from './routes/app_.ajustes.ajuda'
 import { Route as ApiPublicCspReportRouteImport } from './routes/api/public/csp-report'
 import { Route as ApiPublicClientLoadErrorRouteImport } from './routes/api/public/client-load-error'
 import { Route as ApiPublicAppVersionRouteImport } from './routes/api/public/app-version'
@@ -535,6 +539,11 @@ const AppCofrePessoalRoute = AppCofrePessoalRouteImport.update({
   path: '/app/cofre-pessoal',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppAjustesRoute = AppAjustesRouteImport.update({
+  id: '/app_/ajustes',
+  path: '/app/ajustes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiOcrGastoRoute = ApiOcrGastoRouteImport.update({
   id: '/api/ocr-gasto',
   path: '/api/ocr-gasto',
@@ -708,6 +717,21 @@ const AssinaturasIdEditarRoute = AssinaturasIdEditarRouteImport.update({
   path: '/assinaturas/$id/editar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppAjustesNotificacoesRoute = AppAjustesNotificacoesRouteImport.update({
+  id: '/notificacoes',
+  path: '/notificacoes',
+  getParentRoute: () => AppAjustesRoute,
+} as any)
+const AppAjustesAparenciaRoute = AppAjustesAparenciaRouteImport.update({
+  id: '/aparencia',
+  path: '/aparencia',
+  getParentRoute: () => AppAjustesRoute,
+} as any)
+const AppAjustesAjudaRoute = AppAjustesAjudaRouteImport.update({
+  id: '/ajuda',
+  path: '/ajuda',
+  getParentRoute: () => AppAjustesRoute,
+} as any)
 const ApiPublicCspReportRoute = ApiPublicCspReportRouteImport.update({
   id: '/api/public/csp-report',
   path: '/api/public/csp-report',
@@ -880,6 +904,7 @@ export interface FileRoutesByFullPath {
   '/api/mercado-flyer-ocr': typeof ApiMercadoFlyerOcrRoute
   '/api/mercado-joanin-import': typeof ApiMercadoJoaninImportRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/app/ajustes': typeof AppAjustesRouteWithChildren
   '/app/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
@@ -927,6 +952,9 @@ export interface FileRoutesByFullPath {
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/client-load-error': typeof ApiPublicClientLoadErrorRoute
   '/api/public/csp-report': typeof ApiPublicCspReportRoute
+  '/app/ajustes/ajuda': typeof AppAjustesAjudaRoute
+  '/app/ajustes/aparencia': typeof AppAjustesAparenciaRoute
+  '/app/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
@@ -1015,6 +1043,7 @@ export interface FileRoutesByTo {
   '/api/mercado-flyer-ocr': typeof ApiMercadoFlyerOcrRoute
   '/api/mercado-joanin-import': typeof ApiMercadoJoaninImportRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/app/ajustes': typeof AppAjustesRouteWithChildren
   '/app/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
@@ -1062,6 +1091,9 @@ export interface FileRoutesByTo {
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/client-load-error': typeof ApiPublicClientLoadErrorRoute
   '/api/public/csp-report': typeof ApiPublicCspReportRoute
+  '/app/ajustes/ajuda': typeof AppAjustesAjudaRoute
+  '/app/ajustes/aparencia': typeof AppAjustesAparenciaRoute
+  '/app/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
@@ -1151,6 +1183,7 @@ export interface FileRoutesById {
   '/api/mercado-flyer-ocr': typeof ApiMercadoFlyerOcrRoute
   '/api/mercado-joanin-import': typeof ApiMercadoJoaninImportRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/app_/ajustes': typeof AppAjustesRouteWithChildren
   '/app_/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app_/idioma': typeof AppIdiomaRoute
   '/app_/mais': typeof AppMaisRoute
@@ -1198,6 +1231,9 @@ export interface FileRoutesById {
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/client-load-error': typeof ApiPublicClientLoadErrorRoute
   '/api/public/csp-report': typeof ApiPublicCspReportRoute
+  '/app_/ajustes/ajuda': typeof AppAjustesAjudaRoute
+  '/app_/ajustes/aparencia': typeof AppAjustesAparenciaRoute
+  '/app_/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
@@ -1288,6 +1324,7 @@ export interface FileRouteTypes {
     | '/api/mercado-flyer-ocr'
     | '/api/mercado-joanin-import'
     | '/api/ocr-gasto'
+    | '/app/ajustes'
     | '/app/cofre-pessoal'
     | '/app/idioma'
     | '/app/mais'
@@ -1335,6 +1372,9 @@ export interface FileRouteTypes {
     | '/api/public/app-version'
     | '/api/public/client-load-error'
     | '/api/public/csp-report'
+    | '/app/ajustes/ajuda'
+    | '/app/ajustes/aparencia'
+    | '/app/ajustes/notificacoes'
     | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
@@ -1423,6 +1463,7 @@ export interface FileRouteTypes {
     | '/api/mercado-flyer-ocr'
     | '/api/mercado-joanin-import'
     | '/api/ocr-gasto'
+    | '/app/ajustes'
     | '/app/cofre-pessoal'
     | '/app/idioma'
     | '/app/mais'
@@ -1470,6 +1511,9 @@ export interface FileRouteTypes {
     | '/api/public/app-version'
     | '/api/public/client-load-error'
     | '/api/public/csp-report'
+    | '/app/ajustes/ajuda'
+    | '/app/ajustes/aparencia'
+    | '/app/ajustes/notificacoes'
     | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
@@ -1558,6 +1602,7 @@ export interface FileRouteTypes {
     | '/api/mercado-flyer-ocr'
     | '/api/mercado-joanin-import'
     | '/api/ocr-gasto'
+    | '/app_/ajustes'
     | '/app_/cofre-pessoal'
     | '/app_/idioma'
     | '/app_/mais'
@@ -1605,6 +1650,9 @@ export interface FileRouteTypes {
     | '/api/public/app-version'
     | '/api/public/client-load-error'
     | '/api/public/csp-report'
+    | '/app_/ajustes/ajuda'
+    | '/app_/ajustes/aparencia'
+    | '/app_/ajustes/notificacoes'
     | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
@@ -1694,6 +1742,7 @@ export interface RootRouteChildren {
   ApiMercadoFlyerOcrRoute: typeof ApiMercadoFlyerOcrRoute
   ApiMercadoJoaninImportRoute: typeof ApiMercadoJoaninImportRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
+  AppAjustesRoute: typeof AppAjustesRouteWithChildren
   AppCofrePessoalRoute: typeof AppCofrePessoalRoute
   AppIdiomaRoute: typeof AppIdiomaRoute
   AppMaisRoute: typeof AppMaisRoute
@@ -2326,6 +2375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCofrePessoalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app_/ajustes': {
+      id: '/app_/ajustes'
+      path: '/app/ajustes'
+      fullPath: '/app/ajustes'
+      preLoaderRoute: typeof AppAjustesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/ocr-gasto': {
       id: '/api/ocr-gasto'
       path: '/api/ocr-gasto'
@@ -2564,6 +2620,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AssinaturasIdEditarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app_/ajustes/notificacoes': {
+      id: '/app_/ajustes/notificacoes'
+      path: '/notificacoes'
+      fullPath: '/app/ajustes/notificacoes'
+      preLoaderRoute: typeof AppAjustesNotificacoesRouteImport
+      parentRoute: typeof AppAjustesRoute
+    }
+    '/app_/ajustes/aparencia': {
+      id: '/app_/ajustes/aparencia'
+      path: '/aparencia'
+      fullPath: '/app/ajustes/aparencia'
+      preLoaderRoute: typeof AppAjustesAparenciaRouteImport
+      parentRoute: typeof AppAjustesRoute
+    }
+    '/app_/ajustes/ajuda': {
+      id: '/app_/ajustes/ajuda'
+      path: '/ajuda'
+      fullPath: '/app/ajustes/ajuda'
+      preLoaderRoute: typeof AppAjustesAjudaRouteImport
+      parentRoute: typeof AppAjustesRoute
+    }
     '/api/public/csp-report': {
       id: '/api/public/csp-report'
       path: '/api/public/csp-report'
@@ -2725,6 +2802,22 @@ const GastosRouteChildren: GastosRouteChildren = {
 const GastosRouteWithChildren =
   GastosRoute._addFileChildren(GastosRouteChildren)
 
+interface AppAjustesRouteChildren {
+  AppAjustesAjudaRoute: typeof AppAjustesAjudaRoute
+  AppAjustesAparenciaRoute: typeof AppAjustesAparenciaRoute
+  AppAjustesNotificacoesRoute: typeof AppAjustesNotificacoesRoute
+}
+
+const AppAjustesRouteChildren: AppAjustesRouteChildren = {
+  AppAjustesAjudaRoute: AppAjustesAjudaRoute,
+  AppAjustesAparenciaRoute: AppAjustesAparenciaRoute,
+  AppAjustesNotificacoesRoute: AppAjustesNotificacoesRoute,
+}
+
+const AppAjustesRouteWithChildren = AppAjustesRoute._addFileChildren(
+  AppAjustesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
@@ -2776,6 +2869,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMercadoFlyerOcrRoute: ApiMercadoFlyerOcrRoute,
   ApiMercadoJoaninImportRoute: ApiMercadoJoaninImportRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
+  AppAjustesRoute: AppAjustesRouteWithChildren,
   AppCofrePessoalRoute: AppCofrePessoalRoute,
   AppIdiomaRoute: AppIdiomaRoute,
   AppMaisRoute: AppMaisRoute,
@@ -2868,12 +2962,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

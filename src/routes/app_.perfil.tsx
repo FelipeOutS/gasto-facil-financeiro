@@ -45,7 +45,7 @@ function AppPerfilPage() {
     { to: "/conta", label: t("profileShortcuts.account"), icon: UserRound },
     { to: "/perfil", label: t("actions.edit"), icon: Pencil },
     { to: "/meu-plano", label: t("actions.myPlan"), icon: Sparkles },
-    { to: "/categorias", label: t("profileShortcuts.settings"), icon: Settings2 },
+    { to: "/app/ajustes", label: t("profileShortcuts.settings"), icon: Settings2 },
     { to: "/app/idioma", label: t("language.title"), icon: Languages },
     { to: "/onboarding", label: t("actions.redoOnboarding"), icon: RotateCcw },
     { to: "/app/privacidade", label: "Privacidade e dados", icon: ShieldCheck },

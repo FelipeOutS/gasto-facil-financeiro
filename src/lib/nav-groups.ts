@@ -184,7 +184,7 @@ export const NAV_GROUPS: NavGroup[] = [
         feature: "cofre_pessoal",
       },
       { to: "/meu-plano", labelKey: "meuPlano", descKey: "meuPlano", icon: Crown },
-      { to: "/categorias", labelKey: "categorias", descKey: "categorias", icon: Settings2 },
+      { to: "/app/ajustes", labelKey: "categorias", descKey: "categorias", icon: Settings2 },
     ],
   },
   {
