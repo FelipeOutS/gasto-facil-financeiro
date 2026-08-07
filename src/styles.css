@@ -594,6 +594,40 @@ body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* Sidebar — scrollbar fina, escura e discreta (UX-SIDEBAR-01) */
+.gi-sidebar-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.16) transparent;
+  transition: scrollbar-color 200ms ease;
+}
+.gi-sidebar-scroll:hover,
+.gi-sidebar-scroll[data-scrolling="true"] {
+  scrollbar-color: hsl(var(--muted-foreground) / 0.38) transparent;
+}
+.gi-sidebar-scroll::-webkit-scrollbar { width: 6px; }
+.gi-sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+.gi-sidebar-scroll::-webkit-scrollbar-button { display: none; height: 0; width: 0; }
+.gi-sidebar-scroll::-webkit-scrollbar-corner { background: transparent; }
+.gi-sidebar-scroll::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.16);
+  border-radius: 9999px;
+  transition:
+    background-color 200ms ease,
+    opacity 200ms ease;
+}
+.gi-sidebar-scroll:hover::-webkit-scrollbar-thumb,
+.gi-sidebar-scroll[data-scrolling="true"]::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.34);
+}
+.gi-sidebar-scroll::-webkit-scrollbar-thumb:hover,
+.gi-sidebar-scroll::-webkit-scrollbar-thumb:active {
+  background-color: hsl(var(--muted-foreground) / 0.5);
+}
+
+
 /* Banks marquee — infinite horizontal scroll */
 @keyframes banks-marquee {
   from { transform: translateX(0); }
