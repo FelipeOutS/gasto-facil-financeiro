@@ -516,10 +516,15 @@ function Index() {
             <div className="lg:sticky lg:top-4 lg:space-y-4">
               <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
               <DashboardAlertasBloco />
-              <DashboardSaudeFinanceiraCard mes={ym.mes} ano={ym.ano} />
-              <DashboardDiagnosticoMensalCard mes={ym.mes} ano={ym.ano} />
+              <DashboardSaudeFinanceiraCard />
+              <DashboardDiagnosticoMensalCard />
               <DashboardDicasBloco />
-              <PrimeirosPassosCard />
+              <PrimeirosPassosCard
+                gastosCount={gastos.length}
+                receitasCount={receitas.length}
+                cartoesCount={cartoes.length}
+                metasCount={metas.length}
+              />
             </div>
           </div>
         </div>
@@ -571,7 +576,12 @@ function Index() {
             limiteTotal={limiteTotal}
           />
           <ContasAReceberCard />
-          <EconomicMonthImpactCard mes={ym.mes} ano={ym.ano} />
+          <EconomicMonthImpactCard
+            saldo={saldo}
+            receitas={totalEntradas}
+            despesas={total}
+            contasVencidas={contasResumo.atrasadasCount}
+          />
         </div>
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
           <RadarEconomicoCard />
