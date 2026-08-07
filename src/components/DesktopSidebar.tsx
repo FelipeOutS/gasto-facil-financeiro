@@ -53,6 +53,8 @@ const ROUTE_FEATURE = Object.fromEntries(
 );
 
 const STORAGE_KEY = "gi-sidebar-groups-v1";
+const SCROLL_KEY = "gi-sidebar-scroll-v1";
+
 
 function readGroupState(): Record<string, boolean> {
   if (typeof window === "undefined") return {};
