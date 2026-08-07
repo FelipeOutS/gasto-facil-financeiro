@@ -75,6 +75,8 @@ import enMercado from "./locales/en/mercado.json";
 import enCofre from "./locales/en/cofre.json";
 import enInvestimentos from "./locales/en/investimentos.json";
 
+import enPrivacy from "./locales/en/privacy.json";
+
 export const SUPPORTED_LOCALES = ["pt", "en"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "pt";
@@ -169,6 +171,7 @@ const resources = {
     mercado: enMercado,
     cofre: enCofre,
     investimentos: enInvestimentos,
+    privacy: enPrivacy,
   },
 };
 
@@ -214,6 +217,7 @@ if (!i18n.isInitialized) {
       "mercado",
       "cofre",
       "investimentos",
+      "privacy",
     ],
     // Os recursos já estão no bundle: inicializar de forma síncrona garante que
     // SSR e o primeiro render do navegador traduzam o mesmo texto na hidratação.
