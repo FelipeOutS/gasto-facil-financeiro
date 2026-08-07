@@ -1,5 +1,6 @@
 import { hydrateRoot } from 'react-dom/client'
-import { StartClient } from '@tanstack/react-start'
+import { StartClient } from '@tanstack/react-router'
+
 import { getRouter } from './router'
 import { attemptRecovery } from './lib/recovery'
 
