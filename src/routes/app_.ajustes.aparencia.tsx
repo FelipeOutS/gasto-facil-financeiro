@@ -28,17 +28,16 @@ function AparenciaPage() {
   });
 
   const themeOptions = [
-    { id: "light", icon: Sun, label: t("appearance.themes.light") },
-    { id: "dark", icon: Moon, label: t("appearance.themes.dark") },
-    { id: "system", icon: Monitor, label: t("appearance.themes.system") },
+    { id: "light", icon: Sun, label: t("appearance.themes.light") || "Claro" },
+    { id: "dark", icon: Moon, label: t("appearance.themes.dark") || "Escuro" },
+    { id: "system", icon: Monitor, label: t("appearance.themes.system") || "Sistema" },
   ];
 
   return (
     <>
       <SettingsPageHeader 
-
         title={t("appearance.title")} 
-        description={t("appearance.description")} 
+        description={t("appearance.description") || "Personalize como o Gasto Inteligente aparece para você."} 
       />
 
       <div className="space-y-6 mt-6">
@@ -69,30 +68,33 @@ function AparenciaPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-border bg-card p-6 opacity-50 cursor-not-allowed">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-xl bg-muted text-muted-foreground">
-              <Layout className="h-5 w-5" />
+        <section className="mt-8 border-t border-border pt-6">
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4 px-1">
+            Mais opções
+          </h2>
+          <div className="grid gap-3">
+            <div className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card/50 opacity-70">
+              <div className="flex items-center gap-3">
+                <Layout className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <h3 className="text-sm font-semibold">Layout Compacto</h3>
+                  <p className="text-xs text-muted-foreground">Exiba mais informações na tela</p>
+                </div>
+              </div>
+              <span className="text-[10px] bg-muted px-2 py-0.5 rounded-full font-bold uppercase text-muted-foreground tracking-tight">Em breve</span>
             </div>
-            <div>
-              <h3 className="text-sm font-semibold">Layout Compacto</h3>
-              <p className="text-xs text-muted-foreground">Exibir mais itens na tela</p>
-            </div>
-          </div>
-          <p className="text-[10px] text-brand font-bold uppercase tracking-widest mt-4">Em breve na versão Beta</p>
-        </section>
 
-        <section className="rounded-3xl border border-border bg-card p-6 opacity-50 cursor-not-allowed">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-xl bg-muted text-muted-foreground">
-              <Type className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold">Tamanho da Fonte</h3>
-              <p className="text-xs text-muted-foreground">Ajustar legibilidade dos textos</p>
+            <div className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card/50 opacity-70">
+              <div className="flex items-center gap-3">
+                <Type className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <h3 className="text-sm font-semibold">Tamanho da Fonte</h3>
+                  <p className="text-xs text-muted-foreground">Ajuste a legibilidade dos textos</p>
+                </div>
+              </div>
+              <span className="text-[10px] bg-muted px-2 py-0.5 rounded-full font-bold uppercase text-muted-foreground tracking-tight">Em breve</span>
             </div>
           </div>
-          <p className="text-[10px] text-brand font-bold uppercase tracking-widest mt-4">Em breve na versão Beta</p>
         </section>
       </div>
     </>

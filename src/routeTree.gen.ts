@@ -141,6 +141,9 @@ import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/em
 import { Route as InvestimentosRendimentoRendIdEditarRouteImport } from './routes/investimentos.rendimento.$rendId.editar'
 import { Route as InvestimentosMovimentacaoMovIdEditarRouteImport } from './routes/investimentos.movimentacao.$movId.editar'
 import { Route as AppIntegracoesMercadoPagoMovimentacoesRouteImport } from './routes/app_.integracoes.mercado-pago.movimentacoes'
+import { Route as AppAjustesAjudaTermosRouteImport } from './routes/app_.ajustes.ajuda.termos'
+import { Route as AppAjustesAjudaSuporteRouteImport } from './routes/app_.ajustes.ajuda.suporte'
+import { Route as AppAjustesAjudaPrivacidadeRouteImport } from './routes/app_.ajustes.ajuda.privacidade'
 import { Route as ApiPublicWhatsappExpenseRouteImport } from './routes/api/public.whatsapp.expense'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public.webhooks.mercadopago'
 import { Route as ApiPublicHooksWhatsappDispatcherRouteImport } from './routes/api/public.hooks.whatsapp-dispatcher'
@@ -823,6 +826,22 @@ const AppIntegracoesMercadoPagoMovimentacoesRoute =
     path: '/app/integracoes/mercado-pago/movimentacoes',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AppAjustesAjudaTermosRoute = AppAjustesAjudaTermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
+  getParentRoute: () => AppAjustesAjudaRoute,
+} as any)
+const AppAjustesAjudaSuporteRoute = AppAjustesAjudaSuporteRouteImport.update({
+  id: '/suporte',
+  path: '/suporte',
+  getParentRoute: () => AppAjustesAjudaRoute,
+} as any)
+const AppAjustesAjudaPrivacidadeRoute =
+  AppAjustesAjudaPrivacidadeRouteImport.update({
+    id: '/privacidade',
+    path: '/privacidade',
+    getParentRoute: () => AppAjustesAjudaRoute,
+  } as any)
 const ApiPublicWhatsappExpenseRoute =
   ApiPublicWhatsappExpenseRouteImport.update({
     id: '/api/public/whatsapp/expense',
@@ -965,7 +984,7 @@ export interface FileRoutesByFullPath {
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/client-load-error': typeof ApiPublicClientLoadErrorRoute
   '/api/public/csp-report': typeof ApiPublicCspReportRoute
-  '/app/ajustes/ajuda': typeof AppAjustesAjudaRoute
+  '/app/ajustes/ajuda': typeof AppAjustesAjudaRouteWithChildren
   '/app/ajustes/aparencia': typeof AppAjustesAparenciaRoute
   '/app/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/app/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
@@ -997,6 +1016,9 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/whatsapp-dispatcher': typeof ApiPublicHooksWhatsappDispatcherRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
+  '/app/ajustes/ajuda/privacidade': typeof AppAjustesAjudaPrivacidadeRoute
+  '/app/ajustes/ajuda/suporte': typeof AppAjustesAjudaSuporteRoute
+  '/app/ajustes/ajuda/termos': typeof AppAjustesAjudaTermosRoute
   '/app/integracoes/mercado-pago/movimentacoes': typeof AppIntegracoesMercadoPagoMovimentacoesRoute
   '/investimentos/movimentacao/$movId/editar': typeof InvestimentosMovimentacaoMovIdEditarRoute
   '/investimentos/rendimento/$rendId/editar': typeof InvestimentosRendimentoRendIdEditarRoute
@@ -1105,7 +1127,7 @@ export interface FileRoutesByTo {
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/client-load-error': typeof ApiPublicClientLoadErrorRoute
   '/api/public/csp-report': typeof ApiPublicCspReportRoute
-  '/app/ajustes/ajuda': typeof AppAjustesAjudaRoute
+  '/app/ajustes/ajuda': typeof AppAjustesAjudaRouteWithChildren
   '/app/ajustes/aparencia': typeof AppAjustesAparenciaRoute
   '/app/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/app/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
@@ -1137,6 +1159,9 @@ export interface FileRoutesByTo {
   '/api/public/hooks/whatsapp-dispatcher': typeof ApiPublicHooksWhatsappDispatcherRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
+  '/app/ajustes/ajuda/privacidade': typeof AppAjustesAjudaPrivacidadeRoute
+  '/app/ajustes/ajuda/suporte': typeof AppAjustesAjudaSuporteRoute
+  '/app/ajustes/ajuda/termos': typeof AppAjustesAjudaTermosRoute
   '/app/integracoes/mercado-pago/movimentacoes': typeof AppIntegracoesMercadoPagoMovimentacoesRoute
   '/investimentos/movimentacao/$movId/editar': typeof InvestimentosMovimentacaoMovIdEditarRoute
   '/investimentos/rendimento/$rendId/editar': typeof InvestimentosRendimentoRendIdEditarRoute
@@ -1247,7 +1272,7 @@ export interface FileRoutesById {
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/client-load-error': typeof ApiPublicClientLoadErrorRoute
   '/api/public/csp-report': typeof ApiPublicCspReportRoute
-  '/app_/ajustes/ajuda': typeof AppAjustesAjudaRoute
+  '/app_/ajustes/ajuda': typeof AppAjustesAjudaRouteWithChildren
   '/app_/ajustes/aparencia': typeof AppAjustesAparenciaRoute
   '/app_/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/app_/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
@@ -1279,6 +1304,9 @@ export interface FileRoutesById {
   '/api/public/hooks/whatsapp-dispatcher': typeof ApiPublicHooksWhatsappDispatcherRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
+  '/app_/ajustes/ajuda/privacidade': typeof AppAjustesAjudaPrivacidadeRoute
+  '/app_/ajustes/ajuda/suporte': typeof AppAjustesAjudaSuporteRoute
+  '/app_/ajustes/ajuda/termos': typeof AppAjustesAjudaTermosRoute
   '/app_/integracoes/mercado-pago/movimentacoes': typeof AppIntegracoesMercadoPagoMovimentacoesRoute
   '/investimentos/movimentacao/$movId/editar': typeof InvestimentosMovimentacaoMovIdEditarRoute
   '/investimentos/rendimento/$rendId/editar': typeof InvestimentosRendimentoRendIdEditarRoute
@@ -1422,6 +1450,9 @@ export interface FileRouteTypes {
     | '/api/public/hooks/whatsapp-dispatcher'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
+    | '/app/ajustes/ajuda/privacidade'
+    | '/app/ajustes/ajuda/suporte'
+    | '/app/ajustes/ajuda/termos'
     | '/app/integracoes/mercado-pago/movimentacoes'
     | '/investimentos/movimentacao/$movId/editar'
     | '/investimentos/rendimento/$rendId/editar'
@@ -1562,6 +1593,9 @@ export interface FileRouteTypes {
     | '/api/public/hooks/whatsapp-dispatcher'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
+    | '/app/ajustes/ajuda/privacidade'
+    | '/app/ajustes/ajuda/suporte'
+    | '/app/ajustes/ajuda/termos'
     | '/app/integracoes/mercado-pago/movimentacoes'
     | '/investimentos/movimentacao/$movId/editar'
     | '/investimentos/rendimento/$rendId/editar'
@@ -1703,6 +1737,9 @@ export interface FileRouteTypes {
     | '/api/public/hooks/whatsapp-dispatcher'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
+    | '/app_/ajustes/ajuda/privacidade'
+    | '/app_/ajustes/ajuda/suporte'
+    | '/app_/ajustes/ajuda/termos'
     | '/app_/integracoes/mercado-pago/movimentacoes'
     | '/investimentos/movimentacao/$movId/editar'
     | '/investimentos/rendimento/$rendId/editar'
@@ -2776,6 +2813,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIntegracoesMercadoPagoMovimentacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app_/ajustes/ajuda/termos': {
+      id: '/app_/ajustes/ajuda/termos'
+      path: '/termos'
+      fullPath: '/app/ajustes/ajuda/termos'
+      preLoaderRoute: typeof AppAjustesAjudaTermosRouteImport
+      parentRoute: typeof AppAjustesAjudaRoute
+    }
+    '/app_/ajustes/ajuda/suporte': {
+      id: '/app_/ajustes/ajuda/suporte'
+      path: '/suporte'
+      fullPath: '/app/ajustes/ajuda/suporte'
+      preLoaderRoute: typeof AppAjustesAjudaSuporteRouteImport
+      parentRoute: typeof AppAjustesAjudaRoute
+    }
+    '/app_/ajustes/ajuda/privacidade': {
+      id: '/app_/ajustes/ajuda/privacidade'
+      path: '/privacidade'
+      fullPath: '/app/ajustes/ajuda/privacidade'
+      preLoaderRoute: typeof AppAjustesAjudaPrivacidadeRouteImport
+      parentRoute: typeof AppAjustesAjudaRoute
+    }
     '/api/public/whatsapp/expense': {
       id: '/api/public/whatsapp/expense'
       path: '/api/public/whatsapp/expense'
@@ -2839,8 +2897,24 @@ const GastosRouteChildren: GastosRouteChildren = {
 const GastosRouteWithChildren =
   GastosRoute._addFileChildren(GastosRouteChildren)
 
+interface AppAjustesAjudaRouteChildren {
+  AppAjustesAjudaPrivacidadeRoute: typeof AppAjustesAjudaPrivacidadeRoute
+  AppAjustesAjudaSuporteRoute: typeof AppAjustesAjudaSuporteRoute
+  AppAjustesAjudaTermosRoute: typeof AppAjustesAjudaTermosRoute
+}
+
+const AppAjustesAjudaRouteChildren: AppAjustesAjudaRouteChildren = {
+  AppAjustesAjudaPrivacidadeRoute: AppAjustesAjudaPrivacidadeRoute,
+  AppAjustesAjudaSuporteRoute: AppAjustesAjudaSuporteRoute,
+  AppAjustesAjudaTermosRoute: AppAjustesAjudaTermosRoute,
+}
+
+const AppAjustesAjudaRouteWithChildren = AppAjustesAjudaRoute._addFileChildren(
+  AppAjustesAjudaRouteChildren,
+)
+
 interface AppAjustesRouteChildren {
-  AppAjustesAjudaRoute: typeof AppAjustesAjudaRoute
+  AppAjustesAjudaRoute: typeof AppAjustesAjudaRouteWithChildren
   AppAjustesAparenciaRoute: typeof AppAjustesAparenciaRoute
   AppAjustesNotificacoesRoute: typeof AppAjustesNotificacoesRoute
   AppAjustesPreferenciasFinanceirasRoute: typeof AppAjustesPreferenciasFinanceirasRoute
@@ -2848,7 +2922,7 @@ interface AppAjustesRouteChildren {
 }
 
 const AppAjustesRouteChildren: AppAjustesRouteChildren = {
-  AppAjustesAjudaRoute: AppAjustesAjudaRoute,
+  AppAjustesAjudaRoute: AppAjustesAjudaRouteWithChildren,
   AppAjustesAparenciaRoute: AppAjustesAparenciaRoute,
   AppAjustesNotificacoesRoute: AppAjustesNotificacoesRoute,
   AppAjustesPreferenciasFinanceirasRoute:
