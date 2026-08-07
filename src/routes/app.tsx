@@ -581,7 +581,7 @@ function Index() {
 
       {/* Resumo e orçamento */}
       <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <ResumoMesCard
           mes={ym.mes}
           ano={ym.ano}
@@ -605,7 +605,7 @@ function Index() {
       </section>
 
       {/* Alertas e limites */}
-      <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <section className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
         {temAlertasDashboard && <AlertasContasCard contas={contas} />}
         <div className="space-y-4">
           {!!limiteTotal && (
@@ -623,7 +623,7 @@ function Index() {
 
       {/* Atalhos de controle */}
       <SectionLabel>{t("sections.controle")}</SectionLabel>
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:gap-4">
         <Link
           to="/orcamento"
           className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
