@@ -1183,16 +1183,16 @@ function QuickActionsBar() {
       tone: "success",
     },
     {
-      to: "/gasto-ai",
-      label: t("quickActions.ia"),
-      icon: <Sparkles className="h-4 w-4" />,
-      tone: "brand",
-    },
-    {
       to: "/cartoes",
       label: t("quickActions.importar"),
       icon: <ReceiptIcon className="h-4 w-4" />,
       tone: "warning",
+    },
+    {
+      to: "/gasto-ai",
+      label: t("quickActions.ia"),
+      icon: <Sparkles className="h-4 w-4" />,
+      tone: "brand",
     },
   ];
   const toneRing: Record<string, string> = {
@@ -1275,16 +1275,18 @@ function LimiteMensalCard({
   usoLimite,
   passouLimite,
   proximoLimite,
+  className,
 }: {
   total: number;
   limiteTotal: number;
   usoLimite: number;
   passouLimite: boolean;
   proximoLimite: boolean;
+  className?: string;
 }) {
   const { t } = useTranslation("dashboard");
   return (
-    <section className="w-full rounded-2xl border border-border bg-card p-4 shadow-card">
+    <section className={cn("w-full rounded-2xl border border-border bg-card p-4 shadow-card", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
