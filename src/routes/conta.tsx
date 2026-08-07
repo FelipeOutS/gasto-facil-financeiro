@@ -1,6 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import {
-  ArrowLeft,
   LogOut,
   User as UserIcon,
   Mail,
@@ -27,8 +26,15 @@ import {
   type TipoCadastro,
 } from "@/lib/profile-utils";
 import i18n from "@/i18n";
+import { SettingsPageHeader } from "@/components/SettingsPageHeader";
+import { z } from "zod";
+
+const accountSearchSchema = z.object({
+  from: z.enum(["ajustes", "outros"]).optional(),
+});
 
 export const Route = createFileRoute("/conta")({
+  validateSearch: accountSearchSchema,
   head: () => {
     const t = i18n.getFixedT(null, "account");
     return { meta: [{ title: t("meta.title") }] };
@@ -41,6 +47,7 @@ function ContaPage() {
   const { user, profile, signOut } = useAuth();
   const { isOwner, isAdmin } = useRoles();
   const navigate = useNavigate();
+  const { from } = useSearch({ from: "/conta" });
 
   async function handleLogout() {
     await signOut();
@@ -57,18 +64,12 @@ function ContaPage() {
       ? profile?.razao_social || profile?.nome_fantasia || profile?.nome || t("dash")
       : profile?.nome || profile?.responsavel_nome || t("defaultUser");
 
+  const backTo = from === "ajustes" ? "/app/ajustes" : "/app";
+
   return (
     <MobileShell>
-      <header className="flex items-center gap-3 pt-2">
-        <Link
-          to="/categorias"
-          className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card"
-          aria-label={t("back")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <h1 className="text-xl font-bold tracking-tight">{t("title")}</h1>
-      </header>
+      <SettingsPageHeader title={t("title")} backTo={backTo} className="mb-0" />
+
 
       <section className="mt-6 rounded-3xl border border-border bg-card p-5 shadow-card">
         <div className="flex items-center gap-3">
