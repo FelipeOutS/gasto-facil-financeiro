@@ -507,6 +507,7 @@ function Index() {
                   usoLimite={usoLimite}
                   passouLimite={!!passouLimite}
                   proximoLimite={!!proximoLimite}
+                  className="h-full"
                 />
               </div>
             </div>
