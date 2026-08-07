@@ -301,7 +301,12 @@ export function DesktopSidebar() {
         </li>
       );
     }
-    return <li key={to}>{inner}</li>;
+    return (
+      <li key={to} data-nav-active={active ? "true" : undefined}>
+        {inner}
+      </li>
+    );
+
   }
 
   const dashboardActive = currentPath === "/";
