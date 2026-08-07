@@ -13,8 +13,10 @@ import {
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { SettingsPageHeader } from "@/components/SettingsPageHeader";
+import { Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/app_/ajustes/")({
+
   component: AjustesHubPage,
 });
 
@@ -35,7 +37,8 @@ function AjustesHubPage() {
   return (
     <MobileShell data-testid="settings-hub">
       <SettingsPageHeader title="Ajustes" description="Personalize sua experiência." backTo="/app" />
-      <div className="grid gap-3">
+      <div className="grid gap-3 pb-8">
+
         {sections.map((s) => (
           <Link
             key={s.id}

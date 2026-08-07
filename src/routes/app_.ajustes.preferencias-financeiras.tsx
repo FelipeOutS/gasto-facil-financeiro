@@ -76,8 +76,9 @@ function PreferenciasFinanceirasPage() {
   if (!ready) return <PageSkeleton />;
 
   return (
-    <MobileShell data-testid="settings-financial-preferences-page">
+    <>
       <SettingsPageHeader 
+
         title="Preferências financeiras" 
         description="Categorias, limites e organização das suas finanças." 
       />
@@ -238,6 +239,6 @@ function PreferenciasFinanceirasPage() {
           ))}
         </ul>
       </section>
-    </MobileShell>
+    </>
   );
 }

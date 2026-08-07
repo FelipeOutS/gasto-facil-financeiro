@@ -6,9 +6,5 @@ export const Route = createFileRoute("/app_/ajustes")({
 });
 
 function AjustesLayout() {
-  return (
-    <div data-testid="settings-layout">
-      <Outlet />
-    </div>
-  );
+  return <Outlet />;
 }
