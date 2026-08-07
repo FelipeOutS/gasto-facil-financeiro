@@ -25,5 +25,5 @@ if (typeof window !== 'undefined') {
   });
 }
 
-hydrateRoot(document, <StartClient router={router} />)
+hydrateRoot(document, <StartClient />)
 
