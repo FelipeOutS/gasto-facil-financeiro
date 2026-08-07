@@ -289,7 +289,8 @@ export function DesktopSidebar() {
 
     if (collapsed) {
       return (
-        <li key={to}>
+        <li key={to} data-nav-active={active ? "true" : undefined}>
+
           <Tooltip>
             <TooltipTrigger asChild>{inner}</TooltipTrigger>
             <TooltipContent side="right" sideOffset={10} className="font-medium">
