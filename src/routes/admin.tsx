@@ -336,7 +336,7 @@ function AdminPage() {
       email: u.email,
       telefone: u.telefone ?? "",
       tipo_cadastro: u.tipo_cadastro ?? "",
-      cadastro: fmtDate(u.created_at),
+      cadastro: fmtDateTime(u.created_at),
       plano: PLAN_LABEL[u.plano as keyof typeof PLAN_LABEL] ?? u.plano,
       ciclo: u.periodicidade ?? "",
       valor_pago: u.last_payment_amount_cents ? fmtMoney(u.last_payment_amount_cents) : "",
