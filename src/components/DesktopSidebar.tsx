@@ -87,6 +87,59 @@ export function DesktopSidebar() {
   const { user, profile } = useAuth();
   const collapsed = useSidebarCollapsed();
 
+  // ---- UX de rolagem do menu (área central) ----
+  const scrollRef = useRef<HTMLElement | null>(null);
+  const scrollingTimer = useRef<number | null>(null);
+  const [edges, setEdges] = useState({ top: false, bottom: false });
+  const [scrolling, setScrolling] = useState(false);
+
+  const syncEdges = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const max = el.scrollHeight - el.clientHeight;
+    setEdges({
+      top: el.scrollTop > 4,
+      bottom: max > 4 && el.scrollTop < max - 4,
+    });
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (el) {
+      try {
+        window.sessionStorage.setItem(SCROLL_KEY, String(el.scrollTop));
+      } catch {
+        /* ignore */
+      }
+    }
+    syncEdges();
+    setScrolling(true);
+    if (scrollingTimer.current) window.clearTimeout(scrollingTimer.current);
+    scrollingTimer.current = window.setTimeout(() => setScrolling(false), 700);
+  }, [syncEdges]);
+
+  // Restaura a posição anterior (não volta ao topo ao trocar de rota) e
+  // recalcula os fades quando o conteúdo/altura muda.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    try {
+      const saved = Number(window.sessionStorage.getItem(SCROLL_KEY) ?? "0");
+      if (Number.isFinite(saved) && saved > 0) el.scrollTop = saved;
+    } catch {
+      /* ignore */
+    }
+    syncEdges();
+    const ro = new ResizeObserver(() => syncEdges());
+    ro.observe(el);
+    Array.from(el.children).forEach((c) => ro.observe(c));
+    return () => {
+      ro.disconnect();
+      if (scrollingTimer.current) window.clearTimeout(scrollingTimer.current);
+    };
+  }, [syncEdges]);
+
+
   const groups = useMemo(
     () =>
       filterVisibleGroups(
