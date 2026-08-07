@@ -83,7 +83,9 @@ function PrivacyPage() {
   };
 
   const handleDelete = async () => {
-    if (confirmationInput !== "EXCLUIR") return;
+    const isLargeDeletion = selectedCategories.length > 5;
+    if (isLargeDeletion && confirmationInput !== "EXCLUIR") return;
+    if (confirmationInput && confirmationInput !== "EXCLUIR") return;
     
     setIsDeleting(true);
     try {
@@ -222,7 +224,7 @@ function PrivacyPage() {
           <Button 
             variant="destructive" 
             className="w-full h-12 text-base font-bold shadow-lg shadow-destructive/20"
-            disabled={confirmationInput !== "EXCLUIR" || isDeleting}
+            disabled={(selectedCategories.length > 5 && confirmationInput !== "EXCLUIR") || isDeleting}
             onClick={handleDelete}
           >
             {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}

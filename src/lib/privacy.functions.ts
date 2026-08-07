@@ -59,8 +59,12 @@ export const executeDataDeletion = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { userId } = context;
 
-    if (data.confirmationText !== "EXCLUIR") {
-      throw new Error("Confirmação inválida");
+    const isLargeDeletion = data.categories.length > 5;
+    if (isLargeDeletion && data.confirmationText !== "EXCLUIR") {
+      throw new Error("Confirmação de segurança necessária para exclusão em massa");
+    }
+    if (data.confirmationText && data.confirmationText !== "EXCLUIR") {
+       throw new Error("Texto de confirmação incorreto");
     }
 
     const results: Record<string, { success: boolean; deletedCount?: number; error?: any }> = {};
