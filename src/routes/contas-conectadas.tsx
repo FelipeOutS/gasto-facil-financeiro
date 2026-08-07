@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -31,6 +31,8 @@ import { confirmAsync } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/utils";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import i18n from "@/i18n";
+import { SettingsPageHeader } from "@/components/SettingsPageHeader";
+import { z } from "zod";
 
 async function sendInviteEmail(
   to: string,
@@ -50,10 +52,16 @@ async function sendInviteEmail(
   });
 }
 
+const connectionsSearchSchema = z.object({
+  from: z.enum(["ajustes", "outros"]).optional(),
+});
+
 export const Route = createFileRoute("/contas-conectadas")({
+  validateSearch: connectionsSearchSchema,
   head: () => ({ meta: [{ title: i18n.getFixedT(i18n.language, "misc")("connected.metaTitle") }] }),
   component: ContasConectadasPage,
 });
+
 
 function ContasConectadasPage() {
   const { t } = useTranslation("misc");
