@@ -729,10 +729,20 @@ function Index() {
           <Target className="h-5 w-5 text-brand" />
           <p className="text-sm font-semibold">{t("atalhos.metasEyebrow")}</p>
           <p className="num text-xs text-muted-foreground">
-            {metasAndamento.length > 0 && metaProxima
-              ? `${metaProxima.nome} · ${Math.round(metaProxima.pct)}%`
+            {metaProxima
+              ? `${metaProxima.meta.nome} · ${Math.round(
+                  metaProxima.breakdown.total > 0
+                    ? Math.min(
+                        100,
+                        ((metaProxima.breakdown.guardado + metaProxima.breakdown.direto) /
+                          metaProxima.breakdown.total) *
+                          100,
+                      )
+                    : 0,
+                )}%`
               : `${metasAndamento.length}`}
           </p>
+
         </Link>
       </section>
 
