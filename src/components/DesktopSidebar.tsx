@@ -408,12 +408,26 @@ export function DesktopSidebar() {
           </button>
         )}
 
-        <nav
-          className={cn(
-            "flex-1 overflow-y-auto overflow-x-hidden pb-3 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40",
-            collapsed ? "px-2" : "px-3",
-          )}
-        >
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          {/* Fade superior — só aparece quando há conteúdo acima */}
+          <div
+            aria-hidden
+            className={cn(
+              "pointer-events-none absolute inset-x-0 top-0 z-10 h-6 bg-gradient-to-b from-card/85 to-transparent transition-opacity duration-200",
+              edges.top ? "opacity-100" : "opacity-0",
+            )}
+          />
+          <nav
+            ref={scrollRef}
+            onScroll={handleScroll}
+            data-scrolling={scrolling ? "true" : "false"}
+            tabIndex={-1}
+            className={cn(
+              "gi-sidebar-scroll min-h-0 flex-1 overflow-x-hidden pb-3 focus:outline-none",
+              collapsed ? "px-2" : "pl-3 pr-2",
+            )}
+          >
+
           {/* Dashboard fixo no topo */}
           <ul className="space-y-1">
             <li>
