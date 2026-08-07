@@ -626,10 +626,8 @@ function Index() {
       <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-12">
         <div className="flex min-w-0 flex-col gap-4 xl:col-span-7">
           <RecentTransactionsCard ultimos={ultimos} />
-          <MetaProximaCard
-            metaProxima={metaProxima}
-            metasAtivas={metasAndamento.length}
-          />
+          <MetaProximaCard metaProxima={metaProxima} metasAtivas={metasAndamento.length} />
+
         </div>
         <div className="min-w-0 xl:col-span-5">
           <CalendarioFinanceiro ano={ym.ano} mes={ym.mes} onChangeMonth={changeMonth} />
