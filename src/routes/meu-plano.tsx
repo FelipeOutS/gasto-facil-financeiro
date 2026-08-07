@@ -336,23 +336,12 @@ function MeuPlanoPage() {
     }
   }
 
+  const backTo = from === "ajustes" ? "/app/ajustes" : from === "conta" ? "/conta" : "/conta";
+
   return (
     <MobileShell wide>
-      <header className="flex items-center gap-3 pt-2">
-        <Link
-          to="/conta"
-          className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card"
-          aria-label={tp("back")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <div className="min-w-0">
-          <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
-            {tp("eyebrow")}
-          </p>
-          <h1 className="text-xl font-bold tracking-tight">{vocab.controle}</h1>
-        </div>
-      </header>
+      <SettingsPageHeader title={vocab.controle} description={tp("eyebrow")} backTo={backTo} />
+
 
       {/* Card do plano atual */}
       <section
