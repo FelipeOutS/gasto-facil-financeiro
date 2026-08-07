@@ -73,7 +73,7 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
   return (
     <section
       className={cn(
-        "relative flex w-full flex-col overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-amber-100/10 p-3.5 shadow-card sm:p-4",
+        "relative flex w-full flex-col overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-amber-100/10 p-4 shadow-card sm:p-5",
         className,
       )}
     >
