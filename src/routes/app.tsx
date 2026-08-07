@@ -545,8 +545,8 @@ function Index() {
 
       <SectionLabel>{t("sections.radar")}</SectionLabel>
 
-      {/* LINHA 4 — Fluxo de caixa (2/3) + Resumo inteligente (1/3) */}
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+      {/* LINHA 4 — Fluxo de caixa (8/12) + coluna empilhada Resumo + Alertas (4/12) */}
+      <section className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-12">
         <div className="min-w-0 xl:col-span-8">
           <FluxoCaixaChart
             ano={ym.ano}
@@ -555,30 +555,26 @@ function Index() {
             receitas={receitas}
           />
         </div>
-        <div className="min-w-0 xl:col-span-4">
+        <div className="flex min-w-0 flex-col gap-4 xl:col-span-4">
           <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
-        </div>
-      </section>
-
-      {/* LINHA 5 — Alertas + Saúde financeira */}
-      <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="min-w-0">
           <DashboardAlertasBloco />
         </div>
-        <div className="min-w-0">
-          <DashboardSaudeFinanceiraCard />
+      </section>
+
+      {/* LINHA 5 — Saúde financeira + Diagnóstico consolidados (7/12) + Dicas (5/12) */}
+      <section className="mt-4 grid grid-cols-1 items-stretch gap-4 xl:grid-cols-12">
+        <div className="min-w-0 xl:col-span-7">
+          <section className="h-full rounded-2xl border border-border bg-card p-4 shadow-card motion-safe:animate-rise">
+            <DashboardSaudeFinanceiraCard embedded />
+            <div className="my-4 h-px w-full bg-border/70" />
+            <DashboardDiagnosticoMensalCard embedded />
+          </section>
+        </div>
+        <div className="min-w-0 xl:col-span-5">
+          <DashboardDicasBloco className="h-full" />
         </div>
       </section>
 
-      {/* LINHA 6 — Diagnóstico + Dicas */}
-      <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="min-w-0">
-          <DashboardDiagnosticoMensalCard />
-        </div>
-        <div className="min-w-0">
-          <DashboardDicasBloco />
-        </div>
-      </section>
 
       {/* LINHA 7 — Radar econômico + Indicadores do Banco Central */}
       <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-12">
