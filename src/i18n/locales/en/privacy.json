@@ -1,0 +1,85 @@
+{
+  "title": "Privacy and data",
+  "back": "Back",
+  "manageData": {
+    "title": "Manage my data",
+    "description": "Choose which information you want to remove. Your account will remain active.",
+    "cta": "Manage my data",
+    "categories": {
+      "daily": "DAILY DATA",
+      "planning": "PLANNING",
+      "others": "OTHERS",
+      "expenses": {
+        "title": "Expenses",
+        "description": "Entries and expenses you have recorded."
+      },
+      "income": {
+        "title": "Income",
+        "description": "Your income sources and receipts."
+      },
+      "payables": {
+        "title": "Payables",
+        "description": "Scheduled expenses and bills."
+      },
+      "receivables": {
+        "title": "Receivables",
+        "description": "Amounts you have to receive."
+      },
+      "subscriptions": {
+        "title": "Subscriptions",
+        "description": "Recurring services and payments."
+      },
+      "budgets": {
+        "title": "Budgets",
+        "description": "Monthly limits by category."
+      },
+      "goals": {
+        "title": "Goals",
+        "description": "Your financial objectives."
+      },
+      "savings": {
+        "title": "Savings",
+        "description": "Reserves and savings."
+      },
+      "investments": {
+        "title": "Investments",
+        "description": "Asset portfolio and returns."
+      },
+      "cards": {
+        "title": "Cards and invoices",
+        "description": "Card data and invoice history."
+      },
+      "market": {
+        "title": "Market",
+        "description": "Shopping lists and items."
+      },
+      "imports": {
+        "title": "Imports",
+        "description": "Files and imported transactions."
+      }
+    },
+    "selection": {
+      "selectAll": "Select all financial data",
+      "records": "{{count}} records",
+      "continue": "Continue"
+    },
+    "review": {
+      "title": "Review what will be deleted",
+      "willBeRemoved": "will be removed",
+      "total": "Total",
+      "dependencies": "Also affected:",
+      "wontBeDeleted": "This will not be deleted",
+      "accountSafe": "Your account, login, and plan",
+      "settingsSafe": "Your basic settings",
+      "billingSafe": "Required billing history",
+      "irreversible": "This action cannot be undone.",
+      "confirm": "Delete data",
+      "confirmLarge": "Type DELETE to continue"
+    },
+    "success": {
+      "title": "Data deleted",
+      "description": "The selected data has been removed from your account.",
+      "back": "Back to settings"
+    }
+  }
+}

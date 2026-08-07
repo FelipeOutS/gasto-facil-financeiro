@@ -7,6 +7,7 @@ import {
   Pencil,
   RotateCcw,
   Settings2,
+  ShieldCheck,
   Sparkles,
   UserRound,
 } from "lucide-react";
@@ -47,6 +48,7 @@ function AppPerfilPage() {
     { to: "/categorias", label: t("profileShortcuts.settings"), icon: Settings2 },
     { to: "/app/idioma", label: t("language.title"), icon: Languages },
     { to: "/onboarding", label: t("actions.redoOnboarding"), icon: RotateCcw },
+    { to: "/app/privacidade", label: "Privacidade e dados", icon: ShieldCheck },
   ] as const;
 
   return (

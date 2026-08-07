@@ -1,0 +1,85 @@
+{
+  "title": "Privacidade e dados",
+  "back": "Voltar",
+  "manageData": {
+    "title": "Gerenciar meus dados",
+    "description": "Escolha quais informações deseja remover. Sua conta continuará ativa.",
+    "cta": "Gerenciar meus dados",
+    "categories": {
+      "daily": "DADOS DO DIA A DIA",
+      "planning": "PLANEJAMENTO",
+      "others": "OUTROS",
+      "expenses": {
+        "title": "Gastos",
+        "description": "Lançamentos e despesas que você registrou."
+      },
+      "income": {
+        "title": "Receitas",
+        "description": "Suas fontes de renda e recebimentos."
+      },
+      "payables": {
+        "title": "Contas a pagar",
+        "description": "Despesas agendadas e faturas."
+      },
+      "receivables": {
+        "title": "Contas a receber",
+        "description": "Valores que você tem para receber."
+      },
+      "subscriptions": {
+        "title": "Assinaturas",
+        "description": "Serviços e pagamentos recorrentes."
+      },
+      "budgets": {
+        "title": "Orçamentos",
+        "description": "Limites mensais por categoria."
+      },
+      "goals": {
+        "title": "Metas",
+        "description": "Seus objetivos financeiros."
+      },
+      "savings": {
+        "title": "Dinheiro guardado",
+        "description": "Reservas e poupança."
+      },
+      "investments": {
+        "title": "Investimentos",
+        "description": "Carteira de ativos e rendimentos."
+      },
+      "cards": {
+        "title": "Cartões e faturas",
+        "description": "Dados de cartões e histórico de faturas."
+      },
+      "market": {
+        "title": "Mercado",
+        "description": "Listas de compras e itens."
+      },
+      "imports": {
+        "title": "Importações",
+        "description": "Arquivos e transações importadas."
+      }
+    },
+    "selection": {
+      "selectAll": "Selecionar todos os dados financeiros",
+      "records": "{{count}} registros",
+      "continue": "Continuar"
+    },
+    "review": {
+      "title": "Revise o que será excluído",
+      "willBeRemoved": "serão removidos",
+      "total": "Total",
+      "dependencies": "Também serão afetados:",
+      "wontBeDeleted": "Isso não será excluído",
+      "accountSafe": "Sua conta, login e plano",
+      "settingsSafe": "Suas configurações básicas",
+      "billingSafe": "Histórico de cobrança obrigatório",
+      "irreversible": "Esta ação não poderá ser desfeita.",
+      "confirm": "Excluir dados",
+      "confirmLarge": "Digite EXCLUIR para continuar"
+    },
+    "success": {
+      "title": "Dados excluídos",
+      "description": "Os dados selecionados foram removidos da sua conta.",
+      "back": "Voltar às configurações"
+    }
+  }
+}
