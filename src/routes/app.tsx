@@ -758,6 +758,86 @@ function Index() {
 
 /* ====================== Helpers de UI ====================== */
 
+/** Donut "Por categoria" — sem dependência de gráfico, usando conic-gradient. */
+function CategoriasDonutCard({
+  itens,
+  total,
+  className,
+}: {
+  itens: { id: string; nome: string; valor: number; color: string; pct: number }[];
+  total: number;
+  className?: string;
+}) {
+  const { t } = useTranslation("dashboard");
+  const top = itens.slice(0, 5);
+  const restoValor = itens.slice(5).reduce((s, i) => s + i.valor, 0);
+  const fatias = [
+    ...top,
+    ...(restoValor > 0
+      ? [
+          {
+            id: "__outros",
+            nome: t("categorias.outros", { defaultValue: "Outros" }),
+            valor: restoValor,
+            color: "hsl(var(--muted-foreground))",
+            pct: total > 0 ? (restoValor / total) * 100 : 0,
+          },
+        ]
+      : []),
+  ];
+
+  let acc = 0;
+  const stops = fatias
+    .map((f) => {
+      const start = acc;
+      acc += f.pct;
+      return `${f.color} ${start.toFixed(2)}% ${Math.min(100, acc).toFixed(2)}%`;
+    })
+    .join(", ");
+
+  return (
+    <section
+      className={cn("rounded-2xl border border-border bg-card p-4 shadow-card", className)}
+    >
+      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        {t("sections.categoriasCartoes")}
+      </p>
+      {fatias.length === 0 || total <= 0 ? (
+        <p className="mt-3 text-xs text-muted-foreground">{t("kpi.tudoEmDia")}</p>
+      ) : (
+        <>
+          <div className="mt-3 flex justify-center">
+            <div
+              className="relative h-[120px] w-[120px] rounded-full"
+              style={{ background: `conic-gradient(${stops})` }}
+              aria-hidden
+            >
+              <div className="absolute inset-[22%] grid place-items-center rounded-full bg-card">
+                <span className="num text-[11px] font-semibold">{formatBRL(total)}</span>
+              </div>
+            </div>
+          </div>
+          <ul className="mt-3 space-y-1.5">
+            {fatias.map((f) => (
+              <li key={f.id} className="flex min-w-0 items-center gap-2 text-[11px]">
+                <span
+                  aria-hidden
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ background: f.color }}
+                />
+                <span className="min-w-0 flex-1 truncate text-muted-foreground">{f.nome}</span>
+                <span className="num shrink-0 font-semibold">{Math.round(f.pct)}%</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
+
+
+
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="mb-2.5 mt-5 flex items-center gap-2.5 px-1 sm:mt-5 lg:mb-3 lg:mt-6">
