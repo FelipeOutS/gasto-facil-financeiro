@@ -84,6 +84,7 @@ import {
   isLoginBioUnlockRequired,
 } from "@/lib/biometric-login";
 import { AppModuleBanner, AppEmptyStateVisual, AppActionCard } from "@/components/app-v2";
+import { AdminMasterBadge } from "@/components/AdminMasterBadge";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -451,7 +452,8 @@ function Index() {
   );
 
   return (
-    <MobileShell wide>
+      <MobileShell wide>
+        <AvisoTrialExpirandoBanner />
       {/* ===== Mobile: resumo do mês estilo app financeiro (apenas <lg) ===== */}
       <div className="lg:hidden">
         <MobileMonthSummary
@@ -1068,9 +1070,10 @@ function HeroGreeting({
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             {eyebrow}
           </p>
-          <h1 className="mt-0.5 text-[18px] font-bold leading-tight tracking-tight sm:text-xl lg:text-[22px]">
+          <h1 className="mt-0.5 flex items-center gap-2 text-[18px] font-bold leading-tight tracking-tight sm:text-xl lg:text-[22px]">
             {greet}
             {firstName ? `, ${firstName}` : ""}
+            <AdminMasterBadge className="mt-0.5" />
           </h1>
           <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-card-elevated/70 px-2 py-0.5 text-[10px] font-medium capitalize text-muted-foreground">
             <CalendarClock className="h-3 w-3" />

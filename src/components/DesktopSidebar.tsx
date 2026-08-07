@@ -2,7 +2,32 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
-import { Home, Plus, Lock, ChevronDown, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import {
+  Home,
+  Plus,
+  Lock,
+  ChevronDown,
+  PanelLeftClose,
+  PanelLeftOpen,
+  LayoutDashboard,
+  Wallet,
+  Target,
+  ArrowUp,
+  CreditCard,
+  PieChart,
+  BarChart3,
+  Calendar,
+  Sparkles,
+  Repeat,
+  Bell,
+  ShoppingCart,
+  Receipt,
+  HandCoins,
+  ShieldCheck,
+  Smartphone,
+  MessageSquare,
+  HelpCircle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/BrandMark";
 import { ConnectedAccountSwitcher } from "@/components/ConnectedAccountSwitcher";
@@ -15,7 +40,12 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { NAV_GROUPS, filterVisibleGroups, type NavLeaf } from "@/lib/nav-groups";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useSidebarCollapsed, setSidebarCollapsed } from "@/lib/sidebar-collapsed";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const ROUTE_FEATURE = Object.fromEntries(
   PREMIUM_ROUTE_RULES.map((r) => [r.path, { feature: r.feature, title: r.title }]),
@@ -133,7 +163,7 @@ export function DesktopSidebar() {
     const iconNode = (
       <span className="relative">
         <Icon
-          className={cn("h-4 w-4 shrink-0", active && "text-brand")}
+          className={cn("h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110", active && "text-brand")}
           strokeWidth={active ? 2.4 : 1.8}
         />
         {showDot && (
@@ -147,22 +177,20 @@ export function DesktopSidebar() {
         )}
       </span>
     );
-    const labelNode = collapsed ? null : (
-      <>
-        <span className="truncate">{label}</span>
-        {locked && <Lock className="ml-auto h-3.5 w-3.5 text-muted-foreground/70" />}
-      </>
-    );
 
     const inner = locked ? (
       <button
         type="button"
         onClick={() => setLockState({ open: true, title: routeRule!.title })}
         className={cn(linkClasses, "w-full text-left")}
-        aria-label={label}
       >
         {iconNode}
-        {labelNode}
+        {!collapsed && (
+          <>
+            <span className="flex-1 truncate tracking-tight">{label}</span>
+            <Lock className="ml-auto h-3 w-3 shrink-0 text-muted-foreground/70" />
+          </>
+        )}
       </button>
     ) : (
       <Link
@@ -171,16 +199,17 @@ export function DesktopSidebar() {
         preloadDelay={0}
         onClick={(e: MouseEvent<HTMLAnchorElement>) => handleNavClick(to, e)}
         className={linkClasses}
-        aria-label={label}
       >
         {active && !collapsed && (
           <span
             aria-hidden
-            className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand"
+            className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand shadow-[0_0_8px_rgba(var(--brand-rgb),0.6)]"
           />
         )}
         {iconNode}
-        {labelNode}
+        {!collapsed && (
+          <span className="flex-1 truncate tracking-tight">{label}</span>
+        )}
       </Link>
     );
 
@@ -189,7 +218,10 @@ export function DesktopSidebar() {
         <li key={to}>
           <Tooltip>
             <TooltipTrigger asChild>{inner}</TooltipTrigger>
-            <TooltipContent side="right">{label}</TooltipContent>
+            <TooltipContent side="right" sideOffset={10} className="font-medium">
+              {label}
+              {locked && " (Premium)"}
+            </TooltipContent>
           </Tooltip>
         </li>
       );
@@ -298,7 +330,7 @@ export function DesktopSidebar() {
 
         <nav
           className={cn(
-            "flex-1 overflow-y-auto overflow-x-hidden pb-3",
+            "flex-1 overflow-y-auto overflow-x-hidden pb-3 scrollbar-thin scrollbar-thumb-border/60 scrollbar-track-transparent hover:scrollbar-thumb-border",
             collapsed ? "px-2" : "px-3",
           )}
         >
