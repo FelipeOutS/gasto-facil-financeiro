@@ -136,88 +136,17 @@ function CategoriasPage() {
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </Link>
 
-      {/* Aparência */}
-      <section className="mt-5 rounded-3xl border border-border bg-card p-5 animate-rise">
-        <h2 className="text-sm font-semibold">{t("appearance.title")}</h2>
-        <p className="mt-1 text-xs text-muted-foreground">{t("appearance.desc")}</p>
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          {(
-            [
-              { id: "light", labelKey: "light", Icon: Sun },
-              { id: "dark", labelKey: "dark", Icon: Moon },
-              { id: "system", labelKey: "system", Icon: Monitor },
-            ] as { id: ThemeChoice; labelKey: "light" | "dark" | "system"; Icon: typeof Sun }[]
-          ).map(({ id, labelKey, Icon }) => {
-            const active = theme === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTheme(id)}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1.5 rounded-2xl border px-3 py-3 text-xs font-medium transition-all card-press",
-                  active
-                    ? "border-brand bg-brand-soft text-brand-on-soft shadow-card"
-                    : "border-border bg-card text-muted-foreground hover:text-foreground",
-                )}
-                aria-pressed={active}
-              >
-                <Icon className={cn("h-4 w-4", active && "text-brand")} />
-                {t(`appearance.themes.${labelKey}`)}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mt-5">
-          <p className="text-xs font-medium text-foreground">{t("appearance.accentTitle")}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">{t("appearance.accentDesc")}</p>
-          <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-8">
-            {ACCENTS.map((a) => {
-              const active = accent === a.id;
-              return (
-                <button
-                  key={a.id}
-                  type="button"
-                  onClick={() => setAccent(a.id)}
-                  className={cn(
-                    "card-press group relative flex flex-col items-center gap-1.5 rounded-2xl border p-2 transition-all",
-                    active
-                      ? "border-brand bg-brand-soft shadow-card"
-                      : "border-border bg-card hover:bg-card-elevated hover:border-brand/40",
-                  )}
-                  aria-pressed={active}
-                  aria-label={a.label}
-                >
-                  <span
-                    className={cn(
-                      "relative grid h-8 w-8 place-items-center rounded-full ring-2 ring-offset-2 ring-offset-card transition-all",
-                      active ? "ring-foreground/70 scale-105 animate-pop" : "ring-transparent",
-                    )}
-                    style={{ background: a.swatch }}
-                  >
-                    {active && (
-                      <Check
-                        className="h-4 w-4 drop-shadow-sm"
-                        style={{ color: a.fgLight === "oklch(0.985 0 0)" ? "#fff" : "#111" }}
-                        strokeWidth={3}
-                      />
-                    )}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-[10px] font-medium",
-                      active ? "text-brand-on-soft" : "text-muted-foreground",
-                    )}
-                  >
-                    {a.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      {/* Redirecionamento visual: Aparência agora tem sua própria seção */}
+      <div className="mt-5 p-4 rounded-2xl border border-brand/20 bg-brand-soft/10">
+        <p className="text-xs font-medium text-brand">{t("appearance.title")}</p>
+        <p className="text-xs text-muted-foreground mt-1">Configurações de tema e cores foram movidas para uma seção dedicada.</p>
+        <Link 
+          to="/app/ajustes/aparencia" 
+          className="mt-3 inline-flex items-center text-xs font-bold text-brand hover:underline"
+        >
+          Ir para Aparência <ChevronRight className="h-3 w-3 ml-1" />
+        </Link>
+      </div>
 
       {/* Limite mensal */}
       <section className="mt-5 rounded-3xl border border-border bg-card p-5">

@@ -26,13 +26,13 @@ function AjustesPage() {
 
   const sections = [
     { id: "account", label: t("sections.account.title"), desc: t("sections.account.description"), icon: User, to: "/conta" },
-    { id: "appearance", label: t("sections.appearance.title"), desc: t("sections.appearance.description"), icon: Sun, to: "/ajustes/aparencia" },
+    { id: "appearance", label: t("sections.appearance.title"), desc: t("sections.appearance.description"), icon: Sun, to: "/app/ajustes/aparencia" },
     { id: "finance", label: t("sections.finance.title"), desc: t("sections.finance.description"), icon: PieChart, to: "/categorias" },
-    { id: "notifications", label: t("sections.notifications.title"), desc: t("sections.notifications.description"), icon: Bell, to: "/ajustes/notificacoes" },
+    { id: "notifications", label: t("sections.notifications.title"), desc: t("sections.notifications.description"), icon: Bell, to: "/app/ajustes/notificacoes" },
     { id: "privacy", label: t("sections.privacy.title"), desc: t("sections.privacy.description"), icon: ShieldCheck, to: "/app/privacidade" },
-    { id: "connections", label: t("sections.connections.title"), desc: t("sections.connections.description"), icon: Plug, to: "/contas-conectadas" },
+    { id: "connections", label: t("sections.connections.title"), desc: t("sections.connections.description"), icon: "/contas-conectadas" },
     { id: "plan", label: t("sections.plan.title"), desc: t("sections.plan.description"), icon: Crown, to: "/meu-plano" },
-    { id: "help", label: t("sections.help.title"), desc: t("sections.help.description"), icon: HelpCircle, to: "/ajustes/ajuda" },
+    { id: "help", label: t("sections.help.title"), desc: t("sections.help.description"), icon: HelpCircle, to: "/app/ajustes/ajuda" },
   ];
 
   return (
