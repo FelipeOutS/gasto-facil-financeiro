@@ -14,7 +14,7 @@ import { useStore, setTheme } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/app/ajustes/aparencia")({
+export const Route = createFileRoute("/app_/ajustes/aparencia")({
   head: () => ({ meta: [{ title: "Aparência — Gasto Inteligente" }] }),
   component: AparenciaPage,
 });
