@@ -61,8 +61,16 @@
     "selection": {
       "selectAll": "Selecionar todos os dados financeiros",
       "records": "{{count}} registros",
-      "continue": "Continuar"
+      "continue": "Continuar ({{count}} selecionados)"
     },
+    "scopes": {
+      "all": "Todos",
+      "paid": "Somente pagas",
+      "received": "Somente recebidas",
+      "pending": "Somente pendentes",
+      "overdue": "Somente atrasadas/vencidas"
+    },
+
     "review": {
       "title": "Revise o que será excluído",
       "willBeRemoved": "serão removidos",
