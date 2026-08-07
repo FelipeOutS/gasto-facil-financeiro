@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+
 import { useTranslation } from "react-i18next";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import {
@@ -40,18 +41,14 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { NAV_GROUPS, filterVisibleGroups, type NavLeaf } from "@/lib/nav-groups";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useSidebarCollapsed, setSidebarCollapsed } from "@/lib/sidebar-collapsed";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const ROUTE_FEATURE = Object.fromEntries(
   PREMIUM_ROUTE_RULES.map((r) => [r.path, { feature: r.feature, title: r.title }]),
 );
 
 const STORAGE_KEY = "gi-sidebar-groups-v1";
+const SCROLL_KEY = "gi-sidebar-scroll-v1";
 
 function readGroupState(): Record<string, boolean> {
   if (typeof window === "undefined") return {};
@@ -85,6 +82,58 @@ export function DesktopSidebar() {
   });
   const { user, profile } = useAuth();
   const collapsed = useSidebarCollapsed();
+
+  // ---- UX de rolagem do menu (área central) ----
+  const scrollRef = useRef<HTMLElement | null>(null);
+  const scrollingTimer = useRef<number | null>(null);
+  const [edges, setEdges] = useState({ top: false, bottom: false });
+  const [scrolling, setScrolling] = useState(false);
+
+  const syncEdges = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const max = el.scrollHeight - el.clientHeight;
+    setEdges({
+      top: el.scrollTop > 4,
+      bottom: max > 4 && el.scrollTop < max - 4,
+    });
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (el) {
+      try {
+        window.sessionStorage.setItem(SCROLL_KEY, String(el.scrollTop));
+      } catch {
+        /* ignore */
+      }
+    }
+    syncEdges();
+    setScrolling(true);
+    if (scrollingTimer.current) window.clearTimeout(scrollingTimer.current);
+    scrollingTimer.current = window.setTimeout(() => setScrolling(false), 700);
+  }, [syncEdges]);
+
+  // Restaura a posição anterior (não volta ao topo ao trocar de rota) e
+  // recalcula os fades quando o conteúdo/altura muda.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    try {
+      const saved = Number(window.sessionStorage.getItem(SCROLL_KEY) ?? "0");
+      if (Number.isFinite(saved) && saved > 0) el.scrollTop = saved;
+    } catch {
+      /* ignore */
+    }
+    syncEdges();
+    const ro = new ResizeObserver(() => syncEdges());
+    ro.observe(el);
+    Array.from(el.children).forEach((c) => ro.observe(c));
+    return () => {
+      ro.disconnect();
+      if (scrollingTimer.current) window.clearTimeout(scrollingTimer.current);
+    };
+  }, [syncEdges]);
 
   const groups = useMemo(
     () =>
@@ -120,6 +169,23 @@ export function DesktopSidebar() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPath]);
+
+  // Traz o item ativo para a área visível SOMENTE quando ele está fora dela.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const target = el.querySelector<HTMLElement>('[data-nav-active="true"]');
+    if (!target) {
+      syncEdges();
+      return;
+    }
+    const c = el.getBoundingClientRect();
+    const r = target.getBoundingClientRect();
+    if (r.top < c.top + 4 || r.bottom > c.bottom - 4) {
+      target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+    syncEdges();
+  }, [currentPath, collapsed, openState, syncEdges]);
 
   function toggleGroup(id: string) {
     setOpenState((s) => {
@@ -163,7 +229,10 @@ export function DesktopSidebar() {
     const iconNode = (
       <span className="relative">
         <Icon
-          className={cn("h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110", active && "text-brand")}
+          className={cn(
+            "h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110",
+            active && "text-brand",
+          )}
           strokeWidth={active ? 2.4 : 1.8}
         />
         {showDot && (
@@ -207,15 +276,13 @@ export function DesktopSidebar() {
           />
         )}
         {iconNode}
-        {!collapsed && (
-          <span className="flex-1 truncate tracking-tight">{label}</span>
-        )}
+        {!collapsed && <span className="flex-1 truncate tracking-tight">{label}</span>}
       </Link>
     );
 
     if (collapsed) {
       return (
-        <li key={to}>
+        <li key={to} data-nav-active={active ? "true" : undefined}>
           <Tooltip>
             <TooltipTrigger asChild>{inner}</TooltipTrigger>
             <TooltipContent side="right" sideOffset={10} className="font-medium">
@@ -226,7 +293,11 @@ export function DesktopSidebar() {
         </li>
       );
     }
-    return <li key={to}>{inner}</li>;
+    return (
+      <li key={to} data-nav-active={active ? "true" : undefined}>
+        {inner}
+      </li>
+    );
   }
 
   const dashboardActive = currentPath === "/";
@@ -328,110 +399,132 @@ export function DesktopSidebar() {
           </button>
         )}
 
-        <nav
-          className={cn(
-            "flex-1 overflow-y-auto overflow-x-hidden pb-3 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/40",
-            collapsed ? "px-2" : "px-3",
-          )}
-        >
-          {/* Dashboard fixo no topo */}
-          <ul className="space-y-1">
-            <li>
-              {collapsed ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link
-                      to="/app"
-                      preload="intent"
-                      preloadDelay={0}
-                      onClick={(e: MouseEvent<HTMLAnchorElement>) => handleNavClick("/app", e)}
-                      aria-label={t("items.dashboard")}
-                      className={cn(
-                        "group relative flex items-center justify-center rounded-xl px-2 py-2 text-sm font-medium transition-all",
-                        dashboardActive
-                          ? "bg-brand-soft text-brand-on-soft shadow-card"
-                          : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
-                      )}
-                    >
-                      <Home
-                        className={cn("h-4 w-4 shrink-0", dashboardActive && "text-brand")}
-                        strokeWidth={dashboardActive ? 2.4 : 1.8}
-                      />
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">{t("items.dashboard")}</TooltipContent>
-                </Tooltip>
-              ) : (
-                <Link
-                  to="/app"
-                  preload="intent"
-                  preloadDelay={0}
-                  onClick={(e: MouseEvent<HTMLAnchorElement>) => handleNavClick("/app", e)}
-                  className={cn(
-                    "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
-                    dashboardActive
-                      ? "bg-brand-soft text-brand-on-soft shadow-card"
-                      : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
-                  )}
-                >
-                  {dashboardActive && (
-                    <span
-                      aria-hidden
-                      className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand"
-                    />
-                  )}
-                  <Home
-                    className={cn("h-4 w-4 shrink-0", dashboardActive && "text-brand")}
-                    strokeWidth={dashboardActive ? 2.4 : 1.8}
-                  />
-                  <span className="truncate">{t("items.dashboard")}</span>
-                </Link>
-              )}
-            </li>
-          </ul>
-
-          <div className="mt-3 space-y-1">
-            {groups.map((group) => {
-              const open = isOpen(group.id);
-              const hasActive = group.items.some(
-                (it) => currentPath === it.to || currentPath.startsWith(it.to + "/"),
-              );
-              if (collapsed) {
-                // No accordion header when collapsed; just a thin divider + items
-                return (
-                  <div key={group.id} className="rounded-xl">
-                    <div aria-hidden className="my-2 mx-2 h-px bg-border/60" />
-                    <ul className="space-y-1">{group.items.map(renderLeaf)}</ul>
-                  </div>
-                );
-              }
-              return (
-                <div key={group.id} className="rounded-xl">
-                  <button
-                    type="button"
-                    onClick={() => toggleGroup(group.id)}
-                    aria-expanded={open}
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          {/* Fade superior — só aparece quando há conteúdo acima */}
+          <div
+            aria-hidden
+            className={cn(
+              "pointer-events-none absolute inset-x-0 top-0 z-10 h-6 bg-gradient-to-b from-card/85 to-transparent transition-opacity duration-200",
+              edges.top ? "opacity-100" : "opacity-0",
+            )}
+          />
+          <nav
+            ref={scrollRef}
+            onScroll={handleScroll}
+            data-scrolling={scrolling ? "true" : "false"}
+            tabIndex={-1}
+            className={cn(
+              "gi-sidebar-scroll min-h-0 flex-1 overflow-x-hidden pb-3 focus:outline-none",
+              collapsed ? "px-2" : "pl-3 pr-2",
+            )}
+          >
+            {/* Dashboard fixo no topo */}
+            <ul className="space-y-1">
+              <li>
+                {collapsed ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to="/app"
+                        preload="intent"
+                        preloadDelay={0}
+                        onClick={(e: MouseEvent<HTMLAnchorElement>) => handleNavClick("/app", e)}
+                        aria-label={t("items.dashboard")}
+                        className={cn(
+                          "group relative flex items-center justify-center rounded-xl px-2 py-2 text-sm font-medium transition-all",
+                          dashboardActive
+                            ? "bg-brand-soft text-brand-on-soft shadow-card"
+                            : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
+                        )}
+                      >
+                        <Home
+                          className={cn("h-4 w-4 shrink-0", dashboardActive && "text-brand")}
+                          strokeWidth={dashboardActive ? 2.4 : 1.8}
+                        />
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">{t("items.dashboard")}</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Link
+                    to="/app"
+                    preload="intent"
+                    preloadDelay={0}
+                    onClick={(e: MouseEvent<HTMLAnchorElement>) => handleNavClick("/app", e)}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold uppercase tracking-widest transition-colors",
-                      hasActive
-                        ? "text-foreground"
-                        : "text-muted-foreground/70 hover:text-foreground",
+                      "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+                      dashboardActive
+                        ? "bg-brand-soft text-brand-on-soft shadow-card"
+                        : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
                     )}
                   >
-                    <span>{t(group.labelKey)}</span>
-                    <ChevronDown
-                      className={cn(
-                        "h-3.5 w-3.5 transition-transform duration-200",
-                        open ? "rotate-0" : "-rotate-90",
-                      )}
+                    {dashboardActive && (
+                      <span
+                        aria-hidden
+                        className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-brand"
+                      />
+                    )}
+                    <Home
+                      className={cn("h-4 w-4 shrink-0", dashboardActive && "text-brand")}
+                      strokeWidth={dashboardActive ? 2.4 : 1.8}
                     />
-                  </button>
-                  {open && <ul className="mt-1 space-y-1 pb-1">{group.items.map(renderLeaf)}</ul>}
-                </div>
-              );
-            })}
-          </div>
-        </nav>
+                    <span className="truncate">{t("items.dashboard")}</span>
+                  </Link>
+                )}
+              </li>
+            </ul>
+
+            <div className="mt-3 space-y-1">
+              {groups.map((group) => {
+                const open = isOpen(group.id);
+                const hasActive = group.items.some(
+                  (it) => currentPath === it.to || currentPath.startsWith(it.to + "/"),
+                );
+                if (collapsed) {
+                  // No accordion header when collapsed; just a thin divider + items
+                  return (
+                    <div key={group.id} className="rounded-xl">
+                      <div aria-hidden className="my-2 mx-2 h-px bg-border/60" />
+                      <ul className="space-y-1">{group.items.map(renderLeaf)}</ul>
+                    </div>
+                  );
+                }
+                return (
+                  <div key={group.id} className="rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(group.id)}
+                      aria-expanded={open}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-lg px-3 py-2 text-[11px] font-semibold uppercase tracking-widest transition-colors",
+                        hasActive
+                          ? "text-foreground"
+                          : "text-muted-foreground/70 hover:text-foreground",
+                      )}
+                    >
+                      <span>{t(group.labelKey)}</span>
+                      <ChevronDown
+                        className={cn(
+                          "h-3.5 w-3.5 transition-transform duration-200",
+                          open ? "rotate-0" : "-rotate-90",
+                        )}
+                      />
+                    </button>
+                    {open && <ul className="mt-1 space-y-1 pb-1">{group.items.map(renderLeaf)}</ul>}
+                  </div>
+                );
+              })}
+            </div>
+          </nav>
+          {/* Fade inferior — indica que existe mais conteúdo abaixo */}
+          <div
+            aria-hidden
+            className={cn(
+              "pointer-events-none absolute inset-x-0 bottom-0 z-10 h-7 bg-gradient-to-t from-card/90 to-transparent transition-opacity duration-200",
+              edges.bottom ? "opacity-100" : "opacity-0",
+            )}
+          />
+        </div>
 
         {/* Theme toggle */}
         <div

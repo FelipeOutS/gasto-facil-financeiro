@@ -6,9 +6,11 @@
 
 @theme inline {
   --font-sans:
-    "Manrope", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    "Manrope", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
   --font-display:
-    "Manrope", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    "Manrope", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -167,15 +169,15 @@
   --sidebar-ring: var(--ring);
 
   /* Mercado Inteligente — category accents (dark) */
-  --mercado-fresh: oklch(0.74 0.16 145);      /* hortifruti — verde fresco */
-  --mercado-meat: oklch(0.62 0.18 22);        /* açougue — vermelho carne */
-  --mercado-bakery: oklch(0.76 0.13 70);      /* padaria — dourado pão */
-  --mercado-drinks: oklch(0.7 0.15 230);      /* bebidas — azul */
-  --mercado-dairy: oklch(0.86 0.07 95);       /* laticínios — creme */
-  --mercado-cleaning: oklch(0.74 0.13 200);   /* limpeza — ciano */
-  --mercado-pantry: oklch(0.7 0.12 55);       /* mercearia — caramelo */
-  --mercado-household: oklch(0.68 0.13 290);  /* utilidades — violeta */
-  --mercado-community: oklch(0.75 0.17 152);  /* preço comunitário — verde economia */
+  --mercado-fresh: oklch(0.74 0.16 145); /* hortifruti — verde fresco */
+  --mercado-meat: oklch(0.62 0.18 22); /* açougue — vermelho carne */
+  --mercado-bakery: oklch(0.76 0.13 70); /* padaria — dourado pão */
+  --mercado-drinks: oklch(0.7 0.15 230); /* bebidas — azul */
+  --mercado-dairy: oklch(0.86 0.07 95); /* laticínios — creme */
+  --mercado-cleaning: oklch(0.74 0.13 200); /* limpeza — ciano */
+  --mercado-pantry: oklch(0.7 0.12 55); /* mercearia — caramelo */
+  --mercado-household: oklch(0.68 0.13 290); /* utilidades — violeta */
+  --mercado-community: oklch(0.75 0.17 152); /* preço comunitário — verde economia */
 
   /* App V3 — module accents (dark). Usados pelos componentes app-v2. */
   --module-gastos: oklch(0.66 0.18 25);
@@ -249,11 +251,7 @@ html.light {
 }
 
 html.light body {
-  background: radial-gradient(
-      ellipse at top,
-      oklch(0.97 0.008 260) 0%,
-      var(--color-background) 60%
-    )
+  background: radial-gradient(ellipse at top, oklch(0.97 0.008 260) 0%, var(--color-background) 60%)
     no-repeat fixed;
 }
 
@@ -271,7 +269,9 @@ html.light .shadow-elevated {
 
 html,
 body {
-  transition: background-color 200ms ease, color 200ms ease;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
 }
 
 @layer base {
@@ -305,20 +305,15 @@ body {
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-feature-settings:
-      "cv11", "ss01";
+    font-feature-settings: "cv11", "ss01";
   }
 
   body {
-    background: radial-gradient(
-        ellipse at top,
-        oklch(0.22 0.012 260) 0%,
-        var(--color-background) 60%
-      )
-      no-repeat fixed,
+    background:
+      radial-gradient(ellipse at top, oklch(0.22 0.012 260) 0%, var(--color-background) 60%)
+        no-repeat fixed,
       var(--color-background);
   }
-
 
   /* Soft brand tint overlay — visível mas elegante. A intensidade real é
      controlada por --brand-tint (definido em accent.tsx), variando por cor
@@ -344,16 +339,36 @@ body {
 
 @layer utilities {
   /* ===== Brand / Accent tokens (set dynamically by AccentProvider) ===== */
-  .bg-brand { background-color: var(--brand); }
-  .text-brand { color: var(--brand); }
-  .text-brand-foreground { color: var(--brand-foreground); }
-  .hover\:bg-brand\/90:hover { background-color: color-mix(in oklab, var(--brand) 90%, transparent); }
-  .text-brand-on-soft { color: var(--brand-fg-on-soft, var(--foreground)); }
-  .bg-brand-soft { background-color: var(--brand-soft); }
-  .bg-brand-tint { background-color: var(--brand-tint); }
-  .border-brand { border-color: var(--brand-border); }
-  .ring-brand { --tw-ring-color: var(--brand); }
-  .from-brand { --tw-gradient-from: var(--brand) var(--tw-gradient-from-position); }
+  .bg-brand {
+    background-color: var(--brand);
+  }
+  .text-brand {
+    color: var(--brand);
+  }
+  .text-brand-foreground {
+    color: var(--brand-foreground);
+  }
+  .hover\:bg-brand\/90:hover {
+    background-color: color-mix(in oklab, var(--brand) 90%, transparent);
+  }
+  .text-brand-on-soft {
+    color: var(--brand-fg-on-soft, var(--foreground));
+  }
+  .bg-brand-soft {
+    background-color: var(--brand-soft);
+  }
+  .bg-brand-tint {
+    background-color: var(--brand-tint);
+  }
+  .border-brand {
+    border-color: var(--brand-border);
+  }
+  .ring-brand {
+    --tw-ring-color: var(--brand);
+  }
+  .from-brand {
+    --tw-gradient-from: var(--brand) var(--tw-gradient-from-position);
+  }
   /* Soft brand gradient — usado em CTAs principais quando há accent não-grafite */
   .bg-brand-grad {
     background-image: linear-gradient(
@@ -399,14 +414,20 @@ body {
   }
   /* Resposta tátil de botões/cards */
   .card-press {
-    transition: transform 160ms ease, box-shadow 200ms ease, background-color 160ms ease;
+    transition:
+      transform 160ms ease,
+      box-shadow 200ms ease,
+      background-color 160ms ease;
   }
   .card-press:active {
     transform: scale(0.985);
   }
   /* Hover sutil em listas no desktop */
   .hover-lift {
-    transition: transform 220ms ease, box-shadow 220ms ease, background-color 200ms ease;
+    transition:
+      transform 220ms ease,
+      box-shadow 220ms ease,
+      background-color 200ms ease;
   }
   @media (hover: hover) {
     .hover-lift:hover {
@@ -420,14 +441,30 @@ body {
     opacity: 1;
     animation: rise 380ms cubic-bezier(0.22, 0.61, 0.36, 1);
   }
-  .stagger > *:nth-child(1) { animation-delay: 20ms; }
-  .stagger > *:nth-child(2) { animation-delay: 60ms; }
-  .stagger > *:nth-child(3) { animation-delay: 100ms; }
-  .stagger > *:nth-child(4) { animation-delay: 140ms; }
-  .stagger > *:nth-child(5) { animation-delay: 180ms; }
-  .stagger > *:nth-child(6) { animation-delay: 220ms; }
-  .stagger > *:nth-child(7) { animation-delay: 260ms; }
-  .stagger > *:nth-child(8) { animation-delay: 300ms; }
+  .stagger > *:nth-child(1) {
+    animation-delay: 20ms;
+  }
+  .stagger > *:nth-child(2) {
+    animation-delay: 60ms;
+  }
+  .stagger > *:nth-child(3) {
+    animation-delay: 100ms;
+  }
+  .stagger > *:nth-child(4) {
+    animation-delay: 140ms;
+  }
+  .stagger > *:nth-child(5) {
+    animation-delay: 180ms;
+  }
+  .stagger > *:nth-child(6) {
+    animation-delay: 220ms;
+  }
+  .stagger > *:nth-child(7) {
+    animation-delay: 260ms;
+  }
+  .stagger > *:nth-child(8) {
+    animation-delay: 300ms;
+  }
   /* Skeleton mais agradável */
   .skeleton-shimmer {
     background: linear-gradient(
@@ -454,19 +491,37 @@ body {
 }
 
 @keyframes pop {
-  0% { opacity: 0; transform: scale(0.92); }
-  60% { opacity: 1; transform: scale(1.04); }
-  100% { transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes pageEnter {
-  from { opacity: 0.88; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0.88;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* Pulse macio para alertas — mais perceptível que animate-pulse padrão,
@@ -489,35 +544,90 @@ body {
 }
 
 @keyframes pulseSoft {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.78; transform: scale(1.04); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.78;
+    transform: scale(1.04);
+  }
 }
 @keyframes shake {
-  10%, 90% { transform: translateX(-1px); }
-  20%, 80% { transform: translateX(2px); }
-  30%, 50%, 70% { transform: translateX(-3px); }
-  40%, 60% { transform: translateX(3px); }
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-3px);
+  }
+  40%,
+  60% {
+    transform: translateX(3px);
+  }
 }
 @keyframes fillBar {
-  from { transform: scaleX(0); transform-origin: left; }
-  to { transform: scaleX(1); transform-origin: left; }
+  from {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  to {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
 }
 @keyframes breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.02); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
 }
 @keyframes bell-shake {
-  0%, 50%, 100% { transform: rotate(0deg); }
-  6% { transform: rotate(-12deg); }
-  12% { transform: rotate(10deg); }
-  18% { transform: rotate(-7deg); }
-  24% { transform: rotate(5deg); }
-  30%, 44% { transform: rotate(0deg); }
+  0%,
+  50%,
+  100% {
+    transform: rotate(0deg);
+  }
+  6% {
+    transform: rotate(-12deg);
+  }
+  12% {
+    transform: rotate(10deg);
+  }
+  18% {
+    transform: rotate(-7deg);
+  }
+  24% {
+    transform: rotate(5deg);
+  }
+  30%,
+  44% {
+    transform: rotate(0deg);
+  }
 }
 @keyframes badge-pop {
-  0% { transform: scale(0.4); opacity: 0; }
-  60% { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Respeita preferência do usuário */
@@ -533,8 +643,12 @@ body {
   .skeleton-shimmer {
     animation: none !important;
   }
-  .hover-lift:hover { transform: none !important; }
-  * { transition-duration: 0.01ms !important; }
+  .hover-lift:hover {
+    transform: none !important;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ============================================================
@@ -588,16 +702,73 @@ body {
 }
 
 /* Hide scrollbar utility for horizontal pill rows */
-.scrollbar-none::-webkit-scrollbar { display: none; }
-.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 /* Alias usado nos componentes do Mercado (mesmo efeito) */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Sidebar — scrollbar fina, escura e discreta (UX-SIDEBAR-01) */
+.gi-sidebar-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--muted-foreground) 16%, transparent) transparent;
+  transition: scrollbar-color 200ms ease;
+}
+.gi-sidebar-scroll:hover,
+.gi-sidebar-scroll[data-scrolling="true"] {
+  scrollbar-color: color-mix(in oklab, var(--muted-foreground) 38%, transparent) transparent;
+}
+.gi-sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.gi-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.gi-sidebar-scroll::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+.gi-sidebar-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+.gi-sidebar-scroll::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklab, var(--muted-foreground) 16%, transparent);
+  border-radius: 9999px;
+  transition:
+    background-color 200ms ease,
+    opacity 200ms ease;
+}
+.gi-sidebar-scroll:hover::-webkit-scrollbar-thumb,
+.gi-sidebar-scroll[data-scrolling="true"]::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklab, var(--muted-foreground) 34%, transparent);
+}
+.gi-sidebar-scroll::-webkit-scrollbar-thumb:hover,
+.gi-sidebar-scroll::-webkit-scrollbar-thumb:active {
+  background-color: color-mix(in oklab, var(--muted-foreground) 50%, transparent);
+}
 
 /* Banks marquee — infinite horizontal scroll */
 @keyframes banks-marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 .banks-marquee-track {
   animation: banks-marquee 38s linear infinite;
@@ -607,34 +778,85 @@ body {
   animation-play-state: paused;
 }
 @media (max-width: 640px) {
-  .banks-marquee-track { animation-duration: 28s; }
+  .banks-marquee-track {
+    animation-duration: 28s;
+  }
 }
 
 /* Brand loader — subtle premium pulse */
 @keyframes brand-pulse {
-  0%, 100% { opacity: 0.85; transform: scale(1); }
-  50%      { opacity: 1;    transform: scale(1.04); }
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
 }
 
 /* Gasto AI markdown rendering */
-.ai-markdown { color: var(--foreground); }
-.ai-markdown > *:first-child { margin-top: 0; }
-.ai-markdown > *:last-child { margin-bottom: 0; }
-.ai-markdown p { margin: 0.35rem 0; line-height: 1.55; }
-.ai-markdown strong { font-weight: 600; color: inherit; }
-.ai-markdown em { font-style: italic; }
-.ai-markdown ul, .ai-markdown ol { margin: 0.4rem 0; padding-left: 1.1rem; }
-.ai-markdown ul { list-style: disc; }
-.ai-markdown ol { list-style: decimal; }
-.ai-markdown li { margin: 0.18rem 0; line-height: 1.5; }
-.ai-markdown li::marker { color: var(--primary); }
-.ai-markdown h1, .ai-markdown h2, .ai-markdown h3, .ai-markdown h4 {
-  font-weight: 700; margin: 0.6rem 0 0.3rem; line-height: 1.3;
+.ai-markdown {
+  color: var(--foreground);
 }
-.ai-markdown h1 { font-size: 1rem; }
-.ai-markdown h2 { font-size: 0.95rem; }
-.ai-markdown h3, .ai-markdown h4 { font-size: 0.9rem; }
-.ai-markdown a { color: var(--primary); text-decoration: underline; }
+.ai-markdown > *:first-child {
+  margin-top: 0;
+}
+.ai-markdown > *:last-child {
+  margin-bottom: 0;
+}
+.ai-markdown p {
+  margin: 0.35rem 0;
+  line-height: 1.55;
+}
+.ai-markdown strong {
+  font-weight: 600;
+  color: inherit;
+}
+.ai-markdown em {
+  font-style: italic;
+}
+.ai-markdown ul,
+.ai-markdown ol {
+  margin: 0.4rem 0;
+  padding-left: 1.1rem;
+}
+.ai-markdown ul {
+  list-style: disc;
+}
+.ai-markdown ol {
+  list-style: decimal;
+}
+.ai-markdown li {
+  margin: 0.18rem 0;
+  line-height: 1.5;
+}
+.ai-markdown li::marker {
+  color: var(--primary);
+}
+.ai-markdown h1,
+.ai-markdown h2,
+.ai-markdown h3,
+.ai-markdown h4 {
+  font-weight: 700;
+  margin: 0.6rem 0 0.3rem;
+  line-height: 1.3;
+}
+.ai-markdown h1 {
+  font-size: 1rem;
+}
+.ai-markdown h2 {
+  font-size: 0.95rem;
+}
+.ai-markdown h3,
+.ai-markdown h4 {
+  font-size: 0.9rem;
+}
+.ai-markdown a {
+  color: var(--primary);
+  text-decoration: underline;
+}
 .ai-markdown code {
   background: color-mix(in oklab, var(--muted) 60%, transparent);
   padding: 0.05rem 0.3rem;
