@@ -3,6 +3,14 @@ import { useEffect, useMemo, useState } from "react";
 import { MobileShell } from "@/components/MobileShell";
 import { useAuth } from "@/lib/auth-context";
 import { PLAN_LABEL } from "@/lib/plans";
+import {
+  formatAdminDate,
+  formatAdminDateTime,
+  formatAdminTime,
+  adminDateTimeTooltip,
+  compareCreatedAtDesc,
+} from "@/lib/admin-datetime";
+
 import { usePlan } from "@/lib/use-plan";
 import {
   getAdminDashboard,
@@ -88,21 +96,23 @@ function fmtMoney(cents: number) {
 }
 
 function fmtDate(s: string | null) {
-  if (!s) return "—";
-  try {
-    return new Date(s).toLocaleDateString("pt-BR");
-  } catch {
-    return "—";
-  }
+  return formatAdminDate(s);
+}
+
+/** Data + horário do cadastro (America/Sao_Paulo). */
+function fmtDateTime(s: string | null) {
+  return formatAdminDateTime(s);
 }
 
 type DisplayStatus = "ativo" | "aguardando" | "cancelado_vencido" | "conta_criada";
 
+// Nota: estes rótulos representam status COMERCIAL (plano/pagamento),
+// não integridade técnica do cadastro (Auth/profile/user_plans).
 const STATUS_LABEL: Record<DisplayStatus, string> = {
   ativo: "Plano ativo",
-  aguardando: "Aguardando pagamento",
+  aguardando: "Pagamento pendente",
   cancelado_vencido: "Cancelado/Vencido",
-  conta_criada: "Conta criada",
+  conta_criada: "Gratuito ativo",
 };
 
 const STATUS_COLORS: Record<DisplayStatus, string> = {
@@ -111,6 +121,7 @@ const STATUS_COLORS: Record<DisplayStatus, string> = {
   cancelado_vencido: "bg-red-500/15 text-red-500 border-red-500/30",
   conta_criada: "bg-muted text-muted-foreground border-border",
 };
+
 
 function getDisplayStatus(u: AdminUserRow): DisplayStatus {
   const paid = u.last_payment_status === "approved" || u.last_payment_status === "paid";
@@ -244,15 +255,19 @@ function AdminPage() {
   const filteredUsers = useMemo(() => {
     const sd = periodToDate(filterPeriod);
     const q = search.trim().toLowerCase();
-    return usersList.filter((u) => {
-      if (q && !(u.email.toLowerCase().includes(q) || (u.nome ?? "").toLowerCase().includes(q)))
-        return false;
-      if (filterPlan !== "all" && u.plano !== filterPlan) return false;
-      if (filterStatus !== "all" && getDisplayStatus(u) !== filterStatus) return false;
-      if (filterMethod !== "all" && u.last_payment_method !== filterMethod) return false;
-      if (sd && new Date(u.created_at) < sd) return false;
-      return true;
-    });
+    return usersList
+      .filter((u) => {
+        if (q && !(u.email.toLowerCase().includes(q) || (u.nome ?? "").toLowerCase().includes(q)))
+          return false;
+        if (filterPlan !== "all" && u.plano !== filterPlan) return false;
+        if (filterStatus !== "all" && getDisplayStatus(u) !== filterStatus) return false;
+        if (filterMethod !== "all" && u.last_payment_method !== filterMethod) return false;
+        if (sd && new Date(u.created_at) < sd) return false;
+        return true;
+      })
+      // Ordena pelo timestamp real do cadastro (mais recente primeiro)
+      .sort(compareCreatedAtDesc);
+
   }, [usersList, search, filterPlan, filterStatus, filterMethod, filterPeriod]);
 
   // Charts data
@@ -321,7 +336,7 @@ function AdminPage() {
       email: u.email,
       telefone: u.telefone ?? "",
       tipo_cadastro: u.tipo_cadastro ?? "",
-      cadastro: fmtDate(u.created_at),
+      cadastro: fmtDateTime(u.created_at),
       plano: PLAN_LABEL[u.plano as keyof typeof PLAN_LABEL] ?? u.plano,
       ciclo: u.periodicidade ?? "",
       valor_pago: u.last_payment_amount_cents ? fmtMoney(u.last_payment_amount_cents) : "",
@@ -647,7 +662,7 @@ function AdminPage() {
                 <SelectItem value="ativo">Plano ativo</SelectItem>
                 <SelectItem value="aguardando">Aguardando pagamento</SelectItem>
                 <SelectItem value="cancelado_vencido">Cancelado/Vencido</SelectItem>
-                <SelectItem value="conta_criada">Conta criada</SelectItem>
+                <SelectItem value="conta_criada">Gratuito ativo</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterMethod} onValueChange={setFilterMethod}>
@@ -729,7 +744,18 @@ function AdminPage() {
                       </div>
                       <div className="min-w-0">
                         <span className="text-muted-foreground">Cadastro: </span>
-                        <span className="font-medium">{fmtDate(u.created_at)}</span>
+                        <span
+                          className="font-medium"
+                          title={adminDateTimeTooltip(u.created_at)}
+                        >
+                          {fmtDate(u.created_at)}
+                          {formatAdminTime(u.created_at) ? (
+                            <span className="block text-[11px] text-muted-foreground">
+                              às {formatAdminTime(u.created_at)}
+                            </span>
+                          ) : null}
+                        </span>
+
                       </div>
                       <div className="min-w-0">
                         <span className="text-muted-foreground">Total pago: </span>
@@ -801,7 +827,13 @@ function AdminPage() {
                       >
                         <TableCell className="font-medium">{u.nome ?? "—"}</TableCell>
                         <TableCell className="text-xs">{u.email}</TableCell>
-                        <TableCell className="text-xs">{fmtDate(u.created_at)}</TableCell>
+                        <TableCell
+                          className="text-xs whitespace-nowrap"
+                          title={adminDateTimeTooltip(u.created_at)}
+                        >
+                          {fmtDateTime(u.created_at)}
+                        </TableCell>
+
                         <TableCell className="text-xs">
                           {PLAN_LABEL[u.plano as keyof typeof PLAN_LABEL] ?? u.plano}
                         </TableCell>
@@ -901,7 +933,10 @@ function AdminPage() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Cadastro</p>
-                    <p className="font-medium">{fmtDate(selected.created_at)}</p>
+                    <p className="font-medium" title={adminDateTimeTooltip(selected.created_at)}>
+                      {fmtDateTime(selected.created_at)}
+                    </p>
+
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Plano</p>
