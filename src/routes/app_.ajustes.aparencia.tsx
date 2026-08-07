@@ -6,8 +6,7 @@ import {
   Sun, 
   Monitor,
   Layout,
-  Type,
-  Maximize2
+  Type
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { SettingsPageHeader } from "@/components/SettingsPageHeader";
@@ -15,14 +14,18 @@ import { useStore, setTheme } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/app_/ajustes/aparencia")({
+export const Route = createFileRoute("/app/ajustes/aparencia")({
   head: () => ({ meta: [{ title: "Aparência — Gasto Inteligente" }] }),
   component: AparenciaPage,
 });
 
 function AparenciaPage() {
   const { t } = useTranslation("settings");
-  const theme = useStore((s) => s.theme);
+  // @ts-ignore - useStore in this project expects a selector with no arguments
+  const theme = useStore(() => {
+    if (typeof window === "undefined") return "system";
+    return localStorage.getItem("gi-theme") || "system";
+  });
 
   const themeOptions = [
     { id: "light", icon: Sun, label: t("appearance.themes.light") },
