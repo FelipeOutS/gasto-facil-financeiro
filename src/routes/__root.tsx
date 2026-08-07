@@ -318,6 +318,7 @@ const PUBLIC_PATH_PREFIXES = [
 
 const WIDE_EXACT = new Set<string>([
   "/",
+  "/app",
   "/relatorios",
   "/orcamento",
   "/meu-plano",
