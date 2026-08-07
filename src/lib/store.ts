@@ -33,6 +33,31 @@ import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { markContaAPagarPaid, unmarkContaAPagarPaid } from "@/lib/contas.functions";
 
+type Theme = "light" | "dark" | "system";
+
+export function setTheme(theme: Theme) {
+  if (typeof window === "undefined") return;
+  const root = window.document.documentElement;
+  root.classList.remove("light", "dark");
+  if (theme === "system") {
+    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    root.classList.add(systemTheme);
+  } else {
+    root.classList.add(theme);
+  }
+  localStorage.setItem("gi-theme", theme);
+  // Emita um evento para que o store saiba que o tema mudou
+  window.dispatchEvent(new Event("gi-theme-changed"));
+}
+
+import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
+import { parseDateLocal, toLocalISODate } from "./format";
+import { addMonthsPreservingDay } from "./recurrence-date";
+import { validateFinancialAmount, financialAmountMessage } from "./financial-limits";
+import { supabase } from "@/integrations/supabase/client";
+import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
+import { markContaAPagarPaid, unmarkContaAPagarPaid } from "@/lib/contas.functions";
+
 /**
  * Flag de assinatura ativa publicada pelo SubscriptionGuardProvider.
  * Defaultamos para `false` — só liberamos escrita quando o provider confirmar
