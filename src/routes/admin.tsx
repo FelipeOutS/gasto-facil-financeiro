@@ -750,10 +750,7 @@ function AdminPage() {
                       </div>
                       <div className="min-w-0">
                         <span className="text-muted-foreground">Cadastro: </span>
-                        <span
-                          className="font-medium"
-                          title={adminDateTimeTooltip(u.created_at)}
-                        >
+                        <span className="font-medium" title={adminDateTimeTooltip(u.created_at)}>
                           {fmtDate(u.created_at)}
                           {formatAdminTime(u.created_at) ? (
                             <span className="block text-[11px] text-muted-foreground">
@@ -761,6 +758,7 @@ function AdminPage() {
                             </span>
                           ) : null}
                         </span>
+
 
                       </div>
                       <div className="min-w-0">
