@@ -19,7 +19,7 @@ import { getDeletionPreview, executeDataDeletion } from "@/lib/privacy.functions
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/app/privacidade")({
+export const Route = createFileRoute("/app_/privacidade")({
   component: PrivacyPage,
 });
 
@@ -72,7 +72,7 @@ function PrivacyPage() {
     
     setIsLoadingPreview(true);
     try {
-      const res = await getPreview({ categories: selectedCategories });
+      const res = await getPreview({ data: { categories: selectedCategories } });
       setPreviewData(res.stats);
       setStep("review");
     } catch (err) {
@@ -87,7 +87,7 @@ function PrivacyPage() {
     
     setIsDeleting(true);
     try {
-      await deleteFn({ categories: selectedCategories, confirmationText: confirmationInput });
+      await deleteFn({ data: { categories: selectedCategories, confirmationText: confirmationInput } });
       setStep("success");
       toast.success(t("manageData.success.title"));
     } catch (err) {

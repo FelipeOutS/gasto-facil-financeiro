@@ -23,20 +23,20 @@ const CATEGORY_TABLES: Record<string, string[]> = {
 
 export const getDeletionPreview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ categories: z.array(z.string()) }).parse(d))
-  .handler(async ({ input, context }) => {
+  .validator((d: { categories: string[] }) => z.object({ categories: z.array(z.string()) }).parse(d))
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { userId } = context;
     
     const stats: Record<string, number> = {};
     
-    for (const cat of input.categories) {
+    for (const cat of data.categories) {
       const tables = CATEGORY_TABLES[cat] || [];
       let total = 0;
       
       for (const table of tables) {
         const { count, error } = await supabaseAdmin
-          .from(table)
+          .from(table as any)
           .select("*", { count: "exact", head: true })
           .eq("user_id", userId);
           
@@ -52,29 +52,26 @@ export const getDeletionPreview = createServerFn({ method: "POST" })
 
 export const executeDataDeletion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ 
+  .validator((d: { categories: string[]; confirmationText: string }) => z.object({ 
     categories: z.array(z.string()),
     confirmationText: z.string()
   }).parse(d))
-  .handler(async ({ input, context }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { userId } = context;
 
-    if (input.confirmationText !== "EXCLUIR") {
+    if (data.confirmationText !== "EXCLUIR") {
       throw new Error("Confirmação inválida");
     }
 
     const results: Record<string, { success: boolean; deletedCount?: number; error?: any }> = {};
 
-    // Executamos a exclusão por categoria
-    for (const cat of input.categories) {
+    for (const cat of data.categories) {
       const tables = CATEGORY_TABLES[cat] || [];
       
       for (const table of tables) {
-        // Algumas tabelas podem ter dependências complexas ou RLS específicas
-        // No Lovable Cloud, usamos o supabaseAdmin para garantir a execução da limpeza
         const { error, count } = await supabaseAdmin
-          .from(table)
+          .from(table as any)
           .delete()
           .eq("user_id", userId);
 
@@ -86,13 +83,12 @@ export const executeDataDeletion = createServerFn({ method: "POST" })
       }
     }
 
-    // Auditoria da ação destrutiva
     await supabaseAdmin.from("audit_logs").insert({
       actor_user_id: userId,
       target_user_id: userId,
       action: "selective_data_deletion",
       entity_type: "multiple",
-      metadata: { categories: input.categories, results }
+      metadata: { categories: data.categories, results }
     });
 
     return { success: true, results };

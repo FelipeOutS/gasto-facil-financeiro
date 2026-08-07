@@ -82,6 +82,7 @@ import { Route as ContaSegurancaRouteImport } from './routes/conta_.seguranca'
 import { Route as ClientesRelatorioRouteImport } from './routes/clientes_.relatorio'
 import { Route as CartoesNovoRouteImport } from './routes/cartoes.novo'
 import { Route as AssinaturasNovaRouteImport } from './routes/assinaturas.nova'
+import { Route as AppPrivacidadeRouteImport } from './routes/app_.privacidade'
 import { Route as AppPerfilRouteImport } from './routes/app_.perfil'
 import { Route as AppMaisRouteImport } from './routes/app_.mais'
 import { Route as AppIdiomaRouteImport } from './routes/app_.idioma'
@@ -509,6 +510,11 @@ const AssinaturasNovaRoute = AssinaturasNovaRouteImport.update({
   path: '/assinaturas/nova',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppPrivacidadeRoute = AppPrivacidadeRouteImport.update({
+  id: '/app_/privacidade',
+  path: '/app/privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppPerfilRoute = AppPerfilRouteImport.update({
   id: '/app_/perfil',
   path: '/app/perfil',
@@ -878,6 +884,7 @@ export interface FileRoutesByFullPath {
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/app/privacidade': typeof AppPrivacidadeRoute
   '/assinaturas/nova': typeof AssinaturasNovaRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
@@ -1012,6 +1019,7 @@ export interface FileRoutesByTo {
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/app/privacidade': typeof AppPrivacidadeRoute
   '/assinaturas/nova': typeof AssinaturasNovaRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
@@ -1147,6 +1155,7 @@ export interface FileRoutesById {
   '/app_/idioma': typeof AppIdiomaRoute
   '/app_/mais': typeof AppMaisRoute
   '/app_/perfil': typeof AppPerfilRoute
+  '/app_/privacidade': typeof AppPrivacidadeRoute
   '/assinaturas/nova': typeof AssinaturasNovaRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes_/relatorio': typeof ClientesRelatorioRoute
@@ -1283,6 +1292,7 @@ export interface FileRouteTypes {
     | '/app/idioma'
     | '/app/mais'
     | '/app/perfil'
+    | '/app/privacidade'
     | '/assinaturas/nova'
     | '/cartoes/novo'
     | '/clientes/relatorio'
@@ -1417,6 +1427,7 @@ export interface FileRouteTypes {
     | '/app/idioma'
     | '/app/mais'
     | '/app/perfil'
+    | '/app/privacidade'
     | '/assinaturas/nova'
     | '/cartoes/novo'
     | '/clientes/relatorio'
@@ -1551,6 +1562,7 @@ export interface FileRouteTypes {
     | '/app_/idioma'
     | '/app_/mais'
     | '/app_/perfil'
+    | '/app_/privacidade'
     | '/assinaturas/nova'
     | '/cartoes/novo'
     | '/clientes_/relatorio'
@@ -1686,6 +1698,7 @@ export interface RootRouteChildren {
   AppIdiomaRoute: typeof AppIdiomaRoute
   AppMaisRoute: typeof AppMaisRoute
   AppPerfilRoute: typeof AppPerfilRoute
+  AppPrivacidadeRoute: typeof AppPrivacidadeRoute
   AssinaturasNovaRoute: typeof AssinaturasNovaRoute
   CartoesNovoRoute: typeof CartoesNovoRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
@@ -2278,6 +2291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AssinaturasNovaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app_/privacidade': {
+      id: '/app_/privacidade'
+      path: '/app/privacidade'
+      fullPath: '/app/privacidade'
+      preLoaderRoute: typeof AppPrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app_/perfil': {
       id: '/app_/perfil'
       path: '/app/perfil'
@@ -2760,6 +2780,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppIdiomaRoute: AppIdiomaRoute,
   AppMaisRoute: AppMaisRoute,
   AppPerfilRoute: AppPerfilRoute,
+  AppPrivacidadeRoute: AppPrivacidadeRoute,
   AssinaturasNovaRoute: AssinaturasNovaRoute,
   CartoesNovoRoute: CartoesNovoRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
