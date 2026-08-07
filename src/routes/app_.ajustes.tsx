@@ -1,8 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
-  ArrowLeft,
-  ChevronRight,
   User,
   Sun,
   PieChart,
@@ -11,9 +9,10 @@ import {
   Plug,
   Crown,
   HelpCircle,
+  ChevronRight,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
-import { cn } from "@/lib/utils";
+import { SettingsPageHeader } from "@/components/SettingsPageHeader";
 
 export const Route = createFileRoute("/app_/ajustes")({
   head: () => ({ meta: [{ title: "Ajustes — Gasto Inteligente" }] }),
@@ -22,39 +21,27 @@ export const Route = createFileRoute("/app_/ajustes")({
 
 function AjustesPage() {
   const { t } = useTranslation("settings");
-  const navigate = useNavigate();
 
   const sections = [
-    { id: "account", label: t("sections.account.title"), desc: t("sections.account.description"), icon: User, to: "/conta" },
+    { id: "account", label: t("sections.account.title"), desc: t("sections.account.description"), icon: User, to: "/conta", params: { from: "ajustes" } },
     { id: "appearance", label: t("sections.appearance.title"), desc: t("sections.appearance.description"), icon: Sun, to: "/app/ajustes/aparencia" },
-    { id: "finance", label: t("sections.finance.title"), desc: t("sections.finance.description"), icon: PieChart, to: "/categorias" },
+    { id: "finance", label: t("sections.finance.title"), desc: t("sections.finance.description"), icon: PieChart, to: "/app/ajustes/preferencias-financeiras" },
     { id: "notifications", label: t("sections.notifications.title"), desc: t("sections.notifications.description"), icon: Bell, to: "/app/ajustes/notificacoes" },
     { id: "privacy", label: t("sections.privacy.title"), desc: t("sections.privacy.description"), icon: ShieldCheck, to: "/app/privacidade" },
-    { id: "connections", label: t("sections.connections.title"), desc: t("sections.connections.description"), icon: Plug, to: "/contas-conectadas" },
-    { id: "plan", label: t("sections.plan.title"), desc: t("sections.plan.description"), icon: Crown, to: "/meu-plano" },
+    { id: "connections", label: t("sections.connections.title"), desc: t("sections.connections.description"), icon: Plug, to: "/contas-conectadas", params: { from: "ajustes" } },
+    { id: "plan", label: t("sections.plan.title"), desc: t("sections.plan.description"), icon: Crown, to: "/meu-plano", params: { from: "ajustes" } },
     { id: "help", label: t("sections.help.title"), desc: t("sections.help.description"), icon: HelpCircle, to: "/app/ajustes/ajuda" },
   ];
 
   return (
     <MobileShell>
-      <header className="flex items-center gap-3 pt-2 mb-6">
-        <button
-          onClick={() => navigate({ to: "/app" })}
-          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Ajustes</h1>
-          <p className="text-sm text-muted-foreground">Personalize sua experiência.</p>
-        </div>
-      </header>
-
+      <SettingsPageHeader title="Ajustes" description="Personalize sua experiência." backTo="/app" />
       <div className="grid gap-3">
         {sections.map((s) => (
           <Link
             key={s.id}
             to={s.to as any}
+            search={s.params}
             className="flex items-center gap-4 rounded-3xl border border-border bg-card p-4 transition-all hover:border-brand/30 hover:bg-card-elevated"
           >
             <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-card-elevated">
@@ -71,3 +58,4 @@ function AjustesPage() {
     </MobileShell>
   );
 }
+

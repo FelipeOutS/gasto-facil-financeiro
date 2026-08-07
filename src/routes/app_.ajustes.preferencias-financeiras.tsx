@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/app/ajustes/preferencias-financeiras")({
+export const Route = createFileRoute("/app_/ajustes/preferencias-financeiras")({
   beforeLoad: () => {
     // This route is a canonical wrapper around /categorias for now,
     // but the plan says to redirect /categorias to here in the future.
