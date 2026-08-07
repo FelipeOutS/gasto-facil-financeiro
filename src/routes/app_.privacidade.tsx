@@ -211,7 +211,7 @@ function PrivacyPage() {
           onClick={handleContinue}
         >
           {isLoadingPreview ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {t("manageData.selection.continue", { count: selections.length })}
+          {t("manageData.selection.continue", { count: selections.length } as any)}
         </Button>
       </div>
     </div>
@@ -262,7 +262,7 @@ function PrivacyPage() {
             </div>
             {dependencies.map((dep, i) => (
               <div key={i} className="flex justify-between text-xs">
-                <span className="text-muted-foreground">{t(`manageData.review.depType.${dep.type}`)} ({{count: dep.count}})</span>
+                <span className="text-muted-foreground">{t(`manageData.review.depType.${dep.type}`)} ({dep.count})</span>
                 <span className="font-bold text-orange-600">{t(`manageData.review.action.${dep.action}`)}</span>
               </div>
             ))}
