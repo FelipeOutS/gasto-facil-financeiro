@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, ExternalLink, Shield, FileText, Info } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
-import { getBuildId } from "@/lib/build-id.server";
+
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 
@@ -14,7 +14,6 @@ export const Route = createFileRoute("/app_/ajustes/ajuda")({
 function AjudaPage() {
   const { t } = useTranslation("settings");
   
-  // Mock version for now as we are in preview
   const version = "v2.6.0-beta";
 
   const links = [

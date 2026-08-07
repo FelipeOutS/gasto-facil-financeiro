@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ArrowLeft, Bell, Smartphone, Mail, MessageSquare } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app_/ajustes/notificacoes")({
   head: () => ({ meta: [{ title: "Notificações — Gasto Inteligente" }] }),
