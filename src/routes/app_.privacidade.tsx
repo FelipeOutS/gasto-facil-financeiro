@@ -262,8 +262,9 @@ function PrivacyPage() {
             </div>
             {dependencies.map((dep, i) => (
               <div key={i} className="flex justify-between text-xs">
-                <span className="text-muted-foreground">{t(`manageData.review.depType.${dep.type}`)} ({dep.count})</span>
-                <span className="font-bold text-orange-600">{t(`manageData.review.action.${dep.action}`)}</span>
+                <span className="text-muted-foreground">{String(t(`manageData.review.depType.${dep.type}`))} ({dep.count})</span>
+                <span className="font-bold text-orange-600">{String(t(`manageData.review.action.${dep.action}`))}</span>
+
               </div>
             ))}
           </div>
