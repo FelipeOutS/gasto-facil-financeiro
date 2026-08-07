@@ -701,30 +701,41 @@ function Index() {
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:gap-4">
         <Link
           to="/orcamento"
-          className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+          className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
         >
           <PieChartIcon className="h-5 w-5 text-brand" />
           <p className="text-sm font-semibold">{t("atalhos.orcamentoEyebrow")}</p>
+          <p className="num text-xs text-muted-foreground">
+            {limiteTotal ? `${formatBRL(total)} / ${formatBRL(limiteTotal)}` : formatBRL(total)}
+          </p>
         </Link>
         <Link
           to="/guardado"
-          className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+          className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
         >
           <Wallet className="h-5 w-5 text-brand" />
           <p className="text-sm font-semibold">{t("atalhos.guardadoEyebrow")}</p>
+          <p className="num text-xs text-muted-foreground">{formatBRL(totalGuardado)}</p>
         </Link>
-        <div className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4">
+        <div className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4">
           <Lock className="h-5 w-5 text-muted-foreground" />
           <p className="text-sm font-semibold">{t("atalhos.fixosEyebrow")}</p>
+          <p className="num text-xs text-muted-foreground">{formatBRL(gastosFixos)}</p>
         </div>
         <Link
           to="/metas"
-          className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+          className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
         >
           <Target className="h-5 w-5 text-brand" />
           <p className="text-sm font-semibold">{t("atalhos.metasEyebrow")}</p>
+          <p className="num text-xs text-muted-foreground">
+            {metasAndamento.length > 0 && metaProxima
+              ? `${metaProxima.nome} · ${Math.round(metaProxima.pct)}%`
+              : `${metasAndamento.length}`}
+          </p>
         </Link>
       </section>
+
 
       <AvisoTrialExpirandoBanner />
       <UpgradeCardsList max={4} />
