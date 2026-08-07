@@ -36,8 +36,8 @@ import ptExtratosImportados from "./locales/pt/extratos-importados.json";
 import ptMercado from "./locales/pt/mercado.json";
 import ptCofre from "./locales/pt/cofre.json";
 import ptInvestimentos from "./locales/pt/investimentos.json";
-
 import ptPrivacy from "./locales/pt/privacy.json";
+import ptSettings from "./locales/pt/settings.json";
 
 import enCommon from "./locales/en/common.json";
 import enLanding from "./locales/en/landing.json";
@@ -74,8 +74,8 @@ import enExtratosImportados from "./locales/en/extratos-importados.json";
 import enMercado from "./locales/en/mercado.json";
 import enCofre from "./locales/en/cofre.json";
 import enInvestimentos from "./locales/en/investimentos.json";
-
 import enPrivacy from "./locales/en/privacy.json";
+import enSettings from "./locales/en/settings.json";
 
 export const SUPPORTED_LOCALES = ["pt", "en"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
@@ -86,12 +86,6 @@ export function isLocale(value: unknown): value is Locale {
   return typeof value === "string" && (SUPPORTED_LOCALES as readonly string[]).includes(value);
 }
 
-/**
- * Mantém o primeiro render idêntico no SSR e no cliente. O servidor não tem
- * acesso à URL do navegador neste singleton, portanto qualquer detecção aqui
- * faria o cliente traduzir antes da hidratação e divergiria do HTML em PT.
- * URL, localStorage e navegador são sincronizados depois pelo hook useLocale.
- */
 function detectInitialLocale(): Locale {
   return DEFAULT_LOCALE;
 }
@@ -133,14 +127,48 @@ const resources = {
     mercado: ptMercado,
     cofre: ptCofre,
     investimentos: ptInvestimentos,
-      privacy: ptPrivacy,
-      settings: ptSettings,
-    },
-    en: {
-      ...
-      privacy: enPrivacy,
-      settings: enSettings,
-    },
+    privacy: ptPrivacy,
+    settings: ptSettings,
+  },
+  en: {
+    common: enCommon,
+    landing: enLanding,
+    auth: enAuth,
+    account: enAccount,
+    nav: enNav,
+    dashboard: enDashboard,
+    gastos: enGastos,
+    cartoes: enCartoes,
+    "contas-a-pagar": enContasAPagar,
+    "contas-a-receber": enContasAReceber,
+    categorias: enCategorias,
+    clientes: enClientes,
+    fornecedores: enFornecedores,
+    metas: enMetas,
+    orcamento: enOrcamento,
+    relatorios: enRelatorios,
+    adicionar: enAdicionar,
+    guardado: enGuardado,
+    renda: enRenda,
+    assinaturas: enAssinaturas,
+    "meu-plano": enMeuPlano,
+    perfil: enPerfil,
+    empresa: enEmpresa,
+    onboarding: enOnboarding,
+    confirmar: enConfirmar,
+    legal: enLegal,
+    misc: enMisc,
+    "import-conta": enImportConta,
+    "import-fatura": enImportFatura,
+    "import-extrato": enImportExtrato,
+    "import-investimentos": enImportInvestimentos,
+    "extratos-importados": enExtratosImportados,
+    mercado: enMercado,
+    cofre: enCofre,
+    investimentos: enInvestimentos,
+    privacy: enPrivacy,
+    settings: enSettings,
+  },
 };
 
 if (!i18n.isInitialized) {
@@ -186,19 +214,13 @@ if (!i18n.isInitialized) {
       "cofre",
       "investimentos",
       "privacy",
+      "settings",
     ],
-    // Os recursos já estão no bundle: inicializar de forma síncrona garante que
-    // SSR e o primeiro render do navegador traduzam o mesmo texto na hidratação.
     initAsync: false,
     interpolation: { escapeValue: false },
     react: { useSuspense: false },
   });
 } else if (normalizeLanguageTag(i18n.resolvedLanguage || i18n.language) !== DEFAULT_LOCALE) {
-  // Singleton i18next pode persistir entre requisições no runtime do servidor e
-  // entre navegações client-side. Forçar o idioma padrão antes do primeiro
-  // render garante que o HTML do SSR e a hidratação inicial usem o mesmo
-  // idioma (React #418). O useLocale reaplica a preferência do usuário no
-  // próximo effect, sem alterar áreas autenticadas após a hidratação.
   void i18n.changeLanguage(DEFAULT_LOCALE);
 }
 
