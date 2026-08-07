@@ -42,7 +42,8 @@ function AjustesPage() {
           <Link
             key={s.id}
             to={s.to as any}
-            search={s.params}
+            search={s.search as any}
+
             className="flex items-center gap-4 rounded-3xl border border-border bg-card p-4 transition-all hover:border-brand/30 hover:bg-card-elevated"
           >
             <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-card-elevated">
