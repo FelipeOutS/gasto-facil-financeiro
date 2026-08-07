@@ -72,7 +72,7 @@ function PrivacyPage() {
     
     setIsLoadingPreview(true);
     try {
-      const res = await getPreview({ data: { categories: selectedCategories } });
+      const res = await getPreview({ data: { categories: selectedCategories } as any });
       setPreviewData(res.stats);
       setStep("review");
     } catch (err) {
@@ -87,7 +87,7 @@ function PrivacyPage() {
     
     setIsDeleting(true);
     try {
-      await deleteFn({ data: { categories: selectedCategories, confirmationText: confirmationInput } });
+      await deleteFn({ data: { categories: selectedCategories, confirmationText: confirmationInput } as any });
       setStep("success");
       toast.success(t("manageData.success.title"));
     } catch (err) {

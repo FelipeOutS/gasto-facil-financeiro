@@ -22,9 +22,10 @@ const CATEGORY_TABLES: Record<string, string[]> = {
 };
 
 export const getDeletionPreview = createServerFn({ method: "POST" })
-  .validator((d: { categories: string[] }) => d)
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data, context }) => {
+  .handler(async (ctx) => {
+    const data = (ctx as any).data as { categories: string[] };
+    const context = (ctx as any).context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { userId } = context;
     
@@ -51,9 +52,10 @@ export const getDeletionPreview = createServerFn({ method: "POST" })
   });
 
 export const executeDataDeletion = createServerFn({ method: "POST" })
-  .validator((d: { categories: string[]; confirmationText: string }) => d)
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data, context }) => {
+  .handler(async (ctx) => {
+    const data = (ctx as any).data as { categories: string[]; confirmationText: string };
+    const context = (ctx as any).context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { userId } = context;
 
