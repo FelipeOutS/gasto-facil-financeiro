@@ -827,7 +827,13 @@ function AdminPage() {
                       >
                         <TableCell className="font-medium">{u.nome ?? "—"}</TableCell>
                         <TableCell className="text-xs">{u.email}</TableCell>
-                        <TableCell className="text-xs">{fmtDate(u.created_at)}</TableCell>
+                        <TableCell
+                          className="text-xs whitespace-nowrap"
+                          title={adminDateTimeTooltip(u.created_at)}
+                        >
+                          {fmtDateTime(u.created_at)}
+                        </TableCell>
+
                         <TableCell className="text-xs">
                           {PLAN_LABEL[u.plano as keyof typeof PLAN_LABEL] ?? u.plano}
                         </TableCell>
