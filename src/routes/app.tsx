@@ -579,9 +579,83 @@ function Index() {
         </div>
       </div>
 
+      {/* Resumo e orçamento */}
+      <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ResumoMesCard
+          mes={ym.mes}
+          ano={ym.ano}
+          saldo={saldo}
+          totalEntradas={totalEntradas}
+          totalGastos={total}
+          maiorCategoria={maior ?? null}
+          categorias={categorias}
+          gastosConfirmados={gastosConfirmados}
+          contasAtrasadas={contasResumo.atrasadasCount}
+          limiteTotal={limiteTotal}
+        />
+        {temOrcamentoMes && (
+          <OrcamentoCard
+            categorias={categorias}
+            gastos={gastosConfirmados}
+            mes={ym.mes}
+            ano={ym.ano}
+          />
+        )}
+      </section>
 
+      {/* Alertas e limites */}
+      <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {temAlertasDashboard && <AlertasContasCard contas={contas} />}
+        <div className="space-y-4">
+          {!!limiteTotal && (
+            <LimiteMensalCard
+              total={total}
+              limiteTotal={limiteTotal}
+              usoLimite={usoLimite}
+              passouLimite={!!passouLimite}
+              proximoLimite={!!proximoLimite}
+            />
+          )}
+          <MinhaRendaCard totalEntradas={totalEntradas} ano={ym.ano} mes={ym.mes} />
+        </div>
+      </section>
+
+      {/* Atalhos de controle */}
+      <SectionLabel>{t("sections.controle")}</SectionLabel>
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Link
+          to="/orcamento"
+          className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+        >
+          <PieChartIcon className="h-5 w-5 text-brand" />
+          <p className="text-sm font-semibold">{t("atalhos.orcamentoTitle")}</p>
+        </Link>
+        <Link
+          to="/guardado"
+          className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+        >
+          <Wallet className="h-5 w-5 text-brand" />
+          <p className="text-sm font-semibold">{t("atalhos.guardadoTitle")}</p>
+        </Link>
+        <div className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4">
+          <Lock className="h-5 w-5 text-muted-foreground" />
+          <p className="text-sm font-semibold">{t("atalhos.fixosTitle")}</p>
+        </div>
+        <Link
+          to="/metas"
+          className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+        >
+          <Target className="h-5 w-5 text-brand" />
+          <p className="text-sm font-semibold">{t("atalhos.metasTitle")}</p>
+        </Link>
+      </section>
+
+      <AvisoTrialExpirandoBanner />
+      <UpgradeCardsList max={4} />
       <AvisoWhatsAppBanner />
     </MobileShell>
+
 
   );
 }
