@@ -46,7 +46,7 @@ function NotificacoesPage() {
   ];
 
   return (
-    <MobileShell>
+    <MobileShell data-testid="settings-notifications-page">
       <SettingsPageHeader 
         title={t("notifications.title")} 
         description={t("sections.notifications.description")} 

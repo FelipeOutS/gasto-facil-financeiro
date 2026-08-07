@@ -34,7 +34,7 @@ function AparenciaPage() {
   ];
 
   return (
-    <MobileShell>
+    <MobileShell data-testid="settings-appearance-page">
       <SettingsPageHeader 
         title={t("appearance.title")} 
         description={t("appearance.description")} 

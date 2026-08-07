@@ -21,7 +21,7 @@ function AjudaPage() {
   ];
 
   return (
-    <MobileShell>
+    <MobileShell data-testid="settings-help-page">
       <SettingsPageHeader 
         title={t("help.title")} 
         description={t("sections.help.description")} 
