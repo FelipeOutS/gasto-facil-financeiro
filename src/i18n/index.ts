@@ -37,6 +37,8 @@ import ptMercado from "./locales/pt/mercado.json";
 import ptCofre from "./locales/pt/cofre.json";
 import ptInvestimentos from "./locales/pt/investimentos.json";
 
+import ptPrivacy from "./locales/pt/privacy.json";
+
 import enCommon from "./locales/en/common.json";
 import enLanding from "./locales/en/landing.json";
 import enAuth from "./locales/en/auth.json";
@@ -129,6 +131,7 @@ const resources = {
     mercado: ptMercado,
     cofre: ptCofre,
     investimentos: ptInvestimentos,
+    privacy: ptPrivacy,
   },
   en: {
     common: enCommon,
