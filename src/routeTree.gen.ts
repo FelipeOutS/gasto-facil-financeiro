@@ -87,6 +87,7 @@ import { Route as AppPerfilRouteImport } from './routes/app_.perfil'
 import { Route as AppMaisRouteImport } from './routes/app_.mais'
 import { Route as AppIdiomaRouteImport } from './routes/app_.idioma'
 import { Route as AppCofrePessoalRouteImport } from './routes/app_.cofre-pessoal'
+import { Route as AppAjustesRouteImport } from './routes/app_.ajustes'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
 import { Route as ApiMercadoJoaninImportRouteImport } from './routes/api/mercado-joanin-import'
 import { Route as ApiMercadoFlyerOcrRouteImport } from './routes/api/mercado-flyer-ocr'
@@ -535,6 +536,11 @@ const AppCofrePessoalRoute = AppCofrePessoalRouteImport.update({
   path: '/app/cofre-pessoal',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppAjustesRoute = AppAjustesRouteImport.update({
+  id: '/app_/ajustes',
+  path: '/app/ajustes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiOcrGastoRoute = ApiOcrGastoRouteImport.update({
   id: '/api/ocr-gasto',
   path: '/api/ocr-gasto',
@@ -880,6 +886,7 @@ export interface FileRoutesByFullPath {
   '/api/mercado-flyer-ocr': typeof ApiMercadoFlyerOcrRoute
   '/api/mercado-joanin-import': typeof ApiMercadoJoaninImportRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/app/ajustes': typeof AppAjustesRoute
   '/app/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
@@ -1015,6 +1022,7 @@ export interface FileRoutesByTo {
   '/api/mercado-flyer-ocr': typeof ApiMercadoFlyerOcrRoute
   '/api/mercado-joanin-import': typeof ApiMercadoJoaninImportRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/app/ajustes': typeof AppAjustesRoute
   '/app/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
@@ -1151,6 +1159,7 @@ export interface FileRoutesById {
   '/api/mercado-flyer-ocr': typeof ApiMercadoFlyerOcrRoute
   '/api/mercado-joanin-import': typeof ApiMercadoJoaninImportRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/app_/ajustes': typeof AppAjustesRoute
   '/app_/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app_/idioma': typeof AppIdiomaRoute
   '/app_/mais': typeof AppMaisRoute
@@ -1288,6 +1297,7 @@ export interface FileRouteTypes {
     | '/api/mercado-flyer-ocr'
     | '/api/mercado-joanin-import'
     | '/api/ocr-gasto'
+    | '/app/ajustes'
     | '/app/cofre-pessoal'
     | '/app/idioma'
     | '/app/mais'
@@ -1423,6 +1433,7 @@ export interface FileRouteTypes {
     | '/api/mercado-flyer-ocr'
     | '/api/mercado-joanin-import'
     | '/api/ocr-gasto'
+    | '/app/ajustes'
     | '/app/cofre-pessoal'
     | '/app/idioma'
     | '/app/mais'
@@ -1558,6 +1569,7 @@ export interface FileRouteTypes {
     | '/api/mercado-flyer-ocr'
     | '/api/mercado-joanin-import'
     | '/api/ocr-gasto'
+    | '/app_/ajustes'
     | '/app_/cofre-pessoal'
     | '/app_/idioma'
     | '/app_/mais'
@@ -1694,6 +1706,7 @@ export interface RootRouteChildren {
   ApiMercadoFlyerOcrRoute: typeof ApiMercadoFlyerOcrRoute
   ApiMercadoJoaninImportRoute: typeof ApiMercadoJoaninImportRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
+  AppAjustesRoute: typeof AppAjustesRoute
   AppCofrePessoalRoute: typeof AppCofrePessoalRoute
   AppIdiomaRoute: typeof AppIdiomaRoute
   AppMaisRoute: typeof AppMaisRoute
@@ -2326,6 +2339,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCofrePessoalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app_/ajustes': {
+      id: '/app_/ajustes'
+      path: '/app/ajustes'
+      fullPath: '/app/ajustes'
+      preLoaderRoute: typeof AppAjustesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/ocr-gasto': {
       id: '/api/ocr-gasto'
       path: '/api/ocr-gasto'
@@ -2776,6 +2796,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMercadoFlyerOcrRoute: ApiMercadoFlyerOcrRoute,
   ApiMercadoJoaninImportRoute: ApiMercadoJoaninImportRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
+  AppAjustesRoute: AppAjustesRoute,
   AppCofrePessoalRoute: AppCofrePessoalRoute,
   AppIdiomaRoute: AppIdiomaRoute,
   AppMaisRoute: AppMaisRoute,
@@ -2868,12 +2889,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
