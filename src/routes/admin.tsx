@@ -88,21 +88,23 @@ function fmtMoney(cents: number) {
 }
 
 function fmtDate(s: string | null) {
-  if (!s) return "—";
-  try {
-    return new Date(s).toLocaleDateString("pt-BR");
-  } catch {
-    return "—";
-  }
+  return formatAdminDate(s);
+}
+
+/** Data + horário do cadastro (America/Sao_Paulo). */
+function fmtDateTime(s: string | null) {
+  return formatAdminDateTime(s);
 }
 
 type DisplayStatus = "ativo" | "aguardando" | "cancelado_vencido" | "conta_criada";
 
+// Nota: estes rótulos representam status COMERCIAL (plano/pagamento),
+// não integridade técnica do cadastro (Auth/profile/user_plans).
 const STATUS_LABEL: Record<DisplayStatus, string> = {
   ativo: "Plano ativo",
-  aguardando: "Aguardando pagamento",
+  aguardando: "Pagamento pendente",
   cancelado_vencido: "Cancelado/Vencido",
-  conta_criada: "Conta criada",
+  conta_criada: "Gratuito ativo",
 };
 
 const STATUS_COLORS: Record<DisplayStatus, string> = {
@@ -111,6 +113,7 @@ const STATUS_COLORS: Record<DisplayStatus, string> = {
   cancelado_vencido: "bg-red-500/15 text-red-500 border-red-500/30",
   conta_criada: "bg-muted text-muted-foreground border-border",
 };
+
 
 function getDisplayStatus(u: AdminUserRow): DisplayStatus {
   const paid = u.last_payment_status === "approved" || u.last_payment_status === "paid";
