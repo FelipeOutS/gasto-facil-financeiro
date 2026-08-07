@@ -4350,6 +4350,10 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      execute_data_deletion_atomic: {
+        Args: { p_categories: string[]; p_options?: Json; p_user_id: string }
+        Returns: Json
+      }
       fetch_invite_by_token: {
         Args: { _token: string }
         Returns: {
