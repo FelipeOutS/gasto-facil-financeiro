@@ -758,6 +758,97 @@ function Index() {
 
 /* ====================== Helpers de UI ====================== */
 
+/** "Meta mais próxima" — restaurado. Usa os dados/regras já existentes. */
+function MetaProximaCard({
+  metaProxima,
+  metasAtivas,
+}: {
+  metaProxima: {
+    meta: import("@/lib/types").Meta;
+    breakdown: { total: number; guardado: number; direto: number; restante: number };
+  } | null;
+  metasAtivas: number;
+}) {
+  const { t } = useTranslation("dashboard");
+
+  if (!metaProxima) {
+    return (
+      <Link
+        to="/metas"
+        className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
+      >
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-card-elevated">
+          <Target className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{t("metasFallback.title")}</p>
+          <p className="truncate text-[11px] text-muted-foreground">
+            {t("metasFallback.andamento", { count: metasAtivas })}
+          </p>
+        </div>
+      </Link>
+    );
+  }
+
+  const m = metaProxima.meta;
+  const bd = metaProxima.breakdown;
+  const objetivo = Number(m.valorObjetivo) || 0;
+  const acumulado = bd.total;
+  const restante = bd.restante;
+  const pct = pctMeta(acumulado, objetivo);
+
+  return (
+    <section className="flex w-full flex-col rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <Sparkles className="h-3.5 w-3.5 shrink-0" style={{ color: m.colorHex }} />
+          <h2 className="truncate text-sm font-semibold">{t("metaProxima.title")}</h2>
+        </div>
+        <Link
+          to="/metas"
+          className="shrink-0 text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {t("metaProxima.verTodas")}
+        </Link>
+      </div>
+      <div className="mt-3 flex items-baseline justify-between gap-3">
+        <p className="truncate text-base font-semibold">{m.nome}</p>
+        <p className="num shrink-0 text-xs text-muted-foreground">
+          {formatBRL(acumulado)} / {formatBRL(objetivo)}
+        </p>
+      </div>
+      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${pct}%`, background: m.colorHex }}
+        />
+      </div>
+      <div className="mt-2 flex items-center justify-between text-xs">
+        <span className="num font-semibold" style={{ color: m.colorHex }}>
+          {Math.round(pct)}%
+        </span>
+        <span className="num text-muted-foreground">
+          {t("metaProxima.falta", { valor: formatBRL(restante) })}
+        </span>
+      </div>
+      {bd.guardado > 0 && (
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          <Trans
+            i18nKey="metaProxima.incluiGuardado"
+            t={t}
+            values={{ valor: formatBRL(bd.guardado) }}
+            components={{ strong: <span className="num font-semibold text-foreground" /> }}
+          />
+        </p>
+      )}
+      <p className="mt-3 text-[11px] text-muted-foreground">
+        {metasAtivas} {metasAtivas === 1 ? t("metaProxima.ativaSing") : t("metaProxima.ativaPlur")}
+      </p>
+    </section>
+  );
+}
+
+
 /** Donut "Por categoria" — sem dependência de gráfico, usando conic-gradient. */
 function CategoriasDonutCard({
   itens,
