@@ -545,8 +545,8 @@ function Index() {
 
       <SectionLabel>{t("sections.radar")}</SectionLabel>
 
-      {/* LINHA 4 — Fluxo de caixa (2/3) + Resumo inteligente (1/3) */}
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+      {/* LINHA 4 — Fluxo de caixa (8/12) + coluna empilhada Resumo + Alertas (4/12) */}
+      <section className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-12">
         <div className="min-w-0 xl:col-span-8">
           <FluxoCaixaChart
             ano={ym.ano}
@@ -555,30 +555,26 @@ function Index() {
             receitas={receitas}
           />
         </div>
-        <div className="min-w-0 xl:col-span-4">
+        <div className="flex min-w-0 flex-col gap-4 xl:col-span-4">
           <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
-        </div>
-      </section>
-
-      {/* LINHA 5 — Alertas + Saúde financeira */}
-      <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="min-w-0">
           <DashboardAlertasBloco />
         </div>
-        <div className="min-w-0">
-          <DashboardSaudeFinanceiraCard />
+      </section>
+
+      {/* LINHA 5 — Saúde financeira + Diagnóstico consolidados (7/12) + Dicas (5/12) */}
+      <section className="mt-4 grid grid-cols-1 items-stretch gap-4 xl:grid-cols-12">
+        <div className="min-w-0 xl:col-span-7">
+          <section className="h-full rounded-2xl border border-border bg-card p-4 shadow-card motion-safe:animate-rise">
+            <DashboardSaudeFinanceiraCard embedded />
+            <div className="my-4 h-px w-full bg-border/70" />
+            <DashboardDiagnosticoMensalCard embedded />
+          </section>
+        </div>
+        <div className="min-w-0 xl:col-span-5">
+          <DashboardDicasBloco className="h-full" />
         </div>
       </section>
 
-      {/* LINHA 6 — Diagnóstico + Dicas */}
-      <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="min-w-0">
-          <DashboardDiagnosticoMensalCard />
-        </div>
-        <div className="min-w-0">
-          <DashboardDicasBloco />
-        </div>
-      </section>
 
       {/* LINHA 7 — Radar econômico + Indicadores do Banco Central */}
       <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-12">
@@ -592,8 +588,8 @@ function Index() {
 
       {/* LINHA 8 — Maiores gastos + Categorias / Cartões */}
       <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-        <div className="min-w-0 xl:col-span-7">
+      <section className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-12">
+        <div className="min-w-0 xl:col-span-5">
           <DashboardCartoesInsights
             mes={ym.mes}
             ano={ym.ano}
@@ -605,7 +601,7 @@ function Index() {
             slot="lists"
           />
         </div>
-        <div className="min-w-0 xl:col-span-5">
+        <div className="min-w-0 xl:col-span-4">
           <DashboardCartoesInsights
             mes={ym.mes}
             ano={ym.ano}
@@ -617,7 +613,11 @@ function Index() {
             slot="insights"
           />
         </div>
+        <div className="min-w-0 xl:col-span-3">
+          <CategoriasDonutCard itens={porCategoria} total={total} className="h-full" />
+        </div>
       </section>
+
 
       {/* LINHA 9 — Transações recentes + Calendário financeiro */}
       <SectionLabel>{t("sections.visao")}</SectionLabel>
@@ -680,7 +680,6 @@ function Index() {
               proximoLimite={!!proximoLimite}
             />
           )}
-          <MinhaRendaCard totalEntradas={totalEntradas} ano={ym.ano} mes={ym.mes} />
           <PrimeirosPassosCard
             gastosCount={gastos.length}
             receitasCount={receitas.length}
@@ -701,30 +700,51 @@ function Index() {
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:gap-4">
         <Link
           to="/orcamento"
-          className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+          className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
         >
           <PieChartIcon className="h-5 w-5 text-brand" />
           <p className="text-sm font-semibold">{t("atalhos.orcamentoEyebrow")}</p>
+          <p className="num text-xs text-muted-foreground">
+            {limiteTotal ? `${formatBRL(total)} / ${formatBRL(limiteTotal)}` : formatBRL(total)}
+          </p>
         </Link>
         <Link
           to="/guardado"
-          className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+          className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
         >
           <Wallet className="h-5 w-5 text-brand" />
           <p className="text-sm font-semibold">{t("atalhos.guardadoEyebrow")}</p>
+          <p className="num text-xs text-muted-foreground">{formatBRL(totalGuardado)}</p>
         </Link>
-        <div className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4">
+        <div className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4">
           <Lock className="h-5 w-5 text-muted-foreground" />
           <p className="text-sm font-semibold">{t("atalhos.fixosEyebrow")}</p>
+          <p className="num text-xs text-muted-foreground">{formatBRL(gastosFixos)}</p>
         </div>
         <Link
           to="/metas"
-          className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+          className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
         >
           <Target className="h-5 w-5 text-brand" />
           <p className="text-sm font-semibold">{t("atalhos.metasEyebrow")}</p>
+          <p className="num text-xs text-muted-foreground">
+            {metaProxima
+              ? `${metaProxima.meta.nome} · ${Math.round(
+                  metaProxima.breakdown.total > 0
+                    ? Math.min(
+                        100,
+                        ((metaProxima.breakdown.guardado + metaProxima.breakdown.direto) /
+                          metaProxima.breakdown.total) *
+                          100,
+                      )
+                    : 0,
+                )}%`
+              : `${metasAndamento.length}`}
+          </p>
+
         </Link>
       </section>
+
 
       <AvisoTrialExpirandoBanner />
       <UpgradeCardsList max={4} />
@@ -736,6 +756,86 @@ function Index() {
 }
 
 /* ====================== Helpers de UI ====================== */
+
+/** Donut "Por categoria" — sem dependência de gráfico, usando conic-gradient. */
+function CategoriasDonutCard({
+  itens,
+  total,
+  className,
+}: {
+  itens: { id: string; nome: string; valor: number; color: string; pct: number }[];
+  total: number;
+  className?: string;
+}) {
+  const { t } = useTranslation("dashboard");
+  const top = itens.slice(0, 5);
+  const restoValor = itens.slice(5).reduce((s, i) => s + i.valor, 0);
+  const fatias = [
+    ...top,
+    ...(restoValor > 0
+      ? [
+          {
+            id: "__outros",
+            nome: t("porCategoria.outros"),
+            valor: restoValor,
+            color: "hsl(var(--muted-foreground))",
+            pct: total > 0 ? (restoValor / total) * 100 : 0,
+          },
+        ]
+      : []),
+  ];
+
+  let acc = 0;
+  const stops = fatias
+    .map((f) => {
+      const start = acc;
+      acc += f.pct;
+      return `${f.color} ${start.toFixed(2)}% ${Math.min(100, acc).toFixed(2)}%`;
+    })
+    .join(", ");
+
+  return (
+    <section
+      className={cn("rounded-2xl border border-border bg-card p-4 shadow-card", className)}
+    >
+      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        {t("porCategoria.title")}
+      </p>
+      {fatias.length === 0 || total <= 0 ? (
+        <p className="mt-3 text-xs text-muted-foreground">{t("kpi.tudoEmDia")}</p>
+      ) : (
+        <>
+          <div className="mt-3 flex justify-center">
+            <div
+              className="relative h-[120px] w-[120px] rounded-full"
+              style={{ background: `conic-gradient(${stops})` }}
+              aria-hidden
+            >
+              <div className="absolute inset-[22%] grid place-items-center rounded-full bg-card">
+                <span className="num text-[11px] font-semibold">{formatBRL(total)}</span>
+              </div>
+            </div>
+          </div>
+          <ul className="mt-3 space-y-1.5">
+            {fatias.map((f) => (
+              <li key={f.id} className="flex min-w-0 items-center gap-2 text-[11px]">
+                <span
+                  aria-hidden
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ background: f.color }}
+                />
+                <span className="min-w-0 flex-1 truncate text-muted-foreground">{f.nome}</span>
+                <span className="num shrink-0 font-semibold">{Math.round(f.pct)}%</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
+
+
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -990,36 +1090,6 @@ function LimiteMensalCard({
         </p>
       )}
     </section>
-  );
-}
-
-function MinhaRendaCard({
-  totalEntradas,
-  ano,
-  mes,
-}: {
-  totalEntradas: number;
-  ano: number;
-  mes: number;
-}) {
-  const { t } = useTranslation("dashboard");
-  return (
-    <Link
-      to="/renda"
-      search={{ ano, mes }}
-      className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-card transition-colors hover:bg-card-elevated"
-    >
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-success/15 text-success">
-        <ArrowUp className="h-4 w-4" />
-      </span>
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium">{t("minhaRenda.title")}</p>
-        <p className="num truncate text-[11px] text-muted-foreground">
-          {t("minhaRenda.esteMes", { valor: formatBRL(totalEntradas) })}
-        </p>
-      </div>
-      <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
-    </Link>
   );
 }
 
