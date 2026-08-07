@@ -73,6 +73,8 @@ const STATUS_BADGE_TONE: Record<string, StatusTone> = {
 function MeuPlanoPage() {
   const { t, i18n } = useTranslation("landing");
   const { t: tp } = useTranslation("meu-plano");
+  const { from } = useSearch({ from: "/meu-plano" });
+
   const { profile, user } = useAuth();
   const {
     plan,
