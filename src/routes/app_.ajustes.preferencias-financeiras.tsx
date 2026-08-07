@@ -50,7 +50,7 @@ const COLOR_OPTIONS = [
 
 const ICON_OPTIONS = Object.keys(ICON_MAP);
 
-export const Route = createFileRoute("/app/ajustes/preferencias-financeiras")({
+export const Route = createFileRoute("/app_/ajustes/preferencias-financeiras")({
   head: () => ({ meta: [{ title: "Preferências financeiras — Gasto Inteligente" }] }),
   component: PreferenciasFinanceirasPage,
 });
