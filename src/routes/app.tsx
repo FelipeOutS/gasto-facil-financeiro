@@ -619,21 +619,25 @@ function Index() {
       </section>
 
 
-      {/* LINHA 9 — Transações recentes + Calendário financeiro */}
+      {/* LINHA 9 — Transações recentes + Meta mais próxima (esquerda) + Calendário */}
       <SectionLabel>{t("sections.visao")}</SectionLabel>
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-        <div className="min-w-0 xl:col-span-7">
+      <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-12">
+        <div className="flex min-w-0 flex-col gap-4 xl:col-span-7">
           <RecentTransactionsCard ultimos={ultimos} />
+          <MetaProximaCard
+            metaProxima={metaProxima}
+            metasAtivas={metasAndamento.length}
+          />
         </div>
         <div className="min-w-0 xl:col-span-5">
           <CalendarioFinanceiro ano={ym.ano} mes={ym.mes} onChangeMonth={changeMonth} />
         </div>
       </section>
 
-      {/* LINHA 10 — Resumo do mês + Limite inteligente */}
+      {/* LINHA 10 — Resumo do mês + Impacto (esquerda) / Limite inteligente (direita) */}
       <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="min-w-0">
+      <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-4">
           <ResumoMesCard
             mes={ym.mes}
             ano={ym.ano}
@@ -646,6 +650,12 @@ function Index() {
             contasAtrasadas={contasResumo.atrasadasCount}
             limiteTotal={limiteTotal}
           />
+          <EconomicMonthImpactCard
+            saldo={saldo}
+            receitas={totalEntradas}
+            despesas={total}
+            contasVencidas={contasResumo.atrasadasCount}
+          />
         </div>
         <div className="min-w-0">
           <SmartLimiteCard
@@ -657,8 +667,8 @@ function Index() {
         </div>
       </section>
 
-      {/* Orçamento, alertas de contas, limite mensal, renda e primeiros passos */}
-      <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+      {/* Orçamento, alertas de contas, limite mensal e primeiros passos */}
+      <section className="mt-4 grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
         <div className="min-w-0 space-y-4">
           {temOrcamentoMes && (
             <OrcamentoCard
@@ -686,14 +696,9 @@ function Index() {
             cartoesCount={cartoes.length}
             metasCount={metas.length}
           />
-          <EconomicMonthImpactCard
-            saldo={saldo}
-            receitas={totalEntradas}
-            despesas={total}
-            contasVencidas={contasResumo.atrasadasCount}
-          />
         </div>
       </section>
+
 
       {/* LINHA 11 — Controle financeiro */}
       <SectionLabel>{t("sections.controle")}</SectionLabel>
