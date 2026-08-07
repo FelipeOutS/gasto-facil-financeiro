@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -31,6 +31,8 @@ import { confirmAsync } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/utils";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import i18n from "@/i18n";
+import { SettingsPageHeader } from "@/components/SettingsPageHeader";
+import { z } from "zod";
 
 async function sendInviteEmail(
   to: string,
@@ -50,15 +52,23 @@ async function sendInviteEmail(
   });
 }
 
+const connectionsSearchSchema = z.object({
+  from: z.enum(["ajustes", "outros"]).optional(),
+});
+
 export const Route = createFileRoute("/contas-conectadas")({
+  validateSearch: connectionsSearchSchema,
   head: () => ({ meta: [{ title: i18n.getFixedT(i18n.language, "misc")("connected.metaTitle") }] }),
   component: ContasConectadasPage,
 });
 
+
 function ContasConectadasPage() {
   const { t } = useTranslation("misc");
   const { user } = useAuth();
+  const { from } = useSearch({ from: "/contas-conectadas" });
   const [outgoing, setOutgoing] = useState<ConnectedAccount[]>([]);
+
   const [incoming, setIncoming] = useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -101,17 +111,18 @@ function ContasConectadasPage() {
   return (
     <MobileShell wide>
       <div className="mx-auto w-full max-w-5xl space-y-8 py-6 lg:py-10">
-        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              {t("connected.title")}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">{t("connected.subtitle")}</p>
-          </div>
-          <Button onClick={() => setInviteOpen(true)} className="gap-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <SettingsPageHeader
+            title={t("connected.title")}
+            description={t("connected.subtitle")}
+            backTo={from === "ajustes" ? "/app/ajustes" : "/app"}
+            className="mb-0"
+          />
+          <Button onClick={() => setInviteOpen(true)} className="gap-2 sm:mt-8">
             <Plus className="h-4 w-4" /> {t("connected.newConnection")}
           </Button>
-        </header>
+        </div>
+
 
         {/* Contas que EU acompanho */}
         <section className="space-y-4">

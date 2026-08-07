@@ -1,10 +1,9 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useSearch, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { chooseFreeAdsPlan } from "@/lib/subscription.functions";
 import { useTranslation } from "react-i18next";
 import {
-  ArrowLeft,
   Check,
   Crown,
   Hourglass,
@@ -48,8 +47,15 @@ import {
   type PaymentHistoryRow,
 } from "@/lib/payments-mp";
 import { toast } from "sonner";
+import { SettingsPageHeader } from "@/components/SettingsPageHeader";
+import { z } from "zod";
+
+const planSearchSchema = z.object({
+  from: z.enum(["ajustes", "conta"]).optional(),
+});
 
 export const Route = createFileRoute("/meu-plano")({
+  validateSearch: planSearchSchema,
   head: () => ({ meta: [{ title: "Meu plano — Gasto Inteligente" }] }),
   component: MeuPlanoPage,
 });
@@ -63,9 +69,12 @@ const STATUS_BADGE_TONE: Record<string, StatusTone> = {
   sem_assinatura: "muted",
 };
 
+
 function MeuPlanoPage() {
   const { t, i18n } = useTranslation("landing");
   const { t: tp } = useTranslation("meu-plano");
+  const { from } = useSearch({ from: "/meu-plano" });
+
   const { profile, user } = useAuth();
   const {
     plan,
@@ -329,23 +338,12 @@ function MeuPlanoPage() {
     }
   }
 
+  const backTo = from === "ajustes" ? "/app/ajustes" : from === "conta" ? "/conta" : "/conta";
+
   return (
     <MobileShell wide>
-      <header className="flex items-center gap-3 pt-2">
-        <Link
-          to="/conta"
-          className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card"
-          aria-label={tp("back")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <div className="min-w-0">
-          <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
-            {tp("eyebrow")}
-          </p>
-          <h1 className="text-xl font-bold tracking-tight">{vocab.controle}</h1>
-        </div>
-      </header>
+      <SettingsPageHeader title={vocab.controle} description={tp("eyebrow")} backTo={backTo} />
+
 
       {/* Card do plano atual */}
       <section

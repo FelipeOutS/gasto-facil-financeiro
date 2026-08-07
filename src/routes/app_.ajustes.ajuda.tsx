@@ -1,10 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, ExternalLink, Shield, FileText, Info } from "lucide-react";
+import { ExternalLink, Shield, FileText, Info } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
-
-import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { SettingsPageHeader } from "@/components/SettingsPageHeader";
 
 export const Route = createFileRoute("/app_/ajustes/ajuda")({
   head: () => ({ meta: [{ title: "Ajuda e informações — Gasto Inteligente" }] }),
@@ -24,20 +22,12 @@ function AjudaPage() {
 
   return (
     <MobileShell>
-      <header className="flex items-center gap-3 pt-2 mb-6">
-        <Link
-          to="/app/ajustes"
-          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("help.title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("sections.help.description")}</p>
-        </div>
-      </header>
+      <SettingsPageHeader 
+        title={t("help.title")} 
+        description={t("sections.help.description")} 
+      />
 
-      <div className="space-y-4">
+      <div className="space-y-4 mt-6">
         <div className="grid gap-2">
           {links.map((link) => (
             <a

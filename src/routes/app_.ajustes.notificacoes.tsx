@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Bell, Smartphone, Mail, MessageSquare } from "lucide-react";
+import { Bell, Smartphone, Mail, MessageSquare } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { SettingsPageHeader } from "@/components/SettingsPageHeader";
 
 export const Route = createFileRoute("/app_/ajustes/notificacoes")({
   head: () => ({ meta: [{ title: "Notificações — Gasto Inteligente" }] }),
@@ -46,20 +47,12 @@ function NotificacoesPage() {
 
   return (
     <MobileShell>
-      <header className="flex items-center gap-3 pt-2 mb-6">
-        <Link
-          to="/app/ajustes"
-          className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("notifications.title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("sections.notifications.description")}</p>
-        </div>
-      </header>
+      <SettingsPageHeader 
+        title={t("notifications.title")} 
+        description={t("sections.notifications.description")} 
+      />
 
-      <div className="space-y-8">
+      <div className="space-y-8 mt-6">
         {notificationGroups.map((group) => (
           <section key={group.title} className="space-y-3">
             <h2 className="text-xs font-bold tracking-widest text-muted-foreground uppercase px-1">
@@ -79,7 +72,7 @@ function NotificacoesPage() {
           </section>
         ))}
 
-        <section className="space-y-3">
+        <section className="space-y-3 pb-8">
           <h2 className="text-xs font-bold tracking-widest text-muted-foreground uppercase px-1">
             Canais de Notificação
           </h2>
@@ -100,7 +93,7 @@ function NotificacoesPage() {
                 <div className="flex items-center justify-between">
                   <canal.icon className="h-5 w-5 text-brand" />
                   {canal.badge && (
-                    <span className="text-[10px] font-bold bg-muted px-1.5 py-0.5 rounded uppercase">
+                    <span className="text-[10px] font-bold bg-muted px-1.5 py-0.5 rounded uppercase text-foreground">
                       {canal.badge}
                     </span>
                   )}

@@ -122,6 +122,7 @@ import { Route as ContasAReceberIdEditarRouteImport } from './routes/contas-a-re
 import { Route as ContasAPagarIdEditarRouteImport } from './routes/contas-a-pagar.$id.editar'
 import { Route as CartoesIdEditarRouteImport } from './routes/cartoes.$id.editar'
 import { Route as AssinaturasIdEditarRouteImport } from './routes/assinaturas.$id.editar'
+import { Route as AppAjustesPreferenciasFinanceirasRouteImport } from './routes/app_.ajustes.preferencias-financeiras'
 import { Route as AppAjustesNotificacoesRouteImport } from './routes/app_.ajustes.notificacoes'
 import { Route as AppAjustesAparenciaRouteImport } from './routes/app_.ajustes.aparencia'
 import { Route as AppAjustesAjudaRouteImport } from './routes/app_.ajustes.ajuda'
@@ -717,6 +718,12 @@ const AssinaturasIdEditarRoute = AssinaturasIdEditarRouteImport.update({
   path: '/assinaturas/$id/editar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppAjustesPreferenciasFinanceirasRoute =
+  AppAjustesPreferenciasFinanceirasRouteImport.update({
+    id: '/preferencias-financeiras',
+    path: '/preferencias-financeiras',
+    getParentRoute: () => AppAjustesRoute,
+  } as any)
 const AppAjustesNotificacoesRoute = AppAjustesNotificacoesRouteImport.update({
   id: '/notificacoes',
   path: '/notificacoes',
@@ -955,6 +962,7 @@ export interface FileRoutesByFullPath {
   '/app/ajustes/ajuda': typeof AppAjustesAjudaRoute
   '/app/ajustes/aparencia': typeof AppAjustesAparenciaRoute
   '/app/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
+  '/app/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
@@ -1094,6 +1102,7 @@ export interface FileRoutesByTo {
   '/app/ajustes/ajuda': typeof AppAjustesAjudaRoute
   '/app/ajustes/aparencia': typeof AppAjustesAparenciaRoute
   '/app/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
+  '/app/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
@@ -1234,6 +1243,7 @@ export interface FileRoutesById {
   '/app_/ajustes/ajuda': typeof AppAjustesAjudaRoute
   '/app_/ajustes/aparencia': typeof AppAjustesAparenciaRoute
   '/app_/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
+  '/app_/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
@@ -1375,6 +1385,7 @@ export interface FileRouteTypes {
     | '/app/ajustes/ajuda'
     | '/app/ajustes/aparencia'
     | '/app/ajustes/notificacoes'
+    | '/app/ajustes/preferencias-financeiras'
     | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
@@ -1514,6 +1525,7 @@ export interface FileRouteTypes {
     | '/app/ajustes/ajuda'
     | '/app/ajustes/aparencia'
     | '/app/ajustes/notificacoes'
+    | '/app/ajustes/preferencias-financeiras'
     | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
@@ -1653,6 +1665,7 @@ export interface FileRouteTypes {
     | '/app_/ajustes/ajuda'
     | '/app_/ajustes/aparencia'
     | '/app_/ajustes/notificacoes'
+    | '/app_/ajustes/preferencias-financeiras'
     | '/assinaturas/$id/editar'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
@@ -2620,6 +2633,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AssinaturasIdEditarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app_/ajustes/preferencias-financeiras': {
+      id: '/app_/ajustes/preferencias-financeiras'
+      path: '/preferencias-financeiras'
+      fullPath: '/app/ajustes/preferencias-financeiras'
+      preLoaderRoute: typeof AppAjustesPreferenciasFinanceirasRouteImport
+      parentRoute: typeof AppAjustesRoute
+    }
     '/app_/ajustes/notificacoes': {
       id: '/app_/ajustes/notificacoes'
       path: '/notificacoes'
@@ -2806,12 +2826,15 @@ interface AppAjustesRouteChildren {
   AppAjustesAjudaRoute: typeof AppAjustesAjudaRoute
   AppAjustesAparenciaRoute: typeof AppAjustesAparenciaRoute
   AppAjustesNotificacoesRoute: typeof AppAjustesNotificacoesRoute
+  AppAjustesPreferenciasFinanceirasRoute: typeof AppAjustesPreferenciasFinanceirasRoute
 }
 
 const AppAjustesRouteChildren: AppAjustesRouteChildren = {
   AppAjustesAjudaRoute: AppAjustesAjudaRoute,
   AppAjustesAparenciaRoute: AppAjustesAparenciaRoute,
   AppAjustesNotificacoesRoute: AppAjustesNotificacoesRoute,
+  AppAjustesPreferenciasFinanceirasRoute:
+    AppAjustesPreferenciasFinanceirasRoute,
 }
 
 const AppAjustesRouteWithChildren = AppAjustesRoute._addFileChildren(
@@ -2962,12 +2985,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
