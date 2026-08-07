@@ -502,38 +502,98 @@ function Index() {
         <div className="hidden lg:block">{monthSwitcher}</div>
       </div>
 
-      <SaldoHeroCard saldo={saldo} entradas={totalEntradas} despesas={total} />
+      {/* LINHA 2 — KPIs: Saldo maior + Receitas / Despesas / A pagar */}
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-12 xl:gap-4">
+        <div className="sm:col-span-2 xl:col-span-5">
+          <SaldoHeroCard saldo={saldo} entradas={totalEntradas} despesas={total} />
+        </div>
+        <div className="xl:col-span-3 xl:col-start-6">
+          <KpiCard
+            label={t("kpi.receitas")}
+            valueNum={totalEntradas}
+            tone="success"
+            icon={<ArrowUp className="h-4 w-4" />}
+          />
+        </div>
+        <div className="xl:col-span-2">
+          <KpiCard
+            label={t("kpi.despesas")}
+            valueNum={total}
+            tone="destructive"
+            icon={<ArrowDown className="h-4 w-4" />}
+          />
+        </div>
+        <div className="xl:col-span-2">
+          <KpiCard
+            label={t("kpi.aPagar")}
+            valueNum={contasResumo.pendente}
+            tone="warning"
+            icon={<Clock className="h-4 w-4" />}
+            hint={
+              contasResumo.atrasadasCount > 0
+                ? `${contasResumo.atrasadasCount} ${t("kpi.atrasada")}`
+                : contasResumo.pendentesCount > 0
+                  ? `${contasResumo.pendentesCount} ${t("kpi.pendente")}`
+                  : t("kpi.tudoEmDia")
+            }
+          />
+        </div>
+      </section>
 
+      {/* LINHA 3 — Ações rápidas */}
       <QuickActionsBar />
 
       <SectionLabel>{t("sections.radar")}</SectionLabel>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="space-y-4">
-          <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
-          <DashboardAlertasBloco />
-          <DashboardSaudeFinanceiraCard />
-          <DashboardDiagnosticoMensalCard />
-          <DashboardDicasBloco />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <RadarEconomicoCard />
-            <RadarEconomicoInteligenteCard />
-          </div>
-        </div>
-        <div className="space-y-4">
-          <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
-          <CalendarioFinanceiro ano={ym.ano} mes={ym.mes} onChangeMonth={changeMonth} compact />
-          <SmartLimiteCard
-            mes={ym.mes}
+
+      {/* LINHA 4 — Fluxo de caixa (2/3) + Resumo inteligente (1/3) */}
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+        <div className="min-w-0 xl:col-span-8">
+          <FluxoCaixaChart
             ano={ym.ano}
-            totalEntradas={totalEntradas}
-            totalGastos={total}
+            mes={ym.mes}
+            gastos={gastosConfirmados}
+            receitas={receitas}
           />
         </div>
-      </div>
+        <div className="min-w-0 xl:col-span-4">
+          <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
+        </div>
+      </section>
 
+      {/* LINHA 5 — Alertas + Saúde financeira */}
+      <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="min-w-0">
+          <DashboardAlertasBloco />
+        </div>
+        <div className="min-w-0">
+          <DashboardSaudeFinanceiraCard />
+        </div>
+      </section>
+
+      {/* LINHA 6 — Diagnóstico + Dicas */}
+      <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="min-w-0">
+          <DashboardDiagnosticoMensalCard />
+        </div>
+        <div className="min-w-0">
+          <DashboardDicasBloco />
+        </div>
+      </section>
+
+      {/* LINHA 7 — Radar econômico + Indicadores do Banco Central */}
+      <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-12">
+        <div className="min-w-0 xl:col-span-5">
+          <RadarEconomicoCard />
+        </div>
+        <div className="min-w-0 xl:col-span-7">
+          <RadarEconomicoInteligenteCard />
+        </div>
+      </section>
+
+      {/* LINHA 8 — Maiores gastos + Categorias / Cartões */}
       <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="lg:col-span-8">
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+        <div className="min-w-0 xl:col-span-7">
           <DashboardCartoesInsights
             mes={ym.mes}
             ano={ym.ano}
@@ -545,7 +605,7 @@ function Index() {
             slot="lists"
           />
         </div>
-        <div className="lg:col-span-4">
+        <div className="min-w-0 xl:col-span-5">
           <DashboardCartoesInsights
             mes={ym.mes}
             ano={ym.ano}
@@ -557,12 +617,70 @@ function Index() {
             slot="insights"
           />
         </div>
-      </div>
+      </section>
 
+      {/* LINHA 9 — Transações recentes + Calendário financeiro */}
       <SectionLabel>{t("sections.visao")}</SectionLabel>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <RecentTransactionsCard ultimos={ultimos} />
-        <div className="space-y-4">
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+        <div className="min-w-0 xl:col-span-7">
+          <RecentTransactionsCard ultimos={ultimos} />
+        </div>
+        <div className="min-w-0 xl:col-span-5">
+          <CalendarioFinanceiro ano={ym.ano} mes={ym.mes} onChangeMonth={changeMonth} />
+        </div>
+      </section>
+
+      {/* LINHA 10 — Resumo do mês + Limite inteligente */}
+      <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="min-w-0">
+          <ResumoMesCard
+            mes={ym.mes}
+            ano={ym.ano}
+            saldo={saldo}
+            totalEntradas={totalEntradas}
+            totalGastos={total}
+            maiorCategoria={maior ?? null}
+            categorias={categorias}
+            gastosConfirmados={gastosConfirmados}
+            contasAtrasadas={contasResumo.atrasadasCount}
+            limiteTotal={limiteTotal}
+          />
+        </div>
+        <div className="min-w-0">
+          <SmartLimiteCard
+            mes={ym.mes}
+            ano={ym.ano}
+            totalEntradas={totalEntradas}
+            totalGastos={total}
+          />
+        </div>
+      </section>
+
+      {/* Orçamento, alertas de contas, limite mensal, renda e primeiros passos */}
+      <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="min-w-0 space-y-4">
+          {temOrcamentoMes && (
+            <OrcamentoCard
+              categorias={categorias}
+              gastos={gastosConfirmados}
+              mes={ym.mes}
+              ano={ym.ano}
+            />
+          )}
+          {temAlertasDashboard && <AlertasContasCard contas={contas} />}
+        </div>
+        <div className="min-w-0 space-y-4">
+          {!!limiteTotal && (
+            <LimiteMensalCard
+              total={total}
+              limiteTotal={limiteTotal}
+              usoLimite={usoLimite}
+              passouLimite={!!passouLimite}
+              proximoLimite={!!proximoLimite}
+            />
+          )}
+          <MinhaRendaCard totalEntradas={totalEntradas} ano={ym.ano} mes={ym.mes} />
           <PrimeirosPassosCard
             gastosCount={gastos.length}
             receitasCount={receitas.length}
@@ -574,54 +692,11 @@ function Index() {
             receitas={totalEntradas}
             despesas={total}
             contasVencidas={contasResumo.atrasadasCount}
-            className="h-full"
           />
-        </div>
-      </div>
-
-      {/* Resumo e orçamento */}
-      <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <ResumoMesCard
-          mes={ym.mes}
-          ano={ym.ano}
-          saldo={saldo}
-          totalEntradas={totalEntradas}
-          totalGastos={total}
-          maiorCategoria={maior ?? null}
-          categorias={categorias}
-          gastosConfirmados={gastosConfirmados}
-          contasAtrasadas={contasResumo.atrasadasCount}
-          limiteTotal={limiteTotal}
-        />
-        {temOrcamentoMes && (
-          <OrcamentoCard
-            categorias={categorias}
-            gastos={gastosConfirmados}
-            mes={ym.mes}
-            ano={ym.ano}
-          />
-        )}
-      </section>
-
-      {/* Alertas e limites */}
-      <section className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
-        {temAlertasDashboard && <AlertasContasCard contas={contas} />}
-        <div className="space-y-4">
-          {!!limiteTotal && (
-            <LimiteMensalCard
-              total={total}
-              limiteTotal={limiteTotal}
-              usoLimite={usoLimite}
-              passouLimite={!!passouLimite}
-              proximoLimite={!!proximoLimite}
-            />
-          )}
-          <MinhaRendaCard totalEntradas={totalEntradas} ano={ym.ano} mes={ym.mes} />
         </div>
       </section>
 
-      {/* Atalhos de controle */}
+      {/* LINHA 11 — Controle financeiro */}
       <SectionLabel>{t("sections.controle")}</SectionLabel>
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:gap-4">
         <Link
@@ -629,25 +704,25 @@ function Index() {
           className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
         >
           <PieChartIcon className="h-5 w-5 text-brand" />
-          <p className="text-sm font-semibold">{t("atalhos.orcamentoTitle")}</p>
+          <p className="text-sm font-semibold">{t("atalhos.orcamentoEyebrow")}</p>
         </Link>
         <Link
           to="/guardado"
           className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
         >
           <Wallet className="h-5 w-5 text-brand" />
-          <p className="text-sm font-semibold">{t("atalhos.guardadoTitle")}</p>
+          <p className="text-sm font-semibold">{t("atalhos.guardadoEyebrow")}</p>
         </Link>
         <div className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4">
           <Lock className="h-5 w-5 text-muted-foreground" />
-          <p className="text-sm font-semibold">{t("atalhos.fixosTitle")}</p>
+          <p className="text-sm font-semibold">{t("atalhos.fixosEyebrow")}</p>
         </div>
         <Link
           to="/metas"
           className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
         >
           <Target className="h-5 w-5 text-brand" />
-          <p className="text-sm font-semibold">{t("atalhos.metasTitle")}</p>
+          <p className="text-sm font-semibold">{t("atalhos.metasEyebrow")}</p>
         </Link>
       </section>
 
