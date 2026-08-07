@@ -35,12 +35,18 @@
       "description": "Suporte, privacidade, termos e versão."
     }
   },
-  "appearance": {
-    "title": "Aparência",
-    "theme": "Tema",
-    "accent": "Cor de destaque",
-    "preview": "Prévia visual"
-  },
+    "appearance": {
+      "title": "Aparência",
+      "description": "Personalize como o Gasto Inteligente aparece para você.",
+      "theme": "Tema",
+      "themes": {
+        "light": "Claro",
+        "dark": "Escuro",
+        "system": "Sistema"
+      },
+      "accent": "Cor de destaque",
+      "preview": "Prévia visual"
+    },
   "finance": {
     "title": "Preferências financeiras",
     "limit": "Limite mensal total",

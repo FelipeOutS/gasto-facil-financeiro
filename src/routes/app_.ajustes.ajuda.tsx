@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ExternalLink, Shield, FileText, Info } from "lucide-react";
+import { Shield, FileText, Info, ChevronRight } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { SettingsPageHeader } from "@/components/SettingsPageHeader";
 
@@ -12,18 +12,17 @@ export const Route = createFileRoute("/app_/ajustes/ajuda")({
 function AjudaPage() {
   const { t } = useTranslation("settings");
   
-  const version = "v2.6.0-beta";
+  const version = "2.6.0"; // Versão amigável sem "beta"
 
   const links = [
-    { label: t("help.support"), icon: Info, href: "mailto:suporte@gastointeligente.com.br" },
-    { label: t("help.terms"), icon: FileText, href: "/termos" },
-    { label: t("help.privacyPolicy"), icon: Shield, href: "/privacidade" },
+    { label: t("help.support"), icon: Info, to: "/app/ajustes/ajuda/suporte" },
+    { label: t("help.terms"), icon: FileText, to: "/app/ajustes/ajuda/termos" },
+    { label: t("help.privacyPolicy"), icon: Shield, to: "/app/ajustes/ajuda/privacidade" },
   ];
 
   return (
     <>
       <SettingsPageHeader 
-
         title={t("help.title")} 
         description={t("sections.help.description")} 
       />
@@ -31,19 +30,17 @@ function AjudaPage() {
       <div className="space-y-4 mt-6">
         <div className="grid gap-2">
           {links.map((link) => (
-            <a
+            <Link
               key={link.label}
-              href={link.href}
-              target={link.href.startsWith("http") || link.href.includes("@") ? "_blank" : undefined}
-              rel="noopener noreferrer"
+              to={link.to as any}
               className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card hover:bg-card-elevated transition-colors"
             >
               <div className="flex items-center gap-3">
                 <link.icon className="h-5 w-5 text-muted-foreground" />
                 <span className="text-sm font-medium">{link.label}</span>
               </div>
-              <ExternalLink className="h-4 w-4 text-muted-foreground/50" />
-            </a>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+            </Link>
           ))}
         </div>
 
