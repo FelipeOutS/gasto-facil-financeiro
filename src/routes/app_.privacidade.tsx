@@ -12,7 +12,9 @@ import {
   ChevronUp
 } from "lucide-react";
 import { useState, useMemo } from "react";
+import { MobileShell } from "@/components/MobileShell";
 import { Button } from "@/components/ui/button";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
