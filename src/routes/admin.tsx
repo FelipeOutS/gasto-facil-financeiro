@@ -122,7 +122,6 @@ const STATUS_COLORS: Record<DisplayStatus, string> = {
   conta_criada: "bg-muted text-muted-foreground border-border",
 };
 
-
 function getDisplayStatus(u: AdminUserRow): DisplayStatus {
   const paid = u.last_payment_status === "approved" || u.last_payment_status === "paid";
   const hasPlan = !!u.plano && u.plano !== "free" && u.plano !== "sem_assinatura";
@@ -255,19 +254,20 @@ function AdminPage() {
   const filteredUsers = useMemo(() => {
     const sd = periodToDate(filterPeriod);
     const q = search.trim().toLowerCase();
-    return usersList
-      .filter((u) => {
-        if (q && !(u.email.toLowerCase().includes(q) || (u.nome ?? "").toLowerCase().includes(q)))
-          return false;
-        if (filterPlan !== "all" && u.plano !== filterPlan) return false;
-        if (filterStatus !== "all" && getDisplayStatus(u) !== filterStatus) return false;
-        if (filterMethod !== "all" && u.last_payment_method !== filterMethod) return false;
-        if (sd && new Date(u.created_at) < sd) return false;
-        return true;
-      })
-      // Ordena pelo timestamp real do cadastro (mais recente primeiro)
-      .sort(compareCreatedAtDesc);
-
+    return (
+      usersList
+        .filter((u) => {
+          if (q && !(u.email.toLowerCase().includes(q) || (u.nome ?? "").toLowerCase().includes(q)))
+            return false;
+          if (filterPlan !== "all" && u.plano !== filterPlan) return false;
+          if (filterStatus !== "all" && getDisplayStatus(u) !== filterStatus) return false;
+          if (filterMethod !== "all" && u.last_payment_method !== filterMethod) return false;
+          if (sd && new Date(u.created_at) < sd) return false;
+          return true;
+        })
+        // Ordena pelo timestamp real do cadastro (mais recente primeiro)
+        .sort(compareCreatedAtDesc)
+    );
   }, [usersList, search, filterPlan, filterStatus, filterMethod, filterPeriod]);
 
   // Charts data
@@ -744,10 +744,7 @@ function AdminPage() {
                       </div>
                       <div className="min-w-0">
                         <span className="text-muted-foreground">Cadastro: </span>
-                        <span
-                          className="font-medium"
-                          title={adminDateTimeTooltip(u.created_at)}
-                        >
+                        <span className="font-medium" title={adminDateTimeTooltip(u.created_at)}>
                           {fmtDate(u.created_at)}
                           {formatAdminTime(u.created_at) ? (
                             <span className="block text-[11px] text-muted-foreground">
@@ -755,7 +752,6 @@ function AdminPage() {
                             </span>
                           ) : null}
                         </span>
-
                       </div>
                       <div className="min-w-0">
                         <span className="text-muted-foreground">Total pago: </span>
@@ -936,7 +932,6 @@ function AdminPage() {
                     <p className="font-medium" title={adminDateTimeTooltip(selected.created_at)}>
                       {fmtDateTime(selected.created_at)}
                     </p>
-
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Plano</p>
