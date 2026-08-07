@@ -90,7 +90,14 @@ function BulletRow({
   );
 }
 
-export function DashboardSaudeFinanceiraCard({ className }: { className?: string }) {
+export function DashboardSaudeFinanceiraCard({
+  className,
+  embedded = false,
+}: {
+  className?: string;
+  /** Renderiza sem a moldura de card, para compor dentro de outro card. */
+  embedded?: boolean;
+}) {
   const { t } = useTranslation("dashboard");
   const [ym] = useMesReferenciaRef() as unknown as [
     { mes: number; ano: number },
