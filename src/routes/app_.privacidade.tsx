@@ -211,7 +211,7 @@ function PrivacyPage() {
           onClick={handleContinue}
         >
           {isLoadingPreview ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {t("manageData.selection.continue", { count: selections.length } as any)}
+          {String(t("manageData.selection.continue", { count: selections.length } as any))}
         </Button>
       </div>
     </div>
@@ -240,7 +240,7 @@ function PrivacyPage() {
               <div key={sel.category} className="flex justify-between items-center text-sm border-b border-destructive/10 pb-2 last:border-0">
                 <div className="flex flex-col">
                   <span className="text-muted-foreground">{t(`manageData.categories.${sel.category}.title`)}</span>
-                  {sel.scope !== "all" && <span className="text-[10px] font-bold text-destructive/70">{t(`scopes.${sel.scope}`).toUpperCase()}</span>}
+                  {sel.scope !== "all" && <span className="text-[10px] font-bold text-destructive/70">{String(t(`scopes.${sel.scope}`)).toUpperCase()}</span>}
                 </div>
                 <span className="font-mono font-medium text-destructive">
                   {previewData[sel.category] || 0} {t("manageData.review.willBeRemoved")}
