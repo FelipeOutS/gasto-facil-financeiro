@@ -5,14 +5,12 @@ import { attemptRecovery } from './lib/recovery'
 
 const router = getRouter()
 
-// Listen for Vite preload errors BEFORE anything else
 if (typeof window !== 'undefined') {
   window.addEventListener('vite:preloadError', (event: any) => {
     event.preventDefault();
     attemptRecovery(new Error('Vite preload error'), 'vite_preload_error');
   });
 
-  // Global error listener
   window.addEventListener('error', (event) => {
     const error = event.error;
     if (error && (
@@ -26,3 +24,4 @@ if (typeof window !== 'undefined') {
 }
 
 hydrateRoot(document, <StartClient router={router} />)
+

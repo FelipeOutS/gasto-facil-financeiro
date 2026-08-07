@@ -1,4 +1,6 @@
 import { createRouter, Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { StartClient } from "@tanstack/react-start";
+
 import { useEffect } from "react";
 import { routeTree } from "./routeTree.gen";
 
