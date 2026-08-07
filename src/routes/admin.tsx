@@ -662,7 +662,7 @@ function AdminPage() {
                 <SelectItem value="ativo">Plano ativo</SelectItem>
                 <SelectItem value="aguardando">Aguardando pagamento</SelectItem>
                 <SelectItem value="cancelado_vencido">Cancelado/Vencido</SelectItem>
-                <SelectItem value="conta_criada">Conta criada</SelectItem>
+                <SelectItem value="conta_criada">Gratuito ativo</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterMethod} onValueChange={setFilterMethod}>
