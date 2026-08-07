@@ -64,7 +64,7 @@ export function MobileShell({
           className={
             "mx-auto flex w-full flex-col px-3 pt-4 pb-[calc(112px+env(safe-area-inset-bottom))] sm:px-5 md:px-6 lg:min-h-screen lg:px-6 lg:pt-5 lg:pb-12 xl:px-7 2xl:px-8 " +
             (wide
-              ? "max-w-md md:max-w-3xl lg:max-w-[1280px] xl:max-w-[1360px] 2xl:max-w-[1440px]"
+              ? "max-width-md md:max-w-3xl lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl"
               : "max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl")
           }
           style={
