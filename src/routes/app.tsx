@@ -84,6 +84,7 @@ import {
   isLoginBioUnlockRequired,
 } from "@/lib/biometric-login";
 import { AppModuleBanner, AppEmptyStateVisual, AppActionCard } from "@/components/app-v2";
+import { AdminMasterBadge } from "@/components/AdminMasterBadge";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -451,412 +452,87 @@ function Index() {
   );
 
   return (
-    <MobileShell wide>
-      {/* ===== Mobile: resumo do mês estilo app financeiro (apenas <lg) ===== */}
-      <div className="lg:hidden">
-        <MobileMonthSummary
-          ano={ym.ano}
-          mes={ym.mes}
-          saldo={saldo}
-          receitas={totalEntradas}
-          despesas={total}
-          guardado={totalGuardado}
-          aPagar={contasResumo.pendente}
-          atrasadasCount={contasResumo.atrasadasCount}
-          pendentesCount={contasResumo.pendentesCount}
-          onPrev={() => changeMonth(-1)}
-          onNext={() => changeMonth(1)}
-        />
-      </div>
-
-      {/* Hero — saudação compacta (desktop/tablet apenas; mobile usa o MobileTopBar) */}
-      <div className="hidden lg:block">
-        <HeroGreeting
-          nome={profile?.nome ?? null}
-          eyebrow={getVocab(profile?.tipo_cadastro as TipoCadastro).dashboardEyebrow}
-          mesAno={formatMonthYear(ym.ano, ym.mes)}
-          subtitle={t("hero.subtitle")}
-          monthSwitcher={monthSwitcher}
-        />
-      </div>
-
-      {/* Onboarding leve — Primeiros passos (some quando checklist completo ou dispensado) */}
-      <div className="mt-3 lg:mt-4">
-        <PrimeirosPassosCard
-          gastosCount={gastos.length}
-          receitasCount={receitas.length}
-          cartoesCount={cartoes.length}
-          metasCount={metas.length}
-        />
-      </div>
-
-      {/* V3 — Banner premium do Dashboard (compacto, complementa o hero/MonthSummary). */}
-      <div className="mt-3 lg:mt-4">
-        <AppModuleBanner
-          tone="relatorios"
-          compact
-          title={t("heroBannerV2.title")}
-          subtitle={t("heroBannerV2.subtitle")}
-          cta={
-            <Link
-              to="/adicionar"
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-card transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
-            >
-              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-              {t("heroBannerV2.cta")}
-            </Link>
-          }
-        />
-      </div>
-
-      {/* ===== Resumo financeiro — versão desktop/tablet ===== */}
-      <section className="mt-4 hidden grid-cols-1 gap-3 lg:grid lg:grid-cols-12 lg:gap-4">
-        <div className="lg:col-span-5">
-          <SaldoHeroCard saldo={saldo} entradas={totalEntradas} despesas={total} />
-        </div>
-        <div className="grid grid-cols-2 gap-3 lg:col-span-7 lg:grid-cols-3">
-          <KpiCard
-            label={t("kpi.receitas")}
-            valueNum={totalEntradas}
-            icon={<ArrowUp className="h-3.5 w-3.5" />}
-            tone="success"
-            hint={`${receitasMes.length} ${receitasMes.length === 1 ? t("kpi.entradaSing") : t("kpi.entradaPlur")}`}
-          />
-          <KpiCard
-            label={t("kpi.despesas")}
-            valueNum={total}
-            icon={<ArrowDown className="h-3.5 w-3.5" />}
-            tone="destructive"
-            hint={`${doMes.length} ${doMes.length === 1 ? t("kpi.lancamentoSing") : t("kpi.lancamentoPlur")}`}
-          />
-          <KpiCard
-            label={t("kpi.aPagar")}
-            valueNum={contasResumo.pendente}
-            icon={<CalendarClock className="h-3.5 w-3.5" />}
-            tone={contasResumo.atrasadasCount > 0 ? "destructive" : "warning"}
-            hint={
-              contasResumo.atrasadasCount > 0
-                ? `${contasResumo.atrasadasCount} ${t("kpi.atrasada")}`
-                : contasResumo.pendentesCount > 0
-                  ? `${contasResumo.pendentesCount} ${t("kpi.pendente")}`
-                  : t("kpi.tudoEmDia")
-            }
-          />
-        </div>
-      </section>
-
-      {saldo < 0 && (
-        <p className="mt-2 flex items-center gap-1.5 text-xs text-destructive animate-fade-in">
-          <AlertTriangle className="h-3.5 w-3.5" />
-          {t("saldoNegativoAlerta", { valor: formatBRL(-saldo) })}
-        </p>
-      )}
-
-      {/* Ações rápidas — tiles compactos */}
-      <QuickActionsBar />
-
-      {/* Card de assinatura/plano */}
-      <PlanoCard className="mt-4" />
-
-      {/* Indicadores do Banco Central + Radar Econômico — pareados em desktop */}
-      <section className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-4 md:items-stretch">
-        <RadarEconomicoInteligenteCard
-          className="h-full"
-          userContext={{ saldo, receitas: totalEntradas, despesas: total }}
-        />
-        <RadarEconomicoCard className="h-full" />
-      </section>
-
-      {/* Impacto prático do cenário econômico no mês do usuário */}
-      <section className="mt-3">
-        <EconomicMonthImpactCard
-          saldo={saldo}
-          receitas={totalEntradas}
-          despesas={total}
-          contasVencidas={contasResumo.atrasadasCount}
-        />
-      </section>
-
-      {/* Saúde financeira + Dicas — par responsivo.
-          Se Dicas retornar null (sem insights), o card de Saúde ocupa a linha inteira no desktop. */}
-      <section className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-2 md:gap-4 md:items-stretch [&>*:only-child]:md:col-span-2">
-        <DashboardSaudeFinanceiraCard className="h-full" />
-        <DashboardDicasBloco className="h-full" />
-      </section>
-
-      {/* Diagnóstico mensal — leitura amigável do mês com próximas ações */}
-      <section className="mt-4">
-        <DashboardDiagnosticoMensalCard />
-      </section>
-
-      {/* AdSlot — apenas free_ads ativo (Fase 1E-B2L) */}
-      <AdSlot className="mt-4" slotId="dashboard-middle" />
-
-      {/* Aviso contextual: assinaturas em moeda estrangeira */}
-      <AssinaturasMoedaEstrangeiraBanner />
-
-      {/* Banner discreto: completar perfil (usuários antigos sem tipo_cadastro) */}
-      {profile && !profile.tipo_cadastro && (
-        <Link
-          to="/perfil"
-          className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3 transition-colors hover:bg-primary/10"
-        >
-          <div className="min-w-0">
-            <p className="text-sm font-semibold">{t("completeProfile.title")}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {t("completeProfile.subtitle")}
-            </p>
-          </div>
-          <span className="shrink-0 rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground">
-            {t("completeProfile.cta")}
-          </span>
-        </Link>
-      )}
-
-      {/* CTA principal — apenas mobile (sidebar tem o seu) */}
-      <Link to="/adicionar" className="mt-3 block lg:hidden">
-        <Button
-          size="lg"
-          className="card-press h-14 w-full rounded-2xl bg-brand-grad text-base font-semibold shadow-elevated hover:opacity-95"
-        >
-          <Plus className="mr-1 h-5 w-5" />
-          {t("ctaLancar")}
-        </Button>
-      </Link>
-
-      {/* ===== 2. Visão financeira + Calendário ===== */}
-      <SectionLabel>{t("sections.visao")}</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12 lg:items-stretch lg:gap-5 xl:gap-6">
-        <div className="flex min-w-0 lg:col-span-7">
-          <FluxoCaixaChart
-            ano={ym.ano}
-            mes={ym.mes}
-            gastos={gastosConfirmados}
-            receitas={receitas}
-          />
-        </div>
-        <div className="flex min-w-0 lg:col-span-5">
-          <CalendarioFinanceiro ano={ym.ano} mes={ym.mes} onChangeMonth={changeMonth} compact />
-        </div>
-      </section>
-
-      {/* ===== 3. Resumo e próximas ações ===== */}
-      <SectionLabel>{t("sections.resumo")}</SectionLabel>
-      <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2 lg:grid-rows-[auto_1fr] lg:gap-5">
-        {/* Esquerda topo: Resumo inteligente */}
-        <div className="flex min-w-0 lg:col-start-1 lg:row-start-1">
-          <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} className="w-full" />
-        </div>
-
-        {/* Direita: Limite inteligente — span nas 2 linhas para casar a altura */}
-        <div className="flex min-w-0 [&>section]:w-full lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:[&>section]:h-full">
-          <SmartLimiteCard
-            mes={ym.mes}
-            ano={ym.ano}
-            totalEntradas={totalEntradas}
-            totalGastos={total}
-          />
-        </div>
-
-        {/* Esquerda baixo: Próximas contas — preenche o restante até a base do Limite */}
-        {contasResumo.total > 0 && (
-          <div className="flex min-w-0 lg:col-start-1 lg:row-start-2 lg:[&>div]:h-full">
-            <div className="flex w-full">
-              <ContasCard resumo={contasResumo} variant="sideTop" />
+      <MobileShell wide>
+        <AvisoTrialExpirandoBanner />
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
+          {/* Dashboard Left Column (Main Stats) */}
+          <div className="space-y-4 lg:col-span-8">
+            <HeroGreeting
+              nome={profile?.nome ?? null}
+              eyebrow={getVocab(profile?.tipo_cadastro as TipoCadastro).dashboardEyebrow}
+              mesAno={formatMonthYear(ym.ano, ym.mes)}
+              subtitle={t("hero.subtitle")}
+              monthSwitcher={monthSwitcher}
+            />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <SaldoHeroCard saldo={saldo} entradas={totalEntradas} despesas={total} />
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <KpiCard
+                  label={t("kpi.receitas")}
+                  valueNum={totalEntradas}
+                  icon={<ArrowUp className="h-4 w-4" />}
+                  tone="success"
+                  hint={t("kpi.entradaPlur", { count: receitasMes.length })}
+                />
+                <KpiCard
+                  label={t("kpi.aPagar")}
+                  valueNum={contasResumo.pendente}
+                  icon={<Clock className="h-4 w-4" />}
+                  tone={contasResumo.atrasadasCount > 0 ? "destructive" : "warning"}
+                  hint={
+                    contasResumo.atrasadasCount > 0
+                      ? t("kpi.atrasada", { count: contasResumo.atrasadasCount })
+                      : t("kpi.tudoEmDia")
+                  }
+                />
+              </div>
+            </div>
+            <QuickActionsBar />
+            <SectionLabel>{t("sections.radar")}</SectionLabel>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FluxoCaixaChart ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />
+              <div className="grid grid-cols-1 gap-4">
+                <SmartLimiteCard mes={ym.mes} ano={ym.ano} totalEntradas={totalEntradas} totalGastos={total} />
+                <ContasCard resumo={contasResumo} variant="sideTop" className="h-full" />
+              </div>
+            </div>
+            <SectionLabel>{t("sections.controle")}</SectionLabel>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <OrcamentoCard categorias={categorias} gastos={gastosConfirmados} mes={ym.mes} ano={ym.ano} />
+              <div className="grid grid-cols-1 gap-4">
+                <MinhaRendaCard totalEntradas={totalEntradas} ano={ym.ano} mes={ym.mes} />
+                <LimiteMensalCard
+                  total={total}
+                  limiteTotal={limiteTotal ?? 0}
+                  usoLimite={usoLimite}
+                  passouLimite={!!passouLimite}
+                  proximoLimite={!!proximoLimite}
+                  className="h-full"
+                />
+              </div>
             </div>
           </div>
-        )}
-      </section>
-
-      {/* ===== 4. Atividade + Meta mais próxima ===== */}
-      <section className="mt-6 grid min-w-0 grid-cols-1 gap-4 lg:mt-4 lg:grid-cols-2 lg:items-stretch lg:gap-5">
-        <div className="flex min-w-0">
-          <div className="flex w-full">
-            <RecentTransactionsCard ultimos={ultimos} />
+          {/* Dashboard Right Column (Sidebar Insights) */}
+          <div className="space-y-4 lg:col-span-4">
+            <div className="lg:sticky lg:top-4 lg:space-y-4">
+              <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
+              <DashboardAlertasBloco />
+              <DashboardSaudeFinanceiraCard />
+              <DashboardDiagnosticoMensalCard />
+              <DashboardDicasBloco />
+              <PrimeirosPassosCard
+                gastosCount={gastos.length}
+                receitasCount={receitas.length}
+                cartoesCount={cartoes.length}
+                metasCount={metas.length}
+              />
+            </div>
           </div>
         </div>
-        {metaProxima ? (
-          (() => {
-            const m = metaProxima.meta;
-            const bd = metaProxima.breakdown;
-            const objetivo = Number(m.valorObjetivo) || 0;
-            const acumulado = bd.total;
-            const restante = bd.restante;
-            const pct = objetivo > 0 ? Math.min(100, (acumulado / objetivo) * 100) : 0;
-            return (
-              <div className="flex min-w-0">
-                <section className="flex h-full w-full flex-col rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-3.5 w-3.5" style={{ color: m.colorHex }} />
-                      <h2 className="text-sm font-semibold">{t("metaProxima.title")}</h2>
-                    </div>
-                    <Link
-                      to="/metas"
-                      className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {t("metaProxima.verTodas")}
-                    </Link>
-                  </div>
-                  <div className="mt-3 flex items-baseline justify-between gap-3">
-                    <p className="truncate text-base font-semibold">{m.nome}</p>
-                    <p className="num shrink-0 text-xs text-muted-foreground">
-                      {formatBRL(acumulado)} / {formatBRL(objetivo)}
-                    </p>
-                  </div>
-                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-card-elevated">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${pct}%`, background: m.colorHex }}
-                    />
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-xs">
-                    <span className="num font-semibold" style={{ color: m.colorHex }}>
-                      {Math.round(pct)}%
-                    </span>
-                    <span className="num text-muted-foreground">
-                      {t("metaProxima.falta", { valor: formatBRL(restante) })}
-                    </span>
-                  </div>
-                  {bd.guardado > 0 && (
-                    <p className="mt-2 text-[11px] text-muted-foreground">
-                      <Trans
-                        i18nKey="metaProxima.incluiGuardado"
-                        t={t}
-                        values={{ valor: formatBRL(bd.guardado) }}
-                        components={{
-                          strong: <span className="num font-semibold text-foreground" />,
-                        }}
-                      />
-                    </p>
-                  )}
-                  <div className="mt-auto pt-3 text-[11px] text-muted-foreground">
-                    {metasAndamento.length}{" "}
-                    {metasAndamento.length === 1
-                      ? t("metaProxima.ativaSing")
-                      : t("metaProxima.ativaPlur")}
-                  </div>
-                </section>
-              </div>
-            );
-          })()
-        ) : (
-          <div className="flex min-w-0">
-            <Link
-              to="/metas"
-              className="flex h-full w-full items-center gap-3 rounded-2xl border border-border bg-card p-3.5 transition-colors hover:bg-card-elevated"
-            >
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-card-elevated">
-                <Target className="h-4 w-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{t("metasFallback.title")}</p>
-                <p className="truncate text-[11px] text-muted-foreground">
-                  {t("metasFallback.andamento", { count: metasAndamento.length })}
-                </p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </Link>
-          </div>
-        )}
-      </section>
 
-      {/* Contas a receber */}
-      <section className="mt-6 grid min-w-0 grid-cols-1 gap-4 lg:mt-4">
-        <ContasAReceberCard />
-      </section>
-
-      {/* ===== 7. Insights secundários: Categorias + Cartões ===== */}
-      {(porCategoria.length > 0 || doMes.length > 0) && (
-        <>
-          <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
-          <div className="grid min-w-0 grid-cols-1 gap-3.5 lg:gap-4">
-            {/* Linha 1: Por categoria (esquerda) + Insight & Cartões (direita) */}
-            <section className="grid min-w-0 grid-cols-1 gap-3.5 lg:grid-cols-12 lg:gap-4 lg:items-stretch">
-              {porCategoria.length > 0 && (
-                <section className="flex flex-col rounded-2xl border border-border bg-card p-3.5 shadow-card sm:p-4 lg:col-span-7">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <PieChartIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                      <h2 className="text-sm font-semibold">{t("porCategoria.title")}</h2>
-                    </div>
-                    <Link
-                      to="/resumo"
-                      className="shrink-0 whitespace-nowrap text-xs text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {t("porCategoria.verTudo")}
-                    </Link>
-                  </div>
-                  <div className="mt-3 grid min-w-0 flex-1 grid-cols-[120px_1fr] items-center gap-3 sm:grid-cols-[140px_1fr]">
-                    <div className="relative h-[120px] w-[120px] sm:h-[140px] sm:w-[140px]">
-                      <ResponsiveContainer>
-                        <PieChart>
-                          <Pie
-                            data={porCategoria}
-                            dataKey="valor"
-                            nameKey="nome"
-                            innerRadius={42}
-                            outerRadius={64}
-                            paddingAngle={2}
-                            stroke="none"
-                          >
-                            {porCategoria.map((d) => (
-                              <Cell key={d.id} fill={d.color} />
-                            ))}
-                          </Pie>
-                          <RTooltip
-                            contentStyle={{
-                              background: "var(--card-elevated)",
-                              border: "1px solid var(--border)",
-                              borderRadius: 12,
-                              color: "var(--foreground)",
-                              fontSize: 12,
-                            }}
-                            formatter={(v: number, n) => [formatBRL(v), n]}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="pointer-events-none absolute inset-0 grid place-items-center">
-                        <div className="text-center">
-                          <p className="text-[9px] uppercase tracking-wide text-muted-foreground">
-                            {t("kpi.total")}
-                          </p>
-                          <p className="num text-sm font-semibold">{formatBRLCompact(total)}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <ul className="min-w-0 space-y-1.5">
-                      {porCategoria.slice(0, 6).map((c) => (
-                        <li key={c.id} className="flex items-center gap-2">
-                          <span
-                            className="h-2.5 w-2.5 shrink-0 rounded-full"
-                            style={{ background: c.color }}
-                          />
-                          <span className="flex-1 truncate text-[12.5px]">{c.nome}</span>
-                          <span className="num text-[11px] text-muted-foreground">
-                            {c.pct.toFixed(0)}%
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </section>
-              )}
-
-              <DashboardCartoesInsights
-                mes={ym.mes}
-                ano={ym.ano}
-                gastosMes={doMes}
-                totalMes={total}
-                totalMesAnterior={totalMesAnterior}
-                maiorCategoria={maior ?? null}
-                onAbrirFatura={(cartaoId) => abrirFatura(cartaoId)}
-                slot="insights"
-                className="lg:col-span-5"
-              />
-            </section>
-
-            {/* Linha 2: Próximos vencimentos + Maiores gastos, lado a lado */}
+        <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <div className="lg:col-span-8">
             <DashboardCartoesInsights
               mes={ym.mes}
               ano={ym.ano}
@@ -864,12 +540,58 @@ function Index() {
               totalMes={total}
               totalMesAnterior={totalMesAnterior}
               maiorCategoria={maior ?? null}
-              onAbrirFatura={(cartaoId) => abrirFatura(cartaoId)}
+              onAbrirFatura={abrirFatura}
               slot="lists"
             />
           </div>
-        </>
-      )}
+          <div className="lg:col-span-4">
+            <DashboardCartoesInsights
+              mes={ym.mes}
+              ano={ym.ano}
+              gastosMes={doMes}
+              totalMes={total}
+              totalMesAnterior={totalMesAnterior}
+              maiorCategoria={maior ?? null}
+              onAbrirFatura={abrirFatura}
+              slot="insights"
+            />
+          </div>
+        </div>
+        <SectionLabel>{t("sections.visao")}</SectionLabel>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <RecentTransactionsCard ultimos={ultimos} />
+          <CalendarioFinanceiro ano={ym.ano} mes={ym.mes} onChangeMonth={changeMonth} compact />
+        </div>
+        <SectionLabel>{t("sections.resumo")}</SectionLabel>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ResumoMesCard
+            mes={ym.mes}
+            ano={ym.ano}
+            saldo={saldo}
+            totalEntradas={totalEntradas}
+            totalGastos={total}
+            maiorCategoria={maior ?? null}
+            categorias={categorias}
+            gastosConfirmados={gastosConfirmados}
+            contasAtrasadas={contasResumo.atrasadasCount}
+            limiteTotal={limiteTotal}
+          />
+          <ContasAReceberCard className="h-full" />
+          <EconomicMonthImpactCard
+            saldo={saldo}
+            receitas={totalEntradas}
+            despesas={total}
+            contasVencidas={contasResumo.atrasadasCount}
+            className="h-full"
+          />
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <RadarEconomicoCard />
+          <RadarEconomicoInteligenteCard />
+        </div>
+        <AdSlot />
+        <UpgradeCardsList max={4} />
+        <AvisoWhatsAppBanner />
 
       {/* ===== 8. Resumo, orçamento e limites detalhados (secundários) ===== */}
       <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
@@ -1068,9 +790,10 @@ function HeroGreeting({
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             {eyebrow}
           </p>
-          <h1 className="mt-0.5 text-[18px] font-bold leading-tight tracking-tight sm:text-xl lg:text-[22px]">
+          <h1 className="mt-0.5 flex items-center gap-2 text-[18px] font-bold leading-tight tracking-tight sm:text-xl lg:text-[22px]">
             {greet}
             {firstName ? `, ${firstName}` : ""}
+            <AdminMasterBadge className="mt-0.5" />
           </h1>
           <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-card-elevated/70 px-2 py-0.5 text-[10px] font-medium capitalize text-muted-foreground">
             <CalendarClock className="h-3 w-3" />
@@ -1188,16 +911,16 @@ function QuickActionsBar() {
       tone: "success",
     },
     {
-      to: "/gasto-ai",
-      label: t("quickActions.ia"),
-      icon: <Sparkles className="h-4 w-4" />,
-      tone: "brand",
-    },
-    {
       to: "/cartoes",
       label: t("quickActions.importar"),
       icon: <ReceiptIcon className="h-4 w-4" />,
       tone: "warning",
+    },
+    {
+      to: "/gasto-ai",
+      label: t("quickActions.ia"),
+      icon: <Sparkles className="h-4 w-4" />,
+      tone: "brand",
     },
   ];
   const toneRing: Record<string, string> = {
@@ -1280,16 +1003,18 @@ function LimiteMensalCard({
   usoLimite,
   passouLimite,
   proximoLimite,
+  className,
 }: {
   total: number;
   limiteTotal: number;
   usoLimite: number;
   passouLimite: boolean;
   proximoLimite: boolean;
+  className?: string;
 }) {
   const { t } = useTranslation("dashboard");
   return (
-    <section className="w-full rounded-2xl border border-border bg-card p-4 shadow-card">
+    <section className={cn("w-full rounded-2xl border border-border bg-card p-4 shadow-card", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -1469,9 +1194,11 @@ type ContasResumo = {
 function ContasCard({
   resumo,
   variant = "default",
+  className,
 }: {
   resumo: ContasResumo;
   variant?: "default" | "sideTop";
+  className?: string;
 }) {
   const { t } = useTranslation("dashboard");
   const hasAtrasada = resumo.atrasadasCount > 0;
@@ -2124,7 +1851,7 @@ function ResumoMesCard({
   );
 }
 
-function ContasAReceberCard() {
+function ContasAReceberCard({ className }: { className?: string }) {
   const { t } = useTranslation("dashboard");
   const { user } = useAuth();
   const userId = user?.id;
@@ -2184,7 +1911,7 @@ function ContasAReceberCard() {
             : t("contasReceber.venceEm", { dias });
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 shadow-card">
+    <section className={cn("rounded-2xl border border-border bg-card p-4 shadow-card", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-success/15 text-success">

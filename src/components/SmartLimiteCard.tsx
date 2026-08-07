@@ -260,7 +260,7 @@ export function SmartLimiteCard({
   return (
     <section
       className={cn(
-        "relative w-full overflow-hidden rounded-3xl border p-4 sm:p-5 shadow-card animate-rise transition-colors",
+        "relative w-full overflow-hidden rounded-3xl border p-3.5 sm:p-4 shadow-card animate-rise transition-colors",
         // dark
         "dark:bg-gradient-to-br",
         cfg.darkGradient,
@@ -374,14 +374,14 @@ export function SmartLimiteCard({
         {/* Valor principal */}
         <div className="mt-3 flex items-end gap-2">
           {status === "sem_dados" ? (
-            <p className={cn("text-2xl font-bold sm:text-3xl", cfg.valueText)}>—</p>
+            <p className={cn("text-xl font-bold sm:text-2xl", cfg.valueText)}>—</p>
           ) : (
             <>
               <Money
                 value={porDia}
                 duration={900}
                 className={cn(
-                  "num text-3xl font-extrabold leading-none tracking-tight sm:text-4xl",
+                  "num text-2xl font-extrabold leading-none tracking-tight sm:text-3xl",
                   cfg.valueText,
                 )}
               />
