@@ -680,7 +680,6 @@ function Index() {
               proximoLimite={!!proximoLimite}
             />
           )}
-          <MinhaRendaCard totalEntradas={totalEntradas} ano={ym.ano} mes={ym.mes} />
           <PrimeirosPassosCard
             gastosCount={gastos.length}
             receitasCount={receitas.length}
@@ -1091,36 +1090,6 @@ function LimiteMensalCard({
         </p>
       )}
     </section>
-  );
-}
-
-function MinhaRendaCard({
-  totalEntradas,
-  ano,
-  mes,
-}: {
-  totalEntradas: number;
-  ano: number;
-  mes: number;
-}) {
-  const { t } = useTranslation("dashboard");
-  return (
-    <Link
-      to="/renda"
-      search={{ ano, mes }}
-      className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-card transition-colors hover:bg-card-elevated"
-    >
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-success/15 text-success">
-        <ArrowUp className="h-4 w-4" />
-      </span>
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium">{t("minhaRenda.title")}</p>
-        <p className="num truncate text-[11px] text-muted-foreground">
-          {t("minhaRenda.esteMes", { valor: formatBRL(totalEntradas) })}
-        </p>
-      </div>
-      <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
-    </Link>
   );
 }
 
