@@ -164,7 +164,7 @@ export function FluxoCaixaChart({
           <p className="mt-1 max-w-xs text-xs text-muted-foreground">{t("fluxo.emptyDesc")}</p>
         </div>
       ) : (
-        <div className="mt-4 h-[220px] w-full sm:h-[260px] lg:h-[300px] xl:h-[340px]">
+        <div className="mt-3 min-h-[200px] w-full flex-1 sm:min-h-[220px] lg:min-h-[230px] xl:min-h-[240px]">
           <ResponsiveContainer width="100%" height="100%">
             {tipo === "area" ? (
               <AreaChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
