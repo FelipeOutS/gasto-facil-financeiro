@@ -76,7 +76,14 @@
       "willBeRemoved": "serão removidos",
       "total": "Total",
       "dependencies": "Também serão afetados:",
+      "depType": {
+        "linked_transactions": "Gastos vinculados a cartões"
+      },
+      "action": {
+        "preserved_and_unlinked": "Preservados e desvinculados"
+      },
       "wontBeDeleted": "Isso não será excluído",
+
       "accountSafe": "Sua conta, login e plano",
       "settingsSafe": "Suas configurações básicas",
       "billingSafe": "Histórico de cobrança obrigatório",
