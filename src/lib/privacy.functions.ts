@@ -22,15 +22,15 @@ const CATEGORY_TABLES: Record<string, string[]> = {
 };
 
 export const getDeletionPreview = createServerFn({ method: "POST" })
+  .validator((d: { categories: string[] }) => d)
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data, context }: { data: any, context: any }) => {
-    const input = data as { categories: string[] };
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { userId } = context;
     
     const stats: Record<string, number> = {};
     
-    for (const cat of input.categories) {
+    for (const cat of data.categories) {
       const tables = CATEGORY_TABLES[cat] || [];
       let total = 0;
       
@@ -51,19 +51,19 @@ export const getDeletionPreview = createServerFn({ method: "POST" })
   });
 
 export const executeDataDeletion = createServerFn({ method: "POST" })
+  .validator((d: { categories: string[]; confirmationText: string }) => d)
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data, context }: { data: any, context: any }) => {
-    const input = data as { categories: string[]; confirmationText: string };
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { userId } = context;
 
-    if (input.confirmationText !== "EXCLUIR") {
+    if (data.confirmationText !== "EXCLUIR") {
       throw new Error("Confirmação inválida");
     }
 
     const results: Record<string, { success: boolean; deletedCount?: number; error?: any }> = {};
 
-    for (const cat of input.categories) {
+    for (const cat of data.categories) {
       const tables = CATEGORY_TABLES[cat] || [];
       
       for (const table of tables) {
@@ -85,7 +85,7 @@ export const executeDataDeletion = createServerFn({ method: "POST" })
       target_user_id: userId,
       action: "selective_data_deletion",
       entity_type: "multiple",
-      metadata: { categories: input.categories, results }
+      metadata: { categories: data.categories, results }
     });
 
     return { success: true, results };
