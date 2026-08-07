@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { 
   ShieldCheck, 
@@ -8,14 +8,17 @@ import {
   CheckCircle2,
   Info,
   Loader2,
-  Lock
+  Lock,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useServerFn } from "@tanstack/react-start";
-import { getDeletionPreview, executeDataDeletion } from "@/lib/privacy.functions";
+import { getDeletionPreview, executeDataDeletion, CATEGORY_MAP, type DeletionSelection } from "@/lib/privacy.functions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -25,24 +28,30 @@ export const Route = createFileRoute("/app_/privacidade")({
 
 type Step = "choose" | "review" | "success";
 
+interface SelectionState {
+  category: string;
+  scope: string;
+}
+
 function PrivacyPage() {
   const { t } = useTranslation("privacy");
-  const navigate = useNavigate();
   const [step, setStep] = useState<Step>("choose");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selections, setSelections] = useState<SelectionState[]>([]);
   const [confirmationInput, setConfirmationInput] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [previewData, setPreviewData] = useState<Record<string, number>>({});
+  const [dependencies, setDependencies] = useState<{ type: string; count: number; action: string }[]>([]);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   const getPreview = useServerFn(getDeletionPreview);
   const deleteFn = useServerFn(executeDataDeletion);
 
-  const categories = [
+  const categories = useMemo(() => [
     { id: "expenses", group: "daily" },
     { id: "income", group: "daily" },
-    { id: "payables", group: "daily" },
-    { id: "receivables", group: "daily" },
+    { id: "payables", group: "daily", scopes: ["all", "paid", "pending", "overdue"] },
+    { id: "receivables", group: "daily", scopes: ["all", "received", "pending", "overdue"] },
     { id: "subscriptions", group: "daily" },
     { id: "budgets", group: "planning" },
     { id: "goals", group: "planning" },
@@ -51,29 +60,39 @@ function PrivacyPage() {
     { id: "cards", group: "others" },
     { id: "market", group: "others" },
     { id: "imports", group: "others" },
-  ];
+  ], []);
 
   const handleToggleCategory = (id: string) => {
-    setSelectedCategories(prev => 
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
-    );
+    setSelections(prev => {
+      const exists = prev.find(s => s.category === id);
+      if (exists) {
+        return prev.filter(s => s.category !== id);
+      } else {
+        return [...prev, { category: id, scope: "all" }];
+      }
+    });
+  };
+
+  const handleScopeChange = (id: string, scope: string) => {
+    setSelections(prev => prev.map(s => s.category === id ? { ...s, scope } : s));
   };
 
   const handleSelectAll = () => {
-    if (selectedCategories.length === categories.length) {
-      setSelectedCategories([]);
+    if (selections.length === categories.length) {
+      setSelections([]);
     } else {
-      setSelectedCategories(categories.map(c => c.id));
+      setSelections(categories.map(c => ({ category: c.id, scope: "all" })));
     }
   };
 
   const handleContinue = async () => {
-    if (selectedCategories.length === 0) return;
+    if (selections.length === 0) return;
     
     setIsLoadingPreview(true);
     try {
-      const res = await getPreview({ data: { categories: selectedCategories } as any });
+      const res = await getPreview({ data: { selections: selections as DeletionSelection[] } as any });
       setPreviewData(res.stats);
+      setDependencies(res.dependencies || []);
       setStep("review");
     } catch (err) {
       toast.error("Erro ao carregar prévia dos dados");
@@ -83,13 +102,11 @@ function PrivacyPage() {
   };
 
   const handleDelete = async () => {
-    const isLargeDeletion = selectedCategories.length > 5;
-    if (isLargeDeletion && confirmationInput !== "EXCLUIR") return;
-    if (confirmationInput && confirmationInput !== "EXCLUIR") return;
+    if (confirmationInput !== "EXCLUIR") return;
     
     setIsDeleting(true);
     try {
-      await deleteFn({ data: { categories: selectedCategories, confirmationText: confirmationInput } as any });
+      await deleteFn({ data: { selections: selections as DeletionSelection[], confirmationText: confirmationInput } as any });
       setStep("success");
       toast.success(t("manageData.success.title"));
     } catch (err) {
@@ -109,7 +126,7 @@ function PrivacyPage() {
       <div className="flex items-center space-x-2 pb-2">
         <Checkbox 
           id="select-all" 
-          checked={selectedCategories.length === categories.length}
+          checked={selections.length === categories.length}
           onCheckedChange={handleSelectAll}
         />
         <label htmlFor="select-all" className="text-sm font-medium leading-none cursor-pointer">
@@ -123,28 +140,65 @@ function PrivacyPage() {
             <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase px-1">
               {t(`manageData.categories.${group}`)}
             </h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {categories.filter(c => c.group === group).map(cat => (
-                <div 
-                  key={cat.id}
-                  onClick={() => handleToggleCategory(cat.id)}
-                  className={cn(
-                    "relative flex cursor-pointer items-start space-x-3 rounded-xl border p-4 transition-all hover:bg-accent/50",
-                    selectedCategories.includes(cat.id) ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border bg-card"
-                  )}
-                >
-                  <Checkbox 
-                    checked={selectedCategories.includes(cat.id)}
-                    className="mt-1"
-                  />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none">{t(`manageData.categories.${cat.id}.title`)}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-1">
-                      {t(`manageData.categories.${cat.id}.description`)}
-                    </p>
+            <div className="grid gap-3 sm:grid-cols-1">
+              {categories.filter(c => c.group === group).map(cat => {
+                const isSelected = selections.some(s => s.category === cat.id);
+                const currentSelection = selections.find(s => s.category === cat.id);
+                
+                return (
+                  <div key={cat.id} className="space-y-2">
+                    <div 
+                      onClick={() => handleToggleCategory(cat.id)}
+                      className={cn(
+                        "relative flex cursor-pointer items-center justify-between rounded-xl border p-4 transition-all hover:bg-accent/50",
+                        isSelected ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border bg-card"
+                      )}
+                    >
+                      <div className="flex items-start space-x-3">
+                        <Checkbox checked={isSelected} className="mt-1" />
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium leading-none">{t(`manageData.categories.${cat.id}.title`)}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">
+                            {t(`manageData.categories.${cat.id}.description`)}
+                          </p>
+                        </div>
+                      </div>
+                      {cat.scopes && isSelected && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedCategory(expandedCategory === cat.id ? null : cat.id);
+                          }}
+                        >
+                          {expandedCategory === cat.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </Button>
+                      )}
+                    </div>
+
+                    {cat.scopes && isSelected && expandedCategory === cat.id && (
+                      <div className="ml-8 p-4 rounded-xl border bg-muted/30 animate-in slide-in-from-top-2 duration-200">
+                        <RadioGroup 
+                          value={currentSelection?.scope || "all"} 
+                          onValueChange={(val) => handleScopeChange(cat.id, val)}
+                          className="space-y-3"
+                        >
+                          {cat.scopes.map(scope => (
+                            <div key={scope} className="flex items-center space-x-2">
+                              <RadioGroupItem value={scope} id={`${cat.id}-${scope}`} />
+                              <label htmlFor={`${cat.id}-${scope}`} className="text-sm font-medium leading-none cursor-pointer">
+                                {t(`scopes.${scope}`)}
+                              </label>
+                            </div>
+                          ))}
+                        </RadioGroup>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}
@@ -153,11 +207,11 @@ function PrivacyPage() {
       <div className="sticky bottom-0 bg-background/80 py-4 backdrop-blur-sm">
         <Button 
           className="w-full h-12 text-base font-semibold"
-          disabled={selectedCategories.length === 0 || isLoadingPreview}
+          disabled={selections.length === 0 || isLoadingPreview}
           onClick={handleContinue}
         >
           {isLoadingPreview ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {t("manageData.selection.continue")}
+          {String(t("manageData.selection.continue", { count: selections.length } as any))}
         </Button>
       </div>
     </div>
@@ -182,11 +236,14 @@ function PrivacyPage() {
           </div>
           
           <div className="space-y-3">
-            {selectedCategories.map(cat => (
-              <div key={cat} className="flex justify-between items-center text-sm border-b border-destructive/10 pb-2 last:border-0">
-                <span className="text-muted-foreground">{t(`manageData.categories.${cat}.title`)}</span>
+            {selections.map(sel => (
+              <div key={sel.category} className="flex justify-between items-center text-sm border-b border-destructive/10 pb-2 last:border-0">
+                <div className="flex flex-col">
+                  <span className="text-muted-foreground">{t(`manageData.categories.${sel.category}.title`)}</span>
+                  {sel.scope !== "all" && <span className="text-[10px] font-bold text-destructive/70">{String(t(`scopes.${sel.scope}`)).toUpperCase()}</span>}
+                </div>
                 <span className="font-mono font-medium text-destructive">
-                  {previewData[cat] || 0} {t("manageData.review.willBeRemoved")}
+                  {previewData[sel.category] || 0} {t("manageData.review.willBeRemoved")}
                 </span>
               </div>
             ))}
@@ -196,6 +253,22 @@ function PrivacyPage() {
             </div>
           </div>
         </div>
+
+        {dependencies.length > 0 && (
+          <div className="rounded-xl border p-4 bg-orange-500/5 border-orange-500/20 space-y-3">
+            <div className="flex items-center space-x-2 text-orange-600">
+              <Info className="h-5 w-5" />
+              <span className="font-semibold text-sm">{t("manageData.review.dependencies")}</span>
+            </div>
+            {dependencies.map((dep, i) => (
+              <div key={i} className="flex justify-between text-xs">
+                <span className="text-muted-foreground">{String(t(`manageData.review.depType.${dep.type}`))} ({dep.count})</span>
+                <span className="font-bold text-orange-600">{String(t(`manageData.review.action.${dep.action}`))}</span>
+
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="space-y-4 rounded-xl border p-4 bg-muted/30">
           <div className="flex items-center space-x-2 text-primary">
@@ -224,7 +297,7 @@ function PrivacyPage() {
           <Button 
             variant="destructive" 
             className="w-full h-12 text-base font-bold shadow-lg shadow-destructive/20"
-            disabled={(selectedCategories.length > 5 && confirmationInput !== "EXCLUIR") || isDeleting}
+            disabled={confirmationInput !== "EXCLUIR" || isDeleting}
             onClick={handleDelete}
           >
             {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
@@ -276,7 +349,7 @@ function PrivacyPage() {
 
       <div className="flex items-center justify-center space-x-2 text-xs text-muted-foreground">
         <Info className="h-3.5 w-3.5" />
-        <span>GI Privacy Engine v1.0 • Operação Irreversível</span>
+        <span>GI Privacy Engine v2.0 • Atomic Deletion • Irreversível</span>
       </div>
     </div>
   );

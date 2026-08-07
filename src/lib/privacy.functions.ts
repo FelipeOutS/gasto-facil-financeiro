@@ -1,98 +1,155 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
- * Mapeamento de categorias de exclusão para tabelas do banco de dados.
- * Baseado na auditoria em docs/EXCLUSAO_SELETIVA_DADOS_USUARIO.md.
+ * Mapeamento canônico de categorias para tabelas e lógica de dependência.
+ * Ref: docs/EXCLUSAO_SELETIVA_DADOS_USUARIO.md
  */
-const CATEGORY_TABLES: Record<string, string[]> = {
-  expenses: ["gastos"],
-  income: ["receitas"],
-  payables: ["contas_a_pagar"],
-  receivables: ["contas_a_receber"],
-  subscriptions: ["recorrencias"],
-  budgets: ["limites"],
-  goals: ["metas_financeiras", "movimentacoes_meta"],
-  savings: ["dinheiro_guardado"],
-  investments: ["investimentos_ativos", "investimentos_atualizacoes", "investimentos_movimentacoes", "investimentos_rendimentos"],
-  cards: ["cartoes", "faturas_cartao"],
-  market: ["mercado_listas", "mercado_historico_compras", "mercado_precos_usuario", "mercado_mercados_salvos"],
-  imports: ["extratos_importados", "imported_transactions", "investimentos_importacoes"]
-};
+export const CATEGORY_MAP = {
+  expenses: {
+    tables: ["gastos"],
+    scope: "all"
+  },
+  income: {
+    tables: ["receitas"],
+    scope: "all"
+  },
+  payables: {
+    tables: ["contas_a_pagar"],
+    scopes: ["all", "paid", "pending", "overdue"]
+  },
+  receivables: {
+    tables: ["contas_a_receber"],
+    scopes: ["all", "received", "pending", "overdue"]
+  },
+  subscriptions: {
+    tables: ["recorrencias"],
+    scope: "all"
+  },
+  budgets: {
+    tables: ["limites"],
+    scope: "all"
+  },
+  goals: {
+    tables: ["metas_financeiras", "movimentacoes_meta"],
+    scope: "all"
+  },
+  savings: {
+    tables: ["dinheiro_guardado"],
+    scope: "all"
+  },
+  investments: {
+    tables: ["investimentos_ativos", "investimentos_atualizacoes", "investimentos_movimentacoes", "investimentos_rendimentos"],
+    scope: "all"
+  },
+  cards: {
+    tables: ["cartoes", "faturas_cartao"],
+    scope: "all",
+    dependencyInfo: "dependency.cards.info"
+  },
+  market: {
+    tables: ["mercado_orcamentos", "mercado_precos_usuario", "mercado_listas", "mercado_historico_compras", "mercado_mercados_salvos"],
+    scope: "all"
+  },
+  imports: {
+    tables: ["imported_transactions", "investimentos_importacoes", "extratos_importados"],
+    scope: "all"
+  }
+} as const;
+
+export interface DeletionSelection {
+  category: keyof typeof CATEGORY_MAP;
+  scope: string;
+}
 
 export const getDeletionPreview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async (ctx) => {
-    const data = (ctx as any).data as { categories: string[] };
+    const data = (ctx as any).data as { selections: DeletionSelection[] };
     const context = (ctx as any).context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { userId } = context;
     
     const stats: Record<string, number> = {};
+    const dependencies: { type: string; count: number; action: string }[] = [];
     
-    for (const cat of data.categories) {
-      const tables = CATEGORY_TABLES[cat] || [];
-      let total = 0;
-      
-      for (const table of tables) {
-        const { count, error } = await supabaseAdmin
+    for (const selection of data.selections) {
+      const mapping = CATEGORY_MAP[selection.category];
+      if (!mapping) continue;
+
+      let categoryTotal = 0;
+      for (const table of mapping.tables) {
+        let query = supabaseAdmin
           .from(table as any)
           .select("*", { count: "exact", head: true })
           .eq("user_id", userId);
-          
+
+        // Apply scopes for payables/receivables
+        if (selection.category === "payables" && selection.scope !== "all") {
+          const statusMap: Record<string, string> = { paid: "pago", pending: "pendente", overdue: "atrasado" };
+          query = query.eq("status", statusMap[selection.scope]);
+        } else if (selection.category === "receivables" && selection.scope !== "all") {
+          const statusMap: Record<string, string> = { received: "recebido", pending: "pendente", overdue: "atrasado" };
+          query = query.eq("status", statusMap[selection.scope]);
+        }
+
+        const { count, error } = await query;
         if (!error && count !== null) {
-          total += count;
+          categoryTotal += count;
         }
       }
-      stats[cat] = total;
+      stats[selection.category] = categoryTotal;
+
+      // Add dependency info if applicable
+      if (selection.category === "cards") {
+        const { count: linkedExpenses } = await supabaseAdmin
+          .from("gastos")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .not("cartao_id", "is", null);
+        
+        if (linkedExpenses && linkedExpenses > 0) {
+          dependencies.push({
+            type: "linked_transactions",
+            count: linkedExpenses,
+            action: "preserved_and_unlinked"
+          });
+        }
+      }
     }
     
-    return { stats };
+    return { stats, dependencies, totalPrimaryRecords: Object.values(stats).reduce((a, b) => a + b, 0) };
   });
 
 export const executeDataDeletion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async (ctx) => {
-    const data = (ctx as any).data as { categories: string[]; confirmationText: string };
+    const data = (ctx as any).data as { selections: DeletionSelection[]; confirmationText: string };
     const context = (ctx as any).context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { userId } = context;
 
-    const isLargeDeletion = data.categories.length > 5;
-    if (isLargeDeletion && data.confirmationText !== "EXCLUIR") {
-      throw new Error("Confirmação de segurança necessária para exclusão em massa");
-    }
-    if (data.confirmationText && data.confirmationText !== "EXCLUIR") {
-       throw new Error("Texto de confirmação incorreto");
+    if (data.confirmationText !== "EXCLUIR") {
+      throw new Error("Confirmação inválida");
     }
 
-    const results: Record<string, { success: boolean; deletedCount?: number; error?: any }> = {};
-
-    for (const cat of data.categories) {
-      const tables = CATEGORY_TABLES[cat] || [];
-      
-      for (const table of tables) {
-        const { error, count } = await supabaseAdmin
-          .from(table as any)
-          .delete()
-          .eq("user_id", userId);
-
-        results[table] = { 
-          success: !error, 
-          deletedCount: count || 0,
-          error: error ? error.message : undefined 
-        };
-      }
-    }
-
-    await supabaseAdmin.from("audit_logs").insert({
-      actor_user_id: userId,
-      target_user_id: userId,
-      action: "selective_data_deletion",
-      entity_type: "multiple",
-      metadata: { categories: data.categories, results }
+    // Call the atomic PostgreSQL RPC
+    const categories = data.selections.map(s => s.category);
+    const options: Record<string, any> = {};
+    data.selections.forEach(s => {
+      options[s.category] = { scope: s.scope };
     });
 
-    return { success: true, results };
+    const { data: rpcResult, error } = await supabaseAdmin.rpc("execute_data_deletion_atomic", {
+      p_user_id: userId,
+      p_categories: categories,
+      p_options: options
+    });
+
+    if (error) {
+      console.error("Atomic deletion failed:", error);
+      throw new Error(`Erro na exclusão atômica: ${error.message}`);
+    }
+
+    return { success: true, results: rpcResult };
   });
