@@ -69,14 +69,6 @@ const STATUS_BADGE_TONE: Record<string, StatusTone> = {
   sem_assinatura: "muted",
 };
 
-function MeuPlanoPage() {
-  const { t, i18n } = useTranslation("landing");
-  const { t: tp } = useTranslation("meu-plano");
-  const { profile, user } = useAuth();
-  const { from } = useSearch({ from: "/meu-plano" });
-
-  sem_assinatura: "muted",
-};
 
 function MeuPlanoPage() {
   const { t, i18n } = useTranslation("landing");
