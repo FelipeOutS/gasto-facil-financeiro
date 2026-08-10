@@ -88,14 +88,18 @@ export const Route = createFileRoute("/api/public/csp-report")({
             if (error) {
               console.error("[CSP Report Persistence Error]", error);
             }
+          } else {
+            // Payload não é um relatório CSP válido: rejeitar sem persistir.
+            return new Response("Invalid CSP report", { status: 400 });
           }
 
           // Resposta 204 conforme especificação da CSP
           return new Response(null, { status: 204 });
-        } catch (e) {
-          // Fail silent para o browser para não quebrar a navegação do usuário caso o report falhe
-          return new Response(null, { status: 204 });
+        } catch {
+          // JSON inválido / corpo ilegível
+          return new Response("Invalid CSP report", { status: 400 });
         }
+
       },
     },
   },
