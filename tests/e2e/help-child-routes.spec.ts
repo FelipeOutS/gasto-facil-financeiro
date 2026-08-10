@@ -2,14 +2,23 @@ import { expect, test, type Page } from "@playwright/test";
 import { readE2EEnv } from "./helpers/env";
 
 const envResult = readE2EEnv();
+const managedStorageKey = process.env.LOVABLE_BROWSER_SUPABASE_STORAGE_KEY;
+const managedSession = process.env.LOVABLE_BROWSER_SUPABASE_SESSION_JSON;
+const hasManagedSession = !!(managedStorageKey && managedSession);
 
 test.describe("Ajuda — child routes", () => {
-  test.skip(!envResult.ok, () => (envResult.ok ? "" : envResult.reason));
-
-  if (!envResult.ok) return;
-  const env = envResult.env;
-
   async function login(page: Page) {
+    if (hasManagedSession) {
+      await page.goto("/");
+      await page.evaluate(
+        ({ key, session }) => window.localStorage.setItem(key, session),
+        { key: managedStorageKey, session: managedSession },
+      );
+      return;
+    }
+
+    if (!envResult.ok) return;
+    const env = envResult.env;
     await page.goto("/login");
     await page.getByLabel(/e-?mail/i).fill(env.qaEmail);
     await page.getByLabel(/senha|password/i).fill(env.qaPassword);
@@ -18,6 +27,7 @@ test.describe("Ajuda — child routes", () => {
   }
 
   test("child route renders child content instead of help hub", async ({ page }) => {
+    test.skip(!hasManagedSession && !envResult.ok, "Sessão QA não disponível.");
     await login(page);
 
     const cases = [
@@ -44,9 +54,7 @@ test.describe("Ajuda — child routes", () => {
     for (const route of cases) {
       await page.goto(route.path);
       await expect(page).toHaveURL(new RegExp(`${route.path}$`));
-      await expect(
-        page.getByRole("heading", { level: 1, name: route.heading }),
-      ).toBeVisible();
+      await expect(page.getByRole("heading", { level: 1, name: route.heading })).toBeVisible();
       await expect(page.getByTestId(route.testId)).toContainText(route.content);
       await expect(page.getByTestId("settings-help-hub")).toHaveCount(0);
 
