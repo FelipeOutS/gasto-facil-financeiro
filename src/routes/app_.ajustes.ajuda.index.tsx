@@ -27,7 +27,7 @@ function AjudaPage() {
           {links.map((link) => (
             <Link
               key={link.label}
-              to={link.to as any}
+              to={link.to as never}
               className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card hover:bg-card-elevated transition-colors"
             >
               <div className="flex items-center gap-3">

@@ -25,10 +25,7 @@ function AparenciaPage() {
 
   return (
     <>
-      <SettingsPageHeader
-        title={t("appearance.title")}
-        description={t("appearance.description")}
-      />
+      <SettingsPageHeader title={t("appearance.title")} description={t("appearance.description")} />
 
       <div className="space-y-8 mt-6">
         <section>

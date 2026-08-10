@@ -1,10 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -77,10 +74,9 @@ function PreferenciasFinanceirasPage() {
 
   return (
     <>
-      <SettingsPageHeader 
-
-        title="Preferências financeiras" 
-        description="Categorias, limites e organização das suas finanças." 
+      <SettingsPageHeader
+        title="Preferências financeiras"
+        description="Categorias, limites e organização das suas finanças."
       />
 
       {/* Limite mensal */}
