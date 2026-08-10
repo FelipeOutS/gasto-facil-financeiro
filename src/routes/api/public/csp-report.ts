@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { checkRateLimit, getClientIp } from "@/server/rate-limit.server";
 
 const cspReportSchema = z.object({
   "csp-report": z
@@ -41,6 +42,17 @@ export const Route = createFileRoute("/api/public/csp-report")({
             return new Response("Payload too large", { status: 413 });
           }
 
+          const ip = getClientIp(request) ?? "unknown";
+          const rl = await checkRateLimit({
+            key: `csp-report:${ip}`,
+            route: "/api/public/csp-report",
+            limit: 60,
+            windowSeconds: 300,
+            ip_address: ip,
+            method: "POST",
+          });
+          if (rl.blocked) return new Response(null, { status: 429 });
+
           const payload = JSON.parse(bodyText);
           const validated = cspReportSchema.safeParse(payload);
 
@@ -68,36 +80,36 @@ export const Route = createFileRoute("/api/public/csp-report")({
               directive: report["effective-directive"],
             });
 
-            // Persistência no banco (Audit Trail)
-            // Usamos supabaseAdmin pois a tabela tem RLS sem policy de escrita para anon por segurança extra
-            // Embora tenhamos dado GRANT INSERT para anon/authenticated, o admin garante a bypass de RLS
-            // se precisarmos de logs mesmo com falhas de auth.
-            const { error } = await supabaseAdmin.from("whatsapp_csp_reports").insert({
+            // Persistência no banco (tabela dedicada, fail-closed: apenas service_role escreve)
+            const { error } = await supabaseAdmin.from("csp_reports").insert({
               document_uri: documentUri,
               referrer: sanitizeUrl(report["referrer"]),
               violated_directive: report["violated-directive"],
               effective_directive: report["effective-directive"],
-              original_policy: report["original-policy"],
+              original_policy: report["original-policy"]?.substring(0, 2000),
               disposition: report["disposition"],
               blocked_uri: blockedUri,
               line_number: report["line-number"],
               column_number: report["column-number"],
-              source_file: report["source-file"],
+              source_file: sanitizeUrl(report["source-file"]),
               status_code: report["status-code"],
               script_sample: report["script-sample"]?.substring(0, 100), // Limitar tamanho da amostra
-              user_agent: request.headers.get("user-agent"),
+              user_agent: request.headers.get("user-agent")?.substring(0, 512),
             });
 
             if (error) {
               console.error("[CSP Report Persistence Error]", error);
             }
+          } else {
+            // Payload não é um relatório CSP válido: rejeitar sem persistir.
+            return new Response("Invalid CSP report", { status: 400 });
           }
 
           // Resposta 204 conforme especificação da CSP
           return new Response(null, { status: 204 });
-        } catch (e) {
-          // Fail silent para o browser para não quebrar a navegação do usuário caso o report falhe
-          return new Response(null, { status: 204 });
+        } catch {
+          // JSON inválido / corpo ilegível
+          return new Response("Invalid CSP report", { status: 400 });
         }
       },
     },
