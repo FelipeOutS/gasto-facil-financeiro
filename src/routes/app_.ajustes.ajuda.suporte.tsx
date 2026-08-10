@@ -19,29 +19,26 @@ function SuportePage() {
       />
       <div className="mt-6 grid gap-2">
         <a
-          href="mailto:suporte@gastointeligente.com.br"
+          href="mailto:contato@gastointeligente.com.br"
           className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
         >
           <Mail className="h-5 w-5 text-brand" />
           <div className="min-w-0">
-            <p className="text-sm font-medium">E-mail</p>
-            <p className="truncate text-xs text-muted-foreground">
-              suporte@gastointeligente.com.br
-            </p>
-          </div>
-        </a>
-        <a
-          href="mailto:contato@gastointeligente.com.br"
-          className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
-        >
-          <MessageCircle className="h-5 w-5 text-brand" />
-          <div className="min-w-0">
-            <p className="text-sm font-medium">Assuntos gerais e privacidade</p>
+            <p className="text-sm font-medium">E-mail oficial</p>
             <p className="truncate text-xs text-muted-foreground">
               contato@gastointeligente.com.br
             </p>
           </div>
         </a>
+        <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
+          <MessageCircle className="h-5 w-5 text-brand" />
+          <div className="min-w-0">
+            <p className="text-sm font-medium">Suporte, privacidade e LGPD</p>
+            <p className="text-xs text-muted-foreground">
+              Use o mesmo e-mail oficial e descreva o assunto no título.
+            </p>
+          </div>
+        </div>
       </div>
       <p className="mt-4 text-xs text-muted-foreground">
         Respondemos em dias úteis. Nunca pedimos sua senha por e-mail.

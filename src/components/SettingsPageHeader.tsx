@@ -20,7 +20,7 @@ export function SettingsPageHeader({
   return (
     <header className={cn("flex items-center gap-3 pt-2 mb-6", className)}>
       <button
-        onClick={() => navigate({ to: backTo as any })}
+        onClick={() => navigate({ to: backTo as never })}
         className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-5 w-5" />

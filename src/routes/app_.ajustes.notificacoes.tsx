@@ -21,36 +21,39 @@ function NotificacoesPage() {
         { id: "venceAmanha", label: t("notifications.options.venceAmanha"), active: true },
         { id: "venceHoje", label: t("notifications.options.venceHoje"), active: true },
         { id: "atrasada", label: t("notifications.options.atrasada"), active: true },
-      ]
+      ],
     },
     {
       title: t("notifications.groups.budget"),
       items: [
         { id: "pertoLimite", label: t("notifications.options.pertoLimite"), active: true },
-        { id: "ultrapassouLimite", label: t("notifications.options.ultrapassouLimite"), active: true },
-      ]
+        {
+          id: "ultrapassouLimite",
+          label: t("notifications.options.ultrapassouLimite"),
+          active: true,
+        },
+      ],
     },
     {
       title: t("notifications.groups.goals"),
       items: [
         { id: "metaAtingida", label: t("notifications.options.metaAtingida"), active: true },
         { id: "progressoMeta", label: t("notifications.options.progressoMeta"), active: false },
-      ]
+      ],
     },
     {
       title: t("notifications.groups.summaries"),
       items: [
         { id: "resumoMensal", label: t("notifications.options.resumoMensal"), active: false },
-      ]
-    }
+      ],
+    },
   ];
 
   return (
     <>
-      <SettingsPageHeader 
-
-        title={t("notifications.title")} 
-        description={t("sections.notifications.description")} 
+      <SettingsPageHeader
+        title={t("notifications.title")}
+        description={t("sections.notifications.description")}
       />
 
       <div className="space-y-8 mt-6">
@@ -88,7 +91,7 @@ function NotificacoesPage() {
                 key={canal.label}
                 className={cn(
                   "flex flex-col gap-3 p-4 rounded-2xl border border-border bg-card",
-                  !canal.active && "opacity-60"
+                  !canal.active && "opacity-60",
                 )}
               >
                 <div className="flex items-center justify-between">

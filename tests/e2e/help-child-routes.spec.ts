@@ -35,7 +35,7 @@ test.describe("Ajuda — child routes", () => {
         path: "/app/ajustes/ajuda/suporte",
         heading: "Suporte",
         testId: "settings-help-support",
-        content: "suporte@gastointeligente.com.br",
+        content: "contato@gastointeligente.com.br",
       },
       {
         path: "/app/ajustes/ajuda/termos",
