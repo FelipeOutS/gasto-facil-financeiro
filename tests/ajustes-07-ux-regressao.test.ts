@@ -62,7 +62,7 @@ describe("AJUSTES-07 — regressões de UX da Central de Ajustes", () => {
     const ver = read("src/lib/app-version.ts");
     expect(ver).toMatch(/APP_VERSION = "\d+\.\d+\.\d+"/);
     expect(ver).not.toMatch(/APP_VERSION = "[^"]*(beta|alpha|rc)/i);
-    expect(read("src/routes/app_.ajustes.ajuda.tsx")).toContain("APP_VERSION");
+    expect(read("src/routes/app_.ajustes.ajuda.index.tsx")).toContain("APP_VERSION");
   });
 
   it("exclusão seletiva usa checkbox + modal, sem campo de texto EXCLUIR", () => {
