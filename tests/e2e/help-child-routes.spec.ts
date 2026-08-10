@@ -8,7 +8,7 @@ const hasManagedSession = !!(managedStorageKey && managedSession);
 
 test.describe("Ajuda — child routes", () => {
   async function login(page: Page) {
-    if (hasManagedSession) {
+    if (managedStorageKey && managedSession) {
       await page.goto("/");
       await page.evaluate(
         ({ key, session }) => window.localStorage.setItem(key, session),
