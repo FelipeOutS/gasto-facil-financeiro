@@ -70,7 +70,6 @@
       "pending": "Somente pendentes",
       "overdue": "Somente atrasadas/vencidas"
     },
-
     "review": {
       "title": "Revise o que será excluído",
       "willBeRemoved": "serão removidos",
@@ -83,10 +82,9 @@
         "preserved_and_unlinked": "Preservados e desvinculados"
       },
       "wontBeDeleted": "Isso não será excluído",
-
       "accountSafe": "Sua conta, login e plano",
       "settingsSafe": "Suas configurações básicas",
-      "billingSafe": "Histórico de cobrança obrigatório",
+      "billingSafe": "Dados de cobrança e segurança que não fazem parte desta limpeza",
       "irreversible": "Esta ação não poderá ser desfeita.",
       "confirm": "Excluir dados",
       "confirmLarge": "Digite EXCLUIR para continuar"

@@ -71,7 +71,7 @@
       "wontBeDeleted": "This will not be deleted",
       "accountSafe": "Your account, login, and plan",
       "settingsSafe": "Your basic settings",
-      "billingSafe": "Required billing history",
+      "billingSafe": "Billing and security data that is not part of this cleanup",
       "irreversible": "This action cannot be undone.",
       "confirm": "Delete data",
       "confirmLarge": "Type DELETE to continue"

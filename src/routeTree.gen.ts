@@ -133,6 +133,7 @@ import { Route as ApiPublicAppVersionRouteImport } from './routes/api/public/app
 import { Route as ApiCheckoutVerifyRouteImport } from './routes/api/checkout.verify'
 import { Route as ApiCheckoutCreateRouteImport } from './routes/api/checkout.create'
 import { Route as AppIntegracoesMercadoPagoIndexRouteImport } from './routes/app_.integracoes.mercado-pago.index'
+import { Route as AppAjustesAjudaIndexRouteImport } from './routes/app_.ajustes.ajuda.index'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -780,6 +781,11 @@ const AppIntegracoesMercadoPagoIndexRoute =
     path: '/app/integracoes/mercado-pago/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AppAjustesAjudaIndexRoute = AppAjustesAjudaIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppAjustesAjudaRoute,
+} as any)
 const LovableEmailTransactionalSendRoute =
   LovableEmailTransactionalSendRouteImport.update({
     id: '/lovable/email/transactional/send',
@@ -1027,6 +1033,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/app/ajustes/ajuda/': typeof AppAjustesAjudaIndexRoute
   '/app/integracoes/mercado-pago/': typeof AppIntegracoesMercadoPagoIndexRoute
 }
 export interface FileRoutesByTo {
@@ -1127,7 +1134,6 @@ export interface FileRoutesByTo {
   '/api/public/app-version': typeof ApiPublicAppVersionRoute
   '/api/public/client-load-error': typeof ApiPublicClientLoadErrorRoute
   '/api/public/csp-report': typeof ApiPublicCspReportRoute
-  '/app/ajustes/ajuda': typeof AppAjustesAjudaRouteWithChildren
   '/app/ajustes/aparencia': typeof AppAjustesAparenciaRoute
   '/app/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/app/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
@@ -1170,6 +1176,7 @@ export interface FileRoutesByTo {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/app/ajustes/ajuda': typeof AppAjustesAjudaIndexRoute
   '/app/integracoes/mercado-pago': typeof AppIntegracoesMercadoPagoIndexRoute
 }
 export interface FileRoutesById {
@@ -1315,6 +1322,7 @@ export interface FileRoutesById {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/app_/ajustes/ajuda/': typeof AppAjustesAjudaIndexRoute
   '/app_/integracoes/mercado-pago/': typeof AppIntegracoesMercadoPagoIndexRoute
 }
 export interface FileRouteTypes {
@@ -1461,6 +1469,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
+    | '/app/ajustes/ajuda/'
     | '/app/integracoes/mercado-pago/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -1561,7 +1570,6 @@ export interface FileRouteTypes {
     | '/api/public/app-version'
     | '/api/public/client-load-error'
     | '/api/public/csp-report'
-    | '/app/ajustes/ajuda'
     | '/app/ajustes/aparencia'
     | '/app/ajustes/notificacoes'
     | '/app/ajustes/preferencias-financeiras'
@@ -1604,6 +1612,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
+    | '/app/ajustes/ajuda'
     | '/app/integracoes/mercado-pago'
   id:
     | '__root__'
@@ -1748,6 +1757,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
+    | '/app_/ajustes/ajuda/'
     | '/app_/integracoes/mercado-pago/'
   fileRoutesById: FileRoutesById
 }
@@ -2757,6 +2767,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIntegracoesMercadoPagoIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app_/ajustes/ajuda/': {
+      id: '/app_/ajustes/ajuda/'
+      path: '/'
+      fullPath: '/app/ajustes/ajuda/'
+      preLoaderRoute: typeof AppAjustesAjudaIndexRouteImport
+      parentRoute: typeof AppAjustesAjudaRoute
+    }
     '/lovable/email/transactional/send': {
       id: '/lovable/email/transactional/send'
       path: '/lovable/email/transactional/send'
@@ -2901,12 +2918,14 @@ interface AppAjustesAjudaRouteChildren {
   AppAjustesAjudaPrivacidadeRoute: typeof AppAjustesAjudaPrivacidadeRoute
   AppAjustesAjudaSuporteRoute: typeof AppAjustesAjudaSuporteRoute
   AppAjustesAjudaTermosRoute: typeof AppAjustesAjudaTermosRoute
+  AppAjustesAjudaIndexRoute: typeof AppAjustesAjudaIndexRoute
 }
 
 const AppAjustesAjudaRouteChildren: AppAjustesAjudaRouteChildren = {
   AppAjustesAjudaPrivacidadeRoute: AppAjustesAjudaPrivacidadeRoute,
   AppAjustesAjudaSuporteRoute: AppAjustesAjudaSuporteRoute,
   AppAjustesAjudaTermosRoute: AppAjustesAjudaTermosRoute,
+  AppAjustesAjudaIndexRoute: AppAjustesAjudaIndexRoute,
 }
 
 const AppAjustesAjudaRouteWithChildren = AppAjustesAjudaRoute._addFileChildren(
@@ -3078,12 +3097,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
