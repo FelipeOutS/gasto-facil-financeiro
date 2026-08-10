@@ -134,4 +134,12 @@ describe("AJUSTES-07 — regressões de UX da Central de Ajustes", () => {
       expect(src, file).toContain('backTo="/app/ajustes/ajuda"');
     }
   });
+
+  it("marcador biométrico interrompido expira e não prende o app no loader", () => {
+    const src = read("src/lib/biometric-login.ts");
+    expect(src).toContain("LOGIN_BIO_IN_PROGRESS_MAX_MS");
+    expect(src).toContain("String(Date.now())");
+    expect(src).toContain("window.sessionStorage.removeItem(LOGIN_BIO_IN_PROGRESS_KEY)");
+    expect(src).not.toContain('setItem(LOGIN_BIO_IN_PROGRESS_KEY, "true")');
+  });
 });
