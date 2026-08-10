@@ -286,6 +286,78 @@ export type Database = {
         }
         Relationships: []
       }
+      client_load_errors: {
+        Row: {
+          anonymous_id: string | null
+          cache_names: string | null
+          colno: number | null
+          created_at: string
+          current_route: string | null
+          deployment_id: string | null
+          error_message: string | null
+          error_name: string | null
+          error_type: string
+          html_build_id: string | null
+          id: string
+          js_build_id: string | null
+          lineno: number | null
+          navigator_online: boolean | null
+          recovery_attempted: boolean | null
+          resource_url: string | null
+          server_build_id: string | null
+          stack_trace: string | null
+          sw_controller_url: string | null
+          sw_state: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          anonymous_id?: string | null
+          cache_names?: string | null
+          colno?: number | null
+          created_at?: string
+          current_route?: string | null
+          deployment_id?: string | null
+          error_message?: string | null
+          error_name?: string | null
+          error_type: string
+          html_build_id?: string | null
+          id?: string
+          js_build_id?: string | null
+          lineno?: number | null
+          navigator_online?: boolean | null
+          recovery_attempted?: boolean | null
+          resource_url?: string | null
+          server_build_id?: string | null
+          stack_trace?: string | null
+          sw_controller_url?: string | null
+          sw_state?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          anonymous_id?: string | null
+          cache_names?: string | null
+          colno?: number | null
+          created_at?: string
+          current_route?: string | null
+          deployment_id?: string | null
+          error_message?: string | null
+          error_name?: string | null
+          error_type?: string
+          html_build_id?: string | null
+          id?: string
+          js_build_id?: string | null
+          lineno?: number | null
+          navigator_online?: boolean | null
+          recovery_attempted?: boolean | null
+          resource_url?: string | null
+          server_build_id?: string | null
+          stack_trace?: string | null
+          sw_controller_url?: string | null
+          sw_state?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       clientes: {
         Row: {
           apelido: string | null
@@ -761,6 +833,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      csp_reports: {
+        Row: {
+          blocked_uri: string | null
+          column_number: number | null
+          created_at: string
+          disposition: string | null
+          document_uri: string | null
+          effective_directive: string | null
+          id: string
+          line_number: number | null
+          original_policy: string | null
+          referrer: string | null
+          script_sample: string | null
+          source_file: string | null
+          status_code: number | null
+          user_agent: string | null
+          violated_directive: string | null
+        }
+        Insert: {
+          blocked_uri?: string | null
+          column_number?: number | null
+          created_at?: string
+          disposition?: string | null
+          document_uri?: string | null
+          effective_directive?: string | null
+          id?: string
+          line_number?: number | null
+          original_policy?: string | null
+          referrer?: string | null
+          script_sample?: string | null
+          source_file?: string | null
+          status_code?: number | null
+          user_agent?: string | null
+          violated_directive?: string | null
+        }
+        Update: {
+          blocked_uri?: string | null
+          column_number?: number | null
+          created_at?: string
+          disposition?: string | null
+          document_uri?: string | null
+          effective_directive?: string | null
+          id?: string
+          line_number?: number | null
+          original_policy?: string | null
+          referrer?: string | null
+          script_sample?: string | null
+          source_file?: string | null
+          status_code?: number | null
+          user_agent?: string | null
+          violated_directive?: string | null
+        }
+        Relationships: []
       }
       dinheiro_guardado: {
         Row: {
