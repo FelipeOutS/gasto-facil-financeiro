@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { checkRateLimit, getClientIp } from "@/server/rate-limit.server";
 
 const cspReportSchema = z.object({
   "csp-report": z
@@ -40,6 +41,17 @@ export const Route = createFileRoute("/api/public/csp-report")({
           if (bodyText.length > 10000) {
             return new Response("Payload too large", { status: 413 });
           }
+
+          const ip = getClientIp(request) ?? "unknown";
+          const rl = await checkRateLimit({
+            key: `csp-report:${ip}`,
+            route: "/api/public/csp-report",
+            limit: 60,
+            windowSeconds: 300,
+            ip_address: ip,
+            method: "POST",
+          });
+          if (rl.blocked) return new Response(null, { status: 429 });
 
           const payload = JSON.parse(bodyText);
           const validated = cspReportSchema.safeParse(payload);

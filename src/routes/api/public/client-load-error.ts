@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
 import { supabaseAdmin } from '@/integrations/supabase/client.server'
+import { checkRateLimit, getClientIp } from '@/server/rate-limit.server'
 
 /** Limite duro do corpo bruto: 32KB. Acima disso rejeitamos sem persistir. */
 const MAX_BODY_BYTES = 32 * 1024
@@ -33,14 +34,6 @@ function stripUrlSecrets(value: string | undefined): string | undefined {
   return value.split('?')[0]?.split('#')[0]
 }
 
-function clientIp(request: Request): string {
-  return (
-    request.headers.get('cf-connecting-ip') ??
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    'unknown'
-  )
-}
-
 export const Route = createFileRoute('/api/public/client-load-error')({
   server: {
     handlers: {
@@ -54,17 +47,16 @@ export const Route = createFileRoute('/api/public/client-load-error')({
           const data = schema.parse(JSON.parse(raw))
 
           // Rate limit persistente/distribuído (mecanismo canônico do projeto).
-          const ip = clientIp(request)
-          const { data: rl } = await supabaseAdmin.rpc('rate_limit_hit', {
-            _key: `client-load-error:${ip}`,
-            _route: '/api/public/client-load-error',
-            _limit: 30,
-            _window_seconds: 300,
-            _ip_address: ip,
-            _method: 'POST',
+          const ip = getClientIp(request) ?? 'unknown'
+          const rl = await checkRateLimit({
+            key: `client-load-error:${ip}`,
+            route: '/api/public/client-load-error',
+            limit: 30,
+            windowSeconds: 300,
+            ip_address: ip,
+            method: 'POST',
           })
-          const blocked = Array.isArray(rl) ? rl[0]?.blocked : undefined
-          if (blocked) return new Response(null, { status: 429 })
+          if (rl.blocked) return new Response(null, { status: 429 })
 
           const { error } = await supabaseAdmin.from('client_load_errors').insert({
             ...data,
