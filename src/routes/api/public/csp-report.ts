@@ -111,7 +111,6 @@ export const Route = createFileRoute("/api/public/csp-report")({
           // JSON inválido / corpo ilegível
           return new Response("Invalid CSP report", { status: 400 });
         }
-
       },
     },
   },
