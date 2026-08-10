@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 //  - app_android_biometric_user:<email>  = "true"
 //  - app_android_biometric_session       = tokens da sessão atual
 //  - gi:biometric-unlocked               = "true" (sessionStorage)
-//  - gi:biometric-auth-in-progress       = "true" (sessionStorage)
+//  - gi:biometric-auth-in-progress       = timestamp em ms (sessionStorage)
 
 export const LOGIN_BIO_ENABLED_KEY = "app_android_biometric_login_enabled";
 export const LOGIN_BIO_EMAIL_KEY = "app_android_biometric_user_email";
@@ -23,6 +23,11 @@ export const LOGIN_BIO_SESSION_KEY = "app_android_biometric_session";
 export const LOGIN_BIO_UNLOCKED_KEY = "gi:biometric-unlocked";
 export const LOGIN_BIO_IN_PROGRESS_KEY = "gi:biometric-auth-in-progress";
 export const LOGIN_BIO_SESSION_RESTORED_EVENT = "gi:login-bio-session-restored";
+
+// As bridges nativas aguardam até 60 s. A margem adicional preserva uma
+// autenticação realmente em andamento, mas impede que uma aba recarregada
+// herde o marcador para sempre caso o fluxo nativo tenha sido interrompido.
+const LOGIN_BIO_IN_PROGRESS_MAX_MS = 90_000;
 
 const LEGACY_LOGIN_BIO_ENABLED_KEY = "biometric_enabled";
 const LEGACY_LOGIN_BIO_EMAIL_KEY = "biometric_user_email";
@@ -113,7 +118,19 @@ export function setLoginBioUnlocked(value: boolean): void {
 export function isLoginBioInProgress(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return window.sessionStorage.getItem(LOGIN_BIO_IN_PROGRESS_KEY) === "true";
+    const raw = window.sessionStorage.getItem(LOGIN_BIO_IN_PROGRESS_KEY);
+    if (!raw) return false;
+
+    const startedAt = Number(raw);
+    const age = Date.now() - startedAt;
+    if (Number.isFinite(startedAt) && startedAt > 0 && age >= 0 && age <= LOGIN_BIO_IN_PROGRESS_MAX_MS) {
+      return true;
+    }
+
+    // Também remove o formato legado "true", que não possui prazo e podia
+    // deixar rotas privadas presas indefinidamente após uma recarga.
+    window.sessionStorage.removeItem(LOGIN_BIO_IN_PROGRESS_KEY);
+    return false;
   } catch {
     return false;
   }
@@ -131,7 +148,7 @@ export function isLoginBioUnlockRequired(): boolean {
 export function setLoginBioInProgress(value: boolean): void {
   if (typeof window === "undefined") return;
   try {
-    if (value) window.sessionStorage.setItem(LOGIN_BIO_IN_PROGRESS_KEY, "true");
+    if (value) window.sessionStorage.setItem(LOGIN_BIO_IN_PROGRESS_KEY, String(Date.now()));
     else window.sessionStorage.removeItem(LOGIN_BIO_IN_PROGRESS_KEY);
   } catch {
     /* ignore */

@@ -11,7 +11,7 @@ export const Route = createFileRoute("/app_/ajustes/ajuda/privacidade")({
 function PrivacidadeInternoPage() {
   const { t } = useTranslation("legal");
   return (
-    <>
+    <div data-testid="settings-help-privacy" className="contents">
       <SettingsPageHeader title={t("privacidade.title")} backTo="/app/ajustes/ajuda" />
       <div className="mt-6 rounded-3xl border border-border bg-card p-6">
         <p className="mb-4 text-xs text-muted-foreground">
@@ -21,6 +21,6 @@ function PrivacidadeInternoPage() {
           <PrivacidadeContent />
         </div>
       </div>
-    </>
+    </div>
   );
 }

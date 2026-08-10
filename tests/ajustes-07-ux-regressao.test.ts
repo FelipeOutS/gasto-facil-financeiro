@@ -62,7 +62,7 @@ describe("AJUSTES-07 — regressões de UX da Central de Ajustes", () => {
     const ver = read("src/lib/app-version.ts");
     expect(ver).toMatch(/APP_VERSION = "\d+\.\d+\.\d+"/);
     expect(ver).not.toMatch(/APP_VERSION = "[^"]*(beta|alpha|rc)/i);
-    expect(read("src/routes/app_.ajustes.ajuda.tsx")).toContain("APP_VERSION");
+    expect(read("src/routes/app_.ajustes.ajuda.index.tsx")).toContain("APP_VERSION");
   });
 
   it("exclusão seletiva usa checkbox + modal, sem campo de texto EXCLUIR", () => {
@@ -109,5 +109,37 @@ describe("AJUSTES-07 — regressões de UX da Central de Ajustes", () => {
       expect(src, f).not.toContain("MobileShell");
       expect(src, f).toContain('backTo="/app/ajustes/ajuda"');
     }
+  });
+
+  it("layout de Ajuda entrega o Outlet e o Hub existe somente na rota index", () => {
+    const layout = read("src/routes/app_.ajustes.ajuda.tsx");
+    const index = read("src/routes/app_.ajustes.ajuda.index.tsx");
+    expect(layout).toContain("<Outlet />");
+    expect(layout).not.toContain("settings-help-hub");
+    expect(index).toContain('data-testid="settings-help-hub"');
+    expect(index).toContain('createFileRoute("/app_/ajustes/ajuda/")');
+  });
+
+  it("cada child de Ajuda possui conteúdo próprio e nunca inclui o Hub", () => {
+    const children = [
+      ["src/routes/app_.ajustes.ajuda.suporte.tsx", "settings-help-support", "SuportePage"],
+      ["src/routes/app_.ajustes.ajuda.termos.tsx", "settings-help-terms", "TermosContent"],
+      ["src/routes/app_.ajustes.ajuda.privacidade.tsx", "settings-help-privacy", "PrivacidadeContent"],
+    ];
+    for (const [file, testId, ownContent] of children) {
+      const src = read(file);
+      expect(src, file).toContain(`data-testid="${testId}"`);
+      expect(src, file).toContain(ownContent);
+      expect(src, file).not.toContain("settings-help-hub");
+      expect(src, file).toContain('backTo="/app/ajustes/ajuda"');
+    }
+  });
+
+  it("marcador biométrico interrompido expira e não prende o app no loader", () => {
+    const src = read("src/lib/biometric-login.ts");
+    expect(src).toContain("LOGIN_BIO_IN_PROGRESS_MAX_MS");
+    expect(src).toContain("String(Date.now())");
+    expect(src).toContain("window.sessionStorage.removeItem(LOGIN_BIO_IN_PROGRESS_KEY)");
+    expect(src).not.toContain('setItem(LOGIN_BIO_IN_PROGRESS_KEY, "true")');
   });
 });
