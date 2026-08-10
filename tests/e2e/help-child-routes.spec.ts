@@ -10,10 +10,10 @@ test.describe("Ajuda — child routes", () => {
   async function login(page: Page) {
     if (managedStorageKey && managedSession) {
       await page.goto("/");
-      await page.evaluate(
-        ({ key, session }) => window.localStorage.setItem(key, session),
-        { key: managedStorageKey, session: managedSession },
-      );
+      await page.evaluate(({ key, session }) => window.localStorage.setItem(key, session), {
+        key: managedStorageKey,
+        session: managedSession,
+      });
       return;
     }
 
