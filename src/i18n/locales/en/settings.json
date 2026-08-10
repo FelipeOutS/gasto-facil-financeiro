@@ -35,18 +35,23 @@
       "description": "Support, privacy, terms and version."
     }
   },
-    "appearance": {
-      "title": "Appearance",
-      "description": "Customize how Gasto Inteligente looks for you.",
-      "theme": "Theme",
-      "themes": {
-        "light": "Light",
-        "dark": "Dark",
-        "system": "System"
-      },
-      "accent": "Accent color",
-      "preview": "Visual preview"
+  "appearance": {
+    "title": "Appearance",
+    "description": "Customize how Gasto Inteligente looks for you.",
+    "theme": "Theme",
+    "themes": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
     },
+    "accent": "Accent color",
+    "preview": "Visual preview",
+    "themeUpdated": "Theme updated",
+    "moreOptions": "More options",
+    "comingSoon": "Coming soon",
+    "compactLayout": "Compact layout",
+    "fontSize": "Font size"
+  },
   "finance": {
     "title": "Financial preferences",
     "limit": "Total monthly limit",

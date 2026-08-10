@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Shield, FileText, Info, ChevronRight } from "lucide-react";
-import { MobileShell } from "@/components/MobileShell";
 import { SettingsPageHeader } from "@/components/SettingsPageHeader";
+import { APP_VERSION } from "@/lib/app-version";
 
 export const Route = createFileRoute("/app_/ajustes/ajuda")({
   head: () => ({ meta: [{ title: "Ajuda e informações — Gasto Inteligente" }] }),
@@ -11,8 +11,8 @@ export const Route = createFileRoute("/app_/ajustes/ajuda")({
 
 function AjudaPage() {
   const { t } = useTranslation("settings");
-  
-  const version = "2.6.0"; // Versão amigável sem "beta"
+
+  const version = APP_VERSION;
 
   const links = [
     { label: t("help.support"), icon: Info, to: "/app/ajustes/ajuda/suporte" },

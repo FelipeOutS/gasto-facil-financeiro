@@ -1,24 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { MobileShell } from "@/components/MobileShell";
 import { SettingsPageHeader } from "@/components/SettingsPageHeader";
+import { PrivacidadeContent } from "@/components/legal/LegalContent";
 
 export const Route = createFileRoute("/app_/ajustes/ajuda/privacidade")({
+  head: () => ({ meta: [{ title: "Política de Privacidade — Gasto Inteligente" }] }),
   component: PrivacidadeInternoPage,
 });
 
 function PrivacidadeInternoPage() {
   const { t } = useTranslation("legal");
   return (
-    <MobileShell>
-      <SettingsPageHeader title="Política de Privacidade" backTo="/app/ajustes/ajuda" />
-      <div className="p-6">
-         <h2 className="text-xl font-bold mb-4">{t("privacidade.title")}</h2>
-         <p className="text-xs text-muted-foreground mb-4">Última atualização: {t("updatedAt")}</p>
-         <div className="space-y-4 text-sm text-muted-foreground">
-             <p>{t("privacidade.intro")}</p>
-         </div>
+    <>
+      <SettingsPageHeader title={t("privacidade.title")} backTo="/app/ajustes/ajuda" />
+      <div className="mt-6 rounded-3xl border border-border bg-card p-6">
+        <p className="mb-4 text-xs text-muted-foreground">
+          {t("updatedAtLabel", { defaultValue: "Última atualização" })}: {t("updatedAt")}
+        </p>
+        <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground prose-li:text-muted-foreground prose-strong:text-foreground prose-a:text-brand">
+          <PrivacidadeContent />
+        </div>
       </div>
-    </MobileShell>
+    </>
   );
 }
