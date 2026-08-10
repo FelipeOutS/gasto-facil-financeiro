@@ -11,7 +11,7 @@ export const Route = createFileRoute("/app_/ajustes/ajuda/suporte")({
 function SuportePage() {
   const { t } = useTranslation("settings");
   return (
-    <>
+    <div data-testid="settings-help-support" className="contents">
       <SettingsPageHeader
         title={t("help.support")}
         description="Fale com a nossa equipe pelos canais oficiais."
@@ -46,6 +46,6 @@ function SuportePage() {
       <p className="mt-4 text-xs text-muted-foreground">
         Respondemos em dias úteis. Nunca pedimos sua senha por e-mail.
       </p>
-    </>
+    </div>
   );
 }

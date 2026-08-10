@@ -22,7 +22,7 @@ function AjudaPage() {
     <>
       <SettingsPageHeader title={t("help.title")} description={t("sections.help.description")} />
 
-      <div className="space-y-4 mt-6">
+      <div data-testid="settings-help-hub" className="space-y-4 mt-6">
         <div className="grid gap-2">
           {links.map((link) => (
             <Link

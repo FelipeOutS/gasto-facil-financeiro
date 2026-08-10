@@ -110,4 +110,28 @@ describe("AJUSTES-07 — regressões de UX da Central de Ajustes", () => {
       expect(src, f).toContain('backTo="/app/ajustes/ajuda"');
     }
   });
+
+  it("layout de Ajuda entrega o Outlet e o Hub existe somente na rota index", () => {
+    const layout = read("src/routes/app_.ajustes.ajuda.tsx");
+    const index = read("src/routes/app_.ajustes.ajuda.index.tsx");
+    expect(layout).toContain("<Outlet />");
+    expect(layout).not.toContain("settings-help-hub");
+    expect(index).toContain('data-testid="settings-help-hub"');
+    expect(index).toContain('createFileRoute("/app_/ajustes/ajuda/")');
+  });
+
+  it("cada child de Ajuda possui conteúdo próprio e nunca inclui o Hub", () => {
+    const children = [
+      ["src/routes/app_.ajustes.ajuda.suporte.tsx", "settings-help-support", "SuportePage"],
+      ["src/routes/app_.ajustes.ajuda.termos.tsx", "settings-help-terms", "TermosContent"],
+      ["src/routes/app_.ajustes.ajuda.privacidade.tsx", "settings-help-privacy", "PrivacidadeContent"],
+    ];
+    for (const [file, testId, ownContent] of children) {
+      const src = read(file);
+      expect(src, file).toContain(`data-testid="${testId}"`);
+      expect(src, file).toContain(ownContent);
+      expect(src, file).not.toContain("settings-help-hub");
+      expect(src, file).toContain('backTo="/app/ajustes/ajuda"');
+    }
+  });
 });
