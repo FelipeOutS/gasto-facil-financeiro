@@ -68,24 +68,21 @@ export const Route = createFileRoute("/api/public/csp-report")({
               directive: report["effective-directive"],
             });
 
-            // Persistência no banco (Audit Trail)
-            // Usamos supabaseAdmin pois a tabela tem RLS sem policy de escrita para anon por segurança extra
-            // Embora tenhamos dado GRANT INSERT para anon/authenticated, o admin garante a bypass de RLS
-            // se precisarmos de logs mesmo com falhas de auth.
-            const { error } = await supabaseAdmin.from("whatsapp_csp_reports").insert({
+            // Persistência no banco (tabela dedicada, fail-closed: apenas service_role escreve)
+            const { error } = await supabaseAdmin.from("csp_reports").insert({
               document_uri: documentUri,
               referrer: sanitizeUrl(report["referrer"]),
               violated_directive: report["violated-directive"],
               effective_directive: report["effective-directive"],
-              original_policy: report["original-policy"],
+              original_policy: report["original-policy"]?.substring(0, 2000),
               disposition: report["disposition"],
               blocked_uri: blockedUri,
               line_number: report["line-number"],
               column_number: report["column-number"],
-              source_file: report["source-file"],
+              source_file: sanitizeUrl(report["source-file"]),
               status_code: report["status-code"],
               script_sample: report["script-sample"]?.substring(0, 100), // Limitar tamanho da amostra
-              user_agent: request.headers.get("user-agent"),
+              user_agent: request.headers.get("user-agent")?.substring(0, 512),
             });
 
             if (error) {
