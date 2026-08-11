@@ -936,7 +936,6 @@ function RendaPage() {
                   onValueChange={setMeses}
                   className="mt-1 h-11 bg-card-elevated"
                 />
-
               </div>
             )}
           </div>

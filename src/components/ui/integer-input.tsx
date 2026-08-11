@@ -73,8 +73,7 @@ export function IntegerInput({
       onBlur={(e) => {
         focused.current = false;
         const digits = draft.replace(/\D+/g, "");
-        const finalValue =
-          digits === "" ? (fallback ?? min) : clamp(Number(digits), min, max);
+        const finalValue = digits === "" ? (fallback ?? min) : clamp(Number(digits), min, max);
         setDraft(String(finalValue));
         if (finalValue !== value) onValueChange(finalValue);
         onBlur?.(e);

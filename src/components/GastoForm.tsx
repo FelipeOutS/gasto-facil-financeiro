@@ -392,7 +392,6 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
                 onValueChange={setRecorrenteMeses}
                 className="mt-1 h-11 bg-card-elevated"
               />
-
             </div>
           )}
 

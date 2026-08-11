@@ -208,7 +208,6 @@ export function CartaoForm({
                     fallback={10}
                     value={diaVenc}
                     onValueChange={setDiaVenc}
-
                     className="num mt-1.5 h-11"
                   />
                 </div>

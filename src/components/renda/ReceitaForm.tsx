@@ -318,7 +318,6 @@ export function ReceitaForm(props: Props) {
                 onValueChange={setMeses}
                 className="mt-1 h-11 bg-card-elevated"
               />
-
             </div>
           )}
         </>
