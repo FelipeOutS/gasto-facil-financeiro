@@ -450,12 +450,13 @@ export function ContaPagarForm({
                   </Label>
                   <Input
                     id="conta-meses"
-                    type="number"
-                    min={1}
-                    max={120}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
                     value={meses}
-                    onChange={(e) => setMeses(e.target.value)}
+                    onChange={(e) => setMeses(e.target.value.replace(/\D+/g, "").slice(0, 3))}
                   />
+
                 </div>
               </div>
             )}
