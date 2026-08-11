@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { IntegerInput } from "@/components/ui/integer-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -367,12 +368,12 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
           {tipoGasto === "parcelado" && (
             <div>
               <Label className="text-xs text-muted-foreground">{t("form.parcelas")}</Label>
-              <Input
-                type="number"
+              <IntegerInput
                 min={2}
                 max={36}
+                fallback={2}
                 value={parcelas}
-                onChange={(e) => setParcelas(Math.max(2, Number(e.target.value) || 2))}
+                onValueChange={setParcelas}
                 className="mt-1 h-11 bg-card-elevated"
               />
               <p className="mt-1 text-xs text-muted-foreground num">
@@ -383,12 +384,12 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
           {tipoGasto === "recorrente" && (
             <div>
               <Label className="text-xs text-muted-foreground">{t("form.repetirMeses")}</Label>
-              <Input
-                type="number"
+              <IntegerInput
                 min={1}
                 max={60}
+                fallback={12}
                 value={recorrenteMeses}
-                onChange={(e) => setRecorrenteMeses(Math.max(1, Number(e.target.value) || 1))}
+                onValueChange={setRecorrenteMeses}
                 className="mt-1 h-11 bg-card-elevated"
               />
             </div>

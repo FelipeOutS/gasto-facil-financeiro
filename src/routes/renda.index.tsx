@@ -64,6 +64,7 @@ import { formatBRL, formatDateBR, formatMonthYear, parseBRLInput, todayISO } fro
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { IntegerInput } from "@/components/ui/integer-input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -927,12 +928,12 @@ function RendaPage() {
                 <Label className="text-xs text-muted-foreground">
                   {t("dialog.fields.repeatMonths")}
                 </Label>
-                <Input
-                  type="number"
+                <IntegerInput
                   min={1}
                   max={60}
+                  fallback={12}
                   value={meses}
-                  onChange={(e) => setMeses(Math.max(1, Number(e.target.value) || 1))}
+                  onValueChange={setMeses}
                   className="mt-1 h-11 bg-card-elevated"
                 />
               </div>
