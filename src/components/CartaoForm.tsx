@@ -187,15 +187,12 @@ export function CartaoForm({
                   <Label htmlFor="fech" className="text-xs text-muted-foreground">
                     {t("form.closingDay")}
                   </Label>
-                  <Input
+                  <IntegerInput
                     id="fech"
-                    type="number"
                     min={1}
                     max={31}
                     value={diaFech}
-                    onChange={(e) =>
-                      setDiaFech(Math.max(1, Math.min(31, Number(e.target.value) || 1)))
-                    }
+                    onValueChange={setDiaFech}
                     className="num mt-1.5 h-11"
                   />
                 </div>
@@ -203,15 +200,14 @@ export function CartaoForm({
                   <Label htmlFor="venc" className="text-xs text-muted-foreground">
                     {t("form.dueDay")}
                   </Label>
-                  <Input
+                  <IntegerInput
                     id="venc"
-                    type="number"
                     min={1}
                     max={31}
+                    fallback={10}
                     value={diaVenc}
-                    onChange={(e) =>
-                      setDiaVenc(Math.max(1, Math.min(31, Number(e.target.value) || 1)))
-                    }
+                    onValueChange={setDiaVenc}
+
                     className="num mt-1.5 h-11"
                   />
                 </div>
