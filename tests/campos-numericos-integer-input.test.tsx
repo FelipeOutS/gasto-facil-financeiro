@@ -10,10 +10,11 @@ import { GlobalRegistrator } from "@happy-dom/global-registrator";
 GlobalRegistrator.register();
 
 const React = await import("react");
-const { render, screen, fireEvent } = await import("@testing-library/react");
+const { render, screen, fireEvent, cleanup } = await import("@testing-library/react");
 const { IntegerInput } = await import("../src/components/ui/integer-input");
 
 function setup(props: { min: number; max: number; fallback?: number; initial: number }) {
+  cleanup();
   function Harness() {
     const [v, setV] = React.useState(props.initial);
     return React.createElement(
