@@ -27,10 +27,12 @@ export default defineConfig({
     },
     resolve: {
       alias: {
-        "entities/lib/decode.js": path.resolve(__dirname, "node_modules/entities/lib/decode.js"),
-        "entities/lib/encode.js": path.resolve(__dirname, "node_modules/entities/lib/encode.js"),
+        // entities v7 moveu os arquivos: não existe mais `lib/`.
+        "entities/lib/decode.js": path.resolve(__dirname, "node_modules/entities/decode.js"),
+        "entities/lib/encode.js": path.resolve(__dirname, "node_modules/entities/escape.js"),
         entities: path.resolve(__dirname, "node_modules/entities"),
       },
     },
+
   },
 });
