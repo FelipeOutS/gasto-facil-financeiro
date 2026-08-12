@@ -3662,9 +3662,12 @@ export type NovaContaInput = {
   categoriaId?: string;
   observacao?: string;
   recorrente?: boolean;
-  /** Frequência da recorrência (default: mensal) */
+  /** Frequência legada (atalho) — mantida por compatibilidade */
   frequenciaRecorrencia?: FrequenciaRecorrencia;
-  /** Quantas ocorrências gerar (default 12 — interpretado conforme frequência) */
+  /** Intervalo flexível: "a cada N unidades" */
+  recorrenteIntervalo?: number;
+  recorrenteUnidade?: RecurrenceUnit;
+  /** Quantas ocorrências gerar (default 12) */
   recorrenteMeses?: number;
   dataFim?: string;
   beneficiario?: string;
