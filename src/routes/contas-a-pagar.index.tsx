@@ -933,11 +933,16 @@ function ContaCard({
             {conta.recorrente && (
               <span className="inline-flex items-center gap-1">
                 <Repeat className="h-3 w-3" />
-                {conta.frequenciaRecorrencia
-                  ? t(`frequency.${conta.frequenciaRecorrencia}`, {
-                      defaultValue: t("card.recurringFallback"),
-                    })
-                  : t("card.recurringFallback")}
+                {conta.recorrenciaIntervalo && conta.recorrenciaUnidade
+                  ? `${tc("recurrence.every")} ${conta.recorrenciaIntervalo} ${tc(
+                      `recurrence.unit.${conta.recorrenciaUnidade}`,
+                      { count: conta.recorrenciaIntervalo },
+                    )}`
+                  : conta.frequenciaRecorrencia
+                    ? t(`frequency.${conta.frequenciaRecorrencia}`, {
+                        defaultValue: t("card.recurringFallback"),
+                      })
+                    : t("card.recurringFallback")}
               </span>
             )}
             <StatusBadge status={status} dias={diasParaVencer} />
