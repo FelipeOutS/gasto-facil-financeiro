@@ -115,7 +115,23 @@ export function EditGastoForm({
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 space-y-5 overflow-y-auto px-4 py-5 sm:px-6">
+        {serie && (
+          <div className="rounded-2xl border border-border bg-card-elevated/60 p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {tCommon("recurrence.everyLabel")}
+            </p>
+            <p className="mt-1 text-sm font-medium">
+              {tCommon("recurrence.every")} {serie.rule.interval}{" "}
+              {tCommon(`recurrence.unit.${serie.rule.unit}`, { count: serie.rule.interval })} ·{" "}
+              {tCommon("recurrence.preview.total", { count: serie.total })}
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {t("form.editar.serieHint")}
+            </p>
+          </div>
+        )}
         <div className="rounded-2xl border border-border bg-card p-4">
+
           <Label htmlFor="edit-valor" className="text-xs text-muted-foreground">
             {t("form.valor")}
           </Label>
