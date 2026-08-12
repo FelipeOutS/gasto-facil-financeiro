@@ -129,6 +129,9 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
           tipoGasto,
           totalParcelas: tipoGasto === "parcelado" ? parcelas : undefined,
           recorrenteMeses: tipoGasto === "recorrente" ? recorrenteMeses : undefined,
+          recorrenteIntervalo: tipoGasto === "recorrente" ? recorrencia.interval : undefined,
+          recorrenteUnidade: tipoGasto === "recorrente" ? recorrencia.unit : undefined,
+
           gastoFixo: gastoFixo || tipoGasto === "recorrente",
           essencial,
           cartaoId: formaPagamento === "credito" ? cartaoId : undefined,
