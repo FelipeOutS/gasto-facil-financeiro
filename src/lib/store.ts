@@ -3717,7 +3717,16 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
     fornecedor_id: fornecedorVal,
   };
 
-  const freq: FrequenciaRecorrencia = input.frequenciaRecorrencia ?? "mensal";
+  // Regra única de recorrência: intervalo flexível tem prioridade; sem ele,
+  // deriva do atalho legado (semanal/quinzenal/mensal/anual).
+  const rule =
+    input.recorrenteIntervalo || input.recorrenteUnidade
+      ? {
+          interval: Math.max(1, Math.floor(input.recorrenteIntervalo ?? 1)),
+          unit: input.recorrenteUnidade ?? ("mes" as RecurrenceUnit),
+        }
+      : ruleFromFrequencia(input.frequenciaRecorrencia ?? "mensal");
+  const freq: FrequenciaRecorrencia = frequenciaFromRule(rule) as FrequenciaRecorrencia;
 
   function pushOne(iso: string, recurringId: string | null) {
     const d = new Date(iso + "T00:00:00");
