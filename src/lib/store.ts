@@ -27,7 +27,12 @@ import {
 } from "./types";
 import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
 import { parseDateLocal, toLocalISODate } from "./format";
-import { addMonthsPreservingDay } from "./recurrence-date";
+import {
+  addMonthsPreservingDay,
+  occurrenceDate,
+  type RecurrenceUnit,
+} from "./recurrence-date";
+
 import { validateFinancialAmount, financialAmountMessage } from "./financial-limits";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
@@ -1804,7 +1809,13 @@ export type NovoGastoInput = {
   tipoGasto?: TipoGasto;
   parcelaAtual?: number;
   totalParcelas?: number;
+  /** Quantidade de ocorrências geradas (duração). Default 12. */
   recorrenteMeses?: number;
+  /** Intervalo entre ocorrências: "a cada N unidades". Default 1. */
+  recorrenteIntervalo?: number;
+  /** Unidade do intervalo: dia | semana | mes | ano. Default "mes". */
+  recorrenteUnidade?: RecurrenceUnit;
+
   essencial?: boolean;
   gastoFixo?: boolean;
   cartaoId?: string;
@@ -1959,9 +1970,14 @@ function buildGastosFromInput(
     }
   } else if (tipo === "recorrente") {
     const meses = Math.max(1, input.recorrenteMeses ?? 12);
+    const rule = {
+      interval: input.recorrenteIntervalo ?? 1,
+      unit: input.recorrenteUnidade ?? ("mes" as RecurrenceUnit),
+    };
     const recId = crypto.randomUUID();
     for (let i = 0; i < meses; i++) {
-      const d = addMonthsPreservingDay(baseDate, i);
+      const d = occurrenceDate(baseDate, i, rule);
+
       const iso = toLocalISODate(d);
       const id = crypto.randomUUID();
       out.push({
@@ -2599,7 +2615,13 @@ export type NovaReceitaInput = {
   data: string;
   tipo: TipoReceita;
   recorrente?: boolean;
+  /** Quantidade de ocorrências geradas (duração). Default 12. */
   recorrenteMeses?: number;
+  /** Intervalo entre ocorrências: "a cada N unidades". Default 1. */
+  recorrenteIntervalo?: number;
+  /** Unidade do intervalo: dia | semana | mes | ano. Default "mes". */
+  recorrenteUnidade?: RecurrenceUnit;
+
   clienteId?: string | null;
 };
 
@@ -2635,10 +2657,15 @@ export async function addReceita(input: NovaReceitaInput): Promise<Receita[]> {
 
   if (input.recorrente) {
     const meses = Math.max(1, input.recorrenteMeses ?? 12);
+    const rule = {
+      interval: input.recorrenteIntervalo ?? 1,
+      unit: input.recorrenteUnidade ?? ("mes" as RecurrenceUnit),
+    };
     const recId = crypto.randomUUID();
     for (let i = 0; i < meses; i++) {
-      const d = addMonthsPreservingDay(baseDate, i);
-      const iso = d.toISOString().slice(0, 10);
+      const d = occurrenceDate(baseDate, i, rule);
+      const iso = toLocalISODate(d);
+
       const id = crypto.randomUUID();
       created.push({
         id,

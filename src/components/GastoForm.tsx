@@ -3,6 +3,11 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IntegerInput } from "@/components/ui/integer-input";
+import {
+  RecurrenceIntervalField,
+  type RecurrenceIntervalValue,
+} from "@/components/RecurrenceIntervalField";
+
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -72,6 +77,11 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
   const [tipoGasto, setTipoGasto] = useState<TipoGasto>(initial?.tipoGasto ?? "unico");
   const [parcelas, setParcelas] = useState<number>(initial?.totalParcelas ?? 2);
   const [recorrenteMeses, setRecorrenteMeses] = useState<number>(initial?.recorrenteMeses ?? 12);
+  const [recorrencia, setRecorrencia] = useState<RecurrenceIntervalValue>({
+    interval: initial?.recorrenteIntervalo ?? 1,
+    unit: initial?.recorrenteUnidade ?? "mes",
+  });
+
   const [gastoFixo, setGastoFixo] = useState<boolean>(initial?.gastoFixo ?? false);
   const [fornecedorId, setFornecedorId] = useState<string>(
     (initial as { fornecedorId?: string } | undefined)?.fornecedorId ?? "",
@@ -119,6 +129,9 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
           tipoGasto,
           totalParcelas: tipoGasto === "parcelado" ? parcelas : undefined,
           recorrenteMeses: tipoGasto === "recorrente" ? recorrenteMeses : undefined,
+          recorrenteIntervalo: tipoGasto === "recorrente" ? recorrencia.interval : undefined,
+          recorrenteUnidade: tipoGasto === "recorrente" ? recorrencia.unit : undefined,
+
           gastoFixo: gastoFixo || tipoGasto === "recorrente",
           essencial,
           cartaoId: formaPagamento === "credito" ? cartaoId : undefined,
@@ -382,18 +395,26 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
             </div>
           )}
           {tipoGasto === "recorrente" && (
-            <div>
-              <Label className="text-xs text-muted-foreground">{t("form.repetirMeses")}</Label>
-              <IntegerInput
-                min={1}
-                max={60}
-                fallback={12}
-                value={recorrenteMeses}
-                onValueChange={setRecorrenteMeses}
-                className="mt-1 h-11 bg-card-elevated"
+            <div className="space-y-3 rounded-xl bg-card-elevated/60 p-3">
+              <RecurrenceIntervalField
+                value={recorrencia}
+                onChange={setRecorrencia}
+                className="[&_button]:bg-card"
               />
+              <div>
+                <Label className="text-xs text-muted-foreground">{t("form.repetirMeses")}</Label>
+                <IntegerInput
+                  min={1}
+                  max={240}
+                  fallback={12}
+                  value={recorrenteMeses}
+                  onValueChange={setRecorrenteMeses}
+                  className="mt-1 h-11 bg-card-elevated"
+                />
+              </div>
             </div>
           )}
+
 
           <div className="flex items-center justify-between rounded-xl bg-card-elevated px-3 py-2">
             <div>

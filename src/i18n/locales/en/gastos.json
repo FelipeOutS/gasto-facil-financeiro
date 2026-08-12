@@ -200,7 +200,7 @@
     "tipoRecorrente": "Recurring",
     "parcelas": "Installments",
     "parcelasPreview": "{{n}}x of {{valor}}",
-    "repetirMeses": "Repeat for (months)",
+    "repetirMeses": "Number of occurrences",
     "gastoFixo": "Fixed expense",
     "gastoFixoDesc": "Recurring monthly bill",
     "essencial": "Essential",

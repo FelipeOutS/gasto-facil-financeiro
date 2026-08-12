@@ -280,5 +280,21 @@
     "placeholderTitle": "Espaço reservado para anúncio",
     "placeholderSubtitle": "Este espaço ajuda a manter o plano gratuito.",
     "freePlanBadge": "Plano gratuito com anúncios"
+  },
+  "recurrence": {
+    "everyLabel": "Repetir",
+    "every": "A cada",
+    "intervalAria": "Intervalo da recorrência",
+    "hint": "Uma ocorrência a cada {{n}} {{unit}}.",
+    "unit": {
+      "dia_one": "dia",
+      "dia_other": "dias",
+      "semana_one": "semana",
+      "semana_other": "semanas",
+      "mes_one": "mês",
+      "mes_other": "meses",
+      "ano_one": "ano",
+      "ano_other": "anos"
+    }
   }
 }

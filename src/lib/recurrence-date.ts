@@ -46,3 +46,82 @@ export function addMonthsPreservingDayISO(baseISO: string, i: number): string {
   const dd = String(next.getDate()).padStart(2, "0");
   return `${next.getFullYear()}-${mm}-${dd}`;
 }
+
+/* ------------------------------------------------------------------ *
+ * Recorrência flexível — "a cada X períodos"
+ *
+ * O intervalo (a cada quanto acontece) é independente da duração
+ * (quantas ocorrências / até quando). Nada aqui é hardcoded para
+ * intervalos específicos: `interval` é qualquer inteiro >= 1.
+ * ------------------------------------------------------------------ */
+
+export const RECURRENCE_UNITS = ["dia", "semana", "mes", "ano"] as const;
+export type RecurrenceUnit = (typeof RECURRENCE_UNITS)[number];
+
+export function isRecurrenceUnit(v: unknown): v is RecurrenceUnit {
+  return typeof v === "string" && (RECURRENCE_UNITS as readonly string[]).includes(v);
+}
+
+export type RecurrenceRule = {
+  /** A cada quantas unidades. Inteiro >= 1. */
+  interval: number;
+  unit: RecurrenceUnit;
+};
+
+export function normalizeRule(rule?: Partial<RecurrenceRule> | null): RecurrenceRule {
+  const interval = Math.max(1, Math.floor(Number(rule?.interval ?? 1) || 1));
+  const unit = isRecurrenceUnit(rule?.unit) ? rule.unit : "mes";
+  return { interval, unit };
+}
+
+function addDays(base: Date, days: number): Date {
+  const d = new Date(base.getTime());
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+/**
+ * i-ésima ocorrência (i = 0 é a data base) para qualquer intervalo/unidade.
+ * Meses e anos usam clamp para o último dia do mês, preservando o dia-base
+ * original nas ocorrências seguintes (31/01 → 28/02 → 31/03).
+ */
+export function occurrenceDate(base: Date, i: number, rule?: Partial<RecurrenceRule>): Date {
+  const { interval, unit } = normalizeRule(rule);
+  const step = interval * i;
+  switch (unit) {
+    case "dia":
+      return addDays(base, step);
+    case "semana":
+      return addDays(base, step * 7);
+    case "ano":
+      return addMonthsPreservingDay(base, step * 12);
+    case "mes":
+    default:
+      return addMonthsPreservingDay(base, step);
+  }
+}
+
+/** Versão ISO local (YYYY-MM-DD). */
+export function occurrenceDateISO(
+  baseISO: string,
+  i: number,
+  rule?: Partial<RecurrenceRule>,
+): string {
+  const [y, m, d] = baseISO.slice(0, 10).split("-").map(Number);
+  const base = new Date(y!, m! - 1, d!, 12, 0, 0, 0);
+  const next = occurrenceDate(base, i, rule);
+  const mm = String(next.getMonth() + 1).padStart(2, "0");
+  const dd = String(next.getDate()).padStart(2, "0");
+  return `${next.getFullYear()}-${mm}-${dd}`;
+}
+
+/** Série de `count` ocorrências ISO (inclui a data base como primeira). */
+export function generateOccurrencesISO(
+  baseISO: string,
+  count: number,
+  rule?: Partial<RecurrenceRule>,
+): string[] {
+  const total = Math.max(1, Math.floor(count || 1));
+  return Array.from({ length: total }, (_, i) => occurrenceDateISO(baseISO, i, rule));
+}
+

@@ -200,7 +200,7 @@
     "tipoRecorrente": "Recorrente",
     "parcelas": "Parcelas",
     "parcelasPreview": "{{n}}x de {{valor}}",
-    "repetirMeses": "Repetir por (meses)",
+    "repetirMeses": "Quantidade de ocorrências",
     "gastoFixo": "Gasto fixo",
     "gastoFixoDesc": "Conta mensal recorrente",
     "essencial": "Essencial",

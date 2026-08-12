@@ -20,6 +20,11 @@ import { ClienteSelect } from "@/components/ClienteSelect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IntegerInput } from "@/components/ui/integer-input";
+import {
+  RecurrenceIntervalField,
+  type RecurrenceIntervalValue,
+} from "@/components/RecurrenceIntervalField";
+
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -103,6 +108,11 @@ export function ReceitaForm(props: Props) {
   const [tipo, setTipo] = useState<TipoReceita>(initial.tipo);
   const [recorrente, setRecorrente] = useState<boolean>(initial.recorrente);
   const [meses, setMeses] = useState(12);
+  const [recorrencia, setRecorrencia] = useState<RecurrenceIntervalValue>({
+    interval: 1,
+    unit: "mes",
+  });
+
   const [clienteId, setClienteId] = useState<string | null>(initial.clienteId);
   const [scope, setScope] = useState<UpdateReceitaScope>("single");
 
@@ -113,6 +123,9 @@ export function ReceitaForm(props: Props) {
     tipo: TipoReceita;
     recorrente: boolean;
     recorrenteMeses?: number;
+    recorrenteIntervalo?: number;
+    recorrenteUnidade?: RecurrenceIntervalValue["unit"];
+
     clienteId?: string | null;
   };
 
@@ -199,6 +212,9 @@ export function ReceitaForm(props: Props) {
       tipo,
       recorrente,
       recorrenteMeses: recorrente ? meses : undefined,
+      recorrenteIntervalo: recorrente ? recorrencia.interval : undefined,
+      recorrenteUnidade: recorrente ? recorrencia.unit : undefined,
+
       clienteId,
     };
 
@@ -306,20 +322,24 @@ export function ReceitaForm(props: Props) {
             />
           </div>
           {!isFreeAdsPlan && recorrente && (
-            <div>
-              <Label className="text-xs text-muted-foreground">
-                {t("dialog.fields.repeatMonths")}
-              </Label>
-              <IntegerInput
-                min={1}
-                max={60}
-                fallback={12}
-                value={meses}
-                onValueChange={setMeses}
-                className="mt-1 h-11 bg-card-elevated"
-              />
+            <div className="space-y-3 rounded-xl bg-card-elevated/60 p-3">
+              <RecurrenceIntervalField value={recorrencia} onChange={setRecorrencia} />
+              <div>
+                <Label className="text-xs text-muted-foreground">
+                  {t("dialog.fields.repeatMonths")}
+                </Label>
+                <IntegerInput
+                  min={1}
+                  max={240}
+                  fallback={12}
+                  value={meses}
+                  onValueChange={setMeses}
+                  className="mt-1 h-11 bg-card-elevated"
+                />
+              </div>
             </div>
           )}
+
         </>
       )}
 
