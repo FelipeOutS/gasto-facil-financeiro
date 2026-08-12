@@ -123,6 +123,9 @@ export function ReceitaForm(props: Props) {
     tipo: TipoReceita;
     recorrente: boolean;
     recorrenteMeses?: number;
+    recorrenteIntervalo?: number;
+    recorrenteUnidade?: RecurrenceIntervalValue["unit"];
+
     clienteId?: string | null;
   };
 
