@@ -263,7 +263,7 @@ export function inferRuleFromISODates(dates: string[]): RecurrenceRule | null {
   const uniq = Array.from(new Set(dates.map((d) => d.slice(0, 10)))).sort();
   if (uniq.length < 2) return null;
   const [a, b] = [uniq[0]!, uniq[1]!];
-  for (const unit of ["mes", "ano"] as const) {
+  for (const unit of ["ano", "mes"] as const) {
     for (let interval = 1; interval <= 36; interval++) {
       if (occurrenceDateISO(a, 1, { interval, unit }) === b) return { interval, unit };
     }
