@@ -130,7 +130,7 @@ export function GastosExportDialog({
           buildFileName(periodLabel, "csv"),
         );
       } else if (formato === "xlsx") {
-        const buf = buildXlsxArrayBuffer(rows, columns, headers, {
+        const buf = await buildXlsxArrayBuffer(rows, columns, headers, {
           appName: "Gasto Inteligente",
           reportTitle: t("export.reportTitle"),
           periodLabel,
