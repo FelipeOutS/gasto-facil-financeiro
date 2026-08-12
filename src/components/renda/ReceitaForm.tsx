@@ -108,6 +108,11 @@ export function ReceitaForm(props: Props) {
   const [tipo, setTipo] = useState<TipoReceita>(initial.tipo);
   const [recorrente, setRecorrente] = useState<boolean>(initial.recorrente);
   const [meses, setMeses] = useState(12);
+  const [recorrencia, setRecorrencia] = useState<RecurrenceIntervalValue>({
+    interval: 1,
+    unit: "mes",
+  });
+
   const [clienteId, setClienteId] = useState<string | null>(initial.clienteId);
   const [scope, setScope] = useState<UpdateReceitaScope>("single");
 
