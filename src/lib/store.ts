@@ -761,6 +761,8 @@ type ContaAPagarRow = {
   chave_pix?: string | null;
   banco_emissor?: string | null;
   frequencia_recorrencia?: string | null;
+  recorrencia_intervalo?: number | null;
+  recorrencia_unidade?: string | null;
   import_batch_id?: string | null;
   mes_referencia?: string | null;
   fornecedor_id?: string | null;
