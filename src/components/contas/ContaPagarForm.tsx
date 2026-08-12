@@ -81,10 +81,13 @@ export function ContaPagarForm({
     return ymFromDate();
   });
   const [recorrente, setRecorrente] = useState(conta?.recorrente ?? false);
-  const [frequencia, setFrequencia] = useState<FrequenciaRecorrencia>(
-    conta?.frequenciaRecorrencia ?? "mensal",
-  );
-  const [meses, setMeses] = useState("12");
+  const [regra, setRegra] = useState<RecurrenceIntervalValue>(() => {
+    if (conta?.recorrenciaIntervalo && conta?.recorrenciaUnidade) {
+      return { interval: conta.recorrenciaIntervalo, unit: conta.recorrenciaUnidade };
+    }
+    return ruleFromFrequencia(conta?.frequenciaRecorrencia ?? "mensal");
+  });
+  const [ocorrencias, setOcorrencias] = useState(12);
 
   const [beneficiario, setBeneficiario] = useState(conta?.beneficiario ?? "");
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | "">(
