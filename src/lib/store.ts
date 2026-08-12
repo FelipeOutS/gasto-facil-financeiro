@@ -3778,6 +3778,8 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
       recorrente: !!recurringId,
       recorrencia_id: recurringId,
       frequencia_recorrencia: recurringId ? freq : null,
+      recorrencia_intervalo: recurringId ? rule.interval : null,
+      recorrencia_unidade: recurringId ? rule.unit : null,
       data_inicio: recurringId ? input.dataVencimento : null,
       data_fim: recurringId && input.dataFim ? input.dataFim : null,
       status: "pendente",
