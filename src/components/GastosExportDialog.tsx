@@ -26,6 +26,7 @@ import {
   buildPdfData,
   buildXlsxArrayBuffer,
   computeSummary,
+  formatDateBRSafe,
   toCSV,
   type ExportColumn,
   type ExportRow,
@@ -33,6 +34,25 @@ import {
 
 type Formato = "xlsx" | "csv" | "pdf";
 type Escopo = "filtrados" | "periodo";
+
+const LOGO_URL = "/logos/brand/gasto-inteligente-symbol-white.png";
+
+/** Carrega o logo oficial como data URL para embutir no PDF (falha silenciosa). */
+async function loadLogoDataUrl(): Promise<string | null> {
+  try {
+    const res = await fetch(LOGO_URL);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string | null>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : null);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
 
 function downloadBlob(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);
@@ -44,6 +64,7 @@ function downloadBlob(blob: Blob, fileName: string) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
+
 
 export interface GastosExportDialogProps {
   open: boolean;
@@ -161,31 +182,129 @@ export function GastosExportDialog({
           import("jspdf-autotable"),
         ]);
         const doc = new JsPDF({ unit: "pt", format: "a4" });
-        doc.setFontSize(16);
-        doc.text("GASTO INTELIGENTE", 40, 48);
-        doc.setFontSize(12);
-        doc.text(`${data.title} — ${data.periodLabel}`, 40, 68);
-        doc.setFontSize(10);
-        doc.text(
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+        const M = 40;
+        const BRAND: [number, number, number] = [32, 170, 108];
+        const INK: [number, number, number] = [30, 41, 59];
+        const MUTED: [number, number, number] = [110, 122, 138];
+
+        const logo = await loadLogoDataUrl();
+        const now = new Date();
+        const geradoEm = `${now.toLocaleDateString("pt-BR")} ${t("export.at", { defaultValue: "às" })} ${now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+
+        const drawHeader = () => {
+          doc.setFillColor(...BRAND);
+          doc.rect(0, 0, pageW, 92, "F");
+          if (logo) {
+            try {
+              doc.addImage(logo, "PNG", M, 24, 40, 40);
+            } catch {
+              /* logo opcional */
+            }
+          }
+          const tx = logo ? M + 54 : M;
+          doc.setTextColor(255, 255, 255);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(16);
+          doc.text("GASTO INTELIGENTE", tx, 44);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(11);
+          doc.text(data.title, tx, 62);
+          doc.setFontSize(9);
+          doc.text(
+            `${t("export.summary.period")}: ${periodLabel}`,
+            pageW - M,
+            44,
+            { align: "right" },
+          );
+          doc.text(`${t("export.generatedAt")}: ${geradoEm}`, pageW - M, 60, { align: "right" });
+        };
+
+        const drawFooter = (pageNumber: number) => {
+          doc.setDrawColor(226, 232, 240);
+          doc.line(M, pageH - 46, pageW - M, pageH - 46);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8);
+          doc.setTextColor(...MUTED);
+          doc.text(
+            `${t("export.footerBy", { defaultValue: "Gerado por Gasto Inteligente" })}  •  ${geradoEm}  •  ${t("export.page", { defaultValue: "Página" })} ${pageNumber}`,
+            pageW / 2,
+            pageH - 30,
+            { align: "center" },
+          );
+        };
+
+        // Cards de resumo
+        const cards: Array<{ label: string; value: string }> = [
+          { label: t("export.summary.total"), value: formatBRL(data.summary.total) },
+          { label: t("export.summary.count"), value: String(data.summary.count) },
+          { label: t("export.summary.byCategory"), value: data.topCategoria },
+          { label: t("export.summary.avg"), value: formatBRL(data.summary.media) },
+        ];
+        const gap = 10;
+        const cardW = (pageW - M * 2 - gap * (cards.length - 1)) / cards.length;
+        const cardY = 112;
+        const cardH = 56;
+        drawHeader();
+        cards.forEach((c, i) => {
+          const x = M + i * (cardW + gap);
+          doc.setFillColor(246, 250, 248);
+          doc.setDrawColor(214, 232, 224);
+          doc.roundedRect(x, cardY, cardW, cardH, 6, 6, "FD");
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(7.5);
+          doc.setTextColor(...MUTED);
+          doc.text(c.label.toUpperCase(), x + 10, cardY + 18, { maxWidth: cardW - 20 });
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(11);
+          doc.setTextColor(...INK);
+          doc.text(c.value, x + 10, cardY + 40, { maxWidth: cardW - 20 });
+        });
+
+        const head = [
           [
-            `${t("export.summary.total")}: ${formatBRL(data.summary.total)}`,
-            `${t("export.summary.count")}: ${data.summary.count}`,
-            `${t("export.summary.byCategory")}: ${data.topCategoria}`,
-          ].join("    "),
-          40,
-          88,
-        );
+            headers.data,
+            headers.descricao,
+            headers.categoria,
+            headers.estabelecimento,
+            headers.formaPagamento,
+            headers.valor,
+          ],
+        ];
+        const body = rows.map((r) => [
+          formatDateBRSafe(r.data),
+          r.descricao || "—",
+          r.categoria,
+          r.estabelecimento || "—",
+          r.formaPagamento,
+          formatBRL(r.valor),
+        ]);
+
         autoTable(doc, {
-          head: [data.head],
-          body: data.body,
-          startY: 106,
-          styles: { fontSize: 9, cellPadding: 4 },
-          headStyles: { fillColor: [30, 41, 59] },
-          columnStyles: { 3: { halign: "right" } },
-          margin: { left: 40, right: 40 },
+          head,
+          body,
+          startY: cardY + cardH + 22,
+          margin: { top: 112, bottom: 60, left: M, right: M },
+          styles: { fontSize: 8.5, cellPadding: 5, textColor: INK, lineColor: [226, 232, 240], lineWidth: 0.4 },
+          headStyles: { fillColor: BRAND, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
+          alternateRowStyles: { fillColor: [248, 250, 252] },
+          columnStyles: {
+            0: { cellWidth: 58 },
+            1: { cellWidth: "auto" },
+            2: { cellWidth: 84 },
+            3: { cellWidth: 92 },
+            4: { cellWidth: 72 },
+            5: { cellWidth: 68, halign: "right", fontStyle: "bold" },
+          },
+          didDrawPage: (hook) => {
+            if ((hook.pageNumber ?? 1) > 1) drawHeader();
+            drawFooter(hook.pageNumber ?? 1);
+          },
         });
         doc.save(buildFileName(periodLabel, "pdf"));
       }
+
       toast.success(t("export.ready"), { id: toastId });
       onOpenChange(false);
     } catch (err) {
