@@ -335,7 +335,6 @@ export function ReceitaForm(props: Props) {
               />
             </div>
           )}
-
         </>
       )}
 

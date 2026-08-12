@@ -142,13 +142,10 @@ export function EditGastoForm({
               {tCommon(`recurrence.unit.${serie.rule.unit}`, { count: serie.rule.interval })} ·{" "}
               {tCommon("recurrence.preview.total", { count: serie.total })}
             </p>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              {t("form.editar.serieHint")}
-            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">{t("form.editar.serieHint")}</p>
           </div>
         )}
         <div className="rounded-2xl border border-border bg-card p-4">
-
           <Label htmlFor="edit-valor" className="text-xs text-muted-foreground">
             {t("form.valor")}
           </Label>

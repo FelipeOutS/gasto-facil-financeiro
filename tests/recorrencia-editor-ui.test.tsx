@@ -83,10 +83,14 @@ describe("RecurrenceEditor — prévia visível", () => {
 
   it("término por data e sem data final coexistem com a contagem", () => {
     expect(
-      resolveOccurrenceCount("2026-08-10", { interval: 4, unit: "mes" }, {
-        mode: "until",
-        until: "2027-08-31",
-      }),
+      resolveOccurrenceCount(
+        "2026-08-10",
+        { interval: 4, unit: "mes" },
+        {
+          mode: "until",
+          until: "2027-08-31",
+        },
+      ),
     ).toBe(4);
     expect(
       resolveOccurrenceCount("2026-08-10", { interval: 4, unit: "mes" }, { mode: "forever" }),

@@ -125,7 +125,6 @@ export function generateOccurrencesISO(
   return Array.from({ length: total }, (_, i) => occurrenceDateISO(baseISO, i, rule));
 }
 
-
 /* ------------------------------------------------------------------ *
  * Compatibilidade com o modelo legado de frequência (atalhos)
  * ------------------------------------------------------------------ */

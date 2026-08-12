@@ -7,11 +7,7 @@ import {
   RecurrenceIntervalField,
   type RecurrenceIntervalValue,
 } from "@/components/RecurrenceIntervalField";
-import {
-  previewOccurrences,
-  validateRecurrence,
-  type RecurrenceEnd,
-} from "@/lib/recurrence-date";
+import { previewOccurrences, validateRecurrence, type RecurrenceEnd } from "@/lib/recurrence-date";
 import { cn } from "@/lib/utils";
 
 /**

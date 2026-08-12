@@ -65,13 +65,7 @@ describe("sem data final", () => {
 describe("prévia usa o mesmo motor", () => {
   it("fim de mês: 31/01/2027 mensal", () => {
     const p = previewOccurrences("2027-01-31", rule(1, "mes"), { mode: "count", count: 5 }, 5);
-    expect(p.dates).toEqual([
-      "2027-01-31",
-      "2027-02-28",
-      "2027-03-31",
-      "2027-04-30",
-      "2027-05-31",
-    ]);
+    expect(p.dates).toEqual(["2027-01-31", "2027-02-28", "2027-03-31", "2027-04-30", "2027-05-31"]);
     expect(p.remaining).toBe(0);
   });
 
@@ -110,25 +104,25 @@ describe("validações", () => {
   });
 
   it("recusa contagem 0 e intervalo 0", () => {
-    expect(
-      validateRecurrence("2026-08-10", rule(1, "mes"), { mode: "count", count: 0 }).ok,
-    ).toBe(false);
+    expect(validateRecurrence("2026-08-10", rule(1, "mes"), { mode: "count", count: 0 }).ok).toBe(
+      false,
+    );
     expect(validateRecurrence("2026-08-10", rule(0, "mes"), { mode: "forever" }).ok).toBe(false);
   });
 
   it("aceita configuração válida", () => {
-    expect(
-      validateRecurrence("2026-08-10", rule(4, "mes"), { mode: "count", count: 12 }),
-    ).toEqual({ ok: true });
+    expect(validateRecurrence("2026-08-10", rule(4, "mes"), { mode: "count", count: 12 })).toEqual({
+      ok: true,
+    });
   });
 });
 
 describe("edição: dedução da regra a partir das ocorrências", () => {
   it("reconstrói 'a cada 4 meses' (não vira mensal)", async () => {
     const { inferRuleFromISODates } = await import("../src/lib/recurrence-date");
-    expect(
-      inferRuleFromISODates(["2026-08-10", "2026-12-10", "2027-04-10", "2027-08-10"]),
-    ).toEqual({ interval: 4, unit: "mes" });
+    expect(inferRuleFromISODates(["2026-08-10", "2026-12-10", "2027-04-10", "2027-08-10"])).toEqual(
+      { interval: 4, unit: "mes" },
+    );
     expect(inferRuleFromISODates(["2026-08-10", "2026-09-10"])).toEqual({
       interval: 1,
       unit: "mes",
