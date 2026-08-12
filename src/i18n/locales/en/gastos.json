@@ -222,7 +222,8 @@
       "errValor": "Enter a valid amount.",
       "errData": "Pick a date for the expense.",
       "ok": "Expense updated successfully.",
-      "err": "Could not update the expense. Try again."
+      "err": "Could not update the expense. Try again.",
+      "serieHint": "Editing only this occurrence. The other ones in the series stay unchanged."
     }
   },
   "whatsapp": {

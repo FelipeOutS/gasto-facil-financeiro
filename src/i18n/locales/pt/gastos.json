@@ -222,7 +222,8 @@
       "errValor": "Informe um valor válido.",
       "errData": "Escolha uma data para o gasto.",
       "ok": "Gasto atualizado com sucesso.",
-      "err": "Não foi possível atualizar o gasto. Tente novamente."
+      "err": "Não foi possível atualizar o gasto. Tente novamente.",
+      "serieHint": "Editando apenas esta ocorrência. As demais da série não são alteradas."
     }
   },
   "whatsapp": {

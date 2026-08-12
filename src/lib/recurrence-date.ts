@@ -125,7 +125,6 @@ export function generateOccurrencesISO(
   return Array.from({ length: total }, (_, i) => occurrenceDateISO(baseISO, i, rule));
 }
 
-
 /* ------------------------------------------------------------------ *
  * Compatibilidade com o modelo legado de frequência (atalhos)
  * ------------------------------------------------------------------ */
@@ -252,4 +251,28 @@ export function validateRecurrence(
     }
   }
   return { ok: true };
+}
+
+/**
+ * Deduz a regra de recorrência a partir das datas já materializadas
+ * (usada na EDIÇÃO, onde a regra não é persistida por ocorrência).
+ * Usa o mesmo motor: uma regra só é aceita se reproduz a 2ª data.
+ */
+export function inferRuleFromISODates(dates: string[]): RecurrenceRule | null {
+  const uniq = Array.from(new Set(dates.map((d) => d.slice(0, 10)))).sort();
+  if (uniq.length < 2) return null;
+  const [a, b] = [uniq[0]!, uniq[1]!];
+  for (const unit of ["ano", "mes"] as const) {
+    for (let interval = 1; interval <= 36; interval++) {
+      if (occurrenceDateISO(a, 1, { interval, unit }) === b) return { interval, unit };
+    }
+  }
+  const [y1, m1, d1] = a.split("-").map(Number);
+  const [y2, m2, d2] = b.split("-").map(Number);
+  const diffDays = Math.round(
+    (new Date(y2!, m2! - 1, d2!).getTime() - new Date(y1!, m1! - 1, d1!).getTime()) / 86400000,
+  );
+  if (diffDays <= 0) return null;
+  if (diffDays % 7 === 0) return { interval: diffDays / 7, unit: "semana" };
+  return { interval: diffDays, unit: "dia" };
 }
