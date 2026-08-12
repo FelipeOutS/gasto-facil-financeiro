@@ -3755,6 +3755,8 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
       recorrente: !!recurringId,
       recorrenciaId: recurringId ?? undefined,
       frequenciaRecorrencia: recurringId ? freq : undefined,
+      recorrenciaIntervalo: recurringId ? rule.interval : undefined,
+      recorrenciaUnidade: recurringId ? rule.unit : undefined,
       dataInicio: recurringId ? input.dataVencimento : undefined,
       dataFim: recurringId ? input.dataFim : undefined,
       status: "pendente",
