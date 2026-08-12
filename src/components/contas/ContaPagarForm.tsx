@@ -85,7 +85,10 @@ export function ContaPagarForm({
     }
     return ruleFromFrequencia(conta?.frequenciaRecorrencia ?? "mensal");
   });
-  const [ocorrencias, setOcorrencias] = useState(12);
+  const [recorrenciaFim, setRecorrenciaFim] = useState<RecurrenceEnd>({
+    mode: "count",
+    count: 12,
+  });
 
   const [beneficiario, setBeneficiario] = useState(conta?.beneficiario ?? "");
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | "">(
