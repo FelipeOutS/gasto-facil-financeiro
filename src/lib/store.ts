@@ -783,6 +783,10 @@ function rowToContaAPagar(r: ContaAPagarRow, catUuidToKey: Map<string, string>):
     recorrenciaId: r.recorrencia_id ?? undefined,
     frequenciaRecorrencia:
       (r.frequencia_recorrencia as ContaAPagar["frequenciaRecorrencia"]) ?? undefined,
+    recorrenciaIntervalo: r.recorrencia_intervalo ?? undefined,
+    recorrenciaUnidade:
+      (r.recorrencia_unidade as ContaAPagar["recorrenciaUnidade"]) ??
+      (r.recorrente ? ruleFromFrequencia(r.frequencia_recorrencia).unit : undefined),
     dataInicio: r.data_inicio ?? undefined,
     dataFim: r.data_fim ?? undefined,
     status: (r.status as StatusConta) ?? "pendente",
