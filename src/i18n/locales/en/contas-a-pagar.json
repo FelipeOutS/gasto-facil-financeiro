@@ -171,7 +171,9 @@
     "toastUpdated": "Bill updated. ✅",
     "toastUpdatedSync": "Bill and expense updated. ✅",
     "toastCreated": "Bill saved.",
-    "toastCreatedRec": "Recurring bill created. 🔁"
+    "toastCreatedRec": "Recurring bill created. 🔁",
+    "occurrences": "Number of occurrences",
+    "occurrencesHint": "How many times this bill is generated (including the first one)."
   },
   "frequency": {
     "semanal": "Weekly",

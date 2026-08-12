@@ -171,7 +171,9 @@
     "toastUpdated": "Conta atualizada. ✅",
     "toastUpdatedSync": "Conta e gasto atualizados. ✅",
     "toastCreated": "Conta cadastrada.",
-    "toastCreatedRec": "Conta recorrente criada. 🔁"
+    "toastCreatedRec": "Conta recorrente criada. 🔁",
+    "occurrences": "Número de ocorrências",
+    "occurrencesHint": "Quantas vezes essa conta será gerada (inclui a primeira)."
   },
   "frequency": {
     "semanal": "Semanal",
