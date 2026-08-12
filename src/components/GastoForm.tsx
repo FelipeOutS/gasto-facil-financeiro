@@ -385,7 +385,6 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
         {showMore ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
       </button>
 
-
       {showMore && (
         <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
           <div>
@@ -413,7 +412,6 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
               className="mt-1 min-h-[70px] bg-card-elevated"
             />
           </div>
-
 
           <div className="flex items-center justify-between rounded-xl bg-card-elevated px-3 py-2">
             <div>
