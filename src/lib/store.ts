@@ -1809,7 +1809,13 @@ export type NovoGastoInput = {
   tipoGasto?: TipoGasto;
   parcelaAtual?: number;
   totalParcelas?: number;
+  /** Quantidade de ocorrências geradas (duração). Default 12. */
   recorrenteMeses?: number;
+  /** Intervalo entre ocorrências: "a cada N unidades". Default 1. */
+  recorrenteIntervalo?: number;
+  /** Unidade do intervalo: dia | semana | mes | ano. Default "mes". */
+  recorrenteUnidade?: RecurrenceUnit;
+
   essencial?: boolean;
   gastoFixo?: boolean;
   cartaoId?: string;
