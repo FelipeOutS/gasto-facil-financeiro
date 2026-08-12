@@ -4,7 +4,6 @@
  * Reutiliza o modelo real de `Gasto` e o motor de recorrência existente
  * (`inferRuleFromISODates`). Somente leitura: nada aqui altera dados.
  */
-import * as XLSX from "@e965/xlsx";
 import type { Gasto, TipoGasto } from "@/lib/types";
 import { inferRuleFromISODates, type RecurrenceRule } from "@/lib/recurrence-date";
 import { parseDateLocal } from "@/lib/format";
@@ -203,12 +202,13 @@ export interface XlsxMeta {
 const MONEY_FMT = 'R$ #,##0.00;[Red]-R$ #,##0.00;"-"';
 const DATE_FMT = "dd/mm/yyyy";
 
-export function buildXlsxArrayBuffer(
+export async function buildXlsxArrayBuffer(
   rows: ExportRow[],
   columns: ExportColumn[],
   headers: Record<ExportColumn, string>,
   meta: XlsxMeta,
-): ArrayBuffer {
+): Promise<ArrayBuffer> {
+  const XLSX = await import("@e965/xlsx");
   const wb = XLSX.utils.book_new();
 
   // Aba 1 — Gastos (cabeçalho de apresentação + tabela)

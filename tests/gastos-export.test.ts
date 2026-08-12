@@ -111,9 +111,9 @@ describe("gastos-export", () => {
     expect(line).toContain("10/05/2026");
   });
 
-  it("XLSX tem duas abas, valores numéricos e datas reais", () => {
+  it("XLSX tem duas abas, valores numéricos e datas reais", async () => {
     const rows = buildExportRows([gasto({ valor: 250.5 }), gasto({ valor: 149.5 })], ctx);
-    const buf = buildXlsxArrayBuffer(rows, [...EXPORT_COLUMNS], headers, {
+    const buf = await buildXlsxArrayBuffer(rows, [...EXPORT_COLUMNS], headers, {
       appName: "Gasto Inteligente",
       reportTitle: "Relatório de Gastos",
       periodLabel: "Maio de 2026",
