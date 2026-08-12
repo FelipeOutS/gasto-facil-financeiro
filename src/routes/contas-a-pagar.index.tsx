@@ -874,6 +874,7 @@ function ContaCard({
   onDesmarcar: () => void;
 }) {
   const { t } = useTranslation("contas-a-pagar");
+  const { t: tc } = useTranslation("common");
   const status = statusContaEfetivo(conta, hojeISO);
   const cat = conta.categoriaId ? getCategoriaById(conta.categoriaId) : undefined;
   const { porId: fornecedoresPorId } = useFornecedores();
