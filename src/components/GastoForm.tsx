@@ -72,6 +72,11 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
   const [tipoGasto, setTipoGasto] = useState<TipoGasto>(initial?.tipoGasto ?? "unico");
   const [parcelas, setParcelas] = useState<number>(initial?.totalParcelas ?? 2);
   const [recorrenteMeses, setRecorrenteMeses] = useState<number>(initial?.recorrenteMeses ?? 12);
+  const [recorrencia, setRecorrencia] = useState<RecurrenceIntervalValue>({
+    interval: initial?.recorrenteIntervalo ?? 1,
+    unit: initial?.recorrenteUnidade ?? "mes",
+  });
+
   const [gastoFixo, setGastoFixo] = useState<boolean>(initial?.gastoFixo ?? false);
   const [fornecedorId, setFornecedorId] = useState<string>(
     (initial as { fornecedorId?: string } | undefined)?.fornecedorId ?? "",
