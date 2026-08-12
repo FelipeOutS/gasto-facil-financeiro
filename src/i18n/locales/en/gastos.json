@@ -28,7 +28,9 @@
     "importedStatements": "Imported statements",
     "statements": "Statements",
     "import": "Import statement",
-    "importShort": "Import"
+    "importShort": "Import",
+    "export": "Export expenses",
+    "exportShort": "Export"
   },
   "monthRef": {
     "label": "Reference month",
@@ -250,5 +252,52 @@
     "okSalvo": "Expense added!",
     "okSalvoDesc": "{{nome}} — {{valor}}",
     "okSalvoCartao": " on card {{nome}}"
+  },
+  "export": {
+    "title": "Export expenses",
+    "description": "Download your {{period}} expenses as Excel, CSV or PDF.",
+    "cta": "Export",
+    "formatLabel": "Format",
+    "scopeLabel": "Data to export",
+    "format": {
+      "xlsx": "Excel",
+      "csv": "CSV",
+      "pdf": "PDF"
+    },
+    "scope": {
+      "filtered": "Currently filtered expenses ({{count}})",
+      "period": "All expenses in the period ({{count}})"
+    },
+    "previewLabel": "Preview",
+    "previewValue": "{{count}} expense(s) · total {{total}}",
+    "generating": "Generating file…",
+    "ready": "File ready.",
+    "error": "Could not generate the file.",
+    "empty": "There are no expenses to export with the selected filters.",
+    "reportTitle": "Expense Report",
+    "generatedAt": "Generated on",
+    "sheetGastos": "Expenses",
+    "sheetResumo": "Summary",
+    "summary": {
+      "period": "Period",
+      "count": "Expense count",
+      "total": "Total spent",
+      "avg": "Average per expense",
+      "max": "Largest expense",
+      "byCategory": "Expenses by category"
+    },
+    "columns": {
+      "data": "Date",
+      "descricao": "Description",
+      "categoria": "Category",
+      "estabelecimento": "Merchant",
+      "valor": "Amount",
+      "formaPagamento": "Payment method",
+      "cartao": "Card",
+      "mesReferencia": "Reference month",
+      "tipo": "Expense type",
+      "parcelaRecorrencia": "Installment/Recurrence",
+      "observacao": "Notes"
+    }
   }
 }

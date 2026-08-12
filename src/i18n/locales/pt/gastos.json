@@ -28,7 +28,9 @@
     "importedStatements": "Extratos importados",
     "statements": "Extratos",
     "import": "Importar extrato",
-    "importShort": "Importar"
+    "importShort": "Importar",
+    "export": "Exportar gastos",
+    "exportShort": "Exportar"
   },
   "monthRef": {
     "label": "Mês de referência",
@@ -250,5 +252,52 @@
     "okSalvo": "Gasto adicionado!",
     "okSalvoDesc": "{{nome}} — {{valor}}",
     "okSalvoCartao": " no cartão {{nome}}"
+  },
+  "export": {
+    "title": "Exportar gastos",
+    "description": "Baixe seus gastos de {{period}} em Excel, CSV ou PDF.",
+    "cta": "Exportar",
+    "formatLabel": "Formato",
+    "scopeLabel": "Dados a exportar",
+    "format": {
+      "xlsx": "Excel",
+      "csv": "CSV",
+      "pdf": "PDF"
+    },
+    "scope": {
+      "filtered": "Gastos filtrados atualmente ({{count}})",
+      "period": "Todos os gastos do período ({{count}})"
+    },
+    "previewLabel": "Prévia",
+    "previewValue": "{{count}} gasto(s) · total {{total}}",
+    "generating": "Gerando arquivo…",
+    "ready": "Arquivo pronto.",
+    "error": "Não foi possível gerar o arquivo.",
+    "empty": "Não existem gastos para exportar com os filtros selecionados.",
+    "reportTitle": "Relatório de Gastos",
+    "generatedAt": "Gerado em",
+    "sheetGastos": "Gastos",
+    "sheetResumo": "Resumo",
+    "summary": {
+      "period": "Período",
+      "count": "Quantidade de gastos",
+      "total": "Total gasto",
+      "avg": "Média por gasto",
+      "max": "Maior gasto",
+      "byCategory": "Gastos por categoria"
+    },
+    "columns": {
+      "data": "Data",
+      "descricao": "Descrição",
+      "categoria": "Categoria",
+      "estabelecimento": "Estabelecimento",
+      "valor": "Valor",
+      "formaPagamento": "Forma de pagamento",
+      "cartao": "Cartão",
+      "mesReferencia": "Mês de referência",
+      "tipo": "Tipo do gasto",
+      "parcelaRecorrencia": "Parcela/Recorrência",
+      "observacao": "Observações"
+    }
   }
 }
