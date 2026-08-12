@@ -20,6 +20,11 @@ import { ClienteSelect } from "@/components/ClienteSelect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IntegerInput } from "@/components/ui/integer-input";
+import {
+  RecurrenceIntervalField,
+  type RecurrenceIntervalValue,
+} from "@/components/RecurrenceIntervalField";
+
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
