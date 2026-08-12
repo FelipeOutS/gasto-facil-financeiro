@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CategoryIcon } from "./CategoryIcon";
-import { getCartoes, getCategorias, updateGasto, useStore } from "@/lib/store";
+import { getCartoes, getCategorias, getGastos, updateGasto, useStore } from "@/lib/store";
 import { requireOnline } from "@/lib/use-online-status";
 import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
 import type { Gasto } from "@/lib/types";
@@ -27,6 +27,7 @@ import { formatBRL, parseBRLInput, parseDateLocal, toLocalISODate } from "@/lib/
 import { CreditCard } from "lucide-react";
 import { mesReferenciaOpcoes } from "@/lib/mes-referencia";
 import { cn } from "@/lib/utils";
+import { inferRuleFromISODates } from "@/lib/recurrence-date";
 import { toast } from "sonner";
 
 /**
@@ -44,8 +45,24 @@ export function EditGastoForm({
   onCancel: () => void;
 }) {
   const { t } = useTranslation("gastos");
+  const { t: tCommon } = useTranslation("common");
   const categorias = useStore(() => getCategorias());
   const cartoes = useStore(() => getCartoes());
+
+  /**
+   * Recorrência da série (somente leitura): a regra não é persistida por
+   * ocorrência, então é deduzida das datas já materializadas com o MESMO
+   * motor de recorrência. Editar aqui altera apenas esta ocorrência —
+   * o histórico das demais permanece intacto.
+   */
+  const serieGastos = useStore(() =>
+    gasto.recorrenciaId ? getGastos().filter((g) => g.recorrenciaId === gasto.recorrenciaId) : [],
+  );
+  const serie = useMemo(() => {
+    if (!gasto.recorrenciaId || serieGastos.length < 2) return null;
+    const rule = inferRuleFromISODates(serieGastos.map((g) => g.data));
+    return rule ? { rule, total: serieGastos.length } : null;
+  }, [gasto.recorrenciaId, serieGastos]);
 
   const [valorStr, setValorStr] = useState(
     gasto.valor ? gasto.valor.toFixed(2).replace(".", ",") : "",
