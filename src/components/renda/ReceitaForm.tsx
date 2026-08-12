@@ -212,6 +212,9 @@ export function ReceitaForm(props: Props) {
       tipo,
       recorrente,
       recorrenteMeses: recorrente ? meses : undefined,
+      recorrenteIntervalo: recorrente ? recorrencia.interval : undefined,
+      recorrenteUnidade: recorrente ? recorrencia.unit : undefined,
+
       clienteId,
     };
 
