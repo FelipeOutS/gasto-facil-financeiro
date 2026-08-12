@@ -26,6 +26,7 @@ import {
   buildPdfData,
   buildXlsxArrayBuffer,
   computeSummary,
+  formatDateBRSafe,
   toCSV,
   type ExportColumn,
   type ExportRow,
@@ -33,6 +34,25 @@ import {
 
 type Formato = "xlsx" | "csv" | "pdf";
 type Escopo = "filtrados" | "periodo";
+
+const LOGO_URL = "/logos/brand/gasto-inteligente-symbol-white.png";
+
+/** Carrega o logo oficial como data URL para embutir no PDF (falha silenciosa). */
+async function loadLogoDataUrl(): Promise<string | null> {
+  try {
+    const res = await fetch(LOGO_URL);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string | null>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : null);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
 
 function downloadBlob(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);
@@ -44,6 +64,7 @@ function downloadBlob(blob: Blob, fileName: string) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
+
 
 export interface GastosExportDialogProps {
   open: boolean;
