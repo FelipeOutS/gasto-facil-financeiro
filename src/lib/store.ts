@@ -3791,12 +3791,8 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
   }
 
   function addOccurrence(base: Date, i: number): Date {
-    const d = new Date(base);
-    if (freq === "semanal") d.setDate(d.getDate() + 7 * i);
-    else if (freq === "quinzenal") d.setDate(d.getDate() + 14 * i);
-    else if (freq === "anual") d.setFullYear(d.getFullYear() + i);
-    else return addMonthsPreservingDay(base, i); // mensal (sem overflow)
-    return d;
+    // Motor único de recorrência (src/lib/recurrence-date.ts)
+    return occurrenceDate(base, i, rule);
   }
 
   if (input.recorrente) {
