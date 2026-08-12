@@ -11,8 +11,14 @@ import {
   updateContaRecorrencia,
   useStore,
 } from "@/lib/store";
-import type { ContaAPagar, FrequenciaRecorrencia } from "@/lib/types";
-import { FORMAS_PAGAMENTO, FREQUENCIAS_RECORRENCIA, type FormaPagamento } from "@/lib/types";
+import type { ContaAPagar } from "@/lib/types";
+import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
+import { ruleFromFrequencia } from "@/lib/recurrence-date";
+import {
+  RecurrenceIntervalField,
+  type RecurrenceIntervalValue,
+} from "@/components/RecurrenceIntervalField";
+import { IntegerInput } from "@/components/ui/integer-input";
 import { formatMonthYear, parseBRLInput, todayISO } from "@/lib/format";
 import { useFornecedores } from "@/lib/fornecedores";
 import { mesReferenciaOpcoes, ymFromDate } from "@/lib/mes-referencia";
