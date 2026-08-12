@@ -3,10 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IntegerInput } from "@/components/ui/integer-input";
-import {
-  RecurrenceIntervalField,
-  type RecurrenceIntervalValue,
-} from "@/components/RecurrenceIntervalField";
+import { type RecurrenceIntervalValue } from "@/components/RecurrenceIntervalField";
 import { RecurrenceEditor } from "@/components/RecurrenceEditor";
 import { resolveOccurrenceCount, type RecurrenceEnd } from "@/lib/recurrence-date";
 
