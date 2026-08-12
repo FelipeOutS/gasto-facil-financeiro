@@ -208,7 +208,7 @@ export async function buildXlsxArrayBuffer(
   headers: Record<ExportColumn, string>,
   meta: XlsxMeta,
 ): Promise<ArrayBuffer> {
-  const XLSX = await import("@e965/xlsx");
+  const XLSX = (await import("@e965/xlsx")) as never as typeof import("@e965/xlsx");
   const wb = XLSX.utils.book_new();
 
   // Aba 1 — Gastos (cabeçalho de apresentação + tabela)
