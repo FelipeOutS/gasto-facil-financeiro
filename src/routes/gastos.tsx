@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Hash,
   RefreshCw,
+  Download,
   MoreVertical,
   Pencil,
   Search,
@@ -38,6 +39,7 @@ import { getVocab, type TipoCadastro } from "@/lib/profile-utils";
 import { usePlan } from "@/lib/use-plan";
 import { UpgradeModal, LockChip } from "@/components/UpgradeModal";
 import { ImportExtratoDialog } from "@/components/ImportExtratoDialog";
+import { GastosExportDialog } from "@/components/GastosExportDialog";
 import { ExtratosImportadosDialog } from "@/components/ExtratosImportadosDialog";
 import { Upload, History } from "lucide-react";
 import { PageSkeleton } from "@/components/PageSkeleton";
@@ -313,6 +315,7 @@ function GastosPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [reclassificando, setReclassificando] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const { can } = usePlan();
 
   useEffect(() => {
@@ -433,6 +436,30 @@ function GastosPage() {
     }
     return sorted;
   }, [gastos, q, range, mesRef, catFilter, pagFilter, valorMin, valorMax, order]);
+
+  // Gastos apenas do período selecionado (mês de referência + intervalo),
+  // ignorando filtros secundários — usado na opção "Todos os gastos do período".
+  const doPeriodo = useMemo(() => {
+    let list = gastos.filter((g) => g.confirmado !== false);
+    if (mesRef !== "todos" && /^\d{4}-\d{2}$/.test(mesRef)) {
+      const [ay, am] = mesRef.split("-").map(Number);
+      list = list.filter((g) => {
+        const eff = mesEfetivoGasto(g);
+        return eff.ano === ay && eff.mes === am;
+      });
+    }
+    if (range.fromTs != null || range.toTs != null) {
+      list = list.filter((g) => {
+        const d = parseDateLocal(g.data);
+        if (!d) return false;
+        const ts = d.getTime();
+        if (range.fromTs != null && ts < range.fromTs) return false;
+        if (range.toTs != null && ts > range.toTs) return false;
+        return true;
+      });
+    }
+    return [...list].sort((a, b) => (a.data < b.data ? -1 : 1));
+  }, [gastos, mesRef, range]);
 
   const total = useMemo(() => filtered.reduce((s, g) => s + g.valor, 0), [filtered]);
   const media = filtered.length ? total / filtered.length : 0;
@@ -625,6 +652,15 @@ function GastosPage() {
             </Button>
             <Button
               type="button"
+              onClick={() => setExportOpen(true)}
+              className="h-9 rounded-full"
+              variant="outline"
+            >
+              <Download className="h-4 w-4" />
+              {t("actions.export")}
+            </Button>
+            <Button
+              type="button"
               onClick={() => setHistoryOpen(true)}
               className="h-9 rounded-full"
               variant="outline"
@@ -748,6 +784,15 @@ function GastosPage() {
           </Button>
           <Button
             type="button"
+            onClick={() => setExportOpen(true)}
+            className="h-11 rounded-2xl px-3 shrink-0"
+            variant="outline"
+          >
+            <Download className="h-4 w-4" />
+            {t("actions.exportShort")}
+          </Button>
+          <Button
+            type="button"
             onClick={() => setHistoryOpen(true)}
             className="h-11 rounded-2xl px-3 shrink-0"
             variant="outline"
@@ -757,6 +802,14 @@ function GastosPage() {
           </Button>
         </div>
       </div>
+
+      <GastosExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        filtrados={filtered}
+        doPeriodo={doPeriodo}
+        periodLabel={mesRef === MES_REF_ALL ? t("monthRef.all") : ymToLabel(mesRef)}
+      />
 
       <ImportExtratoDialog open={importOpen} onOpenChange={setImportOpen} />
       <ExtratosImportadosDialog open={historyOpen} onOpenChange={setHistoryOpen} />
