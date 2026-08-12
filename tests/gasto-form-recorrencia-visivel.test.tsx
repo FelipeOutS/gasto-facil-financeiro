@@ -28,26 +28,26 @@ function setup() {
 describe("GastoForm — tipo de gasto fora de 'Mais detalhes'", () => {
   it("mostra Único / Parcelado / Recorrente no fluxo principal", () => {
     setup();
-    expect(screen.getByText("form.tipoGasto")).toBeTruthy();
-    expect(screen.getByText("form.tipoUnico")).toBeTruthy();
-    expect(screen.getByText("form.tipoParcelado")).toBeTruthy();
-    expect(screen.getByText("form.tipoRecorrente")).toBeTruthy();
+    expect(screen.getByText("Tipo de gasto")).toBeTruthy();
+    expect(screen.getByText("Único")).toBeTruthy();
+    expect(screen.getByText("Parcelado")).toBeTruthy();
+    expect(screen.getByText("Recorrente")).toBeTruthy();
     // "Mais detalhes" continua fechado
-    expect(screen.queryByText("form.descricao")).toBeNull();
+    expect(screen.queryByText("Descrição")).toBeNull();
   });
 
   it("ao selecionar Recorrente exibe o editor compartilhado com prévia", () => {
     setup();
-    fireEvent.click(screen.getByText("form.tipoRecorrente"));
-    expect(screen.getByText("recurrence.everyLabel")).toBeTruthy();
-    expect(screen.getByText("recurrence.end.label")).toBeTruthy();
-    expect(screen.getByText("recurrence.preview.title")).toBeTruthy();
+    fireEvent.click(screen.getByText("Recorrente"));
+    expect(screen.getByText("Repetir")).toBeTruthy();
+    expect(screen.getByText("Termina")).toBeTruthy();
+    expect(screen.getByText("Próximas ocorrências")).toBeTruthy();
   });
 
   it("ao selecionar Parcelado exibe parcelas e não a recorrência", () => {
     setup();
-    fireEvent.click(screen.getByText("form.tipoParcelado"));
-    expect(screen.getByText("form.parcelas")).toBeTruthy();
-    expect(screen.queryByText("recurrence.everyLabel")).toBeNull();
+    fireEvent.click(screen.getByText("Parcelado"));
+    expect(screen.getByText("Parcelas")).toBeTruthy();
+    expect(screen.queryByText("Repetir")).toBeNull();
   });
 });
