@@ -5,13 +5,19 @@
  *
  * Roda via: bun test tests/gasto-form-recorrencia-visivel.test.tsx
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 
 GlobalRegistrator.register();
 
 const React = await import("react");
 const { render, screen, fireEvent, cleanup } = await import("@testing-library/react");
+const RouterMod = await import("@tanstack/react-router");
+mock.module("@tanstack/react-router", () => ({
+  ...RouterMod,
+  Link: (props: Record<string, unknown>) =>
+    React.createElement("a", { href: "#" }, props.children as never),
+}));
 const { GastoForm } = await import("../src/components/GastoForm");
 
 function setup() {
