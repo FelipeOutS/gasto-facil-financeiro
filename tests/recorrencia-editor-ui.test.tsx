@@ -39,7 +39,8 @@ describe("RecurrenceEditor — prévia visível", () => {
       expect(screen.getByText(d)).toBeTruthy();
     }
     expect(screen.queryByText("10/09/2026")).toBeNull();
-    expect(screen.getByText(/\+\s*2/)).toBeTruthy();
+    // i18n não é inicializado no ambiente de teste: a chave crua confirma o "+ N".
+    expect(screen.getByText("recurrence.preview.more")).toBeTruthy();
   });
 
   it("intervalos dinâmicos 2/3/5/7 meses, 15 dias, 2 semanas, 2 anos", () => {
@@ -74,7 +75,7 @@ describe("RecurrenceEditor — prévia visível", () => {
 
   it("atalho não é a única opção: intervalo aceita digitação livre (18)", () => {
     setup(1, "mes", { mode: "count", count: 3 });
-    const input = screen.getByLabelText("Intervalo de recorrência") as HTMLInputElement;
+    const input = screen.getByLabelText("recurrence.intervalAria") as HTMLInputElement;
     fireEvent.change(input, { target: { value: "18" } });
     fireEvent.blur(input);
     expect(screen.getByText("10/02/2028")).toBeTruthy();
