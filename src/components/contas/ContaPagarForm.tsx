@@ -11,8 +11,14 @@ import {
   updateContaRecorrencia,
   useStore,
 } from "@/lib/store";
-import type { ContaAPagar, FrequenciaRecorrencia } from "@/lib/types";
-import { FORMAS_PAGAMENTO, FREQUENCIAS_RECORRENCIA, type FormaPagamento } from "@/lib/types";
+import type { ContaAPagar } from "@/lib/types";
+import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
+import { ruleFromFrequencia } from "@/lib/recurrence-date";
+import {
+  RecurrenceIntervalField,
+  type RecurrenceIntervalValue,
+} from "@/components/RecurrenceIntervalField";
+import { IntegerInput } from "@/components/ui/integer-input";
 import { formatMonthYear, parseBRLInput, todayISO } from "@/lib/format";
 import { useFornecedores } from "@/lib/fornecedores";
 import { mesReferenciaOpcoes, ymFromDate } from "@/lib/mes-referencia";
@@ -75,10 +81,13 @@ export function ContaPagarForm({
     return ymFromDate();
   });
   const [recorrente, setRecorrente] = useState(conta?.recorrente ?? false);
-  const [frequencia, setFrequencia] = useState<FrequenciaRecorrencia>(
-    conta?.frequenciaRecorrencia ?? "mensal",
-  );
-  const [meses, setMeses] = useState("12");
+  const [regra, setRegra] = useState<RecurrenceIntervalValue>(() => {
+    if (conta?.recorrenciaIntervalo && conta?.recorrenciaUnidade) {
+      return { interval: conta.recorrenciaIntervalo, unit: conta.recorrenciaUnidade };
+    }
+    return ruleFromFrequencia(conta?.frequenciaRecorrencia ?? "mensal");
+  });
+  const [ocorrencias, setOcorrencias] = useState(12);
 
   const [beneficiario, setBeneficiario] = useState(conta?.beneficiario ?? "");
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | "">(
@@ -157,8 +166,9 @@ export function ContaPagarForm({
         observacao: observacao.trim() || undefined,
         mesReferencia: /^\d{4}-\d{2}$/.test(mesReferencia) ? mesReferencia : undefined,
         recorrente,
-        frequenciaRecorrencia: recorrente ? frequencia : undefined,
-        recorrenteMeses: recorrente ? Math.max(1, parseInt(meses) || 12) : undefined,
+        recorrenteIntervalo: recorrente ? regra.interval : undefined,
+        recorrenteUnidade: recorrente ? regra.unit : undefined,
+        recorrenteMeses: recorrente ? Math.max(1, ocorrencias || 12) : undefined,
         beneficiario: beneficiario.trim() || undefined,
         formaPagamento: (formaPagamento || undefined) as FormaPagamento | undefined,
         bancoEmissor: bancoEmissor.trim() || undefined,
@@ -419,43 +429,22 @@ export function ContaPagarForm({
               <Switch checked={recorrente} onCheckedChange={setRecorrente} />
             </div>
             {recorrente && (
-              <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="mt-3 space-y-3">
+                <RecurrenceIntervalField value={regra} onChange={setRegra} />
                 <div className="space-y-1.5">
-                  <Label htmlFor="conta-freq">{t("form.frequency")}</Label>
-                  <Select
-                    value={frequencia}
-                    onValueChange={(v) => setFrequencia(v as FrequenciaRecorrencia)}
-                  >
-                    <SelectTrigger id="conta-freq">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {FREQUENCIAS_RECORRENCIA.map((f) => (
-                        <SelectItem key={f.id} value={f.id}>
-                          {t(`frequency.${f.id}`, { defaultValue: f.label })}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="conta-meses">
-                    {frequencia === "anual"
-                      ? t("form.howManyYears")
-                      : frequencia === "semanal"
-                        ? t("form.howManyWeeks")
-                        : frequencia === "quinzenal"
-                          ? t("form.howManyFortnights")
-                          : t("form.howManyMonths")}
-                  </Label>
-                  <Input
-                    id="conta-meses"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="off"
-                    value={meses}
-                    onChange={(e) => setMeses(e.target.value.replace(/\D+/g, "").slice(0, 3))}
+                  <Label htmlFor="conta-ocorrencias">{t("form.occurrences")}</Label>
+                  <IntegerInput
+                    id="conta-ocorrencias"
+                    min={1}
+                    max={999}
+                    fallback={12}
+                    value={ocorrencias}
+                    onValueChange={setOcorrencias}
+                    className="h-11 w-24 bg-card-elevated text-center"
                   />
+                  <p className="text-[11px] text-muted-foreground">
+                    {t("form.occurrencesHint")}
+                  </p>
                 </div>
               </div>
             )}

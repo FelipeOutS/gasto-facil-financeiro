@@ -125,3 +125,33 @@ export function generateOccurrencesISO(
   return Array.from({ length: total }, (_, i) => occurrenceDateISO(baseISO, i, rule));
 }
 
+
+/* ------------------------------------------------------------------ *
+ * Compatibilidade com o modelo legado de frequência (atalhos)
+ * ------------------------------------------------------------------ */
+
+export type LegacyFrequencia = "semanal" | "quinzenal" | "mensal" | "anual";
+
+/** Atalho legado → regra flexível (sem alterar resultados existentes). */
+export function ruleFromFrequencia(freq?: string | null): RecurrenceRule {
+  switch (freq) {
+    case "semanal":
+      return { interval: 1, unit: "semana" };
+    case "quinzenal":
+      return { interval: 2, unit: "semana" };
+    case "anual":
+      return { interval: 1, unit: "ano" };
+    case "mensal":
+    default:
+      return { interval: 1, unit: "mes" };
+  }
+}
+
+/** Regra flexível → atalho legado mais próximo (para colunas legadas). */
+export function frequenciaFromRule(rule?: Partial<RecurrenceRule> | null): LegacyFrequencia {
+  const { interval, unit } = normalizeRule(rule);
+  if (unit === "semana") return interval === 2 ? "quinzenal" : "semanal";
+  if (unit === "ano") return "anual";
+  if (unit === "dia") return interval % 7 === 0 && interval / 7 === 2 ? "quinzenal" : "semanal";
+  return "mensal";
+}

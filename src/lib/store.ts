@@ -30,6 +30,8 @@ import { parseDateLocal, toLocalISODate } from "./format";
 import {
   addMonthsPreservingDay,
   occurrenceDate,
+  frequenciaFromRule,
+  ruleFromFrequencia,
   type RecurrenceUnit,
 } from "./recurrence-date";
 
@@ -759,6 +761,8 @@ type ContaAPagarRow = {
   chave_pix?: string | null;
   banco_emissor?: string | null;
   frequencia_recorrencia?: string | null;
+  recorrencia_intervalo?: number | null;
+  recorrencia_unidade?: string | null;
   import_batch_id?: string | null;
   mes_referencia?: string | null;
   fornecedor_id?: string | null;
@@ -779,6 +783,12 @@ function rowToContaAPagar(r: ContaAPagarRow, catUuidToKey: Map<string, string>):
     recorrenciaId: r.recorrencia_id ?? undefined,
     frequenciaRecorrencia:
       (r.frequencia_recorrencia as ContaAPagar["frequenciaRecorrencia"]) ?? undefined,
+    recorrenciaIntervalo:
+      r.recorrencia_intervalo ??
+      (r.recorrente ? ruleFromFrequencia(r.frequencia_recorrencia).interval : undefined),
+    recorrenciaUnidade:
+      (r.recorrencia_unidade as ContaAPagar["recorrenciaUnidade"]) ??
+      (r.recorrente ? ruleFromFrequencia(r.frequencia_recorrencia).unit : undefined),
     dataInicio: r.data_inicio ?? undefined,
     dataFim: r.data_fim ?? undefined,
     status: (r.status as StatusConta) ?? "pendente",
@@ -3660,9 +3670,12 @@ export type NovaContaInput = {
   categoriaId?: string;
   observacao?: string;
   recorrente?: boolean;
-  /** Frequência da recorrência (default: mensal) */
+  /** Frequência legada (atalho) — mantida por compatibilidade */
   frequenciaRecorrencia?: FrequenciaRecorrencia;
-  /** Quantas ocorrências gerar (default 12 — interpretado conforme frequência) */
+  /** Intervalo flexível: "a cada N unidades" */
+  recorrenteIntervalo?: number;
+  recorrenteUnidade?: RecurrenceUnit;
+  /** Quantas ocorrências gerar (default 12) */
   recorrenteMeses?: number;
   dataFim?: string;
   beneficiario?: string;
@@ -3712,7 +3725,16 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
     fornecedor_id: fornecedorVal,
   };
 
-  const freq: FrequenciaRecorrencia = input.frequenciaRecorrencia ?? "mensal";
+  // Regra única de recorrência: intervalo flexível tem prioridade; sem ele,
+  // deriva do atalho legado (semanal/quinzenal/mensal/anual).
+  const rule =
+    input.recorrenteIntervalo || input.recorrenteUnidade
+      ? {
+          interval: Math.max(1, Math.floor(input.recorrenteIntervalo ?? 1)),
+          unit: input.recorrenteUnidade ?? ("mes" as RecurrenceUnit),
+        }
+      : ruleFromFrequencia(input.frequenciaRecorrencia ?? "mensal");
+  const freq: FrequenciaRecorrencia = frequenciaFromRule(rule) as FrequenciaRecorrencia;
 
   function pushOne(iso: string, recurringId: string | null) {
     const d = new Date(iso + "T00:00:00");
@@ -3733,6 +3755,8 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
       recorrente: !!recurringId,
       recorrenciaId: recurringId ?? undefined,
       frequenciaRecorrencia: recurringId ? freq : undefined,
+      recorrenciaIntervalo: recurringId ? rule.interval : undefined,
+      recorrenciaUnidade: recurringId ? rule.unit : undefined,
       dataInicio: recurringId ? input.dataVencimento : undefined,
       dataFim: recurringId ? input.dataFim : undefined,
       status: "pendente",
@@ -3754,6 +3778,8 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
       recorrente: !!recurringId,
       recorrencia_id: recurringId,
       frequencia_recorrencia: recurringId ? freq : null,
+      recorrencia_intervalo: recurringId ? rule.interval : null,
+      recorrencia_unidade: recurringId ? rule.unit : null,
       data_inicio: recurringId ? input.dataVencimento : null,
       data_fim: recurringId && input.dataFim ? input.dataFim : null,
       status: "pendente",
@@ -3765,12 +3791,8 @@ export function addContaAPagar(input: NovaContaInput): ContaAPagar[] {
   }
 
   function addOccurrence(base: Date, i: number): Date {
-    const d = new Date(base);
-    if (freq === "semanal") d.setDate(d.getDate() + 7 * i);
-    else if (freq === "quinzenal") d.setDate(d.getDate() + 14 * i);
-    else if (freq === "anual") d.setFullYear(d.getFullYear() + i);
-    else return addMonthsPreservingDay(base, i); // mensal (sem overflow)
-    return d;
+    // Motor único de recorrência (src/lib/recurrence-date.ts)
+    return occurrenceDate(base, i, rule);
   }
 
   if (input.recorrente) {

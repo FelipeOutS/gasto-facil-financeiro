@@ -680,6 +680,8 @@ export type Database = {
           nome: string
           observacao: string | null
           recorrencia_id: string | null
+          recorrencia_intervalo: number | null
+          recorrencia_unidade: string | null
           recorrente: boolean
           status: string
           updated_at: string
@@ -710,6 +712,8 @@ export type Database = {
           nome: string
           observacao?: string | null
           recorrencia_id?: string | null
+          recorrencia_intervalo?: number | null
+          recorrencia_unidade?: string | null
           recorrente?: boolean
           status?: string
           updated_at?: string
@@ -740,6 +744,8 @@ export type Database = {
           nome?: string
           observacao?: string | null
           recorrencia_id?: string | null
+          recorrencia_intervalo?: number | null
+          recorrencia_unidade?: string | null
           recorrente?: boolean
           status?: string
           updated_at?: string
