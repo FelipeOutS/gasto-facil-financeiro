@@ -27,7 +27,12 @@ import {
 } from "./types";
 import { DEFAULT_CATEGORIES, suggestCategoryFromText } from "./categories";
 import { parseDateLocal, toLocalISODate } from "./format";
-import { addMonthsPreservingDay } from "./recurrence-date";
+import {
+  addMonthsPreservingDay,
+  occurrenceDate,
+  type RecurrenceUnit,
+} from "./recurrence-date";
+
 import { validateFinancialAmount, financialAmountMessage } from "./financial-limits";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
