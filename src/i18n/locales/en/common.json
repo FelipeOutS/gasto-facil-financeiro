@@ -295,6 +295,31 @@
       "mes_other": "months",
       "ano_one": "year",
       "ano_other": "years"
+    },
+    "end": {
+      "label": "Ends",
+      "mode": {
+        "count": "After N occurrences",
+        "until": "On a date",
+        "forever": "No end date"
+      },
+      "countLabel": "Number of occurrences",
+      "countHint": "Includes the first occurrence.",
+      "untilLabel": "Until",
+      "foreverHint": "New occurrences will keep being generated until you cancel this recurrence."
+    },
+    "preview": {
+      "title": "Next occurrences",
+      "more_one": "+ {{count}} occurrence",
+      "more_other": "+ {{count}} occurrences",
+      "total_one": "{{count}} occurrence total",
+      "total_other": "{{count}} occurrences total",
+      "continues": "Continues until you cancel."
+    },
+    "errors": {
+      "interval": "The interval must be at least 1.",
+      "count": "The number of occurrences must be at least 1.",
+      "untilBeforeStart": "The end date must be after the first occurrence."
     }
   }
 }
