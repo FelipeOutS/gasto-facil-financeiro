@@ -2657,10 +2657,15 @@ export async function addReceita(input: NovaReceitaInput): Promise<Receita[]> {
 
   if (input.recorrente) {
     const meses = Math.max(1, input.recorrenteMeses ?? 12);
+    const rule = {
+      interval: input.recorrenteIntervalo ?? 1,
+      unit: input.recorrenteUnidade ?? ("mes" as RecurrenceUnit),
+    };
     const recId = crypto.randomUUID();
     for (let i = 0; i < meses; i++) {
-      const d = addMonthsPreservingDay(baseDate, i);
-      const iso = d.toISOString().slice(0, 10);
+      const d = occurrenceDate(baseDate, i, rule);
+      const iso = toLocalISODate(d);
+
       const id = crypto.randomUUID();
       created.push({
         id,
