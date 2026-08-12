@@ -7,6 +7,8 @@ import {
   RecurrenceIntervalField,
   type RecurrenceIntervalValue,
 } from "@/components/RecurrenceIntervalField";
+import { RecurrenceEditor } from "@/components/RecurrenceEditor";
+import { resolveOccurrenceCount, type RecurrenceEnd } from "@/lib/recurrence-date";
 
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -76,11 +78,15 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
   const [observacao, setObservacao] = useState(initial?.observacao ?? "");
   const [tipoGasto, setTipoGasto] = useState<TipoGasto>(initial?.tipoGasto ?? "unico");
   const [parcelas, setParcelas] = useState<number>(initial?.totalParcelas ?? 2);
-  const [recorrenteMeses, setRecorrenteMeses] = useState<number>(initial?.recorrenteMeses ?? 12);
   const [recorrencia, setRecorrencia] = useState<RecurrenceIntervalValue>({
     interval: initial?.recorrenteIntervalo ?? 1,
     unit: initial?.recorrenteUnidade ?? "mes",
   });
+  const [recorrenciaFim, setRecorrenciaFim] = useState<RecurrenceEnd>({
+    mode: "count",
+    count: initial?.recorrenteMeses ?? 12,
+  });
+  const recorrenteMeses = resolveOccurrenceCount(data, recorrencia, recorrenciaFim);
 
   const [gastoFixo, setGastoFixo] = useState<boolean>(initial?.gastoFixo ?? false);
   const [fornecedorId, setFornecedorId] = useState<string>(
@@ -395,26 +401,17 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
             </div>
           )}
           {tipoGasto === "recorrente" && (
-            <div className="space-y-3 rounded-xl bg-card-elevated/60 p-3">
-              <RecurrenceIntervalField
-                value={recorrencia}
-                onChange={setRecorrencia}
+            <div className="rounded-xl bg-card-elevated/60 p-3">
+              <RecurrenceEditor
+                startDate={data}
+                rule={recorrencia}
+                onRuleChange={setRecorrencia}
+                end={recorrenciaFim}
+                onEndChange={setRecorrenciaFim}
                 className="[&_button]:bg-card"
               />
-              <div>
-                <Label className="text-xs text-muted-foreground">{t("form.repetirMeses")}</Label>
-                <IntegerInput
-                  min={1}
-                  max={240}
-                  fallback={12}
-                  value={recorrenteMeses}
-                  onValueChange={setRecorrenteMeses}
-                  className="mt-1 h-11 bg-card-elevated"
-                />
-              </div>
             </div>
           )}
-
 
           <div className="flex items-center justify-between rounded-xl bg-card-elevated px-3 py-2">
             <div>
