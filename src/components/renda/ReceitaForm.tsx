@@ -306,20 +306,24 @@ export function ReceitaForm(props: Props) {
             />
           </div>
           {!isFreeAdsPlan && recorrente && (
-            <div>
-              <Label className="text-xs text-muted-foreground">
-                {t("dialog.fields.repeatMonths")}
-              </Label>
-              <IntegerInput
-                min={1}
-                max={60}
-                fallback={12}
-                value={meses}
-                onValueChange={setMeses}
-                className="mt-1 h-11 bg-card-elevated"
-              />
+            <div className="space-y-3 rounded-xl bg-card-elevated/60 p-3">
+              <RecurrenceIntervalField value={recorrencia} onChange={setRecorrencia} />
+              <div>
+                <Label className="text-xs text-muted-foreground">
+                  {t("dialog.fields.repeatMonths")}
+                </Label>
+                <IntegerInput
+                  min={1}
+                  max={240}
+                  fallback={12}
+                  value={meses}
+                  onValueChange={setMeses}
+                  className="mt-1 h-11 bg-card-elevated"
+                />
+              </div>
             </div>
           )}
+
         </>
       )}
 
