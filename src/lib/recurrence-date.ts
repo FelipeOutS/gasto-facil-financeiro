@@ -155,3 +155,101 @@ export function frequenciaFromRule(rule?: Partial<RecurrenceRule> | null): Legac
   if (unit === "dia") return interval % 7 === 0 && interval / 7 === 2 ? "quinzenal" : "semanal";
   return "mensal";
 }
+
+/* ------------------------------------------------------------------ *
+ * Término da recorrência — contagem, data final ou sem fim
+ *
+ * Fonte única de verdade: tudo abaixo usa `occurrenceDateISO`, o mesmo
+ * motor usado para materializar os lançamentos reais.
+ * ------------------------------------------------------------------ */
+
+export type RecurrenceEnd =
+  | { mode: "count"; count: number }
+  | { mode: "until"; until: string }
+  | { mode: "forever" };
+
+/** Horizonte materializado quando não há data final (evita gerar até 2050). */
+export const OPEN_ENDED_HORIZON_MONTHS = 24;
+/** Teto absoluto de ocorrências materializadas de uma vez. */
+export const MAX_MATERIALIZED_OCCURRENCES = 240;
+
+/** Quantas ocorrências existem de `baseISO` até `untilISO` (inclusive). */
+export function countOccurrencesUntilISO(
+  baseISO: string,
+  untilISO: string,
+  rule?: Partial<RecurrenceRule>,
+  cap: number = MAX_MATERIALIZED_OCCURRENCES,
+): number {
+  const base = baseISO.slice(0, 10);
+  const until = untilISO.slice(0, 10);
+  if (until < base) return 0;
+  let n = 0;
+  for (let i = 0; i < cap; i++) {
+    if (occurrenceDateISO(base, i, rule) <= until) n++;
+    else break;
+  }
+  return n;
+}
+
+/** Quantidade de ocorrências a materializar para qualquer forma de término. */
+export function resolveOccurrenceCount(
+  baseISO: string,
+  rule?: Partial<RecurrenceRule>,
+  end?: RecurrenceEnd,
+): number {
+  const e = end ?? { mode: "count", count: 12 };
+  if (e.mode === "count") {
+    return Math.min(MAX_MATERIALIZED_OCCURRENCES, Math.max(1, Math.floor(e.count || 1)));
+  }
+  if (e.mode === "until") {
+    return Math.max(1, countOccurrencesUntilISO(baseISO, e.until, rule));
+  }
+  const horizon = addMonthsPreservingDayISO(baseISO, OPEN_ENDED_HORIZON_MONTHS);
+  return Math.max(1, Math.min(60, countOccurrencesUntilISO(baseISO, horizon, rule)));
+}
+
+/**
+ * Prévia compacta das próximas ocorrências.
+ * `remaining` é null quando a recorrência não tem fim definido.
+ */
+export function previewOccurrences(
+  baseISO: string,
+  rule?: Partial<RecurrenceRule>,
+  end?: RecurrenceEnd,
+  limit = 4,
+): { dates: string[]; remaining: number | null; openEnded: boolean } {
+  const openEnded = (end?.mode ?? "count") === "forever";
+  if (openEnded) {
+    return { dates: generateOccurrencesISO(baseISO, limit, rule), remaining: null, openEnded };
+  }
+  const total = resolveOccurrenceCount(baseISO, rule, end);
+  const shown = Math.min(limit, total);
+  return {
+    dates: generateOccurrencesISO(baseISO, shown, rule),
+    remaining: Math.max(0, total - shown),
+    openEnded,
+  };
+}
+
+export type RecurrenceValidationCode = "interval" | "count" | "untilBeforeStart";
+
+/** Validação das combinações inválidas de recorrência. */
+export function validateRecurrence(
+  baseISO: string,
+  rule?: Partial<RecurrenceRule>,
+  end?: RecurrenceEnd,
+): { ok: true } | { ok: false; code: RecurrenceValidationCode } {
+  if (!Number.isFinite(Number(rule?.interval)) || Math.floor(Number(rule?.interval)) < 1) {
+    return { ok: false, code: "interval" };
+  }
+  const e = end ?? { mode: "count", count: 12 };
+  if (e.mode === "count" && (!Number.isFinite(e.count) || Math.floor(e.count) < 1)) {
+    return { ok: false, code: "count" };
+  }
+  if (e.mode === "until") {
+    if (!e.until || e.until.slice(0, 10) < baseISO.slice(0, 10)) {
+      return { ok: false, code: "untilBeforeStart" };
+    }
+  }
+  return { ok: true };
+}

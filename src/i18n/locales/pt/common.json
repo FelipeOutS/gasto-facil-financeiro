@@ -295,6 +295,31 @@
       "mes_other": "meses",
       "ano_one": "ano",
       "ano_other": "anos"
+    },
+    "end": {
+      "label": "Termina",
+      "mode": {
+        "count": "Após N ocorrências",
+        "until": "Em uma data",
+        "forever": "Sem data final"
+      },
+      "countLabel": "Número de ocorrências",
+      "countHint": "Inclui a primeira ocorrência.",
+      "untilLabel": "Até",
+      "foreverHint": "Novas ocorrências continuarão sendo geradas até você cancelar esta recorrência."
+    },
+    "preview": {
+      "title": "Próximas ocorrências",
+      "more_one": "+ {{count}} ocorrência",
+      "more_other": "+ {{count}} ocorrências",
+      "total_one": "{{count}} ocorrência no total",
+      "total_other": "{{count}} ocorrências no total",
+      "continues": "Continua até você cancelar."
+    },
+    "errors": {
+      "interval": "O intervalo precisa ser de no mínimo 1.",
+      "count": "O número de ocorrências precisa ser no mínimo 1.",
+      "untilBeforeStart": "A data final precisa ser posterior à primeira ocorrência."
     }
   }
 }

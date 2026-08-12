@@ -14,11 +14,9 @@ import {
 import type { ContaAPagar } from "@/lib/types";
 import { FORMAS_PAGAMENTO, type FormaPagamento } from "@/lib/types";
 import { ruleFromFrequencia } from "@/lib/recurrence-date";
-import {
-  RecurrenceIntervalField,
-  type RecurrenceIntervalValue,
-} from "@/components/RecurrenceIntervalField";
-import { IntegerInput } from "@/components/ui/integer-input";
+import { type RecurrenceIntervalValue } from "@/components/RecurrenceIntervalField";
+import { RecurrenceEditor } from "@/components/RecurrenceEditor";
+import { resolveOccurrenceCount, type RecurrenceEnd } from "@/lib/recurrence-date";
 import { formatMonthYear, parseBRLInput, todayISO } from "@/lib/format";
 import { useFornecedores } from "@/lib/fornecedores";
 import { mesReferenciaOpcoes, ymFromDate } from "@/lib/mes-referencia";
@@ -87,7 +85,10 @@ export function ContaPagarForm({
     }
     return ruleFromFrequencia(conta?.frequenciaRecorrencia ?? "mensal");
   });
-  const [ocorrencias, setOcorrencias] = useState(12);
+  const [recorrenciaFim, setRecorrenciaFim] = useState<RecurrenceEnd>({
+    mode: "count",
+    count: 12,
+  });
 
   const [beneficiario, setBeneficiario] = useState(conta?.beneficiario ?? "");
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | "">(
@@ -168,7 +169,9 @@ export function ContaPagarForm({
         recorrente,
         recorrenteIntervalo: recorrente ? regra.interval : undefined,
         recorrenteUnidade: recorrente ? regra.unit : undefined,
-        recorrenteMeses: recorrente ? Math.max(1, ocorrencias || 12) : undefined,
+        recorrenteMeses: recorrente
+          ? resolveOccurrenceCount(dataVenc, regra, recorrenciaFim)
+          : undefined,
         beneficiario: beneficiario.trim() || undefined,
         formaPagamento: (formaPagamento || undefined) as FormaPagamento | undefined,
         bancoEmissor: bancoEmissor.trim() || undefined,
@@ -429,23 +432,14 @@ export function ContaPagarForm({
               <Switch checked={recorrente} onCheckedChange={setRecorrente} />
             </div>
             {recorrente && (
-              <div className="mt-3 space-y-3">
-                <RecurrenceIntervalField value={regra} onChange={setRegra} />
-                <div className="space-y-1.5">
-                  <Label htmlFor="conta-ocorrencias">{t("form.occurrences")}</Label>
-                  <IntegerInput
-                    id="conta-ocorrencias"
-                    min={1}
-                    max={999}
-                    fallback={12}
-                    value={ocorrencias}
-                    onValueChange={setOcorrencias}
-                    className="h-11 w-24 bg-card-elevated text-center"
-                  />
-                  <p className="text-[11px] text-muted-foreground">
-                    {t("form.occurrencesHint")}
-                  </p>
-                </div>
+              <div className="mt-3">
+                <RecurrenceEditor
+                  startDate={dataVenc}
+                  rule={regra}
+                  onRuleChange={setRegra}
+                  end={recorrenciaFim}
+                  onEndChange={setRecorrenciaFim}
+                />
               </div>
             )}
           </div>
