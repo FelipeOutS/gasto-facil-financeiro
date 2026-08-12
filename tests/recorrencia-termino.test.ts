@@ -122,3 +122,29 @@ describe("validações", () => {
     ).toEqual({ ok: true });
   });
 });
+
+describe("edição: dedução da regra a partir das ocorrências", () => {
+  it("reconstrói 'a cada 4 meses' (não vira mensal)", async () => {
+    const { inferRuleFromISODates } = await import("../src/lib/recurrence-date");
+    expect(
+      inferRuleFromISODates(["2026-08-10", "2026-12-10", "2027-04-10", "2027-08-10"]),
+    ).toEqual({ interval: 4, unit: "mes" });
+    expect(inferRuleFromISODates(["2026-08-10", "2026-09-10"])).toEqual({
+      interval: 1,
+      unit: "mes",
+    });
+    expect(inferRuleFromISODates(["2026-08-10", "2028-08-10"])).toEqual({
+      interval: 2,
+      unit: "ano",
+    });
+    expect(inferRuleFromISODates(["2026-08-10", "2026-08-24"])).toEqual({
+      interval: 2,
+      unit: "semana",
+    });
+    expect(inferRuleFromISODates(["2026-08-10", "2026-08-25"])).toEqual({
+      interval: 15,
+      unit: "dia",
+    });
+    expect(inferRuleFromISODates(["2026-08-10"])).toBeNull();
+  });
+});
