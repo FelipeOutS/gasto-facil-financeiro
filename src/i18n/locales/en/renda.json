@@ -147,7 +147,7 @@
       "repeat": "Repeat every month",
       "repeatHint": "Recurring entry",
       "repeatPaidOnly": "Available on paid plans",
-      "repeatMonths": "Repeat for (months)"
+      "repeatMonths": "Number of occurrences"
     },
     "cancel": "Cancel",
     "save": "Add",
@@ -334,5 +334,18 @@
     "title_mei": "Revenue not found.",
     "title_empresa": "Revenue not found."
   },
-  "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  "months": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
+  ]
 }

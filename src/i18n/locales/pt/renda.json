@@ -147,7 +147,7 @@
       "repeat": "Repetir todo mês",
       "repeatHint": "Receita recorrente",
       "repeatPaidOnly": "Disponível nos planos pagos",
-      "repeatMonths": "Repetir por (meses)"
+      "repeatMonths": "Quantidade de ocorrências"
     },
     "cancel": "Cancelar",
     "save": "Cadastrar",
@@ -334,5 +334,18 @@
     "title_mei": "Faturamento não encontrado.",
     "title_empresa": "Faturamento não encontrado."
   },
-  "months": ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
+  "months": [
+    "jan",
+    "fev",
+    "mar",
+    "abr",
+    "mai",
+    "jun",
+    "jul",
+    "ago",
+    "set",
+    "out",
+    "nov",
+    "dez"
+  ]
 }
