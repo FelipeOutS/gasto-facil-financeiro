@@ -30,6 +30,8 @@ import { parseDateLocal, toLocalISODate } from "./format";
 import {
   addMonthsPreservingDay,
   occurrenceDate,
+  frequenciaFromRule,
+  ruleFromFrequencia,
   type RecurrenceUnit,
 } from "./recurrence-date";
 
