@@ -305,6 +305,77 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
         />
       </div>
 
+      <div className="rounded-2xl border border-border bg-card p-4 space-y-4">
+        <div>
+          <Label className="text-xs text-muted-foreground">{t("form.tipoGasto")}</Label>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {(
+              [
+                { id: "unico", label: t("form.tipoUnico") },
+                { id: "parcelado", label: t("form.tipoParcelado"), icon: Layers },
+                { id: "recorrente", label: t("form.tipoRecorrente"), icon: Repeat },
+              ] as const
+            ).map((opt) => {
+              const active = tipoGasto === opt.id;
+              const Icon = "icon" in opt ? opt.icon : null;
+              const blockedForFreeAds = isFreeAds && opt.id === "parcelado";
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => {
+                    if (blockedForFreeAds) {
+                      toast.error(tCommon("subscription.freeAdsQuota.parcelamentoBlocked"));
+                      return;
+                    }
+                    setTipoGasto(opt.id);
+                  }}
+                  aria-disabled={blockedForFreeAds}
+                  className={cn(
+                    "flex items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-xs font-medium",
+                    active ? "border-foreground/40 bg-card-elevated" : "border-border bg-card",
+                    blockedForFreeAds && "opacity-50",
+                  )}
+                >
+                  {Icon && <Icon className="h-3.5 w-3.5" />}
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {tipoGasto === "parcelado" && (
+          <div>
+            <Label className="text-xs text-muted-foreground">{t("form.parcelas")}</Label>
+            <IntegerInput
+              min={2}
+              max={36}
+              fallback={2}
+              value={parcelas}
+              onValueChange={setParcelas}
+              className="mt-1 h-11 bg-card-elevated"
+            />
+            <p className="mt-1 text-xs text-muted-foreground num">
+              {t("form.parcelasPreview", { n: parcelas, valor: formatBRL(valor / parcelas) })}
+            </p>
+          </div>
+        )}
+
+        {tipoGasto === "recorrente" && (
+          <div className="rounded-xl bg-card-elevated/60 p-3">
+            <RecurrenceEditor
+              startDate={data}
+              rule={recorrencia}
+              onRuleChange={setRecorrencia}
+              end={recorrenciaFim}
+              onEndChange={setRecorrenciaFim}
+              className="[&_button]:bg-card"
+            />
+          </div>
+        )}
+      </div>
+
       <button
         type="button"
         onClick={() => setShowMore((s) => !s)}
@@ -341,74 +412,6 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
               className="mt-1 min-h-[70px] bg-card-elevated"
             />
           </div>
-
-          <div>
-            <Label className="text-xs text-muted-foreground">{t("form.tipoGasto")}</Label>
-            <div className="mt-2 grid grid-cols-3 gap-2">
-              {(
-                [
-                  { id: "unico", label: t("form.tipoUnico") },
-                  { id: "parcelado", label: t("form.tipoParcelado"), icon: Layers },
-                  { id: "recorrente", label: t("form.tipoRecorrente"), icon: Repeat },
-                ] as const
-              ).map((opt) => {
-                const active = tipoGasto === opt.id;
-                const Icon = "icon" in opt ? opt.icon : null;
-                const blockedForFreeAds = isFreeAds && opt.id === "parcelado";
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => {
-                      if (blockedForFreeAds) {
-                        toast.error(tCommon("subscription.freeAdsQuota.parcelamentoBlocked"));
-                        return;
-                      }
-                      setTipoGasto(opt.id);
-                    }}
-                    aria-disabled={blockedForFreeAds}
-                    className={cn(
-                      "flex items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-xs font-medium",
-                      active ? "border-foreground/40 bg-card-elevated" : "border-border bg-card",
-                      blockedForFreeAds && "opacity-50",
-                    )}
-                  >
-                    {Icon && <Icon className="h-3.5 w-3.5" />}
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {tipoGasto === "parcelado" && (
-            <div>
-              <Label className="text-xs text-muted-foreground">{t("form.parcelas")}</Label>
-              <IntegerInput
-                min={2}
-                max={36}
-                fallback={2}
-                value={parcelas}
-                onValueChange={setParcelas}
-                className="mt-1 h-11 bg-card-elevated"
-              />
-              <p className="mt-1 text-xs text-muted-foreground num">
-                {t("form.parcelasPreview", { n: parcelas, valor: formatBRL(valor / parcelas) })}
-              </p>
-            </div>
-          )}
-          {tipoGasto === "recorrente" && (
-            <div className="rounded-xl bg-card-elevated/60 p-3">
-              <RecurrenceEditor
-                startDate={data}
-                rule={recorrencia}
-                onRuleChange={setRecorrencia}
-                end={recorrenciaFim}
-                onEndChange={setRecorrenciaFim}
-                className="[&_button]:bg-card"
-              />
-            </div>
-          )}
 
           <div className="flex items-center justify-between rounded-xl bg-card-elevated px-3 py-2">
             <div>
