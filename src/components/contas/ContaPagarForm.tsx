@@ -419,43 +419,22 @@ export function ContaPagarForm({
               <Switch checked={recorrente} onCheckedChange={setRecorrente} />
             </div>
             {recorrente && (
-              <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="mt-3 space-y-3">
+                <RecurrenceIntervalField value={regra} onChange={setRegra} />
                 <div className="space-y-1.5">
-                  <Label htmlFor="conta-freq">{t("form.frequency")}</Label>
-                  <Select
-                    value={frequencia}
-                    onValueChange={(v) => setFrequencia(v as FrequenciaRecorrencia)}
-                  >
-                    <SelectTrigger id="conta-freq">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {FREQUENCIAS_RECORRENCIA.map((f) => (
-                        <SelectItem key={f.id} value={f.id}>
-                          {t(`frequency.${f.id}`, { defaultValue: f.label })}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="conta-meses">
-                    {frequencia === "anual"
-                      ? t("form.howManyYears")
-                      : frequencia === "semanal"
-                        ? t("form.howManyWeeks")
-                        : frequencia === "quinzenal"
-                          ? t("form.howManyFortnights")
-                          : t("form.howManyMonths")}
-                  </Label>
-                  <Input
-                    id="conta-meses"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="off"
-                    value={meses}
-                    onChange={(e) => setMeses(e.target.value.replace(/\D+/g, "").slice(0, 3))}
+                  <Label htmlFor="conta-ocorrencias">{t("form.occurrences")}</Label>
+                  <IntegerInput
+                    id="conta-ocorrencias"
+                    min={1}
+                    max={999}
+                    fallback={12}
+                    value={ocorrencias}
+                    onValueChange={setOcorrencias}
+                    className="h-11 w-24 bg-card-elevated text-center"
                   />
+                  <p className="text-[11px] text-muted-foreground">
+                    {t("form.occurrencesHint")}
+                  </p>
                 </div>
               </div>
             )}
