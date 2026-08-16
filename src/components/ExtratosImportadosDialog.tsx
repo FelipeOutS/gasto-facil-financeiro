@@ -285,7 +285,9 @@ export function ExtratosImportadosDialog({
 
                   {editadosDoSelecionado &&
                     editadosDoSelecionado.total > 0 &&
-                    selected.status !== "revertido" && (
+                    selected.status !== "revertido" &&
+                    selected.status !== "parcial" && (
+
                       <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
                         <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                         <div>
