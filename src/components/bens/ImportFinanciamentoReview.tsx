@@ -120,12 +120,16 @@ export function ImportFinanciamentoReview({
       
       // 1. Atualizar Saldo (Histórico)
       if (selections.saldoDevedor && financiamentoId) {
-        await criarHistoricoSaldo(supabase.auth.getUser().then(r => r.data.user?.id!), financiamentoId, {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Usuário não autenticado");
+        
+        await criarHistoricoSaldo(user.id, financiamentoId, {
           saldo_devedor: data.saldoDevedor,
           data_referencia: dataRef,
           observacao: "Atualizado via documento"
         });
       }
+
 
       // 2. Atualizar Financiamento (Campos diretos)
       if (selections.valorParcela) updates.valor_parcela_identificada = data.valorParcela;
