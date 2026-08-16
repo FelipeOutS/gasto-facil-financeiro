@@ -18,6 +18,8 @@ import {
   Calculator,
 } from "lucide-react";
 import { SimuladorFinanciamento } from "@/components/bens/SimuladorFinanciamento";
+import { Card as UICard, CardContent as UICardContent } from "@/components/ui/card";
+
 
 import { MobileShell } from "@/components/MobileShell";
 import { cn } from "@/lib/utils";
@@ -653,17 +655,27 @@ function BemDetalhePage() {
 
 
         <TabsContent value="simulacao" className="space-y-4 pt-2">
-          {ativo ? (
+          {!ativo ? (
+            <UICard className="border-dashed">
+              <UICardContent className="pt-6">
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <Info className="h-8 w-8 text-muted-foreground" />
+                  <h3 className="font-medium text-sm">Sem financiamento ativo</h3>
+                  <p className="text-xs text-muted-foreground max-w-[280px]">
+                    Para simular amortizações, você precisa cadastrar um financiamento ativo para este bem na aba <strong>Resumo</strong>.
+                  </p>
+                </div>
+              </UICardContent>
+            </UICard>
+          ) : (
             <SimuladorFinanciamento
               financiamento={ativo}
               saldoAtual={resumo?.saldoDevedorEstimado || 0}
             />
-          ) : (
-            <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-              Este bem não possui um financiamento ativo para simular.
-            </div>
           )}
         </TabsContent>
+
+
 
         <TabsContent value="detalhes" className="space-y-3">
 
