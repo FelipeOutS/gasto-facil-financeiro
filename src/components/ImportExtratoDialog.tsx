@@ -1391,6 +1391,7 @@ function ReviewStep({
   onRemove,
   onAdd,
   categorias,
+  cartoes,
   observacaoIA,
   resumoExtrato,
 }: {
@@ -1399,9 +1400,11 @@ function ReviewStep({
   onRemove: (id: string) => void;
   onAdd: () => void;
   categorias: ReturnType<typeof getCategorias>;
+  cartoes: ReturnType<typeof getCartoes>;
   observacaoIA: string | null;
   resumoExtrato: ExtratoResumo | null;
 }) {
+
   const { t } = useTranslation("import-extrato");
   return (
     <div className="space-y-3">
