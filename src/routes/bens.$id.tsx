@@ -640,8 +640,9 @@ function BemDetalhePage() {
       </p>
 
       <Tabs defaultValue="detalhes" className="mt-4 pb-12">
-        <TabsList className="grid w-full grid-cols-6 h-10">
+        <TabsList className="grid w-full grid-cols-7 h-10">
           <TabsTrigger value="detalhes" className="text-[10px] px-1">Resumo</TabsTrigger>
+          <TabsTrigger value="simulacao" className="text-[10px] px-1 font-semibold text-primary">Simular</TabsTrigger>
           <TabsTrigger value="parcelas" className="text-[10px] px-1">Parcelas</TabsTrigger>
           <TabsTrigger value="amortizacoes" className="text-[10px] px-1">Amortizar</TabsTrigger>
           <TabsTrigger value="custos" className="text-[10px] px-1">Custos</TabsTrigger>
@@ -650,7 +651,22 @@ function BemDetalhePage() {
         </TabsList>
 
 
+
+        <TabsContent value="simulacao" className="space-y-4 pt-2">
+          {ativo ? (
+            <SimuladorFinanciamento
+              financiamento={ativo}
+              saldoAtual={resumo?.saldoDevedorEstimado || 0}
+            />
+          ) : (
+            <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+              Este bem não possui um financiamento ativo para simular.
+            </div>
+          )}
+        </TabsContent>
+
         <TabsContent value="detalhes" className="space-y-3">
+
           {financiamentos.length === 0 ? (
             <div className="rounded-xl border p-4 text-center">
               <p className="text-sm text-muted-foreground">Nenhum financiamento cadastrado.</p>
