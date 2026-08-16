@@ -571,7 +571,7 @@ export async function criarPagamento(
       .select("id")
       .eq("financiamento_id", payload.financiamento_id)
       .eq("numero_parcela", payload.numero_parcela)
-      .eq("data_pagamento", payload.data_pagamento)
+      .eq("data_pagamento", payload.data_pagamento || "")
       .maybeSingle();
     
     if (existente) {
@@ -618,7 +618,7 @@ export async function criarAmortizacao(
       .select("id")
       .eq("financiamento_id", payload.financiamento_id)
       .eq("valor", payload.valor)
-      .eq("data", payload.data)
+      .eq("data", payload.data || "")
       .maybeSingle();
     
     if (existente) {
