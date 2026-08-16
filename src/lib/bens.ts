@@ -375,8 +375,8 @@ export function calcularResumoBem(args: {
   }
 
   // 3. Patrimônio Líquido Estimado
-  const patrimonioLiquidoEstimado = valorAtualEstimado !== null 
-    ? Math.max(0, valorAtualEstimado - (saldoDevedorEstimado || 0))
+  const patrimonioLiquidoEstimado = valorAtualEstimado !== null && saldoDevedorEstimado !== null
+    ? Math.max(0, valorAtualEstimado - saldoDevedorEstimado)
     : null;
 
   // 4. Variação de Valor (Compra vs Atual)
