@@ -29,8 +29,9 @@ REGRAS:
 3. Taxa nominal anual = mensal * 12. Efetiva anual = (1+i)^12 - 1.
 4. Identifique o documento: Demonstrativo, Boleto, Evolução, Comprovante.
 5. Retorne "confianca": "alta" | "media" | "baixa" para cada campo principal.
+6. TAXAS AMBÍGUAS: Se aparecer apenas um percentual (ex: "10,5%") sem indicar se é anual/mensal ou nominal/efetiva, NÃO decida silenciosamente. Defina os campos correspondentes como null e explique na "observacao" que a taxa é ambígua e requer revisão manual.
 
-PRIVACIDADE: Omita CPFs, números completos de conta/cartão e endereços.`;
+PRIVACIDADE: Omita CPFs, números completos de conta/cartão e endereços. NUNCA retorne o conteúdo integral do documento, apenas os campos solicitados.`;
 
 const TOOL_DEF = {
   type: "function" as const,
