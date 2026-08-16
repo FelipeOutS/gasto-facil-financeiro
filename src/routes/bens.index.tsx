@@ -326,8 +326,18 @@ function BensPage() {
             <Skeleton className="h-24 w-full rounded-xl" />
           </>
         ) : visiveis.length === 0 ? (
-          <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-            Nenhum bem cadastrado ainda.
+          <div className="rounded-3xl border border-dashed p-10 text-center flex flex-col items-center justify-center bg-card/50">
+            <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <Landmark className="h-8 w-8" />
+            </div>
+            <h3 className="text-lg font-bold">Meus Bens & Financiamentos</h3>
+            <p className="mt-2 text-sm text-muted-foreground max-w-[280px] mx-auto">
+              Cadastre seus imóveis e veículos para acompanhar financiamento, parcelas, amortizações, custos e evolução do patrimônio.
+            </p>
+            <Button className="mt-6 gap-2 rounded-2xl" onClick={() => setOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Adicionar meu primeiro bem
+            </Button>
           </div>
         ) : (
           visiveis.map((b) => (

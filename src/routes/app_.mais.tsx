@@ -9,6 +9,7 @@ import {
   LogOut,
   Sparkles,
   UserRound,
+  Landmark,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -40,6 +41,7 @@ export const Route = createFileRoute("/app_/mais")({
 
 const PERSONAL_ITEMS: NavLeaf[] = [
   { to: "/app/perfil", labelKey: "perfilMobile", descKey: "perfilMobile", icon: UserRound },
+  { to: "/bens", labelKey: "bens", descKey: "bens", icon: Landmark },
   { to: "/app/idioma", labelKey: "idioma", descKey: "idioma", icon: Languages },
 ];
 
