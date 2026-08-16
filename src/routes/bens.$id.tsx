@@ -374,10 +374,21 @@ function BemDetalhePage() {
 
   const timelineCronologica = useMemo(() => {
     if (!bem) return [];
-    const eventos: Array<{ data: string; tipo: string; label: string; valor?: number; obs?: string }> = [];
+    const eventos: Array<{
+      data: string;
+      tipo: string;
+      label: string;
+      valor?: number;
+      obs?: string;
+    }> = [];
 
     if (bem.data_aquisicao) {
-      eventos.push({ data: bem.data_aquisicao, tipo: "compra", label: "Aquisição do bem", valor: Number(bem.valor_aquisicao) });
+      eventos.push({
+        data: bem.data_aquisicao,
+        tipo: "compra",
+        label: "Aquisição do bem",
+        valor: Number(bem.valor_aquisicao),
+      });
     }
 
     pagamentos.forEach((p) =>
@@ -439,9 +450,9 @@ function BemDetalhePage() {
       }),
     );
 
-
     return eventos.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
   }, [bem, pagamentos, amortizacoes, custos, gastos, historicoValor, historicoSaldo]);
+
 
 
   if (loading) {
