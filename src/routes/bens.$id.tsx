@@ -656,8 +656,8 @@ function BemDetalhePage() {
 
         <TabsContent value="simulacao" className="space-y-4 pt-2">
           {!ativo ? (
-            <Card className="border-dashed">
-              <CardContent className="pt-6">
+            <UICard className="border-dashed">
+              <UICardContent className="pt-6">
                 <div className="flex flex-col items-center text-center space-y-3">
                   <Info className="h-8 w-8 text-muted-foreground" />
                   <h3 className="font-medium text-sm">Sem financiamento ativo</h3>
@@ -665,8 +665,8 @@ function BemDetalhePage() {
                     Para simular amortizações, você precisa cadastrar um financiamento ativo para este bem na aba <strong>Resumo</strong>.
                   </p>
                 </div>
-              </CardContent>
-            </Card>
+              </UICardContent>
+            </UICard>
           ) : (
             <SimuladorFinanciamento
               financiamento={ativo}
@@ -674,6 +674,7 @@ function BemDetalhePage() {
             />
           )}
         </TabsContent>
+
 
 
         <TabsContent value="detalhes" className="space-y-3">
