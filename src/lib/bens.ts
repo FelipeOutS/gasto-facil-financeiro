@@ -1,0 +1,524 @@
+import { supabase } from "@/integrations/supabase/client";
+
+/**
+ * MEUS BENS & FINANCIAMENTOS — V1
+ *
+ * Regras de contabilização (documentadas e cobertas por testes):
+ *
+ * 1. ENTRADA — vive exclusivamente em `bens.entrada_total` (com a composição
+ *    em recursos próprios / FGTS / outros). A entrada NUNCA é lançada em
+ *    `bens_custos_aquisicao`; aquela tabela guarda apenas custos ADICIONAIS
+ *    (ITBI, registro, escritura, avaliação, corretagem, documentação…).
+ *    Isso elimina a dupla contabilização da entrada.
+ *
+ * 2. CONTAGEM ÚNICA — pagamentos, amortizações e custos guardam um snapshot
+ *    do valor do evento. Quando o registro possui `gastoId`, o desembolso
+ *    financeiro é contabilizado UMA única vez: usamos o valor do gasto
+ *    vinculado (fonte de caixa) e o snapshot serve como histórico. Nunca
+ *    somamos `valor do evento + valor do gasto`.
+ *
+ * 3. GASTO EDITADO DEPOIS — se o gasto vinculado for editado, o total
+ *    desembolsado passa a refletir o novo valor do gasto (fonte de caixa),
+ *    enquanto o snapshot do evento permanece intacto para auditoria. A UI
+ *    sinaliza a divergência entre snapshot e gasto.
+ *
+ * 4. GASTO EXCLUÍDO — a FK usa ON DELETE SET NULL: o evento sobrevive e
+ *    volta a ser contabilizado pelo snapshot.
+ *
+ * 5. INTEGRIDADE DE CONTA — todos os vínculos (bem_id, financiamento_id,
+ *    gasto_id) usam FK composta com `user_id`, então o banco recusa
+ *    qualquer tentativa de apontar para registro de outra conta.
+ */
+
+export type TipoBem = "imovel" | "veiculo";
+export type StatusBem = "ativo" | "arquivado" | "vendido";
+
+export const TIPOS_BEM: Array<{ id: TipoBem; label: string }> = [
+  { id: "imovel", label: "Imóvel" },
+  { id: "veiculo", label: "Veículo" },
+];
+
+export type StatusFinanciamento = "ativo" | "liquidado" | "portado" | "refinanciado" | "cancelado";
+
+export const STATUS_FINANCIAMENTO: Array<{ id: StatusFinanciamento; label: string }> = [
+  { id: "ativo", label: "Ativo" },
+  { id: "liquidado", label: "Liquidado" },
+  { id: "portado", label: "Portado" },
+  { id: "refinanciado", label: "Refinanciado" },
+  { id: "cancelado", label: "Cancelado" },
+];
+
+export type TipoCustoAquisicao =
+  | "itbi"
+  | "registro"
+  | "escritura"
+  | "avaliacao"
+  | "corretagem"
+  | "documentacao"
+  | "vistoria"
+  | "transferencia"
+  | "outros";
+
+export const TIPOS_CUSTO_AQUISICAO: Array<{ id: TipoCustoAquisicao; label: string }> = [
+  { id: "itbi", label: "ITBI" },
+  { id: "registro", label: "Registro" },
+  { id: "escritura", label: "Escritura" },
+  { id: "avaliacao", label: "Avaliação" },
+  { id: "corretagem", label: "Corretagem" },
+  { id: "documentacao", label: "Documentação" },
+  { id: "vistoria", label: "Vistoria" },
+  { id: "transferencia", label: "Transferência" },
+  { id: "outros", label: "Outros" },
+];
+
+export type Bem = {
+  id: string;
+  user_id: string;
+  tipo: TipoBem;
+  nome: string;
+  descricao?: string | null;
+  status: StatusBem;
+  data_aquisicao?: string | null;
+  valor_aquisicao?: number | null;
+  valor_mercado?: number | null;
+  entrada_total: number;
+  entrada_recursos_proprios: number;
+  entrada_fgts: number;
+  entrada_outros: number;
+  endereco?: string | null;
+  area_m2?: number | null;
+  matricula?: string | null;
+  marca?: string | null;
+  modelo?: string | null;
+  ano_modelo?: number | null;
+  placa?: string | null;
+  observacao?: string | null;
+  arquivado_em?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Financiamento = {
+  id: string;
+  user_id: string;
+  bem_id: string;
+  instituicao?: string | null;
+  modalidade?: string | null;
+  sistema_amortizacao?: "sac" | "price" | "outro" | null;
+  valor_financiado: number;
+  taxa_juros_anual?: number | null;
+  prazo_meses?: number | null;
+  primeiro_vencimento?: string | null;
+  dia_vencimento?: number | null;
+  saldo_devedor_informado?: number | null;
+  saldo_devedor_data?: string | null;
+  status: StatusFinanciamento;
+  motivo_encerramento?: string | null;
+  encerrado_em?: string | null;
+  substituido_por_id?: string | null;
+  observacao?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PagamentoBem = {
+  id: string;
+  user_id: string;
+  bem_id: string;
+  financiamento_id?: string | null;
+  numero_parcela?: number | null;
+  competencia?: string | null;
+  data_pagamento: string;
+  valor_pago: number;
+  valor_juros?: number | null;
+  valor_amortizacao?: number | null;
+  valor_seguro?: number | null;
+  valor_taxas?: number | null;
+  gasto_id?: string | null;
+  observacao?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AmortizacaoBem = {
+  id: string;
+  user_id: string;
+  bem_id: string;
+  financiamento_id?: string | null;
+  data: string;
+  valor: number;
+  origem_recurso?: "proprio" | "fgts" | "terceiros" | "outros" | null;
+  efeito?: "reduz_prazo" | "reduz_parcela" | null;
+  gasto_id?: string | null;
+  observacao?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CustoAquisicaoBem = {
+  id: string;
+  user_id: string;
+  bem_id: string;
+  tipo: TipoCustoAquisicao;
+  descricao?: string | null;
+  valor: number;
+  data?: string | null;
+  gasto_id?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+// ---------------------------------------------------------------------------
+// Cálculos puros (sem I/O) — testáveis
+// ---------------------------------------------------------------------------
+
+export type EventoFinanceiro = { valor: number; gastoId?: string | null };
+
+/** Mapa `gastoId -> valor atual do gasto`. */
+export type ValoresGastos = Record<string, number>;
+
+/**
+ * Valor efetivo de desembolso de um evento. Contagem única:
+ * com gasto vinculado, o caixa vem do gasto; sem vínculo, do snapshot.
+ */
+export function valorEfetivoDesembolso(ev: EventoFinanceiro, gastos: ValoresGastos = {}): number {
+  if (ev.gastoId && Object.prototype.hasOwnProperty.call(gastos, ev.gastoId)) {
+    return gastos[ev.gastoId] ?? 0;
+  }
+  return ev.valor ?? 0;
+}
+
+/** true quando o gasto vinculado foi editado e divergiu do snapshot do evento. */
+export function snapshotDivergente(ev: EventoFinanceiro, gastos: ValoresGastos = {}): boolean {
+  if (!ev.gastoId || !Object.prototype.hasOwnProperty.call(gastos, ev.gastoId)) return false;
+  return Math.abs((gastos[ev.gastoId] ?? 0) - (ev.valor ?? 0)) > 0.005;
+}
+
+export type ResumoBem = {
+  entradaTotal: number;
+  entradaComposicaoConfere: boolean;
+  totalCustosAquisicao: number;
+  totalParcelasPagas: number;
+  qtdParcelasPagas: number;
+  totalAmortizacoes: number;
+  /** entrada + custos adicionais + parcelas + amortizações (cada evento uma única vez) */
+  totalDesembolsado: number;
+  /** null = não informado (sem dados suficientes) */
+  saldoDevedorEstimado: number | null;
+  parcelasRestantes: number | null;
+  percentualPago: number | null;
+};
+
+export function calcularResumoBem(args: {
+  bem: Pick<
+    Bem,
+    "entrada_total" | "entrada_recursos_proprios" | "entrada_fgts" | "entrada_outros"
+  >;
+  financiamento?: Financiamento | null;
+  pagamentos: PagamentoBem[];
+  amortizacoes: AmortizacaoBem[];
+  custos: CustoAquisicaoBem[];
+  valoresGastos?: ValoresGastos;
+}): ResumoBem {
+  const { bem, financiamento, pagamentos, amortizacoes, custos } = args;
+  const g = args.valoresGastos ?? {};
+
+  const entradaTotal = Number(bem.entrada_total ?? 0);
+  const composicao =
+    Number(bem.entrada_recursos_proprios ?? 0) +
+    Number(bem.entrada_fgts ?? 0) +
+    Number(bem.entrada_outros ?? 0);
+  const entradaComposicaoConfere =
+    composicao === 0 || Math.abs(composicao - entradaTotal) <= 0.005;
+
+  const totalCustosAquisicao = custos.reduce(
+    (s, c) => s + valorEfetivoDesembolso({ valor: Number(c.valor), gastoId: c.gasto_id }, g),
+    0,
+  );
+  const totalParcelasPagas = pagamentos.reduce(
+    (s, p) => s + valorEfetivoDesembolso({ valor: Number(p.valor_pago), gastoId: p.gasto_id }, g),
+    0,
+  );
+  const totalAmortizacoes = amortizacoes.reduce(
+    (s, a) => s + valorEfetivoDesembolso({ valor: Number(a.valor), gastoId: a.gasto_id }, g),
+    0,
+  );
+
+  const totalDesembolsado =
+    entradaTotal + totalCustosAquisicao + totalParcelasPagas + totalAmortizacoes;
+
+  let saldoDevedorEstimado: number | null = null;
+  if (financiamento) {
+    const principalPago = pagamentos.reduce((s, p) => s + Number(p.valor_amortizacao ?? 0), 0);
+    const base =
+      financiamento.saldo_devedor_informado != null
+        ? Number(financiamento.saldo_devedor_informado)
+        : Number(financiamento.valor_financiado ?? 0) - principalPago - totalAmortizacoes;
+    saldoDevedorEstimado = Math.max(0, Number(base.toFixed(2)));
+  }
+
+  const prazo = financiamento?.prazo_meses ?? null;
+  const parcelasRestantes = prazo != null ? Math.max(0, prazo - pagamentos.length) : null;
+  const percentualPago =
+    financiamento && Number(financiamento.valor_financiado ?? 0) > 0 && saldoDevedorEstimado != null
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            ((Number(financiamento.valor_financiado) - saldoDevedorEstimado) /
+              Number(financiamento.valor_financiado)) *
+              100,
+          ),
+        )
+      : null;
+
+  return {
+    entradaTotal,
+    entradaComposicaoConfere,
+    totalCustosAquisicao,
+    totalParcelasPagas,
+    qtdParcelasPagas: pagamentos.length,
+    totalAmortizacoes,
+    totalDesembolsado,
+    saldoDevedorEstimado,
+    parcelasRestantes,
+    percentualPago,
+  };
+}
+
+/** Apenas um financiamento ativo por bem — histórico preservado. */
+export function financiamentoAtivo(lista: Financiamento[]): Financiamento | null {
+  return lista.find((f) => f.status === "ativo") ?? null;
+}
+
+/** Bem com histórico não pode ser excluído: o caminho é arquivar. */
+export function podeExcluirBem(args: {
+  pagamentos: number;
+  amortizacoes: number;
+  custos: number;
+  gastos: number;
+  recorrencias: number;
+}): boolean {
+  return (
+    args.pagamentos === 0 &&
+    args.amortizacoes === 0 &&
+    args.custos === 0 &&
+    args.gastos === 0 &&
+    args.recorrencias === 0
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Acesso a dados (RLS por auth.uid(); FK composta garante mesma conta)
+// ---------------------------------------------------------------------------
+
+export async function listarBens(userId: string): Promise<Bem[]> {
+  const { data, error } = await supabase
+    .from("bens" as never)
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as Bem[];
+}
+
+export async function obterBem(id: string): Promise<Bem | null> {
+  const { data, error } = await supabase
+    .from("bens" as never)
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return (data ?? null) as unknown as Bem | null;
+}
+
+export async function criarBem(userId: string, payload: Partial<Bem>): Promise<Bem> {
+  const { data, error } = await supabase
+    .from("bens" as never)
+    .insert({ ...payload, user_id: userId } as never)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as unknown as Bem;
+}
+
+export async function atualizarBem(id: string, patch: Partial<Bem>): Promise<void> {
+  const { error } = await supabase
+    .from("bens" as never)
+    .update(patch as never)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+/** V1: remover = arquivar. Preserva pagamentos, amortizações, custos e gastos. */
+export async function arquivarBem(id: string): Promise<void> {
+  await atualizarBem(id, {
+    status: "arquivado",
+    arquivado_em: new Date().toISOString(),
+  } as Partial<Bem>);
+}
+
+export async function reativarBem(id: string): Promise<void> {
+  await atualizarBem(id, { status: "ativo", arquivado_em: null } as Partial<Bem>);
+}
+
+/**
+ * Exclusão definitiva. O banco recusa (trigger) quando existe histórico —
+ * nesse caso o usuário deve arquivar.
+ */
+export async function excluirBemSemHistorico(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("bens" as never)
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function listarFinanciamentos(bemId: string): Promise<Financiamento[]> {
+  const { data, error } = await supabase
+    .from("bens_financiamentos" as never)
+    .select("*")
+    .eq("bem_id", bemId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as Financiamento[];
+}
+
+export async function criarFinanciamento(
+  userId: string,
+  bemId: string,
+  payload: Partial<Financiamento>,
+): Promise<Financiamento> {
+  const { data, error } = await supabase
+    .from("bens_financiamentos" as never)
+    .insert({ ...payload, user_id: userId, bem_id: bemId } as never)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as unknown as Financiamento;
+}
+
+export async function atualizarFinanciamento(
+  id: string,
+  patch: Partial<Financiamento>,
+): Promise<void> {
+  const { error } = await supabase
+    .from("bens_financiamentos" as never)
+    .update(patch as never)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function listarPagamentos(bemId: string): Promise<PagamentoBem[]> {
+  const { data, error } = await supabase
+    .from("bens_pagamentos" as never)
+    .select("*")
+    .eq("bem_id", bemId)
+    .order("data_pagamento", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as PagamentoBem[];
+}
+
+export async function criarPagamento(
+  userId: string,
+  bemId: string,
+  payload: Partial<PagamentoBem>,
+): Promise<PagamentoBem> {
+  const { data, error } = await supabase
+    .from("bens_pagamentos" as never)
+    .insert({ ...payload, user_id: userId, bem_id: bemId } as never)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as unknown as PagamentoBem;
+}
+
+export async function excluirPagamento(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("bens_pagamentos" as never)
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function listarAmortizacoes(bemId: string): Promise<AmortizacaoBem[]> {
+  const { data, error } = await supabase
+    .from("bens_amortizacoes" as never)
+    .select("*")
+    .eq("bem_id", bemId)
+    .order("data", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as AmortizacaoBem[];
+}
+
+export async function criarAmortizacao(
+  userId: string,
+  bemId: string,
+  payload: Partial<AmortizacaoBem>,
+): Promise<AmortizacaoBem> {
+  const { data, error } = await supabase
+    .from("bens_amortizacoes" as never)
+    .insert({ ...payload, user_id: userId, bem_id: bemId } as never)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as unknown as AmortizacaoBem;
+}
+
+export async function excluirAmortizacao(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("bens_amortizacoes" as never)
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function listarCustosAquisicao(bemId: string): Promise<CustoAquisicaoBem[]> {
+  const { data, error } = await supabase
+    .from("bens_custos_aquisicao" as never)
+    .select("*")
+    .eq("bem_id", bemId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as CustoAquisicaoBem[];
+}
+
+export async function criarCustoAquisicao(
+  userId: string,
+  bemId: string,
+  payload: Partial<CustoAquisicaoBem>,
+): Promise<CustoAquisicaoBem> {
+  const { data, error } = await supabase
+    .from("bens_custos_aquisicao" as never)
+    .insert({ ...payload, user_id: userId, bem_id: bemId } as never)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as unknown as CustoAquisicaoBem;
+}
+
+export async function excluirCustoAquisicao(id: string): Promise<void> {
+  const { error } = await supabase
+    .from("bens_custos_aquisicao" as never)
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+}
+
+/** Gastos vinculados ao bem (fonte de caixa + rastreabilidade). */
+export async function listarGastosDoBem(
+  bemId: string,
+): Promise<Array<{ id: string; descricao: string; valor: number; data: string }>> {
+  const { data, error } = await supabase
+    .from("gastos" as never)
+    .select("id, descricao, valor, data")
+    .eq("bem_id", bemId)
+    .order("data", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as Array<{
+    id: string;
+    descricao: string;
+    valor: number;
+    data: string;
+  }>;
+}
