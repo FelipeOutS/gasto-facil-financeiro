@@ -1,53 +1,34 @@
-# Auditoria UX e Organização Geral — Gasto Inteligente
+# Plano de Organização de UX e Navegação - Fase 1
 
-Quero agora realizar uma auditoria COMPLETA da experiência atual do Gasto Inteligente.
+Esta fase foca na consolidação de rotas redundantes, limpeza da navegação mobile e implementação do "Smart Menu" baseado no perfil do usuário (PF/MEI/Empresa).
 
-## Diretrizes P0 (Bloqueadores)
-- **NÃO** implementar novas funcionalidades.
-- **NÃO** redesenhar o sistema.
-- **NÃO** remover páginas, alterar banco, planos ou regras financeiras.
-- **FOCO**: Diagnóstico detalhado da experiência REAL do usuário.
+## Alterações Estruturais
 
-## Escopo da Auditoria
+### 1. Smart Menu por Perfil
+- Alterar `src/lib/nav-groups.ts` para que a função `filterVisibleGroups` também filtre pelo tipo de cadastro do usuário.
+- O grupo "Empresa" (`id: "empresa"`) será ocultado para usuários com `tipo_cadastro === "pessoa_fisica"`.
 
-### 1. Navegação e Inventário
-- Mapear Sidebar Desktop (Grupos e itens).
-- Mapear Mobile (Bottom Nav, "Mais", Ajustes).
-- Cruzar Rotas x Menu: Identificar rotas escondidas, duplicadas ou sem entrada clara.
-- **Tabela de Rotas**: ROTA | FUNÇÃO | ACESSO | DESCOBRÍVEL? | MANTER? | OBS
+### 2. Unificação de Rotas de Perfil
+- A rota canônica para visualização será `/conta`.
+- A rota canônica para edição será `/perfil`.
+- Transformar `/app/perfil` (que hoje é um hub de atalhos mobile) em um redirect para `/conta`.
+- O menu lateral e o menu "Mais" (mobile) apontarão diretamente para `/conta`.
 
-### 2. Funcionalidades "Escondidas" vs. Visíveis
-- Procurar módulos que existem mas não têm link (ex: Meus Bens antes da V1).
-- Identificar recursos anunciados mas indisponíveis (Beta, feature flags, planos).
-- Checar consistência entre Desktop e Mobile.
+### 3. Limpeza do Menu "Mais" (Mobile)
+- Remover itens redundantes em `src/components/MobileMoreSheet.tsx` e `src/routes/app_.mais.tsx` (como Idioma e Aparência, que já estão em Ajustes).
+- Manter apenas o essencial: Atalhos principais e acesso ao Hub de Ajustes.
 
-### 3. UX e Jornadas
-- Testar 10 jornadas principais (Registro de gasto, importação, metas, bens, etc.).
-- Avaliar estados vazios (Empty States) para módulos principais.
-- Analisar duplicação de caminhos (Perfil vs. Conta vs. Ajustes).
-- Avaliar nomes das funções (Claro, Pode Melhorar, Confuso).
+### 4. Renomeações e Ajustes Visuais
+- Renomear grupo "Insights" para "Análises e Relatórios" via i18n (`src/i18n/locales/pt/nav.json`).
+- Corrigir a posição do `MobileNotificationsFab` para não sobrepor botões em formulários.
 
-### 4. Dashboards e Quick Actions
-- Auditar relevância dos cards do Dashboard.
-- Mapear Quick Actions (Ações Rápidas) e sugerir melhorias.
+## Detalhes Técnicos
 
-### 5. Consistência e Acessibilidade
-- Verificar ícones, headers, botões e breadcrumbs.
-- Testar navegação profunda e comportamento do botão "Voltar".
-- Auditoria de acessibilidade básica (Aria labels, contraste, targets mobile).
+- **Redirects**: Implementar `beforeLoad` com `throw redirect` em `src/routes/app_.perfil.tsx`.
+- **Lógica de Filtro**: Injetar `profile.tipo_cadastro` na chamada de `filterVisibleGroups` no `DesktopSidebar` e `MobileMoreSheet`.
+- **CSS/Layout**: Ajustar o `z-index` ou o `bottom` do FAB de notificações em páginas de formulário.
 
-## Metodologia de Auditoria
-- Usar Playwright para simular usuário real em Desktop e Mobile (390x844).
-- Não confiar apenas em documentação antiga; validar código atual.
-
-## Entregável: Relatório Final
-1. Resumo Executivo.
-2. Mapeamento de Navegação e Rotas.
-3. Análise de Funcionalidades (Escondidas/Duplicadas).
-4. Avaliação de Jornadas e UX Mobile/Desktop.
-5. Lista de Problemas P0-P3.
-6. Proposta de Navegação (Conservadora vs. Ideal).
-7. Top 5 mudanças sugeridas.
-
----
-**IMPORTANTE**: Esta tarefa encerra com o RELATÓRIO. Nenhuma alteração de código deve ser feita antes da aprovação do diagnóstico.
+## Verificação
+- Validar se um usuário PF não vê o menu "Empresa".
+- Validar se ao clicar em "Meu perfil" no mobile, o usuário cai em `/conta`.
+- Validar se o FAB de notificações não obstrui o botão de salvar no formulário de gastos.
