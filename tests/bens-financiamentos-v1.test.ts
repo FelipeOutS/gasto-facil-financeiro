@@ -148,6 +148,31 @@ describe("BENS V1 — contabilização", () => {
     expect(r.parcelasRestantes).toBe(359);
   });
 
+  it("saldo informado é foto na data: só desconta eventos posteriores", () => {
+    const r = calcularResumoBem({
+      bem,
+      financiamento: fin({
+        valor_financiado: 360000,
+        prazo_meses: 360,
+        saldo_devedor_informado: 360000,
+        saldo_devedor_data: "2026-08-01",
+      }),
+      pagamentos: [
+        pag({ data_pagamento: "2026-07-10", valor_pago: 2200, valor_amortizacao: 300 }),
+        pag({ data_pagamento: "2026-09-10", valor_pago: 2200, valor_amortizacao: 400 }),
+      ],
+      amortizacoes: [
+        amo({ data: "2026-07-15", valor: 5000 }),
+        amo({ data: "2026-10-15", valor: 10000 }),
+      ],
+      custos: [],
+    });
+    // 360000 − 400 (parcela pós-saldo) − 10000 (amortização pós-saldo)
+    expect(r.saldoDevedorEstimado).toBe(349600);
+  });
+
+
+
   it("sem financiamento, saldo devedor é null (não informado)", () => {
     const r = calcularResumoBem({ bem, pagamentos: [], amortizacoes: [], custos: [] });
     expect(r.saldoDevedorEstimado).toBeNull();
