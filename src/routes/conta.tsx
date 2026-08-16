@@ -217,6 +217,18 @@ function ContaPage() {
             {t("actions.security")}
           </Link>
         </Button>
+        <Button asChild variant="outline" size="lg" className="h-11 w-full rounded-2xl">
+          <Link to="/app/privacidade">
+            <ShieldCheck className="mr-2 h-4 w-4" />
+            {tSettings("sections.privacy.title")}
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="lg" className="h-11 w-full rounded-2xl">
+          <Link to="/app/ajustes">
+            <Settings2 className="mr-2 h-4 w-4" />
+            {t("profileShortcuts.settings")}
+          </Link>
+        </Button>
       </div>
 
       <LanguageSection />
