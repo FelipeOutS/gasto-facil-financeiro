@@ -368,9 +368,10 @@ export function calcularResumoBem(args: {
       saldoDevedorEstimado = Math.max(0, Number((Number(financiamento.valor_financiado ?? 0) - principalPago - totalAmortizacoes).toFixed(2)));
     }
     
-    reducaoSaldoDevedorNominal = Number(financiamento.valor_financiado) - saldoDevedorEstimado;
+    reducaoSaldoDevedorNominal = Number(financiamento.valor_financiado) - (saldoDevedorEstimado ?? 0);
   } else {
-    saldoDevedorEstimado = 0;
+    saldoDevedorEstimado = null;
+    reducaoSaldoDevedorNominal = null;
   }
 
   // 3. Patrimônio Líquido Estimado
