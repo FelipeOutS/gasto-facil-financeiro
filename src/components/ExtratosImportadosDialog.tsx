@@ -337,7 +337,7 @@ export function ExtratosImportadosDialog({
 
           {selected && (
             <div className="border-t px-6 py-4 flex flex-wrap items-center justify-end gap-2 shrink-0">
-              {selected.status === "revertido" ? (
+              {selected.status === "revertido" || selected.status === "parcial" ? (
                 <Button
                   variant="outline"
                   onClick={() => setConfirmDeleteId(selected.id)}
