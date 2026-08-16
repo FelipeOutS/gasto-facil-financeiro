@@ -26,6 +26,7 @@ export function MobileShell({
   hideNav = false,
   unprotected = false,
   wide = false,
+  className,
 }: {
   children: ReactNode;
   hideNav?: boolean;
@@ -33,6 +34,7 @@ export function MobileShell({
   unprotected?: boolean;
   /** Use a wider container on desktop (good for dashboard with grids). */
   wide?: boolean;
+  className?: string;
 }) {
   const insidePersistent = useContext(PersistentShellContext);
 
@@ -44,7 +46,7 @@ export function MobileShell({
   const showNav = !hideNav;
 
   if (insidePersistent) {
-    return <>{children}</>;
+    return <div className={className}>{children}</div>;
   }
 
   const inner = (

@@ -141,8 +141,9 @@ export function DesktopSidebar() {
         NAV_GROUPS.filter((g) => !g.adminMasterOnly || isAdminMaster),
         can,
         isAdminMaster,
+        profile?.tipo_cadastro,
       ),
-    [isAdminMaster, can],
+    [isAdminMaster, can, profile?.tipo_cadastro],
   );
 
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
@@ -213,7 +214,15 @@ export function DesktopSidebar() {
   }
 
   function renderLeaf(item: NavLeaf) {
-    const { to, labelKey, icon: Icon } = item;
+    let { to, labelKey, icon: Icon } = item;
+
+    // Redirecionamento de Perfil para Conta
+    if (to === "/app/perfil") to = "/conta";
+    // Ajustes na sidebar deve apontar para Categorias se for o item do grupo conta,
+    // mas a rota canônica que o usuário quer é /categorias se entendi bem o redirect de 16/08.
+    // Porém o requisito 8 diz consolidar /categorias para /app/ajustes.
+    // Como /categorias já é redirect para /app/ajustes, vamos manter.
+
     const active = currentPath === to || currentPath.startsWith(to + "/");
     const showDot = to === "/contas-a-pagar" && alerta !== "nenhum";
     const routeRule = ROUTE_FEATURE[to];
@@ -477,15 +486,19 @@ export function DesktopSidebar() {
             <div className="mt-3 space-y-1">
               {groups.map((group) => {
                 const open = isOpen(group.id);
-                const hasActive = group.items.some(
-                  (it) => currentPath === it.to || currentPath.startsWith(it.to + "/"),
-                );
+                const isContaGroup = group.id === "conta";
+                const hasActive = group.items.some((it) => {
+                  const to = it.to === "/app/ajustes" && isContaGroup ? "/conta" : it.to;
+                  return currentPath === to || currentPath.startsWith(to + "/");
+                });
                 if (collapsed) {
                   // No accordion header when collapsed; just a thin divider + items
                   return (
                     <div key={group.id} className="rounded-xl">
                       <div aria-hidden className="my-2 mx-2 h-px bg-border/60" />
-                      <ul className="space-y-1">{group.items.map(renderLeaf)}</ul>
+                      <ul className="space-y-1">
+                        {group.items.map((item) => renderLeaf(item))}
+                      </ul>
                     </div>
                   );
                 }
@@ -510,7 +523,11 @@ export function DesktopSidebar() {
                         )}
                       />
                     </button>
-                    {open && <ul className="mt-1 space-y-1 pb-1">{group.items.map(renderLeaf)}</ul>}
+                    {open && (
+                      <ul className="mt-1 space-y-1 pb-1">
+                        {group.items.map((item) => renderLeaf(item))}
+                      </ul>
+                    )}
                   </div>
                 );
               })}

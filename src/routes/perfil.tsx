@@ -124,7 +124,7 @@ function PerfilPage() {
   }
 
   return (
-    <MobileShell>
+    <MobileShell className="[--notifications-fab-offset:80px]">
       <header className="flex items-center gap-3 pt-2">
         <Link
           to="/conta"

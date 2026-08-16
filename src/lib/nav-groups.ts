@@ -1,3 +1,4 @@
+import { TipoCadastro, tipoEfetivo } from "./profile-utils";
 import {
   List,
   ShoppingCart,
@@ -214,9 +215,15 @@ export function filterVisibleGroups(
   groups: NavGroup[],
   can: (f: FeatureKey) => boolean,
   isAdminMaster: boolean,
+  tipoCadastro?: TipoCadastro,
 ): NavGroup[] {
   if (isAdminMaster) return groups;
   return groups
+    .filter((g) => {
+      // Ocultar grupo "Empresa" para Pessoa Física
+      if (g.id === "empresa" && tipoCadastro === "pessoa_fisica") return false;
+      return true;
+    })
     .map((g) => ({
       ...g,
       items: g.items.filter((it) => !it.feature || can(it.feature)),
