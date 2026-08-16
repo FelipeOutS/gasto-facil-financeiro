@@ -7,15 +7,17 @@ import { simularFinanciamento, taxaAnualParaMensal } from '../src/lib/financas';
  * Cenário Referência:
  * Valor: R$ 300.000,00
  * Prazo: 360 meses
- * Taxa: 10% a.a. -> Mensal = (1 + 0.10)^(1/12) - 1 ≈ 0.00797414 (0.7974%)
+ * Taxa: 10% a.a. -> MENSAL SIMPLES (como bancos costumam fazer na simulação base)
+ * 10 / 12 = 0.833333% ao mês (0.00833333)
  */
 
 describe('Validação Matemática Independente V3 (SAC & Price)', () => {
   const taxaAnual = 10;
-  const taxaMensal = taxaAnualParaMensal(taxaAnual);
+  const taxaMensal = (taxaAnual / 100) / 12; // TAXA MENSAL NOMINAL (PROPORCIONAL)
   const saldoInicial = 300000;
   const prazoTotal = 360;
   const TOLERANCIA = 0.05; // 5 centavos de tolerância para arredondamentos acumulados
+
 
   describe('Cenário SAC - R$ 300k, 360 meses, 10% aa', () => {
     const simulacao = simularFinanciamento({
