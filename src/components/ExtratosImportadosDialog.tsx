@@ -117,17 +117,24 @@ export function ExtratosImportadosDialog({
   const handleRevert = async (batchId: string) => {
     setWorking(true);
     try {
-      const ok = await revertExtratoImportado(batchId);
-      if (ok) {
-        toast.success(t("toast.reverted"));
-      } else {
+      const res = await revertExtratoImportadoSeguro(batchId);
+      if (!res.ok) {
         toast.error(t("toast.revertFail"));
+        return;
+      }
+      if (res.mantidos > 0) {
+        toast.success(
+          t("toast.revertedPartial", { removed: res.removidos, kept: res.mantidos }),
+        );
+      } else {
+        toast.success(t("toast.reverted"));
       }
     } finally {
       setWorking(false);
       setConfirmRevertId(null);
     }
   };
+
 
   const handleDelete = async (batchId: string) => {
     setWorking(true);
