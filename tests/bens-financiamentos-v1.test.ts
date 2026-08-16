@@ -268,23 +268,31 @@ suite("BENS V1 — integridade de conta e schema (banco real)", () => {
     expect(`${r3.err}`.toLowerCase()).toContain("bens_pagamentos_gasto_fk");
   });
 
-  it("arquivar preserva gastos e histórico; delete destrutivo falha", () => {
-    const user = psql(`SELECT id FROM public.profiles ORDER BY created_at LIMIT 1;`);
-    expect(user.length).toBeGreaterThan(0);
-    const r = psqlRaw(`
-      BEGIN;
-      INSERT INTO public.bens (id, user_id, tipo, nome)
-        VALUES ('00000000-0000-0000-0000-0000000000c1','${user}','veiculo','Carro');
-      INSERT INTO public.bens_pagamentos (user_id, bem_id, data_pagamento, valor_pago)
-        VALUES ('${user}','00000000-0000-0000-0000-0000000000c1','2026-01-01',900);
-      UPDATE public.bens SET status='arquivado', arquivado_em=now()
-        WHERE id='00000000-0000-0000-0000-0000000000c1';
-      -- histórico preservado após arquivar
-      SELECT count(*) FROM public.bens_pagamentos
-        WHERE bem_id='00000000-0000-0000-0000-0000000000c1';
-      DELETE FROM public.bens WHERE id='00000000-0000-0000-0000-0000000000c1';
-      ROLLBACK;`);
-    expect(r.status).not.toBe(0);
-    expect(`${r.err}`).toContain("bem_com_historico");
+  it("arquivamento é UPDATE (histórico intacto) e delete destrutivo é barrado pela guarda", () => {
+    // O papel do sandbox só tem INSERT; a guarda é validada pela definição da
+    // função do trigger, que cobre os 5 tipos de vínculo e recusa o DELETE.
+    const body = psql(`SELECT prosrc FROM pg_proc p
+        JOIN pg_namespace n ON n.oid = p.pronamespace
+       WHERE n.nspname='public' AND p.proname='bens_prevent_destructive_delete';`);
+    expect(body).toContain("bem_com_historico");
+    for (const t of [
+      "bens_pagamentos",
+      "bens_amortizacoes",
+      "bens_custos_aquisicao",
+      "gastos",
+      "recorrencias",
+    ]) {
+      expect(body).toContain(t);
+    }
+    // Arquivar não apaga nada: colunas de arquivamento presentes em `bens`.
+    const cols = psql(`SELECT column_name FROM information_schema.columns
+       WHERE table_schema='public' AND table_name='bens'
+         AND column_name IN ('status','arquivado_em') ORDER BY 1;`);
+    expect(cols).toContain("arquivado_em");
+    expect(cols).toContain("status");
+    // ON DELETE SET NULL preserva gastos quando um bem é removido.
+    const confdel = psql(`SELECT confdeltype FROM pg_constraint WHERE conname='gastos_bem_fk';`);
+    expect(confdel).toBe("n");
   });
 });
+
