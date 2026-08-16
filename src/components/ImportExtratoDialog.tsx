@@ -244,6 +244,7 @@ export function ImportExtratoDialog({
   const { t: tc } = useTranslation("common");
   const premiumGate = usePremiumApiGate();
   const categorias = getCategorias();
+  const cartoes = getCartoes();
 
   const [step, setStep] = useState<Step>("upload");
   const [loading, setLoading] = useState(false);
@@ -253,6 +254,11 @@ export function ImportExtratoDialog({
   const [observacaoIA, setObservacaoIA] = useState<string | null>(null);
   const [resumoExtrato, setResumoExtrato] = useState<ExtratoResumo | null>(null);
   const [analyzingIdx, setAnalyzingIdx] = useState(0);
+  const [cartaoSelecionado, setCartaoSelecionado] = useState<string | null>(null);
+  const [sugestaoCartao, setSugestaoCartao] = useState<{
+    cartaoId: string;
+    motivo: string;
+  } | null>(null);
   const [result, setResult] = useState<{
     adicionados: number;
     duplicados: number;
@@ -274,7 +280,10 @@ export function ImportExtratoDialog({
     setResumoExtrato(null);
     setResult(null);
     setImportMeta(null);
+    setCartaoSelecionado(null);
+    setSugestaoCartao(null);
   }, []);
+
 
   const handleClose = useCallback(
     (v: boolean) => {
