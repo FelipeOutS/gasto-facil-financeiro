@@ -24,6 +24,7 @@ import {
   Plug,
   Shield,
   LockKeyhole,
+  Landmark,
   type LucideIcon,
 } from "lucide-react";
 import type { FeatureKey } from "@/lib/plans";
