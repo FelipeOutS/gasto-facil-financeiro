@@ -298,23 +298,6 @@ function BemDetalhePage() {
     }
   }
 
-  async function novoCusto() {
-    if (!user?.id) return;
-    setBusy(true);
-    try {
-      const criado = await criarCustoAquisicao(user.id, id, {
-        tipo: cus.tipo,
-        valor: parseBRLInput(cus.valor || "0"),
-        data: cus.data || null,
-      });
-      setCustos((prev) => [criado, ...prev]);
-      setCus({ ...cus, valor: "" });
-    } catch (e) {
-      toastFromError(e);
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function atualizarValorBem() {
     if (!user?.id) return;
