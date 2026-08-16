@@ -151,7 +151,36 @@ function calcularPMT(saldo: number, taxa: number, prazo: number): number {
   return Number((saldo * ((taxa * fator) / (fator - 1))).toFixed(2));
 }
 
-/** Converte taxa anual para mensal (juros compostos) */
+/**
+ * Converte taxas conforme o tipo e periodicidade
+ */
+export function converterTaxaParaMensal(
+  valor: number,
+  periodicidade: "mensal" | "anual" = "anual",
+  tipo: "nominal" | "efetiva" | "nao_definido" = "nominal"
+): number {
+  if (valor <= 0) return 0;
+  
+  // Taxa informada já é mensal
+  if (periodicidade === "mensal") {
+    return valor / 100;
+  }
+
+  // Taxa Anual
+  if (tipo === "efetiva") {
+    // mensal = (1 + anual)^(1/12) - 1
+    return Math.pow(1 + (valor / 100), 1 / 12) - 1;
+  }
+
+  // Taxa Anual Nominal (padrão legado ou explícito)
+  // mensal = anual / 12
+  return (valor / 100) / 12;
+}
+
+/** 
+ * Mantido por compatibilidade com código que ainda não foi migrado
+ * @deprecated Use converterTaxaParaMensal
+ */
 export function taxaAnualParaMensal(taxaAnual: number): number {
-  return (taxaAnual / 100) / 12;
+  return converterTaxaParaMensal(taxaAnual, "anual", "nominal");
 }
