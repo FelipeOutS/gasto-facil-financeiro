@@ -22,8 +22,7 @@ import { cn } from "@/lib/utils";
 const ROUTE_RULE = Object.fromEntries(PREMIUM_ROUTE_RULES.map((r) => [r.path, r]));
 
 const PERSONAL_ITEMS: NavLeaf[] = [
-  { to: "/app/perfil", labelKey: "perfilMobile", descKey: "perfilMobile", icon: UserRound },
-  { to: "/app/idioma", labelKey: "idioma", descKey: "idioma", icon: Languages },
+  { to: "/conta", labelKey: "perfilMobile", descKey: "perfilMobile", icon: UserRound },
 ];
 
 export function MobileMoreSheet({ trigger }: { trigger: ReactNode }) {
