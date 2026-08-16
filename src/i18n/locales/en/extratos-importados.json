@@ -21,12 +21,13 @@
     "receitas": "Income",
     "transferencias": "Internal transfers"
   },
-  "editedWarn_one": "<0>{{count}}</0> item from this batch was edited after the import. Reverting will delete it anyway.",
-  "editedWarn_other": "<0>{{count}}</0> items from this batch were edited after the import. Reverting will delete them anyway.",
+  "editedWarn_one": "<0>{{count}}</0> item in this batch was edited after the import. Reverting will keep that item.",
+  "editedWarn_other": "<0>{{count}}</0> items in this batch were edited after the import. Reverting will keep those items.",
   "status": {
     "revertido": "Reverted",
     "erro": "Error",
-    "importado": "Imported"
+    "importado": "Imported",
+    "parcial": "Partially reverted"
   },
   "actions": {
     "remove": "Remove from history",
@@ -34,9 +35,9 @@
   },
   "confirmRevert": {
     "title": "Revert import?",
-    "body": "This will delete <0>all</0> {{count}} entries created in this import (expenses, income, transfers and savings) and refresh Dashboard, Expenses, My income and Savings.",
-    "editedNote_one": "⚠ {{count}} item was edited after the import and will also be deleted.",
-    "editedNote_other": "⚠ {{count}} items were edited after the import and will also be deleted.",
+    "body": "This deletes the entries created by this import ({{count}} total) that you haven't edited since, and updates Dashboard, Expenses, Income and Savings.",
+    "editedNote_one": "⚠ {{count}} item was edited after the import and will be kept.",
+    "editedNote_other": "⚠ {{count}} items were edited after the import and will be kept.",
     "cancel": "Cancel",
     "doing": "Reverting...",
     "confirm": "Yes, revert"
@@ -52,6 +53,7 @@
     "reverted": "Import reverted. Dashboard, Expenses, My income and Savings were recalculated.",
     "revertFail": "Couldn't revert this import. Try again.",
     "removed": "Record removed from history.",
-    "removeFail": "Couldn't remove this record."
+    "removeFail": "Couldn't remove this record.",
+    "revertedPartial": "{{removed}} entries removed. {{kept}} items you edited were kept."
   }
 }
