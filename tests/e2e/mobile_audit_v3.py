@@ -1,6 +1,8 @@
 import asyncio
 import os
 import json
+import re
+
 from pathlib import Path
 from playwright.async_api import async_playwright
 
