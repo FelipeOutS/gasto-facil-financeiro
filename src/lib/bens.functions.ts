@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { 
   processarDocumentoFinanciamentoIA, 
   salvarRastroProcessamento 
@@ -15,7 +16,6 @@ const processarInputSchema = z.object({
   fileType: z.enum(["pdf", "imagem"])
 });
 
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 
 
