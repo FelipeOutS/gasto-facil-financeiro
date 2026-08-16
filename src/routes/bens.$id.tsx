@@ -364,6 +364,32 @@ function BemDetalhePage() {
     }
   }
 
+  async function novoCusto() {
+    if (!user?.id || !id) return;
+    if (!cus.valor) {
+      toast.error("Informe o valor do custo.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const payload = {
+        bem_id: id,
+        tipo: cus.tipo,
+        valor: parseBRLInput(cus.valor),
+        data: cus.data,
+      };
+      const novo = await criarCustoAquisicao(user.id, payload);
+      setCustos((prev) => [...prev, novo]);
+      setCus({ tipo: "itbi", valor: "", data: todayISO() });
+      toast.success("Custo adicionado.");
+    } catch (e) {
+      toastFromError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+
   const timelineCronologica = useMemo(() => {
     if (!bem) return [];
     const eventos: Array<{ data: string; tipo: string; label: string; valor?: number; obs?: string }> = [];
