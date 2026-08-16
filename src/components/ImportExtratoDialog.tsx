@@ -1458,6 +1458,7 @@ function ReviewStep({
             key={item.id}
             item={item}
             categorias={categorias}
+            cartoes={cartoes}
             onUpdate={(patch) => onUpdate(item.id, patch)}
             onRemove={() => onRemove(item.id)}
           />
@@ -1479,14 +1480,17 @@ function ResumoItem({ label, value }: { label: string; value: string }) {
 function ReviewCard({
   item,
   categorias,
+  cartoes,
   onUpdate,
   onRemove,
 }: {
   item: ReviewItem;
   categorias: ReturnType<typeof getCategorias>;
+  cartoes: ReturnType<typeof getCartoes>;
   onUpdate: (patch: Partial<ReviewItem>) => void;
   onRemove: () => void;
 }) {
+
   const { t } = useTranslation("import-extrato");
   const dupBadge =
     item.dupStatus === "duplicado_existente"
