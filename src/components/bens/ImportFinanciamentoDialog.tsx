@@ -15,8 +15,7 @@ import {
   FileText, 
   ImageIcon, 
   Loader2, 
-  AlertTriangle,
-  CheckCircle2,
+  Sparkles,
   X
 } from "lucide-react";
 import { toast } from "sonner";
@@ -54,6 +53,11 @@ export function ImportFinanciamentoDialog({
     setResult(null);
   }, []);
 
+  const handleClose = (v: boolean) => {
+    if (!v) reset();
+    onOpenChange(v);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) {
@@ -78,12 +82,14 @@ export function ImportFinanciamentoDialog({
       });
 
       const res = await processarDoc({
-        bemId,
-        financiamentoId,
-        fileData,
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type.includes("pdf") ? "pdf" : "imagem"
+        data: {
+          bemId,
+          financiamentoId,
+          fileData,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type.includes("pdf") ? "pdf" : "imagem"
+        }
       });
 
       setResult(res);
@@ -97,7 +103,7 @@ export function ImportFinanciamentoDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) reset(); onOpenChange(o); }}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className={cn("sm:max-w-[600px]", step === "review" && "sm:max-w-[900px]")}>
         <DialogHeader>
           <DialogTitle>Importar Financiamento</DialogTitle>
@@ -195,3 +201,4 @@ export function ImportFinanciamentoDialog({
     </Dialog>
   );
 }
+
