@@ -125,7 +125,10 @@ type ReviewItem = {
   observacao?: string;
   selecionado: boolean;
   dupStatus: DupStatus;
+  /** Cartão vinculado (faturas de cartão de crédito). */
+  cartaoId?: string;
 };
+
 
 type ExtratoResumo = {
   banco: string | null;
