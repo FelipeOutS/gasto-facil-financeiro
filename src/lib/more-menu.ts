@@ -7,6 +7,8 @@ import {
   Wallet,
   Repeat,
   TrendingUp,
+  Landmark,
+
   Crown,
   Settings2,
   Sparkles,
