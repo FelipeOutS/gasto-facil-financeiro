@@ -362,6 +362,69 @@ export type Database = {
           },
         ]
       }
+      bens_documentos_processados: {
+        Row: {
+          alteracoes_confirmadas: Json | null
+          bem_id: string
+          created_at: string | null
+          dados_extraidos: Json
+          data_importacao: string | null
+          financiamento_id: string | null
+          id: string
+          nome_arquivo: string | null
+          status: string | null
+          tamanho_arquivo: number | null
+          tipo_documento: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          alteracoes_confirmadas?: Json | null
+          bem_id: string
+          created_at?: string | null
+          dados_extraidos: Json
+          data_importacao?: string | null
+          financiamento_id?: string | null
+          id?: string
+          nome_arquivo?: string | null
+          status?: string | null
+          tamanho_arquivo?: number | null
+          tipo_documento?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          alteracoes_confirmadas?: Json | null
+          bem_id?: string
+          created_at?: string | null
+          dados_extraidos?: Json
+          data_importacao?: string | null
+          financiamento_id?: string | null
+          id?: string
+          nome_arquivo?: string | null
+          status?: string | null
+          tamanho_arquivo?: number | null
+          tipo_documento?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bens_doc_bem_fk"
+            columns: ["user_id", "bem_id"]
+            isOneToOne: false
+            referencedRelation: "bens"
+            referencedColumns: ["user_id", "id"]
+          },
+          {
+            foreignKeyName: "bens_doc_fin_fk"
+            columns: ["user_id", "financiamento_id"]
+            isOneToOne: false
+            referencedRelation: "bens_financiamentos"
+            referencedColumns: ["user_id", "id"]
+          },
+        ]
+      }
       bens_financiamentos: {
         Row: {
           bem_id: string
@@ -370,6 +433,7 @@ export type Database = {
           encerrado_em: string | null
           id: string
           instituicao: string | null
+          metadata: Json | null
           modalidade: string | null
           motivo_encerramento: string | null
           observacao: string | null
@@ -392,6 +456,7 @@ export type Database = {
           encerrado_em?: string | null
           id?: string
           instituicao?: string | null
+          metadata?: Json | null
           modalidade?: string | null
           motivo_encerramento?: string | null
           observacao?: string | null
@@ -414,6 +479,7 @@ export type Database = {
           encerrado_em?: string | null
           id?: string
           instituicao?: string | null
+          metadata?: Json | null
           modalidade?: string | null
           motivo_encerramento?: string | null
           observacao?: string | null
