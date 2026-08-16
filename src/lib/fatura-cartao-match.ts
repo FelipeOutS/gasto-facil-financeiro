@@ -20,7 +20,10 @@ function norm(s: string) {
 export function extrairFinaisCartao(texto: string): string[] {
   const out = new Set<string>();
   const t = texto || "";
-  for (const m of t.matchAll(/(?:final|term(?:ina|inado)?(?:\s+em)?|[*•·x]{2,}\s*)(\d{4})\b/gi)) {
+  for (const m of t.matchAll(
+    /(?:final|term(?:ina|inado)?(?:\s+em)?|[*•·x]{2,})[\s:.-]*(\d{4})\b/gi,
+  )) {
+
     if (m[1]) out.add(m[1]);
   }
   return [...out];
