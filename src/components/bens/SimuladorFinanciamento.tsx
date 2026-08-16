@@ -60,7 +60,7 @@ export function SimuladorFinanciamento({ financiamento, saldoAtual }: SimuladorF
     if (!hasMinData) return null;
     return simularFinanciamento({
       sistema: financiamento.sistema_amortizacao === "sac" ? "sac" : "price",
-      saldoDevedor: saldoAtual,
+      saldoDevedor: saldoAtual ?? 0,
       taxaMensal,
       prazoRestante: financiamento.prazo_meses || 0,
       dataInicio: new Date().toISOString().split('T')[0],
@@ -75,7 +75,7 @@ export function SimuladorFinanciamento({ financiamento, saldoAtual }: SimuladorF
 
     return simularFinanciamento({
       sistema: financiamento.sistema_amortizacao === "sac" ? "sac" : "price",
-      saldoDevedor: saldoAtual,
+      saldoDevedor: saldoAtual ?? 0,
       taxaMensal,
       prazoRestante: financiamento.prazo_meses || 0,
       dataInicio: new Date().toISOString().split('T')[0],
