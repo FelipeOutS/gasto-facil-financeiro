@@ -292,7 +292,7 @@ export function calcularResumoBem(args: {
     if (financiamento.saldo_devedor_informado != null) {
       // O saldo informado é uma foto na `data_saldo`: só descontamos o que
       // veio DEPOIS dessa data, senão contaríamos duas vezes.
-      const corte = financiamento.data_saldo ?? null;
+      const corte = financiamento.saldo_devedor_data ?? null;
       const depois = (d: string | null | undefined) => (corte ? (d ?? "") > corte : true);
       const principalPosSaldo = pagamentos
         .filter((p) => depois(p.data_pagamento))
