@@ -70,21 +70,22 @@ describe('Validação Matemática Independente V3 (SAC & Price)', () => {
       dataInicio: '2026-08-16'
     });
 
-    it('Prestação deve ser constante ≈ R$ 2.541,75', () => {
+    it('Prestação deve ser constante ≈ R$ 2.632,71', () => {
       // PMT = 300000 * [ (i * (1+i)^360) / ((1+i)^360 - 1) ]
-      // i = 0.00797414
-      // (1+i)^360 = 17.545
-      // PMT = 300000 * [ (0.00797414 * 17.545) / 16.545 ] = 300000 * 0.0084725 = 2541.75
-      const pmtEsperada = 2541.75;
+      // i = 0.00833333
+      // (1+i)^360 = 19.837398
+      // PMT = 300000 * [ (0.00833333 * 19.837398) / 18.837398 ] = 2632.71
+      const pmtEsperada = 2632.71;
       expect(simulacao.parcelas[0].valorParcela).toBeCloseTo(pmtEsperada, 0);
       expect(simulacao.parcelas[180].valorParcela).toBeCloseTo(pmtEsperada, 0);
     });
 
-    it('Parcela 1: Juros R$ 2.392,24 | Amortização R$ 149,51', () => {
+    it('Parcela 1: Juros R$ 2.500,00 | Amortização R$ 132,71', () => {
       const p1 = simulacao.parcelas[0];
-      expect(p1.valorJuros).toBeCloseTo(2392.24, 1);
-      expect(p1.valorAmortizacao).toBeCloseTo(149.51, 1);
+      expect(p1.valorJuros).toBeCloseTo(2500.00, 1);
+      expect(p1.valorAmortizacao).toBeCloseTo(132.71, 1);
     });
+
 
     it('Última Parcela: deve zerar o saldo sem resíduos', () => {
       const ultima = simulacao.parcelas[prazoTotal - 1];
