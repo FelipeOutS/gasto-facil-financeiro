@@ -134,6 +134,8 @@ function BemDetalhePage() {
   const [dialogSaldoOpen, setDialogSaldoOpen] = useState(false);
   const [formValor, setFormValor] = useState({ valor: "", data: todayISO(), obs: "" });
   const [formSaldo, setFormSaldo] = useState({ valor: "", data: todayISO(), obs: "" });
+  const [importDocOpen, setImportDocOpen] = useState(false);
+
 
   const carregar = useCallback(async () => {
     try {
