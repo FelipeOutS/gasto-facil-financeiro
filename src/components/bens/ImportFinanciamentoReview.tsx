@@ -15,7 +15,7 @@ import { formatBRL, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { criarHistoricoSaldo, atualizarFinanciamento } from "@/lib/bens";
+import { criarHistoricoSaldo, atualizarFinanciamento, criarPagamento, criarAmortizacao } from "@/lib/bens";
 
 interface ComparisonRowProps {
   label: string;
