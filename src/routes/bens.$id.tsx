@@ -742,7 +742,10 @@ function BemDetalhePage() {
                   <Input
                     inputMode="decimal"
                     value={fin.saldo_devedor_informado}
-                    onChange={(e) => setFin({ ...fin, saldo_devedor_informado: e.target.value })}
+                    onChange={(e) =>
+                      setFin({ ...fin, saldo_devedor_informado: formatBRLInput(e.target.value) })
+                    }
+
                   />
                 </div>
                 <div>
