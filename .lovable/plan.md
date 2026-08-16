@@ -1,33 +1,56 @@
-# Relatório de Auditoria: Semântica da Taxa (V3 Final)
+# Plano V4 — Importação e Atualização de Financiamento por Documento
 
-A auditoria da semântica da taxa de juros foi concluída, eliminando a ambiguidade na conversão entre taxas anuais e mensais.
+Implementação de fluxo seguro para extração de dados financeiros de documentos (PDF/Imagem) e atualização controlada de bens e financiamentos, reutilizando a infraestrutura de OCR/IA existente.
 
-## Alterações Realizadas
+## Infraestrutura & Backend
 
-### 1. Banco de Dados & Modelagem
-- Criada a migração `20260816210000_bens_v3_tipo_taxa.sql`.
-- Adicionados campos `taxa_juros_periodicidade` ('mensal', 'anual') e `taxa_juros_tipo` ('nominal', 'efetiva', 'nao_definido') na tabela `public.bens_financiamentos`.
-- Financiamentos existentes foram marcados como `nao_definido` para preservar o comportamento anterior até confirmação do usuário.
+- **Banco de Dados**:
+  - Criar  para rastreabilidade e histórico de alterações sugeridas por IA.
+  - Adicionar coluna  (jsonb) em  para guardar a origem do dado (ex: `{ source: 'document', docId: '...' }`).
+  - Implementar migração com RLS e GRANTs apropriados.
+- **Server Functions ()**:
+  - Criar :
+    - Sanitiza texto (mascara CPF/contas).
+    - Usa Gemini (via Lovable AI Gateway) com prompt especializado em documentos bancários de financiamento (SAC/Price, taxas nominais/efetivas).
+    - Retorna dados estruturados com níveis de confiança.
+- **Deduplicação & Segurança**:
+  - Reutilizar lógica de  adaptada para financiamentos.
+  - Validar propriedade do  e  no servidor.
 
-### 2. Motor Financeiro (`src/lib/financas.ts`)
-- Implementada a função `converterTaxaParaMensal` com as seguintes regras:
-  - **Mensal:** Utilizada diretamente (`taxa / 100`).
-  - **Anual Nominal:** Dividida por 12 (`(taxa / 100) / 12`).
-  - **Anual Efetiva:** Convertida via capitalização composta (`(1 + taxa/100)^(1/12) - 1`).
-- A função anterior `taxaAnualParaMensal` foi marcada como obsoleta (`@deprecated`), mas mantida apontando para a conversão nominal por compatibilidade.
+## UI/UX
 
-### 3. Experiência do Usuário (UX)
-- **Cadastro:** O formulário de financiamento agora permite escolher a periodicidade e o tipo da taxa.
-- **Ajuda Visual:** Adicionadas descrições curtas explicando a diferença entre Nominal e Efetiva.
-- **Transparência na Simulação:** A aba "Simular" agora exibe explicitamente a taxa mensal exata que está sendo utilizada pelo motor e sua origem (ex: "Origem: 12% a.a. efetiva").
+- **Ponto de Entrada**:
+  - Novo botão "Atualizar por documento" na aba Financiamento de .
+- **Componente de Upload**:
+  - Reutilizar a lógica de arrastar/soltar e seleção de arquivos do .
+- **Tela de Revisão ()**:
+  - Comparação lado a lado: **Atual** vs **Encontrado no Documento**.
+  - Checkboxes para seleção individual de campos (Saldo, Parcela, Taxa, Sistema).
+  - Tratamento específico para Data de Referência do Saldo (obrigatória).
+- **Mobile First**:
+  - Visualização em cards verticais para comparação no celular.
 
-### 4. Validação Matemática
-- Criada a suíte `tests/bens-v3-taxa-semantica.test.ts` cobrindo os casos:
-  - 12% a.a. Nominal = 1% a.m.
-  - 12% a.a. Efetiva = 0,948879% a.m.
-  - 1% a.m. = 1% a.m.
+## Fluxos Específicos
 
-## Veredito Técnico
-O motor financeiro não assume mais silenciosamente que toda taxa anual deve ser dividida por 12. A natureza da taxa está explícita no contrato de dados e na interface. O CET permanece isolado conforme as diretrizes de segurança.
+- **Eventos Identificados**:
+  - Se detectar amortização ou pagamento no documento, sugerir o registro chamando as RPCs/funções reais já existentes (, ).
+- **Histórico**:
+  - Cada alteração confirmada gera uma entrada no histórico do bem, marcando a origem como "Documento".
 
-**Status: APROVADO PARA PRODUÇÃO**
+## Riscos & Mitigação
+
+- **Privacidade**: Sanitização de PII antes do envio para o LLM.
+- **Precisão**: IA como "assistente de preenchimento", nunca automação silenciosa.
+- **Senhas**: Tratar erro de PDF protegido.
+
+---
+
+### Arquivos a serem criados/alterados:
+- 
+-  (Novo: Processamento server-side)
+-  (Novo: Fluxo de upload e análise)
+-  (Novo: Revisão comparativa)
+-  (Integração da ação)
+-  (Novos tipos e metadados)
+
+Confirmamos que nenhum dado real será alterado sem o clique explícito do usuário.
