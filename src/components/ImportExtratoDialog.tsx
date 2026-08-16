@@ -1008,8 +1008,11 @@ export function ImportExtratoDialog({
         return items.filter((i) => i.tipoMovimentacao === "despesa");
       case "receitas":
         return items.filter((i) => i.tipoMovimentacao === "receita");
-      case "outros":
+      case "transferencias":
         return items.filter((i) => i.tipoMovimentacao === "transferencia_interna");
+      case "outros":
+        return items.filter((i) => i.statusRevisao !== "novo");
+
       default:
         return items;
     }
