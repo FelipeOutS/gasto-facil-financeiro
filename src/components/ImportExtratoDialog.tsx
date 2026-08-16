@@ -1170,7 +1170,9 @@ export function ImportExtratoDialog({
                     ["duplicados", "Possíveis duplicados"],
                     ["gastos", "Gastos"],
                     ["receitas", "Receitas"],
-                    ["outros", "Outros"],
+                    ["transferencias", "Transferências"],
+                    ["outros", "A revisar"],
+
                   ] as Array<[ReviewFilter, string]>
                 ).map(([id, label]) => (
                   <button
