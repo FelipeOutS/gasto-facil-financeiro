@@ -78,8 +78,8 @@ export function MobileMoreSheet({ trigger }: { trigger: ReactNode }) {
   }
 
   function renderItem(item: NavLeaf) {
-    let { to, labelKey, icon: Icon } = item;
-    if (to === "/app/perfil") to = "/conta";
+    const { labelKey, icon: Icon } = item;
+    const to = item.to === "/app/perfil" ? "/conta" : item.to;
     const locked = isLocked(item);
     return (
       <Link

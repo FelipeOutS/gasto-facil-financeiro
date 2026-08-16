@@ -72,7 +72,6 @@ function ContaPage() {
     <MobileShell>
       <SettingsPageHeader title={t("title")} backTo={backTo} className="mb-0" />
 
-
       <section className="mt-6 rounded-3xl border border-border bg-card p-5 shadow-card">
         <div className="flex items-center gap-3">
           <UserAvatar url={profile?.avatar_url} name={nomeExibicao} email={user?.email} size={56} />
