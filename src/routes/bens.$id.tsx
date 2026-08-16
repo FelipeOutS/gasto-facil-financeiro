@@ -112,6 +112,7 @@ function BemDetalhePage() {
       setAmortizacoes(a);
       setCustos(c);
       setGastos(g);
+      if (b?.user_id) setGastosDisponiveis(await listarGastosSemBem(b.user_id));
     } catch (e) {
       toastFromError(e);
     } finally {
@@ -342,7 +343,16 @@ function BemDetalhePage() {
             valor={formatBRL(resumo.totalParcelasPagas)}
           />
           <Card titulo="Amortizações" valor={formatBRL(resumo.totalAmortizacoes)} />
-          <Card titulo="Total desembolsado" valor={formatBRL(resumo.totalDesembolsado)} destaque />
+          <Card
+            titulo="Gastos relacionados"
+            valor={formatBRL(resumo.totalGastosRelacionados)}
+          />
+          <Card titulo="Custo deste mês" valor={formatBRL(resumo.custoMensalGastos)} />
+          <Card
+            titulo="Quanto já me custou"
+            valor={formatBRL(resumo.totalDesembolsado)}
+            destaque
+          />
           <Card
             titulo="Saldo devedor"
             valor={
@@ -362,11 +372,12 @@ function BemDetalhePage() {
       </p>
 
       <Tabs defaultValue="financiamento" className="mt-4 pb-12">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="financiamento">Financiamento</TabsTrigger>
           <TabsTrigger value="parcelas">Parcelas</TabsTrigger>
           <TabsTrigger value="amortizacoes">Amortizações</TabsTrigger>
           <TabsTrigger value="custos">Custos</TabsTrigger>
+          <TabsTrigger value="gastos">Gastos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="financiamento" className="space-y-3">
@@ -452,9 +463,9 @@ function BemDetalhePage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="sac">SAC</SelectItem>
-                      <SelectItem value="price">Price</SelectItem>
-                      <SelectItem value="outro">Outro</SelectItem>
+                      <SelectItem value="sac">SAC (parcela cai com o tempo)</SelectItem>
+                      <SelectItem value="price">Price (parcela fixa)</SelectItem>
+                      <SelectItem value="outro">Não sei</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -466,7 +477,35 @@ function BemDetalhePage() {
                     onChange={(e) => setFin({ ...fin, primeiro_vencimento: e.target.value })}
                   />
                 </div>
+                <div>
+                  <Label>Dia de vencimento</Label>
+                  <Input
+                    inputMode="numeric"
+                    value={fin.dia_vencimento}
+                    onChange={(e) => setFin({ ...fin, dia_vencimento: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Saldo devedor atual</Label>
+                  <Input
+                    inputMode="decimal"
+                    value={fin.saldo_devedor_informado}
+                    onChange={(e) => setFin({ ...fin, saldo_devedor_informado: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Data do saldo</Label>
+                  <Input
+                    type="date"
+                    value={fin.saldo_devedor_data}
+                    onChange={(e) => setFin({ ...fin, saldo_devedor_data: e.target.value })}
+                  />
+                </div>
               </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Não sabe a taxa, o sistema ou o saldo? Deixe em branco — nada é inventado, e você
+                pode preencher depois.
+              </p>
               <Button className="mt-3 gap-2" disabled={busy} onClick={() => void novoFinanciamento()}>
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                 Cadastrar
@@ -485,6 +524,14 @@ function BemDetalhePage() {
                   type="date"
                   value={pag.data_pagamento}
                   onChange={(e) => setPag({ ...pag, data_pagamento: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Nº da parcela</Label>
+                <Input
+                  inputMode="numeric"
+                  value={pag.numero_parcela}
+                  onChange={(e) => setPag({ ...pag, numero_parcela: e.target.value })}
                 />
               </div>
               <div>
@@ -541,7 +588,7 @@ function BemDetalhePage() {
         <TabsContent value="amortizacoes" className="space-y-3">
           <div className="rounded-xl border p-4">
             <p className="mb-3 text-sm font-medium">Amortização extraordinária</p>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <Label>Data</Label>
                 <Input
@@ -557,6 +604,23 @@ function BemDetalhePage() {
                   value={amo.valor}
                   onChange={(e) => setAmo({ ...amo, valor: e.target.value })}
                 />
+              </div>
+              <div>
+                <Label>Origem</Label>
+                <Select
+                  value={amo.origem_recurso}
+                  onValueChange={(v) => setAmo({ ...amo, origem_recurso: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="proprio">Recursos próprios</SelectItem>
+                    <SelectItem value="fgts">FGTS</SelectItem>
+                    <SelectItem value="terceiros">Terceiros</SelectItem>
+                    <SelectItem value="outros">Outros</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Efeito</Label>
@@ -659,6 +723,94 @@ function BemDetalhePage() {
               }}
             />
           ))}
+        </TabsContent>
+
+        <TabsContent value="gastos" className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Vincule gastos que você já lançou (condomínio, IPTU, seguro, combustível, manutenção…).
+            O gasto continua aparecendo em Gastos e é contado uma única vez.
+          </p>
+          <div className="rounded-xl border p-4">
+            <Label>Vincular gasto existente</Label>
+            <div className="mt-1 flex flex-col gap-2 sm:flex-row">
+              <Select value={gastoParaVincular} onValueChange={setGastoParaVincular}>
+                <SelectTrigger className="min-w-0 flex-1">
+                  <SelectValue placeholder="Escolha um gasto" />
+                </SelectTrigger>
+                <SelectContent>
+                  {gastosDisponiveis.length === 0 ? (
+                    <SelectItem value="__vazio" disabled>
+                      Nenhum gasto disponível
+                    </SelectItem>
+                  ) : (
+                    gastosDisponiveis.map((x) => (
+                      <SelectItem key={x.id} value={x.id}>
+                        {x.data} · {x.descricao} · {formatBRL(Number(x.valor))}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <Button
+                className="gap-2"
+                disabled={busy || !gastoParaVincular || gastoParaVincular === "__vazio"}
+                onClick={async () => {
+                  const alvo = gastosDisponiveis.find((x) => x.id === gastoParaVincular);
+                  if (!alvo) return;
+                  setBusy(true);
+                  try {
+                    await vincularGastoAoBem(alvo, id);
+                    setGastoParaVincular("");
+                    await carregar();
+                    toast.success("Gasto vinculado ao bem.");
+                  } catch (e) {
+                    toastFromError(e);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                Vincular
+              </Button>
+            </div>
+          </div>
+
+          {gastos.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum gasto vinculado a este bem.</p>
+          ) : (
+            gastos.map((x) => (
+              <div
+                key={x.id}
+                className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm">{x.descricao}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {x.data}
+                    {x.recorrencia_id ? " · recorrente" : ""}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="text-sm font-medium">{formatBRL(Number(x.valor))}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        await vincularGastoAoBem(x, null);
+                        await carregar();
+                      } catch (e) {
+                        toastFromError(e);
+                      }
+                    }}
+                  >
+                    Desvincular
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
         </TabsContent>
       </Tabs>
     </MobileShell>
