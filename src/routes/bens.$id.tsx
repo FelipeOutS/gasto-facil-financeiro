@@ -18,6 +18,8 @@ import {
   Calculator,
 } from "lucide-react";
 import { SimuladorFinanciamento } from "@/components/bens/SimuladorFinanciamento";
+import { Card as UICard, CardContent as UICardContent } from "@/components/ui/card";
+
 
 import { MobileShell } from "@/components/MobileShell";
 import { cn } from "@/lib/utils";
