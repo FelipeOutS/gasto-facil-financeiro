@@ -179,215 +179,37 @@ export function GastosExportDialog({
           buildFileName(periodLabel, "xlsx"),
         );
       } else {
-        const data = buildPdfData(rows, headers, t("export.reportTitle"), periodLabel);
-        const breakdown = computeCategoryBreakdown(rows);
         const [{ default: JsPDF }, { default: autoTable }] = await Promise.all([
           import("jspdf"),
           import("jspdf-autotable"),
         ]);
-        const doc = new JsPDF({ unit: "pt", format: "a4" });
-        const pageW = doc.internal.pageSize.getWidth();
-        const pageH = doc.internal.pageSize.getHeight();
-        const M = 40;
-        const BRAND: [number, number, number] = [32, 170, 108];
-        const BRAND_SOFT: [number, number, number] = [214, 236, 226];
-        const INK: [number, number, number] = [30, 41, 59];
-        const MUTED: [number, number, number] = [100, 112, 128];
-
         const logo = await loadLogoDataUrl();
         const now = new Date();
         const geradoEm = `${now.toLocaleDateString("pt-BR")} ${t("export.at", { defaultValue: "às" })} ${now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
-        const HEADER_H = 100;
-
-        const drawHeader = () => {
-          doc.setFillColor(...BRAND);
-          doc.rect(0, 0, pageW, HEADER_H, "F");
-          if (logo) {
-            try {
-              doc.addImage(logo, "PNG", M, 26, 40, 40);
-            } catch {
-              /* logo opcional */
-            }
-          }
-          const tx = logo ? M + 54 : M;
-          doc.setTextColor(255, 255, 255);
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(10);
-          doc.text("GASTO INTELIGENTE", tx, 38);
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(17);
-          doc.text(data.title, tx, 60);
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(10);
-          doc.text(`${t("export.summary.period")}: ${periodLabel}`, tx, 78);
-          doc.setFontSize(9);
-          doc.text(`${t("export.generatedAt")}: ${geradoEm}`, pageW - M, 78, { align: "right" });
-        };
-
-        // Cards de resumo
-        const cards: Array<{ label: string; value: string }> = [
-          { label: t("export.summary.total"), value: formatBRL(data.summary.total) },
-          {
-            label: t("export.summary.entries", { defaultValue: "Lançamentos" }),
-            value: String(data.summary.count),
-          },
-          {
-            label: t("export.summary.topCategory", { defaultValue: "Categoria principal" }),
-            value: data.topCategoria,
-          },
-          { label: t("export.summary.avg"), value: formatBRL(data.summary.media) },
-        ];
-        const gap = 10;
-        const cardW = (pageW - M * 2 - gap * (cards.length - 1)) / cards.length;
-        const cardY = HEADER_H + 20;
-        const cardH = 58;
-        drawHeader();
-        cards.forEach((c, i) => {
-          const x = M + i * (cardW + gap);
-          doc.setFillColor(246, 250, 248);
-          doc.setDrawColor(...BRAND_SOFT);
-          doc.roundedRect(x, cardY, cardW, cardH, 6, 6, "FD");
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(7.5);
-          doc.setTextColor(...MUTED);
-          doc.text(c.label.toUpperCase(), x + 10, cardY + 18, { maxWidth: cardW - 20 });
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(11);
-          doc.setTextColor(...INK);
-          const value = doc.splitTextToSize(c.value, cardW - 20)[0] ?? "";
-          doc.text(value, x + 10, cardY + 41);
-        });
-
-        const head = [
-          [
-            headers.data,
-            headers.descricao,
-            headers.categoria,
-            headers.estabelecimento,
-            headers.formaPagamento,
-            headers.valor,
-          ],
-        ];
-        const body = rows.map((r) => [
-          formatDateBRSafe(r.data),
-          r.descricao || "—",
-          r.categoria || "—",
-          r.estabelecimento || "—",
-          r.formaPagamento || "—",
-          formatBRL(r.valor),
-        ]);
-
-        autoTable(doc, {
-          head,
-          body,
-          startY: cardY + cardH + 24,
-          margin: { top: HEADER_H + 20, bottom: 64, left: M, right: M },
-          styles: {
-            fontSize: 8.5,
-            cellPadding: { top: 6.5, bottom: 6.5, left: 5, right: 5 },
-            textColor: INK,
-            lineColor: [226, 232, 240],
-            lineWidth: 0.4,
-            overflow: "linebreak",
-            valign: "middle",
-          },
-          headStyles: { fillColor: BRAND, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
-          alternateRowStyles: { fillColor: [248, 250, 252] },
-          columnStyles: {
-            0: { cellWidth: 56 },
-            1: { cellWidth: "auto" },
-            2: { cellWidth: 78 },
-            3: { cellWidth: 88 },
-            4: { cellWidth: 66 },
-            5: { cellWidth: 76, halign: "right", fontStyle: "bold" },
-          },
-          didDrawPage: (hook) => {
-            if ((hook.pageNumber ?? 1) > 1) drawHeader();
+        const doc = renderGastosPdf({
+          rows,
+          headers,
+          periodLabel,
+          logoDataUrl: logo,
+          generatedAtText: geradoEm,
+          JsPDF: JsPDF as never,
+          autoTable: autoTable as never,
+          labels: {
+            reportTitle: t("export.reportTitle"),
+            period: t("export.summary.period"),
+            generatedAt: t("export.generatedAt"),
+            total: t("export.summary.total"),
+            entries: t("export.summary.entries", { defaultValue: "Lançamentos" }),
+            topCategory: t("export.summary.topCategory", { defaultValue: "Categoria principal" }),
+            avg: t("export.summary.avg"),
+            byCategoryTitle: t("export.summary.byCategoryTitle", {
+              defaultValue: t("export.summary.byCategory"),
+            }),
+            footerBy: t("export.footerBy", { defaultValue: "Gerado por Gasto Inteligente" }),
+            page: t("export.page", { defaultValue: "Página" }),
+            pageOf: t("export.pageOf", { defaultValue: "de" }),
           },
         });
-
-        // Seção: Gastos por categoria (com barras proporcionais)
-        if (breakdown.length > 0) {
-          const lastY =
-            (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ??
-            cardY + cardH + 24;
-          const rowH = 22;
-          const needed = 34 + breakdown.length * rowH;
-          let y = lastY + 28;
-          if (y + needed > pageH - 70) {
-            doc.addPage();
-            drawHeader();
-            y = HEADER_H + 32;
-          }
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(11);
-          doc.setTextColor(...INK);
-          doc.text(
-            t("export.summary.byCategoryTitle", { defaultValue: t("export.summary.byCategory") }),
-            M,
-            y,
-          );
-          doc.setDrawColor(...BRAND_SOFT);
-          doc.line(M, y + 6, pageW - M, y + 6);
-          y += 22;
-
-          const maxTotal = breakdown[0]?.total || 1;
-          const nameW = 130;
-          const valueW = 90;
-          const pctW = 48;
-          const barX = M + nameW + 8;
-          const barW = pageW - M - valueW - pctW - barX - 8;
-          breakdown.forEach((c: CategoryBreakdownItem, i: number) => {
-            const cy = y + i * rowH;
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(9);
-            doc.setTextColor(...INK);
-            doc.text(doc.splitTextToSize(c.nome, nameW)[0] ?? "", M, cy + 3);
-            doc.setFillColor(238, 244, 241);
-            doc.roundedRect(barX, cy - 6, barW, 10, 3, 3, "F");
-            const w = Math.max(2, (c.total / maxTotal) * barW);
-            const shade = Math.min(0.35, i * 0.06);
-            doc.setFillColor(
-              Math.round(BRAND[0] + (255 - BRAND[0]) * shade),
-              Math.round(BRAND[1] + (255 - BRAND[1]) * shade),
-              Math.round(BRAND[2] + (255 - BRAND[2]) * shade),
-            );
-            doc.roundedRect(barX, cy - 6, w, 10, 3, 3, "F");
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(9);
-            doc.text(formatBRL(c.total), pageW - M - pctW - 8, cy + 3, { align: "right" });
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(...MUTED);
-            doc.text(
-              `${c.pct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`,
-              pageW - M,
-              cy + 3,
-              { align: "right" },
-            );
-          });
-        }
-
-        // Rodapé em todas as páginas com "Página X de Y"
-        const totalPages = doc.getNumberOfPages();
-        for (let p = 1; p <= totalPages; p++) {
-          doc.setPage(p);
-          doc.setDrawColor(226, 232, 240);
-          doc.line(M, pageH - 48, pageW - M, pageH - 48);
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(9);
-          doc.setTextColor(...MUTED);
-          doc.text(
-            `${t("export.footerBy", { defaultValue: "Gerado por Gasto Inteligente" })}  •  ${geradoEm}  •  ${buildPageLabel(
-              p,
-              totalPages,
-              t("export.page", { defaultValue: "Página" }),
-              t("export.pageOf", { defaultValue: "de" }),
-            )}`,
-            pageW / 2,
-            pageH - 30,
-            { align: "center" },
-          );
-        }
         doc.save(buildFileName(periodLabel, "pdf"));
       }
 
