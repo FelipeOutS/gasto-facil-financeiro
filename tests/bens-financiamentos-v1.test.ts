@@ -219,7 +219,7 @@ suite("BENS V1 — integridade de conta e schema (banco real)", () => {
   });
 
   it("vínculo cruzado entre contas é recusado pelo banco", () => {
-    const users = psql(`SELECT id FROM auth.users ORDER BY created_at LIMIT 2;`)
+    const users = psql(`SELECT id FROM public.profiles ORDER BY created_at LIMIT 2;`)
       .split("\n")
       .map((s) => s.trim())
       .filter(Boolean);
@@ -269,7 +269,7 @@ suite("BENS V1 — integridade de conta e schema (banco real)", () => {
   });
 
   it("arquivar preserva gastos e histórico; delete destrutivo falha", () => {
-    const user = psql(`SELECT id FROM auth.users ORDER BY created_at LIMIT 1;`);
+    const user = psql(`SELECT id FROM public.profiles ORDER BY created_at LIMIT 1;`);
     expect(user.length).toBeGreaterThan(0);
     const r = psqlRaw(`
       BEGIN;
