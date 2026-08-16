@@ -10,6 +10,7 @@ import {
   Briefcase,
   Sparkles,
   Settings2,
+  ShieldCheck,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -44,6 +45,7 @@ export const Route = createFileRoute("/conta")({
 
 function ContaPage() {
   const { t } = useTranslation("account");
+  const { t: tSettings } = useTranslation("settings");
   const { user, profile, signOut } = useAuth();
   const { isOwner, isAdmin } = useRoles();
   const navigate = useNavigate();
