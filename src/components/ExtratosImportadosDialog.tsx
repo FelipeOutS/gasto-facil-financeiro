@@ -60,6 +60,13 @@ function StatusBadge({ status }: { status: ExtratoImportado["status"] }) {
       </Badge>
     );
   }
+  if (status === "parcial") {
+    return (
+      <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-600">
+        <AlertTriangle className="h-3 w-3" /> {t("status.parcial")}
+      </Badge>
+    );
+  }
   if (status === "erro") {
     return (
       <Badge variant="destructive" className="gap-1">
@@ -73,6 +80,7 @@ function StatusBadge({ status }: { status: ExtratoImportado["status"] }) {
     </Badge>
   );
 }
+
 
 export function ExtratosImportadosDialog({
   open,
