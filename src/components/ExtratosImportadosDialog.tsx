@@ -39,7 +39,7 @@ import {
   getExtratosImportados,
   getItensDoBatch,
   getItensEditadosDoBatch,
-  revertExtratoImportado,
+  revertExtratoImportadoSeguro,
   deleteExtratoImportado,
   useStore,
 } from "@/lib/store";
