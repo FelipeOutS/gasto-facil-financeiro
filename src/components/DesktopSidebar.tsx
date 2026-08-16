@@ -214,14 +214,9 @@ export function DesktopSidebar() {
   }
 
   function renderLeaf(item: NavLeaf) {
-    let { to, labelKey, icon: Icon } = item;
-
-    // Redirecionamento de Perfil para Conta
-    if (to === "/app/perfil") to = "/conta";
-    // Ajustes na sidebar deve apontar para Categorias se for o item do grupo conta,
-    // mas a rota canônica que o usuário quer é /categorias se entendi bem o redirect de 16/08.
-    // Porém o requisito 8 diz consolidar /categorias para /app/ajustes.
-    // Como /categorias já é redirect para /app/ajustes, vamos manter.
+    const { labelKey, icon: Icon } = item;
+    // Rota canônica de perfil: /conta
+    const to = item.to === "/app/perfil" ? "/conta" : item.to;
 
     const active = currentPath === to || currentPath.startsWith(to + "/");
     const showDot = to === "/contas-a-pagar" && alerta !== "nenhum";
@@ -496,9 +491,7 @@ export function DesktopSidebar() {
                   return (
                     <div key={group.id} className="rounded-xl">
                       <div aria-hidden className="my-2 mx-2 h-px bg-border/60" />
-                      <ul className="space-y-1">
-                        {group.items.map((item) => renderLeaf(item))}
-                      </ul>
+                      <ul className="space-y-1">{group.items.map((item) => renderLeaf(item))}</ul>
                     </div>
                   );
                 }

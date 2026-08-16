@@ -53,7 +53,7 @@ export function MobileTopBar() {
 
         {/* Direita — Avatar (44x44 clicável, ~36px visível) */}
         <Link
-          to="/app/perfil"
+          to="/conta"
           aria-label={t("aria.openProfile")}
           className="grid h-11 w-11 place-items-center rounded-full transition active:scale-95"
         >

@@ -10,6 +10,7 @@ import {
   Briefcase,
   Sparkles,
   Settings2,
+  ShieldCheck,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -44,6 +45,7 @@ export const Route = createFileRoute("/conta")({
 
 function ContaPage() {
   const { t } = useTranslation("account");
+  const { t: tSettings } = useTranslation("settings");
   const { user, profile, signOut } = useAuth();
   const { isOwner, isAdmin } = useRoles();
   const navigate = useNavigate();
@@ -69,7 +71,6 @@ function ContaPage() {
   return (
     <MobileShell>
       <SettingsPageHeader title={t("title")} backTo={backTo} className="mb-0" />
-
 
       <section className="mt-6 rounded-3xl border border-border bg-card p-5 shadow-card">
         <div className="flex items-center gap-3">
@@ -215,6 +216,18 @@ function ContaPage() {
           <Link to="/conta/seguranca">
             <IdCard className="mr-2 h-4 w-4" />
             {t("actions.security")}
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="lg" className="h-11 w-full rounded-2xl">
+          <Link to="/app/privacidade">
+            <ShieldCheck className="mr-2 h-4 w-4" />
+            {tSettings("sections.privacy.title")}
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="lg" className="h-11 w-full rounded-2xl">
+          <Link to="/app/ajustes">
+            <Settings2 className="mr-2 h-4 w-4" />
+            {t("profileShortcuts.settings")}
           </Link>
         </Button>
       </div>
