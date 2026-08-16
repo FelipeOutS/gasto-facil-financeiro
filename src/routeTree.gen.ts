@@ -53,6 +53,7 @@ import { Route as EnIndexRouteImport } from './routes/en.index'
 import { Route as ContasAReceberIndexRouteImport } from './routes/contas-a-receber.index'
 import { Route as ContasAPagarIndexRouteImport } from './routes/contas-a-pagar.index'
 import { Route as CartoesIndexRouteImport } from './routes/cartoes.index'
+import { Route as BensIndexRouteImport } from './routes/bens.index'
 import { Route as AssinaturasIndexRouteImport } from './routes/assinaturas.index'
 import { Route as RendaNovaRouteImport } from './routes/renda.nova'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
@@ -371,6 +372,11 @@ const ContasAPagarIndexRoute = ContasAPagarIndexRouteImport.update({
 const CartoesIndexRoute = CartoesIndexRouteImport.update({
   id: '/cartoes/',
   path: '/cartoes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BensIndexRoute = BensIndexRouteImport.update({
+  id: '/bens/',
+  path: '/bens/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssinaturasIndexRoute = AssinaturasIndexRouteImport.update({
@@ -977,6 +983,7 @@ export interface FileRoutesByFullPath {
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
   '/assinaturas/': typeof AssinaturasIndexRoute
+  '/bens/': typeof BensIndexRoute
   '/cartoes/': typeof CartoesIndexRoute
   '/contas-a-pagar/': typeof ContasAPagarIndexRoute
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
@@ -1121,6 +1128,7 @@ export interface FileRoutesByTo {
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
   '/assinaturas': typeof AssinaturasIndexRoute
+  '/bens': typeof BensIndexRoute
   '/cartoes': typeof CartoesIndexRoute
   '/contas-a-pagar': typeof ContasAPagarIndexRoute
   '/contas-a-receber': typeof ContasAReceberIndexRoute
@@ -1266,6 +1274,7 @@ export interface FileRoutesById {
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
   '/assinaturas/': typeof AssinaturasIndexRoute
+  '/bens/': typeof BensIndexRoute
   '/cartoes/': typeof CartoesIndexRoute
   '/contas-a-pagar/': typeof ContasAPagarIndexRoute
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
@@ -1413,6 +1422,7 @@ export interface FileRouteTypes {
     | '/pt/$'
     | '/renda/nova'
     | '/assinaturas/'
+    | '/bens/'
     | '/cartoes/'
     | '/contas-a-pagar/'
     | '/contas-a-receber/'
@@ -1557,6 +1567,7 @@ export interface FileRouteTypes {
     | '/pt/$'
     | '/renda/nova'
     | '/assinaturas'
+    | '/bens'
     | '/cartoes'
     | '/contas-a-pagar'
     | '/contas-a-receber'
@@ -1701,6 +1712,7 @@ export interface FileRouteTypes {
     | '/pt/$'
     | '/renda/nova'
     | '/assinaturas/'
+    | '/bens/'
     | '/cartoes/'
     | '/contas-a-pagar/'
     | '/contas-a-receber/'
@@ -1847,6 +1859,7 @@ export interface RootRouteChildren {
   PtSplatRoute: typeof PtSplatRoute
   RendaNovaRoute: typeof RendaNovaRoute
   AssinaturasIndexRoute: typeof AssinaturasIndexRoute
+  BensIndexRoute: typeof BensIndexRoute
   CartoesIndexRoute: typeof CartoesIndexRoute
   ContasAPagarIndexRoute: typeof ContasAPagarIndexRoute
   ContasAReceberIndexRoute: typeof ContasAReceberIndexRoute
@@ -2205,6 +2218,13 @@ declare module '@tanstack/react-router' {
       path: '/cartoes'
       fullPath: '/cartoes/'
       preLoaderRoute: typeof CartoesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bens/': {
+      id: '/bens/'
+      path: '/bens'
+      fullPath: '/bens/'
+      preLoaderRoute: typeof BensIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assinaturas/': {
@@ -3039,6 +3059,7 @@ const rootRouteChildren: RootRouteChildren = {
   PtSplatRoute: PtSplatRoute,
   RendaNovaRoute: RendaNovaRoute,
   AssinaturasIndexRoute: AssinaturasIndexRoute,
+  BensIndexRoute: BensIndexRoute,
   CartoesIndexRoute: CartoesIndexRoute,
   ContasAPagarIndexRoute: ContasAPagarIndexRoute,
   ContasAReceberIndexRoute: ContasAReceberIndexRoute,
