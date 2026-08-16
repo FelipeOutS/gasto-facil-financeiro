@@ -341,6 +341,7 @@ const WIDE_PREFIXES = [
   "/renda",
   "/mercado",
   "/investimentos",
+  "/bens",
 ];
 
 function isPublicPath(p: string) {
