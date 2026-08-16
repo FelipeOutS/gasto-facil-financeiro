@@ -1,3 +1,4 @@
+import { TipoCadastro, tipoEfetivo } from "./profile-utils";
 import {
   List,
   ShoppingCart,
