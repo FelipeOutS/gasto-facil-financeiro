@@ -82,6 +82,7 @@ import { Route as ContasAPagarNovaRouteImport } from './routes/contas-a-pagar.no
 import { Route as ContaSegurancaRouteImport } from './routes/conta_.seguranca'
 import { Route as ClientesRelatorioRouteImport } from './routes/clientes_.relatorio'
 import { Route as CartoesNovoRouteImport } from './routes/cartoes.novo'
+import { Route as BensIdRouteImport } from './routes/bens.$id'
 import { Route as AssinaturasNovaRouteImport } from './routes/assinaturas.nova'
 import { Route as AppPrivacidadeRouteImport } from './routes/app_.privacidade'
 import { Route as AppPerfilRouteImport } from './routes/app_.perfil'
@@ -521,6 +522,11 @@ const CartoesNovoRoute = CartoesNovoRouteImport.update({
   path: '/cartoes/novo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BensIdRoute = BensIdRouteImport.update({
+  id: '/bens/$id',
+  path: '/bens/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AssinaturasNovaRoute = AssinaturasNovaRouteImport.update({
   id: '/assinaturas/nova',
   path: '/assinaturas/nova',
@@ -955,6 +961,7 @@ export interface FileRoutesByFullPath {
   '/app/perfil': typeof AppPerfilRoute
   '/app/privacidade': typeof AppPrivacidadeRoute
   '/assinaturas/nova': typeof AssinaturasNovaRoute
+  '/bens/$id': typeof BensIdRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/conta/seguranca': typeof ContaSegurancaRoute
@@ -1100,6 +1107,7 @@ export interface FileRoutesByTo {
   '/app/perfil': typeof AppPerfilRoute
   '/app/privacidade': typeof AppPrivacidadeRoute
   '/assinaturas/nova': typeof AssinaturasNovaRoute
+  '/bens/$id': typeof BensIdRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/conta/seguranca': typeof ContaSegurancaRoute
@@ -1246,6 +1254,7 @@ export interface FileRoutesById {
   '/app_/perfil': typeof AppPerfilRoute
   '/app_/privacidade': typeof AppPrivacidadeRoute
   '/assinaturas/nova': typeof AssinaturasNovaRoute
+  '/bens/$id': typeof BensIdRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes_/relatorio': typeof ClientesRelatorioRoute
   '/conta_/seguranca': typeof ContaSegurancaRoute
@@ -1394,6 +1403,7 @@ export interface FileRouteTypes {
     | '/app/perfil'
     | '/app/privacidade'
     | '/assinaturas/nova'
+    | '/bens/$id'
     | '/cartoes/novo'
     | '/clientes/relatorio'
     | '/conta/seguranca'
@@ -1539,6 +1549,7 @@ export interface FileRouteTypes {
     | '/app/perfil'
     | '/app/privacidade'
     | '/assinaturas/nova'
+    | '/bens/$id'
     | '/cartoes/novo'
     | '/clientes/relatorio'
     | '/conta/seguranca'
@@ -1684,6 +1695,7 @@ export interface FileRouteTypes {
     | '/app_/perfil'
     | '/app_/privacidade'
     | '/assinaturas/nova'
+    | '/bens/$id'
     | '/cartoes/novo'
     | '/clientes_/relatorio'
     | '/conta_/seguranca'
@@ -1831,6 +1843,7 @@ export interface RootRouteChildren {
   AppPerfilRoute: typeof AppPerfilRoute
   AppPrivacidadeRoute: typeof AppPrivacidadeRoute
   AssinaturasNovaRoute: typeof AssinaturasNovaRoute
+  BensIdRoute: typeof BensIdRoute
   CartoesNovoRoute: typeof CartoesNovoRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
   ContaSegurancaRoute: typeof ContaSegurancaRoute
@@ -2421,6 +2434,13 @@ declare module '@tanstack/react-router' {
       path: '/cartoes/novo'
       fullPath: '/cartoes/novo'
       preLoaderRoute: typeof CartoesNovoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bens/$id': {
+      id: '/bens/$id'
+      path: '/bens/$id'
+      fullPath: '/bens/$id'
+      preLoaderRoute: typeof BensIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assinaturas/nova': {
@@ -3031,6 +3051,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppPerfilRoute: AppPerfilRoute,
   AppPrivacidadeRoute: AppPrivacidadeRoute,
   AssinaturasNovaRoute: AssinaturasNovaRoute,
+  BensIdRoute: BensIdRoute,
   CartoesNovoRoute: CartoesNovoRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
   ContaSegurancaRoute: ContaSegurancaRoute,
