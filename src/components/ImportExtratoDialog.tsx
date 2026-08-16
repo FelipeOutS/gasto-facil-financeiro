@@ -1657,6 +1657,30 @@ function ReviewCard({
             </Select>
           </div>
         )}
+        {item.tipoMovimentacao === "despesa" &&
+          item.formaPagamento === "credito" &&
+          cartoes.length > 0 && (
+            <div>
+              <Label className="text-xs">Cartão</Label>
+              <Select
+                value={item.cartaoId ?? "sem_cartao"}
+                onValueChange={(v) => onUpdate({ cartaoId: v === "sem_cartao" ? undefined : v })}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sem_cartao">Sem cartão</SelectItem>
+                  {cartoes.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
         {item.tipoMovimentacao === "despesa" && (
           <div className="sm:col-span-2">
             <Label className="text-xs">{t("row.categoria")}</Label>
