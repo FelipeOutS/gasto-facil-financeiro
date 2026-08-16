@@ -288,12 +288,25 @@ export function calcularResumoBem(args: {
   let saldoDevedorEstimado: number | null = null;
   if (financiamento) {
     const principalPago = pagamentos.reduce((s, p) => s + Number(p.valor_amortizacao ?? 0), 0);
-    const base =
-      financiamento.saldo_devedor_informado != null
-        ? Number(financiamento.saldo_devedor_informado)
-        : Number(financiamento.valor_financiado ?? 0) - principalPago - totalAmortizacoes;
+    let base: number;
+    if (financiamento.saldo_devedor_informado != null) {
+      // O saldo informado é uma foto na `data_saldo`: só descontamos o que
+      // veio DEPOIS dessa data, senão contaríamos duas vezes.
+      const corte = financiamento.data_saldo ?? null;
+      const depois = (d: string | null | undefined) => (corte ? (d ?? "") > corte : true);
+      const principalPosSaldo = pagamentos
+        .filter((p) => depois(p.data_pagamento))
+        .reduce((s, p) => s + Number(p.valor_amortizacao ?? 0), 0);
+      const amortPosSaldo = amortizacoes
+        .filter((a) => depois(a.data))
+        .reduce((s, a) => s + Number(a.valor ?? 0), 0);
+      base = Number(financiamento.saldo_devedor_informado) - principalPosSaldo - amortPosSaldo;
+    } else {
+      base = Number(financiamento.valor_financiado ?? 0) - principalPago - totalAmortizacoes;
+    }
     saldoDevedorEstimado = Math.max(0, Number(base.toFixed(2)));
   }
+
 
   const prazo = financiamento?.prazo_meses ?? null;
   const parcelasRestantes = prazo != null ? Math.max(0, prazo - pagamentos.length) : null;
