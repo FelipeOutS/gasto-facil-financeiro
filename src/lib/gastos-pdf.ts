@@ -101,9 +101,18 @@ export function renderGastosPdf(opts: RenderPdfOptions) {
     doc.setTextColor(...MUTED);
     doc.text(c.label.toUpperCase(), x + 10, cardY + 18, { maxWidth: cardW - 20 });
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
     doc.setTextColor(...INK);
-    doc.text(doc.splitTextToSize(c.value, cardW - 20)[0] ?? "", x + 10, cardY + 41);
+    // Reduz discretamente a fonte e permite 2 linhas para valores longos (ex.: categoria)
+    let size = 11;
+    let lines: string[] = doc.splitTextToSize(c.value, cardW - 20);
+    while (lines.length > 2 && size > 8) {
+      size -= 1;
+      doc.setFontSize(size);
+      lines = doc.splitTextToSize(c.value, cardW - 20);
+    }
+    doc.setFontSize(size);
+    lines = lines.slice(0, 2);
+    doc.text(lines, x + 10, lines.length > 1 ? cardY + 36 : cardY + 41);
   });
 
   autoTable(doc, {
