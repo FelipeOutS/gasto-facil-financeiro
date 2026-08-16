@@ -17,6 +17,8 @@ const processarInputSchema = z.object({
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+
+
 /**
  * Server function para processar documentos de financiamento via IA.
  * Reutiliza a infraestrutura de OCR/IA e sanitização.
