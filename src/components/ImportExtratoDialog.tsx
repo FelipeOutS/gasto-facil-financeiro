@@ -798,6 +798,25 @@ export function ImportExtratoDialog({
     [files, handleCsv, handleImagens, handleFaturaPdf, handlePdf],
   );
 
+  // ---------- FATURA: vincula os lançamentos ao cartão escolhido ----------
+  const confirmarCartaoFatura = useCallback(
+    (cartaoId: string | null) => {
+      setItems((prev) =>
+        computeDupStatus(
+          prev.map((it) =>
+            it.tipoMovimentacao === "despesa"
+              ? { ...it, cartaoId: cartaoId ?? undefined, formaPagamento: "credito" as FormaPagamento }
+              : it,
+          ),
+        ),
+      );
+      setCartaoSelecionado(cartaoId);
+      setStep("review");
+    },
+    [computeDupStatus],
+  );
+
+
   // ---------- REVIEW edits ----------
   const updateItem = (id: string, patch: Partial<ReviewItem>) => {
     setItems((prev) => {
