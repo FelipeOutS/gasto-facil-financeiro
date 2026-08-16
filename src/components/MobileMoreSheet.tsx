@@ -84,7 +84,7 @@ export function MobileMoreSheet({ trigger }: { trigger: ReactNode }) {
     return (
       <Link
         key={item.to}
-        to={locked ? "/meu-plano" : (to as any)}
+        to={locked ? "/meu-plano" : (to as never)}
         preload="intent"
         preloadDelay={0}
         onClick={() => setOpen(false)}
