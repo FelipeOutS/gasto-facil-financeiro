@@ -92,6 +92,12 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: TrendingUp,
         feature: "investimentos",
       },
+      {
+        to: "/bens",
+        labelKey: "bens",
+        descKey: "bens",
+        icon: Landmark,
+      },
       { to: "/metas", labelKey: "metas", descKey: "metas", icon: Target },
       { to: "/guardado", labelKey: "guardado", descKey: "guardado", icon: Wallet },
     ],
