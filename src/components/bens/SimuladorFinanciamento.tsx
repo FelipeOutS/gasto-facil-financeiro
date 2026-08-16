@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 
 interface SimuladorFinanciamentoProps {
   financiamento: Financiamento;
-  saldoAtual: number;
+  saldoAtual: number | null;
 }
 
 export function SimuladorFinanciamento({ financiamento, saldoAtual }: SimuladorFinanciamentoProps) {
