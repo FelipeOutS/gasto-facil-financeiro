@@ -581,7 +581,7 @@ function BemDetalhePage() {
                 )}
               </div>
               <div className="mt-1 text-2xl font-bold text-rose-600/90">
-                {resumo.saldoDevedorEstimado !== null ? formatBRL(resumo.saldoDevedorEstimado) : "0,00"}
+                {resumo.saldoDevedorEstimado !== null ? formatBRL(resumo.saldoDevedorEstimado) : "—"}
               </div>
               {resumo.percentualPago !== null && (
                 <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
