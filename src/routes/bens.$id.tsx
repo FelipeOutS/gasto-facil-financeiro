@@ -15,7 +15,10 @@ import {
   History,
   Calendar,
   PieChart,
+  Calculator,
 } from "lucide-react";
+import { SimuladorFinanciamento } from "@/components/bens/SimuladorFinanciamento";
+
 import { MobileShell } from "@/components/MobileShell";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
