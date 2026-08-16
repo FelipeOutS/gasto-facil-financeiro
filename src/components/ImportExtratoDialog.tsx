@@ -321,7 +321,9 @@ export function ImportExtratoDialog({
           data: r.data,
           descricao: r.descricao,
           horario: r.horario ?? undefined,
+          cartaoId: r.cartaoId,
         });
+
       } else if (r.tipoMovimentacao === "receita") {
         existe = findDuplicateReceitaAdvanced({
           valor: r.valor,
