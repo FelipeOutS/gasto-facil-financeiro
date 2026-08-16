@@ -559,7 +559,16 @@ export function ImportExtratoDialog({
         setItems(itensFromBruto(brutos, "fatura_pdf"));
         setObservacaoIA(json.observacao ?? null);
         setImportMeta({ nomeArquivo: file.name, tipoOrigem: "pdf" });
-        setStep("review");
+        // Fatura de cartão: pergunta a qual cartão os lançamentos pertencem.
+        if (cartoes.length > 0) {
+          const sugestao = sugerirCartaoDaFatura(cartoes, [file.name, json.observacao]);
+          setSugestaoCartao(sugestao);
+          setCartaoSelecionado(sugestao?.cartaoId ?? null);
+          setStep("cartao");
+        } else {
+          setStep("review");
+        }
+
       } catch (e) {
         console.error("[import-gastos] erro fatura PDF", e);
         toast.error(t("errors.processFail"));
