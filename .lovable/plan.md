@@ -1,21 +1,33 @@
-# Auditoria Financeira Meus Bens V3
+# Relatório de Auditoria: Semântica da Taxa (V3 Final)
 
-Aprovado matematicamente com ressalva de alinhamento de taxa (Nominal vs Efetiva).
+A auditoria da semântica da taxa de juros foi concluída, eliminando a ambiguidade na conversão entre taxas anuais e mensais.
 
-## Resultados Unitários
-- SAC: 833,33 amortização constante (OK)
-- Price: 2.632,71 prestação constante (OK)
-- Amortização Extra: R$ 10.000 reduz saldo para 340.000 (OK)
-- Redução de Prazo/Parcela: Lógicas independentes validadas (OK)
+## Alterações Realizadas
 
-## Auditoria UI (Mobile/Desktop)
-- Isolamento: Simulações não tocam banco real (Confirmado)
-- Visual: Avisos de estimativa presentes (OK)
-- UX: Navegação corrigida para /bens (OK)
+### 1. Banco de Dados & Modelagem
+- Criada a migração `20260816210000_bens_v3_tipo_taxa.sql`.
+- Adicionados campos `taxa_juros_periodicidade` ('mensal', 'anual') e `taxa_juros_tipo` ('nominal', 'efetiva', 'nao_definido') na tabela `public.bens_financiamentos`.
+- Financiamentos existentes foram marcados como `nao_definido` para preservar o comportamento anterior até confirmação do usuário.
 
-## Mudanças Técnicas
-- Alinhada `taxaAnualParaMensal` para taxa nominal (juros simples/12), padrão bancário de simulação.
-- Corrigido Empty State da aba "Simular" em bens sem financiamento.
-- Adicionado `/bens` ao Shell WIDE_PREFIXES.
+### 2. Motor Financeiro (`src/lib/financas.ts`)
+- Implementada a função `converterTaxaParaMensal` com as seguintes regras:
+  - **Mensal:** Utilizada diretamente (`taxa / 100`).
+  - **Anual Nominal:** Dividida por 12 (`(taxa / 100) / 12`).
+  - **Anual Efetiva:** Convertida via capitalização composta (`(1 + taxa/100)^(1/12) - 1`).
+- A função anterior `taxaAnualParaMensal` foi marcada como obsoleta (`@deprecated`), mas mantida apontando para a conversão nominal por compatibilidade.
 
-**Baseline Final: 2439 testes aprovados.**
+### 3. Experiência do Usuário (UX)
+- **Cadastro:** O formulário de financiamento agora permite escolher a periodicidade e o tipo da taxa.
+- **Ajuda Visual:** Adicionadas descrições curtas explicando a diferença entre Nominal e Efetiva.
+- **Transparência na Simulação:** A aba "Simular" agora exibe explicitamente a taxa mensal exata que está sendo utilizada pelo motor e sua origem (ex: "Origem: 12% a.a. efetiva").
+
+### 4. Validação Matemática
+- Criada a suíte `tests/bens-v3-taxa-semantica.test.ts` cobrindo os casos:
+  - 12% a.a. Nominal = 1% a.m.
+  - 12% a.a. Efetiva = 0,948879% a.m.
+  - 1% a.m. = 1% a.m.
+
+## Veredito Técnico
+O motor financeiro não assume mais silenciosamente que toda taxa anual deve ser dividida por 12. A natureza da taxa está explícita no contrato de dados e na interface. O CET permanece isolado conforme as diretrizes de segurança.
+
+**Status: APROVADO PARA PRODUÇÃO**
