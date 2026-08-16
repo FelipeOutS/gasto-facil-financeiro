@@ -1374,7 +1374,15 @@ function BemDetalhePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ImportFinanciamentoDialog
+        open={importDocOpen}
+        onOpenChange={setImportDocOpen}
+        bemId={id}
+        financiamentoId={ativo?.id}
+        onSuccess={carregar}
+      />
     </MobileShell>
+
   );
 }
 
