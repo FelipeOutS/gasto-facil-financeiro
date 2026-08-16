@@ -885,6 +885,8 @@ export function ImportExtratoDialog({
           origem: importOrigin(d, d.origem || "extrato_pdf"),
           importBatchId: batchId,
           idOperacaoBanco: d.idOperacao,
+          cartaoId: d.formaPagamento === "credito" ? d.cartaoId : undefined,
+
         })),
       );
       novosCount += created.length;
