@@ -50,6 +50,7 @@ import {
   findDuplicateReceitaAdvanced,
   findDuplicateTransferenciaAdvanced,
   normalizeDescricao,
+  getCartoes,
   getCategorias,
   getGastos,
   getReceitas,
@@ -63,10 +64,20 @@ import {
   parseDataBR,
   suggestCategoryFromDescription,
 } from "@/lib/csv-fatura";
+import { resolverTipoMovimentacao } from "@/lib/transferencia-detect";
+import { sugerirCartaoDaFatura } from "@/lib/fatura-cartao-match";
 
-type Step = "upload" | "kind" | "analyzing" | "review" | "done";
-type ReviewFilter = "todos" | "selecionados" | "duplicados" | "gastos" | "receitas" | "outros";
+type Step = "upload" | "kind" | "analyzing" | "cartao" | "review" | "done";
+type ReviewFilter =
+  | "todos"
+  | "selecionados"
+  | "duplicados"
+  | "gastos"
+  | "receitas"
+  | "transferencias"
+  | "outros";
 type ImportKind = "extrato" | "fatura";
+
 
 type TipoMov = "despesa" | "receita" | "transferencia_interna";
 type DupStatus = "novo" | "duplicado_lote" | "duplicado_existente";
