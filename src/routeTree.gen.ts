@@ -53,6 +53,7 @@ import { Route as EnIndexRouteImport } from './routes/en.index'
 import { Route as ContasAReceberIndexRouteImport } from './routes/contas-a-receber.index'
 import { Route as ContasAPagarIndexRouteImport } from './routes/contas-a-pagar.index'
 import { Route as CartoesIndexRouteImport } from './routes/cartoes.index'
+import { Route as BensIndexRouteImport } from './routes/bens.index'
 import { Route as AssinaturasIndexRouteImport } from './routes/assinaturas.index'
 import { Route as RendaNovaRouteImport } from './routes/renda.nova'
 import { Route as PtSplatRouteImport } from './routes/pt.$'
@@ -81,6 +82,7 @@ import { Route as ContasAPagarNovaRouteImport } from './routes/contas-a-pagar.no
 import { Route as ContaSegurancaRouteImport } from './routes/conta_.seguranca'
 import { Route as ClientesRelatorioRouteImport } from './routes/clientes_.relatorio'
 import { Route as CartoesNovoRouteImport } from './routes/cartoes.novo'
+import { Route as BensIdRouteImport } from './routes/bens.$id'
 import { Route as AssinaturasNovaRouteImport } from './routes/assinaturas.nova'
 import { Route as AppPrivacidadeRouteImport } from './routes/app_.privacidade'
 import { Route as AppPerfilRouteImport } from './routes/app_.perfil'
@@ -373,6 +375,11 @@ const CartoesIndexRoute = CartoesIndexRouteImport.update({
   path: '/cartoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BensIndexRoute = BensIndexRouteImport.update({
+  id: '/bens/',
+  path: '/bens/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AssinaturasIndexRoute = AssinaturasIndexRouteImport.update({
   id: '/assinaturas/',
   path: '/assinaturas/',
@@ -513,6 +520,11 @@ const ClientesRelatorioRoute = ClientesRelatorioRouteImport.update({
 const CartoesNovoRoute = CartoesNovoRouteImport.update({
   id: '/cartoes/novo',
   path: '/cartoes/novo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BensIdRoute = BensIdRouteImport.update({
+  id: '/bens/$id',
+  path: '/bens/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssinaturasNovaRoute = AssinaturasNovaRouteImport.update({
@@ -949,6 +961,7 @@ export interface FileRoutesByFullPath {
   '/app/perfil': typeof AppPerfilRoute
   '/app/privacidade': typeof AppPrivacidadeRoute
   '/assinaturas/nova': typeof AssinaturasNovaRoute
+  '/bens/$id': typeof BensIdRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/conta/seguranca': typeof ContaSegurancaRoute
@@ -977,6 +990,7 @@ export interface FileRoutesByFullPath {
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
   '/assinaturas/': typeof AssinaturasIndexRoute
+  '/bens/': typeof BensIndexRoute
   '/cartoes/': typeof CartoesIndexRoute
   '/contas-a-pagar/': typeof ContasAPagarIndexRoute
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
@@ -1093,6 +1107,7 @@ export interface FileRoutesByTo {
   '/app/perfil': typeof AppPerfilRoute
   '/app/privacidade': typeof AppPrivacidadeRoute
   '/assinaturas/nova': typeof AssinaturasNovaRoute
+  '/bens/$id': typeof BensIdRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes/relatorio': typeof ClientesRelatorioRoute
   '/conta/seguranca': typeof ContaSegurancaRoute
@@ -1121,6 +1136,7 @@ export interface FileRoutesByTo {
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
   '/assinaturas': typeof AssinaturasIndexRoute
+  '/bens': typeof BensIndexRoute
   '/cartoes': typeof CartoesIndexRoute
   '/contas-a-pagar': typeof ContasAPagarIndexRoute
   '/contas-a-receber': typeof ContasAReceberIndexRoute
@@ -1238,6 +1254,7 @@ export interface FileRoutesById {
   '/app_/perfil': typeof AppPerfilRoute
   '/app_/privacidade': typeof AppPrivacidadeRoute
   '/assinaturas/nova': typeof AssinaturasNovaRoute
+  '/bens/$id': typeof BensIdRoute
   '/cartoes/novo': typeof CartoesNovoRoute
   '/clientes_/relatorio': typeof ClientesRelatorioRoute
   '/conta_/seguranca': typeof ContaSegurancaRoute
@@ -1266,6 +1283,7 @@ export interface FileRoutesById {
   '/pt/$': typeof PtSplatRoute
   '/renda/nova': typeof RendaNovaRoute
   '/assinaturas/': typeof AssinaturasIndexRoute
+  '/bens/': typeof BensIndexRoute
   '/cartoes/': typeof CartoesIndexRoute
   '/contas-a-pagar/': typeof ContasAPagarIndexRoute
   '/contas-a-receber/': typeof ContasAReceberIndexRoute
@@ -1385,6 +1403,7 @@ export interface FileRouteTypes {
     | '/app/perfil'
     | '/app/privacidade'
     | '/assinaturas/nova'
+    | '/bens/$id'
     | '/cartoes/novo'
     | '/clientes/relatorio'
     | '/conta/seguranca'
@@ -1413,6 +1432,7 @@ export interface FileRouteTypes {
     | '/pt/$'
     | '/renda/nova'
     | '/assinaturas/'
+    | '/bens/'
     | '/cartoes/'
     | '/contas-a-pagar/'
     | '/contas-a-receber/'
@@ -1529,6 +1549,7 @@ export interface FileRouteTypes {
     | '/app/perfil'
     | '/app/privacidade'
     | '/assinaturas/nova'
+    | '/bens/$id'
     | '/cartoes/novo'
     | '/clientes/relatorio'
     | '/conta/seguranca'
@@ -1557,6 +1578,7 @@ export interface FileRouteTypes {
     | '/pt/$'
     | '/renda/nova'
     | '/assinaturas'
+    | '/bens'
     | '/cartoes'
     | '/contas-a-pagar'
     | '/contas-a-receber'
@@ -1673,6 +1695,7 @@ export interface FileRouteTypes {
     | '/app_/perfil'
     | '/app_/privacidade'
     | '/assinaturas/nova'
+    | '/bens/$id'
     | '/cartoes/novo'
     | '/clientes_/relatorio'
     | '/conta_/seguranca'
@@ -1701,6 +1724,7 @@ export interface FileRouteTypes {
     | '/pt/$'
     | '/renda/nova'
     | '/assinaturas/'
+    | '/bens/'
     | '/cartoes/'
     | '/contas-a-pagar/'
     | '/contas-a-receber/'
@@ -1819,6 +1843,7 @@ export interface RootRouteChildren {
   AppPerfilRoute: typeof AppPerfilRoute
   AppPrivacidadeRoute: typeof AppPrivacidadeRoute
   AssinaturasNovaRoute: typeof AssinaturasNovaRoute
+  BensIdRoute: typeof BensIdRoute
   CartoesNovoRoute: typeof CartoesNovoRoute
   ClientesRelatorioRoute: typeof ClientesRelatorioRoute
   ContaSegurancaRoute: typeof ContaSegurancaRoute
@@ -1847,6 +1872,7 @@ export interface RootRouteChildren {
   PtSplatRoute: typeof PtSplatRoute
   RendaNovaRoute: typeof RendaNovaRoute
   AssinaturasIndexRoute: typeof AssinaturasIndexRoute
+  BensIndexRoute: typeof BensIndexRoute
   CartoesIndexRoute: typeof CartoesIndexRoute
   ContasAPagarIndexRoute: typeof ContasAPagarIndexRoute
   ContasAReceberIndexRoute: typeof ContasAReceberIndexRoute
@@ -2207,6 +2233,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartoesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bens/': {
+      id: '/bens/'
+      path: '/bens'
+      fullPath: '/bens/'
+      preLoaderRoute: typeof BensIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/assinaturas/': {
       id: '/assinaturas/'
       path: '/assinaturas'
@@ -2401,6 +2434,13 @@ declare module '@tanstack/react-router' {
       path: '/cartoes/novo'
       fullPath: '/cartoes/novo'
       preLoaderRoute: typeof CartoesNovoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bens/$id': {
+      id: '/bens/$id'
+      path: '/bens/$id'
+      fullPath: '/bens/$id'
+      preLoaderRoute: typeof BensIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assinaturas/nova': {
@@ -3011,6 +3051,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppPerfilRoute: AppPerfilRoute,
   AppPrivacidadeRoute: AppPrivacidadeRoute,
   AssinaturasNovaRoute: AssinaturasNovaRoute,
+  BensIdRoute: BensIdRoute,
   CartoesNovoRoute: CartoesNovoRoute,
   ClientesRelatorioRoute: ClientesRelatorioRoute,
   ContaSegurancaRoute: ContaSegurancaRoute,
@@ -3039,6 +3080,7 @@ const rootRouteChildren: RootRouteChildren = {
   PtSplatRoute: PtSplatRoute,
   RendaNovaRoute: RendaNovaRoute,
   AssinaturasIndexRoute: AssinaturasIndexRoute,
+  BensIndexRoute: BensIndexRoute,
   CartoesIndexRoute: CartoesIndexRoute,
   ContasAPagarIndexRoute: ContasAPagarIndexRoute,
   ContasAReceberIndexRoute: ContasAReceberIndexRoute,

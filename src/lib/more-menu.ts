@@ -7,6 +7,8 @@ import {
   Wallet,
   Repeat,
   TrendingUp,
+  Landmark,
+
   Crown,
   Settings2,
   Sparkles,
@@ -98,6 +100,8 @@ export const MORE_ITEMS: MoreItem[] = [
     icon: TrendingUp,
     feature: "investimentos",
   },
+  { to: "/bens", labelKey: "bens", descKey: "bens", icon: Landmark },
+
   {
     to: "/contas-conectadas",
     labelKey: "contasConectadas",

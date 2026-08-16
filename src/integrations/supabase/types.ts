@@ -160,6 +160,371 @@ export type Database = {
         }
         Relationships: []
       }
+      bens: {
+        Row: {
+          ano_modelo: number | null
+          area_m2: number | null
+          arquivado_em: string | null
+          created_at: string
+          data_aquisicao: string | null
+          descricao: string | null
+          endereco: string | null
+          entrada_fgts: number
+          entrada_outros: number
+          entrada_recursos_proprios: number
+          entrada_total: number
+          id: string
+          marca: string | null
+          matricula: string | null
+          modelo: string | null
+          nome: string
+          observacao: string | null
+          placa: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          user_id: string
+          valor_aquisicao: number | null
+          valor_mercado: number | null
+        }
+        Insert: {
+          ano_modelo?: number | null
+          area_m2?: number | null
+          arquivado_em?: string | null
+          created_at?: string
+          data_aquisicao?: string | null
+          descricao?: string | null
+          endereco?: string | null
+          entrada_fgts?: number
+          entrada_outros?: number
+          entrada_recursos_proprios?: number
+          entrada_total?: number
+          id?: string
+          marca?: string | null
+          matricula?: string | null
+          modelo?: string | null
+          nome: string
+          observacao?: string | null
+          placa?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          user_id: string
+          valor_aquisicao?: number | null
+          valor_mercado?: number | null
+        }
+        Update: {
+          ano_modelo?: number | null
+          area_m2?: number | null
+          arquivado_em?: string | null
+          created_at?: string
+          data_aquisicao?: string | null
+          descricao?: string | null
+          endereco?: string | null
+          entrada_fgts?: number
+          entrada_outros?: number
+          entrada_recursos_proprios?: number
+          entrada_total?: number
+          id?: string
+          marca?: string | null
+          matricula?: string | null
+          modelo?: string | null
+          nome?: string
+          observacao?: string | null
+          placa?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+          valor_aquisicao?: number | null
+          valor_mercado?: number | null
+        }
+        Relationships: []
+      }
+      bens_amortizacoes: {
+        Row: {
+          bem_id: string
+          created_at: string
+          data: string
+          efeito: string | null
+          financiamento_id: string | null
+          gasto_id: string | null
+          id: string
+          observacao: string | null
+          origem_recurso: string | null
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          bem_id: string
+          created_at?: string
+          data: string
+          efeito?: string | null
+          financiamento_id?: string | null
+          gasto_id?: string | null
+          id?: string
+          observacao?: string | null
+          origem_recurso?: string | null
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          bem_id?: string
+          created_at?: string
+          data?: string
+          efeito?: string | null
+          financiamento_id?: string | null
+          gasto_id?: string | null
+          id?: string
+          observacao?: string | null
+          origem_recurso?: string | null
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bens_amortizacoes_bem_fk"
+            columns: ["user_id", "bem_id"]
+            isOneToOne: false
+            referencedRelation: "bens"
+            referencedColumns: ["user_id", "id"]
+          },
+          {
+            foreignKeyName: "bens_amortizacoes_financiamento_fk"
+            columns: ["user_id", "financiamento_id"]
+            isOneToOne: false
+            referencedRelation: "bens_financiamentos"
+            referencedColumns: ["user_id", "id"]
+          },
+          {
+            foreignKeyName: "bens_amortizacoes_gasto_fk"
+            columns: ["user_id", "gasto_id"]
+            isOneToOne: false
+            referencedRelation: "gastos"
+            referencedColumns: ["user_id", "id"]
+          },
+        ]
+      }
+      bens_custos_aquisicao: {
+        Row: {
+          bem_id: string
+          created_at: string
+          data: string | null
+          descricao: string | null
+          gasto_id: string | null
+          id: string
+          tipo: string
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          bem_id: string
+          created_at?: string
+          data?: string | null
+          descricao?: string | null
+          gasto_id?: string | null
+          id?: string
+          tipo: string
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          bem_id?: string
+          created_at?: string
+          data?: string | null
+          descricao?: string | null
+          gasto_id?: string | null
+          id?: string
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bens_custos_aquisicao_bem_fk"
+            columns: ["user_id", "bem_id"]
+            isOneToOne: false
+            referencedRelation: "bens"
+            referencedColumns: ["user_id", "id"]
+          },
+          {
+            foreignKeyName: "bens_custos_aquisicao_gasto_fk"
+            columns: ["user_id", "gasto_id"]
+            isOneToOne: false
+            referencedRelation: "gastos"
+            referencedColumns: ["user_id", "id"]
+          },
+        ]
+      }
+      bens_financiamentos: {
+        Row: {
+          bem_id: string
+          created_at: string
+          dia_vencimento: number | null
+          encerrado_em: string | null
+          id: string
+          instituicao: string | null
+          modalidade: string | null
+          motivo_encerramento: string | null
+          observacao: string | null
+          prazo_meses: number | null
+          primeiro_vencimento: string | null
+          saldo_devedor_data: string | null
+          saldo_devedor_informado: number | null
+          sistema_amortizacao: string | null
+          status: string
+          substituido_por_id: string | null
+          taxa_juros_anual: number | null
+          updated_at: string
+          user_id: string
+          valor_financiado: number
+        }
+        Insert: {
+          bem_id: string
+          created_at?: string
+          dia_vencimento?: number | null
+          encerrado_em?: string | null
+          id?: string
+          instituicao?: string | null
+          modalidade?: string | null
+          motivo_encerramento?: string | null
+          observacao?: string | null
+          prazo_meses?: number | null
+          primeiro_vencimento?: string | null
+          saldo_devedor_data?: string | null
+          saldo_devedor_informado?: number | null
+          sistema_amortizacao?: string | null
+          status?: string
+          substituido_por_id?: string | null
+          taxa_juros_anual?: number | null
+          updated_at?: string
+          user_id: string
+          valor_financiado?: number
+        }
+        Update: {
+          bem_id?: string
+          created_at?: string
+          dia_vencimento?: number | null
+          encerrado_em?: string | null
+          id?: string
+          instituicao?: string | null
+          modalidade?: string | null
+          motivo_encerramento?: string | null
+          observacao?: string | null
+          prazo_meses?: number | null
+          primeiro_vencimento?: string | null
+          saldo_devedor_data?: string | null
+          saldo_devedor_informado?: number | null
+          sistema_amortizacao?: string | null
+          status?: string
+          substituido_por_id?: string | null
+          taxa_juros_anual?: number | null
+          updated_at?: string
+          user_id?: string
+          valor_financiado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bens_financiamentos_bem_fk"
+            columns: ["user_id", "bem_id"]
+            isOneToOne: false
+            referencedRelation: "bens"
+            referencedColumns: ["user_id", "id"]
+          },
+          {
+            foreignKeyName: "bens_financiamentos_substituido_por_id_fkey"
+            columns: ["substituido_por_id"]
+            isOneToOne: false
+            referencedRelation: "bens_financiamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bens_pagamentos: {
+        Row: {
+          bem_id: string
+          competencia: string | null
+          created_at: string
+          data_pagamento: string
+          financiamento_id: string | null
+          gasto_id: string | null
+          id: string
+          numero_parcela: number | null
+          observacao: string | null
+          updated_at: string
+          user_id: string
+          valor_amortizacao: number | null
+          valor_juros: number | null
+          valor_pago: number
+          valor_seguro: number | null
+          valor_taxas: number | null
+        }
+        Insert: {
+          bem_id: string
+          competencia?: string | null
+          created_at?: string
+          data_pagamento: string
+          financiamento_id?: string | null
+          gasto_id?: string | null
+          id?: string
+          numero_parcela?: number | null
+          observacao?: string | null
+          updated_at?: string
+          user_id: string
+          valor_amortizacao?: number | null
+          valor_juros?: number | null
+          valor_pago: number
+          valor_seguro?: number | null
+          valor_taxas?: number | null
+        }
+        Update: {
+          bem_id?: string
+          competencia?: string | null
+          created_at?: string
+          data_pagamento?: string
+          financiamento_id?: string | null
+          gasto_id?: string | null
+          id?: string
+          numero_parcela?: number | null
+          observacao?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_amortizacao?: number | null
+          valor_juros?: number | null
+          valor_pago?: number
+          valor_seguro?: number | null
+          valor_taxas?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bens_pagamentos_bem_fk"
+            columns: ["user_id", "bem_id"]
+            isOneToOne: false
+            referencedRelation: "bens"
+            referencedColumns: ["user_id", "id"]
+          },
+          {
+            foreignKeyName: "bens_pagamentos_financiamento_fk"
+            columns: ["user_id", "financiamento_id"]
+            isOneToOne: false
+            referencedRelation: "bens_financiamentos"
+            referencedColumns: ["user_id", "id"]
+          },
+          {
+            foreignKeyName: "bens_pagamentos_gasto_fk"
+            columns: ["user_id", "gasto_id"]
+            isOneToOne: false
+            referencedRelation: "gastos"
+            referencedColumns: ["user_id", "id"]
+          },
+        ]
+      }
       brand_assets: {
         Row: {
           company_name: string | null
@@ -1283,6 +1648,7 @@ export type Database = {
       gastos: {
         Row: {
           ano: number
+          bem_id: string | null
           cartao_id: string | null
           categoria_id: string | null
           confirmado: boolean
@@ -1315,6 +1681,7 @@ export type Database = {
         }
         Insert: {
           ano: number
+          bem_id?: string | null
           cartao_id?: string | null
           categoria_id?: string | null
           confirmado?: boolean
@@ -1347,6 +1714,7 @@ export type Database = {
         }
         Update: {
           ano?: number
+          bem_id?: string | null
           cartao_id?: string | null
           categoria_id?: string | null
           confirmado?: boolean
@@ -1378,6 +1746,13 @@ export type Database = {
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "gastos_bem_fk"
+            columns: ["user_id", "bem_id"]
+            isOneToOne: false
+            referencedRelation: "bens"
+            referencedColumns: ["user_id", "id"]
+          },
           {
             foreignKeyName: "gastos_categoria_id_fkey"
             columns: ["categoria_id"]
@@ -2506,6 +2881,7 @@ export type Database = {
       }
       recorrencias: {
         Row: {
+          bem_id: string | null
           cartao_id: string | null
           categoria_id: string | null
           created_at: string
@@ -2527,6 +2903,7 @@ export type Database = {
           valor_original: number | null
         }
         Insert: {
+          bem_id?: string | null
           cartao_id?: string | null
           categoria_id?: string | null
           created_at?: string
@@ -2548,6 +2925,7 @@ export type Database = {
           valor_original?: number | null
         }
         Update: {
+          bem_id?: string | null
           cartao_id?: string | null
           categoria_id?: string | null
           created_at?: string
@@ -2568,7 +2946,15 @@ export type Database = {
           valor?: number
           valor_original?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "recorrencias_bem_fk"
+            columns: ["user_id", "bem_id"]
+            isOneToOne: false
+            referencedRelation: "bens"
+            referencedColumns: ["user_id", "id"]
+          },
+        ]
       }
       subscription_payments: {
         Row: {
