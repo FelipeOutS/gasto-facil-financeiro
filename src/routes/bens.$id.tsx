@@ -727,6 +727,19 @@ function BemDetalhePage() {
             ))
           )}
 
+          <div className="flex justify-center pt-2">
+            <Button 
+              variant="outline" 
+              className="w-full gap-2 border-dashed h-12 text-muted-foreground hover:text-primary hover:border-primary transition-colors"
+              onClick={() => setImportDocOpen(true)}
+            >
+              <FileText className="h-4 w-4" />
+              Atualizar por documento (PDF/Imagem)
+              <Sparkles className="h-3 w-3 text-primary animate-pulse ml-1" />
+            </Button>
+          </div>
+
+
           {!ativo && (
             <div className="rounded-xl border p-4">
               <p className="mb-3 text-sm font-medium">Novo financiamento</p>
