@@ -39,8 +39,9 @@ export function MobileMoreSheet({ trigger }: { trigger: ReactNode }) {
         NAV_GROUPS.filter((g) => !g.adminMasterOnly || isAdminMaster),
         can,
         isAdminMaster,
+        profile?.tipo_cadastro,
       ),
-    [isAdminMaster, can],
+    [isAdminMaster, can, profile?.tipo_cadastro],
   );
 
   function getRule(item: NavLeaf) {
@@ -78,12 +79,13 @@ export function MobileMoreSheet({ trigger }: { trigger: ReactNode }) {
   }
 
   function renderItem(item: NavLeaf) {
-    const Icon = item.icon;
+    let { to, labelKey, icon: Icon } = item;
+    if (to === "/app/perfil") to = "/conta";
     const locked = isLocked(item);
     return (
       <Link
         key={item.to}
-        to={locked ? "/meu-plano" : item.to}
+        to={locked ? "/meu-plano" : (to as any)}
         preload="intent"
         preloadDelay={0}
         onClick={() => setOpen(false)}
@@ -121,7 +123,7 @@ export function MobileMoreSheet({ trigger }: { trigger: ReactNode }) {
         <SheetHeader className="border-b border-border/60 px-4 py-4 text-left">
           <SheetTitle className="sr-only">{t("more.title")}</SheetTitle>
           <SheetDescription className="sr-only">{t("more.description")}</SheetDescription>
-          <Link to="/app/perfil" onClick={() => setOpen(false)} className="flex items-center gap-3">
+          <Link to="/conta" onClick={() => setOpen(false)} className="flex items-center gap-3">
             <UserAvatar
               url={profile?.avatar_url}
               name={displayName}

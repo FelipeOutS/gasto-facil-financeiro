@@ -141,8 +141,9 @@ export function DesktopSidebar() {
         NAV_GROUPS.filter((g) => !g.adminMasterOnly || isAdminMaster),
         can,
         isAdminMaster,
+        profile?.tipo_cadastro,
       ),
-    [isAdminMaster, can],
+    [isAdminMaster, can, profile?.tipo_cadastro],
   );
 
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
@@ -212,8 +213,12 @@ export function DesktopSidebar() {
     setOptimisticPath(to);
   }
 
-  function renderLeaf(item: NavLeaf) {
-    const { to, labelKey, icon: Icon } = item;
+  function renderLeaf(item: NavLeaf, isContaGroup = false) {
+    let { to, labelKey, icon: Icon } = item;
+
+    // Redirecionamento de Perfil para Conta
+    if (to === "/app/perfil") to = "/conta";
+
     const active = currentPath === to || currentPath.startsWith(to + "/");
     const showDot = to === "/contas-a-pagar" && alerta !== "nenhum";
     const routeRule = ROUTE_FEATURE[to];
@@ -477,9 +482,11 @@ export function DesktopSidebar() {
             <div className="mt-3 space-y-1">
               {groups.map((group) => {
                 const open = isOpen(group.id);
-                const hasActive = group.items.some(
-                  (it) => currentPath === it.to || currentPath.startsWith(it.to + "/"),
-                );
+                const isContaGroup = group.id === "conta";
+                const hasActive = group.items.some((it) => {
+                  const to = it.to === "/app/ajustes" && isContaGroup ? "/conta" : it.to;
+                  return currentPath === to || currentPath.startsWith(to + "/");
+                });
                 if (collapsed) {
                   // No accordion header when collapsed; just a thin divider + items
                   return (

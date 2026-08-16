@@ -17,7 +17,12 @@ import { MobileShell } from "@/components/MobileShell";
 import { UserAvatar } from "@/components/UserAvatar";
 import { useAuth } from "@/lib/auth-context";
 
+import { redirect } from "@tanstack/react-router";
+
 export const Route = createFileRoute("/app_/perfil")({
+  beforeLoad: () => {
+    throw redirect({ to: "/conta", replace: true });
+  },
   head: () => ({ meta: [{ title: "Perfil — Gasto Inteligente" }] }),
   component: AppPerfilPage,
 });

@@ -48,6 +48,7 @@ export function MobileNotificationsFab() {
           )}
           style={{
             bottom: "calc(92px + env(safe-area-inset-bottom, 0px))",
+            marginBottom: "var(--notifications-fab-offset, 0px)",
           }}
         >
           <Bell
