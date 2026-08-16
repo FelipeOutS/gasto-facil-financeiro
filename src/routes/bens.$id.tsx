@@ -678,7 +678,7 @@ function BemDetalhePage() {
           ) : (
             <SimuladorFinanciamento
               financiamento={ativo}
-              saldoAtual={resumo?.saldoDevedorEstimado}
+              saldoAtual={resumo ? resumo.saldoDevedorEstimado : null}
             />
           )}
         </TabsContent>
