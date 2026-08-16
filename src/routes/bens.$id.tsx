@@ -581,7 +581,7 @@ function BemDetalhePage() {
                 )}
               </div>
               <div className="mt-1 text-2xl font-bold text-rose-600/90">
-                {resumo.saldoDevedorEstimado !== null ? formatBRL(resumo.saldoDevedorEstimado) : "0,00"}
+                {resumo.saldoDevedorEstimado !== null ? formatBRL(resumo.saldoDevedorEstimado) : "—"}
               </div>
               {resumo.percentualPago !== null && (
                 <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
@@ -605,8 +605,8 @@ function BemDetalhePage() {
               destaque
             />
             <Card titulo="Custo do mês" valor={formatBRL(resumo.custoMensalGastos)} />
-            <Card titulo="Diferença nominal" valor={formatBRL(resumo.variacaoValorNominal || 0)} />
-            <Card titulo="Redução do saldo" valor={formatBRL(resumo.reducaoSaldoDevedorNominal || 0)} />
+            <Card titulo="Diferença nominal" valor={resumo.variacaoValorNominal !== null ? formatBRL(resumo.variacaoValorNominal) : "—"} />
+            <Card titulo="Redução do saldo" valor={resumo.reducaoSaldoDevedorNominal !== null ? formatBRL(resumo.reducaoSaldoDevedorNominal) : "—"} />
             <Card titulo="Amortizado (FGTS)" valor={formatBRL(resumo.totalAmortizadoFGTS)} />
 
           </section>
@@ -678,7 +678,7 @@ function BemDetalhePage() {
           ) : (
             <SimuladorFinanciamento
               financiamento={ativo}
-              saldoAtual={resumo?.saldoDevedorEstimado || 0}
+              saldoAtual={resumo ? resumo.saldoDevedorEstimado : null}
             />
           )}
         </TabsContent>
