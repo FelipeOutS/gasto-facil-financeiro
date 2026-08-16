@@ -118,11 +118,11 @@ export function ImportFinanciamentoReview({
     try {
       const updates: any = {};
       
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
       // 1. Atualizar Saldo (Histórico)
       if (selections.saldoDevedor && financiamentoId) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Usuário não autenticado");
-        
         await criarHistoricoSaldo(user.id, financiamentoId, {
           saldo_devedor: data.saldoDevedor,
           data_referencia: dataRef,
@@ -130,11 +130,10 @@ export function ImportFinanciamentoReview({
         });
       }
 
-
       // 2. Atualizar Financiamento (Campos diretos)
       if (selections.valorParcela) updates.valor_parcela_identificada = data.valorParcela;
       if (selections.taxaJuros) {
-        updates.taxa_juros_anual = data.taxaJuros; // Simplificação, idealmente tratar periodicidade
+        updates.taxa_juros_anual = data.taxaJuros;
         updates.taxa_juros_periodicidade = data.periodicidadeTaxa;
         updates.taxa_juros_tipo = data.tipoTaxa;
       }
@@ -150,12 +149,13 @@ export function ImportFinanciamentoReview({
         .update({ 
           alteracoes_confirmadas: selections,
           status: "revisado" 
-        })
+        } as any)
         .eq("id", data.docId);
 
       toast.success("Dados do financiamento atualizados.");
       onConfirm();
     } catch (err) {
+      console.error(err);
       toast.error("Erro ao salvar atualizações.");
     } finally {
       setBusy(false);
@@ -177,7 +177,7 @@ export function ImportFinanciamentoReview({
       <div className="space-y-0 border rounded-xl overflow-hidden bg-white">
         <ComparisonRow 
           label="Saldo Devedor"
-          current={null} // Idealmente buscar do resumo
+          current={null}
           found={data.saldoDevedor}
           selected={selections.saldoDevedor}
           onSelect={(v) => setSelections({ ...selections, saldoDevedor: v })}
@@ -245,3 +245,4 @@ export function ImportFinanciamentoReview({
     </div>
   );
 }
+
