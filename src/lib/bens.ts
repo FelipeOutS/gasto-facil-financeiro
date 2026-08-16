@@ -168,6 +168,50 @@ export type CustoAquisicaoBem = {
   updated_at: string;
 };
 
+export type ResumoBem = {
+  entradaTotal: number;
+  entradaComposicaoConfere: boolean;
+  totalCustosAquisicao: number;
+  totalParcelasPagas: number;
+  qtdParcelasPagas: number;
+  totalAmortizacoes: number;
+  /** gastos vinculados ao bem que NÃO são fonte de caixa de outro evento */
+  totalGastosRelacionados: number;
+  /** custo do mês de referência somando apenas gastos relacionados */
+  custoMensalGastos: number;
+  /** entrada + custos adicionais + parcelas + amortizações + gastos (cada evento uma única vez) */
+  totalDesembolsado: number;
+  /** null = não informado (sem dados suficientes) */
+  saldoDevedorEstimado: number | null;
+  parcelasRestantes: number | null;
+  percentualPago: number | null;
+  // --- V2 Patrimônio ---
+  valorAtualEstimado: number | null;
+  patrimonioLiquidoEstimado: number | null;
+  variacaoValorNominal: number | null;
+  variacaoValorPercentual: number | null;
+  reducaoSaldoDevedorNominal: number | null;
+  totalAmortizadoFGTS: number;
+  totalAmortizadoProprio: number;
+  totalAmortizadoOutros: number;
+};
+
+export type HistoricoValorBem = {
+  id: string;
+  bem_id: string;
+  valor_estimado: number;
+  data_referencia: string;
+  observacao?: string | null;
+};
+
+export type HistoricoSaldoBem = {
+  id: string;
+  financiamento_id: string;
+  saldo_devedor: number;
+  data_referencia: string;
+  observacao?: string | null;
+};
+
 // ---------------------------------------------------------------------------
 // Cálculos puros (sem I/O) — testáveis
 // ---------------------------------------------------------------------------
@@ -199,32 +243,15 @@ export type GastoDoBem = {
   descricao: string;
   valor: number;
   data: string;
+  categoria?: string | null;
   recorrencia_id?: string | null;
 };
 
-export type ResumoBem = {
-  entradaTotal: number;
-  entradaComposicaoConfere: boolean;
-  totalCustosAquisicao: number;
-  totalParcelasPagas: number;
-  qtdParcelasPagas: number;
-  totalAmortizacoes: number;
-  /** gastos vinculados ao bem que NÃO são fonte de caixa de outro evento */
-  totalGastosRelacionados: number;
-  /** custo do mês de referência somando apenas gastos relacionados */
-  custoMensalGastos: number;
-  /** entrada + custos adicionais + parcelas + amortizações + gastos (cada evento uma única vez) */
-  totalDesembolsado: number;
-  /** null = não informado (sem dados suficientes) */
-  saldoDevedorEstimado: number | null;
-  parcelasRestantes: number | null;
-  percentualPago: number | null;
-};
 
 export function calcularResumoBem(args: {
   bem: Pick<
     Bem,
-    "entrada_total" | "entrada_recursos_proprios" | "entrada_fgts" | "entrada_outros"
+    "entrada_total" | "entrada_recursos_proprios" | "entrada_fgts" | "entrada_outros" | "valor_aquisicao"
   >;
   financiamento?: Financiamento | null;
   pagamentos: PagamentoBem[];
@@ -235,8 +262,12 @@ export function calcularResumoBem(args: {
   gastos?: GastoDoBem[];
   /** mês de referência do custo mensal, formato YYYY-MM */
   mesReferencia?: string;
+  /** V2: histórico de valor para determinar o valor atual */
+  historicoValor?: HistoricoValorBem[];
+  /** V2: histórico de saldo para determinar o saldo informado mais recente */
+  historicoSaldo?: HistoricoSaldoBem[];
 }): ResumoBem {
-  const { bem, financiamento, pagamentos, amortizacoes, custos } = args;
+  const { bem, financiamento, pagamentos, amortizacoes, custos, historicoValor = [], historicoSaldo = [] } = args;
   const g = args.valoresGastos ?? {};
   const gastos = args.gastos ?? [];
 
@@ -260,6 +291,16 @@ export function calcularResumoBem(args: {
     (s, a) => s + valorEfetivoDesembolso({ valor: Number(a.valor), gastoId: a.gasto_id }, g),
     0,
   );
+
+  const totalAmortizadoFGTS = amortizacoes
+    .filter((a) => a.origem_recurso === "fgts")
+    .reduce((s, a) => s + valorEfetivoDesembolso({ valor: Number(a.valor), gastoId: a.gasto_id }, g), 0);
+  const totalAmortizadoProprio = amortizacoes
+    .filter((a) => a.origem_recurso === "proprio")
+    .reduce((s, a) => s + valorEfetivoDesembolso({ valor: Number(a.valor), gastoId: a.gasto_id }, g), 0);
+  const totalAmortizadoOutros = amortizacoes
+    .filter((a) => a.origem_recurso !== "fgts" && a.origem_recurso !== "proprio")
+    .reduce((s, a) => s + valorEfetivoDesembolso({ valor: Number(a.valor), gastoId: a.gasto_id }, g), 0);
 
   // Gastos que já são fonte de caixa de um pagamento/amortização/custo não podem
   // ser somados de novo: eles já entraram acima via `valorEfetivoDesembolso`.
@@ -285,14 +326,33 @@ export function calcularResumoBem(args: {
     totalAmortizacoes +
     totalGastosRelacionados;
 
+  // --- V2: Patrimônio e Evolução ---
+
+  // 1. Valor Atual Estimado
+  const ultimoValorInformado = [...historicoValor].sort(
+    (a, b) => new Date(b.data_referencia).getTime() - new Date(a.data_referencia).getTime(),
+  )[0];
+  const valorAtualEstimado = ultimoValorInformado ? Number(ultimoValorInformado.valor_estimado) : null;
+
+  // 2. Saldo Devedor
   let saldoDevedorEstimado: number | null = null;
+  let reducaoSaldoDevedorNominal: number | null = null;
+
   if (financiamento) {
-    const principalPago = pagamentos.reduce((s, p) => s + Number(p.valor_amortizacao ?? 0), 0);
-    let base: number;
-    if (financiamento.saldo_devedor_informado != null) {
-      // O saldo informado é uma foto na `data_saldo`: só descontamos o que
-      // veio DEPOIS dessa data, senão contaríamos duas vezes.
-      const corte = financiamento.saldo_devedor_data ?? null;
+    const saldoNoFinanciamento = financiamento.saldo_devedor_informado != null 
+      ? { valor: Number(financiamento.saldo_devedor_informado), data: financiamento.saldo_devedor_data }
+      : null;
+    const saldoNoHist = [...historicoSaldo].sort(
+      (a, b) => new Date(b.data_referencia).getTime() - new Date(a.data_referencia).getTime(),
+    )[0];
+    
+    let saldoReferencia = saldoNoFinanciamento;
+    if (saldoNoHist && (!saldoNoFinanciamento || new Date(saldoNoHist.data_referencia) >= new Date(saldoNoFinanciamento.data || ""))) {
+      saldoReferencia = { valor: Number(saldoNoHist.saldo_devedor), data: saldoNoHist.data_referencia };
+    }
+
+    if (saldoReferencia) {
+      const corte = saldoReferencia.data ?? null;
       const depois = (d: string | null | undefined) => (corte ? (d ?? "") > corte : true);
       const principalPosSaldo = pagamentos
         .filter((p) => depois(p.data_pagamento))
@@ -300,13 +360,30 @@ export function calcularResumoBem(args: {
       const amortPosSaldo = amortizacoes
         .filter((a) => depois(a.data))
         .reduce((s, a) => s + Number(a.valor ?? 0), 0);
-      base = Number(financiamento.saldo_devedor_informado) - principalPosSaldo - amortPosSaldo;
+      saldoDevedorEstimado = Math.max(0, Number((saldoReferencia.valor - principalPosSaldo - amortPosSaldo).toFixed(2)));
     } else {
-      base = Number(financiamento.valor_financiado ?? 0) - principalPago - totalAmortizacoes;
+      const principalPago = pagamentos.reduce((s, p) => s + Number(p.valor_amortizacao ?? 0), 0);
+      saldoDevedorEstimado = Math.max(0, Number((Number(financiamento.valor_financiado ?? 0) - principalPago - totalAmortizacoes).toFixed(2)));
     }
-    saldoDevedorEstimado = Math.max(0, Number(base.toFixed(2)));
+    
+    reducaoSaldoDevedorNominal = Number(financiamento.valor_financiado) - saldoDevedorEstimado;
+  } else {
+    saldoDevedorEstimado = 0;
   }
 
+  // 3. Patrimônio Líquido Estimado
+  const patrimonioLiquidoEstimado = valorAtualEstimado !== null 
+    ? Math.max(0, valorAtualEstimado - (saldoDevedorEstimado || 0))
+    : null;
+
+  // 4. Variação de Valor (Compra vs Atual)
+  const valorCompra = Number(bem.valor_aquisicao ?? 0);
+  const variacaoValorNominal = (valorAtualEstimado !== null && valorCompra > 0)
+    ? valorAtualEstimado - valorCompra
+    : null;
+  const variacaoValorPercentual = (variacaoValorNominal !== null && valorCompra > 0)
+    ? (variacaoValorNominal / valorCompra) * 100
+    : null;
 
   const prazo = financiamento?.prazo_meses ?? null;
   const parcelasRestantes = prazo != null ? Math.max(0, prazo - pagamentos.length) : null;
@@ -336,6 +413,14 @@ export function calcularResumoBem(args: {
     saldoDevedorEstimado,
     parcelasRestantes,
     percentualPago,
+    valorAtualEstimado,
+    patrimonioLiquidoEstimado,
+    variacaoValorNominal,
+    variacaoValorPercentual,
+    reducaoSaldoDevedorNominal,
+    totalAmortizadoFGTS,
+    totalAmortizadoProprio,
+    totalAmortizadoOutros,
   };
 }
 
@@ -611,4 +696,56 @@ export async function vincularGastoAoBem(
       .eq("recorrencia_id", gasto.recorrencia_id);
     if (e3) throw e3;
   }
+}
+
+// ---------------------------------------------------------------------------
+// V2: Acesso ao Histórico de Valor e Saldo
+// ---------------------------------------------------------------------------
+
+export async function listarHistoricoValor(bemId: string): Promise<HistoricoValorBem[]> {
+  const { data, error } = await supabase
+    .from("bens_historico_valor" as never)
+    .select("*")
+    .eq("bem_id", bemId)
+    .order("data_referencia", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as HistoricoValorBem[];
+}
+
+export async function criarHistoricoValor(
+  userId: string,
+  bemId: string,
+  payload: Partial<HistoricoValorBem>
+): Promise<HistoricoValorBem> {
+  const { data, error } = await supabase
+    .from("bens_historico_valor" as never)
+    .insert({ ...payload, user_id: userId, bem_id: bemId } as never)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as unknown as HistoricoValorBem;
+}
+
+export async function listarHistoricoSaldo(financiamentoId: string): Promise<HistoricoSaldoBem[]> {
+  const { data, error } = await supabase
+    .from("bens_historico_saldo" as never)
+    .select("*")
+    .eq("financiamento_id", financiamentoId)
+    .order("data_referencia", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as HistoricoSaldoBem[];
+}
+
+export async function criarHistoricoSaldo(
+  userId: string,
+  financiamentoId: string,
+  payload: Partial<HistoricoSaldoBem>
+): Promise<HistoricoSaldoBem> {
+  const { data, error } = await supabase
+    .from("bens_historico_saldo" as never)
+    .insert({ ...payload, user_id: userId, financiamento_id: financiamentoId } as never)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as unknown as HistoricoSaldoBem;
 }

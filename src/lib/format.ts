@@ -120,3 +120,14 @@ export function ymOf(iso: string): { year: number; month: number } {
   const d = parseDateLocal(iso) ?? new Date();
   return { year: d.getFullYear(), month: d.getMonth() + 1 };
 }
+
+export function formatBRLInput(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  const number = parseFloat(digits) / 100;
+  if (isNaN(number)) return "";
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(number);
+}
+
