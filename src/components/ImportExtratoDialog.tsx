@@ -577,7 +577,8 @@ export function ImportExtratoDialog({
         setLoading(false);
       }
     },
-    [itensFromBruto, premiumGate, t, tc],
+    [cartoes, itensFromBruto, premiumGate, t, tc],
+
   );
 
   // ---------- IMPORT: PDF ----------
