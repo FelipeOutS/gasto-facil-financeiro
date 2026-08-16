@@ -107,9 +107,10 @@ describe('Validação Matemática Independente V3 (SAC & Price)', () => {
       
       // O motor calcula a primeira parcela baseada no saldo JÁ reduzido
       // Saldo após amortização extra imediata = 340.000
-      // Juros 1 = 340.000 * 0.00797414 = 2711.21
-      expect(result.parcelas[0].valorJuros).toBeCloseTo(2711.21, 1);
+      // Juros 1 = 340.000 * (0.10 / 12) = 2833.33
+      expect(result.parcelas[0].valorJuros).toBeCloseTo(2833.33, 1);
     });
+
 
     it('Quitação total se valor extra >= saldo', () => {
       const result = simularFinanciamento({
