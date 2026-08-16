@@ -21,7 +21,8 @@ describe('Motor Financeiro V3 — Auditoria de Semântica de Taxa', () => {
 
   it('Caso D: 10.5% a.a. nominal (Exemplo Real)', () => {
     const taxa = converterTaxaParaMensal(10.5, 'anual', 'nominal');
-    expect(taxa * 100).toBe(10.5 / 12);
+    // 10.5 / 12 = 0.875
+    expect(taxa * 100).toBeCloseTo(0.875, 10);
   });
 
   it('Caso E: 10.5% a.a. efetiva (Exemplo Real)', () => {
