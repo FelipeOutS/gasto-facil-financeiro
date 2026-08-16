@@ -337,7 +337,7 @@ export function GastosExportDialog({
           const pctW = 48;
           const barX = M + nameW + 8;
           const barW = pageW - M - valueW - pctW - barX - 8;
-          breakdown.forEach((c, i) => {
+          breakdown.forEach((c: CategoryBreakdownItem, i: number) => {
             const cy = y + i * rowH;
             doc.setFont("helvetica", "normal");
             doc.setFontSize(9);
