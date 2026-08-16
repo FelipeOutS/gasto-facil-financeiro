@@ -23,17 +23,13 @@ import {
   EXPORT_COLUMNS,
   buildExportRows,
   buildFileName,
-  buildPageLabel,
-  buildPdfData,
   buildXlsxArrayBuffer,
-  computeCategoryBreakdown,
   computeSummary,
-  formatDateBRSafe,
   toCSV,
-  type CategoryBreakdownItem,
   type ExportColumn,
   type ExportRow,
 } from "@/lib/gastos-export";
+import { renderGastosPdf } from "@/lib/gastos-pdf";
 
 type Formato = "xlsx" | "csv" | "pdf";
 type Escopo = "filtrados" | "periodo";
