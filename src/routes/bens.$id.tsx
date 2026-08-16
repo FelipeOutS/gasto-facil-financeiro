@@ -201,6 +201,8 @@ function BemDetalhePage() {
     valor_financiado: "",
     prazo_meses: "",
     taxa_juros_anual: "",
+    taxa_juros_periodicidade: "anual",
+    taxa_juros_tipo: "nominal",
     sistema_amortizacao: "sac",
     primeiro_vencimento: "",
     dia_vencimento: "",
@@ -747,13 +749,60 @@ function BemDetalhePage() {
                     onChange={(e) => setFin({ ...fin, prazo_meses: e.target.value })}
                   />
                 </div>
-                <div>
-                  <Label>Taxa anual (%)</Label>
-                  <Input
-                    inputMode="decimal"
-                    value={fin.taxa_juros_anual}
-                    onChange={(e) => setFin({ ...fin, taxa_juros_anual: e.target.value })}
-                  />
+                <div className="space-y-3 sm:col-span-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <Label>Taxa de juros (%)</Label>
+                      <Input
+                        inputMode="decimal"
+                        value={fin.taxa_juros_anual}
+                        onChange={(e) => setFin({ ...fin, taxa_juros_anual: e.target.value })}
+                        placeholder="Ex: 10,50"
+                      />
+                    </div>
+                    <div>
+                      <Label>Periodicidade</Label>
+                      <Select
+                        value={fin.taxa_juros_periodicidade}
+                        onValueChange={(v) => setFin({ ...fin, taxa_juros_periodicidade: v })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="anual">ao ano</SelectItem>
+                          <SelectItem value="mensal">ao mês</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Tipo da Taxa</Label>
+                      <Select
+                        value={fin.taxa_juros_tipo}
+                        onValueChange={(v) => setFin({ ...fin, taxa_juros_tipo: v })}
+                        disabled={fin.taxa_juros_periodicidade === 'mensal'}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="nominal">Nominal</SelectItem>
+                          <SelectItem value="efetiva">Efetiva</SelectItem>
+                          <SelectItem value="nao_definido">Não sei / Legada</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {fin.taxa_juros_periodicidade === 'anual' && fin.taxa_juros_tipo === 'efetiva' && (
+                    <p className="text-[10px] text-muted-foreground italic">
+                      Taxas efetivas anuais são convertidas para a taxa mensal equivalente via capitalização composta.
+                    </p>
+                  )}
+                  {fin.taxa_juros_periodicidade === 'anual' && fin.taxa_juros_tipo === 'nominal' && (
+                    <p className="text-[10px] text-muted-foreground italic">
+                      Taxas nominais anuais são divididas por 12 (capitalização simples mensal).
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label>Sistema</Label>

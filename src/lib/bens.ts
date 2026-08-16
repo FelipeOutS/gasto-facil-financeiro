@@ -107,6 +107,8 @@ export type Financiamento = {
   sistema_amortizacao?: "sac" | "price" | "outro" | null;
   valor_financiado: number;
   taxa_juros_anual?: number | null;
+  taxa_juros_periodicidade?: "mensal" | "anual" | null;
+  taxa_juros_tipo?: "nominal" | "efetiva" | "nao_definido" | null;
   prazo_meses?: number | null;
   primeiro_vencimento?: string | null;
   dia_vencimento?: number | null;

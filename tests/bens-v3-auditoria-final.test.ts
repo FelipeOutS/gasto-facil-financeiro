@@ -10,7 +10,8 @@ import { simularFinanciamento, taxaAnualParaMensal } from '../src/lib/financas';
 
 describe('Motor Financeiro V3 — Auditoria Profunda', () => {
   const taxaAnual = 10;
-  const taxaMensal = (taxaAnual / 100) / 12; // 0.8333% am
+  // Simula o comportamento bancário padrão (nominal/12) para os testes existentes
+  const taxaMensal = 0.10 / 12; 
   const saldoInicial = 300000;
   const prazoTotal = 360;
 
