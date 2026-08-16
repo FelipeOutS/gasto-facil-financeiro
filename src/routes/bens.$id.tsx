@@ -46,13 +46,16 @@ import {
   listarCustosAquisicao,
   listarFinanciamentos,
   listarGastosDoBem,
+  listarGastosSemBem,
   listarPagamentos,
   obterBem,
   snapshotDivergente,
+  vincularGastoAoBem,
   type AmortizacaoBem,
   type Bem,
   type CustoAquisicaoBem,
   type Financiamento,
+  type GastoDoBem,
   type PagamentoBem,
   type StatusFinanciamento,
   type TipoCustoAquisicao,
@@ -79,8 +82,6 @@ export const Route = createFileRoute("/bens/$id")({
   component: BemDetalhePage,
 });
 
-type GastoVinculado = { id: string; descricao: string; valor: number; data: string };
-
 function BemDetalhePage() {
   const { id } = useParams({ from: "/bens/$id" });
   const { user } = useAuth();
@@ -90,7 +91,9 @@ function BemDetalhePage() {
   const [pagamentos, setPagamentos] = useState<PagamentoBem[]>([]);
   const [amortizacoes, setAmortizacoes] = useState<AmortizacaoBem[]>([]);
   const [custos, setCustos] = useState<CustoAquisicaoBem[]>([]);
-  const [gastos, setGastos] = useState<GastoVinculado[]>([]);
+  const [gastos, setGastos] = useState<GastoDoBem[]>([]);
+  const [gastosDisponiveis, setGastosDisponiveis] = useState<GastoDoBem[]>([]);
+  const [gastoParaVincular, setGastoParaVincular] = useState<string>("");
   const [busy, setBusy] = useState(false);
 
   const carregar = useCallback(async () => {
@@ -137,6 +140,8 @@ function BemDetalhePage() {
             amortizacoes,
             custos,
             valoresGastos,
+            gastos,
+            mesReferencia: todayISO().slice(0, 7),
           })
         : null,
     [bem, ativo, pagamentos, amortizacoes, custos, valoresGastos],
@@ -150,6 +155,9 @@ function BemDetalhePage() {
     taxa_juros_anual: "",
     sistema_amortizacao: "sac",
     primeiro_vencimento: "",
+    dia_vencimento: "",
+    saldo_devedor_informado: "",
+    saldo_devedor_data: "",
   });
   const [pag, setPag] = useState({
     data_pagamento: todayISO(),
@@ -158,7 +166,12 @@ function BemDetalhePage() {
     valor_amortizacao: "",
     numero_parcela: "",
   });
-  const [amo, setAmo] = useState({ data: todayISO(), valor: "", efeito: "reduz_prazo" });
+  const [amo, setAmo] = useState({
+    data: todayISO(),
+    valor: "",
+    efeito: "reduz_prazo",
+    origem_recurso: "proprio",
+  });
   const [cus, setCus] = useState({ tipo: "itbi" as TipoCustoAquisicao, valor: "", data: "" });
 
   async function novoFinanciamento() {
@@ -172,6 +185,11 @@ function BemDetalhePage() {
         taxa_juros_anual: fin.taxa_juros_anual ? Number(fin.taxa_juros_anual) : null,
         sistema_amortizacao: fin.sistema_amortizacao as "sac" | "price" | "outro",
         primeiro_vencimento: fin.primeiro_vencimento || null,
+        dia_vencimento: fin.dia_vencimento ? Number(fin.dia_vencimento) : null,
+        saldo_devedor_informado: fin.saldo_devedor_informado
+          ? parseBRLInput(fin.saldo_devedor_informado)
+          : null,
+        saldo_devedor_data: fin.saldo_devedor_data || null,
         status: "ativo",
       });
       setFinanciamentos((prev) => [criado, ...prev]);
@@ -226,6 +244,7 @@ function BemDetalhePage() {
         data: amo.data,
         valor: parseBRLInput(amo.valor || "0"),
         efeito: amo.efeito as "reduz_prazo" | "reduz_parcela",
+        origem_recurso: amo.origem_recurso as "proprio" | "fgts" | "terceiros" | "outros",
       });
       setAmortizacoes((prev) => [criado, ...prev]);
       setAmo({ ...amo, valor: "" });
