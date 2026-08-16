@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { detectFileKind, filenameSuggestsFatura } from "@/components/ImportExtratoDialog";
 import { parseCsvFile, parseValorBR, parseDataBR, suggestCategoryFromDescription } from "@/lib/csv-fatura";
 
