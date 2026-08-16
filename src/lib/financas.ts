@@ -153,5 +153,5 @@ function calcularPMT(saldo: number, taxa: number, prazo: number): number {
 
 /** Converte taxa anual para mensal (juros compostos) */
 export function taxaAnualParaMensal(taxaAnual: number): number {
-  return Math.pow(1 + taxaAnual / 100, 1 / 12) - 1;
+  return (taxaAnual / 100) / 12;
 }
