@@ -349,6 +349,11 @@ export function computeCategoryBreakdown(rows: ExportRow[]): CategoryBreakdownIt
 }
 
 /** Rótulo "Página X de Y". */
-export function buildPageLabel(page: number, totalPages: number, pageWord = "Página", ofWord = "de"): string {
+export function buildPageLabel(
+  page: number,
+  totalPages: number,
+  pageWord = "Página",
+  ofWord = "de",
+): string {
   return `${pageWord} ${page} ${ofWord} ${Math.max(totalPages, 1)}`;
 }

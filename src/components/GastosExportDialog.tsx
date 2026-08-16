@@ -64,7 +64,6 @@ function downloadBlob(blob: Blob, fileName: string) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-
 export interface GastosExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;

@@ -26,6 +26,41 @@ export interface PdfLabels {
   pageOf: string;
 }
 
+/** Superfície mínima do jsPDF usada por este layout. */
+type PdfDoc = {
+  internal: { pageSize: { getWidth: () => number; getHeight: () => number } };
+  lastAutoTable?: { finalY: number };
+  setFillColor: (r: number, g: number, b: number) => void;
+  setDrawColor: (r: number, g: number, b: number) => void;
+  setTextColor: (r: number, g: number, b: number) => void;
+  setFont: (name: string, style: string) => void;
+  setFontSize: (size: number) => void;
+  splitTextToSize: (text: string, width: number) => string[];
+  text: (
+    text: string | string[],
+    x: number,
+    y: number,
+    opts?: { align?: string; maxWidth?: number },
+  ) => void;
+  rect: (x: number, y: number, w: number, h: number, style: string) => void;
+  roundedRect: (
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    rx: number,
+    ry: number,
+    style: string,
+  ) => void;
+  line: (x1: number, y1: number, x2: number, y2: number) => void;
+  addImage: (data: string, fmt: string, x: number, y: number, w: number, h: number) => void;
+  addPage: () => void;
+  setPage: (n: number) => void;
+  getNumberOfPages: () => number;
+  save: (name: string) => void;
+  output: (type: string) => ArrayBuffer;
+};
+
 export interface RenderPdfOptions {
   rows: ExportRow[];
   headers: Record<ExportColumn, string>;
@@ -34,9 +69,9 @@ export interface RenderPdfOptions {
   logoDataUrl?: string | null;
   generatedAtText: string;
   /** Construtor jsPDF (import dinâmico na UI). */
-  JsPDF: new (opts: { unit: string; format: string }) => any;
+  JsPDF: new (opts: { unit: string; format: string }) => PdfDoc;
   /** Plugin jspdf-autotable. */
-  autoTable: (doc: any, opts: Record<string, unknown>) => void;
+  autoTable: (doc: PdfDoc, opts: Record<string, unknown>) => void;
 }
 
 const BRAND: [number, number, number] = [32, 170, 108];
@@ -47,7 +82,8 @@ const M = 40;
 const HEADER_H = 100;
 
 export function renderGastosPdf(opts: RenderPdfOptions) {
-  const { rows, headers, periodLabel, labels, logoDataUrl, generatedAtText, JsPDF, autoTable } = opts;
+  const { rows, headers, periodLabel, labels, logoDataUrl, generatedAtText, JsPDF, autoTable } =
+    opts;
   const data = buildPdfData(rows, headers, labels.reportTitle, periodLabel);
   const breakdown = computeCategoryBreakdown(rows);
 
