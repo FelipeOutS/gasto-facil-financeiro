@@ -10,9 +10,16 @@ import {
   Info,
   AlertTriangle,
   Loader2,
+  TrendingUp,
+  Wallet,
+  History,
+  Calendar,
+  PieChart,
 } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -25,8 +32,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toastFromError } from "@/lib/premium-error";
-import { formatBRL, parseBRLInput, todayISO } from "@/lib/format";
+import { formatBRL, parseBRLInput, formatBRLInput, todayISO } from "@/lib/format";
 import { useAuth } from "@/lib/auth-context";
 import {
   STATUS_FINANCIAMENTO,
@@ -51,6 +66,10 @@ import {
   obterBem,
   snapshotDivergente,
   vincularGastoAoBem,
+  listarHistoricoValor,
+  criarHistoricoValor,
+  listarHistoricoSaldo,
+  criarHistoricoSaldo,
   type AmortizacaoBem,
   type Bem,
   type CustoAquisicaoBem,
@@ -59,7 +78,10 @@ import {
   type PagamentoBem,
   type StatusFinanciamento,
   type TipoCustoAquisicao,
+  type HistoricoValorBem,
+  type HistoricoSaldoBem,
 } from "@/lib/bens";
+
 
 export const Route = createFileRoute("/bens/$id")({
   head: () => ({
@@ -92,19 +114,28 @@ function BemDetalhePage() {
   const [amortizacoes, setAmortizacoes] = useState<AmortizacaoBem[]>([]);
   const [custos, setCustos] = useState<CustoAquisicaoBem[]>([]);
   const [gastos, setGastos] = useState<GastoDoBem[]>([]);
+  const [historicoValor, setHistoricoValor] = useState<HistoricoValorBem[]>([]);
+  const [historicoSaldo, setHistoricoSaldo] = useState<HistoricoSaldoBem[]>([]);
   const [gastosDisponiveis, setGastosDisponiveis] = useState<GastoDoBem[]>([]);
   const [gastoParaVincular, setGastoParaVincular] = useState<string>("");
   const [busy, setBusy] = useState(false);
+  
+  // V2 UI State
+  const [dialogValorOpen, setDialogValorOpen] = useState(false);
+  const [dialogSaldoOpen, setDialogSaldoOpen] = useState(false);
+  const [formValor, setFormValor] = useState({ valor: "", data: todayISO(), obs: "" });
+  const [formSaldo, setFormSaldo] = useState({ valor: "", data: todayISO(), obs: "" });
 
   const carregar = useCallback(async () => {
     try {
-      const [b, f, p, a, c, g] = await Promise.all([
+      const [b, f, p, a, c, g, hv] = await Promise.all([
         obterBem(id),
         listarFinanciamentos(id),
         listarPagamentos(id),
         listarAmortizacoes(id),
         listarCustosAquisicao(id),
         listarGastosDoBem(id),
+        listarHistoricoValor(id),
       ]);
       setBem(b);
       setFinanciamentos(f);
@@ -112,6 +143,13 @@ function BemDetalhePage() {
       setAmortizacoes(a);
       setCustos(c);
       setGastos(g);
+      setHistoricoValor(hv);
+      
+      const ativo = f.find(x => x.status === "ativo");
+      if (ativo) {
+        setHistoricoSaldo(await listarHistoricoSaldo(ativo.id));
+      }
+
       if (b?.user_id) setGastosDisponiveis(await listarGastosSemBem(b.user_id));
     } catch (e) {
       toastFromError(e);
@@ -123,6 +161,7 @@ function BemDetalhePage() {
   useEffect(() => {
     void carregar();
   }, [carregar]);
+
 
   const valoresGastos = useMemo(
     () => Object.fromEntries(gastos.map((g) => [g.id, Number(g.valor)])),
@@ -143,10 +182,13 @@ function BemDetalhePage() {
             valoresGastos,
             gastos,
             mesReferencia: todayISO().slice(0, 7),
+            historicoValor,
+            historicoSaldo,
           })
         : null,
-    [bem, ativo, pagamentos, amortizacoes, custos, valoresGastos],
+    [bem, ativo, pagamentos, amortizacoes, custos, valoresGastos, gastos, historicoValor, historicoSaldo],
   );
+
 
   // ---- formulários simples -------------------------------------------------
   const [fin, setFin] = useState({
@@ -256,17 +298,24 @@ function BemDetalhePage() {
     }
   }
 
-  async function novoCusto() {
+
+  async function atualizarValorBem() {
     if (!user?.id) return;
+    if (!formValor.valor) {
+      toast.error("Informe o valor estimado.");
+      return;
+    }
     setBusy(true);
     try {
-      const criado = await criarCustoAquisicao(user.id, id, {
-        tipo: cus.tipo,
-        valor: parseBRLInput(cus.valor || "0"),
-        data: cus.data || null,
+      const novo = await criarHistoricoValor(user.id, id, {
+        valor_estimado: parseBRLInput(formValor.valor),
+        data_referencia: formValor.data,
+        observacao: formValor.obs || null,
       });
-      setCustos((prev) => [criado, ...prev]);
-      setCus({ ...cus, valor: "" });
+      setHistoricoValor((prev) => [novo, ...prev]);
+      setDialogValorOpen(false);
+      setFormValor({ valor: "", data: todayISO(), obs: "" });
+      toast.success("Valor atualizado.");
     } catch (e) {
       toastFromError(e);
     } finally {
@@ -274,7 +323,140 @@ function BemDetalhePage() {
     }
   }
 
+  async function atualizarSaldoManual() {
+    if (!user?.id || !ativo) return;
+    if (!formSaldo.valor) {
+      toast.error("Informe o saldo devedor.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const novo = await criarHistoricoSaldo(user.id, ativo.id, {
+        saldo_devedor: parseBRLInput(formSaldo.valor),
+        data_referencia: formSaldo.data,
+        observacao: formSaldo.obs || null,
+      });
+      setHistoricoSaldo((prev) => [novo, ...prev]);
+      setDialogSaldoOpen(false);
+      setFormSaldo({ valor: "", data: todayISO(), obs: "" });
+      toast.success("Saldo devedor atualizado.");
+    } catch (e) {
+      toastFromError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function novoCusto() {
+    if (!user?.id || !id) return;
+    if (!cus.valor) {
+      toast.error("Informe o valor do custo.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const criado = await criarCustoAquisicao(user.id, id, {
+        tipo: cus.tipo,
+        valor: parseBRLInput(cus.valor),
+        data: cus.data || null,
+      });
+      setCustos((prev) => [...prev, criado]);
+      setCus({ tipo: "itbi", valor: "", data: todayISO() });
+      toast.success("Custo adicionado.");
+    } catch (e) {
+
+      toastFromError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+
+  const timelineCronologica = useMemo(() => {
+    if (!bem) return [];
+    const eventos: Array<{
+      data: string;
+      tipo: string;
+      label: string;
+      valor?: number;
+      obs?: string;
+    }> = [];
+
+    if (bem.data_aquisicao) {
+      eventos.push({
+        data: bem.data_aquisicao,
+        tipo: "compra",
+        label: "Aquisição do bem",
+        valor: Number(bem.valor_aquisicao),
+      });
+    }
+
+    pagamentos.forEach((p) =>
+      eventos.push({
+        data: p.data_pagamento,
+        tipo: "pagamento",
+        label: `Parcela ${p.numero_parcela || ""}`,
+        valor: Number(p.valor_pago),
+      }),
+    );
+    amortizacoes.forEach((a) =>
+      eventos.push({
+        data: a.data,
+        tipo: "amortizacao",
+        label: "Amortização extraordinária",
+        valor: Number(a.valor),
+        obs: a.origem_recurso || "",
+      }),
+    );
+    custos.forEach((c) =>
+      eventos.push({
+        data: c.data || "",
+        tipo: "custo",
+        label: TIPOS_CUSTO_AQUISICAO.find((t) => t.id === c.tipo)?.label || "Custo",
+        valor: Number(c.valor),
+      }),
+    );
+
+    const idsJaContabilizados = new Set(
+      [
+        ...pagamentos.map((p) => p.gasto_id),
+        ...amortizacoes.map((a) => a.gasto_id),
+        ...custos.map((c) => c.gasto_id),
+      ].filter((x): x is string => !!x),
+    );
+
+    gastos
+      .filter((g) => !idsJaContabilizados.has(g.id))
+      .forEach((g) =>
+        eventos.push({ data: g.data, tipo: "gasto", label: g.descricao, valor: Number(g.valor) }),
+      );
+
+    historicoValor.forEach((h) =>
+      eventos.push({
+        data: h.data_referencia,
+        tipo: "valor",
+        label: "Valor estimado atualizado",
+        valor: Number(h.valor_estimado),
+        obs: h.observacao || "",
+      }),
+    );
+    historicoSaldo.forEach((h) =>
+      eventos.push({
+        data: h.data_referencia,
+        tipo: "saldo",
+        label: "Saldo devedor atualizado",
+        valor: Number(h.saldo_devedor),
+        obs: h.observacao || "",
+      }),
+    );
+
+    return eventos.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+  }, [bem, pagamentos, amortizacoes, custos, gastos, historicoValor, historicoSaldo]);
+
+
+
   if (loading) {
+
     return (
       <MobileShell>
         <div className="space-y-3 pt-6">
@@ -335,34 +517,117 @@ function BemDetalhePage() {
       </header>
 
       {resumo && (
-        <section className="mt-4 grid grid-cols-2 gap-3">
-          <Card titulo="Entrada" valor={formatBRL(resumo.entradaTotal)} />
-          <Card titulo="Custos adicionais" valor={formatBRL(resumo.totalCustosAquisicao)} />
-          <Card
-            titulo={`Parcelas pagas (${resumo.qtdParcelasPagas})`}
-            valor={formatBRL(resumo.totalParcelasPagas)}
-          />
-          <Card titulo="Amortizações" valor={formatBRL(resumo.totalAmortizacoes)} />
-          <Card
-            titulo="Gastos relacionados"
-            valor={formatBRL(resumo.totalGastosRelacionados)}
-          />
-          <Card titulo="Custo deste mês" valor={formatBRL(resumo.custoMensalGastos)} />
-          <Card
-            titulo="Quanto já me custou"
-            valor={formatBRL(resumo.totalDesembolsado)}
-            destaque
-          />
-          <Card
-            titulo="Saldo devedor"
-            valor={
-              resumo.saldoDevedorEstimado == null
-                ? "Não informado"
-                : formatBRL(resumo.saldoDevedorEstimado)
-            }
-          />
-        </section>
+        <>
+          <section className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider">
+                <TrendingUp className="h-3.5 w-3.5" />
+                Patrimônio Líquido
+              </div>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-primary">
+                  {resumo.patrimonioLiquidoEstimado !== null ? formatBRL(resumo.patrimonioLiquidoEstimado) : "—"}
+                </span>
+              </div>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Com base nos valores informados por você.
+              </p>
+            </div>
+
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider">
+                  <PieChart className="h-3.5 w-3.5" />
+                  Valor Atual
+                </div>
+                <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={() => setDialogValorOpen(true)}>
+                  Atualizar
+                </Button>
+              </div>
+              <div className="mt-1 text-2xl font-bold">
+                {resumo.valorAtualEstimado !== null ? formatBRL(resumo.valorAtualEstimado) : "Não informado"}
+              </div>
+              {resumo.variacaoValorPercentual !== null && (
+                <p className={cn("mt-1 text-[10px] font-medium", resumo.variacaoValorPercentual >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                  {resumo.variacaoValorPercentual >= 0 ? "+" : ""}
+                  {resumo.variacaoValorPercentual.toFixed(1)}% vs compra
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider">
+                  <Wallet className="h-3.5 w-3.5" />
+                  Saldo Devedor
+                </div>
+                {ativo && (
+                  <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={() => setDialogSaldoOpen(true)}>
+                    Atualizar
+                  </Button>
+                )}
+              </div>
+              <div className="mt-1 text-2xl font-bold text-rose-600/90">
+                {resumo.saldoDevedorEstimado !== null ? formatBRL(resumo.saldoDevedorEstimado) : "0,00"}
+              </div>
+              {resumo.percentualPago !== null && (
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div className="h-full bg-emerald-500 transition-all" style={{ width: `${resumo.percentualPago}%` }} />
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <Card titulo="Entrada" valor={formatBRL(resumo.entradaTotal)} />
+            <Card titulo="Custos iniciais" valor={formatBRL(resumo.totalCustosAquisicao)} />
+            <Card
+              titulo={`Parcelas pagas (${resumo.qtdParcelasPagas})`}
+              valor={formatBRL(resumo.totalParcelasPagas)}
+            />
+            <Card titulo="Amortizações" valor={formatBRL(resumo.totalAmortizacoes)} />
+            <Card
+              titulo="Quanto já custou"
+              valor={formatBRL(resumo.totalDesembolsado)}
+              destaque
+            />
+            <Card titulo="Custo do mês" valor={formatBRL(resumo.custoMensalGastos)} />
+            <Card titulo="Diferença nominal" valor={formatBRL(resumo.variacaoValorNominal || 0)} />
+            <Card titulo="Redução do saldo" valor={formatBRL(resumo.reducaoSaldoDevedorNominal || 0)} />
+            <Card titulo="Amortizado (FGTS)" valor={formatBRL(resumo.totalAmortizadoFGTS)} />
+
+          </section>
+
+          {resumo.totalAmortizacoes > 0 && (
+            <section className="mt-6">
+              <h3 className="text-sm font-semibold flex items-center gap-2 mb-3 px-1">
+                <Landmark className="h-4 w-4" />
+                Amortizações Realizadas
+              </h3>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                <div className="rounded-xl border p-3 bg-muted/30">
+                  <div className="text-[10px] text-muted-foreground uppercase">Total Amortizado</div>
+                  <div className="text-sm font-bold">{formatBRL(resumo.totalAmortizacoes)}</div>
+                </div>
+                {resumo.totalAmortizadoFGTS > 0 && (
+                  <div className="rounded-xl border p-3 bg-muted/30">
+                    <div className="text-[10px] text-muted-foreground uppercase">FGTS</div>
+                    <div className="text-sm font-bold">{formatBRL(resumo.totalAmortizadoFGTS)}</div>
+                  </div>
+                )}
+                {resumo.totalAmortizadoProprio > 0 && (
+                  <div className="rounded-xl border p-3 bg-muted/30">
+                    <div className="text-[10px] text-muted-foreground uppercase">Recursos Próprios</div>
+                    <div className="text-sm font-bold">{formatBRL(resumo.totalAmortizadoProprio)}</div>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+        </>
       )}
+
+
 
       <p className="mt-3 flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -371,20 +636,25 @@ function BemDetalhePage() {
         histórico.
       </p>
 
-      <Tabs defaultValue="financiamento" className="mt-4 pb-12">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="financiamento">Financiamento</TabsTrigger>
-          <TabsTrigger value="parcelas">Parcelas</TabsTrigger>
-          <TabsTrigger value="amortizacoes">Amortizações</TabsTrigger>
-          <TabsTrigger value="custos">Custos</TabsTrigger>
-          <TabsTrigger value="gastos">Gastos</TabsTrigger>
+      <Tabs defaultValue="detalhes" className="mt-4 pb-12">
+        <TabsList className="grid w-full grid-cols-6 h-10">
+          <TabsTrigger value="detalhes" className="text-[10px] px-1">Resumo</TabsTrigger>
+          <TabsTrigger value="parcelas" className="text-[10px] px-1">Parcelas</TabsTrigger>
+          <TabsTrigger value="amortizacoes" className="text-[10px] px-1">Amortizar</TabsTrigger>
+          <TabsTrigger value="custos" className="text-[10px] px-1">Custos</TabsTrigger>
+          <TabsTrigger value="gastos" className="text-[10px] px-1">Gastos</TabsTrigger>
+          <TabsTrigger value="timeline" className="text-[10px] px-1">Histórico</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="financiamento" className="space-y-3">
+
+        <TabsContent value="detalhes" className="space-y-3">
           {financiamentos.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum financiamento cadastrado.</p>
+            <div className="rounded-xl border p-4 text-center">
+              <p className="text-sm text-muted-foreground">Nenhum financiamento cadastrado.</p>
+            </div>
           ) : (
             financiamentos.map((f) => (
+
               <div key={f.id} className="rounded-xl border bg-card p-4">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{f.instituicao || "Financiamento"}</span>
@@ -434,7 +704,8 @@ function BemDetalhePage() {
                   <Input
                     inputMode="decimal"
                     value={fin.valor_financiado}
-                    onChange={(e) => setFin({ ...fin, valor_financiado: e.target.value })}
+                    onChange={(e) => setFin({ ...fin, valor_financiado: formatBRLInput(e.target.value) })}
+
                   />
                 </div>
                 <div>
@@ -490,7 +761,10 @@ function BemDetalhePage() {
                   <Input
                     inputMode="decimal"
                     value={fin.saldo_devedor_informado}
-                    onChange={(e) => setFin({ ...fin, saldo_devedor_informado: e.target.value })}
+                    onChange={(e) =>
+                      setFin({ ...fin, saldo_devedor_informado: formatBRLInput(e.target.value) })
+                    }
+
                   />
                 </div>
                 <div>
@@ -539,7 +813,8 @@ function BemDetalhePage() {
                 <Input
                   inputMode="decimal"
                   value={pag.valor_pago}
-                  onChange={(e) => setPag({ ...pag, valor_pago: e.target.value })}
+                  onChange={(e) => setPag({ ...pag, valor_pago: formatBRLInput(e.target.value) })}
+
                 />
               </div>
               <div>
@@ -547,7 +822,8 @@ function BemDetalhePage() {
                 <Input
                   inputMode="decimal"
                   value={pag.valor_juros}
-                  onChange={(e) => setPag({ ...pag, valor_juros: e.target.value })}
+                  onChange={(e) => setPag({ ...pag, valor_juros: formatBRLInput(e.target.value) })}
+
                 />
               </div>
               <div>
@@ -555,7 +831,8 @@ function BemDetalhePage() {
                 <Input
                   inputMode="decimal"
                   value={pag.valor_amortizacao}
-                  onChange={(e) => setPag({ ...pag, valor_amortizacao: e.target.value })}
+                  onChange={(e) => setPag({ ...pag, valor_amortizacao: formatBRLInput(e.target.value) })}
+
                 />
               </div>
             </div>
@@ -602,7 +879,8 @@ function BemDetalhePage() {
                 <Input
                   inputMode="decimal"
                   value={amo.valor}
-                  onChange={(e) => setAmo({ ...amo, valor: e.target.value })}
+                  onChange={(e) => setAmo({ ...amo, valor: formatBRLInput(e.target.value) })}
+
                 />
               </div>
               <div>
@@ -689,7 +967,74 @@ function BemDetalhePage() {
                 <Input
                   inputMode="decimal"
                   value={cus.valor}
-                  onChange={(e) => setCus({ ...cus, valor: e.target.value })}
+                  onChange={(e) => setCus({ ...cus, valor: formatBRLInput(e.target.value) })}
+
+                />
+              </div>
+              <div>
+                <Label>Data</Label>
+                <Input
+                  type="date"
+                  value={cus.data}
+                  onChange={(e) => setCus({ ...cus, data: e.target.value })}
+                />
+              </div>
+            </div>
+            <Button className="mt-3 gap-2" disabled={busy} onClick={() => void novoCusto()}>
+              <Plus className="h-4 w-4" />
+              Adicionar
+            </Button>
+          </div>
+
+          {custos.map((c) => (
+            <Linha
+              key={c.id}
+              titulo={TIPOS_CUSTO_AQUISICAO.find((t) => t.id === c.tipo)?.label ?? c.tipo}
+              valor={formatBRL(Number(c.valor))}
+              aviso={
+                snapshotDivergente({ valor: Number(c.valor), gastoId: c.gasto_id }, valoresGastos)
+                  ? "Gasto vinculado foi editado — o caixa segue o gasto."
+                  : null
+              }
+              onRemover={async () => {
+                await excluirCustoAquisicao(c.id);
+                setCustos((prev) => prev.filter((x) => x.id !== c.id));
+              }}
+            />
+          ))}
+        </TabsContent>
+
+        <TabsContent value="custos" className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Somente custos adicionais (ITBI, registro, escritura, avaliação, corretagem…). A entrada
+            fica no cadastro do bem e não deve ser repetida aqui.
+          </p>
+          <div className="rounded-xl border p-4">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <Label>Tipo</Label>
+                <Select
+                  value={cus.tipo}
+                  onValueChange={(v) => setCus({ ...cus, tipo: v as TipoCustoAquisicao })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIPOS_CUSTO_AQUISICAO.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Valor</Label>
+                <Input
+                  inputMode="decimal"
+                  value={cus.valor}
+                  onChange={(e) => setCus({ ...cus, valor: formatBRLInput(e.target.value) })}
                 />
               </div>
               <div>
@@ -726,6 +1071,8 @@ function BemDetalhePage() {
         </TabsContent>
 
         <TabsContent value="gastos" className="space-y-3">
+
+
           <p className="text-xs text-muted-foreground">
             Vincule gastos que você já lançou (condomínio, IPTU, seguro, combustível, manutenção…).
             O gasto continua aparecendo em Gastos e é contado uma única vez.
@@ -812,10 +1159,127 @@ function BemDetalhePage() {
             ))
           )}
         </TabsContent>
+        <TabsContent value="timeline" className="space-y-3">
+          {timelineCronologica.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhum evento registrado ainda.</p>
+          ) : (
+            timelineCronologica.map((ev, idx) => (
+              <div key={idx} className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <div className={cn(
+                    "h-6 w-6 rounded-full flex items-center justify-center text-[10px] text-white",
+                    ev.tipo === "compra" ? "bg-primary" :
+                    ev.tipo === "pagamento" ? "bg-emerald-500" :
+                    ev.tipo === "amortizacao" ? "bg-amber-500" :
+                    ev.tipo === "valor" ? "bg-blue-500" :
+                    ev.tipo === "saldo" ? "bg-rose-500" :
+                    "bg-slate-500"
+                  )}>
+                    {ev.tipo.charAt(0).toUpperCase()}
+                  </div>
+                  {idx < timelineCronologica.length - 1 && <div className="w-0.5 grow bg-border mt-1" />}
+                </div>
+                <div className="pb-4 min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium truncate">{ev.label}</p>
+                    {ev.valor !== undefined && <span className="text-sm font-bold shrink-0">{formatBRL(ev.valor)}</span>}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{ev.data} {ev.obs ? `· ${ev.obs}` : ""}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </TabsContent>
       </Tabs>
+
+      <Dialog open={dialogValorOpen} onOpenChange={setDialogValorOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Atualizar valor do bem</DialogTitle>
+            <DialogDescription>Informe quanto você estima que este bem vale atualmente.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Valor estimado</Label>
+              <Input
+                placeholder="R$ 0,00"
+                value={formValor.valor}
+                onChange={(e) => setFormValor({ ...formValor, valor: formatBRLInput(e.target.value) })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Data de referência</Label>
+              <Input
+                type="date"
+                value={formValor.data}
+                onChange={(e) => setFormValor({ ...formValor, data: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Observação (opcional)</Label>
+              <Input
+                placeholder="Ex: Avaliação pessoal, valor anunciado..."
+                value={formValor.obs}
+                onChange={(e) => setFormValor({ ...formValor, obs: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogValorOpen(false)}>Cancelar</Button>
+            <Button onClick={() => void atualizarValorBem()} disabled={busy}>
+              {busy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialogSaldoOpen} onOpenChange={setDialogSaldoOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Atualizar saldo devedor</DialogTitle>
+            <DialogDescription>Informe o saldo devedor atual consultado na fonte oficial.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Novo saldo</Label>
+              <Input
+                placeholder="R$ 0,00"
+                value={formSaldo.valor}
+                onChange={(e) => setFormSaldo({ ...formSaldo, valor: formatBRLInput(e.target.value) })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Data de referência</Label>
+              <Input
+                type="date"
+                value={formSaldo.data}
+                onChange={(e) => setFormSaldo({ ...formSaldo, data: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Observação (opcional)</Label>
+              <Input
+                placeholder="Ex: Saldo no app do banco..."
+                value={formSaldo.obs}
+                onChange={(e) => setFormSaldo({ ...formSaldo, obs: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogSaldoOpen(false)}>Cancelar</Button>
+            <Button onClick={() => void atualizarSaldoManual()} disabled={busy}>
+              {busy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MobileShell>
   );
 }
+
+
 
 function Card({
   titulo,

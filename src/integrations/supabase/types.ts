@@ -446,6 +446,82 @@ export type Database = {
           },
         ]
       }
+      bens_historico_saldo: {
+        Row: {
+          created_at: string
+          data_referencia: string
+          financiamento_id: string
+          id: string
+          observacao: string | null
+          saldo_devedor: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_referencia?: string
+          financiamento_id: string
+          id?: string
+          observacao?: string | null
+          saldo_devedor: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_referencia?: string
+          financiamento_id?: string
+          id?: string
+          observacao?: string | null
+          saldo_devedor?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bens_historico_saldo_fin_fk"
+            columns: ["user_id", "financiamento_id"]
+            isOneToOne: false
+            referencedRelation: "bens_financiamentos"
+            referencedColumns: ["user_id", "id"]
+          },
+        ]
+      }
+      bens_historico_valor: {
+        Row: {
+          bem_id: string
+          created_at: string
+          data_referencia: string
+          id: string
+          observacao: string | null
+          user_id: string
+          valor_estimado: number
+        }
+        Insert: {
+          bem_id: string
+          created_at?: string
+          data_referencia?: string
+          id?: string
+          observacao?: string | null
+          user_id: string
+          valor_estimado: number
+        }
+        Update: {
+          bem_id?: string
+          created_at?: string
+          data_referencia?: string
+          id?: string
+          observacao?: string | null
+          user_id?: string
+          valor_estimado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bens_historico_valor_bem_fk"
+            columns: ["user_id", "bem_id"]
+            isOneToOne: false
+            referencedRelation: "bens"
+            referencedColumns: ["user_id", "id"]
+          },
+        ]
+      }
       bens_pagamentos: {
         Row: {
           bem_id: string
