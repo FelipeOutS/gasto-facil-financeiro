@@ -1199,6 +1199,8 @@ export function ImportExtratoDialog({
                 onRemove={removeItem}
                 onAdd={addEmptyItem}
                 categorias={categorias}
+                cartoes={cartoes}
+
                 observacaoIA={observacaoIA}
                 resumoExtrato={resumoExtrato}
               />
