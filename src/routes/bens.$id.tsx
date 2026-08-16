@@ -355,17 +355,16 @@ function BemDetalhePage() {
     }
     setBusy(true);
     try {
-      const payload = {
-        bem_id: id,
+      const criado = await criarCustoAquisicao(user.id, id, {
         tipo: cus.tipo,
         valor: parseBRLInput(cus.valor),
-        data: cus.data,
-      };
-      const novo = await criarCustoAquisicao(user.id, payload);
-      setCustos((prev) => [...prev, novo]);
+        data: cus.data || null,
+      });
+      setCustos((prev) => [...prev, criado]);
       setCus({ tipo: "itbi", valor: "", data: todayISO() });
       toast.success("Custo adicionado.");
     } catch (e) {
+
       toastFromError(e);
     } finally {
       setBusy(false);
