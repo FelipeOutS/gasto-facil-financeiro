@@ -491,9 +491,7 @@ export function DesktopSidebar() {
                   return (
                     <div key={group.id} className="rounded-xl">
                       <div aria-hidden className="my-2 mx-2 h-px bg-border/60" />
-                      <ul className="space-y-1">
-                        {group.items.map((item) => renderLeaf(item))}
-                      </ul>
+                      <ul className="space-y-1">{group.items.map((item) => renderLeaf(item))}</ul>
                     </div>
                   );
                 }
