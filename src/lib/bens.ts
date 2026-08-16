@@ -564,6 +564,21 @@ export async function criarPagamento(
   bemId: string,
   payload: Partial<PagamentoBem>,
 ): Promise<PagamentoBem> {
+  // Deduplicação básica: não permitir mesma parcela para o mesmo financiamento no mesmo dia
+  if (payload.financiamento_id && payload.numero_parcela) {
+    const { data: existente } = await supabase
+      .from("bens_pagamentos" as never)
+      .select("id")
+      .eq("financiamento_id", payload.financiamento_id)
+      .eq("numero_parcela", payload.numero_parcela)
+      .eq("data_pagamento", payload.data_pagamento || "")
+      .maybeSingle();
+    
+    if (existente) {
+      throw new Error(`A parcela ${payload.numero_parcela} já foi registrada nesta data.`);
+    }
+  }
+
   const { data, error } = await supabase
     .from("bens_pagamentos" as never)
     .insert({ ...payload, user_id: userId, bem_id: bemId } as never)
@@ -596,6 +611,21 @@ export async function criarAmortizacao(
   bemId: string,
   payload: Partial<AmortizacaoBem>,
 ): Promise<AmortizacaoBem> {
+  // Deduplicação: evitar mesmo valor na mesma data para o mesmo financiamento
+  if (payload.financiamento_id && payload.valor && payload.data) {
+    const { data: existente } = await supabase
+      .from("bens_amortizacoes" as never)
+      .select("id")
+      .eq("financiamento_id", payload.financiamento_id)
+      .eq("valor", payload.valor)
+      .eq("data", payload.data || "")
+      .maybeSingle();
+    
+    if (existente) {
+      throw new Error(`Uma amortização de ${payload.valor} já foi registrada nesta data.`);
+    }
+  }
+
   const { data, error } = await supabase
     .from("bens_amortizacoes" as never)
     .insert({ ...payload, user_id: userId, bem_id: bemId } as never)

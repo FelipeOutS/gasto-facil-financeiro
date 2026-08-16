@@ -15,7 +15,7 @@ import { formatBRL, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { criarHistoricoSaldo, atualizarFinanciamento } from "@/lib/bens";
+import { criarHistoricoSaldo, atualizarFinanciamento, criarPagamento, criarAmortizacao } from "@/lib/bens";
 
 interface ComparisonRowProps {
   label: string;
@@ -108,6 +108,7 @@ export function ImportFinanciamentoReview({
     valorParcela: data.valorParcela !== null,
     taxaJuros: data.taxaJuros !== null,
     sistemaAmortizacao: data.sistemaAmortizacao !== null && data.sistemaAmortizacao !== "outro",
+    eventos: (data.eventos?.length || 0) > 0
   });
   
   const [dataRef, setDataRef] = useState(data.dataReferenciaSaldo || todayISO());
@@ -143,7 +144,29 @@ export function ImportFinanciamentoReview({
         await atualizarFinanciamento(financiamentoId, updates);
       }
 
-      // 3. Rastrear alterações confirmadas no documento
+      // 3. Processar Eventos (Pagamentos/Amortizações)
+      if (selections.eventos && data.eventos?.length > 0) {
+        for (const ev of data.eventos) {
+          if (ev.tipo === 'pagamento') {
+            await criarPagamento(user.id, bemId, {
+              financiamento_id: financiamentoId || null,
+              data_pagamento: ev.data || todayISO(),
+              valor_pago: ev.valor,
+              numero_parcela: ev.parcela,
+              observacao: "Registrado via documento"
+            });
+          } else if (ev.tipo === 'amortizacao') {
+            await criarAmortizacao(user.id, bemId, {
+              financiamento_id: financiamentoId || null,
+              data: ev.data || todayISO(),
+              valor: ev.valor,
+              observacao: "Registrada via documento"
+            });
+          }
+        }
+      }
+
+      // 4. Rastrear alterações confirmadas no documento
       await supabase
         .from("bens_documentos_processados")
         .update({ 
@@ -209,7 +232,24 @@ export function ImportFinanciamentoReview({
           onSelect={(v) => setSelections({ ...selections, sistemaAmortizacao: v })}
           confidence={data.confianca}
         />
+        <ComparisonRow 
+          label="Pagamentos/Amortizações"
+          current={null}
+          found={data.eventos?.length ? `${data.eventos.length} identificado(s)` : null}
+          selected={selections.eventos}
+          onSelect={(v) => setSelections({ ...selections, eventos: v })}
+          confidence={data.confianca}
+        />
       </div>
+
+      {data.observacao && (
+        <div className="rounded-lg bg-amber-50 p-3 border border-amber-200">
+          <div className="flex items-start gap-2 text-xs text-amber-800">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span><strong>Nota da IA:</strong> {data.observacao}</span>
+          </div>
+        </div>
+      )}
 
       {selections.saldoDevedor && (
         <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50/50 p-4">
