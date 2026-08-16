@@ -1,68 +1,57 @@
-## Diagnóstico atual
+# Plano de Implementação — Meus Bens & Financiamentos V2
 
-- `/` (`src/routes/index.tsx` → `IndexGate`) hoje faz duas coisas: se **não** tem sessão → renderiza `PublicLanding`; se **tem** sessão → renderiza o `Index` (dashboard).
-- Existe um caminho onde `IndexGate` **redireciona para `/login`**: quando a bridge biométrica nativa está disponível (`isLoginBioBridgeAvailable && isLoginBioEnabled`) ou quando exige unlock (`isLoginBioUnlockRequired`). É o que dispara o comportamento reportado ("acessa a raiz e vai pra /login") em dispositivos onde o WebView expôs a bridge biométrica ou onde ficou `bio-unlock=required` em `sessionStorage`.
-- O botão "Voltar para o início" em `AuthGate.tsx` L268-274 já é um `<Link to="/">`. Ele "não faz nada" para usuário logado porque `/` re-renderiza a mesma tela (dashboard/loader) sem mudar de rota; ou porque o `GuestOnly` do `/login` intercepta antes o teste do usuário.
-- `/landing` já redireciona para `/` (`src/routes/landing.tsx`).
+Este plano detalha a V2 do módulo de Bens e Financiamentos, focada em patrimônio líquido, evolução de valor e visão financeira consolidada, sem alterar a arquitetura de contabilização da V1.
 
-## Decisão pedida pelo usuário
+## 1. Banco de Dados e Migração
 
-Item 1: `/` deve **sempre** abrir a landing pública — inclusive para usuário logado. Item 5: nada pode interceptar `/`. Isso obriga a mover o dashboard para uma rota própria (`/app`).
+Criar tabelas para suportar o histórico de valor do bem e atualizações manuais de saldo devedor, mantendo a integridade de conta via FK composta.
 
-## Mudanças
+- **Tabela `bens_historico_valor`**:
+  - `id`, `user_id`, `bem_id`, `valor_estimado`, `data_referencia`, `observacao`, `created_at`.
+  - FK composta `(user_id, bem_id) -> bens(user_id, id)`.
+  - RLS estrito por `auth.uid()`.
+- **Tabela `bens_historico_saldo`**:
+  - `id`, `user_id`, `financiamento_id`, `saldo_devedor`, `data_referencia`, `observacao`, `created_at`.
+  - FK composta `(user_id, financiamento_id) -> bens_financiamentos(user_id, id)`.
+  - RLS estrito por `auth.uid()`.
 
-### 1. `/` fica 100% público e sempre landing
+## 2. Motor de Cálculo (`src/lib/bens.ts`)
 
-`src/routes/index.tsx`:
-- Substituir `IndexGate` por um componente simples que sempre renderiza `<PublicLanding />`.
-- Remover todos os `useEffect` de biometria dessa rota (não redireciona para `/login` sob nenhuma condição).
-- Remover a lógica do `Index` (dashboard) deste arquivo — passa a viver em `src/routes/app.tsx`.
+Expandir as métricas mantendo o rigor da V1.
 
-### 2. Dashboard passa a viver em `/app`
+- **Patrimônio Líquido**: `valor_atual - saldo_devedor`.
+- **Evolução de Valor**: Comparação entre `valor_compra` e `valor_atual` (variação nominal e percentual).
+- **Média de Custos**: Cálculo de média móvel (3, 6, 12 meses) baseada em despesas reais.
+- **Composição de Custos**: Agrupamento percentual por categoria (financiamento, impostos, manutenção, etc).
+- **Progresso**: Percentual de redução do saldo devedor original vs atual.
 
-`src/routes/app.tsx`:
-- Hoje é um redirect-bridge para `/`. Trocar para renderizar o `Index` (dashboard) diretamente, dentro de `<AuthGate>`.
-- Se usuário não logado acessar `/app` → `AuthGate` já redireciona para `/login` (comportamento correto).
-- Manter o timeout/boot loader existente.
+## 3. Interface do Usuário (UI/UX)
 
-### 3. Atualizar navegações internas
+- **Dashboard Geral (`/bens`)**:
+  - Topo com resumo: Valor Total dos Bens, Saldo Devedor Total, Patrimônio Líquido Estimado Total.
+  - Indicadores de bens sem valor atualizado.
+- **Detalhes do Bem (`/bens/$id`)**:
+  - **Novo Card de Patrimônio**: Exibe Valor Atual, Saldo Devedor e Patrimônio Líquido.
+  - **Comparativo de Aquisição**: Compra vs Atual.
+  - **Ações Rápidas**: "Atualizar Valor" e "Atualizar Saldo" com diálogos dedicados.
+  - **Gráficos**: Evolução do Valor Estimado e Evolução do Saldo Devedor (usando `recharts`).
+  - **Resumo de Amortizações**: Visualização consolidada por origem (FGTS, Recursos Próprios).
+  - **Composição de Gastos**: Barras horizontais de custos.
+  - **Timeline Unificada**: Histórico cronológico de todos os eventos (financeiros e informativos).
 
-- Login/cadastro/reset após sucesso → `navigate({ to: "/app" })` (hoje vai para `/`).
-- `/app` como destino para "voltar ao dashboard" já é o padrão em todo o codebase (`to: "/app"` já é usado extensamente) — nada a alterar.
-- Logo do `AuthShell` continua `to="/"` (leva o usuário à landing).
-- Botão "Voltar para o início" no login continua `to="/"` — funcionará porque `/` agora é sempre landing e não faz mais redirect condicional.
-- Sign-out: manter destino atual (`/login`) — não altera a rota inicial pública.
+## 4. Testes e Validação
 
-### 4. Biometria e sessão expirada
+- **Testes Unitários**:
+  - Cálculo de patrimônio com dados parciais.
+  - Média de custos em períodos sem dados.
+  - Variação nominal/percentual correta.
+- **Testes E2E (Playwright)**:
+  - Fluxo de atualização de valor e reflexo imediato no patrimônio.
+  - Visualização de gráficos em mobile (sem overflow).
+  - Validação da timeline cronológica.
 
-- Bridge biométrica: mover o "sugerir login biométrico ao abrir o app" para `/app` (dentro do `AuthGate`), não para `/`.
-- Sessão expirada em rota privada → continua indo para `/login` via `AuthGate` (comportamento atual). `/` nunca intercepta.
+## Detalhes Técnicos
 
-### 5. `/landing` legado
-
-Já corrigido em turno anterior — verificar que continua redirecionando para `/` com `replace: true`. Nenhuma mudança nova.
-
-### 6. Verificações
-
-- `rg` por `to: "/"` / `to="/"` em componentes de dashboard/redirect pós-login e trocar para `/app` apenas onde o intuito era "voltar ao dashboard".
-- Garantir que nenhum `beforeLoad` ou `AuthGate` cobre a rota `/`.
-- Confirmar que `PublicLanding` não depende de `useAuth().session`; se depender, aceitar `session` opcional e mostrar CTA "Entrar" / "Ir para o app" conforme.
-
-### 7. Testes, build e publish
-
-- Rodar suíte (`bun test`) para confirmar zero regressão.
-- Build de produção.
-- Publish + confirmar propagação em `gastointeligente.com.br`, `/login`, `/app`, `/landing`.
-
-## Impacto
-
-- Dashboard muda de URL: `/` → `/app`. Bookmarks antigos de usuários no dashboard passarão pela landing pública (com CTA "Entrar"/"Abrir app"). Aceitável e desejado pelo pedido.
-- SEO da raiz melhora (sempre HTML público indexável).
-- Zero mudança em código de negócio, RLS ou WhatsApp.
-
-## Riscos
-
-- Componentes do dashboard que hoje usam `useNavigate({ to: "/" })` para "voltar" precisarão apontar para `/app`. Levantar todas as ocorrências e ajustar apenas as com intenção de dashboard.
-- `PublicLanding` renderizado para usuário logado: adicionar um CTA discreto "Ir para o app" no topo quando `session` existir, sem forçar redirect.
-
-Confirma esse plano para eu executar?
+- **Tecnologias**: React 19, Tailwind v4, TanStack Start, Lucide Icons, Recharts para os gráficos.
+- **Segurança**: Toda a lógica de RLS e FKs compostas será replicada para as novas tabelas, garantindo que um usuário nunca veja dados de outro, mesmo que os UUIDs sejam conhecidos.
+- **Consistência**: O `valor_aquisicao` da V1 nunca será usado como fallback automático para `valor_atual`, conforme solicitado, para manter a clareza da estimativa do usuário.
