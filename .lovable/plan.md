@@ -1,57 +1,47 @@
-# Plano de Implementação — Meus Bens & Financiamentos V2
+# Plano V3 — Simulação e Planejamento de Financiamento
 
-Este plano detalha a V2 do módulo de Bens e Financiamentos, focada em patrimônio líquido, evolução de valor e visão financeira consolidada, sem alterar a arquitetura de contabilização da V1.
+Esta etapa foca na criação de um motor de simulação matemática (SAC e Price) para permitir que o usuário projete cenários de amortização extraordinária sem alterar seus dados reais.
 
-## 1. Banco de Dados e Migração
+## Dados Reutilizados (V1/V2)
+- **Contrato:** `valor_financiado`, `taxa_juros_anual`, `prazo_meses`, `sistema_amortizacao`, `primeiro_vencimento`.
+- **Saldo de Verdade:** O `saldoDevedorEstimado` calculado em `calcularResumoBem` (que já considera fotos de saldo + amortizações reais posteriores) será o ponto de partida da simulação.
+- **Histórico:** Pagamentos e amortizações reais já registrados servem para determinar o estado "Atual" do contrato.
 
-Criar tabelas para suportar o histórico de valor do bem e atualizações manuais de saldo devedor, mantendo a integridade de conta via FK composta.
+## Fórmulas e Estratégia
+### SAC (Sistema de Amortização Constante)
+- **Amortização Mensal (A):** `Saldo Devedor / Prazo Restante`.
+- **Juros (J):** `Saldo Devedor * Taxa Mensal`.
+- **Parcela (P):** `A + J`.
+- **Amortização Extra:**
+  - **Reduzir Prazo:** O valor extra abate diretamente o saldo devedor; a amortização mensal (A) é recalculada para manter o valor da parcela próximo, resultando em menos meses.
+  - **Reduzir Parcela:** O valor extra abate o saldo; o prazo é mantido e a amortização mensal (A) diminui.
 
-- **Tabela `bens_historico_valor`**:
-  - `id`, `user_id`, `bem_id`, `valor_estimado`, `data_referencia`, `observacao`, `created_at`.
-  - FK composta `(user_id, bem_id) -> bens(user_id, id)`.
-  - RLS estrito por `auth.uid()`.
-- **Tabela `bens_historico_saldo`**:
-  - `id`, `user_id`, `financiamento_id`, `saldo_devedor`, `data_referencia`, `observacao`, `created_at`.
-  - FK composta `(user_id, financiamento_id) -> bens_financiamentos(user_id, id)`.
-  - RLS estrito por `auth.uid()`.
+### Price (Sistema Francês)
+- **Parcela (P):** `Saldo Devedor * [ (i * (1+i)^n) / ((1+i)^n - 1) ]`, onde `i` é a taxa mensal e `n` o prazo restante.
+- **Juros (J):** `Saldo Devedor * i`.
+- **Amortização (A):** `P - J`.
+- **Amortização Extra:** Segue a mesma lógica de abatimento de saldo com recálculo da PMT (parcela) ou do prazo (n).
 
-## 2. Motor de Cálculo (`src/lib/bens.ts`)
+## Arredondamentos e Precisão
+- Cálculos internos usarão `Decimal.js` ou similar (ou precisão de 10 casas decimais com `number`) para evitar erros acumulativos.
+- O resultado final de cada parcela será arredondado para 2 casas decimais.
+- A última parcela ajustará qualquer resíduo de centavos para zerar o saldo.
 
-Expandir as métricas mantendo o rigor da V1.
+## Isolamento Real vs Simulado
+- **Nenhum dado no banco será alterado.**
+- Simulações serão puramente em memória ou salvas em uma nova tabela `bens_simulacoes` (apenas parâmetros: valor extra, tipo de redução, etc.).
+- A UI terá um "Modo Simulação" com cores distintas (ex: bordas tracejadas ou fundo âmbar suave) e o aviso legal obrigatório.
 
-- **Patrimônio Líquido**: `valor_atual - saldo_devedor`.
-- **Evolução de Valor**: Comparação entre `valor_compra` e `valor_atual` (variação nominal e percentual).
-- **Média de Custos**: Cálculo de média móvel (3, 6, 12 meses) baseada em despesas reais.
-- **Composição de Custos**: Agrupamento percentual por categoria (financiamento, impostos, manutenção, etc).
-- **Progresso**: Percentual de redução do saldo devedor original vs atual.
+## Estrutura Proposta
+1. **Motor Financeiro (`src/lib/financas.ts`):** Funções puras `simularSAC` e `simularPrice`.
+2. **Componente Simulador (`src/components/bens/SimuladorFinanciamento.tsx`):** UI para entrada de valores extras e botões de atalho (1k, 5k, 10k).
+3. **Comparador de Cenários:** Tabela/Cards lado a lado mostrando: "Hoje" vs "Simulado".
 
-## 3. Interface do Usuário (UI/UX)
+## Testes Matemáticos
+- Validar contra calculadoras financeiras padrão (ex: calculadoras de bancos reais).
+- Testar casos de borda: taxa zero, prazo de 1 mês, saldo muito pequeno, amortização extra maior que o saldo.
 
-- **Dashboard Geral (`/bens`)**:
-  - Topo com resumo: Valor Total dos Bens, Saldo Devedor Total, Patrimônio Líquido Estimado Total.
-  - Indicadores de bens sem valor atualizado.
-- **Detalhes do Bem (`/bens/$id`)**:
-  - **Novo Card de Patrimônio**: Exibe Valor Atual, Saldo Devedor e Patrimônio Líquido.
-  - **Comparativo de Aquisição**: Compra vs Atual.
-  - **Ações Rápidas**: "Atualizar Valor" e "Atualizar Saldo" com diálogos dedicados.
-  - **Gráficos**: Evolução do Valor Estimado e Evolução do Saldo Devedor (usando `recharts`).
-  - **Resumo de Amortizações**: Visualização consolidada por origem (FGTS, Recursos Próprios).
-  - **Composição de Gastos**: Barras horizontais de custos.
-  - **Timeline Unificada**: Histórico cronológico de todos os eventos (financeiros e informativos).
+---
+**Confirmação:** As simulações não alteram dados reais. O saldo oficial informado continua sendo a fonte de verdade. Resultados simulados são identificados como estimativas.
 
-## 4. Testes e Validação
-
-- **Testes Unitários**:
-  - Cálculo de patrimônio com dados parciais.
-  - Média de custos em períodos sem dados.
-  - Variação nominal/percentual correta.
-- **Testes E2E (Playwright)**:
-  - Fluxo de atualização de valor e reflexo imediato no patrimônio.
-  - Visualização de gráficos em mobile (sem overflow).
-  - Validação da timeline cronológica.
-
-## Detalhes Técnicos
-
-- **Tecnologias**: React 19, Tailwind v4, TanStack Start, Lucide Icons, Recharts para os gráficos.
-- **Segurança**: Toda a lógica de RLS e FKs compostas será replicada para as novas tabelas, garantindo que um usuário nunca veja dados de outro, mesmo que os UUIDs sejam conhecidos.
-- **Consistência**: O `valor_aquisicao` da V1 nunca será usado como fallback automático para `valor_atual`, conforme solicitado, para manter a clareza da estimativa do usuário.
+Deseja que eu prossiga com a criação da tabela de simulações e do motor financeiro?
