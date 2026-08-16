@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api-fetch";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { usePremiumApiGate } from "@/lib/premium-errors";
 import { PremiumLockModal } from "@/components/PremiumLockModal";
@@ -64,7 +64,9 @@ import {
   suggestCategoryFromDescription,
 } from "@/lib/csv-fatura";
 
-type Step = "source" | "image-upload" | "pdf-upload" | "csv-upload" | "review";
+type Step = "upload" | "kind" | "analyzing" | "review" | "done";
+type ReviewFilter = "todos" | "selecionados" | "duplicados" | "gastos" | "receitas" | "outros";
+type ImportKind = "extrato" | "fatura";
 
 type TipoMov = "despesa" | "receita" | "transferencia_interna";
 type DupStatus = "novo" | "duplicado_lote" | "duplicado_existente";
@@ -187,6 +189,35 @@ function importOrigin(item: ReviewItem, fallback: string) {
   return parts.join("|");
 }
 
+const ANALYZING_MESSAGES = [
+  "Lendo documento…",
+  "Identificando movimentações…",
+  "Organizando lançamentos…",
+];
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+type FileKind = "pdf" | "csv" | "imagem";
+
+export function detectFileKind(file: File): FileKind | null {
+  const name = (file.name || "").toLowerCase();
+  const type = (file.type || "").toLowerCase();
+  if (type === "application/pdf" || name.endsWith(".pdf")) return "pdf";
+  if (type.startsWith("image/")) return "imagem";
+  if (type.includes("csv") || name.endsWith(".csv")) return "csv";
+  if (type === "text/plain" && name.endsWith(".txt")) return "csv";
+  return null;
+}
+
+/** Heurística leve: o nome do arquivo sugere fatura de cartão? */
+export function filenameSuggestsFatura(name: string) {
+  return /fatura|invoice|cart[aã]o/i.test(name || "");
+}
+
 export function ImportExtratoDialog({
   open,
   onOpenChange,
@@ -200,23 +231,34 @@ export function ImportExtratoDialog({
   const premiumGate = usePremiumApiGate();
   const categorias = getCategorias();
 
-  const [step, setStep] = useState<Step>("source");
+  const [step, setStep] = useState<Step>("upload");
   const [loading, setLoading] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
   const [items, setItems] = useState<ReviewItem[]>([]);
+  const [filter, setFilter] = useState<ReviewFilter>("todos");
   const [observacaoIA, setObservacaoIA] = useState<string | null>(null);
   const [resumoExtrato, setResumoExtrato] = useState<ExtratoResumo | null>(null);
+  const [analyzingIdx, setAnalyzingIdx] = useState(0);
+  const [result, setResult] = useState<{
+    adicionados: number;
+    duplicados: number;
+    naoImportados: number;
+    total: number;
+  } | null>(null);
   const [importMeta, setImportMeta] = useState<{
     nomeArquivo?: string;
     tipoOrigem: "pdf" | "csv" | "imagem";
   } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = useCallback(() => {
-    setStep("source");
+    setStep("upload");
     setLoading(false);
+    setFiles([]);
     setItems([]);
+    setFilter("todos");
     setObservacaoIA(null);
     setResumoExtrato(null);
+    setResult(null);
     setImportMeta(null);
   }, []);
 
@@ -227,6 +269,16 @@ export function ImportExtratoDialog({
     },
     [onOpenChange, reset],
   );
+
+  // Mensagens rotativas durante a análise (evita tela congelada)
+  useEffect(() => {
+    if (step !== "analyzing") return;
+    setAnalyzingIdx(0);
+    const id = setInterval(() => {
+      setAnalyzingIdx((i) => Math.min(i + 1, ANALYZING_MESSAGES.length - 1));
+    }, 3500);
+    return () => clearInterval(id);
+  }, [step]);
 
   // ---------- DEDUP ----------
   const computeDupStatus = useCallback((rs: ReviewItem[]): ReviewItem[] => {
@@ -344,6 +396,7 @@ export function ImportExtratoDialog({
         return;
       }
       setLoading(true);
+      setStep("analyzing");
       setObservacaoIA(null);
       try {
         const dataUrls = await Promise.all(
@@ -364,10 +417,12 @@ export function ImportExtratoDialog({
             })
           ) {
             setLoading(false);
+            setStep("upload");
             return;
           }
           toast.error(json?.error || t("errors.readFail"));
           setLoading(false);
+          setStep("upload");
           return;
         }
         const brutos = (json.itens || []) as ItemBruto[];
@@ -375,6 +430,7 @@ export function ImportExtratoDialog({
           toast.warning(t("errors.noneFoundImg"));
           setObservacaoIA(json.observacao ?? null);
           setLoading(false);
+          setStep("upload");
           return;
         }
         setItems(itensFromBruto(brutos, "extrato_imagem"));
@@ -387,11 +443,107 @@ export function ImportExtratoDialog({
       } catch (e) {
         console.error(e);
         toast.error(t("errors.sendImg"));
+        setStep("upload");
       } finally {
         setLoading(false);
       }
     },
-    [itensFromBruto, t],
+    [itensFromBruto, premiumGate, t, tc],
+  );
+
+  // ---------- IMPORT: PDF de fatura de cartão ----------
+  const handleFaturaPdf = useCallback(
+    async (file: File) => {
+      setLoading(true);
+      setStep("analyzing");
+      setObservacaoIA(null);
+      try {
+        const dataUrl = await fileToDataUrl(file, t("errors.fileRead"));
+        const resp = await apiFetch("/api/import-fatura-pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pdf: dataUrl }),
+        });
+        const raw = await resp.text();
+        let json: {
+          itens?: Array<{
+            descricao?: string | null;
+            estabelecimento?: string | null;
+            valor?: number | null;
+            data?: string | null;
+            horario?: string | null;
+            parcelaAtual?: number | null;
+            totalParcelas?: number | null;
+            categoriaSugerida?: string | null;
+            observacao?: string | null;
+          }>;
+          observacao?: string | null;
+          error?: string;
+        } = {};
+        try {
+          json = raw ? JSON.parse(raw) : {};
+        } catch {
+          toast.error(t("errors.processFail"));
+          setLoading(false);
+          setStep("upload");
+          return;
+        }
+        if (!resp.ok) {
+          if (
+            premiumGate.handleResponse(resp, json, {
+              title: tc("premium.premiumApi.importExtrato.title"),
+              description: tc("premium.premiumApi.importExtrato.description"),
+              fallbackFeature: "importar_extrato",
+            })
+          ) {
+            setLoading(false);
+            setStep("upload");
+            return;
+          }
+          toast.error(json?.error || t("errors.readPdfNo"));
+          setLoading(false);
+          setStep("upload");
+          return;
+        }
+        const raws = json.itens ?? [];
+        const brutos: ItemBruto[] = raws.map((it) => {
+          const parcela =
+            it.parcelaAtual && it.totalParcelas
+              ? `Parcela ${it.parcelaAtual}/${it.totalParcelas}`
+              : null;
+          return {
+            descricao: it.descricao || it.estabelecimento || "Compra",
+            valor: typeof it.valor === "number" ? it.valor : null,
+            data: it.data ?? null,
+            horario: it.horario ?? null,
+            tipoMovimentacao: "despesa",
+            formaPagamento: "credito",
+            categoriaSugerida: it.categoriaSugerida ?? null,
+            contraparte: it.estabelecimento ?? null,
+            confianca: "media",
+            observacao: [it.observacao, parcela].filter(Boolean).join(" • ") || null,
+          };
+        });
+        if (brutos.length === 0) {
+          toast.warning("Não encontramos lançamentos nesse arquivo.");
+          setObservacaoIA(json.observacao ?? null);
+          setLoading(false);
+          setStep("upload");
+          return;
+        }
+        setItems(itensFromBruto(brutos, "fatura_pdf"));
+        setObservacaoIA(json.observacao ?? null);
+        setImportMeta({ nomeArquivo: file.name, tipoOrigem: "pdf" });
+        setStep("review");
+      } catch (e) {
+        console.error("[import-gastos] erro fatura PDF", e);
+        toast.error(t("errors.processFail"));
+        setStep("upload");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [itensFromBruto, premiumGate, t, tc],
   );
 
   // ---------- IMPORT: PDF ----------
@@ -407,6 +559,7 @@ export function ImportExtratoDialog({
         return;
       }
       setLoading(true);
+      setStep("analyzing");
       setObservacaoIA(null);
       try {
         // Envia como multipart/form-data — sem header manual (browser gera o boundary).
@@ -437,6 +590,7 @@ export function ImportExtratoDialog({
             toast.error(t("errors.processFail"));
           }
           setLoading(false);
+          setStep("upload");
           return;
         }
 
@@ -449,10 +603,12 @@ export function ImportExtratoDialog({
             })
           ) {
             setLoading(false);
+            setStep("upload");
             return;
           }
           toast.error(json?.error || t("errors.readPdfNo"));
           setLoading(false);
+          setStep("upload");
           return;
         }
         const brutos = (json.itens || []) as ItemBruto[];
@@ -460,6 +616,7 @@ export function ImportExtratoDialog({
           toast.warning(t("errors.noneInPdf"));
           setObservacaoIA(json.observacao ?? null);
           setLoading(false);
+          setStep("upload");
           return;
         }
         setResumoExtrato(json.resumo ?? null);
@@ -470,23 +627,26 @@ export function ImportExtratoDialog({
       } catch (e) {
         console.error("[import-extrato] erro envio PDF", e);
         toast.error(t("errors.processFail"));
+        setStep("upload");
       } finally {
         setLoading(false);
       }
     },
-    [itensFromBruto, t],
+    [itensFromBruto, premiumGate, t, tc],
   );
 
   // ---------- IMPORT: CSV ----------
   const handleCsv = useCallback(
     async (file: File) => {
       setLoading(true);
+      setStep("analyzing");
       try {
         const text = await file.text();
         const { headers, rows } = parseCsvFile(text);
         if (rows.length === 0) {
           toast.error(t("errors.csvEmpty"));
           setLoading(false);
+          setStep("upload");
           return;
         }
         // mapeamento simples: tenta achar "data", "descricao/historico", "valor"
@@ -510,6 +670,7 @@ export function ImportExtratoDialog({
         if (idxData < 0 || idxDesc < 0 || idxValor < 0) {
           toast.error(t("errors.csvCols"));
           setLoading(false);
+          setStep("upload");
           return;
         }
         const brutos: ItemBruto[] = [];
@@ -541,6 +702,7 @@ export function ImportExtratoDialog({
         if (brutos.length === 0) {
           toast.warning(t("errors.csvNoValid"));
           setLoading(false);
+          setStep("upload");
           return;
         }
         setItems(itensFromBruto(brutos, "extrato_csv"));
@@ -549,11 +711,54 @@ export function ImportExtratoDialog({
       } catch (e) {
         console.error(e);
         toast.error(t("errors.csvRead"));
+        setStep("upload");
       } finally {
         setLoading(false);
       }
     },
     [itensFromBruto, t],
+  );
+
+  // ---------- SELEÇÃO DE ARQUIVOS ----------
+  const addFiles = useCallback((picked: File[]) => {
+    const aceitos = picked.filter((f) => detectFileKind(f) !== null);
+    if (aceitos.length === 0) {
+      toast.error("Formato não suportado. Envie um PDF, CSV ou imagem.");
+      return;
+    }
+    if (aceitos.length < picked.length) {
+      toast.warning("Alguns arquivos foram ignorados por não serem PDF, CSV ou imagem.");
+    }
+    const primeiro = detectFileKind(aceitos[0]!);
+    // Só imagens podem ser enviadas em lote; PDF/CSV é 1 arquivo por vez.
+    const finais =
+      primeiro === "imagem" ? aceitos.filter((f) => detectFileKind(f) === "imagem") : [aceitos[0]!];
+    if (primeiro === "imagem" && finais.length > 10) {
+      toast.error(t("errors.tooManyImages"));
+      return;
+    }
+    setFiles(primeiro === "imagem" ? (prev) => [...prev, ...finais].slice(0, 10) : finais);
+  }, [t]);
+
+  const startAnalysis = useCallback(
+    (kind?: ImportKind) => {
+      const first = files[0];
+      if (!first) return;
+      const fk = detectFileKind(first);
+      if (fk === "csv") return void handleCsv(first);
+      if (fk === "imagem") return void handleImagens(files);
+      if (fk !== "pdf") {
+        toast.error("Formato não suportado. Envie um PDF, CSV ou imagem.");
+        return;
+      }
+      if (!kind && filenameSuggestsFatura(first.name)) {
+        setStep("kind");
+        return;
+      }
+      if (kind === "fatura") return void handleFaturaPdf(first);
+      return void handlePdf(first);
+    },
+    [files, handleCsv, handleImagens, handleFaturaPdf, handlePdf],
   );
 
   // ---------- REVIEW edits ----------
@@ -592,6 +797,8 @@ export function ImportExtratoDialog({
       },
     ]);
   };
+  const setAllSelected = (v: boolean) =>
+    setItems((prev) => prev.map((i) => ({ ...i, selecionado: v })));
 
   // ---------- CONFIRM ----------
   const handleConfirm = async () => {
@@ -714,18 +921,41 @@ export function ImportExtratoDialog({
       }
     }
 
-    if (novosCount === 0 && duplicadosIgnorados > 0) {
-      toast(t("toast.noNew"));
-    } else {
-      toast.success(
-        t("toast.done", { novos: novosCount, dup: duplicadosIgnorados, nao: naoConfirmados }),
-      );
-    }
-    handleClose(false);
+    setResult({
+      adicionados: novosCount,
+      duplicados: duplicadosIgnorados,
+      naoImportados: naoConfirmados,
+      total: totalDespesas + totalReceitas + totalTransferencias,
+    });
+    setStep("done");
   };
 
   // ---------- RENDER ----------
   const totalSelecionados = useMemo(() => items.filter((i) => i.selecionado).length, [items]);
+  const duplicadosCount = useMemo(
+    () => items.filter((i) => i.dupStatus !== "novo").length,
+    [items],
+  );
+  const totalSelecionadoValor = useMemo(
+    () => items.filter((i) => i.selecionado).reduce((s, i) => s + (i.valor ?? 0), 0),
+    [items],
+  );
+  const itensFiltrados = useMemo(() => {
+    switch (filter) {
+      case "selecionados":
+        return items.filter((i) => i.selecionado);
+      case "duplicados":
+        return items.filter((i) => i.dupStatus !== "novo");
+      case "gastos":
+        return items.filter((i) => i.tipoMovimentacao === "despesa");
+      case "receitas":
+        return items.filter((i) => i.tipoMovimentacao === "receita");
+      case "outros":
+        return items.filter((i) => i.tipoMovimentacao === "transferencia_interna");
+      default:
+        return items;
+    }
+  }, [items, filter]);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -733,82 +963,144 @@ export function ImportExtratoDialog({
         <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Upload className="h-5 w-5" />
-            {t("title")}
+            Importar gastos
           </DialogTitle>
-          <DialogDescription className="text-sm">{t("desc")}</DialogDescription>
+          <DialogDescription className="text-sm">
+            Envie um arquivo com suas movimentações e o Gasto Inteligente identifica os lançamentos
+            para você revisar antes de adicioná-los.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          {step === "source" && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <SourceCard
-                icon={<ImageIcon className="h-6 w-6" />}
-                title={t("source.imagens")}
-                desc={t("source.imagensDesc")}
-                onClick={() => setStep("image-upload")}
-              />
-              <SourceCard
-                icon={<FileText className="h-6 w-6" />}
-                title={t("source.pdf")}
-                desc={t("source.pdfDesc")}
-                onClick={() => setStep("pdf-upload")}
-              />
-              <SourceCard
-                icon={<FileSpreadsheet className="h-6 w-6" />}
-                title={t("source.csv")}
-                desc={t("source.csvDesc")}
-                onClick={() => setStep("csv-upload")}
+          {step === "upload" && (
+            <UploadStep
+              files={files}
+              onAddFiles={addFiles}
+              onRemoveFile={(idx) => setFiles((prev) => prev.filter((_, i) => i !== idx))}
+              onAnalyze={() => startAnalysis()}
+            />
+          )}
+
+          {step === "kind" && (
+            <div className="space-y-4">
+              <p className="text-sm font-medium">O que você está importando?</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <SourceCard
+                  icon={<FileText className="h-6 w-6" />}
+                  title="Extrato bancário"
+                  desc="Pix, débito, transferências e tarifas"
+                  onClick={() => startAnalysis("extrato")}
+                />
+                <SourceCard
+                  icon={<FileSpreadsheet className="h-6 w-6" />}
+                  title="Fatura de cartão"
+                  desc="Compras lançadas no crédito"
+                  onClick={() => startAnalysis("fatura")}
+                />
+              </div>
+              <button
+                onClick={() => setStep("upload")}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                ← Voltar
+              </button>
+            </div>
+          )}
+
+          {step === "analyzing" && (
+            <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm font-medium">Estamos analisando seus lançamentos…</p>
+              <p className="text-xs text-muted-foreground">{ANALYZING_MESSAGES[analyzingIdx]}</p>
+            </div>
+          )}
+
+          {step === "review" && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-sm">
+                  <p className="font-medium">{items.length} lançamentos encontrados</p>
+                  <p className="text-xs text-muted-foreground">
+                    {totalSelecionados} selecionados para importar
+                    {duplicadosCount > 0 ? ` • ${duplicadosCount} possíveis duplicados` : ""}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setAllSelected(true)}>
+                    Selecionar todos
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setAllSelected(false)}>
+                    Desmarcar todos
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                {(
+                  [
+                    ["todos", "Todos"],
+                    ["selecionados", "Selecionados"],
+                    ["duplicados", "Possíveis duplicados"],
+                    ["gastos", "Gastos"],
+                    ["receitas", "Receitas"],
+                    ["outros", "Outros"],
+                  ] as Array<[ReviewFilter, string]>
+                ).map(([id, label]) => (
+                  <button
+                    key={id}
+                    onClick={() => setFilter(id)}
+                    className={cn(
+                      "rounded-full border px-3 py-1 text-xs transition-colors",
+                      filter === id
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <ReviewStep
+                items={itensFiltrados}
+                onUpdate={updateItem}
+                onRemove={removeItem}
+                onAdd={addEmptyItem}
+                categorias={categorias}
+                observacaoIA={observacaoIA}
+                resumoExtrato={resumoExtrato}
               />
             </div>
           )}
 
-          {step === "image-upload" && (
-            <UploadStep
-              accept="image/*"
-              multiple
-              loading={loading}
-              hint={t("upload.hintImagens")}
-              onPick={(files) => handleImagens(files)}
-              onBack={() => setStep("source")}
-            />
-          )}
-          {step === "pdf-upload" && (
-            <UploadStep
-              accept="application/pdf"
-              loading={loading}
-              hint={t("upload.hintPdf")}
-              onPick={(files) => files[0] && handlePdf(files[0])}
-              onBack={() => setStep("source")}
-            />
-          )}
-          {step === "csv-upload" && (
-            <UploadStep
-              accept=".csv,text/csv"
-              loading={loading}
-              hint={t("upload.hintCsv")}
-              onPick={(files) => files[0] && handleCsv(files[0])}
-              onBack={() => setStep("source")}
-            />
-          )}
-
-          {step === "review" && (
-            <ReviewStep
-              items={items}
-              onUpdate={updateItem}
-              onRemove={removeItem}
-              onAdd={addEmptyItem}
-              categorias={categorias}
-              observacaoIA={observacaoIA}
-              resumoExtrato={resumoExtrato}
-            />
+          {step === "done" && result && (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+              <p className="text-base font-semibold">Importação concluída</p>
+              <div className="text-sm text-muted-foreground space-y-0.5">
+                <p>{result.adicionados} lançamentos adicionados</p>
+                <p>{result.duplicados} duplicados ignorados</p>
+                <p>{result.naoImportados} itens não importados</p>
+              </div>
+              <p className="text-lg font-semibold">{formatBRL(result.total)}</p>
+              <div className="flex gap-2 pt-2">
+                <Button onClick={() => handleClose(false)}>Ver gastos importados</Button>
+                <Button variant="ghost" onClick={() => handleClose(false)}>
+                  Concluir
+                </Button>
+              </div>
+            </div>
           )}
         </div>
 
         {step === "review" && (
-          <div className="border-t px-6 py-3 bg-card flex items-center justify-between gap-3 shrink-0">
+          <div className="border-t px-6 py-3 bg-card flex flex-wrap items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="h-4 w-4 text-emerald-500" />
-              {t("footer.selectedOf", { sel: totalSelecionados, total: items.length })}
+              Total a importar:{" "}
+              <span className="font-semibold text-foreground">
+                {formatBRL(totalSelecionadoValor)}
+              </span>
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" onClick={() => handleClose(false)}>
@@ -816,7 +1108,7 @@ export function ImportExtratoDialog({
               </Button>
               <Button size="sm" onClick={handleConfirm} disabled={totalSelecionados === 0}>
                 <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                {t("footer.confirm")}
+                Importar {totalSelecionados} lançamentos
               </Button>
             </div>
           </div>
@@ -863,57 +1155,98 @@ function SourceCard({
 }
 
 function UploadStep({
-  accept,
-  multiple,
-  loading,
-  hint,
-  onPick,
-  onBack,
+  files,
+  onAddFiles,
+  onRemoveFile,
+  onAnalyze,
 }: {
-  accept: string;
-  multiple?: boolean;
-  loading: boolean;
-  hint: string;
-  onPick: (files: File[]) => void;
-  onBack: () => void;
+  files: File[];
+  onAddFiles: (files: File[]) => void;
+  onRemoveFile: (idx: number) => void;
+  onAnalyze: () => void;
 }) {
-  const { t } = useTranslation("import-extrato");
   const ref = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="text-xs text-muted-foreground hover:text-foreground">
-        {t("upload.back")}
-      </button>
-      <div className="rounded-2xl border-2 border-dashed border-border p-10 text-center">
-        {loading ? (
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">{t("upload.loading")}</p>
-          </div>
-        ) : (
-          <>
-            <Sparkles className="mx-auto h-8 w-8 text-primary mb-3" />
-            <p className="text-sm font-medium mb-1">{hint}</p>
-            <p className="text-xs text-muted-foreground mb-4">{t("upload.privacy")}</p>
-            <input
-              ref={ref}
-              type="file"
-              accept={accept}
-              multiple={multiple}
-              className="hidden"
-              onChange={(e) => {
-                const files = Array.from(e.target.files ?? []);
-                if (files.length > 0) onPick(files);
-                e.target.value = "";
-              }}
-            />
-            <Button onClick={() => ref.current?.click()}>
-              <Upload className="h-4 w-4 mr-2" />
-              {multiple ? t("upload.pickMany") : t("upload.pickOne")}
-            </Button>
-          </>
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          const dropped = Array.from(e.dataTransfer.files ?? []);
+          if (dropped.length > 0) onAddFiles(dropped);
+        }}
+        className={cn(
+          "rounded-2xl border-2 border-dashed p-8 text-center transition-colors",
+          dragging ? "border-primary bg-primary/5" : "border-border",
         )}
+      >
+        <Sparkles className="mx-auto h-8 w-8 text-primary mb-3" />
+        <p className="text-sm font-medium mb-1">Importe seus gastos</p>
+        <p className="text-xs text-muted-foreground mb-4">
+          Arraste aqui ou selecione um PDF, CSV ou imagem (prints também funcionam).
+        </p>
+        <input
+          ref={ref}
+          type="file"
+          accept="application/pdf,.csv,text/csv,image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            const picked = Array.from(e.target.files ?? []);
+            if (picked.length > 0) onAddFiles(picked);
+            e.target.value = "";
+          }}
+        />
+        <Button onClick={() => ref.current?.click()}>
+          <Upload className="h-4 w-4 mr-2" />
+          Selecionar arquivo
+        </Button>
       </div>
+
+      {files.length > 0 && (
+        <div className="space-y-2">
+          {files.map((f, idx) => (
+            <div
+              key={`${f.name}-${idx}`}
+              className="flex items-center gap-3 rounded-xl border bg-card px-3 py-2"
+            >
+              {detectFileKind(f) === "imagem" ? (
+                <ImageIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+              ) : detectFileKind(f) === "csv" ? (
+                <FileSpreadsheet className="h-4 w-4 text-muted-foreground shrink-0" />
+              ) : (
+                <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{f.name}</p>
+                <p className="text-xs text-muted-foreground">{formatFileSize(f.size)}</p>
+              </div>
+              <button
+                onClick={() => onRemoveFile(idx)}
+                aria-label="Remover arquivo"
+                className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+          <Button className="w-full" onClick={onAnalyze}>
+            <Sparkles className="h-4 w-4 mr-2" />
+            Analisar arquivo
+          </Button>
+        </div>
+      )}
+
+      <p className="text-xs text-muted-foreground">
+        Seus dados são utilizados somente para processar esta importação. O arquivo não é
+        armazenado — apenas os lançamentos que você confirmar são salvos.
+      </p>
     </div>
   );
 }
@@ -975,7 +1308,8 @@ function ReviewStep({
         </div>
       )}
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium">{t("review.found", { count: items.length })}</p>
+        <p className="text-sm font-medium">Exibindo {items.length} lançamento(s)</p>
+
         <Button size="sm" variant="outline" onClick={onAdd}>
           <Plus className="h-3.5 w-3.5 mr-1" /> {t("review.addRow")}
         </Button>
