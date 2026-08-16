@@ -24,7 +24,7 @@ import {
 import { formatBRL, parseBRLInput, formatBRLInput } from "@/lib/format";
 import { 
   simularFinanciamento, 
-  taxaAnualParaMensal,
+  converterTaxaParaMensal,
   type ResultadoSimulacao 
 } from "@/lib/financas";
 import { type Financiamento } from "@/lib/bens";
@@ -47,8 +47,12 @@ export function SimuladorFinanciamento({ financiamento, saldoAtual }: SimuladorF
   );
 
   const taxaMensal = useMemo(() => 
-    taxaAnualParaMensal(financiamento.taxa_juros_anual || 0),
-    [financiamento.taxa_juros_anual]
+    converterTaxaParaMensal(
+      financiamento.taxa_juros_anual || 0,
+      financiamento.taxa_juros_periodicidade || "anual",
+      financiamento.taxa_juros_tipo || "nominal"
+    ),
+    [financiamento.taxa_juros_anual, financiamento.taxa_juros_periodicidade, financiamento.taxa_juros_tipo]
   );
 
   // Simulação Cenário Atual (sem amortização extra)
@@ -98,14 +102,21 @@ export function SimuladorFinanciamento({ financiamento, saldoAtual }: SimuladorF
 
   return (
     <div className="space-y-4">
-      <section className="rounded-xl bg-amber-50/50 border border-amber-100 p-3 flex gap-2">
-        <Calculator className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-        <div>
-          <h4 className="text-xs font-semibold text-amber-900 uppercase tracking-wider">Simulador Financeiro</h4>
-          <p className="text-[10px] text-amber-800 leading-relaxed mt-1">
-            Os valores apresentados são estimativas. O saldo e condições oficiais devem ser confirmados com o banco.
-          </p>
+      <section className="rounded-xl bg-amber-50/50 border border-amber-100 p-3 flex flex-col gap-2">
+        <div className="flex gap-2">
+          <Calculator className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <h4 className="text-xs font-semibold text-amber-900 uppercase tracking-wider">Simulador Financeiro</h4>
+            <p className="text-[10px] text-amber-800 leading-relaxed mt-1">
+              Taxa utilizada no motor: <strong className="font-bold">{(taxaMensal * 100).toFixed(4)}% a.m.</strong>
+              <br />
+              Origem: {financiamento.taxa_juros_anual}% {financiamento.taxa_juros_periodicidade === 'mensal' ? 'a.m.' : 'a.a.'} ({financiamento.taxa_juros_tipo || 'nominal'})
+            </p>
+          </div>
         </div>
+        <p className="text-[9px] text-amber-700/80 italic border-t border-amber-200/50 pt-1.5">
+          Valores aproximados baseados em {financiamento.sistema_amortizacao?.toUpperCase()}. O saldo real deve ser consultado no banco.
+        </p>
       </section>
 
       <div className="grid grid-cols-1 gap-4">
