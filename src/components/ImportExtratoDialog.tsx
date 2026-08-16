@@ -1073,6 +1073,75 @@ export function ImportExtratoDialog({
             </div>
           )}
 
+          {step === "cartao" && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium">Em qual cartão entram essas compras?</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Vincular o cartão deixa a fatura, os limites e os relatórios corretos.
+                </p>
+              </div>
+              {sugestaoCartao && (
+                <div className="flex items-start gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-xs">
+                  <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <span>
+                    Sugerimos{" "}
+                    <strong>
+                      {cartoes.find((c) => c.id === sugestaoCartao.cartaoId)?.nome ?? "um cartão"}
+                    </strong>{" "}
+                    porque {sugestaoCartao.motivo}.
+                  </span>
+                </div>
+              )}
+              <div className="space-y-2">
+                {cartoes.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setCartaoSelecionado(c.id)}
+                    className={cn(
+                      "w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-colors",
+                      cartaoSelecionado === c.id
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:bg-accent/40",
+                    )}
+                  >
+                    <span
+                      className="h-8 w-8 rounded-lg shrink-0"
+                      style={{ backgroundColor: c.cor }}
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">{c.nome}</span>
+                      <span className="block text-xs text-muted-foreground">{c.banco}</span>
+                    </span>
+                    {cartaoSelecionado === c.id && (
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button
+                  disabled={!cartaoSelecionado}
+                  onClick={() => confirmarCartaoFatura(cartaoSelecionado)}
+                >
+                  Continuar
+                </Button>
+                <Button variant="ghost" onClick={() => confirmarCartaoFatura(null)}>
+                  Importar sem vincular cartão
+                </Button>
+              </div>
+              <button
+                onClick={() => setStep("upload")}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                ← Voltar
+              </button>
+            </div>
+          )}
+
+
           {step === "review" && (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
