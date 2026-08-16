@@ -31,8 +31,15 @@ async def main():
         # Go directly to /bens
         await page.goto("http://localhost:8080/bens", wait_until="networkidle")
         
+        # Handle Cookie Consent if blocking
+        cookie_banner = page.get_by_role("button", name=re.compile(r"Entendi|Aceitar|Fechar", re.I))
+        if await cookie_banner.is_visible():
+            await cookie_banner.click()
+            await page.wait_for_timeout(500)
+
         # Check if we are stuck on onboarding and try to skip
         if "onboarding" in page.url:
+
             print("Onboarding detected, trying to bypass...")
             await page.evaluate("window.localStorage.setItem('user_onboarding', 'true')")
             await page.goto("http://localhost:8080/bens", wait_until="networkidle")
