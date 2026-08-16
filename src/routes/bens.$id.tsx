@@ -605,8 +605,8 @@ function BemDetalhePage() {
               destaque
             />
             <Card titulo="Custo do mês" valor={formatBRL(resumo.custoMensalGastos)} />
-            <Card titulo="Diferença nominal" valor={formatBRL(resumo.variacaoValorNominal || 0)} />
-            <Card titulo="Redução do saldo" valor={formatBRL(resumo.reducaoSaldoDevedorNominal || 0)} />
+            <Card titulo="Diferença nominal" valor={resumo.variacaoValorNominal !== null ? formatBRL(resumo.variacaoValorNominal) : "—"} />
+            <Card titulo="Redução do saldo" valor={resumo.reducaoSaldoDevedorNominal !== null ? formatBRL(resumo.reducaoSaldoDevedorNominal) : "—"} />
             <Card titulo="Amortizado (FGTS)" valor={formatBRL(resumo.totalAmortizadoFGTS)} />
 
           </section>
