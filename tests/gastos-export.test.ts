@@ -4,8 +4,10 @@ import {
   EXPORT_COLUMNS,
   buildExportRows,
   buildFileName,
+  buildPageLabel,
   buildPdfData,
   buildXlsxArrayBuffer,
+  computeCategoryBreakdown,
   computeSummary,
   sanitizeFileName,
   sumValores,
@@ -13,6 +15,7 @@ import {
   type ExportColumn,
 } from "../src/lib/gastos-export";
 import type { Gasto } from "../src/lib/types";
+import { formatBRL } from "../src/lib/format";
 
 const headers = EXPORT_COLUMNS.reduce(
   (acc, c) => {
@@ -169,5 +172,62 @@ describe("gastos-export", () => {
       "Gasto-Inteligente_Gastos_Maio-de-2026.xlsx",
     );
     expect(sanitizeFileName("01/08/2026 a 31/08/2026")).toBe("01-08-2026-a-31-08-2026");
+  });
+});
+
+describe("gastos-export — PDF refinado", () => {
+  it("categoria principal é a de maior gasto", () => {
+    const rows = buildExportRows(
+      [gasto({ valor: 100 }), gasto({ valor: 400, categoriaId: "saude" })],
+      ctx,
+    );
+    const data = buildPdfData(rows, headers, "Relatório de Gastos", "Agosto de 2026");
+    expect(data.topCategoria).toBe("Saúde");
+  });
+
+  it("resumo por categoria: ordenação, total e percentual", () => {
+    const rows = buildExportRows(
+      [gasto({ valor: 100 }), gasto({ valor: 300, categoriaId: "saude" })],
+      ctx,
+    );
+    const b = computeCategoryBreakdown(rows);
+    expect(b.map((c) => c.nome)).toEqual(["Saúde", "Alimentação"]);
+    expect(b[0]).toEqual({ nome: "Saúde", total: 300, pct: 75 });
+    expect(b[1].pct).toBe(25);
+    expect(b.reduce((a, c) => a + c.pct, 0)).toBe(100);
+  });
+
+  it("uma única categoria fica com 100%", () => {
+    const b = computeCategoryBreakdown(buildExportRows([gasto({ valor: 25 })], ctx));
+    expect(b).toEqual([{ nome: "Alimentação", total: 25, pct: 100 }]);
+  });
+
+  it("sem gastos não há categorias", () => {
+    expect(computeCategoryBreakdown([])).toEqual([]);
+  });
+
+  it("Página X de Y", () => {
+    expect(buildPageLabel(1, 1)).toBe("Página 1 de 1");
+    expect(buildPageLabel(2, 3)).toBe("Página 2 de 3");
+    expect(buildPageLabel(1, 0)).toBe("Página 1 de 1");
+    expect(buildPageLabel(1, 2, "Page", "of")).toBe("Page 1 of 2");
+  });
+
+  it("dados opcionais ausentes não vazam textos técnicos", () => {
+    const rows = buildExportRows(
+      [gasto({ estabelecimento: undefined, observacao: undefined, cartaoId: undefined })],
+      ctx,
+    );
+    const s = JSON.stringify(rows[0]);
+    expect(s).not.toContain("null");
+    expect(s).not.toContain("undefined");
+    expect(s).not.toContain("NaN");
+    expect(rows[0].estabelecimento).toBe("");
+  });
+
+  it("valores grandes preservam formatação brasileira", () => {
+    const rows = buildExportRows([gasto({ valor: 120000 }), gasto({ valor: 10500.9 })], ctx);
+    expect(formatBRL(rows[0].valor)).toContain("120.000,00");
+    expect(formatBRL(rows[1].valor)).toContain("10.500,90");
   });
 });

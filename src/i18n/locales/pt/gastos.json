@@ -284,7 +284,10 @@
       "total": "Total gasto",
       "avg": "Média por gasto",
       "max": "Maior gasto",
-      "byCategory": "Gastos por categoria"
+      "byCategory": "Gastos por categoria",
+      "entries": "Lançamentos",
+      "topCategory": "Categoria principal",
+      "byCategoryTitle": "Gastos por categoria"
     },
     "columns": {
       "data": "Data",
@@ -298,6 +301,10 @@
       "tipo": "Tipo do gasto",
       "parcelaRecorrencia": "Parcela/Recorrência",
       "observacao": "Observações"
-    }
+    },
+    "page": "Página",
+    "pageOf": "de",
+    "footerBy": "Gerado por Gasto Inteligente",
+    "at": "às"
   }
 }

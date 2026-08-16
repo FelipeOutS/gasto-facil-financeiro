@@ -326,3 +326,34 @@ export function buildPdfData(
     ]),
   };
 }
+
+// ------------------------------------------------------------------
+// Resumo por categoria (PDF) — total, percentual e ordenação
+// ------------------------------------------------------------------
+
+export interface CategoryBreakdownItem {
+  nome: string;
+  total: number;
+  /** Percentual do total do período (1 casa decimal). */
+  pct: number;
+}
+
+/** Categorias ordenadas do maior para o menor, com percentual do total. */
+export function computeCategoryBreakdown(rows: ExportRow[]): CategoryBreakdownItem[] {
+  const { porCategoria, total } = computeSummary(rows);
+  return porCategoria.map((c) => ({
+    nome: c.nome,
+    total: c.total,
+    pct: total > 0 ? Math.round((c.total / total) * 1000) / 10 : 0,
+  }));
+}
+
+/** Rótulo "Página X de Y". */
+export function buildPageLabel(
+  page: number,
+  totalPages: number,
+  pageWord = "Página",
+  ofWord = "de",
+): string {
+  return `${pageWord} ${page} ${ofWord} ${Math.max(totalPages, 1)}`;
+}
