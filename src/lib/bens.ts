@@ -194,6 +194,14 @@ export function snapshotDivergente(ev: EventoFinanceiro, gastos: ValoresGastos =
   return Math.abs((gastos[ev.gastoId] ?? 0) - (ev.valor ?? 0)) > 0.005;
 }
 
+export type GastoDoBem = {
+  id: string;
+  descricao: string;
+  valor: number;
+  data: string;
+  recorrencia_id?: string | null;
+};
+
 export type ResumoBem = {
   entradaTotal: number;
   entradaComposicaoConfere: boolean;
@@ -201,7 +209,11 @@ export type ResumoBem = {
   totalParcelasPagas: number;
   qtdParcelasPagas: number;
   totalAmortizacoes: number;
-  /** entrada + custos adicionais + parcelas + amortizações (cada evento uma única vez) */
+  /** gastos vinculados ao bem que NÃO são fonte de caixa de outro evento */
+  totalGastosRelacionados: number;
+  /** custo do mês de referência somando apenas gastos relacionados */
+  custoMensalGastos: number;
+  /** entrada + custos adicionais + parcelas + amortizações + gastos (cada evento uma única vez) */
   totalDesembolsado: number;
   /** null = não informado (sem dados suficientes) */
   saldoDevedorEstimado: number | null;
@@ -219,9 +231,14 @@ export function calcularResumoBem(args: {
   amortizacoes: AmortizacaoBem[];
   custos: CustoAquisicaoBem[];
   valoresGastos?: ValoresGastos;
+  /** gastos com `bem_id` apontando para este bem */
+  gastos?: GastoDoBem[];
+  /** mês de referência do custo mensal, formato YYYY-MM */
+  mesReferencia?: string;
 }): ResumoBem {
   const { bem, financiamento, pagamentos, amortizacoes, custos } = args;
   const g = args.valoresGastos ?? {};
+  const gastos = args.gastos ?? [];
 
   const entradaTotal = Number(bem.entrada_total ?? 0);
   const composicao =
@@ -244,8 +261,29 @@ export function calcularResumoBem(args: {
     0,
   );
 
+  // Gastos que já são fonte de caixa de um pagamento/amortização/custo não podem
+  // ser somados de novo: eles já entraram acima via `valorEfetivoDesembolso`.
+  const idsJaContabilizados = new Set(
+    [
+      ...pagamentos.map((p) => p.gasto_id),
+      ...amortizacoes.map((a) => a.gasto_id),
+      ...custos.map((c) => c.gasto_id),
+    ].filter((x): x is string => !!x),
+  );
+  const gastosAvulsos = gastos.filter((x) => !idsJaContabilizados.has(x.id));
+  const totalGastosRelacionados = gastosAvulsos.reduce((s2, x) => s2 + Number(x.valor ?? 0), 0);
+  const custoMensalGastos = args.mesReferencia
+    ? gastosAvulsos
+        .filter((x) => (x.data ?? "").slice(0, 7) === args.mesReferencia)
+        .reduce((s2, x) => s2 + Number(x.valor ?? 0), 0)
+    : 0;
+
   const totalDesembolsado =
-    entradaTotal + totalCustosAquisicao + totalParcelasPagas + totalAmortizacoes;
+    entradaTotal +
+    totalCustosAquisicao +
+    totalParcelasPagas +
+    totalAmortizacoes +
+    totalGastosRelacionados;
 
   let saldoDevedorEstimado: number | null = null;
   if (financiamento) {
@@ -279,6 +317,8 @@ export function calcularResumoBem(args: {
     totalParcelasPagas,
     qtdParcelasPagas: pagamentos.length,
     totalAmortizacoes,
+    totalGastosRelacionados,
+    custoMensalGastos,
     totalDesembolsado,
     saldoDevedorEstimado,
     parcelasRestantes,
@@ -506,19 +546,56 @@ export async function excluirCustoAquisicao(id: string): Promise<void> {
 }
 
 /** Gastos vinculados ao bem (fonte de caixa + rastreabilidade). */
-export async function listarGastosDoBem(
-  bemId: string,
-): Promise<Array<{ id: string; descricao: string; valor: number; data: string }>> {
+export async function listarGastosDoBem(bemId: string): Promise<GastoDoBem[]> {
   const { data, error } = await supabase
     .from("gastos" as never)
-    .select("id, descricao, valor, data")
+    .select("id, descricao, valor, data, recorrencia_id")
     .eq("bem_id", bemId)
     .order("data", { ascending: false });
   if (error) throw error;
-  return (data ?? []) as unknown as Array<{
-    id: string;
-    descricao: string;
-    valor: number;
-    data: string;
-  }>;
+  return (data ?? []) as unknown as GastoDoBem[];
+}
+
+/** Gastos do usuário ainda sem bem vinculado — usados no seletor de vínculo. */
+export async function listarGastosSemBem(userId: string, limite = 60): Promise<GastoDoBem[]> {
+  const { data, error } = await supabase
+    .from("gastos" as never)
+    .select("id, descricao, valor, data, recorrencia_id")
+    .eq("user_id", userId)
+    .is("bem_id", null)
+    .order("data", { ascending: false })
+    .limit(limite);
+  if (error) throw error;
+  return (data ?? []) as unknown as GastoDoBem[];
+}
+
+/**
+ * Vincula (ou desvincula) um gasto já existente a um bem. Não cria gasto novo:
+ * apenas atualiza `bem_id`, então o valor continua contado uma única vez.
+ * Quando o gasto pertence a uma recorrência, o vínculo é propagado para a
+ * recorrência e suas demais ocorrências — o motor de recorrência segue sendo o
+ * do app, sem motor paralelo dentro de Meus Bens.
+ */
+export async function vincularGastoAoBem(
+  gasto: Pick<GastoDoBem, "id" | "recorrencia_id">,
+  bemId: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from("gastos" as never)
+    .update({ bem_id: bemId } as never)
+    .eq("id", gasto.id);
+  if (error) throw error;
+
+  if (gasto.recorrencia_id) {
+    const { error: e2 } = await supabase
+      .from("recorrencias" as never)
+      .update({ bem_id: bemId } as never)
+      .eq("id", gasto.recorrencia_id);
+    if (e2) throw e2;
+    const { error: e3 } = await supabase
+      .from("gastos" as never)
+      .update({ bem_id: bemId } as never)
+      .eq("recorrencia_id", gasto.recorrencia_id);
+    if (e3) throw e3;
+  }
 }
