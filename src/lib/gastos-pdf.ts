@@ -217,10 +217,11 @@ export function renderGastosPdf(opts: RenderPdfOptions) {
 
     const maxTotal = breakdown[0]?.total || 1;
     const nameW = 130;
-    const valueW = 84;
-    const pctW = 44;
     const barX = M + nameW + 10;
-    const barW = pageW - M - valueW - pctW - barX - 10;
+    // Largura máxima controlada: a barra não domina a linha mesmo com 100%
+    const barW = Math.min(200, pageW - M - 150 - barX);
+    const valueRight = barX + barW + 84;
+    const pctRight = valueRight + 44;
     breakdown.forEach((c, i) => {
       const cy = y + i * rowH;
       doc.setFont("helvetica", "normal");
@@ -240,12 +241,12 @@ export function renderGastosPdf(opts: RenderPdfOptions) {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
       doc.setTextColor(...INK);
-      doc.text(formatBRL(c.total), pageW - M - pctW - 10, cy + 3, { align: "right" });
+      doc.text(formatBRL(c.total), valueRight, cy + 3, { align: "right" });
       doc.setFont("helvetica", "normal");
       doc.setTextColor(...MUTED);
       doc.text(
         `${c.pct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`,
-        pageW - M,
+        pctRight,
         cy + 3,
         { align: "right" },
       );
@@ -257,14 +258,14 @@ export function renderGastosPdf(opts: RenderPdfOptions) {
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
     doc.setDrawColor(226, 232, 240);
-    doc.line(M, pageH - 48, pageW - M, pageH - 48);
+    doc.line(M, pageH - 54, pageW - M, pageH - 54);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(...MUTED);
+    doc.setFontSize(10);
+    doc.setTextColor(...INK);
     doc.text(
       `${labels.footerBy}  •  ${generatedAtText}  •  ${buildPageLabel(p, totalPages, labels.page, labels.pageOf)}`,
       pageW / 2,
-      pageH - 30,
+      pageH - 36,
       { align: "center" },
     );
   }
