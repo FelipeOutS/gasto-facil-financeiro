@@ -4466,7 +4466,118 @@ export function getItensEditadosDoBatch(batchId: string): {
   return { total: g + r + t, gastos: g, receitas: r, transferencias: t };
 }
 
+export type ResultadoRevertSeguro = {
+  ok: boolean;
+  /** Itens efetivamente removidos. */
+  removidos: number;
+  /** Itens preservados porque foram editados depois da importação. */
+  mantidos: number;
+  /** `revertido` (tudo apagado) ou `parcial` (sobraram itens editados). */
+  status: StatusExtratoImportado;
+};
+
+/**
+ * Reverte uma importação preservando o que o usuário editou depois.
+ *
+ * Regras:
+ * - só apaga linhas do próprio usuário e com `import_batch_id` do lote;
+ * - itens cujo `updated_at` é posterior ao `created_at` (>5s) são MANTIDOS;
+ * - se sobrar algum item, o lote fica com status `parcial`;
+ * - idempotente: relançar em lote já revertido não faz nada.
+ */
+export async function revertExtratoImportadoSeguro(
+  batchId: string,
+): Promise<ResultadoRevertSeguro> {
+  const falha: ResultadoRevertSeguro = {
+    ok: false,
+    removidos: 0,
+    mantidos: 0,
+    status: "importado",
+  };
+  if (!activeUserId) return falha;
+  const extrato = memExtratos.find((e) => e.id === batchId);
+  if (!extrato) return falha;
+  if (extrato.status === "revertido") {
+    return { ok: true, removidos: 0, mantidos: 0, status: "revertido" };
+  }
+
+  const itens = getItensDoBatch(batchId);
+  const TOLERANCIA_MS = 5000;
+  const foiEditado = (criadoEm?: string, atualizadoEm?: string) => {
+    if (!criadoEm || !atualizadoEm) return false;
+    return new Date(atualizadoEm).getTime() - new Date(criadoEm).getTime() > TOLERANCIA_MS;
+  };
+
+  const alvos: Array<{ tabela: string; ids: string[] }> = [
+    {
+      tabela: "gastos",
+      ids: itens.gastos.filter((x) => !foiEditado(x.criadoEm, x.atualizadoEm)).map((x) => x.id),
+    },
+    {
+      tabela: "receitas",
+      ids: itens.receitas.filter((x) => !foiEditado(x.criadoEm, x.atualizadoEm)).map((x) => x.id),
+    },
+    {
+      tabela: "transferencias_internas",
+      ids: itens.transferencias
+        .filter((x) => !foiEditado(x.criadoEm, x.atualizadoEm))
+        .map((x) => x.id),
+    },
+    { tabela: "dinheiro_guardado", ids: itens.guardado.map((x) => x.id) },
+    { tabela: "movimentacoes_meta", ids: itens.movimentacoesMeta.map((x) => x.id) },
+  ];
+
+  const totalItens =
+    itens.gastos.length +
+    itens.receitas.length +
+    itens.transferencias.length +
+    itens.guardado.length +
+    itens.movimentacoesMeta.length;
+  const removiveis = alvos.reduce((s, a) => s + a.ids.length, 0);
+  const mantidos = totalItens - removiveis;
+
+  const apagados = new Set<string>();
+  for (const alvo of alvos) {
+    if (alvo.ids.length === 0) continue;
+    const { error } = await sbAny
+      .from(alvo.tabela)
+      .delete()
+      .eq("user_id", activeUserId)
+      .eq("import_batch_id", batchId)
+      .in("id", alvo.ids);
+    if (error) {
+      console.error(`[store] revertExtratoImportadoSeguro: falha em ${alvo.tabela}`, error);
+      return { ...falha, mantidos };
+    }
+    for (const id of alvo.ids) apagados.add(id);
+  }
+
+  const novoStatus: StatusExtratoImportado = mantidos > 0 ? "parcial" : "revertido";
+  const now = new Date().toISOString();
+  const { error: upErr } = await sbAny
+    .from("extratos_importados")
+    .update({ status: novoStatus, reverted_at: now, updated_at: now })
+    .eq("id", batchId)
+    .eq("user_id", activeUserId);
+  if (upErr) {
+    console.error("[store] revertExtratoImportadoSeguro: falha ao atualizar status", upErr);
+  }
+
+  const keep = <T extends { id: string }>(arr: T[]) => arr.filter((x) => !apagados.has(x.id));
+  memGastos = keep(memGastos);
+  memReceitas = keep(memReceitas);
+  memTransferencias = keep(memTransferencias);
+  memGuardado = keep(memGuardado);
+  memMov = keep(memMov);
+  memExtratos = memExtratos.map((e) =>
+    e.id === batchId ? { ...e, status: novoStatus, revertedAt: now, atualizadoEm: now } : e,
+  );
+  emit();
+  return { ok: true, removidos: apagados.size, mantidos, status: novoStatus };
+}
+
 export async function revertExtratoImportado(batchId: string): Promise<boolean> {
+
   if (!activeUserId) return false;
   const extrato = memExtratos.find((e) => e.id === batchId);
   if (!extrato) return false;

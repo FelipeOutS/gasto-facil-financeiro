@@ -21,12 +21,13 @@
     "receitas": "Receitas",
     "transferencias": "Transferências internas"
   },
-  "editedWarn_one": "<0>{{count}}</0> item desse lote foi editado depois da importação. Reverter vai apagar esse item mesmo assim.",
-  "editedWarn_other": "<0>{{count}}</0> itens desse lote foram editados depois da importação. Reverter vai apagar esses itens mesmo assim.",
+  "editedWarn_one": "<0>{{count}}</0> item desse lote foi editado depois da importação. Ao reverter, esse item será preservado.",
+  "editedWarn_other": "<0>{{count}}</0> itens desse lote foram editados depois da importação. Ao reverter, esses itens serão preservados.",
   "status": {
     "revertido": "Revertido",
     "erro": "Erro",
-    "importado": "Importado"
+    "importado": "Importado",
+    "parcial": "Revertido parcialmente"
   },
   "actions": {
     "remove": "Remover do histórico",
@@ -34,9 +35,9 @@
   },
   "confirmRevert": {
     "title": "Reverter importação?",
-    "body": "Isso vai apagar <0>todos</0> os {{count}} lançamentos criados nessa importação (despesas, receitas, transferências e reservas) e atualizar Dashboard, Gastos, Receitas e Guardado.",
-    "editedNote_one": "⚠ {{count}} item foi editado depois da importação e também será apagado.",
-    "editedNote_other": "⚠ {{count}} itens foram editados depois da importação e também serão apagados.",
+    "body": "Isso vai apagar os lançamentos criados nessa importação ({{count}} no total) que você não editou depois, e atualizar Dashboard, Gastos, Receitas e Guardado.",
+    "editedNote_one": "⚠ {{count}} item foi editado depois da importação e será mantido.",
+    "editedNote_other": "⚠ {{count}} itens foram editados depois da importação e serão mantidos.",
     "cancel": "Cancelar",
     "doing": "Revertendo...",
     "confirm": "Sim, reverter"
@@ -52,6 +53,7 @@
     "reverted": "Importação revertida. Dashboard, Gastos, Receitas e Guardado foram recalculados.",
     "revertFail": "Não foi possível reverter essa importação. Tente novamente.",
     "removed": "Registro removido do histórico.",
-    "removeFail": "Não foi possível remover esse registro."
+    "removeFail": "Não foi possível remover esse registro.",
+    "revertedPartial": "{{removed}} lançamentos removidos. {{kept}} itens editados por você foram mantidos."
   }
 }

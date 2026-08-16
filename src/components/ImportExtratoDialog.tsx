@@ -50,6 +50,7 @@ import {
   findDuplicateReceitaAdvanced,
   findDuplicateTransferenciaAdvanced,
   normalizeDescricao,
+  getCartoes,
   getCategorias,
   getGastos,
   getReceitas,
@@ -63,10 +64,20 @@ import {
   parseDataBR,
   suggestCategoryFromDescription,
 } from "@/lib/csv-fatura";
+import { resolverTipoMovimentacao } from "@/lib/transferencia-detect";
+import { sugerirCartaoDaFatura } from "@/lib/fatura-cartao-match";
 
-type Step = "upload" | "kind" | "analyzing" | "review" | "done";
-type ReviewFilter = "todos" | "selecionados" | "duplicados" | "gastos" | "receitas" | "outros";
+type Step = "upload" | "kind" | "analyzing" | "cartao" | "review" | "done";
+type ReviewFilter =
+  | "todos"
+  | "selecionados"
+  | "duplicados"
+  | "gastos"
+  | "receitas"
+  | "transferencias"
+  | "outros";
 type ImportKind = "extrato" | "fatura";
+
 
 type TipoMov = "despesa" | "receita" | "transferencia_interna";
 type DupStatus = "novo" | "duplicado_lote" | "duplicado_existente";
@@ -114,7 +125,10 @@ type ReviewItem = {
   observacao?: string;
   selecionado: boolean;
   dupStatus: DupStatus;
+  /** Cartão vinculado (faturas de cartão de crédito). */
+  cartaoId?: string;
 };
+
 
 type ExtratoResumo = {
   banco: string | null;
@@ -230,6 +244,7 @@ export function ImportExtratoDialog({
   const { t: tc } = useTranslation("common");
   const premiumGate = usePremiumApiGate();
   const categorias = getCategorias();
+  const cartoes = getCartoes();
 
   const [step, setStep] = useState<Step>("upload");
   const [loading, setLoading] = useState(false);
@@ -239,6 +254,11 @@ export function ImportExtratoDialog({
   const [observacaoIA, setObservacaoIA] = useState<string | null>(null);
   const [resumoExtrato, setResumoExtrato] = useState<ExtratoResumo | null>(null);
   const [analyzingIdx, setAnalyzingIdx] = useState(0);
+  const [cartaoSelecionado, setCartaoSelecionado] = useState<string | null>(null);
+  const [sugestaoCartao, setSugestaoCartao] = useState<{
+    cartaoId: string;
+    motivo: string;
+  } | null>(null);
   const [result, setResult] = useState<{
     adicionados: number;
     duplicados: number;
@@ -260,7 +280,10 @@ export function ImportExtratoDialog({
     setResumoExtrato(null);
     setResult(null);
     setImportMeta(null);
+    setCartaoSelecionado(null);
+    setSugestaoCartao(null);
   }, []);
+
 
   const handleClose = useCallback(
     (v: boolean) => {
@@ -307,7 +330,9 @@ export function ImportExtratoDialog({
           data: r.data,
           descricao: r.descricao,
           horario: r.horario ?? undefined,
+          cartaoId: r.cartaoId,
         });
+
       } else if (r.tipoMovimentacao === "receita") {
         existe = findDuplicateReceitaAdvanced({
           valor: r.valor,
@@ -534,7 +559,16 @@ export function ImportExtratoDialog({
         setItems(itensFromBruto(brutos, "fatura_pdf"));
         setObservacaoIA(json.observacao ?? null);
         setImportMeta({ nomeArquivo: file.name, tipoOrigem: "pdf" });
-        setStep("review");
+        // Fatura de cartão: pergunta a qual cartão os lançamentos pertencem.
+        if (cartoes.length > 0) {
+          const sugestao = sugerirCartaoDaFatura(cartoes, [file.name, json.observacao]);
+          setSugestaoCartao(sugestao);
+          setCartaoSelecionado(sugestao?.cartaoId ?? null);
+          setStep("cartao");
+        } else {
+          setStep("review");
+        }
+
       } catch (e) {
         console.error("[import-gastos] erro fatura PDF", e);
         toast.error(t("errors.processFail"));
@@ -543,7 +577,8 @@ export function ImportExtratoDialog({
         setLoading(false);
       }
     },
-    [itensFromBruto, premiumGate, t, tc],
+    [cartoes, itensFromBruto, premiumGate, t, tc],
+
   );
 
   // ---------- IMPORT: PDF ----------
@@ -679,7 +714,7 @@ export function ImportExtratoDialog({
           const data = parseDataBR(r[idxData] ?? "");
           const desc = (r[idxDesc] ?? "").trim();
           if (valor === null || !data || !desc) continue;
-          const tipoMov: TipoMov = valor < 0 ? "despesa" : "receita";
+          const { tipo, precisaRevisao, deteccao } = resolverTipoMovimentacao(desc, valor);
           const lower = desc.toLowerCase();
           let forma: string = "outro";
           if (/pix/.test(lower)) forma = "pix";
@@ -691,13 +726,15 @@ export function ImportExtratoDialog({
             valor: Math.abs(valor),
             data,
             horario: null,
-            tipoMovimentacao: tipoMov,
+            tipoMovimentacao: tipo,
+            statusRevisao: precisaRevisao ? "revisar" : null,
             formaPagamento: forma,
             categoriaSugerida: suggestCategoryFromDescription(desc),
             contraparte: null,
-            confianca: "media",
-            observacao: null,
+            confianca: deteccao.certeza,
+            observacao: precisaRevisao ? `Verifique: ${deteccao.motivo}` : null,
           });
+
         }
         if (brutos.length === 0) {
           toast.warning(t("errors.csvNoValid"));
@@ -760,6 +797,25 @@ export function ImportExtratoDialog({
     },
     [files, handleCsv, handleImagens, handleFaturaPdf, handlePdf],
   );
+
+  // ---------- FATURA: vincula os lançamentos ao cartão escolhido ----------
+  const confirmarCartaoFatura = useCallback(
+    (cartaoId: string | null) => {
+      setItems((prev) =>
+        computeDupStatus(
+          prev.map((it) =>
+            it.tipoMovimentacao === "despesa"
+              ? { ...it, cartaoId: cartaoId ?? undefined, formaPagamento: "credito" as FormaPagamento }
+              : it,
+          ),
+        ),
+      );
+      setCartaoSelecionado(cartaoId);
+      setStep("review");
+    },
+    [computeDupStatus],
+  );
+
 
   // ---------- REVIEW edits ----------
   const updateItem = (id: string, patch: Partial<ReviewItem>) => {
@@ -848,6 +904,8 @@ export function ImportExtratoDialog({
           origem: importOrigin(d, d.origem || "extrato_pdf"),
           importBatchId: batchId,
           idOperacaoBanco: d.idOperacao,
+          cartaoId: d.formaPagamento === "credito" ? d.cartaoId : undefined,
+
         })),
       );
       novosCount += created.length;
@@ -950,8 +1008,11 @@ export function ImportExtratoDialog({
         return items.filter((i) => i.tipoMovimentacao === "despesa");
       case "receitas":
         return items.filter((i) => i.tipoMovimentacao === "receita");
-      case "outros":
+      case "transferencias":
         return items.filter((i) => i.tipoMovimentacao === "transferencia_interna");
+      case "outros":
+        return items.filter((i) => i.statusRevisao !== "novo");
+
       default:
         return items;
     }
@@ -1015,6 +1076,75 @@ export function ImportExtratoDialog({
             </div>
           )}
 
+          {step === "cartao" && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium">Em qual cartão entram essas compras?</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Vincular o cartão deixa a fatura, os limites e os relatórios corretos.
+                </p>
+              </div>
+              {sugestaoCartao && (
+                <div className="flex items-start gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-xs">
+                  <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <span>
+                    Sugerimos{" "}
+                    <strong>
+                      {cartoes.find((c) => c.id === sugestaoCartao.cartaoId)?.nome ?? "um cartão"}
+                    </strong>{" "}
+                    porque {sugestaoCartao.motivo}.
+                  </span>
+                </div>
+              )}
+              <div className="space-y-2">
+                {cartoes.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setCartaoSelecionado(c.id)}
+                    className={cn(
+                      "w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-colors",
+                      cartaoSelecionado === c.id
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:bg-accent/40",
+                    )}
+                  >
+                    <span
+                      className="h-8 w-8 rounded-lg shrink-0"
+                      style={{ backgroundColor: c.cor }}
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">{c.nome}</span>
+                      <span className="block text-xs text-muted-foreground">{c.banco}</span>
+                    </span>
+                    {cartaoSelecionado === c.id && (
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button
+                  disabled={!cartaoSelecionado}
+                  onClick={() => confirmarCartaoFatura(cartaoSelecionado)}
+                >
+                  Continuar
+                </Button>
+                <Button variant="ghost" onClick={() => confirmarCartaoFatura(null)}>
+                  Importar sem vincular cartão
+                </Button>
+              </div>
+              <button
+                onClick={() => setStep("upload")}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                ← Voltar
+              </button>
+            </div>
+          )}
+
+
           {step === "review" && (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1043,7 +1173,9 @@ export function ImportExtratoDialog({
                     ["duplicados", "Possíveis duplicados"],
                     ["gastos", "Gastos"],
                     ["receitas", "Receitas"],
-                    ["outros", "Outros"],
+                    ["transferencias", "Transferências"],
+                    ["outros", "A revisar"],
+
                   ] as Array<[ReviewFilter, string]>
                 ).map(([id, label]) => (
                   <button
@@ -1067,6 +1199,8 @@ export function ImportExtratoDialog({
                 onRemove={removeItem}
                 onAdd={addEmptyItem}
                 categorias={categorias}
+                cartoes={cartoes}
+
                 observacaoIA={observacaoIA}
                 resumoExtrato={resumoExtrato}
               />
@@ -1257,6 +1391,7 @@ function ReviewStep({
   onRemove,
   onAdd,
   categorias,
+  cartoes,
   observacaoIA,
   resumoExtrato,
 }: {
@@ -1265,9 +1400,11 @@ function ReviewStep({
   onRemove: (id: string) => void;
   onAdd: () => void;
   categorias: ReturnType<typeof getCategorias>;
+  cartoes: ReturnType<typeof getCartoes>;
   observacaoIA: string | null;
   resumoExtrato: ExtratoResumo | null;
 }) {
+
   const { t } = useTranslation("import-extrato");
   return (
     <div className="space-y-3">
@@ -1321,6 +1458,7 @@ function ReviewStep({
             key={item.id}
             item={item}
             categorias={categorias}
+            cartoes={cartoes}
             onUpdate={(patch) => onUpdate(item.id, patch)}
             onRemove={() => onRemove(item.id)}
           />
@@ -1342,14 +1480,17 @@ function ResumoItem({ label, value }: { label: string; value: string }) {
 function ReviewCard({
   item,
   categorias,
+  cartoes,
   onUpdate,
   onRemove,
 }: {
   item: ReviewItem;
   categorias: ReturnType<typeof getCategorias>;
+  cartoes: ReturnType<typeof getCartoes>;
   onUpdate: (patch: Partial<ReviewItem>) => void;
   onRemove: () => void;
 }) {
+
   const { t } = useTranslation("import-extrato");
   const dupBadge =
     item.dupStatus === "duplicado_existente"
@@ -1516,6 +1657,30 @@ function ReviewCard({
             </Select>
           </div>
         )}
+        {item.tipoMovimentacao === "despesa" &&
+          item.formaPagamento === "credito" &&
+          cartoes.length > 0 && (
+            <div>
+              <Label className="text-xs">Cartão</Label>
+              <Select
+                value={item.cartaoId ?? "sem_cartao"}
+                onValueChange={(v) => onUpdate({ cartaoId: v === "sem_cartao" ? undefined : v })}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sem_cartao">Sem cartão</SelectItem>
+                  {cartoes.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
         {item.tipoMovimentacao === "despesa" && (
           <div className="sm:col-span-2">
             <Label className="text-xs">{t("row.categoria")}</Label>

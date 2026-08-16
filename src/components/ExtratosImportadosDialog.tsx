@@ -39,7 +39,7 @@ import {
   getExtratosImportados,
   getItensDoBatch,
   getItensEditadosDoBatch,
-  revertExtratoImportado,
+  revertExtratoImportadoSeguro,
   deleteExtratoImportado,
   useStore,
 } from "@/lib/store";
@@ -60,6 +60,13 @@ function StatusBadge({ status }: { status: ExtratoImportado["status"] }) {
       </Badge>
     );
   }
+  if (status === "parcial") {
+    return (
+      <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-600">
+        <AlertTriangle className="h-3 w-3" /> {t("status.parcial")}
+      </Badge>
+    );
+  }
   if (status === "erro") {
     return (
       <Badge variant="destructive" className="gap-1">
@@ -73,6 +80,7 @@ function StatusBadge({ status }: { status: ExtratoImportado["status"] }) {
     </Badge>
   );
 }
+
 
 export function ExtratosImportadosDialog({
   open,
@@ -117,17 +125,24 @@ export function ExtratosImportadosDialog({
   const handleRevert = async (batchId: string) => {
     setWorking(true);
     try {
-      const ok = await revertExtratoImportado(batchId);
-      if (ok) {
-        toast.success(t("toast.reverted"));
-      } else {
+      const res = await revertExtratoImportadoSeguro(batchId);
+      if (!res.ok) {
         toast.error(t("toast.revertFail"));
+        return;
+      }
+      if (res.mantidos > 0) {
+        toast.success(
+          t("toast.revertedPartial", { removed: res.removidos, kept: res.mantidos }),
+        );
+      } else {
+        toast.success(t("toast.reverted"));
       }
     } finally {
       setWorking(false);
       setConfirmRevertId(null);
     }
   };
+
 
   const handleDelete = async (batchId: string) => {
     setWorking(true);
@@ -270,7 +285,9 @@ export function ExtratosImportadosDialog({
 
                   {editadosDoSelecionado &&
                     editadosDoSelecionado.total > 0 &&
-                    selected.status !== "revertido" && (
+                    selected.status !== "revertido" &&
+                    selected.status !== "parcial" && (
+
                       <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
                         <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                         <div>
@@ -322,7 +339,7 @@ export function ExtratosImportadosDialog({
 
           {selected && (
             <div className="border-t px-6 py-4 flex flex-wrap items-center justify-end gap-2 shrink-0">
-              {selected.status === "revertido" ? (
+              {selected.status === "revertido" || selected.status === "parcial" ? (
                 <Button
                   variant="outline"
                   onClick={() => setConfirmDeleteId(selected.id)}
