@@ -16,9 +16,13 @@ import {
   Calendar,
   PieChart,
   Calculator,
+  FileText,
+  Sparkles,
 } from "lucide-react";
 import { SimuladorFinanciamento } from "@/components/bens/SimuladorFinanciamento";
 import { Card as UICard, CardContent as UICardContent } from "@/components/ui/card";
+import { ImportFinanciamentoDialog } from "@/components/bens/ImportFinanciamentoDialog";
+
 
 
 import { MobileShell } from "@/components/MobileShell";
