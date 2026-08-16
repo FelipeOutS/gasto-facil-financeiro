@@ -35,12 +35,12 @@ describe('Validação Matemática Independente V3 (SAC & Price)', () => {
       expect(simulacao.parcelas[prazoTotal - 2].valorAmortizacao).toBe(amortizacaoEsperada);
     });
 
-    it('Parcela 1: Juros R$ 2.392,24 | Total R$ 3.225,57', () => {
-      // Juros 1 = 300.000 * 0.00797414 = 2392.242... -> 2392.24
-      // Total 1 = 833.33 + 2392.24 = 3225.57
+    it('Parcela 1: Juros R$ 2.500,00 | Total R$ 3.333,33', () => {
+      // Juros 1 = 300.000 * (0.10 / 12) = 2500.00
+      // Total 1 = 833.33 + 2500.00 = 3333.33
       const p1 = simulacao.parcelas[0];
-      expect(p1.valorJuros).toBeCloseTo(2392.24, 1);
-      expect(p1.valorParcela).toBeCloseTo(3225.57, 1);
+      expect(p1.valorJuros).toBeCloseTo(2500.00, 1);
+      expect(p1.valorParcela).toBeCloseTo(3333.33, 1);
     });
 
     it('Parcela 120: Saldo Devedor Anterior ≈ R$ 200.833,73', () => {
@@ -49,9 +49,10 @@ describe('Validação Matemática Independente V3 (SAC & Price)', () => {
       const saldoAnterior = simulacao.parcelas[118].saldoDevedor;
       expect(saldoAnterior).toBeCloseTo(200833.73, 1);
       
-      // Juros 120 = 200.833,73 * 0.00797414 = 1601.47
-      expect(p120.valorJuros).toBeCloseTo(1601.47, 1);
+      // Juros 120 = 200.833,73 * (0.10 / 12) = 1673.61
+      expect(p120.valorJuros).toBeCloseTo(1673.61, 1);
     });
+
 
     it('Última Parcela: deve zerar o saldo sem resíduos', () => {
       const ultima = simulacao.parcelas[prazoTotal - 1];
