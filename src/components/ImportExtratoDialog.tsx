@@ -714,7 +714,7 @@ export function ImportExtratoDialog({
           const data = parseDataBR(r[idxData] ?? "");
           const desc = (r[idxDesc] ?? "").trim();
           if (valor === null || !data || !desc) continue;
-          const tipoMov: TipoMov = valor < 0 ? "despesa" : "receita";
+          const { tipo, precisaRevisao, deteccao } = resolverTipoMovimentacao(desc, valor);
           const lower = desc.toLowerCase();
           let forma: string = "outro";
           if (/pix/.test(lower)) forma = "pix";
@@ -726,13 +726,15 @@ export function ImportExtratoDialog({
             valor: Math.abs(valor),
             data,
             horario: null,
-            tipoMovimentacao: tipoMov,
+            tipoMovimentacao: tipo,
+            statusRevisao: precisaRevisao ? "revisar" : null,
             formaPagamento: forma,
             categoriaSugerida: suggestCategoryFromDescription(desc),
             contraparte: null,
-            confianca: "media",
-            observacao: null,
+            confianca: deteccao.certeza,
+            observacao: precisaRevisao ? `Verifique: ${deteccao.motivo}` : null,
           });
+
         }
         if (brutos.length === 0) {
           toast.warning(t("errors.csvNoValid"));
