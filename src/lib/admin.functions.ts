@@ -294,13 +294,52 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
       }
     }
 
+    // Índices em memória para resolver a assinatura sem consultar por usuário
+    // (antes eram ~8 consultas por conta, o que travava o carregamento).
+    const ownerIds = new Set<string>(
+      ((ownersRes.data ?? []) as Array<{ user_id: string }>).map((r) => r.user_id),
+    );
+    const fullPayments = (paymentsFullRes.data ?? []) as Array<Record<string, any>>;
+    const fullByUser = new Map<string, Array<Record<string, any>>>();
+    const fullByEmail = new Map<string, Array<Record<string, any>>>();
+    const emailPaths = (payload: any): string[] => {
+      const out = [
+        payload?.payer?.email,
+        payload?.payer_email,
+        payload?.metadata?.email,
+        payload?.metadata?.user_email,
+        payload?.additional_info?.payer?.email,
+      ];
+      return out
+        .filter((v): v is string => typeof v === "string" && v.length > 0)
+        .map((v) => v.trim().toLowerCase());
+    };
+    for (const p of fullPayments) {
+      if (p["user_id"]) {
+        const arr = fullByUser.get(p["user_id"]) ?? [];
+        arr.push(p);
+        fullByUser.set(p["user_id"], arr);
+      }
+      for (const mail of emailPaths(p["payload"])) {
+        const arr = fullByEmail.get(mail) ?? [];
+        arr.push(p);
+        fullByEmail.set(mail, arr);
+      }
+    }
+
     const users: AdminUserRow[] = await Promise.all(
       allAuthUsers.map(async (au) => {
         const prof: any = profileBy.get(au.id);
+        const mail = (au.email ?? "").trim().toLowerCase();
         const sub = await getSubscriptionForUserIdentity({
           userId: au.id,
           email: au.email,
           repairLink: false,
+          preloaded: {
+            isAdmin: ownerIds.has(au.id),
+            planRow: planBy.get(au.id) ?? null,
+            payments: [...(fullByUser.get(au.id) ?? []), ...(fullByEmail.get(mail) ?? [])],
+          },
         });
         const last = lastPaymentByUser.get(au.id);
         const paid = paidPaymentsByUser.get(au.id) ?? [];
