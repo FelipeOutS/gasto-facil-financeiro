@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileShell } from "@/components/MobileShell";
 import { AdminMasterGate } from "@/components/AdminMasterGate";
@@ -198,7 +198,7 @@ function UsoProdutoPage() {
                     </TableHeader>
                     <TableBody>
                       {usuariosFiltrados.map((u) => (
-                        <>
+                        <Fragment key={u.userId}>
                           <TableRow
                             key={u.userId}
                             className="cursor-pointer"
@@ -257,7 +257,7 @@ function UsoProdutoPage() {
                               </TableCell>
                             </TableRow>
                           )}
-                        </>
+                        </Fragment>
                       ))}
                     </TableBody>
                   </Table>
