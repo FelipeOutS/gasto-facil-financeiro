@@ -211,7 +211,7 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
     }
 
     // 2) Fonte primária = profiles (todo cadastrado tem profile via trigger)
-    const [profilesRes, plansRes, paymentsRes] = await Promise.all([
+    const [profilesRes, plansRes, paymentsRes, ownersRes, paymentsFullRes] = await Promise.all([
       supabaseAdmin.from("profiles").select("id, nome, telefone, tipo_cadastro, created_at"),
       supabaseAdmin.from("user_plans").select("*"),
       supabaseAdmin
@@ -220,6 +220,14 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
           "id, user_id, plano, method, status, amount_cents, periodicidade, months, discount_percent, paid_at, created_at",
         )
         .order("created_at", { ascending: false }),
+      supabaseAdmin.from("user_roles").select("user_id").eq("role", "owner"),
+      supabaseAdmin
+        .from("subscription_payments")
+        .select(
+          "id, user_id, plano, method, status, amount_cents, periodicidade, months, provider_payment_id, paid_at, created_at, payload",
+        )
+        .order("created_at", { ascending: false })
+        .limit(5000),
     ]);
 
     // Reconcilia pagamentos por cartão pendentes (best-effort) para usuários
