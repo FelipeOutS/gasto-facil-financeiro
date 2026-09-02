@@ -4943,31 +4943,8 @@ function AppExperienceSection() {
           </Reveal>
         </div>
 
-        {/* Bloco 2 — 3 cards (WhatsApp / Cofre / Radar) */}
-        <div className="mt-14 grid gap-4 md:grid-cols-3">
-          <Reveal>
-            <div className="h-full rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.18)]">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50 text-emerald-700">
-                <MessageCircle className="h-5 w-5" />
-              </span>
-              <h4 className="mt-4 text-base font-bold text-slate-900">
-                {t("appExperience.whatsappTitle")}
-              </h4>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-                {t("appExperience.whatsappText")}
-              </p>
-              <div className="mt-4 space-y-2">
-                <div className="ml-auto max-w-[78%] rounded-2xl rounded-br-sm bg-emerald-500 px-3 py-1.5 text-xs text-white">
-                  {t("appExperience.whatsappSample.user")}
-                </div>
-                <div
-                  className="max-w-[88%] rounded-2xl rounded-bl-sm bg-slate-100 px-3 py-1.5 text-xs text-slate-700"
-                  dangerouslySetInnerHTML={{ __html: t("appExperience.whatsappSample.bot") }}
-                />
-              </div>
-            </div>
-          </Reveal>
-
+        {/* Bloco 2 — 2 cards (Cofre / Radar) */}
+        <div className="mt-14 grid gap-4 md:grid-cols-2">
           <Reveal delay={0.05}>
             <div className="h-full rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.18)]">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-700">
