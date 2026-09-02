@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileShell } from "@/components/MobileShell";
 import { AdminMasterGate } from "@/components/AdminMasterGate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -14,11 +15,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, BarChart3, RefreshCcw, Users } from "lucide-react";
+import { ArrowLeft, BarChart3, ChevronRight, RefreshCcw, Users } from "lucide-react";
 import {
   getProductUsageReport,
   type ProductUsageReport,
 } from "@/lib/product-analytics.functions";
+
+function fmtDate(iso: string | null): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
 
 export const Route = createFileRoute("/admin_/uso-produto")({
   head: () => ({
