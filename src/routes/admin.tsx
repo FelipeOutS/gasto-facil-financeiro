@@ -482,6 +482,12 @@ function AdminPage() {
                 <Activity className="h-4 w-4" /> Uso do Produto
               </a>
             </Button>
+            <Button variant="outline" asChild className="gap-2 flex-1 sm:flex-none">
+              <a href="/admin/atividade-usuarios">
+                <Activity className="h-4 w-4" /> Atividade dos Usuários
+              </a>
+            </Button>
+
             <Button variant="outline" onClick={exportCsv} className="gap-2 flex-1 sm:flex-none">
               <Download className="h-4 w-4" /> Exportar CSV
             </Button>
