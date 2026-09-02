@@ -169,15 +169,28 @@ async function paymentsForEmail(email: string): Promise<PaymentRow[]> {
   return results.flatMap((res) => (res.data ?? []) as PaymentRow[]);
 }
 
+/**
+ * Dados já carregados em lote (usado pelo painel admin para evitar N+1:
+ * sem isso cada usuário dispara ~8 consultas).
+ */
+export type SubscriptionPreload = {
+  isAdmin: boolean;
+  planRow: unknown | null;
+  payments: unknown[];
+};
+
 export async function getSubscriptionForUserIdentity(input: {
   userId: string;
   email?: string | null;
   repairLink?: boolean;
+  preloaded?: SubscriptionPreload;
 }): Promise<CurrentUserSubscription> {
   const email = normalizeEmail(input.email);
   const nowMs = Date.now();
 
-  const isAdmin = await hasAdminMasterRole(input.userId);
+  const isAdmin = input.preloaded
+    ? input.preloaded.isAdmin
+    : await hasAdminMasterRole(input.userId);
   if (isAdmin) {
     return {
       ...emptySubscription(input.userId, email, "admin_master"),
@@ -195,25 +208,39 @@ export async function getSubscriptionForUserIdentity(input: {
     };
   }
 
-  const [planRes, paymentsByUserRes, paymentsByEmail] = await Promise.all([
-    supabaseAdmin.from("user_plans").select("*").eq("user_id", input.userId).maybeSingle(),
-    supabaseAdmin
-      .from("subscription_payments")
-      .select(
-        "id, user_id, plano, method, status, amount_cents, periodicidade, months, provider_payment_id, paid_at, created_at, payload",
-      )
-      .eq("user_id", input.userId)
-      .order("created_at", { ascending: false })
-      .limit(50),
-    paymentsForEmail(email),
-  ]);
+  let planRow: PlanRow | null;
+  let payments: PaymentRow[];
 
-  const planRow = (planRes.data ?? null) as PlanRow | null;
-  const paymentMap = new Map<string, PaymentRow>();
-  for (const payment of [...((paymentsByUserRes.data ?? []) as PaymentRow[]), ...paymentsByEmail]) {
-    paymentMap.set(payment.id, payment);
+  if (input.preloaded) {
+    planRow = (input.preloaded.planRow ?? null) as PlanRow | null;
+    const preMap = new Map<string, PaymentRow>();
+    for (const payment of input.preloaded.payments as PaymentRow[]) preMap.set(payment.id, payment);
+    payments = [...preMap.values()];
+  } else {
+    const [planRes, paymentsByUserRes, paymentsByEmail] = await Promise.all([
+      supabaseAdmin.from("user_plans").select("*").eq("user_id", input.userId).maybeSingle(),
+      supabaseAdmin
+        .from("subscription_payments")
+        .select(
+          "id, user_id, plano, method, status, amount_cents, periodicidade, months, provider_payment_id, paid_at, created_at, payload",
+        )
+        .eq("user_id", input.userId)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      paymentsForEmail(email),
+    ]);
+    planRow = (planRes.data ?? null) as PlanRow | null;
+    const paymentMap = new Map<string, PaymentRow>();
+    for (const payment of [
+      ...((paymentsByUserRes.data ?? []) as PaymentRow[]),
+      ...paymentsByEmail,
+    ]) {
+      paymentMap.set(payment.id, payment);
+    }
+    payments = [...paymentMap.values()];
   }
-  const payments = [...paymentMap.values()].sort(
+
+  payments = payments.sort(
     (a, b) =>
       new Date(b.paid_at ?? b.created_at).getTime() - new Date(a.paid_at ?? a.created_at).getTime(),
   );

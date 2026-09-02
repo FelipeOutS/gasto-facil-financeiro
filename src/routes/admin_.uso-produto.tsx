@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileShell } from "@/components/MobileShell";
 import { AdminMasterGate } from "@/components/AdminMasterGate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -14,11 +15,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, BarChart3, RefreshCcw, Users } from "lucide-react";
+import { ArrowLeft, BarChart3, ChevronRight, RefreshCcw, Users } from "lucide-react";
 import {
   getProductUsageReport,
   type ProductUsageReport,
 } from "@/lib/product-analytics.functions";
+
+function fmtDate(iso: string | null): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
 
 export const Route = createFileRoute("/admin_/uso-produto")({
   head: () => ({
@@ -53,6 +59,19 @@ function UsoProdutoPage() {
   const [data, setData] = useState<ProductUsageReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [buscaUsuario, setBuscaUsuario] = useState("");
+  const [aberto, setAberto] = useState<Record<string, boolean>>({});
+
+  const usuariosFiltrados = useMemo(() => {
+    const termo = buscaUsuario.trim().toLowerCase();
+    return (data?.byUser ?? []).filter(
+      (u) =>
+        !termo ||
+        u.email.toLowerCase().includes(termo) ||
+        (u.nome ?? "").toLowerCase().includes(termo),
+    );
+  }, [data, buscaUsuario]);
+
 
   const load = useCallback(
     async (windowDays: number) => {
@@ -143,12 +162,148 @@ function UsoProdutoPage() {
               <Metric label="Usuários" value={data.totals.users} />
             </div>
 
+            <Card className="mt-5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">
+                  Relatório por usuário ({data.byUser.length}) — clique para ver página por página
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="overflow-x-auto">
+                <div className="mb-3">
+                  <Input
+                    value={buscaUsuario}
+                    onChange={(e) => setBuscaUsuario(e.target.value)}
+                    placeholder="Buscar por e-mail ou nome"
+                    className="sm:max-w-xs"
+                  />
+                </div>
+                {usuariosFiltrados.length === 0 ? (
+                  <p className="py-4 text-xs text-muted-foreground">
+                    Sem eventos de usuários identificados no período.
+                  </p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Usuário</TableHead>
+                        <TableHead>Plano</TableHead>
+                        <TableHead className="text-right">Telas vistas</TableHead>
+                        <TableHead className="text-right">Cliques no menu</TableHead>
+                        <TableHead className="text-right">Sessões</TableHead>
+                        <TableHead className="text-right">Dias com uso</TableHead>
+                        <TableHead>Primeiro evento</TableHead>
+                        <TableHead>Último evento</TableHead>
+                        <TableHead>Plataformas</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {usuariosFiltrados.map((u) => (
+                        <Fragment key={u.userId}>
+                          <TableRow
+                            key={u.userId}
+                            className="cursor-pointer"
+                            onClick={() =>
+                              setAberto((prev) => ({ ...prev, [u.userId]: !prev[u.userId] }))
+                            }
+                          >
+                            <TableCell className="max-w-[220px]">
+                              <div className="flex items-center gap-1 truncate font-medium">
+                                <ChevronRight
+                                  className={`h-3.5 w-3.5 shrink-0 transition-transform ${aberto[u.userId] ? "rotate-90" : ""}`}
+                                />
+                                {u.nome ?? "—"}
+                              </div>
+                              <div className="truncate pl-4 text-xs text-muted-foreground">
+                                {u.email}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-xs">{u.plano ?? "—"}</TableCell>
+                            <TableCell className="text-right text-xs">{u.pageViews}</TableCell>
+                            <TableCell className="text-right text-xs">{u.navClicks}</TableCell>
+                            <TableCell className="text-right text-xs">{u.sessions}</TableCell>
+                            <TableCell className="text-right text-xs">{u.activeDays}</TableCell>
+                            <TableCell className="whitespace-nowrap text-xs">
+                              {fmtDate(u.firstSeen)}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-xs">
+                              {fmtDate(u.lastSeen)}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {u.platforms.join(", ") || "—"}
+                            </TableCell>
+                          </TableRow>
+                          {aberto[u.userId] && (
+                            <TableRow key={`${u.userId}-detalhe`} className="bg-muted/40">
+                              <TableCell colSpan={9}>
+                                {u.routes.length === 0 ? (
+                                  <p className="text-xs text-muted-foreground">
+                                    Nenhuma tela registrada para este usuário no período.
+                                  </p>
+                                ) : (
+                                  <div className="grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
+                                    {u.routes.map((r) => (
+                                      <div
+                                        key={r.route}
+                                        className="flex items-center justify-between gap-2 rounded-md bg-background px-2 py-1 text-xs"
+                                      >
+                                        <span className="truncate">{r.route}</span>
+                                        <span className="shrink-0 text-muted-foreground">
+                                          {r.views} · {fmtDate(r.lastViewAt)}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </Fragment>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="mt-4">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">
+                  Relatório por página ({data.topRoutes.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="overflow-x-auto">
+                {data.topRoutes.length === 0 ? (
+                  <p className="py-4 text-xs text-muted-foreground">Sem dados no período.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Página</TableHead>
+                        <TableHead className="text-right">Views</TableHead>
+                        <TableHead className="text-right">Usuários únicos</TableHead>
+                        <TableHead className="text-right">Sessões</TableHead>
+                        <TableHead>Última visita</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {data.topRoutes.map((r) => (
+                        <TableRow key={r.route}>
+                          <TableCell className="text-xs">{r.route}</TableCell>
+                          <TableCell className="text-right text-xs">{r.views}</TableCell>
+                          <TableCell className="text-right text-xs">{r.users}</TableCell>
+                          <TableCell className="text-right text-xs">{r.sessions}</TableCell>
+                          <TableCell className="whitespace-nowrap text-xs">
+                            {fmtDate(r.lastViewAt)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+
             <div className="mt-5 grid gap-4 lg:grid-cols-2">
-              <ListCard
-                title="Telas mais vistas"
-                columns={["Rota", "Views"]}
-                rows={data.topRoutes.map((r) => [r.route, r.views])}
-              />
               <ListCard
                 title="Origem dos cliques de navegação"
                 columns={["Origem", "Cliques"]}
