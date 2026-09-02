@@ -407,7 +407,8 @@ export function __setWhatsAppAuditObserverForTests(
 }
 
 // ---------- elegibilidade WhatsApp (gate único) ----------
-// Admin Master OU participante ativo da beta fechada (whatsapp_beta_access).
+// Admin Master OU plano pago com o recurso incluído (cortesias e bloqueios
+// explícitos continuam em whatsapp_beta_access).
 // Esta é a única fonte de verdade usada no webhook e nas server functions.
 async function userPodeUsarWhatsApp(userId: string): Promise<{ ok: boolean; reason?: string }> {
   const { getWhatsAppEntitlement } = await import("./whatsapp-entitlement.server");
@@ -417,7 +418,8 @@ async function userPodeUsarWhatsApp(userId: string): Promise<{ ok: boolean; reas
   if (!ok) {
     return {
       ok: false,
-      reason: "Seu acesso ao WhatsApp ainda não está disponível — o recurso está em beta fechada.",
+      reason:
+        "Seu acesso ao WhatsApp está indisponível. Verifique se seu plano está ativo ou fale com o suporte.",
     };
   }
   return { ok: true };
