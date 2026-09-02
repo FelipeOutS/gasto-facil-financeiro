@@ -274,6 +274,7 @@ function RootComponent() {
   return (
     <>
       <HreflangTags path={cleanPath} />
+      <ProductAnalyticsTracker />
       <ConnectedAccountBanner />
       <OfflineQueueMount />
       <PersistentAppShell pathname={pathname} />
