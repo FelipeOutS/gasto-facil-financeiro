@@ -59,6 +59,19 @@ function UsoProdutoPage() {
   const [data, setData] = useState<ProductUsageReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [buscaUsuario, setBuscaUsuario] = useState("");
+  const [aberto, setAberto] = useState<Record<string, boolean>>({});
+
+  const usuariosFiltrados = useMemo(() => {
+    const termo = buscaUsuario.trim().toLowerCase();
+    return (data?.byUser ?? []).filter(
+      (u) =>
+        !termo ||
+        u.email.toLowerCase().includes(termo) ||
+        (u.nome ?? "").toLowerCase().includes(termo),
+    );
+  }, [data, buscaUsuario]);
+
 
   const load = useCallback(
     async (windowDays: number) => {
