@@ -79,10 +79,11 @@ import { toast } from "sonner";
    Scoped under .gi-landing so dark theme classes don't leak in.
    ────────────────────────────────────────────────────────────── */
 
-type NavKey = "home" | "features" | "how" | "plans" | "faq";
+type NavKey = "home" | "features" | "whatsapp" | "how" | "plans" | "faq";
 const NAV: { key: NavKey; href: string; sectionId: string }[] = [
   { key: "home", href: "#inicio", sectionId: "inicio" },
   { key: "features", href: "#recursos", sectionId: "recursos" },
+  { key: "whatsapp", href: "#whatsapp", sectionId: "whatsapp" },
   { key: "how", href: "#como-funciona", sectionId: "como-funciona" },
   { key: "plans", href: "#planos", sectionId: "planos" },
   { key: "faq", href: "#duvidas", sectionId: "duvidas" },
