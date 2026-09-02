@@ -2857,6 +2857,69 @@ export type Database = {
           },
         ]
       }
+      product_analytics_events: {
+        Row: {
+          build_id: string | null
+          event_name: string
+          id: number
+          occurred_at: string
+          platform: string | null
+          prev_route: string | null
+          props: Json
+          route: string | null
+          session_id: string | null
+          source: string | null
+          target: string | null
+          user_id: string | null
+        }
+        Insert: {
+          build_id?: string | null
+          event_name: string
+          id?: number
+          occurred_at?: string
+          platform?: string | null
+          prev_route?: string | null
+          props?: Json
+          route?: string | null
+          session_id?: string | null
+          source?: string | null
+          target?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          build_id?: string | null
+          event_name?: string
+          id?: number
+          occurred_at?: string
+          platform?: string | null
+          prev_route?: string | null
+          props?: Json
+          route?: string | null
+          session_id?: string | null
+          source?: string | null
+          target?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      product_analytics_meta: {
+        Row: {
+          data_start_at: string
+          id: number
+          notes: string | null
+        }
+        Insert: {
+          data_start_at?: string
+          id?: number
+          notes?: string | null
+        }
+        Update: {
+          data_start_at?: string
+          id?: number
+          notes?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
