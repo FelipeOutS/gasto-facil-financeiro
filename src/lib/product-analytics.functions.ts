@@ -112,16 +112,41 @@ export const ingestProductEvents = createServerFn({ method: "POST" })
 
 /* ------------------------------------------------------------ agregação */
 
+export type ProductUsageRouteStat = {
+  route: string;
+  views: number;
+  users: number;
+  sessions: number;
+  lastViewAt: string | null;
+};
+
+export type ProductUsageUserRow = {
+  userId: string;
+  email: string;
+  nome: string | null;
+  plano: string | null;
+  events: number;
+  pageViews: number;
+  navClicks: number;
+  sessions: number;
+  activeDays: number;
+  firstSeen: string | null;
+  lastSeen: string | null;
+  platforms: string[];
+  routes: Array<{ route: string; views: number; lastViewAt: string | null }>;
+};
+
 export type ProductUsageReport = {
   dataStartAt: string | null;
   windowDays: number;
-  totals: { events: number; sessions: number; users: number };
+  totals: { events: number; sessions: number; users: number; anonymousEvents: number };
   active: { dau: number; wau: number; mau: number };
   byDay: Array<{ day: string; events: number; users: number }>;
-  topRoutes: Array<{ route: string; views: number }>;
+  topRoutes: ProductUsageRouteStat[];
   bySource: Array<{ source: string; clicks: number }>;
   byEvent: Array<{ event: string; count: number }>;
   byPlatform: Array<{ platform: string; events: number }>;
+  byUser: ProductUsageUserRow[];
 };
 
 type RawRow = {
