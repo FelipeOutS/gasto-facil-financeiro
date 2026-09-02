@@ -104,6 +104,7 @@ import { Route as ApiEconomicRadarRouteImport } from './routes/api/economic-rada
 import { Route as AdminWhatsappRuntimeRouteImport } from './routes/admin_.whatsapp-runtime'
 import { Route as AdminUsoProdutoRouteImport } from './routes/admin_.uso-produto'
 import { Route as AdminSaudeRouteImport } from './routes/admin_.saude'
+import { Route as AdminAtividadeUsuariosRouteImport } from './routes/admin_.atividade-usuarios'
 import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
 import { Route as CartoesIdIndexRouteImport } from './routes/cartoes.$id.index'
 import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integracoes.index'
@@ -633,6 +634,11 @@ const AdminSaudeRoute = AdminSaudeRouteImport.update({
   path: '/admin/saude',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAtividadeUsuariosRoute = AdminAtividadeUsuariosRouteImport.update({
+  id: '/admin_/atividade-usuarios',
+  path: '/admin/atividade-usuarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AceitarConviteTokenRoute = AceitarConviteTokenRouteImport.update({
   id: '/aceitar-convite/$token',
   path: '/aceitar-convite/$token',
@@ -947,6 +953,7 @@ export interface FileRoutesByFullPath {
   '/termos': typeof TermosRoute
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
+  '/admin/atividade-usuarios': typeof AdminAtividadeUsuariosRoute
   '/admin/saude': typeof AdminSaudeRoute
   '/admin/uso-produto': typeof AdminUsoProdutoRoute
   '/admin/whatsapp-runtime': typeof AdminWhatsappRuntimeRoute
@@ -1095,6 +1102,7 @@ export interface FileRoutesByTo {
   '/termos': typeof TermosRoute
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
+  '/admin/atividade-usuarios': typeof AdminAtividadeUsuariosRoute
   '/admin/saude': typeof AdminSaudeRoute
   '/admin/uso-produto': typeof AdminUsoProdutoRoute
   '/admin/whatsapp-runtime': typeof AdminWhatsappRuntimeRoute
@@ -1242,6 +1250,7 @@ export interface FileRoutesById {
   '/termos': typeof TermosRoute
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
+  '/admin_/atividade-usuarios': typeof AdminAtividadeUsuariosRoute
   '/admin_/saude': typeof AdminSaudeRoute
   '/admin_/uso-produto': typeof AdminUsoProdutoRoute
   '/admin_/whatsapp-runtime': typeof AdminWhatsappRuntimeRoute
@@ -1392,6 +1401,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/whatsapp'
     | '/aceitar-convite/$token'
+    | '/admin/atividade-usuarios'
     | '/admin/saude'
     | '/admin/uso-produto'
     | '/admin/whatsapp-runtime'
@@ -1540,6 +1550,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/whatsapp'
     | '/aceitar-convite/$token'
+    | '/admin/atividade-usuarios'
     | '/admin/saude'
     | '/admin/uso-produto'
     | '/admin/whatsapp-runtime'
@@ -1686,6 +1697,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/whatsapp'
     | '/aceitar-convite/$token'
+    | '/admin_/atividade-usuarios'
     | '/admin_/saude'
     | '/admin_/uso-produto'
     | '/admin_/whatsapp-runtime'
@@ -1835,6 +1847,7 @@ export interface RootRouteChildren {
   TermosRoute: typeof TermosRoute
   WhatsappRoute: typeof WhatsappRoute
   AceitarConviteTokenRoute: typeof AceitarConviteTokenRoute
+  AdminAtividadeUsuariosRoute: typeof AdminAtividadeUsuariosRoute
   AdminSaudeRoute: typeof AdminSaudeRoute
   AdminUsoProdutoRoute: typeof AdminUsoProdutoRoute
   AdminWhatsappRuntimeRoute: typeof AdminWhatsappRuntimeRoute
@@ -2603,6 +2616,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSaudeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin_/atividade-usuarios': {
+      id: '/admin_/atividade-usuarios'
+      path: '/admin/atividade-usuarios'
+      fullPath: '/admin/atividade-usuarios'
+      preLoaderRoute: typeof AdminAtividadeUsuariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/aceitar-convite/$token': {
       id: '/aceitar-convite/$token'
       path: '/aceitar-convite/$token'
@@ -3051,6 +3071,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermosRoute: TermosRoute,
   WhatsappRoute: WhatsappRoute,
   AceitarConviteTokenRoute: AceitarConviteTokenRoute,
+  AdminAtividadeUsuariosRoute: AdminAtividadeUsuariosRoute,
   AdminSaudeRoute: AdminSaudeRoute,
   AdminUsoProdutoRoute: AdminUsoProdutoRoute,
   AdminWhatsappRuntimeRoute: AdminWhatsappRuntimeRoute,
