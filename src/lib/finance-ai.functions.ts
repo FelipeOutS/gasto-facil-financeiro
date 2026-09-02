@@ -33,21 +33,23 @@ export const getMonthForecast = createServerFn({ method: "GET" })
     z.object({ mes: z.number().optional(), ano: z.number().optional() }).optional().parse(d),
   )
   .handler(async ({ data, context }): Promise<ForecastData> => {
+    const { agregarMes, mesLabel } = await import("@/server/finance-ai.server");
+    const agg = await agregarMes(context.supabase as never, data?.mes, data?.ano);
     return {
       ok: true,
-      status: "positivo",
-      label: "Mês atual",
-      hoje: new Date().toISOString().slice(0, 10),
-      temDados: true,
-      resultadoPrevisto: 100,
-      resultadoAtual: 50,
-      entradasConfirmadas: 200,
-      entradasPrevistas: 50,
-      saidasConfirmadas: 100,
-      saidasPendentes: 50,
-      impactos: [],
-      receitas: [],
-      faturasDetalhe: [],
+      status: agg.status,
+      label: mesLabel(agg.mes, agg.ano),
+      hoje: agg.hoje,
+      temDados: agg.temDados,
+      resultadoPrevisto: agg.resultadoPrevisto,
+      resultadoAtual: agg.resultadoAtual,
+      entradasConfirmadas: agg.entradasConfirmadas,
+      entradasPrevistas: agg.entradasPrevistas,
+      saidasConfirmadas: agg.saidasConfirmadas,
+      saidasPendentes: agg.saidasPendentes,
+      impactos: agg.impactos,
+      receitas: agg.receitas,
+      faturasDetalhe: agg.faturasDetalhe,
     };
   });
 
@@ -64,11 +66,14 @@ export const getMonthlySmartSummary = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    return {
-      ok: true,
-      reply: "Resumo simulado",
-      error: null as { message: string } | null,
-    };
+    const { agregarMes, gerarResumoInteligente } = await import("@/server/finance-ai.server");
+    const agg = await agregarMes(context.supabase as never, data?.mes, data?.ano);
+    const lang = data?.lang?.toLowerCase().startsWith("en") ? "en" : "pt";
+    const out = await gerarResumoInteligente(agg, lang);
+    if (!out.ok) {
+      return { ok: false, reply: "", error: out.error as { message: string } | null };
+    }
+    return { ok: true, reply: out.reply, error: null as { message: string } | null };
   });
 
 export const aiChat = createServerFn({ method: "POST" })
