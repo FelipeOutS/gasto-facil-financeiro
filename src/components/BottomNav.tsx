@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Home, List, CreditCard, Plus, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
+import { PRODUCT_EVENTS, trackProductEvent } from "@/lib/product-analytics";
 
 const LEFT_TABS = [
   { to: "/", labelKey: "dashboard", icon: Home },
@@ -43,6 +44,12 @@ export function BottomNav() {
       event.preventDefault();
       return;
     }
+    trackProductEvent({
+      event: PRODUCT_EVENTS.navClick,
+      route: currentPath,
+      source: "bottom_nav",
+      target: to,
+    });
     setOptimisticPath(to);
   }
 
@@ -119,6 +126,14 @@ export function BottomNav() {
             preload="intent"
             preloadDelay={0}
             aria-label={t("aria.addExpense", { defaultValue: "Novo lançamento" })}
+            onClick={() =>
+              trackProductEvent({
+                event: PRODUCT_EVENTS.navClick,
+                route: currentPath,
+                source: "bottom_nav",
+                target: "/adicionar",
+              })
+            }
             className="-mt-5 grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-background transition-transform active:scale-95"
           >
             <Plus className="h-6 w-6" strokeWidth={2.6} />

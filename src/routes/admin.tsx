@@ -477,6 +477,11 @@ function AdminPage() {
                 <Activity className="h-4 w-4" /> Saúde do Sistema
               </a>
             </Button>
+            <Button variant="outline" asChild className="gap-2 flex-1 sm:flex-none">
+              <a href="/admin/uso-produto">
+                <Activity className="h-4 w-4" /> Uso do Produto
+              </a>
+            </Button>
             <Button variant="outline" onClick={exportCsv} className="gap-2 flex-1 sm:flex-none">
               <Download className="h-4 w-4" /> Exportar CSV
             </Button>
