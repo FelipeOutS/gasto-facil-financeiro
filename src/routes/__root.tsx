@@ -18,6 +18,7 @@ import { ThemeProvider } from "@/lib/theme";
 import { AccentProvider } from "@/lib/accent";
 import { CookieConsentProvider } from "@/lib/cookie-consent";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
+import { ProductAnalyticsTracker } from "@/components/ProductAnalyticsTracker";
 import { SubscriptionGuardProvider } from "@/lib/subscription-guard";
 import { ActiveAccountProvider } from "@/lib/active-account";
 import { ConnectedAccountBanner } from "@/components/ConnectedAccountBanner";
