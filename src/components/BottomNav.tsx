@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Home, List, CreditCard, Plus, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAlertaContas } from "@/lib/contas-alertas";
+import { PRODUCT_EVENTS, trackProductEvent } from "@/lib/product-analytics";
 
 const LEFT_TABS = [
   { to: "/", labelKey: "dashboard", icon: Home },

@@ -102,6 +102,7 @@ import { Route as ApiImportContaRouteImport } from './routes/api/import-conta'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiEconomicRadarRouteImport } from './routes/api/economic-radar'
 import { Route as AdminWhatsappRuntimeRouteImport } from './routes/admin_.whatsapp-runtime'
+import { Route as AdminUsoProdutoRouteImport } from './routes/admin_.uso-produto'
 import { Route as AdminSaudeRouteImport } from './routes/admin_.saude'
 import { Route as AceitarConviteTokenRouteImport } from './routes/aceitar-convite.$token'
 import { Route as CartoesIdIndexRouteImport } from './routes/cartoes.$id.index'
@@ -622,6 +623,11 @@ const AdminWhatsappRuntimeRoute = AdminWhatsappRuntimeRouteImport.update({
   path: '/admin/whatsapp-runtime',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUsoProdutoRoute = AdminUsoProdutoRouteImport.update({
+  id: '/admin_/uso-produto',
+  path: '/admin/uso-produto',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminSaudeRoute = AdminSaudeRouteImport.update({
   id: '/admin_/saude',
   path: '/admin/saude',
@@ -942,6 +948,7 @@ export interface FileRoutesByFullPath {
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/admin/saude': typeof AdminSaudeRoute
+  '/admin/uso-produto': typeof AdminUsoProdutoRoute
   '/admin/whatsapp-runtime': typeof AdminWhatsappRuntimeRoute
   '/api/economic-radar': typeof ApiEconomicRadarRoute
   '/api/health': typeof ApiHealthRoute
@@ -1089,6 +1096,7 @@ export interface FileRoutesByTo {
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/admin/saude': typeof AdminSaudeRoute
+  '/admin/uso-produto': typeof AdminUsoProdutoRoute
   '/admin/whatsapp-runtime': typeof AdminWhatsappRuntimeRoute
   '/api/economic-radar': typeof ApiEconomicRadarRoute
   '/api/health': typeof ApiHealthRoute
@@ -1235,6 +1243,7 @@ export interface FileRoutesById {
   '/whatsapp': typeof WhatsappRoute
   '/aceitar-convite/$token': typeof AceitarConviteTokenRoute
   '/admin_/saude': typeof AdminSaudeRoute
+  '/admin_/uso-produto': typeof AdminUsoProdutoRoute
   '/admin_/whatsapp-runtime': typeof AdminWhatsappRuntimeRoute
   '/api/economic-radar': typeof ApiEconomicRadarRoute
   '/api/health': typeof ApiHealthRoute
@@ -1384,6 +1393,7 @@ export interface FileRouteTypes {
     | '/whatsapp'
     | '/aceitar-convite/$token'
     | '/admin/saude'
+    | '/admin/uso-produto'
     | '/admin/whatsapp-runtime'
     | '/api/economic-radar'
     | '/api/health'
@@ -1531,6 +1541,7 @@ export interface FileRouteTypes {
     | '/whatsapp'
     | '/aceitar-convite/$token'
     | '/admin/saude'
+    | '/admin/uso-produto'
     | '/admin/whatsapp-runtime'
     | '/api/economic-radar'
     | '/api/health'
@@ -1676,6 +1687,7 @@ export interface FileRouteTypes {
     | '/whatsapp'
     | '/aceitar-convite/$token'
     | '/admin_/saude'
+    | '/admin_/uso-produto'
     | '/admin_/whatsapp-runtime'
     | '/api/economic-radar'
     | '/api/health'
@@ -1824,6 +1836,7 @@ export interface RootRouteChildren {
   WhatsappRoute: typeof WhatsappRoute
   AceitarConviteTokenRoute: typeof AceitarConviteTokenRoute
   AdminSaudeRoute: typeof AdminSaudeRoute
+  AdminUsoProdutoRoute: typeof AdminUsoProdutoRoute
   AdminWhatsappRuntimeRoute: typeof AdminWhatsappRuntimeRoute
   ApiEconomicRadarRoute: typeof ApiEconomicRadarRoute
   ApiHealthRoute: typeof ApiHealthRoute
@@ -2576,6 +2589,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminWhatsappRuntimeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin_/uso-produto': {
+      id: '/admin_/uso-produto'
+      path: '/admin/uso-produto'
+      fullPath: '/admin/uso-produto'
+      preLoaderRoute: typeof AdminUsoProdutoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin_/saude': {
       id: '/admin_/saude'
       path: '/admin/saude'
@@ -3032,6 +3052,7 @@ const rootRouteChildren: RootRouteChildren = {
   WhatsappRoute: WhatsappRoute,
   AceitarConviteTokenRoute: AceitarConviteTokenRoute,
   AdminSaudeRoute: AdminSaudeRoute,
+  AdminUsoProdutoRoute: AdminUsoProdutoRoute,
   AdminWhatsappRuntimeRoute: AdminWhatsappRuntimeRoute,
   ApiEconomicRadarRoute: ApiEconomicRadarRoute,
   ApiHealthRoute: ApiHealthRoute,
