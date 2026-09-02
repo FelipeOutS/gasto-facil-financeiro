@@ -227,6 +227,7 @@ export function PublicLanding() {
       <Header />
       <main>
         <Hero />
+        <WhatsAppFeatureSection />
         <BanksStrip />
         <TrustStrip />
         <WhyUs />
