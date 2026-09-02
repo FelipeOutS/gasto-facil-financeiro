@@ -4877,6 +4877,136 @@ function IntelligenceSection() {
   );
 }
 
+/* ============================== WHATSAPP FEATURE SECTION ============================== */
+
+function WhatsAppFeatureSection() {
+  const { t } = useTranslation("landing");
+  const reduce = useReducedMotion();
+
+  const steps = [
+    { icon: MessageCircle, text: t("whatsapp.steps.natural") },
+    { icon: Bot, text: t("whatsapp.steps.understands") },
+    { icon: CheckCircle2, text: t("whatsapp.steps.confirm") },
+    { icon: Smartphone, text: t("whatsapp.steps.anywhere") },
+  ] as const;
+
+  return (
+    <section id="whatsapp" className="relative overflow-hidden bg-emerald-50/60 py-16 sm:py-20 lg:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+          {/* Chat mockup */}
+          <Reveal>
+            <div className="mx-auto w-full max-w-[360px] overflow-hidden rounded-[2.25rem] border-[8px] border-white bg-[#efeae2] shadow-[0_28px_70px_-20px_rgba(5,46,22,0.22)]">
+              {/* Chat header */}
+              <div className="flex items-center gap-3 bg-[#f0f2f5] px-4 py-3">
+                <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-600 text-white">
+                  <MessageCircle className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-bold text-slate-900">{t("whatsapp.chat.name")}</div>
+                  <div className="text-xs text-emerald-700">{t("whatsapp.chat.status")}</div>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="space-y-3 px-4 py-5">
+                <div className="flex justify-end">
+                  <div className="relative max-w-[82%] rounded-2xl rounded-br-sm bg-[#d9fdd3] px-3.5 py-2 text-sm text-slate-900 shadow-sm">
+                    {t("whatsapp.messages.user1")}
+                    <span className="ml-2 mt-1 inline-block align-bottom text-[10px] text-slate-500">12:41</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-start">
+                  <div className="max-w-[88%] rounded-2xl rounded-bl-sm bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm">
+                    <p className="font-medium text-emerald-700">{t("whatsapp.messages.botName")}</p>
+                    <p className="mt-0.5">{t("whatsapp.messages.botReply")}</p>
+                    <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
+                      <Check className="h-3 w-3" />
+                      {t("whatsapp.messages.confirmButton")}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <div className="max-w-[70%] rounded-2xl rounded-br-sm bg-[#d9fdd3] px-3.5 py-2 text-sm text-slate-900 shadow-sm">
+                    {t("whatsapp.messages.userConfirm")}
+                    <span className="ml-2 mt-1 inline-block align-bottom text-[10px] text-slate-500">12:42</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-start">
+                  <div className="max-w-[88%] rounded-2xl rounded-bl-sm bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm">
+                    <p>{t("whatsapp.messages.saved")}</p>
+                    <p className="mt-1 text-xs text-slate-500">{t("whatsapp.messages.category")}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Input bar */}
+              <div className="flex items-center gap-2 bg-[#f0f2f5] px-3 py-2">
+                <div className="flex-1 rounded-full bg-white px-4 py-2 text-xs text-slate-400">
+                  {t("whatsapp.chat.inputPlaceholder")}
+                </div>
+                <div className="grid h-8 w-8 place-items-center rounded-full bg-emerald-600 text-white">
+                  <Send className="h-3.5 w-3.5" />
+                </div>
+              </div>
+            </div>
+          </Reveal>
+
+          {/* Copy */}
+          <Reveal delay={0.06}>
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-100/60 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-700">
+                <MessageCircle className="h-3.5 w-3.5" />
+                {t("whatsapp.eyebrow")}
+              </span>
+              <h2 className="mt-4 font-display text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-[2.75rem]">
+                {t("whatsapp.title")}
+              </h2>
+              <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
+                {t("whatsapp.subtitle")}
+              </p>
+
+              <ul className="mt-8 space-y-4">
+                {steps.map((s, i) => (
+                  <motion.li
+                    key={s.text}
+                    initial={reduce ? false : { opacity: 0, x: -12 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, amount: 0.5 }}
+                    transition={{ duration: 0.4, delay: i * 0.08 }}
+                    className="flex items-start gap-3"
+                  >
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+                      <s.icon className="h-4 w-4" />
+                    </span>
+                    <span className="pt-1 text-sm font-medium text-slate-700 sm:text-base">{s.text}</span>
+                  </motion.li>
+                ))}
+              </ul>
+
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <LandingAnchorLink
+                  section="planos"
+                  className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_-12px_rgba(5,150,105,0.45)] transition-all hover:bg-emerald-700 hover:shadow-[0_16px_32px_-12px_rgba(5,150,105,0.55)]"
+                >
+                  {t("whatsapp.ctaPrimary")}
+                  <ArrowRight className="h-4 w-4" />
+                </LandingAnchorLink>
+                <span className="text-xs font-medium text-slate-500">
+                  {t("whatsapp.disclaimer")}
+                </span>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ============================== APP EXPERIENCE SECTION ============================== */
 
 function AppExperienceSection() {
