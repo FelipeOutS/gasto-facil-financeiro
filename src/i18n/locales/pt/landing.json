@@ -892,6 +892,33 @@
       "more": "Mais"
     }
   },
+  "whatsapp": {
+    "eyebrow": "WhatsApp",
+    "title": "Lançamentos pelo WhatsApp",
+    "subtitle": "Mande uma mensagem como se estivesse conversando com um amigo. Nosso bot entende o gasto, confirma os detalhes e salva automaticamente no seu controle financeiro.",
+    "steps": {
+      "natural": "Envie de forma natural: \"gastei 35 no uber\" ou \"recebi 2.000 de salário\".",
+      "understands": "O bot identifica valor, categoria e data em segundos.",
+      "confirm": "Você confirma com um toque e o lançamento é salvo no app.",
+      "anywhere": "Funciona direto no celular, sem precisar abrir o app."
+    },
+    "chat": {
+      "name": "Gasto Inteligente",
+      "status": "online",
+      "inputPlaceholder": "Digite uma mensagem"
+    },
+    "messages": {
+      "user1": "gastei 35 no uber",
+      "botName": "Gasto Inteligente",
+      "botReply": "Encontrei: R$ 35,00 em Transporte — Uber. Posso salvar?",
+      "confirmButton": "Confirmar",
+      "userConfirm": "pode salvar",
+      "saved": "Pronto! R$ 35,00 salvo em Transporte.",
+      "category": "Categoria: Transporte · Hoje, 12:41"
+    },
+    "ctaPrimary": "Quero usar no WhatsApp",
+    "disclaimer": "Disponível para planos pagos · Beta por lista de espera."
+  },
   "mercadoInteligente": {
     "eyebrow": "Mercado Inteligente",
     "title": "Mercado Inteligente",
