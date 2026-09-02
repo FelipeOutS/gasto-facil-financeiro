@@ -4896,9 +4896,9 @@ function WhatsAppFeatureSection() {
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
           {/* Chat mockup */}
           <Reveal>
-            <div className="mx-auto w-full max-w-[360px] overflow-hidden rounded-[2.25rem] border-[8px] border-white bg-[#efeae2] shadow-[0_28px_70px_-20px_rgba(5,46,22,0.22)]">
+            <div className="mx-auto w-full max-w-[360px] overflow-hidden rounded-[2.25rem] border-[8px] border-white bg-amber-50/40 shadow-[0_28px_70px_-20px_rgba(5,46,22,0.22)]">
               {/* Chat header */}
-              <div className="flex items-center gap-3 bg-[#f0f2f5] px-4 py-3">
+              <div className="flex items-center gap-3 bg-slate-100 px-4 py-3">
                 <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-600 text-white">
                   <MessageCircle className="h-5 w-5" />
                 </div>
@@ -4911,7 +4911,7 @@ function WhatsAppFeatureSection() {
               {/* Messages */}
               <div className="space-y-3 px-4 py-5">
                 <div className="flex justify-end">
-                  <div className="relative max-w-[82%] rounded-2xl rounded-br-sm bg-[#d9fdd3] px-3.5 py-2 text-sm text-slate-900 shadow-sm">
+                  <div className="relative max-w-[82%] rounded-2xl rounded-br-sm bg-emerald-100 px-3.5 py-2 text-sm text-slate-900 shadow-sm">
                     {t("whatsapp.messages.user1")}
                     <span className="ml-2 mt-1 inline-block align-bottom text-[10px] text-slate-500">12:41</span>
                   </div>
@@ -4929,7 +4929,7 @@ function WhatsAppFeatureSection() {
                 </div>
 
                 <div className="flex justify-end">
-                  <div className="max-w-[70%] rounded-2xl rounded-br-sm bg-[#d9fdd3] px-3.5 py-2 text-sm text-slate-900 shadow-sm">
+                  <div className="max-w-[70%] rounded-2xl rounded-br-sm bg-emerald-100 px-3.5 py-2 text-sm text-slate-900 shadow-sm">
                     {t("whatsapp.messages.userConfirm")}
                     <span className="ml-2 mt-1 inline-block align-bottom text-[10px] text-slate-500">12:42</span>
                   </div>
@@ -4944,7 +4944,7 @@ function WhatsAppFeatureSection() {
               </div>
 
               {/* Input bar */}
-              <div className="flex items-center gap-2 bg-[#f0f2f5] px-3 py-2">
+              <div className="flex items-center gap-2 bg-slate-100 px-3 py-2">
                 <div className="flex-1 rounded-full bg-white px-4 py-2 text-xs text-slate-400">
                   {t("whatsapp.chat.inputPlaceholder")}
                 </div>
