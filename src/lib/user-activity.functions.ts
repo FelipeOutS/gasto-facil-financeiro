@@ -131,15 +131,15 @@ export const getUserActivityReport = createServerFn({ method: "POST" })
     // 2. Nome do perfil e plano.
     const [{ data: profiles }, { data: planos }] = await Promise.all([
       supabaseAdmin.from("profiles").select("id, nome").limit(5000),
-      supabaseAdmin.from("user_plans").select("user_id, plan_tier").limit(5000),
+      supabaseAdmin.from("user_plans").select("user_id, plano").limit(5000),
     ]);
     for (const p of (profiles ?? []) as Array<{ id: string; nome: string | null }>) {
       const row = rows.get(p.id);
       if (row) row.nome = p.nome ?? null;
     }
-    for (const p of (planos ?? []) as Array<{ user_id: string; plan_tier: string | null }>) {
+    for (const p of (planos ?? []) as unknown as Array<{ user_id: string; plano: string | null }>) {
       const row = rows.get(p.user_id);
-      if (row) row.plano = p.plan_tier ?? null;
+      if (row) row.plano = p.plano ?? null;
     }
 
     // 3. Ações por usuário (apenas contagens e datas, nunca valores).
@@ -155,7 +155,7 @@ export const getUserActivityReport = createServerFn({ method: "POST" })
         .order("created_at", { ascending: false })
         .limit(20000);
       if (error) continue;
-      for (const rec of (records ?? []) as Array<{
+      for (const rec of (records ?? []) as unknown as Array<{
         user_id: string | null;
         created_at: string | null;
       }>) {
