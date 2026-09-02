@@ -10,8 +10,10 @@ function normTel(raw: string): string {
 }
 
 /**
- * Gate unificado: feature de plano + beta fechada (ou Admin Master).
- * Lança 403 amigável se faltar acesso de beta.
+ * Gate unificado: feature de plano (ou Admin Master).
+ * O beta fechado foi removido — planos pagos com o recurso já entram.
+ * A lista `whatsapp_beta_access` segue valendo como cortesia e como bloqueio
+ * explícito (revogado/inativo).
  */
 async function assertWhatsAppAccess(userId: string): Promise<void> {
   await assertFeatureAccess(userId, "whatsapp");
@@ -20,9 +22,9 @@ async function assertWhatsAppAccess(userId: string): Promise<void> {
   if (!ok) {
     throw new Response(
       JSON.stringify({
-        error: "whatsapp_beta_required",
+        error: "whatsapp_not_entitled",
         message:
-          "O WhatsApp está em beta fechada. Solicite acesso ao Admin Master para participar.",
+          "Seu acesso ao WhatsApp está indisponível. Verifique se seu plano está ativo ou fale com o suporte.",
       }),
       { status: 403, headers: { "Content-Type": "application/json" } },
     );
