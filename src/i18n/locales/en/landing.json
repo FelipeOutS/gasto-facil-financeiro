@@ -892,6 +892,33 @@
       "more": "More"
     }
   },
+  "whatsapp": {
+    "eyebrow": "WhatsApp",
+    "title": "Log expenses via WhatsApp",
+    "subtitle": "Send a message like you're chatting with a friend. Our bot understands the expense, confirms the details, and automatically saves it to your financial tracker.",
+    "steps": {
+      "natural": "Send naturally: \"spent 35 on uber\" or \"received 2,000 salary\".",
+      "understands": "The bot identifies amount, category, and date in seconds.",
+      "confirm": "You confirm with one tap and the entry is saved in the app.",
+      "anywhere": "Works straight from your phone, no need to open the app."
+    },
+    "chat": {
+      "name": "Gasto Inteligente",
+      "status": "online",
+      "inputPlaceholder": "Type a message"
+    },
+    "messages": {
+      "user1": "spent 35 on uber",
+      "botName": "Gasto Inteligente",
+      "botReply": "Found: R$ 35.00 in Transport — Uber. Can I save it?",
+      "confirmButton": "Confirm",
+      "userConfirm": "yes, save it",
+      "saved": "Done! R$ 35.00 saved under Transport.",
+      "category": "Category: Transport · Today, 12:41"
+    },
+    "ctaPrimary": "I want to use on WhatsApp",
+    "disclaimer": "Available on paid plans · Beta waitlist."
+  },
   "mercadoInteligente": {
     "eyebrow": "Smart Grocery",
     "title": "Smart Grocery",
