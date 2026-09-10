@@ -20,9 +20,15 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import { WhatsAppExpenseDialog } from "@/components/WhatsAppExpenseDialog";
+import {
+  ReceiptCaptureSheet,
+  type ReceiptCaptureResult,
+} from "@/components/nota/ReceiptCaptureSheet";
+import { detectQrFromDataUrl, fileToDataUrl } from "@/lib/nota/qr-scan";
 import { useAuth } from "@/lib/auth-context";
 import { tipoEfetivo, type TipoCadastro } from "@/lib/profile-utils";
 import i18n from "@/i18n";
+
 
 const searchSchema = z.object({
   // `tipo` é opcional. Aceita "gasto" | "receita"; qualquer outro valor

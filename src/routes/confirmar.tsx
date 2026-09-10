@@ -27,9 +27,9 @@ import {
   findDuplicateGastoAdvanced,
   getCategorias,
   useStore,
-  type Gasto,
   type NovoGastoInput,
 } from "@/lib/store";
+
 import { requireOnline } from "@/lib/use-online-status";
 import { formatBRL, todayISO } from "@/lib/format";
 import { toast } from "sonner";
@@ -44,7 +44,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { FormaPagamento } from "@/lib/types";
+import type { FormaPagamento, Gasto } from "@/lib/types";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import { parseNfceQrContent, type ParsedNfceQrResult } from "@/lib/mercado/nfce-parser";
 import { fetchNfceFromUrl } from "@/lib/mercado/nfce-fetch.functions";
