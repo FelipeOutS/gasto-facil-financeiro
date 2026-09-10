@@ -10,7 +10,12 @@
 import { describe, expect, it, beforeEach, mock } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 
-GlobalRegistrator.register();
+// Outro arquivo de teste pode já ter registrado o DOM no mesmo processo.
+try {
+  GlobalRegistrator.register();
+} catch {
+  /* já registrado */
+}
 
 const React = await import("react");
 const { render, screen, fireEvent, cleanup, waitFor, act } = await import(
