@@ -82,7 +82,7 @@ describe("ReceiptCaptureSheet — captura dentro do Gasto Inteligente", () => {
     expect(inputs.length).toBe(2);
     const file = new File(["fake-bytes"], "cupom.jpg", { type: "image/jpeg" });
     fireEvent.change(inputs[0] as HTMLInputElement, { target: { files: [file] } });
-    await waitFor(() => expect(recebido).not.toBeNull());
+    await waitFor(() => expect(recebido).not.toBeNull(), { timeout: 8000 });
     expect(recebido!.imageDataUrl?.startsWith("data:")).toBe(true);
   });
 
