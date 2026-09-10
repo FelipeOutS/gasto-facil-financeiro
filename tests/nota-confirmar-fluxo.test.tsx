@@ -176,6 +176,8 @@ describe("/confirmar — captura → extração → revisão → dedup → confi
     nfceResposta = null;
     ultimoInitial = undefined;
     store.setActiveUserId("usuario-teste");
+    store.setStoreCanWrite(true);
+    store.setStoreCanWriteBasic(true);
   });
 
   it("imagem capturada é analisada automaticamente (usuário não escolhe o arquivo de novo)", async () => {
