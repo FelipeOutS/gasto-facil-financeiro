@@ -1,28 +1,31 @@
 /**
- * Mercado Inteligente — fetch server-side da página pública de NFC-e.
+ * Consulta server-side da página pública de NFC-e.
  *
- * Faz GET na URL pública da SEFAZ (consultaPublica), valida o host contra
- * whitelist de domínios gov.br/sefaz/fazenda e devolve dados estruturados
- * (itens, total, mercado, CNPJ, data). NÃO usa cookies privados, NÃO faz
- * login, NÃO tenta quebrar captcha. Em dev, loga só diagnóstico seguro.
+ * Segurança (endurecida na melhoria do fluxo de nota/comprovante):
+ *  - exige usuário autenticado (não é endpoint aberto);
+ *  - valida a URL em `validateNfceUrl` (HTTPS, allowlist .gov.br + pista fiscal,
+ *    bloqueio de IP literal/loopback/privado/metadata/porta/credenciais);
+ *  - redirects em modo MANUAL: cada hop é revalidado pela mesma guarda (máx. 3);
+ *  - timeout de 8s e limite de resposta de 2 MB lido em streaming;
+ *  - nunca usa cookies/login, nunca tenta quebrar CAPTCHA.
+ *
+ * NÃO persiste HTML nem dados fiscais: devolve só o que a revisão precisa.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 import { parseNfceHtml } from "./nfce-html-parser";
 import type { CupomItemPreview } from "./nfce-items-parser";
-
-// Hosts públicos esperados para NFC-e. Whitelist por sufixo.
-const HOST_ALLOW_SUFFIXES = [
-  ".gov.br",
-  // alguns estados publicam em subdomínios fora do .gov.br padrão; aqui restringimos a .gov.br.
-];
-
-const HOST_HINTS = ["fazenda", "sefaz", "set.", "sef.", "economia", "receita"];
+import { validateNfceUrl } from "@/lib/nota/nfce-url-guard";
 
 const InputSchema = z.object({
   url: z.string().url().max(2048),
 });
+
+const MAX_REDIRECTS = 3;
+const MAX_BYTES = 2_000_000;
+const TIMEOUT_MS = 8000;
 
 export type NfceFetchStatus =
   | "items_found"
@@ -46,19 +49,13 @@ export interface NfceFetchResult {
   warnings: string[];
 }
 
-function isAllowedHost(host: string): boolean {
-  const h = host.toLowerCase();
-  if (!HOST_ALLOW_SUFFIXES.some((suf) => h.endsWith(suf))) return false;
-  return HOST_HINTS.some((hint) => h.includes(hint));
-}
-
-async function fetchWithTimeout(url: string, ms: number): Promise<Response> {
+async function fetchNoRedirect(url: string, ms: number): Promise<Response> {
   const ctrl = new AbortController();
   const id = setTimeout(() => ctrl.abort(), ms);
   try {
     return await fetch(url, {
       method: "GET",
-      redirect: "follow",
+      redirect: "manual",
       signal: ctrl.signal,
       headers: {
         "User-Agent":
@@ -72,54 +69,105 @@ async function fetchWithTimeout(url: string, ms: number): Promise<Response> {
   }
 }
 
+/** Lê no máximo `maxBytes` do corpo, abortando o resto. */
+async function readLimitedText(res: Response, maxBytes: number): Promise<string> {
+  const body = res.body;
+  if (!body) return await res.text();
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (total < maxBytes) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value) {
+      chunks.push(value);
+      total += value.byteLength;
+    }
+  }
+  try {
+    await reader.cancel();
+  } catch {
+    /* ignore */
+  }
+  const merged = new Uint8Array(Math.min(total, maxBytes));
+  let offset = 0;
+  for (const c of chunks) {
+    if (offset >= merged.length) break;
+    const slice = c.subarray(0, merged.length - offset);
+    merged.set(slice, offset);
+    offset += slice.length;
+  }
+  return new TextDecoder("utf-8", { fatal: false }).decode(merged);
+}
+
 export const fetchNfceFromUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<NfceFetchResult> => {
     const isDev = process.env.NODE_ENV !== "production";
 
-    let parsed: URL;
-    try {
-      parsed = new URL(data.url);
-    } catch {
-      return { status: "invalid_url", items: [], warnings: ["url_parse_failed"] };
+    let guard = validateNfceUrl(data.url);
+    if (!guard.ok) {
+      if (isDev) console.warn("[nfce-fetch] url rejeitada", { reason: guard.reason });
+      return { status: "invalid_url", host: guard.host, items: [], warnings: [guard.reason] };
     }
 
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      return { status: "invalid_url", items: [], warnings: ["bad_protocol"] };
-    }
-
-    const host = parsed.host.toLowerCase();
-    if (!isAllowedHost(host)) {
-      if (isDev) {
-        console.warn("[nfce-fetch] host fora da whitelist", { host });
-      }
-      return { status: "invalid_url", host, items: [], warnings: ["host_not_allowed"] };
-    }
-
+    let current = guard.url;
+    let host = guard.host;
     let res: Response;
-    try {
-      res = await fetchWithTimeout(parsed.toString(), 8000);
-    } catch (err) {
-      const isAbort = err instanceof Error && err.name === "AbortError";
-      if (isDev) {
-        console.warn("[nfce-fetch] erro de rede", {
+
+    for (let hop = 0; ; hop += 1) {
+      try {
+        res = await fetchNoRedirect(current, TIMEOUT_MS);
+      } catch (err) {
+        const isAbort = err instanceof Error && err.name === "AbortError";
+        if (isDev) {
+          console.warn("[nfce-fetch] erro de rede", {
+            host,
+            reason: isAbort ? "timeout" : "network",
+          });
+        }
+        return {
+          status: isAbort ? "timeout" : "network_error",
           host,
-          provider: "nfce",
-          reason: isAbort ? "timeout" : "network",
-        });
+          items: [],
+          warnings: [isAbort ? "timeout" : "network_error"],
+        };
       }
-      return {
-        status: isAbort ? "timeout" : "network_error",
-        host,
-        items: [],
-        warnings: [isAbort ? "timeout" : "network_error"],
-      };
+
+      const isRedirect = res.status >= 300 && res.status < 400;
+      if (!isRedirect) break;
+
+      if (hop >= MAX_REDIRECTS) {
+        return { status: "http_error", host, items: [], warnings: ["too_many_redirects"] };
+      }
+      const location = res.headers.get("location");
+      if (!location) {
+        return { status: "http_error", host, items: [], warnings: ["redirect_without_location"] };
+      }
+      // Cada hop passa pela MESMA guarda (impede escapar da allowlist via redirect).
+      let next: string;
+      try {
+        next = new URL(location, current).toString();
+      } catch {
+        return { status: "invalid_url", host, items: [], warnings: ["bad_redirect_url"] };
+      }
+      guard = validateNfceUrl(next);
+      if (!guard.ok) {
+        if (isDev) console.warn("[nfce-fetch] redirect bloqueado", { reason: guard.reason });
+        return {
+          status: "invalid_url",
+          host: guard.host,
+          items: [],
+          warnings: [`redirect_${guard.reason}`],
+        };
+      }
+      current = guard.url;
+      host = guard.host;
     }
 
     if (!res.ok) {
-      if (isDev) {
-        console.warn("[nfce-fetch] http error", { host, httpStatus: res.status });
-      }
+      if (isDev) console.warn("[nfce-fetch] http error", { host, httpStatus: res.status });
       return {
         status: "http_error",
         host,
@@ -131,7 +179,7 @@ export const fetchNfceFromUrl = createServerFn({ method: "POST" })
 
     let html = "";
     try {
-      html = await res.text();
+      html = await readLimitedText(res, MAX_BYTES);
     } catch {
       return {
         status: "network_error",
@@ -140,11 +188,6 @@ export const fetchNfceFromUrl = createServerFn({ method: "POST" })
         items: [],
         warnings: ["body_read_failed"],
       };
-    }
-
-    // Limite defensivo de tamanho (3MB).
-    if (html.length > 3_000_000) {
-      html = html.slice(0, 3_000_000);
     }
 
     const parsedHtml = parseNfceHtml(html);
