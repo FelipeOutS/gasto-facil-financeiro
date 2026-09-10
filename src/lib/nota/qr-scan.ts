@@ -45,17 +45,28 @@ async function loadZxing(): Promise<ZxingReader | null> {
   }
 }
 
+/** Tempo máximo esperando a imagem decodificar antes de desistir do QR. */
+const IMAGE_LOAD_TIMEOUT_MS = 4000;
+
 /** Tenta ler um QR Code em uma imagem (data URL). Devolve o conteúdo bruto ou null. */
 export async function detectQrFromDataUrl(dataUrl: string): Promise<string | null> {
-  if (typeof document === "undefined") return null;
+  if (typeof document === "undefined" || typeof Image === "undefined") return null;
   const img = new Image();
   img.src = dataUrl;
   try {
     await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = () => reject(new Error("image_load_failed"));
+      const timer = setTimeout(() => reject(new Error("image_load_timeout")), IMAGE_LOAD_TIMEOUT_MS);
+      img.onload = () => {
+        clearTimeout(timer);
+        resolve();
+      };
+      img.onerror = () => {
+        clearTimeout(timer);
+        reject(new Error("image_load_failed"));
+      };
     });
   } catch {
+    // Sem imagem decodificada não há QR: o fluxo segue para OCR/IA.
     return null;
   }
 
