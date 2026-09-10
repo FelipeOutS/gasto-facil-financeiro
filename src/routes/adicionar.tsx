@@ -76,6 +76,8 @@ function Adicionar() {
   const incomeKey = isBusiness ? "revenue" : "income";
   const [busy, setBusy] = useState(false);
   const [waOpen, setWaOpen] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
+
   const [guideDismissed, setGuideDismissed] = useState<boolean>(() =>
     isGuideDismissed(user?.id ?? null),
   );
@@ -278,7 +280,9 @@ function Adicionar() {
 
       <div className="mt-6 space-y-3 stagger">
         <button
-          onClick={() => pickImage(true)}
+          onClick={openScanner}
+          data-testid="opcao-ler-nota"
+
           disabled={busy}
           className="card-press hover-lift group flex w-full items-center gap-4 rounded-3xl border border-border bg-card p-5 text-left shadow-card transition-all hover:border-brand/60 hover:bg-card-elevated disabled:opacity-60"
         >
@@ -293,7 +297,9 @@ function Adicionar() {
         </button>
 
         <button
-          onClick={() => pickImage(false)}
+          onClick={pickFromGallery}
+          data-testid="opcao-galeria"
+
           disabled={busy}
           className="card-press hover-lift group flex w-full items-center gap-4 rounded-3xl border border-border bg-card p-5 text-left shadow-card transition-all hover:border-brand/60 hover:bg-card-elevated disabled:opacity-60"
         >
