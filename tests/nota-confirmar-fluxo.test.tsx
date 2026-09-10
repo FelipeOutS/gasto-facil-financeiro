@@ -42,8 +42,21 @@ mock.module("@tanstack/react-router", () => ({
   HeadContent: () => null,
   Scripts: () => null,
 }));
+const chain = () => {
+  const api: Record<string, unknown> = {};
+  api['middleware'] = () => api;
+  api['inputValidator'] = () => api;
+  api['validator'] = () => api;
+  api['client'] = () => api;
+  api['server'] = () => api;
+  api['handler'] = (fn: unknown) => fn;
+  return api;
+};
 mock.module("@tanstack/react-start", () => ({
   useServerFn: (fn: unknown) => fn,
+  createServerFn: () => chain(),
+  createMiddleware: () => chain(),
+  createStart: (fn: unknown) => fn,
 }));
 mock.module("@/integrations/supabase/client", () => ({
   supabase: {
