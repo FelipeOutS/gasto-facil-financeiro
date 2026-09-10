@@ -175,6 +175,7 @@ describe("/confirmar — captura → extração → revisão → dedup → confi
     ocrResposta = { ok: true, body: ocrOk() };
     nfceResposta = null;
     ultimoInitial = undefined;
+    store.setActiveUserId(null);
     store.setActiveUserId("usuario-teste");
     store.setStoreCanWrite(true);
     store.setStoreCanWriteBasic(true);
@@ -295,7 +296,7 @@ describe("/confirmar — captura → extração → revisão → dedup → confi
     ocrResposta = { ok: false, body: { error: "falhou" } };
     prepararSessao({ img: IMG });
     await renderConfirmar();
-    await waitFor(() => expect(screen.getByText("Não consegui ler")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Não consegui ler tudo dessa imagem")).toBeTruthy());
     expect(store.getGastos().length).toBe(0);
   });
 });
