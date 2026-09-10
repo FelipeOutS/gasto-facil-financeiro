@@ -19,10 +19,28 @@ const { render, screen, fireEvent, cleanup, waitFor, act } = await import(
 await import("../src/i18n");
 
 // ---- dependências de plataforma substituídas por dublês simples ----
+const anchorStub = ({ children, ...rest }: Record<string, unknown>) =>
+  React.createElement("a", rest as never, children as never);
 mock.module("@tanstack/react-router", () => ({
   createFileRoute: () => (opts: unknown) => ({ options: opts }),
-  Link: ({ children }: { children?: unknown }) => React.createElement("a", null, children as never),
+  createRootRoute: (opts: unknown) => ({ options: opts }),
+  createRootRouteWithContext: () => (opts: unknown) => ({ options: opts }),
+  createRouter: () => ({}),
+  RouterProvider: ({ children }: { children?: unknown }) =>
+    React.createElement("div", null, children as never),
+  Outlet: () => null,
+  Link: anchorStub,
   useNavigate: () => () => {},
+  useRouter: () => ({ navigate: () => {}, state: { location: { pathname: "/confirmar" } } }),
+  useRouterState: () => ({ location: { pathname: "/confirmar" } }),
+  useLocation: () => ({ pathname: "/confirmar", search: "", searchStr: "" }),
+  useParams: () => ({}),
+  useSearch: () => ({}),
+  useMatches: () => [],
+  redirect: (o: unknown) => o,
+  notFound: () => undefined,
+  HeadContent: () => null,
+  Scripts: () => null,
 }));
 mock.module("@tanstack/react-start", () => ({
   useServerFn: (fn: unknown) => fn,
