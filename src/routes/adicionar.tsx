@@ -102,7 +102,34 @@ function Adicionar() {
     navigate({ to: "/renda/nova" });
   };
 
-  function pickImage(camera: boolean) {
+  /**
+   * Entrega o resultado da captura ao pipeline único (/confirmar), que decide
+   * entre dados do QR da NFC-e e OCR/IA da imagem. Nada é salvo aqui.
+   */
+  function stashAndGo(res: ReceiptCaptureResult) {
+    try {
+      if (res.imageDataUrl) sessionStorage.setItem("gf:pendingImage", res.imageDataUrl);
+      else sessionStorage.removeItem("gf:pendingImage");
+      if (res.qrRaw) sessionStorage.setItem("gf:pendingQr", res.qrRaw);
+      else sessionStorage.removeItem("gf:pendingQr");
+      sessionStorage.setItem("gf:pendingAuto", "1");
+    } catch {
+      /* noop */
+    }
+    setScanOpen(false);
+    setBusy(false);
+    navigate({ to: "/confirmar" });
+  }
+
+  function openScanner() {
+    if (!canWrite) {
+      requireSubscription(t("requirePlan"));
+      return;
+    }
+    setScanOpen(true);
+  }
+
+  function pickFromGallery() {
     if (!canWrite) {
       requireSubscription(t("requirePlan"));
       return;
@@ -110,21 +137,21 @@ function Adicionar() {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
-    if (camera) input.setAttribute("capture", "environment");
-    input.onchange = () => {
+    input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
       setBusy(true);
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = String(reader.result);
-        sessionStorage.setItem("gf:pendingImage", dataUrl);
-        navigate({ to: "/confirmar" });
-      };
-      reader.readAsDataURL(file);
+      try {
+        const dataUrl = await fileToDataUrl(file);
+        const qr = await detectQrFromDataUrl(dataUrl);
+        stashAndGo({ imageDataUrl: dataUrl, qrRaw: qr ?? undefined });
+      } catch {
+        setBusy(false);
+      }
     };
     input.click();
   }
+
 
   const highlightExpense = tipo === "gasto";
   const highlightIncome = tipo === "receita";
