@@ -6,7 +6,7 @@
  * Cobre: câmera indisponível, permissão negada, galeria e o fato de que o
  * conteúdo de um QR Code NUNCA é aberto no navegador por este componente.
  */
-import { describe, expect, it, beforeEach, afterEach, mock } from "bun:test";
+import { describe, expect, it, beforeEach, afterEach } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 
 GlobalRegistrator.register();
@@ -14,10 +14,6 @@ GlobalRegistrator.register();
 const React = await import("react");
 const { render, screen, fireEvent, cleanup, waitFor } = await import("@testing-library/react");
 await import("../src/i18n");
-mock.module("@/lib/nota/qr-scan", async () => {
-  const real = await import("../src/lib/nota/qr-scan");
-  return { ...real, detectQrFromDataUrl: async () => null };
-});
 const { ReceiptCaptureSheet } = await import("../src/components/nota/ReceiptCaptureSheet");
 
 function setMediaDevices(value: unknown) {
