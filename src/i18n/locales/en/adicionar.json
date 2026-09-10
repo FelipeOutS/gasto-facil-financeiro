@@ -1,12 +1,30 @@
 {
-  "meta": { "title": "Add — Gasto Inteligente" },
-  "header": { "kicker": "New", "title": "What do you want to add?", "back": "Back" },
+  "meta": {
+    "title": "Add — Gasto Inteligente"
+  },
+  "header": {
+    "kicker": "New",
+    "title": "What do you want to add?",
+    "back": "Back"
+  },
   "subtitle": "Choose the entry type to add it manually, import it, or continue through a guided flow.",
   "options": {
-    "photo": { "title": "Take a photo", "desc": "Receipt, invoice, slip" },
-    "gallery": { "title": "Upload from gallery", "desc": "Pix, bill, invoice, screenshot" },
-    "whatsapp": { "title": "Paste WhatsApp message", "desc": "e.g. \"Spotify 19.90 Nubank\"" },
-    "manual": { "title": "Enter manually", "desc": "Type the expense details" }
+    "photo": {
+      "title": "Scan a receipt or invoice",
+      "desc": "Take a photo or scan a receipt, slip or invoice"
+    },
+    "gallery": {
+      "title": "Choose from gallery",
+      "desc": "Send a photo, screenshot or saved document"
+    },
+    "whatsapp": {
+      "title": "Paste WhatsApp message",
+      "desc": "e.g. \"Spotify 19.90 Nubank\""
+    },
+    "manual": {
+      "title": "Enter manually",
+      "desc": "Type the expense details"
+    }
   },
   "hint": "Import when you want to speed up entry. You'll always be able to review before saving.",
   "cancel": "Cancel",
@@ -38,7 +56,9 @@
     "hint": "After your first entries, you can explore charts, alerts, imports, and smart features based on your plan."
   },
   "manual": {
-    "meta": { "title": "Add manually — Gasto Inteligente" },
+    "meta": {
+      "title": "Add manually — Gasto Inteligente"
+    },
     "kicker": "Manual",
     "title": "New expense",
     "toastSaved": "Expense saved. ✅",
@@ -48,5 +68,20 @@
       "cancel": "Cancel",
       "confirm": "Save anyway"
     }
+  },
+  "scan": {
+    "eyebrow": "Scan",
+    "title": "Scan purchase",
+    "close": "Close",
+    "frameTitle": "Frame the receipt or invoice",
+    "frameHint": "We can read the text or the QR code automatically.",
+    "takePhoto": "Take photo",
+    "gallery": "Choose from gallery",
+    "nativeCamera": "Open phone camera",
+    "processing": "Processing...",
+    "deniedTitle": "No camera access",
+    "unsupportedTitle": "Camera unavailable here",
+    "fallbackHint": "You can use your phone camera or pick a saved image. Reading still happens inside Gasto Inteligente.",
+    "privacy": "The image is only used to read the purchase details and is not stored as a receipt."
   }
 }

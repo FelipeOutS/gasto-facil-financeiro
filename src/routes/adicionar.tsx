@@ -20,9 +20,15 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import { WhatsAppExpenseDialog } from "@/components/WhatsAppExpenseDialog";
+import {
+  ReceiptCaptureSheet,
+  type ReceiptCaptureResult,
+} from "@/components/nota/ReceiptCaptureSheet";
+import { detectQrFromDataUrl, fileToDataUrl } from "@/lib/nota/qr-scan";
 import { useAuth } from "@/lib/auth-context";
 import { tipoEfetivo, type TipoCadastro } from "@/lib/profile-utils";
 import i18n from "@/i18n";
+
 
 const searchSchema = z.object({
   // `tipo` é opcional. Aceita "gasto" | "receita"; qualquer outro valor
@@ -70,6 +76,8 @@ function Adicionar() {
   const incomeKey = isBusiness ? "revenue" : "income";
   const [busy, setBusy] = useState(false);
   const [waOpen, setWaOpen] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
+
   const [guideDismissed, setGuideDismissed] = useState<boolean>(() =>
     isGuideDismissed(user?.id ?? null),
   );
@@ -102,7 +110,34 @@ function Adicionar() {
     navigate({ to: "/renda/nova" });
   };
 
-  function pickImage(camera: boolean) {
+  /**
+   * Entrega o resultado da captura ao pipeline único (/confirmar), que decide
+   * entre dados do QR da NFC-e e OCR/IA da imagem. Nada é salvo aqui.
+   */
+  function stashAndGo(res: ReceiptCaptureResult) {
+    try {
+      if (res.imageDataUrl) sessionStorage.setItem("gf:pendingImage", res.imageDataUrl);
+      else sessionStorage.removeItem("gf:pendingImage");
+      if (res.qrRaw) sessionStorage.setItem("gf:pendingQr", res.qrRaw);
+      else sessionStorage.removeItem("gf:pendingQr");
+      sessionStorage.setItem("gf:pendingAuto", "1");
+    } catch {
+      /* noop */
+    }
+    setScanOpen(false);
+    setBusy(false);
+    navigate({ to: "/confirmar" });
+  }
+
+  function openScanner() {
+    if (!canWrite) {
+      requireSubscription(t("requirePlan"));
+      return;
+    }
+    setScanOpen(true);
+  }
+
+  function pickFromGallery() {
     if (!canWrite) {
       requireSubscription(t("requirePlan"));
       return;
@@ -110,21 +145,21 @@ function Adicionar() {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
-    if (camera) input.setAttribute("capture", "environment");
-    input.onchange = () => {
+    input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
       setBusy(true);
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = String(reader.result);
-        sessionStorage.setItem("gf:pendingImage", dataUrl);
-        navigate({ to: "/confirmar" });
-      };
-      reader.readAsDataURL(file);
+      try {
+        const dataUrl = await fileToDataUrl(file);
+        const qr = await detectQrFromDataUrl(dataUrl);
+        stashAndGo({ imageDataUrl: dataUrl, qrRaw: qr ?? undefined });
+      } catch {
+        setBusy(false);
+      }
     };
     input.click();
   }
+
 
   const highlightExpense = tipo === "gasto";
   const highlightIncome = tipo === "receita";
@@ -245,7 +280,9 @@ function Adicionar() {
 
       <div className="mt-6 space-y-3 stagger">
         <button
-          onClick={() => pickImage(true)}
+          onClick={openScanner}
+          data-testid="opcao-ler-nota"
+
           disabled={busy}
           className="card-press hover-lift group flex w-full items-center gap-4 rounded-3xl border border-border bg-card p-5 text-left shadow-card transition-all hover:border-brand/60 hover:bg-card-elevated disabled:opacity-60"
         >
@@ -260,7 +297,9 @@ function Adicionar() {
         </button>
 
         <button
-          onClick={() => pickImage(false)}
+          onClick={pickFromGallery}
+          data-testid="opcao-galeria"
+
           disabled={busy}
           className="card-press hover-lift group flex w-full items-center gap-4 rounded-3xl border border-border bg-card p-5 text-left shadow-card transition-all hover:border-brand/60 hover:bg-card-elevated disabled:opacity-60"
         >
@@ -322,6 +361,12 @@ function Adicionar() {
       </div>
 
       <WhatsAppExpenseDialog open={waOpen} onOpenChange={setWaOpen} />
+      <ReceiptCaptureSheet
+        open={scanOpen}
+        onClose={() => setScanOpen(false)}
+        onResult={stashAndGo}
+      />
+
     </MobileShell>
   );
 }

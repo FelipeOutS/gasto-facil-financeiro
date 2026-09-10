@@ -1,12 +1,30 @@
 {
-  "meta": { "title": "Adicionar — Gasto Inteligente" },
-  "header": { "kicker": "Novo", "title": "O que você quer adicionar?", "back": "Voltar" },
+  "meta": {
+    "title": "Adicionar — Gasto Inteligente"
+  },
+  "header": {
+    "kicker": "Novo",
+    "title": "O que você quer adicionar?",
+    "back": "Voltar"
+  },
   "subtitle": "Escolha o tipo de lançamento para registrar manualmente, importar ou continuar por um fluxo guiado.",
   "options": {
-    "photo": { "title": "Tirar foto", "desc": "Comprovante, nota, recibo" },
-    "gallery": { "title": "Enviar print da galeria", "desc": "Pix, boleto, fatura, screenshot" },
-    "whatsapp": { "title": "Colar mensagem do WhatsApp", "desc": "Ex.: \"Spotify 19,90 Nubank\"" },
-    "manual": { "title": "Cadastrar manualmente", "desc": "Digite os dados do gasto" }
+    "photo": {
+      "title": "Ler nota ou comprovante",
+      "desc": "Fotografe ou escaneie uma nota, cupom ou recibo"
+    },
+    "gallery": {
+      "title": "Escolher da galeria",
+      "desc": "Envie uma foto, print ou documento salvo"
+    },
+    "whatsapp": {
+      "title": "Colar mensagem do WhatsApp",
+      "desc": "Ex.: \"Spotify 19,90 Nubank\""
+    },
+    "manual": {
+      "title": "Cadastrar manualmente",
+      "desc": "Digite os dados do gasto"
+    }
   },
   "hint": "Importe quando quiser acelerar o preenchimento. Você sempre poderá revisar antes de salvar.",
   "cancel": "Cancelar",
@@ -38,7 +56,9 @@
     "hint": "Depois dos primeiros lançamentos, você poderá explorar gráficos, alertas, importações e recursos inteligentes conforme seu plano."
   },
   "manual": {
-    "meta": { "title": "Cadastrar manualmente — Gasto Inteligente" },
+    "meta": {
+      "title": "Cadastrar manualmente — Gasto Inteligente"
+    },
     "kicker": "Manual",
     "title": "Novo gasto",
     "toastSaved": "Gasto registrado. ✅",
@@ -48,5 +68,20 @@
       "cancel": "Cancelar",
       "confirm": "Salvar mesmo assim"
     }
+  },
+  "scan": {
+    "eyebrow": "Leitura",
+    "title": "Escanear compra",
+    "close": "Fechar",
+    "frameTitle": "Enquadre a nota ou comprovante",
+    "frameHint": "Podemos ler o texto ou o QR Code automaticamente.",
+    "takePhoto": "Tirar foto",
+    "gallery": "Escolher da galeria",
+    "nativeCamera": "Abrir câmera do celular",
+    "processing": "Processando...",
+    "deniedTitle": "Sem acesso à câmera",
+    "unsupportedTitle": "Câmera indisponível aqui",
+    "fallbackHint": "Você pode usar a câmera do celular ou escolher uma imagem salva. A leitura continua no Gasto Inteligente.",
+    "privacy": "A imagem é usada só para ler os dados da compra e não fica guardada como comprovante."
   }
 }
