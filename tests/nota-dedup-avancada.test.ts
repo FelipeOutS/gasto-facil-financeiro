@@ -10,20 +10,17 @@ import { describe, expect, it, beforeEach, mock } from "bun:test";
 
 mock.module("@/integrations/supabase/client", () => ({
   supabase: {
-    from: () => ({
-      insert: () => ({ then: (cb: (r: unknown) => void) => cb({ error: null }) }),
-      select: () => ({ eq: () => ({ then: (cb: (r: unknown) => void) => cb({ data: [] }) }) }),
-    }),
+    from: () => ({ insert: () => Promise.resolve({ error: null }) }),
     auth: { getSession: async () => ({ data: { session: null } }) },
   },
 }));
 
-const { addGasto, findDuplicateGastoAdvanced, setActiveUserId, getGastos } = await import(
+const { addGastoAuto, findDuplicateGastoAdvanced, setActiveUserId, getGastos } = await import(
   "../src/lib/store"
 );
 
 function seed(valor: number, data: string, estabelecimento: string) {
-  addGasto({
+  addGastoAuto({
     valor,
     data,
     estabelecimento,
@@ -35,7 +32,7 @@ function seed(valor: number, data: string, estabelecimento: string) {
 
 describe("deduplicação avançada no fluxo de nota", () => {
   beforeEach(() => {
-    setActiveUserId(null);
+    setActiveUserId("usuario-teste");
   });
 
   it("nota de 09/09 'MERCADO EXEMPLO LTDA' encontra gasto de 08/09 'Mercado Exemplo'", () => {
