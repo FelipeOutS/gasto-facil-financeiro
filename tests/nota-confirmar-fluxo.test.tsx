@@ -10,7 +10,12 @@
 import { describe, expect, it, beforeEach, mock } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 
-GlobalRegistrator.register();
+// Outro arquivo de teste pode já ter registrado o DOM no mesmo processo.
+try {
+  GlobalRegistrator.register();
+} catch {
+  /* já registrado */
+}
 
 const React = await import("react");
 const { render, screen, fireEvent, cleanup, waitFor, act } = await import(
@@ -19,13 +24,44 @@ const { render, screen, fireEvent, cleanup, waitFor, act } = await import(
 await import("../src/i18n");
 
 // ---- dependências de plataforma substituídas por dublês simples ----
+const anchorStub = ({ children, ...rest }: Record<string, unknown>) =>
+  React.createElement("a", rest as never, children as never);
 mock.module("@tanstack/react-router", () => ({
   createFileRoute: () => (opts: unknown) => ({ options: opts }),
-  Link: ({ children }: { children?: unknown }) => React.createElement("a", null, children as never),
+  createRootRoute: (opts: unknown) => ({ options: opts }),
+  createRootRouteWithContext: () => (opts: unknown) => ({ options: opts }),
+  createRouter: () => ({}),
+  RouterProvider: ({ children }: { children?: unknown }) =>
+    React.createElement("div", null, children as never),
+  Outlet: () => null,
+  Link: anchorStub,
   useNavigate: () => () => {},
+  useRouter: () => ({ navigate: () => {}, state: { location: { pathname: "/confirmar" } } }),
+  useRouterState: () => ({ location: { pathname: "/confirmar" } }),
+  useLocation: () => ({ pathname: "/confirmar", search: "", searchStr: "" }),
+  useParams: () => ({}),
+  useSearch: () => ({}),
+  useMatches: () => [],
+  redirect: (o: unknown) => o,
+  notFound: () => undefined,
+  HeadContent: () => null,
+  Scripts: () => null,
 }));
+const chain = () => {
+  const api: Record<string, unknown> = {};
+  api['middleware'] = () => api;
+  api['inputValidator'] = () => api;
+  api['validator'] = () => api;
+  api['client'] = () => api;
+  api['server'] = () => api;
+  api['handler'] = (fn: unknown) => fn;
+  return api;
+};
 mock.module("@tanstack/react-start", () => ({
   useServerFn: (fn: unknown) => fn,
+  createServerFn: () => chain(),
+  createMiddleware: () => chain(),
+  createStart: (fn: unknown) => fn,
 }));
 mock.module("@/integrations/supabase/client", () => ({
   supabase: {
@@ -144,7 +180,10 @@ describe("/confirmar — captura → extração → revisão → dedup → confi
     ocrResposta = { ok: true, body: ocrOk() };
     nfceResposta = null;
     ultimoInitial = undefined;
+    store.setActiveUserId(null);
     store.setActiveUserId("usuario-teste");
+    store.setStoreCanWrite(true);
+    store.setStoreCanWriteBasic(true);
   });
 
   it("imagem capturada é analisada automaticamente (usuário não escolhe o arquivo de novo)", async () => {
@@ -262,7 +301,7 @@ describe("/confirmar — captura → extração → revisão → dedup → confi
     ocrResposta = { ok: false, body: { error: "falhou" } };
     prepararSessao({ img: IMG });
     await renderConfirmar();
-    await waitFor(() => expect(screen.getByText("Não consegui ler")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Não consegui ler tudo dessa imagem")).toBeTruthy());
     expect(store.getGastos().length).toBe(0);
   });
 });
