@@ -1,6 +1,6 @@
 {
   "metaTitle": "Confirmar gasto — Gasto Inteligente",
-  "eyebrow": "Leitura por imagem",
+  "eyebrow": "Nota ou comprovante",
   "header": "Comprovante",
   "headerDone": "Pronto!",
   "intro": "Manda o print que eu tento adiantar pra você. A IA ajuda, mas quem manda é você.",
@@ -30,13 +30,24 @@
     "subtitle": "Estou procurando valor, data e descrição. Você confere tudo antes de salvar.",
     "values": "Detectando valores",
     "date": "Lendo data",
-    "category": "Categoria"
+    "category": "Categoria",
+    "steps": {
+      "received": "Imagem recebida",
+      "identifying": "Identificando a compra",
+      "preparing": "Preparando a revisão"
+    }
   },
   "error": {
     "title": "Não consegui ler tudo dessa imagem",
     "fallback": "Pode acontecer com prints cortados, imagem tremida ou comprovante com pouco contraste. Você ainda pode preencher manualmente.",
     "retry": "Tentar outra imagem",
-    "manual": "Preencher manualmente"
+    "manual": "Preencher manualmente",
+    "again": "Tentar novamente",
+    "tips": {
+      "closer": "Aproxime a câmera da nota",
+      "light": "Melhore a iluminação",
+      "whole": "Deixe a nota inteira visível"
+    }
   },
   "review": {
     "foundMany": "Encontrei alguns valores",
@@ -46,7 +57,10 @@
     "imageAlt": "Comprovante",
     "valuesLabel": "Valores encontrados — toque para usar",
     "submit": "Salvar gasto",
-    "tip": "Dá uma conferida e salva quando quiser."
+    "tip": "Dá uma conferida e salva quando quiser.",
+    "fromNota": "Dados da nota fiscal",
+    "itemsTitle": "Itens da nota ({{count}})",
+    "itemsHint": "Os itens são só informação auxiliar. A compra é salva como um único gasto."
   },
   "guard": "Para adicionar gastos, escolha um plano ativo.",
   "dup": {
@@ -59,5 +73,20 @@
     "alta": "Confiança alta",
     "media": "Confiança média",
     "baixa": "Confiança baixa"
+  },
+  "qr": {
+    "foundTitle": "Nota fiscal encontrada",
+    "foundDesc": "Encontramos o QR Code desta nota. Podemos usar os dados dela para preencher o gasto.",
+    "stateLabel": "Estado",
+    "useNota": "Usar dados da nota",
+    "usePhoto": "Continuar com a foto",
+    "openOfficial": "Abrir nota oficial",
+    "notFiscal": "Este QR Code não foi reconhecido como uma nota fiscal compatível. Vamos ler a imagem.",
+    "fallbackOcr": "Não consegui usar os dados oficiais desta nota agora. Vou ler a imagem da nota.",
+    "privacy": "Nada é salvo antes da sua confirmação."
+  },
+  "dupPreview": {
+    "title": "Possível duplicidade",
+    "desc": "Encontramos um gasto semelhante já registrado. Você decide se importa mesmo assim."
   }
 }

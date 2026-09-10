@@ -361,6 +361,12 @@ function Adicionar() {
       </div>
 
       <WhatsAppExpenseDialog open={waOpen} onOpenChange={setWaOpen} />
+      <ReceiptCaptureSheet
+        open={scanOpen}
+        onClose={() => setScanOpen(false)}
+        onResult={stashAndGo}
+      />
+
     </MobileShell>
   );
 }

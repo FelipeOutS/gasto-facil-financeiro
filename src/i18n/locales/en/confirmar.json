@@ -1,6 +1,6 @@
 {
   "metaTitle": "Confirm expense — Gasto Inteligente",
-  "eyebrow": "Image reading",
+  "eyebrow": "Receipt or invoice",
   "header": "Receipt",
   "headerDone": "Done!",
   "intro": "Send the screenshot and I'll try to fill it in for you. AI helps, but you're in charge.",
@@ -30,13 +30,24 @@
     "subtitle": "Looking for amount, date and description. You'll review everything before saving.",
     "values": "Detecting amounts",
     "date": "Reading date",
-    "category": "Category"
+    "category": "Category",
+    "steps": {
+      "received": "Image received",
+      "identifying": "Identifying the purchase",
+      "preparing": "Preparing the review"
+    }
   },
   "error": {
     "title": "I couldn't read everything from this image",
     "fallback": "This can happen with cropped screenshots, blurry images or low-contrast receipts. You can still fill it in manually.",
     "retry": "Try another image",
-    "manual": "Fill in manually"
+    "manual": "Fill in manually",
+    "again": "Try again",
+    "tips": {
+      "closer": "Move the camera closer",
+      "light": "Improve the lighting",
+      "whole": "Keep the whole receipt visible"
+    }
   },
   "review": {
     "foundMany": "I found a few amounts",
@@ -46,7 +57,10 @@
     "imageAlt": "Receipt",
     "valuesLabel": "Amounts found — tap to use",
     "submit": "Save expense",
-    "tip": "Take a look and save whenever you're ready."
+    "tip": "Take a look and save whenever you're ready.",
+    "fromNota": "Invoice data",
+    "itemsTitle": "Invoice items ({{count}})",
+    "itemsHint": "Items are auxiliary info only. The purchase is saved as a single expense."
   },
   "guard": "To add expenses, choose an active plan.",
   "dup": {
@@ -59,5 +73,20 @@
     "alta": "High confidence",
     "media": "Medium confidence",
     "baixa": "Low confidence"
+  },
+  "qr": {
+    "foundTitle": "Invoice found",
+    "foundDesc": "We found this invoice's QR code. We can use its data to fill in the expense.",
+    "stateLabel": "State",
+    "useNota": "Use invoice data",
+    "usePhoto": "Continue with the photo",
+    "openOfficial": "Open official invoice",
+    "notFiscal": "This QR code wasn't recognized as a supported invoice. We'll read the image instead.",
+    "fallbackOcr": "I couldn't use this invoice's official data right now. I'll read the image instead.",
+    "privacy": "Nothing is saved before you confirm."
+  },
+  "dupPreview": {
+    "title": "Possible duplicate",
+    "desc": "We found a similar expense already saved. You decide whether to import anyway."
   }
 }
