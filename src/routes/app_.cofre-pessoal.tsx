@@ -440,7 +440,7 @@ function SetupView({
         hint: hint || null,
       };
       await createVaultSettings(row);
-      setMasterKey(built.key);
+      setMasterKey(built.key, userId);
       toast.success("Cofre criado e desbloqueado");
       onReady(row);
     } catch (e) {
@@ -626,7 +626,7 @@ function UnlockView({
       }
       await assertCurrentVaultKey(userId, key);
       await migrateAfterPrimaryUnlock(key);
-      setMasterKey(key);
+      setMasterKey(key, userId);
       setFails(0);
       onUnlocked();
     } catch (e) {
@@ -643,7 +643,7 @@ function UnlockView({
       const key = await unlockWithServerPin(userId, value);
       await assertCurrentVaultKey(userId, key);
       await migrateAfterPrimaryUnlock(key);
-      setMasterKey(key);
+      setMasterKey(key, userId);
       setPin("");
       onUnlocked();
     } catch (e) {
@@ -666,7 +666,7 @@ function UnlockView({
     try {
       const key = await unlockWithBiometric(userId);
       await assertCurrentVaultKey(userId, key);
-      setMasterKey(key);
+      setMasterKey(key, userId);
       onUnlocked();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : i18n.t("cofre:errors.biometricFailed"));
@@ -984,7 +984,7 @@ function VaultMain({
           if (getCachedSecret(r.id)) return;
           try {
             const dec = await decryptOne(masterKey, r);
-            setCachedSecret(r.id, dec.secret);
+            setCachedSecret(r.id, dec.secret, masterKey);
           } catch {
             // ignora um item falho
           }
@@ -1101,14 +1101,14 @@ function VaultMain({
               previousPassword: view.entry.secret.password,
             });
             evictCached(view.entry.id);
-            setCachedSecret(view.entry.id, data.secret);
+            setCachedSecret(view.entry.id, data.secret, masterKey);
             toast.success("Acesso atualizado");
             await reload();
             const fresh = await fetchEntries(userId);
             const updated = fresh.find((x) => x.id === view.entry.id);
             if (updated) {
               const dec = await decryptOne(masterKey, updated);
-              setCachedSecret(updated.id, dec.secret);
+              setCachedSecret(updated.id, dec.secret, masterKey);
               setView({ kind: "detail", entry: dec });
             } else {
               setView({ kind: "list" });
@@ -1367,7 +1367,7 @@ function VaultMain({
               masterKey={masterKey}
               onOpen={async () => {
                 const dec = await decryptOne(masterKey, e);
-                setCachedSecret(e.id, dec.secret);
+                setCachedSecret(e.id, dec.secret, masterKey);
                 setView({ kind: "detail", entry: dec });
               }}
               onToggleFav={async () => {
@@ -1694,7 +1694,7 @@ function EntryCard({
     decryptOne(masterKey, row)
       .then((d) => {
         if (!alive) return;
-        setCachedSecret(row.id, d.secret);
+        setCachedSecret(row.id, d.secret, masterKey);
         setMaskedUser(maskUsername(d.secret.username ?? ""));
       })
       .catch(() => {});
@@ -1707,7 +1707,7 @@ function EntryCard({
     const cached = getCachedSecret(row.id);
     if (cached) return cached;
     const dec = await decryptOne(masterKey, row);
-    setCachedSecret(row.id, dec.secret);
+    setCachedSecret(row.id, dec.secret, masterKey);
     return dec.secret;
   }
 
@@ -3136,7 +3136,7 @@ function HealthView({
           let sec = getCachedSecret(r.id);
           if (!sec) {
             const dec = await decryptOne(masterKey, r);
-            setCachedSecret(r.id, dec.secret);
+            setCachedSecret(r.id, dec.secret, masterKey);
             sec = dec.secret;
           }
           enriched.push({

@@ -15,6 +15,8 @@ import {
 } from "./biometric-login";
 import { clearSecureSession, hasSavedSecureSession, saveSecureSession } from "./secure-session";
 
+import { setVaultSession } from "./vault/use-vault";
+
 export type Profile = {
   id: string;
   nome: string | null;
@@ -75,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 1) listener FIRST
     const { data: sub } = supabase.auth.onAuthStateChange((evt, sess) => {
       sessionObserved = true;
+      setVaultSession(sess);
       setSession(sess);
       if (evt === "TOKEN_REFRESHED" && sess && hasSavedSecureSession()) {
         void saveSecureSession(sess);
@@ -105,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const sess = (event as CustomEvent<{ session?: Session }>).detail?.session ?? null;
       if (!sess) return;
       sessionObserved = true;
+      setVaultSession(sess);
       setSession(sess);
       setLoading(false);
       const uid = sess.user.id;
@@ -127,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((result) => {
         if (!mounted || sessionObserved) return;
         const data = result?.data ?? { session: null };
+        setVaultSession(data.session);
         setSession(data.session);
         const uid = data.session?.user.id ?? null;
         setAuthenticatedUserId(uid);
@@ -147,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
+      setVaultSession(null);
       window.clearTimeout(loadingFallback);
       sub.subscription.unsubscribe();
       window.removeEventListener(
@@ -195,15 +201,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: error ?? null };
     },
     async signOut() {
-      // Limpa a master key do Cofre Pessoal antes de derrubar a sessão
-      // para garantir que outro usuário no mesmo navegador não herde
-      // dados decifrados em memória.
-      try {
-        const mod = await import("@/lib/vault/use-vault");
-        mod.setMasterKey(null);
-      } catch {
-        // ignore — módulo opcional
-      }
+      setVaultSession(null);
       setLoginBioUnlocked(false);
       setLoginBioInProgress(false);
       // Logout encerra a sessão real e remove tokens salvos, mas mantém a
