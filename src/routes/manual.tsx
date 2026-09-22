@@ -1,15 +1,18 @@
+import { SubscriptionPending } from "@/components/SubscriptionPending";
+import { useActiveAccount } from "@/lib/active-account";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { MobileShell } from "@/components/MobileShell";
 import { GastoForm } from "@/components/GastoForm";
-import { addGasto, findPossibleDuplicate } from "@/lib/store";
+import { findPossibleDuplicate } from "@/lib/store";
+import { syncAllForUser } from "@/lib/offline/use-offline-sync";
 import { isOnline } from "@/lib/use-online-status";
-import { enqueueExpense } from "@/lib/offline/offline-expense-queue";
+import { enqueueExpense, listExpenses } from "@/lib/offline/offline-expense-queue";
 import { useAuth } from "@/lib/auth-context";
 import { OfflineSyncStatus } from "@/components/offline/OfflineSyncStatus";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSubscriptionGuard } from "@/lib/subscription-guard";
 import i18n from "@/i18n";
 import {
@@ -31,18 +34,27 @@ export const Route = createFileRoute("/manual")({
 function Manual() {
   const { t } = useTranslation("adicionar");
   const navigate = useNavigate();
-  const { canWriteBasic, requireSubscription } = useSubscriptionGuard();
+  const { canWriteBasic, requireSubscription, loading, error, refresh } = useSubscriptionGuard();
+  const redirected = useRef(false);
   const { user } = useAuth();
   const userId = user?.id ?? null;
+  const { activeOwnerId: ownerId, canCreate } = useActiveAccount();
   const [pending, setPending] = useState<null | (() => void)>(null);
 
   useEffect(() => {
-    if (!canWriteBasic) {
-      requireSubscription(t("requirePlan"));
-      navigate({ to: "/meu-plano" });
+    if (loading || error) return;
+    if (canWriteBasic) {
+      redirected.current = false;
+      return;
     }
-  }, [canWriteBasic, requireSubscription, navigate, t]);
+    if (!redirected.current) {
+      redirected.current = true;
+      requireSubscription(t("requirePlan"));
+      navigate({ to: "/meu-plano", replace: true });
+    }
+  }, [loading, error, canWriteBasic, requireSubscription, navigate, t]);
 
+  if (loading || error) return <SubscriptionPending error={error} retry={refresh} />;
   if (!canWriteBasic) return null;
 
   return (
@@ -67,7 +79,12 @@ function Manual() {
 
       <div className="mt-5">
         <GastoForm
+          key={ownerId}
           onSubmit={async (data) => {
+            if (!userId || !ownerId || !canCreate) {
+              toast.error("Sem permissão para lançar nesta conta.");
+              return;
+            }
             if (!canWriteBasic) {
               requireSubscription(t("requirePlan"));
               return;
@@ -79,7 +96,7 @@ function Manual() {
                 return;
               }
               try {
-                await enqueueExpense(userId, data);
+                await enqueueExpense(ownerId, data, userId);
                 toast.success(
                   "Gasto salvo offline. Ele será sincronizado quando a internet voltar.",
                 );
@@ -92,15 +109,30 @@ function Manual() {
             }
 
             const dup = findPossibleDuplicate(data.valor, data.data, data.estabelecimento);
-            const save = () => {
-              addGasto(data);
-              toast.success(t("manual.toastSaved"));
-              navigate({ to: "/app" });
+            const save = async () => {
+              if (!userId) return;
+              try {
+                const queued = await enqueueExpense(ownerId, data, userId);
+                await syncAllForUser(userId);
+                const stillPending = (await listExpenses(ownerId, userId)).some(
+                  (item) => item.local_id === queued.local_id,
+                );
+                toast.success(
+                  !stillPending
+                    ? t("manual.toastSaved")
+                    : "Gasto salvo no aparelho. Aguardando sincronização.",
+                );
+                void navigate({ to: "/app" });
+              } catch {
+                toast.error(
+                  "Não foi possível concluir. Confira as pendências antes de tentar novamente.",
+                );
+              }
             };
             if (dup) {
               setPending(() => save);
             } else {
-              save();
+              await save();
             }
           }}
         />

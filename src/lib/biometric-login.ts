@@ -123,7 +123,12 @@ export function isLoginBioInProgress(): boolean {
 
     const startedAt = Number(raw);
     const age = Date.now() - startedAt;
-    if (Number.isFinite(startedAt) && startedAt > 0 && age >= 0 && age <= LOGIN_BIO_IN_PROGRESS_MAX_MS) {
+    if (
+      Number.isFinite(startedAt) &&
+      startedAt > 0 &&
+      age >= 0 &&
+      age <= LOGIN_BIO_IN_PROGRESS_MAX_MS
+    ) {
       return true;
     }
 
@@ -170,6 +175,10 @@ export function getLoginBioEmail(): string | null {
 export function persistLoginBioSession(session: Session | null | undefined): boolean {
   if (typeof window === "undefined" || !session?.access_token || !session.refresh_token)
     return false;
+  if (window.AndroidSecureSession) {
+    window.localStorage.removeItem(LOGIN_BIO_SESSION_KEY);
+    return false;
+  }
   try {
     const email = session.user?.email?.trim().toLowerCase() ?? "";
     const payload: PersistedLoginBioSession = {

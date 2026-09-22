@@ -142,6 +142,9 @@ export function applyConsentState(prefs: ConsentPreferences) {
 
 function loadGtmOnce() {
   if (typeof document === "undefined") return;
+  // This page briefly receives OAuth tokens in its fragment. No third-party
+  // script may observe it, even if analytics consent was previously granted.
+  if (window.location.pathname === "/auth/android/callback") return;
   if (document.getElementById(GTM_SCRIPT_ID)) return;
   const w = window as DataLayerWindow;
   w.dataLayer = w.dataLayer || [];

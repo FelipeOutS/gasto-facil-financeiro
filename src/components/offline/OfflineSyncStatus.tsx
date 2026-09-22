@@ -1,3 +1,4 @@
+import { useActiveAccount } from "@/lib/active-account";
 import { useState } from "react";
 import { CloudOff, RefreshCw, Trash2, AlertCircle, Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -20,8 +21,8 @@ import { OfflineSyncHistory } from "./OfflineSyncHistory";
 
 export function OfflineSyncStatus({ className }: { className?: string }) {
   const { user } = useAuth();
-  const userId = user?.id ?? null;
-  const { items, pending, syncNow } = useOfflineExpenseQueue(userId);
+  const { activeOwnerId: userId } = useActiveAccount();
+  const { items, pending, syncNow } = useOfflineExpenseQueue(userId, user?.id);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<OfflineExpense | null>(null);
@@ -47,13 +48,20 @@ export function OfflineSyncStatus({ className }: { className?: string }) {
   }
 
   async function handleRemove(localId: string) {
-    await removeExpense(localId);
-    toast.success("Pendência removida.");
+    try {
+      if (!user?.id || !userId) return;
+      await removeExpense(localId, userId, user.id);
+      toast.success("Pendência removida.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível remover.");
+    }
   }
 
   function handleEdit(it: OfflineExpense) {
-    if (it.status === "syncing") {
-      toast.error("Este gasto está sincronizando. Aguarde finalizar.");
+    if (it.status === "syncing" || it.attempts > 0) {
+      toast.error(
+        "Este gasto já teve uma tentativa de envio. Sincronize ou confira no site antes de alterar.",
+      );
       return;
     }
     setEditing(it);

@@ -1,3 +1,4 @@
+import { useAuth } from "@/lib/auth-context";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import i18n from "i18next";
@@ -31,6 +32,7 @@ type Props = {
 };
 
 export function EditOfflineIncomeDialog({ item, open, onOpenChange }: Props) {
+  const { user } = useAuth();
   const [descricao, setDescricao] = useState("");
   const [valorStr, setValorStr] = useState("");
   const [data, setData] = useState("");
@@ -56,7 +58,7 @@ export function EditOfflineIncomeDialog({ item, open, onOpenChange }: Props) {
   }
 
   async function handleSave() {
-    if (!item) return;
+    if (!item || !user || user.id !== (item.actor_id ?? item.user_id)) return;
     if (item.status === "syncing") {
       toast.error("Esta receita está sincronizando. Aguarde finalizar.");
       return;
@@ -83,16 +85,22 @@ export function EditOfflineIncomeDialog({ item, open, onOpenChange }: Props) {
         data,
         tipo,
       };
-      await updateIncome(item.local_id, {
-        input: newInput,
-        descricao: desc,
-        valor,
-        data,
-        tipo,
-        status: "pending",
-        error_message: undefined,
-        technical_error: undefined,
-      });
+      await updateIncome(
+        item.local_id,
+        {
+          input: newInput,
+          descricao: desc,
+          valor,
+          data,
+          tipo,
+          status: "pending",
+          error_message: undefined,
+          technical_error: undefined,
+        },
+        item.user_id,
+        undefined,
+        user.id,
+      );
       void recordHistoryEvent({
         user_id: item.user_id,
         type: "income",

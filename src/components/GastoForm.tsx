@@ -1,3 +1,4 @@
+import { gruposParcelas } from "@/lib/parcelamento";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -46,10 +47,12 @@ import { usePlan } from "@/lib/use-plan";
 export type GastoFormProps = {
   initial?: Partial<NovoGastoInput>;
   submitLabel?: string;
-  onSubmit: (data: NovoGastoInput) => void;
+  onSubmit: (data: NovoGastoInput) => void | Promise<void>;
 };
 
 export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
+  const submitting = useRef(false);
+  const [saving, setSaving] = useState(false);
   const { t } = useTranslation("gastos");
   const { t: tCommon } = useTranslation("common");
   const { plan } = usePlan();
@@ -112,36 +115,49 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
     setCategoriaId((prev) => (prev === sug ? prev : sug));
   }, [estabelecimento, descricao]);
 
-  const valid = valor > 0 && !!data && !!categoriaId;
+  const parcelasPreview = tipoGasto === "parcelado" ? gruposParcelas(valor, parcelas) : null;
+  const valid =
+    valor > 0 && !!data && !!categoriaId && (tipoGasto !== "parcelado" || !!parcelasPreview);
   const valorPreview = useMemo(() => formatBRL(valor), [valor]);
 
   return (
     <form
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
-        if (!valid) return;
-        onSubmit({
-          valor,
-          data,
-          estabelecimento: estabelecimento.trim(),
-          descricao: descricao.trim() || estabelecimento.trim(),
-          categoriaId,
-          formaPagamento,
-          observacao: observacao.trim() || undefined,
-          imagemUrl: initial?.imagemUrl,
-          tipoGasto,
-          totalParcelas: tipoGasto === "parcelado" ? parcelas : undefined,
-          recorrenteMeses: tipoGasto === "recorrente" ? recorrenteMeses : undefined,
-          recorrenteIntervalo: tipoGasto === "recorrente" ? recorrencia.interval : undefined,
-          recorrenteUnidade: tipoGasto === "recorrente" ? recorrencia.unit : undefined,
+        if (!valid || submitting.current) return;
+        submitting.current = true;
+        setSaving(true);
+        try {
+          await onSubmit({
+            valor,
+            data,
+            estabelecimento: estabelecimento.trim(),
+            descricao: descricao.trim() || estabelecimento.trim(),
+            categoriaId,
+            formaPagamento,
+            observacao: observacao.trim() || undefined,
+            imagemUrl: initial?.imagemUrl,
+            tipoGasto,
+            totalParcelas: tipoGasto === "parcelado" ? parcelas : undefined,
+            recorrenteMeses: tipoGasto === "recorrente" ? recorrenteMeses : undefined,
+            recorrenteIntervalo: tipoGasto === "recorrente" ? recorrencia.interval : undefined,
+            recorrenteUnidade: tipoGasto === "recorrente" ? recorrencia.unit : undefined,
 
-          gastoFixo: gastoFixo || tipoGasto === "recorrente",
-          essencial,
-          cartaoId: formaPagamento === "credito" ? cartaoId : undefined,
-          invoiceMonth:
-            invoiceMonth && /^\d{4}-\d{2}$/.test(invoiceMonth) ? invoiceMonth : undefined,
-          fornecedorId: fornecedorId || null,
-        });
+            gastoFixo: gastoFixo || tipoGasto === "recorrente",
+            essencial,
+            cartaoId: formaPagamento === "credito" ? cartaoId : undefined,
+            invoiceMonth:
+              invoiceMonth && /^\d{4}-\d{2}$/.test(invoiceMonth) ? invoiceMonth : undefined,
+            fornecedorId: fornecedorId || null,
+          });
+        } catch {
+          toast.error(
+            "Não foi possível concluir. Confira as pendências antes de tentar novamente.",
+          );
+        } finally {
+          submitting.current = false;
+          setSaving(false);
+        }
       }}
       className="space-y-5"
     >
@@ -357,7 +373,13 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
               className="mt-1 h-11 bg-card-elevated"
             />
             <p className="mt-1 text-xs text-muted-foreground num">
-              {t("form.parcelasPreview", { n: parcelas, valor: formatBRL(valor / parcelas) })}
+              {parcelasPreview
+                ? parcelasPreview
+                    .map((p) =>
+                      t("form.parcelasPreview", { n: p.quantidade, valor: formatBRL(p.valor) }),
+                    )
+                    .join(" + ")
+                : t("form.parcelasInvalidas")}
             </p>
           </div>
         )}
@@ -468,7 +490,7 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
       <Button
         type="submit"
         size="lg"
-        disabled={!valid}
+        disabled={!valid || saving}
         className="h-14 w-full rounded-2xl text-base font-semibold shadow-elevated"
       >
         {submitLabel ?? t("form.salvarGasto")}

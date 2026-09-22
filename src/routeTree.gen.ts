@@ -126,6 +126,7 @@ import { Route as ContasAReceberIdReceberRouteImport } from './routes/contas-a-r
 import { Route as ContasAReceberIdEditarRouteImport } from './routes/contas-a-receber.$id.editar'
 import { Route as ContasAPagarIdEditarRouteImport } from './routes/contas-a-pagar.$id.editar'
 import { Route as CartoesIdEditarRouteImport } from './routes/cartoes.$id.editar'
+import { Route as AuthAndroidCallbackRouteImport } from './routes/auth.android.callback'
 import { Route as AssinaturasIdEditarRouteImport } from './routes/assinaturas.$id.editar'
 import { Route as AppAjustesPreferenciasFinanceirasRouteImport } from './routes/app_.ajustes.preferencias-financeiras'
 import { Route as AppAjustesNotificacoesRouteImport } from './routes/app_.ajustes.notificacoes'
@@ -747,6 +748,11 @@ const CartoesIdEditarRoute = CartoesIdEditarRouteImport.update({
   path: '/cartoes/$id/editar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthAndroidCallbackRoute = AuthAndroidCallbackRouteImport.update({
+  id: '/auth/android/callback',
+  path: '/auth/android/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AssinaturasIdEditarRoute = AssinaturasIdEditarRouteImport.update({
   id: '/assinaturas/$id/editar',
   path: '/assinaturas/$id/editar',
@@ -1023,6 +1029,7 @@ export interface FileRoutesByFullPath {
   '/app/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/app/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
+  '/auth/android/callback': typeof AuthAndroidCallbackRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
   '/contas-a-receber/$id/editar': typeof ContasAReceberIdEditarRoute
@@ -1170,6 +1177,7 @@ export interface FileRoutesByTo {
   '/app/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/app/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
+  '/auth/android/callback': typeof AuthAndroidCallbackRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
   '/contas-a-receber/$id/editar': typeof ContasAReceberIdEditarRoute
@@ -1320,6 +1328,7 @@ export interface FileRoutesById {
   '/app_/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/app_/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
+  '/auth/android/callback': typeof AuthAndroidCallbackRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
   '/contas-a-pagar/$id/editar': typeof ContasAPagarIdEditarRoute
   '/contas-a-receber/$id/editar': typeof ContasAReceberIdEditarRoute
@@ -1471,6 +1480,7 @@ export interface FileRouteTypes {
     | '/app/ajustes/notificacoes'
     | '/app/ajustes/preferencias-financeiras'
     | '/assinaturas/$id/editar'
+    | '/auth/android/callback'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
     | '/contas-a-receber/$id/editar'
@@ -1618,6 +1628,7 @@ export interface FileRouteTypes {
     | '/app/ajustes/notificacoes'
     | '/app/ajustes/preferencias-financeiras'
     | '/assinaturas/$id/editar'
+    | '/auth/android/callback'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
     | '/contas-a-receber/$id/editar'
@@ -1767,6 +1778,7 @@ export interface FileRouteTypes {
     | '/app_/ajustes/notificacoes'
     | '/app_/ajustes/preferencias-financeiras'
     | '/assinaturas/$id/editar'
+    | '/auth/android/callback'
     | '/cartoes/$id/editar'
     | '/contas-a-pagar/$id/editar'
     | '/contas-a-receber/$id/editar'
@@ -1913,6 +1925,7 @@ export interface RootRouteChildren {
   ApiPublicClientLoadErrorRoute: typeof ApiPublicClientLoadErrorRoute
   ApiPublicCspReportRoute: typeof ApiPublicCspReportRoute
   AssinaturasIdEditarRoute: typeof AssinaturasIdEditarRoute
+  AuthAndroidCallbackRoute: typeof AuthAndroidCallbackRoute
   CartoesIdEditarRoute: typeof CartoesIdEditarRoute
   ContasAPagarIdEditarRoute: typeof ContasAPagarIdEditarRoute
   ContasAReceberIdEditarRoute: typeof ContasAReceberIdEditarRoute
@@ -2770,6 +2783,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartoesIdEditarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/android/callback': {
+      id: '/auth/android/callback'
+      path: '/auth/android/callback'
+      fullPath: '/auth/android/callback'
+      preLoaderRoute: typeof AuthAndroidCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/assinaturas/$id/editar': {
       id: '/assinaturas/$id/editar'
       path: '/assinaturas/$id/editar'
@@ -3137,6 +3157,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicClientLoadErrorRoute: ApiPublicClientLoadErrorRoute,
   ApiPublicCspReportRoute: ApiPublicCspReportRoute,
   AssinaturasIdEditarRoute: AssinaturasIdEditarRoute,
+  AuthAndroidCallbackRoute: AuthAndroidCallbackRoute,
   CartoesIdEditarRoute: CartoesIdEditarRoute,
   ContasAPagarIdEditarRoute: ContasAPagarIdEditarRoute,
   ContasAReceberIdEditarRoute: ContasAReceberIdEditarRoute,

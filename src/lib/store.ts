@@ -1,3 +1,5 @@
+import { parcelasEmCentavos } from "./parcelamento";
+import { authorizeOfflineWrite, validateOwnerReferences } from "./offline/write-authorization";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   type Gasto,
@@ -37,6 +39,8 @@ import {
 
 import { validateFinancialAmount, financialAmountMessage } from "./financial-limits";
 import { supabase } from "@/integrations/supabase/client";
+import { offlineRowKey, persistOfflineRows, INCOME_FIELDS } from "./offline/expense-idempotency";
+import { saveOfflineSnapshot } from "./offline/offline-snapshot";
 import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { markContaAPagarPaid, unmarkContaAPagarPaid } from "@/lib/contas.functions";
 
@@ -132,6 +136,7 @@ type MovMetaInsert = TablesInsert<"movimentacoes_meta">;
 // ============================================================
 
 let activeUserId: string | null = null;
+let userSessionGeneration = 0;
 
 const SUFFIXES = {
   // bookkeeping
@@ -171,6 +176,7 @@ function uid(): string {
 // ---------- pub/sub ----------
 const listeners = new Set<() => void>();
 function emit() {
+  if (activeUserId && hydratedUserId === activeUserId && hydrationStatus === "ready") saveOfflineSnapshot(activeUserId, memCategorias, memGastos);
   listeners.forEach((l) => l());
 }
 function subscribe(l: () => void) {
@@ -223,9 +229,17 @@ const sbAny = supabase as unknown as any;
 // ============================================================
 // USER SESSION
 // ============================================================
+let authenticatedActorId: string | null = null;
+export function setAuthenticatedUserId(uid: string | null) {
+  if (authenticatedActorId === uid) return;
+  authenticatedActorId = uid;
+  setActiveUserId(null);
+}
+
 export function setActiveUserId(uid: string | null) {
   if (activeUserId === uid) return;
   activeUserId = uid;
+  userSessionGeneration += 1;
   hydratedUserId = null;
   hydrationInFlightUserId = null;
   hydrationInFlightPromise = null;
@@ -971,6 +985,11 @@ async function ensureDefaultBancos(userId: string): Promise<void> {
 
 // ---------- Hydrate everything ----------
 export async function hydrateUser(userId: string): Promise<void> {
+  if (activeUserId !== userId) return;
+  const generation = userSessionGeneration;
+  let expired = false;
+  const isCurrent = () =>
+    !expired && activeUserId === userId && generation === userSessionGeneration;
   if (hydratedUserId === userId && hydrationStatus === "ready") return;
   if (hydrationInFlightPromise && hydrationInFlightUserId === userId) {
     return hydrationInFlightPromise;
@@ -981,12 +1000,14 @@ export async function hydrateUser(userId: string): Promise<void> {
     setHydrationStatus("loading");
     try {
       await Promise.all([ensureDefaultCategorias(userId), ensureDefaultBancos(userId)]);
+      if (!isCurrent()) return;
 
       // Load categorias + bancos first (needed for FK mapping)
       const [catRes, bancoRes] = await Promise.all([
         supabase.from("categorias").select("*").eq("user_id", userId),
         supabase.from("bancos").select("*").eq("user_id", userId),
       ]);
+      if (!isCurrent()) return;
       if (catRes.error) throw catRes.error;
       if (bancoRes.error) throw bancoRes.error;
 
@@ -1009,6 +1030,7 @@ export async function hydrateUser(userId: string): Promise<void> {
 
       // Load metas (needed before mov FK mapping)
       const metasRes = await supabase.from("metas_financeiras").select("*").eq("user_id", userId);
+      if (!isCurrent()) return;
       if (metasRes.error) throw metasRes.error;
       metaKeyToUuid.clear();
       const metaUuidToKey = new Map<string, string>();
@@ -1050,6 +1072,7 @@ export async function hydrateUser(userId: string): Promise<void> {
         sbAny.from("faturas_cartao").select("*").eq("user_id", userId),
       ]);
 
+      if (!isCurrent()) return;
       if (gastosRes.error) throw gastosRes.error;
       if (receitasRes.error) throw receitasRes.error;
       if (limitesRes.error) throw limitesRes.error;
@@ -1111,16 +1134,31 @@ export async function hydrateUser(userId: string): Promise<void> {
         console.warn("[store] reclassificarCategoriasExistentes failed", err);
       });
     } catch (e) {
+      if (!isCurrent()) return;
       console.error("[store] hydrateUser failed", e);
       setHydrationStatus("error");
     } finally {
-      if (hydrationInFlightUserId === userId) {
+      if (isCurrent() && hydrationInFlightUserId === userId) {
         hydrationInFlightUserId = null;
         hydrationInFlightPromise = null;
       }
     }
   })();
 
+  const work = hydrationInFlightPromise;
+  let timeout: ReturnType<typeof setTimeout>;
+  const deadline = new Promise<void>((resolve) => {
+    timeout = setTimeout(() => {
+      if (isCurrent()) {
+        setHydrationStatus("error");
+        hydrationInFlightUserId = null;
+        hydrationInFlightPromise = null;
+      }
+      expired = true;
+      resolve();
+    }, 30000);
+  });
+  hydrationInFlightPromise = Promise.race([work, deadline]).finally(() => clearTimeout(timeout));
   return hydrationInFlightPromise;
 }
 
@@ -1794,8 +1832,10 @@ export async function reclassificarCategoriasExistentes(): Promise<number> {
 
 export async function refreshGastos() {
   if (!activeUserId) return;
-  const { data } = await supabase.from("gastos").select("*").eq("user_id", activeUserId);
-  if (!data) return;
+  const userId = activeUserId;
+  const generation = userSessionGeneration;
+  const { data } = await supabase.from("gastos").select("*").eq("user_id", userId);
+  if (!data || activeUserId !== userId || generation !== userSessionGeneration) return;
   const catUuidToKey = new Map<string, string>();
   for (const [key, uuid] of categoriaKeyToUuid.entries()) catUuidToKey.set(uuid, key);
   memGastos = normalizeGastosForCalculations(
@@ -1849,6 +1889,7 @@ export type NovoGastoInput = {
 function buildGastosFromInput(
   input: NovoGastoInput,
   userId: string,
+  resolveCategory = categoriaUuidFor,
 ): { row: GastoInsert; client: Gasto }[] {
   const now = new Date().toISOString();
   const isFaturaImport = !!input.origem?.toLowerCase().includes("fatura");
@@ -1867,7 +1908,7 @@ function buildGastosFromInput(
     });
     if (guess && guess !== "outros") input = { ...input, categoriaId: guess };
   }
-  const catUuid = categoriaUuidFor(input.categoriaId);
+  const catUuid = resolveCategory(input.categoriaId);
   const horarioVal = input.horario && input.horario.trim() ? input.horario.trim() : null;
   const origemVal = input.origem && input.origem.trim() ? input.origem.trim() : null;
   const out: { row: GastoInsert; client: Gasto }[] = [];
@@ -1924,9 +1965,10 @@ function buildGastosFromInput(
     });
   } else if (tipo === "parcelado" && (input.totalParcelas ?? 0) > 1) {
     const total = input.totalParcelas!;
-    const valorParcela = Math.round((input.valor / total) * 100) / 100;
+    const valoresCentavos = parcelasEmCentavos(input.valor, total);
     const grupo = crypto.randomUUID();
     for (let i = 0; i < total; i++) {
+      const valorParcela = valoresCentavos[i] / 100;
       const d = addMonthsPreservingDay(baseDate, i);
       const iso = toLocalISODate(d);
       const id = crypto.randomUUID();
@@ -2168,42 +2210,45 @@ function addGastoUnchecked(input: NovoGastoInput): Gasto[] {
  *
  * Quando `offlineClientId` é informado, ele vai como `offline_client_id`
  * no insert. Há um índice único parcial em `(user_id, offline_client_id)`
- * — se já existir um gasto com esse par, o Postgres retorna 23505 e
- * tratamos como `ok: true, duplicate: true` (idempotente).
+ * — confirmação idempotente exige reler a mesma operação na mesma conta.
  */
 export async function addGastoAwait(
   input: NovoGastoInput,
   userId: string,
   offlineClientId?: string,
+  actorId = userId,
+  signal = new AbortController().signal,
 ): Promise<{ ok: boolean; error?: string; duplicate?: boolean }> {
-  if (!userId) return { ok: false, error: "no_user" };
-  const previousActive = activeUserId;
-  if (activeUserId !== userId) activeUserId = userId;
-  let built;
-  try {
-    built = buildGastosFromInput(input, userId);
-  } finally {
-    if (activeUserId !== previousActive) activeUserId = previousActive;
-  }
-  const rows = built.map((b) => {
+  const generation = userSessionGeneration;
+  const authError = await authorizeOfflineWrite(userId, actorId, signal) ?? await validateOwnerReferences(userId, input, signal);
+  if (authError) return { ok: false, error: authError };
+  const { data: categories, error: categoryError } = await supabase.from("categorias").select("id,legacy_id").eq("user_id", userId).abortSignal(signal);
+  if (categoryError || signal.aborted) return {ok: false, error: categoryError?.message ?? "Envio interrompido."};
+  const categoryMap = new Map((categories ?? []).map(row => [row.legacy_id ?? row.id, row.id]));
+  if (!validateFinancialAmount(input.valor).ok) return { ok: false, error: "Valor inválido." };
+  const built = buildGastosFromInput(input, userId, key => categoryMap.get(key) ?? (categories?.some(row => row.id === key) ? key : null));
+  const rows = built.map((b, index) => {
     const row = b.row as GastoInsert & { offline_client_id?: string | null };
-    if (offlineClientId) row.offline_client_id = offlineClientId;
+    if (offlineClientId) row.offline_client_id = offlineRowKey(offlineClientId, index);
     return row;
   });
-  const { error } = await supabase.from("gastos").insert(rows);
-  if (error) {
-    // 23505 = unique_violation. Pelo índice parcial, isso só ocorre quando
-    // o mesmo (user_id, offline_client_id) já foi gravado em uma tentativa
-    // anterior. Idempotente: considera sucesso e deixa a fila remover.
-    const code = (error as { code?: string }).code;
-    const msg = error.message ?? "";
-    if (code === "23505" || /duplicate key|unique/i.test(msg)) {
-      return { ok: true, duplicate: true };
-    }
-    return { ok: false, error: error.message };
+  const insert = async () => {
+    const { error } = await supabase.from("gastos").insert(rows).abortSignal(signal);
+    return { error: error?.message, code: error?.code };
+  };
+  const result = offlineClientId ? await persistOfflineRows(rows, async () => {
+    const { data, error } = await supabase.from("gastos").select("*").eq("user_id", userId)
+      .in("offline_client_id", rows.map((row) => row.offline_client_id!)).abortSignal(signal);
+    return { rows: (data ?? []) as unknown as Record<string, unknown>[], error: error?.message };
+  }, insert, {constraint: "gastos_user_offline_client_id_uniq"}) : await insert().then(({ error }) => ({ ok: !error, error, duplicate: false }));
+  if (!result.ok) return result;
+  if (activeUserId === userId && generation === userSessionGeneration && hydrationInFlightPromise) await hydrationInFlightPromise;
+  if (result.duplicate) {
+    if (!signal.aborted && activeUserId === userId && generation === userSessionGeneration) await refreshGastos();
+    return result;
   }
-  if (activeUserId === userId) {
-    memGastos = [...memGastos, ...built.map((b) => b.client)];
+  if (!signal.aborted && activeUserId === userId && generation === userSessionGeneration) {
+    memGastos = [...memGastos.filter(row => !built.some(item => item.client.id === row.id)), ...built.map((b) => b.client)];
     emit();
     if (input.estabelecimento) rememberCategoryFor(input.estabelecimento, input.categoriaId);
   }
@@ -2635,8 +2680,9 @@ export type NovaReceitaInput = {
   clienteId?: string | null;
 };
 
-export async function addReceita(input: NovaReceitaInput): Promise<Receita[]> {
-  if (!activeUserId) return [];
+export async function addReceita(input: NovaReceitaInput, ownerId = activeUserId, actorId?: string): Promise<Receita[]> {
+  if (!ownerId) return [];
+  const generation = userSessionGeneration;
   if (input.recorrente && !canWriteFinancial) {
     if (canWriteBasicFinancial && typeof window !== "undefined") {
       void import("sonner").then(({ toast }) => {
@@ -2649,6 +2695,11 @@ export async function addReceita(input: NovaReceitaInput): Promise<Receita[]> {
   }
   if (!ensureCanWrite("addReceita", { allowBasic: true })) {
     throw new Error("Você precisa de uma assinatura ativa para usar este recurso.");
+  }
+  if (actorId) {
+    const signal = new AbortController().signal;
+    const error = await authorizeOfflineWrite(ownerId, actorId, signal) ?? await validateOwnerReferences(ownerId, input, signal);
+    if (error) throw new Error(error);
   }
   const amount = validateFinancialAmount(input.valor);
   if (!amount.ok) {
@@ -2693,7 +2744,7 @@ export async function addReceita(input: NovaReceitaInput): Promise<Receita[]> {
       });
       rows.push({
         id,
-        user_id: activeUserId,
+        user_id: ownerId,
         descricao: input.descricao,
         valor: input.valor,
         data: iso,
@@ -2722,7 +2773,7 @@ export async function addReceita(input: NovaReceitaInput): Promise<Receita[]> {
     });
     rows.push({
       id,
-      user_id: activeUserId,
+      user_id: ownerId,
       descricao: input.descricao,
       valor: input.valor,
       data: input.data,
@@ -2736,7 +2787,7 @@ export async function addReceita(input: NovaReceitaInput): Promise<Receita[]> {
   // Aplica otimisticamente para UI responsiva, mas aguarda o insert e
   // reverte se houver falha — evita toast de sucesso silencioso quando
   // RLS, quota ou trigger rejeita a operação.
-  memReceitas = [...memReceitas, ...created];
+  if (activeUserId === ownerId && generation === userSessionGeneration) memReceitas = [...memReceitas, ...created];
   emit();
   const createdIds = new Set(created.map((c) => c.id));
   const { error } = await supabase.from("receitas").insert(rows);
@@ -2762,8 +2813,7 @@ export async function addReceita(input: NovaReceitaInput): Promise<Receita[]> {
  *
  * Quando `offlineClientId` é informado, ele vai como `offline_client_id`
  * no insert. Há um índice único parcial em `(user_id, offline_client_id)`
- * — se já existir, o Postgres retorna 23505 e tratamos como
- * `ok: true, duplicate: true` (idempotente).
+ * — confirmação idempotente exige constraint conhecida e operação idêntica.
  *
  * Não aplica recorrência: a fila offline cobre apenas receita única.
  */
@@ -2771,8 +2821,15 @@ export async function addReceitaAwait(
   input: NovaReceitaInput,
   userId: string,
   offlineClientId?: string,
+  actorId = userId,
+  signal = new AbortController().signal,
 ): Promise<{ ok: boolean; error?: string; duplicate?: boolean }> {
-  if (!userId) return { ok: false, error: "no_user" };
+  const generation = userSessionGeneration;
+  const authError =
+    (await authorizeOfflineWrite(userId, actorId, signal)) ??
+    (await validateOwnerReferences(userId, input, signal));
+  if (authError) return { ok: false, error: authError };
+  if (input.recorrente) return { ok: false, error: "A fila offline aceita apenas receita única." };
   const amountAwait = validateFinancialAmount(input.valor);
   if (!amountAwait.ok) {
     return { ok: false, error: financialAmountMessage(amountAwait.code) };
@@ -2795,19 +2852,49 @@ export async function addReceitaAwait(
   } as ReceitaInsert & { offline_client_id?: string | null };
   if (offlineClientId) row.offline_client_id = offlineClientId;
 
-  const { error } = await supabase.from("receitas").insert(row);
-  if (error) {
-    const code = (error as { code?: string }).code;
-    const msg = error.message ?? "";
-    if (code === "23505" || /duplicate key|unique/i.test(msg)) {
-      return { ok: true, duplicate: true };
+  const insert = async () => {
+    const { error } = await supabase.from("receitas").insert(row).abortSignal(signal);
+    return { error: error?.message, code: error?.code };
+  };
+  let confirmedRows: (ReceitaRow & { deleted_at?: string | null })[] = [];
+  const result = offlineClientId
+    ? await persistOfflineRows(
+        [row],
+        async () => {
+          const { data, error } = await supabase
+            .from("receitas")
+            .select("*")
+            .eq("user_id", userId)
+            .eq("offline_client_id", offlineClientId)
+            .abortSignal(signal);
+          confirmedRows = data ?? [];
+          return {
+            rows: (data ?? []) as unknown as Record<string, unknown>[],
+            error: error?.message,
+          };
+        },
+        insert,
+        { fields: INCOME_FIELDS, constraint: "receitas_user_offline_client_id_uniq" },
+      )
+    : await insert().then(({ error }) => ({ ok: !error, error, duplicate: false }));
+  if (!result.ok) return result;
+  if (activeUserId === userId && generation === userSessionGeneration && hydrationInFlightPromise)
+    await hydrationInFlightPromise;
+  if (result.duplicate) {
+    if (!signal.aborted && activeUserId === userId && generation === userSessionGeneration) {
+      const confirmedIds = new Set(confirmedRows.map((row) => row.id));
+      memReceitas = [
+        ...memReceitas.filter((row) => !confirmedIds.has(row.id)),
+        ...confirmedRows.filter((row) => !row.deleted_at).map(rowToReceita),
+      ];
+      emit();
     }
-    return { ok: false, error: error.message };
+    return result;
   }
-  if (activeUserId === userId) {
+  if (!signal.aborted && activeUserId === userId && generation === userSessionGeneration) {
     const now = new Date().toISOString();
     memReceitas = [
-      ...memReceitas,
+      ...memReceitas.filter((row) => row.id !== id),
       {
         id,
         descricao: input.descricao,

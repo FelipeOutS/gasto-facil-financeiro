@@ -28,12 +28,15 @@ const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.serve
 const { handleDueIntent } = await import("../src/server/whatsapp-contas.server");
 const { todayISOInAppTz } = await import("../src/server/contas-vencimento.server");
 
+let lastMessageAt = 0;
 function msg(texto: string, externalId = `ext-${Math.random().toString(36).slice(2, 10)}`) {
+  // Model ordered user replies without accidental millisecond ties on fast runners.
+  lastMessageAt = Math.max(Date.now(), lastMessageAt + 1);
   return {
     external_id: externalId,
     telefone: "5511999998888",
     texto,
-    recebida_em: new Date().toISOString(),
+    recebida_em: new Date(lastMessageAt).toISOString(),
     authorizedUserId: "u1",
   } as const;
 }

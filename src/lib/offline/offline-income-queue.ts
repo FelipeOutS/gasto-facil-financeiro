@@ -2,7 +2,7 @@
  * Fila offline de receitas manuais (IndexedDB).
  *
  * - Por usuário (`user_id` é parte do registro e usamos índice).
- * - Salva apenas os dados da receita. Nunca tokens, senhas ou refresh tokens.
+ * - Salva apenas os dados do receita. Nunca tokens, senhas ou refresh tokens.
  * - Cada item tem um `local_id` único usado como chave primária.
  *
  * Esta fila é usada APENAS pelo cadastro manual de receitas. Importação,
@@ -11,6 +11,8 @@
 
 import type { NovaReceitaInput } from "@/lib/store";
 import { recordHistoryEvent } from "./offline-sync-history";
+import { validateFinancialAmount } from "../financial-limits";
+import { isValidOfflineDate } from "./offline-validation";
 
 const DB_NAME = "gf_offline_income";
 const DB_VERSION = 1;
@@ -20,8 +22,12 @@ export type OfflineIncomeStatus = "pending" | "syncing" | "failed" | "synced";
 
 export type OfflineIncome = {
   local_id: string;
+  /** Immutable destination owner. */
   user_id: string;
+  /** Authenticated creator; legacy items belong to user_id. */
+  actor_id?: string;
   input: NovaReceitaInput;
+  /** Descrição visível na lista de pendências */
   descricao: string;
   valor: number;
   data: string;
@@ -68,10 +74,26 @@ async function tx<T>(
       .then((r) => {
         result = r;
       })
-      .catch(reject);
-    t.oncomplete = () => resolve(result);
-    t.onerror = () => reject(t.error);
-    t.onabort = () => reject(t.error);
+      .catch((error) => {
+        try {
+          t.abort();
+        } catch {
+          /* already complete */
+        }
+        reject(error);
+      });
+    t.oncomplete = () => {
+      db.close();
+      resolve(result);
+    };
+    t.onerror = () => {
+      db.close();
+      reject(t.error);
+    };
+    t.onabort = () => {
+      db.close();
+      reject(t.error);
+    };
   });
 }
 
@@ -101,12 +123,22 @@ function genId(): string {
 export async function enqueueIncome(
   userId: string,
   input: NovaReceitaInput,
+  actorId = userId,
 ): Promise<OfflineIncome> {
   if (!isBrowser()) throw new Error("offline queue unavailable");
+  if (
+    !userId ||
+    !actorId ||
+    !validateFinancialAmount(input.valor).ok ||
+    !isValidOfflineDate(input.data)
+  )
+    throw new Error("Informe uma conta, data e valor válidos.");
+  if (input.recorrente) throw new Error("A fila offline aceita apenas receita única.");
   const now = Date.now();
   const item: OfflineIncome = {
     local_id: genId(),
     user_id: userId,
+    actor_id: actorId,
     input,
     descricao: (input.descricao || "Receita").trim(),
     valor: input.valor,
@@ -132,18 +164,22 @@ export async function enqueueIncome(
   return item;
 }
 
-export async function listIncomes(userId: string): Promise<OfflineIncome[]> {
+export async function listIncomes(
+  userId: string,
+  actorId = userId,
+  allOwners = false,
+): Promise<OfflineIncome[]> {
   if (!isBrowser()) return [];
   return tx("readonly", (s) => {
     return new Promise<OfflineIncome[]>((resolve, reject) => {
       const out: OfflineIncome[] = [];
       const idx = s.index("user_id");
-      const req = idx.openCursor(IDBKeyRange.only(userId));
+      const req = allOwners ? s.openCursor() : idx.openCursor(IDBKeyRange.only(userId));
       req.onsuccess = () => {
         const cur = req.result;
         if (cur) {
           const v = cur.value as OfflineIncome;
-          if (v.status !== "synced") out.push(v);
+          if (v.status !== "synced" && (v.actor_id ?? v.user_id) === actorId) out.push(v);
           cur.continue();
         } else {
           out.sort((a, b) => a.created_at - b.created_at);
@@ -155,21 +191,64 @@ export async function listIncomes(userId: string): Promise<OfflineIncome[]> {
   });
 }
 
+export async function countPending(userId: string): Promise<number> {
+  const all = await listIncomes(userId);
+  return all.filter((e) => e.status !== "synced").length;
+}
+
 /** Remove sem registrar evento no histórico (uso interno do sync). */
-export async function deleteIncomeSilent(localId: string): Promise<void> {
+export async function deleteIncomeSilent(
+  localId: string,
+  userId: string,
+  attempt: number,
+  actorId = userId,
+): Promise<void> {
   await tx("readwrite", (s) => {
-    s.delete(localId);
+    return new Promise<void>((resolve, reject) => {
+      const request = s.get(localId);
+      request.onsuccess = () => {
+        const current = request.result as OfflineIncome | undefined;
+        if (
+          current?.user_id === userId &&
+          (current.actor_id ?? current.user_id) === actorId &&
+          current.attempts === attempt &&
+          current.status === "syncing"
+        )
+          s.delete(localId);
+        resolve();
+      };
+      request.onerror = () => reject(request.error);
+    });
   });
   emit();
 }
 
-export async function removeIncome(localId: string): Promise<void> {
+export async function removeIncome(
+  localId: string,
+  userId: string,
+  actorId = userId,
+): Promise<void> {
   let snapshot: OfflineIncome | undefined;
   await tx("readwrite", (s) => {
     return new Promise<void>((resolve, reject) => {
       const g = s.get(localId);
       g.onsuccess = () => {
         snapshot = g.result as OfflineIncome | undefined;
+        if (
+          snapshot &&
+          (snapshot.user_id !== userId || (snapshot.actor_id ?? snapshot.user_id) !== actorId)
+        ) {
+          reject(new Error("Esta receita pertence a outra conta."));
+          return;
+        }
+        if (snapshot && (snapshot.status === "syncing" || snapshot.attempts > 0)) {
+          reject(
+            new Error(
+              "Este envio precisa ser conferido antes de remover. Tente sincronizar novamente.",
+            ),
+          );
+          return;
+        }
         s.delete(localId);
         resolve();
       };
@@ -188,7 +267,13 @@ export async function removeIncome(localId: string): Promise<void> {
   }
 }
 
-export async function updateIncome(localId: string, patch: Partial<OfflineIncome>): Promise<void> {
+export async function updateIncome(
+  localId: string,
+  patch: Partial<OfflineIncome>,
+  userId: string,
+  expectedAttempt?: number,
+  actorId = userId,
+): Promise<void> {
   await tx("readwrite", (s) => {
     return new Promise<void>((resolve, reject) => {
       const req = s.get(localId);
@@ -198,9 +283,35 @@ export async function updateIncome(localId: string, patch: Partial<OfflineIncome
           resolve();
           return;
         }
+        if (current.user_id !== userId || (current.actor_id ?? current.user_id) !== actorId) {
+          reject(new Error("Esta receita pertence a outra conta."));
+          return;
+        }
+        if (
+          expectedAttempt !== undefined &&
+          (current.attempts !== expectedAttempt || current.status !== "syncing")
+        ) {
+          resolve();
+          return;
+        }
+        if (
+          patch.input &&
+          (!validateFinancialAmount(patch.input.valor).ok || !isValidOfflineDate(patch.input.data))
+        ) {
+          reject(new Error("Informe uma data e valor válidos."));
+          return;
+        }
+        if (patch.input && (current.status === "syncing" || current.attempts > 0)) {
+          reject(new Error("Este envio precisa ser conferido antes de editar."));
+          return;
+        }
         const merged: OfflineIncome = {
           ...current,
           ...patch,
+          local_id: current.local_id,
+          user_id: current.user_id,
+          actor_id: current.actor_id,
+          attempts: current.attempts,
           input: patch.input ?? current.input,
           updated_at: Date.now(),
         };
@@ -214,21 +325,32 @@ export async function updateIncome(localId: string, patch: Partial<OfflineIncome
   emit();
 }
 
-/** Marca como em sincronização para evitar processamentos paralelos. */
-export async function claimForSync(localId: string): Promise<boolean> {
-  let claimed = false;
+/** Marca um item como em sincronização para evitar processamentos paralelos. */
+export async function claimForSync(
+  localId: string,
+  userId: string,
+  actorId = userId,
+): Promise<OfflineIncome | null> {
+  let claimed: OfflineIncome | null = null;
   await tx("readwrite", (s) => {
     return new Promise<void>((resolve, reject) => {
       const req = s.get(localId);
       req.onsuccess = () => {
         const cur = req.result as OfflineIncome | undefined;
-        if (!cur) return resolve();
-        if (cur.status === "syncing") return resolve();
+        if (
+          !cur ||
+          cur.user_id !== userId ||
+          (cur.actor_id ?? cur.user_id) !== actorId ||
+          cur.status === "synced"
+        )
+          return resolve();
+        if (cur.status === "syncing" && Date.now() - cur.updated_at < 120000) return resolve();
         cur.status = "syncing";
+        cur.attempts += 1;
         cur.updated_at = Date.now();
         const put = s.put(cur);
         put.onsuccess = () => {
-          claimed = true;
+          claimed = cur;
           resolve();
         };
         put.onerror = () => reject(put.error);

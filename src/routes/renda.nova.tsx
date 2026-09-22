@@ -1,5 +1,6 @@
+import { SubscriptionPending } from "@/components/SubscriptionPending";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, Home, Plus } from "lucide-react";
 import { MobileShell } from "@/components/MobileShell";
@@ -34,7 +35,8 @@ export const Route = createFileRoute("/renda/nova")({
 function NovaReceitaPage() {
   const { t: tBase } = useTranslation("renda");
   const { profile } = useAuth();
-  const { canWriteBasic, requireSubscription } = useSubscriptionGuard();
+  const { canWriteBasic, requireSubscription, loading, error, refresh } = useSubscriptionGuard();
+  const redirected = useRef(false);
   const t = useMemo(
     () => makeRevenueT(tBase, revenueSuffix(profile?.tipo_cadastro as TipoCadastro)),
     [tBase, profile?.tipo_cadastro],
@@ -43,12 +45,19 @@ function NovaReceitaPage() {
   const search = Route.useSearch();
 
   useEffect(() => {
-    if (!canWriteBasic) {
-      requireSubscription();
-      navigate({ to: "/meu-plano" });
+    if (loading || error) return;
+    if (canWriteBasic) {
+      redirected.current = false;
+      return;
     }
-  }, [canWriteBasic, requireSubscription, navigate]);
+    if (!redirected.current) {
+      redirected.current = true;
+      requireSubscription();
+      navigate({ to: "/meu-plano", replace: true });
+    }
+  }, [loading, error, canWriteBasic, requireSubscription, navigate]);
 
+  if (loading || error) return <SubscriptionPending error={error} retry={refresh} />;
   if (!canWriteBasic) return null;
 
   const preset: ReceitaFormPreset = {

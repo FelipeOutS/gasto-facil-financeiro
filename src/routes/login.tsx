@@ -81,29 +81,40 @@ function LoginForm() {
   }
 
   useEffect(() => {
-    const secureBridge = hasSecureSessionBridge();
-    const secureHas = secureBridge && hasSavedSecureSession();
-    console.log("[SecureSession] bridge existe:", secureBridge);
-    console.log("[SecureSession] tem sessão segura:", secureHas);
-    if (secureBridge && secureHas) {
-      const savedEmail = getSavedSecureEmail();
-      setBioAvailable(true);
-      setBioEnabled(true);
-      setBioMode(true);
-      if (savedEmail) setEmail(savedEmail);
-      return;
+    function syncBiometricStatus() {
+      const secureBridge = hasSecureSessionBridge();
+      const secureHas = secureBridge && hasSavedSecureSession();
+      console.log("[SecureSession] bridge existe:", secureBridge);
+      console.log("[SecureSession] tem sessão segura:", secureHas);
+      if (secureBridge && secureHas) {
+        const savedEmail = getSavedSecureEmail();
+        setBioAvailable(true);
+        setBioEnabled(true);
+        setBioMode(true);
+        if (savedEmail) setEmail(savedEmail);
+        return;
+      }
+      if (secureBridge) {
+        setBioAvailable(false);
+        setBioEnabled(false);
+        setBioMode(false);
+        return;
+      }
+      const av = isLoginBioBridgeAvailable();
+      const en = isLoginBioEnabled();
+      if (av) console.log("[AndroidBiometricLogin] bridge AndroidBiometric disponível");
+      console.log("[AndroidBiometricLogin] biometria habilitada:", en);
+      setBioAvailable(av);
+      setBioEnabled(en);
+      const savedEmail = getLoginBioEmail();
+      if (av && en && savedEmail) {
+        setBioMode(true);
+        if (savedEmail) setEmail(savedEmail);
+      }
     }
-    const av = isLoginBioBridgeAvailable();
-    const en = isLoginBioEnabled();
-    if (av) console.log("[AndroidBiometricLogin] bridge AndroidBiometric disponível");
-    console.log("[AndroidBiometricLogin] biometria habilitada:", en);
-    setBioAvailable(av);
-    setBioEnabled(en);
-    const savedEmail = getLoginBioEmail();
-    if (av && en && savedEmail) {
-      setBioMode(true);
-      if (savedEmail) setEmail(savedEmail);
-    }
+    syncBiometricStatus();
+    window.addEventListener("AndroidSecureSessionChanged", syncBiometricStatus);
+    return () => window.removeEventListener("AndroidSecureSessionChanged", syncBiometricStatus);
   }, []);
 
   function redirectToProtected() {
@@ -227,7 +238,7 @@ function LoginForm() {
     const secureNow = hasSecureSessionBridge();
     let savedBioAfterPassword = false;
     if (data.session && secureNow) {
-      const ok = saveSecureSession(data.session);
+      const ok = await saveSecureSession(data.session);
       console.log("[SecureSession] saveSession após senha:", ok);
       if (ok) {
         savedBioAfterPassword = true;
@@ -235,7 +246,7 @@ function LoginForm() {
         setLoginBioUnlocked(true);
       }
     }
-    if (data.session && bridgeNow) {
+    if (data.session && bridgeNow && !secureNow) {
       persistLoginBioSession(data.session);
       savedBioAfterPassword = true;
       setBioEnabled(true);

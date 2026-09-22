@@ -6,6 +6,7 @@
  * - Não cria gastos automaticamente. Botão "Gerar gasto deste mês" é opcional.
  */
 import { useEffect, useState } from "react";
+import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { getGastos, getCartoes, useStore, addGasto, type NovoGastoInput } from "@/lib/store";
 import type { Gasto, FormaPagamento } from "@/lib/types";
@@ -99,7 +100,7 @@ function isUuid(v: string | null | undefined): boolean {
 }
 
 async function syncCategoriaMaps(userId: string): Promise<void> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("categorias")
     .select("id, legacy_id, nome")
     .eq("user_id", userId);
@@ -131,9 +132,9 @@ async function categoriaDbId(
   return categoriaKeyToUuidRec.get(id) ?? null;
 }
 
-function rowToRec(r: any): Recorrencia {
-  const freq = FREQ_VALUES.includes(r.frequencia) ? r.frequencia : "mensal";
-  const status = STATUS_VALUES.includes(r.status) ? r.status : "ativa";
+function rowToRec(r: Tables<"recorrencias">): Recorrencia {
+  const freq = FREQ_VALUES.find((value) => value === r.frequencia) ?? "mensal";
+  const status = STATUS_VALUES.find((value) => value === r.status) ?? "ativa";
   const tipo: TipoRecorrencia =
     r.tipo_recorrencia === "recorrencia_fixa" ? "recorrencia_fixa" : "assinatura";
   return {
@@ -169,7 +170,7 @@ export async function hydrateRecorrencias(userId: string | null): Promise<void> 
   hydrating = true;
   try {
     await syncCategoriaMaps(userId);
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("recorrencias")
       .select("*")
       .eq("user_id", userId)
@@ -196,7 +197,7 @@ export function useRecorrencias(): Recorrencia[] {
   useEffect(() => {
     const unsub = subscribe(() => setTick((t) => t + 1));
     return () => {
-      unsub;
+      unsub();
     };
   }, []);
   return memRec;
@@ -606,7 +607,7 @@ export async function criarRecorrencia(
   );
   if (dupManual) return dupManual;
 
-  const payload: any = {
+  const payload: TablesInsert<"recorrencias"> = {
     user_id: userId,
     nome: input.nome.trim(),
     valor: input.valor,
@@ -625,11 +626,7 @@ export async function criarRecorrencia(
     valor_original: input.valorOriginal ?? null,
   };
 
-  const { data, error } = await (supabase as any)
-    .from("recorrencias")
-    .insert(payload)
-    .select()
-    .single();
+  const { data, error } = await supabase.from("recorrencias").insert(payload).select().single();
   if (error) {
     console.error("[recorrencias] criar failed", error);
     return null;
@@ -644,7 +641,7 @@ export async function atualizarRecorrencia(
   id: string,
   patch: Partial<NovaRecorrenciaInput> & { status?: StatusRecorrencia },
 ): Promise<void> {
-  const update: any = {};
+  const update: TablesUpdate<"recorrencias"> = {};
   if (patch.nome !== undefined) update.nome = patch.nome;
   if (patch.valor !== undefined) update.valor = patch.valor;
   if (patch.categoriaId !== undefined)
@@ -660,7 +657,7 @@ export async function atualizarRecorrencia(
   if (patch.moeda !== undefined) update.moeda = patch.moeda;
   if (patch.valorOriginal !== undefined) update.valor_original = patch.valorOriginal;
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("recorrencias")
     .update(update)
     .eq("id", id)
@@ -689,7 +686,7 @@ export async function excluirRecorrencia(id: string): Promise<void> {
   // detecção automática NÃO recrie a mesma recorrência depois do F5.
   // A UI filtra registros com status "excluida".
   const now = new Date().toISOString();
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from("recorrencias")
     .update({ status: "excluida", updated_at: now })
     .eq("id", id);
@@ -731,7 +728,7 @@ export async function sincronizarDeteccoes(
   await syncCategoriaMaps(userId);
   // Busca TODAS as detection_keys (incluindo soft-deleted) para evitar recriar
   // recorrências que o usuário excluiu manualmente.
-  const { data: existentesAll } = await (supabase as any)
+  const { data: existentesAll } = await supabase
     .from("recorrencias")
     .select("id, detection_key, status")
     .eq("user_id", userId);

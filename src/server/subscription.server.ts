@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getEffectiveUserPlan, type PlanTier, type SubscriptionStatus } from "@/lib/plans";
+import { resolveSubscriptionAccess } from "@/lib/subscription-access";
 import { hasAdminMasterRole } from "@/server/admin-master.server";
 
 const APPROVED_PAYMENT_STATUSES = new Set([
@@ -105,7 +106,7 @@ function isPaymentActive(payment: PaymentRow, nowMs: number) {
   if (!APPROVED_PAYMENT_STATUSES.has(normalizedStatus(payment.status))) return false;
   if (!payment.plano) return false;
   const { start, end } = paymentPeriod(payment);
-  return new Date(start).getTime() <= nowMs && new Date(end).getTime() >= nowMs;
+  return new Date(start).getTime() <= nowMs && new Date(end).getTime() > nowMs;
 }
 
 function emptySubscription(
@@ -166,6 +167,8 @@ async function paymentsForEmail(email: string): Promise<PaymentRow[]> {
         .limit(20),
     ),
   );
+  if (results.some((res) => res.error))
+    throw new Error("Não foi possível consultar os pagamentos.");
   return results.flatMap((res) => (res.data ?? []) as PaymentRow[]);
 }
 
@@ -229,6 +232,8 @@ export async function getSubscriptionForUserIdentity(input: {
         .limit(50),
       paymentsForEmail(email),
     ]);
+    if (planRes.error || paymentsByUserRes.error)
+      throw new Error("Não foi possível consultar a assinatura.");
     planRow = (planRes.data ?? null) as PlanRow | null;
     const paymentMap = new Map<string, PaymentRow>();
     for (const payment of [
@@ -244,7 +249,21 @@ export async function getSubscriptionForUserIdentity(input: {
     (a, b) =>
       new Date(b.paid_at ?? b.created_at).getTime() - new Date(a.paid_at ?? a.created_at).getTime(),
   );
-  const activePayment = payments.find((payment) => isPaymentActive(payment, nowMs));
+  // Cancelamento persistido é autoritativo: pagamento histórico não renova
+  // nem estende access_until. Uma nova contratação deve atualizar user_plans.
+  const activePayment = ["cancelado", "expirado"].includes(normalizedStatus(planRow?.status))
+    ? undefined
+    : payments.find((payment) => {
+        if (!isPaymentActive(payment, nowMs)) return false;
+        // An old receipt cannot extend a persisted period that has already ended.
+        if (planRow?.current_period_end && Date.parse(planRow.current_period_end) <= nowMs) {
+          return (
+            Date.parse(payment.paid_at ?? payment.created_at) >
+            Date.parse(planRow.current_period_end)
+          );
+        }
+        return true;
+      });
 
   if (activePayment?.user_id && activePayment.user_id !== input.userId) {
     console.info("[subscription] pagamento aprovado encontrado por e-mail normalizado", {
@@ -256,20 +275,38 @@ export async function getSubscriptionForUserIdentity(input: {
   }
 
   if (activePayment) {
-    const { start, end, months } = paymentPeriod(activePayment);
+    const period = paymentPeriod(activePayment);
+    // O recibo fornece evidência de pagamento; o período persistido da mesma
+    // assinatura continua sendo o limite contratado, inclusive no cache da UI.
+    const persistedPeriod =
+      normalizedStatus(planRow?.status) === "ativo" &&
+      getEffectiveUserPlan(null, planRow?.plano) ===
+        getEffectiveUserPlan(null, activePayment.plano) &&
+      planRow?.current_period_end;
+    const start = persistedPeriod ? (planRow?.current_period_start ?? period.start) : period.start;
+    const end = persistedPeriod || period.end;
+    const months = period.months;
     if (input.repairLink && activePayment.user_id !== input.userId) {
       await supabaseAdmin
         .from("subscription_payments")
         .update({ user_id: input.userId })
         .eq("id", activePayment.id);
     }
+    const access = resolveSubscriptionAccess(
+      {
+        storedPlan: activePayment.plano,
+        status: "ativo",
+        currentPeriodEnd: end,
+      },
+      nowMs,
+    );
     return {
       userId: input.userId,
       email,
-      plan: getEffectiveUserPlan({ email }, activePayment.plano),
+      plan: access.plan,
       storedPlan: getEffectiveUserPlan({ email: null }, activePayment.plano),
-      status: "ativo",
-      active: true,
+      status: access.status,
+      active: access.active,
       trialPlan: null,
       trialStartedAt: planRow?.trial_started_at ?? null,
       trialEndsAt: planRow?.trial_ends_at ?? null,
@@ -302,97 +339,41 @@ export async function getSubscriptionForUserIdentity(input: {
     getEffectiveUserPlan({ email: null }, planRow.trial_plan_type) === "sem_assinatura"
       ? null
       : getEffectiveUserPlan({ email: null }, planRow.trial_plan_type);
-  const trialEndMs = planRow.trial_ends_at ? new Date(planRow.trial_ends_at).getTime() : 0;
-  if (trialPlan && trialEndMs > nowMs) {
-    return {
-      ...emptySubscription(input.userId, email, "trial_active"),
-      plan: trialPlan,
+  const access = resolveSubscriptionAccess(
+    {
       storedPlan,
-      status: "teste",
-      active: true,
+      status: planRow.status,
       trialPlan,
-      trialStartedAt: planRow.trial_started_at,
       trialEndsAt: planRow.trial_ends_at,
-      trialUsed: Boolean(planRow.trial_used),
-      debug: {
-        checkedUserId: input.userId,
-        checkedEmail: email,
-        source: "trial",
-        reason: "trial_inside_period",
-        matchedPaymentId: null,
-      },
-    };
-  }
-
-  const accessUntilMs = planRow.access_until ? new Date(planRow.access_until).getTime() : 0;
-  if (planRow.cancelled_at && accessUntilMs > nowMs) {
-    return {
-      ...emptySubscription(input.userId, email, "cancelled_but_inside_paid_period"),
-      plan: storedPlan,
-      storedPlan,
-      status: "cancelado",
-      active: true,
       cancelledAt: planRow.cancelled_at,
       accessUntil: planRow.access_until,
-      currentPeriodStart: planRow.current_period_start,
       currentPeriodEnd: planRow.current_period_end,
-      periodicidade: planRow.periodicidade,
-      months: planRow.months,
-      lastPaymentId: planRow.last_payment_id,
-      debug: {
-        checkedUserId: input.userId,
-        checkedEmail: email,
-        source: "cancelled",
-        reason: "access_until_in_future",
-        matchedPaymentId: planRow.last_payment_id,
-      },
-    };
-  }
-
-  const planEndMs = planRow.current_period_end ? new Date(planRow.current_period_end).getTime() : 0;
-  if (
-    normalizedStatus(planRow.status) === "ativo" &&
-    storedPlan !== "sem_assinatura" &&
-    storedPlan !== "free" &&
-    (!planEndMs || planEndMs >= nowMs)
-  ) {
-    return {
-      ...emptySubscription(input.userId, email, "user_plan_active"),
-      plan: storedPlan,
-      storedPlan,
-      status: "ativo",
-      active: true,
-      trialStartedAt: planRow.trial_started_at,
-      trialEndsAt: planRow.trial_ends_at,
-      trialUsed: Boolean(planRow.trial_used),
-      currentPeriodStart: planRow.current_period_start,
-      currentPeriodEnd: planRow.current_period_end,
-      periodicidade: planRow.periodicidade,
-      months: planRow.months,
-      lastPaymentId: planRow.last_payment_id,
-      debug: {
-        checkedUserId: input.userId,
-        checkedEmail: email,
-        source: "user_plan",
-        reason: "user_plan_active_inside_period",
-        matchedPaymentId: planRow.last_payment_id,
-      },
-    };
-  }
-
-  const status =
-    normalizedStatus(planRow.status) === "aguardando_pagamento"
-      ? "aguardando_pagamento"
-      : planEndMs > 0 && planEndMs < nowMs
-        ? "expirado"
-        : "sem_assinatura";
+    },
+    nowMs,
+  );
+  const source = access.isCancelled
+    ? "cancelled"
+    : access.isTrialActive
+      ? "trial"
+      : access.active
+        ? "user_plan"
+        : access.status === "aguardando_pagamento"
+          ? "pending"
+          : access.status === "expirado"
+            ? "expired"
+            : "none";
   return {
-    ...emptySubscription(input.userId, email, status),
+    ...emptySubscription(input.userId, email, source),
+    plan: access.plan,
     storedPlan,
-    status,
+    status: access.status,
+    active: access.active,
+    trialPlan,
     trialStartedAt: planRow.trial_started_at,
     trialEndsAt: planRow.trial_ends_at,
     trialUsed: Boolean(planRow.trial_used),
+    cancelledAt: planRow.cancelled_at,
+    accessUntil: planRow.access_until,
     currentPeriodStart: planRow.current_period_start,
     currentPeriodEnd: planRow.current_period_end,
     periodicidade: planRow.periodicidade,
@@ -401,10 +382,9 @@ export async function getSubscriptionForUserIdentity(input: {
     debug: {
       checkedUserId: input.userId,
       checkedEmail: email,
-      source:
-        status === "aguardando_pagamento" ? "pending" : status === "expirado" ? "expired" : "none",
-      reason: status,
-      matchedPaymentId: null,
+      source,
+      reason: access.isCancelled ? "access_until_in_future" : access.status,
+      matchedPaymentId: planRow.last_payment_id,
     },
   };
 }

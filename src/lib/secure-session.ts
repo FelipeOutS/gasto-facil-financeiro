@@ -19,11 +19,16 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AndroidSecureSessionBridge = {
-  saveSession?: (accessToken: string, refreshToken: string, userId: string, email: string) => void;
+  saveSession?: (
+    accessToken: string,
+    refreshToken: string,
+    userId: string,
+    email: string,
+  ) => void | boolean | Promise<boolean>;
   hasSession?: () => boolean;
   getSavedEmail?: () => string | null;
   unlockSession?: () => void;
-  clearSession?: () => void;
+  clearSession?: () => void | Promise<unknown>;
 };
 
 export type AndroidSecureSessionResultDetail = {
@@ -77,7 +82,7 @@ export function clearSecureSession(): void {
   const b = getSecureSessionBridge();
   if (!b || typeof b.clearSession !== "function") return;
   try {
-    b.clearSession();
+    void Promise.resolve(b.clearSession()).catch(() => undefined);
   } catch {
     /* ignore */
   }
@@ -87,7 +92,7 @@ export function clearSecureSession(): void {
  * Salva a sessão atual do Supabase no Android Keystore via bridge nativa.
  * Não salva senha. Não loga tokens.
  */
-export function saveSecureSession(session: Session | null | undefined): boolean {
+export async function saveSecureSession(session: Session | null | undefined): Promise<boolean> {
   const b = getSecureSessionBridge();
   if (!b || typeof b.saveSession !== "function") return false;
   if (
@@ -99,8 +104,14 @@ export function saveSecureSession(session: Session | null | undefined): boolean 
     return false;
   }
   try {
-    b.saveSession(session.access_token, session.refresh_token, session.user.id, session.user.email);
-    return true;
+    const result = await b.saveSession(
+      session.access_token,
+      session.refresh_token,
+      session.user.id,
+      session.user.email,
+    );
+    // Older bridges return void; the current bridge acknowledges persistence.
+    return result !== false;
   } catch (e) {
     console.log("[SecureSession] saveSession lançou exceção:", e);
     return false;
@@ -198,7 +209,7 @@ export async function loginWithSecureSession(): Promise<{
       };
     }
     // Re-salva para renovar a janela de validade após refresh interno.
-    saveSecureSession(session);
+    await saveSecureSession(session);
     return { session, error: null };
   } catch (e) {
     console.log("[SecureSession] erro ao restaurar sessão:", e);
