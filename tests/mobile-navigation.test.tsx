@@ -39,6 +39,89 @@ beforeEach(() => {
   Object.defineProperty(window, "innerHeight", { value: 800, writable: true, configurable: true });
 });
 afterEach(cleanup);
+
+test("ícones mantêm nomes acessíveis sem labels visuais", () => {
+  const ui = render(<BottomNav />);
+  expect(ui.container.querySelector(".mobile-nav-label")).toBeNull();
+  for (const item of MOBILE_TABS) {
+    const link = ui.getByLabelText(`items.${item.labelKey}`);
+    expect(link.getAttribute("title")).toBe(`items.${item.labelKey}`);
+  }
+});
+
+test("stretch por distância, retorno direto e interrupção sem acumular indicadores", () => {
+  const ui = render(<BottomNav />);
+  const indicator = ui.container.querySelector(".mobile-nav-indicator") as HTMLElement;
+  const pill = indicator.firstElementChild as HTMLElement;
+  indicator.getBoundingClientRect = () => ({ width: 64 }) as DOMRect;
+  Object.defineProperty(pill, "offsetWidth", { value: 50 });
+  const calls: Array<{ frames: any[]; options: any; cancel: ReturnType<typeof mock> }> = [];
+  const animate = (frames: any, options: any) => {
+    const cancel = mock(() => {});
+    calls.push({ frames, options, cancel });
+    return { cancel, playState: "running" } as unknown as Animation;
+  };
+  indicator.animate = animate;
+  pill.animate = animate;
+  const matrix = globalThis.DOMMatrixReadOnly;
+  // Browser-rendered position halfway through an interrupted flight.
+  globalThis.DOMMatrixReadOnly = class {
+    m41 = 96;
+    a = 1.2;
+  } as any;
+  try {
+    fireEvent.click(ui.getByLabelText("items.more"));
+    ui.rerender(<BottomNav />);
+    expect(calls).toHaveLength(2);
+    expect(calls[0].frames.at(-1).transform).toBe("translate3d(256px,0,0)");
+    expect(calls[1].frames[1].transform).toBe("scaleX(1.52)");
+    expect(calls[1].frames.at(-1).transform).toBe("scaleX(1)");
+    expect(calls[0].options.duration).toBeLessThanOrEqual(400);
+    fireEvent.click(ui.getByLabelText("items.dashboard"));
+    ui.rerender(<BottomNav />);
+    expect(calls[0].cancel).toHaveBeenCalledTimes(1);
+    expect(calls[1].cancel).toHaveBeenCalledTimes(1);
+    expect(calls[2].frames[0].transform).toBe("translate3d(96px,0,0)");
+    expect(calls[2].frames.at(-1).transform).toBe("translate3d(0px,0,0)");
+    for (const item of MOBILE_TABS.slice(1, 4)) {
+      fireEvent.click(ui.getByLabelText(`items.${item.labelKey}`));
+      ui.rerender(<BottomNav />);
+    }
+    expect(navigations).toEqual(["/app/mais", "/app", "/gastos", "/renda", "/cartoes"]);
+    expect(ui.container.querySelectorAll(".mobile-nav-indicator")).toHaveLength(1);
+    expect(ui.container.querySelector('[aria-current="page"]')?.getAttribute("href")).toBe(
+      pathname,
+    );
+    ui.unmount();
+    expect(calls.at(-1)!.cancel).toHaveBeenCalledTimes(1);
+  } finally {
+    globalThis.DOMMatrixReadOnly = matrix;
+  }
+});
+
+test("reduced motion navega sem stretch nem overshoot", () => {
+  const original = window.matchMedia;
+  window.matchMedia = ((query: string) => ({
+    ...original.call(window, query),
+    matches: true,
+    addEventListener() {},
+    removeEventListener() {},
+  })) as typeof window.matchMedia;
+  try {
+    const ui = render(<BottomNav />);
+    const indicator = ui.container.querySelector(".mobile-nav-indicator") as HTMLElement;
+    indicator.getBoundingClientRect = () => ({ width: 64 }) as DOMRect;
+    indicator.animate = mock(() => ({ cancel() {} }) as Animation);
+    fireEvent.click(ui.getByLabelText("items.more"));
+    ui.rerender(<BottomNav />);
+    expect(indicator.animate).not.toHaveBeenCalled();
+    expect(pathname).toBe("/app/mais");
+    expect(indicator.style.transform).toBe("translate3d(400%,0,0)");
+    ui.unmount();
+  } finally {
+    window.matchMedia = original;
+  }
+});
 test("Dashboard aponta /app e / público não fica ativo", () => {
   const ui = render(<BottomNav />);
   expect(ui.getByLabelText("items.dashboard").getAttribute("href")).toBe("/app");

@@ -1,6 +1,6 @@
 import { SubscriptionPending } from "@/components/SubscriptionPending";
 import { useNavigate, Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRoles } from "@/lib/use-roles";
 import { usePlan } from "@/lib/use-plan";
@@ -58,12 +58,48 @@ function isSubscriptionAllowed(pathname: string) {
   return false;
 }
 
+type GateSubscription = {
+  plan: ReturnType<typeof usePlan>;
+  roles: ReturnType<typeof useRoles>;
+};
+const GateSubscriptionContext = createContext<GateSubscription | null>(null);
+
 export function AuthGate({ children }: { children: ReactNode }) {
-  const { session, loading } = useAuth();
+  const inherited = useContext(GateSubscriptionContext);
+  // The persistent shell already owns this resolution. A nested route gate
+  // still checks its rules, but must not restart the same subscription query.
+  return inherited ? (
+    <ResolvedAuthGate subscription={inherited}>{children}</ResolvedAuthGate>
+  ) : (
+    <SubscriptionAuthGate>{children}</SubscriptionAuthGate>
+  );
+}
+
+function SubscriptionAuthGate({ children }: { children: ReactNode }) {
   // Garante carregamento de roles e auto-claim do primeiro owner
   // assim que o usuário entra em qualquer rota protegida.
-  const { hasFullAccess, loading: rolesLoading } = useRoles();
+  const roles = useRoles();
   const plan = usePlan();
+  const subscription = { plan, roles };
+  return (
+    <GateSubscriptionContext.Provider value={subscription}>
+      <ResolvedAuthGate subscription={subscription}>{children}</ResolvedAuthGate>
+    </GateSubscriptionContext.Provider>
+  );
+}
+
+function ResolvedAuthGate({
+  children,
+  subscription,
+}: {
+  children: ReactNode;
+  subscription: GateSubscription;
+}) {
+  const { session, loading } = useAuth();
+  const {
+    plan,
+    roles: { hasFullAccess, loading: rolesLoading },
+  } = subscription;
   const navigate = useNavigate();
   const [redirecting, setRedirecting] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);

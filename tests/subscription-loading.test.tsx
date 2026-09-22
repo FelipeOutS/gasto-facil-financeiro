@@ -154,6 +154,43 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
+for (const from of ["/app/mais", "/gastos", "/renda"]) {
+  for (const elapsed of [0, 5 * 60_000 + 1]) {
+    test(`${from} → /app mantém resolução do gate persistente após ${elapsed}ms`, async () => {
+      pathname = from;
+      // MobileShell owns the outer gate; AppRoot adds another gate on /app.
+      const tree = (dashboard: boolean) =>
+        app(
+          <AuthGate>
+            {dashboard ? (
+              <AuthGate>
+                <div data-testid="dashboard" />
+              </AuthGate>
+            ) : (
+              <div data-testid="origin" />
+            )}
+          </AuthGate>,
+        );
+      const ui = render(tree(false));
+      await resolve();
+      expect(ui.queryByTestId("origin")).not.toBeNull();
+      const now = Date.now;
+      try {
+        Date.now = () => now() + elapsed;
+        pathname = "/app";
+        ui.rerender(tree(true));
+        expect(ui.queryByTestId("dashboard")).not.toBeNull();
+        expect(ui.queryByText("Verificando assinatura…")).toBeNull();
+        expect(requests).toHaveLength(1);
+        expect(guard.canWrite).toBe(true);
+        expect(navigate).not.toHaveBeenCalled();
+      } finally {
+        Date.now = now;
+      }
+    });
+  }
+}
+
 test("abertura direta /manual espera resposta lenta e canWriteBasic fica pendente", async () => {
   const ui = render(app());
   expect(guard.loading).toBe(true);
@@ -174,6 +211,61 @@ test("abertura direta /manual espera resposta lenta e canWriteBasic fica pendent
   expect(basicWrites).toBe(true);
   expect(ui.queryByTestId("expense-form")).not.toBeNull();
   expect(navigate).not.toHaveBeenCalled();
+});
+
+test("gate aninhado continua bloqueando refresh real e revogação", async () => {
+  pathname = "/app";
+  const ui = render(
+    app(
+      <AuthGate>
+        <AuthGate>
+          <div data-testid="dashboard" />
+        </AuthGate>
+      </AuthGate>,
+    ),
+  );
+  expect(ui.queryByTestId("dashboard")).toBeNull();
+  await resolve();
+  expect(ui.queryByTestId("dashboard")).not.toBeNull();
+  await act(async () => {
+    void plan.refresh();
+  });
+  expect(requests).toHaveLength(2);
+  expect(ui.queryByTestId("dashboard")).toBeNull();
+  expect(guard.canWrite).toBe(false);
+  await resolve(subscription({ status: "expirado", active: false }), 1);
+  expect(ui.queryByTestId("dashboard")).toBeNull();
+  expect(guard.canWrite).toBe(false);
+  expect(navigate).toHaveBeenCalledWith({ to: "/meu-plano", replace: true });
+});
+
+test("Mais → Dashboard não reutiliza autorização com vigência expirada", async () => {
+  pathname = "/app/mais";
+  const tree = (dashboard: boolean) =>
+    app(
+      <AuthGate>
+        {dashboard ? (
+          <AuthGate>
+            <div data-testid="dashboard" />
+          </AuthGate>
+        ) : (
+          <div>Mais</div>
+        )}
+      </AuthGate>,
+    );
+  const ui = render(tree(false));
+  await resolve();
+  const now = Date.now;
+  try {
+    Date.now = () => now() + 2 * 86400000;
+    pathname = "/app";
+    ui.rerender(tree(true));
+    expect(ui.queryByTestId("dashboard")).toBeNull();
+    expect(guard.canWrite).toBe(false);
+    expect(navigate).toHaveBeenCalledWith({ to: "/meu-plano", replace: true });
+  } finally {
+    Date.now = now;
+  }
 });
 for (const [label, patch] of [
   ["ativo", {}],

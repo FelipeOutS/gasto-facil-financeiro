@@ -879,16 +879,16 @@ body {
 
 /* Mobile navigation: one fixed, stable capsule. No scroll listener/reveal gesture. */
 :root {
-  --mobile-nav-height: 68px;
+  --mobile-nav-height: 56px;
   --mobile-nav-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  --mobile-nav-clearance: calc(var(--mobile-nav-height) + var(--mobile-nav-bottom) + 32px);
+  --mobile-nav-clearance: calc(var(--mobile-nav-height) + var(--mobile-nav-bottom) + 44px);
 }
 .mobile-bottom-nav {
   position: fixed;
   z-index: 40;
   bottom: var(--mobile-nav-bottom);
   left: 50%;
-  width: min(calc(100% - 24px), 460px);
+  width: min(calc(100% - 40px), 400px);
   height: var(--mobile-nav-height);
   transform: translateX(-50%);
   padding: 5px 6px;
@@ -896,13 +896,13 @@ body {
   border: 1px solid var(--border);
   background: var(--card);
   box-shadow:
-    0 8px 28px rgb(0 0 0 / 0.14),
+    0 6px 20px rgb(0 0 0 / 0.09),
     inset 0 1px 0 color-mix(in srgb, var(--foreground) 5%, transparent);
   isolation: isolate;
 }
 @supports (backdrop-filter: blur(12px)) {
   .mobile-bottom-nav {
-    background: color-mix(in srgb, var(--card) 91%, transparent);
+    background: color-mix(in srgb, var(--card) 86%, transparent);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
@@ -951,20 +951,11 @@ body {
   place-items: center;
   width: 44px;
   height: 32px;
-  transition: transform 160ms ease;
+  transition: transform 100ms ease-out;
 }
 .mobile-nav-link:active .mobile-nav-icon {
   transform: scale(0.96);
-}
-.mobile-nav-link[aria-current="page"] .mobile-nav-icon {
-  animation: mobile-nav-settle 280ms ease-out;
-}
-.mobile-nav-label {
-  max-width: 100%;
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 12px;
-  white-space: nowrap;
+  transition-duration: 0ms;
 }
 .mobile-nav-dot {
   position: absolute;
@@ -976,14 +967,13 @@ body {
 }
 .mobile-nav-indicator {
   position: absolute;
-  top: 1px;
+  top: 50%;
+  margin-top: -19px;
   left: 0;
   width: 20%;
-  height: 36px;
+  height: 38px;
   pointer-events: none;
-  transition:
-    transform 300ms cubic-bezier(0.22, 0.8, 0.25, 1),
-    opacity 160ms ease;
+  transition: opacity 120ms ease;
 }
 .mobile-nav-indicator > span {
   display: block;
@@ -993,17 +983,6 @@ body {
   margin: auto;
   border-radius: 999px;
   background: var(--brand-soft, var(--accent));
-}
-@keyframes mobile-nav-settle {
-  0% {
-    transform: scale(0.97);
-  }
-  55% {
-    transform: scale(1.04);
-  }
-  100% {
-    transform: scale(1);
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .mobile-nav-indicator,
