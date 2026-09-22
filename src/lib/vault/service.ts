@@ -43,13 +43,21 @@ export async function fetchVaultSettings(userId: string): Promise<VaultSettingsR
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
-  return (data as VaultSettingsRow | null) ?? null;
+  if (data === null) return null;
+  const row = data as VaultSettingsRow | undefined;
+  if (!row || row.user_id !== userId || !row.salt || !row.verifier || !row.verifier_iv ||
+      !Number.isInteger(row.iterations) || row.iterations <= 0) {
+    throw new Error("Não foi possível determinar a configuração do Cofre.");
+  }
+  return row;
 }
 
-export async function saveVaultSettings(
+export async function createVaultSettings(
   row: Omit<VaultSettingsRow, "hint"> & { hint?: string | null },
 ) {
-  const { error } = await supabase.from("vault_settings" as never).upsert(row as never);
+  // INSERT + user_id primary key rejects concurrent/existing setup atomically.
+  // The existing INSERT RLS policy requires auth.uid() = user_id.
+  const { error } = await supabase.from("vault_settings" as never).insert(row as never);
   if (error) throw error;
 }
 

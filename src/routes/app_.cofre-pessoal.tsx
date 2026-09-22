@@ -51,8 +51,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { createMasterKey, unlockMasterKey } from "@/lib/vault/crypto";
 import {
-  fetchVaultSettings,
-  saveVaultSettings,
+  createVaultSettings,
   fetchEntries,
   createEntry,
   updateEntry,
@@ -65,6 +64,7 @@ import {
   type DecryptedEntry,
   type VaultSettingsRow,
 } from "@/lib/vault/service";
+import { useVaultBootstrap } from "@/lib/vault/use-vault-bootstrap";
 import { evaluateStrength, generateStrongPassword, type Strength } from "@/lib/vault/strength";
 import {
   useVaultKey,
@@ -122,10 +122,8 @@ function CofrePessoalPage() {
   const { user } = useAuth();
   const { can, isAdminMaster, loading: planLoading } = usePlan();
   const { isUnlocked, masterKey, lock } = useVaultKey();
-  const [bootstrapState, setBootstrapState] = useState<
-    "loading" | "needs_setup" | "needs_unlock" | "ready"
-  >("loading");
-  const [settings, setSettings] = useState<VaultSettingsRow | null>(null);
+  const { bootstrapState, setBootstrapState, settings, setSettings, retry } =
+    useVaultBootstrap(user?.id, isUnlocked);
 
   // Etapa 14 — Gate premium do Cofre Pessoal.
   // hasAccess: usuário tem a feature liberada no plano (ou é Admin Master).
@@ -144,21 +142,6 @@ function CofrePessoalPage() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!user) return;
-    fetchVaultSettings(user.id)
-      .then((s) => {
-        setSettings(s);
-        if (!s) setBootstrapState("needs_setup");
-        else if (!isUnlocked) setBootstrapState("needs_unlock");
-        else setBootstrapState("ready");
-      })
-      .catch((e) => {
-        toast.error(i18n.t("cofre:errors.loadFailed"));
-        setBootstrapState("needs_setup");
-      });
-  }, [user, isUnlocked]);
-
   if (!user) return null;
 
   // Aguarda carregamento do plano para evitar flash de bloqueio.
@@ -167,6 +150,19 @@ function CofrePessoalPage() {
       <div className="min-h-full bg-background">
         <div className="mx-auto w-full max-w-5xl px-4 pb-8 pt-4 lg:px-8 lg:pt-8">
           <BootLoading />
+        </div>
+      </div>
+    );
+  }
+
+  if (bootstrapState === "error") {
+    return (
+      <div className="min-h-full bg-background">
+        <div className="mx-auto w-full max-w-5xl px-4 pb-8 pt-4 lg:px-8 lg:pt-8">
+          <Card className="mx-auto max-w-md space-y-4 p-6" role="alert">
+            <p>Não foi possível carregar o Cofre. Tente novamente para verificar sua configuração.</p>
+            <Button onClick={retry}>Tentar novamente</Button>
+          </Card>
         </div>
       </div>
     );
@@ -194,6 +190,7 @@ function CofrePessoalPage() {
         {bootstrapState === "needs_setup" && hasAccess && (
           <SetupView
             userId={user.id}
+            onReload={retry}
             onReady={(s) => {
               setSettings(s);
               setBootstrapState("ready");
@@ -409,8 +406,10 @@ function HeaderHero({ subtitle }: { subtitle: string }) {
 function SetupView({
   userId,
   onReady,
+  onReload,
 }: {
   userId: string;
+  onReload: () => void;
   onReady: (s: VaultSettingsRow) => void;
 }) {
   const [pwd, setPwd] = useState("");
@@ -440,12 +439,14 @@ function SetupView({
         iterations: built.iterations,
         hint: hint || null,
       };
-      await saveVaultSettings(row);
+      await createVaultSettings(row);
       setMasterKey(built.key);
       toast.success("Cofre criado e desbloqueado");
       onReady(row);
     } catch (e) {
       toast.error(i18n.t("cofre:errors.createFailed"));
+      // A competing setup or a lost response may mean a vault now exists.
+      onReload();
     } finally {
       setBusy(false);
     }
