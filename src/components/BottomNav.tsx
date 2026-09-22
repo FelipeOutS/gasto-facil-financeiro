@@ -6,6 +6,7 @@ import { useAlertaContas } from "@/lib/contas-alertas";
 import { NAV_GROUPS, type NavLeaf } from "@/lib/nav-groups";
 import { PRODUCT_EVENTS, trackProductEvent } from "@/lib/product-analytics";
 import { useMobileKeyboard } from "@/lib/use-mobile-keyboard";
+import { useLiquidNavIndicator } from "@/lib/use-liquid-nav-indicator";
 
 // Reuse the destinations/labels/icons of the existing menu, not a second route map.
 const menuItems = NAV_GROUPS.flatMap((group) => group.items);
@@ -35,6 +36,7 @@ export function BottomNav() {
   const alerta = useAlertaContas();
   const keyboardOpen = useMobileKeyboard();
   const selected = mobileTabIndex(pathname);
+  const indicator = useLiquidNavIndicator(selected);
 
   return (
     <nav
@@ -44,6 +46,7 @@ export function BottomNav() {
     >
       <ul className="mobile-nav-track">
         <li
+          ref={indicator}
           aria-hidden="true"
           className="mobile-nav-indicator"
           style={{
@@ -63,6 +66,7 @@ export function BottomNav() {
                 preload="intent"
                 activeOptions={{ exact: to === "/app" }}
                 aria-label={t(`items.${labelKey}`)}
+                title={t(`items.${labelKey}`)}
                 aria-current={active ? "page" : undefined}
                 className="mobile-nav-link"
                 onClick={(event: MouseEvent<HTMLAnchorElement>) => {
@@ -93,7 +97,6 @@ export function BottomNav() {
                     />
                   )}
                 </span>
-                <span className="mobile-nav-label">{t(`items.${labelKey}`)}</span>
                 {showDot && (
                   <span className="sr-only">
                     {t(alerta === "vermelho" ? "aria.overdueAccounts" : "aria.soonAccounts")}
