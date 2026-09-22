@@ -34,7 +34,7 @@ import { renderGastosPdf } from "@/lib/gastos-pdf";
 type Formato = "xlsx" | "csv" | "pdf";
 type Escopo = "filtrados" | "periodo";
 
-const LOGO_URL = "/logos/brand/gasto-inteligente-symbol-white.png";
+const LOGO_URL = "/logos/brand/icone-gasto-inteligente-export.png";
 
 /** Carrega o logo oficial como data URL para embutir no PDF (falha silenciosa). */
 async function loadLogoDataUrl(): Promise<string | null> {

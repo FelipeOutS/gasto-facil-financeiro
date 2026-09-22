@@ -43,14 +43,14 @@ export function MobileNotificationsFab() {
               : t("notifications.ariaDefault")
           }
           className={cn(
-            "fixed right-4 z-40 grid h-12 w-12 place-items-center rounded-full lg:hidden",
+            "fixed right-4 z-40 grid h-11 w-11 place-items-center rounded-full lg:hidden",
             "border border-border/70 bg-card text-foreground shadow-lg shadow-black/10",
             "backdrop-blur transition active:scale-95",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           )}
           style={{
             display: keyboardOpen ? "none" : undefined,
-            bottom: "calc(var(--mobile-nav-height) + var(--mobile-nav-bottom) + 12px)",
+            bottom: "var(--mobile-notifications-bottom)",
             marginBottom: "var(--notifications-fab-offset, 0px)",
           }}
         >

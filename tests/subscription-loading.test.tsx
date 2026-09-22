@@ -106,7 +106,27 @@ mock.module("@/lib/biometric-login", () => ({
 const { usePlan } = await import("../src/lib/use-plan");
 const { SubscriptionGuardProvider, useSubscriptionGuard, ensureCanWriteFinancialData } =
   await import("../src/lib/subscription-guard");
-const { AuthGate } = await import("../src/components/AuthGate");
+const { AuthGate, AuthShell } = await import("../src/components/AuthGate");
+
+test("AuthShell mantém fallback de viewport no WebView e acompanha resize sem ampliar o card", async () => {
+  const originalHeight = window.innerHeight;
+  window.innerHeight = 838;
+  const ui = render(<AuthShell title="Entrar com biometria" background={<div data-testid="decoration" />}><button>Usar digital</button></AuthShell>);
+  const shell = ui.container.querySelector(".auth-shell") as HTMLElement;
+  expect(shell.style.getPropertyValue("--auth-viewport-height")).toBe("838px");
+  expect(ui.getByTestId("decoration").parentElement?.className).toBe("auth-background");
+  const card = ui.getByRole("button").closest(".rounded-3xl") as HTMLElement;
+  expect(card.style.minHeight).toBe("");
+  await act(async () => {
+    window.innerHeight = 510;
+    window.dispatchEvent(new Event("resize"));
+  });
+  expect(shell.style.getPropertyValue("--auth-viewport-height")).toBe("510px");
+  ui.unmount();
+  window.innerHeight = originalHeight;
+  window.dispatchEvent(new Event("resize"));
+  expect(shell.style.getPropertyValue("--auth-viewport-height")).toBe("510px");
+});
 const { Route: manualRoute } = await import("../src/routes/manual");
 const { Route: incomeRoute } = await import("../src/routes/renda.nova");
 const Manual = (manualRoute as any).component;

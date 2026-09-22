@@ -137,7 +137,17 @@ for (const [path, index] of [
   ["/app/mais", 4],
   ["/app/mais/", 4],
   ["/gastos-extra", -1],
-  ["/app/perfil", -1],
+  ["/app/perfil", 4],
+  ["/app/cofre-pessoal", 4],
+  ["/app/cofre-pessoal/detalhe", 4],
+  ["/assinaturas", 4],
+  ["/assinaturas/nova", 4],
+  ["/orcamento", 4],
+  ["/metas", 4],
+  ["/investimentos", 4],
+  ["/app/ajustes", 4],
+  ["/app/cofre-pessoal-falso", -1],
+  ["/login", -1],
 ] as const) {
   test(`estado ativo: ${path}`, () => expect(mobileTabIndex(path)).toBe(index));
 }

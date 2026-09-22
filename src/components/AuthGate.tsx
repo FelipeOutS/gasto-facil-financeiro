@@ -291,36 +291,49 @@ export function AuthShell({
    */
   background?: ReactNode;
 }) {
+  const shellRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // Some Android WebViews report supported vh/dvh units as 0 after cold start.
+    // Keep a measured fallback local to auth; resizing also covers the keyboard.
+    const syncViewport = () => {
+      shellRef.current?.style.setProperty("--auth-viewport-height", `${window.innerHeight}px`);
+    };
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    window.visualViewport?.addEventListener("resize", syncViewport);
+    return () => {
+      window.removeEventListener("resize", syncViewport);
+      window.visualViewport?.removeEventListener("resize", syncViewport);
+    };
+  }, []);
   return (
     <div
+      ref={shellRef}
       className={
-        "relative w-full overflow-x-hidden px-4 py-8 sm:px-6 sm:py-12 " +
+        "auth-shell relative w-full overflow-x-hidden px-4 py-8 sm:px-6 sm:py-12 " +
         (background
           ? "bg-[#05070c]"
           : "bg-background bg-gradient-to-br from-slate-50 via-white to-blue-50/40 dark:from-slate-950 dark:via-background dark:to-slate-900")
       }
       style={{
-        minHeight: "100vh",
-
-        ...(typeof CSS !== "undefined" && CSS.supports?.("min-height: 100dvh")
-          ? { minHeight: "100dvh" }
-          : {}),
         paddingBottom: "max(2rem, env(safe-area-inset-bottom))",
         paddingTop: "max(2rem, env(safe-area-inset-top))",
       }}
     >
-      {background ?? (
-        <>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -top-32 -left-24 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl dark:bg-blue-500/10"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-emerald-300/20 blur-3xl dark:bg-emerald-500/10"
-          />
-        </>
-      )}
+      <div className="auth-background" aria-hidden="true">
+        {background ?? (
+          <>
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -top-32 -left-24 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl dark:bg-blue-500/10"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -bottom-32 -right-24 h-80 w-80 rounded-full bg-emerald-300/20 blur-3xl dark:bg-emerald-500/10"
+            />
+          </>
+        )}
+      </div>
 
       <div className="relative mx-auto flex w-full max-w-md flex-col animate-fade-in">
         <Link

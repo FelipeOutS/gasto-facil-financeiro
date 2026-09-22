@@ -59,6 +59,7 @@ import {
   deleteEntry,
   decryptOne,
   rotateMasterKey,
+  assertCurrentVaultKey,
   buildEncryptedBackup,
   type VaultEntryRow,
   type DecryptedEntry,
@@ -163,7 +164,7 @@ function CofrePessoalPage() {
   // Aguarda carregamento do plano para evitar flash de bloqueio.
   if (planLoading || bootstrapState === "loading") {
     return (
-      <div className="min-h-screen min-h-dvh bg-background pb-[calc(112px+env(safe-area-inset-bottom))] lg:pb-12">
+      <div className="min-h-full bg-background">
         <div className="mx-auto w-full max-w-5xl px-4 pb-8 pt-4 lg:px-8 lg:pt-8">
           <BootLoading />
         </div>
@@ -174,7 +175,7 @@ function CofrePessoalPage() {
   // Usuário sem acesso e SEM dados salvos: bloqueio total com upgrade.
   if (!hasAccess && !settings) {
     return (
-      <div className="min-h-screen min-h-dvh bg-background pb-[calc(112px+env(safe-area-inset-bottom))] lg:pb-12">
+      <div className="min-h-full bg-background">
         <div className="mx-auto w-full max-w-5xl px-4 pb-8 pt-4 lg:px-8 lg:pt-8">
           <CofrePremiumGate />
         </div>
@@ -187,7 +188,7 @@ function CofrePessoalPage() {
   const isVaultReadOnly = !hasAccess && !!settings;
 
   return (
-    <div className="min-h-screen min-h-dvh bg-background pb-[calc(112px+env(safe-area-inset-bottom))] lg:pb-12">
+    <div className="min-h-full bg-background">
       <div className="mx-auto w-full max-w-5xl px-4 pb-8 pt-4 lg:px-8 lg:pt-8">
         {showTransitionBanner && <CofreTransitionBanner />}
         {bootstrapState === "needs_setup" && hasAccess && (
@@ -622,10 +623,13 @@ function UnlockView({
         }
         return;
       }
+      await assertCurrentVaultKey(userId, key);
       await migrateAfterPrimaryUnlock(key);
       setMasterKey(key);
       setFails(0);
       onUnlocked();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : i18n.t("cofre:errors.unlockFailed"));
     } finally {
       setBusy(false);
     }
@@ -636,6 +640,7 @@ function UnlockView({
     setBusy(true);
     try {
       const key = await unlockWithServerPin(userId, value);
+      await assertCurrentVaultKey(userId, key);
       await migrateAfterPrimaryUnlock(key);
       setMasterKey(key);
       setPin("");
@@ -659,6 +664,7 @@ function UnlockView({
     setBusy(true);
     try {
       const key = await unlockWithBiometric(userId);
+      await assertCurrentVaultKey(userId, key);
       setMasterKey(key);
       onUnlocked();
     } catch (e) {
@@ -1144,7 +1150,7 @@ function VaultMain({
           );
           // Força novo unlock para usar a nova senha
           setMasterKey(null);
-          toast.success("Senha mestra alterada. Faça o desbloqueio com a nova senha.");
+          toast.success("Senha mestra alterada. Use a nova senha e configure novamente o PIN e a biometria.");
         }}
       />
     );
@@ -2377,16 +2383,17 @@ function ChangeMasterView({
         setBusy(false);
         return;
       }
-      await rotateMasterKey({
+      const fresh = await rotateMasterKey({
         userId,
-        currentKey,
+        currentKey: verify,
+        currentSettings,
         newPassword: newPwd,
         hint: hint || null,
       });
-      const fresh = await fetchVaultSettings(userId);
-      if (fresh) onChanged(fresh);
+      onChanged(fresh);
     } catch (e) {
-      toast.error(i18n.t("cofre:errors.masterPasswordFailed"));
+      setMasterKey(null); // Never continue using an old key after an uncertain commit.
+      toast.error(e instanceof Error ? e.message : i18n.t("cofre:errors.masterPasswordFailed"));
     } finally {
       setBusy(false);
     }

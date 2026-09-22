@@ -310,23 +310,15 @@ function Header() {
           onClick={(e) => handleAnchorClick(e, "#inicio")}
           className="flex items-center gap-2"
         >
-          <img
-            src="/logos/brand/icone-gasto-inteligente-light.svg"
-            alt="Gasto Inteligente"
-            width={36}
-            height={36}
-            fetchPriority="high"
+          <BrandMark
+            variant="symbol"
+            appearance="light"
             className="h-8 w-auto object-contain sm:hidden"
-            draggable={false}
           />
-          <img
-            src="/logos/brand/logo-gasto-inteligente-sidebar-light.svg"
-            alt="Gasto Inteligente"
-            width={180}
-            height={40}
-            fetchPriority="high"
+          <BrandMark
+            variant="full"
+            appearance="light"
             className="hidden w-auto object-contain sm:block sm:h-9 md:h-10"
-            draggable={false}
           />
         </a>
         <nav className="hidden items-center gap-5 lg:flex lg:gap-8">
@@ -409,7 +401,6 @@ function Hero() {
   const reduce = useReducedMotion();
   return (
     <section id="inicio" className="relative overflow-hidden">
-
       {/* Decorative background */}
       <div
         aria-hidden
@@ -767,12 +758,7 @@ function DesktopDashboardMock() {
       {/* Sidebar */}
       <div className="flex w-[22%] flex-col border-r border-slate-200 bg-white p-2">
         <div className="flex items-center px-1 pb-1">
-          <img
-            src="/logos/brand/logo-gasto-inteligente-completo-light.svg"
-            alt="Gasto Inteligente"
-            draggable={false}
-            className="h-4 w-auto object-contain"
-          />
+          <BrandMark variant="full" appearance="light" className="h-4 w-auto object-contain" />
         </div>
         <p className="px-1 text-[6px] text-slate-400">{t("mockup.sidebar.tagline")}</p>
         <div className="mt-2 flex items-center justify-center gap-1 rounded-full bg-slate-900 px-2 py-1 text-[7.5px] font-semibold text-white">
@@ -931,12 +917,7 @@ function TabletDashboardMock() {
       <div className="flex-1 overflow-hidden px-3 pt-3 pb-7">
         {/* logo */}
         <div className="flex items-center justify-between">
-          <img
-            src="/logos/brand/logo-gasto-inteligente-completo-light.svg"
-            alt="Gasto Inteligente"
-            draggable={false}
-            className="h-3 w-auto object-contain"
-          />
+          <BrandMark variant="full" appearance="light" className="h-3 w-auto object-contain" />
           <div className="flex items-center gap-1">
             <span className="flex items-center rounded-full border border-slate-200 bg-white px-1 py-0.5">
               <ChevronLeft className="h-2 w-2 text-slate-500" />
@@ -1150,12 +1131,7 @@ function MobileDashboardMock() {
       <div className="flex-1 overflow-hidden px-2 pt-2 pb-7">
         {/* logo */}
         <div className="flex items-center justify-between gap-1">
-          <img
-            src="/logos/brand/logo-gasto-inteligente-completo-light.svg"
-            alt="Gasto Inteligente"
-            draggable={false}
-            className="h-2.5 w-auto object-contain"
-          />
+          <BrandMark variant="full" appearance="light" className="h-2.5 w-auto object-contain" />
           <div className="flex shrink-0 items-center gap-0.5">
             <span className="flex items-center rounded-full border border-slate-200 bg-white px-0.5 py-0.5">
               <ChevronLeft className="h-1.5 w-1.5 text-slate-500" />
@@ -4159,11 +4135,10 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-8 sm:gap-10 md:grid-cols-12 md:gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-12 lg:col-span-4">
-            <img
-              src="/logos/brand/logo-gasto-inteligente-sidebar-light.svg"
-              alt="Gasto Inteligente"
+            <BrandMark
+              variant="full"
+              appearance="light"
               className="w-[150px] sm:w-[160px] h-auto object-contain"
-              draggable={false}
             />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-600">
               {t("footer.tagline")}
@@ -4891,7 +4866,10 @@ function WhatsAppFeatureSection() {
   ] as const;
 
   return (
-    <section id="whatsapp" className="relative overflow-hidden bg-emerald-50/60 py-16 sm:py-20 lg:py-24">
+    <section
+      id="whatsapp"
+      className="relative overflow-hidden bg-emerald-50/60 py-16 sm:py-20 lg:py-24"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
           {/* Chat mockup */}
@@ -4903,7 +4881,9 @@ function WhatsAppFeatureSection() {
                   <MessageCircle className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-bold text-slate-900">{t("whatsapp.chat.name")}</div>
+                  <div className="truncate text-sm font-bold text-slate-900">
+                    {t("whatsapp.chat.name")}
+                  </div>
                   <div className="text-xs text-emerald-700">{t("whatsapp.chat.status")}</div>
                 </div>
               </div>
@@ -4913,7 +4893,9 @@ function WhatsAppFeatureSection() {
                 <div className="flex justify-end">
                   <div className="relative max-w-[82%] rounded-2xl rounded-br-sm bg-emerald-100 px-3.5 py-2 text-sm text-slate-900 shadow-sm">
                     {t("whatsapp.messages.user1")}
-                    <span className="ml-2 mt-1 inline-block align-bottom text-[10px] text-slate-500">12:41</span>
+                    <span className="ml-2 mt-1 inline-block align-bottom text-[10px] text-slate-500">
+                      12:41
+                    </span>
                   </div>
                 </div>
 
@@ -4931,7 +4913,9 @@ function WhatsAppFeatureSection() {
                 <div className="flex justify-end">
                   <div className="max-w-[70%] rounded-2xl rounded-br-sm bg-emerald-100 px-3.5 py-2 text-sm text-slate-900 shadow-sm">
                     {t("whatsapp.messages.userConfirm")}
-                    <span className="ml-2 mt-1 inline-block align-bottom text-[10px] text-slate-500">12:42</span>
+                    <span className="ml-2 mt-1 inline-block align-bottom text-[10px] text-slate-500">
+                      12:42
+                    </span>
                   </div>
                 </div>
 
@@ -4982,7 +4966,9 @@ function WhatsAppFeatureSection() {
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
                       <s.icon className="h-4 w-4" />
                     </span>
-                    <span className="pt-1 text-sm font-medium text-slate-700 sm:text-base">{s.text}</span>
+                    <span className="pt-1 text-sm font-medium text-slate-700 sm:text-base">
+                      {s.text}
+                    </span>
                   </motion.li>
                 ))}
               </ul>

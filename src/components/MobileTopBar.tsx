@@ -48,7 +48,7 @@ export function MobileTopBar() {
           aria-label="Gasto Inteligente"
           className="flex items-center justify-center active:scale-[0.98]"
         >
-          <BrandMark variant="symbol" className="h-8 w-8" />
+          <BrandMark variant="symbol" className="h-8 w-auto" />
         </Link>
 
         {/* Direita — Avatar (44x44 clicável, ~36px visível) */}

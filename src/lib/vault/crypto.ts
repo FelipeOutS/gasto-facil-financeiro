@@ -118,6 +118,23 @@ export type EntrySecret = {
   notes?: string;
 };
 
+/** Reject an envelope from a previous rotation without exposing any key material. */
+export async function keyMatchesVaultSettings(
+  key: CryptoKey,
+  settings: { verifier: string; verifier_iv: string },
+): Promise<boolean> {
+  try {
+    const plain = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: b64decode(settings.verifier_iv) },
+      key,
+      b64decode(settings.verifier),
+    );
+    return new TextDecoder().decode(plain) === VERIFIER_PLAINTEXT;
+  } catch {
+    return false;
+  }
+}
+
 export async function encryptSecret(
   key: CryptoKey,
   secret: EntrySecret,
