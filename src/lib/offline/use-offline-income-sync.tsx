@@ -1,8 +1,4 @@
-/**
- * Orquestrador de sincronização da fila offline de receitas.
- */
-
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   type OfflineIncome,
   claimForSync,
@@ -14,118 +10,126 @@ import {
 import { addReceitaAwait } from "@/lib/store";
 import { normalizeOfflineError } from "./offline-error-messages";
 import { recordHistoryEvent } from "./offline-sync-history";
+import { withSyncAttempt } from "./sync-attempt";
 
-let syncing = false;
-
-export async function syncAllIncomesForUser(userId: string): Promise<{
-  synced: number;
-  failed: number;
-}> {
-  if (syncing || !userId) return { synced: 0, failed: 0 };
-  syncing = true;
-  let synced = 0;
-  let failed = 0;
-  try {
-    const items = await listIncomes(userId);
-    for (const item of items) {
-      if (item.status === "synced") continue;
-      const claimed = await claimForSync(item.local_id);
-      if (!claimed) continue;
+const running = new Map<string, Promise<{ synced: number; failed: number }>>();
+/** actorId is the authenticated creator, never the currently displayed owner. */
+export function syncAllIncomesForUser(
+  actorId: string,
+): Promise<{ synced: number; failed: number }> {
+  if (!actorId || (typeof navigator !== "undefined" && navigator.onLine === false))
+    return Promise.resolve({ synced: 0, failed: 0 });
+  const existing = running.get(actorId);
+  if (existing) return existing;
+  const task = (async () => {
+    let synced = 0,
+      failed = 0;
+    for (const candidate of await listIncomes(actorId, actorId, true)) {
+      if (typeof navigator !== "undefined" && navigator.onLine === false) break;
       try {
-        const res = await addReceitaAwait(item.input, userId, item.local_id);
-        if (res.ok) {
-          await deleteIncomeSilent(item.local_id);
-          synced += 1;
-          void recordHistoryEvent({
-            user_id: userId,
-            type: "income",
-            action: "synced",
-            title: item.descricao,
-            amount: item.valor,
-          });
-        } else {
-          const norm = normalizeOfflineError(res.error ?? "Falha ao sincronizar");
-          await updateIncome(item.local_id, {
-            status: "failed",
-            attempts: item.attempts + 1,
-            error_message: norm.friendly,
-            technical_error: norm.technical,
-          });
-          failed += 1;
-          void recordHistoryEvent({
-            user_id: userId,
-            type: "income",
-            action: "failed",
-            title: item.descricao,
-            amount: item.valor,
-            error_message: norm.friendly,
-            technical_error: norm.technical,
-          });
-        }
-      } catch (err) {
-        const norm = normalizeOfflineError(err);
-        await updateIncome(item.local_id, {
-          status: "failed",
-          attempts: item.attempts + 1,
-          error_message: norm.friendly,
-          technical_error: norm.technical,
+        await withSyncAttempt("gf:income:" + candidate.local_id, async (signal) => {
+          const item = await claimForSync(candidate.local_id, candidate.user_id, actorId);
+          if (!item || signal.aborted) return;
+          try {
+            const result = await addReceitaAwait(
+              item.input,
+              item.user_id,
+              item.local_id,
+              actorId,
+              signal,
+            );
+            if (signal.aborted) return; // leave the lease recoverable after a timeout
+            if (!result.ok) throw new Error(result.error || "Falha ao sincronizar");
+            await deleteIncomeSilent(item.local_id, item.user_id, item.attempts, actorId);
+            synced++;
+            void recordHistoryEvent({
+              user_id: item.user_id,
+              type: "income",
+              action: "synced",
+              title: item.descricao,
+              amount: item.valor,
+            });
+          } catch (error) {
+            if (signal.aborted) return;
+            const norm = normalizeOfflineError(error);
+            await updateIncome(
+              item.local_id,
+              { status: "failed", error_message: norm.friendly, technical_error: norm.technical },
+              item.user_id,
+              item.attempts,
+              actorId,
+            );
+            failed++;
+            void recordHistoryEvent({
+              user_id: item.user_id,
+              type: "income",
+              action: "failed",
+              title: item.descricao,
+              amount: item.valor,
+              error_message: norm.friendly,
+              technical_error: norm.technical,
+            });
+          }
         });
-        failed += 1;
-        void recordHistoryEvent({
-          user_id: userId,
-          type: "income",
-          action: "failed",
-          title: item.descricao,
-          amount: item.valor,
-          error_message: norm.friendly,
-          technical_error: norm.technical,
-        });
-      }
+      } catch {
+        failed++;
+      } // timeout/IDB failure preserves the item
     }
-  } finally {
-    syncing = false;
-  }
-  return { synced, failed };
+    return { synced, failed };
+  })().finally(() => running.delete(actorId));
+  running.set(actorId, task);
+  return task;
 }
 
-export function useOfflineIncomeQueue(userId: string | null | undefined) {
+export function useOfflineIncomeQueue(ownerId: string | null | undefined, actorId = ownerId) {
   const [items, setItems] = useState<OfflineIncome[]>([]);
-
+  const identity = ownerId + ":" + actorId;
+  const current = useRef(identity);
+  const readRevision = useRef(0);
+  if (current.current !== identity) {
+    current.current = identity;
+    readRevision.current++;
+  }
   const refresh = useCallback(async () => {
-    if (!userId) {
+    const request = ++readRevision.current;
+    if (!ownerId || !actorId) {
       setItems([]);
       return;
     }
-    const list = await listIncomes(userId);
-    setItems(list);
-  }, [userId]);
-
+    const list = await listIncomes(ownerId, actorId);
+    if (current.current === identity && request === readRevision.current) setItems(list);
+  }, [ownerId, actorId, identity]);
   useEffect(() => {
-    void refresh();
-    const unsub = subscribe(() => {
-      void refresh();
+    void refresh().catch(() => undefined);
+    return subscribe(() => {
+      void refresh().catch(() => undefined);
     });
-    return unsub;
   }, [refresh]);
-
   useEffect(() => {
-    if (!userId || typeof window === "undefined") return;
-    const onOnline = () => {
-      void syncAllIncomesForUser(userId).then(() => void refresh());
+    if (!actorId || typeof window === "undefined") return;
+    const trigger = () => {
+      void syncAllIncomesForUser(actorId)
+        .then(refresh)
+        .catch(() => undefined);
     };
-    window.addEventListener("online", onOnline);
-    if (navigator.onLine !== false) {
-      void syncAllIncomesForUser(userId).then(() => void refresh());
-    }
-    return () => window.removeEventListener("online", onOnline);
-  }, [userId, refresh]);
-
+    trigger();
+    window.addEventListener("online", trigger);
+    window.addEventListener("focus", trigger);
+    const timer = window.setInterval(trigger, 30000);
+    return () => {
+      window.removeEventListener("online", trigger);
+      window.removeEventListener("focus", trigger);
+      window.clearInterval(timer);
+    };
+  }, [actorId, refresh]);
   const syncNow = useCallback(async () => {
-    if (!userId) return { synced: 0, failed: 0 };
-    const res = await syncAllIncomesForUser(userId);
+    if (!actorId) return { synced: 0, failed: 0 };
+    const result = await syncAllIncomesForUser(actorId);
     await refresh();
-    return res;
-  }, [userId, refresh]);
-
-  return { items, pending: items.length, syncNow, refresh };
+    return result;
+  }, [actorId, refresh]);
+  const visible = items.filter(
+    (item) => item.user_id === ownerId && (item.actor_id ?? item.user_id) === actorId,
+  );
+  return { items: visible, pending: visible.length, syncNow, refresh };
 }

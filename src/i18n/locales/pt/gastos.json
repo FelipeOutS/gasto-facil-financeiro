@@ -201,6 +201,7 @@
     "tipoParcelado": "Parcelado",
     "tipoRecorrente": "Recorrente",
     "parcelas": "Parcelas",
+    "parcelasInvalidas": "Informe um total e uma quantidade válidos, com pelo menos R$ 0,01 por parcela.",
     "parcelasPreview": "{{n}}x de {{valor}}",
     "repetirMeses": "Quantidade de ocorrências",
     "gastoFixo": "Gasto fixo",

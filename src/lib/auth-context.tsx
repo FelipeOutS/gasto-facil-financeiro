@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { setActiveUserId, migrateLegacyDataToUser, hydrateUser } from "./store";
+import { setAuthenticatedUserId } from "./store";
 import type { TipoCadastro } from "./profile-utils";
 import {
   clearLoginBio,
@@ -13,7 +13,7 @@ import {
   setLoginBioInProgress,
   setLoginBioUnlocked,
 } from "./biometric-login";
-import { clearSecureSession } from "./secure-session";
+import { clearSecureSession, hasSavedSecureSession, saveSecureSession } from "./secure-session";
 
 export type Profile = {
   id: string;
@@ -64,13 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    // Mantém o uid já hidratado nesta sessão de página. Evita re-disparar
-    // hydrateUser em TOKEN_REFRESHED / USER_UPDATED / SIGNED_IN repetidos
-    // (que ocorrem ao reganhar foco da aba, refresh de token periódico,
-    // etc.). hydrateUser zera hydrationStatus para "loading", o que faria
-    // todas as páginas (`if (!ready) return <PageSkeleton/>`) piscarem
-    // skeleton entre rotas — exatamente o "splash entre telas" reportado.
-    let hydratedUidThisSession: string | null = null;
+    // Auth tracks the actor; ActiveAccountProvider owns financial hydration.
+    let sessionObserved = false;
+    let profileUidThisSession: string | null = null;
     // Safety: nunca deixe loading=true para sempre (WebView pode travar getSession)
     const loadingFallback = window.setTimeout(() => {
       if (mounted) setLoading(false);
@@ -78,31 +74,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // 1) listener FIRST
     const { data: sub } = supabase.auth.onAuthStateChange((evt, sess) => {
+      sessionObserved = true;
       setSession(sess);
+      if (evt === "TOKEN_REFRESHED" && sess && hasSavedSecureSession()) {
+        void saveSecureSession(sess);
+      }
       const uid = sess?.user.id ?? null;
-      setActiveUserId(uid);
+      setAuthenticatedUserId(uid);
       if (uid) {
         if (isLoginBioEnabledForEmail(sess?.user.email)) {
           persistLoginBioSession(sess);
         }
-        // Só roda hidratação pesada quando é realmente um novo login
-        // (uid mudou) ou um sign-in inicial. Eventos como TOKEN_REFRESHED
-        // e USER_UPDATED para o mesmo uid não devem re-hidratar.
-        const isNewLogin = hydratedUidThisSession !== uid;
+        // Load profile only for a new login; token refresh preserves the selected owner.
+        const isNewLogin = profileUidThisSession !== uid;
         const isSigninEvent = evt === "SIGNED_IN" || evt === "INITIAL_SESSION";
         if (isNewLogin && isSigninEvent) {
-          hydratedUidThisSession = uid;
+          profileUidThisSession = uid;
           // Defer cloud work to avoid blocking the auth callback
           setTimeout(() => {
-            void (async () => {
-              await migrateLegacyDataToUser(uid);
-              await hydrateUser(uid);
-              void loadProfile(uid);
-            })();
+            if (mounted && profileUidThisSession === uid) void loadProfile(uid);
           }, 0);
         }
       } else {
-        hydratedUidThisSession = null;
+        profileUidThisSession = null;
         setProfile(null);
       }
     });
@@ -110,19 +104,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const onBioSessionRestored = (event: Event) => {
       const sess = (event as CustomEvent<{ session?: Session }>).detail?.session ?? null;
       if (!sess) return;
+      sessionObserved = true;
       setSession(sess);
       setLoading(false);
       const uid = sess.user.id;
-      setActiveUserId(uid);
+      setAuthenticatedUserId(uid);
       persistLoginBioSession(sess);
-      if (hydratedUidThisSession !== uid) {
-        hydratedUidThisSession = uid;
+      if (profileUidThisSession !== uid) {
+        profileUidThisSession = uid;
         setTimeout(() => {
-          void (async () => {
-            await migrateLegacyDataToUser(uid);
-            await hydrateUser(uid);
-            void loadProfile(uid);
-          })();
+          if (mounted && profileUidThisSession === uid) void loadProfile(uid);
         }, 0);
       }
     };
@@ -134,22 +125,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 2) then existing session
     withAuthTimeout(supabase.auth.getSession())
       .then((result) => {
-        if (!mounted) return;
+        if (!mounted || sessionObserved) return;
         const data = result?.data ?? { session: null };
         setSession(data.session);
         const uid = data.session?.user.id ?? null;
-        setActiveUserId(uid);
+        setAuthenticatedUserId(uid);
         if (uid) {
           if (isLoginBioEnabledForEmail(data.session?.user.email)) {
             persistLoginBioSession(data.session);
           }
-          if (hydratedUidThisSession !== uid) {
-            hydratedUidThisSession = uid;
-            void (async () => {
-              await migrateLegacyDataToUser(uid);
-              await hydrateUser(uid);
-              void loadProfile(uid);
-            })();
+          if (profileUidThisSession !== uid) {
+            profileUidThisSession = uid;
+            if (mounted && profileUidThisSession === uid) void loadProfile(uid);
           }
         }
       })
@@ -227,7 +214,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // a biometria.
       clearSecureSession();
       await supabase.auth.signOut();
-      setActiveUserId(null);
+      setAuthenticatedUserId(null);
       setProfile(null);
     },
     async resetPassword(email) {

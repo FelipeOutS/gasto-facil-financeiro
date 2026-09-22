@@ -124,6 +124,9 @@ mock.module("@/server/whatsapp-contas-lembretes.server", () => ({
 mock.module("@/integrations/supabase/client.server", () => ({
   supabaseAdmin: {
     from: () => ({
+      insert: () => ({
+        select: () => ({ maybeSingle: async () => ({ data: { id: "test-log" }, error: null }) }),
+      }),
       select: () => ({
         eq: () => ({
           maybeSingle: async () => {
@@ -154,6 +157,9 @@ beforeEach(() => {
   delete process.env.WHATSAPP_OUTBOUND_HTTP_ENABLED;
   process.env.WHATSAPP_APP_SECRET = "test-app-secret";
   process.env.WHATSAPP_VERIFY_TOKEN = "test-verify-token";
+  process.env.WHATSAPP_ENABLED = "true";
+  process.env.WHATSAPP_ACCESS_TOKEN = "test-access-token";
+  process.env.WHATSAPP_PHONE_NUMBER_ID = "123456789";
   globalThis.fetch = (async () => {
     counts.fetchCalls++;
     throw new Error("network access forbidden in D.2B.2 hardening tests");
@@ -350,6 +356,18 @@ test("summary OFF contém todos os contadores operacionais zerados", async () =>
 });
 
 // ═══════════ Webhook — rejeições ═══════════
+
+test("webhook não configurado → 503 sem executar operações", async () => {
+  delete process.env.WHATSAPP_ACCESS_TOKEN;
+  const res = await webhookHandlers.POST!({
+    request: new Request("http://local/api/public/whatsapp/expense", {
+      method: "POST",
+      body: "{}",
+    }),
+  });
+  expect(res.status).toBe(503);
+  assertNoOperationalCalls();
+});
 
 test("webhook: GET verify token inválido → 403", async () => {
   const GET = webhookHandlers.GET!;

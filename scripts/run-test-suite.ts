@@ -70,7 +70,7 @@ function parse(file: string, out: string, exitCode: number): Result {
 }
 
 async function run(file: string): Promise<Result> {
-  const proc = Bun.spawn(["bun", "test", file], {
+  const proc = Bun.spawn([process.execPath, "test", file], {
     stdout: "pipe",
     stderr: "pipe",
     env: { ...process.env, FORCE_COLOR: "0" },

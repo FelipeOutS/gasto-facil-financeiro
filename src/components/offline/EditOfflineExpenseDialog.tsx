@@ -1,3 +1,4 @@
+import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import i18n from "i18next";
 import {
@@ -19,8 +20,9 @@ type Props = {
 };
 
 export function EditOfflineExpenseDialog({ item, open, onOpenChange }: Props) {
+  const { user } = useAuth();
   async function handleSubmit(data: NovoGastoInput) {
-    if (!item) return;
+    if (!item || !user || user.id !== (item.actor_id ?? item.user_id)) return;
     if (item.status === "syncing") {
       toast.error("Este gasto está sincronizando. Aguarde finalizar.");
       return;
@@ -34,18 +36,24 @@ export function EditOfflineExpenseDialog({ item, open, onOpenChange }: Props) {
       return;
     }
     try {
-      await updateExpense(item.local_id, {
-        input: data,
-        descricao: (data.descricao || data.estabelecimento || "Gasto").trim(),
-        valor: data.valor,
-        data: data.data,
-        forma_pagamento: data.formaPagamento,
-        cartao_id: data.cartaoId,
-        observacao: data.observacao,
-        status: "pending",
-        error_message: undefined,
-        technical_error: undefined,
-      });
+      await updateExpense(
+        item.local_id,
+        {
+          input: data,
+          descricao: (data.descricao || data.estabelecimento || "Gasto").trim(),
+          valor: data.valor,
+          data: data.data,
+          forma_pagamento: data.formaPagamento,
+          cartao_id: data.cartaoId,
+          observacao: data.observacao,
+          status: "pending",
+          error_message: undefined,
+          technical_error: undefined,
+        },
+        item.user_id,
+        undefined,
+        user.id,
+      );
       void recordHistoryEvent({
         user_id: item.user_id,
         type: "expense",

@@ -1,3 +1,4 @@
+import { useActiveAccount } from "@/lib/active-account";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation, Trans } from "react-i18next";
 import { toast } from "sonner";
@@ -76,6 +77,7 @@ type Props =
 export function ReceitaForm(props: Props) {
   const { t, i18n } = useTranslation("renda");
   const { user } = useAuth();
+  const { activeOwnerId: ownerId, canCreate } = useActiveAccount();
   const { plan, isAdminMaster } = usePlan();
   const { ativos: clientesAtivos } = useClientes();
   const receitas = useStore(() => getReceitas());
@@ -118,6 +120,8 @@ export function ReceitaForm(props: Props) {
   const [scope, setScope] = useState<UpdateReceitaScope>("single");
 
   type NovaPayload = {
+    ownerId: string;
+    actorId: string;
     descricao: string;
     valor: number;
     data: string;
@@ -143,16 +147,24 @@ export function ReceitaForm(props: Props) {
   }, [isFreeAdsPlan, recorrente]);
 
   async function persistNova(payload: NovaPayload) {
-    if (!payload.recorrente && user?.id && !isOnline()) {
+    if (user?.id !== payload.actorId) {
+      toast.error("A sessão deste lançamento mudou.");
+      return;
+    }
+    if (!payload.recorrente && !isOnline()) {
       try {
-        await enqueueIncome(user.id, {
-          descricao: payload.descricao,
-          valor: payload.valor,
-          data: payload.data,
-          tipo: payload.tipo,
-          recorrente: false,
-          clienteId: payload.clienteId ?? null,
-        });
+        await enqueueIncome(
+          payload.ownerId,
+          {
+            descricao: payload.descricao,
+            valor: payload.valor,
+            data: payload.data,
+            tipo: payload.tipo,
+            recorrente: false,
+            clienteId: payload.clienteId ?? null,
+          },
+          payload.actorId,
+        );
         toast.success(t("toast.offlineSaved"));
         props.onDone();
         return;
@@ -163,7 +175,7 @@ export function ReceitaForm(props: Props) {
       }
     }
     try {
-      await addReceita(payload);
+      await addReceita(payload, payload.ownerId, payload.actorId);
       toast.success(t("toast.added"));
       props.onDone();
     } catch {
@@ -172,6 +184,10 @@ export function ReceitaForm(props: Props) {
   }
 
   async function handleSaveCreate() {
+    if (!user || !ownerId || !canCreate) {
+      toast.error("Sem permissão para lançar nesta conta.");
+      return;
+    }
     const valorRaw = parseBRLInput(valorStr);
     const desc = descricao.trim();
     if (!valorRaw || !desc) {
@@ -207,6 +223,8 @@ export function ReceitaForm(props: Props) {
     });
 
     const payload: NovaPayload = {
+      ownerId,
+      actorId: user.id,
       descricao: desc,
       valor,
       data,

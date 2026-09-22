@@ -1,5 +1,6 @@
+import { SubscriptionPending } from "@/components/SubscriptionPending";
 import { useNavigate, Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRoles } from "@/lib/use-roles";
 import { usePlan } from "@/lib/use-plan";
@@ -70,11 +71,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const { t } = useTranslation("common");
 
   const isAdmin = plan.isAdminMaster || hasFullAccess;
-  const hasActiveAccess =
-    isAdmin ||
-    plan.status === "ativo" ||
-    plan.status === "teste" ||
-    (plan.status === "cancelado" && !!plan.accessUntil);
+  const hasActiveAccess = isAdmin || plan.active;
+  const subscriptionRedirect = useRef<string | null>(null);
 
   const premiumRule = findPremiumRule(pathname);
   const featureAllowed = premiumRule
@@ -94,12 +92,27 @@ export function AuthGate({ children }: { children: ReactNode }) {
   // tentando acessar rota fora da allowlist => manda para /meu-plano.
   useEffect(() => {
     if (loading || !session) return;
-    if (plan.loading || rolesLoading) return;
+    if (plan.loading || rolesLoading || plan.error) return;
     if (isAdmin) return;
-    if (hasActiveAccess) return;
+    if (hasActiveAccess) {
+      subscriptionRedirect.current = null;
+      return;
+    }
     if (isSubscriptionAllowed(pathname)) return;
-    void navigate({ to: "/meu-plano" });
-  }, [loading, session, plan.loading, rolesLoading, isAdmin, hasActiveAccess, pathname, navigate]);
+    if (subscriptionRedirect.current === pathname) return;
+    subscriptionRedirect.current = pathname;
+    void navigate({ to: "/meu-plano", replace: true });
+  }, [
+    loading,
+    session,
+    plan.loading,
+    plan.error,
+    rolesLoading,
+    isAdmin,
+    hasActiveAccess,
+    pathname,
+    navigate,
+  ]);
 
   useEffect(() => {
     if (!loading && !session && !redirecting) {
@@ -165,6 +178,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   // Bloqueio: usuário sem plano ativo em rota protegida espera o redirect.
   const subscriptionAllowed = isSubscriptionAllowed(pathname);
+  if ((!subscriptionAllowed || premiumRule) && (plan.loading || rolesLoading || plan.error)) {
+    return <SubscriptionPending error={plan.error} retry={plan.refresh} />;
+  }
   if (!subscriptionAllowed && !plan.loading && !rolesLoading && !hasActiveAccess) {
     return (
       <BrandLoader message="Você precisa de um plano ativo para usar esta página. Redirecionando para Meu plano…" />

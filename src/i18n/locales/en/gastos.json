@@ -201,6 +201,7 @@
     "tipoParcelado": "Installments",
     "tipoRecorrente": "Recurring",
     "parcelas": "Installments",
+    "parcelasInvalidas": "Enter a valid total and installment count, with at least R$ 0.01 per installment.",
     "parcelasPreview": "{{n}}x of {{valor}}",
     "repetirMeses": "Number of occurrences",
     "gastoFixo": "Fixed expense",

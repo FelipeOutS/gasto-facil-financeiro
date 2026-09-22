@@ -78,6 +78,8 @@ import { extractDomain } from "@/lib/brand/resolver";
 import { confirmAsync } from "@/components/ConfirmDialog";
 import {
   getQuickUnlock,
+  needsQuickUnlockMigration,
+  migrateLegacyQuickUnlock,
   disableQuickUnlock,
   enableBiometricUnlock,
   unlockWithBiometric,
@@ -544,7 +546,11 @@ function UnlockView({
   settings: VaultSettingsRow;
   onUnlocked: () => void;
 }) {
-  const [bio, setBio] = useState<QuickUnlockRecord | null>(() => getQuickUnlock(userId));
+  const [bio] = useState<QuickUnlockRecord | null>(() => {
+    const record = getQuickUnlock(userId);
+    return record?.kind === "android-bio" ? null : record;
+  });
+  const legacyBiometric = needsQuickUnlockMigration(userId);
   const [serverPin, setServerPin] = useState<ServerPinStatus | null>(null);
   const [mode, setMode] = useState<"pin" | "bio" | "master">("master");
   const [pwd, setPwd] = useState("");
@@ -583,6 +589,19 @@ function UnlockView({
   const cooldownLeft = Math.max(0, Math.ceil((cooldownUntil - now) / 1000));
   const isCoolingDown = cooldownLeft > 0;
 
+  async function migrateAfterPrimaryUnlock(key: CryptoKey) {
+    try {
+      if (await migrateLegacyQuickUnlock(userId, userLabel, key)) {
+        toast.success("Proteção biométrica atualizada. A configuração antiga foi removida.");
+      }
+    } catch {
+      toast.warning("Cofre aberto com senha/PIN. A atualização da biometria não foi concluída.", {
+        description:
+          "A configuração antiga não será usada para desbloquear. Atualize o app e configure novamente em Desbloqueio rápido, ou remova a biometria antiga.",
+      });
+    }
+  }
+
   async function handleUnlock() {
     if (!pwd || isCoolingDown) return;
     setBusy(true);
@@ -603,6 +622,7 @@ function UnlockView({
         }
         return;
       }
+      await migrateAfterPrimaryUnlock(key);
       setMasterKey(key);
       setFails(0);
       onUnlocked();
@@ -616,6 +636,7 @@ function UnlockView({
     setBusy(true);
     try {
       const key = await unlockWithServerPin(userId, value);
+      await migrateAfterPrimaryUnlock(key);
       setMasterKey(key);
       setPin("");
       onUnlocked();
@@ -641,7 +662,7 @@ function UnlockView({
       setMasterKey(key);
       onUnlocked();
     } catch (e) {
-      toast.error(i18n.t("cofre:errors.biometricFailed"));
+      toast.error(e instanceof Error ? e.message : i18n.t("cofre:errors.biometricFailed"));
     } finally {
       setBusy(false);
     }
@@ -665,6 +686,12 @@ function UnlockView({
   return (
     <>
       <HeaderHero subtitle={subtitle} />
+      {legacyBiometric && (
+        <p role="status" className="mx-auto mb-4 max-w-md text-sm text-muted-foreground">
+          A biometria antiga precisa ser atualizada. Entre com sua senha mestra ou PIN do Cofre;
+          depois confirme a biometria para concluir a atualização sem alterar seus dados.
+        </p>
+      )}
       <Card className="mx-auto max-w-md p-6">
         <div className="mb-5 grid place-items-center">
           <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand-on-soft">
@@ -1110,7 +1137,11 @@ function VaultMain({
           onSettingsChanged(newSettings);
           clearSecretCache();
           // Invalida desbloqueio rápido — a chave mestra mudou
-          disableQuickUnlock(userId);
+          void disableQuickUnlock(userId).catch(() =>
+            toast.error(
+              "Não foi possível remover a biometria antiga. Remova-a em Desbloqueio rápido antes de configurar novamente.",
+            ),
+          );
           // Força novo unlock para usar a nova senha
           setMasterKey(null);
           toast.success("Senha mestra alterada. Faça o desbloqueio com a nova senha.");
@@ -2717,13 +2748,21 @@ function QuickUnlockSettingsView({
       }))
     )
       return;
-    disableQuickUnlock(userId);
-    refresh();
-    toast.success("Biometria removida deste dispositivo");
+    setBusy(true);
+    try {
+      await disableQuickUnlock(userId);
+      refresh();
+      toast.success("Biometria removida deste dispositivo");
+    } catch {
+      toast.error("Não foi possível remover a biometria. Tente novamente.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   const hasPin = pinStatus?.configured ?? false;
-  const hasBio = rec?.kind === "webauthn" || rec?.kind === "android-bio";
+  const hasBio = rec?.kind === "webauthn" || rec?.kind === "native-vault";
+  const hasLegacyBio = needsQuickUnlockMigration(userId);
 
   return (
     <>
@@ -2742,10 +2781,10 @@ function QuickUnlockSettingsView({
         <div>
           <p className="font-medium text-foreground">Como isso funciona</p>
           <p className="mt-1">
-            Seu PIN é usado apenas para desbloqueio rápido neste dispositivo. Por segurança, ele{" "}
-            <strong>não pode ser visualizado</strong>, apenas alterado. Sua senha mestra continua
-            sendo a única forma de criar o cofre — a chave do cofre fica guardada cifrada localmente
-            e só é aberta com o PIN ou biometria.
+            A senha mestra e o PIN do Cofre continuam disponíveis. No Android atualizado, o
+            desbloqueio biométrico usa uma chave protegida pelo sistema e exige autenticação a cada
+            abertura. No navegador, depende de WebAuthn com PRF; sem esse recurso, use a senha
+            mestra ou o PIN. O novo mecanismo não salva a chave de desbloqueio no armazenamento web.
           </p>
         </div>
       </Card>
@@ -2962,12 +3001,12 @@ function QuickUnlockSettingsView({
             <Fingerprint className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold">Biometria / Face ID</p>
+            <p className="text-sm font-semibold">Desbloqueio biométrico</p>
             <p className="text-[11px] text-muted-foreground">
               {hasBio
                 ? `Ativa neste dispositivo desde ${new Date(rec!.createdAt).toLocaleDateString("pt-BR")}`
                 : bioAvailable
-                  ? "Usa a biometria nativa deste aparelho quando disponível."
+                  ? "No Android, usa proteção do sistema; na web, exige WebAuthn PRF."
                   : "Indisponível neste dispositivo ou navegador."}
             </p>
           </div>
@@ -2977,6 +3016,24 @@ function QuickUnlockSettingsView({
             </span>
           )}
         </div>
+        {hasLegacyBio && (
+          <p role="status" className="mt-3 text-sm text-muted-foreground">
+            A proteção antiga está desativada para desbloqueio, mas o registro inseguro permanece
+            neste aparelho até a atualização ou remoção. Configure a proteção segura abaixo ou
+            remova o registro antigo. Seus dados e senha/PIN serão mantidos.
+          </p>
+        )}
+        {hasLegacyBio && (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={handleRemoveBio}
+            className="mt-3 w-full"
+          >
+            Remover biometria antiga
+          </Button>
+        )}
         {hasBio ? (
           <Button
             type="button"

@@ -304,7 +304,7 @@ export function DesktopSidebar() {
     );
   }
 
-  const dashboardActive = currentPath === "/";
+  const dashboardActive = currentPath === "/app" || currentPath === "/app/";
 
   return (
     <TooltipProvider delayDuration={200}>

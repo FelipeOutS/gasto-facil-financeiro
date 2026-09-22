@@ -1,3 +1,4 @@
+import { useActiveAccount } from "@/lib/active-account";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation, Trans } from "react-i18next";
@@ -205,6 +206,7 @@ function RendaPage() {
   const { t: tBase, i18n } = useTranslation("renda");
   const ready = useBootstrap();
   const { profile, user } = useAuth();
+  const { activeOwnerId: ownerId, canCreate } = useActiveAccount();
   const { plan, isAdminMaster } = usePlan();
   const isFreeAdsPlan = !isAdminMaster && plan === "free_ads";
   const tipoCad = profile?.tipo_cadastro as TipoCadastro;
@@ -438,6 +440,8 @@ function RendaPage() {
   const [novaClienteId, setNovaClienteId] = useState<string | null>(null);
   const { ativos: clientesAtivos, porId: clientesPorId } = useClientes();
   type NovaPayload = {
+    ownerId: string;
+    actorId: string;
     descricao: string;
     valor: number;
     data: string;
@@ -467,16 +471,24 @@ function RendaPage() {
 
   async function persistNova(payload: NovaPayload) {
     // Fluxo offline: apenas para receita não recorrente, com usuário logado.
-    if (!payload.recorrente && user?.id && !isOnline()) {
+    if (user?.id !== payload.actorId) {
+      toast.error("A sessão deste lançamento mudou.");
+      return;
+    }
+    if (!payload.recorrente && !isOnline()) {
       try {
-        await enqueueIncome(user.id, {
-          descricao: payload.descricao,
-          valor: payload.valor,
-          data: payload.data,
-          tipo: payload.tipo,
-          recorrente: false,
-          clienteId: payload.clienteId ?? null,
-        });
+        await enqueueIncome(
+          payload.ownerId,
+          {
+            descricao: payload.descricao,
+            valor: payload.valor,
+            data: payload.data,
+            tipo: payload.tipo,
+            recorrente: false,
+            clienteId: payload.clienteId ?? null,
+          },
+          payload.actorId,
+        );
         toast.success("Receita salva offline. Ela será sincronizada quando a internet voltar.");
         setOpen(false);
         reset();
@@ -488,7 +500,7 @@ function RendaPage() {
       }
     }
     try {
-      await addReceita(payload);
+      await addReceita(payload, payload.ownerId, payload.actorId);
       toast.success(t("toast.added"));
       setOpen(false);
       reset();
@@ -529,6 +541,10 @@ function RendaPage() {
   }
 
   async function handleSave() {
+    if (!user || !ownerId || !canCreate) {
+      toast.error("Sem permissão para lançar nesta conta.");
+      return;
+    }
     const valor = parseBRLInput(valorStr);
     const desc = descricao.trim();
     if (!valor || !desc) {
@@ -558,6 +574,8 @@ function RendaPage() {
     });
 
     const payload: NovaPayload = {
+      ownerId,
+      actorId: user.id,
       descricao: desc,
       valor,
       data,

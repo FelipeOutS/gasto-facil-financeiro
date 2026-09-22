@@ -1,3 +1,4 @@
+import { useMobileKeyboard } from "@/lib/use-mobile-keyboard";
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -18,6 +19,7 @@ import { NotificationsPanel } from "@/components/NotificationBell";
  */
 export function MobileNotificationsFab() {
   const { t } = useTranslation("dashboard");
+  const keyboardOpen = useMobileKeyboard();
   const { visible, unreadCount } = useAlerts();
   const hasUrgente = visible.some((a) => a.priority === "critica" || a.priority === "alta");
   const [open, setOpen] = useState(false);
@@ -47,7 +49,8 @@ export function MobileNotificationsFab() {
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           )}
           style={{
-            bottom: "calc(92px + env(safe-area-inset-bottom, 0px))",
+            display: keyboardOpen ? "none" : undefined,
+            bottom: "calc(var(--mobile-nav-height) + var(--mobile-nav-bottom) + 12px)",
             marginBottom: "var(--notifications-fab-offset, 0px)",
           }}
         >

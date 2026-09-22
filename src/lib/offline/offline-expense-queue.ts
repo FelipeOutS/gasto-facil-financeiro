@@ -11,6 +11,8 @@
 
 import type { NovoGastoInput } from "@/lib/store";
 import { recordHistoryEvent } from "./offline-sync-history";
+import { validateFinancialAmount } from "../financial-limits";
+import { isValidOfflineDate } from "./offline-validation";
 
 const DB_NAME = "gf_offline";
 const DB_VERSION = 1;
@@ -20,7 +22,10 @@ export type OfflineExpenseStatus = "pending" | "syncing" | "failed" | "synced";
 
 export type OfflineExpense = {
   local_id: string;
+  /** Immutable destination owner. */
   user_id: string;
+  /** Authenticated creator; legacy items belong to user_id. */
+  actor_id?: string;
   input: NovoGastoInput;
   /** Descrição visível na lista de pendências */
   descricao: string;
@@ -70,10 +75,26 @@ async function tx<T>(
       .then((r) => {
         result = r;
       })
-      .catch(reject);
-    t.oncomplete = () => resolve(result);
-    t.onerror = () => reject(t.error);
-    t.onabort = () => reject(t.error);
+      .catch((error) => {
+        try {
+          t.abort();
+        } catch {
+          /* already complete */
+        }
+        reject(error);
+      });
+    t.oncomplete = () => {
+      db.close();
+      resolve(result);
+    };
+    t.onerror = () => {
+      db.close();
+      reject(t.error);
+    };
+    t.onabort = () => {
+      db.close();
+      reject(t.error);
+    };
   });
 }
 
@@ -103,12 +124,21 @@ function genId(): string {
 export async function enqueueExpense(
   userId: string,
   input: NovoGastoInput,
+  actorId = userId,
 ): Promise<OfflineExpense> {
   if (!isBrowser()) throw new Error("offline queue unavailable");
+  if (
+    !userId ||
+    !actorId ||
+    !validateFinancialAmount(input.valor).ok ||
+    !isValidOfflineDate(input.data)
+  )
+    throw new Error("Informe uma conta, data e valor válidos.");
   const now = Date.now();
   const item: OfflineExpense = {
     local_id: genId(),
     user_id: userId,
+    actor_id: actorId,
     input,
     descricao: (input.descricao || input.estabelecimento || "Gasto").trim(),
     valor: input.valor,
@@ -135,18 +165,22 @@ export async function enqueueExpense(
   return item;
 }
 
-export async function listExpenses(userId: string): Promise<OfflineExpense[]> {
+export async function listExpenses(
+  userId: string,
+  actorId = userId,
+  allOwners = false,
+): Promise<OfflineExpense[]> {
   if (!isBrowser()) return [];
   return tx("readonly", (s) => {
     return new Promise<OfflineExpense[]>((resolve, reject) => {
       const out: OfflineExpense[] = [];
       const idx = s.index("user_id");
-      const req = idx.openCursor(IDBKeyRange.only(userId));
+      const req = allOwners ? s.openCursor() : idx.openCursor(IDBKeyRange.only(userId));
       req.onsuccess = () => {
         const cur = req.result;
         if (cur) {
           const v = cur.value as OfflineExpense;
-          if (v.status !== "synced") out.push(v);
+          if (v.status !== "synced" && (v.actor_id ?? v.user_id) === actorId) out.push(v);
           cur.continue();
         } else {
           out.sort((a, b) => a.created_at - b.created_at);
@@ -164,20 +198,58 @@ export async function countPending(userId: string): Promise<number> {
 }
 
 /** Remove sem registrar evento no histórico (uso interno do sync). */
-export async function deleteExpenseSilent(localId: string): Promise<void> {
+export async function deleteExpenseSilent(
+  localId: string,
+  userId: string,
+  attempt: number,
+  actorId = userId,
+): Promise<void> {
   await tx("readwrite", (s) => {
-    s.delete(localId);
+    return new Promise<void>((resolve, reject) => {
+      const request = s.get(localId);
+      request.onsuccess = () => {
+        const current = request.result as OfflineExpense | undefined;
+        if (
+          current?.user_id === userId &&
+          (current.actor_id ?? current.user_id) === actorId &&
+          current.attempts === attempt &&
+          current.status === "syncing"
+        )
+          s.delete(localId);
+        resolve();
+      };
+      request.onerror = () => reject(request.error);
+    });
   });
   emit();
 }
 
-export async function removeExpense(localId: string): Promise<void> {
+export async function removeExpense(
+  localId: string,
+  userId: string,
+  actorId = userId,
+): Promise<void> {
   let snapshot: OfflineExpense | undefined;
   await tx("readwrite", (s) => {
     return new Promise<void>((resolve, reject) => {
       const g = s.get(localId);
       g.onsuccess = () => {
         snapshot = g.result as OfflineExpense | undefined;
+        if (
+          snapshot &&
+          (snapshot.user_id !== userId || (snapshot.actor_id ?? snapshot.user_id) !== actorId)
+        ) {
+          reject(new Error("Este gasto pertence a outra conta."));
+          return;
+        }
+        if (snapshot && (snapshot.status === "syncing" || snapshot.attempts > 0)) {
+          reject(
+            new Error(
+              "Este envio precisa ser conferido antes de remover. Tente sincronizar novamente.",
+            ),
+          );
+          return;
+        }
         s.delete(localId);
         resolve();
       };
@@ -199,6 +271,9 @@ export async function removeExpense(localId: string): Promise<void> {
 export async function updateExpense(
   localId: string,
   patch: Partial<OfflineExpense>,
+  userId: string,
+  expectedAttempt?: number,
+  actorId = userId,
 ): Promise<void> {
   await tx("readwrite", (s) => {
     return new Promise<void>((resolve, reject) => {
@@ -209,9 +284,35 @@ export async function updateExpense(
           resolve();
           return;
         }
+        if (current.user_id !== userId || (current.actor_id ?? current.user_id) !== actorId) {
+          reject(new Error("Este gasto pertence a outra conta."));
+          return;
+        }
+        if (
+          expectedAttempt !== undefined &&
+          (current.attempts !== expectedAttempt || current.status !== "syncing")
+        ) {
+          resolve();
+          return;
+        }
+        if (
+          patch.input &&
+          (!validateFinancialAmount(patch.input.valor).ok || !isValidOfflineDate(patch.input.data))
+        ) {
+          reject(new Error("Informe uma data e valor válidos."));
+          return;
+        }
+        if (patch.input && (current.status === "syncing" || current.attempts > 0)) {
+          reject(new Error("Este envio precisa ser conferido antes de editar."));
+          return;
+        }
         const merged: OfflineExpense = {
           ...current,
           ...patch,
+          local_id: current.local_id,
+          user_id: current.user_id,
+          actor_id: current.actor_id,
+          attempts: current.attempts,
           input: patch.input ?? current.input,
           updated_at: Date.now(),
         };
@@ -246,20 +347,31 @@ export async function clearForUser(userId: string): Promise<void> {
 }
 
 /** Marca um item como em sincronização para evitar processamentos paralelos. */
-export async function claimForSync(localId: string): Promise<boolean> {
-  let claimed = false;
+export async function claimForSync(
+  localId: string,
+  userId: string,
+  actorId = userId,
+): Promise<OfflineExpense | null> {
+  let claimed: OfflineExpense | null = null;
   await tx("readwrite", (s) => {
     return new Promise<void>((resolve, reject) => {
       const req = s.get(localId);
       req.onsuccess = () => {
         const cur = req.result as OfflineExpense | undefined;
-        if (!cur) return resolve();
-        if (cur.status === "syncing") return resolve();
+        if (
+          !cur ||
+          cur.user_id !== userId ||
+          (cur.actor_id ?? cur.user_id) !== actorId ||
+          cur.status === "synced"
+        )
+          return resolve();
+        if (cur.status === "syncing" && Date.now() - cur.updated_at < 120000) return resolve();
         cur.status = "syncing";
+        cur.attempts += 1;
         cur.updated_at = Date.now();
         const put = s.put(cur);
         put.onsuccess = () => {
-          claimed = true;
+          claimed = cur;
           resolve();
         };
         put.onerror = () => reject(put.error);

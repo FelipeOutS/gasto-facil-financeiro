@@ -1,3 +1,4 @@
+import { gruposParcelas } from "@/lib/parcelamento";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -61,6 +62,7 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
   // ensure FORMAS_PAGAMENTO stays imported (used elsewhere) – referenced for type narrow
   void FORMAS_PAGAMENTO;
 
+  const parcelasPreview = parsed?.parcelas ? gruposParcelas(parsed.valor, parsed.parcelas) : null;
   const altaConfianca = !!parsed && parsed.confianca >= 0.7 && parsed.valor > 0;
   const dateLocale = i18n.resolvedLanguage === "en" ? "en-US" : "pt-BR";
 
@@ -77,6 +79,10 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
   async function salvar() {
     if (!parsed || parsed.valor <= 0) {
       toast.error(t("whatsapp.errValor"));
+      return;
+    }
+    if (parsed.parcelas && !parcelasPreview) {
+      toast.error(t("form.parcelasInvalidas"));
       return;
     }
     if (!canWrite) {
@@ -203,10 +209,16 @@ export function WhatsAppExpenseDialog({ open, onOpenChange, onSaved }: Props) {
                   <div className="col-span-2 rounded-lg bg-card-elevated px-2.5 py-2">
                     <p className="text-muted-foreground">{t("whatsapp.parcelas")}</p>
                     <p className="mt-0.5 font-medium num">
-                      {t("whatsapp.parcelasPreview", {
-                        n: parsed.parcelas,
-                        valor: formatBRL(parsed.valor / parsed.parcelas),
-                      })}
+                      {parcelasPreview
+                        ? parcelasPreview
+                            .map((p) =>
+                              t("whatsapp.parcelasPreview", {
+                                n: p.quantidade,
+                                valor: formatBRL(p.valor),
+                              }),
+                            )
+                            .join(" + ")
+                        : t("form.parcelasInvalidas")}
                     </p>
                   </div>
                 )}

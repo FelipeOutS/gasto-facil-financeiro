@@ -21,12 +21,18 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { setActiveUserId, hydrateUser } from "@/lib/store";
+import {
+  setActiveUserId,
+  hydrateUser,
+  getHydrationStatus,
+  migrateLegacyDataToUser,
+} from "@/lib/store";
 import type { AccessLevel } from "@/lib/connected-accounts";
 
 export type ConnectedAccountAccess = {
@@ -90,74 +96,112 @@ export function ActiveAccountProvider({ children }: { children: ReactNode }) {
   const [activeOwnerId, setActiveOwnerIdState] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Carrega lista de conexões aceitas para o usuário logado.
+  const revision = useRef(0);
+  const applySwitch = useCallback(
+    async (ownerId: string, persist: boolean) => {
+      const request = ++revision.current;
+      setActiveOwnerIdState(ownerId);
+      setActiveUserId(ownerId);
+      setLoading(true);
+      if (persist && viewerId) writeStored(viewerId, ownerId);
+      try {
+        await hydrateUser(ownerId);
+      } finally {
+        if (revision.current === request) setLoading(false);
+      }
+    },
+    [viewerId],
+  );
+
   useEffect(() => {
+    let cancelled = false;
+    const initialization = ++revision.current;
+    setConnections([]);
+    setActiveOwnerIdState(null);
+    setActiveUserId(null);
     if (!viewerId) {
-      setConnections([]);
-      setActiveOwnerIdState(null);
       setLoading(false);
       return;
     }
-    let cancelled = false;
     setLoading(true);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
     void (async () => {
-      const { data, error } = await supabase
-        .from("connected_accounts")
-        .select("owner_user_id,invited_email,nickname,access_level,status")
-        .eq("viewer_user_id", viewerId)
-        .eq("status", "accepted");
-
-      if (cancelled) return;
-      if (error || !data) {
-        setConnections([]);
-      } else {
-        const list: ConnectedAccountAccess[] = data
-          .filter((r) => !!r.owner_user_id)
-          .map((r) => ({
-            ownerId: r.owner_user_id as string,
-            email: r.invited_email as string,
-            nickname: (r.nickname as string | null) ?? null,
-            accessLevel: r.access_level as AccessLevel,
-          }));
-        setConnections(list);
-
-        // Restaura escolha salva (se ainda for válida) ou volta para a própria
-        const stored = readStored(viewerId);
-        const valid = stored && list.some((c) => c.ownerId === stored) ? stored : null;
-        applySwitch(valid ?? viewerId, false);
+      let list: ConnectedAccountAccess[] = [];
+      try {
+        const { data, error } = await supabase
+          .from("connected_accounts")
+          .select("owner_user_id,invited_email,nickname,access_level,status")
+          .eq("viewer_user_id", viewerId)
+          .eq("status", "accepted")
+          .abortSignal(controller.signal);
+        if (!error && data)
+          list = data
+            .filter((r) => !!r.owner_user_id)
+            .map((r) => ({
+              ownerId: r.owner_user_id!,
+              email: r.invited_email,
+              nickname: r.nickname ?? null,
+              accessLevel: r.access_level as AccessLevel,
+            }));
+      } catch {
+        /* use own account if connections cannot be loaded */
+      } finally {
+        clearTimeout(timer);
       }
-      setLoading(false);
-    })();
+      if (cancelled) return;
+      setConnections(list);
+      const stored = readStored(viewerId);
+      const target = stored && list.some((c) => c.ownerId === stored) ? stored : viewerId;
+      // Legacy import belongs only to the authenticated owner, never a connected account.
+      let migrationTimer: ReturnType<typeof setTimeout>;
+      try {
+        await Promise.race([
+          migrateLegacyDataToUser(viewerId),
+          new Promise<void>((resolve) => {
+            migrationTimer = setTimeout(resolve, 10000);
+          }),
+        ]);
+      } finally {
+        clearTimeout(migrationTimer!);
+      }
+      if (!cancelled && revision.current === initialization) await applySwitch(target, false);
+    })().catch(() => {
+      if (!cancelled && revision.current === initialization) void applySwitch(viewerId, false);
+    });
     return () => {
       cancelled = true;
+      ++revision.current;
+      controller.abort();
+      clearTimeout(timer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewerId]);
-
-  function applySwitch(ownerId: string, persist: boolean) {
-    setActiveOwnerIdState(ownerId);
-    setActiveUserId(ownerId);
-    // Só re-hidrata quando estamos trocando para uma conta CONECTADA
-    // (diferente da própria). Se for a conta do próprio usuário, o
-    // auth-context já hidratou — chamar hydrateUser aqui zera o status
-    // para "loading" e faz todas as páginas piscarem PageSkeleton.
-    if (viewerId && ownerId !== viewerId) {
-      void hydrateUser(ownerId);
-    }
-    if (persist && viewerId) writeStored(viewerId, ownerId === viewerId ? null : ownerId);
-    // O store já emite/atualiza componentes via subscribe; hydrateUser repovoa caches.
-  }
+  }, [viewerId, applySwitch]);
 
   const switchTo = useCallback(
     async (ownerId: string | null) => {
       if (!viewerId) return;
       const target = ownerId ?? viewerId;
       if (target !== viewerId && !connections.some((c) => c.ownerId === target)) return;
-      applySwitch(target, true);
+      await applySwitch(target, true);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [viewerId, connections],
+    [viewerId, connections, applySwitch],
   );
+
+  useEffect(() => {
+    if (!activeOwnerId) return;
+    const retry = () => {
+      if (navigator.onLine !== false && getHydrationStatus() === "error")
+        void applySwitch(activeOwnerId, false);
+    };
+    window.addEventListener("online", retry);
+    window.addEventListener("focus", retry);
+    const timer = window.setInterval(retry, 30000);
+    return () => {
+      window.removeEventListener("online", retry);
+      window.removeEventListener("focus", retry);
+      window.clearInterval(timer);
+    };
+  }, [activeOwnerId, applySwitch]);
 
   const isOwnAccount = !viewerId || activeOwnerId === viewerId || activeOwnerId === null;
   const activeConnection = useMemo(
@@ -166,8 +210,13 @@ export function ActiveAccountProvider({ children }: { children: ReactNode }) {
   );
   const accessLevel: AccessLevel | null = activeConnection?.accessLevel ?? null;
 
-  const canCreate = isOwnAccount || accessLevel === "view_create" || accessLevel === "admin";
-  const canAdmin = isOwnAccount || accessLevel === "admin";
+  const canCreate =
+    !!viewerId &&
+    !!activeOwnerId &&
+    !loading &&
+    (isOwnAccount || accessLevel === "view_create" || accessLevel === "admin");
+  const canAdmin =
+    !!viewerId && !!activeOwnerId && !loading && (isOwnAccount || accessLevel === "admin");
 
   const value: Ctx = {
     activeOwnerId,

@@ -114,7 +114,7 @@ describe("WA-C10.a.1 — fingerprint pepper por ambiente", () => {
     const origSecret = process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET;
     __setBoletoPepperForTest(null);
     delete process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET;
-    Object.defineProperty(process.env, "NODE_ENV", { value: "production", configurable: true });
+    process.env.NODE_ENV = "production";
     const origErr = console.error;
     console.error = () => {};
     try {
@@ -122,7 +122,7 @@ describe("WA-C10.a.1 — fingerprint pepper por ambiente", () => {
     } finally {
       console.error = origErr;
       if (origNode === undefined) delete process.env.NODE_ENV;
-      else Object.defineProperty(process.env, "NODE_ENV", { value: origNode, configurable: true });
+      else process.env.NODE_ENV = origNode;
       if (origSecret !== undefined) process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET = origSecret;
       __resetBoletoPepperCacheForTest();
     }
@@ -133,7 +133,7 @@ describe("WA-C10.a.1 — fingerprint pepper por ambiente", () => {
     const origSecret = process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET;
     __setBoletoPepperForTest(null);
     delete process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET;
-    Object.defineProperty(process.env, "NODE_ENV", { value: "development", configurable: true });
+    process.env.NODE_ENV = "development";
     const warns: unknown[] = [];
     const origWarn = console.warn;
     console.warn = (...args: unknown[]) => warns.push(args);
@@ -144,7 +144,7 @@ describe("WA-C10.a.1 — fingerprint pepper por ambiente", () => {
     } finally {
       console.warn = origWarn;
       if (origNode === undefined) delete process.env.NODE_ENV;
-      else Object.defineProperty(process.env, "NODE_ENV", { value: origNode, configurable: true });
+      else process.env.NODE_ENV = origNode;
       if (origSecret !== undefined) process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET = origSecret;
       __resetBoletoPepperCacheForTest();
     }
