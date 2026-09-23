@@ -1,5 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
-import { encryptSecret, decryptSecret, createMasterKey, type EntrySecret } from "./crypto";
+import {
+  encryptSecret,
+  decryptSecret,
+  createMasterKey,
+  keyMatchesVaultSettings,
+  type EntrySecret,
+} from "./crypto";
 import { evaluateStrength, type Strength } from "./strength";
 
 export type VaultSettingsRow = {
@@ -37,13 +43,21 @@ export async function fetchVaultSettings(userId: string): Promise<VaultSettingsR
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
-  return (data as VaultSettingsRow | null) ?? null;
+  if (data === null) return null;
+  const row = data as VaultSettingsRow | undefined;
+  if (!row || row.user_id !== userId || !row.salt || !row.verifier || !row.verifier_iv ||
+      !Number.isInteger(row.iterations) || row.iterations <= 0) {
+    throw new Error("Não foi possível determinar a configuração do Cofre.");
+  }
+  return row;
 }
 
-export async function saveVaultSettings(
+export async function createVaultSettings(
   row: Omit<VaultSettingsRow, "hint"> & { hint?: string | null },
 ) {
-  const { error } = await supabase.from("vault_settings" as never).upsert(row as never);
+  // INSERT + user_id primary key rejects concurrent/existing setup atomically.
+  // The existing INSERT RLS policy requires auth.uid() = user_id.
+  const { error } = await supabase.from("vault_settings" as never).insert(row as never);
   if (error) throw error;
 }
 
@@ -122,45 +136,102 @@ export async function decryptOne(key: CryptoKey, row: VaultEntryRow): Promise<De
   return { ...row, secret: await decryptSecret(key, row) };
 }
 
-/**
- * Rotaciona a senha mestra: deriva nova key, recriptografa todas as entries
- * e atualiza vault_settings com novo salt/verifier. Operação melhor-esforço:
- * recriptografia ocorre antes do update do verifier para minimizar risco de
- * inconsistência (entries com key nova continuam funcionando com nova senha).
- */
+/** Fresh verification prevents a pre-rotation PIN/native/WebAuthn envelope from
+ * restoring the replaced key, including envelopes on another device. */
+export async function assertCurrentVaultKey(userId: string, key: CryptoKey) {
+  const settings = await fetchVaultSettings(userId);
+  if (!settings || !(await keyMatchesVaultSettings(key, settings)))
+    throw new Error(
+      "A chave do Cofre mudou. Use a senha mestra atual e configure o desbloqueio rápido novamente.",
+    );
+  return settings;
+}
+
+function rotationSettings(settings: VaultSettingsRow) {
+  return {
+    salt: settings.salt,
+    iterations: settings.iterations,
+    verifier: settings.verifier,
+    verifier_iv: settings.verifier_iv,
+    hint: settings.hint ?? null,
+  };
+}
+
+/** Prepare locally; persist in ONE PostgreSQL transaction. Never fall back to
+ * individual writes if the RPC is unavailable. */
 export async function rotateMasterKey(args: {
   userId: string;
   currentKey: CryptoKey;
+  currentSettings: VaultSettingsRow;
   newPassword: string;
   hint?: string | null;
-}): Promise<void> {
+}): Promise<VaultSettingsRow> {
+  if (
+    args.currentSettings.user_id !== args.userId ||
+    !(await keyMatchesVaultSettings(args.currentKey, args.currentSettings))
+  )
+    throw new Error("Desbloqueie o Cofre com a senha mestra atual antes de tentar novamente.");
   const rows = await fetchEntries(args.userId);
-  // Decifra tudo com a key atual
-  const decrypted: { id: string; secret: EntrySecret }[] = [];
-  for (const r of rows) {
-    decrypted.push({ id: r.id, secret: await decryptSecret(args.currentKey, r) });
-  }
-  // Cria nova master key
   const built = await createMasterKey(args.newPassword);
-  // Recriptografa cada entry com a nova key
-  for (const d of decrypted) {
-    const enc = await encryptSecret(built.key, d.secret);
-    const { error } = await supabase
-      .from("vault_entries" as never)
-      .update({ ...enc } as never)
-      .eq("id", d.id);
-    if (error) throw error;
+  const entries = [];
+  for (const row of rows) {
+    const secret = await decryptSecret(args.currentKey, row);
+    entries.push({
+      id: row.id,
+      expected: {
+        username_cipher: row.username_cipher,
+        password_cipher: row.password_cipher,
+        notes_cipher: row.notes_cipher,
+        cipher_iv: row.cipher_iv,
+        updated_at: row.updated_at,
+      },
+      replacement: await encryptSecret(built.key, secret),
+    });
   }
-  // Atualiza settings (verifier) por último
-  await saveVaultSettings({
+  const next: VaultSettingsRow = {
     user_id: args.userId,
     salt: built.salt,
+    iterations: built.iterations,
     verifier: built.verifier,
     verifier_iv: built.verifier_iv,
-    iterations: built.iterations,
     hint: args.hint ?? null,
-  });
-  return;
+  };
+  let committed: VaultSettingsRow | null = null;
+  try {
+    const { data, error } = await supabase.rpc(
+      "vault_rotate_master_key_atomic" as never,
+      {
+        p_expected_settings: rotationSettings(args.currentSettings),
+        p_new_settings: rotationSettings(next),
+        p_entries: entries,
+      } as never,
+    );
+    if (!error && data) committed = data as unknown as VaultSettingsRow;
+  } catch {
+    // The response may be lost AFTER commit. Reconcile by the prepared generation.
+  }
+  if (!committed) {
+    let current: VaultSettingsRow | null = null;
+    try {
+      current = await fetchVaultSettings(args.userId);
+    } catch {
+      /* outcome unknown */
+    }
+    if (current?.salt === next.salt && current.verifier === next.verifier) committed = current;
+    else
+      throw new Error(
+        "Não foi possível confirmar a troca. Reabra o Cofre com a senha atual; se a nova senha já estiver ativa, use-a. Nenhuma gravação parcial é feita. Se o Cofre mudou em outro dispositivo, tente novamente após recarregar.",
+      );
+  }
+  if (
+    committed.user_id !== args.userId ||
+    committed.salt !== next.salt ||
+    committed.verifier !== next.verifier
+  )
+    throw new Error(
+      "A confirmação da troca não corresponde a este Cofre. Reabra com a senha atual.",
+    );
+  return committed;
 }
 
 /**

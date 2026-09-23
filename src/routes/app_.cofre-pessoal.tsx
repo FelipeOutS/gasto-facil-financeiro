@@ -51,19 +51,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { createMasterKey, unlockMasterKey } from "@/lib/vault/crypto";
 import {
-  fetchVaultSettings,
-  saveVaultSettings,
+  createVaultSettings,
   fetchEntries,
   createEntry,
   updateEntry,
   deleteEntry,
   decryptOne,
   rotateMasterKey,
+  assertCurrentVaultKey,
   buildEncryptedBackup,
   type VaultEntryRow,
   type DecryptedEntry,
   type VaultSettingsRow,
 } from "@/lib/vault/service";
+import { useVaultBootstrap } from "@/lib/vault/use-vault-bootstrap";
 import { evaluateStrength, generateStrongPassword, type Strength } from "@/lib/vault/strength";
 import {
   useVaultKey,
@@ -121,10 +122,8 @@ function CofrePessoalPage() {
   const { user } = useAuth();
   const { can, isAdminMaster, loading: planLoading } = usePlan();
   const { isUnlocked, masterKey, lock } = useVaultKey();
-  const [bootstrapState, setBootstrapState] = useState<
-    "loading" | "needs_setup" | "needs_unlock" | "ready"
-  >("loading");
-  const [settings, setSettings] = useState<VaultSettingsRow | null>(null);
+  const { bootstrapState, setBootstrapState, settings, setSettings, retry } =
+    useVaultBootstrap(user?.id, isUnlocked);
 
   // Etapa 14 — Gate premium do Cofre Pessoal.
   // hasAccess: usuário tem a feature liberada no plano (ou é Admin Master).
@@ -143,29 +142,27 @@ function CofrePessoalPage() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!user) return;
-    fetchVaultSettings(user.id)
-      .then((s) => {
-        setSettings(s);
-        if (!s) setBootstrapState("needs_setup");
-        else if (!isUnlocked) setBootstrapState("needs_unlock");
-        else setBootstrapState("ready");
-      })
-      .catch((e) => {
-        toast.error(i18n.t("cofre:errors.loadFailed"));
-        setBootstrapState("needs_setup");
-      });
-  }, [user, isUnlocked]);
-
   if (!user) return null;
 
   // Aguarda carregamento do plano para evitar flash de bloqueio.
   if (planLoading || bootstrapState === "loading") {
     return (
-      <div className="min-h-screen min-h-dvh bg-background pb-[calc(112px+env(safe-area-inset-bottom))] lg:pb-12">
+      <div className="min-h-full bg-background">
         <div className="mx-auto w-full max-w-5xl px-4 pb-8 pt-4 lg:px-8 lg:pt-8">
           <BootLoading />
+        </div>
+      </div>
+    );
+  }
+
+  if (bootstrapState === "error") {
+    return (
+      <div className="min-h-full bg-background">
+        <div className="mx-auto w-full max-w-5xl px-4 pb-8 pt-4 lg:px-8 lg:pt-8">
+          <Card className="mx-auto max-w-md space-y-4 p-6" role="alert">
+            <p>Não foi possível carregar o Cofre. Tente novamente para verificar sua configuração.</p>
+            <Button onClick={retry}>Tentar novamente</Button>
+          </Card>
         </div>
       </div>
     );
@@ -174,7 +171,7 @@ function CofrePessoalPage() {
   // Usuário sem acesso e SEM dados salvos: bloqueio total com upgrade.
   if (!hasAccess && !settings) {
     return (
-      <div className="min-h-screen min-h-dvh bg-background pb-[calc(112px+env(safe-area-inset-bottom))] lg:pb-12">
+      <div className="min-h-full bg-background">
         <div className="mx-auto w-full max-w-5xl px-4 pb-8 pt-4 lg:px-8 lg:pt-8">
           <CofrePremiumGate />
         </div>
@@ -187,12 +184,13 @@ function CofrePessoalPage() {
   const isVaultReadOnly = !hasAccess && !!settings;
 
   return (
-    <div className="min-h-screen min-h-dvh bg-background pb-[calc(112px+env(safe-area-inset-bottom))] lg:pb-12">
+    <div className="min-h-full bg-background">
       <div className="mx-auto w-full max-w-5xl px-4 pb-8 pt-4 lg:px-8 lg:pt-8">
         {showTransitionBanner && <CofreTransitionBanner />}
         {bootstrapState === "needs_setup" && hasAccess && (
           <SetupView
             userId={user.id}
+            onReload={retry}
             onReady={(s) => {
               setSettings(s);
               setBootstrapState("ready");
@@ -408,8 +406,10 @@ function HeaderHero({ subtitle }: { subtitle: string }) {
 function SetupView({
   userId,
   onReady,
+  onReload,
 }: {
   userId: string;
+  onReload: () => void;
   onReady: (s: VaultSettingsRow) => void;
 }) {
   const [pwd, setPwd] = useState("");
@@ -439,12 +439,14 @@ function SetupView({
         iterations: built.iterations,
         hint: hint || null,
       };
-      await saveVaultSettings(row);
-      setMasterKey(built.key);
+      await createVaultSettings(row);
+      setMasterKey(built.key, userId);
       toast.success("Cofre criado e desbloqueado");
       onReady(row);
     } catch (e) {
       toast.error(i18n.t("cofre:errors.createFailed"));
+      // A competing setup or a lost response may mean a vault now exists.
+      onReload();
     } finally {
       setBusy(false);
     }
@@ -622,10 +624,13 @@ function UnlockView({
         }
         return;
       }
+      await assertCurrentVaultKey(userId, key);
       await migrateAfterPrimaryUnlock(key);
-      setMasterKey(key);
+      setMasterKey(key, userId);
       setFails(0);
       onUnlocked();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : i18n.t("cofre:errors.unlockFailed"));
     } finally {
       setBusy(false);
     }
@@ -636,8 +641,9 @@ function UnlockView({
     setBusy(true);
     try {
       const key = await unlockWithServerPin(userId, value);
+      await assertCurrentVaultKey(userId, key);
       await migrateAfterPrimaryUnlock(key);
-      setMasterKey(key);
+      setMasterKey(key, userId);
       setPin("");
       onUnlocked();
     } catch (e) {
@@ -659,7 +665,8 @@ function UnlockView({
     setBusy(true);
     try {
       const key = await unlockWithBiometric(userId);
-      setMasterKey(key);
+      await assertCurrentVaultKey(userId, key);
+      setMasterKey(key, userId);
       onUnlocked();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : i18n.t("cofre:errors.biometricFailed"));
@@ -977,7 +984,7 @@ function VaultMain({
           if (getCachedSecret(r.id)) return;
           try {
             const dec = await decryptOne(masterKey, r);
-            setCachedSecret(r.id, dec.secret);
+            setCachedSecret(r.id, dec.secret, masterKey);
           } catch {
             // ignora um item falho
           }
@@ -1094,14 +1101,14 @@ function VaultMain({
               previousPassword: view.entry.secret.password,
             });
             evictCached(view.entry.id);
-            setCachedSecret(view.entry.id, data.secret);
+            setCachedSecret(view.entry.id, data.secret, masterKey);
             toast.success("Acesso atualizado");
             await reload();
             const fresh = await fetchEntries(userId);
             const updated = fresh.find((x) => x.id === view.entry.id);
             if (updated) {
               const dec = await decryptOne(masterKey, updated);
-              setCachedSecret(updated.id, dec.secret);
+              setCachedSecret(updated.id, dec.secret, masterKey);
               setView({ kind: "detail", entry: dec });
             } else {
               setView({ kind: "list" });
@@ -1144,7 +1151,7 @@ function VaultMain({
           );
           // Força novo unlock para usar a nova senha
           setMasterKey(null);
-          toast.success("Senha mestra alterada. Faça o desbloqueio com a nova senha.");
+          toast.success("Senha mestra alterada. Use a nova senha e configure novamente o PIN e a biometria.");
         }}
       />
     );
@@ -1360,7 +1367,7 @@ function VaultMain({
               masterKey={masterKey}
               onOpen={async () => {
                 const dec = await decryptOne(masterKey, e);
-                setCachedSecret(e.id, dec.secret);
+                setCachedSecret(e.id, dec.secret, masterKey);
                 setView({ kind: "detail", entry: dec });
               }}
               onToggleFav={async () => {
@@ -1687,7 +1694,7 @@ function EntryCard({
     decryptOne(masterKey, row)
       .then((d) => {
         if (!alive) return;
-        setCachedSecret(row.id, d.secret);
+        setCachedSecret(row.id, d.secret, masterKey);
         setMaskedUser(maskUsername(d.secret.username ?? ""));
       })
       .catch(() => {});
@@ -1700,7 +1707,7 @@ function EntryCard({
     const cached = getCachedSecret(row.id);
     if (cached) return cached;
     const dec = await decryptOne(masterKey, row);
-    setCachedSecret(row.id, dec.secret);
+    setCachedSecret(row.id, dec.secret, masterKey);
     return dec.secret;
   }
 
@@ -2377,16 +2384,17 @@ function ChangeMasterView({
         setBusy(false);
         return;
       }
-      await rotateMasterKey({
+      const fresh = await rotateMasterKey({
         userId,
-        currentKey,
+        currentKey: verify,
+        currentSettings,
         newPassword: newPwd,
         hint: hint || null,
       });
-      const fresh = await fetchVaultSettings(userId);
-      if (fresh) onChanged(fresh);
+      onChanged(fresh);
     } catch (e) {
-      toast.error(i18n.t("cofre:errors.masterPasswordFailed"));
+      setMasterKey(null); // Never continue using an old key after an uncertain commit.
+      toast.error(e instanceof Error ? e.message : i18n.t("cofre:errors.masterPasswordFailed"));
     } finally {
       setBusy(false);
     }
@@ -3128,7 +3136,7 @@ function HealthView({
           let sec = getCachedSecret(r.id);
           if (!sec) {
             const dec = await decryptOne(masterKey, r);
-            setCachedSecret(r.id, dec.secret);
+            setCachedSecret(r.id, dec.secret, masterKey);
             sec = dec.secret;
           }
           enriched.push({

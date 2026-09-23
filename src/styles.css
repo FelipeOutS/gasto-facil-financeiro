@@ -268,6 +268,28 @@ html.light .shadow-elevated {
 }
 
 html,
+.auth-shell {
+  min-height: max(100vh, var(--auth-viewport-height, 0px));
+  min-height: max(100dvh, var(--auth-viewport-height, 0px));
+  isolation: isolate;
+}
+
+.auth-background {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Match the existing native system-bar surface at both viewport edges. */
+.auth-background .starfield {
+  background: linear-gradient(180deg, #0b0f14 0%, #0b1220 55%, #0b0f14 100%);
+}
+.auth-background .starfield__glow {
+  bottom: 15%;
+}
+
 body {
   transition:
     background-color 200ms ease,
@@ -880,15 +902,16 @@ body {
 /* Mobile navigation: one fixed, stable capsule. No scroll listener/reveal gesture. */
 :root {
   --mobile-nav-height: 56px;
-  --mobile-nav-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  --mobile-nav-clearance: calc(var(--mobile-nav-height) + var(--mobile-nav-bottom) + 44px);
+  --mobile-nav-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  --mobile-notifications-bottom: calc(var(--mobile-nav-height) + var(--mobile-nav-bottom) + 20px);
+  --mobile-nav-clearance: calc(var(--mobile-notifications-bottom) + 44px + 20px);
 }
 .mobile-bottom-nav {
   position: fixed;
   z-index: 40;
   bottom: var(--mobile-nav-bottom);
   left: 50%;
-  width: min(calc(100% - 40px), 400px);
+  width: min(88%, 380px);
   height: var(--mobile-nav-height);
   transform: translateX(-50%);
   padding: 5px 6px;
@@ -909,6 +932,14 @@ body {
 }
 .mobile-bottom-nav[hidden] {
   display: none;
+}
+/* Secondary views inherit one bottom reservation from the persistent shell. */
+.mobile-shell-content { padding-bottom: var(--mobile-nav-clearance); }
+@media (min-width: 1024px) { .mobile-shell-content { padding-bottom: 3rem; } }
+:root:not(.dark) .mobile-bottom-nav {
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  border-color: color-mix(in srgb, var(--foreground) 18%, var(--border));
+  box-shadow: 0 5px 18px rgb(0 0 0 / 0.12);
 }
 .mobile-nav-track {
   position: relative;

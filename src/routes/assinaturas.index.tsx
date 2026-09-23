@@ -353,12 +353,12 @@ function AssinaturasPage() {
   return (
     <MobileShell wide>
       <header className="pt-6 pb-4 lg:pt-10">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col items-start justify-between gap-3 sm:flex-row">
           <div>
             <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">{t("title")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="outline"
               size="sm"

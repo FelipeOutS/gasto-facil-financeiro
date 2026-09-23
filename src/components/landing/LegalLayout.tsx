@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/BrandMark";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { Footer as PublicFooter } from "@/components/landing/PublicLanding";
@@ -23,11 +24,10 @@ export function LegalLayout({ title, eyebrow = "Institucional", updatedAt, child
       <header className="sticky top-0 z-40 w-full border-b border-slate-200/70 bg-white/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-4 sm:px-6">
           <Link to="/" className="flex items-center gap-2">
-            <img
-              src="/logos/brand/logo-gasto-inteligente-sidebar-light.svg"
-              alt="Gasto Inteligente"
+            <BrandMark
+              variant="full"
+              appearance="light"
               className="h-9 w-auto sm:h-10 object-contain"
-              draggable={false}
             />
           </Link>
           <Link

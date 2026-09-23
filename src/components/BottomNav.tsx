@@ -25,9 +25,13 @@ export const MOBILE_TABS: readonly NavLeaf[] = [
 
 export function mobileTabIndex(pathname: string): number {
   const path = pathname.replace(/\/+$/, "") || "/";
-  return MOBILE_TABS.findIndex(({ to }) =>
+  const tab = MOBILE_TABS.findIndex(({ to }) =>
     to === "/app" ? path === to : path === to || path.startsWith(to + "/"),
   );
+  if (tab !== -1) return tab;
+  // Secondary destinations come from the same menu used by Mais.
+  const morePaths = [...menuItems.map((item) => item.to), "/app/perfil", "/conta", "/app/idioma"];
+  return morePaths.some((to) => path === to || path.startsWith(to + "/")) ? 4 : -1;
 }
 
 export function BottomNav() {

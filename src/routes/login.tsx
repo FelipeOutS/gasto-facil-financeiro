@@ -6,6 +6,7 @@ import { Fingerprint, KeyRound } from "lucide-react";
 import i18n from "@/i18n";
 import { AuthShell, GuestOnly } from "@/components/AuthGate";
 import { StarfieldBackground } from "@/components/StarfieldBackground";
+import { BrandLoader } from "@/components/BrandLoader";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -282,6 +283,11 @@ function LoginForm() {
     setAskEnableBio(false);
     void navigate({ to: "/app" });
   }
+
+  // While Android owns the prompt, keep only a quiet brand backdrop.
+  // Cancellation/errors still restore the existing retry/password controls.
+  if (bioRunning || enablingBio)
+    return <BrandLoader message="Confirme sua identidade no Android." />;
 
   // === Painel de pós-login: oferecer ativar biometria ===
   if (askEnableBio) {

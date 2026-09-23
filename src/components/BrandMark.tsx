@@ -13,8 +13,8 @@ import { cn } from "@/lib/utils";
  * - `symbol`  → icon-only (collapsed sidebar, compact headers, loaders,
  *               mobile top bar when space is tight).
  *
- * The component always renders both the light-bg and dark-bg SVG and lets
- * Tailwind's `dark:` variant swap them — no CSS filters / recoloring.
+ * By default, Tailwind's `dark:` variant swaps the two official SVGs.
+ * Fixed public surfaces may choose an appearance — no CSS filters / recoloring.
  */
 
 type Variant = "full" | "login" | "sidebar" | "symbol";
@@ -46,6 +46,8 @@ export interface BrandMarkProps {
   alt?: string;
   /** Mark as decorative — sets aria-hidden and empty alt. */
   decorative?: boolean;
+  /** Public surfaces can stay light even when the application theme is dark. */
+  appearance?: "light" | "dark";
 }
 
 export function BrandMark({
@@ -54,6 +56,7 @@ export function BrandMark({
   symbolOnly,
   alt = "Gasto Inteligente",
   decorative = false,
+  appearance,
 }: BrandMarkProps) {
   const resolved: Variant = variant ?? (symbolOnly ? "symbol" : "full");
   const { light, dark } = SOURCES[resolved];
@@ -69,6 +72,20 @@ export function BrandMark({
     img.src = fallback;
   };
 
+  if (appearance) {
+    return (
+      <img
+        src={appearance === "dark" ? dark : light}
+        alt={imgAlt}
+        aria-hidden={ariaHidden}
+        draggable={false}
+        onError={onErrorFallback(
+          appearance === "dark" ? SYMBOL_FALLBACK_DARK : SYMBOL_FALLBACK_LIGHT,
+        )}
+        className={cn("w-auto max-w-full object-contain select-none", className)}
+      />
+    );
+  }
   return (
     <>
       <img
