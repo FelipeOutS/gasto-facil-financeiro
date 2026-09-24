@@ -543,7 +543,7 @@ function SetupView({
 // =====================================================================
 // Unlock (com proteção contra tentativas)
 // =====================================================================
-function UnlockView({
+export function UnlockView({
   userId,
   userLabel,
   settings,
@@ -561,7 +561,7 @@ function UnlockView({
   const legacyBiometric = needsQuickUnlockMigration(userId);
   const [serverPin, setServerPin] = useState<ServerPinStatus | null>(null);
   const [nativePin, setNativePin] = useState<NativePinStatus | null>(null);
-  const [mode, setMode] = useState<"pin" | "bio" | "master">("master");
+  const [mode, setMode] = useState<"pin" | "bio" | "master">(bio ? "bio" : "master");
   const [pwd, setPwd] = useState("");
   const [pin, setPin] = useState("");
   const [show, setShow] = useState(false);
@@ -587,7 +587,7 @@ function UnlockView({
       setNativePin(local);
 
       const nativeReady = local?.configured === true && !local.lockedUntil;
-      const serverReady = server?.configured === true && !server.lockedUntil;
+      const serverReady = !local?.configured && server?.configured === true && !server.lockedUntil;
 
       // Biometria configurada continua sendo a primeira opção.
       if (bio) {
@@ -616,12 +616,12 @@ function UnlockView({
   async function migrateAfterPrimaryUnlock(key: CryptoKey) {
     try {
       if (await migrateLegacyQuickUnlock(userId, userLabel, key)) {
-        toast.success("Proteção biométrica atualizada. A configuração antiga foi removida.");
+        toast.success("Biometria pronta para usar.");
       }
     } catch {
-      toast.warning("Cofre aberto com senha/PIN. A atualização da biometria não foi concluída.", {
+      toast.warning("Cofre aberto. Configure a biometria em Desbloqueio rápido.", {
         description:
-          "A configuração antiga não será usada para desbloquear. Atualize o app e configure novamente em Desbloqueio rápido, ou remova a biometria antiga.",
+          "Enquanto isso, continue usando seu PIN ou sua senha mestra.",
       });
     }
   }
@@ -660,6 +660,10 @@ function UnlockView({
 
   async function handlePinUnlock(value: string) {
     if (busy) return;
+    if (nativePin?.configured && nativePin.lockedUntil) {
+      setMode(bio ? "bio" : "master");
+      return;
+    }
 
     setBusy(true);
 
@@ -721,10 +725,7 @@ function UnlockView({
 
             setNativePin(freshStatus);
 
-            toast.success("PIN protegido neste dispositivo", {
-              description:
-                "O novo desbloqueio seguro foi configurado sem remover seu PIN anterior.",
-            });
+            toast.success("PIN protegido neste dispositivo.");
           } catch {
             /*
              * Como a migração só começa quando o status confirmou
@@ -736,20 +737,10 @@ function UnlockView({
             await clearNativePin(userId).catch(() => {});
             setNativePin(null);
 
-            toast.warning("O Cofre foi aberto, mas a proteção local do PIN não foi concluída.", {
+            toast.warning("Cofre aberto. Você pode configurar o PIN em Desbloqueio rápido.", {
               description: "Seu PIN atual continua funcionando normalmente.",
             });
           }
-        } else if (
-          nativePinAvailable() &&
-          nativePin !== null &&
-          !nativePin.configured &&
-          value.length !== 6
-        ) {
-          toast.info("Seu PIN antigo abriu o Cofre.", {
-            description:
-              "Para migrar para a proteção nova do Android, configure um PIN de exatamente 6 dígitos em Desbloqueio rápido.",
-          });
         }
       }
 
@@ -765,21 +756,24 @@ function UnlockView({
         e instanceof Error ? e.message : i18n.t("cofre:errors.unlockFailed"),
       );
 
-      // Atualiza os dois estados após falha/tentativa/bloqueio.
+      // Decide com o status recém-obtido, sem esperar o próximo render.
+      let freshNativePin = nativePin;
       try {
         if (nativePinAvailable()) {
-          setNativePin(await getNativePinStatus(userId));
+          freshNativePin = await getNativePinStatus(userId);
+          setNativePin(freshNativePin);
         }
       } catch {}
+
+      if (freshNativePin?.configured && freshNativePin.lockedUntil) {
+        setMode(bio ? "bio" : "master");
+      }
 
       try {
         const s = await getServerPinStatus(userId);
         setServerPin(s);
 
-        if (
-          (nativePin?.configured && nativePin.lockedUntil) ||
-          (!nativePin?.configured && s.lockedUntil)
-        ) {
+        if (!freshNativePin?.configured && s.lockedUntil) {
           setMode("master");
         }
       } catch {}
@@ -805,10 +799,11 @@ function UnlockView({
 
   const usingNativePin =
     nativePinAvailable() &&
-    nativePin?.configured === true &&
-    !nativePin.lockedUntil;
+    nativePin?.configured === true;
+  const nativePinLocked = usingNativePin && !!nativePin.lockedUntil;
 
   const hasLegacyPin =
+    !usingNativePin &&
     serverPin?.configured === true &&
     !serverPin.lockedUntil;
 
@@ -816,18 +811,18 @@ function UnlockView({
   // O PIN legado aceitava de 4 a 8 dígitos, então exige confirmação manual
   // para não bloquear usuários antigos com PIN de tamanho diferente.
   useEffect(() => {
-    if (mode !== "pin" || !usingNativePin) return;
+    if (mode !== "pin" || !usingNativePin || nativePinLocked) return;
     if (pin.length === 6) void handlePinUnlock(pin);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pin, mode, usingNativePin]);
+  }, [pin, mode, usingNativePin, nativePinLocked]);
 
-  const hasServerPin = usingNativePin || hasLegacyPin;
+  const hasServerPin = (usingNativePin && !nativePinLocked) || hasLegacyPin;
 
   const subtitle =
     mode === "pin"
       ? usingNativePin
         ? "Use o PIN de 6 dígitos deste dispositivo para abrir o Cofre."
-        : "Use seu PIN atual para abrir o Cofre. PINs antigos podem ter de 4 a 8 dígitos."
+        : "Digite seu PIN para abrir o Cofre."
       : mode === "bio"
         ? "Use sua biometria para abrir o cofre."
         : "Digite sua senha mestra para acessar seus logins e dados sensíveis.";
@@ -835,10 +830,14 @@ function UnlockView({
   return (
     <>
       <HeaderHero subtitle={subtitle} />
+      {nativePinLocked && (
+        <p role="status" className="mx-auto mb-4 max-w-md text-sm text-muted-foreground">
+          O PIN está temporariamente bloqueado. Use sua biometria ou senha mestra.
+        </p>
+      )}
       {legacyBiometric && (
         <p role="status" className="mx-auto mb-4 max-w-md text-sm text-muted-foreground">
-          A biometria antiga precisa ser atualizada. Entre com sua senha mestra ou PIN do Cofre;
-          depois confirme a biometria para concluir a atualização sem alterar seus dados.
+          Entre com seu PIN ou sua senha mestra para configurar a biometria.
         </p>
       )}
       <Card className="mx-auto max-w-md p-6">
@@ -851,18 +850,27 @@ function UnlockView({
         {mode === "pin" && (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-center block">
-                {usingNativePin ? "PIN de 6 dígitos" : "PIN atual"}
+              <Label htmlFor={usingNativePin ? undefined : "vault-unlock-pin"} className="text-center block">
+                PIN de segurança
               </Label>
-              <PinDots length={usingNativePin ? 6 : 8} value={pin} />
-              {!usingNativePin && (
-                <p className="text-center text-[11px] text-muted-foreground">
-                  PIN legado: digite de 4 a 8 dígitos e toque em Desbloquear.
-                </p>
+              {usingNativePin ? (
+                <PinDots length={6} value={pin} />
+              ) : (
+                <Input
+                  id="vault-unlock-pin"
+                  type="password"
+                  inputMode="none"
+                  autoComplete="off"
+                  readOnly
+                  value={pin}
+                  placeholder="Digite seu PIN"
+                  disabled={busy}
+                  className="h-12 text-center text-lg tracking-widest"
+                />
               )}
             </div>
             <PinPad
-              disabled={busy}
+              disabled={busy || nativePinLocked}
               onDigit={(d) =>
                 setPin((p) => {
                   const maxLength = usingNativePin ? 6 : 8;
@@ -931,7 +939,7 @@ function UnlockView({
                   onClick={() => setMode("pin")}
                   className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
                 >
-                  Usar PIN da conta
+                  {usingNativePin ? "Usar PIN de 6 dígitos" : "Usar PIN"}
                 </button>
               )}
               <button
@@ -1003,15 +1011,6 @@ function UnlockView({
             </Button>
             {(hasServerPin || bio) && (
               <div className="flex flex-col gap-1">
-                {hasServerPin && (
-                  <button
-                    type="button"
-                    onClick={() => setMode("pin")}
-                    className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
-                  >
-                    Usar PIN da conta
-                  </button>
-                )}
                 {bio && (
                   <button
                     type="button"
@@ -1019,6 +1018,15 @@ function UnlockView({
                     className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
                   >
                     Usar biometria
+                  </button>
+                )}
+                {hasServerPin && (
+                  <button
+                    type="button"
+                    onClick={() => setMode("pin")}
+                    className="block w-full text-center text-xs text-muted-foreground underline-offset-2 hover:underline"
+                  >
+                    {usingNativePin ? "Usar PIN de 6 dígitos" : "Usar PIN"}
                   </button>
                 )}
               </div>
@@ -2766,7 +2774,7 @@ function BackupView({
 // =====================================================================
 // Desbloqueio rápido (PIN + biometria)
 // =====================================================================
-function QuickUnlockSettingsView({
+export function QuickUnlockSettingsView({
   userId,
   userLabel,
   masterKey,
@@ -2848,7 +2856,7 @@ function QuickUnlockSettingsView({
       toast.error(
         hasNativePin
           ? "Digite seu PIN atual de 6 dígitos."
-          : "Digite seu PIN atual de 4 a 8 dígitos.",
+          : "Digite seu PIN atual.",
       );
       return;
     }
@@ -2881,7 +2889,7 @@ function QuickUnlockSettingsView({
       return;
     }
 
-    if (pin.length !== 6) {
+    if (!/^\d{6}$/.test(pin)) {
       toast.error("O PIN deve ter exatamente 6 dígitos.");
       return;
     }
@@ -2906,7 +2914,7 @@ function QuickUnlockSettingsView({
       setNativeStatus(status);
 
       toast.success(panel === "change" ? "PIN alterado com sucesso" : "PIN seguro configurado", {
-        description: "Este PIN está protegido neste dispositivo pelo Android Keystore.",
+        description: "PIN protegido neste dispositivo.",
       });
 
       resetPanel();
@@ -2926,7 +2934,7 @@ function QuickUnlockSettingsView({
     const confirmed = await confirmAsync({
       title: "Remover o PIN deste dispositivo?",
       description:
-        "O desbloqueio por PIN local será removido deste aparelho. Seus dados do Cofre não serão apagados.",
+        "O desbloqueio por PIN será removido deste aparelho. Seus dados do Cofre não serão apagados.",
       destructive: true,
       confirmText: "Remover PIN",
     });
@@ -2984,7 +2992,7 @@ function QuickUnlockSettingsView({
     <>
       <PageHeader
         title="Desbloqueio rápido"
-        subtitle="Use primeiro a biometria do aparelho ou, como alternativa, um PIN seguro de 6 dígitos."
+        subtitle="Use sua biometria ou um PIN de 6 números para abrir o Cofre."
         crumbs={[
           { label: "Cofre Pessoal", to: "/app/cofre-pessoal" },
           { label: "Desbloqueio rápido" },
@@ -2997,10 +3005,73 @@ function QuickUnlockSettingsView({
         <div>
           <p className="font-medium text-foreground">Como funciona</p>
           <p className="mt-1">
-            No Android, biometria e PIN são protegidos pelo armazenamento seguro do aparelho. A
-            senha mestra continua sendo a credencial principal do Cofre.
+            Use a biometria no dia a dia. Seu PIN e sua senha mestra continuam disponíveis como alternativas.
           </p>
         </div>
+      </Card>
+
+      <Card className="mb-4 p-5">
+        <div className="flex items-center gap-3">
+          <span
+            className={cn(
+              "grid h-10 w-10 place-items-center rounded-lg",
+              hasBio ? "bg-emerald-500/15 text-emerald-400" : "bg-brand-soft text-brand-on-soft",
+            )}
+          >
+            <Fingerprint className="h-5 w-5" />
+          </span>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">Biometria</p>
+            <p className="text-[11px] text-muted-foreground">
+              {hasBio
+                ? "Ativa neste dispositivo."
+                : bioAvailable
+                  ? "Use impressão digital ou reconhecimento biométrico compatível."
+                  : "Indisponível neste dispositivo ou navegador."}
+            </p>
+          </div>
+
+          {hasBio && (
+            <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              Ativa
+            </span>
+          )}
+        </div>
+
+        {hasLegacyBio && (
+          <div className="mt-3 rounded-lg bg-amber-500/10 p-3 text-[11px] text-foreground/90">
+            Configure a biometria para usá-la neste dispositivo.
+          </div>
+        )}
+
+        {hasBio ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleRemoveBio}
+            disabled={busy}
+            className="mt-3 h-11 w-full"
+          >
+            <Trash2 className="h-4 w-4" />
+            Remover biometria
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            onClick={handleEnableBiometric}
+            disabled={busy || !bioAvailable}
+            className="mt-3 h-11 w-full bg-brand text-brand-foreground font-semibold hover:bg-brand/90"
+          >
+            {busy ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Fingerprint className="h-4 w-4" />
+            )}
+            Configurar biometria
+          </Button>
+        )}
       </Card>
 
       <Card className="mb-4 p-5">
@@ -3020,14 +3091,12 @@ function QuickUnlockSettingsView({
             <p className="text-sm font-semibold">PIN de 6 dígitos</p>
             <p className="text-[11px] text-muted-foreground">
               {hasNativePin
-                ? "Protegido neste dispositivo pelo Android Keystore."
+                ? "PIN protegido neste dispositivo."
                 : nativeCapable
-                  ? hasLegacyPin
-                    ? "PIN antigo detectado. Configure a nova proteção local."
-                    : "Configure um PIN seguro para este dispositivo."
+                  ? "Use um PIN de 6 números como alternativa à biometria."
                   : hasLegacyPin
-                    ? "PIN antigo ativo. A migração segura exige o aplicativo Android atualizado."
-                    : "O PIN seguro está disponível no aplicativo Android."}
+                    ? "Seu PIN continua disponível para abrir o Cofre."
+                    : "Configure seu PIN pelo aplicativo Android."}
             </p>
           </div>
 
@@ -3039,19 +3108,10 @@ function QuickUnlockSettingsView({
           )}
         </div>
 
-        {hasLegacyPin && (
-          <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-500/10 p-3 text-[11px] text-foreground/90">
-            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-            <p>
-              Existe um PIN do modelo antigo associado à sua conta. Ele será mantido temporariamente
-              durante a validação do novo PIN seguro.
-            </p>
-          </div>
-        )}
 
         {nativeStatus?.lockedUntil && (
           <div className="mt-3 rounded-lg bg-amber-500/10 p-3 text-[11px] text-amber-300">
-            O PIN local está temporariamente bloqueado por excesso de tentativas.
+            O PIN está temporariamente bloqueado por excesso de tentativas.
           </div>
         )}
 
@@ -3089,7 +3149,7 @@ function QuickUnlockSettingsView({
                   className="mt-3 h-11 w-full bg-brand text-brand-foreground font-semibold hover:bg-brand/90"
                 >
                   <KeyRound className="h-4 w-4" />
-                  {hasLegacyPin ? "Migrar para PIN seguro" : "Configurar PIN seguro"}
+                  Configurar PIN de 6 dígitos
                 </Button>
               )
             ) : (
@@ -3106,6 +3166,8 @@ function QuickUnlockSettingsView({
             <Label>PIN atual</Label>
 
             <Input
+              type="password"
+              autoComplete="off"
               inputMode="numeric"
               pattern="[0-9]*"
               maxLength={hasNativePin ? 6 : 8}
@@ -3160,6 +3222,8 @@ function QuickUnlockSettingsView({
             <Label>{hasNativePin ? "Novo PIN de 6 dígitos" : "Crie um PIN de 6 dígitos"}</Label>
 
             <Input
+              type="password"
+              autoComplete="off"
               inputMode="numeric"
               pattern="[0-9]*"
               maxLength={6}
@@ -3203,6 +3267,8 @@ function QuickUnlockSettingsView({
             <Label>Confirme o novo PIN</Label>
 
             <Input
+              type="password"
+              autoComplete="off"
               inputMode="numeric"
               pattern="[0-9]*"
               maxLength={6}
@@ -3247,70 +3313,6 @@ function QuickUnlockSettingsView({
         )}
       </Card>
 
-      <Card className="mb-4 p-5">
-        <div className="flex items-center gap-3">
-          <span
-            className={cn(
-              "grid h-10 w-10 place-items-center rounded-lg",
-              hasBio ? "bg-emerald-500/15 text-emerald-400" : "bg-brand-soft text-brand-on-soft",
-            )}
-          >
-            <Fingerprint className="h-5 w-5" />
-          </span>
-
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold">Biometria</p>
-            <p className="text-[11px] text-muted-foreground">
-              {hasBio
-                ? "Ativa neste dispositivo."
-                : bioAvailable
-                  ? "Use impressão digital ou reconhecimento biométrico compatível."
-                  : "Indisponível neste dispositivo ou navegador."}
-            </p>
-          </div>
-
-          {hasBio && (
-            <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              Ativa
-            </span>
-          )}
-        </div>
-
-        {hasLegacyBio && (
-          <div className="mt-3 rounded-lg bg-amber-500/10 p-3 text-[11px] text-foreground/90">
-            A configuração biométrica antiga precisa ser atualizada ou removida.
-          </div>
-        )}
-
-        {hasBio ? (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleRemoveBio}
-            disabled={busy}
-            className="mt-3 h-11 w-full"
-          >
-            <Trash2 className="h-4 w-4" />
-            Remover biometria
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            onClick={handleEnableBiometric}
-            disabled={busy || !bioAvailable}
-            className="mt-3 h-11 w-full bg-brand text-brand-foreground font-semibold hover:bg-brand/90"
-          >
-            {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Fingerprint className="h-4 w-4" />
-            )}
-            Configurar biometria
-          </Button>
-        )}
-      </Card>
-
       <Card className="p-5">
         <div className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-lg bg-brand-soft text-brand-on-soft">
@@ -3329,14 +3331,14 @@ function QuickUnlockSettingsView({
           <li className="flex items-start gap-2">
             <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
             <span>
-              O PIN seguro depende de uma chave exclusiva e não exportável do Android Keystore.
+              Seu PIN é protegido neste dispositivo.
             </span>
           </li>
 
           <li className="flex items-start gap-2">
             <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
             <span>
-              Após <strong>5 tentativas incorretas</strong>, o PIN local fica bloqueado por
+              Após <strong>5 tentativas incorretas</strong>, o PIN fica bloqueado por
               <strong> 15 minutos</strong>.
             </span>
           </li>
@@ -3344,8 +3346,7 @@ function QuickUnlockSettingsView({
           <li className="flex items-start gap-2">
             <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
             <span>
-              O novo PIN fica vinculado a este dispositivo e não é automaticamente reutilizável em
-              outro aparelho.
+              Configure o PIN em cada aparelho que você usa.
             </span>
           </li>
 
