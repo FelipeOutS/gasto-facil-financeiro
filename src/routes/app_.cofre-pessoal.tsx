@@ -95,6 +95,14 @@ import {
   unlockWithServerPin,
   type ServerPinStatus,
 } from "@/lib/vault/server-pin";
+import {
+  nativePinAvailable,
+  getNativePinStatus,
+  enrollNativePin,
+  unlockWithNativePin,
+  clearNativePin,
+  type NativePinStatus,
+} from "@/lib/vault/native-pin";
 
 export const Route = createFileRoute("/app_/cofre-pessoal")({
   head: () => ({
@@ -554,6 +562,7 @@ function UnlockView({
   });
   const legacyBiometric = needsQuickUnlockMigration(userId);
   const [serverPin, setServerPin] = useState<ServerPinStatus | null>(null);
+  const [nativePin, setNativePin] = useState<NativePinStatus | null>(null);
   const [mode, setMode] = useState<"pin" | "bio" | "master">("master");
   const [pwd, setPwd] = useState("");
   const [pin, setPin] = useState("");
@@ -563,24 +572,39 @@ function UnlockView({
   const [cooldownUntil, setCooldownUntil] = useState<number>(0);
   const [now, setNow] = useState(Date.now());
 
-  // Carrega status do PIN global da conta e define modo inicial preferido
+  // Carrega o PIN legado e o novo PIN local do dispositivo.
   useEffect(() => {
     let alive = true;
-    getServerPinStatus(userId)
-      .then((s) => {
-        if (!alive) return;
-        setServerPin(s);
-        if (s.configured && !s.lockedUntil) setMode("pin");
-        else if (bio) setMode("bio");
-      })
-      .catch(() => {
-        if (alive && bio) setMode("bio");
-      });
+
+    void (async () => {
+      const server = await getServerPinStatus(userId).catch(() => null);
+
+      const local = nativePinAvailable()
+        ? await getNativePinStatus(userId).catch(() => null)
+        : null;
+
+      if (!alive) return;
+
+      setServerPin(server);
+      setNativePin(local);
+
+      const nativeReady = local?.configured === true && !local.lockedUntil;
+      const serverReady = server?.configured === true && !server.lockedUntil;
+
+      // Biometria configurada continua sendo a primeira opção.
+      if (bio) {
+        setMode("bio");
+      } else if (nativeReady || serverReady) {
+        setMode("pin");
+      } else {
+        setMode("master");
+      }
+    })();
+
     return () => {
       alive = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, bio]);
 
   useEffect(() => {
     if (cooldownUntil <= now) return;
@@ -638,22 +662,117 @@ function UnlockView({
 
   async function handlePinUnlock(value: string) {
     if (busy) return;
+
     setBusy(true);
+
     try {
-      const key = await unlockWithServerPin(userId, value);
-      await assertCurrentVaultKey(userId, key);
+      let key: CryptoKey;
+
+      /*
+       * Se este Android já possui o novo PIN local seguro,
+       * ele passa a ser o mecanismo normal.
+       */
+      if (nativePinAvailable() && nativePin?.configured) {
+        key = await unlockWithNativePin(userId, value);
+
+        // Nunca confia apenas no armazenamento local:
+        // a chave precisa corresponder ao Cofre atual.
+        await assertCurrentVaultKey(userId, key);
+
+        setNativePin(await getNativePinStatus(userId));
+      } else {
+        /*
+         * Primeiro uso após a atualização:
+         * abre usando o PIN legado do servidor.
+         */
+        key = await unlockWithServerPin(userId, value);
+
+        await assertCurrentVaultKey(userId, key);
+
+        /*
+         * Só inicia a migração quando conseguimos confirmar
+         * que NÃO existe PIN local configurado.
+         *
+         * Se a leitura do status local falhou (nativePin === null),
+         * o Cofre abre pelo PIN legado, mas não altera nada localmente.
+         */
+        const canMigrateToNativePin =
+          nativePinAvailable() &&
+          nativePin !== null &&
+          !nativePin.configured;
+
+        if (canMigrateToNativePin) {
+          try {
+            await enrollNativePin(userId, value, key);
+
+            /*
+             * Round-trip obrigatório:
+             * prova que o PIN recém-criado recupera
+             * uma chave válida do mesmo Cofre.
+             */
+            const verificationKey = await unlockWithNativePin(userId, value);
+
+            await assertCurrentVaultKey(userId, verificationKey);
+
+            const freshStatus = await getNativePinStatus(userId);
+
+            if (!freshStatus.configured) {
+              throw new Error("O PIN seguro não foi confirmado.");
+            }
+
+            setNativePin(freshStatus);
+
+            toast.success("PIN protegido neste dispositivo", {
+              description:
+                "O novo desbloqueio seguro foi configurado sem remover seu PIN anterior.",
+            });
+          } catch {
+            /*
+             * Como a migração só começa quando o status confirmou
+             * ausência de PIN local, podemos remover com segurança
+             * apenas o candidato/configuração local recém-criada.
+             *
+             * O PIN legado no servidor permanece intacto.
+             */
+            await clearNativePin(userId).catch(() => {});
+            setNativePin(null);
+
+            toast.warning("O Cofre foi aberto, mas a proteção local do PIN não foi concluída.", {
+              description: "Seu PIN atual continua funcionando normalmente.",
+            });
+          }
+        }
+      }
+
       await migrateAfterPrimaryUnlock(key);
+
       setMasterKey(key, userId);
       setPin("");
       onUnlocked();
     } catch (e) {
       setPin("");
-      toast.error(i18n.t("cofre:errors.unlockFailed"));
-      // Recarrega status para refletir bloqueio
+
+      toast.error(
+        e instanceof Error ? e.message : i18n.t("cofre:errors.unlockFailed"),
+      );
+
+      // Atualiza os dois estados após falha/tentativa/bloqueio.
+      try {
+        if (nativePinAvailable()) {
+          setNativePin(await getNativePinStatus(userId));
+        }
+      } catch {}
+
       try {
         const s = await getServerPinStatus(userId);
         setServerPin(s);
-        if (s.lockedUntil) setMode("master");
+
+        if (
+          (nativePin?.configured && nativePin.lockedUntil) ||
+          (!nativePin?.configured && s.lockedUntil)
+        ) {
+          setMode("master");
+        }
       } catch {}
     } finally {
       setBusy(false);
@@ -682,7 +801,9 @@ function UnlockView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pin, mode]);
 
-  const hasServerPin = !!serverPin?.configured && !serverPin?.lockedUntil;
+  const hasServerPin =
+    (!!nativePin?.configured && !nativePin?.lockedUntil) ||
+    (!!serverPin?.configured && !serverPin?.lockedUntil);
   const subtitle =
     mode === "pin"
       ? "Use o PIN cadastrado na sua conta para abrir o Cofre."
