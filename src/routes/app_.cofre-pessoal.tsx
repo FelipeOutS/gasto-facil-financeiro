@@ -587,7 +587,7 @@ export function UnlockView({
       setNativePin(local);
 
       const nativeReady = local?.configured === true && !local.lockedUntil;
-      const serverReady = server?.configured === true && !server.lockedUntil;
+      const serverReady = !local?.configured && server?.configured === true && !server.lockedUntil;
 
       // Biometria configurada continua sendo a primeira opção.
       if (bio) {
@@ -660,6 +660,10 @@ export function UnlockView({
 
   async function handlePinUnlock(value: string) {
     if (busy) return;
+    if (nativePin?.configured && nativePin.lockedUntil) {
+      setMode(bio ? "bio" : "master");
+      return;
+    }
 
     setBusy(true);
 
@@ -752,21 +756,24 @@ export function UnlockView({
         e instanceof Error ? e.message : i18n.t("cofre:errors.unlockFailed"),
       );
 
-      // Atualiza os dois estados após falha/tentativa/bloqueio.
+      // Decide com o status recém-obtido, sem esperar o próximo render.
+      let freshNativePin = nativePin;
       try {
         if (nativePinAvailable()) {
-          setNativePin(await getNativePinStatus(userId));
+          freshNativePin = await getNativePinStatus(userId);
+          setNativePin(freshNativePin);
         }
       } catch {}
+
+      if (freshNativePin?.configured && freshNativePin.lockedUntil) {
+        setMode(bio ? "bio" : "master");
+      }
 
       try {
         const s = await getServerPinStatus(userId);
         setServerPin(s);
 
-        if (
-          (nativePin?.configured && nativePin.lockedUntil) ||
-          (!nativePin?.configured && s.lockedUntil)
-        ) {
+        if (!freshNativePin?.configured && s.lockedUntil) {
           setMode("master");
         }
       } catch {}
@@ -792,10 +799,11 @@ export function UnlockView({
 
   const usingNativePin =
     nativePinAvailable() &&
-    nativePin?.configured === true &&
-    !nativePin.lockedUntil;
+    nativePin?.configured === true;
+  const nativePinLocked = usingNativePin && !!nativePin.lockedUntil;
 
   const hasLegacyPin =
+    !usingNativePin &&
     serverPin?.configured === true &&
     !serverPin.lockedUntil;
 
@@ -803,12 +811,12 @@ export function UnlockView({
   // O PIN legado aceitava de 4 a 8 dígitos, então exige confirmação manual
   // para não bloquear usuários antigos com PIN de tamanho diferente.
   useEffect(() => {
-    if (mode !== "pin" || !usingNativePin) return;
+    if (mode !== "pin" || !usingNativePin || nativePinLocked) return;
     if (pin.length === 6) void handlePinUnlock(pin);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pin, mode, usingNativePin]);
+  }, [pin, mode, usingNativePin, nativePinLocked]);
 
-  const hasServerPin = usingNativePin || hasLegacyPin;
+  const hasServerPin = (usingNativePin && !nativePinLocked) || hasLegacyPin;
 
   const subtitle =
     mode === "pin"
@@ -822,6 +830,11 @@ export function UnlockView({
   return (
     <>
       <HeaderHero subtitle={subtitle} />
+      {nativePinLocked && (
+        <p role="status" className="mx-auto mb-4 max-w-md text-sm text-muted-foreground">
+          O PIN está temporariamente bloqueado. Use sua biometria ou senha mestra.
+        </p>
+      )}
       {legacyBiometric && (
         <p role="status" className="mx-auto mb-4 max-w-md text-sm text-muted-foreground">
           Entre com seu PIN ou sua senha mestra para configurar a biometria.
@@ -857,7 +870,7 @@ export function UnlockView({
               )}
             </div>
             <PinPad
-              disabled={busy}
+              disabled={busy || nativePinLocked}
               onDigit={(d) =>
                 setPin((p) => {
                   const maxLength = usingNativePin ? 6 : 8;

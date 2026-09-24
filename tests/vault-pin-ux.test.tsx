@@ -7,11 +7,14 @@ let configured = false,
   biometric = false,
   legacy = true,
   fail = false;
+let lockedUntil: number | null = null;
+let lockOnAttempt = false;
+let failServerStatus = false;
 let calls: string[] = [];
 const key = {} as CryptoKey;
 const noop = () => {};
 const ok = async () => {};
-const status = () => ({ configured, failedAttempts: 0, lockedUntil: null });
+const status = () => ({ configured, failedAttempts: lockedUntil ? 5 : 0, lockedUntil });
 mock.module("@tanstack/react-router", () => ({
   createFileRoute: () => (o: any) => o,
   Link: ({ children, ...props }: any) => <a>{children}</a>,
@@ -58,6 +61,11 @@ mock.module("@/lib/vault/native-pin", () => ({
   },
   unlockWithNativePin: async (_id: string, pin: string) => {
     calls.push("native:" + pin);
+    if (lockOnAttempt) {
+      lockedUntil = Date.now() + 15 * 60_000;
+      failServerStatus = true;
+      throw Error("PIN temporariamente bloqueado.");
+    }
     if (fail) throw Error("PIN incorreto. 4 tentativas restantes.");
     return key;
   },
@@ -66,12 +74,15 @@ mock.module("@/lib/vault/native-pin", () => ({
   },
 }));
 mock.module("@/lib/vault/server-pin", () => ({
-  getServerPinStatus: async () => ({
-    configured: legacy,
-    lockedUntil: null,
-    failedAttempts: fail ? 1 : 0,
-    updatedAt: null,
-  }),
+  getServerPinStatus: async () => {
+    if (failServerStatus) throw Error("Falha ao consultar status");
+    return {
+      configured: legacy,
+      lockedUntil: null,
+      failedAttempts: fail ? 1 : 0,
+      updatedAt: null,
+    };
+  },
   unlockWithServerPin: async (_id: string, pin: string) => {
     calls.push("legacy:" + pin);
     if (fail) throw Error("PIN incorreto. 4 tentativas restantes.");
@@ -112,6 +123,9 @@ const props = {
 };
 beforeEach(() => {
   configured = false;
+  lockedUntil = null;
+  lockOnAttempt = false;
+  failServerStatus = false;
   biometric = false;
   legacy = true;
   fail = false;
@@ -214,3 +228,56 @@ test("settings put biometrics before PIN, hide technical migration details and r
   fireEvent.click(ui.getByRole("button", { name: "Salvar PIN" }));
   await waitFor(() => expect(calls).toEqual(["enroll:123456", "native:123456", "validate"]));
 });
+
+for (const hasBio of [true, false]) {
+  test(`configured native PIN already locked prefers ${hasBio ? "biometrics" : "master password"}, never legacy`, async () => {
+    configured = true;
+    biometric = hasBio;
+    lockedUntil = Date.now() + 15 * 60_000;
+    const ui = render(<UnlockView {...props} />);
+    await waitFor(() =>
+      expect(ui.getByRole("status").textContent).toContain("temporariamente bloqueado"),
+    );
+    expect(ui.queryByLabelText("PIN de segurança")).toBeNull();
+    expect(ui.queryByRole("button", { name: /^Usar PIN/ })).toBeNull();
+    expect(ui.queryByRole("button", { name: "Desbloquear com PIN" })).toBeNull();
+    if (hasBio) {
+      fireEvent.click(ui.getByRole("button", { name: "Desbloquear com biometria" }));
+    } else {
+      fireEvent.change(ui.getByLabelText("Senha mestra", { exact: true }), {
+        target: { value: "synthetic-password" },
+      });
+      fireEvent.submit(ui.container.querySelector("form")!);
+    }
+    await waitFor(() =>
+      expect(calls).toEqual([hasBio ? "biometric" : "master", "validate", "open", "done"]),
+    );
+  });
+
+  test(`attempt reaching native lockout uses fresh status and selects ${hasBio ? "biometrics" : "master password"} even if server status fails`, async () => {
+    configured = true;
+    biometric = hasBio;
+    lockOnAttempt = true;
+    const ui = render(<UnlockView {...props} />);
+    if (hasBio) {
+      await waitFor(() =>
+        expect(ui.getByRole("button", { name: "Usar PIN de 6 dígitos" })).toBeTruthy(),
+      );
+      fireEvent.click(ui.getByRole("button", { name: "Usar PIN de 6 dígitos" }));
+    }
+    await waitFor(() => expect(ui.getByText("PIN de segurança")).toBeTruthy());
+    expect(ui.container.querySelectorAll("span.h-3\\.5").length).toBe(6);
+    await enter(ui, "123456");
+    await waitFor(() =>
+      expect(ui.getByRole("status").textContent).toContain("temporariamente bloqueado"),
+    );
+    expect(ui.queryByLabelText("PIN de segurança")).toBeNull();
+    expect(ui.queryByRole("button", { name: /^Usar PIN/ })).toBeNull();
+    if (hasBio) {
+      expect(ui.getByRole("button", { name: "Desbloquear com biometria" })).toBeTruthy();
+    } else {
+      expect(ui.getByLabelText("Senha mestra", { exact: true })).toBeTruthy();
+    }
+    expect(calls).toEqual(["native:123456"]);
+  });
+}
