@@ -5,6 +5,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useOverlayViewportRef } from "@/lib/use-overlay-viewport";
 
 const Dialog = DialogPrimitive.Root;
 
@@ -29,29 +30,32 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] top-[max(1rem,env(safe-area-inset-top))] z-[10000] m-auto grid h-fit max-h-[calc(100dvh-2rem)] w-auto max-w-lg gap-4 overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border bg-background p-6 shadow-2xl shadow-black/50 sm:rounded-2xl",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-      <DialogPrimitive.Close
-        type="button"
-        aria-label="Fechar"
-        className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-md opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+>(({ className, children, ...props }, ref) => {
+  const viewportRef = useOverlayViewportRef(ref);
+  return (
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        ref={viewportRef}
+        className={cn(
+          "fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] top-[max(1rem,env(safe-area-inset-top))] z-[10000] m-auto grid h-fit max-h-[calc(100dvh-2rem)] w-auto max-w-lg gap-4 overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border bg-background p-6 shadow-2xl shadow-black/50 sm:rounded-2xl",
+          className,
+        )}
+        {...props}
       >
-        <X className="h-4 w-4" aria-hidden="true" />
-        <span className="sr-only">Fechar</span>
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
-  </DialogPortal>
-));
+        {children}
+        <DialogPrimitive.Close
+          type="button"
+          aria-label="Fechar"
+          className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-md opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+          <span className="sr-only">Fechar</span>
+        </DialogPrimitive.Close>
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  );
+});
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

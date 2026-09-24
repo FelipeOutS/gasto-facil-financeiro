@@ -2,6 +2,7 @@ import * as React from "react";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 
 import { cn } from "@/lib/utils";
+import { useOverlayViewportRef } from "@/lib/use-overlay-viewport";
 import { buttonVariants } from "@/components/ui/button";
 
 const AlertDialog = AlertDialogPrimitive.Root;
@@ -25,19 +26,22 @@ AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName;
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <AlertDialogPortal>
-    <AlertDialogOverlay />
-    <AlertDialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] top-[max(1rem,env(safe-area-inset-top))] z-[10000] m-auto grid h-fit max-h-[calc(100dvh-2rem)] w-auto max-w-lg gap-4 overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border bg-background p-6 shadow-2xl shadow-black/50 sm:rounded-2xl",
-        className,
-      )}
-      {...props}
-    />
-  </AlertDialogPortal>
-));
+>(({ className, ...props }, ref) => {
+  const viewportRef = useOverlayViewportRef(ref);
+  return (
+    <AlertDialogPortal>
+      <AlertDialogOverlay />
+      <AlertDialogPrimitive.Content
+        ref={viewportRef}
+        className={cn(
+          "fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] top-[max(1rem,env(safe-area-inset-top))] z-[10000] m-auto grid h-fit max-h-[calc(100dvh-2rem)] w-auto max-w-lg gap-4 overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border bg-background p-6 shadow-2xl shadow-black/50 sm:rounded-2xl",
+          className,
+        )}
+        {...props}
+      />
+    </AlertDialogPortal>
+  );
+});
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName;
 
 const AlertDialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
