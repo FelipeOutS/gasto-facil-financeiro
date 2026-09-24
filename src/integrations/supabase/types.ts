@@ -5192,6 +5192,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      vault_rotate_master_key_atomic: {
+        Args: {
+          p_entries: Json
+          p_expected_settings: Json
+          p_new_settings: Json
+        }
+        Returns: Json
+      }
       whatsapp_attempt_finalize_accepted_atomic: {
         Args: {
           p_attempt_id: string
