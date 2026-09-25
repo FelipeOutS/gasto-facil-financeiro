@@ -8,6 +8,20 @@
       "when": 1790105761801,
       "tag": "0000_harden_selected_security_findings",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790360217976,
+      "tag": "0001_fix_whatsapp_quota_ambiguous_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790360291216,
+      "tag": "0002_fix_whatsapp_quota_variable_conflicts",
+      "breakpoints": true
     }
   ]
 }

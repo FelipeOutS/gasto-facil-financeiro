@@ -2,8 +2,8 @@
  * WA-G5B — gate único `canUseWhatsAppForSender`.
  *
  * Garante que somente usuários com vínculo ativo + consentimento + plano
- * elegível (ou Admin Master, ou beta explícita + plano pago) podem usar
- * o WhatsApp. Qualquer outro caso → `{ allowed: false }`.
+ * elegível (ou Admin Master) podem usar o WhatsApp. Qualquer outro caso
+ * → `{ allowed: false }`.
  *
  * Também valida o rate-limit (1×/24h) da resposta neutra de bloqueio.
  */
@@ -121,7 +121,6 @@ const entitlementResult = () => {
   }
   const eligible = linkState.subscription.active && ELIGIBLE.has(linkState.subscription.plan);
   if (!eligible) return { allowed: false, reason: "plan_not_eligible" };
-  if (!linkState.betaOk) return { allowed: false, reason: "beta_access_missing" };
   return { allowed: true, reason: "allowed" };
 };
 mock.module("@/server/whatsapp-entitlement.server", () => ({
@@ -220,12 +219,13 @@ test("usuário sem assinatura → não autorizado", async () => {
   expect(r.allowed).toBe(false);
 });
 
-test("plano pago SEM acesso ao canary/beta → bloqueado durante beta fechada", async () => {
+test("plano pago SEM acesso ao beta → autorizado após liberação geral", async () => {
   linkState.link = ACTIVE_LINK;
-  linkState.betaOk = false; // não está na lista beta
+  linkState.betaOk = false;
   linkState.subscription = { active: true, plan: "pessoal_premium" };
   const r = await canUseWhatsAppForSender(PHONE);
-  expect(r.allowed).toBe(false);
+  expect(r.allowed).toBe(true);
+  expect(r.userId).toBe("u1");
 });
 
 test("plano pago + beta liberada → autorizado", async () => {
@@ -248,14 +248,13 @@ test("Admin Master continua autorizado mesmo sem beta/plano", async () => {
 
 // ---------------- canary ----------------
 
-test("modo canary: SOMENTE Admin Master passa, mesmo com beta+plano pago", async () => {
+test("modo canary legado não bloqueia plano pago elegível", async () => {
   linkState.link = ACTIVE_LINK;
   linkState.betaOk = true;
   linkState.subscription = { active: true, plan: "pessoal_premium" };
-  // usuário comum no canary
   const r1 = await canUseWhatsAppForSender(PHONE, { canaryOnly: true });
-  expect(r1.allowed).toBe(false);
-  // admin master no canary
+  expect(r1.allowed).toBe(true);
+  expect(r1.userId).toBe("u1");
   linkState.email = "felipe.out.silva@outlook.com";
   const r2 = await canUseWhatsAppForSender(PHONE, { canaryOnly: true });
   expect(r2.allowed).toBe(true);

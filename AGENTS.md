@@ -1,0 +1,2 @@
+- WhatsApp inbound authorization no longer lets the legacy canary flag block paid eligible users, because WhatsApp is released for all paid plans.
+- WhatsApp quota SQL functions must qualify table columns or use `#variable_conflict use_column`, because `RETURNS TABLE` output names otherwise collide with column names in PL/pgSQL.
