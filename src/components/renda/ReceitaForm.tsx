@@ -27,13 +27,6 @@ import { resolveOccurrenceCount, type RecurrenceEnd } from "@/lib/recurrence-dat
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -304,19 +297,21 @@ export function ReceitaForm(props: Props) {
         </div>
       </div>
       <div>
-        <Label className="text-xs text-muted-foreground">{t("dialog.fields.tipo")}</Label>
-        <Select value={tipo} onValueChange={(v) => setTipo(v as TipoReceita)}>
-          <SelectTrigger className="mt-1 h-11 bg-card-elevated">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {TIPOS_RECEITA.map((tp) => (
-              <SelectItem key={tp.id} value={tp.id}>
-                {t(`tipo.${tp.id}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Label htmlFor="receita-tipo" className="text-xs text-muted-foreground">
+          {t("dialog.fields.tipo")}
+        </Label>
+        <select
+          id="receita-tipo"
+          value={tipo}
+          onChange={(e) => setTipo(e.target.value as TipoReceita)}
+          className="mt-1 h-11 w-full rounded-md border border-input bg-card-elevated px-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {TIPOS_RECEITA.map((tp) => (
+            <option key={tp.id} value={tp.id}>
+              {t(`tipo.${tp.id}`)}
+            </option>
+          ))}
+        </select>
       </div>
       <ClienteSelect value={clienteId} onChange={setClienteId} clientesAtivos={clientesAtivos} />
 

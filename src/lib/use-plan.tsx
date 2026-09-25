@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { resolveSubscriptionAccess } from "@/lib/subscription-access";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { isLocalDevPreview } from "@/lib/local-dev-preview";
 import { getCurrentUserSubscription } from "@/lib/subscription.functions";
 import {
   getEffectiveUserPlan,
@@ -94,6 +95,25 @@ type CachedSubscription = {
   currentPeriodEnd: string | null;
 };
 
+// Não persiste em cache nem altera assinatura: só libera a interface no Vite local.
+const LOCAL_PREVIEW_SUBSCRIPTION: CachedSubscription = {
+  active: true,
+  storedPlan: "pessoal_premium",
+  status: "ativo",
+  trialEndsAt: null,
+  trialStartedAt: null,
+  trialPlan: null,
+  trialUsed: false,
+  cancelledAt: null,
+  accessUntil: null,
+  paymentMethod: null,
+  paymentAmountCents: null,
+  paidAt: null,
+  periodicidade: null,
+  currentPeriodStart: null,
+  currentPeriodEnd: null,
+};
+
 const CACHE_PREFIX = "gf-plan-cache:";
 const RUNTIME_CACHE_TTL_MS = 5 * 60_000;
 
@@ -159,6 +179,14 @@ function writeCache(userId: string, value: CachedSubscription) {
 export function usePlan(): PlanState {
   const { user, loading: authLoading } = useAuth();
   const userId = user?.id ?? null;
+  const localPreview =
+    !!userId &&
+    typeof window !== "undefined" &&
+    isLocalDevPreview(
+      import.meta.env.DEV,
+      import.meta.env.VITE_LOCAL_DEV_PREVIEW,
+      window.location.hostname,
+    );
   const initialCache = userId ? (getRuntimeCache(userId) ?? readCache(userId)) : null;
   const [snapshot, setSnapshot] = useState<{
     userId: string | null;
@@ -192,6 +220,10 @@ export function usePlan(): PlanState {
       setError(null);
       if (!userId) {
         setSnapshot({ userId: null, data: null });
+        setPending(false);
+        return;
+      }
+      if (localPreview) {
         setPending(false);
         return;
       }
@@ -256,7 +288,7 @@ export function usePlan(): PlanState {
         if (current()) setPending(false);
       }
     },
-    [userId, authLoading],
+    [userId, authLoading, localPreview],
   );
 
   useEffect(() => {
@@ -266,8 +298,9 @@ export function usePlan(): PlanState {
     };
   }, [load]);
   const refresh = useCallback(() => load(true), [load]);
-  const data = snapshot.userId === userId ? snapshot.data : null;
-  const loading = authLoading || pending || snapshot.userId !== userId;
+  const data = localPreview ? LOCAL_PREVIEW_SUBSCRIPTION : snapshot.userId === userId ? snapshot.data : null;
+  const loading = authLoading || (!localPreview && (pending || snapshot.userId !== userId));
+  const effectiveError = localPreview ? null : error;
   const access = resolveSubscriptionAccess({
     storedPlan: data?.storedPlan ?? null,
     status: data?.status ?? null,
@@ -277,7 +310,7 @@ export function usePlan(): PlanState {
     accessUntil: data?.accessUntil,
     currentPeriodEnd: data?.currentPeriodEnd,
   });
-  const active = !loading && !error && data?.active !== false && access.active;
+  const active = !loading && !effectiveError && data?.active !== false && access.active;
   const isAdminMaster = active && access.plan === "admin_master";
   const trialPlan = asTrialPlan(data?.trialPlan);
   const trialEndMs = Date.parse(data?.trialEndsAt ?? "");
@@ -307,7 +340,7 @@ export function usePlan(): PlanState {
     storedPlan: getEffectiveUserPlan(null, data?.storedPlan),
     status: access.status,
     active,
-    error,
+    error: effectiveError,
     loading,
     isAdminMaster,
     trialEndsAt: isAdminMaster ? null : (data?.trialEndsAt ?? null),
