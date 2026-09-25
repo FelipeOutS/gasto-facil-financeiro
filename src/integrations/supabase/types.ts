@@ -5111,6 +5111,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      import_extrato_atomic: {
+        Args: {
+          p_batch_id: string
+          p_extrato: Json
+          p_gastos: Json
+          p_owner_id: string
+          p_receitas: Json
+          p_transferencias: Json
+        }
+        Returns: Json
+      }
       is_admin_email: { Args: { _email: string }; Returns: boolean }
       is_free_ads: { Args: { _user_id: string }; Returns: boolean }
       is_full_access: { Args: { _user_id: string }; Returns: boolean }
