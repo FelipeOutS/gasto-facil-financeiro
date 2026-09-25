@@ -15,6 +15,13 @@
       "when": 1790360217976,
       "tag": "0001_fix_whatsapp_quota_ambiguous_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790360291216,
+      "tag": "0002_fix_whatsapp_quota_variable_conflicts",
+      "breakpoints": true
     }
   ]
 }
