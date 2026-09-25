@@ -1830,20 +1830,74 @@ export async function reclassificarCategoriasExistentes(): Promise<number> {
   return successIds.size;
 }
 
-export async function refreshGastos() {
-  if (!activeUserId) return;
-  const userId = activeUserId;
+/** Captura a geração, inclusive para impedir callbacks de uma sessão anterior da mesma conta. */
+export function financialSessionGuard(ownerId: string): () => boolean {
   const generation = userSessionGeneration;
-  const { data } = await supabase.from("gastos").select("*").eq("user_id", userId);
-  if (!data || activeUserId !== userId || generation !== userSessionGeneration) return;
-  const catUuidToKey = new Map<string, string>();
-  for (const [key, uuid] of categoriaKeyToUuid.entries()) catUuidToKey.set(uuid, key);
-  memGastos = normalizeGastosForCalculations(
-    data.map((r: GastoRow) => rowToGasto(r, catUuidToKey)),
-    true,
-  );
-  memGastos = memGastos.map(applyCategoriaInferida);
-  emit();
+  return () => activeUserId === ownerId && userSessionGeneration === generation;
+}
+
+const financialRefreshes = new Map<string, Promise<void>>();
+
+type FinancialRefreshOptions = { afterPending?: boolean };
+
+function refreshFinancialEntity(
+  table: "gastos" | "receitas",
+  options: FinancialRefreshOptions = {},
+): Promise<void> {
+  const userId = activeUserId;
+  if (!userId) return Promise.resolve();
+  const isCurrent = financialSessionGuard(userId);
+  const key = `${userSessionGeneration}:${table}`;
+  const running = financialRefreshes.get(key);
+  if (running) {
+    // Um evento pode chegar durante um SELECT iniciado pela rota, antes deste serviço.
+    // Nesse caso, sua atualização precisa de uma consulta posterior àquela em andamento.
+    if (options.afterPending) {
+      return running.then(() => isCurrent() ? refreshFinancialEntity(table) : undefined);
+    }
+    return running;
+  }
+  const task = (async () => {
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const query = table === "receitas"
+        ? supabase.from("receitas").select("*").eq("user_id", userId).is("deleted_at", null)
+        : supabase.from("gastos").select("*").eq("user_id", userId);
+      // Uma leitura suspensa não impede a próxima recuperação ao voltar ao app.
+      const result = await Promise.race([
+        query,
+        new Promise<null>(resolve => { timeout = setTimeout(() => resolve(null), 15000); }),
+      ]);
+      if (!result || result.error || !Array.isArray(result.data) || !isCurrent()) return;
+      if (table === "receitas") {
+        memReceitas = (result.data as ReceitaRow[]).map(rowToReceita);
+      } else {
+        const catUuidToKey = new Map([...categoriaKeyToUuid].map(([key, uuid]) => [uuid, key]));
+        memGastos = normalizeGastosForCalculations(
+          (result.data as GastoRow[]).map(row => rowToGasto(row, catUuidToKey)), true,
+        ).map(applyCategoriaInferida);
+      }
+      emit();
+    } catch {
+      // Mantém a última leitura válida em falhas de rede/RLS; foreground pode tentar novamente.
+    } finally {
+      clearTimeout(timeout);
+    }
+  })().finally(() => financialRefreshes.delete(key));
+  financialRefreshes.set(key, task);
+  return task;
+}
+
+export function refreshGastos(options: FinancialRefreshOptions = {}): Promise<void> {
+  return refreshFinancialEntity("gastos", options);
+}
+
+export function refreshReceitas(options: FinancialRefreshOptions = {}): Promise<void> {
+  return refreshFinancialEntity("receitas", options);
+}
+
+export async function refreshFinancialCore(options: FinancialRefreshOptions = {}): Promise<void> {
+  await Promise.all([refreshGastos(options), refreshReceitas(options)]);
 }
 
 // ---------- Gastos ----------
