@@ -42,10 +42,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
 import {
-  addGastosBulk,
-  addReceitasBulk,
-  addTransferenciasInternasBulk,
-  createExtratoImportado,
+  importExtratoPersistido,
   findDuplicateGastoAdvanced,
   findDuplicateReceitaAdvanced,
   findDuplicateTransferenciaAdvanced,
@@ -248,6 +245,9 @@ export function ImportExtratoDialog({
 
   const [step, setStep] = useState<Step>("upload");
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const batchIdRef = useRef<string | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [filter, setFilter] = useState<ReviewFilter>("todos");
@@ -271,6 +271,7 @@ export function ImportExtratoDialog({
   } | null>(null);
 
   const reset = useCallback(() => {
+    batchIdRef.current = null;
     setStep("upload");
     setLoading(false);
     setFiles([]);
@@ -287,6 +288,7 @@ export function ImportExtratoDialog({
 
   const handleClose = useCallback(
     (v: boolean) => {
+      if (savingRef.current) return;
       if (!v) reset();
       onOpenChange(v);
     },
@@ -870,27 +872,20 @@ export function ImportExtratoDialog({
     const receitas = validos.filter((i) => i.tipoMovimentacao === "receita");
     const transferencias = validos.filter((i) => i.tipoMovimentacao === "transferencia_interna");
 
-    let novosCount = 0;
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
     const duplicadosIgnorados = items.filter(
-      (i) =>
-        !i.selecionado &&
+      (i) => !i.selecionado &&
         (i.dupStatus === "duplicado_existente" || i.dupStatus === "duplicado_lote"),
     ).length;
     const naoConfirmados = items.filter((i) => !i.selecionado && i.dupStatus === "novo").length;
-
-    // Gera o batchId que será compartilhado por todos os itens dessa importação.
-    const batchId =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `batch-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-    let totalDespesas = 0;
-    let totalReceitas = 0;
-    let totalTransferencias = 0;
-
-    if (despesas.length > 0) {
-      const created = addGastosBulk(
-        despesas.map((d) => ({
+    try {
+      // Conserva o lote em retries: uma resposta perdida não deve duplicar um commit.
+      const batchId = (batchIdRef.current ??= crypto.randomUUID());
+      const confirmed = await importExtratoPersistido({
+        batchId,
+        gastos: despesas.map((d) => ({
           descricao: d.descricao,
           valor: d.valor!,
           data: d.data!,
@@ -905,15 +900,8 @@ export function ImportExtratoDialog({
           importBatchId: batchId,
           idOperacaoBanco: d.idOperacao,
           cartaoId: d.formaPagamento === "credito" ? d.cartaoId : undefined,
-
         })),
-      );
-      novosCount += created.length;
-      totalDespesas = created.reduce((s, x) => s + x.valor, 0);
-    }
-    if (receitas.length > 0) {
-      const created = addReceitasBulk(
-        receitas.map((r) => {
+        receitas: receitas.map((r) => {
           const tipoReceita: TipoReceita = /sal[áa]rio/i.test(r.descricao)
             ? "salario"
             : /pix/i.test(r.descricao)
@@ -932,13 +920,7 @@ export function ImportExtratoDialog({
             idOperacaoBanco: r.idOperacao,
           };
         }),
-      );
-      novosCount += created.length;
-      totalReceitas = created.reduce((s, x) => s + x.valor, 0);
-    }
-    if (transferencias.length > 0) {
-      const created = addTransferenciasInternasBulk(
-        transferencias.map((t) => ({
+        transferencias: transferencias.map((t) => ({
           descricao: t.descricao,
           valor: t.valor!,
           data: t.data!,
@@ -948,44 +930,31 @@ export function ImportExtratoDialog({
           importBatchId: batchId,
           idOperacaoBanco: t.idOperacao,
         })),
-      );
-      novosCount += created.length;
-      totalTransferencias = created.reduce((s, x) => s + x.valor, 0);
-    }
-
-    // Cria registro no histórico de extratos importados (apenas se gerou itens novos)
-    if (novosCount > 0) {
-      // Determina período pelas datas dos itens
-      const datas = validos.map((v) => v.data!).sort();
-      const periodoInicio = datas[0];
-      const periodoFim = datas[datas.length - 1];
-      try {
-        await createExtratoImportado({
-          id: batchId,
+        historico: {
           nomeArquivo: importMeta?.nomeArquivo,
           tipoOrigem: importMeta?.tipoOrigem ?? "pdf",
-          periodoInicio,
-          periodoFim,
-          qtdMovimentacoes: novosCount,
           qtdDuplicadasIgnoradas: duplicadosIgnorados,
-          totalReceitas,
-          totalDespesas,
-          totalGuardado: 0,
-          totalTransferencias,
           observacao: observacaoIA ?? undefined,
-        });
-      } catch (e) {
-        console.error("[ImportExtratoDialog] createExtratoImportado falhou", e);
-      }
+        },
+      });
+      const persisted = [...confirmed.gastos, ...confirmed.receitas, ...confirmed.transferencias];
+      setResult({
+        adicionados: persisted.length,
+        duplicados:
+          confirmed.extrato?.qtdDuplicadasIgnoradas ?? duplicadosIgnorados + confirmed.duplicados,
+        naoImportados: naoConfirmados,
+        total: persisted.reduce((sum, item) => sum + item.valor, 0),
+      });
+      setStep("done");
+    } catch (error) {
+      console.error("[ImportExtratoDialog] persistência do lote falhou", error);
+      toast.error("Não foi possível confirmar a importação.", {
+        description: "Tente novamente. O mesmo lote será verificado sem duplicar lançamentos.",
+      });
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
     }
-
-    setResult({
-      adicionados: novosCount,
-      duplicados: duplicadosIgnorados,
-      naoImportados: naoConfirmados,
-      total: totalDespesas + totalReceitas + totalTransferencias,
-    });
-    setStep("done");
   };
 
   // ---------- RENDER ----------
@@ -1237,12 +1206,12 @@ export function ImportExtratoDialog({
               </span>
             </div>
             <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => handleClose(false)}>
+              <Button variant="ghost" size="sm" disabled={saving} onClick={() => handleClose(false)}>
                 {t("footer.cancel")}
               </Button>
-              <Button size="sm" onClick={handleConfirm} disabled={totalSelecionados === 0}>
+              <Button size="sm" onClick={handleConfirm} disabled={saving || totalSelecionados === 0}>
                 <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                Importar {totalSelecionados} lançamentos
+                {saving ? "Confirmando importação…" : `Importar ${totalSelecionados} lançamentos`}
               </Button>
             </div>
           </div>

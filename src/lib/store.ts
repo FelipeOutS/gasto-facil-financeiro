@@ -4457,6 +4457,98 @@ export type CriarExtratoImportadoInput = {
   observacao?: string;
 };
 
+/** Importação confirmada: nenhuma mutação otimista; a RPC grava o lote inteiro. */
+export async function importExtratoPersistido(input: {
+  batchId: string;
+  gastos: NovoGastoInput[];
+  receitas: NovaReceitaBulkInput[];
+  transferencias: NovaTransferenciaInternaInput[];
+  historico: Pick<
+    CriarExtratoImportadoInput,
+    "nomeArquivo" | "banco" | "tipoOrigem" | "qtdDuplicadasIgnoradas" | "observacao"
+  >;
+}) {
+  const ownerId = activeUserId;
+  const generation = userSessionGeneration;
+  if (!ownerId || !ensureCanWrite("importExtratoPersistido")) {
+    throw new Error("Importação indisponível para esta sessão.");
+  }
+  const commonRow = (item: NovaReceitaBulkInput | NovaTransferenciaInternaInput) => ({
+    descricao: item.descricao,
+    valor: Math.abs(item.valor),
+    data: item.data,
+    horario: item.horario ?? null,
+    id_operacao_banco: item.idOperacaoBanco ?? null,
+  });
+  const { data, error } = await sbAny.rpc("import_extrato_atomic", {
+    p_owner_id: ownerId,
+    p_batch_id: input.batchId,
+    p_gastos: input.gastos.flatMap((item) =>
+      buildGastosFromInput(
+        {
+          ...item,
+          tipoGasto: "unico",
+          importBatchId: input.batchId,
+        },
+        ownerId,
+      ).map((built) => built.row),
+    ),
+    p_receitas: input.receitas.map((item) => ({
+      ...commonRow(item),
+      tipo: item.tipo,
+      origem: item.origem ?? null,
+    })),
+    p_transferencias: input.transferencias.map((item) => ({
+      ...commonRow(item),
+      origem: item.origem ?? null,
+      destino: item.destino ?? null,
+      observacao: item.observacao ?? null,
+      origem_importacao: item.origemImportacao ?? null,
+    })),
+    p_extrato: {
+      nome_arquivo: input.historico.nomeArquivo ?? null,
+      banco: input.historico.banco ?? null,
+      tipo_origem: input.historico.tipoOrigem,
+      qtd_duplicadas_ignoradas: input.historico.qtdDuplicadasIgnoradas,
+      observacao: input.historico.observacao ?? null,
+    },
+  });
+  // Falha/timeout nunca publica itens nem histórico. O mesmo batchId pode ser reconsultado.
+  if (error) throw error;
+  if (
+    !data ||
+    !Array.isArray(data.gastos) ||
+    !Array.isArray(data.receitas) ||
+    !Array.isArray(data.transferencias)
+  )
+    throw new Error("Resposta de importação inválida.");
+  const catMap = new Map([...categoriaKeyToUuid].map(([key, uuid]) => [uuid, key]));
+  const gastos = (data.gastos as GastoRow[]).map((row) => rowToGasto(row, catMap));
+  const receitas = (data.receitas as ReceitaRow[]).map(rowToReceita);
+  const transferencias = (data.transferencias as TransferenciaInternaRow[]).map(
+    rowToTransferenciaInterna,
+  );
+  const extrato = data.extrato ? rowToExtratoImportado(data.extrato) : null;
+  if (gastos.length + receitas.length + transferencias.length > 0 && !extrato) {
+    throw new Error("Histórico da importação não confirmado.");
+  }
+  if (activeUserId === ownerId && userSessionGeneration === generation) {
+    // Substitui por ID para que repetir a confirmação também seja idempotente na memória.
+    memGastos = [...memGastos.filter((row) => !gastos.some((g) => g.id === row.id)), ...gastos];
+    memReceitas = [
+      ...memReceitas.filter((row) => !receitas.some((r) => r.id === row.id)),
+      ...receitas,
+    ];
+    memTransferencias = [
+      ...memTransferencias.filter((row) => !transferencias.some((t) => t.id === row.id)),
+      ...transferencias,
+    ];
+    if (extrato) memExtratos = [extrato, ...memExtratos.filter((row) => row.id !== extrato.id)];
+    emit();
+  }
+  return { gastos, receitas, transferencias, extrato, duplicados: Number(data.duplicados ?? 0) };
+}
+
 export async function createExtratoImportado(
   input: CriarExtratoImportadoInput,
 ): Promise<ExtratoImportado | null> {
