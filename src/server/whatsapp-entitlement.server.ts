@@ -205,16 +205,9 @@ export async function getWhatsAppEntitlement(
       return r;
     }
 
-    const betaAllowed = await hasBetaAccess(userId);
-    if (!betaAllowed) {
-      const r = blocked("beta_access_missing", {
-        featureIncluded: true,
-        planActive: true,
-        betaAllowed: false,
-      });
-      logDecision("entitlement_blocked", r, userId);
-      return r;
-    }
+    // Liberado para todos os planos pagos ativos (set/2026): convite beta
+    // não é mais exigido — o plano pago já habilita o WhatsApp.
+    void hasBetaAccess;
 
     let linkActive = false;
     let optInActive = false;
