@@ -33,6 +33,7 @@ import {
   getHydrationStatus,
   migrateLegacyDataToUser,
 } from "@/lib/store";
+import { useFinancialRealtimeSync } from "@/lib/financial-realtime-sync";
 import type { AccessLevel } from "@/lib/connected-accounts";
 
 export type ConnectedAccountAccess = {
@@ -202,6 +203,8 @@ export function ActiveAccountProvider({ children }: { children: ReactNode }) {
       window.clearInterval(timer);
     };
   }, [activeOwnerId, applySwitch]);
+
+  useFinancialRealtimeSync(viewerId, loading ? null : activeOwnerId);
 
   const isOwnAccount = !viewerId || activeOwnerId === viewerId || activeOwnerId === null;
   const activeConnection = useMemo(
