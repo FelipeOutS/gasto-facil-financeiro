@@ -12,11 +12,9 @@
  *  3) vínculo possui `opt_in_em` (consentimento) e NÃO possui `revogado_em`;
  *  4) usuário do vínculo existe;
  *  5) Admin Master → libera (bypass);
- *  6) canary ligado → SOMENTE Admin Master passa;
- *  7) beta fechada → usuário precisa estar em `whatsapp_beta_access`
- *     (RPC `can_use_whatsapp`) E ter plano elegível para WhatsApp
- *     (paid plan: pessoal_premium / mei_essencial / mei_inteligente /
- *     empresa). free, free_ads, pessoal_manual, sem_assinatura → bloqueados.
+ *  6) plano elegível para WhatsApp (paid plan: pessoal_premium /
+ *     mei_essencial / mei_inteligente / empresa). free, free_ads,
+ *     pessoal_manual, sem_assinatura → bloqueados.
  *
  * Retorna apenas `{ allowed, userId? }` ao caller — nunca o motivo
  * detalhado (evita enumeração de contas/planos por terceiros).
@@ -97,13 +95,14 @@ export async function canUseWhatsAppForSender(
     const { isAdmin } = await isAdminMaster(userId);
     if (isAdmin) return { allowed: true, userId };
 
-    // (6) Canary fechado: só admin master.
-    if (opts?.canaryOnly) return { allowed: false };
-
-    // (7) WA-C11 Fase 1 — Delegação para a fonte única de entitlement.
+    // (6) WA-C11 Fase 1 — Delegação para a fonte única de entitlement.
     // Cobre: plano elegível (SQL `has_feature_access`) + beta_access +
     // assinatura ativa/não cancelada/não expirada. Gratuito com beta
     // ativo permanece BLOQUEADO por construção.
+    // Pós-liberação geral (set/2026): `canaryOnly` não bloqueia mais
+    // usuários pagantes; o secret legado pode permanecer true sem derrubar
+    // o WhatsApp de clientes elegíveis.
+    void opts;
     try {
       const { getWhatsAppEntitlement } = await import("@/server/whatsapp-entitlement.server");
       const ent = await getWhatsAppEntitlement(userId);
