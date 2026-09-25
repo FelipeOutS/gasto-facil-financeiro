@@ -62,7 +62,7 @@ beforeAll(async () => {
   const base = await migration("20260424172418_824996a1-2d41-4090-a056-93d3c267449c.sql");
   await db.exec(base.split("-- ============= LIMITES")[0]);
   await db.exec(`ALTER TABLE gastos ADD COLUMN cartao_id uuid, ADD COLUMN horario text,
-    ADD COLUMN origem text, ADD COLUMN invoice_month text, ADD COLUMN deleted_at timestamptz;
+    ADD COLUMN origem text, ADD COLUMN invoice_month text;
     ALTER TABLE receitas ADD COLUMN deleted_at timestamptz;
     CREATE TABLE dinheiro_guardado(id uuid); CREATE TABLE movimentacoes_meta(id uuid);`);
   await db.exec(await migration("20260429030746_8e0ca191-85c8-4155-a6db-25b0eff1fcfa.sql"));
@@ -273,4 +273,47 @@ test("rollback of a new batch preserves earlier imports", async () => {
   expect(await counts()).toEqual({ g: 1, r: 0, t: 0, h: 1 });
   expect(store.getGastos()[0].id).toBe(first.gastos[0].id);
   expect(store.getItensDoBatch(next.batchId).gastos).toHaveLength(0);
+});
+
+test("RPC works without gastos.deleted_at and uses the confirmed Lovable Cloud column types", async () => {
+  const { rows } = await db.query<{ table_name: string; column_name: string; udt_name: string }>(`
+    SELECT table_name, column_name, udt_name FROM information_schema.columns
+    WHERE table_schema='public' AND table_name IN ('gastos','receitas','extratos_importados')
+  `);
+  const types = new Map(rows.map((row) => [`${row.table_name}.${row.column_name}`, row.udt_name]));
+  expect(types.has("gastos.deleted_at")).toBe(false);
+  for (const [column, type] of Object.entries({
+    "extratos_importados.tipo_origem": "text",
+    "extratos_importados.status": "text",
+    "gastos.forma_pagamento": "text",
+    "gastos.tipo_gasto": "text",
+    "gastos.categoria_id": "uuid",
+    "gastos.cartao_id": "uuid",
+    "receitas.tipo": "text",
+    "receitas.deleted_at": "timestamptz",
+  }))
+    expect(types.get(column)).toBe(type);
+  const request = input(true);
+  const result = await store.importExtratoPersistido(request);
+  expect(result.extrato?.qtdMovimentacoes).toBe(3);
+  expect(await counts()).toEqual({ g: 1, r: 1, t: 1, h: 1 });
+  const duplicate = await store.importExtratoPersistido({
+    ...request,
+    batchId: crypto.randomUUID(),
+  });
+  expect(duplicate.duplicados).toBe(3);
+  expect(await counts()).toEqual({ g: 1, r: 1, t: 1, h: 1 });
+});
+
+test("dedup ignores soft-deleted receitas while preserving active expense and transfer dedup", async () => {
+  const request = input(true);
+  await store.importExtratoPersistido(request);
+  await db.query("UPDATE receitas SET deleted_at=now() WHERE user_id=$1", [owner]);
+  const result = await store.importExtratoPersistido({ ...request, batchId: crypto.randomUUID() });
+  expect(result.gastos).toHaveLength(0);
+  expect(result.transferencias).toHaveLength(0);
+  expect(result.receitas).toHaveLength(1);
+  expect(result.duplicados).toBe(2);
+  expect(result.extrato?.qtdMovimentacoes).toBe(1);
+  expect(await counts()).toEqual({ g: 1, r: 2, t: 1, h: 2 });
 });

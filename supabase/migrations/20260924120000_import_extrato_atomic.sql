@@ -59,7 +59,7 @@ BEGIN
       IF EXISTS (
         SELECT 1 FROM (
           SELECT 'gastos' AS kind, descricao, valor, data, id_operacao_banco, cartao_id
-            FROM public.gastos WHERE user_id = p_owner_id AND deleted_at IS NULL
+            FROM public.gastos WHERE user_id = p_owner_id
           UNION ALL
           SELECT 'receitas', descricao, valor, data, id_operacao_banco, NULL::uuid
             FROM public.receitas WHERE user_id = p_owner_id AND deleted_at IS NULL
