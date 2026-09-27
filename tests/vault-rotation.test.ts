@@ -239,7 +239,7 @@ test("old quick unlock key is rejected against the new settings", async () => {
   const { args } = await seed();
   await rotateMasterKey(args);
   await expect(assertCurrentVaultKey(owner, args.currentKey)).rejects.toThrow(
-    "chave do Cofre mudou",
+    "Use a senha mestra atual",
   );
   expect(await keyMatchesVaultSettings(args.currentKey, (await snapshot()).settings[0])).toBe(
     false,
