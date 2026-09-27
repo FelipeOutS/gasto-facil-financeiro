@@ -101,6 +101,13 @@ import {
   clearNativePin,
   type NativePinStatus,
 } from "@/lib/vault/native-pin";
+import {
+  quickCredentialIsCurrent,
+  rememberQuickCredential,
+  syncQuickCredentials,
+  VaultKeyChangedError,
+  QUICK_UNLOCK_RESET_MESSAGE,
+} from "@/lib/vault/quick-unlock-state";
 
 export const Route = createFileRoute("/app_/cofre-pessoal")({
   head: () => ({
@@ -554,10 +561,12 @@ export function UnlockView({
   settings: VaultSettingsRow;
   onUnlocked: () => void;
 }) {
-  const [bio] = useState<QuickUnlockRecord | null>(() => {
+  const [bio, setBio] = useState<QuickUnlockRecord | null>(() => {
     const record = getQuickUnlock(userId);
-    return record?.kind === "android-bio" ? null : record;
+    return record?.kind === "android-bio" || !quickCredentialIsCurrent(userId, "biometric", settings)
+      ? null : record;
   });
+  const [quickNeedsSetup, setQuickNeedsSetup] = useState(false);
   const legacyBiometric = needsQuickUnlockMigration(userId);
   const [serverPin, setServerPin] = useState<ServerPinStatus | null>(null);
   const [nativePin, setNativePin] = useState<NativePinStatus | null>(null);
@@ -577,20 +586,22 @@ export function UnlockView({
     void (async () => {
       const server = await getServerPinStatus(userId).catch(() => null);
 
-      const local = nativePinAvailable()
-        ? await getNativePinStatus(userId).catch(() => null)
-        : null;
+      const synced = await syncQuickCredentials(userId, settings).catch(() => null);
+      const local = synced?.nativePin ?? null;
 
       if (!alive) return;
 
-      setServerPin(server);
+      const nativeStatusUnknown = nativePinAvailable() && synced === null;
+      setServerPin(nativeStatusUnknown ? null : server);
       setNativePin(local);
+      setBio(synced?.biometric ?? null);
+      setQuickNeedsSetup(synced?.pinNeedsSetup ?? false);
 
       const nativeReady = local?.configured === true && !local.lockedUntil;
-      const serverReady = !local?.configured && server?.configured === true && !server.lockedUntil;
+      const serverReady = !nativeStatusUnknown && !synced?.pinNeedsSetup && !local?.configured && server?.configured === true && !server.lockedUntil;
 
       // Biometria configurada continua sendo a primeira opção.
-      if (bio) {
+      if (synced?.biometric) {
         setMode("bio");
       } else if (nativeReady || serverReady) {
         setMode("pin");
@@ -602,7 +613,7 @@ export function UnlockView({
     return () => {
       alive = false;
     };
-  }, [userId, bio]);
+  }, [userId, settings]);
 
   useEffect(() => {
     if (cooldownUntil <= now) return;
@@ -616,6 +627,8 @@ export function UnlockView({
   async function migrateAfterPrimaryUnlock(key: CryptoKey) {
     try {
       if (await migrateLegacyQuickUnlock(userId, userLabel, key)) {
+        const currentSettings = await assertCurrentVaultKey(userId, key);
+        rememberQuickCredential(userId, "biometric", currentSettings);
         toast.success("Biometria pronta para usar.");
       }
     } catch {
@@ -660,6 +673,11 @@ export function UnlockView({
 
   async function handlePinUnlock(value: string) {
     if (busy) return;
+    if (quickNeedsSetup) {
+      setPin("");
+      setMode("master");
+      return;
+    }
     if (nativePin?.configured && nativePin.lockedUntil) {
       setMode(bio ? "bio" : "master");
       return;
@@ -679,7 +697,8 @@ export function UnlockView({
 
         // Nunca confia apenas no armazenamento local:
         // a chave precisa corresponder ao Cofre atual.
-        await assertCurrentVaultKey(userId, key);
+        const currentSettings = await assertCurrentVaultKey(userId, key);
+        rememberQuickCredential(userId, "pin", currentSettings);
 
         setNativePin(await getNativePinStatus(userId));
       } else {
@@ -715,7 +734,8 @@ export function UnlockView({
              */
             const verificationKey = await unlockWithNativePin(userId, value);
 
-            await assertCurrentVaultKey(userId, verificationKey);
+            const currentSettings = await assertCurrentVaultKey(userId, verificationKey);
+            rememberQuickCredential(userId, "pin", currentSettings);
 
             const freshStatus = await getNativePinStatus(userId);
 
@@ -752,6 +772,16 @@ export function UnlockView({
     } catch (e) {
       setPin("");
 
+      if (e instanceof VaultKeyChangedError) {
+        setBio(null);
+        setNativePin(null);
+        setServerPin(null);
+        setQuickNeedsSetup(true);
+        setMode("master");
+        toast.info(e.message);
+        return;
+      }
+
       toast.error(
         e instanceof Error ? e.message : i18n.t("cofre:errors.unlockFailed"),
       );
@@ -787,10 +817,18 @@ export function UnlockView({
     setBusy(true);
     try {
       const key = await unlockWithBiometric(userId);
-      await assertCurrentVaultKey(userId, key);
+      const currentSettings = await assertCurrentVaultKey(userId, key);
+      rememberQuickCredential(userId, "biometric", currentSettings);
       setMasterKey(key, userId);
       onUnlocked();
     } catch (e) {
+      if (e instanceof VaultKeyChangedError) {
+        setBio(null);
+        setNativePin(null);
+        setServerPin(null);
+        setQuickNeedsSetup(true);
+        setMode("master");
+      }
       toast.error(e instanceof Error ? e.message : i18n.t("cofre:errors.biometricFailed"));
     } finally {
       setBusy(false);
@@ -803,6 +841,7 @@ export function UnlockView({
   const nativePinLocked = usingNativePin && !!nativePin.lockedUntil;
 
   const hasLegacyPin =
+    !quickNeedsSetup &&
     !usingNativePin &&
     serverPin?.configured === true &&
     !serverPin.lockedUntil;
@@ -830,6 +869,7 @@ export function UnlockView({
   return (
     <>
       <HeaderHero subtitle={subtitle} />
+      {quickNeedsSetup && <p role="status">Use a senha mestra atual. {QUICK_UNLOCK_RESET_MESSAGE}</p>}
       {nativePinLocked && (
         <p role="status" className="mx-auto mb-4 max-w-md text-sm text-muted-foreground">
           O PIN está temporariamente bloqueado. Use sua biometria ou senha mestra.
@@ -1316,15 +1356,10 @@ function VaultMain({
         onChanged={(newSettings) => {
           onSettingsChanged(newSettings);
           clearSecretCache();
-          // Invalida desbloqueio rápido — a chave mestra mudou
-          void disableQuickUnlock(userId).catch(() =>
-            toast.error(
-              "Não foi possível remover a biometria antiga. Remova-a em Desbloqueio rápido antes de configurar novamente.",
-            ),
-          );
+          // rotateMasterKey invalidates both device credentials after confirmed commit.
           // Força novo unlock para usar a nova senha
           setMasterKey(null);
-          toast.success("Senha mestra alterada. Use a nova senha e configure novamente o PIN e a biometria.");
+          toast.success(`Senha mestra alterada. ${QUICK_UNLOCK_RESET_MESSAGE}`);
         }}
       />
     );
@@ -2785,17 +2820,27 @@ export function QuickUnlockSettingsView({
   masterKey: CryptoKey;
   onBack: () => void;
 }) {
-  const [rec, setRec] = useState<QuickUnlockRecord | null>(() => getQuickUnlock(userId));
+  const [rec, setRec] = useState<QuickUnlockRecord | null>(null);
 
   const [nativeStatus, setNativeStatus] = useState<NativePinStatus | null>(null);
   const [legacyStatus, setLegacyStatus] = useState<ServerPinStatus | null>(null);
   const [bioAvailable, setBioAvailable] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [working, setBusy] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [needsReconfiguration, setNeedsReconfiguration] = useState(false);
+  const [loadedUserId, setLoadedUserId] = useState<string | null>(null);
+  const refreshVersion = useRef(0);
+  const busy = working || checking || !!statusError || loadedUserId !== userId;
 
   type Panel = "none" | "setup" | "change";
   type Stage = "verify" | "set" | "confirm";
 
-  const [panel, setPanel] = useState<Panel>("none");
+  const [panelState, setPanel] = useState<Panel>("none");
+  const panel = loadedUserId === userId ? panelState : "none";
+  const activeIdentity = useRef({ userId, masterKey });
+  activeIdentity.current = { userId, masterKey };
+  const sameAccount = () => activeIdentity.current.userId === userId && activeIdentity.current.masterKey === masterKey;
   const [stage, setStage] = useState<Stage>("set");
   const [currentPin, setCurrentPin] = useState("");
   const [pin, setPin] = useState("");
@@ -2804,26 +2849,56 @@ export function QuickUnlockSettingsView({
   const nativeCapable = nativePinAvailable();
 
   const refresh = useCallback(async () => {
-    setRec(getQuickUnlock(userId));
-
-    const [biometric, legacy, local] = await Promise.all([
-      isPlatformAuthenticatorAvailable().catch(() => false),
-      getServerPinStatus(userId).catch(() => null),
-      nativePinAvailable() ? getNativePinStatus(userId).catch(() => null) : Promise.resolve(null),
-    ]);
-
-    setBioAvailable(biometric);
-    setLegacyStatus(legacy);
-    setNativeStatus(local);
-  }, [userId]);
+    const version = ++refreshVersion.current;
+    setChecking(true);
+    setStatusError(null);
+    try {
+      const settings = await assertCurrentVaultKey(userId, masterKey);
+      const [biometric, legacy, synced] = await Promise.all([
+        isPlatformAuthenticatorAvailable().catch(() => false),
+        getServerPinStatus(userId),
+        syncQuickCredentials(userId, settings),
+      ]);
+      if (version !== refreshVersion.current) return;
+      setBioAvailable(biometric);
+      setLegacyStatus(legacy);
+      setNativeStatus(synced.nativePin);
+      setRec(synced.biometric);
+      setNeedsReconfiguration(synced.needsReconfiguration);
+      setLoadedUserId(userId);
+    } catch (e) {
+      if (version !== refreshVersion.current) return;
+      if (e instanceof VaultKeyChangedError) {
+        resetPanel();
+        setRec(null);
+        setNativeStatus(null);
+        setLegacyStatus(null);
+        setMasterKey(null);
+        toast.info(e.message);
+      }
+      setStatusError("Não foi possível verificar o desbloqueio rápido. Tente novamente.");
+    } finally {
+      if (version === refreshVersion.current) setChecking(false);
+    }
+  }, [userId, masterKey]);
 
   useEffect(() => {
+    resetPanel();
+    setBusy(false);
     void refresh();
+    const foreground = () => { if (document.visibilityState !== "hidden") void refresh(); };
+    window.addEventListener("focus", foreground);
+    document.addEventListener("visibilitychange", foreground);
+    return () => {
+      refreshVersion.current++;
+      window.removeEventListener("focus", foreground);
+      document.removeEventListener("visibilitychange", foreground);
+    };
   }, [refresh]);
 
-  const hasNativePin = nativeStatus?.configured === true;
-  const hasLegacyPin = legacyStatus?.configured === true;
-  const hasBio = rec?.kind === "webauthn" || rec?.kind === "native-vault";
+  const hasNativePin = loadedUserId === userId && nativeStatus?.configured === true;
+  const hasLegacyPin = loadedUserId === userId && legacyStatus?.configured === true;
+  const hasBio = loadedUserId === userId && (rec?.kind === "webauthn" || rec?.kind === "native-vault");
   const hasLegacyBio = needsQuickUnlockMigration(userId);
 
   function resetPanel() {
@@ -2871,15 +2946,28 @@ export function QuickUnlockSettingsView({
         key = await unlockWithServerPin(userId, currentPin);
       }
 
-      await assertCurrentVaultKey(userId, key);
+      const settings = await assertCurrentVaultKey(userId, key);
+      if (!sameAccount()) return;
+      if (hasNativePin) rememberQuickCredential(userId, "pin", settings);
       setCurrentPin("");
       setStage("set");
     } catch (e) {
+      if (!sameAccount()) return;
       setCurrentPin("");
+      if (e instanceof VaultKeyChangedError) {
+        resetPanel();
+        setNativeStatus(null);
+        setLegacyStatus(null);
+        setRec(null);
+        setNeedsReconfiguration(true);
+        toast.info(QUICK_UNLOCK_RESET_MESSAGE);
+        await refresh();
+        return;
+      }
       toast.error(e instanceof Error ? e.message : "PIN atual incorreto.");
       await refresh();
     } finally {
-      setBusy(false);
+      if (sameAccount()) setBusy(false);
     }
   }
 
@@ -2901,12 +2989,17 @@ export function QuickUnlockSettingsView({
 
     setBusy(true);
     try {
+      await assertCurrentVaultKey(userId, masterKey);
+      if (!sameAccount()) return;
       await enrollNativePin(userId, pin, masterKey);
 
       const verifiedKey = await unlockWithNativePin(userId, pin);
-      await assertCurrentVaultKey(userId, verifiedKey);
+      const settings = await assertCurrentVaultKey(userId, verifiedKey);
+      if (!sameAccount()) return;
+      rememberQuickCredential(userId, "pin", settings);
 
       const status = await getNativePinStatus(userId);
+      if (!sameAccount()) return;
       if (!status.configured) {
         throw new Error("O Android não confirmou o novo PIN.");
       }
@@ -2920,11 +3013,12 @@ export function QuickUnlockSettingsView({
       resetPanel();
       await refresh();
     } catch (e) {
+      if (!sameAccount()) return;
       toast.error(
         e instanceof Error ? e.message : "Não foi possível configurar o PIN seguro.",
       );
     } finally {
-      setBusy(false);
+      if (sameAccount()) setBusy(false);
     }
   }
 
@@ -2944,26 +3038,34 @@ export function QuickUnlockSettingsView({
     setBusy(true);
     try {
       await clearNativePin(userId);
+      if (!sameAccount()) return;
       resetPanel();
       await refresh();
       toast.success("PIN removido deste dispositivo.");
     } catch {
+      if (!sameAccount()) return;
       toast.error("Não foi possível remover o PIN deste dispositivo.");
     } finally {
-      setBusy(false);
+      if (sameAccount()) setBusy(false);
     }
   }
 
   async function handleEnableBiometric() {
     setBusy(true);
     try {
+      await assertCurrentVaultKey(userId, masterKey);
+      if (!sameAccount()) return;
       await enableBiometricUnlock(userId, userLabel, masterKey);
+      const settings = await assertCurrentVaultKey(userId, masterKey);
+      if (!sameAccount()) return;
+      rememberQuickCredential(userId, "biometric", settings);
       toast.success("Biometria ativada com sucesso neste dispositivo.");
       await refresh();
     } catch {
+      if (!sameAccount()) return;
       toast.error(i18n.t("cofre:errors.biometricFailed"));
     } finally {
-      setBusy(false);
+      if (sameAccount()) setBusy(false);
     }
   }
 
@@ -2979,12 +3081,14 @@ export function QuickUnlockSettingsView({
     setBusy(true);
     try {
       await disableQuickUnlock(userId);
+      if (!sameAccount()) return;
       await refresh();
       toast.success("Biometria removida deste dispositivo.");
     } catch {
+      if (!sameAccount()) return;
       toast.error("Não foi possível remover a biometria. Tente novamente.");
     } finally {
-      setBusy(false);
+      if (sameAccount()) setBusy(false);
     }
   }
 
@@ -3009,6 +3113,17 @@ export function QuickUnlockSettingsView({
           </p>
         </div>
       </Card>
+
+      {checking && <p role="status">Verificando desbloqueio rápido…</p>}
+      {statusError && (
+        <div role="alert">
+          <p>{statusError}</p>
+          <Button type="button" onClick={() => void refresh()} disabled={working}>Tentar novamente</Button>
+        </div>
+      )}
+      {loadedUserId === userId && needsReconfiguration && (
+        <p role="status" className="mb-4 text-sm text-muted-foreground">{QUICK_UNLOCK_RESET_MESSAGE}</p>
+      )}
 
       <Card className="mb-4 p-5">
         <div className="flex items-center gap-3">
@@ -3092,6 +3207,8 @@ export function QuickUnlockSettingsView({
             <p className="text-[11px] text-muted-foreground">
               {hasNativePin
                 ? "PIN protegido neste dispositivo."
+                : needsReconfiguration
+                  ? "Não configurado. Configure novamente o PIN."
                 : nativeCapable
                   ? "Use um PIN de 6 números como alternativa à biometria."
                   : hasLegacyPin
@@ -3109,7 +3226,7 @@ export function QuickUnlockSettingsView({
         </div>
 
 
-        {nativeStatus?.lockedUntil && (
+        {hasNativePin && nativeStatus?.lockedUntil && (
           <div className="mt-3 rounded-lg bg-amber-500/10 p-3 text-[11px] text-amber-300">
             O PIN está temporariamente bloqueado por excesso de tentativas.
           </div>

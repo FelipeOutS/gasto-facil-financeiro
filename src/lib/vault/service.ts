@@ -7,6 +7,7 @@ import {
   type EntrySecret,
 } from "./crypto";
 import { evaluateStrength, type Strength } from "./strength";
+import { invalidateQuickCredentials, VaultKeyChangedError } from "./quick-unlock-state";
 
 export type VaultSettingsRow = {
   user_id: string;
@@ -140,10 +141,10 @@ export async function decryptOne(key: CryptoKey, row: VaultEntryRow): Promise<De
  * restoring the replaced key, including envelopes on another device. */
 export async function assertCurrentVaultKey(userId: string, key: CryptoKey) {
   const settings = await fetchVaultSettings(userId);
-  if (!settings || !(await keyMatchesVaultSettings(key, settings)))
-    throw new Error(
-      "A chave do Cofre mudou. Use a senha mestra atual e configure o desbloqueio rápido novamente.",
-    );
+  if (!settings || !(await keyMatchesVaultSettings(key, settings))) {
+    if (settings) await invalidateQuickCredentials(userId, settings);
+    throw new VaultKeyChangedError();
+  }
   return settings;
 }
 
@@ -231,6 +232,7 @@ export async function rotateMasterKey(args: {
     throw new Error(
       "A confirmação da troca não corresponde a este Cofre. Reabra com a senha atual.",
     );
+  await invalidateQuickCredentials(args.userId, committed);
   return committed;
 }
 

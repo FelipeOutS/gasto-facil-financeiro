@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, mock, test } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 GlobalRegistrator.register();
 const React = await import("react");
-const { render, cleanup, fireEvent, waitFor } = await import("@testing-library/react");
+const { render, cleanup, fireEvent, waitFor, act } = await import("@testing-library/react");
 let configured = false,
   biometric = false,
   legacy = true,
@@ -12,6 +12,11 @@ let lockOnAttempt = false;
 let failServerStatus = false;
 let calls: string[] = [];
 const key = {} as CryptoKey;
+const staleKey = {} as CryptoKey;
+let rotated = false;
+let mismatchOnAttempt = false;
+let settingsReadFails = false;
+let pendingSettings: Promise<any> | null = null;
 const noop = () => {};
 const ok = async () => {};
 const status = () => ({ configured, failedAttempts: lockedUntil ? 5 : 0, lockedUntil });
@@ -32,8 +37,16 @@ mock.module("@/lib/vault/service", () => ({
   decryptOne: ok,
   rotateMasterKey: ok,
   buildEncryptedBackup: ok,
-  assertCurrentVaultKey: async () => {
+  assertCurrentVaultKey: async (id: string, candidate: CryptoKey) => {
     calls.push("validate");
+    if (settingsReadFails) throw Error("Network unavailable");
+    if (id === "qa" && pendingSettings) return pendingSettings;
+    const settings = { ...props.settings, user_id: id, salt: rotated ? "new-salt" : props.settings.salt };
+    if (candidate === staleKey) {
+      await invalidateQuickCredentials(id, settings);
+      throw new VaultKeyChangedError();
+    }
+    return settings;
   },
 }));
 mock.module("@/lib/vault/crypto", () => ({
@@ -67,10 +80,11 @@ mock.module("@/lib/vault/native-pin", () => ({
       throw Error("PIN temporariamente bloqueado.");
     }
     if (fail) throw Error("PIN incorreto. 4 tentativas restantes.");
-    return key;
+    return mismatchOnAttempt ? staleKey : key;
   },
   clearNativePin: async () => {
     calls.push("clear-native");
+    configured = false;
   },
 }));
 mock.module("@/lib/vault/server-pin", () => ({
@@ -90,8 +104,8 @@ mock.module("@/lib/vault/server-pin", () => ({
   },
 }));
 mock.module("@/lib/vault/quick-unlock", () => ({
-  getQuickUnlock: () =>
-    biometric ? { kind: "native-vault", v: 2, userId: "qa", createdAt: 1 } : null,
+  getQuickUnlock: (id: string) =>
+    biometric && id === "qa" ? { kind: "native-vault", v: 2, userId: "qa", createdAt: 1 } : null,
   needsQuickUnlockMigration: () => false,
   migrateLegacyQuickUnlock: async () => false,
   disableQuickUnlock: ok,
@@ -108,6 +122,8 @@ mock.module("sonner", () => ({
   toast: { success: noop, warning: noop, info: noop, error: (s: string) => errors.push(s) },
 }));
 const { UnlockView, QuickUnlockSettingsView } = await import("../src/routes/app_.cofre-pessoal");
+const { rememberQuickCredential, invalidateQuickCredentials, VaultKeyChangedError } =
+  await import("../src/lib/vault/quick-unlock-state");
 const props = {
   userId: "qa",
   userLabel: "QA",
@@ -122,6 +138,13 @@ const props = {
   onUnlocked: () => calls.push("done"),
 };
 beforeEach(() => {
+  rotated = false;
+  mismatchOnAttempt = false;
+  settingsReadFails = false;
+  pendingSettings = null;
+  localStorage.clear();
+  rememberQuickCredential("qa", "pin", props.settings);
+  rememberQuickCredential("qa", "biometric", props.settings);
   configured = false;
   lockedUntil = null;
   lockOnAttempt = false;
@@ -226,7 +249,8 @@ test("settings put biometrics before PIN, hide technical migration details and r
   fireEvent.click(ui.getByRole("button", { name: "Continuar" }));
   fireEvent.change(ui.container.querySelector("input")!, { target: { value: "123456" } });
   fireEvent.click(ui.getByRole("button", { name: "Salvar PIN" }));
-  await waitFor(() => expect(calls).toEqual(["enroll:123456", "native:123456", "validate"]));
+  await waitFor(() => expect(calls.filter((call) => call !== "validate")).toEqual(["enroll:123456", "native:123456"]));
+  expect(calls.filter((call) => call === "validate").length).toBeGreaterThanOrEqual(2);
 });
 
 for (const hasBio of [true, false]) {
@@ -281,3 +305,86 @@ for (const hasBio of [true, false]) {
     expect(calls).toEqual(["native:123456"]);
   });
 }
+
+function settingsView(id = "qa") {
+  return <QuickUnlockSettingsView userId={id} userLabel="QA" masterKey={key} onBack={noop} />;
+}
+test("rotation immediately replaces change/remove actions with setup and remains so after remount", async () => {
+  configured = true; biometric = true; legacy = false;
+  const ui = render(settingsView());
+  await waitFor(() => expect(ui.getByRole("button", { name: "Alterar PIN" })).toBeTruthy());
+  rotated = true;
+  await invalidateQuickCredentials("qa", { ...props.settings, salt: "new-salt" });
+  window.dispatchEvent(new Event("focus"));
+  await waitFor(() => expect(ui.queryByRole("button", { name: "Alterar PIN" })).toBeNull());
+  expect(ui.queryByRole("button", { name: "Remover PIN" })).toBeNull();
+  expect(ui.queryByRole("button", { name: "Remover biometria" })).toBeNull();
+  fireEvent.click(ui.getByRole("button", { name: "Configurar PIN de 6 dígitos" }));
+  expect(ui.queryByText("PIN atual")).toBeNull();
+  ui.unmount();
+  const again = render(settingsView());
+  await waitFor(() => expect((again.getByRole("button", { name: "Configurar PIN de 6 dígitos" }) as HTMLButtonElement).disabled).toBe(false));
+  expect(again.queryByRole("button", { name: "Alterar PIN" })).toBeNull();
+});
+test("rotation on web is detected on settings entry in the native container without a PIN attempt", async () => {
+  configured = true; biometric = true; legacy = false; rotated = true;
+  const ui = render(settingsView());
+  await waitFor(() => expect(ui.getByText("Não configurado. Configure novamente o PIN.")).toBeTruthy());
+  expect(ui.queryByRole("button", { name: "Alterar PIN" })).toBeNull();
+  expect(calls.some(call => call.startsWith("native:") || call.startsWith("legacy:"))).toBe(false);
+  expect(ui.queryByRole("button", { name: "Remover biometria" })).toBeNull();
+});
+test("late key mismatch clears current PIN and exits change flow without a verification loop", async () => {
+  configured = true; legacy = false;
+  const ui = render(settingsView());
+  await waitFor(() => expect((ui.getByRole("button", { name: "Alterar PIN" }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(ui.getByRole("button", { name: "Alterar PIN" }));
+  fireEvent.change(ui.container.querySelector("input")!, { target: { value: "123456" } });
+  mismatchOnAttempt = true;
+  fireEvent.click(ui.getByRole("button", { name: "Confirmar", exact: true }));
+  await waitFor(() => expect(ui.queryByText("PIN atual")).toBeNull());
+  expect(ui.queryByRole("button", { name: "Alterar PIN" })).toBeNull();
+  expect(ui.getByRole("button", { name: "Configurar PIN de 6 dígitos" })).toBeTruthy();
+  expect(ui.container.querySelector("input")).toBeNull();
+  expect(calls.filter(call => call.startsWith("native:")).length).toBe(1);
+});
+test("after reset a newly confirmed PIN restores configured UI without asking for old PIN", async () => {
+  rotated = true; legacy = false;
+  await invalidateQuickCredentials("qa", { ...props.settings, salt: "new-salt" });
+  const ui = render(settingsView());
+  await waitFor(() => expect((ui.getByRole("button", { name: "Configurar PIN de 6 dígitos" }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(ui.getByRole("button", { name: "Configurar PIN de 6 dígitos" }));
+  fireEvent.change(ui.container.querySelector("input")!, { target: { value: "654321" } });
+  fireEvent.click(ui.getByRole("button", { name: "Continuar" }));
+  fireEvent.change(ui.container.querySelector("input")!, { target: { value: "654321" } });
+  fireEvent.click(ui.getByRole("button", { name: "Salvar PIN" }));
+  await waitFor(() => expect((ui.getByRole("button", { name: "Alterar PIN" }) as HTMLButtonElement).disabled).toBe(false));
+  expect(calls).toContain("native:654321");
+  expect(calls).not.toContain("native:123456");
+});
+test("read error disables setup without declaring a credential absent, retry restores status", async () => {
+  configured = true; legacy = false; settingsReadFails = true;
+  const ui = render(settingsView());
+  await waitFor(() => expect(ui.getByRole("alert")).toBeTruthy());
+  expect((ui.getByRole("button", { name: "Configurar PIN de 6 dígitos" }) as HTMLButtonElement).disabled).toBe(true);
+  expect(calls).not.toContain("clear-native");
+  settingsReadFails = false;
+  fireEvent.click(ui.getByRole("button", { name: "Tentar novamente" }));
+  await waitFor(() => expect((ui.getByRole("button", { name: "Alterar PIN" }) as HTMLButtonElement).disabled).toBe(false));
+});
+test("switching user hides old configured state and current PIN, ignoring late reads from A", async () => {
+  configured = true; legacy = false;
+  const ui = render(settingsView());
+  await waitFor(() => expect((ui.getByRole("button", { name: "Alterar PIN" }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(ui.getByRole("button", { name: "Alterar PIN" }));
+  fireEvent.change(ui.container.querySelector("input")!, { target: { value: "123456" } });
+  let resolve!: (value: unknown) => void;
+  pendingSettings = new Promise(r => { resolve = r; });
+  await act(async () => { window.dispatchEvent(new Event("focus")); });
+  ui.rerender(settingsView("user-B"));
+  expect(ui.queryByText("PIN atual")).toBeNull();
+  expect(ui.queryByText("PIN protegido neste dispositivo.")).toBeNull();
+  await act(async () => { resolve(props.settings); });
+  await waitFor(() => expect((ui.getByRole("button", { name: "Configurar PIN de 6 dígitos" }) as HTMLButtonElement).disabled).toBe(false));
+  expect(ui.queryByRole("button", { name: "Alterar PIN" })).toBeNull();
+});
