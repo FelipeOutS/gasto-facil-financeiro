@@ -702,66 +702,11 @@ export function UnlockView({
 
         setNativePin(await getNativePinStatus(userId));
       } else {
-        /*
-         * Primeiro uso após a atualização:
-         * abre usando o PIN legado do servidor.
-         */
+        // Compatibilidade temporária: o PIN antigo abre o Cofre, mas nunca
+        // cadastra automaticamente os mesmos dígitos como PIN deste aparelho.
         key = await unlockWithServerPin(userId, value);
 
         await assertCurrentVaultKey(userId, key);
-
-        /*
-         * Só inicia a migração quando conseguimos confirmar
-         * que NÃO existe PIN local configurado.
-         *
-         * Se a leitura do status local falhou (nativePin === null),
-         * o Cofre abre pelo PIN legado, mas não altera nada localmente.
-         */
-        const canMigrateToNativePin =
-          nativePinAvailable() &&
-          nativePin !== null &&
-          !nativePin.configured &&
-          value.length === 6;
-
-        if (canMigrateToNativePin) {
-          try {
-            await enrollNativePin(userId, value, key);
-
-            /*
-             * Round-trip obrigatório:
-             * prova que o PIN recém-criado recupera
-             * uma chave válida do mesmo Cofre.
-             */
-            const verificationKey = await unlockWithNativePin(userId, value);
-
-            const currentSettings = await assertCurrentVaultKey(userId, verificationKey);
-            rememberQuickCredential(userId, "pin", currentSettings);
-
-            const freshStatus = await getNativePinStatus(userId);
-
-            if (!freshStatus.configured) {
-              throw new Error("O PIN seguro não foi confirmado.");
-            }
-
-            setNativePin(freshStatus);
-
-            toast.success("PIN protegido neste dispositivo.");
-          } catch {
-            /*
-             * Como a migração só começa quando o status confirmou
-             * ausência de PIN local, podemos remover com segurança
-             * apenas o candidato/configuração local recém-criada.
-             *
-             * O PIN legado no servidor permanece intacto.
-             */
-            await clearNativePin(userId).catch(() => {});
-            setNativePin(null);
-
-            toast.warning("Cofre aberto. Você pode configurar o PIN em Desbloqueio rápido.", {
-              description: "Seu PIN atual continua funcionando normalmente.",
-            });
-          }
-        }
       }
 
       await migrateAfterPrimaryUnlock(key);
@@ -793,7 +738,9 @@ export function UnlockView({
           freshNativePin = await getNativePinStatus(userId);
           setNativePin(freshNativePin);
         }
-      } catch {}
+      } catch {
+        // Mantém a opção de senha mestra quando a consulta local falhar.
+      }
 
       if (freshNativePin?.configured && freshNativePin.lockedUntil) {
         setMode(bio ? "bio" : "master");
@@ -806,7 +753,9 @@ export function UnlockView({
         if (!freshNativePin?.configured && s.lockedUntil) {
           setMode("master");
         }
-      } catch {}
+      } catch {
+        // A falha de consulta ao PIN antigo não reativa nenhum fallback.
+      }
     } finally {
       setBusy(false);
     }
@@ -873,6 +822,11 @@ export function UnlockView({
       {nativePinLocked && (
         <p role="status" className="mx-auto mb-4 max-w-md text-sm text-muted-foreground">
           O PIN está temporariamente bloqueado. Use sua biometria ou senha mestra.
+        </p>
+      )}
+      {!quickNeedsSetup && !usingNativePin && serverPin?.configured && (
+        <p role="status" className="mx-auto mb-4 max-w-md text-sm text-muted-foreground">
+          Seu desbloqueio rápido precisa ser atualizado. Use sua senha mestra para configurar um novo PIN no aplicativo Android.
         </p>
       )}
       {legacyBiometric && (
@@ -2834,7 +2788,7 @@ export function QuickUnlockSettingsView({
   const busy = working || checking || !!statusError || loadedUserId !== userId;
 
   type Panel = "none" | "setup" | "change";
-  type Stage = "verify" | "set" | "confirm";
+  type Stage = "master" | "verify" | "set" | "confirm";
 
   const [panelState, setPanel] = useState<Panel>("none");
   const panel = loadedUserId === userId ? panelState : "none";
@@ -2843,6 +2797,8 @@ export function QuickUnlockSettingsView({
   const sameAccount = () => activeIdentity.current.userId === userId && activeIdentity.current.masterKey === masterKey;
   const [stage, setStage] = useState<Stage>("set");
   const [currentPin, setCurrentPin] = useState("");
+  const [masterPassword, setMasterPassword] = useState("");
+  const verifiedMigrationKey = useRef<CryptoKey | null>(null);
   const [pin, setPin] = useState("");
   const [pinConfirm, setPinConfirm] = useState("");
 
@@ -2905,6 +2861,8 @@ export function QuickUnlockSettingsView({
     setPanel("none");
     setStage("set");
     setCurrentPin("");
+    setMasterPassword("");
+    verifiedMigrationKey.current = null;
     setPin("");
     setPinConfirm("");
   }
@@ -2912,7 +2870,32 @@ export function QuickUnlockSettingsView({
   function openSetup() {
     resetPanel();
     setPanel("setup");
-    setStage(hasLegacyPin ? "verify" : "set");
+    setStage(hasLegacyPin ? "master" : "set");
+  }
+
+  async function handleVerifyMasterPassword() {
+    if (!masterPassword || !hasLegacyPin || hasNativePin) return;
+    setBusy(true);
+    try {
+      const currentSettings = await assertCurrentVaultKey(userId, masterKey);
+      const key = await unlockMasterKey(masterPassword, currentSettings);
+      if (!sameAccount()) return;
+      setMasterPassword("");
+      if (!key) {
+        toast.error("Senha mestra incorreta.");
+        return;
+      }
+      await assertCurrentVaultKey(userId, key);
+      if (!sameAccount()) return;
+      verifiedMigrationKey.current = key;
+      setStage("set");
+    } catch (e) {
+      if (!sameAccount()) return;
+      setMasterPassword("");
+      toast.error(e instanceof Error ? e.message : "Não foi possível confirmar a senha mestra.");
+    } finally {
+      if (sameAccount()) setBusy(false);
+    }
   }
 
   function openChange() {
@@ -2922,33 +2905,18 @@ export function QuickUnlockSettingsView({
   }
 
   async function handleVerifyCurrentPin() {
-    const currentPinLengthValid =
-      hasNativePin
-        ? currentPin.length === 6
-        : currentPin.length >= 4 && currentPin.length <= 8;
-
-    if (!currentPinLengthValid) {
-      toast.error(
-        hasNativePin
-          ? "Digite seu PIN atual de 6 dígitos."
-          : "Digite seu PIN atual.",
-      );
+    if (!nativeCapable || !hasNativePin || currentPin.length !== 6) {
+      toast.error("Digite seu PIN atual de 6 dígitos.");
       return;
     }
 
     setBusy(true);
     try {
-      let key: CryptoKey;
-
-      if (nativeCapable && hasNativePin) {
-        key = await unlockWithNativePin(userId, currentPin);
-      } else {
-        key = await unlockWithServerPin(userId, currentPin);
-      }
+      const key = await unlockWithNativePin(userId, currentPin);
 
       const settings = await assertCurrentVaultKey(userId, key);
       if (!sameAccount()) return;
-      if (hasNativePin) rememberQuickCredential(userId, "pin", settings);
+      rememberQuickCredential(userId, "pin", settings);
       setCurrentPin("");
       setStage("set");
     } catch (e) {
@@ -2989,9 +2957,15 @@ export function QuickUnlockSettingsView({
 
     setBusy(true);
     try {
-      await assertCurrentVaultKey(userId, masterKey);
+      const enrollmentKey = hasLegacyPin && !hasNativePin
+        ? verifiedMigrationKey.current
+        : masterKey;
+      if (!enrollmentKey) {
+        throw new Error("Confirme sua senha mestra antes de criar o novo PIN.");
+      }
+      await assertCurrentVaultKey(userId, enrollmentKey);
       if (!sameAccount()) return;
-      await enrollNativePin(userId, pin, masterKey);
+      await enrollNativePin(userId, pin, enrollmentKey);
 
       const verifiedKey = await unlockWithNativePin(userId, pin);
       const settings = await assertCurrentVaultKey(userId, verifiedKey);
@@ -3124,6 +3098,13 @@ export function QuickUnlockSettingsView({
       {loadedUserId === userId && needsReconfiguration && (
         <p role="status" className="mb-4 text-sm text-muted-foreground">{QUICK_UNLOCK_RESET_MESSAGE}</p>
       )}
+      {loadedUserId === userId && hasLegacyPin && !hasNativePin && (
+        <p role="status" className="mb-4 text-sm text-muted-foreground">
+          {nativeCapable
+            ? "Seu desbloqueio rápido precisa ser atualizado. Use sua senha mestra para criar um novo PIN de 6 dígitos neste aparelho."
+            : "Seu desbloqueio rápido precisa ser atualizado. Use sua senha mestra quando necessário e configure um novo PIN pelo aplicativo Android."}
+        </p>
+      )}
 
       <Card className="mb-4 p-5">
         <div className="flex items-center gap-3">
@@ -3212,7 +3193,7 @@ export function QuickUnlockSettingsView({
                 : nativeCapable
                   ? "Use um PIN de 6 números como alternativa à biometria."
                   : hasLegacyPin
-                    ? "Seu PIN continua disponível para abrir o Cofre."
+                    ? "Seu PIN atual continua disponível temporariamente. Atualize pelo aplicativo Android."
                     : "Configure seu PIN pelo aplicativo Android."}
             </p>
           </div>
@@ -3278,6 +3259,30 @@ export function QuickUnlockSettingsView({
           </>
         )}
 
+        {panel !== "none" && stage === "master" && (
+          <div className="mt-4 space-y-3 border-t border-border pt-4">
+            <Label htmlFor="vault-pin-update-master">Senha mestra atual</Label>
+            <Input
+              id="vault-pin-update-master"
+              type="password"
+              autoComplete="current-password"
+              value={masterPassword}
+              onChange={(e) => setMasterPassword(e.target.value)}
+              disabled={busy}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" className="flex-1" onClick={resetPanel} disabled={busy}>
+                Cancelar
+              </Button>
+              <Button type="button" className="flex-1 bg-brand text-brand-foreground hover:bg-brand/90"
+                disabled={busy || !masterPassword} onClick={() => void handleVerifyMasterPassword()}>
+                Confirmar
+              </Button>
+            </div>
+          </div>
+        )}
+
         {panel !== "none" && stage === "verify" && (
           <div className="mt-4 space-y-3 border-t border-border pt-4">
             <Label>PIN atual</Label>
@@ -3287,13 +3292,13 @@ export function QuickUnlockSettingsView({
               autoComplete="off"
               inputMode="numeric"
               pattern="[0-9]*"
-              maxLength={hasNativePin ? 6 : 8}
+              maxLength={6}
               value={currentPin}
               onChange={(e) =>
                 setCurrentPin(
                   e.target.value
                     .replace(/\D/g, "")
-                    .slice(0, hasNativePin ? 6 : 8),
+                    .slice(0, 6),
                 )
               }
               placeholder="••••••"
@@ -3317,9 +3322,7 @@ export function QuickUnlockSettingsView({
                 className="flex-1 bg-brand text-brand-foreground hover:bg-brand/90"
                 disabled={
                   busy ||
-                  (hasNativePin
-                    ? currentPin.length !== 6
-                    : currentPin.length < 4 || currentPin.length > 8)
+                  currentPin.length !== 6
                 }
                 onClick={handleVerifyCurrentPin}
               >

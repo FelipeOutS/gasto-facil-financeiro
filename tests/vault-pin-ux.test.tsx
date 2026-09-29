@@ -17,6 +17,8 @@ let rotated = false;
 let mismatchOnAttempt = false;
 let settingsReadFails = false;
 let pendingSettings: Promise<any> | null = null;
+let nativeCapable = true;
+let wrongMasterPassword = false;
 const noop = () => {};
 const ok = async () => {};
 const status = () => ({ configured, failedAttempts: lockedUntil ? 5 : 0, lockedUntil });
@@ -53,7 +55,7 @@ mock.module("@/lib/vault/crypto", () => ({
   createMasterKey: ok,
   unlockMasterKey: async () => {
     calls.push("master");
-    return key;
+    return wrongMasterPassword ? null : key;
   },
 }));
 mock.module("@/lib/vault/use-vault", () => ({
@@ -65,7 +67,7 @@ mock.module("@/lib/vault/use-vault", () => ({
   clearSecretCache: noop,
 }));
 mock.module("@/lib/vault/native-pin", () => ({
-  nativePinAvailable: () => true,
+  nativePinAvailable: () => nativeCapable,
   getNativePinStatus: async () => status(),
   enrollNativePin: async (_id: string, pin: string) => {
     calls.push("enroll:" + pin);
@@ -142,6 +144,8 @@ beforeEach(() => {
   mismatchOnAttempt = false;
   settingsReadFails = false;
   pendingSettings = null;
+  nativeCapable = true;
+  wrongMasterPassword = false;
   localStorage.clear();
   rememberQuickCredential("qa", "pin", props.settings);
   rememberQuickCredential("qa", "biometric", props.settings);
@@ -187,23 +191,78 @@ for (const value of ["1234", "12345", "1234567", "12345678"]) {
     await waitFor(() => expect(calls).toEqual(["legacy:" + value, "validate", "open", "done"]));
   });
 }
-test("existing six-digit PIN waits for confirmation then preserves validated enrollment roundtrip", async () => {
+test("existing six-digit PIN opens without copying its digits into native enrollment", async () => {
   const ui = render(<UnlockView {...props} />);
   await waitFor(() => expect(ui.getByLabelText("PIN de segurança")).toBeTruthy());
   await enter(ui, "123456");
   expect(calls).toEqual([]);
   fireEvent.click(ui.getByRole("button", { name: "Desbloquear com PIN" }));
-  await waitFor(() =>
-    expect(calls).toEqual([
-      "legacy:123456",
-      "validate",
-      "enroll:123456",
-      "native:123456",
-      "validate",
-      "open",
-      "done",
-    ]),
-  );
+  await waitFor(() => expect(calls).toEqual(["legacy:123456", "validate", "open", "done"]));
+  expect(configured).toBe(false);
+});
+test("legacy PIN on web remains temporary; no server or native setup is offered", async () => {
+  nativeCapable = false;
+  const ui = render(settingsView());
+  await waitFor(() => expect(ui.getAllByText(/Seu desbloqueio rápido precisa ser atualizado/).length).toBeGreaterThan(0));
+  expect(ui.queryByRole("button", { name: "Configurar PIN de 6 dígitos" })).toBeNull();
+  expect(calls).not.toContain("enroll:123456");
+});
+test("web can still unlock an existing legacy record and use the master password", async () => {
+  nativeCapable = false;
+  const ui = render(<UnlockView {...props} />);
+  await waitFor(() => expect(ui.getByText(/Seu desbloqueio rápido precisa ser atualizado/)).toBeTruthy());
+  await enter(ui, "123456");
+  fireEvent.click(ui.getByRole("button", { name: "Desbloquear com PIN" }));
+  await waitFor(() => expect(calls).toEqual(["legacy:123456", "validate", "open", "done"]));
+  expect(configured).toBe(false);
+  ui.unmount();
+  calls = [];
+  const master = render(<UnlockView {...props} />);
+  fireEvent.change(master.getByLabelText("Senha mestra", { exact: true }), {
+    target: { value: "synthetic-password" },
+  });
+  fireEvent.submit(master.container.querySelector("form")!);
+  await waitFor(() => expect(calls).toEqual(["master", "validate", "open", "done"]));
+});
+test("legacy update requires current master password and a separately entered new native PIN", async () => {
+  const ui = render(settingsView());
+  await waitFor(() => expect((ui.getByRole("button", { name: "Configurar PIN de 6 dígitos" }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(ui.getByRole("button", { name: "Configurar PIN de 6 dígitos" }));
+  expect(ui.getByLabelText("Senha mestra atual")).toBeTruthy();
+  expect(ui.queryByText("PIN atual")).toBeNull();
+  wrongMasterPassword = true;
+  fireEvent.change(ui.getByLabelText("Senha mestra atual"), { target: { value: "wrong" } });
+  fireEvent.click(ui.getByRole("button", { name: "Confirmar", exact: true }));
+  await waitFor(() => expect(errors).toContain("Senha mestra incorreta."));
+  expect(ui.getByLabelText("Senha mestra atual")).toBeTruthy();
+  expect(calls.some(call => call.startsWith("enroll:"))).toBe(false);
+  wrongMasterPassword = false;
+  fireEvent.change(ui.getByLabelText("Senha mestra atual"), { target: { value: "correct" } });
+  fireEvent.click(ui.getByRole("button", { name: "Confirmar", exact: true }));
+  await waitFor(() => expect(ui.getByText("Crie um PIN de 6 dígitos")).toBeTruthy());
+  fireEvent.change(ui.container.querySelector("input")!, { target: { value: "654321" } });
+  fireEvent.click(ui.getByRole("button", { name: "Continuar" }));
+  fireEvent.change(ui.container.querySelector("input")!, { target: { value: "654321" } });
+  fireEvent.click(ui.getByRole("button", { name: "Salvar PIN" }));
+  await waitFor(() => expect(ui.getByRole("button", { name: "Alterar PIN" })).toBeTruthy());
+  expect(calls).toContain("enroll:654321");
+  expect(calls).toContain("native:654321");
+  expect(calls).not.toContain("legacy:654321");
+  expect(calls).not.toContain("enroll:123456");
+});
+test("switching accounts clears a legacy migration that had verified the previous password", async () => {
+  const ui = render(settingsView());
+  await waitFor(() => expect((ui.getByRole("button", { name: "Configurar PIN de 6 dígitos" }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(ui.getByRole("button", { name: "Configurar PIN de 6 dígitos" }));
+  fireEvent.change(ui.getByLabelText("Senha mestra atual"), { target: { value: "correct" } });
+  fireEvent.click(ui.getByRole("button", { name: "Confirmar", exact: true }));
+  await waitFor(() => expect(ui.getByText("Crie um PIN de 6 dígitos")).toBeTruthy());
+  ui.rerender(settingsView("user-B"));
+  expect(ui.queryByText("Crie um PIN de 6 dígitos")).toBeNull();
+  await waitFor(() => expect((ui.getByRole("button", { name: "Configurar PIN de 6 dígitos" }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(ui.getByRole("button", { name: "Configurar PIN de 6 dígitos" }));
+  expect(ui.getByLabelText("Senha mestra atual")).toBeTruthy();
+  expect(calls.some(call => call.startsWith("enroll:"))).toBe(false);
 });
 test("incorrect PIN reports the existing failure and does not expose a key", async () => {
   fail = true;

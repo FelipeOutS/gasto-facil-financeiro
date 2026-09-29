@@ -4,6 +4,7 @@ import {
   encryptSecret,
   decryptSecret,
   vaultB64encode,
+  vaultRandomBytes,
   exportMasterKeyRaw,
 } from "../src/lib/vault/crypto";
 let row: Record<string, unknown> | null = null;
@@ -14,26 +15,41 @@ mock.module("@/integrations/supabase/client", () => ({
       select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: row, error: null }) }) }),
     }),
     rpc: async (name: string, args: Record<string, unknown>) => {
-      if (name === "vault_pin_set")
-        row = {
-          user_id: "fixture-user",
-          salt: args.p_salt,
-          iterations: args.p_iterations,
-          wrapped_key: args.p_wrapped_key,
-          wrap_iv: args.p_wrap_iv,
-          failed_attempts: 0,
-          locked_until: null,
-        };
+      if (name === "vault_pin_set") throw Error("Legacy PIN enrollment is disabled");
       if (name === "vault_pin_record_attempt" && args.p_success) successAttempts++;
       return { error: null, data: [{ failed_attempts: 1, locked_until: null }] };
     },
   },
 }));
-const { enableServerPin, unlockWithServerPin } = await import("../src/lib/vault/server-pin");
+const { unlockWithServerPin } = await import("../src/lib/vault/server-pin");
+async function seedExistingLegacyPin(pin: string, masterKey: CryptoKey) {
+  const salt = vaultRandomBytes(16);
+  const iv = vaultRandomBytes(12);
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, ["deriveKey"]);
+  const wrappingKey = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt, iterations: 600_000, hash: "SHA-256" },
+    base,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt"],
+  );
+  const wrapped = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv }, wrappingKey, await exportMasterKeyRaw(masterKey),
+  );
+  row = {
+    user_id: "fixture-user",
+    salt: vaultB64encode(salt),
+    iterations: 600_000,
+    wrapped_key: vaultB64encode(wrapped),
+    wrap_iv: vaultB64encode(iv),
+    failed_attempts: 0,
+    locked_until: null,
+  };
+}
 test("existing PIN wrapping and normal vault data remain usable without native quick unlock", async () => {
   const created = await createMasterKey("synthetic fixture master password");
   const entry = await encryptSecret(created.key, { password: "existing encrypted entry" });
-  await enableServerPin("123456", created.key);
+  await seedExistingLegacyPin("123456", created.key);
   await expect(unlockWithServerPin("fixture-user", "654321")).rejects.toThrow("PIN incorreto");
   const key = await unlockWithServerPin("fixture-user", "123456");
   expect((await decryptSecret(key, entry)).password).toBe("existing encrypted entry");
@@ -45,7 +61,7 @@ test("legacy migration accepts the key recovered with the legitimate existing PI
     await import("../src/lib/vault/quick-unlock");
   const created = await createMasterKey("synthetic second master password");
   const entry = await encryptSecret(created.key, { notes: "preserved during PIN migration" });
-  await enableServerPin("123456", created.key);
+  await seedExistingLegacyPin("123456", created.key);
   const recovered = await unlockWithServerPin("fixture-user", "123456");
   const disk = new Map([
     [
