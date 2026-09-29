@@ -1,23 +1,15 @@
-// Server-side PIN do Cofre Pessoal — GLOBAL POR CONTA (zero-knowledge).
+// Compatibilidade de leitura/desbloqueio com PIN antigo do Cofre Pessoal.
 //
 // Modelo: o servidor guarda apenas o salt, os parâmetros PBKDF2 e a
 // chave-mestra do cofre cifrada (AES-GCM) por uma chave derivada do PIN.
-// Servidor NUNCA enxerga o PIN nem a chave-mestra. O mesmo PIN funciona
-// em qualquer dispositivo do usuário (desktop, mobile, Android/WebView).
+// Servidor NUNCA enxerga o PIN nem a chave-mestra. Novos cadastros são
+// bloqueados pela migration de retirada do PIN legado.
 //
 // Limite de tentativas é aplicado no servidor pela RPC vault_pin_record_attempt,
 // sem depender do cliente. Bloqueio: 5 erros => 15 min bloqueado.
 
 import { supabase } from "@/integrations/supabase/client";
-import {
-  exportMasterKeyRaw,
-  importMasterKeyRaw,
-  vaultB64decode,
-  vaultB64encode,
-  vaultRandomBytes,
-} from "./crypto";
-
-const PIN_ITERATIONS = 600_000;
+import { importMasterKeyRaw, vaultB64decode } from "./crypto";
 
 type ServerPinRow = {
   user_id: string;
@@ -73,29 +65,6 @@ export async function getServerPinStatus(userId: string): Promise<ServerPinStatu
     failedAttempts: row.failed_attempts ?? 0,
     updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : null,
   };
-}
-
-/** Cria ou substitui o PIN da conta. Requer a chave-mestra desbloqueada. */
-export async function enableServerPin(pin: string, masterKey: CryptoKey): Promise<void> {
-  if (!/^\d{4,8}$/.test(pin)) {
-    throw new Error("O PIN deve ter de 4 a 8 dígitos numéricos.");
-  }
-  const salt = vaultB64encode(vaultRandomBytes(16));
-  const wrapKey = await derivePinKey(pin, salt, PIN_ITERATIONS);
-  const iv = vaultRandomBytes(12);
-  const raw = await exportMasterKeyRaw(masterKey);
-  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, wrapKey, raw);
-
-  const { error } = await supabase.rpc(
-    "vault_pin_set" as never,
-    {
-      p_salt: salt,
-      p_iterations: PIN_ITERATIONS,
-      p_wrapped_key: vaultB64encode(new Uint8Array(ct)),
-      p_wrap_iv: vaultB64encode(iv),
-    } as never,
-  );
-  if (error) throw new Error("Falha ao salvar o PIN. Tente novamente.");
 }
 
 /** Remove o PIN da conta (afeta todos os dispositivos). */

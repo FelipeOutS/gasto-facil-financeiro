@@ -114,6 +114,15 @@ beforeAll(async () => {
       "utf8",
     ),
   );
+  await db.exec(
+    await readFile(
+      new URL(
+        "../supabase/migrations/20260928120000_disable_legacy_vault_pin_enrollment.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
   await db.exec(`INSERT INTO auth.users VALUES ('${owner}'),('${other}');
     CREATE TABLE rotation_test_counter(n integer); INSERT INTO rotation_test_counter VALUES (0);
     CREATE FUNCTION rotation_test_failure() RETURNS trigger LANGUAGE plpgsql AS $$
