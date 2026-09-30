@@ -243,8 +243,11 @@ export function detectDueIntent(texto: string): DueIntent | null {
 
   // "próximas contas", "próximos vencimentos", "contas pendentes",
   // "contas em aberto" → próximos 30 dias (inclui virada de mês).
+  // "próximo vencimento DA academia" é busca por termo — não entra aqui.
+  const temTermo = /\bproxim[ao]s?\s+(?:contas?|vencimentos?)\s+(?:da|do|de)\s+\S/.test(t);
   if (
-    /\bproxim[ao]s?\s+(?:contas?|vencimentos?|compromissos?|boletos?)\b/.test(t) ||
+    !temTermo &&
+    (/\bproxim[ao]s?\s+(?:contas?|vencimentos?|compromissos?|boletos?)\b/.test(t) ||
     /\b(?:contas?|vencimentos?|compromissos?)\s+(?:proxim[ao]s?|pendentes?|em\s+aberto|futur[ao]s?|a\s+vencer)\b/.test(t) ||
     /\bo\s+que\s+(?:vai\s+)?vence(?:r)?\b/.test(t)
   ) {
