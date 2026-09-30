@@ -15,7 +15,8 @@ function isRecoverableRouteLoadError(error: Error) {
   );
 }
 
-function DefaultErrorComponent({ error, reset }: ErrorComponentProps) {
+function DefaultErrorComponent({ error: rawError, reset }: ErrorComponentProps) {
+  const error = rawError instanceof Error ? rawError : new Error(String(rawError));
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isRouteLoadError = isRecoverableRouteLoadError(error);
