@@ -73,7 +73,7 @@ test("GI abre o menu completo", async () => {
   const r = await processarMensagemWhatsApp({ telefone: tel, texto: "GI", external_id: "g3-m-1" });
   expect(r.status).toBe("consulta");
   expect(r.resposta).toContain("1. Gastos");
-  expect(r.resposta).toContain("Cadastrar uma conta");
+  expect(r.resposta).toContain("3. Contas");
   expect(r.resposta).toContain("Ver contas pendentes");
 });
 
