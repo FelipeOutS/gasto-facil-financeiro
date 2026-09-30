@@ -159,7 +159,13 @@ export function detectLimiteIntent(texto: string): LimiteIntent | null {
     /\bquanto\s+(?:eu\s+)?ainda\s+tenho\s+disponivel\b/.test(t) ||
     /\bquanto\s+(?:eu\s+)?tenho\s+disponivel\b/.test(t) ||
     /\bmeu\s+limite\b/.test(t) ||
-    /\blimite\s+(?:do|dos|nos)\s+cart(?:ao|oes)\b/.test(t)
+    /\blimite\s+(?:do|dos|nos)\s+cart(?:ao|oes)\b/.test(t) ||
+    // "limite do meu cartão", "qual meu limite do cartão",
+    // "quanto tenho disponível no cartão".
+    /\blimite\s+(?:do|dos|no|nos|de)\s+(?:meu|meus)\s+cart(?:ao|oes)\b/.test(t) ||
+    /\blimite\s+(?:do|no)\s+cart(?:ao|oes)\b/.test(t) ||
+    /\bdisponivel\s+(?:no|nos|do|dos)\s+(?:meu\s+|meus\s+)?cart(?:ao|oes)\b/.test(t) ||
+    /\blimite\s+(?:de\s+)?credito\b/.test(t)
   ) {
     return { kind: "limit_total" };
   }

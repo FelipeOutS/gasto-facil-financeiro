@@ -63,6 +63,16 @@ export function weekRangeInAppTz(hoje: Date = nowInAppTz()): {
   return { startISO: start, endISO: todayISOInAppTz(end) };
 }
 
+/** Intervalo [hoje, hoje + dias] — "próximas contas" (padrão 30 dias). */
+export function upcomingRangeInAppTz(
+  hoje: Date = nowInAppTz(),
+  dias = 30,
+): { startISO: string; endISO: string } {
+  const end = new Date(hoje);
+  end.setDate(end.getDate() + dias);
+  return { startISO: todayISOInAppTz(hoje), endISO: todayISOInAppTz(end) };
+}
+
 /**
  * Intervalo [primeiro, último] dia do mês informado (YYYY-MM) — ou do
  * mês corrente quando `ym` é nulo.

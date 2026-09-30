@@ -92,9 +92,28 @@ function formatDDMM(d: Date | null): string | null {
  * "Uber 29,90" como fatura — exige token "fatura", "cart[ãa]o" + verbos
  * de consulta, ou "quanto devo no cart[ãa]o".
  */
+/**
+ * Expressão temporal de fatura FUTURA/por mês ("próxima fatura", "fatura de
+ * outubro", "faturas futuras", "fatura do mês que vem"). Quando presente,
+ * WA-F1 (fatura atual) cede para WA-F4, que extrai período e cartão
+ * separadamente — o mês nunca é tratado como nome de cartão.
+ */
+const MESES_RE =
+  /\b(janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b/;
+export function hasFaturaPeriodCue(t: string): boolean {
+  return (
+    /\bprox(?:ima|imo|imas|imos)\b/.test(t) ||
+    /\bfutur[ao]s?\b/.test(t) ||
+    /\bmes\s+que\s+vem\b/.test(t) ||
+    /\bproximo\s+mes\b/.test(t) ||
+    MESES_RE.test(t)
+  );
+}
+
 export function detectFaturaIntent(texto: string): FaturaIntent | null {
   const t = norm(texto);
   if (!t) return null;
+  if (/\bfaturas?\b/.test(t) && hasFaturaPeriodCue(t)) return null;
 
   // WA-F2 — detalhamento. Estes padrões precisam vir ANTES das regras
   // genéricas do WA-F1: "compras do Nubank" não deve cair em invoice_card.
@@ -951,7 +970,7 @@ export function detectFutureFaturaIntent(
   // Só dispara como "fatura futura" se houver token claro de fatura/cartão/pagamento.
   if (
     !(
-      /\bfatura\b/.test(t) ||
+      /\bfaturas?\b/.test(t) ||
       /\bcart(?:ao|oes)\b/.test(t) ||
       /\b(?:vou|vai|sera|sera)\s+pagar\b/.test(t) ||
       /\b(?:vai|vou)\s+(?:dar|ficar)\b/.test(t)

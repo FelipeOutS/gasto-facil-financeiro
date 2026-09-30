@@ -247,6 +247,39 @@ function descricaoFromTipo(label: string): string {
   return label;
 }
 
+const TIPO_WORDS_SET = new Set(
+  TIPO_KEYWORDS.flatMap((k) => k.words).concat(["outro", "outros", "renda", "receita"]),
+);
+
+/**
+ * Extrai a DESCRIÇÃO livre da receita, separada do tipo.
+ * "recebi 20 reais de TESTE X como freelancer" → "TESTE X".
+ * Retorna null quando o que sobra é só a palavra do tipo ("recebi 4000 de
+ * salário") — nesse caso a descrição continua sendo o rótulo do tipo.
+ */
+export function extractDescricaoReceita(texto: string): string | null {
+  let s = String(texto ?? "").trim();
+  if (!s) return null;
+  s = s.replace(
+    /^\s*(?:eu\s+)?(?:recebi|ganhei|entrou|caiu|receita|renda)\b(?:\s+(?:de|do|da)\s+(?=r\$|\d))?/i,
+    " ",
+  );
+  s = s.replace(/r\$\s*\d[\d.,]*/gi, " ");
+  s = s.replace(/\b\d[\d.,]*\s*(?:mil\b)?\s*(?:reais|real|conto|contos)?\b/gi, " ");
+  s = s.replace(
+    /\b(?:como|tipo|sendo)\s+(?:um\s+|uma\s+)?(?:sal[aá]rio|freela\w*|comiss[aã]o\w*|venda\w*|reembolso|b[oô]nus|pix|outros?)\s*$/i,
+    " ",
+  );
+  s = s.replace(/\s+/g, " ").trim();
+  for (let i = 0; i < 3; i += 1) {
+    s = s.replace(/^(?:de|do|da|dos|das|por|pelo|pela|com|em|no|na|referente\s+a)\s+/i, "").trim();
+  }
+  s = s.replace(/[.,;:!?]+$/g, "").trim();
+  if (s.length < 2) return null;
+  if (TIPO_WORDS_SET.has(normalize(s))) return null;
+  return s.slice(0, 60);
+}
+
 // ---------- (helpers de pré-projeção removidos em WA-R1-Fix) ----------
 
 // WA-R1-Fix: a função `gerarDatasRecorrencia` foi removida. A criação de
@@ -520,10 +553,14 @@ export function startReceitaFromText(texto: string): StepResult {
     mensagemOriginal: texto,
     data: todayLocalISO(),
   };
+  // Descrição e tipo são campos distintos: o tipo NUNCA sobrescreve a
+  // descrição livre informada pelo usuário.
+  const descLivre = extractDescricaoReceita(texto);
+  if (descLivre) base.descricao = descLivre;
   if (tipoMatch) {
     base.tipo = tipoMatch.tipo;
     base.tipoLabel = tipoMatch.label;
-    base.descricao = descricaoFromTipo(tipoMatch.label);
+    if (!base.descricao) base.descricao = descricaoFromTipo(tipoMatch.label);
   }
   if (valor !== null) base.valor = valor;
 
@@ -562,11 +599,11 @@ export function nextStepReceita(
       // Resposta livre vira descrição com tipo "outros".
       s.tipo = "outros";
       s.tipoLabel = "Outros";
-      s.descricao = texto.trim().slice(0, 60) || "Renda";
+      if (!s.descricao) s.descricao = texto.trim().slice(0, 60) || "Renda";
     } else {
       s.tipo = t.tipo;
       s.tipoLabel = t.label;
-      s.descricao = descricaoFromTipo(t.label);
+      if (!s.descricao) s.descricao = descricaoFromTipo(t.label);
     }
     if (!s.valor) {
       return { status: "rec_aguardando_valor", session: s, resposta: M.receita.perguntaValor() };

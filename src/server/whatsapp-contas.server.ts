@@ -21,6 +21,7 @@ import {
   monthRangeInAppTz,
   todayISOInAppTz,
   tomorrowISOInAppTz,
+  upcomingRangeInAppTz,
   weekRangeInAppTz,
   type ContaVencimentoRow,
 } from "./contas-vencimento.server";
@@ -34,6 +35,7 @@ export type DueIntent =
   | { kind: "week" }
   | { kind: "month"; yearMonth: string | null }
   | { kind: "overdue" }
+  | { kind: "upcoming" }
   | { kind: "term"; termo: string };
 
 export type DueResultStatus =
@@ -45,7 +47,7 @@ export type DueResultStatus =
 
 export type DueSessionState = {
   kind: "consulta_vencimentos";
-  mode: "today" | "tomorrow" | "week" | "month" | "term" | "overdue";
+  mode: "today" | "tomorrow" | "week" | "month" | "term" | "overdue" | "upcoming";
   page: number;
   referenceMonth: string | null;
 };
@@ -89,6 +91,7 @@ function logDueQuery(args: {
     | "due_week"
     | "due_month"
     | "due_overdue"
+    | "due_upcoming"
     | "due_term"
     | "due_page";
   itemsReturnedCount: number;
@@ -236,6 +239,16 @@ export function detectDueIntent(texto: string): DueIntent | null {
     /\bquanto\s+(?:tenho|vou)\s+(?:que\s+|de\s+)?pagar\s+(?:este|esse|nesse|no)\s+mes\b/.test(t)
   ) {
     return { kind: "month", yearMonth: mesYM };
+  }
+
+  // "próximas contas", "próximos vencimentos", "contas pendentes",
+  // "contas em aberto" → próximos 30 dias (inclui virada de mês).
+  if (
+    /\bproxim[ao]s?\s+(?:contas?|vencimentos?|compromissos?|boletos?)\b/.test(t) ||
+    /\b(?:contas?|vencimentos?|compromissos?)\s+(?:proxim[ao]s?|pendentes?|em\s+aberto|futur[ao]s?|a\s+vencer)\b/.test(t) ||
+    /\bo\s+que\s+(?:vai\s+)?vence(?:r)?\b/.test(t)
+  ) {
+    return { kind: "upcoming" };
   }
 
   // "quais contas tenho para pagar" / "minhas contas" / "o que tenho para pagar"
@@ -448,6 +461,36 @@ export async function handleDueIntent(userId: string, intent: DueIntent): Promis
     return out;
   }
 
+  if (intent.kind === "upcoming") {
+    const { startISO, endISO } = upcomingRangeInAppTz(hoje);
+    const rows = await getVencimentosPorPeriodo(userId, startISO, endISO);
+    if (rows.length === 0) {
+      const out: DueResult = {
+        status: "no_due_items",
+        resposta: "Não encontrei contas pendentes para os próximos 30 dias.",
+      };
+      logDueQuery({ intent: "due_upcoming", itemsReturnedCount: 0, result: out.status });
+      return out;
+    }
+    const { body, nextSession } = paginate(
+      rows,
+      "upcoming",
+      0,
+      null,
+      "Suas próximas contas (próximos 30 dias):",
+      true,
+      "Total previsto",
+    );
+    const out: DueResult = {
+      status: "answered",
+      resposta: body,
+      nextSession,
+      items: rows.map((r) => r.nome),
+    };
+    logDueQuery({ intent: "due_upcoming", itemsReturnedCount: rows.length, result: out.status });
+    return out;
+  }
+
   if (intent.kind === "overdue") {
     const ref = todayISOInAppTz(hoje);
     const rows = await getVencimentosComStatusAnterior(userId, ref);
@@ -547,6 +590,9 @@ export async function handleDuePagination(
     rows = await getVencimentosPorPeriodo(userId, startISO, endISO);
   } else if (state.mode === "overdue") {
     rows = await getVencimentosComStatusAnterior(userId, todayISOInAppTz(hoje));
+  } else if (state.mode === "upcoming") {
+    const { startISO, endISO } = upcomingRangeInAppTz(hoje);
+    rows = await getVencimentosPorPeriodo(userId, startISO, endISO);
   } else {
     // term — não paginamos.
     rows = [];

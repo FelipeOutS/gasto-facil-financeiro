@@ -629,13 +629,14 @@ export const whatsappMessages = {
       return `Não encontrei receitas do tipo "${tipo}" neste período.`;
     },
     gastosOntem(args: {
+      dia?: "ontem" | "hoje";
       total: string;
       quantidade: number;
       maior: { descricao: string; valor: string };
       itens: Array<{ descricao: string; valor: string }>;
     }) {
       const linhas = [
-        `Resumo de ontem 📊`,
+        `Resumo de ${args.dia ?? "ontem"} 📊`,
         ``,
         `• Despesas: ${args.total}`,
         `• Lançamentos: ${args.quantidade}`,
@@ -650,8 +651,8 @@ export const whatsappMessages = {
       }
       return linhas.join("\n");
     },
-    gastosOntemSemRegistros() {
-      return `Não encontrei gastos registrados ontem.`;
+    gastosOntemSemRegistros(dia: "ontem" | "hoje" = "ontem") {
+      return `Não encontrei gastos registrados ${dia}.`;
     },
     sobraPositiva(args: { receitas: string; despesas: string; saldo: string }) {
       return [
