@@ -53,7 +53,7 @@ describe("WA-Q-Orcamento — handler não escreve nada", () => {
   test("sem limites cadastrados: resposta amigável, sem pedir valor de gasto", async () => {
     const out = await handleConsulta(USER, "orcamento_mes");
     expect(out.status).toBe("consulta");
-    expect(out.resposta).toMatch(/ainda não tem limites/i);
+    expect(out.resposta).toMatch(/ainda não criou um orçamento/i);
     expect(out.resposta).toMatch(/gastointeligente\.com\.br/);
     expect(out.resposta).not.toMatch(/qual foi o valor/i);
     // Zero escrita em qualquer tabela

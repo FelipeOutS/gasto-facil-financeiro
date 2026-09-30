@@ -75,7 +75,7 @@ test("ajuda/menu responde com apresentação do GI e bullets", async () => {
   const r = await processarMensagemWhatsApp({ telefone: tel, texto: "menu", external_id: "h-1" });
   expect(r.status).toBe("consulta");
   expect(r.resposta).toContain("GI");
-  expect(r.resposta).toContain("Registrar gasto");
+  expect(r.resposta).toContain("1. Gastos");
   expect(r.resposta).toContain("Cadastrar uma conta");
   expect(r.resposta).toContain("Ver contas pendentes");
   // Não deve criar gasto/receita

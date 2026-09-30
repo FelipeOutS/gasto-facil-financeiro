@@ -78,14 +78,14 @@ test("WA-C6: 'menu' devolve menu numerado 1..8 com itens chave", async () => {
     external_id: "c6-aj-1",
   });
   for (const linha of [
-    "1. Registrar gasto",
-    "2. Cadastrar uma conta",
-    "3. Ver contas pendentes",
-    "4. Ver contas atrasadas",
-    "5. Marcar conta como paga",
-    "6. Editar uma conta",
-    "7. Cancelar uma conta",
-    "8. Ajuda",
+    "1. Gastos",
+    "2. Cartões",
+    "3. Contas",
+    "4. Receitas",
+    "5. Planejamento",
+    "6. Resumos",
+    "7. Ajuda",
+    "8. Comandos rápidos",
   ]) {
     expect(r.resposta).toContain(linha);
   }
@@ -103,7 +103,7 @@ test("WA-C6: 'ajuda' devolve exemplos práticos e NÃO o menu numerado", async (
   expect(r.resposta).toContain("Uber 29,90");
   expect(r.resposta).toMatch(/Paguei a internet/i);
   // NÃO é a lista numerada do menu
-  expect(r.resposta).not.toContain("1. Registrar gasto");
+  expect(r.resposta).not.toContain("1. Gastos");
   expect(r.resposta).not.toContain("8. Ajuda");
 });
 
@@ -119,7 +119,7 @@ test("WA-C6: 'comandos' devolve lista curta de atalhos (não menu, não ajuda)",
   expect(r.resposta).toContain("ajuda");
   expect(r.resposta).toContain("minhas contas");
   // não cita exemplos longos nem opções numeradas do menu
-  expect(r.resposta).not.toContain("1. Registrar gasto");
+  expect(r.resposta).not.toContain("1. Gastos");
   expect(r.resposta).not.toContain("Uber 29,90");
 });
 
@@ -143,13 +143,10 @@ test("WA-C6 detectMenuOption: aceita '1'..'8' e variações", () => {
   expect(detectMenuOption("oi")).toBeNull();
 });
 
-test("WA-C6 dispatchMenuOption: 1/5/6/7 são guidance; 3/4/8 são rewrite", () => {
-  expect(dispatchMenuOption(1)?.kind).toBe("guidance");
-  expect(dispatchMenuOption(2)?.kind).toBe("guidance");
-  expect(dispatchMenuOption(3)).toEqual({ kind: "rewrite", texto: "minhas contas" });
-  expect(dispatchMenuOption(4)).toEqual({ kind: "rewrite", texto: "contas atrasadas" });
-  expect(dispatchMenuOption(5)?.kind).toBe("guidance");
-  expect(dispatchMenuOption(8)).toEqual({ kind: "rewrite", texto: "ajuda" });
+test("WA-C6 dispatchMenuOption: 1-6 são grupos (guidance); 7=ajuda; 8=comandos", () => {
+  for (const n of [1, 2, 3, 4, 5, 6]) expect(dispatchMenuOption(n)?.kind).toBe("guidance");
+  expect(dispatchMenuOption(7)).toEqual({ kind: "rewrite", texto: "ajuda" });
+  expect(dispatchMenuOption(8)).toEqual({ kind: "rewrite", texto: "comandos" });
 });
 
 test("WA-C6: enviar '1' fora de sessão responde com guia de registro de gasto", async () => {
@@ -159,19 +156,19 @@ test("WA-C6: enviar '1' fora de sessão responde com guia de registro de gasto",
     external_id: "c6-num-1",
   });
   expect(r.status).toBe("consulta");
-  expect(r.resposta).toMatch(/registrar um gasto/i);
+  expect(r.resposta).toMatch(/Registrar: “Uber 29,90”/);
 });
 
-test("WA-C6: enviar '8' fora de sessão dispara ajuda com exemplos práticos", async () => {
+test("WA-C6: enviar '7' fora de sessão dispara ajuda com exemplos práticos", async () => {
   const r = await processarMensagemWhatsApp({
     telefone: tel,
-    texto: "8",
+    texto: "7",
     external_id: "c6-num-8",
   });
   expect(r.status).toBe("consulta");
   expect(r.resposta).toMatch(/exemplos?/i);
   expect(r.resposta).toContain("Uber 29,90");
-  expect(r.resposta).not.toContain("1. Registrar gasto");
+  expect(r.resposta).not.toContain("1. Gastos");
 });
 
 test("WA-C6: '3' fora de sessão entra no fluxo de contas (rewrite → minhas contas)", async () => {

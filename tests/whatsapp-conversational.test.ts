@@ -72,7 +72,7 @@ test("oi responde saudação curta e não cria sessão de gasto/receita", async 
 test("GI abre o menu completo", async () => {
   const r = await processarMensagemWhatsApp({ telefone: tel, texto: "GI", external_id: "g3-m-1" });
   expect(r.status).toBe("consulta");
-  expect(r.resposta).toContain("Registrar gasto");
+  expect(r.resposta).toContain("1. Gastos");
   expect(r.resposta).toContain("Cadastrar uma conta");
   expect(r.resposta).toContain("Ver contas pendentes");
 });
@@ -84,7 +84,7 @@ test("Gasto Inteligente abre o menu completo", async () => {
     external_id: "g3-m-2",
   });
   expect(r.status).toBe("consulta");
-  expect(r.resposta).toContain("Registrar gasto");
+  expect(r.resposta).toContain("1. Gastos");
   expect(r.resposta).toContain("Ajuda");
 });
 
@@ -96,7 +96,7 @@ test("ajuda devolve exemplos práticos (não o menu numerado)", async () => {
   });
   expect(r.resposta).toMatch(/exemplos?/i);
   expect(r.resposta).toContain("Uber 29,90");
-  expect(r.resposta).not.toContain("1. Registrar gasto");
+  expect(r.resposta).not.toContain("1. Gastos");
 });
 
 test("comandos devolve lista curta de atalhos", async () => {
@@ -117,13 +117,13 @@ test("menu repetido em sequência envia versão curta", async () => {
     texto: "menu",
     external_id: "g3-rep-1",
   });
-  expect(r1.resposta).toContain("Registrar gasto");
+  expect(r1.resposta).toContain("1. Gastos");
   const r2 = await processarMensagemWhatsApp({
     telefone: tel,
     texto: "menu",
     external_id: "g3-rep-2",
   });
-  expect(r2.resposta).not.toContain("Registrar gasto");
+  expect(r2.resposta).not.toContain("1. Gastos");
   expect(r2.resposta).toContain("Você pode me enviar");
 });
 
