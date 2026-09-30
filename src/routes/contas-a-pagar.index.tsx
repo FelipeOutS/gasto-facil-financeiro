@@ -93,7 +93,7 @@ import {
 import { toast } from "sonner";
 import { toastFromError } from "@/lib/premium-error";
 import { cn } from "@/lib/utils";
-import { listaDaAba, type AbaContas } from "@/lib/contas-status";
+import { listaDaAba, mesSemNenhumaConta, type AbaContas } from "@/lib/contas-status";
 
 export const Route = createFileRoute("/contas-a-pagar/")({
   head: () => ({ meta: [{ title: "Contas a pagar — Gasto Inteligente" }] }),

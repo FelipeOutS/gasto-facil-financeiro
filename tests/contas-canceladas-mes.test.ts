@@ -30,3 +30,33 @@ describe("canceladas aparecem no mês do vencimento", () => {
     expect(ativas).toHaveLength(0);
   });
 });
+
+import { mesSemNenhumaConta } from "@/lib/contas-status";
+
+describe("caso real: mês só com canceladas não cai no estado vazio", () => {
+  const rec = "8cab293c";
+  const reais = [
+    { id: "pago-out", mesRef: "2026-10", status: "pago", rec: null },
+    { id: "out", mesRef: "2026-10", status: "cancelado", rec },
+    { id: "nov", mesRef: "2026-11", status: "cancelado", rec },
+    { id: "dez", mesRef: "2026-12", status: "cancelado", rec },
+  ];
+  const at = filtrarContasAtivas(reais);
+  const ca = reais.filter((c) => isStatusContaCancelado(c.status));
+  const ver = (ym: string, aba: "canceladas" | "todas") => {
+    const a = at.filter((c) => c.mesRef === ym);
+    const c = ca.filter((x) => x.mesRef === ym);
+    if (mesSemNenhumaConta(a, c)) return null; // tela vazia
+    return listaDaAba(aba, a, c, () => true).map((x) => x.id);
+  };
+  it("navegação Out → Nov → Dez → Out", () => {
+    expect(ver("2026-10", "canceladas")).toEqual(["out"]);
+    expect(ver("2026-11", "canceladas")).toEqual(["nov"]);
+    expect(ver("2026-12", "canceladas")).toEqual(["dez"]);
+    expect(ver("2026-10", "canceladas")).toEqual(["out"]);
+    expect(ver("2026-11", "todas")).toEqual(["nov"]);
+  });
+  it("mês sem nada continua vazio", () => {
+    expect(ver("2028-01", "todas")).toBeNull();
+  });
+});
