@@ -353,26 +353,31 @@ export const whatsappMessages = {
     // WA-C6 — “ajuda” explícito: explicação + exemplos práticos (NÃO é o menu numerado).
     ajudaExemplos() {
       return [
-        `💡 Posso te ajudar com tarefas rápidas pelo WhatsApp. Veja exemplos:`,
+        `💡 Veja exemplos do que já funciona por aqui (texto ou áudio):`,
         ``,
-        `📝 Registrar gasto`,
-        `   • “Uber 29,90”`,
-        `   • “Mercado 187,50 ontem no crédito”`,
+        `📝 Gastos`,
+        `   • “Uber 29,90” • “Mercado 187,50 no crédito”`,
+        `   • “quanto gastei hoje” • “meus gastos do mês” • “gastos de setembro”`,
         ``,
-        `📄 Criar conta a pagar`,
+        `💳 Cartões`,
+        `   • “minha fatura” • “fatura do Nubank de novembro”`,
+        `   • “próxima fatura” • “limite do meu cartão”`,
+        ``,
+        `📄 Contas`,
         `   • “Cadastrar internet 119,90 vence dia 5”`,
-        `   • “Nova conta luz 230 venc 15/07”`,
+        `   • “próximas contas” • “contas atrasadas” • “quando vence a luz?”`,
+        `   • “paguei a internet” • “editar internet” • “cancelar internet”`,
         ``,
-        `💸 Marcar como paga / adiar / cancelar`,
-        `   • “Paguei a internet”`,
-        `   • “Adiar a luz para sexta”`,
-        `   • “Cancelar a conta do streaming”`,
+        `💰 Receitas`,
+        `   • “recebi 2000 de salário” • “minhas receitas”`,
         ``,
-        `📊 Consultar`,
-        `   • “Minhas contas” • “Contas atrasadas”`,
-        `   • “Resumo da semana” • “Maiores gastos do mês”`,
+        `🎯 Planejamento`,
+        `   • “minhas metas” • “meu orçamento” • “contas recorrentes”`,
         ``,
-        `Para a lista de opções numeradas digite “menu”. Para ver só os atalhos digite “comandos”.`,
+        `📊 Resumos`,
+        `   • “resumo da semana” • “resumo do mês”`,
+        ``,
+        `Digite “menu” para as opções numeradas ou “comandos” para os atalhos.`,
       ].join("\n");
     },
 
@@ -381,15 +386,14 @@ export const whatsappMessages = {
       return [
         `🔤 Comandos rápidos:`,
         ``,
-        `• menu — opções numeradas (1 a 8)`,
-        `• ajuda — exemplos práticos de uso`,
-        `• minhas contas — pendentes`,
-        `• contas atrasadas — em atraso`,
-        `• próximas contas — vencimentos futuros`,
-        `• resumo da semana / resumo do mês`,
-        `• paguei <conta> — dar baixa`,
-        `• adiar <conta> para <data> — reagendar`,
-        `• cancelar — encerra o que estiver em andamento`,
+        `Gastos: quanto gastei hoje · meus gastos do mês`,
+        `Cartões: minha fatura · próxima fatura · limite do meu cartão`,
+        `Contas: minhas contas · próximas contas · contas atrasadas · paguei <conta>`,
+        `Receitas: minhas receitas`,
+        `Planejamento: minhas metas · meu orçamento · contas recorrentes`,
+        `Resumos: resumo da semana · resumo do mês`,
+        ``,
+        `menu — opções numeradas · ajuda — exemplos · cancelar — encerra o que está em andamento`,
       ].join("\n");
     },
 
@@ -629,13 +633,14 @@ export const whatsappMessages = {
       return `Não encontrei receitas do tipo "${tipo}" neste período.`;
     },
     gastosOntem(args: {
+      dia?: "ontem" | "hoje";
       total: string;
       quantidade: number;
       maior: { descricao: string; valor: string };
       itens: Array<{ descricao: string; valor: string }>;
     }) {
       const linhas = [
-        `Resumo de ontem 📊`,
+        `Resumo de ${args.dia ?? "ontem"} 📊`,
         ``,
         `• Despesas: ${args.total}`,
         `• Lançamentos: ${args.quantidade}`,
@@ -650,8 +655,8 @@ export const whatsappMessages = {
       }
       return linhas.join("\n");
     },
-    gastosOntemSemRegistros() {
-      return `Não encontrei gastos registrados ontem.`;
+    gastosOntemSemRegistros(dia: "ontem" | "hoje" = "ontem") {
+      return `Não encontrei gastos registrados ${dia}.`;
     },
     sobraPositiva(args: { receitas: string; despesas: string; saldo: string }) {
       return [

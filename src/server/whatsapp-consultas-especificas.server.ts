@@ -58,6 +58,7 @@ export type EspecificaIntent =
   | { kind: "consulta_gasto_por_categoria"; termo: string }
   | { kind: "consulta_receita_por_tipo"; termo: string }
   | { kind: "consulta_gastos_ontem" }
+  | { kind: "consulta_gastos_hoje" }
   | { kind: "consulta_sobra_mes" };
 
 /**
@@ -78,6 +79,20 @@ export function detectConsultaEspecifica(texto: string): EspecificaIntent | null
     /\bcomo foi (o )?meu dia ontem\b/.test(t)
   ) {
     return { kind: "consulta_gastos_ontem" };
+  }
+
+  // ---- gastos de HOJE ("quanto gastei hoje", "meus gastos de hoje") ----
+  // Sem dígitos: "gastei hoje 30 no mercado" continua sendo lançamento.
+  if (
+    !/\d/.test(t) &&
+    (/\b(quais|quanto|qual o total)\b.*\b(gastei|gasto|gastos|despesas?)\b.*\bhoje\b/.test(t) ||
+      /\b(meus|os) gastos? (de )?hoje\b/.test(t) ||
+      /\bgastos? (de|do dia de) hoje\b/.test(t) ||
+      /\bgastei hoje\b/.test(t) ||
+      /\bresumo de hoje\b/.test(t) ||
+      /\bcomo foi (o )?meu dia( hoje)?\b/.test(t))
+  ) {
+    return { kind: "consulta_gastos_hoje" };
   }
 
   // ---- quanto sobra da renda este mês ----
@@ -366,6 +381,8 @@ export async function handleConsultaEspecifica(
   switch (intent.kind) {
     case "consulta_gastos_ontem":
       return await handleGastosOntem(userId);
+    case "consulta_gastos_hoje":
+      return await handleGastosOntem(userId, "hoje");
     case "consulta_sobra_mes":
       return await handleSobraMes(userId);
     case "consulta_receita_por_tipo":
@@ -377,11 +394,17 @@ export async function handleConsultaEspecifica(
   }
 }
 
-async function handleGastosOntem(userId: string): Promise<EspecificaResult> {
-  const { from, to } = janelaOntem();
+async function handleGastosOntem(
+  userId: string,
+  dia: "ontem" | "hoje" = "ontem",
+): Promise<EspecificaResult> {
+  const { from, to } =
+    dia === "hoje"
+      ? { from: todayLocalISO(), to: addDaysISO(todayLocalISO(), 1) }
+      : janelaOntem();
   const gastos = await loadGastos(userId, from, to);
   if (gastos.length === 0) {
-    return { status: "consulta", resposta: M.consultaEspecifica.gastosOntemSemRegistros() };
+    return { status: "consulta", resposta: M.consultaEspecifica.gastosOntemSemRegistros(dia) };
   }
   const itens = gastos
     .map((g) => ({
@@ -395,6 +418,7 @@ async function handleGastosOntem(userId: string): Promise<EspecificaResult> {
   return {
     status: "consulta",
     resposta: M.consultaEspecifica.gastosOntem({
+      dia,
       total: formatBRL(total),
       quantidade: itens.length,
       maior: { descricao: maior.descricao, valor: formatBRL(maior.valor) },

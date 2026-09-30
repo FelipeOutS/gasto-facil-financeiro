@@ -3895,7 +3895,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     const intent = detectConsultaIntent(texto);
     if (intent) {
       logWaRouteDecision(msg, "consulta_handler", "consulta_intent_without_session");
-      const out = await handleConsulta(userId, intent);
+      const out = await handleConsulta(userId, intent, { texto });
       await gravarSessao(
         userId,
         msg.telefone,

@@ -13,13 +13,14 @@
  */
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 import { whatsappMessages as M } from "./whatsapp-messages";
+import { calcMetaProgresso } from "@/lib/metas-progresso";
 import {
   detectConsultaMensalNomeada as _detectConsultaMensalNomeada,
   janelaMes as _janelaMes,
   mesLabel as _mesLabel,
 } from "./whatsapp-mes-nomeado";
 
-export type ConsultaParams = { month?: number; year?: number };
+export type ConsultaParams = { month?: number; year?: number; texto?: string };
 export const detectConsultaMensalNomeada = _detectConsultaMensalNomeada;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -123,7 +124,10 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     /\blistar (as )?(minhas )?recorrencias\b/.test(t) ||
     /\bver (as )?(minhas )?recorrencias\b/.test(t) ||
     /\bmeus pagamentos recorrentes\b/.test(t) ||
-    /\bminhas (despesas|contas) recorrentes\b/.test(t) ||
+    /\b(minhas )?(despesas|contas|pagamentos) (fixas )?recorrentes\b/.test(t) ||
+    /\b(contas|despesas) fixas\b/.test(t) ||
+    t === "assinaturas" ||
+    /\b(quais|ver|listar?) (sao )?(as )?(minhas )?assinaturas\b/.test(t) ||
     /\bminhas receitas recorrentes\b/.test(t) ||
     /\bassinaturas ativas\b/.test(t) ||
     /\bminhas assinaturas\b/.test(t)
@@ -204,7 +208,17 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
     /\bquanto falta (para |pra )?(as |atingir )?(minhas )?metas\b/.test(t) ||
     /\bquanto falta (para |pra )?(a )?minha meta\b/.test(t) ||
     /\b(quais|liste?|ver|mostrar?|mostre) (sao )?(as )?(minhas )?metas\b/.test(t) ||
-    /\bmetas ativas\b/.test(t)
+    /\bmetas ativas\b/.test(t) ||
+    // Perguntas sobre UMA meta específica ("quanto tenho guardado na meta X",
+    // "como está minha meta X", "quanto falta para a meta X"). Sem dígitos,
+    // para nunca capturar um lançamento com valor.
+    (!/\d/.test(t) &&
+      (/\bquanto (eu )?(ja )?(tenho )?guardad[oa] (na|para a|pra|para|pra a) (minha )?meta\b/.test(t) ||
+        /\bquanto falta (para|pra) (a |minha )?meta\b/.test(t) ||
+        /\bcomo (esta|ta|anda) (a |minha )?meta\b/.test(t) ||
+        /\b(progresso|status|situacao) (da|de) (minha )?meta\b/.test(t) ||
+        /^(a )?minha meta\b/.test(t) ||
+        /\b(quanto|como|qual)\b.*\bmetas?\b/.test(t)))
   ) {
     return "listar_metas";
   }
@@ -236,7 +250,9 @@ export function detectConsultaIntent(texto: string): ConsultaIntent | null {
   if (
     /\bresumo (da )?semana\b/.test(t) ||
     /\bcomo foi (a )?minha semana\b/.test(t) ||
-    /\bquanto (eu )?gastei (n?essa|esta|na) semana\b/.test(t) ||
+    /\bquanto (eu )?gastei (n?essa|esta|nesta|na) semana\b/.test(t) ||
+    /\b(meus )?gastos (da|desta|dessa|nesta|nessa) semana\b/.test(t) ||
+    /\b(minhas )?despesas (da|desta|dessa|nesta|nessa) semana\b/.test(t) ||
     /\bcomo est[aã]o (as )?minhas finan[cç]as (n?essa|esta|na) semana\b/.test(t) ||
     /\bfinan[cç]as (da |n?essa |esta |na )?semana\b/.test(t)
   ) {
@@ -638,7 +654,7 @@ export async function handleConsulta(
     case "listar_transferencias":
       return await handleListarTransferencias(userId);
     case "listar_metas":
-      return await handleListarMetas(userId);
+      return await handleListarMetas(userId, extractMetaTermo(params?.texto ?? ""));
   }
 }
 
@@ -724,18 +740,65 @@ type MetaRow = {
   prazo: string | null;
 };
 
-async function handleListarMetas(userId: string): Promise<ConsultaResult> {
-  const { data: raw } = await supabaseAdmin
-    .from("metas_financeiras")
-    .select("id, nome, valor_objetivo, valor_atual, prazo")
-    .eq("user_id", userId);
-  const all = (Array.isArray(raw) ? raw : []) as MetaRow[];
+/**
+ * Extrai o nome da meta citada ("quanto tenho guardado na meta Entrada de
+ * apartamento" → "entrada de apartamento"). Null quando é listagem geral.
+ */
+export function extractMetaTermo(texto: string): string | null {
+  const t = norm(texto);
+  const m = t.match(/\bmeta\s+(?!financeira)(.{2,60})$/);
+  if (!m) return null;
+  const termo = m[1]
+    .replace(/^(de|da|do|para|pra)\s+/, "")
+    .replace(/\s+(hoje|agora|atualmente)$/, "")
+    .trim();
+  return termo.length >= 2 ? termo : null;
+}
 
-  const ativas = all.filter((m) => {
-    const obj = Number(m.valor_objetivo ?? 0) || 0;
-    const atu = Number(m.valor_atual ?? 0) || 0;
-    return obj > 0 && atu < obj;
-  });
+type MetaAporteRow = { meta_id: string | null; valor: number | string | null };
+
+async function handleListarMetas(userId: string, termo: string | null = null): Promise<ConsultaResult> {
+  const [metasRes, guardRes, movRes] = await Promise.all([
+    supabaseAdmin
+      .from("metas_financeiras")
+      .select("id, nome, valor_objetivo, valor_atual, prazo")
+      .eq("user_id", userId),
+    supabaseAdmin.from("dinheiro_guardado").select("meta_id, valor").eq("user_id", userId),
+    supabaseAdmin.from("movimentacoes_meta").select("meta_id, valor").eq("user_id", userId),
+  ]);
+  const all = (Array.isArray(metasRes?.data) ? metasRes.data : []) as MetaRow[];
+  const guardados = (Array.isArray(guardRes?.data) ? guardRes.data : []) as MetaAporteRow[];
+  const movs = (Array.isArray(movRes?.data) ? movRes.data : []) as MetaAporteRow[];
+
+  // MESMA regra do site (src/lib/metas-progresso.ts).
+  const comProgresso = all.map((m) => ({
+    meta: m,
+    p: calcMetaProgresso({
+      valorAtual: m.valor_atual,
+      valorObjetivo: m.valor_objetivo,
+      guardados: guardados.filter((g) => g.meta_id === m.id),
+      movimentacoes: movs.filter((mv) => mv.meta_id === m.id),
+    }),
+  }));
+
+  let ativas = comProgresso.filter(({ p }) => p.objetivo > 0 && p.total < p.objetivo);
+
+  if (termo) {
+    const alvo = norm(termo);
+    const achadas = comProgresso.filter(({ meta }) => {
+      const n = norm(meta.nome ?? "");
+      return n && (n === alvo || n.includes(alvo) || alvo.includes(n));
+    });
+    if (achadas.length === 0) {
+      return {
+        status: "consulta",
+        resposta:
+          `Não encontrei uma meta chamada "${termo}". 🎯\n\n` +
+          `Envie "minhas metas" para ver a lista completa.`,
+      };
+    }
+    ativas = achadas;
+  }
 
   if (ativas.length === 0) {
     return {
@@ -748,24 +811,26 @@ async function handleListarMetas(userId: string): Promise<ConsultaResult> {
   }
 
   ativas.sort((a, b) => {
-    const av = a.prazo ?? "9999-99-99";
-    const bv = b.prazo ?? "9999-99-99";
+    const av = a.meta.prazo ?? "9999-99-99";
+    const bv = b.meta.prazo ?? "9999-99-99";
     return av < bv ? -1 : av > bv ? 1 : 0;
   });
 
   const recentes = ativas.slice(0, 10);
   const linhas: string[] = [];
-  linhas.push(`Suas metas financeiras ativas 🎯 (${ativas.length})`);
+  linhas.push(
+    termo && ativas.length === 1
+      ? "Sua meta 🎯"
+      : `Suas metas financeiras ativas 🎯 (${ativas.length})`,
+  );
   linhas.push("");
-  for (const m of recentes) {
+  for (const { meta: m, p } of recentes) {
     const nome = (m.nome ?? "").trim() || "Meta";
-    const obj = Number(m.valor_objetivo ?? 0) || 0;
-    const atu = Number(m.valor_atual ?? 0) || 0;
-    const falta = Math.max(0, obj - atu);
-    const pct = obj > 0 ? Math.min(100, Math.round((atu / obj) * 100)) : 0;
     const prazo = m.prazo ? ` · prazo: ${formatDataBR(m.prazo)}` : "";
-    linhas.push(`• ${nome} — ${formatBRL(atu)} de ${formatBRL(obj)} (${pct}%)${prazo}`);
-    linhas.push(`  Faltam ${formatBRL(falta)}.`);
+    linhas.push(
+      `• ${nome} — ${formatBRL(p.total)} de ${formatBRL(p.objetivo)} (${p.percentual}%)${prazo}`,
+    );
+    linhas.push(p.restante > 0 ? `  Faltam ${formatBRL(p.restante)}.` : "  Meta atingida! 🎉");
   }
   if (ativas.length > recentes.length) {
     linhas.push("");
@@ -855,15 +920,63 @@ type RecorrenciaRow = {
   categoria_id: string | null;
 };
 
-async function handleListarRecorrencias(userId: string): Promise<ConsultaResult> {
-  const { data: recosRaw } = await supabaseAdmin
-    .from("recorrencias")
-    .select("id, nome, valor, frequencia, proxima_cobranca, forma_pagamento, categoria_id")
-    .eq("user_id", userId)
-    .eq("status", "ativa");
-  const recos = (Array.isArray(recosRaw) ? recosRaw : []) as RecorrenciaRow[];
+export type ContaRecorrenteRow = {
+  nome: string | null;
+  valor: number | string | null;
+  data_vencimento: string;
+  frequencia_recorrencia: string | null;
+  recorrencia_id: string | null;
+  status: string | null;
+};
 
-  if (recos.length === 0) {
+/**
+ * Agrupa ocorrências PENDENTES de `contas_a_pagar` recorrentes em séries
+ * (por recorrencia_id, ou nome quando ausente) e devolve a próxima
+ * ocorrência de cada série. Canceladas/pagas são ignoradas.
+ */
+export function groupContasRecorrentes(
+  rows: ContaRecorrenteRow[],
+): Array<{ nome: string; valor: number; frequencia: string | null; proxima: string }> {
+  const map = new Map<string, ContaRecorrenteRow>();
+  for (const r of rows) {
+    if (String(r.status ?? "pendente") !== "pendente") continue;
+    const key = r.recorrencia_id || norm(r.nome ?? "");
+    const cur = map.get(key);
+    if (!cur || r.data_vencimento < cur.data_vencimento) map.set(key, r);
+  }
+  return Array.from(map.values())
+    .map((r) => ({
+      nome: (r.nome ?? "").trim() || "Conta recorrente",
+      valor: Number(r.valor ?? 0) || 0,
+      frequencia: r.frequencia_recorrencia,
+      proxima: r.data_vencimento,
+    }))
+    .sort((a, b) => a.proxima.localeCompare(b.proxima));
+}
+
+async function handleListarRecorrencias(userId: string): Promise<ConsultaResult> {
+  const [recosRes, contasRecRes] = await Promise.all([
+    supabaseAdmin
+      .from("recorrencias")
+      .select("id, nome, valor, frequencia, proxima_cobranca, forma_pagamento, categoria_id")
+      .eq("user_id", userId)
+      .eq("status", "ativa"),
+    // Contas a pagar recorrentes (ex.: criadas pelo WhatsApp) vivem em
+    // `contas_a_pagar`, não em `recorrencias` — incluímos para que
+    // "minhas assinaturas"/"contas recorrentes" as encontrem.
+    supabaseAdmin
+      .from("contas_a_pagar")
+      .select("nome, valor, data_vencimento, frequencia_recorrencia, recorrencia_id, status")
+      .eq("user_id", userId)
+      .eq("recorrente", true)
+      .eq("status", "pendente"),
+  ]);
+  const recos = (Array.isArray(recosRes?.data) ? recosRes.data : []) as RecorrenciaRow[];
+  const contasRec = groupContasRecorrentes(
+    (Array.isArray(contasRecRes?.data) ? contasRecRes.data : []) as ContaRecorrenteRow[],
+  );
+
+  if (recos.length === 0 && contasRec.length === 0) {
     return {
       status: "consulta",
       resposta:
@@ -917,7 +1030,7 @@ async function handleListarRecorrencias(userId: string): Promise<ConsultaResult>
   const despesas = recos.filter((r) => !receitaLinks.has(r.id)).sort(sortByProx);
 
   const linhas: string[] = [];
-  linhas.push(`Suas recorrências ativas 🔁 (${recos.length})`);
+  linhas.push(`Suas recorrências ativas 🔁 (${recos.length + contasRec.length})`);
   if (receitas.length) {
     linhas.push("");
     linhas.push(`Receitas recorrentes (${receitas.length}):`);
@@ -927,6 +1040,15 @@ async function handleListarRecorrencias(userId: string): Promise<ConsultaResult>
     linhas.push("");
     linhas.push(`Despesas recorrentes (${despesas.length}):`);
     for (const r of despesas) linhas.push(fmtLinha(r));
+  }
+  if (contasRec.length) {
+    linhas.push("");
+    linhas.push(`Contas a pagar recorrentes (${contasRec.length}):`);
+    for (const c of contasRec) {
+      linhas.push(
+        `• ${c.nome} — ${formatBRL(c.valor)} (${fmtFreq(c.frequencia)}) · próx.: ${formatDataBR(c.proxima)}`,
+      );
+    }
   }
   linhas.push("");
   linhas.push("Para editar ou cancelar: https://gastointeligente.com.br → Recorrências");

@@ -280,6 +280,15 @@ export function detectPayableAccountIntent(textRaw: string): boolean {
 
   // Bloqueia gastos consumados, receitas e saldo.
   if (VERBOS_GASTO_OU_RECEITA.test(t)) return false;
+  // Perguntas ("quando vence Spotify?", "qual o vencimento da luz") são
+  // consultas, nunca cadastro — salvo quando há verbo explícito de cadastro.
+  if (
+    (/^(quando|qual|quais|quanto|quantas|como|onde|que dia|em que dia)\b/.test(t) ||
+      /\?\s*$/.test(String(textRaw ?? ""))) &&
+    !VERBOS_CADASTRAR.test(t)
+  ) {
+    return false;
+  }
   // Bloqueia fatura / cartão (WA-F1..F5).
   if (FATURA_OU_CARTAO.test(t)) return false;
 
@@ -487,9 +496,14 @@ function resolveNextOccurrence(
 
 const KW_CATEGORIA: Array<{ key: string; re: RegExp }> = [
   { key: "moradia", re: /\b(aluguel|condominio|condomínio|iptu)\b/ },
+  // Serviços de assinatura → categoria existente "Assinaturas" (legacy_id).
+  {
+    key: "assinaturas",
+    re: /\b(assinaturas?|streaming|netflix|spotify|deezer|youtube premium|disney|hbo|prime video|amazon prime|globoplay|paramount|apple music|icloud|chatgpt)\b/,
+  },
   {
     key: "casa",
-    re: /\b(internet|luz|energia|agua|água|gas|gás|telefone|celular|tv|streaming|netflix|spotify)\b/,
+    re: /\b(internet|luz|energia|agua|água|gas|gás|telefone|celular|tv)\b/,
   },
   { key: "saude", re: /\b(plano de saude|plano de saúde|saude|saúde|odonto|farmacia|farmácia)\b/ },
   { key: "educacao", re: /\b(escola|faculdade|creche|curso|mensalidade)\b/ },
@@ -511,6 +525,13 @@ function sugerirCategoriaKey(nome: string | null | undefined): string | null {
 
 function extrairNome(textRaw: string): string | null {
   let t = textRaw
+    // "todo dia 3" / "toda semana" precisam sair INTEIROS antes de "dia N",
+    // senão sobra "todo" no nome ("Assinatura Spotify Todo").
+    .replace(/\b(?:todo|toda)\s+dia\s+\d{1,2}\b/gi, " ")
+    // Rótulos funcionais que não fazem parte do nome do serviço.
+    .replace(/^\s*(?:minha\s+|nova\s+)?assinaturas?\s+(?:d[oae]\s+)?(?=\S)/i, " ")
+    .replace(/\b(?:despesa|conta)\s+recorrente\b/gi, " ")
+    .replace(/\brecorrentes?\b/gi, " ")
     .replace(/\bR\$\s*[\d.,]+/gi, " ")
     .replace(/\b\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?\b/g, " ")
     .replace(/\b\d+(?:[.,]\d+)?\s*(?:mil\s+)?(?:reais|real)\b/gi, " ")
@@ -530,6 +551,9 @@ function extrairNome(textRaw: string): string | null {
     )
     .replace(/[.,;:!?]/g, " ")
     .replace(/\s+/g, " ")
+    .trim()
+    // "todo"/"toda" órfãos no fim (ex.: "Spotify todo").
+    .replace(/(?:\s+(?:todo|toda|todos|todas))+$/i, "")
     .trim();
   if (!t || t.length < 2) return null;
   // Capitaliza primeira letra de cada palavra.

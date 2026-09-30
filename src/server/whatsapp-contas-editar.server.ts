@@ -640,7 +640,7 @@ function previewSingle(
   return linhas.join("\n");
 }
 
-function previewCancelamento(conta: ContaVencimentoRow, scope?: RecurrenceScope): string {
+export function previewCancelamento(conta: ContaVencimentoRow, scope?: RecurrenceScope): string {
   const linhas = [
     "Confirma o cancelamento desta conta?",
     "",
@@ -653,7 +653,11 @@ function previewCancelamento(conta: ContaVencimentoRow, scope?: RecurrenceScope)
     );
   }
   linhas.push("");
-  linhas.push("A conta deixará de aparecer como pendente.");
+  linhas.push(
+    scope === "future_pending"
+      ? "Esta conta e as próximas ocorrências pendentes serão canceladas."
+      : "Esta conta deixará de aparecer como pendente.",
+  );
   linhas.push("");
   linhas.push('Responda "sim" para confirmar ou "cancelar" para desistir.');
   return linhas.join("\n");

@@ -1,3 +1,5 @@
+import { calcMetaProgresso } from "./metas-progresso";
+import { filtrarContasAtivas } from "./contas-status";
 import { parcelasEmCentavos } from "./parcelamento";
 import { authorizeOfflineWrite, validateOwnerReferences } from "./offline/write-authorization";
 import { useEffect, useState, useSyncExternalStore } from "react";
@@ -1106,9 +1108,11 @@ export async function hydrateUser(userId: string): Promise<void> {
       memCartoes = (cartoesRes.error ? [] : (cartoesRes.data ?? [])).map((r: CartaoRow) =>
         rowToCartao(r),
       );
-      memContas = (contasRes.error ? [] : (contasRes.data ?? [])).map((r: ContaAPagarRow) =>
-        rowToContaAPagar(r, catUuidToKey),
-      );
+      // Contas canceladas (ex.: pelo WhatsApp) ficam no banco, mas fora das
+      // listas/totais ativos — senão seriam exibidas como "Pendente".
+      memContas = filtrarContasAtivas(
+        (contasRes.error ? [] : (contasRes.data ?? [])) as ContaAPagarRow[],
+      ).map((r: ContaAPagarRow) => rowToContaAPagar(r, catUuidToKey));
       memTransferencias = (transferenciasRes.error ? [] : (transferenciasRes.data ?? [])).map(
         (r: TransferenciaInternaRow) => rowToTransferenciaInterna(r),
       );
@@ -3547,18 +3551,13 @@ export function getMetaProgressoBreakdown(metaId: string): {
   restante: number;
 } {
   const meta = memMetas.find((m) => m.id === metaId);
-  const baseline = meta ? Number(meta.valorAtual) || 0 : 0;
-  const guardado = memGuardado
-    .filter((g) => g.metaId === metaId)
-    .reduce((s, g) => s + (Number(g.valor) || 0), 0);
-  const movsLegado = memMov
-    .filter((mv) => mv.metaId === metaId)
-    .reduce((s, mv) => s + (Number(mv.valor) || 0), 0);
-  const direto = baseline + movsLegado;
-  const total = direto + guardado;
-  const objetivo = meta ? Number(meta.valorObjetivo) || 0 : 0;
-  const restante = Math.max(0, objetivo - total);
-  return { total, guardado, direto, restante };
+  const p = calcMetaProgresso({
+    valorAtual: meta?.valorAtual,
+    valorObjetivo: meta?.valorObjetivo,
+    guardados: memGuardado.filter((g) => g.metaId === metaId),
+    movimentacoes: memMov.filter((mv) => mv.metaId === metaId),
+  });
+  return { total: p.total, guardado: p.guardado, direto: p.direto, restante: p.restante };
 }
 
 // ---------- Metas ----------

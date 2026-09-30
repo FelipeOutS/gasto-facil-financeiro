@@ -316,13 +316,18 @@ function extractNome(textRaw: string, valor: number | null): string {
     /\bem\s+\d{1,2}\s*x\b/gi,
     /\b\d{1,2}\s*x\b/gi,
     /\bgastei\b|\bcomprei\b|\bpaguei\b/gi,
-    /\bno\b|\bna\b|\bnos\b|\bnas\b|\bde\b|\bdo\b|\bda\b|\bcom\b|\bpor\b/gi,
+    /\bno\b|\bna\b|\bnos\b|\bnas\b|\bde\b|\bdo\b|\bda\b|\bcom\b|\bpor\b|\bem\b/gi,
+    // Unidade monetária falada/escrita ("7 reais", "sete conto").
+    /\breais\b|\breal\b|\bcontos?\b|\bpila\b/gi,
     /\bcart(a|ã)o\b|\bcr(e|é)dito\b|\bd(e|é)bito\b|\bpix\b|\bboleto\b|\btransfer(e|ê)ncia\b|\bdinheiro\b/gi,
     new RegExp(`\\b(?:${BANCOS_KEYWORDS.map((k) => k.replace(/ /g, "\\s+")).join("|")})\\b`, "gi"),
     /\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g,
   ];
   for (const re of stop) t = t.replace(re, " ");
+  // Pontuação órfã deixada pelos tokens removidos ("Café , ," → "Café").
+  t = t.replace(/\s*([,;])(?:\s*[,;])+/g, "$1").replace(/\s+([,;.])/g, "$1");
   t = t.replace(/\s+/g, " ").trim();
+  t = t.replace(/^[,;.\s]+|[,;.\s]+$/g, "").trim();
   // capitaliza palavras
   const titled = t
     .split(" ")
