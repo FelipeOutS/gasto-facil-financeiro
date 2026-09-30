@@ -1411,62 +1411,42 @@ export type MenuDispatch =
   | { kind: "guidance"; resposta: string };
 
 export function dispatchMenuOption(opcao: number): MenuDispatch | null {
+  // Menu por GRUPOS — mesmos recursos listados em "ajuda" e "comandos".
   switch (opcao) {
     case 1:
       return {
         kind: "guidance",
-        resposta:
-          "Para registrar um gasto, me envie em uma única mensagem.\n\n" +
-          "Exemplos:\n" +
-          "• “Uber 29,90 hoje no pix”\n" +
-          "• “Mercado 148 ontem no cartão Nubank”\n" +
-          "• “Almoço 35 débito”",
+        resposta: "📝 Gastos\n\n• Registrar: “Uber 29,90” ou “Mercado 148 no crédito”\n• “quanto gastei hoje”\n• “gastos desta semana”\n• “meus gastos do mês”\n\nÉ só me mandar uma dessas frases.",
       };
     case 2:
       return {
         kind: "guidance",
-        resposta:
-          "Para cadastrar uma conta a pagar, me envie nome, valor e vencimento.\n\n" +
-          "Exemplos:\n" +
-          "• “Cadastrar internet 119,90 vence dia 5 todo mês”\n" +
-          "• “Nova conta aluguel 1500 vence 10/07”",
+        resposta: "💳 Cartões\n\n• “minha fatura”\n• “próxima fatura do Nubank”\n• “faturas futuras do Mercado Pago”\n• “limite do meu cartão”\n\nÉ só me mandar uma dessas frases.",
       };
     case 3:
-      return { kind: "rewrite", texto: "minhas contas" };
+      return {
+        kind: "guidance",
+        resposta: "📄 Contas\n\n• Cadastrar: “internet 119,90 vence dia 5 todo mês”\n• “próximas contas” • “contas atrasadas”\n• “contas recorrentes” • “quando vence a luz?”\n• Pagar: “paguei a internet”\n• Editar: “editar internet” • Cancelar: “cancelar internet”\n\nÉ só me mandar uma dessas frases.",
+      };
     case 4:
-      return { kind: "rewrite", texto: "contas atrasadas" };
+      return {
+        kind: "guidance",
+        resposta: "💰 Receitas\n\n• Registrar: “recebi 2000 de salário”\n• “minhas receitas”\n\nÉ só me mandar uma dessas frases.",
+      };
     case 5:
       return {
         kind: "guidance",
-        resposta:
-          "Para marcar uma conta como paga, diga o nome dela.\n\n" +
-          "Exemplos:\n" +
-          "• “Paguei a internet”\n" +
-          "• “Quitei o aluguel ontem”\n" +
-          "Se você acabou de ver uma lista, também posso entender “paguei a segunda”.",
+        resposta: "🎯 Planejamento\n\n• “minhas metas”\n• “quanto tenho guardado na meta Viagem?”\n• “meu orçamento”\n\nÉ só me mandar uma dessas frases.",
       };
     case 6:
       return {
         kind: "guidance",
-        resposta:
-          "Para editar uma conta, diga o nome dela.\n\n" +
-          "Exemplos:\n" +
-          "• “Editar internet”\n" +
-          "• “Alterar aluguel”\n" +
-          "Depois eu pergunto o que você quer mudar.",
+        resposta: "📊 Resumos\n\n• “resumo da semana”\n• “resumo do mês”\n\nÉ só me mandar uma dessas frases.",
       };
     case 7:
-      return {
-        kind: "guidance",
-        resposta:
-          "Para cancelar uma conta, diga o nome dela.\n\n" +
-          "Exemplos:\n" +
-          "• “Cancelar internet”\n" +
-          "• “Excluir academia”\n" +
-          "Eu confirmo antes de remover.",
-      };
-    case 8:
       return { kind: "rewrite", texto: "ajuda" };
+    case 8:
+      return { kind: "rewrite", texto: "comandos" };
     default:
       return null;
   }
