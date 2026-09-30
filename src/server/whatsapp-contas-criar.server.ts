@@ -680,7 +680,7 @@ export async function processarContaAPagar(args: {
 
   if (sessao && isHardCancel) {
     await deps.fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
-    const resposta = "Conta cancelada. Quando quiser, é só me contar de novo. 👍";
+    const resposta = "Tudo certo, não registrei essa conta. Quando quiser, é só me contar de novo. 👍";
     await deps.gravarSessao(
       userId,
       msg.telefone,
