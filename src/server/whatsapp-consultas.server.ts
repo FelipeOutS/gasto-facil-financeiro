@@ -1077,26 +1077,43 @@ async function loadLimitesDoMes(userId: string, mes: number, ano: number): Promi
   return Array.isArray(data) ? (data as LimiteRow[]) : [];
 }
 
+/**
+ * Orçamento "criado" = limite total ou por categoria com valor > 0.
+ * A chave legada `meta_gasto_mensal` (sugestão/planejamento) e linhas
+ * zeradas NÃO contam como orçamento configurado.
+ */
+export function limitesOrcamentoReais<T extends { tipo: string | null; valor: number | string | null }>(
+  limites: T[],
+): T[] {
+  return limites.filter((l) => {
+    const t = (l.tipo ?? "").trim().toLowerCase();
+    return t !== "" && t !== "meta_gasto_mensal" && (Number(l.valor ?? 0) || 0) > 0;
+  });
+}
+
+export function orcamentoNaoCriadoMsg(mesExtenso: string): string {
+  return (
+    `Você ainda não criou um orçamento para ${mesExtenso}.\n\n` +
+    `Crie seus limites no Gasto Inteligente para eu acompanhar quanto já foi usado:\n` +
+    `https://gastointeligente.com.br/orcamento\n\n` +
+    `Depois é só me perguntar "meu orçamento" que eu te mostro como está o mês.`
+  );
+}
+
 async function handleOrcamentoMes(userId: string): Promise<ConsultaResult> {
   const hoje = todayLocalISO();
   const [y, m] = hoje.split("-").map(Number);
   const from = monthStartISO(hoje);
   const to = addDaysISO(hoje, 1);
-  const [limites, gastos, catMap] = await Promise.all([
+  const [limitesBrutos, gastos, catMap] = await Promise.all([
     loadLimitesDoMes(userId, m, y),
     loadGastos(userId, from, to),
     loadCategoriasMap(userId),
   ]);
 
+  const limites = limitesOrcamentoReais(limitesBrutos);
   if (!limites.length) {
-    return {
-      status: "consulta",
-      resposta:
-        `Você ainda não tem limites de orçamento cadastrados para ${mesPorExtenso(hoje)}.\n\n` +
-        `Para definir um limite total ou por categoria, acesse:\n` +
-        `https://gastointeligente.com.br → Limites\n\n` +
-        `Depois é só me perguntar "meu orçamento" que eu te mostro como está o mês.`,
-    };
+    return { status: "consulta", resposta: orcamentoNaoCriadoMsg(mesPorExtenso(hoje)) };
   }
 
   // Índices de gasto: total do mês e por nome de categoria (lowercased).
