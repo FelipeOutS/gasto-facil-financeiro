@@ -4515,6 +4515,75 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_outbound_messages: {
+        Row: {
+          accepted_at: string | null
+          content_length: number | null
+          content_sha256: string | null
+          created_at: string
+          delivered_at: string | null
+          error_code: string | null
+          error_message: string | null
+          failed_at: string | null
+          http_status: number | null
+          id: string
+          message_type: string
+          meta_message_id: string | null
+          read_at: string | null
+          recipient_hash: string
+          recipient_last4: string | null
+          sent_at: string | null
+          source: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          content_length?: number | null
+          content_sha256?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          http_status?: number | null
+          id?: string
+          message_type: string
+          meta_message_id?: string | null
+          read_at?: string | null
+          recipient_hash: string
+          recipient_last4?: string | null
+          sent_at?: string | null
+          source?: string
+          status: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          content_length?: number | null
+          content_sha256?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          http_status?: number | null
+          id?: string
+          message_type?: string
+          meta_message_id?: string | null
+          read_at?: string | null
+          recipient_hash?: string
+          recipient_last4?: string | null
+          sent_at?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       whatsapp_pix_pending_secrets: {
         Row: {
           created_at: string

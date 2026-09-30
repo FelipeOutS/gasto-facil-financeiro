@@ -22,6 +22,13 @@
       "when": 1790360291216,
       "tag": "0002_fix_whatsapp_quota_variable_conflicts",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790772071409,
+      "tag": "0003_whatsapp_outbound_messages",
+      "breakpoints": true
     }
   ]
 }
