@@ -1,2 +1,4 @@
 - WhatsApp inbound authorization no longer lets the legacy canary flag block paid eligible users, because WhatsApp is released for all paid plans.
 - WhatsApp quota SQL functions must qualify table columns or use `#variable_conflict use_column`, because `RETURNS TABLE` output names otherwise collide with column names in PL/pgSQL.
+- WhatsApp conversation replies are logged in `whatsapp_outbound_messages` (hash/last4 only, no text) and reconciled from `whatsapp_notification_status_events` by Meta message id, because status events are the single durable callback store.
+- `FEATURE_PLAN_WHITELIST.whatsapp` must mirror SQL `has_feature_access(_, 'whatsapp')`, because UI and backend gates must agree.
