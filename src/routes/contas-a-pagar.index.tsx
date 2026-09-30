@@ -93,7 +93,7 @@ import {
 import { toast } from "sonner";
 import { toastFromError } from "@/lib/premium-error";
 import { cn } from "@/lib/utils";
-import { listaDaAba, type AbaContas } from "@/lib/contas-status";
+import { listaDaAba, mesSemNenhumaConta, type AbaContas } from "@/lib/contas-status";
 
 export const Route = createFileRoute("/contas-a-pagar/")({
   head: () => ({ meta: [{ title: "Contas a pagar — Gasto Inteligente" }] }),
@@ -516,7 +516,7 @@ function ContasAPagarPage() {
 
       {/* Lista */}
       <section className="mt-3 space-y-2.5">
-        {doMes.length === 0 ? (
+        {mesSemNenhumaConta(doMes, canceladasDoMes) ? (
           <EmptyState onAdd={openCreate} />
         ) : filtradas.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground animate-fade-in space-y-3">

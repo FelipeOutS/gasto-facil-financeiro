@@ -48,3 +48,12 @@ export function acoesDisponiveisConta(c: { cancelada?: boolean }, pago: boolean)
   if (c.cancelada) return [];
   return [pago ? "desmarcar" : "pagar", "editar", "excluir"];
 }
+
+/**
+ * Estado vazio do mês só quando NÃO há contas ativas NEM canceladas.
+ * (Antes olhava só as ativas: um mês com apenas canceladas caía no vazio
+ * e as abas "Canceladas"/"Todas" nunca eram renderizadas.)
+ */
+export function mesSemNenhumaConta(ativasDoMes: unknown[], canceladasDoMes: unknown[]): boolean {
+  return ativasDoMes.length === 0 && canceladasDoMes.length === 0;
+}
