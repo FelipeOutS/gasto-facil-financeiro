@@ -5152,6 +5152,11 @@ async function sendWhatsAppRaw(
     // nenhuma mensagem sai. Não expor conteúdo do erro.
     return { sent: false, reason: "configuration_error" };
   }
+  const messageType = body.type === "interactive" ? "interactive" : "text";
+  const content =
+    messageType === "text"
+      ? String((body.text as { body?: unknown } | undefined)?.body ?? "")
+      : JSON.stringify(body.interactive ?? {});
   try {
     const res = await fetch(built.url, {
       method: "POST",
@@ -5167,6 +5172,30 @@ async function sendWhatsAppRaw(
         handlerVersion: WHATSAPP_HANDLER_VERSION,
         httpStatus: res.status,
       });
+    }
+    let responseBody: string | null = null;
+    try {
+      responseBody = typeof res.text === "function" ? await res.text() : null;
+    } catch {
+      responseBody = null;
+    }
+    // Rastreabilidade outbound (best-effort; nunca altera o resultado do envio).
+    try {
+      const { recordOutboundSend } = await import("./whatsapp-outbound-log.server");
+      await recordOutboundSend(
+        {
+          to: _to,
+          messageType,
+          source: messageType === "interactive" ? "reply_interactive" : "reply",
+          content,
+          ok: res.ok,
+          httpStatus: res.status,
+          responseBody,
+        },
+        supabaseAdmin,
+      );
+    } catch {
+      // no-op
     }
     return { sent: res.ok, status: res.status };
   } catch (e) {
