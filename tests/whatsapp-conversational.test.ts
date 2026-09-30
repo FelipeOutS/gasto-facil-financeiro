@@ -74,7 +74,7 @@ test("GI abre o menu completo", async () => {
   expect(r.status).toBe("consulta");
   expect(r.resposta).toContain("1. Gastos");
   expect(r.resposta).toContain("3. Contas");
-  expect(r.resposta).toContain("Ver contas pendentes");
+  expect(r.resposta).toContain("5. Planejamento");
 });
 
 test("Gasto Inteligente abre o menu completo", async () => {

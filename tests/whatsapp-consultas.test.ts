@@ -77,7 +77,7 @@ test("ajuda/menu responde com apresentação do GI e bullets", async () => {
   expect(r.resposta).toContain("GI");
   expect(r.resposta).toContain("1. Gastos");
   expect(r.resposta).toContain("3. Contas");
-  expect(r.resposta).toContain("Ver contas pendentes");
+  expect(r.resposta).toContain("5. Planejamento");
   // Não deve criar gasto/receita
   expect(state.inserts.some((i) => i.table === "gastos")).toBe(false);
   expect(state.inserts.some((i) => i.table === "receitas")).toBe(false);
