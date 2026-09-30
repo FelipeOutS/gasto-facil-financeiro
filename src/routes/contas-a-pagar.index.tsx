@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ContaPagarForm } from "@/components/contas/ContaPagarForm";
 import {
@@ -47,6 +47,7 @@ import {
   marcarContaComoPago,
   statusContaEfetivo,
   getContasCanceladas,
+  refreshContasAPagar,
   updateContaAPagar,
   updateContaRecorrencia,
   useBootstrap,
@@ -164,6 +165,12 @@ function ContasAPagarPage() {
 
   const contas = useStore(() => getContasAPagar());
   const contasCanceladas = useStore(() => getContasCanceladas());
+  useEffect(() => {
+    void refreshContasAPagar();
+    const onFocus = () => void refreshContasAPagar();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
   const categorias = useStore(() => getCategorias());
 
   const hojeISO = todayISO();
