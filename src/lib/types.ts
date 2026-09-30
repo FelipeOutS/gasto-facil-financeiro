@@ -320,6 +320,8 @@ export const FREQUENCIAS_RECORRENCIA: Array<{ id: FrequenciaRecorrencia; label: 
 
 export type ContaAPagar = {
   id: string;
+  /** true quando status no banco = cancelado (só histórico, sem ações). */
+  cancelada?: boolean;
   nome: string;
   valor: number;
   /** YYYY-MM-DD */
