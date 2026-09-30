@@ -989,6 +989,18 @@ export async function persistAndApplyEvents(
       }
     }
 
+    // 3.5) Respostas comuns (outbound de conversa): aplica status na linha
+    //      de `whatsapp_outbound_messages`. Best-effort; eventos já estão
+    //      persistidos e a reconciliação relê todos por PMID (idempotente).
+    if (!notifId) {
+      try {
+        const { reconcileOutboundStatus } = await import("./whatsapp-outbound-log.server");
+        await reconcileOutboundStatus(pmid, client);
+      } catch {
+        // no-op
+      }
+    }
+
     // 4) WA-C11 3B.2.E.1 — Reconciliação de quota outbound.
     //    Traduz status Meta em commit idempotente da reservation:
     //      sent/delivered/read → commit (aceite comprovado)
