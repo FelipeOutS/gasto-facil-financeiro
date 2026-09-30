@@ -1114,12 +1114,9 @@ export async function hydrateUser(userId: string): Promise<void> {
       // Contas canceladas (ex.: pelo WhatsApp) ficam no banco, mas fora das
       // listas/totais ativos — senão seriam exibidas como "Pendente".
       const contasRows = (contasRes.error ? [] : (contasRes.data ?? [])) as ContaAPagarRow[];
-      memContas = filtrarContasAtivas(contasRows).map((r: ContaAPagarRow) =>
-        rowToContaAPagar(r, catUuidToKey),
-      );
-      memContasCanceladas = contasRows
-        .filter((r) => isStatusContaCancelado(r.status))
-        .map((r: ContaAPagarRow) => ({ ...rowToContaAPagar(r, catUuidToKey), cancelada: true }));
+      const contasSplit = splitContasRows(contasRows, catUuidToKey);
+      memContas = contasSplit.ativas;
+      memContasCanceladas = contasSplit.canceladas;
       memTransferencias = (transferenciasRes.error ? [] : (transferenciasRes.data ?? [])).map(
         (r: TransferenciaInternaRow) => rowToTransferenciaInterna(r),
       );
@@ -1901,6 +1898,39 @@ function refreshFinancialEntity(
 
 export function refreshGastos(options: FinancialRefreshOptions = {}): Promise<void> {
   return refreshFinancialEntity("gastos", options);
+}
+
+/** Separa linhas de `contas_a_pagar` em ativas e canceladas (histórico). */
+export function splitContasRows(
+  rows: ContaAPagarRow[],
+  catUuidToKey: Map<string, string>,
+): { ativas: ContaAPagar[]; canceladas: ContaAPagar[] } {
+  return {
+    ativas: filtrarContasAtivas(rows).map((r) => rowToContaAPagar(r, catUuidToKey)),
+    canceladas: rows
+      .filter((r) => isStatusContaCancelado(r.status))
+      .map((r) => ({ ...rowToContaAPagar(r, catUuidToKey), cancelada: true })),
+  };
+}
+
+/**
+ * Recarrega `contas_a_pagar` do banco. Alterações feitas fora do site
+ * (ex.: cancelamento em massa pelo WhatsApp) só chegavam após recarregar
+ * a página inteira; a tela de Contas chama isto ao abrir e ao voltar o foco.
+ */
+export async function refreshContasAPagar(): Promise<void> {
+  const userId = activeUserId;
+  if (!userId) return;
+  const gen = userSessionGeneration;
+  const { data, error } = await sbAny.from("contas_a_pagar").select("*").eq("user_id", userId);
+  if (error || !Array.isArray(data) || activeUserId !== userId || gen !== userSessionGeneration)
+    return;
+  const catUuidToKey = new Map<string, string>();
+  for (const [key, uuid] of categoriaKeyToUuid) catUuidToKey.set(uuid, key);
+  const { ativas, canceladas } = splitContasRows(data as ContaAPagarRow[], catUuidToKey);
+  memContas = ativas;
+  memContasCanceladas = canceladas;
+  emit();
 }
 
 export function refreshReceitas(options: FinancialRefreshOptions = {}): Promise<void> {
