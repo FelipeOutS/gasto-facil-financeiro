@@ -191,7 +191,7 @@ export function reduceOutboundStatus(
   let status: OutboundStatus = row.status;
   if (read) status = "read";
   else if (delivered) status = "delivered";
-  else if (failed && (row.status !== "send_failed" || latestFailed)) status = "failed";
+  else if (failed && (!sent || failed >= sent)) status = "failed";
   else if (sent) status = "sent";
   return {
     status,
