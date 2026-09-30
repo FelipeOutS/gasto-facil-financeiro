@@ -46,7 +46,8 @@
     "proximas": "Upcoming",
     "atrasadas": "Overdue",
     "pagas": "Paid",
-    "recorrentes": "Recurring"
+    "recorrentes": "Recurring",
+    "canceladas": "Cancelled"
   },
   "search": {
     "placeholder": "Search by name, category, amount or due date",
@@ -77,7 +78,8 @@
     "dueToday": "Due today",
     "dueTomorrow": "Due tomorrow",
     "dueInDays": "In {{days}}d",
-    "pendingDays": "Pending · {{days}}d"
+    "pendingDays": "Pending · {{days}}d",
+    "cancelled": "Cancelled"
   },
   "copy": {
     "boletoLabel": "Boleto code",

@@ -533,7 +533,7 @@ export async function processarParcelamento(args: {
       "cancelada",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       sessao.session as any,
-      "Compra parcelada cancelada. Quando quiser, é só me contar de novo. 👍",
+      "Tudo certo, não registrei essa compra parcelada. Quando quiser, é só me contar de novo. 👍",
     );
     logDecision({
       stage: "cancelled",
@@ -543,7 +543,7 @@ export async function processarParcelamento(args: {
     });
     return {
       status: "cancelada",
-      resposta: "Compra parcelada cancelada. Quando quiser, é só me contar de novo. 👍",
+      resposta: "Tudo certo, não registrei essa compra parcelada. Quando quiser, é só me contar de novo. 👍",
     };
   }
 

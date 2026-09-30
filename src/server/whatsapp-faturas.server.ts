@@ -961,9 +961,9 @@ export function detectFutureFaturaIntent(
   // ---- futuro de fatura ----
   const target = resolveTargetInvoiceMonth(t, hoje);
   const futureCue =
-    /\bprox(?:ima|imo)\b/.test(t) ||
+    /\bprox(?:ima|imo)s?\b/.test(t) ||
     /\bmes\s+que\s+vem\b/.test(t) ||
-    /\bfutur[ao]\b/.test(t) ||
+    /\bfutur[ao]s?\b/.test(t) ||
     target !== null;
   if (!futureCue) return null;
 

@@ -1,4 +1,4 @@
-import { createRouter, Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { createRouter, Link, useRouter, useRouterState, type ErrorComponentProps } from "@tanstack/react-router";
 
 import { useEffect } from "react";
 import { routeTree } from "./routeTree.gen";
@@ -15,7 +15,8 @@ function isRecoverableRouteLoadError(error: Error) {
   );
 }
 
-function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function DefaultErrorComponent({ error: rawError, reset }: ErrorComponentProps) {
+  const error = rawError instanceof Error ? rawError : new Error(String(rawError));
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isRouteLoadError = isRecoverableRouteLoadError(error);

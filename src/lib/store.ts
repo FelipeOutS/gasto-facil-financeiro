@@ -1,5 +1,5 @@
 import { calcMetaProgresso } from "./metas-progresso";
-import { filtrarContasAtivas } from "./contas-status";
+import { filtrarContasAtivas, isStatusContaCancelado } from "./contas-status";
 import { parcelasEmCentavos } from "./parcelamento";
 import { authorizeOfflineWrite, validateOwnerReferences } from "./offline/write-authorization";
 import { useEffect, useState, useSyncExternalStore } from "react";
@@ -214,6 +214,8 @@ let memMetas: Meta[] = EMPTY_METAS;
 let memMov: MovimentacaoMeta[] = EMPTY_MOV;
 let memCartoes: Cartao[] = EMPTY_CARTOES;
 let memContas: ContaAPagar[] = EMPTY_CONTAS;
+/** Contas com status cancelado — só para histórico (aba "Canceladas"/"Todas"). */
+let memContasCanceladas: ContaAPagar[] = EMPTY_CONTAS;
 let memTransferencias: TransferenciaInterna[] = EMPTY_TRANSFERENCIAS;
 let memExtratos: ExtratoImportado[] = EMPTY_EXTRATOS;
 let memFaturas: FaturaCartao[] = [];
@@ -257,6 +259,7 @@ export function setActiveUserId(uid: string | null) {
   memMov = EMPTY_MOV;
   memCartoes = EMPTY_CARTOES;
   memContas = EMPTY_CONTAS;
+  memContasCanceladas = EMPTY_CONTAS;
   memTransferencias = EMPTY_TRANSFERENCIAS;
   memExtratos = EMPTY_EXTRATOS;
   memFaturas = [];
@@ -1110,9 +1113,13 @@ export async function hydrateUser(userId: string): Promise<void> {
       );
       // Contas canceladas (ex.: pelo WhatsApp) ficam no banco, mas fora das
       // listas/totais ativos — senão seriam exibidas como "Pendente".
-      memContas = filtrarContasAtivas(
-        (contasRes.error ? [] : (contasRes.data ?? [])) as ContaAPagarRow[],
-      ).map((r: ContaAPagarRow) => rowToContaAPagar(r, catUuidToKey));
+      const contasRows = (contasRes.error ? [] : (contasRes.data ?? [])) as ContaAPagarRow[];
+      memContas = filtrarContasAtivas(contasRows).map((r: ContaAPagarRow) =>
+        rowToContaAPagar(r, catUuidToKey),
+      );
+      memContasCanceladas = contasRows
+        .filter((r) => isStatusContaCancelado(r.status))
+        .map((r: ContaAPagarRow) => ({ ...rowToContaAPagar(r, catUuidToKey), cancelada: true }));
       memTransferencias = (transferenciasRes.error ? [] : (transferenciasRes.data ?? [])).map(
         (r: TransferenciaInternaRow) => rowToTransferenciaInterna(r),
       );
@@ -3795,6 +3802,11 @@ export function contaPertenceAoMesRef(
  * Status efetivo: se a conta está pendente e a data de vencimento já passou,
  * retorna "atrasado" sem alterar o registro persistido.
  */
+/** Histórico de contas canceladas (nunca entram em totais/pendentes). */
+export function getContasCanceladas(): ContaAPagar[] {
+  return memContasCanceladas;
+}
+
 export function statusContaEfetivo(c: ContaAPagar, hojeISO?: string): StatusConta {
   if (c.status === "pago") return "pago";
   const hoje = hojeISO ?? new Date().toISOString().slice(0, 10);

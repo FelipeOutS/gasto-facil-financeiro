@@ -46,7 +46,8 @@
     "proximas": "Próximas",
     "atrasadas": "Atrasadas",
     "pagas": "Pagas",
-    "recorrentes": "Recorrentes"
+    "recorrentes": "Recorrentes",
+    "canceladas": "Canceladas"
   },
   "search": {
     "placeholder": "Buscar por nome, categoria, valor ou vencimento",
@@ -77,7 +78,8 @@
     "dueToday": "Vence hoje",
     "dueTomorrow": "Vence amanhã",
     "dueInDays": "Em {{days}}d",
-    "pendingDays": "Pendente · {{days}}d"
+    "pendingDays": "Pendente · {{days}}d",
+    "cancelled": "Cancelada"
   },
   "copy": {
     "boletoLabel": "Código de boleto",
