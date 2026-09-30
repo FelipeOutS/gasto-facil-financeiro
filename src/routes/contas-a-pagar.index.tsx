@@ -92,6 +92,7 @@ import {
 import { toast } from "sonner";
 import { toastFromError } from "@/lib/premium-error";
 import { cn } from "@/lib/utils";
+import { listaDaAba, type AbaContas } from "@/lib/contas-status";
 
 export const Route = createFileRoute("/contas-a-pagar/")({
   head: () => ({ meta: [{ title: "Contas a pagar — Gasto Inteligente" }] }),
@@ -1016,6 +1017,7 @@ function ContaCard({
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
+      )}
     </article>
   );
 }
