@@ -55,8 +55,16 @@ export function EditGastoForm({
    * motor de recorrência. Editar aqui altera apenas esta ocorrência —
    * o histórico das demais permanece intacto.
    */
-  const serieGastos = useStore(() =>
-    gasto.recorrenciaId ? getGastos().filter((g) => g.recorrenciaId === gasto.recorrenciaId) : [],
+  // O seletor deve devolver uma referência ESTÁVEL (a lista do store);
+  // filtrar dentro dele cria um array novo a cada render e causa
+  // "Maximum update depth exceeded" ao abrir a edição.
+  const todosGastos = useStore(() => getGastos());
+  const serieGastos = useMemo(
+    () =>
+      gasto.recorrenciaId
+        ? todosGastos.filter((g) => g.recorrenciaId === gasto.recorrenciaId)
+        : [],
+    [todosGastos, gasto.recorrenciaId],
   );
   const serie = useMemo(() => {
     if (!gasto.recorrenciaId || serieGastos.length < 2) return null;
