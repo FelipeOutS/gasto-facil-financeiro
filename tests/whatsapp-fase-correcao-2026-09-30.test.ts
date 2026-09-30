@@ -16,7 +16,7 @@ import { detectPayableAccountIntent } from "../src/server/whatsapp-contas-criar.
 import { detectDueIntent } from "../src/server/whatsapp-contas.server";
 import { upcomingRangeInAppTz } from "../src/server/contas-vencimento.server";
 import { detectLimiteIntent } from "../src/server/whatsapp-limites.server";
-import { M } from "../src/server/whatsapp-messages";
+import { whatsappMessages as M } from "../src/server/whatsapp-messages";
 
 describe("P0 — contas canceladas não aparecem como pendentes", () => {
   it("reconhece variações de cancelado", () => {
