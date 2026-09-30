@@ -249,7 +249,7 @@ export function detectDueIntent(texto: string): DueIntent | null {
     !temTermo &&
     (/\bproxim[ao]s?\s+(?:contas?|vencimentos?|compromissos?|boletos?)\b/.test(t) ||
     /\b(?:contas?|vencimentos?|compromissos?)\s+(?:proxim[ao]s?|pendentes?|em\s+aberto|futur[ao]s?|a\s+vencer)\b/.test(t) ||
-    /\bo\s+que\s+(?:vai\s+)?vence(?:r)?\b/.test(t)
+    /\bo\s+que\s+(?:vai\s+)?vence(?:r)?\b/.test(t))
   ) {
     return { kind: "upcoming" };
   }
