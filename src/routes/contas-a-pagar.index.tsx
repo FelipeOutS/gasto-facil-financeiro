@@ -46,6 +46,7 @@ import {
   getContasAPagar,
   marcarContaComoPago,
   statusContaEfetivo,
+  getContasCanceladas,
   updateContaAPagar,
   updateContaRecorrencia,
   useBootstrap,
@@ -97,7 +98,7 @@ export const Route = createFileRoute("/contas-a-pagar/")({
   component: ContasAPagarPage,
 });
 
-type FilterId = "todas" | "pendentes" | "proximas" | "atrasadas" | "pagas" | "recorrentes";
+type FilterId = AbaContas;
 
 const FILTRO_IDS: FilterId[] = [
   "todas",
@@ -106,6 +107,7 @@ const FILTRO_IDS: FilterId[] = [
   "atrasadas",
   "pagas",
   "recorrentes",
+  "canceladas",
 ];
 
 function normalizar(s: string): string {
@@ -160,6 +162,7 @@ function ContasAPagarPage() {
   const [confirmDeleteRec, setConfirmDeleteRec] = useState<ContaAPagar | null>(null);
 
   const contas = useStore(() => getContasAPagar());
+  const contasCanceladas = useStore(() => getContasCanceladas());
   const categorias = useStore(() => getCategorias());
 
   const hojeISO = todayISO();
@@ -236,9 +239,26 @@ function ContasAPagarPage() {
       .sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento))[0];
   }, [doMes, hojeISO]);
 
+  const canceladasDoMes = useMemo(
+    () =>
+      contasCanceladas
+        .filter((c) => contaPertenceAoMesRef(c, ym.mes, ym.ano))
+        .sort((a, b) => a.dataVencimento.localeCompare(b.dataVencimento)),
+    [contasCanceladas, ym],
+  );
+
   const filtradas = useMemo(() => {
     const q = normalizar(busca);
-    return doMes.filter((c) => {
+    const combinaBusca = (c: ContaAPagar) => {
+      if (!q) return true;
+      const cat = c.categoriaId ? getCategoriaById(c.categoriaId) : undefined;
+      return [c.nome, c.beneficiario ?? "", cat?.nome ?? "", formatBRL(c.valor),
+        String(c.valor).replace(".", ","), formatDateBR(c.dataVencimento), c.dataVencimento]
+        .map(normalizar)
+        .join(" ")
+        .includes(q);
+    };
+    return listaDaAba(filtro, doMes, canceladasDoMes, (c) => {
       const s = statusContaEfetivo(c, hojeISO);
       let okFiltro = true;
       switch (filtro) {
@@ -269,24 +289,10 @@ function ContasAPagarPage() {
         default:
           okFiltro = true;
       }
-      if (!okFiltro) return false;
-      if (!q) return true;
-      const cat = c.categoriaId ? getCategoriaById(c.categoriaId) : undefined;
-      const haystack = [
-        c.nome,
-        c.beneficiario ?? "",
-        cat?.nome ?? "",
-        formatBRL(c.valor),
-        String(c.valor).replace(".", ","),
-        formatDateBR(c.dataVencimento),
-        c.dataVencimento,
-      ]
-        .map(normalizar)
-        .join(" ");
-      return haystack.includes(q);
-    });
+      return okFiltro;
+    }).filter(combinaBusca);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [doMes, hojeISO, filtro, busca]);
+  }, [doMes, canceladasDoMes, hojeISO, filtro, busca]);
 
   function changeMonth(delta: number) {
     const d = new Date(ym.ano, ym.mes - 1 + delta, 1);
@@ -892,7 +898,9 @@ function ContaCard({
     <article
       className={cn(
         "overflow-hidden rounded-2xl border bg-card p-4 transition-colors",
-        status === "atrasado"
+        conta.cancelada
+          ? "border-dashed border-border bg-muted/40 opacity-70"
+          : status === "atrasado"
           ? "border-destructive/40"
           : status === "pago"
             ? "border-success/30 opacity-80"
@@ -946,7 +954,13 @@ function ContaCard({
                     : t("card.recurringFallback")}
               </span>
             )}
-            <StatusBadge status={status} dias={diasParaVencer} />
+            {conta.cancelada ? (
+              <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("status.cancelled")}
+              </span>
+            ) : (
+              <StatusBadge status={status} dias={diasParaVencer} />
+            )}
           </div>
           {conta.fornecedorId && fornecedorNome && (
             <p className="mt-1 truncate text-[11px] text-muted-foreground">
@@ -970,6 +984,7 @@ function ContaCard({
         </div>
       )}
 
+      {!conta.cancelada && (
       <div className="mt-3 flex items-center gap-2">
         {status === "pago" ? (
           <Button variant="outline" size="sm" className="flex-1" onClick={onDesmarcar}>
