@@ -353,7 +353,7 @@ export const whatsappMessages = {
     // WA-C6 — “ajuda” explícito: explicação + exemplos práticos (NÃO é o menu numerado).
     ajudaExemplos() {
       return [
-        `💡 Veja o que já funciona por aqui (texto ou áudio):`,
+        `💡 Veja exemplos do que já funciona por aqui (texto ou áudio):`,
         ``,
         `📝 Gastos`,
         `   • “Uber 29,90” • “Mercado 187,50 no crédito”`,
