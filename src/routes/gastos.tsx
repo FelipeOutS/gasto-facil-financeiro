@@ -63,6 +63,7 @@ import {
   useBootstrap,
   useStore,
   bulkSetMesReferencia,
+  getCartaoById,
 } from "@/lib/store";
 import { requireOnline } from "@/lib/use-online-status";
 import { mesAnoToLabel, mesReferenciaOpcoes, ymFromDate, ymToLabel } from "@/lib/mes-referencia";
