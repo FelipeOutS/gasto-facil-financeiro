@@ -11,6 +11,7 @@ import {
   processarMensagemWhatsApp,
   sendWhatsAppReply,
   sendWhatsAppInteractiveCtaUrl,
+  sendWhatsAppInteractiveReply,
   WHATSAPP_HANDLER_VERSION,
 } from "@/server/whatsapp.server";
 import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
