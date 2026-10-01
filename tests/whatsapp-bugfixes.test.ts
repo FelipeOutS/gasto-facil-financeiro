@@ -23,6 +23,17 @@ function cartoesMercadoPago(): Record<string, unknown>[] {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
+      {
+        id: "c-nu-2",
+        nome: "Nubank",
+        banco: "Nubank",
+        limite_total: 0,
+        dia_fechamento: 1,
+        dia_vencimento: 10,
+        cor: "#000",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
   ];
 }
 
@@ -221,6 +232,17 @@ test("cartão cadastrado com caixa errada é exibido com capitalização canôni
         id: "c-mp-low",
         nome: "Mercado pago",
         banco: "Mercado pago",
+        limite_total: 0,
+        dia_fechamento: 1,
+        dia_vencimento: 10,
+        cor: "#000",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: "c-nu-2",
+        nome: "Nubank",
+        banco: "Nubank",
         limite_total: 0,
         dia_fechamento: 1,
         dia_vencimento: 10,

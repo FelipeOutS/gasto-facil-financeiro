@@ -4755,7 +4755,13 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
       return { status: "aguardando_forma_pagamento", resposta };
     }
     const next: Session = { ...sessao.session, formaPagamento: forma };
-    if (forma === "credito") {
+    let autoCartaoPrefix = "";
+    if (forma === "credito" && cartoes.length === 1 && !next.cartaoId) {
+      next.cartaoId = cartoes[0].id;
+      next.cartaoNomeDetectado = cartoes[0].nome;
+      autoCartaoPrefix = M.cartaoUnicoAuto(cartoes[0].nome);
+    }
+    if (forma === "credito" && !next.cartaoId) {
       const resposta = perguntaCartao(next, cartoes);
       await atualizarSessao(sessao.id, "aguardando_cartao", next, resposta);
       await gravarSessao(
@@ -4781,7 +4787,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
       categorias,
       source: next.source === "audio" ? "audio" : "text",
     });
-    const resposta = formatarConfirmacao(
+    const resposta = autoCartaoPrefix + formatarConfirmacao(
       sessionToParsed(next, cartoes),
       undefined,
       categorias,
@@ -5221,6 +5227,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   // Forma de pagamento foi explicitamente identificada?
   const formaExplicita = !parsed.notas.includes("Forma de pagamento não identificada");
 
+  let autoCartaoPrefixNovo = "";
   if (formaExplicita) {
     sess.formaPagamento = parsed.formaPagamento;
     if (parsed.formaPagamento === "credito") {
@@ -5257,6 +5264,11 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
           resposta,
         );
         return { status: "aguardando_confirmacao", confianca: sess.confianca, resposta };
+      } else if (cartoes.length === 1) {
+        // Exatamente 1 cartão: seleciona automaticamente e segue p/ confirmação.
+        sess.cartaoId = cartoes[0].id;
+        sess.cartaoNomeDetectado = cartoes[0].nome;
+        autoCartaoPrefixNovo = M.cartaoUnicoAuto(cartoes[0].nome);
       } else {
         const resposta = perguntaCartao(sess, cartoes);
         await gravarSessao(
@@ -5278,7 +5290,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
       categorias,
       source: sess.source === "audio" ? "audio" : "text",
     });
-    const resposta = formatarConfirmacao(
+    const resposta = autoCartaoPrefixNovo + formatarConfirmacao(
       sessionToParsed(sess, cartoes),
       undefined,
       categorias,
