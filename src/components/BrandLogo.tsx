@@ -82,33 +82,10 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
       const isWhiteOptimized = WHITE_OPTIMIZED_SLUGS.has(slug);
       const isWide = WIDE_BANK_SLUGS.has(slug);
 
-      // SVG colorido (Nubank roxo, PicPay verde, Itaú, BB, Neon, Will Bank) —
-      // envolve em uma "pílula" branca discreta para garantir contraste em
-      // qualquer gradiente de cartão. Instantâneo, sem requisição de rede.
-      if (!isWhiteOptimized) {
-        return (
-          <span
-            className={cn(
-              "bank-logo-container relative inline-flex items-center justify-start overflow-visible",
-              className,
-            )}
-            aria-hidden
-          >
-            <span className="bank-logo-pill inline-flex h-9 items-center justify-center rounded-md bg-white/95 px-2.5 py-1 shadow-sm ring-1 ring-black/5">
-              <img
-                src={staticUrl}
-                alt=""
-                className={cn(
-                  "block h-6 w-auto max-w-[120px] object-contain",
-                  imgClassName,
-                )}
-                decoding="async"
-              />
-            </span>
-          </span>
-        );
-      }
-
+      // Regra única sobre superfícies de cartão: todo logo aparece como
+      // marca monocromática clara. SVGs coloridos (Nubank roxo, PicPay, Itaú,
+      // BB, Neon, Will Bank) são convertidos para branco via filtro, sem
+      // pílula/caixa extra — mesmo peso visual que o Mercado Pago.
       return (
         <span
           className={cn(
@@ -123,6 +100,7 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
             alt=""
             className={cn(
               "block h-auto w-auto max-h-full max-w-full object-contain object-left",
+              !isWhiteOptimized && "bank-logo-mono",
               imgClassName,
             )}
             decoding="async"
