@@ -1,4 +1,5 @@
-import { describe, expect, test, plugin } from "bun:test";
+import { describe, expect, test } from "bun:test";
+import { plugin } from "bun";
 
 // Bun não entende imports `?url` do Vite: devolve o próprio caminho local.
 plugin({
