@@ -36,6 +36,13 @@
       "when": 1790819500699,
       "tag": "0004_add_gastos_fatura_competencia",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790820617847,
+      "tag": "0005_installment_rpc_fatura_competencia",
+      "breakpoints": true
     }
   ]
 }
