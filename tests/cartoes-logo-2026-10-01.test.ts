@@ -1,17 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { plugin } from "bun";
+import { mock } from "bun:test";
 
-// Bun não entende imports `?url` do Vite: devolve o próprio caminho local.
-plugin({
-  name: "vite-url-stub",
-  setup(build) {
-    build.onResolve({ filter: /\.svg\?url$/ }, (args) => ({ path: args.path, namespace: "svgurl" }));
-    build.onLoad({ filter: /.*/, namespace: "svgurl" }, (args) => ({
-      contents: `export default ${JSON.stringify(args.path.replace(/\?url$/, ""))};`,
-      loader: "js",
-    }));
-  },
-});
+// Bun não entende imports `?url` do Vite: cada asset local vira o próprio caminho.
+for (const p of ["/public/logos/bancos/Banco_Bradesco.svg?url", "/public/logos/bancos/banco-do-brasil-novo.svg?url", "/public/logos/bancos/banco-inter.svg?url", "/public/logos/bancos/banco-itau.svg?url", "/public/logos/bancos/Logo_C6_Bank.svg?url", "/public/logos/bancos/logo-caixa.svg?url", "/public/logos/bancos/logo-santander.svg?url", "/public/logos/bancos/mercadopago-branco.svg?url", "/public/logos/bancos/nubank.svg?url", "/public/logos/bancos/picpay.svg?url", "/public/logos/bancos/will-bank.svg?url", "/public/logos/bancos/neon.svg?url", "/public/logos/empresas/adobe.svg?url", "/public/logos/empresas/amazon.svg?url", "/public/logos/empresas/apple.svg?url", "/public/logos/empresas/cobasi.svg?url", "/public/logos/empresas/coursera.svg?url", "/public/logos/empresas/google.svg?url", "/public/logos/empresas/ifood.svg?url", "/public/logos/empresas/mercado-livre.svg?url", "/public/logos/empresas/microsoft.svg?url", "/public/logos/empresas/netflix.svg?url", "/public/logos/empresas/spotify.svg?url", "/public/logos/empresas/totalpass.svg?url", "/public/logos/empresas/uber-eats.svg?url", "/public/logos/empresas/uber.svg?url", "/public/logos/empresas/youtube.svg?url"]) {
+  mock.module(p, () => ({ default: p.replace(/\?url$/, "") }));
+}
 const { getBankLogo } = await import("@/lib/logos");
 
 describe("Identidade visual do cartão", () => {
