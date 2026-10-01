@@ -956,6 +956,7 @@ async function avancarFluxo(args: {
     totalReais: session.valorTotal!,
     totalParcelas: session.totalParcelas!,
     diaFechamentoCartao: dia,
+    diaVencimentoCartao: cartao?.diaVencimento ?? null,
   });
   // WA-F3.3 — categoria: manual escolhida tem precedência; senão, sugere
   // pelo texto. A label exibida na prévia também é a definitiva usada na
@@ -975,7 +976,7 @@ async function avancarFluxo(args: {
     valorTotal: plano.total,
     totalParcelas: plano.totalParcelas,
     cartaoNome: session.cartaoNome ?? "cartão",
-    primeiraYm: plano.parcelas[0].invoiceMonth,
+    primeiraYm: plano.parcelas[0].competencia,
     categoria: categoriaLabel,
   });
   // WA-F3.3-Fix-UX — consome ack pendente e prefixa a prévia.
@@ -1075,6 +1076,7 @@ export async function persistir(args: {
       totalReais: session.valorTotal,
       totalParcelas: session.totalParcelas,
       diaFechamentoCartao: cartao.diaFechamento,
+      diaVencimentoCartao: cartao.diaVencimento ?? null,
     });
   } catch {
     logDecision({
@@ -1301,6 +1303,12 @@ export async function persistir(args: {
         "Salvei mas não consegui confirmar todas as parcelas. Pode me chamar de novo em alguns minutos?",
     };
   }
+  // Decisão 3 — separar "quando comprei" de "quando vou pagar": todas as
+  // parcelas passam a ter o mês de referência da COMPRA original e cada uma
+  // recebe a competência da sua fatura. Best-effort: se falhar, as parcelas
+  // continuam com o ciclo legado em invoice_month (mesma fatura de antes).
+  await aplicarCompetenciasParcelas(userId, grupoId, plano);
+
   const inseridos: string[] = rbRows
     .slice()
     .sort((a, b) => (a.parcela_atual ?? 0) - (b.parcela_atual ?? 0))
@@ -1356,7 +1364,7 @@ export async function persistir(args: {
     "Pronto! Registrei sua compra parcelada ✅",
     "",
     `${session.descricao} — ${plano.totalParcelas}x de ${formatBRL(valorPrim)} no ${session.cartaoNome}.`,
-    `A primeira parcela entra na fatura de ${nomeMes(plano.parcelas[0].invoiceMonth)}.`,
+    `A primeira parcela entra na fatura de ${nomeMes(plano.parcelas[0].competencia)}.`,
   ].join("\n");
   logDecision({
     stage: "confirmed",
@@ -1365,4 +1373,39 @@ export async function persistir(args: {
     result: "ok",
   });
   return { status: "salva", gastoId: inseridos[0], resposta };
+}
+
+
+/** Grava fatura_competencia por parcela + mês de referência da compra. */
+export async function aplicarCompetenciasParcelas(
+  userId: string,
+  grupoId: string,
+  plano: {
+    mesReferenciaCompra: string;
+    dataCompra: string;
+    parcelas: Array<{ numero: number; competencia: string }>;
+  },
+): Promise<boolean> {
+  const [ano, mes] = plano.mesReferenciaCompra.split("-").map(Number);
+  let ok = true;
+  for (const p of plano.parcelas) {
+    try {
+      const { error } = await supabaseAdmin
+        .from("gastos")
+        .update({
+          fatura_competencia: p.competencia,
+          invoice_month: plano.mesReferenciaCompra,
+          data: plano.dataCompra,
+          mes,
+          ano,
+        })
+        .eq("user_id", userId)
+        .eq("grupo_parcelamento_id", grupoId)
+        .eq("parcela_atual", p.numero);
+      if (error) ok = false;
+    } catch {
+      ok = false;
+    }
+  }
+  return ok;
 }
