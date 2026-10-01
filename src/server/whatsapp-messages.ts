@@ -1,3 +1,4 @@
+import { CARD_NEW_FALLBACK } from "./whatsapp-cartao-messages";
 /**
  * Camada centralizada de textos do fluxo de gastos via WhatsApp do Gasto
  * Inteligente. Não muda regras de negócio, parser, sessão ou validações —
@@ -49,9 +50,10 @@ export const whatsappMessages = {
 
   avisoCartaoNaoCadastrado(digitado: string, valorFmt: string, nome: string, dataFmt: string) {
     return (
-      `Não encontrei "${digitado}" entre os seus cartões cadastrados.\n` +
-      `Sem problema — posso registrar como cartão não cadastrado e você ajusta depois na área Cartões.\n\n` +
-      `Confirma o gasto de ${valorFmt} em ${nome}, ${dataFmt}, pago com cartão não cadastrado? Responda sim ou não.`
+      `Não encontrei um cartão ${digitado} cadastrado. 💳\n\n` +
+      `Quer cadastrá-lo agora? Depois eu termino seu gasto de ${valorFmt} em ${nome}, ${dataFmt}.\n` +
+      `Se preferir, sigo com cartão não cadastrado e você ajusta depois na área Cartões.\n\n` +
+      CARD_NEW_FALLBACK
     );
   },
 

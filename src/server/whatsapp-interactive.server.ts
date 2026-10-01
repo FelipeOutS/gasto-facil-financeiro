@@ -9,6 +9,14 @@
  */
 import { FATURA_COMP_PREFIX } from "./whatsapp-fatura-escolha.server";
 import { EXPENSE_CONFIRM_FALLBACK } from "./whatsapp-messages";
+import {
+  CARD_CONFIRM_FALLBACK,
+  CARD_DUP_FALLBACK,
+  CARD_EDIT_FALLBACK,
+  CARD_EDIT_QUESTION,
+  CARD_NEW_FALLBACK,
+  CARD_POS_FALLBACK,
+} from "./whatsapp-cartao-messages";
 import { nomeMesYm } from "@/lib/fatura-competencia";
 
 export type InteractiveButtons = {
@@ -74,6 +82,22 @@ export const REPLY_ID_TEXT: Record<string, string> = {
   resumo_hoje: "quanto gastei hoje",
   resumo_semana: "resumo da semana",
   resumo_mes: "resumo do mês",
+  // Cadastro de cartão (Flow ou conversa). Cancelar → "não" para cancelar
+  // só o cadastro, sem cair no reinício geral da conversa.
+  card_reg_confirm: "cadastrar",
+  card_reg_adjust: "ajustar",
+  card_reg_cancel: "não",
+  card_reg_spend: "lançar gasto",
+  card_reg_later: "agora não",
+  card_dup_use: "usar existente",
+  card_dup_rename: "alterar nome",
+  card_edit_nome: "nome",
+  card_edit_limite: "limite",
+  card_edit_fechamento: "fechamento",
+  card_edit_vencimento: "vencimento",
+  // Gasto com cartão não cadastrado.
+  card_new_register: "cadastrar cartão",
+  card_new_continue: "sim",
 };
 
 /** Prefixo de ID para escolha de cartão: o resto é o rótulo mascarado. */
@@ -192,6 +216,59 @@ export function buildInteractiveFromReply(resposta: string): InteractiveReply | 
         ],
       };
     }
+  }
+
+  // Cadastro de cartão: blocos "Responda: ..." viram botões/lista.
+  const cardButtons: Array<[string, Array<{ id: string; title: string }>]> = [
+    [
+      CARD_CONFIRM_FALLBACK,
+      [
+        { id: "card_reg_confirm", title: "✅ Cadastrar" },
+        { id: "card_reg_adjust", title: "✏️ Ajustar" },
+        { id: "card_reg_cancel", title: "❌ Cancelar" },
+      ],
+    ],
+    [
+      CARD_DUP_FALLBACK,
+      [
+        { id: "card_dup_use", title: "💳 Usar existente" },
+        { id: "card_dup_rename", title: "✏️ Alterar nome" },
+        { id: "card_reg_cancel", title: "❌ Cancelar" },
+      ],
+    ],
+    [
+      CARD_POS_FALLBACK,
+      [
+        { id: "card_reg_spend", title: "➕ Lançar gasto" },
+        { id: "card_reg_later", title: "Agora não" },
+      ],
+    ],
+    [
+      CARD_NEW_FALLBACK,
+      [
+        { id: "card_new_register", title: "➕ Cadastrar cartão" },
+        { id: "card_new_continue", title: "➡️ Sem cadastrar" },
+        { id: "expense_cancel", title: "❌ Cancelar" },
+      ],
+    ],
+  ];
+  for (const [fallback, buttons] of cardButtons) {
+    if (body.includes(fallback)) {
+      return { type: "button", body: body.replace(fallback, "").trim(), buttons };
+    }
+  }
+  if (body.includes(CARD_EDIT_QUESTION) && body.includes(CARD_EDIT_FALLBACK)) {
+    return {
+      type: "list",
+      body: body.replace(CARD_EDIT_FALLBACK, "").trim(),
+      buttonText: "Escolher",
+      rows: [
+        { id: "card_edit_nome", title: "💳 Nome" },
+        { id: "card_edit_limite", title: "💰 Limite" },
+        { id: "card_edit_fechamento", title: "📅 Fechamento" },
+        { id: "card_edit_vencimento", title: "🗓️ Vencimento" },
+      ],
+    };
   }
 
   // Confirmação de gasto: Confirmar / Ajustar / Cancelar. O bloco
