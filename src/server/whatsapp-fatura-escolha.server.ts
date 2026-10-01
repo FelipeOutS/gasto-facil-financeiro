@@ -4,8 +4,10 @@
  * vai cair?"). Botão e texto convergem para `tratarEscolhaFatura`, então o
  * resultado financeiro é idêntico.
  *
- * Segurança: só atualiza gasto do próprio `userId`, origem WhatsApp, crédito,
- * sem cartão, ainda sem competência e criado nas últimas 2 horas.
+ * Segurança: só atualiza o gasto salvo pela ÚLTIMA mensagem deste mesmo
+ * telefone (que fez a pergunta), do próprio `userId`, origem WhatsApp,
+ * crédito, sem cartão, ainda sem competência e criado nas últimas 2 horas.
+ * Confere que exatamente 1 linha foi alterada.
  */
 import * as _supa from "@/integrations/supabase/client.server";
 import { addMonthsYm, isYm, nomeMesYm, ym } from "@/lib/fatura-competencia";
@@ -87,12 +89,34 @@ export function resolverCompetenciaEscolhida(
 
 type Pendente = { id: string; data: string };
 
-async function buscarGastoPendente(userId: string): Promise<Pendente | null> {
+/**
+ * Só existe escolha pendente quando a ÚLTIMA mensagem processada deste
+ * mesmo telefone (para este usuário) foi a que salvou o gasto e fez a
+ * pergunta. Qualquer outra conversa no meio encerra a pendência — assim
+ * nunca alteramos um gasto que não seja o da pergunta.
+ */
+async function buscarGastoPendente(userId: string, telefone: string): Promise<Pendente | null> {
   const desde = new Date(Date.now() - PENDENTE_JANELA_MS).toISOString();
   try {
+    const { data: ult } = await supabaseAdmin
+      .from("whatsapp_messages")
+      .select("gasto_id, resposta_sugerida")
+      .eq("user_id", userId)
+      .eq("telefone", telefone)
+      .gte("created_at", desde)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const last = Array.isArray(ult) ? ult[0] : null;
+    if (
+      !last?.gasto_id ||
+      !String(last.resposta_sugerida ?? "").includes("Em qual fatura essa compra vai cair?")
+    ) {
+      return null;
+    }
     const { data } = await supabaseAdmin
       .from("gastos")
       .select("id, data, created_at")
+      .eq("id", last.gasto_id)
       .eq("user_id", userId)
       .eq("origem", "whatsapp")
       .eq("forma_pagamento", "credito")
@@ -115,11 +139,12 @@ async function buscarGastoPendente(userId: string): Promise<Pendente | null> {
  */
 export async function tratarEscolhaFatura(
   userId: string,
+  telefone: string,
   texto: string,
 ): Promise<{ gastoId: string; resposta: string } | null> {
   const parsed = parseEscolhaFatura(texto);
   if (!parsed) return null;
-  const pend = await buscarGastoPendente(userId);
+  const pend = await buscarGastoPendente(userId, telefone);
   if (!pend) return null;
   if (parsed.kind === "outro") {
     return {
@@ -129,13 +154,14 @@ export async function tratarEscolhaFatura(
   }
   const comp = resolverCompetenciaEscolhida(parsed, pend.data);
   if (!comp) return null;
-  const { error } = await supabaseAdmin
+  const { data: upd, error } = await supabaseAdmin
     .from("gastos")
     .update({ fatura_competencia: comp })
     .eq("id", pend.id)
     .eq("user_id", userId)
-    .is("fatura_competencia", null);
-  if (error) {
+    .is("fatura_competencia", null)
+    .select("id");
+  if (error || !Array.isArray(upd) || upd.length !== 1) {
     return { gastoId: pend.id, resposta: "Não consegui salvar a fatura agora. Pode tentar de novo?" };
   }
   return {

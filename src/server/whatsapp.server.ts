@@ -2754,7 +2754,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   // caem na MESMA função → mesmo resultado financeiro. Texto só é tratado
   // quando há um gasto pendente dessa escolha (senão segue como consulta).
   {
-    const escolha = await tratarEscolhaFatura(userId, texto);
+    const escolha = await tratarEscolhaFatura(userId, msg.telefone, texto);
     if (escolha) {
       logWaRouteDecision(msg, "fatura_escolha", "fatura_competencia_choice");
       return { status: "salva", gastoId: escolha.gastoId, resposta: escolha.resposta };
