@@ -555,6 +555,37 @@ export async function getFaturaPorMes(
   };
 }
 
+/**
+ * Fatura de um cartão pela COMPETÊNCIA (mês do vencimento, "YYYY-MM").
+ * É o que o usuário quer dizer com "fatura de novembro".
+ */
+export async function getFaturaPorCompetencia(
+  userId: string,
+  cartao: CartaoRow,
+  competencia: string,
+): Promise<FaturaAtual | null> {
+  if (!isYm(competencia)) return null;
+  const ciclo = competenciaParaCiclo(
+    competencia,
+    Number(cartao.dia_fechamento ?? 1) || 1,
+    Number(cartao.dia_vencimento ?? 10) || 10,
+  );
+  return getFaturaPorMes(userId, cartao, ciclo);
+}
+
+export async function getResumoFaturasPorCompetencia(
+  userId: string,
+  competencia: string,
+): Promise<FaturaAtual[]> {
+  const cartoes = await loadCartoesDoUsuario(userId);
+  const out: FaturaAtual[] = [];
+  for (const c of cartoes) {
+    const f = await getFaturaPorCompetencia(userId, c, competencia);
+    if (f) out.push(f);
+  }
+  return out;
+}
+
 /** Resumo consolidado de faturas estimadas por mês (todos os cartões). */
 export async function getResumoFaturasPorMes(
   userId: string,
