@@ -20,6 +20,7 @@
  * quanto em futuros pontos do site.
  */
 import { faturaCorrenteRef, nowInAppTz } from "./cartao-fatura.server";
+import { offsetVencimento } from "@/lib/fatura-competencia";
 
 export const MIN_PARCELAS = 2;
 export const MAX_PARCELAS = 48;
@@ -35,6 +36,8 @@ export type ParcelaItem = {
   data: string;
   mes: number;
   ano: number;
+  /** Competência da fatura desta parcela (YYYY-MM do VENCIMENTO). */
+  competencia: string;
 };
 
 export type PlanoParcelamento = {
@@ -42,6 +45,10 @@ export type PlanoParcelamento = {
   /** Total em reais (R$), com 2 casas. */
   total: number;
   parcelas: ParcelaItem[];
+  /** Mês de referência da COMPRA original (YYYY-MM) — igual para todas as parcelas. */
+  mesReferenciaCompra: string;
+  /** Data real da compra (YYYY-MM-DD). */
+  dataCompra: string;
 };
 
 /**
@@ -121,6 +128,7 @@ export function criarPlanoParcelamento(args: {
   totalReais: number;
   totalParcelas: number;
   diaFechamentoCartao: number;
+  diaVencimentoCartao?: number | null;
   dataCompra?: Date;
 }): PlanoParcelamento {
   const total = Number(args.totalReais);
@@ -134,7 +142,12 @@ export function criarPlanoParcelamento(args: {
     diaFechamento: args.diaFechamentoCartao,
     dataCompra: args.dataCompra,
   });
-  const baseDay = (args.dataCompra ?? nowInAppTz()).getDate();
+  const compraDate = args.dataCompra ?? nowInAppTz();
+  const baseDay = compraDate.getDate();
+  const offset = offsetVencimento(
+    Math.max(1, Math.min(28, args.diaFechamentoCartao || 1)),
+    args.diaVencimentoCartao ?? 10,
+  );
   const parcelas: ParcelaItem[] = centavos.map((c, i) => {
     const ym = i === 0 ? primeiraYm : addMonthsToYm(primeiraYm, i);
     const data = dataForInvoiceMonth(ym, baseDay);
@@ -146,6 +159,7 @@ export function criarPlanoParcelamento(args: {
       data,
       mes: m,
       ano: y,
+      competencia: addMonthsToYm(ym, offset),
     };
   });
   // Sanity check: soma exata.
@@ -157,6 +171,8 @@ export function criarPlanoParcelamento(args: {
     totalParcelas: n,
     total: centavosParaReais(totalCentavos),
     parcelas,
+    mesReferenciaCompra: `${compraDate.getFullYear()}-${String(compraDate.getMonth() + 1).padStart(2, "0")}`,
+    dataCompra: `${compraDate.getFullYear()}-${String(compraDate.getMonth() + 1).padStart(2, "0")}-${String(baseDay).padStart(2, "0")}`,
   };
 }
 

@@ -21,6 +21,7 @@ mock.module("@/integrations/supabase/client", () => ({
   },
 }));
 const store = await import("../src/lib/store");
+const { competenciaParaCiclo } = await import("../src/lib/fatura-competencia");
 const { buildResumoMensal } = await import("../src/lib/relatorios");
 const { sumValores } = await import("../src/lib/gastos-export");
 const input = {
@@ -61,7 +62,15 @@ for (const [total, n] of [
     expect(writes.map((r) => r.valor)).toEqual(created.map((r) => r.valor));
     expect(writes.reduce((s, r) => s + Math.round(r.valor * 100), 0)).toBe(Math.round(total * 100));
     expect(sumValores(created.map((r) => r.valor))).toBe(total);
-    const summaryCents = created.reduce(
+    // Decisão 3 (01/10/2026): todas as parcelas ficam no mês da COMPRA em
+    // Gastos/Dashboard; cada uma vai para a sua fatura (fatura_competencia).
+    const meses = [...new Map(created.map((g) => [`${g.ano}-${g.mes}`, g])).values()];
+    expect(meses).toHaveLength(1);
+    const ciclos = [
+      ...new Set(created.map((g) => competenciaParaCiclo(g.faturaCompetencia!, 5, 10))),
+    ];
+    expect(ciclos).toHaveLength(n);
+    const summaryCents = meses.reduce(
       (s, g) =>
         s +
         Math.round(
@@ -78,12 +87,12 @@ for (const [total, n] of [
       0,
     );
     expect(summaryCents).toBe(Math.round(total * 100));
-    const invoiceCents = created.reduce(
-      (s, g) => s + Math.round(store.resumoFaturaPorMes(input.cartaoId, g.mes, g.ano).total * 100),
-      0,
-    );
+    const invoiceCents = ciclos.reduce((s, c) => {
+      const [a, m] = c.split("-").map(Number);
+      return s + Math.round(store.resumoFaturaPorMes(input.cartaoId, m, a).total * 100);
+    }, 0);
     expect(invoiceCents).toBe(Math.round(total * 100));
-    const dashboardCents = created.reduce(
+    const dashboardCents = meses.reduce(
       (s, g) =>
         s +
         Math.round(
@@ -95,7 +104,11 @@ for (const [total, n] of [
   });
 test("dates and group metadata are preserved", () => {
   const rows = store.addGasto(input);
-  expect(rows.map((r) => r.data)).toEqual(["2026-01-31", "2026-02-28", "2026-03-31"]);
+  // Data e mês de referência da compra original em todas as parcelas.
+  expect(rows.map((r) => r.data)).toEqual(["2026-01-31", "2026-01-31", "2026-01-31"]);
+  expect(rows.map((r) => r.invoiceMonth)).toEqual(["2026-01", "2026-01", "2026-01"]);
+  // fecha 5 / vence 10: compra 31/01 vence em fevereiro, depois março e abril.
+  expect(rows.map((r) => r.faturaCompetencia)).toEqual(["2026-02", "2026-03", "2026-04"]);
   expect(rows.map((r) => r.parcelaAtual)).toEqual([1, 2, 3]);
   expect(new Set(rows.map((r) => r.grupoParcelamentoId)).size).toBe(1);
 });

@@ -24,6 +24,8 @@ import {
   nowInAppTz,
   // WA-F4 — faturas futuras e parcelas em aberto.
   getFaturaPorMes,
+  getFaturaPorCompetencia,
+  getResumoFaturasPorCompetencia,
   getResumoFaturasPorMes,
   getComprasParceladasEmAberto,
   getDetalheCompraParcelada,
@@ -1046,7 +1048,7 @@ export async function handleFutureFaturaIntent(
   hoje: Date = nowInAppTz(),
 ): Promise<FutureFaturaResult> {
   if (intent.kind === "future_invoice_total") {
-    const resumos = await getResumoFaturasPorMes(userId, intent.invoiceMonth);
+    const resumos = await getResumoFaturasPorCompetencia(userId, intent.invoiceMonth);
     const ativos = resumos.filter((f) => f.total > 0);
     if (ativos.length === 0) {
       const out: FutureFaturaResult = { status: "no_future_data", resposta: noFutureDataMsg() };
@@ -1065,7 +1067,7 @@ export async function handleFutureFaturaIntent(
       .sort((a, b) => b.total - a.total)
       .map((f) => `• ${f.cartaoNome}: ${formatBRL_F4(f.total)}`);
     const corpo =
-      `Sua próxima fatura estimada de ${monthName} está em ${formatBRL_F4(total)}.\n\n` +
+      `Sua fatura estimada de ${monthName} (mês do vencimento) está em ${formatBRL_F4(total)}.\n\n` +
       linhas.join("\n") +
       `\n\nEsse valor pode mudar conforme novas compras forem registradas.`;
     const out: FutureFaturaResult = { status: "answered", resposta: corpo };
@@ -1108,7 +1110,7 @@ export async function handleFutureFaturaIntent(
       });
       return out;
     }
-    const f = await getFaturaPorMes(userId, matches[0], intent.invoiceMonth);
+    const f = await getFaturaPorCompetencia(userId, matches[0], intent.invoiceMonth);
     if (!f || f.total <= 0) {
       const out: FutureFaturaResult = { status: "no_future_data", resposta: noFutureDataMsg() };
       logFutureQuery({
@@ -1270,7 +1272,7 @@ async function renderInstallmentDetail(
   linhas.push(`• Parcelas restantes: ${compra.parcelasRestantes.length}`);
   linhas.push(`• Saldo previsto restante: ${formatBRL_F4(compra.saldoRestante)}`);
   if (proxima) {
-    const ymKey = proxima.invoiceMonth ?? proxima.data.slice(0, 7);
+    const ymKey = proxima.competencia ?? proxima.invoiceMonth ?? proxima.data.slice(0, 7);
     const parsed = parseInvoiceMonth(ymKey);
     const mesNome = parsed ? monthLabel(parsed.mes) : "";
     linhas.push(

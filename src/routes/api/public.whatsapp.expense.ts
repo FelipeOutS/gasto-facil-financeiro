@@ -1,4 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import {
+  buildInteractiveFromReply,
+  replyIdToTexto,
+  toGraphInteractive,
+} from "@/server/whatsapp-interactive.server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { z } from "zod";
 import {
@@ -6,6 +11,7 @@ import {
   processarMensagemWhatsApp,
   sendWhatsAppReply,
   sendWhatsAppInteractiveCtaUrl,
+  sendWhatsAppInteractiveReply,
   WHATSAPP_HANDLER_VERSION,
 } from "@/server/whatsapp.server";
 import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
@@ -237,8 +243,29 @@ const MetaDocumentMessage = z.object({
     caption: z.string().max(1000).optional(),
   }),
 });
+// Respostas de botões/listas (Cloud API `interactive`).
+const MetaInteractiveMessage = z.object({
+  id: z.string().min(1).max(256),
+  from: z.string().min(5).max(40).regex(/^\d+$/),
+  timestamp: z.string().min(1).max(20).regex(/^\d+$/),
+  type: z.literal("interactive"),
+  interactive: z.object({
+    type: z.enum(["button_reply", "list_reply"]),
+    button_reply: z
+      .object({ id: z.string().min(1).max(256), title: z.string().max(100).optional() })
+      .optional(),
+    list_reply: z
+      .object({
+        id: z.string().min(1).max(256),
+        title: z.string().max(100).optional(),
+        description: z.string().max(200).optional(),
+      })
+      .optional(),
+  }),
+});
 const MetaAnyMessage = z.union([
   MetaTextMessage,
+  MetaInteractiveMessage,
   MetaImageMessage,
   MetaAudioMessage,
   MetaDocumentMessage,
@@ -267,6 +294,8 @@ type FlatMessage = {
   telefone: string;
   texto: string;
   recebida_em?: string;
+  /** ID estável do botão/linha quando a mensagem veio de interactive. */
+  replyId?: string;
   image?: {
     mediaId: string;
     mimeType?: string;
@@ -300,6 +329,20 @@ function extractIncomingMessages(payload: z.infer<typeof MetaPayload>): FlatMess
             telefone: t.data.from,
             texto: t.data.text.body,
             recebida_em: new Date(Number(t.data.timestamp) * 1000).toISOString(),
+          });
+          continue;
+        }
+        const ia = MetaInteractiveMessage.safeParse(m);
+        if (ia.success) {
+          const r = ia.data.interactive.button_reply ?? ia.data.interactive.list_reply;
+          if (!r) continue;
+          out.push({
+            external_id: ia.data.id,
+            telefone: ia.data.from,
+            // Mesmo texto que a pessoa digitaria → mesmo resultado financeiro.
+            texto: replyIdToTexto(r.id, r.title),
+            replyId: r.id,
+            recebida_em: new Date(Number(ia.data.timestamp) * 1000).toISOString(),
           });
           continue;
         }
@@ -1068,6 +1111,20 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                 if (out.interactive) {
                   const r = await sendWhatsAppInteractiveCtaUrl(msg.telefone, out.interactive);
                   sentOk = r.sent;
+                } else {
+                  // Botões/listas para perguntas conhecidas. Falhou → texto.
+                  const ir = buildInteractiveFromReply(out.resposta);
+                  if (ir) {
+                    try {
+                      const r = await sendWhatsAppInteractiveReply(
+                        msg.telefone,
+                        toGraphInteractive(ir),
+                      );
+                      sentOk = r.sent;
+                    } catch {
+                      sentOk = false;
+                    }
+                  }
                 }
                 if (!sentOk) {
                   await sendWhatsAppReply(msg.telefone, out.resposta);

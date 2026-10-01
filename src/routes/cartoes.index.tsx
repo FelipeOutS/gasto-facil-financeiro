@@ -1,3 +1,4 @@
+import { cicloParaCompetencia } from "@/lib/fatura-competencia";
 import { createFileRoute } from "@tanstack/react-router";
 import { EditGastoDialog } from "@/components/EditGastoDialog";
 import { GastoForm } from "@/components/GastoForm";
@@ -1556,8 +1557,15 @@ export function FaturaSheet({
 
   async function handleAddCompra(data: NovoGastoInput) {
     if (!(await requireOnline())) return;
-    const invoiceMonth = `${ref.ano}-${String(ref.mes).padStart(2, "0")}`;
-    addGasto({ ...data, formaPagamento: "credito", cartaoId: cartao!.id, invoiceMonth });
+    // Compra adicionada DENTRO desta fatura: a competência é a da fatura
+    // aberta na tela; o mês de referência do gasto continua sendo o da compra.
+    const ciclo = `${ref.ano}-${String(ref.mes).padStart(2, "0")}`;
+    const faturaCompetencia = cicloParaCompetencia(
+      ciclo,
+      cartao!.diaFechamento,
+      cartao!.diaVencimento,
+    );
+    addGasto({ ...data, formaPagamento: "credito", cartaoId: cartao!.id, faturaCompetencia });
     toast.success(t("toast.purchaseAdded"));
     setOpenAdd(false);
   }
