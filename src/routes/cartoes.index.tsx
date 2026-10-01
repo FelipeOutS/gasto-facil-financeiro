@@ -478,23 +478,33 @@ function CartoesPage() {
               label={t("v3.summary.available")}
               value={<Money value={resumo.disponivel} className="text-xl" />}
             />
-            <AppSummaryCard
-              tone="contas"
-              icon={<CalendarDays className="h-4 w-4" />}
-              label={t("v3.summary.openInvoices")}
-              value={
-                resumo.proxima && resumo.proximaData
-                  ? `${String(resumo.proximaData.getDate()).padStart(2, "0")}/${String(resumo.proximaData.getMonth() + 1).padStart(2, "0")}`
-                  : "—"
-              }
-              hint={
-                resumo.proxima && resumo.proximaDias !== null
-                  ? resumo.proximaDias === 0
-                    ? t("summary.dueToday")
-                    : t("summary.dueDays", { count: resumo.proximaDias })
-                  : t("summary.noPending")
-              }
-            />
+            {faturaSel ? (
+              <AppSummaryCard
+                tone="contas"
+                icon={<CalendarDays className="h-4 w-4" />}
+                label={t("card.currentInvoice")}
+                value={<Money value={faturaSel.total} className="text-xl" />}
+                hint={`${t("card.closes")} ${faturaSel.fecha} · ${t("card.dueOn")} ${faturaSel.vence}`}
+              />
+            ) : (
+              <AppSummaryCard
+                tone="contas"
+                icon={<CalendarDays className="h-4 w-4" />}
+                label={t("v3.summary.openInvoices")}
+                value={
+                  resumo.proxima && resumo.proximaData
+                    ? `${String(resumo.proximaData.getDate()).padStart(2, "0")}/${String(resumo.proximaData.getMonth() + 1).padStart(2, "0")}`
+                    : "—"
+                }
+                hint={
+                  resumo.proxima && resumo.proximaDias !== null
+                    ? resumo.proximaDias === 0
+                      ? t("summary.dueToday")
+                      : t("summary.dueDays", { count: resumo.proximaDias })
+                    : t("summary.noPending")
+                }
+              />
+            )}
           </section>
 
           {/* Microcopy de segurança */}
