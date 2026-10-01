@@ -22,6 +22,12 @@
  * de outro usuário.
  */
 import * as _supa from "@/integrations/supabase/client.server";
+import {
+  cicloParaCompetencia,
+  competenciaDoGasto,
+  competenciaParaCiclo,
+  isYm,
+} from "@/lib/fatura-competencia";
 
 // Lazy live-binding: garante que mock.module() em testes seja
 // resolvido a cada chamada, sem snapshot no escopo de módulo.
@@ -42,8 +48,10 @@ export type CartaoRow = {
 export type FaturaAtual = {
   cartaoId: string;
   cartaoNome: string;
-  mesRef: number; // 1-12
+  mesRef: number; // 1-12 (ciclo legado — chave interna)
   anoRef: number;
+  /** Competência da fatura = mês do VENCIMENTO (YYYY-MM). Use para exibir. */
+  competencia: string;
   total: number;
   limite: number;
   disponivel: number;
@@ -191,6 +199,7 @@ export async function getFaturaAtualPorCartao(
   const { mes, ano } = faturaCorrenteRef(diaFech, hoje);
   const { inicio, fim } = cicloFatura(diaFech, mes, ano);
   const targetYm = ymOf(mes, ano);
+  const targetComp = cicloParaCompetencia(targetYm, diaFech, diaVenc);
 
   // Janela ampla para apanhar tanto gastos com invoice_month manual quanto
   // por data dentro do ciclo. Filtramos em memória pelas regras finas.
@@ -198,18 +207,21 @@ export async function getFaturaAtualPorCartao(
   const toIso = new Date(fim.getTime() + 24 * 3600 * 1000).toISOString().slice(0, 10);
   const { data } = await supabaseAdmin
     .from("gastos")
-    .select("valor, data, cartao_id, invoice_month, forma_pagamento, confirmado")
+    .select("valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado")
     .eq("user_id", userId)
     .eq("cartao_id", cartao.id)
     .gte("data", fromIso)
     .lt("data", toIso);
+  const extra = await fetchPorCompetencia(userId, cartao.id, targetComp, SEL_RESUMO);
 
-  const rows = Array.isArray(data)
+  const rows = mergeById(data, extra) as unknown as Array<any>;
+  void (Array.isArray(data)
     ? (data as Array<{
         valor: number | string | null;
         data: string;
         cartao_id: string | null;
         invoice_month: string | null;
+        fatura_competencia?: string | null;
         forma_pagamento: string | null;
         confirmado: boolean | null;
       }>)
@@ -221,14 +233,7 @@ export async function getFaturaAtualPorCartao(
     if (g.cartao_id !== cartao.id) continue;
     if ((g.forma_pagamento ?? "") !== "credito") continue;
     if (g.confirmado === false) continue;
-    const im = g.invoice_month;
-    if (im && /^\d{4}-\d{2}$/.test(im)) {
-      if (im !== targetYm) continue;
-    } else {
-      const d = g.data ? new Date(g.data + "T00:00:00") : null;
-      if (!d) continue;
-      if (d < inicio || d > fim) continue;
-    }
+    if (competenciaDoGasto(g, diaFech, diaVenc) !== targetComp) continue;
     total += Number(g.valor ?? 0) || 0;
     qtd += 1;
   }
@@ -304,16 +309,18 @@ export async function getItensFaturaAtualPorCartao(
   hoje: Date = nowInAppTz(),
 ): Promise<ItemFatura[]> {
   const diaFech = Number(cartao.dia_fechamento ?? 1) || 1;
+  const diaVenc = Number(cartao.dia_vencimento ?? 10) || 10;
   const { mes, ano } = faturaCorrenteRef(diaFech, hoje);
   const { inicio, fim } = cicloFatura(diaFech, mes, ano);
   const targetYm = ymOf(mes, ano);
+  const targetComp = cicloParaCompetencia(targetYm, diaFech, diaVenc);
 
   const fromIso = inicio.toISOString().slice(0, 10);
   const toIso = new Date(fim.getTime() + 24 * 3600 * 1000).toISOString().slice(0, 10);
   const { data } = await supabaseAdmin
     .from("gastos")
     .select(
-      "id, descricao, estabelecimento, valor, data, cartao_id, invoice_month, forma_pagamento, confirmado, parcela_atual, total_parcelas",
+      "id, descricao, estabelecimento, valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado, parcela_atual, total_parcelas",
     )
     .eq("user_id", userId)
     .eq("cartao_id", cartao.id)
@@ -329,6 +336,7 @@ export async function getItensFaturaAtualPorCartao(
         data: string;
         cartao_id: string | null;
         invoice_month: string | null;
+        fatura_competencia?: string | null;
         forma_pagamento: string | null;
         confirmado: boolean | null;
         parcela_atual: number | null;
@@ -341,14 +349,7 @@ export async function getItensFaturaAtualPorCartao(
     if (g.cartao_id !== cartao.id) continue;
     if ((g.forma_pagamento ?? "") !== "credito") continue;
     if (g.confirmado === false) continue;
-    const im = g.invoice_month;
-    if (im && /^\d{4}-\d{2}$/.test(im)) {
-      if (im !== targetYm) continue;
-    } else {
-      const d = g.data ? new Date(g.data + "T00:00:00") : null;
-      if (!d) continue;
-      if (d < inicio || d > fim) continue;
-    }
+    if (competenciaDoGasto(g, diaFech, diaVenc) !== targetComp) continue;
     // Só consideramos parcela "confiável" quando AMBOS parcela_atual e
     // total_parcelas vierem preenchidos com inteiros consistentes
     // (1 <= atual <= total). Nunca inferimos parcelamento pelo nome,
@@ -423,6 +424,7 @@ export async function getFaturaPorMes(
   const diaFech = Number(cartao.dia_fechamento ?? 1) || 1;
   const diaVenc = Number(cartao.dia_vencimento ?? 10) || 10;
   const { mes, ano, ym: targetYm } = parsed;
+  const targetComp = cicloParaCompetencia(targetYm, diaFech, diaVenc);
   const { inicio, fim } = cicloFatura(diaFech, mes, ano);
 
   const fromIso = inicio.toISOString().slice(0, 10);
@@ -436,14 +438,14 @@ export async function getFaturaPorMes(
   // deduplicamos por id.
   const { data: byDate } = await supabaseAdmin
     .from("gastos")
-    .select("id, valor, data, cartao_id, invoice_month, forma_pagamento, confirmado")
+    .select("id, valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado")
     .eq("user_id", userId)
     .eq("cartao_id", cartao.id)
     .gte("data", fromIso)
     .lt("data", toIso);
   const { data: byYm } = await supabaseAdmin
     .from("gastos")
-    .select("id, valor, data, cartao_id, invoice_month, forma_pagamento, confirmado")
+    .select("id, valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado")
     .eq("user_id", userId)
     .eq("cartao_id", cartao.id)
     .eq("invoice_month", targetYm);
@@ -454,6 +456,7 @@ export async function getFaturaPorMes(
     data: string;
     cartao_id: string | null;
     invoice_month: string | null;
+    fatura_competencia?: string | null;
     forma_pagamento: string | null;
     confirmado: boolean | null;
   };
@@ -472,14 +475,7 @@ export async function getFaturaPorMes(
     if (g.cartao_id !== cartao.id) continue;
     if ((g.forma_pagamento ?? "") !== "credito") continue;
     if (g.confirmado === false) continue;
-    const im = g.invoice_month;
-    if (im && /^\d{4}-\d{2}$/.test(im)) {
-      if (im !== targetYm) continue;
-    } else {
-      const d = g.data ? new Date(g.data + "T00:00:00") : null;
-      if (!d) continue;
-      if (d < inicio || d > fim) continue;
-    }
+    if (competenciaDoGasto(g, diaFech, diaVenc) !== targetComp) continue;
     total += Number(g.valor ?? 0) || 0;
     qtd += 1;
   }
@@ -560,7 +556,7 @@ async function loadParcelasDoUsuario(userId: string): Promise<ParcelaRow[]> {
   const { data } = await supabaseAdmin
     .from("gastos")
     .select(
-      "id, descricao, estabelecimento, valor, data, invoice_month, forma_pagamento, confirmado, parcela_atual, total_parcelas, grupo_parcelamento_id, cartao_id",
+      "id, descricao, estabelecimento, valor, data, invoice_month, fatura_competencia, forma_pagamento, confirmado, parcela_atual, total_parcelas, grupo_parcelamento_id, cartao_id",
     )
     .eq("user_id", userId);
   const rows = Array.isArray(data) ? (data as Array<Record<string, unknown>>) : [];
