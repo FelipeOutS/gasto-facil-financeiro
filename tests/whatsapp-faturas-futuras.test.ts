@@ -289,19 +289,21 @@ describe("WA-F4 — handleFutureFaturaIntent (consolidado e por cartão)", () =>
   it("consolida próxima fatura somando cartões", async () => {
     const r = await handleFutureFaturaIntent(
       "u1",
-      { kind: "future_invoice_total", invoiceMonth: "2026-08" },
+      // Decisão A (01/10/2026): "fatura de setembro" = fatura que VENCE em
+      // setembro = ciclo legado 2026-08 desses cartões (fecha 1, vence 10/15).
+      { kind: "future_invoice_total", invoiceMonth: "2026-09" },
       HOJE,
     );
     expect(r.status).toBe("answered");
     expect(r.resposta).toContain("Nubank");
     expect(r.resposta).toContain("Inter");
-    expect(r.resposta.toLowerCase()).toContain("agosto");
+    expect(r.resposta.toLowerCase()).toContain("setembro");
   });
 
   it("por cartão (Nubank) mostra apenas o cartão pedido", async () => {
     const r = await handleFutureFaturaIntent(
       "u1",
-      { kind: "future_invoice_card", termo: "nubank", invoiceMonth: "2026-08" },
+      { kind: "future_invoice_card", termo: "nubank", invoiceMonth: "2026-09" },
       HOJE,
     );
     expect(r.status).toBe("answered");
