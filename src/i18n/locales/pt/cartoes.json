@@ -71,7 +71,8 @@
     "dueDay": "vence dia {{day}}",
     "today": "hoje",
     "tomorrow": "amanhã",
-    "daysShort": "{{count}}d"
+    "daysShort": "Em {{count}} dias",
+    "dueDayCap": "Vence dia {{day}}"
   },
   "recent": {
     "title": "Últimas compras no crédito",

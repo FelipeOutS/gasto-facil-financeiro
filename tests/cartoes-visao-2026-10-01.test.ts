@@ -83,3 +83,19 @@ describe("Cartões — visão geral × cartão selecionado", () => {
     expect(totaisDaVisao(semBanco, resumos, "nu")).toEqual(totaisDaVisao(cartoes, resumos, "nu"));
   });
 });
+
+describe("Próximos vencimentos — seleção pelo item", () => {
+  test("clicar no item muda a visão para aquele cartão", () => {
+    let visao: string = VISAO_GERAL;
+    const onSelect = (id: string) => (visao = id);
+    const item = vencimentosDaVisao(cartoes, faturas, visao, dias).find((v) => v.cartao.id === "nu")!;
+    onSelect(item.cartao.id);
+    expect(visao).toBe("nu");
+    expect(vencimentosDaVisao(cartoes, faturas, visao, dias).map((v) => v.cartao.id)).toEqual(["nu"]);
+    expect(totaisDaVisao(cartoes, resumos, visao).limite).toBe(5000);
+  });
+  test("valor exibido no item é o pendente da fatura do próprio cartão", () => {
+    expect(faturas.get("nu")!.pendente).toBe(56);
+    expect(faturas.get("mp")!.pendente).toBe(297);
+  });
+});

@@ -723,36 +723,46 @@ body {
   max-height: 22px;
 }
 
-/* Colored logos inside a white pill: shrink pill in compact containers */
-.bank-logo-container.bank-logo-sm .bank-logo-pill {
-  height: 28px;
-  padding: 2px 6px;
+/* Card brand marks: one rule for every bank logo on card surfaces.
+   Colored SVGs become a light monochrome mark (same weight as white ones). */
+.bank-logo-mono {
+  filter: brightness(0) invert(1);
 }
-.bank-logo-container.bank-logo-sm .bank-logo-pill > img {
-  height: 18px;
-}
+/* Square brand tile (chips, due-date list): fixed box, centered mark. */
+.bank-logo-container.bank-logo-sm,
 .bank-logo-container.bank-logo-xs {
-  width: 24px;
-  height: 24px;
-  max-width: 24px;
-  max-height: 24px;
   justify-content: center;
 }
-.bank-logo-container.bank-logo-xs > img {
+.bank-logo-container.bank-logo-sm {
+  width: 34px;
+  height: 22px;
+  max-width: 34px;
+  max-height: 22px;
+}
+.bank-logo-container.bank-logo-sm > img {
+  max-width: 34px;
+  max-height: 18px;
+  object-position: center;
+}
+.bank-logo-container.bank-logo-xs {
+  width: 20px;
+  height: 14px;
   max-width: 20px;
   max-height: 14px;
 }
-.bank-logo-container.bank-logo-xs .bank-logo-pill {
-  height: 20px;
-  padding: 1px 3px;
+.bank-logo-container.bank-logo-xs > img {
+  max-width: 20px;
+  max-height: 12px;
+  object-position: center;
 }
-.bank-logo-container.bank-logo-xs .bank-logo-pill > img {
-  height: 14px;
-}
-.bank-logo-container.bank-logo-xs > span:not(.bank-logo-pill) {
-  width: 24px;
-  height: 24px;
-  font-size: 10px;
+.bank-logo-container.bank-logo-sm > span,
+.bank-logo-container.bank-logo-xs > span {
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  font-size: 11px;
+  box-shadow: none;
+  background: transparent !important;
 }
 
 /* Hide scrollbar utility for horizontal pill rows */
