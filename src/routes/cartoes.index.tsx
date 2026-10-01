@@ -242,14 +242,16 @@ function CartoesPage() {
     return map;
   }, [cartoes, resumosPorCartao]);
 
+  // Visão da página: "geral" (agregado) ou um cartão selecionado.
+  const [visaoRaw, setVisao] = useState<VisaoCartoes | null>(null);
+  const visao: VisaoCartoes = visaoRaw === null ? visaoInicial(cartoes) : normalizarVisao(visaoRaw, cartoes);
+  const cartaoSelecionado = visao === VISAO_GERAL ? null : (cartoes.find((c) => c.id === visao) ?? null);
+
   const resumo = useMemo(() => {
-    const limiteTotal = cartoes.reduce((s, c) => s + (c.limiteTotal || 0), 0);
-    let usado = 0;
+    const tot = totaisDaVisao(cartoes, resumosPorCartao, visao);
     let proxima: Cartao | null = null;
     let proximaDias = Infinity;
-    for (const c of cartoes) {
-      const r = resumosPorCartao.get(c.id);
-      if (r) usado += r.usadoMes;
+    for (const c of cartoesDaVisao(cartoes, visao)) {
       const f = faturaCorrentePorCartao.get(c.id);
       // Só concorre como "próxima fatura" se ainda houver pendência.
       if (c.diaVencimento && f && f.status !== "paga" && f.pendente > 0) {
@@ -272,36 +274,30 @@ function CartoesPage() {
       proximaValor = faturaCorrentePorCartao.get(proxima.id)?.pendente ?? 0;
     }
     return {
-      limiteTotal,
-      usado,
-      disponivel: Math.max(0, limiteTotal - usado),
+      limiteTotal: tot.limite,
+      usado: tot.usado,
+      disponivel: tot.disponivel,
       proxima,
       proximaDias: proxima ? proximaDias : null,
       proximaData,
       proximaValor,
     };
-  }, [cartoes, resumosPorCartao, faturaCorrentePorCartao]);
+  }, [cartoes, resumosPorCartao, faturaCorrentePorCartao, visao]);
 
   // Próximos vencimentos — esconde faturas já pagas (sem pendência).
-  const proximosVencimentos = useMemo(() => {
-    return cartoes
-      .filter((c) => {
-        if (!c.diaVencimento) return false;
-        const f = faturaCorrentePorCartao.get(c.id);
-        return !!f && f.status !== "paga" && f.pendente > 0;
-      })
-      .map((c) => ({ cartao: c, dias: diasAte(c.diaVencimento) }))
-      .sort((a, b) => a.dias - b.dias)
-      .slice(0, 4);
-  }, [cartoes, faturaCorrentePorCartao]);
+  const proximosVencimentos = useMemo(
+    () => vencimentosDaVisao(cartoes, faturaCorrentePorCartao, visao, (d) => diasAte(d)),
+    [cartoes, faturaCorrentePorCartao, visao],
+  );
 
   // Últimas compras no crédito (top 4 — botão Ver todas leva a /gastos)
-  const ultimasComprasAll = useMemo(() => {
-    return gastos
-      .filter((g) => g.formaPagamento === "credito" && g.cartaoId)
-      .sort((a, b) => (a.data < b.data ? 1 : -1));
-  }, [gastos]);
+  const ultimasComprasAll = useMemo(() => comprasDaVisao(gastos, visao), [gastos, visao]);
   const ultimasCompras = useMemo(() => ultimasComprasAll.slice(0, 4), [ultimasComprasAll]);
+
+  const seletorVisao =
+    cartoes.length > 1 ? (
+      <VisaoSelector cartoes={cartoes} visao={visao} onChange={setVisao} />
+    ) : null;
 
   const isMobile = useIsMobile();
   function handleOpenNew() {
