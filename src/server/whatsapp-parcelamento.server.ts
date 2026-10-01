@@ -1203,13 +1203,18 @@ export async function persistir(args: {
   // pertence ao user, categoria pertence ao user, soma > 0, parcelas
   // 1..N sem furos, invoice_month YYYY-MM). Falha em qualquer validação
   // não insere nenhuma parcela.
+  // 01/10/2026 — todas as parcelas carregam data/mês da COMPRA original
+  // (Gastos/Dashboard) e a competência da sua fatura, gravadas na MESMA
+  // transação do RPC (sem atualização posterior).
+  const [anoCompra, mesCompra] = plano.mesReferenciaCompra.split("-").map(Number);
   const parcelasPayload = plano.parcelas.map((p) => ({
     numero: p.numero,
     valor: p.valor,
-    data: p.data,
-    mes: p.mes,
-    ano: p.ano,
-    invoice_month: p.invoiceMonth,
+    data: plano.dataCompra,
+    mes: mesCompra,
+    ano: anoCompra,
+    invoice_month: plano.mesReferenciaCompra,
+    fatura_competencia: p.competencia,
   }));
   const { data: rpcRows, error: rpcErr } = await supabaseAdmin.rpc("create_installment_purchase", {
     p_user_id: userId,
@@ -1307,7 +1312,6 @@ export async function persistir(args: {
   // parcelas passam a ter o mês de referência da COMPRA original e cada uma
   // recebe a competência da sua fatura. Best-effort: se falhar, as parcelas
   // continuam com o ciclo legado em invoice_month (mesma fatura de antes).
-  await aplicarCompetenciasParcelas(userId, grupoId, plano);
 
   const inseridos: string[] = rbRows
     .slice()
@@ -1376,36 +1380,3 @@ export async function persistir(args: {
 }
 
 
-/** Grava fatura_competencia por parcela + mês de referência da compra. */
-export async function aplicarCompetenciasParcelas(
-  userId: string,
-  grupoId: string,
-  plano: {
-    mesReferenciaCompra: string;
-    dataCompra: string;
-    parcelas: Array<{ numero: number; competencia: string }>;
-  },
-): Promise<boolean> {
-  const [ano, mes] = plano.mesReferenciaCompra.split("-").map(Number);
-  let ok = true;
-  for (const p of plano.parcelas) {
-    try {
-      const { error } = await supabaseAdmin
-        .from("gastos")
-        .update({
-          fatura_competencia: p.competencia,
-          invoice_month: plano.mesReferenciaCompra,
-          data: plano.dataCompra,
-          mes,
-          ano,
-        })
-        .eq("user_id", userId)
-        .eq("grupo_parcelamento_id", grupoId)
-        .eq("parcela_atual", p.numero);
-      if (error) ok = false;
-    } catch {
-      ok = false;
-    }
-  }
-  return ok;
-}
