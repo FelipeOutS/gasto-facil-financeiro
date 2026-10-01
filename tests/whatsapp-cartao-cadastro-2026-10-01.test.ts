@@ -435,10 +435,22 @@ describe("WhatsApp Flow (com flow_id)", () => {
 });
 
 describe("cadastro durante um gasto", () => {
-  beforeEach(() => resetState({ cartoes: [{ id: "c-in", nome: "Inter", user_id: "u1", dia_fechamento: 10, dia_vencimento: 20 }] }));
+  beforeEach(() =>
+    resetState({
+      cartoes: [
+        { id: "c-in", nome: "Inter", user_id: "u1", dia_fechamento: 10, dia_vencimento: 20 },
+        { id: "c-c6", nome: "C6", user_id: "u1", dia_fechamento: 10, dia_vencimento: 20 },
+      ],
+    }),
+  );
+  // Gasto no crédito citando um cartão que não existe.
+  const gastoNubank = async () => {
+    await send("Farmácia 89,90 no crédito");
+    return send("Nubank");
+  };
   test("21-23/29. cartão citado não existe → cadastrar → retoma o gasto (antes do fechamento)", async () => {
     setSystemTime(new Date("2026-09-20T15:00:00Z"));
-    const g = await send("Gastei 89,90 na farmácia no cartão Nubank");
+    const g = await gastoNubank();
     expect(g.resposta).toContain("Não encontrei um cartão Nubank cadastrado. 💳");
     const ir = buildInteractiveFromReply(g.resposta);
     expect(ir && "buttons" in ir ? ir.buttons.map((b) => b.id) : []).toEqual([
@@ -468,7 +480,7 @@ describe("cadastro durante um gasto", () => {
 
   test("30. depois do fechamento → fatura do mês seguinte", async () => {
     setSystemTime(new Date("2026-09-30T15:00:00Z"));
-    await send("Gastei 89,90 na farmácia no cartão Nubank");
+    await gastoNubank();
     await tap("card_new_register");
     await send("5000");
     await send("25");
@@ -480,14 +492,14 @@ describe("cadastro durante um gasto", () => {
   });
 
   test("24. continuar sem cadastrar mantém o fluxo atual", async () => {
-    await send("Gastei 89,90 na farmácia no cartão Nubank");
+    await gastoNubank();
     const r = await tap("card_new_continue");
     expect(cartoesInseridos()).toHaveLength(0);
     expect(r.status).not.toBe("cartao_cadastro");
   });
 
   test("cancelar durante o cadastro não cria cartão nem gasto", async () => {
-    await send("Gastei 89,90 na farmácia no cartão Nubank");
+    await gastoNubank();
     await tap("card_new_register");
     const r = await tap("card_reg_cancel");
     expect(r.resposta).toContain("nem registrei o gasto");
