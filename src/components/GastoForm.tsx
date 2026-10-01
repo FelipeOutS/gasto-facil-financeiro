@@ -1,4 +1,6 @@
 import { gruposParcelas } from "@/lib/parcelamento";
+import { FaturaCompetenciaField } from "@/components/FaturaCompetenciaField";
+import { isYm } from "@/lib/fatura-competencia";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -105,6 +107,16 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
     setInvoiceMonth(ymFromDate(data));
   }, [data]);
   const opcoesMes = useMemo(() => mesReferenciaOpcoes(data), [data]);
+  const [faturaCompetencia, setFaturaCompetencia] = useState<string>(
+    (initial as { faturaCompetencia?: string } | undefined)?.faturaCompetencia ?? "",
+  );
+  const userPickedFatura = useRef(
+    !!(initial as { faturaCompetencia?: string } | undefined)?.faturaCompetencia,
+  );
+  useEffect(() => {
+    if (userPickedFatura.current) return;
+    setFaturaCompetencia("");
+  }, [data, cartaoId]);
   const [showMore, setShowMore] = useState(false);
 
   useEffect(() => {
@@ -149,6 +161,10 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
             invoiceMonth:
               invoiceMonth && /^\d{4}-\d{2}$/.test(invoiceMonth) ? invoiceMonth : undefined,
             fornecedorId: fornecedorId || null,
+            faturaCompetencia:
+              formaPagamento === "credito" && isYm(faturaCompetencia)
+                ? faturaCompetencia
+                : undefined,
           });
         } catch {
           toast.error(
@@ -305,6 +321,15 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
               </Link>
             </div>
           )}
+          <FaturaCompetenciaField
+            data={data}
+            cartao={cartoes.find((c) => c.id === cartaoId)}
+            value={faturaCompetencia}
+            onChange={(v) => {
+              userPickedFatura.current = true;
+              setFaturaCompetencia(v);
+            }}
+          />
         </div>
       )}
 
