@@ -1449,7 +1449,8 @@ type WhatsAppAuditRoute =
   | "revenue_handler"
   | "consulta_handler"
   | "conversational_handler"
-  | "reset_handler";
+  | "reset_handler"
+  | "fatura_escolha";
 
 export function logWhatsAppInboundReceived(args: {
   telefone: string;
