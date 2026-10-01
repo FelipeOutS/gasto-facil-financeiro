@@ -2289,6 +2289,10 @@ function aplicarCompetenciaFatura(
 ) {
   if (input.formaPagamento !== "credito" || out.length === 0) return;
   const manual = isYm(input.faturaCompetencia) ? input.faturaCompetencia : null;
+  // Importação de fatura: o mês escolhido no import continua valendo pela
+  // regra legada (invoice_month como ciclo). Sem cálculo automático aqui.
+  const isImport = !!input.importBatchId || !!input.origem?.toLowerCase().includes("fatura");
+  if (!manual && isImport) return;
   const cartao = input.cartaoId ? memCartoes.find((c) => c.id === input.cartaoId) : undefined;
   const auto = cartao
     ? (competenciaPorData(inputData, cartao.diaFechamento, cartao.diaVencimento)?.competencia ??
@@ -5661,11 +5665,18 @@ export function proximoVencimentoFaturaAberta(
  * Mês de referência da fatura (identidade — `mes/ano` já são o mês das compras).
  */
 export function mesReferenciaFatura(
-  _cartao: Cartao,
+  cartao: Cartao,
   mes: number,
   ano: number,
 ): { mes: number; ano: number } {
-  return { mes, ano };
+  // Exibição: mês do VENCIMENTO (competência da fatura).
+  const comp = cicloParaCompetencia(
+    `${ano}-${String(mes).padStart(2, "0")}`,
+    cartao?.diaFechamento,
+    cartao?.diaVencimento,
+  );
+  const [a, m] = comp.split("-").map(Number);
+  return { mes: m, ano: a };
 }
 
 /** Label "Maio de 2026" do mês de referência da fatura. */
