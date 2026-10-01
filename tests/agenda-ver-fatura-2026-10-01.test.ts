@@ -87,8 +87,7 @@ beforeEach(() => {
     ],
     recorrencias: [],
     gastos: [
-      { id: "g1", user_id: U1, cartao_id: "c-nu", descricao: "Mercado", valor: 56, data: "2026-09-28", forma_pagamento: "credito", confirmado: true, invoice_month: null, fatura_competencia: "2026-11", parcela_atual: null, total_parcelas: null },
-      { id: "g2", user_id: U1, cartao_id: "c-nu", descricao: "Mercado", valor: 56, data: "2026-09-30", forma_pagamento: "credito", confirmado: true, invoice_month: null, fatura_competencia: "2026-11", parcela_atual: null, total_parcelas: null },
+      { id: "g1", user_id: U1, cartao_id: "c-nu", descricao: "Mercado", valor: 56, data: "2026-10-01", forma_pagamento: "credito", confirmado: true, invoice_month: "2026-10", fatura_competencia: "2026-11", parcela_atual: null, total_parcelas: null },
     ],
   };
   queue = [];
@@ -116,12 +115,13 @@ describe("💳 Ver fatura abre a fatura real", () => {
     const v = await W.handleAgendaIntent(U1, detectAgendaIntent(texto)!, { now: NOW, deps: deps() });
     const t = nb(v.resposta);
     expect(t).toContain("💳 Fatura Nubank — Novembro/2026");
-    expect(t).toContain("💰 Valor atual: R$ 112,00");
+    expect(t).toContain("💰 Valor atual: R$ 56,00");
     expect(t).toContain("📅 Vencimento: 05/11");
     expect(t).toContain("🗓️ Fechamento: 25/10");
-    expect(t).toContain("💳 Limite disponível: R$ 4.888,00");
+    expect(t).toContain("💳 Limite disponível: R$ 4.944,00");
     expect(t).toContain("Últimas compras:");
     expect(t).toContain("• Mercado — R$ 56,00");
+    expect(t.match(/Mercado/g)).toHaveLength(1);
     // Não é o resumo do lembrete.
     expect(t).not.toContain("Aviso em");
     expect(t).not.toContain("Vence em");
@@ -134,11 +134,11 @@ describe("💳 Ver fatura abre a fatura real", () => {
     const v = await W.handleAgendaIntent(U1, detectAgendaIntent(`agenda_view_invoice:${r.itemId}`)!, { now: NOW, deps: deps() });
     const ref = await handleFaturaIntent(U1, { kind: "invoice_card", termo: "nubank" });
     const refT = nb(ref.resposta);
-    expect(refT).toContain("R$ 112,00");
+    expect(refT).toContain("R$ 56,00");
     expect(refT).toContain("Vencimento: 05/11");
     expect(refT).toContain("Fechamento: 25/10");
-    expect(refT).toContain("R$ 4.888,00");
-    expect(nb(v.resposta)).toContain("R$ 112,00");
+    expect(refT).toContain("R$ 4.944,00");
+    expect(nb(v.resposta)).toContain("R$ 56,00");
   });
 
   test("botão ANTIGO agenda_view:<id> (mensagens já enviadas) também abre a fatura", async () => {
@@ -153,8 +153,48 @@ describe("💳 Ver fatura abre a fatura real", () => {
     const r = await criar();
     db.gastos.push({ id: "g3", user_id: U1, cartao_id: "c-nu", descricao: "Farmácia", valor: 30, data: "2026-10-01", forma_pagamento: "credito", confirmado: true, invoice_month: null, fatura_competencia: "2026-11", parcela_atual: null, total_parcelas: null });
     const v = await W.handleAgendaIntent(U1, detectAgendaIntent(`agenda_view_invoice:${r.itemId}`)!, { now: NOW, deps: deps() });
-    expect(nb(v.resposta)).toContain("💰 Valor atual: R$ 142,00");
-    expect(nb(v.resposta).indexOf("Farmácia")).toBeLessThan(nb(v.resposta).indexOf("Mercado"));
+    expect(nb(v.resposta)).toContain("💰 Valor atual: R$ 86,00");
+    expect(nb(v.resposta)).toContain("Farmácia");
+  });
+});
+
+describe("sem dupla contagem (mesma compra nas duas consultas)", () => {
+  test("1 compra: Cartões(função), 'fatura do Nubank' e Ver fatura = R$ 56 / R$ 4.944 / 1 item", async () => {
+    const F = await import("../src/server/cartao-fatura.server");
+    const cartao = db.cartoes[0] as never;
+    const f = await F.getFaturaAtualPorCartao(U1, cartao);
+    const itens = await F.getItensFaturaAtualPorCartao(U1, cartao);
+    expect(f.competencia).toBe("2026-11");
+    expect(f.total).toBe(56);
+    expect(f.disponivel).toBe(4944);
+    expect(f.qtd).toBe(1);
+    expect(itens).toHaveLength(1);
+    const ref = nb((await handleFaturaIntent(U1, { kind: "invoice_card", termo: "nubank" })).resposta);
+    expect(ref).toContain("R$ 56,00");
+    expect(ref).toContain("R$ 4.944,00");
+    const r = await criar();
+    const v = nb((await W.handleAgendaIntent(U1, detectAgendaIntent(`agenda_view_invoice:${r.itemId}`)!, { now: NOW, deps: deps() })).resposta);
+    expect(v).toContain("💰 Valor atual: R$ 56,00");
+    expect(v).toContain("R$ 4.944,00");
+  });
+
+  test("2 compras: Mercado 56 + Farmácia 20 = R$ 76, 2 itens, R$ 4.924", async () => {
+    db.gastos.push({ id: "g4", user_id: U1, cartao_id: "c-nu", descricao: "Farmácia", valor: 20, data: "2026-10-01", forma_pagamento: "credito", confirmado: true, invoice_month: "2026-10", fatura_competencia: "2026-11", parcela_atual: null, total_parcelas: null });
+    const F = await import("../src/server/cartao-fatura.server");
+    const cartao = db.cartoes[0] as never;
+    const f = await F.getFaturaAtualPorCartao(U1, cartao);
+    expect(f.total).toBe(76);
+    expect(f.qtd).toBe(2);
+    expect(f.disponivel).toBe(4924);
+    expect(await F.getItensFaturaAtualPorCartao(U1, cartao)).toHaveLength(2);
+  });
+
+  test("legado sem fatura_competencia conta uma vez", async () => {
+    db.gastos[0].fatura_competencia = null;
+    db.gastos[0].invoice_month = null;
+    const F = await import("../src/server/cartao-fatura.server");
+    const f = await F.getFaturaAtualPorCartao(U1, db.cartoes[0] as never);
+    expect(f.total).toBe(56);
   });
 });
 
