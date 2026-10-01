@@ -178,7 +178,7 @@ describe("site + WhatsApp na mesma agenda", () => {
   test("A/D/E: cria no WhatsApp → site vê; edita e cancela no WhatsApp → site vê", async () => {
     const d = deps();
     const r = await W.handleAgendaIntent(U1, detectAgendaIntent("me lembra amanhã às 9 de pagar a internet")!, { now: NOW, deps: d });
-    expect(r.resposta).toContain("Amanhã às 09:00");
+    expect(r.resposta).toContain("🕘 09:00");
     const site = await A.listAgenda(U1, { status: "ativo" }, d);
     expect(site).toHaveLength(1);
     expect(site[0].origem).toBe("whatsapp");
@@ -289,5 +289,67 @@ describe("lembretes financeiros (sem snapshot)", () => {
     expect(
       await A.revalidateAgendaForDispatch({ user_id: U1, category: "agenda", entity_type: "agenda_item", entity_id: it.id, payload }, d),
     ).toEqual({ ok: false, reason: "agenda_inactive" });
+  });
+});
+
+describe("UX pós-criação (sem Concluir imediato)", () => {
+  const ids = (r: { graphInteractive?: Record<string, unknown> }) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((r.graphInteractive as any)?.action?.buttons ?? []).map((b: any) => b.reply as { id: string; title: string });
+
+  test("1/2: lembrete comum recém-criado mostra Editar e Cancelar, sem Concluir", async () => {
+    const d = deps();
+    const r = await W.handleAgendaIntent(U1, detectAgendaIntent("me lembra amanhã às 9 de pagar a internet")!, { now: NOW, deps: d });
+    const b = ids(r);
+    expect(b.map((x: { title: string }) => x.title)).toEqual(["✏️ Editar", "❌ Cancelar"]);
+    expect(b.some((x: { id: string }) => x.id.startsWith("agenda_done:"))).toBe(false);
+    expect(r.resposta).toContain("🔔 Pagar a internet");
+    expect(r.resposta).toContain("📅 Amanhã");
+    expect(r.resposta).toContain("🕘 09:00");
+  });
+
+  test("3/4/6/7/8: fatura mostra Ver fatura, aviso 02/11 e valor atual só informativo", async () => {
+    const d = deps();
+    const r = await W.handleAgendaIntent(U1, detectAgendaIntent("me lembra da fatura do Nubank 3 dias antes")!, { now: NOW, deps: d });
+    expect(ids(r).map((x: { title: string }) => x.title)).toEqual(["💳 Ver fatura", "✏️ Editar aviso", "❌ Cancelar aviso"]);
+    expect(r.resposta).toContain("📅 Vence em 05/11");
+    expect(r.resposta).toContain("🔔 Aviso em 02/11 (3 dias antes)");
+    expect(nb(r.resposta)).toContain("💰 Valor atual: R$ 56,00");
+    expect(r.resposta).toContain("conferidos novamente no momento do aviso");
+    const it = (await A.listAgenda(U1, {}, d))[0] as Row;
+    expect(JSON.stringify(it)).not.toContain("56");
+  });
+
+  test("5: conta mostra Ver conta", async () => {
+    const d = deps();
+    const r = await W.handleAgendaIntent(U1, detectAgendaIntent("me lembra da conta Internet 3 dias antes")!, { now: NOW, deps: d });
+    expect(ids(r)[0]?.title).toBe("🧾 Ver conta");
+    expect(r.resposta).toContain("🔔 Aviso em 07/10 (3 dias antes)");
+  });
+
+  test("9: Ver lê a fonte financeira de novo", async () => {
+    const d = deps();
+    const c = await W.handleAgendaIntent(U1, detectAgendaIntent("me lembra da fatura do Nubank 3 dias antes")!, { now: NOW, deps: d });
+    fatura.total = 200;
+    const v = await W.handleAgendaIntent(U1, detectAgendaIntent(`agenda_view:${c.itemId}`)!, { now: NOW, deps: d });
+    expect(nb(v.resposta)).toContain("R$ 200,00");
+  });
+
+  test("editar aviso: muda dias antes e recalcula a data", async () => {
+    const d = deps();
+    await W.handleAgendaIntent(U1, detectAgendaIntent("me lembra da fatura do Nubank 3 dias antes")!, { now: NOW, deps: d });
+    const r = await W.handleAgendaIntent(U1, detectAgendaIntent("mude o aviso da fatura nubank para 5 dias antes")!, { now: NOW, deps: d });
+    expect(r.resposta).toContain("🔔 Aviso em 31/10 (5 dias antes)");
+    const e = await W.handleAgendaIntent(U1, detectAgendaIntent(`agenda_edit:${r.itemId}`)!, { now: NOW, deps: d });
+    expect(e.resposta).toContain("dias antes");
+  });
+
+  test("10: Concluir continua disponível ao abrir um item existente", async () => {
+    const d = deps();
+    const row = await A.createAgendaItem(U1, { titulo: "Dentista", starts_at: "2026-10-02T17:00:00.000Z" }, d);
+    const v = await W.handleAgendaIntent(U1, detectAgendaIntent(`agenda_view:${row.id}`)!, { now: NOW, deps: d });
+    expect(ids(v).map((x: { title: string }) => x.title)).toEqual(["✅ Concluir", "✏️ Editar", "❌ Cancelar"]);
+    const done = await W.handleAgendaIntent(U1, detectAgendaIntent(`agenda_done:${row.id}`)!, { now: NOW, deps: d });
+    expect(done.resposta).toContain("concluído");
   });
 });

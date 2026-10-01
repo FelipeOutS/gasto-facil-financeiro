@@ -10,6 +10,8 @@ import {
   getAgendaItem,
   itemWhenLabel,
   listAgenda,
+  financialAvisoAt,
+  resolveFinancialSource,
   setAgendaStatus,
   updateAgendaItem,
   type AgendaDeps,
@@ -18,6 +20,8 @@ import {
 import {
   AGENDA_CANCEL_PREFIX,
   AGENDA_DONE_PREFIX,
+  AGENDA_EDIT_PREFIX,
+  AGENDA_VIEW_PREFIX,
   detectAgendaIntent,
   tituloFromBody,
   type AgendaIntent,
@@ -51,17 +55,83 @@ function norm(s: string): string {
     .trim();
 }
 
-function buttons(body: string, item: AgendaRow) {
+type Btn = { id: string; title: string };
+
+function buttonsMsg(body: string, list: Btn[]) {
   return {
     type: "button",
     body: { text: body.slice(0, 1024) },
-    action: {
-      buttons: [
-        { type: "reply", reply: { id: `${AGENDA_DONE_PREFIX}${item.id}`, title: "✅ Concluir" } },
-        { type: "reply", reply: { id: `${AGENDA_CANCEL_PREFIX}${item.id}`, title: "❌ Cancelar" } },
-      ],
-    },
+    action: { buttons: list.slice(0, 3).map((b) => ({ type: "reply", reply: { id: b.id, title: b.title.slice(0, 20) } })) },
   };
+}
+
+function viewTitle(item: AgendaRow): string {
+  if (item.source_type === "cartao") return "💳 Ver fatura";
+  if (item.source_type === "conta_a_pagar") return "🧾 Ver conta";
+  return "👀 Ver";
+}
+
+/**
+ * Ações logo após criar/editar: nunca "Concluir" (o item ainda nem aconteceu).
+ * Financeiro → Ver / Editar aviso / Cancelar aviso. Comum → Editar / Cancelar.
+ */
+export function postCreateButtons(item: AgendaRow): Btn[] {
+  if (item.source_type)
+    return [
+      { id: `${AGENDA_VIEW_PREFIX}${item.id}`, title: viewTitle(item) },
+      { id: `${AGENDA_EDIT_PREFIX}${item.id}`, title: "✏️ Editar aviso" },
+      { id: `${AGENDA_CANCEL_PREFIX}${item.id}`, title: "❌ Cancelar aviso" },
+    ];
+  return [
+    { id: `${AGENDA_EDIT_PREFIX}${item.id}`, title: "✏️ Editar" },
+    { id: `${AGENDA_CANCEL_PREFIX}${item.id}`, title: "❌ Cancelar" },
+  ];
+}
+
+/** Ações ao abrir um item existente: aqui "Concluir" faz sentido. */
+export function existingItemButtons(item: AgendaRow): Btn[] {
+  if (item.source_type)
+    return [
+      { id: `${AGENDA_EDIT_PREFIX}${item.id}`, title: "✏️ Editar aviso" },
+      { id: `${AGENDA_CANCEL_PREFIX}${item.id}`, title: "❌ Cancelar aviso" },
+    ];
+  return [
+    { id: `${AGENDA_DONE_PREFIX}${item.id}`, title: "✅ Concluir" },
+    { id: `${AGENDA_EDIT_PREFIX}${item.id}`, title: "✏️ Editar" },
+    { id: `${AGENDA_CANCEL_PREFIX}${item.id}`, title: "❌ Cancelar" },
+  ];
+}
+
+function ddmm(y: { d: number; m: number }): string {
+  return `${String(y.d).padStart(2, "0")}/${String(y.m).padStart(2, "0")}`;
+}
+
+function brl(v: number): string {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+/** Texto de um item financeiro com dados AO VIVO (valor é só informativo). */
+async function financialDetails(item: AgendaRow, deps?: AgendaDeps): Promise<string> {
+  const snap = await resolveFinancialSource(item, deps);
+  const icon = item.source_type === "cartao" ? "💳" : item.source_type === "conta_a_pagar" ? "🧾" : "🔁";
+  if (!snap.ok) return `${icon} ${item.titulo}\n${snap.reason === "payable_paid" ? "✅ Já paga" : "Sem vencimento no momento"}`;
+  const dias = item.aviso_dias_antes ?? 1;
+  const tz = item.timezone || DEFAULT_TZ;
+  const due = snap.dueIso.slice(0, 10).split("-").map(Number);
+  const aviso = localParts(financialAvisoAt(snap.dueIso, dias, item.aviso_hora_local ?? 9, tz), tz);
+  const avisoTxt = dias === 0 ? `🔔 Aviso em ${ddmm(aviso)} (no dia do vencimento)` : `🔔 Aviso em ${ddmm(aviso)} (${dias} dia${dias > 1 ? "s" : ""} antes)`;
+  const valor = snap.valor != null ? `\n💰 Valor atual: ${brl(snap.valor)}` : "";
+  return `${icon} ${item.titulo}\n📅 Vence em ${ddmm({ d: due[2], m: due[1] })}\n${avisoTxt}${valor}`;
+}
+
+function fixedDetails(item: AgendaRow, now: Date): string {
+  if (!item.starts_at) return `🔔 ${item.titulo}`;
+  const lp = localParts(new Date(item.starts_at), item.timezone);
+  const full = formatWhen(item.starts_at, item.timezone, now);
+  const dia = full.split(" às ")[0];
+  const hora = `${String(lp.h).padStart(2, "0")}:${String(lp.mi).padStart(2, "0")}`;
+  const icon = item.kind === "compromisso" ? "📅" : "🔔";
+  return `${icon} ${item.titulo}\n📅 ${dia}\n🕘 ${hora}`;
 }
 
 function pickList(body: string, items: AgendaRow[], prefix: string, labels: Map<string, string>) {
@@ -166,8 +236,8 @@ export async function handleAgendaIntent(
         );
         const rec = intent.recurrence ? `\n🔁 Repete: ${intent.recurrence}` : "";
         const head = intent.kind === "compromisso" ? "Compromisso agendado! 📅" : "Pronto! Vou te lembrar 🔔";
-        const body = `${head}\n• ${item.titulo}\n• ${formatWhen(at, tz, now)}${rec}\n\nTambém aparece na Agenda do site.`;
-        return { resposta: body, graphInteractive: buttons(body, item), itemId: item.id };
+        const body = `${head}\n\n${fixedDetails(item, now)}${rec}\n\nTambém aparece na Agenda do site.`;
+        return { resposta: body, graphInteractive: buttonsMsg(body, postCreateButtons(item)), itemId: item.id };
       }
       case "criar_financeiro": {
         const fontes = await resolveSourceByName(userId, intent.sourceKind, intent.nome, deps);
@@ -195,9 +265,8 @@ export async function handleAgendaIntent(
           },
           deps,
         );
-        const label = await itemWhenLabel(item, deps);
-        const body = `Combinado! 🔔 Vou te avisar ${intent.diasAntes === 0 ? "no dia do vencimento" : `${intent.diasAntes} dia(s) antes do vencimento`}.\n• ${item.titulo}\n• ${label}\n\nO valor e a data são conferidos de novo na hora do aviso.`;
-        return { resposta: body, graphInteractive: buttons(body, item), itemId: item.id };
+        const body = `Combinado! 🔔\n\n${await financialDetails(item, deps)}\n\nO valor e o vencimento serão conferidos novamente no momento do aviso.`;
+        return { resposta: body, graphInteractive: buttonsMsg(body, postCreateButtons(item)), itemId: item.id };
       }
       case "consultar": {
         const lp = localParts(now, tz);
@@ -249,8 +318,17 @@ export async function handleAgendaIntent(
         const at = w.instant ?? (date ? localToUtc(date, time, item.timezone) : null);
         if (!at) return { resposta: "Não entendi o novo horário. Ex.: *mude o dentista para 15h*." };
         const upd = await updateAgendaItem(userId, item.id, { starts_at: at.toISOString() }, deps);
-        const body = `Atualizado ✏️\n• ${upd.titulo}\n• ${formatWhen(at, upd.timezone, now)}`;
-        return { resposta: body, graphInteractive: buttons(body, upd), itemId: upd.id };
+        const body = `Atualizado ✏️\n\n${fixedDetails(upd, now)}`;
+        return { resposta: body, graphInteractive: buttonsMsg(body, postCreateButtons(upd)), itemId: upd.id };
+      }
+      case "editar_aviso": {
+        const found = (await findAgendaByTitle(userId, intent.alvo, deps)).filter((r) => r.source_type);
+        if (!found.length) return { resposta: "", notMatched: true };
+        if (found.length > 1)
+          return { resposta: `Encontrei ${found.length} avisos com "${intent.alvo}". Diga o nome completo para eu alterar o certo.` };
+        const upd = await updateAgendaItem(userId, found[0].id, { aviso_dias_antes: intent.diasAntes }, deps);
+        const body = `Aviso atualizado ✏️\n\n${await financialDetails(upd, deps)}\n\nO valor e o vencimento serão conferidos novamente no momento do aviso.`;
+        return { resposta: body, graphInteractive: buttonsMsg(body, postCreateButtons(upd)), itemId: upd.id };
       }
       case "cancelar":
       case "concluir": {
@@ -272,16 +350,32 @@ export async function handleAgendaIntent(
 async function applyAction(
   userId: string,
   id: string,
-  acao: "concluir" | "cancelar",
+  acao: "concluir" | "cancelar" | "editar" | "ver",
   deps: AgendaDeps,
   now: Date,
 ): Promise<AgendaReply> {
   const cur = await getAgendaItem(userId, id, deps);
   if (!cur) return { resposta: "Esse item não está mais na sua agenda." };
+  if (acao === "ver") {
+    const det = cur.source_type ? await financialDetails(cur, deps) : fixedDetails(cur, now);
+    const st = cur.status === "ativo" ? "" : `\n\nSituação: ${cur.status}`;
+    const body = `${det}${st}`;
+    return cur.status === "ativo"
+      ? { resposta: body, graphInteractive: buttonsMsg(body, existingItemButtons(cur)), itemId: cur.id }
+      : { resposta: body, itemId: cur.id };
+  }
+  if (acao === "editar") {
+    if (cur.status !== "ativo") return { resposta: `"${cur.titulo}" não está mais ativo.` };
+    const ex = cur.source_type
+      ? `Para mudar a antecedência, envie:\n*mude o aviso da ${cur.titulo} para 5 dias antes*\n\nA data do vencimento segue o item financeiro.`
+      : `Para mudar o horário, envie:\n*mude ${cur.titulo} para sexta às 15h*\n\nTambém dá para editar na Agenda do site.`;
+    return { resposta: `✏️ Editar "${cur.titulo}"\n\n${ex}`, itemId: cur.id };
+  }
   if (cur.status !== "ativo")
     return { resposta: `"${cur.titulo}" já está ${cur.status === "cancelado" ? "cancelado" : "concluído"}.` };
   const { row, advanced } = await setAgendaStatus(userId, id, acao, deps);
-  if (acao === "cancelar") return { resposta: `Tudo certo, cancelei "${row.titulo}". ❌`, itemId: row.id };
+  if (acao === "cancelar")
+    return { resposta: row.source_type ? `Tudo certo, cancelei o aviso "${row.titulo}". ❌` : `Tudo certo, cancelei "${row.titulo}". ❌`, itemId: row.id };
   if (advanced && row.starts_at)
     return { resposta: `Feito ✅ "${row.titulo}". Próxima vez: ${formatWhen(row.starts_at, row.timezone, now)}.`, itemId: row.id };
   return { resposta: `Feito ✅ "${row.titulo}" marcado como concluído.`, itemId: row.id };
