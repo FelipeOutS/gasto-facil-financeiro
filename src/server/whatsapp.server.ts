@@ -858,6 +858,7 @@ const CONFIRM_TOKENS = [
   "confirmado",
   "confirmada",
   "pode salvar",
+  "pode registrar",
   "pode",
   "isso",
   "isso mesmo",
