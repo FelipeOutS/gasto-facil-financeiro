@@ -252,7 +252,9 @@ export async function getFaturaAtualPorCartao(
     userId,
     cartao.id,
     targetComp,
-    "valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado",
+    // `id` é obrigatório: mergeById deduplica por id. Sem ele, a mesma compra
+    // vinda das duas consultas (janela por data + competência) era somada 2x.
+    "id, valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado",
   );
   const rows = mergeById(data, extra) as Array<{
     valor: number | string | null;
