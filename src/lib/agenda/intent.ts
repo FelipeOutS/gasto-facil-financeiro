@@ -27,10 +27,13 @@ export type AgendaIntent =
   | { type: "editar"; alvo: string; when: ParsedWhen; novoTitulo?: string }
   | { type: "cancelar"; alvo: string }
   | { type: "concluir"; alvo: string }
-  | { type: "acao_id"; acao: "concluir" | "cancelar"; id: string };
+  | { type: "editar_aviso"; alvo: string; diasAntes: number }
+  | { type: "acao_id"; acao: "concluir" | "cancelar" | "editar" | "ver"; id: string };
 
 export const AGENDA_DONE_PREFIX = "agenda_done:";
 export const AGENDA_CANCEL_PREFIX = "agenda_cancel:";
+export const AGENDA_EDIT_PREFIX = "agenda_edit:";
+export const AGENDA_VIEW_PREFIX = "agenda_view:";
 
 function norm(s: string): string {
   return (s ?? "")
@@ -62,8 +65,16 @@ export function detectAgendaIntent(text: string): AgendaIntent | null {
   if (idDone) return { type: "acao_id", acao: "concluir", id: idDone[1].toLowerCase() };
   const idCancel = new RegExp(`^${AGENDA_CANCEL_PREFIX}(${UUID})$`, "i").exec(raw);
   if (idCancel) return { type: "acao_id", acao: "cancelar", id: idCancel[1].toLowerCase() };
+  const idEdit = new RegExp(`^${AGENDA_EDIT_PREFIX}(${UUID})$`, "i").exec(raw);
+  if (idEdit) return { type: "acao_id", acao: "editar", id: idEdit[1].toLowerCase() };
+  const idView = new RegExp(`^${AGENDA_VIEW_PREFIX}(${UUID})$`, "i").exec(raw);
+  if (idView) return { type: "acao_id", acao: "ver", id: idView[1].toLowerCase() };
 
   const n = norm(raw).replace(/[?!.]+$/g, "");
+
+  // Editar antecedência de um aviso financeiro: "mude o aviso da fatura nubank para 5 dias antes"
+  const ea = /^(?:mud[ae]r?|alter[ae]r?|troc[ae]r?) (?:o )?aviso (?:da |do |de )?(.+?) para (\d{1,2}) dias? antes$/.exec(n);
+  if (ea) return { type: "editar_aviso", alvo: ea[1].trim(), diasAntes: Math.min(60, Number(ea[2])) };
 
   // Consultas
   if (/^(?:minha agenda|agenda|meus lembretes|meus compromissos|lembretes|compromissos|ver (?:minha )?agenda|proximos (?:lembretes|compromissos))$/.test(n))
