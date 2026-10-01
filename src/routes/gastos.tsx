@@ -1,3 +1,4 @@
+import { competenciaDoGasto, isYm, nomeMesYm } from "@/lib/fatura-competencia";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect, useMemo, useState } from "react";
@@ -1336,6 +1337,28 @@ function GastosPage() {
                         {mesAnoToLabel(mesEfetivoGasto(g).mes, mesEfetivoGasto(g).ano)}
                       </span>
                     )}
+                    {g.formaPagamento === "credito" &&
+                    (() => {
+                      const c = g.cartaoId ? getCartaoById(g.cartaoId) : undefined;
+                      const comp = c
+                        ? competenciaDoGasto(
+                            {
+                              fatura_competencia: g.faturaCompetencia,
+                              invoice_month: g.invoiceMonth,
+                              data: g.data,
+                            },
+                            c.diaFechamento,
+                            c.diaVencimento,
+                          )
+                        : isYm(g.faturaCompetencia)
+                          ? g.faturaCompetencia
+                          : null;
+                      return comp ? (
+                        <span className="ml-1 mt-1 inline-flex items-center gap-1 rounded-full border border-border bg-card-elevated px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          Fatura: {nomeMesYm(comp)}
+                        </span>
+                      ) : null;
+                    })()}
                     {g.origem === "mercado_inteligente" && (
                       <span
                         className="ml-1 mt-1 inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-brand-on-soft"
