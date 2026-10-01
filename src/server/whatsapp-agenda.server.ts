@@ -37,6 +37,8 @@ export type AgendaReply = {
   /** Objeto `interactive` da Graph API (botões/lista). */
   graphInteractive?: Record<string, unknown>;
   itemId?: string;
+  /** Nenhum item da agenda casou: o pipeline segue para os fluxos financeiros. */
+  notMatched?: boolean;
 };
 
 export { detectAgendaIntent };
@@ -92,8 +94,7 @@ async function sameOrPick(
 ): Promise<AgendaReply | AgendaRow> {
   const found = await findAgendaByTitle(userId, alvo, deps);
   if (found.length === 1) return found[0];
-  if (!found.length)
-    return { resposta: `Não encontrei "${alvo}" na sua agenda. Envie *minha agenda* para ver seus lembretes.` };
+  if (!found.length) return { resposta: "", notMatched: true };
   const labels = new Map<string, string>();
   for (const r of found) labels.set(r.id, await itemWhenLabel(r, deps));
   const body = `Encontrei ${found.length} itens com "${alvo}". Qual deles?`;
@@ -233,7 +234,7 @@ export async function handleAgendaIntent(
       }
       case "editar": {
         const found = await findAgendaByTitle(userId, intent.alvo, deps);
-        if (!found.length) return { resposta: `Não encontrei "${intent.alvo}" na sua agenda.` };
+        if (!found.length) return { resposta: "", notMatched: true };
         if (found.length > 1)
           return { resposta: `Encontrei ${found.length} itens com "${intent.alvo}". Diga o nome completo para eu alterar o certo.` };
         const item = found[0];

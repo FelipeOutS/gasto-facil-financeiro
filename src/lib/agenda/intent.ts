@@ -83,7 +83,7 @@ export function detectAgendaIntent(text: string): AgendaIntent | null {
 
   // Editar: "mude o dentista para 15h", "remarque a reuniao para sexta"
   m = /^(?:mud(?:e|a|ar)|alter(?:e|a|ar)|remarc(?:a|ar)|remarque|pass(?:e|a|ar)|adi(?:e|a|ar)|troc(?:a|ar|que))\s+(?:o |a |meu |minha )?(?:lembrete |compromisso )?(?:de |da |do )?(.+?)\s+(?:para|pra)\s+(.+)$/.exec(n);
-  if (m) {
+  if (m && !/\b(vencimento|valor|conta|fatura|limite|fechamento|categoria|gasto|receita|pagamento)\b/.test(m[1])) {
     const when = parseWhen(m[2], new Date(0));
     // Só é edição de agenda se o destino é data/hora.
     if (when.date || when.time || when.instant) return { type: "editar", alvo: m[1].trim(), when: whenPlaceholder(m[2]) };

@@ -2887,8 +2887,9 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     const { detectAgendaIntent, handleAgendaIntent } = await import("./whatsapp-agenda.server");
     const agendaIntent = detectAgendaIntent(texto);
     if (agendaIntent) {
-      logWaRouteDecision(msg, "consulta_handler", `agenda_${agendaIntent.type}`);
       const out = await handleAgendaIntent(userId, agendaIntent);
+      if (!out.notMatched) {
+      logWaRouteDecision(msg, "consulta_handler", `agenda_${agendaIntent.type}`);
       return {
         status: "agenda",
         resposta: out.resposta,
@@ -2896,6 +2897,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
           ? { graphInteractive: out.graphInteractive as { [key: string]: Json | undefined } }
           : {}),
       };
+      }
     }
   }
 
