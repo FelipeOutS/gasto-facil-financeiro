@@ -307,6 +307,8 @@ function extractNome(textRaw: string, valor: number | null): string {
     );
     t = t.replace(valorRe, " ");
   }
+  // "Passei 35 no Nubank" — verbo de lançamento no início da frase com valor.
+  if (valor != null && /^\s*passei\b/i.test(textRaw)) t = t.replace(/^\s*passei\b/i, " ");
   // remove tokens conhecidos
   const stop = [
     /\br\$\s*\d[\d.,]*\b/gi,

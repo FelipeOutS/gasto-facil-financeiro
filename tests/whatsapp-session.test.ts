@@ -59,7 +59,12 @@ test("fluxo cartão cadastrado por nome (Mercado → cartão → Nubank → sim)
     texto: "sim",
     external_id: "a4",
   });
-  expect(r4.status).toBe("salva");
+  // 01/10/2026 — cartão não cadastrado: pergunta a fatura antes de salvar.
+  expect(r4.status).toBe("aguardando_fatura_nao_cadastrado");
+  expect(gastosInserts()).toHaveLength(0);
+  await processarMensagemWhatsApp({ telefone: tel, texto: "fatura de novembro", external_id: "a4f" });
+  const r5 = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "a4s" });
+  expect(r5.status).toBe("salva");
   expect(gastosInserts()).toHaveLength(1);
 });
 
@@ -79,7 +84,12 @@ test("cartão não cadastrado: registra sem criar cartão automaticamente", asyn
     texto: "sim",
     external_id: "b4",
   });
-  expect(r4.status).toBe("salva");
+  // 01/10/2026 — cartão não cadastrado: pergunta a fatura antes de salvar.
+  expect(r4.status).toBe("aguardando_fatura_nao_cadastrado");
+  expect(gastosInserts()).toHaveLength(0);
+  await processarMensagemWhatsApp({ telefone: tel, texto: "fatura de novembro", external_id: "b4f" });
+  const r5 = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: "b4s" });
+  expect(r5.status).toBe("salva");
   expect(gastosInserts()).toHaveLength(1);
 });
 
