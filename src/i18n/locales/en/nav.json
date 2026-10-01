@@ -47,7 +47,8 @@
     "idioma": "App language",
     "more": "More",
     "integracoes": "Integrations",
-    "mercado": "Grocery"
+    "mercado": "Grocery",
+    "agenda": "Calendar & reminders"
   },
   "more": {
     "title": "More options",
@@ -87,7 +88,8 @@
     "perfilMobile": "Account data, profile and personal shortcuts",
     "idioma": "Switch between Português and English",
     "integracoes": "Connect Mercado Pago and other services",
-    "mercado": "Lists, budget and grocery purchases"
+    "mercado": "Lists, budget and grocery purchases",
+    "agenda": "Appointments and reminders on web and WhatsApp"
   },
   "groups": {
     "financeiro": "Finance",

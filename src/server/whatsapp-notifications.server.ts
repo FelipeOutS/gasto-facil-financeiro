@@ -53,7 +53,9 @@ export type NotificationCategory =
   | "orcamento"
   | "ia_insights"
   | "mercado"
-  | "avisos_sistema";
+  | "avisos_sistema"
+  // GI Agenda — lembretes e compromissos (fonte: agenda_items).
+  | "agenda";
 
 export type NotificationStatus =
   | "pending"
@@ -80,7 +82,10 @@ export type SkippedReason =
   | "payable_not_found"
   // WA-C11 Fase 1 — entitlement revogado entre criação e envio (downgrade,
   // cancelamento, expiração, beta revogado, link/opt-in perdido).
-  | "entitlement_revoked";
+  | "entitlement_revoked"
+  // GI Agenda — item concluído/cancelado ou horário recalculado.
+  | "agenda_inactive"
+  | "agenda_changed";
 
 export interface EnqueueInput {
   userId: string;

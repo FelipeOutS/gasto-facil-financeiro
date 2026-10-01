@@ -97,7 +97,7 @@ describe("ajustar", () => {
 });
 
 describe("menu", () => {
-  test("11/20. 'menu' abre lista 'Ver menu' com 8 opções", async () => {
+  test("11/20. 'menu' abre lista 'Ver menu' com 9 opções", async () => {
     const r = await send("menu");
     const ir = buildInteractiveFromReply(r.resposta);
     if (ir?.type !== "list") throw new Error("esperava lista");
@@ -105,7 +105,7 @@ describe("menu", () => {
     expect(ir.buttonText).toBe("Ver menu");
     expect(ir.rows.map((x) => x.id)).toEqual([
       "menu_gastos", "menu_cartoes", "menu_contas", "menu_receitas",
-      "menu_planejamento", "menu_resumos", "menu_ajuda", "menu_comandos",
+      "menu_planejamento", "menu_resumos", "menu_agenda", "menu_ajuda", "menu_comandos",
     ]);
     // Fallback textual continua numerado.
     expect(r.resposta).toContain("1. Gastos");

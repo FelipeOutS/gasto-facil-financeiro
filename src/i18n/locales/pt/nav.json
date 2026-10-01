@@ -47,7 +47,8 @@
     "idioma": "Idioma do app",
     "more": "Mais",
     "integracoes": "Integrações",
-    "mercado": "Mercado"
+    "mercado": "Mercado",
+    "agenda": "Agenda e lembretes"
   },
   "more": {
     "title": "Mais opções",
@@ -87,7 +88,8 @@
     "perfilMobile": "Dados da conta, perfil e atalhos pessoais",
     "idioma": "Troque entre Português e English",
     "integracoes": "Conecte Mercado Pago e outros serviços",
-    "mercado": "Listas, orçamento e compras de mercado"
+    "mercado": "Listas, orçamento e compras de mercado",
+    "agenda": "Compromissos e lembretes do site e WhatsApp"
   },
   "groups": {
     "financeiro": "Financeiro",

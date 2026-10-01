@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdicionarRouteImport } from './routes/adicionar'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AgendaRouteImport } from './routes/agenda'
 import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as CadastroRouteImport } from './routes/cadastro'
@@ -171,6 +172,11 @@ const AdicionarRoute = AdicionarRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgendaRoute = AgendaRouteImport.update({
+  id: '/agenda',
+  path: '/agenda',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AlertasRoute = AlertasRouteImport.update({
@@ -925,6 +931,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
   '/admin': typeof AdminRoute
+  '/agenda': typeof AgendaRoute
   '/alertas': typeof AlertasRoute
   '/app': typeof AppRoute
   '/cadastro': typeof CadastroRoute
@@ -1075,6 +1082,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
   '/admin': typeof AdminRoute
+  '/agenda': typeof AgendaRoute
   '/alertas': typeof AlertasRoute
   '/app': typeof AppRoute
   '/cadastro': typeof CadastroRoute
@@ -1224,6 +1232,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/adicionar': typeof AdicionarRoute
   '/admin': typeof AdminRoute
+  '/agenda': typeof AgendaRoute
   '/alertas': typeof AlertasRoute
   '/app': typeof AppRoute
   '/cadastro': typeof CadastroRoute
@@ -1376,6 +1385,7 @@ export interface FileRouteTypes {
     | '/'
     | '/adicionar'
     | '/admin'
+    | '/agenda'
     | '/alertas'
     | '/app'
     | '/cadastro'
@@ -1526,6 +1536,7 @@ export interface FileRouteTypes {
     | '/'
     | '/adicionar'
     | '/admin'
+    | '/agenda'
     | '/alertas'
     | '/app'
     | '/cadastro'
@@ -1674,6 +1685,7 @@ export interface FileRouteTypes {
     | '/'
     | '/adicionar'
     | '/admin'
+    | '/agenda'
     | '/alertas'
     | '/app'
     | '/cadastro'
@@ -1825,6 +1837,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdicionarRoute: typeof AdicionarRoute
   AdminRoute: typeof AdminRoute
+  AgendaRoute: typeof AgendaRoute
   AlertasRoute: typeof AlertasRoute
   AppRoute: typeof AppRoute
   CadastroRoute: typeof CadastroRoute
@@ -1983,6 +1996,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agenda': {
+      id: '/agenda'
+      path: '/agenda'
+      fullPath: '/agenda'
+      preLoaderRoute: typeof AgendaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/alertas': {
@@ -3057,6 +3077,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdicionarRoute: AdicionarRoute,
   AdminRoute: AdminRoute,
+  AgendaRoute: AgendaRoute,
   AlertasRoute: AlertasRoute,
   AppRoute: AppRoute,
   CadastroRoute: CadastroRoute,

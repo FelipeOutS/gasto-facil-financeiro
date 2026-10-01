@@ -845,7 +845,8 @@ export type ProcessOutcome = {
     | "falha"
     | "consulta"
     | "cartao_cadastro"
-    | "cartao_salvo";
+    | "cartao_salvo"
+    | "agenda";
   gastoId?: string;
   confianca?: number;
   resposta: string;
@@ -2875,6 +2876,28 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     if (escolha) {
       logWaRouteDecision(msg, "fatura_escolha", "fatura_competencia_choice");
       return { status: "salva", gastoId: escolha.gastoId, resposta: escolha.resposta };
+    }
+  }
+
+  // ---- GI Agenda e Lembretes (mesma agenda do site) ----
+  // Só frases com gatilho explícito ("me lembra…", "tenho X sexta às 14h",
+  // "o que tenho amanhã", "cancele o lembrete…", botões agenda_*). Não toca
+  // em sessões pendentes; "gastei/paguei 50" nunca casam aqui.
+  {
+    const { detectAgendaIntent, handleAgendaIntent } = await import("./whatsapp-agenda.server");
+    const agendaIntent = detectAgendaIntent(texto);
+    if (agendaIntent) {
+      const out = await handleAgendaIntent(userId, agendaIntent);
+      if (!out.notMatched) {
+      logWaRouteDecision(msg, "consulta_handler", `agenda_${agendaIntent.type}`);
+      return {
+        status: "agenda",
+        resposta: out.resposta,
+        ...(out.graphInteractive
+          ? { graphInteractive: out.graphInteractive as { [key: string]: Json | undefined } }
+          : {}),
+      };
+      }
     }
   }
 

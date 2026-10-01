@@ -150,6 +150,7 @@ export const NAV_GROUPS: NavGroup[] = [
         feature: "relatorios_avancados",
       },
       { to: "/alertas", labelKey: "alertas", descKey: "alertas", icon: Bell },
+      { to: "/agenda", labelKey: "agenda", descKey: "agenda", icon: CalendarClock },
       { to: "/radar", labelKey: "radar", descKey: "radar", icon: Globe },
       {
         to: "/gasto-ai",
