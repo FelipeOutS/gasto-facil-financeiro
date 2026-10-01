@@ -1,4 +1,11 @@
 import { calcMetaProgresso } from "./metas-progresso";
+import {
+  addMonthsYm,
+  cicloParaCompetencia,
+  competenciaDoGasto,
+  competenciaPorData,
+  isYm,
+} from "./fatura-competencia";
 import { filtrarContasAtivas, isStatusContaCancelado } from "./contas-status";
 import { parcelasEmCentavos } from "./parcelamento";
 import { authorizeOfflineWrite, validateOwnerReferences } from "./offline/write-authorization";
@@ -335,6 +342,7 @@ type GastoRow = {
   gasto_fixo: boolean | null;
   cartao_id?: string | null;
   invoice_month?: string | null;
+  fatura_competencia?: string | null;
   horario?: string | null;
   origem?: string | null;
   import_batch_id?: string | null;
@@ -366,6 +374,7 @@ function rowToGasto(r: GastoRow, catUuidToKey: Map<string, string>): Gasto {
     gastoFixo: r.gasto_fixo ?? undefined,
     cartaoId: r.cartao_id ?? undefined,
     invoiceMonth: r.invoice_month ?? undefined,
+    faturaCompetencia: r.fatura_competencia ?? undefined,
     horario: r.horario ?? undefined,
     origem: r.origem ?? undefined,
     importBatchId: r.import_batch_id ?? undefined,
@@ -1704,11 +1713,20 @@ export function resumoFaturaCartao(cartaoId: string, hoje: Date = new Date()) {
     }
   }
   const currentYm = `${refY}-${String(refM0 + 1).padStart(2, "0")}`;
+  const currentComp = cartao?.diaFechamento
+    ? cicloParaCompetencia(currentYm, cartao.diaFechamento, cartao.diaVencimento)
+    : null;
   const considerados = gastosCartao.filter((g) => {
-    if (g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) {
-      // Fonte da verdade: o usuário decidiu o mês da fatura.
-      return g.invoiceMonth === currentYm;
+    if (currentComp && cartao) {
+      return (
+        competenciaDoGasto(
+          { fatura_competencia: g.faturaCompetencia, invoice_month: g.invoiceMonth, data: g.data },
+          cartao.diaFechamento,
+          cartao.diaVencimento,
+        ) === currentComp
+      );
     }
+    if (g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) return g.invoiceMonth === currentYm;
     const d = parseDateLocal(g.data);
     return !!d && d >= inicio && d <= fim;
   });
@@ -1969,6 +1987,12 @@ export type NovoGastoInput = {
    * independente da data de lançamento, pagamento ou vencimento.
    */
   invoiceMonth?: string;
+  /**
+   * Competência da fatura (YYYY-MM do VENCIMENTO). Opcional: com cartão
+   * cadastrado é calculada automaticamente; informe para ajuste manual ou
+   * para crédito sem cartão cadastrado.
+   */
+  faturaCompetencia?: string;
   /** Horário opcional (HH:mm). */
   horario?: string;
   /** Origem do registro: manual, fatura_imagem, fatura_csv. */
@@ -2248,7 +2272,49 @@ function buildGastosFromInput(
     o.client.invoiceMonth = resolvedInvoiceMonth;
     if (fornecedorVal) o.client.fornecedorId = fornecedorVal;
   }
+  aplicarCompetenciaFatura(input, out, inputData);
   return out;
+}
+
+/**
+ * Separa "quando comprei" (invoice_month / mês de referência) de "quando vou
+ * pagar" (fatura_competencia). Só atua em crédito. Parcelas de uma mesma
+ * compra mantêm o mês de referência da COMPRA e recebem competências
+ * consecutivas.
+ */
+function aplicarCompetenciaFatura(
+  input: NovoGastoInput,
+  out: { row: GastoInsert; client: Gasto }[],
+  inputData: string,
+) {
+  if (input.formaPagamento !== "credito" || out.length === 0) return;
+  const manual = isYm(input.faturaCompetencia) ? input.faturaCompetencia : null;
+  const cartao = input.cartaoId ? memCartoes.find((c) => c.id === input.cartaoId) : undefined;
+  const auto = cartao
+    ? (competenciaPorData(inputData, cartao.diaFechamento, cartao.diaVencimento)?.competencia ??
+      null)
+    : null;
+  const base = manual ?? auto;
+  if (!base) return; // crédito sem cartão e sem escolha → legado (NULL)
+  const serie = out.length > 1 && out.every((o) => o.client.grupoParcelamentoId);
+  const compraYm = inputData.slice(0, 7);
+  const [ca, cm] = compraYm.split("-").map(Number);
+  out.forEach((o, i) => {
+    type Extra = GastoInsert & { fatura_competencia?: string | null; invoice_month?: string | null };
+    const comp = serie ? addMonthsYm(base, i) : base;
+    (o.row as Extra).fatura_competencia = comp;
+    o.client.faturaCompetencia = comp;
+    if (serie) {
+      (o.row as Extra).invoice_month = compraYm;
+      o.row.data = inputData;
+      o.row.mes = cm;
+      o.row.ano = ca;
+      o.client.invoiceMonth = compraYm;
+      o.client.data = inputData;
+      o.client.mes = cm;
+      o.client.ano = ca;
+    }
+  });
 }
 
 export function addGasto(input: NovoGastoInput): Gasto[] {
@@ -2425,6 +2491,12 @@ export function updateGasto(id: string, patch: Partial<Gasto>) {
   if (patch.invoiceMonth !== undefined)
     (row as GastoUpdate & { invoice_month?: string | null }).invoice_month =
       patch.invoiceMonth && /^\d{4}-\d{2}$/.test(patch.invoiceMonth) ? patch.invoiceMonth : null;
+  if (patch.faturaCompetencia !== undefined)
+    (row as GastoUpdate & { fatura_competencia?: string | null }).fatura_competencia = isYm(
+      patch.faturaCompetencia,
+    )
+      ? patch.faturaCompetencia
+      : null;
   if (patch.horario !== undefined)
     (row as GastoUpdate & { horario?: string | null }).horario = patch.horario ?? null;
   if (patch.origem !== undefined)
@@ -5460,6 +5532,7 @@ export function gastosDaFatura(cartaoId: string, mes: number, ano: number): Gast
   const cartao = memCartoes.find((c) => c.id === cartaoId);
   if (!cartao) return [];
   const targetYm = `${ano}-${String(mes).padStart(2, "0")}`;
+  const targetComp = cicloParaCompetencia(targetYm, cartao.diaFechamento, cartao.diaVencimento);
   const { inicio, fim } = cicloFatura(cartao, mes, ano);
   const analisados = normalizeGastosForCalculations(memGastos);
   return analisados
@@ -5468,13 +5541,17 @@ export function gastosDaFatura(cartaoId: string, mes: number, ano: number): Gast
         gastoCartaoId(g) === cartaoId && g.formaPagamento === "credito" && g.confirmado !== false,
     )
     .filter((g) => {
-      // Fonte da verdade: invoice_month (mês da fatura escolhido pelo usuário).
-      if (g.invoiceMonth && /^\d{4}-\d{2}$/.test(g.invoiceMonth)) {
-        return g.invoiceMonth === targetYm;
-      }
-      // Fallback (gastos antigos sem invoice_month): usa o ciclo de fechamento.
-      const d = parseDateLocal(g.data);
-      return !!d && d >= inicio && d <= fim;
+      // Competência (mês do vencimento): fatura_competencia quando presente;
+      // senão regra legada (invoice_month como ciclo / data) — ver fatura-competencia.ts.
+      void inicio;
+      void fim;
+      return (
+        competenciaDoGasto(
+          { fatura_competencia: g.faturaCompetencia, invoice_month: g.invoiceMonth, data: g.data },
+          cartao.diaFechamento,
+          cartao.diaVencimento,
+        ) === targetComp
+      );
     })
     .sort((a, b) => (a.data < b.data ? 1 : -1));
 }
@@ -5592,7 +5669,14 @@ export function mesReferenciaFatura(
 }
 
 /** Label "Maio de 2026" do mês de referência da fatura. */
-export function mesReferenciaFaturaLabel(_cartao: Cartao, mes: number, ano: number): string {
+export function mesReferenciaFaturaLabel(cartao: Cartao, mes: number, ano: number): string {
+  // Decisão de produto: a fatura é identificada pelo mês do VENCIMENTO.
+  const comp = cicloParaCompetencia(
+    `${ano}-${String(mes).padStart(2, "0")}`,
+    cartao?.diaFechamento,
+    cartao?.diaVencimento,
+  );
+  [ano, mes] = comp.split("-").map(Number);
   const nomes = [
     "Janeiro",
     "Fevereiro",
