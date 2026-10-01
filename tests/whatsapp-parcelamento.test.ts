@@ -284,9 +284,12 @@ describe("WA-F3.2 — persistência atômica via RPC", () => {
     expect(gs.length).toBe(3);
     const soma = gs.reduce((acc, g) => acc + Number(g.row.valor), 0);
     expect(Math.round(soma * 100)).toBe(120050);
-    // invoice_month sequencial mês a mês (3 valores distintos).
+    // Decisão 3 (01/10/2026): invoice_month = mês da COMPRA para todas;
+    // a fatura de cada parcela fica em fatura_competencia (sequencial).
     const ims = gs.map((g) => g.row.invoice_month as string);
-    expect(new Set(ims).size).toBe(3);
+    expect(new Set(ims).size).toBe(1);
+    const comps = gs.map((g) => g.row.fatura_competencia as string);
+    expect(new Set(comps).size).toBe(3);
     // Centavos extras vão para a primeira parcela.
     const valores = gs
       .sort((a, b) => (a.row.parcela_atual as number) - (b.row.parcela_atual as number))
