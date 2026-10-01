@@ -13,7 +13,7 @@
  */
 
 /** Fallback textual da confirmação de gasto (usado quando não há botões). */
-export const EXPENSE_CONFIRM_FALLBACK = "Responda:\n1. Confirmar\n2. Ajustar\n3. Cancelar";
+export const EXPENSE_CONFIRM_FALLBACK = "Escolha uma opção:\n1. ✅ Confirmar\n2. ✏️ Ajustar\n3. ❌ Cancelar";
 
 export const whatsappMessages = {
   // ---- forma de pagamento ----
@@ -91,7 +91,7 @@ export const whatsappMessages = {
   perguntaCampoAjuste() {
     return (
       `O que você quer ajustar?\n\n` +
-      `1. Descrição\n2. Categoria\n3. Valor\n4. Data\n5. Pagamento\n\n` +
+      `1. 💬 Descrição\n2. 🏷️ Categoria\n3. 💰 Valor\n4. 📅 Data\n5. 💳 Pagamento\n\n` +
       `Responda com o número ou o nome.`
     );
   },

@@ -44,7 +44,104 @@ export const REPLY_ID_TEXT: Record<string, string> = {
   expense_edit_value: "ajustar valor",
   expense_edit_date: "ajustar data",
   expense_edit_payment: "ajustar pagamento",
+  // Menu principal → mesmo número que a pessoa digitaria no menu em texto.
+  menu_gastos: "1",
+  menu_cartoes: "2",
+  menu_contas: "3",
+  menu_receitas: "4",
+  menu_planejamento: "5",
+  menu_resumos: "6",
+  menu_ajuda: "7",
+  menu_comandos: "8",
+  // Submenus → mesma frase natural já entendida pelo pipeline.
+  gastos_registrar: "registrar gasto",
+  gastos_mes: "meus gastos do mês",
+  gastos_semana: "gastos desta semana",
+  gastos_consultar: "meus gastos",
+  cartoes_cadastrar: "cadastrar cartão",
+  cartoes_fatura: "minha fatura",
+  cartoes_proxima: "próxima fatura",
+  cartoes_futuras: "faturas futuras",
+  cartoes_limite: "limite do meu cartão",
+  contas_nova: "cadastrar conta",
+  contas_proximas: "próximas contas",
+  contas_recorrentes: "contas recorrentes",
+  contas_atrasadas: "contas atrasadas",
+  receitas_registrar: "registrar receita",
+  receitas_mes: "receitas do mês",
+  plan_metas: "minhas metas",
+  plan_orcamento: "meu orçamento",
+  resumo_hoje: "quanto gastei hoje",
+  resumo_semana: "resumo da semana",
+  resumo_mes: "resumo do mês",
 };
+
+/** Prefixo de ID para escolha de cartão: o resto é o rótulo mascarado. */
+export const CARD_PICK_PREFIX = "card_pick:";
+
+/** Cabeçalho que identifica o menu principal (ver consulta.ajuda). */
+export const MAIN_MENU_MARKER = "📌 O que deseja fazer?";
+
+type Row = { id: string; title: string; description?: string };
+/** Submenus: cabeçalho do texto-guia (dispatchMenuOption) → ações. */
+const SUBMENUS: Array<{ header: string; button: string; rows: Row[] }> = [
+  {
+    header: "📝 Gastos",
+    button: "Ver opções",
+    rows: [
+      { id: "gastos_registrar", title: "➕ Registrar gasto" },
+      { id: "gastos_mes", title: "📅 Gastos do mês" },
+      { id: "gastos_semana", title: "📆 Gastos da semana" },
+      { id: "gastos_consultar", title: "🔎 Consultar gastos" },
+    ],
+  },
+  {
+    header: "💳 Cartões",
+    button: "Ver opções",
+    rows: [
+      { id: "cartoes_cadastrar", title: "➕ Cadastrar cartão" },
+      { id: "cartoes_fatura", title: "💳 Minha fatura" },
+      { id: "cartoes_proxima", title: "📅 Próxima fatura" },
+      { id: "cartoes_futuras", title: "🗓️ Faturas futuras" },
+      { id: "cartoes_limite", title: "💰 Limite disponível" },
+    ],
+  },
+  {
+    header: "📄 Contas",
+    button: "Ver opções",
+    rows: [
+      { id: "contas_nova", title: "➕ Nova conta" },
+      { id: "contas_proximas", title: "📋 Próximas contas" },
+      { id: "contas_recorrentes", title: "🔁 Contas recorrentes" },
+      { id: "contas_atrasadas", title: "⏰ Contas atrasadas" },
+    ],
+  },
+  {
+    header: "💰 Receitas",
+    button: "Ver opções",
+    rows: [
+      { id: "receitas_registrar", title: "➕ Registrar receita" },
+      { id: "receitas_mes", title: "📊 Receitas do mês" },
+    ],
+  },
+  {
+    header: "🎯 Planejamento",
+    button: "Ver opções",
+    rows: [
+      { id: "plan_metas", title: "🎯 Minhas metas" },
+      { id: "plan_orcamento", title: "📊 Meu orçamento" },
+    ],
+  },
+  {
+    header: "📊 Resumos",
+    button: "Ver opções",
+    rows: [
+      { id: "resumo_hoje", title: "📅 Hoje" },
+      { id: "resumo_semana", title: "📆 Esta semana" },
+      { id: "resumo_mes", title: "🗓️ Este mês" },
+    ],
+  },
+];
 
 const MAX_BODY = 1024;
 const MAX_BTN_TITLE = 20;
@@ -61,6 +158,7 @@ export function replyIdToTexto(id: string, title?: string): string {
   const v = (id ?? "").trim();
   if (REPLY_ID_TEXT[v]) return REPLY_ID_TEXT[v];
   if (v.startsWith(FATURA_COMP_PREFIX)) return v; // tratado por tratarEscolhaFatura
+  if (v.startsWith(CARD_PICK_PREFIX)) return v.slice(CARD_PICK_PREFIX.length).trim();
   const opt = /^opt_(\d{1,2})$/.exec(v);
   if (opt) return opt[1];
   return (title ?? "").trim() || v;
@@ -88,9 +186,9 @@ export function buildInteractiveFromReply(resposta: string): InteractiveReply | 
         buttons: [
           ...ym.map((o) => ({
             id: `${FATURA_COMP_PREFIX}${o}`,
-            title: clip(nomeMesYm(o).split("/")[0], MAX_BTN_TITLE),
+            title: clip(`📅 ${nomeMesYm(o).split("/")[0]}`, MAX_BTN_TITLE),
           })),
-          { id: `${FATURA_COMP_PREFIX}outro`, title: "Outro mês" },
+          { id: `${FATURA_COMP_PREFIX}outro`, title: "🗓️ Outro mês" },
         ],
       };
     }
@@ -104,9 +202,9 @@ export function buildInteractiveFromReply(resposta: string): InteractiveReply | 
       type: "button",
       body: semFallback,
       buttons: [
-        { id: "expense_confirm", title: "Confirmar" },
-        { id: "expense_adjust", title: "Ajustar" },
-        { id: "expense_cancel", title: "Cancelar" },
+        { id: "expense_confirm", title: "✅ Confirmar" },
+        { id: "expense_adjust", title: "✏️ Ajustar" },
+        { id: "expense_cancel", title: "❌ Cancelar" },
       ],
     };
   }
@@ -118,11 +216,11 @@ export function buildInteractiveFromReply(resposta: string): InteractiveReply | 
       body: "O que você quer ajustar?",
       buttonText: "Escolher",
       rows: [
-        { id: "expense_edit_description", title: "Descrição" },
-        { id: "expense_edit_category", title: "Categoria" },
-        { id: "expense_edit_value", title: "Valor" },
-        { id: "expense_edit_date", title: "Data" },
-        { id: "expense_edit_payment", title: "Pagamento" },
+        { id: "expense_edit_description", title: "💬 Descrição" },
+        { id: "expense_edit_category", title: "🏷️ Categoria" },
+        { id: "expense_edit_value", title: "💰 Valor" },
+        { id: "expense_edit_date", title: "📅 Data" },
+        { id: "expense_edit_payment", title: "💳 Pagamento" },
       ],
     };
   }
@@ -134,12 +232,60 @@ export function buildInteractiveFromReply(resposta: string): InteractiveReply | 
       body,
       buttonText: "Forma de pagamento",
       rows: [
-        { id: "payment_pix", title: "Pix" },
-        { id: "payment_cash", title: "Dinheiro" },
-        { id: "payment_debit", title: "Débito" },
-        { id: "payment_credit", title: "Cartão de crédito" },
+        { id: "payment_pix", title: "💠 Pix" },
+        { id: "payment_cash", title: "💵 Dinheiro" },
+        { id: "payment_debit", title: "🏦 Débito" },
+        { id: "payment_credit", title: "💳 Cartão de crédito" },
       ],
     };
+  }
+
+  // Menu principal → lista nativa curta ("Ver menu").
+  if (body.includes(MAIN_MENU_MARKER)) {
+    return {
+      type: "list",
+      body: "Como posso te ajudar? 👇",
+      buttonText: "Ver menu",
+      rows: [
+        { id: "menu_gastos", title: "💸 Gastos" },
+        { id: "menu_cartoes", title: "💳 Cartões" },
+        { id: "menu_contas", title: "🧾 Contas" },
+        { id: "menu_receitas", title: "💰 Receitas" },
+        { id: "menu_planejamento", title: "🎯 Planejamento" },
+        { id: "menu_resumos", title: "📊 Resumos" },
+        { id: "menu_ajuda", title: "❓ Ajuda" },
+        { id: "menu_comandos", title: "⚡ Comandos rápidos" },
+      ],
+    };
+  }
+
+  // Submenus (texto-guia de cada grupo) → lista com as principais ações.
+  const sub = SUBMENUS.find((m) => body.startsWith(m.header));
+  if (sub) {
+    return { type: "list", body, buttonText: sub.button, rows: sub.rows };
+  }
+
+  // Escolha de cartão: 2–3 → botões; 4+ → lista. Só o rótulo mascarado.
+  if (n.includes("qual cartao voce usou?")) {
+    const cards = body
+      .split("\n")
+      .map((l) => /^\s*•\s*(.+)$/.exec(l)?.[1]?.trim())
+      .filter((x): x is string => !!x);
+    if (cards.length >= 2 && cards.length <= 3) {
+      return {
+        type: "button",
+        body,
+        buttons: cards.map((c) => ({ id: `${CARD_PICK_PREFIX}${c}`, title: `💳 ${c}` })),
+      };
+    }
+    if (cards.length >= 4 && cards.length <= 10) {
+      return {
+        type: "list",
+        body,
+        buttonText: "Escolher cartão",
+        rows: cards.map((c) => ({ id: `${CARD_PICK_PREFIX}${c}`, title: `💳 ${c}` })),
+      };
+    }
   }
 
   // Confirmações sim/não (gasto, receita, recorrência).
