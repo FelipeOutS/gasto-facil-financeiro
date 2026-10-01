@@ -134,7 +134,7 @@ describe("ajustar", () => {
     expect(r.status).toBe("aguardando_confirmacao");
     expect(r.resposta).toContain("Confere pra mim? 👀");
     expect(r.resposta).toContain("Uber ida ao trabalho");
-    expect(r.resposta).toContain("R$ 12,60");
+    expect(r.resposta).toMatch(/R\$\s12,60/);
     expect(r.resposta).toContain("Dinheiro");
     expect(gastosInserts()).toHaveLength(0);
     await tap("expense_confirm");
@@ -149,7 +149,7 @@ describe("ajustar", () => {
     await tap("expense_adjust");
     expect((await tap("expense_edit_value")).resposta).toContain("Qual é o valor correto?");
     const r = await send("13,20");
-    expect(r.resposta).toContain("R$ 13,20");
+    expect(r.resposta).toMatch(/R\$\s13,20/);
     expect(r.resposta).toContain("Uber");
     expect(r.resposta).toContain("Dinheiro");
     await send("sim");
@@ -175,15 +175,15 @@ describe("ajustar", () => {
     expect(gastosInserts()).toHaveLength(0);
   });
 
-  test("9. data aceita 30/09/2026 e ontem", async () => {
+  test("9. data aceita 15/08/2026 e ontem", async () => {
     await iniciar();
     await tap("expense_adjust");
     expect((await tap("expense_edit_date")).status).toBe("aguardando_ajuste_data");
-    const r = await send("30/09/2026");
+    const r = await send("15/08/2026");
     expect(r.status).toBe("aguardando_confirmacao");
-    expect(r.resposta).toContain("30/09/2026");
+    expect(r.resposta).toContain("15/08/2026");
     await send("confirmar");
-    expect(gastosInserts()[0].row.data).toBe("2026-09-30");
+    expect(gastosInserts()[0].row.data).toBe("2026-08-15");
 
     resetState({});
     await iniciar();
