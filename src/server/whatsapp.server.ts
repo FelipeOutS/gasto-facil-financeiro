@@ -24,6 +24,8 @@ import {
   parseWhatsAppExpenseMessage as baseParseWhatsAppExpenseMessage,
   cleanDescricao,
   type ParsedExpense,
+  parseValor as parseValorAjuste,
+  parseData as parseDataAjuste,
 } from "@/lib/whatsappParser";
 import { suggestCategoryFromText } from "@/lib/categories";
 import type { Cartao, FormaPagamento } from "@/lib/types";
@@ -793,6 +795,7 @@ export type ProcessOutcome = {
     | "aguardando_forma_pagamento"
     | "aguardando_cartao"
     | "aguardando_categoria_gasto"
+    | AjusteGastoStatus
     | "aguardando_consulta_fatura"
     | "aguardando_consulta_parcelamento"
     | "aguardando_consulta_vencimentos"
@@ -855,6 +858,7 @@ const CONFIRM_TOKENS = [
   "confirmado",
   "confirmada",
   "pode salvar",
+  "pode registrar",
   "pode",
   "isso",
   "isso mesmo",
@@ -877,6 +881,8 @@ const CANCEL_TOKENS = [
   "apagar",
   "errado",
   "no",
+  "deixa pra la",
+  "deixa para la",
 ];
 
 /**
@@ -1288,6 +1294,30 @@ function sessionToParsed(s: Session, cartoes: Cartao[]): ParsedExpense {
   };
 }
 
+const AJUSTE_GASTO_STATES = [
+  "aguardando_ajuste_campo",
+  "aguardando_ajuste_descricao",
+  "aguardando_ajuste_valor",
+  "aguardando_ajuste_data",
+] as const;
+type AjusteGastoStatus = (typeof AJUSTE_GASTO_STATES)[number];
+
+type AjusteCampo = "descricao" | "categoria" | "valor" | "data" | "pagamento";
+/** Interpreta a escolha do campo (número, nome ou texto do botão). */
+export function parseCampoAjuste(texto: string): AjusteCampo | null {
+  const t = normalizeText(texto).replace(/^(ajustar|editar|alterar|corrigir|mudar)\s+(a\s+|o\s+)?/, "");
+  if (/^(1|descricao|nome)$/.test(t)) return "descricao";
+  if (/^(2|categoria)$/.test(t)) return "categoria";
+  if (/^(3|valor|preco)$/.test(t)) return "valor";
+  if (/^(4|data|dia)$/.test(t)) return "data";
+  if (/^(5|pagamento|forma de pagamento|forma)$/.test(t)) return "pagamento";
+  return null;
+}
+/** "ajustar", "editar", "corrigir" (ou "2" na confirmação) abrem o ajuste. */
+export function isAjustarCommand(texto: string): boolean {
+  return /^(ajustar|ajusta|ajuste|editar|corrigir|alterar)$/.test(normalizeText(texto));
+}
+
 const PENDING_TTL_MS = 30 * 60 * 1000;
 export const WHATSAPP_HANDLER_VERSION = "receipt-session-durable-v5";
 const PENDING_STATES = [
@@ -1307,6 +1337,8 @@ const PENDING_STATES = [
   // durante uma confirmação de gasto por texto/áudio. Permanece pendente
   // até o usuário escolher (volta para aguardando_confirmacao) ou cancelar.
   "aguardando_categoria_gasto",
+  // 01/10/2026 — Ajustar na confirmação de gasto (Confirmar/Ajustar/Cancelar).
+  ...AJUSTE_GASTO_STATES,
   // WA-F2 — paginação temporária de detalhamento de fatura. Aguarda
   // "ver mais", "voltar" ou "cancelar". NUNCA cria gasto/receita/cartão.
   "aguardando_consulta_fatura",
@@ -2761,7 +2793,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     }
   }
 
-  const decisao = classificarResposta(texto);
+  let decisao = classificarResposta(texto);
 
   // ---- WA: comando de reinício geral ("cancelar", "reiniciar", ...) ----
   // Prioridade máxima: encerra qualquer sessão pendente (gasto, receita,
@@ -2858,6 +2890,137 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
       aviso,
     );
     return { status: "pendente", resposta: aviso };
+  }
+
+  // ---- 01/10/2026: Confirmar / Ajustar / Cancelar na confirmação de gasto ----
+  // Botão e texto caem aqui pelo MESMO texto (replyIdToTexto). Confirmar e
+  // Cancelar reaproveitam o fluxo atual (decisao confirm/cancel); Ajustar
+  // só altera a sessão pendente — nada é salvo antes de Confirmar.
+  const sessaoGasto =
+    sessao &&
+    !isComprovanteSession(sessao.session) &&
+    !isReceitaSession(sessao.session) &&
+    sessao.session?.kind !== "pagar_pessoa";
+  if (sessao && sessaoGasto && sessao.status === "aguardando_confirmacao") {
+    const t = normalizeText(texto);
+    if (t === "1") decisao = "confirm";
+    else if (t === "3") decisao = "cancel";
+    const campoDireto = /^(ajustar|editar|alterar|corrigir)\s/.test(t) ? parseCampoAjuste(texto) : null;
+    if (t === "2" || isAjustarCommand(texto) || campoDireto) {
+      if (campoDireto) {
+        return await iniciarAjusteCampo(campoDireto);
+      }
+      const resposta = M.perguntaCampoAjuste();
+      await atualizarSessao(sessao.id, "aguardando_ajuste_campo", sessao.session, resposta);
+      return { status: "aguardando_ajuste_campo", resposta };
+    }
+  }
+
+  async function voltarConfirmacao(next: Session, prefixo?: string): Promise<ProcessOutcome> {
+    const resumo = formatarConfirmacao(
+      sessionToParsed(next, cartoes),
+      undefined,
+      categorias,
+      next.source,
+      memoryHintFromSession(next, categorias),
+      next.manualCategoriaLabel,
+    );
+    const resposta = prefixo ? `${prefixo}\n\n${resumo}` : resumo;
+    await atualizarSessao(sessao!.id, "aguardando_confirmacao", next, resposta);
+    return { status: "aguardando_confirmacao", resposta };
+  }
+
+  async function iniciarAjusteCampo(campo: AjusteCampo): Promise<ProcessOutcome> {
+    const s0 = sessao!.session;
+    if (campo === "descricao") {
+      const resposta = M.perguntaAjusteDescricao();
+      await atualizarSessao(sessao!.id, "aguardando_ajuste_descricao", s0, resposta);
+      return { status: "aguardando_ajuste_descricao", resposta };
+    }
+    if (campo === "valor") {
+      const resposta = M.perguntaAjusteValor();
+      await atualizarSessao(sessao!.id, "aguardando_ajuste_valor", s0, resposta);
+      return { status: "aguardando_ajuste_valor", resposta };
+    }
+    if (campo === "data") {
+      const resposta = M.perguntaAjusteData();
+      await atualizarSessao(sessao!.id, "aguardando_ajuste_data", s0, resposta);
+      return { status: "aguardando_ajuste_data", resposta };
+    }
+    if (campo === "categoria") {
+      // Reusa o picker atual (só categorias do próprio usuário; nunca cria).
+      const { body, options } = await buildCategoriaListBody({
+        userId,
+        holder: { descricao: s0.nome, categoriaSugerida: s0.categoriaSugestao ?? null },
+        cats: categorias,
+      });
+      const next: Session = { ...s0, categoriaOptions: options };
+      const resposta = `Qual categoria devo usar?\n\n${body}`;
+      await atualizarSessao(sessao!.id, "aguardando_categoria_gasto", next, resposta);
+      return { status: "aguardando_categoria_gasto", resposta };
+    }
+    // pagamento → reusa o passo atual de forma de pagamento (e cartão).
+    const next: Session = {
+      ...s0,
+      formaPagamento: undefined,
+      cartaoId: null,
+      cartaoNomeDetectado: undefined,
+      cartaoDigitado: undefined,
+      cartaoNaoCadastrado: undefined,
+    };
+    const resposta = perguntaFormaPagamento(next);
+    await atualizarSessao(sessao!.id, "aguardando_forma_pagamento", next, resposta);
+    return { status: "aguardando_forma_pagamento", resposta };
+  }
+
+  if (
+    sessao &&
+    sessaoGasto &&
+    (AJUSTE_GASTO_STATES as readonly string[]).includes(sessao.status)
+  ) {
+    logWaRouteDecision(msg, "expense_parser", "expense_adjust_session");
+    if (decisao === "cancel") {
+      await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+      return { status: "cancelada", resposta: M.gastoCancelado() };
+    }
+    const st = sessao.status as AjusteGastoStatus;
+    if (st === "aguardando_ajuste_campo") {
+      const campo = parseCampoAjuste(texto);
+      if (!campo) {
+        const resposta = M.ajusteNaoEntendido(M.perguntaCampoAjuste());
+        return { status: "aguardando_ajuste_campo", resposta };
+      }
+      return await iniciarAjusteCampo(campo);
+    }
+    if (st === "aguardando_ajuste_descricao") {
+      const nova = texto.trim().slice(0, 80);
+      if (!nova || isGenericExpenseDescription(nova)) {
+        return {
+          status: "aguardando_ajuste_descricao",
+          resposta: M.ajusteNaoEntendido(M.perguntaAjusteDescricao()),
+        };
+      }
+      return await voltarConfirmacao({ ...sessao.session, nome: nova });
+    }
+    if (st === "aguardando_ajuste_valor") {
+      const v = parseValorAjuste(texto);
+      if (!v) {
+        return {
+          status: "aguardando_ajuste_valor",
+          resposta: M.ajusteNaoEntendido(M.perguntaAjusteValor()),
+        };
+      }
+      return await voltarConfirmacao({ ...sessao.session, valor: Math.round(v * 100) / 100 });
+    }
+    // data
+    const d = parseDataAjuste(texto);
+    if (!d.matched) {
+      return {
+        status: "aguardando_ajuste_data",
+        resposta: M.ajusteNaoEntendido(M.perguntaAjusteData()),
+      };
+    }
+    return await voltarConfirmacao({ ...sessao.session, data: d.iso });
   }
 
   // ---- Fase WA-G1: sessão de receita pendente sempre tem prioridade. ----
