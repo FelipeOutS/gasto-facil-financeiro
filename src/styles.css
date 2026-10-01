@@ -734,24 +734,24 @@ body {
   justify-content: center;
 }
 .bank-logo-container.bank-logo-sm {
-  width: 28px;
+  width: 34px;
   height: 22px;
-  max-width: 28px;
+  max-width: 34px;
   max-height: 22px;
 }
 .bank-logo-container.bank-logo-sm > img {
-  max-width: 28px;
+  max-width: 34px;
   max-height: 18px;
   object-position: center;
 }
 .bank-logo-container.bank-logo-xs {
-  width: 18px;
+  width: 20px;
   height: 14px;
-  max-width: 18px;
+  max-width: 20px;
   max-height: 14px;
 }
 .bank-logo-container.bank-logo-xs > img {
-  max-width: 18px;
+  max-width: 20px;
   max-height: 12px;
   object-position: center;
 }

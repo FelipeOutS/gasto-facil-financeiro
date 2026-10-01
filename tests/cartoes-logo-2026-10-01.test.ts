@@ -35,3 +35,27 @@ describe("Identidade visual do cartão", () => {
     expect(r.initial).toBe("B");
   });
 });
+
+describe("Regra única de marca no cartão", () => {
+  test("Nubank (colorido) e Mercado Pago (branco) resolvem asset local", () => {
+    expect(getBankLogo("Nubank").slug).toBe("nubank");
+    expect(getBankLogo("mercado pago").slug).toBe("mercadopago-branco");
+  });
+  test("CSS converte logos coloridos em marca clara e define tamanhos fixos", async () => {
+    const css = await Bun.file(new URL("../src/styles.css", import.meta.url)).text();
+    expect(css).toContain(".bank-logo-mono");
+    expect(css).toMatch(/filter:\s*brightness\(0\)\s*invert\(1\)/);
+    expect(css).toContain(".bank-logo-container.bank-logo-sm > img");
+    expect(css).toContain(".bank-logo-container.bank-logo-xs > img");
+  });
+  test("BrandLogo não usa mais pílula branca e aplica bank-logo-mono", async () => {
+    const src = await Bun.file(new URL("../src/components/BrandLogo.tsx", import.meta.url)).text();
+    expect(src).not.toContain("bank-logo-pill");
+    expect(src).toContain('!isWhiteOptimized && "bank-logo-mono"');
+  });
+  test("botão Ver fatura usa tokens do tema (contraste claro e escuro)", async () => {
+    const src = await Bun.file(new URL("../src/routes/cartoes.index.tsx", import.meta.url)).text();
+    expect(src).toContain("bg-background/95 px-3 text-[11px] font-semibold text-foreground");
+    expect(src).not.toContain("bg-white/95 px-3 text-[11px] font-semibold text-foreground");
+  });
+});
