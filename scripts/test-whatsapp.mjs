@@ -175,11 +175,13 @@ const extras = [...onDisk].filter(
     (f.startsWith("whatsapp-") || f.startsWith("admin-master-") || f.startsWith("free-ads-")) &&
     !INCLUDE.includes(f),
 );
+// Arquivos novos do WhatsApp entram automaticamente (ordem alfabética, após
+// a lista fixa) — antes o runner abortava e a suíte "junta" acabava sendo
+// rodada com `bun test tests/whatsapp*`, num único processo (ver nota abaixo).
 if (extras.length > 0) {
-  console.error(
-    `[WA-B5] arquivos WhatsApp/admin/free-ads não incluídos no runner: ${extras.join(", ")}`,
-  );
-  process.exit(2);
+  extras.sort();
+  INCLUDE.push(...extras);
+  console.log(`[WA-B5] incluídos automaticamente: ${extras.length} arquivo(s)`);
 }
 
 const env = {
