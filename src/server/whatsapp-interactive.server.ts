@@ -97,7 +97,7 @@ export const REPLY_ID_TEXT: Record<string, string> = {
   card_edit_vencimento: "vencimento",
   // Gasto com cartão não cadastrado.
   card_new_register: "cadastrar cartão",
-  card_new_continue: "sim",
+  card_new_continue: "continuar sem cadastrar",
 };
 
 /** Prefixo de ID para escolha de cartão: o resto é o rótulo mascarado. */

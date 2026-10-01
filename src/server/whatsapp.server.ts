@@ -15,7 +15,12 @@
  * NUNCA descarta valor/nome/data/forma já coletados.
  */
 import { competenciaPorData } from "@/lib/fatura-competencia";
-import { perguntaEscolhaFatura, tratarEscolhaFatura } from "./whatsapp-fatura-escolha.server";
+import {
+  parseEscolhaFatura,
+  perguntaEscolhaFatura,
+  resolverCompetenciaEscolhida,
+  tratarEscolhaFatura,
+} from "./whatsapp-fatura-escolha.server";
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -809,6 +814,7 @@ export type ProcessOutcome = {
     | "aguardando_forma_pagamento"
     | "aguardando_cartao"
     | "aguardando_categoria_gasto"
+    | "aguardando_fatura_nao_cadastrado"
     | AjusteGastoStatus
     | "aguardando_consulta_fatura"
     | "aguardando_consulta_parcelamento"
@@ -1244,6 +1250,9 @@ type Session = {
   cartaoNomeDetectado?: string;
   cartaoDigitado?: string;
   cartaoNaoCadastrado?: boolean;
+  /** Competência (YYYY-MM) escolhida pelo usuário para cartão não cadastrado,
+   *  ANTES da confirmação final. Gravada em fatura_competencia ao salvar. */
+  faturaCompetenciaManual?: string;
   parcelas?: number;
   categoriaSugestao?: string;
   mensagemOriginal: string;
@@ -1358,6 +1367,8 @@ const PENDING_STATES = [
   // durante uma confirmação de gasto por texto/áudio. Permanece pendente
   // até o usuário escolher (volta para aguardando_confirmacao) ou cancelar.
   "aguardando_categoria_gasto",
+  // 01/10/2026 — cartão não cadastrado: escolha da fatura antes de confirmar.
+  "aguardando_fatura_nao_cadastrado",
   // 01/10/2026 — Ajustar na confirmação de gasto (Confirmar/Ajustar/Cancelar).
   ...AJUSTE_GASTO_STATES,
   // WA-F2 — paginação temporária de detalhamento de fatura. Aguarda
@@ -1896,6 +1907,17 @@ function detalharCartaoAutoNaConfirmacao(resposta: string, s: Session, cartao: C
   return lines.join("\n");
 }
 
+/** Cartão não cadastrado com fatura escolhida: mostra "• Fatura: Mês/Ano". */
+function adicionarFaturaManualNaConfirmacao(resposta: string, comp: string): string {
+  const lines = resposta.split("\n");
+  const idx = lines.findIndex((l) => l.startsWith("• Pagamento:"));
+  const [y, m] = comp.split("-").map(Number);
+  const linha = `• Fatura: ${MESES_PT_FATURA[m - 1]}/${y}`;
+  if (idx < 0) return `${resposta}\n${linha}`;
+  lines.splice(idx + 1, 0, linha);
+  return lines.join("\n");
+}
+
 function perguntaCartao(s: Session, cartoes: Cartao[]): string {
   const lista = listarCartoesParaPergunta(cartoes);
   return M.perguntaCartao(lista);
@@ -1921,7 +1943,7 @@ function isNegacaoCartao(texto: string): boolean {
 function avisoCartaoNaoCadastrado(s: Session, digitado: string): string {
   const dataFmt = formatDataBR(s.data);
   return M.avisoCartaoNaoCadastrado(
-    digitado,
+    canonicalizeBrand(digitado) || digitado,
     formatBRL(s.valor),
     s.nome,
     dataFmt === "hoje" ? "hoje" : dataFmt,
@@ -2009,6 +2031,10 @@ export async function persistirGasto(
 
   const cartaoFinalId =
     s.formaPagamento === "credito" && s.cartaoId && !s.cartaoNaoCadastrado ? s.cartaoId : null;
+  const faturaManual =
+    (s.formaPagamento ?? "credito") === "credito" && !cartaoFinalId && s.faturaCompetenciaManual
+      ? s.faturaCompetenciaManual
+      : null;
 
   const obsExtra =
     s.cartaoNaoCadastrado && s.cartaoDigitado
@@ -2016,7 +2042,7 @@ export async function persistirGasto(
       : "";
 
   // Separação "quando comprei" × "quando vou pagar".
-  let faturaCompetencia: string | null = null;
+  let faturaCompetencia: string | null = faturaManual;
   if ((s.formaPagamento ?? "credito") === "credito" && cartaoFinalId) {
     try {
       const cs = await carregarCartoes(userId);
@@ -2086,7 +2112,7 @@ export async function persistirGasto(
       : rotuloFormaPagamento(s.formaPagamento ?? "credito");
   let resposta = M.gastoSalvo(formatBRL(s.valor), nomeLimpo, categoriaLabelFinal, ondePagou);
   // Crédito sem cartão cadastrado: não dá para calcular a fatura → pergunta.
-  if ((s.formaPagamento ?? "credito") === "credito" && !cartaoFinalId) {
+  if ((s.formaPagamento ?? "credito") === "credito" && !cartaoFinalId && !faturaManual) {
     resposta += "\n\n" + perguntaEscolhaFatura(s.data);
   }
   return { ok: true, gastoId: gastoRow.id, resposta };
@@ -2986,11 +3012,52 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
       temOutraSessao: !!sessao,
     });
     if (out) return out as ProcessOutcome;
-    // "2. Continuar sem cadastrar" = seguir com o cartão não cadastrado.
-    if (gastoNaoCadastrado && normalizeText(texto) === "2") {
-      texto = "sim";
-      decisao = "confirm";
+    // "2. Continuar sem cadastrar" (ou "sim") = seguir com o cartão não
+    // cadastrado. Sem competência conhecida, pergunta a fatura ANTES da
+    // confirmação final; nada é salvo aqui.
+    if (gastoNaoCadastrado) {
+      const tc = normalizeText(texto);
+      const continuar = tc === "2" || tc === "continuar sem cadastrar" || decisao === "confirm";
+      if (continuar && !gastoNaoCadastrado.session.faturaCompetenciaManual) {
+        const resposta = perguntaEscolhaFatura(gastoNaoCadastrado.session.data);
+        await atualizarSessao(
+          gastoNaoCadastrado.id,
+          "aguardando_fatura_nao_cadastrado",
+          gastoNaoCadastrado.session,
+          resposta,
+        );
+        return { status: "aguardando_fatura_nao_cadastrado", resposta };
+      }
     }
+  }
+  if (sessao && sessaoGasto && sessao.status === "aguardando_fatura_nao_cadastrado") {
+    if (decisao === "cancel") {
+      await atualizarSessao(sessao.id, "cancelada", sessao.session, M.gastoCancelado());
+      return { status: "cancelada", resposta: M.gastoCancelado() };
+    }
+    const p = parseEscolhaFatura(texto);
+    const comp = p ? resolverCompetenciaEscolhida(p, sessao.session.data) : null;
+    if (!comp) {
+      const resposta =
+        (p?.kind === "outro" ? "Me diga o mês, por exemplo \"fatura de dezembro de 2026\".\n\n" : "") +
+        perguntaEscolhaFatura(sessao.session.data);
+      await atualizarSessao(sessao.id, "aguardando_fatura_nao_cadastrado", sessao.session, resposta);
+      return { status: "aguardando_fatura_nao_cadastrado", resposta };
+    }
+    const next: Session = { ...sessao.session, faturaCompetenciaManual: comp };
+    const resumo = adicionarFaturaManualNaConfirmacao(
+      formatarConfirmacao(
+        sessionToParsed(next, cartoes),
+        undefined,
+        categorias,
+        next.source,
+        memoryHintFromSession(next, categorias),
+        next.manualCategoriaLabel,
+      ),
+      comp,
+    );
+    await atualizarSessao(sessao.id, "aguardando_confirmacao", next, resumo);
+    return { status: "aguardando_confirmacao", resposta: resumo };
   }
   if (sessao && sessaoGasto && sessao.status === "aguardando_confirmacao") {
     const t = normalizeText(texto);
@@ -5590,7 +5657,13 @@ async function sendWhatsAppRaw(
         {
           to: _to,
           messageType,
-          source: messageType === "interactive" ? "reply_interactive" : "reply",
+          // Abertura de WhatsApp Flow é distinguida pelo source (sem conteúdo).
+          source:
+            messageType !== "interactive"
+              ? "reply"
+              : (body.interactive as { type?: unknown } | undefined)?.type === "flow"
+                ? "reply_flow"
+                : "reply_interactive",
           content,
           ok: res.ok,
           httpStatus: res.status,

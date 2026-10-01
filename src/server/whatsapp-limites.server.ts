@@ -108,10 +108,16 @@ export function detectLimiteIntent(texto: string): LimiteIntent | null {
   // Guard: mensagens com valor monetário ou número de transação são
   // gastos/receitas e NUNCA são consultas de limite. Evita capturar
   // "Gastei R$ 35,90 no cartão Nubank" como `limit_card`.
+  // O guard roda sobre o texto ORIGINAL (minúsculo): `norm` remove vírgulas
+  // e pontos, então "89,90" virava "89 90" e o guard nunca disparava.
+  // Também: verbo de lançamento ("gastei/comprei/paguei/passei") seguido de
+  // número é registro de gasto, não consulta.
+  const raw = (texto ?? "").toLowerCase();
   if (
-    /r\$\s*\d/.test(t) ||
-    /\d+[.,]\d{2}\b/.test(t) ||
-    /\b\d{2,}\s*(?:reais|conto|paus)\b/.test(t)
+    /r\$\s*\d/.test(raw) ||
+    /\d+[.,]\d{2}\b/.test(raw) ||
+    /\b\d{2,}\s*(?:reais|conto|paus)\b/.test(t) ||
+    /\b(?:gastei|comprei|paguei|passei)\s+(?:r\$\s*)?\d/.test(t)
   ) {
     return null;
   }
