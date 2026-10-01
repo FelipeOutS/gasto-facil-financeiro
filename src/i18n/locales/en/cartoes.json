@@ -26,7 +26,8 @@
     "tapHint": "Tap a card to see statement details.",
     "importInvoice": "Import statement",
     "newCard": "New card",
-    "selectHint": "Tap a card to see only that card. Tap again to open the statement."
+    "selectHint": "Tap a card to see only that card. Tap again to open the statement.",
+    "selectHintDesktop": "Click a card to see only that card. Use “View statement” for details."
   },
   "empty": {
     "title": "No cards here yet",

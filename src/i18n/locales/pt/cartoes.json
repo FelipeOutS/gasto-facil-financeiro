@@ -26,7 +26,8 @@
     "tapHint": "Toque em um cartão para ver detalhes da fatura.",
     "importInvoice": "Importar fatura",
     "newCard": "Novo cartão",
-    "selectHint": "Toque em um cartão para ver só ele. Toque de novo para abrir a fatura."
+    "selectHint": "Toque em um cartão para ver só ele. Toque de novo para abrir a fatura.",
+    "selectHintDesktop": "Toque em um cartão para ver só ele. Use “Ver fatura” para os detalhes."
   },
   "empty": {
     "title": "Nenhum cartão por aqui ainda",

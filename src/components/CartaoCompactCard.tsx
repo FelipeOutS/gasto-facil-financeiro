@@ -74,7 +74,7 @@ export const CartaoCompactCard = memo(function CartaoCompactCard({
       }}
       className={cn(
         "hover-lift card-press group relative flex cursor-pointer flex-col overflow-hidden rounded-[26px] p-4 text-white shadow-elevated transition-all duration-200 active:scale-[0.99]",
-        selected && "ring-4 ring-primary ring-offset-2 ring-offset-background",
+        selected && "outline outline-[3px] outline-offset-[3px] outline-primary",
       )}
       style={{ background: theme.background, minHeight: 196, maxHeight: 220 }}
     >

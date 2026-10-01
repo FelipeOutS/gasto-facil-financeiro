@@ -487,7 +487,7 @@ function CartoesPage() {
             <AppSummaryCard
               tone="cartoes"
               icon={<CreditCard className="h-4 w-4" />}
-              label={t("v3.summary.limit")}
+              label={cartaoSelecionado ? t("view.limit") : t("v3.summary.limit")}
               value={<Money value={resumo.limiteTotal} className="text-xl" />}
             />
             <AppSummaryCard
@@ -609,7 +609,7 @@ function CartoesPage() {
                 : t("list.count", { count: cartoes.length })}
             </h2>
             {cartoes.length > 0 && (
-              <p className="mt-0.5 text-xs text-muted-foreground">{t("list.tapHint")}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{cartoes.length > 1 ? t("list.selectHintDesktop") : t("list.tapHint")}</p>
             )}
           </div>
           {cartoes.length > 0 && (
@@ -982,7 +982,7 @@ const CartaoCard = memo(function CartaoCard({
       aria-pressed={onSelect ? !!selected : undefined}
       className={cn(
         "hover-lift card-press group relative cursor-pointer overflow-hidden rounded-3xl p-4 text-white shadow-elevated transition-all duration-200 active:scale-[0.99] sm:p-5",
-        selected && "ring-4 ring-primary ring-offset-2 ring-offset-background",
+        selected && "outline outline-[3px] outline-offset-[3px] outline-primary",
       )}
       style={{ background: theme.background }}
     >
