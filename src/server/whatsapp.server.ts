@@ -3000,7 +3000,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
           resposta: M.ajusteNaoEntendido(M.perguntaAjusteDescricao()),
         };
       }
-      return await voltarConfirmacao({ ...sessao.session, nome: nova });
+      return await voltarConfirmacao({ ...sessao.session, nome: nova }, "Atualizei a descrição 👍");
     }
     if (st === "aguardando_ajuste_valor") {
       const v = parseValorAjuste(texto);
@@ -3010,7 +3010,10 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
           resposta: M.ajusteNaoEntendido(M.perguntaAjusteValor()),
         };
       }
-      return await voltarConfirmacao({ ...sessao.session, valor: Math.round(v * 100) / 100 });
+      return await voltarConfirmacao(
+        { ...sessao.session, valor: Math.round(v * 100) / 100 },
+        "Atualizei o valor 👍",
+      );
     }
     // data
     const d = parseDataAjuste(texto);
@@ -3020,7 +3023,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
         resposta: M.ajusteNaoEntendido(M.perguntaAjusteData()),
       };
     }
-    return await voltarConfirmacao({ ...sessao.session, data: d.iso });
+    return await voltarConfirmacao({ ...sessao.session, data: d.iso }, "Atualizei a data 👍");
   }
 
   // ---- Fase WA-G1: sessão de receita pendente sempre tem prioridade. ----
@@ -3908,6 +3911,28 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   // ---- WA-C6: menu numerado guiado (1..8) sem sessão pendente ----
   // Reescreve "3" → "minhas contas", "8" → "ajuda". Para opções que pedem
   // orientação (1, 2, 5, 6, 7), responde direto com o texto-guia.
+  // "cadastrar cartão": cadastro completo ainda não existe no WhatsApp —
+  // orienta pelo app em vez de cair no parser de gasto.
+  if (
+    !sessao &&
+    decisao === "outro" &&
+    /^(quero\s+)?(cadastrar|adicionar|criar|novo)\s+(um\s+)?(novo\s+)?cart(ao|ão)\s*[.!?]?$/i.test(texto.trim())
+  ) {
+    const resposta =
+      "Por enquanto o cadastro de cartão é feito no app ou site, na área Cartões 💳\n\nDepois de cadastrar, é só me mandar o gasto com o nome do cartão. Ex.: “Mercado 148 no Nubank”.";
+    await gravarSessao(
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "sem_pendencia",
+      { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+      resposta,
+    );
+    return { status: "consulta", resposta };
+  }
+
   if (!sessao && decisao === "outro") {
     const opcao = detectMenuOption(texto);
     if (opcao !== null) {
