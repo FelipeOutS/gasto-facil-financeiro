@@ -408,6 +408,8 @@ function CartoesPage() {
                   <CartaoCompactCard
                     cartao={c}
                     resumo={resumosPorCartao.get(c.id)}
+                    selected={cartoes.length > 1 && visao === c.id}
+                    onSelect={() => setVisao(c.id)}
                     onOpen={() =>
                       isMobile
                         ? navigate({ to: "/cartoes/$id", params: { id: c.id } })
@@ -424,8 +426,9 @@ function CartoesPage() {
               </div>
             </div>
             <p className="mt-1 text-center text-[10px] text-muted-foreground">
-              {t("list.tapHint")}
+              {cartoes.length > 1 ? t("list.selectHint") : t("list.tapHint")}
             </p>
+            {seletorVisao && <div className="mt-3">{seletorVisao}</div>}
           </section>
 
           {/* Ações rápidas */}
