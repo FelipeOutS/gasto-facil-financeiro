@@ -73,6 +73,10 @@ const deps = () => ({
   client: fakeClient(),
   now: () => NOW,
   faturaAtual: async () => ({ total: fatura.total, vencimento: fatura.venc }),
+  faturaDetalhe: async () => ({
+    fatura: { competencia: "2026-11", total: fatura.total, limite: 5000, disponivel: 5000 - fatura.total, fechamento: new Date(2026, 9, 25), vencimento: fatura.venc },
+    itens: [],
+  }),
   enqueue: async (i: Row) => void queue.push({ ...i, status: "pending" }),
   cancelPending: async (_u: string, _t: string, id: string) => {
     let n = 0;
