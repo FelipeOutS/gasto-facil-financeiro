@@ -479,7 +479,7 @@ test("nome de cartão inexistente ainda mostra o nome literal", async () => {
     external_id: "neg13",
   });
   expect(r.status).toBe("aguardando_confirmacao");
-  expect(r.resposta).toMatch(/Não encontrei "Itaú Platinum"/i);
+  expect(r.resposta).toMatch(/Não encontrei um cartão Itaú Platinum/i);
 });
 
 afterAll(() => {});
