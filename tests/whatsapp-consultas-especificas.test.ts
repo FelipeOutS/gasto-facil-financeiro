@@ -2,7 +2,14 @@
  * Fase WA-G4 — Testes das consultas financeiras específicas.
  * Reaproveita o mock compartilhado em ./_whatsapp-fake.
  */
-import { test, expect, beforeEach } from "bun:test";
+import { test, expect, beforeEach, beforeAll, afterAll, setSystemTime } from "bun:test";
+
+// Relógio congelado: as somas "deste mês" usam daysAgoISO(1); no dia 1 isso
+// caía no mês anterior. Data fixa (meio do mês) torna o arquivo determinístico.
+// TEST_NOW permite validar outras datas sem mudar o arquivo.
+const FROZEN_NOW = new Date(process.env.TEST_NOW ?? "2026-10-15T15:00:00Z");
+beforeAll(() => setSystemTime(FROZEN_NOW));
+afterAll(() => setSystemTime());
 import { state, resetState, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
 setupWhatsAppFakeMocks();
 
