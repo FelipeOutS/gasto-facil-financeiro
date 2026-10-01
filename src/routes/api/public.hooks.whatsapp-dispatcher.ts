@@ -179,6 +179,27 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
             continue;
           }
 
+          // 1.55) GI Agenda — recalcula item/origem financeira AGORA. Conta
+          // paga/cancelada → skip; vencimento mudou → skip + reagenda;
+          // ok → valor/vencimento atuais entram no payload do envio.
+          if (claimed.category === "agenda") {
+            const { revalidateAgendaForDispatch } = await import("@/server/agenda.server");
+            const ra = await revalidateAgendaForDispatch(claimed);
+            if (!ra.ok) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              await markSkipped(n.id, ra.reason as any, token);
+              summary.skipped++;
+              continue;
+            }
+            if (ra.vars) {
+              claimed.payload = {
+                ...(claimed.payload ?? {}),
+                agenda_params: ra.vars.params,
+                agenda_text: ra.vars.text,
+              };
+            }
+          }
+
           // 1.6) WA-C11 Fase 1 — revalidação de entitlement no momento do
           // envio. Bloqueia downgrade / cancelamento / expiração / beta
           // revogado / link revogado ocorridos entre a criação e o dispatch.

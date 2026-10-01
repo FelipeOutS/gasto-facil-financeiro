@@ -36,6 +36,7 @@ interface PrefsRow {
   ia_insights: boolean;
   mercado: boolean;
   avisos_sistema: boolean;
+  agenda?: boolean;
   quiet_hours_start: number | null;
   quiet_hours_end: number | null;
 }
@@ -48,6 +49,7 @@ const DEFAULT_PREFS: PrefsRow = {
   ia_insights: false,
   mercado: false,
   avisos_sistema: true,
+  agenda: true,
   quiet_hours_start: null,
   quiet_hours_end: null,
 };
@@ -89,6 +91,8 @@ export async function getPreferences(userId: string, deps?: GatesDeps): Promise<
 }
 
 export function isCategoryEnabled(prefs: PrefsRow, category: NotificationCategory): boolean {
+  // Agenda: coluna nova com default true; linhas antigas sem valor contam como ligado.
+  if (category === "agenda") return prefs.agenda !== false;
   return prefs[category] === true;
 }
 

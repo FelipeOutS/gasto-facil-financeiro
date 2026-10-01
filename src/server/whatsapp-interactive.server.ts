@@ -61,6 +61,8 @@ export const REPLY_ID_TEXT: Record<string, string> = {
   menu_resumos: "6",
   menu_ajuda: "7",
   menu_comandos: "8",
+  // GI Agenda (mesma frase que a pessoa digitaria).
+  menu_agenda: "minha agenda",
   // Submenus → mesma frase natural já entendida pelo pipeline.
   gastos_registrar: "registrar gasto",
   gastos_mes: "meus gastos do mês",
@@ -182,6 +184,8 @@ export function replyIdToTexto(id: string, title?: string): string {
   const v = (id ?? "").trim();
   if (REPLY_ID_TEXT[v]) return REPLY_ID_TEXT[v];
   if (v.startsWith(FATURA_COMP_PREFIX)) return v; // tratado por tratarEscolhaFatura
+  // GI Agenda: ID estável com o item; tratado por handleAgendaIntent.
+  if (v.startsWith("agenda_done:") || v.startsWith("agenda_cancel:")) return v;
   if (v.startsWith(CARD_PICK_PREFIX)) return v.slice(CARD_PICK_PREFIX.length).trim();
   const opt = /^opt_(\d{1,2})$/.exec(v);
   if (opt) return opt[1];
@@ -330,6 +334,7 @@ export function buildInteractiveFromReply(resposta: string): InteractiveReply | 
         { id: "menu_receitas", title: "💰 Receitas" },
         { id: "menu_planejamento", title: "🎯 Planejamento" },
         { id: "menu_resumos", title: "📊 Resumos" },
+        { id: "menu_agenda", title: "📅 Agenda e lembretes" },
         { id: "menu_ajuda", title: "❓ Ajuda" },
         { id: "menu_comandos", title: "⚡ Comandos rápidos" },
       ],

@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAlerts } from "@/lib/alerts/use-alerts";
+import { AgendaTodayHint } from "@/components/AgendaTodayHint";
 import { categoryOf, type AlertPriority, type UserAlert } from "@/lib/alerts/types";
 
 function priorityMeta(p: AlertPriority): { bg: string; fg: string; badge: string } {
@@ -143,6 +144,8 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
             : t("notifications.padrao")}
         </p>
       </div>
+
+      <AgendaTodayHint onClose={onClose} />
 
       {total === 0 ? (
         <div className="px-6 py-8 text-center motion-safe:animate-fade-in">

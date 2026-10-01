@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      agenda_items: {
+        Row: {
+          aviso_dias_antes: number | null
+          aviso_hora_local: number
+          aviso_minutos_antes: number
+          cancelled_at: string | null
+          completed_at: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          kind: string
+          origem: string
+          recurrence_freq: string | null
+          recurrence_interval: number
+          recurrence_until: string | null
+          source_id: string | null
+          source_type: string | null
+          starts_at: string | null
+          status: string
+          timezone: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          aviso_dias_antes?: number | null
+          aviso_hora_local?: number
+          aviso_minutos_antes?: number
+          cancelled_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          kind?: string
+          origem?: string
+          recurrence_freq?: string | null
+          recurrence_interval?: number
+          recurrence_until?: string | null
+          source_id?: string | null
+          source_type?: string | null
+          starts_at?: string | null
+          status?: string
+          timezone?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          aviso_dias_antes?: number | null
+          aviso_hora_local?: number
+          aviso_minutos_antes?: number
+          cancelled_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          kind?: string
+          origem?: string
+          recurrence_freq?: string | null
+          recurrence_interval?: number
+          recurrence_until?: string | null
+          source_id?: string | null
+          source_type?: string | null
+          starts_at?: string | null
+          status?: string
+          timezone?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_chat_messages: {
         Row: {
           content: string
@@ -4284,6 +4356,7 @@ export type Database = {
       }
       whatsapp_notification_preferences: {
         Row: {
+          agenda: boolean
           avisos_sistema: boolean
           contas_a_pagar: boolean
           created_at: string
@@ -4298,6 +4371,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          agenda?: boolean
           avisos_sistema?: boolean
           contas_a_pagar?: boolean
           created_at?: string
@@ -4312,6 +4386,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          agenda?: boolean
           avisos_sistema?: boolean
           contas_a_pagar?: boolean
           created_at?: string

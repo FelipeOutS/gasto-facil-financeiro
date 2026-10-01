@@ -43,6 +43,13 @@
       "when": 1790820617847,
       "tag": "0005_installment_rpc_fatura_competencia",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790865181922,
+      "tag": "0006_agenda_items",
+      "breakpoints": true
     }
   ]
 }
