@@ -29,8 +29,14 @@ export const whatsappMessages = {
     return (
       `Certo! Qual cartão você usou? 💳\n` +
       `${listaCartoes}\n\n` +
-      `Responda com o nome do cartão ou escolha uma opção acima.`
+      (listaCartoes.trim()
+        ? `Responda com o nome do cartão ou escolha uma opção acima.`
+        : `Responda com o nome do cartão.`)
     );
+  },
+
+  cartaoUnicoAuto(nomeCartao: string) {
+    return `Certo! Vou usar seu cartão ${nomeCartao}. 💳\n\n`;
   },
 
   avisoCartaoAmbiguo(nomes: string[]) {
