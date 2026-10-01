@@ -1285,7 +1285,7 @@ function ProximaFaturaCard({
 /* =============== Aside — próximos vencimentos =============== */
 
 /** Marca do cartão em miniatura — regra única para chips e listas. */
-export function CardBrandTile({ cartao, size = "md" }: { cartao: Cartao; size?: "sm" | "md" }) {
+function CardBrandTile({ cartao, size = "md" }: { cartao: Cartao; size?: "sm" | "md" }) {
   const theme = getCardTheme(cartao.cor || "#8b5cf6", cartao.banco);
   return (
     <span
