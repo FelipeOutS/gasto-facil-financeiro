@@ -1189,13 +1189,7 @@ function VisaoSelector({
           onClick={() => onChange(c.id)}
           className={chip(visao === c.id)}
         >
-          <span
-            className="relative grid h-6 w-6 place-items-center overflow-hidden rounded-md"
-            style={{ background: getCardTheme(c.cor || "#8b5cf6", c.banco).background }}
-            aria-hidden
-          >
-            <BrandLogo name={c.banco || c.nome} variant="bank" onDark className="bank-logo-xs" />
-          </span>
+          <CardBrandTile cartao={c} size="sm" />
           {c.nome}
         </button>
       ))}
@@ -1290,7 +1284,38 @@ function ProximaFaturaCard({
 
 /* =============== Aside — próximos vencimentos =============== */
 
-function ProximosVencimentos({ items }: { items: Array<{ cartao: Cartao; dias: number }> }) {
+/** Marca do cartão em miniatura — regra única para chips e listas. */
+export function CardBrandTile({ cartao, size = "md" }: { cartao: Cartao; size?: "sm" | "md" }) {
+  const theme = getCardTheme(cartao.cor || "#8b5cf6", cartao.banco);
+  return (
+    <span
+      data-brand-tile
+      className={cn(
+        "relative grid shrink-0 place-items-center overflow-hidden ring-1 ring-border/40",
+        size === "sm" ? "h-6 w-6 rounded-md" : "h-10 w-10 rounded-xl",
+      )}
+      style={{ background: theme.background }}
+      aria-hidden
+    >
+      <BrandLogo
+        name={cartao.banco || cartao.nome}
+        variant="bank"
+        onDark
+        className={size === "sm" ? "bank-logo-xs" : "bank-logo-sm"}
+      />
+    </span>
+  );
+}
+
+function ProximosVencimentos({
+  items,
+  valores,
+  onSelect,
+}: {
+  items: Array<{ cartao: Cartao; dias: number }>;
+  valores?: Map<string, { pendente: number }>;
+  onSelect?: (id: string) => void;
+}) {
   const { t } = useTranslation("cartoes");
   if (items.length === 0) {
     return (
@@ -1334,36 +1359,47 @@ function ProximosVencimentos({ items }: { items: Array<{ cartao: Cartao; dias: n
               : dias === 1
                 ? t("upcoming.tomorrow")
                 : t("upcoming.daysShort", { count: dias });
-          return (
-            <li
-              key={cartao.id}
-              className={cn(
-                "flex items-center gap-3 rounded-xl px-3 py-2 transition-colors",
-                urgente ? "border border-destructive/30 bg-destructive/10" : "bg-card-elevated",
-              )}
-            >
-              <span
-                className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-lg shadow-card"
-                style={{ background: theme.background }}
-                aria-hidden
-              >
-                <BrandLogo name={cartao.banco || cartao.nome} variant="bank" onDark className="bank-logo-sm" />
-              </span>
+          const valor = valores?.get(cartao.id)?.pendente ?? 0;
+          const inner = (
+            <>
+              <CardBrandTile cartao={cartao} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{cartao.nome}</p>
                 <p className="truncate text-[11px] text-muted-foreground">
-                  {formatBanco(cartao.banco) || t("upcoming.cardFallback")} ·{" "}
-                  {t("upcoming.dueDay", { day: cartao.diaVencimento })}
+                  {t("upcoming.dueDayCap", { day: cartao.diaVencimento })}
                 </p>
               </div>
-              <span
-                className={cn(
-                  "num shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                  urgente ? "bg-destructive text-destructive-foreground" : tone,
-                )}
-              >
-                {label}
-              </span>
+              <div className="shrink-0 text-right">
+                {valor > 0 && <p className="num text-sm font-semibold">{formatBRL(valor)}</p>}
+                <span
+                  className={cn(
+                    "num mt-0.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                    urgente ? "bg-destructive text-destructive-foreground" : tone,
+                  )}
+                >
+                  {label}
+                </span>
+              </div>
+            </>
+          );
+          const base = cn(
+            "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors",
+            urgente ? "border border-destructive/30 bg-destructive/10" : "bg-card-elevated",
+          );
+          return (
+            <li key={cartao.id}>
+              {onSelect ? (
+                <button
+                  type="button"
+                  onClick={() => onSelect(cartao.id)}
+                  aria-label={cartao.nome}
+                  className={cn(base, "hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring")}
+                >
+                  {inner}
+                </button>
+              ) : (
+                <div className={base}>{inner}</div>
+              )}
             </li>
           );
         })}

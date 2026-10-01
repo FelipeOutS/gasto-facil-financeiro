@@ -71,7 +71,8 @@
     "dueDay": "due on day {{day}}",
     "today": "today",
     "tomorrow": "tomorrow",
-    "daysShort": "{{count}}d"
+    "daysShort": "In {{count}} days",
+    "dueDayCap": "Due on day {{day}}"
   },
   "recent": {
     "title": "Recent credit purchases",
