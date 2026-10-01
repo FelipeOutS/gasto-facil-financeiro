@@ -1849,6 +1849,32 @@ function listarCartoesParaPergunta(cartoes: Cartao[]): string {
 function perguntaFormaPagamento(s: Session): string {
   return M.perguntaFormaPagamento(formatBRL(s.valor), s.nome);
 }
+const MESES_PT_FATURA = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+
+/**
+ * Cartão único escolhido automaticamente: deixa explícito na confirmação
+ * "Pagamento: Cartão de crédito", "Cartão: <nome>" e "Fatura: Mês/Ano"
+ * (mesma competência que será gravada em fatura_competencia ao salvar).
+ */
+function detalharCartaoAutoNaConfirmacao(resposta: string, s: Session, cartao: Cartao): string {
+  const comp = s.data
+    ? competenciaPorData(s.data, cartao.diaFechamento, cartao.diaVencimento)?.competencia ?? null
+    : null;
+  const lines = resposta.split("\n");
+  const idx = lines.findIndex((l) => l.startsWith("• Pagamento:"));
+  if (idx < 0) return resposta;
+  const extra = [`• Cartão: ${canonicalizeBrand(cartao.nome)}`];
+  if (comp) {
+    const [y, m] = comp.split("-").map(Number);
+    extra.push(`• Fatura: ${MESES_PT_FATURA[m - 1]}/${y}`);
+  }
+  lines.splice(idx, 1, "• Pagamento: Cartão de crédito", ...extra);
+  return lines.join("\n");
+}
+
 function perguntaCartao(s: Session, cartoes: Cartao[]): string {
   const lista = listarCartoesParaPergunta(cartoes);
   return M.perguntaCartao(lista);
@@ -4787,13 +4813,14 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
       categorias,
       source: next.source === "audio" ? "audio" : "text",
     });
-    const resposta = autoCartaoPrefix + formatarConfirmacao(
+    let resposta = autoCartaoPrefix + formatarConfirmacao(
       sessionToParsed(next, cartoes),
       undefined,
       categorias,
       next.source,
       memoryHintFromSession(next, categorias),
     );
+    if (autoCartaoPrefix) resposta = detalharCartaoAutoNaConfirmacao(resposta, next, cartoes[0]);
     await supabaseAdmin
       .from("whatsapp_messages")
       .update({ status: "expirada" })
@@ -5290,13 +5317,14 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
       categorias,
       source: sess.source === "audio" ? "audio" : "text",
     });
-    const resposta = autoCartaoPrefixNovo + formatarConfirmacao(
+    let resposta = autoCartaoPrefixNovo + formatarConfirmacao(
       sessionToParsed(sess, cartoes),
       undefined,
       categorias,
       sess.source,
       memoryHintFromSession(sess, categorias),
     );
+    if (autoCartaoPrefixNovo) resposta = detalharCartaoAutoNaConfirmacao(resposta, sess, cartoes[0]);
     await gravarSessao(
       userId,
       msg.telefone,
