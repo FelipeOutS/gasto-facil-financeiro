@@ -2,7 +2,7 @@
  * 01/10/2026 — Seleção automática quando o usuário tem exatamente 1 cartão.
  * 0 cartões → fluxo atual; 1 → automático; 2-3 → botões; 4+ → lista.
  */
-import { test, expect, beforeEach, describe } from "bun:test";
+import { test, expect, beforeEach, afterEach, describe, setSystemTime } from "bun:test";
 import { resetState, gastosInserts, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
 setupWhatsAppFakeMocks();
 
@@ -99,5 +99,61 @@ describe("cartão único automático", () => {
     expect((await tap("expense_confirm")).status).toBe("salva");
     expect(gastosInserts()).toHaveLength(1);
     expect(gastosInserts()[0].row.cartao_id).toBe("c-mp");
+  });
+});
+
+describe("cartão único + competência da fatura (fechamento 25, vencimento 11)", () => {
+  const mp2511 = { ...mp, dia_fechamento: 25, dia_vencimento: 11 };
+  afterEach(() => setSystemTime());
+
+  async function fluxo(dataIso: string) {
+    setSystemTime(new Date(`${dataIso}T15:00:00Z`));
+    resetState({ cartoes: [mp2511] });
+    await send("Gastei 15 no mercado");
+    return tap("payment_credit");
+  }
+
+  test("compra 30/09/2026 → Fatura Novembro/2026, gasto em Setembro", async () => {
+    const r = await fluxo("2026-09-30");
+    expect(r.status).toBe("aguardando_confirmacao");
+    expect(r.resposta.startsWith("Certo! Vou usar seu cartão Mercado Pago. 💳")).toBe(true);
+    expect(r.resposta).not.toContain("Qual cartão você usou");
+    expect(r.resposta).not.toContain("escolha uma opção acima");
+    for (const l of ["• Descrição:", "• Categoria:", "• Valor:", "• Data:"]) expect(r.resposta).toContain(l);
+    expect(r.resposta).toContain("• Pagamento: Cartão de crédito");
+    expect(r.resposta).toContain("• Cartão: Mercado Pago");
+    expect(r.resposta).toContain("• Fatura: Novembro/2026");
+    expect(gastosInserts()).toHaveLength(0);
+    expect((await tap("expense_confirm")).status).toBe("salva");
+    expect(gastosInserts()).toHaveLength(1);
+    const g = gastosInserts()[0].row;
+    expect(g.invoice_month).toBe("2026-09");
+    expect(g.fatura_competencia).toBe("2026-11");
+    expect(g.cartao_id).toBe("c-mp");
+  });
+
+  test("compra 20/09/2026 (antes do fechamento) → Fatura Outubro/2026", async () => {
+    const r = await fluxo("2026-09-20");
+    expect(r.resposta).toContain("• Fatura: Outubro/2026");
+    expect((await tap("expense_confirm")).status).toBe("salva");
+    const g = gastosInserts()[0].row;
+    expect(g.invoice_month).toBe("2026-09");
+    expect(g.fatura_competencia).toBe("2026-10");
+  });
+
+  test("dinheiro → Ajustar → Pagamento → Cartão de crédito recalcula fatura", async () => {
+    setSystemTime(new Date("2026-09-30T15:00:00Z"));
+    resetState({ cartoes: [mp2511] });
+    await send("Gastei 12,60 no Uber em dinheiro");
+    await tap("expense_adjust");
+    await tap("expense_edit_payment");
+    const r = await tap("payment_credit");
+    expect(r.status).toBe("aguardando_confirmacao");
+    expect(r.resposta).toContain("• Cartão: Mercado Pago");
+    expect(r.resposta).toContain("• Fatura: Novembro/2026");
+    expect(gastosInserts()).toHaveLength(0);
+    expect((await tap("expense_confirm")).status).toBe("salva");
+    expect(gastosInserts()).toHaveLength(1);
+    expect(gastosInserts()[0].row.fatura_competencia).toBe("2026-11");
   });
 });
