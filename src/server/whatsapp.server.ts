@@ -184,6 +184,14 @@ import {
 } from "./whatsapp-boleto-ocr-cache.server";
 import { enforceUserRateLimit } from "./rate-limit.server";
 import type { DocumentAttachment } from "./whatsapp-media-attachment";
+import {
+  CARD_REG_KIND,
+  fecharCadastroCartao,
+  tratarCadastroCartao,
+  type CardOutcome,
+  type CardRegDeps,
+  type GastoPendente,
+} from "./whatsapp-cartao-cadastro.server";
 
 // Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
 // precisa do orquestrador é exposto aqui de forma explícita, evitando que
@@ -5393,6 +5401,87 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
 }
 
 // ---------- envio ----------
+
+// ---------- cadastro de cartão: integração com o fluxo de gasto ----------
+
+/**
+ * Dependências do cadastro de cartão. Retomar o gasto usa exatamente a
+ * mesma confirmação do gasto em crédito com cartão escolhido sozinho
+ * (cartão + competência da fatura), e nada é salvo antes de Confirmar.
+ */
+function cadastroCartaoDeps(
+  userId: string,
+  msg: WhatsAppMessageRow,
+  texto: string,
+  recebidaEm: string,
+  cartoes: Cartao[],
+  categorias: CategoriaRow[],
+): CardRegDeps {
+  const confirmarComCartao = async (
+    base: Session,
+    cartaoId: string,
+    prefixo: string,
+  ): Promise<CardOutcome> => {
+    const lista = await carregarCartoes(userId);
+    const cartao = lista.find((c) => c.id === cartaoId);
+    if (!cartao) return { status: "erro", resposta: "Não encontrei esse cartão. Tente de novo." };
+    const next: Session = {
+      ...base,
+      formaPagamento: "credito",
+      cartaoId: cartao.id,
+      cartaoNomeDetectado: displayCartaoNome(cartao),
+      cartaoNaoCadastrado: false,
+      cartaoDigitado: undefined,
+    };
+    await aplicarMemoriaEstabelecimento({
+      userId,
+      session: next,
+      categorias,
+      source: next.source === "audio" ? "audio" : "text",
+    });
+    const resumo = detalharCartaoAutoNaConfirmacao(
+      formatarConfirmacao(
+        sessionToParsed(next, lista),
+        undefined,
+        categorias,
+        next.source,
+        memoryHintFromSession(next, categorias),
+      ),
+      next,
+      cartao,
+    );
+    const resposta = `${prefixo}${resumo}`;
+    await gravarSessao(
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "aguardando_confirmacao",
+      next,
+      resposta,
+    );
+    return { status: "aguardando_confirmacao", resposta };
+  };
+  return {
+    userId,
+    telefone: msg.telefone,
+    externalId: msg.external_id,
+    texto,
+    recebidaEm,
+    cartoes: cartoes.map((c) => ({ id: c.id, nome: c.nome })),
+    resumoGasto: (g) => `${formatBRL(Number(g.valor) || 0)} em ${g.nome || "seu gasto"}`,
+    retomarGasto: (g, cartao, prefixo) =>
+      confirmarComCartao(g as unknown as Session, cartao.id, prefixo),
+    iniciarGastoComCartao: async (t, cartao) => {
+      const parsed = parseExpenseMessage(t, cartoes);
+      if (!(parsed.valor > 0) || !parsed.nome || isGenericExpenseDescription(parsed.nome)) {
+        return null;
+      }
+      return confirmarComCartao(buildSessionFromParse(parsed, msg.source), cartao.id, "");
+    },
+  };
+}
 
 export async function sendWhatsAppReply(
   to: string,
