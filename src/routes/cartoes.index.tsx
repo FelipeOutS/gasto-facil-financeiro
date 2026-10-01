@@ -299,6 +299,20 @@ function CartoesPage() {
       <VisaoSelector cartoes={cartoes} visao={visao} onChange={setVisao} />
     ) : null;
 
+  // Fatura atual do cartão selecionado (mesmas funções usadas no card).
+  const faturaSel = useMemo(() => {
+    if (!cartaoSelecionado) return null;
+    const ref = faturaCorrente(cartaoSelecionado);
+    const total = resumoFaturaPorMes(cartaoSelecionado.id, ref.mes, ref.ano).total;
+    const dm = (d: Date | null) =>
+      d ? `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}` : "—";
+    return {
+      total,
+      fecha: dm(proximoFechamentoData(cartaoSelecionado)),
+      vence: dm(proximoVencimentoFaturaAberta(cartaoSelecionado)),
+    };
+  }, [cartaoSelecionado, gastos]);
+
   const isMobile = useIsMobile();
   function handleOpenNew() {
     if (isMobile) {
@@ -530,9 +544,10 @@ function CartoesPage() {
       {/* ============================================================ */}
       <div className="hidden lg:block">
         {/* Resumo */}
-        <section className="mt-5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+        {seletorVisao && <div className="mt-5">{seletorVisao}</div>}
+        <section className="mt-3 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
           <ResumoCard
-            label={t("summary.limitTotal")}
+            label={cartaoSelecionado ? t("view.limit") : t("summary.limitTotal")}
             valueNum={resumo.limiteTotal}
             icon={<CreditCard className="h-4 w-4" />}
             tone="brand"
@@ -549,13 +564,31 @@ function CartoesPage() {
             icon={<Sparkles className="h-4 w-4" />}
             tone="success"
           />
-          <ProximaFaturaCard
-            cartao={resumo.proxima}
-            dias={resumo.proximaDias}
-            data={resumo.proximaData}
-            valor={resumo.proximaValor}
-            temCartoes={cartoes.length > 0}
-          />
+          {faturaSel && cartaoSelecionado ? (
+            <div className="hover-lift rounded-2xl border border-border bg-card p-3.5 animate-rise">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("card.currentInvoice")}
+                </p>
+                <span className="grid h-7 w-7 place-items-center rounded-full bg-brand-soft text-brand-on-soft">
+                  <CalendarDays className="h-4 w-4" />
+                </span>
+              </div>
+              <p className="mt-2 truncate text-sm font-bold">{cartaoSelecionado.nome}</p>
+              <p className="num mt-0.5 text-base font-bold">{formatBRL(faturaSel.total)}</p>
+              <p className="num mt-0.5 text-[11px] text-muted-foreground">
+                {t("card.closes")} {faturaSel.fecha} · {t("card.dueOn")} {faturaSel.vence}
+              </p>
+            </div>
+          ) : (
+            <ProximaFaturaCard
+              cartao={resumo.proxima}
+              dias={resumo.proximaDias}
+              data={resumo.proximaData}
+              valor={resumo.proximaValor}
+              temCartoes={cartoes.length > 0}
+            />
+          )}
         </section>
 
         <div className="mt-6 flex items-center justify-between">
@@ -609,6 +642,8 @@ function CartoesPage() {
                   key={c.id}
                   cartao={c}
                   resumo={resumosPorCartao.get(c.id)}
+                  selected={cartoes.length > 1 && visao === c.id}
+                  onSelect={() => setVisao(c.id)}
                   onOpen={() => setOpenDetail(c)}
                   onEdit={() => handleEdit(c)}
                   onImport={() => handleOpenImport(c.id)}
