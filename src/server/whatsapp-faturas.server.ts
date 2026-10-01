@@ -24,6 +24,8 @@ import {
   nowInAppTz,
   // WA-F4 — faturas futuras e parcelas em aberto.
   getFaturaPorMes,
+  getFaturaPorCompetencia,
+  getResumoFaturasPorCompetencia,
   getResumoFaturasPorMes,
   getComprasParceladasEmAberto,
   getDetalheCompraParcelada,
