@@ -185,7 +185,7 @@ export function replyIdToTexto(id: string, title?: string): string {
   if (REPLY_ID_TEXT[v]) return REPLY_ID_TEXT[v];
   if (v.startsWith(FATURA_COMP_PREFIX)) return v; // tratado por tratarEscolhaFatura
   // GI Agenda: ID estável com o item; tratado por handleAgendaIntent.
-  if (/^agenda_(?:done|cancel|edit|view):/.test(v)) return v;
+  if (/^agenda_(?:done|cancel|edit|view|view_invoice|view_bill):/.test(v)) return v;
   if (v.startsWith(CARD_PICK_PREFIX)) return v.slice(CARD_PICK_PREFIX.length).trim();
   const opt = /^opt_(\d{1,2})$/.exec(v);
   if (opt) return opt[1];

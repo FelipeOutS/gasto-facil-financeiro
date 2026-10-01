@@ -28,12 +28,20 @@ export type AgendaIntent =
   | { type: "cancelar"; alvo: string }
   | { type: "concluir"; alvo: string }
   | { type: "editar_aviso"; alvo: string; diasAntes: number }
-  | { type: "acao_id"; acao: "concluir" | "cancelar" | "editar" | "ver"; id: string };
+  | { type: "acao_id"; acao: AgendaAcaoId; id: string };
+
+/**
+ * "ver" = genérico/legado (botões já enviados): abre a entidade conforme o
+ * tipo do item. "ver_fatura"/"ver_conta" = IDs explícitos dos botões novos.
+ */
+export type AgendaAcaoId = "concluir" | "cancelar" | "editar" | "ver" | "ver_fatura" | "ver_conta";
 
 export const AGENDA_DONE_PREFIX = "agenda_done:";
 export const AGENDA_CANCEL_PREFIX = "agenda_cancel:";
 export const AGENDA_EDIT_PREFIX = "agenda_edit:";
 export const AGENDA_VIEW_PREFIX = "agenda_view:";
+export const AGENDA_VIEW_INVOICE_PREFIX = "agenda_view_invoice:";
+export const AGENDA_VIEW_BILL_PREFIX = "agenda_view_bill:";
 
 function norm(s: string): string {
   return (s ?? "")
@@ -67,6 +75,10 @@ export function detectAgendaIntent(text: string): AgendaIntent | null {
   if (idCancel) return { type: "acao_id", acao: "cancelar", id: idCancel[1].toLowerCase() };
   const idEdit = new RegExp(`^${AGENDA_EDIT_PREFIX}(${UUID})$`, "i").exec(raw);
   if (idEdit) return { type: "acao_id", acao: "editar", id: idEdit[1].toLowerCase() };
+  const idInv = new RegExp(`^${AGENDA_VIEW_INVOICE_PREFIX}(${UUID})$`, "i").exec(raw);
+  if (idInv) return { type: "acao_id", acao: "ver_fatura", id: idInv[1].toLowerCase() };
+  const idBill = new RegExp(`^${AGENDA_VIEW_BILL_PREFIX}(${UUID})$`, "i").exec(raw);
+  if (idBill) return { type: "acao_id", acao: "ver_conta", id: idBill[1].toLowerCase() };
   const idView = new RegExp(`^${AGENDA_VIEW_PREFIX}(${UUID})$`, "i").exec(raw);
   if (idView) return { type: "acao_id", acao: "ver", id: idView[1].toLowerCase() };
 

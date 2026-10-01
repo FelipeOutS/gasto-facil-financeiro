@@ -22,10 +22,14 @@ import {
   AGENDA_DONE_PREFIX,
   AGENDA_EDIT_PREFIX,
   AGENDA_VIEW_PREFIX,
+  AGENDA_VIEW_INVOICE_PREFIX,
+  AGENDA_VIEW_BILL_PREFIX,
   detectAgendaIntent,
   tituloFromBody,
   type AgendaIntent,
+  type AgendaAcaoId,
 } from "@/lib/agenda/intent";
+import { nomeMesYm } from "@/lib/fatura-competencia";
 import {
   DEFAULT_TZ,
   addDaysYmd,
@@ -71,6 +75,13 @@ function viewTitle(item: AgendaRow): string {
   return "👀 Ver";
 }
 
+/** ID explícito por entidade (não depende do texto do botão). */
+function viewId(item: AgendaRow): string {
+  if (item.source_type === "cartao") return `${AGENDA_VIEW_INVOICE_PREFIX}${item.id}`;
+  if (item.source_type === "conta_a_pagar") return `${AGENDA_VIEW_BILL_PREFIX}${item.id}`;
+  return `${AGENDA_VIEW_PREFIX}${item.id}`;
+}
+
 /**
  * Ações logo após criar/editar: nunca "Concluir" (o item ainda nem aconteceu).
  * Financeiro → Ver / Editar aviso / Cancelar aviso. Comum → Editar / Cancelar.
@@ -78,7 +89,7 @@ function viewTitle(item: AgendaRow): string {
 export function postCreateButtons(item: AgendaRow): Btn[] {
   if (item.source_type)
     return [
-      { id: `${AGENDA_VIEW_PREFIX}${item.id}`, title: viewTitle(item) },
+      { id: viewId(item), title: viewTitle(item) },
       { id: `${AGENDA_EDIT_PREFIX}${item.id}`, title: "✏️ Editar aviso" },
       { id: `${AGENDA_CANCEL_PREFIX}${item.id}`, title: "❌ Cancelar aviso" },
     ];
@@ -122,6 +133,73 @@ async function financialDetails(item: AgendaRow, deps?: AgendaDeps): Promise<str
   const avisoTxt = dias === 0 ? `🔔 Aviso em ${ddmm(aviso)} (no dia do vencimento)` : `🔔 Aviso em ${ddmm(aviso)} (${dias} dia${dias > 1 ? "s" : ""} antes)`;
   const valor = snap.valor != null ? `\n💰 Valor atual: ${brl(snap.valor)}` : "";
   return `${icon} ${item.titulo}\n📅 Vence em ${ddmm({ d: due[2], m: due[1] })}\n${avisoTxt}${valor}`;
+}
+
+function ddmmDate(d: Date | null): string | null {
+  return d ? ddmm({ d: d.getDate(), m: d.getMonth() + 1 }) : null;
+}
+
+/**
+ * "💳 Ver fatura": mostra a FATURA do cartão vinculado (não o lembrete).
+ * Mesma fonte de "minha fatura do Nubank" e da tela Cartões:
+ * getFaturaAtualPorCartao + getItensFaturaAtualPorCartao.
+ */
+async function invoiceView(item: AgendaRow, deps?: AgendaDeps): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db: any = deps?.client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+  const { data: cartao } = await db
+    .from("cartoes")
+    .select("id, nome, dia_fechamento, dia_vencimento, limite_total")
+    .eq("id", item.source_id)
+    .eq("user_id", item.user_id)
+    .maybeSingle();
+  if (!cartao) return `💳 ${item.titulo}\nNão encontrei mais esse cartão no seu Gasto Inteligente.`;
+  const det = deps?.faturaDetalhe
+    ? await deps.faturaDetalhe(item.user_id, cartao)
+    : await (async () => {
+        const m = await import("./cartao-fatura.server");
+        const [fatura, itens] = await Promise.all([
+          m.getFaturaAtualPorCartao(item.user_id, cartao),
+          m.getItensFaturaAtualPorCartao(item.user_id, cartao),
+        ]);
+        return { fatura, itens };
+      })();
+  const { cleanDescricaoDisplay } = await import("./whatsapp-faturas.server");
+  const f = det.fatura;
+  const linhas = [`💳 Fatura ${cartao.nome} — ${nomeMesYm(f.competencia)}`, "", `💰 Valor atual: ${brl(f.total)}`];
+  const venc = ddmmDate(f.vencimento);
+  const fech = ddmmDate(f.fechamento);
+  if (venc) linhas.push(`📅 Vencimento: ${venc}`);
+  if (fech) linhas.push(`🗓️ Fechamento: ${fech}`);
+  if (f.limite > 0) linhas.push(`💳 Limite disponível: ${brl(f.disponivel)}`);
+  const recentes = [...det.itens].sort((a, b) => (a.data < b.data ? 1 : a.data > b.data ? -1 : 0)).slice(0, 5);
+  linhas.push("");
+  if (recentes.length) {
+    linhas.push("Últimas compras:");
+    for (const i of recentes) {
+      const parc = i.parcelaAtual && i.totalParcelas ? ` (${i.parcelaAtual}/${i.totalParcelas})` : "";
+      linhas.push(`• ${cleanDescricaoDisplay(i.descricao)}${parc} — ${brl(i.valor)}`);
+    }
+    if (det.itens.length > recentes.length) linhas.push(`… e mais ${det.itens.length - recentes.length}. Peça "compras da fatura do ${cartao.nome}".`);
+  } else linhas.push("Nenhuma compra nesta fatura até agora.");
+  return linhas.join("\n");
+}
+
+/** "🧾 Ver conta" / "👀 Ver" (assinatura): mostra a entidade de origem. */
+async function sourceView(item: AgendaRow, deps?: AgendaDeps): Promise<string> {
+  const snap = await resolveFinancialSource(item, deps);
+  const conta = item.source_type === "conta_a_pagar";
+  const icon = conta ? "🧾" : "🔁";
+  if (!snap.ok) {
+    const why = snap.reason === "payable_paid" ? "✅ Já paga" : snap.reason === "payable_cancelled" ? "Cancelada" : "Não encontrei mais esse item.";
+    return `${icon} ${item.titulo}\n${why}`;
+  }
+  const due = snap.dueIso.slice(0, 10).split("-").map(Number);
+  const linhas = [`${icon} ${conta ? "Conta" : "Assinatura"} ${snap.nome}`, ""];
+  if (snap.valor != null) linhas.push(`💰 Valor: ${brl(snap.valor)}`);
+  linhas.push(`📅 ${conta ? "Vencimento" : "Próxima cobrança"}: ${ddmm({ d: due[2], m: due[1] })}`);
+  if (conta) linhas.push("Situação: pendente");
+  return linhas.join("\n");
 }
 
 function fixedDetails(item: AgendaRow, now: Date): string {
@@ -350,14 +428,21 @@ export async function handleAgendaIntent(
 async function applyAction(
   userId: string,
   id: string,
-  acao: "concluir" | "cancelar" | "editar" | "ver",
+  acao: AgendaAcaoId,
   deps: AgendaDeps,
   now: Date,
 ): Promise<AgendaReply> {
   const cur = await getAgendaItem(userId, id, deps);
   if (!cur) return { resposta: "Esse item não está mais na sua agenda." };
-  if (acao === "ver") {
-    const det = cur.source_type ? await financialDetails(cur, deps) : fixedDetails(cur, now);
+  if (acao === "ver" || acao === "ver_fatura" || acao === "ver_conta") {
+    // O tipo do item (não o texto do botão) decide a entidade. O ID legado
+    // `agenda_view:` de mensagens antigas cai aqui e abre a mesma visão.
+    const det =
+      cur.source_type === "cartao"
+        ? await invoiceView(cur, deps)
+        : cur.source_type
+          ? await sourceView(cur, deps)
+          : fixedDetails(cur, now);
     const st = cur.status === "ativo" ? "" : `\n\nSituação: ${cur.status}`;
     const body = `${det}${st}`;
     return cur.status === "ativo"

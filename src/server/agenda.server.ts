@@ -41,6 +41,17 @@ export interface AgendaDeps {
     userId: string,
     cartao: { id: string; nome: string; dia_fechamento: number | null; dia_vencimento: number | null; limite_total: number | null },
   ) => Promise<{ total: number; vencimento: Date | null }>;
+  /**
+   * Fatura completa do cartão (mesma fonte de "minha fatura do X":
+   * getFaturaAtualPorCartao + getItensFaturaAtualPorCartao). Injetável em testes.
+   */
+  faturaDetalhe?: (
+    userId: string,
+    cartao: { id: string; nome: string; dia_fechamento: number | null; dia_vencimento: number | null; limite_total: number | null },
+  ) => Promise<{
+    fatura: { competencia: string; total: number; limite: number; disponivel: number; fechamento: Date | null; vencimento: Date | null };
+    itens: Array<{ descricao: string; valor: number; data: string; parcelaAtual: number | null; totalParcelas: number | null }>;
+  }>;
   /** Fila de avisos (injetável para testes). */
   enqueue?: (input: {
     userId: string;
