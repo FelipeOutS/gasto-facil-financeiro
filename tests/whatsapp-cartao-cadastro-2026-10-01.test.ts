@@ -354,7 +354,8 @@ describe("WhatsApp Flow (com flow_id)", () => {
       fechamento: "25",
       vencimento: "5",
     });
-    expect(c.resposta).toContain("maior que R$ 0,00");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((c.graphInteractive as any).body.text).toContain("maior que R$ 0,00");
     expect(prefillDe(c)).toMatchObject({ nome: "Nubank", limite: "", fechamento: "25", vencimento: "5" });
     expect(cartoesInseridos()).toHaveLength(0);
   });
@@ -434,6 +435,7 @@ describe("WhatsApp Flow (com flow_id)", () => {
 });
 
 describe("cadastro durante um gasto", () => {
+  beforeEach(() => resetState({ cartoes: [{ id: "c-in", nome: "Inter", user_id: "u1", dia_fechamento: 10, dia_vencimento: 20 }] }));
   test("21-23/29. cartão citado não existe → cadastrar → retoma o gasto (antes do fechamento)", async () => {
     setSystemTime(new Date("2026-09-20T15:00:00Z"));
     const g = await send("Gastei 89,90 na farmácia no cartão Nubank");
