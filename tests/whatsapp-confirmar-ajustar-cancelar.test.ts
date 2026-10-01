@@ -37,14 +37,14 @@ describe("confirmação", () => {
     expect(ir?.type).toBe("button");
     if (ir?.type !== "button") return;
     expect(ir.buttons.map((b) => b.id)).toEqual(["expense_confirm", "expense_adjust", "expense_cancel"]);
-    expect(ir.buttons.map((b) => b.title)).toEqual(["Confirmar", "Ajustar", "Cancelar"]);
+    expect(ir.buttons.map((b) => b.title)).toEqual(["✅ Confirmar", "✏️ Ajustar", "❌ Cancelar"]);
     expect(ir.body).not.toContain("1. Confirmar");
     expect(ir.body.endsWith("Posso registrar?")).toBe(true);
   });
 
   test("16. fallback textual traz 1/2/3 quando não há botão", async () => {
     const r = await iniciar();
-    expect(r.resposta).toContain("Responda:\n1. Confirmar\n2. Ajustar\n3. Cancelar");
+    expect(r.resposta).toContain("Escolha uma opção:\n1. ✅ Confirmar\n2. ✏️ Ajustar\n3. ❌ Cancelar");
   });
 
   test("1. Confirmar por botão salva uma vez", async () => {
