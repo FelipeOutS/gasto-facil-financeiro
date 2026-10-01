@@ -250,7 +250,7 @@ const MetaInteractiveMessage = z.object({
   timestamp: z.string().min(1).max(20).regex(/^\d+$/),
   type: z.literal("interactive"),
   interactive: z.object({
-    type: z.enum(["button_reply", "list_reply"]),
+    type: z.enum(["button_reply", "list_reply", "nfm_reply"]),
     button_reply: z
       .object({ id: z.string().min(1).max(256), title: z.string().max(100).optional() })
       .optional(),
@@ -259,6 +259,14 @@ const MetaInteractiveMessage = z.object({
         id: z.string().min(1).max(256),
         title: z.string().max(100).optional(),
         description: z.string().max(200).optional(),
+      })
+      .optional(),
+    // Conclusão de WhatsApp Flow: só o JSON do formulário.
+    nfm_reply: z
+      .object({
+        response_json: z.string().min(2).max(10_000),
+        name: z.string().max(100).optional(),
+        body: z.string().max(1000).optional(),
       })
       .optional(),
   }),
@@ -296,6 +304,8 @@ type FlatMessage = {
   recebida_em?: string;
   /** ID estável do botão/linha quando a mensagem veio de interactive. */
   replyId?: string;
+  /** Conclusão de WhatsApp Flow (nfm_reply). */
+  flowReply?: { responseJson: string };
   image?: {
     mediaId: string;
     mimeType?: string;
@@ -334,6 +344,18 @@ function extractIncomingMessages(payload: z.infer<typeof MetaPayload>): FlatMess
         }
         const ia = MetaInteractiveMessage.safeParse(m);
         if (ia.success) {
+          const nfm = ia.data.interactive.nfm_reply;
+          if (ia.data.interactive.type === "nfm_reply") {
+            if (!nfm) continue;
+            out.push({
+              external_id: ia.data.id,
+              telefone: ia.data.from,
+              texto: "",
+              flowReply: { responseJson: nfm.response_json },
+              recebida_em: new Date(Number(ia.data.timestamp) * 1000).toISOString(),
+            });
+            continue;
+          }
           const r = ia.data.interactive.button_reply ?? ia.data.interactive.list_reply;
           if (!r) continue;
           out.push({
@@ -672,7 +694,8 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
         const results: Array<{ status: string; gasto_id?: string }> = [];
         for (const msg of flatMessages) {
           // Mensagem precisa ter texto, imagem OU áudio.
-          if (!msg.texto?.trim() && !msg.image && !msg.audio && !msg.document) continue;
+          if (!msg.texto?.trim() && !msg.image && !msg.audio && !msg.document && !msg.flowReply)
+            continue;
           const messageType = msg.audio
             ? "audio"
             : msg.image
@@ -783,12 +806,14 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               // na sugestão de categoria. Mensagens digitadas seguem
               // sem `source` definido e nada muda para elas.
               source?: "audio";
+              flowReply?: { responseJson: string };
             } = {
               external_id: msg.external_id,
               telefone: msg.telefone,
               texto: msg.texto,
               recebida_em: msg.recebida_em,
               authorizedUserId: elig.userId,
+              ...(msg.flowReply ? { flowReply: msg.flowReply } : {}),
             };
             if (msg.image) {
               // (2) external_id já confirmado → não baixa, não chama OCR.
@@ -1111,6 +1136,15 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                 if (out.interactive) {
                   const r = await sendWhatsAppInteractiveCtaUrl(msg.telefone, out.interactive);
                   sentOk = r.sent;
+                } else if (out.graphInteractive) {
+                  // Ex.: abrir o WhatsApp Flow de cadastro de cartão. Mesmo
+                  // sender/rastreio; falhou → texto (cadastro por conversa).
+                  try {
+                    const r = await sendWhatsAppInteractiveReply(msg.telefone, out.graphInteractive);
+                    sentOk = r.sent;
+                  } catch {
+                    sentOk = false;
+                  }
                 } else {
                   // Botões/listas para perguntas conhecidas. Falhou → texto.
                   const ir = buildInteractiveFromReply(out.resposta);

@@ -1,0 +1,91 @@
+{
+  "version": "6.0",
+  "screens": [
+    {
+      "id": "CADASTRO_CARTAO",
+      "title": "Cadastrar cartão",
+      "terminal": true,
+      "success": true,
+      "data": {
+        "nome": {
+          "type": "string",
+          "__example__": "Nubank"
+        },
+        "limite": {
+          "type": "string",
+          "__example__": "5.000,00"
+        },
+        "fechamento": {
+          "type": "string",
+          "__example__": "25"
+        },
+        "vencimento": {
+          "type": "string",
+          "__example__": "5"
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextBody",
+            "text": "Só o necessário para acompanhar sua fatura. Não pedimos número do cartão, CVV nem senha."
+          },
+          {
+            "type": "TextInput",
+            "name": "nome",
+            "label": "Nome do cartão",
+            "input-type": "text",
+            "required": true,
+            "max-chars": 40,
+            "helper-text": "Ex.: Nubank, Mercado Pago, Itaú Visa",
+            "init-value": "${data.nome}"
+          },
+          {
+            "type": "TextInput",
+            "name": "limite",
+            "label": "Limite total (R$)",
+            "input-type": "text",
+            "required": true,
+            "max-chars": 20,
+            "helper-text": "Ex.: 5.000,00",
+            "init-value": "${data.limite}"
+          },
+          {
+            "type": "TextInput",
+            "name": "fechamento",
+            "label": "Dia de fechamento",
+            "input-type": "number",
+            "required": true,
+            "max-chars": 2,
+            "helper-text": "De 1 a 31",
+            "init-value": "${data.fechamento}"
+          },
+          {
+            "type": "TextInput",
+            "name": "vencimento",
+            "label": "Dia de vencimento",
+            "input-type": "number",
+            "required": true,
+            "max-chars": 2,
+            "helper-text": "De 1 a 31",
+            "init-value": "${data.vencimento}"
+          },
+          {
+            "type": "Footer",
+            "label": "Continuar",
+            "on-click-action": {
+              "name": "complete",
+              "payload": {
+                "nome": "${form.nome}",
+                "limite": "${form.limite}",
+                "fechamento": "${form.fechamento}",
+                "vencimento": "${form.vencimento}"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

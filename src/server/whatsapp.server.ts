@@ -184,6 +184,15 @@ import {
 } from "./whatsapp-boleto-ocr-cache.server";
 import { enforceUserRateLimit } from "./rate-limit.server";
 import type { DocumentAttachment } from "./whatsapp-media-attachment";
+import type { Json } from "@/integrations/supabase/types";
+import {
+  CARD_REG_KIND,
+  fecharCadastroCartao,
+  tratarCadastroCartao,
+  type CardOutcome,
+  type CardRegDeps,
+  type GastoPendente,
+} from "./whatsapp-cartao-cadastro.server";
 
 // Dependency-injection seam para o módulo de parcelamento. Tudo o que ele
 // precisa do orquestrador é exposto aqui de forma explícita, evitando que
@@ -460,6 +469,11 @@ export type WhatsAppMessageRow = {
    * (almoço, jantar) SEM alterar o comportamento de texto digitado.
    */
   source?: "audio";
+  /**
+   * Conclusão de um WhatsApp Flow (`interactive.nfm_reply`). Só o JSON do
+   * formulário; a identidade continua vindo do vínculo do número.
+   */
+  flowReply?: { responseJson: string };
 };
 
 export function maskTelefone(tel: string): string {
@@ -823,7 +837,9 @@ export type ProcessOutcome = {
     | "valor_invalido"
     | "gasto_excluido"
     | "falha"
-    | "consulta";
+    | "consulta"
+    | "cartao_cadastro"
+    | "cartao_salvo";
   gastoId?: string;
   confianca?: number;
   resposta: string;
@@ -835,6 +851,11 @@ export type ProcessOutcome = {
    * URL carrega apenas um token opaco de curta duração.
    */
   interactive?: WhatsAppInteractivePayload;
+  /**
+   * Objeto `interactive` pronto da Graph API (ex.: abrir WhatsApp Flow).
+   * Enviado pelo mesmo sender rastreado; se falhar, vai `resposta` em texto.
+   */
+  graphInteractive?: { [key: string]: Json | undefined };
 };
 
 export type WhatsAppInteractivePayload = {
@@ -2696,7 +2717,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
           resposta: "Mensagem já processada anteriormente.",
         };
       }
-      if (PENDING_STATES.includes(existente.status)) {
+      if (PENDING_STATES.includes(existente.status) || parsed.kind === CARD_REG_KIND) {
         return {
           status: "duplicada",
           resposta: "Mensagem já recebida — aguardando sua resposta.",
@@ -2762,7 +2783,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   let texto = (msg.texto ?? "").trim();
   // Permitir mensagens só-imagem (Fase WA-G5A): se vier uma foto sem
   // texto, seguimos o pipeline e roteamos para o handler de comprovante.
-  if (!texto && !msg.image && !msg.document) {
+  if (!texto && !msg.image && !msg.document && !msg.flowReply) {
     return {
       status: "erro",
       resposta: 'Não recebi nenhum texto. Me envie o gasto, ex.: "Mercado 48,90 hoje no Nubank".',
@@ -2807,6 +2828,18 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
 
   const recebidaEm = msg.recebida_em ?? new Date().toISOString();
 
+  // ---- Conclusão do WhatsApp Flow de cadastro de cartão ----
+  if (msg.flowReply) {
+    const cartoesFlow = await carregarCartoes(userId);
+    const categoriasFlow = await carregarCategorias(userId);
+    const out = await tratarCadastroCartao({
+      ...cadastroCartaoDeps(userId, msg, "", recebidaEm, cartoesFlow, categoriasFlow),
+      flowResponseJson: msg.flowReply.responseJson,
+      temOutraSessao: false,
+    });
+    return (out as ProcessOutcome) ?? { status: "cartao_cadastro", resposta: "" };
+  }
+
   // ---- Escolha de fatura (crédito sem cartão cadastrado) ----
   // Botão (`fatura_comp:<gastoId>:<YYYY-MM>`) e texto ("fatura de novembro")
   // caem na MESMA função → mesmo resultado financeiro. Texto só é tratado
@@ -2847,6 +2880,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     }
     await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
     await fecharSessoesComprovanteAtivas(userId, msg.telefone, "cancelada");
+    await fecharCadastroCartao(userId, msg.telefone, "cancelada");
     const resposta = M.resetConversa();
     await gravarSessao(
       userId,
@@ -2927,6 +2961,37 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     !isComprovanteSession(sessao.session) &&
     !isReceitaSession(sessao.session) &&
     sessao.session?.kind !== "pagar_pessoa";
+
+  // ---- Cadastro de cartão pelo WhatsApp (Flow ou conversa) ----
+  // Também oferece cadastrar o cartão citado num gasto quando ele não existe.
+  {
+    const gastoNaoCadastrado =
+      sessao &&
+      sessaoGasto &&
+      sessao.status === "aguardando_confirmacao" &&
+      sessao.session.cartaoNaoCadastrado &&
+      sessao.session.cartaoDigitado
+        ? sessao
+        : null;
+    const out = await tratarCadastroCartao({
+      ...cadastroCartaoDeps(userId, msg, texto, recebidaEm, cartoes, categorias),
+      sessaoGastoNaoCadastrado: gastoNaoCadastrado
+        ? {
+            id: gastoNaoCadastrado.id,
+            session: gastoNaoCadastrado.session as unknown as GastoPendente & {
+              cartaoDigitado?: string;
+            },
+          }
+        : null,
+      temOutraSessao: !!sessao,
+    });
+    if (out) return out as ProcessOutcome;
+    // "2. Continuar sem cadastrar" = seguir com o cartão não cadastrado.
+    if (gastoNaoCadastrado && normalizeText(texto) === "2") {
+      texto = "sim";
+      decisao = "confirm";
+    }
+  }
   if (sessao && sessaoGasto && sessao.status === "aguardando_confirmacao") {
     const t = normalizeText(texto);
     if (t === "1") decisao = "confirm";
@@ -3937,27 +4002,6 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   // ---- WA-C6: menu numerado guiado (1..8) sem sessão pendente ----
   // Reescreve "3" → "minhas contas", "8" → "ajuda". Para opções que pedem
   // orientação (1, 2, 5, 6, 7), responde direto com o texto-guia.
-  // "cadastrar cartão": cadastro completo ainda não existe no WhatsApp —
-  // orienta pelo app em vez de cair no parser de gasto.
-  if (
-    !sessao &&
-    decisao === "outro" &&
-    /^(quero\s+)?(cadastrar|adicionar|criar|novo)\s+(um\s+)?(novo\s+)?cart(ao|ão)\s*[.!?]?$/i.test(texto.trim())
-  ) {
-    const resposta =
-      "Por enquanto o cadastro de cartão é feito no app ou site, na área Cartões 💳\n\nDepois de cadastrar, é só me mandar o gasto com o nome do cartão. Ex.: “Mercado 148 no Nubank”.";
-    await gravarSessao(
-      userId,
-      msg.telefone,
-      msg.external_id,
-      texto,
-      recebidaEm,
-      "sem_pendencia",
-      { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
-      resposta,
-    );
-    return { status: "consulta", resposta };
-  }
 
   if (!sessao && decisao === "outro") {
     const opcao = detectMenuOption(texto);
@@ -5358,6 +5402,87 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
 }
 
 // ---------- envio ----------
+
+// ---------- cadastro de cartão: integração com o fluxo de gasto ----------
+
+/**
+ * Dependências do cadastro de cartão. Retomar o gasto usa exatamente a
+ * mesma confirmação do gasto em crédito com cartão escolhido sozinho
+ * (cartão + competência da fatura), e nada é salvo antes de Confirmar.
+ */
+function cadastroCartaoDeps(
+  userId: string,
+  msg: WhatsAppMessageRow,
+  texto: string,
+  recebidaEm: string,
+  cartoes: Cartao[],
+  categorias: CategoriaRow[],
+): CardRegDeps {
+  const confirmarComCartao = async (
+    base: Session,
+    cartaoId: string,
+    prefixo: string,
+  ): Promise<CardOutcome> => {
+    const lista = await carregarCartoes(userId);
+    const cartao = lista.find((c) => c.id === cartaoId);
+    if (!cartao) return { status: "erro", resposta: "Não encontrei esse cartão. Tente de novo." };
+    const next: Session = {
+      ...base,
+      formaPagamento: "credito",
+      cartaoId: cartao.id,
+      cartaoNomeDetectado: displayCartaoNome(cartao),
+      cartaoNaoCadastrado: false,
+      cartaoDigitado: undefined,
+    };
+    await aplicarMemoriaEstabelecimento({
+      userId,
+      session: next,
+      categorias,
+      source: next.source === "audio" ? "audio" : "text",
+    });
+    const resumo = detalharCartaoAutoNaConfirmacao(
+      formatarConfirmacao(
+        sessionToParsed(next, lista),
+        undefined,
+        categorias,
+        next.source,
+        memoryHintFromSession(next, categorias),
+      ),
+      next,
+      cartao,
+    );
+    const resposta = `${prefixo}${resumo}`;
+    await gravarSessao(
+      userId,
+      msg.telefone,
+      msg.external_id,
+      texto,
+      recebidaEm,
+      "aguardando_confirmacao",
+      next,
+      resposta,
+    );
+    return { status: "aguardando_confirmacao", resposta };
+  };
+  return {
+    userId,
+    telefone: msg.telefone,
+    externalId: msg.external_id,
+    texto,
+    recebidaEm,
+    cartoes: cartoes.map((c) => ({ id: c.id, nome: c.nome })),
+    resumoGasto: (g) => `${formatBRL(Number(g.valor) || 0)} em ${g.nome || "seu gasto"}`,
+    retomarGasto: (g, cartao, prefixo) =>
+      confirmarComCartao(g as unknown as Session, cartao.id, prefixo),
+    iniciarGastoComCartao: async (t, cartao) => {
+      const parsed = parseExpenseMessage(t, cartoes);
+      if (!(parsed.valor > 0) || !parsed.nome || isGenericExpenseDescription(parsed.nome)) {
+        return null;
+      }
+      return confirmarComCartao(buildSessionFromParse(parsed, msg.source), cartao.id, "");
+    },
+  };
+}
 
 export async function sendWhatsAppReply(
   to: string,

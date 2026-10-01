@@ -145,7 +145,9 @@ describe("menu", () => {
     }
     resetState({});
     const c = await send("cadastrar cartão");
-    expect(c.resposta).toContain("área Cartões");
+    // 01/10/2026 — agora inicia o cadastro pelo WhatsApp (Flow ou conversa).
+    expect(c.status).toBe("cartao_cadastro");
+    expect(c.resposta).toContain("Qual o nome do cartão?");
     expect(gastosInserts()).toHaveLength(0);
   });
 });

@@ -2,3 +2,4 @@
 - WhatsApp quota SQL functions must qualify table columns or use `#variable_conflict use_column`, because `RETURNS TABLE` output names otherwise collide with column names in PL/pgSQL.
 - WhatsApp conversation replies are logged in `whatsapp_outbound_messages` (hash/last4 only, no text) and reconciled from `whatsapp_notification_status_events` by Meta message id, because status events are the single durable callback store.
 - `FEATURE_PLAN_WHITELIST.whatsapp` must mirror SQL `has_feature_access(_, 'whatsapp')`, because UI and backend gates must agree.
+- WhatsApp card registration (Flow or conversation) creates rows in the shared `cartoes` table via `src/server/cartao-cadastro.server.ts`, which re-checks link, `cartoes_basico` access, shared validation (`src/lib/cartao-validacao.ts`, also used by the site form), name duplicity and a deterministic id per request, because the service-role client bypasses RLS.

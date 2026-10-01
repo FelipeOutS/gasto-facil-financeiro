@@ -34,6 +34,10 @@ export const state = {
   limitesData: [] as Record<string, any>[],
   favorecidosData: [] as Record<string, any>[],
   pixPendingSecretsData: [] as Record<string, any>[],
+  /** Resultado de has_feature_access (cadastro de cartão). */
+  featureAccess: true as boolean,
+  /** Emula a cota do plano gratuito de cartões (null = sem cota). */
+  cartoesQuota: null as number | null,
   /** Armazenamento genérico para tabelas sem array dedicado (whatsapp_messages, etc.). */
   generic: {} as Record<string, Record<string, any>[]>,
 };
@@ -266,6 +270,23 @@ function makeBuilder(table: string): any {
           }
         }
       }
+      // Emula a PK de cartoes e o gatilho de cota do plano gratuito.
+      if (table === "cartoes") {
+        for (const r of payloadRows) {
+          if (r?.id && store.some((row) => row.id === r.id)) {
+            return { data: null, error: { code: "23505", message: "duplicate key cartoes_pkey" } };
+          }
+          if (
+            state.cartoesQuota !== null &&
+            store.filter((row) => row.user_id === r?.user_id).length >= state.cartoesQuota
+          ) {
+            return {
+              data: null,
+              error: { code: "23514", message: "free_ads_quota_exceeded:cartoes" },
+            };
+          }
+        }
+      }
       const inserted: any[] = payloadRows.map((r) => {
         const newRow = {
           ...r,
@@ -397,6 +418,7 @@ function makeBuilder(table: string): any {
 export const fakeAdmin = {
   from: (t: string) => makeBuilder(t),
   rpc: async (n: string, a: any) => {
+    if (n === "has_feature_access") return { data: state.featureAccess, error: null };
     if (n === "whatsapp_baixa_conta_atomic") {
       // Espelha public.whatsapp_baixa_conta_atomic: ownership por user_id,
       // data_pagamento vinda do parâmetro e resultados not_found/noop/
@@ -764,6 +786,8 @@ export function resetState(o?: any) {
       if (r && r.user_id === undefined) r.user_id = "u1";
     });
   }
+  state.featureAccess = o?.featureAccess ?? true;
+  state.cartoesQuota = o?.cartoesQuota ?? null;
   // Cache anti-repetição conversacional é módulo-global (5 min): sem reset,
   // um menu enviado num teste transforma o próximo em "menu curto".
   resetConversationalCacheSafely();

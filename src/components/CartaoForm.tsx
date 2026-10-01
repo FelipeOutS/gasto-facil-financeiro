@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getCardTheme } from "@/lib/card-theme";
 import { formatBRL, parseBRLInput } from "@/lib/format";
+import { validarCartao } from "@/lib/cartao-validacao";
 import { addCartao, updateCartao, type NovoCartaoInput } from "@/lib/store";
 import { requireOnline } from "@/lib/use-online-status";
 import type { Cartao } from "@/lib/types";
@@ -71,13 +72,14 @@ export function CartaoForm({
   }, [formKey]);
 
   const limite = parseBRLInput(limiteStr);
-  const valid =
-    nome.trim().length > 0 &&
-    limite >= 0 &&
-    diaFech >= 1 &&
-    diaFech <= 31 &&
-    diaVenc >= 1 &&
-    diaVenc <= 31;
+  // Regra compartilhada com o WhatsApp (limite > 0, dias 1–31, nome curto).
+  const validacao = validarCartao({
+    nome,
+    limite: limiteStr,
+    diaFechamento: diaFech,
+    diaVencimento: diaVenc,
+  });
+  const valid = validacao.ok;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -86,12 +88,13 @@ export function CartaoForm({
       return;
     }
     if (!(await requireOnline())) return;
+    if (!validacao.ok) return;
     const payload: NovoCartaoInput = {
-      nome: nome.trim(),
+      nome: validacao.valor.nome,
       banco: banco.trim(),
-      limiteTotal: limite,
-      diaFechamento: diaFech,
-      diaVencimento: diaVenc,
+      limiteTotal: validacao.valor.limiteTotal,
+      diaFechamento: validacao.valor.diaFechamento,
+      diaVencimento: validacao.valor.diaVencimento,
       cor,
       observacao: obs.trim() || undefined,
     };
