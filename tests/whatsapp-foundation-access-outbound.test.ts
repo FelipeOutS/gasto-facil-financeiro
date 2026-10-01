@@ -177,3 +177,56 @@ describe("rastreabilidade outbound", () => {
     ]).status).toBe("delivered");
   });
 });
+
+// ---- 01/10/2026: mensagens interativas usam o MESMO rastreio ----
+describe("rastreio de botões e listas (mesmo recordOutboundSend)", async () => {
+  const { buildInteractiveFromReply, toGraphInteractive } = await import(
+    "../src/server/whatsapp-interactive.server"
+  );
+  const corpoConfirmacao =
+    "Confere pra mim? 👀\n\n• Descrição: Uber\n• Valor: R$ 12,60\n\nPosso registrar?\n\nEscolha uma opção:\n1. ✅ Confirmar\n2. ✏️ Ajustar\n3. ❌ Cancelar";
+  const casos: Array<[string, string, string]> = [
+    ["A. reply buttons", corpoConfirmacao, "button"],
+    ["B. list message", "📌 O que deseja fazer?\n1. Gastos\n2. Cartões", "list"],
+  ];
+  for (const [nome, corpo, tipo] of casos) {
+    test(nome, async () => {
+      const ir = buildInteractiveFromReply(corpo)!;
+      expect(ir.type).toBe(tipo);
+      const interactive = toGraphInteractive(ir);
+      const db = fakeDb();
+      const r = await send(db, {
+        messageType: "interactive",
+        source: "reply_interactive",
+        content: JSON.stringify(interactive),
+        responseBody: JSON.stringify({ messages: [{ id: `wamid.${tipo}` }] }),
+      } as any);
+      expect(r).toEqual({ recorded: true, metaMessageId: `wamid.${tipo}`, status: "accepted" });
+      const row = db.tables.whatsapp_outbound_messages[0];
+      expect(row.message_type).toBe("interactive");
+      expect(row.source).toBe("reply_interactive");
+      expect(row.meta_message_id).toBe(`wamid.${tipo}`);
+      expect(row.status).toBe("accepted");
+      expect(row.http_status).toBe(200);
+      expect(row.user_id).toBe("user-1");
+      const dump = JSON.stringify(row);
+      expect(dump).not.toContain("Uber");
+      expect(dump).not.toContain("Gastos");
+      expect(dump).not.toContain("5511934600504");
+    });
+  }
+  test("falha HTTP de interativa fica registrada sem id da Meta", async () => {
+    const db = fakeDb();
+    await send(db, {
+      messageType: "interactive",
+      source: "reply_interactive",
+      content: "{}",
+      ok: false,
+      httpStatus: 400,
+      responseBody: JSON.stringify({ error: { code: 131009 } }),
+    } as any);
+    const row = db.tables.whatsapp_outbound_messages[0];
+    expect(row?.http_status).toBe(400);
+    expect(row?.meta_message_id ?? null).toBe(null);
+  });
+});
