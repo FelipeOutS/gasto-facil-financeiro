@@ -14,6 +14,8 @@
  * NUNCA cria cartão automaticamente.
  * NUNCA descarta valor/nome/data/forma já coletados.
  */
+import { competenciaPorData } from "@/lib/fatura-competencia";
+import { perguntaEscolhaFatura } from "./whatsapp-fatura-escolha.server";
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1933,10 +1935,27 @@ export async function persistirGasto(
       ? ` (cartão não cadastrado: ${s.cartaoDigitado.slice(0, 60)})`
       : "";
 
+  // Separação "quando comprei" × "quando vou pagar".
+  let faturaCompetencia: string | null = null;
+  if ((s.formaPagamento ?? "credito") === "credito" && cartaoFinalId) {
+    try {
+      const cs = await carregarCartoes(userId);
+      const c = cs.find((x) => x.id === cartaoFinalId);
+      if (c) {
+        faturaCompetencia =
+          competenciaPorData(s.data, c.diaFechamento, c.diaVencimento)?.competencia ?? null;
+      }
+    } catch {
+      faturaCompetencia = null;
+    }
+  }
+
   const { data: gastoRow, error: gastoErr } = await supabaseAdmin
     .from("gastos")
     .insert({
       user_id: userId,
+      invoice_month: s.data.slice(0, 7),
+      fatura_competencia: faturaCompetencia,
       categoria_id: categoriaId,
       descricao: nomeLimpo,
       estabelecimento: nomeLimpo,
@@ -1985,7 +2004,11 @@ export async function persistirGasto(
     : s.cartaoId
       ? `Cartão ${canonicalizeBrand(s.cartaoNomeDetectado ?? "")}`.replace(/\s+$/, "")
       : rotuloFormaPagamento(s.formaPagamento ?? "credito");
-  const resposta = M.gastoSalvo(formatBRL(s.valor), nomeLimpo, categoriaLabelFinal, ondePagou);
+  let resposta = M.gastoSalvo(formatBRL(s.valor), nomeLimpo, categoriaLabelFinal, ondePagou);
+  // Crédito sem cartão cadastrado: não dá para calcular a fatura → pergunta.
+  if ((s.formaPagamento ?? "credito") === "credito" && !cartaoFinalId) {
+    resposta += "\n\n" + perguntaEscolhaFatura(s.data);
+  }
   return { ok: true, gastoId: gastoRow.id, resposta };
 }
 
