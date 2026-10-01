@@ -5176,6 +5176,20 @@ export async function sendWhatsAppInteractiveCtaUrl(
   });
 }
 
+/** Reply buttons (≤3) ou lista (≤10). O chamador faz fallback textual se `sent=false`. */
+export async function sendWhatsAppInteractiveReply(
+  to: string,
+  interactive: Record<string, unknown>,
+): Promise<{ sent: boolean; reason?: string; status?: number }> {
+  return sendWhatsAppRaw(to, {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to,
+    type: "interactive",
+    interactive,
+  });
+}
+
 async function sendWhatsAppRaw(
   _to: string,
   body: Record<string, unknown>,
