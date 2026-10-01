@@ -243,7 +243,7 @@ export async function getFaturaAtualPorCartao(
   const toIso = new Date(fim.getTime() + 24 * 3600 * 1000).toISOString().slice(0, 10);
   const { data } = await supabaseAdmin
     .from("gastos")
-    .select("valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado")
+    .select("id, valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado")
     .eq("user_id", userId)
     .eq("cartao_id", cartao.id)
     .gte("data", fromIso)
@@ -577,7 +577,12 @@ export type ParcelaRow = {
   estabelecimento: string | null;
   valor: number;
   data: string;
+  /** Ciclo legado (chave interna). Para novos registros, derivado de fatura_competencia. */
   invoiceMonth: string | null;
+  /** fatura_competencia persistida (YYYY-MM do vencimento) ou null (legado). */
+  faturaCompetencia?: string | null;
+  /** Competência efetiva (mês do vencimento) — use para exibir. */
+  competencia?: string | null;
   parcelaAtual: number;
   totalParcelas: number;
   grupoId: string;
@@ -629,6 +634,7 @@ async function loadParcelasDoUsuario(userId: string): Promise<ParcelaRow[]> {
       valor: Number(g.valor ?? 0) || 0,
       data: String(g.data ?? ""),
       invoiceMonth: (g.invoice_month as string | null) ?? null,
+      faturaCompetencia: (g.fatura_competencia as string | null) ?? null,
       parcelaAtual: pa,
       totalParcelas: tp,
       grupoId,
@@ -666,7 +672,24 @@ function buildCompraParcelada(
   cartao: CartaoRow,
   hoje: Date,
 ): CompraParcelada {
-  const ordenadas = parcelas.slice().sort((a, b) => a.parcelaAtual - b.parcelaAtual);
+  const diaFech = Number(cartao.dia_fechamento ?? 1) || 1;
+  const diaVenc = Number(cartao.dia_vencimento ?? 10) || 10;
+  const ordenadas = parcelas
+    .map((p) => {
+      const fc = isYm(p.faturaCompetencia) ? p.faturaCompetencia : null;
+      return {
+        ...p,
+        // Com competência nova, o ciclo interno passa a derivar dela
+        // (mesma fatura que o site), não do mês de referência da compra.
+        invoiceMonth: fc ? competenciaParaCiclo(fc, diaFech, diaVenc) : p.invoiceMonth,
+        competencia: competenciaDoGasto(
+          { fatura_competencia: fc, invoice_month: p.invoiceMonth, data: p.data },
+          diaFech,
+          diaVenc,
+        ),
+      };
+    })
+    .sort((a, b) => a.parcelaAtual - b.parcelaAtual);
   const totalCompra = ordenadas.reduce((s, p) => s + p.valor, 0);
   const restantes = ordenadas.filter((p) => isParcelaEmAberto(p, cartao, hoje));
   const saldo = restantes.reduce((s, p) => s + p.valor, 0);
