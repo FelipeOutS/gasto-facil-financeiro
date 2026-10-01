@@ -1799,6 +1799,7 @@ export type Database = {
           descricao: string
           essencial: boolean | null
           estabelecimento: string
+          fatura_competencia: string | null
           forma_pagamento: string
           fornecedor_id: string | null
           gasto_fixo: boolean | null
@@ -1832,6 +1833,7 @@ export type Database = {
           descricao: string
           essencial?: boolean | null
           estabelecimento?: string
+          fatura_competencia?: string | null
           forma_pagamento: string
           fornecedor_id?: string | null
           gasto_fixo?: boolean | null
@@ -1865,6 +1867,7 @@ export type Database = {
           descricao?: string
           essencial?: boolean | null
           estabelecimento?: string
+          fatura_competencia?: string | null
           forma_pagamento?: string
           fornecedor_id?: string | null
           gasto_fixo?: boolean | null
