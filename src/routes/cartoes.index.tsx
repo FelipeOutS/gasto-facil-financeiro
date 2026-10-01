@@ -70,6 +70,16 @@ import { Money } from "@/components/Money";
 import { BrandLogo } from "@/components/BrandLogo";
 import { preloadAllBankLogos } from "@/lib/logos";
 import { CartaoCompactCard, CartaoAddTile } from "@/components/CartaoCompactCard";
+import {
+  VISAO_GERAL,
+  cartoesDaVisao,
+  comprasDaVisao,
+  normalizarVisao,
+  totaisDaVisao,
+  vencimentosDaVisao,
+  visaoInicial,
+  type VisaoCartoes,
+} from "@/lib/cartoes-visao";
 import { CartaoForm } from "@/components/CartaoForm";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TransactionAvatar } from "@/components/TransactionAvatar";
@@ -897,6 +907,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 const CartaoCard = memo(function CartaoCard({
   cartao,
   resumo,
+  selected,
+  onSelect,
   onOpen,
   onEdit,
   onImport,
@@ -904,6 +916,8 @@ const CartaoCard = memo(function CartaoCard({
 }: {
   cartao: Cartao;
   resumo?: { usadoMes: number; limite: number; disponivel: number; pct: number };
+  selected?: boolean;
+  onSelect?: () => void;
   onOpen: () => void;
   onEdit: () => void;
   onImport: () => void;
@@ -958,14 +972,18 @@ const CartaoCard = memo(function CartaoCard({
     <article
       role="button"
       tabIndex={0}
-      onClick={onOpen}
+      onClick={onSelect ?? onOpen}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          onOpen();
+          (onSelect ?? onOpen)();
         }
       }}
-      className="hover-lift card-press group relative cursor-pointer overflow-hidden rounded-3xl p-4 text-white shadow-elevated transition-all duration-200 active:scale-[0.99] sm:p-5"
+      aria-pressed={onSelect ? !!selected : undefined}
+      className={cn(
+        "hover-lift card-press group relative cursor-pointer overflow-hidden rounded-3xl p-4 text-white shadow-elevated transition-all duration-200 active:scale-[0.99] sm:p-5",
+        selected && "ring-4 ring-primary ring-offset-2 ring-offset-background",
+      )}
       style={{ background: theme.background }}
     >
       <div
@@ -1127,6 +1145,64 @@ const CartaoCard = memo(function CartaoCard({
   );
 });
 
+/* =============== Seletor Visão geral / cartão =============== */
+
+function VisaoSelector({
+  cartoes,
+  visao,
+  onChange,
+}: {
+  cartoes: Cartao[];
+  visao: VisaoCartoes;
+  onChange: (v: VisaoCartoes) => void;
+}) {
+  const { t } = useTranslation("cartoes");
+  const chip = (active: boolean) =>
+    cn(
+      "card-press inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3.5 text-xs font-semibold transition-colors",
+      active
+        ? "border-primary bg-primary text-primary-foreground shadow-elevated"
+        : "border-border bg-card text-foreground hover:bg-card-elevated",
+    );
+  return (
+    <div
+      role="tablist"
+      aria-label={t("view.label")}
+      className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      <button
+        type="button"
+        role="tab"
+        aria-selected={visao === VISAO_GERAL}
+        onClick={() => onChange(VISAO_GERAL)}
+        className={chip(visao === VISAO_GERAL)}
+      >
+        <Wallet className="h-3.5 w-3.5" />
+        {t("view.overview")}
+      </button>
+      {cartoes.map((c) => (
+        <button
+          key={c.id}
+          type="button"
+          role="tab"
+          aria-selected={visao === c.id}
+          onClick={() => onChange(c.id)}
+          className={chip(visao === c.id)}
+        >
+          <span
+            className="relative grid h-6 w-6 place-items-center overflow-hidden rounded-md"
+            style={{ background: getCardTheme(c.cor || "#8b5cf6", c.banco).background }}
+            aria-hidden
+          >
+            <BrandLogo name={c.banco || c.nome} variant="bank" onDark className="bank-logo-xs" />
+          </span>
+          {c.nome}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /* =============== Próxima fatura (resumo topo) =============== */
 
 function ProximaFaturaCard({
@@ -1271,7 +1347,7 @@ function ProximosVencimentos({ items }: { items: Array<{ cartao: Cartao; dias: n
                 style={{ background: theme.background }}
                 aria-hidden
               >
-                <BrandLogo name={cartao.banco} variant="bank" onDark className="bank-logo-sm" />
+                <BrandLogo name={cartao.banco || cartao.nome} variant="bank" onDark className="bank-logo-sm" />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{cartao.nome}</p>

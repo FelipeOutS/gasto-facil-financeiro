@@ -94,12 +94,12 @@ function BrandLogoBase({ name, variant, className, onDark, imgClassName }: Props
             )}
             aria-hidden
           >
-            <span className="inline-flex h-9 items-center justify-center rounded-md bg-white/95 px-2.5 py-1 shadow-sm ring-1 ring-black/5">
+            <span className="bank-logo-pill inline-flex h-9 items-center justify-center rounded-md bg-white/95 px-2.5 py-1 shadow-sm ring-1 ring-black/5">
               <img
                 src={staticUrl}
                 alt=""
                 className={cn(
-                  "block h-auto w-auto max-h-6 max-w-[120px] object-contain",
+                  "block h-6 w-auto max-w-[120px] object-contain",
                   imgClassName,
                 )}
                 decoding="async"

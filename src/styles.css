@@ -723,6 +723,38 @@ body {
   max-height: 22px;
 }
 
+/* Colored logos inside a white pill: shrink pill in compact containers */
+.bank-logo-container.bank-logo-sm .bank-logo-pill {
+  height: 28px;
+  padding: 2px 6px;
+}
+.bank-logo-container.bank-logo-sm .bank-logo-pill > img {
+  height: 18px;
+}
+.bank-logo-container.bank-logo-xs {
+  width: 24px;
+  height: 24px;
+  max-width: 24px;
+  max-height: 24px;
+  justify-content: center;
+}
+.bank-logo-container.bank-logo-xs > img {
+  max-width: 20px;
+  max-height: 14px;
+}
+.bank-logo-container.bank-logo-xs .bank-logo-pill {
+  height: 20px;
+  padding: 1px 3px;
+}
+.bank-logo-container.bank-logo-xs .bank-logo-pill > img {
+  height: 14px;
+}
+.bank-logo-container.bank-logo-xs > span:not(.bank-logo-pill) {
+  width: 24px;
+  height: 24px;
+  font-size: 10px;
+}
+
 /* Hide scrollbar utility for horizontal pill rows */
 .scrollbar-none::-webkit-scrollbar {
   display: none;
