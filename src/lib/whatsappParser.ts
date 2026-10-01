@@ -74,7 +74,7 @@ function normalize(text: string): string {
 
 // ---------- valor ----------
 
-function parseValor(text: string): number | null {
+export function parseValor(text: string): number | null {
   // R$ 1.234,56 | 1234,56 | 1234.56 | 950 | 19,90
   const re = /(?:r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[,.]\d{1,2})?)/i;
   const m = text.match(re);
@@ -105,7 +105,7 @@ const MESES: Record<string, number> = {
   dez: 12,
 };
 
-function parseData(textRaw: string): { iso: string; matched: boolean } {
+export function parseData(textRaw: string): { iso: string; matched: boolean } {
   const text = normalize(textRaw);
   const now = new Date();
   const yearNow = now.getFullYear();
