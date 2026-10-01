@@ -1,5 +1,17 @@
-import { describe, expect, test } from "bun:test";
-import { getBankLogo } from "@/lib/logos";
+import { describe, expect, test, plugin } from "bun:test";
+
+// Bun não entende imports `?url` do Vite: devolve o próprio caminho local.
+plugin({
+  name: "vite-url-stub",
+  setup(build) {
+    build.onResolve({ filter: /\.svg\?url$/ }, (args) => ({ path: args.path, namespace: "svgurl" }));
+    build.onLoad({ filter: /.*/, namespace: "svgurl" }, (args) => ({
+      contents: `export default ${JSON.stringify(args.path.replace(/\?url$/, ""))};`,
+      loader: "js",
+    }));
+  },
+});
+const { getBankLogo } = await import("@/lib/logos");
 
 describe("Identidade visual do cartão", () => {
   test("Nubank resolve o asset local, sem depender de caixa/acentos/espaços", () => {
