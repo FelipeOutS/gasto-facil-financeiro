@@ -12,6 +12,7 @@
  */
 import { randomBytes, randomUUID } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Json } from "@/integrations/supabase/types";
 import {
   encontrarCartaoDuplicado,
   validarDiaCartao,
@@ -56,7 +57,7 @@ export type CardRegSession = {
 export type CardOutcome = {
   status: "cartao_cadastro" | "cartao_salvo" | "cancelada" | string;
   resposta: string;
-  graphInteractive?: Record<string, unknown>;
+  graphInteractive?: { [key: string]: Json | undefined };
   [k: string]: unknown;
 };
 
@@ -125,7 +126,7 @@ async function gravar(deps: CardRegDeps, status: string, s: CardRegSession, resp
     texto: deps.texto.slice(0, 500),
     recebida_em: deps.recebidaEm,
     status,
-    parsed: s as unknown as Record<string, unknown>,
+    parsed: s as unknown as Json,
     resposta_sugerida: resposta,
   });
   return !error;

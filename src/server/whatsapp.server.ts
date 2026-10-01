@@ -184,6 +184,7 @@ import {
 } from "./whatsapp-boleto-ocr-cache.server";
 import { enforceUserRateLimit } from "./rate-limit.server";
 import type { DocumentAttachment } from "./whatsapp-media-attachment";
+import type { Json } from "@/integrations/supabase/types";
 import {
   CARD_REG_KIND,
   fecharCadastroCartao,
@@ -854,7 +855,7 @@ export type ProcessOutcome = {
    * Objeto `interactive` pronto da Graph API (ex.: abrir WhatsApp Flow).
    * Enviado pelo mesmo sender rastreado; se falhar, vai `resposta` em texto.
    */
-  graphInteractive?: Record<string, unknown>;
+  graphInteractive?: { [key: string]: Json | undefined };
 };
 
 export type WhatsAppInteractivePayload = {

@@ -7,6 +7,7 @@
  * O conteúdo recebido é sempre revalidado no servidor.
  */
 import { z } from "zod";
+import type { Json } from "@/integrations/supabase/types";
 
 export const CARD_FLOW_SCREEN = "CADASTRO_CARTAO";
 
@@ -110,7 +111,7 @@ export function buildCardFlowInteractive(args: {
   body: string;
   prefill: CardFlowPrefill;
   draft?: boolean;
-}): Record<string, unknown> {
+}): { [key: string]: Json | undefined } {
   const p = args.prefill;
   return {
     type: "flow",
