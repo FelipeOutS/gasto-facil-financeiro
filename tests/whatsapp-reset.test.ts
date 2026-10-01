@@ -79,6 +79,13 @@ test("cancelar durante lançamento de gasto (aguardando forma) encerra sessão",
 });
 
 test("cancelar durante escolha de cartão encerra sessão", async () => {
+  // 2 cartões: com 1 só o cartão é escolhido automaticamente.
+  resetState({
+    cartoes: [
+      { id: "c-nu", nome: "Nubank", user_id: "u1", ultimos_digitos: "1234" },
+      { id: "c-mp", nome: "Mercado Pago", user_id: "u1", ultimos_digitos: "4321" },
+    ],
+  });
   await processarMensagemWhatsApp({
     telefone: tel,
     texto: "Mercado 30",
