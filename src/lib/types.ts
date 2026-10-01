@@ -53,6 +53,8 @@ export type Gasto = {
    * deve aparecer, independentemente da data real (`data`) da compra.
    */
   invoiceMonth?: string;
+  /** Competência da fatura (YYYY-MM do VENCIMENTO). Ausente = legado (derivada). */
+  faturaCompetencia?: string;
   /** Horário opcional da compra (HH:mm). */
   horario?: string;
   /** Origem do registro: manual, fatura_imagem, fatura_csv. */
