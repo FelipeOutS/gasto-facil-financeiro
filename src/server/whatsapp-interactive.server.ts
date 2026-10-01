@@ -8,6 +8,7 @@
  * rastreio de envio. Se o envio interativo falhar, o webhook manda o texto.
  */
 import { FATURA_COMP_PREFIX } from "./whatsapp-fatura-escolha.server";
+import { EXPENSE_CONFIRM_FALLBACK } from "./whatsapp-messages";
 import { nomeMesYm } from "@/lib/fatura-competencia";
 
 export type InteractiveButtons = {
@@ -33,6 +34,16 @@ export const REPLY_ID_TEXT: Record<string, string> = {
   payment_credit: "cartão",
   recurrence_yes: "sim",
   recurrence_no: "não",
+  // Confirmação de gasto. Cancelar → "não" para cair no MESMO cancelamento
+  // do gasto (e não no reinício geral da conversa).
+  expense_confirm: "sim",
+  expense_adjust: "ajustar",
+  expense_cancel: "não",
+  expense_edit_description: "ajustar descrição",
+  expense_edit_category: "ajustar categoria",
+  expense_edit_value: "ajustar valor",
+  expense_edit_date: "ajustar data",
+  expense_edit_payment: "ajustar pagamento",
 };
 
 const MAX_BODY = 1024;
@@ -83,6 +94,37 @@ export function buildInteractiveFromReply(resposta: string): InteractiveReply | 
         ],
       };
     }
+  }
+
+  // Confirmação de gasto: Confirmar / Ajustar / Cancelar. O bloco
+  // "Responda: 1/2/3" só existe para o fallback textual e sai do corpo.
+  if (body.includes(EXPENSE_CONFIRM_FALLBACK)) {
+    const semFallback = body.replace(EXPENSE_CONFIRM_FALLBACK, "").trim();
+    return {
+      type: "button",
+      body: semFallback,
+      buttons: [
+        { id: "expense_confirm", title: "Confirmar" },
+        { id: "expense_adjust", title: "Ajustar" },
+        { id: "expense_cancel", title: "Cancelar" },
+      ],
+    };
+  }
+
+  // Qual campo ajustar (5 opções → lista).
+  if (n.startsWith("o que voce quer ajustar?")) {
+    return {
+      type: "list",
+      body: "O que você quer ajustar?",
+      buttonText: "Escolher",
+      rows: [
+        { id: "expense_edit_description", title: "Descrição" },
+        { id: "expense_edit_category", title: "Categoria" },
+        { id: "expense_edit_value", title: "Valor" },
+        { id: "expense_edit_date", title: "Data" },
+        { id: "expense_edit_payment", title: "Pagamento" },
+      ],
+    };
   }
 
   // Forma de pagamento (4 opções → lista).

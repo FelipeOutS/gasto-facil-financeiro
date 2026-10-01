@@ -12,6 +12,9 @@
  *  - Frases curtas; bullets só no resumo de confirmação.
  */
 
+/** Fallback textual da confirmação de gasto (usado quando não há botões). */
+export const EXPENSE_CONFIRM_FALLBACK = "Responda:\n1. Confirmar\n2. Ajustar\n3. Cancelar";
+
 export const whatsappMessages = {
   // ---- forma de pagamento ----
   perguntaFormaPagamento(valorFmt: string, nome: string) {
@@ -76,8 +79,33 @@ export const whatsappMessages = {
       linhas.push(`• Parcelas: ${args.parcelas}x`);
     }
     linhas.push(``);
-    linhas.push(`Posso registrar? Responda sim ou não.`);
+    linhas.push(`Posso registrar?`);
+    // Fallback textual. Quando os botões saem, este bloco é removido do
+    // corpo (ver EXPENSE_CONFIRM_FALLBACK em whatsapp-interactive).
+    linhas.push(``);
+    linhas.push(EXPENSE_CONFIRM_FALLBACK);
     return linhas.join("\n");
+  },
+
+  // ---- ajuste da confirmação (Confirmar / Ajustar / Cancelar) ----
+  perguntaCampoAjuste() {
+    return (
+      `O que você quer ajustar?\n\n` +
+      `1. Descrição\n2. Categoria\n3. Valor\n4. Data\n5. Pagamento\n\n` +
+      `Responda com o número ou o nome.`
+    );
+  },
+  perguntaAjusteDescricao() {
+    return `Qual deve ser a descrição?`;
+  },
+  perguntaAjusteValor() {
+    return `Qual é o valor correto? Ex.: 13,20`;
+  },
+  perguntaAjusteData() {
+    return `Qual é a data correta? Ex.: hoje, ontem, 30/09 ou 30/09/2026`;
+  },
+  ajusteNaoEntendido(pergunta: string) {
+    return `Não entendi essa parte 😅\n\n${pergunta}`;
   },
 
   // ---- respostas finais ----
@@ -108,7 +136,7 @@ export const whatsappMessages = {
   // ---- erros e edge cases ----
   naoEntendiSimNao() {
     // Mantemos "Não entendi" para preservar contratos de teste e clareza.
-    return `Não entendi essa parte 😅\n\n` + `Você confirma esse gasto? Responda sim ou não.`;
+    return `Não entendi essa parte 😅\n\nVocê confirma esse gasto?\n\n${EXPENSE_CONFIRM_FALLBACK}`;
   },
 
   semPendencia() {
