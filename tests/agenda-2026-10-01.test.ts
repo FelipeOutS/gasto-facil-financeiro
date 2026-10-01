@@ -303,7 +303,7 @@ describe("UX pós-criação (sem Concluir imediato)", () => {
     const b = ids(r);
     expect(b.map((x: { title: string }) => x.title)).toEqual(["✏️ Editar", "❌ Cancelar"]);
     expect(b.some((x: { id: string }) => x.id.startsWith("agenda_done:"))).toBe(false);
-    expect(r.resposta).toContain("🔔 pagar a internet");
+    expect(r.resposta).toContain("🔔 Pagar a internet");
     expect(r.resposta).toContain("📅 Amanhã");
     expect(r.resposta).toContain("🕘 09:00");
   });
