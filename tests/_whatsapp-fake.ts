@@ -489,6 +489,7 @@ export const fakeAdmin = {
         mes: pc.mes,
         ano: pc.ano,
         invoice_month: pc.invoice_month,
+        fatura_competencia: (pc as { fatura_competencia?: string }).fatura_competencia ?? null,
         forma_pagamento: "credito",
       }));
       for (const row of rows) {
