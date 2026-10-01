@@ -331,7 +331,6 @@ describe("WA-F3.2 — persistência atômica via RPC", () => {
             id: `phantom-${i}`,
             parcela_atual: p.numero,
             invoice_month: p.invoice_month,
-            fatura_competencia: p.fatura_competencia ?? null,
             valor: p.valor,
           })),
           error: null,
