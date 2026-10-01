@@ -15,7 +15,7 @@
  * NUNCA descarta valor/nome/data/forma já coletados.
  */
 import { competenciaPorData } from "@/lib/fatura-competencia";
-import { perguntaEscolhaFatura } from "./whatsapp-fatura-escolha.server";
+import { perguntaEscolhaFatura, tratarEscolhaFatura } from "./whatsapp-fatura-escolha.server";
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2747,6 +2747,19 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   }
 
   const recebidaEm = msg.recebida_em ?? new Date().toISOString();
+
+  // ---- Escolha de fatura (crédito sem cartão cadastrado) ----
+  // Botão (`fatura_comp:<gastoId>:<YYYY-MM>`) e texto ("fatura de novembro")
+  // caem na MESMA função → mesmo resultado financeiro. Texto só é tratado
+  // quando há um gasto pendente dessa escolha (senão segue como consulta).
+  {
+    const escolha = await tratarEscolhaFatura(userId, texto);
+    if (escolha) {
+      logWaRouteDecision(msg, "fatura_escolha", "fatura_competencia_choice");
+      return { status: "salva", gastoId: escolha.gastoId, resposta: escolha.resposta };
+    }
+  }
+
   const decisao = classificarResposta(texto);
 
   // ---- WA: comando de reinício geral ("cancelar", "reiniciar", ...) ----
