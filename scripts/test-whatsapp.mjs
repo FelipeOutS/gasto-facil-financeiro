@@ -30,7 +30,6 @@ const INCLUDE = [
   "whatsapp-audio.test.ts",
   "whatsapp-audio-duration.test.ts",
   "whatsapp-authz.test.ts",
-  "whatsapp-beta.test.ts",
   "whatsapp-bugfixes.test.ts",
   "whatsapp-comprovantes.test.ts",
   "whatsapp-consultas-especificas.test.ts",
@@ -101,7 +100,6 @@ const INCLUDE = [
   "whatsapp-c92-dispatcher-concurrency-d2b2.test.ts",
   "whatsapp-c92-dispatcher-hardening-d2b2.test.ts",
   "whatsapp-c92-template-loader-e3a.test.ts",
-  "whatsapp-c11-entitlement.test.ts",
   "whatsapp-c11-f2-billing.test.ts",
   "whatsapp-c11-f22-cancellation-resolver.test.ts",
   "whatsapp-c11-f3b-helpers.test.ts",
@@ -119,7 +117,6 @@ const INCLUDE = [
   "whatsapp-c11-f3b2e-callback-reconcile.test.ts",
   "whatsapp-c11-f3b2e1-optout-precedencia.test.ts",
   "whatsapp-c11-f3b2e1-status-callback-wire.test.ts",
-  "whatsapp-c11-f3b3-admin-auth.test.ts",
   "whatsapp-c11-f3b3-runtime-admin.test.ts",
   "whatsapp-c11-f3b3-quota-admin.test.ts",
   "whatsapp-c11-f4b-meta-catalog.test.ts",
@@ -175,11 +172,13 @@ const extras = [...onDisk].filter(
     (f.startsWith("whatsapp-") || f.startsWith("admin-master-") || f.startsWith("free-ads-")) &&
     !INCLUDE.includes(f),
 );
+// Arquivos novos do WhatsApp entram automaticamente (ordem alfabética, após
+// a lista fixa) — antes o runner abortava e a suíte "junta" acabava sendo
+// rodada com `bun test tests/whatsapp*`, num único processo (ver nota abaixo).
 if (extras.length > 0) {
-  console.error(
-    `[WA-B5] arquivos WhatsApp/admin/free-ads não incluídos no runner: ${extras.join(", ")}`,
-  );
-  process.exit(2);
+  extras.sort();
+  INCLUDE.push(...extras);
+  console.log(`[WA-B5] incluídos automaticamente: ${extras.length} arquivo(s)`);
 }
 
 const env = {
