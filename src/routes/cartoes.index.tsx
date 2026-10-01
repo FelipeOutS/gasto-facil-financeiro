@@ -539,7 +539,7 @@ function CartoesPage() {
 
           {/* Blocos complementares empilhados */}
           <div className="mt-5 space-y-4">
-            <ProximosVencimentos items={proximosVencimentos} />
+            <ProximosVencimentos items={proximosVencimentos} valores={faturaCorrentePorCartao} onSelect={cartoes.length > 1 ? setVisao : undefined} />
             <UltimasCompras
               gastos={ultimasCompras}
               cartoes={cartoes}
@@ -662,7 +662,7 @@ function CartoesPage() {
               ))}
             </section>
             <aside className="min-w-0 space-y-4">
-              <ProximosVencimentos items={proximosVencimentos} />
+              <ProximosVencimentos items={proximosVencimentos} valores={faturaCorrentePorCartao} onSelect={cartoes.length > 1 ? setVisao : undefined} />
               <UltimasCompras
                 gastos={ultimasCompras}
                 cartoes={cartoes}
@@ -1122,7 +1122,7 @@ const CartaoCard = memo(function CartaoCard({
               e.stopPropagation();
               onOpen();
             }}
-            className="inline-flex h-7 items-center gap-1 rounded-full bg-white/95 px-3 text-[11px] font-semibold text-foreground transition-colors hover:bg-white"
+            className="inline-flex h-7 items-center gap-1 rounded-full bg-background/95 px-3 text-[11px] font-semibold text-foreground shadow-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <Receipt className="h-3 w-3" />
             {t("card.viewInvoice")}
