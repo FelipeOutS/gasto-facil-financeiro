@@ -25,7 +25,9 @@
     "count_other": "{{count}} cartões",
     "tapHint": "Toque em um cartão para ver detalhes da fatura.",
     "importInvoice": "Importar fatura",
-    "newCard": "Novo cartão"
+    "newCard": "Novo cartão",
+    "selectHint": "Toque em um cartão para ver só ele. Toque de novo para abrir a fatura.",
+    "selectHintDesktop": "Toque em um cartão para ver só ele. Use “Ver fatura” para os detalhes."
   },
   "empty": {
     "title": "Nenhum cartão por aqui ainda",
@@ -258,5 +260,10 @@
     "security": {
       "note": "Por segurança, o app não solicita número completo, CVV ou senha do cartão."
     }
+  },
+  "view": {
+    "overview": "Visão geral",
+    "label": "Escolher visão",
+    "limit": "Limite"
   }
 }

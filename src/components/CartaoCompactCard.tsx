@@ -35,6 +35,8 @@ function formatPctLimite(usado: number, limite: number): string {
 export const CartaoCompactCard = memo(function CartaoCompactCard({
   cartao,
   resumo,
+  selected,
+  onSelect,
   onOpen,
   onEdit,
   onImport,
@@ -42,6 +44,8 @@ export const CartaoCompactCard = memo(function CartaoCompactCard({
 }: {
   cartao: Cartao;
   resumo?: { usadoMes: number; limite: number; disponivel: number; pct: number };
+  selected?: boolean;
+  onSelect?: () => void;
   onOpen: () => void;
   onEdit: () => void;
   onImport: () => void;
@@ -59,14 +63,19 @@ export const CartaoCompactCard = memo(function CartaoCompactCard({
       role="button"
       tabIndex={0}
       aria-label={cartao.nome}
-      onClick={onOpen}
+      aria-pressed={onSelect ? !!selected : undefined}
+      onClick={() => (onSelect && !selected ? onSelect() : onOpen())}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          onOpen();
+          if (onSelect && !selected) onSelect();
+          else onOpen();
         }
       }}
-      className="hover-lift card-press group relative flex cursor-pointer flex-col overflow-hidden rounded-[26px] p-4 text-white shadow-elevated transition-all duration-200 active:scale-[0.99]"
+      className={cn(
+        "hover-lift card-press group relative flex cursor-pointer flex-col overflow-hidden rounded-[26px] p-4 text-white shadow-elevated transition-all duration-200 active:scale-[0.99]",
+        selected && "outline outline-[3px] outline-offset-[3px] outline-primary",
+      )}
       style={{ background: theme.background, minHeight: 196, maxHeight: 220 }}
     >
       <div

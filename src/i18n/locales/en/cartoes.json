@@ -25,7 +25,9 @@
     "count_other": "{{count}} cards",
     "tapHint": "Tap a card to see statement details.",
     "importInvoice": "Import statement",
-    "newCard": "New card"
+    "newCard": "New card",
+    "selectHint": "Tap a card to see only that card. Tap again to open the statement.",
+    "selectHintDesktop": "Click a card to see only that card. Use “View statement” for details."
   },
   "empty": {
     "title": "No cards here yet",
@@ -258,5 +260,10 @@
     "security": {
       "note": "For your safety, the app never asks for the full card number, CVV or password."
     }
+  },
+  "view": {
+    "overview": "Overview",
+    "label": "Choose view",
+    "limit": "Limit"
   }
 }

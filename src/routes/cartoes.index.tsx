@@ -70,6 +70,16 @@ import { Money } from "@/components/Money";
 import { BrandLogo } from "@/components/BrandLogo";
 import { preloadAllBankLogos } from "@/lib/logos";
 import { CartaoCompactCard, CartaoAddTile } from "@/components/CartaoCompactCard";
+import {
+  VISAO_GERAL,
+  cartoesDaVisao,
+  comprasDaVisao,
+  normalizarVisao,
+  totaisDaVisao,
+  vencimentosDaVisao,
+  visaoInicial,
+  type VisaoCartoes,
+} from "@/lib/cartoes-visao";
 import { CartaoForm } from "@/components/CartaoForm";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TransactionAvatar } from "@/components/TransactionAvatar";
@@ -242,14 +252,16 @@ function CartoesPage() {
     return map;
   }, [cartoes, resumosPorCartao]);
 
+  // Visão da página: "geral" (agregado) ou um cartão selecionado.
+  const [visaoRaw, setVisao] = useState<VisaoCartoes | null>(null);
+  const visao: VisaoCartoes = visaoRaw === null ? visaoInicial(cartoes) : normalizarVisao(visaoRaw, cartoes);
+  const cartaoSelecionado = visao === VISAO_GERAL ? null : (cartoes.find((c) => c.id === visao) ?? null);
+
   const resumo = useMemo(() => {
-    const limiteTotal = cartoes.reduce((s, c) => s + (c.limiteTotal || 0), 0);
-    let usado = 0;
+    const tot = totaisDaVisao(cartoes, resumosPorCartao, visao);
     let proxima: Cartao | null = null;
     let proximaDias = Infinity;
-    for (const c of cartoes) {
-      const r = resumosPorCartao.get(c.id);
-      if (r) usado += r.usadoMes;
+    for (const c of cartoesDaVisao(cartoes, visao)) {
       const f = faturaCorrentePorCartao.get(c.id);
       // Só concorre como "próxima fatura" se ainda houver pendência.
       if (c.diaVencimento && f && f.status !== "paga" && f.pendente > 0) {
@@ -272,36 +284,44 @@ function CartoesPage() {
       proximaValor = faturaCorrentePorCartao.get(proxima.id)?.pendente ?? 0;
     }
     return {
-      limiteTotal,
-      usado,
-      disponivel: Math.max(0, limiteTotal - usado),
+      limiteTotal: tot.limite,
+      usado: tot.usado,
+      disponivel: tot.disponivel,
       proxima,
       proximaDias: proxima ? proximaDias : null,
       proximaData,
       proximaValor,
     };
-  }, [cartoes, resumosPorCartao, faturaCorrentePorCartao]);
+  }, [cartoes, resumosPorCartao, faturaCorrentePorCartao, visao]);
 
   // Próximos vencimentos — esconde faturas já pagas (sem pendência).
-  const proximosVencimentos = useMemo(() => {
-    return cartoes
-      .filter((c) => {
-        if (!c.diaVencimento) return false;
-        const f = faturaCorrentePorCartao.get(c.id);
-        return !!f && f.status !== "paga" && f.pendente > 0;
-      })
-      .map((c) => ({ cartao: c, dias: diasAte(c.diaVencimento) }))
-      .sort((a, b) => a.dias - b.dias)
-      .slice(0, 4);
-  }, [cartoes, faturaCorrentePorCartao]);
+  const proximosVencimentos = useMemo(
+    () => vencimentosDaVisao(cartoes, faturaCorrentePorCartao, visao, (d) => diasAte(d)),
+    [cartoes, faturaCorrentePorCartao, visao],
+  );
 
   // Últimas compras no crédito (top 4 — botão Ver todas leva a /gastos)
-  const ultimasComprasAll = useMemo(() => {
-    return gastos
-      .filter((g) => g.formaPagamento === "credito" && g.cartaoId)
-      .sort((a, b) => (a.data < b.data ? 1 : -1));
-  }, [gastos]);
+  const ultimasComprasAll = useMemo(() => comprasDaVisao(gastos, visao), [gastos, visao]);
   const ultimasCompras = useMemo(() => ultimasComprasAll.slice(0, 4), [ultimasComprasAll]);
+
+  const seletorVisao =
+    cartoes.length > 1 ? (
+      <VisaoSelector cartoes={cartoes} visao={visao} onChange={setVisao} />
+    ) : null;
+
+  // Fatura atual do cartão selecionado (mesmas funções usadas no card).
+  const faturaSel = useMemo(() => {
+    if (!cartaoSelecionado) return null;
+    const ref = faturaCorrente(cartaoSelecionado);
+    const total = resumoFaturaPorMes(cartaoSelecionado.id, ref.mes, ref.ano).total;
+    const dm = (d: Date | null) =>
+      d ? `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}` : "—";
+    return {
+      total,
+      fecha: dm(proximoFechamentoData(cartaoSelecionado)),
+      vence: dm(proximoVencimentoFaturaAberta(cartaoSelecionado)),
+    };
+  }, [cartaoSelecionado, gastos]);
 
   const isMobile = useIsMobile();
   function handleOpenNew() {
@@ -412,6 +432,8 @@ function CartoesPage() {
                   <CartaoCompactCard
                     cartao={c}
                     resumo={resumosPorCartao.get(c.id)}
+                    selected={cartoes.length > 1 && visao === c.id}
+                    onSelect={() => setVisao(c.id)}
                     onOpen={() =>
                       isMobile
                         ? navigate({ to: "/cartoes/$id", params: { id: c.id } })
@@ -428,8 +450,9 @@ function CartoesPage() {
               </div>
             </div>
             <p className="mt-1 text-center text-[10px] text-muted-foreground">
-              {t("list.tapHint")}
+              {cartoes.length > 1 ? t("list.selectHint") : t("list.tapHint")}
             </p>
+            {seletorVisao && <div className="mt-3">{seletorVisao}</div>}
           </section>
 
           {/* Ações rápidas */}
@@ -464,7 +487,7 @@ function CartoesPage() {
             <AppSummaryCard
               tone="cartoes"
               icon={<CreditCard className="h-4 w-4" />}
-              label={t("v3.summary.limit")}
+              label={cartaoSelecionado ? t("view.limit") : t("v3.summary.limit")}
               value={<Money value={resumo.limiteTotal} className="text-xl" />}
             />
             <AppSummaryCard
@@ -479,23 +502,33 @@ function CartoesPage() {
               label={t("v3.summary.available")}
               value={<Money value={resumo.disponivel} className="text-xl" />}
             />
-            <AppSummaryCard
-              tone="contas"
-              icon={<CalendarDays className="h-4 w-4" />}
-              label={t("v3.summary.openInvoices")}
-              value={
-                resumo.proxima && resumo.proximaData
-                  ? `${String(resumo.proximaData.getDate()).padStart(2, "0")}/${String(resumo.proximaData.getMonth() + 1).padStart(2, "0")}`
-                  : "—"
-              }
-              hint={
-                resumo.proxima && resumo.proximaDias !== null
-                  ? resumo.proximaDias === 0
-                    ? t("summary.dueToday")
-                    : t("summary.dueDays", { count: resumo.proximaDias })
-                  : t("summary.noPending")
-              }
-            />
+            {faturaSel ? (
+              <AppSummaryCard
+                tone="contas"
+                icon={<CalendarDays className="h-4 w-4" />}
+                label={t("card.currentInvoice")}
+                value={<Money value={faturaSel.total} className="text-xl" />}
+                hint={`${t("card.closes")} ${faturaSel.fecha} · ${t("card.dueOn")} ${faturaSel.vence}`}
+              />
+            ) : (
+              <AppSummaryCard
+                tone="contas"
+                icon={<CalendarDays className="h-4 w-4" />}
+                label={t("v3.summary.openInvoices")}
+                value={
+                  resumo.proxima && resumo.proximaData
+                    ? `${String(resumo.proximaData.getDate()).padStart(2, "0")}/${String(resumo.proximaData.getMonth() + 1).padStart(2, "0")}`
+                    : "—"
+                }
+                hint={
+                  resumo.proxima && resumo.proximaDias !== null
+                    ? resumo.proximaDias === 0
+                      ? t("summary.dueToday")
+                      : t("summary.dueDays", { count: resumo.proximaDias })
+                    : t("summary.noPending")
+                }
+              />
+            )}
           </section>
 
           {/* Microcopy de segurança */}
@@ -521,9 +554,10 @@ function CartoesPage() {
       {/* ============================================================ */}
       <div className="hidden lg:block">
         {/* Resumo */}
-        <section className="mt-5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+        {seletorVisao && <div className="mt-5">{seletorVisao}</div>}
+        <section className="mt-3 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
           <ResumoCard
-            label={t("summary.limitTotal")}
+            label={cartaoSelecionado ? t("view.limit") : t("summary.limitTotal")}
             valueNum={resumo.limiteTotal}
             icon={<CreditCard className="h-4 w-4" />}
             tone="brand"
@@ -540,13 +574,31 @@ function CartoesPage() {
             icon={<Sparkles className="h-4 w-4" />}
             tone="success"
           />
-          <ProximaFaturaCard
-            cartao={resumo.proxima}
-            dias={resumo.proximaDias}
-            data={resumo.proximaData}
-            valor={resumo.proximaValor}
-            temCartoes={cartoes.length > 0}
-          />
+          {faturaSel && cartaoSelecionado ? (
+            <div className="hover-lift rounded-2xl border border-border bg-card p-3.5 animate-rise">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("card.currentInvoice")}
+                </p>
+                <span className="grid h-7 w-7 place-items-center rounded-full bg-brand-soft text-brand-on-soft">
+                  <CalendarDays className="h-4 w-4" />
+                </span>
+              </div>
+              <p className="mt-2 truncate text-sm font-bold">{cartaoSelecionado.nome}</p>
+              <p className="num mt-0.5 text-base font-bold">{formatBRL(faturaSel.total)}</p>
+              <p className="num mt-0.5 text-[11px] text-muted-foreground">
+                {t("card.closes")} {faturaSel.fecha} · {t("card.dueOn")} {faturaSel.vence}
+              </p>
+            </div>
+          ) : (
+            <ProximaFaturaCard
+              cartao={resumo.proxima}
+              dias={resumo.proximaDias}
+              data={resumo.proximaData}
+              valor={resumo.proximaValor}
+              temCartoes={cartoes.length > 0}
+            />
+          )}
         </section>
 
         <div className="mt-6 flex items-center justify-between">
@@ -557,7 +609,7 @@ function CartoesPage() {
                 : t("list.count", { count: cartoes.length })}
             </h2>
             {cartoes.length > 0 && (
-              <p className="mt-0.5 text-xs text-muted-foreground">{t("list.tapHint")}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{cartoes.length > 1 ? t("list.selectHintDesktop") : t("list.tapHint")}</p>
             )}
           </div>
           {cartoes.length > 0 && (
@@ -600,6 +652,8 @@ function CartoesPage() {
                   key={c.id}
                   cartao={c}
                   resumo={resumosPorCartao.get(c.id)}
+                  selected={cartoes.length > 1 && visao === c.id}
+                  onSelect={() => setVisao(c.id)}
                   onOpen={() => setOpenDetail(c)}
                   onEdit={() => handleEdit(c)}
                   onImport={() => handleOpenImport(c.id)}
@@ -853,6 +907,8 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 const CartaoCard = memo(function CartaoCard({
   cartao,
   resumo,
+  selected,
+  onSelect,
   onOpen,
   onEdit,
   onImport,
@@ -860,6 +916,8 @@ const CartaoCard = memo(function CartaoCard({
 }: {
   cartao: Cartao;
   resumo?: { usadoMes: number; limite: number; disponivel: number; pct: number };
+  selected?: boolean;
+  onSelect?: () => void;
   onOpen: () => void;
   onEdit: () => void;
   onImport: () => void;
@@ -914,14 +972,18 @@ const CartaoCard = memo(function CartaoCard({
     <article
       role="button"
       tabIndex={0}
-      onClick={onOpen}
+      onClick={onSelect ?? onOpen}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          onOpen();
+          (onSelect ?? onOpen)();
         }
       }}
-      className="hover-lift card-press group relative cursor-pointer overflow-hidden rounded-3xl p-4 text-white shadow-elevated transition-all duration-200 active:scale-[0.99] sm:p-5"
+      aria-pressed={onSelect ? !!selected : undefined}
+      className={cn(
+        "hover-lift card-press group relative cursor-pointer overflow-hidden rounded-3xl p-4 text-white shadow-elevated transition-all duration-200 active:scale-[0.99] sm:p-5",
+        selected && "outline outline-[3px] outline-offset-[3px] outline-primary",
+      )}
       style={{ background: theme.background }}
     >
       <div
@@ -1083,6 +1145,64 @@ const CartaoCard = memo(function CartaoCard({
   );
 });
 
+/* =============== Seletor Visão geral / cartão =============== */
+
+function VisaoSelector({
+  cartoes,
+  visao,
+  onChange,
+}: {
+  cartoes: Cartao[];
+  visao: VisaoCartoes;
+  onChange: (v: VisaoCartoes) => void;
+}) {
+  const { t } = useTranslation("cartoes");
+  const chip = (active: boolean) =>
+    cn(
+      "card-press inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3.5 text-xs font-semibold transition-colors",
+      active
+        ? "border-primary bg-primary text-primary-foreground shadow-elevated"
+        : "border-border bg-card text-foreground hover:bg-card-elevated",
+    );
+  return (
+    <div
+      role="tablist"
+      aria-label={t("view.label")}
+      className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      <button
+        type="button"
+        role="tab"
+        aria-selected={visao === VISAO_GERAL}
+        onClick={() => onChange(VISAO_GERAL)}
+        className={chip(visao === VISAO_GERAL)}
+      >
+        <Wallet className="h-3.5 w-3.5" />
+        {t("view.overview")}
+      </button>
+      {cartoes.map((c) => (
+        <button
+          key={c.id}
+          type="button"
+          role="tab"
+          aria-selected={visao === c.id}
+          onClick={() => onChange(c.id)}
+          className={chip(visao === c.id)}
+        >
+          <span
+            className="relative grid h-6 w-6 place-items-center overflow-hidden rounded-md"
+            style={{ background: getCardTheme(c.cor || "#8b5cf6", c.banco).background }}
+            aria-hidden
+          >
+            <BrandLogo name={c.banco || c.nome} variant="bank" onDark className="bank-logo-xs" />
+          </span>
+          {c.nome}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /* =============== Próxima fatura (resumo topo) =============== */
 
 function ProximaFaturaCard({
@@ -1227,7 +1347,7 @@ function ProximosVencimentos({ items }: { items: Array<{ cartao: Cartao; dias: n
                 style={{ background: theme.background }}
                 aria-hidden
               >
-                <BrandLogo name={cartao.banco} variant="bank" onDark className="bank-logo-sm" />
+                <BrandLogo name={cartao.banco || cartao.nome} variant="bank" onDark className="bank-logo-sm" />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{cartao.nome}</p>
