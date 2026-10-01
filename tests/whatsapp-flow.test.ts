@@ -88,7 +88,8 @@ header('1. "Gastei R$ 35,90 no mercado hoje no cartão Nubank"');
   ok("nada faltando → confirmação", falt === null);
   const conf = formatarConfirmacao(p, "Nubank");
   ok("confirmação menciona valor", /35[,.]90/.test(conf));
-  ok("confirmação pede sim/não", /sim/.test(conf) && /n[ãa]o/.test(conf));
+  // 01/10/2026: confirmação passou a oferecer Confirmar / Ajustar / Cancelar.
+  ok("confirmação pede confirmar/ajustar/cancelar", /Confirmar/.test(conf) && /Ajustar/.test(conf) && /Cancelar/.test(conf));
 }
 
 // =====================================================================
