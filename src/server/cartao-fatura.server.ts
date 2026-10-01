@@ -179,6 +179,42 @@ export async function findCartoesDoUsuarioByTerm(
   });
 }
 
+/** Gastos do cartão com `fatura_competencia` = alvo (novos registros/parcelas). */
+async function fetchPorCompetencia(
+  userId: string,
+  cartaoId: string,
+  comp: string,
+  select: string,
+): Promise<Array<Record<string, unknown>>> {
+  try {
+    const { data } = await supabaseAdmin
+      .from("gastos")
+      .select(select)
+      .eq("user_id", userId)
+      .eq("cartao_id", cartaoId)
+      .eq("fatura_competencia", comp);
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+function mergeById(a: unknown, b: unknown): Array<Record<string, unknown>> {
+  const out: Array<Record<string, unknown>> = [];
+  const seen = new Set<string>();
+  for (const r of [...(Array.isArray(a) ? a : []), ...(Array.isArray(b) ? b : [])] as Array<
+    Record<string, unknown>
+  >) {
+    const id = r.id != null ? String(r.id) : "";
+    if (id) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+    }
+    out.push(r);
+  }
+  return out;
+}
+
 function ymOf(mes: number, ano: number): string {
   return `${ano}-${String(mes).padStart(2, "0")}`;
 }
@@ -212,20 +248,21 @@ export async function getFaturaAtualPorCartao(
     .eq("cartao_id", cartao.id)
     .gte("data", fromIso)
     .lt("data", toIso);
-  const extra = await fetchPorCompetencia(userId, cartao.id, targetComp, SEL_RESUMO);
-
-  const rows = mergeById(data, extra) as unknown as Array<any>;
-  void (Array.isArray(data)
-    ? (data as Array<{
-        valor: number | string | null;
-        data: string;
-        cartao_id: string | null;
-        invoice_month: string | null;
-        fatura_competencia?: string | null;
-        forma_pagamento: string | null;
-        confirmado: boolean | null;
-      }>)
-    : [];
+  const extra = await fetchPorCompetencia(
+    userId,
+    cartao.id,
+    targetComp,
+    "valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado",
+  );
+  const rows = mergeById(data, extra) as Array<{
+    valor: number | string | null;
+    data: string;
+    cartao_id: string | null;
+    invoice_month: string | null;
+    fatura_competencia?: string | null;
+    forma_pagamento: string | null;
+    confirmado: boolean | null;
+  }>;
 
   let total = 0;
   let qtd = 0;
@@ -246,6 +283,7 @@ export async function getFaturaAtualPorCartao(
     cartaoNome: cartao.nome,
     mesRef: mes,
     anoRef: ano,
+    competencia: targetComp,
     total,
     limite,
     disponivel,
@@ -326,9 +364,13 @@ export async function getItensFaturaAtualPorCartao(
     .eq("cartao_id", cartao.id)
     .gte("data", fromIso)
     .lt("data", toIso);
-
-  const rows = Array.isArray(data)
-    ? (data as Array<{
+  const extra = await fetchPorCompetencia(
+    userId,
+    cartao.id,
+    targetComp,
+    "id, descricao, estabelecimento, valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado, parcela_atual, total_parcelas",
+  );
+  const rows = mergeById(data, extra) as Array<{
         id: string;
         descricao: string | null;
         estabelecimento: string | null;
@@ -341,8 +383,7 @@ export async function getItensFaturaAtualPorCartao(
         confirmado: boolean | null;
         parcela_atual: number | null;
         total_parcelas: number | null;
-      }>)
-    : [];
+      }>;
 
   const out: ItemFatura[] = [];
   for (const g of rows) {
@@ -462,7 +503,17 @@ export async function getFaturaPorMes(
   };
   const seen = new Set<string>();
   const all: Row[] = [];
-  for (const r of [...((byDate as Row[]) ?? []), ...((byYm as Row[]) ?? [])]) {
+  const byComp = await fetchPorCompetencia(
+    userId,
+    cartao.id,
+    targetComp,
+    "id, valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado",
+  );
+  for (const r of [
+    ...((byDate as Row[]) ?? []),
+    ...((byYm as Row[]) ?? []),
+    ...(byComp as Row[]),
+  ]) {
     const id = String(r.id ?? "");
     if (seen.has(id)) continue;
     seen.add(id);
@@ -494,6 +545,7 @@ export async function getFaturaPorMes(
     cartaoNome: cartao.nome,
     mesRef: mes,
     anoRef: ano,
+    competencia: targetComp,
     total,
     limite,
     disponivel,
