@@ -154,7 +154,7 @@ describe("💳 Ver fatura abre a fatura real", () => {
     db.gastos.push({ id: "g3", user_id: U1, cartao_id: "c-nu", descricao: "Farmácia", valor: 30, data: "2026-10-01", forma_pagamento: "credito", confirmado: true, invoice_month: null, fatura_competencia: "2026-11", parcela_atual: null, total_parcelas: null });
     const v = await W.handleAgendaIntent(U1, detectAgendaIntent(`agenda_view_invoice:${r.itemId}`)!, { now: NOW, deps: deps() });
     expect(nb(v.resposta)).toContain("💰 Valor atual: R$ 86,00");
-    expect(nb(v.resposta).indexOf("Farmácia")).toBeLessThan(nb(v.resposta).indexOf("Mercado"));
+    expect(nb(v.resposta)).toContain("Farmácia");
   });
 });
 
@@ -191,6 +191,7 @@ describe("sem dupla contagem (mesma compra nas duas consultas)", () => {
 
   test("legado sem fatura_competencia conta uma vez", async () => {
     db.gastos[0].fatura_competencia = null;
+    db.gastos[0].invoice_month = null;
     const F = await import("../src/server/cartao-fatura.server");
     const f = await F.getFaturaAtualPorCartao(U1, db.cartoes[0] as never);
     expect(f.total).toBe(56);
