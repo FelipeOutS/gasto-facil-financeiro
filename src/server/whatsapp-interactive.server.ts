@@ -7,7 +7,7 @@
  * resultado financeiro, reaproveitando sessão, autorização, quotas e
  * rastreio de envio. Se o envio interativo falhar, o webhook manda o texto.
  */
-import { FATURA_COMP_PREFIX, opcoesFatura } from "./whatsapp-fatura-escolha.server";
+import { FATURA_COMP_PREFIX } from "./whatsapp-fatura-escolha.server";
 import { nomeMesYm } from "@/lib/fatura-competencia";
 
 export type InteractiveButtons = {
@@ -69,8 +69,6 @@ export function buildInteractiveFromReply(resposta: string): InteractiveReply | 
 
   // Escolha de fatura (crédito sem cartão cadastrado).
   if (n.includes("em qual fatura essa compra vai cair")) {
-    const mdata = /fatura de (\w+)", "fatura de (\w+)"/.exec(body);
-    void mdata;
     const ym = extractFaturaOptions(body);
     if (ym.length === 2) {
       return {
@@ -133,28 +131,16 @@ export function buildInteractiveFromReply(resposta: string): InteractiveReply | 
 
 /** Tira os meses YYYY-MM sugeridos do texto da pergunta de fatura. */
 function extractFaturaOptions(body: string): string[] {
-  // A pergunta não carrega a data da compra; reconstruímos pelos nomes.
   const MESES = [
     "janeiro", "fevereiro", "março", "abril", "maio", "junho",
     "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
   ];
-  const m = /"fatura de ([a-zç]+)", "fatura de ([a-zç]+)"/i.exec(body);
-  if (!m) return [];
-  const a = MESES.indexOf(m[1].toLowerCase());
-  const b = MESES.indexOf(m[2].toLowerCase());
-  if (a < 0 || b < 0) return [];
-  // Ano: o primeiro mês sugerido é o mês seguinte ao atual ou próximo.
-  const hoje = new Date();
-  let ano = hoje.getFullYear();
-  if (a + 1 < hoje.getMonth() + 1 - 1) ano += 1;
-  const first = `${ano}-${String(a + 1).padStart(2, "0")}`;
-  const opts = opcoesFatura(`${ano}-${String(((a + 11) % 12) + 1).padStart(2, "0")}-01`);
-  if (a === 0) {
-    // compra em dezembro do ano anterior
-    return opcoesFatura(`${ano - 1}-12-01`).map((o, i) => (i === 0 ? first : o));
+  const out: string[] = [];
+  for (const m of body.matchAll(/"fatura de ([a-zç]+) de (\d{4})"/gi)) {
+    const i = MESES.indexOf(m[1].toLowerCase());
+    if (i >= 0) out.push(`${m[2]}-${String(i + 1).padStart(2, "0")}`);
   }
-  void b;
-  return opts;
+  return out;
 }
 
 /** "1. Gastos", "2) Cartões", "3️⃣ Contas", "• 4 - Receitas" → {num,label}. */

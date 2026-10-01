@@ -37,7 +37,10 @@ export function opcoesFatura(dataCompraISO: string): string[] {
 }
 
 export function perguntaEscolhaFatura(dataCompraISO: string): string {
-  const [a, b] = opcoesFatura(dataCompraISO).map((o) => nomeMesYm(o).split("/")[0].toLowerCase());
+  const [a, b] = opcoesFatura(dataCompraISO).map((o) => {
+    const [mes, ano] = nomeMesYm(o).split("/");
+    return `${mes.toLowerCase()} de ${ano}`;
+  });
   return (
     "Em qual fatura essa compra vai cair?\n" +
     `Responda: "fatura de ${a}", "fatura de ${b}" ou outro mês.`
