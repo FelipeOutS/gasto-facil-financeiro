@@ -76,9 +76,11 @@ describe("WA-F3.4 — RPC create_installment_purchase: caso real (6x)", () => {
       expect(Number.isInteger(p)).toBe(true);
       expect(typeof p).toBe("number");
     }
-    // invoice_month sequencial (6 distintos)
+    // Decisão 3 (01/10/2026): mesmo mês da compra; faturas sequenciais.
     const ims = new Set(gs.map((g) => g.row.invoice_month));
-    expect(ims.size).toBe(6);
+    expect(ims.size).toBe(1);
+    const comps = new Set(gs.map((g) => g.row.fatura_competencia));
+    expect(comps.size).toBe(6);
   });
 });
 
