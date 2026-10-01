@@ -176,3 +176,57 @@ describe("cartão e fatura", () => {
     for (const b of g.action.buttons) expect(b.reply.title.length).toBeLessThanOrEqual(20);
   });
 });
+
+describe("escolha de cartão — fluxo completo", () => {
+  const dois = [
+    { id: "c-mp", nome: "Mercado Pago", user_id: "u1", ultimos_digitos: "4321" },
+    { id: "c-nu", nome: "Nubank", user_id: "u1", ultimos_digitos: "1234" },
+  ];
+  const quatro = [
+    ...dois,
+    { id: "c-it", nome: "Itaú", user_id: "u1", ultimos_digitos: "5555" },
+    { id: "c-c6", nome: "C6", user_id: "u1", ultimos_digitos: "6666" },
+  ];
+
+  async function escolher(cartoes: any[], nome: string, tipo: "button" | "list") {
+    resetState({ cartoes });
+    const q = await send("Mercado 50 no crédito");
+    const ir = buildInteractiveFromReply(q.resposta);
+    expect(ir?.type).toBe(tipo);
+    const opcoes = ir!.type === "button" ? ir!.buttons : (ir as any).rows;
+    expect(opcoes).toHaveLength(cartoes.length);
+    const alvo = opcoes.find((o: any) => o.title.includes(nome));
+    expect(alvo.id.startsWith("card_pick:")).toBe(true);
+    const conf = await tap(alvo.id, "título ignorado");
+    expect(conf.status).toBe("aguardando_confirmacao");
+    expect(conf.resposta).toContain(nome);
+    expect(gastosInserts()).toHaveLength(0);
+    const s = await tap("expense_confirm");
+    expect(s.status).toBe("salva");
+    const g = gastosInserts();
+    expect(g).toHaveLength(1);
+    return g[0].row;
+  }
+
+  test("2 cartões: tocar Mercado Pago vincula Mercado Pago", async () => {
+    const row = await escolher(dois, "Mercado Pago", "button");
+    expect(row.cartao_id).toBe("c-mp");
+  });
+  test("2 cartões: tocar Nubank vincula Nubank", async () => {
+    const row = await escolher(dois, "Nubank", "button");
+    expect(row.cartao_id).toBe("c-nu");
+  });
+  test("4 cartões: lista funciona igual", async () => {
+    const row = await escolher(quatro, "Mercado Pago", "list");
+    expect(row.cartao_id).toBe("c-mp");
+  });
+  test("menu → Cartões pelo ID abre o submenu de cartões", async () => {
+    resetState({});
+    const m = buildInteractiveFromReply((await send("menu")).resposta);
+    if (m?.type !== "list") throw new Error("esperava lista");
+    const id = m.rows.find((r) => r.id === "menu_cartoes")!.id;
+    const sub = buildInteractiveFromReply((await tap(id, "x")).resposta);
+    if (sub?.type !== "list") throw new Error("esperava lista");
+    expect(sub.rows.map((r) => r.id)).toContain("cartoes_fatura");
+  });
+});
