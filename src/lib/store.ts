@@ -514,7 +514,10 @@ function normalizeGastoForCalculations(g: Gasto): { gasto: Gasto; row?: GastoUpd
       row.mes = normalized.mes;
       row.ano = normalized.ano;
     }
-    if (!normalized.invoiceMonth || !/^\d{4}-\d{2}$/.test(normalized.invoiceMonth)) {
+    // Em crédito com cartão, NULL significa "usar o ciclo pela data".
+    // Preencher invoice_month com o mês da compra mudaria a competência
+    // de compras feitas até o fechamento e divergiria da consulta server-side.
+    if (!cartao && (!normalized.invoiceMonth || !/^\d{4}-\d{2}$/.test(normalized.invoiceMonth))) {
       normalized.invoiceMonth = `${dateForYm.getFullYear()}-${String(dateForYm.getMonth() + 1).padStart(2, "0")}`;
       row.invoice_month = normalized.invoiceMonth;
     }

@@ -13,7 +13,7 @@
  *  - consulta não interrompe sessão pendente;
  *  - log seguro `wa_invoice_detail_query` sem PII.
  */
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterAll, beforeEach, describe, expect, it, mock, setSystemTime } from "bun:test";
 import { state, resetState, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
 setupWhatsAppFakeMocks();
 
@@ -28,6 +28,11 @@ const {
 const { getItensFaturaAtualPorCartao, faturaCorrenteRef, cicloFatura } =
   await import("../src/server/cartao-fatura.server");
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
+
+// O cartão-base fecha dia 1: em 10/09, o ciclo aberto é 02/09–01/10.
+// Assim hoje e os três dias anteriores pertencem à mesma fatura.
+setSystemTime(new Date("2026-09-10T15:00:00Z"));
+afterAll(() => setSystemTime());
 
 const NBSP = "\u00a0";
 const BRL = (s: string) => s.replace(/R\$ /g, `R$${NBSP}`);

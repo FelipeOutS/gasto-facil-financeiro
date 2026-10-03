@@ -140,7 +140,7 @@ export async function loadCartoesDoUsuario(userId: string): Promise<CartaoRow[]>
     .from("cartoes")
     .select("id, nome, banco, limite_total, dia_fechamento, dia_vencimento")
     .eq("user_id", userId);
-  if (error) return [];
+  if (error) throw new Error("Não foi possível consultar os cartões da fatura.");
   return Array.isArray(data) ? (data as CartaoRow[]) : [];
 }
 
@@ -179,32 +179,49 @@ export async function findCartoesDoUsuarioByTerm(
   });
 }
 
-/** Gastos do cartão com `fatura_competencia` = alvo (novos registros/parcelas). */
-async function fetchPorCompetencia(
+/** As três fontes precisam ser consultadas: data, mês legado e competência nova. */
+async function fetchGastosDaFatura(
   userId: string,
   cartaoId: string,
-  comp: string,
+  fromIso: string,
+  toIso: string,
+  targetYm: string,
+  targetComp: string,
   select: string,
 ): Promise<Array<Record<string, unknown>>> {
-  try {
-    const { data } = await supabaseAdmin
+  const [byDate, byYm, byComp] = await Promise.all([
+    supabaseAdmin
       .from("gastos")
       .select(select)
       .eq("user_id", userId)
       .eq("cartao_id", cartaoId)
-      .eq("fatura_competencia", comp);
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
+      .gte("data", fromIso)
+      .lt("data", toIso),
+    supabaseAdmin
+      .from("gastos")
+      .select(select)
+      .eq("user_id", userId)
+      .eq("cartao_id", cartaoId)
+      .eq("invoice_month", targetYm),
+    supabaseAdmin
+      .from("gastos")
+      .select(select)
+      .eq("user_id", userId)
+      .eq("cartao_id", cartaoId)
+      .eq("fatura_competencia", targetComp),
+  ]);
+  for (const result of [byDate, byYm, byComp]) {
+    if (result.error || !Array.isArray(result.data)) {
+      throw new Error("Não foi possível consultar os gastos da fatura.");
+    }
   }
+  return mergeById(byDate.data, byYm.data, byComp.data);
 }
 
-function mergeById(a: unknown, b: unknown): Array<Record<string, unknown>> {
+function mergeById(...sources: unknown[]): Array<Record<string, unknown>> {
   const out: Array<Record<string, unknown>> = [];
   const seen = new Set<string>();
-  for (const r of [...(Array.isArray(a) ? a : []), ...(Array.isArray(b) ? b : [])] as Array<
-    Record<string, unknown>
-  >) {
+  for (const r of sources.flatMap((source) => source as Array<Record<string, unknown>>)) {
     const id = r.id != null ? String(r.id) : "";
     if (id) {
       if (seen.has(id)) continue;
@@ -237,26 +254,17 @@ export async function getFaturaAtualPorCartao(
   const targetYm = ymOf(mes, ano);
   const targetComp = cicloParaCompetencia(targetYm, diaFech, diaVenc);
 
-  // Janela ampla para apanhar tanto gastos com invoice_month manual quanto
-  // por data dentro do ciclo. Filtramos em memória pelas regras finas.
   const fromIso = inicio.toISOString().slice(0, 10);
   const toIso = new Date(fim.getTime() + 24 * 3600 * 1000).toISOString().slice(0, 10);
-  const { data } = await supabaseAdmin
-    .from("gastos")
-    .select("id, valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado")
-    .eq("user_id", userId)
-    .eq("cartao_id", cartao.id)
-    .gte("data", fromIso)
-    .lt("data", toIso);
-  const extra = await fetchPorCompetencia(
+  const rows = await fetchGastosDaFatura(
     userId,
     cartao.id,
+    fromIso,
+    toIso,
+    targetYm,
     targetComp,
-    // `id` é obrigatório: mergeById deduplica por id. Sem ele, a mesma compra
-    // vinda das duas consultas (janela por data + competência) era somada 2x.
     "id, valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado",
-  );
-  const rows = mergeById(data, extra) as Array<{
+  ) as Array<{
     valor: number | string | null;
     data: string;
     cartao_id: string | null;
@@ -357,22 +365,15 @@ export async function getItensFaturaAtualPorCartao(
 
   const fromIso = inicio.toISOString().slice(0, 10);
   const toIso = new Date(fim.getTime() + 24 * 3600 * 1000).toISOString().slice(0, 10);
-  const { data } = await supabaseAdmin
-    .from("gastos")
-    .select(
-      "id, descricao, estabelecimento, valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado, parcela_atual, total_parcelas",
-    )
-    .eq("user_id", userId)
-    .eq("cartao_id", cartao.id)
-    .gte("data", fromIso)
-    .lt("data", toIso);
-  const extra = await fetchPorCompetencia(
+  const rows = await fetchGastosDaFatura(
     userId,
     cartao.id,
+    fromIso,
+    toIso,
+    targetYm,
     targetComp,
     "id, descricao, estabelecimento, valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado, parcela_atual, total_parcelas",
-  );
-  const rows = mergeById(data, extra) as Array<{
+  ) as Array<{
         id: string;
         descricao: string | null;
         estabelecimento: string | null;
@@ -473,26 +474,6 @@ export async function getFaturaPorMes(
   const fromIso = inicio.toISOString().slice(0, 10);
   const toIso = new Date(fim.getTime() + 24 * 3600 * 1000).toISOString().slice(0, 10);
 
-  // Buscamos TODOS os gastos do cartão por dois caminhos:
-  // a) gastos com invoice_month = targetYm (parcelas futuras já criadas);
-  // b) gastos com data dentro da janela do ciclo (sem invoice_month).
-  // Como a query SQL não consegue um OR limpo neste fake, varremos a
-  // janela do ciclo e também rebuscamos só por invoice_month — depois
-  // deduplicamos por id.
-  const { data: byDate } = await supabaseAdmin
-    .from("gastos")
-    .select("id, valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado")
-    .eq("user_id", userId)
-    .eq("cartao_id", cartao.id)
-    .gte("data", fromIso)
-    .lt("data", toIso);
-  const { data: byYm } = await supabaseAdmin
-    .from("gastos")
-    .select("id, valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado")
-    .eq("user_id", userId)
-    .eq("cartao_id", cartao.id)
-    .eq("invoice_month", targetYm);
-
   type Row = {
     id: string;
     valor: number | string | null;
@@ -503,24 +484,15 @@ export async function getFaturaPorMes(
     forma_pagamento: string | null;
     confirmado: boolean | null;
   };
-  const seen = new Set<string>();
-  const all: Row[] = [];
-  const byComp = await fetchPorCompetencia(
+  const all = (await fetchGastosDaFatura(
     userId,
     cartao.id,
+    fromIso,
+    toIso,
+    targetYm,
     targetComp,
     "id, valor, data, cartao_id, invoice_month, fatura_competencia, forma_pagamento, confirmado",
-  );
-  for (const r of [
-    ...((byDate as Row[]) ?? []),
-    ...((byYm as Row[]) ?? []),
-    ...(byComp as Row[]),
-  ]) {
-    const id = String(r.id ?? "");
-    if (seen.has(id)) continue;
-    seen.add(id);
-    all.push(r);
-  }
+  )) as Row[];
 
   let total = 0;
   let qtd = 0;
