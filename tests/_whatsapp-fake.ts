@@ -27,6 +27,7 @@ export const state = {
   contasData: [] as Record<string, any>[],
   contasReceberData: [] as Record<string, any>[],
   gastosData: [] as Record<string, any>[],
+  gastosSelectError: null as null | "date" | "invoice_month" | "fatura_competencia",
   receitasData: [] as Record<string, any>[],
   recorrenciasData: [] as Record<string, any>[],
   transferenciasData: [] as Record<string, any>[],
@@ -232,6 +233,17 @@ function makeBuilder(table: string): any {
 
   const finalize = async () => {
     if (ctx.op === "select") {
+      if (
+        table === "gastos" &&
+        state.gastosSelectError &&
+        ctx.conds.some((c) =>
+          state.gastosSelectError === "date"
+            ? c.col === "data" && c.op === "gte"
+            : c.col === state.gastosSelectError && c.op === "eq",
+        )
+      ) {
+        return { data: null, error: { message: "simulated invoice read failure" } };
+      }
       if (table === "whatsapp_links") {
         // `undefined` = nenhum override (usa o vínculo padrão);
         // `null` explícito = telefone SEM vínculo.
@@ -741,6 +753,7 @@ installWhatsAppFakeMocks();
 export function resetState(o?: any) {
   state.inserts = [];
   state.pendingRow = null;
+  state.gastosSelectError = null;
   state.generic = {};
   state.linkData = o && "link" in o ? o.link : undefined;
   state.cartoesData = o?.cartoes ?? [
