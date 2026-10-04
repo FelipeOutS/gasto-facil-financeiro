@@ -94,6 +94,10 @@
 }
 
 :root {
+  --android-safe-top: 0px;
+  --android-safe-bottom: 0px;
+  --app-safe-top: max(env(safe-area-inset-top, 0px), var(--android-safe-top));
+  --app-safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--android-safe-bottom));
   --radius: 1rem;
 
   /* Dark premium — single theme */
@@ -310,6 +314,7 @@ body {
     /* Usa dynamic viewport quando suportado (corrige faixa branca no WebView
        Android quando a barra de URL/sistema colapsa). */
     min-height: 100dvh;
+    min-height: max(100dvh, var(--app-viewport-height, 0px));
   }
 
   html {
@@ -416,10 +421,10 @@ body {
       0 20px 40px -20px oklch(0 0 0 / 0.6);
   }
   .safe-bottom {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-bottom: max(1rem, var(--app-safe-bottom));
   }
   .safe-top {
-    padding-top: max(0.75rem, env(safe-area-inset-top));
+    padding-top: max(0.75rem, var(--app-safe-top));
   }
 
   /* ===== Microanimations ===== */
@@ -673,98 +678,6 @@ body {
   }
 }
 
-/* ============================================================
-   Bank logo container — standardized size for card previews.
-   Ensures every bank SVG renders at the SAME visual height
-   regardless of intrinsic aspect ratio, left-aligned.
-   ============================================================ */
-.bank-logo-container {
-  /* Default (in-card header / preview) — square-ish logos like Itaú/Caixa/C6 */
-  width: 170px;
-  height: 46px;
-  max-width: 170px;
-  max-height: 46px;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  overflow: hidden;
-}
-.bank-logo-container > img,
-.bank-logo-container > svg {
-  max-width: 170px;
-  max-height: 38px;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  object-position: left center;
-  display: block;
-}
-
-/* Wide variant — for horizontally-long wordmarks (Mercado Pago, Santander,
-   Bradesco, Banco do Brasil, PicPay, Will Bank, Inter). Slightly larger
-   max-width and max-height so the wordmark stays legible without overpowering
-   the card content. */
-.bank-logo-container.bank-logo-wide > img,
-.bank-logo-container.bank-logo-wide > svg {
-  max-height: 42px;
-}
-
-/* Compact variant for tight rows (e.g. due-soon list) */
-.bank-logo-container.bank-logo-sm {
-  width: 56px;
-  height: 28px;
-  max-width: 56px;
-  max-height: 28px;
-}
-.bank-logo-container.bank-logo-sm > img,
-.bank-logo-container.bank-logo-sm > svg {
-  max-width: 56px;
-  max-height: 22px;
-}
-
-/* Card brand marks: one rule for every bank logo on card surfaces.
-   Colored SVGs become a light monochrome mark (same weight as white ones). */
-.bank-logo-mono {
-  filter: brightness(0) invert(1);
-}
-/* Square brand tile (chips, due-date list): fixed box, centered mark. */
-.bank-logo-container.bank-logo-sm,
-.bank-logo-container.bank-logo-xs {
-  justify-content: center;
-}
-.bank-logo-container.bank-logo-sm {
-  width: 34px;
-  height: 22px;
-  max-width: 34px;
-  max-height: 22px;
-}
-.bank-logo-container.bank-logo-sm > img {
-  max-width: 34px;
-  max-height: 18px;
-  object-position: center;
-}
-.bank-logo-container.bank-logo-xs {
-  width: 20px;
-  height: 14px;
-  max-width: 20px;
-  max-height: 14px;
-}
-.bank-logo-container.bank-logo-xs > img {
-  max-width: 20px;
-  max-height: 12px;
-  object-position: center;
-}
-.bank-logo-container.bank-logo-sm > span,
-.bank-logo-container.bank-logo-xs > span {
-  width: 100%;
-  height: 100%;
-  border-radius: 6px;
-  font-size: 11px;
-  box-shadow: none;
-  background: transparent !important;
-}
-
 /* Hide scrollbar utility for horizontal pill rows */
 .scrollbar-none::-webkit-scrollbar {
   display: none;
@@ -944,7 +857,7 @@ body {
 /* Mobile navigation: one fixed, stable capsule. No scroll listener/reveal gesture. */
 :root {
   --mobile-nav-height: 56px;
-  --mobile-nav-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  --mobile-nav-bottom: calc(16px + var(--app-safe-bottom));
   --mobile-notifications-bottom: calc(var(--mobile-nav-height) + var(--mobile-nav-bottom) + 20px);
   --mobile-nav-clearance: calc(var(--mobile-notifications-bottom) + 44px + 20px);
 }
@@ -977,7 +890,20 @@ body {
 }
 /* Secondary views inherit one bottom reservation from the persistent shell. */
 .mobile-shell-content { padding-bottom: var(--mobile-nav-clearance); }
+.mobile-shell-content--focused { padding-top: max(0.75rem, var(--app-safe-top)); padding-bottom: 0; }
 @media (min-width: 1024px) { .mobile-shell-content { padding-bottom: 3rem; } }
+.cartoes-carousel-item {
+  transform: scale(0.97);
+  opacity: 0.84;
+  transform-origin: center left;
+  transition: transform 220ms cubic-bezier(0.23, 1, 0.32, 1), opacity 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.cartoes-carousel-item[data-primary="true"] { transform: scale(1); opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .cartoes-carousel { scroll-behavior: auto; }
+  .cartoes-carousel-item { transform: none; transition: none; opacity: 0.88; }
+  .cartoes-carousel-item[data-primary="true"] { opacity: 1; }
+}
 :root:not(.dark) .mobile-bottom-nav {
   background: color-mix(in srgb, var(--card) 96%, transparent);
   border-color: color-mix(in srgb, var(--foreground) 18%, var(--border));
@@ -1064,4 +990,24 @@ body {
     transition: none;
     animation: none !important;
   }
+}
+
+/* O shell de Cartões aproveita tablets estreitos antes do breakpoint md. */
+@media (min-width: 640px) and (max-width: 767px) {
+  main:has(> .cartoes-page) {
+    max-width: 48rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .cartoes-page .cartoes-carousel-item {
+    width: 48%;
+  }
+}
+
+.cartoes-form-dialog > button[aria-label="Fechar"] {
+  width: 44px;
+  height: 44px;
+  top: 8px;
+  right: 8px;
 }

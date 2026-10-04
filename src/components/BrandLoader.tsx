@@ -20,8 +20,8 @@ export function BrandLoader({
       )}
       style={{
         minHeight: "100dvh",
-        paddingTop: "env(safe-area-inset-top, 0px)",
-        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        paddingTop: "var(--app-safe-top)",
+        paddingBottom: "var(--app-safe-bottom)",
       }}
       role="status"
       aria-live="polite"

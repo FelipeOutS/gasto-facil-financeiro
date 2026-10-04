@@ -293,7 +293,7 @@ function PerfilPage() {
           </section>
         )}
 
-        <div className="sticky bottom-[calc(80px+env(safe-area-inset-bottom))] lg:static lg:bottom-auto">
+        <div className="sticky bottom-[calc(80px+var(--app-safe-bottom))] lg:static lg:bottom-auto">
           <Button
             type="submit"
             size="lg"

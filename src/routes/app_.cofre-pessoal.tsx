@@ -2467,7 +2467,7 @@ function EntryForm({
       {/* Barra de ações: SEMPRE visível, sólida, com safe-area */}
       <div
         className="sticky bottom-0 z-20 -mx-4 mt-2 border-t border-border bg-background px-4 py-3 lg:-mx-8 lg:px-8"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
+        style={{ paddingBottom: "calc(var(--app-safe-bottom) + 0.75rem)" }}
       >
         <div className="mx-auto flex w-full max-w-3xl flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
           <Button
@@ -2652,7 +2652,7 @@ function ChangeMasterView({
 
       <div
         className="sticky bottom-0 z-20 -mx-4 mt-2 border-t border-border bg-background px-4 py-3 lg:-mx-8 lg:px-8"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
+        style={{ paddingBottom: "calc(var(--app-safe-bottom) + 0.75rem)" }}
       >
         <div className="mx-auto flex w-full max-w-3xl flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
           <Button

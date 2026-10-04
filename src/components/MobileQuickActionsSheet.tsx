@@ -29,7 +29,7 @@ export function MobileQuickActionsSheet({ trigger }: { trigger: ReactNode }) {
       <SheetTrigger asChild>{trigger}</SheetTrigger>
       <SheetContent
         side="bottom"
-        className="rounded-t-3xl border-border/60 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-4"
+        className="rounded-t-3xl border-border/60 px-5 pb-[calc(1.25rem+var(--app-safe-bottom))] pt-4"
       >
         <SheetHeader className="text-left">
           <SheetTitle className="text-base">{t("quickActions.title")}</SheetTitle>

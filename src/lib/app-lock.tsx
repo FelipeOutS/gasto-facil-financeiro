@@ -334,8 +334,8 @@ function LockScreen({
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-8 bg-background px-6"
       style={{
         minHeight: "100dvh",
-        paddingTop: "env(safe-area-inset-top, 0px)",
-        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        paddingTop: "var(--app-safe-top)",
+        paddingBottom: "var(--app-safe-bottom)",
       }}
       role="dialog"
       aria-modal="true"

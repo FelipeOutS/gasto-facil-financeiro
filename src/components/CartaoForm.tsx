@@ -1,35 +1,34 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import { Check, ChevronDown, Plus, Search, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IntegerInput } from "@/components/ui/integer-input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { getCardTheme } from "@/lib/card-theme";
+import { getAutomaticCardColor, getCardTheme } from "@/lib/card-theme";
+import { getCardIdentity } from "@/lib/card-identity";
+import { getExactBankSlug } from "@/lib/bank-aliases";
 import { formatBRL, parseBRLInput } from "@/lib/format";
 import { validarCartao } from "@/lib/cartao-validacao";
 import { addCartao, updateCartao, type NovoCartaoInput } from "@/lib/store";
 import { requireOnline } from "@/lib/use-online-status";
 import type { Cartao } from "@/lib/types";
-import { BANCOS_CARTAO_PADRAO } from "@/lib/types";
+import { EMISSORES_CARTAO_PADRAO } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-export const CORES_CARTAO = [
-  "#820ad1",
-  "#ec7000",
-  "#ec0000",
-  "#00b1ea",
-  "#ff7a00",
-  "#3a3a3a",
-  "#cc092f",
-  "#1c5aa8",
-  "#21c25e",
-  "#0f9b5e",
-  "#8b5cf6",
-  "#0ea5e9",
+const BANK_OPTIONS = [
+  ...EMISSORES_CARTAO_PADRAO.filter((option) => option.nome !== "Outro"),
+  { nome: "Neon", cor: "#00d563" },
 ];
+
+function normalizeBankSearch(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/^cartao\s+/, "");
+}
 
 /**
  * Formulário de cartão reutilizável — usado pelo Dialog (desktop) e pela
@@ -42,11 +41,13 @@ export function CartaoForm({
   onCancel,
   onSaved,
   footerClassName,
+  pageLayout = false,
 }: {
   editing: Cartao | null;
   onCancel: () => void;
   onSaved: () => void;
   footerClassName?: string;
+  pageLayout?: boolean;
 }) {
   const { t } = useTranslation("cartoes");
   const [nome, setNome] = useState(editing?.nome ?? "");
@@ -56,8 +57,42 @@ export function CartaoForm({
   );
   const [diaFech, setDiaFech] = useState<number>(editing?.diaFechamento ?? 1);
   const [diaVenc, setDiaVenc] = useState<number>(editing?.diaVencimento ?? 10);
-  const [cor, setCor] = useState(editing?.cor ?? CORES_CARTAO[0]);
   const [obs, setObs] = useState(editing?.observacao ?? "");
+  const [showObs, setShowObs] = useState(Boolean(editing?.observacao));
+  const [closingTouched, setClosingTouched] = useState(Boolean(editing));
+  const [dueTouched, setDueTouched] = useState(Boolean(editing));
+  const [bankOpen, setBankOpen] = useState(false);
+  const [bankQuery, setBankQuery] = useState("");
+  const [manualBank, setManualBank] = useState(
+    Boolean(editing?.banco && !getExactBankSlug(editing.banco)),
+  );
+  const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const reducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (!pageLayout) return;
+    const ensureFocusedFieldVisible = () => {
+      const form = formRef.current;
+      const active = document.activeElement;
+      if (!form || !(active instanceof HTMLElement) || !form.contains(active)) return;
+      if (!active.matches("input, textarea, select")) return;
+      const field = active.getBoundingClientRect();
+      const footer = form.querySelector<HTMLElement>("[data-card-form-footer]");
+      const bottom = Math.min(window.visualViewport?.height ?? window.innerHeight, footer?.getBoundingClientRect().top ?? Infinity) - 12;
+      if (field.bottom > bottom) window.scrollBy(0, field.bottom - bottom);
+      else if (field.top < 80) window.scrollBy(0, field.top - 80);
+    };
+    const onFocus = () => requestAnimationFrame(ensureFocusedFieldVisible);
+    const form = formRef.current;
+    form?.addEventListener("focusin", onFocus);
+    window.visualViewport?.addEventListener("resize", ensureFocusedFieldVisible);
+    return () => {
+      form?.removeEventListener("focusin", onFocus);
+      window.visualViewport?.removeEventListener("resize", ensureFocusedFieldVisible);
+    };
+  }, [pageLayout]);
 
   const formKey = editing?.id ?? "new";
   useMemo(() => {
@@ -66,12 +101,23 @@ export function CartaoForm({
     setLimiteStr(editing ? editing.limiteTotal.toFixed(2).replace(".", ",") : "");
     setDiaFech(editing?.diaFechamento ?? 1);
     setDiaVenc(editing?.diaVencimento ?? 10);
-    setCor(editing?.cor ?? CORES_CARTAO[0]);
     setObs(editing?.observacao ?? "");
+    setShowObs(Boolean(editing?.observacao));
+    setClosingTouched(Boolean(editing));
+    setDueTouched(Boolean(editing));
+    setBankOpen(false);
+    setBankQuery("");
+    setManualBank(Boolean(editing?.banco && !getExactBankSlug(editing.banco)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formKey]);
 
   const limite = parseBRLInput(limiteStr);
+  const cor = getAutomaticCardColor(banco);
+  const cardTheme = getCardTheme(cor, banco);
+  const previewIdentity = getCardIdentity(nome || t("form.previewDefaultName"), banco);
+  const filteredBanks = BANK_OPTIONS.filter((option) =>
+    normalizeBankSearch(option.nome).includes(normalizeBankSearch(bankQuery.trim())),
+  );
   // Regra compartilhada com o WhatsApp (limite > 0, dias 1–31, nome curto).
   const validacao = validarCartao({
     nome,
@@ -83,48 +129,99 @@ export function CartaoForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (submittingRef.current) return;
     if (!valid) {
       toast.error(t("toast.checkFields"));
       return;
     }
-    if (!(await requireOnline())) return;
-    if (!validacao.ok) return;
-    const payload: NovoCartaoInput = {
-      nome: validacao.valor.nome,
-      banco: banco.trim(),
-      limiteTotal: validacao.valor.limiteTotal,
-      diaFechamento: validacao.valor.diaFechamento,
-      diaVencimento: validacao.valor.diaVencimento,
-      cor,
-      observacao: obs.trim() || undefined,
-    };
-    if (editing) {
-      updateCartao(editing.id, payload);
-      toast.success(t("toast.cardUpdated"));
-    } else {
-      const created = addCartao(payload);
-      if (!created) return; // bloqueado por guard/quota; toast já exibido
-      toast.success(t("toast.cardCreated"));
+    submittingRef.current = true;
+    setSubmitting(true);
+    try {
+      if (!(await requireOnline())) return;
+      if (!validacao.ok) return;
+      const payload: NovoCartaoInput = {
+        nome: validacao.valor.nome,
+        banco: banco.trim(),
+        limiteTotal: validacao.valor.limiteTotal,
+        diaFechamento: validacao.valor.diaFechamento,
+        diaVencimento: validacao.valor.diaVencimento,
+        cor,
+        observacao: obs.trim() || undefined,
+      };
+      if (editing) {
+        updateCartao(editing.id, payload);
+        toast.success(t("toast.cardUpdated"));
+      } else {
+        const created = addCartao(payload);
+        if (!created) return; // bloqueado por guard/quota; toast já exibido
+        toast.success(t("toast.cardCreated"));
+      }
+      onSaved();
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
     }
-    onSaved();
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
-        <div className="grid gap-6 lg:grid-cols-[1fr_minmax(280px,360px)] lg:gap-8">
-          <div className="space-y-5 animate-rise">
-            {!editing && (
-              <p className="rounded-lg border border-border/60 bg-card/60 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
-                🔒 {t("form.security")}
-              </p>
-            )}
-            <section className="space-y-4">
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                {t("form.dataSection")}
-              </h3>
-
-              <div>
+    <form ref={formRef} onSubmit={handleSubmit} aria-busy={submitting} className={cn("flex flex-col", pageLayout ? "flex-1 lg:flex-none" : "min-h-0 flex-1")}>
+      <div className={cn("px-4 py-3 sm:px-5 lg:py-4", pageLayout ? "flex-1 lg:flex-none" : "min-h-0 flex-1 overflow-y-auto overscroll-contain")}>
+        <div className="grid gap-3 md:grid-cols-[minmax(250px,0.8fr)_minmax(0,1.2fr)] md:items-start md:gap-5">
+          <section aria-label={t("form.liveCard")} data-live-card className="min-w-0 md:sticky md:top-6">
+            <div
+              className="relative flex min-h-[146px] flex-col justify-between overflow-hidden rounded-2xl p-3.5 shadow-card md:min-h-[180px] md:p-4"
+              style={{ color: cardTheme.fg }}
+            >
+              <AnimatePresence initial={false}>
+                <motion.div
+                  key={cardTheme.background}
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0"
+                  style={{ background: cardTheme.background }}
+                  initial={reducedMotion ? false : { opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: reducedMotion ? 0 : 0.22 }}
+                />
+              </AnimatePresence>
+              <div className="relative h-9 w-[120px]">
+                <AnimatePresence initial={false}>
+                  <motion.div
+                    key={`${banco}-${cardTheme.logoTone}`}
+                    className="absolute inset-0"
+                    initial={reducedMotion ? false : { opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: reducedMotion ? 0 : 0.18 }}
+                  >
+                    <BrandLogo name={banco} variant="bank" bankPresentation="card" bankCardTone={cardTheme.logoTone} className="h-9 w-[120px]" />
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+              <div className="relative min-w-0">
+                <div className="flex min-w-0 items-end justify-between gap-3">
+                  <div className="min-w-0">
+                    {previewIdentity.primary ? (
+                      <>
+                        <p className="truncate text-base font-bold leading-tight">{previewIdentity.primary}</p>
+                        {previewIdentity.secondary && <p className="mt-0.5 truncate text-xs font-medium opacity-85">{previewIdentity.secondary}</p>}
+                      </>
+                    ) : (
+                      <span className="sr-only">{previewIdentity.accessibleName}</span>
+                    )}
+                  </div>
+                  <span className="num shrink-0 text-sm font-semibold">{formatBRL(limite || 0)}</span>
+                </div>
+                <div className="mt-2 flex items-center gap-4 text-[11px] font-medium opacity-85">
+                  <span>{t("form.previewClosing", { day: closingTouched ? String(diaFech).padStart(2, "0") : "--" })}</span>
+                  <span>{t("form.previewDue", { day: dueTouched ? String(diaVenc).padStart(2, "0") : "--" })}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section aria-label={t("form.dataSection")} className="min-w-0 space-y-2.5">
+            <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-1">
+              <div className="min-w-0">
                 <Label htmlFor="nome" className="text-xs text-muted-foreground">
                   {t("form.nameLabel")}
                 </Label>
@@ -134,209 +231,166 @@ export function CartaoForm({
                   onChange={(e) => setNome(e.target.value)}
                   placeholder={t("form.namePlaceholder")}
                   maxLength={40}
-                  className="mt-1.5 h-11"
+                  className="mt-1 h-11 text-base sm:text-sm"
                 />
               </div>
 
-              <div>
-                <Label className="text-xs text-muted-foreground">{t("form.bankLabel")}</Label>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {BANCOS_CARTAO_PADRAO.map((b) => {
-                    const active = banco === b.nome;
-                    return (
+              <div className="min-w-0">
+                <Label htmlFor="bank-picker" className="text-xs text-muted-foreground">
+                  {t("form.bankLabel")}
+                </Label>
+                <Popover open={bankOpen} onOpenChange={setBankOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      id="bank-picker"
+                      type="button"
+                      className="mt-1 flex h-11 w-full items-center gap-2 rounded-md border border-input bg-background px-3 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {banco && !manualBank && <BrandLogo name={banco} variant="bank" bankPresentation="tiny" />}
+                      <span className={cn("min-w-0 flex-1 truncate", !banco && "text-muted-foreground")}>
+                        {banco || t("form.bankPlaceholder")}
+                      </span>
+                      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    id="bank-picker-options"
+                    align="start"
+                    side="top"
+                    sideOffset={6}
+                    className="w-[var(--radix-popover-trigger-width)] max-h-[min(21rem,var(--radix-popover-content-available-height))] overflow-hidden rounded-xl border-border bg-popover p-2 shadow-elevated"
+                  >
+                    <div className="relative">
+                      <Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      <Input
+                        autoFocus
+                        value={bankQuery}
+                        onChange={(e) => setBankQuery(e.target.value)}
+                        aria-label={t("form.bankSearch")}
+                        placeholder={t("form.bankSearchPlaceholder")}
+                        className="h-11 pl-9 text-base sm:text-sm"
+                      />
+                    </div>
+                    <div className="mt-1 max-h-56 overflow-y-auto overscroll-contain">
+                      {filteredBanks.map((option) => (
+                        <button
+                          key={option.nome}
+                          type="button"
+                          onClick={() => {
+                            setBanco(option.nome);
+                            setManualBank(false);
+                            setBankOpen(false);
+                            setBankQuery("");
+                          }}
+                          className="flex min-h-11 w-full items-center gap-3 rounded-lg px-2 text-left text-sm hover:bg-card-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <BrandLogo name={option.nome} variant="bank" bankPresentation="tiny" />
+                          <span className="flex-1">{option.nome}</span>
+                          {banco === option.nome && <Check className="h-4 w-4 text-brand" aria-hidden="true" />}
+                        </button>
+                      ))}
+                      {filteredBanks.length === 0 && (
+                        <p className="px-2 py-2 text-xs text-muted-foreground">{t("form.bankNotFound")}</p>
+                      )}
                       <button
-                        key={b.nome}
                         type="button"
                         onClick={() => {
-                          setBanco(b.nome);
-                          setCor(b.cor);
+                          setManualBank(true);
+                          setBanco("");
+                          setBankOpen(false);
+                          setBankQuery("");
                         }}
-                        className={cn(
-                          "card-press rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
-                          active
-                            ? "border-brand bg-brand-soft text-brand-on-soft shadow-card"
-                            : "border-border bg-card hover:-translate-y-0.5 hover:bg-card-elevated",
-                        )}
+                        className="flex min-h-11 w-full items-center gap-3 rounded-lg border-t border-border px-2 text-left text-sm hover:bg-card-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
-                        {b.nome}
+                        <Plus className="h-4 w-4" aria-hidden="true" />
+                        {t("form.bankOther")}
                       </button>
-                    );
-                  })}
-                </div>
-                <Input
-                  value={banco}
-                  onChange={(e) => setBanco(e.target.value)}
-                  placeholder={t("form.bankPlaceholder")}
-                  maxLength={30}
-                  className="mt-2.5 h-10"
-                />
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                {manualBank && (
+                  <Input
+                    value={banco}
+                    onChange={(e) => setBanco(e.target.value)}
+                    aria-label={t("form.bankOtherLabel")}
+                    placeholder={t("form.bankOtherPlaceholder")}
+                    maxLength={30}
+                    className="mt-2 h-11 text-base sm:text-sm"
+                  />
+                )}
               </div>
+            </div>
 
-              <div>
-                <Label htmlFor="limite" className="text-xs text-muted-foreground">
-                  {t("form.limitLabel")}
-                </Label>
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)_minmax(0,0.8fr)]">
+              <div className="col-span-2 min-w-0 sm:col-span-1">
+                <Label htmlFor="limite" className="text-xs text-muted-foreground">{t("form.limitLabel")}</Label>
                 <Input
                   id="limite"
                   inputMode="decimal"
                   value={limiteStr}
                   onChange={(e) => setLimiteStr(e.target.value)}
                   placeholder={t("form.limitPlaceholder")}
-                  className="num mt-1.5 h-11"
+                  className="num mt-1 h-11 text-base sm:text-sm"
                 />
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="fech" className="text-xs text-muted-foreground">
-                    {t("form.closingDay")}
-                  </Label>
-                  <IntegerInput
-                    id="fech"
-                    min={1}
-                    max={31}
-                    value={diaFech}
-                    onValueChange={setDiaFech}
-                    className="num mt-1.5 h-11"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="venc" className="text-xs text-muted-foreground">
-                    {t("form.dueDay")}
-                  </Label>
-                  <IntegerInput
-                    id="venc"
-                    min={1}
-                    max={31}
-                    fallback={10}
-                    value={diaVenc}
-                    onValueChange={setDiaVenc}
-                    className="num mt-1.5 h-11"
-                  />
-                </div>
+              <div className="min-w-0">
+                <Label htmlFor="fech" className="text-xs text-muted-foreground">{t("form.closingDay")}</Label>
+                <IntegerInput id="fech" min={1} max={31} value={diaFech} onValueChange={(value) => { setDiaFech(value); setClosingTouched(true); }} className="num mt-1 h-11 text-base sm:text-sm" />
               </div>
-
-              <div>
-                <Label htmlFor="obs" className="text-xs text-muted-foreground">
-                  {t("form.obsLabel")}
-                </Label>
-                <Textarea
-                  id="obs"
-                  value={obs}
-                  onChange={(e) => setObs(e.target.value)}
-                  placeholder={t("form.obsPlaceholder")}
-                  maxLength={200}
-                  className="mt-1.5 min-h-[72px]"
-                />
+              <div className="min-w-0">
+                <Label htmlFor="venc" className="text-xs text-muted-foreground">{t("form.dueDay")}</Label>
+                <IntegerInput id="venc" min={1} max={31} fallback={10} value={diaVenc} onValueChange={(value) => { setDiaVenc(value); setDueTouched(true); }} className="num mt-1 h-11 text-base sm:text-sm" />
               </div>
-            </section>
-          </div>
+            </div>
 
-          <div className="space-y-5 animate-rise">
-            <section>
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                {t("form.previewTitle")}
-              </h3>
-              <div
-                className="relative mt-2 aspect-[1.586/1] w-full overflow-hidden rounded-2xl p-5 text-white shadow-elevated transition-[background] duration-500 ease-out"
-                style={{ background: getCardTheme(cor, banco).background }}
+            <div>
+              <button
+                type="button"
+                aria-expanded={showObs}
+                aria-controls="card-observation"
+                onClick={() => setShowObs((shown) => !shown)}
+                className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-foreground hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-white/15 blur-2xl"
-                />
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"
-                />
-                <div className="relative flex h-full flex-col justify-between">
-                  <div className="flex items-center">
-                    <BrandLogo name={banco} variant="bank" onDark />
-                  </div>
-                  <div>
-                    <p className="truncate text-lg font-bold leading-tight">
-                      {nome || t("form.previewDefaultName")}
-                    </p>
-                    <div className="mt-2 flex items-end justify-between gap-2">
-                      <div>
-                        <p className="text-[9px] uppercase tracking-widest text-white/70">
-                          {t("form.previewLimit")}
-                        </p>
-                        <p className="num text-sm font-semibold">{formatBRL(limite || 0)}</p>
-                      </div>
-                      <span className="text-[10px] uppercase tracking-widest text-white/70">
-                        {t("form.previewType")}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
+                <Plus className={cn("h-4 w-4 transition-transform", showObs && "rotate-45")} aria-hidden="true" />
+                {showObs ? t("form.obsHide") : t("form.obsAdd")}
+              </button>
+              <AnimatePresence initial={false}>
+              {showObs && (
+                <motion.div
+                  id="card-observation"
+                  className="mt-1 overflow-hidden"
+                  initial={reducedMotion ? false : { height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={reducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                  transition={{ duration: reducedMotion ? 0 : 0.18, ease: [0.23, 1, 0.32, 1] }}
+                >
+                  <Label htmlFor="obs" className="sr-only">{t("form.obsLabel")}</Label>
+                  <Textarea
+                    id="obs"
+                    value={obs}
+                    onChange={(e) => setObs(e.target.value)}
+                    placeholder={t("form.obsPlaceholder")}
+                    maxLength={200}
+                    className="min-h-[70px] text-base sm:text-sm"
+                  />
+                </motion.div>
+              )}
+              </AnimatePresence>
+            </div>
+          </section>
 
-            <section>
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                {t("form.appearanceTitle")}
-              </h3>
-              <p className="mt-1 text-xs text-muted-foreground">{t("form.appearanceHint")}</p>
-              <div className="mt-3 flex flex-wrap gap-2.5">
-                {CORES_CARTAO.map((c) => {
-                  const active = cor === c;
-                  return (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setCor(c)}
-                      aria-label={t("form.colorLabel", { color: c })}
-                      aria-pressed={active}
-                      className={cn(
-                        "relative h-10 w-10 rounded-full border-2 transition-all duration-200",
-                        active
-                          ? "scale-110 border-foreground shadow-card animate-pop"
-                          : "border-transparent hover:scale-105 hover:shadow-card",
-                      )}
-                      style={{ background: c }}
-                    >
-                      {active && (
-                        <span className="absolute inset-0 grid place-items-center text-white drop-shadow">
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          </div>
         </div>
       </div>
 
-      <div
-        className={cn(
-          "shrink-0 flex flex-col-reverse gap-2 border-t border-border bg-card/80 px-4 py-4 backdrop-blur sm:flex-row sm:justify-end sm:gap-2 sm:px-6",
-          footerClassName,
-        )}
-      >
-        <Button type="button" variant="outline" onClick={onCancel} className="card-press">
-          {t("form.cancel")}
-        </Button>
-        <Button
-          type="submit"
-          disabled={!valid}
-          className="card-press bg-brand-grad font-semibold shadow-elevated hover:opacity-95"
-        >
-          {t("form.save")}
-        </Button>
+      <div data-card-form-footer className={cn("flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card px-4 py-3 pb-[calc(0.75rem+var(--app-safe-bottom))] sm:px-5", pageLayout && "sticky bottom-0 z-10 shadow-[0_-8px_24px_-20px_rgba(0,0,0,0.35)] sm:static sm:shadow-none", footerClassName)}>
+        <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          {t("form.securityShort")}
+        </p>
+        <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
+          <Button type="button" variant="outline" onClick={onCancel} className="h-11 min-w-24">{t("form.cancel")}</Button>
+          <Button type="submit" disabled={!valid || submitting} className="h-11 min-w-28 bg-brand-grad font-semibold transition-opacity duration-150">{submitting ? t("form.saving", { defaultValue: "Salvando..." }) : t("form.save")}</Button>
+        </div>
       </div>
     </form>
   );

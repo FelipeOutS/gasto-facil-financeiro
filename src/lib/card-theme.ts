@@ -6,6 +6,23 @@
  * C6 Bank) get a premium "black" treatment regardless of color.
  */
 
+import { EMISSORES_CARTAO_PADRAO } from "@/lib/types";
+import { getExactBankSlug } from "@/lib/bank-aliases";
+
+const UNKNOWN_ISSUER_COLOR = "#34383f";
+
+/** Visual identity for the focused card form; unknown issuers stay neutral. */
+export function getAutomaticCardColor(bank: string): string {
+  const slug = getExactBankSlug(bank);
+  if (!slug) return UNKNOWN_ISSUER_COLOR;
+  if (slug === "neon") return "#00d563";
+  const issuer = EMISSORES_CARTAO_PADRAO.find(
+    (option) => option.nome !== "Outro" &&
+      getExactBankSlug(option.nome) === slug,
+  );
+  return issuer?.cor ?? UNKNOWN_ISSUER_COLOR;
+}
+
 export type CardTheme = {
   /** Full background gradient ready for `style.background` */
   background: string;
@@ -13,8 +30,10 @@ export type CardTheme = {
   primary: string;
   /** Darker version of primary (gradient end) */
   deep: string;
-  /** Foreground color for text on the gradient (always white-ish here) */
+  /** Foreground color with contrast against the visible card surface. */
   fg: string;
+  /** Monochrome logo treatment for the card presentation. */
+  logoTone: "light" | "dark";
   /** Whether this theme is intentionally dark/premium (black-ish) */
   premium: boolean;
 };
@@ -37,6 +56,18 @@ function rgbToHex(r: number, g: number, b: number): string {
       .toString(16)
       .padStart(2, "0");
   return `#${c(r)}${c(g)}${c(b)}`;
+}
+function luminance(hex: string): number {
+  const { r, g, b } = hexToRgb(hex);
+  const channel = (value: number) => {
+    const srgb = value / 255;
+    return srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+}
+function shade(hex: string, factor: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  return rgbToHex(r * factor, g * factor, b * factor);
 }
 function rgbToHsl(r: number, g: number, b: number) {
   r /= 255;
@@ -138,17 +169,39 @@ export function getCardTheme(cor: string, banco?: string): CardTheme {
       primary: "#2a2a2e",
       deep: "#0b0b0d",
       fg: "#ffffff",
+      logoTone: "light",
       premium: true,
     };
   }
 
-  const mid = midShade(cor);
-  const deep = deepen(cor, 0.45);
+  // Uma cor saturada e brilhante precisa de uma superfície um pouco mais
+  // profunda para receber a assinatura branca com contraste real. O HEX salvo
+  // continua intacto; amarelos e tons realmente claros usam tinta escura.
+  const { r, g, b } = hexToRgb(cor);
+  const hsl = rgbToHsl(r, g, b);
+  const isLightYellow = hsl.h >= 40 && hsl.h <= 70 && hsl.s >= 45 && hsl.l >= 45;
+  let surface = cor;
+  if (!isLightYellow && hsl.s >= 40 && luminance(cor) > 0.183) {
+    for (let factor = 0.96; factor >= 0.5; factor -= 0.04) {
+      surface = shade(cor, factor);
+      if (luminance(surface) <= 0.17) break;
+    }
+  }
+  const useDarkInk = luminance(surface) > 0.183;
+  const midCandidate = shade(surface, 0.97);
+  const mid = useDarkInk
+    ? luminance(midCandidate) > 0.183 ? midCandidate : surface
+    : midShade(surface);
+  const darkerCandidate = shade(surface, 0.92);
+  const deep = useDarkInk
+    ? luminance(darkerCandidate) > 0.183 ? darkerCandidate : surface
+    : deepen(surface, 0.45);
   return {
-    background: `linear-gradient(135deg, ${cor} 0%, ${mid} 55%, ${deep} 100%)`,
+    background: `linear-gradient(135deg, ${surface} 0%, ${mid} 55%, ${deep} 100%)`,
     primary: cor,
     deep,
-    fg: "#ffffff",
+    fg: useDarkInk ? "#000000" : "#ffffff",
+    logoTone: useDarkInk ? "dark" : "light",
     premium: false,
   };
 }

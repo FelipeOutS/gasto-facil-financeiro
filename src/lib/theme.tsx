@@ -34,7 +34,7 @@ function resolve(theme: ThemeChoice): ResolvedTheme {
   return theme;
 }
 
-const THEME_COLOR_DARK = "#1E2126";
+const THEME_COLOR_DARK = "#101214";
 const THEME_COLOR_LIGHT = "#FAFAFB";
 
 function applyTheme(resolved: ResolvedTheme) {

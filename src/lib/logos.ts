@@ -8,18 +8,33 @@
  */
 
 /* -------------------- Static imports (banks) -------------------- */
-import bradescoUrl from "/public/logos/bancos/Banco_Bradesco.svg?url";
-import bbUrl from "/public/logos/bancos/banco-do-brasil-novo.svg?url";
-import interUrl from "/public/logos/bancos/banco-inter.svg?url";
-import itauUrl from "/public/logos/bancos/banco-itau.svg?url";
-import c6Url from "/public/logos/bancos/Logo_C6_Bank.svg?url";
-import caixaUrl from "/public/logos/bancos/logo-caixa.svg?url";
-import santanderUrl from "/public/logos/bancos/logo-santander.svg?url";
-import mpUrl from "/public/logos/bancos/mercadopago-branco.svg?url";
+import bradescoUrl from "/public/logos/bancos/bradesco.svg?url";
+import bbUrl from "/public/logos/bancos/banco-do-brasil.svg?url";
+import interUrl from "/public/logos/bancos/inter.svg?url";
+import itauUrl from "/public/logos/bancos/itau-unibanco.svg?url";
+import c6Url from "/public/logos/bancos/c6-bank.svg?url";
+import caixaUrl from "/public/logos/bancos/caixa.svg?url";
+import santanderUrl from "/public/logos/bancos/santander.svg?url";
+import mpUrl from "/public/logos/bancos/mercado-pago.svg?url";
 import nubankUrl from "/public/logos/bancos/nubank.svg?url";
 import picpayUrl from "/public/logos/bancos/picpay.svg?url";
 import willUrl from "/public/logos/bancos/will-bank.svg?url";
 import neonUrl from "/public/logos/bancos/neon.svg?url";
+import atacadaoUrl from "/public/logos/bancos/atacadao.svg?url";
+import assaiUrl from "/public/logos/bancos/assai-atacadista.svg?url";
+import mpSymbolUrl from "/public/logos/bancos/compact/mercado-pago-simbolo.svg?url";
+import santanderSymbolUrl from "/public/logos/bancos/compact/santander-simbolo.svg?url";
+import bradescoSymbolUrl from "/public/logos/bancos/compact/bradesco-simbolo.svg?url";
+import bbSymbolUrl from "/public/logos/bancos/compact/banco-do-brasil-simbolo.svg?url";
+import c6SymbolUrl from "/public/logos/bancos/compact/c6-simbolo.svg?url";
+import interCardUrl from "/public/logos/bancos/banco-inter.svg?url";
+import caixaCardUrl from "/public/logos/bancos/logo-caixa.svg?url";
+import bbCardUrl from "/public/logos/bancos/card/banco-do-brasil-mark.svg?url";
+import mpCardUrl from "/public/logos/bancos/card/mercado-pago-wordmark.svg?url";
+import nubankCardUrl from "/public/logos/bancos/card/nubank-mark.svg?url";
+import { BANK_ALIASES, normalizeName } from "@/lib/bank-aliases";
+
+export { getExactBankSlug, normalizeName } from "@/lib/bank-aliases";
 
 /* -------------------- Static imports (merchants) -------------------- */
 import adobeUrl from "/public/logos/empresas/adobe.svg?url";
@@ -37,19 +52,6 @@ import totalpassUrl from "/public/logos/empresas/totalpass.svg?url";
 import uberEatsUrl from "/public/logos/empresas/uber-eats.svg?url";
 import uberUrl from "/public/logos/empresas/uber.svg?url";
 import youtubeUrl from "/public/logos/empresas/youtube.svg?url";
-
-/** Normalize a free-form name for matching. Case/diacritics/whitespace insensitive. */
-export function normalizeName(input: string | undefined | null): string {
-  if (!input) return "";
-  return input
-    .toString()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 function toSlug(normalized: string): string {
   return normalized.replace(/\s+/g, "-");
@@ -70,33 +72,40 @@ const BANK_URL: Record<string, string> = {
   neon: neonUrl,
   Logo_C6_Bank: c6Url,
   "will-bank": willUrl,
+  atacadao: atacadaoUrl,
+  "assai-atacadista": assaiUrl,
 };
 
-const BANK_ALIASES: Record<string, string> = {
-  nubank: "nubank",
-  "nu pagamentos": "nubank",
-  nu: "nubank",
-  "mercado pago": "mercadopago-branco",
-  mercadopago: "mercadopago-branco",
-  mp: "mercadopago-branco",
-  inter: "banco-inter",
-  "banco inter": "banco-inter",
-  itau: "banco-itau",
-  "itau unibanco": "banco-itau",
-  santander: "logo-santander",
-  bradesco: "Banco_Bradesco",
-  caixa: "logo-caixa",
-  "caixa economica": "logo-caixa",
-  "caixa economica federal": "logo-caixa",
-  cef: "logo-caixa",
-  "banco do brasil": "banco-do-brasil",
-  bb: "banco-do-brasil",
-  picpay: "picpay",
-  neon: "neon",
-  c6: "Logo_C6_Bank",
-  "c6 bank": "Logo_C6_Bank",
-  "will bank": "will-bank",
-  will: "will-bank",
+// Símbolos extraídos dos SVGs locais para slots quadrados; o logo completo
+// continua disponível nos cartões maiores e como fallback do próprio slot.
+const BANK_COMPACT_URL: Record<string, string> = {
+  "mercadopago-branco": mpSymbolUrl,
+  "logo-santander": santanderSymbolUrl,
+  Banco_Bradesco: bradescoSymbolUrl,
+  "banco-do-brasil": bbSymbolUrl,
+  Logo_C6_Bank: c6SymbolUrl,
+};
+
+// Cada cartão usa uma associação explícita; não há fallback cego para o asset
+// de lista, que pode conter uma superfície própria. Itaú usa o mesmo SVG
+// oficial em todos os contextos; o cartão altera somente sua cor via CSS.
+// Neon mantém o asset inteiro, com sua superfície escura original, sem filtro.
+export type BankCardMark = { url: string; shape: "symbol" | "wordmark"; colorMode?: "original" };
+const BANK_CARD_MARK: Record<string, BankCardMark> = {
+  nubank: { url: nubankCardUrl, shape: "symbol" },
+  "mercadopago-branco": { url: mpCardUrl, shape: "wordmark" },
+  "banco-inter": { url: interCardUrl, shape: "wordmark" },
+  "banco-itau": { url: itauUrl, shape: "wordmark" },
+  "logo-santander": { url: santanderSymbolUrl, shape: "symbol" },
+  Banco_Bradesco: { url: bradescoSymbolUrl, shape: "symbol" },
+  "logo-caixa": { url: caixaCardUrl, shape: "wordmark" },
+  "banco-do-brasil": { url: bbCardUrl, shape: "symbol" },
+  picpay: { url: picpayUrl, shape: "wordmark" },
+  neon: { url: neonUrl, shape: "symbol", colorMode: "original" },
+  Logo_C6_Bank: { url: c6SymbolUrl, shape: "symbol" },
+  "will-bank": { url: willUrl, shape: "wordmark" },
+  atacadao: { url: atacadaoUrl, shape: "symbol", colorMode: "original" },
+  "assai-atacadista": { url: assaiUrl, shape: "wordmark", colorMode: "original" },
 };
 
 const BANK_COLOR: Record<string, string> = {
@@ -112,6 +121,8 @@ const BANK_COLOR: Record<string, string> = {
   neon: "#00d563",
   Logo_C6_Bank: "#1f1f1f",
   "will-bank": "#0f9b5e",
+  atacadao: "#006943",
+  "assai-atacadista": "#f4f0e8",
 };
 
 /* -------------------- Merchants -------------------- */
@@ -191,6 +202,8 @@ const MERCHANT_COLOR: Record<string, string> = {
 export type BrandResolved = {
   slug: string | null;
   logoUrl: string | null;
+  compactLogoUrl?: string | null;
+  cardMark?: BankCardMark | null;
   brandColor: string | null;
   initial: string;
 };
@@ -200,6 +213,7 @@ function resolve(
   aliasMap: Record<string, string>,
   urlMap: Record<string, string>,
   colorMap: Record<string, string>,
+  matchWholeWords = false,
 ): BrandResolved {
   const norm = normalizeName(name);
   const initial = (norm[0] || "?").toUpperCase();
@@ -207,8 +221,11 @@ function resolve(
 
   let slug = aliasMap[norm];
   if (!slug) {
-    for (const key of Object.keys(aliasMap)) {
-      if (norm.includes(key)) {
+    for (const key of Object.keys(aliasMap).sort((a, b) => b.length - a.length)) {
+      const matches = matchWholeWords
+        ? ` ${norm} `.includes(` ${key} `)
+        : norm.includes(key);
+      if (matches) {
         slug = aliasMap[key];
         break;
       }
@@ -229,7 +246,12 @@ function resolve(
 }
 
 export function getBankLogo(name: string | undefined | null): BrandResolved {
-  return resolve(name, BANK_ALIASES, BANK_URL, BANK_COLOR);
+  const resolved = resolve(name, BANK_ALIASES, BANK_URL, BANK_COLOR, true);
+  return {
+    ...resolved,
+    compactLogoUrl: resolved.slug ? BANK_COMPACT_URL[resolved.slug] ?? null : null,
+    cardMark: resolved.slug ? BANK_CARD_MARK[resolved.slug] ?? null : null,
+  };
 }
 
 export function getMerchantLogo(name: string | undefined | null): BrandResolved {
@@ -241,7 +263,11 @@ export function hasMerchantLogo(name: string | undefined | null): boolean {
 }
 
 /** All bank logo URLs — useful for preloading on screens that swap cards. */
-export const ALL_BANK_LOGO_URLS: ReadonlyArray<string> = Object.values(BANK_URL);
+export const ALL_BANK_LOGO_URLS: ReadonlyArray<string> = [
+  ...Object.values(BANK_URL),
+  ...Object.values(BANK_COMPACT_URL),
+  ...Object.values(BANK_CARD_MARK).map((mark) => mark.url),
+];
 /** All merchant logo URLs — preload to make transaction lists feel instant. */
 export const ALL_MERCHANT_LOGO_URLS: ReadonlyArray<string> = Object.values(MERCHANT_URL);
 

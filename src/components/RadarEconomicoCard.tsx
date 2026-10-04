@@ -169,7 +169,7 @@ export function RadarEconomicoCard({ className }: { className?: string }) {
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "group flex h-full w-full flex-col overflow-hidden rounded-2xl border bg-card p-5 text-left shadow-sm transition-all hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring",
+          "group flex w-full flex-col overflow-hidden rounded-2xl border bg-card p-5 text-left shadow-sm transition-all hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring",
           className,
         )}
         aria-label={t("radarCard.aria")}
@@ -208,7 +208,7 @@ export function RadarEconomicoCard({ className }: { className?: string }) {
           )}
         </div>
 
-        <p className="mt-3 text-xs leading-relaxed text-muted-foreground sm:mt-auto sm:pt-3">
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
           {loading ? t("radarCard.loading") : stale ? t("radarCard.outdatedDesc") : impactoMsg()}
         </p>
 
