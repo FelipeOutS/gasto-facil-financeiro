@@ -255,6 +255,7 @@ export function CartaoForm({
                   </PopoverTrigger>
                   <PopoverContent
                     id="bank-picker-options"
+                    portalContainer={pageLayout ? undefined : formRef.current ?? undefined}
                     align="start"
                     side="top"
                     sideOffset={6}

@@ -6,6 +6,7 @@ const { render, cleanup, fireEvent, waitFor } = await import("@testing-library/r
 const D = await import("../src/components/ui/dialog");
 const S = await import("../src/components/ui/sheet");
 const A = await import("../src/components/ui/alert-dialog");
+const P = await import("../src/components/ui/popover");
 afterEach(cleanup);
 const kinds = [
   { name: "Dialog", Root: D.Dialog, Content: D.DialogContent, Title: D.DialogTitle },
@@ -63,6 +64,34 @@ for (const { name, Root, Content, Title } of kinds) {
     expect(clicks).toBe(10);
   });
 }
+
+test("bank popover portal stays inside its modal scroll boundary", async () => {
+  function ModalWithPopover() {
+    const [host, setHost] = React.useState<HTMLDivElement | null>(null);
+    return (
+      <D.Dialog open>
+        <D.DialogContent aria-describedby={undefined}>
+          <D.DialogTitle>New card</D.DialogTitle>
+          <div ref={setHost}>
+            <P.Popover open>
+              <P.PopoverTrigger>Bank</P.PopoverTrigger>
+              {host && <P.PopoverContent portalContainer={host}>Bank choices</P.PopoverContent>}
+            </P.Popover>
+          </div>
+        </D.DialogContent>
+      </D.Dialog>
+    );
+  }
+  const ui = render(<ModalWithPopover />);
+  await waitFor(() => {
+    const dialog = document.querySelector('[role="dialog"]');
+    const popover = document.querySelector('[data-radix-popper-content-wrapper]');
+    expect(dialog?.contains(popover)).toBe(true);
+    expect(document.body.hasAttribute("data-scroll-locked")).toBe(true);
+  });
+  ui.unmount();
+  await waitFor(() => expect(document.body.hasAttribute("data-scroll-locked")).toBe(false));
+});
 
 const { overlayHeightFallback, watchOverlayViewport } =
   await import("../src/lib/use-overlay-viewport");

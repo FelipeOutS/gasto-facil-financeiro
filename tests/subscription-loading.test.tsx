@@ -391,6 +391,21 @@ test("erro de consulta oferece retry sem modal ou redirect", async () => {
   expect(guard.canWriteBasic).toBe(true);
   expect(navigate).not.toHaveBeenCalled();
 });
+test("resposta HTTP 500 da função de assinatura não vira plano nem causa crash", async () => {
+  const ui = render(app());
+  await resolve({ status: 500 });
+  expect(guard.error).not.toBeNull();
+  expect(guard.canWriteBasic).toBe(false);
+  expect(writes).toBe(false);
+  expect(ui.queryByTestId("expense-form")).toBeNull();
+  expect(ui.getByRole("alert").textContent).toContain("verificar");
+  expect(navigate).not.toHaveBeenCalled();
+  expect(localStorage.getItem(`gf-plan-cache:${user!.id}`)).toBeNull();
+  fireEvent.click(ui.getByText("Tentar novamente"));
+  await resolve(subscription(), 1);
+  expect(guard.error).toBeNull();
+  expect(guard.canWriteBasic).toBe(true);
+});
 test("resposta tardia da sessão anterior não autoriza outra identidade", async () => {
   const ui = render(app());
   user = { id: `other-${counter}` };
