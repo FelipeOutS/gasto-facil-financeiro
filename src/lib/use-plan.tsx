@@ -242,23 +242,36 @@ export function usePlan(): PlanState {
             ? runtimeSubscriptionInFlight.promise
             : null;
         if (!promise) {
-          promise = getCurrentUserSubscription().then((subscription) => ({
-            active: subscription.active,
-            storedPlan: subscription.storedPlan,
-            status: subscription.status,
-            trialEndsAt: subscription.trialEndsAt,
-            trialStartedAt: subscription.trialStartedAt,
-            trialPlan: subscription.trialPlan,
-            trialUsed: subscription.trialUsed,
-            cancelledAt: subscription.cancelledAt,
-            accessUntil: subscription.accessUntil,
-            paymentMethod: subscription.paymentMethod,
-            paymentAmountCents: subscription.paymentAmountCents,
-            paidAt: subscription.paidAt,
-            periodicidade: subscription.periodicidade,
-            currentPeriodStart: subscription.currentPeriodStart,
-            currentPeriodEnd: subscription.currentPeriodEnd,
-          }));
+          promise = getCurrentUserSubscription().then((subscription) => {
+            // A failed server function can resolve with an HTTP response (status: 500).
+            // Never cache it or interpret it as a subscription/permission decision.
+            if (
+              !subscription ||
+              typeof subscription !== "object" ||
+              typeof subscription.active !== "boolean" ||
+              typeof subscription.storedPlan !== "string" ||
+              typeof subscription.status !== "string"
+            ) {
+              throw new Error("Invalid subscription response");
+            }
+            return {
+              active: subscription.active,
+              storedPlan: subscription.storedPlan,
+              status: subscription.status,
+              trialEndsAt: subscription.trialEndsAt,
+              trialStartedAt: subscription.trialStartedAt,
+              trialPlan: subscription.trialPlan,
+              trialUsed: subscription.trialUsed,
+              cancelledAt: subscription.cancelledAt,
+              accessUntil: subscription.accessUntil,
+              paymentMethod: subscription.paymentMethod,
+              paymentAmountCents: subscription.paymentAmountCents,
+              paidAt: subscription.paidAt,
+              periodicidade: subscription.periodicidade,
+              currentPeriodStart: subscription.currentPeriodStart,
+              currentPeriodEnd: subscription.currentPeriodEnd,
+            };
+          });
           runtimeSubscriptionInFlight = { userId, promise };
           const clear = () => {
             if (runtimeSubscriptionInFlight?.promise === promise)

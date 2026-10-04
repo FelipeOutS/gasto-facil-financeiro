@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   VISAO_GERAL,
+  cartoesDaVisao,
   comprasDaVisao,
   normalizarVisao,
   totaisDaVisao,
@@ -33,6 +34,17 @@ describe("Cartões — visão geral × cartão selecionado", () => {
     expect(visaoInicial([mp])).toBe("mp");
     expect(visaoInicial(cartoes)).toBe(VISAO_GERAL);
     expect(visaoInicial([])).toBe(VISAO_GERAL);
+  });
+
+  test("a lista desktop mostra todos na visão geral e só o selecionado com 1, 2 ou 3+ cartões", () => {
+    const terceiro = { ...nu, id: "terceiro", nome: "Neon" };
+    for (const lista of [[mp], cartoes, [mp, nu, terceiro]]) {
+      expect(cartoesDaVisao(lista, VISAO_GERAL)).toEqual(lista);
+      for (const card of lista) {
+        expect(cartoesDaVisao(lista, card.id)).toEqual([card]);
+      }
+    }
+    expect(cartoesDaVisao([], VISAO_GERAL)).toEqual([]);
   });
 
   test("Visão geral soma tudo (13.800 / 353 / 13.447)", () => {

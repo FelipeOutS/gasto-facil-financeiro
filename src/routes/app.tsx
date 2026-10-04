@@ -559,28 +559,27 @@ function Index() {
         </div>
       </section>
 
-      {/* LINHA 5 — Saúde financeira + Diagnóstico consolidados (7/12) + Dicas (5/12) */}
-      <section className="mt-4 grid grid-cols-1 items-start gap-4 xl:grid-cols-12">
-        <div className="min-w-0 xl:col-span-7">
-          <section className="rounded-2xl border border-border bg-card p-4 shadow-card motion-safe:animate-rise">
-            <DashboardSaudeFinanceiraCard embedded />
-            <div className="my-4 h-px w-full bg-border/70" />
-            <DashboardDiagnosticoMensalCard embedded />
-          </section>
+      {/* Colunas independentes: Dicas e indicadores não esticam a Saúde nem isolam o Radar. */}
+      <section className="mt-4 flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)] xl:items-start">
+        <div className="contents xl:flex xl:min-w-0 xl:flex-col xl:gap-4">
+          <div className="order-1 min-w-0">
+            <section className="rounded-2xl border border-border bg-card p-4 shadow-card motion-safe:animate-rise">
+              <DashboardSaudeFinanceiraCard embedded />
+              <div className="my-4 h-px w-full bg-border/70" />
+              <DashboardDiagnosticoMensalCard embedded />
+            </section>
+          </div>
+          <div className="order-3 min-w-0">
+            <RadarEconomicoCard />
+          </div>
         </div>
-        <div className="min-w-0 xl:col-span-5">
-          <DashboardDicasBloco />
-        </div>
-      </section>
-
-
-      {/* Radar econômico + Indicadores do Banco Central */}
-      <section className="mt-4 grid grid-cols-1 items-start gap-4 xl:grid-cols-12">
-        <div className="min-w-0 xl:col-span-5">
-          <RadarEconomicoCard />
-        </div>
-        <div className="min-w-0 xl:col-span-7">
-          <RadarEconomicoInteligenteCard />
+        <div className="contents xl:flex xl:min-w-0 xl:flex-col xl:gap-4">
+          <div className="order-2 min-w-0">
+            <DashboardDicasBloco />
+          </div>
+          <div className="order-4 min-w-0">
+            <RadarEconomicoInteligenteCard />
+          </div>
         </div>
       </section>
 
@@ -630,10 +629,9 @@ function Index() {
         </div>
       </section>
 
-      {/* O limite ocupa as duas linhas enquanto os atalhos sobem abaixo do resumo. */}
       <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
-      <section className="flex flex-col gap-4 xl:grid xl:grid-cols-2 xl:items-start">
-        <div className="flex min-w-0 flex-col gap-4 xl:col-start-1 xl:row-start-1">
+      <section className="flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:items-start">
+        <div className="flex min-w-0 flex-col gap-4">
           <ResumoMesCard
             mes={ym.mes}
             ano={ym.ano}
@@ -653,7 +651,7 @@ function Index() {
             contasVencidas={contasResumo.atrasadasCount}
           />
         </div>
-        <div className="min-w-0 xl:col-start-2 xl:row-span-2 xl:row-start-1">
+        <div className="min-w-0">
           <SmartLimiteCard
             mes={ym.mes}
             ano={ym.ano}
@@ -661,9 +659,10 @@ function Index() {
             totalGastos={total}
           />
         </div>
-        <div className="min-w-0 xl:col-start-1 xl:row-start-2">
-          <SectionLabel>{t("sections.controle")}</SectionLabel>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-2 xl:gap-4">
+      </section>
+
+      <SectionLabel>{t("sections.controle")}</SectionLabel>
+      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-4">
             <Link
               to="/orcamento"
               className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
@@ -701,8 +700,6 @@ function Index() {
                   : `${metasAndamento.length}`}
               </p>
             </Link>
-          </div>
-        </div>
       </section>
 
       {/* Orçamento, alertas de contas, limite mensal e primeiros passos */}

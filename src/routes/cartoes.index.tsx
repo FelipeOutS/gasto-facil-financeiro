@@ -22,6 +22,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import type { StatusFatura } from "@/lib/types";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, memo } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Trans, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import {
@@ -256,6 +257,8 @@ function CartoesPage() {
   const [visaoRaw, setVisao] = useState<VisaoCartoes | null>(() => cardsPageMemory.view);
   const visao: VisaoCartoes = visaoRaw === null ? visaoInicial(cartoes) : normalizarVisao(visaoRaw, cartoes);
   const cartaoSelecionado = visao === VISAO_GERAL ? null : (cartoes.find((c) => c.id === visao) ?? null);
+  const cartoesDesktop = cartoesDaVisao(cartoes, visao);
+  const reducedMotion = useReducedMotion();
   const carouselRef = useRef<HTMLDivElement>(null);
   const restoredRef = useRef(false);
   const programmaticScrollRef = useRef<number | null>(null);
@@ -278,9 +281,13 @@ function CartoesPage() {
     };
   }, []);
 
-  function selectView(next: VisaoCartoes) {
+  function rememberView(next: VisaoCartoes) {
     cardsPageMemory.view = next;
     setVisao(next);
+  }
+
+  function selectView(next: VisaoCartoes) {
+    rememberView(next);
     const carousel = carouselRef.current;
     if (!carousel) return;
     const index = next === VISAO_GERAL ? 0 : cartoes.findIndex((card) => card.id === next);
@@ -310,8 +317,7 @@ function CartoesPage() {
     );
     const next = cartoes[nearest]?.id;
     if (next && next !== visao) {
-      cardsPageMemory.view = next;
-      setVisao(next);
+      rememberView(next);
     }
   }
 
@@ -585,7 +591,7 @@ function CartoesPage() {
 
           {/* Blocos complementares empilhados */}
           <div className="mt-5 space-y-4">
-            <ProximosVencimentos items={proximosVencimentos} valores={faturaCorrentePorCartao} onSelect={cartoes.length > 1 ? setVisao : undefined} />
+            <ProximosVencimentos items={proximosVencimentos} valores={faturaCorrentePorCartao} onSelect={cartoes.length > 1 ? selectView : undefined} />
             <UltimasCompras
               gastos={ultimasCompras}
               cartoes={cartoes}
@@ -679,28 +685,34 @@ function CartoesPage() {
           <EmptyState onAdd={handleOpenNew} />
         ) : (
           <div className="mt-4 grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.75fr)] xl:gap-6">
-            <section
-              className={cn(
-                "grid min-w-0 auto-rows-fr grid-cols-1 items-stretch gap-5",
-                cartoes.length > 1 && "xl:grid-cols-2",
-              )}
-            >
-              {cartoes.map((c) => (
-                <CartaoCard
-                  key={c.id}
-                  cartao={c}
-                  resumo={resumosPorCartao.get(c.id)}
-                  selected={cartoes.length > 1 && visao === c.id}
-                  onSelect={() => setVisao(c.id)}
-                  onOpen={() => setOpenDetail(c)}
-                  onEdit={() => handleEdit(c)}
-                  onImport={() => handleOpenImport(c.id)}
-                  onDelete={() => setConfirmDelete(c)}
-                />
-              ))}
+            <section className={cn("grid min-w-0 auto-rows-fr grid-cols-1 items-stretch gap-5", cartoes.length > 1 && "xl:grid-cols-2")}>
+              <AnimatePresence initial={false} mode="popLayout">
+                {cartoesDesktop.map((c) => (
+                  <motion.div
+                    key={c.id}
+                    layout={!reducedMotion}
+                    initial={reducedMotion ? false : { opacity: 0, y: 8, scale: 0.99 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.99 }}
+                    transition={{ duration: reducedMotion ? 0.01 : 0.24, ease: [0.23, 1, 0.32, 1] }}
+                    className={cn("min-w-0", cartoesDesktop.length === 1 && "w-full max-w-[420px]")}
+                  >
+                    <CartaoCard
+                      cartao={c}
+                      resumo={resumosPorCartao.get(c.id)}
+                      selected={cartoes.length > 1 && visao === c.id}
+                      onSelect={() => selectView(c.id)}
+                      onOpen={() => setOpenDetail(c)}
+                      onEdit={() => handleEdit(c)}
+                      onImport={() => handleOpenImport(c.id)}
+                      onDelete={() => setConfirmDelete(c)}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </section>
             <aside className="min-w-0 space-y-4">
-              <ProximosVencimentos items={proximosVencimentos} valores={faturaCorrentePorCartao} onSelect={cartoes.length > 1 ? setVisao : undefined} />
+              <ProximosVencimentos items={proximosVencimentos} valores={faturaCorrentePorCartao} onSelect={cartoes.length > 1 ? selectView : undefined} />
               <UltimasCompras
                 gastos={ultimasCompras}
                 cartoes={cartoes}
