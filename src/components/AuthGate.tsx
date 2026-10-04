@@ -316,8 +316,8 @@ export function AuthShell({
           : "bg-background bg-gradient-to-br from-slate-50 via-white to-blue-50/40 dark:from-slate-950 dark:via-background dark:to-slate-900")
       }
       style={{
-        paddingBottom: "max(2rem, env(safe-area-inset-bottom))",
-        paddingTop: "max(2rem, env(safe-area-inset-top))",
+        paddingBottom: "max(2rem, var(--app-safe-bottom))",
+        paddingTop: "max(2rem, var(--app-safe-top))",
       }}
     >
       <div className="auth-background" aria-hidden="true">

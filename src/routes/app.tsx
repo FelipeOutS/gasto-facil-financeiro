@@ -505,45 +505,41 @@ function Index() {
       </div>
 
       {/* LINHA 2 — KPIs: Saldo maior + Receitas / Despesas / A pagar */}
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-12 xl:gap-4">
-        <div className="sm:col-span-2 xl:col-span-5">
+      <section className="grid grid-cols-1 items-start gap-3 xl:grid-cols-12 xl:gap-4">
+        <div className="min-w-0 xl:col-span-5">
           <SaldoHeroCard saldo={saldo} entradas={totalEntradas} despesas={total} />
         </div>
-        <div className="xl:col-span-3 xl:col-start-6">
-          <KpiCard
-            label={t("kpi.receitas")}
-            valueNum={totalEntradas}
-            tone="success"
-            icon={<ArrowUp className="h-4 w-4" />}
-          />
-        </div>
-        <div className="xl:col-span-2">
-          <KpiCard
-            label={t("kpi.despesas")}
-            valueNum={total}
-            tone="destructive"
-            icon={<ArrowDown className="h-4 w-4" />}
-          />
-        </div>
-        <div className="xl:col-span-2">
-          <KpiCard
-            label={t("kpi.aPagar")}
-            valueNum={contasResumo.pendente}
-            tone="warning"
-            icon={<Clock className="h-4 w-4" />}
-            hint={
-              contasResumo.atrasadasCount > 0
-                ? `${contasResumo.atrasadasCount} ${t("kpi.atrasada")}`
-                : contasResumo.pendentesCount > 0
-                  ? `${contasResumo.pendentesCount} ${t("kpi.pendente")}`
-                  : t("kpi.tudoEmDia")
-            }
-          />
+        <div className="min-w-0 xl:col-span-7">
+          <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-3 xl:gap-4">
+            <KpiCard
+              label={t("kpi.receitas")}
+              valueNum={totalEntradas}
+              tone="success"
+              icon={<ArrowUp className="h-4 w-4" />}
+            />
+            <KpiCard
+              label={t("kpi.despesas")}
+              valueNum={total}
+              tone="destructive"
+              icon={<ArrowDown className="h-4 w-4" />}
+            />
+            <KpiCard
+              label={t("kpi.aPagar")}
+              valueNum={contasResumo.pendente}
+              tone="warning"
+              icon={<Clock className="h-4 w-4" />}
+              hint={
+                contasResumo.atrasadasCount > 0
+                  ? `${contasResumo.atrasadasCount} ${t("kpi.atrasada")}`
+                  : contasResumo.pendentesCount > 0
+                    ? `${contasResumo.pendentesCount} ${t("kpi.pendente")}`
+                    : t("kpi.tudoEmDia")
+              }
+            />
+          </div>
+          <QuickActionsBar />
         </div>
       </section>
-
-      {/* LINHA 3 — Ações rápidas */}
-      <QuickActionsBar />
 
       <SectionLabel>{t("sections.radar")}</SectionLabel>
 
@@ -564,22 +560,22 @@ function Index() {
       </section>
 
       {/* LINHA 5 — Saúde financeira + Diagnóstico consolidados (7/12) + Dicas (5/12) */}
-      <section className="mt-4 grid grid-cols-1 items-stretch gap-4 xl:grid-cols-12">
+      <section className="mt-4 grid grid-cols-1 items-start gap-4 xl:grid-cols-12">
         <div className="min-w-0 xl:col-span-7">
-          <section className="h-full rounded-2xl border border-border bg-card p-4 shadow-card motion-safe:animate-rise">
+          <section className="rounded-2xl border border-border bg-card p-4 shadow-card motion-safe:animate-rise">
             <DashboardSaudeFinanceiraCard embedded />
             <div className="my-4 h-px w-full bg-border/70" />
             <DashboardDiagnosticoMensalCard embedded />
           </section>
         </div>
         <div className="min-w-0 xl:col-span-5">
-          <DashboardDicasBloco className="h-full" />
+          <DashboardDicasBloco />
         </div>
       </section>
 
 
-      {/* LINHA 7 — Radar econômico + Indicadores do Banco Central */}
-      <section className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-12">
+      {/* Radar econômico + Indicadores do Banco Central */}
+      <section className="mt-4 grid grid-cols-1 items-start gap-4 xl:grid-cols-12">
         <div className="min-w-0 xl:col-span-5">
           <RadarEconomicoCard />
         </div>
@@ -588,10 +584,10 @@ function Index() {
         </div>
       </section>
 
-      {/* LINHA 8 — Maiores gastos + Categorias / Cartões */}
+      {/* Maiores gastos + Categorias / Cartões */}
       <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
-      <section className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-12">
-        <div className="min-w-0 xl:col-span-5">
+      <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-12">
+        <div className="min-w-0 xl:col-span-5 2xl:col-span-4">
           <DashboardCartoesInsights
             mes={ym.mes}
             ano={ym.ano}
@@ -603,7 +599,7 @@ function Index() {
             slot="lists"
           />
         </div>
-        <div className="min-w-0 xl:col-span-4">
+        <div className="min-w-0 xl:col-span-4 2xl:col-span-5">
           <DashboardCartoesInsights
             mes={ym.mes}
             ano={ym.ano}
@@ -616,7 +612,7 @@ function Index() {
           />
         </div>
         <div className="min-w-0 xl:col-span-3">
-          <CategoriasDonutCard itens={porCategoria} total={total} className="h-full" />
+          <CategoriasDonutCard itens={porCategoria} total={total} />
         </div>
       </section>
 
@@ -630,14 +626,14 @@ function Index() {
 
         </div>
         <div className="min-w-0 xl:col-span-5">
-          <CalendarioFinanceiro ano={ym.ano} mes={ym.mes} onChangeMonth={changeMonth} />
+          <CalendarioFinanceiro ano={ym.ano} mes={ym.mes} onChangeMonth={changeMonth} compact />
         </div>
       </section>
 
-      {/* LINHA 10 — Resumo do mês + Impacto (esquerda) / Limite inteligente (direita) */}
+      {/* O limite ocupa as duas linhas enquanto os atalhos sobem abaixo do resumo. */}
       <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
-      <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
-        <div className="flex min-w-0 flex-col gap-4">
+      <section className="flex flex-col gap-4 xl:grid xl:grid-cols-2 xl:items-start">
+        <div className="flex min-w-0 flex-col gap-4 xl:col-start-1 xl:row-start-1">
           <ResumoMesCard
             mes={ym.mes}
             ano={ym.ano}
@@ -657,7 +653,7 @@ function Index() {
             contasVencidas={contasResumo.atrasadasCount}
           />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 xl:col-start-2 xl:row-span-2 xl:row-start-1">
           <SmartLimiteCard
             mes={ym.mes}
             ano={ym.ano}
@@ -665,11 +661,53 @@ function Index() {
             totalGastos={total}
           />
         </div>
+        <div className="min-w-0 xl:col-start-1 xl:row-start-2">
+          <SectionLabel>{t("sections.controle")}</SectionLabel>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-2 xl:gap-4">
+            <Link
+              to="/orcamento"
+              className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+            >
+              <PieChartIcon className="h-5 w-5 text-brand" />
+              <p className="text-sm font-semibold">{t("atalhos.orcamentoEyebrow")}</p>
+              <p className="num text-xs text-muted-foreground">
+                {limiteTotal ? `${formatBRL(total)} / ${formatBRL(limiteTotal)}` : formatBRL(total)}
+              </p>
+            </Link>
+            <Link
+              to="/guardado"
+              className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+            >
+              <Wallet className="h-5 w-5 text-brand" />
+              <p className="text-sm font-semibold">{t("atalhos.guardadoEyebrow")}</p>
+              <p className="num text-xs text-muted-foreground">{formatBRL(totalGuardado)}</p>
+            </Link>
+            <div className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4">
+              <Lock className="h-5 w-5 text-muted-foreground" />
+              <p className="text-sm font-semibold">{t("atalhos.fixosEyebrow")}</p>
+              <p className="num text-xs text-muted-foreground">{formatBRL(gastosFixos)}</p>
+            </div>
+            <Link
+              to="/metas"
+              className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
+            >
+              <Target className="h-5 w-5 text-brand" />
+              <p className="text-sm font-semibold">{t("atalhos.metasEyebrow")}</p>
+              <p className="num text-xs text-muted-foreground">
+                {metaProxima
+                  ? `${metaProxima.meta.nome} · ${Math.round(
+                      pctMeta(metaProxima.breakdown.total, metaProxima.meta.valorObjetivo),
+                    )}%`
+                  : `${metasAndamento.length}`}
+              </p>
+            </Link>
+          </div>
+        </div>
       </section>
 
       {/* Orçamento, alertas de contas, limite mensal e primeiros passos */}
       <section className="mt-4 grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
-        <div className="min-w-0 space-y-4">
+        <div className="min-w-0 space-y-4 empty:hidden">
           {temOrcamentoMes && (
             <OrcamentoCard
               categorias={categorias}
@@ -680,7 +718,7 @@ function Index() {
           )}
           {temAlertasDashboard && <AlertasContasCard contas={contas} />}
         </div>
-        <div className="min-w-0 space-y-4">
+        <div className="min-w-0 space-y-4 empty:hidden">
           {!!limiteTotal && (
             <LimiteMensalCard
               total={total}
@@ -698,52 +736,6 @@ function Index() {
           />
         </div>
       </section>
-
-
-      {/* LINHA 11 — Controle financeiro */}
-      <SectionLabel>{t("sections.controle")}</SectionLabel>
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:gap-4">
-        <Link
-          to="/orcamento"
-          className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
-        >
-          <PieChartIcon className="h-5 w-5 text-brand" />
-          <p className="text-sm font-semibold">{t("atalhos.orcamentoEyebrow")}</p>
-          <p className="num text-xs text-muted-foreground">
-            {limiteTotal ? `${formatBRL(total)} / ${formatBRL(limiteTotal)}` : formatBRL(total)}
-          </p>
-        </Link>
-        <Link
-          to="/guardado"
-          className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
-        >
-          <Wallet className="h-5 w-5 text-brand" />
-          <p className="text-sm font-semibold">{t("atalhos.guardadoEyebrow")}</p>
-          <p className="num text-xs text-muted-foreground">{formatBRL(totalGuardado)}</p>
-        </Link>
-        <div className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4">
-          <Lock className="h-5 w-5 text-muted-foreground" />
-          <p className="text-sm font-semibold">{t("atalhos.fixosEyebrow")}</p>
-          <p className="num text-xs text-muted-foreground">{formatBRL(gastosFixos)}</p>
-        </div>
-        <Link
-          to="/metas"
-          className="flex flex-col gap-1.5 rounded-3xl border border-border bg-card p-4 transition-colors hover:bg-card-elevated"
-        >
-          <Target className="h-5 w-5 text-brand" />
-          <p className="text-sm font-semibold">{t("atalhos.metasEyebrow")}</p>
-          <p className="num text-xs text-muted-foreground">
-            {metaProxima
-              ? `${metaProxima.meta.nome} · ${Math.round(
-                  pctMeta(metaProxima.breakdown.total, metaProxima.meta.valorObjetivo),
-                )}%`
-              : `${metasAndamento.length}`}
-          </p>
-
-
-        </Link>
-      </section>
-
 
       <AvisoTrialExpirandoBanner />
       <UpgradeCardsList max={4} />
@@ -953,7 +945,7 @@ function SaldoHeroCard({
   const pctReceita =
     entradas > 0 ? Math.min(100, Math.max(0, ((entradas - despesas) / entradas) * 100)) : 0;
   return (
-    <div className="relative h-full overflow-hidden rounded-2xl border border-border bg-card p-3.5 shadow-elevated animate-rise sm:p-4">
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-3.5 shadow-elevated animate-rise sm:p-4">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_75%_at_0%_0%,var(--brand-soft),transparent_60%)]"
@@ -970,7 +962,7 @@ function SaldoHeroCard({
           <Money
             value={saldo}
             className={cn(
-              "num mt-1.5 block text-[28px] font-bold leading-none tracking-tight sm:text-[32px]",
+              "num mt-1.5 block [overflow-wrap:anywhere] text-[28px] font-bold leading-none tracking-tight sm:text-[32px]",
               negativo ? "text-destructive" : "text-foreground",
             )}
           />
@@ -1060,7 +1052,7 @@ function QuickActionsBar() {
   return (
     <nav
       aria-label={t("quickActions.title")}
-      className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5"
+      className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5 xl:grid-cols-2 2xl:grid-cols-4"
     >
       {items.map((it) => (
         <Link
@@ -1108,7 +1100,7 @@ function KpiCard({
     warning: "bg-warning",
   }[tone];
   return (
-    <div className="group relative h-full overflow-hidden rounded-2xl border border-border bg-card p-3 shadow-card transition-all hover-lift hover:border-brand/40 animate-rise sm:p-3.5">
+    <div className="group relative min-w-0 overflow-hidden rounded-2xl border border-border bg-card p-3 shadow-card transition-all hover-lift hover:border-brand/40 animate-rise sm:p-3.5">
       <span aria-hidden className={cn("absolute left-0 top-0 h-full w-[3px]", toneBar)} />
       <div className="flex items-center justify-between gap-2">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -1118,9 +1110,9 @@ function KpiCard({
       </div>
       <Money
         value={valueNum}
-        className="num mt-2 block text-[18px] font-bold leading-tight tracking-tight sm:text-[19px]"
+        className="num mt-2 block [overflow-wrap:anywhere] text-[18px] font-bold leading-tight tracking-tight sm:text-[19px]"
       />
-      {hint && <p className="mt-0.5 truncate text-[10.5px] text-muted-foreground">{hint}</p>}
+      {hint && <p className="mt-0.5 text-[10.5px] text-muted-foreground">{hint}</p>}
     </div>
   );
 }

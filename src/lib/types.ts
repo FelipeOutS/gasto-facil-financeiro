@@ -280,7 +280,8 @@ export type Cartao = {
   atualizadoEm: string;
 };
 
-export const BANCOS_CARTAO_PADRAO: Array<{ nome: string; cor: string }> = [
+/** Emissores disponíveis no seletor de cartão, incluindo marcas de varejo. */
+export const EMISSORES_CARTAO_PADRAO: Array<{ nome: string; cor: string }> = [
   { nome: "Nubank", cor: "#820ad1" },
   { nome: "Itaú", cor: "#ec7000" },
   { nome: "Santander", cor: "#ec0000" },
@@ -292,8 +293,13 @@ export const BANCOS_CARTAO_PADRAO: Array<{ nome: string; cor: string }> = [
   { nome: "Caixa", cor: "#1c5aa8" },
   { nome: "PicPay", cor: "#21c25e" },
   { nome: "Will Bank", cor: "#0f9b5e" },
+  { nome: "Atacadão", cor: "#006943" },
+  { nome: "Assaí Atacadista", cor: "#f4f0e8" },
   { nome: "Outro", cor: "#8b5cf6" },
 ];
+
+/** Alias de compatibilidade com consumidores antigos. */
+export const BANCOS_CARTAO_PADRAO = EMISSORES_CARTAO_PADRAO;
 
 export type StatusFatura = "aberta" | "fechada" | "paga" | "vencida";
 

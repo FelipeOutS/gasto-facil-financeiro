@@ -38,9 +38,18 @@ function EditarCartaoPage() {
   }, [ready, cartao, navigate]);
 
   return (
-    <MobileShell wide>
-      <header className="pt-2 animate-rise">
-        <div className="mb-2 flex items-center gap-2">
+    <MobileShell wide className="flex flex-1 flex-col lg:block">
+      <header className="flex items-center gap-1 py-1 lg:block lg:pt-2">
+        <button
+          type="button"
+          onClick={back}
+          aria-label={t("form.back", { defaultValue: "Voltar" })}
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:hidden"
+        >
+          <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+        </button>
+        <h1 className="text-lg font-bold leading-tight tracking-tight lg:hidden">{t("form.editTitle")}</h1>
+        <div className="mb-2 hidden items-center gap-2 lg:flex">
           <button
             type="button"
             onClick={back}
@@ -58,16 +67,16 @@ function EditarCartaoPage() {
             <Home className="h-4 w-4" />
           </button>
         </div>
-        <h1 className="flex items-center gap-2 text-[22px] font-bold leading-tight tracking-tight">
+        <h1 className="hidden items-center gap-2 text-[22px] font-bold leading-tight tracking-tight lg:flex">
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-brand-soft text-brand-on-soft">
             <CreditCard className="h-4 w-4" />
           </span>
           {t("form.editTitle")}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("form.subtitle")}</p>
+        <p className="mt-1 hidden text-sm text-muted-foreground lg:block">{t("form.subtitle")}</p>
       </header>
 
-      <div className="mt-4 flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+      <div className="-mx-3 mt-2 flex flex-1 flex-col bg-card sm:mx-0 sm:overflow-hidden sm:rounded-2xl sm:border sm:border-border sm:shadow-card lg:mt-4 lg:flex-none">
         {!ready || !cartao ? (
           <div className="space-y-3 p-4">
             <Skeleton className="h-10 w-full" />
@@ -77,6 +86,7 @@ function EditarCartaoPage() {
         ) : (
           <CartaoForm
             editing={cartao}
+            pageLayout
             onCancel={back}
             onSaved={() => navigate({ to: "/cartoes/$id", params: { id } })}
           />

@@ -119,6 +119,42 @@ test("collapsed CSS viewport uses measured height, follows resize and releases l
     });
   }
 });
+test("full-screen card dialog recovers when WebView resolves 100dvh to zero", () => {
+  const node = document.createElement("div");
+  node.className = "cartoes-form-dialog h-[100dvh] max-h-[100dvh]";
+  document.body.append(node);
+  let cssHeight = "0px";
+  const styleSpy = spyOn(globalThis, "getComputedStyle").mockImplementation((() => ({
+    height: cssHeight,
+    maxHeight: "0px",
+  })) as any);
+  const originalHeight = window.innerHeight;
+  const originalViewport = window.visualViewport;
+  Object.defineProperty(window, "innerHeight", { configurable: true, value: 800, writable: true });
+  Object.defineProperty(window, "visualViewport", { configurable: true, value: undefined });
+  const dispose = watchOverlayViewport(node);
+  try {
+    expect(node.style.height).toBe("800px");
+    expect(node.style.maxHeight).toBe("800px");
+    window.innerHeight = 600;
+    window.dispatchEvent(new Event("resize"));
+    expect(node.style.height).toBe("600px");
+    cssHeight = "600px";
+    window.dispatchEvent(new Event("resize"));
+    expect(node.style.height).toBe(""); // native CSS recovered
+    dispose();
+    expect(node.style.maxHeight).toBe("");
+    window.innerHeight = 900;
+    window.dispatchEvent(new Event("resize"));
+    expect(node.style.height).toBe("");
+  } finally {
+    dispose();
+    styleSpy.mockRestore();
+    node.remove();
+    Object.defineProperty(window, "innerHeight", { configurable: true, value: originalHeight });
+    Object.defineProperty(window, "visualViewport", { configurable: true, value: originalViewport });
+  }
+});
 test("healthy CSS max-height is not overridden", () => {
   const node = document.createElement("div");
   node.className = "max-h-[90vh]";

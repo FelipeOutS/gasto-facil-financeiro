@@ -527,7 +527,7 @@ function CartMode({ lista }: { lista: MercadoLista }) {
       {resumo.totalItens > 0 && (
         <div
           className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-card/95 px-3 pt-2 shadow-elevated backdrop-blur md:hidden"
-          style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+          style={{ paddingBottom: "max(0.5rem, var(--app-safe-bottom))" }}
           role="region"
           aria-label={t("cartV2.stickyTotal")}
         >

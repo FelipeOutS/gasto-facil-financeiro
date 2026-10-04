@@ -4,7 +4,6 @@ import { Percent, LineChart, Landmark, RefreshCw, AlertCircle, Lightbulb } from 
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { LoadErrorState } from "@/components/ui/load-error-state";
 import {
   loadBcbRadar,
   type BcbIndicator,
@@ -74,7 +73,7 @@ export function RadarEconomicoInteligenteCard({
 
   return (
     <section
-      className={cn("flex h-full flex-col rounded-2xl border bg-card p-5 shadow-sm", className)}
+      className={cn("flex flex-col rounded-2xl border bg-card p-5 shadow-sm", className)}
       aria-label={tD("radarInteligente.aria")}
     >
       <header className="flex items-start justify-between gap-3">
@@ -110,12 +109,28 @@ export function RadarEconomicoInteligenteCard({
       )}
 
       {errored && !loading && !data?.indicators.length && (
-        <div className="mt-3">
-          <LoadErrorState
-            variant="compact"
-            description={t("loadError.bcbIndicators")}
-            onRetry={() => carregar(true)}
-          />
+        <div
+          role="alert"
+          aria-live="polite"
+          className="mt-3 flex flex-col gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3 sm:flex-row sm:items-center"
+        >
+          <div className="flex min-w-0 items-start gap-2.5 sm:flex-1">
+            <AlertCircle className="h-5 w-5 shrink-0 text-destructive" aria-hidden />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">{t("loadError.title")}</p>
+              <p className="text-xs text-muted-foreground">{t("loadError.bcbIndicators")}</p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void carregar(true)}
+            className="min-h-11 w-full shrink-0 sm:min-h-9 sm:w-auto"
+          >
+            <RefreshCw className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+            {t("loadError.retry")}
+          </Button>
         </div>
       )}
 

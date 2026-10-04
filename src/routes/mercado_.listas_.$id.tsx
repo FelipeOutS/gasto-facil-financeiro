@@ -495,7 +495,7 @@ function ListaContent({ lista, onBack }: { lista: MercadoLista; onBack: () => vo
       {lista.entries.length > 0 && (
         <div
           className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-card/95 px-4 py-3 shadow-elevated backdrop-blur md:hidden"
-          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+          style={{ paddingBottom: "calc(0.75rem + var(--app-safe-bottom))" }}
         >
           <div className="mx-auto flex max-w-screen-sm items-center justify-between gap-3">
             <div className="min-w-0">

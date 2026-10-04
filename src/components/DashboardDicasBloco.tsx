@@ -168,7 +168,7 @@ export function DashboardDicasBloco({ className }: { className?: string }) {
         </div>
       </div>
 
-      <div className="mt-4 space-y-3 flex-1">
+      <div className="mt-4 space-y-3">
         {visiveis.map((insight) => {
           const Icon = iconForInsight(insight.type);
           return (

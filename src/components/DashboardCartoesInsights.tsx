@@ -265,7 +265,7 @@ export function DashboardCartoesInsights({
 
   const containerCls =
     slot === "insights"
-      ? "flex h-full flex-col gap-3.5 sm:gap-4 [&>section:last-child]:flex-1"
+      ? "flex flex-col gap-3.5 sm:gap-4"
       : slot === "lists"
         ? "grid grid-cols-1 gap-3.5 lg:grid-cols-2 lg:gap-4 [&>*:only-child]:lg:col-span-2"
         : "grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-4";
@@ -321,7 +321,13 @@ export function DashboardCartoesInsights({
               {t("cartoesInsights.verTodos")}
             </Link>
           </div>
-          <ul className="mt-3 space-y-2.5">
+          <ul
+            className={cn(
+              "mt-3 space-y-2.5",
+              slot === "insights" &&
+                "2xl:grid 2xl:grid-cols-2 2xl:items-start 2xl:gap-2.5 2xl:space-y-0 2xl:[&>*:only-child]:col-span-2",
+            )}
+          >
             {usoCartoes.map((u) => {
               const passou = u.limite > 0 && u.usado > u.limite;
               const proximo = u.limite > 0 && u.pct >= 80 && !passou;
@@ -342,21 +348,20 @@ export function DashboardCartoesInsights({
                   }}
                 >
                   <div className="flex items-center gap-3">
-                    <span
-                      className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl"
-                      style={{ background: u.cartao.cor }}
-                    >
-                      <BrandLogo
-                        name={u.cartao.banco}
-                        variant="bank"
-                        onDark
-                        className="h-6 w-12"
-                        imgClassName="object-left"
-                      />
-                    </span>
+                    <BrandLogo
+                      name={u.cartao.banco}
+                      variant="bank"
+                      bankPresentation="badge"
+                    />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold">{u.cartao.nome}</p>
-                      <p className="truncate text-[11px] text-muted-foreground">
+                      <p
+                        className={cn(
+                          "truncate text-[11px] text-muted-foreground",
+                          slot === "insights" &&
+                            "2xl:overflow-visible 2xl:whitespace-normal 2xl:text-clip 2xl:break-words",
+                        )}
+                      >
                         {u.qtd}{" "}
                         {u.qtd === 1
                           ? t("cartoesInsights.compraSing")
@@ -442,18 +447,11 @@ export function DashboardCartoesInsights({
                     onClick={() => onAbrirFatura?.(p.cartaoId, p.mes, p.ano)}
                     className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card-elevated/40 p-3 text-left transition-colors hover:bg-card-elevated"
                   >
-                    <span
-                      className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl"
-                      style={{ background: p.cor }}
-                    >
-                      <BrandLogo
-                        name={p.banco}
-                        variant="bank"
-                        onDark
-                        className="h-6 w-12"
-                        imgClassName="object-left"
-                      />
-                    </span>
+                    <BrandLogo
+                      name={p.banco}
+                      variant="bank"
+                      bankPresentation="badge"
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <p className="truncate text-sm font-semibold">{p.cartaoNome}</p>

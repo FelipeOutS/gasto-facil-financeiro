@@ -15,18 +15,29 @@ export function overlayHeightFallback(className: string, height: number): string
 /** WebView can report 0px for viewport CSS units while visualViewport is valid.
  * Install on the actual portalled panel, and release listeners on unmount. */
 export function watchOverlayViewport(node: HTMLElement): () => void {
-  const original = node.style.maxHeight;
-  let applied = false;
+  const originalMaxHeight = node.style.maxHeight;
+  const originalHeight = node.style.height;
+  let appliedMaxHeight = false;
+  let appliedHeight = false;
   const update = () => {
     // Remove only our own override before checking whether native CSS recovered.
-    if (applied) node.style.maxHeight = original;
-    applied = false;
-    if (getComputedStyle(node).maxHeight !== "0px") return;
+    if (appliedMaxHeight) node.style.maxHeight = originalMaxHeight;
+    if (appliedHeight) node.style.height = originalHeight;
+    appliedMaxHeight = false;
+    appliedHeight = false;
+    const style = getComputedStyle(node);
     const height = window.visualViewport?.height || window.innerHeight;
-    const fallback = overlayHeightFallback(node.className, height);
-    if (fallback) {
-      node.style.maxHeight = fallback;
-      applied = true;
+    if (style.maxHeight === "0px") {
+      const fallback = overlayHeightFallback(node.className, height);
+      if (fallback) {
+        node.style.maxHeight = fallback;
+        appliedMaxHeight = true;
+      }
+    }
+    // Some Android WebViews also resolve an explicit 100dvh panel height to 0px.
+    if (style.height === "0px" && /(?:^|\s)h-\[100dvh\](?=\s|$)/.test(node.className) && height > 0) {
+      node.style.height = `${height}px`;
+      appliedHeight = true;
     }
   };
   update();
@@ -35,7 +46,8 @@ export function watchOverlayViewport(node: HTMLElement): () => void {
   return () => {
     window.removeEventListener("resize", update);
     window.visualViewport?.removeEventListener("resize", update);
-    if (applied) node.style.maxHeight = original;
+    if (appliedMaxHeight) node.style.maxHeight = originalMaxHeight;
+    if (appliedHeight) node.style.height = originalHeight;
   };
 }
 
