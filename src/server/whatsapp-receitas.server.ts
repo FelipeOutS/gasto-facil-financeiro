@@ -16,6 +16,7 @@ import { whatsappMessages as M } from "./whatsapp-messages";
 import { getSubscriptionForUserIdentity } from "./subscription.server";
 import type { TipoReceita } from "@/lib/types";
 import { validateFinancialAmount } from "@/lib/financial-limits";
+import { financialIdForWhatsAppMessage } from "./whatsapp-financial-idempotency.server";
 // WA-C11 3B.2.C.1 Block 3 — quota financeira do WhatsApp para receitas
 // (única e recorrente). Ordem: sessão em confirmação → gate → escrita.
 // Fail-closed sem `external_id` (idempotência da quota depende dele).
@@ -341,12 +342,6 @@ export type PersistirReceitaResult =
   | { ok: true; resposta: string; receitaId: string; recorrenciaId?: string }
   | { ok: false; resposta: string };
 
-function genId(): string {
-  return typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
 /**
  * WA-R1-Fix — Persistência atômica de receita.
  *
@@ -363,6 +358,7 @@ export async function persistirReceita(
   userId: string,
   s: ReceitaSession,
   externalMessageId?: string,
+  pendingSessionId?: string,
 ): Promise<PersistirReceitaResult> {
   // WA-C11 3B.2.C.1 Block 3 — Fail-closed sem external_id: a idempotência
   // da quota financeira depende dele. Não consulta plano, não abre RPC,
@@ -371,6 +367,7 @@ export async function persistirReceita(
     console.error("[whatsapp] persistirReceita missing externalMessageId");
     return { ok: false, resposta: M.receita.erroAoSalvar() };
   }
+  const actionId = pendingSessionId ? `session:${pendingSessionId}` : externalMessageId;
 
   const plan = await getUserPlan(userId);
   const isFreeAds = plan === "free_ads" || plan === "free" || plan === "sem_assinatura";
@@ -391,7 +388,7 @@ export async function persistirReceita(
   // uma única "ação financeira" por confirmação do usuário).
   const gateOutcome = await assertFinancialActionQuotaForWhatsApp({
     userId,
-    externalMessageId,
+    externalMessageId: actionId,
     actionType: s.recorrente ? "income_recurring" : "income_single",
   });
   if (!gateOutcome.allowed) {
@@ -417,8 +414,9 @@ export async function persistirReceita(
       return { ok: false, resposta: M.receita.erroAoSalvar() };
     }
 
-    const { data, error } = await supabaseAdmin.rpc("create_recurring_income", {
+    const { data, error } = await supabaseAdmin.rpc("whatsapp_create_recurring_income_once", {
       p_user_id: userId,
+      p_external_id: actionId,
       p_descricao: descricao,
       p_valor: valor,
       p_data: baseData,
@@ -426,19 +424,17 @@ export async function persistirReceita(
       p_frequencia: s.frequencia ?? "mensal",
       p_dia_mes: s.frequencia === "mensal" ? (s.diaMes ?? null) : null,
       p_dia_semana: s.frequencia === "semanal" ? (s.diaSemana ?? null) : null,
-      p_observacao: null,
-      p_origem: "whatsapp",
     });
 
-    if (error || !Array.isArray(data) || data.length === 0) {
-      console.error("[whatsapp] receita recorrente RPC failed", error);
+    if (error || !data || typeof data !== "object") {
+      console.error("[whatsapp] receita recorrente RPC failed", error?.code ?? "no_row");
       return { ok: false, resposta: M.receita.erroAoSalvar() };
     }
-    const row = data[0] as { receita_id?: string; recorrencia_id?: string };
+    const row = data as { receita_id?: string; recorrencia_id?: string };
     const receitaId = row?.receita_id;
     const recorrenciaId = row?.recorrencia_id;
     if (!receitaId || !recorrenciaId) {
-      console.error("[whatsapp] receita recorrente RPC retornou shape inesperado", row);
+      console.error("[whatsapp] receita recorrente RPC retornou shape inesperado");
       return { ok: false, resposta: M.receita.erroAoSalvar() };
     }
 
@@ -479,7 +475,7 @@ export async function persistirReceita(
       recoRow.status !== "ativa" ||
       !recoRow.proxima_cobranca
     ) {
-      console.error("[whatsapp] receita recorrente readback failed", { recRow, recoRow });
+      console.error("[whatsapp] receita recorrente readback failed");
       return { ok: false, resposta: M.receita.erroAoSalvar() };
     }
 
@@ -497,7 +493,7 @@ export async function persistirReceita(
 
   // -------- ÚNICA --------
   const [y, m] = baseData.split("-").map(Number);
-  const primeiroReceitaId = genId();
+  const primeiroReceitaId = financialIdForWhatsAppMessage(userId, actionId, "income_single");
   const row = {
     id: primeiroReceitaId,
     user_id: userId,
@@ -512,8 +508,20 @@ export async function persistirReceita(
   };
   const { error } = await supabaseAdmin.from("receitas").insert(row);
   if (error) {
-    console.error("[whatsapp] receita insert failed", error);
-    return { ok: false, resposta: M.receita.erroAoSalvar() };
+    if (error.code !== "23505") {
+      console.error("[whatsapp] receita insert failed", error.code ?? "unknown");
+      return { ok: false, resposta: M.receita.erroAoSalvar() };
+    }
+    const { data: prior, error: priorError } = await supabaseAdmin
+      .from("receitas")
+      .select("id, user_id, origem")
+      .eq("id", primeiroReceitaId)
+      .eq("user_id", userId)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (priorError || !prior || prior.origem !== "whatsapp") {
+      return { ok: false, resposta: M.receita.erroAoSalvar() };
+    }
   }
 
   return {

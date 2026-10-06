@@ -53,6 +53,8 @@ const fakeState = {
   shouldBlockReply: true,
   ocrAllowed: true,
   externalConfirmed: false,
+  optoutOutcome: "revoked" as "revoked" | "unknown" | "retry",
+  confirmationOutcome: "not_confirmation" as "not_confirmation" | "verified" | "invalid" | "retry",
   processOutcome: {
     status: "salva" as string,
     resposta: "ok" as string | null,
@@ -61,6 +63,8 @@ const fakeState = {
   // Histórico de chamadas: usado para asserts de "NÃO chamou".
   calls: {
     canUseWhatsAppForSender: 0,
+    executeOptoutForSender: 0,
+    completeWhatsAppLinkVerification: 0,
     podeUsarOcrComprovante: 0,
     processarMensagemWhatsApp: 0,
     sendWhatsAppReply: [] as Array<{ telefone: string; texto: string }>,
@@ -76,9 +80,13 @@ function resetState() {
   fakeState.shouldBlockReply = true;
   fakeState.ocrAllowed = true;
   fakeState.externalConfirmed = false;
+  fakeState.optoutOutcome = "revoked";
+  fakeState.confirmationOutcome = "not_confirmation";
   fakeState.processOutcome = { status: "salva", resposta: "ok", gastoId: "g-1" };
   fakeState.calls = {
     canUseWhatsAppForSender: 0,
+    executeOptoutForSender: 0,
+    completeWhatsAppLinkVerification: 0,
     podeUsarOcrComprovante: 0,
     processarMensagemWhatsApp: 0,
     sendWhatsAppReply: [],
@@ -134,6 +142,23 @@ mock.module("@/server/whatsapp-authz.server", () => ({
   },
   shouldSendBlockedReply: async (_phone: string) => fakeState.shouldBlockReply,
   WHATSAPP_BLOCKED_REPLY: "Olá! No momento, este número não está vinculado a uma conta ativa.",
+}));
+
+mock.module("@/server/whatsapp-optout.server", () => ({
+  detectOptout: (text: string) => ({
+    isOptout: ["parar", "sair", "stop", "cancelar recebimento"].includes(text.toLowerCase().trim()),
+    matchedCommand: text.toLowerCase().trim(),
+  }),
+  executeOptoutForSender: async () => {
+    fakeState.calls.executeOptoutForSender += 1;
+    return fakeState.optoutOutcome;
+  },
+}));
+mock.module("@/server/whatsapp-link-verification.server", () => ({
+  completeWhatsAppLinkVerification: async () => {
+    fakeState.calls.completeWhatsAppLinkVerification += 1;
+    return fakeState.confirmationOutcome;
+  },
 }));
 
 mock.module("@/server/whatsapp-comprovantes.server", () => ({
@@ -358,12 +383,44 @@ test("POST sem cabeçalho de assinatura → 403", async () => {
   expect(fakeState.calls.canUseWhatsAppForSender).toBe(0);
 });
 
-test("POST com WHATSAPP_ENABLED=false → 503 e NÃO processa", async () => {
+test("POST com WHATSAPP_ENABLED=false → não processa finanças", async () => {
   process.env.WHATSAPP_ENABLED = "false";
   const req = signedPostRequest(metaTextPayload());
   const res = await POST({ request: req });
-  expect(res.status).toBe(503);
-  expect(await res.json()).toEqual({ error: "whatsapp_not_configured" });
+  expect(res.status).toBe(200);
+  expect(fakeState.calls.canUseWhatsAppForSender).toBe(0);
+  expect(fakeState.calls.processarMensagemWhatsApp).toBe(0);
+});
+
+test("opt-out com HMAC inválido não revoga vínculo", async () => {
+  const req = signedPostRequest(metaTextPayload("PARAR"), { signature: "sha256=" + "0".repeat(64) });
+  const res = await POST({ request: req });
+  expect(res.status).toBe(403);
+  expect(fakeState.calls.executeOptoutForSender).toBe(0);
+});
+
+test.each([
+  ["plano ativo", true, true],
+  ["plano expirado", false, true],
+  ["vínculo inativo", false, true],
+  ["feature flag desligada", false, false],
+  ["sem acesso financeiro", false, true],
+])("opt-out assinado antes dos gates: %s", async (_case, eligible, enabled) => {
+  fakeState.elig = { allowed: eligible, userId: eligible ? "u-test" : undefined };
+  process.env.WHATSAPP_ENABLED = enabled ? "true" : "false";
+  const res = await POST({ request: signedPostRequest(metaTextPayload("PARAR")) });
+  expect(res.status).toBe(200);
+  expect(fakeState.calls.executeOptoutForSender).toBe(1);
+  expect(fakeState.calls.canUseWhatsAppForSender).toBe(0);
+  expect(fakeState.calls.processarMensagemWhatsApp).toBe(0);
+});
+
+test("confirmação assinada funciona com produto desligado e não chama pipeline financeiro", async () => {
+  process.env.WHATSAPP_ENABLED = "false";
+  fakeState.confirmationOutcome = "verified";
+  const res = await POST({ request: signedPostRequest(metaTextPayload("CONFIRMAR GASTO INTELIGENTE ABCDEFGHJKLM")) });
+  expect(res.status).toBe(200);
+  expect(fakeState.calls.completeWhatsAppLinkVerification).toBe(1);
   expect(fakeState.calls.canUseWhatsAppForSender).toBe(0);
   expect(fakeState.calls.processarMensagemWhatsApp).toBe(0);
 });

@@ -3,6 +3,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { processarMensagemWhatsApp } from "@/server/whatsapp.server";
 import { assertFeatureAccess } from "@/server/feature-gate.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { beginWhatsAppLinkVerification } from "@/server/whatsapp-link-verification.server";
 
 /** Normaliza telefone: mantém apenas dígitos. */
 function normTel(raw: string): string {
@@ -60,14 +62,14 @@ export const listWhatsAppLinks = createServerFn({ method: "GET" })
     const sb = context.supabase as any;
     const { data, error } = await sb
       .from("whatsapp_links")
-      .select("id, telefone, ativo, ultimo_uso, created_at, opt_in_em, opt_in_version, revogado_em")
+      .select("id, telefone, ativo, ultimo_uso, created_at, opt_in_em, opt_in_version, revogado_em, verification_state")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return { links: data ?? [] };
   });
 
 /** Versão atual da copy de consentimento (WhatsApp como canal de lançamento de gastos). */
-export const WHATSAPP_OPT_IN_VERSION = "whatsapp-expense-v1";
+export const WHATSAPP_OPT_IN_VERSION = "whatsapp-channel-v2";
 
 /**
  * Versão específica para o fluxo de re-confirmação de consentimento
@@ -108,15 +110,15 @@ export const confirmWhatsAppLinkConsent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     await assertWhatsAppAccess(context.userId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sb = context.supabase as any;
     const { userId } = context;
 
-    // Localiza o vínculo do PRÓPRIO usuário (RLS já restringe a auth.uid()).
-    const { data: link, error: selErr } = await sb
+    // Re-consent only for an already verified, active legacy link. A revoked
+    // number must prove possession again through the pending-link flow.
+    const { data: link, error: selErr } = await supabaseAdmin
       .from("whatsapp_links")
-      .select("id, ativo, telefone, revogado_em")
+      .select("id, ativo, telefone, revogado_em, verification_state")
       .eq("user_id", userId)
+      .eq("ativo", true)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -125,20 +127,17 @@ export const confirmWhatsAppLinkConsent = createServerFn({ method: "POST" })
       return { consentimento_atualizado: "falhou" as const };
     }
 
-    // Se o vínculo está revogado ou inativo, isto é reativação — cai no gate.
-    const isReactivation = !link.ativo || link.revogado_em !== null;
-    if (isReactivation) {
-      await assertNewLinksAllowed();
+    if (!link.ativo || link.revogado_em || link.verification_state !== "verified") {
+      return { consentimento_atualizado: "falhou" as const };
     }
 
     const nowIso = new Date().toISOString();
-    const { error: updErr } = await sb
+    const { error: updErr } = await supabaseAdmin
       .from("whatsapp_links")
       .update({
         opt_in_em: nowIso,
         opt_in_version: WHATSAPP_CONSENT_REFRESH_VERSION,
         opt_in_user_agent: data.user_agent ?? null,
-        revogado_em: null,
       })
       .eq("id", link.id)
       .eq("user_id", userId);
@@ -169,55 +168,20 @@ export const upsertWhatsAppLink = createServerFn({ method: "POST" })
         "Para usar o lançamento por WhatsApp, você precisa aceitar o consentimento de uso desse canal.",
       );
     }
-    const tel = normTel(data.telefone);
-    if (tel.length < 8) throw new Error("Telefone inválido");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sb = context.supabase as any;
-    const { userId } = context;
-
-    // Cross-user: existência global do telefone (RLS não vê linhas de outros;
-    // usamos a query com filtro explícito, e a unicidade real vem da constraint
-    // do banco). Se pertence a outro usuário, negamos sem revelar identidade.
-    const { data: existing } = await sb
-      .from("whatsapp_links")
-      .select("id, user_id")
-      .eq("telefone", tel)
-      .maybeSingle();
-
-    if (existing && existing.user_id !== userId) {
-      throw new Error("Esse número já está vinculado a outra conta.");
-    }
-
-    const nowIso = new Date().toISOString();
-    const consentPayload = {
-      opt_in_em: nowIso,
-      opt_in_version: WHATSAPP_OPT_IN_VERSION,
-      opt_in_user_agent: data.user_agent ?? null,
-      revogado_em: null as string | null,
+    void data.ativo; // Kept only for compatibility; it never activates a link.
+    const result = await beginWhatsAppLinkVerification({
+      userId: context.userId,
+      phone: data.telefone,
+      consentVersion: WHATSAPP_OPT_IN_VERSION,
+      userAgent: data.user_agent,
+    });
+    return {
+      id: result.linkId,
+      telefone: result.phone,
+      status: result.status,
+      mensagem_confirmacao: result.message ?? null,
+      expira_em: result.expiresAt ?? null,
     };
-
-    if (existing) {
-      const { error } = await sb
-        .from("whatsapp_links")
-        .update({ ativo: data.ativo ?? true, ...consentPayload })
-        .eq("id", existing.id)
-        .eq("user_id", userId);
-      if (error) throw new Error(error.message);
-      return { id: existing.id, telefone: tel };
-    }
-
-    const { data: created, error } = await sb
-      .from("whatsapp_links")
-      .insert({
-        user_id: userId,
-        telefone: tel,
-        ativo: data.ativo ?? true,
-        ...consentPayload,
-      })
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    return { id: created.id, telefone: tel };
   });
 
 /**
@@ -236,23 +200,16 @@ export const deleteWhatsAppLink = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sb = context.supabase as any;
     const { userId } = context;
 
-    // Filtro explícito por user_id: nunca depende apenas de RLS.
-    const { data: updated, error } = await sb
-      .from("whatsapp_links")
-      .update({
-        ativo: false,
-        revogado_em: new Date().toISOString(),
-      })
-      .eq("id", data.id)
-      .eq("user_id", userId)
-      .select("id")
-      .maybeSingle();
+    // One transaction with the confirmation lock; no in-flight token can
+    // reactivate the link after the user removes it.
+    const { data: revokedCount, error } = await supabaseAdmin.rpc("whatsapp_revoke_links", {
+      p_user_id: userId,
+      p_link_id: data.id,
+    });
     if (error) throw new Error(error.message);
-    if (!updated) {
+    if (!revokedCount) {
       // Não vaza identidade: mesma mensagem para "não existe" e "de outro dono".
       throw new Response(
         JSON.stringify({ error: "not_found", message: "Vínculo não encontrado." }),

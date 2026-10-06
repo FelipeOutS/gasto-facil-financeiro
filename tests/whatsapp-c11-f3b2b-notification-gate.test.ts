@@ -183,6 +183,15 @@ test("vínculo inativo → bloqueada", async () => {
   expect(out.reason).toBe("entitlement_denied");
 });
 
+test("vínculo pendente sem opt-in não recebe notificação financeira", async () => {
+  const out = await canCreateNotificationForUser(
+    { userId: USER },
+    makeDeps({ entitlement: ent({ allowed: false, reason: "whatsapp_link_inactive", linkActive: false, optInActive: false }) }),
+  );
+  expect(out.allowed).toBe(false);
+  expect(out.reason).toBe("entitlement_denied");
+});
+
 test("opt-in ausente → bloqueada", async () => {
   const out = await canCreateNotificationForUser(
     { userId: USER },

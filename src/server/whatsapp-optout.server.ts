@@ -27,6 +27,7 @@ const OPTOUT_COMMANDS: readonly string[] = Object.freeze([
   "parar de receber",
   "nao quero mais mensagens",
   "nao quero mais receber",
+  "cancelar recebimento",
   "nao quero mais",
   "remover whatsapp",
   "desativar whatsapp",
@@ -190,18 +191,13 @@ export async function executeOptoutRevocation(args: {
   );
   const previousActive = activeLinks.length > 0;
 
-  // 2) Revoga todos os vínculos do usuário (soft revoke).
-  if (previousActive) {
-    const nowIso = (args.now ?? new Date()).toISOString();
-    const { error: updErr } = await sb
-      .from("whatsapp_links")
-      .update({ ativo: false, revogado_em: nowIso })
-      .eq("user_id", args.userId)
-      .is("revogado_em", null);
-    if (updErr) {
-      return { ok: false, audit: null, reason: "revoke_error" };
-    }
-  }
+  // Link revocation and token invalidation share one DB transaction and the
+  // confirmation lock. Either ordering of PARAR vs CONFIRMAR ends revoked.
+  const { error: revokeErr } = await sb.rpc("whatsapp_revoke_links", {
+    p_user_id: args.userId,
+    p_link_id: null,
+  });
+  if (revokeErr) return { ok: false, audit: null, reason: "revoke_error" };
 
   // 3) Invalida SOMENTE notifications pending sem attempt em curso.
   //    Nunca toca processing/sending/ambiguous/sent/delivered/read/canary.
@@ -236,4 +232,41 @@ export async function executeOptoutRevocation(args: {
   }
 
   return { ok: true, audit };
+}
+
+/** Resolve ownership by the Meta sender, including inactive links. */
+export async function executeOptoutForSender(args: {
+  senderPhone: string;
+  matchedCommand: string | null;
+  externalId: string | null;
+}): Promise<"revoked" | "unknown" | "retry"> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { canonicalWhatsAppPhone } = await import("./whatsapp-link-verification.server");
+  const digits = args.senderPhone.replace(/\D/g, "");
+  if (!digits) return "unknown";
+  const candidates = new Set([digits]);
+  if (digits.startsWith("55")) candidates.add(digits.slice(2));
+  else candidates.add(`55${digits}`);
+  const canonical = canonicalWhatsAppPhone(digits);
+  if (canonical) {
+    candidates.add(canonical);
+    candidates.add(canonical.slice(2));
+    candidates.add(canonical.slice(0, 4) + canonical.slice(5));
+    candidates.add(canonical.slice(2, 4) + canonical.slice(5));
+  }
+  const { data, error } = await supabaseAdmin
+    .from("whatsapp_links")
+    .select("user_id")
+    .in("telefone", Array.from(candidates))
+    .limit(2);
+  if (error) return "retry";
+  const owners = new Set((data ?? []).map((row) => row.user_id));
+  if (owners.size !== 1) return "unknown";
+  const result = await executeOptoutRevocation({
+    userId: Array.from(owners)[0],
+    origin: "whatsapp",
+    matchedCommand: args.matchedCommand,
+    correlationId: args.externalId ?? "wa-optout",
+  });
+  return result.ok ? "revoked" : "retry";
 }

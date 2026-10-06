@@ -69,6 +69,18 @@ describe("WA-C3.1 — detector com data embutida", () => {
     expect(r?.paymentDate).toContain("dia 5");
   });
 
+  it("distingue baixa financeira de compromisso mesmo com verbo 'marcar'", () => {
+    expect(detectMarkAsPaidIntent("marcar internet como paga dia 5")?.termo).toBe("internet");
+    expect(detectMarkAsPaidIntent("marcar conta de luz como paga ontem")?.termo).toBe("conta de luz");
+    expect(detectMarkAsPaidIntent("colocar aluguel como pago")?.termo).toBe("aluguel");
+    expect(detectMarkAsPaidIntent("dar baixa no aluguel")?.termo).toBe("aluguel");
+    expect(detectMarkAsPaidIntent("quitar aluguel")?.termo).toBe("aluguel");
+    expect(detectMarkAsPaidIntent("paguei o aluguel dia 5")?.paymentDate).toContain("dia 5");
+    expect(detectMarkAsPaidIntent("marcar dentista dia 10")).toBeNull();
+    expect(detectMarkAsPaidIntent("marcar reunião amanhã às 15h")).toBeNull();
+    expect(detectMarkAsPaidIntent("marcar consulta sexta-feira")).toBeNull();
+  });
+
   it("extrai termo e DD/MM (dei baixa)", () => {
     const r = detectMarkAsPaidIntent("dei baixa na academia em 03/07");
     expect(r?.termo).toBe("academia");
@@ -135,19 +147,76 @@ describe("WA-C3.1 — fluxo end-to-end com data embutida", () => {
 
   it("'marcar aluguel como pago dia 5' usa dia 5 do mês corrente", async () => {
     resetState({ contas: [makeConta({ id: "c-alug", nome: "Aluguel" })] });
-    await processarMensagemWhatsApp(msg("marcar aluguel como pago dia 5"));
-    await processarMensagemWhatsApp(msg("sim", "ext-c"));
+    const preview = await processarMensagemWhatsApp(msg("marcar aluguel como pago dia 5"));
+    expect(preview.status).toBe("pendente");
+    expect(state.contasData[0].status).toBe("pendente");
     const today = todayISOInAppTz();
     const [y, m] = today.split("-");
     const expected = `${y}-${m}-05`;
-    // Se "dia 5" for futuro neste ciclo o teste vira o fluxo futuro;
-    // nos demais, baixa direta.
-    if (expected > today) {
-      // pulamos — caímos no fluxo futuro (coberto em outro teste).
-      return;
-    }
+    if (expected > today) expect(preview.resposta).toMatch(/ainda não chegou/i);
+    else expect(preview.resposta).toContain("Encontrei esta conta pendente");
+    const saved = await processarMensagemWhatsApp(msg("sim", "ext-c"));
+    expect(saved.status).toBe("salva");
+    expect(state.contasData[0].status).toBe("pago");
     expect(state.contasData[0].data_pagamento).toBe(expected);
+    expect(state.generic.agenda_items ?? []).toHaveLength(0);
   });
+
+  for (const [phrase, name, date] of [
+    ["marcar aluguel como pago hoje", "Aluguel", todayISOInAppTz()],
+    ["marcar aluguel como pago ontem", "Aluguel", pastISO(1)],
+    ["marcar internet como paga dia 5", "Internet", `${todayISOInAppTz().slice(0, 8)}05`],
+    ["marcar conta de luz como paga ontem", "Conta de Luz", pastISO(1)],
+    ["paguei o aluguel dia 5", "Aluguel", `${todayISOInAppTz().slice(0, 8)}05`],
+    ["colocar aluguel como pago", "Aluguel", todayISOInAppTz()],
+    ["dar baixa no aluguel", "Aluguel", todayISOInAppTz()],
+    ["quitar aluguel", "Aluguel", todayISOInAppTz()],
+  ] as const) {
+    it(`${phrase} segue para baixa da conta`, async () => {
+      resetState({ contas: [makeConta({ id: "c-target", nome: name })] });
+      const preview = await processarMensagemWhatsApp(msg(phrase));
+      expect(preview.status).toBe("pendente");
+      expect(state.contasData[0].status).toBe("pendente");
+      const saved = await processarMensagemWhatsApp(msg("sim"));
+      expect(saved.status).toBe("salva");
+      expect(state.contasData[0].status).toBe("pago");
+      expect(state.contasData[0].data_pagamento).toBe(date);
+      expect(state.generic.agenda_items ?? []).toHaveLength(0);
+    });
+  }
+
+  it("contas ambíguas preservam o dia pedido após a escolha", async () => {
+    resetState({ contas: [
+      makeConta({ id: "c-first", nome: "Aluguel" }),
+      makeConta({ id: "c-second", nome: "Aluguel" }),
+    ] });
+    const choice = await processarMensagemWhatsApp(msg("marcar aluguel como pago dia 5"));
+    expect(choice.status).toBe("pendente");
+    expect(choice.resposta).toMatch(/Escolha uma/i);
+    expect(state.contasData.every((row) => row.status === "pendente")).toBe(true);
+    const preview = await processarMensagemWhatsApp(msg("2"));
+    expect(preview.status).toBe("pendente");
+    const expected = `${todayISOInAppTz().slice(0, 8)}05`;
+    if (expected > todayISOInAppTz()) expect(preview.resposta).toMatch(/ainda não chegou/i);
+    else expect(preview.resposta).toContain("05/");
+    const saved = await processarMensagemWhatsApp(msg("sim"));
+    expect(saved.status).toBe("salva");
+    expect(state.contasData.find((row) => row.id === "c-first")?.status).toBe("pendente");
+    expect(state.contasData.find((row) => row.id === "c-second")?.data_pagamento).toBe(expected);
+  });
+
+  for (const phrase of [
+    "marcar dentista dia 10",
+    "marcar reunião amanhã às 15h",
+    "marcar consulta sexta-feira",
+  ]) {
+    it(`${phrase} continua na Agenda`, async () => {
+      resetState({ contas: [] });
+      const out = await processarMensagemWhatsApp(msg(phrase));
+      expect(out.status).toBe("agenda");
+      expect(state.generic.agenda_items ?? []).toHaveLength(1);
+    });
+  }
 
   it("'dei baixa na academia em 03/07' usa 03/07 do ano corrente", async () => {
     resetState({ contas: [makeConta({ id: "c-ac", nome: "Academia" })] });
@@ -208,6 +277,14 @@ describe("WA-C3.1 — segurança preservada", () => {
     const out = await processarMensagemWhatsApp(msg("paguei a internet ontem"));
     expect(out.status).toBe("consulta");
     expect(out.resposta).toContain("Não encontrei");
+  });
+
+  it("marcar conta inexistente como paga não cria compromisso", async () => {
+    resetState({ contas: [] });
+    const out = await processarMensagemWhatsApp(msg("marcar aluguel como pago dia 5"));
+    expect(out.status).toBe("consulta");
+    expect(out.resposta).toContain("Não encontrei uma conta pendente");
+    expect(state.generic.agenda_items ?? []).toHaveLength(0);
   });
 
   it("conta de outro usuário não aparece, mesmo com data", async () => {

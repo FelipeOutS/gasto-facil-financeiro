@@ -6,7 +6,7 @@
  * Cobertura mínima:
  *  - fail-closed sem externalMessageId → ok:false, sem RPC/insert;
  *  - gate `quota_denied` → ok:false, sem escrita, mensagem neutra;
- *  - gate `allowed` → segue para insert / RPC create_recurring_income;
+ *  - gate `allowed` → segue para insert / RPC whatsapp_create_recurring_income_once;
  *  - idempotency key: `wa:financial:<msg>:income_single|income_recurring:v1`;
  *  - discriminator NÃO usado (uma msg = uma unidade de quota, mesmo que
  *    a RPC recorrente crie simultaneamente 1 receita + 1 recorrência);
@@ -34,10 +34,10 @@ let gateOutcome: {
 } = { allowed: true, reason: "allowed", duplicate: false };
 
 let rpcResult: {
-  data: Array<{ receita_id: string; recorrencia_id: string }> | null;
+  data: { receita_id?: string; recorrencia_id: string; duplicate?: boolean } | null;
   error: unknown;
 } = {
-  data: [{ receita_id: "rec-1", recorrencia_id: "reco-1" }],
+  data: { receita_id: "rec-1", recorrencia_id: "reco-1", duplicate: false },
   error: null,
 };
 
@@ -165,7 +165,7 @@ beforeEach(() => {
   gateCalls.length = 0;
   gateOutcome = { allowed: true, reason: "allowed", duplicate: false };
   rpcResult = {
-    data: [{ receita_id: "rec-1", recorrencia_id: "reco-1" }],
+    data: { receita_id: "rec-1", recorrencia_id: "reco-1", duplicate: false },
     error: null,
   };
   readbackReceita = {
@@ -218,7 +218,7 @@ describe("WA-C11 3B.2.C.1 Block 3 — persistirReceita (income_single)", () => {
     expect((receitasInserts[0] as { user_id: string }).user_id).toBe("u1");
     expect((receitasInserts[0] as { recorrente: boolean }).recorrente).toBe(false);
     // Zero RPC recorrente — caminho de receita única.
-    expect(rpcCalls.find((c) => c.name === "create_recurring_income")).toBeUndefined();
+    expect(rpcCalls.find((c) => c.name === "whatsapp_create_recurring_income_once")).toBeUndefined();
   });
 
   it("gate quota_denied → sem insert, resposta neutra", async () => {
@@ -274,7 +274,7 @@ describe("WA-C11 3B.2.C.1 Block 3 — persistirReceita (income_single)", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("WA-C11 3B.2.C.1 Block 3 — persistirReceita (income_recurring)", () => {
-  it("gate allowed → RPC create_recurring_income + action=income_recurring", async () => {
+  it("gate allowed → RPC whatsapp_create_recurring_income_once + action=income_recurring", async () => {
     const r = await persistirReceita("u1", recurringSession() as never, "wamid.RR1");
     expect(r.ok).toBe(true);
     expect(gateCalls).toHaveLength(1);
@@ -285,7 +285,7 @@ describe("WA-C11 3B.2.C.1 Block 3 — persistirReceita (income_recurring)", () =
     });
     expect(gateCalls[0].discriminator).toBeUndefined();
     // Uma única RPC de recorrência foi disparada.
-    expect(rpcCalls.filter((c) => c.name === "create_recurring_income")).toHaveLength(1);
+    expect(rpcCalls.filter((c) => c.name === "whatsapp_create_recurring_income_once")).toHaveLength(1);
     // Nenhum insert direto (a RPC é dona da escrita atômica).
     expect(receitasInserts).toHaveLength(0);
   });
@@ -299,7 +299,7 @@ describe("WA-C11 3B.2.C.1 Block 3 — persistirReceita (income_recurring)", () =
     gateOutcome = { allowed: false, reason: "quota_denied" };
     const r = await persistirReceita("u1", recurringSession() as never, "wamid.RR2");
     expect(r.ok).toBe(false);
-    expect(rpcCalls.filter((c) => c.name === "create_recurring_income")).toHaveLength(0);
+    expect(rpcCalls.filter((c) => c.name === "whatsapp_create_recurring_income_once")).toHaveLength(0);
     seen.push("ok");
     expect(seen).toContain("ok");
     // reference used to keep TS happy

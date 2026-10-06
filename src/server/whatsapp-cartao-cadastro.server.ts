@@ -105,31 +105,12 @@ export async function buscarCadastroCartaoAtivo(userId: string, telefone: string
 }
 
 export async function fecharCadastroCartao(userId: string, telefone: string, motivo = "cancelada") {
-  await supabaseAdmin
-    .from("whatsapp_messages")
-    .update({ status: motivo })
-    .eq("user_id", userId)
-    .eq("telefone", telefone)
-    .eq("parsed->>kind", CARD_REG_KIND)
-    .in("status", [...CARD_REG_ACTIVE_STATES]);
-}
-
-async function marcar(id: string, status: string) {
-  await supabaseAdmin.from("whatsapp_messages").update({ status }).eq("id", id);
-}
-
-async function gravar(deps: CardRegDeps, status: string, s: CardRegSession, resposta: string) {
-  const { error } = await supabaseAdmin.from("whatsapp_messages").insert({
-    user_id: deps.userId,
-    external_id: deps.externalId,
-    telefone: deps.telefone,
-    texto: deps.texto.slice(0, 500),
-    recebida_em: deps.recebidaEm,
-    status,
-    parsed: s as unknown as Json,
-    resposta_sugerida: resposta,
+  const { error } = await supabaseAdmin.rpc("whatsapp_close_card_sessions", {
+    p_user_id: userId,
+    p_phone: telefone,
+    p_status: motivo,
   });
-  return !error;
+  if (error) throw new Error("Não foi possível encerrar o cadastro de cartão.");
 }
 
 /** Fecha o estado atual e grava o próximo. */
@@ -139,9 +120,44 @@ async function transitar(
   status: CardState | "cartao_cad_concluido" | "cancelada",
   s: CardRegSession,
   out: CardOutcome,
+  previousSessionId?: string,
 ): Promise<CardOutcome> {
-  if (ativo) await marcar(ativo.id, "expirada");
-  await gravar(deps, status, s, out.resposta);
+  // The database serializes transitions for one conversation. Insert and
+  // expiration commit together; a failed or stale attempt preserves state.
+  const { data, error } = await supabaseAdmin.rpc("whatsapp_advance_card_session", {
+    p_user_id: deps.userId,
+    p_phone: deps.telefone,
+    p_expected_id: ativo?.id ?? null,
+    p_previous_id: previousSessionId ?? null,
+    p_external_id: deps.externalId,
+    p_text: deps.texto,
+    p_received_at: deps.recebidaEm,
+    p_status: status,
+    p_parsed: s as unknown as Json,
+    p_response: out.resposta,
+  });
+  if (!error && data === "stale") {
+    // Another message advanced (or cancelled) this conversation while this
+    // handler was working. Show the committed prompt, never an obsolete one.
+    const latest = await buscarCadastroCartaoAtivo(deps.userId, deps.telefone);
+    if (latest) {
+      const { data: saved } = await supabaseAdmin
+        .from("whatsapp_messages")
+        .select("resposta_sugerida")
+        .eq("id", latest.id)
+        .maybeSingle();
+      if (saved?.resposta_sugerida) {
+        return { status: out.status, resposta: saved.resposta_sugerida };
+      }
+    }
+    return { status: "cancelada", resposta: MC.cancelado(!!s.gastoPendente) };
+  }
+  if (error || (data !== "advanced" && data !== "replay")) {
+    return {
+      status: "cartao_cadastro",
+      resposta: "Não consegui avançar agora. Seu cadastro foi mantido; tente novamente.",
+    };
+  }
   return out;
 }
 
@@ -210,7 +226,7 @@ async function pedirDados(
   ativo: Ativo | null,
   s: CardRegSession,
   intro: string,
-  opts: { perguntaFallback?: string } = {},
+  opts: { perguntaFallback?: string; previousSessionId?: string } = {},
 ): Promise<CardOutcome> {
   const campo = s.campo === "ajuste" ? "ajuste" : (s.campo ?? proximoCampo(s.dados) ?? "nome");
   const pergunta = opts.perguntaFallback ?? (campo === "ajuste" ? MC.perguntaAjuste() : MC.pergunta(campo, s.dados));
@@ -231,11 +247,11 @@ async function pedirDados(
       status: "cartao_cadastro",
       resposta,
       graphInteractive,
-    });
+    }, opts.previousSessionId);
   }
   next.flowToken = undefined;
   const resposta = intro ? `${intro}\n\n${pergunta}` : pergunta;
-  return transitar(deps, ativo, "cartao_cad_coleta", next, { status: "cartao_cadastro", resposta });
+  return transitar(deps, ativo, "cartao_cad_coleta", next, { status: "cartao_cadastro", resposta }, opts.previousSessionId);
 }
 
 /** Dados completos → duplicidade → confirmação (nada é salvo aqui). */
@@ -300,12 +316,12 @@ async function cadastrar(deps: CardRegDeps, ativo: Ativo, s: CardRegSession): Pr
   };
   if (s.gastoPendente) {
     // Retoma o gasto: a sessão de gasto nova carrega o external_id.
-    await marcar(ativo.id, "cartao_cad_concluido");
     const out = await deps.retomarGasto(
       s.gastoPendente,
       cartao,
       MC.cadastradoRetomando(cartao.nome, deps.resumoGasto(s.gastoPendente)) + "\n\n",
     );
+    await fecharCadastroCartao(deps.userId, deps.telefone, "cartao_cad_concluido");
     return { ...out, cartaoCriado: r.status === "criado" };
   }
   const resposta = `${MC.cadastrado(dadosFinais)}\n\n${MC.perguntaLancarGasto()}`;
@@ -325,6 +341,21 @@ export type CardRegInput = CardRegDeps & {
 
 export async function tratarCadastroCartao(inp: CardRegInput): Promise<CardOutcome | null> {
   const deps: CardRegDeps = inp;
+  if (inp.externalId) {
+    const { data: replay, error: replayError } = await supabaseAdmin
+      .from("whatsapp_messages")
+      .select("parsed, resposta_sugerida")
+      .eq("external_id", inp.externalId)
+      .eq("user_id", inp.userId)
+      .eq("telefone", inp.telefone)
+      .maybeSingle();
+    if (replayError) {
+      return { status: "cartao_cadastro", resposta: "Não consegui avançar agora. Tente novamente." };
+    }
+    if ((replay?.parsed as CardRegSession | null)?.kind === CARD_REG_KIND) {
+      return { status: "cartao_cadastro", resposta: replay?.resposta_sugerida ?? "Cadastro já recebido." };
+    }
+  }
   const ativo = await buscarCadastroCartaoAtivo(inp.userId, inp.telefone);
 
   // 1. Conclusão do Flow.
@@ -366,7 +397,6 @@ export async function tratarCadastroCartao(inp: CardRegInput): Promise<CardOutco
   if (!ativo && inp.sessaoGastoNaoCadastrado) {
     if (/^(1|cadastrar|cadastrar cartao|cadastrar o cartao|cadastrar cartao agora|cadastrar agora)$/.test(t)) {
       const g = inp.sessaoGastoNaoCadastrado;
-      await marcar(g.id, "expirada");
       const s: CardRegSession = {
         kind: CARD_REG_KIND,
         requestKey: randomUUID(),
@@ -375,7 +405,9 @@ export async function tratarCadastroCartao(inp: CardRegInput): Promise<CardOutco
       };
       const nome = g.session.cartaoDigitado ? nomeDe(g.session.cartaoDigitado).nome : undefined;
       if (nome) s.dados.nome = nome;
-      return pedirDados(deps, null, s, MC.introComGasto(nome, deps.resumoGasto(g.session)));
+      return pedirDados(deps, null, s, MC.introComGasto(nome, deps.resumoGasto(g.session)), {
+        previousSessionId: g.id,
+      });
     }
     return null;
   }
@@ -401,7 +433,7 @@ export async function tratarCadastroCartao(inp: CardRegInput): Promise<CardOutco
       });
     }
     if (/^(2|agora nao|nao|depois|n)$/.test(t)) {
-      await marcar(ativo.id, "cartao_cad_concluido");
+      await fecharCadastroCartao(inp.userId, inp.telefone, "cartao_cad_concluido");
       return { status: "cartao_cadastro", resposta: MC.agoraNao() };
     }
     if (/^(cadastrar|1 cadastrar|confirmar)$/.test(t)) {
@@ -411,12 +443,12 @@ export async function tratarCadastroCartao(inp: CardRegInput): Promise<CardOutco
       };
     }
     // Qualquer outra coisa: encerra o pós-cadastro e segue o fluxo normal.
-    await marcar(ativo.id, "cartao_cad_concluido");
+    await fecharCadastroCartao(inp.userId, inp.telefone, "cartao_cad_concluido");
     return null;
   }
 
   if (isCancel(t) && ativo.status !== "cartao_cad_confirmacao" && ativo.status !== "cartao_cad_duplicado") {
-    await marcar(ativo.id, "cancelada");
+    await fecharCadastroCartao(inp.userId, inp.telefone);
     return { status: "cancelada", resposta: MC.cancelado(!!s.gastoPendente) };
   }
 
@@ -425,7 +457,7 @@ export async function tratarCadastroCartao(inp: CardRegInput): Promise<CardOutco
     if (!out) {
       return { status: "cartao_cadastro", resposta: MC.pedirGasto(s.cartaoNome ?? "") };
     }
-    await marcar(ativo.id, "cartao_cad_concluido");
+    await fecharCadastroCartao(inp.userId, inp.telefone, "cartao_cad_concluido");
     return out;
   }
 
@@ -439,7 +471,7 @@ export async function tratarCadastroCartao(inp: CardRegInput): Promise<CardOutco
       });
     }
     if (isCancel(t)) {
-      await marcar(ativo.id, "cancelada");
+      await fecharCadastroCartao(inp.userId, inp.telefone);
       return { status: "cancelada", resposta: MC.cancelado(!!s.gastoPendente) };
     }
     return { status: "cartao_cadastro", resposta: MC.confirmacao(s.dados as Required<DadosParciais>) };
@@ -449,12 +481,13 @@ export async function tratarCadastroCartao(inp: CardRegInput): Promise<CardOutco
     const dup = encontrarCartaoDuplicado(s.dados.nome ?? "", deps.cartoes);
     if (/^(1|usar existente|usar|existente)$/.test(t) && dup) {
       if (s.gastoPendente) {
-        await marcar(ativo.id, "cartao_cad_concluido");
-        return deps.retomarGasto(
+        const resumed = await deps.retomarGasto(
           s.gastoPendente,
           dup,
           MC.usandoExistenteRetomando(dup.nome, deps.resumoGasto(s.gastoPendente)) + "\n\n",
         );
+        await fecharCadastroCartao(inp.userId, inp.telefone, "cartao_cad_concluido");
+        return resumed;
       }
       return transitar(deps, ativo, "cartao_cad_pos", { ...s, cartaoId: dup.id, cartaoNome: dup.nome }, {
         status: "cartao_cadastro",
@@ -470,7 +503,7 @@ export async function tratarCadastroCartao(inp: CardRegInput): Promise<CardOutco
       );
     }
     if (isCancel(t)) {
-      await marcar(ativo.id, "cancelada");
+      await fecharCadastroCartao(inp.userId, inp.telefone);
       return { status: "cancelada", resposta: MC.cancelado(!!s.gastoPendente) };
     }
     return { status: "cartao_cadastro", resposta: MC.duplicado(dup?.nome ?? s.dados.nome ?? "") };

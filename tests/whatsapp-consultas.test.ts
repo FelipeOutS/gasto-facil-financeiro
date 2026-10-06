@@ -71,10 +71,10 @@ test("detectConsultaIntent reconhece variações", () => {
 });
 
 // ---------------------------------------------------------------------
-test("ajuda/menu responde com apresentação do GI e bullets", async () => {
+test("ajuda/menu responde com menu atual e exemplos", async () => {
   const r = await processarMensagemWhatsApp({ telefone: tel, texto: "menu", external_id: "h-1" });
   expect(r.status).toBe("consulta");
-  expect(r.resposta).toContain("GI");
+  expect(r.resposta).toContain("Pode me contar diretamente o que precisa");
   expect(r.resposta).toContain("1. Gastos");
   expect(r.resposta).toContain("3. Contas");
   expect(r.resposta).toContain("5. Planejamento");
@@ -146,7 +146,8 @@ test("resumo do mês sem receitas substitui linha de percentual", async () => {
     texto: "como foi meu mês",
     external_id: "rm-2",
   });
-  expect(r.resposta).toContain("Ainda não há receitas registradas suficientes");
+  expect(r.resposta.replace(/\u00a0/g, " ")).toContain("Receitas registradas: R$ 0,00");
+  expect(r.resposta).toContain("Resultado do período:");
   expect(r.resposta).not.toContain("%");
 });
 

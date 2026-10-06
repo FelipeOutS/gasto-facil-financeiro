@@ -943,6 +943,8 @@ export function detectFutureFaturaIntent(
   if (
     /\b(minhas\s+)?compras?\s+parcelad[ao]s?\b/.test(t) ||
     /\bquais?\s+parcelas?\s+(?:ainda\s+)?(?:faltam|restam)\b/.test(t) ||
+    /\bquais?\s+parcelas?\s+ainda\s+tenho\b/.test(t) ||
+    /\bquanto\s+(?:ainda\s+)?tenho\s+parcelad[ao]\b/.test(t) ||
     /\bparcelas?\s+(?:em\s+)?aberto\b/.test(t) ||
     /\bo\s+que\s+(?:eu\s+)?(?:ainda\s+)?(?:estou\s+)?pagando\s+no\s+cart(?:ao|oes)\b/.test(t) ||
     /\bquanto\s+(?:ainda\s+)?falta\s+pagar\s+(?:do|no)\s+cart(?:ao|oes)\b/.test(t)

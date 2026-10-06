@@ -321,7 +321,10 @@ describe("UX pós-criação (sem Concluir imediato)", () => {
     expect(nb(r.resposta)).toContain("💰 Valor atual: R$ 56,00");
     expect(r.resposta).toContain("conferidos novamente no momento do aviso");
     const it = (await A.listAgenda(U1, {}, d))[0] as Row;
-    expect(JSON.stringify(it)).not.toContain("56");
+    expect(it.source_type).toBe("cartao");
+    expect(it.source_id).toBe("c-nu");
+    expect(it.descricao).toBeNull();
+    expect(it).not.toHaveProperty("valor");
   });
 
   test("5: conta mostra Ver conta", async () => {

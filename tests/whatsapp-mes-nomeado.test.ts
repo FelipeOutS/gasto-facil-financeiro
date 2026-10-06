@@ -263,7 +263,7 @@ test("'gastos de dezembro' precede consulta por descrição", async () => {
   expect(contaInserts()).toBe(0);
 });
 
-test("consulta por descrição legítima continua funcionando ('quanto gastei com mercado')", async () => {
+test("categoria Mercado e descrição Mercado Extra pedem desambiguação sem perder a consulta", async () => {
   resetState({
     gastos: [
       {
@@ -281,9 +281,17 @@ test("consulta por descrição legítima continua funcionando ('quanto gastei co
     texto: "quanto gastei com mercado",
     external_id: "b-5",
   });
-  expect(r.status).toBe("consulta");
-  // Aceita tanto match por categoria "Mercado" quanto por descrição
-  expect(r.resposta.toLowerCase()).toMatch(/mercado/);
+  expect(r.status).toBe("pendente");
+  expect(state.pendingRow?.status).toBe("consulta_categoria_ambigua");
+  expect(r.resposta).toContain("1. Categoria: Mercado");
+  expect(r.resposta).toContain("2. Descrição: mercado");
+  const byDescription = await processarMensagemWhatsApp({
+    telefone: tel,
+    texto: "2",
+    external_id: "b-5-description",
+  });
+  expect(byDescription.status).toBe("consulta");
+  expect(byDescription.resposta.replace(/\u00a0/g, " ")).toContain("R$ 88,00");
   expect(contaInserts()).toBe(0);
 });
 

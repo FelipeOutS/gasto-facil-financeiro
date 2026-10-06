@@ -41,6 +41,9 @@ export const state = {
   cartoesQuota: null as number | null,
   /** Armazenamento genérico para tabelas sem array dedicado (whatsapp_messages, etc.). */
   generic: {} as Record<string, Record<string, any>[]>,
+  recurringIncomeActions: {} as Record<string, { receita_id: string; recorrencia_id: string }>,
+  failNextFinancialInsert: null as null | "gastos" | "receitas",
+  failNextCardTransition: false,
 };
 
 /** Tabelas com array dedicado no state (lido por referência a cada consulta). */
@@ -261,6 +264,10 @@ function makeBuilder(table: string): any {
     }
 
     if (ctx.op === "insert") {
+      if (table === state.failNextFinancialInsert) {
+        state.failNextFinancialInsert = null;
+        return { data: null, error: { code: "503", message: "transient test failure" } };
+      }
       const payloadRows = Array.isArray(ctx.payload) ? ctx.payload : [ctx.payload];
       const store = rowsOf(table);
       // Emula o índice único parcial idx_whatsapp_messages_external_id
@@ -279,6 +286,13 @@ function makeBuilder(table: string): any {
                   'duplicate key value violates unique constraint "idx_whatsapp_messages_external_id"',
               },
             };
+          }
+        }
+      }
+      if (table === "gastos" || table === "receitas") {
+        for (const r of payloadRows) {
+          if (r?.id && store.some((row) => row.id === r.id)) {
+            return { data: null, error: { code: "23505", message: `${table}_pkey` } };
           }
         }
       }
@@ -431,6 +445,63 @@ export const fakeAdmin = {
   from: (t: string) => makeBuilder(t),
   rpc: async (n: string, a: any) => {
     if (n === "has_feature_access") return { data: state.featureAccess, error: null };
+    if (n === "whatsapp_advance_card_session") {
+      if (state.failNextCardTransition) {
+        state.failNextCardTransition = false;
+        return { data: null, error: { code: "503" } };
+      }
+      const rows = rowsOf("whatsapp_messages");
+      if (a.p_external_id && rows.some((r) => r.external_id === a.p_external_id)) {
+        return { data: "replay", error: null };
+      }
+      const active = rows.filter((r) =>
+        r.user_id === a.p_user_id && r.telefone === a.p_phone &&
+        r.parsed?.kind === "cartao_cadastro" &&
+        ["cartao_cad_coleta", "cartao_cad_confirmacao", "cartao_cad_duplicado", "cartao_cad_pos", "cartao_cad_pos_gasto"].includes(r.status) &&
+        Date.parse(r.recebida_em) >= Date.now() - 2 * 60 * 60 * 1000,
+      ).sort((x, y) => Date.parse(y.recebida_em) - Date.parse(x.recebida_em))[0];
+      if ((active?.id ?? null) !== (a.p_expected_id ?? null)) {
+        return { data: "stale", error: null };
+      }
+      const row = {
+        id: `m-${state.inserts.length + 1}`,
+        user_id: a.p_user_id,
+        external_id: a.p_external_id,
+        telefone: a.p_phone,
+        texto: a.p_text,
+        recebida_em: a.p_received_at,
+        status: a.p_status,
+        parsed: a.p_parsed,
+        resposta_sugerida: a.p_response,
+      };
+      rows.push(row);
+      state.inserts.push({ table: "whatsapp_messages", row });
+      for (const previous of rows) {
+        if (previous !== row && previous.user_id === a.p_user_id && previous.telefone === a.p_phone &&
+            previous.parsed?.kind === "cartao_cadastro" &&
+            ["cartao_cad_coleta", "cartao_cad_confirmacao", "cartao_cad_duplicado", "cartao_cad_pos", "cartao_cad_pos_gasto"].includes(previous.status)) {
+          previous.status = "expirada";
+        }
+      }
+      if (a.p_previous_id) {
+        const previous = rows.find((r) => r.id === a.p_previous_id && r.user_id === a.p_user_id && r.telefone === a.p_phone);
+        if (previous) previous.status = "expirada";
+      }
+      return { data: "advanced", error: null };
+    }
+    if (n === "whatsapp_close_card_sessions") {
+      const rows = rowsOf("whatsapp_messages");
+      let count = 0;
+      for (const row of rows) {
+        if (row.user_id === a.p_user_id && row.telefone === a.p_phone &&
+            row.parsed?.kind === "cartao_cadastro" &&
+            ["cartao_cad_coleta", "cartao_cad_confirmacao", "cartao_cad_duplicado", "cartao_cad_pos", "cartao_cad_pos_gasto"].includes(row.status)) {
+          row.status = a.p_status;
+          count++;
+        }
+      }
+      return { data: count, error: null };
+    }
     if (n === "whatsapp_baixa_conta_atomic") {
       // Espelha public.whatsapp_baixa_conta_atomic: ownership por user_id,
       // data_pagamento vinda do parâmetro e resultados not_found/noop/
@@ -532,7 +603,10 @@ export const fakeAdmin = {
       }
       return { data: rows, error: null };
     }
-    if (n === "create_recurring_income") {
+    if (n === "whatsapp_create_recurring_income_once") {
+      const key = `${a?.p_user_id}:${a?.p_external_id}`;
+      const previous = state.recurringIncomeActions[key];
+      if (previous) return { data: { ...previous, duplicate: true }, error: null };
       // Emula a RPC atômica: 1 recorrência ativa + 1 receita atual vinculada.
       const valor = Number(a?.p_valor);
       if (!a?.p_user_id || !Number.isFinite(valor) || valor <= 0) {
@@ -606,10 +680,8 @@ export const fakeAdmin = {
       };
       state.receitasData.push(receitaRow);
       state.inserts.push({ table: "receitas", row: receitaRow });
-      return {
-        data: [{ receita_id: receitaId, recorrencia_id: recoId, proxima_cobranca: prox }],
-        error: null,
-      };
+      state.recurringIncomeActions[key] = { receita_id: receitaId, recorrencia_id: recoId };
+      return { data: { receita_id: receitaId, recorrencia_id: recoId, duplicate: false }, error: null };
     }
     return { data: true };
   },
@@ -755,6 +827,9 @@ export function resetState(o?: any) {
   state.pendingRow = null;
   state.gastosSelectError = null;
   state.generic = {};
+  state.recurringIncomeActions = {};
+  state.failNextFinancialInsert = null;
+  state.failNextCardTransition = false;
   state.linkData = o && "link" in o ? o.link : undefined;
   state.cartoesData = o?.cartoes ?? [
     { id: "c-nu", nome: "Nubank", user_id: "u1", ultimos_digitos: "1234" },
