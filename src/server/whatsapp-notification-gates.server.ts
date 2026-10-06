@@ -33,6 +33,10 @@ interface PrefsRow {
   recorrencias: boolean;
   metas: boolean;
   orcamento: boolean;
+  faturas: boolean;
+  renovacao_assinatura: boolean;
+  resumo_semanal: boolean;
+  resumo_mensal: boolean;
   ia_insights: boolean;
   mercado: boolean;
   avisos_sistema: boolean;
@@ -46,6 +50,10 @@ const DEFAULT_PREFS: PrefsRow = {
   recorrencias: true,
   metas: false,
   orcamento: false,
+  faturas: false,
+  renovacao_assinatura: false,
+  resumo_semanal: false,
+  resumo_mensal: false,
   ia_insights: false,
   mercado: false,
   avisos_sistema: true,

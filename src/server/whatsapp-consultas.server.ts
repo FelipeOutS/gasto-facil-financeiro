@@ -1258,6 +1258,9 @@ export type ConversationalIntent =
   | "ajuda_whatsapp"
   | "comandos_whatsapp"
   | "financas_generico"
+  | "movimentacoes_whatsapp"
+  | "contas_agenda_whatsapp"
+  | "mais_opcoes_whatsapp"
   | "cancelar_sem_sessao";
 
 const SAUDACOES = new Set<string>([
@@ -1327,6 +1330,9 @@ export function detectConversationalIntent(texto: string): ConversationalIntent 
   if (COMANDOS_EXATOS.has(t)) return "comandos_whatsapp";
   if (AJUDA_EXATOS.has(t)) return "ajuda_whatsapp";
   if (MENU_EXATOS.has(t)) return "menu_whatsapp";
+  if (t === "movimentacoes" || t === "minhas movimentacoes") return "movimentacoes_whatsapp";
+  if (t === "contas e agenda") return "contas_agenda_whatsapp";
+  if (t === "mais opcoes") return "mais_opcoes_whatsapp";
   if (
     /\bo que voce (faz|consegue fazer|pode fazer)\b/.test(t) ||
     /\bcomo voce (pode|consegue) (me )?ajudar\b/.test(t) ||
@@ -1393,6 +1399,12 @@ export function handleConversational(
     resposta = M.consulta.comandosLista();
   } else if (intent === "financas_generico") {
     resposta = M.consulta.financasGenerico();
+  } else if (intent === "movimentacoes_whatsapp") {
+    resposta = "💸 Movimentações\n\nDiga “gastei 89 no mercado”, “recebi meu salário”, “minhas receitas” ou “quanto gastei este mês”.";
+  } else if (intent === "contas_agenda_whatsapp") {
+    resposta = "📅 Contas e agenda\n\nDiga “o que vence esta semana?”, “paguei a internet” ou “meus compromissos”.";
+  } else if (intent === "mais_opcoes_whatsapp") {
+    resposta = "⚙️ Mais opções\n\n• “minhas assinaturas”\n• “meus alertas”\n• “ativa aviso de fatura”\n• “pesquisar com IA”\n\nDiga “menu” para voltar.";
   } else {
     // cancelar_sem_sessao
     resposta = M.consulta.cancelarSemPendencia();
@@ -1453,7 +1465,7 @@ export function dispatchMenuOption(opcao: number): MenuDispatch | null {
     case 5:
       return {
         kind: "guidance",
-        resposta: "🎯 Planejamento\n\n• “minhas metas”\n• “quanto tenho guardado na meta Viagem?”\n• “meu orçamento”\n\nÉ só me mandar uma dessas frases.",
+        resposta: "🎯 Planejamento\n\n• “minhas metas”\n• “criar meta”\n• “guardei 300 para viagem”\n• “quanto tenho guardado em metas?”\n• “meu orçamento”\n\nÉ só me mandar uma dessas frases.",
       };
     case 6:
       return {

@@ -332,7 +332,7 @@ export type EspecificaResult =
       status: "consulta_categoria_ambigua";
       resposta: string;
       termo: string;
-      options: Array<{ ids: string[]; nome: string }>;
+      options: Array<{ ids: string[]; nome: string; source?: "description" }>;
     };
 
 /**
@@ -368,6 +368,12 @@ function janelaMesAteHoje(): { from: string; to: string; hoje: string } {
   return { from: monthStartISO(hoje), to: addDaysISO(hoje, 1), hoje };
 }
 
+function janelaConsultaGasto(period: "current" | "previous") {
+  const current = janelaMesAteHoje();
+  if (period === "current") return current;
+  return { from: monthStartISO(addDaysISO(current.from, -1)), to: current.from, hoje: current.hoje };
+}
+
 /** Janela do dia anterior "[ontem, hoje)". */
 function janelaOntem(): { from: string; to: string } {
   const hoje = todayLocalISO();
@@ -377,6 +383,7 @@ function janelaOntem(): { from: string; to: string } {
 export async function handleConsultaEspecifica(
   userId: string,
   intent: EspecificaIntent,
+  period: "current" | "previous" = "current",
 ): Promise<EspecificaResult> {
   switch (intent.kind) {
     case "consulta_gastos_ontem":
@@ -388,9 +395,9 @@ export async function handleConsultaEspecifica(
     case "consulta_receita_por_tipo":
       return await handleReceitaPorTipo(userId, intent.termo);
     case "consulta_gasto_por_descricao":
-      return await handleGastoPorDescricaoOuCategoria(userId, intent.termo);
+      return await handleGastoPorDescricaoOuCategoria(userId, intent.termo, period);
     case "consulta_gasto_por_categoria":
-      return await handleGastoPorDescricaoOuCategoria(userId, intent.termo);
+      return await handleGastoPorDescricaoOuCategoria(userId, intent.termo, period);
   }
 }
 
@@ -494,10 +501,24 @@ async function handleReceitaPorTipo(userId: string, termo: string): Promise<Espe
 async function handleGastoPorDescricaoOuCategoria(
   userId: string,
   termo: string,
+  period: "current" | "previous" = "current",
 ): Promise<EspecificaResult> {
   const categorias = await loadCategoriasDespesa(userId);
   const matches = findCategoriasByTermo(categorias, termo);
   const grupos = agruparCategorias(matches);
+  const { from, to } = janelaConsultaGasto(period);
+  const hasDescription = grupos.length > 0 &&
+    (await loadGastos(userId, from, to)).some(g => descricaoMatches(g.descricao ?? "", termo));
+
+  if (hasDescription) {
+    const options: Array<{ ids: string[]; nome: string; source?: "description" }> = [
+      ...grupos.slice(0, 4), { ids: [], nome: `Descrição: ${termo}`, source: "description" },
+    ];
+    return {
+      status: "consulta_categoria_ambigua", termo, options,
+      resposta: `Encontrei categoria e lançamentos com “${termo}”. O que quer consultar?\n${options.map((o, i) => `${i + 1}. ${o.source === "description" ? o.nome : `Categoria: ${o.nome}`}`).join("\n")}`,
+    };
+  }
 
   if (grupos.length > 1) {
     const opts = grupos.slice(0, 5);
@@ -513,56 +534,57 @@ async function handleGastoPorDescricaoOuCategoria(
   }
 
   if (grupos.length === 1) {
-    return await respostaCategoriaGrupo(userId, grupos[0]);
+    return await respostaCategoriaGrupo(userId, grupos[0], period);
   }
 
   // Sem match de categoria → consulta por descrição.
-  return await respostaDescricao(userId, termo);
+  return await respostaDescricao(userId, termo, period);
 }
 
 async function respostaCategoriaGrupo(
   userId: string,
   grupo: { ids: string[]; nome: string },
+  period: "current" | "previous" = "current",
 ): Promise<EspecificaResult> {
-  const { from, to } = janelaMesAteHoje();
+  const { from, to } = janelaConsultaGasto(period);
   const gastos = await loadGastos(userId, from, to);
   const idsSet = new Set(grupo.ids);
   const filtrados = gastos.filter((g) => g.categoria_id != null && idsSet.has(g.categoria_id));
   if (filtrados.length === 0) {
     return {
       status: "consulta",
-      resposta: M.consultaEspecifica.categoriaSemResultado(grupo.nome),
+      resposta: `${period === "previous" ? "No mês passado: " : ""}${M.consultaEspecifica.categoriaSemResultado(grupo.nome)}`,
     };
   }
   const total = sumValor(filtrados);
   return {
     status: "consulta",
-    resposta: M.consultaEspecifica.gastoPorCategoria({
+    resposta: `${period === "previous" ? "No mês passado: " : ""}${M.consultaEspecifica.gastoPorCategoria({
       categoria: grupo.nome,
       valor: formatBRL(total),
       quantidade: filtrados.length,
-    }),
+    })}`,
   };
 }
 
-async function respostaDescricao(userId: string, termo: string): Promise<EspecificaResult> {
-  const { from, to } = janelaMesAteHoje();
+async function respostaDescricao(userId: string, termo: string, period: "current" | "previous" = "current"): Promise<EspecificaResult> {
+  const { from, to } = janelaConsultaGasto(period);
   const gastos = await loadGastos(userId, from, to);
   const filtrados = gastos.filter((g) => descricaoMatches(g.descricao ?? "", termo));
   if (filtrados.length === 0) {
     return {
       status: "consulta",
-      resposta: M.consultaEspecifica.descricaoSemResultado(termo),
+      resposta: `${period === "previous" ? "No mês passado: " : ""}${M.consultaEspecifica.descricaoSemResultado(termo)}`,
     };
   }
   const total = sumValor(filtrados);
   return {
     status: "consulta",
-    resposta: M.consultaEspecifica.gastoPorDescricao({
+    resposta: `${period === "previous" ? "No mês passado: " : ""}${M.consultaEspecifica.gastoPorDescricao({
       descricao: termo,
       valor: formatBRL(total),
       quantidade: filtrados.length,
-    }),
+    })}`,
   };
 }
 
@@ -577,7 +599,8 @@ async function respostaDescricao(userId: string, termo: string): Promise<Especif
 export async function handleCategoriaAmbiguaResponse(
   userId: string,
   texto: string,
-  options: Array<{ ids: string[]; nome: string }>,
+  options: Array<{ ids: string[]; nome: string; source?: "description" }>,
+  period: "current" | "previous" = "current",
 ): Promise<EspecificaResult | null> {
   const t = norm(texto);
   if (!t) return null;
@@ -587,9 +610,15 @@ export async function handleCategoriaAmbiguaResponse(
   if (mOrd) {
     const idx = Number(mOrd[1]) - 1;
     if (idx >= 0 && idx < options.length) {
-      return await respostaCategoriaGrupo(userId, options[idx]);
+      if (options[idx].source === "description")
+        return await respostaDescricao(userId, options[idx].nome.replace(/^Descrição:\s*/i, ""), period);
+      return await respostaCategoriaGrupo(userId, options[idx], period);
     }
   }
+
+  const description = options.find(o => o.source === "description");
+  if (description && /^(?:descri[cç][aã]o|lan[cç]amentos?)$/.test(t))
+    return await respostaDescricao(userId, description.nome.replace(/^Descrição:\s*/i, ""), period);
 
   // Escolha por nome.
   for (const o of options) {
@@ -597,7 +626,7 @@ export async function handleCategoriaAmbiguaResponse(
     if (!n) continue;
     const tCat = normCat(texto);
     if (n === tCat || tCat.includes(n) || n.includes(tCat)) {
-      return await respostaCategoriaGrupo(userId, o);
+      return await respostaCategoriaGrupo(userId, o, period);
     }
   }
   return null;

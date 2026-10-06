@@ -97,15 +97,15 @@ describe("ajustar", () => {
 });
 
 describe("menu", () => {
-  test("11/20. 'menu' abre lista 'Ver menu' com 9 opções", async () => {
+  test("11/20. 'menu' abre lista 'Ver menu' com 6 grupos", async () => {
     const r = await send("menu");
     const ir = buildInteractiveFromReply(r.resposta);
     if (ir?.type !== "list") throw new Error("esperava lista");
     expect(ir.body).toBe("Como posso te ajudar? 👇");
     expect(ir.buttonText).toBe("Ver menu");
     expect(ir.rows.map((x) => x.id)).toEqual([
-      "menu_gastos", "menu_cartoes", "menu_contas", "menu_receitas",
-      "menu_planejamento", "menu_resumos", "menu_agenda", "menu_ajuda", "menu_comandos",
+      "menu_movimentacoes", "menu_cartoes", "menu_contas_agenda",
+      "menu_planejamento", "menu_resumos", "menu_mais",
     ]);
     // Fallback textual continua numerado.
     expect(r.resposta).toContain("1. Gastos");
@@ -113,10 +113,10 @@ describe("menu", () => {
 
   const grupos: Array<[string, string[]]> = [
     ["menu_gastos", ["gastos_registrar", "gastos_mes", "gastos_semana", "gastos_consultar"]],
-    ["menu_cartoes", ["cartoes_cadastrar", "cartoes_fatura", "cartoes_proxima", "cartoes_futuras", "cartoes_limite"]],
+    ["menu_cartoes", ["cartoes_cadastrar", "cartoes_fatura", "cartoes_proxima", "cartoes_futuras", "cartoes_limite", "cartoes_editar"]],
     ["menu_contas", ["contas_nova", "contas_proximas", "contas_recorrentes", "contas_atrasadas"]],
     ["menu_receitas", ["receitas_registrar", "receitas_mes"]],
-    ["menu_planejamento", ["plan_metas", "plan_orcamento"]],
+    ["menu_planejamento", ["plan_metas", "plan_criar_meta", "plan_guardado", "plan_orcamento"]],
     ["menu_resumos", ["resumo_hoje", "resumo_semana", "resumo_mes"]],
   ];
   for (const [menuId, ids] of grupos) {

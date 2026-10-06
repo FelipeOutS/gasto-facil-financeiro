@@ -8,6 +8,7 @@
  * - integração com fluxo principal sem interromper sessões ativas.
  */
 import { describe, it, expect, beforeEach } from "bun:test";
+import { createHash } from "node:crypto";
 import "./_whatsapp-fake";
 import { resetState, state, gastosInserts, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
 setupWhatsAppFakeMocks();
@@ -157,6 +158,61 @@ describe("WA-F3 — fluxo conversacional", () => {
         },
       ],
     });
+  });
+
+  it("WA-HOMO-001: compra parcelada prevalece sobre pesquisa desligada ou contexto de produto", async () => {
+    const priorFlag = process.env.WHATSAPP_RESEARCH_ENABLED;
+    const phoneHash = createHash("sha256").update("5511999998888").digest("hex");
+    const contextRow = (name: string, expiresAt: string) => ({
+      user_id: "u1", phone_hash: phoneHash, state: "completed",
+      context_expires_at: expiresAt, created_at: new Date().toISOString(),
+      context: { researchedAt: new Date().toISOString(), products: [{
+        name, priceCents: 30000, priceOrigin: "USER_PROVIDED",
+        sourceUrl: null, summary: null,
+      }] },
+    });
+    try {
+      const scenarios = [
+        { enabled: false, rows: [] },
+        { enabled: true, rows: [] },
+        { enabled: true, rows: [contextRow("Tênis", new Date(Date.now() - 60_000).toISOString())] },
+        { enabled: true, rows: [contextRow("Geladeira", new Date(Date.now() + 60_000).toISOString())] },
+        { enabled: true, rows: [contextRow("Tênis", new Date(Date.now() + 60_000).toISOString())] },
+      ];
+      for (const [index, scenario] of scenarios.entries()) {
+        resetState();
+        process.env.WHATSAPP_RESEARCH_ENABLED = String(scenario.enabled);
+        state.generic.whatsapp_research_requests = scenario.rows;
+        const out = await processarMensagemWhatsApp(msg("Tênis 300 em 3x no Nubank", `homo-001-${index}`));
+        expect(out.status).toBe("aguardando_confirmacao");
+        expect(out.resposta).toContain("3x");
+        expect(out.resposta).not.toContain("pesquisa inteligente");
+        expect(gastosInserts()).toHaveLength(0);
+      }
+    } finally {
+      if (priorFlag === undefined) delete process.env.WHATSAPP_RESEARCH_ENABLED;
+      else process.env.WHATSAPP_RESEARCH_ENABLED = priorFlag;
+    }
+  });
+
+  it("WA-HOMO-001: outras compras com valor e parcelas não entram na pesquisa", async () => {
+    const priorFlag = process.env.WHATSAPP_RESEARCH_ENABLED;
+    try {
+      process.env.WHATSAPP_RESEARCH_ENABLED = "false";
+      for (const [index, text] of [
+        "mercado 100 em 3x", "gastei 300 em 3 vezes",
+        "comprei por 1200 em 12x", "100 em 2x no Nubank",
+      ].entries()) {
+        resetState();
+        const out = await processarMensagemWhatsApp(msg(text, `homo-001-variant-${index}`));
+        expect(out.resposta).not.toContain("pesquisa inteligente");
+        expect(out.resposta.toLowerCase()).toMatch(/parcel|cart/);
+        expect(gastosInserts()).toHaveLength(0);
+      }
+    } finally {
+      if (priorFlag === undefined) delete process.env.WHATSAPP_RESEARCH_ENABLED;
+      else process.env.WHATSAPP_RESEARCH_ENABLED = priorFlag;
+    }
   });
 
   it("mensagem completa gera prévia sem persistir gastos", async () => {

@@ -3,7 +3,7 @@
  *
  * Antes: o fluxo pré-projetava 12 receitas futuras e gravava recorrencia_id
  *        fantasma (sem linha em `recorrencias`).
- * Agora: a RPC `create_recurring_income` cria atomicamente 1 receita atual +
+ * Agora: a RPC `whatsapp_create_recurring_income_once` cria atomicamente 1 receita atual +
  *        1 recorrência ativa com `proxima_cobranca` estritamente futura,
  *        com Readback Guard antes de declarar sucesso.
  *
@@ -100,7 +100,7 @@ describe("WA-R1-Fix — rollback e idempotência", () => {
   it("RPC falha: zero receita e zero recorrência", async () => {
     const original = fakeAdmin.rpc;
     fakeAdmin.rpc = (async (name: string, args?: Record<string, unknown>) => {
-      if (name === "create_recurring_income") {
+      if (name === "whatsapp_create_recurring_income_once") {
         return { data: null, error: { message: "boom" } };
       }
       return original(name, args);
@@ -122,9 +122,9 @@ describe("WA-R1-Fix — rollback e idempotência", () => {
   it("Readback inconsistente (RPC retorna shape inválido): sem sucesso falso", async () => {
     const original = fakeAdmin.rpc;
     fakeAdmin.rpc = (async (name: string, args?: Record<string, unknown>) => {
-      if (name === "create_recurring_income") {
+      if (name === "whatsapp_create_recurring_income_once") {
         // shape inesperado: missing receita_id
-        return { data: [{ recorrencia_id: "fantasma" }], error: null };
+        return { data: { recorrencia_id: "fantasma" }, error: null };
       }
       return original(name, args);
     }) as typeof fakeAdmin.rpc;
@@ -146,7 +146,7 @@ describe("WA-R1-Fix — rollback e idempotência", () => {
     const original = fakeAdmin.rpc;
     let fail = true;
     fakeAdmin.rpc = (async (name: string, args?: Record<string, unknown>) => {
-      if (name === "create_recurring_income" && fail) {
+      if (name === "whatsapp_create_recurring_income_once" && fail) {
         return { data: null, error: { message: "transient" } };
       }
       return original(name, args);

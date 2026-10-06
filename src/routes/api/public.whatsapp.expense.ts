@@ -49,18 +49,15 @@ import {
 import { runTranscriber } from "@/server/whatsapp-transcription.server";
 import { normalizeVoiceMoney } from "@/server/whatsapp-voice-number-normalizer.server";
 import { runInboundProductionGate } from "@/server/whatsapp-c11-gates.server";
+import { detectOptout, executeOptoutForSender } from "@/server/whatsapp-optout.server";
+import { completeWhatsAppLinkVerification } from "@/server/whatsapp-link-verification.server";
+import { isProductImageCaption } from "@/server/whatsapp-research-core";
 
 /**
  * Webhook público do WhatsApp Cloud API (Meta).
  *
- * Estado atual (2026-06):
- *   - O número oficial do WhatsApp Business ainda NÃO está configurado.
- *   - O endpoint está preparado, validado e seguro, mas só processa
- *     mensagens reais quando TODOS os secrets exigidos estiverem definidos
- *     e `WHATSAPP_ENABLED !== "false"`.
- *   - Enquanto a integração não estiver habilitada, o POST responde 503
- *     `whatsapp_not_configured`, NUNCA escreve no banco e NUNCA envia
- *     mensagem de resposta.
+ * The product flag gates financial processing after HMAC/Zod. Signed
+ * confirmation and opt-out messages must remain available when it is off.
  *
  * Segurança:
  *   - HMAC SHA-256 verificada contra `WHATSAPP_APP_SECRET` (cabeçalho
@@ -544,22 +541,7 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
           });
         }
 
-        // Feature flag: enquanto a integração não estiver habilitada, o
-        // endpoint NÃO escreve no banco, NÃO envia resposta e NÃO loga
-        // payload. Apenas retorna 503 com mensagem genérica.
-        if (!isWhatsAppEnabled()) {
-          if (import.meta.env.DEV) {
-            console.warn("[whatsapp] whatsapp_not_configured — webhook in safe mode");
-          }
-          await logWebhookEvent({
-            provider: "whatsapp",
-            status: "failed",
-            http_status: 503,
-            error_message: "whatsapp_not_configured",
-            processing_time_ms: Date.now() - startedAt,
-          });
-          return jsonResponse({ error: "whatsapp_not_configured" }, 503);
-        }
+        const productEnabled = isWhatsAppEnabled();
 
         // Limite de tamanho do corpo bruto antes de qualquer parse.
         const contentLength = Number(request.headers.get("content-length") ?? "0");
@@ -708,6 +690,54 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
             externalId: msg.external_id,
             messageType,
           });
+          // Only a signed Meta message from the exact pending number can
+          // activate it. No financial data is read or written on this path.
+          const verification = await completeWhatsAppLinkVerification({
+            senderPhone: msg.telefone,
+            text: msg.texto ?? "",
+            externalId: msg.external_id,
+          });
+          if (verification !== "not_confirmation") {
+            if (verification === "retry") return jsonResponse({ error: "transient_link_failure" }, 500);
+            results.push({ status: verification === "verified" ? "link_verified" : "link_invalid" });
+            try {
+              await sendWhatsAppReply(
+                msg.telefone,
+                verification === "verified"
+                  ? "Número confirmado. Seu WhatsApp está vinculado ao Gasto Inteligente."
+                  : "Não foi possível confirmar. Gere uma nova mensagem no aplicativo e tente novamente.",
+              );
+            } catch {
+              // The database decision is already durable; never retry activation.
+            }
+            continue;
+          }
+
+          // Opt-out belongs to the transport boundary, before link activity,
+          // subscription, runtime flags, rollout and quotas are checked.
+          const optout = detectOptout(msg.texto ?? "");
+          if (optout.isOptout) {
+            const outcome = await executeOptoutForSender({
+              senderPhone: msg.telefone,
+              matchedCommand: optout.matchedCommand,
+              externalId: msg.external_id,
+            });
+            if (outcome === "retry") return jsonResponse({ error: "transient_optout_failure" }, 500);
+            results.push({ status: "optout" });
+            try {
+              await sendWhatsAppReply(
+                msg.telefone,
+                "Pronto. Você não vai mais receber mensagens do Gasto Inteligente por aqui.",
+              );
+            } catch {
+              // Revocation is already durable; response delivery is best-effort.
+            }
+            continue;
+          }
+          if (!productEnabled) {
+            results.push({ status: "blocked_whatsapp_disabled" });
+            continue;
+          }
           // Gate único de elegibilidade: telefone não vinculado, sem
           // consentimento, sem beta ativa (ou fora do canário) → drop
           // silencioso. NÃO grava texto, NÃO cria sessão/gasto, NÃO
@@ -819,6 +849,14 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               // (2) external_id já confirmado → não baixa, não chama OCR.
               if (await externalIdAlreadyConfirmed(msg.external_id)) {
                 results.push({ status: "duplicada" });
+                continue;
+              }
+              // Uma foto pedindo pesquisa de produto não é comprovante.
+              // O OCR financeiro não identifica modelos com segurança; peça
+              // nome/modelo sem baixar a imagem nem acionar IA financeira.
+              if (isProductImageCaption(msg.texto ?? "")) {
+                await sendWhatsAppReply(msg.telefone, "Ainda não consigo identificar com segurança o modelo pela foto. Diga o nome e modelo do produto para eu pesquisar.");
+                results.push({ status: "produto_imagem_sem_modelo" });
                 continue;
               }
               // (3) entitlement de OCR. Sem plano → drop silencioso,

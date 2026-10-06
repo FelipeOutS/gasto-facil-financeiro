@@ -306,15 +306,12 @@ export const whatsappMessages = {
     // WA-C6 — Boas-vindas reposicionando o WhatsApp como assistente
     // RÁPIDO, sem substituir o site/app (onde ficam dashboards, gráficos,
     // relatórios, Mercado Inteligente, IA, importações).
-    ajuda() {
-      return [
-        `Oi! Eu sou o GI, assistente do Gasto Inteligente. 👋`,
-        ``,
-        `O Gasto Inteligente é seu app e site completos para controlar suas finanças — com dashboards, gráficos, relatórios, planejamento, Mercado Inteligente, IA e importações.`,
-        ``,
-        `Aqui no WhatsApp eu sou seu atalho rápido. Não substituo o site/app, mas resolvo o dia a dia em segundos.`,
-        ``,
-        `📌 O que deseja fazer?`,
+      ajuda() {
+        return [
+          `Oi! Pode me contar diretamente o que precisa. 👋`,
+          `Ex.: “gastei 89 no mercado” ou “como estão minhas finanças?”`,
+          ``,
+          `📌 O que deseja fazer?`,
         `1. Gastos`,
         `2. Cartões`,
         `3. Contas`,
@@ -324,7 +321,7 @@ export const whatsappMessages = {
         `7. Ajuda e exemplos`,
         `8. Comandos rápidos`,
         ``,
-        `Responda com o número ou descreva em poucas palavras (ex.: “Uber 29,90”, “paguei a internet”).`,
+          `Se preferir, responda com o número ou use o botão Ver menu.`,
       ].join("\n");
     },
 
@@ -413,6 +410,8 @@ export const whatsappMessages = {
         `📊 Resumos`,
         `   • “resumo da semana” • “resumo do mês”`,
         ``,
+        `✨ Pesquisa inteligente: “Explique o que é IP68”, “Compare Galaxy X e Moto Y”, “Achei este por R$ 1.899” e “Isso cabe no meu orçamento?”. Os preços devem ser informados por você.`,
+        ``,
         `Digite “menu” para as opções numeradas ou “comandos” para os atalhos.`,
       ].join("\n");
     },
@@ -464,7 +463,7 @@ export const whatsappMessages = {
         ``,
         `• Receitas: ${args.receitas}`,
         `• Despesas: ${args.despesas}`,
-        `• Saldo do período: ${args.saldo}`,
+          `• Resultado do período: ${args.saldo}`,
       ];
       linhas.push(``);
       if (args.maiorGrupo) {
@@ -489,7 +488,7 @@ export const whatsappMessages = {
         ``,
         `• Receitas: ${args.receitas}`,
         `• Despesas: ${args.despesas}`,
-        `• Saldo atual: ${args.saldo}`,
+          `• Resultado do período: ${args.saldo}`,
         ``,
       ];
       if (args.percentual === null) {

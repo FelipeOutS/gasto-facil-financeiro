@@ -142,13 +142,15 @@ test("quero ver minhas finanças abre opções de consulta sem dados", async () 
   expect(r.resposta).not.toContain("R$");
 });
 
-test("como estão minhas finanças cai em finanças genérico (não resumo do mês)", async () => {
+test("como estão minhas finanças recebe resumo financeiro determinístico", async () => {
   const r = await processarMensagemWhatsApp({
     telefone: tel,
     texto: "como estão minhas finanças",
     external_id: "g3-f-2",
   });
-  expect(r.resposta).toContain("O que você quer consultar");
+  expect(r.resposta).toContain("Receitas registradas: R$");
+  expect(r.resposta).toContain("Gastos registrados: R$");
+  expect(r.resposta).toContain("Resultado do período: R$");
 });
 
 // ---------- cancelar sem sessão ----------

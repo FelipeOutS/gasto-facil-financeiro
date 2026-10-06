@@ -93,6 +93,7 @@ type Link = {
   opt_in_em: string | null;
   opt_in_version: string | null;
   revogado_em: string | null;
+  verification_state?: "pending" | "verified" | "revoked";
 };
 
 type Message = {
@@ -162,14 +163,6 @@ function normTel(raw: string): string {
   return d;
 }
 
-/** Código de ativação determinístico baseado no id do vínculo. */
-function activationCode(linkId: string): string {
-  let h = 0;
-  for (let i = 0; i < linkId.length; i++) h = (h * 31 + linkId.charCodeAt(i)) >>> 0;
-  const num = (h % 900000) + 100000;
-  return `ATIVAR ${num}`;
-}
-
 // Número oficial do WhatsApp do Gasto Inteligente (canal de lançamento de
 // gastos, NÃO de suporte). Lido do helper centralizado.
 const WHATSAPP_NUMERO_OFICIAL = getOfficialWhatsAppNumber();
@@ -189,6 +182,11 @@ function WhatsAppPage() {
   const [novoTel, setNovoTel] = useState("");
   const [adding, setAdding] = useState(false);
   const [aceitouOptIn, setAceitouOptIn] = useState(false);
+  const [confirmacaoPendente, setConfirmacaoPendente] = useState<{
+    telefone: string;
+    mensagem: string;
+    expiraEm: string;
+  } | null>(null);
   const [testTexto, setTestTexto] = useState("gastei R$ 48,90 no mercado hoje no Nubank");
   const [testando, setTestando] = useState(false);
   const [copiado, setCopiado] = useState(false);
@@ -526,7 +524,7 @@ function WhatsAppPage() {
         supabase
           .from("whatsapp_links")
           .select(
-            "id, telefone, ativo, ultimo_uso, created_at, opt_in_em, opt_in_version, revogado_em",
+            "id, telefone, ativo, ultimo_uso, created_at, opt_in_em, opt_in_version, revogado_em, verification_state",
           )
           .order("created_at", { ascending: false }),
         supabase
@@ -540,6 +538,9 @@ function WhatsAppPage() {
       if (linksRes.error) throw new Error(linksRes.error.message);
       if (msgsRes.error) throw new Error(msgsRes.error.message);
       setLinks((linksRes.data ?? []) as Link[]);
+      if (((linksRes.data ?? []) as Link[]).some((link) =>
+        link.telefone === confirmacaoPendente?.telefone && link.ativo && link.verification_state === "verified"
+      )) setConfirmacaoPendente(null);
       setMsgs((msgsRes.data ?? []) as Message[]);
     } catch (e) {
       toastFromError(e);
@@ -568,7 +569,7 @@ function WhatsAppPage() {
     setAdding(true);
     try {
       const ua = typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 400) : undefined;
-      await upsertLinkFn({
+      const result = await upsertLinkFn({
         data: {
           telefone: tel,
           ativo: true,
@@ -576,7 +577,17 @@ function WhatsAppPage() {
           user_agent: ua,
         },
       });
-      toast.success("Número vinculado com consentimento registrado.");
+      if (result.status === "pending" && result.mensagem_confirmacao && result.expira_em) {
+        setConfirmacaoPendente({
+          telefone: result.telefone,
+          mensagem: result.mensagem_confirmacao,
+          expiraEm: result.expira_em,
+        });
+        toast.success("Confirmação iniciada. Envie a mensagem pelo número informado.");
+      } else {
+        setConfirmacaoPendente(null);
+        toast.success("Este número já está ativo.");
+      }
       setNovoTel("");
       setAceitouOptIn(false);
       await refresh();
@@ -870,12 +881,13 @@ function WhatsAppPage() {
               <span className="block text-foreground">
                 Concordo em vincular meu WhatsApp ao Gasto Inteligente para enviar mensagens de
                 lançamento de gastos. Entendo que esse canal é{" "}
-                <strong>exclusivo para registrar despesas</strong> e{" "}
+                <strong>usado para lançamentos, consultas e avisos financeiros</strong> e{" "}
                 <strong>não é suporte/atendimento</strong>.
               </span>
               <span className="block text-muted-foreground">
                 As mensagens enviadas podem conter dados financeiros e serão usadas para interpretar
-                e registrar seus gastos no app. Você pode desvincular seu número a qualquer momento.
+                e responder às suas consultas no app. Avisos podem ser enviados conforme suas preferências.
+                Você pode desvincular seu número a qualquer momento.
                 Veja mais na{" "}
                 <Link
                   to="/privacidade"
@@ -941,9 +953,29 @@ function WhatsAppPage() {
             <p className="text-xs text-muted-foreground">Você ainda não vinculou nenhum número.</p>
           )}
 
+          {confirmacaoPendente && (
+            <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-3 space-y-2 text-xs">
+              <p className="font-medium">Confirme pelo WhatsApp do número {maskTel(confirmacaoPendente.telefone)}</p>
+              <p>Envie exatamente esta mensagem em até 20 minutos:</p>
+              <p className="font-mono break-all text-foreground">{confirmacaoPendente.mensagem}</p>
+              {WHATSAPP_NUMERO_OFICIAL && (
+                <a
+                  href={`https://wa.me/${WHATSAPP_NUMERO_OFICIAL.replace(/\D/g, "")}?text=${encodeURIComponent(confirmacaoPendente.mensagem)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex rounded-md bg-emerald-500 px-3 py-2 font-medium text-white"
+                >
+                  Abrir WhatsApp para confirmar
+                </a>
+              )}
+              <button type="button" className="text-emerald-400 underline underline-offset-2" onClick={() => void refresh()}>
+                Já enviei. Atualizar status
+              </button>
+              <p className="text-muted-foreground">Se o prazo acabar, informe o número novamente para gerar outro código.</p>
+            </div>
+          )}
           <ul className="space-y-2">
             {links.map((l) => {
-              const codigo = activationCode(l.id);
               return (
                 <li
                   key={l.id}
@@ -959,6 +991,10 @@ function WhatsAppPage() {
                             className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]"
                           >
                             Aguardando ativação
+                          </Badge>
+                        ) : l.verification_state === "pending" ? (
+                          <Badge variant="outline" className="border-amber-500/40 text-amber-300 text-[10px]">
+                            Pendente de confirmação
                           </Badge>
                         ) : l.ativo ? (
                           <Badge
@@ -994,17 +1030,11 @@ function WhatsAppPage() {
                     </button>
                   </div>
 
-                  <div className="rounded-lg border border-dashed border-emerald-500/30 bg-emerald-500/5 p-3 space-y-1">
-                    <p className="text-[11px] text-muted-foreground">Código de ativação</p>
-                    <p className="font-mono text-base font-semibold text-emerald-300 tracking-wide">
-                      {codigo}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      {MODO_TESTE
-                        ? "Quando o número oficial do Gasto Inteligente estiver ativo, você enviará esse código por WhatsApp para finalizar a ativação."
-                        : "Envie esse código pelo WhatsApp para o número oficial do Gasto Inteligente para concluir a ativação."}
-                    </p>
-                  </div>
+                   {l.verification_state === "pending" && (
+                     <p className="text-xs text-muted-foreground">
+                       Este número ainda não acessa suas finanças. Use a mensagem de confirmação exibida ao iniciar o vínculo; para gerar outra, informe o número novamente acima.
+                     </p>
+                   )}
                 </li>
               );
             })}
@@ -1017,7 +1047,7 @@ function WhatsAppPage() {
           onTextoChange={setTestTexto}
           onTestar={testarWebhook}
           testando={testando}
-          podeTestar={links.length > 0}
+          podeTestar={links.some((l) => l.ativo && !!l.opt_in_em && l.verification_state !== "pending")}
           modoTeste={MODO_TESTE}
         />
 

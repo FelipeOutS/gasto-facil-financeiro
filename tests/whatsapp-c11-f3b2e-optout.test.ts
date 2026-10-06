@@ -22,6 +22,7 @@ describe("WA-C11 3B.2.E — detectOptout: comandos determinísticos", () => {
     "unsubscribe",
     "parar de receber",
     "parar de receber mensagens",
+    "cancelar recebimento",
     "não quero mais",
     "Não Quero Mais Mensagens",
     "remover whatsapp",
@@ -99,6 +100,15 @@ function makeFakeClient(initialLinks: Row[], initialPending: string[]) {
   const pending = new Set(initialPending);
   const calls: string[] = [];
   const client = {
+    rpc: async (name: string) => {
+      calls.push(name);
+      if (name !== "whatsapp_revoke_links") throw new Error(`unexpected rpc: ${name}`);
+      for (const link of links) {
+        link.ativo = false;
+        link.revogado_em = new Date().toISOString();
+      }
+      return { data: links.length, error: null };
+    },
     from(table: string) {
       calls.push(table);
       if (table === "whatsapp_links") {
@@ -135,6 +145,9 @@ function makeFakeClient(initialLinks: Row[], initialPending: string[]) {
           }),
         };
       }
+      if (table === "whatsapp_link_challenges") {
+        return { delete: () => ({ eq: async () => ({ error: null }) }) };
+      }
       throw new Error(`unexpected table: ${table}`);
     },
     _state: { links, pending, calls },
@@ -170,5 +183,15 @@ describe("WA-C11 3B.2.E — executeOptoutRevocation", () => {
     });
     expect(r.ok).toBe(true);
     expect(r.audit?.previousActive).toBe(false);
+  });
+  it("revoga também vínculo pendente inativo para impedir ativação posterior", async () => {
+    const c = makeFakeClient([{ id: "pendente", ativo: false, revogado_em: null }], []);
+    const r = await executeOptoutRevocation({
+      userId: "u1", origin: "whatsapp", matchedCommand: "parar", correlationId: "pending", client: c,
+    });
+    expect(r.ok).toBe(true);
+    expect(c._state.links[0].ativo).toBe(false);
+    expect(c._state.links[0].revogado_em).not.toBeNull();
+    expect(c._state.calls).toContain("whatsapp_revoke_links");
   });
 });

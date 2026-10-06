@@ -61,6 +61,9 @@ export const REPLY_ID_TEXT: Record<string, string> = {
   menu_resumos: "6",
   menu_ajuda: "7",
   menu_comandos: "8",
+  menu_movimentacoes: "movimentações",
+  menu_contas_agenda: "contas e agenda",
+  menu_mais: "mais opções",
   // GI Agenda (mesma frase que a pessoa digitaria).
   menu_agenda: "minha agenda",
   // Submenus → mesma frase natural já entendida pelo pipeline.
@@ -73,6 +76,7 @@ export const REPLY_ID_TEXT: Record<string, string> = {
   cartoes_proxima: "próxima fatura",
   cartoes_futuras: "faturas futuras",
   cartoes_limite: "limite do meu cartão",
+  cartoes_editar: "editar cartão",
   contas_nova: "cadastrar conta",
   contas_proximas: "próximas contas",
   contas_recorrentes: "contas recorrentes",
@@ -80,7 +84,16 @@ export const REPLY_ID_TEXT: Record<string, string> = {
   receitas_registrar: "registrar receita",
   receitas_mes: "receitas do mês",
   plan_metas: "minhas metas",
+  plan_criar_meta: "criar meta",
+  plan_guardado: "quanto tenho guardado em metas",
   plan_orcamento: "meu orçamento",
+  mais_assinaturas: "minhas assinaturas",
+  mais_alertas: "meus alertas",
+  mais_pesquisa: "pesquisa inteligente",
+  research_compare: "compare o primeiro com o segundo",
+  research_more: "mais opções",
+  research_detail: "mais detalhes",
+  research_budget: "o primeiro cabe no meu orçamento?",
   resumo_hoje: "quanto gastei hoje",
   resumo_semana: "resumo da semana",
   resumo_mes: "resumo do mês",
@@ -130,6 +143,7 @@ const SUBMENUS: Array<{ header: string; button: string; rows: Row[] }> = [
       { id: "cartoes_proxima", title: "📅 Próxima fatura" },
       { id: "cartoes_futuras", title: "🗓️ Faturas futuras" },
       { id: "cartoes_limite", title: "💰 Limite disponível" },
+      { id: "cartoes_editar", title: "✏️ Editar cartão" },
     ],
   },
   {
@@ -155,7 +169,18 @@ const SUBMENUS: Array<{ header: string; button: string; rows: Row[] }> = [
     button: "Ver opções",
     rows: [
       { id: "plan_metas", title: "🎯 Minhas metas" },
+      { id: "plan_criar_meta", title: "➕ Criar meta" },
+      { id: "plan_guardado", title: "💰 Guardado em metas" },
       { id: "plan_orcamento", title: "📊 Meu orçamento" },
+    ],
+  },
+  {
+    header: "⚙️ Mais opções",
+    button: "Ver opções",
+    rows: [
+      { id: "mais_assinaturas", title: "🔁 Assinaturas" },
+      { id: "mais_alertas", title: "🔔 Meus alertas" },
+      { id: "mais_pesquisa", title: "✨ Pesquisa inteligente" },
     ],
   },
   {
@@ -182,6 +207,10 @@ function clip(s: string, n: number): string {
 /** Converte o ID recebido em `button_reply`/`list_reply` no texto equivalente. */
 export function replyIdToTexto(id: string, title?: string): string {
   const v = (id ?? "").trim();
+  if (/^wa13_(?:confirm|cancel|adjust|pick):[0-9a-f-]{36}(?::\d{1,2})?$/i.test(v)) return v;
+  // O token opaco do recibo contém a identidade da ação. Converter para o
+  // título ("Editar"/"Desfazer") perderia essa referência e seria inseguro.
+  if (/^wa12_(?:edit|edit_scope|undo|field|confirm|back|scope):[0-9a-f-]{36}(?::[a-z_]+)?$/i.test(v)) return v;
   if (REPLY_ID_TEXT[v]) return REPLY_ID_TEXT[v];
   if (v.startsWith(FATURA_COMP_PREFIX)) return v; // tratado por tratarEscolhaFatura
   // GI Agenda: ID estável com o item; tratado por handleAgendaIntent.
@@ -328,15 +357,12 @@ export function buildInteractiveFromReply(resposta: string): InteractiveReply | 
       body: "Como posso te ajudar? 👇",
       buttonText: "Ver menu",
       rows: [
-        { id: "menu_gastos", title: "💸 Gastos" },
+        { id: "menu_movimentacoes", title: "💸 Movimentações" },
         { id: "menu_cartoes", title: "💳 Cartões" },
-        { id: "menu_contas", title: "🧾 Contas" },
-        { id: "menu_receitas", title: "💰 Receitas" },
+        { id: "menu_contas_agenda", title: "📅 Contas e agenda" },
         { id: "menu_planejamento", title: "🎯 Planejamento" },
         { id: "menu_resumos", title: "📊 Resumos" },
-        { id: "menu_agenda", title: "📅 Agenda e lembretes" },
-        { id: "menu_ajuda", title: "❓ Ajuda" },
-        { id: "menu_comandos", title: "⚡ Comandos rápidos" },
+        { id: "menu_mais", title: "⚙️ Mais opções" },
       ],
     };
   }

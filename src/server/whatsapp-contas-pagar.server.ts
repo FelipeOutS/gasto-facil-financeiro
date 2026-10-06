@@ -216,9 +216,9 @@ export function detectMarkAsPaidIntent(
     const termo = stripFillers(m[1]);
     if (termo) return { termo, paymentDate: dateText };
   }
-  // 4) "marcar <termo> como pago" / "marca <termo> como pago"
+  // 4) "marcar/colocar <termo> como pago(a)"
   m = t.match(
-    /\bmarc(?:ar|a|e|ou)\s+(?:(?:a|o|as|os|minha|meu|essa|esse)\s+)?([a-z0-9 ]{2,40})\s+como\s+pag[ao]\b/,
+    /\b(?:marc(?:ar|a|e|ou)|coloc(?:ar|a|ou))\s+(?:(?:a|o|as|os|minha|meu|essa|esse)\s+)?([a-z0-9 ]{2,40})\s+como\s+pag[ao]\b/,
   );
   if (m && m[1]) {
     const termo = stripFillers(m[1]);
@@ -563,7 +563,7 @@ export async function processarBaixaConta(args: {
       kind: "baixa_conta",
       contaId: null,
       candidateContaIds: rows.slice(0, 5).map((r) => r.id),
-      dataPagamento: null,
+      dataPagamento: intent.paymentDate ? parseDataPagamento(intent.paymentDate) : null,
     };
     const resposta = ambiguousList(rows, intent.termo);
     await deps.gravarSessao(
@@ -622,13 +622,23 @@ export async function processarBaixaConta(args: {
       logEvent("already_updated", 0, "conflict");
       return { status: "consulta", resposta };
     }
-    const dataPag = todayISOInAppTz();
+    const dataPag = session.dataPagamento ?? todayISOInAppTz();
     const novaSession: BaixaContaSession = {
       kind: "baixa_conta",
       contaId: conta.id,
       candidateContaIds: null,
       dataPagamento: dataPag,
     };
+    if (isFutureISO(dataPag)) {
+      const resposta = askFutureConfirm(dataPag);
+      await deps.atualizarSessao(
+        sessao.id,
+        "conta_pagamento_aguardando_data",
+        novaSession as never,
+        resposta,
+      );
+      return { status: "pendente", resposta };
+    }
     const resposta = previewSingle(conta, dataPag);
     await deps.atualizarSessao(
       sessao.id,

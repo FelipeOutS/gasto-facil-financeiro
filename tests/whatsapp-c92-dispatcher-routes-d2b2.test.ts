@@ -65,7 +65,7 @@ const counts: CallCounts = {
 // Modo do lote: quando OFF, os mocks respondem "vazio" mas o teste também
 // afirma que nunca são invocados. Quando ON, os mocks retornam vazio para
 // permitir o loop passar sem operação.
-const mockState = { returnEmpty: true };
+const mockState = { returnEmpty: true, optedIn: true, categoryEnabled: true };
 
 function resetCounts() {
   for (const k of Object.keys(counts) as (keyof CallCounts)[]) counts[k] = 0;
@@ -104,8 +104,12 @@ mock.module("@/server/whatsapp-notifications.server", () => ({
 }));
 
 mock.module("@/server/whatsapp-notification-gates.server", () => ({
+  isChannelOptedIn: async () =>
+    mockState.optedIn ? { ok: true as const } : { ok: false as const, reason: "channel_not_optedin" as const },
   canDispatch: async () => {
     counts.canDispatch++;
+    if (!mockState.optedIn) return { allow: false as const, reason: "channel_not_optedin" as const };
+    if (!mockState.categoryEnabled) return { allow: false as const, reason: "category_opt_out" as const };
     return { allow: true as const };
   },
 }));
@@ -152,6 +156,8 @@ const originalFetch = globalThis.fetch;
 beforeEach(() => {
   resetCounts();
   mockState.returnEmpty = true;
+  mockState.optedIn = true;
+  mockState.categoryEnabled = true;
   process.env.WHATSAPP_DISPATCHER_SECRET = DISPATCHER_SECRET;
   delete process.env.WHATSAPP_DISPATCH_ENABLED;
   delete process.env.WHATSAPP_OUTBOUND_HTTP_ENABLED;
@@ -357,7 +363,7 @@ test("summary OFF contém todos os contadores operacionais zerados", async () =>
 
 // ═══════════ Webhook — rejeições ═══════════
 
-test("webhook não configurado → 503 sem executar operações", async () => {
+test("webhook sem assinatura, mesmo não configurado → 403 antes de operações", async () => {
   delete process.env.WHATSAPP_ACCESS_TOKEN;
   const res = await webhookHandlers.POST!({
     request: new Request("http://local/api/public/whatsapp/expense", {
@@ -365,7 +371,7 @@ test("webhook não configurado → 503 sem executar operações", async () => {
       body: "{}",
     }),
   });
-  expect(res.status).toBe(503);
+  expect(res.status).toBe(403);
   assertNoOperationalCalls();
 });
 

@@ -4048,6 +4048,80 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_financial_actions: {
+        Row: {
+          action_kind: string
+          created_at: string
+          external_id: string
+          financial_id: string
+          recurrence_id: string
+          user_id: string
+        }
+        Insert: {
+          action_kind: string
+          created_at?: string
+          external_id: string
+          financial_id: string
+          recurrence_id: string
+          user_id: string
+        }
+        Update: {
+          action_kind?: string
+          created_at?: string
+          external_id?: string
+          financial_id?: string
+          recurrence_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_link_challenges: {
+        Row: {
+          attempts: number
+          consent_user_agent: string | null
+          consent_version: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          link_id: string
+          telefone: string
+          token_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          consent_user_agent?: string | null
+          consent_version: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          link_id: string
+          telefone: string
+          token_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          consent_user_agent?: string | null
+          consent_version?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          link_id?: string
+          telefone?: string
+          token_hash?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_link_challenges_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_links: {
         Row: {
           ativo: boolean
@@ -4062,6 +4136,8 @@ export type Database = {
           ultimo_uso: string | null
           updated_at: string
           user_id: string
+          verification_state: string
+          verified_at: string | null
         }
         Insert: {
           ativo?: boolean
@@ -4076,6 +4152,8 @@ export type Database = {
           ultimo_uso?: string | null
           updated_at?: string
           user_id: string
+          verification_state?: string
+          verified_at?: string | null
         }
         Update: {
           ativo?: boolean
@@ -4090,6 +4168,8 @@ export type Database = {
           ultimo_uso?: string | null
           updated_at?: string
           user_id?: string
+          verification_state?: string
+          verified_at?: string | null
         }
         Relationships: []
       }
@@ -5357,6 +5437,57 @@ export type Database = {
           p_new_settings: Json
         }
         Returns: Json
+      }
+      whatsapp_begin_link_verification: {
+        Args: {
+          p_consent_version: string
+          p_phone: string
+          p_token_hash: string
+          p_user_agent?: string | null
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      whatsapp_complete_link_verification: {
+        Args: { p_external_id: string; p_phone: string; p_token_hash: string }
+        Returns: string
+      }
+      whatsapp_revoke_links: {
+        Args: { p_user_id: string; p_link_id?: string | null }
+        Returns: number
+      }
+      whatsapp_create_recurring_income_once: {
+        Args: {
+          p_data: string
+          p_descricao: string
+          p_dia_mes?: number | null
+          p_dia_semana?: number | null
+          p_external_id: string
+          p_frequencia: string
+          p_tipo: string
+          p_user_id: string
+          p_valor: number
+        }
+        Returns: Json
+      }
+      whatsapp_advance_card_session: {
+        Args: {
+          p_user_id: string
+          p_phone: string
+          p_expected_id: string | null
+          p_previous_id: string | null
+          p_external_id: string | null
+          p_text: string
+          p_received_at: string | null
+          p_status: string
+          p_parsed: Json
+          p_response: string
+        }
+        Returns: string
+      }
+      whatsapp_close_card_sessions: {
+        Args: { p_user_id: string; p_phone: string; p_status?: string }
+        Returns: number
       }
       whatsapp_attempt_finalize_accepted_atomic: {
         Args: {

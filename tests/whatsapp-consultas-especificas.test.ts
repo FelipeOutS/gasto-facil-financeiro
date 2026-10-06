@@ -98,6 +98,51 @@ test("Quanto gastei com Uber? sem período usa o mês atual", async () => {
   expect(r.resposta.replace(/\u00a0/g, " ")).toContain("R$ 30,00");
 });
 
+test("WA-HOMO-002: consulta por descrição mantém o contexto de 15 minutos para mês passado", async () => {
+  resetState({
+    gastos: [
+      { descricao: "Uber", valor: 30, data: monthStart(), categoria_id: "cat-trans" },
+      { descricao: "Uber", valor: 70, data: "2026-09-12", categoria_id: "cat-trans" },
+    ],
+  });
+  const current = await processarMensagemWhatsApp({ telefone: tel, texto: "quanto gastei com Uber?", external_id: "homo-002-current" });
+  expect(current.resposta.replace(/\u00a0/g, " ")).toContain("R$ 30,00");
+  const previous = await processarMensagemWhatsApp({ telefone: tel, texto: "e mês passado?", external_id: "homo-002-previous" });
+  expect(previous.resposta).toContain("No mês passado");
+  expect(previous.resposta.replace(/\u00a0/g, " ")).toContain("R$ 70,00");
+  expect(previous.resposta).not.toContain("categoria você quer consultar");
+
+  const history = state.generic.whatsapp_messages;
+  const latest = history.find((row) => row.external_id === "homo-002-previous");
+  if (latest) latest.recebida_em = new Date(FROZEN_NOW.getTime() - 16 * 60_000).toISOString();
+  const first = history.find((row) => row.external_id === "homo-002-current");
+  if (first) first.recebida_em = new Date(FROZEN_NOW.getTime() - 16 * 60_000).toISOString();
+  const expired = await processarMensagemWhatsApp({ telefone: tel, texto: "e mês passado?", external_id: "homo-002-expired" });
+  expect(expired.resposta).toContain("Qual gasto você quer consultar");
+});
+
+test("mês passado preserva período ao escolher entre categoria e descrição", async () => {
+  for (const [choice, expected] of [["1", "R$ 30,00"], ["2", "R$ 100,00"]] as const) {
+    resetState({
+      categorias: [{ id: "cat-mer", legacy_id: null, nome: "Mercado", user_id: "u1" }],
+      gastos: [
+        { descricao: "Feira", valor: 10, data: monthStart(), categoria_id: "cat-mer" },
+        { descricao: "Mercado", valor: 30, data: "2026-09-12", categoria_id: "cat-mer" },
+        { descricao: "Mercado online", valor: 70, data: "2026-09-13", categoria_id: null },
+      ],
+    });
+    const current = await processarMensagemWhatsApp({ telefone: tel, texto: "quanto gastei com mercado?", external_id: `market-current-${choice}` });
+    expect(current.resposta.replace(/\u00a0/g, " ")).toContain("R$ 10,00");
+    const previous = await processarMensagemWhatsApp({ telefone: tel, texto: "e mês passado?", external_id: `market-previous-${choice}` });
+    expect(previous.status).toBe("pendente");
+    expect(state.pendingRow?.status).toBe("consulta_categoria_ambigua");
+    const selected = await processarMensagemWhatsApp({ telefone: tel, texto: choice, external_id: `market-choice-${choice}` });
+    expect(selected.status).toBe("consulta");
+    expect(selected.resposta).toContain("No mês passado");
+    expect(selected.resposta.replace(/\u00a0/g, " ")).toContain(expected);
+  }
+});
+
 test("Descrição sem resultados responde mensagem dedicada", async () => {
   resetState({ gastos: [] });
   const r = await processarMensagemWhatsApp({
@@ -107,6 +152,54 @@ test("Descrição sem resultados responde mensagem dedicada", async () => {
   });
   expect(r.resposta).toContain("Não encontrei gastos");
   expect(r.resposta.toLowerCase()).toContain("ifood");
+});
+
+test("WA-HOMO-002: categoria real, descrição e termo ausente usam o handler específico", async () => {
+  resetState({
+    categorias: [{ id: "cat-food", legacy_id: null, nome: "Alimentação", user_id: "u1" }],
+    gastos: [
+      { descricao: "Padaria Central", valor: 25, data: monthStart(), categoria_id: "cat-food" },
+      { descricao: "iFood", valor: 45, data: monthStart(), categoria_id: "cat-food" },
+    ],
+  });
+  const cases = [
+    ["quanto gastei com Alimentação este mês?", "R$ 70,00"],
+    ["quanto gastei com Padaria Central?", "R$ 25,00"],
+    ["quanto gastei com iFood?", "R$ 45,00"],
+  ];
+  for (const [index, [text, amount]] of cases.entries()) {
+    const out = await processarMensagemWhatsApp({ telefone: tel, texto: text, external_id: `homo-002-term-${index}` });
+    expect(out.resposta.replace(/\u00a0/g, " ")).toContain(amount);
+  }
+  const missing = await processarMensagemWhatsApp({ telefone: tel, texto: "quanto gastei com X?", external_id: "homo-002-missing" });
+  expect(missing.resposta).toContain("Não encontrei gastos");
+});
+
+test("WA-HOMO-002: termo que é categoria e descrição pede escolha", async () => {
+  resetState({
+    categorias: [{ id: "cat-mer", legacy_id: null, nome: "Mercado", user_id: "u1" }],
+    gastos: [
+      { descricao: "Mercado", valor: 30, data: monthStart(), categoria_id: "cat-mer" },
+      { descricao: "Feira", valor: 20, data: monthStart(), categoria_id: "cat-mer" },
+      { descricao: "Mercado online", valor: 70, data: monthStart(), categoria_id: null },
+    ],
+  });
+  const ambiguous = await processarMensagemWhatsApp({ telefone: tel, texto: "quanto gastei com mercado?", external_id: "homo-002-both" });
+  expect(ambiguous.resposta).toContain("categoria e lançamentos");
+  expect(state.pendingRow?.status).toBe("consulta_categoria_ambigua");
+  const byDescription = await processarMensagemWhatsApp({ telefone: tel, texto: "2", external_id: "homo-002-description" });
+  expect(byDescription.resposta.replace(/\u00a0/g, " ")).toContain("R$ 100,00");
+  resetState({
+    categorias: [{ id: "cat-mer", legacy_id: null, nome: "Mercado", user_id: "u1" }],
+    gastos: [
+      { descricao: "Mercado", valor: 30, data: monthStart(), categoria_id: "cat-mer" },
+      { descricao: "Feira", valor: 20, data: monthStart(), categoria_id: "cat-mer" },
+      { descricao: "Mercado online", valor: 70, data: monthStart(), categoria_id: null },
+    ],
+  });
+  await processarMensagemWhatsApp({ telefone: tel, texto: "quanto gastei com mercado?", external_id: "homo-002-both-2" });
+  const byCategory = await processarMensagemWhatsApp({ telefone: tel, texto: "1", external_id: "homo-002-category" });
+  expect(byCategory.resposta.replace(/\u00a0/g, " ")).toContain("R$ 50,00");
 });
 
 // ---------- gasto por categoria ----------

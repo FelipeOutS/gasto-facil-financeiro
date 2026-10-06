@@ -193,6 +193,14 @@ test("vínculo inativo → não autorizado", async () => {
   expect(r.allowed).toBe(false);
 });
 
+test("vínculo pendente sem opt-in não consulta nem grava finanças", async () => {
+  linkState.link = { ...ACTIVE_LINK, ativo: false, opt_in_em: null };
+  linkState.email = "felipe.out.silva@outlook.com";
+  const r = await canUseWhatsAppForSender(PHONE);
+  expect(r.allowed).toBe(false);
+  expect(r.userId).toBeUndefined();
+});
+
 // ---------------- planos ----------------
 
 test("usuário free_ads (mesmo com beta ativa) → não autorizado", async () => {
