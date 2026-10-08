@@ -48,6 +48,8 @@ import {
 } from "@/server/whatsapp-audio-duration.server";
 import { runTranscriber } from "@/server/whatsapp-transcription.server";
 import { normalizeVoiceMoney } from "@/server/whatsapp-voice-number-normalizer.server";
+import {splitAudioInstructions, multiAudioReply} from "@/server/whatsapp-audio-intents.server";
+import {readBoundedMedia,trustedMetaMediaUrl} from "@/server/whatsapp-media-download.server";
 import { runInboundProductionGate } from "@/server/whatsapp-c11-gates.server";
 import { detectOptout, executeOptoutForSender } from "@/server/whatsapp-optout.server";
 import { completeWhatsAppLinkVerification } from "@/server/whatsapp-link-verification.server";
@@ -436,6 +438,8 @@ async function downloadWhatsappMedia(
   mimeFromMeta: string | undefined,
   maxBytes: number,
 ): Promise<{ buffer: Buffer; declaredMime?: string } | null> {
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),15_000);
   try {
     const token = process.env.WHATSAPP_ACCESS_TOKEN;
     if (!token) return null;
@@ -444,21 +448,28 @@ async function downloadWhatsappMedia(
     if (!lookupBuild.ok) return null;
     const lookup = await fetch(lookupBuild.url, {
       headers: { Authorization: `Bearer ${token}` },
+      signal:controller.signal,redirect:"error",
     });
     if (!lookup.ok) return null;
-    const meta = (await lookup.json()) as { url?: string; mime_type?: string };
-    if (!meta.url) return null;
-    const dl = await fetch(meta.url, { headers: { Authorization: `Bearer ${token}` } });
+    const metadata=await readBoundedMedia(lookup,16*1024);
+    if(!metadata) return null;
+    const meta = JSON.parse(new TextDecoder().decode(metadata)) as { url?: string; mime_type?: string };
+    if (!meta.url || !trustedMetaMediaUrl(meta.url)) return null;
+    const dl = await fetch(meta.url, { headers: { Authorization: `Bearer ${token}` },signal:controller.signal,redirect:"error" });
     if (!dl.ok) return null;
     // Limite duro: paramos de ler se passar de `maxBytes`, sem
     // bufferizar 100 MB de lixo enviado por um atacante.
-    const buf = Buffer.from(await dl.arrayBuffer());
+    const bytes=await readBoundedMedia(dl,maxBytes);
+    if(!bytes) return null;
+    const buf = Buffer.from(bytes);
     if (buf.byteLength === 0 || buf.byteLength > maxBytes) return null;
     return { buffer: buf, declaredMime: (meta.mime_type ?? mimeFromMeta)?.toLowerCase() };
   } catch (err) {
     // Não logamos `err.message`: pode conter a URL assinada da Meta.
     console.error("[whatsapp] media download failed:", err instanceof Error ? err.name : "unknown");
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -1134,6 +1145,18 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               // apenas adaptamos o texto. Transcript e texto
               // normalizado permanecem só em memória.
               const moneyNorm = normalizeVoiceMoney(transcript);
+              const instructions=splitAudioInstructions(moneyNorm.normalizedText);
+              if(instructions.length>1) {
+                if(process.env.WHATSAPP_AUDIO_BATCH_ENABLED === "true" && process.env.WHATSAPP_REMINDER_CONFIRMATION_ENABLED === "true" && msg.external_id) {
+                  const {prepareAudioBatch}=await import("@/server/whatsapp-audio-batch.server");
+                  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+                  const batch=await prepareAudioBatch(elig.userId,msg.telefone,msg.external_id,instructions,{client:supabaseAdmin});
+                  if(batch.graphInteractive) await sendWhatsAppInteractiveReply(msg.telefone,batch.graphInteractive);
+                  else if(batch.resposta) await sendWhatsAppReply(msg.telefone,batch.resposta);
+                } else await sendWhatsAppReply(msg.telefone,multiAudioReply(instructions));
+                results.push({status:"audio_multiplas_instrucoes"});
+                continue;
+              }
               console.log({
                 event: "wa_audio_money_normalization",
                 applied: moneyNorm.normalizedValuesCount > 0,

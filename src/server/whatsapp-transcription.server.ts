@@ -19,6 +19,10 @@
  */
 
 import { Buffer } from "buffer";
+import { getMaxAudioBytes } from "./whatsapp-audio.server";
+
+export const TRANSCRIPTION_TIMEOUT_MS = 25_000;
+export const TRANSCRIPTION_MAX_RESPONSE_BYTES = 64 * 1024;
 
 export type TranscriptionResult =
   | { ok: true; text: string; language: string | null }
@@ -63,22 +67,26 @@ export async function transcribeWhatsAppAudio(
     return { ok: false, reason: "unavailable" };
   }
   if (!buffer || buffer.byteLength === 0) return { ok: false, reason: "empty" };
+  if (buffer.byteLength > getMaxAudioBytes()) return { ok: false, reason: "failed" };
 
   const ext = MIME_TO_EXT[mimeType] ?? "ogg";
   const blob = new Blob([buffer as unknown as ArrayBuffer], { type: mimeType });
   const form = new FormData();
   form.append("model", "openai/gpt-4o-mini-transcribe");
   form.append("file", blob, `audio.${ext}`);
-  // Deixamos a detecção de idioma para o modelo (mais seguro do que forçar
-  // "pt" e descartar áudios em outros idiomas no servidor). O caller
-  // checa o idioma resultante.
+  form.append("language", "pt");
+  // Portuguese is the supported product language. Provider language metadata,
+  // when present, is still validated; language detection is not a confidence score.
   // Nada de logs com a URL/headers/body.
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), TRANSCRIPTION_TIMEOUT_MS);
   try {
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}` },
       body: form,
+      signal: controller.signal,
     });
     if (!resp.ok) {
       // Sem err.message do upstream: apenas status numérico.
@@ -86,7 +94,26 @@ export async function transcribeWhatsAppAudio(
       console.error({ event: "wa_audio_transcription_failed", httpStatus: resp.status });
       return { ok: false, reason: "failed" };
     }
-    const data = (await resp.json().catch(() => null)) as {
+    const reader = resp.body?.getReader();
+    if (!reader) return { ok: false, reason: "failed" };
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    try {
+      while (true) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        size += chunk.value.byteLength;
+        if (size > TRANSCRIPTION_MAX_RESPONSE_BYTES) {
+          await reader.cancel();
+          return { ok: false, reason: "failed" };
+        }
+        chunks.push(chunk.value);
+      }
+    } finally { reader.releaseLock(); }
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    const data = JSON.parse(new TextDecoder().decode(bytes)) as {
       text?: string;
       language?: string;
     } | null;
@@ -109,6 +136,8 @@ export async function transcribeWhatsAppAudio(
       errorName: err instanceof Error ? err.name : "unknown",
     });
     return { ok: false, reason: "failed" };
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

@@ -2909,6 +2909,18 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   }
 
   const recebidaEm = msg.recebida_em ?? new Date().toISOString();
+  if (/^reminder_(confirm|cancel):/i.test(texto) && process.env.WHATSAPP_REMINDER_CONFIRMATION_ENABLED !== "true")
+    return {status:"agenda",resposta:"Esse pedido de confirmação está indisponível. Nenhuma operação foi executada."};
+  if (/^audio_pick:/i.test(texto) && process.env.WHATSAPP_AUDIO_BATCH_ENABLED !== "true")
+    return {status:"agenda",resposta:"A revisão desse áudio está indisponível. Nenhuma operação foi executada."};
+  if(process.env.WHATSAPP_AUDIO_BATCH_ENABLED === "true" && !msg.image && !msg.document && !msg.flowReply) {
+    const {handleAudioBatchInput}=await import("./whatsapp-audio-batch.server");
+    const batch=await handleAudioBatchInput({userId,phone:msg.telefone,text:texto},{client:supabaseAdmin,
+      hasPending:async()=>!!(await buscarSessaoAtiva(userId,msg.telefone)),
+      process:async(text,externalId)=>processarMensagemWhatsApp({...msg,texto:text,external_id:externalId,source:"audio"})});
+    if(batch) return {status:"agenda",resposta:batch.resposta,
+      ...(batch.graphInteractive?{graphInteractive:batch.graphInteractive as {[key:string]:Json|undefined}}:{})};
+  }
 
   // A ação rápida usa ID opaco, usuário e telefone resolvidos pelo gate.
   // Também atende as próximas respostas de um fluxo de edição em andamento.
@@ -2993,8 +3005,24 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   {
     const { detectAgendaIntent, handleAgendaIntent } = await import("./whatsapp-agenda.server");
     const agendaIntent = detectAgendaIntent(texto);
+    if (process.env.WHATSAPP_REMINDER_CONFIRMATION_ENABLED === "true" && !payablePaymentIntent) {
+      const {handleReminderConfirmation} = await import("./whatsapp-reminder-confirmation.server");
+      const confirmation = await handleReminderConfirmation({userId, externalId:msg.external_id,
+        text:texto, intent:agendaIntent}, {client:supabaseAdmin});
+      if (confirmation) return {status:"agenda", resposta:confirmation.resposta,
+        ...(confirmation.graphInteractive ? {graphInteractive:confirmation.graphInteractive as {[key:string]:Json|undefined}} : {})};
+    }
     if (agendaIntent && !payablePaymentIntent) {
-      const out = await handleAgendaIntent(userId, agendaIntent);
+      let agendaTimezone: string | undefined;
+      if(process.env.WHATSAPP_REMINDER_CONFIRMATION_ENABLED === "true") {
+        const profile=await supabaseAdmin.from("profiles").select("timezone").eq("id",userId).maybeSingle();
+        try {
+          if(profile.error || !profile.data?.timezone) throw new Error();
+          new Intl.DateTimeFormat("pt-BR",{timeZone:profile.data.timezone});
+          agendaTimezone=profile.data.timezone;
+        } catch {return {status:"agenda",resposta:"Não consegui determinar seu fuso horário. Confira a configuração no aplicativo antes de alterar a Agenda."};}
+      }
+      const out = await handleAgendaIntent(userId, agendaIntent,{tz:agendaTimezone});
       if (!out.notMatched) {
       logWaRouteDecision(msg, "consulta_handler", `agenda_${agendaIntent.type}`);
       return {

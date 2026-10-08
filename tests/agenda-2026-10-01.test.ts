@@ -86,6 +86,34 @@ const deps = () => ({
 });
 const pending = (id: string) => queue.filter((q) => q.entityId === id && q.status === "pending");
 
+test("worker restarted after a delay: queued occurrence remains valid",async()=>{
+  const d=deps();
+  const item=await A.createAgendaItem(U1,{titulo:"Veterinário",starts_at:"2026-10-02T18:00:00Z"},d);
+  const queued=pending(item.id)[0];
+  const result=await A.revalidateAgendaForDispatch({user_id:U1,category:"agenda",entity_type:"agenda_item",entity_id:item.id,payload:queued.payload as Record<string,unknown>},
+    {...d,now:()=>new Date("2026-10-02T18:30:00Z")});
+  expect(result.ok).toBe(true);
+});
+test("date-only edit targets a unique reminder; two matches do not mutate either",async()=>{
+  const d=deps();
+  const first=await A.createAgendaItem(U1,{titulo:"Veterinário",starts_at:"2026-10-02T18:00:00Z"},d);
+  const text="muda meu lembrete de sexta para as 16 horas";
+  const intent=detectAgendaIntent(text)!;
+  const edited=await W.handleAgendaIntent(U1,intent,{now:NOW,deps:d});
+  expect(edited.resposta).toContain("Atualizado");
+  expect((await A.getAgendaItem(U1,first.id,d))?.starts_at).toBe("2026-10-02T19:00:00.000Z");
+  await A.createAgendaItem(U1,{titulo:"Contador",starts_at:"2026-10-02T20:00:00Z"},d);
+  const ambiguous=await W.handleAgendaIntent(U1,intent,{now:NOW,deps:d});
+  expect(ambiguous.resposta).toContain("2 itens");
+  expect((await A.getAgendaItem(U1,first.id,d))?.starts_at).toBe("2026-10-02T19:00:00.000Z");
+});
+test("tomorrow query includes recurrence, not only its original anchor",async()=>{
+  const d=deps();
+  await A.createAgendaItem(U1,{titulo:"Aluguel",starts_at:"2026-09-02T11:00:00Z",recurrence_freq:"mensal"},d);
+  const result=await W.handleAgendaIntent(U1,{type:"consultar",periodo:"amanha"},{now:NOW,deps:d});
+  expect(result.resposta).toContain("Aluguel");
+});
+
 beforeEach(() => {
   db = {
     agenda_items: [],

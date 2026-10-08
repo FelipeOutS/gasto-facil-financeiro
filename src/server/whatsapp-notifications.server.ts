@@ -208,7 +208,7 @@ export async function enqueueNotification(
       ignoreDuplicates: true,
     });
   if (error) {
-    console.error("[wa-notif] enqueue failed", error.code, error.message);
+    console.error("[wa-notif] enqueue failed", error.code);
     return null;
   }
 
