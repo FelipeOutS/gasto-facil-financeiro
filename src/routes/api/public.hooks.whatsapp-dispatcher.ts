@@ -123,6 +123,27 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
         }
 
         // 0) WA-C9.2 Fase B — recovery de processing preso ANTES da listagem.
+        if (parseStrictBool(process.env.WHATSAPP_AGENDA_SCHEDULER_ENABLED)) {
+          if (parseStrictBool(process.env.WHATSAPP_REMINDER_CONFIRMATION_ENABLED)) {
+            const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+            const scrub=await (supabaseAdmin as any).rpc("whatsapp_reminder_scrub_expired");
+            if(scrub.error) console.error({event:"wa_reminder_cleanup_failed"});
+            if(parseStrictBool(process.env.WHATSAPP_AUDIO_BATCH_ENABLED)) {
+              const audioScrub=await (supabaseAdmin as any).rpc("whatsapp_audio_scrub_expired");
+              if(audioScrub.error) console.error({event:"wa_audio_cleanup_failed"});
+            }
+          }
+          const {reconcileAgendaQueue} = await import("@/server/whatsapp-agenda-scheduler.server");
+          let offset: number | null = 0;
+          // Bounded tick. Larger installations must use a durable scan cursor
+          // before enabling this flag; never pretend a truncated scan completed.
+          for (let page=0; offset !== null && page<50; page++) {
+            const repaired=await reconcileAgendaQueue({},100,offset);
+            if(repaired.errors) console.error({event:"wa_agenda_repair_failed",count:repaired.errors});
+            offset=repaired.nextOffset;
+          }
+          if(offset !== null) console.error({event:"wa_agenda_scan_incomplete"});
+        }
         const recovery = await recoverStuckProcessing(50);
         console.info(
           "[wa-dispatcher] recover_stuck_processing",
@@ -196,6 +217,12 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
                 ...(claimed.payload ?? {}),
                 agenda_params: ra.vars.params,
                 agenda_text: ra.vars.text,
+                ...(ra.vars.kind === "lembrete" ? {
+                  agenda_titulo: ra.vars.params[0], agenda_quando: ra.vars.params[1],
+                } : {
+                  agenda_nome: ra.vars.params[0], agenda_prazo: ra.vars.params[1],
+                  agenda_valor: ra.vars.params[2], agenda_vencimento: ra.vars.params[3],
+                }),
               };
             }
           }
@@ -228,6 +255,16 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
 
           // 2) Template
           const tpl = await loadTemplate(n.notification_type);
+          if (n.category === "agenda") {
+            const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+            const {agendaTemplateApproved}=await import("@/server/whatsapp-agenda-template.server");
+            const catalog=await supabaseAdmin.from("whatsapp_meta_templates")
+              .select("internal_key,meta_name,language,category,version,status,active,provider_template_id,last_synced_at")
+              .eq("internal_key",n.notification_type).eq("version",1).maybeSingle();
+            if(catalog.error || !agendaTemplateApproved(n.notification_type,tpl?.meta_template_name??null,catalog.data)) {
+              await markSkipped(n.id,"template_missing",token); summary.skipped++; continue;
+            }
+          }
           if (!tpl || !tpl.active) {
             await markSkipped(n.id, "template_missing", token);
             summary.skipped++;

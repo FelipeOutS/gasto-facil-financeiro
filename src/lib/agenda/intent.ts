@@ -23,7 +23,7 @@ export type AgendaIntent =
       nome: string;
       diasAntes: number;
     }
-  | { type: "consultar"; periodo: "hoje" | "amanha" | "semana" | "proximos" }
+  | { type: "consultar"; periodo: "hoje" | "amanha" | "semana" | "proximos" | "recorrentes" }
   | { type: "editar"; alvo: string; when: ParsedWhen; novoTitulo?: string }
   | { type: "cancelar"; alvo: string }
   | { type: "concluir"; alvo: string }
@@ -83,6 +83,14 @@ export function detectAgendaIntent(text: string): AgendaIntent | null {
   if (idView) return { type: "acao_id", acao: "ver", id: idView[1].toLowerCase() };
 
   const n = norm(raw).replace(/[?!.]+$/g, "");
+  const leadingRecurrence = /^(todo dia \d{1,2}|todos os dias|toda (?:segunda|terca|quarta|quinta|sexta|sabado)|todo domingo)(.*?)\b(me lembr[ae].*)$/.exec(n);
+  if (leadingRecurrence) return detectAgendaIntent(`${leadingRecurrence[3]} ${leadingRecurrence[1]} ${leadingRecurrence[2]}`);
+  if (/^(?:quais |meus )?lembretes recorrentes(?: estao ativos)?$/.test(n))
+    return {type:"consultar",periodo:"recorrentes"};
+  const reminderQuery = /^quais lembretes (?:eu )?tenho (?:para )?(hoje|amanha)$/.exec(n);
+  if(reminderQuery) return {type:"consultar",periodo:reminderQuery[1] === "hoje"?"hoje":"amanha"};
+  const stop = /^nao precisa mais me lembrar (?:de |da |do )?(.+)$/.exec(n);
+  if(stop) return {type:"cancelar",alvo:stop[1]};
 
   // Editar antecedência de um aviso financeiro: "mude o aviso da fatura nubank para 5 dias antes"
   const ea = /^(?:mud[ae]r?|alter[ae]r?|troc[ae]r?) (?:o )?aviso (?:da |do |de )?(.+?) para (\d{1,2}) dias? antes$/.exec(n);

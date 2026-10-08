@@ -409,23 +409,30 @@ export async function computeNextAviso(
  */
 export async function syncAgendaNotification(item: AgendaRow, deps?: AgendaDeps): Promise<Date | null> {
   try {
+    const nxt = await computeNextAviso(item, deps);
+    const dedupeKey = nxt ? `agenda:${item.id}:${nxt.at.toISOString()}:${item.updated_at}` : null;
+    if (dedupeKey && !deps?.cancelPending) {
+      const {data, error} = await c(deps).from("whatsapp_notifications").select("id,status")
+        .eq("user_id", item.user_id).eq("dedupe_key", dedupeKey).maybeSingle();
+      if (error) throw new Error("agenda_queue_lookup_unavailable");
+      if (data) return data.status === "pending" || data.status === "processing" ? nxt!.at : null;
+    }
     const cancel =
       deps?.cancelPending ??
       (async (u: string, t: string, i: string) => (await import("./whatsapp-notifications.server")).cancelByEntity(u, t, i));
     await cancel(item.user_id, AGENDA_ENTITY, item.id);
-    const nxt = await computeNextAviso(item, deps);
     if (!nxt) return null;
     const enqueue =
       deps?.enqueue ??
       (async (input: Parameters<NonNullable<AgendaDeps["enqueue"]>>[0]) =>
         (await import("./whatsapp-notifications.server")).enqueueNotification(input));
     // Reaproveita a mesma linha se o horário não mudou (dedupe estável).
-    await enqueue({
+    const queued = await enqueue({
       userId: item.user_id,
       type: item.source_type ? "gi_agenda_financeiro" : "gi_agenda_lembrete",
       category: "agenda",
       scheduledAt: nxt.at,
-      dedupeKey: `agenda:${item.id}:${nxt.at.toISOString()}:${item.updated_at}`,
+      dedupeKey: dedupeKey!,
       payload: {
         agenda_item_id: item.id,
         aviso_at: nxt.at.toISOString(),
@@ -437,6 +444,7 @@ export async function syncAgendaNotification(item: AgendaRow, deps?: AgendaDeps)
       entityId: item.id,
       priority: item.source_type ? "alta" : "media",
     });
+    if (queued === null) return null;
     return nxt.at;
   } catch (err) {
     console.error("[agenda] sync falhou", (err as Error)?.name ?? "err");
@@ -501,8 +509,18 @@ export async function revalidateAgendaForDispatch(
   }
   const occIso = String(n.payload?.occurrence_at ?? item.starts_at ?? "");
   const occ = new Date(occIso);
-  const expected = await computeNextAviso({ ...item }, { ...deps, now: () => new Date(now.getTime() - 120_000) });
-  if (!expected || Math.abs(expected.at.getTime() - new Date(String(n.payload?.aviso_at ?? "")).getTime()) > 60_000) {
+  // Validate against the queued occurrence, not a two-minute window around
+  // worker execution. Restarts, backoff and quiet hours may delay dispatch.
+  const plannedAt = new Date(String(n.payload?.aviso_at ?? ""));
+  const lead = (item.aviso_minutos_antes ?? 0) * 60_000;
+  const occurrenceValid = Number.isFinite(occ.getTime()) && !!item.starts_at &&
+    (item.recurrence_freq
+      ? nextOccurrence(new Date(item.starts_at),
+          {freq: item.recurrence_freq as RecurrenceFreq, interval: item.recurrence_interval, until: item.recurrence_until},
+          new Date(occ.getTime() - 1), tz)?.getTime() === occ.getTime()
+      : new Date(item.starts_at).getTime() === occ.getTime());
+  const expected = occurrenceValid ? {at: new Date(occ.getTime() - lead)} : null;
+  if (!expected || !Number.isFinite(plannedAt.getTime()) || Math.abs(expected.at.getTime() - plannedAt.getTime()) > 60_000) {
     await syncAgendaNotification(item, deps);
     return { ok: false, reason: "agenda_changed" };
   }

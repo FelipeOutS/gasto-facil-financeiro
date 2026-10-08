@@ -129,6 +129,13 @@ export type ParsedWhen = {
  */
 export function parseWhen(text: string, now: Date, tz: string = DEFAULT_TZ): ParsedWhen {
   let s = ` ${norm(text).replace(/[?!.,;]+(\s|$)/g, " ")} `.replace(/\s+/g, " ");
+  const spoken: Record<string, number> = { uma: 1, um: 1, duas: 2, dois: 2, tres: 3,
+    quatro: 4, cinco: 5, seis: 6, sete: 7, oito: 8, nove: 9, dez: 10,
+    onze: 11, doze: 12, treze: 13, quatorze: 14, quinze: 15, dezesseis: 16,
+    dezessete: 17, dezoito: 18, dezenove: 19, vinte: 20 };
+  // Only convert within explicit temporal markers; money/title stay intact.
+  s = s.replace(/\b(as|dia|daqui a|daqui|em) ([a-z]+)(?=\s)/g,
+    (all, marker: string, word: string) => spoken[word] == null ? all : `${marker} ${spoken[word]}`);
   const today = localParts(now, tz);
   const todayYmd: YMD = { y: today.y, m: today.m, d: today.d };
   let date: YMD | null = null;
@@ -217,6 +224,7 @@ export function parseWhen(text: string, now: Date, tz: string = DEFAULT_TZ): Par
     const mi = Number(m[2] ?? m[3] ?? 0);
     const per = m[4];
     if ((per === "tarde" || per === "noite") && h < 12) h += 12;
+    if (h === 12 && (per === "manha" || per === "madrugada" || per === "noite")) h = 0;
     if (h <= 23 && mi <= 59) time = { h, mi };
     cut(new RegExp(m[0].trim().replace(/\s/g, "\\s")));
   } else if ((m = /\s(?:as |a )?(\d{1,2}):(\d{2})(?:h)?\s/.exec(s))) {

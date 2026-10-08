@@ -138,7 +138,6 @@ export async function defaultLoadTemplate(
           event: "template_query_error",
           key,
           code: (error as { code?: unknown })?.code ?? null,
-          message: (error as { message?: unknown })?.message ?? null,
         }),
       );
     } catch {

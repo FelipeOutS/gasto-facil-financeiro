@@ -6,6 +6,7 @@
 import {
   AgendaError,
   createAgendaItem,
+  computeNextAviso,
   findAgendaByTitle,
   getAgendaItem,
   itemWhenLabel,
@@ -39,6 +40,7 @@ import {
   resolveWhen,
   formatWhen,
 } from "@/lib/agenda/datetime";
+import {nextOccurrence, type RecurrenceFreq} from "@/lib/agenda/recurrence";
 
 export type AgendaReply = {
   resposta: string;
@@ -122,7 +124,7 @@ function brl(v: number): string {
 }
 
 /** Texto de um item financeiro com dados AO VIVO (valor é só informativo). */
-async function financialDetails(item: AgendaRow, deps?: AgendaDeps): Promise<string> {
+export async function financialDetails(item: AgendaRow, deps?: AgendaDeps): Promise<string> {
   const snap = await resolveFinancialSource(item, deps);
   const icon = item.source_type === "cartao" ? "💳" : item.source_type === "conta_a_pagar" ? "🧾" : "🔁";
   if (!snap.ok) return `${icon} ${item.titulo}\n${snap.reason === "payable_paid" ? "✅ Já paga" : "Sem vencimento no momento"}`;
@@ -255,7 +257,7 @@ async function sameOrPick(
   };
 }
 
-async function resolveSourceByName(
+export async function resolveSourceByName(
   userId: string,
   kind: "cartao" | "conta_a_pagar" | "recorrencia",
   nome: string,
@@ -272,10 +274,10 @@ async function resolveSourceByName(
     const n = norm(r.nome);
     return n.includes(alvo) || alvo.includes(n);
   });
-  // Contas: uma por nome (a pendente mais próxima já vem filtrada por status).
+  // Same title does not mean same financial entity. Do not hide ambiguity.
   const seen = new Set<string>();
   return rows.filter((r) => {
-    const k = norm(r.nome);
+    const k = r.id;
     if (seen.has(k)) return false;
     seen.add(k);
     return true;
@@ -313,8 +315,8 @@ export async function handleAgendaIntent(
           deps,
         );
         const rec = intent.recurrence ? `\n🔁 Repete: ${intent.recurrence}` : "";
-        const head = intent.kind === "compromisso" ? "Compromisso agendado! 📅" : "Pronto! Vou te lembrar 🔔";
-        const body = `${head}\n\n${fixedDetails(item, now)}${rec}\n\nTambém aparece na Agenda do site.`;
+        const head = intent.kind === "compromisso" ? "Compromisso salvo na Agenda 📅" : "Lembrete salvo na Agenda 🔔";
+        const body = `${head}\n\n${fixedDetails(item, now)}${rec}\n\nTambém aparece na Agenda do site. O cadastro não confirma a entrega de um aviso pelo WhatsApp.`;
         return { resposta: body, graphInteractive: buttonsMsg(body, postCreateButtons(item)), itemId: item.id };
       }
       case "criar_financeiro": {
@@ -366,11 +368,16 @@ export async function handleAgendaIntent(
           titulo = "📅 Próximos 7 dias";
         } else from = new Date(now.getTime() - 3600_000);
         const all = await listAgenda(userId, { status: "ativo" }, deps);
-        const rows = all.filter((r) => {
-          if (!r.starts_at) return intent.periodo === "proximos" || intent.periodo === "semana";
-          const t = new Date(r.starts_at).getTime();
-          return (!from || t >= from.getTime()) && (!to || t < to.getTime());
-        });
+        const rows:AgendaRow[]=[];
+        for(const r of all) {
+          if(intent.periodo==="recorrentes") {if(r.recurrence_freq) rows.push(r);continue;}
+          let instant:Date|null=r.starts_at?new Date(r.starts_at):null;
+          if(r.source_type) instant=(await computeNextAviso(r,deps))?.at??null;
+          else if(instant && r.recurrence_freq && from)
+            instant=nextOccurrence(instant,{freq:r.recurrence_freq as RecurrenceFreq,interval:r.recurrence_interval,until:r.recurrence_until},new Date(from.getTime()-1),r.timezone);
+          if(instant && (!from || instant.getTime()>=from.getTime()) && (!to || instant.getTime()<to.getTime()))
+            rows.push(r.source_type ? r : {...r,starts_at:instant.toISOString()});
+        }
         if (!rows.length) {
           const quando = intent.periodo === "hoje" ? "hoje" : intent.periodo === "amanha" ? "amanhã" : "nos próximos dias";
           return { resposta: `Nada na sua agenda ${quando}. ✨\nPara criar: *me lembra amanhã às 9 de pagar a internet*.` };
@@ -380,7 +387,19 @@ export async function handleAgendaIntent(
         return { resposta: `${titulo}\n\n${lines.join("\n")}${rows.length > 15 ? `\n… e mais ${rows.length - 15} no site.` : ""}` };
       }
       case "editar": {
-        const found = await findAgendaByTitle(userId, intent.alvo, deps);
+        let found = await findAgendaByTitle(userId, intent.alvo, deps);
+        if (!found.length) {
+          const target=parseWhen(intent.alvo,now,tz);
+          // Date-only reference can identify a fixed reminder, but never a
+          // financial source or an arbitrary fuzzy title. Multiple matches ask.
+          if(target.date && !target.rest.trim()) {
+            found=(await listAgenda(userId,{status:"ativo"},deps)).filter(item=>{
+              if(!item.starts_at || item.source_type) return false;
+              const date=localParts(new Date(item.starts_at),item.timezone);
+              return date.y===target.date!.y && date.m===target.date!.m && date.d===target.date!.d;
+            });
+          }
+        }
         if (!found.length) return { resposta: "", notMatched: true };
         if (found.length > 1)
           return { resposta: `Encontrei ${found.length} itens com "${intent.alvo}". Diga o nome completo para eu alterar o certo.` };

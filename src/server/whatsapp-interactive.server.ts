@@ -207,6 +207,7 @@ function clip(s: string, n: number): string {
 /** Converte o ID recebido em `button_reply`/`list_reply` no texto equivalente. */
 export function replyIdToTexto(id: string, title?: string): string {
   const v = (id ?? "").trim();
+  if (/^(?:reminder_(?:confirm|cancel):[0-9a-f-]{36}|audio_pick:[0-9a-f-]{36}:\d{1,2})$/i.test(v)) return v;
   if (/^wa13_(?:confirm|cancel|adjust|pick):[0-9a-f-]{36}(?::\d{1,2})?$/i.test(v)) return v;
   // O token opaco do recibo contém a identidade da ação. Converter para o
   // título ("Editar"/"Desfazer") perderia essa referência e seria inseguro.
