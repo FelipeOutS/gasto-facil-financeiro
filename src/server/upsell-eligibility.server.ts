@@ -169,6 +169,7 @@ export async function checkUpsellEligibility(userId: string): Promise<UpsellElig
   criteria.paid_feature_attempt = Boolean(p.paid_feature_attempt_at);
 
   // Gatilho: 5 lançamentos financeiros reais (gastos + receitas)
+  // soft-delete-exceção: critério de uso/atividade; gasto excluído continua contando (como na cota free_ads).
   const { count: gastosCount } = await sb
     .from("gastos")
     .select("id", { count: "exact", head: true })

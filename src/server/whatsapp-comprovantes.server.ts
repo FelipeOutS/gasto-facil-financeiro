@@ -474,6 +474,7 @@ async function loadCategoriaHistory(
       .from("gastos")
       .select("categoria_id, data, created_at")
       .eq("user_id", userId)
+      .is("deleted_at", null)
       .gte("data", since);
     if (!Array.isArray(data)) return { recentIds: [], topIds: [] };
     const rows = data as Array<{

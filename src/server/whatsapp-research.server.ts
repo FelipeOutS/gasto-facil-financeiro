@@ -55,7 +55,7 @@ async function budgetReadOnly(userId: string, priceCents: number): Promise<strin
     return "Não há um orçamento total configurado para este mês. Não consigo avaliar essa compra pelos dados registrados.";
   let spentCents = 0;
   for (let start = 0; start < 10000; start += 500) {
-    const { data, error } = await db.from("gastos").select("valor").eq("user_id", userId)
+    const { data, error } = await db.from("gastos").select("valor").eq("user_id", userId).is("deleted_at", null)
       .gte("data", from).lt("data", to).range(start, start + 499);
     if (error || !Array.isArray(data)) throw new Error("budget_unavailable");
     for (const row of data) spentCents += Math.round(Number(row.valor ?? 0) * 100);

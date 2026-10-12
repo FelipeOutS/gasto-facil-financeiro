@@ -4,5 +4,9 @@
 - [ ] P1 Lembretes — ativação real: templates Meta gi_agenda_*, cron do dispatcher e WHATSAPP_DISPATCH_ENABLED (aguarda autorização)
 - [ ] Assistente de Compras WhatsApp (Fases A/B/C) — bloqueado: aguarda conclusão dos lembretes e chave SERPAPI_API_KEY
 - [x] Exclusão reversível de gastos F1 (auditoria/plano) e F2 (migration CANDIDATA + RPCs + testes SQL locais) — NÃO aplicada
-- [ ] F3 leitores filtram deleted_at / F4 fluxo WhatsApp / F5 ativação — aguardam autorização
+- [x] F3 código/testes: leitores de gastos filtram deleted_at (NÃO publicar antes da F2 aplicada)
+- [ ] F3 pendências: vínculo conta↔gasto (contas.functions), revisar RPCs SQL remotas
+- [ ] F4 fluxo WhatsApp exclusão/restauração / F5 ativação — aguardam autorização
+- [ ] Cadastro conversacional de cartões
+- [ ] Smoke test de áudio real
 - [ ] Botões de gasto: versionar sessão após "Ajustar" (tarefa independente)

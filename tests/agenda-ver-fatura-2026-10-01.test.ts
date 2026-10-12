@@ -19,6 +19,7 @@ function fakeClient() {
       const q = {
         select: () => q,
         eq: (k: string, v: unknown) => (filters.push((r) => r[k] === v), q),
+        is: (k: string, v: unknown) => (filters.push((r) => (r[k] ?? null) === v), q),
         in: (k: string, v: unknown[]) => (filters.push((r) => v.includes(r[k])), q),
         gte: (k: string, v: string) => (filters.push((r) => String(r[k]) >= v), q),
         lt: (k: string, v: string) => (filters.push((r) => String(r[k]) < v), q),

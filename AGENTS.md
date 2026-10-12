@@ -6,3 +6,4 @@
 - GI Agenda: `agenda_items` is the single source for reminders/appointments; site (`src/lib/agenda.functions.ts`) and WhatsApp (`src/server/whatsapp-agenda.server.ts`) both go through `src/server/agenda.server.ts`, because the two channels must always show the same data.
 - Agenda financial reminders store only (source_type, source_id, days before) and read amount/due date live at send time, because financial modules own those values.
 - Agenda alerts reuse `whatsapp_notifications` (entity_type `agenda_item`); every change cancels pending rows and re-enqueues, and the dispatcher revalidates before sending, because there must be one notification queue.
+- Every read of `gastos` must filter `.is("deleted_at", null)` or carry a `soft-delete-exceção:` comment, enforced by tests/whatsapp-gastos-soft-delete-f3.test.ts, because soft-deleted expenses must never be shown or summed.
