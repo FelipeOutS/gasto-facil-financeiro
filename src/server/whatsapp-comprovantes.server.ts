@@ -1313,7 +1313,9 @@ export async function processarRespostaImagem(args: {
     };
     if (usarHoje) next.data = todayLocalISO();
     if (dataInformada && !usarNota && !usarHoje) next.data = dataInformada;
-    return avancarAposConfirmacao(userId, next, cats, externalMessageId);
+    const out = await avancarAposConfirmacao(userId, next, cats, externalMessageId);
+    if (out.status === "erro" || !next.data) return out;
+    return { ...out, resposta: `📅 Data usada: ${formatDataBR(next.data)}\n\n${out.resposta}` };
   }
 
   // ----- aguardando categoria obrigatória -----
