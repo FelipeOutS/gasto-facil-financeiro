@@ -114,7 +114,7 @@ describe("F3 — guarda: novas leituras de gastos sem filtro", () => {
     }
     expect(sem).toEqual([]);
     // Exceções revisadas (mudança aqui exige revisão consciente).
-    expect(excecoes.length).toBe(6);
+    expect(excecoes.length).toBe(7);
   });
 
   it("leitores dinâmicos (gastos|receitas) filtram as duas tabelas", () => {

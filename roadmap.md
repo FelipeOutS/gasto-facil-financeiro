@@ -5,7 +5,8 @@
 - [ ] Assistente de Compras WhatsApp (Fases A/B/C) — bloqueado: aguarda conclusão dos lembretes e chave SERPAPI_API_KEY
 - [x] Exclusão reversível de gastos F1 (auditoria/plano) e F2 (migration CANDIDATA + RPCs + testes SQL locais) — NÃO aplicada
 - [x] F3 código/testes: leitores de gastos filtram deleted_at (NÃO publicar antes da F2 aplicada)
-- [ ] F3 pendências: vínculo conta↔gasto (contas.functions), revisar RPCs SQL remotas
+- [x] P0 nº1: estorno de conta bloqueia gasto vinculado soft-excluído (código; depende da F2)
+- [ ] F3 pendências: undo WhatsApp, reversão de extrato, edit WhatsApp, aviso site, cache offline, RPC transacional de estorno (F4)
 - [ ] F4 fluxo WhatsApp exclusão/restauração / F5 ativação — aguardam autorização
 - [ ] Cadastro conversacional de cartões
 - [ ] Smoke test de áudio real

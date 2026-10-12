@@ -3,7 +3,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const CONTA_GASTO_ORIGEM = "contas_a_pagar";
+import {
+  CONTA_GASTO_ORIGEM,
+  ContaGastoExcluidoError,
+  MSG_PAGAR_GASTO_EXCLUIDO,
+  estornarPagamentoConta,
+  findLinkedGastos,
+  hasDeletedLinkedGasto,
+  normalizedText,
+  opId,
+} from "./contas-estorno";
 
 const formaSchema = z.enum([
   "pix",
@@ -45,24 +54,8 @@ const unpayInputSchema = z.object({
   removerGastoVinculado: z.boolean().optional(),
 });
 
-function opId(contaId: string) {
-  return `conta_a_pagar:${contaId}`;
-}
 
-function normalizedText(value: string | null | undefined) {
-  return (value ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-}
 
-function daysBetween(a: string, b: string) {
-  const ta = new Date(`${a}T00:00:00`).getTime();
-  const tb = new Date(`${b}T00:00:00`).getTime();
-  return Math.abs(Math.round((ta - tb) / 86_400_000));
-}
 
 function monthYear(iso: string) {
   const d = new Date(`${iso}T00:00:00`);
@@ -92,35 +85,6 @@ async function resolveContaAlerts(sb: any, userId: string, contaId: string) {
     .in("status", ["unread", "read"]);
 }
 
-async function findLinkedGastos(
-  sb: any,
-  userId: string,
-  conta: any,
-  nome: string,
-  valor: number,
-  dataPagamento: string,
-) {
-  const directIds = [conta.gasto_id].filter(Boolean);
-  // soft-delete-exceção (PENDENTE F4): vínculo conta↔gasto; filtrar criaria duplicata após restaurar.
-  const { data, error } = await sb
-    .from("gastos")
-    .select("id, descricao, estabelecimento, valor, data, origem, id_operacao_banco")
-    .eq("user_id", userId)
-    .or(`id_operacao_banco.eq.${opId(conta.id)},origem.eq.${CONTA_GASTO_ORIGEM}`);
-  if (error) throw new Error(error.message);
-
-  const targetName = normalizedText(nome);
-  return ((data ?? []) as any[]).filter((g) => {
-    if (directIds.includes(g.id)) return true;
-    if (g.id_operacao_banco === opId(conta.id)) return true;
-    if (g.origem !== CONTA_GASTO_ORIGEM) return false;
-    if (Math.abs(Number(g.valor ?? 0) - valor) > 0.01) return false;
-    if (normalizedText(g.descricao || g.estabelecimento) !== targetName) return false;
-    return (
-      daysBetween(g.data, dataPagamento) <= 3 || daysBetween(g.data, conta.data_vencimento) <= 3
-    );
-  });
-}
 
 export const markContaAPagarPaid = createServerFn({ method: "POST" })
   .inputValidator((input) => paymentInputSchema.parse(input))
@@ -193,6 +157,10 @@ export const markContaAPagarPaid = createServerFn({ method: "POST" })
 
       if (data.criarGasto && !faturaVinculada) {
         const linked = await findLinkedGastos(sb, userId, conta, nome, valor, dataPagamento);
+        // Gasto vinculado soft-excluído: não atualiza nem recria (evita duplicata após restaurar).
+        if (await hasDeletedLinkedGasto(sb, userId, conta, linked)) {
+          throw new ContaGastoExcluidoError(MSG_PAGAR_GASTO_EXCLUIDO);
+        }
         const existing = linked[0];
         const duplicateIds = linked.slice(1).map((g) => g.id);
         const gastoRow = {
@@ -282,37 +250,5 @@ export const unmarkContaAPagarPaid = createServerFn({ method: "POST" })
     const userId = context.userId;
     const { assertFeatureAccess } = await import("@/server/feature-gate.server");
     await assertFeatureAccess(userId, "contas_a_pagar");
-    const { data: conta, error: contaErr } = await sb
-      .from("contas_a_pagar")
-      .select("*")
-      .eq("id", data.id)
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (contaErr) throw new Error(contaErr.message);
-    if (!conta) throw new Error("Conta não encontrada.");
-
-    if (data.removerGastoVinculado ?? true) {
-      const linked = await findLinkedGastos(
-        sb,
-        userId,
-        conta,
-        conta.nome,
-        Number(conta.valor),
-        conta.data_pagamento ?? conta.data_vencimento,
-      );
-      const ids = linked.map((g) => g.id);
-      if (ids.length > 0) {
-        const { error } = await sb.from("gastos").delete().eq("user_id", userId).in("id", ids);
-        if (error) throw new Error(error.message);
-      }
-    }
-
-    const now = new Date().toISOString();
-    const { error } = await sb
-      .from("contas_a_pagar")
-      .update({ status: "pendente", data_pagamento: null, gasto_id: null, updated_at: now })
-      .eq("id", conta.id)
-      .eq("user_id", userId);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+    return estornarPagamentoConta(sb, userId, data);
   });
