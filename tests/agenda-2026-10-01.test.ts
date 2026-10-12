@@ -1,6 +1,7 @@
 import { describe, expect, test, mock, beforeEach } from "bun:test";
 
 mock.module("@/integrations/supabase/client.server", () => ({ supabaseAdmin: {} }));
+process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET = "test-only-fake-secret-0123456789abcdef";
 
 const { parseWhen, resolveWhen, localParts, localToUtc } = await import("../src/lib/agenda/datetime");
 const { nextOccurrence } = await import("../src/lib/agenda/recurrence");
@@ -582,5 +583,108 @@ describe("cancelar lembrete com páginas e confirmação (2026-10-12)", () => {
     expect(replyIdToTexto("agenda_cancel_back", "Voltar")).toBe("agenda_cancel_back");
     const ok = `agenda_cancel_ok:${crypto.randomUUID()}:abc`;
     expect(replyIdToTexto(ok, "Confirmar")).toBe(ok);
+  });
+});
+
+describe("confirmação assinada e cancelamento atômico (2026-10-12)", () => {
+  const run = (u: string, t: string, d: ReturnType<typeof deps>, now = NOW) =>
+    W.handleAgendaIntent(u, detectAgendaIntent(t)!, { now, tz: TZ, deps: d });
+  const okOf = (r: { graphInteractive?: unknown }) => (r.graphInteractive as any).action.buttons[0].reply.id as string;
+  const mk = async (d: ReturnType<typeof deps>) => {
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    return db.agenda_items[0].id as string;
+  };
+  const minute = (Math.floor(NOW.getTime() / 60_000)).toString(36);
+
+  test("ID forjado com minuto atual e sem assinatura válida não cancela", async () => {
+    const d = deps();
+    const id = await mk(d);
+    for (const forged of [
+      `agenda_cancel_ok:${id}:${minute}`,
+      `agenda_cancel_ok:${id}:${minute}:${"A".repeat(22)}`,
+    ]) {
+      const r = await run(U1, forged, d);
+      expect(r.resposta).toContain("nada foi cancelado");
+    }
+    expect(db.agenda_items[0].status).toBe("ativo");
+  });
+
+  test("assinatura de um item não vale para outro item do mesmo usuário", async () => {
+    const d = deps();
+    const id1 = await mk(d);
+    await run(U1, "me lembra amanhã às 10 de ligar pro banco", d);
+    const id2 = db.agenda_items[1].id as string;
+    const ok1 = okOf(await run(U1, `agenda_cancel:${id1}`, d));
+    const swapped = ok1.replace(id1, id2);
+    expect((await run(U1, swapped, d)).resposta).toContain("nada foi cancelado");
+    expect(db.agenda_items.every((x) => x.status === "ativo")).toBe(true);
+  });
+
+  test("token de A usado por B é recusado pela assinatura", async () => {
+    const d = deps();
+    const id = await mk(d);
+    const ok = okOf(await run(U1, `agenda_cancel:${id}`, d));
+    expect((await run(U2, ok, d)).resposta).toContain("nada foi cancelado");
+    expect(db.agenda_items[0].status).toBe("ativo");
+  });
+
+  test("minuto adulterado invalida a assinatura (não estende a validade)", async () => {
+    const d = deps();
+    const id = await mk(d);
+    const ok = okOf(await run(U1, `agenda_cancel:${id}`, d));
+    const parts = ok.split(":");
+    parts[2] = (parseInt(parts[2], 36) + 40).toString(36);
+    expect((await run(U1, parts.join(":"), d, new Date(NOW.getTime() + 45 * 60_000))).resposta).toContain("nada foi cancelado");
+  });
+
+  test("dois cliques simultâneos: só um altera e a fila é sincronizada uma vez", async () => {
+    const d = deps();
+    const id = await mk(d);
+    const ok = okOf(await run(U1, `agenda_cancel:${id}`, d));
+    let syncs = 0;
+    const d2 = { ...d, cancelPending: async (...a: [string, string, string]) => (syncs++, d.cancelPending(...a)) };
+    const [a, b] = await Promise.all([run(U1, ok, d2), run(U1, ok, d2)]);
+    const textos = [a.resposta, b.resposta];
+    expect(textos.filter((t) => t.startsWith("Tudo certo"))).toHaveLength(1);
+    expect(db.agenda_items[0].status).toBe("cancelado");
+    expect(syncs).toBe(1);
+  });
+
+  test("item concluído depois do resumo não é cancelado", async () => {
+    const d = deps();
+    const id = await mk(d);
+    const ok = okOf(await run(U1, `agenda_cancel:${id}`, d));
+    await run(U1, `agenda_done:${id}`, d);
+    const r = await run(U1, ok, d);
+    expect(r.resposta).toContain("já está concluído");
+    expect(db.agenda_items[0].status).toBe("concluido");
+  });
+
+  test("sem segredo no servidor: falha fechada, nada é cancelado", async () => {
+    const d = deps();
+    const id = await mk(d);
+    const ok = okOf(await run(U1, `agenda_cancel:${id}`, d));
+    const saved = process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET;
+    delete process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET;
+    try {
+      expect((await run(U1, ok, d)).resposta).toContain("nada foi cancelado");
+      expect((await run(U1, `agenda_cancel:${id}`, d)).resposta).toContain("Nada foi alterado");
+    } finally {
+      process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET = saved;
+    }
+    expect(db.agenda_items[0].status).toBe("ativo");
+  });
+
+  test("UPDATE condicional: setAgendaStatus em item já cancelado lança 'already'", async () => {
+    const d = deps();
+    const id = await mk(d);
+    await A.setAgendaStatus(U1, id, "cancelar", d);
+    const before = db.agenda_items[0].cancelled_at;
+    db.agenda_items[0].status = "ativo"; // simula leitura antiga (TOCTOU)
+    const realGet = A.getAgendaItem;
+    expect(realGet).toBeTruthy();
+    db.agenda_items[0].status = "cancelado";
+    await expect(A.setAgendaStatus(U1, id, "cancelar", d)).rejects.toThrow();
+    expect(db.agenda_items[0].cancelled_at).toBe(before);
   });
 });
