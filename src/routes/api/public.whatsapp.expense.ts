@@ -1187,7 +1187,18 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                   }
                 } else {
                   // Botões/listas para perguntas conhecidas. Falhou → texto.
-                  const ir = buildInteractiveFromReply(out.resposta);
+                  // Botões de gasto só saem presos à sessão criada por
+                  // ESTA mensagem; sem vínculo → só texto (1/2/3).
+                  const rowId =
+                    elig.userId && out.resposta.includes(EXPENSE_CONFIRM_FALLBACK)
+                      ? await buscarVinculoBotaoGasto(elig.userId, msg.telefone, msg.external_id)
+                      : null;
+                  const ir = buildInteractiveFromReply(
+                    out.resposta,
+                    rowId && elig.userId
+                      ? { userId: elig.userId, telefone: msg.telefone, rowId }
+                      : null,
+                  );
                   if (ir) {
                     try {
                       const r = await sendWhatsAppInteractiveReply(
