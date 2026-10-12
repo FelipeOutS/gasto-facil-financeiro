@@ -74,7 +74,7 @@ describe("F3 — gastos excluídos (deleted_at) não aparecem nem somam", () => 
 
   it("excluídos continuam fisicamente no banco (nada apagado pelo leitor)", async () => {
     await load([expense("ativo", "2026-10-02", 50), expense("excluido", "2026-10-02", 70, DEL)]);
-    expect(((state.generic as Record<string, Array<{ id: string }>>).gastos ?? []).map((g) => g.id).sort()).toEqual(["ativo", "excluido"]);
+    expect(((state as unknown as { gastosData: Array<{ id: string }> }).gastosData).map((g) => g.id).sort()).toEqual(["ativo", "excluido"]);
   });
 });
 
