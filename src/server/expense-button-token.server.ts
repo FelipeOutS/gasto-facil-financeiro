@@ -22,7 +22,7 @@ export const EXPENSE_ACTION_TEXT: Record<ExpenseAction, string> = {
   adjust: "ajustar",
   cancel: "não",
 };
-export const EXPENSE_TOKEN_RE = /^exp1:([cax]):([0-9a-f-]{36}):([A-Za-z0-9_-]{22})$/;
+export const EXPENSE_TOKEN_RE = /^exp1:([cax]):([A-Za-z0-9-]{1,64}):([A-Za-z0-9_-]{22})$/;
 export const LEGACY_EXPENSE_RE = /^expense_(?:confirm|adjust|cancel)$/;
 
 function key(): Buffer | null {
