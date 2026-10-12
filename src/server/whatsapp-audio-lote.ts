@@ -23,11 +23,6 @@ export type AudioAnalise =
   | { kind: "lote"; itens: LoteItem[]; formaPagamento: LoteForma | null };
 
 
-// Só conta valores monetários explícitos ("R$ 20,00" ou "20 reais"), nunca
-// datas, quantidades ou números de parcelas.
-const MONEY = /r\$\s*\d[\d.]*(?:,\d{1,2})?|\b\d[\d.]*(?:,\d{1,2})?\s*reais\b/gi;
-const SEPARADOR =
-  /\s*(?:,|;|\be\b|\bmais\b|\btamb[eé]m\b)\s+(?=(?:(?:eu\s+)?(?:gastei|paguei|comprei)\s+)?(?:r\$\s*)?\d)/i;
 const TEM_DATA = /\b(hoje|ontem|anteontem|\d{1,2}\/\d{1,2}|dia\s+\d{1,2})\b/i;
 const RECEITA = /\b(recebi|ganhei|entrou|caiu|sal[aá]rio)\b/i;
 

@@ -391,7 +391,7 @@ const boletoDeps: WhatsAppBoletoDeps = {
 };
 
 import { createHash } from "crypto";
-import { splitLoteGastos, textoListaLote, loteMsgs, type LoteItem } from "./whatsapp-audio-lote";
+import { analisarGastoPorVoz, textoListaLote, loteMsgs, type LoteItem } from "./whatsapp-audio-lote";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
 type WhatsAppAuditTestEvent =
@@ -5583,9 +5583,17 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   void handlePagarPessoaIntent;
 
   if (msg.source === "audio") {
-    const lote = splitLoteGastos(texto, cartoes);
+    // Transcrição de voz: valor sem "R$"/"reais" só conta na posição de
+    // valor do lançamento. Texto digitado não passa por aqui.
+    const lote = analisarGastoPorVoz(texto, cartoes);
+    if (lote.kind === "ask_value") {
+      return { status: "pendente", resposta: loteMsgs.pedirValor() };
+    }
     if (lote.kind === "unsafe") {
-      return { status: "pendente", resposta: loteMsgs.unsafe() };
+      return { status: "pendente", resposta: loteMsgs.ambiguo() };
+    }
+    if (lote.kind === "single") {
+      texto = lote.texto;
     }
     if (lote.kind === "lote") {
       return iniciarLoteAudio({ userId, msg, texto, recebidaEm, lote, categorias });
