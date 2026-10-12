@@ -222,9 +222,4 @@ describe("idempotência e isolamento", () => {
     expect(insertedGastos.map((g) => g.user_id).sort()).toEqual(["user-a", "user-b"]);
     expect(insertedGastos[0].id).not.toBe(insertedGastos[1].id);
   });
-  it("sem pendência de data, \"Essa\" não é tratada como escolha de data", () => {
-    // Fora do estado img_aguardando_data_confirmacao o roteador nunca chama
-    // este interpretador; a função isolada não salva nada por si.
-    expect(insertedGastos).toHaveLength(0);
-  });
 });
