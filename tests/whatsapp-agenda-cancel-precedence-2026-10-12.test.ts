@@ -33,3 +33,12 @@ for (const [nome, abre] of [
     });
   }
 }
+
+test("após o aviso, a sessão retoma normalmente com a resposta esperada", async () => {
+  await send("registrar gasto", "b1");
+  const r = await send("cancelar lembrete", "b2");
+  expect(r.resposta).toContain("lançamento em andamento");
+  const r3 = await send("Uber 30", "b3");
+  expect(r3.resposta).not.toContain("lançamento em andamento");
+  expect(state.pendingRow?.status).not.toBe("aguardando_descricao_e_valor_gasto");
+});
