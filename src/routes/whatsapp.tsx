@@ -1,3 +1,4 @@
+import { deleteGastoAtivo } from "@/lib/whatsapp-gasto-delete";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
