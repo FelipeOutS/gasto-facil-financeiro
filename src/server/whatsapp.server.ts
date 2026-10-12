@@ -1741,18 +1741,27 @@ export async function buscarVinculoBotaoGasto(
   userId: string,
   telefone: string,
   externalId: string | null,
+  resposta?: string,
 ): Promise<string | null> {
-  if (!externalId) return null;
-  const { data } = await supabaseAdmin
-    .from("whatsapp_messages")
-    .select("id, status, parsed, recebida_em")
-    .eq("user_id", userId)
-    .eq("telefone", telefone)
-    .eq("external_id", externalId)
-    .eq("status", "aguardando_confirmacao")
-    .limit(2);
-  const rows = toSessaoRows(data).filter((r) => r.session && sessaoEhGasto(r));
-  return rows.length === 1 ? rows[0].id : null;
+  const achar = async (col: "external_id" | "resposta_sugerida", val: string) => {
+    const { data } = await supabaseAdmin
+      .from("whatsapp_messages")
+      .select("id, status, parsed, recebida_em")
+      .eq("user_id", userId)
+      .eq("telefone", telefone)
+      .eq(col, val)
+      .eq("status", "aguardando_confirmacao")
+      .limit(2);
+    const rows = toSessaoRows(data).filter((r) => r.session && sessaoEhGasto(r));
+    return rows.length === 1 ? rows[0].id : null;
+  };
+  // 1) linha criada por esta mensagem; 2) ajuste atualiza a MESMA linha no
+  // lugar e grava esta resposta exata — só vale se houver uma única.
+  if (externalId) {
+    const id = await achar("external_id", externalId);
+    if (id) return id;
+  }
+  return resposta ? achar("resposta_sugerida", resposta) : null;
 }
 
 async function buscarSessaoAtiva(userId: string, telefone: string): Promise<SessaoRow | null> {

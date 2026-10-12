@@ -28,7 +28,7 @@ const send = async (texto: string) => {
 /** Simula o webhook: assina os botões com a sessão criada pela própria mensagem. */
 async function abrirGasto(texto: string) {
   const { out, external_id } = await send(texto);
-  const rowId = await buscarVinculoBotaoGasto(U, tel, external_id);
+  const rowId = await buscarVinculoBotaoGasto(U, tel, external_id, out.resposta ?? "");
   const ir = buildInteractiveFromReply(out.resposta ?? "", rowId ? { userId: U, telefone: tel, rowId } : null);
   const ids = ir && ir.type === "button" ? ir.buttons.map((b) => b.id) : [];
   return { out, rowId, ids };
@@ -144,7 +144,8 @@ describe("botões vinculados à sessão exata", () => {
     await send("valor");
     const b = await abrirGasto("35");
     expect(b.ids.length).toBe(3);
-    expect((await tap(a.ids[0])).resposta).toBe(EXPENSE_BUTTON_STALE);
+    // Mesmo gasto (mesma sessão): os botões apontam para a mesma operação.
+    expect(b.rowId).toBe(a.rowId);
     await tap(b.ids[0]);
     expect(gastosInserts().length).toBe(1);
   });

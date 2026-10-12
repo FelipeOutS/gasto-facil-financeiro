@@ -1200,6 +1200,7 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                           elig.userId,
                           msg.telefone,
                           msg.external_id,
+                          out.resposta,
                         )) ?? null)
                       : null;
                   const ir = buildInteractiveFromReply(
