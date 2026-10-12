@@ -378,8 +378,8 @@ describe("comandos sem alvo (2026-10-12)", () => {
     await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
     await run(U2, "me lembra amanhã às 10 de ligar pro banco", d);
     const r = await run(U1, "cancelar lembrete", d);
-    expect(r.resposta).toContain("pagar a internet");
-    expect(r.resposta).not.toContain("ligar pro banco");
+    expect(r.resposta).toContain("Pagar a internet");
+    expect(r.resposta).not.toContain("igar pro banco");
     const rows = (r.graphInteractive as any).action.sections[0].rows;
     expect(rows).toHaveLength(1);
     expect(rows[0].id.startsWith("agenda_cancel:")).toBe(true);
@@ -414,9 +414,8 @@ describe("comandos sem alvo (2026-10-12)", () => {
     await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
     await run(U1, "me lembra todo dia às 8h de tomar remedio", d);
     const r = await run(U1, "adiar para amanhã", d);
-    expect(r.resposta).toContain("pagar a internet");
-    expect(r.resposta).not.toContain("tomar remedio");
-    expect(db.agenda_items.map((x) => x.starts_at)).toEqual(db.agenda_items.map((x) => x.starts_at));
+    expect(r.resposta).toContain("Pagar a internet");
+    expect(r.resposta).not.toContain("omar remedio");
   });
 
   test("adiar lembrete recorrente explica o limite e não altera a série", async () => {
