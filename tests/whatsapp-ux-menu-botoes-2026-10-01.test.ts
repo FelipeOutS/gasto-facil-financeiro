@@ -4,6 +4,8 @@
  * mesmo texto canônico (replyIdToTexto) e pelo mesmo pipeline.
  */
 import { test, expect, beforeEach, describe } from "bun:test";
+process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET ??= "test-secret-ficticio-0123456789abcdef";
+const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test" };
 import { resetState, gastosInserts, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
 setupWhatsAppFakeMocks();
 
@@ -25,12 +27,12 @@ const inicio = () => send("Gastei 12,60 no Uber em dinheiro");
 describe("confirmação com emojis", () => {
   test("1-3. botões ✅ ✏️ ❌ e IDs estáveis", async () => {
     const r = await inicio();
-    const ir = buildInteractiveFromReply(r.resposta);
+    const ir = buildInteractiveFromReply(r.resposta, TEST_BIND);
     if (ir?.type !== "button") throw new Error("esperava botões");
     expect(ir.buttons).toEqual([
-      { id: "expense_confirm", title: "✅ Confirmar" },
-      { id: "expense_adjust", title: "✏️ Ajustar" },
-      { id: "expense_cancel", title: "❌ Cancelar" },
+      { id: expect.stringMatching(/^exp1:c:/), title: "✅ Confirmar" },
+      { id: expect.stringMatching(/^exp1:a:/), title: "✏️ Ajustar" },
+      { id: expect.stringMatching(/^exp1:x:/), title: "❌ Cancelar" },
     ]);
     expect(ir.body).not.toContain("Escolha uma opção");
   });
@@ -56,7 +58,7 @@ describe("ajustar", () => {
   test("5. lista com emojis", async () => {
     await inicio();
     const r = await tap("expense_adjust");
-    const ir = buildInteractiveFromReply(r.resposta);
+    const ir = buildInteractiveFromReply(r.resposta, TEST_BIND);
     if (ir?.type !== "list") throw new Error("esperava lista");
     expect(ir.rows.map((x) => x.title)).toEqual([
       "💬 Descrição", "🏷️ Categoria", "💰 Valor", "📅 Data", "💳 Pagamento",
@@ -68,7 +70,7 @@ describe("ajustar", () => {
     await tap("expense_edit_description");
     let r = await send("Uber trabalho");
     expect(r.resposta.startsWith("Atualizei a descrição 👍")).toBe(true);
-    expect(buildInteractiveFromReply(r.resposta)?.type).toBe("button");
+    expect(buildInteractiveFromReply(r.resposta, TEST_BIND)?.type).toBe("button");
     await tap("expense_adjust");
     await tap("expense_edit_value");
     r = await send("13,20");
@@ -89,7 +91,7 @@ describe("ajustar", () => {
     await inicio();
     await tap("expense_adjust");
     const r = await tap("expense_edit_payment");
-    const ir = buildInteractiveFromReply(r.resposta);
+    const ir = buildInteractiveFromReply(r.resposta, TEST_BIND);
     if (ir?.type !== "list") throw new Error("esperava lista");
     expect(ir.rows.map((x) => x.title)).toEqual(["💠 Pix", "💵 Dinheiro", "🏦 Débito", "💳 Cartão de crédito"]);
     expect((await tap("payment_pix")).status).toBe("aguardando_confirmacao");
@@ -99,7 +101,7 @@ describe("ajustar", () => {
 describe("menu", () => {
   test("11/20. 'menu' abre lista 'Ver menu' com 6 grupos", async () => {
     const r = await send("menu");
-    const ir = buildInteractiveFromReply(r.resposta);
+    const ir = buildInteractiveFromReply(r.resposta, TEST_BIND);
     if (ir?.type !== "list") throw new Error("esperava lista");
     expect(ir.body).toBe("Como posso te ajudar? 👇");
     expect(ir.buttonText).toBe("Ver menu");
@@ -122,7 +124,7 @@ describe("menu", () => {
   for (const [menuId, ids] of grupos) {
     test(`12-17. ${menuId} abre submenu e cada ação responde`, async () => {
       const r = await tap(menuId);
-      const ir = buildInteractiveFromReply(r.resposta);
+      const ir = buildInteractiveFromReply(r.resposta, TEST_BIND);
       if (ir?.type !== "list") throw new Error("esperava lista");
       expect(ir.rows.map((x) => x.id)).toEqual(ids);
       for (const id of ids) {
@@ -167,7 +169,7 @@ describe("cartão e fatura", () => {
   test("fatura com 📅 / 🗓️", () => {
     const ir = buildInteractiveFromReply(
       'Em qual fatura essa compra vai cair?\n"fatura de outubro de 2026" ou "fatura de novembro de 2026"',
-    );
+    , TEST_BIND);
     if (ir?.type !== "button") throw new Error("esperava botões");
     expect(ir.buttons.map((b) => b.title)).toEqual(["📅 Outubro", "📅 Novembro", "🗓️ Outro mês"]);
     expect(ir.buttons[0].id).toBe("fatura_comp:2026-10");
@@ -193,7 +195,7 @@ describe("escolha de cartão — fluxo completo", () => {
   async function escolher(cartoes: any[], nome: string, tipo: "button" | "list") {
     resetState({ cartoes });
     const q = await send("Mercado 50 no crédito");
-    const ir = buildInteractiveFromReply(q.resposta);
+    const ir = buildInteractiveFromReply(q.resposta, TEST_BIND);
     expect(ir?.type).toBe(tipo);
     const opcoes = ir!.type === "button" ? ir!.buttons : (ir as any).rows;
     expect(opcoes).toHaveLength(cartoes.length);

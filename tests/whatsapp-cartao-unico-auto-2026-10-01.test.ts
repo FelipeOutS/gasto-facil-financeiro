@@ -3,6 +3,8 @@
  * 0 cartões → fluxo atual; 1 → automático; 2-3 → botões; 4+ → lista.
  */
 import { test, expect, beforeEach, afterEach, describe, setSystemTime } from "bun:test";
+process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET ??= "test-secret-ficticio-0123456789abcdef";
+const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test" };
 import { resetState, gastosInserts, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
 setupWhatsAppFakeMocks();
 
@@ -49,7 +51,7 @@ describe("cartão único automático", () => {
     expect(r.resposta).not.toContain("Qual cartão você usou");
     expect(r.resposta).not.toContain("escolha uma opção acima");
     expect(r.resposta).toContain("Mercado Pago");
-    expect(buildInteractiveFromReply(r.resposta)?.type).toBe("button");
+    expect(buildInteractiveFromReply(r.resposta, TEST_BIND)?.type).toBe("button");
     expect(gastosInserts()).toHaveLength(0);
     const s = await tap("expense_confirm");
     expect(s.status).toBe("salva");
@@ -69,13 +71,13 @@ describe("cartão único automático", () => {
     resetState({ cartoes: [mp, nu] });
     const r = await escolherCredito();
     expect(r.status).toBe("aguardando_cartao");
-    expect(buildInteractiveFromReply(r.resposta)?.type).toBe("button");
+    expect(buildInteractiveFromReply(r.resposta, TEST_BIND)?.type).toBe("button");
   });
 
   test("4. 3 cartões → botões", async () => {
     resetState({ cartoes: [mp, nu, it] });
     const r = await escolherCredito();
-    const ir = buildInteractiveFromReply(r.resposta);
+    const ir = buildInteractiveFromReply(r.resposta, TEST_BIND);
     expect(ir?.type).toBe("button");
     if (ir?.type === "button") expect(ir.buttons).toHaveLength(3);
   });
@@ -83,7 +85,7 @@ describe("cartão único automático", () => {
   test("5. 4 cartões → lista", async () => {
     resetState({ cartoes: [mp, nu, it, c6] });
     const r = await escolherCredito();
-    expect(buildInteractiveFromReply(r.resposta)?.type).toBe("list");
+    expect(buildInteractiveFromReply(r.resposta, TEST_BIND)?.type).toBe("list");
     expect(gastosInserts()).toHaveLength(0);
   });
 

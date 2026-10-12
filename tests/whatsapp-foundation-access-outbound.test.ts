@@ -1,4 +1,6 @@
 import { test, expect, describe } from "bun:test";
+process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET ??= "test-secret-ficticio-0123456789abcdef";
+const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test" };
 import { planAllowsFeature, plansAllowingFeature, type PlanTier } from "../src/lib/plans";
 import {
   recordOutboundSend,
@@ -191,7 +193,7 @@ describe("rastreio de botões e listas (mesmo recordOutboundSend)", async () => 
   ];
   for (const [nome, corpo, tipo] of casos) {
     test(nome, async () => {
-      const ir = buildInteractiveFromReply(corpo)!;
+      const ir = buildInteractiveFromReply(corpo, TEST_BIND)!;
       expect(ir.type).toBe(tipo);
       const interactive = toGraphInteractive(ir);
       const db = fakeDb();
