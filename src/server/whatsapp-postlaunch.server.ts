@@ -53,6 +53,29 @@ async function readFinancial(action: Action) {
   return data as Record<string, unknown>;
 }
 
+export const MSG_UNDO_GASTO_EXCLUIDO =
+  "Esse gasto está excluído e pode ser restaurado. Não é possível desfazer antes da restauração.";
+const MSG_UNDO_FALHA_LEITURA = "Não consegui desfazer agora. Confira o lançamento no app e tente novamente.";
+
+/**
+ * Pré-checagem do Desfazer (gasto/parcelado): retorna mensagem de bloqueio ou null.
+ * Lê o gasto (e o grupo, se parcelado) SEM filtrar deleted_at, de propósito.
+ * soft-delete-exceção: precisa enxergar marcados para recusar o DELETE físico.
+ * Erro de leitura (inclusive coluna ausente) => falha fechada, nunca "sem vínculo".
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function checkUndoSoftDelete(client: any, action: Pick<Action, "user_id" | "entity_kind" | "entity_id" | "related_id">): Promise<string | null> {
+  let q = client.from("gastos").select("id, deleted_at").eq("user_id", action.user_id);
+  q = action.entity_kind === "installment" && action.related_id
+    ? q.or(`id.eq.${action.entity_id},grupo_parcelamento_id.eq.${action.related_id}`)
+    : q.eq("id", action.entity_id);
+  const { data, error } = await q;
+  if (error || !Array.isArray(data)) return MSG_UNDO_FALHA_LEITURA;
+  if (data.some((g: { deleted_at?: string | null }) => g.deleted_at != null)) return MSG_UNDO_GASTO_EXCLUIDO;
+  return null;
+}
+const undoSoftDeleteGuard = (action: Action) => checkUndoSoftDelete(db, action);
+
 async function receipt(action: Action, title = "✅ Lançamento registrado"): Promise<PostlaunchReply> {
   const row = await readFinancial(action);
   if (!row) return { resposta: "O lançamento foi salvo, mas não consegui mostrar os detalhes agora. Consulte o app para conferir." };
