@@ -392,6 +392,8 @@ export async function handleAgendaIntent(
         if (found.length > 1)
           return { resposta: `Encontrei ${found.length} itens com "${intent.alvo}". Diga o nome completo para eu alterar o certo.` };
         const item = found[0];
+        if (intent.adiar && item.recurrence_freq)
+          return { resposta: `"${item.titulo}" se repete (${item.recurrence_freq}). Adiar mudaria todas as próximas vezes, então não alterei. Para mudar o horário da série, diga por exemplo *mude ${item.titulo} para 15h*, ou ajuste na Agenda do site.` };
         if (item.source_type)
           return { resposta: `"${item.titulo}" segue o vencimento do item financeiro. Para mudar a data, altere o vencimento em Contas/Cartões.` };
         const w = parseWhen(intent.when.rest, now, item.timezone);
@@ -420,6 +422,26 @@ export async function handleAgendaIntent(
         const r = await sameOrPick(userId, intent.alvo, intent.type, deps);
         if (!("id" in r)) return r;
         return await applyAction(userId, r.id, intent.type, deps, now);
+      }
+      case "escolher": {
+        const ativos = await listAgenda(userId, { status: "ativo" }, deps);
+        if (intent.acao === "adiar") {
+          const elegiveis = ativos.filter((r) => !r.source_type && !r.recurrence_freq);
+          if (!elegiveis.length)
+            return { resposta: "Não há lembrete único para adiar. Lembretes que se repetem e avisos de contas/faturas não são adiados por aqui." };
+          const lines: string[] = [];
+          for (const r of elegiveis.slice(0, 10)) lines.push(`${ICON(r)} ${r.titulo} — ${await itemWhenLabel(r, deps)}`);
+          return { resposta: `Qual lembrete quer adiar?\n\n${lines.join("\n")}\n\nResponda com o nome, ex.: *adie o lembrete ${elegiveis[0].titulo} para ${intent.when?.rest ?? "amanhã"}*.` };
+        }
+        if (!ativos.length) return { resposta: "Você não tem lembretes ativos na agenda." };
+        const labels = new Map<string, string>();
+        for (const r of ativos.slice(0, 10)) labels.set(r.id, await itemWhenLabel(r, deps));
+        const verbo = intent.acao === "cancelar" ? "cancelar" : "marcar como concluído";
+        const body = `Qual item você quer ${verbo}? Toque em um da lista.`;
+        return {
+          resposta: `${body}\n${ativos.slice(0, 10).map((r, i) => `${i + 1}. ${r.titulo} — ${labels.get(r.id)}`).join("\n")}`,
+          graphInteractive: pickList(body, ativos, intent.acao === "cancelar" ? AGENDA_CANCEL_PREFIX : AGENDA_DONE_PREFIX, labels),
+        };
       }
       case "acao_id":
         return await applyAction(userId, intent.id, intent.acao, deps, now);

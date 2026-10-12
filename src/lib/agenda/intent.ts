@@ -24,9 +24,11 @@ export type AgendaIntent =
       diasAntes: number;
     }
   | { type: "consultar"; periodo: "hoje" | "amanha" | "semana" | "proximos" }
-  | { type: "editar"; alvo: string; when: ParsedWhen; novoTitulo?: string }
+  | { type: "editar"; alvo: string; when: ParsedWhen; novoTitulo?: string; adiar?: boolean }
   | { type: "cancelar"; alvo: string }
   | { type: "concluir"; alvo: string }
+  /** Comando sem alvo ("cancelar lembrete", "concluir", "adiar para amanhã"): o usuário escolhe. */
+  | { type: "escolher"; acao: "cancelar" | "concluir" | "adiar"; when?: ParsedWhen }
   | { type: "editar_aviso"; alvo: string; diasAntes: number }
   | { type: "acao_id"; acao: AgendaAcaoId; id: string };
 
@@ -98,6 +100,17 @@ export function detectAgendaIntent(text: string): AgendaIntent | null {
     return { type: "consultar", periodo: p === "hoje" ? "hoje" : p === "amanha" ? "amanha" : "semana" };
   }
 
+  // Comandos sem alvo: nunca escolhem sozinhos; o handler lista para o usuário escolher.
+  if (/^(?:cancel(?:e|a|ar)|apag(?:ue|a|ar)|remov(?:e|a|er)|exclu(?:a|i|ir))\s+(?:o |meu )?(?:lembrete|compromisso)$/.test(n))
+    return { type: "escolher", acao: "cancelar" };
+  if (/^(?:conclu(?:a|i|ir|ido)|marc(?:a|ar|ue) (?:o lembrete )?como (?:feito|concluido)|finaliz(?:e|a|ar)(?: o lembrete)?|conclu(?:a|i|ir) (?:o )?lembrete)$/.test(n))
+    return { type: "escolher", acao: "concluir" };
+  m = /^(?:adi(?:e|a|ar)|remarc(?:a|ar)|remarque)(?: o lembrete)?\s+(?:para|pra)\s+(.+)$/.exec(n);
+  if (m) {
+    const w = parseWhen(m[1], new Date(0));
+    if (w.date || w.time || w.instant) return { type: "escolher", acao: "adiar", when: whenPlaceholder(m[1]) };
+  }
+
   // Cancelar / concluir item da agenda (precisa citar lembrete/compromisso OU um alvo + "da agenda").
   m = /^(?:cancel(?:e|a|ar)|apag(?:ue|a|ar)|remov(?:e|a|er)|exclu(?:a|i|ir))\s+(?:o |a |meu |minha )?(?:lembrete|compromisso)\s*(?:de |da |do |das |dos |com |para |pra )?(.+)$/.exec(n);
   if (m && m[1].trim()) return { type: "cancelar", alvo: m[1].trim() };
@@ -109,7 +122,7 @@ export function detectAgendaIntent(text: string): AgendaIntent | null {
   if (m && !/\b(vencimento|valor|conta|fatura|limite|fechamento|categoria|gasto|receita|pagamento)\b/.test(m[1])) {
     const when = parseWhen(m[2], new Date(0));
     // Só é edição de agenda se o destino é data/hora.
-    if (when.date || when.time || when.instant) return { type: "editar", alvo: m[1].trim(), when: whenPlaceholder(m[2]) };
+    if (when.date || when.time || when.instant) return { type: "editar", alvo: m[1].trim(), when: whenPlaceholder(m[2]), ...(/^adi/.test(n) ? { adiar: true } : {}) };
   }
 
   // Lembrete financeiro: "me lembra da fatura do Nubank 3 dias antes"

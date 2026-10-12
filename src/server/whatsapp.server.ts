@@ -3008,7 +3008,10 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   {
     const { detectAgendaIntent, handleAgendaIntent } = await import("./whatsapp-agenda.server");
     const agendaIntent = detectAgendaIntent(texto);
-    if (agendaIntent && !payablePaymentIntent) {
+    // Comando sem alvo ("cancelar lembrete", "concluir") nunca atropela uma
+    // confirmação pendente (gasto, comprovante, cartão): a sessão tem prioridade.
+    const bareBlocked = agendaIntent?.type === "escolher" && !!(await buscarSessaoAtiva(userId, msg.telefone));
+    if (agendaIntent && !payablePaymentIntent && !bareBlocked) {
       // Fuso do perfil (padrão São Paulo); nunca o relógio do servidor.
       const { getUserTimezone } = await import("./whatsapp-notification-gates.server");
       const agendaTz = await getUserTimezone(userId).catch(() => "America/Sao_Paulo");
