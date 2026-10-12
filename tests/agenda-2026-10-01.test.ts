@@ -195,7 +195,10 @@ describe("site + WhatsApp na mesma agenda", () => {
     expect(site[0].starts_at).toBe("2026-10-02T12:00:00.000Z");
     await W.handleAgendaIntent(U1, detectAgendaIntent("mude a internet para 15h")!, { now: NOW, deps: d });
     expect((await A.getAgendaItem(U1, site[0].id, d))!.starts_at).toBe("2026-10-02T18:00:00.000Z");
-    await W.handleAgendaIntent(U1, detectAgendaIntent("cancele o lembrete da internet")!, { now: NOW, deps: d });
+    const ask = await W.handleAgendaIntent(U1, detectAgendaIntent("cancele o lembrete da internet")!, { now: NOW, deps: d });
+    expect((await A.getAgendaItem(U1, site[0].id, d))!.status).toBe("ativo"); // pede confirmação antes
+    const okId = (ask.graphInteractive as any).action.buttons[0].reply.id as string;
+    await W.handleAgendaIntent(U1, detectAgendaIntent(okId)!, { now: NOW, deps: d });
     expect((await A.getAgendaItem(U1, site[0].id, d))!.status).toBe("cancelado");
     expect(pending(site[0].id)).toHaveLength(0);
   });
