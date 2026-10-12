@@ -65,6 +65,7 @@ const MSG_UNDO_FALHA_LEITURA = "Não consegui desfazer agora. Confira o lançame
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function checkUndoSoftDelete(client: any, action: Pick<Action, "user_id" | "entity_kind" | "entity_id" | "related_id">): Promise<string | null> {
+  // soft-delete-exceção: lê marcados de propósito para recusar o Desfazer.
   let q = client.from("gastos").select("id, deleted_at").eq("user_id", action.user_id);
   q = action.entity_kind === "installment" && action.related_id
     ? q.or(`id.eq.${action.entity_id},grupo_parcelamento_id.eq.${action.related_id}`)
