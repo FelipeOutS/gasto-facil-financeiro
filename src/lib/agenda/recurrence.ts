@@ -64,6 +64,8 @@ export function nextOccurrence(
 }
 
 export function detectRecurrence(textNorm: string): RecurrenceFreq | null {
+  // "todo dia 5" é mensal (dia do mês), não diário — checar antes de "todo dia".
+  if (/\btodo dia \d{1,2}\b/.test(textNorm)) return "mensal";
   if (/\b(todo dia|todos os dias|diariamente|toda manha|toda noite)\b/.test(textNorm)) return "diaria";
   if (/\b(toda semana|semanalmente|toda (segunda|terca|quarta|quinta|sexta|sabado)|todo (sabado|domingo))\b/.test(textNorm))
     return "semanal";
@@ -74,6 +76,11 @@ export function detectRecurrence(textNorm: string): RecurrenceFreq | null {
 
 export function stripRecurrence(textNorm: string): string {
   return textNorm
+    // Preserva a âncora para o parser de datas: "todo dia 5" → "dia 5",
+    // "toda segunda" → "segunda".
+    .replace(/\btodo dia (\d{1,2})\b/g, "dia $1")
+    .replace(/\btoda (segunda|terca|quarta|quinta|sexta|sabado)(?:-feira| feira)?\b/g, "$1")
+    .replace(/\btodo (sabado|domingo)\b/g, "$1")
     .replace(/\b(todo dia|todos os dias|diariamente|toda semana|semanalmente|todo mes|todos os meses|mensalmente|todo ano|todos os anos|anualmente)\b/g, " ")
     .replace(/\s+/g, " ")
     .trim();

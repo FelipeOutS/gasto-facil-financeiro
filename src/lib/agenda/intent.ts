@@ -89,7 +89,7 @@ export function detectAgendaIntent(text: string): AgendaIntent | null {
   if (ea) return { type: "editar_aviso", alvo: ea[1].trim(), diasAntes: Math.min(60, Number(ea[2])) };
 
   // Consultas
-  if (/^(?:minha agenda|agenda|meus lembretes|meus compromissos|lembretes|compromissos|ver (?:minha )?agenda|proximos (?:lembretes|compromissos))$/.test(n))
+  if (/^(?:(?:quais (?:sao )?)?(?:os )?meus (?:lembretes|compromissos)|minha agenda|agenda|meus lembretes|meus compromissos|lembretes|compromissos|ver (?:minha )?agenda|proximos (?:lembretes|compromissos))$/.test(n))
     return { type: "consultar", periodo: "proximos" };
   let m = /^(?:o que|oque|que) (?:eu )?(?:tenho|terei|tem)(?: (?:marcado|na agenda|agendado))?(?: para| pra)? (hoje|amanha|essa semana|esta semana|nesta semana|na semana)$/.exec(n);
   if (!m) m = /^(?:agenda|lembretes|compromissos|minha agenda) (?:de |para |pra |da )?(hoje|amanha|essa semana|esta semana|semana)$/.exec(n);
