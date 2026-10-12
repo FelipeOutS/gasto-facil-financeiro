@@ -6,7 +6,9 @@
 - [x] Exclusão reversível de gastos F1 (auditoria/plano) e F2 (migration CANDIDATA + RPCs + testes SQL locais) — NÃO aplicada
 - [x] F3 código/testes: leitores de gastos filtram deleted_at (NÃO publicar antes da F2 aplicada)
 - [x] P0 nº1: estorno de conta bloqueia gasto vinculado soft-excluído (código; depende da F2)
-- [ ] F3 pendências: undo WhatsApp, reversão de extrato, edit WhatsApp, aviso site, cache offline, RPC transacional de estorno (F4)
+- [x] P0 undo WhatsApp/site: código + SQL candidato docs/migrations-candidate/whatsapp-undo-soft-delete.sql (NÃO aplicado; aplicar junto com F2)
+- [ ] Release rápido WhatsApp: candidato = commit 388a742c (sem deleted_at em gastos); exige regressão e autorização para publicar
+- [ ] F3 pendências: reversão de extrato, edit WhatsApp, aviso site, cache offline, RPC transacional de estorno (F4)
 - [ ] F4 fluxo WhatsApp exclusão/restauração / F5 ativação — aguardam autorização
 - [ ] Cadastro conversacional de cartões
 - [ ] Smoke test de áudio real
