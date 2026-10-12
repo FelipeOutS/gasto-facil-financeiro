@@ -24,6 +24,7 @@ import {
 import { whatsappMessages as M } from "./whatsapp-messages";
 import { merchantKeyFor, recordMerchantMemory } from "./whatsapp-merchant-memory.server";
 import { createHash } from "crypto";
+import { financialIdForWhatsAppMessage } from "./whatsapp-financial-idempotency.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin = _supabaseAdmin as any;
@@ -886,9 +887,13 @@ export async function persistirGastoComprovante(
 
   const obs = `WhatsApp (foto): ${s.mensagemOriginal}`.slice(0, 240);
 
+  // Id determinístico por (usuário, mensagem que confirmou): um retry do
+  // webhook com a mesma mensagem colide na PK em vez de criar outro gasto.
+  const gastoId = financialIdForWhatsAppMessage(userId, externalMessageId, "expense_receipt");
   const { data: row, error } = await supabaseAdmin
     .from("gastos")
     .insert({
+      id: gastoId,
       user_id: userId,
       categoria_id: cat.id,
       descricao: desc,
@@ -908,6 +913,18 @@ export async function persistirGastoComprovante(
     .select("id")
     .single();
 
+  if (error?.code === "23505") {
+    return {
+      ok: true,
+      gastoId,
+      resposta: M.imagem.salvo({
+        valor: formatBRL(s.valor),
+        descricao: desc,
+        categoria: cat.label,
+        pagamento: rotuloPagamento(s.formaPagamento),
+      }),
+    };
+  }
   if (error || !row) {
     console.error("[whatsapp-comprovante] gasto insert failed", error);
     return { ok: false, resposta: M.erroAoSalvar() };
