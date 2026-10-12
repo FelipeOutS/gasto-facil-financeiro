@@ -18,6 +18,12 @@ import {
   CARD_POS_FALLBACK,
 } from "./whatsapp-cartao-messages";
 import { nomeMesYm } from "@/lib/fatura-competencia";
+import {
+  expenseTokenToTexto,
+  LEGACY_EXPENSE_RE,
+  signExpenseButton,
+  type ExpenseAction,
+} from "./expense-button-token.server";
 
 export type InteractiveButtons = {
   type: "button";
@@ -211,6 +217,8 @@ export function replyIdToTexto(id: string, title?: string): string {
   // O token opaco do recibo contém a identidade da ação. Converter para o
   // título ("Editar"/"Desfazer") perderia essa referência e seria inseguro.
   if (/^wa12_(?:edit|edit_scope|undo|field|confirm|back|scope):[0-9a-f-]{36}(?::[a-z_]+)?$/i.test(v)) return v;
+  const exp = expenseTokenToTexto(v);
+  if (exp) return exp; // validado contra a sessão em processarMensagemWhatsApp
   if (REPLY_ID_TEXT[v]) return REPLY_ID_TEXT[v];
   if (v.startsWith(FATURA_COMP_PREFIX)) return v; // tratado por tratarEscolhaFatura
   // GI Agenda: ID estável com o item; tratado por handleAgendaIntent.
@@ -225,7 +233,37 @@ export function replyIdToTexto(id: string, title?: string): string {
  * Decide se a resposta textual ganha botões/lista. Só reconhece perguntas
  * existentes — nunca muda o texto nem o fluxo.
  */
-export function buildInteractiveFromReply(resposta: string): InteractiveReply | null {
+export type ExpenseButtonBinding = { userId: string; telefone: string; rowId: string };
+
+/**
+ * Igual a buildInteractiveFromReplyRaw, mas troca os IDs genéricos de gasto
+ * (expense_confirm/adjust/cancel) por IDs assinados presos à sessão exata.
+ * Sem vínculo (ou sem segredo) → null: o webhook envia só o texto 1/2/3.
+ */
+export function buildInteractiveFromReply(
+  resposta: string,
+  bind?: ExpenseButtonBinding | null,
+): InteractiveReply | null {
+  const ir = buildInteractiveFromReplyRaw(resposta);
+  if (!ir) return null;
+  const items = ir.type === "button" ? ir.buttons : ir.rows;
+  if (!items.some((b) => LEGACY_EXPENSE_RE.test(b.id))) return ir;
+  if (!bind) return null;
+  for (const b of items) {
+    if (!LEGACY_EXPENSE_RE.test(b.id)) continue;
+    const t = signExpenseButton(
+      b.id.slice("expense_".length) as ExpenseAction,
+      bind.userId,
+      bind.telefone,
+      bind.rowId,
+    );
+    if (!t) return null;
+    b.id = t;
+  }
+  return ir;
+}
+
+function buildInteractiveFromReplyRaw(resposta: string): InteractiveReply | null {
   const body = (resposta ?? "").trim();
   if (!body || body.length > MAX_BODY) return null;
   const n = body

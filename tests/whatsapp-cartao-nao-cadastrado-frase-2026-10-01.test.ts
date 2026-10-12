@@ -4,6 +4,8 @@
  * envio do Flow e idempotência concorrente do cadastro de cartão.
  */
 import { test, expect, beforeEach, afterEach, describe, setSystemTime } from "bun:test";
+process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET ??= "test-secret-ficticio-0123456789abcdef";
+const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test" };
 import { resetState, gastosInserts, setupWhatsAppFakeMocks, state } from "./_whatsapp-fake";
 setupWhatsAppFakeMocks();
 
@@ -81,11 +83,11 @@ describe("cartão não cadastrado na frase", () => {
       expect(r.resposta).toContain("Quer cadastrá-lo agora?");
       expect(r.resposta).toContain(`em ${desc},`);
       expect(r.resposta).toMatch(new RegExp(`R\\$\\s?${valor.toFixed(2).replace(".", ",")}`));
-      const ir = buildInteractiveFromReply(r.resposta);
+      const ir = buildInteractiveFromReply(r.resposta, TEST_BIND);
       expect(ir && "buttons" in ir ? ir.buttons.map((b) => b.id) : []).toEqual([
         "card_new_register",
         "card_new_continue",
-        "expense_cancel",
+        expect.stringMatching(/^exp1:x:/),
       ]);
       expect(gastosInserts()).toHaveLength(0);
       expect(cartoesInseridos()).toHaveLength(0);

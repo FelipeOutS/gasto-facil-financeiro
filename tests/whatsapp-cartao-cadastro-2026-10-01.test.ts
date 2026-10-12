@@ -4,6 +4,8 @@
  * retomada do gasto e competência da fatura.
  */
 import { test, expect, beforeEach, afterEach, describe, setSystemTime } from "bun:test";
+process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET ??= "test-secret-ficticio-0123456789abcdef";
+const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test" };
 import { resetState, gastosInserts, setupWhatsAppFakeMocks, state } from "./_whatsapp-fake";
 setupWhatsAppFakeMocks();
 
@@ -117,7 +119,7 @@ describe("conversa (sem flow_id)", () => {
     expect(r.resposta).toMatch(/Limite: R\$\s?5\.000,00/);
     expect(r.resposta).toContain("📅 Fecha: dia 25");
     expect(r.resposta).toContain("🗓️ Vence: dia 5");
-    const ir = buildInteractiveFromReply(r.resposta);
+    const ir = buildInteractiveFromReply(r.resposta, TEST_BIND);
     expect(ir?.type).toBe("button");
     expect(ir && "buttons" in ir ? ir.buttons.map((b) => b.id) : []).toEqual([
       "card_reg_confirm",
@@ -169,7 +171,7 @@ describe("conversa (sem flow_id)", () => {
     resetState({ cartoes: [{ id: "c-mp", nome: "Mercado Pago", user_id: "u1" }] });
     const r = await conversaCompleta("mercado pago");
     expect(r.resposta).toContain("Você já tem um cartão chamado Mercado Pago. 💳");
-    const ir = buildInteractiveFromReply(r.resposta);
+    const ir = buildInteractiveFromReply(r.resposta, TEST_BIND);
     expect(ir && "buttons" in ir ? ir.buttons.map((b) => b.id) : []).toEqual([
       "card_dup_use",
       "card_dup_rename",
@@ -201,7 +203,7 @@ describe("conversa (sem flow_id)", () => {
     await conversaCompleta();
     const a = await tap("card_reg_adjust");
     expect(a.resposta).toContain("Qual dado do cartão você quer ajustar?");
-    expect(buildInteractiveFromReply(a.resposta)?.type).toBe("list");
+    expect(buildInteractiveFromReply(a.resposta, TEST_BIND)?.type).toBe("list");
     expect((await tap("card_edit_limite")).resposta).toContain("Qual o limite total");
     const r = await send("8.000");
     expect(r.resposta).toContain("💳 Cartão: Nubank");
@@ -452,11 +454,11 @@ describe("cadastro durante um gasto", () => {
     setSystemTime(new Date("2026-09-20T15:00:00Z"));
     const g = await gastoNubank();
     expect(g.resposta).toContain("Não encontrei um cartão Nubank cadastrado. 💳");
-    const ir = buildInteractiveFromReply(g.resposta);
+    const ir = buildInteractiveFromReply(g.resposta, TEST_BIND);
     expect(ir && "buttons" in ir ? ir.buttons.map((b) => b.id) : []).toEqual([
       "card_new_register",
       "card_new_continue",
-      "expense_cancel",
+      expect.stringMatching(/^exp1:x:/),
     ]);
     const c = await tap("card_new_register");
     expect(c.resposta).toContain("Vamos cadastrar o cartão Nubank");

@@ -3,6 +3,8 @@
  * Botão e texto passam pelo mesmo texto (replyIdToTexto) e pelo mesmo fluxo.
  */
 import { test, expect, beforeEach, describe } from "bun:test";
+process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET ??= "test-secret-ficticio-0123456789abcdef";
+const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test" };
 import { resetState, gastosInserts, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
 setupWhatsAppFakeMocks();
 
@@ -33,10 +35,10 @@ describe("confirmação", () => {
     expect(r.resposta).toContain("Confere pra mim? 👀");
     expect(r.resposta).toContain("Posso registrar?");
     expect(r.resposta).not.toContain("Responda sim ou não");
-    const ir = buildInteractiveFromReply(r.resposta);
+    const ir = buildInteractiveFromReply(r.resposta, TEST_BIND);
     expect(ir?.type).toBe("button");
     if (ir?.type !== "button") return;
-    expect(ir.buttons.map((b) => b.id)).toEqual(["expense_confirm", "expense_adjust", "expense_cancel"]);
+    expect(ir.buttons.map((b) => b.id)).toEqual([expect.stringMatching(/^exp1:c:/), expect.stringMatching(/^exp1:a:/), expect.stringMatching(/^exp1:x:/)]);
     expect(ir.buttons.map((b) => b.title)).toEqual(["✅ Confirmar", "✏️ Ajustar", "❌ Cancelar"]);
     expect(ir.body).not.toContain("1. Confirmar");
     expect(ir.body.endsWith("Posso registrar?")).toBe(true);
@@ -107,7 +109,7 @@ describe("ajustar", () => {
     const r = await tap("expense_adjust", "Ajustar");
     expect(r.status).toBe("aguardando_ajuste_campo");
     expect(r.resposta).toContain("O que você quer ajustar?");
-    const ir = buildInteractiveFromReply(r.resposta);
+    const ir = buildInteractiveFromReply(r.resposta, TEST_BIND);
     expect(ir?.type).toBe("list");
     if (ir?.type !== "list") return;
     expect(ir.rows.map((x) => x.id)).toEqual([
@@ -209,7 +211,7 @@ describe("ajustar", () => {
     await tap("expense_adjust");
     const r = await tap("expense_edit_payment", "Pagamento");
     expect(r.status).toBe("aguardando_forma_pagamento");
-    expect(buildInteractiveFromReply(r.resposta)?.type).toBe("list");
+    expect(buildInteractiveFromReply(r.resposta, TEST_BIND)?.type).toBe("list");
     const back = await tap("payment_pix", "Pix");
     expect(back.status).toBe("aguardando_confirmacao");
     expect(back.resposta).toContain("Pix");

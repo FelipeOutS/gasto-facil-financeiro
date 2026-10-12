@@ -15,6 +15,7 @@
  * NUNCA descarta valor/nome/data/forma já coletados.
  */
 import { competenciaPorData } from "@/lib/fatura-competencia";
+import { LEGACY_EXPENSE_RE, verifyExpenseButton } from "./expense-button-token.server";
 import {
   parseEscolhaFatura,
   perguntaEscolhaFatura,
@@ -1720,6 +1721,49 @@ export async function logReceiptSessionCreatedAudit(args: {
   });
 }
 
+export const EXPENSE_BUTTON_STALE =
+  "Esse botão pertence a um lançamento anterior ou expirou. Nada foi alterado. Use a confirmação mais recente.";
+
+function sessaoEhGasto(s: SessaoRow): boolean {
+  return (
+    !isComprovanteSession(s.session) &&
+    !isReceitaSession(s.session) &&
+    s.session?.kind !== "pagar_pessoa"
+  );
+}
+
+/**
+ * Linha de sessão criada pela MESMA mensagem (external_id) que gerou a
+ * pergunta de confirmação de gasto. Usada para assinar os botões; nunca
+ * deduz pela sessão "mais recente" (evita corrida/fora de ordem).
+ */
+export async function buscarVinculoBotaoGasto(
+  userId: string,
+  telefone: string,
+  externalId: string | null,
+  resposta?: string,
+): Promise<string | null> {
+  const achar = async (col: "external_id" | "resposta_sugerida", val: string) => {
+    const { data } = await supabaseAdmin
+      .from("whatsapp_messages")
+      .select("id, status, parsed, recebida_em")
+      .eq("user_id", userId)
+      .eq("telefone", telefone)
+      .eq(col, val)
+      .eq("status", "aguardando_confirmacao")
+      .limit(2);
+    const rows = toSessaoRows(data).filter((r) => r.session && sessaoEhGasto(r));
+    return rows.length === 1 ? rows[0].id : null;
+  };
+  // 1) linha criada por esta mensagem; 2) ajuste atualiza a MESMA linha no
+  // lugar e grava esta resposta exata — só vale se houver uma única.
+  if (externalId) {
+    const id = await achar("external_id", externalId);
+    if (id) return id;
+  }
+  return resposta ? achar("resposta_sugerida", resposta) : null;
+}
+
 async function buscarSessaoAtiva(userId: string, telefone: string): Promise<SessaoRow | null> {
   const desde = new Date(Date.now() - PENDING_TTL_MS).toISOString();
   const { data } = await supabaseAdmin
@@ -3087,25 +3131,23 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     return { status: "cancelada", resposta };
   }
 
-  // ---- P2-botões: botão de gasto (expense_*) só vale para gasto pendente ----
-  // Os IDs expense_* viram "sim"/"não"/"ajustar". Sem esta checagem, um
-  // botão antigo de gasto confirmaria/cancelaria um comprovante, receita ou
-  // outra operação pendente. Nada é alterado: só orienta.
-  if (/^expense_/.test(msg.replyId ?? "")) {
-    const alvo = await buscarSessaoAtiva(userId, msg.telefone);
-    const ehGasto =
+  // ---- P2-botões: botões de gasto presos à sessão exata ----
+  // Validado ANTES de qualquer roteamento/gravação. Um botão só age se for
+  // assinado para este usuário+telefone e se a linha de sessão que o gerou
+  // ainda for a sessão ativa, de gasto, aguardando confirmação. Botões
+  // genéricos legados (expense_*) nunca são aplicados. "sim" digitado segue igual.
+  if (msg.replyId && (LEGACY_EXPENSE_RE.test(msg.replyId) || /^exp1:/.test(msg.replyId))) {
+    const v = verifyExpenseButton(msg.replyId, userId, msg.telefone);
+    const alvo = v.ok ? await buscarSessaoAtiva(userId, msg.telefone) : null;
+    const valido =
+      v.ok &&
       !!alvo &&
-      !isComprovanteSession(alvo.session) &&
-      !isReceitaSession(alvo.session) &&
-      alvo.session?.kind !== "pagar_pessoa";
-    if (!ehGasto) {
-      logWaRouteDecision(msg, "consulta_handler", "expense_button_without_expense_session");
-      return {
-        status: "consulta",
-        resposta: alvo
-          ? "Esse botão era de um gasto anterior e não vale para a operação em andamento. Responda a pergunta mais recente para continuar."
-          : "Esse botão é de uma confirmação que já foi concluída ou expirou. Nada foi registrado agora. Se quiser, envie o gasto de novo.",
-      };
+      alvo.id === v.rowId &&
+      alvo.status === "aguardando_confirmacao" &&
+      sessaoEhGasto(alvo);
+    if (!valido) {
+      logWaRouteDecision(msg, "consulta_handler", "expense_button_stale_or_unbound");
+      return { status: "consulta", resposta: EXPENSE_BUTTON_STALE };
     }
   }
 
