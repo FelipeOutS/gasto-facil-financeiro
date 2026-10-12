@@ -37,7 +37,15 @@ CREATE INDEX IF NOT EXISTS gastos_deletion_batch_idx
 CREATE OR REPLACE FUNCTION public.tg_gastos_guard_soft_delete()
 RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$
 BEGIN
-  IF current_setting('gi.gastos_soft_delete', true) = 'on' THEN
+  -- A GUC é só um sinal de intenção (qualquer cliente pode setá-la).
+  -- A autorização real é a IDENTIDADE efetiva: dentro das RPCs SECURITY
+  -- DEFINER, current_user = dono da tabela/RPCs; para clientes
+  -- (anon/authenticated/service_role) current_user nunca é o dono.
+  -- Esta função NÃO é SECURITY DEFINER de propósito (senão current_user
+  -- seria sempre o dono).
+  IF current_setting('gi.gastos_soft_delete', true) = 'on'
+     AND current_user = (SELECT pg_get_userbyid(c.relowner) FROM pg_catalog.pg_class c
+                          WHERE c.oid = 'public.gastos'::regclass) THEN
     RETURN NEW;
   END IF;
   IF TG_OP = 'INSERT' THEN
@@ -246,3 +254,17 @@ REVOKE ALL ON FUNCTION public.gastos_restaurar_lote(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.gastos_preview_exclusao_periodo(date, date, boolean) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.gastos_soft_delete_periodo(date, date, boolean, int, numeric, text, uuid, text) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.gastos_restaurar_lote(uuid) TO authenticated, service_role;
+
+-- 9) Pré-condição do modelo: RPCs que marcam/restauram pertencem ao MESMO
+-- papel dono de public.gastos. Se divergir, a migração falha (fail-closed).
+DO $$ DECLARE v_owner oid := (SELECT relowner FROM pg_class WHERE oid = 'public.gastos'::regclass);
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE oid IN (
+      'public.gastos_soft_delete_periodo(date,date,boolean,int,numeric,text,uuid,text)'::regprocedure,
+      'public.gastos_restaurar_lote(uuid)'::regprocedure) AND proowner <> v_owner) THEN
+    RAISE EXCEPTION 'rpc_owner_diferente_do_dono_de_gastos';
+  END IF;
+  IF v_owner IN (SELECT oid FROM pg_roles WHERE rolname IN ('anon','authenticated','service_role')) THEN
+    RAISE EXCEPTION 'dono_de_gastos_nao_pode_ser_papel_de_cliente';
+  END IF;
+END $$;
