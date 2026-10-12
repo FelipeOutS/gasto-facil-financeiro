@@ -54,3 +54,15 @@ describe("agenda — recorrência e consultas (2026-10-12)", () => {
     expect(detectAgendaIntent("gastei 50 no mercado")).toBeNull();
   });
 });
+
+describe("handler — não agenda no passado", () => {
+  it("lembrete único com horário passado pede novo horário sem gravar", async () => {
+    const { handleAgendaIntent } = await import("@/server/whatsapp-agenda.server");
+    const i = detectAgendaIntent("me lembra de ligar hoje às 10h")!;
+    let inserts = 0;
+    const deps = { now: () => now, client: { from: () => { inserts++; throw new Error("no db"); } } } as never;
+    const out = await handleAgendaIntent("user-ficticio", i, { now, tz: TZ, deps });
+    expect(out.resposta).toContain("já passou");
+    expect(inserts).toBe(0);
+  });
+});
