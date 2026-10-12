@@ -837,10 +837,12 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               // sem `source` definido e nada muda para elas.
               source?: "audio";
               flowReply?: { responseJson: string };
+              replyId?: string;
             } = {
               external_id: msg.external_id,
               telefone: msg.telefone,
               texto: msg.texto,
+              replyId: msg.replyId,
               recebida_em: msg.recebida_em,
               authorizedUserId: elig.userId,
               ...(msg.flowReply ? { flowReply: msg.flowReply } : {}),
