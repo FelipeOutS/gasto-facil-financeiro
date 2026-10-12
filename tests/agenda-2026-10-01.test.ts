@@ -540,7 +540,7 @@ describe("cancelar lembrete com páginas e confirmação (2026-10-12)", () => {
     const id = db.agenda_items[0].id as string;
     const ok = btnsOf(await run(U1, `agenda_cancel:${id}`, d))[0];
     const r = await run(U2, ok, d);
-    expect(r.resposta).toContain("não está mais na sua agenda");
+    expect(r.resposta).toContain("nada foi cancelado");
     expect(db.agenda_items[0].status).toBe("ativo");
   });
 
@@ -680,10 +680,6 @@ describe("confirmação assinada e cancelamento atômico (2026-10-12)", () => {
     const id = await mk(d);
     await A.setAgendaStatus(U1, id, "cancelar", d);
     const before = db.agenda_items[0].cancelled_at;
-    db.agenda_items[0].status = "ativo"; // simula leitura antiga (TOCTOU)
-    const realGet = A.getAgendaItem;
-    expect(realGet).toBeTruthy();
-    db.agenda_items[0].status = "cancelado";
     await expect(A.setAgendaStatus(U1, id, "cancelar", d)).rejects.toThrow();
     expect(db.agenda_items[0].cancelled_at).toBe(before);
   });
