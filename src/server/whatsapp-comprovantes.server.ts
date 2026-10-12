@@ -240,6 +240,41 @@ function dataPrecisaConfirmacao(iso: string | undefined): boolean {
   return diff > 0 || diff < -30;
 }
 
+export type RespostaData =
+  | { kind: "nota" }
+  | { kind: "hoje" }
+  | { kind: "data"; data: string }
+  | { kind: "pedir_data" }
+  | { kind: "indefinida" };
+
+/**
+ * Interpreta a resposta à pergunta "usar a data da nota ou hoje?".
+ * `dataIncerta` = a pergunta foi "usar hoje ou informar outra data?" (sem
+ * data confiável da nota) — nesse caso "sim"/"essa" são ambíguos.
+ */
+export function interpretarRespostaData(texto: string, dataIncerta: boolean): RespostaData {
+  const t = normalize(texto).replace(/[.!?,;]+$/g, "").trim();
+  if (!t) return { kind: "indefinida" };
+  if (/^(usar )?(a )?(data de )?hoje$|^(registrar|registra|lanca|lancar) (como |com )?(a data de )?hoje$|^como hoje$/.test(t)) {
+    return { kind: "hoje" };
+  }
+  const nota =
+    /^((usar|use|uso|usa|manter|mantem|mantenha|pode usar|quero) )?((a|essa|esta|aquela) )?(data )?(da nota|do cupom|do comprovante|essa|esta|ela|mesmo|mesma)?$/.test(
+      t,
+    ) && /(essa|esta|ela|nota|cupom|comprovante|manter|mantem|mantenha|mesm)/.test(t);
+  const afirmativo = /^(sim|s|ss|isso|pode|pode ser|ok|okay|certo|confirmo|confirmar|correto|isso mesmo|sim essa|sim pode|exato)$/.test(t);
+  if (nota || (afirmativo && !dataIncerta) || /^sim,? (essa|a da nota|usar essa)$/.test(t)) {
+    return dataIncerta ? { kind: "indefinida" } : { kind: "nota" };
+  }
+  if (afirmativo) return { kind: "indefinida" };
+  if (/^(nao|n|nao essa|outra|outra data|informar outra( data)?|quero outra( data)?)$/.test(t)) {
+    return { kind: "pedir_data" };
+  }
+  const d = parseData(texto);
+  if (d) return { kind: "data", data: d };
+  return { kind: "indefinida" };
+}
+
 function parseValor(texto: string): number | null {
   const t = texto.replace(/[Rr]\$\s*/g, "").trim();
   // dois grupos: "1.234,56" (BR) ou "1234.56" / "1234,56"
@@ -757,7 +792,7 @@ function ocrParaSessao(
   const categoriaNaoIdentificada = !ocr.categoriaSugerida || ocr.confianca === "baixa";
   // Data fica "incerta" quando o OCR trouxe uma data mas a confiança geral
   // é baixa — não confiar mesmo dentro da janela ±30 dias.
-  const dataIncerta = !!ocr.data && ocr.confianca === "baixa";
+  const dataIncerta = !!ocr.data && (ocr.confianca === "baixa" || ocr.dataIncerta === true);
   return {
     kind: "imagem_comprovante",
     descricao,
@@ -1236,24 +1271,23 @@ export async function processarRespostaImagem(args: {
 
   // ----- aguardando confirmação de DATA (fora da janela ±30 dias OU incerta) -----
   if (status === "img_aguardando_data_confirmacao") {
-    const t = normalize(texto);
-    const usarNota =
-      /^(usar data da nota|usar a data da nota|manter data|manter|data da nota|nota)$/.test(t);
-    const usarHoje = /^(usar hoje|hoje|usar a data de hoje)$/.test(t);
-    // Quando o usuário responde com uma data direta ("15/06/2026", "ontem")
-    // também aceitamos — confirma a data informada manualmente.
-    const dataInformada = parseData(texto);
-    if (!usarNota && !usarHoje && !dataInformada) {
-      const resposta = session.dataIncerta
-        ? M.imagem.perguntaDataIncerta()
-        : M.imagem.perguntaDataConfirmacao(formatDataBR(session.data as string));
+    const escolha = interpretarRespostaData(texto, !!session.dataIncerta);
+    if (escolha.kind === "indefinida" || escolha.kind === "pedir_data") {
       return {
         status: "aguardando_data_confirmacao",
         newStatus: "img_aguardando_data_confirmacao",
         session,
-        resposta,
+        resposta:
+          escolha.kind === "pedir_data"
+            ? M.imagem.pedirNovaData()
+            : M.imagem.respostaDataNaoEntendida(
+                session.dataIncerta ? null : formatDataBR(session.data as string),
+              ),
       };
     }
+    const usarHoje = escolha.kind === "hoje";
+    const usarNota = escolha.kind === "nota";
+    const dataInformada = escolha.kind === "data" ? escolha.data : null;
     const next: ComprovanteSession = {
       ...session,
       dataConfirmada: true,

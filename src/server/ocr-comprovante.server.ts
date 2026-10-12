@@ -60,6 +60,8 @@ export type OcrResult = {
   formaPagamento: string | null;
   confianca: OcrConfianca;
   observacao: string | null;
+  /** true quando a data extraída é contextualmente impossível/divergente. */
+  dataIncerta?: boolean;
 };
 
 export type OcrError = {
@@ -81,6 +83,9 @@ REGRAS DE VALOR (em reais):
 
 DATA:
 - Formato ISO YYYY-MM-DD. Se não achar, deixe null.
+- Em notas fiscais (NFC-e/NF-e/SAT), a data oficial é a de EMISSÃO ("Emissão", "Data de emissão") ou AUTORIZAÇÃO ("Protocolo de autorização"). Preencha "dataEmissao" e "dataAutorizacao" com elas quando estiverem impressas.
+- Leia os 4 dígitos do ano com atenção, caractere por caractere (ex.: "2026" e "2006" são anos diferentes). Copie exatamente o que está impresso; não corrija nem adivinhe.
+- Em "tipoDocumento" informe "nfce", "nfe", "sat", "pix", "boleto" ou "outro".
 
 DESCRIÇÃO:
 - Nome do estabelecimento, recebedor do Pix, ou serviço (ex: "Uber", "Mercado Assaí", "Maria Silva").
@@ -120,6 +125,12 @@ const TOOL_DEF = {
         },
         confianca: { type: "string", enum: ["alta", "media", "baixa"] },
         observacao: { type: ["string", "null"] },
+        dataEmissao: { type: ["string", "null"] },
+        dataAutorizacao: { type: ["string", "null"] },
+        tipoDocumento: {
+          type: ["string", "null"],
+          enum: ["nfce", "nfe", "sat", "pix", "boleto", "outro", null],
+        },
       },
       required: ["valoresEncontrados", "confianca"],
       additionalProperties: false,
@@ -211,10 +222,17 @@ export async function extrairDadosComprovante(imageBase64: string): Promise<OcrO
         .filter((n) => Number.isFinite(n) && n > 0)
     : [];
 
+  const datas = escolherDataComprovante({
+    data: parsed.data,
+    dataEmissao: parsed.dataEmissao,
+    dataAutorizacao: parsed.dataAutorizacao,
+    tipoDocumento: parsed.tipoDocumento,
+  });
+
   const result: OcrResult = {
     valor: typeof parsed.valor === "number" && parsed.valor > 0 ? parsed.valor : null,
     valoresEncontrados,
-    data: typeof parsed.data === "string" ? parsed.data : null,
+    data: datas.data,
     descricao: typeof parsed.descricao === "string" ? parsed.descricao : null,
     categoriaSugerida:
       typeof parsed.categoriaSugerida === "string" &&
@@ -231,9 +249,49 @@ export async function extrairDadosComprovante(imageBase64: string): Promise<OcrO
         ? parsed.confianca
         : "baixa",
     observacao: typeof parsed.observacao === "string" ? parsed.observacao : null,
+    ...(datas.incerta ? { dataIncerta: true } : {}),
   };
 
   return { ok: true, data: result };
+}
+
+function isoValida(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const m = v.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  if (d.getUTCFullYear() !== +m[1] || d.getUTCMonth() !== +m[2] - 1 || d.getUTCDate() !== +m[3]) {
+    return null;
+  }
+  return `${m[1]}-${m[2]}-${m[3]}`;
+}
+
+/** Ano mínimo plausível por tipo de documento fiscal eletrônico. */
+const ANO_MINIMO_POR_TIPO: Record<string, number> = { nfce: 2012, nfe: 2006, sat: 2015, pix: 2020 };
+
+/**
+ * Escolhe a data do comprovante priorizando a data fiscal impressa
+ * (emissão > autorização > data genérica). Nunca troca o ano por palpite:
+ * quando as datas lidas divergem entre si ou o ano é impossível para o tipo
+ * de documento (ex.: NFC-e em 2006), marca `incerta` para o usuário confirmar.
+ */
+export function escolherDataComprovante(input: {
+  data?: unknown;
+  dataEmissao?: unknown;
+  dataAutorizacao?: unknown;
+  tipoDocumento?: unknown;
+}): { data: string | null; incerta: boolean } {
+  const emissao = isoValida(input.dataEmissao);
+  const autorizacao = isoValida(input.dataAutorizacao);
+  const generica = isoValida(input.data);
+  const data = emissao ?? autorizacao ?? generica;
+  if (!data) return { data: null, incerta: false };
+  const lidas = [emissao, autorizacao, generica].filter((d): d is string => !!d);
+  const divergente = lidas.some((d) => d !== data);
+  const tipo = typeof input.tipoDocumento === "string" ? input.tipoDocumento : "";
+  const anoMin = ANO_MINIMO_POR_TIPO[tipo];
+  const anoImpossivel = anoMin !== undefined && Number(data.slice(0, 4)) < anoMin;
+  return { data, incerta: divergente || anoImpossivel };
 }
 
 // =====================================================================
