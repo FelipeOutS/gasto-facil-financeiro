@@ -90,6 +90,7 @@ type ProcessCall = {
   texto: string;
   telefone: string;
   external_id: string | null;
+  source?: string;
 };
 
 const fakeState = {
@@ -179,6 +180,7 @@ mock.module("@/server/whatsapp.server", () => ({
       texto: msg.texto,
       telefone: msg.telefone,
       external_id: msg.external_id,
+      source: (msg as { source?: string }).source,
     });
     return fakeState.processOutcome;
   },
@@ -466,6 +468,11 @@ test("áudio válido → transcreve e encaminha o TEXTO ao processarMensagemWhat
   // WA-V1.2 — valor falado por extenso é normalizado em memória antes
   // do pipeline textual existente. Transcript original não é persistido.
   expect(arg.texto).toBe("gastei R$ 42,00 no almoço");
+});
+
+test("áudio chega ao pipeline marcado como source=audio (ativa a leitura contextual de valores)", async () => {
+  await POST({ request: signedPostRequest(metaAudioPayload()) });
+  expect(fakeState.calls.processArgs[0].source).toBe("audio");
 });
 
 test("authorizedUserId do gate é preservado no runMsg enviado ao pipeline", async () => {

@@ -9,7 +9,8 @@ import { state, resetState, setupWhatsAppFakeMocks, gastosInserts } from "./_wha
 setupWhatsAppFakeMocks();
 
 const { processarMensagemWhatsApp } = await import("../src/server/whatsapp.server");
-const { splitLoteGastos } = await import("../src/server/whatsapp-audio-lote");
+const { analisarGastoPorVoz } = await import("../src/server/whatsapp-audio-lote");
+const { parseWhatsAppExpenseMessage } = await import("../src/lib/whatsappParser");
 
 const tel = "5511999998888";
 let n = 0;
@@ -20,34 +21,111 @@ const texto = (t: string, external_id = `t${++n}`) =>
 
 beforeEach(() => resetState());
 
-test("separa 'gastei 20 no Uber e 30 na farmácia hoje' em 2 itens sem misturar valores", () => {
-  const r = splitLoteGastos("gastei R$ 20,00 no Uber e R$ 30,00 na farmácia hoje");
+const A = (t: string) => analisarGastoPorVoz(t);
+const unico = (t: string) => {
+  const r = A(t);
+  if (r.kind !== "single") throw new Error(`esperava single, veio ${r.kind}`);
+  const p = parseWhatsAppExpenseMessage(r.texto, []);
+  return { nome: p.nome, valor: p.valor, data: p.data };
+};
+
+test("'Gastei 20 no Uber e 30 na farmácia hoje' (sem 'reais') → 2 itens", () => {
+  const r = A("Gastei 20 no Uber e 30 na farmácia hoje");
   expect(r.kind).toBe("lote");
   if (r.kind !== "lote") return;
   expect(r.itens.map((i) => [i.nome, i.valor])).toEqual([
     ["Uber", 20],
     ["Farmácia", 30],
   ]);
-  expect(r.itens[0].data).toBe(r.itens[1].data); // "hoje" vale para os dois
-  expect(r.formaPagamento).toBeNull(); // não inventa forma de pagamento
+  expect(r.itens[0].data).toBe(r.itens[1].data);
+  expect(r.formaPagamento).toBeNull();
 });
 
-test("um único gasto não vira lote", () => {
-  expect(splitLoteGastos("gastei R$ 45,00 de mercado ontem").kind).toBe("none");
+test("três gastos com vírgula, centavos, 'ontem' e pix", () => {
+  const r = A("gastei 20 no Uber, 30 na farmácia e 15,50 no café ontem no pix");
+  expect(r.kind === "lote" && r.itens.map((i) => i.valor)).toEqual([20, 30, 15.5]);
+  expect(r.kind === "lote" && r.formaPagamento).toBe("pix");
 });
 
-test("datas e quantidades não contam como valores (não vira lote)", () => {
-  expect(splitLoteGastos("gastei R$ 45,00 no mercado dia 15/10").kind).toBe("none");
-  expect(splitLoteGastos("comprei 2 pizzas por R$ 80,00").kind).toBe("none");
-});
-
-test("valores falados como 'reais' também são separados", () => {
-  const r = splitLoteGastos("gastei 20 reais no Uber e 30 reais na farmácia hoje");
+test("valores com 'R$' e 'reais' continuam sendo separados", () => {
+  expect(A("gastei R$ 20,00 no Uber e R$ 30,00 na farmácia hoje").kind).toBe("lote");
+  const r = A("gastei 20 reais no Uber e 30 reais na farmácia hoje");
   expect(r.kind === "lote" && r.itens.map((i) => i.valor)).toEqual([20, 30]);
 });
 
+test("'Comprei 2 pizzas por 50 reais' → um gasto de R$ 50 (2 é quantidade)", () => {
+  expect(unico("Comprei 2 pizzas por 50 reais")).toMatchObject({ nome: "Pizzas", valor: 50 });
+  expect(unico("comprei 2 pizzas por 50")).toMatchObject({ valor: 50 });
+});
+
+test("'dia 15/10 gastei 20 no Uber' → um gasto de R$ 20 em 15/10", () => {
+  const r = unico("dia 15/10 gastei 20 no Uber");
+  expect(r.valor).toBe(20);
+  expect(r.nome).toBe("Uber");
+  expect(r.data.slice(5)).toBe("10-15");
+});
+
+test("'comprei 2 pizzas' → pede o valor, sem inventar", () => {
+  expect(A("comprei 2 pizzas").kind).toBe("ask_value");
+});
+
+test("parcelas e 'cartão final 1234' nunca viram valor", () => {
+  expect(A("paguei 3 parcelas de 100 na loja").kind).toBe("ask_value");
+  expect(unico("gastei 50 no cartão final 1234").valor).toBe(50);
+});
+
+test("'dia 30' sem mês, ainda no futuro deste mês → ambíguo, pergunta em vez de adivinhar", () => {
+  // O dia 31 nunca passou antes do fim do mês; usado para não depender da data.
+  expect(A("gastei 20 no uber dia 31").kind).toBe("unsafe");
+});
+
+test("'gastei 45 de mercado ontem' → R$ 45 ontem", () => {
+  const r = unico("gastei 45 de mercado ontem");
+  expect(r).toMatchObject({ nome: "Mercado", valor: 45 });
+  const ontem = new Date(Date.parse(parseWhatsAppExpenseMessage("R$ 1,00 x hoje", []).data) - 86400000)
+    .toISOString()
+    .slice(0, 10);
+  expect(r.data).toBe(ontem);
+});
+
+test("perguntas e receitas não passam pela leitura de gasto por voz", () => {
+  expect(A("quanto gastei em 2026").kind).toBe("passthrough");
+  expect(A("recebi 2300 de salário em agosto").kind).toBe("passthrough");
+});
+
 test("gasto e receita no mesmo áudio não são separados às cegas", () => {
-  expect(splitLoteGastos("gastei R$ 20,00 no Uber e recebi R$ 100,00 do João").kind).toBe("unsafe");
+  expect(A("gastei 20 no uber e recebi 100").kind).toBe("unsafe");
+});
+
+test("texto DIGITADO não usa a leitura de voz: o parser global continua igual", async () => {
+  // Mesma frase por texto segue o fluxo antigo (um lançamento só).
+  const r = await texto("gastei 20 no Uber e 30 na farmácia hoje");
+  expect(r.status).not.toBe("aguardando_forma_lote_audio");
+});
+
+test("áudio sem 'reais' com 2 gastos → lista no fluxo real, nada salvo", async () => {
+  const r = await audio("Gastei 20 no Uber e 30 na farmácia hoje");
+  expect(r.status).toBe("aguardando_forma_lote_audio");
+  expect(r.resposta).toMatch(/1\. Uber — R\$\s20,00/);
+  expect(r.resposta).toMatch(/2\. Farmácia — R\$\s30,00/);
+  expect(gastosInserts()).toHaveLength(0);
+  await texto("pix");
+  await texto("confirmar", "c-x");
+  await texto("confirmar", "c-x");
+  expect(gastosInserts().map((g) => g.row.valor)).toEqual([20, 30]);
+});
+
+test("áudio 'comprei 2 pizzas' no fluxo real pede valor e não salva", async () => {
+  const r = await audio("comprei 2 pizzas");
+  expect(r.resposta).toContain("Não entendi o valor");
+  expect(gastosInserts()).toHaveLength(0);
+});
+
+test("áudio 'Comprei 2 pizzas por 50 reais' no fluxo real registra R$ 50 (pendente de confirmação)", async () => {
+  const r = await audio("Comprei 2 pizzas por R$ 50,00");
+  expect(r.resposta).toMatch(/R\$\s50,00/);
+  expect(r.resposta).not.toMatch(/R\$\s2,00/);
+  expect(gastosInserts()).toHaveLength(0);
 });
 
 test("áudio com 2 gastos pede pagamento, mostra a lista e NÃO salva nada", async () => {
@@ -152,8 +230,8 @@ test("'confirmar' antes de dizer o pagamento NÃO descarta o gasto pendente", as
 });
 
 test("datas relativas: 'ontem' é um dia antes de 'hoje'", () => {
-  const r = splitLoteGastos("gastei R$ 10,00 no pão e R$ 5,00 no café ontem");
-  const h = splitLoteGastos("gastei R$ 10,00 no pão e R$ 5,00 no café hoje");
+  const r = A("gastei R$ 10,00 no pão e R$ 5,00 no café ontem");
+  const h = A("gastei R$ 10,00 no pão e R$ 5,00 no café hoje");
   if (r.kind !== "lote" || h.kind !== "lote") throw new Error("esperava lote");
   const diff = (Date.parse(h.itens[0].data) - Date.parse(r.itens[0].data)) / 86400000;
   expect(diff).toBe(1);
