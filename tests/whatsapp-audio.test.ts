@@ -90,6 +90,7 @@ type ProcessCall = {
   texto: string;
   telefone: string;
   external_id: string | null;
+  source?: string;
 };
 
 const fakeState = {
