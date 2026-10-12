@@ -17,4 +17,5 @@ P=(psql -X -q -v ON_ERROR_STOP=1 -h "$D" -p "$PORT" -U gi_test -d postgres)
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/gastos-soft-delete-f2.sql"
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/gastos-soft-delete-f2.sql"   # reexecução idempotente
 "${P[@]}" -f "$ROOT/tests/sql/gastos-soft-delete-f2/10-tests.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"
+"${P[@]}" -f "$ROOT/tests/sql/gastos-soft-delete-f2/20-hostile-guc.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"
 echo "OK: todos os testes SQL passaram"
