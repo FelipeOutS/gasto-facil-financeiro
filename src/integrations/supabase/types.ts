@@ -4440,6 +4440,7 @@ export type Database = {
           avisos_sistema: boolean
           contas_a_pagar: boolean
           created_at: string
+          faturas: boolean
           ia_insights: boolean
           mercado: boolean
           metas: boolean
@@ -4447,6 +4448,9 @@ export type Database = {
           quiet_hours_end: number | null
           quiet_hours_start: number | null
           recorrencias: boolean
+          renovacao_assinatura: boolean
+          resumo_mensal: boolean
+          resumo_semanal: boolean
           updated_at: string
           user_id: string
         }
@@ -4455,6 +4459,7 @@ export type Database = {
           avisos_sistema?: boolean
           contas_a_pagar?: boolean
           created_at?: string
+          faturas?: boolean
           ia_insights?: boolean
           mercado?: boolean
           metas?: boolean
@@ -4462,6 +4467,9 @@ export type Database = {
           quiet_hours_end?: number | null
           quiet_hours_start?: number | null
           recorrencias?: boolean
+          renovacao_assinatura?: boolean
+          resumo_mensal?: boolean
+          resumo_semanal?: boolean
           updated_at?: string
           user_id: string
         }
@@ -4470,6 +4478,7 @@ export type Database = {
           avisos_sistema?: boolean
           contas_a_pagar?: boolean
           created_at?: string
+          faturas?: boolean
           ia_insights?: boolean
           mercado?: boolean
           metas?: boolean
@@ -4477,6 +4486,9 @@ export type Database = {
           quiet_hours_end?: number | null
           quiet_hours_start?: number | null
           recorrencias?: boolean
+          renovacao_assinatura?: boolean
+          resumo_mensal?: boolean
+          resumo_semanal?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -4867,6 +4879,102 @@ export type Database = {
           plan_code?: string
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_planning_actions: {
+        Row: {
+          applied_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          kind: string
+          payload: Json
+          result_id: string | null
+          source_external_id: string
+          state: string
+          target_id: string | null
+          telefone: string
+          user_id: string
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          kind: string
+          payload?: Json
+          result_id?: string | null
+          source_external_id: string
+          state?: string
+          target_id?: string | null
+          telefone: string
+          user_id: string
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          result_id?: string | null
+          source_external_id?: string
+          state?: string
+          target_id?: string | null
+          telefone?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_recent_actions: {
+        Row: {
+          created_at: string
+          edit_field: string | null
+          edit_state: string
+          entity_id: string
+          entity_kind: string
+          expires_at: string
+          id: string
+          pending_patch: Json | null
+          related_id: string | null
+          source_external_id: string
+          state: string
+          telefone: string
+          undone_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          edit_field?: string | null
+          edit_state?: string
+          entity_id: string
+          entity_kind: string
+          expires_at?: string
+          id?: string
+          pending_patch?: Json | null
+          related_id?: string | null
+          source_external_id: string
+          state?: string
+          telefone: string
+          undone_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          edit_field?: string | null
+          edit_state?: string
+          entity_id?: string
+          entity_kind?: string
+          expires_at?: string
+          id?: string
+          pending_patch?: Json | null
+          related_id?: string | null
+          source_external_id?: string
+          state?: string
+          telefone?: string
+          undone_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -5438,56 +5546,24 @@ export type Database = {
         }
         Returns: Json
       }
-      whatsapp_begin_link_verification: {
-        Args: {
-          p_consent_version: string
-          p_phone: string
-          p_token_hash: string
-          p_user_agent?: string | null
-          p_user_id: string
-        }
-        Returns: Json
-      }
-      whatsapp_complete_link_verification: {
-        Args: { p_external_id: string; p_phone: string; p_token_hash: string }
-        Returns: string
-      }
-      whatsapp_revoke_links: {
-        Args: { p_user_id: string; p_link_id?: string | null }
-        Returns: number
-      }
-      whatsapp_create_recurring_income_once: {
-        Args: {
-          p_data: string
-          p_descricao: string
-          p_dia_mes?: number | null
-          p_dia_semana?: number | null
-          p_external_id: string
-          p_frequencia: string
-          p_tipo: string
-          p_user_id: string
-          p_valor: number
-        }
-        Returns: Json
-      }
       whatsapp_advance_card_session: {
         Args: {
-          p_user_id: string
-          p_phone: string
-          p_expected_id: string | null
-          p_previous_id: string | null
-          p_external_id: string | null
-          p_text: string
-          p_received_at: string | null
-          p_status: string
+          p_expected_id: string
+          p_external_id: string
           p_parsed: Json
+          p_phone: string
+          p_previous_id: string
+          p_received_at: string
           p_response: string
+          p_status: string
+          p_text: string
+          p_user_id: string
         }
         Returns: string
       }
-      whatsapp_close_card_sessions: {
-        Args: { p_user_id: string; p_phone: string; p_status?: string }
-        Returns: number
+      whatsapp_apply_planning_action: {
+        Args: { p_id: string; p_telefone: string; p_user_id: string }
+        Returns: Json
       }
       whatsapp_attempt_finalize_accepted_atomic: {
         Args: {
@@ -5578,7 +5654,21 @@ export type Database = {
           valor: number
         }[]
       }
+      whatsapp_begin_link_verification: {
+        Args: {
+          p_consent_version: string
+          p_phone: string
+          p_token_hash: string
+          p_user_agent?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       whatsapp_cleanup_csp_reports: { Args: never; Returns: undefined }
+      whatsapp_close_card_sessions: {
+        Args: { p_phone: string; p_status?: string; p_user_id: string }
+        Returns: number
+      }
       whatsapp_commit_outbound_quota_atomic: {
         Args: {
           p_notification_id: string
@@ -5590,6 +5680,10 @@ export type Database = {
           outcome: string
           state: string
         }[]
+      }
+      whatsapp_complete_link_verification: {
+        Args: { p_external_id: string; p_phone: string; p_token_hash: string }
+        Returns: string
       }
       whatsapp_consume_financial_action_quota_atomic: {
         Args: {
@@ -5632,6 +5726,34 @@ export type Database = {
           state: string
           used: number
         }[]
+      }
+      whatsapp_create_recurring_income_once: {
+        Args: {
+          p_data: string
+          p_descricao: string
+          p_dia_mes?: number
+          p_dia_semana?: number
+          p_external_id: string
+          p_frequencia: string
+          p_tipo: string
+          p_user_id: string
+          p_valor: number
+        }
+        Returns: Json
+      }
+      whatsapp_edit_recent_action: {
+        Args: {
+          p_action_id: string
+          p_before: string
+          p_card_id?: string
+          p_competence?: string
+          p_field: string
+          p_phone: string
+          p_scope?: string
+          p_user_id: string
+          p_value: string
+        }
+        Returns: string
       }
       whatsapp_get_usage_snapshot: {
         Args: {
@@ -5720,6 +5842,19 @@ export type Database = {
           state: string
           used: number
         }[]
+      }
+      whatsapp_revoke_links: {
+        Args: { p_link_id?: string; p_user_id: string }
+        Returns: number
+      }
+      whatsapp_undo_recent_action: {
+        Args: {
+          p_action_id: string
+          p_phone: string
+          p_scope?: string
+          p_user_id: string
+        }
+        Returns: string
       }
       whatsapp_user_in_rollout: {
         Args: { _pct: number; _user_id: string }

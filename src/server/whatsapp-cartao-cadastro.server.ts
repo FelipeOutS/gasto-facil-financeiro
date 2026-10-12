@@ -127,9 +127,9 @@ async function transitar(
   const { data, error } = await supabaseAdmin.rpc("whatsapp_advance_card_session", {
     p_user_id: deps.userId,
     p_phone: deps.telefone,
-    p_expected_id: ativo?.id ?? null,
-    p_previous_id: previousSessionId ?? null,
-    p_external_id: deps.externalId,
+    p_expected_id: (ativo?.id ?? null) as string,
+    p_previous_id: (previousSessionId ?? null) as string,
+    p_external_id: deps.externalId as string,
     p_text: deps.texto,
     p_received_at: deps.recebidaEm,
     p_status: status,
