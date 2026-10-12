@@ -468,6 +468,11 @@ test("áudio válido → transcreve e encaminha o TEXTO ao processarMensagemWhat
   expect(arg.texto).toBe("gastei R$ 42,00 no almoço");
 });
 
+test("áudio chega ao pipeline marcado como source=audio (ativa a leitura contextual de valores)", async () => {
+  await POST({ request: signedPostRequest(metaAudioPayload()) });
+  expect(fakeState.calls.processArgs[0].source).toBe("audio");
+});
+
 test("authorizedUserId do gate é preservado no runMsg enviado ao pipeline", async () => {
   fakeState.elig = { allowed: true, userId: "u-audio-xyz" };
   await POST({ request: signedPostRequest(metaAudioPayload()) });
