@@ -3009,7 +3009,10 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     const { detectAgendaIntent, handleAgendaIntent } = await import("./whatsapp-agenda.server");
     const agendaIntent = detectAgendaIntent(texto);
     if (agendaIntent && !payablePaymentIntent) {
-      const out = await handleAgendaIntent(userId, agendaIntent);
+      // Fuso do perfil (padrão São Paulo); nunca o relógio do servidor.
+      const { getUserTimezone } = await import("./whatsapp-notification-gates.server");
+      const agendaTz = await getUserTimezone(userId).catch(() => "America/Sao_Paulo");
+      const out = await handleAgendaIntent(userId, agendaIntent, { tz: agendaTz });
       if (!out.notMatched) {
       logWaRouteDecision(msg, "consulta_handler", `agenda_${agendaIntent.type}`);
       return {
