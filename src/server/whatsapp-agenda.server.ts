@@ -425,6 +425,7 @@ export async function handleAgendaIntent(
       case "concluir": {
         const r = await sameOrPick(userId, intent.alvo, intent.type, deps);
         if (!("id" in r)) return r;
+        if (intent.type === "cancelar") return await askCancel(userId, r.id, deps, now);
         return await applyAction(userId, r.id, intent.type, deps, now);
       }
       case "escolher": {
