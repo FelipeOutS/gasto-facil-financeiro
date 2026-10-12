@@ -258,10 +258,11 @@ export function interpretarRespostaData(texto: string, dataIncerta: boolean): Re
   if (/^(usar )?(a )?(data de )?hoje$|^(registrar|registra|lanca|lancar) (como |com )?(a data de )?hoje$|^como hoje$/.test(t)) {
     return { kind: "hoje" };
   }
-  const nota =
-    /^((usar|use|uso|usa|manter|mantem|mantenha|pode usar|quero) )?((a|essa|esta|aquela) )?(data )?(da nota|do cupom|do comprovante|essa|esta|ela|mesmo|mesma)?$/.test(
-      t,
-    ) && /(essa|esta|ela|nota|cupom|comprovante|manter|mantem|mantenha|mesm)/.test(t);
+  const resto = t
+    .replace(/^(sim,? )?(eu )?(pode |quero |prefiro )?(usar|use|uso|usa|manter|mantem|mantenha|fica com|fique com|ficar com)? ?/, "")
+    .trim();
+  const nota = /^((a|essa|esta|aquela|com) )?(data )?(essa|esta|ela|mesma|mesmo|da nota|do cupom|do comprovante|que esta na nota|indicada)?( data)?( mesmo| mesma)?$/.test(resto) &&
+    /(essa|esta|ela|mesm|nota|cupom|comprovante|indicada)/.test(resto) || /^(manter|mantem|mantenha)$/.test(t);
   const afirmativo = /^(sim|s|ss|isso|pode|pode ser|ok|okay|certo|confirmo|confirmar|correto|isso mesmo|sim essa|sim pode|exato)$/.test(t);
   if (nota || (afirmativo && !dataIncerta) || /^sim,? (essa|a da nota|usar essa)$/.test(t)) {
     return dataIncerta ? { kind: "indefinida" } : { kind: "nota" };
