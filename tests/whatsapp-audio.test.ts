@@ -179,6 +179,7 @@ mock.module("@/server/whatsapp.server", () => ({
       texto: msg.texto,
       telefone: msg.telefone,
       external_id: msg.external_id,
+      source: (msg as { source?: string }).source,
     });
     return fakeState.processOutcome;
   },
