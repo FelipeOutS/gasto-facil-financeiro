@@ -3011,7 +3011,15 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     // Comando sem alvo ("cancelar lembrete", "concluir") nunca atropela uma
     // confirmação pendente (gasto, comprovante, cartão): a sessão tem prioridade.
     const bareBlocked = agendaIntent?.type === "escolher" && !!(await buscarSessaoAtiva(userId, msg.telefone));
-    if (agendaIntent && !payablePaymentIntent && !bareBlocked) {
+    if (bareBlocked) {
+      // Não descarta nem altera a sessão pendente; só orienta.
+      logWaRouteDecision(msg, "consulta_handler", "agenda_bare_blocked_by_session");
+      return {
+        status: "consulta",
+        resposta: "Você tem um lançamento em andamento. Responda a pergunta anterior para concluir, ou envie *cancelar* para descartá-lo. Depois é só mandar de novo o pedido do lembrete.",
+      };
+    }
+    if (agendaIntent && !payablePaymentIntent) {
       // Fuso do perfil (padrão São Paulo); nunca o relógio do servidor.
       const { getUserTimezone } = await import("./whatsapp-notification-gates.server");
       const agendaTz = await getUserTimezone(userId).catch(() => "America/Sao_Paulo");

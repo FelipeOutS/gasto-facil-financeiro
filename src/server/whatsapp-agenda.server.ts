@@ -35,6 +35,7 @@ import {
 } from "@/lib/agenda/intent";
 import { nomeMesYm } from "@/lib/fatura-competencia";
 import { nextOccurrence } from "@/lib/agenda/recurrence";
+import { CANCEL_TTL_MIN, signCancel, verifyCancel } from "./agenda-confirm-token.server";
 import {
   DEFAULT_TZ,
   addDaysYmd,
@@ -452,9 +453,11 @@ export async function handleAgendaIntent(
       case "cancel_page":
         return await cancelPage(userId, intent.page, deps);
       case "cancel_ok": {
-        const ageMin = Math.floor(now.getTime() / 60_000) - intent.issuedMin;
-        if (!(ageMin >= 0 && ageMin <= CANCEL_TTL_MIN))
+        const check = intent.id ? verifyCancel(userId, intent.id, intent.issuedMin, intent.sig, now) : "invalid";
+        if (check === "expired")
           return { resposta: "Essa confirmação expirou e nada foi cancelado. Envie *cancelar lembrete* para escolher de novo." };
+        if (check !== "ok")
+          return { resposta: "Não consegui validar essa confirmação, então nada foi cancelado. Envie *cancelar lembrete* para escolher de novo." };
         const r = await applyAction(userId, intent.id, "cancelar", deps, now);
         return r.resposta.startsWith("Tudo certo") ? { ...r, resposta: `${r.resposta}\nO histórico fica preservado na Agenda do site.` } : r;
       }
@@ -477,7 +480,6 @@ export async function handleAgendaIntent(
 }
 
 const CANCEL_PAGE_SIZE = 8; // + até 2 linhas de navegação = 10 (limite da Meta)
-const CANCEL_TTL_MIN = 30;
 const FREQ_TXT: Record<string, string> = { diaria: "todo dia", semanal: "toda semana", mensal: "todo mês", anual: "todo ano" };
 const ORIGEM_TXT = (o: string | null | undefined) => (o === "whatsapp" ? "WhatsApp" : o === "site" ? "Site" : "");
 
@@ -512,7 +514,9 @@ async function askCancel(userId: string, id: string, deps: AgendaDeps, now: Date
   const fin = cur.source_type ? "\n\nIsso cancela só o aviso. A conta/fatura e seus lançamentos continuam como estão." : "";
   const origem = ORIGEM_TXT(cur.origem);
   const body = `Cancelar este item?\n\n${ICON(cur)} ${cur.titulo}\n🗓️ ${when}${origem ? `\nCriado no ${origem}` : ""}${rec}${fin}`;
-  const okId = `${AGENDA_CANCEL_OK_PREFIX}${cur.id}:${Math.floor(now.getTime() / 60_000).toString(36)}`;
+  const token = signCancel(userId, cur.id, now);
+  if (!token) return { resposta: "Não consigo confirmar cancelamentos agora. Nada foi alterado; tente pela Agenda do site." };
+  const okId = `${AGENDA_CANCEL_OK_PREFIX}${cur.id}:${token}`;
   return {
     resposta: `${body}\n\nToque em *Confirmar cancelamento* (vale por ${CANCEL_TTL_MIN} min).`,
     graphInteractive: buttonsMsg(body, [
@@ -556,7 +560,15 @@ async function applyAction(
   }
   if (cur.status !== "ativo")
     return { resposta: `"${cur.titulo}" já está ${cur.status === "cancelado" ? "cancelado" : "concluído"}.` };
-  const { row, advanced } = await setAgendaStatus(userId, id, acao, deps);
+  let res: Awaited<ReturnType<typeof setAgendaStatus>>;
+  try {
+    res = await setAgendaStatus(userId, id, acao, deps);
+  } catch (e) {
+    if (e instanceof AgendaError && e.code === "already")
+      return { resposta: `"${cur.titulo}" já foi atualizado. Nada foi alterado de novo.`, itemId: cur.id };
+    throw e;
+  }
+  const { row, advanced } = res;
   if (acao === "cancelar")
     return { resposta: row.source_type ? `Tudo certo, cancelei o aviso "${row.titulo}". ❌` : `Tudo certo, cancelei "${row.titulo}". ❌`, itemId: row.id };
   if (advanced && row.starts_at)
