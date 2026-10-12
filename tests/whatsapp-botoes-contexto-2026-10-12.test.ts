@@ -137,4 +137,15 @@ describe("botões vinculados à sessão exata", () => {
     expect(r.resposta).not.toContain("registrado");
     expect(gastosInserts().length).toBe(0);
   });
+
+  test("após Ajustar, a nova confirmação tem botões próprios e os de antes param", async () => {
+    const a = await abrirGasto("gastei 30 no mercado no pix");
+    await send("ajustar");
+    await send("valor");
+    const b = await abrirGasto("35");
+    expect(b.ids.length).toBe(3);
+    expect((await tap(a.ids[0])).resposta).toBe(EXPENSE_BUTTON_STALE);
+    await tap(b.ids[0]);
+    expect(gastosInserts().length).toBe(1);
+  });
 });
