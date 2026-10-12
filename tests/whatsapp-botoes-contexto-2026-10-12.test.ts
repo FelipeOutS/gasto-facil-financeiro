@@ -126,4 +126,15 @@ describe("botões vinculados à sessão exata", () => {
     expect(r.out.resposta).not.toBe(EXPENSE_BUTTON_STALE);
     expect(gastosInserts().length).toBe(1);
   });
+
+  test("botão de A não age em receita pendente nem vindo de outro telefone", async () => {
+    const a = await abrirGasto("gastei 30 no mercado no pix");
+    await send("não");
+    await send("recebi 500 de salário");
+    for (const id of a.ids) expect((await tap(id)).resposta).toBe(EXPENSE_BUTTON_STALE);
+    const b = await abrirGasto("gastei 45 na farmácia no pix");
+    const r = await tap(b.ids[0], "5511000000000");
+    expect(r.resposta).not.toContain("registrado");
+    expect(gastosInserts().length).toBe(0);
+  });
 });
