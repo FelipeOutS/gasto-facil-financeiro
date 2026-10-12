@@ -32,7 +32,7 @@ export type AgendaIntent =
   | { type: "editar_aviso"; alvo: string; diasAntes: number }
   | { type: "acao_id"; acao: AgendaAcaoId; id: string }
   | { type: "cancel_page"; page: number }
-  | { type: "cancel_ok"; id: string; issuedMin: number }
+  | { type: "cancel_ok"; id: string; issuedMin: number; sig: string }
   | { type: "historico" };
 
 /**
@@ -81,8 +81,10 @@ export function detectAgendaIntent(text: string): AgendaIntent | null {
   const cpage = new RegExp(`^${AGENDA_CANCEL_PAGE_PREFIX}(\\d{1,4})$`).exec(raw);
   if (cpage) return { type: "cancel_page", page: Number(cpage[1]) };
   if (raw === AGENDA_CANCEL_BACK_ID) return { type: "cancel_page", page: 0 };
-  const cok = new RegExp(`^${AGENDA_CANCEL_OK_PREFIX}(${UUID}):([0-9a-z]{1,10})$`, "i").exec(raw);
-  if (cok) return { type: "cancel_ok", id: cok[1].toLowerCase(), issuedMin: parseInt(cok[2], 36) };
+  const cok = new RegExp(`^${AGENDA_CANCEL_OK_PREFIX}(${UUID}):([0-9a-z]{1,10}):([A-Za-z0-9_-]{22})$`).exec(raw);
+  if (cok) return { type: "cancel_ok", id: cok[1].toLowerCase(), issuedMin: parseInt(cok[2], 36), sig: cok[3] };
+  // Formato antigo/sem assinatura: nunca cancela; o handler pede para escolher de novo.
+  if (raw.startsWith(AGENDA_CANCEL_OK_PREFIX)) return { type: "cancel_ok", id: "", issuedMin: -1, sig: "" };
   const idDone = new RegExp(`^${AGENDA_DONE_PREFIX}(${UUID})$`, "i").exec(raw);
   if (idDone) return { type: "acao_id", acao: "concluir", id: idDone[1].toLowerCase() };
   const idCancel = new RegExp(`^${AGENDA_CANCEL_PREFIX}(${UUID})$`, "i").exec(raw);

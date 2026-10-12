@@ -72,7 +72,7 @@ const nowOf = (d?: AgendaDeps) => d?.now?.() ?? new Date();
 
 export class AgendaError extends Error {
   constructor(
-    public code: "not_found" | "invalid" | "source_not_owned",
+    public code: "not_found" | "invalid" | "source_not_owned" | "already",
     message: string,
   ) {
     super(message);
