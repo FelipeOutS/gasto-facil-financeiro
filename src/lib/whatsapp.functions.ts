@@ -282,15 +282,16 @@ export const deleteGastoFromWhatsApp = createServerFn({ method: "POST" })
     if (!msg || msg.user_id !== userId) throw new Error("Mensagem não encontrada.");
 
     if (msg.gasto_id) {
-      // Remove o gasto real (RLS garante que só o dono pode apagar).
-      const { error: delErr } = await sb.from("gastos").delete().eq("id", msg.gasto_id);
-      if (delErr) throw new Error(delErr.message);
-
-      // Limpa contas a pagar vinculadas, se houver.
-      await sb
-        .from("contas_a_pagar")
-        .update({ status: "pendente", data_pagamento: null, gasto_id: null })
-        .eq("gasto_id", msg.gasto_id);
+      // Remove o gasto real só se ativo (nunca apaga soft-excluído; RLS + user_id).
+      const r = await deleteGastoAtivo(sb, userId, msg.gasto_id);
+      if (r === "deleted") {
+        // Limpa contas a pagar vinculadas, se houver.
+        await sb
+          .from("contas_a_pagar")
+          .update({ status: "pendente", data_pagamento: null, gasto_id: null })
+          .eq("user_id", userId)
+          .eq("gasto_id", msg.gasto_id);
+      }
     }
 
     // Atualiza o log mantendo histórico.

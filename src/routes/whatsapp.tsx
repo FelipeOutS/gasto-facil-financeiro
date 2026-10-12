@@ -712,7 +712,13 @@ function WhatsAppPage() {
         .from("whatsapp_messages")
         .update({ gasto_id: null })
         .in("gasto_id", idsParaApagar);
-      const { error: delErr } = await supabase.from("gastos").delete().in("id", idsParaApagar);
+      // Só apaga duplicados ainda ativos (nunca soft-excluídos).
+      const { error: delErr } = await supabase
+        .from("gastos")
+        .delete()
+        .eq("user_id", user.id)
+        .is("deleted_at", null)
+        .in("id", idsParaApagar);
       if (delErr) throw new Error(delErr.message);
       toast.success(`${idsParaApagar.length} duplicado(s) removido(s).`);
       await Promise.all([refresh(), refreshGastos()]);
@@ -1523,12 +1529,18 @@ function MessageActions({
       return;
     setBusy("delete-gasto");
     try {
-      const { error: delErr } = await supabase.from("gastos").delete().eq("id", msg.gasto_id);
-      if (delErr) throw new Error(delErr.message);
-      await supabase
-        .from("contas_a_pagar")
-        .update({ status: "pendente", data_pagamento: null, gasto_id: null })
-        .eq("gasto_id", msg.gasto_id);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Sessão expirada");
+      const r = await deleteGastoAtivo(supabase, user.id, msg.gasto_id);
+      if (r === "deleted") {
+        await supabase
+          .from("contas_a_pagar")
+          .update({ status: "pendente", data_pagamento: null, gasto_id: null })
+          .eq("user_id", user.id)
+          .eq("gasto_id", msg.gasto_id);
+      }
       await supabase
         .from("whatsapp_messages")
         .update({
