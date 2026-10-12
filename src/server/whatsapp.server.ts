@@ -391,6 +391,7 @@ const boletoDeps: WhatsAppBoletoDeps = {
 };
 
 import { createHash } from "crypto";
+import { splitLoteGastos, textoListaLote, loteMsgs, type LoteItem } from "./whatsapp-audio-lote";
 
 let parseExpenseMessage = baseParseWhatsAppExpenseMessage;
 type WhatsAppAuditTestEvent =
@@ -841,6 +842,8 @@ export type ProcessOutcome = {
     | "conta_pagamento_aguardando_escolha"
     | "conta_pagamento_aguardando_confirmacao"
     | "conta_pagamento_aguardando_data"
+    | "aguardando_forma_lote_audio"
+    | "aguardando_confirmacao_lote_audio"
     | "cancelada"
     | "sem_pendencia"
     | "pendente"
@@ -1251,6 +1254,8 @@ export function detectarFaltantes(parsed: ParsedExpense, cartoes: Cartao[]): str
 // ---------- sessão persistida ----------
 
 type Session = {
+  /** Áudio com vários gastos: itens confirmados juntos. */
+  lote?: LoteItem[];
   nome: string;
   valor: number;
   data: string;
@@ -1361,6 +1366,9 @@ const PENDING_TTL_MS = 30 * 60 * 1000;
 export const WHATSAPP_HANDLER_VERSION = "receipt-session-durable-v5";
 const PENDING_STATES = [
   "aguardando_confirmacao",
+  // Áudio com vários gastos: escolha de pagamento e confirmação do conjunto.
+  "aguardando_forma_lote_audio",
+  "aguardando_confirmacao_lote_audio",
   "aguardando_forma_pagamento",
   "aguardando_cartao",
   // WA — sessão de gasto criada por comando genérico ("registrar gasto"),
@@ -2685,6 +2693,13 @@ async function processarSessaoComprovanteAtiva(args: {
   }
   logReceiptSessionRoute({ ...lookup, routedTo: "receipt_handler" });
   const prev = sessao.session as unknown as ComprovanteSession;
+  if (msg.source === "audio") {
+    // Um áudio nunca responde por um comprovante pendente: evita que um
+    // "confirmar" falado salve a foto sem o usuário ver o resumo.
+    const aviso =
+      "Você tem um comprovante aguardando resposta. Para ele, responda por texto: sim, ajustar ou cancelar.";
+    return { status: "pendente", resposta: aviso };
+  }
   if (msg.image || msg.document) {
     const aviso = M.imagem.sessaoEmAndamento();
     await atualizarSessao(sessao.id, sessao.status, prev as unknown as Session, aviso);
@@ -5040,7 +5055,23 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     return { status: "aguardando_categoria_gasto", resposta: aviso };
   }
 
+  // ---- Áudio com vários gastos (confirmação do conjunto) ----
+  if (
+    sessao &&
+    (sessao.status === "aguardando_forma_lote_audio" ||
+      sessao.status === "aguardando_confirmacao_lote_audio") &&
+    sessao.session.lote?.length
+  ) {
+    return processarLoteAudio({ userId, msg, texto, recebidaEm, decisao, sessao, categorias });
+  }
+
   // ---- Confirmar/cancelar ----
+  if (decisao === "confirm" && sessao && sessao.status === "aguardando_forma_pagamento") {
+    // "confirmar" antes de dizer a forma: repete a pergunta sem perder o gasto.
+    const resposta = M.faltaForma(perguntaFormaPagamento(sessao.session));
+    await atualizarSessao(sessao.id, sessao.status, sessao.session, resposta);
+    return { status: "aguardando_forma_pagamento", resposta };
+  }
   if (decisao !== "outro") {
     if (!sessao || sessao.status !== "aguardando_confirmacao") {
       await gravarSessao(
@@ -5551,6 +5582,15 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   // se a state machine não foi acionada (defensivo — não deve ocorrer).
   void handlePagarPessoaIntent;
 
+  if (msg.source === "audio") {
+    const lote = splitLoteGastos(texto, cartoes);
+    if (lote.kind === "unsafe") {
+      return { status: "pendente", resposta: loteMsgs.unsafe() };
+    }
+    if (lote.kind === "lote") {
+      return iniciarLoteAudio({ userId, msg, texto, recebidaEm, lote, categorias });
+    }
+  }
   const parsed = parseExpenseMessage(texto, cartoes);
   // Comandos genéricos ("registrar gasto", "novo gasto", ...) e descrições
   // automáticas inválidas ("Gasto WhatsApp") NUNCA podem virar descrição
@@ -5929,4 +5969,122 @@ async function sendWhatsAppRaw(
     });
     return { sent: false, reason: errorName };
   }
+}
+
+
+// ---------- Áudio com vários gastos ----------
+type LoteSessao = { id: string; status: string; session: Session };
+
+function listaLote(itens: LoteItem[], categorias: CategoriaRow[]): string {
+  return textoListaLote(itens, (nome) => categoriaParaExibir(nome, categorias, "audio"));
+}
+
+async function iniciarLoteAudio(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  lote: { itens: LoteItem[]; formaPagamento: FormaPagamento | null };
+  categorias: CategoriaRow[];
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, lote, categorias } = args;
+  const forma = lote.formaPagamento === "credito" ? null : lote.formaPagamento;
+  const session: Session = {
+    nome: "",
+    valor: 0,
+    data: lote.itens[0].data,
+    mensagemOriginal: texto,
+    source: "audio",
+    kind: "gasto",
+    lote: lote.itens,
+    ...(forma ? { formaPagamento: forma } : {}),
+  };
+  const lista = listaLote(lote.itens, categorias);
+  const status = forma ? "aguardando_confirmacao_lote_audio" : "aguardando_forma_lote_audio";
+  const resposta = forma
+    ? loteMsgs.confirmacao(lista, lote.itens.length, forma)
+    : loteMsgs.perguntaForma(lista, lote.itens.length);
+  await fecharSessoesAnteriores(userId, msg.telefone, "expirada");
+  await gravarSessao(userId, msg.telefone, msg.external_id, texto, recebidaEm, status, session, resposta);
+  return { status, resposta };
+}
+
+async function processarLoteAudio(args: {
+  userId: string;
+  msg: WhatsAppMessageRow;
+  texto: string;
+  recebidaEm: string;
+  decisao: "confirm" | "cancel" | "outro";
+  sessao: LoteSessao;
+  categorias: CategoriaRow[];
+}): Promise<ProcessOutcome> {
+  const { userId, msg, texto, recebidaEm, decisao, sessao, categorias } = args;
+  const itens = sessao.session.lote ?? [];
+  const lista = listaLote(itens, categorias);
+  const n = itens.length;
+
+  if (decisao === "cancel") {
+    await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+    return { status: "cancelada", resposta: loteMsgs.cancelado() };
+  }
+  if (isAjustarCommand(texto)) {
+    await fecharSessoesAnteriores(userId, msg.telefone, "cancelada");
+    return { status: "cancelada", resposta: loteMsgs.ajustar() };
+  }
+
+  if (sessao.status === "aguardando_forma_lote_audio") {
+    const forma = detectFormaPagamentoFromText(texto);
+    if (forma === "credito") {
+      const resposta = loteMsgs.creditoNaoSuportado();
+      await atualizarSessao(sessao.id, sessao.status, sessao.session, resposta);
+      return { status: "aguardando_forma_lote_audio", resposta };
+    }
+    if (!forma) {
+      const resposta = loteMsgs.perguntaForma(lista, n);
+      await atualizarSessao(sessao.id, sessao.status, sessao.session, resposta);
+      return { status: "aguardando_forma_lote_audio", resposta };
+    }
+    const next: Session = { ...sessao.session, formaPagamento: forma };
+    const resposta = loteMsgs.confirmacao(lista, n, forma);
+    await atualizarSessao(sessao.id, "aguardando_confirmacao_lote_audio", next, resposta);
+    return { status: "aguardando_confirmacao_lote_audio", resposta };
+  }
+
+  if (decisao !== "confirm") {
+    const resposta = loteMsgs.naoEntendido(n);
+    await atualizarSessao(sessao.id, sessao.status, sessao.session, resposta);
+    return { status: "aguardando_confirmacao_lote_audio", resposta };
+  }
+
+  // Confirmar: cada item tem id determinístico (sessão + posição). Um retry
+  // ou um segundo "confirmar" reaproveita os já salvos, sem duplicar.
+  const salvos: LoteItem[] = [];
+  let primeiroId: string | undefined;
+  for (let i = 0; i < n; i++) {
+    const it = itens[i];
+    const s: Session = {
+      nome: it.nome,
+      valor: it.valor,
+      data: it.data,
+      categoriaSugestao: it.categoriaSugestao ?? undefined,
+      formaPagamento: sessao.session.formaPagamento,
+      mensagemOriginal: sessao.session.mensagemOriginal,
+      source: "audio",
+    };
+    const r = await persistirGasto(userId, s, msg.external_id ?? undefined, `${sessao.id}:${i}`);
+    if (r.ok) {
+      salvos.push(it);
+      primeiroId ??= r.gastoId;
+    }
+  }
+  const listaSalvos = listaLote(salvos, categorias);
+  if (salvos.length < n) {
+    const resposta = loteMsgs.parcial(listaSalvos, salvos.length, n);
+    await atualizarSessao(sessao.id, sessao.status, sessao.session, resposta);
+    return { status: "erro", resposta };
+  }
+  const resposta = loteMsgs.salvos(listaSalvos, n);
+  await atualizarSessao(sessao.id, "salva", sessao.session, resposta);
+  void recebidaEm;
+  return { status: "salva", gastoId: primeiroId, resposta };
 }
