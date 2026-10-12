@@ -442,11 +442,11 @@ export async function handleAgendaIntent(
         if (!ativos.length) return { resposta: "Você não tem lembretes ativos na agenda." };
         const labels = new Map<string, string>();
         for (const r of ativos.slice(0, 10)) labels.set(r.id, await itemWhenLabel(r, deps));
-        const verbo = intent.acao === "cancelar" ? "cancelar" : "marcar como concluído";
+        const verbo = "marcar como concluído";
         const body = `Qual item você quer ${verbo}? Toque em um da lista.`;
         return {
           resposta: `${body}\n${ativos.slice(0, 10).map((r, i) => `${i + 1}. ${r.titulo} — ${labels.get(r.id)}`).join("\n")}`,
-          graphInteractive: pickList(body, ativos, intent.acao === "cancelar" ? AGENDA_CANCEL_PREFIX : AGENDA_DONE_PREFIX, labels),
+          graphInteractive: pickList(body, ativos, AGENDA_DONE_PREFIX, labels),
         };
       }
       case "cancel_page":
