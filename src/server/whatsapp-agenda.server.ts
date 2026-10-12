@@ -30,6 +30,7 @@ import {
   type AgendaAcaoId,
 } from "@/lib/agenda/intent";
 import { nomeMesYm } from "@/lib/fatura-competencia";
+import { nextOccurrence } from "@/lib/agenda/recurrence";
 import {
   DEFAULT_TZ,
   addDaysYmd,
