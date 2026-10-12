@@ -251,14 +251,20 @@ export async function setAgendaStatus(
       advanced = true;
     } else upd = { status: "concluido", completed_at: nowOf(deps).toISOString() };
   } else upd = { status: "concluido", completed_at: nowOf(deps).toISOString() };
-  const { data, error } = await c(deps)
-    .from("agenda_items")
-    .update(upd)
-    .eq("id", id)
-    .eq("user_id", userId)
-    .select("*")
-    .single();
-  if (error || !data) throw new AgendaError("invalid", "Não foi possível salvar.");
+  let q = c(deps).from("agenda_items").update(upd).eq("id", id).eq("user_id", userId);
+  // Concluir/cancelar: UPDATE condicional (só se ainda ativo e na mesma
+  // ocorrência). Em dois cliques/retries simultâneos só um altera a linha;
+  // o outro recebe "already" e não re-sincroniza a fila.
+  if (action !== "reativar") {
+    q = q.eq("status", "ativo");
+    if (advanced) q = q.eq("starts_at", cur.starts_at);
+  }
+  const { data, error } = await q.select("*").maybeSingle();
+  if (error) throw new AgendaError("invalid", "Não foi possível salvar.");
+  if (!data) {
+    if (action === "reativar") throw new AgendaError("invalid", "Não foi possível salvar.");
+    throw new AgendaError("already", "Esse item já foi atualizado. Nada foi alterado de novo.");
+  }
   await syncAgendaNotification(data as AgendaRow, deps);
   return { row: data as AgendaRow, advanced };
 }
