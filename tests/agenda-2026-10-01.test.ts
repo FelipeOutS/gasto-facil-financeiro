@@ -360,3 +360,78 @@ describe("UX pós-criação (sem Concluir imediato)", () => {
     expect(done.resposta).toContain("concluído");
   });
 });
+
+describe("comandos sem alvo (2026-10-12)", () => {
+  const run = (u: string, t: string, d: ReturnType<typeof deps>) =>
+    W.handleAgendaIntent(u, detectAgendaIntent(t)!, { now: NOW, tz: TZ, deps: d });
+
+  test("frases sem nome viram 'escolher', nunca cancelar/concluir direto", () => {
+    expect(detectAgendaIntent("cancelar lembrete")).toEqual({ type: "escolher", acao: "cancelar" });
+    expect(detectAgendaIntent("marcar como concluído")).toEqual({ type: "escolher", acao: "concluir" });
+    expect(detectAgendaIntent("concluir")).toEqual({ type: "escolher", acao: "concluir" });
+    expect(detectAgendaIntent("adiar para amanhã")?.type).toBe("escolher");
+    expect(detectAgendaIntent("cancelar")).toBeNull(); // pertence às sessões pendentes
+  });
+
+  test("cancelar lembrete lista só itens do próprio usuário e não altera nada", async () => {
+    const d = deps();
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    await run(U2, "me lembra amanhã às 10 de ligar pro banco", d);
+    const r = await run(U1, "cancelar lembrete", d);
+    expect(r.resposta).toContain("pagar a internet");
+    expect(r.resposta).not.toContain("ligar pro banco");
+    const rows = (r.graphInteractive as any).action.sections[0].rows;
+    expect(rows).toHaveLength(1);
+    expect(rows[0].id.startsWith("agenda_cancel:")).toBe(true);
+    expect(db.agenda_items.every((x) => x.status === "ativo")).toBe(true);
+  });
+
+  test("tocar no item cancela; retry do mesmo botão não repete a ação", async () => {
+    const d = deps();
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    const id = db.agenda_items[0].id as string;
+    await run(U1, `agenda_cancel:${id}`, d);
+    expect(db.agenda_items[0].status).toBe("cancelado");
+    const again = await run(U1, `agenda_cancel:${id}`, d);
+    expect(db.agenda_items[0].status).toBe("cancelado");
+    expect(again.resposta).toBeTruthy();
+  });
+
+  test("outro usuário não consegue cancelar pelo id", async () => {
+    const d = deps();
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    const id = db.agenda_items[0].id as string;
+    await run(U2, `agenda_cancel:${id}`, d);
+    expect(db.agenda_items[0].status).toBe("ativo");
+  });
+
+  test("sem itens: resposta útil", async () => {
+    expect((await run(U1, "concluir", deps())).resposta).toContain("não tem lembretes ativos");
+  });
+
+  test("adiar sem nome lista só lembretes únicos e pede o nome", async () => {
+    const d = deps();
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    await run(U1, "me lembra todo dia às 8h de tomar remedio", d);
+    const r = await run(U1, "adiar para amanhã", d);
+    expect(r.resposta).toContain("pagar a internet");
+    expect(r.resposta).not.toContain("tomar remedio");
+    expect(db.agenda_items.map((x) => x.starts_at)).toEqual(db.agenda_items.map((x) => x.starts_at));
+  });
+
+  test("adiar lembrete recorrente explica o limite e não altera a série", async () => {
+    const d = deps();
+    await run(U1, "me lembra todo dia às 8h de tomar remedio", d);
+    const before = db.agenda_items[0].starts_at;
+    const r = await run(U1, "adie o lembrete tomar remedio para amanhã", d);
+    expect(r.resposta).toContain("se repete");
+    expect(db.agenda_items[0].starts_at).toBe(before);
+  });
+
+  test("adiar lembrete único move no fuso do item, mantendo a hora", async () => {
+    const d = deps();
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    await run(U1, "adie o lembrete pagar a internet para depois de amanhã", d);
+    expect(local(new Date(db.agenda_items[0].starts_at as string))).toBe("2026-10-03 09:00");
+  });
+});
