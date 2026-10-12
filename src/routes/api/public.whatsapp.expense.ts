@@ -16,6 +16,7 @@ import {
   WHATSAPP_HANDLER_VERSION,
 } from "@/server/whatsapp.server";
 import { EXPENSE_CONFIRM_FALLBACK } from "@/server/whatsapp-messages";
+import { CARD_NEW_FALLBACK } from "@/server/whatsapp-cartao-messages";
 import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
 import {
@@ -1192,7 +1193,9 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                   // Botões de gasto só saem presos à sessão criada por
                   // ESTA mensagem; sem vínculo → só texto (1/2/3).
                   const rowId =
-                    elig.userId && out.resposta.includes(EXPENSE_CONFIRM_FALLBACK)
+                    elig.userId &&
+                    (out.resposta.includes(EXPENSE_CONFIRM_FALLBACK) ||
+                      out.resposta.includes(CARD_NEW_FALLBACK))
                       ? await buscarVinculoBotaoGasto(elig.userId, msg.telefone, msg.external_id)
                       : null;
                   const ir = buildInteractiveFromReply(
