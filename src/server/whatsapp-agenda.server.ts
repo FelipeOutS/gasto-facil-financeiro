@@ -294,7 +294,13 @@ export async function handleAgendaIntent(
     switch (intent.type) {
       case "criar": {
         const { titulo, when } = tituloFromBody(intent.when.rest, now, tz);
-        const at = resolveWhen(when, now, tz);
+        let at = resolveWhen(when, now, tz);
+        if (at && at.getTime() <= now.getTime()) {
+          // Recorrente: começa na próxima ocorrência futura. Único: não agenda no passado.
+          at = intent.recurrence ? nextOccurrence(at, { freq: intent.recurrence }, now, tz) : null;
+          if (!at)
+            return { resposta: `Esse horário já passou. Para quando é "${titulo || intent.titulo}"? Ex.: *amanhã às 9* ou *hoje às 20h*.` };
+        }
         if (!at) {
           return {
             resposta: `Para quando é "${titulo || intent.titulo}"? Ex.: *amanhã às 9*, *sexta às 14h* ou *10/10 às 08:30*.`,
