@@ -12,14 +12,20 @@ mock.module("@/integrations/supabase/client", () => ({
       // No client-side writes allowed in this import path.
       return {
         select: () => ({
-          eq: async (_field: string, id: string) => ({
-            data: (
-              await db.query(`SELECT to_jsonb(t) AS row FROM public.${table} t WHERE user_id=$1`, [
-                id,
-              ])
-            ).rows.map((r: any) => r.row),
-            error: null,
-          }),
+          eq: (_field: string, id: string) => {
+            const run = async (onlyActive: boolean) => ({
+              data: (
+                await db.query(`SELECT to_jsonb(t) AS row FROM public.${table} t WHERE user_id=$1`, [
+                  id,
+                ])
+              ).rows
+                .map((r: any) => r.row)
+                .filter((row: any) => !onlyActive || (row.deleted_at ?? null) === null),
+              error: null,
+            });
+            const p = run(false);
+            return Object.assign(p, { is: (_c: string, _v: null) => run(true) });
+          },
         }),
       };
     },
