@@ -1261,6 +1261,7 @@ export async function persistir(args: {
   // `categoria_id` agora entra no readback — qualquer parcela com
   // categoria diferente da escolhida (manual ou sugerida) aborta com
   // erro em vez de informar sucesso falso.
+  // soft-delete-exceção: readback das parcelas recém-criadas pelo próprio fluxo (nunca excluídas).
   const { data: readback, error: readErr } = await supabaseAdmin
     .from("gastos")
     .select("id, parcela_atual, categoria_id")

@@ -1072,7 +1072,7 @@ export async function hydrateUser(userId: string): Promise<void> {
         extratosRes,
         faturasRes,
       ] = await Promise.all([
-        supabase.from("gastos").select("*").eq("user_id", userId),
+        supabase.from("gastos").select("*").eq("user_id", userId).is("deleted_at", null),
         supabase.from("receitas").select("*").eq("user_id", userId).is("deleted_at", null),
         supabase.from("limites").select("*").eq("user_id", userId),
         supabase.from("aprendizado_categoria").select("*").eq("user_id", userId),
@@ -1815,7 +1815,7 @@ function applyCategoriaInferida(g: Gasto): Gasto {
 export async function reclassificarCategoriasExistentes(): Promise<number> {
   if (!activeUserId) return 0;
   const userId = activeUserId;
-  const { data, error } = await supabase.from("gastos").select("*").eq("user_id", userId);
+  const { data, error } = await supabase.from("gastos").select("*").eq("user_id", userId).is("deleted_at", null);
   if (error || !data) {
     if (error) console.error("[store] reclassificarCategoriasExistentes load failed", error);
     return 0;
@@ -1891,7 +1891,7 @@ function refreshFinancialEntity(
     try {
       const query = table === "receitas"
         ? supabase.from("receitas").select("*").eq("user_id", userId).is("deleted_at", null)
-        : supabase.from("gastos").select("*").eq("user_id", userId);
+        : supabase.from("gastos").select("*").eq("user_id", userId).is("deleted_at", null);
       // Uma leitura suspensa não impede a próxima recuperação ao voltar ao app.
       const result = await Promise.race([
         query,
@@ -2405,6 +2405,7 @@ export async function addGastoAwait(
     return { error: error?.message, code: error?.code };
   };
   const result = offlineClientId ? await persistOfflineRows(rows, async () => {
+    // soft-delete-exceção: dedupe offline precisa ver linhas excluídas (mesmo offline_client_id não pode reinserir).
     const { data, error } = await supabase.from("gastos").select("*").eq("user_id", userId)
       .in("offline_client_id", rows.map((row) => row.offline_client_id!)).abortSignal(signal);
     return { rows: (data ?? []) as unknown as Record<string, unknown>[], error: error?.message };

@@ -239,6 +239,7 @@ async function loadGastos(userId: string, from: string, toExclusive: string): Pr
     .from("gastos")
     .select("descricao, valor, data, categoria_id")
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .gte("data", from)
     .lt("data", toExclusive);
   return Array.isArray(data) ? (data as GastoRow[]) : [];

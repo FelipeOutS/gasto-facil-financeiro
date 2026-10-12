@@ -30,7 +30,7 @@ async function pagedEntries(userId:string,table:"gastos"|"receitas",start:string
     let q=db.from(table).select(table==="gastos"?"id,valor,categoria_id,confirmado":"id,valor")
       .eq("user_id",userId).gte("data",start).lt("data",end).order("id")
       .range(offset,offset+499);
-    if(table==="receitas") q=q.is("deleted_at",null);
+    q=q.is("deleted_at",null); // gastos e receitas: só ativos
     const {data,error}=await q;
     if(error) throw error;
     const page=(data??[]) as Array<{valor:number|string|null;categoria_id?:string|null;confirmado?:boolean|null}>;

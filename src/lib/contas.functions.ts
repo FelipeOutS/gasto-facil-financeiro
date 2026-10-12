@@ -101,6 +101,7 @@ async function findLinkedGastos(
   dataPagamento: string,
 ) {
   const directIds = [conta.gasto_id].filter(Boolean);
+  // soft-delete-exceção (PENDENTE F4): vínculo conta↔gasto; filtrar criaria duplicata após restaurar.
   const { data, error } = await sb
     .from("gastos")
     .select("id, descricao, estabelecimento, valor, data, origem, id_operacao_banco")

@@ -47,7 +47,7 @@ async function setEdit(action: Action, edit_state: Action["edit_state"], edit_fi
 async function readFinancial(action: Action) {
   const table = action.entity_kind === "expense" || action.entity_kind === "installment" ? "gastos" : "receitas";
   let q = db.from(table).select("*").eq("id", action.entity_id).eq("user_id", action.user_id).eq("origem", "whatsapp");
-  if (table === "receitas") q = q.is("deleted_at", null);
+  q = q.is("deleted_at", null); // gastos e receitas: só ativos
   const { data, error } = await q.maybeSingle();
   if (error || !data) return null;
   return data as Record<string, unknown>;
@@ -71,7 +71,7 @@ async function receipt(action: Action, title = "✅ Lançamento registrado"): Pr
     } else if (row.forma_pagamento) lines.push(String(row.forma_pagamento));
     if (action.entity_kind === "installment" && action.related_id) {
       const { data } = await db.from("gastos").select("valor")
-        .eq("user_id", action.user_id).eq("grupo_parcelamento_id", action.related_id);
+        .eq("user_id", action.user_id).eq("grupo_parcelamento_id", action.related_id).is("deleted_at", null);
       if (Array.isArray(data)) lines.push(`${data.length} parcelas · total ${brl(data.reduce((v: number, p: { valor: number }) => v + Number(p.valor), 0))}`);
     } else if (Number(row.total_parcelas ?? 0) > 1) lines.push(`${row.total_parcelas} parcelas`);
     if (row.fatura_competencia) lines.push(`Fatura ${String(row.fatura_competencia)}`);
@@ -124,7 +124,7 @@ export async function postlaunchReceipt(args: {
 export async function installmentReceipt(args: { userId: string; phone: string; externalId: string | null; expenseId: string }): Promise<PostlaunchReply | null> {
   try {
   const { data } = await db.from("gastos").select("grupo_parcelamento_id")
-    .eq("id", args.expenseId).eq("user_id", args.userId).eq("origem", "whatsapp").maybeSingle();
+    .eq("id", args.expenseId).eq("user_id", args.userId).eq("origem", "whatsapp").is("deleted_at", null).maybeSingle();
   if (!data?.grupo_parcelamento_id) return null;
   return postlaunchReceipt({ ...args, kind: "installment", entityId: args.expenseId,
     relatedId: data.grupo_parcelamento_id });

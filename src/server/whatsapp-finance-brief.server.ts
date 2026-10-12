@@ -77,7 +77,7 @@ async function loadEntries(userId: string, table: "gastos" | "receitas", from: s
     let q = db.from(table).select(table === "gastos" ? "id, valor, categoria_id" : "id, valor")
       .eq("user_id", userId).gte("data", from).lt("data", to).order("id")
       .range(offset, offset + pageSize - 1);
-    if (table === "receitas") q = q.is("deleted_at", null);
+    q = q.is("deleted_at", null); // gastos e receitas: só ativos
     const { data, error } = await q;
     if (error) throw error;
     const page = Array.isArray(data) ? data as Entry[] : [];

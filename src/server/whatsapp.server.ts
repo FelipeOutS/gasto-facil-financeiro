@@ -2024,7 +2024,7 @@ function avisoCartaoNaoCadastradoNegado(s: Session): string {
 
 export async function verificarGastoExiste(gastoId: string | null | undefined): Promise<boolean> {
   if (!gastoId) return false;
-  const { data } = await supabaseAdmin.from("gastos").select("id").eq("id", gastoId).maybeSingle();
+  const { data } = await supabaseAdmin.from("gastos").select("id").eq("id", gastoId).is("deleted_at", null).maybeSingle();
   return !!data;
 }
 
@@ -2152,6 +2152,7 @@ export async function persistirGasto(
   if (inserted) {
     gastoId = gastoRow.id;
   } else if (gastoErr?.code === "23505") {
+    // soft-delete-exceção: dedupe por id determinístico precisa ver a linha mesmo excluída (23505).
     const { data: prior, error: priorError } = await supabaseAdmin
       .from("gastos")
       .select("id, user_id, origem")

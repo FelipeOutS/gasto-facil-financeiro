@@ -195,6 +195,7 @@ async function fetchGastosDaFatura(
       .select(select)
       .eq("user_id", userId)
       .eq("cartao_id", cartaoId)
+      .is("deleted_at", null)
       .gte("data", fromIso)
       .lt("data", toIso),
     supabaseAdmin
@@ -202,12 +203,14 @@ async function fetchGastosDaFatura(
       .select(select)
       .eq("user_id", userId)
       .eq("cartao_id", cartaoId)
+      .is("deleted_at", null)
       .eq("invoice_month", targetYm),
     supabaseAdmin
       .from("gastos")
       .select(select)
       .eq("user_id", userId)
       .eq("cartao_id", cartaoId)
+      .is("deleted_at", null)
       .eq("fatura_competencia", targetComp),
   ]);
   for (const result of [byDate, byYm, byComp]) {
@@ -620,7 +623,8 @@ async function loadParcelasDoUsuario(userId: string): Promise<ParcelaRow[]> {
     .select(
       "id, descricao, estabelecimento, valor, data, invoice_month, fatura_competencia, forma_pagamento, confirmado, parcela_atual, total_parcelas, grupo_parcelamento_id, cartao_id",
     )
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .is("deleted_at", null);
   const rows = Array.isArray(data) ? (data as Array<Record<string, unknown>>) : [];
   const out: ParcelaRow[] = [];
   for (const g of rows) {

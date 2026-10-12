@@ -99,6 +99,7 @@ export async function agregarMes(
       supabase
         .from("gastos")
         .select("descricao, estabelecimento, valor, data, confirmado, cartao_id, categoria_id")
+        .is("deleted_at", null)
         .gte("data", from)
         .lt("data", toExclusive),
       supabase

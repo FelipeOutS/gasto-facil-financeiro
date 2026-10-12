@@ -682,6 +682,7 @@ function WhatsAppPage() {
         .from("gastos")
         .select("id, descricao, valor, data, cartao_id, created_at")
         .eq("user_id", user.id)
+        .is("deleted_at", null)
         .eq("origem", "whatsapp")
         .order("created_at", { ascending: true });
       if (error) throw new Error(error.message);
@@ -1491,6 +1492,7 @@ function MessageActions({
       .from("gastos")
       .select("id")
       .eq("id", msg.gasto_id)
+      .is("deleted_at", null)
       .maybeSingle();
     if (error || !data) {
       toast.error("Esse gasto não foi encontrado. Você pode reprocessar a mensagem.");
