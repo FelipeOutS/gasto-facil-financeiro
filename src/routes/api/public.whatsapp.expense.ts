@@ -9,12 +9,12 @@ import { z } from "zod";
 import {
   logWhatsAppInboundReceived,
   processarMensagemWhatsApp,
-  buscarVinculoBotaoGasto,
   sendWhatsAppReply,
   sendWhatsAppInteractiveCtaUrl,
   sendWhatsAppInteractiveReply,
   WHATSAPP_HANDLER_VERSION,
 } from "@/server/whatsapp.server";
+import * as waServer from "@/server/whatsapp.server";
 import { EXPENSE_CONFIRM_FALLBACK } from "@/server/whatsapp-messages";
 import { CARD_NEW_FALLBACK } from "@/server/whatsapp-cartao-messages";
 import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
@@ -1196,7 +1196,11 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                     elig.userId &&
                     (out.resposta.includes(EXPENSE_CONFIRM_FALLBACK) ||
                       out.resposta.includes(CARD_NEW_FALLBACK))
-                      ? await buscarVinculoBotaoGasto(elig.userId, msg.telefone, msg.external_id)
+                      ? ((await waServer.buscarVinculoBotaoGasto?.(
+                          elig.userId,
+                          msg.telefone,
+                          msg.external_id,
+                        )) ?? null)
                       : null;
                   const ir = buildInteractiveFromReply(
                     out.resposta,
