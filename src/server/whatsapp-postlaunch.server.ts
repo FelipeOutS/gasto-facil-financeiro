@@ -257,10 +257,18 @@ export async function handlePostlaunchInput(args: {
     if (command === "undo" || command === "scope") {
       const scope = command === "scope" ? token?.[3] : "single";
       if (action.entity_kind === "recurring_income" && scope !== "occurrence" && scope !== "series") return { resposta: "Escolha uma das opções de recorrência." };
+      // P0 soft-delete: nunca desfazer (DELETE físico) gasto já excluído de forma
+      // reversível. Pré-checagem falha fechada; a garantia atômica definitiva
+      // depende do SQL candidato docs/migrations-candidate/whatsapp-undo-soft-delete.sql.
+      if (action.entity_kind === "expense" || action.entity_kind === "installment") {
+        const guard = await undoSoftDeleteGuard(action);
+        if (guard) return { resposta: guard };
+      }
       const { data, error } = await db.rpc("whatsapp_undo_recent_action", {
         p_user_id: args.userId, p_phone: args.phone, p_action_id: action.id, p_scope: scope,
       });
       if (error) return { resposta: "Não consegui desfazer agora. Confira o lançamento no app e tente novamente." };
+      if (data === "soft_deleted") return { resposta: MSG_UNDO_GASTO_EXCLUIDO };
       if (data === "undone") return { resposta: action.entity_kind === "recurring_income" && scope === "occurrence" ? "Pronto, removi só esta receita. A recorrência continua ativa." : "Pronto, desfiz esse lançamento." };
       if (data === "already_undone") return { resposta: "Esse lançamento já foi desfeito." };
       return { resposta: data === "expired" ? expired : unavailable };
