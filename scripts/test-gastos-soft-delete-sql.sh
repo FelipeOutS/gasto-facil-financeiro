@@ -3,6 +3,7 @@
 # DESCARTÁVEL (cluster novo em /tmp, socket local, sem rede, sem PG* do
 # projeto). Nunca conecta ao banco do Lovable Cloud.
 set -euo pipefail
+[ -n "${PG_BIN:-}" ] && export PATH="$PG_BIN:$PATH"
 unset PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE PGSSLMODE DATABASE_URL || true
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 D="$(mktemp -d /tmp/gi-pg-isolado.XXXX)"
