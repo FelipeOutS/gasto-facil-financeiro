@@ -169,7 +169,8 @@ describe("cartão e fatura", () => {
   test("fatura com 📅 / 🗓️", () => {
     const ir = buildInteractiveFromReply(
       'Em qual fatura essa compra vai cair?\n"fatura de outubro de 2026" ou "fatura de novembro de 2026"',
-    , TEST_BIND);
+      TEST_BIND,
+    );
     if (ir?.type !== "button") throw new Error("esperava botões");
     expect(ir.buttons.map((b) => b.title)).toEqual(["📅 Outubro", "📅 Novembro", "🗓️ Outro mês"]);
     expect(ir.buttons[0].id).toBe("fatura_comp:2026-10");
