@@ -9,11 +9,13 @@ import { z } from "zod";
 import {
   logWhatsAppInboundReceived,
   processarMensagemWhatsApp,
+  buscarVinculoBotaoGasto,
   sendWhatsAppReply,
   sendWhatsAppInteractiveCtaUrl,
   sendWhatsAppInteractiveReply,
   WHATSAPP_HANDLER_VERSION,
 } from "@/server/whatsapp.server";
+import { EXPENSE_CONFIRM_FALLBACK } from "@/server/whatsapp-messages";
 import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
 import {
