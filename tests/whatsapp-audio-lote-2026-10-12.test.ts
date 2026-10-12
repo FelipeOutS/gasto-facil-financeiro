@@ -230,8 +230,8 @@ test("'confirmar' antes de dizer o pagamento NÃO descarta o gasto pendente", as
 });
 
 test("datas relativas: 'ontem' é um dia antes de 'hoje'", () => {
-  const r = splitLoteGastos("gastei R$ 10,00 no pão e R$ 5,00 no café ontem");
-  const h = splitLoteGastos("gastei R$ 10,00 no pão e R$ 5,00 no café hoje");
+  const r = A("gastei R$ 10,00 no pão e R$ 5,00 no café ontem");
+  const h = A("gastei R$ 10,00 no pão e R$ 5,00 no café hoje");
   if (r.kind !== "lote" || h.kind !== "lote") throw new Error("esperava lote");
   const diff = (Date.parse(h.itens[0].data) - Date.parse(r.itens[0].data)) / 86400000;
   expect(diff).toBe(1);
