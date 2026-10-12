@@ -283,6 +283,30 @@ export async function listAgenda(
   return rows;
 }
 
+/**
+ * Página estável de itens ativos (ordem por data e id), direto do banco com
+ * range — não depende do limite de 200 nem de memória do worker.
+ */
+export async function listActivePage(
+  userId: string,
+  page: number,
+  size: number,
+  deps?: AgendaDeps,
+): Promise<{ rows: AgendaRow[]; hasMore: boolean }> {
+  const from = Math.max(0, page) * size;
+  const { data, error } = await c(deps)
+    .from("agenda_items")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("status", "ativo")
+    .order("starts_at", { ascending: true, nullsFirst: false })
+    .order("id", { ascending: true })
+    .range(from, from + size);
+  if (error) throw new AgendaError("invalid", "Não consegui abrir sua agenda agora. Tente de novo em instantes.");
+  const rows = ((data as AgendaRow[]) ?? []).filter((r) => r.user_id === userId);
+  return { rows: rows.slice(0, size), hasMore: rows.length > size };
+}
+
 function normTxt(s: string): string {
   return (s ?? "")
     .toLowerCase()
