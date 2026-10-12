@@ -22,10 +22,6 @@ export type AudioAnalise =
   | { kind: "unsafe" }
   | { kind: "lote"; itens: LoteItem[]; formaPagamento: LoteForma | null };
 
-export type LoteSplit =
-  | { kind: "none" }
-  | { kind: "unsafe" }
-  | { kind: "lote"; itens: LoteItem[]; formaPagamento: LoteForma | null };
 
 // Só conta valores monetários explícitos ("R$ 20,00" ou "20 reais"), nunca
 // datas, quantidades ou números de parcelas.
@@ -36,37 +32,6 @@ const TEM_DATA = /\b(hoje|ontem|anteontem|\d{1,2}\/\d{1,2}|dia\s+\d{1,2})\b/i;
 const RECEITA = /\b(recebi|ganhei|entrou|caiu|sal[aá]rio)\b/i;
 
 type Parser = typeof parseWhatsAppExpenseMessage;
-
-export function splitLoteGastos(
-  texto: string,
-  cartoes: Parameters<Parser>[1] = [],
-  parser: Parser = parseWhatsAppExpenseMessage,
-): LoteSplit {
-  const valores = texto.match(MONEY) ?? [];
-  if (valores.length < 2) return { kind: "none" };
-  if (RECEITA.test(texto)) return { kind: "unsafe" };
-  const partes = texto.split(SEPARADOR).map((p) => p.trim()).filter(Boolean);
-  if (partes.length < 2) return { kind: "none" };
-
-  const todo = parser(texto, cartoes);
-  const formaGeral = todo.notas.includes("Forma de pagamento não identificada")
-    ? null
-    : (todo.formaPagamento as LoteForma);
-
-  const itens: LoteItem[] = [];
-  for (const parte of partes) {
-    if ((parte.match(MONEY) ?? []).length !== 1) return { kind: "unsafe" };
-    const p = parser(parte, cartoes);
-    if (!p.valor || p.valor <= 0 || !p.nome || p.nome.trim().length < 2) return { kind: "unsafe" };
-    itens.push({
-      nome: p.nome.trim(),
-      valor: p.valor,
-      data: TEM_DATA.test(parte) ? p.data : todo.data,
-      categoriaSugestao: p.categoriaSugestao,
-    });
-  }
-  return { kind: "lote", itens, formaPagamento: formaGeral };
-}
 
 const BRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const DATA = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
@@ -118,6 +83,12 @@ export const loteMsgs = {
   },
   cancelado() {
     return `Cancelado. Nenhum dos gastos do áudio foi salvo.`;
+  },
+  pedirValor() {
+    return `Não entendi o valor do gasto no áudio. Repita dizendo quanto pagou, por exemplo: "comprei 2 pizzas por 50 reais".`;
+  },
+  ambiguo() {
+    return `Não consegui entender com segurança o valor ou a data do áudio. Envie de novo com o valor e a data completos, por exemplo: "gastei 20 no Uber dia 15/10".`;
   },
   unsafe() {
     return `Entendi mais de um lançamento no áudio, mas não consegui separar com segurança. Envie um gasto ou receita por vez, por exemplo: "gastei 20 no Uber hoje".`;
@@ -224,7 +195,7 @@ export function analisarGastoPorVoz(
   parser: Parser = parseWhatsAppExpenseMessage,
 ): AudioAnalise {
   const t = texto.trim();
-  if (!VERBO_GASTO.test(t) || RECEITA.test(t)) {
+  if (/^(quanto|qual|quais|quando|onde|como)\b/i.test(t) || !VERBO_GASTO.test(t) || RECEITA.test(t)) {
     // Receita, consulta ou comando: comportamento atual. Vários valores com
     // receita continuam sem separação às cegas.
     if (RECEITA.test(t) && VERBO_GASTO.test(t)) return { kind: "unsafe" };
