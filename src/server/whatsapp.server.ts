@@ -456,6 +456,8 @@ export type WhatsAppMessageRow = {
   external_id: string | null;
   telefone: string;
   texto: string;
+  /** ID bruto do button_reply/list_reply (quando a mensagem veio de botão). */
+  replyId?: string;
   recebida_em?: string;
   /** Anexo de imagem (Fase WA-G5A). Quando presente, dispara o fluxo
    *  de leitura de comprovante via OCR existente do site. */
@@ -3083,6 +3085,28 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
       resposta,
     );
     return { status: "cancelada", resposta };
+  }
+
+  // ---- P2-botões: botão de gasto (expense_*) só vale para gasto pendente ----
+  // Os IDs expense_* viram "sim"/"não"/"ajustar". Sem esta checagem, um
+  // botão antigo de gasto confirmaria/cancelaria um comprovante, receita ou
+  // outra operação pendente. Nada é alterado: só orienta.
+  if (/^expense_/.test(msg.replyId ?? "")) {
+    const alvo = await buscarSessaoAtiva(userId, msg.telefone);
+    const ehGasto =
+      !!alvo &&
+      !isComprovanteSession(alvo.session) &&
+      !isReceitaSession(alvo.session) &&
+      alvo.session?.kind !== "pagar_pessoa";
+    if (!ehGasto) {
+      logWaRouteDecision(msg, "consulta_handler", "expense_button_without_expense_session");
+      return {
+        status: "consulta",
+        resposta: alvo
+          ? "Esse botão era de um gasto anterior e não vale para a operação em andamento. Responda a pergunta mais recente para continuar."
+          : "Esse botão é de uma confirmação que já foi concluída ou expirou. Nada foi registrado agora. Se quiser, envie o gasto de novo.",
+      };
+    }
   }
 
   // ---- Fase WA-G5A: sessão de comprovante/imagem pendente ----
