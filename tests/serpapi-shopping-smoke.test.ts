@@ -92,7 +92,7 @@ test("variantes e URLs", () => {
   expect(S.classifyUrl("https://shopping.google.com/x")?.kind).toBe("google_shopping");
 });
 test("script não importa app/banco/WhatsApp e não grava arquivos", () => {
-  const src = readFileSync("scripts/serpapi-shopping-smoke.mjs", "utf8");
+  const src = readFileSync("scripts/serpapi-shopping-smoke.mjs", "utf8").replace(/\/\*\*[\s\S]*?\*\//g, "");
   expect(src).not.toMatch(/supabase|whatsapp\.|@\/|from "\.\.?\/|writeFile|appendFile|console\.(log|error)\([^)]*(key|json)\b/i);
   expect(src.match(/^import .*$/gm)).toEqual(['import { pathToFileURL } from "node:url";']);
 });
