@@ -78,7 +78,10 @@ export async function handleShoppingMessage(
       body += "\n\nNão consegui estimar o impacto no seu orçamento agora.";
     }
   }
-  const { userRemaining } = await deps.quota.finish(msg.userId, msg.externalId, month, res.apiCalls, body);
-  const resposta = res.apiCalls > 0 ? `${body}\n\n${quotaLine(userRemaining)}` : body;
+  let userRemaining: number | null = null;
+  // Falha ao finalizar deixa a reserva pendente; o banco a expira contando 2 chamadas (conservador).
+  try { userRemaining = (await deps.quota.finish(msg.userId, msg.externalId, month, res.apiCalls, body)).userRemaining; }
+  catch { userRemaining = null; }
+  const resposta = res.apiCalls > 0 && userRemaining !== null ? `${body}\n\n${quotaLine(userRemaining)}` : body;
   return { resposta, ...(res.ok && res.offers.length > 0 ? { search: { query: intent.query, offers: res.offers, collectedAt: res.collectedAt } } : {}) };
 }
