@@ -5,6 +5,7 @@
  */
 import { detectShoppingIntent, type ShoppingIntent } from "./shopping-intent";
 import { searchShopping, type Offer } from "./serpapi-shopping";
+import { rotuloVariante, rotuloLink, variantesMisturadas, MSG_ESCOLHA_VARIANTE } from "./offer-specs";
 import { estimarCapacidadeCompra, type CapacidadeInput } from "./capacidade-compra";
 import { monthKeySaoPaulo, USER_MONTHLY_LIMIT, type ShoppingQuotaStore } from "./shopping-quota";
 
@@ -31,7 +32,8 @@ export function quotaLine(remaining: number): string {
 export function formatOffers(query: string, offers: Offer[], collectedAt: string): string {
   if (offers.length === 0) return MSG_SEM_OFERTAS;
   const l = [`🛒 Ofertas para "${query}":`, ""];
-  offers.forEach((o, i) => l.push(`${i + 1}. ${o.title}`, `   ${brl(o.priceCents)} — ${o.store}`, `   ${o.url}`));
+  offers.forEach((o, i) => l.push(`${i + 1}. ${o.title}`, `   ${rotuloVariante(o.title)}`, `   ${brl(o.priceCents)} — Loja: ${o.store}`, `   ${rotuloLink(o.url)}: ${o.url}`));
+  if (variantesMisturadas(offers.map((o) => o.title))) l.push("", MSG_ESCOLHA_VARIANTE);
   l.push("", `Preços coletados em ${horaBR(collectedAt)} (Brasília). Podem mudar.`,
     "Frete, estoque, juros e garantia: confira na loja.");
   return l.join("\n");
@@ -73,7 +75,10 @@ export async function handleShoppingMessage(
     try {
       const fin = await deps.loadFinance(msg.userId);
       const cap = estimarCapacidadeCompra({ ...fin, precoCents: res.offers[0].priceCents });
-      body += `\n\n💰 Com base na oferta mais barata encontrada:\n${cap.mensagem}`;
+      const base = variantesMisturadas(res.offers.map((o) => o.title))
+        ? `Simulação com o 1º anúncio listado (${rotuloVariante(res.offers[0].title)}), não um ranking entre variantes:`
+        : "Com base na oferta de menor preço encontrada para essa variante:";
+      body += `\n\n💰 ${base}\n${cap.mensagem}`;
     } catch {
       body += "\n\nNão consegui estimar o impacto no seu orçamento agora.";
     }

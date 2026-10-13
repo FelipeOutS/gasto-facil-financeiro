@@ -5,6 +5,7 @@
  * Variante diferente ("e o Pro?", "e o M5?") vira NOVA busca — nunca reaproveita preço.
  */
 import type { Offer } from "./serpapi-shopping";
+import { rotuloLink, rotuloVariante } from "./offer-specs";
 import { sanitizeQuery } from "./shopping-intent";
 import { AVISO_APERTO, LIMITE_PCT_FOLGA, estimarCapacidadeCompra, type CapacidadeInput } from "./capacidade-compra";
 
@@ -85,7 +86,7 @@ export function responderFollowupLocal(f: Exclude<Followup, { kind: "variante" }
   const o = ctx.offers[0];
   const coleta = `Preço coletado em ${horaBR(ctx.collectedAt)} (Brasília); pode ter mudado.`;
   if (f.kind === "loja") {
-    const l = ctx.offers.map((x, i) => `${i + 1}. ${x.store} — ${brl(x.priceCents)}\n   ${x.url}`);
+    const l = ctx.offers.map((x, i) => `${i + 1}. Loja: ${x.store} — ${brl(x.priceCents)} (${rotuloVariante(x.title)})\n   ${rotuloLink(x.url)}: ${x.url}`);
     return [`Lojas da sua pesquisa "${ctx.query}":`, ...l, "", coleta, "Frete, estoque, juros e garantia: confira na loja."].join("\n");
   }
   if (f.kind === "parcelas") {

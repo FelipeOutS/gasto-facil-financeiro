@@ -8,8 +8,7 @@ export type SearchResult =
   | { ok: true; offers: Offer[]; collectedAt: string; apiCalls: number }
   | { ok: false; reason: "no_key" | "timeout" | "http_error" | "bad_response"; apiCalls: number };
 
-const USED = /\b(usado|usada|seminovo|seminova|recondicionado|recondicionada|refurbished|renewed|vitrine|open ?box|reembalado|mostruario)\b/;
-const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+import { NAO_NOVO, compativel, isGoogleHost, norm } from "./offer-specs";
 
 export function buildSerpApiUrl(query: string, apiKey: string): string {
   const u = new URL("https://serpapi.com/search.json");
@@ -63,6 +62,7 @@ export function matchesVariant(title: string, query: string): boolean {
   const chipQ = /\b(m\d)\b/.exec(q)?.[1];
   const chips = [...t.matchAll(/\b(m\d)\b/g)].map((m) => m[1]);
   if (chipQ && chips.some((c) => c !== chipQ)) return false;
+  if (!compativel(title, query)) return false;
   for (const w of ["pro", "max", "mini", "ultra"]) {
     if (!new RegExp(`\\b${w}\\b`).test(q) && new RegExp(`\\b${w}\\b`).test(t) && /\b(air|pro)\b/.test(q)) return false;
   }
@@ -78,9 +78,13 @@ export function parseOffers(json: any, query: string, wantsUsed: boolean): Offer
     const title = typeof r?.title === "string" ? r.title.trim().slice(0, 120) : "";
     const store = typeof r?.source === "string" ? r.source.trim().slice(0, 60) : "";
     const priceCents = parseBRL(r?.extracted_price) ?? parseBRL(r?.price);
-    const url = safeUrl(r?.product_link) ?? safeUrl(r?.link);
+    // Prefere URL HTTPS segura do lojista; link do Google é só intermediário.
+    const cand = [safeUrl(r?.link), safeUrl(r?.product_link)].filter((u): u is string => !!u);
+    const url = cand.find((u) => !isGoogleHost(u)) ?? cand[0] ?? null;
     if (!title || !store || !priceCents || !url) continue;
-    if (!wantsUsed && (USED.test(norm(title)) || (r?.second_hand_condition && !wantsUsed))) continue;
+    const extra = [r?.snippet, r?.condition, r?.second_hand_condition, ...(Array.isArray(r?.extensions) ? r.extensions : [])]
+      .filter((x) => typeof x === "string").join(" ");
+    if (!wantsUsed && (NAO_NOVO.test(norm(`${title} ${extra}`)) || r?.second_hand_condition)) continue;
     if (!matchesVariant(title, query)) continue;
     const k = `${norm(store)}|${priceCents}`;
     if (seen.has(k)) continue;
