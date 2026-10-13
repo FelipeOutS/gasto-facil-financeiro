@@ -26,6 +26,26 @@ export type WhatsAppShoppingDeps = {
   loadFinance?: ShoppingDeps["loadFinance"];
   fetchImpl?: typeof fetch;
   now?: () => Date;
+  /** Reserva o wamid da continuação (dedupe de reentrega). */
+  claimFollowup?: FollowupClaim;
+};
+
+export type FollowupClaim = (m: { userId: string; phone: string; externalId: string; text: string }) => Promise<"ok" | "dup" | "error">;
+export const SHOPPING_FOLLOWUP_KIND = "shopping_followup";
+export const MSG_FOLLOWUP_FALHA = "Não consegui responder agora. Tente de novo em instantes.";
+
+/** Usa o índice único existente de whatsapp_messages.external_id; sem URL, preço ou finanças. */
+export const dbClaimFollowup: FollowupClaim = async ({ userId, phone, externalId, text }) => {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("whatsapp_messages").insert({
+      user_id: userId, external_id: externalId, telefone: phone, texto: text.slice(0, 200),
+      recebida_em: new Date().toISOString(), status: "sem_pendencia",
+      parsed: { kind: SHOPPING_FOLLOWUP_KIND }, resposta_sugerida: null,
+    });
+    if (!error) return "ok";
+    return error.code === "23505" ? "dup" : "error";
+  } catch { return "error"; }
 };
 
 export function hojeSaoPaulo(d: Date): string {
@@ -78,7 +98,7 @@ export function phoneHash(phone: string): string {
 export async function handleWhatsAppShopping(
   msg: { userId: string; phone: string; externalId: string | null; text: string },
   deps: WhatsAppShoppingDeps = {},
-): Promise<{ resposta: string } | null> {
+): Promise<{ resposta: string; duplicate?: boolean } | null> {
   const env = deps.env ?? process.env;
   // Flag OFF: nenhuma leitura (nem de contexto/tabelas novas) — o bot segue intacto.
   if (env.WHATSAPP_SHOPPING_ENABLED !== "true") return null;
@@ -118,6 +138,12 @@ export async function handleWhatsAppShopping(
   if (fu && ctx) {
     if (ctx.expired || ctx.offers.length === 0) return { resposta: MSG_CONTEXTO_EXPIRADO };
     if (fu.kind !== "variante") {
+      // Reentrega do mesmo wamid: no máximo uma resposta. Sem id → falha fechada.
+      // Testes com contexto em memória sem claim explícito não tocam o banco.
+      const claim = deps.claimFollowup ?? (deps.contexts ? async () => "ok" as const : dbClaimFollowup);
+      const c = msg.externalId ? await claim({ userId: msg.userId, phone: msg.phone, externalId: msg.externalId, text: msg.text }).catch(() => "error" as const) : "error";
+      if (c === "dup") return { resposta: "", duplicate: true };
+      if (c === "error") return { resposta: MSG_FOLLOWUP_FALHA };
       const fin = fu.kind === "loja" || fu.kind === "link" ? null : await loadFinance(msg.userId).catch(() => null);
       return { resposta: responderFollowupLocal(fu, ctx, hojeSaoPaulo(now()), fin) };
     }
