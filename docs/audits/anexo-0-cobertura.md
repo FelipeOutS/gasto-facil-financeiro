@@ -6,9 +6,9 @@ Inventário: `_inventario_src.txt` (111 arquivos, 46.557 linhas: src/server/what
 
 | Status | Arquivos | Linhas | % das 46.557 |
 |---|---:|---:|---:|
-| Integral (autodeclarado) | IN | 26.902 | 57,8% |
-| Parcial | — | 2.419 | 5,2% |
-| Não lido (citado como não lido) | — | 8.577 | 18,4% |
+| Integral (autodeclarado) | 77 | 26.902 | 57,8% |
+| Parcial | 3 | 2.419 | 5,2% |
+| Não lido (citado como não lido) | 13 | 8.577 | 18,4% |
 | Sem anexo (não citado) | 18 | 8.659 | 18,6% |
 
 Contagem por arquivo nos anexos (inclui arquivos fora do inventário, ex.: tests/, docs/, src/lib/store.ts): integral 117 arquivos/32.732 linhas; parcial 9/4.365; não lido 27/12.946.
