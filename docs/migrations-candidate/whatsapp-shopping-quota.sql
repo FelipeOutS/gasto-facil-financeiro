@@ -61,7 +61,7 @@ BEGIN
   SELECT count(*)::int INTO v_user FROM public.whatsapp_shopping_searches s
    WHERE s.month_key = v_month AND s.user_id = p_user_id AND (s.state = 'pending' OR s.api_calls > 0);
 
-  IF FOUND AND v_ex.id IS NOT NULL THEN
+  IF v_ex.id IS NOT NULL THEN
     RETURN QUERY SELECT 'duplicate'::text, v_ex.reply, greatest(c_user_limit - v_user, 0), greatest(c_global_limit - v_global, 0);
     RETURN;
   END IF;
