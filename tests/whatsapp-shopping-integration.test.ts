@@ -120,9 +120,9 @@ describe("snapshot financeiro", () => {
     expect(ids).toEqual(["conta:c1", "parc:G", "rec:rec1", "variaveis"]);
     expect(s.compromissos.find((c) => c.id === "parc:G")?.valorMensalCents).toBe(20_000);
     expect(s.compromissos.find((c) => c.id === "variaveis")?.valorMensalCents).toBe(10_000);
-    const cap = estimarCapacidadeCompra({ ...s, precoCents: 400_000, guardadoCents: 99_000_000, limiteCartaoCents: 99_000_000 });
+    const cap = estimarCapacidadeCompra({ ...s, precoCents: 800_000, guardadoCents: 99_000_000, limiteCartaoCents: 99_000_000 });
     expect(cap.folgaCents).toBe(500_000 - 150_000 - 20_000 - 5_000 - 10_000);
-    expect(cap.mensagem).toContain(AVISO_APERTO); // 6x de 666,67 > 30% de 3.150
+    expect(cap.mensagem).toContain(AVISO_APERTO); // 6x de 1.333,34 > 30% de 3.150
   });
   test("menos de 2 meses → baixa confiança; nenhum → insuficiente", () => {
     const um = buildFinanceSnapshot("2026-10-13", { ...base, receitas: base.receitas.slice(0, 1) });
