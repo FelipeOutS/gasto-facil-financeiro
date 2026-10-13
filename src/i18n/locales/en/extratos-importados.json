@@ -51,7 +51,7 @@
   },
   "toast": {
     "reverted": "Import reverted. Dashboard, Expenses, My income and Savings were recalculated.",
-    "revertFail": "Couldn't revert this import. Try again.",
+    "revertFail": "Couldn't revert safely right now. Nothing was deleted.",
     "removed": "Record removed from history.",
     "removeFail": "Couldn't remove this record.",
     "revertedPartial": "{{removed}} entries removed. {{kept}} items you edited were kept."
