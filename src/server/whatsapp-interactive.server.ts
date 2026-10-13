@@ -233,7 +233,7 @@ export function replyIdToTexto(id: string, title?: string): string {
  * Decide se a resposta textual ganha botões/lista. Só reconhece perguntas
  * existentes — nunca muda o texto nem o fluxo.
  */
-export type ExpenseButtonBinding = { userId: string; telefone: string; rowId: string };
+export type ExpenseButtonBinding = { userId: string; telefone: string; rowId: string; rev: string };
 
 /**
  * Igual a buildInteractiveFromReplyRaw, mas troca os IDs genéricos de gasto
@@ -256,6 +256,7 @@ export function buildInteractiveFromReply(
       bind.userId,
       bind.telefone,
       bind.rowId,
+      bind.rev,
     );
     if (!t) return null;
     b.id = t;

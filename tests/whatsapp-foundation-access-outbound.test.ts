@@ -1,6 +1,6 @@
 import { test, expect, describe } from "bun:test";
 process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET ??= "test-secret-ficticio-0123456789abcdef";
-const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test" };
+const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test", rev: "AAAAAAAAAAAA" };
 import { planAllowsFeature, plansAllowingFeature, type PlanTier } from "../src/lib/plans";
 import {
   recordOutboundSend,

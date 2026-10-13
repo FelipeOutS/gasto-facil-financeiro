@@ -28,8 +28,9 @@ const send = async (texto: string) => {
 /** Simula o webhook: assina os botões com a sessão criada pela própria mensagem. */
 async function abrirGasto(texto: string) {
   const { out, external_id } = await send(texto);
-  const rowId = await buscarVinculoBotaoGasto(U, tel, external_id, out.resposta ?? "");
-  const ir = buildInteractiveFromReply(out.resposta ?? "", rowId ? { userId: U, telefone: tel, rowId } : null);
+  const v = await buscarVinculoBotaoGasto(U, tel, external_id, out.resposta ?? "");
+  const rowId = v?.rowId ?? null;
+  const ir = buildInteractiveFromReply(out.resposta ?? "", v ? { userId: U, telefone: tel, rowId: v.rowId, rev: v.rev } : null);
   const ids = ir && ir.type === "button" ? ir.buttons.map((b) => b.id) : [];
   return { out, rowId, ids };
 }
@@ -49,7 +50,7 @@ afterEach(() => setSystemTime());
 
 describe("token do botão de gasto", () => {
   test("cabe no limite da Graph e é verificável só pelo mesmo usuário/telefone", () => {
-    const id = signExpenseButton("confirm", U, tel, "11111111-1111-1111-1111-111111111111")!;
+    const id = signExpenseButton("confirm", U, tel, "11111111-1111-1111-1111-111111111111", "AAAAAAAAAAAA")!;
     expect(id.length).toBeLessThanOrEqual(256);
     expect(verifyExpenseButton(id, U, tel).ok).toBe(true);
     expect(verifyExpenseButton(id, "u2", tel).ok).toBe(false);
@@ -58,6 +59,8 @@ describe("token do botão de gasto", () => {
     expect(verifyExpenseButton(forjado, U, tel).ok).toBe(false);
     const trocaAcao = id.replace("exp1:c:", "exp1:x:");
     expect(verifyExpenseButton(trocaAcao, U, tel).ok).toBe(false);
+    const trocaRev = id.replace(":AAAAAAAAAAAA:", ":BBBBBBBBBBBB:");
+    expect(verifyExpenseButton(trocaRev, U, tel).ok).toBe(false);
   });
 
   test("sem vínculo de sessão, nenhum botão genérico é emitido (só texto)", () => {
@@ -115,7 +118,7 @@ describe("botões vinculados à sessão exata", () => {
   });
 
   test("sem sessão: botão recusado sem gravar", async () => {
-    const id = signExpenseButton("confirm", U, tel, "22222222-2222-2222-2222-222222222222")!;
+    const id = signExpenseButton("confirm", U, tel, "22222222-2222-2222-2222-222222222222", "AAAAAAAAAAAA")!;
     expect((await tap(id)).resposta).toBe(EXPENSE_BUTTON_STALE);
     expect(gastosInserts().length).toBe(0);
   });
@@ -144,9 +147,38 @@ describe("botões vinculados à sessão exata", () => {
     await send("valor");
     const b = await abrirGasto("35");
     expect(b.ids.length).toBe(3);
-    // Mesmo gasto (mesma sessão): os botões apontam para a mesma operação.
+    // Mesmo gasto (mesma sessão), mas revisão nova: botões diferentes.
     expect(b.rowId).toBe(a.rowId);
+    expect(b.ids[0]).not.toBe(a.ids[0]);
     await tap(b.ids[0]);
+    expect(gastosInserts().length).toBe(1);
+  });
+
+  for (const [campo, novo] of [["valor", "35"], ["descricao", "padaria"], ["pagamento", "dinheiro"]] as const) {
+    test(`após Ajustar ${campo}: botões ANTERIORES recusados, NOVOS aceitos`, async () => {
+      const a = await abrirGasto("gastei 30 no mercado no pix");
+      await send("ajustar");
+      await send(campo);
+      const b = await abrirGasto(novo);
+      // valor/descrição reescrevem a MESMA linha; pagamento abre linha nova.
+      if (campo !== "pagamento") expect(b.rowId).toBe(a.rowId);
+      for (const id of a.ids) expect((await tap(id)).resposta).toBe(EXPENSE_BUTTON_STALE);
+      expect(gastosInserts().length).toBe(0);
+      const r = await tap(b.ids[0]);
+      expect(r.resposta).not.toBe(EXPENSE_BUTTON_STALE);
+      expect(gastosInserts().length).toBe(1);
+      expect((await tap(b.ids[0])).resposta).toBe(EXPENSE_BUTTON_STALE); // clique duplo
+      expect(gastosInserts().length).toBe(1);
+    });
+  }
+
+  test("após Ajustar, Cancelar antigo não cancela; texto 'sim' continua confirmando", async () => {
+    const a = await abrirGasto("gastei 30 no mercado no pix");
+    await send("ajustar");
+    await send("valor");
+    await abrirGasto("35");
+    expect((await tap(a.ids[2])).resposta).toBe(EXPENSE_BUTTON_STALE);
+    await send("sim");
     expect(gastosInserts().length).toBe(1);
   });
 });
