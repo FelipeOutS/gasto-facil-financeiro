@@ -14,3 +14,8 @@ DO $$ DECLARE t text; BEGIN
     EXECUTE format('CREATE POLICY own ON public.%I FOR ALL TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid())', t);
     EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON public.%I TO authenticated', t);
   END LOOP; END $$;
+-- Colunas usadas pela reversão com paridade do fluxo seguro (conforme types.ts do repositório).
+ALTER TABLE public.receitas ADD COLUMN created_at timestamptz DEFAULT now(), ADD COLUMN updated_at timestamptz DEFAULT now(), ADD COLUMN deleted_at timestamptz;
+ALTER TABLE public.transferencias_internas ADD COLUMN created_at timestamptz DEFAULT now(), ADD COLUMN updated_at timestamptz DEFAULT now();
+ALTER TABLE public.dinheiro_guardado ADD COLUMN created_at timestamptz DEFAULT now(), ADD COLUMN updated_at timestamptz DEFAULT now();
+ALTER TABLE public.movimentacoes_meta ADD COLUMN created_at timestamptz DEFAULT now(), ADD COLUMN updated_at timestamptz DEFAULT now();
