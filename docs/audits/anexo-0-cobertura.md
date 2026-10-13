@@ -6,7 +6,7 @@ Inventário: `_inventario_src.txt` (111 arquivos, 46.557 linhas: src/server/what
 
 | Status | Arquivos | Linhas | % das 46.557 |
 |---|---:|---:|---:|
-| Integral (autodeclarado) | — | 26.902 | 57,8% |
+| Integral (autodeclarado) | IN | 26.902 | 57,8% |
 | Parcial | — | 2.419 | 5,2% |
 | Não lido (citado como não lido) | — | 8.577 | 18,4% |
 | Sem anexo (não citado) | 18 | 8.659 | 18,6% |
