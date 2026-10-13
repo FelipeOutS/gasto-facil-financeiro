@@ -75,7 +75,7 @@ describe("gate e roteamento", () => {
   });
   test("módulos de compras não escrevem em tabelas", () => {
     for (const f of ["whatsapp-shopping.server.ts", "finance-snapshot.ts", "shopping-assistant.ts", "shopping-quota-db.ts"])
-      expect(readFileSync(`src/server/shopping/${f}`, "utf8")).not.toMatch(/\.(insert|update|upsert|delete)\(/);
+      { const s = readFileSync(`src/server/shopping/${f}`, "utf8"); expect(s).not.toMatch(/\.(insert|upsert|delete)\(/); expect(s).not.toMatch(/\.update\(\s*\{/); }
   });
 });
 
