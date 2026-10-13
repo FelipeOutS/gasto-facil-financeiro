@@ -33,12 +33,12 @@ CREATE OR REPLACE FUNCTION public.whatsapp_shopping_month_key_at(p_ts timestampt
 RETURNS text LANGUAGE sql IMMUTABLE SET search_path = pg_catalog
 AS $$ SELECT to_char(p_ts AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM') $$;
 CREATE OR REPLACE FUNCTION public.whatsapp_shopping_month_key()
-RETURNS text LANGUAGE sql STABLE SET search_path = pg_catalog, public
+RETURNS text LANGUAGE sql STABLE SET search_path = public
 AS $$ SELECT public.whatsapp_shopping_month_key_at(now()) $$;
 
 CREATE OR REPLACE FUNCTION public.whatsapp_shopping_reserve(p_user_id uuid, p_external_id text)
 RETURNS TABLE (claim_state text, previous_reply text, user_remaining integer, global_remaining integer)
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
 AS $$
 #variable_conflict use_column
 DECLARE
@@ -84,7 +84,7 @@ END $$;
 CREATE OR REPLACE FUNCTION public.whatsapp_shopping_finish(
   p_user_id uuid, p_external_id text, p_api_calls integer, p_reply text
 ) RETURNS TABLE (finished boolean, user_remaining integer, global_remaining integer)
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
 AS $$
 #variable_conflict use_column
 DECLARE
@@ -143,7 +143,7 @@ ALTER TABLE public.whatsapp_shopping_contexts ENABLE ROW LEVEL SECURITY;
 
 CREATE OR REPLACE FUNCTION public.whatsapp_shopping_context_save(
   p_user_id uuid, p_phone_hash text, p_query text, p_offers jsonb, p_collected_at timestamptz
-) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public
+) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
 AS $$
 BEGIN
   IF p_user_id IS NULL OR p_collected_at IS NULL OR p_collected_at > now() + interval '1 minute' THEN
@@ -160,7 +160,7 @@ END $$;
 DROP FUNCTION IF EXISTS public.whatsapp_shopping_context_get(uuid, text);
 CREATE OR REPLACE FUNCTION public.whatsapp_shopping_context_get(p_user_id uuid, p_phone_hash text)
 RETURNS TABLE (query text, offers jsonb, collected_at timestamptz, expired boolean)
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
 AS $$
   -- Expirado (até 1 dia) volta só como marcador, SEM ofertas, para pedir nova pesquisa.
   SELECT c.query, CASE WHEN c.expires_at > now() THEN c.offers ELSE NULL END, c.collected_at, c.expires_at <= now()
