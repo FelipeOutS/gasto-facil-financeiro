@@ -35,12 +35,10 @@ describe("P0 reversão de extrato × soft-delete", () => {
     excluidos = []; leituraFalha = false;
     expect(await store.loteTemGastoExcluido("b1", "u1")).toBe(false);
   });
-  it("fonte: DELETE de gastos no extrato sempre condicionado a deleted_at IS NULL", async () => {
+  it("fonte: reversão de extrato não faz DELETE no app (só RPC atômica)", async () => {
     const src = await Bun.file("src/lib/store.ts").text();
-    const ini = src.indexOf("export async function loteTemGastoExcluido");
+    const ini = src.indexOf("export async function revertExtratoImportadoSeguro");
     const fim = src.indexOf("export async function deleteExtratoImportado");
-    const bloco = src.slice(ini, fim);
-    expect(bloco.match(/loteTemGastoExcluido\(batchId, activeUserId\)/g)?.length).toBe(2);
-    expect(bloco.match(/=== "gastos"\) q = q\.is\("deleted_at", null\)/g)?.length).toBe(2);
+    expect(src.slice(ini, fim)).not.toMatch(/\.delete\(\)/);
   });
 });
