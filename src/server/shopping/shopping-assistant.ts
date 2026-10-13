@@ -5,8 +5,8 @@
  */
 import { detectShoppingIntent, type ShoppingIntent } from "./shopping-intent";
 import { searchShopping, type Offer } from "./serpapi-shopping";
-import { rotuloVariante, rotuloLink, variantesMisturadas, MSG_ESCOLHA_VARIANTE } from "./offer-specs";
-import { MSG_NAO_AVALIA, estimarCapacidadeCompra, type CapacidadeInput } from "./capacidade-compra";
+import { rotuloVariante, variantesMisturadas } from "./offer-specs";
+import { MSG_NAO_AVALIA, estimarCapacidadeCompra, resumoCapacidade, type CapacidadeInput } from "./capacidade-compra";
 import { monthKeySaoPaulo, USER_MONTHLY_LIMIT, type ShoppingQuotaStore } from "./shopping-quota";
 
 export const MSG_SEM_CHAVE =
@@ -20,22 +20,26 @@ export const MSG_FALHA =
 export const MSG_SEM_OFERTAS = "Não encontrei ofertas confiáveis para esse produto exato agora.";
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }).replace(/\u00a0/g, " ");
-const horaBR = (iso: string) =>
-  new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+export const horaBR = (iso: string) =>
+  new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+// Strip layout/URL injection from third-party text, retaining the real URL only in link replies.
+export const textoCurto = (s: string, max: number) => s.replace(/https?:\/\/\S+|www\.\S+/gi, "").replace(/[*_~`\r\n]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+export const tituloPesquisa = (q: string) => textoCurto(q, 80).replace(/\bmacbook\b/gi, "MacBook").replace(/\b(air|pro)\b/gi, (s) => s[0].toUpperCase() + s.slice(1)).replace(/\bm(\d)\b/gi, "M$1").replace(/\b(\d+)gb\b/gi, "$1 GB");
+export const varianteCompacta = (title: string) => rotuloVariante(title).replace(/Tela (\d+)"/, "$1″").replace(/SSD /, "").replace(/(\d+)(GB|TB)/g, "$1 $2");
+export const instrucoesLinks = (n: number) => `🔗 Para abrir, responda ${Array.from({ length: n }, (_, i) => `*link ${i + 1}*`).join(", ")}. Também pode perguntar *em 10x?*`;
 
 export function quotaLine(remaining: number): string {
-  if (remaining <= 0) return "Você usou todas as 10 buscas deste mês.";
-  if (remaining === 2) return "Atenção: restam só 2 buscas de compras este mês.";
-  return `Você ainda tem ${remaining} de ${USER_MONTHLY_LIMIT} buscas este mês.`;
+  return `🔎 ${remaining}/${USER_MONTHLY_LIMIT} buscas restantes.${remaining === 2 ? " Atenção: restam só 2." : ""}`;
 }
 
-export function formatOffers(query: string, offers: Offer[], collectedAt: string): string {
+export function formatOffers(query: string, offers: Offer[], collectedAt: string, budget?: string): string {
   if (offers.length === 0) return MSG_SEM_OFERTAS;
-  const l = [`🛒 Ofertas para "${query}":`, ""];
-  offers.forEach((o, i) => l.push(`${i + 1}. ${o.title}`, `   ${rotuloVariante(o.title)}`, `   ${brl(o.priceCents)} — Loja: ${o.store}`, `   ${rotuloLink(o.url)}: ${o.url}`));
-  if (variantesMisturadas(offers.map((o) => o.title))) l.push("", MSG_ESCOLHA_VARIANTE);
-  l.push("", `Preços coletados em ${horaBR(collectedAt)} (Brasília). Podem mudar.`,
-    "Frete, estoque, juros e garantia: confira na loja.");
+  const shown = offers.slice(0, 3);
+  const l = [`🛍️ *${tituloPesquisa(query)}*`, ""];
+  shown.forEach((o, i) => l.push(`*${i + 1}. ${brl(o.priceCents)}* — ${textoCurto(o.store, 60)}`, varianteCompacta(o.title)));
+  if (variantesMisturadas(shown.map((o) => o.title))) l.push("", "⚠️ Tela/SSD diferentes ou não informados: não digo qual é o mais barato. Diga a tela e o SSD para comparar a mesma configuração.");
+  if (budget) l.push("", budget);
+  l.push("", instrucoesLinks(shown.length), `🕒 ${horaBR(collectedAt)} (Brasília) · Preços sujeitos a mudanças.`, "Frete, estoque, juros e garantia: confira na loja.");
   return l.join("\n");
 }
 
@@ -70,19 +74,19 @@ export async function handleShoppingMessage(
   if (r.state === "global_quota") return { resposta: MSG_LIMITE_GLOBAL };
 
   const res = await searchShopping({ query: intent.query, wantsUsed: intent.wantsUsed, apiKey: deps.apiKey, fetchImpl: deps.fetchImpl, now: () => now });
-  let body = res.ok ? formatOffers(intent.query, res.offers, res.collectedAt) : MSG_FALHA;
+  let budget: string | undefined;
   if (res.ok && res.offers.length > 0 && deps.loadFinance) {
     try {
       const fin = await deps.loadFinance(msg.userId);
       const cap = estimarCapacidadeCompra({ ...fin, precoCents: res.offers[0].priceCents });
-      const base = variantesMisturadas(res.offers.map((o) => o.title))
-        ? `Simulação com o 1º anúncio listado (${rotuloVariante(res.offers[0].title)}), não um ranking entre variantes:`
-        : "Com base na oferta de menor preço encontrada para essa variante:";
-      body += `\n\n💰 ${base}\n${cap.mensagem}`;
+      budget = variantesMisturadas(res.offers.map((o) => o.title))
+        ? "💰 *Seu orçamento*\nEscolha a tela e o SSD antes de simular; os anúncios não são da mesma configuração."
+        : resumoCapacidade(cap, fin.alertas, fin.compromissos.filter((c) => c.tipo === "divida").length);
     } catch {
-      body += `\n\n${MSG_NAO_AVALIA} Os preços acima continuam valendo como consulta.`;
+      budget = `💰 *Seu orçamento*\n${MSG_NAO_AVALIA}`;
     }
   }
+  const body = res.ok ? formatOffers(intent.query, res.offers, res.collectedAt, budget) : MSG_FALHA;
   let userRemaining: number | null = null;
   // Falha ao finalizar deixa a reserva pendente; o banco a expira contando 2 chamadas (conservador).
   try { userRemaining = (await deps.quota.finish(msg.userId, msg.externalId, month, res.apiCalls, body)).userRemaining; }

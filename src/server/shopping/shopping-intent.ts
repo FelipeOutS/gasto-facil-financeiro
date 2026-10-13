@@ -36,7 +36,8 @@ export function detectShoppingIntent(text: string): ShoppingIntent | null {
   const wantsBudget = /\b(cabe no (?:meu )?orcamento|consigo pagar|da pra pagar|posso comprar|cabe no bolso)\b/.test(n);
   const wantsUsed = /\b(usado|seminovo|recondicionado|refurbished|vitrine)\b/.test(n);
   let q = n
-    .split(/[,?;!]| e (?:onde|se|cabe|quanto)\b| onde | que cabe\b/)[0]
+    // Cut instructions, not product specs (e.g. 13.6 inches or SSD/RAM).
+    .split(/[,?;!]|\.(?=\s|$)|\s+(?:e\s+)?(?:pesquise|pesquisa|procure|busque|veja se|me mostra|me mostre|mostre|onde\b|cabe no\b|por favor\b)| e (?:se|quanto)\b| que cabe\b/)[0]
     .replace(/^(?:oi|ola|bom dia|boa tarde|boa noite)\s+/, "")
     .replace(/\b(?:eu )?(?:quero|pretendo|penso em|vale a pena) comprar\b/, "")
     .replace(/\b(?:quanto custa|preco d[oae]s?|pesquisa(?:r)? (?:o )?preco d[oae]s?|procura(?:r)? (?:o )?preco d[oae]s?|menor preco d[oae]s?|melhor preco d[oae]s?|mais barato)\b/, "")

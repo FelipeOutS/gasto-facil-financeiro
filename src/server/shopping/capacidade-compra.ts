@@ -65,7 +65,7 @@ export function estimarCapacidadeCompra(i: CapacidadeInput): Capacidade {
   const comHistorico = Array.isArray(i.mesesAtivos);
   // Com histórico explícito: meses ativos contam (renda 0 = zero observado). Legado: só meses com renda.
   const meses = comHistorico
-    ? ultimos.filter((k) => i.mesesAtivos!.includes(k) && Number.isSafeInteger(i.rendaPorMes[k] ?? 0))
+    ? ultimos.filter((k) => i.mesesAtivos?.includes(k) && Number.isSafeInteger(i.rendaPorMes[k] ?? 0))
     : ultimos.filter((k) => Number.isSafeInteger(i.rendaPorMes[k]) && i.rendaPorMes[k] > 0);
   const vistos = new Set<string>();
   let compromissosCents = 0;
@@ -117,4 +117,25 @@ export function estimarCapacidadeCompra(i: CapacidadeInput): Capacidade {
   }
   linhas.push("É uma estimativa com seus registros, não uma garantia.");
   return { confianca, meses, rendaMediaCents, compromissosCents, folgaCents, cabeAVista, cenarios, mensagem: linhas.join("\n") };
+}
+
+/** Presentation only: no change to the estimator or its risk threshold. */
+export function resumoCapacidade(cap: Capacidade, alertas: string[] = [], dividas = 0): string {
+  const l = ["💰 *Seu orçamento*"];
+  if (cap.confianca === "insuficiente" || cap.folgaCents === null) {
+    l.push(MSG_NAO_AVALIA);
+    if (cap.meses.length < 3) l.push(`⚠️ Histórico parcial (${cap.meses.length}/3 meses). Não dá para confirmar que a compra cabe.`);
+    return l.join("\n");
+  }
+  l.push(`Folga estimada${cap.confianca === "baixa" ? " (baixa confiança)" : ""}: *${brl(Math.max(0, cap.folgaCents))}/mês*`);
+  if (cap.confianca === "baixa") l.push(`⚠️ Histórico parcial (${cap.meses.length}/3 meses). Não dá para confirmar que a compra cabe.`);
+  else l.push("Estimativa dos registros; dinheiro guardado não entra. Não é garantia.");
+  if (dividas) l.push("⚠️ Contas vencidas incluídas pelo valor cheio.");
+  if (alertas.length) l.push("⚠️ Há ressalvas nos registros; a folga pode não refletir todos os compromissos.");
+  const c = cap.cenarios.find((x) => x.n === 12) ?? cap.cenarios[0];
+  if (c) {
+    l.push(`*${c.n}x de até ${brl(c.parcelaCents)}* — ${ROTULO_SIMULACAO_SEM_JUROS}.`);
+    if (c.aperta) l.push(`⚠️ ${AVISO_APERTO}`);
+  }
+  return l.join("\n");
 }
