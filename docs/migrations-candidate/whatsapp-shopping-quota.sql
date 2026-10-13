@@ -157,12 +157,15 @@ BEGIN
   DELETE FROM public.whatsapp_shopping_contexts c WHERE c.expires_at < now() - interval '1 day';
 END $$;
 
+DROP FUNCTION IF EXISTS public.whatsapp_shopping_context_get(uuid, text);
 CREATE OR REPLACE FUNCTION public.whatsapp_shopping_context_get(p_user_id uuid, p_phone_hash text)
-RETURNS TABLE (query text, offers jsonb, collected_at timestamptz)
+RETURNS TABLE (query text, offers jsonb, collected_at timestamptz, expired boolean)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public
 AS $$
-  SELECT c.query, c.offers, c.collected_at FROM public.whatsapp_shopping_contexts c
-   WHERE c.user_id = p_user_id AND c.phone_hash = p_phone_hash AND c.expires_at > now()
+  -- Expirado (até 1 dia) volta só como marcador, SEM ofertas, para pedir nova pesquisa.
+  SELECT c.query, CASE WHEN c.expires_at > now() THEN c.offers ELSE NULL END, c.collected_at, c.expires_at <= now()
+    FROM public.whatsapp_shopping_contexts c
+   WHERE c.user_id = p_user_id AND c.phone_hash = p_phone_hash AND c.expires_at > now() - interval '1 day'
 $$;
 
 REVOKE ALL ON FUNCTION public.whatsapp_shopping_context_save(uuid, text, text, jsonb, timestamptz) FROM PUBLIC, anon, authenticated;

@@ -72,7 +72,7 @@ SELECT pg_temp.ok(NOT EXISTS (SELECT 1 FROM whatsapp_shopping_context_get('00000
 RESET ROLE;
 UPDATE whatsapp_shopping_contexts SET expires_at = now() - interval '1 second';
 SET ROLE service_role;
-SELECT pg_temp.ok(NOT EXISTS (SELECT 1 FROM whatsapp_shopping_context_get('00000000-0000-0000-0000-000000000001', repeat('a',64))),'Q19 contexto expirado (20 min) nao retorna');
+SELECT pg_temp.ok((SELECT expired AND offers IS NULL FROM whatsapp_shopping_context_get('00000000-0000-0000-0000-000000000001', repeat('a',64))),'Q19 contexto expirado (20 min) volta sem ofertas');
 DO $$ BEGIN
   BEGIN PERFORM whatsapp_shopping_context_save(gen_random_uuid(), 'naohash', 'q', '[]', now()); RAISE EXCEPTION 'FALHOU Q20';
   EXCEPTION WHEN check_violation THEN NULL; END;
