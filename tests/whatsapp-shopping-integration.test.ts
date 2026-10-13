@@ -117,7 +117,7 @@ describe("snapshot financeiro", () => {
     const s = buildFinanceSnapshot("2026-10-13", base);
     expect(s.rendaPorMes).toEqual({ "2026-09": 500_000, "2026-08": 500_000, "2026-07": 500_000 });
     const ids = s.compromissos.map((c) => c.id).sort();
-    expect(ids).toEqual(["conta:c1", "parc:G", "rec:rec1", "variaveis"]);
+    expect(ids).toEqual(["fixas:mes-atual", "parc:G", "rec:rec1", "variaveis"]);
     expect(s.compromissos.find((c) => c.id === "parc:G")?.valorMensalCents).toBe(20_000);
     expect(s.compromissos.find((c) => c.id === "variaveis")?.valorMensalCents).toBe(10_000);
     const cap = estimarCapacidadeCompra({ ...s, precoCents: 800_000, guardadoCents: 99_000_000, limiteCartaoCents: 99_000_000 });
