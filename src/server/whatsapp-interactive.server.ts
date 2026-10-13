@@ -224,6 +224,9 @@ export function replyIdToTexto(id: string, title?: string): string {
   // GI Agenda: ID estável com o item; tratado por handleAgendaIntent.
   if (/^agenda_(?:done|cancel|edit|view|view_invoice|view_bill|cpage|cancel_ok):/.test(v) || v === "agenda_cancel_back") return v;
   if (v.startsWith(CARD_PICK_PREFIX)) return v.slice(CARD_PICK_PREFIX.length).trim();
+  // Assistente de Compras: IDs dedicados (nunca opt_N, que cairia no menu principal).
+  const shop = /^shopping_link_([1-3])$/.exec(v);
+  if (shop) return `link ${shop[1]}`;
   const opt = /^opt_(\d{1,2})$/.exec(v);
   if (opt) return opt[1];
   return (title ?? "").trim() || v;
@@ -445,6 +448,14 @@ function buildInteractiveFromReplyRaw(resposta: string): InteractiveReply | null
         { id: "confirm_no", title: "Não" },
       ],
     };
+  }
+
+  // Assistente de Compras: botões dedicados; se o formato não bater, só texto.
+  if (body.trimStart().startsWith("🛍️") || /para abrir, responda \*?link 1/.test(n)) {
+    const nums = [...body.matchAll(/^\*([1-3])\. R\$ [\d.,]+\*/gm)].map((m) => Number(m[1]));
+    const ok = /🔗 Para abrir, responda/.test(body) && nums.length >= 1 && nums.length <= 3 && nums.every((x, i) => x === i + 1);
+    if (!ok) return null;
+    return { type: "button", body, buttons: nums.map((x) => ({ id: `shopping_link_${x}`, title: `🔗 Oferta ${x}` })) };
   }
 
   // Listas numeradas (menu, escolha de cartão, seleção de contas).
