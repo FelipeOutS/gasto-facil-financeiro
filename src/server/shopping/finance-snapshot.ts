@@ -62,7 +62,6 @@ export function buildFinanceSnapshot(hoje: string, rows: FinanceRows): Omit<Capa
     if ((g.parcela_atual ?? 0) < (g.total_parcelas ?? 0) || ym(g.data) >= mesAtual)
       compromissos.push({ id: `parc:${k}`, tipo: "parcela", valorMensalCents: cents(g.valor) });
   }
-  const mesesComRenda = meses.filter((m) => (rendaPorMes[m] ?? 0) > 0).length || 1;
-  if (variavel > 0) compromissos.push({ id: "variaveis", tipo: "fixa", valorMensalCents: Math.floor(variavel / mesesComRenda) });
+  if (variavel > 0) compromissos.push({ id: "variaveis", tipo: "fixa", valorMensalCents: Math.floor(variavel / meses.length) });
   return { hoje, rendaPorMes, compromissos };
 }
