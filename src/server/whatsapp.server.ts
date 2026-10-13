@@ -40,6 +40,7 @@ import { detectOptout, executeOptoutRevocation } from "./whatsapp-optout.server"
 import { financialIdForWhatsAppMessage } from "./whatsapp-financial-idempotency.server";
 import { handleFinanceBrief } from "./whatsapp-finance-brief.server";
 import { handleWhatsAppResearch } from "./whatsapp-research.server";
+import { handleWhatsAppShopping } from "./shopping/whatsapp-shopping.server";
 import { handlePostlaunchInput, installmentReceipt, postlaunchReceipt } from "./whatsapp-postlaunch.server";
 import { handlePlanning } from "./whatsapp-planning.server";
 import { handleAlertPreference } from "./whatsapp-alert-preferences.server";
@@ -4476,6 +4477,9 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   // mesmo que exista contexto de pesquisa de produto para o mesmo telefone.
   const financialInstallment = detectInstallmentIntent(texto) !== null && extrairValor(texto) !== null;
   if (!sessao && decisao === "outro" && !msg.image && !msg.document && !financialInstallment) {
+    // Assistente de Compras: antes da pesquisa antiga; flag OFF → null (sem efeito).
+    const shopping = await handleWhatsAppShopping({ userId, externalId: msg.external_id, text: texto });
+    if (shopping) return { status: "consulta", resposta: shopping.resposta };
     const research = await handleWhatsAppResearch({
       userId, phone: msg.telefone, externalId: msg.external_id, text: texto,
     });
