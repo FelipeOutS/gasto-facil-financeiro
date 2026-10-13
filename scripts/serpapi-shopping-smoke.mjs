@@ -25,19 +25,41 @@ export function buildSearchUrl(apiKey) {
 }
 
 const norm = (s) => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-const USED = /\b(usado|usada|seminovo|seminova|recondicionado|recondicionada|refurbished|renewed|vitrine|open ?box|reembalado|mostruario)\b/;
+// Espelho de src/server/shopping/offer-specs.ts (sem importar o app).
+const NAO_NOVO = /\b(usad[oa]s?|seminov[oa]s?|semi[- ]nov[oa]s?|recondicionad[oa]s?|refurbished|renewed|reembalad[oa]s?|mostruario|vitrine|open[- ]?box|unsealed|desembalad[oa]|(?:com )?caixa aberta|embalagem aberta|lacre (?:rompido|violado)|segunda mao|pre[- ]owned)\b/;
 const SHORT = /(bit\.ly|tinyurl|t\.co|goo\.gl|cutt\.ly|encurtador|is\.gd|ow\.ly)/;
+const SSD_OK = new Set([128, 256, 512, 1024, 2048, 4096]);
+const uniq = (a) => [...new Set(a)];
 
-/** Variante exata: MacBook AIR, chip M4, 16GB. Recusa M3/M2/M5, Pro, 8GB/24GB etc. */
-export function isExactVariant(title) {
-  const t = norm(title).replace(/\b(\d+)\s?(gb|tb)\b/g, "$1$2");
-  if (!/\bmacbook\b/.test(t) || !/\bair\b/.test(t) || !/\bm4\b/.test(t)) return false;
-  if (/\b(pro|max|ultra)\b/.test(t)) return false;
-  if ([...t.matchAll(/\bm(\d)\b/g)].some((m) => m[1] !== "4")) return false;
-  const ram = [...t.matchAll(/\b(\d+)gb\b/g)].map((m) => Number(m[1])).filter((n) => n <= 64);
-  if (!ram.includes(16) || ram.some((n) => n !== 16 && n < 128)) return false;
-  return !USED.test(t);
+export function extractSpecs(text) {
+  const t = norm(text);
+  return {
+    chips: uniq([...t.matchAll(/\bm(\d)\b/g)].map((m) => `m${m[1]}`)),
+    air: /\bair\b/.test(t), pro: /\b(pro|max|ultra)\b/.test(t), macbook: /\bmacbook\b/.test(t),
+    ram: uniq([...t.matchAll(/\b(\d{1,2})\s?gb\b/g)].map((m) => Number(m[1])).filter((n) => n >= 4 && n <= 64)),
+    ssd: uniq([...[...t.matchAll(/\b(\d{3,4})\s?g(?:b)?\b/g)].map((m) => Number(m[1])).filter((n) => SSD_OK.has(n)),
+      ...[...t.matchAll(/\b(\d)\s?tb\b/g)].map((m) => Number(m[1]) * 1024)]),
+    screens: uniq([...t.matchAll(/\b(13|15)(?:[.,]\d)?\b(?!\s?(?:gb|tb|g\b|x\b|vezes|parcelas))/g)].map((m) => Number(m[1]))),
+  };
 }
+
+/** Variante: MacBook AIR, M4, 16GB RAM. Recusa M3/Pro/8GB e anúncio com 2 telas/SSDs por um preço. */
+export function isExactVariant(title) {
+  const s = extractSpecs(title);
+  if (!s.macbook || !s.air || s.pro) return false;
+  if (s.chips.length !== 1 || s.chips[0] !== "m4") return false;
+  if (s.ram.length !== 1 || s.ram[0] !== 16) return false;
+  if (s.screens.length > 1 || s.ssd.length > 1) return false;
+  return true;
+}
+export const isNotNew = (text) => NAO_NOVO.test(norm(text));
+const fmtSsd = (g) => (g >= 1024 ? `${g / 1024}TB` : `${g}GB`);
+export function variantLabel(title) {
+  const s = extractSpecs(title);
+  return `Tela ${s.screens[0] ? `${s.screens[0]}"` : "não informada"} · SSD ${s.ssd[0] ? fmtSsd(s.ssd[0]) : "não informado"}`;
+}
+const variantKey = (title) => { const s = extractSpecs(title); return `${s.screens[0] ?? "?"}|${s.ssd[0] ?? "?"}`; };
+export const mixedVariants = (titles) => { const k = titles.map(variantKey); return new Set(k).size > 1 || k.some((x) => x.includes("?")); };
 
 /** https, sem credencial/porta/IP/localhost/encurtador. Retorna {url, kind} ou null. */
 export function classifyUrl(raw) {
@@ -48,7 +70,7 @@ export function classifyUrl(raw) {
   const h = u.hostname.toLowerCase();
   if (h === "localhost" || /^[\d.]+$/.test(h) || h.includes(":") || !h.includes(".") || SHORT.test(h)) return null;
   for (const k of [...u.searchParams.keys()]) if (/api_?key|token|secret/i.test(k)) return null;
-  const google = /(^|\.)google\.(com|com\.br)$/.test(h);
+  const google = /(^|\.)google\.[a-z.]+$/.test(h);
   return { url: u.toString(), kind: google ? "google_shopping" : "loja_direta" };
 }
 
@@ -70,9 +92,11 @@ export function pickOffers(json) {
     const title = typeof r?.title === "string" ? r.title.trim().slice(0, 120) : "";
     const store = typeof r?.source === "string" ? r.source.trim().slice(0, 60) : "";
     const priceCents = parseBRL(r?.extracted_price) ?? parseBRL(r?.price);
-    const link = classifyUrl(r?.link) ?? classifyUrl(r?.product_link);
+    const cands = [classifyUrl(r?.link), classifyUrl(r?.product_link)].filter(Boolean);
+    const link = cands.find((c) => c.kind === "loja_direta") ?? cands[0]; // Google = intermediário
     if (!title || !store || !priceCents || !link || r?.second_hand_condition) continue;
-    if (!isExactVariant(title)) continue;
+    const extra = [r?.snippet, r?.condition, ...(Array.isArray(r?.extensions) ? r.extensions : [])].filter((x) => typeof x === "string").join(" ");
+    if (isNotNew(`${title} ${extra}`) || !isExactVariant(title)) continue;
     const k = `${norm(store)}|${priceCents}`;
     if (seen.has(k)) continue;
     seen.add(k);
@@ -87,8 +111,10 @@ const horaBR = (d) => new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_
 export function formatReport(offers, at) {
   if (!offers || offers.length === 0) return "Nenhuma oferta confiável da variante exata (MacBook Air M4 16GB, novo) foi encontrada. Nenhum preço foi inventado.";
   const l = [`Ofertas para "${QUERY}" (coletadas em ${horaBR(at)}, horário de Brasília):`];
-  offers.forEach((o, i) => l.push(`${i + 1}. ${o.title}`, `   ${brl(o.priceCents)} — ${o.store}`,
-    `   ${o.linkKind === "google_shopping" ? "Link do Google Shopping" : "Link direto da loja"}: ${o.url}`));
+  offers.forEach((o, i) => l.push(`${i + 1}. ${o.title}`, `   ${variantLabel(o.title)}`, `   ${brl(o.priceCents)} — Loja: ${o.store}`,
+    `   ${o.linkKind === "google_shopping" ? "Ver no Google Shopping" : "Link direto da loja"}: ${o.url}`));
+  if (mixedVariants(offers.map((o) => o.title)))
+    l.push("Anúncios com tela/SSD diferentes ou não informados: não é um ranking do mesmo produto. Escolha tela (13\" ou 15\") e SSD para comparar.");
   l.push("Preços podem mudar. Frete, estoque, juros e garantia: confira na loja. Não é garantia de menor preço.");
   return l.join("\n");
 }
