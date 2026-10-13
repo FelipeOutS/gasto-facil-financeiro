@@ -10,7 +10,7 @@ INSERT INTO public.gastos (id, user_id, descricao, valor, data, import_batch_id)
  ('a2000000-0000-0000-0000-000000000002','aaaaaaaa-0000-0000-0000-000000000001','ext excluido',5,'2026-09-02','e0000000-0000-0000-0000-000000000001'),
  ('a3000000-0000-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000001','ext2',5,'2026-09-02','e0000000-0000-0000-0000-000000000002'),
  ('b1000000-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000002','de B',99,'2026-09-01',NULL);
-SET gi.gastos_soft_delete = 'on'; UPDATE public.gastos SET deleted_at = now(), deleted_by = user_id, deletion_batch_id = gen_random_uuid(), deletion_source = 'teste' WHERE id = 'a2000000-0000-0000-0000-000000000002'; RESET gi.gastos_soft_delete;
+SET gi.gastos_soft_delete = 'on'; UPDATE public.gastos SET deleted_at = now(), deleted_by = user_id, deletion_batch_id = gen_random_uuid(), deletion_source = 'site' WHERE id = 'a2000000-0000-0000-0000-000000000002'; RESET gi.gastos_soft_delete;
 INSERT INTO public.contas_a_pagar VALUES
  ('c0000000-0000-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000001','pago','2026-09-01','a1000000-0000-0000-0000-000000000001'),
  ('c0000000-0000-0000-0000-000000000002','aaaaaaaa-0000-0000-0000-000000000001','pago','2026-09-01',NULL);
