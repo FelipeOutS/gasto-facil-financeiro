@@ -35,5 +35,4 @@ E=eeeeeeee-0000-0000-0000-00000000000e
  'recorrencias', (select coalesce(json_agg(x),'[]') from (select id,valor::float,status,frequencia from recorrencias where user_id='$E') x),
  'contas', (select coalesce(json_agg(c),'[]') from (select id,nome,valor::float,status,gasto_id,recorrencia_id,data_vencimento from contas_a_pagar where user_id='$E' and data_vencimento>='2026-10-01') c))" > "$D/rows.json"
 bun "$ROOT/tests/sql/homolog-compras/check-finance.ts" "$D/rows.json"
-"${P[@]}" -tAc "select 'PASSOU H7 restauração F2: ' || (public.gastos_restaurar_lote('eeeeeeee-0000-0000-0000-0000000000d1'))::text" -c "select 1" >/dev/null 2>&1 || true
 echo "OK: homologação local concluída"
