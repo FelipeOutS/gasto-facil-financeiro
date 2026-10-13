@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # F4 candidata em PostgreSQL LOCAL DESCARTÁVEL (sem rede). Inclui corrida com 2 conexões.
 set -euo pipefail
+[ -n "${PG_BIN:-}" ] && export PATH="$PG_BIN:$PATH"
 unset PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE PGSSLMODE DATABASE_URL || true
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 D="$(mktemp -d /tmp/gi-pg-f4.XXXX)"; chmod 777 "$D"; PORT=55441
