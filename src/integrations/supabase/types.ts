@@ -1868,6 +1868,7 @@ export type Database = {
           confirmado: boolean
           created_at: string
           data: string
+          deleted_at: string | null
           descricao: string
           essencial: boolean | null
           estabelecimento: string
@@ -1902,6 +1903,7 @@ export type Database = {
           confirmado?: boolean
           created_at?: string
           data: string
+          deleted_at?: string | null
           descricao: string
           essencial?: boolean | null
           estabelecimento?: string
@@ -1936,6 +1938,7 @@ export type Database = {
           confirmado?: boolean
           created_at?: string
           data?: string
+          deleted_at?: string | null
           descricao?: string
           essencial?: boolean | null
           estabelecimento?: string
