@@ -2,6 +2,7 @@
 # Cota do Assistente de Compras: testa o SQL CANDIDATO num PostgreSQL LOCAL
 # DESCARTÁVEL (cluster novo em /tmp, socket unix, sem rede). Nunca usa o Lovable Cloud.
 set -euo pipefail
+[ -n "${PG_BIN:-}" ] && export PATH="$PG_BIN:$PATH"
 unset PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE PGSSLMODE DATABASE_URL || true
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 D="$(mktemp -d /tmp/gi-pg-shop.XXXX)"; PORT=55441
