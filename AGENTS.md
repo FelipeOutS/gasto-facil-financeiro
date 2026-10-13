@@ -7,3 +7,4 @@
 - Agenda financial reminders store only (source_type, source_id, days before) and read amount/due date live at send time, because financial modules own those values.
 - Agenda alerts reuse `whatsapp_notifications` (entity_type `agenda_item`); every change cancels pending rows and re-enqueues, and the dispatcher revalidates before sending, because there must be one notification queue.
 - Every read of `gastos` must filter `.is("deleted_at", null)` or carry a `soft-delete-exceção:` comment, enforced by tests/whatsapp-gastos-soft-delete-f3.test.ts, because soft-deleted expenses must never be shown or summed.
+- Shopping assistant lives in src/server/shopping/ as pure, dependency-injected modules (not wired to the WhatsApp pipeline yet); quota counts real API calls, not messages, because the legacy whatsapp_claim_research RPC counts rows.
