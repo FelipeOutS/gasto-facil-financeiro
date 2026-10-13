@@ -5,7 +5,7 @@ import { buildSerpApiUrl, parseBRL, safeUrl, matchesVariant, parseOffers, search
 import { estimarCapacidadeCompra, AVISO_APERTO, ultimosMesesCompletos } from "../src/server/shopping/capacidade-compra";
 import { createMemoryQuotaStore, GLOBAL_MONTHLY_LIMIT } from "../src/server/shopping/shopping-quota";
 import { handleShoppingMessage, MSG_SEM_CHAVE, MSG_LIMITE_USUARIO, MSG_LIMITE_GLOBAL, MSG_FALHA } from "../src/server/shopping/shopping-assistant";
-import { detectInstallmentIntent } from "../src/lib/whatsappParser";
+import { detectInstallmentIntent } from "../src/server/whatsapp-parcelamento.server";
 
 const KEY = "chave-ficticia-teste";
 const NOW = new Date("2026-10-13T15:00:00Z");
