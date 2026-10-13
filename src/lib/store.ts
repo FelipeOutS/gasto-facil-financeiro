@@ -4861,84 +4861,31 @@ export async function loteTemGastoExcluido(batchId: string, userId: string): Pro
 export async function revertExtratoImportadoSeguro(
   batchId: string,
 ): Promise<ResultadoRevertSeguro> {
-  const falha: ResultadoRevertSeguro = {
-    ok: false,
-    removidos: 0,
-    mantidos: 0,
-    status: "importado",
-  };
+  // P1 (13/10/2026): reversão SOMENTE via RPC transacional `reverter_extrato_atomic`
+  // (docs/migrations-candidate/gastos-delete-atomic-f4.sql), com a mesma regra de
+  // editados/parcial do fluxo antigo. SEM fallback para DELETE sequencial: se a RPC
+  // não existir ou falhar, nada é apagado e memória/cache ficam intactos.
+  const falha: ResultadoRevertSeguro = { ok: false, removidos: 0, mantidos: 0, status: "importado" };
   if (!activeUserId) return falha;
   const extrato = memExtratos.find((e) => e.id === batchId);
   if (!extrato) return falha;
   if (extrato.status === "revertido") {
     return { ok: true, removidos: 0, mantidos: 0, status: "revertido" };
   }
-  if (await loteTemGastoExcluido(batchId, activeUserId)) return falha;
-
-  const itens = getItensDoBatch(batchId);
-  const TOLERANCIA_MS = 5000;
-  const foiEditado = (criadoEm?: string, atualizadoEm?: string) => {
-    if (!criadoEm || !atualizadoEm) return false;
-    return new Date(atualizadoEm).getTime() - new Date(criadoEm).getTime() > TOLERANCIA_MS;
-  };
-
-  const alvos: Array<{ tabela: string; ids: string[] }> = [
-    {
-      tabela: "gastos",
-      ids: itens.gastos.filter((x) => !foiEditado(x.criadoEm, x.atualizadoEm)).map((x) => x.id),
-    },
-    {
-      tabela: "receitas",
-      ids: itens.receitas.filter((x) => !foiEditado(x.criadoEm, x.atualizadoEm)).map((x) => x.id),
-    },
-    {
-      tabela: "transferencias_internas",
-      ids: itens.transferencias
-        .filter((x) => !foiEditado(x.criadoEm, x.atualizadoEm))
-        .map((x) => x.id),
-    },
-    { tabela: "dinheiro_guardado", ids: itens.guardado.map((x) => x.id) },
-    { tabela: "movimentacoes_meta", ids: itens.movimentacoesMeta.map((x) => x.id) },
-  ];
-
-  const totalItens =
-    itens.gastos.length +
-    itens.receitas.length +
-    itens.transferencias.length +
-    itens.guardado.length +
-    itens.movimentacoesMeta.length;
-  const removiveis = alvos.reduce((s, a) => s + a.ids.length, 0);
-  const mantidos = totalItens - removiveis;
-
-  const apagados = new Set<string>();
-  for (const alvo of alvos) {
-    if (alvo.ids.length === 0) continue;
-    let q = sbAny
-      .from(alvo.tabela)
-      .delete()
-      .eq("user_id", activeUserId)
-      .eq("import_batch_id", batchId)
-      .in("id", alvo.ids);
-    if (alvo.tabela === "gastos") q = q.is("deleted_at", null);
-    const { error } = await q;
-    if (error) {
-      console.error(`[store] revertExtratoImportadoSeguro: falha em ${alvo.tabela}`, error);
-      return { ...falha, mantidos };
-    }
-    for (const id of alvo.ids) apagados.add(id);
+  const { data, error } = await sbAny.rpc("reverter_extrato_atomic", { p_batch_id: batchId });
+  const r = data as
+    | { ok?: boolean; removidos?: number; mantidos?: number; status?: string; ids?: unknown }
+    | null;
+  const statusOk = r?.status === "parcial" || r?.status === "revertido";
+  if (error || !r || r.ok !== true || !statusOk || !Array.isArray(r.ids)) {
+    console.error("[store] revertExtratoImportadoSeguro: reversão segura indisponível", {
+      code: (error as { code?: string } | null)?.code ?? null,
+    });
+    return { ...falha, status: extrato.status };
   }
-
-  const novoStatus: StatusExtratoImportado = mantidos > 0 ? "parcial" : "revertido";
+  const novoStatus = r.status as StatusExtratoImportado;
+  const apagados = new Set((r.ids as unknown[]).map(String));
   const now = new Date().toISOString();
-  const { error: upErr } = await sbAny
-    .from("extratos_importados")
-    .update({ status: novoStatus, reverted_at: now, updated_at: now })
-    .eq("id", batchId)
-    .eq("user_id", activeUserId);
-  if (upErr) {
-    console.error("[store] revertExtratoImportadoSeguro: falha ao atualizar status", upErr);
-  }
-
   const keep = <T extends { id: string }>(arr: T[]) => arr.filter((x) => !apagados.has(x.id));
   memGastos = keep(memGastos);
   memReceitas = keep(memReceitas);
@@ -4949,64 +4896,17 @@ export async function revertExtratoImportadoSeguro(
     e.id === batchId ? { ...e, status: novoStatus, revertedAt: now, atualizadoEm: now } : e,
   );
   emit();
-  return { ok: true, removidos: apagados.size, mantidos, status: novoStatus };
+  return {
+    ok: true,
+    removidos: Number(r.removidos) || 0,
+    mantidos: Number(r.mantidos) || 0,
+    status: novoStatus,
+  };
 }
 
+/** Legado: delega ao fluxo seguro (preserva editados). Não há mais DELETE sequencial. */
 export async function revertExtratoImportado(batchId: string): Promise<boolean> {
-
-  if (!activeUserId) return false;
-  const extrato = memExtratos.find((e) => e.id === batchId);
-  if (!extrato) return false;
-  if (extrato.status === "revertido") return true;
-  if (await loteTemGastoExcluido(batchId, activeUserId)) return false;
-
-  // Hard delete em todas as tabelas com import_batch_id = batchId
-  const tables = [
-    "gastos",
-    "receitas",
-    "transferencias_internas",
-    "dinheiro_guardado",
-    "movimentacoes_meta",
-  ];
-  for (const tbl of tables) {
-    let q = sbAny
-      .from(tbl)
-      .delete()
-      .eq("user_id", activeUserId)
-      .eq("import_batch_id", batchId);
-    if (tbl === "gastos") q = q.is("deleted_at", null);
-    const { error } = await q;
-    if (error) {
-      console.error(`[store] revertExtratoImportado: falha ao apagar de ${tbl}`, error);
-      return false;
-    }
-  }
-
-  // Marca o lote como revertido
-  const now = new Date().toISOString();
-  const { error: upErr } = await sbAny
-    .from("extratos_importados")
-    .update({ status: "revertido", reverted_at: now, updated_at: now })
-    .eq("id", batchId)
-    .eq("user_id", activeUserId);
-  if (upErr) {
-    console.error("[store] revertExtratoImportado: falha ao atualizar status", upErr);
-    return false;
-  }
-
-  // Atualiza memória local
-  memGastos = memGastos.filter((g) => g.importBatchId !== batchId);
-  memReceitas = memReceitas.filter((r) => r.importBatchId !== batchId);
-  memTransferencias = memTransferencias.filter((t) => t.importBatchId !== batchId);
-  memGuardado = memGuardado.filter((g) => g.importBatchId !== batchId);
-  memMov = memMov.filter((m) => m.importBatchId !== batchId);
-  memExtratos = memExtratos.map((e) =>
-    e.id === batchId
-      ? { ...e, status: "revertido" as StatusExtratoImportado, revertedAt: now, atualizadoEm: now }
-      : e,
-  );
-  emit();
-  return true;
+  return (await revertExtratoImportadoSeguro(batchId)).ok;
 }
 
 export async function deleteExtratoImportado(batchId: string): Promise<boolean> {
