@@ -61,3 +61,26 @@ DO $$ BEGIN
 SELECT pg_temp.ok(NOT has_function_privilege('anon','whatsapp_shopping_finish(uuid,text,integer,text)','EXECUTE'),'Q12 anon sem EXECUTE');
 SELECT pg_temp.ok((SELECT bool_and(p.prosecdef AND array_to_string(p.proconfig,',') LIKE 'search_path=pg_catalog, public%')
   FROM pg_proc p WHERE p.proname IN ('whatsapp_shopping_reserve','whatsapp_shopping_finish')),'Q13 SECURITY DEFINER com search_path fixo');
+-- Q15 virada de mês em São Paulo (UTC 02:59 de 1/nov ainda é outubro)
+SELECT pg_temp.ok(whatsapp_shopping_month_key_at('2026-11-01 02:59:00+00')='2026-10' AND whatsapp_shopping_month_key_at('2026-11-01 03:00:00+00')='2026-11','Q15 virada de mes Sao Paulo');
+-- Q16..Q19 contexto
+SET ROLE service_role;
+SELECT whatsapp_shopping_context_save('00000000-0000-0000-0000-000000000001', repeat('a',64), 'iphone 15', '[{"title":"x","store":"L","priceCents":100,"url":"https://a.com.br"}]', now());
+SELECT pg_temp.ok((SELECT query FROM whatsapp_shopping_context_get('00000000-0000-0000-0000-000000000001', repeat('a',64)))='iphone 15','Q16 contexto salvo e lido');
+SELECT pg_temp.ok(NOT EXISTS (SELECT 1 FROM whatsapp_shopping_context_get('00000000-0000-0000-0000-000000000001', repeat('b',64))),'Q17 outro telefone nao ve contexto');
+SELECT pg_temp.ok(NOT EXISTS (SELECT 1 FROM whatsapp_shopping_context_get('00000000-0000-0000-0000-000000000002', repeat('a',64))),'Q18 outro usuario nao ve contexto');
+RESET ROLE;
+UPDATE whatsapp_shopping_contexts SET expires_at = now() - interval '1 second';
+SET ROLE service_role;
+SELECT pg_temp.ok((SELECT expired AND offers IS NULL FROM whatsapp_shopping_context_get('00000000-0000-0000-0000-000000000001', repeat('a',64))),'Q19 contexto expirado (20 min) volta sem ofertas');
+DO $$ BEGIN
+  BEGIN PERFORM whatsapp_shopping_context_save(gen_random_uuid(), 'naohash', 'q', '[]', now()); RAISE EXCEPTION 'FALHOU Q20';
+  EXCEPTION WHEN check_violation THEN NULL; END;
+  BEGIN PERFORM 1 FROM whatsapp_shopping_contexts; RAISE EXCEPTION 'FALHOU Q20b';
+  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  RAISE NOTICE 'PASSOU Q20 hash invalido recusado e sem leitura direta'; END $$;
+RESET ROLE;
+DO $$ BEGIN SET LOCAL ROLE authenticated;
+  BEGIN PERFORM whatsapp_shopping_context_get(gen_random_uuid(), repeat('a',64)); RAISE EXCEPTION 'FALHOU Q21';
+  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  RAISE NOTICE 'PASSOU Q21 authenticated sem acesso ao contexto'; END $$;

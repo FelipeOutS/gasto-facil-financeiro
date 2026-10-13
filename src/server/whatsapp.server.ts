@@ -4478,7 +4478,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   const financialInstallment = detectInstallmentIntent(texto) !== null && extrairValor(texto) !== null;
   if (!sessao && decisao === "outro" && !msg.image && !msg.document && !financialInstallment) {
     // Assistente de Compras: antes da pesquisa antiga; flag OFF → null (sem efeito).
-    const shopping = await handleWhatsAppShopping({ userId, externalId: msg.external_id, text: texto });
+    const shopping = await handleWhatsAppShopping({ userId, phone: msg.telefone, externalId: msg.external_id, text: texto });
     if (shopping) return { status: "consulta", resposta: shopping.resposta };
     const research = await handleWhatsAppResearch({
       userId, phone: msg.telefone, externalId: msg.external_id, text: texto,

@@ -90,7 +90,7 @@ export function estimarCapacidadeCompra(i: CapacidadeInput): Capacidade {
     cabeAVista = i.precoCents <= folgaCents;
     linhas.push(cabeAVista ? `À vista (${brl(i.precoCents)}): cabe na folga de um mês, pela estimativa.` : `À vista (${brl(i.precoCents)}): passa da folga de um mês.`);
     for (const c of cenarios) {
-      linhas.push(`${c.n}x de ${brl(c.parcelaCents)} (simulação sem juros) = ${String(c.pctFolga).replace(".", ",")}% da folga${c.aperta ? ` — ${AVISO_APERTO}` : ""}`);
+      linhas.push(`${c.n}x de ${brl(c.parcelaCents)} (simulação matemática sem juros, não é oferta de parcelamento da loja) = ${String(c.pctFolga).replace(".", ",")}% da folga${c.aperta ? ` — ${AVISO_APERTO}` : ""}`);
     }
   }
   linhas.push("É uma estimativa com seus registros, não uma garantia.");

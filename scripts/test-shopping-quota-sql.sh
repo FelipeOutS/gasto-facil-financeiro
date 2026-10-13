@@ -10,7 +10,8 @@ initdb -D "$D/data" -U gi_test --auth=trust >/dev/null
 pg_ctl -D "$D/data" -o "-k $D -p $PORT -c listen_addresses=''" -l "$D/log" start >/dev/null
 trap 'pg_ctl -D "$D/data" stop -m immediate >/dev/null 2>&1; rm -rf "$D"' EXIT
 P=(psql -X -q -v ON_ERROR_STOP=1 -h "$D" -p "$PORT" -U gi_test -d postgres)
-"${P[@]}" -tc "select 'ISOLADO listen=[' || current_setting('listen_addresses') || ']'"
+"${P[@]}" -tAc "select 'ISOLADO listen=[' || current_setting('listen_addresses') || '] socket=' || current_setting('unix_socket_directories') || ' data=' || current_setting('data_directory') || ' os_user=' || '$(id -un)' || ' conexoes_tcp=' || (select count(*) from pg_stat_activity where client_addr is not null)"
+[ "$(id -u)" != "0" ] || { echo "FALHOU: root"; exit 1; }
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-shopping-quota/00-stub.sql"
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/whatsapp-shopping-quota.sql"
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/whatsapp-shopping-quota.sql"  # reexecução
