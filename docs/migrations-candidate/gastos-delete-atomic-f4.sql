@@ -41,8 +41,7 @@ END $$;
 -- soft-excluída não é apagada nem contada. Acesso: RLS do chamador (dono ou
 -- conta conectada com permissão), como no app; nenhuma linha fora do lote.
 -- Contagem divergente (RLS/concorrência) => exceção => ROLLBACK total.
-DROP FUNCTION IF EXISTS public.reverter_extrato_atomic(uuid);
-CREATE FUNCTION public.reverter_extrato_atomic(p_batch_id uuid)
+CREATE OR REPLACE FUNCTION public.reverter_extrato_atomic(p_batch_id uuid)
 RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER SET search_path = public AS $$
 DECLARE
   v_uid uuid := auth.uid(); v_ext record; v_owner uuid; v_n int;
