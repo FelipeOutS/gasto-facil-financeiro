@@ -29,8 +29,9 @@ describe("3 anúncios reais — app", () => {
   test("link Google é rotulado 'Ver no Google Shopping', loja separada", () => {
     const o = parseOffers(REAL, Q, false)!;
     const txt = formatOffers(Q, o, AT);
-    expect(txt).toContain("Ver no Google Shopping: https://www.google.com.br/search?ibp=oshop");
-    expect(txt).toContain("R$ 7.802,18 — Loja: Mercado Livre");
+    expect(txt).not.toContain("https://");
+    expect(txt).toContain("link 1");
+    expect(txt).toContain("*1. R$ 7.802,18* — Mercado Livre");
     expect(txt).not.toContain("Link direto da loja");
     expect(txt).toContain("12:00"); expect(txt).toContain("Frete, estoque, juros e garantia");
   });
@@ -61,14 +62,16 @@ describe("3 anúncios reais — app", () => {
     expect(variantesMisturadas(offers.map((o) => o.title))).toBe(true);
     const txt = formatOffers(Q, offers, AT);
     expect(txt).toContain("não digo qual é o mais barato");
-    expect(txt).toContain('Tela 13" · SSD 256GB'); expect(txt).toContain('Tela 13" · SSD 512GB');
+    expect(txt).toContain('13″ · 256 GB'); expect(txt).toContain('13″ · 512 GB');
   });
   test("sem ofertas coerentes não inventa", () => {
     expect(formatOffers(Q, parseOffers({ shopping_results: [REAL.shopping_results[0], REAL.shopping_results[2]] }, Q, false)!, AT)).toContain("Não encontrei ofertas confiáveis");
   });
   test("'qual loja?' do contexto mostra rótulo correto sem custo", () => {
     const r = responderFollowupLocal({ kind: "loja" }, { query: Q, offers: [{ title: ML512, store: "Mercado Livre", priceCents: 780_218, url: G(2) }], collectedAt: AT, expired: false }, "2026-10-13", null);
-    expect(r).toContain("Loja: Mercado Livre — R$ 7.802,18"); expect(r).toContain("Ver no Google Shopping");
+    expect(r).toContain("*1. R$ 7.802,18* — Mercado Livre"); expect(r).not.toContain("https://");
+    const link = responderFollowupLocal({ kind: "link", index: 0 }, { query: Q, offers: [{ title: ML512, store: "Mercado Livre", priceCents: 780_218, url: G(2) }], collectedAt: AT, expired: false }, "2026-10-13", null);
+    expect(link).toContain("Ver no Google Shopping"); expect(link).toContain(G(2));
   });
 });
 

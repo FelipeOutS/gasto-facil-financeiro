@@ -58,7 +58,7 @@ describe("gate e roteamento", () => {
     const d = { env: ON, fetchImpl: s.f, isEntitled: async () => true, quota: q, loadFinance: finOk, now: NOW };
     const a = await handleWhatsAppShopping({ userId: U, phone: "5511900000001", externalId: "dup", text: TXT }, d);
     const b = await handleWhatsAppShopping({ userId: U, phone: "5511900000001", externalId: "dup", text: TXT }, d);
-    expect(s.urls.length).toBe(1); expect(b?.resposta).toContain("Loja A"); expect(a?.resposta).toContain("9 de 10");
+    expect(s.urls.length).toBe(1); expect(b?.resposta).toContain("Loja A"); expect(a?.resposta).toContain("9/10");
   });
   test("SerpApi recebe só a busca, nunca dados financeiros/usuário", async () => {
     const s = fetchSpy();
