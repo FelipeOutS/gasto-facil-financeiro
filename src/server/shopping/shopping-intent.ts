@@ -17,7 +17,9 @@ const TRIGGER = /\b(quero comprar|pretendo comprar|penso em comprar|vale a pena 
 export function sanitizeQuery(raw: string): string {
   return raw
     .replace(/[^\s@]+@[^\s@]+\.[^\s@]+/g, " ")
-    .replace(/\d[\d.\-\s/]{7,}\d/g, " ")
+    .replace(/\b(?:\d{4}[ -]){3}\d{4}\b/g, " ")
+    .replace(/\b\d{3}[.\-]?\d{3}[.\-]?\d{3}[.\-]?\d{2}\b/g, " ")
+    .replace(/\b\d{8,}\b/g, " ")
     .replace(/[^\p{L}\p{N}\s.+\-/]/gu, " ")
     .replace(/\s+/g, " ")
     .trim()

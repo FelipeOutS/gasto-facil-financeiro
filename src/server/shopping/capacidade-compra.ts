@@ -50,7 +50,7 @@ export function ultimosMesesCompletos(hoje: string, n = 3): string[] {
   return out;
 }
 
-const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }).replace(/\u00a0/g, " ");
 
 export function estimarCapacidadeCompra(i: CapacidadeInput): Capacidade {
   if (!Number.isSafeInteger(i.precoCents) || i.precoCents <= 0) throw new Error("preço inválido");

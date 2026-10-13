@@ -18,7 +18,7 @@ export const MSG_FALHA =
   "Não consegui buscar ofertas agora. Nada foi descontado se a busca não chegou a ser feita. Tente novamente em alguns minutos.";
 export const MSG_SEM_OFERTAS = "Não encontrei ofertas confiáveis para esse produto exato agora.";
 
-const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }).replace(/\u00a0/g, " ");
 const horaBR = (iso: string) =>
   new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 
