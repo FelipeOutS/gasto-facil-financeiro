@@ -12,7 +12,7 @@ const U1 = "11111111-1111-1111-1111-111111111111";
 const U2 = "22222222-2222-2222-2222-222222222222";
 const T1 = "5511900000001";
 const T2 = "5511900000002";
-const ENV = { WHATSAPP_SHOPPING_ENABLED: "true", SERPAPI_API_KEY: "ficticia" };
+const ENV = { WHATSAPP_SHOPPING_ENABLED: "true", SERPAPI_API_KEY: "ficticia", WHATSAPP_SHOPPING_PILOT_USER_IDS: `${U1},${U2}` };
 const AIR = { shopping_results: [
   { title: "Apple MacBook Air M4 16GB 256GB", source: "Loja A", extracted_price: 7999.99, link: "https://lojaa.com.br/air" },
   { title: "MacBook Air M4 16GB", source: "Loja B", extracted_price: 8299, link: "https://lojab.com.br/air" },
