@@ -4839,6 +4839,25 @@ export type ResultadoRevertSeguro = {
  * - se sobrar algum item, o lote fica com status `parcial`;
  * - idempotente: relançar em lote já revertido não faz nada.
  */
+/**
+ * F2/F3: lote com gasto soft-excluído NUNCA é revertido (o DELETE físico
+ * impediria restaurar). Erro de leitura → bloqueia (fail-closed).
+ * Atomicidade total entre tabelas: RPC candidata `reverter_extrato_atomic`
+ * (docs/migrations-candidate/gastos-delete-atomic-f4.sql).
+ */
+export async function loteTemGastoExcluido(batchId: string, userId: string): Promise<boolean> {
+  // soft-delete-exceção: precisa ver excluídos para bloquear a reversão.
+  const { data, error } = await sbAny
+    .from("gastos")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("import_batch_id", batchId)
+    .not("deleted_at", "is", null)
+    .limit(1);
+  if (error || !Array.isArray(data)) return true;
+  return data.length > 0;
+}
+
 export async function revertExtratoImportadoSeguro(
   batchId: string,
 ): Promise<ResultadoRevertSeguro> {
@@ -4854,6 +4873,7 @@ export async function revertExtratoImportadoSeguro(
   if (extrato.status === "revertido") {
     return { ok: true, removidos: 0, mantidos: 0, status: "revertido" };
   }
+  if (await loteTemGastoExcluido(batchId, activeUserId)) return falha;
 
   const itens = getItensDoBatch(batchId);
   const TOLERANCIA_MS = 5000;
@@ -4893,12 +4913,14 @@ export async function revertExtratoImportadoSeguro(
   const apagados = new Set<string>();
   for (const alvo of alvos) {
     if (alvo.ids.length === 0) continue;
-    const { error } = await sbAny
+    let q = sbAny
       .from(alvo.tabela)
       .delete()
       .eq("user_id", activeUserId)
       .eq("import_batch_id", batchId)
       .in("id", alvo.ids);
+    if (alvo.tabela === "gastos") q = q.is("deleted_at", null);
+    const { error } = await q;
     if (error) {
       console.error(`[store] revertExtratoImportadoSeguro: falha em ${alvo.tabela}`, error);
       return { ...falha, mantidos };
@@ -4936,6 +4958,7 @@ export async function revertExtratoImportado(batchId: string): Promise<boolean> 
   const extrato = memExtratos.find((e) => e.id === batchId);
   if (!extrato) return false;
   if (extrato.status === "revertido") return true;
+  if (await loteTemGastoExcluido(batchId, activeUserId)) return false;
 
   // Hard delete em todas as tabelas com import_batch_id = batchId
   const tables = [
@@ -4946,11 +4969,13 @@ export async function revertExtratoImportado(batchId: string): Promise<boolean> 
     "movimentacoes_meta",
   ];
   for (const tbl of tables) {
-    const { error } = await sbAny
+    let q = sbAny
       .from(tbl)
       .delete()
       .eq("user_id", activeUserId)
       .eq("import_batch_id", batchId);
+    if (tbl === "gastos") q = q.is("deleted_at", null);
+    const { error } = await q;
     if (error) {
       console.error(`[store] revertExtratoImportado: falha ao apagar de ${tbl}`, error);
       return false;
