@@ -58,7 +58,10 @@ export async function handleShoppingMessage(
   if (!msg.externalId) return { resposta: MSG_FALHA };
   const now = deps.now?.() ?? new Date();
   const month = monthKeySaoPaulo(now);
-  const r = await deps.quota.reserve(msg.userId, msg.externalId, month);
+  let r: Awaited<ReturnType<ShoppingQuotaStore["reserve"]>>;
+  // Cota indisponível (ex.: SQL candidato não aplicado) → fail-closed, sem SerpApi.
+  try { r = await deps.quota.reserve(msg.userId, msg.externalId, month); }
+  catch { return { resposta: MSG_FALHA }; }
   if (r.state === "duplicate") return { resposta: r.previousReply ?? "Essa busca já está em andamento." };
   if (r.state === "user_quota") return { resposta: MSG_LIMITE_USUARIO };
   if (r.state === "global_quota") return { resposta: MSG_LIMITE_GLOBAL };
