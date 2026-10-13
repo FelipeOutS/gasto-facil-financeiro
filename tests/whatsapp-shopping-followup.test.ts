@@ -110,10 +110,10 @@ describe("fluxo com contexto", () => {
   test("sem renda → não afirma poder de compra; finanças indisponíveis → avisa limite", async () => {
     const h = harness({ renda: 0 });
     await h.send(BUSCA);
-    expect((await h.send("e em 10x?"))!.resposta).toContain("Não tenho receitas suficientes");
+    expect((await h.send("e em 10x?"))!.resposta).toContain("Não consigo avaliar com segurança");
     const h2 = harness({ fin: "erro" });
     await h2.send(BUSCA);
-    expect((await h2.send("e em 10x?"))!.resposta).toContain("Não consegui ler suas finanças");
+    expect((await h2.send("e em 10x?"))!.resposta).toContain("Não consigo avaliar com segurança seu orçamento agora.");
   });
   test("qual loja repete fontes com horário, sem busca", async () => {
     const h = harness();
