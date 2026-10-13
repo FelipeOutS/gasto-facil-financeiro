@@ -11,7 +11,23 @@
  * do segredo server-side existente WHATSAPP_BOLETO_FINGERPRINT_SECRET.
  * Sem segredo → não assina (o webhook envia só texto) e recusa botões.
  */
-import { createHmac, hkdfSync, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, hkdfSync, timingSafeEqual } from "node:crypto";
+
+/**
+ * Revisão do conteúdo da sessão (hash canônico de whatsapp_messages.parsed,
+ * chaves ordenadas). Qualquer Ajuste na MESMA sessão muda a revisão e os
+ * botões emitidos antes param de valer. Sem migration: deriva do JSON persistido.
+ */
+function canon(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(canon);
+  if (v && typeof v === "object") {
+    return Object.fromEntries(Object.keys(v as object).sort().map((k) => [k, canon((v as Record<string, unknown>)[k])]));
+  }
+  return v;
+}
+export function expenseSessionRevision(parsed: unknown): string {
+  return createHash("sha256").update(JSON.stringify(canon(parsed ?? null))).digest("base64url").slice(0, 12);
+}
 
 export type ExpenseAction = "confirm" | "adjust" | "cancel";
 const CODE: Record<ExpenseAction, string> = { confirm: "c", adjust: "a", cancel: "x" };
@@ -22,7 +38,7 @@ export const EXPENSE_ACTION_TEXT: Record<ExpenseAction, string> = {
   adjust: "ajustar",
   cancel: "não",
 };
-export const EXPENSE_TOKEN_RE = /^exp1:([cax]):([A-Za-z0-9-]{1,64}):([A-Za-z0-9_-]{22})$/;
+export const EXPENSE_TOKEN_RE = /^exp1:([cax]):([A-Za-z0-9-]{1,64}):([A-Za-z0-9_-]{12}):([A-Za-z0-9_-]{22})$/;
 export const LEGACY_EXPENSE_RE = /^expense_(?:confirm|adjust|cancel)$/;
 
 function key(): Buffer | null {
@@ -31,9 +47,9 @@ function key(): Buffer | null {
   return Buffer.from(hkdfSync("sha256", master, "gi-expense", "gi-expense-button-v1", 32));
 }
 
-function mac(k: Buffer, a: string, userId: string, telefone: string, rowId: string): string {
+function mac(k: Buffer, a: string, userId: string, telefone: string, rowId: string, rev: string): string {
   return createHmac("sha256", k)
-    .update(`exp1|${a}|${userId}|${telefone}|${rowId}`)
+    .update(`exp1|${a}|${userId}|${telefone}|${rowId}|${rev}`)
     .digest("base64url")
     .slice(0, 22);
 }
@@ -43,25 +59,26 @@ export function signExpenseButton(
   userId: string,
   telefone: string,
   rowId: string,
+  rev: string,
 ): string | null {
   const k = key();
-  if (!k) return null;
+  if (!k || !/^[A-Za-z0-9_-]{12}$/.test(rev)) return null;
   const a = CODE[action];
-  return `exp1:${a}:${rowId}:${mac(k, a, userId, telefone, rowId)}`;
+  return `exp1:${a}:${rowId}:${rev}:${mac(k, a, userId, telefone, rowId, rev)}`;
 }
 
 export type ExpenseTokenCheck =
-  | { ok: true; action: ExpenseAction; rowId: string }
+  | { ok: true; action: ExpenseAction; rowId: string; rev: string }
   | { ok: false };
 
 export function verifyExpenseButton(id: string, userId: string, telefone: string): ExpenseTokenCheck {
   const m = EXPENSE_TOKEN_RE.exec(id ?? "");
   const k = key();
   if (!m || !k) return { ok: false };
-  const want = Buffer.from(mac(k, m[1], userId, telefone, m[2]));
-  const got = Buffer.from(m[3]);
+  const want = Buffer.from(mac(k, m[1], userId, telefone, m[2], m[3]));
+  const got = Buffer.from(m[4]);
   if (got.length !== want.length || !timingSafeEqual(got, want)) return { ok: false };
-  return { ok: true, action: FROM_CODE[m[1]], rowId: m[2] };
+  return { ok: true, action: FROM_CODE[m[1]], rowId: m[2], rev: m[3] };
 }
 
 /** Texto do botão (antes da validação de sessão, que ocorre no pipeline). */

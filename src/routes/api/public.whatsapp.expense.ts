@@ -1192,7 +1192,7 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                   // Botões/listas para perguntas conhecidas. Falhou → texto.
                   // Botões de gasto só saem presos à sessão criada por
                   // ESTA mensagem; sem vínculo → só texto (1/2/3).
-                  const rowId =
+                  const vinculo =
                     elig.userId &&
                     (out.resposta.includes(EXPENSE_CONFIRM_FALLBACK) ||
                       out.resposta.includes(CARD_NEW_FALLBACK))
@@ -1205,8 +1205,8 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                       : null;
                   const ir = buildInteractiveFromReply(
                     out.resposta,
-                    rowId && elig.userId
-                      ? { userId: elig.userId, telefone: msg.telefone, rowId }
+                    vinculo && elig.userId
+                      ? { userId: elig.userId, telefone: msg.telefone, rowId: vinculo.rowId, rev: vinculo.rev }
                       : null,
                   );
                   if (ir) {

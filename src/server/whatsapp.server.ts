@@ -15,7 +15,7 @@
  * NUNCA descarta valor/nome/data/forma já coletados.
  */
 import { competenciaPorData } from "@/lib/fatura-competencia";
-import { LEGACY_EXPENSE_RE, verifyExpenseButton } from "./expense-button-token.server";
+import { LEGACY_EXPENSE_RE, expenseSessionRevision, verifyExpenseButton } from "./expense-button-token.server";
 import {
   parseEscolhaFatura,
   perguntaEscolhaFatura,
@@ -1743,7 +1743,7 @@ export async function buscarVinculoBotaoGasto(
   telefone: string,
   externalId: string | null,
   resposta?: string,
-): Promise<string | null> {
+): Promise<{ rowId: string; rev: string } | null> {
   const achar = async (col: "external_id" | "resposta_sugerida", val: string) => {
     const { data } = await supabaseAdmin
       .from("whatsapp_messages")
@@ -1754,7 +1754,7 @@ export async function buscarVinculoBotaoGasto(
       .eq("status", "aguardando_confirmacao")
       .limit(2);
     const rows = toSessaoRows(data).filter((r) => r.session && sessaoEhGasto(r));
-    return rows.length === 1 ? rows[0].id : null;
+    return rows.length === 1 ? { rowId: rows[0].id, rev: expenseSessionRevision(rows[0].session) } : null;
   };
   // 1) linha criada por esta mensagem; 2) ajuste atualiza a MESMA linha no
   // lugar e grava esta resposta exata — só vale se houver uma única.
@@ -3145,6 +3145,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
       v.ok &&
       !!alvo &&
       alvo.id === v.rowId &&
+      expenseSessionRevision(alvo.session) === v.rev &&
       alvo.status === "aguardando_confirmacao" &&
       sessaoEhGasto(alvo);
     if (!valido) {
