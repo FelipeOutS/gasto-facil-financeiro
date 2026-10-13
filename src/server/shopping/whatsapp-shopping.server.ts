@@ -14,6 +14,8 @@ import { createDbQuotaStore, type RpcFn } from "./shopping-quota-db";
 import { buildFinanceSnapshot, type FinanceRows } from "./finance-snapshot";
 import { ultimosMesesCompletos } from "./capacidade-compra";
 import type { ShoppingQuotaStore } from "./shopping-quota";
+import { dbClaimFollowup, SHOPPING_FOLLOWUP_KIND, type FollowupClaim } from "./shopping-followup-claim.server";
+export { SHOPPING_FOLLOWUP_KIND, type FollowupClaim };
 
 export const MSG_SHOPPING_NAO_DISPONIVEL =
   "O assistente de compras não está disponível para sua conta. Os comandos financeiros continuam disponíveis.";
@@ -26,7 +28,11 @@ export type WhatsAppShoppingDeps = {
   loadFinance?: ShoppingDeps["loadFinance"];
   fetchImpl?: typeof fetch;
   now?: () => Date;
+  /** Reserva o wamid da continuação (dedupe de reentrega). */
+  claimFollowup?: FollowupClaim;
 };
+
+export const MSG_FOLLOWUP_FALHA = "Não consegui responder agora. Tente de novo em instantes.";
 
 export function hojeSaoPaulo(d: Date): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
@@ -78,7 +84,7 @@ export function phoneHash(phone: string): string {
 export async function handleWhatsAppShopping(
   msg: { userId: string; phone: string; externalId: string | null; text: string },
   deps: WhatsAppShoppingDeps = {},
-): Promise<{ resposta: string } | null> {
+): Promise<{ resposta: string; duplicate?: boolean } | null> {
   const env = deps.env ?? process.env;
   // Flag OFF: nenhuma leitura (nem de contexto/tabelas novas) — o bot segue intacto.
   if (env.WHATSAPP_SHOPPING_ENABLED !== "true") return null;
@@ -118,6 +124,12 @@ export async function handleWhatsAppShopping(
   if (fu && ctx) {
     if (ctx.expired || ctx.offers.length === 0) return { resposta: MSG_CONTEXTO_EXPIRADO };
     if (fu.kind !== "variante") {
+      // Reentrega do mesmo wamid: no máximo uma resposta. Sem id → falha fechada.
+      // Testes com contexto em memória sem claim explícito não tocam o banco.
+      const claim = deps.claimFollowup ?? (deps.contexts ? async () => "ok" as const : dbClaimFollowup);
+      const c = msg.externalId ? await claim({ userId: msg.userId, phone: msg.phone, externalId: msg.externalId, text: msg.text }).catch(() => "error" as const) : "error";
+      if (c === "dup") return { resposta: "", duplicate: true };
+      if (c === "error") return { resposta: MSG_FOLLOWUP_FALHA };
       const fin = fu.kind === "loja" || fu.kind === "link" ? null : await loadFinance(msg.userId).catch(() => null);
       return { resposta: responderFollowupLocal(fu, ctx, hojeSaoPaulo(now()), fin) };
     }

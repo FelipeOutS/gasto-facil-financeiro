@@ -2852,7 +2852,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
         parsed.kind === "receita" &&
         parsed.status === "salva" &&
         (typeof parsed.receita_id === "string" || typeof parsed.recorrencia_id === "string");
-      if (parsed.kind === "wa12_action" || parsed.kind === "wa12_finance_query") {
+      if (parsed.kind === "wa12_action" || parsed.kind === "wa12_finance_query" || parsed.kind === "shopping_followup") {
         return { status: "duplicada", resposta: "Mensagem já processada anteriormente." };
       }
       if ((existente.status === "salva" && gastoAindaExiste) || receitaSalva) {
@@ -4480,6 +4480,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   if (!sessao && decisao === "outro" && !msg.image && !msg.document && !financialInstallment) {
     // Assistente de Compras: antes da pesquisa antiga; flag OFF → null (sem efeito).
     const shopping = await handleWhatsAppShopping({ userId, phone: msg.telefone, externalId: msg.external_id, text: texto });
+    if (shopping?.duplicate) return { status: "duplicada", resposta: "Mensagem já processada anteriormente." };
     if (shopping) return { status: "consulta", resposta: shopping.resposta };
     const research = await handleWhatsAppResearch({
       userId, phone: msg.telefone, externalId: msg.external_id, text: texto,
