@@ -1,0 +1,316 @@
+diff -ruN '--exclude=node_modules' '--exclude=dist' '--exclude=.output' '--exclude=.tanstack' '--exclude=.nitro' rel-base/src/routes/api/public.whatsapp.expense.ts rel/src/routes/api/public.whatsapp.expense.ts
+--- rel-base/src/routes/api/public.whatsapp.expense.ts	2026-10-12 19:47:20.000000000 +0000
++++ rel/src/routes/api/public.whatsapp.expense.ts	2026-10-13 00:23:16.048589977 +0000
+@@ -1192,7 +1192,7 @@
+                   // Botões/listas para perguntas conhecidas. Falhou → texto.
+                   // Botões de gasto só saem presos à sessão criada por
+                   // ESTA mensagem; sem vínculo → só texto (1/2/3).
+-                  const rowId =
++                  const vinculo =
+                     elig.userId &&
+                     (out.resposta.includes(EXPENSE_CONFIRM_FALLBACK) ||
+                       out.resposta.includes(CARD_NEW_FALLBACK))
+@@ -1205,8 +1205,8 @@
+                       : null;
+                   const ir = buildInteractiveFromReply(
+                     out.resposta,
+-                    rowId && elig.userId
+-                      ? { userId: elig.userId, telefone: msg.telefone, rowId }
++                    vinculo && elig.userId
++                      ? { userId: elig.userId, telefone: msg.telefone, rowId: vinculo.rowId, rev: vinculo.rev }
+                       : null,
+                   );
+                   if (ir) {
+diff -ruN '--exclude=node_modules' '--exclude=dist' '--exclude=.output' '--exclude=.tanstack' '--exclude=.nitro' rel-base/src/server/expense-button-token.server.ts rel/src/server/expense-button-token.server.ts
+--- rel-base/src/server/expense-button-token.server.ts	2026-10-12 19:47:20.000000000 +0000
++++ rel/src/server/expense-button-token.server.ts	2026-10-13 00:23:16.042589977 +0000
+@@ -11,7 +11,23 @@
+  * do segredo server-side existente WHATSAPP_BOLETO_FINGERPRINT_SECRET.
+  * Sem segredo → não assina (o webhook envia só texto) e recusa botões.
+  */
+-import { createHmac, hkdfSync, timingSafeEqual } from "node:crypto";
++import { createHash, createHmac, hkdfSync, timingSafeEqual } from "node:crypto";
++
++/**
++ * Revisão do conteúdo da sessão (hash canônico de whatsapp_messages.parsed,
++ * chaves ordenadas). Qualquer Ajuste na MESMA sessão muda a revisão e os
++ * botões emitidos antes param de valer. Sem migration: deriva do JSON persistido.
++ */
++function canon(v: unknown): unknown {
++  if (Array.isArray(v)) return v.map(canon);
++  if (v && typeof v === "object") {
++    return Object.fromEntries(Object.keys(v as object).sort().map((k) => [k, canon((v as Record<string, unknown>)[k])]));
++  }
++  return v;
++}
++export function expenseSessionRevision(parsed: unknown): string {
++  return createHash("sha256").update(JSON.stringify(canon(parsed ?? null))).digest("base64url").slice(0, 12);
++}
+ 
+ export type ExpenseAction = "confirm" | "adjust" | "cancel";
+ const CODE: Record<ExpenseAction, string> = { confirm: "c", adjust: "a", cancel: "x" };
+@@ -22,7 +38,7 @@
+   adjust: "ajustar",
+   cancel: "não",
+ };
+-export const EXPENSE_TOKEN_RE = /^exp1:([cax]):([A-Za-z0-9-]{1,64}):([A-Za-z0-9_-]{22})$/;
++export const EXPENSE_TOKEN_RE = /^exp1:([cax]):([A-Za-z0-9-]{1,64}):([A-Za-z0-9_-]{12}):([A-Za-z0-9_-]{22})$/;
+ export const LEGACY_EXPENSE_RE = /^expense_(?:confirm|adjust|cancel)$/;
+ 
+ function key(): Buffer | null {
+@@ -31,9 +47,9 @@
+   return Buffer.from(hkdfSync("sha256", master, "gi-expense", "gi-expense-button-v1", 32));
+ }
+ 
+-function mac(k: Buffer, a: string, userId: string, telefone: string, rowId: string): string {
++function mac(k: Buffer, a: string, userId: string, telefone: string, rowId: string, rev: string): string {
+   return createHmac("sha256", k)
+-    .update(`exp1|${a}|${userId}|${telefone}|${rowId}`)
++    .update(`exp1|${a}|${userId}|${telefone}|${rowId}|${rev}`)
+     .digest("base64url")
+     .slice(0, 22);
+ }
+@@ -43,25 +59,26 @@
+   userId: string,
+   telefone: string,
+   rowId: string,
++  rev: string,
+ ): string | null {
+   const k = key();
+-  if (!k) return null;
++  if (!k || !/^[A-Za-z0-9_-]{12}$/.test(rev)) return null;
+   const a = CODE[action];
+-  return `exp1:${a}:${rowId}:${mac(k, a, userId, telefone, rowId)}`;
++  return `exp1:${a}:${rowId}:${rev}:${mac(k, a, userId, telefone, rowId, rev)}`;
+ }
+ 
+ export type ExpenseTokenCheck =
+-  | { ok: true; action: ExpenseAction; rowId: string }
++  | { ok: true; action: ExpenseAction; rowId: string; rev: string }
+   | { ok: false };
+ 
+ export function verifyExpenseButton(id: string, userId: string, telefone: string): ExpenseTokenCheck {
+   const m = EXPENSE_TOKEN_RE.exec(id ?? "");
+   const k = key();
+   if (!m || !k) return { ok: false };
+-  const want = Buffer.from(mac(k, m[1], userId, telefone, m[2]));
+-  const got = Buffer.from(m[3]);
++  const want = Buffer.from(mac(k, m[1], userId, telefone, m[2], m[3]));
++  const got = Buffer.from(m[4]);
+   if (got.length !== want.length || !timingSafeEqual(got, want)) return { ok: false };
+-  return { ok: true, action: FROM_CODE[m[1]], rowId: m[2] };
++  return { ok: true, action: FROM_CODE[m[1]], rowId: m[2], rev: m[3] };
+ }
+ 
+ /** Texto do botão (antes da validação de sessão, que ocorre no pipeline). */
+diff -ruN '--exclude=node_modules' '--exclude=dist' '--exclude=.output' '--exclude=.tanstack' '--exclude=.nitro' rel-base/src/server/whatsapp-interactive.server.ts rel/src/server/whatsapp-interactive.server.ts
+--- rel-base/src/server/whatsapp-interactive.server.ts	2026-10-12 19:47:20.000000000 +0000
++++ rel/src/server/whatsapp-interactive.server.ts	2026-10-13 00:23:16.043589977 +0000
+@@ -233,7 +233,7 @@
+  * Decide se a resposta textual ganha botões/lista. Só reconhece perguntas
+  * existentes — nunca muda o texto nem o fluxo.
+  */
+-export type ExpenseButtonBinding = { userId: string; telefone: string; rowId: string };
++export type ExpenseButtonBinding = { userId: string; telefone: string; rowId: string; rev: string };
+ 
+ /**
+  * Igual a buildInteractiveFromReplyRaw, mas troca os IDs genéricos de gasto
+@@ -256,6 +256,7 @@
+       bind.userId,
+       bind.telefone,
+       bind.rowId,
++      bind.rev,
+     );
+     if (!t) return null;
+     b.id = t;
+diff -ruN '--exclude=node_modules' '--exclude=dist' '--exclude=.output' '--exclude=.tanstack' '--exclude=.nitro' rel-base/src/server/whatsapp.server.ts rel/src/server/whatsapp.server.ts
+--- rel-base/src/server/whatsapp.server.ts	2026-10-12 19:47:20.000000000 +0000
++++ rel/src/server/whatsapp.server.ts	2026-10-13 00:23:16.047589977 +0000
+@@ -15,7 +15,7 @@
+  * NUNCA descarta valor/nome/data/forma já coletados.
+  */
+ import { competenciaPorData } from "@/lib/fatura-competencia";
+-import { LEGACY_EXPENSE_RE, verifyExpenseButton } from "./expense-button-token.server";
++import { LEGACY_EXPENSE_RE, expenseSessionRevision, verifyExpenseButton } from "./expense-button-token.server";
+ import {
+   parseEscolhaFatura,
+   perguntaEscolhaFatura,
+@@ -1742,7 +1742,7 @@
+   telefone: string,
+   externalId: string | null,
+   resposta?: string,
+-): Promise<string | null> {
++): Promise<{ rowId: string; rev: string } | null> {
+   const achar = async (col: "external_id" | "resposta_sugerida", val: string) => {
+     const { data } = await supabaseAdmin
+       .from("whatsapp_messages")
+@@ -1753,7 +1753,7 @@
+       .eq("status", "aguardando_confirmacao")
+       .limit(2);
+     const rows = toSessaoRows(data).filter((r) => r.session && sessaoEhGasto(r));
+-    return rows.length === 1 ? rows[0].id : null;
++    return rows.length === 1 ? { rowId: rows[0].id, rev: expenseSessionRevision(rows[0].session) } : null;
+   };
+   // 1) linha criada por esta mensagem; 2) ajuste atualiza a MESMA linha no
+   // lugar e grava esta resposta exata — só vale se houver uma única.
+@@ -3143,6 +3143,7 @@
+       v.ok &&
+       !!alvo &&
+       alvo.id === v.rowId &&
++      expenseSessionRevision(alvo.session) === v.rev &&
+       alvo.status === "aguardando_confirmacao" &&
+       sessaoEhGasto(alvo);
+     if (!valido) {
+diff -ruN '--exclude=node_modules' '--exclude=dist' '--exclude=.output' '--exclude=.tanstack' '--exclude=.nitro' rel-base/tests/whatsapp-botoes-contexto-2026-10-12.test.ts rel/tests/whatsapp-botoes-contexto-2026-10-12.test.ts
+--- rel-base/tests/whatsapp-botoes-contexto-2026-10-12.test.ts	2026-10-12 19:47:20.000000000 +0000
++++ rel/tests/whatsapp-botoes-contexto-2026-10-12.test.ts	2026-10-13 00:23:56.891591437 +0000
+@@ -28,8 +28,9 @@
+ /** Simula o webhook: assina os botões com a sessão criada pela própria mensagem. */
+ async function abrirGasto(texto: string) {
+   const { out, external_id } = await send(texto);
+-  const rowId = await buscarVinculoBotaoGasto(U, tel, external_id, out.resposta ?? "");
+-  const ir = buildInteractiveFromReply(out.resposta ?? "", rowId ? { userId: U, telefone: tel, rowId } : null);
++  const v = await buscarVinculoBotaoGasto(U, tel, external_id, out.resposta ?? "");
++  const rowId = v?.rowId ?? null;
++  const ir = buildInteractiveFromReply(out.resposta ?? "", v ? { userId: U, telefone: tel, rowId: v.rowId, rev: v.rev } : null);
+   const ids = ir && ir.type === "button" ? ir.buttons.map((b) => b.id) : [];
+   return { out, rowId, ids };
+ }
+@@ -49,7 +50,7 @@
+ 
+ describe("token do botão de gasto", () => {
+   test("cabe no limite da Graph e é verificável só pelo mesmo usuário/telefone", () => {
+-    const id = signExpenseButton("confirm", U, tel, "11111111-1111-1111-1111-111111111111")!;
++    const id = signExpenseButton("confirm", U, tel, "11111111-1111-1111-1111-111111111111", "AAAAAAAAAAAA")!;
+     expect(id.length).toBeLessThanOrEqual(256);
+     expect(verifyExpenseButton(id, U, tel).ok).toBe(true);
+     expect(verifyExpenseButton(id, "u2", tel).ok).toBe(false);
+@@ -58,6 +59,8 @@
+     expect(verifyExpenseButton(forjado, U, tel).ok).toBe(false);
+     const trocaAcao = id.replace("exp1:c:", "exp1:x:");
+     expect(verifyExpenseButton(trocaAcao, U, tel).ok).toBe(false);
++    const trocaRev = id.replace(":AAAAAAAAAAAA:", ":BBBBBBBBBBBB:");
++    expect(verifyExpenseButton(trocaRev, U, tel).ok).toBe(false);
+   });
+ 
+   test("sem vínculo de sessão, nenhum botão genérico é emitido (só texto)", () => {
+@@ -115,7 +118,7 @@
+   });
+ 
+   test("sem sessão: botão recusado sem gravar", async () => {
+-    const id = signExpenseButton("confirm", U, tel, "22222222-2222-2222-2222-222222222222")!;
++    const id = signExpenseButton("confirm", U, tel, "22222222-2222-2222-2222-222222222222", "AAAAAAAAAAAA")!;
+     expect((await tap(id)).resposta).toBe(EXPENSE_BUTTON_STALE);
+     expect(gastosInserts().length).toBe(0);
+   });
+@@ -144,9 +147,38 @@
+     await send("valor");
+     const b = await abrirGasto("35");
+     expect(b.ids.length).toBe(3);
+-    // Mesmo gasto (mesma sessão): os botões apontam para a mesma operação.
++    // Mesmo gasto (mesma sessão), mas revisão nova: botões diferentes.
+     expect(b.rowId).toBe(a.rowId);
++    expect(b.ids[0]).not.toBe(a.ids[0]);
+     await tap(b.ids[0]);
+     expect(gastosInserts().length).toBe(1);
+   });
++
++  for (const [campo, novo] of [["valor", "35"], ["descricao", "padaria"], ["pagamento", "dinheiro"]] as const) {
++    test(`após Ajustar ${campo}: botões ANTERIORES recusados, NOVOS aceitos`, async () => {
++      const a = await abrirGasto("gastei 30 no mercado no pix");
++      await send("ajustar");
++      await send(campo);
++      const b = await abrirGasto(novo);
++      // valor/descrição reescrevem a MESMA linha; pagamento abre linha nova.
++      if (campo !== "pagamento") expect(b.rowId).toBe(a.rowId);
++      for (const id of a.ids) expect((await tap(id)).resposta).toBe(EXPENSE_BUTTON_STALE);
++      expect(gastosInserts().length).toBe(0);
++      const r = await tap(b.ids[0]);
++      expect(r.resposta).not.toBe(EXPENSE_BUTTON_STALE);
++      expect(gastosInserts().length).toBe(1);
++      expect((await tap(b.ids[0])).resposta).toBe(EXPENSE_BUTTON_STALE); // clique duplo
++      expect(gastosInserts().length).toBe(1);
++    });
++  }
++
++  test("após Ajustar, Cancelar antigo não cancela; texto 'sim' continua confirmando", async () => {
++    const a = await abrirGasto("gastei 30 no mercado no pix");
++    await send("ajustar");
++    await send("valor");
++    await abrirGasto("35");
++    expect((await tap(a.ids[2])).resposta).toBe(EXPENSE_BUTTON_STALE);
++    await send("sim");
++    expect(gastosInserts().length).toBe(1);
++  });
+ });
+diff -ruN '--exclude=node_modules' '--exclude=dist' '--exclude=.output' '--exclude=.tanstack' '--exclude=.nitro' rel-base/tests/whatsapp-cartao-cadastro-2026-10-01.test.ts rel/tests/whatsapp-cartao-cadastro-2026-10-01.test.ts
+--- rel-base/tests/whatsapp-cartao-cadastro-2026-10-01.test.ts	2026-10-12 19:47:20.000000000 +0000
++++ rel/tests/whatsapp-cartao-cadastro-2026-10-01.test.ts	2026-10-13 00:25:19.546594393 +0000
+@@ -5,7 +5,7 @@
+  */
+ import { test, expect, beforeEach, afterEach, describe, setSystemTime } from "bun:test";
+ process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET ??= "test-secret-ficticio-0123456789abcdef";
+-const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test" };
++const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test", rev: "AAAAAAAAAAAA" };
+ import { resetState, gastosInserts, setupWhatsAppFakeMocks, state } from "./_whatsapp-fake";
+ setupWhatsAppFakeMocks();
+ 
+diff -ruN '--exclude=node_modules' '--exclude=dist' '--exclude=.output' '--exclude=.tanstack' '--exclude=.nitro' rel-base/tests/whatsapp-cartao-nao-cadastrado-frase-2026-10-01.test.ts rel/tests/whatsapp-cartao-nao-cadastrado-frase-2026-10-01.test.ts
+--- rel-base/tests/whatsapp-cartao-nao-cadastrado-frase-2026-10-01.test.ts	2026-10-12 19:47:20.000000000 +0000
++++ rel/tests/whatsapp-cartao-nao-cadastrado-frase-2026-10-01.test.ts	2026-10-13 00:25:19.546594393 +0000
+@@ -5,7 +5,7 @@
+  */
+ import { test, expect, beforeEach, afterEach, describe, setSystemTime } from "bun:test";
+ process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET ??= "test-secret-ficticio-0123456789abcdef";
+-const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test" };
++const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test", rev: "AAAAAAAAAAAA" };
+ import { resetState, gastosInserts, setupWhatsAppFakeMocks, state } from "./_whatsapp-fake";
+ setupWhatsAppFakeMocks();
+ 
+diff -ruN '--exclude=node_modules' '--exclude=dist' '--exclude=.output' '--exclude=.tanstack' '--exclude=.nitro' rel-base/tests/whatsapp-cartao-unico-auto-2026-10-01.test.ts rel/tests/whatsapp-cartao-unico-auto-2026-10-01.test.ts
+--- rel-base/tests/whatsapp-cartao-unico-auto-2026-10-01.test.ts	2026-10-12 19:47:20.000000000 +0000
++++ rel/tests/whatsapp-cartao-unico-auto-2026-10-01.test.ts	2026-10-13 00:25:19.546594393 +0000
+@@ -4,7 +4,7 @@
+  */
+ import { test, expect, beforeEach, afterEach, describe, setSystemTime } from "bun:test";
+ process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET ??= "test-secret-ficticio-0123456789abcdef";
+-const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test" };
++const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test", rev: "AAAAAAAAAAAA" };
+ import { resetState, gastosInserts, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+ setupWhatsAppFakeMocks();
+ 
+diff -ruN '--exclude=node_modules' '--exclude=dist' '--exclude=.output' '--exclude=.tanstack' '--exclude=.nitro' rel-base/tests/whatsapp-confirmar-ajustar-cancelar.test.ts rel/tests/whatsapp-confirmar-ajustar-cancelar.test.ts
+--- rel-base/tests/whatsapp-confirmar-ajustar-cancelar.test.ts	2026-10-12 19:47:20.000000000 +0000
++++ rel/tests/whatsapp-confirmar-ajustar-cancelar.test.ts	2026-10-13 00:25:19.546594393 +0000
+@@ -4,7 +4,7 @@
+  */
+ import { test, expect, beforeEach, describe } from "bun:test";
+ process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET ??= "test-secret-ficticio-0123456789abcdef";
+-const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test" };
++const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test", rev: "AAAAAAAAAAAA" };
+ import { resetState, gastosInserts, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+ setupWhatsAppFakeMocks();
+ 
+diff -ruN '--exclude=node_modules' '--exclude=dist' '--exclude=.output' '--exclude=.tanstack' '--exclude=.nitro' rel-base/tests/whatsapp-foundation-access-outbound.test.ts rel/tests/whatsapp-foundation-access-outbound.test.ts
+--- rel-base/tests/whatsapp-foundation-access-outbound.test.ts	2026-10-12 19:47:20.000000000 +0000
++++ rel/tests/whatsapp-foundation-access-outbound.test.ts	2026-10-13 00:25:19.546594393 +0000
+@@ -1,6 +1,6 @@
+ import { test, expect, describe } from "bun:test";
+ process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET ??= "test-secret-ficticio-0123456789abcdef";
+-const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test" };
++const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test", rev: "AAAAAAAAAAAA" };
+ import { planAllowsFeature, plansAllowingFeature, type PlanTier } from "../src/lib/plans";
+ import {
+   recordOutboundSend,
+diff -ruN '--exclude=node_modules' '--exclude=dist' '--exclude=.output' '--exclude=.tanstack' '--exclude=.nitro' rel-base/tests/whatsapp-ux-menu-botoes-2026-10-01.test.ts rel/tests/whatsapp-ux-menu-botoes-2026-10-01.test.ts
+--- rel-base/tests/whatsapp-ux-menu-botoes-2026-10-01.test.ts	2026-10-12 19:47:20.000000000 +0000
++++ rel/tests/whatsapp-ux-menu-botoes-2026-10-01.test.ts	2026-10-13 00:25:19.546594393 +0000
+@@ -5,7 +5,7 @@
+  */
+ import { test, expect, beforeEach, describe } from "bun:test";
+ process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET ??= "test-secret-ficticio-0123456789abcdef";
+-const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test" };
++const TEST_BIND = { userId: "u1", telefone: "5511999998888", rowId: "m-test", rev: "AAAAAAAAAAAA" };
+ import { resetState, gastosInserts, setupWhatsAppFakeMocks } from "./_whatsapp-fake";
+ setupWhatsAppFakeMocks();
+ 
