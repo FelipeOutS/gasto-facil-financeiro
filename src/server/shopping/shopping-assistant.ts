@@ -6,7 +6,7 @@
 import { detectShoppingIntent, type ShoppingIntent } from "./shopping-intent";
 import { searchShopping, type Offer } from "./serpapi-shopping";
 import { rotuloVariante, rotuloLink, variantesMisturadas, MSG_ESCOLHA_VARIANTE } from "./offer-specs";
-import { estimarCapacidadeCompra, type CapacidadeInput } from "./capacidade-compra";
+import { MSG_NAO_AVALIA, estimarCapacidadeCompra, type CapacidadeInput } from "./capacidade-compra";
 import { monthKeySaoPaulo, USER_MONTHLY_LIMIT, type ShoppingQuotaStore } from "./shopping-quota";
 
 export const MSG_SEM_CHAVE =
@@ -80,7 +80,7 @@ export async function handleShoppingMessage(
         : "Com base na oferta de menor preço encontrada para essa variante:";
       body += `\n\n💰 ${base}\n${cap.mensagem}`;
     } catch {
-      body += "\n\nNão consegui estimar o impacto no seu orçamento agora.";
+      body += `\n\n${MSG_NAO_AVALIA} Os preços acima continuam valendo como consulta.`;
     }
   }
   let userRemaining: number | null = null;

@@ -7,7 +7,7 @@
 import type { Offer } from "./serpapi-shopping";
 import { rotuloLink, rotuloVariante } from "./offer-specs";
 import { sanitizeQuery } from "./shopping-intent";
-import { AVISO_APERTO, LIMITE_PCT_FOLGA, estimarCapacidadeCompra, type CapacidadeInput } from "./capacidade-compra";
+import { AVISO_APERTO, LIMITE_PCT_FOLGA, MSG_NAO_AVALIA, estimarCapacidadeCompra, type CapacidadeInput } from "./capacidade-compra";
 
 export type ShoppingContext = { query: string; offers: Offer[]; collectedAt: string; expired: boolean };
 export type Followup =
@@ -72,9 +72,9 @@ export function mesesAte(hojeISO: string, mesAlvo: number): number {
 type Fin = Omit<CapacidadeInput, "precoCents"> | null;
 
 function analiseFolga(valorMensal: number, fin: Fin): string {
-  if (!fin) return "Não consegui ler suas finanças agora, então não digo se cabe no orçamento.";
+  if (!fin) return MSG_NAO_AVALIA;
   const cap = estimarCapacidadeCompra({ ...fin, precoCents: Math.max(valorMensal, 1), parcelas: [] });
-  if (cap.confianca === "insuficiente" || cap.folgaCents === null) return "Não tenho receitas suficientes dos últimos 3 meses para dizer se cabe no seu orçamento.";
+  if (cap.confianca === "insuficiente" || cap.folgaCents === null) return cap.mensagem;
   const pre = cap.confianca === "baixa" ? "Estimativa com baixa confiança. " : "";
   if (cap.folgaCents <= 0) return `${pre}Pela estimativa, sua folga mensal está zerada; isso não cabe hoje. ${AVISO_APERTO}`;
   const pct = Math.round((valorMensal * 1000) / cap.folgaCents) / 10;

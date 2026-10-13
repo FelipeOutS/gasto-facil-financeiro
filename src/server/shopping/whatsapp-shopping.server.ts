@@ -38,23 +38,25 @@ export async function loadFinanceReadOnly(userId: string, hoje: string) {
   const meses = ultimosMesesCompletos(hoje);
   const inicio = `${meses[meses.length - 1]}-01`;
   const LIM = 2000;
-  const [rec, gas, recs, contas] = await Promise.all([
-    supabaseAdmin.from("receitas").select("id,data,valor,descricao,origem,tipo")
+  const [rec, gas, recs, contas, cards] = await Promise.all([
+    supabaseAdmin.from("receitas").select("id,user_id,data,valor,descricao,origem,tipo")
       .eq("user_id", userId).is("deleted_at", null).gte("data", inicio).lt("data", `${hoje.slice(0, 7)}-01`).limit(LIM),
     supabaseAdmin.from("gastos")
-      .select("id,data,valor,gasto_fixo,recorrencia_id,total_parcelas,parcela_atual,grupo_parcelamento_id")
+      .select("id,user_id,data,valor,gasto_fixo,recorrencia_id,total_parcelas,parcela_atual,grupo_parcelamento_id,cartao_id")
       .eq("user_id", userId).is("deleted_at", null).or(`data.gte.${inicio},total_parcelas.gt.1`).limit(LIM),
-    supabaseAdmin.from("recorrencias").select("id,valor,status,frequencia").eq("user_id", userId).limit(LIM),
-    supabaseAdmin.from("contas_a_pagar").select("id,nome,valor,status,gasto_id,recorrencia_id,data_vencimento")
-      .eq("user_id", userId).gte("data_vencimento", `${hoje.slice(0, 7)}-01`).limit(LIM),
+    supabaseAdmin.from("recorrencias").select("id,user_id,valor,status,frequencia").eq("user_id", userId).limit(LIM),
+    supabaseAdmin.from("contas_a_pagar").select("id,user_id,nome,valor,status,gasto_id,recorrencia_id,data_vencimento")
+      // histórico dos 3 meses (fixos pagos) + qualquer conta não paga (vencidas antigas)
+      .eq("user_id", userId).or(`data_vencimento.gte.${inicio},status.neq.pago`).limit(LIM),
+    supabaseAdmin.from("cartoes").select("id,user_id,nome,banco").eq("user_id", userId).limit(LIM),
   ]);
-  for (const r of [rec, gas, recs, contas]) {
+  for (const r of [rec, gas, recs, contas, cards]) {
     if (r.error || !Array.isArray(r.data)) throw new Error("finance_unavailable");
     if (r.data.length >= LIM) throw new Error("finance_too_many_rows"); // sem análise parcial
   }
   return buildFinanceSnapshot(hoje, {
-    receitas: rec.data, gastos: gas.data, recorrencias: recs.data, contas: contas.data,
-  } as unknown as FinanceRows);
+    receitas: rec.data, gastos: gas.data, recorrencias: recs.data, contas: contas.data, cartoes: cards.data,
+  } as FinanceRows, { userId });
 }
 
 export function phoneHash(phone: string): string {
