@@ -5,7 +5,10 @@
  * Sem SQL candidato aplicado, a RPC falha e a resposta é fail-closed SEM SerpApi.
  * Somente leitura financeira: nenhum insert/update/delete em tabelas financeiras.
  */
-import { detectShoppingIntent } from "./shopping-intent";
+import { createHash } from "node:crypto";
+import { detectShoppingIntent, type ShoppingIntent } from "./shopping-intent";
+import { detectShoppingFollowup, resolverVariante, responderFollowupLocal, MSG_CONTEXTO_EXPIRADO, msgConfirmarVariante, type ShoppingContext } from "./shopping-followup";
+import { createDbContextStore, type ShoppingContextStore } from "./shopping-context";
 import { handleShoppingMessage, type ShoppingDeps } from "./shopping-assistant";
 import { createDbQuotaStore, type RpcFn } from "./shopping-quota-db";
 import { buildFinanceSnapshot, type FinanceRows } from "./finance-snapshot";
@@ -19,6 +22,7 @@ export type WhatsAppShoppingDeps = {
   env?: Record<string, string | undefined>;
   isEntitled?: (userId: string) => Promise<boolean>;
   quota?: ShoppingQuotaStore;
+  contexts?: ShoppingContextStore;
   loadFinance?: ShoppingDeps["loadFinance"];
   fetchImpl?: typeof fetch;
   now?: () => Date;
@@ -53,13 +57,38 @@ export async function loadFinanceReadOnly(userId: string, hoje: string) {
   } as unknown as FinanceRows);
 }
 
+export function phoneHash(phone: string): string {
+  return createHash("sha256").update(phone.replace(/\D/g, "")).digest("hex");
+}
+
 export async function handleWhatsAppShopping(
-  msg: { userId: string; externalId: string | null; text: string },
+  msg: { userId: string; phone: string; externalId: string | null; text: string },
   deps: WhatsAppShoppingDeps = {},
 ): Promise<{ resposta: string } | null> {
   const env = deps.env ?? process.env;
-  if (!detectShoppingIntent(msg.text)) return null;
+  // Flag OFF: nenhuma leitura (nem de contexto/tabelas novas) — o bot segue intacto.
   if (env.WHATSAPP_SHOPPING_ENABLED !== "true") return null;
+  const intent = detectShoppingIntent(msg.text);
+  const fu = intent ? null : detectShoppingFollowup(msg.text);
+  if (!intent && !fu) return null;
+  const now = deps.now ?? (() => new Date());
+  let rpc: RpcFn | null = null;
+  const getRpc = async () => {
+    if (!rpc) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      rpc = supabaseAdmin.rpc.bind(supabaseAdmin) as unknown as RpcFn;
+    }
+    return rpc;
+  };
+  const contexts = deps.contexts ?? createDbContextStore((fn, a) => getRpc().then((r) => r(fn, a)));
+  const hash = phoneHash(msg.phone);
+
+  let ctx: ShoppingContext | null = null;
+  if (fu) {
+    // Sem contexto de compras deste usuário+telefone, a frase curta não é nossa.
+    try { ctx = await contexts.get(msg.userId, hash); } catch { return null; }
+    if (!ctx) return null;
+  }
   const entitled = deps.isEntitled
     ? await deps.isEntitled(msg.userId).catch(() => false)
     : await (async () => {
@@ -67,18 +96,27 @@ export async function handleWhatsAppShopping(
         return (await getWhatsAppEntitlement(msg.userId)).allowed;
       })().catch(() => false);
   if (!entitled) return { resposta: MSG_SHOPPING_NAO_DISPONIVEL };
-  let quota = deps.quota;
-  if (!quota) {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    quota = createDbQuotaStore(supabaseAdmin.rpc.bind(supabaseAdmin) as unknown as RpcFn);
+  const loadFinance = deps.loadFinance ?? ((uid: string) => loadFinanceReadOnly(uid, hojeSaoPaulo(now())));
+
+  let searchIntent: ShoppingIntent | undefined;
+  if (fu && ctx) {
+    if (ctx.expired || ctx.offers.length === 0) return { resposta: MSG_CONTEXTO_EXPIRADO };
+    if (fu.kind !== "variante") {
+      const fin = await loadFinance(msg.userId).catch(() => null);
+      return { resposta: responderFollowupLocal(fu, ctx, hojeSaoPaulo(now()), fin) };
+    }
+    const q = resolverVariante(ctx.query, fu.termo);
+    if (!q) return { resposta: msgConfirmarVariante(fu.termo) };
+    searchIntent = { query: q, wantsBudget: true, wantsUsed: false };
   }
-  const now = deps.now ?? (() => new Date());
-  return handleShoppingMessage(msg, {
-    enabled: true,
-    apiKey: env.SERPAPI_API_KEY,
-    quota,
-    fetchImpl: deps.fetchImpl,
-    now,
-    loadFinance: deps.loadFinance ?? ((uid) => loadFinanceReadOnly(uid, hojeSaoPaulo(now()))),
-  });
+  const quota = deps.quota ?? createDbQuotaStore((fn, a) => getRpc().then((r) => r(fn, a)));
+  const out = await handleShoppingMessage(msg, {
+    enabled: true, apiKey: env.SERPAPI_API_KEY, quota, fetchImpl: deps.fetchImpl, now, loadFinance,
+  }, { intent: searchIntent });
+  if (!out) return null;
+  if (out.search) {
+    try { await contexts.save(msg.userId, hash, out.search.query, out.search.offers, out.search.collectedAt); }
+    catch { /* sem contexto: continuações pedirão nova pesquisa */ }
+  }
+  return { resposta: out.resposta };
 }

@@ -25,44 +25,44 @@ describe("gate e roteamento", () => {
   test("flag OFF (padrão) → null, nada chamado", async () => {
     const s = fetchSpy();
     let ent = 0;
-    const r = await handleWhatsAppShopping({ userId: U, externalId: "e1", text: TXT },
+    const r = await handleWhatsAppShopping({ userId: U, phone: "5511900000001", externalId: "e1", text: TXT },
       { env: {}, fetchImpl: s.f, isEntitled: async () => { ent++; return true; }, quota: createMemoryQuotaStore() });
     expect(r).toBeNull(); expect(s.urls.length).toBe(0); expect(ent).toBe(0);
   });
   test("WHATSAPP_RESEARCH_ENABLED não liga compras", async () => {
-    const r = await handleWhatsAppShopping({ userId: U, externalId: "e1", text: TXT }, { env: { WHATSAPP_RESEARCH_ENABLED: "true", SERPAPI_API_KEY: "k" } });
+    const r = await handleWhatsAppShopping({ userId: U, phone: "5511900000001", externalId: "e1", text: TXT }, { env: { WHATSAPP_RESEARCH_ENABLED: "true", SERPAPI_API_KEY: "k" } });
     expect(r).toBeNull();
   });
   test("lançamentos/supermercado/comprovante não interceptados mesmo com flag ON", async () => {
     for (const t of ["comprei um iphone por 4000", "gastei 89,90 no cartão", "quanto custa o arroz no mercado", "segue o comprovante do boleto", "me lembra de pagar a fatura"])
-      expect(await handleWhatsAppShopping({ userId: U, externalId: "x", text: t }, { env: ON })).toBeNull();
+      expect(await handleWhatsAppShopping({ userId: U, phone: "5511900000001", externalId: "x", text: t }, { env: ON })).toBeNull();
   });
   test("sem elegibilidade → mensagem, sem busca", async () => {
     const s = fetchSpy();
-    const r = await handleWhatsAppShopping({ userId: U, externalId: "e1", text: TXT }, { env: ON, fetchImpl: s.f, isEntitled: async () => false, quota: createMemoryQuotaStore() });
+    const r = await handleWhatsAppShopping({ userId: U, phone: "5511900000001", externalId: "e1", text: TXT }, { env: ON, fetchImpl: s.f, isEntitled: async () => false, quota: createMemoryQuotaStore() });
     expect(r?.resposta).toBe(MSG_SHOPPING_NAO_DISPONIVEL); expect(s.urls.length).toBe(0);
   });
   test("sem chave → busca não configurada, sem chamada", async () => {
     const s = fetchSpy();
-    const r = await handleWhatsAppShopping({ userId: U, externalId: "e1", text: TXT }, { env: { WHATSAPP_SHOPPING_ENABLED: "true" }, fetchImpl: s.f, isEntitled: async () => true, quota: createMemoryQuotaStore() });
+    const r = await handleWhatsAppShopping({ userId: U, phone: "5511900000001", externalId: "e1", text: TXT }, { env: { WHATSAPP_SHOPPING_ENABLED: "true" }, fetchImpl: s.f, isEntitled: async () => true, quota: createMemoryQuotaStore() });
     expect(r?.resposta).toBe(MSG_SEM_CHAVE); expect(s.urls.length).toBe(0);
   });
   test("SQL não aplicado (RPC erro) → fail-closed sem SerpApi", async () => {
     const s = fetchSpy();
     const rpc: RpcFn = async () => ({ data: null, error: { message: "function does not exist" } });
-    const r = await handleWhatsAppShopping({ userId: U, externalId: "e1", text: TXT }, { env: ON, fetchImpl: s.f, isEntitled: async () => true, quota: createDbQuotaStore(rpc), loadFinance: finOk, now: NOW });
+    const r = await handleWhatsAppShopping({ userId: U, phone: "5511900000001", externalId: "e1", text: TXT }, { env: ON, fetchImpl: s.f, isEntitled: async () => true, quota: createDbQuotaStore(rpc), loadFinance: finOk, now: NOW });
     expect(r?.resposta).toBe(MSG_FALHA); expect(s.urls.length).toBe(0);
   });
   test("webhook duplicado → não busca de novo", async () => {
     const s = fetchSpy(); const q = createMemoryQuotaStore();
     const d = { env: ON, fetchImpl: s.f, isEntitled: async () => true, quota: q, loadFinance: finOk, now: NOW };
-    const a = await handleWhatsAppShopping({ userId: U, externalId: "dup", text: TXT }, d);
-    const b = await handleWhatsAppShopping({ userId: U, externalId: "dup", text: TXT }, d);
+    const a = await handleWhatsAppShopping({ userId: U, phone: "5511900000001", externalId: "dup", text: TXT }, d);
+    const b = await handleWhatsAppShopping({ userId: U, phone: "5511900000001", externalId: "dup", text: TXT }, d);
     expect(s.urls.length).toBe(1); expect(b?.resposta).toContain("Loja A"); expect(a?.resposta).toContain("9 de 10");
   });
   test("SerpApi recebe só a busca, nunca dados financeiros/usuário", async () => {
     const s = fetchSpy();
-    await handleWhatsAppShopping({ userId: U, externalId: "p", text: "quero comprar iphone 15 128gb, meu cpf 123.456.789-00 cabe no orçamento?" },
+    await handleWhatsAppShopping({ userId: U, phone: "5511900000001", externalId: "p", text: "quero comprar iphone 15 128gb, meu cpf 123.456.789-00 cabe no orçamento?" },
       { env: ON, fetchImpl: s.f, isEntitled: async () => true, quota: createMemoryQuotaStore(), loadFinance: finOk, now: NOW });
     const q = new URL(s.urls[0]).searchParams;
     expect(q.get("q")).not.toMatch(/\d{3}\.\d{3}/); expect(s.urls[0]).not.toContain(U); expect(s.urls[0]).not.toContain("500000");
