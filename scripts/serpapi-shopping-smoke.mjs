@@ -50,7 +50,7 @@ export function isExactVariant(title) {
   if (s.chips.length !== 1 || s.chips[0] !== "m4") return false;
   if (s.ram.length !== 1 || s.ram[0] !== 16) return false;
   if (s.screens.length > 1 || s.ssd.length > 1) return false;
-  return true;
+  return !NAO_NOVO.test(norm(title));
 }
 export const isNotNew = (text) => NAO_NOVO.test(norm(text));
 const fmtSsd = (g) => (g >= 1024 ? `${g / 1024}TB` : `${g}GB`);
