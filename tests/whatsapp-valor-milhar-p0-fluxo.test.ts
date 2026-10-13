@@ -38,7 +38,7 @@ test("Ajustar valor '2.500' => R$ 2.500,00 e salva 2500, nunca 2,50", async () =
   expect(s.status).toBe("salva");
   const ins = gastosInserts();
   expect(ins).toHaveLength(1);
-  expect(Number((ins[0] as { valor: number }).valor)).toBe(2500);
+  expect(Number((ins[0] as any).row?.valor ?? (ins[0] as any).values?.valor ?? (ins[0] as any).data?.valor)).toBe(2500);
 });
 
 test("Ajustar valor malformado '2.500.00' pede de novo, sem salvar", async () => {
