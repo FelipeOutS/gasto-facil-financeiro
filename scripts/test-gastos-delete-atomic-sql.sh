@@ -19,7 +19,7 @@ P=(psql -X -q -v ON_ERROR_STOP=1 -h "$D" -p "$PORT" -U gi_test -d postgres)
 # Corrida: conexão 1 marca excluído e segura a transação; conexão 2 tenta estornar.
 A=aaaaaaaa-0000-0000-0000-000000000001
 "${P[@]}" -c "INSERT INTO public.gastos(id,user_id,valor,data) VALUES ('f1000000-0000-0000-0000-000000000001','$A',1,'2026-09-01'),('f1000000-0000-0000-0000-000000000002','$A',1,'2026-09-01'); INSERT INTO public.contas_a_pagar VALUES ('cf000000-0000-0000-0000-000000000001','$A','pago','2026-09-01',NULL);"
-( "${P[@]}" -c "BEGIN; SET LOCAL gi.gastos_soft_delete='on'; UPDATE public.gastos SET deleted_at=now(), deleted_by=user_id WHERE id='f1000000-0000-0000-0000-000000000002'; SELECT pg_sleep(2); COMMIT;" ) &
+( "${P[@]}" -c "BEGIN; SET LOCAL gi.gastos_soft_delete='on'; UPDATE public.gastos SET deleted_at=now(), deleted_by=user_id, deletion_batch_id=gen_random_uuid(), deletion_source='teste' WHERE id='f1000000-0000-0000-0000-000000000002'; SELECT pg_sleep(2); COMMIT;" ) &
 sleep 0.5
 OUT=$("${P[@]}" -c "SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','$A',false); SELECT public.estornar_conta_gastos_atomic('cf000000-0000-0000-0000-000000000001', ARRAY['f1000000-0000-0000-0000-000000000001','f1000000-0000-0000-0000-000000000002']::uuid[]);" 2>&1 || true)
 wait
