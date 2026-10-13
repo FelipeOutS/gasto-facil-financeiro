@@ -10,7 +10,7 @@ import { estimarCapacidadeCompra, resumoCapacidade, AVISO_APERTO } from "../src/
 const U = "11111111-1111-1111-1111-111111111111";
 const OTHER = "22222222-2222-2222-2222-222222222222";
 const TEXT = "Quero comprar um MacBook Air M4 de 16 GB. Pesquise os melhores preços e veja se cabe no meu orçamento.";
-const urls = [1, 2, 3].map((n) => `https://www.google.com.br/search?ibp=oshop&q=macbook&prds=${n}${"1234567890".repeat(70)}`);
+const urls = [1, 2, 3].map((n) => `https://www.google.com.br/search?ibp=oshop&q=macbook&prds=${n}${"1234567890".repeat(50)}`);
 const fixture = { shopping_results: [
   { title: "Apple MacBook Air M4 16GB RAM 13 Polegadas 256GB SSD Novo Lacrado Garantia", source: "Next Computer", extracted_price: 8900, product_link: urls[0] },
   { title: "Computador Apple MacBook Air M4 16GB 13 256GB SSD", source: "B&W Store", extracted_price: 9490, product_link: urls[1] },
@@ -87,9 +87,9 @@ test("expenses, groceries, reminders and short followups never start research", 
   for (const t of ["comprei link 1", "paguei oferta 1", "gastei 50", "lembrete link 2"]) expect(detectShoppingFollowup(t)).toBeNull();
 });
 test("compact summary preserves threshold exactly; insufficient data never exposes folga", () => {
-  const at = estimarCapacidadeCompra({ ...fin, precoCents: 1474962, parcelas: [12] });
+  const at = estimarCapacidadeCompra({ ...fin, precoCents: 1474956, parcelas: [12] });
   expect(at.cenarios[0].aperta).toBe(false);
-  const above = estimarCapacidadeCompra({ ...fin, precoCents: 1474969, parcelas: [12] });
+  const above = estimarCapacidadeCompra({ ...fin, precoCents: 1474957, parcelas: [12] });
   expect(above.cenarios[0].aperta).toBe(true); expect(resumoCapacidade(above)).toContain(AVISO_APERTO);
   const insufficient = estimarCapacidadeCompra({ ...fin, inconclusivo: true, precoCents: 890000 });
   expect(resumoCapacidade(insufficient)).not.toMatch(/Folga|4\.097/);

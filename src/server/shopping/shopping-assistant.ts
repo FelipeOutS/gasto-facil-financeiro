@@ -80,7 +80,7 @@ export async function handleShoppingMessage(
       const fin = await deps.loadFinance(msg.userId);
       const cap = estimarCapacidadeCompra({ ...fin, precoCents: res.offers[0].priceCents });
       budget = variantesMisturadas(res.offers.map((o) => o.title))
-        ? "💰 *Seu orçamento*\nEscolha a tela e o SSD antes de simular; os anúncios não são da mesma configuração."
+        ? `${resumoCapacidade({ ...cap, cenarios: [] }, fin.alertas, fin.compromissos.filter((c) => c.tipo === "divida").length)}\nEscolha a tela e o SSD antes de simular.`
         : resumoCapacidade(cap, fin.alertas, fin.compromissos.filter((c) => c.tipo === "divida").length);
     } catch {
       budget = `💰 *Seu orçamento*\n${MSG_NAO_AVALIA}`;

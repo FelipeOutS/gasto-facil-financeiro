@@ -5,7 +5,7 @@
  * Variante diferente ("e o Pro?", "e o M5?") vira NOVA busca — nunca reaproveita preço.
  */
 import type { Offer } from "./serpapi-shopping";
-import { rotuloLink, rotuloVariante } from "./offer-specs";
+import { rotuloLink } from "./offer-specs";
 import { sanitizeQuery } from "./shopping-intent";
 import { horaBR, tituloPesquisa, textoCurto, varianteCompacta, instrucoesLinks } from "./shopping-assistant";
 import { safeUrl } from "./serpapi-shopping";
