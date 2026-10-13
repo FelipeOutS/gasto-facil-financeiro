@@ -5062,6 +5062,75 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_shopping_contexts: {
+        Row: {
+          collected_at: string
+          expires_at: string
+          offers: Json
+          phone_hash: string
+          query: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          collected_at: string
+          expires_at: string
+          offers: Json
+          phone_hash: string
+          query: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          collected_at?: string
+          expires_at?: string
+          offers?: Json
+          phone_hash?: string
+          query?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_shopping_searches: {
+        Row: {
+          api_calls: number
+          created_at: string
+          external_id: string
+          finished_at: string | null
+          id: string
+          month_key: string
+          reply: string | null
+          reserved_calls: number
+          state: string
+          user_id: string
+        }
+        Insert: {
+          api_calls?: number
+          created_at?: string
+          external_id: string
+          finished_at?: string | null
+          id?: string
+          month_key: string
+          reply?: string | null
+          reserved_calls?: number
+          state?: string
+          user_id: string
+        }
+        Update: {
+          api_calls?: number
+          created_at?: string
+          external_id?: string
+          finished_at?: string | null
+          id?: string
+          month_key?: string
+          reply?: string | null
+          reserved_calls?: number
+          state?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       whatsapp_usage_counters: {
         Row: {
           cycle_end: string
@@ -5849,6 +5918,52 @@ export type Database = {
       whatsapp_revoke_links: {
         Args: { p_link_id?: string; p_user_id: string }
         Returns: number
+      }
+      whatsapp_shopping_context_get: {
+        Args: { p_phone_hash: string; p_user_id: string }
+        Returns: {
+          collected_at: string
+          expired: boolean
+          offers: Json
+          query: string
+        }[]
+      }
+      whatsapp_shopping_context_save: {
+        Args: {
+          p_collected_at: string
+          p_offers: Json
+          p_phone_hash: string
+          p_query: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      whatsapp_shopping_finish: {
+        Args: {
+          p_api_calls: number
+          p_external_id: string
+          p_reply: string
+          p_user_id: string
+        }
+        Returns: {
+          finished: boolean
+          global_remaining: number
+          user_remaining: number
+        }[]
+      }
+      whatsapp_shopping_month_key: { Args: never; Returns: string }
+      whatsapp_shopping_month_key_at: {
+        Args: { p_ts: string }
+        Returns: string
+      }
+      whatsapp_shopping_reserve: {
+        Args: { p_external_id: string; p_user_id: string }
+        Returns: {
+          claim_state: string
+          global_remaining: number
+          previous_reply: string
+          user_remaining: number
+        }[]
       }
       whatsapp_undo_recent_action: {
         Args: {
