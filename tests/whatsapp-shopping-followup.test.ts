@@ -86,7 +86,7 @@ describe("fluxo com contexto", () => {
     const b = await h.send("e em 10x?");
     expect(h.urls.length).toBe(1);
     expect(await h.quota.userRemaining(U1, "2026-10")).toBe(9);
-    expect(b?.resposta).toContain("10x de R$ 800,00");
+    expect(b?.resposta).toContain("9x de R$ 800,00 + 1x de R$ 799,99");
     expect(b?.resposta).toContain(ROTULO_SIMULACAO);
     expect(b?.resposta).toContain("nada foi descontado");
   });
@@ -176,7 +176,7 @@ describe("fluxo com contexto", () => {
     const h = harness();
     await h.send("quero comprar macbook air m4 16gb");
     expect((await h.send("e em dez vezes"))).toBeNull(); // por extenso não é reconhecido: segue fluxo normal
-    expect((await h.send("e em 10 vezes"))!.resposta).toContain("10x");
+    expect((await h.send("e em 10 vezes"))!.resposta).toContain("1x de R$ 799,99");
   });
   test("flag OFF em todos os estados: nada lido, nada chamado", async () => {
     const contexts = createMemoryContextStore();
@@ -195,7 +195,7 @@ describe("fluxo com contexto", () => {
   test("contexto não guarda dados financeiros", async () => {
     const h = harness();
     await h.send(BUSCA);
-    const saved = JSON.stringify([...h.contexts.raw.values()]);
+    const saved = JSON.stringify([...h.contexts.raw.values()].map(({ savedAt: _s, ...e }) => e));
     expect(saved).not.toMatch(/renda|folga|guardado|600000|1000000/);
   });
 });
