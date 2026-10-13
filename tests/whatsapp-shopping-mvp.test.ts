@@ -154,7 +154,7 @@ describe("orquestrador + cota", () => {
     const { f, calls } = fakeFetch();
     const d = deps({ fetchImpl: f, loadFinance: async () => fin });
     const r = (await handleShoppingMessage({ userId: "u1", externalId: "e1", text: MAC }, d))!.resposta;
-    expect(r).toContain("R$ 7.999,00 — Loja B");
+    expect(r).toContain("R$ 7.999,00 — Loja: Loja B");
     expect(r).toContain("Brasília");
     expect(r).toContain("Você ainda tem 9 de 10");
     expect(r).not.toMatch(/menor preço do mercado|em estoque|frete grátis/i);
