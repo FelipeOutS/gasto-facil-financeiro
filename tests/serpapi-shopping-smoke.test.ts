@@ -65,7 +65,7 @@ test("execução feliz: 1 busca, parâmetros BR, até 3 ofertas exatas por preç
   expect(out).not.toContain(KEY); expect(out).not.toContain("api_key");
   expect(out.indexOf("R$ 7.999,00")).toBeLessThan(out.indexOf("R$ 8.100,00"));
   expect(out).toContain("R$ 8.499,90"); expect(out).not.toContain("R$ 9.100,00");
-  expect(out).toContain("Link do Google Shopping"); expect(out).toContain("Link direto da loja");
+  expect(out).toContain("Ver no Google Shopping"); expect(out).toContain("Link direto da loja");
   expect(out).toContain("12:00"); expect(out).toContain("Não é garantia de menor preço");
   for (const s of ["M3", "Pro", "8GB", "Seminovo", "192.168", "bit.ly"]) expect(out).not.toContain(s);
 });
