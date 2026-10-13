@@ -29,9 +29,12 @@ REVOKE ALL ON public.whatsapp_shopping_searches FROM PUBLIC, anon, authenticated
 GRANT SELECT ON public.whatsapp_shopping_searches TO service_role;
 ALTER TABLE public.whatsapp_shopping_searches ENABLE ROW LEVEL SECURITY;
 
+CREATE OR REPLACE FUNCTION public.whatsapp_shopping_month_key_at(p_ts timestamptz)
+RETURNS text LANGUAGE sql IMMUTABLE SET search_path = pg_catalog
+AS $$ SELECT to_char(p_ts AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM') $$;
 CREATE OR REPLACE FUNCTION public.whatsapp_shopping_month_key()
-RETURNS text LANGUAGE sql STABLE SET search_path = pg_catalog
-AS $$ SELECT to_char(now() AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM') $$;
+RETURNS text LANGUAGE sql STABLE SET search_path = pg_catalog, public
+AS $$ SELECT public.whatsapp_shopping_month_key_at(now()) $$;
 
 CREATE OR REPLACE FUNCTION public.whatsapp_shopping_reserve(p_user_id uuid, p_external_id text)
 RETURNS TABLE (claim_state text, previous_reply text, user_remaining integer, global_remaining integer)
@@ -119,3 +122,50 @@ REVOKE ALL ON FUNCTION public.whatsapp_shopping_month_key() FROM PUBLIC, anon, a
 GRANT EXECUTE ON FUNCTION public.whatsapp_shopping_reserve(uuid, text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.whatsapp_shopping_finish(uuid, text, integer, text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.whatsapp_shopping_month_key() TO service_role;
+REVOKE ALL ON FUNCTION public.whatsapp_shopping_month_key_at(timestamptz) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.whatsapp_shopping_month_key_at(timestamptz) TO service_role;
+
+-- ===== Contexto de continuação (namespace compras), TTL 20 min =====
+-- Guarda SOMENTE a busca normalizada e ofertas públicas (título, loja, preço, URL)
+-- com horário da coleta. Nunca dados financeiros. Chave: user_id + phone_hash.
+CREATE TABLE IF NOT EXISTS public.whatsapp_shopping_contexts (
+  user_id uuid NOT NULL,
+  phone_hash text NOT NULL CHECK (phone_hash ~ '^[0-9a-f]{64}$'),
+  query text NOT NULL CHECK (length(query) BETWEEN 1 AND 120),
+  offers jsonb NOT NULL CHECK (jsonb_typeof(offers) = 'array' AND jsonb_array_length(offers) <= 3 AND pg_column_size(offers) <= 4096),
+  collected_at timestamptz NOT NULL,
+  expires_at timestamptz NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, phone_hash)
+);
+REVOKE ALL ON public.whatsapp_shopping_contexts FROM PUBLIC, anon, authenticated, service_role;
+ALTER TABLE public.whatsapp_shopping_contexts ENABLE ROW LEVEL SECURITY;
+
+CREATE OR REPLACE FUNCTION public.whatsapp_shopping_context_save(
+  p_user_id uuid, p_phone_hash text, p_query text, p_offers jsonb, p_collected_at timestamptz
+) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, public
+AS $$
+BEGIN
+  IF p_user_id IS NULL OR p_collected_at IS NULL OR p_collected_at > now() + interval '1 minute' THEN
+    RAISE EXCEPTION 'invalid shopping context';
+  END IF;
+  INSERT INTO public.whatsapp_shopping_contexts AS c (user_id, phone_hash, query, offers, collected_at, expires_at, updated_at)
+  VALUES (p_user_id, p_phone_hash, p_query, p_offers, p_collected_at, now() + interval '20 minutes', now())
+  ON CONFLICT (user_id, phone_hash) DO UPDATE
+    SET query = EXCLUDED.query, offers = EXCLUDED.offers, collected_at = EXCLUDED.collected_at,
+        expires_at = EXCLUDED.expires_at, updated_at = now();
+  DELETE FROM public.whatsapp_shopping_contexts c WHERE c.expires_at < now() - interval '1 day';
+END $$;
+
+CREATE OR REPLACE FUNCTION public.whatsapp_shopping_context_get(p_user_id uuid, p_phone_hash text)
+RETURNS TABLE (query text, offers jsonb, collected_at timestamptz)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, public
+AS $$
+  SELECT c.query, c.offers, c.collected_at FROM public.whatsapp_shopping_contexts c
+   WHERE c.user_id = p_user_id AND c.phone_hash = p_phone_hash AND c.expires_at > now()
+$$;
+
+REVOKE ALL ON FUNCTION public.whatsapp_shopping_context_save(uuid, text, text, jsonb, timestamptz) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.whatsapp_shopping_context_get(uuid, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.whatsapp_shopping_context_save(uuid, text, text, jsonb, timestamptz) TO service_role;
+GRANT EXECUTE ON FUNCTION public.whatsapp_shopping_context_get(uuid, text) TO service_role;
