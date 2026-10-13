@@ -15,14 +15,14 @@ beforeEach(() => resetState({}));
 test("R$ 1.950,00 mercado mostra R$ 1.950,00 na confirmação", async () => {
   const r = await send("Gastei R$ 1.950,00 no mercado no pix");
   expect(r.status).toBe("aguardando_confirmacao");
-  expect(r.resposta).toContain("R$ 1.950,00");
+  expect(r.resposta).toMatch(/R\$\s1.950,00/);
   expect(gastosInserts()).toHaveLength(0);
 });
 
 test("Mercado 1.950 hoje no pix não mostra R$ 1,95", async () => {
   const r = await send("Mercado 1.950 hoje no pix");
-  expect(r.resposta).toContain("R$ 1.950,00");
-  expect(r.resposta).not.toContain("R$ 1,95");
+  expect(r.resposta).toMatch(/R\$\s1.950,00/);
+  expect(r.resposta).not.toMatch(/R\$\s1,95/);
 });
 
 test("Ajustar valor '2.500' => R$ 2.500,00 e salva 2500, nunca 2,50", async () => {
@@ -32,8 +32,8 @@ test("Ajustar valor '2.500' => R$ 2.500,00 e salva 2500, nunca 2,50", async () =
   expect(a.status).toBe("aguardando_ajuste_valor");
   const r = await send("2.500");
   expect(r.status).toBe("aguardando_confirmacao");
-  expect(r.resposta).toContain("R$ 2.500,00");
-  expect(r.resposta).not.toContain("R$ 2,50");
+  expect(r.resposta).toMatch(/R\$\s2.500,00/);
+  expect(r.resposta).not.toMatch(/R\$\s2,50/);
   const s = await send("confirmar");
   expect(s.status).toBe("salva");
   const ins = gastosInserts();
