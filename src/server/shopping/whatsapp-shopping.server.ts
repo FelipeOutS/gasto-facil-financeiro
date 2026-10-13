@@ -118,7 +118,7 @@ export async function handleWhatsAppShopping(
   if (fu && ctx) {
     if (ctx.expired || ctx.offers.length === 0) return { resposta: MSG_CONTEXTO_EXPIRADO };
     if (fu.kind !== "variante") {
-      const fin = await loadFinance(msg.userId).catch(() => null);
+      const fin = fu.kind === "loja" || fu.kind === "link" ? null : await loadFinance(msg.userId).catch(() => null);
       return { resposta: responderFollowupLocal(fu, ctx, hojeSaoPaulo(now()), fin) };
     }
     const q = resolverVariante(ctx.query, fu.termo);

@@ -81,7 +81,7 @@ describe("fluxo com contexto", () => {
   test("'e em 10x' não chama API nem mexe na cota", async () => {
     const h = harness();
     const a = await h.send(BUSCA);
-    expect(a?.resposta).toContain("9 de 10");
+    expect(a?.resposta).toContain("9/10");
     expect(h.urls.length).toBe(1);
     const b = await h.send("e em 10x?");
     expect(h.urls.length).toBe(1);
@@ -119,7 +119,7 @@ describe("fluxo com contexto", () => {
     const h = harness();
     await h.send(BUSCA);
     const r = (await h.send("qual loja?"))!.resposta;
-    expect(r).toContain("Loja A"); expect(r).toContain("https://lojaa.com.br/air"); expect(r).toContain("coletado em");
+    expect(r).toContain("Loja A"); expect(r).not.toContain("https://"); expect(r).toContain("link 1"); expect(r).toContain("coletado em");
     expect(h.urls.length).toBe(1);
   });
   test("'e o Pro' é nova busca com nova cota, sem preço do Air", async () => {
@@ -128,7 +128,7 @@ describe("fluxo com contexto", () => {
     const r = (await h.send("e o pro?"))!.resposta;
     expect(h.urls.length).toBe(2);
     expect(new URL(h.urls[1]).searchParams.get("q")).toBe("macbook pro m4 16gb");
-    expect(r).toContain("Loja P"); expect(r).not.toContain("Loja A"); expect(r).toContain("8 de 10");
+    expect(r).toContain("Loja P"); expect(r).not.toContain("Loja A"); expect(r).toContain("8/10");
     expect((await h.send("qual loja?"))!.resposta).toContain("Loja P"); // contexto atualizado
   });
   test("variante ambígua pede confirmação sem buscar", async () => {

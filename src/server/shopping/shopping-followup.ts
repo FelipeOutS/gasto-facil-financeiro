@@ -5,8 +5,10 @@
  * Variante diferente ("e o Pro?", "e o M5?") vira NOVA busca — nunca reaproveita preço.
  */
 import type { Offer } from "./serpapi-shopping";
-import { rotuloLink, rotuloVariante } from "./offer-specs";
+import { rotuloLink } from "./offer-specs";
 import { sanitizeQuery } from "./shopping-intent";
+import { horaBR, tituloPesquisa, textoCurto, varianteCompacta, instrucoesLinks } from "./shopping-assistant";
+import { safeUrl } from "./serpapi-shopping";
 import { AVISO_APERTO, LIMITE_PCT_FOLGA, MSG_NAO_AVALIA, estimarCapacidadeCompra, type CapacidadeInput } from "./capacidade-compra";
 
 export type ShoppingContext = { query: string; offers: Offer[]; collectedAt: string; expired: boolean };
@@ -14,6 +16,7 @@ export type Followup =
   | { kind: "parcelas"; n: number }
   | { kind: "guardar"; mes: number }
   | { kind: "loja" }
+  | { kind: "link"; index: number }
   | { kind: "variante"; termo: string };
 
 const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
@@ -24,6 +27,9 @@ const VARIANTES = ["air", "pro", "max", "mini", "plus", "ultra"];
 export function detectShoppingFollowup(text: string): Followup | null {
   const n = norm(text ?? "").replace(/[?!.]+$/g, "").trim();
   if (!n || n.length > 120 || BLOQUEIO.test(n)) return null;
+  const link = /^(?:(?:manda|me manda|envia|me envia) (?:o )?)?link ([1-3])$|^ver (?:a )?oferta ([1-3])$/.exec(n);
+  if (link) return { kind: "link", index: Number(link[1] ?? link[2]) - 1 };
+  if (/^(?:links?|manda links|me manda links)$/.test(n)) return { kind: "loja" };
   const p = /^(?:e |e se for |se for |e se fosse )?(?:em |no |parcelad[oa] em )?(\d{1,2}) ?(?:x|vezes|parcelas)$/.exec(n);
   if (p) { const k = Number(p[1]); return k >= 2 && k <= 24 ? { kind: "parcelas", n: k } : null; }
   const g = new RegExp(`(?:esperar|guardar|juntar).{0,40}\\b(?:ate|para|em) (${MESES.join("|")})\\b`).exec(n);
@@ -50,7 +56,6 @@ export function resolverVariante(baseQuery: string, termo: string): string | nul
 }
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }).replace(/\u00a0/g, " ");
-const horaBR = (iso: string) => new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 export const ROTULO_SIMULACAO = "simulação matemática sem juros, não é oferta de parcelamento da loja";
 
 /** Divide centavos sem perder nenhum: as primeiras `resto` parcelas levam 1 centavo a mais. */
@@ -75,7 +80,7 @@ function analiseFolga(valorMensal: number, fin: Fin): string {
   if (!fin) return MSG_NAO_AVALIA;
   const cap = estimarCapacidadeCompra({ ...fin, precoCents: Math.max(valorMensal, 1), parcelas: [] });
   if (cap.confianca === "insuficiente" || cap.folgaCents === null) return cap.mensagem;
-  const pre = cap.confianca === "baixa" ? "Estimativa com baixa confiança. " : "";
+  const pre = cap.confianca === "baixa" ? `⚠️ Histórico parcial (${cap.meses.length}/3 meses), baixa confiança. Não dá para confirmar que a compra cabe. ` : "";
   if (cap.folgaCents <= 0) return `${pre}Pela estimativa, sua folga mensal está zerada; isso não cabe hoje. ${AVISO_APERTO}`;
   const pct = Math.round((valorMensal * 1000) / cap.folgaCents) / 10;
   const aperta = valorMensal * 100 > LIMITE_PCT_FOLGA * cap.folgaCents;
@@ -83,11 +88,18 @@ function analiseFolga(valorMensal: number, fin: Fin): string {
 }
 
 export function responderFollowupLocal(f: Exclude<Followup, { kind: "variante" }>, ctx: ShoppingContext, hojeISO: string, fin: Fin): string {
+  if (ctx.expired || !ctx.offers.length) return MSG_CONTEXTO_EXPIRADO;
   const o = ctx.offers[0];
   const coleta = `Preço coletado em ${horaBR(ctx.collectedAt)} (Brasília); pode ter mudado.`;
+  if (f.kind === "link") {
+    const selected = ctx.offers[f.index];
+    const url = selected ? safeUrl(selected.url) : null;
+    if (!selected || !url) return `Essa oferta não está disponível. ${instrucoesLinks(ctx.offers.length)}`;
+    return [`*${tituloPesquisa(ctx.query)}*`, `*${f.index + 1}. ${brl(selected.priceCents)}* — ${textoCurto(selected.store, 60)}`, varianteCompacta(selected.title), "", `${rotuloLink(url)}:`, url, "", coleta, "Frete, estoque, juros e garantia: confira na loja."].join("\n");
+  }
   if (f.kind === "loja") {
-    const l = ctx.offers.map((x, i) => `${i + 1}. Loja: ${x.store} — ${brl(x.priceCents)} (${rotuloVariante(x.title)})\n   ${rotuloLink(x.url)}: ${x.url}`);
-    return [`Lojas da sua pesquisa "${ctx.query}":`, ...l, "", coleta, "Frete, estoque, juros e garantia: confira na loja."].join("\n");
+    const l = ctx.offers.map((x, i) => `*${i + 1}. ${brl(x.priceCents)}* — ${textoCurto(x.store, 60)}\n${varianteCompacta(x.title)}`);
+    return [`*Lojas · ${tituloPesquisa(ctx.query)}*`, ...l, "", instrucoesLinks(ctx.offers.length), coleta, "Frete, estoque, juros e garantia: confira na loja."].join("\n");
   }
   if (f.kind === "parcelas") {
     return [`${o.title} (${o.store}, ${brl(o.priceCents)}):`, `${textoParcelas(o.priceCents, f.n)} — ${ROTULO_SIMULACAO}.`,
