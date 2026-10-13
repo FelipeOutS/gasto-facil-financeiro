@@ -18,7 +18,7 @@ function fetchSpy() {
   const f = (async (u: string) => { urls.push(String(u)); return new Response(JSON.stringify(body)); }) as unknown as typeof fetch;
   return { f, urls };
 }
-const ON = { WHATSAPP_SHOPPING_ENABLED: "true", SERPAPI_API_KEY: "ficticia" };
+const ON = { WHATSAPP_SHOPPING_ENABLED: "true", SERPAPI_API_KEY: "ficticia", WHATSAPP_SHOPPING_PILOT_USER_IDS: U };
 const finOk = async () => ({ hoje: "2026-10-13", rendaPorMes: { "2026-09": 500_000, "2026-08": 500_000, "2026-07": 500_000 }, compromissos: [] });
 
 describe("gate e roteamento", () => {
@@ -44,7 +44,7 @@ describe("gate e roteamento", () => {
   });
   test("sem chave → busca não configurada, sem chamada", async () => {
     const s = fetchSpy();
-    const r = await handleWhatsAppShopping({ userId: U, phone: "5511900000001", externalId: "e1", text: TXT }, { env: { WHATSAPP_SHOPPING_ENABLED: "true" }, fetchImpl: s.f, isEntitled: async () => true, quota: createMemoryQuotaStore() });
+    const r = await handleWhatsAppShopping({ userId: U, phone: "5511900000001", externalId: "e1", text: TXT }, { env: { WHATSAPP_SHOPPING_ENABLED: "true", WHATSAPP_SHOPPING_PILOT_USER_IDS: U }, fetchImpl: s.f, isEntitled: async () => true, quota: createMemoryQuotaStore() });
     expect(r?.resposta).toBe(MSG_SEM_CHAVE); expect(s.urls.length).toBe(0);
   });
   test("SQL não aplicado (RPC erro) → fail-closed sem SerpApi", async () => {
