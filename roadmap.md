@@ -13,3 +13,6 @@
 - [ ] Cadastro conversacional de cartões
 - [ ] Smoke test de áudio real
 - [ ] Botões de gasto: versionar sessão após "Ajustar" (tarefa independente)
+
+- [x] Compras MVP (dev): intenção, adaptador SerpApi mockado, cota 10/200 em memória, estimador puro — sem chave, sem pipeline, sem banco
+- [ ] Compras: cota persistente (migration candidata, aprovação), ligar ao pipeline com flag desligada, leitura financeira real read-only, chave SERPAPI_API_KEY pelo dono
