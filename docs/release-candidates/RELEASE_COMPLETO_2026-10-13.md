@@ -9,7 +9,7 @@ Publicar só DEPOIS de aplicar as migrações abaixo, na mesma janela.
 ## Ordem das migrações candidatas (uma janela só)
 1. `docs/migrations-candidate/gastos-soft-delete-f2.sql` — colunas de exclusão reversível + RPCs (45 testes locais).
 2. `docs/migrations-candidate/whatsapp-undo-soft-delete.sql` — Desfazer do WhatsApp não apaga excluídos.
-3. `docs/migrations-candidate/gastos-delete-atomic-f4.sql` — estorno de conta e reversão de extrato tudo-ou-nada (15 testes locais, inclui corrida com 2 conexões).
+3. `docs/migrations-candidate/gastos-delete-atomic-f4.sql` — estorno de conta e reversão de extrato tudo-ou-nada. A reversão (atualizada em 13/10) preserva itens editados (>5 s) e marca `parcial`, igual ao fluxo do site. 36 testes SQL locais, incluindo 2 corridas com 2 conexões. **O site depende desta função: sem ela, reverter extrato falha sem apagar nada.**
 4. `docs/migrations-candidate/whatsapp-shopping-quota.sql` — cotas do Assistente de Compras (10/usuário, 200 globais).
 Logo após: publicar o app (mesma janela).
 
