@@ -59,6 +59,18 @@ export async function loadFinanceReadOnly(userId: string, hoje: string) {
   } as FinanceRows, { userId });
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/**
+ * Piloto: WHATSAPP_SHOPPING_PILOT_USER_IDS (CSV de UUIDs) precisa conter o userId.
+ * Vazio, ausente ou com qualquer item malformado → ninguém entra (sem fallback).
+ */
+export function isShoppingPilotUser(raw: string | undefined, userId: string | null | undefined): boolean {
+  if (!raw || !userId || !UUID_RE.test(userId)) return false;
+  const ids = raw.split(",").map((x) => x.trim()).filter(Boolean);
+  if (ids.length === 0 || ids.some((x) => !UUID_RE.test(x))) return false;
+  return ids.some((x) => x.toLowerCase() === userId.toLowerCase());
+}
+
 export function phoneHash(phone: string): string {
   return createHash("sha256").update(phone.replace(/\D/g, "")).digest("hex");
 }
@@ -70,6 +82,8 @@ export async function handleWhatsAppShopping(
   const env = deps.env ?? process.env;
   // Flag OFF: nenhuma leitura (nem de contexto/tabelas novas) — o bot segue intacto.
   if (env.WHATSAPP_SHOPPING_ENABLED !== "true") return null;
+  // Piloto: fora da allowlist → bot segue normal, sem contexto/cota/finanças/SerpApi.
+  if (!isShoppingPilotUser(env.WHATSAPP_SHOPPING_PILOT_USER_IDS, msg.userId)) return null;
   const intent = detectShoppingIntent(msg.text);
   const fu = intent ? null : detectShoppingFollowup(msg.text);
   if (!intent && !fu) return null;
