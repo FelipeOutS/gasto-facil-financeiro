@@ -14,6 +14,8 @@ import { createDbQuotaStore, type RpcFn } from "./shopping-quota-db";
 import { buildFinanceSnapshot, type FinanceRows } from "./finance-snapshot";
 import { ultimosMesesCompletos } from "./capacidade-compra";
 import type { ShoppingQuotaStore } from "./shopping-quota";
+import { dbClaimFollowup, SHOPPING_FOLLOWUP_KIND, type FollowupClaim } from "./shopping-followup-claim.server";
+export { SHOPPING_FOLLOWUP_KIND, type FollowupClaim };
 
 export const MSG_SHOPPING_NAO_DISPONIVEL =
   "O assistente de compras não está disponível para sua conta. Os comandos financeiros continuam disponíveis.";
@@ -30,23 +32,7 @@ export type WhatsAppShoppingDeps = {
   claimFollowup?: FollowupClaim;
 };
 
-export type FollowupClaim = (m: { userId: string; phone: string; externalId: string; text: string }) => Promise<"ok" | "dup" | "error">;
-export const SHOPPING_FOLLOWUP_KIND = "shopping_followup";
 export const MSG_FOLLOWUP_FALHA = "Não consegui responder agora. Tente de novo em instantes.";
-
-/** Usa o índice único existente de whatsapp_messages.external_id; sem URL, preço ou finanças. */
-export const dbClaimFollowup: FollowupClaim = async ({ userId, phone, externalId, text }) => {
-  try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("whatsapp_messages").insert({
-      user_id: userId, external_id: externalId, telefone: phone, texto: text.slice(0, 200),
-      recebida_em: new Date().toISOString(), status: "sem_pendencia",
-      parsed: { kind: SHOPPING_FOLLOWUP_KIND }, resposta_sugerida: null,
-    });
-    if (!error) return "ok";
-    return error.code === "23505" ? "dup" : "error";
-  } catch { return "error"; }
-};
 
 export function hojeSaoPaulo(d: Date): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
