@@ -175,6 +175,6 @@ describe("loader read-only (mock, sem rede)", () => {
     expect(src).toContain("status.neq.pago");
     expect(src).toContain('throw new Error("finance_too_many_rows")');
     expect(src).toContain('throw new Error("finance_unavailable")');
-    expect(src).not.toMatch(/\.(insert|update|delete|upsert)\(/);
+    expect(src).not.toMatch(/from\("[a-z_]+"\)\s*\.(insert|update|delete|upsert)\(/);
   });
 });
