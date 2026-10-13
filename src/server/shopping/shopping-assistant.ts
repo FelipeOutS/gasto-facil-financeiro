@@ -3,7 +3,7 @@
  * NÃO está ligado ao pipeline do WhatsApp nem a banco/chave reais.
  * Leitura financeira é só via `loadFinance` (read-only); nada é gravado.
  */
-import { detectShoppingIntent } from "./shopping-intent";
+import { detectShoppingIntent, type ShoppingIntent } from "./shopping-intent";
 import { searchShopping, type Offer } from "./serpapi-shopping";
 import { estimarCapacidadeCompra, type CapacidadeInput } from "./capacidade-compra";
 import { monthKeySaoPaulo, USER_MONTHLY_LIMIT, type ShoppingQuotaStore } from "./shopping-quota";
@@ -50,8 +50,9 @@ export type ShoppingDeps = {
 export async function handleShoppingMessage(
   msg: { userId: string; externalId: string | null; text: string },
   deps: ShoppingDeps,
-): Promise<{ resposta: string } | null> {
-  const intent = detectShoppingIntent(msg.text);
+  opts: { intent?: ShoppingIntent } = {},
+): Promise<{ resposta: string; search?: { query: string; offers: Offer[]; collectedAt: string } } | null> {
+  const intent = opts.intent ?? detectShoppingIntent(msg.text);
   if (!intent) return null;
   if (!deps.enabled) return { resposta: "O assistente de compras está em preparação. Os comandos financeiros continuam disponíveis." };
   if (!deps.apiKey?.trim()) return { resposta: MSG_SEM_CHAVE };
@@ -79,5 +80,5 @@ export async function handleShoppingMessage(
   }
   const { userRemaining } = await deps.quota.finish(msg.userId, msg.externalId, month, res.apiCalls, body);
   const resposta = res.apiCalls > 0 ? `${body}\n\n${quotaLine(userRemaining)}` : body;
-  return { resposta };
+  return { resposta, ...(res.ok && res.offers.length > 0 ? { search: { query: intent.query, offers: res.offers, collectedAt: res.collectedAt } } : {}) };
 }
