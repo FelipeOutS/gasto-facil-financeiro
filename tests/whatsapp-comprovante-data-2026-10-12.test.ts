@@ -223,3 +223,51 @@ describe("idempotência e isolamento", () => {
     expect(insertedGastos[0].id).not.toBe(insertedGastos[1].id);
   });
 });
+
+// ---- Rodada 13/10: matriz completa (fixture fictícia, sem foto real) ----
+describe("matriz de variantes — data legível (sem incerteza)", () => {
+  for (const t of ["Essa", "essa", "Sim", "sim", "Usar essa", "essa data", "a da nota", "data da nota", "manter"]) {
+    it(`"${t}" → nota`, () => expect(interpretarRespostaData(t, false).kind).toBe("nota"));
+  }
+  it('"hoje" → hoje; "11/10/2026" → data; "não" → pedir_data; lixo → indefinida', () => {
+    expect(interpretarRespostaData("hoje", false).kind).toBe("hoje");
+    expect(interpretarRespostaData("11/10/2026", false)).toEqual({ kind: "data", data: "2026-10-11" });
+    expect(interpretarRespostaData("não", false).kind).toBe("pedir_data");
+    expect(interpretarRespostaData("xyz banana", false).kind).toBe("indefinida");
+  });
+});
+
+describe("2006 incerta (NFC-e) nunca é gravada por confirmação genérica", () => {
+  const inc = () => sessaoNota({ dataIncerta: true });
+  for (const t of ["Essa", "Sim", "Usar essa", "a da nota", "manter"]) {
+    it(`"${t}" não salva 2006 e não repete a mesma pergunta`, async () => {
+      const r = await responder(t, inc());
+      expect(insertedGastos).toHaveLength(0);
+      expect(r.status).not.toBe("salva");
+      expect(r.resposta).not.toContain("Quer usar essa data");
+    });
+  }
+  it("data explícita 11/10/2026 salva 1 gasto com valor e '📅 Data usada'", async () => {
+    const r = await responder("11/10/2026", inc());
+    expect(r.status).toBe("salva");
+    expect(insertedGastos).toHaveLength(1);
+    expect(insertedGastos[0].data).toBe("2026-10-11");
+    expect((insertedGastos[0] as unknown as { valor: number }).valor).toBe(1107.71);
+    expect(r.resposta).toContain("Data usada: 11/10/2026");
+  });
+  it("'hoje' também resolve sem 2006", async () => {
+    await responder("hoje", inc());
+    expect(insertedGastos[0].data).not.toBe("2006-10-11");
+  });
+});
+
+describe("NFC-e 33 itens = 1 gasto; replay não duplica", () => {
+  it("33 itens na sessão salvam um único gasto; replay do mesmo wamid não duplica", async () => {
+    const itens = Array.from({ length: 33 }, (_, i) => ({ nome: `Item ${i + 1}`, valor: 1 }));
+    const s = sessaoNota({ dataIncerta: false, data: "2026-10-11", itens });
+    await responder("Essa", s, "user-a", "wamid.33");
+    await responder("Essa", s, "user-a", "wamid.33");
+    expect(insertedGastos).toHaveLength(1);
+    expect(insertedGastos[0].data).toBe("2026-10-11");
+  });
+});
