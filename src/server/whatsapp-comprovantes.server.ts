@@ -25,6 +25,7 @@ import { whatsappMessages as M } from "./whatsapp-messages";
 import { merchantKeyFor, recordMerchantMemory } from "./whatsapp-merchant-memory.server";
 import { createHash } from "crypto";
 import { financialIdForWhatsAppMessage } from "./whatsapp-financial-idempotency.server";
+import { parseValorRespostaReais } from "@/lib/whatsapp-valor-resposta";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin = _supabaseAdmin as any;
@@ -277,19 +278,9 @@ export function interpretarRespostaData(texto: string, dataIncerta: boolean): Re
   return { kind: "indefinida" };
 }
 
+// P0 FASE 2: delega ao parser central (1.950 → 1950), com guardas de resposta.
 function parseValor(texto: string): number | null {
-  const t = texto.replace(/[Rr]\$\s*/g, "").trim();
-  // dois grupos: "1.234,56" (BR) ou "1234.56" / "1234,56"
-  const m = t.match(/(\d{1,3}(?:[.\s]\d{3})*(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?)/);
-  if (!m) return null;
-  let s = m[1].replace(/\s/g, "");
-  // se contém ',' tratamos como BR
-  if (s.includes(",")) {
-    s = s.replace(/\./g, "").replace(",", ".");
-  }
-  const n = Number(s);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.round(n * 100) / 100;
+  return parseValorRespostaReais(texto);
 }
 
 function parseData(texto: string): string | null {
