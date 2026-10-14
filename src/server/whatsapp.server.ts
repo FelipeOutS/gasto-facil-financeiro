@@ -2994,6 +2994,20 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     };
   }
 
+  // P1 14/10: botões e respostas de uma edição de lançamento antigo em andamento.
+  if (!msg.flowReply && !msg.image && !msg.document) {
+    let ed;
+    try {
+      ed = await handleEdicaoAntiga({ userId, phone: msg.telefone, externalId: msg.external_id, text: texto, podeIniciar: false });
+    } catch {
+      return { status: "erro", resposta: "Não consegui continuar a edição agora. Nada foi alterado. Tente novamente." };
+    }
+    if (ed) return {
+      status: "consulta", resposta: ed.resposta,
+      ...(ed.graphInteractive ? { graphInteractive: ed.graphInteractive as { [key: string]: Json | undefined } } : {}),
+    };
+  }
+
   // WhatsApp 1.3: proposals are confirmed before any financial mutation.
   // Runs after 1.2 action tokens, before legacy expense/consultation parsing.
   if (!msg.flowReply && !msg.image && !msg.document) {
@@ -4924,24 +4938,21 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
       _row: msg,
     });
   }
-  // P1 14/10: pedido de editar receita/gasto existente nunca abre cadastro.
-  if (!sessao && decisao === "outro") {
-    const editTipo = detectEditarLancamentoExistente(texto);
-    if (editTipo) {
-      logWaRouteDecision(msg, "consulta_handler", "edit_existing_entry_unavailable");
-      const resposta = respostaEdicaoIndisponivel(editTipo);
-      await gravarSessao(
-        userId,
-        msg.telefone,
-        msg.external_id,
-        texto,
-        recebidaEm,
-        "sem_pendencia",
-        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
-        resposta,
-      );
-      return { status: "consulta", resposta };
+  // P1 14/10: pedido de editar receita/gasto existente nunca abre cadastro;
+  // abre a edição segura de lançamentos já registrados (sem gravar nada
+  // até o Confirmar).
+  if (!sessao && decisao === "outro" && detectEdicaoAntiga(texto)) {
+    logWaRouteDecision(msg, "consulta_handler", "edit_existing_entry_start");
+    let ed;
+    try {
+      ed = await handleEdicaoAntiga({ userId, phone: msg.telefone, externalId: msg.external_id, text: texto, podeIniciar: true });
+    } catch {
+      return { status: "erro", resposta: "Não consegui abrir a edição agora. Nada foi alterado. Tente novamente." };
     }
+    if (ed) return {
+      status: "consulta", resposta: ed.resposta,
+      ...(ed.graphInteractive ? { graphInteractive: ed.graphInteractive as { [key: string]: Json | undefined } } : {}),
+    };
   }
   if (!sessao && decisao === "outro") {
     const guard = detectConsultaShape(texto);
