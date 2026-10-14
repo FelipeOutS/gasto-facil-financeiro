@@ -71,6 +71,7 @@ export type QuotaUpdateError =
   | "daily_exceeds_monthly"
   | "free_plan_must_be_zero"
   | "empty_patch"
+  | "conflict"
   | "db_error";
 
 export type QuotaUpdateResult =
@@ -220,7 +221,7 @@ export async function updatePlanQuota(
     const { data: current, error: curErr } = await c
       .from("whatsapp_plan_quotas")
       .select(
-        "plan_code, inbound_monthly_limit, outbound_monthly_limit, financial_actions_monthly_limit, daily_inbound_limit, daily_outbound_limit, per_minute_limit, enabled",
+        "plan_code, inbound_monthly_limit, outbound_monthly_limit, financial_actions_monthly_limit, daily_inbound_limit, daily_outbound_limit, per_minute_limit, enabled, updated_at",
       )
       .eq("plan_code", planCode)
       .maybeSingle();
@@ -244,15 +245,21 @@ export async function updatePlanQuota(
       updated_by: ctx.adminUserId,
     };
 
-    const { data: updated, error: upErr } = await c
-      .from("whatsapp_plan_quotas")
-      .update(updatePayload)
-      .eq("plan_code", planCode)
+    // Controle otimista: só grava se ninguém alterou o plano desde a leitura.
+    // Sem linha de volta com updated_at igual → outra edição venceu → "conflict".
+    const expectedUpdatedAt = (current as Record<string, unknown>).updated_at;
+    delete (merged as Record<string, unknown>).updated_at;
+    let q = c.from("whatsapp_plan_quotas").update(updatePayload).eq("plan_code", planCode);
+    if (typeof expectedUpdatedAt === "string") q = q.eq("updated_at", expectedUpdatedAt);
+    const { data: updated, error: upErr } = await q
       .select(
         "plan_code, inbound_monthly_limit, outbound_monthly_limit, financial_actions_monthly_limit, daily_inbound_limit, daily_outbound_limit, per_minute_limit, enabled, updated_at, updated_by",
       )
       .maybeSingle();
-    if (upErr || !updated) return { ok: false, error: "db_error" };
+    if (upErr) return { ok: false, error: "db_error" };
+    if (!updated) {
+      return { ok: false, error: typeof expectedUpdatedAt === "string" ? "conflict" : "db_error" };
+    }
 
     // Auditoria mínima (best-effort; não usa tabela paralela — reusa runtime_config_audit
     // apenas para runtime. Para quotas mantemos updated_by/updated_at + notes opcional).

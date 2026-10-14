@@ -269,7 +269,7 @@ describe("WA-C7 :: handlers", () => {
       fornecedor_id: string | null;
       forma_pagamento: string;
     };
-    expect(g.valor).toBe(5000);
+    expect(g.valor).toBe(50); // reais, não centavos (F-05)
     expect(g.fornecedor_id).toBe("f1");
   });
 
