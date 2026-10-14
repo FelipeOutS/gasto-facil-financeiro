@@ -17,6 +17,14 @@ import type { ShoppingQuotaStore } from "./shopping-quota";
 import { dbClaimFollowup, SHOPPING_FOLLOWUP_KIND, type FollowupClaim } from "./shopping-followup-claim.server";
 export { SHOPPING_FOLLOWUP_KIND, type FollowupClaim };
 
+/**
+ * Trava de liberação em código (pré-publicação 14/10/2026): o Assistente de Compras
+ * é piloto e NÃO pode ser habilitado em produção só pela configuração
+ * WHATSAPP_SHOPPING_ENABLED. Ativar exige autorização do dono + troca explícita
+ * desta constante para `true` (revisada em diff). Testes injetam `deps.env`/`releaseAuthorized`.
+ */
+export const SHOPPING_RELEASE_AUTHORIZED = false;
+
 export const MSG_SHOPPING_NAO_DISPONIVEL =
   "O assistente de compras não está disponível para sua conta. Os comandos financeiros continuam disponíveis.";
 
@@ -28,6 +36,8 @@ export type WhatsAppShoppingDeps = {
   loadFinance?: ShoppingDeps["loadFinance"];
   fetchImpl?: typeof fetch;
   now?: () => Date;
+  /** Só testes. Padrão: SHOPPING_RELEASE_AUTHORIZED (ou liberado quando `env` é injetado). */
+  releaseAuthorized?: boolean;
   /** Reserva o wamid da continuação (dedupe de reentrega). */
   claimFollowup?: FollowupClaim;
 };
@@ -85,6 +95,9 @@ export async function handleWhatsAppShopping(
   msg: { userId: string; phone: string; externalId: string | null; text: string },
   deps: WhatsAppShoppingDeps = {},
 ): Promise<{ resposta: string; duplicate?: boolean } | null> {
+  // Trava de código: com o ambiente real (process.env) e sem autorização, nada roda.
+  const released = deps.releaseAuthorized ?? (deps.env ? true : SHOPPING_RELEASE_AUTHORIZED);
+  if (!released) return null;
   const env = deps.env ?? process.env;
   // Flag OFF: nenhuma leitura (nem de contexto/tabelas novas) — o bot segue intacto.
   if (env.WHATSAPP_SHOPPING_ENABLED !== "true") return null;
