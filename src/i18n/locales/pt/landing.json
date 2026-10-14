@@ -864,8 +864,8 @@
       "theme": "Modo claro e escuro",
       "android": "Otimizado para Android"
     },
-    "whatsappTitle": "Lançamento pelo WhatsApp (em breve)",
-    "whatsappText": "Em breve você poderá registrar gastos pelo WhatsApp com confirmação antes de salvar. Integração preparada para liberação futura.",
+    "whatsappTitle": "Assistente financeiro pelo WhatsApp — disponível",
+    "whatsappText": "Registre gastos pelo WhatsApp com confirmação antes de salvar. Disponível nos planos pagos elegíveis, após vincular seu número e autorizar o acesso.",
     "whatsappSample": {
       "user": "gastei 35 no uber",
       "bot": "Confirmar: <b>R$ 35,00</b> em Transporte?"
@@ -894,7 +894,7 @@
   },
   "whatsapp": {
     "eyebrow": "WhatsApp",
-    "title": "Lançamentos pelo WhatsApp",
+    "title": "Assistente financeiro pelo WhatsApp — disponível",
     "subtitle": "Mande uma mensagem como se estivesse conversando com um amigo. Nosso bot entende o gasto, confirma os detalhes e salva automaticamente no seu controle financeiro.",
     "steps": {
       "natural": "Envie de forma natural: \"gastei 35 no uber\" ou \"recebi 2.000 de salário\".",
@@ -916,8 +916,8 @@
       "saved": "Pronto! R$ 35,00 salvo em Transporte.",
       "category": "Categoria: Transporte · Hoje, 12:41"
     },
-    "ctaPrimary": "Quero usar no WhatsApp",
-    "disclaimer": "Disponível para planos pagos · Beta por lista de espera."
+    "ctaPrimary": "Vincular meu WhatsApp",
+    "disclaimer": "Disponível nos planos pagos elegíveis, após vincular seu número e autorizar o acesso."
   },
   "mercadoInteligente": {
     "eyebrow": "Mercado Inteligente",

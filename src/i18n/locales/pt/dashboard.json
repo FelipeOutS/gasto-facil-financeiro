@@ -277,11 +277,11 @@
     "moedaEstrangeira": "moeda estrangeira"
   },
   "whatsappBanner": {
-    "title": "Lançamento pelo WhatsApp em breve",
-    "novo": "Em breve",
-    "subtitle": "Em uma próxima versão, você poderá enviar gastos pelo WhatsApp para facilitar o registro no dia a dia.",
+    "title": "Assistente financeiro pelo WhatsApp — disponível",
+    "novo": "Disponível",
+    "subtitle": "Disponível nos planos pagos elegíveis, após vincular seu número e autorizar o acesso.",
     "dispensar": "Fechar aviso",
-    "cta": "Entendi"
+    "cta": "Vincular meu WhatsApp"
   },
   "trialBanner": {
     "title": "Seu teste termina em breve",

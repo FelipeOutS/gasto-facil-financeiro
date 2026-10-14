@@ -60,6 +60,13 @@
   },
   "notifications": {
     "title": "Notifications and alerts",
+    "channels": {
+      "whatsappAlerts": "Automatic WhatsApp alerts",
+      "notEnabled": "Not enabled",
+      "assistant": "Financial assistant on WhatsApp — available",
+      "eligibility": "Available on eligible paid plans after linking your number and authorizing access. Automatic alerts are a separate feature that is not enabled.",
+      "link": "Link my WhatsApp"
+    },
     "groups": {
       "accounts": "ACCOUNTS AND DUE DATES",
       "budget": "BUDGET",

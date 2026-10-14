@@ -71,8 +71,6 @@ export function UpgradeCardsList({
 
   const groups = NAV_GROUPS.filter((g) => !g.adminMasterOnly);
   const navLocked = getLockedNavItems(groups, can, false)
-    // WhatsApp ainda é "em breve": não usar como gancho comercial agora.
-    .filter((it) => it.to !== "/whatsapp")
     .map((it) => ({
       to: it.to,
       icon: it.icon,

@@ -864,8 +864,8 @@
       "theme": "Light and dark mode",
       "android": "Optimized for Android"
     },
-    "whatsappTitle": "Add expenses via WhatsApp (coming soon)",
-    "whatsappText": "Soon you'll be able to log expenses via WhatsApp with confirmation before saving. Integration prepared for a future release.",
+    "whatsappTitle": "Financial assistant on WhatsApp — available",
+    "whatsappText": "Log expenses via WhatsApp with confirmation before saving. Available on eligible paid plans after linking your number and authorizing access.",
     "whatsappSample": {
       "user": "spent 35 on uber",
       "bot": "Confirm: <b>R$ 35.00</b> in Transport?"
@@ -894,7 +894,7 @@
   },
   "whatsapp": {
     "eyebrow": "WhatsApp",
-    "title": "Log expenses via WhatsApp",
+    "title": "Financial assistant on WhatsApp — available",
     "subtitle": "Send a message like you're chatting with a friend. Our bot understands the expense, confirms the details, and automatically saves it to your financial tracker.",
     "steps": {
       "natural": "Send naturally: \"spent 35 on uber\" or \"received 2,000 salary\".",
@@ -916,8 +916,8 @@
       "saved": "Done! R$ 35.00 saved under Transport.",
       "category": "Category: Transport · Today, 12:41"
     },
-    "ctaPrimary": "I want to use on WhatsApp",
-    "disclaimer": "Available on paid plans · Beta waitlist."
+    "ctaPrimary": "Link my WhatsApp",
+    "disclaimer": "Available on eligible paid plans after linking your number and authorizing access."
   },
   "mercadoInteligente": {
     "eyebrow": "Smart Grocery",

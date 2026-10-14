@@ -62,6 +62,11 @@ export const Route = createFileRoute("/whatsapp")({
   head: () => ({
     meta: [
       { title: "Gastos via WhatsApp — Gasto Inteligente" },
+      { name: "description", content: "Assistente financeiro pelo WhatsApp disponível nos planos pagos elegíveis, após vincular seu número e autorizar o acesso." },
+      { property: "og:title", content: "Gastos via WhatsApp — Gasto Inteligente" },
+      { property: "og:description", content: "Vincule seu número e autorize o assistente financeiro pelo WhatsApp nos planos pagos elegíveis." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -833,9 +838,9 @@ function WhatsAppPage() {
             <div className="space-y-1.5">
               <p className="font-semibold text-amber-300 text-sm">Modo teste</p>
               <p>
-                O número oficial do Gasto Inteligente ainda está em configuração. Por enquanto, você
-                pode conhecer o funcionamento e testar a interpretação das mensagens pelo simulador
-                abaixo.
+                Esta tela está em modo de teste. O assistente financeiro pelo WhatsApp está
+                disponível em produção nos planos pagos elegíveis, após vincular seu número e
+                autorizar o acesso. O simulador abaixo permite testar a interpretação das mensagens.
               </p>
               <p className="text-amber-200/90">Nenhum gasto é salvo sem a sua confirmação.</p>
             </div>
@@ -894,7 +899,8 @@ function WhatsAppPage() {
               </span>
               <span className="block text-muted-foreground">
                 As mensagens enviadas podem conter dados financeiros e serão usadas para interpretar
-                e responder às suas consultas no app. Avisos podem ser enviados conforme suas preferências.
+                e responder às suas consultas no app. Alertas automáticos dependem de ativação específica
+                e não estão incluídos na disponibilidade do assistente financeiro.
                 Você pode desvincular seu número a qualquer momento.
                 Veja mais na{" "}
                 <Link
