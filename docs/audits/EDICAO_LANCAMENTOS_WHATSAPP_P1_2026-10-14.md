@@ -29,3 +29,10 @@ tests/whatsapp-editar-antigo-p1.test.ts: 20/0. Suíte oficial: 171 arquivos, 2.9
 - Simulações não substituem teste no WhatsApp real.
 - Controle otimista depende do gatilho `set_updated_at` (existe em gastos e receitas).
 - Conta conectada não edita por aqui (restrição intencional).
+
+## Ajustes finais (14/10, 19:15 UTC)
+- Interrupção: "gastei/paguei/comprei/recebi/ganhei/lançar/registrar/anotar" durante a edição não encerra mais a edição. Novo passo `interrupt` guarda a etapa (`resume`) e o texto (`pending_text`) e pergunta: Continuar edição / Iniciar novo lançamento / Cancelar (botões com nonce novo; também aceita 1/2/3). Nada gravado em gastos/receitas até a escolha. "Novo" encerra a edição e o pipeline processa o texto guardado pelo fluxo normal (`replayText`, whatsapp.server.ts). Consultas ("minhas…", "quanto…") continuam encerrando a edição (só leitura).
+- "Ver mais": `MORE_CMD` exige a mensagem inteira ("mais", "ver mais", "próximos"…). "mais barato", "mais 50", "50 a mais" não paginam; na etapa de descrição/valor "mais" é o valor do campo. Seleção continua por ID real.
+- Testes: tests/whatsapp-editar-antigo-interrupcao.test.ts 7/0; com o P1 27/0. Suíte oficial 172 arquivos, 3.000 aprovados, 0 falhas. tsgo OK, build OK.
+- Diff desde d9bb152e9: só arquivos da edição/receitas por período + AGENTS.md + docs; sem migrações. Trava `SHOPPING_RELEASE_AUTHORIZED = false` presente.
+- Produção (só estrutura): `reverter_extrato_atomic` e `estornar_conta_gastos_atomic` continuam AUSENTES (desfazer extrato segue indisponível, fail closed); `whatsapp_shopping_reserve` e `whatsapp_undo_recent_action` existem.
