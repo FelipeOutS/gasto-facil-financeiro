@@ -35,7 +35,7 @@ const defaultDb: Db = _supabaseAdmin;
 export const EDIT_OLD_KIND = "wa_edit_old";
 export const EDIT_OLD_TTL_MS = 15 * 60 * 1000;
 export const EDIT_OLD_PAGE = 8;
-const TOKEN = /^wa_ed:([0-9a-f]{12}):(sel|pg|f|ok|adj|x|cont|novo)(?::([0-9a-z_-]{1,40}))?$/i;
+const TOKEN = /^wa_ed:([0-9a-f]{12}):(sel|pg|f|ok|adj|x|cont|novo|del|bk)(?::([0-9a-z_-]{1,40}))?$/i;
 
 type Tbl = "gastos" | "receitas";
 type Field = "valor" | "descricao" | "data" | "categoria_id";
@@ -53,6 +53,8 @@ export type EditOldState = {
   seq?: number;
   expires_at: string;
   tipo: "receita" | "gasto" | "lancamento";
+  /** P1 exclusão individual (14/10): mesmo fluxo/estado da edição, ação diferente. */
+  acao?: "editar" | "excluir";
   termo?: string | null;
   cands?: Cand[];
   page?: number;
@@ -121,6 +123,24 @@ export function detectEdicaoAntiga(texto: string): EditarTipo | null {
   return null;
 }
 
+// --------------------------------------------- detector (exclusão individual)
+const DEL_VERB = /\b(excluir|exclui|exclua|apagar|apaga|apague|remover|remove|remova|deletar|deleta|delete)\b/;
+/** Pedido de exclusão em massa: fora do escopo desta rodada (etapa própria com prévia). */
+export const BULK_DEL = /\b(todos|todas|tudo|inteiro|inteira|em massa|varios|varias)\b/;
+/** "excluir um gasto de outubro", "apagar a receita do salário", "remover o Uber de ontem". */
+export function detectExclusaoAntiga(texto: string, now: Date = new Date()): EditarTipo | null {
+  const t = norm(texto);
+  if (!t || !DEL_VERB.test(t)) return null;
+  if (OUTROS_FLUXOS.test(t)) return null;
+  if (RECEITA_W.test(t)) return "receita";
+  if (GASTO_W.test(t)) return "gasto";
+  if (LANC_W.test(t)) return "lancamento";
+  // Sem a palavra do tipo, só com nome E período ("remover o Uber de ontem").
+  const f = extrairFiltro(texto, now);
+  if (f.termo && f.range) return "lancamento";
+  return null;
+}
+
 const WEEKDAYS: Record<string, number> = {
   domingo: 0, segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6,
 };
@@ -172,7 +192,7 @@ export function extrairFiltro(texto: string, now: Date): Filtro {
       }
     }
   }
-  const tokens = t.split(" ").filter((w) => w.length >= 3 && !STOP.has(w) && !EDIT_VERB.test(w) && !/^\d+$/.test(w));
+  const tokens = t.split(" ").filter((w) => w.length >= 3 && !STOP.has(w) && !EDIT_VERB.test(w) && !DEL_VERB.test(w) && !/^\d+$/.test(w));
   return { range, termo: tokens[0] ?? null, periodoLabel };
 }
 
@@ -205,8 +225,8 @@ async function saveState(
   return error.code === "23505" ? "duplicate" : "error";
 }
 
-const GASTO_COLS = "id, descricao, estabelecimento, valor, data, categoria_id, forma_pagamento, cartao_id, grupo_parcelamento_id, total_parcelas, recorrencia_id, bem_id, updated_at, deleted_at";
-const RECEITA_COLS = "id, descricao, valor, data, recorrencia_id, updated_at, deleted_at";
+const GASTO_COLS = "id, descricao, estabelecimento, valor, data, categoria_id, forma_pagamento, cartao_id, grupo_parcelamento_id, total_parcelas, recorrencia_id, bem_id, import_batch_id, updated_at, deleted_at";
+const RECEITA_COLS = "id, descricao, valor, data, recorrencia_id, import_batch_id, updated_at, deleted_at";
 
 type Row = Record<string, unknown>;
 function allowedFor(t: Tbl, r: Row): Field[] | string {
@@ -218,6 +238,28 @@ function allowedFor(t: Tbl, r: Row): Field[] | string {
     return ["valor", "descricao", "data", "categoria_id"];
   }
   return ["valor", "descricao", "data"];
+}
+
+/**
+ * Exclusão individual: só tipos com exclusão reversível segura. Retorna o
+ * motivo do bloqueio (texto ao usuário) ou null quando pode excluir.
+ */
+async function deleteBlock(db: Db, userId: string, t: Tbl, r: Row): Promise<string | null> {
+  const site = "Exclua esse pelo site ou app.";
+  if (t === "gastos") {
+    if (r.grupo_parcelamento_id || Number(r.total_parcelas ?? 1) > 1) return `Compras parceladas envolvem todas as parcelas e a fatura. ${site}`;
+    if (r.recorrencia_id) return `Gastos recorrentes seguem as regras da recorrência. ${site}`;
+    if (r.bem_id) return `Pagamentos ligados a bens e financiamentos seguem regras próprias. ${site}`;
+    if (r.cartao_id || r.forma_pagamento === "credito") return `Gastos no cartão de crédito afetam a fatura e o limite. ${site}`;
+    if (r.import_batch_id) return `Lançamentos importados de extrato seguem a importação. ${site}`;
+    const { data, error } = await db.from("contas_a_pagar").select("id").eq("user_id", userId).eq("gasto_id", String(r.id)).limit(1);
+    if (error) throw new Error("delete_old_link_read_failed");
+    if (Array.isArray(data) && data.length > 0) return `Esse gasto é o pagamento de uma conta a pagar. ${site}`;
+    return null;
+  }
+  if (r.recorrencia_id) return `Receitas recorrentes seguem as regras da recorrência. ${site}`;
+  if (r.import_batch_id) return `Lançamentos importados de extrato seguem a importação. ${site}`;
+  return null;
 }
 
 async function readRow(db: Db, userId: string, t: Tbl, id: string): Promise<Row | null> {
@@ -359,6 +401,46 @@ export async function aplicarEdicao(db: Db, userId: string, s: Snap, p: Patch, n
   return "changed";
 }
 
+/**
+ * Exclusão reversível (deleted_at), com controle otimista. Nunca DELETE físico.
+ * "gone" = já excluído ou inexistente; "changed" = alterado no site depois da escolha.
+ */
+export async function aplicarExclusao(db: Db, userId: string, s: Snap, now: Date):
+  Promise<"deleted" | "gone" | "changed" | "blocked" | "error"> {
+  let cur: Row | null;
+  try { cur = await readRow(db, userId, s.t, s.id); } catch { return "error"; }
+  if (!cur) return "gone";
+  if (String(cur.updated_at ?? "") !== s.updated_at) return "changed";
+  try { if (await deleteBlock(db, userId, s.t, cur)) return "blocked"; } catch { return "error"; }
+  const patch: Record<string, unknown> = { deleted_at: now.toISOString(), updated_at: now.toISOString() };
+  if (s.t === "receitas") { patch.deleted_source = "whatsapp"; patch.deleted_reason = "exclusao_usuario"; }
+  const { data, error } = await db.from(s.t).update(patch)
+    .eq("id", s.id).eq("user_id", userId).eq("updated_at", s.updated_at).is("deleted_at", null)
+    .select("id").maybeSingle();
+  if (error) return "error";
+  if (data?.id) return "deleted";
+  try { cur = await readRow(db, userId, s.t, s.id); } catch { return "error"; }
+  return cur ? "changed" : "gone";
+}
+
+function renderDelConfirm(st: EditOldState): EditOldReply {
+  const s = st.sel!;
+  const body = [
+    "Você vai excluir este lançamento:",
+    `${s.t === "gastos" ? "Gasto" : "Receita"}: ${s.descricao}`,
+    `Valor: ${brl(s.valor)}`,
+    `Data: ${dateBR(s.data)}`,
+    "",
+    "Ele deixa de aparecer nas consultas e nos totais do site, do app e do WhatsApp.",
+    "Deseja confirmar a exclusão?",
+  ].join("\n");
+  return { resposta: body, graphInteractive: btns(body, [
+    { id: `wa_ed:${st.nonce}:del`, title: "Confirmar" },
+    { id: `wa_ed:${st.nonce}:bk`, title: "Voltar" },
+    { id: `wa_ed:${st.nonce}:x`, title: "Cancelar" },
+  ]) };
+}
+
 // ----------------------------------------------------------------- main
 const RESET = /^(cancelar|cancela|sair|voltar|menu|parar)$/;
 /** Novo LANÇAMENTO no meio da edição: pergunta antes de abandonar (14/10). */
@@ -424,7 +506,9 @@ export async function handleEdicaoAntiga(args: {
 
   // 2) Texto livre dentro de um fluxo ativo.
   if (active) {
-    if (RESET.test(t)) return close(active, "Tudo bem, edição cancelada. Nenhum lançamento foi alterado.");
+    const del = active.acao === "excluir";
+    if (del && active.stage === "confirm" && t === "voltar") return continuar(active, "bk", null);
+    if (RESET.test(t)) return close(active, del ? "Tudo bem, exclusão cancelada. Nenhum lançamento foi alterado." : "Tudo bem, edição cancelada. Nenhum lançamento foi alterado.");
     if (active.stage === "interrupt") return continuar(active, "text", null);
     if (NEW_ENTRY.test(t)) {
       // Não descarta a edição: guarda o pedido e pergunta. Nada é gravado em gastos/receitas.
@@ -440,10 +524,16 @@ export async function handleEdicaoAntiga(args: {
 
   // 3) Início de um fluxo novo.
   if (!args.podeIniciar) return null;
-  const tipo = detectEdicaoAntiga(text);
+  const tipoEd = detectEdicaoAntiga(text);
+  const tipoDel = tipoEd ? null : detectExclusaoAntiga(text, now);
+  const tipo = tipoEd ?? tipoDel;
   if (!tipo) return null;
+  const acao: "editar" | "excluir" = tipoDel ? "excluir" : "editar";
+  if (acao === "excluir" && BULK_DEL.test(t)) {
+    return { resposta: "Por aqui eu excluo um lançamento por vez. Diga qual, por exemplo: “excluir o Uber de ontem” ou “excluir um gasto de outubro de 2026”.\n\nNada foi alterado." };
+  }
   // `seq` continua a sequência anterior: o passo mais recente sempre vence.
-  const base: EditOldState = { kind: EDIT_OLD_KIND, stage: "periodo", nonce: "", expires_at: "", tipo, seq: st?.seq ?? 0 };
+  const base: EditOldState = { kind: EDIT_OLD_KIND, stage: "periodo", nonce: "", expires_at: "", tipo, acao, seq: st?.seq ?? 0 };
   const f = extrairFiltro(text, now);
   if (f.ambiguo) return save(step(base, { stage: "periodo" }), { resposta: "Você citou mais de um mês. De qual mês é o lançamento? (ex.: setembro de 2026)\n\nDigite “cancelar” para sair." });
   if (!f.range && !f.termo) {
@@ -466,7 +556,7 @@ export async function handleEdicaoAntiga(args: {
     if (rows.length === 1) return selecionar(step(base, { stage: "select", cands, page: 0, termo: f.termo }), cands[0]);
     const next = step(base, { stage: "select", cands, page: 0, termo: f.termo });
     const reply = renderList(next, rows.map((r) => ({ t: r._t, id: String(r.id), descricao: r.descricao, valor: r.valor, data: r.data })),
-      `Encontrei ${rows.length} ${rows.length === 1 ? nome : `${nome}s`}${onde ? ` ${onde}` : ""}. Qual você quer editar?`);
+      `Encontrei ${rows.length} ${rows.length === 1 ? nome : `${nome}s`}${onde ? ` ${onde}` : ""}. Qual você quer ${base.acao === "excluir" ? "excluir" : "editar"}?`);
     return save(next, reply);
   }
 
@@ -476,6 +566,21 @@ export async function handleEdicaoAntiga(args: {
       return { resposta: "Não consegui abrir esse lançamento agora. Nada foi alterado. Tente novamente." };
     }
     if (!row) return close(cur, "Esse lançamento não está mais disponível (pode ter sido excluído). Nada foi alterado.");
+    if (cur.acao === "excluir") {
+      let block: string | null;
+      try { block = await deleteBlock(db, userId, c.t, row); } catch {
+        return { resposta: "Não consegui conferir esse lançamento agora. Nada foi alterado. Tente novamente." };
+      }
+      if (block) return close(cur, `${block}\n\nNada foi alterado.`);
+      const sel: Snap = {
+        t: c.t, id: c.id, updated_at: String(row.updated_at ?? ""),
+        descricao: String(row.descricao ?? "Lançamento"), valor: Number(row.valor ?? 0),
+        data: String(row.data ?? ""), categoria_id: (row.categoria_id as string | null) ?? null, allowed: [],
+      };
+      // Mantém `cands` para o botão Voltar reabrir a mesma lista.
+      const next = step(cur, { stage: "confirm", sel });
+      return save(next, renderDelConfirm(next));
+    }
     const allowed = allowedFor(c.t, row);
     if (typeof allowed === "string") return close(cur, `${allowed}\n\nNada foi alterado.`);
     const sel: Snap = {
@@ -491,7 +596,7 @@ export async function handleEdicaoAntiga(args: {
   }
 
   async function continuar(cur: EditOldState, cmd: string, arg: string | null): Promise<EditOldReply> {
-    if (cmd === "x") return close(cur, "Tudo bem, edição cancelada. Nenhum lançamento foi alterado.");
+    if (cmd === "x") return close(cur, cur.acao === "excluir" ? "Tudo bem, exclusão cancelada. Nenhum lançamento foi alterado." : "Tudo bem, edição cancelada. Nenhum lançamento foi alterado.");
 
     if (cur.stage === "interrupt") {
       const c = cmd === "text" ? (/^(1|continuar|continuar edicao|continua)$/.test(t) ? "cont" : /^(2|iniciar|novo|novo lancamento|iniciar novo lancamento)$/.test(t) ? "novo" : /^3$/.test(t) ? "x" : "") : cmd;
@@ -501,7 +606,7 @@ export async function handleEdicaoAntiga(args: {
         const next = step(back, {});
         const reply = next.stage === "field" ? renderFieldMenu(next)
           : next.stage === "value" ? askValue(next)
-          : next.stage === "confirm" ? renderConfirm(next)
+          : next.stage === "confirm" ? (next.acao === "excluir" ? renderDelConfirm(next) : renderConfirm(next))
           : next.stage === "select" ? { resposta: "Certo, edição retomada. Responda com o número do lançamento da lista anterior, “mais” para ver outros ou “cancelar”." }
           : { resposta: "Certo, edição retomada. De quando é o lançamento? (ex.: setembro de 2026)" };
         return save(next, reply);
@@ -568,6 +673,37 @@ export async function handleEdicaoAntiga(args: {
       if (typeof p === "string") return save(step(cur, {}), { resposta: `${p}\n\nDigite “cancelar” para sair.` });
       const next = step(cur, { stage: "confirm", patch: p });
       return save(next, renderConfirm(next));
+    }
+
+    if (cur.stage === "confirm" && cur.acao === "excluir") {
+      if (cmd === "bk" || (cmd === "text" && /^(voltar|volta)$/.test(t))) {
+        const cands = cur.cands ?? [];
+        if (cands.length > 1) {
+          const rows: Array<{ t: Tbl; id: string; descricao: unknown; valor: unknown; data: unknown }> = [];
+          for (const c of cands) {
+            try { const r = await readRow(db, userId, c.t, c.id); if (r) rows.push({ t: c.t, id: c.id, descricao: r.descricao, valor: r.valor, data: r.data }); } catch { /* omitido */ }
+          }
+          const next = step(cur, { stage: "select", sel: undefined, page: 0, cands: rows.map((r) => ({ t: r.t, id: r.id })) });
+          return save(next, renderList(next, rows, "Qual você quer excluir?"));
+        }
+        return save(step(cur, { stage: "periodo", sel: undefined, cands: undefined }), { resposta: "Certo. De quando é o lançamento que você quer excluir? (ex.: setembro de 2026, ontem ou o nome)\n\nNada foi alterado." });
+      }
+      const yes = cmd === "del" || (cmd === "text" && /^(sim|confirmar|confirmo|excluir|pode)$/.test(t));
+      if (!yes) return save(step(cur, {}), renderDelConfirm(cur));
+      // Consome o estado ANTES de escrever: confirmação repetida/replay não reaplica.
+      const claim = await saveState(db, userId, phone, externalId, text, { ...cur, stage: "applying", seq: (cur.seq ?? 0) + 1, nonce: mkNonce() }, "", now);
+      if (claim === "duplicate") return { resposta: "Mensagem já processada anteriormente." };
+      if (claim === "error") return { resposta: "Não consegui excluir agora. Nada foi alterado. Tente novamente." };
+      const s = cur.sel!;
+      const r = await aplicarExclusao(db, userId, s, now);
+      const resposta = r === "deleted"
+        ? `🗑️ ${s.t === "gastos" ? "Gasto excluído" : "Receita excluída"}\n${s.descricao} — ${brl(s.valor)} — ${dateBR(s.data)}\nEle não aparece mais nas consultas e nos totais.`
+        : r === "gone" ? "Esse lançamento já foi excluído ou não existe mais. Nada foi alterado."
+        : r === "changed" ? "Esse lançamento foi alterado no site ou app depois que você o escolheu. Para não excluir algo diferente, não fiz nada. Envie o pedido de novo para ver os dados atuais."
+        : r === "blocked" ? "Esse lançamento passou a ter vínculos que não podem ser desfeitos por aqui. Exclua pelo site ou app. Nada foi alterado."
+        : "Não consegui excluir agora. Nada foi alterado. Confira o lançamento no app e tente novamente.";
+      await saveState(db, userId, phone, null, "", { ...cur, stage: "done", seq: (cur.seq ?? 0) + 2, nonce: mkNonce() }, resposta, now);
+      return { resposta };
     }
 
     if (cur.stage === "confirm") {
