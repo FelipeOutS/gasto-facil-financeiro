@@ -172,7 +172,7 @@ export function extrairFiltro(texto: string, now: Date): Filtro {
 async function loadState(db: Db, userId: string, phone: string, now: Date): Promise<EditOldState | null> {
   const { data, error } = await db.from("whatsapp_messages").select("parsed, created_at")
     .eq("user_id", userId).eq("telefone", phone).eq("parsed->>kind", EDIT_OLD_KIND)
-    .order("created_at", { ascending: false }).limit(5);
+    .order("created_at", { ascending: false }).limit(20);
   if (error) throw new Error("edit_old_state_read_failed");
   // Desempate por `seq` (passos gravados no mesmo milissegundo).
   const rows = (Array.isArray(data) ? data : []) as Array<{ parsed: EditOldState; created_at: string }>;
