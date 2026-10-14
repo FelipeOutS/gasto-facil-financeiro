@@ -293,18 +293,28 @@ test("parcelado é bloqueado; cartão de crédito só descrição/categoria", as
 });
 
 // --------------------------------------------------- falha de persistência
-test("falha no UPDATE: informa que nada foi alterado", async () => {
+test("falha no UPDATE do banco: retorna erro, nunca sucesso", async () => {
+  const { aplicarEdicao } = await import("../src/server/whatsapp-editar-antigo.server");
+  const chain: any = {};
+  for (const k of ["update", "eq", "is", "select"]) chain[k] = () => chain;
+  chain.maybeSingle = async () => ({ data: null, error: { code: "57014", message: "timeout" } });
+  const db = { from: () => chain };
+  const snap = { t: "gastos", id: "g-1", updated_at: T0, descricao: "M", valor: 56, data: "2026-08-10", categoria_id: null, allowed: ["valor"] } as any;
+  const res = await aplicarEdicao(db, "u1", snap, { field: "valor", value: "65.00", label: "R$ 65,00", beforeLabel: "R$ 56,00" }, new Date());
+  expect(res).toBe("error");
+  // campo não permitido para o tipo nunca é escrito
+  const res2 = await aplicarEdicao(db, "u1", snap, { field: "data", value: "2026-08-01", label: "", beforeLabel: "" }, new Date());
+  expect(res2).toBe("error");
+});
+
+test("falha ao gravar o passo da confirmação: nada é alterado", async () => {
   resetState({ gastos: [g({ id: "g-1", descricao: "Mercado", valor: 56, data: "2026-08-10" })] });
   await send("editar gasto de agosto de 2026");
   await send("valor");
   await send("65");
-  // simula erro do banco: o registro some do filtro e a releitura falha
-  const orig = state.gastosData;
-  state.gastosSelectError = null;
-  (state as any).gastosData = new Proxy(orig, {}) ;
-  gasto("g-1").updated_at = "x"; gasto("g-1").deleted_at = null;
-  const res = await send("sim");
-  expect(res.resposta).not.toContain("✅");
+  // replay da mensagem anterior com o mesmo external_id + "sim" => dedupe, nada aplicado
+  const dup = await processarMensagemWhatsApp({ telefone: tel, texto: "sim", external_id: `ed-${n}` });
+  expect(dup.resposta).not.toContain("✅");
   expect(gasto("g-1").valor).toBe(56);
 });
 
