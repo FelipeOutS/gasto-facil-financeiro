@@ -596,7 +596,7 @@ export async function handleEdicaoAntiga(args: {
   }
 
   async function continuar(cur: EditOldState, cmd: string, arg: string | null): Promise<EditOldReply> {
-    if (cmd === "x") return close(cur, "Tudo bem, edição cancelada. Nenhum lançamento foi alterado.");
+    if (cmd === "x") return close(cur, cur.acao === "excluir" ? "Tudo bem, exclusão cancelada. Nenhum lançamento foi alterado." : "Tudo bem, edição cancelada. Nenhum lançamento foi alterado.");
 
     if (cur.stage === "interrupt") {
       const c = cmd === "text" ? (/^(1|continuar|continuar edicao|continua)$/.test(t) ? "cont" : /^(2|iniciar|novo|novo lancamento|iniciar novo lancamento)$/.test(t) ? "novo" : /^3$/.test(t) ? "x" : "") : cmd;
