@@ -36,3 +36,8 @@ tests/whatsapp-editar-antigo-p1.test.ts: 20/0. Suíte oficial: 171 arquivos, 2.9
 - Testes: tests/whatsapp-editar-antigo-interrupcao.test.ts 7/0; com o P1 27/0. Suíte oficial 172 arquivos, 3.000 aprovados, 0 falhas. tsgo OK, build OK.
 - Diff desde d9bb152e9: só arquivos da edição/receitas por período + AGENTS.md + docs; sem migrações. Trava `SHOPPING_RELEASE_AUTHORIZED = false` presente.
 - Produção (só estrutura): `reverter_extrato_atomic` e `estornar_conta_gastos_atomic` continuam AUSENTES (desfazer extrato segue indisponível, fail closed); `whatsapp_shopping_reserve` e `whatsapp_undo_recent_action` existem.
+
+## Busca por descrição (14/10, 23:30 UTC)
+- Termo agora usa a frase inteira (sem palavras vazias), não só a 1ª palavra.
+- `rankPorTermo`: exata (sem caixa/acento/pontuação) → só as exatas; senão todas as palavras; senão parcial. Única → prévia direto, confirmação obrigatória mantida.
+- tests/whatsapp-busca-lancamentos-p1.test.ts 6/0. Suíte oficial 176 arquivos, 3.034/0. tsgo OK.
