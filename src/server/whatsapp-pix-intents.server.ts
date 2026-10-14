@@ -475,7 +475,8 @@ export async function handlePagarPessoaIntent(args: {
       categoria_id: catId,
       descricao: descricao.slice(0, 120),
       estabelecimento: parsed.nome.slice(0, 120),
-      valor: parsed.valorCentavos,
+      // gastos.valor é em REAIS; parser devolve centavos (achado F-05: antes gravava 100×).
+      valor: parsed.valorCentavos / 100,
       data,
       mes: mo,
       ano: y,
