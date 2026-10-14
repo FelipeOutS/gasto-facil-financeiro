@@ -507,8 +507,9 @@ export async function handleEdicaoAntiga(args: {
         return save(next, reply);
       }
       if (c === "novo" && cur.pending_text) {
-        const r = await close(cur, "");
-        if (r.resposta) return r; // duplicate/erro: não processa o novo lançamento
+        // Sem external_id: o identificador da mensagem fica livre para a sessão do cadastro.
+        const r = await saveState(db, userId, phone, null, text, { ...cur, stage: "done", seq: (cur.seq ?? 0) + 1, nonce: mkNonce() }, "", now);
+        if (r === "error") return { resposta: "Não consegui iniciar o novo lançamento agora. Nada foi criado ou alterado. Tente novamente." };
         return { resposta: "", replayText: cur.pending_text };
       }
       const again = step(cur, {});
