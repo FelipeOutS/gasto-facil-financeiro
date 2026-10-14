@@ -154,3 +154,16 @@ test("pedido de exclusão em massa não é executado nesta rodada", async () => 
   expect(r.resposta).toContain("um lançamento por vez");
   expect((state.gastosData as any[]).every((x) => x.deleted_at === null)).toBe(true);
 });
+
+test("falha de persistência: informa erro e não alega exclusão", async () => {
+  const { aplicarExclusao } = await import("../src/server/whatsapp-editar-antigo.server");
+  const row = { id: "g1", updated_at: T0, deleted_at: null, total_parcelas: 1, forma_pagamento: "pix" };
+  const q: any = {
+    select: () => q, eq: () => q, is: () => q, limit: async () => ({ data: [], error: null }),
+    maybeSingle: async () => (q._upd ? { data: null, error: { message: "db down" } } : { data: row, error: null }),
+    update: () => { q._upd = true; return q; },
+  };
+  const db = { from: () => { q._upd = false; return q; } };
+  const r = await aplicarExclusao(db, "u1", { t: "gastos", id: "g1", updated_at: T0, descricao: "X", valor: 1, data: "2026-10-01", categoria_id: null, allowed: [] }, new Date());
+  expect(r).toBe("error");
+});
