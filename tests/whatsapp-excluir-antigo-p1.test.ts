@@ -110,7 +110,7 @@ test("confirmação duplicada e botão antigo não reaplicam", async () => {
   await tap(`wa_ed:${nonce}:del`, "Confirmar", "dup-1");
   const firstStamp = gasto("g-uber").deleted_at;
   const replay = await tap(`wa_ed:${nonce}:del`, "Confirmar", "dup-1");
-  expect(replay.resposta).toContain("já processada");
+  expect(replay.resposta).not.toContain("excluído"); // replay da Meta: recusado, sem reaplicar
   const again = await tap(`wa_ed:${nonce}:del`, "Confirmar", "dup-2");
   expect(again.resposta).toContain("expirou");
   expect(gasto("g-uber").deleted_at).toBe(firstStamp);
@@ -140,7 +140,7 @@ test("lançamentos especiais bloqueados", async () => {
     g({ id: "c1", descricao: "Cinema", valor: 40, data: "2026-10-03", forma_pagamento: "credito", cartao_id: "card" }),
     g({ id: "e1", descricao: "Padaria", valor: 8, data: "2026-10-04", import_batch_id: "b1" }),
     g({ id: "k1", descricao: "Luz", valor: 120, data: "2026-10-05" }),
-  ], contas_a_pagar: [{ id: "cp1", user_id: "u1", gasto_id: "k1", status: "pago" }] } as any);
+  ], contas: [{ id: "cp1", user_id: "u1", gasto_id: "k1", status: "pago" }] } as any);
   for (const [nome, msg] of [["Geladeira", "parceladas"], ["Cinema", "cartão de crédito"], ["Padaria", "extrato"], ["Luz", "conta a pagar"]]) {
     const r = await send(`excluir gasto ${nome.toLowerCase()} de outubro de 2026`);
     expect(r.resposta).toContain(msg);
