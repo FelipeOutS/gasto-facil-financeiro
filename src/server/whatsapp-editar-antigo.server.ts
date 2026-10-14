@@ -35,7 +35,7 @@ const defaultDb: Db = _supabaseAdmin;
 export const EDIT_OLD_KIND = "wa_edit_old";
 export const EDIT_OLD_TTL_MS = 15 * 60 * 1000;
 export const EDIT_OLD_PAGE = 8;
-const TOKEN = /^wa_ed:([0-9a-f]{12}):(sel|pg|f|ok|adj|x|cont|novo|del|bk)(?::([0-9a-z_-]{1,40}))?$/i;
+const TOKEN = /^wa_ed:([0-9a-f]{12}):(sel|pg|f|ok|adj|x|cont|novo|del|bk|rst)(?::([0-9a-z_-]{1,40}))?$/i;
 
 type Tbl = "gastos" | "receitas";
 type Field = "valor" | "descricao" | "data" | "categoria_id";
@@ -54,7 +54,7 @@ export type EditOldState = {
   expires_at: string;
   tipo: "receita" | "gasto" | "lancamento";
   /** P1 exclusão individual (14/10): mesmo fluxo/estado da edição, ação diferente. */
-  acao?: "editar" | "excluir";
+  acao?: "editar" | "excluir" | "restaurar";
   termo?: string | null;
   cands?: Cand[];
   page?: number;
@@ -141,6 +141,24 @@ export function detectExclusaoAntiga(texto: string, now: Date = new Date()): Edi
   return null;
 }
 
+// ------------------------------------------- detector (restauração individual)
+const REST_VERB = /\b(restaurar|restaura|restaure|recuperar|recupera|recupere|desfazer (a )?exclusao|desfaz (a )?exclusao|desexcluir)\b/;
+const EXCLUIDOS_W = /\b(excluid[oa]s?|apagad[oa]s?|removid[oa]s?|apaguei|exclui|removi|deletad[oa]s?)\b/;
+/** "restaurar um gasto excluído", "mostrar meus gastos excluídos", "desfazer a exclusão do mercado de ontem". */
+export function detectRestauracaoAntiga(texto: string, now: Date = new Date()): EditarTipo | null {
+  const t = norm(texto);
+  if (!t) return null;
+  const listar = /\b(mostrar|mostra|ver|listar|quais)\b/.test(t) && EXCLUIDOS_W.test(t);
+  if (!REST_VERB.test(t) && !listar) return null;
+  if (OUTROS_FLUXOS.test(t)) return null;
+  if (RECEITA_W.test(t)) return "receita";
+  if (GASTO_W.test(t)) return "gasto";
+  if (LANC_W.test(t) || EXCLUIDOS_W.test(t) || /\bexclusao\b/.test(t)) return "lancamento";
+  const f = extrairFiltro(texto, now);
+  if (f.termo && f.range) return "lancamento";
+  return null;
+}
+
 const WEEKDAYS: Record<string, number> = {
   domingo: 0, segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6,
 };
@@ -192,7 +210,7 @@ export function extrairFiltro(texto: string, now: Date): Filtro {
       }
     }
   }
-  const tokens = t.split(" ").filter((w) => w.length >= 3 && !STOP.has(w) && !EDIT_VERB.test(w) && !DEL_VERB.test(w) && !/^\d+$/.test(w));
+  const tokens = t.split(" ").filter((w) => w.length >= 3 && !STOP.has(w) && !EDIT_VERB.test(w) && !DEL_VERB.test(w) && !REST_VERB.test(w) && !EXCLUIDOS_W.test(w) && !["exclusao", "desfazer", "mostrar", "listar", "excluido", "excluida"].includes(w) && !/^\d+$/.test(w));
   return { range, termo: tokens[0] ?? null, periodoLabel };
 }
 
@@ -262,6 +280,14 @@ async function deleteBlock(db: Db, userId: string, t: Tbl, r: Row): Promise<stri
   return null;
 }
 
+/** soft-delete-exceção: lê um lançamento EXCLUÍDO do próprio usuário (restauração). */
+async function readDeletedRow(db: Db, userId: string, t: Tbl, id: string): Promise<Row | null> {
+  const { data, error } = await db.from(t).select(t === "gastos" ? GASTO_COLS : RECEITA_COLS)
+    .eq("id", id).eq("user_id", userId).not("deleted_at", "is", null).maybeSingle();
+  if (error) throw new Error("restore_old_row_read_failed");
+  return (data as Row) ?? null;
+}
+
 async function readRow(db: Db, userId: string, t: Tbl, id: string): Promise<Row | null> {
   const { data, error } = await db.from(t).select(t === "gastos" ? GASTO_COLS : RECEITA_COLS)
     .eq("id", id).eq("user_id", userId).is("deleted_at", null).maybeSingle();
@@ -269,13 +295,15 @@ async function readRow(db: Db, userId: string, t: Tbl, id: string): Promise<Row 
   return (data as Row) ?? null;
 }
 
-async function buscar(db: Db, userId: string, tipo: EditarTipo, f: Filtro, now: Date): Promise<Array<Row & { _t: Tbl }>> {
+async function buscar(db: Db, userId: string, tipo: EditarTipo, f: Filtro, now: Date, excluidos = false): Promise<Array<Row & { _t: Tbl }>> {
   const range = f.range ?? [shiftISO(todaySP(now), -365), todaySP(now)];
   const tables: Tbl[] = tipo === "receita" ? ["receitas"] : tipo === "gasto" ? ["gastos"] : ["gastos", "receitas"];
   const out: Array<Row & { _t: Tbl }> = [];
   for (const t of tables) {
-    const { data, error } = await db.from(t).select(t === "gastos" ? GASTO_COLS : RECEITA_COLS)
-      .eq("user_id", userId).is("deleted_at", null)
+    // soft-delete-exceção: na restauração lê SOMENTE os excluídos do próprio usuário.
+    let q = db.from(t).select(t === "gastos" ? GASTO_COLS : RECEITA_COLS).eq("user_id", userId);
+    q = excluidos ? q.not("deleted_at", "is", null) : q.is("deleted_at", null);
+    const { data, error } = await q
       .gte("data", range[0]).lte("data", range[1])
       .order("data", { ascending: false }).limit(200);
     if (error) throw new Error("edit_old_search_failed");
@@ -423,6 +451,47 @@ export async function aplicarExclusao(db: Db, userId: string, s: Snap, now: Date
   return cur ? "changed" : "gone";
 }
 
+/**
+ * Restauração (deleted_at → NULL) com controle otimista. Não cria lançamento novo.
+ * "already" = já estava ativo; "gone" = não existe/não é do usuário.
+ */
+export async function aplicarRestauracao(db: Db, userId: string, s: Snap, now: Date):
+  Promise<"restored" | "already" | "gone" | "changed" | "blocked" | "error"> {
+  let cur: Row | null;
+  try { cur = await readDeletedRow(db, userId, s.t, s.id); } catch { return "error"; }
+  if (!cur) {
+    try { return (await readRow(db, userId, s.t, s.id)) ? "already" : "gone"; } catch { return "error"; }
+  }
+  if (String(cur.updated_at ?? "") !== s.updated_at) return "changed";
+  try { if (await deleteBlock(db, userId, s.t, cur)) return "blocked"; } catch { return "error"; }
+  const patch: Record<string, unknown> = { deleted_at: null, updated_at: now.toISOString() };
+  if (s.t === "receitas") { patch.deleted_source = null; patch.deleted_reason = null; }
+  const { data, error } = await db.from(s.t).update(patch)
+    .eq("id", s.id).eq("user_id", userId).eq("updated_at", s.updated_at).not("deleted_at", "is", null)
+    .select("id").maybeSingle();
+  if (error) return "error";
+  if (data?.id) return "restored";
+  try { if (await readRow(db, userId, s.t, s.id)) return "already"; } catch { return "error"; }
+  return "changed";
+}
+
+function renderRestConfirm(st: EditOldState): EditOldReply {
+  const s = st.sel!;
+  const body = [
+    "Você vai restaurar este lançamento excluído:",
+    `${s.t === "gastos" ? "Gasto" : "Receita"}: ${s.descricao}`,
+    `Valor: ${brl(s.valor)}`,
+    `Data: ${dateBR(s.data)}`,
+    "",
+    "Ele volta a aparecer nas consultas e nos totais do site, do app e do WhatsApp.",
+    "Deseja confirmar a restauração?",
+  ].join("\n");
+  return { resposta: body, graphInteractive: btns(body, [
+    { id: `wa_ed:${st.nonce}:rst`, title: "Confirmar" },
+    { id: `wa_ed:${st.nonce}:x`, title: "Cancelar" },
+  ]) };
+}
+
 function renderDelConfirm(st: EditOldState): EditOldReply {
   const s = st.sel!;
   const body = [
@@ -507,6 +576,7 @@ export async function handleEdicaoAntiga(args: {
   // 2) Texto livre dentro de um fluxo ativo.
   if (active) {
     const del = active.acao === "excluir";
+    if (active.acao === "restaurar" && RESET.test(t)) return close(active, "Tudo bem, restauração cancelada. Nenhum lançamento foi alterado.");
     if (del && active.stage === "confirm" && t === "voltar") return continuar(active, "bk", null);
     if (RESET.test(t)) return close(active, del ? "Tudo bem, exclusão cancelada. Nenhum lançamento foi alterado." : "Tudo bem, edição cancelada. Nenhum lançamento foi alterado.");
     if (active.stage === "interrupt") return continuar(active, "text", null);
@@ -525,10 +595,11 @@ export async function handleEdicaoAntiga(args: {
   // 3) Início de um fluxo novo.
   if (!args.podeIniciar) return null;
   const tipoEd = detectEdicaoAntiga(text);
-  const tipoDel = tipoEd ? null : detectExclusaoAntiga(text, now);
-  const tipo = tipoEd ?? tipoDel;
+  const tipoRst = tipoEd ? null : detectRestauracaoAntiga(text, now);
+  const tipoDel = tipoEd || tipoRst ? null : detectExclusaoAntiga(text, now);
+  const tipo = tipoEd ?? tipoRst ?? tipoDel;
   if (!tipo) return null;
-  const acao: "editar" | "excluir" = tipoDel ? "excluir" : "editar";
+  const acao: "editar" | "excluir" | "restaurar" = tipoRst ? "restaurar" : tipoDel ? "excluir" : "editar";
   if (acao === "excluir" && BULK_DEL.test(t)) {
     return { resposta: "Por aqui eu excluo um lançamento por vez. Diga qual, por exemplo: “excluir o Uber de ontem” ou “excluir um gasto de outubro de 2026”.\n\nNada foi alterado." };
   }
@@ -544,11 +615,14 @@ export async function handleEdicaoAntiga(args: {
   // ---------------------------------------------------------- internals
   async function buscarEMostrar(base: EditOldState, f: Filtro): Promise<EditOldReply> {
     let rows;
-    try { rows = await buscar(db, userId, base.tipo, f, now); } catch {
+    try { rows = await buscar(db, userId, base.tipo, f, now, base.acao === "restaurar"); } catch {
       return { resposta: "Não consegui buscar seus lançamentos agora. Nada foi alterado. Tente novamente." };
     }
     const nome = base.tipo === "receita" ? "receita" : base.tipo === "gasto" ? "gasto" : "lançamento";
     const onde = [f.termo ? `“${f.termo}”` : null, f.periodoLabel ? `em ${f.periodoLabel}` : null].filter(Boolean).join(" ");
+    if (rows.length === 0 && base.acao === "restaurar") {
+      return close({ ...base, nonce: "", expires_at: "" }, `Não encontrei nenhum ${nome} excluído${onde ? ` ${onde}` : ""} na sua conta. Nada foi alterado.`);
+    }
     if (rows.length === 0) {
       return close({ ...base, nonce: "", expires_at: "" }, `Não encontrei nenhum ${nome}${onde ? ` ${onde}` : ""} na sua conta. Nada foi alterado.\n\nTente outro mês ou nome, por exemplo: “editar gasto de agosto de 2026”.`);
     }
@@ -556,11 +630,27 @@ export async function handleEdicaoAntiga(args: {
     if (rows.length === 1) return selecionar(step(base, { stage: "select", cands, page: 0, termo: f.termo }), cands[0]);
     const next = step(base, { stage: "select", cands, page: 0, termo: f.termo });
     const reply = renderList(next, rows.map((r) => ({ t: r._t, id: String(r.id), descricao: r.descricao, valor: r.valor, data: r.data })),
-      `Encontrei ${rows.length} ${rows.length === 1 ? nome : `${nome}s`}${onde ? ` ${onde}` : ""}. Qual você quer ${base.acao === "excluir" ? "excluir" : "editar"}?`);
+      `Encontrei ${rows.length} ${rows.length === 1 ? nome : `${nome}s`}${base.acao === "restaurar" ? (rows.length === 1 ? " excluído" : " excluídos") : ""}${onde ? ` ${onde}` : ""}. Qual você quer ${base.acao === "excluir" ? "excluir" : base.acao === "restaurar" ? "restaurar" : "editar"}?`);
     return save(next, reply);
   }
 
   async function selecionar(cur: EditOldState, c: Cand): Promise<EditOldReply> {
+    if (cur.acao === "restaurar") {
+      let row: Row | null; let block: string | null = null;
+      try {
+        row = await readDeletedRow(db, userId, c.t, c.id);
+        if (row) block = await deleteBlock(db, userId, c.t, row);
+      } catch { return { resposta: "Não consegui abrir esse lançamento agora. Nada foi alterado. Tente novamente." }; }
+      if (!row) return close(cur, "Esse lançamento não está mais na lista de excluídos (pode já ter sido restaurado). Nada foi alterado.");
+      if (block) return close(cur, `${block.replace("Exclua esse", "Restaure esse")}\n\nNada foi alterado.`);
+      const sel: Snap = {
+        t: c.t, id: c.id, updated_at: String(row.updated_at ?? ""),
+        descricao: String(row.descricao ?? "Lançamento"), valor: Number(row.valor ?? 0),
+        data: String(row.data ?? ""), categoria_id: (row.categoria_id as string | null) ?? null, allowed: [],
+      };
+      const next = step(cur, { stage: "confirm", sel });
+      return save(next, renderRestConfirm(next));
+    }
     let row: Row | null;
     try { row = await readRow(db, userId, c.t, c.id); } catch {
       return { resposta: "Não consegui abrir esse lançamento agora. Nada foi alterado. Tente novamente." };
@@ -596,6 +686,7 @@ export async function handleEdicaoAntiga(args: {
   }
 
   async function continuar(cur: EditOldState, cmd: string, arg: string | null): Promise<EditOldReply> {
+    if (cmd === "x" && cur.acao === "restaurar") return close(cur, "Tudo bem, restauração cancelada. Nenhum lançamento foi alterado.");
     if (cmd === "x") return close(cur, cur.acao === "excluir" ? "Tudo bem, exclusão cancelada. Nenhum lançamento foi alterado." : "Tudo bem, edição cancelada. Nenhum lançamento foi alterado.");
 
     if (cur.stage === "interrupt") {
@@ -606,7 +697,7 @@ export async function handleEdicaoAntiga(args: {
         const next = step(back, {});
         const reply = next.stage === "field" ? renderFieldMenu(next)
           : next.stage === "value" ? askValue(next)
-          : next.stage === "confirm" ? (next.acao === "excluir" ? renderDelConfirm(next) : renderConfirm(next))
+          : next.stage === "confirm" ? (next.acao === "excluir" ? renderDelConfirm(next) : next.acao === "restaurar" ? renderRestConfirm(next) : renderConfirm(next))
           : next.stage === "select" ? { resposta: "Certo, edição retomada. Responda com o número do lançamento da lista anterior, “mais” para ver outros ou “cancelar”." }
           : { resposta: "Certo, edição retomada. De quando é o lançamento? (ex.: setembro de 2026)" };
         return save(next, reply);
@@ -633,8 +724,9 @@ export async function handleEdicaoAntiga(args: {
         const page = cmd === "pg" ? Number(arg) : (cur.page ?? 0) + 1;
         if (!Number.isInteger(page) || page < 0 || page * EDIT_OLD_PAGE >= cands.length) return save(step(cur, {}), { resposta: "Não há mais lançamentos nesta busca. Escolha um da lista ou digite “cancelar”." });
         const rows: Array<{ t: Tbl; id: string; descricao: unknown; valor: unknown; data: unknown }> = [];
+        const rd = cur.acao === "restaurar" ? readDeletedRow : readRow;
         for (const c of cands) {
-          try { const r = await readRow(db, userId, c.t, c.id); if (r) rows.push({ t: c.t, id: c.id, descricao: r.descricao, valor: r.valor, data: r.data }); } catch { /* omitido */ }
+          try { const r = await rd(db, userId, c.t, c.id); if (r) rows.push({ t: c.t, id: c.id, descricao: r.descricao, valor: r.valor, data: r.data }); } catch { /* omitido */ }
         }
         const next = step(cur, { page, cands: rows.map((r) => ({ t: r.t, id: r.id })) });
         return save(next, renderList(next, rows, "Mais lançamentos:"));
@@ -673,6 +765,26 @@ export async function handleEdicaoAntiga(args: {
       if (typeof p === "string") return save(step(cur, {}), { resposta: `${p}\n\nDigite “cancelar” para sair.` });
       const next = step(cur, { stage: "confirm", patch: p });
       return save(next, renderConfirm(next));
+    }
+
+    if (cur.stage === "confirm" && cur.acao === "restaurar") {
+      const yes = cmd === "rst" || (cmd === "text" && /^(sim|confirmar|confirmo|restaurar|pode)$/.test(t));
+      if (!yes) return save(step(cur, {}), renderRestConfirm(cur));
+      // Consome o estado ANTES de escrever: confirmação repetida/replay não reaplica.
+      const claim = await saveState(db, userId, phone, externalId, text, { ...cur, stage: "applying", seq: (cur.seq ?? 0) + 1, nonce: mkNonce() }, "", now);
+      if (claim === "duplicate") return { resposta: "Mensagem já processada anteriormente." };
+      if (claim === "error") return { resposta: "Não consegui restaurar agora. Nada foi alterado. Tente novamente." };
+      const s = cur.sel!;
+      const r = await aplicarRestauracao(db, userId, s, now);
+      const resposta = r === "restored"
+        ? `♻️ ${s.t === "gastos" ? "Gasto restaurado" : "Receita restaurada"}\n${s.descricao} — ${brl(s.valor)} — ${dateBR(s.data)}\nEle voltou para as consultas e os totais.`
+        : r === "already" ? "Esse lançamento já estava ativo. Nada foi alterado."
+        : r === "gone" ? "Não encontrei esse lançamento na sua conta. Nada foi alterado."
+        : r === "changed" ? "Esse lançamento mudou depois que você o escolheu. Para não restaurar algo diferente, não fiz nada. Envie o pedido de novo."
+        : r === "blocked" ? "Esse lançamento tem vínculos que não podem ser restaurados por aqui. Use o site ou app. Nada foi alterado."
+        : "Não consegui restaurar agora. Nada foi alterado. Tente novamente.";
+      await saveState(db, userId, phone, null, "", { ...cur, stage: "done", seq: (cur.seq ?? 0) + 2, nonce: mkNonce() }, resposta, now);
+      return { resposta };
     }
 
     if (cur.stage === "confirm" && cur.acao === "excluir") {

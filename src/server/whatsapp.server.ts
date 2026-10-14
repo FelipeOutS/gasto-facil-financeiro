@@ -162,7 +162,7 @@ import {
   processarEdicaoConta,
   type WhatsAppEdicaoContaDeps,
 } from "./whatsapp-contas-editar.server";
-import { detectEdicaoAntiga, detectExclusaoAntiga, handleEdicaoAntiga } from "./whatsapp-editar-antigo.server";
+import { detectEdicaoAntiga, detectExclusaoAntiga, detectRestauracaoAntiga, handleEdicaoAntiga } from "./whatsapp-editar-antigo.server";
 import {
   detectSavePixIntent,
   detectQueryPixIntent,
@@ -2996,7 +2996,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     let ed;
     try {
       // Início só sem outra sessão ativa (cadastro em andamento tem prioridade).
-      const podeIniciar = (detectEdicaoAntiga(texto) !== null || detectExclusaoAntiga(texto) !== null) && !(await buscarSessaoAtiva(userId, msg.telefone));
+      const podeIniciar = (detectEdicaoAntiga(texto) !== null || detectExclusaoAntiga(texto) !== null || detectRestauracaoAntiga(texto) !== null) && !(await buscarSessaoAtiva(userId, msg.telefone));
       ed = await handleEdicaoAntiga({ userId, phone: msg.telefone, externalId: msg.external_id, text: texto, podeIniciar });
     } catch {
       return { status: "erro", resposta: "Não consegui continuar a edição agora. Nada foi alterado. Tente novamente." };
