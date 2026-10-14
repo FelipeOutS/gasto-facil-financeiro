@@ -79,6 +79,8 @@ export async function transcribeWhatsAppAudio(
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}` },
       body: form,
+      // Pacote 2/C: transcrição com tempo limite (cai no catch → reason "failed").
+      signal: AbortSignal.timeout(30_000),
     });
     if (!resp.ok) {
       // Sem err.message do upstream: apenas status numérico.

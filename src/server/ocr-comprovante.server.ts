@@ -155,8 +155,12 @@ export async function extrairDadosComprovante(imageBase64: string): Promise<OcrO
     return { ok: false, error: { error: "Imagem muito grande. Máximo 15 MB.", status: 413 } };
   }
 
-  const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  let aiResp: Response;
+  try {
+  aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
+    // Pacote 2/C: leitura por IA com tempo limite.
+    signal: AbortSignal.timeout(45_000),
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
@@ -177,10 +181,15 @@ export async function extrairDadosComprovante(imageBase64: string): Promise<OcrO
       tool_choice: { type: "function", function: { name: "registrar_gasto_extraido" } },
     }),
   });
+  } catch (err) {
+    const n = (err as { name?: string } | null)?.name;
+    console.error("[ocr-comprovante] AI gateway falhou", { kind: n === "TimeoutError" || n === "AbortError" ? "timeout" : "network" });
+    return { ok: false, error: { error: "A leitura demorou demais. Tente de novo em instantes.", status: 504 } };
+  }
 
   if (!aiResp.ok) {
     const text = await aiResp.text().catch(() => "");
-    console.error("[ocr-comprovante] AI gateway error", aiResp.status, text);
+    console.error("[ocr-comprovante] AI gateway error", aiResp.status, text.length);
     if (aiResp.status === 429) {
       return {
         ok: false,

@@ -439,30 +439,20 @@ async function downloadWhatsappMedia(
   mimeFromMeta: string | undefined,
   maxBytes: number,
 ): Promise<{ buffer: Buffer; declaredMime?: string } | null> {
-  try {
-    const token = process.env.WHATSAPP_ACCESS_TOKEN;
-    if (!token) return null;
-    const { buildWhatsAppGraphUrl } = await import("@/server/whatsapp-graph-version.server");
-    const lookupBuild = buildWhatsAppGraphUrl({ kind: "media_lookup", mediaId });
-    if (!lookupBuild.ok) return null;
-    const lookup = await fetch(lookupBuild.url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!lookup.ok) return null;
-    const meta = (await lookup.json()) as { url?: string; mime_type?: string };
-    if (!meta.url) return null;
-    const dl = await fetch(meta.url, { headers: { Authorization: `Bearer ${token}` } });
-    if (!dl.ok) return null;
-    // Limite duro: paramos de ler se passar de `maxBytes`, sem
-    // bufferizar 100 MB de lixo enviado por um atacante.
-    const buf = Buffer.from(await dl.arrayBuffer());
-    if (buf.byteLength === 0 || buf.byteLength > maxBytes) return null;
-    return { buffer: buf, declaredMime: (meta.mime_type ?? mimeFromMeta)?.toLowerCase() };
-  } catch (err) {
-    // Não logamos `err.message`: pode conter a URL assinada da Meta.
-    console.error("[whatsapp] media download failed:", err instanceof Error ? err.name : "unknown");
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  if (!token) return null;
+  const { buildWhatsAppGraphUrl } = await import("@/server/whatsapp-graph-version.server");
+  const lookupBuild = buildWhatsAppGraphUrl({ kind: "media_lookup", mediaId });
+  if (!lookupBuild.ok) return null;
+  // Pacote 2/C: tempo limite em lookup e download; limite de bytes durante o streaming.
+  const { downloadWhatsappMediaBounded } = await import("@/server/whatsapp-bounded-fetch.server");
+  const r = await downloadWhatsappMediaBounded({ lookupUrl: lookupBuild.url, token, mimeFromMeta, maxBytes });
+  if (!r.ok) {
+    // Só o tipo da falha; nunca URL, token ou conteúdo.
+    console.error("[whatsapp] media download failed:", r.reason);
     return null;
   }
+  return { buffer: r.buffer, declaredMime: r.declaredMime };
 }
 
 const MAX_RAW_BODY = 64 * 1024; // 64KB
