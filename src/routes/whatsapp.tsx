@@ -741,10 +741,10 @@ function WhatsAppPage() {
   const ultimaMsg = msgs[0];
   const processamentoRealAtivo = configStatus?.enabled === true;
   const integracaoStatus = MODO_TESTE
-    ? { label: "Em configuração", cls: "border-amber-500/40 text-amber-300" }
+    ? { label: "Esta tela está em modo de simulação", cls: "border-amber-500/40 text-amber-300" }
     : !processamentoRealAtivo
       ? {
-          label: "Configurado — teste de mensagens ainda desativado",
+          label: "Teste de mensagens nesta tela desativado",
           cls: "border-amber-500/40 text-amber-300",
         }
       : links.length === 0
@@ -1004,7 +1004,7 @@ function WhatsAppPage() {
                             variant="outline"
                             className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]"
                           >
-                            Aguardando ativação
+                            Modo de simulação nesta tela
                           </Badge>
                         ) : l.verification_state === "pending" ? (
                           <Badge variant="outline" className="border-amber-500/40 text-amber-300 text-[10px]">
