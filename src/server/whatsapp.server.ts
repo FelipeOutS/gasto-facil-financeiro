@@ -6016,6 +6016,8 @@ async function sendWhatsAppRaw(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
+      // Pacote 2/A: sem resposta em 15 s → resultado AMBÍGUO (a Meta pode ter aceitado).
+      signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) {
       console.error({
@@ -6062,7 +6064,8 @@ async function sendWhatsAppRaw(
       handlerVersion: WHATSAPP_HANDLER_VERSION,
       errorName,
     });
-    return { sent: false, reason: errorName };
+    // TimeoutError/AbortError/erro de rede: não sabemos se a Meta aceitou.
+    return { sent: false, reason: errorName === "AbortError" ? "TimeoutError" : errorName };
   }
 }
 
