@@ -3001,6 +3001,12 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     } catch {
       return { status: "erro", resposta: "Não consegui continuar a edição agora. Nada foi alterado. Tente novamente." };
     }
+    if (ed?.replayText) {
+      // Escolha explícita "Iniciar novo lançamento": a edição já foi encerrada; o
+      // texto guardado segue o fluxo normal (com suas próprias confirmações).
+      texto = ed.replayText;
+      ed = null;
+    }
     if (ed) return {
       status: "consulta", resposta: ed.resposta,
       ...(ed.graphInteractive ? { graphInteractive: ed.graphInteractive as { [key: string]: Json | undefined } } : {}),

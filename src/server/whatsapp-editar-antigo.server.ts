@@ -511,7 +511,8 @@ export async function handleEdicaoAntiga(args: {
         if (r.resposta) return r; // duplicate/erro: não processa o novo lançamento
         return { resposta: "", replayText: cur.pending_text };
       }
-      return save(step(cur, {}), renderInterrupt(step(cur, {})));
+      const again = step(cur, {});
+      return save(again, renderInterrupt(again));
     }
 
     if (cur.stage === "periodo") {
