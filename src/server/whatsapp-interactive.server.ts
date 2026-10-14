@@ -217,6 +217,9 @@ export function replyIdToTexto(id: string, title?: string): string {
   // O token opaco do recibo contém a identidade da ação. Converter para o
   // título ("Editar"/"Desfazer") perderia essa referência e seria inseguro.
   if (/^wa12_(?:edit|edit_scope|undo|field|confirm|back|scope):[0-9a-f-]{36}(?::[a-z_]+)?$/i.test(v)) return v;
+  // Edição de lançamentos antigos: token com nonce do passo + ID real; o
+  // título ("Uber") não identifica o lançamento. Validado no fluxo de edição.
+  if (/^wa_ed:[0-9a-f]{12}:(?:sel|pg|f|ok|adj|x|cont|novo)(?::[0-9a-z_-]{1,40})?$/i.test(v)) return v;
   const exp = expenseTokenToTexto(v);
   if (exp) return exp; // validado contra a sessão em processarMensagemWhatsApp
   if (REPLY_ID_TEXT[v]) return REPLY_ID_TEXT[v];
