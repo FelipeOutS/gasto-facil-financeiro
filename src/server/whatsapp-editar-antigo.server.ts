@@ -325,15 +325,16 @@ function chaveDescricao(s: string): string {
  * 2) contém todas as palavras do termo;
  * 3) parcial (alguma palavra), mais palavras primeiro.
  */
-export function rankPorTermo<R extends { descricao?: unknown; estabelecimento?: unknown; data?: unknown }>(rows: R[], termo: string): R[] {
-  const byDate = (a: R, b: R) => String(b.data).localeCompare(String(a.data));
+export function rankPorTermo<R extends object>(rows: R[], termo: string): R[] {
+  const v = (r: R, k: string) => (r as Record<string, unknown>)[k];
+  const byDate = (a: R, b: R) => String(v(b, "data")).localeCompare(String(v(a, "data")));
   const alvo = chaveDescricao(termo);
   if (!alvo) return [...rows].sort(byDate);
-  const exatas = rows.filter((r) => chaveDescricao(String(r.descricao ?? "")) === alvo || (!!r.estabelecimento && chaveDescricao(String(r.estabelecimento)) === alvo));
+  const exatas = rows.filter((r) => chaveDescricao(String(v(r, "descricao") ?? "")) === alvo || (!!v(r, "estabelecimento") && chaveDescricao(String(v(r, "estabelecimento"))) === alvo));
   if (exatas.length) return exatas.sort(byDate);
   const palavras = alvo.split(" ").map((w) => (w.length > 3 ? w.replace(/s$/, "") : w));
   const scored = rows.map((r) => {
-    const h = norm(`${r.descricao ?? ""} ${r.estabelecimento ?? ""}`);
+    const h = norm(`${v(r, "descricao") ?? ""} ${v(r, "estabelecimento") ?? ""}`);
     return { r, n: palavras.filter((w) => h.includes(w)).length };
   }).filter((x) => x.n > 0);
   scored.sort((a, b) => b.n - a.n || byDate(a.r, b.r));
