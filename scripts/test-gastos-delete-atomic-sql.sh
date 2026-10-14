@@ -37,4 +37,5 @@ sleep 0.4
 wait
 R=$("${P[@]}" -tAc "SELECT (SELECT count(*) FROM public.gastos WHERE import_batch_id='$X')||'/'||(SELECT count(*) FROM public.receitas WHERE import_batch_id='$X')||'/'||(SELECT status FROM public.extratos_importados WHERE id='$X')")
 if grep -q '"removidos": 2' "$D/c1" && grep -q '"idempotent": true' "$D/c2" && [ "$R" = "0/0/revertido" ]; then echo "PASSOU: (9) corrida 2 conexões no mesmo lote — 1 reversão, 2ª idempotente"; else echo "FALHOU: (9) $R $(cat "$D/c1" "$D/c2")"; exit 1; fi
+"${P[@]}" -f "$ROOT/tests/sql/gastos-delete-atomic-f4/40-rollback.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"
 echo "OK F4"
