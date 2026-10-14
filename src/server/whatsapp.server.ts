@@ -163,6 +163,10 @@ import {
   type WhatsAppEdicaoContaDeps,
 } from "./whatsapp-contas-editar.server";
 import {
+  detectEditarLancamentoExistente,
+  respostaEdicaoIndisponivel,
+} from "./whatsapp-editar-lancamento.server";
+import {
   detectSavePixIntent,
   detectQueryPixIntent,
   detectPagarPessoaIntent,
@@ -4919,6 +4923,25 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
       texto,
       _row: msg,
     });
+  }
+  // P1 14/10: pedido de editar receita/gasto existente nunca abre cadastro.
+  if (!sessao && decisao === "outro") {
+    const editTipo = detectEditarLancamentoExistente(texto);
+    if (editTipo) {
+      logWaRouteDecision(msg, "consulta_handler", "edit_existing_entry_unavailable");
+      const resposta = respostaEdicaoIndisponivel(editTipo);
+      await gravarSessao(
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        resposta,
+      );
+      return { status: "consulta", resposta };
+    }
   }
   if (!sessao && decisao === "outro") {
     const guard = detectConsultaShape(texto);
