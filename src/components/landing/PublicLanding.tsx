@@ -4974,13 +4974,12 @@ function WhatsAppFeatureSection() {
               </ul>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
-                <LandingAnchorLink
-                  section="planos"
-                  className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_-12px_rgba(5,150,105,0.45)] transition-all hover:bg-emerald-700 hover:shadow-[0_16px_32px_-12px_rgba(5,150,105,0.55)]"
-                >
-                  {t("whatsapp.ctaPrimary")}
-                  <ArrowRight className="h-4 w-4" />
-                </LandingAnchorLink>
+                <Button asChild>
+                  <Link to="/whatsapp">
+                    {t("whatsapp.ctaPrimary")}
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                </Button>
                 <span className="text-xs font-medium text-slate-500">
                   {t("whatsapp.disclaimer")}
                 </span>

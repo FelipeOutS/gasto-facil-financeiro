@@ -60,6 +60,13 @@
   },
   "notifications": {
     "title": "Notificações e alertas",
+    "channels": {
+      "whatsappAlerts": "Alertas automáticos pelo WhatsApp",
+      "notEnabled": "Não ativados",
+      "assistant": "Assistente financeiro pelo WhatsApp — disponível",
+      "eligibility": "Disponível nos planos pagos elegíveis, após vincular seu número e autorizar o acesso. Alertas automáticos são uma função separada, não ativada.",
+      "link": "Vincular meu WhatsApp"
+    },
     "groups": {
       "accounts": "CONTAS E VENCIMENTOS",
       "budget": "ORÇAMENTO",
