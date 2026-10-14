@@ -162,10 +162,7 @@ import {
   processarEdicaoConta,
   type WhatsAppEdicaoContaDeps,
 } from "./whatsapp-contas-editar.server";
-import {
-  detectEditarLancamentoExistente,
-  respostaEdicaoIndisponivel,
-} from "./whatsapp-editar-lancamento.server";
+import { detectEdicaoAntiga, handleEdicaoAntiga } from "./whatsapp-editar-antigo.server";
 import {
   detectSavePixIntent,
   detectQueryPixIntent,
@@ -2994,6 +2991,22 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     };
   }
 
+  // P1 14/10: botões e respostas de uma edição de lançamento antigo em andamento.
+  if (!msg.flowReply && !msg.image && !msg.document) {
+    let ed;
+    try {
+      // Início só sem outra sessão ativa (cadastro em andamento tem prioridade).
+      const podeIniciar = detectEdicaoAntiga(texto) !== null && !(await buscarSessaoAtiva(userId, msg.telefone));
+      ed = await handleEdicaoAntiga({ userId, phone: msg.telefone, externalId: msg.external_id, text: texto, podeIniciar });
+    } catch {
+      return { status: "erro", resposta: "Não consegui continuar a edição agora. Nada foi alterado. Tente novamente." };
+    }
+    if (ed) return {
+      status: "consulta", resposta: ed.resposta,
+      ...(ed.graphInteractive ? { graphInteractive: ed.graphInteractive as { [key: string]: Json | undefined } } : {}),
+    };
+  }
+
   // WhatsApp 1.3: proposals are confirmed before any financial mutation.
   // Runs after 1.2 action tokens, before legacy expense/consultation parsing.
   if (!msg.flowReply && !msg.image && !msg.document) {
@@ -4923,25 +4936,6 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
       texto,
       _row: msg,
     });
-  }
-  // P1 14/10: pedido de editar receita/gasto existente nunca abre cadastro.
-  if (!sessao && decisao === "outro") {
-    const editTipo = detectEditarLancamentoExistente(texto);
-    if (editTipo) {
-      logWaRouteDecision(msg, "consulta_handler", "edit_existing_entry_unavailable");
-      const resposta = respostaEdicaoIndisponivel(editTipo);
-      await gravarSessao(
-        userId,
-        msg.telefone,
-        msg.external_id,
-        texto,
-        recebidaEm,
-        "sem_pendencia",
-        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
-        resposta,
-      );
-      return { status: "consulta", resposta };
-    }
   }
   if (!sessao && decisao === "outro") {
     const guard = detectConsultaShape(texto);
