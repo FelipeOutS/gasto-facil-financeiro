@@ -106,9 +106,11 @@ test("resposta repetida (mesmo id Meta) e lista antiga não mudam a seleção", 
   outubro();
   await send("Quero editar um gasto de outubro de 2026");
   const old = lastState().nonce;
-  await tapList(`wa_ed:${old}:sel:g-uber`, "Uber", "meta-wamid-1");
+  const r0 = await tapList(`wa_ed:${old}:sel:g-uber`, "Uber", "meta-wamid-1");
+  const seq = lastState().seq;
   const r1 = await tapList(`wa_ed:${old}:sel:g-uber`, "Uber", "meta-wamid-1");
-  expect(r1.resposta).toContain("já processada");
+  expect(r1.resposta).toBe(r0.resposta); // replay devolve a mesma resposta
+  expect(lastState().seq).toBe(seq); // sem novo passo
   const r2 = await tapList(`wa_ed:${old}:sel:g-m56`, "Mercado");
   expect(r2.resposta).toContain("expirou");
   expect(lastState().sel.id).toBe("g-uber");
