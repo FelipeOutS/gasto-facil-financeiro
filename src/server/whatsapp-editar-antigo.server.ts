@@ -50,6 +50,7 @@ export type EditOldState = {
   kind: typeof EDIT_OLD_KIND;
   stage: "periodo" | "select" | "field" | "value" | "confirm" | "applying" | "done";
   nonce: string;
+  seq?: number;
   expires_at: string;
   tipo: "receita" | "gasto" | "lancamento";
   termo?: string | null;
@@ -171,9 +172,11 @@ export function extrairFiltro(texto: string, now: Date): Filtro {
 async function loadState(db: Db, userId: string, phone: string, now: Date): Promise<EditOldState | null> {
   const { data, error } = await db.from("whatsapp_messages").select("parsed, created_at")
     .eq("user_id", userId).eq("telefone", phone).eq("parsed->>kind", EDIT_OLD_KIND)
-    .order("created_at", { ascending: false }).limit(1);
+    .order("created_at", { ascending: false }).limit(5);
   if (error) throw new Error("edit_old_state_read_failed");
-  const row = Array.isArray(data) ? data[0] : null;
+  // Desempate por `seq` (passos gravados no mesmo milissegundo).
+  const rows = (Array.isArray(data) ? data : []) as Array<{ parsed: EditOldState; created_at: string }>;
+  const row = rows.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)) || (b.parsed?.seq ?? 0) - (a.parsed?.seq ?? 0))[0];
   const st = row?.parsed as EditOldState | undefined;
   if (!st || st.kind !== EDIT_OLD_KIND) return null;
   if (st.stage === "done" || st.stage === "applying") return st;
@@ -260,8 +263,7 @@ function renderList(st: EditOldState, rows: Array<{ t: Tbl; descricao: unknown; 
 function renderFieldMenu(st: EditOldState): EditOldReply {
   const s = st.sel!;
   const head = `${s.descricao} — ${brl(s.valor)} — ${dateBR(s.data)}`;
-  const recNote = s.t === "receitas" ? "" : "";
-  const body = `${head}\n\nO que você quer alterar?\n${s.allowed.map((f) => `• ${FIELD_LABEL[f]}`).join("\n")}${recNote}\n\nDigite “cancelar” para sair.`;
+  const body = `${head}\n\nO que você quer alterar?\n${s.allowed.map((f) => `• ${FIELD_LABEL[f]}`).join("\n")}\n\nDigite “cancelar” para sair.`;
   const rows = s.allowed.map((f) => ({ id: `wa_ed:${st.nonce}:f:${f}`, title: FIELD_LABEL[f] }));
   rows.push({ id: `wa_ed:${st.nonce}:x`, title: "Cancelar" });
   return { resposta: body, graphInteractive: toGraphInteractive({ type: "list", body, buttonText: "Escolher", rows }) };
@@ -372,16 +374,16 @@ export async function handleEdicaoAntiga(args: {
   const active = st && st.stage !== "done" && st.stage !== "applying" ? st : null;
 
   const save = async (next: EditOldState, reply: EditOldReply): Promise<EditOldReply> => {
-    const r = await saveState(db, userId, phone, externalId, text, next, reply.resposta, now);
+      const r = await saveState(db, userId, phone, externalId, text, next, reply.resposta, now);
     if (r === "duplicate") return { resposta: "Mensagem já processada anteriormente." };
     if (r === "error") return { resposta: "Não consegui continuar a edição agora. Nada foi alterado. Tente novamente." };
     return reply;
   };
   const step = (base: EditOldState, patch: Partial<EditOldState>): EditOldState => ({
-    ...base, ...patch, nonce: mkNonce(), expires_at: new Date(now.getTime() + EDIT_OLD_TTL_MS).toISOString(),
+    ...base, ...patch, seq: (base.seq ?? 0) + 1, nonce: mkNonce(), expires_at: new Date(now.getTime() + EDIT_OLD_TTL_MS).toISOString(),
   });
   const close = (base: EditOldState, resposta: string) =>
-    save({ ...base, stage: "done", nonce: mkNonce() }, { resposta });
+    save({ ...base, stage: "done", seq: (base.seq ?? 0) + 1, nonce: mkNonce() }, { resposta });
 
   // 1) Botão/lista deste fluxo.
   if (tok) {
@@ -394,8 +396,8 @@ export async function handleEdicaoAntiga(args: {
   // 2) Texto livre dentro de um fluxo ativo.
   if (active) {
     if (RESET.test(t)) return close(active, "Tudo bem, edição cancelada. Nenhum lançamento foi alterado.");
-    if (NEW_COMMAND.test(t) && active.stage !== "value") {
-      await saveState(db, userId, phone, null, text, { ...active, stage: "done", nonce: mkNonce() }, "", now);
+    if (NEW_COMMAND.test(t) && active.stage !== "value" && active.stage !== "periodo") {
+      await saveState(db, userId, phone, null, text, { ...active, stage: "done", seq: (active.seq ?? 0) + 1, nonce: mkNonce() }, "", now);
       return null; // segue para o fluxo normal (cadastro/consulta)
     }
     return continuar(active, "text", null);
@@ -517,7 +519,7 @@ export async function handleEdicaoAntiga(args: {
       const yes = cmd === "ok" || (cmd === "text" && /^(sim|confirmar|confirmo|ok|pode)$/.test(t));
       if (!yes) return save(step(cur, {}), renderConfirm(cur));
       // Consome o estado ANTES de escrever: confirmação repetida/replay não reaplica.
-      const claim = await saveState(db, userId, phone, externalId, text, { ...cur, stage: "applying", nonce: mkNonce() }, "", now);
+      const claim = await saveState(db, userId, phone, externalId, text, { ...cur, stage: "applying", seq: (cur.seq ?? 0) + 1, nonce: mkNonce() }, "", now);
       if (claim === "duplicate") return { resposta: "Mensagem já processada anteriormente." };
       if (claim === "error") return { resposta: "Não consegui salvar agora. Nada foi alterado. Tente novamente." };
       const r = await aplicarEdicao(db, userId, cur.sel!, cur.patch!, now);
@@ -528,7 +530,7 @@ export async function handleEdicaoAntiga(args: {
         : r === "changed" ? "Esse lançamento foi alterado no site ou app depois que você o escolheu. Para não sobrescrever, não salvei nada. Envie o pedido de edição de novo para ver os dados atuais."
         : r === "deleted" ? "Esse lançamento foi excluído e não pode ser editado. Nada foi alterado."
         : "Não consegui salvar a alteração. Nada foi alterado. Confira o lançamento no app e tente novamente.";
-      await saveState(db, userId, phone, null, "", { ...cur, stage: "done", nonce: mkNonce() }, resposta, new Date(now.getTime() + 1));
+      await saveState(db, userId, phone, null, "", { ...cur, stage: "done", seq: (cur.seq ?? 0) + 2, nonce: mkNonce() }, resposta, new Date(now.getTime() + 1));
       return { resposta };
     }
     return close(cur, "Essa edição foi encerrada. Nada foi alterado.");
