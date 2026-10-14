@@ -27,6 +27,7 @@ import { randomUUID } from "crypto";
 import type { WhatsAppMessageRow, ProcessOutcome } from "./whatsapp.server";
 import { detectBoletoFromText, type BoletoParsed } from "./whatsapp-boleto-parser";
 import { formatBancoEmissor } from "./whatsapp-boleto-banco";
+import { parseValorRespostaCentavos } from "@/lib/whatsapp-valor-resposta";
 // WA-C11 3B.2.C.1 Block 5 — quota financeira para criação de conta por boleto.
 import {
   assertFinancialActionQuotaForWhatsApp,
@@ -205,14 +206,9 @@ function todayLocalISO(): string {
 
 // ---------- parsing de respostas ----------
 
+// P0 FASE 2: delega ao parser central (reais) e converte uma única vez p/ centavos.
 function parseValorFromText(t: string): number | null {
-  const m = t.match(/r?\$?\s*(\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?)/i);
-  if (!m) return null;
-  let raw = m[1];
-  if (raw.includes(",")) raw = raw.replace(/\./g, "").replace(",", ".");
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.round(n * 100);
+  return parseValorRespostaCentavos(t);
 }
 
 function parseDataFromText(t: string): string | null {
