@@ -1165,16 +1165,24 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                 // preferimos a mensagem com botão CTA URL. Se o envio
                 // interativo falhar (`sent=false`), caímos para o texto
                 // plano `out.resposta` (que já inclui o link de fallback).
+                // Pacote 2/A: a resposta é entregue SEM reprocessar a mensagem.
+                // Interativo ambíguo (timeout) → não manda texto por cima (duplicaria).
+                const { classifySendResult, deliverReplyWithRetry } = await import(
+                  "@/server/whatsapp-reply-delivery.server"
+                );
                 let sentOk = false;
+                let interAmbiguous = false;
                 if (out.interactive) {
                   const r = await sendWhatsAppInteractiveCtaUrl(msg.telefone, out.interactive);
                   sentOk = r.sent;
+                  interAmbiguous = classifySendResult(r) === "ambiguous";
                 } else if (out.graphInteractive) {
                   // Ex.: abrir o WhatsApp Flow de cadastro de cartão. Mesmo
                   // sender/rastreio; falhou → texto (cadastro por conversa).
                   try {
                     const r = await sendWhatsAppInteractiveReply(msg.telefone, out.graphInteractive);
                     sentOk = r.sent;
+                    interAmbiguous = classifySendResult(r) === "ambiguous";
                   } catch {
                     sentOk = false;
                   }
@@ -1206,13 +1214,21 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                         toGraphInteractive(ir),
                       );
                       sentOk = r.sent;
+                      interAmbiguous = classifySendResult(r) === "ambiguous";
                     } catch {
                       sentOk = false;
                     }
                   }
                 }
-                if (!sentOk) {
-                  await sendWhatsAppReply(msg.telefone, out.resposta);
+                if (!sentOk && !interAmbiguous) {
+                  const tel = msg.telefone;
+                  const d = await deliverReplyWithRetry(() => sendWhatsAppReply(tel, out.resposta!));
+                  if (d.outcome !== "accepted") {
+                    // Efeito financeiro já gravado (ou não) independe disto. Só classe e tentativas.
+                    console.error({ event: "wa_reply_undelivered", outcome: d.outcome, attempts: d.attempts, status: out.status });
+                  }
+                } else if (interAmbiguous) {
+                  console.error({ event: "wa_reply_undelivered", outcome: "ambiguous", attempts: 1, status: out.status });
                 }
               } catch (replyErr) {
                 // WA-B3.4 — NUNCA logar err.message; pode conter URL
