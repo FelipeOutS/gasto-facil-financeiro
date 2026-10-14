@@ -1065,18 +1065,18 @@ function WhatsAppPage() {
           modoTeste={MODO_TESTE}
         />
 
-        {/* Como vai funcionar quando estiver ativo */}
+        {/* Como funciona o assistente pelo WhatsApp */}
         <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3">
           <h2 className="text-sm font-semibold flex items-center gap-2 text-emerald-300">
             <Sparkles className="h-4 w-4" />
-            Como vai funcionar quando estiver ativo
+            Como funciona o assistente pelo WhatsApp
           </h2>
           <ol className="space-y-2 text-sm text-foreground/90">
             {[
               "Você envia um gasto pelo WhatsApp.",
               "O bot entende as informações principais.",
               "Ele mostra um resumo do gasto.",
-              "Você responde sim ou não.",
+              "Você informa a forma de pagamento e pode Confirmar, Ajustar ou Cancelar.",
               "O gasto só é salvo depois da sua confirmação.",
             ].map((passo, i) => (
               <li key={i} className="flex items-start gap-2.5">
@@ -1815,8 +1815,8 @@ function SimuladorCard({
           <p className="text-[11px] text-muted-foreground border-t border-border/60 pt-2">
             Nada foi salvo.{" "}
             {modoTeste
-              ? 'Quando o número oficial estiver ativo, você confirmaria com um "sim" no WhatsApp.'
-              : 'Para salvar de verdade, envie a mensagem pelo WhatsApp e responda "sim".'}
+              ? "Este simulador apenas mostra a interpretação da mensagem, sem salvar dados. Para registrar um gasto, vincule seu número, autorize o acesso e faça a confirmação final no WhatsApp real, disponível nos planos pagos elegíveis."
+              : "Este resultado é apenas uma simulação, sem dados salvos. Para registrar um gasto, vincule seu número, autorize o acesso e faça a confirmação final no WhatsApp real, disponível nos planos pagos elegíveis."}
           </p>
         </div>
       )}
