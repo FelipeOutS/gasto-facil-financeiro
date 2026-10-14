@@ -28,7 +28,14 @@ function rpc(name: string, a: any) {
   if (rpcMode === "throw") throw new Error("timeout");
   if (name === "wa_lote_mes_excluir") {
     const prev = lotes.find((l) => l.id === a.p_batch_id);
-    if (prev) return { data: { status: "replay", count: prev.item_ids.length }, error: null };
+    if (prev) {
+      if (prev.user_id !== a.p_user_id) return { data: null, error: { code: "42501", message: "lote_de_outro_usuario" } };
+      const ids = [...a.p_ids].sort();
+      if (prev.tipo !== a.p_tipo || prev.ano !== a.p_ano || prev.mes !== a.p_mes || JSON.stringify(prev.item_ids) !== JSON.stringify(ids))
+        return { data: null, error: { code: "22023", message: "lote_parametros_divergentes" } };
+      if (prev.status === "restaurado") return { data: { status: "already_restored", count: 0 }, error: null };
+      return { data: { status: "replay", count: 0 }, error: null };
+    }
     const rows = (a.p_tipo === "gastos" ? G() : R()).filter((r) => r.user_id === a.p_user_id && r.deleted_at === null &&
       r.data.startsWith(`${a.p_ano}-${String(a.p_mes).padStart(2, "0")}`) && !r.recorrencia_id && !r.import_batch_id &&
       (a.p_tipo === "receitas" || (!r.grupo_parcelamento_id && Number(r.total_parcelas ?? 1) <= 1 && !r.bem_id && !r.cartao_id && r.forma_pagamento !== "credito" &&

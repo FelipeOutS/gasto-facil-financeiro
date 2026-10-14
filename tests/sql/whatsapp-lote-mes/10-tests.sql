@@ -83,6 +83,28 @@ SELECT pg_temp.ok((public.wa_lote_mes_restaurar('aaaaaaaa-0000-0000-0000-0000000
 SELECT pg_temp.ok((SELECT deleted_at FROM public.gastos WHERE id='a0000000-0000-0000-0000-000000000003') IS NOT NULL, 'excluído por outra operação continua excluído');
 SELECT pg_temp.ok((SELECT deleted_at FROM public.gastos WHERE id='a0000000-0000-0000-0000-000000000007') IS NOT NULL, 'excluído antes do lote não é restaurado');
 SELECT pg_temp.ok((public.wa_lote_mes_restaurar('aaaaaaaa-0000-0000-0000-000000000001','22222222-0000-0000-0000-000000000001',2)->>'status') = 'replay', 'restauração repetida idempotente');
+-- Revisão final: repetir exclusão de lote já restaurado → already_restored, nada excluído.
+SELECT pg_temp.ok((public.wa_lote_mes_excluir('aaaaaaaa-0000-0000-0000-000000000001','22222222-0000-0000-0000-000000000001','gastos',2026,9,
+  (SELECT ids FROM snap),(SELECT ver FROM snap))->>'status') = 'already_restored', 'exclusão repetida após restauração → already_restored');
+SELECT pg_temp.ok((SELECT count(*) FROM public.gastos WHERE id = ANY (ARRAY['a0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002']::uuid[]) AND deleted_at IS NULL) = 2, 'nada re-excluído após restauração');
+DO $$ BEGIN
+  PERFORM public.wa_lote_mes_excluir('aaaaaaaa-0000-0000-0000-000000000001','22222222-0000-0000-0000-000000000001','gastos',2026,8,
+    (SELECT ids FROM snap),(SELECT ver FROM snap));
+  RAISE EXCEPTION 'FALHOU: lote reutilizado com mês diferente';
+EXCEPTION WHEN invalid_parameter_value THEN RAISE NOTICE 'PASSOU: lote reutilizado com mês diferente recusado';
+END $$;
+DO $$ BEGIN
+  PERFORM public.wa_lote_mes_excluir('aaaaaaaa-0000-0000-0000-000000000001','22222222-0000-0000-0000-000000000001','receitas',2026,9,
+    (SELECT ids FROM snap),(SELECT ver FROM snap));
+  RAISE EXCEPTION 'FALHOU: lote reutilizado com tipo diferente';
+EXCEPTION WHEN invalid_parameter_value THEN RAISE NOTICE 'PASSOU: lote reutilizado com tipo diferente recusado';
+END $$;
+DO $$ BEGIN
+  PERFORM public.wa_lote_mes_excluir('aaaaaaaa-0000-0000-0000-000000000001','22222222-0000-0000-0000-000000000001','gastos',2026,9,
+    ARRAY['a0000000-0000-0000-0000-000000000001'::uuid],ARRAY[now()]);
+  RAISE EXCEPTION 'FALHOU: lote reutilizado com IDs diferentes';
+EXCEPTION WHEN invalid_parameter_value THEN RAISE NOTICE 'PASSOU: lote reutilizado com IDs diferentes recusado';
+END $$;
 
 -- Receitas (agosto) com deleted_source.
 SELECT pg_temp.ok((public.wa_lote_mes_excluir('aaaaaaaa-0000-0000-0000-000000000001','33333333-0000-0000-0000-000000000001','receitas',2026,8,

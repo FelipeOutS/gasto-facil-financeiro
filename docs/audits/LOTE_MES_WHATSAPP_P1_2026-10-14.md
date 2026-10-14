@@ -20,3 +20,8 @@ A F2 candidata cria o gatilho `gastos_guard_soft_delete`, que recusa mudança de
 2. Aplicar `whatsapp-lote-mes.sql` (idempotente).
 3. Trocar `LOTE_MES_RELEASE_AUTHORIZED` para `true`, rodar suíte, publicar.
 4. Teste real com mês de poucos lançamentos de teste.
+
+## Revisão final P1 (14/10/2026)
+- Prévia de restauração filtra `deleted_at = deleted_stamp` do lote (item restaurado e re-excluído por outra operação não aparece).
+- `wa_lote_mes_excluir` com batch existente: parâmetros divergentes (tipo/ano/mês/IDs) → `lote_parametros_divergentes`; lote restaurado → `already_restored` (count 0); replay → count 0. App nunca diz "excluí" nesses casos.
+- SQL candidato SHA-256: 9a87920d72e52a9d89d518c6f068e0831889e6717bea720cbc8fe4cb2a9e0153. Continua NÃO aplicado; `LOTE_MES_RELEASE_AUTHORIZED=false`.

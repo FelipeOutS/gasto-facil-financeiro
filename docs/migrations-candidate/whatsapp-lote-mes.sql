@@ -50,16 +50,21 @@ BEGIN
 
   -- Serializa lotes do mesmo usuário (duplo Confirmar / webhook duplicado).
   PERFORM pg_advisory_xact_lock(hashtextextended(p_user_id::text || ':wa_lote_mes', 0));
-  SELECT * INTO v_prev FROM public.whatsapp_lote_mes_acoes WHERE id = p_batch_id;
+  SELECT array_agg(i ORDER BY i), array_agg(v ORDER BY i) INTO v_in_ids, v_in_ver
+    FROM unnest(p_ids, p_versions) AS x(i, v);
+  SELECT * INTO v_prev FROM public.whatsapp_lote_mes_acoes WHERE id = p_batch_id FOR UPDATE;
   IF FOUND THEN
     IF v_prev.user_id <> p_user_id THEN RAISE EXCEPTION 'lote_de_outro_usuario' USING ERRCODE = '42501'; END IF;
-    RETURN jsonb_build_object('status', 'replay', 'count', cardinality(v_prev.item_ids));
+    -- Mesmo id com parâmetros diferentes: recusa (nunca reaproveita lote).
+    IF v_prev.tipo <> p_tipo OR v_prev.ano <> p_ano OR v_prev.mes <> p_mes OR v_prev.item_ids IS DISTINCT FROM v_in_ids THEN
+      RAISE EXCEPTION 'lote_parametros_divergentes' USING ERRCODE = '22023'; END IF;
+    -- Lote já restaurado: nada é excluído de novo.
+    IF v_prev.status = 'restaurado' THEN RETURN jsonb_build_object('status', 'already_restored', 'count', 0); END IF;
+    RETURN jsonb_build_object('status', 'replay', 'count', 0);
   END IF;
 
   v_ini := make_date(p_ano, p_mes, 1);
   v_fim := (v_ini + interval '1 month')::date;
-  SELECT array_agg(i ORDER BY i), array_agg(v ORDER BY i) INTO v_in_ids, v_in_ver
-    FROM unnest(p_ids, p_versions) AS x(i, v);
 
   IF p_tipo = 'gastos' THEN
     PERFORM 1 FROM public.gastos WHERE user_id = p_user_id AND data >= v_ini AND data < v_fim AND deleted_at IS NULL FOR UPDATE;
