@@ -318,11 +318,13 @@ export async function handleLoteMes(args: {
       .eq("user_id", userId).eq("tipo", s.tipo).eq("ano", s.ano).eq("mes", s.mes).eq("status", "excluido")
       .order("created_at", { ascending: false }).limit(1);
     if (error) return close(s, INDISPONIVEL);
-    const lote = (Array.isArray(data) ? data : [])[0] as { id: string; item_ids: string[] } | undefined;
+    const lote = (Array.isArray(data) ? data : [])[0] as { id: string; item_ids: string[]; deleted_stamp?: string | null } | undefined;
     if (!lote) return close(s, `Não encontrei uma exclusão em lote de ${nomeTipo(s.tipo!)} de ${periodoLabel(s)} para restaurar. Nada foi alterado.\n\nPara um lançamento só: “restaurar o gasto mercado”.`);
-    // soft-delete-exceção: restauração lê os lançamentos EXCLUÍDOS daquele lote (só IDs do lote, do próprio usuário).
+    if (!lote.deleted_stamp) return close(s, "Não consegui calcular a prévia agora. Nada foi alterado. Tente novamente.");
+    // soft-delete-exceção: restauração lê só IDs do lote ainda com o deleted_at EXATO do lote
+    // (um item restaurado e excluído de novo por outra operação não entra).
     const { data: rows, error: e2 } = await db.from(s.tipo!).select("id, descricao, valor, data, updated_at").eq("user_id", userId)
-      .in("id", lote.item_ids ?? []).not("deleted_at", "is", null);
+      .in("id", lote.item_ids ?? []).eq("deleted_at", lote.deleted_stamp);
     if (e2) return close(s, "Não consegui calcular a prévia agora. Nada foi alterado. Tente novamente.");
     const items: Item[] = (Array.isArray(rows) ? rows : []).map((r: Record<string, unknown>) => ({ id: String(r.id), v: String(r.updated_at ?? ""), valor: Number(r.valor ?? 0), descricao: String(r.descricao ?? ""), data: String(r.data ?? "") }))
       .sort((a: Item, b: Item) => a.id.localeCompare(b.id));
@@ -395,10 +397,13 @@ export async function handleLoteMes(args: {
     const d = (res.data ?? {}) as { status?: string; count?: number };
     const n = Number(d.count ?? 0);
     const nomeR = `${n} ${nomeTipo(cur.tipo!, n)} de ${periodoLabel(cur)}`;
-    if (d.status === "deleted" || (d.status === "replay" && cur.acao === "excluir")) {
+    if (d.status === "deleted" && cur.acao === "excluir") {
       return done(`Pronto: excluí ${nomeR}.\n\nPara desfazer, envie: “restaurar os ${nomeTipo(cur.tipo!)} que excluí de ${MES_NOME[cur.mes!]} de ${cur.ano}”.`);
     }
-    if (d.status === "restored" || (d.status === "replay" && cur.acao === "restaurar")) return done(`Pronto: restaurei ${nomeR}.`);
+    if (d.status === "replay" && cur.acao === "excluir") return done("Essa exclusão já tinha sido feita antes. Nada foi excluído novamente.");
+    if (d.status === "already_restored") return done("Esse lote já foi restaurado. Nada foi excluído novamente.");
+    if (d.status === "restored" && cur.acao === "restaurar") return done(`Pronto: restaurei ${nomeR}.`);
+    if (d.status === "replay" && cur.acao === "restaurar") return done("Esse lote já tinha sido restaurado. Nada foi alterado novamente.");
     if (d.status === "changed") return done("Os lançamentos mudaram desde a prévia. Nada foi alterado. Peça de novo para ver a prévia atualizada.");
     return done("Não consegui confirmar o resultado agora. Não considere como feito: confira no site ou app antes de tentar de novo.");
   }
