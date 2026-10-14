@@ -1167,27 +1167,20 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                 // plano `out.resposta` (que já inclui o link de fallback).
                 // Pacote 2/A: a resposta é entregue SEM reprocessar a mensagem.
                 // Interativo ambíguo (timeout) → não manda texto por cima (duplicaria).
-                const { classifySendResult, deliverReplyWithRetry } = await import(
-                  "@/server/whatsapp-reply-delivery.server"
-                );
-                let sentOk = false;
-                let interAmbiguous = false;
+                // Revisão corretiva: qualquer exceção ou 5xx/429/timeout no
+                // interativo é AMBÍGUA → nunca manda texto por cima.
+                const { deliverReplyPlan } = await import("@/server/whatsapp-reply-delivery.server");
+                const tel = msg.telefone;
+                let interactiveSend: (() => Promise<{ sent: boolean; reason?: string; status?: number }>) | null = null;
                 if (out.interactive) {
-                  const r = await sendWhatsAppInteractiveCtaUrl(msg.telefone, out.interactive);
-                  sentOk = r.sent;
-                  interAmbiguous = classifySendResult(r) === "ambiguous";
+                  const p = out.interactive;
+                  interactiveSend = () => sendWhatsAppInteractiveCtaUrl(tel, p);
                 } else if (out.graphInteractive) {
-                  // Ex.: abrir o WhatsApp Flow de cadastro de cartão. Mesmo
-                  // sender/rastreio; falhou → texto (cadastro por conversa).
-                  try {
-                    const r = await sendWhatsAppInteractiveReply(msg.telefone, out.graphInteractive);
-                    sentOk = r.sent;
-                    interAmbiguous = classifySendResult(r) === "ambiguous";
-                  } catch {
-                    sentOk = false;
-                  }
+                  // Ex.: abrir o WhatsApp Flow de cadastro de cartão. Recusado → texto.
+                  const g = out.graphInteractive;
+                  interactiveSend = () => sendWhatsAppInteractiveReply(tel, g);
                 } else {
-                  // Botões/listas para perguntas conhecidas. Falhou → texto.
+                  // Botões/listas para perguntas conhecidas. Recusado → texto.
                   // Botões de gasto só saem presos à sessão criada por
                   // ESTA mensagem; sem vínculo → só texto (1/2/3).
                   const vinculo =
@@ -1207,28 +1200,13 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                       ? { userId: elig.userId, telefone: msg.telefone, rowId: vinculo.rowId, rev: vinculo.rev }
                       : null,
                   );
-                  if (ir) {
-                    try {
-                      const r = await sendWhatsAppInteractiveReply(
-                        msg.telefone,
-                        toGraphInteractive(ir),
-                      );
-                      sentOk = r.sent;
-                      interAmbiguous = classifySendResult(r) === "ambiguous";
-                    } catch {
-                      sentOk = false;
-                    }
-                  }
+                  if (ir) interactiveSend = () => sendWhatsAppInteractiveReply(tel, toGraphInteractive(ir));
                 }
-                if (!sentOk && !interAmbiguous) {
-                  const tel = msg.telefone;
-                  const d = await deliverReplyWithRetry(() => sendWhatsAppReply(tel, out.resposta!));
-                  if (d.outcome !== "accepted") {
-                    // Efeito financeiro já gravado (ou não) independe disto. Só classe e tentativas.
-                    console.error({ event: "wa_reply_undelivered", outcome: d.outcome, attempts: d.attempts, status: out.status });
-                  }
-                } else if (interAmbiguous) {
-                  console.error({ event: "wa_reply_undelivered", outcome: "ambiguous", attempts: 1, status: out.status });
+                const texto = out.resposta;
+                const plan = await deliverReplyPlan(interactiveSend, () => sendWhatsAppReply(tel, texto));
+                if (plan.outcome !== "accepted") {
+                  // Efeito financeiro independe disto. Só classe e canal, sem PII.
+                  console.error({ event: "wa_reply_undelivered", outcome: plan.outcome, channel: plan.channel, status: out.status });
                 }
               } catch (replyErr) {
                 // WA-B3.4 — NUNCA logar err.message; pode conter URL

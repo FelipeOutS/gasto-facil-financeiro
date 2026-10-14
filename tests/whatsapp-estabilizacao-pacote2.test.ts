@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import { readBodyLimited, downloadWhatsappMediaBounded, fetchWithTimeout, BoundedFetchError } from "@/server/whatsapp-bounded-fetch.server";
-import { classifySendResult, deliverReplyWithRetry } from "@/server/whatsapp-reply-delivery.server";
+import { classifySendResult, deliverReplyWithRetry, deliverReplyPlan } from "@/server/whatsapp-reply-delivery.server";
 
 const enc = new TextEncoder();
 function streamOf(chunks: Uint8Array[], opts: { hang?: boolean; infinite?: boolean; errorAfter?: boolean } = {}) {
@@ -80,41 +80,72 @@ describe("C — download de mídia Meta", () => {
   });
 });
 
-describe("A — entrega da resposta sem reprocessar", () => {
+describe("A — entrega da resposta sem reprocessar (conservador)", () => {
   const noSleep = { sleep: async () => {} };
   it("classificação", () => {
-    expect(classifySendResult({ sent: true, status: 200 })).toBe("accepted");
-    expect(classifySendResult({ sent: false, status: 503 })).toBe("transient");
-    expect(classifySendResult({ sent: false, status: 429 })).toBe("transient");
+    expect(classifySendResult({ sent: true, status: 200 })).toBe("accepted"); // só HTTP, não "entregue"
+    expect(classifySendResult({ sent: false, status: 503 })).toBe("ambiguous");
+    expect(classifySendResult({ sent: false, status: 500 })).toBe("ambiguous");
+    expect(classifySendResult({ sent: false, status: 429 })).toBe("ambiguous");
     expect(classifySendResult({ sent: false, status: 400 })).toBe("permanent");
     expect(classifySendResult({ sent: false, reason: "not_configured" })).toBe("permanent");
     expect(classifySendResult({ sent: false, reason: "TimeoutError" })).toBe("ambiguous");
   });
-  it("falha temporária → 1 novo envio da MESMA resposta", async () => {
-    const calls: string[] = [];
-    const seq = [{ sent: false, status: 503 }, { sent: true, status: 200 }];
-    const d = await deliverReplyWithRetry(async () => { calls.push("send"); return seq[calls.length - 1]; }, noSleep);
-    expect(d).toEqual({ outcome: "accepted", attempts: 2 });
-  });
+  for (const st of [503, 500, 429]) {
+    it(`HTTP ${st} → 1 tentativa, sem reenvio`, async () => {
+      let n = 0;
+      const d = await deliverReplyWithRetry(async () => { n++; return { sent: false, status: st }; }, noSleep);
+      expect(n).toBe(1);
+      expect(d.outcome).toBe("ambiguous");
+    });
+  }
   it("timeout ambíguo → NÃO reenvia", async () => {
     let n = 0;
-    const d = await deliverReplyWithRetry(async () => { n++; return { sent: false, reason: "TimeoutError" }; }, noSleep);
+    await deliverReplyWithRetry(async () => { n++; return { sent: false, reason: "TimeoutError" }; }, noSleep);
     expect(n).toBe(1);
-    expect(d.outcome).toBe("ambiguous");
   });
   it("falha permanente → NÃO reenvia", async () => {
     let n = 0;
     await deliverReplyWithRetry(async () => { n++; return { sent: false, status: 400 }; }, noSleep);
     expect(n).toBe(1);
   });
-  it("temporária persistente → no máximo 2 tentativas", async () => {
-    let n = 0;
-    const d = await deliverReplyWithRetry(async () => { n++; return { sent: false, status: 500 }; }, noSleep);
-    expect(n).toBe(2);
-    expect(d.outcome).toBe("transient");
-  });
   it("exceção no envio vira ambíguo, sem relançar", async () => {
     const d = await deliverReplyWithRetry(async () => { throw new TypeError("net"); }, noSleep);
     expect(d.outcome).toBe("ambiguous");
+  });
+});
+
+describe("A — interativo → texto (sem confirmação dupla)", () => {
+  // Cobre os dois ramos do webhook: graphInteractive (Flow) e botões
+  // Confirmar/Ajustar/Cancelar — ambos passam por deliverReplyPlan.
+  for (const ramo of ["graphInteractive (Flow)", "botões Confirmar/Ajustar/Cancelar"]) {
+    it(`${ramo}: exceção de rede no interativo → texto NÃO é enviado`, async () => {
+      let textCalls = 0;
+      const r = await deliverReplyPlan(async () => { throw new TypeError("fetch failed"); }, async () => { textCalls++; return { sent: true, status: 200 }; });
+      expect(textCalls).toBe(0);
+      expect(r).toEqual({ outcome: "ambiguous", channel: "interactive", textAttempted: false });
+    });
+    it(`${ramo}: 5xx no interativo → texto NÃO é enviado`, async () => {
+      let textCalls = 0;
+      await deliverReplyPlan(async () => ({ sent: false, status: 502 }), async () => { textCalls++; return { sent: true }; });
+      expect(textCalls).toBe(0);
+    });
+    it(`${ramo}: HTTP 400 (recusa explícita) → fallback em texto, 1 vez`, async () => {
+      let textCalls = 0;
+      const r = await deliverReplyPlan(async () => ({ sent: false, status: 400 }), async () => { textCalls++; return { sent: true, status: 200 }; });
+      expect(textCalls).toBe(1);
+      expect(r.outcome).toBe("accepted");
+      expect(r.channel).toBe("text");
+    });
+  }
+  it("interativo aceito → texto não é enviado", async () => {
+    let textCalls = 0;
+    await deliverReplyPlan(async () => ({ sent: true, status: 200 }), async () => { textCalls++; return { sent: true }; });
+    expect(textCalls).toBe(0);
+  });
+  it("sem interativo → texto 1 vez", async () => {
+    let textCalls = 0;
+    await deliverReplyPlan(null, async () => { textCalls++; return { sent: true }; });
+    expect(textCalls).toBe(1);
   });
 });

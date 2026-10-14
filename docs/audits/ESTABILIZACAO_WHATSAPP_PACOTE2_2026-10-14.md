@@ -84,3 +84,44 @@ Verificado no HEAD; não houve mudança de código:
 - O retry acrescenta até cerca de 0,7 s + 15 s no pior caso. Isso vale só para 5xx/429 com resposta.
 
 Não consigo confirmar o consumo exato de créditos.
+
+
+---
+
+## Revisão corretiva (14/10, após o commit 4fbc10de, NÃO PUBLICADO)
+
+O dono apontou dois riscos de confirmação duplicada. Os dois foram corrigidos e o reenvio automático ficou **desativado por segurança**.
+
+1. **5xx e 429 eram reenviados.** Agora os dois são `ambiguous`: o provedor pode ter enviado a mensagem antes de responder com erro, e o sistema só recebe o status HTTP, sem o código de erro da Meta. Nenhum resultado é classificado como `transient`. `deliverReplyWithRetry` existe, mas na prática faz **uma única tentativa**.
+   **A afirmação anterior de "recuperação de falha temporária" está retirada.** Falhas temporárias não são recuperadas automaticamente.
+2. **Exceção no interativo levava ao texto (`catch { sentOk = false }`).** Removido. Os três ramos — CTA Pix, `graphInteractive` (Flow) e os botões Confirmar/Ajustar/Cancelar — passam por `deliverReplyPlan` (`src/server/whatsapp-reply-delivery.server.ts`), que usa `safeSend`: qualquer exceção é `ambiguous`. O texto só é enviado quando não há interativo, ou quando o interativo foi recusado explicitamente (4xx exceto 429). Webhook: `src/routes/api/public.whatsapp.expense.ts:1168-1211`.
+3. **Conferências:**
+   - `sendWhatsAppRaw` tem `AbortSignal.timeout(15_000)` (`whatsapp.server.ts:6020`). Exceção, timeout e `AbortError` voltam sem `status` e são classificados como `ambiguous`.
+   - HTTP 2xx (com ou sem id) é `accepted` **somente no sentido HTTP**. Entrega ao usuário só pode ser afirmada pelo callback de status.
+   - Não há reenvio financeiro: a mensagem nunca é reprocessada.
+
+**Testes**
+- `tests/whatsapp-estabilizacao-pacote2.test.ts`: **28/0**. Casos novos:
+  - 503, 500 e 429 → 1 tentativa;
+  - exceção no interativo → texto não enviado (casos rotulados para os dois ramos);
+  - 5xx no interativo → texto não enviado;
+  - 400 → fallback em texto, 1 vez;
+  - interativo aceito → sem texto.
+- Esses testes exercitam o helper que o webhook passou a usar, não o handler HTTP completo. Ligação no webhook conferida por leitura: as 2 chamadas a `deliverReplyPlan` e nenhum `sentOk` restante.
+- Suíte oficial: **168 arquivos, 2.940 aprovados, 0 falhas**, rc=0, 71,9 s.
+- `bunx tsgo --noEmit`: rc=0.
+- Build: automático da plataforma.
+
+**GO/NO-GO (código atual, para revisão do dono)**
+
+| Item | Status | Publicar? |
+|---|---|---|
+| A — resposta: classificação conservadora, sem confirmação dupla | CONCLUÍDO | GO após revisão |
+| A — recuperação automática de falha temporária | BLOQUEADO por segurança | — |
+| A — recuperação durável (outbox) | BLOQUEADO (SQL candidato inativo, não aplicado) | NO-GO até autorização |
+| B — botões antigos | CONCLUÍDO (já existia) | GO |
+| C — tempos limite e limites de mídia | CONCLUÍDO | GO após revisão; calibrar pelos logs |
+
+**Consequência aceita:** quando a Meta devolve 5xx, 429 ou timeout, o usuário pode ficar sem confirmação. O gasto continua salvo uma única vez e o caso fica registrado no evento `wa_reply_undelivered`.
+
+Não consigo confirmar o consumo exato de créditos.
