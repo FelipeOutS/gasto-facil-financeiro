@@ -270,6 +270,9 @@ Referência informada e HEAD conferido no início: `3b0b1de9bc7c6b12c91ea92567f7
 | `src/routes/whatsapp.tsx:1079` | Você responde sim ou não. | Você informa a forma de pagamento e pode Confirmar, Ajustar ou Cancelar. |
 | `src/routes/whatsapp.tsx:1818` (`modoTeste=true`) | Quando o número oficial estiver ativo, você confirmaria com um "sim" no WhatsApp. | Este simulador apenas mostra a interpretação da mensagem, sem salvar dados. Para registrar um gasto, vincule seu número, autorize o acesso e faça a confirmação final no WhatsApp real, disponível nos planos pagos elegíveis. |
 | `src/routes/whatsapp.tsx:1819` (`modoTeste=false`) | Para salvar de verdade, envie a mensagem pelo WhatsApp e responda "sim". | Este resultado é apenas uma simulação, sem dados salvos. Para registrar um gasto, vincule seu número, autorize o acesso e faça a confirmação final no WhatsApp real, disponível nos planos pagos elegíveis. |
+| `src/routes/whatsapp.tsx:744` (`MODO_TESTE`) | Em configuração | Esta tela está em modo de simulação |
+| `src/routes/whatsapp.tsx:747` (`!processamentoRealAtivo`) | Configurado — teste de mensagens ainda desativado | Teste de mensagens nesta tela desativado |
+| `src/routes/whatsapp.tsx:1008` (`MODO_TESTE`) | Aguardando ativação | Modo de simulação nesta tela |
 
 Condição `modoTeste`, estado `MODO_TESTE`, handlers, gates, vinculação e persistência preservados. Nenhum envio WhatsApp ou teste financeiro executado.
 
@@ -280,6 +283,8 @@ Busca em `src/routes`, `src/components` e `src/i18n` PT/EN por WhatsApp e termos
 Ocorrências preservadas e razões:
 - `src/routes/whatsapp.tsx:841–843`: modo de teste desta tela, com disponibilidade em produção explicitada; não anuncia lançamento futuro.
 - `src/routes/whatsapp.tsx:1065,1743,1817`: condições do simulador, não gates de lançamento; preservadas.
+- `src/routes/whatsapp.tsx:744,747,1008`: badges condicionais revisados e reescritos para especificar esta tela/teste, evitando sugerir que o canal aguarda lançamento. Condições intactas; não se afirma processamento ativo quando o sinal consultado está desligado.
+- `src/routes/whatsapp.tsx:967,1033,1049`: nenhum número vinculado, sem uso anterior e confirmação pendente de um número específico; estados individuais legítimos, não disponibilidade futura do canal.
 - `src/routes/app_.ajustes.notificacoes.tsx:95`: Push “Em breve”, outro canal.
 - `src/routes/app_.ajustes.notificacoes.tsx:96` e `src/i18n/locales/{pt,en}/settings.json:64–67`: alertas automáticos “Não ativados”/“Not enabled”; distintos do assistente financeiro disponível.
 - `src/components/whatsapp/BetaAdminSection.tsx:100`: “WA-F · Beta fechada do WhatsApp”, ferramenta administrativa legada, renderizada dentro de `isAdmin` em `src/routes/whatsapp.tsx:1129–1247`; não é anúncio público de disponibilidade futura. Não alterada.
