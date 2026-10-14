@@ -176,7 +176,7 @@ async function loadState(db: Db, userId: string, phone: string, now: Date): Prom
   if (error) throw new Error("edit_old_state_read_failed");
   // Desempate por `seq` (passos gravados no mesmo milissegundo).
   const rows = (Array.isArray(data) ? data : []) as Array<{ parsed: EditOldState; created_at: string }>;
-  const row = rows.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)) || (b.parsed?.seq ?? 0) - (a.parsed?.seq ?? 0))[0];
+  const row = rows.sort((a, b) => (b.parsed?.seq ?? 0) - (a.parsed?.seq ?? 0) || String(b.created_at).localeCompare(String(a.created_at)))[0];
   const st = row?.parsed as EditOldState | undefined;
   if (!st || st.kind !== EDIT_OLD_KIND) return null;
   if (st.stage === "done" || st.stage === "applying") return st;
@@ -407,7 +407,8 @@ export async function handleEdicaoAntiga(args: {
   if (!args.podeIniciar) return null;
   const tipo = detectEdicaoAntiga(text);
   if (!tipo) return null;
-  const base: EditOldState = { kind: EDIT_OLD_KIND, stage: "periodo", nonce: "", expires_at: "", tipo };
+  // `seq` continua a sequência anterior: o passo mais recente sempre vence.
+  const base: EditOldState = { kind: EDIT_OLD_KIND, stage: "periodo", nonce: "", expires_at: "", tipo, seq: st?.seq ?? 0 };
   const f = extrairFiltro(text, now);
   if (f.ambiguo) return save(step(base, { stage: "periodo" }), { resposta: "Você citou mais de um mês. De qual mês é o lançamento? (ex.: setembro de 2026)\n\nDigite “cancelar” para sair." });
   if (!f.range && !f.termo) {
@@ -530,7 +531,7 @@ export async function handleEdicaoAntiga(args: {
         : r === "changed" ? "Esse lançamento foi alterado no site ou app depois que você o escolheu. Para não sobrescrever, não salvei nada. Envie o pedido de edição de novo para ver os dados atuais."
         : r === "deleted" ? "Esse lançamento foi excluído e não pode ser editado. Nada foi alterado."
         : "Não consegui salvar a alteração. Nada foi alterado. Confira o lançamento no app e tente novamente.";
-      await saveState(db, userId, phone, null, "", { ...cur, stage: "done", seq: (cur.seq ?? 0) + 2, nonce: mkNonce() }, resposta, new Date(now.getTime() + 1));
+      await saveState(db, userId, phone, null, "", { ...cur, stage: "done", seq: (cur.seq ?? 0) + 2, nonce: mkNonce() }, resposta, now);
       return { resposta };
     }
     return close(cur, "Essa edição foi encerrada. Nada foi alterado.");
