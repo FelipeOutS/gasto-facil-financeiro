@@ -439,30 +439,20 @@ async function downloadWhatsappMedia(
   mimeFromMeta: string | undefined,
   maxBytes: number,
 ): Promise<{ buffer: Buffer; declaredMime?: string } | null> {
-  try {
-    const token = process.env.WHATSAPP_ACCESS_TOKEN;
-    if (!token) return null;
-    const { buildWhatsAppGraphUrl } = await import("@/server/whatsapp-graph-version.server");
-    const lookupBuild = buildWhatsAppGraphUrl({ kind: "media_lookup", mediaId });
-    if (!lookupBuild.ok) return null;
-    const lookup = await fetch(lookupBuild.url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!lookup.ok) return null;
-    const meta = (await lookup.json()) as { url?: string; mime_type?: string };
-    if (!meta.url) return null;
-    const dl = await fetch(meta.url, { headers: { Authorization: `Bearer ${token}` } });
-    if (!dl.ok) return null;
-    // Limite duro: paramos de ler se passar de `maxBytes`, sem
-    // bufferizar 100 MB de lixo enviado por um atacante.
-    const buf = Buffer.from(await dl.arrayBuffer());
-    if (buf.byteLength === 0 || buf.byteLength > maxBytes) return null;
-    return { buffer: buf, declaredMime: (meta.mime_type ?? mimeFromMeta)?.toLowerCase() };
-  } catch (err) {
-    // Não logamos `err.message`: pode conter a URL assinada da Meta.
-    console.error("[whatsapp] media download failed:", err instanceof Error ? err.name : "unknown");
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  if (!token) return null;
+  const { buildWhatsAppGraphUrl } = await import("@/server/whatsapp-graph-version.server");
+  const lookupBuild = buildWhatsAppGraphUrl({ kind: "media_lookup", mediaId });
+  if (!lookupBuild.ok) return null;
+  // Pacote 2/C: tempo limite em lookup e download; limite de bytes durante o streaming.
+  const { downloadWhatsappMediaBounded } = await import("@/server/whatsapp-bounded-fetch.server");
+  const r = await downloadWhatsappMediaBounded({ lookupUrl: lookupBuild.url, token, mimeFromMeta, maxBytes });
+  if (!r.ok) {
+    // Só o tipo da falha; nunca URL, token ou conteúdo.
+    console.error("[whatsapp] media download failed:", r.reason);
     return null;
   }
+  return { buffer: r.buffer, declaredMime: r.declaredMime };
 }
 
 const MAX_RAW_BODY = 64 * 1024; // 64KB
@@ -1175,16 +1165,24 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                 // preferimos a mensagem com botão CTA URL. Se o envio
                 // interativo falhar (`sent=false`), caímos para o texto
                 // plano `out.resposta` (que já inclui o link de fallback).
+                // Pacote 2/A: a resposta é entregue SEM reprocessar a mensagem.
+                // Interativo ambíguo (timeout) → não manda texto por cima (duplicaria).
+                const { classifySendResult, deliverReplyWithRetry } = await import(
+                  "@/server/whatsapp-reply-delivery.server"
+                );
                 let sentOk = false;
+                let interAmbiguous = false;
                 if (out.interactive) {
                   const r = await sendWhatsAppInteractiveCtaUrl(msg.telefone, out.interactive);
                   sentOk = r.sent;
+                  interAmbiguous = classifySendResult(r) === "ambiguous";
                 } else if (out.graphInteractive) {
                   // Ex.: abrir o WhatsApp Flow de cadastro de cartão. Mesmo
                   // sender/rastreio; falhou → texto (cadastro por conversa).
                   try {
                     const r = await sendWhatsAppInteractiveReply(msg.telefone, out.graphInteractive);
                     sentOk = r.sent;
+                    interAmbiguous = classifySendResult(r) === "ambiguous";
                   } catch {
                     sentOk = false;
                   }
@@ -1216,13 +1214,21 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                         toGraphInteractive(ir),
                       );
                       sentOk = r.sent;
+                      interAmbiguous = classifySendResult(r) === "ambiguous";
                     } catch {
                       sentOk = false;
                     }
                   }
                 }
-                if (!sentOk) {
-                  await sendWhatsAppReply(msg.telefone, out.resposta);
+                if (!sentOk && !interAmbiguous) {
+                  const tel = msg.telefone;
+                  const d = await deliverReplyWithRetry(() => sendWhatsAppReply(tel, out.resposta!));
+                  if (d.outcome !== "accepted") {
+                    // Efeito financeiro já gravado (ou não) independe disto. Só classe e tentativas.
+                    console.error({ event: "wa_reply_undelivered", outcome: d.outcome, attempts: d.attempts, status: out.status });
+                  }
+                } else if (interAmbiguous) {
+                  console.error({ event: "wa_reply_undelivered", outcome: "ambiguous", attempts: 1, status: out.status });
                 }
               } catch (replyErr) {
                 // WA-B3.4 — NUNCA logar err.message; pode conter URL
