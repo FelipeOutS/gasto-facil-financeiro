@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Candidata whatsapp-lote-mes em PostgreSQL LOCAL DESCARTÁVEL (sem rede).
 set -euo pipefail
+[ -n "${PG_BIN:-}" ] && export PATH="$PG_BIN:$PATH"
 unset PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE PGSSLMODE DATABASE_URL || true
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 D="$(mktemp -d /tmp/gi-pg-lm.XXXX)"; chmod 777 "$D"; PORT=55452

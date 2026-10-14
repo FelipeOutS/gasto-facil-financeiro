@@ -134,7 +134,7 @@ test("sem mês/ano: pede esclarecimento, sem assumir mês atual", async () => {
 
 test("movimentações: exige escolher o tipo", async () => {
   setembro();
-  const r = await send("excluir todas as movimentações de setembro de 2026");
+  const r = await send("excluir todas as movimentações de agosto de 2026");
   expect(r!.resposta).toContain("separadamente");
   await tap("tr");
   expect(last().tipo).toBe("receitas");
@@ -175,7 +175,7 @@ test("Confirmar só com botão não executa (exige frase)", async () => {
   await send("Excluir todos os gastos de setembro de 2026");
   await tap("go");
   const r = await tap("go");
-  expect(r!.resposta).toContain("expirou");
+  expect(r!.resposta).toContain("Frase diferente");
   expect(rpcCalls).toHaveLength(0);
 });
 
@@ -212,7 +212,8 @@ test("frase repetida / webhook duplicado: não reaplica", async () => {
   const again = await send("EXCLUIR GASTOS 09/2026", "u1", "dup-1");
   expect(again!.resposta).toContain("já processada");
   const novo = await send("EXCLUIR GASTOS 09/2026");
-  expect(novo).toBeNull(); // estado consumido; sem fluxo ativo, texto não é pedido em lote
+  // Estado consumido: vira um pedido NOVO (nova prévia), nunca reaplica o lote.
+  expect(novo!.resposta).toContain("Não há gastos que possam ser excluídos");
   expect(rpcCalls.filter((x) => x === "wa_lote_mes_excluir")).toHaveLength(1);
   expect(lotes).toHaveLength(1);
 });
@@ -238,7 +239,8 @@ test("dois usuários: estado e lançamentos isolados", async () => {
   const st = last();
   expect(st.items.map((i: any) => i.id)).toEqual(["b1"]);
   const r = await send(`wa_lm:${st.nonce}:go`, "u1");
-  expect(r).toBeNull();
+  expect(r!.resposta).toContain("expirou");
+  expect(rpcCalls).toHaveLength(0);
 });
 
 test("RPC ausente (migração não aplicada): indisponível, nada alterado", async () => {
