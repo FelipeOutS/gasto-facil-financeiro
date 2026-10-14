@@ -607,7 +607,7 @@ export async function handleEdicaoAntiga(args: {
   const base: EditOldState = { kind: EDIT_OLD_KIND, stage: "periodo", nonce: "", expires_at: "", tipo, acao, seq: st?.seq ?? 0 };
   const f = extrairFiltro(text, now);
   if (f.ambiguo) return save(step(base, { stage: "periodo" }), { resposta: "Você citou mais de um mês. De qual mês é o lançamento? (ex.: setembro de 2026)\n\nDigite “cancelar” para sair." });
-  if (!f.range && !f.termo) {
+  if (!f.range && !f.termo && acao !== "restaurar") {
     return save(step(base, { stage: "periodo" }), { resposta: "Certo! De quando é o lançamento? Pode responder com o mês (ex.: setembro de 2026), “ontem” ou o nome, como “mercado”.\n\nNenhum lançamento foi criado ou alterado." });
   }
   return buscarEMostrar(base, f);
