@@ -26,6 +26,7 @@ wait
 N=$("${P[@]}" -tAc "SELECT count(*) FROM public.gastos WHERE id IN ('f1000000-0000-0000-0000-000000000001','f1000000-0000-0000-0000-000000000002')")
 if echo "$OUT" | grep -q gasto_vinculado_excluido && [ "$N" = 2 ]; then echo "PASSOU: corrida 2 conexões — bloqueado, nada apagado"; else echo "FALHOU: corrida ($N) $OUT"; exit 1; fi
 "${P[@]}" -f "$ROOT/tests/sql/gastos-delete-atomic-f4/20-reverter-paridade.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"
+"${P[@]}" -f "$ROOT/tests/sql/gastos-delete-atomic-f4/30-complementar.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"
 # (9) Duas conexões revertendo o MESMO lote ao mesmo tempo: uma reverte, a outra vê 'revertido'.
 X=d0000000-0000-0000-0000-0000000000c9
 "${P[@]}" -c "INSERT INTO public.extratos_importados VALUES ('$X','$A','importado'); INSERT INTO public.gastos(id,user_id,valor,data,import_batch_id) VALUES ('c9000000-0000-0000-0000-000000000001','$A',7,'2026-09-01','$X'); INSERT INTO public.receitas(user_id,import_batch_id) VALUES ('$A','$X');"
