@@ -239,7 +239,7 @@ Linhas atuais conferidas por enumeração equivalente a `nl -ba`; linhas anterio
 ## Varredura sistemática
 Busca case-insensitive com rg por WhatsApp/Whats App e por em breve, coming soon, soon, aguarde lançamento, em construção, lançamento previsto, disponível futuramente, waitlist, lista de espera, próxima versão e future release em src/components, src/routes, src/i18n e public; revisão de landing, banners, bloqueios de upgrade, navegação, planos, comparativos, FAQ e metadados. Sem substituir documentos históricos.
 
-Resultado: nenhuma ocorrência textual remanescente anuncia WhatsApp financeiro como futuro. O aviso de modo de teste foi distinguido da disponibilidade em produção. Os cards de upgrade deixam de ocultar WhatsApp como futuro, sem conceder acesso. CTAs novos apontam para /whatsapp existente, nunca para número/link inventado.
+Resultado da primeira varredura (incompleto, retificado pela revisão abaixo): foram removidos os anúncios futuros encontrados, mas dois avisos JSX ainda passaram despercebidos. A afirmação anterior de ausência de ocorrências remanescentes não estava comprovada. O aviso de modo de teste foi distinguido da disponibilidade em produção. Os cards de upgrade deixam de ocultar WhatsApp como futuro, sem conceder acesso. CTAs novos apontam para /whatsapp existente, nunca para número/link inventado.
 
 ### Ocorrências legítimas preservadas
 - Ajustes: Push futuro; WhatsApp automático explicitamente “Não ativados”, separado do assistente disponível e vinculação.
@@ -257,3 +257,44 @@ Resultado: nenhuma ocorrência textual remanescente anuncia WhatsApp financeiro 
 - Build automático da prévia: build OK, última entrada observada 2026-10-14T13:58:29Z. Build e typecheck manuais não executados por restrição do ambiente; não há evidência separada de typecheck nesta tarefa.
 - Navegador local: landing PT/EN, larguras 1280 e 390 px, sem overflow horizontal; CTA href /whatsapp e visitante sem sessão chega a /login; nenhum pageerror capturado. Captura desktop PT confirmou visualmente título, CTA e elegibilidade. Capturas mobile PT/EN ficaram em branco na área do título: o texto está no DOM, mas a apresentação mobile NÃO está visualmente verificada; possível comportamento da animação preexistente, não investigado/corrigido nesta tarefa de copy. Não foi executada vinculação, consentimento nem envio WhatsApp; telas autenticadas validadas por código/testes locais, não por operação em conta real.
 - Não houve publicação. Créditos exatos: não consigo confirmar.
+
+## Correção tardia identificada pelo proprietário — 14:02 UTC
+
+Referência informada e HEAD conferido no início: `3b0b1de9bc7c6b12c91ea92567f7d65272c8283e`. A revisão anterior falhou ao cobrir texto JSX e uma expressão condicional do simulador; não foi falha nas traduções. Nesta revisão, somente copy em `src/routes/whatsapp.tsx`, este relatório e acompanhamento de tarefa foram alterados.
+
+### Antes/depois (linhas conferidas com `nl -ba`)
+
+| Local | Antes | Depois |
+|---|---|---|
+| `src/routes/whatsapp.tsx:1068` (comentário, não exibido) e `:1072` (título exibido) | Como vai funcionar quando estiver ativo | Como funciona o assistente pelo WhatsApp |
+| `src/routes/whatsapp.tsx:1079` | Você responde sim ou não. | Você informa a forma de pagamento e pode Confirmar, Ajustar ou Cancelar. |
+| `src/routes/whatsapp.tsx:1818` (`modoTeste=true`) | Quando o número oficial estiver ativo, você confirmaria com um "sim" no WhatsApp. | Este simulador apenas mostra a interpretação da mensagem, sem salvar dados. Para registrar um gasto, vincule seu número, autorize o acesso e faça a confirmação final no WhatsApp real, disponível nos planos pagos elegíveis. |
+| `src/routes/whatsapp.tsx:1819` (`modoTeste=false`) | Para salvar de verdade, envie a mensagem pelo WhatsApp e responda "sim". | Este resultado é apenas uma simulação, sem dados salvos. Para registrar um gasto, vincule seu número, autorize o acesso e faça a confirmação final no WhatsApp real, disponível nos planos pagos elegíveis. |
+| `src/routes/whatsapp.tsx:744` (`MODO_TESTE`) | Em configuração | Esta tela está em modo de simulação |
+| `src/routes/whatsapp.tsx:747` (`!processamentoRealAtivo`) | Configurado — teste de mensagens ainda desativado | Teste de mensagens nesta tela desativado |
+| `src/routes/whatsapp.tsx:1007` (`MODO_TESTE`) | Aguardando ativação (antes L1007) | Modo de simulação nesta tela |
+
+Condição `modoTeste`, estado `MODO_TESTE`, handlers, gates, vinculação e persistência preservados. Nenhum envio WhatsApp ou teste financeiro executado.
+
+### Nova busca e classificação
+
+Busca em `src/routes`, `src/components` e `src/i18n` PT/EN por WhatsApp e termos de futuro, incluindo ainda, quando estiver ativo, ainda não disponível, antes de liberar, número em configuração, em breve, vai funcionar, beta, lista de espera e equivalentes EN. Revisadas expressões condicionais do simulador e dos canais de notificações, além dos resultados JSX. Os dois anúncios futuros confirmados acima foram corrigidos; a branch que prescrevia “sim” também foi corrigida.
+
+Ocorrências preservadas e razões:
+- `src/routes/whatsapp.tsx:841–843`: modo de teste desta tela, com disponibilidade em produção explicitada; não anuncia lançamento futuro.
+- `src/routes/whatsapp.tsx:1065,1743,1817`: condições do simulador, não gates de lançamento; preservadas.
+- `src/routes/whatsapp.tsx:744,747,1007`: badges condicionais revisados e reescritos para especificar esta tela/teste, evitando sugerir que o canal aguarda lançamento. Condições intactas; não se afirma processamento ativo quando o sinal consultado está desligado.
+- `src/routes/whatsapp.tsx:967,1033,1049`: nenhum número vinculado, sem uso anterior e confirmação pendente de um número específico; estados individuais legítimos, não disponibilidade futura do canal.
+- `src/routes/app_.ajustes.notificacoes.tsx:95`: Push “Em breve”, outro canal.
+- `src/routes/app_.ajustes.notificacoes.tsx:96` e `src/i18n/locales/{pt,en}/settings.json:64–67`: alertas automáticos “Não ativados”/“Not enabled”; distintos do assistente financeiro disponível.
+- `src/components/whatsapp/BetaAdminSection.tsx:100`: “WA-F · Beta fechada do WhatsApp”, ferramenta administrativa legada, renderizada dentro de `isAdmin` em `src/routes/whatsapp.tsx:1129–1247`; não é anúncio público de disponibilidade futura. Não alterada.
+- `src/routes/api/public.whatsapp.expense.ts:863`: limitação de identificação de produto por foto, recurso de compras; não anúncio futuro do WhatsApp financeiro, fora da apresentação do site.
+- Imports, nomes de funções beta e comentários operacionais: não exibidos ao usuário; preservados. Documentos históricos intactos.
+
+### Validação desta revisão
+- Testes existentes: `bun test tests/whatsapp-upgrade-presentation.test.ts`: **2 aprovados, 0 falhas**; `bunx vitest run tests/ajustes-07-ux-regressao.test.ts`: **12 aprovados, 0 falhas**. Nenhum teste permanente de texto/markup adicionado.
+- Verificação temporária isolada das duas branches: **2 verificações aprovadas**, sem carregar serviços, executar `onTestar` ou gravar dados. Não equivale a teste visual autenticado.
+- Busca pelos avisos antigos e “Você responde sim ou não” em routes/components/i18n: nenhuma ocorrência restante.
+- Build automático: **build OK em 2026-10-14T14:05:53Z**, após as alterações adicionais nos badges. Build/typecheck manuais não executados: o ambiente proíbe execução manual dessas verificações; typecheck separado continua não verificado.
+- Playwright local: home **HTTP 200**, CTA existente **`/whatsapp`**, visitante sem sessão direcionado a **`/login`** tanto pelo CTA quanto pelo acesso direto; documento final HTTP 200, nenhum `pageerror`. Tela de login carregada e captura inspecionada. Não houve login, vinculação, execução do simulador nem operação com dados reais; apresentação autenticada verificada apenas em código.
+- **Não publicado**; nenhum backend, banco, dado real, flag, segredo, Meta, preço ou migration F2/UNDO/F4 alterado. Créditos exatos: **não consigo confirmar**.

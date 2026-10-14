@@ -1,4 +1,5 @@
 
+- [x] Corrigir avisos JSX restantes do WhatsApp e revisar condicionais; atualizar relatório e validar localmente, sem publicação.
 - [x] Atualizar comunicação visível PT/EN do WhatsApp disponível, revisar CTAs e validar localmente; sem publicação ou alteração de acesso (antes/depois em docs/COMUNICACAO_WHATSAPP_DISPONIVEL_2026-10-14.md).
 - [x] Ativar áudio WhatsApp em produção (flag WHATSAPP_AUDIO_ENABLED + publicar) após ajuste de valores sem "reais"
 - [x] UX compras: resposta compacta (fixture 626 caracteres), links sob pedido, query limpa; compras 109/0, WhatsApp 160 arquivos/2792 testes/0 falhas. DEV somente, piloto publicado inalterado.
