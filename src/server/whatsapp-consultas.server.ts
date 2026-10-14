@@ -18,6 +18,7 @@ import {
   detectConsultaMensalNomeada as _detectConsultaMensalNomeada,
   janelaMes as _janelaMes,
   mesLabel as _mesLabel,
+  detectMesNoTexto as _detectMesNoTexto,
 } from "./whatsapp-mes-nomeado";
 
 export type ConsultaParams = { month?: number; year?: number; texto?: string };
@@ -597,10 +598,43 @@ function formatDataBR(iso: string): string {
   return `${d}/${m}/${y}`;
 }
 
-async function handleListarReceitasMes(userId: string): Promise<ConsultaResult> {
+async function handleListarReceitasMes(
+  userId: string,
+  params?: ConsultaParams,
+): Promise<ConsultaResult> {
+  // WA-Q-Receitas-Periodo: mês/ano explícitos prevalecem sobre o mês atual.
+  // Antes, o período pedido era ignorado (consulta E resposta usavam hoje).
   const hoje = todayLocalISO();
-  const from = monthStartISO(hoje);
-  const to = addDaysISO(hoje, 1);
+  let from: string;
+  let to: string;
+  let mesTitulo: string;
+  let month = params?.month;
+  let year = params?.year;
+  if (!(month && year)) {
+    const det = _detectMesNoTexto(params?.texto ?? "");
+    if (det.kind === "ambiguo") {
+      return {
+        status: "consulta",
+        resposta:
+          "Não consegui identificar com segurança o mês da consulta.\n\n" +
+          'Tente algo como "minhas receitas de agosto" ou "minhas receitas de agosto de 2026".',
+      };
+    }
+    if (det.kind === "ok") {
+      month = det.month;
+      year = det.year;
+    }
+  }
+  if (month && year) {
+    const win = _janelaMes(month, year);
+    from = win.from;
+    to = win.to;
+    mesTitulo = `${_mesLabel(month)} de ${year}`;
+  } else {
+    from = monthStartISO(hoje);
+    to = addDaysISO(hoje, 1);
+    mesTitulo = mesPorExtenso(hoje);
+  }
   const receitas = await loadReceitasDetalhadas(userId, from, to);
   const total = sumValor(receitas);
   const itens = receitas.slice(0, 10).map((r) => ({
@@ -614,7 +648,7 @@ async function handleListarReceitasMes(userId: string): Promise<ConsultaResult> 
   return {
     status: "consulta",
     resposta: M.consulta.listarReceitasMes({
-      mes: mesPorExtenso(hoje),
+      mes: mesTitulo,
       itens,
       total: formatBRL(total),
       totalRegistros: receitas.length,
@@ -641,7 +675,7 @@ export async function handleConsulta(
     case "impacto_despesas_renda":
       return await handleImpacto(userId);
     case "listar_receitas_mes":
-      return await handleListarReceitasMes(userId);
+      return await handleListarReceitasMes(userId, params);
     case "listar_gastos_mes":
       return await handleListarGastosMes(userId, params);
     case "gastos_por_categoria_mes":

@@ -232,3 +232,33 @@ export function janelaMes(month: number, year: number): { from: string; to: stri
   const to = `${nextYear}-${nmm}-01`;
   return { from, to };
 }
+
+export type MesNoTextoOutcome =
+  | { kind: "nenhum" }
+  | { kind: "ok"; month: number; year: number; hadExplicitYear: boolean }
+  | { kind: "ambiguo" };
+
+/**
+ * WA-Q-Receitas-Periodo — Extrai um mês nomeado (com ano opcional) de
+ * qualquer posição do texto ("minhas receitas de agosto de 2026").
+ * - Nenhum mês → "nenhum" (chamador usa o mês atual, comportamento antigo).
+ * - Mais de um mês distinto, ou ano inválido → "ambiguo" (pedir esclarecimento,
+ *   nunca consultar silenciosamente outro mês).
+ */
+export function detectMesNoTexto(texto: string, opts?: { now?: Date }): MesNoTextoOutcome {
+  const t = norm(texto);
+  if (!t) return { kind: "nenhum" };
+  const re = new RegExp(`\\b(${MES_ALT})\\b(?:\\s+(?:de|del)\\s+(\\d{2,4})|\\s+(\\d{4}))?`, "g");
+  const achados: Array<{ month: number; anoTxt?: string }> = [];
+  for (const m of t.matchAll(re)) achados.push({ month: MESES[m[1]], anoTxt: m[2] ?? m[3] });
+  if (achados.length === 0) return { kind: "nenhum" };
+  const distintos = new Set(achados.map((a) => `${a.month}-${a.anoTxt ?? ""}`));
+  if (distintos.size > 1) return { kind: "ambiguo" };
+  const { month, anoTxt } = achados[0];
+  const anoCorr = anoCorrenteSaoPaulo(opts?.now ?? new Date());
+  if (anoTxt == null) return { kind: "ok", month, year: anoCorr, hadExplicitYear: false };
+  const raw = Number(anoTxt);
+  const year = raw < 100 ? 2000 + raw : raw;
+  if (!Number.isFinite(year) || year < 1970 || year > anoCorr + 50) return { kind: "ambiguo" };
+  return { kind: "ok", month, year, hadExplicitYear: true };
+}
