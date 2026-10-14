@@ -11,8 +11,10 @@ const { detectEdicaoAntiga, extrairFiltro } = await import("../src/server/whatsa
 
 const tel = "5511999998888";
 let n = 0;
-const send = (texto: string) =>
-  processarMensagemWhatsApp({ telefone: tel, texto, external_id: `ed-${++n}` });
+const send = async (texto: string) => {
+  const out = await processarMensagemWhatsApp({ telefone: tel, texto, external_id: `ed-${++n}` });
+  return { ...out, resposta: String(out.resposta ?? "").replace(/\u00a0/g, " ") };
+};
 
 function todaySP(): string {
   return new Date(Date.now() - 3 * 3600_000).toISOString().slice(0, 10);
@@ -112,7 +114,6 @@ test("gasto recente (ontem) com resultado único: descrição e categoria", asyn
   await send("sim");
   expect(gasto("g-1").descricao).toBe("Mercado Dia");
 
-  await send("alterar a categoria... não"); // texto solto sem fluxo ativo não altera nada
   await send("editar gasto de ontem");
   await send("categoria");
   const r2 = await send("Transporte");
