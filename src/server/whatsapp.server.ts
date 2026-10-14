@@ -162,10 +162,7 @@ import {
   processarEdicaoConta,
   type WhatsAppEdicaoContaDeps,
 } from "./whatsapp-contas-editar.server";
-import {
-  detectEditarLancamentoExistente,
-  respostaEdicaoIndisponivel,
-} from "./whatsapp-editar-lancamento.server";
+import { detectEdicaoAntiga, handleEdicaoAntiga } from "./whatsapp-editar-antigo.server";
 import {
   detectSavePixIntent,
   detectQueryPixIntent,
