@@ -2995,7 +2995,9 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   if (!msg.flowReply && !msg.image && !msg.document) {
     let ed;
     try {
-      ed = await handleEdicaoAntiga({ userId, phone: msg.telefone, externalId: msg.external_id, text: texto, podeIniciar: false });
+      // Início só sem outra sessão ativa (cadastro em andamento tem prioridade).
+      const podeIniciar = detectEdicaoAntiga(texto) !== null && !(await buscarSessaoAtiva(userId, msg.telefone));
+      ed = await handleEdicaoAntiga({ userId, phone: msg.telefone, externalId: msg.external_id, text: texto, podeIniciar });
     } catch {
       return { status: "erro", resposta: "Não consegui continuar a edição agora. Nada foi alterado. Tente novamente." };
     }
@@ -4934,22 +4936,6 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
       texto,
       _row: msg,
     });
-  }
-  // P1 14/10: pedido de editar receita/gasto existente nunca abre cadastro;
-  // abre a edição segura de lançamentos já registrados (sem gravar nada
-  // até o Confirmar).
-  if (!sessao && decisao === "outro" && detectEdicaoAntiga(texto)) {
-    logWaRouteDecision(msg, "consulta_handler", "edit_existing_entry_start");
-    let ed;
-    try {
-      ed = await handleEdicaoAntiga({ userId, phone: msg.telefone, externalId: msg.external_id, text: texto, podeIniciar: true });
-    } catch {
-      return { status: "erro", resposta: "Não consegui abrir a edição agora. Nada foi alterado. Tente novamente." };
-    }
-    if (ed) return {
-      status: "consulta", resposta: ed.resposta,
-      ...(ed.graphInteractive ? { graphInteractive: ed.graphInteractive as { [key: string]: Json | undefined } } : {}),
-    };
   }
   if (!sessao && decisao === "outro") {
     const guard = detectConsultaShape(texto);
