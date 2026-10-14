@@ -254,6 +254,6 @@ Resultado: nenhuma ocorrência textual remanescente anuncia WhatsApp financeiro 
 - free-ads-plan: 101 verificações aprovadas, 0 falhas.
 - ajustes-07-ux-regressao: 12 testes aprovados, 0 falhas.
 - Total: 168 aprovações, 0 falhas. Apenas testes locais/fixtures, sem operações financeiras.
-- Build automático da prévia: build OK, última entrada observada 2026-10-14T13:56:33Z. Build e typecheck manuais não executados por restrição do ambiente; não há evidência separada de typecheck nesta tarefa.
-- Navegador local: landing PT/EN, larguras 1280 e 390 px, sem overflow horizontal; CTA href /whatsapp e visitante sem sessão chega a /login; nenhum pageerror capturado. Capturas inspecionadas. Não foi executada vinculação, consentimento nem envio WhatsApp; telas autenticadas validadas por código/testes locais, não por operação em conta real.
+- Build automático da prévia: build OK, última entrada observada 2026-10-14T13:58:29Z. Build e typecheck manuais não executados por restrição do ambiente; não há evidência separada de typecheck nesta tarefa.
+- Navegador local: landing PT/EN, larguras 1280 e 390 px, sem overflow horizontal; CTA href /whatsapp e visitante sem sessão chega a /login; nenhum pageerror capturado. Captura desktop PT confirmou visualmente título, CTA e elegibilidade. Capturas mobile PT/EN ficaram em branco na área do título: o texto está no DOM, mas a apresentação mobile NÃO está visualmente verificada; possível comportamento da animação preexistente, não investigado/corrigido nesta tarefa de copy. Não foi executada vinculação, consentimento nem envio WhatsApp; telas autenticadas validadas por código/testes locais, não por operação em conta real.
 - Não houve publicação. Créditos exatos: não consigo confirmar.
