@@ -177,7 +177,7 @@ const STOP = new Set([
   "entradas", "recebimento", "recebimentos", "hoje", "ontem", "anteontem", "pra", "para", "com", "que", "e",
   "janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro",
   "novembro", "dezembro", "registrado", "registrada", "lancado", "lancada", "ai", "la",
-  ...Object.keys(WEEKDAYS),
+  ...Object.keys(WEEKDAYS), ...Object.keys(WEEKDAYS).map((d) => `${d}-feira`),
 ]);
 
 export function extrairFiltro(texto: string, now: Date): Filtro {
