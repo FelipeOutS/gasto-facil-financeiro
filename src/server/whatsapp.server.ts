@@ -163,6 +163,7 @@ import {
   type WhatsAppEdicaoContaDeps,
 } from "./whatsapp-contas-editar.server";
 import { detectEdicaoAntiga, detectExclusaoAntiga, detectRestauracaoAntiga, handleEdicaoAntiga } from "./whatsapp-editar-antigo.server";
+import { detectLoteMes, handleLoteMes } from "./whatsapp-lote-mes.server";
 import {
   detectSavePixIntent,
   detectQueryPixIntent,
@@ -2988,6 +2989,22 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     if (post) return {
       status: "consulta", resposta: post.resposta,
       ...(post.graphInteractive ? { graphInteractive: post.graphInteractive as { [key: string]: Json | undefined } } : {}),
+    };
+  }
+
+  // P1 14/10: exclusão/restauração de um MÊS inteiro (travada por LOTE_MES_RELEASE_AUTHORIZED).
+  // Vem antes do fluxo individual: pedido em lote nunca cai na exclusão individual nem no cadastro.
+  if (!msg.flowReply && !msg.image && !msg.document) {
+    let lm;
+    try {
+      const podeIniciarLote = detectLoteMes(texto) !== null && !(await buscarSessaoAtiva(userId, msg.telefone));
+      lm = await handleLoteMes({ userId, phone: msg.telefone, externalId: msg.external_id, text: texto, podeIniciar: podeIniciarLote });
+    } catch {
+      return { status: "erro", resposta: "Não consegui continuar agora. Nada foi alterado. Tente novamente." };
+    }
+    if (lm) return {
+      status: "consulta", resposta: lm.resposta,
+      ...(lm.graphInteractive ? { graphInteractive: lm.graphInteractive as { [key: string]: Json | undefined } } : {}),
     };
   }
 

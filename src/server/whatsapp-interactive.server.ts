@@ -220,6 +220,7 @@ export function replyIdToTexto(id: string, title?: string): string {
   // Edição de lançamentos antigos: token com nonce do passo + ID real; o
   // título ("Uber") não identifica o lançamento. Validado no fluxo de edição.
   if (/^wa_ed:[0-9a-f]{12}:(?:sel|pg|f|ok|adj|x|cont|novo|del|bk|rst)(?::[0-9a-z_-]{1,40})?$/i.test(v)) return v;
+  if (/^wa_lm:[0-9a-f]{12}:(?:go|ls|pg|bk|x|tg|tr)(?::\d{1,3})?$/i.test(v)) return v;
   const exp = expenseTokenToTexto(v);
   if (exp) return exp; // validado contra a sessão em processarMensagemWhatsApp
   if (REPLY_ID_TEXT[v]) return REPLY_ID_TEXT[v];
