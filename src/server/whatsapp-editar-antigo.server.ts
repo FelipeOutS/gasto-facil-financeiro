@@ -211,7 +211,7 @@ export function extrairFiltro(texto: string, now: Date): Filtro {
     }
   }
   const tokens = t.split(" ").filter((w) => w.length >= 3 && !STOP.has(w) && !EDIT_VERB.test(w) && !DEL_VERB.test(w) && !REST_VERB.test(w) && !EXCLUIDOS_W.test(w) && !["exclusao", "desfazer", "mostrar", "listar", "excluido", "excluida"].includes(w) && !/^\d+$/.test(w));
-  return { range, termo: tokens[0] ?? null, periodoLabel };
+  return { range, termo: tokens.length ? tokens.join(" ") : null, periodoLabel };
 }
 
 // ----------------------------------------------------------- persistence
@@ -309,12 +309,36 @@ async function buscar(db: Db, userId: string, tipo: EditarTipo, f: Filtro, now: 
     if (error) throw new Error("edit_old_search_failed");
     for (const r of (Array.isArray(data) ? data : []) as Row[]) out.push({ ...r, _t: t });
   }
-  const termo = f.termo ? norm(f.termo) : null;
-  const filtered = termo
-    ? out.filter((r) => norm(`${r.descricao ?? ""} ${r.estabelecimento ?? ""}`).includes(termo.replace(/s$/, "")))
-    : out;
-  filtered.sort((a, b) => String(b.data).localeCompare(String(a.data)));
-  return filtered.slice(0, 40);
+  const byDate = (a: Row, b: Row) => String(b.data).localeCompare(String(a.data));
+  if (!f.termo) return out.sort(byDate).slice(0, 40);
+  return rankPorTermo(out, f.termo).slice(0, 40);
+}
+
+/** Chave de comparação: sem acento/caixa/pontuação e sem palavras vazias. */
+function chaveDescricao(s: string): string {
+  return norm(s).split(" ").filter((w) => w && !STOP.has(w)).join(" ");
+}
+
+/**
+ * P1 — busca por descrição em camadas (nunca autoriza nada; só ordena candidatos):
+ * 1) exata (descrição normalizada == termo) → somente as exatas;
+ * 2) contém todas as palavras do termo;
+ * 3) parcial (alguma palavra), mais palavras primeiro.
+ */
+export function rankPorTermo<R extends { descricao?: unknown; estabelecimento?: unknown; data?: unknown }>(rows: R[], termo: string): R[] {
+  const byDate = (a: R, b: R) => String(b.data).localeCompare(String(a.data));
+  const alvo = chaveDescricao(termo);
+  if (!alvo) return [...rows].sort(byDate);
+  const exatas = rows.filter((r) => chaveDescricao(String(r.descricao ?? "")) === alvo || (!!r.estabelecimento && chaveDescricao(String(r.estabelecimento)) === alvo));
+  if (exatas.length) return exatas.sort(byDate);
+  const palavras = alvo.split(" ").map((w) => (w.length > 3 ? w.replace(/s$/, "") : w));
+  const scored = rows.map((r) => {
+    const h = norm(`${r.descricao ?? ""} ${r.estabelecimento ?? ""}`);
+    return { r, n: palavras.filter((w) => h.includes(w)).length };
+  }).filter((x) => x.n > 0);
+  scored.sort((a, b) => b.n - a.n || byDate(a.r, b.r));
+  const todas = scored.filter((x) => x.n === palavras.length);
+  return (todas.length ? todas : scored).map((x) => x.r);
 }
 
 // ------------------------------------------------------------- rendering
