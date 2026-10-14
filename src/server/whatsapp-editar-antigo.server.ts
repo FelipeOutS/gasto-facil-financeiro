@@ -35,7 +35,7 @@ const defaultDb: Db = _supabaseAdmin;
 export const EDIT_OLD_KIND = "wa_edit_old";
 export const EDIT_OLD_TTL_MS = 15 * 60 * 1000;
 export const EDIT_OLD_PAGE = 8;
-const TOKEN = /^wa_ed:([0-9a-f]{12}):(sel|pg|f|ok|adj|x)(?::([0-9a-z_-]{1,40}))?$/i;
+const TOKEN = /^wa_ed:([0-9a-f]{12}):(sel|pg|f|ok|adj|x|cont|novo)(?::([0-9a-z_-]{1,40}))?$/i;
 
 type Tbl = "gastos" | "receitas";
 type Field = "valor" | "descricao" | "data" | "categoria_id";
@@ -48,7 +48,7 @@ type Snap = {
 type Patch = { field: Field; value: string; label: string; beforeLabel: string };
 export type EditOldState = {
   kind: typeof EDIT_OLD_KIND;
-  stage: "periodo" | "select" | "field" | "value" | "confirm" | "applying" | "done";
+  stage: "periodo" | "select" | "field" | "value" | "confirm" | "interrupt" | "applying" | "done";
   nonce: string;
   seq?: number;
   expires_at: string;
@@ -59,8 +59,16 @@ export type EditOldState = {
   sel?: Snap;
   field?: Field;
   patch?: Patch;
+  /** Etapa a retomar quando o usuário escolhe "Continuar edição". */
+  resume?: "periodo" | "select" | "field" | "value" | "confirm";
+  /** Texto do novo lançamento; só é processado após escolha explícita. */
+  pending_text?: string;
 };
-export type EditOldReply = { resposta: string; graphInteractive?: Record<string, unknown> };
+export type EditOldReply = {
+  resposta: string; graphInteractive?: Record<string, unknown>;
+  /** "Iniciar novo lançamento": o pipeline processa este texto como mensagem nova. */
+  replayText?: string;
+};
 export type EditOldDeps = { db?: Db; now?: () => Date; nonce?: () => string };
 
 // ---------------------------------------------------------------- utils
@@ -353,7 +361,28 @@ export async function aplicarEdicao(db: Db, userId: string, s: Snap, p: Patch, n
 
 // ----------------------------------------------------------------- main
 const RESET = /^(cancelar|cancela|sair|voltar|menu|parar)$/;
-const NEW_COMMAND = /^(gastei|paguei|comprei|recebi|ganhei|minhas?|meus?|quanto|qual|quais|lancar|registrar|anotar)\b/;
+/** Novo LANÇAMENTO no meio da edição: pergunta antes de abandonar (14/10). */
+const NEW_ENTRY = /^(gastei|paguei|comprei|recebi|ganhei|lancar|registrar|anotar)\b/;
+/** Consulta no meio da edição: encerra (só leitura) e segue para o fluxo normal. */
+const NEW_QUERY = /^(minhas?|meus?|quanto|qual|quais)\b/;
+/** "Ver mais" só quando a mensagem inteira é o pedido de paginação. */
+export const MORE_CMD = /^(mais|ver mais|mostrar mais|mostra mais|mais opcoes|mais lancamentos|proxima|proxima pagina|proximos|proximas)[.!]?$/;
+
+function renderInterrupt(st: EditOldState): EditOldReply {
+  const resposta = "Você está editando um lançamento. Quer abandonar a edição e iniciar um novo lançamento?\n\n1. Continuar edição\n2. Iniciar novo lançamento\n3. Cancelar\n\nNada foi criado ou alterado até você escolher.";
+  return {
+    resposta,
+    graphInteractive: {
+      type: "button",
+      body: { text: resposta },
+      action: { buttons: [
+        { type: "reply", reply: { id: `wa_ed:${st.nonce}:cont`, title: "Continuar edição" } },
+        { type: "reply", reply: { id: `wa_ed:${st.nonce}:novo`, title: "Novo lançamento" } },
+        { type: "reply", reply: { id: `wa_ed:${st.nonce}:x`, title: "Cancelar" } },
+      ] },
+    },
+  };
+}
 
 export async function handleEdicaoAntiga(args: {
   userId: string; phone: string; externalId: string | null; text: string;
@@ -396,7 +425,13 @@ export async function handleEdicaoAntiga(args: {
   // 2) Texto livre dentro de um fluxo ativo.
   if (active) {
     if (RESET.test(t)) return close(active, "Tudo bem, edição cancelada. Nenhum lançamento foi alterado.");
-    if (NEW_COMMAND.test(t) && active.stage !== "value" && active.stage !== "periodo") {
+    if (active.stage === "interrupt") return continuar(active, "text", null);
+    if (NEW_ENTRY.test(t)) {
+      // Não descarta a edição: guarda o pedido e pergunta. Nada é gravado em gastos/receitas.
+      const next = step(active, { stage: "interrupt", resume: active.stage as EditOldState["resume"], pending_text: text.trim().slice(0, 1000) });
+      return save(next, renderInterrupt(next));
+    }
+    if (NEW_QUERY.test(t) && active.stage !== "value" && active.stage !== "periodo") {
       await saveState(db, userId, phone, null, text, { ...active, stage: "done", seq: (active.seq ?? 0) + 1, nonce: mkNonce() }, "", now);
       return null; // segue para o fluxo normal (cadastro/consulta)
     }
@@ -458,6 +493,27 @@ export async function handleEdicaoAntiga(args: {
   async function continuar(cur: EditOldState, cmd: string, arg: string | null): Promise<EditOldReply> {
     if (cmd === "x") return close(cur, "Tudo bem, edição cancelada. Nenhum lançamento foi alterado.");
 
+    if (cur.stage === "interrupt") {
+      const c = cmd === "text" ? (/^(1|continuar|continuar edicao|continua)$/.test(t) ? "cont" : /^(2|iniciar|novo|novo lancamento|iniciar novo lancamento)$/.test(t) ? "novo" : /^3$/.test(t) ? "x" : "") : cmd;
+      if (c === "x") return close(cur, "Tudo bem, edição cancelada. Nenhum lançamento foi criado ou alterado.");
+      if (c === "cont" && cur.resume) {
+        const back: EditOldState = { ...cur, stage: cur.resume, resume: undefined, pending_text: undefined };
+        const next = step(back, {});
+        const reply = next.stage === "field" ? renderFieldMenu(next)
+          : next.stage === "value" ? askValue(next)
+          : next.stage === "confirm" ? renderConfirm(next)
+          : next.stage === "select" ? { resposta: "Certo, edição retomada. Responda com o número do lançamento da lista anterior, “mais” para ver outros ou “cancelar”." }
+          : { resposta: "Certo, edição retomada. De quando é o lançamento? (ex.: setembro de 2026)" };
+        return save(next, reply);
+      }
+      if (c === "novo" && cur.pending_text) {
+        const r = await close(cur, "");
+        if (r.resposta) return r; // duplicate/erro: não processa o novo lançamento
+        return { resposta: "", replayText: cur.pending_text };
+      }
+      return save(step(cur, {}), renderInterrupt(step(cur, {})));
+    }
+
     if (cur.stage === "periodo") {
       const f = extrairFiltro(text, now);
       if (f.ambiguo || (!f.range && !f.termo)) return save(step(cur, {}), { resposta: "Não entendi o período. Responda com o mês (ex.: setembro de 2026), “ontem” ou o nome do lançamento.\n\nDigite “cancelar” para sair." });
@@ -466,7 +522,7 @@ export async function handleEdicaoAntiga(args: {
 
     if (cur.stage === "select") {
       const cands = cur.cands ?? [];
-      if (cmd === "pg" || (cmd === "text" && /^(mais|ver mais|proxima|proximos)$/.test(t))) {
+      if (cmd === "pg" || (cmd === "text" && MORE_CMD.test(t))) {
         const page = cmd === "pg" ? Number(arg) : (cur.page ?? 0) + 1;
         if (!Number.isInteger(page) || page < 0 || page * EDIT_OLD_PAGE >= cands.length) return save(step(cur, {}), { resposta: "Não há mais lançamentos nesta busca. Escolha um da lista ou digite “cancelar”." });
         const rows: Array<{ t: Tbl; id: string; descricao: unknown; valor: unknown; data: unknown }> = [];
