@@ -145,8 +145,8 @@ test("prévia: contagem, soma, bloqueados por motivo, sem alterar nada", async (
   setembro();
   const r = await send("Excluir todos os gastos de setembro de 2026");
   expect(r!.resposta).toContain("3 gastos serão excluídos — total R$ 60,50");
-  expect(r!.resposta).toContain("1 gasto parcelados — total R$ 100,00 (NÃO serão alterados");
-  expect(r!.resposta).toContain("1 gasto no cartão de crédito — total R$ 50,00");
+  expect(r!.resposta).toContain("1 gasto bloqueado(s) — parcelados — total R$ 100,00 (NÃO serão alterados");
+  expect(r!.resposta).toContain("1 gasto bloqueado(s) — no cartão de crédito — total R$ 50,00");
   expect(last().items.map((i: any) => i.id).sort()).toEqual(["s1", "s2", "s3"]);
   expect(ativos()).toHaveLength(6);
   expect(rpcCalls).toHaveLength(0);
@@ -271,15 +271,15 @@ test("timeout: não reporta sucesso", async () => {
 test("receitas: recorrente bloqueada; restauração só dos IDs do lote", async () => {
   setembro();
   const p = await send("Apagar minhas receitas de agosto de 2026");
-  expect(p!.resposta).toContain("2 receitas serão excluídas".replace("excluídas", "excluídos"));
-  expect(p!.resposta).toContain("1 receita recorrentes");
+  expect(p!.resposta).toContain("2 receitas serão excluídas");
+  expect(p!.resposta).toContain("1 receita bloqueado(s) — recorrentes");
   await tap("go");
   await send("EXCLUIR RECEITAS 08/2026");
   expect(R().filter((x) => x.deleted_at === null).map((x) => x.id)).toEqual(["r3"]);
   // Excluída por outra operação antes da restauração em lote:
   R().find((x) => x.id === "r3").deleted_at = "2026-10-14T13:00:00.000Z";
   const rp = await send("Restaurar as receitas que excluí de agosto de 2026");
-  expect(rp!.resposta).toContain("2 receitas serão restaurados");
+  expect(rp!.resposta).toContain("2 receitas serão restauradas");
   await tap("go");
   const ok = await send("RESTAURAR RECEITAS 08/2026");
   expect(ok!.resposta).toContain("restaurei 2 receitas");

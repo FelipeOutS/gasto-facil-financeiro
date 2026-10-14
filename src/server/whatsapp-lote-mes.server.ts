@@ -196,9 +196,9 @@ function renderPreview(s: LoteState, aviso = ""): LoteReply {
   const linhas = [
     aviso,
     `Prévia: ${verbo} ${nomeTipo(t)} de ${periodoLabel(s)}`,
-    `• ${items.length} ${nomeTipo(t, items.length)} ${s.acao === "excluir" ? "serão excluídos" : "serão restaurados"} — total ${brl(s.total ?? 0)}`,
+    `• ${items.length} ${nomeTipo(t, items.length)} ${s.acao === "excluir" ? (t === "gastos" ? "serão excluídos" : "serão excluídas") : (t === "gastos" ? "serão restaurados" : "serão restauradas")} — total ${brl(s.total ?? 0)}`,
   ];
-  for (const b of s.bloqueados ?? []) linhas.push(`• ${b.n} ${nomeTipo(t, b.n)} ${b.motivo} — total ${brl(b.total)} (NÃO serão alterados; use o site ou app)`);
+  for (const b of s.bloqueados ?? []) linhas.push(`• ${b.n} ${nomeTipo(t, b.n)} bloqueado(s) — ${b.motivo} — total ${brl(b.total)} (NÃO serão alterados; use o site ou app)`);
   const ex = items.slice(0, 5).map((i) => `  - ${i.descricao || "Sem descrição"} — ${brl(i.valor)} — ${dateBR(i.data)}`);
   if (ex.length) linhas.push("", "Exemplos:", ...ex);
   linhas.push("", s.acao === "excluir"
