@@ -5,6 +5,10 @@ import {
   competenciaDoGasto,
   competenciaPorData,
   isYm,
+  periodoCiclo as _periodoCiclo,
+  fechamentoNoMes as _fechamentoNoMes,
+  vencimentoDoFechamento as _vencimentoDoFechamento,
+  proximoFechamento as _proximoFechamento,
 } from "./fatura-competencia";
 import { filtrarContasAtivas, isStatusContaCancelado } from "./contas-status";
 import { parcelasEmCentavos } from "./parcelamento";
@@ -1689,12 +1693,10 @@ export function resumoFaturaCartao(cartaoId: string, hoje: Date = new Date()) {
     const m = hoje.getMonth();
     if (hojeDia > diaFech) {
       // Já fechou este mês → ciclo aberto vai até o fechamento do próximo mês.
-      inicio = new Date(y, m, diaFech + 1);
-      fim = new Date(y, m + 1, diaFech, 23, 59, 59, 999);
+      ({ inicio, fim } = _periodoCiclo(diaFech, m + 1, y));
     } else {
       // Ainda não fechou este mês → ciclo aberto começou no mês passado.
-      inicio = new Date(y, m - 1, diaFech + 1);
-      fim = new Date(y, m, diaFech, 23, 59, 59, 999);
+      ({ inicio, fim } = _periodoCiclo(diaFech, m, y));
     }
   } else {
     // Fallback: mês civil corrente.
@@ -5231,10 +5233,9 @@ export function cicloFatura(cartao: Cartao, mes: number, ano: number): { inicio:
   const diaFech = cartao.diaFechamento && cartao.diaFechamento > 0 ? cartao.diaFechamento : 1;
   // inicio = dia seguinte ao fechamento do mês anterior (= dia seguinte ao
   // fechamento que ocorre no início do próprio mês de referência).
-  const inicio = new Date(ano, mes - 1, diaFech + 1, 0, 0, 0, 0);
-  // fim = fechamento do mês seguinte ao mês de referência.
-  const fim = new Date(ano, mes, diaFech, 23, 59, 59, 999);
-  return { inicio, fim };
+  // fim = fechamento do mês seguinte. Dia 29-31 limitado ao último dia do
+  // mês (mesma convenção de cicloLegadoPorData, que compara números de dia).
+  return _periodoCiclo(diaFech, mes, ano);
 }
 
 /**
@@ -5519,12 +5520,10 @@ export function statusEfetivoFatura(
   const diaFech = cartao.diaFechamento ?? 1;
   const diaVenc = cartao.diaVencimento ?? 10;
   // Fechamento da fatura "mes" ocorre em (ano, mes, diaFech) — mês seguinte.
-  const dataFechamento = new Date(ano, mes, diaFech, 23, 59, 59, 999);
-  // Vencimento: primeira ocorrência de diaVenc em ou após o fechamento.
-  let dataVencimento = new Date(ano, mes, diaVenc, 23, 59, 59, 999);
-  if (dataVencimento.getTime() < dataFechamento.getTime()) {
-    dataVencimento = new Date(ano, mes + 1, diaVenc, 23, 59, 59, 999);
-  }
+  const dataFechamento = _fechamentoNoMes(ano, mes, diaFech);
+  // Vencimento: regra de offsetVencimento (dia venc > dia fech → mesmo mês).
+  const dataVencimento = _vencimentoDoFechamento(ano, mes, diaFech, diaVenc);
+  dataVencimento.setHours(23, 59, 59, 999);
   if (hoje > dataVencimento) return "vencida";
   if (hoje > dataFechamento) return "fechada";
   return "aberta";
@@ -5568,11 +5567,7 @@ export function faturaCorrente(
 /** Próximo fechamento (futuro mais próximo) considerando hoje. */
 export function proximoFechamentoData(cartao: Cartao, hoje: Date = new Date()): Date | null {
   if (!cartao.diaFechamento) return null;
-  const ref = new Date(hoje.getFullYear(), hoje.getMonth(), cartao.diaFechamento, 23, 59, 59, 999);
-  if (ref.getTime() < new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime()) {
-    return new Date(hoje.getFullYear(), hoje.getMonth() + 1, cartao.diaFechamento, 23, 59, 59, 999);
-  }
-  return ref;
+  return _proximoFechamento(cartao.diaFechamento, hoje);
 }
 
 /** Vencimento da fatura aberta (vence depois do próximo fechamento). */
@@ -5583,11 +5578,12 @@ export function proximoVencimentoFaturaAberta(
   if (!cartao.diaVencimento) return null;
   const fech = proximoFechamentoData(cartao, hoje);
   if (!fech) return null;
-  let venc = new Date(fech.getFullYear(), fech.getMonth(), cartao.diaVencimento);
-  if (venc.getTime() <= fech.getTime()) {
-    venc = new Date(fech.getFullYear(), fech.getMonth() + 1, cartao.diaVencimento);
-  }
-  return venc;
+  return _vencimentoDoFechamento(
+    fech.getFullYear(),
+    fech.getMonth(),
+    cartao.diaFechamento,
+    cartao.diaVencimento,
+  );
 }
 
 /**
