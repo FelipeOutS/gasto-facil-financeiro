@@ -15,6 +15,7 @@ CREATE TABLE public.gastos (
 CREATE TABLE public.receitas (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid NOT NULL, descricao text, valor numeric NOT NULL DEFAULT 1,
   data date NOT NULL DEFAULT '2026-09-01', recorrencia_id uuid, import_batch_id uuid, deleted_at timestamptz,
+  deleted_source text, deleted_reason text,
   created_at timestamptz DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());
 CREATE TABLE public.contas_a_pagar (id uuid PRIMARY KEY, user_id uuid NOT NULL, gasto_id uuid,
   status text NOT NULL DEFAULT 'pendente', data_pagamento date, updated_at timestamptz DEFAULT now());
