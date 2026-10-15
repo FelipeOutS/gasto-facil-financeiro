@@ -166,6 +166,25 @@ export async function findCartoesDoUsuarioByTerm(
   const t = norm(termo);
   if (!t) return [];
   const cartoes = await loadCartoesDoUsuario(userId);
+  return selecionarCartoesPorTermo(cartoes, t);
+}
+
+/**
+ * P1 15/10/2026: nome EXATO (normalizado) tem prioridade sobre inclusão —
+ * "Itaú Visa" não pode ficar ambíguo com "Itaú" (desde que nenhum outro nome contenha o termo). Homônimos exatos continuam
+ * ambíguos (nunca escolhe um deles sozinho).
+ */
+export function selecionarCartoesPorTermo<T extends { nome?: string | null; banco?: string | null }>(
+  cartoes: T[],
+  termo: string,
+): T[] {
+  const t = norm(termo);
+  if (!t) return [];
+  // Exato só decide se nenhum OUTRO nome contém o termo ("Nubank" x
+  // "Nubank Ouro" continua ambíguo — o usuário pode querer qualquer um).
+  const exatos = cartoes.filter((c) => norm(c.nome ?? "") === t);
+  const maiores = cartoes.filter((c) => { const n = norm(c.nome ?? ""); return n !== t && n.includes(t); });
+  if (exatos.length > 0 && maiores.length === 0) return exatos;
   return cartoes.filter((c) => {
     const n = norm(c.nome ?? "");
     const b = norm(c.banco ?? "");
