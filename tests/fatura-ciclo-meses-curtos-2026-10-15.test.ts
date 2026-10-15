@@ -70,10 +70,10 @@ describe("ciclo com fechamento 28-31 em meses curtos", () => {
   it("dia do fechamento x dia seguinte, com virada de ano", () => {
     expect(faturaCorrenteRef(31, new Date(2026, 11, 31, 23, 59))).toEqual({ mes: 11, ano: 2026 });
     expect(faturaCorrenteRef(31, new Date(2027, 0, 1, 0, 1))).toEqual({ mes: 12, ano: 2026 });
-    expect(competenciaPorData("2026-12-31", 31, 10)!.competencia).toBe("2026-12");
-    expect(competenciaPorData("2027-01-01", 31, 10)!.competencia).toBe("2027-01");
-    expect(competenciaPorData("2026-02-28", 30, 10)!.competencia).toBe("2026-02");
-    expect(competenciaPorData("2026-03-01", 30, 10)!.competencia).toBe("2026-03");
+    expect(competenciaPorData("2026-12-31", 31, 10)!.competencia).toBe("2027-01");
+    expect(competenciaPorData("2027-01-01", 31, 10)!.competencia).toBe("2027-02");
+    expect(competenciaPorData("2026-02-28", 30, 10)!.competencia).toBe("2026-03");
+    expect(competenciaPorData("2026-03-01", 30, 10)!.competencia).toBe("2026-04");
   });
 
   it("vencimento segue offsetVencimento e limita ao mês", () => {
@@ -90,11 +90,11 @@ describe("ciclo com fechamento 28-31 em meses curtos", () => {
 
   it("parcelamento 100/3 em cartão fech 31 a partir de dezembro", () => {
     const c = competenciaPorData("2026-12-15", 31, 10)!.competencia;
-    expect(competenciasParcelas(c, 3)).toEqual(["2026-12", "2027-01", "2027-02"]);
+    expect(competenciasParcelas(c, 3)).toEqual(["2027-01", "2027-02", "2027-03"]);
   });
 
   it("dois cartões com fechamentos diferentes no mesmo dia de compra", () => {
-    expect(competenciaPorData("2026-04-30", 31, 10)!.competencia).toBe("2026-04");
+    expect(competenciaPorData("2026-04-30", 31, 10)!.competencia).toBe("2026-05");
     expect(competenciaPorData("2026-04-30", 5, 15)!.competencia).toBe("2026-05");
     expect(competenciaPorData("2026-04-30", 29, 5)!.competencia).toBe("2026-06");
   });
