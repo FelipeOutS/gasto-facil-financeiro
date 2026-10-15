@@ -1,4 +1,10 @@
 {
+  "mobile": {
+    "home": "Início",
+    "create": "Novo lançamento",
+    "menu": "Abrir menu",
+    "vault": "Cofre"
+  },
   "aria": {
     "side": "Navegação lateral",
     "primary": "Navegação principal",

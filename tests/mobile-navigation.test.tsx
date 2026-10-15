@@ -8,6 +8,7 @@ const navigations: string[] = [];
 let commit = true;
 mock.module("@tanstack/react-router", () => ({
   useLocation: () => ({ pathname }),
+  useNavigate: () => ({ to }: { to: string }) => { navigations.push(to); pathname = to; },
   Link: ({ to, onClick, preload, activeOptions, children, ...props }: any) => (
     <a
       href={to}
@@ -31,6 +32,9 @@ mock.module("@/lib/product-analytics", () => ({
   trackProductEvent: () => {},
 }));
 mock.module("react-i18next", () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+mock.module("@/lib/auth-context", () => ({ useAuth: () => ({ user: { email: "qa@example.test" }, profile: { nome: "QA" } }) }));
+mock.module("@/components/BrandMark", () => ({ BrandMark: () => <span>Logo</span> }));
+const { MobileTopBar } = await import("../src/components/MobileTopBar");
 const { BottomNav, mobileTabIndex, MOBILE_TABS } = await import("../src/components/BottomNav");
 beforeEach(() => {
   pathname = "/app";
@@ -40,9 +44,9 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-test("ícones mantêm nomes acessíveis sem labels visuais", () => {
+test("quatro destinos mantêm nomes acessíveis e labels visuais", () => {
   const ui = render(<BottomNav />);
-  expect(ui.container.querySelector(".mobile-nav-label")).toBeNull();
+  expect(ui.container.querySelectorAll(".mobile-nav-label")).toHaveLength(4);
   for (const item of MOBILE_TABS) {
     const link = ui.getByLabelText(`items.${item.labelKey}`);
     expect(link.getAttribute("title")).toBe(`items.${item.labelKey}`);
@@ -70,7 +74,7 @@ test("stretch por distância, retorno direto e interrupção sem acumular indica
     a = 1.2;
   } as any;
   try {
-    fireEvent.click(ui.getByLabelText("items.more"));
+    fireEvent.click(ui.getByLabelText("items.cofrePessoal"));
     ui.rerender(<BottomNav />);
     expect(calls).toHaveLength(2);
     expect(calls[0].frames.at(-1).transform).toBe("translate3d(256px,0,0)");
@@ -83,11 +87,11 @@ test("stretch por distância, retorno direto e interrupção sem acumular indica
     expect(calls[1].cancel).toHaveBeenCalledTimes(1);
     expect(calls[2].frames[0].transform).toBe("translate3d(96px,0,0)");
     expect(calls[2].frames.at(-1).transform).toBe("translate3d(0px,0,0)");
-    for (const item of MOBILE_TABS.slice(1, 4)) {
+    for (const item of MOBILE_TABS.slice(1, 3)) {
       fireEvent.click(ui.getByLabelText(`items.${item.labelKey}`));
       ui.rerender(<BottomNav />);
     }
-    expect(navigations).toEqual(["/app/mais", "/app", "/gastos", "/renda", "/cartoes"]);
+    expect(navigations).toEqual(["/app/cofre-pessoal", "/app", "/gastos", "/cartoes"]);
     expect(ui.container.querySelectorAll(".mobile-nav-indicator")).toHaveLength(1);
     expect(ui.container.querySelector('[aria-current="page"]')?.getAttribute("href")).toBe(
       pathname,
@@ -112,10 +116,10 @@ test("reduced motion navega sem stretch nem overshoot", () => {
     const indicator = ui.container.querySelector(".mobile-nav-indicator") as HTMLElement;
     indicator.getBoundingClientRect = () => ({ width: 64 }) as DOMRect;
     indicator.animate = mock(() => ({ cancel() {} }) as Animation);
-    fireEvent.click(ui.getByLabelText("items.more"));
+    fireEvent.click(ui.getByLabelText("items.cofrePessoal"));
     ui.rerender(<BottomNav />);
     expect(indicator.animate).not.toHaveBeenCalled();
-    expect(pathname).toBe("/app/mais");
+    expect(pathname).toBe("/app/cofre-pessoal");
     expect(indicator.style.transform).toBe("translate3d(400%,0,0)");
     ui.unmount();
   } finally {
@@ -132,20 +136,20 @@ for (const [path, index] of [
   ["/app/", 0],
   ["/gastos", 1],
   ["/gastos/123", 1],
-  ["/renda/nova", 2],
+  ["/renda/nova", -1],
   ["/cartoes/123", 3],
-  ["/app/mais", 4],
-  ["/app/mais/", 4],
+  ["/app/mais", -1],
+  ["/app/mais/", -1],
   ["/gastos-extra", -1],
-  ["/app/perfil", 4],
+  ["/app/perfil", -1],
   ["/app/cofre-pessoal", 4],
   ["/app/cofre-pessoal/detalhe", 4],
-  ["/assinaturas", 4],
-  ["/assinaturas/nova", 4],
-  ["/orcamento", 4],
-  ["/metas", 4],
-  ["/investimentos", 4],
-  ["/app/ajustes", 4],
+  ["/assinaturas", -1],
+  ["/assinaturas/nova", -1],
+  ["/orcamento", -1],
+  ["/metas", -1],
+  ["/investimentos", -1],
+  ["/app/ajustes", -1],
   ["/app/cofre-pessoal-falso", -1],
   ["/login", -1],
 ] as const) {
@@ -159,7 +163,7 @@ test("cada aba recebe um clique e uma navegação", () => {
     expect(navigations.at(-1)).toBe(item.to);
     expect(ui.getByLabelText(`items.${item.labelKey}`).getAttribute("aria-current")).toBe("page");
   }
-  expect(navigations).toHaveLength(5);
+  expect(navigations).toHaveLength(4);
 });
 test("rota lenta/falha não deixa estado otimista preso nem bloqueia nova tentativa", () => {
   commit = false;
@@ -183,7 +187,7 @@ test("voltar/avançar/refresh seguem localização sem estado otimista", () => {
   for (const next of ["/gastos", "/renda", "/gastos", "/renda", "/app"]) {
     pathname = next;
     ui.rerender(<BottomNav />);
-    expect(ui.container.querySelector('[aria-current="page"]')?.getAttribute("href")).toBe(next);
+    expect(ui.container.querySelector('[aria-current="page"]')?.getAttribute("href")).toBe(next.startsWith("/renda") ? undefined : next);
   }
   ui.unmount();
   const refreshed = render(<BottomNav />);
@@ -197,7 +201,7 @@ test("indicador é único e muda por transform; não há controles interativos a
   expect(ui.container.querySelector(".mobile-nav-indicator")).toBe(indicator);
   expect(indicator.style.transform).toContain("300%");
   expect(ui.container.querySelector("a button, button a")).toBeNull();
-  expect(ui.container.querySelectorAll("a")).toHaveLength(5);
+  expect(ui.container.querySelectorAll("a")).toHaveLength(4);
 });
 test("teclado por adjustResize oculta a barra e fechar restaura sem toque extra", async () => {
   const ui = render(
@@ -230,3 +234,36 @@ test("scroll sem input não esconde a navegação", async () => {
   });
   expect(ui.container.querySelector("nav")?.hidden).toBe(false);
 });
+
+for (const [label, destination] of [["novoGasto", "/manual"], ["novaReceita", "/renda/nova"]]) {
+  test("botao central abre apenas despesa/receita e fecha ao escolher " + label, async () => {
+    const ui = render(<BottomNav />);
+    const trigger = ui.getByRole("button", {name: "mobile.create"});
+    fireEvent.click(trigger);
+    expect(navigations).toHaveLength(0);
+    expect(ui.getByRole("dialog")).toBeTruthy();
+    expect(ui.queryByText("quickActions.importar")).toBeNull();
+    expect(ui.queryByText("quickActions.ia")).toBeNull();
+    fireEvent.click(ui.getByRole("button", { name: "quickActions." + label }));
+    await waitFor(() => expect(ui.queryByRole("dialog")).toBeNull());
+    expect(navigations).toEqual([destination]);
+    expect(document.body.style.pointerEvents).not.toBe("none");
+  });
+}
+test("fechar acoes nao navega nem deixa backdrop preso", async () => {
+  const ui=render(<BottomNav />);
+  fireEvent.click(ui.getByRole("button",{name:"mobile.create"}));
+  fireEvent.click(ui.getByRole("button",{name:"Fechar"}));
+  await waitFor(()=>expect(ui.queryByRole("dialog")).toBeNull());
+  expect(navigations).toHaveLength(0);
+  expect(document.body.style.pointerEvents).not.toBe("none");
+});
+
+ test("foto à esquerda abre perfil e menu à direita preserva os acessos secundários", () => {
+  const ui = render(<MobileTopBar />);
+  const links = [...ui.container.querySelectorAll("a")];
+  expect(links.map(a => a.getAttribute("href"))).toEqual(["/conta", "/app", "/app/mais"]);
+  fireEvent.click(ui.getByLabelText("aria.openProfile"));
+  fireEvent.click(ui.getByLabelText("mobile.menu"));
+  expect(navigations).toEqual(["/conta", "/app/mais"]);
+ });

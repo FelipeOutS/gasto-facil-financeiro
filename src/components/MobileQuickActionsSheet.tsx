@@ -19,15 +19,19 @@ const ACTIONS: Action[] = [
   { to: "/gasto-ai", labelKey: "ia", icon: Sparkles, tone: "brand" },
 ];
 
-export function MobileQuickActionsSheet({ trigger }: { trigger: ReactNode }) {
+export function MobileQuickActionsSheet({ trigger, financialOnly = false }: { trigger: ReactNode; financialOnly?: boolean }) {
   const { t } = useTranslation("dashboard");
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const actions = financialOnly
+    ? ACTIONS.slice(0, 2).map(action => ({ ...action, to: action.to === "/renda" ? "/renda/nova" : "/manual" }))
+    : ACTIONS;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>{trigger}</SheetTrigger>
       <SheetContent
+        aria-describedby={undefined}
         side="bottom"
         className="rounded-t-3xl border-border/60 px-5 pb-[calc(1.25rem+var(--app-safe-bottom))] pt-4"
       >
@@ -35,7 +39,7 @@ export function MobileQuickActionsSheet({ trigger }: { trigger: ReactNode }) {
           <SheetTitle className="text-base">{t("quickActions.title")}</SheetTitle>
         </SheetHeader>
         <div className="mt-4 grid grid-cols-2 gap-3">
-          {ACTIONS.map(({ to, labelKey, icon: Icon, tone }) => (
+          {actions.map(({ to, labelKey, icon: Icon, tone }) => (
             <button
               key={to}
               type="button"

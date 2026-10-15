@@ -18,10 +18,14 @@ import nav from "../../../src/i18n/locales/pt/nav.json";
 // Component fixture only: no session, auth mock, financial data or backend.
 const destinations = [
   { to: "/app", labelKey: "dashboard" },
+  { to: "/adicionar", labelKey: "gastos" },
+  { to: "/renda/nova", labelKey: "renda" },
   ...NAV_GROUPS.flatMap((g) => g.items),
 ].filter((item) =>
   [
     "/app",
+    "/adicionar",
+    "/renda/nova",
     "/gastos",
     "/renda",
     "/contas-a-pagar",

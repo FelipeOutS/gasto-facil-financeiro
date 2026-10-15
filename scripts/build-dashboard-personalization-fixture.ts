@@ -1,0 +1,12 @@
+import { readFile, mkdir, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { compile } from "@tailwindcss/node";
+const output = process.argv[2];
+if (!output) throw new Error("Provide a test-only output directory");
+const result = await Bun.build({ entrypoints: ["tests/fixtures/dashboard-personalization.tsx"], target: "browser", minify: true, define: { "process.env.NODE_ENV": JSON.stringify("production") } });
+if (!result.success) throw new Error(String(result.logs));
+const compiled = await compile(await readFile("src/styles.css", "utf8"), { base: resolve("src"), onDependency: () => {} });
+const sources = await Promise.all(["src/components/dashboard/PersonalizedDashboard.tsx", "src/components/ui/sheet.tsx", "src/components/ui/button.tsx", "tests/fixtures/dashboard-personalization.tsx"].map(p => readFile(p, "utf8")));
+const candidates = sources.flatMap(s => [...s.matchAll(/"([^"\n]+)"/g)].flatMap(m => m[1].split(/\s+/)));
+await mkdir(output, { recursive: true });
+await writeFile(resolve(output, "index.html"), `<!doctype html><html class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${compiled.build(candidates)}</style></head><body style="background:var(--background);color:var(--foreground)"><div id="root"></div><script>${(await result.outputs[0].text()).replaceAll("</script>", "<\\/script>")}</script></body></html>`);

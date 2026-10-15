@@ -308,7 +308,7 @@ export function DesktopSidebar() {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <aside
+      <aside style={{ left: "var(--app-safe-left)", paddingTop: "var(--app-safe-top)", paddingBottom: "var(--app-safe-bottom)" }}
         className={cn(
           "hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:flex-col lg:border-r lg:border-border/60 lg:bg-card/40 lg:backdrop-blur-xl transition-[width] duration-300",
           collapsed ? "lg:w-20" : "lg:w-64",

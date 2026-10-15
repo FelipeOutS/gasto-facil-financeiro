@@ -63,8 +63,8 @@ export function MobileShell({
         className={
           showNav
             ? collapsed
-              ? "lg:pl-20 transition-[padding] duration-300"
-              : "lg:pl-64 transition-[padding] duration-300"
+              ? "lg:pl-[calc(5rem+var(--app-safe-left))] transition-[padding] duration-300"
+              : "lg:pl-[calc(16rem+var(--app-safe-left))] transition-[padding] duration-300"
             : ""
         }
       >

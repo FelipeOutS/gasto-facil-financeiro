@@ -21,6 +21,7 @@ import {
   HandCoins,
   ShieldCheck,
 } from "lucide-react";
+import { PersonalizedDashboard, DashboardBlock } from "@/components/dashboard/PersonalizedDashboard";
 import { MobileShell } from "@/components/MobileShell";
 import { MobileMonthSummary } from "@/components/MobileMonthSummary";
 import { CalendarioFinanceiro } from "@/components/CalendarioFinanceiro";
@@ -142,7 +143,7 @@ function AppRoot() {
 function Index() {
   const { t: tBase } = useTranslation("dashboard");
   const ready = useBootstrap();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   // Vocabulário contextual: MEI/Empresa veem variantes "_mei"/"_empresa"
   // de chaves do dashboard quando definidas (ex.: minhaRenda.title).
   const t = useMemo(
@@ -470,13 +471,12 @@ function Index() {
             {(profile?.nome ?? "").trim().split(/\s+/)[0] ? `, ${(profile?.nome ?? "").trim().split(/\s+/)[0]}` : ""}
             <AdminMasterBadge className="mt-0.5" />
           </h1>
-          <p className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-card-elevated/70 px-2 py-0.5 text-[10px] font-medium capitalize text-muted-foreground">
+          <p className="mt-1 hidden lg:inline-flex items-center gap-1.5 rounded-full bg-card-elevated/70 px-2 py-0.5 text-[10px] font-medium capitalize text-muted-foreground">
             <CalendarClock className="h-3 w-3" />
             {formatMonthYear(ym.ano, ym.mes)}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <div className="lg:hidden">{monthSwitcher}</div>
           <div className="hidden lg:block">
             <NotificationBell />
           </div>
@@ -499,13 +499,13 @@ function Index() {
         />
       </div>
 
-      <div className="mt-6 flex items-center justify-between gap-4">
+      <div className="mt-6 hidden items-center justify-between gap-4 lg:flex">
         <SectionLabel>{t("kpi.saldo")}</SectionLabel>
         <div className="hidden lg:block">{monthSwitcher}</div>
       </div>
 
       {/* LINHA 2 — KPIs: Saldo maior + Receitas / Despesas / A pagar */}
-      <section className="grid grid-cols-1 items-start gap-3 xl:grid-cols-12 xl:gap-4">
+      <section className="hidden grid-cols-1 items-start gap-3 lg:grid xl:grid-cols-12 xl:gap-4">
         <div className="min-w-0 xl:col-span-5">
           <SaldoHeroCard saldo={saldo} entradas={totalEntradas} despesas={total} />
         </div>
@@ -541,6 +541,10 @@ function Index() {
         </div>
       </section>
 
+      <div className="lg:hidden"><QuickActionsBar /></div>
+
+      <PersonalizedDashboard key={user?.id} userId={user?.id ?? ""}>
+      <DashboardBlock id="radar">
       <SectionLabel>{t("sections.radar")}</SectionLabel>
 
       {/* LINHA 4 — Fluxo de caixa (8/12) + coluna empilhada Resumo + Alertas (4/12) */}
@@ -559,6 +563,8 @@ function Index() {
         </div>
       </section>
 
+      </DashboardBlock>
+      <DashboardBlock id="economia">
       {/* Colunas independentes: Dicas e indicadores não esticam a Saúde nem isolam o Radar. */}
       <section className="mt-4 flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)] xl:items-start">
         <div className="contents xl:flex xl:min-w-0 xl:flex-col xl:gap-4">
@@ -583,6 +589,8 @@ function Index() {
         </div>
       </section>
 
+      </DashboardBlock>
+      <DashboardBlock id="categorias">
       {/* Maiores gastos + Categorias / Cartões */}
       <SectionLabel>{t("sections.categoriasCartoes")}</SectionLabel>
       <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-12">
@@ -616,6 +624,8 @@ function Index() {
       </section>
 
 
+      </DashboardBlock>
+      <DashboardBlock id="visao">
       {/* LINHA 9 — Transações recentes + Meta mais próxima (esquerda) + Calendário */}
       <SectionLabel>{t("sections.visao")}</SectionLabel>
       <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-12">
@@ -629,6 +639,8 @@ function Index() {
         </div>
       </section>
 
+      </DashboardBlock>
+      <DashboardBlock id="orcamento">
       <SectionLabel>{t("sections.resumoOrcamento")}</SectionLabel>
       <section className="flex flex-col gap-4 xl:grid xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:items-start">
         <div className="flex min-w-0 flex-col gap-4">
@@ -661,6 +673,8 @@ function Index() {
         </div>
       </section>
 
+      </DashboardBlock>
+      <DashboardBlock id="controle">
       <SectionLabel>{t("sections.controle")}</SectionLabel>
       <section className="grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-4">
             <Link
@@ -734,6 +748,8 @@ function Index() {
         </div>
       </section>
 
+      </DashboardBlock>
+      </PersonalizedDashboard>
       <AvisoTrialExpirandoBanner />
       <UpgradeCardsList max={4} />
       <AvisoWhatsAppBanner />
@@ -1022,7 +1038,7 @@ function QuickActionsBar() {
       tone: "primary",
     },
     {
-      to: "/renda",
+      to: "/renda/nova",
       label: t("quickActions.novaReceita"),
       icon: <ArrowUp className="h-4 w-4" />,
       tone: "success",
@@ -1049,13 +1065,16 @@ function QuickActionsBar() {
   return (
     <nav
       aria-label={t("quickActions.title")}
-      className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5 xl:grid-cols-2 2xl:grid-cols-4"
+      className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-4 sm:gap-2.5 xl:grid-cols-2 2xl:grid-cols-4"
     >
       {items.map((it) => (
         <Link
           key={it.to}
           to={it.to}
-          className="card-press hover-lift group flex min-h-[56px] items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 shadow-card transition-colors hover:border-brand/50 hover:bg-card-elevated"
+          className={cn(
+            "card-press hover-lift group flex min-h-[56px] items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 shadow-card transition-colors hover:border-brand/50 hover:bg-card-elevated",
+            (it.to === "/adicionar" || it.to === "/renda/nova") && "hidden lg:flex",
+          )}
         >
           <span
             className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg", toneRing[it.tone])}
