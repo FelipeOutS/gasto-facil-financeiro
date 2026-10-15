@@ -274,6 +274,14 @@ function logFaturaDetailQuery(args: {
   });
 }
 
+/** Homônimos: o nome sozinho não identifica o cartão — não pedir para digitar de novo (laço). */
+function avisoHomonimos(cartoes: CartaoRow[]): string {
+  const nomes = cartoes.map((c) => ((c.nome ?? "").trim() || (c.banco ?? "").trim()).toLowerCase());
+  return new Set(nomes).size < nomes.length
+    ? "\n\nVocê tem cartões com o mesmo nome. Para consultar um deles por aqui, dê nomes diferentes a eles no app (ex.: Nubank Pessoal e Nubank Empresa)."
+    : "";
+}
+
 function ambiguousCardMessage(cartoes: CartaoRow[]): string {
   const linhas = cartoes
     .map((c) => `• ${(c.nome ?? "").trim() || (c.banco ?? "").trim() || "Cartão"}`)
@@ -281,7 +289,8 @@ function ambiguousCardMessage(cartoes: CartaoRow[]): string {
   return (
     "Encontrei mais de um cartão.\n\n" +
     "Digite o nome de um deles para eu consultar a fatura:\n" +
-    linhas
+    linhas +
+    avisoHomonimos(cartoes)
   );
 }
 
@@ -570,7 +579,8 @@ function ambiguousDetailMessage(cartoes: CartaoRow[]): string {
   return (
     "Encontrei mais de uma fatura em aberto.\n\n" +
     "Digite o nome do cartão para ver as compras:\n" +
-    linhas
+    linhas +
+    avisoHomonimos(cartoes)
   );
 }
 

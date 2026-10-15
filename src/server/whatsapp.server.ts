@@ -632,6 +632,10 @@ export function matchCartao(
 ): { match: Cartao | null; ambiguous?: string[] } {
   const t = normalizeText(input);
   if (!t || cartoes.length === 0) return { match: null };
+  // P1 15/10/2026: resposta igual ao nome de UM cartão → esse cartão
+  // ("Itaú Visa" não fica ambíguo com "Itaú"). Homônimos seguem ambíguos.
+  const exatos = cartoes.filter((c) => normalizeText(c.nome) === t);
+  if (exatos.length === 1) return { match: exatos[0] };
   const digits = input.replace(/\D/g, "");
   const last4 = digits.length >= 4 ? digits.slice(-4) : null;
   const hits = new Set<string>();
