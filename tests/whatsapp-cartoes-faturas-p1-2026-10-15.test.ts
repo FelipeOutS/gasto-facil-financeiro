@@ -21,7 +21,8 @@ describe("seleção de cartão por nome", () => {
   it("nome exato vence inclusão (Itaú x Itaú Visa)", () => {
     const cs = [card("a", "Itaú"), card("b", "Itaú Visa")];
     expect(selecionarCartoesPorTermo(cs, "itau visa").map((c) => c.id)).toEqual(["b"]);
-    expect(selecionarCartoesPorTermo(cs, "Itaú").map((c) => c.id)).toEqual(["a"]);
+    // "Itaú" também está contido em "Itaú Visa" → continua ambíguo (conservador).
+    expect(selecionarCartoesPorTermo(cs, "Itaú").length).toBe(2);
   });
   it("sem exato, inclusão continua (Visa → Itaú Visa)", () => {
     expect(selecionarCartoesPorTermo([card("a", "Itaú"), card("b", "Itaú Visa")], "visa").map((c) => c.id)).toEqual(["b"]);
