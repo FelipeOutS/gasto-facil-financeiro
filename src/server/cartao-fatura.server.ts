@@ -26,7 +26,11 @@ import {
   cicloParaCompetencia,
   competenciaDoGasto,
   competenciaParaCiclo,
+  fechamentoNoMes,
   isYm,
+  periodoCiclo,
+  proximoFechamento,
+  vencimentoDoFechamento,
 } from "@/lib/fatura-competencia";
 
 // Lazy live-binding: garante que mock.module() em testes seja
