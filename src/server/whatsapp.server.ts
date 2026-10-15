@@ -72,6 +72,7 @@ import {
 } from "./whatsapp-consultas.server";
 
 import { detectConsultaShape } from "./whatsapp-query-guard.server";
+import { isListarCartoesIntent } from "./whatsapp-listar-cartoes";
 import {
   recordContas as shortRecordContas,
   resolveOrdinal as shortResolveOrdinal,
@@ -4508,7 +4509,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     }
   }
 
-  if (!sessao && decisao === "outro" && /^(?:meus cartoes|meus cartoes cadastrados|quais sao meus cartoes)$/.test(normalizeText(texto))) {
+  if (!sessao && decisao === "outro" && isListarCartoesIntent(texto)) {
     const resposta = cartoes.length
       ? `Seus cartões cadastrados:\n${cartoes.map(c => `• ${displayCartaoNome(c)}`).join("\n")}\n\nDiga “minha fatura do Nubank” para consultar um deles.`
       : "Você ainda não tem cartão cadastrado. Diga “quero cadastrar um cartão” para começar.";
