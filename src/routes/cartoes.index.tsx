@@ -1,4 +1,4 @@
-import { cicloParaCompetencia } from "@/lib/fatura-competencia";
+import { cicloParaCompetencia, vencimentoDoFechamento } from "@/lib/fatura-competencia";
 import { createFileRoute } from "@tanstack/react-router";
 import { EditGastoDialog } from "@/components/EditGastoDialog";
 import { GastoForm } from "@/components/GastoForm";
@@ -1721,11 +1721,7 @@ export function FaturaSheet({
   // mês seguinte (ou no próprio mês de fechamento se diaVenc>=diaFech).
   const _diaFechRef = cartao.diaFechamento || 1;
   const _diaVencRef = cartao.diaVencimento || 10;
-  let proxVencDate = new Date(ref.ano, ref.mes, _diaVencRef);
-  const _fechRef = new Date(ref.ano, ref.mes, _diaFechRef);
-  if (proxVencDate.getTime() < _fechRef.getTime()) {
-    proxVencDate = new Date(ref.ano, ref.mes + 1, _diaVencRef);
-  }
+  const proxVencDate = vencimentoDoFechamento(ref.ano, ref.mes, _diaFechRef, _diaVencRef);
   const diasParaVencer = Math.ceil(
     (proxVencDate.getTime() -
       new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime()) /

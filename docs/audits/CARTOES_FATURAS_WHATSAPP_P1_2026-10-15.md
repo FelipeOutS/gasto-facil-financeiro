@@ -47,3 +47,11 @@ Nada publicado e nenhuma migração aplicada. Nenhum dado, flag ou segredo de pr
 - Lote mensal travado; migração `whatsapp-lote-mes.sql` aguarda autorização.
 - F4 aguarda autorização; F2 incompatível, não aplicar.
 - A cópia de segurança antiga nunca teve a restauração testada.
+
+## Adendo — fechamento 29/30/31 em meses curtos (2026-10-15)
+
+Regra de negócio (fonte da verdade, `src/lib/fatura-competencia.ts`): uma compra pertence ao ciclo do mês anterior se `dia da compra ≤ dia de fechamento` (comparação por NÚMERO de dia). Logo, com fechamento 31 todo o mês de abril fica num ciclo só: o fechamento efetivo é o último dia do mês (clamp). Totais/itens do site e do WhatsApp e a persistência (`fatura_competencia`, parcelas) já seguiam essa regra — corretos.
+
+Defeito comprovado (só datas, não classificação): `cicloFatura`, `proximoFechamentoData`, `proximoVencimentoFaturaAberta`, `statusEfetivoFatura` e cálculos de vencimento do painel/página de cartões/alertas usavam `new Date(ano, mes, 31)`, que transborda (30/04 → 01/05; 31/02 → 03/03). Efeitos: fechamento exibido "01/05" em vez de 30/04; status "fechada" 1–3 dias atrasado; vencimento dia 29–31 jogado para o mês seguinte; e no WhatsApp a janela por data do ciclo fev/2026 (fech 31) começava em 04/03 — compras antigas sem `invoice_month`/`fatura_competencia` de 01–03/03 sumiam do total no WhatsApp, divergindo do site.
+
+Correção: helpers únicos `periodoCiclo`, `fechamentoNoMes`, `vencimentoDoFechamento`, `proximoFechamento` (clamp ao último dia; vencimento pela mesma regra de `offsetVencimento`), usados em store.ts, cartao-fatura.server.ts, DashboardCartoesInsights, cartoes.index e alerts/generator. Sem migração; nenhum dado histórico alterado (valores gravados não dependiam dessas datas). Teste: tests/fatura-ciclo-meses-curtos-2026-10-15.test.ts (fech 28–31 × 12 meses × 2024/2026/2027, fusos São Paulo e UTC).
