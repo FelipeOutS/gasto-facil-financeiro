@@ -20,12 +20,9 @@ SELECT pg_temp.ok((SELECT deleted_at IS NULL FROM public.gastos WHERE id='e10000
 
 -- 2) Lote do mês 08/2027 (inclui itens do extrato X — importação NÃO é elegível pelo lote).
 SET ROLE service_role;
-DO $$ DECLARE r jsonb; BEGIN
-  r := public.wa_lote_mes_excluir('11111111-0000-0000-0000-000000000001','e9000000-0000-0000-0000-000000000001','gastos',2027,8,
-     ARRAY['e1000000-0000-0000-0000-000000000001']::uuid[], ARRAY[(SELECT updated_at FROM public.gastos WHERE id='e1000000-0000-0000-0000-000000000001')]);
-  RAISE EXCEPTION 'FALHOU: lote aceitou item de extrato %', r;
-EXCEPTION WHEN raise_exception THEN RAISE; WHEN OTHERS THEN RAISE NOTICE 'PASSOU: lote recusa item de importação (%), nada alterado', SQLERRM;
-END $$;
+SELECT pg_temp.ok((public.wa_lote_mes_excluir('11111111-0000-0000-0000-000000000001','e9000000-0000-0000-0000-000000000001','gastos',2027,8,
+   ARRAY['e1000000-0000-0000-0000-000000000001']::uuid[], ARRAY[(SELECT updated_at FROM public.gastos WHERE id='e1000000-0000-0000-0000-000000000001')])->>'status')='changed',
+   'lote recusa conjunto com item de importação (changed)');
 RESET ROLE;
 SELECT pg_temp.ok((SELECT count(*) FROM public.gastos WHERE deleted_at IS NOT NULL)=0, 'nenhum deleted_at após recusa');
 
