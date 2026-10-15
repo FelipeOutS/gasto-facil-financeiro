@@ -88,10 +88,10 @@ export async function criarCartaoViaWhatsApp(
     .in("telefone", telefoneCandidatos(telefone))
     .limit(10);
   if (linkErr) return { status: "erro" };
-  const lista = (links ?? []) as Array<{ user_id: string; ativo: boolean; opt_in_em: string | null; revogado_em: string | null }>;
+  const vinculos = (links ?? []) as Array<{ user_id: string; ativo: boolean; opt_in_em: string | null; revogado_em: string | null }>;
   // Número ativo vinculado a OUTRO usuário → ambíguo: falha fechada.
-  if (lista.some((l) => l.ativo && !l.revogado_em && l.user_id !== userId)) return { status: "sem_vinculo" };
-  const link = lista.find((l) => l.user_id === userId && l.ativo && l.opt_in_em && !l.revogado_em);
+  if (vinculos.some((l) => l.ativo && !l.revogado_em && l.user_id !== userId)) return { status: "sem_vinculo" };
+  const link = vinculos.find((l) => l.user_id === userId && l.ativo && l.opt_in_em && !l.revogado_em);
   if (!link) return { status: "sem_vinculo" };
 
   // 3. Mesmo critério da regra de acesso do banco para gravar cartões.
