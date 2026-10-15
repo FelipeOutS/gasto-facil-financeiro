@@ -1,4 +1,10 @@
 {
+  "mobile": {
+    "home": "Home",
+    "create": "New entry",
+    "menu": "Open menu",
+    "vault": "Vault"
+  },
   "aria": {
     "side": "Side navigation",
     "primary": "Primary navigation",

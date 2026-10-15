@@ -392,7 +392,7 @@ function OfflineQueueMount() {
   useOfflineExpenseQueue(user?.id ?? null);
   useOfflineIncomeQueue(user?.id ?? null);
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-2 z-40 mx-auto flex max-w-md flex-col items-center gap-2 px-3">
+    <div className="pointer-events-none fixed inset-x-0 top-[calc(var(--app-safe-top)+0.5rem)] z-40 mx-auto flex max-w-md flex-col items-center gap-2 px-3">
       <div className="pointer-events-auto w-full">
         <OfflineSyncStatus />
       </div>

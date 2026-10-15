@@ -9,7 +9,6 @@ import {
   LogOut,
   Sparkles,
   UserRound,
-  Landmark,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -41,7 +40,6 @@ export const Route = createFileRoute("/app_/mais")({
 
 const PERSONAL_ITEMS: NavLeaf[] = [
   { to: "/conta", labelKey: "perfilMobile", descKey: "perfilMobile", icon: UserRound },
-  { to: "/bens", labelKey: "bens", descKey: "bens", icon: Landmark },
 ];
 
 function AppMaisPage() {
@@ -102,8 +100,11 @@ function AppMaisPage() {
   }
 
   const groups = useMemo(
-    () => NAV_GROUPS.filter((g) => !g.adminMasterOnly || isAdminMaster),
-    [isAdminMaster],
+    () => NAV_GROUPS.filter((g) =>
+      (!g.adminMasterOnly || isAdminMaster) &&
+      (isAdminMaster || g.id !== "empresa" || profile?.tipo_cadastro !== "pessoa_fisica"),
+    ),
+    [isAdminMaster, profile?.tipo_cadastro],
   );
 
   const displayName =
@@ -161,6 +162,7 @@ function AppMaisPage() {
         className={cn(
           "group flex min-h-[68px] items-center gap-3 rounded-2xl border border-border bg-card p-3.5 text-left shadow-card transition-colors active:scale-[0.99]",
           locked ? "opacity-75" : "hover:bg-card-elevated",
+          (item.to === "/gastos" || item.to === "/cartoes") && "hidden lg:flex",
         )}
       >
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-card-elevated text-foreground ring-1 ring-border/60">
@@ -291,7 +293,7 @@ function AppMaisPage() {
           to="/app"
           preload="intent"
           preloadDelay={0}
-          className="flex min-h-[68px] items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-card active:scale-[0.99]"
+          className="hidden min-h-[68px] items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-card active:scale-[0.99] lg:flex"
         >
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand ring-1 ring-border/60">
             <Home className="h-5 w-5" />
