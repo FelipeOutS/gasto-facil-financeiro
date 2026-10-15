@@ -44,14 +44,14 @@ SELECT pg_temp.ok((SELECT count(*) FROM public.gastos WHERE import_batch_id='e00
 SET ROLE service_role; UPDATE public.gastos SET deleted_at=now() WHERE id='e1000000-0000-0000-0000-000000000001'; RESET ROLE;
 SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','11111111-0000-0000-0000-000000000001',false);
 DO $$ BEGIN PERFORM public.reverter_extrato_atomic('e0000000-0000-0000-0000-00000000000a'); RAISE EXCEPTION 'FALHOU: F4 apagou lote com excluído';
-EXCEPTION WHEN raise_exception THEN RAISE; WHEN OTHERS THEN RAISE NOTICE 'PASSOU: F4 bloqueia lote com gasto soft-excluído (%)', SQLERRM; END $$;
+EXCEPTION WHEN OTHERS THEN IF SQLERRM LIKE 'FALHOU%' THEN RAISE; END IF; RAISE NOTICE 'PASSOU: F4 bloqueia lote com gasto soft-excluído (%)', SQLERRM; END $$;
 RESET ROLE;
 SELECT pg_temp.ok((SELECT count(*) FROM public.gastos WHERE import_batch_id='e0000000-0000-0000-0000-00000000000a')=2, 'nada apagado no bloqueio');
 
 -- 6) Outro usuário não reverte extrato alheio.
 SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','22222222-0000-0000-0000-000000000002',false);
 DO $$ BEGIN PERFORM public.reverter_extrato_atomic('e0000000-0000-0000-0000-00000000000a'); RAISE EXCEPTION 'FALHOU: outro usuário';
-EXCEPTION WHEN raise_exception THEN RAISE; WHEN OTHERS THEN RAISE NOTICE 'PASSOU: extrato alheio recusado (%)', SQLERRM; END $$;
+EXCEPTION WHEN OTHERS THEN IF SQLERRM LIKE 'FALHOU%' THEN RAISE; END IF; RAISE NOTICE 'PASSOU: extrato alheio recusado (%)', SQLERRM; END $$;
 -- 7) authenticated não executa as RPCs de lote.
 DO $$ BEGIN PERFORM public.wa_lote_mes_restaurar('11111111-0000-0000-0000-000000000001','e9000000-0000-0000-0000-000000000002',1); RAISE EXCEPTION 'FALHOU: authenticated restaurou';
 EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'PASSOU: authenticated sem EXECUTE no restaurar'; END $$;
