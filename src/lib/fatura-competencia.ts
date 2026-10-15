@@ -129,3 +129,61 @@ export function nomeMesYm(v: string): string {
 export function competenciasParcelas(primeira: string, total: number): string[] {
   return Array.from({ length: Math.max(1, total) }, (_, i) => addMonthsYm(primeira, i));
 }
+
+/* ---------------------------------------------------------------------- *
+ * Datas de fechamento/vencimento com dia 29/30/31 em meses curtos.        *
+ * A classificação das compras (cicloLegadoPorData) compara NÚMEROS de     *
+ * dia: com fechamento 31, toda compra de abril (dia ≤ 31) cai no mesmo    *
+ * ciclo, ou seja, o fechamento efetivo é o ÚLTIMO dia do mês. As datas    *
+ * exibidas/usadas como janela precisam seguir a mesma convenção — sem     *
+ * isso `new Date(2026, 3, 31)` vira 01/05 e a janela pula dias.           *
+ * ---------------------------------------------------------------------- */
+
+/** Data local no mês `m0` (0-11, pode transbordar o ano) com dia limitado ao último dia. */
+export function diaNoMes(ano: number, m0: number, diaMes: number): Date {
+  const y = ano + Math.floor(m0 / 12);
+  const m = ((m0 % 12) + 12) % 12;
+  const ultimo = new Date(y, m + 1, 0).getDate();
+  return new Date(y, m, Math.min(Math.max(1, Math.trunc(diaMes)), ultimo));
+}
+
+/** Fechamento (23:59:59.999 local) que ocorre no mês `m0`. */
+export function fechamentoNoMes(ano: number, m0: number, diaFech?: number | null): Date {
+  const d = diaNoMes(ano, m0, dia(diaFech, 1));
+  d.setHours(23, 59, 59, 999);
+  return d;
+}
+
+/**
+ * Vencimento correspondente ao fechamento que ocorre no mês `m0Fech`.
+ * Mesma regra de `offsetVencimento`: dia de vencimento > dia de
+ * fechamento → mesmo mês; senão → mês seguinte. Dia limitado ao mês.
+ */
+export function vencimentoDoFechamento(
+  ano: number,
+  m0Fech: number,
+  diaFech?: number | null,
+  diaVenc?: number | null,
+): Date {
+  const f = dia(diaFech, 1);
+  const v = dia(diaVenc, 10);
+  return diaNoMes(ano, m0Fech + (v > f ? 0 : 1), v);
+}
+
+/** Período por data do ciclo legado `mes/ano` (1-12): (fechamento de mes, fechamento de mes+1]. */
+export function periodoCiclo(diaFech: number | null | undefined, mes: number, ano: number) {
+  const fAnt = fechamentoNoMes(ano, mes - 1, diaFech);
+  const inicio = new Date(fAnt.getFullYear(), fAnt.getMonth(), fAnt.getDate() + 1, 0, 0, 0, 0);
+  const fim = fechamentoNoMes(ano, mes, diaFech);
+  return { inicio, fim };
+}
+
+/** Próximo fechamento ≥ hoje (fim do dia), com dia limitado ao mês. */
+export function proximoFechamento(diaFech: number, hoje: Date): Date {
+  const ref = fechamentoNoMes(hoje.getFullYear(), hoje.getMonth(), diaFech);
+  const startOfToday = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  if (ref.getTime() < startOfToday.getTime()) {
+    return fechamentoNoMes(hoje.getFullYear(), hoje.getMonth() + 1, diaFech);
+  }
+  return ref;
+}
