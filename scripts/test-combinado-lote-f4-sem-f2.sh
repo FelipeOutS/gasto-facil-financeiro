@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Lote mensal + F4 aplicadas SEM a F2, no formato atual da produção. PostgreSQL LOCAL DESCARTÁVEL apenas.
 set -euo pipefail
+[ -n "${PG_BIN:-}" ] && export PATH="$PG_BIN:$PATH"
 unset PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE PGSSLMODE DATABASE_URL || true
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 D="$(mktemp -d /tmp/gi-pg-comb.XXXX)"; chmod 777 "$D"; PORT=55447
