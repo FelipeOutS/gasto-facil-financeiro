@@ -519,7 +519,22 @@
   gap: 12px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding-bottom: 4px;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--premium-secondary) transparent;
+}
+.finexy-card-scroll::-webkit-scrollbar {
+  height: 5px;
+}
+.finexy-card-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.finexy-card-scroll::-webkit-scrollbar-thumb {
+  background: var(--premium-secondary);
+  border-radius: 999px;
+}
+.finexy-card-scroll::-webkit-scrollbar-button {
+  display: none;
 }
 .finexy-credit-card {
   flex: 0 0 76%;

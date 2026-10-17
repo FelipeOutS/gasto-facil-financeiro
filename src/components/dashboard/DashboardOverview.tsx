@@ -39,7 +39,6 @@ export function DashboardCards({ cartoes }: { cartoes: Cartao[] }) {
                     bankCardTone={theme.logoTone}
                     onDark={theme.logoTone === "light"}
                   />
-                  <span>{card.banco}</span>
                 </div>
                 <h3>{card.nome}</h3>
                 <p>Limite cadastrado</p>
