@@ -969,3 +969,113 @@
     min-height: 0;
   }
 }
+
+/* Consistent Finexy density across authenticated modules; no portal/nav overrides. */
+@media (min-width: 1024px) {
+  .premium-content[data-layout-width="wide"] {
+    max-width: 1480px;
+  }
+  .premium-content[data-layout-width="standard"] {
+    max-width: 1080px;
+  }
+  .premium-content .gi-page-header {
+    align-items: center;
+    gap: 16px;
+  }
+  .premium-content .gi-page-header h1 {
+    font-size: 28px;
+    font-weight: 600;
+  }
+  .premium-content .gi-module-banner {
+    min-height: 0;
+    border-radius: 20px;
+  }
+  .premium-content .gi-module-banner > div {
+    padding: 20px 24px;
+  }
+  .premium-content .gi-module-banner[data-has-image="false"] > div {
+    max-width: 100%;
+  }
+  .premium-content .gi-empty-state {
+    padding: 24px;
+    gap: 12px;
+  }
+  .premium-content .gi-empty-state > div[aria-hidden] {
+    width: 64px;
+    height: 64px;
+  }
+  .premium-content :is(.gi-summary-card, .gi-action-card) {
+    padding: 16px 18px;
+    border-radius: 18px;
+    box-shadow: var(--premium-shadow);
+  }
+  .premium-content .gi-summary-card > div:nth-last-of-type(1) {
+    font-variant-numeric: tabular-nums;
+  }
+  .premium-dashboard .gi-mascot-guide {
+    padding: 16px 24px;
+    gap: 20px;
+  }
+  .premium-dashboard .gi-mascot-guide .gi-mascot {
+    width: 80px;
+    height: 100px;
+  }
+  .premium-dashboard .gi-mascot-guide h2 {
+    font-size: 20px;
+  }
+  .premium-dashboard .dashboard-block-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+  }
+  .premium-dashboard .dashboard-block-grid > [data-dashboard-block] {
+    margin-top: 0;
+    min-width: 0;
+  }
+  .premium-dashboard [data-dashboard-block] section[class*="bg-card"] {
+    padding: 16px;
+    border-radius: 18px;
+  }
+}
+@media (min-width: 1280px) {
+  .premium-dashboard .dashboard-block-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  .premium-dashboard .dashboard-block-grid > [data-dashboard-block] {
+    grid-column: 1 / -1;
+  }
+  /* Pair adjacent planning groups only: custom order and hidden groups never leave a hole. */
+  .premium-dashboard [data-dashboard-block="visao"]:has(+ [data-dashboard-block="orcamento"]),
+  .premium-dashboard [data-dashboard-block="visao"] + [data-dashboard-block="orcamento"],
+  .premium-dashboard [data-dashboard-block="orcamento"]:has(+ [data-dashboard-block="visao"]),
+  .premium-dashboard [data-dashboard-block="orcamento"] + [data-dashboard-block="visao"] {
+    grid-column: auto;
+  }
+  .premium-dashboard [data-dashboard-block="orcamento"] > section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .premium-dashboard [data-dashboard-block="orcamento"] > section > div {
+    width: 100%;
+  }
+}
+@media (min-width: 1024px) {
+  .premium-content .gi-module-banner[data-has-image="false"] > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 24px;
+    row-gap: 6px;
+    align-items: center;
+  }
+  .premium-content .gi-module-banner[data-has-image="false"] > div > :is(h2, p) {
+    grid-column: 1;
+  }
+  .premium-content .gi-module-banner[data-has-image="false"] > div > div {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    margin-top: 0;
+  }
+}
