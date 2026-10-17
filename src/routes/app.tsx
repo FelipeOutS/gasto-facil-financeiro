@@ -513,8 +513,8 @@ function Index() {
       <SectionLabel>{t("sections.radar")}</SectionLabel>
 
       {/* LINHA 4 — Fluxo de caixa (8/12) + coluna empilhada Resumo + Alertas (4/12) */}
-      <section className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-12">
-        <div className="min-w-0 xl:col-span-8 lg:hidden">
+      <section className="dashboard-radar-layout">
+        <div className="min-w-0 lg:hidden">
           <FluxoCaixaChart
             ano={ym.ano}
             mes={ym.mes}
@@ -522,7 +522,7 @@ function Index() {
             receitas={receitas}
           />
         </div>
-        <div className="flex min-w-0 flex-col gap-4 xl:col-span-4">
+        <div className="dashboard-radar-cards">
           <SmartMonthSummaryCard mes={ym.mes} ano={ym.ano} />
           <DashboardAlertasBloco />
         </div>
@@ -591,15 +591,15 @@ function Index() {
 
       </DashboardBlock>
       <DashboardBlock id="visao">
-      {/* LINHA 9 — Transações recentes + Meta mais próxima (esquerda) + Calendário */}
+      {/* Desktop: transações já estão no topo; não reservar a antiga coluna. */}
       <SectionLabel>{t("sections.visao")}</SectionLabel>
-      <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-12">
-        <div className="flex min-w-0 flex-col gap-4 xl:col-span-7">
+      <section className="dashboard-goals-calendar">
+        <div className="flex min-w-0 flex-col gap-4">
           <div className="lg:hidden"><RecentTransactionsCard ultimos={ultimos} /></div>
           <MetaProximaCard metaProxima={metaProxima} metasAtivas={metasAndamento.length} />
 
         </div>
-        <div className="min-w-0 xl:col-span-5">
+        <div className="min-w-0">
           <CalendarioFinanceiro ano={ym.ano} mes={ym.mes} onChangeMonth={changeMonth} compact />
         </div>
       </section>

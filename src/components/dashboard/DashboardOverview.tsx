@@ -1,3 +1,5 @@
+import { getCardTheme } from "@/lib/card-theme";
+import { BrandLogo } from "@/components/BrandLogo";
 import { BrandMascot, DashboardGuide } from "../BrandMascot";
 import { type ReactNode } from "react";
 import { ArrowUp, ArrowDown, Clock, Wallet, CreditCard, Plus } from "lucide-react";
@@ -20,25 +22,35 @@ export function DashboardCards({ cartoes }: { cartoes: Cartao[] }) {
       </header>
       {cartoes.length ? (
         <div className="finexy-card-scroll">
-          {cartoes.map((card, index) => (
-            <Link
-              to="/cartoes"
-              key={card.id}
-              className={`finexy-credit-card ${index % 2 ? "finexy-credit-green" : ""}`}
-            >
-              <div>
-                <CreditCard size={20} />
-                <span>{card.banco}</span>
-              </div>
-              <h3>{card.nome}</h3>
-              <p>Limite cadastrado</p>
-              <strong>{formatBRL(card.limiteTotal)}</strong>
-              <footer>
-                Fecha dia {card.diaFechamento}
-                <span>Vence dia {card.diaVencimento}</span>
-              </footer>
-            </Link>
-          ))}
+          {cartoes.map((card) => {
+            const theme = getCardTheme(card.cor || "#8b5cf6", card.banco);
+            return (
+              <Link
+                to="/cartoes"
+                key={card.id}
+                className="finexy-credit-card"
+                style={{ background: theme.background, color: theme.fg }}
+              >
+                <div>
+                  <BrandLogo
+                    name={card.banco || card.nome}
+                    variant="bank"
+                    bankPresentation="card"
+                    bankCardTone={theme.logoTone}
+                    onDark={theme.logoTone === "light"}
+                  />
+                  <span>{card.banco}</span>
+                </div>
+                <h3>{card.nome}</h3>
+                <p>Limite cadastrado</p>
+                <strong>{formatBRL(card.limiteTotal)}</strong>
+                <footer>
+                  Fecha dia {card.diaFechamento}
+                  <span>Vence dia {card.diaVencimento}</span>
+                </footer>
+              </Link>
+            );
+          })}
         </div>
       ) : (
         <div className="finexy-empty">

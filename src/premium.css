@@ -531,9 +531,6 @@
   background: linear-gradient(125deg, #35382c, #181b16);
   color: white;
 }
-.finexy-credit-green {
-  background: linear-gradient(125deg, #29ae74, #0f784a);
-}
 .finexy-credit-card > div {
   display: flex;
   align-items: center;
@@ -946,5 +943,29 @@
   }
   .premium-content select {
     font-size: 16px;
+  }
+}
+
+/* Supplemental blocks must not reserve columns for desktop duplicates. */
+.dashboard-radar-layout,
+.dashboard-radar-cards,
+.dashboard-goals-calendar {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.dashboard-radar-cards > :empty {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .dashboard-radar-cards {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+    align-items: start;
+  }
+  .dashboard-goals-calendar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .finexy-transactions > section {
+    min-height: 0;
   }
 }
