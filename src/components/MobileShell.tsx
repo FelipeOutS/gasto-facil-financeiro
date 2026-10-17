@@ -57,7 +57,7 @@ export function MobileShell({
   }
 
   const inner = (
-    <div className="min-h-screen min-h-dvh w-full bg-background">
+    <div className="gi-app-shell min-h-screen min-h-dvh w-full bg-background">
       {showNav && <DesktopSidebar />}
       {showNav && !hideMobileTopBar && <MobileTopBar />}
       <div className={showNav ? "finexy-shell-body" : ""}>
