@@ -27,7 +27,7 @@ export type AndroidSecureSessionBridge = {
   ) => void | boolean | Promise<boolean>;
   hasSession?: () => boolean;
   getSavedEmail?: () => string | null;
-  unlockSession?: () => void;
+  unlockSession?: () => void | Promise<AndroidSecureSessionResultDetail>;
   clearSession?: () => void | Promise<unknown>;
 };
 
@@ -78,14 +78,15 @@ export function getSavedSecureEmail(): string | null {
   }
 }
 
-export function clearSecureSession(): void {
+export async function clearSecureSession(): Promise<boolean> {
   const b = getSecureSessionBridge();
-  if (!b || typeof b.clearSession !== "function") return;
+  if (!b) return true;
+  if (typeof b.clearSession !== "function") return false;
   try {
-    void Promise.resolve(b.clearSession()).catch(() => undefined);
-  } catch {
-    /* ignore */
-  }
+    const result = await b.clearSession();
+    return result === undefined || result === true ||
+      (typeof result === "object" && result !== null && "success" in result && result.success === true);
+  } catch { return false; }
 }
 
 /**
@@ -122,7 +123,15 @@ export async function saveSecureSession(session: Session | null | undefined): Pr
  * Aciona o desbloqueio biométrico nativo. Resolve com o detail do evento
  * `AndroidSecureSessionResult`.
  */
+let activeUnlock: Promise<AndroidSecureSessionResultDetail> | null = null;
 export function unlockSecureSession(timeoutMs = 60_000): Promise<AndroidSecureSessionResultDetail> {
+  if (activeUnlock) return activeUnlock;
+  const task = requestSecureUnlock(timeoutMs);
+  activeUnlock = task;
+  void task.finally(() => { if (activeUnlock === task) activeUnlock = null; });
+  return task;
+}
+function requestSecureUnlock(timeoutMs: number): Promise<AndroidSecureSessionResultDetail> {
   return new Promise((resolve) => {
     const b = getSecureSessionBridge();
     if (!b || typeof b.unlockSession !== "function") {
@@ -130,7 +139,9 @@ export function unlockSecureSession(timeoutMs = 60_000): Promise<AndroidSecureSe
       return;
     }
     let settled = false;
+    let correlated = false;
     const onResult = (event: Event) => {
+      if (correlated) return;
       const detail = (event as CustomEvent<AndroidSecureSessionResultDetail>).detail ?? {};
       console.log("[SecureSession] resultado biometria:", detail.success);
       finish(detail);
@@ -150,7 +161,11 @@ export function unlockSecureSession(timeoutMs = 60_000): Promise<AndroidSecureSe
       once: true,
     });
     try {
-      b.unlockSession();
+      const result = b.unlockSession();
+      if (result && typeof result.then === "function") {
+        correlated = true;
+        void result.then(finish, () => finish({ success: false, error: "Não foi possível desbloquear. Tente novamente." }));
+      }
     } catch (e) {
       console.log("[SecureSession] unlockSession lançou exceção:", e);
       finish({
@@ -170,53 +185,30 @@ export function unlockSecureSession(timeoutMs = 60_000): Promise<AndroidSecureSe
  * Retorna a sessão restaurada ou null. Em caso de tokens inválidos, limpa
  * a sessão segura para forçar novo login por senha.
  */
+const retryMessage = "Não foi possível verificar sua sessão agora. Confira a conexão e tente novamente. Seu acesso salvo foi preservado.";
+const expiredMessage = "Sessão expirada. Entre com sua senha novamente para reativar a biometria.";
+function invalidSession(error: unknown): boolean {
+  if (!error || typeof error !== "object" || !("code" in error)) return false;
+  return ["refresh_token_not_found", "refresh_token_already_used", "session_not_found", "session_expired", "user_not_found", "user_banned"].includes(String(error.code));
+}
 export async function loginWithSecureSession(): Promise<{
-  session: Session | null;
-  error: string | null;
+  session: Session | null; error: string | null; warning?: string;
 }> {
   const detail = await unlockSecureSession();
-  if (detail.success !== true) {
-    return { session: null, error: detail.error || "Biometria não autorizada." };
-  }
-  if (!detail.access_token || !detail.refresh_token) {
-    clearSecureSession();
-    return {
-      session: null,
-      error: "Sessão expirada. Entre com sua senha novamente para reativar a biometria.",
-    };
-  }
+  if (detail.success !== true) return { session: null, error: detail.error || "Biometria não autorizada." };
+  if (!detail.access_token || !detail.refresh_token) return { session: null, error: "Não foi possível recuperar o acesso salvo. Entre com sua senha." };
   try {
-    const { error: setErr } = await supabase.auth.setSession({
-      access_token: detail.access_token,
-      refresh_token: detail.refresh_token,
-    });
-    if (setErr) {
-      console.log("[SecureSession] setSession falhou:", setErr.message);
-      clearSecureSession();
-      return {
-        session: null,
-        error: "Sessão expirada. Entre com sua senha novamente para reativar a biometria.",
-      };
+    const { error } = await supabase.auth.setSession({ access_token: detail.access_token, refresh_token: detail.refresh_token });
+    if (error) {
+      if (invalidSession(error)) await clearSecureSession();
+      return { session: null, error: invalidSession(error) ? expiredMessage : retryMessage };
     }
-    const { data } = await supabase.auth.getSession();
-    const session = data.session ?? null;
-    console.log("[SecureSession] sessão restaurada:", !!session);
-    if (!session) {
-      clearSecureSession();
-      return {
-        session: null,
-        error: "Sessão expirada. Entre com sua senha novamente para reativar a biometria.",
-      };
-    }
-    // Re-salva para renovar a janela de validade após refresh interno.
-    await saveSecureSession(session);
-    return { session, error: null };
-  } catch (e) {
-    console.log("[SecureSession] erro ao restaurar sessão:", e);
-    clearSecureSession();
-    return {
-      session: null,
-      error: "Sessão expirada. Entre com sua senha novamente para reativar a biometria.",
-    };
+    const { data, error: readError } = await supabase.auth.getSession();
+    if (readError || !data.session) return { session: null, error: retryMessage };
+    const saved = await saveSecureSession(data.session);
+    return { session: data.session, error: null, ...(!saved ? { warning: "Você entrou, mas não foi possível atualizar o acesso seguro neste aparelho. Reative a entrada por biometria nas configurações." } : {}) };
+  } catch (error) {
+    if (invalidSession(error)) await clearSecureSession();
+    return { session: null, error: invalidSession(error) ? expiredMessage : retryMessage };
   }
 }

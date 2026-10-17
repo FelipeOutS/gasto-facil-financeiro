@@ -64,7 +64,7 @@ function AppMaisPage() {
     setTogglingLoginBio(true);
     try {
       if (loginBioEnabled) {
-        clearLoginBio();
+        await clearLoginBio();
         setLoginBioEnabled(false);
         toast.success("Entrada por biometria desativada neste dispositivo.");
       } else {
