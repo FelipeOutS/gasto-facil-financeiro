@@ -43,8 +43,9 @@ export function AppModuleBanner({
 
   return (
     <div
+      data-has-image={imageSrc ? "true" : "false"}
       className={cn(
-        "relative overflow-hidden rounded-3xl border border-border/60 shadow-card",
+        "gi-module-banner relative overflow-hidden rounded-3xl border border-border/60 shadow-card",
         compact ? "min-h-[128px]" : "min-h-[168px] md:min-h-[200px]",
         className,
       )}

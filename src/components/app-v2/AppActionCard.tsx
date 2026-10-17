@@ -72,7 +72,7 @@ export function AppActionCard({
   );
 
   const className_ = cn(
-    "group flex min-h-11 w-full flex-col gap-2 rounded-2xl border border-border/60 bg-card p-4 text-left shadow-card transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+    "gi-action-card group flex min-h-11 w-full flex-col gap-2 rounded-2xl border border-border/60 bg-card p-4 text-left shadow-card transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
     !locked && "hover:bg-card-elevated active:scale-[0.99]",
     locked && "opacity-80",
     className,

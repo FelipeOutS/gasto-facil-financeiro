@@ -63,6 +63,7 @@ export function MobileShell({
       <div className={showNav ? "finexy-shell-body" : ""}>
         {showNav && <DesktopTopBar />}
         <main
+          data-layout-width={wide ? "wide" : "standard"}
           className={
             "premium-content mx-auto flex w-full flex-col px-3 pt-4 mobile-shell-content sm:px-5 md:px-6 lg:min-h-screen lg:px-6 lg:pt-5 lg:pb-12 xl:px-7 2xl:px-8 " +
             (hideBottomNav ? "mobile-shell-content--focused " : "") +
