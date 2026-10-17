@@ -27,7 +27,12 @@ export function DesktopTopBar() {
         {DESKTOP_AREAS.map((area) => {
           const to = desktopAreaDestination(area, groups);
           return to ? (
-            <Link key={area.id} to={to} aria-current={active.id === area.id ? "page" : undefined}>
+            <Link
+              activeOptions={{ exact: true }}
+              key={area.id}
+              to={to}
+              aria-current={active?.id === area.id ? "page" : undefined}
+            >
               {area.label}
             </Link>
           ) : null;
