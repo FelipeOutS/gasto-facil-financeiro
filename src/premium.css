@@ -523,6 +523,12 @@
   scrollbar-width: thin;
   scrollbar-color: var(--premium-secondary) transparent;
 }
+@supports selector(::-webkit-scrollbar) {
+  .finexy-card-scroll {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+}
 .finexy-card-scroll::-webkit-scrollbar {
   height: 5px;
 }
