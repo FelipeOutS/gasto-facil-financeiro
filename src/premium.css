@@ -1100,3 +1100,13 @@
     margin-top: 0;
   }
 }
+
+/* Keep the desktop gutters and rail on the same canvas as page content. */
+@media (min-width: 1024px) {
+  .gi-app-shell {
+    background: #f5f6f5;
+  }
+  .dark .gi-app-shell {
+    background: #101512;
+  }
+}
