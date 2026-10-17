@@ -35,14 +35,16 @@ export function FluxoCaixaChart({
   mes,
   gastos,
   receitas,
+  compact = false,
 }: {
   ano: number;
   mes: number;
   gastos: Gasto[];
   receitas: Receita[];
+  compact?: boolean;
 }) {
   const { t, i18n } = useTranslation("dashboard");
-  const [tipo, setTipo] = useState<ChartKind>("area");
+  const [tipo, setTipo] = useState<ChartKind>(compact ? "bar" : "area");
   const locale = i18n.resolvedLanguage || i18n.language || "pt";
 
   const labelEntradas = t("fluxo.entradas");
@@ -95,7 +97,10 @@ export function FluxoCaixaChart({
   };
 
   return (
-    <section className="flex h-full w-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5">
+    <section
+      data-compact={compact || undefined}
+      className="flex h-full w-full flex-col rounded-3xl border border-border bg-card p-4 shadow-card sm:p-5"
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -104,7 +109,7 @@ export function FluxoCaixaChart({
           <h2 className="mt-0.5 text-base font-semibold sm:text-lg">{t("fluxo.title")}</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">{t("fluxo.subtitle")}</p>
         </div>
-        {!semHistoricoSuficiente && (
+        {!compact && !semHistoricoSuficiente && (
           <div className="flex items-center gap-1 self-start rounded-full border border-border bg-card-elevated p-1">
             {TYPES.map(({ id, label, Icon }) => {
               const active = tipo === id;
@@ -114,13 +119,14 @@ export function FluxoCaixaChart({
                   type="button"
                   onClick={() => setTipo(id)}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all card-press",
+                    "inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all card-press",
                     active
                       ? "bg-brand-soft text-brand-on-soft shadow-card"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                   aria-pressed={active}
                   title={label}
+                  aria-label={label}
                 >
                   <Icon className="h-3 w-3" />
                   <span className="hidden sm:inline">{label}</span>
@@ -131,7 +137,12 @@ export function FluxoCaixaChart({
         )}
       </div>
 
-      <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 text-[11px] sm:grid-cols-3">
+      <div
+        className={cn(
+          compact && "hidden",
+          "mt-3 grid min-w-0 grid-cols-1 gap-2 text-[11px] sm:grid-cols-3",
+        )}
+      >
         <div className="min-w-0 rounded-xl bg-card-elevated px-2.5 py-2 sm:px-3">
           <p className="text-muted-foreground">{t("fluxo.entradas")}</p>
           <p className="num mt-0.5 truncate font-semibold text-success">
@@ -288,7 +299,7 @@ export function FluxoCaixaChart({
                 <Bar
                   dataKey="gastos"
                   name={labelGastos}
-                  fill="var(--destructive)"
+                  fill={compact ? "var(--foreground)" : "var(--destructive)"}
                   radius={[6, 6, 0, 0]}
                 />
               </BarChart>
