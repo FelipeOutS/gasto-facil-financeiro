@@ -8,7 +8,6 @@ import { NAV_GROUPS, filterVisibleGroups } from "@/lib/nav-groups";
 import { PREMIUM_ROUTE_RULES } from "@/lib/premium-routes";
 import { PremiumLockModal } from "./PremiumLockModal";
 import { ConnectedAccountSwitcher } from "./ConnectedAccountSwitcher";
-import { ThemeToggle } from "./ThemeToggle";
 import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
 
 export function DesktopSidebar() {
@@ -26,11 +25,9 @@ export function DesktopSidebar() {
   );
   return (
     <aside className="premium-sidebar finexy-rail hidden lg:flex" aria-label={t("aria.side")}>
-      <div className="finexy-theme">
-        <ThemeToggle />
-      </div>
       <nav aria-label="Módulos do aplicativo" className="finexy-rail-nav">
         <Link
+          activeOptions={{ exact: true }}
           to="/app"
           aria-label="Visão geral"
           title="Visão geral"

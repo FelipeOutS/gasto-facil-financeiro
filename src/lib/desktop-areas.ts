@@ -1,25 +1,23 @@
-import { NAV_GROUPS, type NavGroup } from "./nav-groups";
+import type { NavGroup } from "./nav-groups";
 
+// Direct shortcuts: labels always describe their destination, never the first allowed module.
 export const DESKTOP_AREAS = [
-  { id: "overview", label: "Visão Geral", groups: [] as string[] },
-  { id: "activity", label: "Atividades", groups: ["financeiro"] },
-  { id: "management", label: "Gestão", groups: ["empresa", "conexoes", "conta", "admin"] },
-  { id: "planning", label: "Planejamento", groups: ["planejamento"] },
-  { id: "reports", label: "Relatórios", groups: ["insights"] },
+  { id: "overview", label: "Visão geral", to: "/app" },
+  { id: "activity", label: "Gastos", to: "/gastos" },
+  { id: "cards", label: "Cartões", to: "/cartoes" },
+  { id: "goals", label: "Metas", to: "/metas" },
+  { id: "reports", label: "Relatórios", to: "/relatorios" },
 ] as const;
 
 export function desktopAreaForPath(path: string) {
-  if (path === "/conta" || path === "/perfil") return DESKTOP_AREAS[2];
-  const group = NAV_GROUPS.find((group) =>
-    group.items.some((item) => path === item.to || path.startsWith(item.to + "/")),
-  );
-  return (
-    DESKTOP_AREAS.find((area) => area.groups.some((id) => id === group?.id)) ?? DESKTOP_AREAS[0]
+  return DESKTOP_AREAS.find(
+    (area) => path === area.to || (area.id !== "overview" && path.startsWith(area.to + "/")),
   );
 }
 
 export function desktopAreaDestination(area: (typeof DESKTOP_AREAS)[number], visible: NavGroup[]) {
-  if (area.id === "overview") return "/app";
-  if (area.id === "management") return "/conta";
-  return area.groups.flatMap((id) => visible.find((group) => group.id === id)?.items ?? [])[0]?.to;
+  if (area.id === "overview") return area.to;
+  return visible.some((group) => group.items.some((item) => item.to === area.to))
+    ? area.to
+    : undefined;
 }
