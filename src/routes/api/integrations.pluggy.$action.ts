@@ -85,13 +85,19 @@ export const Route = createFileRoute("/api/integrations/pluggy/$action")({
                 const owner = await store.getItemOwner(parsed.itemId);
                 if (owner?.userId !== a.userId) return forbiddenResponse();
               }
+              const { PLUGGY_LIVE_READONLY_AUTHORIZED, isLiveConnectorAllowedName } = await import("@/lib/pluggy/rules");
               const { results } = await api.sandboxConnectors();
               const connectorIds = results.filter((c) => c.isSandbox === true).map((c) => c.id);
+              if (PLUGGY_LIVE_READONLY_AUTHORIZED) {
+                // Somente leitura: apenas Nubank/Mercado Pago reais; staging pluggy_*.
+                const live = await api.liveConnectors();
+                for (const c of live.results) if (c.isSandbox === false && isLiveConnectorAllowedName(c.name)) connectorIds.push(c.id);
+              }
               if (!connectorIds.length) return json({ error: "sem_conector_sandbox" }, 502);
               // Header-authenticated webhooks require separately authorized /webhooks registration.
               // Connect tokens must never configure an external callback or carry a secret URL.
               const { accessToken } = await api.connectToken(a.userId, null, parsed.itemId);
-              return json({ accessToken, connectorIds, includeSandbox: true });
+              return json({ accessToken, connectorIds, includeSandbox: true, liveReadonly: PLUGGY_LIVE_READONLY_AUTHORIZED });
             }
             case "register-item": {
               const { itemId } = ItemBody.parse(body);

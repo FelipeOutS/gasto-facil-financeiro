@@ -189,11 +189,34 @@ export function reconcileWithMercadoPago(
   return matches.length ? { status: "revisao", matchIds: matches.map((m) => m.id) } : { status: "sem_coincidencia" };
 }
 
-/** Valida no servidor que o conector é Sandbox enquanto o modo for sandbox. */
-export function assertConnectorAllowed(connector: { id: number; isSandbox?: boolean | null } | null, mode = PLUGGY_MODE): void {
+/**
+ * Conexão real SOMENTE LEITURA (staging pluggy_*). Fica false até a aprovação
+ * do SQL `docs/migrations-candidate/pluggy-live-readonly.sql`: hoje o banco
+ * rejeita is_sandbox=false por CHECK. Gravação financeira continua travada
+ * no SQL (pluggy_import_apply exige Sandbox + pluggy_assert_financial_release).
+ */
+export const PLUGGY_LIVE_READONLY_AUTHORIZED: boolean = false;
+
+/** Únicas instituições reais aceitas nesta etapa (nome normalizado do conector). */
+export const PLUGGY_LIVE_CONNECTOR_NAMES: readonly string[] = Object.freeze(["nubank", "mercado pago"]);
+
+export function isLiveConnectorAllowedName(name: string | null | undefined): boolean {
+  const n = norm(name);
+  return PLUGGY_LIVE_CONNECTOR_NAMES.some((a) => n === a || n.startsWith(a + " "));
+}
+
+/** Valida no servidor o conector: Sandbox sempre; real só com trava liberada e instituição permitida. */
+export function assertConnectorAllowed(
+  connector: { id: number; name?: string | null; isSandbox?: boolean | null } | null,
+  mode = PLUGGY_MODE,
+  liveReadonly = PLUGGY_LIVE_READONLY_AUTHORIZED,
+): void {
   if (!connector) throw new Error("pluggy_conector_desconhecido");
-  if (mode === "sandbox" && connector.isSandbox !== true) throw new Error("pluggy_conector_nao_sandbox");
   if (mode === "live") throw new Error("pluggy_live_nao_autorizado");
+  if (connector.isSandbox === true) return;
+  if (!liveReadonly) throw new Error("pluggy_conector_nao_sandbox");
+  if (connector.isSandbox !== false) throw new Error("pluggy_conector_ambiente_indefinido");
+  if (!isLiveConnectorAllowedName(connector.name)) throw new Error("pluggy_instituicao_nao_permitida");
 }
 
 export type AccessState = "ok" | "pausado_acesso" | "pausado_erro";

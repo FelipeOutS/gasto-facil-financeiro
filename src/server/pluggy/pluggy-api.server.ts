@@ -77,6 +77,9 @@ export function createPluggyApi(f: Fetch = fetch) {
     sandboxConnectors: () =>
       req<{ results: Array<{ id: number; name: string; isSandbox?: boolean }> }>("GET", "/connectors?sandbox=true"),
     connector: (id: number) => req<{ id: number; name: string; isSandbox?: boolean }>("GET", `/connectors/${id}`),
+    /** Conectores reais do Brasil (sem Sandbox); filtragem por instituição é feita no servidor. */
+    liveConnectors: () =>
+      req<{ results: Array<{ id: number; name: string; isSandbox?: boolean }> }>("GET", "/connectors?countries=BR&sandbox=false"),
     item: (id: string) => req<PluggyItem>("GET", `/items/${encodeURIComponent(id)}`),
     deleteItem: (id: string) => req<void>("DELETE", `/items/${encodeURIComponent(id)}`),
     accounts: (itemId: string) =>
