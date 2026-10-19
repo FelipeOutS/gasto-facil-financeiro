@@ -424,7 +424,7 @@ describe("recorrentes de meses diferentes", () => {
   test("setembro e outubro com mesma descrição e valor são independentes", async () => {
     const store = memStore({ itemF: FELIPE });
     const n = (id: string, date: string) => tx({ id, type: "CREDIT", description: "NETFLIX.COM", category: "Video streaming", amount: -55.9, date });
-    const api = { ...fakeApi(), transactionsV2: async () => ({ results: [n("s", "2026-09-01"), n("o", "2026-10-01")], next: null }) } as unknown as PluggyApi;
+    const api = { ...fakeApi(), accounts: async (itemId: string) => ({ results: [{ id: "card", itemId, type: "CREDIT", name: "Cartão", balance: 0 }] }), transactionsV2: async () => ({ results: [n("s", "2026-09-01"), n("o", "2026-10-01")], next: null }) } as unknown as PluggyApi;
     await syncItem({ api, store, now: () => new Date("2026-10-19T12:00:00Z") }, { userId: FELIPE, itemId: "itemF" });
     await syncItem({ api, store, now: () => new Date("2026-10-19T12:00:00Z") }, { userId: FELIPE, itemId: "itemF" });
     expect(store.tx.size).toBe(2);
