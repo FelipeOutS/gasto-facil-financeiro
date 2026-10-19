@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Migração candidata Pluggy em PostgreSQL LOCAL DESCARTÁVEL (sem rede). Inclui corrida de claim.
 set -euo pipefail
+[ -n "${PG_BIN:-}" ] && export PATH="$PG_BIN:$PATH"
 unset PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE PGSSLMODE DATABASE_URL || true
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 D="$(mktemp -d /tmp/gi-pg-pluggy.XXXX)"; chmod 777 "$D"; PORT=55452
