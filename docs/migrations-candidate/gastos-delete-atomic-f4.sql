@@ -55,8 +55,8 @@ BEGIN
   v_owner := v_ext.user_id;
   -- Autoridade no servidor: nunca confiar no cache/tipo informado pelo browser.
   IF v_ext.tipo_origem='pluggy'
-     OR EXISTS (SELECT 1 FROM public.gastos WHERE user_id=v_owner AND import_batch_id=p_batch_id AND origem='pluggy')
-     OR EXISTS (SELECT 1 FROM public.receitas WHERE user_id=v_owner AND import_batch_id=p_batch_id AND origem='pluggy') THEN
+     OR EXISTS (SELECT 1 FROM public.gastos WHERE user_id=v_owner AND import_batch_id=p_batch_id AND to_jsonb(gastos)->>'origem'='pluggy')
+     OR EXISTS (SELECT 1 FROM public.receitas WHERE user_id=v_owner AND import_batch_id=p_batch_id AND to_jsonb(receitas)->>'origem'='pluggy') THEN
     RAISE EXCEPTION 'pluggy_reversao_generica_bloqueada' USING ERRCODE='42501';
   END IF;
   IF v_ext.status = 'revertido' THEN

@@ -27,4 +27,6 @@ if [ "$TOT" = 6 ] && [ "$UNI" = 6 ]; then echo "PASSOU: corrida 2 conexões — 
 ( cd "$ROOT" && bun tests/sql/pluggy/gen-import-fixture.ts > "$D/seed.sql" )
 "${P[@]}" -f "$ROOT/tests/sql/pluggy/35-gi-stub.sql"
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/pluggy-import-gi.sql"
+"${P[@]}" -f "$ROOT/tests/sql/pluggy/39-release-block.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"
+"${P[@]}" -f "$ROOT/tests/sql/pluggy/39-test-only-unlock.sql"
 ( cd "$ROOT" && "${P[@]}" -v seed_file="$D/seed.sql" -f tests/sql/pluggy/40-import.sql 2>&1 | grep -E "PASSOU|FALHOU|ERROR" )
