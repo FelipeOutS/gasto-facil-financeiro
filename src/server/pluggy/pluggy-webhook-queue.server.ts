@@ -46,7 +46,7 @@ export function safeErrorCode(e: unknown): string {
   const raw = e instanceof Error ? e.message : typeof e === "string" ? e : "erro_interno";
   // Só códigos internos (sem espaços, letras/dígitos/_:.-); mensagens livres
   // podem conter valores ou nomes e são descartadas.
-  return /^[a-z][a-z0-9_:.-]{2,79}$/i.test(raw) && !/\d{3,}/.test(raw) ? raw : "erro_interno";
+  return /^[a-z][a-z0-9_:.-]{2,79}$/i.test(raw) && !/\d{5,}/.test(raw) ? raw : "erro_interno";
 }
 
 export async function receiveWebhook(
