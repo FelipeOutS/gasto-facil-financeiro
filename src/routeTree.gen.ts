@@ -118,6 +118,7 @@ import { Route as AppAjustesAparenciaRouteImport } from './routes/app_.ajustes.a
 import { Route as AppAjustesNotificacoesRouteImport } from './routes/app_.ajustes.notificacoes'
 import { Route as AppAjustesPreferenciasFinanceirasRouteImport } from './routes/app_.ajustes.preferencias-financeiras'
 import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integracoes.index'
+import { Route as AppIntegracoesOpenFinanceRouteImport } from './routes/app_.integracoes.open-finance'
 import { Route as AssinaturasIdEditarRouteImport } from './routes/assinaturas.$id.editar'
 import { Route as AuthAndroidCallbackRouteImport } from './routes/auth.android.callback'
 import { Route as CartoesIdIndexRouteImport } from './routes/cartoes.$id.index'
@@ -141,9 +142,11 @@ import { Route as RendaIdEditarRouteImport } from './routes/renda.$id.editar'
 import { Route as ApiIntegrationsMercadopagoActionRouteImport } from './routes/api/integrations.mercadopago.$action'
 import { Route as ApiIntegrationsMercadopagoCallbackRouteImport } from './routes/api/integrations.mercadopago.callback'
 import { Route as ApiIntegrationsMercadopagoConnectRouteImport } from './routes/api/integrations.mercadopago.connect'
+import { Route as ApiIntegrationsPluggyActionRouteImport } from './routes/api/integrations.pluggy.$action'
 import { Route as ApiPublicHooksWhatsappContasLembretesGenerateRouteImport } from './routes/api/public.hooks.whatsapp-contas-lembretes-generate'
 import { Route as ApiPublicHooksWhatsappDispatcherRouteImport } from './routes/api/public.hooks.whatsapp-dispatcher'
 import { Route as ApiPublicHooksWhatsappProactiveGenerateRouteImport } from './routes/api/public.hooks.whatsapp-proactive-generate'
+import { Route as ApiPublicPluggyWebhookRouteImport } from './routes/api/public/pluggy.webhook'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public.webhooks.mercadopago'
 import { Route as ApiPublicWhatsappExpenseRouteImport } from './routes/api/public.whatsapp.expense'
 import { Route as AppAjustesAjudaIndexRouteImport } from './routes/app_.ajustes.ajuda.index'
@@ -709,6 +712,12 @@ const AppIntegracoesIndexRoute = AppIntegracoesIndexRouteImport.update({
   path: '/app/integracoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIntegracoesOpenFinanceRoute =
+  AppIntegracoesOpenFinanceRouteImport.update({
+    id: '/app_/integracoes/open-finance',
+    path: '/app/integracoes/open-finance',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AssinaturasIdEditarRoute = AssinaturasIdEditarRouteImport.update({
   id: '/assinaturas/$id/editar',
   path: '/assinaturas/$id/editar',
@@ -830,6 +839,12 @@ const ApiIntegrationsMercadopagoConnectRoute =
     path: '/api/integrations/mercadopago/connect',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiIntegrationsPluggyActionRoute =
+  ApiIntegrationsPluggyActionRouteImport.update({
+    id: '/api/integrations/pluggy/$action',
+    path: '/api/integrations/pluggy/$action',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksWhatsappContasLembretesGenerateRoute =
   ApiPublicHooksWhatsappContasLembretesGenerateRouteImport.update({
     id: '/api/public/hooks/whatsapp-contas-lembretes-generate',
@@ -848,6 +863,11 @@ const ApiPublicHooksWhatsappProactiveGenerateRoute =
     path: '/api/public/hooks/whatsapp-proactive-generate',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPluggyWebhookRoute = ApiPublicPluggyWebhookRouteImport.update({
+  id: '/api/public/pluggy/webhook',
+  path: '/api/public/pluggy/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWebhooksMercadopagoRoute =
   ApiPublicWebhooksMercadopagoRouteImport.update({
     id: '/api/public/webhooks/mercadopago',
@@ -1042,6 +1062,7 @@ export interface FileRoutesByFullPath {
   '/app/ajustes/aparencia': typeof AppAjustesAparenciaRoute
   '/app/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/app/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
+  '/app/integracoes/open-finance': typeof AppIntegracoesOpenFinanceRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/auth/android/callback': typeof AuthAndroidCallbackRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
@@ -1067,9 +1088,11 @@ export interface FileRoutesByFullPath {
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
   '/api/integrations/mercadopago/callback': typeof ApiIntegrationsMercadopagoCallbackRoute
   '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
+  '/api/integrations/pluggy/$action': typeof ApiIntegrationsPluggyActionRoute
   '/api/public/hooks/whatsapp-contas-lembretes-generate': typeof ApiPublicHooksWhatsappContasLembretesGenerateRoute
   '/api/public/hooks/whatsapp-dispatcher': typeof ApiPublicHooksWhatsappDispatcherRoute
   '/api/public/hooks/whatsapp-proactive-generate': typeof ApiPublicHooksWhatsappProactiveGenerateRoute
+  '/api/public/pluggy/webhook': typeof ApiPublicPluggyWebhookRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
   '/app/ajustes/ajuda/privacidade': typeof AppAjustesAjudaPrivacidadeRoute
@@ -1192,6 +1215,7 @@ export interface FileRoutesByTo {
   '/app/ajustes/aparencia': typeof AppAjustesAparenciaRoute
   '/app/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/app/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
+  '/app/integracoes/open-finance': typeof AppIntegracoesOpenFinanceRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/auth/android/callback': typeof AuthAndroidCallbackRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
@@ -1217,9 +1241,11 @@ export interface FileRoutesByTo {
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
   '/api/integrations/mercadopago/callback': typeof ApiIntegrationsMercadopagoCallbackRoute
   '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
+  '/api/integrations/pluggy/$action': typeof ApiIntegrationsPluggyActionRoute
   '/api/public/hooks/whatsapp-contas-lembretes-generate': typeof ApiPublicHooksWhatsappContasLembretesGenerateRoute
   '/api/public/hooks/whatsapp-dispatcher': typeof ApiPublicHooksWhatsappDispatcherRoute
   '/api/public/hooks/whatsapp-proactive-generate': typeof ApiPublicHooksWhatsappProactiveGenerateRoute
+  '/api/public/pluggy/webhook': typeof ApiPublicPluggyWebhookRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
   '/app/ajustes/ajuda/privacidade': typeof AppAjustesAjudaPrivacidadeRoute
@@ -1345,6 +1371,7 @@ export interface FileRoutesById {
   '/app_/ajustes/aparencia': typeof AppAjustesAparenciaRoute
   '/app_/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/app_/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
+  '/app_/integracoes/open-finance': typeof AppIntegracoesOpenFinanceRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/auth/android/callback': typeof AuthAndroidCallbackRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
@@ -1370,9 +1397,11 @@ export interface FileRoutesById {
   '/api/integrations/mercadopago/$action': typeof ApiIntegrationsMercadopagoActionRoute
   '/api/integrations/mercadopago/callback': typeof ApiIntegrationsMercadopagoCallbackRoute
   '/api/integrations/mercadopago/connect': typeof ApiIntegrationsMercadopagoConnectRoute
+  '/api/integrations/pluggy/$action': typeof ApiIntegrationsPluggyActionRoute
   '/api/public/hooks/whatsapp-contas-lembretes-generate': typeof ApiPublicHooksWhatsappContasLembretesGenerateRoute
   '/api/public/hooks/whatsapp-dispatcher': typeof ApiPublicHooksWhatsappDispatcherRoute
   '/api/public/hooks/whatsapp-proactive-generate': typeof ApiPublicHooksWhatsappProactiveGenerateRoute
+  '/api/public/pluggy/webhook': typeof ApiPublicPluggyWebhookRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
   '/app_/ajustes/ajuda/privacidade': typeof AppAjustesAjudaPrivacidadeRoute
@@ -1499,6 +1528,7 @@ export interface FileRouteTypes {
     | '/app/ajustes/aparencia'
     | '/app/ajustes/notificacoes'
     | '/app/ajustes/preferencias-financeiras'
+    | '/app/integracoes/open-finance'
     | '/assinaturas/$id/editar'
     | '/auth/android/callback'
     | '/cartoes/$id/editar'
@@ -1524,9 +1554,11 @@ export interface FileRouteTypes {
     | '/api/integrations/mercadopago/$action'
     | '/api/integrations/mercadopago/callback'
     | '/api/integrations/mercadopago/connect'
+    | '/api/integrations/pluggy/$action'
     | '/api/public/hooks/whatsapp-contas-lembretes-generate'
     | '/api/public/hooks/whatsapp-dispatcher'
     | '/api/public/hooks/whatsapp-proactive-generate'
+    | '/api/public/pluggy/webhook'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
     | '/app/ajustes/ajuda/privacidade'
@@ -1649,6 +1681,7 @@ export interface FileRouteTypes {
     | '/app/ajustes/aparencia'
     | '/app/ajustes/notificacoes'
     | '/app/ajustes/preferencias-financeiras'
+    | '/app/integracoes/open-finance'
     | '/assinaturas/$id/editar'
     | '/auth/android/callback'
     | '/cartoes/$id/editar'
@@ -1674,9 +1707,11 @@ export interface FileRouteTypes {
     | '/api/integrations/mercadopago/$action'
     | '/api/integrations/mercadopago/callback'
     | '/api/integrations/mercadopago/connect'
+    | '/api/integrations/pluggy/$action'
     | '/api/public/hooks/whatsapp-contas-lembretes-generate'
     | '/api/public/hooks/whatsapp-dispatcher'
     | '/api/public/hooks/whatsapp-proactive-generate'
+    | '/api/public/pluggy/webhook'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
     | '/app/ajustes/ajuda/privacidade'
@@ -1801,6 +1836,7 @@ export interface FileRouteTypes {
     | '/app_/ajustes/aparencia'
     | '/app_/ajustes/notificacoes'
     | '/app_/ajustes/preferencias-financeiras'
+    | '/app_/integracoes/open-finance'
     | '/assinaturas/$id/editar'
     | '/auth/android/callback'
     | '/cartoes/$id/editar'
@@ -1826,9 +1862,11 @@ export interface FileRouteTypes {
     | '/api/integrations/mercadopago/$action'
     | '/api/integrations/mercadopago/callback'
     | '/api/integrations/mercadopago/connect'
+    | '/api/integrations/pluggy/$action'
     | '/api/public/hooks/whatsapp-contas-lembretes-generate'
     | '/api/public/hooks/whatsapp-dispatcher'
     | '/api/public/hooks/whatsapp-proactive-generate'
+    | '/api/public/pluggy/webhook'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
     | '/app_/ajustes/ajuda/privacidade'
@@ -1950,6 +1988,7 @@ export interface RootRouteChildren {
   ApiPublicAppVersionRoute: typeof ApiPublicAppVersionRoute
   ApiPublicClientLoadErrorRoute: typeof ApiPublicClientLoadErrorRoute
   ApiPublicCspReportRoute: typeof ApiPublicCspReportRoute
+  AppIntegracoesOpenFinanceRoute: typeof AppIntegracoesOpenFinanceRoute
   AssinaturasIdEditarRoute: typeof AssinaturasIdEditarRoute
   AuthAndroidCallbackRoute: typeof AuthAndroidCallbackRoute
   CartoesIdEditarRoute: typeof CartoesIdEditarRoute
@@ -1973,9 +2012,11 @@ export interface RootRouteChildren {
   ApiIntegrationsMercadopagoActionRoute: typeof ApiIntegrationsMercadopagoActionRoute
   ApiIntegrationsMercadopagoCallbackRoute: typeof ApiIntegrationsMercadopagoCallbackRoute
   ApiIntegrationsMercadopagoConnectRoute: typeof ApiIntegrationsMercadopagoConnectRoute
+  ApiIntegrationsPluggyActionRoute: typeof ApiIntegrationsPluggyActionRoute
   ApiPublicHooksWhatsappContasLembretesGenerateRoute: typeof ApiPublicHooksWhatsappContasLembretesGenerateRoute
   ApiPublicHooksWhatsappDispatcherRoute: typeof ApiPublicHooksWhatsappDispatcherRoute
   ApiPublicHooksWhatsappProactiveGenerateRoute: typeof ApiPublicHooksWhatsappProactiveGenerateRoute
+  ApiPublicPluggyWebhookRoute: typeof ApiPublicPluggyWebhookRoute
   ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
   ApiPublicWhatsappExpenseRoute: typeof ApiPublicWhatsappExpenseRoute
   AppIntegracoesMercadoPagoMovimentacoesRoute: typeof AppIntegracoesMercadoPagoMovimentacoesRoute
@@ -2754,6 +2795,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIntegracoesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app_/integracoes/open-finance': {
+      id: '/app_/integracoes/open-finance'
+      path: '/app/integracoes/open-finance'
+      fullPath: '/app/integracoes/open-finance'
+      preLoaderRoute: typeof AppIntegracoesOpenFinanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/assinaturas/$id/editar': {
       id: '/assinaturas/$id/editar'
       path: '/assinaturas/$id/editar'
@@ -2915,6 +2963,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiIntegrationsMercadopagoConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/integrations/pluggy/$action': {
+      id: '/api/integrations/pluggy/$action'
+      path: '/api/integrations/pluggy/$action'
+      fullPath: '/api/integrations/pluggy/$action'
+      preLoaderRoute: typeof ApiIntegrationsPluggyActionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/whatsapp-contas-lembretes-generate': {
       id: '/api/public/hooks/whatsapp-contas-lembretes-generate'
       path: '/api/public/hooks/whatsapp-contas-lembretes-generate'
@@ -2934,6 +2989,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/whatsapp-proactive-generate'
       fullPath: '/api/public/hooks/whatsapp-proactive-generate'
       preLoaderRoute: typeof ApiPublicHooksWhatsappProactiveGenerateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/pluggy/webhook': {
+      id: '/api/public/pluggy/webhook'
+      path: '/api/public/pluggy/webhook'
+      fullPath: '/api/public/pluggy/webhook'
+      preLoaderRoute: typeof ApiPublicPluggyWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/webhooks/mercadopago': {
@@ -3198,6 +3260,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAppVersionRoute: ApiPublicAppVersionRoute,
   ApiPublicClientLoadErrorRoute: ApiPublicClientLoadErrorRoute,
   ApiPublicCspReportRoute: ApiPublicCspReportRoute,
+  AppIntegracoesOpenFinanceRoute: AppIntegracoesOpenFinanceRoute,
   AssinaturasIdEditarRoute: AssinaturasIdEditarRoute,
   AuthAndroidCallbackRoute: AuthAndroidCallbackRoute,
   CartoesIdEditarRoute: CartoesIdEditarRoute,
@@ -3223,11 +3286,13 @@ const rootRouteChildren: RootRouteChildren = {
     ApiIntegrationsMercadopagoCallbackRoute,
   ApiIntegrationsMercadopagoConnectRoute:
     ApiIntegrationsMercadopagoConnectRoute,
+  ApiIntegrationsPluggyActionRoute: ApiIntegrationsPluggyActionRoute,
   ApiPublicHooksWhatsappContasLembretesGenerateRoute:
     ApiPublicHooksWhatsappContasLembretesGenerateRoute,
   ApiPublicHooksWhatsappDispatcherRoute: ApiPublicHooksWhatsappDispatcherRoute,
   ApiPublicHooksWhatsappProactiveGenerateRoute:
     ApiPublicHooksWhatsappProactiveGenerateRoute,
+  ApiPublicPluggyWebhookRoute: ApiPublicPluggyWebhookRoute,
   ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
   ApiPublicWhatsappExpenseRoute: ApiPublicWhatsappExpenseRoute,
   AppIntegracoesMercadoPagoMovimentacoesRoute:

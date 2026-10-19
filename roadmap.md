@@ -22,3 +22,6 @@
 - [ ] Assistente de Compras: aplicar `docs/migrations-candidate/whatsapp-shopping-quota.sql` (aguarda aprovação), cadastrar `SERPAPI_API_KEY`, ligar `WHATSAPP_SHOPPING_ENABLED` só após homologação; continuações (10x/12x, guardar até mês, qual loja, variante) prontas em DEV com contexto 20 min no mesmo SQL candidato.
 - [x] Preparação lote mensal + F4 sem F2 (teste combinado 40/0) e vínculo determinístico no cadastro de cartão — aguardando autorização para migrar/publicar
 - [x] Revisão P1 cartões/faturas WhatsApp (nome exato, homônimos, vínculo) — docs/audits/CARTOES_FATURAS_WHATSAPP_P1_2026-10-15.md
+- [x] Open Finance Pluggy Fase 2 (código Sandbox + testes 29/0) — SQL candidato NÃO aplicado
+- [ ] Open Finance: aplicar docs/migrations-candidate/pluggy-open-finance.sql (aguarda aprovação) e cadastrar PLUGGY_CLIENT_ID/SECRET
+- [ ] Open Finance: teste Sandbox ponta a ponta no preview; gravação em Gastos/Receitas e Live (Fases 3–5) aguardam autorização
