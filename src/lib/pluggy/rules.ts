@@ -115,7 +115,11 @@ export function classifyTransaction(tx: PluggyTx, account: AccountKind, ownDocum
     if (payer === doc && recv === doc) return { kind: "ignorado", reason: "transferencia_mesma_titularidade" };
   }
 
-  if (REFUND.test(text)) return { kind: "revisao", reason: "estorno" };
+  // Estorno/cancelamento devolve dinheiro de uma compra: nunca é nova despesa nem receita automática.
+  // O Mercado Pago marca estornos de cartão pelo operationType "ESTORNO" (descrição traz só o comerciante).
+  if (REFUND.test(text) || norm(tx.operationType) === "estorno" || /^transferencia cancelada\b/.test(norm(tx.description))) {
+    return { kind: "revisao", reason: "estorno" };
+  }
 
   if (account === "CREDIT") return classifyCardTransaction(tx, text);
   if (tx.type === "DEBIT" && GENERIC_BOLETO.test(text) && !hasMerchantEvidence(tx)) {
