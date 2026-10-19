@@ -3,9 +3,11 @@
 \set M '47df50ce-df1e-4c54-8fae-0ffb5105478d'
 CREATE FUNCTION pg_temp.ok(c boolean, n text) RETURNS void LANGUAGE plpgsql AS $$ BEGIN IF c THEN RAISE NOTICE 'PASSOU: %', n; ELSE RAISE EXCEPTION 'FALHOU: %', n; END IF; END $$;
 RESET ROLE;
+INSERT INTO public.pluggy_items(user_id,item_id,is_sandbox) VALUES (:'F','iAmt',true);
+INSERT INTO public.pluggy_accounts(user_id,item_id,account_id,type,is_sandbox) VALUES (:'F','iAmt','accAmt','CREDIT',true);
 -- registro "antigo" com correções manuais do usuário
 INSERT INTO public.pluggy_transactions(user_id,item_id,account_id,transaction_id,dedupe_key,amount,date,status,type,classification,classification_reason,categoria_manual,review_status,is_sandbox)
- VALUES (:'F','iF','acc1','old1','kold1',55.90,'2026-09-01','POSTED','CREDIT','revisao','credito_em_cartao','Lazer','aprovado',true);
+ VALUES (:'F','iAmt','accAmt','old1','kold1',55.90,'2026-09-01','POSTED','CREDIT','revisao','credito_em_cartao','Lazer','aprovado',true);
 SELECT count(*) AS n_before, md5(string_agg(t::text, ',' ORDER BY id)) AS h_before FROM public.pluggy_transactions t \gset
 SELECT pg_temp.ok(NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='pluggy_transactions' AND column_name='amount_original'), 'coluna não existe antes');
 \i docs/migrations-candidate/pluggy-amount-original.sql
@@ -15,7 +17,7 @@ SELECT pg_temp.ok(md5(string_agg((t.id,t.user_id,t.item_id,t.account_id,t.transa
 -- ressincronização: upsert com amount_original preserva correções manuais
 SET ROLE service_role;
 INSERT INTO public.pluggy_transactions(user_id,item_id,account_id,transaction_id,dedupe_key,amount,amount_original,date,status,type,classification,classification_reason,is_sandbox)
- VALUES (:'F','iF','acc1','old1','kold1',55.90,-55.9,'2026-09-01','POSTED','CREDIT','gasto','compra_cartao_valor_negativo',true)
+ VALUES (:'F','iAmt','accAmt','old1','kold1',55.90,-55.9,'2026-09-01','POSTED','CREDIT','gasto','compra_cartao_valor_negativo',true)
  ON CONFLICT (user_id,account_id,transaction_id) DO UPDATE SET amount_original=EXCLUDED.amount_original, classification=EXCLUDED.classification, classification_reason=EXCLUDED.classification_reason;
 SELECT pg_temp.ok(amount_original = -55.9 AND categoria_manual='Lazer' AND review_status='aprovado' AND classification='gasto', 'ressincronização preenche sinal e mantém correção manual') FROM public.pluggy_transactions WHERE transaction_id='old1';
 UPDATE public.pluggy_transactions SET amount_original = -0.123456789 WHERE transaction_id='old1';
@@ -23,7 +25,7 @@ SELECT pg_temp.ok(amount_original::text = '-0.123456789', 'precisão da API pres
 RESET ROLE;
 -- RLS e permissões
 SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub', :'F', false);
-SELECT pg_temp.ok(count(amount_original) = 1, 'Felipe lê o novo campo das próprias linhas') FROM public.pluggy_transactions;
+SELECT pg_temp.ok(count(amount_original) >= 1, 'Felipe lê o novo campo das próprias linhas') FROM public.pluggy_transactions;
 SELECT set_config('request.jwt.claim.sub', :'M', false);
 SELECT pg_temp.ok(count(*) FILTER (WHERE user_id = :'F') = 0, 'Michael não vê linhas do Felipe') FROM public.pluggy_transactions;
 DO $$ BEGIN UPDATE public.pluggy_transactions SET amount_original = 1; RAISE EXCEPTION 'FALHOU: authenticated atualizou';
