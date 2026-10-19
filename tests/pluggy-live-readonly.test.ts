@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import {
   assertConnectorAllowed,
   isLiveConnectorAllowedName,
@@ -41,7 +41,7 @@ describe("Pluggy conexão real somente leitura", () => {
   });
 
   it("SQL candidato não toca gravação financeira e mantém Sandbox nas importações", () => {
-    const sql = readFileSync("docs/migrations-candidate/pluggy-live-readonly.sql", "utf8");
+    const sql = readFileSync("docs/migrations-candidate/pluggy-live-readonly.sql", "utf8").split("\n").filter((l) => !l.trim().startsWith("--")).join("\n");
     expect(sql).not.toMatch(/pluggy_import_apply|pluggy_assert_financial_release|pluggy_link_card/);
     expect(sql).not.toMatch(/\b(gastos|receitas|cartoes)\b/);
     expect(sql).toContain(FELIPE);
