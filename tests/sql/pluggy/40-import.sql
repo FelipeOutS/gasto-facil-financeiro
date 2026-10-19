@@ -4,7 +4,7 @@
 \set U '99999999-0000-0000-0000-000000000009'
 CREATE FUNCTION pg_temp.ok(c boolean, n text) RETURNS void LANGUAGE plpgsql AS $$ BEGIN IF c THEN RAISE NOTICE 'PASSOU: %', n; ELSE RAISE EXCEPTION 'FALHOU: %', n; END IF; END $$;
 CREATE FUNCTION pg_temp.err(q text) RETURNS text LANGUAGE plpgsql AS $$ BEGIN EXECUTE q; RETURN 'ok'; EXCEPTION WHEN OTHERS THEN RETURN SQLERRM; END $$;
-\i tests/sql/pluggy/_seed.sql
+\i :seed_file
 SELECT md5(string_agg(t::text, ',' ORDER BY id)) AS h_mp FROM public.imported_transactions t \gset
 SELECT md5(string_agg(g::text, ',' ORDER BY id)) AS h_g0 FROM public.gastos g \gset
 SELECT md5(string_agg(r::text, ',' ORDER BY id)) AS h_r0 FROM public.receitas r \gset
@@ -34,6 +34,11 @@ SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_import_apply(%L, gen_
 -- Payload adulterado (valor diferente do banco) recusado
 SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_import_apply(%L, gen_random_uuid(), %L)', :'F',
   jsonb_build_array(jsonb_set(:'plan'::jsonb->0, '{row,valor}', '1')))) LIKE '%lancamento_invalido%', 'valor adulterado recusado');
+SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_import_apply(%L, gen_random_uuid(), %L)', :'F',
+  (SELECT jsonb_agg(jsonb_set(e,'{row,fatura_competencia}','"2099-01"')) FROM jsonb_array_elements(:'plan'::jsonb) e WHERE e->'row'->>'forma_pagamento'='credito'))) LIKE '%cartao_sem_vinculo%', 'competência adulterada recusada');
+UPDATE public.pluggy_transactions SET is_sandbox=false WHERE transaction_id=(:'plan'::jsonb->0->>'transaction_id');
+SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_import_apply(%L, gen_random_uuid(), %L)', :'F', jsonb_build_array(:'plan'::jsonb->0))) LIKE '%sandbox_obrigatorio%', 'transação Live recusada');
+UPDATE public.pluggy_transactions SET is_sandbox=true WHERE transaction_id=(:'plan'::jsonb->0->>'transaction_id');
 
 -- Importação histórica
 \set B1 '00000000-0000-0000-0000-0000000000f1'
@@ -65,6 +70,10 @@ RESET ROLE;
 SET ROLE service_role;
 SELECT e.entry_id AS eid, e.account_id AS acc, e.transaction_id AS tid, e.snapshot AS snap FROM public.pluggy_import_entries e JOIN public.gastos g ON g.id=e.entry_id WHERE g.descricao='SMART FIT ACADEMIA' ORDER BY g.data LIMIT 1 \gset
 UPDATE public.pluggy_transactions SET amount = 99.9 WHERE account_id=:'acc' AND transaction_id=:'tid';
+UPDATE public.pluggy_transactions SET status='PENDING' WHERE account_id=:'acc' AND transaction_id=:'tid';
+SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_import_apply(%L, gen_random_uuid(), %L)', :'F', jsonb_build_array(jsonb_build_object('op','update','table','gastos','account_id',:'acc','transaction_id',:'tid','entry_id',:'eid','next',(:'snap'::jsonb)||'{"valor":99.9}')))) LIKE '%nao_elegivel%', 'update pendente recusado');
+UPDATE public.pluggy_transactions SET status='POSTED' WHERE account_id=:'acc' AND transaction_id=:'tid';
+SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_import_apply(%L, gen_random_uuid(), %L)', :'F', jsonb_build_array(jsonb_build_object('op','remove','table','gastos','account_id',:'acc','transaction_id',:'tid','entry_id',:'eid')))) LIKE '%remocao_nao_elegivel%', 'remoção sem alteração de origem recusada');
 SELECT public.pluggy_import_apply(:'F', gen_random_uuid(), jsonb_build_array(jsonb_build_object('op','update','table','gastos','account_id',:'acc','transaction_id',:'tid','entry_id',:'eid','next', (:'snap'::jsonb) || '{"valor":99.9}'))) AS r4 \gset
 SELECT pg_temp.ok((:'r4'::jsonb->>'atualizados')::int = 1 AND (SELECT valor FROM public.gastos WHERE id=:'eid') = 99.9, 'atualização do banco aplicada em lançamento não editado');
 -- Edição manual bloqueia atualização e reversão

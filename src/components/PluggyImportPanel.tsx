@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Eye, Undo2, Link2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { pluggyImport } from "@/lib/pluggy/import.functions";
+import { pluggyImport, type PluggyImportInput } from "@/lib/pluggy/import.functions";
 
 type Result = Awaited<ReturnType<typeof pluggyImport>>;
 type Preview = Extract<Result, { cards: unknown }>;
@@ -20,7 +20,7 @@ export function PluggyImportPanel({ accounts }: { accounts: Account[] }) {
     const r = await call({ data: { action: "preview" } });
     if ("cards" in r) setPreview(r);
   }
-  async function act(data: Parameters<typeof call>[0]["data"]) {
+  async function act(data: PluggyImportInput) {
     setBusy(true);
     try {
       const r = await call({ data });

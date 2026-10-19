@@ -9,11 +9,12 @@ const Input = z.discriminatedUnion("action", [
   z.object({ action: z.literal("link"), accountId: z.string().min(1).max(100), cardId: z.string().uuid(), confirmed: z.literal(true) }),
   z.object({ action: z.literal("review"), accountId: z.string().min(1).max(100), transactionId: z.string().min(1).max(100), decision: z.enum(["aprovado", "rejeitado"]).nullable() }),
 ]);
+export type PluggyImportInput = z.input<typeof Input>;
 
 /** No userId, release flag, plan actions or financial values are accepted from the browser. */
 export const pluggyImport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => Input.parse(input))
+  .inputValidator((input: PluggyImportInput) => Input.parse(input))
   .handler(async ({ data, context }) => {
     const { isPluggyAllowed } = await import("@/lib/pluggy/rules");
     const roles = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
@@ -29,11 +30,11 @@ export const pluggyImport = createServerFn({ method: "POST" })
         importSchemaReady(context.supabase, context.userId),
         context.supabase.from("cartoes").select("id,nome,dia_fechamento,dia_vencimento").eq("user_id", context.userId).order("nome"),
       ]);
-      if (cards.error || !plan.ok) throw new Error("pluggy_leitura_indisponivel");
+      if (cards.error || !plan.ok || !plan.actions) throw new Error("pluggy_leitura_indisponivel");
       // Batches are read only when candidate schema exists; no seed/creation on page load.
       const batches = schemaReady ? await context.supabase.from("extratos_importados").select("id,status,data_importacao,qtd_movimentacoes").eq("user_id", context.userId).eq("tipo_origem", "pluggy").order("data_importacao", { ascending: false }).limit(30) : { data: [], error: null };
       if (batches.error) throw new Error("pluggy_leitura_indisponivel");
-      return { ...plan, schemaReady, releaseAuthorized: PLUGGY_IMPORT_RELEASE_AUTHORIZED, cards: cards.data ?? [], batches: batches.data ?? [] };
+      return { ...plan, actions: plan.actions, schemaReady, releaseAuthorized: PLUGGY_IMPORT_RELEASE_AUTHORIZED, cards: cards.data ?? [], batches: batches.data ?? [] };
     }
     if (!(await importSchemaReady(context.supabase, context.userId))) throw new Error("pluggy_import_rpc_indisponivel");
     if (data.action === "history") return runPluggyImport(deps, { userId: context.userId, batchId: data.batchId, mode: "historico_inicial", confirmed: true });

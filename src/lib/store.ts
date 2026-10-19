@@ -4871,6 +4871,8 @@ export async function revertExtratoImportadoSeguro(
   if (!activeUserId) return falha;
   const extrato = memExtratos.find((e) => e.id === batchId);
   if (!extrato) return falha;
+  // Pluggy must use its own origin-scoped, soft-delete-only reversal RPC.
+  if (extrato.tipoOrigem === "pluggy") return falha;
   if (extrato.status === "revertido") {
     return { ok: true, removidos: 0, mantidos: 0, status: "revertido" };
   }
