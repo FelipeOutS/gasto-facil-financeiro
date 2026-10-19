@@ -118,6 +118,7 @@ import { Route as AppAjustesAparenciaRouteImport } from './routes/app_.ajustes.a
 import { Route as AppAjustesNotificacoesRouteImport } from './routes/app_.ajustes.notificacoes'
 import { Route as AppAjustesPreferenciasFinanceirasRouteImport } from './routes/app_.ajustes.preferencias-financeiras'
 import { Route as AppIntegracoesIndexRouteImport } from './routes/app_.integracoes.index'
+import { Route as AppIntegracoesOpenFinanceRouteImport } from './routes/app_.integracoes.open-finance'
 import { Route as AssinaturasIdEditarRouteImport } from './routes/assinaturas.$id.editar'
 import { Route as AuthAndroidCallbackRouteImport } from './routes/auth.android.callback'
 import { Route as CartoesIdIndexRouteImport } from './routes/cartoes.$id.index'
@@ -711,6 +712,12 @@ const AppIntegracoesIndexRoute = AppIntegracoesIndexRouteImport.update({
   path: '/app/integracoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIntegracoesOpenFinanceRoute =
+  AppIntegracoesOpenFinanceRouteImport.update({
+    id: '/app_/integracoes/open-finance',
+    path: '/app/integracoes/open-finance',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AssinaturasIdEditarRoute = AssinaturasIdEditarRouteImport.update({
   id: '/assinaturas/$id/editar',
   path: '/assinaturas/$id/editar',
@@ -1055,6 +1062,7 @@ export interface FileRoutesByFullPath {
   '/app/ajustes/aparencia': typeof AppAjustesAparenciaRoute
   '/app/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/app/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
+  '/app/integracoes/open-finance': typeof AppIntegracoesOpenFinanceRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/auth/android/callback': typeof AuthAndroidCallbackRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
@@ -1207,6 +1215,7 @@ export interface FileRoutesByTo {
   '/app/ajustes/aparencia': typeof AppAjustesAparenciaRoute
   '/app/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/app/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
+  '/app/integracoes/open-finance': typeof AppIntegracoesOpenFinanceRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/auth/android/callback': typeof AuthAndroidCallbackRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
@@ -1362,6 +1371,7 @@ export interface FileRoutesById {
   '/app_/ajustes/aparencia': typeof AppAjustesAparenciaRoute
   '/app_/ajustes/notificacoes': typeof AppAjustesNotificacoesRoute
   '/app_/ajustes/preferencias-financeiras': typeof AppAjustesPreferenciasFinanceirasRoute
+  '/app_/integracoes/open-finance': typeof AppIntegracoesOpenFinanceRoute
   '/assinaturas/$id/editar': typeof AssinaturasIdEditarRoute
   '/auth/android/callback': typeof AuthAndroidCallbackRoute
   '/cartoes/$id/editar': typeof CartoesIdEditarRoute
@@ -1518,6 +1528,7 @@ export interface FileRouteTypes {
     | '/app/ajustes/aparencia'
     | '/app/ajustes/notificacoes'
     | '/app/ajustes/preferencias-financeiras'
+    | '/app/integracoes/open-finance'
     | '/assinaturas/$id/editar'
     | '/auth/android/callback'
     | '/cartoes/$id/editar'
@@ -1670,6 +1681,7 @@ export interface FileRouteTypes {
     | '/app/ajustes/aparencia'
     | '/app/ajustes/notificacoes'
     | '/app/ajustes/preferencias-financeiras'
+    | '/app/integracoes/open-finance'
     | '/assinaturas/$id/editar'
     | '/auth/android/callback'
     | '/cartoes/$id/editar'
@@ -1824,6 +1836,7 @@ export interface FileRouteTypes {
     | '/app_/ajustes/aparencia'
     | '/app_/ajustes/notificacoes'
     | '/app_/ajustes/preferencias-financeiras'
+    | '/app_/integracoes/open-finance'
     | '/assinaturas/$id/editar'
     | '/auth/android/callback'
     | '/cartoes/$id/editar'
@@ -1975,6 +1988,7 @@ export interface RootRouteChildren {
   ApiPublicAppVersionRoute: typeof ApiPublicAppVersionRoute
   ApiPublicClientLoadErrorRoute: typeof ApiPublicClientLoadErrorRoute
   ApiPublicCspReportRoute: typeof ApiPublicCspReportRoute
+  AppIntegracoesOpenFinanceRoute: typeof AppIntegracoesOpenFinanceRoute
   AssinaturasIdEditarRoute: typeof AssinaturasIdEditarRoute
   AuthAndroidCallbackRoute: typeof AuthAndroidCallbackRoute
   CartoesIdEditarRoute: typeof CartoesIdEditarRoute
@@ -2781,6 +2795,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIntegracoesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app_/integracoes/open-finance': {
+      id: '/app_/integracoes/open-finance'
+      path: '/app/integracoes/open-finance'
+      fullPath: '/app/integracoes/open-finance'
+      preLoaderRoute: typeof AppIntegracoesOpenFinanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/assinaturas/$id/editar': {
       id: '/assinaturas/$id/editar'
       path: '/assinaturas/$id/editar'
@@ -3239,6 +3260,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAppVersionRoute: ApiPublicAppVersionRoute,
   ApiPublicClientLoadErrorRoute: ApiPublicClientLoadErrorRoute,
   ApiPublicCspReportRoute: ApiPublicCspReportRoute,
+  AppIntegracoesOpenFinanceRoute: AppIntegracoesOpenFinanceRoute,
   AssinaturasIdEditarRoute: AssinaturasIdEditarRoute,
   AuthAndroidCallbackRoute: AuthAndroidCallbackRoute,
   CartoesIdEditarRoute: CartoesIdEditarRoute,
