@@ -80,6 +80,9 @@ export const Route = createFileRoute("/api/integrations/pluggy/$action")({
               const webhookUrl = pluggyWebhookUrl();
               if (!webhookUrl) return json({ error: "webhook_nao_configurado" }, 503);
               const parsed = z.object({ itemId: z.string().uuid().optional() }).parse(body);
+              const prefCt = await db.from("pluggy_settings").select("user_id").eq("user_id", a.userId).maybeSingle();
+              if (prefCt.error) return json({ error: "pluggy_store_indisponivel" }, 503);
+              if (!prefCt.data) return json({ ok: false, error: "historico_nao_escolhido" }, 409);
               if (parsed.itemId) {
                 const store = await createPluggyStore();
                 const owner = await store.getItemOwner(parsed.itemId);

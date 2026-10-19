@@ -97,6 +97,20 @@ function OpenFinancePage() {
     }
   }
 
+  async function saveHistory(days: number) {
+    setBusy(true);
+    try {
+      const r = await post("settings", { autoImport: false, autoCategorize: s?.settings?.auto_categorize ?? true, historyDays: days });
+      if (r.historyDays !== days) throw new Error("preferencia_nao_confirmada");
+      toast.success(`Histórico de ${r.historyDays} dias salvo.`);
+    } catch {
+      toast.error("Não foi possível salvar o período. Tente novamente.");
+    } finally {
+      setBusy(false);
+      void load();
+    }
+  }
+
   async function act(action: string, body: unknown, ok: string) {
     setBusy(true);
     try {
@@ -105,7 +119,9 @@ function OpenFinancePage() {
     } catch (e) {
       const m = (e as Error).message;
       toast.error(
-        m.startsWith("sync_parcial:")
+        m === "historico_nao_escolhido"
+          ? "Escolha o período do histórico antes de sincronizar."
+          : m.startsWith("sync_parcial:")
           ? "Contas e saldos atualizados, mas as transações falharam. Tente sincronizar novamente."
           : m,
       );
@@ -131,7 +147,8 @@ function OpenFinancePage() {
   }
 
   const paused = s.settings?.access_state === "pausado_acesso";
-  const settings = s.settings ?? { auto_import: false, auto_categorize: true, history_days: 90, access_state: "ok" };
+  const needsHistory = !s.settings;
+  const settings = s.settings ?? { auto_import: false, auto_categorize: true, history_days: 0, access_state: "ok" };
   const gastos = s.transactions.filter((t) => t.classification === "gasto");
   const receitas = s.transactions.filter((t) => t.classification === "receita");
   const revisao = s.transactions.filter((t) => t.classification === "revisao" && !t.review_status);
@@ -174,7 +191,19 @@ function OpenFinancePage() {
         </section>
       )}
 
-      <Button className="mt-5 w-full" disabled={busy || !s.configured || !s.schemaReady || paused} onClick={() => connect()}>
+      {needsHistory && s.schemaReady && (
+        <section className="mt-4 rounded-2xl border border-primary/30 bg-card p-4 text-sm">
+          <p className="font-semibold">Antes de começar, escolha o período do histórico</p>
+          <p className="mt-1 text-xs text-muted-foreground">Sem essa escolha nada é conectado nem sincronizado.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {[30, 90, 180, 365].map((d) => (
+              <Button key={d} size="sm" variant="outline" disabled={busy} onClick={() => saveHistory(d)}>{d} dias</Button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <Button className="mt-5 w-full" disabled={busy || needsHistory || !s.configured || !s.schemaReady || paused} onClick={() => connect()}>
         <Link2 className="mr-2 h-4 w-4" /> Conectar banco de teste
       </Button>
 
@@ -192,7 +221,7 @@ function OpenFinancePage() {
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" disabled={busy || paused} onClick={() => act("sync", { itemId: it.item_id }, "Sincronizado.")}>
+              <Button size="sm" variant="outline" disabled={busy || paused || needsHistory} onClick={() => act("sync", { itemId: it.item_id }, "Sincronizado.")}>
                 <RefreshCw className="mr-1 h-3.5 w-3.5" /> Sincronizar
               </Button>
               {it.status !== "UPDATED" && (
@@ -233,7 +262,8 @@ function OpenFinancePage() {
             <Switch checked={settings.auto_categorize} disabled={busy || !s.schemaReady} onCheckedChange={(v) => act("settings", { autoImport: false, autoCategorize: v, historyDays: settings.history_days }, "Salvo.")} />
           </Row>
           <Row label="Histórico inicial">
-            <select className="rounded-lg border border-border bg-background px-2 py-1 text-sm" value={settings.history_days} disabled={busy || !s.schemaReady} onChange={(e) => act("settings", { autoImport: false, autoCategorize: settings.auto_categorize, historyDays: Number(e.target.value) }, "Salvo.")}>
+            <select className="rounded-lg border border-border bg-background px-2 py-1 text-sm" value={settings.history_days} disabled={busy || !s.schemaReady} onChange={(e) => saveHistory(Number(e.target.value))}>
+              {needsHistory && <option value={0} disabled>Escolha…</option>}
               {[30, 90, 180, 365].map((d) => <option key={d} value={d}>{d} dias</option>)}
             </select>
           </Row>
