@@ -23,3 +23,8 @@ if [ "$TOT" = 6 ] && [ "$UNI" = 6 ]; then echo "PASSOU: corrida 2 conexões — 
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/pluggy-webhook-claim-max-attempts.sql"
 "${P[@]}" -f "$ROOT/tests/sql/pluggy/20-lease-max.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"
 "${P[@]}" -f "$ROOT/tests/sql/pluggy/30-amount-original.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"
+# Fase 3: importação Pluggy → Gastos/Receitas (candidata)
+( cd "$ROOT" && bun tests/sql/pluggy/gen-import-fixture.ts > tests/sql/pluggy/_seed.sql )
+"${P[@]}" -f "$ROOT/tests/sql/pluggy/35-gi-stub.sql"
+"${P[@]}" -f "$ROOT/docs/migrations-candidate/pluggy-import-gi.sql"
+( cd "$ROOT" && "${P[@]}" -f tests/sql/pluggy/40-import.sql 2>&1 | grep -E "PASSOU|FALHOU|ERROR" ); rm -f "$ROOT/tests/sql/pluggy/_seed.sql"
