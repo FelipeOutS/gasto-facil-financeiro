@@ -147,6 +147,7 @@ import { Route as ApiPublicHooksWhatsappContasLembretesGenerateRouteImport } fro
 import { Route as ApiPublicHooksWhatsappDispatcherRouteImport } from './routes/api/public.hooks.whatsapp-dispatcher'
 import { Route as ApiPublicHooksWhatsappProactiveGenerateRouteImport } from './routes/api/public.hooks.whatsapp-proactive-generate'
 import { Route as ApiPublicPluggyWebhookRouteImport } from './routes/api/public/pluggy.webhook'
+import { Route as ApiPublicPluggyWorkerRouteImport } from './routes/api/public/pluggy.worker'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public.webhooks.mercadopago'
 import { Route as ApiPublicWhatsappExpenseRouteImport } from './routes/api/public.whatsapp.expense'
 import { Route as AppAjustesAjudaIndexRouteImport } from './routes/app_.ajustes.ajuda.index'
@@ -868,6 +869,11 @@ const ApiPublicPluggyWebhookRoute = ApiPublicPluggyWebhookRouteImport.update({
   path: '/api/public/pluggy/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPluggyWorkerRoute = ApiPublicPluggyWorkerRouteImport.update({
+  id: '/api/public/pluggy/worker',
+  path: '/api/public/pluggy/worker',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWebhooksMercadopagoRoute =
   ApiPublicWebhooksMercadopagoRouteImport.update({
     id: '/api/public/webhooks/mercadopago',
@@ -1093,6 +1099,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/whatsapp-dispatcher': typeof ApiPublicHooksWhatsappDispatcherRoute
   '/api/public/hooks/whatsapp-proactive-generate': typeof ApiPublicHooksWhatsappProactiveGenerateRoute
   '/api/public/pluggy/webhook': typeof ApiPublicPluggyWebhookRoute
+  '/api/public/pluggy/worker': typeof ApiPublicPluggyWorkerRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
   '/app/ajustes/ajuda/privacidade': typeof AppAjustesAjudaPrivacidadeRoute
@@ -1246,6 +1253,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/whatsapp-dispatcher': typeof ApiPublicHooksWhatsappDispatcherRoute
   '/api/public/hooks/whatsapp-proactive-generate': typeof ApiPublicHooksWhatsappProactiveGenerateRoute
   '/api/public/pluggy/webhook': typeof ApiPublicPluggyWebhookRoute
+  '/api/public/pluggy/worker': typeof ApiPublicPluggyWorkerRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
   '/app/ajustes/ajuda/privacidade': typeof AppAjustesAjudaPrivacidadeRoute
@@ -1402,6 +1410,7 @@ export interface FileRoutesById {
   '/api/public/hooks/whatsapp-dispatcher': typeof ApiPublicHooksWhatsappDispatcherRoute
   '/api/public/hooks/whatsapp-proactive-generate': typeof ApiPublicHooksWhatsappProactiveGenerateRoute
   '/api/public/pluggy/webhook': typeof ApiPublicPluggyWebhookRoute
+  '/api/public/pluggy/worker': typeof ApiPublicPluggyWorkerRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
   '/api/public/whatsapp/expense': typeof ApiPublicWhatsappExpenseRoute
   '/app_/ajustes/ajuda/privacidade': typeof AppAjustesAjudaPrivacidadeRoute
@@ -1559,6 +1568,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/whatsapp-dispatcher'
     | '/api/public/hooks/whatsapp-proactive-generate'
     | '/api/public/pluggy/webhook'
+    | '/api/public/pluggy/worker'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
     | '/app/ajustes/ajuda/privacidade'
@@ -1712,6 +1722,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/whatsapp-dispatcher'
     | '/api/public/hooks/whatsapp-proactive-generate'
     | '/api/public/pluggy/webhook'
+    | '/api/public/pluggy/worker'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
     | '/app/ajustes/ajuda/privacidade'
@@ -1867,6 +1878,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/whatsapp-dispatcher'
     | '/api/public/hooks/whatsapp-proactive-generate'
     | '/api/public/pluggy/webhook'
+    | '/api/public/pluggy/worker'
     | '/api/public/webhooks/mercadopago'
     | '/api/public/whatsapp/expense'
     | '/app_/ajustes/ajuda/privacidade'
@@ -2017,6 +2029,7 @@ export interface RootRouteChildren {
   ApiPublicHooksWhatsappDispatcherRoute: typeof ApiPublicHooksWhatsappDispatcherRoute
   ApiPublicHooksWhatsappProactiveGenerateRoute: typeof ApiPublicHooksWhatsappProactiveGenerateRoute
   ApiPublicPluggyWebhookRoute: typeof ApiPublicPluggyWebhookRoute
+  ApiPublicPluggyWorkerRoute: typeof ApiPublicPluggyWorkerRoute
   ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
   ApiPublicWhatsappExpenseRoute: typeof ApiPublicWhatsappExpenseRoute
   AppIntegracoesMercadoPagoMovimentacoesRoute: typeof AppIntegracoesMercadoPagoMovimentacoesRoute
@@ -2998,6 +3011,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPluggyWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/pluggy/worker': {
+      id: '/api/public/pluggy/worker'
+      path: '/api/public/pluggy/worker'
+      fullPath: '/api/public/pluggy/worker'
+      preLoaderRoute: typeof ApiPublicPluggyWorkerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/mercadopago': {
       id: '/api/public/webhooks/mercadopago'
       path: '/api/public/webhooks/mercadopago'
@@ -3293,6 +3313,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksWhatsappProactiveGenerateRoute:
     ApiPublicHooksWhatsappProactiveGenerateRoute,
   ApiPublicPluggyWebhookRoute: ApiPublicPluggyWebhookRoute,
+  ApiPublicPluggyWorkerRoute: ApiPublicPluggyWorkerRoute,
   ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
   ApiPublicWhatsappExpenseRoute: ApiPublicWhatsappExpenseRoute,
   AppIntegracoesMercadoPagoMovimentacoesRoute:

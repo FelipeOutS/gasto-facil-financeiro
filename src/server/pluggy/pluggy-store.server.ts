@@ -81,7 +81,7 @@ export async function createPluggyStore(): Promise<PluggyStore> {
     },
     async upsertTransactions(rows: TxRow[]) {
       for (let i = 0; i < rows.length; i += 500) {
-        must(await db.from("pluggy_transactions").upsert(rows.slice(i, i + 500), { onConflict: "user_id,transaction_id" }));
+        must(await db.from("pluggy_transactions").upsert(rows.slice(i, i + 500), { onConflict: "user_id,account_id,transaction_id" }));
       }
     },
     async markTransactionsDeleted(userId, ids) {
