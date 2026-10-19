@@ -3,18 +3,18 @@ import { z } from "zod";
 
 /**
  * POST /api/public/pluggy/webhook
- * - Autenticação: cabeçalho `X-GI-Webhook-Token` (preferido; configurado no
- *   recurso POST /webhooks da Pluggy, campo `headers`). Aceita `?t=` só para
- *   webhooks por Connect Token, que não suportam cabeçalhos. Comparação em
+ * - Autenticação: somente cabeçalho `X-GI-Webhook-Token`, configurado no
+ *   recurso POST /webhooks da Pluggy, campo `headers`. Nunca aceita token
+ *   na URL (incluindo Connect Token). Comparação em
  *   tempo constante.
  * - Apenas grava o evento na fila durável e responde; o processamento é feito
  *   por /api/public/pluggy/worker. Nunca confia no conteúdo do payload.
  */
 const Payload = z.object({
-  event: z.string().max(80),
-  eventId: z.string().max(100).optional(),
+  event: z.string().trim().min(1).max(80),
+  eventId: z.string().trim().min(1).max(100).optional(),
   itemId: z.string().uuid().optional(),
-  transactionIds: z.array(z.string().max(100)).max(5000).optional(),
+  transactionIds: z.array(z.string().min(1).max(100)).max(5000).optional(),
 });
 
 export const Route = createFileRoute("/api/public/pluggy/webhook")({
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/api/public/pluggy/webhook")({
       POST: async ({ request }) => {
         const { safeEqual, PLUGGY_WEBHOOK_EVENTS } = await import("@/lib/pluggy/rules");
         const expected = process.env.PLUGGY_WEBHOOK_TOKEN ?? "";
-        const got = request.headers.get("x-gi-webhook-token") ?? new URL(request.url).searchParams.get("t") ?? "";
+        const got = request.headers.get("x-gi-webhook-token") ?? "";
         if (!expected || !safeEqual(got, expected)) return new Response("unauthorized", { status: 401 });
 
         const parsed = Payload.safeParse(await request.json().catch(() => null));
@@ -33,7 +33,9 @@ export const Route = createFileRoute("/api/public/pluggy/webhook")({
           return Response.json({ ok: true, ignored: true });
         }
 
-        const eventId = p.eventId ?? `${p.event}:${p.itemId}:${(p.transactionIds ?? []).join(",").slice(0, 200)}`;
+        // Never merge distinct provider events using a truncated payload key.
+        if (!p.eventId) return new Response("event_id_required", { status: 400 });
+        const eventId = p.eventId;
         try {
           const { createQueueDb, receiveWebhook } = await import("@/server/pluggy/pluggy-webhook-queue.server");
           const r = await receiveWebhook(await createQueueDb(), {

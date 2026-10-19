@@ -11,9 +11,3 @@ export async function assertPluggyAccess(userId: string | null | undefined): Pro
   return userId;
 }
 
-/** Webhook só para homologação (URL estável de preview), nunca produção na Fase 2. */
-export function pluggyWebhookUrl(): string | null {
-  const token = process.env.PLUGGY_WEBHOOK_TOKEN;
-  if (!token) return null;
-  return `https://project--5de62d63-2340-4175-8a16-26c2beff1e71-dev.lovable.app/api/public/pluggy/webhook?t=${encodeURIComponent(token)}`;
-}

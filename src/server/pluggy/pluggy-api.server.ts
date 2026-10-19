@@ -69,10 +69,10 @@ export function createPluggyApi(f: Fetch = fetch) {
   }
 
   return {
-    connectToken: (clientUserId: string, webhookUrl: string, itemId?: string) =>
+    connectToken: (clientUserId: string, webhookUrl: string | null, itemId?: string) =>
       req<{ accessToken: string }>("POST", "/connect_token", {
         ...(itemId ? { itemId } : {}),
-        options: { clientUserId, webhookUrl, avoidDuplicates: true },
+        options: { clientUserId, ...(webhookUrl ? { webhookUrl } : {}), avoidDuplicates: true },
       }),
     sandboxConnectors: () =>
       req<{ results: Array<{ id: number; name: string; isSandbox?: boolean }> }>("GET", "/connectors?sandbox=true"),
