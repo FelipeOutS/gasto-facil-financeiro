@@ -71,6 +71,13 @@
       "when": 1792421291803,
       "tag": "0009_pluggy_amount_original",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792429207105,
+      "tag": "0010_pluggy_phase3_structural_locked",
+      "breakpoints": true
     }
   ]
 }

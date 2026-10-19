@@ -2997,6 +2997,98 @@ export type Database = {
           },
         ]
       }
+      pluggy_card_links: {
+        Row: {
+          account_id: string
+          active: boolean
+          cartao_id: string
+          confirmed_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          active?: boolean
+          cartao_id: string
+          confirmed_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          active?: boolean
+          cartao_id?: string
+          confirmed_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pluggy_card_links_user_id_account_id_fkey"
+            columns: ["user_id", "account_id"]
+            isOneToOne: true
+            referencedRelation: "pluggy_accounts"
+            referencedColumns: ["user_id", "account_id"]
+          },
+        ]
+      }
+      pluggy_import_entries: {
+        Row: {
+          account_id: string
+          batch_id: string
+          created_at: string
+          entry_id: string
+          entry_table: string
+          id: string
+          snapshot: Json
+          state: string
+          transaction_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          batch_id: string
+          created_at?: string
+          entry_id: string
+          entry_table: string
+          id?: string
+          snapshot: Json
+          state?: string
+          transaction_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          batch_id?: string
+          created_at?: string
+          entry_id?: string
+          entry_table?: string
+          id?: string
+          snapshot?: Json
+          state?: string
+          transaction_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pluggy_import_entries_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "extratos_importados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pluggy_import_entries_user_id_account_id_transaction_id_fkey"
+            columns: ["user_id", "account_id", "transaction_id"]
+            isOneToOne: true
+            referencedRelation: "pluggy_transactions"
+            referencedColumns: ["user_id", "account_id", "transaction_id"]
+          },
+        ]
+      }
       pluggy_items: {
         Row: {
           connector_id: number | null
@@ -3047,6 +3139,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      pluggy_review_decisions: {
+        Row: {
+          account_id: string
+          decided_at: string
+          decision: string | null
+          id: string
+          previous: string | null
+          transaction_id: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          decided_at?: string
+          decision?: string | null
+          id?: string
+          previous?: string | null
+          transaction_id: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          decided_at?: string
+          decision?: string | null
+          id?: string
+          previous?: string | null
+          transaction_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pluggy_review_decisions_user_id_account_id_transaction_id_fkey"
+            columns: ["user_id", "account_id", "transaction_id"]
+            isOneToOne: false
+            referencedRelation: "pluggy_transactions"
+            referencedColumns: ["user_id", "account_id", "transaction_id"]
+          },
+        ]
       }
       pluggy_settings: {
         Row: {
@@ -5862,7 +5992,30 @@ export type Database = {
         }
         Returns: number
       }
+      pluggy_assert_financial_release: { Args: never; Returns: undefined }
+      pluggy_assert_owner: { Args: { p_user_id: string }; Returns: undefined }
+      pluggy_import_apply: {
+        Args: { p_actions: Json; p_batch_id: string; p_user_id: string }
+        Returns: Json
+      }
+      pluggy_import_revert: {
+        Args: { p_batch_id: string; p_user_id: string }
+        Returns: Json
+      }
       pluggy_is_allowed: { Args: never; Returns: boolean }
+      pluggy_link_card: {
+        Args: { p_account_id: string; p_cartao_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      pluggy_review_decide: {
+        Args: {
+          p_account_id: string
+          p_decision: string
+          p_transaction_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       pluggy_webhook_claim: {
         Args: { p_lease_seconds: number; p_limit: number }
         Returns: {
