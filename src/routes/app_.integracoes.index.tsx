@@ -117,6 +117,24 @@ function IntegracoesIndexPage() {
             <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
           </div>
         </Link>
+
+        <Link
+          to="/app/integracoes/open-finance"
+          className="group relative mt-3 block overflow-hidden rounded-3xl border border-border bg-card p-5 shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:bg-card-elevated"
+        >
+          <div className="relative flex items-start gap-4">
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary/15 text-primary ring-1 ring-primary/20">
+              <Building2 className="h-7 w-7" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-base font-semibold leading-tight">Open Finance (Pluggy)</p>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                Ambiente de testes com bancos fictícios: contas, cartões e movimentações.
+              </p>
+            </div>
+            <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-muted-foreground" />
+          </div>
+        </Link>
       </section>
 
       {/* Em breve */}
