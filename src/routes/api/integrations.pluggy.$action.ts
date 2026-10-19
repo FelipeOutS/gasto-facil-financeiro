@@ -1,3 +1,4 @@
+import { isGiCategoria } from "@/lib/pluggy/categorias";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { getUserFromRequest, unauthorizedResponse, forbiddenResponse } from "@/server/api-auth";
@@ -26,7 +27,7 @@ const SettingsBody = z.object({
   autoCategorize: z.boolean(),
   historyDays: z.union([z.literal(30), z.literal(90), z.literal(180), z.literal(365)]),
 });
-const CategoriaBody = z.object({ transactionId: z.string().min(1).max(100), categoria: z.string().trim().min(1).max(60) });
+const CategoriaBody = z.object({ transactionId: z.string().min(1).max(100), categoria: z.string().trim().refine(isGiCategoria, "categoria_invalida") });
 const ReviewBody = z.object({ transactionId: z.string().min(1).max(100), decisao: z.enum(["aprovado", "rejeitado"]) });
 
 export const Route = createFileRoute("/api/integrations/pluggy/$action")({
