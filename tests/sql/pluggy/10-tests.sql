@@ -97,6 +97,22 @@ SELECT pg_temp.ok(NOT has_table_privilege('anon','public.pluggy_transactions','S
 SELECT pg_temp.ok(has_table_privilege('authenticated','public.pluggy_transactions','SELECT') AND NOT has_table_privilege('authenticated','public.pluggy_transactions','INSERT') AND NOT has_table_privilege('authenticated','public.pluggy_transactions','UPDATE') AND NOT has_table_privilege('authenticated','public.pluggy_transactions','DELETE') AND NOT has_table_privilege('authenticated','public.pluggy_webhook_events','SELECT'), 'authenticated só SELECT (RLS) apesar do padrão');
 SELECT pg_temp.ok(NOT has_function_privilege('anon','public.pluggy_is_allowed()','EXECUTE') AND NOT has_function_privilege('authenticated','public.pluggy_webhook_claim(integer,integer)','EXECUTE') AND NOT has_function_privilege('anon','public.pluggy_webhook_enqueue(text,text,text,text[])','EXECUTE'), 'funções sem EXECUTE indevido apesar do padrão');
 
+-- sandbox_exec (BYPASSRLS) sem acesso a nada Pluggy
+SELECT pg_temp.ok(rolbypassrls, 'stub reproduz BYPASSRLS de sandbox_exec') FROM pg_roles WHERE rolname='sandbox_exec';
+SELECT pg_temp.ok(bool_and(NOT has_table_privilege('sandbox_exec', t, p)), 'sandbox_exec sem SELECT/INSERT/UPDATE/DELETE/TRUNCATE nas 5 tabelas')
+  FROM unnest(ARRAY['public.pluggy_settings','public.pluggy_items','public.pluggy_accounts','public.pluggy_transactions','public.pluggy_webhook_events']) t,
+       unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) p;
+SELECT pg_temp.ok(NOT has_function_privilege('sandbox_exec','public.pluggy_webhook_claim(integer,integer)','EXECUTE') AND NOT has_function_privilege('sandbox_exec','public.pluggy_is_allowed()','EXECUTE'), 'sandbox_exec sem EXECUTE nas funções Pluggy');
+SET ROLE sandbox_exec;
+DO $$ BEGIN PERFORM * FROM public.pluggy_transactions; RAISE EXCEPTION 'FALHOU: sandbox_exec lê';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'PASSOU: sandbox_exec não lê transações de Felipe/Michael'; END $$;
+DO $$ BEGIN INSERT INTO public.pluggy_webhook_events(event_id,event) VALUES ('x','item/updated'); RAISE EXCEPTION 'FALHOU: sandbox_exec insere';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'PASSOU: sandbox_exec não insere na fila'; END $$;
+DO $$ BEGIN UPDATE public.pluggy_items SET status='x'; RAISE EXCEPTION 'FALHOU: sandbox_exec altera';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'PASSOU: sandbox_exec não altera'; END $$;
+DO $$ BEGIN DELETE FROM public.pluggy_accounts; RAISE EXCEPTION 'FALHOU: sandbox_exec exclui';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'PASSOU: sandbox_exec não exclui'; END $$;
+RESET ROLE;
 -- fila
 SET ROLE service_role;
 SELECT pg_temp.ok((SELECT is_new FROM public.pluggy_webhook_enqueue('e1','item/updated','iF','{}')), 'evento novo gravado como pendente');
