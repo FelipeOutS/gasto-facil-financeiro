@@ -5,15 +5,22 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const Day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const Input = z.discriminatedUnion("action", [
   z.object({ action: z.literal("preview_real"), from: Day }),
-  z.object({ action: z.literal("import_real_once"), from: Day, batchId: z.string().uuid(), selection: z.array(z.object({ accountId: z.string().min(1).max(100), transactionId: z.string().min(1).max(100) })).min(1).max(1), confirmed: z.literal(true) }),
-  z.object({ action: z.literal("revert_real_once"), batchId: z.string().uuid(), confirmed: z.literal(true) }),
+  z.object({ action: z.literal("import_real_once"), from: Day, selection: z.array(z.object({ accountId: z.string().min(1).max(100), transactionId: z.string().min(1).max(100) })).min(1).max(1), confirmed: z.literal(true) }),
+  z.object({ action: z.literal("revert_real_once"), accountId: z.string().min(1).max(100), transactionId: z.string().min(1).max(100), confirmed: z.literal(true) }),
 ]);
 export type PluggyRealImportInput = z.input<typeof Input>;
 
 /**
  * Mercado Pago real (conector 606), só Admin Master. A prévia nunca grava; importar/desfazer
  * exigem a trava de código PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED e a autorização literal no banco.
+ * O lote vem SEMPRE da autorização aprovada (lida no servidor); o navegador nunca escolhe o lote.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function authorizedBatch(admin: any, userId: string, accountId: string, transactionId: string): Promise<string> {
+  const g = await admin.from("pluggy_real_import_grants").select("batch_id").eq("user_id", userId).eq("account_id", accountId).eq("transaction_id", transactionId).maybeSingle();
+  if (g.error || !g.data?.batch_id) throw new Error("pluggy_autorizacao_inexistente");
+  return g.data.batch_id as string;
+}
 export const pluggyRealImport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: PluggyRealImportInput) => Input.parse(input))
@@ -30,9 +37,11 @@ export const pluggyRealImport = createServerFn({ method: "POST" })
       if (!rp.PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED) throw new Error("importacao_bloqueada");
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const r = await (supabaseAdmin as any).rpc("pluggy_import_revert_real_once", { p_user_id: context.userId, p_batch_id: data.batchId });
+      const batchId = await authorizedBatch(supabaseAdmin, context.userId, data.accountId, data.transactionId);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const r = await (supabaseAdmin as any).rpc("pluggy_import_revert_real_once", { p_user_id: context.userId, p_batch_id: batchId });
       if (r.error) throw new Error("pluggy_import_rpc_indisponivel");
-      return { ok: true as const, resultado: r.data as { revertidos: number; preservados: number; replay: boolean } };
+      return { ok: true as const, resultado: r.data as { resultado: "revertido" | "parcial"; revertidos: number; preservados: number; replay: boolean } };
     }
     {
       // Prévia: somente leitura. Importação: revalida tudo no servidor e só grava pela RPC única autorizada.
@@ -52,7 +61,9 @@ export const pluggyRealImport = createServerFn({ method: "POST" })
         if (chosen.op !== "insert") throw new Error("movimentacao_nao_elegivel");
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const r = await (supabaseAdmin as any).rpc("pluggy_import_apply_real_once", { p_user_id: context.userId, p_account_id: chosen.account_id, p_transaction_id: chosen.transaction_id, p_batch_id: data.batchId, p_row: chosen.row });
+        const batchId = await authorizedBatch(supabaseAdmin, context.userId, chosen.account_id, chosen.transaction_id);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const r = await (supabaseAdmin as any).rpc("pluggy_import_apply_real_once", { p_user_id: context.userId, p_account_id: chosen.account_id, p_transaction_id: chosen.transaction_id, p_batch_id: batchId, p_row: chosen.row });
         if (r.error) throw new Error("pluggy_import_rpc_indisponivel");
         return { ok: true as const, resultado: r.data as { gastos: number; receitas: number; replay: boolean; batch_id: string } };
       }
