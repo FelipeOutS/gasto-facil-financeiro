@@ -60,7 +60,7 @@ describe("prévia real", () => {
 import { PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED, pickRealSelection } from "@/lib/pluggy/real-preview";
 describe("confirmação da primeira importação real", () => {
   const batch = [{ account_id: "a", transaction_id: "t1" }, { account_id: "a", transaction_id: "t2" }];
-  it("gravação real permanece bloqueada", () => expect(PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED).toBe(false));
+  it("gravação real liberada só no código; o banco exige a autorização única", () => expect(PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED).toBe(true));
   it("aceita só uma movimentação", () => {
     expect(pickRealSelection(batch, [{ accountId: "a", transactionId: "t1" }])).toHaveLength(1);
     expect(() => pickRealSelection(batch, [{ accountId: "a", transactionId: "t1" }, { accountId: "a", transactionId: "t2" }])).toThrow("selecao_invalida");
