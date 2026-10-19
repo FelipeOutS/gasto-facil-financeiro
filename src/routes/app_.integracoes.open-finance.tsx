@@ -85,7 +85,9 @@ function OpenFinancePage() {
           }
           void load();
         },
-        onError: () => toast.error("A conexão não foi concluída."),
+        onError: () => {
+          toast.error("A conexão não foi concluída.");
+        },
       });
       await widget.init();
     } catch (e) {
