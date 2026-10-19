@@ -22,3 +22,4 @@ if [ "$TOT" = 6 ] && [ "$UNI" = 6 ]; then echo "PASSOU: corrida 2 conexões — 
 # Correção candidata: limite de tentativas com reserva expirada
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/pluggy-webhook-claim-max-attempts.sql"
 "${P[@]}" -f "$ROOT/tests/sql/pluggy/20-lease-max.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"
+"${P[@]}" -f "$ROOT/tests/sql/pluggy/30-amount-original.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"

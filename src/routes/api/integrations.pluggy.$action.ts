@@ -80,6 +80,9 @@ export const Route = createFileRoute("/api/integrations/pluggy/$action")({
               const webhookUrl = pluggyWebhookUrl();
               if (!webhookUrl) return json({ error: "webhook_nao_configurado" }, 503);
               const parsed = z.object({ itemId: z.string().uuid().optional() }).parse(body);
+              const prefCt = await db.from("pluggy_settings").select("user_id").eq("user_id", a.userId).maybeSingle();
+              if (prefCt.error) return json({ error: "pluggy_store_indisponivel" }, 503);
+              if (!prefCt.data) return json({ ok: false, error: "historico_nao_escolhido" }, 409);
               if (parsed.itemId) {
                 const store = await createPluggyStore();
                 const owner = await store.getItemOwner(parsed.itemId);
@@ -99,6 +102,9 @@ export const Route = createFileRoute("/api/integrations/pluggy/$action")({
               const existing = await db.from("pluggy_items").select("user_id").eq("item_id", itemId).maybeSingle();
               if (existing.error) return json({ error: "pluggy_store_indisponivel" }, 503);
               if (existing.data && existing.data.user_id !== a.userId) return forbiddenResponse();
+              const pref = await db.from("pluggy_settings").select("user_id").eq("user_id", a.userId).maybeSingle();
+              if (pref.error) return json({ error: "pluggy_store_indisponivel" }, 503);
+              if (!pref.data) return json({ ok: false, error: "historico_nao_escolhido" }, 409);
               if (!existing.data) {
                 const ins = await db.from("pluggy_items").insert({
                   user_id: a.userId,
@@ -135,10 +141,16 @@ export const Route = createFileRoute("/api/integrations/pluggy/$action")({
                 { user_id: a.userId, auto_import: false, auto_categorize: s.autoCategorize, history_days: s.historyDays },
                 { onConflict: "user_id" },
               );
-              return r.error ? json({ error: "pluggy_store_indisponivel" }, 503) : json({ ok: true });
+              if (r.error) return json({ error: "pluggy_store_indisponivel" }, 503);
+              // Confirma a persistência relendo do banco.
+              const back = await db.from("pluggy_settings").select("history_days,auto_import,auto_categorize").eq("user_id", a.userId).maybeSingle();
+              if (back.error || !back.data || back.data.history_days !== s.historyDays || back.data.auto_import !== false) {
+                return json({ error: "preferencia_nao_confirmada" }, 503);
+              }
+              return json({ ok: true, historyDays: back.data.history_days, autoCategorize: back.data.auto_categorize });
             }
             case "resume": {
-              const r = await db.from("pluggy_settings").upsert({ user_id: a.userId, access_state: "ok", paused_reason: null }, { onConflict: "user_id" });
+              const r = await db.from("pluggy_settings").update({ access_state: "ok", paused_reason: null }).eq("user_id", a.userId);
               return r.error ? json({ error: "pluggy_store_indisponivel" }, 503) : json({ ok: true });
             }
             case "categoria": {

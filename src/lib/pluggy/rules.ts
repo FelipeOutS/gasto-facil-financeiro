@@ -55,6 +55,36 @@ const BILL_PAYMENT = /(pagamento\s+(de\s+)?fatura|pgto\s+fatura|pag\s+fatura|cre
 const SAME_OWNER = /(same person transfer|transfer.*same ownership|mesma titularidade|transferencia entre contas)/;
 const REFUND = /(estorno|refund|reembolso|chargeback|devolucao)/;
 
+const GENERIC_BOLETO = /(pagamento de boleto|pagto boleto|pag boleto|bank slip|boleto)/;
+/** Categorias da Pluggy que NÃO indicam compra (pagamento, ajuste, juros, tarifa, transferência). */
+const NON_PURCHASE = /(transfer|payment|pagamento|adjust|ajuste|interest|juros|fee|tarifa|iof|encargo|credito|cashback|bonus|rotativo|saque|withdraw)/;
+
+function hasMerchantEvidence(tx: PluggyTx): boolean {
+  const desc = norm(tx.description).replace(/pagamento de boleto|boleto/g, "").trim();
+  return desc.length >= 3;
+}
+
+/**
+ * Cartão de crédito: a Pluggy pode devolver compras como `type: CREDIT` com
+ * valor NEGATIVO (visto no Pluggy Bank). Compra só é reconhecida com evidência:
+ * confirmada + categoria de comerciante (não pagamento/ajuste/juros/tarifa/
+ * transferência). Positivos, divergências sem evidência e ajustes vão para revisão.
+ */
+function classifyCardTransaction(tx: PluggyTx, text: string): Classification {
+  const cat = norm(tx.category);
+  const merchantCategory = !!cat && !NON_PURCHASE.test(cat);
+  const confirmed = (tx.status ?? "POSTED") === "POSTED";
+  if (tx.amount < 0) {
+    if (confirmed && merchantCategory && !NON_PURCHASE.test(norm(tx.operationType))) {
+      return { kind: "gasto", reason: tx.type === "CREDIT" ? "compra_cartao_valor_negativo" : "compra_cartao" };
+    }
+    return { kind: "revisao", reason: "cartao_valor_negativo_sem_evidencia" };
+  }
+  // valor positivo
+  if (tx.type === "DEBIT" && !/(ajuste|adjust)/.test(text)) return { kind: "gasto", reason: "compra_cartao" };
+  return { kind: "revisao", reason: "credito_em_cartao" };
+}
+
 /**
  * Classifica uma transação. Regras conservadoras: tudo que não é claramente
  * gasto ou receita vai para revisão; nada é descartado sem motivo explícito.
@@ -77,9 +107,9 @@ export function classifyTransaction(tx: PluggyTx, account: AccountKind, ownDocum
 
   if (REFUND.test(text)) return { kind: "revisao", reason: "estorno" };
 
-  if (account === "CREDIT") {
-    if (tx.type === "DEBIT") return { kind: "gasto", reason: "compra_cartao" };
-    return { kind: "revisao", reason: "credito_em_cartao" };
+  if (account === "CREDIT") return classifyCardTransaction(tx, text);
+  if (tx.type === "DEBIT" && GENERIC_BOLETO.test(text) && !hasMerchantEvidence(tx)) {
+    return { kind: "revisao", reason: "boleto_sem_identificacao" };
   }
   return tx.type === "DEBIT"
     ? { kind: "gasto", reason: "debito_conta" }
@@ -97,6 +127,7 @@ export const GI_CATEGORIAS = [
   "Supermercado",
   "Transporte",
   "Moradia",
+  "Contas",
   "Compras",
   "Saúde",
   "Lazer",
@@ -112,8 +143,9 @@ const CATEGORY_RULES: Array<[RegExp, GiCategoria]> = [
   [/(supermarket|groceries|supermercado|mercado|atacad|assai|carrefour|pao de acucar)/, "Supermercado"],
   [/(restaurant|food|eating out|delivery|ifood|lanchonete|padaria|alimenta)/, "Alimentação"],
   [/(transport|taxi|ride|uber|99app|gas station|fuel|combustivel|posto|parking|estacionamento|pedagio)/, "Transporte"],
-  [/(housing|rent|aluguel|condominio|utilities|electricity|energia|water|agua|internet|telefon)/, "Moradia"],
-  [/(health|pharmacy|farmacia|drogaria|hospital|clinic|medic|dentist)/, "Saúde"],
+  [/(electricity|energia|eletrobras|light sa|enel|cemig|copel|water|agua|sabesp|gas natural|comgas|telecommunications|telecom|internet|telefon|celular|vivo|claro|tim |oi fibra)/, "Contas"],
+  [/(housing|rent|aluguel|condominio|utilities)/, "Moradia"],
+  [/(health|pharmacy|farmacia|drogaria|hospital|clinic|medic|dentist|gym|fitness|academia|smart ?fit)/, "Saúde"],
   [/(subscription|streaming|digital services|netflix|spotify|youtube|prime video|disney|apple\.com|google)/, "Assinaturas"],
   [/(leisure|entertainment|cinema|travel|viagem|hotel|lazer|show|ingresso)/, "Lazer"],
   [/(shopping|clothing|electronics|compras|loja|mercado livre|amazon|shopee|magalu)/, "Compras"],
