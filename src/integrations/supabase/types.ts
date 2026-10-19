@@ -2935,6 +2935,306 @@ export type Database = {
           },
         ]
       }
+      pluggy_accounts: {
+        Row: {
+          account_id: string
+          available_credit: number | null
+          balance: number | null
+          balance_due_date: string | null
+          credit_limit: number | null
+          currency: string
+          id: string
+          is_sandbox: boolean
+          item_id: string
+          name: string | null
+          number_last4: string | null
+          subtype: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          available_credit?: number | null
+          balance?: number | null
+          balance_due_date?: string | null
+          credit_limit?: number | null
+          currency?: string
+          id?: string
+          is_sandbox: boolean
+          item_id: string
+          name?: string | null
+          number_last4?: string | null
+          subtype?: string | null
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          available_credit?: number | null
+          balance?: number | null
+          balance_due_date?: string | null
+          credit_limit?: number | null
+          currency?: string
+          id?: string
+          is_sandbox?: boolean
+          item_id?: string
+          name?: string | null
+          number_last4?: string | null
+          subtype?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pluggy_accounts_user_id_item_id_is_sandbox_fkey"
+            columns: ["user_id", "item_id", "is_sandbox"]
+            isOneToOne: false
+            referencedRelation: "pluggy_items"
+            referencedColumns: ["user_id", "item_id", "is_sandbox"]
+          },
+        ]
+      }
+      pluggy_items: {
+        Row: {
+          connector_id: number | null
+          connector_name: string | null
+          consent_expires_at: string | null
+          created_at: string
+          deleted_at: string | null
+          execution_status: string | null
+          id: string
+          is_sandbox: boolean
+          item_id: string
+          last_error: string | null
+          last_synced_at: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connector_id?: number | null
+          connector_name?: string | null
+          consent_expires_at?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          execution_status?: string | null
+          id?: string
+          is_sandbox: boolean
+          item_id: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connector_id?: number | null
+          connector_name?: string | null
+          consent_expires_at?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          execution_status?: string | null
+          id?: string
+          is_sandbox?: boolean
+          item_id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pluggy_settings: {
+        Row: {
+          access_state: string
+          auto_categorize: boolean
+          auto_import: boolean
+          history_days: number
+          paused_reason: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_state?: string
+          auto_categorize?: boolean
+          auto_import?: boolean
+          history_days?: number
+          paused_reason?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_state?: string
+          auto_categorize?: boolean
+          auto_import?: boolean
+          history_days?: number
+          paused_reason?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pluggy_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          categoria_manual: string | null
+          categoria_sugerida: string | null
+          classification: string
+          classification_reason: string
+          created_at: string
+          currency: string
+          date: string
+          dedupe_key: string
+          deleted_at: string | null
+          description: string | null
+          id: string
+          imported_gasto_id: string | null
+          imported_receita_id: string | null
+          installment_number: number | null
+          is_sandbox: boolean
+          item_id: string
+          mp_match_ids: string[] | null
+          operation_type: string | null
+          pluggy_category: string | null
+          review_status: string | null
+          status: string
+          total_installments: number | null
+          transaction_id: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          categoria_manual?: string | null
+          categoria_sugerida?: string | null
+          classification: string
+          classification_reason: string
+          created_at?: string
+          currency?: string
+          date: string
+          dedupe_key: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          imported_gasto_id?: string | null
+          imported_receita_id?: string | null
+          installment_number?: number | null
+          is_sandbox: boolean
+          item_id: string
+          mp_match_ids?: string[] | null
+          operation_type?: string | null
+          pluggy_category?: string | null
+          review_status?: string | null
+          status: string
+          total_installments?: number | null
+          transaction_id: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          categoria_manual?: string | null
+          categoria_sugerida?: string | null
+          classification?: string
+          classification_reason?: string
+          created_at?: string
+          currency?: string
+          date?: string
+          dedupe_key?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          imported_gasto_id?: string | null
+          imported_receita_id?: string | null
+          installment_number?: number | null
+          is_sandbox?: boolean
+          item_id?: string
+          mp_match_ids?: string[] | null
+          operation_type?: string | null
+          pluggy_category?: string | null
+          review_status?: string | null
+          status?: string
+          total_installments?: number | null
+          transaction_id?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pluggy_transactions_user_id_item_id_account_id_is_sandbox_fkey"
+            columns: ["user_id", "item_id", "account_id", "is_sandbox"]
+            isOneToOne: false
+            referencedRelation: "pluggy_accounts"
+            referencedColumns: [
+              "user_id",
+              "item_id",
+              "account_id",
+              "is_sandbox",
+            ]
+          },
+        ]
+      }
+      pluggy_webhook_events: {
+        Row: {
+          attempts: number
+          claim_token: string | null
+          error: string | null
+          event: string
+          event_id: string
+          id: string
+          item_id: string | null
+          locked_until: string | null
+          max_attempts: number
+          next_attempt_at: string
+          processed_at: string | null
+          received_at: string
+          status: string
+          transaction_ids: string[]
+        }
+        Insert: {
+          attempts?: number
+          claim_token?: string | null
+          error?: string | null
+          event: string
+          event_id: string
+          id?: string
+          item_id?: string | null
+          locked_until?: string | null
+          max_attempts?: number
+          next_attempt_at?: string
+          processed_at?: string | null
+          received_at?: string
+          status?: string
+          transaction_ids?: string[]
+        }
+        Update: {
+          attempts?: number
+          claim_token?: string | null
+          error?: string | null
+          event?: string
+          event_id?: string
+          id?: string
+          item_id?: string | null
+          locked_until?: string | null
+          max_attempts?: number
+          next_attempt_at?: string
+          processed_at?: string | null
+          received_at?: string
+          status?: string
+          transaction_ids?: string[]
+        }
+        Relationships: []
+      }
       product_analytics_events: {
         Row: {
           build_id: string | null
@@ -5558,6 +5858,40 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      pluggy_is_allowed: { Args: never; Returns: boolean }
+      pluggy_webhook_claim: {
+        Args: { p_lease_seconds: number; p_limit: number }
+        Returns: {
+          attempts: number
+          claim_token: string
+          event: string
+          id: string
+          item_id: string
+          max_attempts: number
+          transaction_ids: string[]
+        }[]
+      }
+      pluggy_webhook_enqueue: {
+        Args: {
+          p_event: string
+          p_event_id: string
+          p_item_id: string
+          p_transaction_ids: string[]
+        }
+        Returns: {
+          is_new: boolean
+          status: string
+        }[]
+      }
+      pluggy_webhook_finish: {
+        Args: {
+          p_claim_token: string
+          p_error: string
+          p_id: string
+          p_ok: boolean
+        }
+        Returns: string
       }
       rate_limit_hit: {
         Args: {
