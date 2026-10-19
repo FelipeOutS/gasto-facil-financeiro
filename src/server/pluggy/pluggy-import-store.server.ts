@@ -53,7 +53,7 @@ export function createImportDeps(db: Db): ImportDeps {
       return txs.filter((t) => t.is_sandbox === true && allowed.has(t.account_id)).map((t) => ({ ...t, amount: Number(t.amount), amount_original: t.amount_original == null ? null : Number(t.amount_original), account_type: allowed.get(t.account_id) })) as PlanTx[];
     },
     async cardLinks(userId) {
-      const r = await db.from("pluggy_card_links").select("account_id,cartao_id").eq("user_id", userId);
+      const r = await db.from("pluggy_card_links").select("account_id,cartao_id").eq("user_id", userId).eq("active", true);
       if (missing(r.error)) return []; // before migration, unlinked card purchases go to review
       if (r.error) throw new Error("pluggy_leitura_indisponivel");
       const cards = await rows(() => db.from("cartoes").select("id,dia_fechamento,dia_vencimento").eq("user_id", userId).order("id"));
