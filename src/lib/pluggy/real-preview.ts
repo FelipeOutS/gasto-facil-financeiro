@@ -102,3 +102,29 @@ export function pickRealSelection<T extends { account_id: string; transaction_id
     return hit;
   });
 }
+
+/**
+ * Fase 4 — importação real em LOTE FECHADO: BLOQUEADA até aplicação aprovada de
+ * `docs/migrations-candidate/pluggy-real-batch-import.sql` e da autorização literal do lote.
+ */
+export const PLUGGY_REAL_BATCH_IMPORT_AUTHORIZED = false as const;
+export const REAL_BATCH_MAX = 10;
+
+/** Seleção múltipla: 1..10 itens distintos, todos do lote revalidado no servidor. */
+export function pickRealBatchSelection<T extends { account_id: string; transaction_id: string }>(batch: readonly T[], sel: { accountId: string; transactionId: string }[]): T[] {
+  if (sel.length === 0 || sel.length > REAL_BATCH_MAX) throw new Error("selecao_invalida");
+  if (new Set(sel.map((s) => `${s.accountId}|${s.transactionId}`)).size !== sel.length) throw new Error("selecao_repetida");
+  return sel.map((s) => {
+    const hit = batch.find((a) => a.account_id === s.accountId && a.transaction_id === s.transactionId);
+    if (!hit) throw new Error("movimentacao_nao_elegivel");
+    return hit;
+  });
+}
+
+/** A seleção precisa coincidir EXATAMENTE com os itens de uma autorização de lote (sem faltar nem sobrar). */
+export function matchBatchGrant(grants: readonly { batch_id: string; items: { account_id: string; transaction_id: string }[] }[], sel: readonly { account_id: string; transaction_id: string }[]): string | null {
+  const key = (x: { account_id: string; transaction_id: string }) => `${x.account_id}|${x.transaction_id}`;
+  const want = new Set(sel.map(key));
+  const g = grants.find((g) => g.items.length === want.size && g.items.every((i) => want.has(key(i))));
+  return g?.batch_id ?? null;
+}
