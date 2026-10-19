@@ -40,3 +40,9 @@ Q="SET ROLE service_role; BEGIN; SELECT public.pluggy_import_apply('47df50ce-df1
 wait "$A"; wait "$B"
 N=$("${P[@]}" -tAc "SELECT count(*) FROM public.receitas WHERE id_operacao_banco='pluggy:acc1:race-income'")
 if [ "$N" = 1 ]; then echo 'PASSOU: corrida importação 2 conexões — uma receita, sem duplicação'; else echo "FALHOU: corrida importação $N"; exit 1; fi
+Q="SET ROLE service_role; BEGIN; SELECT public.pluggy_import_revert('47df50ce-df1e-4c54-8fae-0ffb5105478d',(SELECT batch_id FROM public.pluggy_import_entries WHERE transaction_id='race-income')); SELECT pg_sleep(1); COMMIT;"
+( "${P[@]}" -tAc "$Q" > "$D/ra" ) & A=$!
+( "${P[@]}" -tAc "$Q" > "$D/rb" ) & B=$!
+wait "$A"; wait "$B"
+N=$("${P[@]}" -tAc "SELECT count(*) FROM public.receitas WHERE id_operacao_banco='pluggy:acc1:race-income' AND deleted_at IS NOT NULL")
+if [ "$N" = 1 ] && grep -q '"replay": true' "$D/ra" "$D/rb"; then echo 'PASSOU: corrida desfazer 2 conexões — exclusão reversível única e replay'; else echo "FALHOU: corrida desfazer $N"; exit 1; fi

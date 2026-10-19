@@ -10,6 +10,9 @@ SELECT md5(string_agg(to_jsonb(r)::text,'' ORDER BY id)) AS hr FROM public.recei
 SET ROLE service_role;
 SELECT pg_temp.ok(pg_temp.blocked(format('SELECT public.pluggy_import_apply(%L,gen_random_uuid(),''[]'')',:'F')), 'candidate: direct service apply blocked before even creating a batch');
 SELECT pg_temp.ok(pg_temp.blocked(format('SELECT public.pluggy_import_revert(%L,gen_random_uuid())',:'F')), 'candidate: direct service revert blocked');
+SELECT pg_temp.ok(pg_temp.blocked(format('SELECT public.pluggy_import_apply(%L,gen_random_uuid(),''[{"op":"update"}]'')',:'F')), 'candidate: direct service update blocked');
+SELECT pg_temp.ok(pg_temp.blocked(format('SELECT public.pluggy_import_apply(%L,gen_random_uuid(),''[{"op":"remove"}]'')',:'F')), 'candidate: direct service soft delete blocked');
+SELECT pg_temp.ok(NOT has_schema_privilege('service_role','public','CREATE'),'service role cannot create a substitute release helper');
 SELECT set_config('pluggy.financial_release','true',false);
 SELECT pg_temp.ok(pg_temp.blocked(format('SELECT public.pluggy_import_apply(%L,gen_random_uuid(),''[]'')',:'F')), 'candidate: forged session setting cannot release writes');
 SELECT pg_temp.ok(NOT has_function_privilege('authenticated','public.pluggy_assert_financial_release()','EXECUTE') AND NOT has_function_privilege('sandbox_exec','public.pluggy_assert_financial_release()','EXECUTE'), 'release helper ACL closed');
