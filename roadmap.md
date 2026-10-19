@@ -28,3 +28,4 @@
 - [x] Pluggy Fase 3: adaptador, prévia autenticada, vínculo/revisão/histórico/desfazer, consentimento individual e hook incremental preparados e testados; gravação bloqueada, sem migrar/ativar/publicar.
 - [ ] Pluggy Fase 3 ativação: aguarda aprovação do SQL candidato, liberação de gravação e testes de escrita autorizados; reversão de mutações incrementais exige journal adicional e F4 genérica precisa excluir origem Pluggy antes de futura liberação.
 - [x] Pluggy validação dos vínculos: 40 movimentos explicados, destinos/categorias/duplicações detalhados, duas opções próprias simuladas sem salvar, correção/desvínculo seguro em código/SQL candidato; 98 testes e 110 verificações SQL descartáveis aprovados, relatório atualizado; nenhuma ativação ou migração.
+- [ ] Pluggy revisão final: bloqueio financeiro no SQL, integridade dos vínculos, proteção F4 no servidor, status reais read-only, testes isolados/gerais e entrega; nenhuma migração ou ativação autorizada.
