@@ -8,6 +8,8 @@ const Input = z.discriminatedUnion("action", [
   z.object({ action: z.literal("real_status") }),
   z.object({ action: z.literal("import_real_once"), from: Day, selection: z.array(z.object({ accountId: z.string().min(1).max(100), transactionId: z.string().min(1).max(100) })).min(1).max(1), confirmed: z.literal(true) }),
   z.object({ action: z.literal("revert_real_once"), accountId: z.string().min(1).max(100), transactionId: z.string().min(1).max(100), confirmed: z.literal(true) }),
+  z.object({ action: z.literal("import_real_batch"), from: Day, selection: z.array(z.object({ accountId: z.string().min(1).max(100), transactionId: z.string().min(1).max(100) })).min(1).max(10), confirmed: z.literal(true) }),
+  z.object({ action: z.literal("revert_real_batch"), batchId: z.string().uuid(), confirmed: z.literal(true) }),
 ]);
 export type PluggyRealImportInput = z.input<typeof Input>;
 
@@ -48,7 +50,27 @@ export const pluggyRealImport = createServerFn({ method: "POST" })
         const l = e.data?.entry_id ? await context.supabase.from(tbl).select("descricao,valor,data,deleted_at").eq("id", e.data.entry_id).eq("user_id", context.userId).maybeSingle() : null; // soft-delete-exceção: mostra estado do item do lote
         lotes.push({ accountId: row.account_id as string, transactionId: row.transaction_id as string, batchId: row.batch_id as string, table: tbl, revertido: !!row.reverted_at, resultado: (row.revert_outcome ?? null) as string | null, estado: (e.data?.state ?? null) as string | null, lancamento: l?.data ? { descricao: l.data.descricao as string, valor: Number(l.data.valor), data: l.data.data as string, excluido: !!l.data.deleted_at } : null });
       }
-      return { status: true as const, lotes, revertAuthorized: rp.PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED };
+      // Histórico dos lotes fechados (Fase 4). Tabela ausente = SQL ainda não aplicado: lista vazia.
+      const bg = await a.from("pluggy_real_batch_grants").select("batch_id,item_count,total,consumed_at,reverted_at,revert_outcome").eq("user_id", context.userId).not("consumed_at", "is", null);
+      const lotesFechados = [];
+      for (const row of bg.error ? [] : bg.data ?? []) {
+        const ex = await context.supabase.from("extratos_importados").select("status,total_receitas,total_despesas,periodo_inicio,periodo_fim").eq("id", row.batch_id).eq("user_id", context.userId).maybeSingle();
+        lotesFechados.push({ batchId: row.batch_id as string, itens: Number(row.item_count), total: Number(row.total), revertido: !!row.reverted_at, resultado: (row.revert_outcome ?? null) as string | null, status: (ex.data?.status ?? null) as string | null, receitas: Number(ex.data?.total_receitas ?? 0), despesas: Number(ex.data?.total_despesas ?? 0), de: (ex.data?.periodo_inicio ?? null) as string | null, ate: (ex.data?.periodo_fim ?? null) as string | null });
+      }
+      return { status: true as const, lotes, lotesFechados, revertAuthorized: rp.PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED, batchRevertAuthorized: rp.PLUGGY_REAL_BATCH_IMPORT_AUTHORIZED };
+    }
+    if (data.action === "revert_real_batch") {
+      const rp = await import("@/lib/pluggy/real-preview");
+      if (!rp.canUseRealPreview(context.userId, (roles.data ?? []).map((r) => r.role))) throw new Error("pluggy_nao_autorizado");
+      if (!rp.PLUGGY_REAL_BATCH_IMPORT_AUTHORIZED) throw new Error("importacao_bloqueada");
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const a = supabaseAdmin as any;
+      const g = await a.from("pluggy_real_batch_grants").select("batch_id").eq("user_id", context.userId).eq("batch_id", data.batchId).not("consumed_at", "is", null).maybeSingle();
+      if (g.error || !g.data) throw new Error("pluggy_lote_inexistente");
+      const r = await a.rpc("pluggy_import_revert_real_batch", { p_user_id: context.userId, p_batch_id: g.data.batch_id });
+      if (r.error) throw new Error("pluggy_import_rpc_indisponivel");
+      return { ok: true as const, resultado: r.data as { resultado: "revertido" | "parcial"; revertidos: number; preservados: number; replay: boolean } };
     }
     if (data.action === "revert_real_once") {
       const rp = await import("@/lib/pluggy/real-preview");
@@ -74,7 +96,28 @@ export const pluggyRealImport = createServerFn({ method: "POST" })
       ]);
       const { planImport, summarizePlan } = await import("@/lib/pluggy/import-plan");
       const actions = planImport({ userId: context.userId, txs, cardLinks, categorias, imported, existing });
-      const lote = rp.firstBatchActions(actions, txs);
+      // Nunca repropõe transação já importada, inclusive desfeita (ex.: 1º teste de R$ 0,01).
+      const prev = await context.supabase.from("pluggy_import_entries").select("account_id,transaction_id").eq("user_id", context.userId);
+      if (prev.error) throw new Error("pluggy_status_indisponivel");
+      const done = new Set((prev.data ?? []).map((e) => `${e.account_id}|${e.transaction_id}`));
+      const lote = rp.firstBatchActions(actions, txs).filter((a) => !done.has(`${a.account_id}|${a.transaction_id}`));
+      if (data.action === "import_real_batch") {
+        if (!rp.PLUGGY_REAL_BATCH_IMPORT_AUTHORIZED) throw new Error("importacao_bloqueada");
+        const chosen = rp.pickRealBatchSelection(lote, data.selection);
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const a = supabaseAdmin as any;
+        const gi = await a.from("pluggy_real_batch_grant_items").select("batch_id,account_id,transaction_id").eq("user_id", context.userId);
+        if (gi.error) throw new Error("pluggy_autorizacao_inexistente");
+        const byBatch = new Map<string, { account_id: string; transaction_id: string }[]>();
+        for (const i of gi.data ?? []) byBatch.set(i.batch_id, [...(byBatch.get(i.batch_id) ?? []), i]);
+        const batchId = rp.matchBatchGrant([...byBatch].map(([batch_id, items]) => ({ batch_id, items })), chosen);
+        if (!batchId) throw new Error("pluggy_lote_nao_autorizado");
+        const rows = chosen.map((c) => ({ account_id: c.account_id, transaction_id: c.transaction_id, descricao: c.op === "insert" ? c.row.descricao : "", estabelecimento: c.op === "insert" && c.table === "gastos" ? (c.row.estabelecimento ?? "") : "" }));
+        const r = await a.rpc("pluggy_import_apply_real_batch", { p_user_id: context.userId, p_batch_id: batchId, p_rows: rows });
+        if (r.error) throw new Error("pluggy_import_rpc_indisponivel");
+        return { ok: true as const, resultado: r.data as { gastos: number; receitas: number; replay: boolean; batch_id: string } };
+      }
       if (data.action === "import_real_once") {
         const [chosen] = rp.pickRealSelection(lote, data.selection);
         if (chosen.op !== "insert") throw new Error("movimentacao_nao_elegivel");
@@ -86,6 +129,6 @@ export const pluggyRealImport = createServerFn({ method: "POST" })
         if (r.error) throw new Error("pluggy_import_rpc_indisponivel");
         return { ok: true as const, resultado: r.data as { gastos: number; receitas: number; replay: boolean; batch_id: string } };
       }
-      return { real: true as const, window: win, resumo: summarizePlan(actions), lines: rp.groupRealPreview(actions, txs, lote), firstBatch: lote.map((a) => ({ account_id: a.account_id, transaction_id: a.transaction_id, table: a.op === "insert" ? a.table : null, row: a.op === "insert" ? a.row : null })), existingCount: existing.length, releaseAuthorized: releaseAuthorized, realFirstImportAuthorized: rp.PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED };
+      return { real: true as const, window: win, resumo: summarizePlan(actions), lines: rp.groupRealPreview(actions, txs, lote), firstBatch: lote.map((a) => ({ account_id: a.account_id, transaction_id: a.transaction_id, table: a.op === "insert" ? a.table : null, row: a.op === "insert" ? a.row : null })), existingCount: existing.length, releaseAuthorized: releaseAuthorized, realFirstImportAuthorized: rp.PLUGGY_REAL_BATCH_IMPORT_AUTHORIZED };
     }
   });

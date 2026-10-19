@@ -60,7 +60,7 @@ describe("prévia real", () => {
 import { PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED, pickRealSelection } from "@/lib/pluggy/real-preview";
 describe("confirmação da primeira importação real", () => {
   const batch = [{ account_id: "a", transaction_id: "t1" }, { account_id: "a", transaction_id: "t2" }];
-  it("gravação real liberada só no código; o banco exige a autorização única", () => expect(PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED).toBe(true));
+  it("gravação real permanece bloqueada", () => expect(PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED).toBe(false));
   it("aceita só uma movimentação", () => {
     expect(pickRealSelection(batch, [{ accountId: "a", transactionId: "t1" }])).toHaveLength(1);
     expect(() => pickRealSelection(batch, [{ accountId: "a", transactionId: "t1" }, { accountId: "a", transactionId: "t2" }])).toThrow("selecao_invalida");
@@ -77,4 +77,18 @@ describe("apresentação da prévia real", () => {
     const line = groupRealPreview(actions, txs, firstBatchActions(actions, txs)).find((l) => l.transaction_id === "u1");
     expect([line?.grupo, line?.motivo]).toEqual(["revisao", "gasto_com_estorno_no_periodo"]);
   });
+});
+
+import { PLUGGY_REAL_BATCH_IMPORT_AUTHORIZED, pickRealBatchSelection, matchBatchGrant } from "@/lib/pluggy/real-preview";
+describe("Fase 4: lote fechado", () => {
+  const lote = [{ account_id: "a", transaction_id: "1" }, { account_id: "a", transaction_id: "2" }, { account_id: "a", transaction_id: "3" }];
+  it("gravação em lote permanece bloqueada", () => expect(PLUGGY_REAL_BATCH_IMPORT_AUTHORIZED).toBe(false));
+  it("aceita seleção múltipla do lote", () => expect(pickRealBatchSelection(lote, [{ accountId: "a", transactionId: "1" }, { accountId: "a", transactionId: "3" }])).toHaveLength(2));
+  it("recusa item fora do lote", () => expect(() => pickRealBatchSelection(lote, [{ accountId: "a", transactionId: "9" }])).toThrow("movimentacao_nao_elegivel"));
+  it("recusa repetição", () => expect(() => pickRealBatchSelection(lote, [{ accountId: "a", transactionId: "1" }, { accountId: "a", transactionId: "1" }])).toThrow("selecao_repetida"));
+  it("recusa mais de 10", () => expect(() => pickRealBatchSelection(lote, Array.from({ length: 11 }, (_, i) => ({ accountId: "a", transactionId: String(i) })))).toThrow("selecao_invalida"));
+  const grants = [{ batch_id: "L", items: [lote[0], lote[1]] }];
+  it("lote autorizado só com seleção idêntica", () => expect(matchBatchGrant(grants, [lote[1], lote[0]])).toBe("L"));
+  it("seleção parcial não usa a autorização", () => expect(matchBatchGrant(grants, [lote[0]])).toBeNull());
+  it("seleção com item extra não usa a autorização", () => expect(matchBatchGrant(grants, lote)).toBeNull());
 });

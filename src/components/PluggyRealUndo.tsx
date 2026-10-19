@@ -18,7 +18,7 @@ export function PluggyRealUndo() {
     try { const r = await call({ data: { action: "real_status" } }); if ("status" in r) setSt(r as Status); } catch { setSt(null); }
   }
   useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!st || st.lotes.length === 0) return null;
+  if (!st || (st.lotes.length === 0 && st.lotesFechados.length === 0)) return null;
   async function desfazer(l: Status["lotes"][number]) {
     const x = l.lancamento;
     const txt = x ? `${x.descricao} · ${brl(x.valor)} · ${dt(x.data)}` : "lançamento do lote";
@@ -28,6 +28,17 @@ export function PluggyRealUndo() {
       const r = await call({ data: { action: "revert_real_once", accountId: l.accountId, transactionId: l.transactionId, confirmed: true } });
       const res = "resultado" in r ? (r.resultado as { resultado: string; replay: boolean }) : null;
       toast.success(res?.replay ? "Essa importação já tinha sido desfeita." : res?.resultado === "parcial" ? "Lançamento editado foi preservado." : "Importação desfeita.");
+      await load();
+    } catch { toast.error("Não foi possível desfazer. Nada foi alterado."); }
+    finally { setBusy(false); }
+  }
+  async function desfazerLote(l: Status["lotesFechados"][number]) {
+    if (!confirm(`Desfazer o lote inteiro?\n\n${l.itens} lançamento(s) · ${brl(l.total)}${l.de ? ` · ${dt(l.de)} a ${dt(l.ate ?? l.de)}` : ""}\nLote ${l.batchId}\n\nOs lançamentos serão excluídos de forma reversível. Editados à mão serão preservados. Nenhum outro lançamento é afetado.`)) return;
+    setBusy(true);
+    try {
+      const r = await call({ data: { action: "revert_real_batch", batchId: l.batchId, confirmed: true } });
+      const res = "resultado" in r ? (r.resultado as { resultado: string; replay: boolean }) : null;
+      toast.success(res?.replay ? "Esse lote já tinha sido desfeito." : res?.resultado === "parcial" ? "Lote desfeito; editados preservados." : "Lote desfeito.");
       await load();
     } catch { toast.error("Não foi possível desfazer. Nada foi alterado."); }
     finally { setBusy(false); }
@@ -48,6 +59,21 @@ export function PluggyRealUndo() {
           {!l.revertido && (
             <Button size="sm" variant="destructive" className="w-full sm:w-auto" disabled={busy || !st.revertAuthorized} onClick={() => desfazer(l)}>
               <Undo2 className="mr-2 h-4 w-4" />Desfazer importação
+            </Button>
+          )}
+        </div>
+      ))}
+      {st.lotesFechados.map((l) => (
+        <div key={l.batchId} className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0 text-xs">
+            <p className="text-sm font-medium">Lote · {l.itens} lançamento(s) · {brl(l.total)}</p>
+            <p className="text-muted-foreground">Receitas {brl(l.receitas)} · Gastos {brl(l.despesas)}{l.de ? ` · ${dt(l.de)} a ${dt(l.ate ?? l.de)}` : ""}</p>
+            <p className="break-all text-muted-foreground">Lote {l.batchId}</p>
+            <p className="text-muted-foreground">{l.revertido ? (l.resultado === "parcial" ? "Desfeito parcialmente (editados preservados)" : "Lote desfeito") : "Importado"}</p>
+          </div>
+          {!l.revertido && (
+            <Button size="sm" variant="destructive" className="w-full sm:w-auto" disabled={busy || !st.batchRevertAuthorized} onClick={() => desfazerLote(l)}>
+              <Undo2 className="mr-2 h-4 w-4" />Desfazer lote
             </Button>
           )}
         </div>

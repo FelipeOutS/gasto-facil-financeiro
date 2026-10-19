@@ -18,26 +18,29 @@ export function PluggyRealPreview() {
   const [from, setFrom] = useState(() => new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10));
   const [data, setData] = useState<Real | null>(null);
   const [busy, setBusy] = useState(false);
-  const [sel, setSel] = useState<string | null>(null);
+  const [sel, setSel] = useState<string[]>([]);
   async function run() {
     setBusy(true);
     try {
       const r = await call({ data: { action: "preview_real", from } });
-      if ("real" in r && r.real === true) { setData(r as Real); setSel(null); }
+      if ("real" in r && r.real === true) { setData(r as Real); setSel([]); }
     } catch { toast.error("Prévia real indisponível para esta conta ou período."); }
     finally { setBusy(false); }
   }
-  const chosen = data?.firstBatch.find((b) => `${b.account_id}|${b.transaction_id}` === sel) ?? null;
+  const chosen = data?.firstBatch.filter((b) => sel.includes(`${b.account_id}|${b.transaction_id}`) && b.row) ?? [];
+  const totG = chosen.filter((c) => c.table === "gastos").reduce((s, c) => s + (c.row?.valor ?? 0), 0);
+  const totR = chosen.filter((c) => c.table === "receitas").reduce((s, c) => s + (c.row?.valor ?? 0), 0);
+  const toggle = (k: string) => setSel((p) => (p.includes(k) ? p.filter((x) => x !== k) : p.length >= 10 ? p : [...p, k]));
   async function importar() {
-    if (!data || !chosen?.row) return;
-    const r = chosen.row;
-    if (!confirm(`Criar exatamente 1 lançamento em ${chosen.table === "gastos" ? "Gastos" : "Receitas"}?\n${r.data} · ${r.descricao} · ${brl(r.valor)}\nPoderá ser desfeito enquanto não for editado.`)) return;
+    if (!data || chosen.length === 0) return;
+    const lista = chosen.map((c) => `${c.row!.data} · ${c.row!.descricao} · ${brl(c.row!.valor)} → ${c.table === "gastos" ? "Gastos" : "Receitas"}`).join("\n");
+    if (!confirm(`Importar ${chosen.length} movimentação(ões)?\n\n${lista}\n\nGastos: ${brl(totG)} · Receitas: ${brl(totR)}\nTudo ou nada. Poderá ser desfeito.`)) return;
     setBusy(true);
     try {
-      await call({ data: { action: "import_real_once", from: data.window.from, selection: [{ accountId: chosen.account_id, transactionId: chosen.transaction_id }], confirmed: true } });
-      toast.success("Lançamento criado.");
+      await call({ data: { action: "import_real_batch", from: data.window.from, selection: chosen.map((c) => ({ accountId: c.account_id, transactionId: c.transaction_id })), confirmed: true } });
+      toast.success("Lote importado.");
       await run();
-    } catch { toast.error("Importação real bloqueada ou movimentação não elegível. Nada foi gravado."); }
+    } catch { toast.error("Importação bloqueada, lote não autorizado ou movimentação não elegível. Nada foi gravado."); }
     finally { setBusy(false); }
   }
   return (
@@ -51,13 +54,14 @@ export function PluggyRealPreview() {
         <p className="text-xs text-muted-foreground">{data.window.from} a {data.window.to}. Gravação bloqueada — nada será lançado. Primeiro lote possível: {data.firstBatch.length} movimentações bancárias sem suspeita.</p>
         <div className="space-y-2 border-b border-border py-3">
           <p className="text-sm font-medium">Importar movimentações selecionadas</p>
-          <p className="text-xs text-muted-foreground">Primeiro teste: escolha uma única movimentação bancária sem suspeita de duplicação.</p>
+          <p className="text-xs text-muted-foreground">Escolha até 10 movimentações bancárias sem suspeita de duplicação. Só grava se o lote escolhido for exatamente o autorizado.</p>
           {data.firstBatch.length === 0 && <p className="text-xs text-muted-foreground">Nenhuma movimentação elegível neste período.</p>}
           {data.firstBatch.map((b) => b.row && <label key={b.account_id + b.transaction_id} className="flex items-center gap-2 text-xs">
-            <input type="radio" name="real-sel" checked={sel === `${b.account_id}|${b.transaction_id}`} onChange={() => setSel(`${b.account_id}|${b.transaction_id}`)} />
-            <span>{b.row.data} · {b.row.descricao} · {brl(b.row.valor)} → {b.table === "gastos" ? "Gastos" : "Receitas"}</span>
+            <input type="checkbox" checked={sel.includes(`${b.account_id}|${b.transaction_id}`)} onChange={() => toggle(`${b.account_id}|${b.transaction_id}`)} />
+            <span>{b.row.data} · {b.row.descricao} · {brl(b.row.valor)} → {b.table === "gastos" ? "Gastos" : "Receitas"}{data.lines.find((l) => l.transaction_id === b.transaction_id)?.categoria ? ` · ${data.lines.find((l) => l.transaction_id === b.transaction_id)?.categoria}` : ""}</span>
           </label>)}
-          <Button size="sm" disabled={busy || !chosen || !data.realFirstImportAuthorized} onClick={importar}>Importar movimentações selecionadas</Button>
+          {chosen.length > 0 && <p className="text-xs">Selecionadas: {chosen.length} · Gastos {brl(totG)} · Receitas {brl(totR)}</p>}
+          <Button size="sm" disabled={busy || chosen.length === 0 || !data.realFirstImportAuthorized} onClick={importar}>Importar movimentações selecionadas</Button>
           {!data.realFirstImportAuthorized && <p className="text-xs text-muted-foreground">Gravação real bloqueada até autorização final.</p>}
         </div>
         {GROUPS.map(([g, label]) => {
