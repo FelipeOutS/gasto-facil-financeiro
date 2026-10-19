@@ -51,3 +51,19 @@ describe("Separação Pluggy Bank (fictício) x Mercado Pago (real)", () => {
     }
   });
 });
+
+import { categorize } from "@/lib/pluggy/rules";
+describe("Rendimentos e resgates do Mercado Pago", () => {
+  it("rendimento creditado é receita na categoria Rendimentos", () => {
+    const tx = { id: "1", description: "Rendimentos", amount: 0.23, date: "2026-10-01", type: "CREDIT", status: "POSTED", operationType: "RESGATE_APLIC_FINANCEIRA" } as never;
+    expect(classifyTransaction(tx, "BANK").kind).toBe("receita");
+    expect(categorize(tx, "receita")).toBe("Rendimentos");
+    expect(categorize(tx, "gasto")).toBe("Outras despesas");
+  });
+  it("venda de Meli Dólar ou cripto vai para revisão", () => {
+    for (const description of ["Venda de Meli Dólar MUSD 8,14", "Venda de criptomoedas"]) {
+      const c = classifyTransaction({ id: "1", description, amount: 10, date: "2026-10-01", type: "CREDIT", status: "POSTED", operationType: "RESGATE_APLIC_FINANCEIRA" } as never, "BANK");
+      expect(c).toEqual({ kind: "revisao", reason: "resgate_investimento" });
+    }
+  });
+});

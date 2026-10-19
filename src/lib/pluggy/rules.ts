@@ -151,7 +151,7 @@ export type GiCategoria = (typeof GI_CATEGORIAS)[number];
 
 const CATEGORY_RULES: Array<[RegExp, GiCategoria]> = [
   [/(salary|salario|payroll|folha)/, "Salário"],
-  [/^rendimentos?\b/, "Rendimentos"],
+  [/(^| )rendimentos?( |$)/, "Rendimentos"],
   [/(supermarket|groceries|supermercado|mercado|atacad|assai|carrefour|pao de acucar)/, "Supermercado"],
   [/(restaurant|food|eating out|delivery|ifood|lanchonete|padaria|alimenta)/, "Alimentação"],
   [/(transport|taxi|ride|uber|99app|gas station|fuel|combustivel|posto|parking|estacionamento|pedagio)/, "Transporte"],
