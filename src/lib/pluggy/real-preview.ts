@@ -74,5 +74,8 @@ export function groupRealPreview(actions: readonly PlanAction[], txs: readonly R
 /** Primeiro lote: somente movimentações BANCÁRIAS elegíveis e sem suspeita de duplicação. */
 export function firstBatchActions(actions: readonly PlanAction[], txs: readonly RealTxRow[]): PlanAction[] {
   const bank = new Set(txs.filter((t) => t.account_type === "BANK").map((t) => `${t.account_id}|${t.transaction_id}`));
-  return actions.filter((a) => a.op === "insert" && bank.has(`${a.account_id}|${a.transaction_id}`) && (a.table === "receitas" || a.row.cartao_id === null));
+  // Gasto com estorno de mesmo valor em até 7 dias fica fora: importar só a saída superestimaria a despesa.
+  const refunds = txs.filter((t) => t.classification_reason === "estorno");
+  const refunded = (a: PlanAction) => a.op === "insert" && a.table === "gastos" && refunds.some((r) => Math.round(r.amount * 100) === Math.round(a.row.valor * 100) && Math.abs(Date.parse(r.date) - Date.parse(a.row.data)) <= 7 * 86_400_000);
+  return actions.filter((a) => a.op === "insert" && bank.has(`${a.account_id}|${a.transaction_id}`) && (a.table === "receitas" || a.row.cartao_id === null) && !refunded(a));
 }

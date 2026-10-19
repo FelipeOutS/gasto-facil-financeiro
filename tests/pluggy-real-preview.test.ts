@@ -50,4 +50,9 @@ describe("prévia real", () => {
     const actions = planImport({ userId: FELIPE, txs, cardLinks: [], categorias: [{ id: "c", nome: "Alimentação" }], imported: [], existing: [] });
     expect(firstBatchActions(actions, txs).map((a) => a.transaction_id)).toEqual(["t1"]);
   });
+  it("gasto estornado no mesmo período fica fora do primeiro lote", () => {
+    const txs = [tx({ transaction_id: "u1", amount: 38.94 }), tx({ transaction_id: "r1", type: "CREDIT", amount: 38.94, amount_original: 38.94, classification: "revisao", classification_reason: "estorno" })];
+    const actions = planImport({ userId: FELIPE, txs, cardLinks: [], categorias: [{ id: "c", nome: "Alimentação" }], imported: [], existing: [] });
+    expect(firstBatchActions(actions, txs)).toEqual([]);
+  });
 });
