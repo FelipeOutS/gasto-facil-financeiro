@@ -3082,6 +3082,7 @@ export type Database = {
         Row: {
           account_id: string
           amount: number
+          amount_original: number | null
           categoria_manual: string | null
           categoria_sugerida: string | null
           classification: string
@@ -3112,6 +3113,7 @@ export type Database = {
         Insert: {
           account_id: string
           amount: number
+          amount_original?: number | null
           categoria_manual?: string | null
           categoria_sugerida?: string | null
           classification: string
@@ -3142,6 +3144,7 @@ export type Database = {
         Update: {
           account_id?: string
           amount?: number
+          amount_original?: number | null
           categoria_manual?: string | null
           categoria_sugerida?: string | null
           classification?: string

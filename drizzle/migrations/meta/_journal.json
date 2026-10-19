@@ -64,6 +64,13 @@
       "when": 1792419005241,
       "tag": "0008_pluggy_open_finance_rev4",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792421291803,
+      "tag": "0009_pluggy_amount_original",
+      "breakpoints": true
     }
   ]
 }
