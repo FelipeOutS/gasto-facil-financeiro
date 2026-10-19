@@ -37,6 +37,6 @@
 - [x] Pluggy MP 606 real (verificado; publicação aguarda autorização): verificar tela Open Finance no celular + parecer de publicação (aguardando autorização para publicar)
 
 ## Pluggy / Contas a Receber (pendente)
-- [ ] Lote real 1: 3 rendimentos 13–15/10 (R$ 0,03) — aguarda aprovação do SQL `pluggy-real-batch-import.sql` (hash 3038a110…)
+- [ ] Lote real 1 (adc45cd8…): migração 3038a110… APLICADA 19/10; aguarda aprovação do SQL de autorização pluggy-real-batch-grant-1.sql (hash 4ac3465f…), depois ligar botão
 - [ ] "Adiantamento — Mãe" R$ 185 (Pix R$ 35 Maria Celia vinculado; Pix R$ 150 sem vínculo) — aguarda autorização de criação e data prevista
 - [ ] Investigar recorrência "Cabelo" inexistente (gastos 27/09 e 27/10 preservados) — futura

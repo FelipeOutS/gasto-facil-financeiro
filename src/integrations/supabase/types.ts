@@ -3140,6 +3140,99 @@ export type Database = {
         }
         Relationships: []
       }
+      pluggy_real_batch_grant_items: {
+        Row: {
+          account_id: string
+          batch_id: string
+          categoria_id: string | null
+          data: string
+          entry_table: string
+          tipo: string | null
+          transaction_id: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          account_id: string
+          batch_id: string
+          categoria_id?: string | null
+          data: string
+          entry_table: string
+          tipo?: string | null
+          transaction_id: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          account_id?: string
+          batch_id?: string
+          categoria_id?: string | null
+          data?: string
+          entry_table?: string
+          tipo?: string | null
+          transaction_id?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pluggy_real_batch_grant_items_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "pluggy_real_batch_grants"
+            referencedColumns: ["batch_id"]
+          },
+          {
+            foreignKeyName: "pluggy_real_batch_grant_items_user_id_account_id_transacti_fkey"
+            columns: ["user_id", "account_id", "transaction_id"]
+            isOneToOne: true
+            referencedRelation: "pluggy_transactions"
+            referencedColumns: ["user_id", "account_id", "transaction_id"]
+          },
+        ]
+      }
+      pluggy_real_batch_grants: {
+        Row: {
+          active_txid: number | null
+          batch_id: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          item_count: number
+          revert_kept: number | null
+          revert_outcome: string | null
+          reverted_at: string | null
+          total: number
+          user_id: string
+        }
+        Insert: {
+          active_txid?: number | null
+          batch_id?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          item_count: number
+          revert_kept?: number | null
+          revert_outcome?: string | null
+          reverted_at?: string | null
+          total: number
+          user_id: string
+        }
+        Update: {
+          active_txid?: number | null
+          batch_id?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          item_count?: number
+          revert_kept?: number | null
+          revert_outcome?: string | null
+          reverted_at?: string | null
+          total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       pluggy_real_import_grants: {
         Row: {
           account_id: string
@@ -6060,6 +6153,10 @@ export type Database = {
         Args: { p_actions: Json; p_batch_id: string; p_user_id: string }
         Returns: Json
       }
+      pluggy_import_apply_real_batch: {
+        Args: { p_batch_id: string; p_rows: Json; p_user_id: string }
+        Returns: Json
+      }
       pluggy_import_apply_real_once: {
         Args: {
           p_account_id: string
@@ -6074,6 +6171,10 @@ export type Database = {
         Args: { p_batch_id: string; p_user_id: string }
         Returns: Json
       }
+      pluggy_import_revert_real_batch: {
+        Args: { p_batch_id: string; p_user_id: string }
+        Returns: Json
+      }
       pluggy_import_revert_real_once: {
         Args: { p_batch_id: string; p_user_id: string }
         Returns: Json
@@ -6082,6 +6183,16 @@ export type Database = {
       pluggy_link_card: {
         Args: { p_account_id: string; p_cartao_id: string; p_user_id: string }
         Returns: undefined
+      }
+      pluggy_real_batch_in_use: {
+        Args: {
+          p_account_id: string
+          p_batch_id: string
+          p_entry_table: string
+          p_transaction_id: string
+          p_user_id: string
+        }
+        Returns: boolean
       }
       pluggy_real_grant_in_use: {
         Args: {
