@@ -92,6 +92,19 @@ export function createImportDeps(db: Db): ImportDeps {
   };
 }
 
+/** Leitura RLS das transações reais (conector permitido) na janela; nunca escreve. */
+export async function readRealTxs(db: Db, userId: string, win: { from: string; to: string }) {
+  const { selectRealTxs } = await import("@/lib/pluggy/real-preview");
+  const [txs, accounts, items] = await Promise.all([
+    rows(() => db.from("pluggy_transactions").select("*").eq("user_id", userId).eq("is_sandbox", false).gte("date", win.from).lte("date", win.to).order("id")),
+    rows(() => db.from("pluggy_accounts").select("account_id,item_id,type,is_sandbox").eq("user_id", userId).eq("is_sandbox", false).order("id")),
+    rows(() => db.from("pluggy_items").select("item_id,is_sandbox,connector_id,deleted_at").eq("user_id", userId).eq("is_sandbox", false).is("deleted_at", null).order("id")),
+  ]);
+  const norm = txs.map((t) => ({ ...t, amount: Number(t.amount), amount_original: t.amount_original == null ? null : Number(t.amount_original) }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return selectRealTxs(items as any, accounts as any, norm as any, win);
+}
+
 export async function importSchemaReady(db: Db, userId: string): Promise<boolean> {
   const results = await Promise.all(["pluggy_card_links", "pluggy_import_entries", "pluggy_review_decisions"].map((t) => db.from(t).select("user_id").eq("user_id", userId).limit(1)));
   if (results.some((r) => r.error && !missing(r.error))) throw new Error("pluggy_leitura_indisponivel");
