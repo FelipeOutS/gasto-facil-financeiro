@@ -345,3 +345,89 @@ describe("Pluggy /v2/transactions", () => {
     expect(src).not.toMatch(/auto_import: s\.autoImport/);
   });
 });
+
+// ---------- correção pós-auditoria: cartão, categorias, histórico ----------
+describe("cartão: compras negativas com type CREDIT (Pluggy Bank)", () => {
+  const card = (o: Partial<PluggyTx>) => tx({ type: "CREDIT", status: "POSTED", ...o });
+  test("Smart Fit, Spotify e Netflix negativos e confirmados = gasto de cartão", () => {
+    for (const [d, c] of [["SMART FIT ACADEMIA", "Gyms and fitness centers"], ["SPOTIFY AB", "Music streaming"], ["NETFLIX.COM", "Video streaming"]]) {
+      expect(classifyTransaction(card({ description: d, category: c, amount: -21.9 }), "CREDIT")).toEqual({ kind: "gasto", reason: "compra_cartao_valor_negativo" });
+    }
+  });
+  test("negativo sem categoria de comerciante não vira compra", () => {
+    expect(classifyTransaction(card({ description: "X", category: null, amount: -10 }), "CREDIT").kind).toBe("revisao");
+    expect(classifyTransaction(card({ description: "Juros", category: "Interest", amount: -10 }), "CREDIT").kind).toBe("revisao");
+    expect(classifyTransaction(card({ description: "Ajuste", category: "Adjustment", amount: -10 }), "CREDIT").kind).toBe("revisao");
+    expect(classifyTransaction(card({ description: "Compra", category: "Shopping", amount: -10, status: "PENDING" }), "CREDIT").kind).toBe("ignorado");
+  });
+  test("créditos e estornos verdadeiros vão para revisão", () => {
+    expect(classifyTransaction(card({ description: "Crédito", category: "Shopping", amount: 30 }), "CREDIT")).toEqual({ kind: "revisao", reason: "credito_em_cartao" });
+    expect(classifyTransaction(card({ description: "ESTORNO NETFLIX", category: "Video streaming", amount: -55.9 }), "CREDIT").reason).toBe("estorno");
+  });
+  test("pagamento de fatura nunca é contado duas vezes", () => {
+    expect(classifyTransaction(tx({ description: "PAGAMENTO FATURA CARTAO VISA", category: "Credit card payment", amount: -167.7 }), "BANK").kind).toBe("ignorado");
+    expect(classifyTransaction(card({ description: "Pagamento recebido", category: "Credit card payment", amount: 167.7 }), "CREDIT").kind).toBe("ignorado");
+  });
+  test("compra DEBIT positiva continua gasto", () => {
+    expect(classifyTransaction(tx({ category: "Shopping", amount: 10 }), "CREDIT").kind).toBe("gasto");
+  });
+});
+
+describe("categorias corrigidas", () => {
+  test("mapeamentos aprovados", () => {
+    expect(categorize({ description: "ELETROBRAS LIGHT SA", category: "Electricity" }, "gasto")).toBe("Contas");
+    expect(categorize({ description: "CONDOMINIO EDIFICIO SOLAR", category: "Housing" }, "gasto")).toBe("Moradia");
+    expect(categorize({ description: "VIVO SERVICOS E COMERCIO", category: "Telecommunications" }, "gasto")).toBe("Contas");
+    expect(categorize({ description: "SMART FIT ACADEMIA", category: "Gyms and fitness centers" }, "gasto")).toBe("Saúde");
+    expect(categorize({ description: "SPOTIFY AB", category: "Music streaming" }, "gasto")).toBe("Assinaturas");
+    expect(categorize({ description: "NETFLIX.COM", category: "Video streaming" }, "gasto")).toBe("Assinaturas");
+    expect(categorize({ description: "SALARIO EMPRESA XYZ LTDA", category: "Salary" }, "receita")).toBe("Salário");
+  });
+  test("boleto sem identificação vai para revisão; boleto identificado não", () => {
+    expect(classifyTransaction(tx({ description: "Pagamento de boleto", category: "Transfer - Bank Slip", amount: -100 }), "BANK")).toEqual({ kind: "revisao", reason: "boleto_sem_identificacao" });
+    expect(classifyTransaction(tx({ description: "Boleto ESCOLA ABC", category: "Transfer - Bank Slip", amount: -100 }), "BANK").kind).toBe("gasto");
+  });
+  test("categorias usadas existem entre as padrão do app", async () => {
+    const { GI_CATEGORIAS } = await import("@/lib/pluggy/rules");
+    expect(GI_CATEGORIAS).toContain("Contas");
+  });
+});
+
+describe("histórico inicial", () => {
+  const now = () => new Date("2026-10-19T12:00:00Z");
+  test("sem preferência salva a sincronização pede a escolha (não presume 90)", async () => {
+    const store = memStore({ itemF: FELIPE });
+    store.getSettings = async () => ({ autoImport: false, autoCategorize: true, historyDays: 90, accessState: "ok", configured: false });
+    expect(await syncItem({ api: fakeApi(), store, now }, { userId: FELIPE, itemId: "itemF" })).toEqual({ ok: false, error: "historico_nao_escolhido" });
+    expect(store.tx.size).toBe(0);
+  });
+  test("365 salvos => busca desde 19/10/2025 e recupera as antigas", async () => {
+    const store = memStore({ itemF: FELIPE });
+    store.settings[FELIPE] = { autoImport: false, autoCategorize: true, historyDays: 365, accessState: "ok", configured: true };
+    let from = "";
+    const api = { ...fakeApi(), transactionsV2: async (_a: string, f: string) => { from = f; return { results: [tx({ id: "abr", date: "2026-04-15", amount: -185 })], next: null }; } } as unknown as PluggyApi;
+    expect((await syncItem({ api, store, now }, { userId: FELIPE, itemId: "itemF" })).ok).toBe(true);
+    expect(from).toBe("2025-10-19");
+    expect(store.tx.get(`${FELIPE}|abr`)?.amount_original).toBe(-185);
+  });
+  test("fontes: criação automática não substitui a escolha e o backend confirma", async () => {
+    const store = await Bun.file("src/server/pluggy/pluggy-store.server.ts").text();
+    expect(store).not.toMatch(/from\("pluggy_settings"\)\s*\.upsert/);
+    const route = await Bun.file("src/routes/api/integrations.pluggy.$action.ts").text();
+    expect(route).toMatch(/preferencia_nao_confirmada/);
+    expect(route.match(/historico_nao_escolhido/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(route).not.toMatch(/pluggy_settings"\)\.upsert\(\{ user_id: a\.userId, access_state/);
+  });
+});
+
+describe("recorrentes de meses diferentes", () => {
+  test("setembro e outubro com mesma descrição e valor são independentes", async () => {
+    const store = memStore({ itemF: FELIPE });
+    const n = (id: string, date: string) => tx({ id, type: "CREDIT", description: "NETFLIX.COM", category: "Video streaming", amount: -55.9, date });
+    const api = { ...fakeApi(), transactionsV2: async () => ({ results: [n("s", "2026-09-01"), n("o", "2026-10-01")], next: null }) } as unknown as PluggyApi;
+    await syncItem({ api, store, now: () => new Date("2026-10-19T12:00:00Z") }, { userId: FELIPE, itemId: "itemF" });
+    await syncItem({ api, store, now: () => new Date("2026-10-19T12:00:00Z") }, { userId: FELIPE, itemId: "itemF" });
+    expect(store.tx.size).toBe(2);
+    expect([...store.tx.values()].every((t) => t.classification === "gasto" && t.total_installments === null)).toBe(true);
+  });
+});
