@@ -1,4 +1,6 @@
 -- CANDIDATA — Pluggy Open Finance (Fase 2, Sandbox). NÃO APLICADA.
+-- Revisão 4 (2026-10-19): REVOKE para a role interna sandbox_exec (BYPASSRLS, recebe
+-- SELECT/INSERT por privilégio padrão) somente nos objetos Pluggy.
 -- Revisão 3 (2026-10-19): dedupe por dono+conta; FKs compostas transação→conta→conexão
 -- incluindo is_sandbox; is_sandbox obrigatoriamente true (Live desabilitado);
 -- REVOKE explícito contra os privilégios padrão do Lovable Cloud.
@@ -144,6 +146,13 @@ CREATE INDEX pluggy_webhook_events_due_idx ON public.pluggy_webhook_events (stat
 --    authenticated (pg_default_acl); por isso revogamos tudo explicitamente antes.
 -- ---------------------------------------------------------------------------
 REVOKE ALL ON public.pluggy_settings, public.pluggy_items, public.pluggy_accounts, public.pluggy_transactions, public.pluggy_webhook_events FROM PUBLIC, anon, authenticated;
+-- sandbox_exec ignora RLS e receberia SELECT/INSERT pelo privilégio padrão; não tem
+-- concessão em nenhuma tabela existente, então retirar aqui não afeta a plataforma.
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'sandbox_exec') THEN
+    EXECUTE 'REVOKE ALL ON public.pluggy_settings, public.pluggy_items, public.pluggy_accounts, public.pluggy_transactions, public.pluggy_webhook_events FROM sandbox_exec';
+  END IF;
+END $$;
 GRANT SELECT ON public.pluggy_settings, public.pluggy_items, public.pluggy_accounts, public.pluggy_transactions TO authenticated;
 GRANT ALL ON public.pluggy_settings, public.pluggy_items, public.pluggy_accounts, public.pluggy_transactions, public.pluggy_webhook_events TO service_role;
 
@@ -235,6 +244,11 @@ END $$;
 REVOKE ALL ON FUNCTION public.pluggy_webhook_enqueue(text, text, text, text[]) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.pluggy_webhook_claim(integer, integer) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.pluggy_webhook_finish(uuid, uuid, boolean, text) FROM PUBLIC, anon, authenticated;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'sandbox_exec') THEN
+    EXECUTE 'REVOKE ALL ON FUNCTION public.pluggy_is_allowed(), public.pluggy_webhook_enqueue(text, text, text, text[]), public.pluggy_webhook_claim(integer, integer), public.pluggy_webhook_finish(uuid, uuid, boolean, text) FROM sandbox_exec';
+  END IF;
+END $$;
 GRANT EXECUTE ON FUNCTION public.pluggy_webhook_enqueue(text, text, text, text[]) TO service_role;
 GRANT EXECUTE ON FUNCTION public.pluggy_webhook_claim(integer, integer) TO service_role;
 GRANT EXECUTE ON FUNCTION public.pluggy_webhook_finish(uuid, uuid, boolean, text) TO service_role;
