@@ -49,10 +49,16 @@ DECLARE
   v_mantidos int := 0; v_status text; v_tol interval := interval '5 seconds';
 BEGIN
   IF v_uid IS NULL THEN RAISE EXCEPTION 'login_required' USING ERRCODE = '42501'; END IF;
-  SELECT id, user_id, status INTO v_ext FROM public.extratos_importados
+  SELECT id, user_id, status, to_jsonb(extratos_importados)->>'tipo_origem' AS tipo_origem INTO v_ext FROM public.extratos_importados
    WHERE id = p_batch_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'extrato_not_found' USING ERRCODE = 'P0002'; END IF;
   v_owner := v_ext.user_id;
+  -- Autoridade no servidor: nunca confiar no cache/tipo informado pelo browser.
+  IF v_ext.tipo_origem='pluggy'
+     OR EXISTS (SELECT 1 FROM public.gastos WHERE user_id=v_owner AND import_batch_id=p_batch_id AND to_jsonb(gastos)->>'origem'='pluggy')
+     OR EXISTS (SELECT 1 FROM public.receitas WHERE user_id=v_owner AND import_batch_id=p_batch_id AND to_jsonb(receitas)->>'origem'='pluggy') THEN
+    RAISE EXCEPTION 'pluggy_reversao_generica_bloqueada' USING ERRCODE='42501';
+  END IF;
   IF v_ext.status = 'revertido' THEN
     RETURN jsonb_build_object('ok', true, 'idempotent', true, 'removidos', 0, 'mantidos', 0,
       'status', 'revertido', 'ids', '[]'::jsonb);

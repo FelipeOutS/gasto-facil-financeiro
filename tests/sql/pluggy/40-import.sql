@@ -26,6 +26,8 @@ INSERT INTO public.cartoes(id,user_id,nome) VALUES ('00000000-0000-0000-0000-000
 SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_link_card(%L,%L,%L)', :'F', :'CARD', '00000000-0000-0000-0000-00000000ca99')) LIKE '%pluggy_cartao_invalido%', 'não vincula cartão de outro usuário');
 SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_link_card(%L,%L,%L)', :'M', :'CARD', :'CARTAO')) LIKE '%pluggy_conta_cartao_invalida%', 'Michael não vincula conta do Felipe');
 SELECT public.pluggy_link_card(:'F', :'CARD', :'CARTAO');
+SELECT pg_temp.ok(pg_temp.err(format('UPDATE public.pluggy_card_links SET cartao_id=%L WHERE user_id=%L AND account_id=%L','00000000-0000-0000-0000-00000000ca99',:'F',:'CARD')) LIKE '%pluggy_cartao_invalido%', 'direct service card update cannot bypass ownership');
+SELECT pg_temp.ok(pg_temp.err(format('INSERT INTO public.pluggy_review_decisions(user_id,account_id,transaction_id,decision) VALUES(%L,%L,''missing'',''aprovado'')',:'F',:'CARD')) LIKE '%foreign key%', 'review audit FK rejects nonexistent transaction');
 SELECT public.pluggy_link_card(:'F', :'CARD', NULL);
 SELECT public.pluggy_link_card(:'F', :'CARD', NULL);
 SELECT pg_temp.ok((SELECT NOT active FROM public.pluggy_card_links WHERE user_id=:'F' AND account_id=:'CARD'), 'desvínculo idempotente preserva registro e não cria cartão');
@@ -40,6 +42,8 @@ SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_import_apply(%L, gen_
   jsonb_build_array(jsonb_set(:'plan'::jsonb->0, '{row,valor}', '1')))) LIKE '%lancamento_invalido%', 'valor adulterado recusado');
 SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_import_apply(%L, gen_random_uuid(), %L)', :'F',
   (SELECT jsonb_agg(jsonb_set(e,'{row,fatura_competencia}','"2099-01"')) FROM jsonb_array_elements(:'plan'::jsonb) e WHERE e->'row'->>'forma_pagamento'='credito'))) LIKE '%cartao_sem_vinculo%', 'competência adulterada recusada');
+SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_import_apply(%L,gen_random_uuid(),%L)',:'F',
+  (SELECT jsonb_agg(e #- '{row,forma_pagamento}') FROM jsonb_array_elements(:'plan'::jsonb) e WHERE e->'row'->>'forma_pagamento'='credito'))) LIKE '%cartao_sem_vinculo%', 'missing credit payment fails closed');
 SELECT pg_temp.ok(pg_temp.err(format('UPDATE public.pluggy_transactions SET is_sandbox=false WHERE transaction_id=%L', :'plan'::jsonb->0->>'transaction_id')) LIKE '%pluggy_tx_sandbox_only%', 'transação Live recusada pela constraint existente');
 
 -- Importação histórica
@@ -54,6 +58,12 @@ SELECT pg_temp.ok((SELECT count(*) FROM public.gastos WHERE origem='pluggy' AND 
 SELECT pg_temp.ok((SELECT count(DISTINCT id_operacao_banco) FROM public.gastos WHERE origem='pluggy') = 31, 'ID Pluggy preservado e único');
 SELECT pg_temp.ok((SELECT string_agg(DISTINCT c.nome, ',') FROM public.gastos g JOIN public.categorias c ON c.id=g.categoria_id WHERE g.descricao ~ 'ELETROBRAS|VIVO') = 'Contas', 'Eletrobras/Vivo em Contas');
 SELECT pg_temp.ok((SELECT qtd_movimentacoes FROM public.extratos_importados WHERE id=:'B1') = 36 AND (SELECT tipo_origem FROM public.extratos_importados WHERE id=:'B1') = 'pluggy', 'lote auditável registrado');
+INSERT INTO public.extratos_importados(id,user_id,tipo_origem) VALUES ('00000000-0000-0000-0000-00000000ba99',:'M','pluggy'),('00000000-0000-0000-0000-00000000ba98',:'F','pdf');
+SELECT pg_temp.ok(pg_temp.err('UPDATE public.pluggy_import_entries SET batch_id=''00000000-0000-0000-0000-00000000ba99''') LIKE '%identidade_imutavel%', 'entry source/batch identity cannot be rewritten');
+SELECT pg_temp.ok(pg_temp.err(format('INSERT INTO public.pluggy_import_entries(user_id,account_id,transaction_id,entry_table,entry_id,batch_id,snapshot) VALUES(%L,%L,%L,''gastos'',gen_random_uuid(),%L,''{}'')',:'F',:'plan'::jsonb->0->>'account_id',:'plan'::jsonb->0->>'transaction_id','00000000-0000-0000-0000-00000000ba99')) LIKE '%lote_invalido%', 'direct service entry cannot use another owner batch');
+SELECT pg_temp.ok(pg_temp.err(format('INSERT INTO public.pluggy_import_entries(user_id,account_id,transaction_id,entry_table,entry_id,batch_id,snapshot) VALUES(%L,%L,%L,''gastos'',gen_random_uuid(),%L,''{}'')',:'F',:'plan'::jsonb->0->>'account_id',:'plan'::jsonb->0->>'transaction_id','00000000-0000-0000-0000-00000000ba98')) LIKE '%lote_invalido%', 'direct service entry cannot use non Pluggy batch');
+SELECT pg_temp.ok(pg_temp.err(format('INSERT INTO public.pluggy_import_entries(user_id,account_id,transaction_id,entry_table,entry_id,batch_id,snapshot) VALUES(%L,%L,%L,''gastos'',''00000000-0000-0000-0000-0000000000a2'',%L,''{}'')',:'F',:'plan'::jsonb->0->>'account_id',:'plan'::jsonb->0->>'transaction_id',:'B1')) LIKE '%lancamento_invalido%', 'direct service entry cannot point to Michael manual expense');
+SELECT pg_temp.ok(pg_temp.err(format('INSERT INTO public.pluggy_import_entries(user_id,account_id,transaction_id,entry_table,entry_id,batch_id,snapshot) VALUES(%L,%L,%L,''receitas'',''00000000-0000-0000-0000-0000000000a1'',%L,''{}'')',:'F',:'plan'::jsonb->0->>'account_id',:'plan'::jsonb->0->>'transaction_id',:'B1')) LIKE '%lancamento_invalido%', 'polymorphic target cannot point at wrong table');
 SELECT e.entry_id AS card_eid, e.account_id AS card_acc, e.transaction_id AS card_tid, e.snapshot AS card_snap FROM public.pluggy_import_entries e JOIN public.gastos g ON g.id=e.entry_id WHERE g.cartao_id=:'CARTAO' ORDER BY g.id LIMIT 1 \gset
 INSERT INTO public.cartoes(id,user_id,nome) VALUES ('00000000-0000-0000-0000-00000000ca98', :'F', 'Outra opção do Felipe');
 SELECT public.pluggy_link_card(:'F', :'CARD', '00000000-0000-0000-0000-00000000ca98');

@@ -27,6 +27,16 @@ function database(data: Data, missing = false) {
 }
 
 describe("Pluggy Fase3 wiring", () => {
+  it("null status is not normalized to POSTED by preview", () => {
+    const result = planImport({ userId: F, categorias: [], cardLinks: [], existing: [], imported: [], txs: [{ ...tx, status: null }] });
+    expect(result[0]).toMatchObject({ op: "skip", reason: "pendente_aguardando_confirmacao" });
+  });
+  it("snapshot preserves actual status/type counts: POSTED 40, CREDIT 20, DEBIT 20", async () => {
+    const { default: fixture } = await import("./fixtures/pluggy-sandbox-40.json");
+    expect(fixture.filter((t) => t.status === "POSTED")).toHaveLength(40);
+    expect(fixture.filter((t) => t.type === "CREDIT")).toHaveLength(20);
+    expect(fixture.filter((t) => t.type === "DEBIT")).toHaveLength(20);
+  });
   it("incremental default stays blocked before any DB/service import", async () => {
     expect(await runIncrementalAfterSync(F)).toEqual({ ok: true, blocked: true });
   });
