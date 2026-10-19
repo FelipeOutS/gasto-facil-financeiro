@@ -67,3 +67,19 @@ Q="SET ROLE service_role; BEGIN; SELECT public.pluggy_import_revert_real_once('3
 wait "$A"; wait "$B"
 N=$("${P[@]}" -tAc "SELECT count(*) FROM public.receitas WHERE id_operacao_banco='pluggy:aReal:race1' AND deleted_at IS NOT NULL")
 if [ "$N" = 1 ] && grep -q '"replay": true' "$D/ya" "$D/yb"; then echo 'PASSOU: corrida desfazer real 2 conexões — exclusão reversível única e replay'; else echo "FALHOU: corrida desfazer real $N"; exit 1; fi
+# Fase 4: lote fechado (candidata)
+"${P[@]}" -1 -f "$ROOT/docs/migrations-candidate/pluggy-real-batch-import.sql"
+"${P[@]}" -f "$ROOT/tests/sql/pluggy/60-real-batch.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"
+Q="SET ROLE service_role; BEGIN; SELECT public.pluggy_import_apply_real_batch('3324b9f8-ea68-465c-8e1e-ab1cc8caebf1','00000000-0000-0000-0000-00000000ba05','[{\"account_id\":\"aReal\",\"transaction_id\":\"c1\",\"descricao\":\"Rendimentos\"},{\"account_id\":\"aReal\",\"transaction_id\":\"c2\",\"descricao\":\"Rendimentos\"}]'); SELECT pg_sleep(1); COMMIT;"
+( "${P[@]}" -tAc "$Q" > "$D/za" 2>&1 ) & A=$!
+( "${P[@]}" -tAc "$Q" > "$D/zb" 2>&1 ) & B=$!
+wait "$A"; wait "$B"
+N=$("${P[@]}" -tAc "SELECT count(*) FROM public.receitas WHERE import_batch_id='00000000-0000-0000-0000-00000000ba05'")
+R=$(cat "$D/za" "$D/zb" | grep -c '"replay": true' || true); W=$(cat "$D/za" "$D/zb" | grep -c '"replay": false' || true)
+if [ "$N" = 2 ] && [ "$R" = 1 ] && [ "$W" = 1 ]; then echo 'PASSOU: corrida lote 2 conexões — 2 receitas, 1 gravação + 1 replay'; else echo "FALHOU: corrida lote N=$N R=$R W=$W"; cat "$D/za" "$D/zb"; exit 1; fi
+Q="SET ROLE service_role; BEGIN; SELECT public.pluggy_import_revert_real_batch('3324b9f8-ea68-465c-8e1e-ab1cc8caebf1','00000000-0000-0000-0000-00000000ba05'); SELECT pg_sleep(1); COMMIT;"
+( "${P[@]}" -tAc "$Q" > "$D/wa" 2>&1 ) & A=$!
+( "${P[@]}" -tAc "$Q" > "$D/wb" 2>&1 ) & B=$!
+wait "$A"; wait "$B"
+N=$("${P[@]}" -tAc "SELECT count(*) FROM public.receitas WHERE import_batch_id='00000000-0000-0000-0000-00000000ba05' AND deleted_at IS NOT NULL")
+if [ "$N" = 2 ] && grep -q '"replay": true' "$D/wa" "$D/wb"; then echo 'PASSOU: corrida desfazer lote 2 conexões — reversão única e replay'; else echo "FALHOU: corrida desfazer lote $N"; exit 1; fi
