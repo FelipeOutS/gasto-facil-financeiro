@@ -57,6 +57,13 @@
       "when": 1791858413374,
       "tag": "0007_hotfix_gastos_deleted_at_column",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792419005241,
+      "tag": "0008_pluggy_open_finance_rev4",
+      "breakpoints": true
     }
   ]
 }
