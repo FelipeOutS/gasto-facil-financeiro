@@ -27,8 +27,7 @@ const SettingsBody = z.object({
   autoCategorize: z.boolean(),
   historyDays: z.union([z.literal(30), z.literal(90), z.literal(180), z.literal(365)]),
 });
-const CategoriaBody = z.object({ transactionId: z.string().min(1).max(100), categoria: z.string().trim().refine(isGiCategoria, "categoria_invalida") });
-const ReviewBody = z.object({ transactionId: z.string().min(1).max(100), decisao: z.enum(["aprovado", "rejeitado"]) });
+const CategoriaBody = z.object({ accountId: z.string().min(1).max(100), transactionId: z.string().min(1).max(100), categoria: z.string().trim().refine(isGiCategoria, "categoria_invalida") });
 
 export const Route = createFileRoute("/api/integrations/pluggy/$action")({
   server: {
@@ -156,13 +155,12 @@ export const Route = createFileRoute("/api/integrations/pluggy/$action")({
             }
             case "categoria": {
               const c = CategoriaBody.parse(body);
-              const r = await db.from("pluggy_transactions").update({ categoria_manual: c.categoria }).eq("user_id", a.userId).eq("transaction_id", c.transactionId);
+              const r = await db.from("pluggy_transactions").update({ categoria_manual: c.categoria }).eq("user_id", a.userId).eq("account_id", c.accountId).eq("transaction_id", c.transactionId);
               return r.error ? json({ error: "pluggy_store_indisponivel" }, 503) : json({ ok: true });
             }
             case "review": {
-              const c = ReviewBody.parse(body);
-              const r = await db.from("pluggy_transactions").update({ review_status: c.decisao }).eq("user_id", a.userId).eq("transaction_id", c.transactionId).eq("classification", "revisao");
-              return r.error ? json({ error: "pluggy_store_indisponivel" }, 503) : json({ ok: true });
+              // Legacy unaudited route cannot bypass Phase 3 authorization/RPC.
+              return json({ ok: false, error: "importacao_bloqueada" }, 409);
             }
             default:
               return new Response("not_found", { status: 404 });
