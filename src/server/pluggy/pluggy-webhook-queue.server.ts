@@ -44,8 +44,9 @@ export type QueueDeps = {
 /** Código de erro curto, sem valores, descrições ou dados pessoais. */
 export function safeErrorCode(e: unknown): string {
   const raw = e instanceof Error ? e.message : typeof e === "string" ? e : "erro_interno";
-  const code = raw.replace(/[^a-z0-9_:.-]/gi, "_").slice(0, 80);
-  return /^[a-z0-9_:.-]+$/i.test(code) && code.length >= 3 ? code : "erro_interno";
+  // Só códigos internos (sem espaços, letras/dígitos/_:.-); mensagens livres
+  // podem conter valores ou nomes e são descartadas.
+  return /^[a-z][a-z0-9_:.-]{2,79}$/i.test(raw) && !/\d{3,}/.test(raw) ? raw : "erro_interno";
 }
 
 export async function receiveWebhook(

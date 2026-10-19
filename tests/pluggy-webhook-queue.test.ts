@@ -107,6 +107,8 @@ test("reconciliação sincroniza só contas autorizadas", async () => {
 });
 
 test("erros guardados não carregam dados sensíveis", () => {
-  expect(safeErrorCode(new Error("Pix R$ 1.234,56 para João"))).toBe("Pix_R__1.234_56_para_Jo_o");
+  expect(safeErrorCode(new Error("Pix R$ 1.234,56 para João"))).toBe("erro_interno");
   expect(safeErrorCode({})).toBe("erro_interno");
+  expect(safeErrorCode(new Error("pluggy_http_500"))).toBe("pluggy_http_500");
+  expect(safeErrorCode(new Error("conta_12345678"))).toBe("erro_interno");
 });
