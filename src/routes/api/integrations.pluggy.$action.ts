@@ -131,7 +131,8 @@ export const Route = createFileRoute("/api/integrations/pluggy/$action")({
               const s = SettingsBody.parse(body);
               // Fase 2: importação para Gastos/Receitas reais permanece travada.
               const r = await db.from("pluggy_settings").upsert(
-                { user_id: a.userId, auto_import: s.autoImport, auto_categorize: s.autoCategorize, history_days: s.historyDays },
+                // auto_import é sempre false na Fase 2, independentemente do que o cliente enviar.
+                { user_id: a.userId, auto_import: false, auto_categorize: s.autoCategorize, history_days: s.historyDays },
                 { onConflict: "user_id" },
               );
               return r.error ? json({ error: "pluggy_store_indisponivel" }, 503) : json({ ok: true });

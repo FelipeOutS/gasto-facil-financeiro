@@ -81,12 +81,31 @@ export function createPluggyApi(f: Fetch = fetch) {
     deleteItem: (id: string) => req<void>("DELETE", `/items/${encodeURIComponent(id)}`),
     accounts: (itemId: string) =>
       req<{ results: PluggyAccount[] }>("GET", `/accounts?itemId=${encodeURIComponent(itemId)}`),
-    transactionsPage: (accountId: string, from: string, page: number) =>
-      req<{ results: unknown[]; totalPages: number; page: number }>(
-        "GET",
-        `/transactions?accountId=${encodeURIComponent(accountId)}&from=${from}&pageSize=500&page=${page}`,
-      ),
+    /**
+     * GET /v2/transactions (paginação por cursor). `next` é a query string
+     * devolvida pela Pluggy, usada sem decodificar; só é aceita se apontar
+     * para o mesmo endpoint autorizado.
+     */
+    transactionsV2: (accountId: string, dateFrom: string, next?: string | null) =>
+      req<{ results: unknown[]; next: string | null }>("GET", transactionsV2Path(accountId, dateFrom, next)),
   };
+}
+/** Monta o caminho da próxima página sem nunca sair de /v2/transactions. */
+export function transactionsV2Path(accountId: string, dateFrom: string, next?: string | null): string {
+  if (next == null) {
+    return `/v2/transactions?accountId=${encodeURIComponent(accountId)}&dateFrom=${encodeURIComponent(dateFrom)}`;
+  }
+  let qs = next.trim();
+  if (/^https?:\/\//i.test(qs)) {
+    const u = new URL(qs);
+    if (u.origin !== BASE || u.pathname !== "/v2/transactions") throw new PluggyHttpError(502, "next_invalido");
+    qs = u.search;
+  } else if (qs.startsWith("/v2/transactions?")) {
+    qs = qs.slice("/v2/transactions".length);
+  }
+  if (!qs.startsWith("?")) qs = `?${qs}`;
+  if (qs.length < 2 || qs.length > 4000 || /[\s#]/.test(qs)) throw new PluggyHttpError(502, "next_invalido");
+  return `/v2/transactions${qs}`;
 }
 export type PluggyApi = ReturnType<typeof createPluggyApi>;
 

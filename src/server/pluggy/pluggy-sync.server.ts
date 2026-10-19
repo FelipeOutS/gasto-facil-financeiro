@@ -45,6 +45,8 @@ export interface PluggyStore {
   setAccessState(userId: string, state: AccessState, reason: string | null): Promise<void>;
   getItemOwner(itemId: string): Promise<{ userId: string; isSandbox: boolean } | null>;
   upsertItem(userId: string, item: PluggyItem): Promise<void>;
+  /** Fecha a sincronização: sucesso grava last_synced_at e limpa o erro; falha só grava o código. */
+  markItemSync(userId: string, itemId: string, outcome: { ok: true; pluggyError: string | null } | { ok: false; error: string }): Promise<void>;
   markItemDeleted(itemId: string): Promise<void>;
   upsertAccounts(userId: string, accounts: PluggyAccount[], isSandbox: boolean): Promise<void>;
   upsertTransactions(rows: TxRow[]): Promise<void>;
@@ -54,10 +56,19 @@ export interface PluggyStore {
 
 export type SyncResult =
   | { ok: true; accounts: number; transactions: number; revisao: number; ignorados: number }
-  | { ok: false; error: string };
+  | { ok: false; error: string; partial?: { accounts: number } };
+
+/** Limite defensivo de páginas por conta (cursor da Pluggy). */
+export const MAX_TX_PAGES = 200;
 
 function isoDate(d: Date) {
   return d.toISOString().slice(0, 10);
+}
+
+class PluggyTxStepError extends Error {
+  constructor(readonly code: string) {
+    super(code);
+  }
 }
 
 export async function syncItem(
@@ -72,6 +83,7 @@ export async function syncItem(
   const owner = await store.getItemOwner(input.itemId);
   if (!owner || owner.userId !== input.userId) return { ok: false, error: "item_de_outro_usuario" };
 
+  let accountsDone = 0;
   try {
     const item = await api.item(input.itemId);
     if (item.clientUserId && item.clientUserId !== input.userId) return { ok: false, error: "item_de_outro_usuario" };
@@ -81,6 +93,7 @@ export async function syncItem(
 
     const { results: accounts } = await api.accounts(item.id);
     await store.upsertAccounts(input.userId, accounts, isSandbox);
+    accountsDone = accounts.length;
 
     const fromD = new Date(now.getTime() - settings.historyDays * 86_400_000);
     const from = isoDate(fromD);
@@ -91,10 +104,20 @@ export async function syncItem(
 
     for (const acc of accounts) {
       const ownDoc = acc.taxNumber ?? null;
-      for (let page = 1, total = 1; page <= total && page <= 40; page++) {
-        const r = await api.transactionsPage(acc.id, from, page);
-        total = r.totalPages || 1;
-        for (const raw of r.results as PluggyTx[]) {
+      const seen = new Set<string>();
+      let next: string | null = null;
+      for (let page = 0; ; page++) {
+        if (page >= MAX_TX_PAGES) throw new PluggyTxStepError("transacoes_paginas_excedidas");
+        let r: { results: unknown[]; next: string | null };
+        try {
+          r = await api.transactionsV2(acc.id, from, next);
+        } catch (e) {
+          throw new PluggyTxStepError(e instanceof PluggyHttpError ? (e.status === 0 ? e.code : `transacoes_http_${e.status}`) : "transacoes_erro");
+        }
+        for (const raw of (r.results ?? []) as PluggyTx[]) {
+          if (typeof raw.date === "string" && raw.date.slice(0, 10) < from) continue; // fora do período escolhido
+          if (seen.has(raw.id)) continue; // a mesma transação nunca entra duas vezes na mesma sincronização
+          seen.add(raw.id);
           const tx = { ...raw, accountId: acc.id };
           let cls = classifyTransaction(tx, acc.type, ownDoc);
           let matchIds: string[] | null = null;
@@ -131,15 +154,25 @@ export async function syncItem(
             is_sandbox: isSandbox,
           });
         }
+        if (!r.next) break;
+        if (r.next === next) throw new PluggyTxStepError("transacoes_cursor_repetido");
+        next = r.next;
       }
     }
     // Upsert por (user_id, transaction_id): o mesmo id da Pluggy nunca duplica,
     // e colunas do usuário (categoria_manual, review_status) não são enviadas.
     if (rows.length) await store.upsertTransactions(rows);
     await store.setAccessState(input.userId, "ok", null);
+    await store.markItemSync(input.userId, item.id, { ok: true, pluggyError: item.error?.code ?? null });
     return { ok: true, accounts: accounts.length, transactions: rows.length, revisao, ignorados };
   } catch (e) {
+    if (e instanceof PluggyTxStepError) {
+      // Contas/saldos já atualizados; transações falharam => sucesso parcial, nunca "sincronizado".
+      await store.markItemSync(input.userId, input.itemId, { ok: false, error: `sync_parcial:${e.code}` }).catch(() => undefined);
+      return { ok: false, error: `sync_parcial:${e.code}`, partial: { accounts: accountsDone } };
+    }
     if (e instanceof PluggyHttpError) {
+      await store.markItemSync(input.userId, input.itemId, { ok: false, error: `sync_falhou:${e.status === 0 ? e.code : `http_${e.status}`}` }).catch(() => undefined);
       const st = accessStateFromHttp(e.status);
       if (st !== "ok") {
         await store.setAccessState(input.userId, st, `http_${e.status}`);
