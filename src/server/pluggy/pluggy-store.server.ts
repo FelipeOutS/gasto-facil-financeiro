@@ -47,11 +47,15 @@ export async function createPluggyStore(): Promise<PluggyStore> {
           is_sandbox: item.connector.isSandbox === true,
           status: item.status,
           execution_status: item.executionStatus ?? null,
-          last_error: item.error?.code ?? null,
           consent_expires_at: item.consentExpiresAt ?? null,
-          last_synced_at: new Date().toISOString(),
         }).eq("item_id", item.id).eq("user_id", userId),
       );
+    },
+    async markItemSync(userId, itemId, outcome) {
+      const patch = outcome.ok
+        ? { last_error: outcome.pluggyError, last_synced_at: new Date().toISOString() }
+        : { last_error: outcome.error.slice(0, 80) };
+      must(await db.from("pluggy_items").update(patch).eq("item_id", itemId).eq("user_id", userId));
     },
     async markItemDeleted(itemId) {
       must(await db.from("pluggy_items").update({ deleted_at: new Date().toISOString(), status: "DELETED" }).eq("item_id", itemId));
