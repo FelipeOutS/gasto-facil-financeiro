@@ -25,3 +25,4 @@
 - [x] Open Finance Pluggy Fase 2 (código Sandbox + testes 29/0) — SQL candidato NÃO aplicado
 - [ ] Open Finance: aplicar docs/migrations-candidate/pluggy-open-finance.sql (aguarda aprovação) e cadastrar PLUGGY_CLIENT_ID/SECRET
 - [ ] Open Finance: teste Sandbox ponta a ponta no preview; gravação em Gastos/Receitas e Live (Fases 3–5) aguardam autorização
+- [ ] Pluggy Fase 3: ligar adaptador real, prévia, vínculo, revisão auditada, histórico/desfazer e processamento incremental; testar isoladamente, sem migrar/ativar/publicar.
