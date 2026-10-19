@@ -85,6 +85,13 @@
       "when": 1792433615299,
       "tag": "0011_pluggy_live_readonly",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792438112443,
+      "tag": "0012_pluggy_real_first_import_v2",
+      "breakpoints": true
     }
   ]
 }

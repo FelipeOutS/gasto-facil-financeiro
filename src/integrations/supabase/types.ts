@@ -3140,6 +3140,68 @@ export type Database = {
         }
         Relationships: []
       }
+      pluggy_real_import_grants: {
+        Row: {
+          account_id: string
+          active_txid: number | null
+          batch_id: string
+          consumed_at: string | null
+          created_at: string
+          data: string
+          entry_table: string
+          expires_at: string
+          id: string
+          revert_kept: number | null
+          revert_outcome: string | null
+          reverted_at: string | null
+          transaction_id: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          account_id: string
+          active_txid?: number | null
+          batch_id?: string
+          consumed_at?: string | null
+          created_at?: string
+          data: string
+          entry_table: string
+          expires_at: string
+          id?: string
+          revert_kept?: number | null
+          revert_outcome?: string | null
+          reverted_at?: string | null
+          transaction_id: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          account_id?: string
+          active_txid?: number | null
+          batch_id?: string
+          consumed_at?: string | null
+          created_at?: string
+          data?: string
+          entry_table?: string
+          expires_at?: string
+          id?: string
+          revert_kept?: number | null
+          revert_outcome?: string | null
+          reverted_at?: string | null
+          transaction_id?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pluggy_real_import_grants_user_id_account_id_transaction_i_fkey"
+            columns: ["user_id", "account_id", "transaction_id"]
+            isOneToOne: true
+            referencedRelation: "pluggy_transactions"
+            referencedColumns: ["user_id", "account_id", "transaction_id"]
+          },
+        ]
+      }
       pluggy_review_decisions: {
         Row: {
           account_id: string
@@ -5998,7 +6060,21 @@ export type Database = {
         Args: { p_actions: Json; p_batch_id: string; p_user_id: string }
         Returns: Json
       }
+      pluggy_import_apply_real_once: {
+        Args: {
+          p_account_id: string
+          p_batch_id: string
+          p_row: Json
+          p_transaction_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       pluggy_import_revert: {
+        Args: { p_batch_id: string; p_user_id: string }
+        Returns: Json
+      }
+      pluggy_import_revert_real_once: {
         Args: { p_batch_id: string; p_user_id: string }
         Returns: Json
       }
@@ -6006,6 +6082,16 @@ export type Database = {
       pluggy_link_card: {
         Args: { p_account_id: string; p_cartao_id: string; p_user_id: string }
         Returns: undefined
+      }
+      pluggy_real_grant_in_use: {
+        Args: {
+          p_account_id: string
+          p_batch_id: string
+          p_entry_table: string
+          p_transaction_id: string
+          p_user_id: string
+        }
+        Returns: boolean
       }
       pluggy_review_decide: {
         Args: {
