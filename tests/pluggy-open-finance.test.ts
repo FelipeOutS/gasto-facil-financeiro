@@ -130,8 +130,9 @@ describe("sandbox, trial e webhook", () => {
   test("webhook exige token, é idempotente e acha o dono pelo itemId", () => {
     const src = readFileSync("src/routes/api/public/pluggy.webhook.ts", "utf8");
     expect(src).toContain("safeEqual(got, expected)");
-    expect(src).toContain("23505");
-    expect(src).toContain("getItemOwner(p.itemId)");
+    expect(src).toContain('request.headers.get("x-gi-webhook-token")');
+    expect(src).toContain("receiveWebhook(");
+    expect(src).not.toContain("syncItem"); // só grava na fila; processamento é no worker
     expect(src).not.toMatch(/clientUserId/);
   });
   test("secrets nunca no navegador", () => {
