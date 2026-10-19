@@ -56,3 +56,25 @@ describe("prévia real", () => {
     expect(firstBatchActions(actions, txs)).toEqual([]);
   });
 });
+
+import { PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED, pickRealSelection } from "@/lib/pluggy/real-preview";
+describe("confirmação da primeira importação real", () => {
+  const batch = [{ account_id: "a", transaction_id: "t1" }, { account_id: "a", transaction_id: "t2" }];
+  it("gravação real permanece bloqueada", () => expect(PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED).toBe(false));
+  it("aceita só uma movimentação", () => {
+    expect(pickRealSelection(batch, [{ accountId: "a", transactionId: "t1" }])).toHaveLength(1);
+    expect(() => pickRealSelection(batch, [{ accountId: "a", transactionId: "t1" }, { accountId: "a", transactionId: "t2" }])).toThrow("selecao_invalida");
+  });
+  it("recusa movimentação fora do lote revalidado", () => {
+    expect(() => pickRealSelection(batch, [{ accountId: "a", transactionId: "x" }])).toThrow("movimentacao_nao_elegivel");
+  });
+});
+import { groupRealPreview } from "@/lib/pluggy/real-preview";
+describe("apresentação da prévia real", () => {
+  it("gasto estornado aparece bloqueado, não elegível", () => {
+    const txs = [tx({ transaction_id: "u1", amount: 38.94 }), tx({ transaction_id: "r1", type: "CREDIT", amount: 38.94, amount_original: 38.94, classification: "revisao", classification_reason: "estorno" })];
+    const actions = planImport({ userId: FELIPE, txs, cardLinks: [], categorias: [{ id: "c", nome: "Alimentação" }], imported: [], existing: [] });
+    const line = groupRealPreview(actions, txs, firstBatchActions(actions, txs)).find((l) => l.transaction_id === "u1");
+    expect([line?.grupo, line?.motivo]).toEqual(["revisao", "gasto_com_estorno_no_periodo"]);
+  });
+});
