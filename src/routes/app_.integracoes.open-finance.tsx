@@ -272,7 +272,7 @@ function OpenFinancePage() {
         </div>
       </Section>
 
-      <PluggyImportPanel accounts={s.accounts} />
+      <PluggyImportPanel accounts={s.accounts.map((a) => ({ ...a, institution: s.items.find((i) => i.item_id === a.item_id)?.connector_name ?? "Instituição não informada" }))} />
 
       <Section title={`Para revisar (${revisao.length})`}>
         {revisao.length === 0 && <Empty>Nada para revisar.</Empty>}

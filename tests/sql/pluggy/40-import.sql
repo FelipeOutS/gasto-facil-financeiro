@@ -26,6 +26,10 @@ INSERT INTO public.cartoes(id,user_id,nome) VALUES ('00000000-0000-0000-0000-000
 SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_link_card(%L,%L,%L)', :'F', :'CARD', '00000000-0000-0000-0000-00000000ca99')) LIKE '%pluggy_cartao_invalido%', 'não vincula cartão de outro usuário');
 SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_link_card(%L,%L,%L)', :'M', :'CARD', :'CARTAO')) LIKE '%pluggy_conta_cartao_invalida%', 'Michael não vincula conta do Felipe');
 SELECT public.pluggy_link_card(:'F', :'CARD', :'CARTAO');
+SELECT public.pluggy_link_card(:'F', :'CARD', NULL);
+SELECT public.pluggy_link_card(:'F', :'CARD', NULL);
+SELECT pg_temp.ok((SELECT NOT active FROM public.pluggy_card_links WHERE user_id=:'F' AND account_id=:'CARD'), 'desvínculo idempotente preserva registro e não cria cartão');
+SELECT public.pluggy_link_card(:'F', :'CARD', :'CARTAO');
 -- Revisão pendente nunca entra
 SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_import_apply(%L, gen_random_uuid(), %L)', :'F',
   jsonb_build_array(jsonb_build_object('op','insert','table','gastos','account_id',t.account_id,'transaction_id',t.transaction_id,
@@ -50,6 +54,15 @@ SELECT pg_temp.ok((SELECT count(*) FROM public.gastos WHERE origem='pluggy' AND 
 SELECT pg_temp.ok((SELECT count(DISTINCT id_operacao_banco) FROM public.gastos WHERE origem='pluggy') = 31, 'ID Pluggy preservado e único');
 SELECT pg_temp.ok((SELECT string_agg(DISTINCT c.nome, ',') FROM public.gastos g JOIN public.categorias c ON c.id=g.categoria_id WHERE g.descricao ~ 'ELETROBRAS|VIVO') = 'Contas', 'Eletrobras/Vivo em Contas');
 SELECT pg_temp.ok((SELECT qtd_movimentacoes FROM public.extratos_importados WHERE id=:'B1') = 36 AND (SELECT tipo_origem FROM public.extratos_importados WHERE id=:'B1') = 'pluggy', 'lote auditável registrado');
+SELECT e.entry_id AS card_eid, e.account_id AS card_acc, e.transaction_id AS card_tid, e.snapshot AS card_snap FROM public.pluggy_import_entries e JOIN public.gastos g ON g.id=e.entry_id WHERE g.cartao_id=:'CARTAO' ORDER BY g.id LIMIT 1 \gset
+INSERT INTO public.cartoes(id,user_id,nome) VALUES ('00000000-0000-0000-0000-00000000ca98', :'F', 'Outra opção do Felipe');
+SELECT public.pluggy_link_card(:'F', :'CARD', '00000000-0000-0000-0000-00000000ca98');
+SELECT public.pluggy_import_apply(:'F',gen_random_uuid(),jsonb_build_array(jsonb_build_object('op','update','table','gastos','account_id',:'card_acc','transaction_id',:'card_tid','entry_id',:'card_eid','next',:'card_snap'::jsonb))) AS changed_link \gset
+SELECT pg_temp.ok((:'changed_link'::jsonb->>'conflitos')::int=1 AND (SELECT cartao_id=:'CARTAO' FROM public.gastos WHERE id=:'card_eid'), 'corrigir vínculo preserva cartão anterior e bloqueia update antigo');
+SELECT public.pluggy_link_card(:'F', :'CARD', NULL);
+SELECT public.pluggy_import_apply(:'F',gen_random_uuid(),jsonb_build_array(jsonb_build_object('op','remove','table','gastos','account_id',:'card_acc','transaction_id',:'card_tid','entry_id',:'card_eid'))) AS unlinked \gset
+SELECT pg_temp.ok((:'unlinked'::jsonb->>'conflitos')::int=1 AND (SELECT deleted_at IS NULL FROM public.gastos WHERE id=:'card_eid'), 'desvínculo não remove compra anterior');
+SELECT public.pluggy_link_card(:'F', :'CARD', :'CARTAO');
 -- Repetições
 SELECT public.pluggy_import_apply(:'F', :'B1', :'plan'::jsonb) AS r2 \gset
 SELECT pg_temp.ok((:'r2'::jsonb->>'replay')::boolean AND (SELECT count(*) FROM public.gastos WHERE origem='pluggy') = 31, 'mesmo lote repetido (duplo clique) não grava');

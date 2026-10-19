@@ -5,10 +5,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { pluggyImport, type PluggyImportInput } from "@/lib/pluggy/import.functions";
+import { previewReason } from "@/lib/pluggy/import-preview";
 
 type Result = Awaited<ReturnType<typeof pluggyImport>>;
 type Preview = Extract<Result, { cards: unknown }>;
-type Account = { account_id: string; name: string; number_last4: string | null; type: string };
+type Account = { account_id: string; name: string; number_last4: string | null; type: string; institution: string };
 
 /** All import controls use the server-derived gate; preview itself never writes. */
 export function PluggyImportPanel({ accounts }: { accounts: Account[] }) {
@@ -40,7 +41,7 @@ export function PluggyImportPanel({ accounts }: { accounts: Account[] }) {
       toast.error("Não foi possível concluir. A importação permanece bloqueada se ainda não foi autorizada.");
     } finally { setBusy(false); }
   }
-  const enabled = !!preview?.schemaReady && !!preview?.releaseAuthorized && !busy;
+  const enabled = !!preview?.schemaReady && !!preview?.releaseAuthorized && !preview?.simulated && !busy;
   const review = preview?.actions.filter((a) => a.op === "review") ?? [];
   return (
     <section className="mt-7 space-y-4">
@@ -50,21 +51,44 @@ export function PluggyImportPanel({ accounts }: { accounts: Account[] }) {
       </div>
       {preview && <>
         <p className="text-xs text-muted-foreground">{preview.schemaReady ? "Estrutura disponível." : "Estrutura de importação aguardando aprovação."} {preview.releaseAuthorized ? "Importação autorizada." : "Gravação bloqueada."}</p>
+        {preview.simulated && <p className="text-sm font-medium text-primary">Simulação de vínculo — nenhuma associação salva.</p>}
         <label className="flex items-center justify-between gap-3 text-sm">Importar novas movimentações automaticamente<Switch checked={preview.autoImport} disabled={!enabled} onCheckedChange={(v) => { if (confirm(v ? "Autorizar importações automáticas das suas novas movimentações elegíveis?" : "Desativar a importação automática?")) void act({ action: "automatic", enabled: v, confirmed: true }); }} /></label>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {([["Gastos", preview.resumo.gastos], ["Receitas", preview.resumo.receitas], ["Revisão", preview.resumo.revisao], ["Ignorados", preview.resumo.ignorados], ["Atualizações", preview.resumo.atualizacoes], ["Remoções reversíveis", preview.resumo.remocoes]] as const).map(([label, count]) => <div key={label} className="border-b border-border py-3"><p className="text-xl font-semibold">{count}</p><p className="text-xs text-muted-foreground">{label}</p></div>)}
+          {([["Gastos elegíveis", preview.resumo.gastos], ["Receitas elegíveis", preview.resumo.receitas], ["Cartão aguardando vínculo", preview.resumo.motivos.cartao_sem_vinculo_confirmado ?? 0], ["Outras revisões", preview.resumo.revisao - (preview.resumo.motivos.cartao_sem_vinculo_confirmado ?? 0)], ["Ignorados", preview.resumo.ignorados], ["Atualizações", preview.resumo.atualizacoes], ["Remoções reversíveis", preview.resumo.remocoes]] as const).map(([label, count]) => <div key={label} className="border-b border-border py-3"><p className="text-xl font-semibold">{count}</p><p className="text-xs text-muted-foreground">{label}</p></div>)}
         </div>
         {accounts.filter((a) => a.type === "CREDIT").map((a) => <div key={a.account_id} className="space-y-2 border-b border-border py-3">
+          <p className="text-xs text-muted-foreground">{a.institution}</p>
           <p className="text-sm font-medium">{a.name} {a.number_last4 ? `••${a.number_last4}` : ""}</p>
+          <p className="text-xs text-muted-foreground">Vínculo salvo: {preview.cards.find((c) => c.id === preview.cardLinks.find((l) => l.account_id === a.account_id)?.cartao_id)?.nome ?? "Nenhum"}</p>
           <div className="flex flex-wrap gap-2">
-            <select aria-label={`Cartão vinculado a ${a.name}`} className="min-w-0 flex-1 rounded-md border border-border bg-background p-2 text-sm" value={links[a.account_id] ?? ""} onChange={(e) => setLinks((v) => ({ ...v, [a.account_id]: e.target.value }))}>
+            <select aria-label={`Cartão vinculado a ${a.name}`} className="min-w-0 w-full rounded-md border border-border bg-background p-2 text-sm sm:flex-1" value={links[a.account_id] ?? preview.cardLinks.find((l) => l.account_id === a.account_id)?.cartao_id ?? ""} onChange={(e) => setLinks((v) => ({ ...v, [a.account_id]: e.target.value }))}>
               <option value="">Escolha seu cartão…</option>
               {preview.cards.map((c) => <option key={c.id} value={c.id}>{c.nome} · fecha {c.dia_fechamento}, vence {c.dia_vencimento}</option>)}
             </select>
             <Button size="sm" variant="outline" disabled={!enabled || !links[a.account_id]} onClick={() => { const cardId = links[a.account_id]; if (cardId && confirm("Confirmar que este é o mesmo cartão? Lançamentos anteriores não serão movidos.")) void act({ action: "link", accountId: a.account_id, cardId, confirmed: true }); }}><Link2 className="mr-2 h-4 w-4" />Confirmar vínculo</Button>
+            <Button size="sm" variant="outline" disabled={busy || !links[a.account_id]} onClick={() => { const cardId = links[a.account_id]; if (cardId) void act({ action: "preview", simulationLinks: [{ accountId: a.account_id, cardId }] }); }}><Eye className="mr-2 h-4 w-4" />Simular vínculo sem salvar</Button>
+            <Button size="sm" variant="ghost" disabled={!enabled || !preview.cardLinks.some((l) => l.account_id === a.account_id)} onClick={() => { if (confirm("Desvincular para novas compras? Lançamentos anteriores serão preservados e alterações futuras exigirão revisão.")) void act({ action: "unlink", accountId: a.account_id, confirmed: true }); }}>Desvincular</Button>
           </div>
+          {preview.cards.length === 0 && <p className="text-xs text-muted-foreground">Nenhum cartão existente na sua conta.</p>}
         </div>)}
         <Button disabled={!enabled || preview.resumo.gastos + preview.resumo.receitas + preview.resumo.atualizacoes + preview.resumo.remocoes === 0} onClick={() => { if (confirm("Confirmar o lançamento deste histórico em Gastos e Receitas? Movimentações em revisão ficam de fora.")) { const id = batchId ?? crypto.randomUUID(); setBatchId(id); void act({ action: "history", batchId: id, confirmed: true }); } }}><Download className="mr-2 h-4 w-4" />Confirmar importação do histórico</Button>
+        <h3 className="text-sm font-semibold">Destino das {preview.actions.length} movimentações</h3>
+        <div className="space-y-2">
+          {preview.actions.map((a) => {
+            const t = preview.transactions.find((t) => t.account_id === a.account_id && t.transaction_id === a.transaction_id);
+            const category = a.op === "insert" && a.table === "gastos" ? preview.categorias.find((c) => c.id === a.row.categoria_id)?.nome : t?.categoria;
+            const target = a.op === "insert" ? (a.table === "gastos" ? "Gastos" : "Receitas") : a.op === "review" ? "Revisão — não lançar" : a.op === "skip" ? "Ignorado — não lançar" : a.op === "update" ? "Atualizar lançamento Pluggy" : "Retirada reversível";
+            const matches = t ? preview.existing.filter((e) => e.origem !== "pluggy" && Math.round(e.valor * 100) === Math.round(t.amount * 100) && Math.abs(Date.parse(e.data) - Date.parse(t.date)) <= 86400000) : [];
+            return <div key={`destination:${a.account_id}:${a.transaction_id}`} className="border-b border-border py-3">
+              <div className="flex flex-wrap justify-between gap-2 text-sm font-medium"><span className="min-w-0 break-words">{t?.description ?? "Sem descrição"}</span><span>{(t?.amount ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span></div>
+              <p className="text-xs text-muted-foreground">{t?.date} · {target} · Categoria: {category ?? "Não aplicável"}</p>
+              {(a.op === "review" || a.op === "skip") && <p className="text-xs">{previewReason(a.reason)}</p>}
+              {a.op === "insert" && a.table === "gastos" && a.row.cartao_id && <p className="text-xs">{preview.cards.find((c) => c.id === a.row.cartao_id)?.nome} · Fatura {a.row.fatura_competencia}</p>}
+              {(t?.mp_match_ids?.length ?? 0) > 0 && <p className="text-xs">Possíveis correspondências Mercado Pago: {t?.mp_match_ids?.length}</p>}
+              {matches.map((e) => <p key={`${e.table}:${e.id}`} className="break-words text-xs text-muted-foreground">Possível duplicação · {e.origem ?? "manual"} · {e.descricao} · {e.data}</p>)}
+            </div>;
+          })}
+        </div>
         <h3 className="text-sm font-semibold">Revisão da importação ({review.length})</h3>
         {review.map((a) => <div key={`${a.account_id}:${a.transaction_id}`} className="rounded-lg border border-border p-3">
           <p className="text-sm font-medium">{preview.transactions.find((t) => t.account_id === a.account_id && t.transaction_id === a.transaction_id)?.description ?? "Movimentação sem descrição"}</p>

@@ -1,5 +1,17 @@
 # Pluggy — Fase 3, implementação conectada
 
+## Validação posterior dos vínculos (19/10/2026)
+
+Distribuição confirmada por leitura: **40 = 16 despesas bancárias + 15 compras de cartão + 5 receitas + 3 pagamentos de fatura ignorados + 1 boleto em revisão**. As 15 revisões adicionais não mudam a natureza dos movimentos: faltava vínculo de cartão confirmado. A prévia original permanece 16/5/16/3; a simulação com cada uma das duas opções próprias (Mercado pago: fecha 5/vence 11; Nubank: fecha 25/vence 5) retornou 31/5/1/3, sem salvar associações, sem duplicações candidatas detectadas nesse conjunto. Isso não confirma que algum desses cartões seja o Mastercard fictício 9437.
+
+Ajustes reais desta validação: `src/lib/pluggy/import-preview.ts` (simulação pura validada contra cartões/contas do titular e motivos), `import.functions.ts` (simulação somente na prévia, metadados, desvínculo bloqueado), `PluggyImportPanel.tsx` (instituição/nome/final, opções, vínculo salvo, simulação identificada, destinos/categorias/fatura/matches das 40), rota Open Finance (instituição por item), `import-plan.ts` e adapter (cartão anterior preservado quando vínculo muda/some), SQL candidato e testes SQL (active, desvínculo sem DELETE, lock compartilhado, guard de compras anteriores), `tests/pluggy-import-preview.test.ts` (6 regras concretas), regras locais e roadmap.
+
+Vínculo/desvínculo persistentes continuam bloqueados, dependentes de SQL e autorização; **somente simulação foi homologada no aplicativo**. SQL mantém três tabelas/cinco funções: `pluggy_link_card(..., NULL)` desativa vínculo, não exclui registro. Correção aplica-se a compras novas; compras anteriores não mudam de cartão/fatura e updates/removes via incremental entram em conflito/revisão. Movimentar compras antigas ou restaurar mutações incrementais não está implementado.
+
+Validação desta continuação: 98 testes focados/0 falhas; 110 verificações SQL em banco descartável; Preview autenticado, duas opções próprias, original/simulação/retorno à original, importação e vínculo persistente desabilitados, nenhum erro JavaScript. Suíte oficial teve 4.122 aprovados/1 falha/9 skips (timeout do cofre); arquivo isolado passou 24/0. Harness registrou build OK. Leitura antes/depois: 278 gastos, 215 receitas, 11 cartões, 751 registros MP, zero despesas/receitas Pluggy, tabelas candidatas ausentes. Contagens são evidência complementar, não comparação byte a byte dos dados reais; nenhuma operação de escrita real foi chamada.
+
+Créditos consultados: saldo 145,37; uso agregado do projeto desde 19/10 reportado 113,103966946 no momento da consulta. **Consumo exclusivo desta solicitação não confirmado** (não confundir agregado com custo da tarefa).
+
 ## Resultado e limite de autorização
 
 Motor ligado à tela Open Finance e aos pontos de sincronização, mas **gravação financeira continua bloqueada** por `PLUGGY_IMPORT_RELEASE_AUTHORIZED = false`. Somente prévia read-only foi executada no aplicativo autenticado. Nenhuma migração, publicação, ativação de worker/Live/agendamento ou chamada de escrita financeira foi realizada nesta tarefa. Não houve alteração de secrets/flags de ambiente, envio Meta ou criação de backup.

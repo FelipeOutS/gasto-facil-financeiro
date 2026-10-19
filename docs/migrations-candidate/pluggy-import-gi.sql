@@ -13,6 +13,7 @@ CREATE TABLE public.pluggy_card_links (
   user_id uuid NOT NULL,
   account_id text NOT NULL,
   cartao_id uuid NOT NULL,
+  active boolean NOT NULL DEFAULT true,
   confirmed_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, account_id),
@@ -90,15 +91,21 @@ CREATE FUNCTION public.pluggy_link_card(p_user_id uuid, p_account_id text, p_car
 RETURNS void LANGUAGE plpgsql SECURITY INVOKER SET search_path = public, pg_temp AS $$
 BEGIN
   PERFORM public.pluggy_assert_owner(p_user_id);
+  PERFORM pg_advisory_xact_lock(hashtextextended('pluggy-import:' || p_user_id::text, 0));
   IF NOT EXISTS (SELECT 1 FROM public.pluggy_accounts a WHERE a.user_id = p_user_id AND a.account_id = p_account_id AND a.type = 'CREDIT' AND a.is_sandbox AND EXISTS (SELECT 1 FROM public.pluggy_items i WHERE i.user_id=a.user_id AND i.item_id=a.item_id AND i.is_sandbox AND i.deleted_at IS NULL)) THEN
     RAISE EXCEPTION 'pluggy_conta_cartao_invalida' USING ERRCODE = '22023';
+  END IF;
+  -- NULL = desvincular, sem DELETE e sem alterar qualquer lançamento financeiro.
+  IF p_cartao_id IS NULL THEN
+    UPDATE public.pluggy_card_links SET active=false WHERE user_id=p_user_id AND account_id=p_account_id AND active;
+    RETURN;
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.cartoes c WHERE c.user_id = p_user_id AND c.id = p_cartao_id) THEN
     RAISE EXCEPTION 'pluggy_cartao_invalido' USING ERRCODE = '22023';
   END IF;
   -- Trocar o vínculo não move lançamentos já importados (continuam no cartão original).
   INSERT INTO public.pluggy_card_links (user_id, account_id, cartao_id) VALUES (p_user_id, p_account_id, p_cartao_id)
-  ON CONFLICT (user_id, account_id) DO UPDATE SET cartao_id = EXCLUDED.cartao_id, confirmed_at = now();
+  ON CONFLICT (user_id, account_id) DO UPDATE SET cartao_id = EXCLUDED.cartao_id, active=true, confirmed_at = now();
 END $$;
 
 -- ---------------------------------------------------------------------------
@@ -193,8 +200,8 @@ BEGIN
           -- Compra de cartão exige vínculo confirmado e o mesmo cartão do vínculo.
           IF r->>'forma_pagamento' <> 'credito' OR NOT EXISTS (
                SELECT 1 FROM public.pluggy_card_links l JOIN public.cartoes c ON c.id = l.cartao_id AND c.user_id = l.user_id
-               WHERE l.user_id = p_user_id AND l.account_id = tx.account_id AND l.cartao_id = (r->>'cartao_id')::uuid)
-             OR coalesce(r->>'fatura_competencia', '') !~ '^[0-9]{4}-(0[1-9]|1[0-2])$' OR NOT EXISTS (SELECT 1 FROM public.pluggy_card_links l JOIN public.cartoes c ON c.id=l.cartao_id AND c.user_id=l.user_id WHERE l.user_id=p_user_id AND l.account_id=tx.account_id AND extract(day FROM d) <> c.dia_fechamento AND r->>'fatura_competencia' = to_char((date_trunc('month', d) + ((CASE WHEN extract(day FROM d)<=c.dia_fechamento THEN -1 ELSE 0 END) + (CASE WHEN c.dia_vencimento<=c.dia_fechamento THEN 2 ELSE 1 END)) * interval '1 month')::date, 'YYYY-MM')) THEN
+               WHERE l.user_id = p_user_id AND l.account_id = tx.account_id AND l.active AND l.cartao_id = (r->>'cartao_id')::uuid)
+             OR coalesce(r->>'fatura_competencia', '') !~ '^[0-9]{4}-(0[1-9]|1[0-2])$' OR NOT EXISTS (SELECT 1 FROM public.pluggy_card_links l JOIN public.cartoes c ON c.id=l.cartao_id AND c.user_id=l.user_id WHERE l.user_id=p_user_id AND l.account_id=tx.account_id AND l.active AND extract(day FROM d) <> c.dia_fechamento AND r->>'fatura_competencia' = to_char((date_trunc('month', d) + ((CASE WHEN extract(day FROM d)<=c.dia_fechamento THEN -1 ELSE 0 END) + (CASE WHEN c.dia_vencimento<=c.dia_fechamento THEN 2 ELSE 1 END)) * interval '1 month')::date, 'YYYY-MM')) THEN
             RAISE EXCEPTION 'pluggy_cartao_sem_vinculo' USING ERRCODE = '22023';
           END IF;
         ELSIF r->>'cartao_id' IS NOT NULL OR r->>'forma_pagamento' = 'credito' THEN
@@ -232,6 +239,11 @@ BEGIN
         FOR UPDATE;
       IF NOT FOUND THEN n_conf := n_conf + 1; CONTINUE; END IF;
       IF a->>'table' IS DISTINCT FROM ent.entry_table THEN RAISE EXCEPTION 'pluggy_lancamento_invalido' USING ERRCODE='22023'; END IF;
+      -- Troca/desvínculo não move, atualiza nem remove compras do cartão anterior.
+      IF ent.entry_table='gastos' AND EXISTS (SELECT 1 FROM public.pluggy_accounts pa WHERE pa.user_id=p_user_id AND pa.account_id=tx.account_id AND pa.type='CREDIT') AND NOT EXISTS (
+        SELECT 1 FROM public.gastos g JOIN public.pluggy_card_links l ON l.user_id=g.user_id AND l.cartao_id=g.cartao_id
+        WHERE g.id=ent.entry_id AND g.user_id=p_user_id AND l.account_id=tx.account_id AND l.active
+      ) THEN n_conf := n_conf + 1; CONTINUE; END IF;
       IF a->>'op'='update' AND (tx.deleted_at IS NOT NULL OR tx.status IS DISTINCT FROM 'POSTED' OR tx.review_status='rejeitado' OR tx.classification='ignorado' OR (tx.classification='revisao' AND tx.review_status IS DISTINCT FROM 'aprovado') OR (ent.entry_table='receitas' AND tx.type IS DISTINCT FROM 'CREDIT') OR (ent.entry_table='gastos' AND EXISTS (SELECT 1 FROM public.pluggy_accounts pa WHERE pa.user_id=p_user_id AND pa.account_id=tx.account_id AND pa.type='CREDIT') AND tx.date<>(ent.snapshot->>'data')::date)) THEN RAISE EXCEPTION 'pluggy_transacao_nao_elegivel' USING ERRCODE='22023'; END IF;
       IF a->>'op'='remove' AND tx.deleted_at IS NULL AND tx.review_status IS DISTINCT FROM 'rejeitado' AND tx.classification IS DISTINCT FROM 'ignorado' THEN RAISE EXCEPTION 'pluggy_remocao_nao_elegivel' USING ERRCODE='22023'; END IF;
       IF ent.entry_table = 'gastos' THEN
