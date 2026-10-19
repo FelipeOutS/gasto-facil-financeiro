@@ -200,6 +200,9 @@ export const PLUGGY_LIVE_READONLY_AUTHORIZED: boolean = false;
 /** Únicas instituições reais aceitas nesta etapa (nome normalizado do conector). */
 export const PLUGGY_LIVE_CONNECTOR_NAMES: readonly string[] = Object.freeze(["mercado pago"]) // Etapa 1; Nubank entra na etapa 2;
 
+/** Etapa 1: só o conector Open Finance oficial "Mercado Pago" pessoa física (id 606 na Pluggy). */
+export const PLUGGY_LIVE_CONNECTOR_IDS: readonly number[] = Object.freeze([606]);
+
 export function isLiveConnectorAllowedName(name: string | null | undefined): boolean {
   const n = norm(name);
   return PLUGGY_LIVE_CONNECTOR_NAMES.some((a) => n === a || n.startsWith(a + " "));
@@ -216,7 +219,8 @@ export function assertConnectorAllowed(
   if (connector.isSandbox === true) return;
   if (!liveReadonly) throw new Error("pluggy_conector_nao_sandbox");
   if (connector.isSandbox !== false) throw new Error("pluggy_conector_ambiente_indefinido");
-  if (!isLiveConnectorAllowedName(connector.name)) throw new Error("pluggy_instituicao_nao_permitida");
+  if (!PLUGGY_LIVE_CONNECTOR_IDS.includes(connector.id) || !isLiveConnectorAllowedName(connector.name))
+    throw new Error("pluggy_instituicao_nao_permitida");
 }
 
 export type AccessState = "ok" | "pausado_acesso" | "pausado_erro";
