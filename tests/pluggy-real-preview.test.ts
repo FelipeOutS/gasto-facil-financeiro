@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import { classifyTransaction } from "@/lib/pluggy/rules";
 import { canUseRealPreview, firstBatchActions, realPreviewWindow, reclassifyForPreview, selectRealTxs, type RealTxRow } from "@/lib/pluggy/real-preview";
 import { planImport } from "@/lib/pluggy/import-plan";

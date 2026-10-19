@@ -57,7 +57,7 @@ const DUP = new Set(["possivel_duplicata_mercado_pago", "possivel_duplicata_lanc
 
 export function groupRealPreview(actions: readonly PlanAction[], txs: readonly RealTxRow[]): RealPreviewLine[] {
   const byKey = new Map(txs.map((t) => [`${t.account_id}|${t.transaction_id}`, t]));
-  return actions.flatMap((a) => {
+  return actions.flatMap((a): RealPreviewLine[] => {
     const t = byKey.get(`${a.account_id}|${a.transaction_id}`);
     if (!t) return [];
     const base = { transaction_id: t.transaction_id, account_id: t.account_id, date: t.date, description: t.description, amount: t.amount, categoria: t.categoria_manual ?? t.categoria_sugerida };
