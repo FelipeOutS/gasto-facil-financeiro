@@ -19,8 +19,8 @@ describe("Pluggy conexão real somente leitura", () => {
     expect(() => assertConnectorAllowed({ id: 201, name: "Nubank", isSandbox: false })).toThrow("pluggy_conector_nao_sandbox");
   });
 
-  it("com a trava liberada, só Nubank e Mercado Pago reais passam", () => {
-    expect(() => assertConnectorAllowed({ id: 201, name: "Nubank", isSandbox: false }, "sandbox", true)).not.toThrow();
+  it("etapa 1: com a trava liberada, só Mercado Pago real passa", () => {
+    expect(() => assertConnectorAllowed({ id: 201, name: "Nubank", isSandbox: false }, "sandbox", true)).toThrow("pluggy_instituicao_nao_permitida");
     expect(() => assertConnectorAllowed({ id: 202, name: "Mercado Pago", isSandbox: false }, "sandbox", true)).not.toThrow();
     expect(() => assertConnectorAllowed({ id: 203, name: "Itaú", isSandbox: false }, "sandbox", true)).toThrow("pluggy_instituicao_nao_permitida");
     expect(() => assertConnectorAllowed({ id: 204, name: "Nubank", isSandbox: null }, "sandbox", true)).toThrow("pluggy_conector_ambiente_indefinido");
@@ -28,7 +28,8 @@ describe("Pluggy conexão real somente leitura", () => {
   });
 
   it("nomes parecidos não passam", () => {
-    expect(isLiveConnectorAllowedName("Nubank Empresas")).toBe(true);
+    expect(isLiveConnectorAllowedName("Mercado Pago Empresas")).toBe(true);
+    expect(isLiveConnectorAllowedName("Nubank")).toBe(false);
     expect(isLiveConnectorAllowedName("Nubankx")).toBe(false);
     expect(isLiveConnectorAllowedName("Mercado")).toBe(false);
   });
@@ -38,6 +39,11 @@ describe("Pluggy conexão real somente leitura", () => {
     expect(isPluggyAllowed(MICHAEL, ["owner"])).toBe(true);
     expect(isPluggyAllowed(FELIPE, ["admin"])).toBe(false);
     expect(isPluggyAllowed("00000000-0000-0000-0000-000000000000", ["owner"])).toBe(false);
+  });
+
+  it("dados reais nunca entram na prévia de importação (só Sandbox)", () => {
+    const src = readFileSync("src/server/pluggy/pluggy-import-store.server.ts", "utf8");
+    expect(src).toContain("t.is_sandbox === true");
   });
 
   it("SQL candidato não toca gravação financeira e mantém Sandbox nas importações", () => {
