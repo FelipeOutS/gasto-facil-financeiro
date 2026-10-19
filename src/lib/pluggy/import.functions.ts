@@ -24,7 +24,7 @@ export const pluggyImport = createServerFn({ method: "POST" })
     if (roles.error || !isPluggyAllowed(context.userId, (roles.data ?? []).map((r) => r.role))) throw new Error("pluggy_nao_autorizado");
     const { runPluggyImport, revertPluggyImport, PLUGGY_IMPORT_RELEASE_AUTHORIZED } = await import("@/server/pluggy/pluggy-import.server");
     // Before any privileged import, financial write, or RPC call. Never supplied by client.
-    if (data.action !== "preview" && !PLUGGY_IMPORT_RELEASE_AUTHORIZED) throw new Error("importacao_bloqueada");
+    if (data.action !== "preview" && data.action !== "preview_real" && !PLUGGY_IMPORT_RELEASE_AUTHORIZED) throw new Error("importacao_bloqueada");
     const { createImportDeps, importSchemaReady, readRealTxs } = await import("@/server/pluggy/pluggy-import-store.server");
     const deps = createImportDeps(context.supabase);
     if (data.action === "preview_real") {
