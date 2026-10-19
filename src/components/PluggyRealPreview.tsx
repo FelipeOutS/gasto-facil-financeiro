@@ -22,7 +22,7 @@ export function PluggyRealPreview() {
     setBusy(true);
     try {
       const r = await call({ data: { action: "preview_real", from } });
-      if ("real" in r) setData(r);
+      if ("real" in r && r.real === true) setData(r as Real);
     } catch { toast.error("Prévia real indisponível para esta conta ou período."); }
     finally { setBusy(false); }
   }
