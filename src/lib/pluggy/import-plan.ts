@@ -43,7 +43,7 @@ export type ImportedEntry = {
   current: EntrySnapshot | null; // null = linha removida (deleted_at) ou inexistente
   state: "ativo" | "revertido" | "removido";
 };
-export type EntrySnapshot = { valor: number; data: string; descricao: string; categoria_id?: string | null; updated_at?: string };
+export type EntrySnapshot = { valor: number; data: string; descricao: string; categoria_id?: string | null; updated_at?: string; cartao_id?: string | null };
 /** Lançamentos de OUTRAS origens (manual, extrato, WhatsApp, Mercado Pago) para conciliação. */
 export type ExistingEntry = { table: "gastos" | "receitas"; id: string; valor: number; data: string; descricao: string; origem: string | null };
 
@@ -156,6 +156,9 @@ export function planImport(input: PlanInput): PlanAction[] {
     if (prev) {
       if (prev.state !== "ativo" || !prev.current) { out.push({ op: "skip", ...base, reason: "ja_importada_" + prev.state }); continue; }
       const edited = !sameSnap(prev.snapshot, prev.current) || (!!prev.snapshot.updated_at && Date.parse(prev.snapshot.updated_at) !== Date.parse(prev.current.updated_at ?? ""));
+      if (tx.account_type === "CREDIT" && (!links.has(tx.account_id) || (prev.current.cartao_id !== undefined && links.get(tx.account_id)?.cartao_id !== prev.current.cartao_id))) {
+        out.push({ op: "review", ...base, reason: "vinculo_alterado_preservar_lancamento_anterior" }); continue;
+      }
       const eff = effectiveKind(tx);
       if (tx.deleted_at || "skip" in eff) {
         if (edited) { out.push({ op: "review", ...base, reason: "remocao_conflita_com_edicao_manual" }); continue; }
