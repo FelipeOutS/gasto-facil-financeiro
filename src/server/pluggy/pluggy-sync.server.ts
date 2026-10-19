@@ -115,6 +115,7 @@ export async function syncItem(
           throw new PluggyTxStepError(e instanceof PluggyHttpError ? (e.status === 0 ? e.code : `transacoes_http_${e.status}`) : "transacoes_erro");
         }
         for (const raw of (r.results ?? []) as PluggyTx[]) {
+          if (typeof raw.date === "string" && raw.date.slice(0, 10) < from) continue; // fora do período escolhido
           if (seen.has(raw.id)) continue; // a mesma transação nunca entra duas vezes na mesma sincronização
           seen.add(raw.id);
           const tx = { ...raw, accountId: acc.id };

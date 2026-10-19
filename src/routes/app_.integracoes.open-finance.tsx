@@ -103,7 +103,12 @@ function OpenFinancePage() {
       await post(action, body);
       toast.success(ok);
     } catch (e) {
-      toast.error((e as Error).message);
+      const m = (e as Error).message;
+      toast.error(
+        m.startsWith("sync_parcial:")
+          ? "Contas e saldos atualizados, mas as transações falharam. Tente sincronizar novamente."
+          : m,
+      );
     } finally {
       setBusy(false);
       void load();
