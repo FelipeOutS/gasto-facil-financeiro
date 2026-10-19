@@ -25,16 +25,17 @@ export const pluggyImport = createServerFn({ method: "POST" })
     const { createImportDeps, importSchemaReady } = await import("@/server/pluggy/pluggy-import-store.server");
     const deps = createImportDeps(context.supabase);
     if (data.action === "preview") {
-      const [plan, schemaReady, cards] = await Promise.all([
+      const [plan, schemaReady, cards, transactions] = await Promise.all([
         runPluggyImport(deps, { userId: context.userId, batchId: crypto.randomUUID(), mode: "previa" }),
         importSchemaReady(context.supabase, context.userId),
         context.supabase.from("cartoes").select("id,nome,dia_fechamento,dia_vencimento").eq("user_id", context.userId).order("nome"),
+        deps.txs(context.userId),
       ]);
       if (cards.error || !plan.ok || !plan.actions) throw new Error("pluggy_leitura_indisponivel");
       // Batches are read only when candidate schema exists; no seed/creation on page load.
       const batches = schemaReady ? await context.supabase.from("extratos_importados").select("id,status,data_importacao,qtd_movimentacoes").eq("user_id", context.userId).eq("tipo_origem", "pluggy").order("data_importacao", { ascending: false }).limit(30) : { data: [], error: null };
       if (batches.error) throw new Error("pluggy_leitura_indisponivel");
-      return { ...plan, actions: plan.actions, schemaReady, releaseAuthorized: PLUGGY_IMPORT_RELEASE_AUTHORIZED, cards: cards.data ?? [], batches: batches.data ?? [] };
+      return { ...plan, actions: plan.actions, transactions: transactions.map((t) => ({ account_id: t.account_id, transaction_id: t.transaction_id, description: t.description, amount: t.amount, date: t.date, review_status: t.review_status })), schemaReady, releaseAuthorized: PLUGGY_IMPORT_RELEASE_AUTHORIZED, cards: cards.data ?? [], batches: batches.data ?? [] };
     }
     if (!(await importSchemaReady(context.supabase, context.userId))) throw new Error("pluggy_import_rpc_indisponivel");
     if (data.action === "history") return runPluggyImport(deps, { userId: context.userId, batchId: data.batchId, mode: "historico_inicial", confirmed: true });

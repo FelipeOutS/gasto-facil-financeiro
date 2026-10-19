@@ -907,7 +907,7 @@ type ExtratoImportadoRow = {
 };
 function rowToExtratoImportado(r: ExtratoImportadoRow): ExtratoImportado {
   const tipo: TipoOrigemExtrato =
-    r.tipo_origem === "csv" || r.tipo_origem === "imagem" ? r.tipo_origem : "pdf";
+    r.tipo_origem === "csv" || r.tipo_origem === "imagem" || r.tipo_origem === "pluggy" ? r.tipo_origem : "pdf";
   const status: StatusExtratoImportado =
     r.status === "parcial" || r.status === "revertido" || r.status === "erro"
       ? r.status

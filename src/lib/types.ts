@@ -166,7 +166,7 @@ export type TransferenciaInterna = {
 
 // ---------- Extratos importados (lotes) ----------
 export type StatusExtratoImportado = "importado" | "parcial" | "revertido" | "erro";
-export type TipoOrigemExtrato = "pdf" | "csv" | "imagem";
+export type TipoOrigemExtrato = "pdf" | "csv" | "imagem" | "pluggy";
 
 export type ExtratoImportado = {
   id: string;

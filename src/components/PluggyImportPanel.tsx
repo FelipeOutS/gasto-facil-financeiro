@@ -62,6 +62,7 @@ export function PluggyImportPanel({ accounts }: { accounts: Account[] }) {
         <Button disabled={!enabled || preview.resumo.gastos + preview.resumo.receitas + preview.resumo.atualizacoes + preview.resumo.remocoes === 0} onClick={() => { if (confirm("Confirmar o lançamento deste histórico em Gastos e Receitas? Movimentações em revisão ficam de fora.")) { const id = batchId ?? crypto.randomUUID(); setBatchId(id); void act({ action: "history", batchId: id, confirmed: true }); } }}><Download className="mr-2 h-4 w-4" />Confirmar importação do histórico</Button>
         <h3 className="text-sm font-semibold">Revisão da importação ({review.length})</h3>
         {review.map((a) => <div key={`${a.account_id}:${a.transaction_id}`} className="rounded-lg border border-border p-3">
+          <p className="text-sm font-medium">{preview.transactions.find((t) => t.account_id === a.account_id && t.transaction_id === a.transaction_id)?.description ?? "Movimentação sem descrição"}</p>
           <p className="break-all text-xs text-muted-foreground">{a.transaction_id}</p>
           <p className="mt-1 text-sm">{a.op === "review" ? a.reason.replace(/_/g, " ") : ""}</p>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -70,6 +71,7 @@ export function PluggyImportPanel({ accounts }: { accounts: Account[] }) {
             <Button size="sm" variant="ghost" disabled={!enabled} onClick={() => act({ action: "review", accountId: a.account_id, transactionId: a.transaction_id, decision: null })}>Voltar a pendente</Button>
           </div>
         </div>)}
+        {preview.transactions.filter((t) => t.review_status).map((t) => <div key={`decision:${t.account_id}:${t.transaction_id}`} className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-3"><p className="text-sm">{t.description} · {t.review_status}</p><Button size="sm" variant="ghost" disabled={!enabled} onClick={() => act({ action: "review", accountId: t.account_id, transactionId: t.transaction_id, decision: null })}>Voltar a pendente</Button></div>)}
         <h3 className="text-sm font-semibold">Importações anteriores</h3>
         {preview.batches.length === 0 && <p className="text-xs text-muted-foreground">Nenhuma importação realizada.</p>}
         {preview.batches.map((b) => <div key={b.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-3">
