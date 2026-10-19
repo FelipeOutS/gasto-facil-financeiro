@@ -35,3 +35,8 @@
 - [ ] Fechamento mínimo 19/10 17:54 concluído: fallback MP e OAuth oficial aceitos no ambiente disponível (não prova do processo publicado); Shopping flag ativa mas trava independente false e chamada sem override; dispatcher false no ambiente disponível; Pluggy/lote false em código. Código candidato idêntico ao testado, build automático 17:55 OK, testes reutilizados. Patch de retorno com quatro awaits preparado e equivalência exata conferida, não aplicado. BLOQUEADO: confirmação runtime publicado e aprovação final das exceções typecheck/cofre e do escopo/retorno ainda pendentes; sem publicar/migrar/ativar.
 
 - [x] Pluggy MP 606 real (verificado; publicação aguarda autorização): verificar tela Open Finance no celular + parecer de publicação (aguardando autorização para publicar)
+
+## Pluggy / Contas a Receber (pendente)
+- [ ] Lote real 1: 3 rendimentos 13–15/10 (R$ 0,03) — aguarda aprovação do SQL `pluggy-real-batch-import.sql` (hash 3038a110…)
+- [ ] "Adiantamento — Mãe" R$ 185 (Pix R$ 35 Maria Celia vinculado; Pix R$ 150 sem vínculo) — aguarda autorização de criação e data prevista
+- [ ] Investigar recorrência "Cabelo" inexistente (gastos 27/09 e 27/10 preservados) — futura
