@@ -145,7 +145,7 @@ describe("sandbox, trial e webhook", () => {
 function memStore(owners: Record<string, string>) {
   const tx = new Map<string, TxRow & { categoria_manual?: string }>();
   const settings: Record<string, PluggySettings> = {};
-  const store: PluggyStore & { tx: typeof tx; settings: typeof settings } = {
+  const store: PluggyStore & { tx: typeof tx; settings: typeof settings; syncMarks: Array<{ ok: boolean; error?: string; pluggyError?: string | null }> } = {
     tx,
     settings,
     async getSettings(u) {
@@ -158,6 +158,10 @@ function memStore(owners: Record<string, string>) {
       return owners[i] ? { userId: owners[i], isSandbox: true } : null;
     },
     async upsertItem() {},
+    syncMarks: [] as Array<{ ok: boolean; error?: string; pluggyError?: string | null }>,
+    async markItemSync(_u, _i, o) {
+      store.syncMarks.push(o);
+    },
     async markItemDeleted() {},
     async upsertAccounts() {},
     async upsertTransactions(rows) {
@@ -188,7 +192,7 @@ function fakeApi(opts: { sandbox?: boolean; clientUserId?: string; fail?: number
       return { id, clientUserId: opts.clientUserId ?? FELIPE, status: "UPDATED", connector: { id: 2, name: "Pluggy Bank", isSandbox: opts.sandbox ?? true } };
     },
     accounts: async (itemId: string) => ({ results: [{ id: "a1", itemId, type: "BANK", name: "Conta", balance: 100 }] }),
-    transactionsPage: async () => ({ results: txs, totalPages: 1, page: 1 }),
+    transactionsV2: async () => ({ results: txs, next: null }),
   } as unknown as PluggyApi;
 }
 
@@ -248,5 +252,96 @@ describe("sincronização", () => {
   test("motor não toca em gastos/receitas", () => {
     const src = readFileSync("src/server/pluggy/pluggy-sync.server.ts", "utf8") + readFileSync("src/server/pluggy/pluggy-store.server.ts", "utf8");
     expect(src).not.toMatch(/from\("(gastos|receitas|cartoes)"\)/);
+  });
+});
+
+// ---------- API v2 de transações (cursor) ----------
+import { transactionsV2Path } from "@/server/pluggy/pluggy-api.server";
+
+describe("Pluggy /v2/transactions", () => {
+  const now = () => new Date("2026-10-19T12:00:00Z");
+  const base = { status: "POSTED" as const };
+  function v2Api(pages: Record<string, Array<Record<string, unknown>> | Error>, nexts: Record<string, string | null>, calls: string[]) {
+    return {
+      item: async (id: string) => ({ id, clientUserId: FELIPE, status: "UPDATED", connector: { id: 2, name: "Pluggy Bank", isSandbox: true } }),
+      accounts: async (itemId: string) => ({
+        results: [
+          { id: "bank", itemId, type: "BANK", name: "Conta", balance: 1 },
+          { id: "card", itemId, type: "CREDIT", name: "Cartão", balance: -1 },
+        ],
+      }),
+      transactionsV2: async (acc: string, from: string, next?: string | null) => {
+        const key = `${acc}:${next ?? "first"}`;
+        calls.push(`${key}@${from}`);
+        const p = pages[key];
+        if (p instanceof Error) throw p;
+        return { results: p ?? [], next: nexts[key] ?? null };
+      },
+    } as unknown as PluggyApi;
+  }
+
+  test("caminho usa v2, accountId e dateFrom; next só no mesmo endpoint", () => {
+    expect(transactionsV2Path("a b", "2025-10-19")).toBe("/v2/transactions?accountId=a%20b&dateFrom=2025-10-19");
+    expect(transactionsV2Path("x", "d", "?cursor=abc%3D&accountId=x")).toBe("/v2/transactions?cursor=abc%3D&accountId=x");
+    expect(transactionsV2Path("x", "d", "https://api.pluggy.ai/v2/transactions?cursor=z")).toBe("/v2/transactions?cursor=z");
+    expect(() => transactionsV2Path("x", "d", "https://evil.example/v2/transactions?cursor=z")).toThrow();
+    expect(() => transactionsV2Path("x", "d", "https://api.pluggy.ai/items?cursor=z")).toThrow();
+  });
+
+  test("pagina por cursor em várias contas, inclui cartão, respeita período e é idempotente", async () => {
+    const store = memStore({ itemF: FELIPE });
+    store.settings[FELIPE] = { autoImport: false, autoCategorize: true, historyDays: 365, accessState: "ok" };
+    const calls: string[] = [];
+    const tx = (id: string, date: string, amount: number, type = "DEBIT") => ({ ...base, id, description: `D ${id}`, amount, date, type });
+    const api = v2Api(
+      {
+        "bank:first": [tx("b1", "2026-10-01", -10), tx("b2", "2026-09-01", 2000, "CREDIT")],
+        "bank:?cursor=p2": [tx("b3", "2026-05-01", -5), tx("b2", "2026-09-01", 2000, "CREDIT"), tx("old", "2024-01-01", -1)],
+        "card:first": [tx("c1", "2026-10-05", 50)],
+      },
+      { "bank:first": "?cursor=p2" },
+      calls,
+    );
+    const r1 = await syncItem({ api, store, now }, { userId: FELIPE, itemId: "itemF" });
+    expect(r1.ok).toBe(true);
+    expect(calls).toEqual(["bank:first@2025-10-19", "bank:?cursor=p2@2025-10-19", "card:first@2025-10-19"]);
+    expect([...store.tx.keys()].sort()).toEqual([`${FELIPE}|b1`, `${FELIPE}|b2`, `${FELIPE}|b3`, `${FELIPE}|c1`]);
+    expect(store.tx.get(`${FELIPE}|c1`)?.account_id).toBe("card");
+    await syncItem({ api, store, now }, { userId: FELIPE, itemId: "itemF" });
+    expect(store.tx.size).toBe(4);
+    expect(store.syncMarks.at(-1)).toEqual({ ok: true, pluggyError: null });
+  });
+
+  test("cursor repetido não entra em loop", async () => {
+    const store = memStore({ itemF: FELIPE });
+    const api = v2Api({ "bank:first": [], "bank:?c=1": [] }, { "bank:first": "?c=1", "bank:?c=1": "?c=1" }, []);
+    const r = await syncItem({ api, store, now }, { userId: FELIPE, itemId: "itemF" });
+    expect(r).toMatchObject({ ok: false, error: "sync_parcial:transacoes_cursor_repetido" });
+  });
+
+  test("falha nas transações = sucesso parcial registrado, sem marcar sincronizado", async () => {
+    const store = memStore({ itemF: FELIPE });
+    const api = v2Api({ "bank:first": new PluggyHttpError(410, "/v2/transactions") }, {}, []);
+    const r = await syncItem({ api, store, now }, { userId: FELIPE, itemId: "itemF" });
+    expect(r).toEqual({ ok: false, error: "sync_parcial:transacoes_http_410", partial: { accounts: 2 } });
+    expect(store.syncMarks).toEqual([{ ok: false, error: "sync_parcial:transacoes_http_410" }]);
+    expect(store.tx.size).toBe(0);
+    // nova tentativa manual bem-sucedida limpa o erro
+    const ok = v2Api({ "bank:first": [{ ...base, id: "b1", description: "x", amount: -1, date: "2026-10-01", type: "DEBIT" }] }, {}, []);
+    expect((await syncItem({ api: ok, store, now }, { userId: FELIPE, itemId: "itemF" })).ok).toBe(true);
+    expect(store.syncMarks.at(-1)).toEqual({ ok: true, pluggyError: null });
+  });
+
+  test("Michael não sincroniza item do Felipe", async () => {
+    const store = memStore({ itemF: FELIPE });
+    const r = await syncItem({ api: v2Api({}, {}, []), store, now }, { userId: MICHAEL, itemId: "itemF" });
+    expect(r).toEqual({ ok: false, error: "item_de_outro_usuario" });
+    expect(store.tx.size).toBe(0);
+  });
+
+  test("configurações: auto_import é forçado a false no servidor", async () => {
+    const src = await Bun.file("src/routes/api/integrations.pluggy.$action.ts").text();
+    expect(src).toMatch(/auto_import: false, auto_categorize/);
+    expect(src).not.toMatch(/auto_import: s\.autoImport/);
   });
 });
