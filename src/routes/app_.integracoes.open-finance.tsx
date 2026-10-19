@@ -170,7 +170,7 @@ function OpenFinancePage() {
       <section className="mt-5 flex items-start gap-3 rounded-2xl border border-primary/30 bg-primary/10 p-4">
         <FlaskConical className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
         <p className="text-xs leading-relaxed text-foreground">
-          Ambiente de testes: somente bancos fictícios da Pluggy. Nada é lançado em Gastos ou Receitas nesta etapa.
+          Somente leitura: Mercado Pago real (Open Finance oficial) e banco fictício de testes. Nada é lançado em Gastos, Receitas ou Cartões nesta etapa.
         </p>
       </section>
 
@@ -206,7 +206,7 @@ function OpenFinancePage() {
       )}
 
       <Button className="mt-5 w-full" disabled={busy || needsHistory || !s.configured || !s.schemaReady || paused} onClick={() => connect()}>
-        <Link2 className="mr-2 h-4 w-4" /> Conectar banco de teste
+        <Link2 className="mr-2 h-4 w-4" /> Conectar banco
       </Button>
 
       <Section title="Instituições conectadas">
