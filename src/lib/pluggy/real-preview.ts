@@ -55,12 +55,16 @@ export type RealPreviewLine = {
 
 const DUP = new Set(["possivel_duplicata_mercado_pago", "possivel_duplicata_lancamento_existente"]);
 
-export function groupRealPreview(actions: readonly PlanAction[], txs: readonly RealTxRow[]): RealPreviewLine[] {
+export function groupRealPreview(actions: readonly PlanAction[], txs: readonly RealTxRow[], batch?: readonly PlanAction[]): RealPreviewLine[] {
+  const inBatch = batch ? new Set(batch.map((a) => `${a.account_id}|${a.transaction_id}`)) : null;
   const byKey = new Map(txs.map((t) => [`${t.account_id}|${t.transaction_id}`, t]));
   return actions.flatMap((a): RealPreviewLine[] => {
     const t = byKey.get(`${a.account_id}|${a.transaction_id}`);
     if (!t) return [];
     const base = { transaction_id: t.transaction_id, account_id: t.account_id, date: t.date, description: t.description, amount: t.amount, categoria: t.categoria_manual ?? t.categoria_sugerida };
+    if (a.op === "insert" && inBatch && !inBatch.has(`${a.account_id}|${a.transaction_id}`)) {
+      return [{ ...base, grupo: "revisao" as const, destino: "Não importa (revisão)", motivo: a.table === "gastos" && txs.some((r) => r.classification_reason === "estorno" && Math.round(r.amount * 100) === Math.round(a.row.valor * 100)) ? "gasto_com_estorno_no_periodo" : "fora_do_primeiro_lote" }];
+    }
     if (a.op === "insert") return [{ ...base, grupo: a.table === "gastos" ? "gasto" as const : "receita" as const, destino: a.table === "gastos" ? "Gastos" : "Receitas", motivo: null }];
     if (a.op === "review") {
       const grupo = DUP.has(a.reason) ? "duplicacao" as const : a.reason === "cartao_sem_vinculo_confirmado" ? "cartao" as const : "revisao" as const;
@@ -78,4 +82,23 @@ export function firstBatchActions(actions: readonly PlanAction[], txs: readonly 
   const refunds = txs.filter((t) => t.classification_reason === "estorno");
   const refunded = (a: PlanAction) => a.op === "insert" && a.table === "gastos" && refunds.some((r) => Math.round(r.amount * 100) === Math.round(a.row.valor * 100) && Math.abs(Date.parse(r.date) - Date.parse(a.row.data)) <= 7 * 86_400_000);
   return actions.filter((a) => a.op === "insert" && bank.has(`${a.account_id}|${a.transaction_id}`) && (a.table === "receitas" || a.row.cartao_id === null) && !refunded(a));
+}
+
+/**
+ * Gravação real da primeira operação: BLOQUEADA até autorização final do titular,
+ * aplicação do SQL `docs/migrations-candidate/pluggy-real-first-import.sql` e da
+ * autorização literal da movimentação. Nunca vem do navegador.
+ */
+export const PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED = false as const;
+/** Primeiro teste: exatamente uma movimentação por confirmação. */
+export const REAL_FIRST_IMPORT_MAX = 1;
+
+/** A seleção precisa ser 1 item do primeiro lote revalidado no servidor. */
+export function pickRealSelection<T extends { account_id: string; transaction_id: string }>(batch: readonly T[], sel: { accountId: string; transactionId: string }[]): T[] {
+  if (sel.length === 0 || sel.length > REAL_FIRST_IMPORT_MAX) throw new Error("selecao_invalida");
+  return sel.map((s) => {
+    const hit = batch.find((a) => a.account_id === s.accountId && a.transaction_id === s.transactionId);
+    if (!hit) throw new Error("movimentacao_nao_elegivel");
+    return hit;
+  });
 }

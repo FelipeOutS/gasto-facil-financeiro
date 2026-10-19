@@ -46,3 +46,8 @@ Q="SET ROLE service_role; BEGIN; SELECT public.pluggy_import_revert('47df50ce-df
 wait "$A"; wait "$B"
 N=$("${P[@]}" -tAc "SELECT count(*) FROM public.receitas WHERE id_operacao_banco='pluggy:acc1:race-income' AND deleted_at IS NOT NULL")
 if [ "$N" = 1 ] && grep -q '"replay": true' "$D/ra" "$D/rb"; then echo 'PASSOU: corrida desfazer 2 conexões — exclusão reversível única e replay'; else echo "FALHOU: corrida desfazer $N"; exit 1; fi
+# Primeira importação real controlada (candidata): trava global restaurada antes.
+"${P[@]}" -c "CREATE OR REPLACE FUNCTION public.pluggy_assert_financial_release() RETURNS void LANGUAGE plpgsql SECURITY INVOKER SET search_path=public,pg_temp AS \$\$ BEGIN RAISE EXCEPTION 'pluggy_gravacao_financeira_bloqueada' USING ERRCODE='42501'; END \$\$;"
+"${P[@]}" -f "$ROOT/docs/migrations-candidate/pluggy-live-readonly.sql"
+"${P[@]}" -1 -f "$ROOT/docs/migrations-candidate/pluggy-real-first-import.sql"
+"${P[@]}" -f "$ROOT/tests/sql/pluggy/50-real-once.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"

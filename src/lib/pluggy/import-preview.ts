@@ -19,6 +19,8 @@ export function simulateCardLinks(input: PlanInput, cards: readonly PreviewCard[
 }
 
 export const previewReason = (reason: string) => ({
+  gasto_com_estorno_no_periodo: "Gasto com estorno no período: fora do lote",
+  fora_do_primeiro_lote: "Fora do primeiro lote",
   cartao_sem_vinculo_confirmado: "Compra de cartão aguardando vínculo",
   boleto_sem_identificacao: "Boleto sem identificação: revisão necessária",
   pagamento_de_fatura: "Pagamento de fatura: ignorado para evitar dupla contagem",
