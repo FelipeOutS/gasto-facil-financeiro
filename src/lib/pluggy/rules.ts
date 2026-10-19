@@ -103,6 +103,10 @@ export function classifyTransaction(tx: PluggyTx, account: AccountKind, ownDocum
   }
   // Empréstimo: depósito não é receita e parcela mistura principal e juros; decisão é do usuário.
   if (/emprestimo/.test(text)) return { kind: "revisao", reason: "emprestimo" };
+  // Venda de ativo (dólar/cripto) devolve principal investido: não é receita automática.
+  if (tx.type === "CREDIT" && /^venda de (meli dolar|criptomoeda)/.test(norm(tx.description))) {
+    return { kind: "revisao", reason: "resgate_investimento" };
+  }
 
   const doc = (ownDocument ?? "").replace(/\D/g, "");
   if (doc) {
@@ -139,6 +143,7 @@ export const GI_CATEGORIAS = [
   "Lazer",
   "Assinaturas",
   "Salário",
+  "Rendimentos",
   "Outros recebimentos",
   "Outras despesas",
 ] as const;
@@ -146,6 +151,7 @@ export type GiCategoria = (typeof GI_CATEGORIAS)[number];
 
 const CATEGORY_RULES: Array<[RegExp, GiCategoria]> = [
   [/(salary|salario|payroll|folha)/, "Salário"],
+  [/(^| )rendimentos?( |$)/, "Rendimentos"],
   [/(supermarket|groceries|supermercado|mercado|atacad|assai|carrefour|pao de acucar)/, "Supermercado"],
   [/(restaurant|food|eating out|delivery|ifood|lanchonete|padaria|alimenta)/, "Alimentação"],
   [/(transport|taxi|ride|uber|99app|gas station|fuel|combustivel|posto|parking|estacionamento|pedagio)/, "Transporte"],
@@ -161,8 +167,9 @@ export function categorize(tx: Pick<PluggyTx, "category" | "description">, kind:
   const text = `${norm(tx.category)} ${norm(tx.description)}`;
   for (const [re, cat] of CATEGORY_RULES) {
     if (!re.test(text)) continue;
-    if (kind === "receita" && cat !== "Salário") continue;
-    if (kind === "gasto" && cat === "Salário") continue;
+    const incomeOnly = cat === "Salário" || cat === "Rendimentos";
+    if (kind === "receita" && !incomeOnly) continue;
+    if (kind === "gasto" && incomeOnly) continue;
     return cat;
   }
   return kind === "receita" ? "Outros recebimentos" : "Outras despesas";
