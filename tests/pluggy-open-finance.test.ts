@@ -108,7 +108,8 @@ describe("conciliação Mercado Pago", () => {
 describe("sandbox, trial e webhook", () => {
   test("só conector Sandbox é aceito", () => {
     expect(() => assertConnectorAllowed({ id: 2, isSandbox: true })).not.toThrow();
-    expect(() => assertConnectorAllowed({ id: 201, isSandbox: false })).toThrow("pluggy_conector_nao_sandbox");
+    expect(() => assertConnectorAllowed({ id: 201, isSandbox: false }, "sandbox", false)).toThrow("pluggy_conector_nao_sandbox");
+    expect(() => assertConnectorAllowed({ id: 201, isSandbox: false })).toThrow("pluggy_instituicao_nao_permitida");
     expect(() => assertConnectorAllowed(null)).toThrow();
     expect(() => assertConnectorAllowed({ id: 2, isSandbox: true }, "live")).toThrow("pluggy_live_nao_autorizado");
   });
@@ -230,9 +231,9 @@ describe("sincronização", () => {
     const r = await syncItem({ api: fakeApi({ clientUserId: MICHAEL }), store, now }, { userId: FELIPE, itemId: "itemF" });
     expect(r.ok).toBe(false);
   });
-  test("conector real é recusado no modo Sandbox", async () => {
+  test("conector real fora da lista permitida é recusado", async () => {
     const r = await syncItem({ api: fakeApi({ sandbox: false }), store, now }, { userId: FELIPE, itemId: "itemF" });
-    expect(r).toEqual({ ok: false, error: "pluggy_conector_nao_sandbox" });
+    expect(r).toEqual({ ok: false, error: "pluggy_instituicao_nao_permitida" });
     expect(store.tx.size).toBe(0);
   });
   test("fim do trial (403) pausa e não chama mais a API", async () => {
