@@ -51,3 +51,19 @@ if [ "$N" = 1 ] && grep -q '"replay": true' "$D/ra" "$D/rb"; then echo 'PASSOU: 
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/pluggy-live-readonly.sql"
 "${P[@]}" -1 -f "$ROOT/docs/migrations-candidate/pluggy-real-first-import.sql"
 "${P[@]}" -f "$ROOT/tests/sql/pluggy/50-real-once.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"
+# Corrida da nova função: duas conexões, mesma autorização e mesmo lote pré-fixado.
+"${P[@]}" -c "INSERT INTO public.pluggy_transactions(user_id,item_id,account_id,transaction_id,dedupe_key,description,amount,date,status,type,classification,classification_reason,is_sandbox) VALUES ('3324b9f8-ea68-465c-8e1e-ab1cc8caebf1','iReal','aReal','race1','k-race1','Rendimentos',0.03,'2026-10-13','POSTED','CREDIT','receita','credito_conta',false); INSERT INTO public.pluggy_real_import_grants(user_id,account_id,transaction_id,entry_table,valor,data,batch_id,expires_at) VALUES ('3324b9f8-ea68-465c-8e1e-ab1cc8caebf1','aReal','race1','receitas',0.03,'2026-10-13','00000000-0000-0000-0000-0000000bace1',now()+interval '1 day');" >/dev/null
+Q="SET ROLE service_role; BEGIN; SELECT public.pluggy_import_apply_real_once('3324b9f8-ea68-465c-8e1e-ab1cc8caebf1','aReal','race1','00000000-0000-0000-0000-0000000bace1','{\"descricao\":\"Rendimentos\",\"valor\":0.03,\"data\":\"2026-10-13\",\"tipo\":\"outros\",\"id_operacao_banco\":\"pluggy:aReal:race1\"}'); SELECT pg_sleep(1); COMMIT;"
+( "${P[@]}" -tAc "$Q" > "$D/xa" 2>&1 ) & A=$!
+( "${P[@]}" -tAc "$Q" > "$D/xb" 2>&1 ) & B=$!
+wait "$A"; wait "$B"
+N=$("${P[@]}" -tAc "SELECT count(*) FROM public.receitas WHERE id_operacao_banco='pluggy:aReal:race1'")
+E=$("${P[@]}" -tAc "SELECT count(*) FROM public.pluggy_import_entries WHERE transaction_id='race1'")
+R=$(cat "$D/xa" "$D/xb" | grep -c '"replay": true' || true); W=$(cat "$D/xa" "$D/xb" | grep -c '"replay": false' || true)
+if [ "$N" = 1 ] && [ "$E" = 1 ] && [ "$R" = 1 ] && [ "$W" = 1 ]; then echo 'PASSOU: corrida importação real 2 conexões — 1 receita, 1 entrada, 1 gravação + 1 replay'; else echo "FALHOU: corrida real N=$N E=$E R=$R W=$W"; cat "$D/xa" "$D/xb"; exit 1; fi
+Q="SET ROLE service_role; BEGIN; SELECT public.pluggy_import_revert_real_once('3324b9f8-ea68-465c-8e1e-ab1cc8caebf1','00000000-0000-0000-0000-0000000bace1'); SELECT pg_sleep(1); COMMIT;"
+( "${P[@]}" -tAc "$Q" > "$D/ya" 2>&1 ) & A=$!
+( "${P[@]}" -tAc "$Q" > "$D/yb" 2>&1 ) & B=$!
+wait "$A"; wait "$B"
+N=$("${P[@]}" -tAc "SELECT count(*) FROM public.receitas WHERE id_operacao_banco='pluggy:aReal:race1' AND deleted_at IS NOT NULL")
+if [ "$N" = 1 ] && grep -q '"replay": true' "$D/ya" "$D/yb"; then echo 'PASSOU: corrida desfazer real 2 conexões — exclusão reversível única e replay'; else echo "FALHOU: corrida desfazer real $N"; exit 1; fi
