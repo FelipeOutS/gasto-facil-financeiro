@@ -11,12 +11,12 @@ const FELIPE = "3324b9f8-ea68-465c-8e1e-ab1cc8caebf1";
 const MICHAEL = "47df50ce-df1e-4c54-8fae-0ffb5105478d";
 
 describe("Pluggy conexão real somente leitura", () => {
-  it("trava de conexão real permanece desligada até aprovação do SQL", () => {
-    expect(PLUGGY_LIVE_READONLY_AUTHORIZED).toBe(false);
+  it("conexão real autorizada (somente leitura) após o SQL aplicado", () => {
+    expect(PLUGGY_LIVE_READONLY_AUTHORIZED).toBe(true);
   });
 
   it("com a trava desligada, banco real é recusado", () => {
-    expect(() => assertConnectorAllowed({ id: 201, name: "Nubank", isSandbox: false })).toThrow("pluggy_conector_nao_sandbox");
+    expect(() => assertConnectorAllowed({ id: 606, name: "Mercado Pago", isSandbox: false }, "sandbox", false)).toThrow("pluggy_conector_nao_sandbox");
   });
 
   it("etapa 1: com a trava liberada, só Mercado Pago real passa", () => {
