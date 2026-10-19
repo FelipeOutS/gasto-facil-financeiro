@@ -155,7 +155,7 @@ export function planImport(input: PlanInput): PlanAction[] {
     // ---------- Já importada: só atualização/remoção segura ----------
     if (prev) {
       if (prev.state !== "ativo" || !prev.current) { out.push({ op: "skip", ...base, reason: "ja_importada_" + prev.state }); continue; }
-      const edited = !sameSnap(prev.snapshot, prev.current) || (!!prev.snapshot.updated_at && prev.snapshot.updated_at !== prev.current.updated_at);
+      const edited = !sameSnap(prev.snapshot, prev.current) || (!!prev.snapshot.updated_at && Date.parse(prev.snapshot.updated_at) !== Date.parse(prev.current.updated_at ?? ""));
       const eff = effectiveKind(tx);
       if (tx.deleted_at || "skip" in eff) {
         if (edited) { out.push({ op: "review", ...base, reason: "remocao_conflita_com_edicao_manual" }); continue; }

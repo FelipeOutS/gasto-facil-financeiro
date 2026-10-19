@@ -90,7 +90,7 @@ CREATE FUNCTION public.pluggy_link_card(p_user_id uuid, p_account_id text, p_car
 RETURNS void LANGUAGE plpgsql SECURITY INVOKER SET search_path = public, pg_temp AS $$
 BEGIN
   PERFORM public.pluggy_assert_owner(p_user_id);
-  IF NOT EXISTS (SELECT 1 FROM public.pluggy_accounts a WHERE a.user_id = p_user_id AND a.account_id = p_account_id AND a.type = 'CREDIT') THEN
+  IF NOT EXISTS (SELECT 1 FROM public.pluggy_accounts a WHERE a.user_id = p_user_id AND a.account_id = p_account_id AND a.type = 'CREDIT' AND a.is_sandbox AND EXISTS (SELECT 1 FROM public.pluggy_items i WHERE i.user_id=a.user_id AND i.item_id=a.item_id AND i.is_sandbox AND i.deleted_at IS NULL)) THEN
     RAISE EXCEPTION 'pluggy_conta_cartao_invalida' USING ERRCODE = '22023';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.cartoes c WHERE c.user_id = p_user_id AND c.id = p_cartao_id) THEN
@@ -133,7 +133,7 @@ CREATE FUNCTION public.pluggy_import_apply(p_user_id uuid, p_batch_id uuid, p_ac
 RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER SET search_path = public, pg_temp AS $$
 DECLARE
   a jsonb; r jsonb; tx record; ent record; cur record;
-  new_id uuid; d date; v numeric; snap jsonb;
+  new_id uuid; d date; v numeric; snap jsonb; stamp timestamptz;
   n_g int := 0; n_r int := 0; n_up int := 0; n_rm int := 0; n_dup int := 0; n_conf int := 0;
   tot_g numeric := 0; tot_r numeric := 0; d_min date; d_max date;
 BEGIN
@@ -157,8 +157,11 @@ BEGIN
 
   FOR a IN SELECT value FROM jsonb_array_elements(p_actions) LOOP
     SELECT t.* INTO tx FROM public.pluggy_transactions t
-      WHERE t.user_id = p_user_id AND t.account_id = a->>'account_id' AND t.transaction_id = a->>'transaction_id';
+      WHERE t.user_id = p_user_id AND t.account_id = a->>'account_id' AND t.transaction_id = a->>'transaction_id' FOR UPDATE;
     IF NOT FOUND THEN RAISE EXCEPTION 'pluggy_transacao_inexistente' USING ERRCODE = '22023'; END IF;
+    IF NOT tx.is_sandbox OR NOT EXISTS (SELECT 1 FROM public.pluggy_accounts pa JOIN public.pluggy_items pi ON pi.item_id=pa.item_id AND pi.user_id=pa.user_id WHERE pa.user_id=p_user_id AND pa.account_id=tx.account_id AND pa.is_sandbox AND pi.is_sandbox AND pi.deleted_at IS NULL) THEN
+      RAISE EXCEPTION 'pluggy_sandbox_obrigatorio' USING ERRCODE = '22023';
+    END IF;
 
     IF a->>'op' = 'insert' THEN
       -- Defesa em profundidade: revisão pendente, duplicada ou ignorada nunca entra.
@@ -180,6 +183,9 @@ BEGIN
       END IF;
       new_id := gen_random_uuid();
       IF a->>'table' = 'gastos' THEN
+        IF tx.classification_reason IN ('estorno','credito_em_cartao') OR (EXISTS (SELECT 1 FROM public.pluggy_accounts pa WHERE pa.user_id=p_user_id AND pa.account_id=tx.account_id AND pa.type='BANK') AND tx.type IS DISTINCT FROM 'DEBIT') THEN
+          RAISE EXCEPTION 'pluggy_lancamento_invalido' USING ERRCODE = '22023';
+        END IF;
         IF NOT EXISTS (SELECT 1 FROM public.categorias c WHERE c.id = (r->>'categoria_id')::uuid AND c.user_id = p_user_id) THEN
           RAISE EXCEPTION 'pluggy_categoria_invalida' USING ERRCODE = '22023';
         END IF;
@@ -188,7 +194,7 @@ BEGIN
           IF r->>'forma_pagamento' <> 'credito' OR NOT EXISTS (
                SELECT 1 FROM public.pluggy_card_links l JOIN public.cartoes c ON c.id = l.cartao_id AND c.user_id = l.user_id
                WHERE l.user_id = p_user_id AND l.account_id = tx.account_id AND l.cartao_id = (r->>'cartao_id')::uuid)
-             OR coalesce(r->>'fatura_competencia', '') !~ '^[0-9]{4}-(0[1-9]|1[0-2])$' THEN
+             OR coalesce(r->>'fatura_competencia', '') !~ '^[0-9]{4}-(0[1-9]|1[0-2])$' OR NOT EXISTS (SELECT 1 FROM public.pluggy_card_links l JOIN public.cartoes c ON c.id=l.cartao_id AND c.user_id=l.user_id WHERE l.user_id=p_user_id AND l.account_id=tx.account_id AND extract(day FROM d) <> c.dia_fechamento AND r->>'fatura_competencia' = to_char((date_trunc('month', d) + ((CASE WHEN extract(day FROM d)<=c.dia_fechamento THEN -1 ELSE 0 END) + (CASE WHEN c.dia_vencimento<=c.dia_fechamento THEN 2 ELSE 1 END)) * interval '1 month')::date, 'YYYY-MM')) THEN
             RAISE EXCEPTION 'pluggy_cartao_sem_vinculo' USING ERRCODE = '22023';
           END IF;
         ELSIF r->>'cartao_id' IS NOT NULL OR r->>'forma_pagamento' = 'credito' THEN
@@ -202,7 +208,7 @@ BEGIN
         snap := jsonb_build_object('valor', v, 'data', d, 'descricao', btrim(r->>'descricao'), 'categoria_id', r->>'categoria_id');
         n_g := n_g + 1; tot_g := tot_g + v;
       ELSIF a->>'table' = 'receitas' THEN
-        IF tx.type <> 'CREDIT' OR EXISTS (SELECT 1 FROM public.pluggy_accounts pa WHERE pa.user_id = p_user_id AND pa.account_id = tx.account_id AND pa.type = 'CREDIT') THEN
+        IF tx.classification_reason IN ('estorno','credito_em_cartao') OR tx.type <> 'CREDIT' OR EXISTS (SELECT 1 FROM public.pluggy_accounts pa WHERE pa.user_id = p_user_id AND pa.account_id = tx.account_id AND pa.type = 'CREDIT') THEN
           RAISE EXCEPTION 'pluggy_lancamento_invalido' USING ERRCODE = '22023';
         END IF;
         INSERT INTO public.receitas (id, user_id, descricao, valor, data, tipo, mes, ano, origem, import_batch_id, id_operacao_banco)
@@ -213,6 +219,8 @@ BEGIN
       ELSE
         RAISE EXCEPTION 'pluggy_lancamento_invalido' USING ERRCODE = '22023';
       END IF;
+      IF a->>'table' = 'gastos' THEN SELECT updated_at INTO stamp FROM public.gastos WHERE id=new_id; ELSE SELECT updated_at INTO stamp FROM public.receitas WHERE id=new_id; END IF;
+      snap := snap || jsonb_build_object('updated_at', stamp);
       INSERT INTO public.pluggy_import_entries (user_id, account_id, transaction_id, entry_table, entry_id, batch_id, snapshot)
         VALUES (p_user_id, tx.account_id, tx.transaction_id, a->>'table', new_id, p_batch_id, snap);
       d_min := least(coalesce(d_min, d), d); d_max := greatest(coalesce(d_max, d), d);
@@ -223,20 +231,25 @@ BEGIN
           AND e.entry_id = (a->>'entry_id')::uuid AND e.state = 'ativo'
         FOR UPDATE;
       IF NOT FOUND THEN n_conf := n_conf + 1; CONTINUE; END IF;
+      IF a->>'table' IS DISTINCT FROM ent.entry_table THEN RAISE EXCEPTION 'pluggy_lancamento_invalido' USING ERRCODE='22023'; END IF;
+      IF a->>'op'='update' AND (tx.deleted_at IS NOT NULL OR tx.status IS DISTINCT FROM 'POSTED' OR tx.review_status='rejeitado' OR tx.classification='ignorado' OR (tx.classification='revisao' AND tx.review_status IS DISTINCT FROM 'aprovado') OR (ent.entry_table='receitas' AND tx.type IS DISTINCT FROM 'CREDIT') OR (ent.entry_table='gastos' AND EXISTS (SELECT 1 FROM public.pluggy_accounts pa WHERE pa.user_id=p_user_id AND pa.account_id=tx.account_id AND pa.type='CREDIT') AND tx.date<>(ent.snapshot->>'data')::date)) THEN RAISE EXCEPTION 'pluggy_transacao_nao_elegivel' USING ERRCODE='22023'; END IF;
+      IF a->>'op'='remove' AND tx.deleted_at IS NULL AND tx.review_status IS DISTINCT FROM 'rejeitado' AND tx.classification IS DISTINCT FROM 'ignorado' THEN RAISE EXCEPTION 'pluggy_remocao_nao_elegivel' USING ERRCODE='22023'; END IF;
       IF ent.entry_table = 'gastos' THEN
-        SELECT g.valor, g.data, g.descricao, g.categoria_id::text AS categoria_id, g.deleted_at INTO cur FROM public.gastos g
+        SELECT g.valor, g.data, g.descricao, g.categoria_id::text AS categoria_id, g.deleted_at, g.updated_at INTO cur FROM public.gastos g
           WHERE g.id = ent.entry_id AND g.user_id = p_user_id AND g.origem = 'pluggy' FOR UPDATE;
       ELSE
-        SELECT x.valor, x.data, x.descricao, NULL::text AS categoria_id, x.deleted_at INTO cur FROM public.receitas x
+        SELECT x.valor, x.data, x.descricao, NULL::text AS categoria_id, x.deleted_at, x.updated_at INTO cur FROM public.receitas x
           WHERE x.id = ent.entry_id AND x.user_id = p_user_id AND x.origem = 'pluggy' FOR UPDATE;
       END IF;
       -- Só mexe se a linha está exatamente como o importador a deixou (nenhuma edição manual).
       IF NOT FOUND OR cur.deleted_at IS NOT NULL
          OR cur.valor <> (ent.snapshot->>'valor')::numeric OR cur.data <> (ent.snapshot->>'data')::date
          OR cur.descricao <> ent.snapshot->>'descricao'
-         OR cur.categoria_id IS DISTINCT FROM ent.snapshot->>'categoria_id' THEN
+         OR cur.categoria_id IS DISTINCT FROM ent.snapshot->>'categoria_id'
+         OR (ent.snapshot ? 'updated_at' AND cur.updated_at IS DISTINCT FROM (ent.snapshot->>'updated_at')::timestamptz) THEN
         n_conf := n_conf + 1; CONTINUE;
       END IF;
+      IF a->>'expected' IS NOT NULL AND ((a->'expected'->>'valor')::numeric IS DISTINCT FROM cur.valor OR (a->'expected'->>'data')::date IS DISTINCT FROM cur.data OR a->'expected'->>'descricao' IS DISTINCT FROM cur.descricao) THEN n_conf := n_conf + 1; CONTINUE; END IF;
       IF a->>'op' = 'update' THEN
         v := (a->'next'->>'valor')::numeric; d := (a->'next'->>'data')::date;
         IF v IS NULL OR v <= 0 OR v > 999999999.99 OR d IS NULL OR round(v * 100) <> round(tx.amount * 100) OR d <> tx.date THEN
@@ -251,8 +264,9 @@ BEGIN
             descricao = coalesce(nullif(btrim(a->'next'->>'descricao'), ''), descricao)
             WHERE id = ent.entry_id AND user_id = p_user_id;
         END IF;
+        IF ent.entry_table='gastos' THEN SELECT updated_at INTO stamp FROM public.gastos WHERE id=ent.entry_id; ELSE SELECT updated_at INTO stamp FROM public.receitas WHERE id=ent.entry_id; END IF;
         UPDATE public.pluggy_import_entries SET snapshot = jsonb_build_object('valor', v, 'data', d,
-            'descricao', coalesce(nullif(btrim(a->'next'->>'descricao'), ''), ent.snapshot->>'descricao'), 'categoria_id', ent.snapshot->>'categoria_id')
+            'descricao', coalesce(nullif(btrim(a->'next'->>'descricao'), ''), ent.snapshot->>'descricao'), 'categoria_id', ent.snapshot->>'categoria_id', 'updated_at', stamp)
           WHERE id = ent.id;
         n_up := n_up + 1;
       ELSE
@@ -296,15 +310,16 @@ BEGIN
   FOR ent IN SELECT * FROM public.pluggy_import_entries e
              WHERE e.user_id = p_user_id AND e.batch_id = p_batch_id AND e.state = 'ativo' FOR UPDATE LOOP
     IF ent.entry_table = 'gastos' THEN
-      SELECT g.valor, g.data, g.descricao, g.categoria_id::text AS categoria_id, g.deleted_at INTO cur FROM public.gastos g
+      SELECT g.valor, g.data, g.descricao, g.categoria_id::text AS categoria_id, g.deleted_at, g.updated_at INTO cur FROM public.gastos g
         WHERE g.id = ent.entry_id AND g.user_id = p_user_id AND g.origem = 'pluggy' AND g.import_batch_id = p_batch_id FOR UPDATE;
     ELSE
-      SELECT x.valor, x.data, x.descricao, NULL::text AS categoria_id, x.deleted_at INTO cur FROM public.receitas x
+      SELECT x.valor, x.data, x.descricao, NULL::text AS categoria_id, x.deleted_at, x.updated_at INTO cur FROM public.receitas x
         WHERE x.id = ent.entry_id AND x.user_id = p_user_id AND x.origem = 'pluggy' AND x.import_batch_id = p_batch_id FOR UPDATE;
     END IF;
     IF NOT FOUND OR cur.deleted_at IS NOT NULL
        OR cur.valor <> (ent.snapshot->>'valor')::numeric OR cur.data <> (ent.snapshot->>'data')::date
-       OR cur.descricao <> ent.snapshot->>'descricao' OR cur.categoria_id IS DISTINCT FROM ent.snapshot->>'categoria_id' THEN
+       OR cur.descricao <> ent.snapshot->>'descricao' OR cur.categoria_id IS DISTINCT FROM ent.snapshot->>'categoria_id'
+         OR (ent.snapshot ? 'updated_at' AND cur.updated_at IS DISTINCT FROM (ent.snapshot->>'updated_at')::timestamptz) THEN
       n_kept := n_kept + 1; CONTINUE; -- editado pelo usuário: preservado
     END IF;
     IF ent.entry_table = 'gastos' THEN
