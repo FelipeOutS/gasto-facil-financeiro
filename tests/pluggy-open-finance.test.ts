@@ -428,6 +428,6 @@ describe("recorrentes de meses diferentes", () => {
     await syncItem({ api, store, now: () => new Date("2026-10-19T12:00:00Z") }, { userId: FELIPE, itemId: "itemF" });
     await syncItem({ api, store, now: () => new Date("2026-10-19T12:00:00Z") }, { userId: FELIPE, itemId: "itemF" });
     expect(store.tx.size).toBe(2);
-    expect([...store.tx.values()].every((t) => t.classification === "gasto" && t.total_installments === null)).toBe(true);
+    expect([...store.tx.values()].map((t) => [t.classification, t.classification_reason, t.total_installments])).toEqual([["gasto", "compra_cartao_valor_negativo", null], ["gasto", "compra_cartao_valor_negativo", null]]);
   });
 });
