@@ -27,3 +27,4 @@
 - [ ] Open Finance: teste Sandbox ponta a ponta no preview; gravação em Gastos/Receitas e Live (Fases 3–5) aguardam autorização
 - [x] Pluggy Fase 3: adaptador, prévia autenticada, vínculo/revisão/histórico/desfazer, consentimento individual e hook incremental preparados e testados; gravação bloqueada, sem migrar/ativar/publicar.
 - [ ] Pluggy Fase 3 ativação: aguarda aprovação do SQL candidato, liberação de gravação e testes de escrita autorizados; reversão de mutações incrementais exige journal adicional e F4 genérica precisa excluir origem Pluggy antes de futura liberação.
+- [ ] Pluggy validação dos vínculos: explicar 40 movimentos, detalhar destinos/categorias/duplicações, simular cartão próprio sem salvar, preparar correção/desvínculo seguro e relatório; nenhuma ativação ou migração.
