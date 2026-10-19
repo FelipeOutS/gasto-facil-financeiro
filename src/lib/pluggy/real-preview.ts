@@ -89,7 +89,7 @@ export function firstBatchActions(actions: readonly PlanAction[], txs: readonly 
  * aplicação do SQL `docs/migrations-candidate/pluggy-real-first-import.sql` e da
  * autorização literal da movimentação. Nunca vem do navegador.
  */
-export const PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED = true as const; // Preview: autorizado por Felipe em 19/10/2026 só para a 1ª importação (grant único no banco).
+export const PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED = false as const;
 /** Primeiro teste: exatamente uma movimentação por confirmação. */
 export const REAL_FIRST_IMPORT_MAX = 1;
 
