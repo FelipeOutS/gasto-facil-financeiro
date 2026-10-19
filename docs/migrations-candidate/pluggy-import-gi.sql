@@ -1,6 +1,6 @@
 -- CANDIDATA — NÃO APLICADA. Fase 3: importação Pluggy → Gastos/Receitas existentes.
 -- Aditiva: cria 3 tabelas próprias (pluggy_card_links, pluggy_import_entries,
--- pluggy_review_decisions) e 4 funções service_role-only. NÃO altera estrutura,
+-- pluggy_review_decisions) e 5 funções service_role-only. NÃO altera estrutura,
 -- políticas ou dados de gastos/receitas/cartoes/extratos_importados/imported_transactions.
 -- As funções só INSEREM lançamentos com origem='pluggy' e só fazem exclusão
 -- reversível (deleted_at) dos lançamentos que elas mesmas criaram e que não foram editados.
