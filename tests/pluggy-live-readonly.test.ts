@@ -21,9 +21,12 @@ describe("Pluggy conexão real somente leitura", () => {
 
   it("etapa 1: com a trava liberada, só Mercado Pago real passa", () => {
     expect(() => assertConnectorAllowed({ id: 201, name: "Nubank", isSandbox: false }, "sandbox", true)).toThrow("pluggy_instituicao_nao_permitida");
-    expect(() => assertConnectorAllowed({ id: 202, name: "Mercado Pago", isSandbox: false }, "sandbox", true)).not.toThrow();
+    expect(() => assertConnectorAllowed({ id: 606, name: "Mercado Pago", isSandbox: false }, "sandbox", true)).not.toThrow();
+    // Mercado Pago sem Open Finance (206) e Empresas (665) ficam de fora
+    expect(() => assertConnectorAllowed({ id: 206, name: "Mercado Pago", isSandbox: false }, "sandbox", true)).toThrow("pluggy_instituicao_nao_permitida");
+    expect(() => assertConnectorAllowed({ id: 665, name: "Mercado Pago Empresas", isSandbox: false }, "sandbox", true)).toThrow("pluggy_instituicao_nao_permitida");
     expect(() => assertConnectorAllowed({ id: 203, name: "Itaú", isSandbox: false }, "sandbox", true)).toThrow("pluggy_instituicao_nao_permitida");
-    expect(() => assertConnectorAllowed({ id: 204, name: "Nubank", isSandbox: null }, "sandbox", true)).toThrow("pluggy_conector_ambiente_indefinido");
+    expect(() => assertConnectorAllowed({ id: 606, name: "Mercado Pago", isSandbox: null }, "sandbox", true)).toThrow("pluggy_conector_ambiente_indefinido");
     expect(() => assertConnectorAllowed({ id: 2, name: "Pluggy Bank", isSandbox: true }, "sandbox", true)).not.toThrow();
   });
 
