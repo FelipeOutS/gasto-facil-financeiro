@@ -78,6 +78,13 @@
       "when": 1792429207105,
       "tag": "0010_pluggy_phase3_structural_locked",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792433615299,
+      "tag": "0011_pluggy_live_readonly",
+      "breakpoints": true
     }
   ]
 }
