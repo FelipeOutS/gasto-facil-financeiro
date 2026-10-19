@@ -19,24 +19,22 @@ export function PluggyRealPreview() {
   const [data, setData] = useState<Real | null>(null);
   const [busy, setBusy] = useState(false);
   const [sel, setSel] = useState<string | null>(null);
-  // Uma chave de lote por seleção: cliques repetidos viram replay no banco, nunca duplicação.
-  const [batchId, setBatchId] = useState<string | null>(null);
   async function run() {
     setBusy(true);
     try {
       const r = await call({ data: { action: "preview_real", from } });
-      if ("real" in r && r.real === true) { setData(r as Real); setSel(null); setBatchId(null); }
+      if ("real" in r && r.real === true) { setData(r as Real); setSel(null); }
     } catch { toast.error("Prévia real indisponível para esta conta ou período."); }
     finally { setBusy(false); }
   }
   const chosen = data?.firstBatch.find((b) => `${b.account_id}|${b.transaction_id}` === sel) ?? null;
   async function importar() {
-    if (!data || !chosen?.row || !batchId) return;
+    if (!data || !chosen?.row) return;
     const r = chosen.row;
     if (!confirm(`Criar exatamente 1 lançamento em ${chosen.table === "gastos" ? "Gastos" : "Receitas"}?\n${r.data} · ${r.descricao} · ${brl(r.valor)}\nPoderá ser desfeito enquanto não for editado.`)) return;
     setBusy(true);
     try {
-      await call({ data: { action: "import_real_once", from: data.window.from, batchId, selection: [{ accountId: chosen.account_id, transactionId: chosen.transaction_id }], confirmed: true } });
+      await call({ data: { action: "import_real_once", from: data.window.from, selection: [{ accountId: chosen.account_id, transactionId: chosen.transaction_id }], confirmed: true } });
       toast.success("Lançamento criado.");
       await run();
     } catch { toast.error("Importação real bloqueada ou movimentação não elegível. Nada foi gravado."); }
@@ -56,7 +54,7 @@ export function PluggyRealPreview() {
           <p className="text-xs text-muted-foreground">Primeiro teste: escolha uma única movimentação bancária sem suspeita de duplicação.</p>
           {data.firstBatch.length === 0 && <p className="text-xs text-muted-foreground">Nenhuma movimentação elegível neste período.</p>}
           {data.firstBatch.map((b) => b.row && <label key={b.account_id + b.transaction_id} className="flex items-center gap-2 text-xs">
-            <input type="radio" name="real-sel" checked={sel === `${b.account_id}|${b.transaction_id}`} onChange={() => { setSel(`${b.account_id}|${b.transaction_id}`); setBatchId(crypto.randomUUID()); }} />
+            <input type="radio" name="real-sel" checked={sel === `${b.account_id}|${b.transaction_id}`} onChange={() => setSel(`${b.account_id}|${b.transaction_id}`)} />
             <span>{b.row.data} · {b.row.descricao} · {brl(b.row.valor)} → {b.table === "gastos" ? "Gastos" : "Receitas"}</span>
           </label>)}
           <Button size="sm" disabled={busy || !chosen || !data.realFirstImportAuthorized} onClick={importar}>Importar movimentações selecionadas</Button>
