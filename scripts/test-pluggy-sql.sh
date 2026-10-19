@@ -30,3 +30,13 @@ if [ "$TOT" = 6 ] && [ "$UNI" = 6 ]; then echo "PASSOU: corrida 2 conexões — 
 "${P[@]}" -f "$ROOT/tests/sql/pluggy/39-release-block.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"
 "${P[@]}" -f "$ROOT/tests/sql/pluggy/39-test-only-unlock.sql"
 ( cd "$ROOT" && "${P[@]}" -v seed_file="$D/seed.sql" -f tests/sql/pluggy/40-import.sql 2>&1 | grep -E "PASSOU|FALHOU|ERROR" )
+# F4 candidate tested only here; no pending F2/F4 is applied to shared DB.
+"${P[@]}" -f "$ROOT/docs/migrations-candidate/gastos-delete-atomic-f4.sql"
+"${P[@]}" -f "$ROOT/tests/sql/pluggy/41-f4-guard.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"
+"${P[@]}" -f "$ROOT/tests/sql/pluggy/42-import-race.sql"
+Q="SET ROLE service_role; BEGIN; SELECT public.pluggy_import_apply('47df50ce-df1e-4c54-8fae-0ffb5105478d',gen_random_uuid(),(SELECT plan FROM public.test_import_race)); SELECT pg_sleep(1); COMMIT;"
+( "${P[@]}" -tAc "$Q" > "$D/ia" ) & A=$!
+( "${P[@]}" -tAc "$Q" > "$D/ib" ) & B=$!
+wait "$A"; wait "$B"
+N=$("${P[@]}" -tAc "SELECT count(*) FROM public.receitas WHERE id_operacao_banco='pluggy:acc1:race-income'")
+if [ "$N" = 1 ]; then echo 'PASSOU: corrida importação 2 conexões — uma receita, sem duplicação'; else echo "FALHOU: corrida importação $N"; exit 1; fi
