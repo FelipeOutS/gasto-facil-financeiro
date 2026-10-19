@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Eye, Undo2, Link2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { pluggyImport, type PluggyImportInput } from "@/lib/pluggy/import.functions";
 
 type Result = Awaited<ReturnType<typeof pluggyImport>>;
@@ -27,7 +28,10 @@ export function PluggyImportPanel({ accounts }: { accounts: Account[] }) {
       if ("ok" in r && !r.ok) throw new Error("error" in r ? r.error : "erro");
       if (data.action === "preview") { if ("cards" in r) setPreview(r); }
       else {
-        if ("resultado" in r) toast.success(JSON.stringify(r.resultado));
+        if ("resultado" in r) {
+          const result = r.resultado;
+          toast.success(result && "revertidos" in result ? `${result.revertidos} retirados; ${result.preservados} preservados.` : `Importação concluída: ${result?.gastos ?? 0} gastos e ${result?.receitas ?? 0} receitas.`);
+        }
         else toast.success("Salvo.");
         await refresh();
         if (data.action === "history") setBatchId(null);
@@ -46,6 +50,7 @@ export function PluggyImportPanel({ accounts }: { accounts: Account[] }) {
       </div>
       {preview && <>
         <p className="text-xs text-muted-foreground">{preview.schemaReady ? "Estrutura disponível." : "Estrutura de importação aguardando aprovação."} {preview.releaseAuthorized ? "Importação autorizada." : "Gravação bloqueada."}</p>
+        <label className="flex items-center justify-between gap-3 text-sm">Importar novas movimentações automaticamente<Switch checked={preview.autoImport} disabled={!enabled} onCheckedChange={(v) => { if (confirm(v ? "Autorizar importações automáticas das suas novas movimentações elegíveis?" : "Desativar a importação automática?")) void act({ action: "automatic", enabled: v, confirmed: true }); }} /></label>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {([["Gastos", preview.resumo.gastos], ["Receitas", preview.resumo.receitas], ["Revisão", preview.resumo.revisao], ["Ignorados", preview.resumo.ignorados], ["Atualizações", preview.resumo.atualizacoes], ["Remoções reversíveis", preview.resumo.remocoes]] as const).map(([label, count]) => <div key={label} className="border-b border-border py-3"><p className="text-xl font-semibold">{count}</p><p className="text-xs text-muted-foreground">{label}</p></div>)}
         </div>
