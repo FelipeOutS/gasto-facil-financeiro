@@ -7,6 +7,7 @@ import { AdminMasterGate } from "@/components/AdminMasterGate";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { apiFetch } from "@/lib/api-fetch";
+import { categoriaOptions } from "@/lib/pluggy/categorias";
 
 export const Route = createFileRoute("/app_/integracoes/open-finance")({
   head: () => ({
@@ -329,7 +330,6 @@ function TxLine({ t }: { t: Status["transactions"][number] }) {
     </div>
   );
 }
-const CATS = ["Alimentação", "Supermercado", "Transporte", "Moradia", "Compras", "Saúde", "Lazer", "Assinaturas", "Salário", "Outros recebimentos", "Outras despesas"];
 function TxCard({ t, onCat }: { t: Status["transactions"][number]; onCat: (c: string) => void }) {
   const cat = t.categoria_manual ?? t.categoria_sugerida ?? "";
   return (
@@ -337,7 +337,7 @@ function TxCard({ t, onCat }: { t: Status["transactions"][number]; onCat: (c: st
       <TxLine t={t} />
       <select aria-label="Categoria" className="mt-2 w-full rounded-lg border border-border bg-background px-2 py-1 text-xs" value={cat} onChange={(e) => onCat(e.target.value)}>
         <option value="" disabled>Sem categoria</option>
-        {CATS.map((c) => <option key={c} value={c}>{c}{t.categoria_manual === c ? " (manual)" : ""}</option>)}
+        {categoriaOptions(cat).map((c) => <option key={c} value={c}>{c}{t.categoria_manual === c ? " (manual)" : ""}</option>)}
       </select>
     </div>
   );
