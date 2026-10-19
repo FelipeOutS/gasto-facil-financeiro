@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { apiFetch } from "@/lib/api-fetch";
 import { categoriaOptions } from "@/lib/pluggy/categorias";
 import { PluggyImportPanel } from "@/components/PluggyImportPanel";
+import { PluggyRealPreview } from "@/components/PluggyRealPreview";
 import { groupByOrigin } from "@/lib/pluggy/origin-groups";
 
 export const Route = createFileRoute("/app_/integracoes/open-finance")({
@@ -272,6 +273,7 @@ function OpenFinancePage() {
       </Section>
 
       <PluggyImportPanel accounts={s.accounts.map((a) => ({ ...a, institution: s.items.find((i) => i.item_id === a.item_id)?.connector_name ?? "Instituição não informada" }))} />
+      <PluggyRealPreview />
 
       {groups.length === 0 && (
         <Section title="Movimentações">

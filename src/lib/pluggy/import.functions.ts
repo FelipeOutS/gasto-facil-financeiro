@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const Input = z.discriminatedUnion("action", [
   z.object({ action: z.literal("preview"), simulationLinks: z.array(z.object({ accountId: z.string().min(1).max(100), cardId: z.string().uuid() })).max(20).optional() }),
+  z.object({ action: z.literal("preview_real"), from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }),
   z.object({ action: z.literal("history"), batchId: z.string().uuid(), confirmed: z.literal(true) }),
   z.object({ action: z.literal("revert"), batchId: z.string().uuid(), confirmed: z.literal(true) }),
   z.object({ action: z.literal("link"), accountId: z.string().min(1).max(100), cardId: z.string().uuid(), confirmed: z.literal(true) }),
@@ -23,9 +24,23 @@ export const pluggyImport = createServerFn({ method: "POST" })
     if (roles.error || !isPluggyAllowed(context.userId, (roles.data ?? []).map((r) => r.role))) throw new Error("pluggy_nao_autorizado");
     const { runPluggyImport, revertPluggyImport, PLUGGY_IMPORT_RELEASE_AUTHORIZED } = await import("@/server/pluggy/pluggy-import.server");
     // Before any privileged import, financial write, or RPC call. Never supplied by client.
-    if (data.action !== "preview" && !PLUGGY_IMPORT_RELEASE_AUTHORIZED) throw new Error("importacao_bloqueada");
-    const { createImportDeps, importSchemaReady } = await import("@/server/pluggy/pluggy-import-store.server");
+    if (data.action !== "preview" && data.action !== "preview_real" && !PLUGGY_IMPORT_RELEASE_AUTHORIZED) throw new Error("importacao_bloqueada");
+    const { createImportDeps, importSchemaReady, readRealTxs } = await import("@/server/pluggy/pluggy-import-store.server");
     const deps = createImportDeps(context.supabase);
+    if (data.action === "preview_real") {
+      // Somente leitura: nenhum RPC, nenhum cliente privilegiado, nenhuma gravação.
+      const rp = await import("@/lib/pluggy/real-preview");
+      if (!rp.canUseRealPreview(context.userId, (roles.data ?? []).map((r) => r.role))) throw new Error("pluggy_nao_autorizado");
+      const win = rp.realPreviewWindow(data.from);
+      const txs = (await readRealTxs(context.supabase, context.userId, win)).map(rp.reclassifyForPreview);
+      const [cardLinks, categorias, imported, existing] = await Promise.all([
+        deps.cardLinks(context.userId), deps.categorias(context.userId), deps.imported(context.userId), deps.existing(context.userId, win.from, win.to),
+      ]);
+      const { planImport, summarizePlan } = await import("@/lib/pluggy/import-plan");
+      const actions = planImport({ userId: context.userId, txs, cardLinks, categorias, imported, existing });
+      const lote = rp.firstBatchActions(actions, txs);
+      return { real: true as const, window: win, resumo: summarizePlan(actions), lines: rp.groupRealPreview(actions, txs), firstBatch: lote.map((a) => ({ transaction_id: a.transaction_id, table: a.op === "insert" ? a.table : null, row: a.op === "insert" ? a.row : null })), existingCount: existing.length, releaseAuthorized: PLUGGY_IMPORT_RELEASE_AUTHORIZED };
+    }
     if (data.action === "preview") {
       const [plan, schemaReady, cards, transactions, settings, cardLinks, categorias, imported] = await Promise.all([
         runPluggyImport(deps, { userId: context.userId, batchId: crypto.randomUUID(), mode: "previa" }),
