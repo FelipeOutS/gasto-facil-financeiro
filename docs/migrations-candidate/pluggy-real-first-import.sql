@@ -8,10 +8,14 @@
 -- Garantias:
 -- * Autorização é uma LINHA criada apenas pelo dono do banco (migração/SQL aprovado);
 --   anon/authenticated/service_role não inserem nem alteram autorizações.
--- * Cada autorização vale para 1 transação, 1 vez, com prazo; repetição com o mesmo
---   lote devolve replay sem gravar; outro lote é recusado.
--- * O gatilho de integridade só dispensa a trava global durante a transação que está
---   consumindo/desfazendo a autorização (txid atual), nunca em outras sessões.
+-- * Cada autorização vale para 1 transação, 1 vez, com prazo e com o LOTE já fixado
+--   na própria autorização (gerado no servidor do banco, nunca pelo navegador);
+--   repetição com o mesmo lote devolve replay sem gravar; qualquer outro lote é recusado.
+-- * O gatilho de integridade só dispensa a trava global para a identidade EXATA
+--   autorizada (titular, conta, transação, tabela, lote) e somente dentro da transação
+--   SQL que está consumindo/desfazendo a autorização (txid atual).
+-- * Desfazer parcial (lançamento editado preservado) registra o lote como 'parcial'
+--   (estado já existente em extratos_importados) e o resultado na autorização.
 -- * Revalida no banco: titular, papel owner, conector 606, real, conta BANK, POSTED,
 --   sem revisão, sem coincidência Mercado Pago, sem duplicata de outras origens (±1 dia),
 --   valor/data/natureza iguais aos autorizados, sem cartão.
@@ -29,10 +33,14 @@ CREATE TABLE public.pluggy_real_import_grants (
   valor numeric NOT NULL CHECK (valor > 0),
   data date NOT NULL,
   expires_at timestamptz NOT NULL,
-  batch_id uuid UNIQUE,
+  batch_id uuid NOT NULL UNIQUE DEFAULT gen_random_uuid(),
   consumed_at timestamptz,
   active_txid bigint,
   reverted_at timestamptz,
+  revert_outcome text CHECK (revert_outcome IN ('revertido', 'parcial')),
+  revert_kept integer CHECK (revert_kept >= 0),
+  CHECK ((reverted_at IS NULL) = (revert_outcome IS NULL) AND (reverted_at IS NULL) = (revert_kept IS NULL)),
+  CHECK (reverted_at IS NULL OR consumed_at IS NOT NULL),
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (user_id, account_id, transaction_id),
   FOREIGN KEY (user_id, account_id, transaction_id) REFERENCES public.pluggy_transactions(user_id, account_id, transaction_id) ON DELETE RESTRICT
@@ -47,17 +55,20 @@ DO $$ BEGIN
 END $$;
 CREATE POLICY pluggy_real_grants_service_read ON public.pluggy_real_import_grants FOR SELECT TO service_role USING (true);
 
--- Verdadeiro somente dentro da transação que está usando a autorização deste lote.
-CREATE FUNCTION public.pluggy_real_grant_in_use(p_batch_id uuid)
+-- Verdadeiro somente para a movimentação EXATA autorizada, dentro da transação SQL
+-- que está usando essa autorização. Qualquer campo diferente => falso => trava global.
+CREATE FUNCTION public.pluggy_real_grant_in_use(p_user_id uuid, p_account_id text, p_transaction_id text, p_entry_table text, p_batch_id uuid)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
   SELECT EXISTS (SELECT 1 FROM public.pluggy_real_import_grants g
-                 WHERE g.batch_id = p_batch_id AND g.active_txid = txid_current());
+                 WHERE g.user_id = p_user_id AND g.account_id = p_account_id AND g.transaction_id = p_transaction_id
+                   AND g.entry_table = p_entry_table AND g.batch_id = p_batch_id
+                   AND g.active_txid IS NOT NULL AND g.active_txid = txid_current());
 $$;
-REVOKE ALL ON FUNCTION public.pluggy_real_grant_in_use(uuid) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.pluggy_real_grant_in_use(uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.pluggy_real_grant_in_use(uuid, text, text, text, uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.pluggy_real_grant_in_use(uuid, text, text, text, uuid) TO service_role;
 
 -- Mesmo corpo de pluggy-import-gi.sql; única mudança: a trava global é dispensada só
--- quando o lote está sendo gravado/desfeito pela autorização ativa nesta transação.
+-- para a identidade exata autorizada e ativa nesta transação SQL.
 CREATE OR REPLACE FUNCTION public.pluggy_validate_relationship()
 RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = public, pg_temp AS $$
 BEGIN
@@ -71,7 +82,7 @@ BEGIN
     PERFORM 1 FROM public.cartoes c WHERE c.id=NEW.cartao_id AND c.user_id=NEW.user_id FOR SHARE;
     IF NOT FOUND THEN RAISE EXCEPTION 'pluggy_cartao_invalido' USING ERRCODE='23503'; END IF;
   ELSE
-    IF NOT public.pluggy_real_grant_in_use(NEW.batch_id) THEN
+    IF NOT public.pluggy_real_grant_in_use(NEW.user_id, NEW.account_id, NEW.transaction_id, NEW.entry_table, NEW.batch_id) THEN
       PERFORM public.pluggy_assert_financial_release();
     END IF;
     IF TG_OP='UPDATE' AND (NEW.user_id,NEW.account_id,NEW.transaction_id,NEW.entry_table,NEW.entry_id,NEW.batch_id)
@@ -108,11 +119,11 @@ BEGIN
   SELECT * INTO g FROM public.pluggy_real_import_grants
     WHERE user_id = p_user_id AND account_id = p_account_id AND transaction_id = p_transaction_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'pluggy_autorizacao_inexistente' USING ERRCODE = '42501'; END IF;
+  IF p_batch_id IS DISTINCT FROM g.batch_id THEN
+    RAISE EXCEPTION 'pluggy_lote_nao_autorizado' USING ERRCODE = '42501';
+  END IF;
   IF g.consumed_at IS NOT NULL THEN
-    IF g.batch_id = p_batch_id THEN
-      RETURN jsonb_build_object('replay', true, 'gastos', 0, 'receitas', 0, 'batch_id', g.batch_id);
-    END IF;
-    RAISE EXCEPTION 'pluggy_autorizacao_ja_utilizada' USING ERRCODE = '42501';
+    RETURN jsonb_build_object('replay', true, 'gastos', 0, 'receitas', 0, 'batch_id', g.batch_id);
   END IF;
   IF g.expires_at <= now() THEN RAISE EXCEPTION 'pluggy_autorizacao_expirada' USING ERRCODE = '42501'; END IF;
   IF EXISTS (SELECT 1 FROM public.extratos_importados e WHERE e.id = p_batch_id) THEN
@@ -156,7 +167,7 @@ BEGIN
     RAISE EXCEPTION 'pluggy_lancamento_invalido' USING ERRCODE = '22023';
   END IF;
 
-  UPDATE public.pluggy_real_import_grants SET consumed_at = now(), batch_id = p_batch_id, active_txid = txid_current() WHERE id = g.id;
+  UPDATE public.pluggy_real_import_grants SET consumed_at = now(), active_txid = txid_current() WHERE id = g.id;
   INSERT INTO public.extratos_importados (id, user_id, nome_arquivo, banco, tipo_origem, status, periodo_inicio, periodo_fim, qtd_movimentacoes, total_receitas, total_despesas, observacao)
     VALUES (p_batch_id, p_user_id, 'Open Finance (Pluggy) — Mercado Pago', 'Mercado Pago', 'pluggy', 'importado', d, d, 1,
             CASE WHEN g.entry_table = 'receitas' THEN v ELSE 0 END, CASE WHEN g.entry_table = 'gastos' THEN v ELSE 0 END,
@@ -197,7 +208,9 @@ BEGIN
   PERFORM pg_advisory_xact_lock(hashtextextended('pluggy-import:' || p_user_id::text, 0));
   SELECT * INTO g FROM public.pluggy_real_import_grants WHERE user_id = p_user_id AND batch_id = p_batch_id AND consumed_at IS NOT NULL FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'pluggy_lote_inexistente' USING ERRCODE = '22023'; END IF;
-  IF g.reverted_at IS NOT NULL THEN RETURN jsonb_build_object('replay', true, 'revertidos', 0, 'preservados', 0); END IF;
+  IF g.reverted_at IS NOT NULL THEN
+    RETURN jsonb_build_object('replay', true, 'resultado', g.revert_outcome, 'revertidos', 0, 'preservados', g.revert_kept);
+  END IF;
   UPDATE public.pluggy_real_import_grants SET active_txid = txid_current() WHERE id = g.id;
   FOR ent IN SELECT * FROM public.pluggy_import_entries e WHERE e.user_id = p_user_id AND e.batch_id = p_batch_id AND e.state = 'ativo' FOR UPDATE LOOP
     IF ent.entry_table = 'gastos' THEN
@@ -222,22 +235,30 @@ BEGIN
     UPDATE public.pluggy_import_entries SET state = 'revertido' WHERE id = ent.id;
     n_rev := n_rev + 1;
   END LOOP;
-  UPDATE public.extratos_importados SET status = 'revertido', reverted_at = now(),
-      observacao = format('Revertido: %s lançamentos; %s preservados por edição manual', n_rev, n_kept)
-    WHERE id = p_batch_id AND user_id = p_user_id;
-  UPDATE public.pluggy_real_import_grants SET reverted_at = now(), active_txid = NULL WHERE id = g.id;
-  RETURN jsonb_build_object('replay', false, 'revertidos', n_rev, 'preservados', n_kept);
+  -- Parcial: o lançamento editado continua ativo (entrada 'ativo', lote 'parcial', sem reverted_at no lote).
+  IF n_kept = 0 THEN
+    UPDATE public.extratos_importados SET status = 'revertido', reverted_at = now(),
+        observacao = format('Revertido: %s lançamento(s); nenhum preservado', n_rev)
+      WHERE id = p_batch_id AND user_id = p_user_id;
+  ELSE
+    UPDATE public.extratos_importados SET status = 'parcial',
+        observacao = format('Desfeito parcialmente: %s lançamento(s) revertido(s); %s preservado(s) por edição manual', n_rev, n_kept)
+      WHERE id = p_batch_id AND user_id = p_user_id;
+  END IF;
+  UPDATE public.pluggy_real_import_grants SET reverted_at = now(), active_txid = NULL,
+      revert_outcome = CASE WHEN n_kept = 0 THEN 'revertido' ELSE 'parcial' END, revert_kept = n_kept WHERE id = g.id;
+  RETURN jsonb_build_object('replay', false, 'resultado', CASE WHEN n_kept = 0 THEN 'revertido' ELSE 'parcial' END, 'revertidos', n_rev, 'preservados', n_kept);
 END $$;
 
 REVOKE ALL ON FUNCTION public.pluggy_import_apply_real_once(uuid, text, text, uuid, jsonb), public.pluggy_import_revert_real_once(uuid, uuid) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.pluggy_import_apply_real_once(uuid, text, text, uuid, jsonb), public.pluggy_import_revert_real_once(uuid, uuid) TO service_role;
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname='sandbox_exec') THEN
-    EXECUTE 'REVOKE ALL ON FUNCTION public.pluggy_import_apply_real_once(uuid, text, text, uuid, jsonb), public.pluggy_import_revert_real_once(uuid, uuid), public.pluggy_real_grant_in_use(uuid) FROM sandbox_exec';
+    EXECUTE 'REVOKE ALL ON FUNCTION public.pluggy_import_apply_real_once(uuid, text, text, uuid, jsonb), public.pluggy_import_revert_real_once(uuid, uuid), public.pluggy_real_grant_in_use(uuid, text, text, text, uuid) FROM sandbox_exec';
   END IF;
 END $$;
 
 -- A autorização da movimentação específica NÃO faz parte deste arquivo. Após a
 -- aprovação, é um INSERT separado, também aprovado, com valores literais:
--- INSERT INTO public.pluggy_real_import_grants (user_id, account_id, transaction_id, entry_table, valor, data, expires_at)
--- VALUES ('3324b9f8-ea68-465c-8e1e-ab1cc8caebf1', '<account_id>', '<transaction_id>', 'receitas'|'gastos', <valor>, '<data>', now() + interval '24 hours');
+-- INSERT INTO public.pluggy_real_import_grants (user_id, account_id, transaction_id, entry_table, valor, data, batch_id, expires_at)
+-- VALUES ('3324b9f8-ea68-465c-8e1e-ab1cc8caebf1', '<account_id>', '<transaction_id>', 'receitas'|'gastos', <valor>, '<data>', '<batch_id literal>', now() + interval '24 hours');
