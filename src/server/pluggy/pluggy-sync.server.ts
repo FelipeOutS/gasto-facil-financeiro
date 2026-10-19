@@ -15,7 +15,8 @@ import {
 } from "@/lib/pluggy/rules";
 import { PluggyHttpError, type PluggyAccount, type PluggyApi, type PluggyItem } from "./pluggy-api.server";
 
-export type PluggySettings = { autoImport: boolean; autoCategorize: boolean; historyDays: number; accessState: AccessState };
+/** `configured` = o usuário já escolheu e salvou o histórico; sem isso nada sincroniza. */
+export type PluggySettings = { autoImport: boolean; autoCategorize: boolean; historyDays: number; accessState: AccessState; configured?: boolean };
 
 export type TxRow = {
   user_id: string;
@@ -25,6 +26,8 @@ export type TxRow = {
   dedupe_key: string;
   description: string | null;
   amount: number;
+  /** Valor exatamente como a Pluggy enviou (com sinal). */
+  amount_original: number;
   currency: string;
   date: string;
   status: string;
@@ -78,6 +81,7 @@ export async function syncItem(
   const { api, store } = deps;
   const now = deps.now?.() ?? new Date();
   const settings = await store.getSettings(input.userId);
+  if (settings.configured === false) return { ok: false, error: "historico_nao_escolhido" };
   if (settings.accessState === "pausado_acesso") return { ok: false, error: "sincronizacao_pausada" };
 
   const owner = await store.getItemOwner(input.itemId);
@@ -139,6 +143,7 @@ export async function syncItem(
             dedupe_key: pluggyDedupeKey(item.id, acc.id, tx.id),
             description: tx.description ?? null,
             amount: Math.abs(tx.amount),
+            amount_original: tx.amount,
             currency: acc.currencyCode ?? "BRL",
             date: tx.date.slice(0, 10),
             status: tx.status ?? "POSTED",

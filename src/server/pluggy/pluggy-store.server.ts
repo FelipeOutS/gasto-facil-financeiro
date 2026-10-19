@@ -15,6 +15,7 @@ export async function createPluggyStore(): Promise<PluggyStore> {
     if (r.error) throw new Error("pluggy_store_indisponivel");
   };
 
+  let hasOriginal: boolean | null = null;
   return {
     async getSettings(userId) {
       const r = await db.from("pluggy_settings").select("*").eq("user_id", userId).maybeSingle();
@@ -25,14 +26,12 @@ export async function createPluggyStore(): Promise<PluggyStore> {
         autoCategorize: s?.auto_categorize ?? true,
         historyDays: clampHistoryDays(s?.history_days),
         accessState: (s?.access_state ?? "ok") as AccessState,
+        configured: !!s,
       };
     },
     async setAccessState(userId, state, reason) {
-      must(
-        await db
-          .from("pluggy_settings")
-          .upsert({ user_id: userId, access_state: state, paused_reason: reason }, { onConflict: "user_id" }),
-      );
+      // Só atualiza: nunca cria a linha de preferências (isso é escolha do usuário).
+      must(await db.from("pluggy_settings").update({ access_state: state, paused_reason: reason }).eq("user_id", userId));
     },
     async getItemOwner(itemId) {
       const r = await db.from("pluggy_items").select("user_id,is_sandbox").eq("item_id", itemId).is("deleted_at", null).maybeSingle();
@@ -84,6 +83,12 @@ export async function createPluggyStore(): Promise<PluggyStore> {
       );
     },
     async upsertTransactions(rows: TxRow[]) {
+      // amount_original só é gravado se a coluna já existir (migração candidata ainda não aplicada).
+      if (hasOriginal === null) {
+        const probe = await db.from("pluggy_transactions").select("amount_original").limit(1);
+        hasOriginal = !probe.error;
+      }
+      if (!hasOriginal) rows = rows.map(({ amount_original: _o, ...r }) => r as TxRow);
       for (let i = 0; i < rows.length; i += 500) {
         must(await db.from("pluggy_transactions").upsert(rows.slice(i, i + 500), { onConflict: "user_id,account_id,transaction_id" }));
       }
