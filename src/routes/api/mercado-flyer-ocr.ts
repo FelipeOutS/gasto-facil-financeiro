@@ -726,7 +726,7 @@ export const Route = createFileRoute("/api/mercado-flyer-ocr")({
         if (!user) return unauthorizedResponse("Você precisa estar logado.");
 
         // Gate de plano — mercado_avancado.
-        if (!isAdminMasterUser(user)) {
+        if (!(await isAdminMasterUser(user))) {
           try {
             const { getSubscriptionForUserIdentity } = await import("@/server/subscription.server");
             const { planAllowsFeature } = await import("@/lib/plans");
