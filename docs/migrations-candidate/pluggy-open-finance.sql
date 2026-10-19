@@ -1,4 +1,7 @@
 -- CANDIDATA — Pluggy Open Finance (Fase 2, Sandbox). NÃO APLICADA.
+-- Revisão 3 (2026-10-19): dedupe por dono+conta; FKs compostas transação→conta→conexão
+-- incluindo is_sandbox; is_sandbox obrigatoriamente true (Live desabilitado);
+-- REVOKE explícito contra os privilégios padrão do Lovable Cloud.
 -- Revisão 2 (2026-10-19): função de autorização sem parâmetro (só auth.uid()),
 -- SECURITY INVOKER; deduplicação escopada por dono+conta; FKs compostas entre
 -- tabelas Pluggy; fila durável de webhooks com estados, tentativas e lease.
@@ -48,7 +51,9 @@ CREATE TABLE public.pluggy_items (
   deleted_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (user_id, item_id)
+  UNIQUE (user_id, item_id),
+  UNIQUE (user_id, item_id, is_sandbox),
+  CONSTRAINT pluggy_items_sandbox_only CHECK (is_sandbox = true)
 );
 
 CREATE TABLE public.pluggy_accounts (
@@ -68,7 +73,10 @@ CREATE TABLE public.pluggy_accounts (
   is_sandbox boolean NOT NULL,
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (user_id, account_id),
-  FOREIGN KEY (user_id, item_id) REFERENCES public.pluggy_items (user_id, item_id) ON DELETE CASCADE
+  UNIQUE (user_id, item_id, account_id, is_sandbox),
+  CONSTRAINT pluggy_accounts_sandbox_only CHECK (is_sandbox = true),
+  -- conta pertence à conexão do mesmo dono e do mesmo ambiente (Sandbox/Live)
+  FOREIGN KEY (user_id, item_id, is_sandbox) REFERENCES public.pluggy_items (user_id, item_id, is_sandbox) ON DELETE CASCADE
 );
 CREATE INDEX pluggy_accounts_item_idx ON public.pluggy_accounts (user_id, item_id);
 
@@ -102,8 +110,11 @@ CREATE TABLE public.pluggy_transactions (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (user_id, account_id, transaction_id),
-  UNIQUE (user_id, dedupe_key),
-  FOREIGN KEY (user_id, account_id) REFERENCES public.pluggy_accounts (user_id, account_id) ON DELETE CASCADE
+  UNIQUE (user_id, account_id, dedupe_key),
+  CONSTRAINT pluggy_tx_sandbox_only CHECK (is_sandbox = true),
+  -- transação pertence exatamente à conta + conexão + dono + ambiente informados
+  FOREIGN KEY (user_id, item_id, account_id, is_sandbox)
+    REFERENCES public.pluggy_accounts (user_id, item_id, account_id, is_sandbox) ON DELETE CASCADE
 );
 CREATE INDEX pluggy_tx_user_date_idx ON public.pluggy_transactions (user_id, date DESC);
 
@@ -129,8 +140,10 @@ CREATE INDEX pluggy_webhook_events_due_idx ON public.pluggy_webhook_events (stat
 
 -- ---------------------------------------------------------------------------
 -- 3. Grants: leitura só para authenticated (filtrada por RLS); escrita só servidor.
---    anon não recebe nada.
+--    O Lovable Cloud concede por padrão ALL em tabelas novas a anon e
+--    authenticated (pg_default_acl); por isso revogamos tudo explicitamente antes.
 -- ---------------------------------------------------------------------------
+REVOKE ALL ON public.pluggy_settings, public.pluggy_items, public.pluggy_accounts, public.pluggy_transactions, public.pluggy_webhook_events FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.pluggy_settings, public.pluggy_items, public.pluggy_accounts, public.pluggy_transactions TO authenticated;
 GRANT ALL ON public.pluggy_settings, public.pluggy_items, public.pluggy_accounts, public.pluggy_transactions, public.pluggy_webhook_events TO service_role;
 

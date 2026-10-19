@@ -46,6 +46,57 @@ DO $$ BEGIN PERFORM public.pluggy_is_allowed(); RAISE EXCEPTION 'FALHOU: anon ex
 EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'PASSOU: anon não executa a função'; END $$;
 RESET ROLE;
 
+
+-- Revisão 3: duas contas do mesmo dono, compra idêntica (valor/data/descrição)
+SET ROLE service_role;
+INSERT INTO public.pluggy_accounts(user_id,item_id,account_id,type,is_sandbox) VALUES (:'F','iF','acc2','BANK',true);
+INSERT INTO public.pluggy_transactions(user_id,item_id,account_id,transaction_id,dedupe_key,description,amount,date,status,type,classification,classification_reason,is_sandbox)
+ VALUES (:'F','iF','acc2','t9','k1','PADARIA',1,'2026-10-01','POSTED','DEBIT','gasto','x',true);
+SELECT pg_temp.ok((SELECT count(*) FROM public.pluggy_transactions WHERE user_id=:'F' AND amount=1 AND date='2026-10-01')=2, 'mesma compra em 2 contas do mesmo dono não conflita');
+DO $$ BEGIN
+  INSERT INTO public.pluggy_transactions(user_id,item_id,account_id,transaction_id,dedupe_key,amount,date,status,type,classification,classification_reason,is_sandbox)
+  VALUES ('3324b9f8-ea68-465c-8e1e-ab1cc8caebf1','iF','acc2','t10','k1',1,'2026-10-01','POSTED','DEBIT','gasto','x',true);
+  RAISE EXCEPTION 'FALHOU: dedupe repetida na mesma conta';
+EXCEPTION WHEN unique_violation THEN RAISE NOTICE 'PASSOU: dedupe_key repetida na mesma conta rejeitada'; END $$;
+DO $$ BEGIN
+  INSERT INTO public.pluggy_transactions(user_id,item_id,account_id,transaction_id,dedupe_key,amount,date,status,type,classification,classification_reason,is_sandbox)
+  VALUES ('3324b9f8-ea68-465c-8e1e-ab1cc8caebf1','iF','acc2','t9','k77',1,'2026-10-01','POSTED','DEBIT','gasto','x',true);
+  RAISE EXCEPTION 'FALHOU: transaction_id repetido';
+EXCEPTION WHEN unique_violation THEN RAISE NOTICE 'PASSOU: transaction_id repetido na mesma conta rejeitado'; END $$;
+-- integridade: transação com conexão errada / dono errado
+INSERT INTO public.pluggy_items(user_id,item_id,is_sandbox) VALUES (:'F','iF2',true);
+DO $$ BEGIN
+  INSERT INTO public.pluggy_transactions(user_id,item_id,account_id,transaction_id,dedupe_key,amount,date,status,type,classification,classification_reason,is_sandbox)
+  VALUES ('3324b9f8-ea68-465c-8e1e-ab1cc8caebf1','iF2','acc1','tX','kX',1,'2026-10-01','POSTED','DEBIT','gasto','x',true);
+  RAISE EXCEPTION 'FALHOU: transação em conexão diferente da conta';
+EXCEPTION WHEN foreign_key_violation THEN RAISE NOTICE 'PASSOU: transação com conexão diferente da conta rejeitada'; END $$;
+DO $$ BEGIN
+  INSERT INTO public.pluggy_transactions(user_id,item_id,account_id,transaction_id,dedupe_key,amount,date,status,type,classification,classification_reason,is_sandbox)
+  VALUES ('47df50ce-df1e-4c54-8fae-0ffb5105478d','iF','acc1','tY','kY',1,'2026-10-01','POSTED','DEBIT','gasto','x',true);
+  RAISE EXCEPTION 'FALHOU: transação com dono diferente';
+EXCEPTION WHEN foreign_key_violation THEN RAISE NOTICE 'PASSOU: transação com dono diferente da conta rejeitada'; END $$;
+DO $$ BEGIN
+  INSERT INTO public.pluggy_transactions(user_id,item_id,account_id,transaction_id,dedupe_key,amount,date,status,type,classification,classification_reason,is_sandbox)
+  VALUES ('3324b9f8-ea68-465c-8e1e-ab1cc8caebf1','iF','accNAO','tZ','kZ',1,'2026-10-01','POSTED','DEBIT','gasto','x',true);
+  RAISE EXCEPTION 'FALHOU: conta inexistente';
+EXCEPTION WHEN foreign_key_violation THEN RAISE NOTICE 'PASSOU: transação em conta inexistente rejeitada'; END $$;
+-- Sandbox/Live
+DO $$ BEGIN INSERT INTO public.pluggy_items(user_id,item_id,is_sandbox) VALUES ('3324b9f8-ea68-465c-8e1e-ab1cc8caebf1','iLive',false);
+  RAISE EXCEPTION 'FALHOU: conexão Live aceita';
+EXCEPTION WHEN check_violation THEN RAISE NOTICE 'PASSOU: conexão Live rejeitada pelo banco'; END $$;
+DO $$ BEGIN INSERT INTO public.pluggy_transactions(user_id,item_id,account_id,transaction_id,dedupe_key,amount,date,status,type,classification,classification_reason,is_sandbox)
+  VALUES ('3324b9f8-ea68-465c-8e1e-ab1cc8caebf1','iF','acc1','tL','kL',1,'2026-10-01','POSTED','DEBIT','gasto','x',false);
+  RAISE EXCEPTION 'FALHOU: transação Live aceita';
+EXCEPTION WHEN check_violation THEN RAISE NOTICE 'PASSOU: transação marcada Live rejeitada'; END $$;
+DO $$ BEGIN UPDATE public.pluggy_items SET is_sandbox=false WHERE item_id='iF';
+  RAISE EXCEPTION 'FALHOU: conexão virou Live';
+EXCEPTION WHEN check_violation OR foreign_key_violation THEN RAISE NOTICE 'PASSOU: conexão Sandbox não pode virar Live'; END $$;
+RESET ROLE;
+-- permissões efetivas com privilégios padrão do Cloud
+SELECT pg_temp.ok(NOT has_table_privilege('anon','public.pluggy_transactions','SELECT') AND NOT has_table_privilege('anon','public.pluggy_webhook_events','INSERT'), 'anon sem nenhum privilégio apesar do padrão');
+SELECT pg_temp.ok(has_table_privilege('authenticated','public.pluggy_transactions','SELECT') AND NOT has_table_privilege('authenticated','public.pluggy_transactions','INSERT') AND NOT has_table_privilege('authenticated','public.pluggy_transactions','UPDATE') AND NOT has_table_privilege('authenticated','public.pluggy_transactions','DELETE') AND NOT has_table_privilege('authenticated','public.pluggy_webhook_events','SELECT'), 'authenticated só SELECT (RLS) apesar do padrão');
+SELECT pg_temp.ok(NOT has_function_privilege('anon','public.pluggy_is_allowed()','EXECUTE') AND NOT has_function_privilege('authenticated','public.pluggy_webhook_claim(integer,integer)','EXECUTE') AND NOT has_function_privilege('anon','public.pluggy_webhook_enqueue(text,text,text,text[])','EXECUTE'), 'funções sem EXECUTE indevido apesar do padrão');
+
 -- fila
 SET ROLE service_role;
 SELECT pg_temp.ok((SELECT is_new FROM public.pluggy_webhook_enqueue('e1','item/updated','iF','{}')), 'evento novo gravado como pendente');
