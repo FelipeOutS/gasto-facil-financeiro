@@ -81,7 +81,7 @@ function OpenFinancePage() {
         onSuccess: async ({ item }) => {
           try {
             await post("register-item", { itemId: item.id });
-            toast.success("Banco de teste conectado e sincronizado.");
+            toast.success("Banco conectado e sincronizado. Nada foi importado para Gastos ou Receitas.");
           } catch (e) {
             toast.error(`Falha ao registrar: ${(e as Error).message}`);
           }
@@ -170,7 +170,7 @@ function OpenFinancePage() {
       <section className="mt-5 flex items-start gap-3 rounded-2xl border border-primary/30 bg-primary/10 p-4">
         <FlaskConical className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
         <p className="text-xs leading-relaxed text-foreground">
-          Ambiente de testes: somente bancos fictícios da Pluggy. Nada é lançado em Gastos ou Receitas nesta etapa.
+          Somente leitura: Mercado Pago real (Open Finance oficial) e banco fictício de testes. Nada é lançado em Gastos, Receitas ou Cartões nesta etapa.
         </p>
       </section>
 
@@ -206,7 +206,7 @@ function OpenFinancePage() {
       )}
 
       <Button className="mt-5 w-full" disabled={busy || needsHistory || !s.configured || !s.schemaReady || paused} onClick={() => connect()}>
-        <Link2 className="mr-2 h-4 w-4" /> Conectar banco de teste
+        <Link2 className="mr-2 h-4 w-4" /> Conectar banco
       </Button>
 
       <Section title="Instituições conectadas">
@@ -216,7 +216,7 @@ function OpenFinancePage() {
             <div className="flex items-center gap-3">
               <Landmark className="h-5 w-5 text-primary" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">{it.connector_name}{it.is_sandbox ? " · teste" : ""}</p>
+                <p className="truncate text-sm font-semibold">{it.connector_name}{it.is_sandbox ? " · teste" : " · real (somente leitura)"}</p>
                 <p className="text-[11px] text-muted-foreground">
                   {it.status}{it.last_error ? ` · ${it.last_error}` : ""} · última sincronização {it.last_synced_at ? new Date(it.last_synced_at).toLocaleString("pt-BR") : "—"}
                 </p>

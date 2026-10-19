@@ -195,7 +195,7 @@ export function reconcileWithMercadoPago(
  * rejeita is_sandbox=false por CHECK. Gravação financeira continua travada
  * no SQL (pluggy_import_apply exige Sandbox + pluggy_assert_financial_release).
  */
-export const PLUGGY_LIVE_READONLY_AUTHORIZED: boolean = false;
+export const PLUGGY_LIVE_READONLY_AUTHORIZED: boolean = true; // Autorizado 19/10/2026 (Preview, só leitura)
 
 /** Únicas instituições reais aceitas nesta etapa (nome normalizado do conector). */
 export const PLUGGY_LIVE_CONNECTOR_NAMES: readonly string[] = Object.freeze(["mercado pago"]) // Etapa 1; Nubank entra na etapa 2;
