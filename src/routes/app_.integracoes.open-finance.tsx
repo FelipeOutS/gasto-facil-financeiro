@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { apiFetch } from "@/lib/api-fetch";
 import { categoriaOptions } from "@/lib/pluggy/categorias";
+import { PluggyImportPanel } from "@/components/PluggyImportPanel";
 
 export const Route = createFileRoute("/app_/integracoes/open-finance")({
   head: () => ({
@@ -35,7 +36,7 @@ type Status = {
   settings: { auto_import: boolean; auto_categorize: boolean; history_days: number; access_state: string } | null;
   items: Array<{ item_id: string; connector_name: string; is_sandbox: boolean; status: string; last_error: string | null; last_synced_at: string | null }>;
   accounts: Array<{ account_id: string; item_id: string; type: string; name: string; number_last4: string | null; balance: number; credit_limit: number | null; available_credit: number | null }>;
-  transactions: Array<{ transaction_id: string; description: string | null; amount: number; date: string; type: string; classification: string; classification_reason: string; categoria_sugerida: string | null; categoria_manual: string | null; review_status: string | null }>;
+  transactions: Array<{ transaction_id: string; account_id: string; description: string | null; amount: number; date: string; type: string; classification: string; classification_reason: string; categoria_sugerida: string | null; categoria_manual: string | null; review_status: string | null }>;
 };
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -271,6 +272,8 @@ function OpenFinancePage() {
         </div>
       </Section>
 
+      <PluggyImportPanel accounts={s.accounts} />
+
       <Section title={`Para revisar (${revisao.length})`}>
         {revisao.length === 0 && <Empty>Nada para revisar.</Empty>}
         {revisao.map((t) => (
@@ -278,19 +281,18 @@ function OpenFinancePage() {
             <TxLine t={t} />
             <p className="mt-1 text-[11px] text-muted-foreground">Motivo: {t.classification_reason.replace(/_/g, " ")}</p>
             <div className="mt-2 flex gap-2">
-              <Button size="sm" variant="outline" disabled={busy} onClick={() => act("review", { transactionId: t.transaction_id, decisao: "aprovado" }, "Marcada como válida.")}>É válida</Button>
-              <Button size="sm" variant="ghost" disabled={busy} onClick={() => act("review", { transactionId: t.transaction_id, decisao: "rejeitado" }, "Marcada como duplicada.")}>É duplicada</Button>
+              <p className="text-xs text-muted-foreground">Decisão disponível na revisão da importação após autorização.</p>
             </div>
           </div>
         ))}
       </Section>
 
       <Section title={`Gastos de teste (${gastos.length})`}>
-        {gastos.slice(0, 50).map((t) => <TxCard key={t.transaction_id} t={t} onCat={(c) => act("categoria", { transactionId: t.transaction_id, categoria: c }, "Categoria corrigida.")} />)}
+        {gastos.slice(0, 50).map((t) => <TxCard key={`${t.account_id}:${t.transaction_id}`} t={t} onCat={(c) => act("categoria", { accountId: t.account_id, transactionId: t.transaction_id, categoria: c }, "Categoria corrigida.")} />)}
         {gastos.length === 0 && <Empty>Nenhum gasto de teste.</Empty>}
       </Section>
       <Section title={`Receitas de teste (${receitas.length})`}>
-        {receitas.slice(0, 50).map((t) => <TxCard key={t.transaction_id} t={t} onCat={(c) => act("categoria", { transactionId: t.transaction_id, categoria: c }, "Categoria corrigida.")} />)}
+        {receitas.slice(0, 50).map((t) => <TxCard key={`${t.account_id}:${t.transaction_id}`} t={t} onCat={(c) => act("categoria", { accountId: t.account_id, transactionId: t.transaction_id, categoria: c }, "Categoria corrigida.")} />)}
         {receitas.length === 0 && <Empty>Nenhuma receita de teste.</Empty>}
       </Section>
     </MobileShell>

@@ -4,7 +4,7 @@
 \set U '99999999-0000-0000-0000-000000000009'
 CREATE FUNCTION pg_temp.ok(c boolean, n text) RETURNS void LANGUAGE plpgsql AS $$ BEGIN IF c THEN RAISE NOTICE 'PASSOU: %', n; ELSE RAISE EXCEPTION 'FALHOU: %', n; END IF; END $$;
 CREATE FUNCTION pg_temp.err(q text) RETURNS text LANGUAGE plpgsql AS $$ BEGIN EXECUTE q; RETURN 'ok'; EXCEPTION WHEN OTHERS THEN RETURN SQLERRM; END $$;
-\i tests/sql/pluggy/_seed.sql
+\i :seed_file
 SELECT md5(string_agg(t::text, ',' ORDER BY id)) AS h_mp FROM public.imported_transactions t \gset
 SELECT md5(string_agg(g::text, ',' ORDER BY id)) AS h_g0 FROM public.gastos g \gset
 SELECT md5(string_agg(r::text, ',' ORDER BY id)) AS h_r0 FROM public.receitas r \gset
@@ -34,6 +34,9 @@ SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_import_apply(%L, gen_
 -- Payload adulterado (valor diferente do banco) recusado
 SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_import_apply(%L, gen_random_uuid(), %L)', :'F',
   jsonb_build_array(jsonb_set(:'plan'::jsonb->0, '{row,valor}', '1')))) LIKE '%lancamento_invalido%', 'valor adulterado recusado');
+SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_import_apply(%L, gen_random_uuid(), %L)', :'F',
+  (SELECT jsonb_agg(jsonb_set(e,'{row,fatura_competencia}','"2099-01"')) FROM jsonb_array_elements(:'plan'::jsonb) e WHERE e->'row'->>'forma_pagamento'='credito'))) LIKE '%cartao_sem_vinculo%', 'competência adulterada recusada');
+SELECT pg_temp.ok(pg_temp.err(format('UPDATE public.pluggy_transactions SET is_sandbox=false WHERE transaction_id=%L', :'plan'::jsonb->0->>'transaction_id')) LIKE '%pluggy_tx_sandbox_only%', 'transação Live recusada pela constraint existente');
 
 -- Importação histórica
 \set B1 '00000000-0000-0000-0000-0000000000f1'
@@ -65,6 +68,10 @@ RESET ROLE;
 SET ROLE service_role;
 SELECT e.entry_id AS eid, e.account_id AS acc, e.transaction_id AS tid, e.snapshot AS snap FROM public.pluggy_import_entries e JOIN public.gastos g ON g.id=e.entry_id WHERE g.descricao='SMART FIT ACADEMIA' ORDER BY g.data LIMIT 1 \gset
 UPDATE public.pluggy_transactions SET amount = 99.9 WHERE account_id=:'acc' AND transaction_id=:'tid';
+UPDATE public.pluggy_transactions SET status='PENDING' WHERE account_id=:'acc' AND transaction_id=:'tid';
+SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_import_apply(%L, gen_random_uuid(), %L)', :'F', jsonb_build_array(jsonb_build_object('op','update','table','gastos','account_id',:'acc','transaction_id',:'tid','entry_id',:'eid','next',(:'snap'::jsonb)||'{"valor":99.9}')))) LIKE '%nao_elegivel%', 'update pendente recusado');
+UPDATE public.pluggy_transactions SET status='POSTED' WHERE account_id=:'acc' AND transaction_id=:'tid';
+SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_import_apply(%L, gen_random_uuid(), %L)', :'F', jsonb_build_array(jsonb_build_object('op','remove','table','gastos','account_id',:'acc','transaction_id',:'tid','entry_id',:'eid')))) LIKE '%remocao_nao_elegivel%', 'remoção sem alteração de origem recusada');
 SELECT public.pluggy_import_apply(:'F', gen_random_uuid(), jsonb_build_array(jsonb_build_object('op','update','table','gastos','account_id',:'acc','transaction_id',:'tid','entry_id',:'eid','next', (:'snap'::jsonb) || '{"valor":99.9}'))) AS r4 \gset
 SELECT pg_temp.ok((:'r4'::jsonb->>'atualizados')::int = 1 AND (SELECT valor FROM public.gastos WHERE id=:'eid') = 99.9, 'atualização do banco aplicada em lançamento não editado');
 -- Edição manual bloqueia atualização e reversão
@@ -80,9 +87,13 @@ SELECT public.pluggy_review_decide(:'F', :'racc', :'rtid', NULL);
 SELECT pg_temp.ok((SELECT count(*) FROM public.pluggy_review_decisions) = 2 AND (SELECT review_status FROM public.pluggy_transactions WHERE transaction_id=:'rtid') IS NULL AND (SELECT count(*) FROM public.pluggy_transactions WHERE item_id='itemF') = 40, 'revisão idempotente, auditada, reversível e sem excluir');
 SELECT pg_temp.ok(pg_temp.err(format('SELECT public.pluggy_review_decide(%L,%L,%L,''aprovado'')', :'M', :'racc', :'rtid')) LIKE '%transacao_inexistente%', 'Michael não decide revisão do Felipe');
 -- Desfazer
+-- An edit of notes alone must protect the row, not just amount/description edits.
+SELECT e.entry_id AS note_id FROM public.pluggy_import_entries e JOIN public.gastos g ON g.id=e.entry_id WHERE e.batch_id=:'B1' AND g.id<>:'eid' ORDER BY g.id LIMIT 1 \gset
+UPDATE public.gastos SET observacao='Nota manual preservada' WHERE id=:'note_id';
 SELECT public.pluggy_import_revert(:'F', :'B1') AS rv \gset
-SELECT pg_temp.ok((:'rv'::jsonb->>'revertidos')::int = 35 AND (:'rv'::jsonb->>'preservados')::int = 1, 'desfazer: 35 removidos de forma reversível, 1 editado preservado');
-SELECT pg_temp.ok((SELECT count(*) FROM public.gastos WHERE origem='pluggy' AND deleted_at IS NULL) = 1 AND (SELECT count(*) FROM public.gastos WHERE origem='pluggy') = 31, 'nenhuma exclusão física');
+SELECT pg_temp.ok((:'rv'::jsonb->>'revertidos')::int = 34 AND (:'rv'::jsonb->>'preservados')::int = 2, 'desfazer: 34 removidos de forma reversível, 2 editados preservados');
+SELECT pg_temp.ok((SELECT deleted_at IS NULL AND observacao='Nota manual preservada' FROM public.gastos WHERE id=:'note_id'), 'edição apenas de observação também impede exclusão');
+SELECT pg_temp.ok((SELECT count(*) FROM public.gastos WHERE origem='pluggy' AND deleted_at IS NULL) = 2 AND (SELECT count(*) FROM public.gastos WHERE origem='pluggy') = 31, 'nenhuma exclusão física');
 SELECT public.pluggy_import_revert(:'F', :'B1') AS rv2 \gset
 SELECT pg_temp.ok((:'rv2'::jsonb->>'replay')::boolean, 'desfazer repetido é idempotente');
 SELECT pg_temp.ok((SELECT status FROM public.extratos_importados WHERE id=:'B1') = 'revertido', 'lote marcado revertido (histórico mantido)');

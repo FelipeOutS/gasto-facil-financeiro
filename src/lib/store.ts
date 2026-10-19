@@ -907,7 +907,7 @@ type ExtratoImportadoRow = {
 };
 function rowToExtratoImportado(r: ExtratoImportadoRow): ExtratoImportado {
   const tipo: TipoOrigemExtrato =
-    r.tipo_origem === "csv" || r.tipo_origem === "imagem" ? r.tipo_origem : "pdf";
+    r.tipo_origem === "csv" || r.tipo_origem === "imagem" || r.tipo_origem === "pluggy" ? r.tipo_origem : "pdf";
   const status: StatusExtratoImportado =
     r.status === "parcial" || r.status === "revertido" || r.status === "erro"
       ? r.status
@@ -4871,6 +4871,8 @@ export async function revertExtratoImportadoSeguro(
   if (!activeUserId) return falha;
   const extrato = memExtratos.find((e) => e.id === batchId);
   if (!extrato) return falha;
+  // Pluggy must use its own origin-scoped, soft-delete-only reversal RPC.
+  if (extrato.tipoOrigem === "pluggy") return falha;
   if (extrato.status === "revertido") {
     return { ok: true, removidos: 0, mantidos: 0, status: "revertido" };
   }

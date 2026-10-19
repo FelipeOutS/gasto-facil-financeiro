@@ -75,7 +75,7 @@ class PluggyTxStepError extends Error {
 }
 
 export async function syncItem(
-  deps: { api: PluggyApi; store: PluggyStore; now?: () => Date },
+  deps: { api: PluggyApi; store: PluggyStore; now?: () => Date; importIncremental?: (userId: string) => Promise<unknown> },
   input: { userId: string; itemId: string },
 ): Promise<SyncResult> {
   const { api, store } = deps;
@@ -167,6 +167,8 @@ export async function syncItem(
     // Upsert por (user_id, transaction_id): o mesmo id da Pluggy nunca duplica,
     // e colunas do usuário (categoria_manual, review_status) não são enviadas.
     if (rows.length) await store.upsertTransactions(rows);
+    const importIncremental = deps.importIncremental ?? (await import("./pluggy-import.server")).runIncrementalAfterSync;
+    await importIncremental(input.userId);
     await store.setAccessState(input.userId, "ok", null);
     await store.markItemSync(input.userId, item.id, { ok: true, pluggyError: item.error?.code ?? null });
     return { ok: true, accounts: accounts.length, transactions: rows.length, revisao, ignorados };
