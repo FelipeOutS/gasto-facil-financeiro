@@ -62,3 +62,17 @@ export async function revertPluggyImport(deps: ImportDeps, input: { userId: stri
   if (!(input.releaseAuthorized ?? PLUGGY_IMPORT_RELEASE_AUTHORIZED)) return { ok: false as const, error: "importacao_bloqueada" };
   return { ok: true as const, resultado: await deps.revert(input.userId, input.batchId) };
 }
+
+/** Invoked after staging sync/deletions. In this phase returns before any financial read or RPC. */
+export async function runIncrementalAfterSync(userId: string) {
+  if (!PLUGGY_IMPORT_RELEASE_AUTHORIZED) return { ok: true as const, blocked: true };
+  const { assertPluggyAccess } = await import("./pluggy-access.server");
+  await assertPluggyAccess(userId);
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { createImportDeps } = await import("./pluggy-import-store.server");
+  const deps = createImportDeps(supabaseAdmin);
+  if (!(await deps.settings(userId))?.auto_import) return { ok: true as const, disabled: true };
+  const result = await runPluggyImport(deps, { userId, batchId: crypto.randomUUID(), mode: "incremental" });
+  if (!result.ok) throw new Error(result.error);
+  return result;
+}

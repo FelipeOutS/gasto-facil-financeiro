@@ -43,7 +43,7 @@ export type ImportedEntry = {
   current: EntrySnapshot | null; // null = linha removida (deleted_at) ou inexistente
   state: "ativo" | "revertido" | "removido";
 };
-export type EntrySnapshot = { valor: number; data: string; descricao: string; categoria_id?: string | null };
+export type EntrySnapshot = { valor: number; data: string; descricao: string; categoria_id?: string | null; updated_at?: string };
 /** Lançamentos de OUTRAS origens (manual, extrato, WhatsApp, Mercado Pago) para conciliação. */
 export type ExistingEntry = { table: "gastos" | "receitas"; id: string; valor: number; data: string; descricao: string; origem: string | null };
 
@@ -155,7 +155,7 @@ export function planImport(input: PlanInput): PlanAction[] {
     // ---------- Já importada: só atualização/remoção segura ----------
     if (prev) {
       if (prev.state !== "ativo" || !prev.current) { out.push({ op: "skip", ...base, reason: "ja_importada_" + prev.state }); continue; }
-      const edited = !sameSnap(prev.snapshot, prev.current);
+      const edited = !sameSnap(prev.snapshot, prev.current) || (!!prev.snapshot.updated_at && prev.snapshot.updated_at !== prev.current.updated_at);
       const eff = effectiveKind(tx);
       if (tx.deleted_at || "skip" in eff) {
         if (edited) { out.push({ op: "review", ...base, reason: "remocao_conflita_com_edicao_manual" }); continue; }
@@ -163,7 +163,9 @@ export function planImport(input: PlanInput): PlanAction[] {
         continue;
       }
       if ("review" in eff) { out.push({ op: "review", ...base, reason: "importada_voltou_para_revisao" }); continue; }
+      if ((tx.status ?? "POSTED") !== "POSTED") { out.push({ op: "review", ...base, reason: "importada_voltou_para_pendente" }); continue; }
       if ((eff.kind === "gasto") !== (prev.entry_table === "gastos")) { out.push({ op: "review", ...base, reason: "natureza_mudou_apos_importacao" }); continue; }
+      if (tx.account_type === "CREDIT" && tx.date !== prev.snapshot.data) { out.push({ op: "review", ...base, reason: "data_cartao_alterada_requer_revisao_fatura" }); continue; }
       // Compara o dado do banco com o que o importador gravou (snapshot), não com a edição do usuário.
       const next: EntrySnapshot = { valor: tx.amount, data: tx.date, descricao: (tx.description ?? "").trim() || prev.snapshot.descricao, categoria_id: prev.snapshot.categoria_id ?? null };
       if (sameSnap(next, prev.snapshot)) { out.push({ op: "skip", ...base, reason: "sem_alteracao" }); continue; }

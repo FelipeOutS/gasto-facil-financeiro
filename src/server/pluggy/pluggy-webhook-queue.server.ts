@@ -39,6 +39,7 @@ export type QueueDeps = {
     input: { userId: string; itemId: string },
   ) => Promise<{ ok: boolean; error?: string }>;
   now?: () => Date;
+  importIncremental?: (userId: string) => Promise<unknown>;
 };
 
 /** Código de erro curto, sem valores, descrições ou dados pessoais. */
@@ -71,6 +72,8 @@ async function processOne(deps: QueueDeps, ev: ClaimedEvent): Promise<void> {
   }
   if (ev.event === "transactions/deleted") {
     await deps.store.markTransactionsDeleted(owner.userId, ev.transaction_ids);
+    const importIncremental = deps.importIncremental ?? (await import("./pluggy-import.server")).runIncrementalAfterSync;
+    await importIncremental(owner.userId);
     return;
   }
   const r = await deps.syncItem({ api: deps.api, store: deps.store }, { userId: owner.userId, itemId: ev.item_id });

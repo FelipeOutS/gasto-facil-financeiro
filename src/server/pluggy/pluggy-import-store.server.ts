@@ -20,7 +20,7 @@ async function rows(query: () => Db): Promise<Row[]> {
 }
 
 function snapshot(row: Row): EntrySnapshot {
-  return { valor: Number(row.valor), data: String(row.data), descricao: String(row.descricao), categoria_id: row.categoria_id == null ? null : String(row.categoria_id) };
+  return { valor: Number(row.valor), data: String(row.data), descricao: String(row.descricao), categoria_id: row.categoria_id == null ? null : String(row.categoria_id), updated_at: String(row.updated_at) };
 }
 
 /** Read client is authenticated/RLS; privileged client is loaded only inside gated RPC writers. */
@@ -71,8 +71,8 @@ export function createImportDeps(db: Db): ImportDeps {
       if (probe.error) throw new Error("pluggy_leitura_indisponivel");
       const [entries, gastos, receitas] = await Promise.all([
         rows(() => db.from("pluggy_import_entries").select("*").eq("user_id", userId).order("id")),
-        rows(() => db.from("gastos").select("id,valor,data,descricao,categoria_id").eq("user_id", userId).eq("origem", "pluggy").is("deleted_at", null).order("id")),
-        rows(() => db.from("receitas").select("id,valor,data,descricao").eq("user_id", userId).eq("origem", "pluggy").is("deleted_at", null).order("id")),
+        rows(() => db.from("gastos").select("id,valor,data,descricao,categoria_id,updated_at").eq("user_id", userId).eq("origem", "pluggy").is("deleted_at", null).order("id")),
+        rows(() => db.from("receitas").select("id,valor,data,descricao,updated_at").eq("user_id", userId).eq("origem", "pluggy").is("deleted_at", null).order("id")),
       ]);
       return entries.map((e) => {
         const current = (e.entry_table === "gastos" ? gastos : receitas).find((r) => r.id === e.entry_id);
