@@ -21,6 +21,10 @@ CREATE TABLE public.pluggy_card_links (
   FOREIGN KEY (user_id, account_id) REFERENCES public.pluggy_accounts(user_id, account_id) ON DELETE CASCADE
 );
 
+REVOKE ALL ON public.pluggy_card_links FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public.pluggy_card_links TO authenticated;
+GRANT ALL ON public.pluggy_card_links TO service_role;
+
 CREATE TABLE public.pluggy_import_entries (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
@@ -38,6 +42,10 @@ CREATE TABLE public.pluggy_import_entries (
   FOREIGN KEY (user_id, account_id, transaction_id) REFERENCES public.pluggy_transactions(user_id, account_id, transaction_id) ON DELETE RESTRICT,
   FOREIGN KEY (batch_id) REFERENCES public.extratos_importados(id) ON DELETE RESTRICT
 );
+
+REVOKE ALL ON public.pluggy_import_entries FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public.pluggy_import_entries TO authenticated;
+GRANT ALL ON public.pluggy_import_entries TO service_role;
 CREATE INDEX pluggy_import_entries_batch ON public.pluggy_import_entries (user_id, batch_id);
 
 CREATE TABLE public.pluggy_review_decisions (
@@ -50,6 +58,10 @@ CREATE TABLE public.pluggy_review_decisions (
   decided_at timestamptz NOT NULL DEFAULT now(),
   FOREIGN KEY (user_id, account_id, transaction_id) REFERENCES public.pluggy_transactions(user_id, account_id, transaction_id) ON DELETE RESTRICT
 );
+
+REVOKE ALL ON public.pluggy_review_decisions FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public.pluggy_review_decisions TO authenticated;
+GRANT ALL ON public.pluggy_review_decisions TO service_role;
 CREATE INDEX pluggy_review_decisions_tx ON public.pluggy_review_decisions (user_id, account_id, transaction_id, decided_at);
 
 -- Lovable Cloud concede ALL por padrão a anon/authenticated (e SELECT/INSERT a sandbox_exec): revogar antes.
