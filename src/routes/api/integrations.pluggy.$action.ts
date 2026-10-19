@@ -67,7 +67,6 @@ export const Route = createFileRoute("/api/integrations/pluggy/$action")({
         const { createPluggyStore } = await import("@/server/pluggy/pluggy-store.server");
         const { syncItem } = await import("@/server/pluggy/pluggy-sync.server");
         const { assertConnectorAllowed } = await import("@/lib/pluggy/rules");
-        const { pluggyWebhookUrl } = await import("@/server/pluggy/pluggy-access.server");
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = supabaseAdmin as any;
@@ -77,8 +76,6 @@ export const Route = createFileRoute("/api/integrations/pluggy/$action")({
         try {
           switch (params.action) {
             case "connect-token": {
-              const webhookUrl = pluggyWebhookUrl();
-              if (!webhookUrl) return json({ error: "webhook_nao_configurado" }, 503);
               const parsed = z.object({ itemId: z.string().uuid().optional() }).parse(body);
               const prefCt = await db.from("pluggy_settings").select("user_id").eq("user_id", a.userId).maybeSingle();
               if (prefCt.error) return json({ error: "pluggy_store_indisponivel" }, 503);
@@ -91,7 +88,9 @@ export const Route = createFileRoute("/api/integrations/pluggy/$action")({
               const { results } = await api.sandboxConnectors();
               const connectorIds = results.filter((c) => c.isSandbox === true).map((c) => c.id);
               if (!connectorIds.length) return json({ error: "sem_conector_sandbox" }, 502);
-              const { accessToken } = await api.connectToken(a.userId, webhookUrl, parsed.itemId);
+              // Header-authenticated webhooks require separately authorized /webhooks registration.
+              // Connect tokens must never configure an external callback or carry a secret URL.
+              const { accessToken } = await api.connectToken(a.userId, null, parsed.itemId);
               return json({ accessToken, connectorIds, includeSandbox: true });
             }
             case "register-item": {
