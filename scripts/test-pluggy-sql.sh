@@ -19,3 +19,6 @@ Q="SET ROLE service_role; BEGIN; SELECT id FROM public.pluggy_webhook_claim(50,6
 ( "${P[@]}" -tAc "$Q" > "$D/a" ) & ( "${P[@]}" -tAc "$Q" > "$D/b" ) & wait
 TOT=$(cat "$D/a" "$D/b" | grep -cE '^[0-9a-f-]{36}$'); UNI=$(cat "$D/a" "$D/b" | grep -E '^[0-9a-f-]{36}$' | sort -u | wc -l)
 if [ "$TOT" = 6 ] && [ "$UNI" = 6 ]; then echo "PASSOU: corrida 2 conexões — 6 eventos, nenhum reservado duas vezes"; else echo "FALHOU: corrida $TOT/$UNI"; exit 1; fi
+# Correção candidata: limite de tentativas com reserva expirada
+"${P[@]}" -f "$ROOT/docs/migrations-candidate/pluggy-webhook-claim-max-attempts.sql"
+"${P[@]}" -f "$ROOT/tests/sql/pluggy/20-lease-max.sql" 2>&1 | grep -E "PASSOU|FALHOU|ERROR"
