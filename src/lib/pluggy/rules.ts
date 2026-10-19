@@ -198,7 +198,7 @@ export function reconcileWithMercadoPago(
 export const PLUGGY_LIVE_READONLY_AUTHORIZED: boolean = false;
 
 /** Únicas instituições reais aceitas nesta etapa (nome normalizado do conector). */
-export const PLUGGY_LIVE_CONNECTOR_NAMES: readonly string[] = Object.freeze(["nubank", "mercado pago"]);
+export const PLUGGY_LIVE_CONNECTOR_NAMES: readonly string[] = Object.freeze(["mercado pago"]) // Etapa 1; Nubank entra na etapa 2;
 
 export function isLiveConnectorAllowedName(name: string | null | undefined): boolean {
   const n = norm(name);
