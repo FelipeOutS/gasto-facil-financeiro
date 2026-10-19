@@ -50,7 +50,14 @@ export const pluggyRealImport = createServerFn({ method: "POST" })
         const l = e.data?.entry_id ? await context.supabase.from(tbl).select("descricao,valor,data,deleted_at").eq("id", e.data.entry_id).eq("user_id", context.userId).maybeSingle() : null; // soft-delete-exceção: mostra estado do item do lote
         lotes.push({ accountId: row.account_id as string, transactionId: row.transaction_id as string, batchId: row.batch_id as string, table: tbl, revertido: !!row.reverted_at, resultado: (row.revert_outcome ?? null) as string | null, estado: (e.data?.state ?? null) as string | null, lancamento: l?.data ? { descricao: l.data.descricao as string, valor: Number(l.data.valor), data: l.data.data as string, excluido: !!l.data.deleted_at } : null });
       }
-      return { status: true as const, lotes, revertAuthorized: rp.PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED };
+      // Histórico dos lotes fechados (Fase 4). Tabela ausente = SQL ainda não aplicado: lista vazia.
+      const bg = await a.from("pluggy_real_batch_grants").select("batch_id,item_count,total,consumed_at,reverted_at,revert_outcome").eq("user_id", context.userId).not("consumed_at", "is", null);
+      const lotesFechados = [];
+      for (const row of bg.error ? [] : bg.data ?? []) {
+        const ex = await context.supabase.from("extratos_importados").select("status,total_receitas,total_despesas,periodo_inicio,periodo_fim").eq("id", row.batch_id).eq("user_id", context.userId).maybeSingle();
+        lotesFechados.push({ batchId: row.batch_id as string, itens: Number(row.item_count), total: Number(row.total), revertido: !!row.reverted_at, resultado: (row.revert_outcome ?? null) as string | null, status: (ex.data?.status ?? null) as string | null, receitas: Number(ex.data?.total_receitas ?? 0), despesas: Number(ex.data?.total_despesas ?? 0), de: (ex.data?.periodo_inicio ?? null) as string | null, ate: (ex.data?.periodo_fim ?? null) as string | null });
+      }
+      return { status: true as const, lotes, lotesFechados, revertAuthorized: rp.PLUGGY_REAL_FIRST_IMPORT_AUTHORIZED, batchRevertAuthorized: rp.PLUGGY_REAL_BATCH_IMPORT_AUTHORIZED };
     }
     if (data.action === "revert_real_batch") {
       const rp = await import("@/lib/pluggy/real-preview");
