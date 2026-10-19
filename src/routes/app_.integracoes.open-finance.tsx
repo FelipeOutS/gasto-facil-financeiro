@@ -259,7 +259,7 @@ function OpenFinancePage() {
             <Switch checked={false} disabled />
           </Row>
           <Row label="Categorização automática">
-            <Switch checked={settings.auto_categorize} disabled={busy || !s.schemaReady} onCheckedChange={(v) => act("settings", { autoImport: false, autoCategorize: v, historyDays: settings.history_days }, "Salvo.")} />
+            <Switch checked={settings.auto_categorize} disabled={busy || !s.schemaReady || needsHistory} onCheckedChange={(v) => act("settings", { autoImport: false, autoCategorize: v, historyDays: settings.history_days }, "Salvo.")} />
           </Row>
           <Row label="Histórico inicial">
             <select className="rounded-lg border border-border bg-background px-2 py-1 text-sm" value={settings.history_days} disabled={busy || !s.schemaReady} onChange={(e) => saveHistory(Number(e.target.value))}>
