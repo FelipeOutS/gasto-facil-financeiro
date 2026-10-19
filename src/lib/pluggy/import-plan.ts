@@ -166,7 +166,7 @@ export function planImport(input: PlanInput): PlanAction[] {
         continue;
       }
       if ("review" in eff) { out.push({ op: "review", ...base, reason: "importada_voltou_para_revisao" }); continue; }
-      if ((tx.status ?? "POSTED") !== "POSTED") { out.push({ op: "review", ...base, reason: "importada_voltou_para_pendente" }); continue; }
+      if (tx.status !== "POSTED") { out.push({ op: "review", ...base, reason: "importada_voltou_para_pendente" }); continue; }
       if ((eff.kind === "gasto") !== (prev.entry_table === "gastos")) { out.push({ op: "review", ...base, reason: "natureza_mudou_apos_importacao" }); continue; }
       if (tx.account_type === "CREDIT" && tx.date !== prev.snapshot.data) { out.push({ op: "review", ...base, reason: "data_cartao_alterada_requer_revisao_fatura" }); continue; }
       // Compara o dado do banco com o que o importador gravou (snapshot), não com a edição do usuário.
@@ -179,7 +179,7 @@ export function planImport(input: PlanInput): PlanAction[] {
 
     // ---------- Nova ----------
     if (tx.deleted_at) { out.push({ op: "skip", ...base, reason: "removida_na_pluggy" }); continue; }
-    if ((tx.status ?? "POSTED") !== "POSTED") { out.push({ op: "skip", ...base, reason: "pendente_aguardando_confirmacao" }); continue; }
+    if (tx.status !== "POSTED") { out.push({ op: "skip", ...base, reason: "pendente_aguardando_confirmacao" }); continue; }
     const eff = effectiveKind(tx);
     if ("skip" in eff) { out.push({ op: "skip", ...base, reason: eff.skip }); continue; }
     if ("review" in eff) { out.push({ op: "review", ...base, reason: eff.review }); continue; }

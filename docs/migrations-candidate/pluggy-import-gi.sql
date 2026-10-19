@@ -2,7 +2,8 @@
 -- Aditiva: cria 3 tabelas próprias (pluggy_card_links, pluggy_import_entries,
 -- pluggy_review_decisions) e 5 funções service_role-only. NÃO altera estrutura,
 -- políticas ou dados de gastos/receitas/cartoes/extratos_importados/imported_transactions.
--- As funções só INSEREM lançamentos com origem='pluggy' e só fazem exclusão
+-- Gravações financeiras BLOQUEADAS no próprio SQL; habilitação requer revisão separada.
+-- Em homologação descartável, as funções só INSEREM lançamentos com origem='pluggy' e só fazem exclusão
 -- reversível (deleted_at) dos lançamentos que elas mesmas criaram e que não foram editados.
 -- Requer: pluggy-open-finance.sql (Rev4) e pluggy-amount-original.sql já aplicados.
 
@@ -33,7 +34,9 @@ CREATE TABLE public.pluggy_import_entries (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (user_id, account_id, transaction_id),
-  UNIQUE (entry_table, entry_id)
+  UNIQUE (entry_table, entry_id),
+  FOREIGN KEY (user_id, account_id, transaction_id) REFERENCES public.pluggy_transactions(user_id, account_id, transaction_id) ON DELETE RESTRICT,
+  FOREIGN KEY (batch_id) REFERENCES public.extratos_importados(id) ON DELETE RESTRICT
 );
 CREATE INDEX pluggy_import_entries_batch ON public.pluggy_import_entries (user_id, batch_id);
 
@@ -44,7 +47,8 @@ CREATE TABLE public.pluggy_review_decisions (
   transaction_id text NOT NULL,
   decision text CHECK (decision IN ('aprovado', 'rejeitado')),
   previous text,
-  decided_at timestamptz NOT NULL DEFAULT now()
+  decided_at timestamptz NOT NULL DEFAULT now(),
+  FOREIGN KEY (user_id, account_id, transaction_id) REFERENCES public.pluggy_transactions(user_id, account_id, transaction_id) ON DELETE RESTRICT
 );
 CREATE INDEX pluggy_review_decisions_tx ON public.pluggy_review_decisions (user_id, account_id, transaction_id, decided_at);
 
@@ -85,6 +89,65 @@ BEGIN
 END $$;
 
 -- ---------------------------------------------------------------------------
+-- Bloqueio SEM configuração, tabela de release, parâmetro ou override de sessão.
+-- Uma futura mudança de corpo exige autorização separada. service_role não pode substituir DDL.
+CREATE FUNCTION public.pluggy_assert_financial_release()
+RETURNS void LANGUAGE plpgsql SECURITY INVOKER SET search_path = public, pg_temp AS $$
+BEGIN
+  RAISE EXCEPTION 'pluggy_gravacao_financeira_bloqueada' USING ERRCODE = '42501';
+END $$;
+REVOKE ALL ON FUNCTION public.pluggy_assert_financial_release() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.pluggy_assert_financial_release() TO service_role;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname='sandbox_exec') THEN
+    EXECUTE 'REVOKE ALL ON FUNCTION public.pluggy_assert_financial_release() FROM sandbox_exec';
+  END IF;
+END $$;
+
+-- Integridade validada nas tabelas NOVAS, sem índices/constraints/triggers nas finanças existentes.
+CREATE FUNCTION public.pluggy_validate_relationship()
+RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = public, pg_temp AS $$
+BEGIN
+  PERFORM public.pluggy_assert_owner(NEW.user_id);
+  PERFORM pg_advisory_xact_lock(hashtextextended('pluggy-import:' || NEW.user_id::text, 0));
+  IF TG_TABLE_NAME='pluggy_card_links' THEN
+    PERFORM 1 FROM public.pluggy_accounts a JOIN public.pluggy_items i ON i.user_id=a.user_id AND i.item_id=a.item_id
+      WHERE a.user_id=NEW.user_id AND a.account_id=NEW.account_id AND a.type='CREDIT'
+        AND a.is_sandbox AND i.is_sandbox AND i.deleted_at IS NULL FOR SHARE OF a,i;
+    IF NOT FOUND THEN RAISE EXCEPTION 'pluggy_conta_cartao_invalida' USING ERRCODE='23503'; END IF;
+    PERFORM 1 FROM public.cartoes c WHERE c.id=NEW.cartao_id AND c.user_id=NEW.user_id FOR SHARE;
+    IF NOT FOUND THEN RAISE EXCEPTION 'pluggy_cartao_invalido' USING ERRCODE='23503'; END IF;
+  ELSE
+    PERFORM public.pluggy_assert_financial_release();
+    IF TG_OP='UPDATE' AND (NEW.user_id,NEW.account_id,NEW.transaction_id,NEW.entry_table,NEW.entry_id,NEW.batch_id)
+       IS DISTINCT FROM (OLD.user_id,OLD.account_id,OLD.transaction_id,OLD.entry_table,OLD.entry_id,OLD.batch_id) THEN
+      RAISE EXCEPTION 'pluggy_identidade_imutavel' USING ERRCODE='23503';
+    END IF;
+    PERFORM 1 FROM public.extratos_importados e WHERE e.id=NEW.batch_id AND e.user_id=NEW.user_id AND e.tipo_origem='pluggy' FOR SHARE;
+    IF NOT FOUND THEN RAISE EXCEPTION 'pluggy_lote_invalido' USING ERRCODE='23503'; END IF;
+    IF NEW.entry_table='gastos' THEN
+      PERFORM 1 FROM public.gastos g WHERE g.id=NEW.entry_id AND g.user_id=NEW.user_id AND g.origem='pluggy'
+        AND g.import_batch_id=NEW.batch_id AND g.id_operacao_banco='pluggy:'||NEW.account_id||':'||NEW.transaction_id FOR SHARE;
+    ELSE
+      PERFORM 1 FROM public.receitas r WHERE r.id=NEW.entry_id AND r.user_id=NEW.user_id AND r.origem='pluggy'
+        AND r.import_batch_id=NEW.batch_id AND r.id_operacao_banco='pluggy:'||NEW.account_id||':'||NEW.transaction_id FOR SHARE;
+    END IF;
+    IF NOT FOUND THEN RAISE EXCEPTION 'pluggy_lancamento_invalido' USING ERRCODE='23503'; END IF;
+  END IF;
+  RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public.pluggy_validate_relationship() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.pluggy_validate_relationship() TO service_role;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname='sandbox_exec') THEN
+    EXECUTE 'REVOKE ALL ON FUNCTION public.pluggy_validate_relationship() FROM sandbox_exec';
+  END IF;
+END $$;
+CREATE TRIGGER pluggy_card_links_relationship BEFORE INSERT OR UPDATE ON public.pluggy_card_links
+  FOR EACH ROW EXECUTE FUNCTION public.pluggy_validate_relationship();
+CREATE TRIGGER pluggy_import_entries_relationship BEFORE INSERT OR UPDATE ON public.pluggy_import_entries
+  FOR EACH ROW EXECUTE FUNCTION public.pluggy_validate_relationship();
+
 -- 3. Vínculo de cartão: só por confirmação do titular; cartão e conta precisam ser dele.
 -- ---------------------------------------------------------------------------
 CREATE FUNCTION public.pluggy_link_card(p_user_id uuid, p_account_id text, p_cartao_id uuid)
@@ -145,6 +208,7 @@ DECLARE
   tot_g numeric := 0; tot_r numeric := 0; d_min date; d_max date;
 BEGIN
   PERFORM public.pluggy_assert_owner(p_user_id);
+  PERFORM public.pluggy_assert_financial_release();
   IF p_batch_id IS NULL OR jsonb_typeof(p_actions) IS DISTINCT FROM 'array' OR jsonb_array_length(p_actions) > 5000 THEN
     RAISE EXCEPTION 'pluggy_lote_invalido' USING ERRCODE = '22023';
   END IF;
@@ -174,6 +238,7 @@ BEGIN
       -- Defesa em profundidade: revisão pendente, duplicada ou ignorada nunca entra.
       IF tx.review_status = 'rejeitado' OR tx.classification = 'ignorado'
          OR (tx.classification = 'revisao' AND tx.review_status IS DISTINCT FROM 'aprovado')
+         OR (cardinality(tx.mp_match_ids)>0 AND tx.review_status IS DISTINCT FROM 'aprovado')
          OR tx.deleted_at IS NOT NULL OR tx.status IS DISTINCT FROM 'POSTED' THEN
         RAISE EXCEPTION 'pluggy_transacao_nao_elegivel' USING ERRCODE = '22023';
       END IF;
@@ -198,7 +263,7 @@ BEGIN
         END IF;
         IF EXISTS (SELECT 1 FROM public.pluggy_accounts pa WHERE pa.user_id = p_user_id AND pa.account_id = tx.account_id AND pa.type = 'CREDIT') THEN
           -- Compra de cartão exige vínculo confirmado e o mesmo cartão do vínculo.
-          IF r->>'forma_pagamento' <> 'credito' OR NOT EXISTS (
+          IF r->>'forma_pagamento' IS DISTINCT FROM 'credito' OR NOT EXISTS (
                SELECT 1 FROM public.pluggy_card_links l JOIN public.cartoes c ON c.id = l.cartao_id AND c.user_id = l.user_id
                WHERE l.user_id = p_user_id AND l.account_id = tx.account_id AND l.active AND l.cartao_id = (r->>'cartao_id')::uuid)
              OR coalesce(r->>'fatura_competencia', '') !~ '^[0-9]{4}-(0[1-9]|1[0-2])$' OR NOT EXISTS (SELECT 1 FROM public.pluggy_card_links l JOIN public.cartoes c ON c.id=l.cartao_id AND c.user_id=l.user_id WHERE l.user_id=p_user_id AND l.account_id=tx.account_id AND l.active AND extract(day FROM d) <> c.dia_fechamento AND r->>'fatura_competencia' = to_char((date_trunc('month', d) + ((CASE WHEN extract(day FROM d)<=c.dia_fechamento THEN -1 ELSE 0 END) + (CASE WHEN c.dia_vencimento<=c.dia_fechamento THEN 2 ELSE 1 END)) * interval '1 month')::date, 'YYYY-MM')) THEN
@@ -215,7 +280,7 @@ BEGIN
         snap := jsonb_build_object('valor', v, 'data', d, 'descricao', btrim(r->>'descricao'), 'categoria_id', r->>'categoria_id');
         n_g := n_g + 1; tot_g := tot_g + v;
       ELSIF a->>'table' = 'receitas' THEN
-        IF tx.classification_reason IN ('estorno','credito_em_cartao') OR tx.type <> 'CREDIT' OR EXISTS (SELECT 1 FROM public.pluggy_accounts pa WHERE pa.user_id = p_user_id AND pa.account_id = tx.account_id AND pa.type = 'CREDIT') THEN
+        IF tx.classification_reason IN ('estorno','credito_em_cartao') OR tx.type IS DISTINCT FROM 'CREDIT' OR EXISTS (SELECT 1 FROM public.pluggy_accounts pa WHERE pa.user_id = p_user_id AND pa.account_id = tx.account_id AND pa.type = 'CREDIT') THEN
           RAISE EXCEPTION 'pluggy_lancamento_invalido' USING ERRCODE = '22023';
         END IF;
         INSERT INTO public.receitas (id, user_id, descricao, valor, data, tipo, mes, ano, origem, import_batch_id, id_operacao_banco)
@@ -312,6 +377,7 @@ RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER SET search_path = public, pg_tem
 DECLARE ent record; cur record; n_rev int := 0; n_kept int := 0;
 BEGIN
   PERFORM public.pluggy_assert_owner(p_user_id);
+  PERFORM public.pluggy_assert_financial_release();
   PERFORM pg_advisory_xact_lock(hashtextextended('pluggy-import:' || p_user_id::text, 0));
   IF NOT EXISTS (SELECT 1 FROM public.extratos_importados e WHERE e.id = p_batch_id AND e.user_id = p_user_id AND e.tipo_origem = 'pluggy') THEN
     RAISE EXCEPTION 'pluggy_lote_inexistente' USING ERRCODE = '22023';
