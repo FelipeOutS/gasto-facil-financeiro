@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { apiFetch } from "@/lib/api-fetch";
 import { categoriaOptions } from "@/lib/pluggy/categorias";
 import { PluggyImportPanel } from "@/components/PluggyImportPanel";
+import { groupByOrigin } from "@/lib/pluggy/origin-groups";
 
 export const Route = createFileRoute("/app_/integracoes/open-finance")({
   head: () => ({
@@ -36,7 +37,7 @@ type Status = {
   settings: { auto_import: boolean; auto_categorize: boolean; history_days: number; access_state: string } | null;
   items: Array<{ item_id: string; connector_name: string; is_sandbox: boolean; status: string; last_error: string | null; last_synced_at: string | null }>;
   accounts: Array<{ account_id: string; item_id: string; type: string; name: string; number_last4: string | null; balance: number; credit_limit: number | null; available_credit: number | null }>;
-  transactions: Array<{ transaction_id: string; account_id: string; description: string | null; amount: number; date: string; type: string; classification: string; classification_reason: string; categoria_sugerida: string | null; categoria_manual: string | null; review_status: string | null }>;
+  transactions: Array<{ transaction_id: string; account_id: string; item_id: string | null; is_sandbox: boolean | null; description: string | null; amount: number; date: string; type: string; classification: string; classification_reason: string; categoria_sugerida: string | null; categoria_manual: string | null; review_status: string | null }>;
 };
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -151,9 +152,7 @@ function OpenFinancePage() {
   const paused = s.settings?.access_state === "pausado_acesso";
   const needsHistory = !s.settings;
   const settings = s.settings ?? { auto_import: false, auto_categorize: true, history_days: 0, access_state: "ok" };
-  const gastos = s.transactions.filter((t) => t.classification === "gasto");
-  const receitas = s.transactions.filter((t) => t.classification === "receita");
-  const revisao = s.transactions.filter((t) => t.classification === "revisao" && !t.review_status);
+  const groups = groupByOrigin(s.items, s.transactions);
 
   return (
     <MobileShell>
@@ -274,27 +273,43 @@ function OpenFinancePage() {
 
       <PluggyImportPanel accounts={s.accounts.map((a) => ({ ...a, institution: s.items.find((i) => i.item_id === a.item_id)?.connector_name ?? "Instituição não informada" }))} />
 
-      <Section title={`Para revisar (${revisao.length})`}>
-        {revisao.length === 0 && <Empty>Nada para revisar.</Empty>}
-        {revisao.map((t) => (
-          <div key={t.transaction_id} className="rounded-2xl border border-border bg-card p-4">
-            <TxLine t={t} />
-            <p className="mt-1 text-[11px] text-muted-foreground">Motivo: {t.classification_reason.replace(/_/g, " ")}</p>
-            <div className="mt-2 flex gap-2">
-              <p className="text-xs text-muted-foreground">Decisão disponível na revisão da importação após autorização.</p>
+      {groups.length === 0 && (
+        <Section title="Movimentações">
+          <Empty>Nenhuma movimentação ainda.</Empty>
+        </Section>
+      )}
+      {groups.map((g) => {
+        const label = g.sandbox ? "dados fictícios" : "dados reais, somente leitura";
+        const onCat = (t: Status["transactions"][number]) => (c: string) => act("categoria", { accountId: t.account_id, transactionId: t.transaction_id, categoria: c }, "Categoria corrigida.");
+        return (
+          <section key={g.key} className={`mt-8 rounded-3xl border p-3 ${g.sandbox ? "border-dashed border-border" : "border-primary/40"}`}>
+            <div className="px-1">
+              <p className="text-sm font-bold">{g.institution} — {label}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {g.sandbox ? "Banco de testes da Pluggy. Nada aqui é real." : "Somente leitura. Nada é lançado em Gastos, Receitas ou Cartões."}
+                {` ${g.gastos.length} gastos · ${g.receitas.length} receitas · ${g.revisao.length} para revisar · ${g.ignorados.length} ignoradas`}
+              </p>
             </div>
-          </div>
-        ))}
-      </Section>
-
-      <Section title={`Gastos de teste (${gastos.length})`}>
-        {gastos.slice(0, 50).map((t) => <TxCard key={`${t.account_id}:${t.transaction_id}`} t={t} onCat={(c) => act("categoria", { accountId: t.account_id, transactionId: t.transaction_id, categoria: c }, "Categoria corrigida.")} />)}
-        {gastos.length === 0 && <Empty>Nenhum gasto de teste.</Empty>}
-      </Section>
-      <Section title={`Receitas de teste (${receitas.length})`}>
-        {receitas.slice(0, 50).map((t) => <TxCard key={`${t.account_id}:${t.transaction_id}`} t={t} onCat={(c) => act("categoria", { accountId: t.account_id, transactionId: t.transaction_id, categoria: c }, "Categoria corrigida.")} />)}
-        {receitas.length === 0 && <Empty>Nenhuma receita de teste.</Empty>}
-      </Section>
+            <Section title={`Para revisar (${g.revisao.length})`}>
+              {g.revisao.length === 0 && <Empty>Nada para revisar.</Empty>}
+              {g.revisao.slice(0, 50).map((t) => (
+                <div key={`${t.account_id}:${t.transaction_id}`} className="rounded-2xl border border-border bg-card p-4">
+                  <TxLine t={t} />
+                  <p className="mt-1 text-[11px] text-muted-foreground">Motivo: {t.classification_reason.replace(/_/g, " ")}</p>
+                </div>
+              ))}
+            </Section>
+            <Section title={`Gastos (${g.gastos.length})`}>
+              {g.gastos.slice(0, 50).map((t) => <TxCard key={`${t.account_id}:${t.transaction_id}`} t={t} onCat={onCat(t)} />)}
+              {g.gastos.length === 0 && <Empty>Nenhum gasto.</Empty>}
+            </Section>
+            <Section title={`Receitas (${g.receitas.length})`}>
+              {g.receitas.slice(0, 50).map((t) => <TxCard key={`${t.account_id}:${t.transaction_id}`} t={t} onCat={onCat(t)} />)}
+              {g.receitas.length === 0 && <Empty>Nenhuma receita.</Empty>}
+            </Section>
+          </section>
+        );
+      })}
     </MobileShell>
   );
 }

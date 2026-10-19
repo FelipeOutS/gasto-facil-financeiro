@@ -41,13 +41,18 @@ export const Route = createFileRoute("/api/integrations/pluggy/$action")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const db = supabaseAdmin as any;
-        const [settings, items, accounts, txs] = await Promise.all([
+        const txCols = "transaction_id,account_id,item_id,is_sandbox,description,amount,date,type,status,classification,classification_reason,categoria_sugerida,categoria_manual,review_status,mp_match_ids,total_installments,installment_number";
+        // Fictícias e reais são lidas separadamente: o volume real nunca esconde as de teste (e vice-versa).
+        const txQuery = (sandbox: boolean) =>
+          db.from("pluggy_transactions").select(txCols).eq("user_id", a.userId).eq("is_sandbox", sandbox).is("deleted_at", null).order("date", { ascending: false }).limit(300);
+        const [settings, items, accounts, txSandbox, txReal] = await Promise.all([
           db.from("pluggy_settings").select("*").eq("user_id", a.userId).maybeSingle(),
           db.from("pluggy_items").select("item_id,connector_name,is_sandbox,status,execution_status,last_error,consent_expires_at,last_synced_at").eq("user_id", a.userId).is("deleted_at", null),
-          db.from("pluggy_accounts").select("account_id,item_id,type,subtype,name,number_last4,balance,currency,credit_limit,available_credit,balance_due_date,updated_at").eq("user_id", a.userId),
-          db.from("pluggy_transactions").select("transaction_id,account_id,description,amount,date,type,status,classification,classification_reason,categoria_sugerida,categoria_manual,review_status,mp_match_ids,total_installments,installment_number").eq("user_id", a.userId).is("deleted_at", null).order("date", { ascending: false }).limit(200),
+          db.from("pluggy_accounts").select("account_id,item_id,type,subtype,name,number_last4,balance,currency,credit_limit,available_credit,balance_due_date,updated_at,is_sandbox").eq("user_id", a.userId),
+          txQuery(true),
+          txQuery(false),
         ]);
-        const schemaReady = !items.error && !accounts.error && !txs.error && !settings.error;
+        const schemaReady = !items.error && !accounts.error && !txSandbox.error && !txReal.error && !settings.error;
         return json({
           configured: pluggyConfigured(),
           webhookConfigured: !!process.env.PLUGGY_WEBHOOK_TOKEN,
@@ -56,7 +61,7 @@ export const Route = createFileRoute("/api/integrations/pluggy/$action")({
           settings: settings.data ?? null,
           items: items.data ?? [],
           accounts: accounts.data ?? [],
-          transactions: txs.data ?? [],
+          transactions: [...(txSandbox.data ?? []), ...(txReal.data ?? [])],
         });
       },
       POST: async ({ request, params }) => {

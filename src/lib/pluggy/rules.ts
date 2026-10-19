@@ -97,6 +97,12 @@ export function classifyTransaction(tx: PluggyTx, account: AccountKind, ownDocum
 
   if (BILL_PAYMENT.test(text)) return { kind: "ignorado", reason: "pagamento_de_fatura" };
   if (SAME_OWNER.test(text)) return { kind: "ignorado", reason: "transferencia_mesma_titularidade" };
+  // Reservas/cofrinhos movem dinheiro do próprio titular dentro da mesma instituição.
+  if (norm(tx.operationType) === "transferencia_saldo_reservado" || /^(dinheiro (reservado|retirado)|reserva por gastos)\b/.test(norm(tx.description))) {
+    return { kind: "ignorado", reason: "movimentacao_reserva_propria" };
+  }
+  // Empréstimo: depósito não é receita e parcela mistura principal e juros; decisão é do usuário.
+  if (/emprestimo/.test(text)) return { kind: "revisao", reason: "emprestimo" };
 
   const doc = (ownDocument ?? "").replace(/\D/g, "");
   if (doc) {
