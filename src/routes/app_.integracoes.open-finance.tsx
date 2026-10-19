@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { apiFetch } from "@/lib/api-fetch";
 import { categoriaOptions } from "@/lib/pluggy/categorias";
 import { PluggyImportPanel } from "@/components/PluggyImportPanel";
+import { groupByOrigin } from "@/lib/pluggy/origin-groups";
 
 export const Route = createFileRoute("/app_/integracoes/open-finance")({
   head: () => ({
