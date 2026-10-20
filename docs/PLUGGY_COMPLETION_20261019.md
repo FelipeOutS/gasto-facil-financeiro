@@ -2,7 +2,7 @@
 
 Início: 19/10/2026. Atualização: 20/10/2026. Branch `codex/pluggy-completion-20261019`, base remota verificada `91dd1dfd09205897bd21991daaaf9728489a9703`. Worktree isolada `E:/Projetos/APLICATIVO GASTO INTELIGENTE/pluggy-completion-20261019`. Alterações anteriores em outra worktree foram preservadas.
 
-**Não é uma liberação de produção.** Nenhum push, merge, deploy, migração real, grant, conexão bancária ou ativação de worker/cron foi executado. Os controles financeiros continuam fechados. Não foi possível confirmar o consumo de créditos; a ferramenta não disponibilizou esse dado.
+**Não é uma liberação de produção.** A branch de trabalho foi enviada ao GitHub após autorização do titular. Nenhum merge, deploy, migração real, grant, conexão bancária ou ativação de worker/cron foi executado. Os controles financeiros continuam fechados. Não foi possível confirmar o consumo de créditos; a ferramenta não disponibilizou esse dado.
 
 ## Entrega por fase
 
@@ -18,7 +18,7 @@ Início: 19/10/2026. Atualização: 20/10/2026. Branch `codex/pluggy-completion-
 | H — módulos | Usa `gastos`, `receitas`, `cartoes`, `extratos_importados` e trilha existente; nenhuma tabela financeira paralela; conciliação lê apenas ativos; reversão preserva edições | Reflexo ao vivo em Dashboard/Relatórios/Orçamentos depende da homologação autenticada. Não cria obrigações, investimentos ou metas automaticamente |
 | I — segurança | Allowlist+owner, leituras por titular, escrita financeira inicial Felipe, 606 real, Sandbox sem vínculo real, flags falsas, SQL global intacto, funções novas sem execução por browser | Auditoria de RLS efetivamente instalada depende do banco real. Varredura local limitada não encontrou PEM privado/JWT service_role versionados; não equivale a scanner completo de histórico |
 | J — testes | Testes unitários isolados por arquivo; SQL em PostgreSQL WASM descartável; typecheck/build; lint inspecionado | Resultados detalhados abaixo; homologação externa não realizada |
-| K — entrega | Candidatas separadas, hashes, roteiro de consulta, publicação/rollback e homologação | Push e deploy continuam proibidos até aprovação futura |
+| K — entrega | Candidatas separadas, hashes, roteiro de consulta, publicação/rollback e homologação | Push da branch de trabalho realizado após autorização; merge e deploy seguem pendentes de aprovação própria |
 
 ## Ambiente e dependências
 
@@ -48,7 +48,7 @@ Sem credencial válida de leitura de banco, não foram verificados: migração d
 1. Revisar diff e executar instalação limpa pelo lock, typecheck, testes, SQL nativo com duas sessões. Resolver os limites acima antes de ampliar as funcionalidades.
 2. Autorizar apenas consultas reais para validar schema/migrações e contagens. Conferir preservação do primeiro rendimento desfeito e dos lançamentos antigos.
 3. Aprovar os arquivos SQL exatos pelos hashes. Aplicar cada candidata separadamente em ambiente homologado, comparar permissões e validar rollback. Não reaplicar CREATE TABLE de migração já instalada.
-4. Autorizar push/PR explicitamente. GitHub sincronizado ao Lovable transporta código, não comprova migração aplicada nem publicação do domínio. Conferir commit/build servido em Preview e produção separadamente.
+4. A branch de trabalho já foi enviada ao GitHub. Revisar PR e autorizar merge separadamente. GitHub sincronizado ao Lovable transporta código, mas não comprova migração aplicada nem publicação do domínio. Conferir commit/build servido em Preview e produção separadamente.
 5. Publicar inicialmente com gravações e automação bloqueadas. Validar servidor, autenticação e endpoint público no domínio final. Segredos devem ser configurados pelo responsável no Cloud, sem colar valores no chat.
 6. Homologar leitura com Felipe e Michael, cada qual apenas suas contas. Vínculo de cartão precisa de aprovação própria, após candidata de vínculo; isso não libera importação de compras.
 7. Só após revisão financeira aprovar um lote literal, expiração, itens/valores/datas/categorias e confirmação do titular. Não usar automaticamente os IDs de referência como autorização. A trava global deve continuar intacta.
