@@ -123,4 +123,3 @@ BEGIN
   UPDATE public.pluggy_real_batch_grants SET consumed_at = now(), active_txid = NULL WHERE batch_id = p_batch_id;
   RETURN jsonb_build_object('replay', false, 'gastos', n_g, 'receitas', n_r, 'total_gastos', t_g, 'total_receitas', t_r, 'batch_id', p_batch_id);
 END $$;
-
