@@ -8,7 +8,7 @@ type Row = Record<string, unknown>;
 const missing = (error: { code?: string } | null) => error?.code === "42P01" || error?.code === "PGRST205";
 
 /** Paginated, owner-scoped reads; never silently plan with a truncated financial ledger. */
-async function rows(query: () => Db): Promise<Row[]> {
+export async function rows(query: () => Db): Promise<Row[]> {
   const result: Row[] = [];
   for (let page = 0; page < 100; page++) {
     const r = await query().range(page * 500, page * 500 + 499);
@@ -82,8 +82,9 @@ export function createImportDeps(db: Db): ImportDeps {
     async existing(userId, from, to) {
       const shift = (date: string, days: number) => new Date(Date.parse(date + "T12:00:00Z") + days * 86400000).toISOString().slice(0, 10);
       const result = await Promise.all((["gastos", "receitas"] as const).map(async (table) => {
-        const found = await rows(() => db.from(table).select("id,valor,data,descricao,origem").eq("user_id", userId).is("deleted_at", null).gte("data", shift(from, -1)).lte("data", shift(to, 1)).order("id"));
-        return found.map((r) => ({ table, id: String(r.id), valor: Number(r.valor), data: String(r.data), descricao: String(r.descricao), origem: r.origem == null ? null : String(r.origem) }));
+        const found = await rows(() => db.from(table).select("id,valor,data,descricao,origem,id_operacao_banco").eq("user_id", userId).is("deleted_at", null).gte("data", shift(from, -1)).lte("data", shift(to, 1)).order("id"));
+        const identified = await rows(() => db.from(table).select("id,valor,data,descricao,origem,id_operacao_banco").eq("user_id", userId).is("deleted_at", null).like("id_operacao_banco", "pluggy:%").order("id"));
+        return [...new Map([...found, ...identified].map(r => [r.id, r])).values()].map((r) => ({ table, id: String(r.id), valor: Number(r.valor), data: String(r.data), descricao: String(r.descricao), origem: r.origem == null ? null : String(r.origem), id_operacao_banco: r.id_operacao_banco == null ? null : String(r.id_operacao_banco) }));
       }));
       return result.flat();
     },

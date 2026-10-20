@@ -14,6 +14,8 @@ import {
   type PluggyTx,
 } from "@/lib/pluggy/rules";
 import { PluggyHttpError, type PluggyAccount, type PluggyApi, type PluggyItem } from "./pluggy-api.server";
+import { validFinancialDay } from "@/lib/pluggy/reconciliation";
+export const PLUGGY_CARD_BILLS_ENABLED = false as const;
 
 /** `configured` = o usuário já escolheu e salvou o histórico; sem isso nada sincroniza. */
 export type PluggySettings = { autoImport: boolean; autoCategorize: boolean; historyDays: number; accessState: AccessState; configured?: boolean };
@@ -41,6 +43,9 @@ export type TxRow = {
   categoria_sugerida: string | null;
   mp_match_ids: string[] | null;
   is_sandbox: boolean;
+  deleted_at?: null;
+  bill_id?: string | null;
+  bill_due_date?: string | null;
 };
 
 export interface PluggyStore {
@@ -53,7 +58,7 @@ export interface PluggyStore {
   markItemDeleted(itemId: string): Promise<void>;
   upsertAccounts(userId: string, accounts: PluggyAccount[], isSandbox: boolean): Promise<void>;
   upsertTransactions(rows: TxRow[]): Promise<void>;
-  markTransactionsDeleted(userId: string, ids: string[]): Promise<void>;
+  markTransactionsDeleted(userId: string, ids: string[], itemId: string): Promise<void>;
   mpCandidates(userId: string, from: string, to: string): Promise<MpCandidate[]>;
 }
 
@@ -75,10 +80,11 @@ class PluggyTxStepError extends Error {
 }
 
 export async function syncItem(
-  deps: { api: PluggyApi; store: PluggyStore; now?: () => Date; importIncremental?: (userId: string) => Promise<unknown> },
-  input: { userId: string; itemId: string },
+  deps: { api: PluggyApi; store: PluggyStore; now?: () => Date; importIncremental?: (userId: string) => Promise<unknown>; cardBillsEnabled?: boolean },
+  input: { userId: string; itemId: string; transactionIds?: string[]; confirmDeleted?: boolean },
 ): Promise<SyncResult> {
   const { api, store } = deps;
+  if ((input.transactionIds?.length ?? 0) > 500) return { ok: false, error: "transacoes_ids_excedidos" };
   const now = deps.now?.() ?? new Date();
   const settings = await store.getSettings(input.userId);
   if (settings.configured === false) return { ok: false, error: "historico_nao_escolhido" };
@@ -90,23 +96,39 @@ export async function syncItem(
   let accountsDone = 0;
   try {
     const item = await api.item(input.itemId);
+    if (item.id !== input.itemId) return { ok: false, error: "item_de_outro_usuario" };
     if (item.clientUserId && item.clientUserId !== input.userId) return { ok: false, error: "item_de_outro_usuario" };
     assertConnectorAllowed(item.connector);
     await store.upsertItem(input.userId, item);
     const isSandbox = item.connector.isSandbox === true;
 
     const { results: accounts } = await api.accounts(item.id);
+    if (accounts.some(a => a.itemId !== item.id)) throw new PluggyTxStepError("conta_de_outro_item");
     await store.upsertAccounts(input.userId, accounts, isSandbox);
     accountsDone = accounts.length;
+    if (input.confirmDeleted && (!accounts.length || item.status !== "UPDATED" || item.error)) throw new PluggyTxStepError("exclusao_aguarda_dados_completos");
 
     const fromD = new Date(now.getTime() - settings.historyDays * 86_400_000);
     const from = isoDate(fromD);
-    const mp = await store.mpCandidates(input.userId, from, isoDate(now));
+    const mp = await store.mpCandidates(input.userId, input.transactionIds?.length ? "1970-01-01" : from, isoDate(now));
     const rows: TxRow[] = [];
+    const present = new Set<string>();
     let revisao = 0;
     let ignorados = 0;
 
     for (const acc of accounts) {
+      const bills = new Map<string, string>();
+      if (acc.type === "CREDIT" && (deps.cardBillsEnabled ?? PLUGGY_CARD_BILLS_ENABLED)) {
+        for (let page = 1; ; page++) {
+          if (page > 20) throw new PluggyTxStepError("faturas_paginas_excedidas");
+          const result = await api.bills(acc.id, page);
+          for (const bill of result.results) {
+            const day = bill.dueDate?.slice(0, 10);
+            if (bill.id && validFinancialDay(day)) bills.set(bill.id, day);
+          }
+          if (page >= result.totalPages) break;
+        }
+      }
       const ownDoc = acc.taxNumber ?? null;
       const seen = new Set<string>();
       let next: string | null = null;
@@ -114,14 +136,17 @@ export async function syncItem(
         if (page >= MAX_TX_PAGES) throw new PluggyTxStepError("transacoes_paginas_excedidas");
         let r: { results: unknown[]; next: string | null };
         try {
-          r = await api.transactionsV2(acc.id, from, next);
+          r = input.transactionIds?.length ? await api.transactionsByIds(acc.id, input.transactionIds, next) : await api.transactionsV2(acc.id, from, next);
         } catch (e) {
           throw new PluggyTxStepError(e instanceof PluggyHttpError ? (e.status === 0 ? e.code : `transacoes_http_${e.status}`) : "transacoes_erro");
         }
         for (const raw of (r.results ?? []) as PluggyTx[]) {
-          if (typeof raw.date === "string" && raw.date.slice(0, 10) < from) continue; // fora do período escolhido
+          if (raw.accountId !== acc.id || !["DEBIT","CREDIT"].includes(raw.type) || !Number.isFinite(raw.amount) || typeof raw.date !== "string" || !validFinancialDay(raw.date.slice(0, 10)) || typeof raw.id !== "string" || !raw.id) throw new PluggyTxStepError("transacao_invalida");
+          if (!input.transactionIds?.length && raw.date.slice(0, 10) < from) continue; // fora do período escolhido
+          if (input.transactionIds?.length && !input.transactionIds.includes(raw.id)) throw new PluggyTxStepError("transacao_nao_solicitada");
           if (seen.has(raw.id)) continue; // a mesma transação nunca entra duas vezes na mesma sincronização
           seen.add(raw.id);
+          present.add(raw.id);
           const tx = { ...raw, accountId: acc.id };
           let cls = classifyTransaction(tx, acc.type, ownDoc);
           let matchIds: string[] | null = null;
@@ -146,7 +171,7 @@ export async function syncItem(
             amount_original: tx.amount,
             currency: acc.currencyCode ?? "BRL",
             date: tx.date.slice(0, 10),
-            status: tx.status ?? "POSTED",
+            status: tx.status ?? "PENDING",
             type: tx.type,
             pluggy_category: tx.category ?? null,
             operation_type: tx.operationType ?? null,
@@ -157,6 +182,8 @@ export async function syncItem(
             categoria_sugerida: settings.autoCategorize && cls.kind !== "ignorado" ? categorize(tx, kindForCat) : null,
             mp_match_ids: matchIds,
             is_sandbox: isSandbox,
+            deleted_at: null, // provider currently returns this source; never recreates a financial entry
+            ...((deps.cardBillsEnabled ?? PLUGGY_CARD_BILLS_ENABLED) ? { bill_id: tx.creditCardMetadata?.billId ?? null, bill_due_date: bills.get(tx.creditCardMetadata?.billId ?? "") ?? null } : {}),
           });
         }
         if (!r.next) break;
@@ -167,6 +194,9 @@ export async function syncItem(
     // Upsert por (user_id, transaction_id): o mesmo id da Pluggy nunca duplica,
     // e colunas do usuário (categoria_manual, review_status) não são enviadas.
     if (rows.length) await store.upsertTransactions(rows);
+    if (input.confirmDeleted && input.transactionIds?.length) {
+      await store.markTransactionsDeleted(input.userId, input.transactionIds.filter(id => !present.has(id)), input.itemId);
+    }
     const importIncremental = deps.importIncremental ?? (await import("./pluggy-import.server")).runIncrementalAfterSync;
     await importIncremental(input.userId);
     await store.setAccessState(input.userId, "ok", null);

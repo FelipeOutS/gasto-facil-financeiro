@@ -36,7 +36,7 @@ export type QueueDeps = {
   assertAccess: (userId: string) => Promise<unknown>;
   syncItem: (
     deps: { api: PluggyApi; store: PluggyStore },
-    input: { userId: string; itemId: string },
+    input: { userId: string; itemId: string; transactionIds?: string[]; confirmDeleted?: boolean },
   ) => Promise<{ ok: boolean; error?: string }>;
   now?: () => Date;
   importIncremental?: (userId: string) => Promise<unknown>;
@@ -45,9 +45,8 @@ export type QueueDeps = {
 /** Código de erro curto, sem valores, descrições ou dados pessoais. */
 export function safeErrorCode(e: unknown): string {
   const raw = e instanceof Error ? e.message : typeof e === "string" ? e : "erro_interno";
-  // Só códigos internos (sem espaços, letras/dígitos/_:.-); mensagens livres
-  // podem conter valores ou nomes e são descartadas.
-  return /^[a-z][a-z0-9_:.-]{2,79}$/i.test(raw) && !/\d{5,}/.test(raw) ? raw : "erro_interno";
+  const known = new Set(["forbidden", "erro_interno", "evento_sem_item", "item_desconhecido", "sync_falhou", "pluggy_nao_autorizado", "pluggy_fila_indisponivel", "pluggy_leitura_indisponivel", "pluggy_import_rpc_indisponivel", "importacao_bloqueada", "historico_nao_escolhido", "sincronizacao_pausada", "item_de_outro_usuario", "acesso_pluggy_suspenso", "pluggy_instituicao_nao_permitida", "transacoes_ids_excedidos"]);
+  return known.has(raw) || /^(?:pluggy_http_[0-9]{1,3}|sync_parcial:(?:transacoes_http_[0-9]{3}|transacoes_erro|transacoes_paginas_excedidas|transacoes_cursor_repetido|transacao_invalida|conta_de_outro_item|transacao_nao_solicitada|faturas_paginas_excedidas))$/.test(raw) ? raw : "erro_interno";
 }
 
 export async function receiveWebhook(
@@ -70,14 +69,11 @@ async function processOne(deps: QueueDeps, ev: ClaimedEvent): Promise<void> {
     await deps.store.markItemDeleted(ev.item_id);
     return;
   }
-  if (ev.event === "transactions/deleted") {
-    await deps.store.markTransactionsDeleted(owner.userId, ev.transaction_ids);
-    const importIncremental = deps.importIncremental ?? (await import("./pluggy-import.server")).runIncrementalAfterSync;
-    await importIncremental(owner.userId);
-    return;
+  const chunks = ev.transaction_ids.length ? Array.from({ length: Math.ceil(ev.transaction_ids.length / 500) }, (_, n) => ev.transaction_ids.slice(n * 500, (n + 1) * 500)) : [undefined];
+  for (const transactionIds of chunks) {
+    const r = await deps.syncItem({ api: deps.api, store: deps.store }, { userId: owner.userId, itemId: ev.item_id, ...(transactionIds ? { transactionIds, confirmDeleted: ev.event === "transactions/deleted" } : {}) });
+    if (!r.ok) throw new Error(r.error ?? "sync_falhou");
   }
-  const r = await deps.syncItem({ api: deps.api, store: deps.store }, { userId: owner.userId, itemId: ev.item_id });
-  if (!r.ok) throw new Error(r.error ?? "sync_falhou");
 }
 
 export async function drainWebhooks(deps: QueueDeps, opts: { limit?: number; leaseSeconds?: number } = {}) {

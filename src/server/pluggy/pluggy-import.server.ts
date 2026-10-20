@@ -65,6 +65,8 @@ export async function revertPluggyImport(deps: ImportDeps, input: { userId: stri
 
 /** Invoked after staging sync/deletions. In this phase returns before any financial read or RPC. */
 export async function runIncrementalAfterSync(userId: string) {
+  const { runRealAutomaticAfterSync } = await import("./pluggy-real-automatic.server");
+  await runRealAutomaticAfterSync(userId);
   if (!PLUGGY_IMPORT_RELEASE_AUTHORIZED) return { ok: true as const, blocked: true };
   const { assertPluggyAccess } = await import("./pluggy-access.server");
   await assertPluggyAccess(userId);

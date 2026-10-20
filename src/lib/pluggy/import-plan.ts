@@ -7,11 +7,15 @@
  * em dúvida → revisão; nunca sobrescreve correção manual; nunca apaga fisicamente.
  */
 import { competenciaPorData } from "@/lib/fatura-competencia";
+import { reconcileEntry, validFinancialDay, type ReconciliationEntry } from "./reconciliation";
 
 export type PlanTx = {
   transaction_id: string;
   account_id: string;
   account_type: "BANK" | "CREDIT";
+  is_sandbox?: boolean;
+  bill_id?: string | null;
+  bill_due_date?: string | null;
   description: string | null;
   amount: number; // absoluto
   amount_original: number | null; // com sinal
@@ -45,7 +49,7 @@ export type ImportedEntry = {
 };
 export type EntrySnapshot = { valor: number; data: string; descricao: string; categoria_id?: string | null; updated_at?: string; cartao_id?: string | null };
 /** Lançamentos de OUTRAS origens (manual, extrato, WhatsApp, Mercado Pago) para conciliação. */
-export type ExistingEntry = { table: "gastos" | "receitas"; id: string; valor: number; data: string; descricao: string; origem: string | null };
+export type ExistingEntry = ReconciliationEntry;
 
 export type PlanInput = {
   userId: string;
@@ -116,7 +120,7 @@ export function opId(tx: Pick<PlanTx, "account_id" | "transaction_id">): string 
 const key = (a: string, t: string) => `${a}|${t}`;
 const cents = (n: number) => Math.round(Math.abs(n) * 100);
 const sameSnap = (a: EntrySnapshot, b: EntrySnapshot) =>
-  cents(a.valor) === cents(b.valor) && a.data === b.data && a.descricao === b.descricao && (a.categoria_id ?? null) === (b.categoria_id ?? null);
+  cents(a.valor) === cents(b.valor) && a.data === b.data && a.descricao === b.descricao && (a.categoria_id ?? null) === (b.categoria_id ?? null) && (a.cartao_id ?? null) === (b.cartao_id ?? null);
 
 /** Decide a natureza efetiva considerando a revisão do titular. */
 function effectiveKind(tx: PlanTx): { kind: "gasto" | "receita" } | { skip: string } | { review: string } {
@@ -133,11 +137,6 @@ function effectiveKind(tx: PlanTx): { kind: "gasto" | "receita" } | { skip: stri
 }
 
 /** Coincidência com lançamento de outra origem (centavos iguais, ±1 dia). Nunca descarta: revisão. */
-function hasLooseDuplicate(tx: PlanTx, table: "gastos" | "receitas", existing: readonly ExistingEntry[]): boolean {
-  const t = Date.parse(tx.date + "T12:00:00Z");
-  return existing.some((e) => e.table === table && e.origem !== "pluggy" && cents(e.valor) === cents(tx.amount)
-    && Math.abs(Date.parse(e.data + "T12:00:00Z") - t) <= 86_400_000);
-}
 
 export function planImport(input: PlanInput): PlanAction[] {
   const links = new Map(input.cardLinks.map((l) => [l.account_id, l]));
@@ -151,6 +150,9 @@ export function planImport(input: PlanInput): PlanAction[] {
     seen.add(k);
     const base = { transaction_id: tx.transaction_id, account_id: tx.account_id };
     const prev = imported.get(k);
+    if (!Number.isFinite(tx.amount) || tx.amount <= 0 || !validFinancialDay(tx.date)) {
+      out.push({ op: "review", ...base, reason: "dados_invalidos" }); continue;
+    }
 
     // ---------- Já importada: só atualização/remoção segura ----------
     if (prev) {
@@ -170,7 +172,7 @@ export function planImport(input: PlanInput): PlanAction[] {
       if ((eff.kind === "gasto") !== (prev.entry_table === "gastos")) { out.push({ op: "review", ...base, reason: "natureza_mudou_apos_importacao" }); continue; }
       if (tx.account_type === "CREDIT" && tx.date !== prev.snapshot.data) { out.push({ op: "review", ...base, reason: "data_cartao_alterada_requer_revisao_fatura" }); continue; }
       // Compara o dado do banco com o que o importador gravou (snapshot), não com a edição do usuário.
-      const next: EntrySnapshot = { valor: tx.amount, data: tx.date, descricao: (tx.description ?? "").trim() || prev.snapshot.descricao, categoria_id: prev.snapshot.categoria_id ?? null };
+      const next: EntrySnapshot = { valor: tx.amount, data: tx.date, descricao: (tx.description ?? "").trim() || prev.snapshot.descricao, categoria_id: prev.snapshot.categoria_id ?? null, cartao_id: prev.snapshot.cartao_id };
       if (sameSnap(next, prev.snapshot)) { out.push({ op: "skip", ...base, reason: "sem_alteracao" }); continue; }
       if (edited) { out.push({ op: "review", ...base, reason: "atualizacao_conflita_com_edicao_manual" }); continue; }
       out.push({ op: "update", table: prev.entry_table, ...base, entry_id: prev.entry_id, expected: prev.current, next });
@@ -186,7 +188,11 @@ export function planImport(input: PlanInput): PlanAction[] {
     if (!(tx.amount > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(tx.date)) { out.push({ op: "review", ...base, reason: "dados_invalidos" }); continue; }
     if (tx.mp_match_ids?.length && tx.review_status !== "aprovado") { out.push({ op: "review", ...base, reason: "possivel_duplicata_mercado_pago" }); continue; }
     const table = eff.kind === "gasto" ? "gastos" : "receitas";
-    if (tx.review_status !== "aprovado" && hasLooseDuplicate(tx, table, input.existing)) {
+    const reconciliation = reconcileEntry(tx, table, input.existing);
+    if (reconciliation.status === "confirmada") {
+      out.push({ op: "skip", ...base, reason: "correspondencia_confirmada" }); continue;
+    }
+    if (tx.review_status !== "aprovado" && reconciliation.status === "possivel_duplicacao") {
       out.push({ op: "review", ...base, reason: "possivel_duplicata_lancamento_existente" }); continue;
     }
     const descricao = (tx.description ?? "").trim();
@@ -206,13 +212,20 @@ export function planImport(input: PlanInput): PlanAction[] {
     let observacao: string | null = null;
     let forma = (tx.operation_type ?? "").toUpperCase() === "PIX" ? "pix" : /boleto/i.test(descricao) ? "boleto" : "debito";
     if (tx.account_type === "CREDIT") {
+      const n = tx.installment_number, total = tx.total_installments;
+      if ((n != null || total != null) && (!Number.isInteger(n) || !Number.isInteger(total) || n! < 1 || total! < n!)) {
+        out.push({ op: "review", ...base, reason: "parcelamento_incompleto" }); continue;
+      }
       const link = links.get(tx.account_id);
       if (!link) { out.push({ op: "review", ...base, reason: "cartao_sem_vinculo_confirmado" }); continue; }
+      if (tx.is_sandbox === false && (!tx.bill_id || !tx.bill_due_date || !validFinancialDay(tx.bill_due_date))) {
+        out.push({ op: "review", ...base, reason: "fatura_bancaria_nao_identificada" }); continue;
+      }
       const comp = competenciaPorData(tx.date, link.dia_fechamento, link.dia_vencimento);
       if (!comp) { out.push({ op: "review", ...base, reason: "competencia_indefinida" }); continue; }
-      if (comp.diaDoFechamento) { out.push({ op: "review", ...base, reason: "compra_no_dia_do_fechamento" }); continue; }
+      if (comp.diaDoFechamento && !tx.bill_due_date) { out.push({ op: "review", ...base, reason: "compra_no_dia_do_fechamento" }); continue; }
       cartao_id = link.cartao_id;
-      fatura = comp.competencia;
+      fatura = tx.bill_due_date?.slice(0, 7) ?? comp.competencia;
       forma = "credito";
       // Parcela informada pela Pluggy é registrada como informação; nenhuma parcela futura é criada.
       if (tx.installment_number && tx.total_installments && tx.total_installments > 1) {
@@ -230,11 +243,11 @@ export function planImport(input: PlanInput): PlanAction[] {
 export function summarizePlan(actions: readonly PlanAction[]) {
   const s = { gastos: 0, receitas: 0, atualizacoes: 0, remocoes: 0, revisao: 0, ignorados: 0, motivos: {} as Record<string, number> };
   for (const a of actions) {
-    if (a.op === "insert") a.table === "gastos" ? s.gastos++ : s.receitas++;
+    if (a.op === "insert") { if (a.table === "gastos") s.gastos++; else s.receitas++; }
     else if (a.op === "update") s.atualizacoes++;
     else if (a.op === "remove") s.remocoes++;
     else {
-      a.op === "review" ? s.revisao++ : s.ignorados++;
+      if (a.op === "review") s.revisao++; else s.ignorados++;
       s.motivos[a.reason] = (s.motivos[a.reason] ?? 0) + 1;
     }
   }
