@@ -5,6 +5,7 @@
  */
 import type { PluggyStore, TxRow } from "./pluggy-sync.server";
 import { clampHistoryDays, type AccessState } from "@/lib/pluggy/rules";
+import { rows as readRows } from "./pluggy-import-store.server";
 
 export async function createPluggyStore(): Promise<PluggyStore> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -86,6 +87,7 @@ export async function createPluggyStore(): Promise<PluggyStore> {
       // amount_original só é gravado se a coluna já existir (migração candidata ainda não aplicada).
       if (hasOriginal === null) {
         const probe = await db.from("pluggy_transactions").select("amount_original").limit(1);
+        if (probe.error && !["42703", "PGRST204"].includes(probe.error.code)) throw new Error("pluggy_leitura_indisponivel");
         hasOriginal = !probe.error;
       }
       if (!hasOriginal) rows = rows.map(({ amount_original: _o, ...r }) => r as TxRow);
@@ -93,27 +95,26 @@ export async function createPluggyStore(): Promise<PluggyStore> {
         must(await db.from("pluggy_transactions").upsert(rows.slice(i, i + 500), { onConflict: "user_id,account_id,transaction_id" }));
       }
     },
-    async markTransactionsDeleted(userId, ids) {
+    async markTransactionsDeleted(userId, ids, itemId) {
       if (!ids.length) return;
       must(
-        await db.from("pluggy_transactions").update({ deleted_at: new Date().toISOString() }).eq("user_id", userId).in("transaction_id", ids),
+        await db.from("pluggy_transactions").update({ deleted_at: new Date().toISOString() }).eq("user_id", userId).eq("item_id", itemId).in("transaction_id", ids),
       );
     },
     async mpCandidates(userId, from, to) {
-      const r = await db
+      const found = await readRows(() => db
         .from("imported_transactions")
         .select("id,amount,occurred_at,status")
         .eq("user_id", userId)
         .eq("provider", "mercado_pago")
         .gte("occurred_at", `${from}T00:00:00Z`)
         .lte("occurred_at", `${to}T23:59:59Z`)
-        .limit(5000);
-      must(r);
-      return (r.data ?? []).map((x: { id: string; amount: number; occurred_at: string; status: string }) => ({
-        id: x.id,
+        .order("id"));
+      return found.map((x) => ({
+        id: String(x.id),
         amount: Number(x.amount),
-        occurredAt: x.occurred_at,
-        status: x.status,
+        occurredAt: String(x.occurred_at),
+        status: String(x.status),
       }));
     },
   };

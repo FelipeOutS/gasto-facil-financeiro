@@ -84,6 +84,8 @@ export function createPluggyApi(f: Fetch = fetch) {
     deleteItem: (id: string) => req<void>("DELETE", `/items/${encodeURIComponent(id)}`),
     accounts: (itemId: string) =>
       req<{ results: PluggyAccount[] }>("GET", `/accounts?itemId=${encodeURIComponent(itemId)}`),
+    transactionsByIds: (accountId: string, ids: string[], next?: string | null) => req<{ results: unknown[]; next: string | null }>("GET", next ? transactionsV2Path(accountId, "", next) : `/v2/transactions?accountId=${encodeURIComponent(accountId)}&ids=${encodeURIComponent(ids.join(","))}`),
+    bills: (accountId: string, page = 1) => req<{ results: Array<{ id: string; dueDate: string }>; totalPages: number }>("GET", `/bills?accountId=${encodeURIComponent(accountId)}&page=${page}&pageSize=500`),
     /**
      * GET /v2/transactions (paginação por cursor). `next` é a query string
      * devolvida pela Pluggy, usada sem decodificar; só é aceita se apontar

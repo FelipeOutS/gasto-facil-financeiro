@@ -17,6 +17,7 @@ function database(data: Data, missing = false) {
       is: (key: string, value: unknown) => { list = list.filter((r) => (r[key] ?? null) === value); return q; },
       gte: (key: string, value: string) => { list = list.filter((r) => String(r[key]) >= value); return q; },
       lte: (key: string, value: string) => { list = list.filter((r) => String(r[key]) <= value); return q; },
+      like: (key: string, value: string) => { list = list.filter(r => String(r[key] ?? "").startsWith(value.replace(/%$/, ""))); return q; },
       order: (_: string) => q,
       limit: (n: number) => Promise.resolve({ data: list.slice(0, n), error }),
       range: (start: number, end: number) => Promise.resolve({ data: list.slice(start, end + 1), error }),

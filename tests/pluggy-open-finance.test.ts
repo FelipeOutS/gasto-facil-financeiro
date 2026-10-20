@@ -193,7 +193,7 @@ function fakeApi(opts: { sandbox?: boolean; clientUserId?: string; fail?: number
       return { id, clientUserId: opts.clientUserId ?? FELIPE, status: "UPDATED", connector: { id: 2, name: "Pluggy Bank", isSandbox: opts.sandbox ?? true } };
     },
     accounts: async (itemId: string) => ({ results: [{ id: "a1", itemId, type: "BANK", name: "Conta", balance: 100 }] }),
-    transactionsV2: async () => ({ results: txs, next: null }),
+    transactionsV2: async (accountId: string) => ({ results: txs.map(t => ({ ...t, accountId })), next: null }),
   } as unknown as PluggyApi;
 }
 
@@ -276,7 +276,7 @@ describe("Pluggy /v2/transactions", () => {
         calls.push(`${key}@${from}`);
         const p = pages[key];
         if (p instanceof Error) throw p;
-        return { results: p ?? [], next: nexts[key] ?? null };
+        return { results: (p ?? []).map(t => ({ ...t, accountId: acc })), next: nexts[key] ?? null };
       },
     } as unknown as PluggyApi;
   }
@@ -425,10 +425,56 @@ describe("recorrentes de meses diferentes", () => {
   test("setembro e outubro com mesma descrição e valor são independentes", async () => {
     const store = memStore({ itemF: FELIPE });
     const n = (id: string, date: string) => tx({ id, type: "CREDIT", description: "NETFLIX.COM", category: "Video streaming", amount: -55.9, date });
-    const api = { ...fakeApi(), accounts: async (itemId: string) => ({ results: [{ id: "card", itemId, type: "CREDIT", name: "Cartão", balance: 0 }] }), transactionsV2: async () => ({ results: [n("s", "2026-09-01"), n("o", "2026-10-01")], next: null }) } as unknown as PluggyApi;
+    const api = { ...fakeApi(), accounts: async (itemId: string) => ({ results: [{ id: "card", itemId, type: "CREDIT", name: "Cartão", balance: 0 }] }), transactionsV2: async (accountId: string) => ({ results: [n("s", "2026-09-01"), n("o", "2026-10-01")].map(t => ({ ...t, accountId })), next: null }) } as unknown as PluggyApi;
     await syncItem({ api, store, now: () => new Date("2026-10-19T12:00:00Z") }, { userId: FELIPE, itemId: "itemF" });
     await syncItem({ api, store, now: () => new Date("2026-10-19T12:00:00Z") }, { userId: FELIPE, itemId: "itemF" });
     expect(store.tx.size).toBe(2);
     expect([...store.tx.values()].map((t) => [t.classification, t.classification_reason, t.total_installments])).toEqual([["gasto", "compra_cartao_valor_negativo", null], ["gasto", "compra_cartao_valor_negativo", null]]);
   });
+});
+
+
+describe("verified card bill metadata", () => {
+  test("stores provider bill due date and never guesses a missing bill", async () => {
+    const store = memStore({ itemF: FELIPE });
+    const api = { ...fakeApi(),
+      accounts: async (itemId: string) => ({ results: [{ id: "card", itemId, type: "CREDIT", name: "Card", balance: 0 }] }),
+      bills: async () => ({ results: [{ id: "bill", dueDate: "2026-11-05" }], totalPages: 1 }),
+      transactionsV2: async () => ({ results: [{ id: "purchase", accountId: "card", description: "Compra", amount: -12, type: "DEBIT", status: "POSTED", date: "2026-10-15", creditCardMetadata: { billId: "bill" } }], next: null }),
+    } as unknown as PluggyApi;
+    const r = await syncItem({ api, store, now: () => new Date("2026-10-19T12:00:00Z"), cardBillsEnabled: true, importIncremental: async () => undefined }, { userId: FELIPE, itemId: "itemF" });
+    expect(r.ok).toBe(true);
+    expect(store.tx.get(FELIPE + "|purchase")).toMatchObject({ bill_id: "bill", bill_due_date: "2026-11-05" });
+  });
+  test("rejects a transaction returned for another account without staging it", async () => {
+    const store = memStore({ itemF: FELIPE });
+    const api = { ...fakeApi(), transactionsV2: async () => ({ results: [{ id: "bad", accountId: "foreign", amount: 1, date: "2026-10-15" }], next: null }) } as unknown as PluggyApi;
+    expect((await syncItem({ api, store, now: () => new Date("2026-10-19T12:00:00Z") }, { userId: FELIPE, itemId: "itemF" })).ok).toBe(false);
+    expect(store.tx.size).toBe(0);
+  });
+});
+
+
+test("webhook ids recover late transactions outside initial history", async () => {
+ const store = memStore({ itemF: FELIPE });
+ const api = { ...fakeApi(), transactionsByIds: async () => ({ results: [{ id: "late", accountId: "a1", amount: 8, description: "Late entry", date: "2025-01-01", type: "CREDIT", status: "POSTED" }], next: null }), transactionsV2: async () => { throw Error("unexpected date window"); } } as unknown as PluggyApi;
+ const result = await syncItem({ api, store, now: () => new Date("2026-10-19T12:00:00Z"), importIncremental: async () => undefined }, { userId: FELIPE, itemId: "itemF", transactionIds: ["late"] });
+ expect(result.ok).toBe(true);
+ expect(store.tx.get(FELIPE + "|late")?.date).toBe("2025-01-01");
+});
+
+
+test("out-of-order deletion cannot tombstone a source still returned by provider", async () => {
+ const store = memStore({ itemF: FELIPE });
+ const deleted: string[] = [];
+ store.markTransactionsDeleted = async (user, ids, item) => { expect(user).toBe(FELIPE); expect(item).toBe("itemF"); deleted.push(...ids); };
+ const api = { ...fakeApi(), transactionsByIds: async () => ({ results: [{ id: "still-present", accountId: "a1", amount: 8, description: "Entry", date: "2025-01-01", type: "CREDIT", status: "POSTED" }], next: null }) } as unknown as PluggyApi;
+ const input = { userId: FELIPE, itemId: "itemF", transactionIds: ["still-present","absent"], confirmDeleted: true };
+ expect((await syncItem({ api, store, importIncremental: async () => undefined }, input)).ok).toBe(true);
+ expect(deleted).toEqual(["absent"]);
+ expect(store.tx.get(FELIPE + "|still-present")?.deleted_at).toBeNull();
+ deleted.length=0;
+ api.transactionsByIds = async () => { throw new PluggyHttpError(500,"network"); };
+ expect((await syncItem({ api, store, importIncremental: async () => undefined }, input)).ok).toBe(false);
+ expect(deleted).toEqual([]);
 });

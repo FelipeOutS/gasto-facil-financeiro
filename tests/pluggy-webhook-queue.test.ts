@@ -90,12 +90,12 @@ test("dono vem do item salvo; conta fora da allowlist não sincroniza", async ()
   expect(calls).toEqual([]);
 });
 
-test("transactions/deleted usa ids persistidos e o dono do item", async () => {
+test("transactions/deleted rechecks provider state before staging deletion", async () => {
   const db = memDb(); const log: string[] = [];
-  const deps = { db, store: store({ iM: M }, log), api: {} as never, assertAccess: allow, syncItem: async () => ({ ok: true }) };
+  const deps = { db, store: store({ iM: M }, log), api: {} as never, assertAccess: allow, syncItem: async (_: unknown, input: unknown) => { expect(input).toEqual({ userId: M, itemId: "iM", transactionIds: ["t1","t2"], confirmDeleted: true }); return { ok: true }; } };
   await receiveWebhook(db, { eventId: "d", event: "transactions/deleted", itemId: "iM", transactionIds: ["t1", "t2"] });
   await drainWebhooks(deps);
-  expect(log).toEqual([`txdel:${M}:t1,t2`]);
+  expect(log).toEqual([]);
 });
 
 test("reconciliação sincroniza só contas autorizadas", async () => {
@@ -112,3 +112,5 @@ test("erros guardados não carregam dados sensíveis", () => {
   expect(safeErrorCode(new Error("pluggy_http_500"))).toBe("pluggy_http_500");
   expect(safeErrorCode(new Error("conta_12345678"))).toBe("erro_interno");
 });
+
+ test("token-shaped freeform errors are never persisted", () => { expect(safeErrorCode(new Error("abc.def.secret"))).toBe("erro_interno"); });

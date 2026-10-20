@@ -10,6 +10,8 @@ import { apiFetch } from "@/lib/api-fetch";
 import { categoriaOptions } from "@/lib/pluggy/categorias";
 import { PluggyImportPanel } from "@/components/PluggyImportPanel";
 import { PluggyRealPreview } from "@/components/PluggyRealPreview";
+import { PluggyAutomatic } from "@/components/PluggyAutomatic";
+import { PluggyRealCards } from "@/components/PluggyRealCards";
 import { PluggyRealUndo } from "@/components/PluggyRealUndo";
 import { groupByOrigin } from "@/lib/pluggy/origin-groups";
 
@@ -48,12 +50,16 @@ function OpenFinancePage() {
   const [s, setS] = useState<Status | null>(null);
   const [blocked, setBlocked] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showSandbox, setShowSandbox] = useState(false);
 
   const load = useCallback(async () => {
+    try {
     const r = await apiFetch("/api/integrations/pluggy/status");
     if (r.status === 403) return setBlocked("Open Finance é restrito às contas autorizadas.");
     if (!r.ok) return setBlocked("Não foi possível carregar o Open Finance agora.");
     setS(await r.json());
+    setBlocked(null);
+    } catch { setBlocked("Não foi possível carregar o Open Finance agora."); }
   }, []);
   useEffect(() => {
     void load();
@@ -86,7 +92,7 @@ function OpenFinancePage() {
             await post("register-item", { itemId: item.id });
             toast.success("Banco conectado e sincronizado. Nada foi importado para Gastos ou Receitas.");
           } catch (e) {
-            toast.error(`Falha ao registrar: ${(e as Error).message}`);
+            toast.error("Não foi possível concluir a sincronização. Confira a situação da conexão antes de tentar novamente.");
           }
           void load();
         },
@@ -96,7 +102,7 @@ function OpenFinancePage() {
       });
       await widget.init();
     } catch (e) {
-      toast.error(`Não foi possível abrir a conexão: ${(e as Error).message}`);
+      toast.error("Não foi possível abrir a conexão. Tente novamente mais tarde.");
     } finally {
       setBusy(false);
     }
@@ -128,7 +134,7 @@ function OpenFinancePage() {
           ? "Escolha o período do histórico antes de sincronizar."
           : m.startsWith("sync_parcial:")
           ? "Contas e saldos atualizados, mas as transações falharam. Tente sincronizar novamente."
-          : m,
+          : "Não foi possível concluir. Confira a conexão e tente novamente mais tarde.",
       );
     } finally {
       setBusy(false);
@@ -154,7 +160,9 @@ function OpenFinancePage() {
   const paused = s.settings?.access_state === "pausado_acesso";
   const needsHistory = !s.settings;
   const settings = s.settings ?? { auto_import: false, auto_categorize: true, history_days: 0, access_state: "ok" };
-  const groups = groupByOrigin(s.items, s.transactions);
+  const visibleItems = s.items.filter(i => showSandbox || !i.is_sandbox);
+  const visibleAccounts = s.accounts.filter(a => visibleItems.some(i => i.item_id === a.item_id));
+  const groups = groupByOrigin(s.items, s.transactions).filter(g => showSandbox || !g.sandbox);
 
   return (
     <MobileShell>
@@ -211,15 +219,16 @@ function OpenFinancePage() {
       </Button>
 
       <Section title="Instituições conectadas">
-        {s.items.length === 0 && <Empty>Nenhuma instituição conectada.</Empty>}
-        {s.items.map((it) => (
+        <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={showSandbox} onChange={e => setShowSandbox(e.target.checked)} />Mostrar ambiente de testes (Sandbox)</label>
+        {visibleItems.length === 0 && <Empty>Nenhuma instituição real conectada.</Empty>}
+        {visibleItems.map((it) => (
           <div key={it.item_id} className="rounded-2xl border border-border bg-card p-4">
             <div className="flex items-center gap-3">
-              <Landmark className="h-5 w-5 text-primary" />
+              {it.is_sandbox ? <Landmark className="h-5 w-5 text-primary" /> : <img src="/logos/bancos/compact/mercado-pago-simbolo.svg" alt="Mercado Pago" className="h-8 w-8 object-contain" />}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{it.connector_name}{it.is_sandbox ? " · teste" : " · real (somente leitura)"}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  {it.status}{it.last_error ? ` · ${it.last_error}` : ""} · última sincronização {it.last_synced_at ? new Date(it.last_synced_at).toLocaleString("pt-BR") : "—"}
+                  {it.status}{it.last_error ? " · Sincronização requer atenção" : ""} · última sincronização {it.last_synced_at ? new Date(it.last_synced_at).toLocaleString("pt-BR") : "—"}
                 </p>
               </div>
             </div>
@@ -239,8 +248,8 @@ function OpenFinancePage() {
       </Section>
 
       <Section title="Contas e cartões">
-        {s.accounts.length === 0 && <Empty>Nenhuma conta ainda.</Empty>}
-        {s.accounts.map((a) => (
+        {visibleAccounts.length === 0 && <Empty>Nenhuma conta ainda.</Empty>}
+        {visibleAccounts.map((a) => (
           <div key={a.account_id} className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{a.name}{a.number_last4 ? ` ••${a.number_last4}` : ""}</p>
@@ -248,6 +257,7 @@ function OpenFinancePage() {
             </div>
             <div className="text-right">
               <p className="text-sm font-semibold">{brl(Number(a.balance))}</p>
+              {a.type === "CREDIT" && a.credit_limit != null && <p className="text-[11px] text-muted-foreground">limite {brl(Number(a.credit_limit))}</p>}
               {a.type === "CREDIT" && a.available_credit != null && (
                 <p className="text-[11px] text-muted-foreground">disponível {brl(Number(a.available_credit))}</p>
               )}
@@ -258,9 +268,7 @@ function OpenFinancePage() {
 
       <Section title="Configurações">
         <div className="space-y-3 rounded-2xl border border-border bg-card p-4 text-sm">
-          <Row label="Importar automaticamente para Gastos e Receitas" hint="Travado nesta etapa de testes.">
-            <Switch checked={false} disabled />
-          </Row>
+          <PluggyAutomatic />
           <Row label="Categorização automática">
             <Switch checked={settings.auto_categorize} disabled={busy || !s.schemaReady || needsHistory} onCheckedChange={(v) => act("settings", { autoImport: false, autoCategorize: v, historyDays: settings.history_days }, "Salvo.")} />
           </Row>
@@ -273,7 +281,8 @@ function OpenFinancePage() {
         </div>
       </Section>
 
-      <PluggyImportPanel accounts={s.accounts.map((a) => ({ ...a, institution: s.items.find((i) => i.item_id === a.item_id)?.connector_name ?? "Instituição não informada" }))} />
+      {showSandbox && <PluggyImportPanel accounts={s.accounts.filter(a => s.items.some(i => i.item_id === a.item_id && i.is_sandbox)).map((a) => ({ ...a, institution: s.items.find((i) => i.item_id === a.item_id)?.connector_name ?? "Instituição não informada" }))} />}
+      <PluggyRealCards />
       <PluggyRealUndo />
       <PluggyRealPreview />
 

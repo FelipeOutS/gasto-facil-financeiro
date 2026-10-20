@@ -9,20 +9,21 @@ import { previewReason } from "@/lib/pluggy/import-preview";
 
 type Result = Awaited<ReturnType<typeof pluggyRealImport>>;
 type Real = Extract<Result, { real: true }>;
-const GROUPS = [["gasto", "Elegíveis para Gastos"], ["receita", "Elegíveis para Receitas"], ["duplicacao", "Possíveis duplicações"], ["cartao", "Cartão aguardando vínculo"], ["revisao", "Precisam de revisão"], ["ignorado", "Ignoradas"]] as const;
+const GROUPS = [["gasto", "Elegíveis para Gastos"], ["receita", "Elegíveis para Receitas"], ["duplicacao", "Possíveis duplicações"], ["cartao", "Cartão aguardando vínculo"], ["revisao", "Precisam de revisão"], ["ignorado", "Ignoradas"], ["importado", "Já importadas"], ["desfeito", "Importações desfeitas"]] as const;
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 /** Prévia do Mercado Pago real (7 dias). Somente leitura: nenhum lançamento é criado. */
 export function PluggyRealPreview() {
   const call = useServerFn(pluggyRealImport);
   const [from, setFrom] = useState(() => new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10));
+  const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [data, setData] = useState<Real | null>(null);
   const [busy, setBusy] = useState(false);
   const [sel, setSel] = useState<string[]>([]);
   async function run() {
     setBusy(true);
     try {
-      const r = await call({ data: { action: "preview_real", from } });
+      const r = await call({ data: { action: "preview_real", from, to } });
       if ("real" in r && r.real === true) { setData(r as Real); setSel([]); }
     } catch { toast.error("Prévia real indisponível para esta conta ou período."); }
     finally { setBusy(false); }
@@ -37,18 +38,19 @@ export function PluggyRealPreview() {
     if (!confirm(`Importar ${chosen.length} movimentação(ões)?\n\n${lista}\n\nGastos: ${brl(totG)} · Receitas: ${brl(totR)}\nTudo ou nada. Poderá ser desfeito.`)) return;
     setBusy(true);
     try {
-      await call({ data: { action: "import_real_batch", from: data.window.from, selection: chosen.map((c) => ({ accountId: c.account_id, transactionId: c.transaction_id })), confirmed: true } });
+      await call({ data: { action: "import_real_batch", from: data.window.from, to: data.window.to, selection: chosen.map((c) => ({ accountId: c.account_id, transactionId: c.transaction_id })), confirmed: true } });
       toast.success("Lote importado.");
       await run();
-    } catch { toast.error("Importação bloqueada, lote não autorizado ou movimentação não elegível. Nada foi gravado."); }
+    } catch { toast.error("Importação bloqueada, lote não autorizado ou movimentação não elegível. Atualize o histórico para confirmar o resultado antes de tentar novamente."); }
     finally { setBusy(false); }
   }
   return (
     <section className="mt-7 space-y-4">
-      <h2 className="text-sm font-semibold">Prévia real — Mercado Pago (7 dias, sem lançar)</h2>
+      <h2 className="text-sm font-semibold">Prévia real — Mercado Pago</h2>
       <div className="flex flex-wrap items-end gap-3">
         <label className="text-xs text-muted-foreground">Início do período<Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="mt-1 w-44" /></label>
-        <Button variant="outline" size="sm" disabled={busy || !from} onClick={run}><Eye className="mr-2 h-4 w-4" />Ver prévia real</Button>
+        <label className="text-xs text-muted-foreground">Fim do período<Input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} className="mt-1 w-44" /></label>
+        <Button variant="outline" size="sm" disabled={busy || !from || !to} onClick={run}><Eye className="mr-2 h-4 w-4" />Ver prévia real</Button>
       </div>
       {data && <>
         <p className="text-xs text-muted-foreground">{data.window.from} a {data.window.to}. Gravação bloqueada — nada será lançado. Primeiro lote possível: {data.firstBatch.length} movimentações bancárias sem suspeita.</p>

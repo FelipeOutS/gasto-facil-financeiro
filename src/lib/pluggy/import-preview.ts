@@ -19,6 +19,9 @@ export function simulateCardLinks(input: PlanInput, cards: readonly PreviewCard[
 }
 
 export const previewReason = (reason: string) => ({
+  fatura_bancaria_nao_identificada: "Fatura bancária não identificada: revisar antes de importar",
+  parcelamento_incompleto: "Dados de parcelas incompletos: revisão necessária",
+  correspondencia_confirmada: "Já registrado pela mesma identificação bancária",
   gasto_com_estorno_no_periodo: "Gasto com estorno no período: fora do lote",
   fora_do_primeiro_lote: "Fora do primeiro lote",
   cartao_sem_vinculo_confirmado: "Compra de cartão aguardando vínculo",

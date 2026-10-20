@@ -28,7 +28,7 @@ export type PluggyTx = {
   status?: "POSTED" | "PENDING" | null;
   category?: string | null;
   operationType?: string | null;
-  creditCardMetadata?: { installmentNumber?: number | null; totalInstallments?: number | null } | null;
+  creditCardMetadata?: { installmentNumber?: number | null; totalInstallments?: number | null; billId?: string | null } | null;
   paymentData?: {
     payer?: { documentNumber?: { value?: string | null } | null } | null;
     receiver?: { documentNumber?: { value?: string | null } | null } | null;
@@ -95,14 +95,16 @@ export function classifyTransaction(tx: PluggyTx, account: AccountKind, ownDocum
 
   const text = `${norm(tx.description)} ${norm(tx.descriptionRaw)} ${norm(tx.category)}`;
 
-  if (BILL_PAYMENT.test(text)) return { kind: "ignorado", reason: "pagamento_de_fatura" };
+  if (BILL_PAYMENT.test(text) || norm(tx.operationType) === "pagamento_fatura") return { kind: "ignorado", reason: "pagamento_de_fatura" };
   if (SAME_OWNER.test(text)) return { kind: "ignorado", reason: "transferencia_mesma_titularidade" };
   // Reservas/cofrinhos movem dinheiro do próprio titular dentro da mesma instituição.
   if (norm(tx.operationType) === "transferencia_saldo_reservado" || /^(dinheiro (reservado|retirado)|reserva por gastos)\b/.test(norm(tx.description))) {
     return { kind: "ignorado", reason: "movimentacao_reserva_propria" };
   }
   // Empréstimo: depósito não é receita e parcela mistura principal e juros; decisão é do usuário.
-  if (/emprestimo/.test(text)) return { kind: "revisao", reason: "emprestimo" };
+  if (/emprestimo|\bloan\b|capital de giro/.test(text)) return { kind: "revisao", reason: "emprestimo" };
+  if (/adiantamento pessoal|valor a receber|emprestado|emprestei/.test(text)) return { kind: "revisao", reason: "adiantamento_a_receber" };
+  if (/resgate|redemption|venda de ativo|venda de cripto|venda de (meli )?dolar|cambio/.test(text)) return { kind: "revisao", reason: "resgate_investimento" };
   // Venda de ativo (dólar/cripto) devolve principal investido: não é receita automática.
   if (tx.type === "CREDIT" && /^venda de (meli dolar|criptomoeda)/.test(norm(tx.description))) {
     return { kind: "revisao", reason: "resgate_investimento" };
@@ -268,6 +270,7 @@ export const PLUGGY_WEBHOOK_EVENTS = [
   "item/error",
   "item/deleted",
   "item/waiting_user_action",
+  "item/waiting_user_input",
   "transactions/created",
   "transactions/updated",
   "transactions/deleted",

@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 /**
  * POST /api/public/pluggy/worker  (para agendamento; ainda NÃO agendado)
  * Cabeçalho obrigatório `X-GI-Worker-Token` = PLUGGY_WORKER_TOKEN, separado do
- * token do webhook (que viaja na URL registrada na Pluggy); nunca a
+ * token do webhook (enviado somente em cabeçalho); nunca a
  * chave pública). Processa a fila de webhooks e reconcilia itens atrasados.
  */
 export const Route = createFileRoute("/api/public/pluggy/worker")({
