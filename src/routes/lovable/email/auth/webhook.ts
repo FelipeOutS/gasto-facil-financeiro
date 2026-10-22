@@ -13,9 +13,9 @@ import { ReauthenticationEmail } from "@/lib/email-templates/reauthentication";
 
 const EMAIL_SUBJECTS: Record<string, string> = {
   signup: "Confirme seu cadastro no Gasto Inteligente",
-  invite: "Você foi convidado(a) — Gasto Inteligente",
+  invite: "Você recebeu um convite — Gasto Inteligente",
   magiclink: "Seu link de acesso — Gasto Inteligente",
-  recovery: "Redefinir sua senha — Gasto Inteligente",
+  recovery: "Redefina sua senha — Gasto Inteligente",
   email_change: "Confirme seu novo e-mail — Gasto Inteligente",
   reauthentication: "Seu código de verificação — Gasto Inteligente",
 };
