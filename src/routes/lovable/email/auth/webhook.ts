@@ -12,7 +12,7 @@ import { EmailChangeEmail } from "@/lib/email-templates/email-change";
 import { ReauthenticationEmail } from "@/lib/email-templates/reauthentication";
 
 const EMAIL_SUBJECTS: Record<string, string> = {
-  signup: "Confirme seu e-mail — Gasto Inteligente",
+  signup: "Confirme seu cadastro no Gasto Inteligente",
   invite: "Você foi convidado(a) — Gasto Inteligente",
   magiclink: "Seu link de acesso — Gasto Inteligente",
   recovery: "Redefinir sua senha — Gasto Inteligente",
@@ -156,7 +156,7 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
             run_id,
             message_id: messageId,
             to: payload.data.email,
-            from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+            from: `${SITE_NAME} <no-reply@${FROM_DOMAIN}>`,
             sender_domain: SENDER_DOMAIN,
             subject: EMAIL_SUBJECTS[emailType] || "Notification",
             html,
