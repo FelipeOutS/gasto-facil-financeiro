@@ -75,41 +75,67 @@ export function createPluggyApi(f: Fetch = fetch) {
         options: { clientUserId, ...(webhookUrl ? { webhookUrl } : {}), avoidDuplicates: true },
       }),
     sandboxConnectors: () =>
-      req<{ results: Array<{ id: number; name: string; isSandbox?: boolean }> }>("GET", "/connectors?sandbox=true"),
-    connector: (id: number) => req<{ id: number; name: string; isSandbox?: boolean }>("GET", `/connectors/${id}`),
+      req<{ results: Array<{ id: number; name: string; isSandbox?: boolean }> }>(
+        "GET",
+        "/connectors?sandbox=true",
+      ),
+    connector: (id: number) =>
+      req<{ id: number; name: string; isSandbox?: boolean }>("GET", `/connectors/${id}`),
     /** Conectores reais do Brasil (sem Sandbox); filtragem por instituição é feita no servidor. */
     liveConnectors: () =>
-      req<{ results: Array<{ id: number; name: string; isSandbox?: boolean }> }>("GET", "/connectors?countries=BR&sandbox=false"),
+      req<{ results: Array<{ id: number; name: string; isSandbox?: boolean }> }>(
+        "GET",
+        "/connectors?countries=BR&sandbox=false",
+      ),
     item: (id: string) => req<PluggyItem>("GET", `/items/${encodeURIComponent(id)}`),
     deleteItem: (id: string) => req<void>("DELETE", `/items/${encodeURIComponent(id)}`),
     accounts: (itemId: string) =>
       req<{ results: PluggyAccount[] }>("GET", `/accounts?itemId=${encodeURIComponent(itemId)}`),
-    transactionsByIds: (accountId: string, ids: string[], next?: string | null) => req<{ results: unknown[]; next: string | null }>("GET", next ? transactionsV2Path(accountId, "", next) : `/v2/transactions?accountId=${encodeURIComponent(accountId)}&ids=${encodeURIComponent(ids.join(","))}`),
-    bills: (accountId: string, page = 1) => req<{ results: Array<{ id: string; dueDate: string }>; totalPages: number }>("GET", `/bills?accountId=${encodeURIComponent(accountId)}&page=${page}&pageSize=500`),
+    transactionsByIds: (accountId: string, ids: string[], next?: string | null) =>
+      req<{ results: unknown[]; next: string | null }>(
+        "GET",
+        next
+          ? transactionsV2Path(accountId, "", next)
+          : `/v2/transactions?accountId=${encodeURIComponent(accountId)}&ids=${encodeURIComponent(ids.join(","))}`,
+      ),
+    bills: (accountId: string, page = 1) =>
+      req<{ results: Array<import("@/lib/pluggy/settlements").BankBill>; totalPages: number }>(
+        "GET",
+        `/bills?accountId=${encodeURIComponent(accountId)}&page=${page}&pageSize=500`,
+      ),
     /**
      * GET /v2/transactions (paginação por cursor). `next` é a query string
      * devolvida pela Pluggy, usada sem decodificar; só é aceita se apontar
      * para o mesmo endpoint autorizado.
      */
     transactionsV2: (accountId: string, dateFrom: string, next?: string | null) =>
-      req<{ results: unknown[]; next: string | null }>("GET", transactionsV2Path(accountId, dateFrom, next)),
+      req<{ results: unknown[]; next: string | null }>(
+        "GET",
+        transactionsV2Path(accountId, dateFrom, next),
+      ),
   };
 }
 /** Monta o caminho da próxima página sem nunca sair de /v2/transactions. */
-export function transactionsV2Path(accountId: string, dateFrom: string, next?: string | null): string {
+export function transactionsV2Path(
+  accountId: string,
+  dateFrom: string,
+  next?: string | null,
+): string {
   if (next == null) {
     return `/v2/transactions?accountId=${encodeURIComponent(accountId)}&dateFrom=${encodeURIComponent(dateFrom)}`;
   }
   let qs = next.trim();
   if (/^https?:\/\//i.test(qs)) {
     const u = new URL(qs);
-    if (u.origin !== BASE || u.pathname !== "/v2/transactions") throw new PluggyHttpError(502, "next_invalido");
+    if (u.origin !== BASE || u.pathname !== "/v2/transactions")
+      throw new PluggyHttpError(502, "next_invalido");
     qs = u.search;
   } else if (qs.startsWith("/v2/transactions?")) {
     qs = qs.slice("/v2/transactions".length);
   }
   if (!qs.startsWith("?")) qs = `?${qs}`;
-  if (qs.length < 2 || qs.length > 4000 || /[\s#]/.test(qs)) throw new PluggyHttpError(502, "next_invalido");
+  if (qs.length < 2 || qs.length > 4000 || /[\s#]/.test(qs))
+    throw new PluggyHttpError(502, "next_invalido");
   return `/v2/transactions${qs}`;
 }
 export type PluggyApi = ReturnType<typeof createPluggyApi>;
@@ -136,5 +162,9 @@ export type PluggyAccount = {
   currencyCode?: string | null;
   owner?: string | null;
   taxNumber?: string | null;
-  creditData?: { creditLimit?: number | null; availableCreditLimit?: number | null; balanceDueDate?: string | null } | null;
+  creditData?: {
+    creditLimit?: number | null;
+    availableCreditLimit?: number | null;
+    balanceDueDate?: string | null;
+  } | null;
 };

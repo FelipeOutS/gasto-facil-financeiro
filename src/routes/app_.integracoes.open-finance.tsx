@@ -10,6 +10,8 @@ import { apiFetch } from "@/lib/api-fetch";
 import { categoriaOptions } from "@/lib/pluggy/categorias";
 import { PluggyImportPanel } from "@/components/PluggyImportPanel";
 import { PluggyRealPreview } from "@/components/PluggyRealPreview";
+import { PluggySettlements } from "@/components/PluggySettlements";
+import { PluggyContinuous } from "@/components/PluggyContinuous";
 import { PluggyAutomatic } from "@/components/PluggyAutomatic";
 import { PluggyRealCards } from "@/components/PluggyRealCards";
 import { PluggyRealUndo } from "@/components/PluggyRealUndo";
@@ -269,6 +271,8 @@ function OpenFinancePage() {
       <Section title="Configurações">
         <div className="space-y-3 rounded-2xl border border-border bg-card p-4 text-sm">
           <PluggyAutomatic />
+          <PluggyContinuous />
+          <PluggySettlements />
           <Row label="Categorização automática">
             <Switch checked={settings.auto_categorize} disabled={busy || !s.schemaReady || needsHistory} onCheckedChange={(v) => act("settings", { autoImport: false, autoCategorize: v, historyDays: settings.history_days }, "Salvo.")} />
           </Row>

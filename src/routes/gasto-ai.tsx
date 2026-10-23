@@ -19,7 +19,7 @@ import { requireOnline } from "@/lib/use-online-status";
 import { confirmAsync } from "@/components/ConfirmDialog";
 
 export const Route = createFileRoute("/gasto-ai")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { q?: string } => ({
     q: typeof search.q === "string" ? search.q : undefined,
   }),
   head: () => {

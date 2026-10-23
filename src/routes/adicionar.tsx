@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
-import { zodValidator } from "@tanstack/zod-adapter";
 import {
   Camera,
   ImageUp,
@@ -40,7 +39,7 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/adicionar")({
-  validateSearch: zodValidator(searchSchema),
+  validateSearch: searchSchema,
   head: () => ({ meta: [{ title: i18n.t("adicionar:meta.title") }] }),
   component: Adicionar,
 });
