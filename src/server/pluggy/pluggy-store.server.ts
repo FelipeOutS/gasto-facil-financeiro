@@ -18,6 +18,36 @@ export async function createPluggyStore(): Promise<PluggyStore> {
 
   let hasOriginal: boolean | null = null;
   return {
+    async upsertBills(userId, accountId, bills) {
+      const records = bills
+        .filter(
+          (b) =>
+            b.id &&
+            /^\d{4}-\d{2}-\d{2}/.test(b.dueDate) &&
+            Number.isFinite(b.totalAmount) &&
+            b.totalAmount >= 0 &&
+            b.totalAmountCurrencyCode === "BRL" &&
+            Array.isArray(b.payments) &&
+            Array.isArray(b.financeCharges),
+        )
+        .map((b) => ({
+          user_id: userId,
+          account_id: accountId,
+          bill_id: b.id,
+          due_date: b.dueDate.slice(0, 10),
+          total: b.totalAmount,
+          currency: b.totalAmountCurrencyCode,
+          closing_date: b.billClosingDate?.slice(0, 10) ?? null,
+          payments: b.payments ?? [],
+          charges: b.financeCharges ?? [],
+          updated_at: new Date().toISOString(),
+        }));
+      // Candidate table: no financial records are changed.
+      const r = await db
+        .from("pluggy_bill_snapshots")
+        .upsert(records, { onConflict: "user_id,account_id,bill_id" });
+      if (r.error) throw Error("faturas_persistencia_indisponivel");
+    },
     async getSettings(userId) {
       const r = await db.from("pluggy_settings").select("*").eq("user_id", userId).maybeSingle();
       must(r);
@@ -32,23 +62,37 @@ export async function createPluggyStore(): Promise<PluggyStore> {
     },
     async setAccessState(userId, state, reason) {
       // Só atualiza: nunca cria a linha de preferências (isso é escolha do usuário).
-      must(await db.from("pluggy_settings").update({ access_state: state, paused_reason: reason }).eq("user_id", userId));
+      must(
+        await db
+          .from("pluggy_settings")
+          .update({ access_state: state, paused_reason: reason })
+          .eq("user_id", userId),
+      );
     },
     async getItemOwner(itemId) {
-      const r = await db.from("pluggy_items").select("user_id,is_sandbox").eq("item_id", itemId).is("deleted_at", null).maybeSingle();
+      const r = await db
+        .from("pluggy_items")
+        .select("user_id,is_sandbox")
+        .eq("item_id", itemId)
+        .is("deleted_at", null)
+        .maybeSingle();
       must(r);
       return r.data ? { userId: r.data.user_id, isSandbox: r.data.is_sandbox } : null;
     },
     async upsertItem(userId, item) {
       must(
-        await db.from("pluggy_items").update({
-          connector_id: item.connector.id,
-          connector_name: item.connector.name,
-          is_sandbox: item.connector.isSandbox === true,
-          status: item.status,
-          execution_status: item.executionStatus ?? null,
-          consent_expires_at: item.consentExpiresAt ?? null,
-        }).eq("item_id", item.id).eq("user_id", userId),
+        await db
+          .from("pluggy_items")
+          .update({
+            connector_id: item.connector.id,
+            connector_name: item.connector.name,
+            is_sandbox: item.connector.isSandbox === true,
+            status: item.status,
+            execution_status: item.executionStatus ?? null,
+            consent_expires_at: item.consentExpiresAt ?? null,
+          })
+          .eq("item_id", item.id)
+          .eq("user_id", userId),
       );
     },
     async markItemSync(userId, itemId, outcome) {
@@ -58,7 +102,12 @@ export async function createPluggyStore(): Promise<PluggyStore> {
       must(await db.from("pluggy_items").update(patch).eq("item_id", itemId).eq("user_id", userId));
     },
     async markItemDeleted(itemId) {
-      must(await db.from("pluggy_items").update({ deleted_at: new Date().toISOString(), status: "DELETED" }).eq("item_id", itemId));
+      must(
+        await db
+          .from("pluggy_items")
+          .update({ deleted_at: new Date().toISOString(), status: "DELETED" })
+          .eq("item_id", itemId),
+      );
     },
     async upsertAccounts(userId, accounts, isSandbox) {
       if (!accounts.length) return;
@@ -87,29 +136,41 @@ export async function createPluggyStore(): Promise<PluggyStore> {
       // amount_original só é gravado se a coluna já existir (migração candidata ainda não aplicada).
       if (hasOriginal === null) {
         const probe = await db.from("pluggy_transactions").select("amount_original").limit(1);
-        if (probe.error && !["42703", "PGRST204"].includes(probe.error.code)) throw new Error("pluggy_leitura_indisponivel");
+        if (probe.error && !["42703", "PGRST204"].includes(probe.error.code))
+          throw new Error("pluggy_leitura_indisponivel");
         hasOriginal = !probe.error;
       }
       if (!hasOriginal) rows = rows.map(({ amount_original: _o, ...r }) => r as TxRow);
       for (let i = 0; i < rows.length; i += 500) {
-        must(await db.from("pluggy_transactions").upsert(rows.slice(i, i + 500), { onConflict: "user_id,account_id,transaction_id" }));
+        must(
+          await db
+            .from("pluggy_transactions")
+            .upsert(rows.slice(i, i + 500), { onConflict: "user_id,account_id,transaction_id" }),
+        );
       }
     },
     async markTransactionsDeleted(userId, ids, itemId) {
       if (!ids.length) return;
       must(
-        await db.from("pluggy_transactions").update({ deleted_at: new Date().toISOString() }).eq("user_id", userId).eq("item_id", itemId).in("transaction_id", ids),
+        await db
+          .from("pluggy_transactions")
+          .update({ deleted_at: new Date().toISOString() })
+          .eq("user_id", userId)
+          .eq("item_id", itemId)
+          .in("transaction_id", ids),
       );
     },
     async mpCandidates(userId, from, to) {
-      const found = await readRows(() => db
-        .from("imported_transactions")
-        .select("id,amount,occurred_at,status")
-        .eq("user_id", userId)
-        .eq("provider", "mercado_pago")
-        .gte("occurred_at", `${from}T00:00:00Z`)
-        .lte("occurred_at", `${to}T23:59:59Z`)
-        .order("id"));
+      const found = await readRows(() =>
+        db
+          .from("imported_transactions")
+          .select("id,amount,occurred_at,status")
+          .eq("user_id", userId)
+          .eq("provider", "mercado_pago")
+          .gte("occurred_at", `${from}T00:00:00Z`)
+          .lte("occurred_at", `${to}T23:59:59Z`)
+          .order("id"),
+      );
       return found.map((x) => ({
         id: String(x.id),
         amount: Number(x.amount),

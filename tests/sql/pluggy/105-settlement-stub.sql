@@ -1,0 +1,5 @@
+-- Disposable mirrors of the existing app tables (only columns exercised here).
+CREATE TABLE public.contas_a_receber(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid NOT NULL,titulo text NOT NULL,valor_total numeric NOT NULL,valor_recebido numeric NOT NULL DEFAULT 0,valor_restante numeric NOT NULL,status text NOT NULL DEFAULT 'pendente',data_prevista date NOT NULL,data_recebimento date,updated_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE public.faturas_cartao(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid NOT NULL,cartao_id uuid NOT NULL,mes smallint NOT NULL,ano int NOT NULL,status text NOT NULL DEFAULT 'aberta',data_pagamento date,valor_pago numeric NOT NULL DEFAULT 0,observacao text,created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now(),UNIQUE(user_id,cartao_id,mes,ano));
+CREATE TRIGGER native_receivable_stamp BEFORE UPDATE ON public.contas_a_receber FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+CREATE TRIGGER native_invoice_stamp BEFORE UPDATE ON public.faturas_cartao FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();

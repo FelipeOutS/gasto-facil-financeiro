@@ -133,7 +133,7 @@ import {
 } from "@/components/app-v2";
 
 export const Route = createFileRoute("/cartoes/")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { abrir?: string; importar?: string } => ({
     abrir: typeof search.abrir === "string" ? search.abrir : undefined,
     importar: typeof search.importar === "string" ? search.importar : undefined,
   }),

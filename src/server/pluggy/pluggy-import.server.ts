@@ -7,7 +7,16 @@
  * ainda não aplicada) — nunca por INSERT/UPDATE em loop no cliente.
  */
 import { isPluggyAllowed } from "@/lib/pluggy/rules";
-import { planImport, summarizePlan, type CardLink, type ExistingEntry, type ImportedEntry, type PlanAction, type PlanTx, type UserCategoria } from "@/lib/pluggy/import-plan";
+import {
+  planImport,
+  summarizePlan,
+  type CardLink,
+  type ExistingEntry,
+  type ImportedEntry,
+  type PlanAction,
+  type PlanTx,
+  type UserCategoria,
+} from "@/lib/pluggy/import-plan";
 
 export const PLUGGY_IMPORT_RELEASE_AUTHORIZED = false as const;
 
@@ -27,39 +36,63 @@ export type ImportMode = "previa" | "historico_inicial" | "incremental";
 
 export async function runPluggyImport(
   deps: ImportDeps,
-  input: { userId: string; batchId: string; mode: ImportMode; confirmed?: boolean; releaseAuthorized?: boolean },
+  input: {
+    userId: string;
+    batchId: string;
+    mode: ImportMode;
+    confirmed?: boolean;
+    releaseAuthorized?: boolean;
+  },
 ) {
   const roles = await deps.roles(input.userId);
-  if (!isPluggyAllowed(input.userId, roles)) return { ok: false as const, error: "pluggy_nao_autorizado" };
+  if (!isPluggyAllowed(input.userId, roles))
+    return { ok: false as const, error: "pluggy_nao_autorizado" };
   const txs = await deps.txs(input.userId);
   const dates = txs.map((t) => t.date).sort();
   const [cardLinks, categorias, imported, existing] = await Promise.all([
     deps.cardLinks(input.userId),
     deps.categorias(input.userId),
     deps.imported(input.userId),
-    dates.length ? deps.existing(input.userId, dates[0], dates[dates.length - 1]) : Promise.resolve([]),
+    dates.length
+      ? deps.existing(input.userId, dates[0], dates[dates.length - 1])
+      : Promise.resolve([]),
   ]);
-  const actions = planImport({ userId: input.userId, txs, cardLinks, categorias, imported, existing });
+  const actions = planImport({
+    userId: input.userId,
+    txs,
+    cardLinks,
+    categorias,
+    imported,
+    existing,
+  });
   const resumo = summarizePlan(actions);
   if (input.mode === "previa") return { ok: true as const, previa: true, resumo, actions };
 
   const released = input.releaseAuthorized ?? PLUGGY_IMPORT_RELEASE_AUTHORIZED;
   if (!released) return { ok: false as const, error: "importacao_bloqueada", resumo };
-  if (input.mode === "historico_inicial" && !input.confirmed) return { ok: false as const, error: "confirmacao_obrigatoria", resumo };
+  if (input.mode === "historico_inicial" && !input.confirmed)
+    return { ok: false as const, error: "confirmacao_obrigatoria", resumo };
   if (input.mode === "incremental") {
     const s = await deps.settings(input.userId);
-    if (!s?.auto_import) return { ok: false as const, error: "importacao_automatica_desativada", resumo };
+    if (!s?.auto_import)
+      return { ok: false as const, error: "importacao_automatica_desativada", resumo };
   }
   const writes = actions.filter((a) => a.op === "insert" || a.op === "update" || a.op === "remove");
-  if (!writes.length) return { ok: true as const, previa: false, resumo, resultado: { gastos: 0, receitas: 0 } };
+  if (!writes.length)
+    return { ok: true as const, previa: false, resumo, resultado: { gastos: 0, receitas: 0 } };
   const resultado = await deps.apply(input.userId, input.batchId, writes);
   return { ok: true as const, previa: false, resumo, resultado };
 }
 
-export async function revertPluggyImport(deps: ImportDeps, input: { userId: string; batchId: string; releaseAuthorized?: boolean }) {
+export async function revertPluggyImport(
+  deps: ImportDeps,
+  input: { userId: string; batchId: string; releaseAuthorized?: boolean },
+) {
   const roles = await deps.roles(input.userId);
-  if (!isPluggyAllowed(input.userId, roles)) return { ok: false as const, error: "pluggy_nao_autorizado" };
-  if (!(input.releaseAuthorized ?? PLUGGY_IMPORT_RELEASE_AUTHORIZED)) return { ok: false as const, error: "importacao_bloqueada" };
+  if (!isPluggyAllowed(input.userId, roles))
+    return { ok: false as const, error: "pluggy_nao_autorizado" };
+  if (!(input.releaseAuthorized ?? PLUGGY_IMPORT_RELEASE_AUTHORIZED))
+    return { ok: false as const, error: "importacao_bloqueada" };
   return { ok: true as const, resultado: await deps.revert(input.userId, input.batchId) };
 }
 
@@ -67,6 +100,8 @@ export async function revertPluggyImport(deps: ImportDeps, input: { userId: stri
 export async function runIncrementalAfterSync(userId: string) {
   const { runRealAutomaticAfterSync } = await import("./pluggy-real-automatic.server");
   await runRealAutomaticAfterSync(userId);
+  const { runContinuousAfterSync } = await import("./pluggy-continuous.server");
+  await runContinuousAfterSync(userId);
   if (!PLUGGY_IMPORT_RELEASE_AUTHORIZED) return { ok: true as const, blocked: true };
   const { assertPluggyAccess } = await import("./pluggy-access.server");
   await assertPluggyAccess(userId);
@@ -74,7 +109,11 @@ export async function runIncrementalAfterSync(userId: string) {
   const { createImportDeps } = await import("./pluggy-import-store.server");
   const deps = createImportDeps(supabaseAdmin);
   if (!(await deps.settings(userId))?.auto_import) return { ok: true as const, disabled: true };
-  const result = await runPluggyImport(deps, { userId, batchId: crypto.randomUUID(), mode: "incremental" });
+  const result = await runPluggyImport(deps, {
+    userId,
+    batchId: crypto.randomUUID(),
+    mode: "incremental",
+  });
   if (!result.ok) throw new Error(result.error);
   return result;
 }
