@@ -225,7 +225,7 @@ test("WA-B3.4 — sendWhatsAppReply NÃO loga err.message bruto (exception path)
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (async () => {
     const e = new Error(
-      "fetch failed for https://graph.facebook.com/v20.0/999/messages with token supersecret-token-aaaa",
+      "fetch failed for https://graph.facebook.com/v25.0/999/messages with token supersecret-token-aaaa",
     );
     e.name = "NetworkError";
     throw e;

@@ -55,9 +55,9 @@ describe("C — download de mídia Meta", () => {
     let n = 0;
     return (async () => (n++ === 0 ? lookup : dl!)) as unknown as typeof fetch;
   };
-  const args = { lookupUrl: "https://graph.invalid/m", token: "t", maxBytes: 100 };
+  const args = { lookupUrl: "https://graph.facebook.com/v25.0/m", token: "t", maxBytes: 100 };
   it("foto/áudio/PDF dentro do limite → ok com mime da Meta", async () => {
-    const f = mk(Response.json({ url: "https://cdn.invalid/f", mime_type: "Application/PDF" }), new Response(new Uint8Array(40)));
+    const f = mk(Response.json({ url: "https://lookaside.fbsbx.com/fixture", mime_type: "Application/PDF" }), new Response(new Uint8Array(40)));
     const r = await downloadWhatsappMediaBounded(args, { fetchImpl: f });
     expect(r.ok).toBe(true);
     if (r.ok) { expect(r.buffer.byteLength).toBe(40); expect(r.declaredMime).toBe("application/pdf"); }
@@ -67,11 +67,11 @@ describe("C — download de mídia Meta", () => {
     expect(r).toEqual({ ok: false, reason: "http_error" });
   });
   it("download 503 → http_error", async () => {
-    const f = mk(Response.json({ url: "https://cdn.invalid/f" }), new Response("x", { status: 503 }));
+    const f = mk(Response.json({ url: "https://lookaside.fbsbx.com/fixture" }), new Response("x", { status: 503 }));
     expect(await downloadWhatsappMediaBounded(args, { fetchImpl: f })).toEqual({ ok: false, reason: "http_error" });
   });
   it("arquivo grande demais → oversized", async () => {
-    const f = mk(Response.json({ url: "https://cdn.invalid/f" }), new Response(streamOf([], { infinite: true })));
+    const f = mk(Response.json({ url: "https://lookaside.fbsbx.com/fixture" }), new Response(streamOf([], { infinite: true })));
     expect(await downloadWhatsappMediaBounded(args, { fetchImpl: f })).toEqual({ ok: false, reason: "oversized" });
   });
   it("lookup sem url https → invalid", async () => {

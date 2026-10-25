@@ -270,7 +270,7 @@ beforeEach(() => {
           : (input as Request).url;
     fakeState.calls.downloadFetch.push(url);
     // (1) lookup do mediaId — devolve URL "assinada" fictícia.
-    if (url.includes("graph.facebook.com/v20.0/")) {
+    if (url.includes("graph.facebook.com/v25.0/")) {
       return new Response(
         JSON.stringify({
           url: "https://lookaside.fbsbx.com/whatsapp_business/attachments/audio-x",

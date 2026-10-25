@@ -89,7 +89,8 @@ export async function downloadWhatsappMediaBounded(
   const f = opts.fetchImpl ?? fetch;
   const auth = { Authorization: `Bearer ${args.token}` };
   try {
-    const lookup = await fetchWithTimeout(args.lookupUrl, { headers: auth }, opts.lookupTimeoutMs ?? MEDIA_LOOKUP_TIMEOUT_MS, f);
+    if (!isTrustedMetaUrl(args.lookupUrl, true)) return { ok: false, reason: "invalid" };
+    const lookup = await fetchWithTimeout(args.lookupUrl, { headers: auth, redirect: "error" }, opts.lookupTimeoutMs ?? MEDIA_LOOKUP_TIMEOUT_MS, f);
     if (!lookup.ok) {
       await lookup.body?.cancel().catch(() => {});
       return { ok: false, reason: "http_error" };
@@ -97,9 +98,9 @@ export async function downloadWhatsappMediaBounded(
     const metaBuf = await readBodyLimited(lookup, 16 * 1024, opts.lookupTimeoutMs ?? MEDIA_LOOKUP_TIMEOUT_MS);
     let meta: { url?: unknown; mime_type?: unknown };
     try { meta = JSON.parse(metaBuf.toString("utf8")); } catch { return { ok: false, reason: "invalid" }; }
-    if (typeof meta.url !== "string" || !/^https:\/\//.test(meta.url)) return { ok: false, reason: "invalid" };
+    if (typeof meta.url !== "string" || !isTrustedMetaUrl(meta.url)) return { ok: false, reason: "invalid" };
     const dlTimeout = opts.downloadTimeoutMs ?? MEDIA_DOWNLOAD_TIMEOUT_MS;
-    const dl = await fetchWithTimeout(meta.url, { headers: auth }, dlTimeout, f);
+    const dl = await fetchWithTimeout(meta.url, { headers: auth, redirect: "error" }, dlTimeout, f);
     if (!dl.ok) {
       await dl.body?.cancel().catch(() => {});
       return { ok: false, reason: "http_error" };
@@ -110,4 +111,14 @@ export async function downloadWhatsappMediaBounded(
   } catch (err) {
     return { ok: false, reason: err instanceof BoundedFetchError ? err.kind : "network" };
   }
+}
+
+/** Bearer credentials may only reach Meta-controlled HTTPS hosts. */
+export function isTrustedMetaUrl(raw: string, lookup = false): boolean {
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "https:" || u.username || u.password || (u.port && u.port !== "443")) return false;
+    if (lookup) return u.hostname === "graph.facebook.com";
+    return ["facebook.com", "fbcdn.net", "fbsbx.com", "whatsapp.net"].some(h => u.hostname === h || u.hostname.endsWith("." + h));
+  } catch { return false; }
 }

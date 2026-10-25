@@ -22,6 +22,9 @@ async function fixture(withCandidate: boolean) {
   const db = new PGlite();
   await db.exec(`
     CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
+    CREATE TABLE whatsapp_links(user_id uuid,telefone text,ativo boolean,opt_in_em timestamptz,revogado_em timestamptz);
+    INSERT INTO whatsapp_links VALUES ('${A}','${PHONE}',true,now(),null);
+    CREATE FUNCTION has_feature_access(uuid,text) RETURNS boolean LANGUAGE sql AS 'SELECT true';
     CREATE SCHEMA auth; CREATE TABLE auth.users(id uuid PRIMARY KEY);
     INSERT INTO auth.users VALUES ('${A}'), ('${B}');
     CREATE TABLE categorias(id uuid PRIMARY KEY, user_id uuid NOT NULL);
@@ -32,11 +35,11 @@ async function fixture(withCandidate: boolean) {
       valor numeric(14,2) NOT NULL, data date NOT NULL, mes smallint NOT NULL, ano integer NOT NULL,
       forma_pagamento text NOT NULL, categoria_id uuid, cartao_id uuid,
       grupo_parcelamento_id uuid, recorrencia_id uuid, total_parcelas smallint,
-      invoice_month text, fatura_competencia text, deleted_at timestamptz
+      invoice_month text, fatura_competencia text, deleted_at timestamptz, updated_at timestamptz DEFAULT now()
     );
     CREATE TABLE receitas(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid NOT NULL,
       origem text, descricao text NOT NULL, valor numeric(14,2) NOT NULL, data date NOT NULL,
-      mes smallint NOT NULL, ano integer NOT NULL, recorrencia_id uuid, deleted_at timestamptz);
+      mes smallint NOT NULL, ano integer NOT NULL, recorrencia_id uuid, deleted_at timestamptz, updated_at timestamptz DEFAULT now());
     CREATE TABLE recorrencias(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid NOT NULL, origem text, status text);
     CREATE TABLE contas_a_pagar(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid NOT NULL,
       status text, data_pagamento date, gasto_id uuid);
@@ -85,7 +88,7 @@ test("candidato: gasto ativo e restaurado continuam desfazendo como antes; repla
   expect(await undo(db, B)).toBe("unavailable"); // outro usuário
   expect(await undo(db, A)).toBe("undone");
   expect(await undo(db, A)).toBe("already_undone");
-  expect(await count(db, `SELECT count(*) n FROM gastos WHERE id='${G}'`)).toBe(0);
+  expect(await count(db, `SELECT count(*) n FROM gastos WHERE id='${G}' AND deleted_at IS NOT NULL`)).toBe(1);
   expect(await count(db, `SELECT count(*) n FROM contas_a_pagar WHERE status='pendente' AND gasto_id IS NULL`)).toBe(1);
   await db.close();
 });
@@ -104,7 +107,7 @@ test("candidato: série parcelada com uma parcela soft-excluída fica inteira", 
   expect(await count(db, `SELECT count(*) n FROM gastos WHERE grupo_parcelamento_id='${GRP}'`)).toBe(3);
   await db.exec(`UPDATE gastos SET deleted_at = NULL WHERE grupo_parcelamento_id='${GRP}'`);
   expect(await undo(db, A, ACT2)).toBe("undone");
-  expect(await count(db, `SELECT count(*) n FROM gastos WHERE grupo_parcelamento_id='${GRP}'`)).toBe(0);
+  expect(await count(db, `SELECT count(*) n FROM gastos WHERE grupo_parcelamento_id='${GRP}' AND deleted_at IS NOT NULL`)).toBe(3);
   await db.close();
 });
 
@@ -195,4 +198,13 @@ test("bot: pré-checagem do Desfazer bloqueia excluído, parcela excluída e err
   ];
   expect(await checkUndoSoftDelete(fakeClient(serie), inst)).toBe(MSG_UNDO_GASTO_EXCLUIDO);
   expect(await checkUndoSoftDelete(fakeClient([], { readError: true }), exp)).toMatch(/Não consegui desfazer/);
+});
+
+test("candidato: edição manual posterior é preservada sem marcar ação desfeita", async()=>{
+ const db=await fixture(true);try{
+ await db.exec(`UPDATE gastos SET valor=99,updated_at=now()+interval '1 second' WHERE id='${G}'`);
+ expect(await undo(db,A)).toBe("modified");
+ expect(await count(db,`SELECT count(*) n FROM gastos WHERE id='${G}' AND valor=99 AND deleted_at IS NULL`)).toBe(1);
+ expect(await count(db,`SELECT count(*) n FROM whatsapp_recent_actions WHERE id='${ACT}' AND state='active'`)).toBe(1);
+ }finally{await db.close();}
 });

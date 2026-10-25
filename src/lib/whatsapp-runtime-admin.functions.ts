@@ -52,18 +52,23 @@ export const whatsappAdminReadRuntimeSnapshot = createServerFn({ method: "GET" }
     const runtime = await readRuntimeConfig();
     const envDispatch = envFlag("WHATSAPP_DISPATCH_ENABLED");
     const envOutboundHttp = envFlag("WHATSAPP_OUTBOUND_HTTP_ENABLED");
+    const envProduct=envFlag("WHATSAPP_ENABLED");
+    const {isOutboundHttpAllowed}=await import("@/server/whatsapp-outbound-gates.server");
+    const outboundGate=isOutboundHttpAllowed({userId:context.userId});
     const effective = {
-      inbound_effective: runtime.global_enabled && runtime.inbound_enabled,
+      inbound_effective: envProduct && runtime.global_enabled && runtime.inbound_enabled,
       outbound_effective:
-        envDispatch && envOutboundHttp && runtime.global_enabled && runtime.outbound_enabled,
-      dispatcher_effective: envDispatch && runtime.global_enabled,
+        outboundGate.allowed && runtime.global_enabled && runtime.outbound_enabled,
+      dispatcher_effective: envProduct && envDispatch && runtime.global_enabled,
       notification_creation_effective:
         runtime.global_enabled && runtime.notification_creation_enabled,
       new_links_effective: runtime.global_enabled && runtime.new_links_enabled,
       rollout_effective: runtime.rollout_enabled ? runtime.rollout_percentage : 0,
     };
     return {
+      outbound_blockers:outboundGate.allowed ? [] : outboundGate.reasons,
       env: {
+        whatsapp_enabled:envProduct,
         dispatch_enabled: envDispatch,
         outbound_http_enabled: envOutboundHttp,
       },
@@ -142,4 +147,27 @@ export const whatsappAdminGetUsageSnapshot = createServerFn({ method: "GET" })
     await assertAdminMasterOrThrow(context.userId);
     const { getUsageSnapshot } = await import("@/server/whatsapp-quota-admin.server");
     return getUsageSnapshot();
+  });
+export const whatsappAdminListOwnReplyOutbox = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdminMasterOrThrow(context.userId);
+    const { isReplyOutboxEnabled } = await import("@/server/whatsapp-reply-outbox.server");
+    if (!isReplyOutboxEnabled()) return { enabled: false, rows: [] as Array<{id:string;state:string;attempts:number;created_at:string}> };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const {error:leaseError}=await supabaseAdmin.rpc("wa_reply_quarantine_expired" as never,{p_user:context.userId} as never);
+    if(leaseError) throw new Error("reply_outbox_unavailable");
+    const { data, error } = await supabaseAdmin.from("whatsapp_reply_outbox" as never)
+      .select("id,state,attempts,created_at").eq("user_id", context.userId).order("created_at", {ascending:false}).limit(50);
+    if(error) throw new Error("reply_outbox_unavailable");
+    return {enabled:true,rows:(data ?? []) as unknown as Array<{id:string;state:string;attempts:number;created_at:string}>};
+  });
+
+export const whatsappAdminRecoverOwnReply = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({id:z.string().uuid(),confirm:z.literal(true)}).strict().parse(d))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({context,data}) => {
+    await assertAdminMasterOrThrow(context.userId);
+    const { recoverOwnDurableReply } = await import("@/server/whatsapp-reply-outbox-runtime.server");
+    return {state:await recoverOwnDurableReply(data.id,context.userId)};
   });

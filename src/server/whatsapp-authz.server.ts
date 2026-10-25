@@ -147,5 +147,5 @@ export async function shouldSendBlockedReply(
     windowSeconds: 24 * 60 * 60,
     method: "POST",
   });
-  return !r.blocked;
+  return !r.blocked && !r.dbError;
 }

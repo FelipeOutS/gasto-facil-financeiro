@@ -549,16 +549,13 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
           return jsonResponse({ error: "payload_too_large" }, 413);
         }
 
-        const rawBody = await request.text();
-        if (rawBody.length > MAX_RAW_BODY) {
-          await logWebhookEvent({
-            provider: "whatsapp",
-            status: "failed",
-            http_status: 413,
-            error_message: "payload_too_large",
-            processing_time_ms: Date.now() - startedAt,
-          });
-          return jsonResponse({ error: "payload_too_large" }, 413);
+        let rawBody: string;
+        try {
+          const {readBodyLimited} = await import("@/server/whatsapp-bounded-fetch.server");
+          rawBody=(await readBodyLimited(new Response(request.body),MAX_RAW_BODY,5000)).toString("utf8");
+        } catch (error) {
+          const kind=(error as {kind?:string}).kind;
+          return jsonResponse({error:kind==="oversized"?"payload_too_large":"invalid_payload"},kind==="oversized"?413:400);
         }
 
         // Verificação HMAC obrigatória.
@@ -1169,6 +1166,14 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                 // Interativo ambíguo (timeout) → não manda texto por cima (duplicaria).
                 // Revisão corretiva: qualquer exceção ou 5xx/429/timeout no
                 // interativo é AMBÍGUA → nunca manda texto por cima.
+                const { isReplyOutboxEnabled } = await import("@/server/whatsapp-reply-outbox.server");
+                if (isReplyOutboxEnabled() && elig.userId && msg.external_id) {
+                  const { deliverDurableReply } = await import("@/server/whatsapp-reply-outbox-runtime.server");
+                  await deliverDurableReply({ userId: elig.userId, externalId: msg.external_id,
+                    phone: msg.telefone, receivedAt: new Date(msg.recebida_em ?? Date.now()),
+                    snapshot: { text: out.resposta, cta: out.interactive, interactive: out.graphInteractive } });
+                  continue; // Financial result is already saved; never fall back after uncertain send.
+                }
                 const { deliverReplyPlan } = await import("@/server/whatsapp-reply-delivery.server");
                 const tel = msg.telefone;
                 let interactiveSend: (() => Promise<{ sent: boolean; reason?: string; status?: number }>) | null = null;
