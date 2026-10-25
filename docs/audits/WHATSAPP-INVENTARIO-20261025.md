@@ -1,0 +1,382 @@
+# Inventário WhatsApp — código local em 25/10/2026
+
+Extração estática de arquivos, funções e chamadas literais. Não prova execução de cada caminho nem aplicação no banco. Sem leitura de segredos. Estado instalado de cada SQL: não verificado; arquivos em migrations-candidate são candidatos, não comprovantes de aplicação.
+
+- `docs/migrations-candidate/whatsapp-undo-soft-delete.sql`
+- `docs/migrations-candidate/whatsapp-shopping-quota.sql`
+- `docs/migrations-candidate/whatsapp-reply-outbox.sql` — configuração: WHATSAPP_REPLY_OUTBOX_ENABLED
+- `docs/migrations-candidate/whatsapp-lote-mes.sql`
+- `docs/migrations-candidate/whatsapp-agenda-templates.sql`
+- `docs/migrations-candidate/wa-c92-e1e-canary-template.sql`
+- `docs/migrations-candidate/pluggy-real-first-import.sql`
+- `docs/migrations-candidate/pluggy-real-card-batch.sql`
+- `docs/migrations-candidate/pluggy-real-batch-import.sql`
+- `docs/migrations-candidate/gastos-soft-delete-f2.sql`
+- `docs/migrations-candidate/gastos-delete-atomic-f4.sql`
+- `src/server/whatsapp.server.ts` — tabelas: whatsapp_links, cartoes, categorias, whatsapp_messages, gastos, whatsapp_recent_actions — funções: __setExpenseParserForTests, __setWhatsAppAuditObserverForTests, maskTelefone, carregarCartoes, displayCartaoNome, maskCartaoLabel, matchCartao, diagnoseCategoriaResolution, detectCategoriaCommand, classificarResposta, formatarConfirmacao, isGenericExpenseCommand, isResetCommand, isGenericExpenseDescription, detectarFaltantes, parseCampoAjuste, isAjustarCommand, logWhatsAppInboundReceived, logWaReceiptSessionTrace, logReceiptSessionCreatedAudit, buscarVinculoBotaoGasto, buscarSessaoComprovanteAtiva, fecharSessoesAnteriores, verificarGastoExiste, persistirGasto, gravarSessao, atualizarSessao, atualizarSessaoOuFalhar, processarMensagemWhatsApp, sendWhatsAppReply, sendWhatsAppInteractiveCtaUrl, sendWhatsAppInteractiveReply — configuração: WHATSAPP_HANDLER_VERSION, WHATSAPP_SESSION_AUDIT_FALLBACK, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID
+- `src/server/whatsapp-wikimedia.server.ts` — funções: createWikimediaSource
+- `src/server/whatsapp-voice-number-normalizer.server.ts` — funções: normalizeVoiceMoney
+- `src/server/whatsapp-transport-error-sanitizer.server.ts` — funções: sanitizeTransportError
+- `src/server/whatsapp-transcription.server.ts` — funções: transcribeWhatsAppAudio, __setTranscriberForTests, runTranscriber
+- `src/server/whatsapp-short-context.server.ts` — funções: _resetShortContext, recordLembreteConta, getLembreteConta, clearLembreteConta, resolveLembreteResposta, parseLembreteCommand, recordFavorecido, getLastFavorecido, clearFavorecido, recordContas, clear, resolveOrdinal, resolvePagueiSemNome
+- `src/server/whatsapp-sent-audit.server.ts` — tabelas: whatsapp_outbound_queue, whatsapp_usage_events — funções: auditWhatsAppSentMessages
+- `src/server/whatsapp-runtime-config.server.ts` — tabelas: whatsapp_runtime_config — funções: readRuntimeConfig, requiresReason, updateRuntimeConfig
+- `src/server/whatsapp-rollout.server.ts` — RPC: whatsapp_user_in_rollout — funções: isPaidPlan, userInRollout, evaluateRolloutSync, evaluateRollout — configuração: WHATSAPP_ENABLED, WHATSAPP_CANARY_ENABLED, WHATSAPP_DISPATCH_ENABLED
+- `src/server/whatsapp-research.server.ts` — tabelas: whatsapp_research_requests, limites, gastos — RPC: whatsapp_claim_research — funções: handleWhatsAppResearch — configuração: WHATSAPP_RESEARCH_ENABLED, WHATSAPP_RESEARCH_MONTHLY_LIMIT, WHATSAPP_RESEARCH_GLOBAL_MONTHLY_LIMIT
+- `src/server/whatsapp-research-provider.server.ts` — funções: openAiResearchProvider
+- `src/server/whatsapp-research-mvp.ts` — funções: runResearchMvp
+- `src/server/whatsapp-research-core.ts` — funções: researchConcepts, isProductImageCaption, comparisonNames, parseUserPriceCents, parseInstallmentOffer, namedUserPrices, isCurrentPriceQuestion, detectResearchIntent, parseInstallments, splitInstallments, budgetComparison, safeSourceUrl
+- `src/server/whatsapp-reply-outbox.server.ts` — RPC: wa_reply_enqueue, wa_reply_claim, wa_reply_finish, wa_reply_reconcile — funções: sealReply, openReply, enqueueReply, dispatchStoredReply, reconcileReply — configuração: WHATSAPP_REPLY_OUTBOX_ENABLED
+- `src/server/whatsapp-reply-outbox-runtime.server.ts` — tabelas: whatsapp_messages — RPC: wa_reply_retry_rejected — funções: deliverDurableReply, recoverOwnDurableReply — configuração: WHATSAPP_REPLY_ENCRYPTION_KEY, WHATSAPP_ENABLED
+- `src/server/whatsapp-reply-delivery.server.ts` — funções: classifySendResult, safeSend, deliverReplyPlan, deliverReplyWithRetry
+- `src/server/whatsapp-receitas.server.ts` — tabelas: receitas, recorrencias — RPC: whatsapp_create_recurring_income_once — funções: isReceitaSession, isReceitaIntent, detectTipoReceita, parseValor, parseFrequencia, parseDiaSemana, parseDiaMes, extractDescricaoReceita, resumoRecorrencia, persistirReceita, buildConfirmacao, startReceitaFromText, nextStepReceita
+- `src/server/whatsapp-quota.server.ts` — RPC: whatsapp_consume_inbound_quota_atomic, whatsapp_consume_financial_action_quota_atomic, whatsapp_reserve_outbound_quota_atomic, whatsapp_commit_outbound_quota_atomic, whatsapp_release_outbound_quota_atomic, whatsapp_mark_reservation_ambiguous_atomic, whatsapp_reconcile_reservation_from_callback_atomic, whatsapp_get_usage_snapshot — funções: consumeInboundQuota, consumeFinancialActionQuota, reserveOutboundQuota, commitOutboundQuota, releaseOutboundQuota, markReservationAmbiguous, reconcileReservationFromCallback, getUsageSnapshot
+- `src/server/whatsapp-quota-admin.server.ts` — tabelas: whatsapp_plan_quotas, whatsapp_usage_counters — funções: isAllowedPlan, isFreePlan, sanitizeReason, validateQuotaPatch, listPlanQuotas, updatePlanQuota, getUsageSnapshot
+- `src/server/whatsapp-query-guard.server.ts` — funções: detectConsultaShape
+- `src/server/whatsapp-proactive-alerts.server.ts` — tabelas: limites, categorias, faturas_cartao, recorrencias, metas_financeiras, dinheiro_guardado, movimentacoes_meta, whatsapp_notification_templates — funções: crossedBudgetThreshold, collectProactiveCandidates, generateProactiveAlerts
+- `src/server/whatsapp-postlaunch.server.ts` — tabelas: whatsapp_recent_actions, gastos, categorias, cartoes, whatsapp_messages — RPC: whatsapp_undo_recent_action_v2, whatsapp_edit_recent_action — funções: checkUndoSoftDelete, postlaunchReceipt, installmentReceipt, handlePostlaunchInput
+- `src/server/whatsapp-planning.server.ts` — tabelas: whatsapp_planning_actions, whatsapp_messages, metas_financeiras, dinheiro_guardado, movimentacoes_meta, recorrencias, contas_a_pagar — RPC: has_feature_access, whatsapp_apply_planning_action — funções: parseMoney, detectPlanningIntent, detectCardLimitQuestion, handlePlanning
+- `src/server/whatsapp-pix-secret.server.ts` — funções: hashPixKey, storePendingPixKey, consumePendingPixKey, deletePendingPixKey, purgeExpiredPendingPixKeys — configuração: WHATSAPP_PIX_KEY_ENC_SECRET
+- `src/server/whatsapp-pix-reveal-token.server.ts` — tabelas: fornecedores — funções: hashRevealToken, issueRevealToken, consumeRevealToken, purgeExpiredRevealTokens
+- `src/server/whatsapp-pix-parser.ts` — funções: isValidPixKey, detectPixKeyType, normalizePixKey, detectSavePixIntent, parseSavePix, detectQueryPixIntent, parseQueryPix, detectPagarPessoaIntent, parsePagarPessoa, detectPagarPixInlineIntent, parsePagarPixInline, maskPixKey
+- `src/server/whatsapp-pix-intents.server.ts` — tabelas: categorias, whatsapp_messages, gastos — funções: handleSavePixIntent, handleQueryPixIntent, handlePagarPessoaIntent
+- `src/server/whatsapp-pdf-validation.server.ts` — funções: detectPdfFromBytes, estimatePdfPageCount, validateDownloadedPdf
+- `src/server/whatsapp-pdf-text-extract.server.ts` — funções: extractBoletoCandidatesFromPdf, extractBoletoCandidatesFromPdfAsync
+- `src/server/whatsapp-parcelamento.server.ts` — tabelas: whatsapp_messages, categorias, gastos — RPC: create_installment_purchase — funções: detectInstallmentIntent, isParcelamentoSession, extrairValor, extrairQuantidadeParcelas, parseInstallmentMessage, processarParcelamento, persistir
+- `src/server/whatsapp-pagar-pessoa-flow.server.ts` — tabelas: categorias, whatsapp_messages, gastos — funções: isPagarPessoaSession, centavosParaReais, persistirGastoComClaim, processarPagarPessoaFlow, processarPixInlineEntry
+- `src/server/whatsapp-outbound-quota-wire.server.ts` — tabelas: user_plans — funções: runOutboundWithQuota
+- `src/server/whatsapp-outbound-log.server.ts` — tabelas: whatsapp_links, whatsapp_outbound_messages, whatsapp_notification_status_events — funções: hashRecipient, sanitizeErrorText, parseMetaSendResponse, recordOutboundSend, reduceOutboundStatus, reconcileOutboundStatus
+- `src/server/whatsapp-outbound-gates.server.ts` — funções: isOutboundHttpAllowed — configuração: WHATSAPP_CANARY_USERS, WHATSAPP_ENABLED, WHATSAPP_CANARY_ENABLED, WHATSAPP_DISPATCH_ENABLED, WHATSAPP_OUTBOUND_HTTP_ENABLED, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN
+- `src/server/whatsapp-outbound-adapter.server.ts` — tabelas: whatsapp_notification_attempts — RPC: whatsapp_attempt_prepare_atomic, whatsapp_attempt_mark_sending_atomic — funções: validateRecipient, maskPhone, renderTemplateComponents, buildClientReference, buildWhatsAppTemplateRequest, resolveTemplateLanguage, buildNotificationRequestHash, prepareNotificationAttempt, markAttemptSending, completeAttemptAccepted, completeAttemptRejected, completeAttemptAmbiguous, cancelPlannedAttempt, executeNotificationAttemptDryTechnical — configuração: WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID
+- `src/server/whatsapp-optout.server.ts` — tabelas: whatsapp_links, whatsapp_notifications — RPC: whatsapp_revoke_links — funções: normalizeOptoutInput, detectOptout, buildOptoutAudit, executeOptoutRevocation, executeOptoutForSender
+- `tests/agenda-ver-fatura-2026-10-01.test.ts`
+- `supabase/migrations/20260430144044_ec04dc35-e89f-4b7c-a10f-84a469ec4959.sql`
+- `tests/agenda-recorrencia-2026-10-12.test.ts`
+- `tests/agenda-2026-10-01.test.ts` — configuração: WHATSAPP_BOLETO_FINGERPRINT_SECRET
+- `src/server/whatsapp-notifications.server.ts` — tabelas: whatsapp_notifications — funções: enqueueNotification, claimForProcessing, listDuePending, markSent, markSkipped, markFailed, rescheduleForQuietHours, recoverStuckReschedule, revertProcessingToPending, renewProcessingLease, recoverStuckProcessing, cancelByDedupe, cancelByEntity — configuração: WHATSAPP_DISPATCH_ENABLED
+- `src/server/whatsapp-notification-gates.server.ts` — tabelas: whatsapp_links, whatsapp_notification_preferences, profiles, whatsapp_messages — funções: isChannelOptedIn, getPreferences, isCategoryEnabled, getUserTimezone, hourInTimezone, isQuietHour, nextAllowedAfterQuietHours, hasOpenSessionWindow, canDispatch
+- `src/server/whatsapp-notification-freshness.ts` — funções: isNotificationStale
+- `src/server/whatsapp-notification-attempts.server.ts` — RPC: whatsapp_attempt_finalize_accepted_atomic, whatsapp_attempt_finalize_rejected_atomic, whatsapp_attempt_finalize_ambiguous_atomic, whatsapp_attempt_reconcile_callback_atomic, whatsapp_notification_recover_with_attempt_atomic — funções: finalizeAttemptAccepted, finalizeAttemptRejected, finalizeAttemptAmbiguous, reconcileAttemptFromCallback, recoverNotificationWithAttempt
+- `src/server/whatsapp-meta-transport.server.ts` — funções: createMetaWhatsAppNotificationTransport, parseJsonSafe, extractProviderMessageId, extractMetaError, categorizeStatus — configuração: WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN
+- `src/server/whatsapp-meta-templates-catalog.server.ts` — tabelas: whatsapp_meta_templates — funções: buildServiceRoleCatalogLoader, loadCanonicalForNotificationKey
+- `src/server/whatsapp-meta-template-sync.server.ts` — funções: syncRemoteTemplates — configuração: WHATSAPP_META_MGMT_ENABLED
+- `src/server/agenda.server.ts` — tabelas: agenda_items, contas_a_pagar, cartoes, recorrencias — funções: assertSourceOwned, createAgendaItem, getAgendaItem, updateAgendaItem, setAgendaStatus, listAgenda, listActivePage, findAgendaByTitle, resolveFinancialSource, financialAvisoAt, computeNextAviso, syncAgendaNotification, revalidateAgendaForDispatch, itemWhenLabel
+- `src/server/agenda-confirm-token.server.ts` — funções: signCancel, verifyCancel — configuração: WHATSAPP_BOLETO_FINGERPRINT_SECRET
+- `src/server/whatsapp-meta-template-submission.server.ts` — tabelas: whatsapp_meta_templates — funções: submitTemplateToMeta — configuração: WHATSAPP_META_SUBMISSION_ENABLED, WHATSAPP_ACCESS_TOKEN
+- `src/server/whatsapp-meta-template-placeholders.server.ts` — funções: validateDatePlaceholder, sanitizeLabelPlaceholder, resolveAndSanitizePlaceholders
+- `src/server/whatsapp-meta-template-mapping.server.ts` — funções: resolveAllowedMapping, isAllowedNotificationKey, isAllowedMetaName, listAllowedEntries
+- `src/server/whatsapp-meta-template-management.server.ts` — funções: buildMessageTemplatesUrl, deleteRemoteTemplate, sendRemoteMessage, computeTemplateFingerprint, prepareSubmissionPayload, prepareDryRun, listRemoteTemplates, fetchRemoteTemplateByName — configuração: WHATSAPP_WABA_ID, WHATSAPP_BUSINESS_ACCOUNT_ID, WHATSAPP_META_MGMT_ENABLED, WHATSAPP_META_SUBMISSION_ENABLED, WHATSAPP_ACCESS_TOKEN
+- `src/server/whatsapp-meta-status-callbacks.server.ts` — tabelas: whatsapp_notification_status_events, whatsapp_notifications — funções: buildEventKey, classifyMetaError, parseStatusesFromChangeValue, reduceProviderStatusEvents, persistStatusEvent, applyProviderStatusAggregate, createLegacyNoopAttemptReconciler, persistAndApplyEvents, reconcileStatusEvents, processMetaStatusCallbacks
+- `src/server/whatsapp-messages.ts`
+- `src/server/whatsapp-mes-nomeado.ts` — funções: anoCorrenteSaoPaulo, mesLabel, detectConsultaMensalNomeada, extractPeriodoSuffix, janelaMes, detectMesNoTexto
+- `src/server/whatsapp-merchant-memory.server.ts` — tabelas: whatsapp_merchant_category_memories — funções: merchantKeyFor, logMerchantMemoryDecision, lookupMerchantMemory, recordMerchantMemory
+- `src/server/whatsapp-media-validation.server.ts` — funções: detectImageMimeFromBytes, validateDownloadedImage
+- `src/server/whatsapp-media-sanitize.server.ts` — funções: stripMediaFields
+- `src/server/whatsapp-media-attachment.ts` — funções: isDocumentAttachment
+- `src/server/whatsapp-lote-mes.server.ts` — tabelas: whatsapp_messages, contas_a_pagar, whatsapp_lote_mes_acoes — RPC: wa_lote_mes_excluir, wa_lote_mes_restaurar — funções: extrairPeriodo, detectLoteMes, handleLoteMes
+- `src/server/whatsapp-listar-cartoes.ts` — funções: isListarCartoesIntent
+- `src/server/whatsapp-link-verification.server.ts` — RPC: whatsapp_begin_link_verification, whatsapp_complete_link_verification — funções: canonicalWhatsAppPhone, createLinkToken, hashLinkToken, parseLinkConfirmation, beginWhatsAppLinkVerification, completeWhatsAppLinkVerification
+- `src/server/whatsapp-limites.server.ts` — funções: detectLimiteIntent, handleLimiteIntent
+- `src/server/whatsapp-interactive.server.ts` — funções: replyIdToTexto, buildInteractiveFromReply, extractNumberedOptions, toGraphInteractive
+- `src/server/whatsapp-income-reconciliation.ts` — funções: needsIncomeReconciliation
+- `src/server/whatsapp-graph-version.server.ts` — funções: getWhatsAppGraphVersion, buildWhatsAppGraphUrl — configuração: WHATSAPP_GRAPH_VERSION
+- `src/server/whatsapp-financial-quota-gate.server.ts` — tabelas: user_plans — funções: buildFinancialActionKey, assertFinancialActionQuotaForWhatsApp, financialQuotaBlockedReply
+- `src/server/whatsapp-financial-idempotency.server.ts` — funções: financialIdForWhatsAppMessage
+- `src/server/whatsapp-finance-brief.server.ts` — tabelas: whatsapp_messages, categorias — funções: detectFinanceBrief, equivalentMonthWindows, namedFullMonthComparison, handleFinanceBrief
+- `src/server/whatsapp-favorecidos.server.ts` — tabelas: fornecedores — funções: findFavorecidosByNome, createFavorecido, updateFavorecidoPix, findFavorecidoByPixKey, rotuloTipoPix
+- `src/server/whatsapp-faturas.server.ts` — funções: hasFaturaPeriodCue, detectFaturaIntent, handleFaturaIntent, cleanDescricaoDisplay, detectPaginationCommand, handleFaturaDetailIntent, handleFaturaPagination, resolveTargetInvoiceMonth, detectFutureFaturaIntent, isBeyondHorizon, handleFutureFaturaIntent, handleParceladoPagination
+- `src/server/whatsapp-fatura-escolha.server.ts` — tabelas: whatsapp_messages, gastos — funções: opcoesFatura, perguntaEscolhaFatura, parseEscolhaFatura, resolverCompetenciaEscolhida, tratarEscolhaFatura
+- `src/server/whatsapp-entitlement.server.ts` — tabelas: whatsapp_links — RPC: has_feature_access, can_use_whatsapp — funções: getWhatsAppEntitlement, assertWhatsAppEntitlement
+- `src/server/whatsapp-editar-antigo.server.ts` — tabelas: whatsapp_messages, contas_a_pagar, categorias — funções: detectEdicaoAntiga, detectExclusaoAntiga, detectRestauracaoAntiga, extrairFiltro, rankPorTermo, aplicarEdicao, aplicarExclusao, aplicarRestauracao, handleEdicaoAntiga
+- `src/server/whatsapp-dispatcher-outbound.server.ts` — tabelas: whatsapp_links, whatsapp_notification_templates — funções: defaultLoadTemplate, runOutboundForNotification — configuração: WHATSAPP_ENABLED, WHATSAPP_CANARY_ENABLED, WHATSAPP_DISPATCH_ENABLED, WHATSAPP_OUTBOUND_HTTP_ENABLED, WHATSAPP_PHONE_NUMBER_ID
+- `src/server/whatsapp-cycle-resolver.server.ts` — funções: calendarMonthCycleSaoPaulo, resolveCycleForPlan
+- `src/server/whatsapp-contas.server.ts` — funções: detectDueIntent, handleDueIntent, handleDuePagination
+- `src/server/whatsapp-contas-pagar.server.ts` — tabelas: contas_a_pagar — RPC: whatsapp_baixa_conta_atomic — funções: isBaixaContaSession, detectMarkAsPaidIntent, processarBaixaConta, persistirBaixa
+- `src/server/whatsapp-contas-lembretes.server.ts` — tabelas: contas_a_pagar, whatsapp_notifications — funções: gerarLembretesContasUsuario, cancelarLembretesDaConta, revalidateContaForDispatch, findRecentSentLembreteForUser, renderLembreteConta — configuração: WHATSAPP_DISPATCH_ENABLED
+- `src/server/whatsapp-contas-editar.server.ts` — tabelas: contas_a_pagar — funções: isEdicaoContaSession, detectEdicaoContaIntent, previewCancelamento, processarEdicaoConta
+- `tests/fatura-parity-whatsapp-site.test.ts`
+- `src/server/whatsapp-boleto-banco.ts` — funções: formatBancoEmissor
+- `src/server/whatsapp-beta.server.ts` — tabelas: whatsapp_beta_access — RPC: can_use_whatsapp, is_full_access — funções: canUseWhatsApp, getWhatsAppBetaStatus
+- `src/server/whatsapp-authz.server.ts` — tabelas: whatsapp_links — funções: normalizePhone, canUseWhatsAppForSender, shouldSendBlockedReply — configuração: WHATSAPP_BLOCKED_REPLY
+- `src/server/whatsapp-audio.server.ts` — funções: isWhatsAppAudioEnabled, getMaxAudioBytes, getMaxAudioSeconds, detectAudioMimeFromBytes, bucketForBytes, validateDownloadedAudio, logAudioDecision — configuração: WHATSAPP_AUDIO_ENABLED, WHATSAPP_AUDIO_MAX_BYTES, WHATSAPP_AUDIO_MAX_SECONDS, WHATSAPP_AUDIO_DISABLED_REPLY, WHATSAPP_AUDIO_UNINTELLIGIBLE_REPLY, WHATSAPP_AUDIO_UNSUPPORTED_LANGUAGE_REPLY
+- `src/server/whatsapp-audio-lote.ts` — funções: textoListaLote, analisarGastoPorVoz
+- `src/server/whatsapp-audio-duration.server.ts` — funções: bucketForDuration, measureAudioDuration — configuração: WHATSAPP_AUDIO_MAX_SECONDS, WHATSAPP_AUDIO_DURATION_UNAVAILABLE_REPLY, WHATSAPP_AUDIO_TOO_LONG_REPLY
+- `src/server/whatsapp-approved-template-resolver.server.ts` — funções: resolveApprovedTemplateForNotification, projectApprovedTemplate
+- `src/server/whatsapp-alert-preferences.server.ts` — tabelas: whatsapp_notification_preferences, whatsapp_notifications — funções: parseAlertPreference, handleAlertPreference
+- `src/server/whatsapp-agenda.server.ts` — tabelas: cartoes — funções: postCreateButtons, existingItemButtons, handleAgendaIntent
+- `src/server/whatsapp-contas-criar.server.ts` — tabelas: whatsapp_messages, contas_a_pagar — funções: isContaSession, expandRecurrenceDates, detectPayableAccountIntent, detectFrequencia, detectExplicitlyOneShot, extrairDataVencimento, parsePayableAccountMessage, processarContaAPagar, persistir
+- `src/server/whatsapp-consultas.server.ts` — tabelas: gastos, receitas, categorias, transferencias_internas, metas_financeiras, dinheiro_guardado, movimentacoes_meta, contas_a_receber, recorrencias, contas_a_pagar, limites — funções: detectConsultaIntent, handleConsulta, extractMetaTermo, groupContasRecorrentes, limitesOrcamentoReais, orcamentoNaoCriadoMsg, detectConversationalIntent, _resetConversationalCache, handleConversational, detectMenuOption, dispatchMenuOption
+- `src/server/whatsapp-consultas-especificas.server.ts` — tabelas: gastos, receitas, categorias — funções: detectConsultaEspecifica, handleConsultaEspecifica, handleCategoriaAmbiguaResponse
+- `src/server/whatsapp-comprovantes.server.ts` — tabelas: categorias, gastos — funções: isComprovanteSession, interpretarRespostaData, detectAjuste, persistirGastoComprovante, hashImageBase64, processarNovaImagem, processarRespostaImagem, podeUsarOcrComprovante, buildCategoriaListBody, resolveCategoriaPickerInput, loadCategoriasParaPicker
+- `src/server/whatsapp-cartao-messages.ts`
+- `src/server/whatsapp-cartao-flow.ts` — funções: buildCardFlowInteractive, cardFlowConfig, parseCardFlowResponse — configuração: WHATSAPP_CARD_FLOW_ID, WHATSAPP_CARD_FLOW_MODE
+- `src/server/whatsapp-cartao-cadastro.server.ts` — tabelas: whatsapp_messages — RPC: whatsapp_close_card_sessions, whatsapp_advance_card_session — funções: buscarCadastroCartaoAtivo, fecharCadastroCartao, detectarIntencaoCadastroCartao, tratarCadastroCartao
+- `src/server/whatsapp-canary-notification.server.ts` — tabelas: whatsapp_notification_templates, whatsapp_links, whatsapp_notifications, whatsapp_notification_attempts — funções: buildFirstWhatsAppCanaryNotification, createFirstWhatsAppCanaryNotification
+- `src/server/whatsapp-callback-quota-reconcile.server.ts` — funções: reconcileOutboundQuotaFromMetaStatus
+- `src/server/whatsapp-c11-gates.server.ts` — tabelas: user_plans — funções: isInboundGateOk, runInboundProductionGate, canCreateNotificationForUser
+- `src/server/whatsapp-bounded-fetch.server.ts` — funções: fetchWithTimeout, readBodyLimited, downloadWhatsappMediaBounded, isTrustedMetaUrl
+- `tests/whatsapp-2_0-free-mvp.test.ts`
+- `src/server/whatsapp-boleto-secret.server.ts` — funções: getBoletoFingerprintPepper, __setBoletoPepperForTest, __resetBoletoPepperCacheForTest — configuração: WHATSAPP_BOLETO_FINGERPRINT_SECRET
+- `tests/whatsapp-1_3-proactive-alerts.test.ts`
+- `src/server/whatsapp-boleto-parser.ts` — funções: mascararCodigo, tryParseBoleto, detectBoletoFromText, _buildBoletoCobrancaForTest, _buildBoletoArrecadForTest
+- `tests/whatsapp-1_3-planning.test.ts`
+- `src/server/whatsapp-boleto-ocr.server.ts` — funções: __setBoletoOcrExtractorForTests, extractBoletoFromMedia
+- `tests/whatsapp-1_2-postlaunch.test.ts`
+- `src/server/whatsapp-boleto-ocr-cache.server.ts` — funções: getCachedOcr, setCachedOcr, __resetBoletoOcrCacheForTests
+- `src/server/whatsapp-boleto-intents.server.ts` — tabelas: whatsapp_messages, contas_a_pagar — funções: isBoletoSession, isBoletoSelecaoSession, isBoletoManualSession, isAnyBoletoSession, detectBoletoIntent, processarBoleto, persistir, iniciarBoletoDeMidia, iniciarBoletoManualFallback, persistirManual
+- `tests/whatsapp-agenda-cancel-precedence-2026-10-12.test.ts`
+- `tests/whatsapp-2_0-research.test.ts` — configuração: WHATSAPP_RESEARCH_ENABLED
+- `supabase/migrations/20260509002442_905ff165-ed86-4610-9474-0aa70457a91a.sql`
+- `src/scripts/audit-whatsapp-state.ts` — tabelas: whatsapp_runtime_config, webhook_logs, whatsapp_links, whatsapp_beta_access, whatsapp_plan_quotas
+- `supabase/migrations/20260610181746_05b8cd4f-2978-4078-a4e2-6c3e87678923.sql`
+- `tests/whatsapp-2_0-research-runtime.test.ts` — configuração: WHATSAPP_RESEARCH_ENABLED
+- `tests/whatsapp-audio-lote-2026-10-12.test.ts`
+- `tests/whatsapp-audio-duration.test.ts` — configuração: WHATSAPP_ENABLED, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_CANARY_ENABLED, WHATSAPP_AUDIO_ENABLED, WHATSAPP_AUDIO_MAX_SECONDS, WHATSAPP_HANDLER_VERSION, WHATSAPP_BLOCKED_REPLY
+- `tests/whatsapp-agenda-template-sql.test.ts`
+- `tests/whatsapp-audio.test.ts` — configuração: WHATSAPP_AUDIO_ENABLED, WHATSAPP_ENABLED, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_CANARY_ENABLED, WHATSAPP_HANDLER_VERSION, WHATSAPP_BLOCKED_REPLY, WHATSAPP_AUDIO_MAX_BYTES
+- `tests/whatsapp-authz.test.ts` — configuração: WHATSAPP_BLOCKED_REPLY
+- `supabase/migrations/20261004150000_whatsapp_research.sql`
+- `supabase/migrations/20261004140000_whatsapp_planning_actions.sql`
+- `supabase/migrations/20261004130000_whatsapp_postlaunch_actions.sql`
+- `supabase/migrations/20261004120000_whatsapp_trust_foundation.sql`
+- `supabase/migrations/20260902201823_55217f1f-8246-43f0-aeba-ffab592c70b9.sql`
+- `supabase/migrations/20260524165743_47c294a9-5c96-4d94-a138-450f9d5da729.sql`
+- `supabase/migrations/20260701022650_cdffcff3-d7cd-4e4c-a148-9c7b929af29d.sql`
+- `supabase/migrations/20260701011940_a42fb5af-15be-4a15-80d1-f24fff00eb5a.sql`
+- `supabase/migrations/20260701010438_ef35144a-90b7-42bf-9136-3777de643421.sql`
+- `supabase/migrations/20260701005146_47441295-d3a6-4510-a47e-c3f0342ea6dc.sql`
+- `supabase/migrations/20260628183012_9a4ee2d2-c40d-4c61-b64d-227cc129a097.sql`
+- `supabase/migrations/20260628173748_7b0a4f28-53ea-4eb6-98d9-e02dd9ee44d7.sql`
+- `supabase/migrations/20260628165157_19f410ed-de59-40a9-a991-6d550338d371.sql`
+- `supabase/migrations/20260628032234_65f679f2-4c1a-43f0-b057-28e69636ab07.sql`
+- `supabase/migrations/20260628032152_e73c6956-17dc-4e88-8e1f-3c76cecbd923.sql`
+- `supabase/migrations/20260628000252_d746ba5e-01cf-4bdb-842c-a5998e3038c6.sql`
+- `supabase/migrations/20260627235317_6156ded2-67ed-4a29-8d60-dadf90d7abaa.sql`
+- `supabase/migrations/20260627224256_0676b1e0-f971-4d21-b6d5-2183ce09b0d6.sql`
+- `supabase/migrations/20260627185622_644ca7d2-fb4b-446b-ade2-17d5ce0544ad.sql`
+- `supabase/migrations/20260627184257_878ea89f-ca31-4f4b-917b-2c440ec252f6.sql`
+- `supabase/migrations/20260626015346_5d18f5d4-d2d8-4bcf-bb7b-3fcd1d289407.sql`
+- `supabase/migrations/20260621022227_15998132-3c9d-4d4a-8190-0c230d067387.sql`
+- `supabase/migrations/20260619011547_ba155e52-0d02-4eb4-8f67-a7441b07dfe3.sql`
+- `supabase/migrations/20260611013712_f0fe70d9-907a-45c2-992b-c17658d4cd81.sql`
+- `supabase/migrations/20260717164001_1285e74a-ec38-48f5-b9da-a68c2bfdaddb.sql`
+- `supabase/migrations/20260714225854_fa74f077-cb2c-48be-9858-897ccd5ce5b1.sql`
+- `supabase/migrations/20260713234931_6963cba4-7125-415d-b11a-c3103686b696.sql`
+- `supabase/migrations/20260712211535_8c2b77d0-c11e-45db-8d2c-fc734bf5f14f.sql`
+- `supabase/migrations/20260712210727_b5c695c0-7113-4e40-b0aa-5d0b48d48fbb.sql`
+- `supabase/migrations/20260712205454_08b5987a-cf20-46d7-a308-f2baa984ce04.sql`
+- `supabase/migrations/20260712200555_b89041a6-95d1-4c10-b169-12f216a332bd.sql`
+- `supabase/migrations/20260712192122_3a2f0c3e-b2a0-4856-8a12-7e5dcc763e2a.sql`
+- `supabase/migrations/20260712164128_94e4631b-6c52-404e-b7f7-61034d66fafe.sql`
+- `supabase/migrations/20260703011026_56cf4442-8cbc-4f72-a6f5-8d2698e43977.sql`
+- `supabase/migrations/20260702230757_7a0d11cf-f6bc-413c-b051-0cac1f3fc6eb.sql`
+- `supabase/migrations/20260701225434_4a49e17b-8b9c-40ae-aab9-d64f9b879963.sql`
+- `supabase/migrations/20260731185551_31cdbd9e-ef2f-4ba4-9825-ec9d972c3e29.sql`
+- `supabase/migrations/20260720020401_dce25c02-ee96-4a74-86f4-f39390268836.sql`
+- `supabase/migrations/20260718004803_4acf31e8-1e8a-4d12-859b-628b1ec4869e.sql`
+- `supabase/migrations/20260717193225_712a3250-a104-496b-9010-112a55d72b44.sql`
+- `supabase/migrations/20260717193002_f0632503-b38e-46e2-ad23-99eaef72d0d1.sql`
+- `supabase/migrations/20260717185501_d2108d94-c898-418a-aac6-cf2b03ab66f1.sql`
+- `supabase/migrations/20260805202047_76848252-2507-4c06-b546-dd841411767d.sql`
+- `supabase/migrations/20260805202100_whatsapp_csp_reports.sql`
+- `src/server/shopping/whatsapp-shopping.server.ts` — tabelas: receitas, gastos, recorrencias, contas_a_pagar, cartoes — funções: hojeSaoPaulo, loadFinanceReadOnly, isShoppingPilotUser, phoneHash, handleWhatsAppShopping — configuração: WHATSAPP_SHOPPING_ENABLED, WHATSAPP_SHOPPING_PILOT_USER_IDS
+- `tests/sql/whatsapp-shopping-quota/10-tests.sql`
+- `tests/sql/whatsapp-shopping-quota/00-stub.sql`
+- `tests/sql/whatsapp/10-undo-fixture.sql`
+- `tests/sql/whatsapp/00-reply-fixture.sql`
+- `tests/sql/gastos-soft-delete-f2/10-tests.sql`
+- `src/routes/agenda.tsx`
+- `src/routes/admin_.whatsapp-runtime.tsx` — configuração: WHATSAPP_DISPATCH_ENABLED, WHATSAPP_OUTBOUND_HTTP_ENABLED
+- `tests/whatsapp-botoes-contexto-2026-10-12.test.ts` — configuração: WHATSAPP_BOLETO_FINGERPRINT_SECRET
+- `tests/whatsapp-boleto-wa-c10-3.test.ts`
+- `tests/whatsapp-boleto-rate-limit-3-36.test.ts` — RPC: rate_limit_hit
+- `tests/whatsapp-boleto-c10b2.test.ts` — RPC: rate_limit_hit
+- `tests/whatsapp-boleto-c10b.test.ts`
+- `tests/whatsapp-boleto-c10b-integration.test.ts` — tabelas: %PDF-1.4\n%%EOF, not a pdf at all
+- `tests/whatsapp-boleto-c10b-hardening.test.ts`
+- `tests/whatsapp-boleto-c10a.test.ts`
+- `tests/whatsapp-c11-f3b2e-optout.test.ts`
+- `tests/whatsapp-boleto-c10a-1.test.ts` — configuração: WHATSAPP_BOLETO_FINGERPRINT_SECRET
+- `tests/whatsapp-boleto-banco-emissor-c10-4.test.ts`
+- `tests/whatsapp-c11-f3b2e-callback-reconcile.test.ts`
+- `tests/whatsapp-baixa-conta-atomic-3-30.test.ts` — RPC: whatsapp_baixa_conta_atomic
+- `tests/whatsapp-c11-f3b2d-outbound-wire.test.ts`
+- `tests/whatsapp-c11-f3b2d-boleto-mutex.test.ts`
+- `tests/whatsapp-c11-f3b2c1-block5-wiring.test.ts`
+- `tests/whatsapp-c11-f3b2c1-block4-wiring.test.ts`
+- `tests/whatsapp-c81-quiet-hours-reschedule.test.ts`
+- `tests/whatsapp-c11-f3b2c1-block3-wiring.test.ts`
+- `tests/whatsapp-c11-financial-quota-gate.test.ts`
+- `tests/whatsapp-c11-f3b2c1-block2-wiring.test.ts`
+- `tests/whatsapp-c11-f4b-template-resolver.test.ts`
+- `tests/whatsapp-c11-f3b2c1-block1-wiring.test.ts`
+- `tests/whatsapp-c11-f4b-meta-management-client.test.ts` — configuração: WHATSAPP_META_MGMT_ENABLED, WHATSAPP_META_SUBMISSION_ENABLED, WHATSAPP_GRAPH_VERSION, WHATSAPP_WABA_ID, WHATSAPP_BUSINESS_ACCOUNT_ID, WHATSAPP_ACCESS_TOKEN
+- `tests/whatsapp-c11-f3b2b-notification-gate.test.ts`
+- `tests/whatsapp-c11-f4b-meta-catalog.test.ts`
+- `tests/whatsapp-c11-f3b2b-inbound-gate.test.ts`
+- `tests/whatsapp-c11-f3b3-runtime-admin.test.ts`
+- `tests/whatsapp-c11-f3b-helpers.test.ts`
+- `tests/whatsapp-c11-f3b3-quota-admin.test.ts`
+- `tests/whatsapp-c11-f22-cancellation-resolver.test.ts`
+- `tests/whatsapp-c11-f3b2e1-status-callback-wire.test.ts`
+- `tests/whatsapp-c11-f2-billing.test.ts`
+- `tests/whatsapp-c11-f3b2e1-optout-precedencia.test.ts`
+- `tests/whatsapp-busca-lancamentos-p1.test.ts`
+- `tests/whatsapp-bugfixes.test.ts`
+- `tests/whatsapp-c92-dispatch-eligibility-backoff.test.ts`
+- `tests/whatsapp-c92-attempts-d2a.test.ts`
+- `tests/whatsapp-c92-canary-template-e1e.test.ts`
+- `tests/whatsapp-c92-canary-notification-helper-e1e.test.ts`
+- `tests/whatsapp-c91-lifecycle.test.ts`
+- `tests/whatsapp-c92-dispatcher-hardening-d2b2.test.ts` — configuração: WHATSAPP_ENABLED, WHATSAPP_CANARY_ENABLED, WHATSAPP_DISPATCH_ENABLED, WHATSAPP_OUTBOUND_HTTP_ENABLED, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_GRAPH_VERSION
+- `tests/whatsapp-c92-dispatcher-concurrency-d2b2.test.ts`
+- `tests/whatsapp-c92-dispatcher-routes-d2b2.test.ts` — configuração: WHATSAPP_DISPATCH_ENABLED, WHATSAPP_OUTBOUND_HTTP_ENABLED, WHATSAPP_DISPATCHER_SECRET, WHATSAPP_ENABLED, WHATSAPP_CANARY_ENABLED, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID
+- `tests/whatsapp-c92-dispatcher-wiring-d2b2.test.ts`
+- `tests/whatsapp-c92-meta-status-callbacks.test.ts`
+- `tests/sql/whatsapp-lote-mes/10-tests.sql`
+- `tests/sql/whatsapp-lote-mes/00-stub.sql`
+- `tests/whatsapp-c92-outbound-attempts-d1.test.ts`
+- `tests/whatsapp-c92-meta-transport-d2b1.test.ts` — configuração: WHATSAPP_ENABLED, WHATSAPP_CANARY_ENABLED, WHATSAPP_DISPATCH_ENABLED, WHATSAPP_OUTBOUND_HTTP_ENABLED, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN, WHATSAPP_CANARY_USERS
+- `tests/whatsapp-c92-ownership-strict.test.ts`
+- `tests/whatsapp-c92-processing-lease-recovery.test.ts`
+- `tests/whatsapp-c92-recovery-anti-ambiguous-e4c.test.ts`
+- `tests/whatsapp-c92-template-language-e1e.test.ts`
+- `tests/whatsapp-c92-template-loader-e3a.test.ts`
+- `tests/whatsapp-c92-transport-error-sanitizer-e4c.test.ts`
+- `tests/whatsapp-card-transition-failure.test.ts`
+- `tests/sql/pluggy/60-real-batch.sql`
+- `tests/whatsapp-consultas-especificas.test.ts`
+- `tests/whatsapp-confirmar-ajustar-cancelar.test.ts` — configuração: WHATSAPP_BOLETO_FINGERPRINT_SECRET
+- `tests/whatsapp-comprovantes.test.ts`
+- `tests/whatsapp-comprovante-data-2026-10-12.test.ts`
+- `tests/whatsapp-comprovante-categoria-manual.test.ts`
+- `tests/whatsapp-categoria-manual-gasto.test.ts`
+- `tests/whatsapp-cartoes-faturas-p1-2026-10-15.test.ts`
+- `tests/whatsapp-cartao-unico-auto-2026-10-01.test.ts` — configuração: WHATSAPP_BOLETO_FINGERPRINT_SECRET
+- `tests/whatsapp-cartao-nao-cadastrado-frase-2026-10-01.test.ts` — configuração: WHATSAPP_BOLETO_FINGERPRINT_SECRET, WHATSAPP_CARD_FLOW_ID, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID
+- `tests/whatsapp-cartao-cadastro-2026-10-01.test.ts` — configuração: WHATSAPP_BOLETO_FINGERPRINT_SECRET, WHATSAPP_CARD_FLOW_ID, WHATSAPP_CARD_FLOW_MODE
+- `tests/whatsapp-contas-lembretes-c9.test.ts`
+- `tests/whatsapp-contas-editar.test.ts`
+- `tests/whatsapp-contas-criar.test.ts`
+- `tests/whatsapp-contas-adiar-3-31.test.ts`
+- `tests/whatsapp-consultas.test.ts`
+- `tests/whatsapp-contas-pagar.test.ts`
+- `tests/whatsapp-contas-pagar-preserve-name.test.ts`
+- `tests/whatsapp-contas-pagar-data.test.ts`
+- `tests/whatsapp-contas-receber-consulta.test.ts`
+- `tests/whatsapp-contas-vencimento-dia-n.test.ts`
+- `tests/whatsapp-contas.test.ts`
+- `src/components/AvisoWhatsAppBanner.tsx` — funções: AvisoWhatsAppBanner
+- `src/routes/api/public.whatsapp.expense.ts` — tabelas: whatsapp_messages — configuração: WHATSAPP_HANDLER_VERSION, WHATSAPP_BLOCKED_REPLY, WHATSAPP_AUDIO_DISABLED_REPLY, WHATSAPP_AUDIO_UNINTELLIGIBLE_REPLY, WHATSAPP_AUDIO_UNSUPPORTED_LANGUAGE_REPLY, WHATSAPP_AUDIO_DURATION_UNAVAILABLE_REPLY, WHATSAPP_AUDIO_TOO_LONG_REPLY, WHATSAPP_APP_SECRET, WHATSAPP_ENABLED, WHATSAPP_VERIFY_TOKEN, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_CANARY_ENABLED, WHATSAPP_AUDIO_ENABLED
+- `src/routes/api/public.hooks.whatsapp-proactive-generate.ts` — tabelas: whatsapp_links — configuração: WHATSAPP_DISPATCHER_SECRET
+- `src/routes/api/public.hooks.whatsapp-dispatcher.ts` — tabelas: whatsapp_notification_templates — configuração: WHATSAPP_DISPATCHER_SECRET, WHATSAPP_DISPATCH_ENABLED, WHATSAPP_OUTBOUND_HTTP_ENABLED
+- `src/routes/api/public.hooks.whatsapp-contas-lembretes-generate.ts` — tabelas: whatsapp_links — configuração: WHATSAPP_DISPATCHER_SECRET
+- `src/components/AgendaTodayHint.tsx` — tabelas: agenda_items — funções: AgendaTodayHint
+- `src/lib/agenda/buckets.ts` — funções: bucketOf, countToday
+- `src/lib/agenda/datetime.ts` — funções: localParts, localToUtc, addDaysYmd, daysInMonth, ymdToIso, isoToYmd, cmpYmd, diffDaysYmd, parseWhen, resolveWhen, formatWhen
+- `src/lib/agenda/recurrence.ts` — funções: nextOccurrence, detectRecurrence, stripRecurrence
+- `src/lib/agenda/intent.ts` — funções: detectAgendaIntent, tituloFromBody
+- `src/lib/agenda.functions.ts` — tabelas: contas_a_pagar, cartoes, recorrencias
+- `tests/whatsapp-faturas-futuras.test.ts`
+- `tests/whatsapp-faturas-detalhe.test.ts`
+- `tests/whatsapp-fase-correcao-2026-09-30.test.ts`
+- `tests/whatsapp-fase-acabamento-2026-09-30.test.ts`
+- `tests/whatsapp-excluir-antigo-p1.test.ts`
+- `tests/whatsapp-estabilizacao-pacote2.test.ts`
+- `tests/whatsapp-estabilizacao-c1-c2.test.ts` — configuração: WHATSAPP_META_SUBMISSION_ENABLED, WHATSAPP_ACCESS_TOKEN
+- `tests/whatsapp-editar-antigo-selecao-lista.test.ts`
+- `tests/whatsapp-editar-antigo-p1.test.ts`
+- `tests/whatsapp-editar-antigo-interrupcao.test.ts`
+- `tests/whatsapp-conversational.test.ts`
+- `tests/whatsapp-gastos-consulta-listar.test.ts`
+- `tests/whatsapp-foundation-access-outbound.test.ts` — configuração: WHATSAPP_BOLETO_FINGERPRINT_SECRET
+- `tests/whatsapp-flow.test.ts`
+- `tests/whatsapp-financial-once.test.ts`
+- `tests/whatsapp-final-security.test.ts`
+- `tests/whatsapp-faturas.test.ts`
+- `tests/whatsapp-graph-version-unification.test.ts` — configuração: WHATSAPP_GRAPH_VERSION, WHATSAPP_ACCESS_TOKEN
+- `tests/whatsapp-gastos-soft-delete-f3.test.ts` — tabelas: gastos
+- `tests/whatsapp-gastos-por-categoria.test.ts`
+- `tests/whatsapp-hardening-b3.test.ts` — tabelas: whatsapp_messages — configuração: WHATSAPP_SESSION_AUDIT_FALLBACK, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ENABLED, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN, WHATSAPP_CANARY_ENABLED, WHATSAPP_HANDLER_VERSION, WHATSAPP_BLOCKED_REPLY
+- `tests/whatsapp-income-reconciliation.test.ts`
+- `src/routes/whatsapp.tsx` — tabelas: whatsapp_links, whatsapp_messages, gastos, contas_a_pagar — configuração: WHATSAPP_NUMERO_OFICIAL, WHATSAPP_NUMERO_OFICIAL_DISPLAY, WHATSAPP_DEEPLINK, WHATSAPP_ENABLED, WHATSAPP_VERIFY_TOKEN, WHATSAPP_REGISTER_LOCK, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_BUSINESS_ACCOUNT_ID
+- `tests/whatsapp-lote-mes-p1.test.ts`
+- `tests/whatsapp-listar-cartoes-p1-2026-10-15.test.ts`
+- `tests/whatsapp-link-token.test.ts`
+- `tests/whatsapp-limites.test.ts`
+- `tests/whatsapp-lembrete-interativo-3-38.test.ts`
+- `tests/whatsapp-merchant-memory.test.ts`
+- `tests/whatsapp-merchant-memory-evidence.test.ts`
+- `tests/whatsapp-media-blindagem.test.ts`
+- `tests/whatsapp-metas-consulta.test.ts`
+- `tests/whatsapp-mes-nomeado.test.ts`
+- `tests/whatsapp-notifications-c8.test.ts`
+- `tests/whatsapp-pipeline.test.ts`
+- `tests/whatsapp-pending-expense-session.test.ts`
+- `tests/whatsapp-parcelamento.test.ts` — configuração: WHATSAPP_RESEARCH_ENABLED
+- `tests/whatsapp-parcelamento-rpc-hardening.test.ts`
+- `tests/whatsapp-parcelamento-categoria-integracao.test.ts`
+- `tests/whatsapp-parcelamento-categoria-ack.test.ts`
+- `tests/whatsapp-parcelamento-cat-hardening.test.ts`
+- `tests/whatsapp-orcamento-consulta.test.ts`
+- `tests/whatsapp-pix-c72b.test.ts`
+- `tests/whatsapp-pix-c72a.test.ts`
+- `tests/whatsapp-pix-3-26.test.ts`
+- `tests/whatsapp-pix-3-25.test.ts`
+- `tests/whatsapp-pix-inline.test.ts`
+- `tests/whatsapp-pix-favorecidos.test.ts`
+- `tests/whatsapp-pix-consultar-favorecido.test.ts`
+- `tests/whatsapp-principal-no-write.test.ts`
+- `tests/whatsapp-query-guard.test.ts`
+- `src/components/WhatsAppExpenseDialog.tsx` — funções: WhatsAppExpenseDialog
+- `src/components/whatsapp/BetaAdminSection.tsx` — funções: BetaAdminSection
+- `src/lib/whatsappParser.ts` — funções: parseValor, parseData, cleanDescricao, parseWhatsAppExpenseMessage
+- `src/lib/whatsapp.functions.ts` — tabelas: whatsapp_links, whatsapp_messages, contas_a_pagar — RPC: whatsapp_revoke_links — configuração: WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_BUSINESS_ACCOUNT_ID, WHATSAPP_VERIFY_TOKEN, WHATSAPP_ENABLED, WHATSAPP_CANARY_ENABLED, WHATSAPP_OPT_IN_VERSION, WHATSAPP_CONSENT_REFRESH_VERSION
+- `src/lib/whatsapp-valor-resposta.ts` — funções: parseValorRespostaReais, reaisParaCentavos, parseValorRespostaCentavos
+- `src/lib/whatsapp-templates-admin.functions.ts` — tabelas: whatsapp_meta_templates
+- `src/lib/whatsapp-runtime-admin.functions.ts` — configuração: WHATSAPP_DISPATCH_ENABLED, WHATSAPP_OUTBOUND_HTTP_ENABLED, WHATSAPP_ENABLED
+- `src/lib/whatsapp-gasto-delete.ts` — tabelas: gastos — funções: deleteGastoAtivo
+- `src/lib/whatsapp-config.ts` — funções: getOfficialWhatsAppNumber, formatWhatsAppNumber, formatWhatsAppNumberShort, getOfficialWhatsAppDeepLink
+- `src/lib/whatsapp-beta.functions.ts` — tabelas: whatsapp_beta_access
+- `src/lib/whatsapp-admin.functions.ts` — tabelas: whatsapp_links, categorias — configuração: WHATSAPP_REGISTER_LOCK, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_BUSINESS_ACCOUNT_ID, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN, WHATSAPP_ENABLED, WHATSAPP_CANARY_ENABLED, WHATSAPP_REGISTER_PIN
+- `tests/whatsapp-shopping-integration.test.ts` — configuração: WHATSAPP_SHOPPING_ENABLED, WHATSAPP_SHOPPING_PILOT_USER_IDS, WHATSAPP_RESEARCH_ENABLED
+- `tests/whatsapp-shopping-followup.test.ts` — configuração: WHATSAPP_SHOPPING_ENABLED, WHATSAPP_SHOPPING_PILOT_USER_IDS
+- `tests/whatsapp-shopping-followup-dedupe.test.ts` — configuração: WHATSAPP_SHOPPING_ENABLED, WHATSAPP_SHOPPING_PILOT_USER_IDS
+- `tests/whatsapp-shopping-finance-safety.test.ts`
+- `tests/whatsapp-shopping-botoes.test.ts`
+- `tests/whatsapp-session.test.ts`
+- `tests/whatsapp-sent-audit.test.ts`
+- `tests/whatsapp-rpc-security-guard.test.ts`
+- `tests/whatsapp-restaurar-antigo-p1.test.ts`
+- `tests/whatsapp-reset.test.ts`
+- `tests/whatsapp-reply-outbox-sql.test.ts`
+- `tests/whatsapp-reply-outbox-runtime.test.ts`
+- `tests/whatsapp-reply-admin-authorization.test.ts`
+- `tests/whatsapp-recorrencias-consulta.test.ts`
+- `tests/whatsapp-receitas.test.ts`
+- `tests/whatsapp-receitas-periodo-p1.test.ts`
+- `tests/whatsapp-receitas-consulta-listar.test.ts`
+- `tests/whatsapp-receita-recorrencia-rpc.test.ts`
+- `tests/whatsapp-ux-menu-botoes-2026-10-01.test.ts` — configuração: WHATSAPP_BOLETO_FINGERPRINT_SECRET
+- `tests/whatsapp-ux-c6.test.ts`
+- `tests/whatsapp-upgrade-presentation.test.ts`
+- `tests/whatsapp-undo-soft-delete-p0.test.ts`
+- `tests/whatsapp-trust-foundation-sql.test.ts`
+- `tests/whatsapp-transferencias-consulta.test.ts`
+- `tests/whatsapp-shopping-real-fixes.test.ts`
+- `tests/whatsapp-shopping-pilot.test.ts` — configuração: WHATSAPP_SHOPPING_ENABLED, WHATSAPP_SHOPPING_PILOT_USER_IDS
+- `tests/whatsapp-shopping-mvp.test.ts`
+- `tests/whatsapp-shopping-mobile-ux.test.ts` — configuração: WHATSAPP_SHOPPING_ENABLED, WHATSAPP_SHOPPING_PILOT_USER_IDS
+- `tests/whatsapp-voice-category-suggestion.test.ts`
+- `tests/whatsapp-valor-resposta-p0-fase2.test.ts`
+- `tests/whatsapp-valor-milhar-p0.test.ts`
+- `tests/whatsapp-valor-milhar-p0-fluxo.test.ts` — configuração: WHATSAPP_BOLETO_FINGERPRINT_SECRET
+- `tests/whatsapp-validacao-final-p0.test.ts`
+- `tests/whatsapp-voice-number-normalizer.test.ts`
+- `tests/whatsapp-voice-description-cleanup.test.ts`
+- `tests/whatsapp-webhook-http.test.ts` — configuração: WHATSAPP_ENABLED, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_CANARY_ENABLED, WHATSAPP_HANDLER_VERSION, WHATSAPP_BLOCKED_REPLY
+- `tests/whatsapp-webhook-replay-3-27.test.ts`
+- `tests/_whatsapp-approved-catalog.ts` — funções: approvedCatalog
+- `tests/_whatsapp-fake.ts` — funções: merchantMemoryRows, installWhatsAppFakeMocks, setupWhatsAppFakeMocks, resetState, gastosInserts, resetCategorias, receitasInserts, recorrenciasInserts
+- `tests/_whatsapp-http-mock.ts` — funções: buildWhatsAppServerMock — configuração: WHATSAPP_HANDLER_VERSION
+- `tests/whatsapp-dispatch-revocation-final.test.ts` — teste de revogação entre leitura de template e HTTP.
