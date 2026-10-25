@@ -248,6 +248,7 @@ const RECEITA_COLS = "id, descricao, valor, data, recorrencia_id, import_batch_i
 
 type Row = Record<string, unknown>;
 function allowedFor(t: Tbl, r: Row): Field[] | string {
+  if (r.import_batch_id) return "Lançamentos importados seguem a conciliação da importação. Edite esse pelo site ou app.";
   if (t === "gastos") {
     if (r.grupo_parcelamento_id || Number(r.total_parcelas ?? 1) > 1) return "Compras parceladas mexem em todas as parcelas e na fatura. Edite essa pelo site ou app.";
     if (r.recorrencia_id) return "Gastos recorrentes seguem as regras da recorrência. Edite esse pelo site ou app.";
@@ -458,29 +459,26 @@ export async function aplicarEdicao(db: Db, userId: string, s: Snap, p: Patch, n
  * Exclusão reversível (deleted_at), com controle otimista. Nunca DELETE físico.
  * "gone" = já excluído ou inexistente; "changed" = alterado no site depois da escolha.
  */
-export async function aplicarExclusao(db: Db, userId: string, s: Snap, now: Date):
+export async function aplicarExclusao(db: Db, userId: string, s: Snap, now: Date, phone?: string, requestId?: string):
   Promise<"deleted" | "gone" | "changed" | "blocked" | "error"> {
   let cur: Row | null;
   try { cur = await readRow(db, userId, s.t, s.id); } catch { return "error"; }
   if (!cur) return "gone";
   if (String(cur.updated_at ?? "") !== s.updated_at) return "changed";
   try { if (await deleteBlock(db, userId, s.t, cur)) return "blocked"; } catch { return "error"; }
-  const patch: Record<string, unknown> = { deleted_at: now.toISOString(), updated_at: now.toISOString() };
-  if (s.t === "receitas") { patch.deleted_source = "whatsapp"; patch.deleted_reason = "exclusao_usuario"; }
-  const { data, error } = await db.from(s.t).update(patch)
-    .eq("id", s.id).eq("user_id", userId).eq("updated_at", s.updated_at).is("deleted_at", null)
-    .select("id").maybeSingle();
-  if (error) return "error";
-  if (data?.id) return "deleted";
-  try { cur = await readRow(db, userId, s.t, s.id); } catch { return "error"; }
-  return cur ? "changed" : "gone";
+  if (process.env.WHATSAPP_FINANCIAL_MUTATIONS_VERSION !== "2" || !phone || !requestId) return "blocked";
+  const { data, error } = await db.rpc("whatsapp_entry_mutate_v2", {
+    p_user_id: userId, p_phone: phone, p_table: s.t, p_id: s.id,
+    p_expected_at: s.updated_at, p_operation: "delete", p_request_id: requestId,
+  });
+  return !error && ["deleted", "gone", "changed", "blocked"].includes(data) ? data : "error";
 }
 
 /**
  * Restauração (deleted_at → NULL) com controle otimista. Não cria lançamento novo.
  * "already" = já estava ativo; "gone" = não existe/não é do usuário.
  */
-export async function aplicarRestauracao(db: Db, userId: string, s: Snap, now: Date):
+export async function aplicarRestauracao(db: Db, userId: string, s: Snap, now: Date, phone?: string, requestId?: string):
   Promise<"restored" | "already" | "gone" | "changed" | "blocked" | "error"> {
   let cur: Row | null;
   try { cur = await readDeletedRow(db, userId, s.t, s.id); } catch { return "error"; }
@@ -489,15 +487,12 @@ export async function aplicarRestauracao(db: Db, userId: string, s: Snap, now: D
   }
   if (String(cur.updated_at ?? "") !== s.updated_at) return "changed";
   try { if (await deleteBlock(db, userId, s.t, cur)) return "blocked"; } catch { return "error"; }
-  const patch: Record<string, unknown> = { deleted_at: null, updated_at: now.toISOString() };
-  if (s.t === "receitas") { patch.deleted_source = null; patch.deleted_reason = null; }
-  const { data, error } = await db.from(s.t).update(patch)
-    .eq("id", s.id).eq("user_id", userId).eq("updated_at", s.updated_at).not("deleted_at", "is", null)
-    .select("id").maybeSingle();
-  if (error) return "error";
-  if (data?.id) return "restored";
-  try { if (await readRow(db, userId, s.t, s.id)) return "already"; } catch { return "error"; }
-  return "changed";
+  if (process.env.WHATSAPP_FINANCIAL_MUTATIONS_VERSION !== "2" || !phone || !requestId) return "blocked";
+  const { data, error } = await db.rpc("whatsapp_entry_mutate_v2", {
+    p_user_id: userId, p_phone: phone, p_table: s.t, p_id: s.id,
+    p_expected_at: s.updated_at, p_operation: "restore", p_request_id: requestId,
+  });
+  return !error && ["restored", "already", "gone", "changed", "blocked"].includes(data) ? data : "error";
 }
 
 function renderRestConfirm(st: EditOldState): EditOldReply {
@@ -800,7 +795,7 @@ export async function handleEdicaoAntiga(args: {
       if (claim === "duplicate") return { resposta: "Mensagem já processada anteriormente." };
       if (claim === "error") return { resposta: "Não consegui restaurar agora. Nada foi alterado. Tente novamente." };
       const s = cur.sel!;
-      const r = await aplicarRestauracao(db, userId, s, now);
+      const r = await aplicarRestauracao(db, userId, s, now, phone, `restore:${cur.nonce}`);
       const resposta = r === "restored"
         ? `♻️ ${s.t === "gastos" ? "Gasto restaurado" : "Receita restaurada"}\n${s.descricao} — ${brl(s.valor)} — ${dateBR(s.data)}\nEle voltou para as consultas e os totais.`
         : r === "already" ? "Esse lançamento já estava ativo. Nada foi alterado."
@@ -832,7 +827,7 @@ export async function handleEdicaoAntiga(args: {
       if (claim === "duplicate") return { resposta: "Mensagem já processada anteriormente." };
       if (claim === "error") return { resposta: "Não consegui excluir agora. Nada foi alterado. Tente novamente." };
       const s = cur.sel!;
-      const r = await aplicarExclusao(db, userId, s, now);
+      const r = await aplicarExclusao(db, userId, s, now, phone, `delete:${cur.nonce}`);
       const resposta = r === "deleted"
         ? `🗑️ ${s.t === "gastos" ? "Gasto excluído" : "Receita excluída"}\n${s.descricao} — ${brl(s.valor)} — ${dateBR(s.data)}\nEle não aparece mais nas consultas e nos totais.`
         : r === "gone" ? "Esse lançamento já foi excluído ou não existe mais. Nada foi alterado."

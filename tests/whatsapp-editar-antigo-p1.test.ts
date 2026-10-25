@@ -327,3 +327,11 @@ test("cadastro normal e consultas não iniciam edição", async () => {
   expect(q.resposta).not.toContain("Qual você quer editar");
   expect(lastState()).toBeUndefined();
 });
+
+test("edição antiga de extrato é encaminhada ao site sem alterar o registro", async () => {
+  resetState({ gastos: [g({id:"imported",descricao:"Mercado",valor:15,data:"2026-10-01",import_batch_id:"batch-fixture"})] });
+  const out=await send("editar gasto mercado de outubro de 2026");
+  expect(out.resposta).toContain("importa");
+  expect((state.gastosData as any[])[0].valor).toBe(15);
+  expect((state.gastosData as any[])[0].updated_at).toBe(T0);
+});

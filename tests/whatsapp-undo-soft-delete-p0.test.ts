@@ -46,6 +46,9 @@ async function fixture(withCandidate: boolean) {
   `);
   await db.exec(await readFile(new URL("../supabase/migrations/20261004130000_whatsapp_postlaunch_actions.sql", import.meta.url), "utf8"));
   if (withCandidate) {
+    await db.exec(await readFile(new URL("./sql/whatsapp/11-f2-prerequisites.sql", import.meta.url), "utf8"));
+    await db.exec(await readFile(new URL("../docs/migrations-candidate/gastos-soft-delete-f2.sql", import.meta.url), "utf8"));
+    await db.exec(await readFile(new URL("../docs/migrations-candidate/whatsapp-entry-mutations-v2.sql", import.meta.url), "utf8"));
     await db.exec(await readFile(new URL("../docs/migrations-candidate/whatsapp-undo-soft-delete.sql", import.meta.url), "utf8"));
   }
   await db.exec(`
@@ -71,7 +74,7 @@ test("REPRODUÇÃO: RPC atual apaga de vez gasto soft-excluído e marca undone",
 
 test("candidato: gasto soft-excluído não é apagado, ação continua ativa, conta intacta", async () => {
   const db = await fixture(true);
-  await db.exec(`UPDATE gastos SET deleted_at = now() WHERE id='${G}'`);
+  await db.exec(`SET gi.gastos_soft_delete='on'; UPDATE gastos SET deleted_at = now(), deleted_by=user_id, deletion_batch_id=gen_random_uuid(), deletion_source='site' WHERE id='${G}'; SET gi.gastos_soft_delete='off'`);
   expect(await undo(db, A)).toBe("soft_deleted");
   expect(await undo(db, A)).toBe("soft_deleted"); // clique duplo / webhook repetido
   expect(await count(db, `SELECT count(*) n FROM gastos WHERE id='${G}'`)).toBe(1);
@@ -82,9 +85,9 @@ test("candidato: gasto soft-excluído não é apagado, ação continua ativa, co
 
 test("candidato: gasto ativo e restaurado continuam desfazendo como antes; replay idempotente", async () => {
   const db = await fixture(true);
-  await db.exec(`UPDATE gastos SET deleted_at = now() WHERE id='${G}'`);
+  await db.exec(`SET gi.gastos_soft_delete='on'; UPDATE gastos SET deleted_at = now(), deleted_by=user_id, deletion_batch_id=gen_random_uuid(), deletion_source='site' WHERE id='${G}'; SET gi.gastos_soft_delete='off'`);
   expect(await undo(db, A)).toBe("soft_deleted");
-  await db.exec(`UPDATE gastos SET deleted_at = NULL WHERE id='${G}'`); // restaurado
+  await db.exec(`SET gi.gastos_soft_delete='on'; UPDATE gastos SET deleted_at = NULL, deleted_by=NULL, deletion_batch_id=NULL, deletion_source=NULL WHERE id='${G}'; SET gi.gastos_soft_delete='off'`); // restaurado
   expect(await undo(db, B)).toBe("unavailable"); // outro usuário
   expect(await undo(db, A)).toBe("undone");
   expect(await undo(db, A)).toBe("already_undone");
@@ -102,10 +105,10 @@ test("candidato: série parcelada com uma parcela soft-excluída fica inteira", 
   }
   await db.exec(`INSERT INTO whatsapp_recent_actions(id,user_id,telefone,source_external_id,entity_kind,entity_id,related_id)
     VALUES ('${ACT2}','${A}','${PHONE}','wa-ficticio-2','installment','${ids[0]}','${GRP}')`);
-  await db.exec(`UPDATE gastos SET deleted_at = now() WHERE id='${ids[2]}'`);
+  await db.exec(`SET gi.gastos_soft_delete='on'; UPDATE gastos SET deleted_at = now(), deleted_by=user_id, deletion_batch_id=gen_random_uuid(), deletion_source='site' WHERE id='${ids[2]}'; SET gi.gastos_soft_delete='off'`);
   expect(await undo(db, A, ACT2)).toBe("soft_deleted");
   expect(await count(db, `SELECT count(*) n FROM gastos WHERE grupo_parcelamento_id='${GRP}'`)).toBe(3);
-  await db.exec(`UPDATE gastos SET deleted_at = NULL WHERE grupo_parcelamento_id='${GRP}'`);
+  await db.exec(`SET gi.gastos_soft_delete='on'; UPDATE gastos SET deleted_at = NULL, deleted_by=NULL, deletion_batch_id=NULL, deletion_source=NULL WHERE grupo_parcelamento_id='${GRP}'; SET gi.gastos_soft_delete='off'`);
   expect(await undo(db, A, ACT2)).toBe("undone");
   expect(await count(db, `SELECT count(*) n FROM gastos WHERE grupo_parcelamento_id='${GRP}' AND deleted_at IS NOT NULL`)).toBe(3);
   await db.close();

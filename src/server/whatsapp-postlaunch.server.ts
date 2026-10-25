@@ -288,6 +288,7 @@ export async function handlePostlaunchInput(args: {
         const guard = await undoSoftDeleteGuard(action);
         if (guard) return { resposta: guard };
       }
+      if (process.env.WHATSAPP_FINANCIAL_MUTATIONS_VERSION !== "2") return { resposta: "O desfazer está temporariamente indisponível. Nada foi alterado." };
       const { data, error } = await db.rpc("whatsapp_undo_recent_action_v2", {
         p_user_id: args.userId, p_phone: args.phone, p_action_id: action.id, p_scope: scope,
       });
