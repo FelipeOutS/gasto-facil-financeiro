@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createServer } from "node:net";
@@ -127,6 +127,27 @@ try {
   const undos=await race(`SELECT whatsapp_undo_recent_action_v2('${uid}','5511900000000','${action}')`);
   assert(undos.some(s=>s.trim()==="undone") && undos.some(s=>s.trim()==="already_undone"),"two simultaneous undos apply once");
   assert((await sql(`SELECT count(*) FROM gastos WHERE id='${expense}' AND deleted_at IS NOT NULL`)).trim()==="1","undo preserves physical row");
+  // Publication regression probe: use the actual F2 DDL/guard, not a simplified mock.
+  await sql("UPDATE gastos SET deleted_at=NULL; UPDATE whatsapp_recent_actions SET undone_at=NULL, state='active'");
+  const f2 = await readFile("docs/migrations-candidate/gastos-soft-delete-f2.sql", "utf8");
+  const guard = f2.split("-- 4) Seleção determinística")[0];
+  assert(guard.includes("CREATE TRIGGER gastos_guard_soft_delete"), "actual F2 guard extracted");
+  await writeFile(join(dir, "f2-guard.sql"), guard, "utf8"); await file(join(dir, "f2-guard.sql"));
+  let f2Blocked = false;
+  try { await sql(`SELECT whatsapp_undo_recent_action_v2('${uid}','5511900000000','${action}')`); }
+  catch (error) { f2Blocked = String(error).includes("gastos_soft_delete_fields_protected"); }
+  assert(f2Blocked, "KNOWN RELEASE BLOCKER reproduced: undo v2 incompatible with F2 guard");
+  assert((await sql(`SELECT count(*) FROM gastos WHERE id='${expense}' AND deleted_at IS NULL`)).trim()==="1", "failed undo preserves expense");
+  let deletionBlocked=false;
+  try { await sql(`UPDATE gastos SET deleted_at=now() WHERE id='${expense}'`); }
+  catch(error) { deletionBlocked=String(error).includes("gastos_soft_delete_fields_protected"); }
+  assert(deletionBlocked,"KNOWN RELEASE BLOCKER: individual deletion patch rejected by actual F2");
+  await sql(`UPDATE gastos SET descricao='Edited fixture' WHERE id='${expense}'; BEGIN; SET LOCAL gi.gastos_soft_delete='on'; UPDATE gastos SET deleted_at=now(), deleted_by=user_id, deletion_batch_id=gen_random_uuid(), deletion_source='site' WHERE id='${expense}'; COMMIT`);
+  let restoreBlocked=false;
+  try { await sql(`UPDATE gastos SET deleted_at=NULL WHERE id='${expense}'`); }
+  catch(error) { restoreBlocked=String(error).includes("gastos_soft_delete_fields_protected"); }
+  assert(restoreBlocked,"KNOWN RELEASE BLOCKER: individual restoration patch rejected by actual F2");
+  console.log("BLOCKER: successful reproduction is NOT approval of undo/F2 compatibility");
   console.log("PASS native WhatsApp concurrency complete");
 } finally {
   if (started) await run(exe("pg_ctl"), ["-D", join(dir, "data"), "-w", "stop", "-m", "immediate"]);
