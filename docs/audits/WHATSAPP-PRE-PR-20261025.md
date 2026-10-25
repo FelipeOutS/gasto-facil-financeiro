@@ -1,69 +1,72 @@
-# WHATSAPP — revisão de riscos antes do PR — 25/10/2026
+# WHATSAPP — correção dos bloqueios pré-PR — 25/10/2026
 
-**NÃO APTO PARA PR.** Este parecer substitui qualquer interpretação de aprovação dos testes do relatório anterior. A revisão é local; não houve push, merge, deploy, envio de WhatsApp, alteração de segredos ou execução no banco real.
+**APTO PARA PR — não significa APTO PARA PRODUÇÃO.** Parecer local revisado após correções; substitui o NÃO APTO do commit f6f3bf0b. Não houve push, PR, merge, deploy, SQL real, alteração de segredos, mensagem Meta ou ativação de recursos.
 
-## Bloqueios encontrados
+Branch confirmada: codex/whatsapp-finalizacao-20261025. Base: a1ea7ea283760657bc55a1e5c9d536281f977ef5. Histórico preservado: efe4b8ae, e3760885, f6f3bf0b. Novos commits locais: 2f32b3c0 (correção financeira/SQL/testes) e 2e4c62aa (dependências). O commit documental posterior aparece no log Git.
 
-1. **Desfazer v2 incompatível com F2.** `whatsapp-undo-soft-delete.sql` altera somente `gastos.deleted_at`. A candidata `gastos-soft-delete-f2.sql` exige deleted_at/deleted_by/deletion_batch_id/deletion_source coerentes e protege esses campos por trigger. O teste nativo agora aplica as seções reais 1–3 de F2 (colunas, constraints, índices e trigger) e reproduz `gastos_soft_delete_fields_protected`. Não representa homologação das RPCs completas de F2. A transação malsucedida preserva o gasto. As fixtures anteriores não continham esse contrato e produziram uma confiança indevida.
-2. **Exclusão/restauração individual também incompatíveis.** `whatsapp-editar-antigo.server.ts`, linhas 468 e 492, envia apenas deleted_at/updated_at. Reproduzidos ambos os patches contra o guard real de F2. Edição de descrição de gasto ativo segue permitida no ensaio. Não é possível afirmar ausência de regressões de gastos/receitas apenas com mocks: falta compatibilizar RPCs autorizadas, marcadores, CAS, autorizações, restauração e contratos reais de receitas. Não enfraqueci o trigger nem troquei indiscriminadamente SECURITY INVOKER por DEFINER.
-3. **Árvore de dependências inválida:** `npm ls --all --json` retorna ELSPROBLEMS. Miniflare 4.20260410.0 é exigido exatamente por @cloudflare/vite-plugin 1.32.2 e wrangler 4.82.2, mas `nitro/node_modules/env-runner` 0.1.16 pede peer ^4.20260515.0. Não é uma alteração introduzida pelo diff Seroval; ainda assim precisa de resolução e validação antes de aprovar esta entrega. Não forcei atualização global ou audit fix.
-4. `npm audit --omit=dev`: 0 críticos, 13 altos, 3 moderados e 1 baixo. Contagem de dependências/advisories, não prova de exploração. A atualização Seroval não torna toda a árvore livre de alertas.
+## Causas e correções
 
-## TRUNCATE — candidata independente
+1. **F2/desfazer v2:** o código anterior alterava só deleted_at. Agora a RPC v2 preenche os quatro marcadores F2, atualiza updated_at, usa o lock por titular do F2 e o guard original. A fonte `whatsapp` foi acrescentada à constraint de origem por candidata separada; o trigger e a constraint de coerência não foram enfraquecidos. O único corpo elevado do desfazer valida vínculo ativo, telefone, opt-in, plano, propriedade, expiração, ação, timestamps e série antes da escrita. Revalida plano e registra auditoria transacional. A assinatura legada continua INVOKER e delega ao v2 seguro, sem DELETE físico.
+2. **Excluir/restaurar individual:** a nova `whatsapp_entry_mutate_v2` substitui patches isolados em gastos e receitas. Só service_role pode executar; search_path é pg_catalog,public, relações qualificadas, owner obrigatoriamente igual ao de gastos. Locks de linha/advisory, CAS updated_at, request_id estável derivado do nonce e journal com chave única protegem concorrência e replay. Receita usa seus próprios deleted_source/deleted_reason; não recebe marcadores fictícios de gastos.
+3. **Restauração:** só a linha original, da própria conta, excluída por essa RPC, com snapshot completo ainda idêntico e até 30 dias. Não restaura exclusão de outra origem ou registro editado posteriormente; não recria linha. Journal sem grants de UPDATE/DELETE/INSERT para clientes ou service_role; inserção ocorre dentro da RPC. Não há importação de histórico nem restauração física legada.
+4. **Tipos especiais:** exclusão/restauração individual mantém bloqueio de cartões, parcelas, recorrências, bens, extratos e conta a pagar. Edição antiga de importação agora é encaminhada ao site/app. Desfazer recente mantém o contrato próprio de ação/parcelas/recorrência; histórico não associado não é apagado. Controle otimista da edição e cancelamento de conversas preservados. Nenhuma implementação Pluggy alterada.
+5. **Compatibilidade de publicação:** `WHATSAPP_FINANCIAL_MUTATIONS_VERSION` precisa ser explicitamente `2`. Ausente ou diferente, não chama as novas RPCs de exclusão/restauração/desfazer. Isso permite entregar a versão compatível desligada antes de ativar o contrato. RPC ausente retorna erro sem fallback direto. A candidata exige F2 integral e aborta atomicamente quando ausente/parcial; não instala F2 automaticamente.
+6. **Dependências:** Cloudflare 1.37.1/Miniflare 4.20260515.0 corrigem o peer do env-runner sem trocar Nitro/TanStack. Correções transitivas conservadoras e pins de segurança para Undici 7.30.1, ws 8.22.0 e Sharp 0.35.5. Happy DOM/registrator 21.0.4 corrigem escape em testes. Vite permaneceu major 7 (lock 7.3.7). npm ci e npm ls passaram. Locks npm e Bun sincronizados por migração do package-lock, sem audit fix --force.
 
-`public-revoke-truncate.sql` revoga TRUNCATE das tabelas públicas existentes para PUBLIC, anon e authenticated. Corrige defaults globais e no schema public para postgres e supabase_admin, com transação, timeouts e pós-condições. As revogações globais afetam futuras tabelas desses criadores também em outros schemas: necessário porque grants globais não são anulados por revogação apenas por schema. Não altera SELECT/INSERT/UPDATE/DELETE, RLS, dados ou service_role. A reexecução é idempotente. Se herança/ownership continuar dando acesso, aborta toda a transação; não modifica silenciosamente papéis herdados.
+## Testes executados
 
-O número 84 é o achado informado pelo titular; não reconsultei produção. O teste cria exatamente 84 tabelas em um cluster novo de PostgreSQL 17, comprova acesso anterior dos dois papéis, aplica a candidata duas vezes, testa tabelas futuras de ambos os criadores, nega TRUNCATE efetivo, preserva CRUD/linha original/service_role e comprova aborto por grant herdado. O teste usa somente loopback/porta aleatória e apaga apenas seu próprio cluster temporário.
+| Verificação | Resultado |
+|---|---|
+| npm ci, instalação limpa com lock final | exit 0; npm aplicou sua política de lifecycle scripts, com avisos de scripts não aprovados |
+| npm ls --all --json | sem problems/ELSPROBLEMS |
+| npm audit completo, incluindo dev | 0 críticos, 0 altos, 4 moderados, 2 baixos |
+| Typecheck | aprovado, inclusive após novo teste de rollout |
+| Build Vite/TanStack/Nitro | aprovado; avisos de depreciação/use client, sem falha |
+| Runner canônico isolado, concorrência 2 | 288 arquivos, 4.234 pass, 0 fail, 2 skip, 0 errors |
+| Complementos | 2 testes novos de rollout + 1 de edição importada aprovados; total único local 4.237, em 289 arquivos |
+| Reexecução após última revisão SQL | 11 testes undo + 2 rollout e 21 de edição aprovados; cenários antigos não somados novamente |
+| PostgreSQL 17 nativo descartável | F2 integral + candidatas individual/undo, reexecução idempotente e duas sessões aprovadas |
+| PostgreSQL 17 F2/F4 | candidatos reais e testes 10,20,30,40 de exclusão/reversão/paridade/rollback aprovados |
+| PostgreSQL TRUNCATE | cenário local de 84 tabelas, defaults, CRUD, service_role, herança e idempotência aprovados |
+| Miniflare/Workerd + Sharp | worker local responde ok; Sharp 0.35.5 carrega corretamente |
+| Diff | sem alteração em src/server/pluggy ou supabase/migrations; git diff --check sem erros |
 
-`public-truncate-prepost-readonly.sql` contém inventário e conferência para execução futura pelo operador autorizado. Resultado esperado: nenhum acesso efetivo desses papéis e nenhum default TRUNCATE indevido; agrupamentos sem ocorrências podem retornar zero linhas. Verificar TODOS os criadores reais além dos dois cobertos. Não foi executado remotamente.
+A suíte inclui gastos, receitas, cartões/faturas, contas, agenda, dashboard/relatórios, extratos, F3/F4, WhatsApp e Pluggy. Não se eliminou teste para aprovar. Os dois skips permanecem nos testes legados de contas. Não executados os quatro testes dependentes de serviços externos: security-has-role-bypass, whatsapp-rpc-security-guard, bens-financiamentos-v1 e connected-accounts-viewer-policy-sec-ca-01b; nem tests/e2e/Preview/celular. Não é uma declaração de homologação de produção.
 
-Fonte: https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html
+O runner nativo usa fresh cluster, loopback, senha aleatória, porta aleatória e remove apenas seu diretório temporário. Testou: gasto/receita individual, restauração, undo recente, duplicação/concorrência, outro usuário, ausência de EXECUTE, revogação, plano, registro importado, parcela/cartão bloqueados no fluxo individual, recorrência, edição posterior, rollback por erro após escrita e antes da auditoria, snapshot alterado e exclusão de outra origem. O teste que antes apenas reproduzia o erro F2 foi substituído por operações positivas com o guard real; atualização direta de marcadores continua negada. Duplicidade de mensagem Meta e cancelamento também permanecem cobertos nos testes de pipeline locais.
 
-## Diff da branch
+## Dependências e riscos restantes
 
-Base de comparação: a1ea7ea283760657bc55a1e5c9d536281f977ef5. Commits anteriores locais: efe4b8ae61457e2426aa1201d0d0b8b934732aeb e e37608852e675dd9cccf14fa9180bfe1efee3195.
+A auditoria anterior de produção tinha 17 alertas, 13 altos. A atual inclui desenvolvimento e tem seis alertas agregados, não seis explorações independentes: esbuild e sua cadeia Drizzle (moderados), plugin Cloudflare/Wrangler (baixos herdados). A triagem por pacote, versões, origem, severidade, advisory, correção e exposição está em WHATSAPP-DEPENDENCIAS-20261025.md.
 
-Package e ambos os locks mudam Seroval/seroval-plugins de 1.5.6 para 1.6.3. Sem mudança de Vite/TanStack nessa revisão. Sem arquivos Pluggy alterados, sem alterações em supabase/migrations; SQLs novos ficam em docs/migrations-candidate. Isso não elimina efeitos indiretos de dependências compartilhadas: testes financeiros/Pluggy fazem parte da reexecução. Inventário completo de caminhos desta branch acompanha este relatório em WHATSAPP-PRE-PR-ARQUIVOS-20261025.txt.
+Não bloqueiam PR sob a condição de não publicar servidores de desenvolvimento/preview/tooling para terceiros. Não houve downgrade de Drizzle nem override global de esbuild 0.x incompatível. São risco real se essas ferramentas forem expostas ou executarem fontes não confiáveis. Validar runtime Node e binários nativos no destino continua necessário. O teste local usa Node 24.19, Bun 1.4.2 e PostgreSQL 17.11.
 
-## Meta v25.0 e configuração
+## SQL e compatibilidade F2/F3/F4
 
-Código central autoriza somente v25.0 e falha fechado quando a variável está ausente/inválida. Reconsulta pública à página oficial em 25/10/2026 via HTTP retornou 200: v25 lançado em 18/02/2026, validade 29/07/2028; v26 é a versão mais recente. v25 é o alvo deliberado desta branch, não a versão mais recente. O navegador de pesquisa recebeu 429; a confirmação veio do HTML público, sem credenciais. Fonte: https://developers.facebook.com/docs/graph-api/changelog/versions/
+- `public-revoke-truncate.sql`: independente e inalterada; defaults postgres/supabase_admin e PUBLIC considerados. Sem auditoria geral refeita, sem consultar as tabelas reais. O número 84 foi reproduzido em fixture, não recontado em produção.
+- `whatsapp-v2-preflight-readonly.sql`: inventário somente leitura de colunas, triggers/owners/definições e RPCs. Requer revisão do resultado; não foi executado remotamente.
+- `whatsapp-entry-mutations-v2.sql`: candidata nova, requer F2/receitas soft-delete e owner correto; cria journal, RPC, grants mínimos e acrescenta origem whatsapp. Não habilita mês/outbox/Shopping.
+- `whatsapp-undo-soft-delete.sql`: candidata revisada, requer a anterior; assinatura v2 elevada estritamente para acessar guard F2, com autorização e auditoria. Wrapper legado protegido.
+- `gastos-soft-delete-f2.sql` e `gastos-delete-atomic-f4.sql`: implementação preservada. F3 e receitas seguem filtrando deleted_at nos leitores conforme regressões. Não aplicar F2/F4 automaticamente se o schema real divergir.
+- `whatsapp-reply-outbox.sql` e `whatsapp-agenda-templates.sql`: permanecem candidatas inativas, sem ativação nesta missão.
 
-A compatibilidade local de URL/transporte não substitui teste com WABA, permissões do token, número, mídia, callbacks e templates aprovados. Não alterei WHATSAPP_GRAPH_VERSION no servidor. Não registrar token em logs, comandos, relatórios ou screenshots.
+Hashes dos bytes locais e dos blobs Git normalizados: WHATSAPP-SQL-SHA256-20261025.md. Manifesto de caminhos: WHATSAPP-PRE-PR-ARQUIVOS-20261025.txt.
 
-## Plano coordenado — somente depois de resolver bloqueios e obter autorização
+## Implantação coordenada futura, com aprovações separadas
 
-1. **Pré-condições:** novo parecer aprovado, SHA revisado, build reproduzível e árvore de dependências válida. Conferir flags e jobs efetivos com operador; preservar outbox, Shopping, exclusão mensal, cron e disparos automáticos desligados. Não alterei nem certifiquei remotamente o estado atual desses serviços.
-2. **Segurança independente:** com aprovação SQL específica, capturar ACLs/defaults/owners e backup; executar pré-check somente leitura; aplicar apenas public-revoke-truncate.sql em transação; conferir acesso efetivo e operações CRUD legítimas depois. Se falhar, transação reverte. Não usar GRANT ALL como rollback nem restaurar TRUNCATE público. Investigar herança explicitamente.
-3. **SQL funcional:** corrigir primeiro o contrato F2/v2 e testar esquema completo descartável com concorrência, receitas, séries, edições manuais e restauração. NÃO aplicar a atual candidata undo como solução pronta. Depois de nova aprovação, migração compatível deve preceder obrigatoriamente a promoção do código que chama v2. Conferir assinatura, ACL, owners, triggers e respostas da RPC no ambiente de homologação. Não existe fallback autorizado para exclusão física antiga.
-4. **Outbox:** SQL separado, não implica ativação. Mesmo com tabelas prontas, manter código/flag/env bloqueados: commit financeiro e enqueue ainda não são atômicos. Aprovação específica futura para integração e canário. Nunca repetir entrega ambígua automaticamente.
-5. **Templates:** candidata Agenda separada cria rascunhos inativos; revisão Meta de nome/idioma/categoria/variáveis e aprovação não equivale a permitir envio. Conferir catálogo aprovado sem habilitar scheduler ou disparar mensagens.
-6. **Código e variável:** após aprovação futura de envio ao GitHub/PR e implantação, preparar release imutável; sem tráfego de saída durante a troca, configurar somente WHATSAPP_GRAPH_VERSION=v25.0 pelo painel seguro no mesmo ciclo da nova versão, reiniciar/recarregar todas as instâncias e verificar configuração efetiva sem segredos. Evitar instâncias antigas e novas emitindo simultaneamente. Não mudar versão global no painel Meta sem revisão separada. Não publicar código v2 antes do SQL corrigido.
-7. **Pós-deploy/Preview/celular:** testar autenticação, vínculo, opt-in/plano, edição/CAS, desfazer e restauração com conta/dados de homologação autorizados; validar mídia, callback duplicado/fora de ordem, template e janela. Comparar quantidades/valores e audit trail antes/depois, sem operar dados reais nesta tarefa. Envios reais exigem autorização explícita e destinatário de teste. Só depois avaliar canário manual de cada recurso; os bloqueados permanecem desligados.
-8. **Rollback:** suspender saída/recurso ao primeiro erro; preservar staging, filas e evidências. Reverter código apenas para SHA comprovadamente compatível com o schema/versão Graph suportada. Não retornar automaticamente a Graph v20 (expirada), ao undo físico, nem apagar tabelas/dados para reverter. SQL aditivo fica inativo; correção progressiva revisada. Permissões TRUNCATE continuam revogadas. Não reenviar respostas ambíguas ou reprocessar lançamentos durante rollback.
+1. **Antes:** revisar PR/SHA, locks, runtime, backup, flags e jobs efetivos. Nada desta tarefa certifica configuração remota atual. Outbox, Shopping, exclusão mensal, cron e disparos automáticos devem permanecer bloqueados. Pré-verificação SQL somente leitura com operador autorizado; comparar guards/owners reais com candidata. F2 ausente/parcial ou leitores F3 divergentes: parar e preparar a adaptação específica, sem tentar compensar com UPDATE direto.
+2. **Código compatível desligado (versão A):** após autorização futura de publicação, manter WHATSAPP_FINANCIAL_MUTATIONS_VERSION ausente/desligada em todas as instâncias. A nova versão não depende de RPC inexistente enquanto desligada. Confirmar bloqueio no Preview. Não basta o merge: evitar promoção automática pelo Lovable.
+3. **Permissões:** aprovação independente de public-revoke-truncate.sql; pré/pós-check de ACL, defaults e acesso efetivo. Abortar se herança ainda permitir TRUNCATE. Não restaurar privilégios perigosos para fazer aplicativo funcionar.
+4. **SQL funcional:** depois de validar o schema e aprovar explicitamente, F2 integral se necessária (revisão própria), depois whatsapp-entry-mutations-v2.sql, depois whatsapp-undo-soft-delete.sql. F4 só se pendente e separadamente autorizado. Conferir owner/ACL/search_path e teste de conta isolada autorizado. Não seguir a ordem antiga que omitia entry-mutations-v2.
+5. **Ativação do contrato (versão B/config):** só após SQL e Preview aprovados, autorização específica para WHATSAPP_FINANCIAL_MUTATIONS_VERSION=2. Nenhum valor foi gravado no servidor nesta missão. Verificar telefone/opt-in/plano, edição e CAS, excluir/restaurar/desfazer com dados de homologação, totais antes/depois e no celular. Sem criar registros financeiros reais aqui.
+6. **Meta:** v25.0 continua alvo deliberado. Configurar WHATSAPP_GRAPH_VERSION=v25.0 somente na janela aprovada, sem saída concorrente de instâncias antigas/novas e sem expor tokens. Validar WABA/permissões/mídia/callback em Preview/conta autorizada. Não retornar à v20 expirada em rollback. Templates são revisão/aprovação separada; rascunhos inativos não autorizam disparos.
+7. **Outbox/Shopping/mês/cron:** não fazem parte desta ativação. Continuam bloqueados; outbox ainda exige resolver atomicidade commit financeiro/enqueue antes de habilitar. Templates e eventos não autorizam ativação automática.
+8. **Depois:** conferir audit journal, counts/valores, rejeições de permissão, filas, duplicações e logs sanitizados. Homologação real/Preview/celular permanece externa e obrigatória antes de produção.
 
-Não há promoção automática executada por esta tarefa. A ordem acima é condição operacional, não garantia técnica de que um operador externo não publicará fora de ordem. GitHub/Lovable devem continuar sem promoção até nova aprovação.
+## Rollback seguro
 
-## Pendência para novo parecer
+Desligar a variável do contrato e suspender o recurso, preservando dados/journal/evidências. Reverter somente para código compatível e ainda bloqueado. Não reinstalar undo físico, não excluir tabelas/journal nem reverter marcadores em massa. Candidatas transacionais fazem rollback integral se falharem, inclusive na auditoria. Schema aditivo pode permanecer inativo. A revogação TRUNCATE permanece; nunca usar GRANT ALL como rollback. Não reenviar respostas ambíguas nem reimportar lançamentos. Alterações já autorizadas exigem análise pelo journal e restauração individual segura, não scripts genéricos.
 
-Compatibilizar exclusão/restauração/desfazer com os contratos SQL reais; resolver peer inválido e triar os alertas restantes; repetir testes completos pertinentes e ensaio de implantação antes de declarar APTO. Os testes verdes abaixo não anulam os bloqueios reproduzidos. Não consigo confirmar consumo real de créditos.
+## Limites e pendências externas
 
-## Reexecução e resultados
-
-- `npm run typecheck`: concluído sem diagnósticos (pr-ready-typecheck.log).
-- `npm run build`: concluído; avisos existentes de inputValidator depreciado e diretivas use client ignoradas, sem falha (pr-ready-build.log).
-- Runner canônico em processos isolados, TEST_CONCURRENCY=2: **288 arquivos, 4.234 aprovados, 0 falhas, 2 skips, 0 erros** (pr-ready-tests.log). Inclui WhatsApp, finanças e Pluggy. Não é suíte de integração real/E2E: excluídos security-has-role-bypass, whatsapp-rpc-security-guard, bens-financiamentos-v1, connected-accounts-viewer-policy-sec-ca-01b e tests/e2e por dependerem de ambientes/serviços externos. Os dois skips estão nos testes legados de edição de contas.
-- PostgreSQL nativo descartável, runner WhatsApp: enqueue/claim/undo com duas sessões concorrentes, callback fora de ordem e preservação física aprovados; nova sonda reproduz três incompatibilidades F2 (undo/excluir/restaurar). Exit 0 da sonda significa **reprodução confirmada**, não compatibilidade aprovada (pr-ready-native.log).
-- PostgreSQL nativo descartável, runner TRUNCATE: cenário 84 tabelas, duas aplicações, papéis e futuras tabelas, CRUD/service_role e herança aprovados (pr-ready-truncate.log).
-- `npm ls --all --json`: falhou ELSPROBLEMS conforme bloqueio acima; `npm audit --omit=dev --json`: 17 alertas. Não houve nova instalação limpa nesta rodada; usada a instalação limpa documentada na rodada anterior com o mesmo lockfile.
-- `git diff --check`: sem erros. Não foi realizada migração real ou validação com credenciais de produção.
-
-## SQL candidatos e SHA-256
-
-Os hashes abaixo identificam os bytes locais revisados. Nenhum desses arquivos foi aplicado no ambiente real. A candidata undo está **reprovada para implantação**; outbox e templates permanecem inativos.
-- docs/migrations-candidate/public-revoke-truncate.sql : 729e1e2353bb7f47008206db31ba94113a7dff096ba7230d34dcbcd661082dc2
-- docs/migrations-candidate/public-truncate-prepost-readonly.sql : b838096812f480008f083369704f49e13017f3b3bfd51089062355ae73c89c00
-- docs/migrations-candidate/whatsapp-undo-soft-delete.sql : 1491ffe4bad766c22526f2ff7d61135318f0ffb1a2d3d9421093dbfe3db06386
-- docs/migrations-candidate/whatsapp-reply-outbox.sql : 6e8dbad609621c4041eb401b8b9f8fd30344b02cf0be032d42d3ff7a603b3885
-- docs/migrations-candidate/whatsapp-agenda-templates.sql : bc27c37713175b1e7035b91192f7e0aa19bc1866f380f3dfa30e7f40f13c57db
-- docs/migrations-candidate/gastos-soft-delete-f2.sql : 0b39af976003e99ddcb20528441644fdfb2f6ed98ee3f7fa820879ba8a61dcfb
+Ainda faltam inventário real autorizado, aprovação SQL específica, Preview/celular, E2E autenticado e eventual validação Meta com destinatário de teste autorizado. A aprovação é para revisão de PR; a configuração off e estas pendências impedem afirmar pronto para ativação em produção. Não consigo confirmar consumo real de créditos ou tokens.

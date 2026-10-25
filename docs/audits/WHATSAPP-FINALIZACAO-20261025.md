@@ -1,3 +1,5 @@
+> Atualização pré-PR: bloqueios F2 e peers corrigidos nos commits 2f32b3c0 e 2e4c62aa. Consulte WHATSAPP-PRE-PR-20261025.md e o manifesto SHA-256 atual. O texto abaixo registra a rodada anterior; não autoriza produção nem ativação.
+
 # WhatsApp — auditoria, correções e homologação local (25/10/2026)
 
 ## A. Visão executiva
