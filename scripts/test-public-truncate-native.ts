@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, writeFile, appendFile, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createServer } from "node:net";
@@ -68,17 +68,34 @@ try {
     "--encoding=UTF8",
     "--locale=C",
   ]);
-  await run(exe("pg_ctl"), [
-    "-D",
-    join(dir, "data"),
-    "-o",
-    `-h 127.0.0.1 -p ${port}`,
-    "-l",
-    join(dir, "server.log"),
-    "-w",
-    "start",
-  ]);
+  // TCP only: distribution defaults may point Unix sockets at /var/run/postgresql.
+  // Write the empty setting to config, avoiding shell quoting differences on Windows.
+  await appendFile(join(dir, "data", "postgresql.conf"), "\nunix_socket_directories = ''\n");
+  try {
+    await run(exe("pg_ctl"), [
+      "-D",
+      join(dir, "data"),
+      "-o",
+      `-h 127.0.0.1 -p ${port}`,
+      "-l",
+      join(dir, "server.log"),
+      "-w",
+      "start",
+    ]);
+  } catch (error) {
+    const sanitize = (text: string) => text.split(password).join("[REDACTED]")
+      .split(dir).join("[TEST_TMP]").split(dir.replace(/\\/g, "/")).join("[TEST_TMP]").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "");
+    let log = "server.log unavailable";
+    try { log = await readFile(join(dir, "server.log"), "utf8"); } catch { /* Startup may fail before log creation. */ }
+    console.error("PostgreSQL startup server.log (sanitized):\n" + sanitize(log));
+    // A timed-out start can still leave a server alive. Stop only our fresh cluster.
+    try { await run(exe("pg_ctl"), ["-D", join(dir, "data"), "-w", "stop", "-m", "immediate"]); }
+    catch { /* Normally no server was started; preserve the original diagnostic. */ }
+    throw new Error("PostgreSQL startup failed: " + sanitize(String(error)));
+  }
   started = true;
+  assert((await sql("SHOW unix_socket_directories")).trim() === "", "Unix sockets disabled");
+  assert((await sql("SHOW listen_addresses")).trim() === "127.0.0.1", "TCP restricted to loopback");
   await file("tests/sql/public-truncate/00-fixture.sql");
   for(const role of ["anon","authenticated"]) assert((await sql(`SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind='r' AND has_table_privilege('${role}',c.oid,'TRUNCATE')`)).trim()==="84",role+" reproduces 84 vulnerable tables");
   await file("docs/migrations-candidate/public-revoke-truncate.sql");
