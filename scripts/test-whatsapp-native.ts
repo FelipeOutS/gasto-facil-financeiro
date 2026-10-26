@@ -121,6 +121,7 @@ try {
   await file("tests/sql/whatsapp/10-undo-fixture.sql");
   await file("supabase/migrations/20261004130000_whatsapp_postlaunch_actions.sql");
   await file("tests/sql/whatsapp/11-f2-prerequisites.sql");
+  await file("docs/migrations-candidate/whatsapp-v2-preflight-readonly.sql");
   let noF2=false;
   try { await file("docs/migrations-candidate/whatsapp-entry-mutations-v2.sql"); } catch(error) {noF2=String(error).includes("F2_required");}
   assert(noF2,"missing F2 aborts candidate atomically");
@@ -141,6 +142,7 @@ try {
   const changes=await race(`SET ROLE service_role; SELECT whatsapp_entry_mutate_v2('${uid}','5511900000000','gastos','${single}','${stamp}','delete','concurrent-single')`);
   assert(changes.some(x=>x.trim()==="deleted") && changes.some(x=>x.trim()==="gone"),"two individual deletions apply once");
   assert((await sql("SELECT count(*) FROM whatsapp_entry_mutations WHERE request_id='concurrent-single'")).trim()==="1","single audit record for concurrent command");
+  await file("docs/migrations-candidate/whatsapp-v2-preflight-readonly.sql");
   console.log("PASS native WhatsApp concurrency complete");
 } finally {
   if (started) await run(exe("pg_ctl"), ["-D", join(dir, "data"), "-w", "stop", "-m", "immediate"]);
