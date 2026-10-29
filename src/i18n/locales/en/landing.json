@@ -1,4 +1,56 @@
 {
+  "realMobile": {
+  "eyebrow": "The real product",
+  "intro": "Explore four Gasto Inteligente screens with examples of everyday money organization.",
+  "caption": "Real capture · responsive web · demo data",
+  "note": "Isolated environment with fictional amounts. Your view depends on your own records.",
+  "cta": "Explore plans",
+  "error": "This capture could not be loaded. Please try again.",
+  "dashboard": {
+    "label": "Mobile app",
+    "title": "Your finances at hand.",
+    "description": "See your monthly summary and reach the main tools through the app navigation.",
+    "benefits": [
+      "Income, expenses and monthly result",
+      "Quick access to new entries",
+      "Navigation to expenses, cards and Vault"
+    ],
+    "alt": "Real dashboard with demo values"
+  },
+  "metas": {
+    "label": "Goals",
+    "title": "Turn plans into achievements.",
+    "description": "Set a goal and follow how much you have saved and what remains.",
+    "benefits": [
+      "Target amount and clear progress",
+      "Reserved amounts and direct contributions",
+      "Update and track your goal"
+    ],
+    "alt": "Real Goals screen showing a sample trip at 40%"
+  },
+  "investimentos": {
+    "label": "Investments",
+    "title": "A clear view of your portfolio.",
+    "description": "Organize recorded investments and monitor values you update.",
+    "benefits": [
+      "Portfolio and invested amounts",
+      "Results calculated from recorded values",
+      "Holdings organized by investment type"
+    ],
+    "alt": "Real Investments screen with a synthetic portfolio"
+  },
+  "guardado": {
+    "label": "Savings",
+    "title": "Give your plans a place.",
+    "description": "Organize money set aside and see its distribution across registered banks.",
+    "benefits": [
+      "Total savings and reserves by bank",
+      "Purpose of each reserve",
+      "Connect reserves to goals"
+    ],
+    "alt": "Real Savings screen with demonstration reserves"
+  }
+},
   "refinement": {
   "businessAlt": "Entrepreneur working with a laptop",
   "help": "Talk to us",

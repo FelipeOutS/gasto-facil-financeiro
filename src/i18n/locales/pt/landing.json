@@ -1,4 +1,56 @@
 {
+  "realMobile": {
+  "eyebrow": "O produto de verdade",
+  "intro": "Explore quatro telas do Gasto Inteligente, com exemplos de como organizar seu dinheiro no dia a dia.",
+  "caption": "Captura real · web responsiva · dados demonstrativos",
+  "note": "Ambiente isolado com valores fictícios. As informações exibidas dependem dos seus próprios registros.",
+  "cta": "Conhecer os planos",
+  "error": "Não foi possível carregar esta captura. Tente novamente.",
+  "dashboard": {
+    "label": "Mobile e app",
+    "title": "Suas finanças na palma da mão.",
+    "description": "Veja o resumo do mês e acesse os principais controles pela navegação do aplicativo.",
+    "benefits": [
+      "Resumo de receitas, despesas e resultado do mês",
+      "Botão de acesso rápido para novos lançamentos",
+      "Navegação para gastos, cartões e Cofre"
+    ],
+    "alt": "Dashboard real do aplicativo com valores demonstrativos"
+  },
+  "metas": {
+    "label": "Metas",
+    "title": "Transforme seus planos em conquistas.",
+    "description": "Defina um objetivo e acompanhe quanto já foi acumulado e quanto ainda falta.",
+    "benefits": [
+      "Valor objetivo e progresso em uma visão clara",
+      "Valores guardados e adicionados diretamente à meta",
+      "Atualização do valor e acompanhamento do objetivo"
+    ],
+    "alt": "Tela real de Metas com uma viagem demonstrativa e progresso de 40%"
+  },
+  "investimentos": {
+    "label": "Investimentos",
+    "title": "Sua carteira em uma visão clara.",
+    "description": "Organize seus investimentos cadastrados e acompanhe os valores atualizados por você.",
+    "benefits": [
+      "Patrimônio total e valor aplicado",
+      "Resultado calculado com base nos valores cadastrados",
+      "Carteira organizada por tipo de investimento"
+    ],
+    "alt": "Tela real de Investimentos com uma carteira sintética"
+  },
+  "guardado": {
+    "label": "Guardado",
+    "title": "Dê um lugar aos seus planos.",
+    "description": "Organize os valores separados em reservas e veja a distribuição entre seus bancos cadastrados.",
+    "benefits": [
+      "Total guardado e reservas por banco",
+      "Identificação da finalidade de cada reserva",
+      "Vínculo de reservas com suas metas"
+    ],
+    "alt": "Tela real de Dinheiro guardado com reservas de demonstração"
+  }
+},
   "refinement": {
   "businessAlt": "Empreendedora trabalhando com um notebook",
   "help": "Fale com a gente",

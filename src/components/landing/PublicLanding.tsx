@@ -1,3 +1,4 @@
+import { RealMobileShowcase } from "./RealMobileShowcase";
 import { FeatureCollection } from "./LandingInteractions";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import "./landing-refinement.css";
@@ -208,7 +209,7 @@ export function PublicLanding() {
 { label: t("mercadoInteligente.eyebrow"), content: <MercadoInteligenteSection /> },
 { label: t("importacaoInteligente.eyebrow"), content: <ImportacaoInteligenteSection /> }]} />
 <div className="gi-enterprise"><EmpresaInteligenteSection /><AudienceStrip /></div>
-<ProductDemos />
+<RealMobileShowcase />
 <div id="como-funciona"><HowItWorks /></div>
 <BanksStrip />
 <Plans />

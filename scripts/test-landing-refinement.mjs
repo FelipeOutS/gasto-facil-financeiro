@@ -18,7 +18,7 @@ try {
   for(let y=0;y<await page.evaluate(()=>document.body.scrollHeight);y+=650){await page.evaluate(y=>scrollTo(0,y),y);await page.waitForTimeout(50)}
   await page.waitForTimeout(500);
   assert.equal(await page.locator('main details').count(),0,'No structural accordions');
-  for(const id of ['recursos','explorar-planejamento','facilite-sua-rotina','demonstracoes']) {
+  for(const id of ['recursos','explorar-planejamento','facilite-sua-rotina']) {
    const group=page.locator('#'+id); const tabs=group.getByRole('tab');
    await tabs.first().scrollIntoViewIfNeeded();
    for(let i=0;i<await tabs.count();i++){
