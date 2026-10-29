@@ -1076,5 +1076,53 @@
       "complete": "05 / Organizado",
       "reset": "Vamos de novo"
     }
+  },
+  "closing": {
+    "journey": {
+      "kicker": "Como funciona",
+      "title": "Da primeira anotação à visão do seu mês.",
+      "lead": "Você começa pelos seus registros. O Gasto Inteligente reúne as informações para acompanhar a rotina com mais clareza.",
+      "steps": [
+        {
+          "title": "Crie seu ponto de partida",
+          "text": "Cadastre sua conta e configure o perfil que combina com a sua rotina: pessoal, MEI ou empresa.",
+          "outcome": "Um espaço para suas finanças"
+        },
+        {
+          "title": "Registre o que acontece",
+          "text": "Adicione receitas e gastos. Organize contas e cartões conforme os recursos do seu plano.",
+          "outcome": "Seu dia a dia, organizado"
+        },
+        {
+          "title": "Veja o mês com clareza",
+          "text": "Consulte seu resumo, acompanhe vencimentos e compare o que entra com o que sai.",
+          "outcome": "Informação para suas decisões"
+        }
+      ],
+      "next": "Comece com seus próprios registros. Evolua no seu ritmo.",
+      "cta": "Criar minha conta"
+    },
+    "faq": {
+      "lead": "Escolha um assunto e encontre a resposta que você precisa.",
+      "topics": "Assuntos das perguntas frequentes",
+      "groups": {
+        "start": "Primeiros passos",
+        "routine": "Suas finanças",
+        "access": "Acesso e uso",
+        "business": "MEI e empresa"
+      },
+      "more": "Sua dúvida é outra?",
+      "contactNote": "Converse com a equipe pelo nosso e-mail."
+    },
+    "cta": {
+      "kicker": "Seu próximo passo",
+      "title": "Menos informações espalhadas. Mais clareza para decidir.",
+      "lead": "Reúna seus registros e acompanhe o seu mês em um só lugar. Comece a construir uma visão que faz sentido para você.",
+      "expectation": "O botão abre o cadastro. Crie sua conta e conheça os recursos disponíveis para o seu perfil.",
+      "product": "Seu mês, à vista",
+      "demo": "Prévia do produto",
+      "alt": "Recorte do dashboard real do Gasto Inteligente, com valores sintéticos de demonstração",
+      "caption": "Recorte real do aplicativo · dados demonstrativos. Os valores dependem dos seus registros."
+    }
   }
 }

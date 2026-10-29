@@ -1076,5 +1076,53 @@
       "complete": "05 / Organized",
       "reset": "One more time"
     }
+  },
+  "closing": {
+    "journey": {
+      "kicker": "How it works",
+      "title": "From your first entry to your monthly overview.",
+      "lead": "Start with your own records. Gasto Inteligente brings the information together so you can understand your everyday finances.",
+      "steps": [
+        {
+          "title": "Set your starting point",
+          "text": "Create an account and set up the profile that fits your routine: personal, MEI or business.",
+          "outcome": "A place for your finances"
+        },
+        {
+          "title": "Record what happens",
+          "text": "Add income and expenses. Organize bills and cards with the features available in your plan.",
+          "outcome": "Your day-to-day, organized"
+        },
+        {
+          "title": "See your month clearly",
+          "text": "Check your overview, track due dates and compare money coming in with money going out.",
+          "outcome": "Information for your decisions"
+        }
+      ],
+      "next": "Start with your own records. Move at your own pace.",
+      "cta": "Create my account"
+    },
+    "faq": {
+      "lead": "Choose a topic and find the answer you need.",
+      "topics": "Frequently asked question topics",
+      "groups": {
+        "start": "Getting started",
+        "routine": "Your finances",
+        "access": "Access and use",
+        "business": "MEI and business"
+      },
+      "more": "Have another question?",
+      "contactNote": "Contact our team by email."
+    },
+    "cta": {
+      "kicker": "Your next step",
+      "title": "Less scattered information. More clarity to decide.",
+      "lead": "Bring your records together and follow your month in one place. Start building an overview that makes sense to you.",
+      "expectation": "The button opens sign-up. Create your account and explore the features available for your profile.",
+      "product": "Your month at a glance",
+      "demo": "Product preview",
+      "alt": "Crop of the real Gasto Inteligente dashboard with synthetic demonstration values",
+      "caption": "Real app screenshot crop · demonstration data. Your values depend on your records."
+    }
   }
 }

@@ -43,7 +43,7 @@ try {
   const filters=page.locator('.gi-plan-filters button');
   for(const [i,count] of [[0,5],[1,2],[2,2],[3,1]]){await filters.nth(i).click();await expect(page.locator('.gi-plan-grid > *')).toHaveCount(count)}
   await filters.first().click();
-  const faq=page.locator('.gi-faq button[data-state]').first();await faq.scrollIntoViewIfNeeded();await faq.click();await page.waitForTimeout(260);await faq.focus();await page.keyboard.press('Enter');await expect(faq).toHaveAttribute('data-state','open');
+  const faq=page.locator('.gi-clarity-faq [data-faq-item] button[data-state]').first();await faq.scrollIntoViewIfNeeded();await faq.click();await page.waitForTimeout(260);await faq.focus();await page.keyboard.press('Enter');await expect(faq).toHaveAttribute('data-state','open');
   await page.emulateMedia({reducedMotion:'reduce'});await page.waitForTimeout(150);await routine.getByRole('tab').nth(1).click();await page.waitForTimeout(50);
   assert.equal(await routine.locator('[role=tabpanel]:visible').evaluate(e=>e.getAnimations().length),0);
   await routine.getByRole('tab').first().click();await page.emulateMedia({reducedMotion:'no-preference'});
