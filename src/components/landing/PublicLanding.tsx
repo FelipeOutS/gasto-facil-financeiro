@@ -1,8 +1,20 @@
-import { useEffect, useState } from "react";
+import { FeatureCollection } from "./LandingInteractions";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import "./landing-refinement.css";
+import { LifestylePhoto } from "./LifestylePhoto";
+import routine640 from "@/assets/lifestyle/landing-para-quem-e-trabalho-remoto-cafe-640.webp";
+import routine1280 from "@/assets/lifestyle/landing-para-quem-e-trabalho-remoto-cafe-1280.webp";
+import planning640 from "@/assets/lifestyle/landing-planejamento-financeiro-casal-640.webp";
+import planning1280 from "@/assets/lifestyle/landing-planejamento-financeiro-casal-1280.webp";
+import market640 from "@/assets/lifestyle/landing-mercado-inteligente-compras-no-supermercado-640.webp";
+import market1280 from "@/assets/lifestyle/landing-mercado-inteligente-compras-no-supermercado-1280.webp";
+import receipt640 from "@/assets/lifestyle/landing-importacao-inteligente-leitura-de-recibo-640.webp";
+import receipt1280 from "@/assets/lifestyle/landing-importacao-inteligente-leitura-de-recibo-1280.webp";
+import { useEffect, useState, useId } from "react";
 import { CookiePreferencesLink } from "@/components/CookieConsentBanner";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, MotionConfig, motion, useReducedMotion } from "framer-motion";
 import {
   Wallet,
   CreditCard,
@@ -89,71 +101,20 @@ const NAV: { key: NavKey; href: string; sectionId: string }[] = [
   { key: "faq", href: "#duvidas", sectionId: "duvidas" },
 ];
 
-const SCROLL_DURATION = 800;
 const HEADER_GAP = 20;
-let activeScrollFrame: number | null = null;
-
-function getHeaderOffset() {
-  const header = document.querySelector<HTMLElement>("[data-landing-header]");
-  return (header?.offsetHeight ?? 70) + HEADER_GAP;
-}
-
 function smoothScrollToSection(sectionId: string) {
-  if (typeof window === "undefined") return;
-
-  // "inicio" representa o topo da landing — mantemos a URL limpa em "/"
-  // (sem hash) ao invés de "/#inicio".
-  const isTop = sectionId === "inicio";
-  const element = isTop ? null : document.getElementById(sectionId);
-  if (!isTop && !element) return;
-
-  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  const targetPosition = isTop
-    ? 0
-    : Math.max(0, element!.getBoundingClientRect().top + window.scrollY - getHeaderOffset());
-
-  const updateHash = () => {
-    if (!history.replaceState) return;
-    if (isTop) {
-      history.replaceState(null, "", window.location.pathname + window.location.search);
-    } else {
-      history.replaceState(null, "", `#${sectionId}`);
-    }
-  };
-
-  if (activeScrollFrame !== null) {
-    window.cancelAnimationFrame(activeScrollFrame);
-    activeScrollFrame = null;
-  }
-
-  if (reduce) {
-    window.scrollTo(0, targetPosition);
-    updateHash();
+  const element = document.getElementById(sectionId);
+  if (!element) return;
+  const panel = element.closest<HTMLElement>("[data-collection-panel]");
+  if (panel?.hidden) {
+    document.getElementById(panel.getAttribute("aria-labelledby") ?? "")?.click();
+    requestAnimationFrame(() => smoothScrollToSection(sectionId));
     return;
   }
-
-  const startPosition = window.scrollY;
-  const distance = targetPosition - startPosition;
-  let startTime: number | null = null;
-
-  const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-
-  const animation = (currentTime: number) => {
-    if (startTime === null) startTime = currentTime;
-    const elapsed = currentTime - startTime;
-    const progress = Math.min(elapsed / SCROLL_DURATION, 1);
-
-    window.scrollTo(0, startPosition + distance * easeInOutCubic(progress));
-
-    if (progress < 1) {
-      activeScrollFrame = window.requestAnimationFrame(animation);
-    } else {
-      activeScrollFrame = null;
-      updateHash();
-    }
-  };
-
-  activeScrollFrame = window.requestAnimationFrame(animation);
+  const header = document.querySelector<HTMLElement>("[data-landing-header]");
+  const top = sectionId === "inicio" ? 0 : Math.max(0, element.getBoundingClientRect().top + scrollY - (header?.offsetHeight ?? 70) - HEADER_GAP);
+  window.scrollTo({ top, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+  history.replaceState(null, "", sectionId === "inicio" ? location.pathname+location.search : "#"+sectionId);
 }
 
 function handleAnchorClick(
@@ -211,76 +172,73 @@ export function PublicLanding() {
   // Quando aterrissamos na landing com um hash (ex.: vindo de /termos via
   // /#planos), rolamos suavemente até a seção correspondente.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const hash = window.location.hash.replace(/^#/, "");
-    if (!hash) return;
-    // Espera o layout da landing montar antes de rolar.
-    const t = window.setTimeout(() => smoothScrollToSection(hash), 80);
-    return () => window.clearTimeout(t);
+    let timer: ReturnType<typeof setTimeout>;
+    const followHash = () => {
+      clearTimeout(timer);
+      const hash = window.location.hash.slice(1);
+      if (hash) timer = setTimeout(() => smoothScrollToSection(hash), 80);
+    };
+    followHash();
+    window.addEventListener('hashchange', followHash);
+    return () => { clearTimeout(timer); window.removeEventListener('hashchange', followHash); };
   }, []);
+
 
   return (
     <div
-      className="gi-landing min-h-screen bg-white text-slate-900 antialiased"
+      className="gi-landing gi-compact gi-refined min-h-screen bg-white text-slate-900 antialiased"
       style={{ colorScheme: "light" }}
     >
+      <MotionConfig reducedMotion="user">
       <Header />
       <main>
-        <Hero />
-        <WhatsAppFeatureSection />
-        <BanksStrip />
-        <TrustStrip />
-        <WhyUs />
-        <HowItWorks />
-        <ScreensTabs />
-        <DashboardShowcase />
-        <PlanejamentoSection />
-        <ContasSection />
-        <MercadoInteligenteSection />
-        <IntelligenceSection />
-        <GastoAISection />
-        <FeatureSplit
-          eyebrow={t("gastosSplit.eyebrow")}
-          title={t("gastosSplit.title")}
-          text={t("gastosSplit.text")}
-          bullets={t("gastosSplit.bullets", { returnObjects: true }) as string[]}
-          visual={<GastosMock />}
-          reverse
-        />
-        <FeatureSplit
-          eyebrow={t("cartoesSplit.eyebrow")}
-          title={t("cartoesSplit.title")}
-          text={t("cartoesSplit.text")}
-          bullets={t("cartoesSplit.bullets", { returnObjects: true }) as string[]}
-          visual={<CartaoMock />}
-        />
-        <FeatureSplit
-          eyebrow={t("contasSplit.eyebrow")}
-          title={t("contasSplit.title")}
-          text={t("contasSplit.text")}
-          bullets={t("contasSplit.bullets", { returnObjects: true }) as string[]}
-          visual={<ContasMock />}
-          reverse
-        />
-        <EmpresaInteligenteSection />
-        <MoreFeatures />
-        <ImportacaoInteligenteSection />
-        <AppExperienceSection />
-        <MultiDeviceShowcase />
-        <ForWho />
-        <TrustPoints />
-        <Plans />
-        <Testimonials />
-        <FAQ />
-        <FinalCTA />
+<div><Hero /><TrustStrip /></div>
+<FeatureCollection id="recursos" title={t("screens.title")} items={[
+{ label: t("screens.dashboard"), content: <DashboardShowcase /> },
+{ label: t("screens.gastos"), content: <FeatureSplit eyebrow={t("gastosSplit.eyebrow")} title={t("gastosSplit.title")} text={t("gastosSplit.text")} bullets={t("gastosSplit.bullets", { returnObjects: true }) as string[]} visual={<GastosMock />} /> },
+{ label: t("screens.cartoes"), content: <FeatureSplit eyebrow={t("cartoesSplit.eyebrow")} title={t("cartoesSplit.title")} text={t("cartoesSplit.text")} bullets={t("cartoesSplit.bullets", { returnObjects: true }) as string[]} visual={<CartaoMock />} /> },
+{ label: t("contasSplit.eyebrow"), content: <><ContasSection /><div className="gi-account-summary"><p>{t("contasSplit.text")}</p><ul>{(t("contasSplit.bullets", { returnObjects: true }) as string[]).map(bullet => <li key={bullet}>{bullet}</li>)}</ul></div></> }]} />
+<FeatureCollection id="explorar-planejamento" title={t("compact.planning")} items={[
+{ label: t("planningSection.eyebrow"), content: <PlanejamentoSection /> },
+{ label: t("intelligence.eyebrow"), content: <IntelligenceSection /> },
+{ label: "Gasto AI", content: <GastoAISection /> },
+{ label: t("more.eyebrow"), content: <MoreFeatures /> }]} />
+<WhatsAppFeatureSection />
+<FeatureCollection id="facilite-sua-rotina" title={t("compact.routine")} items={[
+{ label: t("mercadoInteligente.eyebrow"), content: <MercadoInteligenteSection /> },
+{ label: t("importacaoInteligente.eyebrow"), content: <ImportacaoInteligenteSection /> }]} />
+<div className="gi-enterprise"><EmpresaInteligenteSection /><AudienceStrip /></div>
+<ProductDemos />
+<div id="como-funciona"><HowItWorks /></div>
+<BanksStrip />
+<Plans />
+<TrustPoints />
+<FAQ /><FinalCTA />
       </main>
       <Footer />
       <LandingStyles />
+      </MotionConfig>
     </div>
   );
 }
 
-/* ============================== HEADER ============================== */
+
+
+
+
+function AudienceStrip() {
+  const { t } = useTranslation("landing");
+  return <div className="gi-audience-strip"><p>{t("forWho.eyebrow")}</p><ul>{(t("forWho.items", {returnObjects:true}) as string[]).map(item => <li key={item}><Check size={16} />{item}</li>)}</ul></div>;
+}
+function ProductDemos() {
+  const { t } = useTranslation("landing");
+  return <FeatureCollection id="demonstracoes" title={t("refinement.demoTitle")} className="gi-device-section" items={[
+    {label:t("appExperience.eyebrow"),content:<AppExperienceSection />},
+    ...(["metas","investimentos","guardado"] as const).map(key => ({label:t("screens."+key),content:
+      <div className="gi-demo-panel"><div><p className="gi-kicker">{t("refinement.illustration")}</p><h3>{t("screens."+key)}</h3><p>{t("screens."+key+"Desc")}</p><ul>{(t("screens.highlights."+key,{returnObjects:true}) as string[]).map(item=><li key={item}><Check size={16}/>{item}</li>)}</ul></div><div><ScreenMock keyName={key}/></div></div>
+    }))
+  ]}/>;
+}
 
 function Header() {
   const { t } = useTranslation();
@@ -354,14 +312,14 @@ function Header() {
           <button
             onClick={() => setOpen((v) => !v)}
             className="flex h-10 w-10 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100"
-            aria-label={open ? t("nav.closeMenu") : t("nav.openMenu")}
+            aria-expanded={open} aria-controls="landing-mobile-menu" aria-label={open ? t("nav.closeMenu") : t("nav.openMenu")}
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
       {open && (
-        <div className="border-t border-slate-200 bg-white lg:hidden">
+        <div id="landing-mobile-menu" className="border-t border-slate-200 bg-white lg:hidden">
           <div className="flex flex-col px-4 py-3">
             {NAV.map((n) => (
               <a
@@ -424,7 +382,7 @@ function Hero() {
       <div className="mx-auto -mt-1 grid w-full max-w-7xl grid-cols-1 items-center gap-10 px-4 pt-0 pb-16 sm:mt-0 sm:px-6 sm:pt-2 md:pt-8 md:pb-24 lg:grid-cols-12 lg:gap-12 lg:px-8">
         <div className="lg:col-span-6">
           <motion.span
-            initial={{ opacity: 0, y: 8 }}
+            initial={reduce ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
@@ -445,7 +403,7 @@ function Hero() {
             {t("hero.titleEnd")}
           </motion.h1>
           <motion.p
-            initial={{ opacity: 0, y: 12 }}
+            initial={reduce ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.15 }}
             className="mt-5 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg"
@@ -453,7 +411,7 @@ function Hero() {
             {t("hero.subtitle")}
           </motion.p>
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={reduce ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.25 }}
             className="mt-7 flex flex-col gap-3 sm:flex-row"
@@ -465,15 +423,13 @@ function Hero() {
               {t("hero.ctaPrimary")}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
-            <Link
-              to="/login"
+            <LandingAnchorLink section="planos"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
             >
-              {t("hero.ctaSecondary")}
-            </Link>
+              {t("planningSection.cta")}</LandingAnchorLink>
           </motion.div>
           <motion.ul
-            initial={{ opacity: 0 }}
+            initial={reduce ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.7, delay: 0.4 }}
             className="mt-8 flex flex-wrap gap-2"
@@ -517,7 +473,7 @@ function Hero() {
             {/* floating cards */}
             <motion.div
               animate={reduce ? undefined : { y: [0, -8, 0] }}
-              transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+              transition={{ duration: 4.5, repeat: 0, ease: "easeInOut" }}
               className="absolute -left-6 top-10 hidden w-44 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.35)] sm:block"
             >
               <div className="flex items-center gap-2">
@@ -535,7 +491,7 @@ function Hero() {
 
             <motion.div
               animate={reduce ? undefined : { y: [0, -6, 0] }}
-              transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
+              transition={{ duration: 5.5, repeat: 0, ease: "easeInOut", delay: 0.8 }}
               className="absolute -left-8 bottom-24 hidden w-44 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.35)] lg:block"
             >
               <div className="flex items-center gap-2">
@@ -555,7 +511,7 @@ function Hero() {
 
             <motion.div
               animate={reduce ? undefined : { y: [0, 8, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+              transition={{ duration: 5, repeat: 0, ease: "easeInOut", delay: 0.5 }}
               className="absolute -right-4 bottom-16 hidden w-48 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.35)] sm:block"
             >
               <div className="flex items-center gap-2">
@@ -578,7 +534,7 @@ function Hero() {
 
             <motion.div
               animate={reduce ? undefined : { y: [0, 7, 0] }}
-              transition={{ duration: 5.8, repeat: Infinity, ease: "easeInOut", delay: 1.1 }}
+              transition={{ duration: 5.8, repeat: 0, ease: "easeInOut", delay: 1.1 }}
               className="absolute -right-6 top-20 hidden w-44 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_40px_-22px_rgba(15,23,42,0.35)] lg:block"
             >
               <div className="flex items-center justify-between">
@@ -644,7 +600,7 @@ function MultiDeviceShowcase() {
             }}
           />
           <img
-            src={landingDevicesMockup}
+            loading="lazy" width={1920} height={1920} src={landingDevicesMockup}
             alt={t("multiDevice.title")}
             draggable={false}
             className="relative z-10 mx-auto w-full select-none object-contain"
@@ -1040,6 +996,7 @@ function TabletDashboardMock() {
 }
 
 function FluxoLineChart({ className, compact = false }: { className?: string; compact?: boolean }) {
+  const gradientId = useId();
   // Two series over the month: receitas (verde) e despesas (azul)
   const receitas = [20, 28, 24, 36, 42, 38, 50, 58, 54, 66, 72, 70];
   const despesas = [14, 22, 20, 30, 26, 38, 34, 44, 40, 52, 48, 58];
@@ -1070,11 +1027,11 @@ function FluxoLineChart({ className, compact = false }: { className?: string; co
       aria-hidden
     >
       <defs>
-        <linearGradient id="fluxoReceitas" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gradientId+"-receitas"} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
           <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
         </linearGradient>
-        <linearGradient id="fluxoDespesas" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gradientId+"-despesas"} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.28" />
           <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
         </linearGradient>
@@ -1094,8 +1051,8 @@ function FluxoLineChart({ className, compact = false }: { className?: string; co
           />
         );
       })}
-      <path d={areaPath(despesas)} fill="url(#fluxoDespesas)" />
-      <path d={areaPath(receitas)} fill="url(#fluxoReceitas)" />
+      <path d={areaPath(despesas)} fill={`url(#${gradientId}-despesas)`} />
+      <path d={areaPath(receitas)} fill={`url(#${gradientId}-receitas)`} />
       <path
         d={toPath(despesas)}
         fill="none"
@@ -1575,7 +1532,7 @@ function WhyUs() {
   };
 
   return (
-    <section id="recursos" className="bg-white py-20 sm:py-24">
+    <section id="beneficios" className="bg-white py-20 sm:py-24">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow={t("why.eyebrow")}
@@ -1711,7 +1668,7 @@ function ScreensTabs() {
 
   return (
     <section
-      id="como-funciona"
+      id="demonstracoes"
       className="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white py-20 sm:py-24"
     >
       {/* soft background accents */}
@@ -1739,6 +1696,7 @@ function ScreensTabs() {
               return (
                 <button
                   key={s.key}
+                  aria-pressed={isActive}
                   onClick={() => setActive(s.key)}
                   className={cn(
                     "snap-start relative inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
@@ -2793,367 +2751,12 @@ function MoreFeatures() {
 /* ============================== EMPRESA INTELIGENTE ============================== */
 
 function EmpresaInteligenteSection() {
-  const { t } = useTranslation("landing");
-  const cards = [
-    {
-      icon: Building2,
-      title: t("empresa.c1Title"),
-      text: t("empresa.c1Text"),
-      tone: "from-emerald-50 to-emerald-100/40 text-emerald-700 ring-emerald-100",
-    },
-    {
-      icon: Users,
-      title: t("empresa.c2Title"),
-      text: t("empresa.c2Text"),
-      tone: "from-violet-50 to-violet-100/40 text-violet-700 ring-violet-100",
-    },
-    {
-      icon: LineChart,
-      title: t("empresa.c3Title"),
-      text: t("empresa.c3Text"),
-      tone: "from-sky-50 to-sky-100/40 text-sky-700 ring-sky-100",
-    },
-    {
-      icon: ClipboardList,
-      title: t("empresa.c4Title"),
-      text: t("empresa.c4Text"),
-      tone: "from-amber-50 to-amber-100/40 text-amber-700 ring-amber-100",
-    },
-    {
-      icon: Activity,
-      title: t("empresa.c5Title"),
-      text: t("empresa.c5Text"),
-      tone: "from-rose-50 to-rose-100/40 text-rose-700 ring-rose-100",
-    },
-  ];
-
-  const trust = [
-    { icon: ShieldCheck, title: t("empresa.trust1Title"), text: t("empresa.trust1Text") },
-    { icon: Landmark, title: t("empresa.trust2Title"), text: t("empresa.trust2Text") },
-    { icon: Cloud, title: t("empresa.trust3Title"), text: t("empresa.trust3Text") },
-  ];
-
-  return (
-    <section id="mei-empresa" className="relative overflow-hidden bg-white py-20 sm:py-28">
-      {/* soft refined gradient accents */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-40 left-1/3 h-[30rem] w-[30rem] -translate-x-1/2 rounded-full bg-gradient-to-br from-teal-100/50 via-emerald-50/30 to-transparent blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute top-1/3 -right-32 h-[26rem] w-[26rem] rounded-full bg-gradient-to-br from-violet-100/40 via-indigo-50/20 to-transparent blur-3xl"
-      />
-      {/* very subtle dotted grid */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.18]"
-        style={{
-          backgroundImage: "radial-gradient(rgba(15,23,42,0.08) 1px, transparent 1px)",
-          backgroundSize: "26px 26px",
-          maskImage: "radial-gradient(ellipse at center, rgba(0,0,0,0.55), transparent 75%)",
-        }}
-      />
-
-      <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
-          {/* LEFT: copy + cards */}
-          <div className="lg:col-span-7">
-            <Reveal>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-700">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                {t("empresa.tag")}
-              </span>
-              <h2 className="mt-4 text-[1.9rem] font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-[2.6rem]">
-                {t("empresa.titleA")}{" "}
-                <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
-                  {t("empresa.titleHighlight")}
-                </span>
-                {t("empresa.titleB")}
-              </h2>
-              <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
-                {t("empresa.subtitle")}
-              </p>
-            </Reveal>
-
-            {/* staggered cards */}
-            <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {cards.map((c, i) => (
-                <Reveal
-                  key={c.title}
-                  delay={i * 0.06}
-                  className={cn(i === 1 && "sm:translate-y-6", i === 3 && "sm:translate-y-6")}
-                >
-                  <div className="group relative h-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.18)] backdrop-blur transition-all hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_22px_44px_-18px_rgba(15,23,42,0.28)]">
-                    <div
-                      className={cn(
-                        "mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ring-1",
-                        c.tone,
-                      )}
-                    >
-                      <c.icon className="h-5 w-5" />
-                    </div>
-                    <h3 className="text-[15px] font-semibold text-slate-900">{c.title}</h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{c.text}</p>
-                    <ArrowUpRight className="absolute right-4 top-4 h-4 w-4 text-slate-300 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-slate-600" />
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-
-            {/* trust row */}
-            <Reveal delay={0.2}>
-              <div className="mt-10 grid grid-cols-1 gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-4 backdrop-blur sm:grid-cols-3">
-                {trust.map((t) => (
-                  <div key={t.title} className="flex items-center gap-3 px-2">
-                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white">
-                      <t.icon className="h-4 w-4" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-900">{t.title}</p>
-                      <p className="truncate text-xs text-slate-500">{t.text}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Reveal>
-          </div>
-
-          {/* RIGHT: visual composition */}
-          <div className="relative lg:col-span-5">
-            <EmpresaVisual />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function EmpresaVisual() {
-  const { t } = useTranslation("landing");
-  return (
-    <div className="relative mx-auto aspect-[4/5] w-full max-w-[560px] lg:aspect-auto lg:h-[680px]">
-      {/* soft halo behind portrait */}
-      <div
-        aria-hidden
-        className="absolute inset-x-8 top-4 bottom-12 rounded-[2.5rem] bg-gradient-to-br from-teal-100/50 via-white to-violet-100/40 blur-2xl"
-      />
-
-      {/* dotted curve accent */}
-      <svg
-        aria-hidden
-        viewBox="0 0 400 600"
-        className="absolute inset-0 h-full w-full text-slate-300/70"
-        fill="none"
-      >
-        <path
-          d="M30 540 C 130 460, 280 560, 380 440"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeDasharray="2 6"
-          strokeLinecap="round"
-        />
-      </svg>
-
-      {/* portrait — large, centered, focal point */}
-      <div className="absolute left-1/2 top-2 h-[92%] w-[80%] -translate-x-1/2 overflow-hidden rounded-[2rem] border border-white/70 bg-white shadow-[0_30px_70px_-22px_rgba(15,23,42,0.32)] ring-1 ring-slate-200/60">
-        <img
-          src={empresaEntrepreneur}
-          alt="Empreendedora sorrindo enquanto trabalha no notebook"
-          loading="lazy"
-          width={1024}
-          height={1024}
-          className="h-full w-full object-cover object-top"
-        />
-        <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-white/70 to-transparent" />
-      </div>
-
-      {/* Floating: Radar — small, top-right corner (away from face) */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-        className="absolute right-0 top-6 hidden w-[170px] rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-[0_18px_40px_-18px_rgba(15,23,42,0.28)] backdrop-blur sm:block"
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-            {t("mockup.empresaFloating.radarTitle")}
-          </span>
-          <Activity className="h-3 w-3 text-slate-400" />
-        </div>
-        <ul className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
-          {[
-            { l: "Dólar", v: "5,12", up: false },
-            { l: "Euro", v: "5,58", up: true },
-            { l: "Selic", v: "10,75%", up: false },
-            { l: "IPCA", v: "4,21%", up: true },
-          ].map((r) => (
-            <li key={r.l} className="flex items-center justify-between">
-              <span className="text-slate-500">{r.l}</span>
-              <span
-                className={cn(
-                  "flex items-center gap-0.5 font-semibold",
-                  r.up ? "text-emerald-600" : "text-rose-500",
-                )}
-              >
-                {r.v}
-                {r.up ? (
-                  <ArrowUpRight className="h-2.5 w-2.5" />
-                ) : (
-                  <ArrowDownRight className="h-2.5 w-2.5" />
-                )}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </motion.div>
-
-      {/* Floating: Overview — left side, mid-height (below face area) */}
-      <motion.div
-        initial={{ opacity: 0, x: -12 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="absolute -left-2 top-[44%] w-[220px] rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-[0_18px_40px_-18px_rgba(15,23,42,0.28)] backdrop-blur"
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            {t("mockup.empresaFloating.monthSummary")}
-          </span>
-          <LayoutDashboard className="h-3.5 w-3.5 text-slate-400" />
-        </div>
-        <div className="mt-3 space-y-2 text-sm">
-          <Row
-            label={t("mockup.empresaFloating.incomeLabel")}
-            value="R$ 28.560"
-            trend="up"
-            delta="+12%"
-          />
-          <Row
-            label={t("mockup.empresaFloating.expensesLabel")}
-            value="R$ 16.230"
-            trend="down"
-            delta="-4%"
-          />
-          <div className="my-2 border-t border-dashed border-slate-200" />
-          <div className="flex items-center justify-between">
-            <span className="text-slate-600">{t("mockup.empresaFloating.balanceLabel")}</span>
-            <span className="font-bold text-emerald-600">R$ 12.330</span>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Floating: Contas a receber — right side, lower (below face) */}
-      <motion.div
-        initial={{ opacity: 0, x: 12 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: 0.18 }}
-        className="absolute -right-2 top-[62%] w-[200px] rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-[0_18px_40px_-18px_rgba(15,23,42,0.28)] backdrop-blur"
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">
-            {t("mockup.empresaFloating.toReceive")}
-          </span>
-          <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" />
-        </div>
-        <p className="mt-2 text-lg font-bold text-slate-900">R$ 14.980</p>
-        <p className="text-xs text-slate-500">{t("mockup.empresaFloating.openTitles")}</p>
-        <MiniChart color="emerald" points={[6, 9, 7, 12, 10, 14, 13, 16]} />
-      </motion.div>
-
-      {/* Floating: Pacote para Contador — bottom center, anchors composition */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: 0.28 }}
-        className="absolute left-1/2 bottom-0 w-[280px] -translate-x-1/2 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-[0_22px_50px_-18px_rgba(15,23,42,0.4)] backdrop-blur"
-      >
-        <div className="flex items-center gap-2">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
-            <ClipboardList className="h-4 w-4" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-              {t("mockup.empresaFloating.accountantPackage")}
-            </p>
-            <p className="text-sm font-semibold text-slate-900">Outubro/2025</p>
-          </div>
-          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-100">
-            {t("mockup.empresaFloating.packageReady")}
-          </span>
-        </div>
-        <p className="mt-2 text-xs leading-relaxed text-slate-500">
-          {t("mockup.empresaFloating.packageDesc")}
-        </p>
-      </motion.div>
-    </div>
-  );
-}
-
-function Row({
-  label,
-  value,
-  trend,
-  delta,
-}: {
-  label: string;
-  value: string;
-  trend: "up" | "down";
-  delta: string;
-}) {
-  const up = trend === "up";
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-slate-600">{label}</span>
-      <span className="flex items-center gap-1.5">
-        <span className="font-semibold text-slate-900">{value}</span>
-        <span
-          className={cn(
-            "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
-            up ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-600",
-          )}
-        >
-          {up ? <TrendingUp className="h-2.5 w-2.5" /> : <TrendingDown className="h-2.5 w-2.5" />}
-          {delta}
-        </span>
-      </span>
-    </div>
-  );
-}
-
-function MiniChart({ color, points }: { color: "emerald" | "violet"; points: number[] }) {
-  const w = 170;
-  const h = 36;
-  const max = Math.max(...points);
-  const min = Math.min(...points);
-  const span = Math.max(1, max - min);
-  const step = w / (points.length - 1);
-  const path = points
-    .map((p, i) => {
-      const x = i * step;
-      const y = h - ((p - min) / span) * (h - 4) - 2;
-      return `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
-    })
-    .join(" ");
-  const area = `${path} L ${w} ${h} L 0 ${h} Z`;
-  const stroke = color === "emerald" ? "#059669" : "#7c3aed";
-  const fill = color === "emerald" ? "#10b98122" : "#8b5cf622";
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="mt-2 h-9 w-full">
-      <path d={area} fill={fill} />
-      <path
-        d={path}
-        fill="none"
-        stroke={stroke}
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+ const {t}=useTranslation("landing");
+ return <section id="mei-empresa"><div className="gi-business-layout"><div>
+  <p className="gi-kicker">{t("empresa.tag")}</p><h2>{t("empresa.titleA")} {t("empresa.titleHighlight")}{t("empresa.titleB")}</h2><p className="gi-business-lead">{t("empresa.subtitle")}</p>
+  <div className="gi-business-benefits">{[1,2,3,4].map((n)=><div key={n}><span>0{n}</span><div><h3>{t("empresa.c"+n+"Title")}</h3><p>{t("empresa.c"+n+"Text")}</p></div></div>)}</div>
+  <LandingAnchorLink section="planos" className="gi-text-link">{t("planningSection.cta")}<ArrowRight size={16}/></LandingAnchorLink>
+ </div><figure className="gi-business-photo"><img src={empresaEntrepreneur} width={1024} height={1024} alt={t("refinement.businessAlt")} loading="lazy"/><figcaption><Building2 size={24}/><span>{t("empresa.c4Title")}</span></figcaption></figure></div></section>;
 }
 
 /* ============================== FOR WHO ============================== */
@@ -3169,10 +2772,12 @@ function ForWho() {
           title={t("forWho.title")}
           subtitle={t("forWho.subtitle")}
         />
-        <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="mt-10 grid items-center gap-6 lg:grid-cols-2">
+          <LifestylePhoto src={routine1280} smallSrc={routine640} alt="Mulher consultando o celular durante uma pausa no café" />
+          <div className="grid grid-cols-2 gap-3">
           {items.map((it, i) => (
             <Reveal key={it} delay={i * 0.04}>
-              <div className="flex h-full items-center gap-2.5 rounded-2xl border border-slate-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_18px_40px_-22px_rgba(15,23,42,0.22)]">
+              <div className="flex h-full items-center gap-2.5 rounded-2xl border border-slate-200 bg-white p-4 gi-photo-benefit">
                 <span className="grid h-8 w-8 place-items-center rounded-full bg-emerald-50 text-emerald-700">
                   <Check className="h-4 w-4" />
                 </span>
@@ -3180,6 +2785,7 @@ function ForWho() {
               </div>
             </Reveal>
           ))}
+          </div>
         </div>
       </div>
     </section>
@@ -3541,6 +3147,8 @@ function PlanCardItem({
 
 function Plans() {
   const { t } = useTranslation("landing");
+  const [audience, setAudience] = useState("all");
+  const visiblePlans = COMMERCIAL_PLANS.filter(plan => audience === "all" || (audience === "pessoal" ? plan.tier.startsWith("pessoal") : audience === "mei" ? plan.tier.startsWith("mei") : plan.tier === "empresa"));
   return (
     <section
       id="planos"
@@ -3562,26 +3170,16 @@ function Plans() {
           center
         />
 
-        {/* audience chips (decorative legend) */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700 ring-1 ring-blue-100">
-            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> {t("plans.audiencePF")}
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 ring-1 ring-emerald-100">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> {t("plans.audienceMEI")}
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 font-semibold text-violet-700 ring-1 ring-violet-100">
-            <span className="h-1.5 w-1.5 rounded-full bg-violet-500" /> {t("plans.audienceEmpresa")}
-          </span>
+        <div className="gi-plan-filters" role="group" aria-label={t("refinement.planFilter")}>
+          {(["all", "pessoal", "mei", "empresa"] as const).map(key => <button type="button" key={key} aria-pressed={audience===key} onClick={() => setAudience(key)}>{key === "all" ? t("refinement.allPlans") : key === "pessoal" ? t("plans.audiencePF") : key === "mei" ? t("plans.audienceMEI") : t("plans.audienceEmpresa")}</button>)}
         </div>
-
         <p className="mx-auto mt-6 max-w-2xl text-center text-sm font-medium text-slate-600">
           {t("plans.freeOrPaid")}
         </p>
 
-        <div className="mx-auto mt-10 grid max-w-md grid-cols-1 items-stretch gap-5 sm:max-w-3xl sm:grid-cols-2 sm:gap-6 lg:max-w-6xl lg:grid-cols-3 xl:max-w-[1380px] xl:grid-cols-5 xl:gap-4 2xl:gap-5">
-          <FreeAdsPlanCard />
-          {COMMERCIAL_PLANS.map((p, i) => (
+        <div className="gi-plan-grid" data-filter={audience} aria-live="polite">
+          {(audience === "all" || audience === "pessoal") && <FreeAdsPlanCard />}
+          {visiblePlans.map((p, i) => (
             <PlanCardItem key={p.tier} plan={p} index={i + 1} />
           ))}
         </div>
@@ -3636,345 +3234,35 @@ const BANKS: { name: string; src: string; scale?: number }[] = [
 
 function BanksStrip() {
   const { t } = useTranslation("landing");
-  const explainers = [
-    {
-      icon: CreditCard,
-      tone: "from-blue-500 to-sky-500",
-      title: t("banks.e1Title"),
-      text: t("banks.e1Text"),
-    },
-    {
-      icon: Receipt,
-      tone: "from-emerald-500 to-teal-500",
-      title: t("banks.e2Title"),
-      text: t("banks.e2Text"),
-    },
-    {
-      icon: PiggyBank,
-      tone: "from-violet-500 to-fuchsia-500",
-      title: t("banks.e3Title"),
-      text: t("banks.e3Text"),
-    },
-  ];
-
-  return (
-    <section className="relative overflow-hidden border-y border-slate-100 bg-gradient-to-b from-white via-slate-50/40 to-white py-16 sm:py-20">
-      {/* subtle decorative dots */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-0 opacity-[0.5]"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 1px 1px, rgba(15,23,42,0.05) 1px, transparent 0)",
-          backgroundSize: "26px 26px",
-          maskImage: "radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, transparent 75%)",
-          WebkitMaskImage:
-            "radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, transparent 75%)",
-        }}
-      />
-      <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <Eyebrow>{t("banks.eyebrow")}</Eyebrow>
-          <h2 className="mx-auto mt-3 max-w-2xl text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-            {t("banks.title")}
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-500 sm:text-base">
-            {t("banks.subtitle")}
-          </p>
-        </div>
-
-        {/* Logos marquee — single line, infinite loop */}
-        <div
-          className="banks-marquee relative mt-12 overflow-hidden"
-          style={{
-            maskImage: "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)",
-            WebkitMaskImage:
-              "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)",
-          }}
-        >
-          <div className="banks-marquee-track flex gap-3 sm:gap-4">
-            {[...BANKS, ...BANKS].map((b, i) => (
-              <div
-                key={`${b.name}-${i}`}
-                className="flex h-20 w-36 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.25)] sm:w-40"
-                title={b.name}
-                aria-hidden={i >= BANKS.length}
-              >
-                <img
-                  src={b.src}
-                  alt={b.name}
-                  loading="lazy"
-                  draggable={false}
-                  style={{ transform: `scale(${b.scale ?? 1})` }}
-                  className="h-8 w-full object-contain"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Explanatory feature cards */}
-        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {explainers.map((e, i) => (
-            <Reveal key={e.title} delay={i * 0.05}>
-              <div className="group flex h-full items-start gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_28px_-22px_rgba(15,23,42,0.22)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-22px_rgba(15,23,42,0.28)]">
-                <span
-                  className={cn(
-                    "grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-white shadow-[0_10px_24px_-12px_rgba(59,130,246,0.45)] transition-transform group-hover:scale-105",
-                    e.tone,
-                  )}
-                >
-                  <e.icon className="h-5 w-5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-900">{e.title}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-600">{e.text}</p>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-
-        <p className="mt-8 text-center text-[11px] uppercase tracking-wider text-slate-400">
-          {t("banks.disclaimer")}
-        </p>
-      </div>
-    </section>
-  );
+  return <section id="bancos" className="gi-banks"><div className="gi-banks-inner">
+    <div><p className="gi-kicker">{t("refinement.manualTag")}</p><h2>{t("banks.title")}</h2><p>{t("banks.subtitle")}</p></div>
+    <div className="gi-bank-logos" aria-label={t("refinement.bankExamples")}>{BANKS.map(bank => <div key={bank.name}><img src={bank.src} alt={bank.name} width={112} height={40} loading="lazy" /></div>)}</div>
+    <div className="gi-bank-note"><ShieldCheck size={20}/><p>{t("refinement.bankNote")}</p></div>
+    <p className="gi-bank-legal">{t("banks.disclaimer")}</p>
+  </div></section>;
 }
 
-/* ============================== TESTIMONIALS ============================== */
-
-const TESTIMONIAL_META = [
-  { initials: "CR", color: "from-blue-500 to-sky-500", highlight: false },
-  { initials: "RM", color: "from-emerald-500 to-teal-500", highlight: true },
-  { initials: "JA", color: "from-violet-500 to-fuchsia-500", highlight: false },
-];
-
-function Testimonials() {
-  const { t } = useTranslation("landing");
-  const items = t("testimonials.items", { returnObjects: true }) as Array<{
-    name: string;
-    role: string;
-    text: string;
-  }>;
-  return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-slate-50/70 to-white py-24 sm:py-28">
-      {/* Decorative background */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute left-1/2 top-0 h-[480px] w-[920px] -translate-x-1/2 rounded-full bg-gradient-to-br from-blue-100/50 via-transparent to-emerald-100/40 blur-3xl" />
-        <div
-          className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage: "radial-gradient(circle at 1px 1px, rgb(15 23 42) 1px, transparent 0)",
-            backgroundSize: "28px 28px",
-          }}
-        />
-      </div>
-
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700 shadow-sm backdrop-blur">
-            <span className="flex items-center gap-0.5 text-amber-400">
-              {Array.from({ length: 5 }).map((_, k) => (
-                <Star key={k} className="h-3 w-3 fill-current" />
-              ))}
-            </span>
-            <span>{t("testimonials.rating")}</span>
-          </span>
-          <h2 className="mt-5 text-balance text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-[2.7rem] md:leading-[1.1]">
-            {t("testimonials.titleA")}{" "}
-            <span className="bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
-              {t("testimonials.titleHighlight")}
-            </span>
-            {t("testimonials.titleB")}
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-pretty text-base text-slate-600 sm:text-lg">
-            {t("testimonials.subtitle")}
-          </p>
-        </div>
-
-        <div className="mx-auto mt-14 grid max-w-2xl grid-cols-1 gap-6 md:max-w-3xl md:gap-7 lg:max-w-none lg:grid-cols-3">
-          {items.map((item, i) => {
-            const meta = TESTIMONIAL_META[i] ?? TESTIMONIAL_META[0];
-            const tt = { ...item, ...meta };
-            return (
-              <Reveal key={tt.name} delay={i * 0.08}>
-                <figure
-                  className={cn(
-                    "group relative flex h-full flex-col overflow-hidden rounded-3xl p-7 sm:p-8 md:p-9 lg:p-8 transition-all duration-300",
-                    tt.highlight
-                      ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white shadow-[0_30px_70px_-30px_rgba(15,23,42,0.55)] ring-1 ring-white/10 lg:-translate-y-2 hover:-translate-y-3"
-                      : "border border-slate-200/80 bg-white/90 backdrop-blur shadow-[0_18px_44px_-26px_rgba(15,23,42,0.22)] hover:-translate-y-1 hover:shadow-[0_28px_60px_-26px_rgba(15,23,42,0.32)] hover:border-slate-300",
-                  )}
-                >
-                  {tt.highlight && (
-                    <>
-                      <div
-                        aria-hidden
-                        className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-400/30 to-blue-500/20 blur-2xl"
-                      />
-                      <span className="absolute right-5 top-5 inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/90 ring-1 ring-white/15 backdrop-blur">
-                        <Sparkles className="h-3 w-3" /> {t("testimonials.highlightTag")}
-                      </span>
-                    </>
-                  )}
-
-                  {/* Decorative quote mark */}
-                  <span
-                    aria-hidden
-                    className={cn(
-                      "absolute left-6 top-3 select-none font-serif text-[88px] leading-none",
-                      tt.highlight ? "text-white/10" : "text-slate-100",
-                    )}
-                  >
-                    “
-                  </span>
-
-                  <div
-                    className={cn(
-                      "relative flex items-center gap-1",
-                      tt.highlight ? "text-amber-300" : "text-amber-400",
-                    )}
-                  >
-                    {Array.from({ length: 5 }).map((_, k) => (
-                      <Star key={k} className="h-[18px] w-[18px] fill-current drop-shadow-sm" />
-                    ))}
-                  </div>
-
-                  <blockquote
-                    className={cn(
-                      "relative mt-5 flex-1 text-[15px] leading-[1.7] sm:text-[15.5px] md:text-base md:leading-[1.75] lg:text-[15.5px] lg:leading-relaxed",
-                      tt.highlight ? "text-white/90" : "text-slate-700",
-                    )}
-                  >
-                    {tt.text}
-                  </blockquote>
-
-                  <figcaption
-                    className={cn(
-                      "relative mt-7 flex items-center gap-3 border-t pt-5 md:gap-4",
-                      tt.highlight ? "border-white/10" : "border-slate-100",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br text-sm font-bold text-white shadow-md ring-2 md:h-12 md:w-12 md:text-base",
-                        tt.color,
-                        tt.highlight ? "ring-white/20" : "ring-white",
-                      )}
-                    >
-                      {tt.initials}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={cn(
-                          "text-sm font-semibold tracking-tight md:text-[15px] lg:truncate",
-                          tt.highlight ? "text-white" : "text-slate-900",
-                        )}
-                      >
-                        {tt.name}
-                      </p>
-                      <p
-                        className={cn(
-                          "text-[12px] md:text-[13px] lg:truncate",
-                          tt.highlight ? "text-white/60" : "text-slate-500",
-                        )}
-                      >
-                        {tt.role}
-                      </p>
-                    </div>
-                    <ShieldCheck
-                      className={cn(
-                        "ml-auto h-4 w-4 shrink-0 md:h-5 md:w-5",
-                        tt.highlight ? "text-emerald-300" : "text-emerald-500",
-                      )}
-                      aria-label={t("testimonials.verifiedAria")}
-                    />
-                  </figcaption>
-                </figure>
-              </Reveal>
-            );
-          })}
-        </div>
-
-        {/* Trust footer */}
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[12px] text-slate-500">
-          <span className="inline-flex items-center gap-1.5">
-            <ShieldCheck className="h-4 w-4 text-emerald-500" />
-            {t("testimonials.trust1")}
-          </span>
-          <span className="hidden h-3 w-px bg-slate-200 sm:inline-block" />
-          <span className="inline-flex items-center gap-1.5">
-            <Sparkles className="h-4 w-4 text-blue-500" />
-            {t("testimonials.trust2")}
-          </span>
-          <span className="hidden h-3 w-px bg-slate-200 sm:inline-block" />
-          <span className="inline-flex items-center gap-1.5 text-amber-500">
-            <Star className="h-4 w-4 fill-current" />
-            <span className="text-slate-600">{t("testimonials.trust3")}</span>
-          </span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ============================== FAQ ============================== */
 
 function FAQ() {
   const { t } = useTranslation("landing");
   const faqs = t("faq.items", { returnObjects: true }) as Array<{ q: string; a: string }>;
-  const [open, setOpen] = useState<number | null>(0);
-  return (
-    <section id="duvidas" className="bg-slate-50 py-20 sm:py-24">
-      <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8">
-        <SectionHeader
-          eyebrow={t("faq.eyebrow")}
-          title={t("faq.title")}
-          subtitle={t("faq.subtitle")}
-          center
-        />
-        <div className="mt-10 space-y-3">
-          {faqs.map((f, i) => {
-            const active = open === i;
-            return (
-              <div
-                key={f.q}
-                className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
-              >
-                <button
-                  onClick={() => setOpen(active ? null : i)}
-                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
-                >
-                  <span className="text-sm font-semibold text-slate-900 sm:text-base">{f.q}</span>
-                  <ChevronDown
-                    className={cn(
-                      "h-5 w-5 shrink-0 text-slate-500 transition-transform",
-                      active && "rotate-180",
-                    )}
-                  />
-                </button>
-                <div
-                  className={cn(
-                    "grid overflow-hidden transition-all duration-300",
-                    active ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
-                  )}
-                >
-                  <div className="min-h-0">
-                    <p className="px-5 pb-5 text-sm leading-relaxed text-slate-600">{f.a}</p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+  const [keyboard, setKeyboard] = useState(false);
+  return <section id="duvidas" className="gi-faq">
+    <div className="gi-faq-layout">
+      <div><SectionHeader eyebrow={t("faq.eyebrow")} title={t("faq.title")} subtitle={t("faq.subtitle")} />
+        <a href="mailto:contato@gastointeligente.com.br" className="gi-text-link">{t("refinement.help")} <ArrowUpRight size={16} /></a>
       </div>
-    </section>
-  );
+      <Accordion type="multiple" defaultValue={["faq-0"]} className="gi-faq-items" data-keyboard={keyboard}
+        onKeyDownCapture={() => setKeyboard(true)} onPointerDownCapture={() => setKeyboard(false)}>
+        {faqs.map((item,index) => <AccordionItem value={"faq-"+index} key={item.q}>
+          <AccordionTrigger>{item.q}</AccordionTrigger>
+          <AccordionContent>{item.a}</AccordionContent>
+        </AccordionItem>)}
+      </Accordion>
+    </div>
+  </section>;
 }
 
-/* ============================== FINAL CTA ============================== */
 
 function FinalCTA() {
   const { t } = useTranslation("landing");
@@ -4342,12 +3630,13 @@ function Reveal({
   delay?: number;
   className?: string;
 }) {
+  const reduce = useReducedMotion();
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={false}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.5, delay, ease: "easeOut" }}
+      transition={{ duration: reduce ? 0 : 0.35, delay: reduce ? 0 : delay, ease: "easeOut" }}
       className={className}
     >
       {children}
@@ -4937,6 +4226,7 @@ function WhatsAppFeatureSection() {
                 </div>
               </div>
             </div>
+            <p className="mt-4 text-center text-xs text-emerald-800">{t("refinement.whatsappNote")}</p>
           </Reveal>
 
           {/* Copy */}
@@ -4957,7 +4247,7 @@ function WhatsAppFeatureSection() {
                 {steps.map((s, i) => (
                   <motion.li
                     key={s.text}
-                    initial={reduce ? false : { opacity: 0, x: -12 }}
+                    initial={false}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true, amount: 0.5 }}
                     transition={{ duration: 0.4, delay: i * 0.08 }}
@@ -4995,139 +4285,16 @@ function WhatsAppFeatureSection() {
 /* ============================== APP EXPERIENCE SECTION ============================== */
 
 function AppExperienceSection() {
-  const { t } = useTranslation("landing");
-
-  const chips = [
-    { icon: Plus, label: t("appExperience.chips.fab") },
-    { icon: LayoutGrid, label: t("appExperience.chips.bottomNav") },
-    { icon: Sparkles, label: t("appExperience.chips.theme") },
-    { icon: Smartphone, label: t("appExperience.chips.android") },
-  ];
-
-  const radarItems = [
-    { k: "Selic", v: "15,00%" },
-    { k: "CDI", v: "14,90%" },
-    { k: "IPCA", v: "0,40%" },
-    { k: "Dólar", v: "R$ 5,xx" },
-    { k: "Euro", v: "R$ 6,xx" },
-  ];
-
-  return (
-    <section id="app-mobile" className="relative overflow-hidden bg-slate-50 py-20 sm:py-24">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeader
-          center
-          eyebrow={t("appExperience.eyebrow")}
-          title={t("appExperience.title")}
-          subtitle={t("appExperience.subtitle")}
-        />
-
-        {/* Bloco 1 — Mockup + chips */}
-        <div className="mt-12 grid items-center gap-10 lg:grid-cols-2">
-          <Reveal>
-            <div className="flex justify-center lg:justify-start">
-              <img
-                src={mobileGastoInteligente}
-                alt={t("appExperience.title")}
-                loading="lazy"
-                className="w-[260px] sm:w-[300px] lg:w-[340px] h-auto drop-shadow-[0_30px_60px_rgba(15,23,42,0.25)]"
-              />
-            </div>
-          </Reveal>
-
-          <Reveal delay={0.05}>
-            <div>
-              <h3 className="text-xl font-bold text-slate-900 sm:text-2xl">
-                {t("appExperience.block1Title")}
-              </h3>
-              <p className="mt-3 text-base text-slate-600">{t("appExperience.block1Text")}</p>
-              <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
-                {chips.map((c) => (
-                  <li
-                    key={c.label}
-                    className="flex items-center gap-2.5 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-800"
-                  >
-                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-slate-900 text-white">
-                      <c.icon className="h-3.5 w-3.5" />
-                    </span>
-                    <span className="min-w-0 truncate">{c.label}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Reveal>
-        </div>
-
-        {/* Bloco 2 — 2 cards (Cofre / Radar) */}
-        <div className="mt-14 grid gap-4 md:grid-cols-2">
-          <Reveal delay={0.05}>
-            <div className="h-full rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.18)]">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-700">
-                <Lock className="h-5 w-5" />
-              </span>
-              <h4 className="mt-4 text-base font-bold text-slate-900">
-                {t("appExperience.vaultTitle")}
-              </h4>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-                {t("appExperience.vaultText")}
-              </p>
-              <div className="mt-4 space-y-2">
-                {["•••• •••• •••• 4821", "••••••••••••", "•••••• ••••••"].map((mask, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs tracking-widest text-slate-500"
-                  >
-                    <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-blue-600" />
-                    <span className="truncate">{mask}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Reveal>
-
-          <Reveal delay={0.1}>
-            <div className="h-full rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.18)]">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-100 bg-amber-50 text-amber-700">
-                <Landmark className="h-5 w-5" />
-              </span>
-              <h4 className="mt-4 text-base font-bold text-slate-900">
-                {t("appExperience.radarTitle")}
-              </h4>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-                {t("appExperience.radarText")}
-              </p>
-              <ul className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                {radarItems.map((it) => (
-                  <li
-                    key={it.k}
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2"
-                  >
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                      {it.k}
-                    </div>
-                    <div className="num text-sm font-bold text-slate-900">{it.v}</div>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 text-[11px] text-slate-500">
-                {t("appExperience.radarMicro")} · {t("appExperience.radarDisclaimer")}
-              </p>
-            </div>
-          </Reveal>
-        </div>
-
-        <div className="mt-12 flex justify-center">
-          <LandingAnchorLink
-            section="planos"
-            className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
-            {t("appExperience.cta")}
-            <ArrowRight className="h-4 w-4" />
-          </LandingAnchorLink>
-        </div>
-      </div>
-    </section>
-  );
+ const {t}=useTranslation("landing");
+ return <section id="app-mobile" className="gi-mobile-showcase"><div className="gi-mobile-layout">
+  <div className="gi-phone-stage"><PhoneAppMock/><p>{t("refinement.illustration")}</p></div>
+  <div><p className="gi-kicker">{t("multiDevice.tag")}</p><h3>{t("appExperience.title")}</h3><p className="gi-mobile-lead">{t("multiDevice.subtitle")}</p>
+    <ul className="gi-mobile-chips">{(["fab","bottomNav","theme","android"] as const).map(key=><li key={key}><Check size={16}/>{t("appExperience.chips."+key)}</li>)}</ul>
+    <div className="gi-mobile-benefit"><Lock size={22}/><div><h4>{t("appExperience.vaultTitle")}</h4><p>{t("appExperience.vaultText")}</p></div></div>
+    <div className="gi-mobile-benefit"><TrendingUp size={22}/><div><h4>{t("appExperience.radarTitle")}</h4><p>{t("appExperience.radarText")}</p></div></div>
+    <LandingAnchorLink section="planos" className="gi-text-link">{t("appExperience.cta")}<ArrowRight size={16}/></LandingAnchorLink>
+  </div>
+ </div></section>;
 }
 
 function PhoneAppMock() {
@@ -5232,6 +4399,26 @@ function LandingStyles() {
   // Scoped reset to ensure landing always reads as light, even if <html> has .dark
   return (
     <style>{`
+      .gi-account-summary { max-width: 1200px; margin: 0 auto; padding: 0 24px 24px; color: #52645c; font-size: 14px; }
+      .gi-account-summary ul { display: flex; flex-wrap: wrap; gap: 12px 24px; padding-top: 12px; }
+      .gi-compact [hidden] { display: none !important; }
+      .gi-compact main > div > section, .gi-compact main > section { padding-block: 48px; }
+      .gi-compact .gi-collection { background: #f5f7f6; padding-block: 48px 24px; }
+      .gi-collection-heading { max-width: 1280px; margin: auto; padding-inline: 24px; }
+      .gi-collection-heading > h2 { font-size: clamp(24px, 3vw, 36px); font-weight: 700; letter-spacing: -.035em; text-wrap: balance; }
+      .gi-collection-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+      .gi-collection-tabs button { min-height: 44px; padding: 10px 20px; border-radius: 999px; background: white; border: 1px solid #dde5e0; font-size: 14px; font-weight: 600; touch-action: manipulation; }
+      .gi-collection-tabs [aria-selected="true"] { background: #183d31; color: white; border-color: #183d31; }
+      .gi-compact :focus-visible { outline: 3px solid #13845b; outline-offset: 4px; }
+      .gi-compact [role="tabpanel"] > section { padding-block: 28px; background: transparent; }
+      .gi-compact .gi-details { max-width: 1200px; margin: 0 auto 24px; padding-inline: 24px; }
+      .gi-details > summary { display: flex; align-items: center; justify-content: space-between; cursor: pointer; min-height: 52px; padding: 14px 20px; border: 1px solid #dce5df; border-radius: 16px; font-weight: 600; list-style: none; }
+      .gi-details > summary::-webkit-details-marker { display: none; }
+      .gi-compact .gi-details section { padding-block: 32px; }
+      .gi-compact .banks-marquee { mask-image: none !important; }
+      .gi-compact .banks-marquee-track { animation: none !important; flex-wrap: wrap; justify-content: center; }
+      @media (max-width: 1023px) { .gi-compact main section { padding-block: 32px; } .gi-compact .gi-collection-heading { padding-inline: 16px; } .gi-collection-tabs button { flex: 1 1 auto; padding-inline: 14px; } }
+      @media (prefers-reduced-motion: reduce) { .gi-compact *, .gi-compact *::before, .gi-compact *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
       .gi-landing { color-scheme: light; overflow-x: clip; }
       .gi-landing, .gi-landing * { border-color: rgb(226 232 240); }
       .gi-landing ::selection { background: rgba(59,130,246,0.18); }
@@ -5288,6 +4475,7 @@ function PlanejamentoSection() {
         />
 
         <div className="mt-10 grid items-start gap-8 lg:grid-cols-2">
+          <LifestylePhoto src={planning1280} smallSrc={planning640} alt="Casal organizando o planejamento financeiro com um notebook e anotações" />
           {/* Mock visual */}
           <Reveal>
             <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 shadow-[0_24px_60px_-30px_rgba(15,23,42,0.25)] sm:p-7">
@@ -5363,12 +4551,11 @@ function PlanejamentoSection() {
               </div>
             </div>
           </Reveal>
-
           {/* Cards/benefícios */}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:col-span-2 lg:grid-cols-4">
             {cards.map((c, i) => (
               <Reveal key={c.title} delay={i * 0.05}>
-                <div className="group h-full rounded-3xl border border-slate-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.18)]">
+                <div className="group h-full rounded-3xl border border-slate-200 bg-white p-5 gi-photo-benefit">
                   <span
                     className={cn(
                       "inline-flex h-10 w-10 items-center justify-center rounded-2xl border",
@@ -5592,123 +4779,17 @@ function ContasSection() {
 /* ============================== MERCADO INTELIGENTE SECTION ============================== */
 
 function MercadoInteligenteSection() {
-  const { t } = useTranslation("landing");
-  const highlights = [
-    { icon: ClipboardList, key: "list" },
-    { icon: ShoppingCart, key: "cart" },
-    { icon: LineChart, key: "history" },
-    { icon: Wallet, key: "budget" },
-  ] as const;
-
-  return (
-    <section
-      id="mercado-inteligente"
-      className="relative overflow-hidden bg-slate-50 py-20 sm:py-24"
-    >
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeader
-          center
-          eyebrow={t("mercadoInteligente.eyebrow")}
-          title={t("mercadoInteligente.title")}
-          subtitle={t("mercadoInteligente.subtitle")}
-        />
-
-        <Reveal className="mt-8">
-          <p className="mx-auto max-w-3xl text-center text-base leading-relaxed text-slate-600 sm:text-lg">
-            {t("mercadoInteligente.description")}
-          </p>
-        </Reveal>
-
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {highlights.map((h, i) => (
-            <Reveal key={h.key} delay={i * 0.04}>
-              <div className="group h-full rounded-3xl border border-slate-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.18)]">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-emerald-100/40 text-emerald-700">
-                  <h.icon className="h-5 w-5" />
-                </span>
-                <h3 className="mt-4 text-base font-bold text-slate-900">
-                  {t(`mercadoInteligente.highlights.${h.key}.title`)}
-                </h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-                  {t(`mercadoInteligente.highlights.${h.key}.text`)}
-                </p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-
-        <div className="mt-10 flex justify-center">
-          <LandingAnchorLink
-            section="planos"
-            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:border-slate-900 hover:shadow-sm"
-          >
-            {t("mercadoInteligente.cta")}
-            <ArrowRight className="h-4 w-4" />
-          </LandingAnchorLink>
-        </div>
-      </div>
-    </section>
-  );
+ const { t } = useTranslation("landing");
+ return <section id="mercado-inteligente" className="gi-routine-panel"><div className="gi-routine-grid">
+   <div className="gi-routine-visual"><LifestylePhoto src={market1280} smallSrc={market640} alt={t("refinement.marketAlt")} /><div className="gi-routine-caption"><ShoppingCart size={20}/><span>{t("mercadoInteligente.highlights.list.title")}</span></div></div>
+   <div className="gi-routine-copy"><p className="gi-kicker">{t("mercadoInteligente.eyebrow")}</p><h3>{t("mercadoInteligente.subtitle")}</h3><ul><li><Check size={17}/><div><h4>{t("mercadoInteligente.highlights.list.title")}</h4><p>{t("mercadoInteligente.highlights.list.text")}</p></div></li><li><Check size={17}/><div><h4>{t("mercadoInteligente.highlights.cart.title")}</h4><p>{t("mercadoInteligente.highlights.cart.text")}</p></div></li><li><Check size={17}/><div><h4>{t("mercadoInteligente.highlights.history.title")}</h4><p>{t("mercadoInteligente.highlights.history.text")}</p></div></li><li><Check size={17}/><div><h4>{t("mercadoInteligente.highlights.budget.title")}</h4><p>{t("mercadoInteligente.highlights.budget.text")}</p></div></li></ul><LandingAnchorLink section="planos" className="gi-text-link">{t("mercadoInteligente.cta")}<ArrowRight size={16}/></LandingAnchorLink></div>
+ </div></section>;
 }
 
-/* ============================== IMPORTACAO INTELIGENTE SECTION ============================== */
-
 function ImportacaoInteligenteSection() {
-  const { t } = useTranslation("landing");
-  const highlights = [
-    { icon: Upload, key: "pdfImage" },
-    { icon: FileText, key: "statements" },
-    { icon: ScanLine, key: "receipt" },
-    { icon: Eye, key: "review" },
-  ] as const;
-
-  return (
-    <section
-      id="importacao-inteligente"
-      className="relative overflow-hidden bg-white py-20 sm:py-24"
-    >
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeader
-          center
-          eyebrow={t("importacaoInteligente.eyebrow")}
-          title={t("importacaoInteligente.title")}
-          subtitle={t("importacaoInteligente.subtitle")}
-        />
-
-        <Reveal className="mt-8">
-          <p className="mx-auto max-w-3xl text-center text-base leading-relaxed text-slate-600 sm:text-lg">
-            {t("importacaoInteligente.description")}
-          </p>
-        </Reveal>
-
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {highlights.map((h, i) => (
-            <Reveal key={h.key} delay={i * 0.04}>
-              <div className="group h-full rounded-3xl border border-slate-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(15,23,42,0.18)]">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-blue-100/40 text-blue-700">
-                  <h.icon className="h-5 w-5" />
-                </span>
-                <h3 className="mt-4 text-base font-bold text-slate-900">
-                  {t(`importacaoInteligente.highlights.${h.key}.title`)}
-                </h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-                  {t(`importacaoInteligente.highlights.${h.key}.text`)}
-                </p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-
-        <div className="mt-10 flex justify-center">
-          <LandingAnchorLink
-            section="planos"
-            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:border-slate-900 hover:shadow-sm"
-          >
-            {t("importacaoInteligente.cta")}
-            <ArrowRight className="h-4 w-4" />
-          </LandingAnchorLink>
-        </div>
-      </div>
-    </section>
-  );
+ const { t } = useTranslation("landing");
+ return <section id="importacao-inteligente" className="gi-routine-panel"><div className="gi-routine-grid">
+   <div className="gi-routine-visual"><LifestylePhoto src={receipt1280} smallSrc={receipt640} alt={t("refinement.receiptAlt")} /><div className="gi-routine-caption"><ScanLine size={20}/><span>{t("importacaoInteligente.highlights.pdfImage.title")}</span></div></div>
+   <div className="gi-routine-copy"><p className="gi-kicker">{t("importacaoInteligente.eyebrow")}</p><h3>{t("importacaoInteligente.subtitle")}</h3><ul><li><Check size={17}/><div><h4>{t("importacaoInteligente.highlights.pdfImage.title")}</h4><p>{t("importacaoInteligente.highlights.pdfImage.text")}</p></div></li><li><Check size={17}/><div><h4>{t("importacaoInteligente.highlights.statements.title")}</h4><p>{t("importacaoInteligente.highlights.statements.text")}</p></div></li><li><Check size={17}/><div><h4>{t("importacaoInteligente.highlights.receipt.title")}</h4><p>{t("importacaoInteligente.highlights.receipt.text")}</p></div></li><li><Check size={17}/><div><h4>{t("importacaoInteligente.highlights.review.title")}</h4><p>{t("importacaoInteligente.highlights.review.text")}</p></div></li></ul><LandingAnchorLink section="planos" className="gi-text-link">{t("importacaoInteligente.cta")}<ArrowRight size={16}/></LandingAnchorLink></div>
+ </div></section>;
 }

@@ -1,4 +1,20 @@
 {
+  "refinement": {
+  "businessAlt": "Entrepreneur working with a laptop",
+  "help": "Talk to us",
+  "demoTitle": "From your goals to your daily mobile routine.",
+  "illustration": "Illustrative demonstration",
+  "manualTag": "Manual entry · no connection required",
+  "bankExamples": "Examples of institutions for manual organization",
+  "bankNote": "Logos identify institutions you can organize manually. They do not imply a partnership or automatic connection. Integrations depend on availability, eligibility and consent; check your account.",
+  "planFilter": "Filter plans by profile",
+  "allPlans": "All plans",
+  "marketAlt": "Checking a shopping list at a supermarket",
+  "receiptAlt": "Reviewing a receipt before importing it",
+  "whatsappNote": "Illustrative example: message, review and confirmation.",
+  "featureOverview": "Choose an area and see how it works."
+},
+  "compact": {"planning":"Plan today. Understand your next step.","routine":"Less work in your routine. More control over your choices."},
   "hero": {
     "badge": "A lighter financial life",
     "titleStart": "Take control of your finances with more",
@@ -864,7 +880,7 @@
       "theme": "Light and dark mode",
       "android": "Optimized for Android"
     },
-    "whatsappTitle": "Financial assistant on WhatsApp — available",
+    "whatsappTitle": "One message. One review. Everything organized.",
     "whatsappText": "Log expenses via WhatsApp with confirmation before saving. Available on eligible paid plans after linking your number and authorizing access.",
     "whatsappSample": {
       "user": "spent 35 on uber",
@@ -894,8 +910,8 @@
   },
   "whatsapp": {
     "eyebrow": "WhatsApp",
-    "title": "Financial assistant on WhatsApp — available",
-    "subtitle": "Send a message like you're chatting with a friend. Our bot understands the expense, confirms the details, and automatically saves it to your financial tracker.",
+    "title": "One message. One review. Everything organized.",
+    "subtitle": "Send an expense or income through WhatsApp, review the details and confirm before saving it to your finances.",
     "steps": {
       "natural": "Send naturally: \"spent 35 on uber\" or \"received 2,000 salary\".",
       "understands": "The bot identifies amount, category, and date in seconds.",

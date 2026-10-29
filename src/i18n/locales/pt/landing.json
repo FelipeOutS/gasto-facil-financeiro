@@ -1,4 +1,20 @@
 {
+  "refinement": {
+  "businessAlt": "Empreendedora trabalhando com um notebook",
+  "help": "Fale com a gente",
+  "demoTitle": "Dos seus objetivos à rotina no celular.",
+  "illustration": "Demonstração ilustrativa",
+  "manualTag": "Cadastro manual · sem conexão obrigatória",
+  "bankExamples": "Exemplos de instituições para organização manual",
+  "bankNote": "Os logos identificam instituições que você pode organizar manualmente. Não representam parceria nem conexão automática. Integrações dependem de disponibilidade, elegibilidade e consentimento; confira na sua conta.",
+  "planFilter": "Filtrar planos por perfil",
+  "allPlans": "Todos os planos",
+  "marketAlt": "Lista de compras sendo consultada no supermercado",
+  "receiptAlt": "Conferência de um recibo para importação",
+  "whatsappNote": "Exemplo ilustrativo: mensagem, conferência e confirmação.",
+  "featureOverview": "Escolha uma área e veja como ela funciona."
+},
+  "compact": {"planning":"Planeje hoje. Entenda o seu próximo passo.","routine":"Menos trabalho na rotina. Mais controle nas escolhas."},
   "hero": {
     "badge": "Sua vida financeira mais leve",
     "titleStart": "Controle suas finanças com mais",
@@ -864,7 +880,7 @@
       "theme": "Modo claro e escuro",
       "android": "Otimizado para Android"
     },
-    "whatsappTitle": "Assistente financeiro pelo WhatsApp — disponível",
+    "whatsappTitle": "Uma mensagem. Uma conferência. Tudo organizado.",
     "whatsappText": "Registre gastos pelo WhatsApp com confirmação antes de salvar. Disponível nos planos pagos elegíveis, após vincular seu número e autorizar o acesso.",
     "whatsappSample": {
       "user": "gastei 35 no uber",
@@ -894,8 +910,8 @@
   },
   "whatsapp": {
     "eyebrow": "WhatsApp",
-    "title": "Assistente financeiro pelo WhatsApp — disponível",
-    "subtitle": "Mande uma mensagem como se estivesse conversando com um amigo. Nosso bot entende o gasto, confirma os detalhes e salva automaticamente no seu controle financeiro.",
+    "title": "Uma mensagem. Uma conferência. Tudo organizado.",
+    "subtitle": "Envie um gasto ou uma receita pelo WhatsApp, confira os dados identificados e confirme antes de salvar no seu controle financeiro.",
     "steps": {
       "natural": "Envie de forma natural: \"gastei 35 no uber\" ou \"recebi 2.000 de salário\".",
       "understands": "O bot identifica valor, categoria e data em segundos.",
