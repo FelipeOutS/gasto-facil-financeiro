@@ -176,9 +176,11 @@ export function FinalCTA({ onPlans }: { onPlans: MouseEventHandler<HTMLAnchorEle
   return (
     <section id="comece-agora" className="gi-closing-cta" aria-labelledby="closing-cta-title">
       <div className="gi-closing-inner gi-closing-composition">
-        <div className="gi-closing-copy">
-          <p className="gi-closing-kicker">{t("closing.cta.kicker")}</p>
-          <h2 id="closing-cta-title">{t("closing.cta.title")}</h2>
+        <p className="gi-closing-kicker">{t("closing.cta.kicker")}</p>
+        <h2 id="closing-cta-title">
+          {t("closing.cta.title")} <span>{t("closing.cta.titleEnd")}</span>
+        </h2>
+        <div className="gi-closing-bottom">
           <p className="gi-closing-lead">{t("closing.cta.lead")}</p>
           <div className="gi-closing-actions">
             <Link to="/cadastro" className="gi-closing-primary">
@@ -190,33 +192,7 @@ export function FinalCTA({ onPlans }: { onPlans: MouseEventHandler<HTMLAnchorEle
               <ArrowUpRight size={16} aria-hidden="true" />
             </a>
           </div>
-          <p className="gi-closing-expectation">{t("closing.cta.expectation")}</p>
-          <ul className="gi-closing-trust">
-            {["noCommitment", "cancelAnytime", "browser"].map((key) => (
-              <li key={key}>
-                <Check size={14} aria-hidden="true" />
-                {t(`finalCta.${key}`)}
-              </li>
-            ))}
-          </ul>
         </div>
-        <figure className="gi-closing-product">
-          <div className="gi-closing-product-heading">
-            <span>{t("closing.cta.product")}</span>
-            <span>{t("closing.cta.demo")}</span>
-          </div>
-          <div className="gi-closing-capture">
-            <img
-              src="/images/landing/mobile/gasto-inteligente-mobile-dashboard.webp"
-              alt={t("closing.cta.alt")}
-              width="780"
-              height="1688"
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-          <figcaption>{t("closing.cta.caption")}</figcaption>
-        </figure>
       </div>
     </section>
   );

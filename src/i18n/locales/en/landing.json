@@ -1116,13 +1116,9 @@
     },
     "cta": {
       "kicker": "Your next step",
-      "title": "Less scattered information. More clarity to decide.",
-      "lead": "Bring your records together and follow your month in one place. Start building an overview that makes sense to you.",
-      "expectation": "The button opens sign-up. Create your account and explore the features available for your profile.",
-      "product": "Your month at a glance",
-      "demo": "Product preview",
-      "alt": "Crop of the real Gasto Inteligente dashboard with synthetic demonstration values",
-      "caption": "Real app screenshot crop · demonstration data. Your values depend on your records."
+      "title": "See where",
+      "titleEnd": "your money goes.",
+      "lead": "Expenses, income and planning in Gasto Inteligente. Start with your records and follow your month in one place."
     }
   }
 }
