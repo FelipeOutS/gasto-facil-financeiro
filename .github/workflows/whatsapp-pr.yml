@@ -1,0 +1,59 @@
+name: WhatsApp PR validation
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: whatsapp-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  local-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      VITE_SUPABASE_URL: http://127.0.0.1:1
+      VITE_SUPABASE_ANON_KEY: ci-placeholder
+      SUPABASE_URL: http://127.0.0.1:1
+      SUPABASE_SERVICE_ROLE_KEY: ci-placeholder
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.2'
+      - name: Remove checked-in environment files from ephemeral CI checkout
+        run: node -e "const fs=require('fs'); for(const f of fs.readdirSync('.')) if(f==='.env'||f.startsWith('.env.')) {if(fs.statSync(f).isFile()) fs.unlinkSync(f);}"
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - name: Isolated contract and regression tests (no live services)
+        run: >-
+          bun scripts/run-test-suite.ts
+          tests/whatsapp-financial-v2-rollout.test.ts
+          tests/whatsapp-gastos-soft-delete-f3.test.ts
+          tests/whatsapp-undo-soft-delete-p0.test.ts
+          tests/whatsapp-excluir-antigo-p1.test.ts
+          tests/whatsapp-restaurar-antigo-p1.test.ts
+          tests/whatsapp-editar-antigo-p1.test.ts
+          tests/whatsapp-graph-version-unification.test.ts
+          tests/whatsapp-final-security.test.ts
+          tests/whatsapp-reply-outbox-runtime.test.ts
+      - name: Install disposable PostgreSQL binaries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-16
+      - name: Native SQL contracts (fresh loopback clusters only)
+        env:
+          PG_BIN: /usr/lib/postgresql/16/bin
+        run: |
+          bun scripts/test-whatsapp-native.ts
+          bun scripts/test-financial-soft-delete-native.ts
+          bun scripts/test-public-truncate-native.ts
+# No secrets, deployment, production connections, push, or pull_request_target.
+# PostgreSQL 16 CI complements the local PostgreSQL 17 validation.
+# CI is not a substitute for the separately authorized Preview/mobile homologation.

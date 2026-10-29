@@ -1,4 +1,72 @@
 {
+  "realMobile": {
+  "eyebrow": "O produto de verdade",
+  "intro": "Explore quatro telas do Gasto Inteligente, com exemplos de como organizar seu dinheiro no dia a dia.",
+  "caption": "Captura real · web responsiva · dados demonstrativos",
+  "note": "Ambiente isolado com valores fictícios. As informações exibidas dependem dos seus próprios registros.",
+  "cta": "Conhecer os planos",
+  "error": "Não foi possível carregar esta captura. Tente novamente.",
+  "dashboard": {
+    "label": "Mobile e app",
+    "title": "Suas finanças na palma da mão.",
+    "description": "Veja o resumo do mês e acesse os principais controles pela navegação do aplicativo.",
+    "benefits": [
+      "Resumo de receitas, despesas e resultado do mês",
+      "Botão de acesso rápido para novos lançamentos",
+      "Navegação para gastos, cartões e Cofre"
+    ],
+    "alt": "Dashboard real do aplicativo com valores demonstrativos"
+  },
+  "metas": {
+    "label": "Metas",
+    "title": "Transforme seus planos em conquistas.",
+    "description": "Defina um objetivo e acompanhe quanto já foi acumulado e quanto ainda falta.",
+    "benefits": [
+      "Valor objetivo e progresso em uma visão clara",
+      "Valores guardados e adicionados diretamente à meta",
+      "Atualização do valor e acompanhamento do objetivo"
+    ],
+    "alt": "Tela real de Metas com uma viagem demonstrativa e progresso de 40%"
+  },
+  "investimentos": {
+    "label": "Investimentos",
+    "title": "Sua carteira em uma visão clara.",
+    "description": "Organize seus investimentos cadastrados e acompanhe os valores atualizados por você.",
+    "benefits": [
+      "Patrimônio total e valor aplicado",
+      "Resultado calculado com base nos valores cadastrados",
+      "Carteira organizada por tipo de investimento"
+    ],
+    "alt": "Tela real de Investimentos com uma carteira sintética"
+  },
+  "guardado": {
+    "label": "Guardado",
+    "title": "Dê um lugar aos seus planos.",
+    "description": "Organize os valores separados em reservas e veja a distribuição entre seus bancos cadastrados.",
+    "benefits": [
+      "Total guardado e reservas por banco",
+      "Identificação da finalidade de cada reserva",
+      "Vínculo de reservas com suas metas"
+    ],
+    "alt": "Tela real de Dinheiro guardado com reservas de demonstração"
+  }
+},
+  "refinement": {
+  "businessAlt": "Empreendedora trabalhando com um notebook",
+  "help": "Fale com a gente",
+  "demoTitle": "Dos seus objetivos à rotina no celular.",
+  "illustration": "Demonstração ilustrativa",
+  "manualTag": "Cadastro manual · sem conexão obrigatória",
+  "bankExamples": "Exemplos de instituições para organização manual",
+  "bankNote": "Os logos identificam instituições que você pode organizar manualmente. Não representam parceria nem conexão automática. Integrações dependem de disponibilidade, elegibilidade e consentimento; confira na sua conta.",
+  "planFilter": "Filtrar planos por perfil",
+  "allPlans": "Todos os planos",
+  "marketAlt": "Lista de compras sendo consultada no supermercado",
+  "receiptAlt": "Conferência de um recibo para importação",
+  "whatsappNote": "Exemplo ilustrativo: mensagem, conferência e confirmação.",
+  "featureOverview": "Escolha uma área e veja como ela funciona."
+},
+  "compact": {"planning":"Planeje hoje. Entenda o seu próximo passo.","routine":"Menos trabalho na rotina. Mais controle nas escolhas."},
   "hero": {
     "badge": "Sua vida financeira mais leve",
     "titleStart": "Controle suas finanças com mais",
@@ -864,7 +932,7 @@
       "theme": "Modo claro e escuro",
       "android": "Otimizado para Android"
     },
-    "whatsappTitle": "Assistente financeiro pelo WhatsApp — disponível",
+    "whatsappTitle": "Uma mensagem. Uma conferência. Tudo organizado.",
     "whatsappText": "Registre gastos pelo WhatsApp com confirmação antes de salvar. Disponível nos planos pagos elegíveis, após vincular seu número e autorizar o acesso.",
     "whatsappSample": {
       "user": "gastei 35 no uber",
@@ -894,11 +962,11 @@
   },
   "whatsapp": {
     "eyebrow": "WhatsApp",
-    "title": "Assistente financeiro pelo WhatsApp — disponível",
-    "subtitle": "Mande uma mensagem como se estivesse conversando com um amigo. Nosso bot entende o gasto, confirma os detalhes e salva automaticamente no seu controle financeiro.",
+    "title": "Uma mensagem. Uma conferência. Tudo organizado.",
+    "subtitle": "Envie um gasto ou uma receita pelo WhatsApp, confira os dados identificados e confirme antes de salvar no seu controle financeiro.",
     "steps": {
       "natural": "Envie de forma natural: \"gastei 35 no uber\" ou \"recebi 2.000 de salário\".",
-      "understands": "O bot identifica valor, categoria e data em segundos.",
+      "understands": "O bot identifica valor, categoria e data para você conferir.",
       "confirm": "Você confirma com um toque e o lançamento é salvo no app.",
       "anywhere": "Funciona direto no celular, sem precisar abrir o app."
     },
@@ -968,5 +1036,89 @@
       }
     },
     "cta": "Ver como funciona"
+  },
+  "showcase": {
+    "message": "gastei 35 no uber",
+    "description": "Demonstração ilustrativa, sem envio ou gravação de dados. A pessoa escreve “gastei 35 no uber”. O assistente identifica Uber, R$ 35,00, categoria Transporte, data Hoje. A pessoa confere e confirma. O exemplo termina com o lançamento organizado.",
+    "preview": "Conversa demonstrativa",
+    "today": "Hoje",
+    "start": "Começa com uma mensagem.",
+    "startNote": "Do seu dia a dia para o seu controle financeiro.",
+    "processing": "Analisando sua mensagem…",
+    "found": "Encontrei este lançamento:",
+    "category": "Categoria",
+    "transport": "Transporte",
+    "date": "Data",
+    "question": "Posso salvar?",
+    "confirm": "Confirmar",
+    "confirmed": "Confirmado",
+    "saving": "Confirmando…",
+    "adjust": "Ajustar",
+    "cancel": "Cancelar",
+    "done": "Pronto!",
+    "saved": "R$ 35,00 salvo em Transporte.",
+    "input": "Escreva uma mensagem",
+    "controls": "Controles da demonstração do WhatsApp",
+    "pause": "Pausar demonstração",
+    "play": "Reproduzir demonstração",
+    "pauseShort": "Pausar",
+    "playShort": "Reproduzir",
+    "static": "Cena estática",
+    "restart": "Reiniciar demonstração",
+    "caption": "Demonstração ilustrativa · nenhum dado é enviado",
+    "phases": {
+      "intro": "01 / Escreva",
+      "typing": "01 / Escreva",
+      "sent": "02 / Identifique",
+      "processing": "02 / Identifique",
+      "review": "03 / Confira",
+      "confirming": "04 / Confirme",
+      "complete": "05 / Organizado",
+      "reset": "Vamos de novo"
+    }
+  },
+  "closing": {
+    "journey": {
+      "kicker": "Como funciona",
+      "title": "Da primeira anotação à visão do seu mês.",
+      "lead": "Você começa pelos seus registros. O Gasto Inteligente reúne as informações para acompanhar a rotina com mais clareza.",
+      "steps": [
+        {
+          "title": "Crie seu ponto de partida",
+          "text": "Cadastre sua conta e configure o perfil que combina com a sua rotina: pessoal, MEI ou empresa.",
+          "outcome": "Um espaço para suas finanças"
+        },
+        {
+          "title": "Registre o que acontece",
+          "text": "Adicione receitas e gastos. Organize contas e cartões conforme os recursos do seu plano.",
+          "outcome": "Seu dia a dia, organizado"
+        },
+        {
+          "title": "Veja o mês com clareza",
+          "text": "Consulte seu resumo, acompanhe vencimentos e compare o que entra com o que sai.",
+          "outcome": "Informação para suas decisões"
+        }
+      ],
+      "next": "Comece com seus próprios registros. Evolua no seu ritmo.",
+      "cta": "Criar minha conta"
+    },
+    "faq": {
+      "lead": "Escolha um assunto e encontre a resposta que você precisa.",
+      "topics": "Assuntos das perguntas frequentes",
+      "groups": {
+        "start": "Primeiros passos",
+        "routine": "Suas finanças",
+        "access": "Acesso e uso",
+        "business": "MEI e empresa"
+      },
+      "more": "Sua dúvida é outra?",
+      "contactNote": "Converse com a equipe pelo nosso e-mail."
+    },
+    "cta": {
+      "kicker": "Seu próximo passo",
+      "title": "Veja para onde",
+      "titleEnd": "seu dinheiro vai.",
+      "lead": "Gastos, receitas e planejamento no Gasto Inteligente. Comece com seus registros e acompanhe o mês em um só lugar."
+    }
   }
 }

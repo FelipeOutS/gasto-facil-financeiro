@@ -237,7 +237,7 @@ describe("WA-C9.2 E.3A — request sanitizado do canary sem parâmetros", () => 
 });
 
 describe("WA-C9.2 E.3A — integração canary sem rede", () => {
-  it("com defaultLoadTemplate REAL + client canary, o fluxo chega ao executor injetado (não é no_template)", async () => {
+  it("canary hello_world não atravessa o catálogo aprovado e não executa envio", async () => {
     const { client } = makeFakeClient(() => ({ data: canaryRow(), error: null }));
     const stubTransport: WhatsAppNotificationTransport = {
       async sendTemplate() {
@@ -278,10 +278,10 @@ describe("WA-C9.2 E.3A — integração canary sem rede", () => {
       "claim-token",
       deps,
     );
-    expect(outcome.kind).toBe("executed");
-    expect(executeCalls).toBe(1);
-    expect(capturedLanguage).toBe("en_US");
-    expect(capturedTemplateName).toBe("hello_world");
+    expect(outcome.kind).toBe("no_template");
+    expect(executeCalls).toBe(0);
+    expect(capturedLanguage).toBeNull();
+    expect(capturedTemplateName).toBeNull();
   });
 
   it("linha inexistente resulta em `no_template` sem chamar o executor", async () => {

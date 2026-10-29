@@ -478,6 +478,7 @@ export type AgendaTemplateVars = {
   kind: "lembrete" | "financeiro";
   /** Variáveis na ordem do template Meta sugerido. */
   params: string[];
+  templateDate: string;
   text: string;
 };
 
@@ -524,6 +525,7 @@ export async function revalidateAgendaForDispatch(
       ok: true,
       vars: {
         kind: "financeiro",
+        templateDate: dueTxt,
         params: [nome, quando, valor, dueTxt],
         text: `🔔 Lembrete do Gasto Inteligente\n${nome} vence ${dias <= 1 ? quando : `em ${quando}`}.\nValor atual: ${valor}\nVencimento: ${dueTxt}`,
       },
@@ -542,6 +544,7 @@ export async function revalidateAgendaForDispatch(
     ok: true,
     vars: {
       kind: "lembrete",
+      templateDate: new Intl.DateTimeFormat("pt-BR", { timeZone: tz }).format(occ),
       params: [item.titulo, quando],
       text: `🔔 Lembrete do Gasto Inteligente\n${item.titulo}\n🗓️ ${quando}`,
     },

@@ -89,7 +89,8 @@ export type SkippedReason =
   | "entitlement_revoked"
   // GI Agenda — item concluído/cancelado ou horário recalculado.
   | "agenda_inactive"
-  | "agenda_changed";
+  | "agenda_changed"
+  | "notification_expired";
 
 export interface EnqueueInput {
   userId: string;

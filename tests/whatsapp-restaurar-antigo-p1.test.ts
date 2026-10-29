@@ -159,7 +159,7 @@ test("falha de banco: não alega restauração", async () => {
     maybeSingle: async () => (q._upd ? { data: null, error: { message: "db down" } } : { data: row, error: null }),
     update: () => { q._upd = true; return q; },
   };
-  const db = { from: () => { q._upd = false; return q; } };
-  const r = await aplicarRestauracao(db, "u1", { t: "gastos", id: "g1", updated_at: T0, descricao: "X", valor: 1, data: "2026-10-01", categoria_id: null, allowed: [] }, new Date());
+  const db = { from: () => { q._upd = false; return q; }, rpc: async () => ({data:null,error:{message:"db down"}}) };
+  const r = await aplicarRestauracao(db, "u1", { t: "gastos", id: "g1", updated_at: T0, descricao: "X", valor: 1, data: "2026-10-01", categoria_id: null, allowed: [] }, new Date(), tel, "failure-fixture");
   expect(r).toBe("error");
 });

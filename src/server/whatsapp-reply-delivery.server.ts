@@ -14,7 +14,7 @@
  *               está BLOQUEADO por segurança.
  */
 
-export type SendResult = { sent: boolean; reason?: string; status?: number };
+export type SendResult = { sent: boolean; reason?: string; status?: number; providerMessageId?: string | null };
 export type DeliveryClass = "accepted" | "transient" | "permanent" | "ambiguous";
 
 export function classifySendResult(r: SendResult): DeliveryClass {

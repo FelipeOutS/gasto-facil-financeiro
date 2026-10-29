@@ -288,10 +288,12 @@ export async function handlePostlaunchInput(args: {
         const guard = await undoSoftDeleteGuard(action);
         if (guard) return { resposta: guard };
       }
-      const { data, error } = await db.rpc("whatsapp_undo_recent_action", {
+      if (process.env.WHATSAPP_FINANCIAL_MUTATIONS_VERSION !== "2") return { resposta: "O desfazer está temporariamente indisponível. Nada foi alterado." };
+      const { data, error } = await db.rpc("whatsapp_undo_recent_action_v2", {
         p_user_id: args.userId, p_phone: args.phone, p_action_id: action.id, p_scope: scope,
       });
       if (error) return { resposta: "Não consegui desfazer agora. Confira o lançamento no app e tente novamente." };
+      if (data === "modified") return { resposta: "Esse lançamento foi alterado depois da confirmação. Confira a versão atual no app; não desfiz a alteração." };
       if (data === "soft_deleted") return { resposta: MSG_UNDO_GASTO_EXCLUIDO };
       if (data === "undone") return { resposta: action.entity_kind === "recurring_income" && scope === "occurrence" ? "Pronto, removi só esta receita. A recorrência continua ativa." : "Pronto, desfiz esse lançamento." };
       if (data === "already_undone") return { resposta: "Esse lançamento já foi desfeito." };

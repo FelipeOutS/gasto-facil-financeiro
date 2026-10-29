@@ -1,0 +1,504 @@
+.gi-landing.gi-refined .gi-closing-inner {
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-inline: 28px;
+}
+.gi-landing.gi-refined .gi-closing-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin: 0 0 15px;
+  color: #3e6b56;
+}
+.gi-landing.gi-refined .gi-journey h2,
+.gi-landing.gi-refined .gi-clarity-faq h2,
+.gi-landing.gi-refined .gi-closing-cta h2 {
+  font-family: var(--font-display, Manrope, sans-serif);
+  font-size: clamp(29px, 3.2vw, 44px);
+  line-height: 1.14;
+  letter-spacing: -0.045em;
+  font-weight: 750;
+  margin: 0;
+  text-wrap: balance;
+}
+.gi-landing.gi-refined .gi-journey {
+  background: #fff;
+  padding-block: 76px 64px;
+  color: #173e2e;
+}
+.gi-landing.gi-refined .gi-journey-heading {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 64px;
+  align-items: end;
+}
+.gi-landing.gi-refined .gi-journey-heading > p {
+  font-size: 16px;
+  line-height: 1.75;
+  color: #52695d;
+  max-width: 370px;
+  margin: 0 0 2px;
+}
+.gi-landing.gi-refined .gi-journey-path {
+  list-style: none;
+  padding: 0;
+  margin: 48px 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 36px;
+}
+.gi-landing.gi-refined .gi-journey-path li {
+  position: relative;
+  min-width: 0;
+}
+.gi-landing.gi-refined .gi-journey-path li:not(:last-child):before {
+  content: "";
+  position: absolute;
+  top: 27px;
+  left: 90px;
+  right: -16px;
+  height: 1px;
+  background: #bfd2c3;
+}
+.gi-landing.gi-refined .gi-journey-marker {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 54px;
+  color: #1c6342;
+}
+.gi-landing.gi-refined .gi-journey-marker > span {
+  font-size: 14px;
+  font-weight: 700;
+  border: 1px solid #8caf97;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #f4f8f3;
+}
+.gi-landing.gi-refined .gi-journey-step h3 {
+  margin: 20px 0 10px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+.gi-landing.gi-refined .gi-journey-step p {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #52695d;
+  margin: 0;
+  max-width: 285px;
+}
+.gi-landing.gi-refined .gi-journey-outcome {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: #366548;
+  font-weight: 600;
+  margin-top: 18px;
+}
+.gi-landing.gi-refined .gi-journey-next {
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid #d9e3da;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+}
+.gi-landing.gi-refined .gi-journey-next p {
+  font-size: 13px;
+  color: #52695d;
+  margin: 0;
+}
+.gi-landing.gi-refined .gi-closing-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  color: #204f35;
+  flex-shrink: 0;
+}
+.gi-landing.gi-refined .gi-clarity-faq {
+  background: #f1f5f1;
+  border-top: 1px solid #dce7dc;
+  padding-block: 64px 48px;
+  color: #173e2e;
+}
+.gi-landing.gi-refined .gi-clarity-faq .gi-closing-inner {
+  max-width: 960px;
+}
+.gi-landing.gi-refined .gi-faq-heading {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.gi-landing.gi-refined .gi-faq-heading > p:last-child {
+  font-size: 15px;
+  line-height: 1.65;
+  color: #52695d;
+  margin: 16px 0 0;
+}
+.gi-landing.gi-refined .gi-faq-topic-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  height: auto;
+  width: 100%;
+  padding: 5px;
+  background: #e5ece4;
+  border-radius: 14px;
+  gap: 3px;
+}
+.gi-landing.gi-refined .gi-faq-topic-list button {
+  height: auto;
+  min-height: 46px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: #4a6250;
+  font-size: 13px;
+  gap: 8px;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+.gi-landing.gi-refined .gi-faq-topic-list button[data-state="active"] {
+  background: #fff;
+  color: #183e2c;
+  box-shadow: 0 2px 5px #1d402b0c;
+}
+.gi-landing.gi-refined .gi-faq-topic-list button > span {
+  font-size: 10px;
+  font-weight: 600;
+  border: 1px solid #c8d6c9;
+  border-radius: 50%;
+  width: 19px;
+  height: 19px;
+  display: grid;
+  place-items: center;
+  color: #496950;
+}
+.gi-landing.gi-refined .gi-faq-topic-panel {
+  margin: 0;
+}
+.gi-landing.gi-refined .gi-faq-topic-panel[data-state="inactive"] {
+  display: none;
+}
+.gi-landing.gi-refined .gi-faq-topic-panel [data-faq-item] {
+  border-bottom: 1px solid #cddacf;
+}
+.gi-landing.gi-refined .gi-faq-topic-panel h3 {
+  margin: 0;
+}
+.gi-landing.gi-refined .gi-faq-topic-panel h3 button {
+  min-height: 58px;
+  padding: 16px 3px;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: #214c35;
+  text-decoration: none;
+  gap: 22px;
+  transition: color 160ms ease;
+}
+.gi-landing.gi-refined .gi-faq-topic-panel h3 button > svg {
+  color: #42684d;
+}
+.gi-landing.gi-refined .gi-faq-topic-panel [role="region"] {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #52695d;
+  animation-duration: 220ms;
+  animation-timing-function: var(--ease-out);
+}
+.gi-landing.gi-refined .gi-faq-topic-panel [role="region"] > div {
+  padding: 0 32px 19px 3px;
+}
+.gi-landing.gi-refined .gi-faq-topics[data-keyboard="true"] [role="region"],
+.gi-landing.gi-refined .gi-faq-topics[data-keyboard="true"] button > svg {
+  animation: none !important;
+  transition: none !important;
+}
+.gi-landing.gi-refined .gi-faq-support {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-top: 1px solid #cddacf;
+  padding-top: 20px;
+}
+.gi-landing.gi-refined .gi-faq-support > div {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+}
+.gi-landing.gi-refined .gi-faq-support p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.gi-landing.gi-refined .gi-faq-support strong,
+.gi-landing.gi-refined .gi-faq-support p span {
+  display: block;
+}
+.gi-landing.gi-refined .gi-faq-support p span {
+  color: #59705e;
+  font-size: 12px;
+}
+.gi-landing.gi-refined
+  :is(.gi-journey, .gi-clarity-faq, .gi-closing-cta)
+  :is(a, button):focus-visible {
+  outline: 2px solid #39895a;
+  outline-offset: 4px;
+  box-shadow: none;
+}
+.gi-landing.gi-refined .gi-closing-cta a:focus-visible {
+  outline-color: #198662;
+}
+.gi-landing.gi-refined :is(.gi-journey, .gi-clarity-faq, .gi-closing-cta) :is(a, button) {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.gi-landing.gi-refined .gi-closing-primary:active {
+  transform: scale(0.98);
+}
+@media (hover: hover) and (pointer: fine) {
+  .gi-landing.gi-refined .gi-closing-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 5px;
+  }
+  .gi-landing.gi-refined .gi-faq-topic-panel h3 button:hover {
+    color: #177d44;
+  }
+}
+@media (max-width: 1000px) {
+  .gi-landing.gi-refined .gi-journey-heading {
+    gap: 32px;
+  }
+}
+@media (max-width: 767px) {
+  .gi-landing.gi-refined .gi-closing-inner {
+    padding-inline: 22px;
+  }
+  .gi-landing.gi-refined .gi-journey,
+  .gi-landing.gi-refined .gi-clarity-faq,
+  .gi-landing.gi-refined .gi-closing-cta {
+    padding-block: 48px;
+  }
+  .gi-landing.gi-refined .gi-journey-heading {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .gi-landing.gi-refined .gi-journey-heading > p {
+    font-size: 15px;
+  }
+  .gi-landing.gi-refined .gi-journey-path {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    margin-top: 30px;
+  }
+  .gi-landing.gi-refined .gi-journey-path li {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 18px;
+  }
+  .gi-landing.gi-refined .gi-journey-marker {
+    height: 40px;
+  }
+  .gi-landing.gi-refined .gi-journey-marker > svg {
+    display: none;
+  }
+  .gi-landing.gi-refined .gi-journey-path li:not(:last-child):before {
+    left: 20px;
+    top: 48px;
+    bottom: -20px;
+    width: 1px;
+    height: auto;
+    right: auto;
+  }
+  .gi-landing.gi-refined .gi-journey-step h3 {
+    margin: 6px 0 8px;
+    font-size: 18px;
+  }
+  .gi-landing.gi-refined .gi-journey-outcome {
+    margin-top: 10px;
+    font-size: 11px;
+  }
+  .gi-landing.gi-refined .gi-journey-next {
+    display: block;
+    margin-top: 28px;
+    padding-top: 20px;
+  }
+  .gi-landing.gi-refined .gi-journey-next a {
+    margin-top: 10px;
+  }
+  .gi-landing.gi-refined .gi-faq-topic-list {
+    grid-template-columns: 1fr 1fr;
+  }
+  .gi-landing.gi-refined .gi-faq-topic-panel {
+  }
+  .gi-landing.gi-refined .gi-faq-support {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .gi-landing.gi-refined .gi-faq-heading {
+    text-align: left;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gi-landing.gi-refined :is(.gi-journey, .gi-clarity-faq, .gi-closing-cta) * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.gi-landing.gi-refined .gi-faq-panel-viewport {
+  margin-top: 18px;
+  overflow: hidden;
+}
+
+.gi-landing.gi-refined .gi-faq-support {
+  margin-top: 24px;
+}
+
+.gi-landing.gi-refined .gi-faq-topic-panel button:focus-visible {
+  outline-offset: -2px;
+}
+
+.gi-landing.gi-refined .gi-faq-support {
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* An editorial close: product proof belongs to the preceding showcase. */
+.gi-landing.gi-refined .gi-closing-cta {
+  background: #fafbf9;
+  color: #172c38;
+  padding-block: 64px 70px;
+  border-top: 1px solid #dce6df;
+}
+.gi-landing.gi-refined .gi-closing-composition {
+  position: relative;
+}
+.gi-landing.gi-refined .gi-closing-cta .gi-closing-kicker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+  color: #436757;
+}
+.gi-landing.gi-refined .gi-closing-cta .gi-closing-kicker::before {
+  content: "";
+  width: 28px;
+  height: 2px;
+  background: #198662;
+}
+.gi-landing.gi-refined .gi-closing-cta h2 {
+  color: #172c38;
+  font-size: clamp(42px, 4.5vw, 64px);
+  font-weight: 650;
+  line-height: 1.12;
+  letter-spacing: -0.055em;
+  text-wrap: initial;
+  max-width: 780px;
+}
+.gi-landing.gi-refined .gi-closing-cta h2 span {
+  display: block;
+  color: #217554;
+}
+.gi-landing.gi-refined .gi-closing-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 40px;
+  margin-top: 32px;
+}
+.gi-landing.gi-refined .gi-closing-lead {
+  max-width: 440px;
+  margin: 0;
+  color: #52675f;
+  font-size: 16px;
+  line-height: 1.75;
+}
+.gi-landing.gi-refined .gi-closing-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-shrink: 0;
+}
+.gi-landing.gi-refined .gi-closing-actions > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  color: #213b32;
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.gi-landing.gi-refined .gi-closing-actions .gi-closing-primary {
+  background: #172c38;
+  color: #fff;
+  padding: 14px 23px;
+  border-radius: 999px;
+  transition:
+    background-color 160ms ease,
+    transform 150ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .gi-landing.gi-refined .gi-closing-actions .gi-closing-primary:hover {
+    background: #244b3c;
+  }
+  .gi-landing.gi-refined .gi-closing-actions > a:not(.gi-closing-primary):hover {
+    text-decoration: underline;
+    text-underline-offset: 5px;
+  }
+}
+@media (max-width: 1000px) {
+  .gi-landing.gi-refined .gi-closing-bottom {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 24px;
+  }
+}
+@media (max-width: 767px) {
+  .gi-landing.gi-refined .gi-closing-cta {
+    padding-block: 42px 48px;
+  }
+  .gi-landing.gi-refined .gi-closing-cta h2 {
+    font-size: 40px;
+    line-height: 1.15;
+    letter-spacing: -0.05em;
+  }
+  .gi-landing.gi-refined .gi-closing-bottom {
+    margin-top: 22px;
+    gap: 24px;
+  }
+  .gi-landing.gi-refined .gi-closing-lead {
+    font-size: 15px;
+    line-height: 1.75;
+  }
+  .gi-landing.gi-refined .gi-closing-actions {
+    width: 100%;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .gi-landing.gi-refined .gi-closing-actions .gi-closing-primary {
+    flex: 1;
+    padding-inline: 18px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gi-landing.gi-refined .gi-closing-primary {
+    transition: none;
+    transform: none;
+  }
+}

@@ -1,3 +1,4 @@
+import { needsIncomeReconciliation, INCOME_RECONCILIATION_REPLY } from "./whatsapp-income-reconciliation";
 /**
  * Helpers server-only para a integração WhatsApp.
  * NÃO importar em código de browser.
@@ -2045,6 +2046,7 @@ export async function persistirGasto(
   externalMessageId?: string,
   pendingSessionId?: string,
 ): Promise<{ gastoId?: string; resposta: string; ok: boolean }> {
+  if(needsIncomeReconciliation(`${s.mensagemOriginal} ${s.nome}`)) return {ok:false,resposta:INCOME_RECONCILIATION_REPLY};
   // WA-C11 3B.2.C — Financial quota gate. Fail-closed sem external_id.
   if (!externalMessageId || externalMessageId.trim().length === 0) {
     console.error("[whatsapp] persistirGasto missing externalMessageId");
@@ -4984,6 +4986,8 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
     }
   }
 
+  if (!sessao && needsIncomeReconciliation(texto)) return {status:"consulta",resposta:INCOME_RECONCILIATION_REPLY};
+
   // ---- Fase WA-G1: texto livre indicando intenção de receita. ----
   const startsReceita = !sessao && decisao === "outro" && isReceitaIntent(texto);
   if (startsReceita) {
@@ -5980,9 +5984,11 @@ function cadastroCartaoDeps(
 export async function sendWhatsAppReply(
   to: string,
   text: string,
-): Promise<{ sent: boolean; reason?: string; status?: number }> {
+  reference?: string,
+): Promise<{ sent: boolean; reason?: string; status?: number; providerMessageId?: string | null }> {
   return sendWhatsAppRaw(to, {
     messaging_product: "whatsapp",
+    ...(reference ? { biz_opaque_callback_data: reference } : {}),
     to,
     type: "text",
     text: { body: text },
@@ -6002,9 +6008,11 @@ export async function sendWhatsAppReply(
 export async function sendWhatsAppInteractiveCtaUrl(
   to: string,
   payload: WhatsAppInteractivePayload,
-): Promise<{ sent: boolean; reason?: string; status?: number }> {
+  reference?: string,
+): Promise<{ sent: boolean; reason?: string; status?: number; providerMessageId?: string | null }> {
   return sendWhatsAppRaw(to, {
     messaging_product: "whatsapp",
+    ...(reference ? { biz_opaque_callback_data: reference } : {}),
     recipient_type: "individual",
     to,
     type: "interactive",
@@ -6026,9 +6034,11 @@ export async function sendWhatsAppInteractiveCtaUrl(
 export async function sendWhatsAppInteractiveReply(
   to: string,
   interactive: Record<string, unknown>,
-): Promise<{ sent: boolean; reason?: string; status?: number }> {
+  reference?: string,
+): Promise<{ sent: boolean; reason?: string; status?: number; providerMessageId?: string | null }> {
   return sendWhatsAppRaw(to, {
     messaging_product: "whatsapp",
+    ...(reference ? { biz_opaque_callback_data: reference } : {}),
     recipient_type: "individual",
     to,
     type: "interactive",
@@ -6039,7 +6049,7 @@ export async function sendWhatsAppInteractiveReply(
 async function sendWhatsAppRaw(
   _to: string,
   body: Record<string, unknown>,
-): Promise<{ sent: boolean; reason?: string; status?: number }> {
+): Promise<{ sent: boolean; reason?: string; status?: number; providerMessageId?: string | null }> {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   if (!token || !phoneId) return { sent: false, reason: "not_configured" };
@@ -6074,7 +6084,8 @@ async function sendWhatsAppRaw(
     }
     let responseBody: string | null = null;
     try {
-      responseBody = typeof res.text === "function" ? await res.text() : null;
+      const { readBodyLimited } = await import("./whatsapp-bounded-fetch.server");
+      responseBody = res.body ? (await readBodyLimited(res, 64 * 1024, 5000)).toString("utf8") : null;
     } catch {
       responseBody = null;
     }
@@ -6102,7 +6113,8 @@ async function sendWhatsAppRaw(
     } catch {
       // no-op
     }
-    return { sent: res.ok, status: res.status };
+    const { parseMetaSendResponse } = await import("./whatsapp-outbound-log.server");
+    return { sent: res.ok, status: res.status, providerMessageId: parseMetaSendResponse(responseBody).metaMessageId };
   } catch (e) {
     const errorName = e instanceof Error ? e.name : "unknown";
     console.error({

@@ -1,3 +1,4 @@
+import { approvedCatalog } from "./_whatsapp-approved-catalog";
 /**
  * WA-C9.2 Fase D.2B.2 (hardening) — Testes de concorrência + comportamento
  * do orquestrador `runOutboundForNotification`.
@@ -50,7 +51,7 @@ function baseNotification() {
     id: NID,
     user_id: UID,
     notification_type: "gi_conta_vencendo_hoje",
-    payload: { nome: "X", valor: "R$ 1,00", vencimento: "14/07" } as Record<string, unknown>,
+    payload: { due_date: "2026-07-12", nome: "X", valor: "R$ 1,00", vencimento: "14/07" } as Record<string, unknown>,
   };
 }
 
@@ -64,6 +65,7 @@ function stubTransport(): WhatsAppNotificationTransport {
 
 function baseDeps(overrides: Partial<RunOutboundDeps> = {}): RunOutboundDeps {
   return {
+    catalogLoader: approvedCatalog(),
     supabaseClient: emptyClient,
     gate: () => ({ allowed: true }),
     transportFactory: () => ({ ok: true, transport: stubTransport() }),

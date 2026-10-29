@@ -309,7 +309,7 @@ beforeEach(() => {
           ? input.toString()
           : (input as Request).url;
     fakeState.calls.downloadFetch.push(url);
-    if (url.includes("graph.facebook.com/v20.0/")) {
+    if (url.includes("graph.facebook.com/v25.0/")) {
       return new Response(
         JSON.stringify({
           url: "https://lookaside.fbsbx.com/whatsapp_business/attachments/audio-x",

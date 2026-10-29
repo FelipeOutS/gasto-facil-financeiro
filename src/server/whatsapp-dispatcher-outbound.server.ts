@@ -1,3 +1,5 @@
+import { resolveApprovedTemplateForNotification } from "./whatsapp-approved-template-resolver.server";
+import { buildServiceRoleCatalogLoader, type CatalogLoader } from "./whatsapp-meta-templates-catalog.server";
 /**
  * WA-C9.2 Fase D.2B.2 — Wiring operacional do transport Meta atrás da dupla trava.
  *
@@ -50,6 +52,7 @@ export type RunOutboundOutcome =
   | { kind: "executed"; result: ExecuteResult };
 
 export interface RunOutboundDeps {
+  catalogLoader?: CatalogLoader;
   /** Cliente Supabase (default: supabaseAdmin, lazy). */
   supabaseClient?: SupabaseLike;
   /** Gate override (default: isOutboundHttpAllowed). */
@@ -97,7 +100,10 @@ async function defaultLoadRecipient(userId: string, client: SupabaseLike): Promi
     revogado_em: string | null;
   };
   if (!row.ativo || row.revogado_em || !row.opt_in_em) return null;
-  return row.telefone ?? null;
+  if (!row.telefone) return null;
+  const {canUseWhatsAppForSender}=await import("./whatsapp-authz.server");
+  const auth=await canUseWhatsAppForSender(row.telefone);
+  return auth.allowed && auth.userId === userId ? row.telefone : null;
 }
 
 /**
@@ -138,7 +144,7 @@ export async function defaultLoadTemplate(
           event: "template_query_error",
           key,
           code: (error as { code?: unknown })?.code ?? null,
-          message: (error as { message?: unknown })?.message ?? null,
+
         }),
       );
     } catch {
@@ -222,6 +228,30 @@ export async function runOutboundForNotification(
     return { kind: "no_template" };
   }
 
+  // The notification table's name is NOT evidence of Meta approval.
+  // Resolve the closed catalog before creating an attempt or calling HTTP.
+  const rawDue = notification.payload?.due_date;
+  const date = typeof rawDue === "string" && /^\d{4}-\d{2}-\d{2}$/.test(rawDue)
+    ? rawDue.split("-").reverse().join("/") : notification.payload?.template_date;
+  let approved;
+  try {
+    approved = await resolveApprovedTemplateForNotification(
+      deps.catalogLoader ?? await buildServiceRoleCatalogLoader(),
+      { notificationKey: notification.notification_type, placeholders: { 1: date,
+        2: notification.notification_type.startsWith("gi_agenda_") ? "Lembrete da Agenda" : "Conta cadastrada" } },
+    );
+  } catch { return { kind: "no_template" }; }
+  if (!approved.ok) return { kind: "no_template" };
+  const canonicalTemplate: NotificationTemplateRow = { ...template,
+    meta_template_name: approved.metaName, language: approved.language,
+    payload_schema: { language: approved.language, required: ["1", "2"], body_params_order: ["1", "2"] },
+  };
+  // Re-read the link immediately before transport. A phone change must not
+  // deliver queued financial details to the former recipient.
+  if (await loadRecipient(notification.user_id, client) !== recipient) return { kind: "no_recipient" };
+  const finalGate = gateFn(notification.user_id);
+  if (!finalGate.allowed) return { kind: "gated", reasons: finalGate.reasons };
+
   const factory = deps.transportFactory ?? createMetaWhatsAppNotificationTransport;
   const factoryInput: MetaTransportFactoryInput = {};
   if (deps.phoneNumberId !== undefined) factoryInput.phoneNumberId = deps.phoneNumberId;
@@ -245,8 +275,8 @@ export async function runOutboundForNotification(
     notificationId: notification.id,
     claimToken,
     phoneNumberId,
-    template,
-    payload: notification.payload ?? {},
+    template: canonicalTemplate,
+    payload: { ...approved.values },
     recipient,
   };
 

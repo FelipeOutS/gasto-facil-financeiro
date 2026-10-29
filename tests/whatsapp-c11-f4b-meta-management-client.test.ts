@@ -31,7 +31,7 @@ function restoreEnv() {
 function setBaselineOff() {
   process.env.WHATSAPP_META_MGMT_ENABLED = "false";
   process.env.WHATSAPP_META_SUBMISSION_ENABLED = "false";
-  process.env.WHATSAPP_GRAPH_VERSION = "v20.0";
+  process.env.WHATSAPP_GRAPH_VERSION = "v25.0";
   process.env.WHATSAPP_WABA_ID = "1234567890";
   delete process.env.WHATSAPP_BUSINESS_ACCOUNT_ID;
   process.env.WHATSAPP_ACCESS_TOKEN = "test-token-xyz";
@@ -77,13 +77,13 @@ const baseLocal = {
 };
 
 describe("WA-C11 4B.2.a — cliente Meta (URL builder)", () => {
-  test("host fixo graph.facebook.com + versão v20.0 + WABA da env + path message_templates", async () => {
+  test("host fixo graph.facebook.com + versão v25.0 + WABA da env + path message_templates", async () => {
     const { buildMessageTemplatesUrl } = await loadMgmt();
     const r = buildMessageTemplatesUrl();
     expect(r.ok).toBe(true);
     if (r.ok) {
       expect(
-        r.url.startsWith("https://graph.facebook.com/v20.0/1234567890/message_templates"),
+        r.url.startsWith("https://graph.facebook.com/v25.0/1234567890/message_templates"),
       ).toBe(true);
     }
   });
@@ -177,7 +177,7 @@ describe("WA-C11 4B.2.a — cliente Meta (fetch com mock, flag ON)", () => {
     expect(capturedAuth).toBe("Bearer test-token-xyz");
     expect(capturedUrl.includes("test-token-xyz")).toBe(false);
     expect(
-      capturedUrl.startsWith("https://graph.facebook.com/v20.0/1234567890/message_templates"),
+      capturedUrl.startsWith("https://graph.facebook.com/v25.0/1234567890/message_templates"),
     ).toBe(true);
   });
 
