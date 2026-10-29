@@ -966,7 +966,7 @@
     "subtitle": "Envie um gasto ou uma receita pelo WhatsApp, confira os dados identificados e confirme antes de salvar no seu controle financeiro.",
     "steps": {
       "natural": "Envie de forma natural: \"gastei 35 no uber\" ou \"recebi 2.000 de salário\".",
-      "understands": "O bot identifica valor, categoria e data em segundos.",
+      "understands": "O bot identifica valor, categoria e data para você conferir.",
       "confirm": "Você confirma com um toque e o lançamento é salvo no app.",
       "anywhere": "Funciona direto no celular, sem precisar abrir o app."
     },
@@ -1036,5 +1036,45 @@
       }
     },
     "cta": "Ver como funciona"
+  },
+  "showcase": {
+    "message": "gastei 35 no uber",
+    "description": "Demonstração ilustrativa, sem envio ou gravação de dados. A pessoa escreve “gastei 35 no uber”. O assistente identifica Uber, R$ 35,00, categoria Transporte, data Hoje. A pessoa confere e confirma. O exemplo termina com o lançamento organizado.",
+    "preview": "Conversa demonstrativa",
+    "today": "Hoje",
+    "start": "Começa com uma mensagem.",
+    "startNote": "Do seu dia a dia para o seu controle financeiro.",
+    "processing": "Analisando sua mensagem…",
+    "found": "Encontrei este lançamento:",
+    "category": "Categoria",
+    "transport": "Transporte",
+    "date": "Data",
+    "question": "Posso salvar?",
+    "confirm": "Confirmar",
+    "confirmed": "Confirmado",
+    "saving": "Confirmando…",
+    "adjust": "Ajustar",
+    "cancel": "Cancelar",
+    "done": "Pronto!",
+    "saved": "R$ 35,00 salvo em Transporte.",
+    "input": "Escreva uma mensagem",
+    "controls": "Controles da demonstração do WhatsApp",
+    "pause": "Pausar demonstração",
+    "play": "Reproduzir demonstração",
+    "pauseShort": "Pausar",
+    "playShort": "Reproduzir",
+    "static": "Cena estática",
+    "restart": "Reiniciar demonstração",
+    "caption": "Demonstração ilustrativa · nenhum dado é enviado",
+    "phases": {
+      "intro": "01 / Escreva",
+      "typing": "01 / Escreva",
+      "sent": "02 / Identifique",
+      "processing": "02 / Identifique",
+      "review": "03 / Confira",
+      "confirming": "04 / Confirme",
+      "complete": "05 / Organizado",
+      "reset": "Vamos de novo"
+    }
   }
 }

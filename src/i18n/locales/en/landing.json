@@ -966,7 +966,7 @@
     "subtitle": "Send an expense or income through WhatsApp, review the details and confirm before saving it to your finances.",
     "steps": {
       "natural": "Send naturally: \"spent 35 on uber\" or \"received 2,000 salary\".",
-      "understands": "The bot identifies amount, category, and date in seconds.",
+      "understands": "The assistant identifies the amount, category and date for you to review.",
       "confirm": "You confirm with one tap and the entry is saved in the app.",
       "anywhere": "Works straight from your phone, no need to open the app."
     },
@@ -1036,5 +1036,45 @@
       }
     },
     "cta": "See how it works"
+  },
+  "showcase": {
+    "message": "spent 35 on uber",
+    "description": "Illustrative demo. No messages or data are sent or saved. The user writes “spent 35 on uber”. The assistant identifies Uber, R$35.00, Transport, Today. The user reviews and confirms. The example ends with an organized entry.",
+    "preview": "Illustrative conversation",
+    "today": "Today",
+    "start": "It starts with a message.",
+    "startNote": "From your everyday life to your financial overview.",
+    "processing": "Reading your message…",
+    "found": "Here is the entry:",
+    "category": "Category",
+    "transport": "Transport",
+    "date": "Date",
+    "question": "Shall I save it?",
+    "confirm": "Confirm",
+    "confirmed": "Confirmed",
+    "saving": "Confirming…",
+    "adjust": "Adjust",
+    "cancel": "Cancel",
+    "done": "Done!",
+    "saved": "R$35.00 saved under Transport.",
+    "input": "Write a message",
+    "controls": "WhatsApp demo controls",
+    "pause": "Pause demo",
+    "play": "Play demo",
+    "pauseShort": "Pause",
+    "playShort": "Play",
+    "static": "Static scene",
+    "restart": "Restart demo",
+    "caption": "Illustrative demo · no data is sent",
+    "phases": {
+      "intro": "01 / Write",
+      "typing": "01 / Write",
+      "sent": "02 / Identify",
+      "processing": "02 / Identify",
+      "review": "03 / Review",
+      "confirming": "04 / Confirm",
+      "complete": "05 / Organized",
+      "reset": "One more time"
+    }
   }
 }
