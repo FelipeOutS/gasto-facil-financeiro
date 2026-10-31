@@ -1,3 +1,5 @@
+import planningPhoto from "@/assets/lifestyle/landing-planejamento-financeiro-casal-640.webp";
+import planningPhotoLarge from "@/assets/lifestyle/landing-planejamento-financeiro-casal-1280.webp";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
@@ -144,7 +146,8 @@ function MetasPage() {
         </div>
       </header>
 
-      <section className="mt-4 rounded-3xl border border-border bg-gradient-to-br from-card to-card-elevated p-5 shadow-elevated animate-rise">
+      <section className="mt-4 flex min-w-0 flex-col overflow-hidden rounded-3xl sm:flex-row border border-border bg-gradient-to-br from-card to-card-elevated shadow-elevated animate-rise">
+        <div className="min-w-0 flex-1 p-5">
         <div className="flex items-center gap-2">
           <span className="grid h-7 w-7 place-items-center rounded-full bg-brand-soft text-brand-on-soft">
             <Target className="h-3.5 w-3.5" />
@@ -161,6 +164,8 @@ function MetasPage() {
           className="mt-1.5 text-xs leading-relaxed text-muted-foreground"
           dangerouslySetInnerHTML={{ __html: countLabel + t("summary.hint") }}
         />
+        </div>
+        <img src={planningPhoto} srcSet={`${planningPhoto} 640w, ${planningPhotoLarge} 1280w`} sizes="(min-width: 640px) 300px, 100vw" width={640} height={360} alt="" loading="lazy" decoding="async" className="h-28 w-full shrink-0 self-stretch object-cover object-[70%_40%] sm:h-auto sm:w-[36%]" />
       </section>
 
       <Button

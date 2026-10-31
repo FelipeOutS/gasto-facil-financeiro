@@ -1,3 +1,6 @@
+import "@/components/app-v2/expenses-editorial.css";
+import expensesPhotoSmall from "@/assets/lifestyle/app-banner-gastos-organizacao-financeira-em-casa-640.webp";
+import expensesPhoto from "@/assets/lifestyle/app-banner-gastos-organizacao-financeira-em-casa-1280.webp";
 import { competenciaDoGasto, isYm, nomeMesYm } from "@/lib/fatura-competencia";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -632,7 +635,7 @@ function GastosPage() {
   if (!ready) return <PageSkeleton wide />;
 
   return (
-    <MobileShell wide>
+    <MobileShell wide className="expenses-editorial">
       {/* V3 Page Header */}
       <AppPageHeader
         tone="gastos"
@@ -686,11 +689,17 @@ function GastosPage() {
 
       {/* V3 Module Banner */}
       <AppModuleBanner
+        imageSrc={expensesPhoto}
+        imageSrcSet={`${expensesPhotoSmall} 640w, ${expensesPhoto} 1280w`}
+        photo
+        photoPosition="35% 42%"
+        imageSizes="(min-width: 768px) 50vw, 100vw"
+        priority
         tone="gastos"
-        className="mt-4"
+        className="mt-4 expenses-hero"
         title={t("v3.banner.title")}
         subtitle={t("v3.banner.subtitle")}
-        imageAlt={t("v3.banner.alt")}
+        imageAlt={t("v3.banner.photoAlt", { defaultValue: "Mulher organizando suas despesas com um caderno e notebook em casa" })}
         cta={
           <Button asChild size="sm" className="h-10 rounded-full px-4 font-semibold">
             <Link to="/adicionar">{t("v3.banner.cta")}</Link>
@@ -698,8 +707,50 @@ function GastosPage() {
         }
       />
 
+      {/* Resumo premium (V3) */}
+      <div className="expenses-summary mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        <AppSummaryCard
+          tone="neutral"
+          icon={<Hash className="h-4 w-4" />}
+          label={t("summary.found")}
+          value={<CountNumber value={filtered.length} />}
+          hint={mesRef === "todos" ? t("summary.foundHintPeriod") : ymToLabel(mesRef)}
+        />
+        <AppSummaryCard
+          tone="gastos"
+          icon={<Wallet className="h-4 w-4" />}
+          label={t("summary.total")}
+          value={<Money value={total} />}
+          hint={t("summary.totalHint")}
+        />
+        <AppSummaryCard
+          tone="relatorios"
+          icon={<TrendingUp className="h-4 w-4" />}
+          label={t("summary.avg")}
+          value={<Money value={media} />}
+          hint={
+            filtered.length
+              ? t("summary.avgHint", { count: filtered.length })
+              : t("summary.noValue")
+          }
+        />
+        <AppSummaryCard
+          tone="metas"
+          icon={<Tag className="h-4 w-4" />}
+          label={t("summary.topCategory")}
+          value={
+            topCategoria ? (
+              <span className="truncate block">{topCategoria.nome}</span>
+            ) : (
+              <span className="text-muted-foreground">{t("summary.noValue")}</span>
+            )
+          }
+          hint={topCategoria ? formatBRL(topCategoria.valor) : t("summary.noData")}
+        />
+      </div>
+
       {/* SELETOR PRINCIPAL: Mês de referência */}
-      <section className="mt-4 rounded-2xl border border-border bg-card p-3 sm:p-4 animate-rise">
+      <section className="expenses-controls mt-4 rounded-2xl border border-border bg-card p-3 sm:p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-soft text-brand">
@@ -752,11 +803,31 @@ function GastosPage() {
           <Sparkles className="h-3 w-3 text-brand" />
           <span>{referenceMonthCaption}</span>
         </p>
+      {/* Busca grande */}
+      <div className="expenses-search relative">
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder={t("search.placeholder")}
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="h-12 rounded-2xl border-border bg-card pl-11 text-sm"
+        />
+        {q && (
+          <button
+            onClick={() => setQ("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated"
+            aria-label={t("search.clear")}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
       </section>
 
       {/* Botões mobile */}
-      <div className="mt-3 sm:hidden -mx-4 px-4 overflow-x-auto scrollbar-none">
-        <div className="flex items-center gap-2 w-max pb-1">
+      <div className="expenses-actions mt-3 sm:hidden">
+        <div className="grid grid-cols-2 gap-2">
           <Button
             type="button"
             onClick={handleReclassificar}
@@ -823,28 +894,8 @@ function GastosPage() {
         benefit={t("upgrade.benefit")}
       />
 
-      {/* Busca grande */}
-      <div className="mt-4 relative">
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder={t("search.placeholder")}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="h-12 rounded-2xl border-border bg-card pl-11 text-sm"
-        />
-        {q && (
-          <button
-            onClick={() => setQ("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-card-elevated"
-            aria-label={t("search.clear")}
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-
       {/* Chips rápidos de período */}
-      <div className="mt-3 flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 no-scrollbar">
+      <div className="expenses-periods mt-3 flex flex-wrap gap-2">
         {PERIODOS_RAPIDOS.map((p) => {
           const active = periodo === p;
           if (p === "personalizado") {
@@ -1085,48 +1136,6 @@ function GastosPage() {
         </div>
       )}
 
-      {/* Resumo premium (V3) */}
-      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 stagger">
-        <AppSummaryCard
-          tone="neutral"
-          icon={<Hash className="h-4 w-4" />}
-          label={t("summary.found")}
-          value={<CountNumber value={filtered.length} />}
-          hint={mesRef === "todos" ? t("summary.foundHintPeriod") : ymToLabel(mesRef)}
-        />
-        <AppSummaryCard
-          tone="gastos"
-          icon={<Wallet className="h-4 w-4" />}
-          label={t("summary.total")}
-          value={<Money value={total} />}
-          hint={t("summary.totalHint")}
-        />
-        <AppSummaryCard
-          tone="relatorios"
-          icon={<TrendingUp className="h-4 w-4" />}
-          label={t("summary.avg")}
-          value={<Money value={media} />}
-          hint={
-            filtered.length
-              ? t("summary.avgHint", { count: filtered.length })
-              : t("summary.noValue")
-          }
-        />
-        <AppSummaryCard
-          tone="metas"
-          icon={<Tag className="h-4 w-4" />}
-          label={t("summary.topCategory")}
-          value={
-            topCategoria ? (
-              <span className="truncate block">{topCategoria.nome}</span>
-            ) : (
-              <span className="text-muted-foreground">{t("summary.noValue")}</span>
-            )
-          }
-          hint={topCategoria ? formatBRL(topCategoria.valor) : t("summary.noData")}
-        />
-      </div>
-
       {/* Barra de seleção em massa */}
       {filtered.length > 0 && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border bg-card-elevated px-3 py-2">
@@ -1261,7 +1270,7 @@ function GastosPage() {
           )}
         </div>
       ) : (
-        <ul className="mt-3 space-y-2 pb-4" data-fornecedores-map>
+        <ul className="expenses-transactions mt-3 pb-4" data-fornecedores-map>
           <AnimatePresence initial={false}>
             {filtered.map((g, idx) => {
               const cat = getCategoriaById(g.categoriaId);

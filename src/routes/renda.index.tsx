@@ -1,3 +1,5 @@
+import incomePhoto from "@/assets/lifestyle/landing-para-quem-e-trabalho-remoto-cafe-640.webp";
+import incomePhotoLarge from "@/assets/lifestyle/landing-para-quem-e-trabalho-remoto-cafe-1280.webp";
 import { useActiveAccount } from "@/lib/active-account";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -642,11 +644,15 @@ function RendaPage() {
 
       {/* V3 Banner */}
       <AppModuleBanner
+        imageSrc={incomePhoto}
+        imageSrcSet={`${incomePhoto} 640w, ${incomePhotoLarge} 1280w`}
+        photo
+        photoPosition="70% center"
         tone="receitas"
         className="mt-4"
         title={t("v3.banner.title")}
         subtitle={t("v3.banner.subtitle")}
-        imageAlt={t("v3.banner.alt")}
+        imageAlt=""
         cta={
           <Button
             size="sm"

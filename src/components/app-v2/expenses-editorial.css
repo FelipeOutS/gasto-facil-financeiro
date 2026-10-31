@@ -1,0 +1,41 @@
+.gi-module-banner.gi-module-banner-photo.expenses-hero {
+  display: flex; flex-direction: column; gap: 0; padding: 0;
+  border-radius: 24px; background: var(--card); min-width: 0;
+}
+.expenses-hero > picture { width: 100%; height: 200px; border-radius: 0; }
+.expenses-hero .gi-banner-photo { position: static; width: 100%; height: 100%; object-fit: cover; mask-image: none; }
+.gi-module-banner.gi-module-banner-photo.expenses-hero > div {
+  width: 100%; max-width: none; padding: 20px; gap: 10px;
+}
+.expenses-hero h2 { font-size: 22px; line-height: 1.18; letter-spacing: -.025em; text-wrap: balance; }
+.expenses-hero p { max-width: 48ch; font-size: 13px; line-height: 1.5; }
+.expenses-hero a { min-height: 44px; }
+.expenses-editorial .gi-summary-card { min-width: 0; padding: 14px; border-radius: 18px; box-shadow: none; }
+.expenses-editorial .gi-summary-card > div:nth-child(3) { font-size: 22px; overflow-wrap: anywhere; }
+.expenses-editorial .gi-summary-card > div:nth-child(2) { gap: 8px; }
+.expenses-editorial .gi-summary-card > div:nth-child(2) > span { width: 28px; height: 28px; }
+@media (min-width: 768px) {
+ .gi-module-banner.gi-module-banner-photo.expenses-hero { flex-direction: row-reverse; align-items: stretch; }
+ .expenses-hero > picture { width: 48%; height: 260px; flex-shrink: 0; }
+ .gi-module-banner.gi-module-banner-photo.expenses-hero > div { padding: 28px; }
+ .expenses-hero h2 { font-size: 28px; }
+}
+
+/* The summary precedes the work area; filters and results share a compact rhythm. */
+.expenses-summary { gap: 1px; overflow: hidden; border: 1px solid var(--border); border-radius: 20px; background: var(--border); }
+.expenses-editorial .expenses-summary .gi-summary-card { border: 0; border-radius: 0; padding: 16px; }
+.expenses-summary .gi-summary-card > div[aria-hidden] { display: none; }
+.expenses-summary .gi-summary-card:nth-child(2) { background: color-mix(in srgb, var(--card) 94%, #e99c62); }
+.expenses-controls { display: grid; gap: 12px; box-shadow: none; }
+.expenses-controls > p { margin-top: 0; }
+.expenses-controls .expenses-search input { background: var(--background); min-height: 48px; font-size: 16px; }
+.expenses-actions button { width: 100%; justify-content: center; box-shadow: none; min-height: 44px; }
+.expenses-periods > button, .expenses-periods > [role=combobox] { min-height: 44px; }
+.expenses-transactions { border: 1px solid var(--border); border-radius: 20px; overflow: hidden; background: var(--card); }
+.expenses-transactions > li { border-width: 0 0 1px; border-radius: 0; padding: 16px 12px; box-shadow: none; }
+.expenses-transactions > li:last-child { border-bottom: 0; }
+@media (min-width: 768px) {
+ .expenses-controls { grid-template-columns: minmax(0,1fr) minmax(240px,1fr); align-items: center; }
+ .expenses-controls > p { grid-row: 2; }
+ .expenses-search { grid-column: 2; grid-row: 1 / span 2; }
+}
