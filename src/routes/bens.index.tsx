@@ -389,7 +389,7 @@ function BensPage() {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[calc(var(--app-viewport-height,100dvh)*0.9)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Novo bem</DialogTitle>
             <DialogDescription>

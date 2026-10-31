@@ -473,7 +473,7 @@ function RelatorioClientesPage() {
                 </div>
               </div>
 
-              <div className="max-h-[50vh] space-y-3 overflow-y-auto pr-1">
+              <div className="max-h-[calc(var(--app-viewport-height,100dvh)*0.5)] space-y-3 overflow-y-auto pr-1">
                 {detalhe.receitas.length > 0 && (
                   <div>
                     <p className="mb-1.5 text-xs font-semibold">

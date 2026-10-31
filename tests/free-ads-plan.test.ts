@@ -118,7 +118,8 @@ ok(
 const landingSource = await Bun.file("src/components/landing/PublicLanding.tsx").text();
 ok(
   "landing exibe card gratuito antes dos planos pagos",
-  landingSource.indexOf("<FreeAdsPlanCard />") < landingSource.indexOf("COMMERCIAL_PLANS.map"),
+  landingSource.indexOf("<FreeAdsPlanCard />") >= 0 &&
+    landingSource.indexOf("visiblePlans.map") > landingSource.indexOf("<FreeAdsPlanCard />"),
 );
 ok(
   "CTA gratuito usa o fluxo seguro chooseFreeAdsPlan",

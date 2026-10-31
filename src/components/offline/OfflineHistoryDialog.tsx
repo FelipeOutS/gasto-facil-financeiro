@@ -146,7 +146,7 @@ export function OfflineHistoryDialog({ open, onOpenChange, userId }: Props) {
             </TabsList>
           </Tabs>
 
-          <div className="max-h-[55vh] space-y-2 overflow-y-auto">
+          <div className="max-h-[calc(var(--app-viewport-height,100dvh)*0.55)] space-y-2 overflow-y-auto">
             {filtered.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">
                 {events.length === 0

@@ -706,7 +706,7 @@ export function ImportInvestimentosFlow({
         )}
 
         {step === "preview" && (
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+          <div className="space-y-4 max-h-[calc(var(--app-viewport-height,100dvh)*0.6)] overflow-y-auto pr-1">
             <div className="flex flex-wrap gap-2 text-xs">
               <Badge variant="secondary">
                 {ti("preview.badges.summary", {
