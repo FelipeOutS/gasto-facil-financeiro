@@ -1,8 +1,6 @@
-import { deleteGastoAtivo } from "@/lib/whatsapp-gasto-delete";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { processarMensagemWhatsApp } from "@/server/whatsapp.server";
 import { assertFeatureAccess } from "@/server/feature-gate.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { beginWhatsAppLinkVerification } from "@/server/whatsapp-link-verification.server";
@@ -53,6 +51,19 @@ export const getWhatsAppConfigStatus = createServerFn({ method: "GET" })
       enabled: flag(process.env.WHATSAPP_ENABLED),
       canary_enabled: flag(process.env.WHATSAPP_CANARY_ENABLED),
     };
+  });
+
+/** Self-service privacy access, independent of subscription; no message history. */
+export const listOwnWhatsAppConsents = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("whatsapp_links")
+      .select("id, telefone")
+      .eq("user_id", context.userId)
+      .is("revogado_em", null);
+    if (error) throw new Error("Não foi possível consultar seus vínculos.");
+    return { links: data ?? [] };
   });
 
 export const listWhatsAppLinks = createServerFn({ method: "GET" })
@@ -120,6 +131,8 @@ export const confirmWhatsAppLinkConsent = createServerFn({ method: "POST" })
       .select("id, ativo, telefone, revogado_em, verification_state")
       .eq("user_id", userId)
       .eq("ativo", true)
+      .eq("verification_state", "verified")
+      .is("revogado_em", null)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -133,7 +146,7 @@ export const confirmWhatsAppLinkConsent = createServerFn({ method: "POST" })
     }
 
     const nowIso = new Date().toISOString();
-    const { error: updErr } = await supabaseAdmin
+    const { data: updatedLink, error: updErr } = await supabaseAdmin
       .from("whatsapp_links")
       .update({
         opt_in_em: nowIso,
@@ -141,8 +154,13 @@ export const confirmWhatsAppLinkConsent = createServerFn({ method: "POST" })
         opt_in_user_agent: data.user_agent ?? null,
       })
       .eq("id", link.id)
-      .eq("user_id", userId);
-    if (updErr) {
+      .eq("user_id", userId)
+      .eq("ativo", true)
+      .eq("verification_state", "verified")
+      .is("revogado_em", null)
+      .select("id")
+      .maybeSingle();
+    if (updErr || !updatedLink) {
       return { consentimento_atualizado: "falhou" as const };
     }
     return { consentimento_atualizado: "ok" as const };
@@ -237,7 +255,7 @@ export const listWhatsAppMessages = createServerFn({ method: "GET" })
     return { messages: data ?? [] };
   });
 
-/** Dispara um teste do webhook usando o telefone vinculado e a mensagem do usuário. */
+/** Endpoint legado desativado: a tela oferece somente prévia local, sem gravação. */
 export const testarWebhookWhatsApp = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z
@@ -248,107 +266,36 @@ export const testarWebhookWhatsApp = createServerFn({ method: "POST" })
       .parse(d),
   )
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data, context }) => {
-    await assertWhatsAppAccess(context.userId);
-    const tel = normTel(data.telefone);
-    const externalId = `test-${Date.now()}`;
-    const out = await processarMensagemWhatsApp({
-      external_id: externalId,
-      telefone: tel,
-      texto: data.texto,
-    });
-    return out;
+  .handler(async () => {
+    // Legacy clients must not bypass the read-only screen or destroy audit history.
+    throw new Error("Esta ação antiga foi desativada para preservar seu histórico. Gerencie lançamentos em Gastos ou use a conversa oficial do WhatsApp.");
   });
 
-/**
- * Exclui o gasto criado por uma mensagem do WhatsApp e atualiza o log
- * para refletir a exclusão. O delete em cascata na tabela `gastos`
- * garante que cartões, faturas, dashboard e relatórios recalculem.
- */
+/** Endpoint legado desativado: gestão financeira deve ocorrer pelo fluxo de Gastos. */
 export const deleteGastoFromWhatsApp = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ messageId: z.string().uuid() }).parse(d))
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data, context }) => {
-    await assertWhatsAppAccess(context.userId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sb = context.supabase as any;
-    const { userId } = context;
-
-    const { data: msg, error: msgErr } = await sb
-      .from("whatsapp_messages")
-      .select("id, gasto_id, user_id")
-      .eq("id", data.messageId)
-      .maybeSingle();
-    if (msgErr) throw new Error(msgErr.message);
-    if (!msg || msg.user_id !== userId) throw new Error("Mensagem não encontrada.");
-
-    if (msg.gasto_id) {
-      // Remove o gasto real só se ativo (nunca apaga soft-excluído; RLS + user_id).
-      const r = await deleteGastoAtivo(sb, userId, msg.gasto_id);
-      if (r === "deleted") {
-        // Limpa contas a pagar vinculadas, se houver.
-        await sb
-          .from("contas_a_pagar")
-          .update({ status: "pendente", data_pagamento: null, gasto_id: null })
-          .eq("user_id", userId)
-          .eq("gasto_id", msg.gasto_id);
-      }
-    }
-
-    // Atualiza o log mantendo histórico.
-    const { error: updErr } = await sb
-      .from("whatsapp_messages")
-      .update({
-        status: "gasto_excluido",
-        gasto_id: null,
-        resposta_sugerida: "Gasto excluído pelo usuário.",
-      })
-      .eq("id", data.messageId);
-    if (updErr) throw new Error(updErr.message);
-
-    return { ok: true };
+  .handler(async () => {
+    // Legacy clients must not bypass the read-only screen or destroy audit history.
+    throw new Error("Esta ação antiga foi desativada para preservar seu histórico. Gerencie lançamentos em Gastos ou use a conversa oficial do WhatsApp.");
   });
 
-/** Reprocessa uma mensagem (cria novo gasto a partir do mesmo texto). */
+/** Endpoint legado desativado: não apaga deduplicação nem recria lançamentos. */
 export const reprocessarMensagemWhatsApp = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ messageId: z.string().uuid() }).parse(d))
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data, context }) => {
-    await assertWhatsAppAccess(context.userId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sb = context.supabase as any;
-    const { userId } = context;
-
-    const { data: msg, error } = await sb
-      .from("whatsapp_messages")
-      .select("id, telefone, texto, user_id")
-      .eq("id", data.messageId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!msg || msg.user_id !== userId) throw new Error("Mensagem não encontrada.");
-
-    // Remove o log antigo para liberar a dedupe e processa de novo.
-    await sb.from("whatsapp_messages").delete().eq("id", data.messageId);
-
-    const out = await processarMensagemWhatsApp({
-      external_id: `reproc-${Date.now()}`,
-      telefone: msg.telefone,
-      texto: msg.texto,
-    });
-    return out;
+  .handler(async () => {
+    // Legacy clients must not bypass the read-only screen or destroy audit history.
+    throw new Error("Esta ação antiga foi desativada para preservar seu histórico. Gerencie lançamentos em Gastos ou use a conversa oficial do WhatsApp.");
   });
 
-/** Exclui apenas o log da mensagem do WhatsApp (não toca no gasto). */
+/** Endpoint legado desativado: preserva histórico e identidade da mensagem. */
 export const deleteWhatsAppMessageLog = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ messageId: z.string().uuid() }).parse(d))
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data, context }) => {
-    await assertWhatsAppAccess(context.userId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sb = context.supabase as any;
-    const { error } = await sb.from("whatsapp_messages").delete().eq("id", data.messageId);
-    if (error) throw new Error(error.message);
-    return { ok: true };
+  .handler(async () => {
+    // Legacy clients must not bypass the read-only screen or destroy audit history.
+    throw new Error("Esta ação antiga foi desativada para preservar seu histórico. Gerencie lançamentos em Gastos ou use a conversa oficial do WhatsApp.");
   });
 
 /**
