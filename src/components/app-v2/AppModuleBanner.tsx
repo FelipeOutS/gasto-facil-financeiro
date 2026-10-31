@@ -1,3 +1,4 @@
+import "./module-photo.css";
 import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -10,8 +11,13 @@ export interface AppModuleBannerProps {
   tone?: AppModuleTone;
   /** Ilustração/imagem opcional (renderizada à direita). */
   imageSrc?: string;
+  imageSrcSet?: string;
+  imageSizes?: string;
   imageSrcWebp?: string;
   imageAlt?: string;
+  /** Contextual photo beside the module introduction. */
+  photo?: boolean;
+  photoPosition?: string;
   /** CTA já estilizado (Link/Button). */
   cta?: ReactNode;
   /** Marca como LCP (carrega eager + fetchPriority high). */
@@ -30,8 +36,12 @@ export function AppModuleBanner({
   subtitle,
   tone = "neutral",
   imageSrc,
+  imageSrcSet,
+  imageSizes,
   imageSrcWebp,
   imageAlt,
+  photo = false,
+  photoPosition = "30% center",
   cta,
   priority = false,
   compact = false,
@@ -47,22 +57,27 @@ export function AppModuleBanner({
       className={cn(
         "gi-module-banner relative overflow-hidden rounded-3xl border border-border/60 shadow-card",
         compact ? "min-h-[128px]" : "min-h-[168px] md:min-h-[200px]",
+        photo && "gi-module-banner-photo",
         className,
       )}
       style={{
-        backgroundImage: `linear-gradient(135deg, color-mix(in oklab, ${color} 24%, var(--card)) 0%, var(--card) 72%)`,
+        backgroundImage: photo ? "none" : `linear-gradient(135deg, color-mix(in oklab, ${color} 24%, var(--card)) 0%, var(--card) 72%)`,
       }}
     >
       {imageSrc && (
         <picture>
           {imageSrcWebp && <source srcSet={imageSrcWebp} type="image/webp" />}
           <img
+            style={photo ? { objectPosition: photoPosition } : undefined}
             src={imageSrc}
+            srcSet={imageSrcSet}
+            sizes={imageSizes ?? (photo ? "(min-width: 640px) 144px, 88px" : undefined)}
+            {...(photo ? { width: 1672, height: 941 } : {})}
             alt={resolvedAlt}
             loading={priority ? "eager" : "lazy"}
             decoding="async"
             {...(priority ? { fetchPriority: "high" as const } : { fetchPriority: "low" as const })}
-            className="pointer-events-none absolute right-0 top-0 h-full w-1/2 object-cover object-right opacity-90 sm:w-2/5"
+            className={cn("pointer-events-none absolute right-0 top-0 h-full w-1/2 object-cover object-right opacity-90 sm:w-2/5", photo && "gi-banner-photo")}
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).style.display = "none";
             }}
