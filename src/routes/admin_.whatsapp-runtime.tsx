@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileShell } from "@/components/MobileShell";
 import { AdminMasterGate } from "@/components/AdminMasterGate";
@@ -81,11 +81,15 @@ function PanelInner() {
   const [templates, setTemplates] = useState<Awaited<
     ReturnType<typeof whatsappAdminListLocalTemplates>
   > | null>(null);
+  const requestId = useRef(0);
+  const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
+    const request = ++requestId.current;
+    setLoadError(false);
     setLoading(true);
     try {
       const [s, q, u, t] = await Promise.all([
@@ -94,22 +98,28 @@ function PanelInner() {
         readUsage(),
         readTemplates(),
       ]);
+      if (request !== requestId.current) return;
       setSnap(s);
       setQuotas(q);
       setUsage(u);
       setTemplates(t);
     } catch (err) {
+      if (request !== requestId.current) return;
+      setLoadError(true);
       toast.error("Falha ao carregar painel");
 
       console.error({event:"whatsapp_admin_load_failed"});
     } finally {
-      setLoading(false);
+      if (request === requestId.current) setLoading(false);
     }
   }, [readSnap, readQuotas, readUsage, readTemplates]);
 
   useEffect(() => {
     void refresh();
+    return () => { requestId.current++; };
   }, [refresh]);
+
+  if (loadError && !snap) return <div role="alert" className="p-6">Não foi possível carregar o painel WhatsApp.<Button onClick={() => void refresh()}>Tentar novamente</Button></div>;
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 pb-16 pt-4">

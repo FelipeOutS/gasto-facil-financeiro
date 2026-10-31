@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { MobileShell } from "@/components/MobileShell";
 import { AdminMasterGate } from "@/components/AdminMasterGate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -145,6 +145,8 @@ function MetricCard({
 }
 
 function SystemHealthPage() {
+  const requestId = useRef(0);
+  const [loadError, setLoadError] = useState(false);
   const [data, setData] = useState<SystemHealthData | null>(null);
   const [retention, setRetention] = useState<LogRetentionPreview | null>(null);
   const [loading, setLoading] = useState(true);
@@ -164,15 +166,20 @@ function SystemHealthPage() {
   }, []);
 
   const load = useCallback(async () => {
+    const request = ++requestId.current;
+    setLoadError(false);
     setLoading(true);
     try {
       const res = (await getSystemHealthDashboard()) as SystemHealthData;
+      if (request !== requestId.current) return;
       setData(res);
     } catch (err) {
+      if (request !== requestId.current) return;
+      setLoadError(true);
       const msg = err instanceof Error ? err.message : "Erro";
       toast.error("Não foi possível carregar a saúde do sistema", { description: msg });
     } finally {
-      setLoading(false);
+      if (request === requestId.current) setLoading(false);
     }
   }, []);
 
@@ -217,7 +224,10 @@ function SystemHealthPage() {
 
   useEffect(() => {
     void load();
+    return () => { requestId.current++; };
   }, [load]);
+
+  if (loadError && !data) return <MobileShell><div role="alert" className="p-6">Não foi possível carregar a saúde do sistema.<Button onClick={() => void load()}>Tentar novamente</Button></div></MobileShell>;
 
   return (
     <MobileShell>

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRef, useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileShell } from "@/components/MobileShell";
 import { AdminMasterGate } from "@/components/AdminMasterGate";
@@ -76,6 +76,7 @@ function fmtDate(iso: string | null): string {
 }
 
 function AtividadeUsuariosPage() {
+  const requestId = useRef(0);
   const fetchReport = useServerFn(getUserActivityReport);
   const [days, setDays] = useState<number>(30);
   const [data, setData] = useState<UserActivityReport | null>(null);
@@ -86,15 +87,18 @@ function AtividadeUsuariosPage() {
 
   const load = useCallback(
     async (windowDays: number) => {
+      const request = ++requestId.current;
       setLoading(true);
       setError(null);
       try {
         const result = await fetchReport({ data: { days: windowDays } });
+        if (request !== requestId.current) return;
         setData(result);
       } catch (e) {
+        if (request !== requestId.current) return;
         setError(e instanceof Error ? e.message : "Falha ao carregar o relatório.");
       } finally {
-        setLoading(false);
+        if (request === requestId.current) setLoading(false);
       }
     },
     [fetchReport],
@@ -102,6 +106,7 @@ function AtividadeUsuariosPage() {
 
   useEffect(() => {
     void load(days);
+    return () => { requestId.current++; };
   }, [days, load]);
 
   const lista = useMemo(() => {
