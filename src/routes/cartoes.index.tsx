@@ -2187,7 +2187,7 @@ export function FaturaSheet({
 
       {/* Adicionar compra */}
       <Dialog open={openAdd} onOpenChange={setOpenAdd}>
-        <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] overflow-y-auto p-0 sm:max-w-[560px]">
+        <DialogContent className="max-h-[calc(var(--app-viewport-height,100dvh)*0.9)] w-[calc(100vw-2rem)] overflow-y-auto p-0 sm:max-w-[560px]">
           <DialogHeader className="border-b border-border px-6 pb-4 pt-6 text-left">
             <DialogTitle className="text-xl font-bold tracking-tight">
               {t("sheet.newPurchaseTitle")}

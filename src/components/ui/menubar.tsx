@@ -102,7 +102,7 @@ const MenubarContent = React.forwardRef<
       sideOffset={sideOffset}
       collisionPadding={12}
       className={cn(
-        "z-[10000] max-h-[calc(100vh-1.5rem)] min-w-[12rem] overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md shadow-black/40",
+        "z-[10000] max-h-[calc(var(--app-viewport-height,100dvh)-1.5rem)] min-w-[12rem] overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md shadow-black/40",
         className,
       )}
       {...props}

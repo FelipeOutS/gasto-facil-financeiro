@@ -1,0 +1,50 @@
+[
+  {
+    "mode": "mouse",
+    "field": "Cartão de crédito",
+    "height": 298,
+    "result": "PASS"
+  },
+  {
+    "mode": "mouse",
+    "field": "Outubro de 2026",
+    "height": 617.5,
+    "result": "PASS"
+  },
+  {
+    "mode": "mouse",
+    "field": "Não sei / decidir depois",
+    "height": 170,
+    "result": "PASS"
+  },
+  {
+    "mode": "touch",
+    "field": "Cartão de crédito",
+    "height": 298,
+    "result": "PASS"
+  },
+  {
+    "mode": "touch",
+    "field": "Outubro de 2026",
+    "height": 617.5,
+    "result": "PASS"
+  },
+  {
+    "mode": "touch",
+    "field": "Não sei / decidir depois",
+    "height": 170,
+    "result": "PASS"
+  },
+  {
+    "css": "calc(var(--app-viewport-height,100dvh) - 1.5rem)",
+    "height": 973.3333740234375
+  },
+  {
+    "css": "calc(var(--app-viewport-height,100dvh)*0.55)",
+    "height": 548.53125
+  },
+  {
+    "css": "calc(var(--app-viewport-height,100dvh)*0.9)",
+    "height": 897.5989990234375
+  }
+]
