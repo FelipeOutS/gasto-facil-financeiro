@@ -1124,7 +1124,7 @@ function ContaFormDialog({
   const isEdit = !!conta;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[calc(var(--app-viewport-height,100dvh)*0.9)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? t("form.editTitle") : t("form.newTitle")}</DialogTitle>
           <DialogDescription>{isEdit ? t("form.editDesc") : t("form.newDesc")}</DialogDescription>
@@ -1191,7 +1191,7 @@ function PagarDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[calc(var(--app-viewport-height,100dvh)*0.9)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("pay.title")}</DialogTitle>
           <DialogDescription>{t("pay.desc")}</DialogDescription>

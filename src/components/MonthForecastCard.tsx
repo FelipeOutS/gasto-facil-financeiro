@@ -338,7 +338,7 @@ function ForecastDetailDialog({
   const { t } = useTranslation("dashboard");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[calc(var(--app-viewport-height,100dvh)*0.85)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("forecast.dialog.title", { label: data.label })}</DialogTitle>
           <DialogDescription>

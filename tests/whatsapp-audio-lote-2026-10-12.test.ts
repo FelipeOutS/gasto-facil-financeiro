@@ -4,7 +4,7 @@
  * "confirmar"; retries não duplicam; áudio não confirma comprovante pendente.
  * Dados 100% fictícios (fake do Supabase), sem rede.
  */
-import { test, expect, beforeEach } from "bun:test";
+import { test, expect, beforeEach, setSystemTime } from "bun:test";
 import { state, resetState, setupWhatsAppFakeMocks, gastosInserts } from "./_whatsapp-fake";
 setupWhatsAppFakeMocks();
 
@@ -75,8 +75,12 @@ test("parcelas e 'cartão final 1234' nunca viram valor", () => {
 });
 
 test("'dia 30' sem mês, ainda no futuro deste mês → ambíguo, pergunta em vez de adivinhar", () => {
-  // O dia 31 nunca passou antes do fim do mês; usado para não depender da data.
-  expect(A("gastei 20 no uber dia 31").kind).toBe("unsafe");
+  setSystemTime(new Date("2026-10-12T15:00:00Z"));
+  try {
+    expect(A("gastei 20 no uber dia 30").kind).toBe("unsafe");
+  } finally {
+    setSystemTime();
+  }
 });
 
 test("'gastei 45 de mercado ontem' → R$ 45 ontem", () => {

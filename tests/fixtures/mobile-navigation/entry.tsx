@@ -9,6 +9,7 @@ import {
   Link,
   useLocation,
 } from "@tanstack/react-router";
+import { SystemSurfaceProvider } from "../../../src/lib/system-surface";
 import { BottomNav } from "../../../src/components/BottomNav";
 import { NAV_GROUPS } from "../../../src/lib/nav-groups";
 import { ThemeProvider, useTheme } from "../../../src/lib/theme";
@@ -18,13 +19,14 @@ import nav from "../../../src/i18n/locales/pt/nav.json";
 // Component fixture only: no session, auth mock, financial data or backend.
 const destinations = [
   { to: "/app", labelKey: "dashboard" },
-  { to: "/adicionar", labelKey: "gastos" },
+  { to: "/manual", labelKey: "gastos" },
   { to: "/renda/nova", labelKey: "renda" },
   ...NAV_GROUPS.flatMap((g) => g.items),
 ].filter((item) =>
   [
     "/app",
-    "/adicionar",
+    "/manual",
+    "/app/cofre-pessoal",
     "/renda/nova",
     "/gastos",
     "/renda",
@@ -45,8 +47,9 @@ function Shell() {
   const { pathname } = useLocation();
   return (
     <>
-      <header style={{ padding: "18px 20px", borderBottom: "1px solid var(--border)" }}>
+      <header style={{ padding: "calc(18px + var(--app-safe-top)) 20px 18px", borderBottom: "1px solid var(--border)" }}>
         <strong>Gasto Inteligente</strong>
+        <Link id="fixture-more" to="/app/mais" style={{display:"block",padding:12}}>Mais opções de teste</Link>
         <p style={{ fontSize: 11, marginTop: 6 }}>TESTE ISOLADO DE NAVEGAÇÃO · SEM SESSÃO</p>
         <button
           id="theme"
@@ -135,7 +138,7 @@ const router = createRouter({ routeTree: root.addChildren(routes), defaultPreloa
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider>
     <AccentProvider>
-      <RouterProvider router={router} />
+      <SystemSurfaceProvider><RouterProvider router={router} /></SystemSurfaceProvider>
     </AccentProvider>
   </ThemeProvider>,
 );

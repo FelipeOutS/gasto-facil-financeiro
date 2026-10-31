@@ -372,7 +372,7 @@ export function EditGastoDialog({
         className={cn(
           "p-0 gap-0 overflow-hidden",
           "w-[calc(100vw-1.5rem)] sm:max-w-[640px] lg:max-w-[760px]",
-          "max-h-[90vh] flex flex-col rounded-2xl",
+          "max-h-[calc(var(--app-viewport-height,100dvh)*0.9)] flex flex-col rounded-2xl",
         )}
       >
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border text-left space-y-1">
