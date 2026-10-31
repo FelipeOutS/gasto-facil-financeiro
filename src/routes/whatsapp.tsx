@@ -1,5 +1,4 @@
-import { deleteGastoAtivo } from "@/lib/whatsapp-gasto-delete";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { usePlan } from "@/lib/use-plan";
@@ -24,7 +23,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { confirmAsync } from "@/components/ConfirmDialog";
 import { toastFromError } from "@/lib/premium-error";
-import { refreshGastos } from "@/lib/store";
 import { ExternalLink } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -121,19 +119,19 @@ function maskTel(t: string) {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  salva: "border-emerald-500/40 text-emerald-400 bg-emerald-500/10",
-  aguardando_confirmacao: "border-indigo-500/40 text-indigo-300 bg-indigo-500/10",
-  cancelada: "border-zinc-500/40 text-zinc-400 bg-zinc-500/10",
-  sem_pendencia: "border-zinc-500/40 text-zinc-400 bg-zinc-500/10",
-  pendente: "border-amber-500/40 text-amber-400 bg-amber-500/10",
-  duplicada: "border-sky-500/40 text-sky-400 bg-sky-500/10",
-  sem_vinculo: "border-rose-500/40 text-rose-400 bg-rose-500/10",
-  sem_consentimento: "border-rose-500/40 text-rose-400 bg-rose-500/10",
-  sem_plano: "border-rose-500/40 text-rose-400 bg-rose-500/10",
-  erro: "border-rose-500/40 text-rose-400 bg-rose-500/10",
-  valor_invalido: "border-amber-500/40 text-amber-400 bg-amber-500/10",
+  salva: "border-emerald-500/40 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10",
+  aguardando_confirmacao: "border-indigo-500/40 text-indigo-700 dark:text-indigo-300 bg-indigo-500/10",
+  cancelada: "border-zinc-500/40 text-zinc-700 dark:text-zinc-400 bg-zinc-500/10",
+  sem_pendencia: "border-zinc-500/40 text-zinc-700 dark:text-zinc-400 bg-zinc-500/10",
+  pendente: "border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/10",
+  duplicada: "border-sky-500/40 text-sky-700 dark:text-sky-400 bg-sky-500/10",
+  sem_vinculo: "border-rose-500/40 text-rose-700 dark:text-rose-400 bg-rose-500/10",
+  sem_consentimento: "border-rose-500/40 text-rose-700 dark:text-rose-400 bg-rose-500/10",
+  sem_plano: "border-rose-500/40 text-rose-700 dark:text-rose-400 bg-rose-500/10",
+  erro: "border-rose-500/40 text-rose-700 dark:text-rose-400 bg-rose-500/10",
+  valor_invalido: "border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/10",
   recebida: "border-border text-muted-foreground bg-card",
-  gasto_excluido: "border-zinc-500/40 text-zinc-400 bg-zinc-500/10",
+  gasto_excluido: "border-zinc-500/40 text-zinc-700 dark:text-zinc-400 bg-zinc-500/10",
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -185,6 +183,11 @@ function WhatsAppPage() {
   const [links, setLinks] = useState<Link[]>([]);
   const [msgs, setMsgs] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [visibleMessages, setVisibleMessages] = useState(8);
+  const refreshSequence = useRef(0);
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
   const [novoTel, setNovoTel] = useState("");
   const [adding, setAdding] = useState(false);
   const [aceitouOptIn, setAceitouOptIn] = useState(false);
@@ -194,8 +197,9 @@ function WhatsAppPage() {
     expiraEm: string;
   } | null>(null);
   const [testTexto, setTestTexto] = useState("gastei R$ 48,90 no mercado hoje no Nubank");
-  const [testando, setTestando] = useState(false);
+  const testando = false;
   const [copiado, setCopiado] = useState(false);
+  const [removing, setRemoving] = useState<string | null>(null);
   const upsertLinkFn = useServerFn(upsertWhatsAppLink);
   const deleteLinkFn = useServerFn(deleteWhatsAppLink);
 
@@ -205,16 +209,7 @@ function WhatsAppPage() {
   // Verify Token NÃO vive no frontend. Configure-o em Secrets (WHATSAPP_VERIFY_TOKEN)
   // e use o mesmo valor no painel da Meta. Nunca exibido na UI nem retornado por server fn.
 
-  const webhookUrl = useMemo(() => {
-    // Em ambiente de preview, usamos a origem atual para teste local;
-    // mas a URL exibida para colar na Meta é sempre a pública.
-    if (typeof window === "undefined") return PUBLIC_WEBHOOK_URL;
-    const origin = window.location.origin;
-    if (origin.includes("lovable.app") && origin.includes("preview")) {
-      return PUBLIC_WEBHOOK_URL;
-    }
-    return `${origin}/api/public/whatsapp/expense`;
-  }, []);
+  const webhookUrl = PUBLIC_WEBHOOK_URL;
 
   async function copyToClipboardSafe(value: string): Promise<boolean> {
     try {
@@ -501,26 +496,16 @@ function WhatsAppPage() {
     enabled: boolean;
     canary_enabled: boolean;
   } | null>(null);
-  useEffect(() => {
-    let alive = true;
-    fetchConfigStatus()
-      .then((s) => {
-        if (alive) setConfigStatus(s);
-      })
-      .catch(() => {
-        if (alive) setConfigStatus(null);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [fetchConfigStatus]);
-
   async function refresh() {
+    const request = ++refreshSequence.current;
     setLoading(true);
+    setLoadError(false);
+    void fetchConfigStatus().then(value => { if (request === refreshSequence.current) setConfigStatus(value); }).catch(() => { if (request === refreshSequence.current) setConfigStatus(null); });
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+      if (request !== refreshSequence.current) return;
       if (!user) {
         setLinks([]);
         setMsgs([]);
@@ -532,35 +517,39 @@ function WhatsAppPage() {
           .select(
             "id, telefone, ativo, ultimo_uso, created_at, opt_in_em, opt_in_version, revogado_em, verification_state",
           )
+          .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         supabase
           .from("whatsapp_messages")
           .select(
             "id, telefone, texto, status, gasto_id, confianca, recebida_em, resposta_sugerida, erro",
           )
+          .eq("user_id", user.id)
           .order("recebida_em", { ascending: false })
           .limit(50),
       ]);
-      if (linksRes.error) throw new Error(linksRes.error.message);
-      if (msgsRes.error) throw new Error(msgsRes.error.message);
-      setLinks((linksRes.data ?? []) as Link[]);
-      if (((linksRes.data ?? []) as Link[]).some((link) =>
-        link.telefone === confirmacaoPendente?.telefone && link.ativo && link.verification_state === "verified"
-      )) setConfirmacaoPendente(null);
-      setMsgs((msgsRes.data ?? []) as Message[]);
+      if (request !== refreshSequence.current) return;
+      if (!linksRes.error) {
+        const loadedLinks = (linksRes.data ?? []) as Link[];
+        setLinks(loadedLinks);
+        setConfirmacaoPendente(pending => loadedLinks.some(link => link.telefone === pending?.telefone && link.ativo && link.verification_state === "verified") ? null : pending);
+      }
+      if (!msgsRes.error) setMsgs((msgsRes.data ?? []) as Message[]);
+      if (linksRes.error || msgsRes.error) throw new Error("Não foi possível atualizar todos os dados do WhatsApp. Tente novamente.");
     } catch (e) {
-      toastFromError(e);
+      if (request === refreshSequence.current) { setLoadError(true); toastFromError(e); }
     } finally {
-      setLoading(false);
+      if (request === refreshSequence.current) setLoading(false);
     }
   }
 
   useEffect(() => {
     void refresh();
+    return () => { refreshSequence.current++; };
   }, []);
 
   async function adicionar() {
-    if (!novoTel.trim()) return;
+    if (adding || !novoTel.trim()) return;
     if (!aceitouOptIn) {
       toast.error(
         "Para usar o lançamento por WhatsApp, você precisa aceitar o consentimento de uso desse canal.",
@@ -568,7 +557,7 @@ function WhatsAppPage() {
       return;
     }
     const tel = normTel(novoTel);
-    if (tel.length < 8) {
+    if (!/^55[1-9][0-9]9[0-9]{8}$/.test(tel)) {
       toast.error("Telefone inválido");
       return;
     }
@@ -590,9 +579,11 @@ function WhatsAppPage() {
           expiraEm: result.expira_em,
         });
         toast.success("Confirmação iniciada. Envie a mensagem pelo número informado.");
-      } else {
+      } else if (result.status === "already_active") {
         setConfirmacaoPendente(null);
         toast.success("Este número já está ativo.");
+      } else {
+        throw new Error("Não foi possível iniciar a confirmação. Tente novamente.");
       }
       setNovoTel("");
       setAceitouOptIn(false);
@@ -605,6 +596,7 @@ function WhatsAppPage() {
   }
 
   async function excluir(id: string) {
+    if (removing) return;
     if (
       !(await confirmAsync({
         title: "Desvincular WhatsApp",
@@ -615,46 +607,18 @@ function WhatsAppPage() {
     )
       return;
     try {
+      setRemoving(id);
       await deleteLinkFn({ data: { id } });
+      setConfirmacaoPendente(null);
       toast.success("Consentimento revogado. Número desvinculado.");
       await refresh();
     } catch (e) {
       toastFromError(e);
-    }
+    } finally { setRemoving(null); }
   }
 
   async function testarWebhook() {
-    if (links.length === 0) {
-      toast.error("Vincule pelo menos um número primeiro");
-      return;
-    }
-    setTestando(true);
-    try {
-      const res = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          telefone: links[0].telefone,
-          texto: testTexto,
-          external_id: `test-${Date.now()}`,
-        }),
-      });
-      const out = await res.json();
-      if (!res.ok) throw new Error(out?.error ?? "Falha no teste");
-      const first = out.results?.[0];
-      const status = first?.status ?? "ok";
-      if (status === "salva" && first?.gasto_id) {
-        toast.success(`Gasto salvo (id ${String(first.gasto_id).slice(0, 8)})`);
-      } else {
-        toast.success(`Status: ${status}`);
-      }
-      // Invalida cache de gastos para que /gastos e dashboard reflitam o novo registro.
-      await Promise.all([refresh(), refreshGastos()]);
-    } catch (e) {
-      toastFromError(e);
-    } finally {
-      setTestando(false);
-    }
+    toast.info("Prévia local: nada foi salvo ou enviado. Para registrar, envie a mensagem na conversa oficial do WhatsApp.");
   }
 
   async function copiarUrl() {
@@ -667,91 +631,15 @@ function WhatsAppPage() {
     }
   }
 
-  const [limpando, setLimpando] = useState(false);
-  async function limparDuplicados() {
-    if (
-      !(await confirmAsync({
-        title: "Remover duplicados",
-        description:
-          "Manter apenas o gasto mais antigo de cada grupo de duplicados criados via WhatsApp?",
-        confirmText: "Manter o mais antigo",
-      }))
-    )
-      return;
-    setLimpando(true);
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Sessão expirada");
-      const { data, error } = await supabase
-        .from("gastos")
-        .select("id, descricao, valor, data, cartao_id, created_at")
-        .eq("user_id", user.id)
-        .is("deleted_at", null)
-        .eq("origem", "whatsapp")
-        .order("created_at", { ascending: true });
-      if (error) throw new Error(error.message);
-      const buckets = new Map<string, string[]>();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      for (const g of (data as any[]) ?? []) {
-        const key = [
-          (g.descricao ?? "").toLowerCase().trim(),
-          Number(g.valor).toFixed(2),
-          g.data,
-          g.cartao_id ?? "",
-        ].join("|");
-        const arr = buckets.get(key) ?? [];
-        arr.push(g.id);
-        buckets.set(key, arr);
-      }
-      const idsParaApagar: string[] = [];
-      for (const ids of buckets.values()) {
-        if (ids.length > 1) idsParaApagar.push(...ids.slice(1)); // mantém o 1º (mais antigo)
-      }
-      if (idsParaApagar.length === 0) {
-        toast.info("Nenhum duplicado encontrado.");
-        return;
-      }
-      // Desvincular as whatsapp_messages que apontavam para os ids apagados
-      await supabase
-        .from("whatsapp_messages")
-        .update({ gasto_id: null })
-        .in("gasto_id", idsParaApagar);
-      // Só apaga duplicados ainda ativos (nunca soft-excluídos).
-      const { error: delErr } = await supabase
-        .from("gastos")
-        .delete()
-        .eq("user_id", user.id)
-        .is("deleted_at", null)
-        .in("id", idsParaApagar);
-      if (delErr) throw new Error(delErr.message);
-      toast.success(`${idsParaApagar.length} duplicado(s) removido(s).`);
-      await Promise.all([refresh(), refreshGastos()]);
-    } catch (e) {
-      toastFromError(e);
-    } finally {
-      setLimpando(false);
-    }
-  }
-
   // Status global da integração (linguagem amigável para o usuário final).
   // Enquanto o processamento real estiver desligado no backend
   // (WHATSAPP_ENABLED !== "true"), nunca mostrar "Ativo".
   const ultimaMsg = msgs[0];
-  const processamentoRealAtivo = configStatus?.enabled === true;
-  const integracaoStatus = MODO_TESTE
-    ? { label: "Esta tela está em modo de simulação", cls: "border-amber-500/40 text-amber-300" }
-    : !processamentoRealAtivo
-      ? {
-          label: "Teste de mensagens nesta tela desativado",
-          cls: "border-amber-500/40 text-amber-300",
-        }
-      : links.length === 0
-        ? { label: "Não configurado", cls: "border-border text-muted-foreground" }
-        : ultimaMsg
-          ? { label: "Ativo", cls: "border-emerald-500/40 text-emerald-400" }
-          : { label: "Aguardando primeira mensagem", cls: "border-sky-500/40 text-sky-400" };
+  const vinculoAtivo = links.some(l => l.ativo && l.verification_state === "verified" && !!l.opt_in_em && !l.revogado_em);
+  const integracaoStatus = {
+    label: loadError ? "Falha ao atualizar" : !configStatus ? "Status indisponível" : !configStatus.enabled ? "Processamento indisponível" : vinculoAtivo ? "Número vinculado" : "Confirmação necessária",
+    cls: "border-border text-foreground",
+  };
 
   return (
     <MobileShell>
@@ -759,21 +647,22 @@ function WhatsAppPage() {
         {/* Header */}
         <header className="flex items-start gap-3">
           <Link
-            to="/adicionar"
+            to="/app"
+            aria-label="Voltar ao início"
             className="grid h-9 w-9 place-items-center rounded-full bg-card border border-border hover:bg-card-elevated mt-0.5"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
                 <MessageCircle className="h-4 w-4" />
               </span>
               <h1 className="text-xl font-semibold">Lance gastos pelo WhatsApp</h1>
               {MODO_TESTE && (
                 <Badge
                   variant="outline"
-                  className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px] uppercase tracking-wide"
+                  className="border-amber-500/40 text-amber-700 dark:text-amber-300 bg-amber-500/10 text-[10px] uppercase tracking-wide"
                 >
                   Modo teste
                 </Badge>
@@ -784,7 +673,7 @@ function WhatsAppPage() {
               forma de pagamento para você confirmar antes de salvar.
             </p>
           </div>
-          <Button variant="outline" size="icon" onClick={refresh} disabled={loading}>
+          <Button aria-label="Atualizar WhatsApp" variant="outline" size="icon" onClick={refresh} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </header>
@@ -793,11 +682,11 @@ function WhatsAppPage() {
         {!MODO_TESTE && (
           <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3">
             <div className="flex items-start gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-500/15 text-emerald-400">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
                 <MessageCircle className="h-5 w-5" />
               </span>
               <div className="flex-1 min-w-0">
-                <h2 className="text-sm font-semibold text-emerald-300">
+                <h2 className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
                   Número oficial para enviar gastos
                 </h2>
                 <p className="text-lg font-semibold mt-0.5 num tracking-wide">
@@ -821,8 +710,8 @@ function WhatsAppPage() {
               Abrir conversa para enviar gasto
               <ExternalLink className="h-3.5 w-3.5 opacity-80" />
             </a>
-            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-[11px] text-amber-200 flex items-start gap-2">
-              <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-300" />
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-[11px] text-amber-700 dark:text-amber-200 flex items-start gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-700 dark:text-amber-300" />
               <p>
                 Esse WhatsApp é exclusivo para lançamento de gastos. Ele
                 <strong> não é canal de suporte ou atendimento</strong>.
@@ -834,15 +723,15 @@ function WhatsAppPage() {
         {/* Aviso de modo teste */}
         {MODO_TESTE && (
           <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-xs text-amber-100 flex items-start gap-3">
-            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-300" />
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-700 dark:text-amber-300" />
             <div className="space-y-1.5">
-              <p className="font-semibold text-amber-300 text-sm">Modo teste</p>
+              <p className="font-semibold text-amber-700 dark:text-amber-300 text-sm">Modo teste</p>
               <p>
                 Esta tela está em modo de teste. O assistente financeiro pelo WhatsApp está
                 disponível em produção nos planos pagos elegíveis, após vincular seu número e
                 autorizar o acesso. O simulador abaixo permite testar a interpretação das mensagens.
               </p>
-              <p className="text-amber-200/90">Nenhum gasto é salvo sem a sua confirmação.</p>
+              <p className="text-amber-700 dark:text-amber-200/90">Nenhum gasto é salvo sem a sua confirmação.</p>
             </div>
           </div>
         )}
@@ -905,7 +794,7 @@ function WhatsAppPage() {
                 Veja mais na{" "}
                 <Link
                   to="/privacidade"
-                  className="underline underline-offset-2 text-emerald-300 hover:text-emerald-200"
+                  className="underline underline-offset-2 text-emerald-700 dark:text-emerald-300 hover:text-emerald-700 dark:text-emerald-200"
                 >
                   Política de Privacidade
                 </Link>
@@ -915,12 +804,12 @@ function WhatsAppPage() {
           </label>
 
           {/* Re-confirmação de consentimento LGPD em vínculo já existente */}
-          {links.some((l) => l.ativo && (!l.opt_in_em || l.revogado_em)) && (
+          {links.some((l) => l.ativo && l.verification_state === "verified" && !l.revogado_em && !l.opt_in_em) && (
             <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 space-y-3">
-              <p className="text-sm font-semibold text-amber-300">
+              <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
                 Confirme seu consentimento para continuar usando o WhatsApp para lançar gastos.
               </p>
-              <p className="text-xs text-amber-200/90 leading-relaxed">
+              <p className="text-xs text-amber-700 dark:text-amber-200/90 leading-relaxed">
                 Seu número já está vinculado, mas o consentimento de uso do canal precisa ser
                 reconfirmado para seguir com o lançamento de gastos por WhatsApp. Nenhuma mensagem é
                 enviada e seu telefone não é alterado.
@@ -937,7 +826,7 @@ function WhatsAppPage() {
                   Inteligente, conforme a{" "}
                   <Link
                     to="/privacidade"
-                    className="underline underline-offset-2 text-amber-200 hover:text-amber-100"
+                    className="underline underline-offset-2 text-amber-700 dark:text-amber-200 hover:text-amber-100"
                   >
                     Política de Privacidade
                   </Link>
@@ -963,18 +852,19 @@ function WhatsAppPage() {
             </div>
           )}
 
-          {links.length === 0 && !loading && (
+          {loadError && <p role="alert" className="text-sm text-destructive">Não foi possível atualizar os dados. Use o botão Atualizar WhatsApp para tentar novamente.</p>}
+          {links.length === 0 && !loading && !loadError && (
             <p className="text-xs text-muted-foreground">Você ainda não vinculou nenhum número.</p>
           )}
 
           {confirmacaoPendente && (
             <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-3 space-y-2 text-xs">
               <p className="font-medium">Confirme pelo WhatsApp do número {maskTel(confirmacaoPendente.telefone)}</p>
-              <p>Envie exatamente esta mensagem em até 20 minutos:</p>
-              <p className="font-mono break-all text-foreground">{confirmacaoPendente.mensagem}</p>
-              {WHATSAPP_NUMERO_OFICIAL && (
+              <p>{Date.parse(confirmacaoPendente.expiraEm) > now ? `Confirmação válida até ${new Date(confirmacaoPendente.expiraEm).toLocaleTimeString("pt-BR")}. Envie esta mensagem:` : "Confirmação expirada. Informe seu número novamente para gerar outra."}</p>
+              {Date.parse(confirmacaoPendente.expiraEm) > now && <p className="font-mono break-all text-foreground">{confirmacaoPendente.mensagem}</p>}
+              {WHATSAPP_NUMERO_OFICIAL && Date.parse(confirmacaoPendente.expiraEm) > now && (
                 <a
-                  href={`https://wa.me/${WHATSAPP_NUMERO_OFICIAL.replace(/\D/g, "")}?text=${encodeURIComponent(confirmacaoPendente.mensagem)}`}
+                  href={getOfficialWhatsAppDeepLink(confirmacaoPendente.mensagem)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex rounded-md bg-emerald-500 px-3 py-2 font-medium text-white"
@@ -982,7 +872,7 @@ function WhatsAppPage() {
                   Abrir WhatsApp para confirmar
                 </a>
               )}
-              <button type="button" className="text-emerald-400 underline underline-offset-2" onClick={() => void refresh()}>
+              <button type="button" className="text-emerald-700 dark:text-emerald-400 underline underline-offset-2" onClick={() => void refresh()}>
                 Já enviei. Atualizar status
               </button>
               <p className="text-muted-foreground">Se o prazo acabar, informe o número novamente para gerar outro código.</p>
@@ -1002,25 +892,25 @@ function WhatsAppPage() {
                         {MODO_TESTE ? (
                           <Badge
                             variant="outline"
-                            className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]"
+                            className="border-amber-500/40 text-amber-700 dark:text-amber-300 bg-amber-500/10 text-[10px]"
                           >
                             Modo de simulação nesta tela
                           </Badge>
                         ) : l.verification_state === "pending" ? (
-                          <Badge variant="outline" className="border-amber-500/40 text-amber-300 text-[10px]">
+                          <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-300 text-[10px]">
                             Pendente de confirmação
                           </Badge>
-                        ) : l.ativo ? (
+                        ) : l.ativo && l.verification_state === "verified" && !!l.opt_in_em && !l.revogado_em ? (
                           <Badge
                             variant="outline"
-                            className="border-emerald-500/40 text-emerald-300 bg-emerald-500/10 text-[10px]"
+                            className="border-emerald-500/40 text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 text-[10px]"
                           >
                             Ativo
                           </Badge>
                         ) : (
                           <Badge
                             variant="outline"
-                            className="border-zinc-500/40 text-zinc-300 text-[10px]"
+                            className="border-zinc-500/40 text-zinc-700 dark:text-zinc-300 text-[10px]"
                           >
                             Inativo
                           </Badge>
@@ -1036,7 +926,8 @@ function WhatsAppPage() {
                     <button
                       type="button"
                       onClick={() => excluir(l.id)}
-                      className="shrink-0 rounded-md p-2 text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
+                      disabled={removing !== null}
+                      className="shrink-0 rounded-md p-2 text-muted-foreground hover:text-rose-700 dark:text-rose-400 hover:bg-rose-500/10"
                       aria-label="Remover número"
                       title="Remover número"
                     >
@@ -1061,13 +952,13 @@ function WhatsAppPage() {
           onTextoChange={setTestTexto}
           onTestar={testarWebhook}
           testando={testando}
-          podeTestar={links.some((l) => l.ativo && !!l.opt_in_em && l.verification_state !== "pending")}
-          modoTeste={MODO_TESTE}
+          podeTestar={true}
+          modoTeste={true}
         />
 
         {/* Como funciona o assistente pelo WhatsApp */}
         <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3">
-          <h2 className="text-sm font-semibold flex items-center gap-2 text-emerald-300">
+          <h2 className="text-sm font-semibold flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
             <Sparkles className="h-4 w-4" />
             Como funciona o assistente pelo WhatsApp
           </h2>
@@ -1080,7 +971,7 @@ function WhatsAppPage() {
               "O gasto só é salvo depois da sua confirmação.",
             ].map((passo, i) => (
               <li key={i} className="flex items-start gap-2.5">
-                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-semibold">
+                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[11px] font-semibold">
                   {i + 1}
                 </span>
                 <span className="text-xs sm:text-sm text-muted-foreground">{passo}</span>
@@ -1099,7 +990,7 @@ function WhatsAppPage() {
               </Badge>
             </div>
             <ul className="space-y-2">
-              {msgs.slice(0, 8).map((m) => (
+              {msgs.slice(0, visibleMessages).map((m) => (
                 <li key={m.id} className="rounded-lg bg-card-elevated p-3 space-y-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[11px] text-muted-foreground num">
@@ -1114,7 +1005,7 @@ function WhatsAppPage() {
                     </p>
                   )}
                   {m.erro && (
-                    <p className="text-[11px] text-rose-400 flex items-center gap-1">
+                    <p className="text-[11px] text-rose-700 dark:text-rose-400 flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" /> {m.erro}
                     </p>
                   )}
@@ -1124,6 +1015,9 @@ function WhatsAppPage() {
             </ul>
           </section>
         )}
+
+        {msgs.length > visibleMessages && <Button variant="outline" onClick={() => setVisibleMessages(n => n + 8)}>Mostrar mais mensagens</Button>}
+        {msgs.length === 50 && <p className="text-xs text-muted-foreground">Exibindo as 50 mensagens mais recentes.</p>}
 
         {/* ============== ÁREA TÉCNICA — APENAS ADMIN MASTER ============== */}
         {isAdmin && (
@@ -1137,10 +1031,10 @@ function WhatsAppPage() {
             {/* WA-D — Preflight read-only (TEMPORÁRIO; remover após WA-D) */}
             <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
               <div className="flex items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold text-amber-300">
+                <h2 className="text-sm font-semibold text-amber-700 dark:text-amber-300">
                   WA-D · Preflight (somente leitura)
                 </h2>
-                <Badge variant="outline" className="border-amber-500/40 text-amber-300">
+                <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-300">
                   temporário
                 </Badge>
               </div>
@@ -1321,7 +1215,7 @@ acao_recomendada: ${registerResult.acao_recomendada}`}
             <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-emerald-400" />
+                  <Sparkles className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                   Status da integração
                 </h2>
                 <Badge variant="outline" className={integracaoStatus.cls}>
@@ -1371,14 +1265,14 @@ acao_recomendada: ${registerResult.acao_recomendada}`}
                         ) : ok ? (
                           <Badge
                             variant="outline"
-                            className="border-emerald-500/40 text-emerald-400 text-[10px]"
+                            className="border-emerald-500/40 text-emerald-700 dark:text-emerald-400 text-[10px]"
                           >
                             Configurado
                           </Badge>
                         ) : (
                           <Badge
                             variant="outline"
-                            className="border-rose-500/40 text-rose-400 text-[10px]"
+                            className="border-rose-500/40 text-rose-700 dark:text-rose-400 text-[10px]"
                           >
                             Pendente
                           </Badge>
@@ -1388,7 +1282,7 @@ acao_recomendada: ${registerResult.acao_recomendada}`}
                   })}
                 </ul>
                 {configStatus && !configStatus.access_token && (
-                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-[11px] text-amber-300 flex items-start gap-2">
+                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-[11px] text-amber-700 dark:text-amber-300 flex items-start gap-2">
                     <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                     <p>
                       Configure o secret <span className="font-mono">WHATSAPP_ACCESS_TOKEN</span>{" "}
@@ -1422,7 +1316,7 @@ acao_recomendada: ${registerResult.acao_recomendada}`}
                     aria-label="Copiar URL"
                   >
                     {copiado ? (
-                      <Check className="h-3.5 w-3.5 text-emerald-400" />
+                      <Check className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-400" />
                     ) : (
                       <Copy className="h-3.5 w-3.5" />
                     )}
@@ -1443,7 +1337,7 @@ acao_recomendada: ${registerResult.acao_recomendada}`}
               </div>
 
               <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 p-3 space-y-1.5 text-[11px] text-muted-foreground">
-                <p className="font-medium text-emerald-400">Passo a passo</p>
+                <p className="font-medium text-emerald-700 dark:text-emerald-400">Passo a passo</p>
                 <ol className="list-decimal list-inside space-y-0.5">
                   <li>
                     Cole a Callback URL no campo <span className="font-mono">Callback URL</span> da
@@ -1462,15 +1356,7 @@ acao_recomendada: ${registerResult.acao_recomendada}`}
                 </ol>
               </div>
 
-              <Button
-                variant="outline"
-                onClick={limparDuplicados}
-                disabled={limpando}
-                className="border-rose-500/40 text-rose-300 hover:bg-rose-500/10 w-full sm:w-auto"
-              >
-                <Trash2 className="h-4 w-4 mr-1.5" />
-                {limpando ? "Limpando..." : "Limpar duplicados"}
-              </Button>
+              <p className="text-sm text-muted-foreground">A remoção automática de duplicados está indisponível. Confira os lançamentos em Gastos antes de excluir: valores e descrições iguais podem ser compras diferentes.</p>
             </section>
           </>
         )}
@@ -1479,7 +1365,7 @@ acao_recomendada: ${registerResult.acao_recomendada}`}
 
         {/* Aviso de segurança */}
         <div className="rounded-xl border border-dashed border-border bg-card/40 p-3 text-[11px] text-muted-foreground flex items-start gap-2">
-          <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0 text-emerald-400" />
+          <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0 text-emerald-700 dark:text-emerald-400" />
           <p>
             Nunca envie número completo do cartão, CVV, senha ou dados bancários sensíveis. Use
             apenas nome do gasto, valor, categoria, cartão e data.
@@ -1490,188 +1376,24 @@ acao_recomendada: ${registerResult.acao_recomendada}`}
   );
 }
 
-function MessageActions({
-  msg,
-  onChanged,
-}: {
-  msg: Message;
-  onChanged: () => Promise<void> | void;
-}) {
-  const [busy, setBusy] = useState<string | null>(null);
-
+function MessageActions({ msg }: { msg: Message; onChanged: () => Promise<void> | void }) {
+  const [busy, setBusy] = useState(false);
   async function verEmGastos() {
-    if (!msg.gasto_id) return;
-    const { data, error } = await supabase
-      .from("gastos")
-      .select("id")
-      .eq("id", msg.gasto_id)
-      .is("deleted_at", null)
-      .maybeSingle();
-    if (error || !data) {
-      toast.error("Esse gasto não foi encontrado. Você pode reprocessar a mensagem.");
-      await supabase
-        .from("whatsapp_messages")
-        .update({
-          status: "gasto_excluido",
-          gasto_id: null,
-          resposta_sugerida: "Gasto não encontrado.",
-        })
-        .eq("id", msg.id);
-      await onChanged();
-      return;
-    }
-    window.location.href = `/gastos?highlight=${msg.gasto_id}`;
-  }
-
-  async function excluirGasto() {
-    if (!msg.gasto_id) return;
-    if (
-      !(await confirmAsync({
-        title: "Excluir gasto?",
-        description: "Essa ação também atualizará cartões, faturas, dashboard e relatórios.",
-        destructive: true,
-        confirmText: "Excluir",
-      }))
-    )
-      return;
-    setBusy("delete-gasto");
+    if (!msg.gasto_id || busy) return;
+    setBusy(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Sessão expirada");
-      const r = await deleteGastoAtivo(supabase, user.id, msg.gasto_id);
-      if (r === "deleted") {
-        await supabase
-          .from("contas_a_pagar")
-          .update({ status: "pendente", data_pagamento: null, gasto_id: null })
-          .eq("user_id", user.id)
-          .eq("gasto_id", msg.gasto_id);
-      }
-      await supabase
-        .from("whatsapp_messages")
-        .update({
-          status: "gasto_excluido",
-          gasto_id: null,
-          resposta_sugerida: "Gasto excluído pelo usuário.",
-        })
-        .eq("id", msg.id);
-      toast.success("Gasto excluído. Tudo recalculado.");
-      await Promise.all([onChanged(), refreshGastos()]);
-    } catch (e) {
-      toastFromError(e);
-    } finally {
-      setBusy(null);
-    }
+      const { data, error } = await supabase.from("gastos").select("id").eq("id", msg.gasto_id).is("deleted_at", null).maybeSingle();
+      if (error) throw new Error("Não foi possível consultar o gasto. Tente novamente. O histórico foi preservado.");
+      if (!data) { toast.info("Gasto indisponível ou excluído. O histórico foi preservado."); return; }
+      window.location.href = `/gastos?highlight=${encodeURIComponent(msg.gasto_id)}`;
+    } catch (e) { toastFromError(e); } finally { setBusy(false); }
   }
-
-  async function reprocessar() {
-    setBusy("reproc");
-    try {
-      await supabase.from("whatsapp_messages").delete().eq("id", msg.id);
-      const res = await fetch(`${window.location.origin}/api/public/whatsapp/expense`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          telefone: msg.telefone,
-          texto: msg.texto,
-          external_id: `reproc-${Date.now()}`,
-        }),
-      });
-      const out = await res.json();
-      if (!res.ok) throw new Error(out?.error ?? "Falha ao reprocessar");
-      toast.success(`Status: ${out.results?.[0]?.status ?? "ok"}`);
-      await Promise.all([onChanged(), refreshGastos()]);
-    } catch (e) {
-      toastFromError(e);
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function excluirLog() {
-    if (
-      !(await confirmAsync({
-        title: "Excluir registro?",
-        description: "Excluir apenas o registro desta mensagem. O gasto não será removido.",
-        destructive: true,
-        confirmText: "Excluir registro",
-      }))
-    )
-      return;
-    setBusy("delete-log");
-    try {
-      const { error } = await supabase.from("whatsapp_messages").delete().eq("id", msg.id);
-      if (error) throw new Error(error.message);
-      toast.success("Log removido.");
-      await onChanged();
-    } catch (e) {
-      toastFromError(e);
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  const isSalva = msg.status === "salva" && !!msg.gasto_id;
-  const isExcluido = msg.status === "gasto_excluido";
-  const isDuplicada = msg.status === "duplicada";
-  const podeReproc =
-    isExcluido ||
-    isDuplicada ||
-    msg.status === "pendente" ||
-    msg.status === "erro" ||
-    msg.status === "valor_invalido";
-
-  return (
-    <div className="flex flex-wrap items-center gap-1.5 pt-1">
-      {isSalva && (
-        <>
-          <Button size="sm" variant="outline" onClick={verEmGastos} className="h-7 text-[11px]">
-            <ExternalLink className="h-3 w-3 mr-1" /> Ver em Gastos
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={excluirGasto}
-            disabled={busy === "delete-gasto"}
-            className="h-7 text-[11px] border-rose-500/40 text-rose-300 hover:bg-rose-500/10"
-          >
-            <Trash2 className="h-3 w-3 mr-1" /> Excluir gasto
-          </Button>
-        </>
-      )}
-      {isDuplicada && msg.gasto_id && (
-        <Button size="sm" variant="outline" onClick={verEmGastos} className="h-7 text-[11px]">
-          <ExternalLink className="h-3 w-3 mr-1" /> Ver gasto existente
-        </Button>
-      )}
-      {podeReproc && (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={reprocessar}
-          disabled={busy === "reproc"}
-          className="h-7 text-[11px]"
-        >
-          <RefreshCw className="h-3 w-3 mr-1" /> Reprocessar
-        </Button>
-      )}
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={excluirLog}
-        disabled={busy === "delete-log"}
-        className="h-7 text-[11px] text-muted-foreground hover:text-rose-300"
-      >
-        Excluir log
-      </Button>
-    </div>
-  );
+  return <div className="space-y-2 pt-2">
+    {msg.gasto_id && <Button variant="outline" disabled={busy} onClick={verEmGastos} className="min-h-11 text-xs"><ExternalLink className="mr-1 h-4 w-4" />{busy ? "Consultando…" : "Ver em Gastos"}</Button>}
+    <p className="text-xs text-muted-foreground">Histórico preservado. Gerencie o lançamento em Gastos. Para uma nova solicitação, use a conversa oficial do WhatsApp.</p>
+  </div>;
 }
 
-// =====================================================================
-// Simulador de lançamento — preview local + botão de teste
-// =====================================================================
 const EXEMPLOS_SIMULADOR = [
   "Gastei R$ 35,90 no mercado hoje no cartão Nubank",
   "Paguei R$ 18 no Pix ontem com lanche",
@@ -1732,7 +1454,7 @@ function SimuladorCard({
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
           <h2 className="text-base font-semibold flex items-center gap-2">
-            <Send className="h-4 w-4 text-emerald-400" />
+            <Send className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
             Simulador de lançamento
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -1743,7 +1465,7 @@ function SimuladorCard({
         {modoTeste && (
           <Badge
             variant="outline"
-            className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]"
+            className="border-amber-500/40 text-amber-700 dark:text-amber-300 bg-amber-500/10 text-[10px]"
           >
             Apenas simulação
           </Badge>
@@ -1776,12 +1498,12 @@ function SimuladorCard({
       {preview && valorOK && (
         <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-2 animate-fade-in">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[11px] text-emerald-300 font-medium uppercase tracking-wide flex items-center gap-1.5">
+            <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium uppercase tracking-wide flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5" /> Resultado da simulação
             </p>
             <Badge
               variant="outline"
-              className="border-amber-500/40 text-amber-300 bg-amber-500/10 text-[10px]"
+              className="border-amber-500/40 text-amber-700 dark:text-amber-300 bg-amber-500/10 text-[10px]"
             >
               Aguardando confirmação
             </Badge>
@@ -1822,7 +1544,7 @@ function SimuladorCard({
       )}
 
       {preview && !valorOK && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-200">
           Não consegui identificar o valor da mensagem. Tente algo como "R$ 35,90".
         </div>
       )}
@@ -1833,11 +1555,11 @@ function SimuladorCard({
           disabled={testando || !podeTestar || !valorOK}
           className="bg-emerald-500 hover:bg-emerald-600 text-white flex-1 sm:flex-initial"
         >
-          {testando ? "Testando..." : "Testar mensagem"}
+          {testando ? "Testando..." : "Conferir prévia (sem salvar)"}
         </Button>
         {!podeTestar && (
           <p className="text-[11px] text-muted-foreground self-center">
-            Vincule seu WhatsApp acima para usar o teste.
+            Esta prévia não envia mensagens nem cria lançamentos.
           </p>
         )}
       </div>
