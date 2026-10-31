@@ -15,10 +15,10 @@ import { Button } from "@/components/ui/button";
 export function AdminMasterGate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { isAdminMaster } = usePlan();
+  const { isAdminMaster, loading: planLoading, error, refresh } = usePlan();
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || planLoading || error) return;
     if (!user) {
       void navigate({ to: "/login", replace: true });
       return;
@@ -29,15 +29,17 @@ export function AdminMasterGate({ children }: { children: React.ReactNode }) {
       }, 1200);
       return () => clearTimeout(timer);
     }
-  }, [loading, user, isAdminMaster, navigate]);
+  }, [loading, planLoading, error, user, isAdminMaster, navigate]);
 
-  if (loading || !user) {
+  if (loading || planLoading || !user) {
     return (
       <MobileShell>
         <div className="py-16 text-center text-sm text-muted-foreground">Carregando…</div>
       </MobileShell>
     );
   }
+
+  if (error) return <MobileShell><div role="alert" className="p-6 text-center">Não foi possível verificar seu acesso administrativo.<Button onClick={() => void refresh()}>Tentar novamente</Button></div></MobileShell>;
 
   if (!isAdminMaster) {
     return (
@@ -56,5 +58,5 @@ export function AdminMasterGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <>{children}</>;
+  return <div key={user.id}>{children}</div>;
 }
