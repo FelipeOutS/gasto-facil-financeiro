@@ -972,8 +972,15 @@
 .dashboard-radar-layout,
 .dashboard-radar-cards,
 .dashboard-goals-calendar {
+  /* Auto tracks can expand to a card's min-content width in Android WebView. */
+  grid-template-columns: minmax(0, 1fr);
   display: grid;
   gap: 16px;
+  min-width: 0;
+}
+.dashboard-radar-layout > *,
+.dashboard-radar-cards > *,
+.dashboard-goals-calendar > * {
   min-width: 0;
 }
 .dashboard-radar-cards > :empty {
