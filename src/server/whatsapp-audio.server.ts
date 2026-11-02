@@ -33,16 +33,17 @@ export function isWhatsAppAudioEnabled(): boolean {
 
 /** Limite duro em bytes. Default: 10 MB. */
 export function getMaxAudioBytes(): number {
-  return envInt("WHATSAPP_AUDIO_MAX_BYTES", 10 * 1024 * 1024);
+  return Math.min(envInt("WHATSAPP_AUDIO_MAX_BYTES", 10 * 1024 * 1024), 10 * 1024 * 1024);
 }
 
 /**
- * Limite duro em segundos. Default: 120 s. Usado apenas para validar a
- * duração declarada pelo provedor de transcrição quando disponível; a
- * Meta não envia duração confiável no payload do webhook.
+ * Limite duro em segundos. Máximo: 120 s. Aplicado à duração medida no
+ * container antes da transcrição; a Meta não declara duração confiável.
  */
 export function getMaxAudioSeconds(): number {
-  return envInt("WHATSAPP_AUDIO_MAX_SECONDS", 120);
+  // Inline webhook processing is not a durable long-audio worker. Environment
+  // configuration may lower the bound, but cannot silently enable five minutes.
+  return Math.min(envInt("WHATSAPP_AUDIO_MAX_SECONDS", 120), 120);
 }
 
 /** MIMEs aceitos pelo provedor de transcrição configurado (Lovable AI / OpenAI). */

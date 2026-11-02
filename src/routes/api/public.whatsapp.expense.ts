@@ -51,6 +51,7 @@ import {
 } from "@/server/whatsapp-audio-duration.server";
 import { runTranscriber } from "@/server/whatsapp-transcription.server";
 import { normalizeVoiceMoney } from "@/server/whatsapp-voice-number-normalizer.server";
+import {splitAudioInstructions, multiAudioReply} from "@/server/whatsapp-audio-intents.server";
 import { runInboundProductionGate } from "@/server/whatsapp-c11-gates.server";
 import { detectOptout, executeOptoutForSender } from "@/server/whatsapp-optout.server";
 import { completeWhatsAppLinkVerification } from "@/server/whatsapp-link-verification.server";
@@ -1126,6 +1127,18 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               // apenas adaptamos o texto. Transcript e texto
               // normalizado permanecem só em memória.
               const moneyNorm = normalizeVoiceMoney(transcript);
+              const instructions=splitAudioInstructions(moneyNorm.normalizedText);
+              if(instructions.length>1) {
+                if(process.env.WHATSAPP_AUDIO_BATCH_ENABLED === "true" && process.env.WHATSAPP_REMINDER_CONFIRMATION_ENABLED === "true" && msg.external_id) {
+                  const {prepareAudioBatch}=await import("@/server/whatsapp-audio-batch.server");
+                  const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
+                  const batch=await prepareAudioBatch(elig.userId,msg.telefone,msg.external_id,instructions,{client:supabaseAdmin});
+                  if(batch.graphInteractive) await sendWhatsAppInteractiveReply(msg.telefone,batch.graphInteractive);
+                  else if(batch.resposta) await sendWhatsAppReply(msg.telefone,batch.resposta);
+                } else await sendWhatsAppReply(msg.telefone,multiAudioReply(instructions));
+                results.push({status:"audio_multiplas_instrucoes"});
+                continue;
+              }
               console.log({
                 event: "wa_audio_money_normalization",
                 applied: moneyNorm.normalizedValuesCount > 0,

@@ -2,6 +2,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { generateProactiveAlerts } from "@/server/whatsapp-proactive-alerts.server";
+import {cronPreflight, readCronBody} from "@/server/whatsapp-cron-preflight.server";
 
 function valid(raw:string,signature:string|null):boolean {
   const secret=process.env.WHATSAPP_DISPATCHER_SECRET;
@@ -12,12 +13,15 @@ function valid(raw:string,signature:string|null):boolean {
 }
 export const Route=createFileRoute("/api/public/hooks/whatsapp-proactive-generate")({
   server:{handlers:{POST:async({request})=>{
-    const raw=await request.text();
+    const raw=await readCronBody(request);
+    if(raw===null) return new Response("body too large",{status:413});
     if(!valid(raw,request.headers.get("x-cron-signature"))) return new Response("invalid signature",{status:401});
     // Operational activation is a separate step, after migration, templates,
     // dispatch mapping and full WhatsApp homologation. No cron is installed.
     if(process.env.WHATSAPP_13_ALERT_GENERATION_ENABLED?.toLowerCase()!=="true")
       return Response.json({enabled:false,users_considered:0,candidates:0,enqueued:0});
+    const guard=await cronPreflight(raw,"whatsapp-proactive-generate");
+    if(guard!=="ok") return new Response("cron request rejected",{status:guard==="unavailable"?503:409});
     const {supabaseAdmin}=await import("@/integrations/supabase/client.server");
     const idsSet=new Set<string>();
     for(let offset=0;;offset+=500) {
